@@ -2,7 +2,8 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRO, ModelRW}
 import io.suggest.ad.edit.m.layout.MLayoutS
-import io.suggest.ad.edit.m.{HandleVScroll, MDocS}
+import io.suggest.ad.edit.m.HandleVScroll
+import io.suggest.ad.edit.m.edit.MDocS
 import io.suggest.common.event.DomEvents
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import org.scalajs.dom._
@@ -46,7 +47,8 @@ class LayoutAh[M](
         val newY0 = scrollY - v0.rightPanelTop
 
         // Пора двигать правую панель по вертикали. Но с учётом ограничения высоты документа.
-        val docHeight = docRO.value.jdArgs.templateHeightCssPx
+        val mdoc0 = docRO.value
+        val docHeight = mdoc0.jdDoc.jdArgs.templateHeightCssPx
         // TODO Нужна реальная фактическая контейнера редактора или текущего выделенного элемента.
         // Нужно отцентровать контейнер редакторов относительно текущего выделенного элемента.
         val editorContHeightCssPx = 350

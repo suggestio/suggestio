@@ -1,25 +1,28 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
+import com.github.souporserious.react.measure.{Bounds, Measure}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.css.Css
-import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs}
+import io.suggest.grid.build.GridBuilderUtil
 import io.suggest.jd.{MJdEdgeId, MJdTagId}
 import io.suggest.jd.render.m._
+import io.suggest.jd.render.u.{JdGridUtil, JdUtil}
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.msg.WarnMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -31,7 +34,9 @@ import scalaz.Tree
 class JdR(
            jdCssStatic        : JdCssStatic,
            jdGridUtil         : JdGridUtil
-         ) { jdR =>
+         )
+  extends Log
+{ jdR =>
 
   type Props_t = MJdArgs
   type Props = ModelProxy[Props_t]
@@ -40,9 +45,9 @@ class JdR(
   /** Для разделения edit и read-only режима используется этот трейт,
     * реализующий только базовый рендер с возможностью внутреннего расширения.
     */
-  trait JdRrr {
+  trait JdRrrBase {
 
-    class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
+    trait QdContentBase {
 
       def _qdContentRrrHtml(p: MJdRrrProps): QdRrrHtml = {
         QdRrrHtml(
@@ -51,7 +56,7 @@ class JdR(
         )
       }
 
-      def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Div] = {
+      def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Element] = {
         import state.jdArgs.jdRuntime.jdCss
 
         val qdTag = state.subTree.rootLabel
@@ -62,7 +67,8 @@ class JdR(
           _bgColorOpt( qdTag, state.jdArgs ),
 
           // Опциональная ротация элемента.
-          _maybeRotate( qdTag, state.jdArgs ),
+          qdTag.props1.rotateDeg
+            .whenDefined { state.jdArgs.jdRuntime.jdCss.rotateF.apply },
 
           // Поддержка перетаскивания
           jdCssStatic.absPosStyleAll,
@@ -85,34 +91,33 @@ class JdR(
         )
       }
 
-      def render(p: MJdRrrProps): VdomElement = {
-        _renderQdContentTag( p )
+      def _doRender(state: MJdRrrProps): VdomElement = {
+        // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
+        val tag0 = _renderQdContentTag(state)
+        if (
+          state.parent
+            .exists(_.name ==* MJdTagNames.STRIP)
+        ) {
+          // Рендер внутри блока, просто пропускаем контент на выход
+          tag0
+        } else {
+          Measure.bounds( blocklessQdContentBoundsMeasuredJdCb )( tag0.withRef(_) )
+        }
       }
+
+      /** Реакция на получение информации о размерах внеблокового qd-контента. */
+      def blocklessQdContentBoundsMeasuredJdCb(b: Bounds): Callback
+      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], bounds: Bounds) =
+        QdBoundsMeasured(mp.value.subTree.rootLabel, bounds)
 
     }
 
-    /** There are no virtual classes in Scala (yet), so you can't write override class Val ...,
-      * and then be sure that invoking new Val will dynamically choose the right class for the new instance. (...)
-      *
-      * The general trick to emulate virtual classes is to write class Val extends super.Val, and then override
-      * a protected method which serves as a factory for instances of the class.
-      *
-      * see [[https://stackoverflow.com/a/4337744]]
-      */
-    def mkQdContentB = new QdContentB(_)
+    def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement
 
-    /** Сборка react-компонента. */
-    val qdContentComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentB].getSimpleName )
-      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .backend( mkQdContentB )
-      .renderBackend
-      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdtRrrPropsFastEq) )
-      .build
 
     // -------------------------------------------------------------------------------------------------
 
-    class BlockB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
+    trait BlockBase {
 
       /** Доп.наполнение для тега фоновой картинки блока. */
       def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
@@ -224,23 +229,15 @@ class JdR(
 
       }
 
-      def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        _renderBlockTag(propsProxy)
-      }
-
     }
-    def mkBlockB = new BlockB(_)
-    val blockComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[BlockB].getSimpleName )
-      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .backend( mkBlockB )
-      .renderBackend
-      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdtRrrPropsFastEq) )
-      .build
+
+    def mkBlock(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement
+
 
     // -------------------------------------------------------------------------------------------------
 
-    class DocumentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
+    /** Базовый трейт для рендера компонента документа. */
+    trait DocumentBase {
 
       def _renderTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
         val state = propsProxy.value
@@ -248,22 +245,13 @@ class JdR(
           // Плитку отсюда полностью вынести не удалось.
           CSSGrid {
             jdGridUtil.mkCssGridArgs(
-              gbRes = GridBuilderUtil.buildGrid {
-                MGridBuildArgs(
-                  itemsExtDatas = (for {
-                    (jdtTree, i) <- state.subTree.subForest.zipWithIndex
-                    jdt = jdtTree.rootLabel
-                    if jdt.props1.bm.nonEmpty
-                  } yield {
-                    Tree.Leaf(
-                      MGbBlock( None, Some(jdt), orderN = Some(i) )
-                    )
-                  })
-                    .toStream,
-                  jdConf = state.jdArgs.conf,
-                  offY = 0,
-                  jdtWideSzMults = state.jdArgs.jdRuntime.jdtWideSzMults,
-                )
+              gbRes = state.gridBuildRes.getOrElse {
+                // 2019-09-25 Пока допускаем обычный рендер, но крайне желательно избегать этой ситуации.
+                // Потом надо будет как-то всё устаканить, чтобы нельзя было на уровне кода рендерить с документ неправильно (убрать плитку из JdR? Тогда и тип jdt document следом?)
+                LOG.warn( WarnMsgs.GRID_REBUILD_INPERFORMANT, msg = state.tagId.toString )
+                GridBuilderUtil.buildGrid {
+                  JdUtil.jdDocGbArgs( state.subTree, state.jdArgs )
+                }
               },
               conf = state.jdArgs.conf,
               tagName = GridComponents.DIV,
@@ -281,19 +269,10 @@ class JdR(
         )
       }
 
-      def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        _renderTag( propsProxy )
-      }
-
     }
-    def mkDocumentB = new DocumentB(_)
-    val documentComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[BlockB].getSimpleName )
-      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .backend( mkDocumentB )
-      .renderBackend
-      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdtRrrPropsFastEq) )
-      .build
+
+    /** Сборка инстанса компонента. Здесь можно навешивать hoc'и и прочее счастье. */
+    def mkDocument(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement
 
 
     // -------------------------------------------------------------------------------------------------
@@ -306,9 +285,9 @@ class JdR(
       import MJdTagNames._
       val p = proxy.value
       p.subTree.rootLabel.name match {
-        case QD_CONTENT                => qdContentComp.withKey(p.tagId.toString)(proxy)
-        case STRIP                     => blockComp.withKey(p.tagId.toString)(proxy)
-        case DOCUMENT                  => documentComp.withKey(p.tagId.toString)(proxy)
+        case QD_CONTENT                => mkQdContent( p.tagId.toString, proxy )
+        case STRIP                     => mkBlock( p.tagId.toString, proxy )
+        case DOCUMENT                  => mkDocument( p.tagId.toString, proxy )
         // Это пока не вызывается, т.к. QD_OP отрабатывается в QdRrrHtml.
         case other =>
           throw new UnsupportedOperationException( other.toString )
@@ -370,26 +349,88 @@ class JdR(
             tagId   = jdArgs.data.doc.jdId,
             jdArgs  = jdArgs,
           )
-        }( renderTag )(implicitly, MJdRrrProps.MJdtRrrPropsFastEq)
+        }( renderTag )(implicitly, MJdRrrProps.MJdRrrPropsFastEq)
       }
       .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdArgs.MJdArgsFastEq) )
       .build
 
   }
+
+
   /** Обычная рендерилка. */
-  object JdRrr extends JdRrr
+  object JdRrr extends JdRrrBase {
+
+    /** Реализация контента. */
+    final class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends QdContentBase {
+
+      /** Реакция на получение информации о размерах внеблокового qd-контента. */
+      override def blocklessQdContentBoundsMeasuredJdCb(b: Bounds): Callback = {
+        ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
+          propsProxy: ModelProxy[MJdRrrProps] =>
+            _qdBoundsMeasured( propsProxy, b )
+        }
+      }
+
+      /** Фасад для рендера. */
+      def render(state: MJdRrrProps): VdomElement =
+        _doRender(state)
+
+    }
+    /** Сборка react-компонента. def - т.к. в редакторе может не использоваться. */
+    val qdContentComp = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentB].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[QdContentB]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdRrrPropsFastEq) )
+      .build
+    def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      qdContentComp.withKey(key)(props)
 
 
+    /** Реализация блока для обычного рендера. */
+    final class BlockB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends BlockBase {
+
+      def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
+        _renderBlockTag(propsProxy)
+      }
+
+    }
+    val blockComp = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[BlockB].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[BlockB]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdRrrPropsFastEq) )
+      .build
+    def mkBlock(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      blockComp.withKey(key)(props)
+
+
+    /** Реализация документа для обычного рендера. */
+    final class DocumentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends DocumentBase {
+
+      def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
+        _renderTag( propsProxy )
+      }
+
+    }
+    val documentComp = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[BlockB].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[DocumentB]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdRrrPropsFastEq) )
+      .build
+    /** Сборка инстанса компонента. Здесь можно навешивать hoc'и и прочее счастье. */
+    override def mkDocument(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      documentComp.withKey(key)(props)
+
+  }
+
+
+  /** Рендер опционального цвета фона. */
   private def _bgColorOpt(jdTag: JdTag, jdArgs: MJdArgs): TagMod = {
     jdTag.props1.bgColor.whenDefined { mcd =>
       jdArgs.jdRuntime.jdCss.bgColorOptStyleF( mcd.hexCode )
     }
-  }
-
-  /** Ротация элемента. */
-  private def _maybeRotate(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
-    jdt.props1.rotateDeg
-      .whenDefined { jdArgs.jdRuntime.jdCss.rotateF.apply }
   }
 
 

@@ -7,14 +7,17 @@ import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
+import io.suggest.ad.edit.m.edit.{MDocS, MEditorsS, MJdDocEditS, MSlideBlocks}
 import io.suggest.jd.tags._
-import io.suggest.ad.edit.m.layout.{MLayoutS, MSlideBlocks}
+import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.color.MColorData
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
+import io.suggest.jd.render.c.JdAh
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
@@ -83,28 +86,34 @@ class LkAdEditCircuit(
           blockPadding      = mFormInit.blockPadding,
           gridColumnsCount  = 2
         )
+        val jdArgs = MJdArgs(
+          data        = jdDataJs,
+          conf        = jdConf,
+          jdRuntime   = JdUtil.mkRuntime(
+            docs   = jdDataJs.doc #:: Stream.empty,
+            jdConf = jdConf,
+          ),
+        )
         MDocS(
-          jdArgs = MJdArgs(
-            data        = jdDataJs,
-            conf        = jdConf,
-            jdRuntime   = MJdRuntime.make(
-              docs   = jdDataJs.doc #:: Stream.empty,
-              jdConf = jdConf,
+          jdDoc = MJdDocEditS(
+            jdArgs    = jdArgs,
+            gridBuild = JdUtil.buildGridFromJdArgs( jdArgs ),
+          ),
+          editors = MEditorsS(
+            // Залить гистограммы в общий словарь гистограмм, т.к. именно оттуда идёт рендер.
+            colorsState = MColorsState(
+              histograms = {
+                val iter = for {
+                  jdEdge    <- mFormInit.adData.edges.iterator
+                  srvFile   <- jdEdge.fileSrv
+                  colorHist <- srvFile.colors
+                } yield {
+                  srvFile.nodeId -> colorHist
+                }
+                iter.toMap
+              }
             )
           ),
-          // Залить гистограммы в общий словарь гистограмм, т.к. именно оттуда идёт рендер.
-          colorsState = MColorsState(
-            histograms = {
-              val iter = for {
-                jdEdge    <- mFormInit.adData.edges.iterator
-                srvFile   <- jdEdge.fileSrv
-                colorHist <- srvFile.colors
-              } yield {
-                srvFile.nodeId -> colorHist
-              }
-              iter.toMap
-            }
-          )
         )
       },
 
@@ -141,13 +150,19 @@ class LkAdEditCircuit(
 
   private val deleteConfirmPopupRW = mkLensZoomRW(popupsRW, MAePopupsS.deleteConfirm)( OptFastEq.Wrapped(MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq) )
 
-  private val slideBlocksRW = mkLensZoomRW(mDocSRw, MDocS.slideBlocks)( MSlideBlocks.MSlideBlocksFastEq )
+  private val editorsRW = mkLensZoomRW(mDocSRw, MDocS.editors)( MEditorsS.MEditorsSFastEq )
+  private val slideBlocksRW = mkLensZoomRW(editorsRW, MEditorsS.slideBlocks)( MSlideBlocks.MSlideBlocksFastEq )
+
+  private val jdDocRW = mkLensZoomRW(mDocSRw, MDocS.jdDoc)( MJdDocEditS.MJdDocEditSFastEq )
+  private val jdArgsRW = mkLensZoomRW(jdDocRW, MJdDocEditS.jdArgs)( MJdArgs.MJdArgsFastEq )
+  private val jdRuntimeRW = mkLensZoomRW(jdArgsRW, MJdArgs.jdRuntime)( MJdRuntime.MJdRuntimeFastEq )
+
 
   /** Класс для сборки зумма для color-picker'а. */
   private abstract class ZoomToBgColorPick {
 
     def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]] = {
-      mdoc.jdArgs.selJdt
+      mdoc.jdDoc.jdArgs.selJdt
         .treeLocOpt
     }
 
@@ -169,7 +184,7 @@ class LkAdEditCircuit(
         } yield {
           color.MColorPick(
             colorOpt    = getColorOpt(currTag.getLabel),
-            colorsState = mdoc.colorsState,
+            colorsState = mdoc.editors.colorsState,
           )
         }
       } { (mdoc0, mColorAhOpt) =>
@@ -183,16 +198,26 @@ class LkAdEditCircuit(
             setColorOpt( s0, mColorAh.colorOpt )
           }
           val tpl2 = strip2.toTree
-          val jdDoc2 = MJdDoc.template.set(tpl2)( mdoc0.jdArgs.data.doc )
+          val jdDoc2 = MJdDoc.template
+            .set(tpl2)( mdoc0.jdDoc.jdArgs.data.doc )
 
           (
-            MDocS.jdArgs.modify(
-              MJdArgs.data
-                .composeLens(MJdDataJs.doc)
-                .set(jdDoc2) andThen
-              MJdArgs.jdRuntime.set( MJdRuntime.make(jdDoc2 #:: Stream.empty, mdoc0.jdArgs.conf) )
-            ) andThen
-            MDocS.colorsState.set( mColorAh.colorsState )
+            MDocS.jdDoc
+              .composeLens(MJdDocEditS.jdArgs)
+              .modify(
+                MJdArgs.data
+                  .composeLens(MJdDataJs.doc)
+                  .set(jdDoc2) andThen
+                MJdArgs.jdRuntime
+                  .set( JdUtil.mkRuntime(
+                    docs   = jdDoc2 #:: Stream.empty,
+                    jdConf = mdoc0.jdDoc.jdArgs.conf,
+                    prev   = mdoc0.jdDoc.jdArgs.jdRuntime,
+                  ))
+              ) andThen
+            MDocS.editors
+              .composeLens(MEditorsS.colorsState)
+              .set( mColorAh.colorsState )
           )(mdoc0)
         }
         // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
@@ -277,50 +302,60 @@ class LkAdEditCircuit(
   private val mPictureAhRW = zoomRW[MPictureAh[Tree[JdTag]]] { mroot =>
     val mdoc = mroot.doc
     MPictureAh(
-      edges       = mdoc.jdArgs.data.edges,
-      view        = mdoc.jdArgs.data.doc.template,
+      edges       = mdoc.jdDoc.jdArgs.data.edges,
+      view        = mdoc.jdDoc.jdArgs.data.doc.template,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
-      histograms  = mdoc.colorsState.histograms
+      histograms  = mdoc.editors.colorsState.histograms
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
-    val jdDoc0 = mdoc0.jdArgs.data.doc
+    val jdDoc0 = mdoc0.jdDoc.jdArgs.data.doc
     val isTplChanged = jdDoc0.template !===* mPictureAh.view
 
-    val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.data.edges)) {
-      MDocS.jdArgs.set {
-        // Разобраться, изменился ли шаблон в реальности:
-        val (jdDoc2, jdRuntime2) = if (isTplChanged) {
-          // Изменился шаблон. Вернуть новый шаблон, пересобрать css
-          val jdDoc1 = MJdDoc.template.set( mPictureAh.view )( jdDoc0 )
-          val jdRuntime1 = MJdRuntime.make(jdDoc1 #:: Stream.empty, mdoc0.jdArgs.conf)
-          (jdDoc1, jdRuntime1)
-        } else {
-          // Не изменился шаблон, вернуть исходник
-          (jdDoc0, mdoc0.jdArgs.jdRuntime)
-        }
+    val mdoc1 = if (
+      isTplChanged ||
+      (mPictureAh.edges !===* mdoc0.jdDoc.jdArgs.data.edges)
+    ) {
+      MDocS.jdDoc
+        .composeLens(MJdDocEditS.jdArgs)
+        .modify { jdArgs0 =>
+          // Разобраться, изменился ли шаблон в реальности:
+          val (jdDoc2, jdRuntime2) = if (isTplChanged) {
+            // Изменился шаблон. Вернуть новый шаблон, пересобрать css
+            val jdDoc1 = MJdDoc.template.set( mPictureAh.view )( jdDoc0 )
+            val jdRuntime1 = JdUtil.mkRuntime(
+              docs    = jdDoc1 #:: Stream.empty,
+              jdConf  = jdArgs0.conf,
+              prev    = jdArgs0.jdRuntime,
+            )
+            (jdDoc1, jdRuntime1)
+          } else {
+            // Не изменился шаблон, вернуть исходник
+            (jdDoc0, jdArgs0.jdRuntime)
+          }
 
-        // Залить всё в итоговое состояние пачкой:
-        mdoc0.jdArgs.copy(
-          data = mdoc0.jdArgs.data.copy(
-            doc       = jdDoc2,
-            edges     = mPictureAh.edges,
-          ),
-          jdRuntime   = jdRuntime2
-        )
-      }(mdoc0)
+          // Залить всё в итоговое состояние пачкой:
+          jdArgs0.copy(
+            data = jdArgs0.data.copy(
+              doc       = jdDoc2,
+              edges     = mPictureAh.edges,
+            ),
+            jdRuntime   = jdRuntime2
+          )
+        }(mdoc0)
     } else {
       // Нет изменений в документе, пропускаем всё молча.
       mdoc0
     }
 
     // Гистограммы лежат вне mdoc, и обновляются нечасто, поэтому тут ленивый апдейт гистограмм в состоянии:
-    val mdoc2 = if (mdoc0.colorsState.histograms ===* mPictureAh.histograms) {
+    val mdoc2 = if (mdoc0.editors.colorsState.histograms ===* mPictureAh.histograms) {
       // Карта гистограмм не изменилась, пропускаем мимо ушей.
       mdoc1
     } else {
-      MDocS.colorsState
+      MDocS.editors
+        .composeLens(MEditorsS.colorsState)
         .composeLens( MColorsState.histograms )
         .set( mPictureAh.histograms )( mdoc1 )
     }
@@ -352,7 +387,7 @@ class LkAdEditCircuit(
   private lazy val jdVldAh = new JdVldAh(
     modelRW = zoomRW { mroot =>
       MJdVldAh(
-        jdData   = mroot.doc.jdArgs.data,
+        jdData   = mroot.doc.jdDoc.jdArgs.data,
         popups   = mroot.popups,
       )
     } { (mroot, _) =>
@@ -380,6 +415,13 @@ class LkAdEditCircuit(
     modelRW     = slideBlocksRW
   )
 
+  private val jdAh = new JdAh(
+    modelRW     = jdRuntimeRW,
+    templatesRO = jdArgsRW.zoom { jdArgs =>
+      jdArgs.data.doc.template #:: Stream.empty
+    },
+  )
+
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
@@ -394,7 +436,7 @@ class LkAdEditCircuit(
     // Если допускается выбор цвета фона текущего jd-тега, то подцепить соотв. контроллер.
     val mDocS = mDocSRw.value
 
-    for (selTagLoc <- mDocS.jdArgs.selJdt.treeLocOpt) {
+    for (selTagLoc <- mDocS.jdDoc.jdArgs.selJdt.treeLocOpt) {
       selTagLoc.getLabel.name match {
         case MJdTagNames.STRIP =>
           acc ::= stripBgColorAh
@@ -409,6 +451,8 @@ class LkAdEditCircuit(
 
     // Управление интерфейсом -- ближе к голове.
     acc ::= layoutAh
+
+    acc ::= jdAh
 
     // В голове -- обработчик всех основных операций на документом.
     acc ::= docAh
@@ -436,7 +480,7 @@ class LkAdEditCircuit(
 
   // Если валидация на клиенте, то мониторить jdArgs.template на предмет изменений шаблона.
   if (DOC_VLD_ON_CLIENT) {
-    subscribe(mDocSRw.zoom(_.jdArgs.data.doc.template)) { _ =>
+    subscribe(mDocSRw.zoom(_.jdDoc.jdArgs.data.doc.template)) { _ =>
       dispatch( JdDocChanged )
     }
   }

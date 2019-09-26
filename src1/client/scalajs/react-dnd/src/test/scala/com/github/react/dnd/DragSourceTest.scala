@@ -36,16 +36,12 @@ object DragSourceTest extends SimpleTestSuite {
       }
       .build
 
-    val jsCompInner = compInner
-      .toJsComponent
-      .raw
-
     val DRAGGER = "DRAGGER"
 
-    val jsCompDraggable = DragSource(
-      "test",
-      new DragSourceSpec {
-        override def beginDrag(props: js.Object, monitor: DragSourceMonitor, component: js.Any): js.Object = ???
+    val compDraggable = DragSource[DragSourceTestJsCompProps1, DragSourceTestJsCompProps1, js.Object, Children.None](
+      itemType = "test",
+      spec = new DragSourceSpec[DragSourceTestJsCompProps1, js.Object] {
+        override def beginDrag(props: DragSourceTestJsCompProps1, monitor: DragSourceMonitor, component: js.Any): js.Object = ???
       },
       collect = { (connect: DragSourceConnector, monitor: DragSourceMonitor) =>
         new DragSourceTestJsCompProps1 {
@@ -54,8 +50,11 @@ object DragSourceTest extends SimpleTestSuite {
           override val isDragging         = monitor.isDragging()
         }
       }
-    )(jsCompInner)
-    val compDraggable = JsComponent[DragSourceTestJsCompProps1, Children.None, Null]( jsCompDraggable )
+    )(
+      compInner
+        .toJsComponent
+        .raw
+    )
 
     val outerComp = ScalaComponent
       .builder[Unit]("Outer")

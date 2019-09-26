@@ -54,7 +54,6 @@ case class MJdArgs(
                     jdRuntime    : MJdRuntime,
                     conf         : MJdConf,
                     renderArgs   : MJdRenderArgs        = MJdRenderArgs.empty,
-                    // TODO поля ниже довольно специфичны, надо унести их в renderArgs.
                   ) {
 
   /** Быстрый доступ и кэш данных по текущему выбранному тегу. */
@@ -124,6 +123,15 @@ case class MJdArgs(
       .flatMap(_.props1.bm)
       .map(_.height)
       .sum
+  }
+
+
+  def toRrrProps: MJdRrrProps = {
+    MJdRrrProps(
+      subTree = data.doc.template,
+      tagId   = data.doc.jdId,
+      jdArgs  = this,
+    )
   }
 
 }

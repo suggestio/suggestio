@@ -1,22 +1,24 @@
 package io.suggest.ad.edit.v
 
 import com.github.react.dnd.backend.html5.Html5Backend
+import com.github.react.dnd.backend.touch.TouchBackend
 import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
-import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.ad.edit.m.{MAeRoot, SlideBlockKeys}
+import io.suggest.ad.edit.m.{MAeRoot, TouchDevSet}
+import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
 import io.suggest.color.IColorPickerMarker
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.{Css, CssR}
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
-import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.render.m.MJdRrrProps
 import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
@@ -29,7 +31,7 @@ import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -75,7 +77,7 @@ class LkAdEditFormR(
 
   /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
   protected case class State(
-                              jdPreviewArgsC                  : ReactConnectProxy[MJdArgs],
+                              jdPreviewArgsC                  : ReactConnectProxy[MJdRrrProps],
                               jdCssArgsC                      : ReactConnectProxy[JdCss],
                               scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
                               upStateOptC                     : ReactConnectProxy[Option[MFileUploadS]],
@@ -96,6 +98,7 @@ class LkAdEditFormR(
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                               contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
                               textShadowC                     : ReactConnectProxy[textShadowR.Props_t],
+                              isTouchDevSomeC                 : ReactConnectProxy[Option[Boolean]],
                             )
 
   case class SlideBlocksState(
@@ -115,13 +118,16 @@ class LkAdEditFormR(
   protected class Backend($: BackendScope[Props, State]) {
 
     /** Любой клик где-то в форме. Нужно для вычисления кликов за пределами каких-либо элементов. */
-    private def _onBodyClick: Callback =
+    private val _onBodyClick: Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB($, DocBodyClick)
 
-    def render(p: Props, s: State): VdomElement = {
+    private val _onBodyTouchStart: Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, TouchDevSet( OptionUtil.SomeBool.someTrue ) )
+
+    private def render1(p: Props, s: State) = {
       val LCSS = lkAdEditCss.Layout
 
-      val contentDiv = <.div(
+      <.div(
         ^.`class` := Css.Overflow.HIDDEN,
 
         // TODO Opt спиливать onClick, когда по состоянию нет ни одного открытого modal'а, например открытого color-picker'а.
@@ -154,7 +160,7 @@ class LkAdEditFormR(
               LCSS.previewInnerCont,
 
               // Тело превьюшки в виде плитки.
-              s.jdPreviewArgsC { jdEditR.JdRrrEdit.anyTagComp.apply },
+              s.jdPreviewArgsC { jdEditR.JdRrrEdit.documentDndComp.apply },
 
               <.div(
                 ^.`class` := Css.CLEAR
@@ -205,10 +211,10 @@ class LkAdEditFormR(
 
               // Рендерить картинку и управление ей, обернув в поддержку таскания файлов:s
               p.wrap { mroot =>
-                val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+                val bgEdgeOpt = mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
                 ImgEditBtnPropsVal(
                   edge   = bgEdgeOpt,
-                  resKey = mroot.doc.jdArgs.selJdt.bgEdgeDataFrk,
+                  resKey = mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataFrk,
                 )
               }(imgEditBtnR.apply)(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
 
@@ -293,16 +299,36 @@ class LkAdEditFormR(
 
         )
       )
+    }
 
+    def render(p: Props, s: State): VdomElement = {
       // Провайдер поддержки drag-drop:
-      DndProvider.component(
-        new DndProviderProps {
-          override val backend = Html5Backend
-        }
-      )(
-        contentDiv
-      )
+      s.isTouchDevSomeC { isTouchDevSomeProxy =>
+        isTouchDevSomeProxy.value
+          // TODO Не помогает: всё равно переключение на touch backend на лету не работает. Страницу редактора перезагружать, выставляя cookie для след.запуска?
+          .fold( ReactCommonUtil.VdomNullElement ) { isTouchDev =>
+            val _backend =
+              if (isTouchDev) TouchBackend
+              else Html5Backend
 
+            // Если !touch, то нужно подслушать touchstart-событие в любом месте редактора:
+            // При смене backend требуется полный пере-рендер всего.
+            val contentDiv = render1(p, s)
+            val innerContent =
+              if (isTouchDev) contentDiv
+              else contentDiv(
+                ^.onTouchStart --> _onBodyTouchStart,
+              )
+
+            DndProvider.component(
+              new DndProviderProps {
+                override val backend = _backend
+              }
+            )(
+              innerContent
+            )
+          }
+      }
     }
 
   }
@@ -315,7 +341,7 @@ class LkAdEditFormR(
       def __mkStripBmC[T](f: BlockMeta => Option[T])(implicit tFeq: FastEq[T]) = {
         p.connect { mroot =>
           for {
-            selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            selJdtTreeLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
             selJdt = selJdtTreeLoc.getLabel
             if selJdt.name ==* MJdTagNames.STRIP
             bm     <- selJdt.props1.bm
@@ -332,7 +358,7 @@ class LkAdEditFormR(
         val jdtNameSome = Some(jdtName)
         p.connect { mroot =>
           for {
-            selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            selJdtTreeLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
             selJdt = selJdtTreeLoc.getLabel
             if selJdt.name ==* jdtName
           } yield {
@@ -346,15 +372,15 @@ class LkAdEditFormR(
       }
 
       State(
-        jdPreviewArgsC = p.connect(_.doc.jdArgs)( MJdArgs.MJdArgsFastEq ),
+        jdPreviewArgsC = p.connect(_.doc.jdDoc.toRrrProps)( MJdRrrProps.MJdRrrPropsFastEq ),
 
-        jdCssArgsC = p.connect(_.doc.jdArgs.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
+        jdCssArgsC = p.connect(_.doc.jdDoc.jdArgs.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
 
         scalePropsOptC = {
           val variants = MSzMults.forAdEditor
           p.connect { mroot =>
             val propsVal = scaleR.PropsVal(
-              current  = mroot.doc.jdArgs.conf.szMult,
+              current  = mroot.doc.jdDoc.jdArgs.conf.szMult,
               variants = variants
             )
             Some(propsVal): Option[scaleR.PropsVal]
@@ -374,13 +400,13 @@ class LkAdEditFormR(
         useAsMainStripPropsOptC = p.connect { mroot =>
           for {
             // Доступно только при редактировании стрипа.
-            _       <- mroot.doc.stripEd
-            selJdt  <- mroot.doc.jdArgs.selJdt.treeLocOpt.toLabelOpt
+            _       <- mroot.doc.editors.stripEd
+            selJdt  <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt.toLabelOpt
           } yield {
             import io.suggest.common.empty.OptionUtil.BoolOptOps
             useAsMainR.PropsVal(
               checked = selJdt.props1.isMain.getOrElseFalse,
-              mainDefined = mroot.doc.jdArgs.data.doc.template
+              mainDefined = mroot.doc.jdDoc.jdArgs.data.doc.template
                 .subForest
                 .exists( _.rootLabel.props1.isMain.getOrElseFalse )
             )
@@ -418,7 +444,7 @@ class LkAdEditFormR(
         }( plusMinusControlsR.PlusMinusControlsPropsValFastEq ),
 
         stripEdSOptC = p.connect { mroot =>
-          mroot.doc.stripEd
+          mroot.doc.editors.stripEd
         }( OptFastEq.Wrapped(MStripEdS.MStripEdSFastEq) ),
 
         blockExpandModeOptC = __mkStripBmC ( _.expandMode )(FastEqUtil.AnyRefFastEq),
@@ -428,12 +454,12 @@ class LkAdEditFormR(
             val title = Messages( MsgCodes.`Block` )
             p.connect { mroot =>
               for {
-                _ <- mroot.doc.stripEd
+                _ <- mroot.doc.editors.stripEd
               } yield {
                 val k = SlideBlockKeys.BLOCK
                 slideBlockR.PropsVal(
                   title = title,
-                  expanded = mroot.doc.slideBlocks.expanded.contains(k),
+                  expanded = mroot.doc.editors.slideBlocks.expanded contains k,
                   key = Some(k)
                 )
               }
@@ -443,12 +469,12 @@ class LkAdEditFormR(
             val title = Messages( MsgCodes.`Background` )
             p.connect { mroot =>
               for {
-                _ <- mroot.doc.stripEd
+                _ <- mroot.doc.editors.stripEd
               } yield {
                 val k = SlideBlockKeys.BLOCK_BG
                 slideBlockR.PropsVal(
                   title     = title,
-                  expanded  = mroot.doc.slideBlocks.expanded.contains(k),
+                  expanded  = mroot.doc.editors.slideBlocks.expanded contains k,
                   key       = Some(k)
                 )
               }
@@ -458,12 +484,12 @@ class LkAdEditFormR(
             val title = Messages( MsgCodes.`Content` )
             p.connect { mroot =>
               for {
-                _ <- mroot.doc.qdEdit
+                _ <- mroot.doc.editors.qdEdit
               } yield {
                 val k = SlideBlockKeys.CONTENT
                 slideBlockR.PropsVal(
                   title = title,
-                  expanded = mroot.doc.slideBlocks.expanded.contains(k),
+                  expanded = mroot.doc.editors.slideBlocks.expanded contains k,
                   key      = Some(k)
                 )
               }
@@ -476,7 +502,7 @@ class LkAdEditFormR(
               Some(
                 slideBlockR.PropsVal(
                   title     = title,
-                  expanded  = mroot.doc.slideBlocks.expanded.contains(k),
+                  expanded  = mroot.doc.editors.slideBlocks.expanded contains k,
                   key       = Some(k)
                 )
               ): Option[slideBlockR.PropsVal]
@@ -490,8 +516,8 @@ class LkAdEditFormR(
             val cssClassOpt = Some( lkCss.ColorOptPicker.pickerCont.htmlClass )
             p.connect { mroot =>
               for {
-                pickerS <- mroot.doc.colorsState.picker
-                selJdtTreeLoc   <- mroot.doc.jdArgs.selJdt.treeLocOpt
+                pickerS         <- mroot.doc.editors.colorsState.picker
+                selJdtTreeLoc   <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
                 bgColor         <- {
                   val p1 = selJdtTreeLoc.getLabel.props1
                   pickerS.marker match {
@@ -505,7 +531,7 @@ class LkAdEditFormR(
                 val topY = pickerS.shownAt.y - 235
                 colorPickerR.PropsVal(
                   color         = bgColor,
-                  colorPresets  = mroot.doc.colorsState.colorPresets,
+                  colorPresets  = mroot.doc.editors.colorsState.colorPresets,
                   cssClass      = cssClassOpt,
                   topLeftPx     = Some( MCoords2di.y.set(topY)(pickerS.shownAt) )
                 )
@@ -520,7 +546,7 @@ class LkAdEditFormR(
         // Коннекшен до пропертисов для QuillEditor-компонента.
         quillEdOptC = p.connect { mroot =>
           for {
-            qdS   <- mroot.doc.qdEdit
+            qdS   <- mroot.doc.editors.qdEdit
           } yield {
             quillEditorR.PropsVal(
               initDelta = qdS.initDelta,
@@ -531,7 +557,7 @@ class LkAdEditFormR(
 
         rotateOptC = p.connect { mroot =>
           for {
-            selJdtLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
             selJdt = selJdtLoc.getLabel
             if selJdt.name ==* MJdTagNames.QD_CONTENT
           } yield {
@@ -542,16 +568,16 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped(rotateR.RotateRPropsValFastEq) ),
 
         upStateOptC = p.connect { mroot =>
-          mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+          mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
             .flatMap(_._2.fileJs)
             .flatMap(_.upload)
         }( OptFastEq.Wrapped( MFileUploadS.MFileUploadSFastEq ) ),
 
         colSuggPropsOptC = p.connect { mroot =>
           for {
-            bgEdge  <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+            bgEdge  <- mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
             fileSrv <- bgEdge._2.jdEdge.fileSrv
-            hist    <- mroot.doc.colorsState.histograms.get( fileSrv.nodeId )
+            hist    <- mroot.doc.editors.colorsState.histograms.get( fileSrv.nodeId )
           } yield {
             colorsSuggestR.PropsVal(
               titleMsgCode = MsgCodes.`Suggested.bg.colors`,
@@ -562,15 +588,15 @@ class LkAdEditFormR(
 
         cropBtnPropsOptC = p.connect { mroot =>
           for {
-            bgEdge <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+            bgEdge <- mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
             if bgEdge._2.imgSrcOpt.nonEmpty
             // Вычислить размер контейнера. Это размер блока, для которого выбираем фон:
-            cropContSz <- mroot.doc.jdArgs
+            cropContSz <- mroot.doc.jdDoc.jdArgs
               .selJdt
               .treeLocOpt
               .flatMap(_.getLabel.props1.bm)
           } yield {
-            CropOpen( mroot.doc.jdArgs.selJdt.bgEdgeDataFrk, cropContSz )
+            CropOpen( mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataFrk, cropContSz )
           }
         }( OptFastEq.Wrapped(CropOpen.CropOpenFastEq) ),
 
@@ -578,7 +604,7 @@ class LkAdEditFormR(
           contentEditCssR.PropsVal(
             bgColor = {
               for {
-                selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+                selJdtTreeLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
                 selJdt = selJdtTreeLoc.getLabel
                 if selJdt.name ==* MJdTagNames.QD_CONTENT
                 r <- {
@@ -596,7 +622,7 @@ class LkAdEditFormR(
         }(contentEditCssR.ContentEditCssRPropsValFastEq),
 
         contentLayersC = p.connect { mroot =>
-          val jdArgs = mroot.doc.jdArgs
+          val jdArgs = mroot.doc.jdDoc.jdArgs
           for {
             selJdtTreeLoc <- jdArgs.selJdt.treeLocOpt
             selJdt = selJdtTreeLoc.getLabel
@@ -614,14 +640,16 @@ class LkAdEditFormR(
 
         textShadowC = p.connect { mroot =>
           for {
-            loc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            loc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
             textShadow <- loc.getLabel.props1.textShadow
           } yield {
             textShadowR.PropsVal(
               jdShadow = textShadow
             )
           }
-        }( OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) )
+        }( OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) ),
+
+        isTouchDevSomeC = p.connect(_.conf.touchDev)( FastEq.AnyRefEq ),
 
       )
     }

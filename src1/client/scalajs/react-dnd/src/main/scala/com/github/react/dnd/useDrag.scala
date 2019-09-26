@@ -39,7 +39,7 @@ trait DragSpec extends js.Object {
 
 
 trait IItem extends js.Object {
-  val `type`: DropAccept_t
+  val `type`: DropAccept_t_0
 }
 
 trait DragDropSpecOptions extends js.Object {

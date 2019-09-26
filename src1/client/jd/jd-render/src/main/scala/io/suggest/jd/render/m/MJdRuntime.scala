@@ -1,14 +1,15 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MSzMult
-import io.suggest.grid.GridCalc
-import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
+import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.JdTag
-import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 import monocle.macros.GenLens
 
 import scala.collection.immutable.HashMap
@@ -32,32 +33,6 @@ object MJdRuntime {
   }
 
 
-  /** Генерация инстанса [[MJdRuntime]] из исходных данных.
-    * Ресурсоёмкая операция, поэтому лучше вызывать только при сильной необходимости.
-    *
-    * @param docs Данные документов (шаблоны, id и тд).
-    * @param jdConf Конфиг рендера.
-    * @return Инстанс [[MJdRuntime]].
-    */
-  def make(
-            docs    : Stream[MJdDoc],
-            jdConf  : MJdConf,
-          ): MJdRuntime = {
-    val tpls = docs.map(_.template)
-    val jdtWideSzMults = GridCalc.wideSzMults(tpls, jdConf)
-    val jdTagsById = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(docs) )
-    MJdRuntime(
-      jdCss = JdCss( MJdCssArgs(
-        conf            = jdConf,
-        jdtWideSzMults  = jdtWideSzMults,
-        jdTagsById      = jdTagsById,
-      )),
-      jdtWideSzMults = jdtWideSzMults,
-      // TODO Opt можно оптимизировать сборку id-индекса в выдаче через HashMap.merged для добавления новых данных вместо полного рендера.
-      jdTagsById     = jdTagsById,
-    )
-  }
-
   @inline implicit def univEq: UnivEq[MJdRuntime] = UnivEq.derive
 
   val qdBlockLess = GenLens[MJdRuntime](_.qdBlockLess)
@@ -76,8 +51,9 @@ object MJdRuntime {
   * @param jdTagsById Теги по ключу. Для связывания стабильных названий стилей в JdCss с JdR.
   */
 case class MJdRuntime(
-                       jdCss            : JdCss,
-                       jdtWideSzMults   : Map[JdTag, MSzMult],
-                       qdBlockLess      : HashMap[JdTag, MSize2di]    = HashMap.empty,
-                       jdTagsById       : HashMap[MJdTagId, JdTag]    = HashMap.empty,
+                       jdCss              : JdCss,
+                     // TODO Заменить ключи: JdTag на MJdTagId.
+                       jdtWideSzMults     : HashMap[JdTag, MSzMult],
+                       qdBlockLess        : HashMap[JdTag, Pot[MSize2di]]     = HashMap.empty,
+                       jdTagsById         : HashMap[MJdTagId, JdTag]          = HashMap.empty,
                      )

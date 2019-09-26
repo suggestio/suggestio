@@ -3,6 +3,7 @@ package io.suggest.bill.cart.v.itm
 import io.suggest.dev.MSzMults
 import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.jd.render.m.MJdRuntime
+import io.suggest.jd.render.u.JdUtil
 
 /**
   * Suggest.io
@@ -22,6 +23,6 @@ object ItemRowPreviewR {
 
   /** Сборка пустого стиля для jd-рендера. */
   def mkJdRuntime(templates: Stream[MJdDoc] = Stream.empty): MJdRuntime =
-    MJdRuntime.make( templates, JD_CONF )
+    JdUtil.mkRuntime( templates, JD_CONF )
 
 }

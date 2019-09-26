@@ -3,7 +3,7 @@ package io.suggest.dev
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.math.SimpleArithmetics
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.math.MathConst.Percents.PERCENTS_COUNT
@@ -64,10 +64,24 @@ object MSzMult {
         .reduceMults
     }
 
-    def apply(sizePx: Int, addSzMults: Option[MSzMult]*): Int = {
-      val multedSzPxD = sizePx * (addSzMults.iterator.flatten.mapToDoubleIter ++ szMultBaseOpt.iterator).reduceMults
+    def withAddSzMults(addSzMults: Seq[Option[MSzMult]]): Stream[Double] = {
+      (addSzMults.iterator.flatten.mapToDoubleIter ++ szMultBaseOpt.iterator)
+        .toStream
+    }
 
-      Math.round(multedSzPxD).toInt
+    /** sizePx обычно Int, поэтому можно прооптимизировать отсутсвие изменений. */
+    def apply(sizePx: Int, addSzMults: Option[MSzMult]*): Int = {
+      val allMults = withAddSzMults(addSzMults)
+
+      if (allMults.isEmpty) sizePx
+      else Math.round(sizePx * allMults.reduceMults).toInt
+    }
+
+    def applyDouble(sizePx: Double, addSzMults: Option[MSzMult]*): Double = {
+      val allMults = withAddSzMults(addSzMults)
+
+      if (allMults.isEmpty) sizePx
+      else sizePx * allMults.reduceMults
     }
 
   }
@@ -117,6 +131,10 @@ case class MSzMult private[dev] (multBody: Int) {
   override def toString = multBody + HtmlConstants.SLASH + MSzMult.SZ_MULT_MOD
 
   def withMultPc(multPc: Int) = copy(multBody = multPc)
+
+  /** @return None, если 1.0. Иначе Some(). */
+  def ifNot1: Option[MSzMult] =
+    OptionUtil.maybe( multBody !=* MSzMult.SZ_MULT_MOD )(this)
 
 }
 

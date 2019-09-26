@@ -1,4 +1,4 @@
-package io.suggest.jd.render.v
+package io.suggest.jd.render.u
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
 import io.suggest.ad.blk.BlockWidths

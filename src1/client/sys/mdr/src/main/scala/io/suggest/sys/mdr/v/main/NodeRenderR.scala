@@ -9,6 +9,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.{MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.JdR
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
@@ -161,7 +162,7 @@ object NodeRenderR {
   /** Ленивая сборка jdCss на основе шаблонов. */
   def mkJdRuntime(docs: Stream[MJdDoc],
                   jdRuntimeOpt: Option[MJdRuntime] = None): MJdRuntime = {
-    val jdRuntime2 = MJdRuntime.make(docs, JD_CONF)
+    val jdRuntime2 = JdUtil.mkRuntime(docs, JD_CONF)
     jdRuntimeOpt
       // Не пересобирать JdCss, если args не изменились.
       .filter { jdRuntime0 =>

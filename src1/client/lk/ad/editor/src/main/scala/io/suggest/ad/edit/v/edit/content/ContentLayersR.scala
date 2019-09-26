@@ -5,7 +5,7 @@ import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.m.JdChangeLayer
+import io.suggest.jd.edit.m.JdChangeLayer
 import io.suggest.msg.Messages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

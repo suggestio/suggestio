@@ -6,7 +6,7 @@ import io.suggest.ads.{LkAdsFormConst, MLkAdsConf, MLkAdsOneAdResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
-import io.suggest.jd.render.m.MJdRuntime
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
@@ -181,7 +181,7 @@ class NodeAdsAh[M](
           v0.copy(
             ads         = v0.ads.ready(ads2),
             hasMoreAds  = respAds.lengthCompare(LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST) >= 0,
-            jdRuntime   = MJdRuntime.make(
+            jdRuntime   = JdUtil.mkRuntime(
               docs    = ads2
                 .iterator
                 .map(_.adResp.jdAdData.doc)

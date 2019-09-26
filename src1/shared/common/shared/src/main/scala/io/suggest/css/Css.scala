@@ -1,6 +1,7 @@
 package io.suggest.css
 
 import io.suggest.common.html.HtmlConstants._
+import scalacss.internal.Literal
 
 /**
   * Suggest.io
@@ -80,11 +81,6 @@ object Css {
     final def BOLD = "bold"
   }
 
-
-  object Coord {
-    final def TOP = "top"
-    final def LEFT = "left"
-  }
 
   object Lk {
 
@@ -545,7 +541,7 @@ object Css {
 
     object Origin {
 
-      def TOP_LEFT = Coord.TOP + SPACE + Coord.LEFT
+      def TOP_LEFT = Literal.top + SPACE + Literal.left
 
     }
 

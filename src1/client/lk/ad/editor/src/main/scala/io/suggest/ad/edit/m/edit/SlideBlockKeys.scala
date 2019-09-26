@@ -1,4 +1,4 @@
-package io.suggest.ad.edit.m
+package io.suggest.ad.edit.m.edit
 
 import io.suggest.i18n.MsgCodes
 

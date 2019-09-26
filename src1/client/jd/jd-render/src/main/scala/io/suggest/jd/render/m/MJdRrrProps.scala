@@ -1,11 +1,13 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.grid.build.MGridBuildResult
 import io.suggest.jd.MJdTagId
 import io.suggest.jd.tags.JdTag
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import scalaz.Tree
 
 /**
@@ -16,16 +18,21 @@ import scalaz.Tree
   */
 object MJdRrrProps {
 
-  implicit object MJdtRrrPropsFastEq extends FastEq[MJdRrrProps] {
+  implicit object MJdRrrPropsFastEq extends FastEq[MJdRrrProps] {
     override def eqv(a: MJdRrrProps, b: MJdRrrProps): Boolean = {
-      (a.subTree        ===* b.subTree) &&
-      (a.tagId          ===* b.tagId) &&
-      (a.jdArgs         ===* b.jdArgs) &&
-      (a.parent         ===* b.parent)
+      (a ===* b) || {
+        (a.subTree        ===* b.subTree) &&
+        (a.tagId          ===* b.tagId) &&
+        (a.jdArgs         ===* b.jdArgs) &&
+        (a.parent         ===* b.parent) &&
+        (a.gridBuildRes   ===* b.gridBuildRes)
+      }
     }
   }
 
   @inline implicit def univEq: UnivEq[MJdRrrProps] = UnivEq.derive
+
+  val gridBuildResult = GenLens[MJdRrrProps](_.gridBuildRes)
 
 }
 
@@ -35,6 +42,7 @@ case class MJdRrrProps(
                         tagId           : MJdTagId,
                         jdArgs          : MJdArgs,
                         parent          : Option[JdTag]    = None,
+                        gridBuildRes    : Option[MGridBuildResult]  = None,
                       ) {
 
   lazy val isCurrentSelected: Boolean =

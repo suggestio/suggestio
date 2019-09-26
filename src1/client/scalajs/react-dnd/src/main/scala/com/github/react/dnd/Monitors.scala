@@ -9,7 +9,7 @@ import scala.scalajs.js
   */
 @js.native
 sealed trait CommonMonitor extends js.Object {
-  def getItemType(): DropAccept_t = js.native
+  def getItemType(): DropAccept_t_0 = js.native
   def getItem(): IItem = js.native
 
   /** Client offset of the pointer at the time when the current drag operation has started.
@@ -70,10 +70,9 @@ trait DropTargetMonitor extends CommonSourceTargetMonitor {
 trait DragLayerMonitor extends CommonMonitor with CommonDragMonitor
 
 
-@js.native
 trait XY extends js.Object {
-  val x: Double = js.native
-  val y: Double = js.native
+  val x: Double
+  val y: Double
 }
 
 trait IsOverOptions extends js.Object {

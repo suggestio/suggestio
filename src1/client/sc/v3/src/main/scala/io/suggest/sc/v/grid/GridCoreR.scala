@@ -5,7 +5,8 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.jd.MJdDoc
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
-import io.suggest.jd.render.v.{JdGridUtil, JdR}
+import io.suggest.jd.render.u.JdGridUtil
+import io.suggest.jd.render.v.JdR
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._

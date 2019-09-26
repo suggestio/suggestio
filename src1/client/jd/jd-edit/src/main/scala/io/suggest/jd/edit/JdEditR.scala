@@ -1,34 +1,36 @@
 package io.suggest.jd.edit
 
-import com.github.souporserious.react.measure.{Bounds, Measure}
+import com.github.react.dnd._
+import com.github.souporserious.react.measure.Bounds
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
+import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdEdgeId
+import io.suggest.jd.edit.m.{CurrContentResize, JdDropContent, JdDropStrip, JdTagDragStart, JdTagSelect, QdEmbedResize}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.{JdCssStatic, JdR, QdRrrHtml}
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.lk.r.img.ImgRenderUtilJs
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
-import io.suggest.react.ReactCommonUtil
-import io.suggest.react.ReactDiodeUtil._
+import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.TagOf
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
-import org.scalajs.dom.{Element, html}
+import org.scalajs.dom.html
 import org.scalajs.dom.raw.CSSStyleDeclaration
-import play.api.libs.json.Json
 import scalacss.ScalaCssReact._
-import scalacss.internal.LengthUnit
+import scalacss.internal.{LengthUnit, Literal}
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -43,6 +45,8 @@ class JdEditR(
              )
   extends Log
 {
+
+  import MRrrEdit._
 
   /**
     * Является ли указанный тег текущим выделенным?
@@ -83,47 +87,47 @@ class JdEditR(
 
   /** Повесить onload для картинки, считывающий ей wh.
     * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
-  private def _notifyImgWhOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], edge: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
+  private def _notifyImgWhOnEdit[P: Props2ModelProxy, S]($: BackendScope[P,S], edge: MEdgeDataJs): TagMod = {
     // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
-    ReactCommonUtil.maybe( jdArgs.conf.isEdit && edge.fileJs.exists(_.whPx.isEmpty) ) {
+    ReactCommonUtil.maybe( edge.fileJs.exists(_.whPx.isEmpty) ) {
       ^.onLoad ==> imgRenderUtilJs.notifyImageLoaded($, edge.id)
     }
   }
 
 
-  private def _clickableOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs): TagMod = {
+  private def _selectableOnClick[P: Props2ModelProxy, S]($: BackendScope[P, S])(p2RrrPF: P => MJdRrrProps): TagMod = {
     // В режиме редактирования -- надо слать инфу по кликам на стрипах
-    ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
-      ^.onClick ==> { e =>
-        e.stopPropagationCB >>
-          dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
-      }
+    ^.onClick ==> { e =>
+      e.stopPropagationCB >>
+        ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
+          props: P  =>
+            val jdt = p2RrrPF(props).subTree.rootLabel
+            JdTagSelect( jdt )
+        }
     }
   }
 
 
-  private def _draggableUsing[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs)
-                                                    (onDragStartF: ReactDragEvent => Callback): TagMod = {
-    TagMod(
-      ^.draggable := true,
-      ^.onDragStart ==> onDragStartF,
-      ^.onDragEnd   --> dispatchOnProxyScopeCB($, JdTagDragEnd )
-    )
+  // Функция-экстрактор целочисленных значений стилей по их названию.
+  private def __extractIntStyleProp(name: String, srcTgStyle: CSSStyleDeclaration): Int = {
+    val valueStr = srcTgStyle.getPropertyValue(name)
+    DataUtil
+      .extractInt( valueStr )
+      .get
   }
 
-
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
-  trait JdRrrEdit extends jdR.JdRrr {
+  object JdRrrEdit extends jdR.JdRrrBase {
 
-    class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends super.QdContentB($) {
+    class QdContentB(contentRef: Ref.Simple[html.Element], $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
 
       override def _qdContentRrrHtml(p: MJdRrrProps): QdRrrHtml = {
         QdRrrHtml(
           jdCssStatic = jdCssStatic,
           rrrProps    = p,
           // Для редактора: следует рендерить img-теги, подслушивая у них wh:
-          imgEdgeMods = OptionUtil.maybe( p.jdArgs.conf.isEdit ) {
-            _notifyImgWhOnEdit($, _, p.jdArgs)
+          imgEdgeMods = Some {
+            _notifyImgWhOnEdit($, _)
           },
           // Выбранный qd-тег можно ресайзить:
           resizableCb = OptionUtil.maybe( p.isCurrentSelected ) {
@@ -132,18 +136,20 @@ class JdEditR(
         )
       }
 
-      override def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Div] = {
+      override def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Element] = {
         val qdTag = state.subTree.rootLabel
 
         super._renderQdContentTag(state)(
           _maybeSelected(qdTag, state.jdArgs),
-          _clickableOnEdit($, qdTag, state.jdArgs),
+          _selectableOnClick( $ )( _.p.value ),
 
+          /* TODO унести в react-dnd spec.canDrag()
           ReactCommonUtil.maybe(
             !state.parent.exists(state.jdArgs.selJdt.treeLocOpt.containsLabel)
           ) {
-            _draggableUsing($, qdTag, state.jdArgs) { qdTagDragStart(qdTag) }
+            _draggableUsing($) { qdTagDragStart }
           },
+           */
 
           // Рендерить особые указатели мыши в режиме редактирования.
           if (state.isCurrentSelected) {
@@ -152,28 +158,16 @@ class JdEditR(
               ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Cursor.MOVE ),
               jdCssStatic.horizResizable,
               // TODO onResize -> ...
-              ^.onMouseUp ==> onQdTagResize(qdTag),
+              ^.onMouseUp ==> onQdTagResize,
             )
           } else {
             // Текущий тег НЕ выделен. Указатель обычной мышкой.
             ^.`class` := Css.Cursor.POINTER
           },
         )
+          .withRef( contentRef )
       }
 
-      override def render(state: MJdRrrProps): VdomElement = {
-        val contentDiv = _renderQdContentTag( state )
-        // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
-        if (state.parent.exists(_.name ==* MJdTagNames.STRIP)) {
-          // Рендер внутри блока, просто пропускаем контент на выход
-          contentDiv
-        } else {
-          // Рендер вне блока. Высоту надо измерять,
-          Measure.bounds( blocklessQdContentBoundsMeasuredJdCb(state.subTree.rootLabel, _) ) { ref =>
-            contentDiv.withRef(ref)
-          }
-        }
-      }
 
       /** Callback ресайза. */
       private def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)
@@ -181,73 +175,115 @@ class JdEditR(
         _parseWidth(e).fold(Callback.empty) { widthPx =>
           // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
           val heightPxOpt = OptionUtil.maybe(withHeight)(_parseHeight(e).get)
-          ReactCommonUtil.stopPropagationCB(e) >>
-            dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeDataJs.jdEdge.id, heightPx = heightPxOpt ) )
+          e.stopPropagationCB >>
+            ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeUid = edgeDataJs.jdEdge.id, heightPx = heightPxOpt ) )
         }
+      }
+
+      /** Самописная поддержка ресайза контента только силами браузера. */
+      private def onQdTagResize(e: ReactMouseEventFromHtml): Callback = {
+        _parseWidth(e).fold(Callback.empty) { widthPx =>
+          ReactDiodeUtil.dispatchOnProxyScopeCB( $, CurrContentResize( widthPx ) )
+        }
+      }
+
+      def render(props: MRrrEdit with MRrrEditCollectDrag, state: MJdRrrProps): VdomElement = {
+        props.dragF
+          .applyVdomEl( _doRender(state) )
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      private def blocklessQdContentBoundsMeasuredJdCb(qdTag: JdTag, b: Bounds): Callback =
-        dispatchOnProxyScopeCB( $, QdBoundsMeasured(qdTag, b) )
-
-      /** Самописная поддержка ресайза контента только силами браузера. */
-      private def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback = {
-        _parseWidth(e).fold(Callback.empty) { widthPx =>
-          dispatchOnProxyScopeCB( $, CurrContentResize( widthPx ) )
+      override def blocklessQdContentBoundsMeasuredJdCb(b: Bounds): Callback = {
+        ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
+          props: MRrrEdit with MRrrEditCollectDrag =>
+            _qdBoundsMeasured( props.p, b )
         }
-      }
-
-      /** Начало таскания qd-тега.
-        * Бывают сложности с рассчётом координат. Особенно, если используется плитка.
-        */
-      private def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
-        // Обязательно надо в setData() что-то передать.
-        val mimes = MimeConst.Sio
-
-        // Засунуть в состояние сериализованный инстанс таскаемого тега TODO с эджами, чтобы можно было перетаскивать за пределы этой страницы
-        //e.dataTransfer.setData( mimes.JDTAG_JSON, Json.toJson(jdt).toString() )
-
-        // Используем методику вычисления начального offset отсюда, т.е. через getComputedStyle(e.target)
-        // http://jsfiddle.net/robertc/kKuqH/30/
-        val srcEl = e.target.asInstanceOf[Element]
-        val srcTgStyle = WindowVm().getComputedStyle( srcEl ).get
-
-        // Функция-экстрактор целочисленных значений стилей по их названию.
-        def __extractIntStyleProp(name: String): Int = {
-          val valueStr = srcTgStyle.getPropertyValue(name)
-          DataUtil
-            .extractInt( valueStr )
-            .get
-        }
-
-        val C = Css.Coord
-        val srcLeft = __extractIntStyleProp( C.LEFT )
-        val srcTop  = __extractIntStyleProp( C.TOP )
-
-        val offsetXy = MCoords2dD(
-          x = srcLeft - e.clientX,
-          y = srcTop  - e.clientY
-        )
-
-        e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.CONTENT_ELEMENT )
-        e.dataTransfer.setData( mimes.COORD_2D_JSON, Json.toJson(offsetXy).toString() )
-
-        dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
       }
 
     }
-    override def mkQdContentB = new QdContentB(_)
+
+    /** Инстанс функции canDrag(), используемый во всех инстансах QdContentDndB. */
+    private lazy val _qdCanDragF: js.Function2[MRrrEdit with MRrrEditCollectDrag, DragSourceMonitor, Boolean] = {
+      (props, mon) =>
+        // Не таскать, если сейчас выделен родительский элемент.
+        val p = props.p.value
+        !p.parent.exists( p.jdArgs.selJdt.treeLocOpt.containsLabel )
+    }
+    class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+      // import, иначе будет рантаймовая ошибка валидации DragSourceSpec (лишние поля json-класса)
+      import MimeConst.Sio.{DataContentTypes => DCT}
+
+      private val contentRef = Ref[html.Element]
+
+      private val _qdBeginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
+        (props, mon, _) =>
+          // Запустить обработку по circuit в фоне. По логике кажется, что должно быть асинхронно, но не факт: рендер перетаскивания может нарушаться.
+          val jdt = props.p.value.subTree.rootLabel
+          props.p dispatchNow JdTagDragStart(jdt)
+
+          // Вычислить разницу между client-координатами и верхним краем элемента по стилям CSS (getBoundingClientRect() и вращение малосовместимы):
+          val el = contentRef.unsafeGet()
+          val srcTgStyle = WindowVm().getComputedStyle( el ).get
+
+          val clientOffset = mon.getClientOffset()
+
+          // TODO Надо считать сдвиг между top-left контента и указателем мыши, а тут считается сдвиг относительно клиентской области. Это проявится неправильным рассчётом, если произойдёт скролл во время перетаскивания.
+          val srcLeft = __extractIntStyleProp( Literal.left, srcTgStyle ) - clientOffset.x
+          val srcTop  = __extractIntStyleProp( Literal.top, srcTgStyle )  - clientOffset.y
+          // Используем голый json вместо MCoords2di, т.к. есть риск, что значение MJsDropInfo может быть сериализовано.
+          val xyOff = new XY {
+            override val x = srcLeft
+            override val y = srcTop
+          }
+
+          // Отрендерить в json данные, которые будут переданы в DropTarget.
+          MJsDropInfo( DCT.CONTENT_ELEMENT, xyOff )
+      }
+
+      val contentDndComp = DragSource[MRrrEdit, MRrrEditCollectDrag, MJsDropInfo, Children.None](
+        itemType = DCT.CONTENT_ELEMENT,
+        spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrag, MJsDropInfo] {
+          override val beginDrag = _qdBeginDragF
+          override val canDrag   = _qdCanDragF
+        },
+        collect = { (conn, mon) =>
+          // Пробросить collecting function + какие-то возможные данные к общим props'ам.
+          new MRrrEditCollectDrag {
+            override val dragF = conn.dragSource()
+          }
+        }
+      )(
+        // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
+        ScalaComponent
+          .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContentB].getSimpleName )
+          .initialStateFromProps( rrrEdit2mproxyValueF )
+          .backend( new QdContentB(contentRef, _) )
+          .renderBackend
+          .configure( ReactDiodeUtil.p2sShouldComponentUpdate(rrrEdit2mproxyValueF)(MJdRrrProps.MJdRrrPropsFastEq) )
+          .build
+          .toJsComponent
+          .raw
+      )
+        .cmapCtorProps( _rrrPropsCMap )
+
+      def render(props: ModelProxy[MJdRrrProps]): VdomElement =
+        contentDndComp(props)
+    }
+    val qdContentDndComp = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentDndB].getSimpleName )
+      .renderBackend[QdContentDndB]
+      .build
+    override def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      qdContentDndComp.withKey(key)(props)
+
 
     // -------------------------------------------------------------------------------------------------
 
-
-    class BlockB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends super.BlockB($) {
+    class BlockB(blockRef: Ref.Simple[html.Div], $: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps]) extends BlockBase {
 
       override def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         val s = state.subTree.rootLabel
-        // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
         TagMod(
-
           // Размеры и центровка картинки в редакторе эмулируется на основе оригинала.
           imgRenderUtilJs
             // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
@@ -263,16 +299,16 @@ class JdEditR(
 
           // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
           ^.draggable := false,
-          _notifyImgWhOnEdit($, edge, state.jdArgs)
+          // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
+          _notifyImgWhOnEdit($, edge)
         )
       }
 
       override def _smBlockAddons(state: MJdRrrProps): TagMod = {
         // Если текущий стрип выделен, то его можно таскать:
-        ReactCommonUtil.maybe( state.isCurrentSelected && state.jdArgs.conf.isEdit ) {
-          val s = state.subTree.rootLabel
+        ReactCommonUtil.maybe( state.isCurrentSelected ) {
           TagMod(
-            _draggableUsing($, s, state.jdArgs)(stripDragStart(s)),
+            //_draggableUsing($)(blockDragStart),
             ^.`class` := Css.Cursor.GRAB
           )
         }
@@ -282,108 +318,291 @@ class JdEditR(
         _maybeSelected( state.subTree.rootLabel, state.jdArgs )
       }
 
-      /** Начинается перетаскивание целого стрипа. */
-      private def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
-        // Надо выставить в событие, что на руках у нас целый стрип.
-        val mimes = MimeConst.Sio
-        e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.STRIP )
-        dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
-      }
-
-      private def jdStripDragOver(e: ReactDragEvent): Callback = {
-        // В b9710f2 здесь была проверка cookie через getData, но webkit/chrome не поддерживают доступ в getData во время dragOver. Ппппппц.
-        e.preventDefaultCB
-      }
-
-      /** Что-то было сброшено на указанный стрип. */
-      private def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
-        val mimes = MimeConst.Sio
-
-        val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
-        val clientY = e.clientY
-
-        val cb: Callback = if ( dataType ==* mimes.DataContentTypes.CONTENT_ELEMENT ) {
-          // Перенос контента.
-          val coordsJsonStr = e.dataTransfer.getData( mimes.COORD_2D_JSON )
-          val clientX = e.clientX
-
-          // Всё остальное (вне event) заносим в callback-функцию, чтобы максимально обленивить вычисления и дальнейшие действия.
-          dispatchOnProxyScopeCBf($) { jdArgsProxy: ModelProxy[MJdRrrProps] =>
-            // Узнать разницу между коодинатами мыши и левым верхним углом. Десериализовать из dataTransfer.
-            val offsetXy = try {
-              Json
-                .parse( coordsJsonStr )
-                .as[MCoords2dD]
-            } catch {
-              case ex: Throwable =>
-                LOG.log(ErrorMsgs.DND_DROP_ERROR, ex)
-                MCoords2dD(0, 0)
-            }
-
-            val szMultD = jdArgsProxy.value.jdArgs.conf.szMult.toDouble
-
-            // Вычислить относительную координату в css-пикселях между точкой дропа и левой верхней точкой strip'а.
-            // Считаем в client-координатах, т.к. рассчёты мгновенны, и client viewport не сдвинется за это время.
-            // Если понадобятся page-координаты, то https://stackoverflow.com/a/37200339
-            val topLeftXy = MCoords2di(
-              x = ((clientX + offsetXy.x) / szMultD).toInt,
-              y = ((clientY + offsetXy.y) / szMultD).toInt
-            )
-
-            JdDropContent(
-              strip       = s,
-              clXy        = topLeftXy,
-              foreignTag  = None   // TODO Десериализовать из event, если элемент не принадлежит текущему документу.
-            )
-          }
-
-        } else if (dataType ==* mimes.DataContentTypes.STRIP) {
-          // Перетаскивание целого стрипа. Нужно вычислить, стрип дропнут выше или ниже он середины текущего стрипа.
-          val tgEl = e.target.asInstanceOf[Element]
-          dispatchOnProxyScopeCBf($) { _ =>
-            // szMult тут учитывать не требуется, т.к. вся работа идёт в client-координатах.
-            val clRect = tgEl.getBoundingClientRect()
-            val pointerY = clientY - clRect.top
-            val isUpper = pointerY < clRect.height / 2
-            JdDropStrip(
-              targetStrip = s,
-              isUpper     = isUpper
-            )
-          }
-
-        } else {
-          LOG.log( WarnMsgs.DND_DROP_UNSUPPORTED, msg = e.dataTransfer.types.mkString(",") )
-          Callback.empty
-        }
-
-        // тут нельзя stopPropagation - всё ломается.
-        e.preventDefaultCB >> cb
-      }
-
-      private def _droppableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
-        ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
-          TagMod(
-            ^.onDragOver ==> jdStripDragOver,
-            ^.onDrop     ==> onDropToStrip(jdt)
-          )
-        }
-      }
-
       override def _renderBlockTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
-        val state = propsProxy.value
-        val s = state.subTree.rootLabel
         super._renderBlockTag(propsProxy)(
-          _clickableOnEdit( $, s, state.jdArgs ),
-          _droppableOnEdit( s, state.jdArgs )
+          _selectableOnClick( $ )(_.p.value),
+          // Поддержка drop:
+          //^.onDragOver ==> jdStripDragOver,
+          //^.onDrop     ==> onDropToStrip
+        )
+          .withRef( blockRef )
+      }
+
+      def render(props: MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, state: MJdRrrProps): VdomElement = {
+        props.dropF.applyVdomEl(
+          props.dragF.applyVdomEl(
+            _renderBlockTag(props.p)
+          )
         )
       }
 
     }
-    override def mkBlockB = new BlockB(_)
+
+
+    /** Инстанс функции canDrag() для BlockDndB. */
+    private lazy val _blockCanDragF: js.Function2[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, Boolean] = {
+      (props, mon) =>
+        // Не таскать, если сейчас выделен какой-то иной элемент.
+        val p = props.p.value
+        p.isCurrentSelected
+    }
+
+    /** Компонент блока для jd-редактора.
+      * Т.к. нужны ref'ы, то надо их изолировать между инстансами.
+      */
+    class BlockDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+      import MimeConst.Sio.{DataContentTypes => DCT}
+
+      private val blockRef = Ref[html.Div]
+
+      private val _blockDropF: js.Function3[MRrrEdit with MRrrEditCollectDrop, DropTargetMonitor, js.Any, js.UndefOr[MJsDropInfo]] = {
+        (props, mon, _) =>
+          if (!mon.didDrop()) {
+            val itemType = mon.getItemType()
+
+            if (itemType == (DCT.CONTENT_ELEMENT: DropAccept_t_0)) {
+              // Сброшен qd-контент на текущий блок. Высчитать примерные координаты сброса.
+              val itm = mon.getItem().asInstanceOf[MJsDropInfo]
+
+              val rrr = props.p.value
+              val szMultD = rrr.jdArgs.conf.szMult.toDouble
+
+              val pointerClXy = mon.getClientOffset()
+
+              // Вычислить относительную координату в css-пикселях между точкой дропа и левой верхней точкой strip'а.
+              // Считаем в client-координатах, а если понадобятся page-координаты, то https://stackoverflow.com/a/37200339
+              def __calcCoord(coordF: XY => Double): Int = {
+                val ptrCoord = coordF(pointerClXy)
+                val coord2 = itm.xy.fold(ptrCoord) { xy =>
+                  ptrCoord + coordF(xy)
+                }
+                (coord2 / szMultD).toInt
+              }
+              val topLeftXy = MCoords2di(
+                x = __calcCoord(_.x),
+                y = __calcCoord(_.y),
+              )
+
+              props.p dispatchNow JdDropContent(
+                strip       = rrr.subTree.rootLabel,
+                clXy        = topLeftXy,
+                foreignTag  = None   // TODO Решить, должно ли тут быть что-либо?
+              )
+            }
+          }
+
+          js.undefined
+      }
+
+      val blockDndComp = DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
+        // Сверху на блок можно скидывать qd-контент
+        itemType = DCT.CONTENT_ELEMENT,
+        spec = new DropTargetSpec[MRrrEdit with MRrrEditCollectDrop, MJsDropInfo] {
+          override val drop = js.defined( _blockDropF )
+        },
+        collect = { (conn, mon) =>
+          new MRrrEditCollectDrop {
+            override val dropF = conn.dropTarget()
+          }
+        }
+      ) {
+
+        /** Реакция на начало перетаскивания qd-контента. */
+        val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
+          (props, monitor, _) =>
+            // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
+            val jdt = props.p.value.subTree.rootLabel
+            props.p dispatchNow JdTagDragStart(jdt)
+            // Отрендерить в json данные, которые будут переданы в DropTarget.
+            MJsDropInfo( DCT.STRIP )
+        }
+
+        DragSource[MRrrEdit with MRrrEditCollectDrop, MRrrEditCollectDrag, MJsDropInfo, Children.None](
+          itemType = DCT.STRIP,
+          spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, MJsDropInfo] {
+            override val beginDrag = _beginDragF
+            override val canDrag   = _blockCanDragF
+          },
+          collect = { (conn, mon) =>
+            // Пробросить collecting function + какие-то возможные данные к общим props'ам.
+            new MRrrEditCollectDrag {
+              override val dragF = conn.dragSource()
+            }
+          },
+        )(
+          ScalaComponent
+            .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockB].getSimpleName )
+            .initialStateFromProps( rrrEdit2mproxyValueF )
+            .backend( new BlockB(blockRef, _) )
+            .renderBackend
+            .configure( ReactDiodeUtil.p2sShouldComponentUpdate( rrrEdit2mproxyValueF.compose[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag](identity) )(MJdRrrProps.MJdRrrPropsFastEq) )
+            .build
+            .toJsComponent
+            .raw
+        )
+          .toJsComponent
+          .raw
+      }
+        .cmapCtorProps( _rrrPropsCMap )
+
+      def render(props: ModelProxy[MJdRrrProps]): VdomElement =
+        blockDndComp(props)
+    }
+    val blockDndComp = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[BlockDndB].getSimpleName )
+      .renderBackend[BlockDndB]
+      .build
+    override def mkBlock(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      blockDndComp.withKey(key)(props)
+
+
+    // -------------------------------------------------------------------------------------------------
+
+    /** Сборка документа под редактор. */
+    class DocumentB(docRef: Ref.Simple[html.Div], $: BackendScope[MRrrEdit with MRrrEditCollectDrop, Unit]) extends DocumentBase {
+
+      // Т.к. react-dnd присылает null вместо компонента, то узнать относительные координаты
+      // в момент перетаскивания получается невозможно.
+
+      def render(p: MRrrEdit with MRrrEditCollectDrop): VdomElement = {
+        p.dropF.applyVdomEl(
+          // div-обёртка нужна, т.к. react-dnd требует нативных элементов: голые компоненты не принимаются.
+          _renderTag(p.p)
+            .withRef( docRef )
+        )
+      }
+
+    }
+    class DocumentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+      // Для получения относительных координат, используем дополнительный ref.
+      private val docRef = Ref[html.Div]
+
+      import MimeConst.Sio.{DataContentTypes => DCT}
+
+      // Нативный drop-callback. Собирается отдельно из-за проблем со spec-валидацией react и https://github.com/scala-js/scala-js/issues/2748
+      private val _dropF: js.Function3[MRrrEdit with MRrrEditCollectDrop, DropTargetMonitor, js.Any, js.UndefOr[MJsDropInfo]] = {
+        (props, mon, _) =>
+          if (!mon.didDrop()) {
+            val itype = mon.getItemType()
+
+            if (itype == (DCT.STRIP: DropAccept_t_0) ) {
+              // Это перетаскивание целого блока внутри редактора.
+              val itm = mon.getItem().asInstanceOf[MJsDropInfo]
+              // Нужно узнать сдвиг указателя относительно верхнего левого угла документа.
+              val docEl = docRef.unsafeGet()
+              val docRect = docEl.getBoundingClientRect()
+
+              // Узнать szMult для нормирования координат относительно документа.
+              val p = props.p.value
+              val szMultOpt = p.jdArgs.conf.szMult.ifNot1
+              val szMultedF = MSzMult.szMultedF().applyDouble(_: Double, szMultOpt).toInt
+
+              val mouseClXy = mon.getClientOffset()
+              val docDropXy = MCoords2di(
+                x = szMultedF( mouseClXy.x - docRect.left ),
+                y = szMultedF( mouseClXy.y - docRect.top  ),
+              )
+
+              props.p dispatchNow JdDropStrip(
+                docXy     = docDropXy,
+              )
+            }
+
+            // TODO И реализовать сброс qd-контента между блоками
+          }
+          js.undefined
+      }
+
+      /** Документ должен поддерживать сброс элемента при перетаскивании. */
+      val _documentDndWrapperComponent = DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
+        itemType = js.Array[DropAccept_t_0](
+          //DCT.CONTENT_ELEMENT,    // TODO Реализовать сброс контента между блоками.
+          DCT.STRIP,
+        ): DropAccept_t_1,
+
+        spec = new DropTargetSpec[MRrrEdit with MRrrEditCollectDrop, MJsDropInfo] {
+          override val drop = js.defined( _dropF )
+        },
+
+        collect = { (conn, mon) =>
+          // Пробросить collecting function + какие-то возможные данные к общим props'ам.
+          new MRrrEditCollectDrop {
+            override val dropF = conn.dropTarget()
+          }
+        },
+      )(
+        // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
+        ScalaComponent
+          .builder [MRrrEdit with MRrrEditCollectDrop] ( classOf[DocumentB].getSimpleName )
+          .backend(new DocumentB(docRef, _))
+          .renderBackend
+          .build
+          .toJsComponent
+          .raw
+      )
+        .cmapCtorProps( _rrrPropsCMap )
+
+      def render(props: ModelProxy[MJdRrrProps]): VdomElement =
+        _documentDndWrapperComponent(props)
+    }
+    val documentDndComp = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[DocumentDndB].getSimpleName )
+      .renderBackend[DocumentDndB]
+      .build
+    override def mkDocument(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      documentDndComp.withKey(key)(props)
 
   }
 
-  /** Дефолтовая реализация [[JdRrrEdit]]. */
-  object JdRrrEdit extends JdRrrEdit
+
+  /** Расшаренный инстанс общей функции для всех вызовов DndComponent().cmapCtorProps().
+    * Функция оборачивает ModelProxy в инстанс MRrrEdit.
+    */
+  private val _rrrPropsCMap: (ModelProxy[MJdRrrProps] => MRrrEdit) = {
+    proxy =>
+      new MRrrEdit {
+        override val p = proxy
+      }
+  }
+
+  private val rrrEdit2mproxyValueF = ReactDiodeUtil.modelProxyValueF.compose[MRrrEdit with MRrrEditCollectDrag](_.p)
+
+}
+
+
+/** Боксинг для scala-пропертисов, который необходим для react-dnd HOC. */
+trait MRrrEdit extends js.Object {
+  /** Исходные scala-пропертисы. */
+  val p: ModelProxy[MJdRrrProps]
+}
+object MRrrEdit {
+  implicit object MRrrEdit2MProxy extends Props2ModelProxy[MRrrEdit] {
+    override def apply(v1: MRrrEdit): ModelProxy[_] = v1.p
+  }
+  implicit def mprox: Props2ModelProxy[MRrrEdit with MRrrEditCollectDrag] =
+    MRrrEdit2MProxy.asInstanceOf[Props2ModelProxy[MRrrEdit with MRrrEditCollectDrag]]
+}
+/** Доп.пропертисы к [[MRrrEdit]], инжектируемые из collect-function для DropTarget. */
+trait MRrrEditCollectDrop extends js.Object {
+  /** Функция активации react-dnd над vdom-тегом. */
+  val dropF: DropTargetF
+}
+/** Доп.пропертисы к [[MRrrEdit]], инжектируемые из collect-function для DragSource. */
+trait MRrrEditCollectDrag extends js.Object {
+  val dragF: DragSourceF[DragSourceFOptions]
+}
+
+/** Инфа по перетаскиваемому элементу для react-dnd. */
+trait MJsDropInfo extends IItem {
+  val xy: js.UndefOr[XY] = js.undefined
+}
+object MJsDropInfo {
+
+  def apply(typ: DropAccept_t_0, coords: js.UndefOr[XY] = js.undefined ) : MJsDropInfo = {
+    new MJsDropInfo {
+      override val `type` = typ
+      override val xy     = coords
+    }
+  }
 
 }

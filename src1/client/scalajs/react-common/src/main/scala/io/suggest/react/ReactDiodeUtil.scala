@@ -24,13 +24,15 @@ object ReactDiodeUtil {
     * @tparam A Тип сообщения msg.
     * @return Callback.
     */
-  def dispatchOnProxyScopeCB[P <: ModelProxy[_], S, A: ActionType]($: BackendScope[P, S], msg: A): Callback = {
+  def dispatchOnProxyScopeCB[P: Props2ModelProxy, S, A: ActionType]($: BackendScope[P, S], msg: A): Callback = {
     dispatchOnProxyScopeCBf($)(_ => msg)
   }
 
-  def dispatchOnProxyScopeCBf[P <: ModelProxy[_], S, A: ActionType]($: BackendScope[P, S])(f: P => A): Callback = {
+  def dispatchOnProxyScopeCBf[P: Props2ModelProxy, S, A: ActionType]($: BackendScope[P, S])(f: P => A): Callback = {
     $.props >>= { p: P =>
-      p.dispatchCB( f(p) )
+      implicitly[Props2ModelProxy[P]]
+        .apply(p)
+        .dispatchCB( f(p) )
     }
   }
 
@@ -47,7 +49,7 @@ object ReactDiodeUtil {
   /** Функция извлечения value из ModelProxy.
     * Используется так: compBuilder.initialStateFromProps(modelProxyValueF)
     */
-  def modelProxyValueF[T] = { modelProxy: ModelProxy[T] =>
+  def modelProxyValueF[T]: (ModelProxy[T] => T) = { modelProxy: ModelProxy[T] =>
     modelProxy.value
   }
 
@@ -59,10 +61,9 @@ object ReactDiodeUtil {
     * @tparam S AnyRef
     * @return Пропатченный компонент, который обновляется (и обновляет S) только если P.value отличается от S.
     */
-  def statePropsValShouldComponentUpdate[P <: ModelProxy[S], C <: Children, S <: AnyRef: FastEq, B, US <: UpdateSnapshot]: ScalaComponent.Config[P, C, S, B, US, US] = {
-    // TODO FastEq[S] - надо организовать примерный тип -S, иначе может вылетать invariant violation. Либо юзать костыль DiodeUtil.FastEqExt.AnyRefFastEq
+  def p2sShouldComponentUpdate[P <: AnyRef, C <: Children, S <: AnyRef: FastEq, B, US <: UpdateSnapshot](p2s: P => S): ScalaComponent.Config[P, C, S, B, US, US] = {
     _.componentWillReceiveProps { $ =>
-      val nextPropsVal = $.nextProps.value
+      val nextPropsVal = p2s( $.nextProps )
       val currPropsVal = $.state
       if ( implicitly[FastEq[S]].eqv(currPropsVal, nextPropsVal) ) {
         Callback.empty
@@ -73,6 +74,8 @@ object ReactDiodeUtil {
       $.currentState ne $.nextState
     }
   }
+  def statePropsValShouldComponentUpdate[P <: ModelProxy[S], C <: Children, S <: AnyRef: FastEq, B, US <: UpdateSnapshot]: ScalaComponent.Config[P, C, S, B, US, US] =
+    p2sShouldComponentUpdate( _.value )
 
 
   /** Конфигурирование компонента, чтобы сверялись props через FastEq.
@@ -112,3 +115,14 @@ object ReactDiodeUtil {
 
 }
 
+
+/** Трейт для поддержки извлечения ModelProxy из любых пропертисов. */
+trait Props2ModelProxy[-P] extends (P => ModelProxy[_])
+object Props2ModelProxy {
+  implicit object Raw extends Props2ModelProxy[ModelProxy[_]] {
+    override def apply(v1: ModelProxy[_]) = v1
+  }
+  implicit def Plain[T]: Props2ModelProxy[ModelProxy[T]] = {
+    Raw.asInstanceOf[Props2ModelProxy[ModelProxy[T]]]
+  }
+}

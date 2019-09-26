@@ -3,7 +3,8 @@ package io.suggest.ad.edit
 import com.softwaremill.macwire._
 import diode.ModelRW
 import io.suggest.ad.edit.c.DocEditAh
-import io.suggest.ad.edit.m.{MAeRoot, MDocS}
+import io.suggest.ad.edit.m.MAeRoot
+import io.suggest.ad.edit.m.edit.MDocS
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayerBtnR, ContentLayersR}
 import io.suggest.ad.edit.v.edit.strip._

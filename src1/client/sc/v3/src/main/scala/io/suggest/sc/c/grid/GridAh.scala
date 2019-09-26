@@ -23,6 +23,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.d2.IWidth
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.primo.id.OptId
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DoNothing
@@ -136,7 +137,7 @@ object GridAh {
 
   /** Сборка аргументов для рендера JdCss. */
   def mkJdRuntime(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MJdRuntime = {
-    MJdRuntime.make(
+    JdUtil.mkRuntime(
       docs = ads
         .iterator
         .flatten

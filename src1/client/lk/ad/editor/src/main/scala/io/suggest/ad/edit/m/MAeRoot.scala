@@ -1,6 +1,7 @@
 package io.suggest.ad.edit.m
 
 import diode.FastEq
+import io.suggest.ad.edit.m.edit.MDocS
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.save.MSaveS
@@ -61,7 +62,7 @@ case class MAeRoot(
 
   /** Экспорт данных формы для отправки на сервер. */
   def toForm: MJdData = {
-    val jdArgs = doc.jdArgs
+    val jdArgs = doc.jdDoc.jdArgs
     MJdData(
       // id карточки здесь не имеет никакого значения, т.к. он передаётся в URL.
       doc = jdArgs.data.doc,

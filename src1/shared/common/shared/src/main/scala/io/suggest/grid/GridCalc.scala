@@ -10,6 +10,7 @@ import japgolly.univeq._
 import scalaz.Tree
 
 import scala.annotation.tailrec
+import scala.collection.immutable.HashMap
 
 /**
  * Suggest.io
@@ -121,21 +122,23 @@ object GridCalc {
     * @param jdConf Конфиг рендера плитки.
     * @return Карта szMults по тегам.
     */
-  def wideSzMults(tpls: TraversableOnce[Tree[JdTag]], jdConf: MJdConf): Map[JdTag, MSzMult] = {
-    (for {
-      tpl         <- tpls.toIterator
-      tplJdt = tpl.rootLabel
-      // Посчитать wideSzMult блока, если wide
-      if tplJdt.name ==* MJdTagNames.STRIP
-      bm          <- tplJdt.props1.bm.iterator
-      expandMode  <- bm.expandMode.iterator
-      if expandMode ==* MBlockExpandModes.Full
-      wideSzMult  <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount ).iterator
-      jdt         <- tpl.flatten
-    } yield {
-      jdt -> wideSzMult
-    })
-      .toMap
+  def wideSzMults(tpls: TraversableOnce[Tree[JdTag]], jdConf: MJdConf): HashMap[JdTag, MSzMult] = {
+    (
+      HashMap.newBuilder[JdTag, MSzMult] ++= (for {
+        tpl         <- tpls.toIterator
+        tplJdt = tpl.rootLabel
+        // Посчитать wideSzMult блока, если wide
+        if tplJdt.name ==* MJdTagNames.STRIP
+        bm          <- tplJdt.props1.bm.iterator
+        expandMode  <- bm.expandMode.iterator
+        if expandMode ==* MBlockExpandModes.Full
+        wideSzMult  <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount ).iterator
+        jdt         <- tpl.flatten
+      } yield {
+        jdt -> wideSzMult
+      })
+    )
+      .result()
   }
 
 }

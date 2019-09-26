@@ -85,9 +85,9 @@ class FilesDropZoneR {
 
       val props = propsProxy.value
 
-      val dropTargetRawComp = DropTarget(
+      val dropTargetComp = DropTarget[ImgEditBtnDropFiles, ImgEditBtnDropFiles, js.Object, Children.None](
         itemType = NativeTypes.FILE,
-        spec = new DropTargetSpec {
+        spec = new DropTargetSpec[ImgEditBtnDropFiles, js.Object] {
           override val drop = onDropF
           // TODO hover
         },
@@ -101,12 +101,12 @@ class FilesDropZoneR {
         }
       )( dropWrapComponentJs.raw )
 
-      val dropTargetComp = JsComponent[ImgEditBtnDropFiles, Children.None, Null]( dropTargetRawComp )
-
-      dropTargetComp( new ImgEditBtnDropFiles {
-        override val isOver = false
-        override val cssClasses = props.cssClasses
-      })
+      dropTargetComp(
+        new ImgEditBtnDropFiles {
+          override val isOver = false
+          override val cssClasses = props.cssClasses
+        }
+      )
     }
 
   }

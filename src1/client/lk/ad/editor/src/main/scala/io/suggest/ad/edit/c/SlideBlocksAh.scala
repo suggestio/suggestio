@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.ad.edit.m.layout.MSlideBlocks
+import io.suggest.ad.edit.m.edit.MSlideBlocks
 import io.suggest.lk.m.SlideBlockClick
 
 /**

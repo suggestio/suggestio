@@ -39,13 +39,9 @@ object DropTargetTest extends SimpleTestSuite {
       }
       .build
 
-    val jsCompInner = compInner
-      .toJsComponent
-      .raw
-
     val DROPNAME = "DROPPER"
 
-    val jsCompDroppable = DropTarget(
+    val compDroppable = DropTarget[DropTargetTestJsCompProps1, DropTargetTestJsCompProps1, js.Object, Children.None](
       itemType = "asdasd",
       collect = { (connector, monitor) =>
         new DropTargetTestJsCompProps1 {
@@ -54,8 +50,11 @@ object DropTargetTest extends SimpleTestSuite {
           override val isOver: Boolean = monitor.isOver()
         }
       }
-    )(jsCompInner)
-    val compDroppable = JsComponent[DropTargetTestJsCompProps1, Children.None, Null](jsCompDroppable)
+    )(
+      compInner
+        .toJsComponent
+        .raw
+    )
 
     val outerComp = ScalaComponent
       .builder[Unit]("Outer")

@@ -2,6 +2,7 @@ package io.suggest.jd.render
 
 import com.softwaremill.macwire._
 import io.suggest.grid.GridModule
+import io.suggest.jd.render.u.JdGridUtil
 import io.suggest.jd.render.v._
 
 /**

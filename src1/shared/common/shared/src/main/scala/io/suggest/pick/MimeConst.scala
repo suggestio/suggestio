@@ -60,12 +60,6 @@ object MimeConst {
 
     }
 
-    /** MIME тип для JSON-представления JSON-document-тега. */
-    //final def JDTAG_JSON = MIME_PREFIX + "jdt+" + Words.JSON
-
-    /** Mime-тип с координатами в виде JSON. */
-    final def COORD_2D_JSON = MIME_PREFIX + "coords-2d+" + Words.JSON
-
   }
 
 

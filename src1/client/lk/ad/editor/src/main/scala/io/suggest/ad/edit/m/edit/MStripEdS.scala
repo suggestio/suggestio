@@ -1,4 +1,4 @@
-package io.suggest.ad.edit.m.edit.strip
+package io.suggest.ad.edit.m.edit
 
 import diode.FastEq
 import japgolly.univeq._

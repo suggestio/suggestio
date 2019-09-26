@@ -79,7 +79,7 @@ object MGbBlock {
   * @param gridWh Размеры собранной плитки.
   */
 case class MGridBuildResult(
-                             coords   : Seq[MCoords2di],
+                             coords   : List[MCoords2di],
                              gridWh   : MSize2di
                            )
 

@@ -71,7 +71,8 @@ class LaePopupsR(
         cropPopPropsOptC = rootProxy.connect { root =>
           for {
             mcrop       <- root.popups.pictureCrop
-            edge        <- root.doc.jdArgs.data.edges.get( mcrop.imgEdgeUid )
+            edge        <- root.doc.jdDoc.jdArgs.data.edges
+              .get( mcrop.imgEdgeUid )
             imgSrc      <- edge.origImgSrcOpt
           } yield {
             cropPopupR.PropsVal(
@@ -80,7 +81,7 @@ class LaePopupsR(
               popCssClass = lkAdEditCss.Crop.popup.htmlClass :: Nil,
               resKey      = MFormResourceKey(
                 edgeUid   = Some( edge.jdEdge.id ),
-                nodePath  = root.doc.jdArgs.renderArgs.selPath
+                nodePath  = root.doc.jdDoc.jdArgs.renderArgs.selPath,
               ),
               withDelete  = false
             )

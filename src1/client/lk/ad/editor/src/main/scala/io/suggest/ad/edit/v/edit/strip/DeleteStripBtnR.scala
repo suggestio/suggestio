@@ -1,8 +1,8 @@
 package io.suggest.ad.edit.v.edit.strip
 
 import diode.react.{ModelProxy, ReactConnectProps}
+import io.suggest.ad.edit.m.edit.MStripEdS
 import io.suggest.ad.edit.m.{StripDelete, StripDeleteCancel}
-import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes

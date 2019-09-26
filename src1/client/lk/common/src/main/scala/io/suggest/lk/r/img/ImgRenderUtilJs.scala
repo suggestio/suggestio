@@ -1,12 +1,12 @@
 package io.suggest.lk.r.img
 
-import diode.react.ModelProxy
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MSzMult
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.msg.ErrorMsgs
+import io.suggest.react.Props2ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
@@ -73,7 +73,7 @@ class ImgRenderUtilJs extends Log {
     * Иначе кроп работать не будет.
     * Тут код реакции на react-событие img.onLoad().
     */
-  def notifyImageLoaded[P <: ModelProxy[_], S]($: BackendScope[P,S], edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
+  def notifyImageLoaded[P: Props2ModelProxy, S]($: BackendScope[P,S], edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
     // Прочитать natural w/h из экшена.
     try {
       val img = e.target.asInstanceOf[html.Image]

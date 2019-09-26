@@ -57,5 +57,5 @@ case class MJdRenderArgs(
                           selJdtBgImgMod      : Option[TagMod]              = None,
                           hideNonMainStrips   : Boolean                     = false,
                           groupOutLined       : Option[MColorData]          = None,
-                          dnd                 : MJdDndS                     = MJdDndS.empty
+                          dnd                 : MJdDndS                     = MJdDndS.empty,
                         )

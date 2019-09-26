@@ -21,7 +21,7 @@ trait DragSourceConnector extends js.Object {
 
 
 @js.native
-trait DragSourceF[Options_t <: js.Object] extends js.Function {
+trait DragSourceF[-Options_t <: js.Object] extends js.Function {
   def apply[T <: raw.React.Element](el: T, options: Options_t = js.native): T = js.native
   @JSName("apply")
   def applyNode[T <: raw.React.Node](node: T, options: Options_t = js.native): T = js.native
@@ -29,12 +29,12 @@ trait DragSourceF[Options_t <: js.Object] extends js.Function {
   def applyRef[T <: raw.React.Ref](ref: T, options: Options_t = js.native): T = js.native
 }
 object DragSourceF {
-  implicit class DragSourceExt[T <: js.Object]( val ds: DragSourceF[T] ) extends AnyVal {
+  implicit class DragSourceExt[-T <: js.Object]( val ds: DragSourceF[T] ) extends AnyVal {
     def applyVdomEl( vdomEl: VdomElement ): VdomElement = {
       VdomElement( ds( vdomEl.rawElement ) )
     }
   }
-  implicit class DragSourceUndExt[T <: js.Object]( val dsUnd: js.UndefOr[DragSourceF[T]] ) extends AnyVal {
+  implicit class DragSourceUndExt[-T <: js.Object]( val dsUnd: js.UndefOr[DragSourceF[T]] ) extends AnyVal {
     def applyVdomEl( vdomEl: VdomElement ): VdomElement = {
       dsUnd.fold( vdomEl )(_.applyVdomEl(vdomEl))
     }

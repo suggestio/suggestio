@@ -1,5 +1,6 @@
 package io.suggest.ad.edit.m
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -18,17 +19,20 @@ object MAdEditFormConf {
     val PRODUCER_ID_FN = "p"
     val AD_ID_FN       = "a"
     val SRV_CTX_ID     = "c"
+    val TOUCH_DEV_FN   = "t"
   }
 
   implicit val MAD_EDIT_FORM_CONF_FORMAT: OFormat[MAdEditFormConf] = (
     (__ \ Fields.PRODUCER_ID_FN).format[String] and
     (__ \ Fields.AD_ID_FN).formatNullable[String] and
-    (__ \ Fields.SRV_CTX_ID).format[String]
+    (__ \ Fields.SRV_CTX_ID).format[String] and
+    (__ \ Fields.TOUCH_DEV_FN).formatNullable[Boolean]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
 
-  val ctxId = GenLens[MAdEditFormConf](_.ctxId)
+  val ctxId     = GenLens[MAdEditFormConf](_.ctxId)
+  val touchDev  = GenLens[MAdEditFormConf](_.touchDev)
 
 }
 
@@ -38,11 +42,15 @@ object MAdEditFormConf {
   * @param producerId id текущего узла-владельца карточки.
   * @param adId id текущей рекламной карточки.
   * @param ctxId Значение Context.ctxIdStr, заданное на сервере.
+  * @param touchDev Это touch-устройство? Это в основном определяется в рантайме.
+  *                 При обнаружении touch-событий происходит переключение react-dnd на touch-backend.
+  *                 None используется для полного перемонтирования рендера, чтобы всё скрыть и всё показать.
   */
 case class MAdEditFormConf(
                             producerId  : String,
                             adId        : Option[String],
-                            ctxId       : String
+                            ctxId       : String,
+                            touchDev    : Option[Boolean]         = OptionUtil.SomeBool.someFalse,
                           )
   extends ICtxIdStrOpt
 {

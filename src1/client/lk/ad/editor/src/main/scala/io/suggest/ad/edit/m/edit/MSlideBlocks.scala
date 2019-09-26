@@ -1,4 +1,4 @@
-package io.suggest.ad.edit.m.layout
+package io.suggest.ad.edit.m.edit
 
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
@@ -13,7 +13,7 @@ import monocle.macros.GenLens
   */
 object MSlideBlocks {
 
-  def empty = MSlideBlocks()
+  def empty = apply()
 
   implicit object MSlideBlocksFastEq extends FastEq[MSlideBlocks] {
     override def eqv(a: MSlideBlocks, b: MSlideBlocks): Boolean = {

@@ -2,6 +2,7 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m._
+import io.suggest.ad.edit.m.edit.{MDocS, MJdDocEditS}
 import io.suggest.css.Css
 import io.suggest.jd.render.m.{IJdAction, MJdArgs, MJdRenderArgs}
 import io.suggest.jd.tags.MJdTagNames
@@ -28,14 +29,14 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
 
       val needTransformOpt = for {
         // Если выделен стрип, имеющий фоновое изображение...
-        selJdt <- v0.jdArgs.selJdt.treeLocOpt.toLabelOpt
+        selJdt <- v0.jdDoc.jdArgs.selJdt.treeLocOpt.toLabelOpt
         if (selJdt.name ==* MJdTagNames.STRIP) &&
            selJdt.props1.bgImg.nonEmpty &&
            // и открыт стрип-редактор...
-           v0.stripEd.nonEmpty
+           v0.editors.stripEd.nonEmpty
            // TODO И m.colorTypeOpt содержит маркер фона стрипа.
       } yield {
-        v0.colorsState.picker.nonEmpty
+        v0.editors.colorsState.picker.nonEmpty
       }
 
       needTransformOpt.fold(noChange)(_doTransform(_, v0))
@@ -73,7 +74,8 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
   }
 
   private def _maybeSetNewTrasform(tmOpt: Option[TagMod], v0: MDocS): ActionResult[M] = {
-    val lens = MDocS.jdArgs
+    val lens = MDocS.jdDoc
+      .composeLens( MJdDocEditS.jdArgs )
       .composeLens( MJdArgs.renderArgs )
       .composeLens( MJdRenderArgs.selJdtBgImgMod )
     // Проверить, изменилось ли хоть что-нибудь:
