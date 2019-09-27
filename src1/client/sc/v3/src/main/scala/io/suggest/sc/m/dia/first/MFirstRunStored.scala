@@ -45,7 +45,7 @@ object MFirstRunStored extends Log {
   def save(m: MFirstRunStored): Unit = {
     val mkv = MKvStorage(
       key   = _CONF_KEY,
-      value = Json.toJson(m).toString()
+      value = m,
     )
     try {
       MKvStorage.save( mkv )
@@ -60,11 +60,9 @@ object MFirstRunStored extends Log {
   def get(): Option[MFirstRunStored] = {
     try {
       for {
-        mkv <- MKvStorage.get( _CONF_KEY )
+        mkv <- MKvStorage.get[MFirstRunStored]( _CONF_KEY )
       } yield {
-        Json
-          .parse( mkv.value )
-          .as[MFirstRunStored]
+        mkv.value
       }
     } catch {
       case ex: Throwable =>

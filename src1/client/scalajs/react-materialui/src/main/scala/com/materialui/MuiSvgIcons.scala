@@ -412,8 +412,8 @@ object MuiSvgIcons {
   object ActionToday extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/toll", JSImport.Default)
   object ActionToll extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/touch-app", JSImport.Default)
-  object ActionTouchApp extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/TouchApp", JSImport.Default)
+  object TouchApp extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/track-changes", JSImport.Default)
   object ActionTrackChanges extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/translate", JSImport.Default)
@@ -1211,8 +1211,8 @@ object MuiSvgIcons {
   object HardwareLaptop extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/memory", JSImport.Default)
   object HardwareMemory extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/hardware/mouse", JSImport.Default)
-  object HardwareMouse extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Mouse", JSImport.Default)
+  object Mouse extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/phone-android", JSImport.Default)
   object HardwarePhoneAndroid extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/phone-iphone", JSImport.Default)

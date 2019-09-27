@@ -1,6 +1,7 @@
 package io.suggest.jd.edit
 
 import com.softwaremill.macwire._
+import io.suggest.jd.edit.v.JdEditR
 
 /**
   * Suggest.io

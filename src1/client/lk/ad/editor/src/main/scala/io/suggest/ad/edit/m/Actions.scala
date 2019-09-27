@@ -109,4 +109,4 @@ case class SetBlurTextShadow(blur: Int) extends ILkEditAction
 
 
 /** Изменение состояния флага конфигурации isTouchDev. */
-case class TouchDevSet(isTouchDev: Option[Boolean]) extends ILkEditAction
+case class TouchDevSet(isTouchDev: Boolean) extends ILkEditAction

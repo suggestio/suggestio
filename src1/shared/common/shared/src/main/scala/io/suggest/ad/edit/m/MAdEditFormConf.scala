@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.m
 
-import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -26,7 +26,7 @@ object MAdEditFormConf {
     (__ \ Fields.PRODUCER_ID_FN).format[String] and
     (__ \ Fields.AD_ID_FN).formatNullable[String] and
     (__ \ Fields.SRV_CTX_ID).format[String] and
-    (__ \ Fields.TOUCH_DEV_FN).formatNullable[Boolean]
+    (__ \ Fields.TOUCH_DEV_FN).formatNullable[Boolean].formatBooleanOrFalse
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
@@ -44,13 +44,12 @@ object MAdEditFormConf {
   * @param ctxId Значение Context.ctxIdStr, заданное на сервере.
   * @param touchDev Это touch-устройство? Это в основном определяется в рантайме.
   *                 При обнаружении touch-событий происходит переключение react-dnd на touch-backend.
-  *                 None используется для полного перемонтирования рендера, чтобы всё скрыть и всё показать.
   */
 case class MAdEditFormConf(
                             producerId  : String,
                             adId        : Option[String],
                             ctxId       : String,
-                            touchDev    : Option[Boolean]         = OptionUtil.SomeBool.someFalse,
+                            touchDev    : Boolean          = false,
                           )
   extends ICtxIdStrOpt
 {

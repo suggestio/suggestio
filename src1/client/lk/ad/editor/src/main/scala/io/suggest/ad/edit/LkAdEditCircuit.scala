@@ -14,12 +14,14 @@ import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.color.MColorData
+import io.suggest.conf.ConfConst
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.{MJdConf, MJdDoc}
-import io.suggest.spa.{OptFastEq, StateInp}
+import io.suggest.kv.MKvStorage
+import io.suggest.spa.{DoNothingActionProcessor, OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
@@ -34,6 +36,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.spa.CircuitUtil._
 import io.suggest.ws.pool.m.MWsPoolS
 import monocle.Traversal
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -77,7 +80,18 @@ class LkAdEditCircuit(
     val jdDataJs = MJdDataJs( mFormInit.adData )
 
     MAeRoot(
-      conf = mFormInit.conf,
+      conf = {
+        val conf0 = mFormInit.conf
+        // Возможно, что флаг isTouchDev переопределён в localStorage.
+        MKvStorage
+          .get[Boolean]( ConfConst.IS_TOUCH_DEV )
+          .filterNot { isTouchDev2 =>
+            conf0.touchDev ==* isTouchDev2.value
+          }
+          .fold(conf0) { isTouchDev2 =>
+            (MAdEditFormConf.touchDev set isTouchDev2.value)(conf0)
+          }
+      },
 
       doc  = {
         val jdConf = MJdConf(
@@ -485,4 +499,5 @@ class LkAdEditCircuit(
     }
   }
 
+  addProcessor( DoNothingActionProcessor[MAeRoot] )
 }

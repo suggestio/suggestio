@@ -1,4 +1,4 @@
-package io.suggest.jd.edit
+package io.suggest.jd.edit.v
 
 import com.github.react.dnd._
 import com.github.souporserious.react.measure.Bounds
@@ -8,7 +8,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
 import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdEdgeId
-import io.suggest.jd.edit.m.{CurrContentResize, JdDropContent, JdDropStrip, JdTagDragStart, JdTagSelect, QdEmbedResize}
+import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.{JdCssStatic, JdR, QdRrrHtml}
 import io.suggest.jd.tags._

@@ -16,4 +16,6 @@ object ConfConst {
   /** Первый запуск. */
   def SC_FIRST_RUN = SC_PREFIX + "first.run"
 
+  def IS_TOUCH_DEV = "device.touch.is"
+
 }

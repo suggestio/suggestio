@@ -22,12 +22,12 @@ object Sc3ConfUtil extends Log {
 
   /** Сохранить конфигурацию выдачи в постоянное хранилище.
     *
-    * @param conf Инстанс конфигурации.
+    * @param init Инстанс конфигурации.
     */
   def saveInit(init: MSc3Init): Unit = {
     val mkv = MKvStorage(
       key   = ConfConst.SC_INIT_KEY,
-      value = Json.toJson( init ).toString()
+      value = init,
     )
     MKvStorage.save( mkv )
   }
@@ -59,16 +59,9 @@ object Sc3ConfUtil extends Log {
   def getSavedInit(): Option[MSc3Init] = {
     OptionUtil.maybeOpt( MKvStorage.isAvailable ) {
       for {
-        confJson  <- MKvStorage.get( ConfConst.SC_INIT_KEY )
-        conf      <- Try(
-          Json
-            .parse(confJson.value)
-            .asOpt[MSc3Init]
-        )
-          .toOption
-          .flatten
+        confJson  <- MKvStorage.get[MSc3Init]( ConfConst.SC_INIT_KEY )
       } yield {
-        conf
+        confJson.value
       }
     }
   }

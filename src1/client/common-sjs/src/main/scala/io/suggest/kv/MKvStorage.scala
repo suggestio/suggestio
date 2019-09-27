@@ -2,10 +2,12 @@ package io.suggest.kv
 
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import org.scalajs.dom
+import play.api.libs.json.{JsString, Json, Reads, Writes}
 
 import scala.scalajs.js
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -33,8 +35,11 @@ object MKvStorage extends Log {
 
   /** Сохранение в базу.
     */
-  def save(mkv: MKvStorage): Unit = {
-    storage.setItem(mkv.key, mkv.value)
+  def save[V: Writes](mkv: MKvStorage[V]): Unit = {
+    val vSerial = Json
+      .toJson(mkv.value)
+      .toString()
+    storage.setItem(mkv.key, vSerial )
   }
 
 
@@ -43,11 +48,11 @@ object MKvStorage extends Log {
     * @param key Ключ.
     * @return Опциональный результат.
     */
-  def get(key: String): Option[MKvStorage] = {
+  def get[V: Reads](key: String): Option[MKvStorage[V]] = {
     for {
       v <- Option(storage.getItem(key))
     } yield {
-      MKvStorage(key, v)
+      MKvStorage(key, Json.parse(v).as[V] )
     }
   }
 
@@ -66,6 +71,8 @@ object MKvStorage extends Log {
     storage.clear()
   }
 
+  @inline implicit def univEq[V: UnivEq]: UnivEq[MKvStorage[V]] = UnivEq.derive
+
 }
 
 
@@ -73,8 +80,9 @@ object MKvStorage extends Log {
   *
   * @param key Ключ.
   * @param value Значение.
+  * @tparam V Тип значения
   */
-case class MKvStorage(
-                       key    : String,
-                       value  : String,
-                     )
+case class MKvStorage[V](
+                          key    : String,
+                          value  : V,
+                        )

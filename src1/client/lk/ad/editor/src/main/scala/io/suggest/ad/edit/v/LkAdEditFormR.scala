@@ -3,6 +3,7 @@ package io.suggest.ad.edit.v
 import com.github.react.dnd.backend.html5.Html5Backend
 import com.github.react.dnd.backend.touch.TouchBackend
 import com.github.react.dnd.{DndProvider, DndProviderProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
@@ -24,7 +25,7 @@ import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.edit.JdEditR
+import io.suggest.jd.edit.v.JdEditR
 import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
@@ -38,6 +39,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
+
 
 /**
   * Suggest.io
@@ -98,7 +100,7 @@ class LkAdEditFormR(
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                               contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
                               textShadowC                     : ReactConnectProxy[textShadowR.Props_t],
-                              isTouchDevSomeC                 : ReactConnectProxy[Option[Boolean]],
+                              isTouchDevSomeC                 : ReactConnectProxy[Some[Boolean]],
                             )
 
   case class SlideBlocksState(
@@ -121,13 +123,16 @@ class LkAdEditFormR(
     private val _onBodyClick: Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB($, DocBodyClick)
 
-    private val _onBodyTouchStart: Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, TouchDevSet( OptionUtil.SomeBool.someTrue ) )
+    private def _onDragTouchDetected(isTouchDev: Boolean): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, TouchDevSet( isTouchDev ) )
+    private def _onTouchSwitchClickJsCb (isTouchDev: Boolean) =
+      // TODO Opt брать новое значение isTouchDev на основе $.props, а не через аргументы.
+      ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent => _onDragTouchDetected(isTouchDev) }
 
-    private def render1(p: Props, s: State) = {
+    def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
 
-      <.div(
+      val contentDiv = <.div(
         ^.`class` := Css.Overflow.HIDDEN,
 
         // TODO Opt спиливать onClick, когда по состоянию нет ни одного открытого modal'а, например открытого color-picker'а.
@@ -164,7 +169,24 @@ class LkAdEditFormR(
 
               <.div(
                 ^.`class` := Css.CLEAR
-              )
+              ),
+
+              // Кнопка переключения touch-режима.
+              s.isTouchDevSomeC { isTouchDevSome =>
+                val isTouchDev = isTouchDevSome.value.value
+                MuiIconButton(
+                  new MuiIconButtonProps {
+                    override val onClick = _onTouchSwitchClickJsCb(!isTouchDev)
+                  }
+                )(
+                  {
+                    val iconComp =
+                      if (isTouchDev) Mui.SvgIcons.TouchApp
+                      else Mui.SvgIcons.Mouse
+                    iconComp()()
+                  }
+                )
+              },
             )
           ),
 
@@ -299,35 +321,31 @@ class LkAdEditFormR(
 
         )
       )
-    }
 
-    def render(p: Props, s: State): VdomElement = {
       // Провайдер поддержки drag-drop:
       s.isTouchDevSomeC { isTouchDevSomeProxy =>
-        isTouchDevSomeProxy.value
-          // TODO Не помогает: всё равно переключение на touch backend на лету не работает. Страницу редактора перезагружать, выставляя cookie для след.запуска?
-          .fold( ReactCommonUtil.VdomNullElement ) { isTouchDev =>
-            val _backend =
-              if (isTouchDev) TouchBackend
-              else Html5Backend
+        val isTouchDev = isTouchDevSomeProxy.value.value
+        val _backend =
+          if (isTouchDev) TouchBackend
+          else Html5Backend
 
-            // Если !touch, то нужно подслушать touchstart-событие в любом месте редактора:
-            // При смене backend требуется полный пере-рендер всего.
-            val contentDiv = render1(p, s)
-            val innerContent =
-              if (isTouchDev) contentDiv
-              else contentDiv(
-                ^.onTouchStart --> _onBodyTouchStart,
-              )
+        // Если !touch, то нужно подслушать touchstart-событие в любом месте редактора:
+        // При смене backend требуется полный пере-рендер всего.
+        val innerContent =
+          if (isTouchDev) contentDiv(
+            ^.onDragStart --> _onDragTouchDetected(false)
+          )
+          else contentDiv(
+            ^.onTouchStart --> _onDragTouchDetected(true)
+          )
 
-            DndProvider.component(
-              new DndProviderProps {
-                override val backend = _backend
-              }
-            )(
-              innerContent
-            )
+        DndProvider.component(
+          new DndProviderProps {
+            override val backend = _backend
           }
+        )(
+          innerContent
+        )
       }
     }
 
@@ -649,7 +667,9 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) ),
 
-        isTouchDevSomeC = p.connect(_.conf.touchDev)( FastEq.AnyRefEq ),
+        isTouchDevSomeC = p.connect{ mroot =>
+          OptionUtil.SomeBool( mroot.conf.touchDev )
+        }( FastEq.AnyRefEq ),
 
       )
     }
