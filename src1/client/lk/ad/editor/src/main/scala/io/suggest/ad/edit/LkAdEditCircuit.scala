@@ -1,6 +1,6 @@
 package io.suggest.ad.edit
 
-import diode.{ModelRO, ModelRW}
+import diode.{FastEq, ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
@@ -21,11 +21,11 @@ import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.kv.MKvStorage
-import io.suggest.spa.{DoNothingActionProcessor, OptFastEq, StateInp}
+import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
-import io.suggest.lk.c.{ColorPickAh, PictureAh}
+import io.suggest.lk.c.{ColorPickAh, IsTouchDevSwitchAh, PictureAh}
 import io.suggest.lk.m.{MDeleteConfirmPopupS, color}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
@@ -143,13 +143,13 @@ class LkAdEditCircuit(
   /** Используется извне, в init например. */
   def rootRO: ModelRO[MAeRoot] = rootRW
 
-  private val confRO = zoom(_.conf)
+  private val confRW = mkLensRootZoomRW(this, MAeRoot.conf)( FastEqUtil.AnyRefFastEq )
 
-  private val uploadApi = new UploadApiHttp(confRO)
+  private val uploadApi = new UploadApiHttp(confRW)
 
-  private val adEditApi = new LkAdEditApiHttp( confRO, uploadApi )
+  private val adEditApi = new LkAdEditApiHttp( confRW, uploadApi )
 
-  private val ctxIdRO = mkLensZoomRO(confRO, MAdEditFormConf.ctxId)
+  private val ctxIdRO = mkLensZoomRO(confRW, MAdEditFormConf.ctxId)
   private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)
 
   private val mDocSRw = mkLensRootZoomRW(this, MAeRoot.doc)( MDocS.MDocSFastEq )
@@ -170,6 +170,8 @@ class LkAdEditCircuit(
   private val jdDocRW = mkLensZoomRW(mDocSRw, MDocS.jdDoc)( MJdDocEditS.MJdDocEditSFastEq )
   private val jdArgsRW = mkLensZoomRW(jdDocRW, MJdDocEditS.jdArgs)( MJdArgs.MJdArgsFastEq )
   private val jdRuntimeRW = mkLensZoomRW(jdArgsRW, MJdArgs.jdRuntime)( MJdRuntime.MJdRuntimeFastEq )
+
+  private val isTouchDevRW = mkLensZoomRW( confRW, MAdEditFormConf.touchDev )( FastEq.AnyValEq.asInstanceOf[FastEq[Boolean]] )
 
 
   /** Класс для сборки зумма для color-picker'а. */
@@ -413,7 +415,7 @@ class LkAdEditCircuit(
   /** Контроллер сохранения. */
   private val saveAh = new SaveAh(
     lkAdEditApi = adEditApi,
-    confRO      = confRO,
+    confRO      = confRW,
     modelRW     = rootRW
   )
 
@@ -421,7 +423,7 @@ class LkAdEditCircuit(
   /** Контроллер удаления. */
   private val deleteAh = new DeleteAh(
     lkAdEditApi = adEditApi,
-    confRO      = confRO,
+    confRO      = confRW,
     modelRW     = deleteConfirmPopupRW
   )
 
@@ -436,6 +438,10 @@ class LkAdEditCircuit(
     },
   )
 
+  private val touchSwitchAh = new IsTouchDevSwitchAh(
+    modelRW = isTouchDevRW,
+  )
+
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
@@ -444,6 +450,7 @@ class LkAdEditCircuit(
       slideBlocksAh,
       saveAh,
       deleteAh,
+      touchSwitchAh,
       tailAh
     )
 

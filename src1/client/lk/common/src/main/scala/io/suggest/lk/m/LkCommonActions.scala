@@ -145,3 +145,7 @@ case object CaptchaInputBlur extends ILkCommonAction
 case class SmsCodeSet( smsCode: String ) extends ILkCommonAction
 /** Расфокусировка поля смс-кода. */
 case object SmsCodeBlur extends ILkCommonAction
+
+
+/** Изменение состояния флага конфигурации isTouchDev. */
+case class TouchDevSet(isTouchDev: Boolean) extends ILkCommonAction

@@ -3,11 +3,10 @@ package io.suggest.ad.edit.v
 import com.github.react.dnd.backend.html5.Html5Backend
 import com.github.react.dnd.backend.touch.TouchBackend
 import com.github.react.dnd.{DndProvider, DndProviderProps}
-import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
-import io.suggest.ad.edit.m.{MAeRoot, TouchDevSet}
+import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
@@ -28,11 +27,11 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.edit.v.JdEditR
 import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{CropOpen, DocBodyClick}
-import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
+import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, TouchSwitchR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -73,6 +72,7 @@ class LkAdEditFormR(
                      val contentEditCssR        : ContentEditCssR,
                      val contentLayersR         : ContentLayersR,
                      val textShadowR            : TextShadowR,
+                     val touchSwitchR           : TouchSwitchR,
                    ) {
 
   type Props = ModelProxy[MAeRoot]
@@ -123,11 +123,6 @@ class LkAdEditFormR(
     private val _onBodyClick: Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB($, DocBodyClick)
 
-    private def _onDragTouchDetected(isTouchDev: Boolean): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, TouchDevSet( isTouchDev ) )
-    private def _onTouchSwitchClickJsCb (isTouchDev: Boolean) =
-      // TODO Opt брать новое значение isTouchDev на основе $.props, а не через аргументы.
-      ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent => _onDragTouchDetected(isTouchDev) }
 
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
@@ -172,21 +167,7 @@ class LkAdEditFormR(
               ),
 
               // Кнопка переключения touch-режима.
-              s.isTouchDevSomeC { isTouchDevSome =>
-                val isTouchDev = isTouchDevSome.value.value
-                MuiIconButton(
-                  new MuiIconButtonProps {
-                    override val onClick = _onTouchSwitchClickJsCb(!isTouchDev)
-                  }
-                )(
-                  {
-                    val iconComp =
-                      if (isTouchDev) Mui.SvgIcons.TouchApp
-                      else Mui.SvgIcons.Mouse
-                    iconComp()()
-                  }
-                )
-              },
+              s.isTouchDevSomeC { touchSwitchR.apply },
             )
           ),
 
@@ -329,15 +310,9 @@ class LkAdEditFormR(
           if (isTouchDev) TouchBackend
           else Html5Backend
 
-        // Если !touch, то нужно подслушать touchstart-событие в любом месте редактора:
-        // При смене backend требуется полный пере-рендер всего.
-        val innerContent =
-          if (isTouchDev) contentDiv(
-            ^.onDragStart --> _onDragTouchDetected(false)
-          )
-          else contentDiv(
-            ^.onTouchStart --> _onDragTouchDetected(true)
-          )
+        val innerContent = contentDiv(
+          touchSwitchR.autoSwitch( isTouchDevSomeProxy )
+        )
 
         DndProvider.component(
           new DndProviderProps {
@@ -352,7 +327,8 @@ class LkAdEditFormR(
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
 
       // Фунция с дедублицированным кодом сборки коннекшена до пропертисов plus-minus control'ов (для стрипов).

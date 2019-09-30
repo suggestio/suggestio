@@ -106,7 +106,3 @@ case class SetHorizOffTextShadow(offset: Int) extends ILkEditAction
 /** Выставление вертикального сдвига тени. */
 case class SetVertOffTextShadow(offset: Int) extends ILkEditAction
 case class SetBlurTextShadow(blur: Int) extends ILkEditAction
-
-
-/** Изменение состояния флага конфигурации isTouchDev. */
-case class TouchDevSet(isTouchDev: Boolean) extends ILkEditAction

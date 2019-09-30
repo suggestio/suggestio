@@ -51,4 +51,6 @@ object LkCommonModule {
 
   lazy val filesDropZoneR = wire[FilesDropZoneR]
 
+  lazy val touchSwitchR = wire[TouchSwitchR]
+
 }
