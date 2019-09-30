@@ -467,7 +467,9 @@ class JdEditR(
       def render(p: MRrrEdit with MRrrEditCollectDrop): VdomElement = {
         p.dropF.applyVdomEl(
           // div-обёртка нужна, т.к. react-dnd требует нативных элементов: голые компоненты не принимаются.
-          _renderTag(p.p)
+          <.div(
+            _renderGrid(p.p)
+          )
             .withRef( docRef )
         )
       }

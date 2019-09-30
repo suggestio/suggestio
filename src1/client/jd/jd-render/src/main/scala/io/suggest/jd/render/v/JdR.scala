@@ -239,33 +239,32 @@ class JdR(
     /** Базовый трейт для рендера компонента документа. */
     trait DocumentBase {
 
-      def _renderTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
+      def _renderGrid(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
         val state = propsProxy.value
-        <.div(
-          // Плитку отсюда полностью вынести не удалось.
-          CSSGrid {
-            jdGridUtil.mkCssGridArgs(
-              gbRes = state.gridBuildRes.getOrElse {
-                // 2019-09-25 Пока допускаем обычный рендер, но крайне желательно избегать этой ситуации.
-                // Потом надо будет как-то всё устаканить, чтобы нельзя было на уровне кода рендерить с документ неправильно (убрать плитку из JdR? Тогда и тип jdt document следом?)
-                LOG.warn( WarnMsgs.GRID_REBUILD_INPERFORMANT, msg = state.tagId.toString )
-                GridBuilderUtil.buildGrid {
-                  JdUtil.jdDocGbArgs( state.subTree, state.jdArgs )
-                }
-              },
-              conf = state.jdArgs.conf,
-              tagName = GridComponents.DIV,
-            )
-          } (
-            renderChildrenWithId( propsProxy )
-              // Тут тег-обёртка-костыль - что для CSSGrid нужен обязательно теги, а НЕ react-компоненты в children.
-              .map { case (id, p) =>
-                <.li(
-                  ^.key := id.toString,
-                  p
-                )
-              }: _*
+
+        // Плитку отсюда полностью вынести не удалось.
+        CSSGrid {
+          jdGridUtil.mkCssGridArgs(
+            gbRes = state.gridBuildRes.getOrElse {
+              // 2019-09-25 Пока допускаем обычный рендер, но крайне желательно избегать этой ситуации.
+              // Потом надо будет как-то всё устаканить, чтобы нельзя было на уровне кода рендерить с документ неправильно (убрать плитку из JdR? Тогда и тип jdt document следом?)
+              LOG.warn( WarnMsgs.GRID_REBUILD_INPERFORMANT, msg = state.tagId.toString )
+              GridBuilderUtil.buildGrid {
+                JdUtil.jdDocGbArgs( state.subTree, state.jdArgs )
+              }
+            },
+            conf = state.jdArgs.conf,
+            tagName = GridComponents.DIV,
           )
+        } (
+          renderChildrenWithId( propsProxy )
+            // Тут тег-обёртка-костыль - что для CSSGrid нужен обязательно теги, а НЕ react-компоненты в children.
+            .map { case (id, p) =>
+              <.div(
+                ^.key := id.toString,
+                p
+              )
+            }: _*
         )
       }
 
@@ -409,7 +408,7 @@ class JdR(
     final class DocumentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends DocumentBase {
 
       def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        _renderTag( propsProxy )
+        _renderGrid( propsProxy )
       }
 
     }
