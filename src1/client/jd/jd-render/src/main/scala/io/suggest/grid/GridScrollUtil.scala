@@ -1,7 +1,7 @@
 package io.suggest.grid
 
-import io.suggest.text.StringUtil
 import com.github.fisshy.react.scroll.LinkProps
+import io.suggest.text.StringUtil
 
 /**
   * Suggest.io

@@ -15,3 +15,9 @@ trait IJdAction extends DAction
 
 /** Сигнал о выполнении измерения размеров qd-контента. */
 case class QdBoundsMeasured(jdTag: JdTag, bounds: Bounds) extends IJdAction
+
+
+/** Принудительный пересчёт плитки.
+  * Поддержка должна быть реализована на уровне каждой конкретной circuit.
+  */
+case object GridRebuild extends IJdAction

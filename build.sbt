@@ -288,13 +288,6 @@ lazy val reactScroll = {
     .dependsOn( commonReactSjs )
 }
 
-/** Утиль для плитки на базе react. */
-lazy val gridSjs = {
-  val name = "grid"
-  Project(id = name + "-sjs", base = file(s"${DIR0}client/jd/grid"))
-    .dependsOn(commonSjs, reactStoneCutterSjs, reactScroll)
-}
-
 /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
 lazy val lkDtPeriodSjs = {
   val name = "lk-dt-period-sjs"
@@ -445,7 +438,7 @@ lazy val lkAdnEditSjs = {
 lazy val lkAdsSjs = {
   Project(id = "lk-ads-sjs", base = file(DIR0 + "client/lk/ads"))
     // Связь с lkNodes: интеграция сначала по api, а затем со всей nodes-формой.
-    .dependsOn(lkCommonSjs, jdRenderSjs, lkNodesFormSjs)
+    .dependsOn(lkCommonSjs, jdRenderSjs, lkNodesFormSjs, reactStoneCutterSjs, reactScroll)
 }
 
 /** Всякие мелкие скрипты ЛК объеденены в этом scala-js.
@@ -507,7 +500,7 @@ lazy val reactMaterialUiSjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( commonSjs, reactStoneCutterSjs, gridSjs, reactMeasureSjs )
+    .dependsOn( commonSjs, reactStoneCutterSjs, reactMeasureSjs, reactStoneCutterSjs, reactScroll )
 }
 
 /** Поддержка редактирования jd с кучей доп.зависимостей ЛК. */
@@ -656,7 +649,7 @@ lazy val sio2 = {
       momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
-      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs,
+      reactGridLayoutSjs, reactStoneCutterSjs,
       reactSidebar, reactScroll, reactMeasureSjs, reactDndSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs, lkAdnEditSjs,

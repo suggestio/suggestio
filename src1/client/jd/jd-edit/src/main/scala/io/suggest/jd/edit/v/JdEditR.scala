@@ -487,30 +487,28 @@ class JdEditR(
           if (!mon.didDrop()) {
             val itype = mon.getItemType()
 
-            if (itype == (DCT.STRIP: DropAccept_t_0) ) {
-              // Это перетаскивание целого блока внутри редактора.
-              val itm = mon.getItem().asInstanceOf[MJsDropInfo]
-              // Нужно узнать сдвиг указателя относительно верхнего левого угла документа.
-              val docEl = docRef.unsafeGet()
-              val docRect = docEl.getBoundingClientRect()
+            // Это перетаскивание целого блока внутри редактора.
+            // Нужно узнать сдвиг указателя относительно верхнего левого угла документа.
+            val docEl = docRef.unsafeGet()
+            val docRect = docEl.getBoundingClientRect()
 
-              // Узнать szMult для нормирования координат относительно документа.
-              val p = props.p.value
-              val szMultOpt = p.jdArgs.conf.szMult.ifNot1
-              val szMultedF = MSzMult.szMultedF().applyDouble(_: Double, szMultOpt).toInt
+            // Узнать szMult для нормирования координат относительно документа.
+            val p = props.p.value
+            val szMultOpt = p.jdArgs.conf.szMult.ifNot1
+            val szMultedF = MSzMult.szMultedF()
+              .applyDouble(_: Double, szMultOpt)
+              .toInt
 
-              val mouseClXy = mon.getClientOffset()
-              val docDropXy = MCoords2di(
-                x = szMultedF( mouseClXy.x - docRect.left ),
-                y = szMultedF( mouseClXy.y - docRect.top  ),
-              )
+            val mouseClXy = mon.getClientOffset()
+            val docDropXy = MCoords2di(
+              x = szMultedF( mouseClXy.x - docRect.left ),
+              y = szMultedF( mouseClXy.y - docRect.top  ),
+            )
 
-              props.p dispatchNow JdDropStrip(
-                docXy     = docDropXy,
-              )
-            }
-
-            // TODO И реализовать сброс qd-контента между блоками
+            props.p dispatchNow JdDropToDocument(
+              docXy     = docDropXy,
+              dropItem  = mon.getItem()
+            )
           }
           js.undefined
       }
@@ -518,7 +516,7 @@ class JdEditR(
       /** Документ должен поддерживать сброс элемента при перетаскивании. */
       val _documentDndWrapperComponent = DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
         itemType = js.Array[DropAccept_t_0](
-          //DCT.CONTENT_ELEMENT,    // TODO Реализовать сброс контента между блоками.
+          DCT.CONTENT_ELEMENT,
           DCT.STRIP,
         ): DropAccept_t_1,
 

@@ -1,5 +1,7 @@
 package com.github.souporserious.react.measure
 
+import io.suggest.react.ReactCommonUtil
+import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
 import org.scalajs.dom.html
@@ -12,22 +14,22 @@ import scala.scalajs.js.annotation.JSImport
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 14.08.2019 17:08
   */
-object Measure {
+object Measure extends Log {
 
   val component = JsComponent[MeasureProps, Children.None, Null]( MeasureJs )
 
-  private def _mkChildrenJsF(f0: Ref.Simple[html.Element] => VdomNode) = {
-    f0.compose[RefHandle_t](Ref.fromJs)
-      .andThen(_.rawNode: raw.PropsChildren)
+  private def _mkChildrenJsF(f0: ChildrenArgs => VdomNode) = {
+    f0.andThen(_.rawNode: raw.PropsChildren)
   }
 
-  def bounds(onResizeF: Bounds => Unit)(childrenF: Ref.Simple[html.Element] => VdomNode) = {
-    val onBoundsF = onResizeF
-      .compose[ContentRect](_.bounds.get)
+  def bounds(onResizeF: Bounds => Callback)(childrenF: ChildrenArgs => VdomNode) = {
+    val onBoundsF = ReactCommonUtil.cbFun1ToJsCb(
+      onResizeF.compose[ContentRect]( _.bounds.get )
+    )
     component(
       new MeasureProps {
         override val bounds   = true
-        override val onResize = js.defined( onBoundsF )
+        override val onResize = onBoundsF
         override val children = _mkChildrenJsF( childrenF )
       }
     )
@@ -40,6 +42,12 @@ object Measure {
 @JSImport( NPM_PACKAGE_NAME, JSImport.Default )
 object MeasureJs extends js.Object
 
+@js.native
+trait ChildrenArgs extends js.Object {
+  val measureRef: raw.React.RefFn[html.Element]
+  def measure(): Unit
+  val contentRect: ContentRect
+}
 
 trait MeasureProps extends js.Object {
   val client: js.UndefOr[Boolean] = js.undefined
@@ -54,12 +62,12 @@ trait MeasureProps extends js.Object {
     *
     * For example:
     * {{{
-    *   children = { ref =>
-    *     <.div.withRef(ref)(
+    *   children = { args =>
+    *     <.div.withRef(args.measureRef)(
     *       ...
     *     )
     *   }
     * }}}
     */
-  val children: js.Function1[RefHandle_t, raw.PropsChildren]
+  val children: js.Function1[ChildrenArgs, raw.PropsChildren]
 }

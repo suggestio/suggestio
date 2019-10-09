@@ -6,16 +6,17 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.css.Css
+import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.grid.build.GridBuilderUtil
 import io.suggest.jd.{MJdEdgeId, MJdTagId}
 import io.suggest.jd.render.m._
-import io.suggest.jd.render.u.{JdGridUtil, JdUtil}
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.WarnMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -33,7 +34,6 @@ import scalacss.ScalaCssReact._
 
 class JdR(
            jdCssStatic        : JdCssStatic,
-           jdGridUtil         : JdGridUtil
          )
   extends Log
 { jdR =>
@@ -101,7 +101,14 @@ class JdR(
           // Рендер внутри блока, просто пропускаем контент на выход
           tag0
         } else {
-          Measure.bounds( blocklessQdContentBoundsMeasuredJdCb )( tag0.withRef(_) )
+          // Для react-dnd-обёртки требуется только нативный тег.
+          <.div(
+            Measure.bounds( blocklessQdContentBoundsMeasuredJdCb ) { chArgs =>
+              tag0(
+                ^.refGeneric := chArgs.measureRef,
+              )
+            }
+          )
         }
       }
 
@@ -244,14 +251,13 @@ class JdR(
 
         // Плитку отсюда полностью вынести не удалось.
         CSSGrid {
-          jdGridUtil.mkCssGridArgs(
+          GridBuilderUtilJs.mkCssGridArgs(
             gbRes = state.gridBuildRes.getOrElse {
               // 2019-09-25 Пока допускаем обычный рендер, но крайне желательно избегать этой ситуации.
               // Потом надо будет как-то всё устаканить, чтобы нельзя было на уровне кода рендерить с документ неправильно (убрать плитку из JdR? Тогда и тип jdt document следом?)
               LOG.warn( WarnMsgs.GRID_REBUILD_INPERFORMANT, msg = state.tagId.toString )
-              GridBuilderUtil.buildGrid {
-                JdUtil.jdDocGbArgs( state.subTree, state.jdArgs )
-              }
+              val gbArgs = GridBuilderUtilJs.jdDocGbArgs( state.subTree, state.jdArgs )
+              GridBuilderUtil.buildGrid( gbArgs )
             },
             conf = state.jdArgs.conf,
             tagName = GridComponents.DIV,

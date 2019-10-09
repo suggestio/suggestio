@@ -11,8 +11,9 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
+import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.edit.m.{CurrContentResize, JdChangeLayer, JdDropContent, JdDropStrip, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize}
+import io.suggest.jd.edit.m.{CurrContentResize, JdChangeLayer, JdDropContent, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize}
 import io.suggest.jd.{JdConst, MJdConf, MJdDoc, MJdEdge}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.u.JdUtil
@@ -520,6 +521,16 @@ class DocEditAh[M](
       }
 
 
+    // Принудительный ребилд плитки из JdAh.
+    case m @ GridRebuild =>
+      val v0 = value
+      val v2 = MDocS.jdDoc
+        .composeLens( MJdDocEditS.gridBuild )
+        .set( GridBuilderUtilJs.buildGridFromJdArgs(v0.jdDoc.jdArgs) )(v0)
+
+      updated(v2)
+
+
     // Клик по кнопкам управления размером текущего блока
     case m: BlockSizeBtnClick =>
       val v0 = value
@@ -565,14 +576,14 @@ class DocEditAh[M](
             MJdArgs.data
               .composeLens( MJdDataJs.doc )
               .set( jdDoc2 ) andThen
-              MJdArgs.jdRuntime
-                .set( _mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs.conf) )
-            )(v0.jdDoc.jdArgs)
+            MJdArgs.jdRuntime
+              .set( _mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs.conf) )
+          )(v0.jdDoc.jdArgs)
 
           // Обновить и дерево, и currentTag новым инстансом.
           val v2 = MDocS.jdDoc.modify(
             (MJdDocEditS.jdArgs set jdArgs2) andThen
-              (MJdDocEditS.gridBuild set JdUtil.buildGridFromJdArgs(jdArgs2))
+            (MJdDocEditS.gridBuild set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2))
           )(v0)
 
           updated( v2 )
@@ -622,7 +633,7 @@ class DocEditAh[M](
               MJdDocEditS.jdArgs
                 .set( jdArgs2 ) andThen
               MJdDocEditS.gridBuild
-                .set( JdUtil.buildGridFromJdArgs(jdArgs2) )
+                .set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
             ) andThen
             MDocS.editors.modify(
               (MEditorsS.stripEd set None) andThen
@@ -817,7 +828,7 @@ class DocEditAh[M](
 
 
     // Сброшен целый блок куда-то на документ.
-    case m: JdDropStrip =>
+    case m: JdDropToDocument =>
       val v0 = value
       val droppedBlockLoc = v0.jdDoc.jdArgs.draggingTagLoc.get
       val droppedBlockLabel = droppedBlockLoc.getLabel
@@ -828,6 +839,7 @@ class DocEditAh[M](
       val allBlocks = v0.jdDoc.jdArgs
         .data.doc.template
         .subForest
+
       // Сброс может быть на блок (на верхнюю или нижнюю половины блока) или в промежутки между блоков.
       val droppedNear = allBlocks
         .zip( v0.jdDoc.gridBuild.coords )
@@ -868,30 +880,31 @@ class DocEditAh[M](
 
       } else {
         // Разобраться, как именно нужно обновить jd-дерево.
-        val (nearJdt, isUpper) = droppedNear match {
+        val (nearJdtTree, isUpper) = droppedNear match {
           // Если один блок - то сброс произошёл прямо в конкретный блок, и нужно по высоте оценить: выше или ниже.
           case Stream(jdtXy) =>
             val jdtWh = jdtXy.jdt.rootLabel.props1.bm.get
             val innerY = m.docXy.y - jdtXy.topLeft.y
             val isUp = innerY < jdtWh.height / 2
-            (jdtXy.jdt.rootLabel, isUp)
+            (jdtXy.jdt, isUp)
 
           // Если два блока, то сброс был в щель между двумя блоками.
           case Stream(_ /*before*/, after) =>
-            (after.jdt.rootLabel, true)
+            (after.jdt, true)
 
           // Неопределённая ситуация. Переносим блок или в начало или в конец документа.
           case other =>
-            LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString("|")) )
+            LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
             val coord0 = v0.jdDoc.gridBuild.coords.head
             if (m.docXy.y > coord0.y) {
               // Положительная координата перетаскивания по вертикали: просто переносим таскаемый блок в конец документа.
-              (allBlocks.last.rootLabel, false)
+              (allBlocks.last, false)
             } else {
               // Поместить таскаемый блок ПЕРЕД самым первым блоком документа.
-              (allBlocks.head.rootLabel, true)
+              (allBlocks.head, true)
             }
         }
+        val nearJdt = nearJdtTree.rootLabel
 
         // Выполнить запланированные действия в дереве документа.
         val targetStripLoc = droppedBlockLoc
@@ -901,7 +914,19 @@ class DocEditAh[M](
           .findByLabel( nearJdt )
           .get
 
-        val droppedBlockTree = droppedBlockLoc.tree
+        // Убрать значение topLeft, если задано. Это для qd-blockless, когда контент был вынесен за пределы блока.
+        val jdt_p1_topLeft_LENS = JdTag.props1 composeLens MJdtProps1.topLeft
+        val droppedBlockLoc1 = if ( jdt_p1_topLeft_LENS.get(droppedBlockLabel).nonEmpty ) {
+          droppedBlockLoc
+            // Обрубаем loc сверху, чтобы modifyLabel() гарантировано не затрагивал ничего кроме текущего уровня, который стал верхним.
+            .tree
+            .loc
+            .modifyLabel( jdt_p1_topLeft_LENS set None )
+        } else {
+          droppedBlockLoc
+        }
+        val droppedBlockTree = droppedBlockLoc1.tree
+
         val droppedBlockLoc2 = if (isUpper) {
           targetStripLoc.insertLeft( droppedBlockTree )
         } else {
@@ -912,22 +937,26 @@ class DocEditAh[M](
         val tpl2 = droppedBlockLoc2.toTree
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
-        val v2 = MDocS.jdDoc
-          .composeLens(MJdDocEditS.jdArgs)
-          .modify(
-            MJdArgs.data
-              .composeLens( MJdDataJs.doc )
-              .set(jdDoc2) andThen
-            MJdArgs.renderArgs.modify(
-              MJdRenderArgs.selPath
-                .set( tpl2 nodeToPath droppedBlockLabel ) andThen
-              MJdRenderArgs.dnd
-                .set( MJdDndS.empty )
-            ) andThen
-            MJdArgs.jdRuntime
-              .set( _mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs.conf) )
-          )(v0)
+        val jdArgs2 = (
+          MJdArgs.data
+            .composeLens( MJdDataJs.doc )
+            .set(jdDoc2) andThen
+          MJdArgs.renderArgs.modify(
+            MJdRenderArgs.selPath
+              .set( tpl2 nodeToPath droppedBlockLabel ) andThen
+            MJdRenderArgs.dnd
+              .set( MJdDndS.empty )
+          ) andThen
+          MJdArgs.jdRuntime
+            .set( _mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs.conf) )
+        )(v0.jdDoc.jdArgs)
 
+        // Сборка основной модификации состояния jdArgs в связи с перемещением:
+        var v2 = MDocS.jdDoc.modify(
+          (MJdDocEditS.jdArgs set jdArgs2) andThen
+          // Если перемещение strip'а или сброс qd-контента на документ, то надо пересчитать плитку:
+          (MJdDocEditS.gridBuild set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+        )(v0)
         updated(v2)
       }
 
@@ -1152,7 +1181,10 @@ class DocEditAh[M](
         val v2 = MDocS.jdDoc
           .composeLens(MJdDocEditS.jdArgs)
           .modify(
-            (_jdData_doc_template_LENS set tpl2) andThen
+            MJdArgs.data
+              .composeLens( MJdDataJs.doc )
+              .composeLens( MJdDoc.template )
+              .set(tpl2) andThen
             // Надо пересчитать path до перемещённого тега.
             MJdArgs.renderArgs
               .composeLens( MJdRenderArgs.selPath )
@@ -1201,7 +1233,7 @@ class DocEditAh[M](
         val v2 = MDocS.jdDoc.modify(
           MJdDocEditS.jdArgs.set( jdArgs2 ) andThen
           MJdDocEditS.gridBuild.set(
-            JdUtil.buildGridFromJdArgs( jdArgs2 )
+            GridBuilderUtilJs.buildGridFromJdArgs( jdArgs2 )
           )
         )(v0)
 
@@ -1460,7 +1492,7 @@ class DocEditAh[M](
           MJdDocEditS.jdArgs
             .set( jdArgs2 ) andThen
           MJdDocEditS.gridBuild
-            .set( JdUtil.buildGridFromJdArgs(jdArgs2) )
+            .set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
         ) andThen
         MDocS.editors
           .composeLens( MEditorsS.slideBlocks )
@@ -1487,7 +1519,7 @@ class DocEditAh[M](
 
       val v2 = MDocS.jdDoc.modify(
         (MJdDocEditS.jdArgs set jdArgs2) andThen
-        (MJdDocEditS.gridBuild set JdUtil.buildGridFromJdArgs(jdArgs2))
+        (MJdDocEditS.gridBuild set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2))
       )(v0)
 
       updated(v2)
@@ -1559,16 +1591,10 @@ class DocEditAh[M](
       .composeLens( MJdRenderArgs.dnd )
   }
 
-  private def _jdData_doc_template_LENS = {
-    MJdArgs.data
-      .composeLens( MJdDataJs.doc )
-      .composeLens( MJdDoc.template )
-  }
-
 }
 
 
-/** Вспомогательная внутренняя модель при обработке [[io.suggest.jd.edit.m.JdDropStrip]].
+/** Вспомогательная внутренняя модель при обработке [[io.suggest.jd.edit.m.JdDropToDocument]].
   *
   * @param jdt Jd-тег
   * @param topLeft Верхней левый угол тега в координатах плитки.

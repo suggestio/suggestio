@@ -17,6 +17,7 @@ import io.suggest.color.MColorData
 import io.suggest.conf.ConfConst
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
+import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.{MJdConf, MJdDoc}
@@ -111,7 +112,7 @@ class LkAdEditCircuit(
         MDocS(
           jdDoc = MJdDocEditS(
             jdArgs    = jdArgs,
-            gridBuild = JdUtil.buildGridFromJdArgs( jdArgs ),
+            gridBuild = GridBuilderUtilJs.buildGridFromJdArgs( jdArgs ),
           ),
           editors = MEditorsS(
             // Залить гистограммы в общий словарь гистограмм, т.к. именно оттуда идёт рендер.

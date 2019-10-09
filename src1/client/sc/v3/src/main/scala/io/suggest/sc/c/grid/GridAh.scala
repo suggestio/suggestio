@@ -7,7 +7,7 @@ import io.suggest.ad.blk.BlockPaddings
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
-import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
+import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.jd.render.m.{MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
@@ -63,14 +63,42 @@ object GridAh {
   }
 
 
-  /** Приведение списка карточек к блокам для обсчёта плитки.
-    *
-    * @param ads Рекламные карточки.
-    * @return Список блоков и под-блоков.
-    */
-  def ads2gridBlocks(ads: TraversableOnce[MScAdData]): Stream[Tree[MGbBlock]] = {
-    ads
+  /** Выполнение ребилда плитки. */
+  def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
+
+    /** Конвертация одной карточки в один блок для рендера в плитке. */
+    def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MJdDataJs): Tree[MGbBlock] = {
+      // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
+      Tree.Leaf {
+        val stripJdt = stripTpl.rootLabel
+
+        val bmOpt = stripJdt.props1.bm
+        val wideBgBlk = for {
+          bm      <- bmOpt
+          if bm.expandMode.nonEmpty
+          //_       <- OptionUtil.maybeTrue( bm.wide )
+          bg      <- stripJdt.props1.bgImg
+          // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
+          // TODO Нужна поддержка wide-фона без картинки.
+          bgEdge  <- brd.edges.get( bg.edgeUid )
+          imgWh   <- bgEdge.origWh
+        } yield {
+          imgWh
+        }
+
+        MGbBlock(
+          size   = GridBuilderUtilJs.gbSizeFromJdt(stripJdt, jdRuntime, jdConf),
+          nodeId = nodeId,
+          jdtOpt = Some(stripJdt),
+          wideBgSz = wideBgBlk
+        )
+      }
+    }
+
+    // Приведение списка карточек к grid-блокам и подблоков обсчёта плитки.
+    val itmDatas = ads
       .toIterator
+      .flatten
       .map { scAdData =>
         scAdData.focused.fold [Tree[MGbBlock]] {
           // Несфокусированная карточка. Вернуть bm единственного стрипа.
@@ -80,6 +108,13 @@ object GridAh {
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
           Tree.Node(
             root = MGbBlock(
+              size   = GridBuilderUtilJs.gbSizeFromJdt(
+                jdt = foc.blkData
+                  .doc.template
+                  .rootLabel,
+                jdRuntime = jdRuntime,
+                jdConf    = jdConf,
+              ),
               nodeId = scAdData.nodeId,
               jdtOpt = None,
             ),
@@ -95,38 +130,10 @@ object GridAh {
         }
       }
       .toStream
-  }
 
-
-  /** Конвертация одной карточки в один блок для рендера в плитке. */
-  def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MJdDataJs): Tree[MGbBlock] = {
-    // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
-    Tree.Leaf {
-      val stripJdt = stripTpl.rootLabel
-
-      val wideBgBlk = for {
-        bm      <- stripJdt.props1.bm
-        if bm.expandMode.nonEmpty
-        //_       <- OptionUtil.maybeTrue( bm.wide )
-        bg      <- stripJdt.props1.bgImg
-        // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
-        // TODO Нужна поддержка wide-фона без картинки.
-        bgEdge  <- brd.edges.get( bg.edgeUid )
-        imgWh   <- bgEdge.origWh
-      } yield {
-        imgWh
-      }
-
-      MGbBlock( nodeId, Some(stripJdt), wideBgBlk )
-    }
-  }
-
-
-  /** Выполнение ребилда плитки. */
-  def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
     GridBuilderUtil.buildGrid(
       MGridBuildArgs(
-        itemsExtDatas = ads2gridBlocks( ads.iterator.flatten ),
+        itemsExtDatas = itmDatas,
         jdConf        = jdConf,
         offY          = GridConst.CONTAINER_OFFSET_TOP,
         jdtWideSzMults = jdRuntime.jdtWideSzMults,

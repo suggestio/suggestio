@@ -3,9 +3,8 @@ package io.suggest.jd.render.u
 import diode.data.Pot
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.grid.GridCalc
-import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
-import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRuntime}
+import io.suggest.jd.render.m.{MJdCssArgs, MJdRuntime}
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import japgolly.univeq._
@@ -105,43 +104,6 @@ object JdUtil {
       // TODO Opt можно оптимизировать сборку id-индекса в выдаче через HashMap.merged для добавления новых данных вместо полного рендера.
       jdTagsById     = jdTagsById,
       qdBlockLess    = mkQdBlockLessData(tpls, prevOpt),
-    )
-  }
-
-
-
-  /** Тривиальная конвертация списка шаблонов блоков в плоский набор grid-build-данных.
-    *
-    * @param jdts Список шаблонов блоков (docJdt.subForest)
-    * @return Список одноуровневых MGbBlock.
-    */
-  def jdts2gbs(jdts: Stream[Tree[JdTag]]): Stream[Tree[MGbBlock]] = {
-    for {
-      (jdtTree, i) <- jdts.zipWithIndex
-      jdt = jdtTree.rootLabel
-      if jdt.props1.bm.nonEmpty
-    } yield {
-      Tree.Leaf(
-        MGbBlock( None, Some(jdt), orderN = Some(i) )
-      )
-    }
-  }
-
-
-  /** Сборка минимальных GbArgs для jd-документа. */
-  def jdDocGbArgs(tpl: Tree[JdTag], jdArgs: MJdArgs): MGridBuildArgs = {
-    MGridBuildArgs(
-      itemsExtDatas   = jdts2gbs( tpl.subForest ),
-      jdConf          = jdArgs.conf,
-      offY            = 0,
-      jdtWideSzMults  = jdArgs.jdRuntime.jdtWideSzMults,
-    )
-  }
-
-
-  def buildGridFromJdArgs(jdArgs: MJdArgs): MGridBuildResult = {
-    GridBuilderUtil.buildGrid(
-      jdDocGbArgs( jdArgs.data.doc.template, jdArgs )
     )
   }
 

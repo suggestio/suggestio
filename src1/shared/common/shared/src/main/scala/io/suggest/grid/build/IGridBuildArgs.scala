@@ -1,6 +1,6 @@
 package io.suggest.grid.build
 
-import io.suggest.ad.blk.BlockMeta
+import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MSzMult
@@ -40,6 +40,7 @@ case class MGridBuildArgs(
   * @param orderN внутренний порядковый номер, заполняется и используется внутри [[GridBuilderUtil]].
   */
 case class MGbBlock(
+                     size                          : MGbSize,
                      nodeId                        : Option[String],
                      jdtOpt                        : Option[JdTag],
                      wideBgSz                      : Option[MSize2di]  = None,
@@ -51,25 +52,24 @@ object MGbBlock {
 
   val orderN = GenLens[MGbBlock](_.orderN)
 
-
-  implicit class MGbBlockExt( val gbBlock: MGbBlock ) extends AnyVal {
-
-    /** Описание размеров текущего блока, если это Tree.Leaf. */
-    def bmOpt: Option[BlockMeta] =
-      gbBlock.jdtOpt.flatMap(_.props1.bm)
-    //override def headOptionBlock = Some(this)
-
-  }
+}
 
 
-  implicit class GbBlockTreeExtOps( val gbTree: Tree[MGbBlock] ) extends AnyVal {
-    def headIsWide: Boolean = {
-      gbTree
-        .flatten
-        .exists(_.bmOpt.hasExpandMode)
-    }
-  }
-
+/** Модель описания размеров одного grid-block.
+  * Изначально, этой моделью была block-meta, но там модель слишком специализирована,
+  * не подходит для внеблокового контента.
+  *
+  * @param widthCells Ширина, в клетках.
+  * @param heightPx Высота, в пикселях.
+  * @param expandMode Режим развёртывания по горизонтали.
+  */
+case class MGbSize(
+                    widthCells      : Int,
+                    heightPx        : Int,
+                    expandMode      : Option[MBlockExpandMode],
+                  )
+object MGbSize {
+  @inline implicit def univEq: UnivEq[MGbSize] = UnivEq.derive
 }
 
 

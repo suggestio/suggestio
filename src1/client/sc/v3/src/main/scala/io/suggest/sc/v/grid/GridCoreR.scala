@@ -3,9 +3,8 @@ package io.suggest.sc.v.grid
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.jd.MJdDoc
+import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
-import io.suggest.jd.render.u.JdGridUtil
 import io.suggest.jd.render.v.JdR
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
@@ -25,9 +24,7 @@ import japgolly.univeq._
   * - карточки должны рендерится лениво, а не перерендериваться постоянно.
   */
 class GridCoreR(
-                 jdGridUtil                 : JdGridUtil,
                  jdR                        : JdR,
-                 //getRouterCtlF              : GetRouterCtlF,
                ) {
 
   import MJdArgs.MJdArgsFastEq
@@ -53,7 +50,7 @@ class GridCoreR(
       val mgrid = mgridProxy.value
 
       CSSGrid {
-        jdGridUtil.mkCssGridArgs(
+        GridBuilderUtilJs.mkCssGridArgs(
           gbRes     = mgrid.gridBuild,
           conf      = mgrid.jdConf,
           tagName   = GridComponents.DIV

@@ -1,6 +1,8 @@
 package com.github.souporserious.react.measure
 
 import minitest._
+import io.suggest.react.ReactCommonUtil.Implicits._
+import japgolly.scalajs.react.Callback
 
 import scala.scalajs.js
 import japgolly.scalajs.react.vdom.html_<^._
@@ -21,8 +23,10 @@ object MeasureSpec extends SimpleTestSuite {
   test("bounds() must work") {
     val unmounted = Measure.bounds { bounds: Bounds =>
       println("bounds => " + bounds)
-    } { ref =>
-      <.div.withRef( ref )(
+      Callback.empty
+    } { args =>
+      <.div(
+        ^.refGeneric := args.measureRef,
         "test",
         <.br,
         "test"

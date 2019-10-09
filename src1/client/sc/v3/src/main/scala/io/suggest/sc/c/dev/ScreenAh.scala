@@ -27,9 +27,6 @@ class ScreenAh[M](
   /** Кол-во миллисекунд срабатывания таймера задержки реакции на произошедший ресайз. */
   private def RSZ_TIMER_MS = 100
 
-  private def scCssRebuildFx: Effect =
-    ScCssReBuild.toEffectPure
-
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -74,7 +71,7 @@ class ScreenAh[M](
       )
 
       // Аккамулируем эффект. Сначала перестройка основной вёрстки.
-      var fx: Effect = scCssRebuildFx + gridReConfFx
+      var fx: Effect = ScCssReBuild.toEffectPure + gridReConfFx
 
       // Если гео.карта видна юзера, то пнуть её после обновления вёрстки.
       val root = rootRO.value
@@ -119,7 +116,7 @@ class ScreenAh[M](
 
       // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
       // Выполнить ребилд ScCss в фоне:
-      val fx = scCssRebuildFx
+      val fx = ScCssReBuild.toEffectPure
       updated(v2, fx)
 
   }

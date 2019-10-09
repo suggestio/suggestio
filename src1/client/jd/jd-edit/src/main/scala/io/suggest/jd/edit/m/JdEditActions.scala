@@ -1,5 +1,6 @@
 package io.suggest.jd.edit.m
 
+import com.github.react.dnd.IItem
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.JdTag
@@ -50,7 +51,7 @@ object JdChangeLayer {
 /** Экшен окончания перетаскивания текущего стрипа на новое место в документе.
   * @param docXy Координата сброса внутри документа (координата мыши).
   */
-case class JdDropStrip(docXy: MCoords2di) extends IJdEditAction
+case class JdDropToDocument(docXy: MCoords2di, dropItem: IItem) extends IJdEditAction
 
 
 /** Сигнал ресайза контента внутри блока. */
