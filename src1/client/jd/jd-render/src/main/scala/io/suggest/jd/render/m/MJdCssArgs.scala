@@ -1,14 +1,10 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import io.suggest.common.html.HtmlConstants
-import io.suggest.dev.MSzMult
-import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
-import io.suggest.jd.tags.JdTag
-import japgolly.univeq.UnivEq
+import io.suggest.jd.MJdConf
 import io.suggest.ueq.UnivEqUtil._
-
-import scala.collection.immutable.HashMap
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,12 +18,13 @@ object MJdCssArgs {
   implicit object MJdCssArgsFastEq extends FastEq[MJdCssArgs] {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
       (a.conf ===* b.conf) &&
-      (a.jdtWideSzMults ===* b.jdtWideSzMults) &&
-      (a.jdTagsById ===* b.jdTagsById)
+      (a.data ===* b.data)
     }
   }
 
   @inline implicit def univEq: UnivEq[MJdCssArgs] = UnivEq.derive
+
+  val data = GenLens[MJdCssArgs](_.data)
 
 }
 
@@ -37,21 +34,10 @@ object MJdCssArgs {
   * @param conf Конфигурация рендеринга.
   * @param quirks Разрешить использовать костыли, которые могут нарушить рендер за пределами плитки.
   *               Появилось, чтобы убрать position.absolute из root-контейнера.
+  * @param data Общие рантаймовые (с JdCss) данными.
   */
 final case class MJdCssArgs(
                              conf             : MJdConf,
+                             data             : MJdRuntimeData,
                              quirks           : Boolean = true,
-                             jdtWideSzMults   : Map[JdTag, MSzMult],
-                             jdTagsById       : HashMap[MJdTagId, JdTag],
-                           ) {
-
-  override def toString: String = {
-    new StringBuilder( productPrefix )
-      .append( HtmlConstants.`(` )
-      .append( jdTagsById.size ).append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
-      .append( conf )
-      .append( HtmlConstants.`)` )
-      .toString()
-  }
-
-}
+                           )

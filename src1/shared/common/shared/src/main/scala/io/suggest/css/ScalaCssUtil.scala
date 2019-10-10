@@ -1,5 +1,6 @@
 package io.suggest.css
 
+import enumeratum.values.ValueEnumEntry
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
@@ -15,6 +16,10 @@ import scalacss.internal.{Literal, StyleA, StyleS}
   * Description: Внутренняя утиль для ScalaCSS.
   */
 object ScalaCssUtil {
+
+  def valueEnumEntryDomainNameF[T](vee: ValueEnumEntry[T], i: Int): T =
+    vee.value
+
 
   object Implicits {
 

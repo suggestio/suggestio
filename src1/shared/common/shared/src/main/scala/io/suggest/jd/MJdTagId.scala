@@ -56,6 +56,7 @@ object MJdTagId extends IEmpty {
   def mkTreesIndexSeg(jdDocs: Stream[MJdDoc]): Stream[(MJdTagId, JdTag)] =
     jdDocs.flatMap( mkTreeIndexSeg )
 
+
   /** Создать сегмент для будущего jd-индекса по id.
     *
     * @param jdDoc Данные исходного документа.

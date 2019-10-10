@@ -4,6 +4,7 @@ import io.suggest.common.html.HtmlConstants
 import japgolly.scalajs.react.vdom.{HtmlAttrAndStyles, TagMod, TagOf, TopNode, VdomElement}
 import japgolly.scalajs.react.{Callback, CallbackTo, ReactEvent}
 import japgolly.scalajs.react.internal.OptionLike
+import japgolly.scalajs.react.vdom.Attr.ValueType
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -90,14 +91,23 @@ object ReactCommonUtil {
   /** Для прямой передачи сырого ref-а сквозь sjs vdom прямо в react.js, используем этот vdom-аттрибут.
     * @see Решение взято из [[https://github.com/japgolly/scalajs-react/issues/500#issuecomment-426559951]]
     */
-  lazy val refGenericAttr = VdomAttr( VdomAttr.Ref.attrName )
+  lazy val genericRefAttr = VdomAttr( VdomAttr.Ref.attrName )
 
   /** Все неявности складируются сюда. */
   object Implicits {
 
-    implicit class AttrsOpsExt( val haas: HtmlAttrAndStyles ) extends AnyVal {
+    implicit class HtmlAttrsOpsExt(val haas: HtmlAttrAndStyles ) extends AnyVal {
       /** Доступ к vdom-атрибуту ref generic, не проверяющий тип ref'а. */
-      def refGeneric = refGenericAttr
+      def genericRef = genericRefAttr
+    }
+
+
+    implicit class TagOfOpsExt[+N <: TopNode]( val tagOf: TagOf[N] ) extends AnyVal {
+      def withGenericRef(ref: js.Any) = {
+        tagOf(
+          ^.genericRef := ref
+        )
+      }
     }
 
 

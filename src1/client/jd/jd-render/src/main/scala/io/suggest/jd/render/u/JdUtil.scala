@@ -1,10 +1,9 @@
 package io.suggest.jd.render.u
 
 import diode.data.Pot
-import io.suggest.common.geom.d2.MSize2di
 import io.suggest.grid.GridCalc
 import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
-import io.suggest.jd.render.m.{MJdCssArgs, MJdRuntime}
+import io.suggest.jd.render.m.{MJdCssArgs, MJdRuntime, MJdRuntimeData, MQdBlSize}
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import japgolly.univeq._
@@ -27,7 +26,7 @@ object JdUtil {
     * @return Карта состояний.
     */
   def mkQdBlockLessData(tpls: Stream[Tree[JdTag]],
-                        prevOpt: Option[MJdRuntime] = None): HashMap[JdTag, Pot[MSize2di]] = {
+                        prevOpt: Option[MJdRuntime] = None): HashMap[JdTag, Pot[MQdBlSize]] = {
     // Какие теги нужны (на основе шаблонов)
     val wantedQdBls = for {
       tpls      <- tpls
@@ -46,24 +45,25 @@ object JdUtil {
 
     if (wantedQdBls.isEmpty) {
       // Нет никаких данных по qd-blockless вообще.
-      HashMap.empty[JdTag, Pot[MSize2di]]
+      HashMap.empty[JdTag, Pot[MQdBlSize]]
+
     } else {
       // Есть старая карта данных. Дополнить её, замёржив новые данные, и но удаляя ненужные
       prevOpt
-        .map(_.qdBlockLess)
+        .map(_.data.qdBlockLess)
         .filter { m =>
           // Пустая карта не нужна. Считаем что пустой карты просто нет.
           m.nonEmpty
         }
         .fold {
-          (HashMap.newBuilder[JdTag, Pot[MSize2di]] ++= wantedQdBls.map(_ -> Pot.empty[MSize2di]))
+          (HashMap.newBuilder[JdTag, Pot[MQdBlSize]] ++= wantedQdBls.map(_ -> Pot.empty[MQdBlSize]))
             .result()
         } { prevMap0 =>
           // TODO И надо убрать удалённые элементы
           wantedQdBls.foldLeft(prevMap0) { (acc0, jdtWant) =>
             (acc0 get jdtWant).fold {
               // Нет такого ключа - добавить в карту с Pot.empty
-              acc0 + (jdtWant -> Pot.empty[MSize2di])
+              acc0 + (jdtWant -> Pot.empty[MQdBlSize])
             } { _ =>
               // Уже есть такой тег в старой карте.
               acc0
@@ -90,20 +90,19 @@ object JdUtil {
     val prevOpt = Option(prev)
 
     val tpls = docs.map(_.template)
-    val jdtWideSzMults = GridCalc.wideSzMults(tpls, jdConf)
-    val jdTagsById = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(docs) )
+    val jdRtData = MJdRuntimeData(
+      jdtWideSzMults  = GridCalc.wideSzMults(tpls, jdConf),
+      jdTagsById      = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(docs) ),
+      qdBlockLess     = mkQdBlockLessData(tpls, prevOpt),
+    )
 
     // Обновить данные по qd blockless (внеблоковому контенту).
     MJdRuntime(
-      jdCss = JdCss( MJdCssArgs(
-        conf            = jdConf,
-        jdtWideSzMults  = jdtWideSzMults,
-        jdTagsById      = jdTagsById,
+      jdCss   = JdCss( MJdCssArgs(
+        conf    = jdConf,
+        data    = jdRtData
       )),
-      jdtWideSzMults = jdtWideSzMults,
-      // TODO Opt можно оптимизировать сборку id-индекса в выдаче через HashMap.merged для добавления новых данных вместо полного рендера.
-      jdTagsById     = jdTagsById,
-      qdBlockLess    = mkQdBlockLessData(tpls, prevOpt),
+      data    = jdRtData,
     )
   }
 

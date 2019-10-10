@@ -26,7 +26,7 @@ object MeasureSpec extends SimpleTestSuite {
       Callback.empty
     } { args =>
       <.div(
-        ^.refGeneric := args.measureRef,
+        ^.genericRef := args.measureRef,
         "test",
         <.br,
         "test"

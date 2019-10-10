@@ -916,7 +916,8 @@ class DocEditAh[M](
 
         // Убрать значение topLeft, если задано. Это для qd-blockless, когда контент был вынесен за пределы блока.
         val jdt_p1_topLeft_LENS = JdTag.props1 composeLens MJdtProps1.topLeft
-        val droppedBlockLoc1 = if ( jdt_p1_topLeft_LENS.get(droppedBlockLabel).nonEmpty ) {
+        val needModifyJdt = jdt_p1_topLeft_LENS.get(droppedBlockLabel).nonEmpty
+        val droppedBlockLoc1 = if (needModifyJdt) {
           droppedBlockLoc
             // Обрубаем loc сверху, чтобы modifyLabel() гарантировано не затрагивал ничего кроме текущего уровня, который стал верхним.
             .tree

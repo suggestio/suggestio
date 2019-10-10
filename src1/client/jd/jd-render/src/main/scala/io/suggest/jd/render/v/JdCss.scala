@@ -1,7 +1,6 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
-import enumeratum.values.ValueEnumEntry
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
@@ -9,13 +8,13 @@ import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.dev.MSzMult
-import io.suggest.font.{MFontSizes, MFonts}
+import io.suggest.font.MFontSizes
 import io.suggest.jd.{JdConst, MJdTagId}
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.primo.ISetUnset
-import io.suggest.text.MTextAligns
 import japgolly.univeq._
+import monocle.macros.GenLens
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.DslMacros
 import scalacss.internal.ValueT.TypedAttr_Color
@@ -40,105 +39,12 @@ object JdCss {
 
   @inline implicit def univEq: UnivEq[JdCss] = UnivEq.derive
 
-
-  private[v] def valueEnumEntryDomainNameF[T] = {
-    (vee: ValueEnumEntry[T], _: Int) =>
-      vee.value
-  }
-
   private val _jdIdToStringF = {
     (jdId: MJdTagId, i: Int) =>
       jdId.toString
   }
 
-}
-
-
-/** Статические стили JdCss, которые не изменяются во время работы. */
-class JdCssStatic extends StyleSheet.Inline {
-
-  import dsl._
-
-
-  /** Текущий выбранный тег выделяется на картинке. */
-  val selectedTag = {
-    style(
-      outline.dashed,
-      zIndex(10)
-    )
-  }
-
-
-  /** Поддержка горизонтального ресайза. */
-  val horizResizable = style(
-    // TODO Хотелось с &.hover(...), но в хроме полный ахтунг и погибель
-    resize.horizontal,
-  )
-
-  val hvResizable = style(
-    resize.both
-  )
-
-  val wideBlockStyle = {
-    val zeroPx = 0.px
-    style(
-      // TODO Переместить top в smBlock?
-      top(zeroPx)
-      //left(zeroPx)
-    )
-  }
-
-  /** Общий стиль для всех AbsPos-тегов. */
-  val absPosStyleAll = style(
-    position.absolute,
-    zIndex(5)
-  )
-
-
-  // Для строк и групп строк стили более точечные.
-  // -------------------------------------------------------------------------------
-  // text-align
-
-  /** styleF допустимых выравниваний текста. */
-  val textAlignsStyleF = {
-    val taAttr = textAlign
-    styleF(
-      new Domain.OverSeq( MTextAligns.values )
-    )(
-      { align =>
-        val av = align match {
-          case MTextAligns.Left    => taAttr.left
-          case MTextAligns.Center  => taAttr.center
-          case MTextAligns.Right   => taAttr.right
-          case MTextAligns.Justify => taAttr.justify
-        }
-        styleS( av )
-      },
-      JdCss.valueEnumEntryDomainNameF
-    )
-  }
-
-  // -------------------------------------------------------------------------------
-  // text indents.
-
-  /** Стили сдвигов выравниваний. */
-  val indentStyleF = {
-    // quill допускает сдвиги от 1 до 8 включительно.
-    styleF.int(1 to 9) { indentLevel =>
-      styleS(
-        paddingLeft( (indentLevel * 3).em )
-      )
-    }
-  }
-
-
-  val smBlockS = style(
-    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
-    overflow.hidden,
-    // Дефолтовые настройки шрифтов внутри блока:
-    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
-    color.black
-  )
+  val jdCssArgs = GenLens[JdCss](_.jdCssArgs)
 
 }
 
@@ -174,12 +80,16 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
+      .data
       .jdTagsById
       .valuesIterator
   }
 
   private def _filteredTagIds(filter: JdTag => Boolean): IndexedSeq[MJdTagId] = {
-    jdCssArgs.jdTagsById.iterator
+    jdCssArgs
+      .data
+      .jdTagsById
+      .iterator
       .filter { jdtWithId =>
         filter( jdtWithId._2 )
       }
@@ -211,12 +121,12 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     )(
       {stripId =>
-        val strip = jdCssArgs.jdTagsById( stripId )
+        val strip = jdCssArgs.data.jdTagsById( stripId )
         var accS = List.empty[ToStyle]
 
         // Стиль размеров блока-полосы.
         for (bm <- strip.props1.bm) {
-          val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
+          val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
 
           val widthPx = _szMulted( bm.width, wideSzMultOpt )
           accS ::= height( _szMulted( bm.height, wideSzMultOpt ).px )
@@ -266,9 +176,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {stripId =>
-      val strip = jdCssArgs.jdTagsById( stripId )
+      val strip = jdCssArgs.data.jdTagsById( stripId )
       strip.props1.bm.whenDefinedStyleS { bm =>
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
         styleS(
           // Записываем одну из двух сторон картинки.
           if (bm.expandMode.nonEmpty) {
@@ -294,11 +204,11 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {stripId =>
-      val strip = jdCssArgs.jdTagsById( stripId )
+      val strip = jdCssArgs.data.jdTagsById( stripId )
       var accS: List[ToStyle] = Nil
       // Уточнить размеры wide-блока:
       for (bm <- strip.props1.bm) {
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
         accS ::= (height( _szMulted(bm.height, wideSzMultOpt).px ): ToStyle)
 
         // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
@@ -351,14 +261,30 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стили для элементов, отпозиционированных абсолютно. */
   val absPosStyleF = styleF(
     new Domain.OverSeq({
-      _filteredTagIds { _.props1.topLeft.nonEmpty }
+      _filteredTagIds { _.name ==* MJdTagNames.QD_CONTENT }
     })
   ) (
-    { jdtId =>
-      val jdt = jdCssArgs.jdTagsById( jdtId )
+    {jdtId =>
+      val jdt = jdCssArgs.data.jdTagsById( jdtId )
       // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
-      jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+      jdt.props1.topLeft.fold[StyleS] {
+        // qd-blockless?
+        jdCssArgs.data.qdBlockLess
+          .get( jdt )
+          .flatMap(_.toOption)
+          .whenDefinedStyleS { qdBlSz =>
+            var acc = List.empty[ToStyle]
+            val hDiffPx = qdBlSz.bounds.height - qdBlSz.client.height
+            if (hDiffPx > 0)
+              acc ::= marginTop( (hDiffPx / 2).px )
+            // TODO Горизонтальная центровка по ширине плитки
+            if (acc.isEmpty) StyleS.empty
+            else styleS( acc: _* )
+          }
+
+      } { topLeft =>
+        // Обычное ручное позиционирование.
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
         // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
         styleS(
           top( _szMulted(topLeft.y, wideSzMultOpt).px ),
@@ -378,9 +304,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {jdtId =>
-      val jdt = jdCssArgs.jdTagsById( jdtId )
+      val jdt = jdCssArgs.data.jdTagsById( jdtId )
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
         styleS(
           width( _szMulted(widthPx, wideSzMultOpt).px )
         )
@@ -400,14 +326,14 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {jdtId =>
-      val jdt = jdCssArgs.jdTagsById( jdtId )
+      val jdt = jdCssArgs.data.jdTagsById( jdtId )
       val shadow = jdt.props1.textShadow.get
       var acc: List[String] = Nil
       for (mcd <- shadow.color)
         acc ::= mcd.hexCode
       for (blur <- shadow.blur)
         acc ::= (blur.toDouble / JdConst.Shadow.TextShadow.BLUR_FRAC).px.value
-      val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+      val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
       acc ::= _szMulted(shadow.vOffset, wideSzMultOpt).px.value
       acc ::= _szMulted(shadow.hOffset, wideSzMultOpt).px.value
       styleS(
@@ -438,7 +364,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     ) (
       {jdtId =>
-        val jdt = jdCssArgs.jdTagsById( jdtId )
+        val jdt = jdCssArgs.data.jdTagsById( jdtId )
         val attrsText = jdt.qdProps.get.attrsText.get
 
         var acc = List.empty[ToStyle]
@@ -461,7 +387,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
         // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
         for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
-          val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+          val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
 
           // Рендер размера шрифта
           acc ::= _lineHeightAttr( _szMulted(fontSizePx.lineHeight, wideSzMultOpt).px )
@@ -493,11 +419,11 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     ) (
       {jdtId =>
-        val jdt = jdCssArgs.jdTagsById( jdtId )
+        val jdt = jdCssArgs.data.jdTagsById( jdtId )
 
         val embedAttrs = jdt.qdProps.get.attrsEmbed.get
         var acc = List.empty[ToStyle]
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
 
         for (heightSU <- embedAttrs.height; heightPx <- heightSU)
           acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
@@ -538,74 +464,5 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       height( _szMulted(whDflt.height).px )
     )
   }
-
-
-  /** Стили для видео-фреймов. */
-  /*
-  val videoStyleF = {
-    val videoPred = MPredicates.JdContent.Video
-    val videosIter = for {
-      qdOp        <- _qdOpsIter
-      eid         <- qdOp.edgeInfo
-      dataEdge    <- jdCssArgs.edges.get(eid.edgeUid)
-      if dataEdge.jdEdge.predicate ==>> videoPred
-    } yield {
-      (qdOp, dataEdge)
-    }
-    val videosSeq = videosIter.toIndexedSeq
-
-    val videosDomain = new Domain.OverSeq( videosSeq )
-    styleF( videosDomain ) { _ =>
-      // Пока используем дефолтовые размеры видео-фрейма -- 300x150: https://stackoverflow.com/a/22844117
-      styleS(
-        width ( Math.round(300 * blkSzMultD).px ),
-        height( Math.round(150 * blkSzMultD).px )
-      )
-    }
-  }
-  */
-
-  // -------------------------------------------------------------------------------
-  // images + crop.
-
-  /** Стили для эмуляции кропа на фоновом изображении блока. */
-  /*
-  val blkBgImgCropEmuF = {
-    val emuCrops = {
-      val cropsIter = for {
-        jdt       <- _allJdTagsIter
-        bm        <- jdt.props1.bm
-        bgImg     <- jdt.props1.bgImg
-        mcrop     <- bgImg.crop
-        e         <- jdCssArgs.edges.get( bgImg.imgEdge.edgeUid )
-        origWh    <- e.origWh
-      } yield {
-        //val outerWh = bm.rePadded( jdCssArgs.conf.blockPadding )
-        MEmuCropCssArgs(mcrop, origWh, bm)
-      }
-      cropsIter.toIndexedSeq
-    }
-
-    val cropsDomain = new Domain.OverSeq( emuCrops )
-
-    styleF(cropsDomain) { ecArgs =>
-
-      // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
-      // margin: -20px 0px 0px -16px; -- сдвиг вверх и влево.
-      // Для этого надо вписать размеры кропа в размеры блока
-
-      // Вычисляем отношение стороны кропа к стороне блока. Считаем, что обе стороны соотносятся одинаково.
-      val outer2cropRatio = ecArgs.outerWh.height.toDouble / ecArgs.crop.height.toDouble
-
-      // Проецируем это отношение на натуральные размеры картинки, top и left:
-      styleS(
-        width     ( (ecArgs.origWh.width  * outer2cropRatio * blkSzMultD).px ),
-        height    ( (ecArgs.origWh.height * outer2cropRatio * blkSzMultD).px ),
-        marginLeft( -(ecArgs.crop.offX * outer2cropRatio * blkSzMultD).px ),
-        marginTop ( -(ecArgs.crop.offY * outer2cropRatio * blkSzMultD).px )
-      )
-    }
-  }
-  */
 
 }

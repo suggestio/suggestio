@@ -17,12 +17,9 @@ import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-
-import scala.collection.immutable.HashMap
 
 /**
   * Suggest.io
@@ -166,7 +163,7 @@ object NodeRenderR {
     jdRuntimeOpt
       // Не пересобирать JdCss, если args не изменились.
       .filter { jdRuntime0 =>
-        jdRuntime0.jdCss.jdCssArgs.jdTagsById ==* jdRuntime2.jdTagsById
+        jdRuntime0.jdCss.jdCssArgs.data.jdTagsById ==* jdRuntime2.data.jdTagsById
       }
       .getOrElse( jdRuntime2 )
   }

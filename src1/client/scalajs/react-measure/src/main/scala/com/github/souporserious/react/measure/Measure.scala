@@ -18,7 +18,7 @@ object Measure extends Log {
 
   val component = JsComponent[MeasureProps, Children.None, Null]( MeasureJs )
 
-  private def _mkChildrenJsF(f0: ChildrenArgs => VdomNode) = {
+  def mkChildrenJsF(f0: ChildrenArgs => VdomNode) = {
     f0.andThen(_.rawNode: raw.PropsChildren)
   }
 
@@ -26,14 +26,16 @@ object Measure extends Log {
     val onBoundsF = ReactCommonUtil.cbFun1ToJsCb(
       onResizeF.compose[ContentRect]( _.bounds.get )
     )
-    component(
+    apply(
       new MeasureProps {
         override val bounds   = true
         override val onResize = onBoundsF
-        override val children = _mkChildrenJsF( childrenF )
+        override val children = mkChildrenJsF( childrenF )
       }
     )
   }
+
+  def apply(measureProps: MeasureProps) = component(measureProps)
 
 }
 
@@ -56,14 +58,17 @@ trait MeasureProps extends js.Object {
   val bounds: js.UndefOr[Boolean] = js.undefined
   val margin: js.UndefOr[Boolean] = js.undefined
   val innerRef: js.UndefOr[js.Function1[RefHandle_t, _]] = js.undefined
-  val onResize: js.UndefOr[js.Function1[ContentRect, _]] = js.undefined
+  val onResize: js.UndefOr[js.Function1[ContentRect, Unit]] = js.undefined
 
   /** Children rendering function.
     *
     * For example:
     * {{{
+    *   import ReactCommonUtil.Implicits._
+    *
     *   children = { args =>
-    *     <.div.withRef(args.measureRef)(
+    *     <.div(
+    *       ^.refGeneric := args.measureRef,
     *       ...
     *     )
     *   }

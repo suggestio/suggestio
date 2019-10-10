@@ -1,6 +1,6 @@
 package io.suggest.jd.render.m
 
-import com.github.souporserious.react.measure.Bounds
+import com.github.souporserious.react.measure.ContentRect
 import io.suggest.jd.tags.JdTag
 import io.suggest.spa.DAction
 
@@ -14,7 +14,7 @@ trait IJdAction extends DAction
 
 
 /** Сигнал о выполнении измерения размеров qd-контента. */
-case class QdBoundsMeasured(jdTag: JdTag, bounds: Bounds) extends IJdAction
+case class QdBoundsMeasured(jdTag: JdTag, contentRect: ContentRect) extends IJdAction
 
 
 /** Принудительный пересчёт плитки.

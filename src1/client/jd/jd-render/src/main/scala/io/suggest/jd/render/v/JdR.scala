@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
-import com.github.souporserious.react.measure.{Bounds, Measure}
+import com.github.souporserious.react.measure.{ChildrenArgs, ContentRect, Measure, MeasureProps}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -24,6 +24,8 @@ import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -61,34 +63,42 @@ class JdR(
 
         val qdTag = state.subTree.rootLabel
 
-        <.div(
-
-          // Опциональный цвет фона
+        var contTagModsAcc = List[TagMod](
           _bgColorOpt( qdTag, state.jdArgs ),
 
-          // Опциональная ротация элемента.
-          qdTag.props1.rotateDeg
-            .whenDefined { state.jdArgs.jdRuntime.jdCss.rotateF.apply },
-
-          // Поддержка перетаскивания
-          jdCssStatic.absPosStyleAll,
-
-          jdCss.absPosStyleF( state.tagId ),
-
-          // CSS-класс принудительной ширины, если задан.
-          ReactCommonUtil.maybe( qdTag.props1.widthPx.nonEmpty ) {
-            jdCss.forcedWidthStyleF( state.tagId )
-          },
-
-          // Стиль для теней
-          ReactCommonUtil.maybe( qdTag.props1.textShadow.nonEmpty ) {
-            jdCss.contentShadowF( state.tagId )
-          },
-
           // Рендер qd-контента в html.
-          _qdContentRrrHtml( state )
-            .render()
+          _qdContentRrrHtml( state ).render(),
         )
+
+        if (qdTag.props1.topLeft.nonEmpty) {
+          // Обычный контент внутри блока.
+          contTagModsAcc =
+            // Поддержка перетаскивания внутри блока
+            (jdCssStatic.absPosStyleAll: TagMod) ::
+            // Поддержка абсолютного позиционирования внутри контейнера:
+            (jdCss.absPosStyleF( state.tagId ): TagMod) ::
+            contTagModsAcc
+        } else {
+          // Внеблоковый контент. Бывает, что высота уже измерена и не измерена. Отработать обе ситуации:
+          contTagModsAcc ::= jdCssStatic.qdBl
+          val qdBlOpt = state.jdArgs.jdRuntime.data.qdBlockLess.get(qdTag)
+          if ( qdBlOpt.exists(_.nonEmpty) )
+            contTagModsAcc ::= jdCss.absPosStyleF( state.tagId )
+        }
+
+        // Вращение, если активно:
+        for (rotateDeg <- qdTag.props1.rotateDeg)
+          contTagModsAcc ::= state.jdArgs.jdRuntime.jdCss.rotateF( rotateDeg )
+
+        // CSS-класс принудительной ширины, если задан.
+        if (qdTag.props1.widthPx.nonEmpty)
+          contTagModsAcc ::= jdCss.forcedWidthStyleF( state.tagId )
+
+        // Стиль для теней
+        if( qdTag.props1.textShadow.nonEmpty )
+          contTagModsAcc ::= jdCss.contentShadowF( state.tagId )
+
+        <.div( contTagModsAcc : _* )
       }
 
       def _doRender(state: MJdRrrProps): VdomElement = {
@@ -101,21 +111,33 @@ class JdR(
           // Рендер внутри блока, просто пропускаем контент на выход
           tag0
         } else {
-          // Для react-dnd-обёртки требуется только нативный тег.
+          // Для наружной обёртки react-dnd требуется только нативный тег:
           <.div(
-            Measure.bounds( blocklessQdContentBoundsMeasuredJdCb ) { chArgs =>
-              tag0(
-                ^.refGeneric := chArgs.measureRef,
-              )
+            // Сборка измерителя размеров тега:
+            Measure {
+              val _childrenF: js.Function1[ChildrenArgs, raw.PropsChildren] = { chArgs =>
+                tag0(
+                  ^.genericRef := chArgs.measureRef,
+                )
+                  .rawElement: raw.PropsChildren
+              }
+              new MeasureProps {
+                override val client = true
+                override val bounds = true
+                override val children = _childrenF
+                override val onResize = _onResizeF
+              }
             }
           )
         }
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      def blocklessQdContentBoundsMeasuredJdCb(b: Bounds): Callback
-      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], bounds: Bounds) =
-        QdBoundsMeasured(mp.value.subTree.rootLabel, bounds)
+      def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback
+      lazy val _onResizeF = ReactCommonUtil.cbFun1ToJsCb( blocklessQdContentBoundsMeasuredJdCb )
+
+      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], cr: ContentRect) =
+        QdBoundsMeasured(mp.value.subTree.rootLabel, cr)
 
     }
 
@@ -369,10 +391,10 @@ class JdR(
     final class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends QdContentBase {
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      override def blocklessQdContentBoundsMeasuredJdCb(b: Bounds): Callback = {
+      override def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback = {
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
           propsProxy: ModelProxy[MJdRrrProps] =>
-            _qdBoundsMeasured( propsProxy, b )
+            _qdBoundsMeasured( propsProxy, cr )
         }
       }
 

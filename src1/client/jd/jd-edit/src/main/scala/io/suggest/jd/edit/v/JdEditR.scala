@@ -1,7 +1,7 @@
 package io.suggest.jd.edit.v
 
 import com.github.react.dnd._
-import com.github.souporserious.react.measure.Bounds
+import com.github.souporserious.react.measure.{Bounds, ContentRect}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -193,10 +193,10 @@ class JdEditR(
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      override def blocklessQdContentBoundsMeasuredJdCb(b: Bounds): Callback = {
+      override def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback = {
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
           props: MRrrEdit with MRrrEditCollectDrag =>
-            _qdBoundsMeasured( props.p, b )
+            _qdBoundsMeasured( props.p, cr )
         }
       }
 

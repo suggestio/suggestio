@@ -136,7 +136,7 @@ object GridAh {
         itemsExtDatas = itmDatas,
         jdConf        = jdConf,
         offY          = GridConst.CONTAINER_OFFSET_TOP,
-        jdtWideSzMults = jdRuntime.jdtWideSzMults,
+        jdtWideSzMults = jdRuntime.data.jdtWideSzMults,
       )
     )
   }

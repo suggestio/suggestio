@@ -1,18 +1,9 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import diode.data.Pot
-import io.suggest.common.geom.d2.MSize2di
-import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.JdTag
-import io.suggest.ueq.JsUnivEqUtil._
-import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
-
-import scala.collection.immutable.HashMap
 
 /**
   * Suggest.io
@@ -26,16 +17,16 @@ object MJdRuntime {
   implicit object MJdRuntimeFastEq extends FastEq[MJdRuntime] {
     override def eqv(a: MJdRuntime, b: MJdRuntime): Boolean = {
       //(a.jdCss ===* b.jdCss) &&
-      //(a.jdtWideSzMults ===* b.jdtWideSzMults) &&
-      (a.qdBlockLess ===* b.qdBlockLess) //&&
-      //(a.jdTagsById ===* b.jdTagsById)
+      //MJdRuntimeData.MJdRuntimeDataFastEq.eqv( a.data, b.data )
+      (a.gen ==* b.gen)
     }
   }
 
-
   @inline implicit def univEq: UnivEq[MJdRuntime] = UnivEq.derive
 
-  val qdBlockLess = GenLens[MJdRuntime](_.qdBlockLess)
+  val jdCss   = GenLens[MJdRuntime](_.jdCss)
+  val data    = GenLens[MJdRuntime](_.data)
+  val gen     = GenLens[MJdRuntime](_.gen)
 
 }
 
@@ -43,17 +34,13 @@ object MJdRuntime {
 /** Контейнер рантаймовых данных jd-рендера.
   *
   * @param jdCss Отрендеренный css.
-  * @param jdtWideSzMults Ассоц.массив информации wideSzMult'ов по jd-тегам.
-  *                       Появился для возможности увеличения wide-блоков без влияния на остальную плитку.
-  * @param qdBlockLess Состояния безблоковых qd-тегов с динамическими размерами в плитке.
-  *                    Оно заполняется асинхронно через callback'и из react-measure и др.
-  *                    Только HashMap, чтобы гарантировать быстрое добавление новых элементов в массив.
-  * @param jdTagsById Теги по ключу. Для связывания стабильных названий стилей в JdCss с JdR.
+  * @param data Пошаренный контейнер данных рантайма.
+  * @param gen Счётчик поколения инстанса модели, чтобы управлять необходимостью пере-рендеривания плитки.
+  *            Счётчик инкрементируется сам по умолчанию, но можно вручную управлять значением,
+  *            которое непосредственно влияет на FastEq.eqv().
   */
 case class MJdRuntime(
-                       jdCss              : JdCss,
-                     // TODO Заменить ключи: JdTag на MJdTagId.
-                       jdtWideSzMults     : HashMap[JdTag, MSzMult],
-                       qdBlockLess        : HashMap[JdTag, Pot[MSize2di]]     = HashMap.empty,
-                       jdTagsById         : HashMap[MJdTagId, JdTag]          = HashMap.empty,
+                       jdCss      : JdCss,
+                       data       : MJdRuntimeData,
+                       gen        : Long            = System.currentTimeMillis(),
                      )
