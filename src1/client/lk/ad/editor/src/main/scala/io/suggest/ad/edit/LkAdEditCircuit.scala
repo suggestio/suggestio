@@ -104,10 +104,10 @@ class LkAdEditCircuit(
         val jdArgs = MJdArgs(
           data        = jdDataJs,
           conf        = jdConf,
-          jdRuntime   = JdUtil.mkRuntime(
-            docs   = jdDataJs.doc #:: Stream.empty,
-            jdConf = jdConf,
-          ),
+          jdRuntime   = JdUtil
+            .mkRuntime(jdConf)
+            .docs(jdDataJs.doc)
+            .make,
         )
         MDocS(
           jdDoc = MJdDocEditS(
@@ -226,11 +226,7 @@ class LkAdEditCircuit(
                   .composeLens(MJdDataJs.doc)
                   .set(jdDoc2) andThen
                 MJdArgs.jdRuntime
-                  .set( JdUtil.mkRuntime(
-                    docs   = jdDoc2 #:: Stream.empty,
-                    jdConf = mdoc0.jdDoc.jdArgs.conf,
-                    prev   = mdoc0.jdDoc.jdArgs.jdRuntime,
-                  ))
+                  .set( DocEditAh.mkJdRuntime(jdDoc2, mdoc0.jdDoc.jdArgs) )
               ) andThen
             MDocS.editors
               .composeLens(MEditorsS.colorsState)
@@ -341,11 +337,7 @@ class LkAdEditCircuit(
           val (jdDoc2, jdRuntime2) = if (isTplChanged) {
             // Изменился шаблон. Вернуть новый шаблон, пересобрать css
             val jdDoc1 = MJdDoc.template.set( mPictureAh.view )( jdDoc0 )
-            val jdRuntime1 = JdUtil.mkRuntime(
-              docs    = jdDoc1 #:: Stream.empty,
-              jdConf  = jdArgs0.conf,
-              prev    = jdArgs0.jdRuntime,
-            )
+            val jdRuntime1 = DocEditAh.mkJdRuntime(jdDoc1, jdArgs0)
             (jdDoc1, jdRuntime1)
           } else {
             // Не изменился шаблон, вернуть исходник

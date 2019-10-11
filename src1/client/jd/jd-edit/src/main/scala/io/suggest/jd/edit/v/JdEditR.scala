@@ -183,7 +183,7 @@ class JdEditR(
       /** Самописная поддержка ресайза контента только силами браузера. */
       private def onQdTagResize(e: ReactMouseEventFromHtml): Callback = {
         _parseWidth(e).fold(Callback.empty) { widthPx =>
-          ReactDiodeUtil.dispatchOnProxyScopeCB( $, CurrContentResize( widthPx ) )
+          ReactDiodeUtil.dispatchOnProxyScopeCB( $, ResizeContent( widthPx ) )
         }
       }
 

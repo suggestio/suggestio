@@ -6,7 +6,6 @@ import io.suggest.ads.c.NodeAdsAh
 import io.suggest.ads.m.{GetMoreAds, MAdsS, MLkAdsRoot}
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
@@ -46,7 +45,7 @@ class LkAdsCircuit
         jdConf  = jdConf
       ),
       ads = MAdsS(
-        jdRuntime = JdUtil.mkRuntime(Stream.empty, jdConf),
+        jdRuntime = JdUtil.mkRuntime(jdConf).make,
       )
     )
   }

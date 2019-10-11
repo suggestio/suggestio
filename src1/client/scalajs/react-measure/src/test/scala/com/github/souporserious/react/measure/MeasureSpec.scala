@@ -2,7 +2,7 @@ package com.github.souporserious.react.measure
 
 import minitest._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import japgolly.scalajs.react.Callback
+import japgolly.scalajs.react.raw.PropsChildren
 
 import scala.scalajs.js
 import japgolly.scalajs.react.vdom.html_<^._
@@ -20,22 +20,24 @@ object MeasureSpec extends SimpleTestSuite {
     assert(MeasureJs != null)
   }
 
+
   test("bounds() must work") {
-    val unmounted = Measure.bounds { bounds: Bounds =>
-      println("bounds => " + bounds)
-      Callback.empty
-    } { args =>
-      <.div(
-        ^.genericRef := args.measureRef,
-        "test",
-        <.br,
-        "test"
-      )
+    val unmounted = Measure {
+      new MeasureProps {
+        override val children: js.Function1[MeasureChildrenArgs, PropsChildren] = { chArgs =>
+          <.div(
+            ^.genericRef := chArgs.measureRef,
+            "test",
+            <.br,
+            "test"
+          )
+            .rawElement
+        }
+      }
     }
 
     assert( !js.isUndefined(unmounted) )
     assert( unmounted != null )
   }
-
 
 }

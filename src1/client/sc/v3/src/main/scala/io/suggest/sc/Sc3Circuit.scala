@@ -12,6 +12,7 @@ import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.MJdConf
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
@@ -141,7 +142,7 @@ class Sc3Circuit(
         MGridS(
           core = MGridCoreS(
             jdConf    = jdConf,
-            jdRuntime = GridAh.mkJdRuntime(Pot.empty, jdConf),
+            jdRuntime = JdUtil.mkRuntime(jdConf).make,
           )
         )
       },

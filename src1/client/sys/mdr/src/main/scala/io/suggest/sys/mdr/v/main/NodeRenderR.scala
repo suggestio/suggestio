@@ -7,15 +7,12 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.{MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
-import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.JdR
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.react.ReactDiodeUtil.Implicits._
-import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -147,25 +144,5 @@ class NodeRenderR(
     .build
 
   def apply( propsPotProxy: Props ) = component( propsPotProxy )
-
-}
-
-
-object NodeRenderR {
-
-  /** jdConf всегда один: */
-  val JD_CONF = SysMdrConst.JD_CONF
-
-  /** Ленивая сборка jdCss на основе шаблонов. */
-  def mkJdRuntime(docs: Stream[MJdDoc],
-                  jdRuntimeOpt: Option[MJdRuntime] = None): MJdRuntime = {
-    val jdRuntime2 = JdUtil.mkRuntime(docs, JD_CONF)
-    jdRuntimeOpt
-      // Не пересобирать JdCss, если args не изменились.
-      .filter { jdRuntime0 =>
-        jdRuntime0.jdCss.jdCssArgs.data.jdTagsById ==* jdRuntime2.data.jdTagsById
-      }
-      .getOrElse( jdRuntime2 )
-  }
 
 }

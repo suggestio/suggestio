@@ -55,7 +55,7 @@ case class JdDropToDocument(docXy: MCoords2di, dropItem: IItem) extends IJdEditA
 
 
 /** Сигнал ресайза контента внутри блока. */
-case class CurrContentResize(widthPx: Int) extends IJdAction
+case class ResizeContent(widthPx: Int) extends IJdAction
 
 
 /** Сигнал о ресайзе какого-то embed'а внутри текущего qd-тега. */

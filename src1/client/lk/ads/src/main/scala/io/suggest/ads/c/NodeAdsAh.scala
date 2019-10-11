@@ -181,13 +181,16 @@ class NodeAdsAh[M](
           v0.copy(
             ads         = v0.ads.ready(ads2),
             hasMoreAds  = respAds.lengthCompare(LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST) >= 0,
-            jdRuntime   = JdUtil.mkRuntime(
-              docs    = ads2
-                .iterator
-                .map(_.adResp.jdAdData.doc)
-                .toStream,
-              jdConf  = confRO.value.jdConf,
-            ),
+            jdRuntime   = JdUtil
+              .mkRuntime(confRO.value.jdConf)
+              .docs(
+                ads2
+                  .iterator
+                  .map(_.adResp.jdAdData.doc)
+                  .toStream
+              )
+              .prev( v0.jdRuntime )
+              .make,
           )
         }
       )

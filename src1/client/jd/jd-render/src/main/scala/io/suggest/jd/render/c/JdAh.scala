@@ -42,29 +42,29 @@ class JdAh[M](
       // Нужно найти тег в MJdRuntime и решить, что же делать дальше.
       val v0 = value
 
-      val qdBlSz = MQdBlSize(
+      val qdBlSz2 = MQdBlSize(
         bounds = _boundsUndef2sz2d( m.contentRect.bounds ),
         client = _boundsUndef2sz2d( m.contentRect.client ),
       )
 
-      val qdBl0 = v0.data.qdBlockLess
+      val qdBlMap0 = v0.data.qdBlockLess
 
       // Т.к. react-measure склонна присылать bounds дважды (согласно докам), то сначала смотрим уже записанные данные.
-      qdBl0
+      qdBlMap0
         .get( m.jdTag )
-        .filterNot( _ contains[MQdBlSize] qdBlSz )
+        .filterNot( _ contains[MQdBlSize] qdBlSz2 )
         .fold {
           // Повторный сигнал размера или размер не изменился. Или сигнал от неизвестного тега.
           noChange
 
-        } { szPot0 =>
+        } { qdBlSzPot0 =>
           // Т.к. HashMap. то HashMap().updated() не вызывает полной пересборки kv-массива.
-          val qdBl2 = qdBl0 + (m.jdTag -> (szPot0 ready qdBlSz))
+          val qdBlMap2 = qdBlMap0 + (m.jdTag -> (qdBlSzPot0 ready qdBlSz2))
 
           // Нужно понять, остались ли ещё внеблоковые qd-теги, от которых ожидаются размеры.
           // true - Пере-рендер плитки не требуется, т.к. в очереди есть ещё qd-bounds-экшены, помимо этого.
           // false - Больше не надо дожидаться экшенов от других qd-тегов, запускаем новый рендер плитки:
-          val hasMoreBlQdsAwaiting = qdBl2
+          val hasMoreBlQdsAwaiting = qdBlMap2
             .valuesIterator
             .exists(_.isEmpty)
 
@@ -72,12 +72,12 @@ class JdAh[M](
             // Есть ещё ожидаемые данные. Просто тихо обновить состояние:
             val v2 = MJdRuntime.data
               .composeLens(MJdRuntimeData.qdBlockLess)
-              .set(qdBl2)(v0)
+              .set(qdBlMap2)(v0)
             updatedSilent(v2)
           } else {
             // Требуется пересборка данных для шаблонов
             val data2 = MJdRuntimeData.qdBlockLess
-              .set(qdBl2)(v0.data)
+              .set(qdBlMap2)(v0.data)
             val v2 = MJdRuntime(
               jdCss = JdCss.jdCssArgs
                 .composeLens(MJdCssArgs.data)

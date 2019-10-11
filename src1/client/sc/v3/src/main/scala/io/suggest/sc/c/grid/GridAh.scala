@@ -143,15 +143,20 @@ object GridAh {
 
 
   /** Сборка аргументов для рендера JdCss. */
-  def mkJdRuntime(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MJdRuntime = {
-    JdUtil.mkRuntime(
-      docs = ads
-        .iterator
-        .flatten
-        .flatMap(_.flatGridTemplates)
-        .toStream,
-      jdConf = jdConf,
-    )
+  def mkJdRuntime(ads: Pot[Seq[MScAdData]], g: MGridCoreS): MJdRuntime =
+    mkJdRuntime(ads, g.jdConf, g.jdRuntime)
+  def mkJdRuntime(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MJdRuntime = {
+    JdUtil
+      .mkRuntime( jdConf )
+      .docs(
+        ads
+          .iterator
+          .flatten
+          .flatMap(_.flatGridTemplates)
+          .toStream
+      )
+      .prev( jdRuntime )
+      .make
   }
 
 
@@ -353,7 +358,7 @@ class GridRespHandler
       g0.core.ads.ready( scAds2 )
     }
 
-    val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core.jdConf)
+    val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
     val g2 = g0.copy(
       core = g0.core.copy(
         jdRuntime   = jdRuntime2,
@@ -453,7 +458,7 @@ class GridFocusRespHandler
             .toVector
         }
 
-        val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, g0.core.jdConf )
+        val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, g0.core )
         val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf, jdRuntime2 )
         val g2 = MGridS.core.modify(
           _.copy(
@@ -623,7 +628,7 @@ class GridAh[M](
           } { _ =>
             val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
             val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
-            val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core.jdConf)
+            val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
             val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
             val v2          = MGridS.core.modify { core0 =>
               core0.copy(
@@ -664,7 +669,7 @@ class GridAh[M](
 
         val jdRuntime2 =
           if (szMultMatches) v0.core.jdRuntime
-          else GridAh.mkJdRuntime(v0.core.ads, jdConf1)
+          else GridAh.mkJdRuntime(v0.core.ads, jdConf1, v0.core.jdRuntime)
 
         var coreLens = (
           MGridCoreS.jdConf.set( jdConf1 ) andThen

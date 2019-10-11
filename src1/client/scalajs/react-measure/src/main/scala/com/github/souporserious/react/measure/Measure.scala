@@ -1,9 +1,7 @@
 package com.github.souporserious.react.measure
 
-import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomNode
 import org.scalajs.dom.html
 
 import scala.scalajs.js
@@ -18,23 +16,6 @@ object Measure extends Log {
 
   val component = JsComponent[MeasureProps, Children.None, Null]( MeasureJs )
 
-  def mkChildrenJsF(f0: ChildrenArgs => VdomNode) = {
-    f0.andThen(_.rawNode: raw.PropsChildren)
-  }
-
-  def bounds(onResizeF: Bounds => Callback)(childrenF: ChildrenArgs => VdomNode) = {
-    val onBoundsF = ReactCommonUtil.cbFun1ToJsCb(
-      onResizeF.compose[ContentRect]( _.bounds.get )
-    )
-    apply(
-      new MeasureProps {
-        override val bounds   = true
-        override val onResize = onBoundsF
-        override val children = mkChildrenJsF( childrenF )
-      }
-    )
-  }
-
   def apply(measureProps: MeasureProps) = component(measureProps)
 
 }
@@ -45,10 +26,10 @@ object Measure extends Log {
 object MeasureJs extends js.Object
 
 @js.native
-trait ChildrenArgs extends js.Object {
-  val measureRef: raw.React.RefFn[html.Element]
-  def measure(): Unit
-  val contentRect: ContentRect
+trait MeasureChildrenArgs extends js.Object {
+  val measureRef      : raw.React.RefFn[html.Element]     = js.native
+  val measure         : js.Function0[Unit]                = js.native
+  val contentRect     : ContentRect                       = js.native
 }
 
 trait MeasureProps extends js.Object {
@@ -74,5 +55,5 @@ trait MeasureProps extends js.Object {
     *   }
     * }}}
     */
-  val children: js.Function1[ChildrenArgs, raw.PropsChildren]
+  val children: js.Function1[MeasureChildrenArgs, raw.PropsChildren]
 }

@@ -1,9 +1,9 @@
-package io.suggest.bill.cart.v.itm
+package io.suggest.bill.cart.u
 
 import io.suggest.dev.MSzMults
-import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.jd.render.u.JdUtil
+import io.suggest.jd.{MJdConf, MJdDoc}
 
 /**
   * Suggest.io
@@ -12,7 +12,7 @@ import io.suggest.jd.render.u.JdUtil
   * Description: Остаточная утиль для jd-рендера в ячейке preview.
   */
 
-object ItemRowPreviewR {
+object CartUtil {
 
   /** Инстанс jd-conf един среди всего компонента. */
   val JD_CONF = MJdConf(
@@ -22,7 +22,11 @@ object ItemRowPreviewR {
   )
 
   /** Сборка пустого стиля для jd-рендера. */
-  def mkJdRuntime(templates: Stream[MJdDoc] = Stream.empty): MJdRuntime =
-    JdUtil.mkRuntime( templates, JD_CONF )
+  def mkJdRuntime(templates: Stream[MJdDoc] = Stream.empty): MJdRuntime = {
+    JdUtil
+      .mkRuntime(JD_CONF)
+      .docs(templates)
+      .make
+  }
 
 }

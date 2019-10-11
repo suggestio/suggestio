@@ -16,7 +16,7 @@ trait ContentRect extends js.Object {
   val scroll: js.UndefOr[Scroll] = js.undefined
   val margin: js.UndefOr[Margin] = js.undefined
 
-  val entry: js.Object
+  val entry: js.UndefOr[ResizeObserverEntry] = js.undefined
 
 }
 

@@ -7,7 +7,7 @@ import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
 import io.suggest.sys.mdr.m.{MMdrNodeS, MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.StateInp
-import io.suggest.sys.mdr.v.main.NodeRenderR
+import io.suggest.sys.mdr.u.SysMdrUtil
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -31,7 +31,7 @@ object SysMdrCircuit {
     // Сборка root-модели, готовой к работе.
     MSysMdrRootS(
       node = MMdrNodeS(
-        jdRuntime = NodeRenderR.mkJdRuntime(
+        jdRuntime = SysMdrUtil.mkJdRuntime(
           docs = Stream.empty
         ),
       ),

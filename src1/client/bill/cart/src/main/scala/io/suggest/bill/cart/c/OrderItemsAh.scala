@@ -3,7 +3,7 @@ package io.suggest.bill.cart.c
 import diode.data.PendingBase
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.cart.m._
-import io.suggest.bill.cart.v.itm.ItemRowPreviewR
+import io.suggest.bill.cart.u.CartUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -110,7 +110,7 @@ class OrderItemsAh[M](
 
         val v2 = v0.copy(
           orderContents = req2,
-          jdRuntime = ItemRowPreviewR.mkJdRuntime(
+          jdRuntime = CartUtil.mkJdRuntime(
             req2.iterator
               .flatMap(_.content.adsJdDatas)
               .map(_.doc)

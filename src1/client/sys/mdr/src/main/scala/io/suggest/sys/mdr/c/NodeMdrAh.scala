@@ -9,7 +9,7 @@ import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.sys.mdr.v.main.NodeRenderR
+import io.suggest.sys.mdr.u.SysMdrUtil
 import japgolly.univeq._
 import monocle.Traversal
 import scalaz.std.option._
@@ -297,7 +297,7 @@ class NodeMdrAh[M](
       if (v0.node.info isPendingWithStartTime m.timestampMs) {
         // Это ожидаемый ответ сервера. Обработать его:
         val infoReq2 = v0.node.info.withTry( m.tryResp.map(MMdrNextRespJs.apply) )
-        val jdRuntime2 = NodeRenderR.mkJdRuntime(
+        val jdRuntime2 = SysMdrUtil.mkJdRuntime(
           jdRuntimeOpt = Some(v0.node.jdRuntime),
           docs = infoReq2
             .iterator

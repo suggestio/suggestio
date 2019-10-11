@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
-import com.github.souporserious.react.measure.{ChildrenArgs, ContentRect, Measure, MeasureProps}
+import com.github.souporserious.react.measure.{ContentRect, Measure, MeasureChildrenArgs, MeasureProps}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -24,8 +24,6 @@ import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -115,16 +113,31 @@ class JdR(
           <.div(
             // Сборка измерителя размеров тега:
             Measure {
-              val _childrenF: js.Function1[ChildrenArgs, raw.PropsChildren] = { chArgs =>
+              // Локальная переменная для блокировния бесконечного рендера. Иначе, вызов args.measure() вызывает тело mkChildrenF() повторный рендер и так до бесконечности.
+              var isReMeasured = false
+              def __mkChildrenF(chArgs: MeasureChildrenArgs): raw.PropsChildren = {
+                // Запустить повторное измерение, когда это требуется состоянием.
+                if (
+                  !isReMeasured && state.jdArgs
+                    .jdRuntime
+                    .data
+                    .qdBlockLess
+                    .get(state.subTree.rootLabel)
+                    .exists(_.isPending)
+                ) {
+                  isReMeasured = true
+                  chArgs.measure()
+                }
+
                 tag0(
                   ^.genericRef := chArgs.measureRef,
                 )
-                  .rawElement: raw.PropsChildren
+                  .rawElement
               }
               new MeasureProps {
                 override val client = true
                 override val bounds = true
-                override val children = _childrenF
+                override val children = __mkChildrenF
                 override val onResize = _onResizeF
               }
             }
