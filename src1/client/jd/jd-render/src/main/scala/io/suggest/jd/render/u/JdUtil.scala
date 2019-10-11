@@ -26,8 +26,11 @@ object JdUtil {
     * @param prevOpt Предыдущее состояние.
     * @return Карта состояний.
     */
-  def mkQdBlockLessData(tpls: Stream[Tree[JdTag]],
-                        prevOpt: Option[MJdRuntime] = None): HashMap[JdTag, Pot[MQdBlSize]] = {
+  def mkQdBlockLessData(tpls      : Stream[Tree[JdTag]],
+                        prevOpt   : Option[MJdRuntime]    = None,
+                        deleted   : Iterable[JdTag]       = Nil,
+                        added     : Iterable[JdTag]       = Nil,
+                       ): HashMap[JdTag, Pot[MQdBlSize]] = {
     // Какие теги нужны (на основе шаблонов)
     val wantedQdBls = for {
       tpls      <- tpls
@@ -60,8 +63,9 @@ object JdUtil {
           (HashMap.newBuilder[JdTag, Pot[MQdBlSize]] ++= wantedQdBls.map(_ -> Pot.empty[MQdBlSize]))
             .result()
         } { prevMap0 =>
-          // TODO И надо убрать удалённые элементы
-          wantedQdBls.foldLeft(prevMap0) { (acc0, jdtWant) =>
+          // Убрать удалённые элементы:
+          val prevMap1 = prevMap0 -- deleted
+          wantedQdBls.foldLeft(prevMap1) { (acc0, jdtWant) =>
             (acc0 get jdtWant).fold {
               // Нет такого ключа - добавить в карту с Pot.empty
               acc0 + (jdtWant -> Pot.empty[MQdBlSize])
@@ -77,8 +81,10 @@ object JdUtil {
 
   object mkRuntime {
 
-    val jdDocs = GenLens[mkRuntime](_.jdDocs)
-    val prevOpt = GenLens[mkRuntime](_.prevOpt)
+    val jdDocs      = GenLens[mkRuntime](_.jdDocs)
+    val prevOpt     = GenLens[mkRuntime](_.prevOpt)
+    val deletedJdts = GenLens[mkRuntime](_.deletedJdts)
+    val addedJdts   = GenLens[mkRuntime](_.addedJdts)
 
     implicit class OpsExt( val args: mkRuntime ) extends AnyVal {
 
@@ -88,13 +94,30 @@ object JdUtil {
       def prev[P: JdRuntimeGetter](from: P): mkRuntime =
         prevOpt.set( implicitly[JdRuntimeGetter[P]].apply(from) )(args)
 
+      def deleted1(jdts: Iterable[JdTag]): mkRuntime = {
+        if (jdts.isEmpty) args
+        else deletedJdts.set(jdts)(args)
+      }
+      def deleted(jdts: JdTag*): mkRuntime = deleted1(jdts)
+
+      def added1(jdts: Iterable[JdTag]): mkRuntime = {
+        if (jdts.isEmpty) args
+        else addedJdts.set(jdts)(args)
+      }
+      def added(jdts: JdTag*): mkRuntime = added1(jdts)
+
       /** Финальная сборка состояния рантайма. Сравнителньо ресурсоёмкая операция. */
-      def make: MJdRuntime = {
+      def result: MJdRuntime = {
         val tpls = args.jdDocs.map(_.template)
         val jdRtData = MJdRuntimeData(
           jdtWideSzMults  = GridCalc.wideSzMults(tpls, args.jdConf),
           jdTagsById      = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(args.jdDocs) ),
-          qdBlockLess     = mkQdBlockLessData(tpls, args.prevOpt),
+          qdBlockLess     = mkQdBlockLessData(
+            tpls    = tpls,
+            prevOpt = args.prevOpt,
+            deleted = args.deletedJdts,
+            added   = args.addedJdts,
+          ),
         )
 
         // Обновить данные по qd blockless (внеблоковому контенту).
@@ -113,12 +136,16 @@ object JdUtil {
     *
     * @param jdDocs Данные документов (шаблоны, id и тд).
     * @param jdConf Конфиг рендера.
+    * @param deletedJdts prev: Удалённые теги.
+    * @param addedJdts prev: Добавленные теги.
     * @return Инстанс [[MJdRuntime]].
     */
   case class mkRuntime(
-                        jdConf  : MJdConf,
-                        jdDocs  : Stream[MJdDoc]        = Stream.empty,
-                        prevOpt : Option[MJdRuntime]    = None,
+                        jdConf        : MJdConf,
+                        jdDocs        : Stream[MJdDoc]        = Stream.empty,
+                        prevOpt       : Option[MJdRuntime]    = None,
+                        deletedJdts   : Iterable[JdTag]       = Nil,
+                        addedJdts     : Iterable[JdTag]       = Nil,
                       )
 
 

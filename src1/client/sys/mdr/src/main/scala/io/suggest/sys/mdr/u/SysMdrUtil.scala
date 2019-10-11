@@ -24,7 +24,7 @@ object SysMdrUtil {
       .mkRuntime(JD_CONF)
       .docs(docs)
       .prev( jdRuntimeOpt )
-      .make
+      .result
 
     jdRuntimeOpt
       // Не пересобирать JdCss, если args не изменились.

@@ -211,6 +211,14 @@ object JdTag {
       treeLoc.find( treeLocByTypeFilterF(typ) )
     }
 
+    def findByEdgeUid(edgeUid: EdgeUid_t): Option[TreeLoc[JdTag]] = {
+      treeLoc.find(
+        _.getLabel.qdProps.exists(
+          _.edgeInfo.exists(
+            _.edgeUid ==* edgeUid))
+      )
+    }
+
   }
 
 

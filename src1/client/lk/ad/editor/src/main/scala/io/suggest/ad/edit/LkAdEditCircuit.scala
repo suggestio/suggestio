@@ -107,7 +107,7 @@ class LkAdEditCircuit(
           jdRuntime   = JdUtil
             .mkRuntime(jdConf)
             .docs(jdDataJs.doc)
-            .make,
+            .result,
         )
         MDocS(
           jdDoc = MJdDocEditS(
@@ -208,10 +208,10 @@ class LkAdEditCircuit(
         // Что-то изменилось с моделью MColorAhOpt во время деятельности контроллера.
         // Нужно обновить текущий стрип.
         val mdoc2Opt = for {
-          jdt0     <- getSelTagLoc( mdoc0 )
-          mColorAh <- mColorAhOpt
+          jdtLoc0     <- getSelTagLoc( mdoc0 )
+          mColorAh    <- mColorAhOpt
         } yield {
-          val strip2 = jdt0.modifyLabel { s0 =>
+          val strip2 = jdtLoc0.modifyLabel { s0 =>
             setColorOpt( s0, mColorAh.colorOpt )
           }
           val tpl2 = strip2.toTree
@@ -225,8 +225,19 @@ class LkAdEditCircuit(
                 MJdArgs.data
                   .composeLens(MJdDataJs.doc)
                   .set(jdDoc2) andThen
-                MJdArgs.jdRuntime
-                  .set( DocEditAh.mkJdRuntime(jdDoc2, mdoc0.jdDoc.jdArgs) )
+                MJdArgs.jdRuntime.set {
+                  val jdRuntime00 = mdoc0.jdDoc.jdArgs.jdRuntime
+                  val jdRuntime01 = if (DocEditAh.isQdBlockless(jdtLoc0)) {
+                    DocEditAh.repairQdBl(jdRuntime00.data.qdBlockLess, jdtLoc0.getLabel, strip2.getLabel, jdRuntime00)
+                  } else {
+                    jdRuntime00
+                  }
+                  DocEditAh
+                    .mkJdRuntime2(jdDoc2, mdoc0.jdDoc.jdArgs.conf, jdRuntime01)
+                    .deleted( jdtLoc0.getLabel )
+                    .added( strip2.getLabel )
+                    .result
+                }
               ) andThen
             MDocS.editors
               .composeLens(MEditorsS.colorsState)
@@ -337,8 +348,25 @@ class LkAdEditCircuit(
           val (jdDoc2, jdRuntime2) = if (isTplChanged) {
             // Изменился шаблон. Вернуть новый шаблон, пересобрать css
             val jdDoc1 = MJdDoc.template.set( mPictureAh.view )( jdDoc0 )
-            val jdRuntime1 = DocEditAh.mkJdRuntime(jdDoc1, jdArgs0)
-            (jdDoc1, jdRuntime1)
+            val selLoc0 = mdoc0.jdDoc.jdArgs.selJdt.treeLocOpt.get
+            val jdt2 = mdoc0.jdDoc.jdArgs
+              .renderArgs
+              .selPath
+              .flatMap( mPictureAh.view.pathToNode )
+              .map(_.getLabel)
+              .get
+            val jdRuntime00 = mdoc0.jdDoc.jdArgs.jdRuntime
+            // Отремонтировать qdBl:
+            val jdRuntime01 = if (DocEditAh.isQdBlockless(selLoc0)) {
+              DocEditAh.repairQdBl(jdRuntime00.data.qdBlockLess, selLoc0.getLabel, jdt2, jdRuntime00 )
+            } else {
+              jdRuntime00
+            }
+            val jdRuntime11 = DocEditAh.mkJdRuntime2(jdDoc1, jdArgs0.conf, jdRuntime01)
+              .deleted( selLoc0.getLabel )
+              .added( jdt2 )
+              .result
+            (jdDoc1, jdRuntime11)
           } else {
             // Не изменился шаблон, вернуть исходник
             (jdDoc0, jdArgs0.jdRuntime)

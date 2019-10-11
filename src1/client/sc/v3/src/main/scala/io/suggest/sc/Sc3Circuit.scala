@@ -142,7 +142,7 @@ class Sc3Circuit(
         MGridS(
           core = MGridCoreS(
             jdConf    = jdConf,
-            jdRuntime = JdUtil.mkRuntime(jdConf).make,
+            jdRuntime = JdUtil.mkRuntime(jdConf).result,
           )
         )
       },

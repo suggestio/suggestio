@@ -38,6 +38,7 @@ object MJdRuntimeData {
   */
 case class MJdRuntimeData(
                            jdtWideSzMults     : HashMap[JdTag, MSzMult],
+                           // TODO Перевести qdBlockLess JdTag на MJdTagId. Обязательно.
                            qdBlockLess        : HashMap[JdTag, Pot[MQdBlSize]]    = HashMap.empty,
                            jdTagsById         : HashMap[MJdTagId, JdTag]          = HashMap.empty,
                          )

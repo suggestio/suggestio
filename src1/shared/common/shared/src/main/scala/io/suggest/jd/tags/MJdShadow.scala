@@ -50,11 +50,4 @@ case class MJdShadow(
                       vOffset   : Int,
                       color     : Option[MColorData],
                       blur      : Option[Int],
-                    ) {
-
-  def withHOffset(hOffset: Int) = copy(hOffset = hOffset)
-  def withVOffset(vOffset: Int) = copy(vOffset = vOffset)
-  def withColor(color: Option[MColorData]) = copy(color = color)
-  def withBlur(blur: Option[Int]) = copy(blur = blur)
-
-}
+                    )

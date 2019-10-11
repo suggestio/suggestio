@@ -156,7 +156,7 @@ object GridAh {
           .toStream
       )
       .prev( jdRuntime )
-      .make
+      .result
   }
 
 

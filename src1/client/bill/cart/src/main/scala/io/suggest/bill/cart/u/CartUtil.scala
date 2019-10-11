@@ -26,7 +26,7 @@ object CartUtil {
     JdUtil
       .mkRuntime(JD_CONF)
       .docs(templates)
-      .make
+      .result
   }
 
 }

@@ -62,69 +62,70 @@ class DocEditAh[M](
 
   import DocEditAh._
 
-  private def _qdUpdateWidth(qdSubTreeLoc0: TreeLoc[JdTag], edgeUid: EdgeUid_t, width: Int,
-                             heightPxOpt: Option[Int] = None, needUpdateF: Option[Int => Boolean] = None): TreeLoc[JdTag] = {
-    qdSubTreeLoc0
-      .root
-      // Найти qd-op-тег, содержащего текущую новую картинку:
-      .find(
-        _.getLabel.qdProps.exists(
-          _.edgeInfo.exists(
-            _.edgeUid ==* edgeUid)))
-      // Требует ли модицификации текущая картинка?
-      .filter { imgOpLoc =>
-        val widthPxOpt = for {
-          qd          <- imgOpLoc.getLabel.qdProps
-          attrsEmbed  <- qd.attrsEmbed
-          widthSU     <- attrsEmbed.width
-          width       <- widthSU.toOption
-        } yield {
-          width
+
+  private def _loc2width(imgOpLoc: TreeLoc[JdTag]) = {
+    for {
+      qd          <- imgOpLoc.getLabel.qdProps
+      attrsEmbed  <- qd.attrsEmbed
+      widthSU     <- attrsEmbed.width
+      width       <- widthSU.toOption
+    } yield {
+      width
+    }
+  }
+
+  private def _qdUpdateWidth(imgOpLoc0: TreeLoc[JdTag], width: Int, heightPxOpt: Option[Int] = None): TreeLoc[JdTag] = {
+    imgOpLoc0.modifyLabel {
+      JdTag.qdProps
+        .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
+        .composeLens( MQdOp.attrsEmbed )
+        .modify { attrsEmbedOpt0 =>
+          val widthSuOpt  = Some( SetVal(width) )
+          val heightSuOpt = heightPxOpt.map(SetVal.apply)
+          // обычно attrs embed пуст для новой картинки/видео. Но quill может сам изменить размер сразу.
+          val ae2 = attrsEmbedOpt0.fold {
+            MQdAttrsEmbed( width = widthSuOpt, height = heightSuOpt )
+          } { attrsEmbed =>
+            attrsEmbed.withWidthHeight(
+              width  = widthSuOpt,
+              height = heightSuOpt
+            )
+          }
+          Some(ae2)
         }
-        widthPxOpt.isEmpty || (needUpdateF.isEmpty || widthPxOpt.exists(needUpdateF.get))
-      }
-      .fold(qdSubTreeLoc0) { imgOpLoc0 =>
-        imgOpLoc0.modifyLabel {
-          JdTag.qdProps
-            .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
-            .composeLens( MQdOp.attrsEmbed )
-            .modify { attrsEmbedOpt0 =>
-              val widthSuOpt  = Some( SetVal(width) )
-              val heightSuOpt = heightPxOpt.map(SetVal.apply)
-              // обычно attrs embed пуст для новой картинки/видео. Но quill может сам изменить размер сразу.
-              val ae2 = attrsEmbedOpt0.fold {
-                MQdAttrsEmbed( width = widthSuOpt, height = heightSuOpt )
-              } { attrsEmbed =>
-                attrsEmbed.withWidthHeight(
-                  width  = widthSuOpt,
-                  height = heightSuOpt
-                )
-              }
-              Some(ae2)
-            }
-        }
-      }
+    }
   }
 
 
   implicit class MDocSOptOpsExt( val treeLocOpt: Option[TreeLoc[JdTag]] ) {
 
     def shadowUpdated(v0: MDocS)(f: Option[MJdShadow] => Option[MJdShadow]): ActionResult[M] = {
-      treeLocOpt.fold(noChange) { treeLoc =>
-        val tpl2 = treeLoc
+      treeLocOpt.fold(noChange) { treeLoc0 =>
+        val treeLoc2 = treeLoc0
           .modifyLabel {
             JdTag.props1
               .composeLens( MJdtProps1.textShadow )
               .modify(f)
           }
-          .toTree
+        val tpl2 = treeLoc2.toTree
         val jdDoc2 = MJdDoc.template.set( tpl2 )( v0.jdDoc.jdArgs.data.doc )
+
+        val jdRuntime1 = if (isQdBlockless(treeLoc0)) {
+          repairQdBl( v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, treeLoc0.getLabel, treeLoc2.getLabel, v0.jdDoc.jdArgs.jdRuntime, reMeasure = true )
+        } else {
+          v0.jdDoc.jdArgs.jdRuntime
+        }
+
+        val jdRuntime2 = mkJdRuntime2(jdDoc2, v0.jdDoc.jdArgs.conf, jdRuntime1)
+          .deleted( treeLoc0.getLabel )
+          .added( treeLoc2.getLabel )
+          .result
 
         val v2 = MDocS.jdDoc
           .composeLens(MJdDocEditS.jdArgs)
           .modify(
             MJdArgs.jdRuntime
-              .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) ) andThen
+              .set( jdRuntime2 ) andThen
             MJdArgs.data
               .composeLens( MJdDataJs.doc )
               .set(jdDoc2)
@@ -134,6 +135,13 @@ class DocEditAh[M](
       }
     }
 
+  }
+
+  private def _shadowUpdating(f: Option[MJdShadow] => Option[MJdShadow]): ActionResult[M] = {
+    val v0 = value
+    v0.jdDoc.jdArgs.selJdt
+      .treeLocOpt
+      .shadowUpdated(v0)(f)
   }
 
 
@@ -222,15 +230,21 @@ class DocEditAh[M](
           .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
             // Новая картинка. Найти и уменьшить её ширину в шаблоне.
             val edgeUid = edgeData.jdEdge.id
-            _qdUpdateWidth(
-              qdLoc,
-              edgeUid = edgeUid,
-              width = maxEmbedWidth,
-              heightPxOpt = None,
-              needUpdateF = Some { widthPx =>
-                widthPx > maxEmbedWidth || widthPx <= 0
+            qdLoc
+              .findByEdgeUid( edgeUid )
+              .filter { imgOpLoc =>
+                val widthPxOpt = _loc2width(imgOpLoc)
+                widthPxOpt.fold(true) { widthPx =>
+                  widthPx > maxEmbedWidth || widthPx <= 0
+                }
               }
-            )
+              .fold(qdLoc) {
+                _qdUpdateWidth(
+                  _,
+                  width = maxEmbedWidth,
+                  heightPxOpt = None,
+                )
+              }
           }
           .toTree
 
@@ -244,7 +258,12 @@ class DocEditAh[M](
                 MJdDataJs.doc.set( jdDoc2 ) andThen
                 MJdDataJs.edges.set( edgesData3 )
               ) andThen
-              MJdArgs.jdRuntime.set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+              MJdArgs.jdRuntime.set(
+                mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                  .added1( qdSubTree0.flatten )
+                  .deleted1( qdSubTree3.flatten )
+                  .result
+              )
             )
           ) andThen
           MDocS.editors
@@ -289,11 +308,17 @@ class DocEditAh[M](
           .setLabel(jdt2)
           .toTree
         val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdDoc.jdArgs.data.doc )
-        var jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
 
         // Для qd-blockless надо пробросить Pot.pending() и новый ключ для тега с прежним значением внутрь рантайма.
-        if ( isQdBlockless(selJdtLoc0) )
-          jdRuntime2 = repairQdBl(v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, jdt0, jdt2, jdRuntime2, reMeasure = true)
+        val jdRuntime1 = if ( isQdBlockless(selJdtLoc0) )
+          repairQdBl(v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, jdt0, jdt2, v0.jdDoc.jdArgs.jdRuntime, reMeasure = true)
+        else
+          v0.jdDoc.jdArgs.jdRuntime
+
+        var jdRuntime2 = mkJdRuntime2(jdDoc2, v0.jdDoc.jdArgs.conf, jdRuntime1)
+          .deleted( jdt0 )
+          .added( jdt2 )
+          .result
 
         val v2 = MDocS.jdDoc.modify(
           MJdDocEditS.jdArgs.modify(
@@ -421,7 +446,9 @@ class DocEditAh[M](
                 MJdDataJs.doc.set( jdDoc2 ) andThen
                 MJdDataJs.edges.set( dataEdges2 )
               ) andThen
-              MJdArgs.jdRuntime.set( mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs) )
+              MJdArgs.jdRuntime.set(
+                mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs).result
+              )
             )
           )(v2)
         }
@@ -577,8 +604,12 @@ class DocEditAh[M](
             MJdArgs.data
               .composeLens( MJdDataJs.doc )
               .set( jdDoc2 ) andThen
-            MJdArgs.jdRuntime
-              .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+            MJdArgs.jdRuntime.set(
+              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                .deleted( strip0 )
+                .added( strip2 )
+                .result
+            )
           )(v0.jdDoc.jdArgs)
 
           // Обновить и дерево, и currentTag новым инстансом.
@@ -626,7 +657,9 @@ class DocEditAh[M](
           val jdArgs0 = v0.jdDoc.jdArgs
           val jdArgs2 = jdArgs0.copy(
             data        = (MJdDataJs.doc set jdDoc2)( jdArgs0.data ),
-            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0),
+            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0)
+              .deleted( strip4delLoc.getLabel )
+              .result,
             renderArgs  = (MJdRenderArgs.selPath set None)( jdArgs0.renderArgs ),
           )
           val v2 = (
@@ -815,7 +848,7 @@ class DocEditAh[M](
         .modify { jdArgs0 =>
           jdArgs0.copy(
             data        = MJdDataJs.doc.set(jdDoc2)( jdArgs0.data ),
-            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0),
+            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0).result,
             renderArgs  = (
               MJdRenderArgs.selPath
                 .set( tpl2.nodeToPath( loc2.getLabel ) ) andThen
@@ -949,8 +982,15 @@ class DocEditAh[M](
             MJdRenderArgs.dnd
               .set( MJdDndS.empty )
           ) andThen
-          MJdArgs.jdRuntime
-            .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+          MJdArgs.jdRuntime.set {
+            var rtArgs = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+            if (needModifyJdt) {
+              rtArgs = rtArgs
+                .deleted( droppedBlockLabel )
+                .added( droppedBlockLoc1.getLabel )
+            }
+            rtArgs.result
+          }
         )(v0.jdDoc.jdArgs)
 
         // Сборка основной модификации состояния jdArgs в связи с перемещением:
@@ -1007,29 +1047,35 @@ class DocEditAh[M](
             lazy val p1_bgColor_LENS = JdTag.props1
               .composeLens( MJdtProps1.bgColor )
 
-            val tpl2 = v0.jdDoc.jdArgs.data.doc.template
-              .map { el1 =>
-                el1
-                  .edgeUids
-                  .map(_.edgeUid)
-                  .find(edgeUids4mod.contains)
-                  .fold(el1) { _ =>
-                    el1.qdProps.fold {
-                      p1_bgColor_LENS
-                        .set( topColorMcdOpt )(el1)
-                    } { qdProps0 =>
-                      JdTag.qdProps.set( Some(
-                        MQdOp.attrsText.set( Some(
-                          qdProps0.attrsText
-                            .getOrElse( MQdAttrsText.empty )
-                            .withBackground(
-                              topColorMcdOpt.map {SetVal.apply }
-                            )
-                        ))(qdProps0)
-                      ))(el1)
-                    }
+            // Аккамуляторы изменившихся тегов.
+            var addedAcc = List.empty[JdTag]
+            var deletedAcc = addedAcc
+
+            val tpl2 = for (el1 <- v0.jdDoc.jdArgs.data.doc.template) yield {
+              el1
+                .edgeUids
+                .map(_.edgeUid)
+                .find(edgeUids4mod.contains)
+                .fold(el1) { _ =>
+                  val jdt2 = el1.qdProps.fold {
+                    p1_bgColor_LENS
+                      .set( topColorMcdOpt )(el1)
+                  } { qdProps0 =>
+                    JdTag.qdProps.set( Some(
+                      MQdOp.attrsText.set( Some(
+                        qdProps0.attrsText
+                          .getOrElse( MQdAttrsText.empty )
+                          .withBackground(
+                            topColorMcdOpt.map( SetVal.apply )
+                          )
+                      ))(qdProps0)
+                    ))(el1)
                   }
-              }
+                  deletedAcc ::= el1
+                  addedAcc ::= jdt2
+                  jdt2
+                }
+            }
             val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
             // Сохранить новые темплейт в состояние.
@@ -1039,8 +1085,12 @@ class DocEditAh[M](
                 MJdArgs.data
                   .composeLens( MJdDataJs.doc )
                   .set(jdDoc2) andThen
-                MJdArgs.jdRuntime
-                  .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+                MJdArgs.jdRuntime.set(
+                  mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                    .deleted1( deletedAcc )
+                    .added1( addedAcc )
+                    .result
+                )
               )(v0)
 
             // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
@@ -1087,9 +1137,16 @@ class DocEditAh[M](
         val loc2 = loc0.setLabel( jdt2 )
         val tpl2 = loc2.toTree
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
-        var jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-        if (!parentIsStrip(loc2))
-          jdRuntime2 = repairQdBl(v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, jdt0, jdt2, jdRuntime2, reMeasure = true)
+
+        val jdRuntime1 = if (!parentIsStrip(loc2))
+          repairQdBl(v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, jdt0, jdt2, v0.jdDoc.jdArgs.jdRuntime, reMeasure = true)
+        else
+          v0.jdDoc.jdArgs.jdRuntime
+
+        val jdRuntime2 = mkJdRuntime2(jdDoc2, v0.jdDoc.jdArgs.conf, jdRuntime1)
+          .deleted( jdt0 )
+          .added( jdt2 )
+          .result
 
         val v2 = MDocS.jdDoc
           .composeLens(MJdDocEditS.jdArgs)
@@ -1108,12 +1165,14 @@ class DocEditAh[M](
     // Реакция на сигнал ресайза у embed'а.
     case m: QdEmbedResize =>
       val v0 = value
-      v0.jdDoc.jdArgs
-        .selJdt.treeOpt
-        .filter { jdt => jdt.rootLabel.name ==* MJdTagNames.QD_CONTENT }
-        .map { qdSubTree =>
-          _qdUpdateWidth(qdSubTree.loc, m.edgeUid, width = m.widthPx, heightPxOpt = m.heightPx)
-        }
+      (for {
+        qdSubTree <- v0.jdDoc.jdArgs.selJdt.treeOpt
+        if (qdSubTree.rootLabel.name ==* MJdTagNames.QD_CONTENT)
+        qdLoc0 = qdSubTree.loc
+        embedLoc <- qdLoc0.findByEdgeUid( m.edgeUid )
+      } yield {
+        _qdUpdateWidth(embedLoc, width = m.widthPx, heightPxOpt = m.heightPx)
+      })
         .fold {
           LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT )
           noChange
@@ -1132,8 +1191,11 @@ class DocEditAh[M](
                 MJdArgs.data
                   .composeLens( MJdDataJs.doc )
                   .set( jdDoc2 ) andThen
-                MJdArgs.jdRuntime
-                  .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+                MJdArgs.jdRuntime.set(
+                  mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                    .deleted( ??? )
+                    .result
+                )
               ) andThen
             MDocS.editors
               .composeLens(MEditorsS.qdEdit)
@@ -1227,19 +1289,21 @@ class DocEditAh[M](
         noChange
 
       } else {
-        val tpl2 = jdtLoc0
-          .modifyLabel { strip0 =>
-            (jdt_p1_bm_expandOpt_LENS set m.expandMode)(strip0)
-          }
-          .toTree
+        val jdtLoc2 = jdtLoc0
+          .modifyLabel( jdt_p1_bm_expandOpt_LENS set m.expandMode )
+        val tpl2 = jdtLoc2.toTree
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
         val jdArgs2 = (
           MJdArgs.data
             .composeLens(MJdDataJs.doc)
             .set( jdDoc2 ) andThen
-          MJdArgs.jdRuntime
-            .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+          MJdArgs.jdRuntime.set(
+            mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+              .deleted( jdt0 )
+              .added( jdtLoc2.getLabel )
+              .result
+          )
         )(v0.jdDoc.jdArgs)
 
         val v2 = MDocS.jdDoc.modify(
@@ -1261,10 +1325,16 @@ class DocEditAh[M](
       val p1_isMain_LENS = JdTag.props1
         .composeLens( MJdtProps1.isMain )
 
+      var addedJdts = List.empty[JdTag]
+      var deletedJdts = addedJdts
+
       def __updateLocLabel(label: JdTag, newValue: Option[Boolean]): JdTag = {
         if ( p1_isMain_LENS.get(label) !=* newValue) {
-          p1_isMain_LENS
+          val jdt2 = p1_isMain_LENS
             .set( newValue )( label )
+          deletedJdts ::= label
+          addedJdts ::= jdt2
+          jdt2
         } else {
           label
         }
@@ -1309,8 +1379,12 @@ class DocEditAh[M](
               MJdArgs.data
                 .composeLens( MJdDataJs.doc )
                 .set( jdDoc2 ) andThen
-              MJdArgs.jdRuntime
-                .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+              MJdArgs.jdRuntime.set(
+                mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                  .deleted1( deletedJdts )
+                  .added1( addedJdts )
+                  .result
+              )
             )( v0 )
 
           updated(v2)
@@ -1409,8 +1483,11 @@ class DocEditAh[M](
               MJdDataJs.doc.set( jdDoc2 ) andThen
               MJdDataJs.edges.set( edgesMap2 )
             ) andThen
-            MJdArgs.jdRuntime
-              .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) ) andThen
+            MJdArgs.jdRuntime.set(
+              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                .added1( qdtTree.flatten )
+                .result
+            ) andThen
             MJdArgs.renderArgs
               .composeLens( MJdRenderArgs.selPath )
               .set( tpl2.nodeToPath( qdtTree.rootLabel ) )
@@ -1495,8 +1572,11 @@ class DocEditAh[M](
           MJdArgs.renderArgs
             .composeLens( MJdRenderArgs.selPath )
             .set( tpl2.nodeToPath( newStripTree.rootLabel ) ) andThen
-          MJdArgs.jdRuntime
-            .set( mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs) )
+          MJdArgs.jdRuntime.set(
+            mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+              .added1( newStripTree.flatten )
+              .result
+          )
       )(v0.jdDoc.jdArgs)
 
       val v2 = (
@@ -1527,7 +1607,7 @@ class DocEditAh[M](
         MJdArgs.conf
           .set( conf2 ) andThen
         MJdArgs.jdRuntime
-          .set( mkJdRuntime(jdArgs0.data.doc, conf2, jdArgs0.jdRuntime) )
+          .set( mkJdRuntime2(jdArgs0.data.doc, conf2, jdArgs0.jdRuntime).result )
       )(jdArgs0)
 
       val v2 = MDocS.jdDoc.modify(
@@ -1561,38 +1641,30 @@ class DocEditAh[M](
 
     // Выставление горизонтального параметра тени.
     case m: SetHorizOffTextShadow =>
-      val v0 = value
-      v0.jdDoc.jdArgs.selJdt
-        .treeLocOpt
-        .shadowUpdated(v0) { shadOpt0 =>
-          for (shad0 <- shadOpt0) yield {
-            shad0.withHOffset(
-              m.offset
-            )
-          }
-        }
+      _shadowUpdating {
+        Traversal
+          .fromTraverse[Option, MJdShadow]
+          .composeLens( MJdShadow.hOffset )
+          .set( m.offset )
+      }
 
     case m: SetVertOffTextShadow =>
-      val v0 = value
-      v0.jdDoc.jdArgs.selJdt
-        .treeLocOpt
-        .shadowUpdated(v0) { shadOpt0 =>
-          for (shad0 <- shadOpt0) yield {
-            shad0.withVOffset( m.offset )
-          }
-        }
+      _shadowUpdating {
+        Traversal
+          .fromTraverse[Option, MJdShadow]
+          .composeLens( MJdShadow.vOffset )
+          .set( m.offset )
+      }
 
     case m: SetBlurTextShadow =>
-      val v0 = value
-      v0.jdDoc.jdArgs.selJdt
-        .treeLocOpt
-        .shadowUpdated(v0) { shadOpt0 =>
-          for (shad0 <- shadOpt0) yield {
-            shad0.withBlur(
-              OptionUtil.maybe(m.blur > 0)(m.blur)
-            )
-          }
-        }
+      _shadowUpdating {
+        Traversal
+          .fromTraverse[Option, MJdShadow]
+          .composeLens( MJdShadow.blur )
+          .set(
+            OptionUtil.maybe(m.blur > 0)(m.blur)
+          )
+      }
 
   }
 
@@ -1608,14 +1680,13 @@ class DocEditAh[M](
 
 object DocEditAh {
 
-  def mkJdRuntime(jdDoc: MJdDoc, jdArgs: MJdArgs): MJdRuntime =
-    mkJdRuntime(jdDoc, jdArgs.conf, jdArgs.jdRuntime)
-  def mkJdRuntime(jdDoc: MJdDoc, jdConf: MJdConf, jdRuntime0: MJdRuntime): MJdRuntime = {
+  def mkJdRuntime(jdDoc: MJdDoc, jdArgs: MJdArgs) =
+    mkJdRuntime2(jdDoc, jdArgs.conf, jdArgs.jdRuntime)
+  def mkJdRuntime2(jdDoc: MJdDoc, jdConf: MJdConf, jdRuntime0: MJdRuntime) = {
     JdUtil
       .mkRuntime( jdConf )
       .docs( jdDoc )
       .prev( jdRuntime0 )
-      .make
   }
 
 
