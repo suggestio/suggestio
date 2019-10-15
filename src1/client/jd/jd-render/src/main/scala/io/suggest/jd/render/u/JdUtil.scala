@@ -2,10 +2,12 @@ package io.suggest.jd.render.u
 
 import diode.data.Pot
 import io.suggest.grid.GridCalc
+import io.suggest.jd.MJdTagId.{blockExpand, selPathRev}
 import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdDataJs, MJdRrrProps, MJdRuntime, MJdRuntimeData, MQdBlSize}
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
 import scalaz.Tree
@@ -26,56 +28,86 @@ object JdUtil {
     * @param prevOpt Предыдущее состояние.
     * @return Карта состояний.
     */
-  def mkQdBlockLessData(tpls      : Stream[Tree[JdTag]],
+  def mkQdBlockLessData(tpls      : Stream[Tree[(MJdTagId, JdTag)]],
                         prevOpt   : Option[MJdRuntime]    = None,
-                        deleted   : Iterable[JdTag]       = Nil,
-                        added     : Iterable[JdTag]       = Nil,
-                       ): HashMap[JdTag, Pot[MQdBlSize]] = {
+                       ): HashMap[MJdTagId, Pot[MQdBlSize]] = {
     // Какие теги нужны (на основе шаблонов)
     val wantedQdBls = for {
       tpls      <- tpls
       rootTree  <- tpls.subForest
       stripOrQdBlockLess <- {
-        if (rootTree.rootLabel.name ==* MJdTagNames.DOCUMENT) {
+        if (rootTree.rootLabel._2.name ==* MJdTagNames.DOCUMENT) {
           rootTree.subForest
         } else {
           rootTree #:: Stream.empty
         }
       }
-      jdt = stripOrQdBlockLess.rootLabel
-      if jdt.name ==* MJdTagNames.QD_CONTENT
+      jdtWithId = stripOrQdBlockLess.rootLabel
+      if jdtWithId._2.name ==* MJdTagNames.QD_CONTENT
     }
-      yield jdt
+      yield jdtWithId
 
     if (wantedQdBls.isEmpty) {
       // Нет никаких данных по qd-blockless вообще.
-      HashMap.empty[JdTag, Pot[MQdBlSize]]
+      HashMap.empty[MJdTagId, Pot[MQdBlSize]]
 
     } else {
+      val potEmpty = Pot.empty[MQdBlSize]
+      val wantedQdBlsMap = HashMap(
+        wantedQdBls
+          .map { case (k,_) => (k, potEmpty) } : _*
+      )
+
       // Есть старая карта данных. Дополнить её, замёржив новые данные, и но удаляя ненужные
-      prevOpt
-        .map(_.data.qdBlockLess)
-        .filter { m =>
-          // Пустая карта не нужна. Считаем что пустой карты просто нет.
-          m.nonEmpty
-        }
-        .fold {
-          (HashMap.newBuilder[JdTag, Pot[MQdBlSize]] ++= wantedQdBls.map(_ -> Pot.empty[MQdBlSize]))
-            .result()
-        } { prevMap0 =>
-          // Убрать удалённые элементы:
-          val prevMap1 = prevMap0 -- deleted
-          wantedQdBls.foldLeft(prevMap1) { (acc0, jdtWant) =>
-            (acc0 get jdtWant).fold {
-              // Нет такого ключа - добавить в карту с Pot.empty
-              acc0 + (jdtWant -> Pot.empty[MQdBlSize])
-            } { _ =>
-              // Уже есть такой тег в старой карте.
-              acc0
-            }
-          }
-        }
+      (for {
+        prev <- prevOpt
+        prevMap0 = prev.data.qdBlockLess
+        if prevMap0.nonEmpty
+      } yield {
+        // Найти и выкинуть удалённые элементы из существующей карты:
+        val jdIdsDeleted = prevMap0.keySet -- wantedQdBlsMap.keySet
+        val prevMap1 = prevMap0 -- jdIdsDeleted
+        // Объединить старую и новую карты. Уже есть такой тег в старой карте.
+        prevMap1.merged( wantedQdBlsMap ) { (kv0, _) => kv0 }
+      })
+        .getOrElse( wantedQdBlsMap )
     }
+  }
+
+
+  /** Создание индексированной версии дерева "изнутри".
+    * Ленивая. Сложность O(N).
+    * Можно превращать в плоские данные для индекса через Tree().flatten.
+    */
+  def mkTreeIndexed(jdDoc: MJdDoc): Tree[(MJdTagId, JdTag)] = {
+    val rootJdt = jdDoc.template.rootLabel
+
+    jdDoc
+      .template
+      .zipWithIndex
+      .deepMapFold( jdDoc.jdId ) { case (jdId, (jdt, i)) =>
+        // Для каждого не-верхнего элемента требуется увеличить selPath:
+        var updAcc = List.empty[MJdTagId => MJdTagId]
+
+        if (jdt ne rootJdt)
+          updAcc ::= selPathRev.modify(i :: _)
+
+        if (jdt.name ==* MJdTagNames.STRIP) {
+          val expandMode2 = jdt.props1.bm
+            .flatMap(_.expandMode)
+          if (expandMode2 !=* jdId.blockExpand)
+            updAcc ::= blockExpand.set(expandMode2)
+        }
+
+        // Выставить blockExpand, если требуется:
+        val jdId2 =
+          if (updAcc.isEmpty) jdId
+          else updAcc.reduce(_ andThen _)(jdId)
+
+        val el2 = jdId2 -> jdt
+        // Вернуть обновлённый jd-id в качестве акка для возможных дочерних итераций.
+        (jdId2, el2)
+      }
   }
 
 
@@ -83,8 +115,6 @@ object JdUtil {
 
     val jdDocs      = GenLens[mkRuntime](_.jdDocs)
     val prevOpt     = GenLens[mkRuntime](_.prevOpt)
-    val deletedJdts = GenLens[mkRuntime](_.deletedJdts)
-    val addedJdts   = GenLens[mkRuntime](_.addedJdts)
 
     implicit class OpsExt( val args: mkRuntime ) extends AnyVal {
 
@@ -94,29 +124,19 @@ object JdUtil {
       def prev[P: JdRuntimeGetter](from: P): mkRuntime =
         prevOpt.set( implicitly[JdRuntimeGetter[P]].apply(from) )(args)
 
-      def deleted1(jdts: Iterable[JdTag]): mkRuntime = {
-        if (jdts.isEmpty) args
-        else deletedJdts.set(jdts)(args)
-      }
-      def deleted(jdts: JdTag*): mkRuntime = deleted1(jdts)
-
-      def added1(jdts: Iterable[JdTag]): mkRuntime = {
-        if (jdts.isEmpty) args
-        else addedJdts.set(jdts)(args)
-      }
-      def added(jdts: JdTag*): mkRuntime = added1(jdts)
-
-      /** Финальная сборка состояния рантайма. Сравнителньо ресурсоёмкая операция. */
+      /** Финальная сборка состояния рантайма. Сравнительно ресурсоёмкая операция. */
       def result: MJdRuntime = {
+        val tplsIndexed = args.jdDocs.map( mkTreeIndexed )
+        val jdTagsById = MJdTagId.mkTreeIndex( tplsIndexed.flatMap(_.flatten) )
+
         val tpls = args.jdDocs.map(_.template)
+
         val jdRtData = MJdRuntimeData(
           jdtWideSzMults  = GridCalc.wideSzMults(tpls, args.jdConf),
-          jdTagsById      = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(args.jdDocs) ),
+          jdTagsById      = jdTagsById,
           qdBlockLess     = mkQdBlockLessData(
-            tpls    = tpls,
+            tpls    = tplsIndexed,
             prevOpt = args.prevOpt,
-            deleted = args.deletedJdts,
-            added   = args.addedJdts,
           ),
         )
 
@@ -136,16 +156,14 @@ object JdUtil {
     *
     * @param jdDocs Данные документов (шаблоны, id и тд).
     * @param jdConf Конфиг рендера.
-    * @param deletedJdts prev: Удалённые теги.
-    * @param addedJdts prev: Добавленные теги.
+    * @param prevOpt Предыдущее состояние, если было.
+    *                Некоторые данные переносятся с предшествующего состояния.
     * @return Инстанс [[MJdRuntime]].
     */
   case class mkRuntime(
                         jdConf        : MJdConf,
                         jdDocs        : Stream[MJdDoc]        = Stream.empty,
                         prevOpt       : Option[MJdRuntime]    = None,
-                        deletedJdts   : Iterable[JdTag]       = Nil,
-                        addedJdts     : Iterable[JdTag]       = Nil,
                       )
 
 

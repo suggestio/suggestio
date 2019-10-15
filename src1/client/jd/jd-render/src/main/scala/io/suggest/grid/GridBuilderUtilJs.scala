@@ -3,7 +3,7 @@ package io.suggest.grid
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t, ItemProps, LayoutFunRes, PropsCommon}
 import io.suggest.ad.blk.{BlockMeta, BlockWidths, MBlockExpandModes}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSize, MGridBuildArgs, MGridBuildResult}
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.tags.JdTag
 import scalaz.Tree
@@ -62,7 +62,7 @@ object GridBuilderUtilJs {
     * @param jdConf Конфиг рендера. Нужен для qd-blockless.
     * @return MGbSize, описывающий размеры рендерящегося блока.
     */
-  def gbSizeFromJdt(jdt: JdTag, jdRuntime: MJdRuntime, jdConf: MJdConf): MGbSize = {
+  def gbSizeFromJdt(jdId: MJdTagId, jdt: JdTag, jdRuntime: MJdRuntime, jdConf: MJdConf): MGbSize = {
     jdt.props1.bm
       .map(gbSizeFromBm)
       .getOrElse {
@@ -70,7 +70,7 @@ object GridBuilderUtilJs {
         MGbSize(
           widthCells = jdConf.gridColumnsCount,
           heightPx   = (for {
-              qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdt)
+              qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdId)
               qdBlSz      <- qdBlSzPot.toOption
             } yield {
               qdBlSz.bounds.height
@@ -82,20 +82,28 @@ object GridBuilderUtilJs {
   }
 
 
-  /** Сборка минимальных GbArgs для jd-документа. */
-  def jdDocGbArgs(tpl: Tree[JdTag], jdArgs: MJdArgs): MGridBuildArgs = {
-    MGridBuildArgs(
+  /** Сборка простой плитки для одной карточки на основе MJdArgs.
+    * Не подходит для выдачи, т.к. там много карточек (много разных MJdArgs одновременно).
+    *
+    * @param jdArgs Аргументы рендера JdR.
+    * @return Результат сборки плитки.
+    */
+  def buildGridFromJdArgs(jdArgs: MJdArgs): MGridBuildResult = {
+    val gbArgs = MGridBuildArgs(
       // Тривиальная конвертация списка шаблонов блоков в плоский список одноуровневых MGbBlock.
       itemsExtDatas = for {
-        (jdtTree, i) <- tpl.subForest.zipWithIndex
+        (jdtTree, i) <- jdArgs.data.doc.template
+          .subForest
+          .zipWithIndex
         jdt = jdtTree.rootLabel
       } yield {
+        val jdId = MJdTagId.selPathRev.modify(i :: _)(jdArgs.data.doc.jdId)
         Tree.Leaf(
           MGbBlock(
-            size    = GridBuilderUtilJs.gbSizeFromJdt(jdt, jdArgs.jdRuntime, jdArgs.conf),
+            size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),
             nodeId  = None,
             jdtOpt  = Some(jdt),
-            orderN  = Some(i)
+            orderN  = Some(i),
           )
         )
       },
@@ -103,13 +111,8 @@ object GridBuilderUtilJs {
       offY            = 0,
       jdtWideSzMults  = jdArgs.jdRuntime.data.jdtWideSzMults,
     )
-  }
 
-
-  def buildGridFromJdArgs(jdArgs: MJdArgs): MGridBuildResult = {
-    GridBuilderUtil.buildGrid(
-      jdDocGbArgs( jdArgs.data.doc.template, jdArgs )
-    )
+    GridBuilderUtil.buildGrid( gbArgs )
   }
 
 

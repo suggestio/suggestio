@@ -12,6 +12,8 @@ import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.Tree
+import io.suggest.scalaz.ZTreeUtil._
 
 import scala.collection.immutable.HashMap
 

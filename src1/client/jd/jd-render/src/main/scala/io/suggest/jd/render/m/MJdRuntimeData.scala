@@ -34,11 +34,12 @@ object MJdRuntimeData {
   * @param qdBlockLess Состояния безблоковых qd-тегов с динамическими размерами в плитке.
   *                    Оно заполняется асинхронно через callback'и из react-measure и др.
   *                    Только HashMap, чтобы гарантировать быстрое добавление новых элементов в массив.
+  *                    Используется MJdTagId, иначе возникает лютый гемор.
   * @param jdTagsById Теги по ключу. Для связывания стабильных названий стилей в JdCss с JdR.
   */
 case class MJdRuntimeData(
                            jdtWideSzMults     : HashMap[JdTag, MSzMult],
                            // TODO Перевести qdBlockLess JdTag на MJdTagId. Обязательно.
-                           qdBlockLess        : HashMap[JdTag, Pot[MQdBlSize]]    = HashMap.empty,
-                           jdTagsById         : HashMap[MJdTagId, JdTag]          = HashMap.empty,
+                           qdBlockLess        : HashMap[MJdTagId, Pot[MQdBlSize]]     = HashMap.empty,
+                           jdTagsById         : HashMap[MJdTagId, JdTag]              = HashMap.empty,
                          )

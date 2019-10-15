@@ -40,7 +40,7 @@ object JdCss {
   @inline implicit def univEq: UnivEq[JdCss] = UnivEq.derive
 
   private val _jdIdToStringF = {
-    (jdId: MJdTagId, i: Int) =>
+    (jdId: MJdTagId, _: Int) =>
       jdId.toString
   }
 
@@ -270,7 +270,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       jdt.props1.topLeft.fold[StyleS] {
         // qd-blockless?
         jdCssArgs.data.qdBlockLess
-          .get( jdt )
+          .get( jdtId )
           .flatMap(_.toOption)
           .whenDefinedStyleS { qdBlSz =>
             var acc = List.empty[ToStyle]

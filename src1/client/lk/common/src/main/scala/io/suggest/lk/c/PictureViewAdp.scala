@@ -66,7 +66,7 @@ object IPictureViewAdp {
   /** Поддержка управления представлением картинок, которые хранятся в дереве jd-тегов. */
   implicit object JdTagTreeBgImgAdp extends IPictureViewAdp[Tree[JdTag]] {
 
-    import io.suggest.scalaz.ZTreeUtil.ZTreeJdOps
+    import io.suggest.scalaz.ZTreeUtil.ZTreeOps
 
     private def _cmpEdgeUid(keyEdgeUid: Option[EdgeUid_t], edgeUids: Iterable[MJdEdgeId]): Boolean = {
       (keyEdgeUid.isEmpty && edgeUids.isEmpty) ||

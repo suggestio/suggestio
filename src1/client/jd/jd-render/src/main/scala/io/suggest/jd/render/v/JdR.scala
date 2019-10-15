@@ -7,12 +7,11 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.css.Css
 import io.suggest.grid.GridBuilderUtilJs
-import io.suggest.grid.build.GridBuilderUtil
 import io.suggest.jd.{MJdEdgeId, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -79,7 +78,7 @@ class JdR(
         } else {
           // Внеблоковый контент. Бывает, что высота уже измерена и не измерена. Отработать обе ситуации:
           contTagModsAcc ::= jdCssStatic.qdBl
-          val qdBlOpt = state.jdArgs.jdRuntime.data.qdBlockLess.get(qdTag)
+          val qdBlOpt = state.jdArgs.jdRuntime.data.qdBlockLess.get( state.tagId )
           if ( qdBlOpt.exists(_.nonEmpty) )
             contTagModsAcc ::= jdCss.absPosStyleF( state.tagId )
         }
@@ -122,7 +121,7 @@ class JdR(
                     .jdRuntime
                     .data
                     .qdBlockLess
-                    .get(state.subTree.rootLabel)
+                    .get( state.tagId )
                     .exists(_.isPending)
                 ) {
                   isReMeasured = true
@@ -149,8 +148,10 @@ class JdR(
       def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback
       lazy val _onResizeF = ReactCommonUtil.cbFun1ToJsCb( blocklessQdContentBoundsMeasuredJdCb )
 
-      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], cr: ContentRect) =
-        QdBoundsMeasured(mp.value.subTree.rootLabel, cr)
+      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], cr: ContentRect): QdBoundsMeasured = {
+        val m = mp.value
+        QdBoundsMeasured(m.subTree.rootLabel, m.tagId, cr)
+      }
 
     }
 
@@ -288,11 +289,8 @@ class JdR(
         CSSGrid {
           GridBuilderUtilJs.mkCssGridArgs(
             gbRes = state.gridBuildRes.getOrElse {
-              // 2019-09-25 Пока допускаем обычный рендер, но крайне желательно избегать этой ситуации.
-              // Потом надо будет как-то всё устаканить, чтобы нельзя было на уровне кода рендерить с документ неправильно (убрать плитку из JdR? Тогда и тип jdt document следом?)
-              LOG.warn( WarnMsgs.GRID_REBUILD_INPERFORMANT, msg = state.tagId.toString )
-              val gbArgs = GridBuilderUtilJs.jdDocGbArgs( state.subTree, state.jdArgs )
-              GridBuilderUtil.buildGrid( gbArgs )
+              LOG.error( ErrorMsgs.GRID_BUILD_RES_MISSING, msg = state.tagId.toString )
+              throw new IllegalArgumentException( ErrorMsgs.GRID_BUILD_RES_MISSING )
             },
             conf = state.jdArgs.conf,
             tagName = GridComponents.DIV,

@@ -14,8 +14,8 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.edit.m.{ResizeContent, JdChangeLayer, JdDropContent, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize}
-import io.suggest.jd.{JdConst, MJdConf, MJdDoc, MJdEdge}
+import io.suggest.jd.edit.m.{JdChangeLayer, JdDropContent, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize, ResizeContent}
+import io.suggest.jd.{JdConst, MJdConf, MJdDoc, MJdEdge, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.tags._
@@ -42,8 +42,6 @@ import monocle.Traversal
 import scala.util.Random
 import scalaz.{Tree, TreeLoc}
 import scalaz.std.option._
-
-import scala.collection.immutable.HashMap
 
 /**
   * Suggest.io
@@ -110,15 +108,7 @@ class DocEditAh[M](
         val tpl2 = treeLoc2.toTree
         val jdDoc2 = MJdDoc.template.set( tpl2 )( v0.jdDoc.jdArgs.data.doc )
 
-        val jdRuntime1 = if (isQdBlockless(treeLoc0)) {
-          repairQdBl( v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, treeLoc0.getLabel, treeLoc2.getLabel, v0.jdDoc.jdArgs.jdRuntime, reMeasure = true )
-        } else {
-          v0.jdDoc.jdArgs.jdRuntime
-        }
-
-        val jdRuntime2 = mkJdRuntime2(jdDoc2, v0.jdDoc.jdArgs.conf, jdRuntime1)
-          .deleted( treeLoc0.getLabel )
-          .added( treeLoc2.getLabel )
+        val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
           .result
 
         val v2 = MDocS.jdDoc
@@ -260,8 +250,6 @@ class DocEditAh[M](
               ) andThen
               MJdArgs.jdRuntime.set(
                 mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                  .added1( qdSubTree0.flatten )
-                  .deleted1( qdSubTree3.flatten )
                   .result
               )
             )
@@ -291,15 +279,19 @@ class DocEditAh[M](
     // Изменения состояния ротации текущего jd-тега.
     case m: RotateSet =>
       val v0 = value
+      val jdArgs0 = v0.jdDoc.jdArgs
 
       (for {
-        selJdtLoc0 <- v0.jdDoc.jdArgs.selJdt.treeLocOpt
+        selJdtLoc0 <- jdArgs0.selJdt.treeLocOpt
         jdt0 = selJdtLoc0.getLabel
-        if (jdt0.props1.rotateDeg !=* m.degrees) &&
+
+        if (jdt0.props1.rotateDeg !=* m.degrees) && (
           // Убедится, что значение не выходит за допустымые пределы поворота:
           m.degrees.fold(true) { deg =>
             Math.abs(deg) <= JdConst.ROTATE_MAX_ABS
           }
+        )
+
       } yield {
         val jdt2 = JdTag.props1
           .composeLens( MJdtProps1.rotateDeg )
@@ -307,26 +299,24 @@ class DocEditAh[M](
         val tpl2 = selJdtLoc0
           .setLabel(jdt2)
           .toTree
-        val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdDoc.jdArgs.data.doc )
+        val jdDoc2 = MJdDoc.template.set(tpl2)( jdArgs0.data.doc )
 
-        // Для qd-blockless надо пробросить Pot.pending() и новый ключ для тега с прежним значением внутрь рантайма.
-        val jdRuntime1 = if ( isQdBlockless(selJdtLoc0) )
-          repairQdBl(v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, jdt0, jdt2, v0.jdDoc.jdArgs.jdRuntime, reMeasure = true)
-        else
-          v0.jdDoc.jdArgs.jdRuntime
-
-        var jdRuntime2 = mkJdRuntime2(jdDoc2, v0.jdDoc.jdArgs.conf, jdRuntime1)
-          .deleted( jdt0 )
-          .added( jdt2 )
-          .result
+        // Выставить Pot.pending в qdBlockLess для текущего тега, а потом только пересобирать новый рантайм.
+        val jdRuntime1 = if (isQdBlockless(selJdtLoc0)) {
+          DocEditAh.qdBlockLess2Pending( jdArgs0 )
+        } else {
+          jdArgs0.jdRuntime
+        }
 
         val v2 = MDocS.jdDoc.modify(
           MJdDocEditS.jdArgs.modify(
             MJdArgs.data
               .composeLens( MJdDataJs.doc )
               .set( jdDoc2 ) andThen
-            MJdArgs.jdRuntime
-              .set( jdRuntime2 )
+            MJdArgs.jdRuntime.set(
+              mkJdRuntime2(jdDoc2, jdArgs0.conf, jdRuntime1)
+                .result
+            )
           )
         )( v0 )
 
@@ -605,10 +595,7 @@ class DocEditAh[M](
               .composeLens( MJdDataJs.doc )
               .set( jdDoc2 ) andThen
             MJdArgs.jdRuntime.set(
-              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                .deleted( strip0 )
-                .added( strip2 )
-                .result
+              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
             )
           )(v0.jdDoc.jdArgs)
 
@@ -657,9 +644,7 @@ class DocEditAh[M](
           val jdArgs0 = v0.jdDoc.jdArgs
           val jdArgs2 = jdArgs0.copy(
             data        = (MJdDataJs.doc set jdDoc2)( jdArgs0.data ),
-            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0)
-              .deleted( strip4delLoc.getLabel )
-              .result,
+            jdRuntime   = mkJdRuntime(jdDoc2, jdArgs0).result,
             renderArgs  = (MJdRenderArgs.selPath set None)( jdArgs0.renderArgs ),
           )
           val v2 = (
@@ -983,13 +968,8 @@ class DocEditAh[M](
               .set( MJdDndS.empty )
           ) andThen
           MJdArgs.jdRuntime.set {
-            var rtArgs = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-            if (needModifyJdt) {
-              rtArgs = rtArgs
-                .deleted( droppedBlockLabel )
-                .added( droppedBlockLoc1.getLabel )
-            }
-            rtArgs.result
+            mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+              .result
           }
         )(v0.jdDoc.jdArgs)
 
@@ -1047,17 +1027,13 @@ class DocEditAh[M](
             lazy val p1_bgColor_LENS = JdTag.props1
               .composeLens( MJdtProps1.bgColor )
 
-            // Аккамуляторы изменившихся тегов.
-            var addedAcc = List.empty[JdTag]
-            var deletedAcc = addedAcc
-
             val tpl2 = for (el1 <- v0.jdDoc.jdArgs.data.doc.template) yield {
               el1
                 .edgeUids
                 .map(_.edgeUid)
                 .find(edgeUids4mod.contains)
                 .fold(el1) { _ =>
-                  val jdt2 = el1.qdProps.fold {
+                  el1.qdProps.fold {
                     p1_bgColor_LENS
                       .set( topColorMcdOpt )(el1)
                   } { qdProps0 =>
@@ -1071,9 +1047,6 @@ class DocEditAh[M](
                       ))(qdProps0)
                     ))(el1)
                   }
-                  deletedAcc ::= el1
-                  addedAcc ::= jdt2
-                  jdt2
                 }
             }
             val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
@@ -1087,8 +1060,6 @@ class DocEditAh[M](
                   .set(jdDoc2) andThen
                 MJdArgs.jdRuntime.set(
                   mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                    .deleted1( deletedAcc )
-                    .added1( addedAcc )
                     .result
                 )
               )(v0)
@@ -1138,15 +1109,7 @@ class DocEditAh[M](
         val tpl2 = loc2.toTree
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
-        val jdRuntime1 = if (!parentIsStrip(loc2))
-          repairQdBl(v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess, jdt0, jdt2, v0.jdDoc.jdArgs.jdRuntime, reMeasure = true)
-        else
-          v0.jdDoc.jdArgs.jdRuntime
-
-        val jdRuntime2 = mkJdRuntime2(jdDoc2, v0.jdDoc.jdArgs.conf, jdRuntime1)
-          .deleted( jdt0 )
-          .added( jdt2 )
-          .result
+        val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
 
         val v2 = MDocS.jdDoc
           .composeLens(MJdDocEditS.jdArgs)
@@ -1193,7 +1156,6 @@ class DocEditAh[M](
                   .set( jdDoc2 ) andThen
                 MJdArgs.jdRuntime.set(
                   mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                    .deleted( ??? )
                     .result
                 )
               ) andThen
@@ -1300,8 +1262,6 @@ class DocEditAh[M](
             .set( jdDoc2 ) andThen
           MJdArgs.jdRuntime.set(
             mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-              .deleted( jdt0 )
-              .added( jdtLoc2.getLabel )
               .result
           )
         )(v0.jdDoc.jdArgs)
@@ -1325,15 +1285,10 @@ class DocEditAh[M](
       val p1_isMain_LENS = JdTag.props1
         .composeLens( MJdtProps1.isMain )
 
-      var addedJdts = List.empty[JdTag]
-      var deletedJdts = addedJdts
-
       def __updateLocLabel(label: JdTag, newValue: Option[Boolean]): JdTag = {
         if ( p1_isMain_LENS.get(label) !=* newValue) {
           val jdt2 = p1_isMain_LENS
             .set( newValue )( label )
-          deletedJdts ::= label
-          addedJdts ::= jdt2
           jdt2
         } else {
           label
@@ -1381,8 +1336,6 @@ class DocEditAh[M](
                 .set( jdDoc2 ) andThen
               MJdArgs.jdRuntime.set(
                 mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                  .deleted1( deletedJdts )
-                  .added1( addedJdts )
                   .result
               )
             )( v0 )
@@ -1485,7 +1438,6 @@ class DocEditAh[M](
             ) andThen
             MJdArgs.jdRuntime.set(
               mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                .added1( qdtTree.flatten )
                 .result
             ) andThen
             MJdArgs.renderArgs
@@ -1574,7 +1526,6 @@ class DocEditAh[M](
             .set( tpl2.nodeToPath( newStripTree.rootLabel ) ) andThen
           MJdArgs.jdRuntime.set(
             mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-              .added1( newStripTree.flatten )
               .result
           )
       )(v0.jdDoc.jdArgs)
@@ -1701,22 +1652,25 @@ object DocEditAh {
     !parentIsStrip( selJdtLoc0 )
   }
 
-  def repairQdBl(qdBlMap0  : HashMap[JdTag, Pot[MQdBlSize]],
-                 jdt0      : JdTag,
-                 jdt2      : JdTag,
-                 jdRuntime : MJdRuntime,
-                 reMeasure : Boolean = false,
-                ): MJdRuntime = {
-    // Извлечь старое состояние qd-blockless из старого рантайма:
-    val qdBlPot0 = qdBlMap0
-      .getOrElse(jdt0, Pot.empty)
-    // Выставить pending, чтобы принудительно вызвать measure()-функцию в шаблоне-компоненте.
-    val qdBlPot2 =
-      if (reMeasure && !qdBlPot0.isPending) qdBlPot0.pending()
-      else qdBlPot0
-    MJdRuntime.data
-      .composeLens(MJdRuntimeData.qdBlockLess)
-      .modify(_ + (jdt2 -> qdBlPot2))(jdRuntime)
+
+  /** Для текущего выбранного qd-content-тега выставить qdBlockLess в pending. */
+  def qdBlockLess2Pending(jdArgs: MJdArgs): MJdRuntime = {
+    import jdArgs.{jdRuntime => jdRuntime0}
+
+    val jdRuntime_data_qdBlockLess_LENS = MJdRuntime.data
+      .composeLens( MJdRuntimeData.qdBlockLess )
+    val qdBlMap0 = jdRuntime_data_qdBlockLess_LENS.get( jdRuntime0 )
+    val selJdId = MJdTagId.selPathRev.set( jdArgs.renderArgs.selPath.get )( jdArgs.data.doc.jdId )
+    val qdBlOptPot0 = qdBlMap0.get( selJdId )
+    qdBlOptPot0
+      .filter(_.isPending)
+      .fold {
+        // Выставить pending для текущего qd-blockless-тега, чтобы произошло повторное измерение размера.
+        val pot2 = qdBlOptPot0
+          .getOrElse(Pot.empty)
+          .pending()
+        jdRuntime_data_qdBlockLess_LENS.set( qdBlMap0 + (selJdId -> pot2) )(jdRuntime0)
+      }(_ => jdRuntime0)
   }
 
 }

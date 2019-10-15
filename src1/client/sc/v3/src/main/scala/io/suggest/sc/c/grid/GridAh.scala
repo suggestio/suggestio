@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
-import io.suggest.jd.{MJdConf, MJdDoc}
+import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -67,7 +67,7 @@ object GridAh {
   def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
 
     /** Конвертация одной карточки в один блок для рендера в плитке. */
-    def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MJdDataJs): Tree[MGbBlock] = {
+    def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
       Tree.Leaf {
         val stripJdt = stripTpl.rootLabel
@@ -76,7 +76,6 @@ object GridAh {
         val wideBgBlk = for {
           bm      <- bmOpt
           if bm.expandMode.nonEmpty
-          //_       <- OptionUtil.maybeTrue( bm.wide )
           bg      <- stripJdt.props1.bgImg
           // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
           // TODO Нужна поддержка wide-фона без картинки.
@@ -87,7 +86,7 @@ object GridAh {
         }
 
         MGbBlock(
-          size   = GridBuilderUtilJs.gbSizeFromJdt(stripJdt, jdRuntime, jdConf),
+          size   = GridBuilderUtilJs.gbSizeFromJdt(jdId, stripJdt, jdRuntime, jdConf),
           nodeId = nodeId,
           jdtOpt = Some(stripJdt),
           wideBgSz = wideBgBlk
@@ -103,7 +102,7 @@ object GridAh {
         scAdData.focused.fold [Tree[MGbBlock]] {
           // Несфокусированная карточка. Вернуть bm единственного стрипа.
           val brd = scAdData.main
-          blockRenderData2GbPayload( scAdData.nodeId, brd.doc.template, brd )
+          blockRenderData2GbPayload( scAdData.nodeId, brd.doc.template, brd, brd.doc.jdId )
         } { foc =>
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
           Tree.Node(
@@ -114,6 +113,7 @@ object GridAh {
                   .rootLabel,
                 jdRuntime = jdRuntime,
                 jdConf    = jdConf,
+                jdId      = foc.blkData.doc.jdId,
               ),
               nodeId = scAdData.nodeId,
               jdtOpt = None,
@@ -121,11 +121,11 @@ object GridAh {
             forest = foc.blkData
               .doc.template
               .subForest
-              .iterator
-              .map { subTpl =>
-                blockRenderData2GbPayload( scAdData.nodeId, subTpl, foc.blkData )
+              .zipWithIndex
+              .map { case (subTpl, i) =>
+                val subJdId = MJdTagId.selPathRev.modify(i :: _)(foc.blkData.doc.jdId)
+                blockRenderData2GbPayload( scAdData.nodeId, subTpl, foc.blkData, subJdId)
               }
-              .toStream
           )
         }
       }

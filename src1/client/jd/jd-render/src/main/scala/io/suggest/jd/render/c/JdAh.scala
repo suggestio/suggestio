@@ -51,7 +51,7 @@ class JdAh[M](
 
       // Т.к. react-measure склонна присылать bounds дважды (согласно докам), то сначала смотрим уже записанные данные.
       qdBlMap0
-        .get( m.jdTag )
+        .get( m.jdtId )
         .filterNot( _ contains[MQdBlSize] qdBlSz2 )
         .fold {
           // Повторный сигнал размера или размер не изменился. Или сигнал от неизвестного тега.
@@ -59,7 +59,7 @@ class JdAh[M](
 
         } { qdBlSzPot0 =>
           // Т.к. HashMap. то HashMap().updated() не вызывает полной пересборки kv-массива.
-          val qdBlMap2 = qdBlMap0 + (m.jdTag -> (qdBlSzPot0 ready qdBlSz2))
+          val qdBlMap2 = qdBlMap0 + (m.jdtId -> (qdBlSzPot0 ready qdBlSz2))
 
           // Нужно понять, остались ли ещё внеблоковые qd-теги, от которых ожидаются размеры.
           // true - Пере-рендер плитки не требуется, т.к. в очереди есть ещё qd-bounds-экшены, помимо этого.

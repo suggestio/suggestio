@@ -30,7 +30,7 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 //webpackBundlingMode := BundlingMode.LibraryOnly()
 // https://github.com/scalacenter/scalajs-bundler/issues/178
 webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
-//
+
 // TODO Проблемы с L() и window.L. Нужно как-то организовать воспроизводимый bug-report и отправить в scala.js.
 webpackBundlingMode in fullOptJS := BundlingMode.Application
 

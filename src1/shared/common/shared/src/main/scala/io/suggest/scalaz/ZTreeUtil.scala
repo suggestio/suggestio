@@ -42,7 +42,7 @@ object ZTreeUtil {
     *
     * @param tree Rose tree.
     */
-  implicit class ZTreeJdOps[A]( private val tree: Tree[A] ) extends AnyVal {
+  implicit class ZTreeOps[A](private val tree: Tree[A] ) extends AnyVal {
 
     /** Выяснить путь в дереве до указанного узла.
       *
@@ -82,7 +82,7 @@ object ZTreeUtil {
       tree.flatten.contains( jdt )
     }
 
-    def deepMap(f: A => A)(implicit ue: UnivEq[A]): Tree[A] = {
+    def deepMap(f: A => A): Tree[A] = {
       tree
         .loc
         .map(f)
@@ -104,6 +104,43 @@ object ZTreeUtil {
       validateNode(rootV) { forest =>
         Validation.liftNel(forest)(_.nonEmpty, notLeafErr)
       }
+    }
+
+
+    /** Проход сверху вниз по всем ветвям с отображением значений.
+      * Сложность - O(N).
+      * Нужен для сложного маппинга всего дерева с сохранением структуры,
+      * например для впихивания id'шников узлов прямо в элементы дерева.
+      * Порядок прохождения - сверху вглубь. На нижних уровнях аккамулятор терминируется.
+      * @param accParent Аккамулятор, передаваемый сверху вглубь.
+      * @param f Функция создания нового элемента и нового аккамулятора для возможных нижележащих уровней.
+      * @return Ленивое дерево с прежней структурой.
+      */
+    def deepMapFold[Acc, T](accParent: Acc)(f: (Acc, A) => (Acc, T) ): Tree[T] = {
+      val (accChild, el2) = f(accParent, tree.rootLabel)
+      Tree.Node(
+        root   = el2,
+        forest = tree
+          .subForest
+          .map { chTree =>
+            chTree.deepMapFold(accChild)(f)
+          }
+      )
+    }
+
+
+    /** Индексация дерева внутри всей уровней. */
+    def zipWithIndex: Tree[(A, Int)] =
+      zipWithIndex( startIndex = 0 )
+    def zipWithIndex(startIndex: Int): Tree[(A, Int)] = {
+      Tree.Node(
+        root    = tree.rootLabel -> startIndex,
+        forest  = for {
+          (chTree, i) <- tree.subForest.zipWithIndex
+        } yield {
+          chTree.zipWithIndex(i)
+        }
+      )
     }
 
   }

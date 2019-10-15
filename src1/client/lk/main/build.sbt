@@ -13,8 +13,10 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 // Есть плавающая проблема с LibraryOnly и Leaflet.js (global.L):
 // https://github.com/scalacenter/scalajs-bundler/issues/178
-//webpackBundlingMode := BundlingMode.LibraryOnly()
-webpackBundlingMode := BundlingMode.Application
+webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
+
+//webpackBundlingMode in fullOptJS := BundlingMode.LibraryOnly()
+webpackBundlingMode in fullOptJS := BundlingMode.Application
 
 // Use a different Webpack configuration file for production
 //[info] ERROR in lk-sjs-opt-library.js from UglifyJs

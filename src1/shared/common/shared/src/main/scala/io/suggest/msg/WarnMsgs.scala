@@ -81,6 +81,4 @@ object WarnMsgs extends MsgsStaticT {
 
   def PLATFORM_NOT_READY                     = E(62)
 
-  def GRID_REBUILD_INPERFORMANT                          = E(63)
-
 }
