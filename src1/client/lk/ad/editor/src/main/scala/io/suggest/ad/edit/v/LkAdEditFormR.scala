@@ -6,6 +6,7 @@ import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
+import io.suggest.ad.edit.c.DocEditAh
 import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
@@ -627,7 +628,8 @@ class LkAdEditFormR(
           } yield {
             contentLayersR.PropsVal(
               position = position,
-              max      = selJdtTreeLoc.lefts.length + selJdtTreeLoc.rights.length
+              max      = selJdtTreeLoc.lefts.length + selJdtTreeLoc.rights.length,
+              isQdBl   = DocEditAh.isQdBlockless( selJdtTreeLoc ),
             )
           }
         }( OptFastEq.OptValueEq ),

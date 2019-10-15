@@ -14,8 +14,19 @@ import io.suggest.spa.DAction
 trait IJdAction extends DAction
 
 
-/** Сигнал о выполнении измерения размеров qd-контента. */
-case class QdBoundsMeasured(jdTag: JdTag, jdtId: MJdTagId, contentRect: ContentRect) extends IJdAction
+/** Сигнал о выполнении измерения размеров qd-контента.
+  *
+  * @param timeStampMs Содержимое qdBlockLess Pot.pending().startTime.
+  *                    None означает, что это не ПЕРЕрендер, а первый рендер без принудительного measure().
+  * @param contentRect Нативный выхлоп react-measure.
+  */
+case class QdBoundsMeasured(
+                             jdTag        : JdTag,
+                             jdtId        : MJdTagId,
+                             timeStampMs  : Option[Long],
+                             contentRect  : ContentRect,
+                           )
+  extends IJdAction
 
 
 /** Принудительный пересчёт плитки.

@@ -16,6 +16,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import diode.data.PendingBase
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -109,20 +110,38 @@ class JdR(
           tag0
         } else {
           // Для наружной обёртки react-dnd требуется только нативный тег:
+          val qdBlOpt = state.jdArgs
+            .jdRuntime
+            .data
+            .qdBlockLess
+            .get( state.tagId )
+
           <.div(
             // Сборка измерителя размеров тега:
             Measure {
-              // Локальная переменная для блокировния бесконечного рендера. Иначе, вызов args.measure() вызывает тело mkChildrenF() повторный рендер и так до бесконечности.
+              // Собираем callback реакции на ресайз: она должна слать таймштамп из Pot'а, чтобы контроллер мог разобрать,
+              // актуален ли callback. Может быть неактуален, т.к. замер происходит в рамках requestAnimationFrame(), которая слишком асинхронна.
+              val __onResizeF = ReactCommonUtil.cbFun1ToJsCb(
+                blocklessQdContentBoundsMeasuredJdCb(
+                  for {
+                    qdBl <- qdBlOpt
+                    if qdBl.isPending
+                    qdBlPend = qdBl.asInstanceOf[PendingBase]
+                  } yield {
+                    qdBlPend.startTime
+                  }
+                )
+              )
+
+              // Локальная переменная для блокирования бесконечного вызова mkChildrenF().
+              // Вызов args.measure() вызывает тело mkChildrenF() из requestAnimationFrame().
+              // Без ручной переменной isReMeasured снаружи от mkChildrenF() рендер будет бесконечен после однократного вызова measure().
               var isReMeasured = false
+
               def __mkChildrenF(chArgs: MeasureChildrenArgs): raw.PropsChildren = {
                 // Запустить повторное измерение, когда это требуется состоянием.
                 if (
-                  !isReMeasured && state.jdArgs
-                    .jdRuntime
-                    .data
-                    .qdBlockLess
-                    .get( state.tagId )
-                    .exists(_.isPending)
+                  !isReMeasured && qdBlOpt.exists(_.isPending)
                 ) {
                   isReMeasured = true
                   chArgs.measure()
@@ -137,7 +156,7 @@ class JdR(
                 override val client = true
                 override val bounds = true
                 override val children = __mkChildrenF
-                override val onResize = _onResizeF
+                override val onResize = __onResizeF
               }
             }
           )
@@ -145,12 +164,11 @@ class JdR(
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback
-      lazy val _onResizeF = ReactCommonUtil.cbFun1ToJsCb( blocklessQdContentBoundsMeasuredJdCb )
+      def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback
 
-      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], cr: ContentRect): QdBoundsMeasured = {
+      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], timeStampMs: Option[Long], cr: ContentRect): QdBoundsMeasured = {
         val m = mp.value
-        QdBoundsMeasured(m.subTree.rootLabel, m.tagId, cr)
+        QdBoundsMeasured(m.subTree.rootLabel, m.tagId, timeStampMs, cr)
       }
 
     }
@@ -402,10 +420,10 @@ class JdR(
     final class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends QdContentBase {
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      override def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback = {
+      override def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
           propsProxy: ModelProxy[MJdRrrProps] =>
-            _qdBoundsMeasured( propsProxy, cr )
+            _qdBoundsMeasured( propsProxy, timeStampMs, cr )
         }
       }
 

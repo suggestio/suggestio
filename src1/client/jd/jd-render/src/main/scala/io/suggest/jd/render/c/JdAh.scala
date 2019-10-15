@@ -7,6 +7,7 @@ import io.suggest.jd.render.m.{GridRebuild, MJdCssArgs, MJdRuntime, MJdRuntimeDa
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.JdTag
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
 import scalaz.Tree
 
@@ -38,56 +39,54 @@ class JdAh[M](
 
     // Сообщение о завершении измерения высоты внеблокового qd-контента.
     case m: QdBoundsMeasured =>
-
-      // Нужно найти тег в MJdRuntime и решить, что же делать дальше.
       val v0 = value
 
-      val qdBlSz2 = MQdBlSize(
-        bounds = _boundsUndef2sz2d( m.contentRect.bounds ),
-        client = _boundsUndef2sz2d( m.contentRect.client ),
-      )
+      (for {
+        // Нужно найти тег в MJdRuntime и решить, что же делать дальше.
+        qdBlSzPot0 <- v0.data.qdBlockLess.get( m.jdtId )
+        // Актуален ли ответ вообще? Есть None, то это первый замер после рендера.
+        if m.timeStampMs.fold(true)( qdBlSzPot0.isPendingWithStartTime )
 
-      val qdBlMap0 = v0.data.qdBlockLess
+        qdBlSz2 = MQdBlSize(
+          bounds = _boundsUndef2sz2d( m.contentRect.bounds ),
+          client = _boundsUndef2sz2d( m.contentRect.client ),
+        )
+        // Т.к. react-measure склонна присылать bounds дважды (согласно докам), то сверяем уже записанные данные с новыми:
+        if !(qdBlSzPot0 contains[MQdBlSize] qdBlSz2)
+      } yield {
+        // Т.к. HashMap. то HashMap().updated() не вызывает полной пересборки kv-массива.
+        val qdBlMap2 = v0.data.qdBlockLess + (m.jdtId -> (qdBlSzPot0 ready qdBlSz2))
 
-      // Т.к. react-measure склонна присылать bounds дважды (согласно докам), то сначала смотрим уже записанные данные.
-      qdBlMap0
-        .get( m.jdtId )
-        .filterNot( _ contains[MQdBlSize] qdBlSz2 )
-        .fold {
+        // Нужно понять, остались ли ещё внеблоковые qd-теги, от которых ожидаются размеры.
+        // true - Пере-рендер плитки не требуется, т.к. в очереди есть ещё qd-bounds-экшены, помимо этого.
+        // false - Больше не надо дожидаться экшенов от других qd-тегов, запускаем новый рендер плитки:
+        val hasMoreBlQdsAwaiting = qdBlMap2
+          .valuesIterator
+          .exists(_.isEmpty)
+
+        if (hasMoreBlQdsAwaiting) {
+          // Есть ещё ожидаемые данные. Просто тихо обновить состояние:
+          val v2 = MJdRuntime.data
+            .composeLens(MJdRuntimeData.qdBlockLess)
+            .set(qdBlMap2)(v0)
+          updatedSilent(v2)
+        } else {
+          // Требуется пересборка данных для шаблонов
+          val data2 = MJdRuntimeData.qdBlockLess
+            .set(qdBlMap2)(v0.data)
+          val v2 = MJdRuntime(
+            jdCss = JdCss.jdCssArgs
+              .composeLens(MJdCssArgs.data)
+              .set(data2)(v0.jdCss),
+            data = data2,
+          )
+          updated(v2, GridRebuild.toEffectPure)
+        }
+      })
+        .getOrElse {
           // Повторный сигнал размера или размер не изменился. Или сигнал от неизвестного тега.
           noChange
-
-        } { qdBlSzPot0 =>
-          // Т.к. HashMap. то HashMap().updated() не вызывает полной пересборки kv-массива.
-          val qdBlMap2 = qdBlMap0 + (m.jdtId -> (qdBlSzPot0 ready qdBlSz2))
-
-          // Нужно понять, остались ли ещё внеблоковые qd-теги, от которых ожидаются размеры.
-          // true - Пере-рендер плитки не требуется, т.к. в очереди есть ещё qd-bounds-экшены, помимо этого.
-          // false - Больше не надо дожидаться экшенов от других qd-тегов, запускаем новый рендер плитки:
-          val hasMoreBlQdsAwaiting = qdBlMap2
-            .valuesIterator
-            .exists(_.isEmpty)
-
-          if (hasMoreBlQdsAwaiting) {
-            // Есть ещё ожидаемые данные. Просто тихо обновить состояние:
-            val v2 = MJdRuntime.data
-              .composeLens(MJdRuntimeData.qdBlockLess)
-              .set(qdBlMap2)(v0)
-            updatedSilent(v2)
-          } else {
-            // Требуется пересборка данных для шаблонов
-            val data2 = MJdRuntimeData.qdBlockLess
-              .set(qdBlMap2)(v0.data)
-            val v2 = MJdRuntime(
-              jdCss = JdCss.jdCssArgs
-                .composeLens(MJdCssArgs.data)
-                .set(data2)(v0.jdCss),
-              data = data2,
-            )
-            updated(v2, GridRebuild.toEffectPure)
-          }
         }
-
   }
 
 }

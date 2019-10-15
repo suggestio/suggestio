@@ -33,6 +33,7 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
+import io.suggest.common.BooleanUtil.Implicits._
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
@@ -934,8 +935,11 @@ class DocEditAh[M](
           .get
 
         // Убрать значение topLeft, если задано. Это для qd-blockless, когда контент был вынесен за пределы блока.
-        val jdt_p1_topLeft_LENS = JdTag.props1 composeLens MJdtProps1.topLeft
-        val needModifyJdt = jdt_p1_topLeft_LENS.get(droppedBlockLabel).nonEmpty
+        val jdt_p1_topLeft_LENS = JdTag.props1
+          .composeLens( MJdtProps1.topLeft )
+        val needModifyJdt = jdt_p1_topLeft_LENS
+          .get(droppedBlockLabel)
+          .nonEmpty
         val droppedBlockLoc1 = if (needModifyJdt) {
           droppedBlockLoc
             // Обрубаем loc сверху, чтобы modifyLabel() гарантировано не затрагивал ничего кроме текущего уровня, который стал верхним.
@@ -1180,16 +1184,21 @@ class DocEditAh[M](
       // Текущий тег в дереве - держим на руках:
       val loc0 = v0.jdDoc.jdArgs.selJdt.treeLocOpt.get
 
+      // TODO Для qdBlockLess надо промигрировать данные qdBlockLess (смена jdId) и
+      val isQdBl = DocEditAh.isQdBlockless(loc0)
+      val isUp = m.up
+        .invertIf( isQdBl )
+
       val loc2OrNull: TreeLoc[JdTag] = if (!m.bounded) {
         // Если !m.bounded, то поменять тег местами с соседними тегами.
         // Если шаг влево и есть теги слева...
-        if (!m.up && loc0.lefts.nonEmpty) {
+        if (!isUp && loc0.lefts.nonEmpty) {
           // Меняем местами первый левый тег с текущим
           val leftLoc = loc0.left.get
           leftLoc
             .setTree( loc0.tree )
             .right.get.setTree( leftLoc.tree )
-        } else if (m.up && loc0.rights.nonEmpty) {
+        } else if (isUp && loc0.rights.nonEmpty) {
           val rightLoc = loc0.right.get
           rightLoc
             .setTree( loc0.tree )
@@ -1203,7 +1212,7 @@ class DocEditAh[M](
         val parentLoc1 = loc0
           .delete.get
           .parent.get
-        if (!m.up) parentLoc1.insertDownFirst( loc0.tree )
+        if (!isUp) parentLoc1.insertDownFirst( loc0.tree )
         else parentLoc1.insertDownLast( loc0.tree )
 
       } else {
@@ -1213,20 +1222,29 @@ class DocEditAh[M](
 
       Option(loc2OrNull).fold(noChange) { loc2 =>
         val tpl2 = loc2.toTree
+        val jdArgs0 = v0.jdDoc.jdArgs
+        val jdDoc2 = MJdDoc.template
+          .set(tpl2)( jdArgs0.data.doc )
+
+        var jdArgsModF = (
+          MJdArgs.data
+            .composeLens( MJdDataJs.doc )
+            .set(jdDoc2) andThen
+          // Надо пересчитать path до перемещённого тега.
+          MJdArgs.renderArgs
+            .composeLens( MJdRenderArgs.selPath )
+            .set( tpl2.nodeToPath( loc0.getLabel ) )
+        )
+
+        if (isQdBl) {
+          jdArgsModF = jdArgsModF andThen MJdArgs.jdRuntime
+            .set( mkJdRuntime(jdDoc2, jdArgs0).result )
+        }
+        // else - css можно не обновлять, т.к. там просто поменяется порядок стилей без видимых изменений.
 
         val v2 = MDocS.jdDoc
           .composeLens(MJdDocEditS.jdArgs)
-          .modify(
-            MJdArgs.data
-              .composeLens( MJdDataJs.doc )
-              .composeLens( MJdDoc.template )
-              .set(tpl2) andThen
-            // Надо пересчитать path до перемещённого тега.
-            MJdArgs.renderArgs
-              .composeLens( MJdRenderArgs.selPath )
-              .set( tpl2.nodeToPath( loc0.getLabel ) )
-            // css можно не обновлять, т.к. там просто поменяется порядок стилей без видимых изменений.
-          )(v0)
+          .modify( jdArgsModF )(v0)
 
         updated(v2)
       }

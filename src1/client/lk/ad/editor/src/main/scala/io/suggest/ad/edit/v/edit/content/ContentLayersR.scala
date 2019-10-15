@@ -11,6 +11,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.common.BooleanUtil.Implicits._
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.raw.React
 import japgolly.univeq._
@@ -29,6 +30,7 @@ class ContentLayersR(
   case class PropsVal(
                        position : Int,
                        max      : Int,
+                       isQdBl   : Boolean,
                      )
     extends UseValueEq
 
@@ -46,6 +48,10 @@ class ContentLayersR(
 
         val canGoUp = props.position < props.max
         val canGoDown = props.position > 0
+
+        val downValue = if (props.isQdBl) canGoUp else canGoDown
+        val upValue = if (props.isQdBl) canGoDown else canGoUp
+
         val PP = contentLayerBtnR.PropsVal
 
         <.div(
@@ -54,10 +60,10 @@ class ContentLayersR(
           HtmlConstants.COLON,
           HtmlConstants.NBSP_STR,
 
-          __mkBtn( PP.downMost(canGoDown) ),
-          __mkBtn( PP.below(canGoDown) ),
-          __mkBtn( PP.above(canGoUp) ),
-          __mkBtn( PP.upperMost(canGoUp) ),
+          __mkBtn( PP.downMost(downValue) ),
+          __mkBtn( PP.below(downValue) ),
+          __mkBtn( PP.above(upValue) ),
+          __mkBtn( PP.upperMost(upValue) ),
 
         )
       }

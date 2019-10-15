@@ -193,10 +193,10 @@ class JdEditR(
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      override def blocklessQdContentBoundsMeasuredJdCb(cr: ContentRect): Callback = {
+      override def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
           props: MRrrEdit with MRrrEditCollectDrag =>
-            _qdBoundsMeasured( props.p, cr )
+            _qdBoundsMeasured( props.p, timeStampMs, cr )
         }
       }
 
