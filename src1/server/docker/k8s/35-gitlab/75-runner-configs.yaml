@@ -1,10 +1,12 @@
+## Dumped via:
+##   kubectl edit configmap runner-gitlab-runner -n gitlab-managed-apps
 apiVersion: v1
 kind: ConfigMap
 metadata:
   ## Считаем, что gitlab-runner установлен через helm (в т.ч. через gitlab k8s-integration).
   labels:
     app: runner-gitlab-runner
-    chart: gitlab-runner-0.3.0
+    chart: gitlab-runner-0.8.0
     heritage: Tiller
     release: runner
   name: runner-gitlab-runner

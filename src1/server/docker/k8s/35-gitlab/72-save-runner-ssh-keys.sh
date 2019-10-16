@@ -8,7 +8,7 @@ KNOWN_HOSTS="known_hosts"
 
 NAME="deploy-ssh-keys"
 
-kubectl delete secret $NAME -n gitlab-managed-apps
+kubectl delete secret $NAME -n gitlab-managed-apps || echo "No previous keys, first run, it's ok."
 
 kubectl create secret generic $NAME \
     --from-file=$KEY \
