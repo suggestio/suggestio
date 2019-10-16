@@ -20,7 +20,7 @@ spec:
         io.suggest.postgresql.slave.here: "true"
       containers:
       - name: pg-slave-cont
-        image: docker-registry.suggest.io:5000/sio/sio2/postgresql:20190528-1
+        image: docker-registry.suggest.io:5000/sio/sio2/postgresql:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5432

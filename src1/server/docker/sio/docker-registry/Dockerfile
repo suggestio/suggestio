@@ -35,3 +35,5 @@ RUN systemctl enable docker-registry
 
 CMD ["/sbin/systemctl", "default"]
 
+ENV REGISTRY_STORAGE_DELETE_ENABLED=True
+

@@ -53,13 +53,9 @@ RUN systemctl enable artifactory.service
 ## Общение с антивирусом в контейнере происходит через указанный tcp-порт, пробрасываемый наружу:
 EXPOSE 8081/tcp
 
-ARG entrypoint_sh="/sbin/docker-entrypoint.sh"
+COPY "docker-entrypoint.sh" "/sbin/docker-entrypoint.sh"
 
-COPY docker-entrypoint.sh "$entrypoint_sh"
-
-RUN chmod 755 "$entrypoint_sh"
-
-ENTRYPOINT ["$entrypoint_sh"]
+ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 
 CMD ["/bin/systemctl", "default"]
 

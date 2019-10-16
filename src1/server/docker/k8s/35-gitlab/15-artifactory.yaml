@@ -20,7 +20,7 @@ spec:
       containers:
       - name: artifactory
         image: docker-registry.suggest.io/sio/sio2/artifactory
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8081
         volumeMounts:

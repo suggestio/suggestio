@@ -31,6 +31,10 @@ RUN cd /tmp && \
 ## скрипт bin/elasticsearch нуждается в ps и hostname
 RUN $PACMAN -S --noconfirm inetutils procps-ng
 
+## Запретить демонизация процесса в фон.
+RUN sed -e "s@ -d @ @g" -i "/usr/lib/systemd/system/elasticsearch.service" && \
+  systemctl enable elasticsearch.service
+
 RUN sio-finalize-container.sh
 
 ARG HOMEDIR=/var/lib/elasticsearch
@@ -47,10 +51,6 @@ RUN for dir in /var/log/elasticsearch $HOMEDIR /run/elasticsearch; do \
 VOLUME $HOMEDIR
 
 CMD ["/bin/systemctl", "default"]
-
-## Запретить демонизация процесса в фон.
-RUN sed -e "s@ -d @ @g" -i "/usr/lib/systemd/system/elasticsearch.service" && \
-  systemctl enable elasticsearch.service
 
 COPY elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
 COPY log4j2.properties /etc/elasticsearch/log4j2.properties

@@ -27,18 +27,19 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-//webpackBundlingMode := BundlingMode.LibraryOnly()
-// https://github.com/scalacenter/scalajs-bundler/issues/178
-webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
+webpackBundlingMode := BundlingMode.LibraryOnly()
 
+// https://github.com/scalacenter/scalajs-bundler/issues/178
 // TODO Проблемы с L() и window.L. Нужно как-то организовать воспроизводимый bug-report и отправить в scala.js.
-webpackBundlingMode in fullOptJS := BundlingMode.Application
+//webpackBundlingMode in fullOptJS := BundlingMode.Application
 
 
 // Use a different Webpack configuration file for production
 webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
 
-emitSourceMaps := false
+emitSourceMaps := true
+
+emitSourceMaps in fullOptJS := false
 
 scalaJSUseMainModuleInitializer := true
 

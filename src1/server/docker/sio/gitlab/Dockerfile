@@ -48,13 +48,17 @@ RUN chmod 750 ${gitlab_home} && \
 
 RUN $PACMAN --noconfirm -Sy --needed gitlab postgresql-libs tar gzip
 
+## gitlab-gitaly.service: time="2019-10-16T13:02:40Z" level=warning msg="getting RSS" error="exec: \"ps\": executable file not found in $PATH"
+RUN $PACMAN --noconfirm -S --needed procps-ng
+
 ## Для распаковки /var/lib/gitlab из gitlab_initial_backup_tar_gz требуется, чтобы tar был в контейнере.
-RUN pacman -D --asexplicit tar gzip
+## sed используется и ниже по коду, и в entrypoint.
+RUN pacman -D --asexplicit tar gzip sed
+
+RUN sio-finalize-container.sh
 
 ## зависит от libaudit, нужно вызывать ДО sio-finalize-container.sh
 RUN gpasswd -a ${gitlab_user} ${redis_group}
-
-RUN sio-finalize-container.sh
 
 ## Система должна раздавать asset'ы. GitLab считает, что это должен делать nginx, а у нас будет без таких оптимизаций, по-старинке:
 RUN sed -r "s/(config.public_file_server.enabled *= *).*/\1true/" -i /usr/share/webapps/gitlab/config/environments/production.rb
@@ -85,16 +89,16 @@ RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /
 RUN cd ${gitlab_home} && \
     tar -czpf ${gitlab_initial_backup_tar_gz} .
 
-EXPOSE ${gitlab_port}
-
-## ssh-порт для доступа через git:
-EXPOSE 22
-
 RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
     echo > $RESQUE_CONF && \
     for mode in "development" "test" "production"; do \
       echo "$mode: unix:/run/redis/redis.sock" >> $RESQUE_CONF; \
     done
+
+EXPOSE ${gitlab_port}
+
+## ssh-порт для доступа через git:
+EXPOSE 22
 
 VOLUME ${gitlab_home}
 

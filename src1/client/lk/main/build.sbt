@@ -13,10 +13,9 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 // Есть плавающая проблема с LibraryOnly и Leaflet.js (global.L):
 // https://github.com/scalacenter/scalajs-bundler/issues/178
-webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
+webpackBundlingMode := BundlingMode.LibraryOnly()
 
-//webpackBundlingMode in fullOptJS := BundlingMode.LibraryOnly()
-webpackBundlingMode in fullOptJS := BundlingMode.Application
+//webpackBundlingMode in fullOptJS := BundlingMode.Application
 
 // Use a different Webpack configuration file for production
 //[info] ERROR in lk-sjs-opt-library.js from UglifyJs
@@ -25,7 +24,7 @@ webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.confi
 
 emitSourceMaps := true
 
-(emitSourceMaps in fullOptJS) := true
+(emitSourceMaps in fullOptJS) := false
 
 npmDependencies in Compile ++= Seq(
   "react"     -> Common.reactJsVsn,
@@ -37,7 +36,8 @@ scalaJSUseMainModuleInitializer := true
 useYarn := true
 
 // А иначе упадёт на стадии bundling NPM deps.
-jsEnv := NodeJSEnv(args = Seq("--max_old_space_size=4096")).value
+jsEnv := NodeJSEnv(args = Seq("--max_old_space_size=8192")).value
+
 
 // ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
 //scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
