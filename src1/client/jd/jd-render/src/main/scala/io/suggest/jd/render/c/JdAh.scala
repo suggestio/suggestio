@@ -1,15 +1,13 @@
 package io.suggest.jd.render.c
 
 import com.github.souporserious.react.measure.WhJs
-import diode.{ActionHandler, ActionResult, ModelRO, ModelRW}
+import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.jd.render.m.{GridRebuild, MJdCssArgs, MJdRuntime, MJdRuntimeData, MQdBlSize, QdBoundsMeasured}
 import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.JdTag
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
-import scalaz.Tree
 
 import scala.scalajs.js
 
@@ -20,7 +18,6 @@ import scala.scalajs.js
   * Description: Контроллер для каких-то внутренних callback'ов при любом jd-рендере.
   */
 class JdAh[M](
-               templatesRO    : ModelRO[Stream[Tree[JdTag]]],
                modelRW        : ModelRW[M, MJdRuntime],
              )
   extends ActionHandler(modelRW)
@@ -44,6 +41,7 @@ class JdAh[M](
       (for {
         // Нужно найти тег в MJdRuntime и решить, что же делать дальше.
         qdBlSzPot0 <- v0.data.qdBlockLess.get( m.jdtId )
+
         // Актуален ли ответ вообще? Есть None, то это первый замер после рендера.
         if m.timeStampMs.fold(true)( qdBlSzPot0.isPendingWithStartTime )
 
@@ -51,10 +49,12 @@ class JdAh[M](
           bounds = _boundsUndef2sz2d( m.contentRect.bounds ),
           client = _boundsUndef2sz2d( m.contentRect.client ),
         )
+
         // Т.к. react-measure склонна присылать bounds дважды (согласно докам), то сверяем уже записанные данные с новыми:
         if !(qdBlSzPot0 contains[MQdBlSize] qdBlSz2)
+
       } yield {
-        // Т.к. HashMap. то HashMap().updated() не вызывает полной пересборки kv-массива.
+        // HashMap().updated() не вызывает полной пересборки kv-массива.
         val qdBlMap2 = v0.data.qdBlockLess + (m.jdtId -> (qdBlSzPot0 ready qdBlSz2))
 
         // Нужно понять, остались ли ещё внеблоковые qd-теги, от которых ожидаются размеры.
@@ -70,6 +70,7 @@ class JdAh[M](
             .composeLens(MJdRuntimeData.qdBlockLess)
             .set(qdBlMap2)(v0)
           updatedSilent(v2)
+
         } else {
           // Требуется пересборка данных для шаблонов
           val data2 = MJdRuntimeData.qdBlockLess
@@ -80,13 +81,14 @@ class JdAh[M](
               .set(data2)(v0.jdCss),
             data = data2,
           )
-          updated(v2, GridRebuild.toEffectPure)
+          updated(v2, GridRebuild(force = true).toEffectPure)
         }
       })
         .getOrElse {
           // Повторный сигнал размера или размер не изменился. Или сигнал от неизвестного тега.
           noChange
         }
+
   }
 
 }

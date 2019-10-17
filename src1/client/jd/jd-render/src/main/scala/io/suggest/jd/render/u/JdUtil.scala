@@ -33,16 +33,13 @@ object JdUtil {
                        ): HashMap[MJdTagId, Pot[MQdBlSize]] = {
     // Какие теги нужны (на основе шаблонов)
     val wantedQdBls = for {
-      tpls      <- tpls
-      rootTree  <- tpls.subForest
-      stripOrQdBlockLess <- {
-        if (rootTree.rootLabel._2.name ==* MJdTagNames.DOCUMENT) {
-          rootTree.subForest
-        } else {
-          rootTree #:: Stream.empty
-        }
+      tpl      <- tpls
+      qdBlsOrStrips <- tpl.rootLabel._2.name match {
+        case MJdTagNames.DOCUMENT   => tpl.subForest
+        case MJdTagNames.QD_CONTENT => tpl :: Nil
+        case _ => Nil
       }
-      jdtWithId = stripOrQdBlockLess.rootLabel
+      jdtWithId = qdBlsOrStrips.rootLabel
       if jdtWithId._2.name ==* MJdTagNames.QD_CONTENT
     }
       yield jdtWithId

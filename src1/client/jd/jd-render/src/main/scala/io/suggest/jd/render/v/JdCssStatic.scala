@@ -95,12 +95,18 @@ class JdCssStatic extends StyleSheet.Inline {
   }
 
 
-  val smBlockS = style(
-    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
-    overflow.hidden,
+  /** Статические стили для контента. */
+  val contentOuterS = style(
     // Дефолтовые настройки шрифтов внутри блока:
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     color.black
+  )
+
+  /** Статический стиль для блока. Надо не забывать про contentOuterS. */
+  val smBlockS = style(
+    addClassName( contentOuterS.htmlClass ),
+    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
+    overflow.hidden,
   )
 
 }

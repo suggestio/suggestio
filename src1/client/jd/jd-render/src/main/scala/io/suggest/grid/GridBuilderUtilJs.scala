@@ -68,7 +68,7 @@ object GridBuilderUtilJs {
       .getOrElse {
         // Внеблоковые элементы. Надо узнать их высоту.
         MGbSize(
-          widthCells = jdConf.gridColumnsCount,
+          widthCells = BlockWidths.max.relSz,
           heightPx   = (for {
               qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdId)
               qdBlSz      <- qdBlSzPot.toOption

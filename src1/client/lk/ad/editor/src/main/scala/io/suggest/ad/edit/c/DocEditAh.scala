@@ -541,7 +541,7 @@ class DocEditAh[M](
 
 
     // Принудительный ребилд плитки из JdAh.
-    case GridRebuild =>
+    case _: GridRebuild =>
       val v0 = value
       val v2 = MDocS.jdDoc
         .composeLens( MJdDocEditS.gridBuild )

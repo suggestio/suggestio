@@ -1,4 +1,6 @@
+
 //import org.scalajs.core.tools.javascript.OutputMode
+import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 Common.settingsOrgJS
 
@@ -35,8 +37,11 @@ scalaJSUseMainModuleInitializer := true
 
 useYarn := true
 
-// А иначе упадёт на стадии bundling NPM deps.
-jsEnv := NodeJSEnv(args = Seq("--max_old_space_size=8192")).value
+// Попытка гашения node.js OOM на стадии "Bundling NPM deps..."
+jsEnv := new NodeJSEnv(
+  NodeJSEnv.Config()
+    .withArgs( List("--max_old_space_size=8192") )
+)
 
 
 // ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L

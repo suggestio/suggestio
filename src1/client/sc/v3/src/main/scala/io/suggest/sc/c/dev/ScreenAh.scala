@@ -3,8 +3,8 @@ package io.suggest.sc.c.dev
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
+import io.suggest.jd.render.m.GridRebuild
 import io.suggest.sc.m.dev.MScScreenS
-import io.suggest.sc.m.grid.GridReConf
 import io.suggest.sc.m.inx.ScCssReBuild
 import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -55,7 +55,7 @@ class ScreenAh[M](
       // TODO Opt Проверять, изменился ли экран по факту? Может быть изменился и вернулся назад за время таймера?
 
       // Уведомить контроллер плитки, что пора пересчитать плитку.
-      val gridReConfFx = GridReConf.toEffectPure
+      val gridReConfFx = GridRebuild(force = false).toEffectPure
       // Забыть о сработавшем таймере.
       val screen2 = JsScreenUtil.getScreen()
       val uo2 = JsScreenUtil.getScreenUnsafeAreas(screen2)

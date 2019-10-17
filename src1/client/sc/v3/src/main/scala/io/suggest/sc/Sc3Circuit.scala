@@ -12,6 +12,8 @@ import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.MJdConf
+import io.suggest.jd.render.c.JdAh
+import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
@@ -173,6 +175,8 @@ class Sc3Circuit(
   private[sc] val mapDelayRW      = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
   private[sc] val gridRW          = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
+  private     val gridCoreRW      = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
+  private     val jdRuntimeRW     = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( MJdRuntime.MJdRuntimeFastEq )
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
   private[sc] val scScreenRW      = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
@@ -319,7 +323,7 @@ class Sc3Circuit(
     foldHandlers( mapCommonAh, scMapDelayAh )
   }
 
-  private val gridAdsAh = new GridAh(
+  private val gridAh = new GridAh(
     api           = api,
     scQsRO        = gridAdsQsRO,
     screenRO      = screenRO,
@@ -360,6 +364,9 @@ class Sc3Circuit(
     circuit = this,
   )
 
+  private val jdAh = new JdAh(
+    modelRW = jdRuntimeRW,
+  )
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
@@ -389,6 +396,8 @@ class Sc3Circuit(
     // События уровня платформы.
     acc ::= platformAh
 
+    // События jd-шаблонов в плитке.
+    acc ::= jdAh
 
     acc ::= sTextAh
     acc ::= geoTabAh    // TODO Объеденить с searchAh
@@ -403,7 +412,7 @@ class Sc3Circuit(
       acc ::= mapAhs
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
-    acc ::= gridAdsAh
+    acc ::= gridAh
 
     // Контроллер BLE-маячков. Сигналы приходят часто, поэтому его - ближе к голове списка.
     acc ::= beaconerAh

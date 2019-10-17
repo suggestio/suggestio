@@ -430,9 +430,6 @@ class LkAdEditCircuit(
 
   private val jdAh = new JdAh(
     modelRW     = jdRuntimeRW,
-    templatesRO = jdArgsRW.zoom { jdArgs =>
-      jdArgs.data.doc.template #:: Stream.empty
-    },
   )
 
   private val touchSwitchAh = new IsTouchDevSwitchAh(

@@ -93,7 +93,10 @@ object JdDocValidationSpec extends SimpleTestSuite {
             JdTag.edgeQdTree( fr3text1EdgeId, MCoords2di(15, 200) ),
             JdTag.edgeQdTree( fr3text2EdgeId, MCoords2di(35, 400) )
           )
-        )
+        ),
+
+        // И блок описания (qd-blockless).
+        JdTag.edgeQdTree( fr3text1EdgeId, coords = null ),
 
       )
     )

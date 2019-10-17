@@ -65,16 +65,18 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     outlineWidth( _szMulted( BlockPaddings.default.outlinePx ).px )
   )
 
-  // TODO Вынести статические стили в object ScCss?
+  /** Стили контейнера контента: блок или qd-blockless. */
+  val contentOuter = style(
+    // Дефолтовые настройки шрифтов внутри блока:
+    fontSize( _szMulted(MFontSizes.default.value).px ),
+  )
+
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
     // TODO Возможно, position.relative (или др.) сможет это пофиксить. Заодно можно будет удалить props-флаг quirks.
     if (jdCssArgs.quirks) position.absolute
     else position.relative,
-
-    // Дефолтовые настройки шрифтов внутри блока:
-    fontSize( _szMulted(MFontSizes.default.value).px ),
   )
 
 
@@ -260,9 +262,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** Стили для элементов, отпозиционированных абсолютно. */
   val absPosStyleF = styleF(
-    new Domain.OverSeq({
+    new Domain.OverSeq(
       _filteredTagIds { _.name ==* MJdTagNames.QD_CONTENT }
-    })
+    )
   ) (
     {jdtId =>
       val jdt = jdCssArgs.data.jdTagsById( jdtId )
@@ -273,13 +275,18 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           .get( jdtId )
           .flatMap(_.toOption)
           .whenDefinedStyleS { qdBlSz =>
-            var acc = List.empty[ToStyle]
+            // Горизонтальная центровка по ширине плитки
+            val wDiffPx = (jdCssArgs.conf.gridInnerWidthPx - qdBlSz.client.width) / 2
+            var acc: List[ToStyle] =
+              marginLeft( wDiffPx.toInt.px ) ::
+              Nil
+
+            // Вертикальный отступ сверху, чтобы повёрнутый контент не наезжал на блоки вверху/внизу.
             val hDiffPx = qdBlSz.bounds.height - qdBlSz.client.height
             if (hDiffPx > 0)
               acc ::= marginTop( (hDiffPx / 2).px )
-            // TODO Горизонтальная центровка по ширине плитки
-            if (acc.isEmpty) StyleS.empty
-            else styleS( acc: _* )
+
+            styleS( acc: _* )
           }
 
       } { topLeft =>

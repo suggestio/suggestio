@@ -9,7 +9,7 @@ import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
-import io.suggest.jd.render.m.{MJdDataJs, MJdRuntime}
+import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -647,7 +647,7 @@ class GridAh[M](
 
 
     // Экшен запуска пересчёта конфигурации плитки.
-    case GridReConf =>
+    case m: GridRebuild =>
       val v0 = value
       val mscreen = screenRO.value
       val (gridColsCount2, szMult2) = GridAh.fullGridConf( mscreen )
@@ -656,7 +656,7 @@ class GridAh[M](
       val szMultMatches = jdConf0.szMult ==* szMult2
       //println( s"gridColumnCount=$gridColsCount2 $szMultMatches ${jdConf0.szMult} => $szMult2" )
 
-      if (szMultMatches && jdConf0.gridColumnsCount ==* gridColsCount2) {
+      if (!m.force && szMultMatches && jdConf0.gridColumnsCount ==* gridColsCount2) {
         noChange
 
       } else {
@@ -668,7 +668,7 @@ class GridAh[M](
         }
 
         val jdRuntime2 =
-          if (szMultMatches) v0.core.jdRuntime
+          if (!m.force && szMultMatches) v0.core.jdRuntime
           else GridAh.mkJdRuntime(v0.core.ads, jdConf1, v0.core.jdRuntime)
 
         var coreLens = (

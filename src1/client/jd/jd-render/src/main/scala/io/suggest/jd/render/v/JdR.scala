@@ -68,20 +68,22 @@ class JdR(
           _qdContentRrrHtml( state ).render(),
         )
 
+        // Поддержка абсолютного позиционирования внутри контейнера:
+        val absPosStyl: TagMod = jdCss.absPosStyleF( state.tagId )
+
         if (qdTag.props1.topLeft.nonEmpty) {
           // Обычный контент внутри блока.
           contTagModsAcc =
             // Поддержка перетаскивания внутри блока
             (jdCssStatic.absPosStyleAll: TagMod) ::
-            // Поддержка абсолютного позиционирования внутри контейнера:
-            (jdCss.absPosStyleF( state.tagId ): TagMod) ::
+            absPosStyl ::
             contTagModsAcc
         } else {
           // Внеблоковый контент. Бывает, что высота уже измерена и не измерена. Отработать обе ситуации:
           contTagModsAcc ::= jdCssStatic.qdBl
           val qdBlOpt = state.jdArgs.jdRuntime.data.qdBlockLess.get( state.tagId )
           if ( qdBlOpt.exists(_.nonEmpty) )
-            contTagModsAcc ::= jdCss.absPosStyleF( state.tagId )
+            contTagModsAcc ::= absPosStyl
         }
 
         // Вращение, если активно:
@@ -117,6 +119,10 @@ class JdR(
             .get( state.tagId )
 
           <.div(
+            // У нас тут - контейнер контента внеблоковый.
+            jdCssStatic.contentOuterS,
+            state.jdArgs.jdRuntime.jdCss.contentOuter,
+
             // Сборка измерителя размеров тега:
             Measure {
               // Собираем callback реакции на ресайз: она должна слать таймштамп из Pot'а, чтобы контроллер мог разобрать,
@@ -249,6 +255,7 @@ class JdR(
         val smBlock = <.div(
           jdCssStatic.smBlockS,
           C.smBlock,
+          C.contentOuter,
           C.bmStyleF( state.tagId ),
 
           if (isWide) {

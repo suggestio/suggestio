@@ -11,7 +11,7 @@ object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
   val SCALA_VSN = "2.12.8"
-  //val SCALA_VSN = "2.13.0"
+  //val SCALA_VSN = "2.13.1"
   
 
   /** Версия scala для scala.js. */

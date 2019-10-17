@@ -56,9 +56,7 @@ class GridCoreR(
           tagName   = GridComponents.DIV
         )
       } {
-        //lazy val routerCtl = getRouterCtlF()
         // TODO routerCtl.urlFor() внутри <a.href>
-
         val iter = for {
           (ad, i) <- mgrid.ads.iterator
             .flatten

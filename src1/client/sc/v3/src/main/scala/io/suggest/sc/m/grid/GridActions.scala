@@ -31,9 +31,3 @@ case class GridBlockClick(nodeId: String) extends IGridAction with IScApiRespRea
 
 /** Экшен скроллинга плитки. */
 case class GridScroll(scrollTop: Double) extends IGridAction
-
-
-/** Пересчитать конфиги плитки, возможно перестроив плитку.
-  * Полезно для ранней реакции на изменение размеров экрана.
-  */
-case object GridReConf extends IGridAction

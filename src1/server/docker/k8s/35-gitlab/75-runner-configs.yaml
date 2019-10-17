@@ -1,5 +1,14 @@
 ## Dumped via:
 ##   kubectl edit configmap runner-gitlab-runner -n gitlab-managed-apps
+##
+## После применения надо перезапустить демон runner'а:
+##
+## ssh root@k2.ku.suggest.io
+## docker ps | grep runner
+## docker kill ...
+##
+## Секреты, объявленные в mount /root/.ssh-mount, лежали в
+##   ~/projects/sio/-doc/ku.s.io/30-gitlab-runner-ssh-deploy
 apiVersion: v1
 kind: ConfigMap
 metadata:

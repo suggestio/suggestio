@@ -61,8 +61,19 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
                 Left( LookupError(volumeId = args.volumeId, error = msg) )
               }
             }
+
           } else if (s == 404) {
-            Left( wsResp.json.as[LookupError] )
+            val lookupErrorVld = wsResp.json
+              .validate[LookupError]
+              .getOrElse {
+                LOGGER.error(s"Cannot parse ${LookupError.getClass.getSimpleName} from swfs reply from ${wsResp.uri}:\n ${wsResp.body}")
+                LookupError(
+                  volumeId = args.volumeId,
+                  error    = wsResp.body,
+                )
+              }
+            Left( lookupErrorVld )
+
           } else {
             LOGGER.error(s"$logPrefix Unexpected answer ($s) from $url: $wsResp")
             throw FileOpUnknownResponseException(_method, url, s, Some(wsResp.body))

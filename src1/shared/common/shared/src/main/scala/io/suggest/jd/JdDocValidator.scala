@@ -54,7 +54,7 @@ class JdDocValidator(
     * @return Выверенное пересобранное дерево.
     */
   def validateDocumentTree(docTree: Tree[JdTag]): ValidationNel[String, Tree[JdTag]] = {
-    docTree.validateNode(validateDocTag)(validateStrips)
+    docTree.validateNode(validateDocTag)(validateDocTags)
   }
 
 
@@ -72,15 +72,15 @@ class JdDocValidator(
 
 
   /** Провалидировать список стрипов. */
-  private def validateStrips(strips: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateDocTags(jdts: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
     // На втором уровне могут быть только стрипы, хотя бы один должен там быть.
     def eStripsPfx(suf: String) = ErrorConstants.EMSG_CODE_PREFIX + STRIPS + `.` + suf
     (
-      Validation.liftNel(strips.size)( _ > JdConst.MAX_STRIPS_COUNT, eStripsPfx( TOO_MANY )) |@|
-      Validation.liftNel(strips.isEmpty)( identity, eStripsPfx( MISSING )) |@|
-      ScalazUtil.validateAll(strips)( validateStripTree )
-    ) { (_,_, strips2) =>
-      strips2
+      Validation.liftNel(jdts.size)( _ > JdConst.MAX_STRIPS_COUNT, eStripsPfx( TOO_MANY )) |@|
+      Validation.liftNel(jdts.isEmpty)( identity, eStripsPfx( MISSING )) |@|
+      ScalazUtil.validateAll(jdts)( validateDocChildTree )
+    ) { (_,_, subTags2) =>
+      subTags2
     }
   }
 
@@ -90,12 +90,20 @@ class JdDocValidator(
     *         Возможно, в будущем будет какое-то удаление ненужного/некорректного стрипа,
     *         благодаря Stream это будет легко.
     */
-  private def validateStripTree(stripTree: Tree[JdTag]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateDocChildTree(jdTree: Tree[JdTag]): ValidationNel[String, Stream[Tree[JdTag]]] = {
     ScalazUtil.someValidationOrFail(BM) {
-      for (bm <- stripTree.rootLabel.props1.bm) yield {
-        stripTree
-          .validateNode(validateStrip)(validateStripContents(_, bm))
-          .map { Stream(_) }
+      val jdt = jdTree.rootLabel
+      jdt.name match {
+        case MJdTagNames.STRIP =>
+          for (bm <- jdTree.rootLabel.props1.bm) yield {
+            jdTree
+              .validateNode(validateStrip)(validateContents(_, bm))
+              .map { _ #:: Stream.empty }
+          }
+        case MJdTagNames.QD_CONTENT =>
+          Some( validateQdTree(jdTree, contSz = None) )
+        case _ =>
+          None
       }
     }
   }
@@ -141,10 +149,10 @@ class JdDocValidator(
     * @param contents Содержимое.
     * @return
     */
-  private def validateStripContents(contents: Stream[Tree[JdTag]], bm: BlockMeta): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateContents(contents: Stream[Tree[JdTag]], bm: BlockMeta): ValidationNel[String, Stream[Tree[JdTag]]] = {
     (
       Validation.liftNel(contents.size)( _ > JdConst.MAX_ELEMENTS_PER_MIN_BLOCK * bm.h.relSz * bm.w.relSz, TOO_MANY ) |@|
-      ScalazUtil.validateAll(contents) { validateQdTree(_, bm) }
+      ScalazUtil.validateAll(contents) { validateQdTree(_, Some(bm)) }
     ) { (_, tree2) => tree2 }
   }
 
@@ -159,7 +167,7 @@ class JdDocValidator(
     * @param contSz Размер внешнего контейнера.
     * @return Список с максимум одним qd-тегом.
     */
-  private def validateQdTree(qdTree: Tree[JdTag], contSz: ISize2di): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateQdTree(qdTree: Tree[JdTag], contSz: Option[ISize2di]): ValidationNel[String, Stream[Tree[JdTag]]] = {
     validateQdTag(qdTree.rootLabel, contSz)
       .filter(_ => qdTree.subForest.nonEmpty)
       .fold {
@@ -168,7 +176,9 @@ class JdDocValidator(
         (
           qdTagValidationRes |@|
           validateQdTagContents( qdTree.subForest )
-        ) { (jdt, nodes) => Stream( Tree.Node(jdt, nodes) ) }
+        ) { (jdt, nodes) =>
+          Tree.Node(jdt, nodes) #:: Stream.empty
+        }
       }
   }
 
@@ -179,7 +189,7 @@ class JdDocValidator(
     * @param contSz Размер контейнера (блока).
     * @return Опциональный результат валидации.
     */
-  private def validateQdTag(qdJdt: JdTag, contSz: ISize2di): Option[ValidationNel[String, JdTag]] = {
+  private def validateQdTag(qdJdt: JdTag, contSz: Option[ISize2di]): Option[ValidationNel[String, JdTag]] = {
     val errMsgF = ErrorConstants.emsgF(QD + `.` + "cont")
 
     val validationRes = (
@@ -198,17 +208,25 @@ class JdDocValidator(
   /** Валидация props1 для qd-контейнера.
     *
     * @param qdProps1 инстанс props1.
-    * @param contSz Размер внешнего контейнера, за пределы которого не должен вылезать контент.
-    * @return
+    * @param contSzOpt Размер внешнего контейнера, за пределы которого не должен вылезать контент.
+    *                  Если None, то это qd-blockless (внеблоковый контент).
     */
-  private def validateQdTagProps1(qdProps1: MJdtProps1, contSz: ISize2di): ValidationNel[String, MJdtProps1] = {
+  private def validateQdTagProps1(qdProps1: MJdtProps1, contSzOpt: Option[ISize2di]): ValidationNel[String, MJdtProps1] = {
     val errMsgF = ErrorConstants.emsgF(QD + `.` + PROPS1)
     // Для qd-тега допустимы цвет фона, и обязательна координата top-left. Остальное - дропаем.
     (
       ScalazUtil.liftNelOpt (qdProps1.bgColor)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") ) |@|
       ScalazUtil.liftNelNone(qdProps1.bm, errMsgF(BM)) |@|
-      ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))( validateQdTagXY(_, contSz, qdProps1.rotateDeg) ) |@|
+        contSzOpt.fold [ValidationNel[String, Option[MCoords2di]]] {
+          // qd-blockless
+          ScalazUtil.liftNelNone(qdProps1.topLeft, errMsgF(XY + `.` + UNEXPECTED))
+        } { contSz =>
+          // контент внутри блока
+          ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))(
+            validateQdTagXY(_, contSz, qdProps1.rotateDeg)
+          )
+        } |@|
       ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
         MathConst.Counts.validateMinMax(

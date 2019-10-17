@@ -61,12 +61,14 @@ object JdTag {
   }
 
   /** Сборка IDocTag, рендерящего примитивный текст по его id эджа. */
-  def qd(topLeft: MCoords2di): JdTag = {
+  def qd(topLeft: MCoords2di = null): JdTag = {
     JdTag.a(
       MJdTagNames.QD_CONTENT,
-      props1 = MJdtProps1(
-        topLeft = Some(topLeft)
-      )
+      props1 = Option(topLeft).fold(MJdtProps1.empty) { tL =>
+        MJdtProps1(
+          topLeft = Some(tL)
+        )
+      }
     )
   }
 
