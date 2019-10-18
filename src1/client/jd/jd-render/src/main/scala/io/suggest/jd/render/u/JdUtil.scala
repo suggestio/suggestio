@@ -52,7 +52,7 @@ object JdUtil {
       val potEmpty = Pot.empty[MQdBlSize]
       val wantedQdBlsMap = HashMap(
         wantedQdBls
-          .map { case (k,_) => (k, potEmpty) } : _*
+          .map { kv => (kv._1, potEmpty) } : _*
       )
 
       // Есть старая карта данных. Дополнить её, замёржив новые данные, и но удаляя ненужные

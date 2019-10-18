@@ -29,11 +29,11 @@ case object JdTagDragEnd extends IJdAction
 
 /** Текущий перетаскиваемый элемент был дропнут в указанный strip.
   *
-  * @param strip Целевой стрип, на который сброшен jd-тег.
+  * @param targetBlock Целевой стрип, на который сброшен jd-тег.
   * @param clXy Координаты точки сброса.
   * @param foreignTag Если тег притащен откуда-то извне, то тут Some() с распарсенным doc-tag'ом.
   */
-case class JdDropContent(strip: JdTag, clXy: MCoords2di, foreignTag: Option[JdTag]) extends IJdAction
+case class JdDropToBlock(targetBlock: JdTag, clXy: MCoords2di, foreignTag: Option[JdTag]) extends IJdAction
 
 
 /** Сменить слой для текущего выделенного контента.

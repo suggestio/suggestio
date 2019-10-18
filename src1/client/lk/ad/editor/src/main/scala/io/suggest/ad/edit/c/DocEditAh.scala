@@ -14,7 +14,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.edit.m.{JdChangeLayer, JdDropContent, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize, ResizeContent}
+import io.suggest.jd.edit.m.{JdChangeLayer, JdDropToBlock, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize, ResizeContent}
 import io.suggest.jd.{JdConst, MJdConf, MJdDoc, MJdEdge, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.u.JdUtil
@@ -34,6 +34,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
 import io.suggest.common.BooleanUtil.Implicits._
+import io.suggest.common.geom.d2.ISize2di
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
@@ -43,6 +44,8 @@ import monocle.Traversal
 import scala.util.Random
 import scalaz.{Tree, TreeLoc}
 import scalaz.std.option._
+
+import scala.annotation.tailrec
 
 /**
   * Suggest.io
@@ -333,8 +336,15 @@ class DocEditAh[M](
         .treeLocOpt
         .map(_.getLabel)
       if ( oldSelectedTag contains m.jdTag ) {
-        // Бывают повторные щелчки по уже выбранным элементам, это нормально.
-        noChange
+        if (v0.jdDoc.jdArgs.renderArgs.dnd.nonEmpty) {
+          // Была какая-то ошибка во время перетаскивания. Надо сбросить dnd-состояние.
+          // Если не сбросить, то тег останется невыделенным.
+          val v2 = _jdArgs_renderArgs_dnd_LENS.set( MJdDndS.empty )(v0)
+          updated(v2)
+        } else {
+          // Бывают повторные щелчки по уже выбранным элементам, это нормально.
+          noChange
+        }
 
       } else {
         val oldTagName = oldSelectedTag.map(_.name)
@@ -723,76 +733,97 @@ class DocEditAh[M](
 
 
     // Юзер отпустил перетаскиваемый объект на какой-то стрип. Нужно запихать этот объект в дерево нового стрипа.
-    case m: JdDropContent =>
+    case m: JdDropToBlock =>
       val v0 = value
-      val tpl0 = v0.jdDoc.jdArgs.data.doc.template
+      val jdDoc0 = v0.jdDoc.jdArgs.data.doc
+
+      // Получить на руки инстанс сброшенного тега.
+      // Прячемся от общего scope, чтобы работать с элементом только через его tree loc.
+      val dndJdt = m.foreignTag
+        .orElse( v0.jdDoc.jdArgs.draggingTagLoc.toLabelOpt )
+        .get
 
       // Найти tree loc текущего тега наиболее оптимальным путём. С некоторой вероятностью это -- selected-тег:
-      val dndJdtLoc0 = {
-        // Получить на руки инстанс сброшенного тега.
-        // Прячемся от общего scope, чтобы работать с элементом только через его tree loc.
-        val dndJdt = m.foreignTag
-          .orElse( v0.jdDoc.jdArgs.draggingTagLoc.toLabelOpt )
-          .get
+      val dndJdtLoc0 = v0.jdDoc.jdArgs.selJdt
+        .treeLocOpt
+        .filter { loc =>
+          // Убедиться, что текущий selected-тег содержит dndJdt:
+          dndJdt ==* loc.getLabel
+        }
+        .orElse {
+          // Это не selected-тег. Возможны перетаскивание без выделения тега: просто взял да потащил.
+          // Это нормально. Перебираем всё дерево:
+          jdDoc0.template
+            .loc
+            .findByLabel( dndJdt )
+        }
+        .get
 
-        v0.jdDoc.jdArgs.selJdt.treeLocOpt
-          .filter { loc =>
-            // Убедиться, что текущий selected-тег содержит dndJdt:
-            dndJdt ==* loc.getLabel
-          }
-          .orElse {
-            // Это не selected-тег. Возможны перетаскивание без выделения тега: просто взял да потащил.
-            // Это нормально. Перебираем всё дерево:
-            tpl0
-              .loc
-              .findByLabel( dndJdt )
-          }
-          .get
+      // Подъём вверх до sub-doc jd-тега: блока, qd-blockless или чего-то ещё.
+      @tailrec def __goToSubDocTag(currLoc: TreeLoc[JdTag]): TreeLoc[JdTag] = {
+        currLoc.parent match {
+          case Some(parentLoc) =>
+            val jdt = parentLoc.getLabel
+            if (jdt.name ==* MJdTagNames.DOCUMENT) {
+              currLoc
+            } else {
+              __goToSubDocTag( parentLoc )
+            }
+          case None =>
+            currLoc
+        }
       }
 
       // Найти исходный strip в исходном шаблоне:
-      val strip0Opt = dndJdtLoc0
-        .findUpByType( MJdTagNames.STRIP )
-
-      val isSameStrip = strip0Opt.fold(false)(_.getLabel ==* m.strip)
+      val subDocJdTree = __goToSubDocTag( dndJdtLoc0 )
+      val fromBlock = subDocJdTree.getLabel
+      val isSameBlock = fromBlock ==* m.targetBlock
 
       // Дополнительно обработать Y-координату.
       val clXy0 = m.clXy
 
       // Если strip изменился, то надо пересчитать координаты относительно нового стрипа:
-      val clXy2 = if (isSameStrip || strip0Opt.isEmpty) {
+      val clXy2 = if (isSameBlock) {
         clXy0
+
       } else {
-        val fromStrip = strip0Opt.get.getLabel
         // Перемещение между разными strip'ами. Надо пофиксить координату Y, иначе добавляемый элемент отрендерится где-то за экраном.
-        val strips = tpl0
-          .deepOfTypeIter( MJdTagNames.STRIP )
-          .toSeq
-        // TODO Отработать ситуацию, когда хотя бы один из index'ов == -1
-        val fromStripIndex = strips.indexOf(fromStrip)
-        val toStripIndex = strips.indexOf(m.strip)
+        val tplIndexed0 = JdUtil.mkTreeIndexed( jdDoc0 )
+        val blockAndQdBlsId = tplIndexed0
+          .subForest
+          .map( _.rootLabel )
+
+        val blockAndQdBls = blockAndQdBlsId
+          .view
+          .map(_._2)
+        val fromStripIndex  = blockAndQdBls indexOf[JdTag] fromBlock
+        val toStripIndex    = blockAndQdBls indexOf[JdTag] m.targetBlock
 
         val (topStrip, bottomStrip, yModSign) =
-          if (fromStripIndex <= toStripIndex) (fromStrip, m.strip, -1)
-          else (m.strip, fromStrip, +1)
+          if (fromStripIndex <= toStripIndex) (fromBlock, m.targetBlock, -1)
+          else (m.targetBlock, fromBlock, +1)
 
         // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
-        val iter = tpl0
-          .deepOfTypeIter( MJdTagNames.STRIP )
-          .dropWhile(_ !=* topStrip)
-          .takeWhile(_ !=* bottomStrip)
-          .flatMap(_.props1.bm)
+        val subDocJdtsHeights = for {
+          jdtWithId <- blockAndQdBlsId
+            .dropWhile { m => m._2 !===* topStrip }
+            .takeWhile { m => m._2 !===* bottomStrip }
 
-        if (iter.nonEmpty) {
-          val yDiff = iter
-            .map { _.h.value }
+          // Узнать пиксельный размер тега.
+          sz <- DocEditAh.getJdtWh(jdtWithId, v0)
+        } yield {
+          sz.height
+        }
+
+        if (subDocJdtsHeights.nonEmpty) {
+          val yDiff = subDocJdtsHeights
             .sum
           val y2 = clXy0.y + yModSign * yDiff
           //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
           MCoords2di.y.set(y2)( clXy0 )
         } else {
           // Странно: нет пройденных стрипов, хотя они должны бы быть
-          LOG.warn( msg = s"$clXy0 [$fromStrip => ${m.strip})" )
+          LOG.warn( msg = s"$clXy0 [$fromBlock => ${m.targetBlock})" )
           clXy0
         }
       }
@@ -804,7 +835,7 @@ class DocEditAh[M](
           .set( Some(clXy2) )(dndJdt0)
       }
 
-      val loc2 = if (isSameStrip) {
+      val loc2 = if (isSameBlock) {
         // strip не изменился. Надо обновить узел не меняя местоположения в дереве.
         dndJdtLoc0.setLabel( jdtLabel2 )
 
@@ -819,7 +850,7 @@ class DocEditAh[M](
           // Фокус на соседнем или родительском узле.
           .root
           // Найти целевой стрип:
-          .findByLabel( m.strip )
+          .findByLabel( m.targetBlock )
           .get
           // Добавляем как последний дочерний элемент текущего стрипа. Пусть будет поверх всех.
           .insertDownLast( dndJdtTree2 )
@@ -856,29 +887,32 @@ class DocEditAh[M](
       // Надо вычислить позицию координаты сброса относительно текущей плитки блоков.
       val paddingPx = v0.jdDoc.jdArgs.conf.blockPadding.value
 
-      val allBlocks = v0.jdDoc.jdArgs
-        .data.doc.template
-        .subForest
+      val tplIndexed0 = JdUtil.mkTreeIndexed( v0.jdDoc.jdArgs.data.doc )
+      val allBlocks = tplIndexed0.subForest
 
       // Сброс может быть на блок (на верхнюю или нижнюю половины блока) или в промежутки между блоков.
-      val droppedNear = allBlocks
-        .zip( v0.jdDoc.gridBuild.coords )
-        .map { case (jdt, topLeft) =>
-          MJdtWithXy(
-            jdt = jdt,
-            topLeft = topLeft,
-            isDownerTl =
-              (m.docXy.x >= topLeft.x - paddingPx) &&
-              (m.docXy.y >= topLeft.y - paddingPx)
-          )
-        }
+      val droppedNear = (for {
+        (jdIdTree, topLeft) <- allBlocks
+          .zip( v0.jdDoc.gridBuild.coords )
+
+        jdtWithId = jdIdTree.rootLabel
+        jdtWh <- DocEditAh.getJdtWh( jdtWithId, v0 )
+      } yield {
+        MJdtWithXy(
+          jdt = jdIdTree,
+          topLeft = topLeft,
+          wh = jdtWh,
+          isDownerTl =
+            (m.docXy.x >= topLeft.x - paddingPx) &&
+            (m.docXy.y >= topLeft.y - paddingPx)
+        )
+      })
         // Отсеять элементы сверху.
         .dropWhile { jdtXy =>
           // Оставлять, если ниже верхнего левого угла с padding, но выше нижнего правого угла с padding.
           val isKeep = jdtXy.isDownerTl && {
-            val jdtWh = jdtXy.jdt.rootLabel.props1.bm.get
-            (m.docXy.x <= jdtXy.topLeft.x + jdtWh.width  + paddingPx) &&
-            (m.docXy.y <= jdtXy.topLeft.y + jdtWh.height + paddingPx)
+            (m.docXy.x <= jdtXy.topLeft.x + jdtXy.wh.width  + paddingPx) &&
+            (m.docXy.y <= jdtXy.topLeft.y + jdtXy.wh.height + paddingPx)
           }
           !isKeep
         }
@@ -886,7 +920,7 @@ class DocEditAh[M](
         .takeWhile( _.isDownerTl )
 
       // droppedNear содержит один или два элемента (хотя не исключены и иные ситуации).
-      if (droppedNear.exists(_.jdt.rootLabel ==* droppedBlockLabel)) {
+      if (droppedNear.exists(_.jdt.rootLabel._2 ==* droppedBlockLabel)) {
         // Перетаскивание блока на самого себя или в щель вокруг себя - игнор.
         // Убрать dnd-состояние.
         val dnd_LENS = _jdArgs_renderArgs_dnd_LENS
@@ -903,9 +937,8 @@ class DocEditAh[M](
         val (nearJdtTree, isUpper) = droppedNear match {
           // Если один блок - то сброс произошёл прямо в конкретный блок, и нужно по высоте оценить: выше или ниже.
           case Stream(jdtXy) =>
-            val jdtWh = jdtXy.jdt.rootLabel.props1.bm.get
             val innerY = m.docXy.y - jdtXy.topLeft.y
-            val isUp = innerY < jdtWh.height / 2
+            val isUp = innerY < jdtXy.wh.height / 2
             (jdtXy.jdt, isUp)
 
           // Если два блока, то сброс был в щель между двумя блоками.
@@ -931,7 +964,7 @@ class DocEditAh[M](
           .delete
           .get
           .root
-          .findByLabel( nearJdt )
+          .findByLabel( nearJdt._2 )
           .get
 
         // Убрать значение topLeft, если задано. Это для qd-blockless, когда контент был вынесен за пределы блока.
@@ -1691,6 +1724,24 @@ object DocEditAh {
       }(_ => jdRuntime0)
   }
 
+
+  def getJdtWh(jdtWithId: (MJdTagId, JdTag), v0: MDocS): Option[ISize2di] = {
+    val jdt = jdtWithId._2
+    jdt.name match {
+      case MJdTagNames.STRIP =>
+        jdt.props1.bm
+      case MJdTagNames.QD_CONTENT =>
+        for {
+          qdBlPot <- v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess.get( jdtWithId._1 )
+          qdBl    <- qdBlPot.toOption
+        } yield {
+          qdBl.bounds
+        }
+      case _ =>
+        None
+    }
+  }
+
 }
 
 
@@ -1701,7 +1752,8 @@ object DocEditAh {
   * @param isDownerTl Находится ли верхний левый угол с паддингом выше точки клика?
   */
 private case class MJdtWithXy(
-                               jdt          : Tree[JdTag],
+                               jdt          : Tree[(MJdTagId,JdTag)],
                                topLeft      : MCoords2di,
+                               wh           : ISize2di,
                                isDownerTl   : Boolean,
                              )

@@ -49,11 +49,12 @@ class JdR(
 
     trait QdContentBase {
 
-      def _qdContentRrrHtml(p: MJdRrrProps): QdRrrHtml = {
+      def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
         QdRrrHtml(
           jdCssStatic = jdCssStatic,
           rrrProps    = p,
         )
+          .render()
       }
 
       def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Element] = {
@@ -65,7 +66,7 @@ class JdR(
           _bgColorOpt( qdTag, state.jdArgs ),
 
           // Рендер qd-контента в html.
-          _qdContentRrrHtml( state ).render(),
+          _qdContentRrrHtml( state ),
         )
 
         // Поддержка абсолютного позиционирования внутри контейнера:
@@ -101,7 +102,7 @@ class JdR(
         <.div( contTagModsAcc : _* )
       }
 
-      def _doRender(state: MJdRrrProps): VdomElement = {
+      def _doRender(state: MJdRrrProps): TagOf[html.Element] = {
         // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
         val tag0 = _renderQdContentTag(state)
         if (
@@ -153,6 +154,7 @@ class JdR(
                   chArgs.measure()
                 }
 
+                // ref должен быть прямо в теге как можно ближе к контенту, чтобы правильно измерить размер react-measure.
                 tag0(
                   ^.genericRef := chArgs.measureRef,
                 )

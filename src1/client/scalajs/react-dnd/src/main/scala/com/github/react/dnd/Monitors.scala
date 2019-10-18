@@ -70,6 +70,14 @@ trait DropTargetMonitor extends CommonSourceTargetMonitor {
 trait DragLayerMonitor extends CommonMonitor with CommonDragMonitor
 
 
+object XY {
+  def apply(x1: Double, y1: Double): XY = {
+    new XY {
+      override val x = x1
+      override val y = y1
+    }
+  }
+}
 trait XY extends js.Object {
   val x: Double
   val y: Double

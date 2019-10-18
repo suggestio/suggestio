@@ -19,6 +19,7 @@ import play.api.libs.functional.syntax._
  * Негативный ответ такой (HTTP 404):
  * {{{
  *   {"volumeId":"35","error":"volumeId not found."}
+ *   {"volumeId":"35"}                  (2019 год)
  * }}}
  */
 object LookupResponse {

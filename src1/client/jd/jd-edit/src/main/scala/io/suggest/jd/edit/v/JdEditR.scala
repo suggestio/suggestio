@@ -1,7 +1,7 @@
 package io.suggest.jd.edit.v
 
 import com.github.react.dnd._
-import com.github.souporserious.react.measure.{Bounds, ContentRect}
+import com.github.souporserious.react.measure.ContentRect
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -116,12 +116,28 @@ class JdEditR(
       .get
   }
 
+
+  /** Вычислить относительнюу topLeft-координату в начале перетаскивания. */
+  private def _getDragElTopLeft(el: html.Element, mon: DragSourceMonitor): XY = {
+    val srcTgStyle = WindowVm().getComputedStyle( el ).get
+
+    val clientOffset = mon.getClientOffset()
+
+    // TODO Надо считать сдвиг между top-left контента и указателем мыши, а тут считается сдвиг относительно клиентской области. Это проявится неправильным рассчётом, если произойдёт скролл во время перетаскивания.
+    val srcLeft = __extractIntStyleProp( Literal.left, srcTgStyle ) - clientOffset.x
+    val srcTop  = __extractIntStyleProp( Literal.top, srcTgStyle )  - clientOffset.y
+
+    // Используем голый json вместо MCoords2di, т.к. есть риск, что значение MJsDropInfo может быть сериализовано.
+    XY(x1 = srcLeft, y1 = srcTop)
+  }
+
+
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   object JdRrrEdit extends jdR.JdRrrBase {
 
     class QdContentB(contentRef: Ref.Simple[html.Element], $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
 
-      override def _qdContentRrrHtml(p: MJdRrrProps): QdRrrHtml = {
+      override def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
         QdRrrHtml(
           jdCssStatic = jdCssStatic,
           rrrProps    = p,
@@ -134,11 +150,13 @@ class JdEditR(
             onQdEmbedResize(_, _, _)(_)
           },
         )
+          .render()
       }
 
       override def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Element] = {
         val qdTag = state.subTree.rootLabel
 
+        // Нельзя withRef() для этого внешнего тега, т.к. другой measure-ref выставляется внутри super._renderQdContentTag().
         super._renderQdContentTag(state)(
           _maybeSelected(qdTag, state.jdArgs),
           _selectableOnClick( $ )( _.p.value ),
@@ -165,9 +183,14 @@ class JdEditR(
             ^.`class` := Css.Cursor.POINTER
           },
         )
-          .withRef( contentRef )
       }
 
+
+      override def _doRender(state: MJdRrrProps): TagOf[html.Element] = {
+        // ref для react-dnd можно выставлять только здесь.
+        super._doRender(state)
+          .withRef( contentRef )
+      }
 
       /** Callback ресайза. */
       private def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)
@@ -209,31 +232,28 @@ class JdEditR(
         val p = props.p.value
         !p.parent.exists( p.jdArgs.selJdt.treeLocOpt.containsLabel )
     }
+
     class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
       // import, иначе будет рантаймовая ошибка валидации DragSourceSpec (лишние поля json-класса)
       import MimeConst.Sio.{DataContentTypes => DCT}
 
       private val contentRef = Ref[html.Element]
 
+
       private val _qdBeginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
         (props, mon, _) =>
           // Запустить обработку по circuit в фоне. По логике кажется, что должно быть асинхронно, но не факт: рендер перетаскивания может нарушаться.
-          val jdt = props.p.value.subTree.rootLabel
+          val s = props.p.value
+          val jdt = s.subTree.rootLabel
           props.p dispatchNow JdTagDragStart(jdt)
 
-          // Вычислить разницу между client-координатами и верхним краем элемента по стилям CSS (getBoundingClientRect() и вращение малосовместимы):
           val el = contentRef.unsafeGet()
-          val srcTgStyle = WindowVm().getComputedStyle( el ).get
-
-          val clientOffset = mon.getClientOffset()
-
-          // TODO Надо считать сдвиг между top-left контента и указателем мыши, а тут считается сдвиг относительно клиентской области. Это проявится неправильным рассчётом, если произойдёт скролл во время перетаскивания.
-          val srcLeft = __extractIntStyleProp( Literal.left, srcTgStyle ) - clientOffset.x
-          val srcTop  = __extractIntStyleProp( Literal.top, srcTgStyle )  - clientOffset.y
-          // Используем голый json вместо MCoords2di, т.к. есть риск, что значение MJsDropInfo может быть сериализовано.
-          val xyOff = new XY {
-            override val x = srcLeft
-            override val y = srcTop
+          val xyOff: XY = if (s.parent.exists(_.name ==* MJdTagNames.STRIP)) {
+            // Контент внутри блока.
+            _getDragElTopLeft(el, mon)
+          } else {
+            // qd-blockless. Ищем координаты для родительского контейнера.
+            _getDragElTopLeft(el.parentElement, mon)
           }
 
           // Отрендерить в json данные, которые будут переданы в DropTarget.
@@ -383,8 +403,8 @@ class JdEditR(
                 y = __calcCoord(_.y),
               )
 
-              props.p dispatchNow JdDropContent(
-                strip       = rrr.subTree.rootLabel,
+              props.p dispatchNow JdDropToBlock(
+                targetBlock       = rrr.subTree.rootLabel,
                 clXy        = topLeftXy,
                 foreignTag  = None   // TODO Решить, должно ли тут быть что-либо?
               )

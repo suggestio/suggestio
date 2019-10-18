@@ -1,10 +1,12 @@
 package io.suggest.swfs.client.play
 
+import io.suggest.proto.http.HttpConst
 import io.suggest.swfs.client.proto.file.FileOpUnknownResponseException
 import io.suggest.swfs.client.proto.lookup._
 import io.suggest.swfs.client.proto.master.OneMasterRequest
 import play.api.http.HttpVerbs
 import play.api.libs.ws.WSResponse
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -36,10 +38,9 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
 
       override def _handleResp(url: String, fut: Future[WSResponse]): Future[Res_t] = {
         for (wsResp <- fut) yield {
-          val s = wsResp.status
-          LOGGER.trace(s"$logPrefix Received answer from $url: HTTP $s, took = ${System.currentTimeMillis() - startMs} ms.\n ${wsResp.body}")
+          LOGGER.trace(s"$logPrefix Received answer from $url: HTTP ${wsResp.status} ${wsResp.statusText}, took = ${System.currentTimeMillis() - startMs} ms.\n ${wsResp.body}")
 
-          if ( SwfsClientWs.isStatus2xx(s) ) {
+          if ( SwfsClientWs.isStatus2xx( wsResp.status ) ) {
             // Может быть пустой ответ: пустой JSON "{}" или вообще пустая строка "".
             if (wsResp.bodyAsBytes.lengthCompare(5) <= 0) {
               LOGGER.warn(s"$logPrefix Empty json-resp=${wsResp.body} from swfs $url")
@@ -62,21 +63,27 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
               }
             }
 
-          } else if (s == 404) {
-            val lookupErrorVld = wsResp.json
-              .validate[LookupError]
-              .getOrElse {
-                LOGGER.error(s"Cannot parse ${LookupError.getClass.getSimpleName} from swfs reply from ${wsResp.uri}:\n ${wsResp.body}")
-                LookupError(
-                  volumeId = args.volumeId,
-                  error    = wsResp.body,
-                )
+          } else if (wsResp.status ==* HttpConst.Status.NOT_FOUND ) {
+            LOGGER.trace(s"$logPrefix Volume not found: ${args.volumeId}")
+            wsResp.json
+              .validate[LookupResponse]
+              .asEither
+              .left.map { errors =>
+                LOGGER.warn(s"$logPrefix Cannot parse ${wsResp.status} resp as normal lookup resp: ${wsResp.body}\n ${errors.mkString(",\n ")}")
+                wsResp.json
+                  .validate[LookupError]
+                  .getOrElse {
+                    LOGGER.error(s"$logPrefix Cannot parse lookup-resp[${LookupError.getClass.getSimpleName}] from weed-master ${wsResp.uri} => ${wsResp.status} ${wsResp.statusText}:\n ${wsResp.body}")
+                    LookupError(
+                      volumeId = args.volumeId,
+                      error    = wsResp.body,
+                    )
+                  }
               }
-            Left( lookupErrorVld )
 
           } else {
-            LOGGER.error(s"$logPrefix Unexpected answer ($s) from $url: $wsResp")
-            throw FileOpUnknownResponseException(_method, url, s, Some(wsResp.body))
+            LOGGER.error(s"$logPrefix Unexpected answer (${wsResp.status} ${wsResp.statusText}) from $url: $wsResp")
+            throw FileOpUnknownResponseException(_method, url, wsResp.status, Some(wsResp.body))
           }
         }
       }
