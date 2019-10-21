@@ -70,11 +70,11 @@ object GridBuilderUtilJs {
         MGbSize(
           widthCells = BlockWidths.max.relSz,
           heightPx   = (for {
-              qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdId)
-              qdBlSz      <- qdBlSzPot.toOption
-            } yield {
-              qdBlSz.bounds.height
-            })
+            qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdId)
+            qdBlSz      <- qdBlSzPot.toOption
+          } yield {
+            qdBlSz.bounds.height
+          })
             .getOrElse(0),
           expandMode = Some( MBlockExpandModes.Wide ),
         )

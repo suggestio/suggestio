@@ -153,9 +153,9 @@ class ShowcaseUtil @Inject() (
     } { getTileArgs }
   }
   def getTileArgs(dscr: MScreen): MJdConf = {
-    val colsCount = GridCalc.getColumnsCount(dscr, GRID_COLS_CONF)
+    val colsCount = GridCalc.getColumnsCount(dscr.wh, GRID_COLS_CONF)
     MJdConf(
-      szMult              = GridCalc.getSzMult4tilesScr(colsCount, dscr, GRID_COLS_CONF),
+      szMult              = GridCalc.getSzMult4tilesScr(colsCount, dscr.wh, GRID_COLS_CONF),
       gridColumnsCount    = colsCount,
       isEdit              = false,
     )
@@ -187,7 +187,8 @@ class ShowcaseUtil @Inject() (
     val szMultIter0 = for {
       bh <- BlockHeights.values.iterator
       heightPx = bh.value
-      if heightPx < dscr.height && heightPx >= bm.height
+      if (heightPx < dscr.wh.height) &&
+         (heightPx >= bm.height)
     } yield {
       heightPx.toFloat / hfloat
     }
@@ -201,7 +202,7 @@ class ShowcaseUtil @Inject() (
 
     val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator).filter { szMult =>
       // Проверяем, влезает ли ширина на экран при таком раскладе?
-      val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = FOCUSED_PADDING_CSSPX)
+      val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.wh.width, paddingPx = FOCUSED_PADDING_CSSPX)
       w1 >= MIN_W1
     }
 

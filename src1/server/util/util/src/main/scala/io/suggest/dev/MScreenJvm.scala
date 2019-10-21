@@ -1,5 +1,6 @@
 package io.suggest.dev
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
@@ -44,8 +45,8 @@ object MScreenJvm {
       "height"  -> whm,
       "pxRatio" -> MPxRatioJvm.mapping
     )
-    { MScreen.apply }
-    { MScreen.unapply }
+    { (w, h, pxRatio) => MScreen(MSize2di(w, h), pxRatio) }
+    { m => Some((m.wh.width, m.wh.height, m.pxRatio)) }
   }
 
 }

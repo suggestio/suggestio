@@ -135,7 +135,8 @@ class JdEditR(
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   object JdRrrEdit extends jdR.JdRrrBase {
 
-    class QdContentB(contentRef: Ref.Simple[html.Element], $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
+    class QdContentB(contentRef: Ref.Simple[html.Element],
+                     $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
 
       override def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
         QdRrrHtml(

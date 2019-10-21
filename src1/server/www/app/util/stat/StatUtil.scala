@@ -228,11 +228,12 @@ class StatUtil @Inject()(
     def mscreen: MScreen = {
       val devScrOpt = devScreenOpt
       MScreen(
-        orientation   = devScrOpt.map(MOrientations2d.forSize2d),
+        orientation   = for (devScr <- devScrOpt)
+          yield MOrientations2d.forSize2d( devScr.wh ),
         vportPhys     = for (dso <- devScrOpt) yield {
           MViewPort(
-            widthPx   = dso.width,
-            heightPx  = dso.height,
+            widthPx   = dso.wh.width,
+            heightPx  = dso.wh.height,
             pxRatio   = Some( dso.pxRatio.pixelRatio )
           )
         },

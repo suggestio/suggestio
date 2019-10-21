@@ -39,7 +39,10 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   import dsl._
 
 
-  private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
+  private val TAB_BODY_HEIGHT_PX = {
+    val si = args.screenInfo
+    si.screen.wh.height - si.unsafeOffsets.top
+  }
 
   private val NODES_LIST_HEIGHT_PX = {
     // Надо оценить кол-во рядов для стилей.

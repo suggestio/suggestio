@@ -8,7 +8,7 @@ import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
-import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
+import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreen, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.MJdConf
@@ -135,7 +135,7 @@ class Sc3Circuit(
         )
       ),
       grid = {
-        val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen)
+        val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen.wh)
         val jdConf = MJdConf(
           isEdit            = false,
           gridColumnsCount  = gridColsCount,
@@ -225,7 +225,7 @@ class Sc3Circuit(
             )
           )
           if (pxRatio2.value > scr0.pxRatio.value)
-            scr0.withPxRatio( pxRatio2 )
+            MScreen.pxRatio.set (pxRatio2 )(scr0)
           else
             scr0
         },

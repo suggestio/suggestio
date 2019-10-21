@@ -1,5 +1,6 @@
 package io.suggest.dev
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -33,8 +34,9 @@ trait PicSzParsers extends JavaTokenParsers {
     picSizeNumRe ^^ { _.toInt }
   }
 
-  def resolutionRawP: Parser[Int ~ Int] = {
-    picSideP ~ (picSizeDelimRe ~> picSideP)
+  def whP: Parser[MSize2di] = {
+    (picSideP ~ (picSizeDelimRe ~> picSideP))
+      .map { case w ~ h => MSize2di(w, h) }
   }
 
 }
@@ -58,11 +60,10 @@ trait DevScreenParsers extends PicSzParsers with DevicePixelRatioParsers {
 
   def devScreenP: Parser[MScreen] = {
     val d = IMG_RES_DPR_DELIM
-    (resolutionRawP ~ (d ~> devPixRatioP)) ^^ {
-      case w ~ h ~ dpr =>
+    (whP ~ (d ~> devPixRatioP)) ^^ {
+      case wh ~ dpr =>
         MScreen(
-          width         = w,
-          height        = h,
+          wh            = wh,
           pxRatio       = dpr
         )
     }

@@ -1,7 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.d2.MOrientations2d
+import io.suggest.common.geom.d2.{MOrientations2d, MSize2di}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -32,12 +32,13 @@ object JsScreenUtil extends Log {
 
     vszOpt.fold{
       // Наврядли этот код будет вызываться когда-либо.
-      MScreen.default
-        .withPxRatio( pxRatio )
+      MScreen.pxRatio.set( pxRatio )(MScreen.default)
     } { sz2d =>
       MScreen(
-        width  = sz2d.width,
-        height = sz2d.height,
+        wh = MSize2di(
+          width  = sz2d.width,
+          height = sz2d.height,
+        ),
         pxRatio = pxRatio
       )
     }
@@ -53,7 +54,7 @@ object JsScreenUtil extends Log {
   def getScreenUnsafeAreas(mscreen: MScreen): MTlbr = {
     try {
       val ua = dom.window.navigator.userAgent
-      def orientation = MOrientations2d.forSize2d( mscreen )
+      def orientation = MOrientations2d.forSize2d( mscreen.wh )
 
       // Const: Отступ сверху на 12px
       def TOP_12PX = MTlbr( topO = Some(12) )
@@ -61,8 +62,8 @@ object JsScreenUtil extends Log {
       if ( ua contains "iPhone" ) {
         // Это айфон. Надо решить, сколько отсутупать.
         val isIphone10Wh = {
-          val wh = mscreen.width ::
-            mscreen.height ::
+          val wh = mscreen.wh.width ::
+            mscreen.wh.height ::
             Nil
 
           (wh contains 812) &&

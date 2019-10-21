@@ -192,7 +192,7 @@ class ScWideMaker @Inject() (
     val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
 
     // Ширину экрана квантуем, получая ширину картинки.
-    val cropWidthCssPx = normWideWidthBgSz(devScreen.width)
+    val cropWidthCssPx = normWideWidthBgSz( devScreen.wh.width )
     val cropWidth = szMulted(cropWidthCssPx, pxRatio.pixelRatio)
 
     // Запустить сбор инфы по кропу.

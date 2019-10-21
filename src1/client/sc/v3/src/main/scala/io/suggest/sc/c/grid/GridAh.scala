@@ -503,7 +503,7 @@ class GridAh[M](
         v0.hasMoreAds && {
           // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
           val contentHeight = v0.core.gridBuild.gridWh.height + GridConst.CONTAINER_OFFSET_TOP
-          val screenHeight = screenRO.value.height
+          val screenHeight = screenRO.value.wh.height
           val scrollPxToGo = contentHeight - screenHeight - m.scrollTop
           scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
         }
@@ -650,7 +650,7 @@ class GridAh[M](
     case m: GridRebuild =>
       val v0 = value
       val mscreen = screenRO.value
-      val (gridColsCount2, szMult2) = GridAh.fullGridConf( mscreen )
+      val (gridColsCount2, szMult2) = GridAh.fullGridConf( mscreen.wh )
 
       val jdConf0 = v0.core.jdConf
       val szMultMatches = jdConf0.szMult ==* szMult2

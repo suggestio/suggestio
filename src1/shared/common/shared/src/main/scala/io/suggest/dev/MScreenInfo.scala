@@ -39,23 +39,23 @@ case class MScreenInfo(
                         unsafeOffsets     : MTlbr       = MTlbr.empty
                       ) {
 
-  def withScreen(screen: MScreen) = copy(screen = screen)
-  def withSafeArea(safeArea: MTlbr) = copy(unsafeOffsets = safeArea)
-
   /** Геометрия экрана, пригодная для отображения контента (переднего плана). */
   def safeScreen: MScreen = {
-    if (unsafeOffsets.isEmpty)
+    if (unsafeOffsets.isEmpty) {
       screen
-    else
-      screen.withWh(
-        width   = screen.width - unsafeOffsets.width,
-        height  = screen.height - unsafeOffsets.height
-      )
+    } else {
+      MScreen.wh.modify { wh0 =>
+        wh0.copy(
+          width   = wh0.width  - unsafeOffsets.width,
+          height  = wh0.height - unsafeOffsets.height,
+        )
+      }(screen)
+    }
   }
 
 
   /** Следует ли разворачивать диалоги на весь экран? */
   def isDialogWndFullScreen: Boolean =
-    screen.width < 800
+    screen.wh.width < 800
 
 }

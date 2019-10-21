@@ -57,15 +57,8 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
     }
   }
 
-
-  def sizeP: Parser[MSize2di] = {
-    resolutionRawP ^^ {
-      case w ~ h  =>  MSize2di(width = w, height = h)
-    }
-  }
-  
   def parseWxH(wxh: String): ParseResult[MSize2di] = {
-    parse(sizeP, wxh)
+    parse(whP, wxh)
   }
 
   def unParseWxH(value: ISize2di): String = {

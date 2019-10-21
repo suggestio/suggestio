@@ -113,7 +113,7 @@ class WelcomeUtil @Inject() (
     screenOpt
       .flatMap { scr =>
         BasicScreenSizes
-          .includesSize( scr )
+          .includesSize( scr.wh )
           .map(_ -> scr)
       }
       .fold {

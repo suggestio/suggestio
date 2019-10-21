@@ -41,7 +41,6 @@ object GeoTabAh {
 
   /** Пересборка SearchCSS.
     *
-    * @param nodesCount Кол-во узлов в списке.
     * @param screenInfo Данные по экрану.
     * @return Инстанс SearchCss.
     */
@@ -234,7 +233,7 @@ class GeoTabAh[M](
       if (
         !v0.found.req.isPending &&
         v0.found.hasMore && {
-          val containerHeight = screenInfoRO.value.screen.height - ScCss.TABS_OFFSET_PX
+          val containerHeight = screenInfoRO.value.screen.wh.height - ScCss.TABS_OFFSET_PX
           val scrollPxToGo = m.scrollHeight - containerHeight - m.scrollTop
           // TODO Нужно выставить правильную delta, т.к. сдвиг плитки сюда никак не относится, и load-more происходит слишком рано.
           scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX

@@ -11,7 +11,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 
 /** Модель метаданных по блоку рекламной карточки. */
-object BlockMeta { outer =>
+object BlockMeta {
 
   object Fields {
     def HEIGHT          = "height"

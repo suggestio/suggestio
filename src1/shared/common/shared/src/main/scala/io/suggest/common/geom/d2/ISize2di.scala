@@ -4,6 +4,7 @@ import enumeratum.values.StringEnumEntry
 import io.suggest.math.SimpleArithmetics
 import io.suggest.media.MediaConst
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 
 /**
@@ -134,6 +135,10 @@ object MSize2di {
       )
     }
   }
+
+
+  val width = GenLens[MSize2di](_.width)
+  val height = GenLens[MSize2di](_.height)
 
 }
 

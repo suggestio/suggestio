@@ -1,13 +1,14 @@
 package io.suggest.dev
 
 import diode.FastEq
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.MSize2di
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.text.parse.ParserUtil.Implicits._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -20,8 +21,7 @@ object MScreen {
 
   implicit object MScreenFastEq extends FastEq[MScreen] {
     override def eqv(a: MScreen, b: MScreen): Boolean = {
-      (a.width ==* b.width) &&
-      (a.height ==* b.height) &&
+      (a.wh ===* b.wh) &&
       (a.pxRatio ===* b.pxRatio)
     }
   }
@@ -49,42 +49,39 @@ object MScreen {
   @inline implicit def univEq: UnivEq[MScreen] = UnivEq.derive
 
   def default = MScreen(
-    width   = 1024,
-    height  = 768,
+    wh = MSize2di(
+      width   = 1024,
+      height  = 768,
+    ),
     pxRatio = MPxRatios.default
   )
+
+  val wh        = GenLens[MScreen](_.wh)
+  val pxRatio   = GenLens[MScreen](_.pxRatio)
 
 }
 
 
 /**
  * Данные по экрану.
- * @param width Ширина в css-пикселях.
- * @param height Высота в css-пикселях.
+ * @param wh Ширина и высота в css-пикселях.
  * @param pxRatio Плотность пикселей.
  */
 case class MScreen(
-                  // TODO Сделать поле wh, убрать top-level поля w/h
-                    override val width    : Int,
-                    override val height   : Int,
+                    wh                    : MSize2di,
                     pxRatio               : MPxRatio
-                  )
-  extends ISize2di
-{
+                  ) {
 
   /** Сериализовать для передачи на сервер. */
   final def toQsValue: String = {
     // Округлять pxRatio до первого знака после запятой:
-    width.toString +
-      PicSzParsers.WH_DELIM + height.toString +
+    wh.width.toString +
+      PicSzParsers.WH_DELIM + wh.height.toString +
       PicSzParsers.IMG_RES_DPR_DELIM + pxRatio.pixelRatio
     // TODO Надо использовать pxRatio.value
   }
 
   override final def toString: String = toQsValue
-
-  def withPxRatio(pxRatio: MPxRatio) = copy(pxRatio = pxRatio)
-  def withWh(width: Int, height: Int) = copy(width = width, height = height)
 
 }
 

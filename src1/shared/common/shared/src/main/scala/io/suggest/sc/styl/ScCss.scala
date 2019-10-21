@@ -490,14 +490,15 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
       val bgImg = {
         // В зависимости от наличия или отсутствия размера welcome background, стили могут отличаться.
         val whMx = args.wcBgWh.fold( StyleS.empty ) { wh0 =>
-          val wh2 = if (ISize2di.whRatio(wh0) < ISize2di.whRatio(args.screenInfo.screen)) {
-            val w = args.screenInfo.screen.width
+          val screenWh = args.screenInfo.screen.wh
+          val wh2 = if (ISize2di.whRatio(wh0) < ISize2di.whRatio(screenWh)) {
+            val w = screenWh.width
             MSize2di(
               width  = w,
               height = w * wh0.height / wh0.width
             )
           } else {
-            val h = args.screenInfo.screen.height
+            val h = screenWh.height
             MSize2di(
               width  = h * wh0.width / wh0.height,
               height = h
@@ -635,7 +636,7 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
       val paddingTopPx = args.screenInfo.unsafeOffsets.top
       style(
         paddingTop( paddingTopPx.px ),
-        maxHeight( (args.screenInfo.screen.height - paddingTopPx).px )
+        maxHeight( (args.screenInfo.screen.wh.height - paddingTopPx).px )
       )
     }
 
@@ -649,7 +650,10 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
       /** Стили содержимого вкладки с гео-картой. */
       object MapTab {
 
-        private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
+        private val TAB_BODY_HEIGHT_PX = {
+          val si = args.screenInfo
+          si.screen.wh.height - si.unsafeOffsets.top
+        }
 
         private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
 
@@ -710,12 +714,15 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
 
     import ScCssStatic.Grid._SM_GRID_ADS
 
-    private val _screenHeightPx = (args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top).px
+    private val _screenHeightPx = {
+      val si = args.screenInfo
+      (si.screen.wh.height - si.unsafeOffsets.top).px
+    }
     private val _screenHeight = height( _screenHeightPx )
 
     /** Крутилка внизу экрана. */
     val loader = style(
-      left( (args.screenInfo.screen.width / 2).px ),
+      left( (args.screenInfo.screen.wh.width / 2).px ),
       position.relative,
     )
 
@@ -759,7 +766,7 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
       style(
         paddingTop( paddingTopPx.px ),
         paddingLeft( Math.max(5, uo.left).px ),
-        maxHeight( (args.screenInfo.screen.height - paddingTopPx).px ),
+        maxHeight( (args.screenInfo.screen.wh.height - paddingTopPx).px ),
         overflow.auto
       )
     }

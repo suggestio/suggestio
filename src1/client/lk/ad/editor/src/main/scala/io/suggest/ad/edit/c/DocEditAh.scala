@@ -1608,8 +1608,10 @@ class DocEditAh[M](
       val jdArgs2 = (
         MJdArgs.conf
           .set( conf2 ) andThen
-        MJdArgs.jdRuntime
-          .set( mkJdRuntime2(jdArgs0.data.doc, conf2, jdArgs0.jdRuntime).result )
+        MJdArgs.jdRuntime.set(
+          mkJdRuntime2(jdArgs0.data.doc, conf2, jdArgs0.jdRuntime)
+            .result
+        )
       )(jdArgs0)
 
       val v2 = MDocS.jdDoc.modify(
