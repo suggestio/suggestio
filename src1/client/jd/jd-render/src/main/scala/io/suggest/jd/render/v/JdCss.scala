@@ -119,45 +119,50 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     styleF(
       new Domain.OverSeq(
-        _filteredTagIds( _.props1.bm.nonEmpty )
+        _filteredTagIds { jdt =>
+          val p1 = jdt.props1
+          p1.widthPx.nonEmpty && p1.heightPx.nonEmpty
+        }
       )
     )(
-      {stripId =>
-        val strip = jdCssArgs.data.jdTagsById( stripId )
+      {jdId =>
+        val blk = jdCssArgs.data.jdTagsById( jdId )
         var accS = List.empty[ToStyle]
 
-        // Стиль размеров блока-полосы.
-        for (bm <- strip.props1.bm) {
-          val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( blk )
 
-          val widthPx = _szMulted( bm.width, wideSzMultOpt )
-          accS ::= height( _szMulted( bm.height, wideSzMultOpt ).px )
-          accS ::= width ( widthPx.px )
-
-          // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
-          for (_ <- wideSzMultOpt) {
-            accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
-          }
+        for (widthPx0 <- blk.props1.widthPx) {
+          val widthPxMulted = _szMulted( widthPx0, wideSzMultOpt )
+          accS ::= width ( widthPxMulted.px )
 
           // Выравнивание блока внутри внешнего контейнера:
-          if (bm.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
+          if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
             // Если wide, то надо отцентровать блок внутри wide-контейнера.
             // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
             import io.suggest.common.html.HtmlConstants._
             accS ::= {
-              val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPx / 2).px.value
+              val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPxMulted / 2).px.value
               left.attr := Css.Calc( calcFormula )
             }
 
             //accS ::= wideLeftAv
             //accS ::= wideWidthAv
-
           } else {
             // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
             accS ::= left0px
           }
         }
 
+        for (heightPx0 <- blk.props1.heightPx) {
+          accS ::= height( _szMulted(heightPx0, wideSzMultOpt).px )
+        }
+
+        // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
+        for (_ <- wideSzMultOpt) {
+          accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
+        }
+
+        // Скомпилировать акк стилей:
         styleS( accS: _* )
       },
       JdCss._jdIdToStringF,
@@ -170,28 +175,34 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     new Domain.OverSeq(
       _filteredTagIds { jdt =>
         // Интересуют только стрипы c bgImg, но без wide
-        val p1 = jdt.props1
-        p1.bm.nonEmpty &&
-          (jdt.name ==* MJdTagNames.STRIP) &&
-          p1.bgImg.nonEmpty
+        (jdt.name ==* MJdTagNames.STRIP) && {
+          val p1 = jdt.props1
+          p1.bgImg.nonEmpty && (
+            (p1.expandMode.nonEmpty && p1.heightPx.nonEmpty) ||
+            p1.widthPx.nonEmpty
+          )
+        }
       }
     )
   ) (
-    {stripId =>
-      val strip = jdCssArgs.data.jdTagsById( stripId )
-      strip.props1.bm.whenDefinedStyleS { bm =>
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
-        styleS(
-          // Записываем одну из двух сторон картинки.
-          if (bm.expandMode.nonEmpty) {
-            // wide-картинки можно прессовать только по высоте блока
-            height( _szMulted( bm.height, wideSzMultOpt ).px )
-          } else {
-            // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-            width( _szMulted( bm.width, wideSzMultOpt ).px )
-          }
-        )
-      }
+    {jdId =>
+      val blk = jdCssArgs.data.jdTagsById( jdId )
+      val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( blk )
+
+      // Записываем одну из двух сторон картинки:
+      (for {
+        heightPx    <- blk.props1.heightPx
+        if blk.props1.expandMode.nonEmpty
+      } yield {
+        // wide-картинки можно прессовать только по высоте блока
+        height( _szMulted( heightPx, wideSzMultOpt ).px )
+      })
+        .orElse {
+          // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
+          for (widthPx <- blk.props1.widthPx)
+            yield width( _szMulted( widthPx, wideSzMultOpt ).px )
+        }
+        .whenDefinedStyleS( styleS(_) )
     },
     JdCss._jdIdToStringF,
   )
@@ -201,26 +212,32 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val wideContStyleF = styleF(
     new Domain.OverSeq(
       _filteredTagIds { jdt =>
-        jdt.props1.bm.hasExpandMode
+        val p1 = jdt.props1
+        p1.expandMode.nonEmpty &&
+        p1.widthPx.nonEmpty &&
+        p1.heightPx.nonEmpty
       }
     )
   ) (
     {stripId =>
       val strip = jdCssArgs.data.jdTagsById( stripId )
       var accS: List[ToStyle] = Nil
-      // Уточнить размеры wide-блока:
-      for (bm <- strip.props1.bm) {
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
-        accS ::= (height( _szMulted(bm.height, wideSzMultOpt).px ): ToStyle)
 
+      val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
+
+      for (h <- strip.props1.heightPx)
+        accS ::= height( _szMulted(h, wideSzMultOpt).px )
+
+      for (w <- strip.props1.widthPx) {
         // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
         accS ::= minWidth(
           if (jdCssArgs.conf.isEdit)
-            _szMulted(bm.width, wideSzMultOpt).px
+            _szMulted(w, wideSzMultOpt).px
           else
             jdCssArgs.conf.gridWidthPx.px
         )
       }
+
       // Цвет фона
       for (bgColor <- strip.props1.bgColor) {
         accS ::= (backgroundColor(Color(bgColor.hexCode)): ToStyle)

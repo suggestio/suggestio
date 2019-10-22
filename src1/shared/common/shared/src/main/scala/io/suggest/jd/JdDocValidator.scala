@@ -1,7 +1,8 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.{BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.err.ErrorConstants
@@ -35,6 +36,7 @@ class JdDocValidator(
   private def XY      = "xy"
   private def WIDTH   = "w"
   private def HEIGHT  = "h"
+  private def EXPAND_MODE = "expandMode"
   private def BLUR    = "blur"
   private def STRIP   = "strip"
   private def S       = "s"
@@ -128,18 +130,25 @@ class JdDocValidator(
     val errMsgF = ErrorConstants.emsgF(STRIP + `.` + PROPS1)
     (
       ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly ) |@|
-      ScalazUtil.liftNelOpt(props1.bgImg)(
-        // TODO imgContSz=70x70 - Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
-        MJdEdgeId.validate(_, edges, props1.bm.map(_ => MSize2di(70, 70)) )
-      ) |@|
-      ScalazUtil.liftNelSome(props1.bm, errMsgF(BM))( BlockMeta.validate ) |@|
+      ScalazUtil.liftNelOpt(props1.bgImg) { jdId =>
+        MJdEdgeId.validate(jdId, edges,
+          // TODO imgContSz=70x70 - Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
+          imgContSzOpt = OptionUtil.maybe(props1.widthPx.nonEmpty && props1.heightPx.nonEmpty)(MSize2di(70, 70))
+        )
+      } |@|
       ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt( props1.isMain ) {
         Validation.liftNel(_)(!_, errMsgF(`MAIN` + `.` + INVALID))
       } |@|
-      ScalazUtil.liftNelNone(props1.widthPx, errMsgF(WIDTH + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelNone(props1.rotateDeg, errMsgF(ROTATE + `.` + UNEXPECTED)) |@|
-      ScalazUtil.liftNelNone(props1.textShadow, errMsgF(TEXT_SHADOW + `.` + UNEXPECTED))
+      ScalazUtil.liftNelNone(props1.textShadow, errMsgF(TEXT_SHADOW + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelSome(props1.widthPx, errMsgF(WIDTH + `.` + MISSING)) { widthPx =>
+        Validation.liftNel( widthPx )( BlockWidths.withValueOpt(_).isEmpty, errMsgF(WIDTH + `.` + INVALID) )
+      } |@|
+      ScalazUtil.liftNelSome(props1.heightPx, errMsgF(HEIGHT + `.` + MISSING)) { heightPx =>
+        Validation.liftNel( heightPx )( BlockHeights.withValueOpt(_).isEmpty, errMsgF(WIDTH + `.` + INVALID) )
+      } |@|
+      ScalazUtil.liftNelOpt(props1.expandMode)( Validation.success )
     )( MJdtProps1.apply )
   }
 
@@ -147,7 +156,6 @@ class JdDocValidator(
     * В содержимом могут быть qd-теги.
     *
     * @param contents Содержимое.
-    * @return
     */
   private def validateContents(contents: Stream[Tree[JdTag]], bm: BlockMeta): ValidationNel[String, Stream[Tree[JdTag]]] = {
     (
@@ -217,7 +225,6 @@ class JdDocValidator(
     (
       ScalazUtil.liftNelOpt (qdProps1.bgColor)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") ) |@|
-      ScalazUtil.liftNelNone(qdProps1.bm, errMsgF(BM)) |@|
         contSzOpt.fold [ValidationNel[String, Option[MCoords2di]]] {
           // qd-blockless
           ScalazUtil.liftNelNone(qdProps1.topLeft, errMsgF(XY + `.` + UNEXPECTED))
@@ -228,14 +235,6 @@ class JdDocValidator(
           )
         } |@|
       ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED)) |@|
-      ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
-        MathConst.Counts.validateMinMax(
-          v = widthPx,
-          min = 10,
-          max = qdProps1.rotateDeg.fold(2)(_ => 6) * BlockWidths.NORMAL.value,
-          errMsgF(WIDTH) + `.`
-        )
-      } |@|
       ScalazUtil.liftNelOpt(qdProps1.rotateDeg.filter(_ !=* 0)) { rotateDeg =>
         MathConst.Counts.validateMinMax(
           v   = rotateDeg,
@@ -244,7 +243,17 @@ class JdDocValidator(
           errMsgF(ROTATE)
         )
       } |@|
-      ScalazUtil.liftNelOpt(qdProps1.textShadow)( validateQdTextShadow )
+      ScalazUtil.liftNelOpt(qdProps1.textShadow)( validateQdTextShadow ) |@|
+      ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
+        MathConst.Counts.validateMinMax(
+          v = widthPx,
+          min = 10,
+          max = qdProps1.rotateDeg.fold(2)(_ => 6) * BlockWidths.NORMAL.value,
+          errMsgF(WIDTH) + `.`
+        )
+      } |@|
+      ScalazUtil.liftNelNone(qdProps1.heightPx, errMsgF(HEIGHT + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelNone(qdProps1.expandMode, errMsgF(EXPAND_MODE + `.` + UNEXPECTED))
     )( MJdtProps1.apply )
   }
 

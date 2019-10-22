@@ -209,7 +209,7 @@ class JdR(
         val s = state.subTree.rootLabel
         val C = state.jdArgs.jdRuntime.jdCss
 
-        val isWide = s.props1.bm.hasExpandMode
+        val isWide = s.props1.expandMode.nonEmpty
 
         val bgColor = _bgColorOpt(s, state.jdArgs)
 
@@ -378,8 +378,7 @@ class JdR(
             val tagId = p.tagId.copy(
               selPathRev  = i :: p.tagId.selPathRev,
               blockExpand = if (ch.name ==* MJdTagNames.STRIP) {
-                ch.props1.bm
-                  .flatMap(_.expandMode)
+                ch.props1.expandMode
               } else {
                 p.tagId.blockExpand
               }

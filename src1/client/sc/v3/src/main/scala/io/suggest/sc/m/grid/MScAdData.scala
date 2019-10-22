@@ -38,8 +38,9 @@ object MScAdData {
   val focused = GenLens[MScAdData](_.focused)
 
   private def _mkJdIdBlkExpand(blkJdt: Tree[JdTag], jdId0: MJdTagId): Option[MBlockExpandMode] = {
-    blkJdt.rootLabel.props1.bm
-      .flatMap(_.expandMode)
+    blkJdt.rootLabel
+      .props1
+      .expandMode
       .orElse( jdId0.blockExpand )
   }
 

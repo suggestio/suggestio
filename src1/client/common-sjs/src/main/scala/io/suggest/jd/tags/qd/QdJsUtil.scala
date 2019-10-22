@@ -28,10 +28,10 @@ object QdJsUtil {
   def isEmpty(qdTree: Tree[JdTag], edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Boolean = {
     // Обычно, пустая дельта выглядит так: {"ops":[{"insert":"\n"}]}
     // Но мы будем анализировать весь список: допускаем целый список инзертов с итоговым пустым текстом.
-    qdTree.qdOpsIter.isEmpty || {
+    qdTree.qdOps.isEmpty || {
       val emptyTextRE = EMPTY_TEXT_PATTERN_RE
       qdTree
-        .deepEdgesUidsIter
+        .deepEdgesUids
         .flatMap { edgesMap.get }
         // Допускаем, что любая пустая дельта может состоять из прозрачного мусора.
         .forall( isEdgeDataEmpty(_, emptyTextRE) )

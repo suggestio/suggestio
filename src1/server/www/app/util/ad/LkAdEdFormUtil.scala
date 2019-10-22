@@ -62,7 +62,7 @@ class LkAdEdFormUtil @Inject() (
 
         // Strip#1 содержит намёк на то, что это верхний блок.
         Tree.Leaf {
-          JdTag.strip(
+          JdTag.block(
             bm = BlockMeta(
               w = BlockWidths.default,
               h = BlockHeights.default,
@@ -164,25 +164,32 @@ class LkAdEdFormUtil @Inject() (
 
   def mkTechName(tpl: Tree[JdTag], edgeTextsMap: Map[EdgeUid_t, String]): Option[String] = {
     val delim = " | "
-    val techName = tpl
-      .deepSubtrees
-      .zipWithIndex
-      .filter(_._1.rootLabel.name ==* MJdTagNames.QD_CONTENT)
-      .flatMap { case (qdTree, i) =>
+    val techName = (for {
+      (qdTree, i) <- tpl
+        .deepSubtrees
+        .zipWithIndex
+
+      if qdTree.rootLabel.name ==* MJdTagNames.QD_CONTENT
+
+      str <- {
         // Внутри одного qd-тега склеить все тексты без разделителей
-        val iter0 = qdTree
-          .deepEdgesUidsIter
-          .flatMap( edgeTextsMap.get )
-          .filter(s => s.trim.nonEmpty && s.length >= 2)
-          .map(_.replace("\\s+", " "))
+        def iter0 = for {
+          s <- qdTree.deepEdgesUids
+          et <- edgeTextsMap.get(s)
+          if et.trim.nonEmpty && et.length >= 2
+        } yield {
+          et.replace("\\s+", " ")
+        }
         // Добавить разделитель, если требутся.
         if (i > 0 && delim.nonEmpty)
-          Iterator.single(delim) ++ iter0
+          delim #:: iter0
         else
           iter0
       }
+    } yield str)
       .mkStringLimitLen(40)
       .trim
+
     OptionUtil.maybe(techName.length >= 2)(techName)
   }
 

@@ -47,14 +47,6 @@ object JdTag {
   @inline implicit def univEq: UnivEq[JdTag] = UnivEq.derive
 
 
-  /** Билдер-функция для более удобной ручной сборки инстансов [[JdTag]] по сравнению с apply.
-    * Нельзя объединить с apply() из-за ограничений copy().
-    */
-  def a(jdTagName : MJdTagName, props1: MJdtProps1 = MJdtProps1.empty, qdProps: Option[MQdOp] = None): JdTag = {
-    apply(jdTagName, props1, qdProps)
-  }
-
-
   /** Краткая форма сборки top-level jd-тега с контентом. */
   def document: JdTag = {
     apply(MJdTagNames.DOCUMENT)
@@ -62,7 +54,7 @@ object JdTag {
 
   /** Сборка IDocTag, рендерящего примитивный текст по его id эджа. */
   def qd(topLeft: MCoords2di = null): JdTag = {
-    JdTag.a(
+    JdTag(
       MJdTagNames.QD_CONTENT,
       props1 = Option(topLeft).fold(MJdtProps1.empty) { tL =>
         MJdtProps1(
@@ -100,16 +92,17 @@ object JdTag {
   }
 
   /** Быстрая сборка стрипа. */
-  def strip(bm: BlockMeta, bgColor: Option[MColorData] = None): JdTag = {
+  def block(bm: BlockMeta, bgColor: Option[MColorData] = None): JdTag = {
     apply(
       MJdTagNames.STRIP,
       props1 = MJdtProps1(
-        bgColor = bgColor,
-        bm      = Some(bm)
+        bgColor     = bgColor,
+        widthPx     = Some(bm.width),
+        heightPx    = Some(bm.height),
+        expandMode  = bm.expandMode,
       )
     )
   }
-
 
 
   /** Дополнительные методы для Option[IDocTag]. */
@@ -127,43 +120,38 @@ object JdTag {
 
     import io.suggest.scalaz.ZTreeUtil._
 
-    def qdOpsIter: Iterator[MQdOp] = {
-      tree.flatten
+    def qdOps: Stream[MQdOp] = {
+      tree
+        .flatten
         .tail
-        .iterator
         .flatMap(_.qdProps)
     }
 
-    def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
+    def deepEdgesUids: Stream[EdgeUid_t] = {
       val jdt = tree.rootLabel
       val iter1 = tree
-        .qdOpsIter
+        .qdOps
         .flatMap(_.edgeInfo)
-      val iter2 = jdt.props1.bgImg
-        .iterator
-      val iter12 = (iter1 ++ iter2)
+      val iter12 = (iter1 #::: jdt.props1.bgImg.toStream)
         .map(_.edgeUid)
-      val iterChs = tree.subForest
-        .iterator
-        .flatMap(_.deepEdgesUidsIter)
-      iter12 ++ iterChs
+      iter12 #::: tree.subForest
+        .flatMap(_.deepEdgesUids)
     }
 
 
-    def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
+    def deepChildrenOfType(jdtName: MJdTagName): Stream[JdTag] = {
       tree
         .deepChildren
-        .iterator
         .filter( _.name ==* jdtName )
     }
 
-    def deepOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
-      def chIter = deepChildrenOfTypeIter(jdtName)
+    def deepOfType(jdtName: MJdTagName): Stream[JdTag] = {
+      val chs = deepChildrenOfType(jdtName)
       val jdt = tree.rootLabel
       if (jdt.name ==* jdtName) {
-        Iterator.single(jdt) ++ chIter
+        jdt #:: chs
       } else {
-        chIter
+        chs
       }
     }
 
@@ -243,7 +231,7 @@ object JdTag {
     */
   def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
     EdgesUtil.purgeUnusedEdgesFromMap(
-      usedEdgeIds = tpl.deepEdgesUidsIter.toSet,
+      usedEdgeIds = tpl.deepEdgesUids.toSet,
       edgesMap    = edgesMap
     )
   }
@@ -274,9 +262,12 @@ final case class JdTag(
   with IEqualsEq
 {
 
-  def edgeUids: Iterable[MJdEdgeId] = {
-    props1.bgImg ++
-      qdProps.flatMap(_.edgeInfo)
+  def edgeUids: Stream[MJdEdgeId] = {
+    (props1.bgImg #::
+      qdProps.flatMap(_.edgeInfo) #::
+      Stream.empty
+    )
+      .flatten
   }
 
   override def toString: String = {

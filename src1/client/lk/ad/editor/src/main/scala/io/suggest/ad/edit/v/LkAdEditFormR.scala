@@ -586,12 +586,10 @@ class LkAdEditFormR(
             bgEdge <- mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
             if bgEdge._2.imgSrcOpt.nonEmpty
             // Вычислить размер контейнера. Это размер блока, для которого выбираем фон:
-            cropContSz <- mroot.doc.jdDoc.jdArgs
-              .selJdt
-              .treeLocOpt
-              .flatMap(_.getLabel.props1.bm)
+            treeLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
+            wh <- treeLoc.getLabel.props1.wh
           } yield {
-            CropOpen( mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataFrk, cropContSz )
+            CropOpen( mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataFrk, wh )
           }
         }( OptFastEq.Wrapped(CropOpen.CropOpenFastEq) ),
 

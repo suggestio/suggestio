@@ -36,7 +36,7 @@ class QuillDeltaJsUtil extends Log {
     * @return Инстанс js.native-дельты дял отправки в редактор.
     */
   def qdTag2delta(qd: Tree[JdTag], edges: Map[EdgeUid_t, MEdgeDataJs]): Delta = {
-    qd.qdOpsIter
+    qd.qdOps
       .foldLeft( new Delta() ) { (delta, qdOp) =>
         qdOp.opType match {
           case MQdOpTypes.Insert =>

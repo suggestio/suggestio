@@ -394,7 +394,7 @@ class DocEditAh[M](
             val s2 = MStripEdS(
               isLastStrip = {
                 val hasManyStrips = v2.jdDoc.jdArgs.data.doc.template
-                  .deepOfTypeIter( n )
+                  .deepOfType( n )
                   // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
                   .slice(0, 2)
                   .size > 1
@@ -565,23 +565,21 @@ class DocEditAh[M](
       val v0 = value
 
       val stripTreeLoc0 = v0.jdDoc.jdArgs.selJdt.treeLocOpt.get
-      val strip0 = stripTreeLoc0.getLabel
+      val blk0 = stripTreeLoc0.getLabel
 
       val jdt_p1_bm_LENS = JdTag.props1
-        .composeLens( MJdtProps1.bm )
 
-      val bmOpt0 = jdt_p1_bm_LENS.get( strip0 )
-      bmOpt0
+      blk0.props1.bm
         // Сконвертить в функцию обновления, если значение требует изменения:
         .flatMap { bm0 =>
-          m.model match {
+          val (szOpt3, lens) = m.model match {
             case bhs @ BlockHeights =>
               val sz0 = bm0.h
               val szOpt2 = m.direction match {
                 case MHands.Left  => bhs.previousOf( sz0 )
                 case MHands.Right => bhs.nextOf( sz0 )
               }
-              szOpt2.map( BlockMeta.h.set )
+              szOpt2 -> MJdtProps1.heightPx
 
             case bws @ BlockWidths =>
               val sz0 = bm0.w
@@ -589,16 +587,17 @@ class DocEditAh[M](
                 case MHands.Left  => bws.previousOf( sz0 )
                 case MHands.Right => bws.nextOf( sz0 )
               }
-              szOpt2.map(BlockMeta.w.set)
+              szOpt2 -> MJdtProps1.widthPx
           }
+          for (sz3 <- szOpt3) yield
+            lens.set( Some(sz3.value) )
         }
         .fold(noChange) { bmUpdateF =>
-          val strip2 = jdt_p1_bm_LENS
-            .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
-            .modify( bmUpdateF )(strip0)
+          val blk2 = JdTag.props1
+            .modify(bmUpdateF)(blk0)
 
           val template2 = stripTreeLoc0
-            .setLabel(strip2)
+            .setLabel(blk2)
             .toTree
           val jdDoc2 = (MJdDoc.template set template2)( v0.jdDoc.jdArgs.data.doc )
           val jdArgs2 = (
@@ -1288,9 +1287,7 @@ class DocEditAh[M](
       val v0 = value
 
       val jdt_p1_bm_expandOpt_LENS = JdTag.props1
-        .composeLens( MJdtProps1.bm )
-        .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
-        .composeLens( BlockMeta.expandMode )
+        .composeLens( MJdtProps1.expandMode )
       val jdtLoc0 = v0.jdDoc.jdArgs
         .selJdt.treeLocOpt
         .get
@@ -1457,11 +1454,17 @@ class DocEditAh[M](
 
       val qdtTree = Tree.Node(
         root = {
-          val bm0 = intoStripLoc.getLabel.props1.bm.get
+          val p1 = intoStripLoc.getLabel.props1
           val rnd = new Random()
           val coordsRnd = MCoords2di(
-            x = rnd.nextInt( bm0.w.value/3 ) + 10,
-            y = rnd.nextInt( (bm0.h.value * 0.75).toInt ) + (bm0.h.value * 0.12).toInt
+            x = {
+              val w0 = p1.widthPx getOrElse BlockWidths.min.value
+              10 + rnd.nextInt( w0 / 3 )
+            },
+            y = {
+              val h0 = p1.heightPx getOrElse BlockHeights.min.value
+              rnd.nextInt( (h0 * 0.75).toInt ) + (h0 * 0.12).toInt
+            }
           )
           JdTag.qd(
             topLeft = coordsRnd,
@@ -1537,7 +1540,7 @@ class DocEditAh[M](
         // Поискать цвет фона среди всех стрипов.
         .++ {
           v0.jdDoc.jdArgs.data.doc.template
-            .deepOfTypeIter( MJdTagNames.STRIP )
+            .deepOfType( MJdTagNames.STRIP )
         }
         .flatMap( _.props1.bgColor )
         .toStream
@@ -1550,7 +1553,7 @@ class DocEditAh[M](
 
       // Собрать начальный блок:
       val newStripTree = Tree.Leaf(
-        JdTag.strip(
+        JdTag.block(
           bm      = BlockMeta.DEFAULT,
           bgColor = bgColorSome0
         )
@@ -1731,7 +1734,7 @@ object DocEditAh {
     val jdt = jdtWithId._2
     jdt.name match {
       case MJdTagNames.STRIP =>
-        jdt.props1.bm
+        jdt.props1.wh
       case MJdTagNames.QD_CONTENT =>
         for {
           qdBlPot <- v0.jdDoc.jdArgs.jdRuntime.data.qdBlockLess.get( jdtWithId._1 )

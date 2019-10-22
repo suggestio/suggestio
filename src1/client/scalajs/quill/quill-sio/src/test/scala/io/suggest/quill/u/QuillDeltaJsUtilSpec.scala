@@ -50,7 +50,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
     val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
 
-    val qdOps2 = qdTagTree2.qdOpsIter.toSeq
+    val qdOps2 = qdTagTree2.qdOps.toSeq
 
     assertEquals( qdOps2.size, 1 )
     assertEquals( edges2.size, 1 )
@@ -81,9 +81,9 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val (qdTagTree2, edges1) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
     val edges2 = JdTag.purgeUnusedEdges( qdTagTree2, edges1 )
 
-    assertEquals( qdTagTree2.qdOpsIter.size, 1 )
+    assertEquals( qdTagTree2.qdOps.size, 1 )
     assertEquals( edges2.size, 1 )
-    assertEquals( edges2.head._1, qdTagTree2.deepEdgesUidsIter.next() )
+    assertEquals( edges2.head._1, qdTagTree2.deepEdgesUids.head )
     assertEquals( edges2.head._2.jdEdge.text.get, newString )
   }
 
@@ -118,7 +118,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
 
     val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
+    assertEquals( qdTagTree2.qdOps.size, 3 )
     assertEquals( edges2.size, 3 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
@@ -163,7 +163,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
 
     val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
+    assertEquals( qdTagTree2.qdOps.size, 3 )
     assertEquals( edges2.size, 6 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
@@ -208,7 +208,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     val (qdTagTree2, edges1) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
     val edges2 = JdTag.purgeUnusedEdges( qdTagTree2, edges1 )
-    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
+    assertEquals( qdTagTree2.qdOps.size, 3 )
     assertEquals( edges2.size, 3 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
@@ -253,7 +253,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val jdTag0 = JdTag.edgeQdTree(0, coords)
 
     val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( jdTag2.qdOpsIter.size, 3 )
+    assertEquals( jdTag2.qdOps.size, 3 )
     assertEquals( edges2.size, 7 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
@@ -315,7 +315,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
 
     val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
+    assertEquals( qdTagTree2.qdOps.size, 3 )
     assertEquals( edges2.size, 6 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)

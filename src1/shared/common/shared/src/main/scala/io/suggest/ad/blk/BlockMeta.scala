@@ -3,14 +3,15 @@ package io.suggest.ad.blk
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.ISize2di
 import japgolly.univeq.UnivEq
-import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import scalaz.{Validation, ValidationNel}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 
-/** Модель метаданных по блоку рекламной карточки. */
+/** Модель метаданных по блоку рекламной карточки.
+  * 2019-10-22 Модель стала живущей вне БД, переведена в раздел устаревших.
+  * Надо от неё потихоньку избавляться.
+  */
 object BlockMeta {
 
   object Fields {
@@ -48,18 +49,8 @@ object BlockMeta {
 
   @inline implicit def univEq: UnivEq[BlockMeta] = UnivEq.derive
 
-  /** Валидация инстансов BlockMeta. */
-  def validate(bm: BlockMeta): ValidationNel[String, BlockMeta] = {
-    // Все поля модели очень жестко типизированы, поэтому валидировать нечего.
-    Validation.success(bm)
-  }
-
 
   def MINIMAL = BlockMeta( BlockWidths.min, BlockHeights.min )
-
-  val w = GenLens[BlockMeta](_.w)
-  val h = GenLens[BlockMeta](_.h)
-  val expandMode = GenLens[BlockMeta](_.expandMode)
 
   implicit class BmOptExt(val bmOpt: Option[BlockMeta]) extends AnyVal {
     def hasExpandMode: Boolean = bmOpt.exists( _.expandMode.nonEmpty )

@@ -114,14 +114,14 @@ case class MJdArgs(
 
   /** Вычислить высоту текущего шаблона. Используется при реакции на скроллинг. */
   lazy val templateHeightCssPx: Int = {
-    data.doc.template
-      // Считаем стрипы только на первом уровне.
-      .subForest
-      .iterator
-      .map(_.rootLabel)
-      .filter { _.name ==* MJdTagNames.STRIP }
-      .flatMap(_.props1.bm)
-      .map(_.height)
+    (for {
+      // Считаем блоки только на первом уровне.
+      jdTree <- data.doc.template.subForest
+      jdt = jdTree.rootLabel
+      if jdt.name ==* MJdTagNames.STRIP
+      h <- jdt.props1.heightPx
+    }
+      yield h)
       .sum
   }
 

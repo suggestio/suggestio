@@ -310,7 +310,7 @@ class JdEditR(
             // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
             .htmlImgCropEmuAttrsOpt(
               cropOpt     = bgImgData.crop,
-              outerWhOpt  = s.props1.bm,
+              outerWhOpt  = s.props1.wh,
               origWhOpt   = edge.origWh,
               szMult      = state.jdArgs.conf.szMult
             )

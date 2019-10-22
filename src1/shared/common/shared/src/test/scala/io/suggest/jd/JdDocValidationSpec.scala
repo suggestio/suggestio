@@ -40,7 +40,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
 
         // Strip#1 содержит намёк на то, что это верхний блок.
         Tree.Node(
-          root = JdTag.strip(
+          root = JdTag.block(
             bm = BlockMeta(
               w = w1,
               h = h1,
@@ -61,7 +61,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
 
         // Strip#2 содержит предложение добавить описание или что-то ещё.
         Tree.Node(
-          root = JdTag.strip(
+          root = JdTag.block(
             bm = BlockMeta(
               w = w1,
               h = BlockHeights.H140,
@@ -79,7 +79,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
 
         // Strip#3
         Tree.Node(
-          root = JdTag.strip(
+          root = JdTag.block(
             bm = BlockMeta(
               w = w1,
               h = BlockHeights.H460,

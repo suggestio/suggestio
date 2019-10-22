@@ -72,11 +72,9 @@ object GridAh {
       Tree.Leaf {
         val stripJdt = stripTpl.rootLabel
 
-        val bmOpt = stripJdt.props1.bm
         val wideBgBlk = for {
-          bm      <- bmOpt
-          if bm.expandMode.nonEmpty
           bg      <- stripJdt.props1.bgImg
+          if stripJdt.props1.expandMode.nonEmpty
           // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
           // TODO Нужна поддержка wide-фона без картинки.
           bgEdge  <- brd.edges.get( bg.edgeUid )
@@ -86,7 +84,7 @@ object GridAh {
         }
 
         MGbBlock(
-          size   = GridBuilderUtilJs.gbSizeFromJdt(jdId, stripJdt, jdRuntime, jdConf),
+          size   = GridBuilderUtilJs.gbSizeFromJdt(jdId, stripJdt, jdRuntime, jdConf).get,
           nodeId = nodeId,
           jdtOpt = Some(stripJdt),
           wideBgSz = wideBgBlk
@@ -107,14 +105,15 @@ object GridAh {
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
           Tree.Node(
             root = MGbBlock(
-              size   = GridBuilderUtilJs.gbSizeFromJdt(
+              size = GridBuilderUtilJs.gbSizeFromJdt(
                 jdt = foc.blkData
                   .doc.template
                   .rootLabel,
                 jdRuntime = jdRuntime,
                 jdConf    = jdConf,
                 jdId      = foc.blkData.doc.jdId,
-              ),
+              )
+                .get,
               nodeId = scAdData.nodeId,
               jdtOpt = None,
             ),

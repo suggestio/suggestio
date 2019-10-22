@@ -101,8 +101,9 @@ class AdItemR(
           ReactCommonUtil.maybeNode(
             s.ad.adResp.jdAdData.doc.template
               .rootLabel
-              .props1.bm
-              .exists(_.height >= BlockHeights.H460.value)
+              .props1
+              .heightPx
+              .exists(_ >= BlockHeights.H460.value)
           ) {
             <.div(
               ^.`class` := ItemCss.AD_ITEM_PREVIEW_BOTTOM_ZIGZAG

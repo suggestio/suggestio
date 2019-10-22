@@ -90,8 +90,7 @@ object JdUtil {
           updAcc ::= selPathRev.modify(i :: _)
 
         if (jdt.name ==* MJdTagNames.STRIP) {
-          val expandMode2 = jdt.props1.bm
-            .flatMap(_.expandMode)
+          val expandMode2 = jdt.props1.expandMode
           if (expandMode2 !=* jdId.blockExpand)
             updAcc ::= blockExpand.set(expandMode2)
         }

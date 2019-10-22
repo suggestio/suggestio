@@ -1,7 +1,7 @@
 package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
-import io.suggest.ad.blk.{BlockMeta, BlockWidths, MBlockExpandMode}
+import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
 import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
@@ -260,10 +260,7 @@ class JdAdUtil @Inject()(
   /** traversal от JdTag до bm.isWide-флага. */
   private def _jdt_p1_bm_wide_LENS = {
     JdTag.props1
-      .composeLens( MJdtProps1.bm )
-      .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
-      .composeLens( BlockMeta.expandMode )
-      //.composeTraversal( Traversal.fromTraverse[Option, MBlockExpandMode] )
+      .composeLens( MJdtProps1.expandMode )
   }
 
   /** Выставление нового значения флага wide для всех блоков, имеющих иное значение флага.
@@ -641,11 +638,13 @@ class JdAdUtil @Inject()(
               }
           } yield {
             val jdTag = jdLoc.getLabel
-            val bmOpt = jdTag.props1.bm
             // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
-            val isWide = allowWide && bmOpt.hasExpandMode
-            val wideSzMult = OptionUtil.maybeOpt( isWide || (allowWide && jdLoc.parents.exists(_._2.props1.bm.hasExpandMode)) ) {
-              bmOpt.flatMap { bm =>
+            val isWide = allowWide && jdTag.props1.expandMode.nonEmpty
+            val wideSzMult = OptionUtil.maybeOpt(
+              isWide ||
+              (allowWide && jdLoc.parents.exists(_._2.props1.expandMode.nonEmpty))
+            ) {
+              jdTag.props1.bm.flatMap { bm =>
                 val r = GridCalc.wideSzMult( bm, jdConf.gridColumnsCount )
                 LOGGER.warn(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=$r")
                 r
@@ -736,15 +735,13 @@ class JdAdUtil @Inject()(
                   targetImgSzPx
                 }
               } else {
-                val bmOpt = eit.jdTag.props1.bm
-
                 val wideTgSzOpt = for {
-                  bm <- bmOpt
+                  h <- eit.jdTag.props1.heightPx
                   if eit.wideSzMult.nonEmpty
                 } yield {
                   // Надо посчитать новый вертикальный размер для wide-блока.
-                  val heightPx2 = szMultedF(bm.height, eit.wideSzMult)
-                  LOGGER.trace(s"$logPrefix Found wideSzMult $szMult, target img height: ${bm.height}px => ${heightPx2}px")
+                  val heightPx2 = szMultedF(h, eit.wideSzMult)
+                  LOGGER.trace(s"$logPrefix Found wideSzMult $szMult, target img height: ${h}px => ${heightPx2}px")
                   MSize2di(
                     // width нет смысла вычислять, т.к. wideMaker игнорирует target width.
                     width  = 0,
@@ -753,8 +750,9 @@ class JdAdUtil @Inject()(
                 }
                 // Если нет wide-мультипликатора, то оставить исходный размер блока.
                 wideTgSzOpt.orElse[ISize2di] {
-                  LOGGER.trace(s"$logPrefix Using block meta as img.wh: ${bmOpt.orNull}")
-                  bmOpt
+                  val whOpt = eit.jdTag.props1.wh
+                  LOGGER.trace(s"$logPrefix Using block meta as img.wh: ${whOpt.orNull}")
+                  whOpt
                 }
               }
 
@@ -819,7 +817,7 @@ class JdAdUtil @Inject()(
     * @return Облегчённый контейнер эджей узла.
     */
   def filterEdgesForTpl(tpl: Tree[JdTag], edges: MNodeEdges): MNodeEdges = {
-    val tplEdgeUids = tpl.deepEdgesUidsIter.toSet
+    val tplEdgeUids = tpl.deepEdgesUids.toSet
     if (tplEdgeUids.isEmpty) {
       edges
     } else {

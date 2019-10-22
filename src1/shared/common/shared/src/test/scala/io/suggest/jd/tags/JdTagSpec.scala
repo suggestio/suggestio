@@ -57,7 +57,7 @@ object JdTagSpec extends SimpleTestSuite {
       JdTag.document,
       Stream(
         Tree.Node(
-          JdTag.strip( bm300x140 ),
+          JdTag.block( bm300x140 ),
           Stream(
             JdTag.edgeQdTree(1, coord1)
           )
@@ -73,14 +73,14 @@ object JdTagSpec extends SimpleTestSuite {
       JdTag.document,
       Stream(
         Tree.Node(
-          JdTag.strip( bm300x140 ),
+          JdTag.block( bm300x140 ),
           Stream(
             JdTag.edgeQdTree(2, coord1),
             JdTag.edgeQdTree(4, coord2)
           )
         ),
         Tree.Node(
-          JdTag.strip( bm300x300 ),
+          JdTag.block( bm300x300 ),
           Stream(
             JdTag.edgeQdTree(5, coord1),
             JdTag.edgeQdTree(1, coord2),
@@ -99,7 +99,7 @@ object JdTagSpec extends SimpleTestSuite {
       JdTag.document,
       Stream(
         Tree.Node(
-          JdTag.strip( bm300x140 ),
+          JdTag.block( bm300x140 ),
           Stream(
             JdTag.edgeQdTree(2, coord1)
               .loc
@@ -112,7 +112,7 @@ object JdTagSpec extends SimpleTestSuite {
           )
         ),
         Tree.Node(
-          JdTag.strip( bm300x300 ),
+          JdTag.block( bm300x300 ),
           Stream(
             JdTag.edgeQdTree(5, coord3)
               .loc

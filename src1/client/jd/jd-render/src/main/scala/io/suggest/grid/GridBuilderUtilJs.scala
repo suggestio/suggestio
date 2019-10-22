@@ -5,7 +5,7 @@ import io.suggest.ad.blk.{BlockMeta, BlockWidths, MBlockExpandModes}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSize, MGridBuildArgs, MGridBuildResult}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import scalaz.Tree
 
 import scala.scalajs.js
@@ -62,12 +62,14 @@ object GridBuilderUtilJs {
     * @param jdConf Конфиг рендера. Нужен для qd-blockless.
     * @return MGbSize, описывающий размеры рендерящегося блока.
     */
-  def gbSizeFromJdt(jdId: MJdTagId, jdt: JdTag, jdRuntime: MJdRuntime, jdConf: MJdConf): MGbSize = {
-    jdt.props1.bm
-      .map(gbSizeFromBm)
-      .getOrElse {
+  def gbSizeFromJdt(jdId: MJdTagId, jdt: JdTag, jdRuntime: MJdRuntime, jdConf: MJdConf): Option[MGbSize] = {
+    jdt.name match {
+      case MJdTagNames.STRIP =>
+        jdt.props1.bm
+          .map(gbSizeFromBm)
+      case MJdTagNames.QD_CONTENT =>
         // Внеблоковые элементы. Надо узнать их высоту.
-        MGbSize(
+        val sz = MGbSize(
           widthCells = BlockWidths.max.relSz,
           heightPx   = (for {
             qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdId)
@@ -78,7 +80,10 @@ object GridBuilderUtilJs {
             .getOrElse(0),
           expandMode = Some( MBlockExpandModes.Wide ),
         )
-      }
+        Some(sz)
+      case _ =>
+        None
+    }
   }
 
 
@@ -100,7 +105,9 @@ object GridBuilderUtilJs {
         val jdId = MJdTagId.selPathRev.modify(i :: _)(jdArgs.data.doc.jdId)
         Tree.Leaf(
           MGbBlock(
-            size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),
+            size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf) getOrElse {
+              throw new IllegalArgumentException(s"Cannot get gb-size for ${jdt.name}-tag#$jdId\n $jdt")
+            },
             nodeId  = None,
             jdtOpt  = Some(jdt),
             orderN  = Some(i),
