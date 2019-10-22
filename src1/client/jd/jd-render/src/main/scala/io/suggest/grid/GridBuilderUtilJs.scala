@@ -81,7 +81,7 @@ object GridBuilderUtilJs {
           expandMode = Some( MBlockExpandModes.Wide ),
         )
         Some(sz)
-      case _ =>
+      case other =>
         None
     }
   }
@@ -105,9 +105,7 @@ object GridBuilderUtilJs {
         val jdId = MJdTagId.selPathRev.modify(i :: _)(jdArgs.data.doc.jdId)
         Tree.Leaf(
           MGbBlock(
-            size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf) getOrElse {
-              throw new IllegalArgumentException(s"Cannot get gb-size for ${jdt.name}-tag#$jdId\n $jdt")
-            },
+            size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),
             nodeId  = None,
             jdtOpt  = Some(jdt),
             orderN  = Some(i),

@@ -67,8 +67,11 @@ class ShowcaseUtil @Inject() (
   def groupNarrowAds[T <: MNode](ads: Seq[T]): Seq[T] = {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
-        val bwidth: BlockWidth = advUtil.getAdvMainBlockMeta(e)
-          .fold(BlockWidths.default)(bm => BlockWidths.withValue(bm.width))
+        val bwidth = advUtil
+          .getAdvMainBlockMeta(e)
+          .fold[BlockWidth] (BlockWidths.default) { bm =>
+            BlockWidths.withValue(bm.width)
+          }
         if (bwidth.isNarrow) {
           enOpt match {
             case Some(en) =>

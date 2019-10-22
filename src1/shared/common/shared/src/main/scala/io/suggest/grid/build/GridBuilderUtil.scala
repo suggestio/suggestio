@@ -147,7 +147,8 @@ object GridBuilderUtil {
             case Tree.Leaf(gb) =>
               val wideSzMultOpt = gb.jdtOpt
                 .flatMap( args.jdtWideSzMults.get )
-              val blockHeightPx = szMultedF( gb.size.heightPx, wideSzMultOpt )
+              val gbSize = gb.size.get
+              val blockHeightPx = szMultedF( gbSize.heightPx, wideSzMultOpt )
               val topPxAbs = currLvl.ctx.lineToAbs( xy.line )
               val currWide = MWideLine(
                 topPx     = topPxAbs,
@@ -158,14 +159,14 @@ object GridBuilderUtil {
                 // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
                 (s0.wides overlaps currWide) ||
                 // Широкий блок подразумевает пустую строку для себя, в т.ч. на самом ВЕРХНЕМ уровне.
-                (if (gb.size.expandMode.nonEmpty) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
+                (if (gbSize.expandMode.nonEmpty) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
                  // !wide: Ширина текущего блока влезает в текущую строку?
-                 else gb.size.widthCells > currLvl.getMaxCellWidthCurrLineCol() )
+                 else gbSize.widthCells > currLvl.getMaxCellWidthCurrLineCol() )
               ) {
                 // Здесь нет места для текущего блока.
                 // Для wide-блока надо считать место с помощью root-уровня.
                 val (searchLvl, searchTopPx) =
-                  if (gb.size.expandMode.nonEmpty) rootLvl -> currWide.topPx
+                  if (gbSize.expandMode.nonEmpty) rootLvl -> currWide.topPx
                   else currLvl -> xy.line
 
                 // Рассчитать следующую строку для перехода. Для wide-блока рассчёт идёт на root-уровне, поэтому требуется обратный маппинг координату назад в проекцию текущего уровня.
@@ -183,7 +184,7 @@ object GridBuilderUtil {
               } else {
                 // Здесь влезет блок текущей ширины и высоты.
                 // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
-                val endColumnIndex = xy.column + gb.size.widthCells
+                val endColumnIndex = xy.column + gbSize.widthCells
                 val pxIvl2 = MPxInterval(
                   startPx = topPxAbs,
                   sizePx  = blockHeightPx,
@@ -214,7 +215,7 @@ object GridBuilderUtil {
                     wideBgSz.width * img2blkSzMult
                   }
                   .orElse {
-                    OptionUtil.maybe( gb.size.expandMode.nonEmpty && !args.jdConf.isEdit ) {
+                    OptionUtil.maybe( gbSize.expandMode.nonEmpty && !args.jdConf.isEdit ) {
                       // wide-блок без фоновой картинки. Взять ширину такого блока из jdConf:
                       args.jdConf.plainWideBlockWidthPx
                     }
@@ -230,7 +231,7 @@ object GridBuilderUtil {
                 )
                 //println(s"RES: Node#${itemExt.nodeId.orNull} topLeft=" + xyAbs + " orderN=" + orderN + " gb=" + gb.size + (if(gb.size.expandMode.nonEmpty) " WIDE" else ""))
 
-                val mwlAbsOpt = for (_ <- gb.size.expandMode) yield currWide
+                val mwlAbsOpt = for (_ <- gbSize.expandMode) yield currWide
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
                 val s1DeConflictedOpt = for {
@@ -277,8 +278,9 @@ object GridBuilderUtil {
                         pxIvl.block !===* e.gbBlock
                       }
                     }
-                    lastConflictColumn = e.gbBlock.size.expandMode
-                      .fold { e.topLeft.left + e.gbBlock.size.widthCells } { _ => args.jdConf.gridColumnsCount }
+                    eGbSize = e.gbBlock.size.get
+                    lastConflictColumn = eGbSize.expandMode
+                      .fold { e.topLeft.left + eGbSize.widthCells } { _ => args.jdConf.gridColumnsCount }
 
                     ci <- e.topLeft.left until lastConflictColumn
                   } {
@@ -312,7 +314,7 @@ object GridBuilderUtil {
                 // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
                 // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
                 val s2 = if (
-                  gb.size.expandMode.nonEmpty &&
+                  gbSize.expandMode.nonEmpty &&
                   !currLvl2.ctx.isRoot &&
                   // Нельзя делать сброс, если последующий элемент тоже wide. Это решает только последний из первых wide-элементов.
                   !currLvl2.restItems
@@ -320,7 +322,7 @@ object GridBuilderUtil {
                     .exists(
                      _.flatten
                       .headOption
-                      .exists(_.size.expandMode.nonEmpty)
+                      .exists(_.size.exists(_.expandMode.nonEmpty))
                     ) &&
                   // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
                   (currLvl2.restItems.lengthCompare(1) > 0)

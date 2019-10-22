@@ -84,7 +84,7 @@ object GridAh {
         }
 
         MGbBlock(
-          size   = GridBuilderUtilJs.gbSizeFromJdt(jdId, stripJdt, jdRuntime, jdConf).get,
+          size   = GridBuilderUtilJs.gbSizeFromJdt(jdId, stripJdt, jdRuntime, jdConf),
           nodeId = nodeId,
           jdtOpt = Some(stripJdt),
           wideBgSz = wideBgBlk
@@ -112,8 +112,7 @@ object GridAh {
                 jdRuntime = jdRuntime,
                 jdConf    = jdConf,
                 jdId      = foc.blkData.doc.jdId,
-              )
-                .get,
+              ),
               nodeId = scAdData.nodeId,
               jdtOpt = None,
             ),

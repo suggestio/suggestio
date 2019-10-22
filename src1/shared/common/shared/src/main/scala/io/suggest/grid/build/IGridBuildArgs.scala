@@ -40,7 +40,7 @@ case class MGridBuildArgs(
   * @param orderN внутренний порядковый номер, заполняется и используется внутри [[GridBuilderUtil]].
   */
 case class MGbBlock(
-                     size                          : MGbSize,
+                     size                          : Option[MGbSize],
                      nodeId                        : Option[String],
                      jdtOpt                        : Option[JdTag],
                      wideBgSz                      : Option[MSize2di]  = None,

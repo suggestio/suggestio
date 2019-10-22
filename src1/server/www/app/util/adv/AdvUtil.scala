@@ -54,11 +54,11 @@ class AdvUtil @Inject() (
 
   /** Извлечь главный BlockMeta из узла-карточки. */
   def getAdvMainBlockMeta(mad: MNode): Option[BlockMeta] = {
-    // v2-карточки, брать block-meta от главного блока
     mad.extras.doc.fold {
       // v1-карточка.
       mad.ad.blockMeta
     } { doc =>
+      // v2-карточки, брать block-meta от главного блока
       doc.template
         .getMainBlockOrFirst
         .rootLabel
