@@ -173,14 +173,21 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стили для фоновых картинок стрипов. */
   val stripBgStyleF = styleF(
     new Domain.OverSeq(
-      _filteredTagIds { jdt =>
-        // Интересуют только стрипы c bgImg, но без wide
-        (jdt.name ==* MJdTagNames.STRIP) && {
-          val p1 = jdt.props1
-          p1.bgImg.nonEmpty && (
-            (p1.expandMode.nonEmpty && p1.heightPx.nonEmpty) ||
-            p1.widthPx.nonEmpty
-          )
+      if (jdCssArgs.conf.isEdit) {
+        // В редакторе эти стили не дёргаются: используется эмулятор кропа прямо в аттрибутах для всех картинок.
+        Vector.empty
+      } else {
+        _filteredTagIds { jdt =>
+          // Интересуют только стрипы c bgImg, но без wide
+          (jdt.name ==* MJdTagNames.STRIP) && {
+            val p1 = jdt.props1
+            // Векторные картинки всегда без стилей, всегда через эмулятор кропа.
+            p1.bgImg.exists(_.outImgFormat.exists(_.isRaster)) && (
+              // Требуется или width, или height в зависимости от wide-режима.
+              (p1.expandMode.nonEmpty && p1.heightPx.nonEmpty) ||
+              p1.widthPx.nonEmpty
+            )
+          }
         }
       }
     )
