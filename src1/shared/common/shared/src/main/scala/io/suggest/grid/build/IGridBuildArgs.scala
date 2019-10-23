@@ -60,16 +60,36 @@ object MGbBlock {
   * не подходит для внеблокового контента.
   *
   * @param widthCells Ширина, в клетках.
+  * @param widthPx Фактическая ширина в пикселях, если она имеет смысл и точно известна.
+  *                Это для qd-blockless и иных элементов с не-ячеистой шириной,
+  *                чтобы билдер плитки мог точно знать реальную ширину элемента на экране.
   * @param heightPx Высота, в пикселях.
   * @param expandMode Режим развёртывания по горизонтали.
   */
 case class MGbSize(
                     widthCells      : Int,
-                    heightPx        : Int,
+                    widthPx         : Option[MGbSidePx] = None,
+                    heightPx        : MGbSidePx,
                     expandMode      : Option[MBlockExpandMode],
                   )
 object MGbSize {
   @inline implicit def univEq: UnivEq[MGbSize] = UnivEq.derive
+}
+
+
+/** Модель пиксельного размера элемента.
+  * Пиксельный размер может быть уже домноженным на szMult (т.е. физический размер),
+  * или просто размер в css-пикселях, который нужно ещё домножить перед употреблением.
+  *
+  * @param sizePx Размер стороны в пикселях.
+  * @param isSzMulted Уже домноженный на szMult размер?
+  */
+case class MGbSidePx(
+                      sizePx        : Int,
+                      isSzMulted    : Boolean,
+                    )
+object MGbSidePx {
+  @inline implicit def univEq: UnivEq[MGbSidePx] = UnivEq.derive
 }
 
 

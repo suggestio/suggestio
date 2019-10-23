@@ -1,8 +1,8 @@
 package io.suggest.grid
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t, ItemProps, LayoutFunRes, PropsCommon}
-import io.suggest.ad.blk.{BlockMeta, BlockWidths, MBlockExpandModes}
-import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSize, MGridBuildArgs, MGridBuildResult}
+import io.suggest.ad.blk.{BlockWidths, MBlockExpandModes}
+import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSidePx, MGbSize, MGridBuildArgs, MGridBuildResult}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
@@ -45,16 +45,6 @@ object GridBuilderUtilJs {
   }
 
 
-  /** Сборка MGbSize на основе BlockMeta обычного блока. */
-  def gbSizeFromBm(bm: BlockMeta): MGbSize = {
-    MGbSize(
-      widthCells  = bm.w.relSz,
-      heightPx    = bm.height,
-      expandMode  = bm.expandMode,
-    )
-  }
-
-
   /** Сборка MGbSize из тега.
     *
     * @param jdt jd-тег.
@@ -65,23 +55,75 @@ object GridBuilderUtilJs {
   def gbSizeFromJdt(jdId: MJdTagId, jdt: JdTag, jdRuntime: MJdRuntime, jdConf: MJdConf): Option[MGbSize] = {
     jdt.name match {
       case MJdTagNames.STRIP =>
-        jdt.props1.bm
-          .map(gbSizeFromBm)
+        val p1 = jdt.props1
+        for {
+          w <- p1.blockWidth
+          heightPx <- p1.heightPx
+        } yield {
+          MGbSize(
+            widthCells = w.relSz,
+            heightPx   = MGbSidePx(
+              sizePx      = heightPx,
+              isSzMulted  = false,
+            ),
+            expandMode = p1.expandMode,
+          )
+        }
+
       case MJdTagNames.QD_CONTENT =>
         // Внеблоковые элементы. Надо узнать их высоту.
+        val qdBlSzOpt = for {
+          qdBlSzPot <- jdRuntime.data.qdBlockLess.get( jdId )
+          qdBlSz    <- qdBlSzPot.toOption
+        } yield {
+          qdBlSz.bounds
+        }
+
         val sz = MGbSize(
           widthCells = BlockWidths.max.relSz,
-          heightPx   = (for {
-            qdBlSzPot   <- jdRuntime.data.qdBlockLess.get(jdId)
-            qdBlSz      <- qdBlSzPot.toOption
-          } yield {
-            qdBlSz.bounds.height
-          })
-            .getOrElse(0),
+          widthPx = qdBlSzOpt
+            .map { qdBl =>
+              MGbSidePx(
+                sizePx      = qdBl.width,
+                isSzMulted  = true,
+              )
+            }
+            .orElse {
+              for (widthPx <- jdt.props1.widthPx) yield {
+                MGbSidePx(
+                  sizePx      = widthPx,
+                  isSzMulted  = false,
+                )
+              }
+            },
+          heightPx = qdBlSzOpt
+            .map { qdBl =>
+              MGbSidePx(
+                sizePx      = qdBl.height,
+                isSzMulted  = true,
+              )
+            }
+            // Сейчас p1.heightPx всегда None для qd-контента, но на возможное будущее...
+            .orElse {
+              for (heightPx <- jdt.props1.heightPx) yield {
+                MGbSidePx(
+                  sizePx      = heightPx,
+                  isSzMulted  = false,
+                )
+              }
+            }
+            // Нулевая высота - это нормально, когда высота ещё не измерена через react-measure.
+            .getOrElse {
+              MGbSidePx(
+                sizePx      = 0,
+                isSzMulted  = true,
+              )
+            },
           expandMode = Some( MBlockExpandModes.Wide ),
         )
         Some(sz)
-      case other =>
+
+      case _ =>
         None
     }
   }

@@ -38,6 +38,10 @@ class ContentEditCssR {
     import dsl._
     import com.quilljs.quill.modules.QuillCssConst._
 
+    QL_EDITOR_CSS_SEL - (
+      maxHeight(300.px)
+    )
+
     // Задать фон для содержимого контент-редактора.
     for (bgColor <- propsVal.bgColor) {
       QL_EDITOR_CSS_SEL - (

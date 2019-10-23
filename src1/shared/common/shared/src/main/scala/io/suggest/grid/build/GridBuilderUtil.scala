@@ -7,6 +7,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
+import io.suggest.jd.tags.MJdTagNames
 import io.suggest.msg.ErrorMsgs
 import monocle.macros.GenLens
 import japgolly.univeq._
@@ -72,6 +73,11 @@ object GridBuilderUtil {
     val paddingMultedPx = szMultedF( args.jdConf.blockPadding.fullBetweenBlocksPx )
     val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
     //val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
+
+    //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
+    // TODO Тут проблема: если padding != 20, то эта примитивная формула рассчёта средней ширины ячейки ошибается, т.к. нет такой ширины:
+    // внутри блока неЕдиничной ширины всегда есть постоянный padding=20.
+    val paddedCellWidthPx  = cellWidthPx + cellPaddingWidthPx
 
 
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
@@ -148,7 +154,11 @@ object GridBuilderUtil {
               val wideSzMultOpt = gb.jdtOpt
                 .flatMap( args.jdtWideSzMults.get )
               val gbSize = gb.size.get
-              val blockHeightPx = szMultedF( gbSize.heightPx, wideSzMultOpt )
+
+              val blockHeightPx =
+                if (gbSize.heightPx.isSzMulted) gbSize.heightPx.sizePx
+                else szMultedF( gbSize.heightPx.sizePx, wideSzMultOpt )
+
               val topPxAbs = currLvl.ctx.lineToAbs( xy.line )
               val currWide = MWideLine(
                 topPx     = topPxAbs,
@@ -164,9 +174,10 @@ object GridBuilderUtil {
                  else gbSize.widthCells > currLvl.getMaxCellWidthCurrLineCol() )
               ) {
                 // Здесь нет места для текущего блока.
-                // Для wide-блока надо считать место с помощью root-уровня.
                 val (searchLvl, searchTopPx) =
+                  // Для wide-блока надо считать место с помощью root-уровня.
                   if (gbSize.expandMode.nonEmpty) rootLvl -> currWide.topPx
+                  // Для обычного блока ищем место на текущем уровне.
                   else currLvl -> xy.line
 
                 // Рассчитать следующую строку для перехода. Для wide-блока рассчёт идёт на root-уровне, поэтому требуется обратный маппинг координату назад в проекцию текущего уровня.
@@ -214,10 +225,32 @@ object GridBuilderUtil {
                     val img2blkSzMult = blockHeightPx / wideBgSz.height.toDouble
                     wideBgSz.width * img2blkSzMult
                   }
-                  .orElse {
-                    OptionUtil.maybe( gbSize.expandMode.nonEmpty && !args.jdConf.isEdit ) {
+                  .orElse[Double] {
+                    if (gb.jdtOpt.exists(_.name ==* MJdTagNames.QD_CONTENT)) {
+                      val r = gb.jdtOpt
+                        .flatMap( _.props1.widthPx )
+                        .map { szMultedF(_, wideSzMultOpt) }
+                        .orElse {
+                          val isSwapWh = gb.jdtOpt.exists(_.props1.rotateDeg.exists { deg =>
+                            val degAbs = Math.abs( deg )
+                            degAbs > 45 && degAbs <= (90+45)
+                          })
+                          for {
+                            horizSzPx <- if (isSwapWh) Some(gbSize.heightPx)
+                                         else gbSize.widthPx
+                          } yield {
+                            if (horizSzPx.isSzMulted) horizSzPx.sizePx
+                            else szMultedF(horizSzPx.sizePx, wideSzMultOpt)
+                          }
+                        }
+                        .getOrElse( gbSize.widthCells * paddedCellWidthPx )
+                      Some(r)
+
+                    } else {
                       // wide-блок без фоновой картинки. Взять ширину такого блока из jdConf:
-                      args.jdConf.plainWideBlockWidthPx
+                      OptionUtil.maybe( gbSize.expandMode.nonEmpty && !args.jdConf.isEdit ) {
+                        args.jdConf.plainWideBlockWidthPx
+                      }
                     }
                   }
 
@@ -243,13 +276,13 @@ object GridBuilderUtil {
                   // Найти id карточек, которые конфликтуют с указанным блоком.
                   conflictingNodeIds = (
                     for {
-                      gbRes0 <-  s0.resultsAccRev.iterator
+                      gbRes0      <- s0.resultsAccRev.iterator
                       gbResNodeId <- gbRes0.gbBlock.nodeId
                       if !(gbRes0.gbBlock.nodeId contains gbResNodeId) &&
                          (mwlAbs overlaps gbRes0.wide)
                     } yield
                       gbResNodeId
-                    )
+                  )
                     .toSet
 
                   if conflictingNodeIds.nonEmpty
@@ -278,7 +311,7 @@ object GridBuilderUtil {
                         pxIvl.block !===* e.gbBlock
                       }
                     }
-                    eGbSize = e.gbBlock.size.get
+                    eGbSize <- e.gbBlock.size
                     lastConflictColumn = eGbSize.expandMode
                       .fold { e.topLeft.left + eGbSize.widthCells } { _ => args.jdConf.gridColumnsCount }
 
@@ -421,11 +454,6 @@ object GridBuilderUtil {
       .map(_.heightUsed)
       .max
 
-    //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
-    // TODO Тут проблема: если padding != 20, то эта примитивная формула рассчёта средней ширины ячейки ошибается, т.к. нет такой ширины:
-    // внутри блока неЕдиничной ширины всегда есть постоянный padding=20.
-    val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
-
     // Ширина всей плитки:
     val gridWidthPx = {
       val busyColsCount = RootCtx.colsInfo.count(_.heightUsed > 0)
@@ -454,8 +482,8 @@ object GridBuilderUtil {
           x = res.forceCenterX.fold {
             res.topLeft.x * paddedCellWidthPx
           } { widthOrigPx =>
-            // Отцентровать используя указанный сдвиг относительно центра плитки.
-            ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
+            // Отцентровать используя указанный сдвиг относительно центра плитки. И никакого szMult тут быть не должно, иначе опять всё пойдёт вразнос.
+            ((gridWidthPx - widthOrigPx) / 2).toInt
           },
           y = res.topLeft.y + args.offY, //Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )
@@ -506,14 +534,14 @@ object IGridBuildCtx {
 
     /** Поиск следующей пустой строки после указанной. */
     def minHeightUsedAfterLine(linePx: Int): Int = {
-      val iter = (0 until ctx.colsCount)
-        .iterator
-        .map( ctx.getHeightUsed )
-        .filter(_ > linePx)
-      val r = if (iter.isEmpty) linePx
+      val iter = for {
+        ci <- (0 until ctx.colsCount).iterator
+        h = ctx.getHeightUsed( ci )
+        if h > linePx
+      } yield h
+
+      if (iter.isEmpty) linePx
       else iter.min
-      //println(s"mhu(after=$linePx) => $r")
-      r
     }
 
     /** Детектирование текущей максимальной ширины в сетке в текущей строке. */

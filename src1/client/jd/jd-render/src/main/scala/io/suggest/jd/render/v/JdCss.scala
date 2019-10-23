@@ -240,7 +240,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       // Цвет фона
       for (bgColor <- strip.props1.bgColor) {
-        accS ::= (backgroundColor(Color(bgColor.hexCode)): ToStyle)
+        accS ::= backgroundColor( Color(bgColor.hexCode) )
       }
 
       // Если нет фона, выставить ширину принудительно.
@@ -292,18 +292,12 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           .get( jdtId )
           .flatMap(_.toOption)
           .whenDefinedStyleS { qdBlSz =>
-            // Горизонтальная центровка по ширине плитки
-            val wDiffPx = (jdCssArgs.conf.gridInnerWidthPx - qdBlSz.client.width) / 2
-            var acc: List[ToStyle] =
-              marginLeft( wDiffPx.toInt.px ) ::
-              Nil
-
-            // Вертикальный отступ сверху, чтобы повёрнутый контент не наезжал на блоки вверху/внизу.
-            val hDiffPx = qdBlSz.bounds.height - qdBlSz.client.height
-            if (hDiffPx > 0)
-              acc ::= marginTop( (hDiffPx / 2).px )
-
-            styleS( acc: _* )
+            styleS(
+              // Вертикальный отступ сверху, чтобы повёрнутый контент не наезжал на блоки вверху/внизу,
+              // а повёрнутый на 45..90+45 градусов - чтобы автоматом смещался вверх.
+              marginTop( ((qdBlSz.bounds.height - qdBlSz.client.height) / 2).px ),
+              // 2019-10-23 Горизонтальной центровкой по ширине плитки занимается gridBuilder.
+            )
           }
 
       } { topLeft =>

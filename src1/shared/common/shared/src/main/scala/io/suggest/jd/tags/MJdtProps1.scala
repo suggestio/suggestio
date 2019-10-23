@@ -1,6 +1,6 @@
 package io.suggest.jd.tags
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
+import io.suggest.ad.blk.{BlockHeight, BlockHeights, BlockMeta, BlockWidth, BlockWidths, MBlockExpandMode}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
@@ -24,35 +24,20 @@ object MJdtProps1 extends IEmpty {
 
   override type T = MJdtProps1
 
-  override def empty = MJdtProps1()
+  override def empty = apply()
 
   /** Поддержка play-json. */
   implicit def jdtProps1Format: OFormat[MJdtProps1] = {
-    val bm = (__ \ "c").formatNullable[BlockMeta]
-
     (
       (__ \ "a").formatNullable[MColorData] and
       (__ \ "b").formatNullable[MJdEdgeId] and
-      //(__ \ "c").formatNullable[BlockMeta] and
       (__ \ "d").formatNullable[MCoords2di] and
       (__ \ "e").formatNullable[Boolean] and
       (__ \ "g").formatNullable[Int] and
-      (__ \ "s").formatNullable[MJdShadow] and {
-        // TODO 2019.10.22 После resaveAll() заменить на (__ \ "f").formatNullable[Int]
-        val path = (__ \ "f")
-        val r = path.read[Int].map(Option.apply) orElse bm.map(_.map(_.width))
-        OFormat(r, path.writeNullable[Int])
-      } and {
-        // TODO 2019.10.22 После resaveAll() заменить на (__ \ "h").formatNullable[Int]
-        val path = (__ \ "h")
-        val r = path.read[Int].map(Option.apply) orElse bm.map(_.map(_.height))
-        OFormat(r, path.writeNullable[Int])
-      } and {
-        // TODO 2019.10.22 После resaveAll() заменить на (__ \ "x").formatNullable[MBlockExpandMode]
-        val path = (__ \ "x")
-        val r = path.read[MBlockExpandMode].map(Option.apply) orElse bm.map(_.flatMap(_.expandMode))
-        OFormat(r, path.writeNullable[MBlockExpandMode])
-      }
+      (__ \ "s").formatNullable[MJdShadow] and
+      (__ \ "f").formatNullable[Int] and
+      (__ \ "h").formatNullable[Int] and
+      (__ \ "x").formatNullable[MBlockExpandMode]
     )(apply, unlift(unapply))
   }
 
@@ -60,7 +45,6 @@ object MJdtProps1 extends IEmpty {
 
   val bgColor     = GenLens[MJdtProps1](_.bgColor)
   val bgImg       = GenLens[MJdtProps1](_.bgImg)
-  //val bm          = GenLens[MJdtProps1](_.bm)
   val topLeft     = GenLens[MJdtProps1](_.topLeft)
   val isMain      = GenLens[MJdtProps1](_.isMain)
   val rotateDeg   = GenLens[MJdtProps1](_.rotateDeg)
@@ -100,13 +84,17 @@ case class MJdtProps1(
   extends EmptyProduct
 {
 
-  /** BlockMeta для блоков (стрипов). */
+  lazy val blockWidth: Option[BlockWidth] =
+    widthPx.flatMap(BlockWidths.withValueOpt)
+
+  lazy val blockHeights: Option[BlockHeight] =
+    heightPx.flatMap(BlockHeights.withValueOpt)
+
+  /** Старый BlockMeta, который изначально был только для блоков (стрипов). */
   lazy val bm: Option[BlockMeta] = {
     for {
-      width <- widthPx
-      w <- BlockWidths.withValueOpt( width )
-      height <- heightPx
-      h <- BlockHeights.withValueOpt( height )
+      w <- blockWidth
+      h <- blockHeights
     } yield {
       BlockMeta(w, h, expandMode)
     }
