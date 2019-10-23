@@ -144,15 +144,16 @@ object GridBuilderUtilJs {
           .zipWithIndex
         jdt = jdtTree.rootLabel
       } yield {
-        val jdId = MJdTagId.selPathRev.modify(i :: _)(jdArgs.data.doc.jdId)
-        Tree.Leaf(
+        Tree.Leaf {
+          val jdId = MJdTagId.selPathRev
+            .modify(i :: _)(jdArgs.data.doc.jdId)
           MGbBlock(
             size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),
             nodeId  = None,
             jdtOpt  = Some(jdt),
             orderN  = Some(i),
           )
-        )
+        }
       },
       jdConf          = jdArgs.conf,
       offY            = 0,

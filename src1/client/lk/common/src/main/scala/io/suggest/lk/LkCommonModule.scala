@@ -4,7 +4,7 @@ import com.softwaremill.macwire._
 import io.suggest.lk.r._
 import io.suggest.lk.r.captcha.CaptchaFormR
 import io.suggest.lk.r.color._
-import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR, ImgRenderUtilJs}
+import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR, LkImgUtilJs}
 import io.suggest.lk.r.sms.SmsCodeFormR
 
 /**
@@ -29,7 +29,7 @@ object LkCommonModule {
   lazy val imgEditBtnR = wire[ImgEditBtnR]
 
 
-  lazy val cropRenderUtilJs = wire[ImgRenderUtilJs]
+  lazy val cropRenderUtilJs = wire[LkImgUtilJs]
 
   lazy val cropBtnR = wire[CropBtnR]
 

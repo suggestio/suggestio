@@ -88,14 +88,14 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
   private def _filteredTagIds(filter: JdTag => Boolean): IndexedSeq[MJdTagId] = {
-    jdCssArgs
-      .data
-      .jdTagsById
-      .iterator
-      .filter { jdtWithId =>
-        filter( jdtWithId._2 )
-      }
-      .map(_._1)
+    (for {
+      (jdId, jdt) <- jdCssArgs.data
+        .jdTagsById
+        .iterator
+      if filter(jdt)
+    } yield {
+      jdId
+    })
       .toIndexedSeq
   }
 

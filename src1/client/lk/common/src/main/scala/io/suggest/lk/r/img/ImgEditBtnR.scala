@@ -14,6 +14,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import MEdgeDataJs.MEdgeDataJsTupleFastEq
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.form.MFormResourceKey
+import io.suggest.img.ImgUtilRJs
 import io.suggest.lk.r.FilesDropZoneR
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -34,7 +35,7 @@ import org.scalajs.dom
   */
 class ImgEditBtnR(
                    val filesDropZoneR   : FilesDropZoneR,
-                   imgRenderUtilJs      : ImgRenderUtilJs
+                   imgRenderUtilJs      : LkImgUtilJs
                  ) {
 
 
@@ -123,7 +124,7 @@ class ImgEditBtnR(
               },
 
               // Имитатор кропа на клиенте, если требуется:
-              imgRenderUtilJs.htmlImgCropEmuAttrsOpt(
+              ImgUtilRJs.htmlImgCropEmuAttrsOpt(
                 cropOpt    = cropOpt,
                 outerWhOpt = propsVal.cropOnClick,
                 origWhOpt  = propsVal.edge.flatMap(_._2.origWh),

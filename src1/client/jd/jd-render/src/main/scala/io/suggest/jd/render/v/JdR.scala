@@ -17,6 +17,7 @@ import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import diode.data.PendingBase
+import io.suggest.img.ImgUtilRJs
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -190,9 +191,25 @@ class JdR(
 
       /** Доп.наполнение для тега фоновой картинки блока. */
       def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
-        // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
-        // на px ratio, надо подогнать картинку по размерам:
-        state.jdArgs.jdRuntime.jdCss.stripBgStyleF( state.tagId )
+        OptionUtil.maybeOpt(
+          // В редакторе: все картинки - всегда оригиналы с эмуляцией кропа на клиенте:
+          state.jdArgs.conf.isEdit ||
+          // За пределами редактора: только векторные картинки подлежат эмуляции кропа на клиенте:
+          bgImgData.outImgFormat.exists(_.isVector)
+        ) {
+          // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
+          ImgUtilRJs.htmlImgCropEmuAttrsOpt(
+            cropOpt     = bgImgData.crop,
+            outerWhOpt  = state.subTree.rootLabel.props1.wh,
+            origWhOpt   = edge.origWh,
+            szMult      = state.jdArgs.conf.szMult
+          )
+        }
+          .getOrElse {
+            // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
+            // на px ratio, надо подогнать картинку по размерам:
+            state.jdArgs.jdRuntime.jdCss.stripBgStyleF( state.tagId )
+          }
       }
 
       /** Доп.наполнение для sm-block div'a. */

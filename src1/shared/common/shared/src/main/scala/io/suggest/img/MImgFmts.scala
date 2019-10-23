@@ -57,8 +57,6 @@ case object MImgFmts extends StringEnum[MImgFmt] {
     override final def imFormat = imFormatNonCompressed + "Z"
     final def imFormatNonCompressed = super.imFormat
 
-    override def isRaster = false
-
     override def uploadMaxFileSizeKb = 2 * bInKb
     override def uploadSideSizeMaxPx = 10000
   }
@@ -100,28 +98,16 @@ case object MImgFmts extends StringEnum[MImgFmt] {
   }
 
 
-  private val _imFormats: Map[String, MImgFmt] = {
-    val iter = for {
-      imgFmt <- values.iterator
-    } yield {
-      imgFmt.imFormat -> imgFmt
-    }
-    iter.toMap
-  }
-  def withImFormat(imFormat: String): Option[MImgFmt] = {
-    _imFormats.get(imFormat)
-  }
-
   final def default: MImgFmt = JPEG
 
 
   private def _nameLenghts = values.iterator.map(_.name.length)
 
   /** Минимальная длина полного названия формата. */
-  final val NAME_LEN_MIN = _nameLenghts.min
+  def NAME_LEN_MIN = _nameLenghts.min
 
   /** Максимальная длина полного названия формата. */
-  final val NAME_LEN_MAX = _nameLenghts.max
+  def NAME_LEN_MAX = _nameLenghts.max
 
 }
 
@@ -155,12 +141,6 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
     */
   def otherMimes: List[String] = Nil
 
-  /** Все связанные MIME-типы в произвольном порядке. */
-  final def allMimes: List[String] = mime :: otherMimes
-
-  /** Файловое расширение (без точки). Обычно эквивалентно name. */
-  def fileExt = name
-
   /** Добавлять -coalesce перед convert-операциями?
     * Требуется для анимированных форматов, чтобы между фреймами всё эффективно жалось.
     */
@@ -174,24 +154,13 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
   /** Добавлять -layers  Optimize */
   def layersOptimize: Boolean = false
 
-  /** Является ли формат растровым? */
-  def isRaster: Boolean = true
-  /** Является ли формат векторным? */
-  final def isVector: Boolean = !isRaster
 
   /** Аплоад: максимальный размер файла. */
   def uploadMaxFileSizeKb: Int
-  final def uploadMaxFileSizeB: Int = {
-    uploadMaxFileSizeKb * 1024
-  }
+
 
   /** Аплоад: максимальный размер одной стороны картинки. */
   def uploadSideSizeMaxPx: Int
-
-  /** Вездесущее форсирование компрессии для формата.
-    * SVG лучше сжимать в brotli, даже если это оригинал.
-    */
-  //def forceCompression: Option[MCompressAlgo] = None
 
 }
 
@@ -201,8 +170,32 @@ object MImgFmt {
   @inline implicit def univEq: UnivEq[MImgFmt] = UnivEq.derive
 
   /** Поддержка play-json. */
-  implicit val OUT_IMG_FMT_FORMAT: Format[MImgFmt] = {
+  implicit def OUT_IMG_FMT_FORMAT: Format[MImgFmt] = {
     EnumeratumUtil.valueEnumEntryFormat( MImgFmts )
+  }
+
+
+  implicit final class MImgFmtOpsExt( val imgFmt: MImgFmt ) extends AnyVal {
+
+    /** Файловое расширение (без точки). Обычно эквивалентно name. */
+    def fileExt: String =
+      imgFmt.name
+
+    /** Все связанные MIME-типы в произвольном порядке. */
+    def allMimes: List[String] =
+      imgFmt.mime :: imgFmt.otherMimes
+
+    def uploadMaxFileSizeB: Int =
+      imgFmt.uploadMaxFileSizeKb * 1024
+
+    /** Является ли формат растровым? */
+    def isRaster: Boolean =
+      !isVector
+
+    /** Является ли формат векторным? */
+    def isVector: Boolean =
+      imgFmt ==* MImgFmts.SVG
+
   }
 
 }

@@ -7,13 +7,14 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
 import io.suggest.dev.MSzMult
+import io.suggest.img.ImgUtilRJs
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.{JdCssStatic, JdR, QdRrrHtml}
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.lk.r.img.ImgRenderUtilJs
+import io.suggest.lk.r.img.LkImgUtilJs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
@@ -41,7 +42,7 @@ import scala.scalajs.js
 class JdEditR(
                val jdR            : JdR,
                jdCssStatic        : JdCssStatic,
-               imgRenderUtilJs    : ImgRenderUtilJs,
+               imgRenderUtilJs    : LkImgUtilJs,
              )
   extends Log
 {
@@ -303,23 +304,12 @@ class JdEditR(
     class BlockB(blockRef: Ref.Simple[html.Div], $: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps]) extends BlockBase {
 
       override def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
-        val s = state.subTree.rootLabel
         TagMod(
-          // Размеры и центровка картинки в редакторе эмулируется на основе оригинала.
-          imgRenderUtilJs
-            // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
-            .htmlImgCropEmuAttrsOpt(
-              cropOpt     = bgImgData.crop,
-              outerWhOpt  = s.props1.wh,
-              origWhOpt   = edge.origWh,
-              szMult      = state.jdArgs.conf.szMult
-            )
-            .getOrElse {
-              super._bgImgAddons(bgImgData, edge, state)
-            },
+          super._bgImgAddons(bgImgData, edge, state),
 
           // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
           ^.draggable := false,
+
           // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
           _notifyImgWhOnEdit($, edge)
         )
