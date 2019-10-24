@@ -4,7 +4,7 @@ import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import diode.FastEq
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.crypto.hash.MHash
 import io.suggest.file.up.MUploadResp
 import io.suggest.form.MFormResourceKey
@@ -149,3 +149,7 @@ case object SmsCodeBlur extends ILkCommonAction
 
 /** Изменение состояния флага конфигурации isTouchDev. */
 case class TouchDevSet(isTouchDev: Boolean) extends ILkCommonAction
+
+
+/** Уведомить систему о ширине и длине загруженной картинки. */
+case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction

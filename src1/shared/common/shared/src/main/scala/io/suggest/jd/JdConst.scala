@@ -1,5 +1,8 @@
 package io.suggest.jd
 
+import io.suggest.ad.blk.BlockWidths
+import io.suggest.common.maps.rad.IMinMaxM
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -37,6 +40,11 @@ object JdConst {
       /** Максимальная размывка в пикселях экрана. */
       final def BLUR_MAX = 5
     }
+  }
+
+  object ContentWidth {
+    def MIN_PX = 10
+    def MAX_PX = 4 * BlockWidths.NORMAL.value
   }
 
 }

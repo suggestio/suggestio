@@ -2,12 +2,12 @@ package io.suggest.lk.r.img
 
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.err.ErrorConstants
+import io.suggest.lk.m.SetImgWh
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.msg.ErrorMsgs
 import io.suggest.react.Props2ModelProxy
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.sjs.common.log.Log
-import io.suggest.spa.DAction
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
 import org.scalajs.dom.html
 
@@ -18,7 +18,6 @@ import org.scalajs.dom.html
   * Description: Утиль для рендера кропнутых картинок на клиенте.
   */
 class LkImgUtilJs extends Log {
-
 
   /** В редакторах для нужд кропа требуется вычислять размеры картинки на стороне браузера.
     * Иначе кроп работать не будет.
@@ -44,7 +43,3 @@ class LkImgUtilJs extends Log {
   }
 
 }
-
-/** Уведомить систему о ширине и длине загруженной картинки. */
-case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends DAction
-

@@ -4,7 +4,6 @@ import io.suggest.common.html.HtmlConstants
 import japgolly.scalajs.react.vdom.{HtmlAttrAndStyles, TagMod, TagOf, TopNode, VdomElement}
 import japgolly.scalajs.react.{Callback, CallbackTo, ReactEvent}
 import japgolly.scalajs.react.internal.OptionLike
-import japgolly.scalajs.react.vdom.Attr.ValueType
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js

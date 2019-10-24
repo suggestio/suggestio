@@ -66,13 +66,14 @@ class LkAdEditFormR(
                      deleteStripBtnR            : DeleteStripBtnR,
                      val showWideR              : ShowWideR,
                      val colorCheckBoxR         : ColorCheckBoxR,
-                     val rotateR                : RotateR,
+                     rotateR                    : RotateR,
+                     widthPxOptR                : WidthPxOptR,
                      val slideBlockR            : SlideBlockR,
                      val colorPickerR           : ColorPickerR,
                      val quillEditorR           : QuillEditorR,
                      val contentEditCssR        : ContentEditCssR,
                      val contentLayersR         : ContentLayersR,
-                     val textShadowR            : TextShadowR,
+                     textShadowR                : TextShadowR,
                      val touchSwitchR           : TouchSwitchR,
                    ) {
 
@@ -97,10 +98,8 @@ class LkAdEditFormR(
                               slideBlocks                     : SlideBlocksState,
                               colors                          : ColorsState,
                               quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]],
-                              rotateOptC                      : ReactConnectProxy[Option[rotateR.PropsVal]],
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                               contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
-                              textShadowC                     : ReactConnectProxy[textShadowR.Props_t],
                               isTouchDevSomeC                 : ReactConnectProxy[Some[Boolean]],
                             )
 
@@ -245,11 +244,43 @@ class LkAdEditFormR(
               s.colors.contentBgCbOptC { colorCheckBoxR.apply },
 
               // Вращение: галочка + опциональный слайдер.
-              s.rotateOptC { rotateR.apply },
+              p.wrap { mroot =>
+                for {
+                  selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
+                  selJdt = selJdtLoc.getLabel
+                  if selJdt.name ==* MJdTagNames.QD_CONTENT
+                } yield {
+                  rotateR.PropsVal(
+                    value = selJdt.props1.rotateDeg
+                  )
+                }
+              }(rotateR.apply)( implicitly, OptFastEq.Wrapped(rotateR.RotateRPropsValFastEq) ),
+
+              // Галочка управления шириной.
+              p.wrap { mroot =>
+                for {
+                  selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
+                  selJdt = selJdtLoc.getLabel
+                  if selJdt.name ==* MJdTagNames.QD_CONTENT
+                } yield {
+                  widthPxOptR.PropsVal(
+                    value = selJdt.props1.widthPx
+                  )
+                }
+              }(widthPxOptR.apply)(implicitly, OptFastEq.Wrapped(widthPxOptR.WidthPxPropsValPropsValFastEq)),
 
               <.br,
               // Управление тенью текста:
-              s.textShadowC { textShadowR.apply },
+              p.wrap { mroot =>
+                for {
+                  loc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
+                  textShadow <- loc.getLabel.props1.textShadow
+                } yield {
+                  textShadowR.PropsVal(
+                    jdShadow = textShadow
+                  )
+                }
+              }( textShadowR.apply )( implicitly, OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) ),
 
               // Управление слоями
               s.contentLayersC { contentLayersR.apply },
@@ -550,18 +581,6 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Wrapped(quillEditorR.QuillEditorPropsValFastEq) ),
 
-        rotateOptC = p.connect { mroot =>
-          for {
-            selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
-            selJdt = selJdtLoc.getLabel
-            if selJdt.name ==* MJdTagNames.QD_CONTENT
-          } yield {
-            rotateR.PropsVal(
-              value = selJdt.props1.rotateDeg
-            )
-          }
-        }( OptFastEq.Wrapped(rotateR.RotateRPropsValFastEq) ),
-
         upStateOptC = p.connect { mroot =>
           mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
             .flatMap(_._2.fileJs)
@@ -632,18 +651,7 @@ class LkAdEditFormR(
           }
         }( OptFastEq.OptValueEq ),
 
-        textShadowC = p.connect { mroot =>
-          for {
-            loc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
-            textShadow <- loc.getLabel.props1.textShadow
-          } yield {
-            textShadowR.PropsVal(
-              jdShadow = textShadow
-            )
-          }
-        }( OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) ),
-
-        isTouchDevSomeC = p.connect{ mroot =>
+        isTouchDevSomeC = p.connect { mroot =>
           OptionUtil.SomeBool( mroot.conf.touchDev )
         }( FastEq.AnyRefEq ),
 

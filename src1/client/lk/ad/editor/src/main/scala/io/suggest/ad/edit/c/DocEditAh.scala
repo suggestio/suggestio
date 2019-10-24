@@ -1132,7 +1132,7 @@ class DocEditAh[M](
       val jdt0 = loc0.getLabel
       val jdt_p1_width_LENS = JdTag.props1
         .composeLens( MJdtProps1.widthPx )
-      if (jdt_p1_width_LENS.get(jdt0) contains[Int] m.widthPx) {
+      if (jdt_p1_width_LENS.get(jdt0) ==* m.widthPx) {
         // Ширина изменилась в исходное значение.
         noChange
 
@@ -1140,7 +1140,7 @@ class DocEditAh[M](
         require( jdt0.name ==* MJdTagNames.QD_CONTENT )
         // Сохранить новую ширину в состояние текущего тега:
         val jdt2 = jdt_p1_width_LENS
-          .set( Some(m.widthPx) )( jdt0 )
+          .set( m.widthPx )( jdt0 )
         val loc2 = loc0.setLabel( jdt2 )
         val tpl2 = loc2.toTree
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )

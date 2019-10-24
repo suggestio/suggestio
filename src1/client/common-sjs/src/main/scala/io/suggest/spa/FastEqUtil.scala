@@ -3,7 +3,6 @@ package io.suggest.spa
 import diode.FastEq
 import diode.data.Pot
 import japgolly.univeq._
-import scala.annotation.unchecked.{ uncheckedVariance=> uV }
 
 import scala.language.higherKinds
 
@@ -112,6 +111,13 @@ object FastEqUtil {
         implicitly[FastEq[T1]].eqv( a._1, b._1 ) &&
         implicitly[FastEq[T2]].eqv( a._2, b._2 )
       }
+    }
+  }
+
+
+  object OptIsDefinedFastEq extends FastEq[Option[_]] {
+    override def eqv(a: Option[_], b: Option[_]): Boolean = {
+      a.isDefined ==* b.isDefined
     }
   }
 

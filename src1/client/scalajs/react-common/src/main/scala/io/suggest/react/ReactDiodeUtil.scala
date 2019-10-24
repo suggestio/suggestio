@@ -94,8 +94,10 @@ object ReactDiodeUtil {
 
     implicit class ReactPotExtOps[T](val pot: Pot[T]) extends AnyVal {
 
-      def renderEl(f: T => VdomElement): VdomElement =
-        if (pot.nonEmpty) f(pot.get) else ReactCommonUtil.VdomNullElement
+      def renderEl(f: T => VdomElement): VdomElement = {
+        if (pot.nonEmpty) f(pot.get)
+        else ReactCommonUtil.VdomNullElement
+      }
 
     }
 

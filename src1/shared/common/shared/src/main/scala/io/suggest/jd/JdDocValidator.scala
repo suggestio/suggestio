@@ -247,8 +247,8 @@ class JdDocValidator(
       ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
         MathConst.Counts.validateMinMax(
           v = widthPx,
-          min = 10,
-          max = qdProps1.rotateDeg.fold(2)(_ => 6) * BlockWidths.NORMAL.value,
+          min = JdConst.ContentWidth.MIN_PX,
+          max = JdConst.ContentWidth.MAX_PX,
           errMsgF(WIDTH) + `.`
         )
       } |@|

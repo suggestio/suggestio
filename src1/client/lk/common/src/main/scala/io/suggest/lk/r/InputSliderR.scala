@@ -1,16 +1,17 @@
 package io.suggest.lk.r
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import scalacss.ScalaCssReact._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.spa.DAction
+import io.suggest.spa.{DAction, OptFastEq}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 
 /**
   * Suggest.io
@@ -28,11 +29,16 @@ class InputSliderR(
                        value    : Int,
                        onChange : Int => DAction,
                      )
-  implicit object InputSliderRPropsValFastEq extends FastEq[PropsVal] {
+  object InputSliderValuesPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.min ==* b.min) &&
       (a.max ==* b.max) &&
-      (a.value ==* b.value) &&
+      (a.value ==* b.value)
+    }
+  }
+  implicit object InputSliderRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      InputSliderValuesPropsValFastEq.eqv(a, b) &&
       (a.onChange eq b.onChange)
     }
   }
@@ -42,7 +48,13 @@ class InputSliderR(
   type Props = ModelProxy[Props_t]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  case class State(
+                    isVisibleSomeC      : ReactConnectProxy[Some[Boolean]],
+                    propsValOptC        : ReactConnectProxy[Props_t],
+                    valueOptC           : ReactConnectProxy[Option[Int]],
+                  )
+
+  class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на движение слайдера градусов наклона. */
     private def onValueChange(e: ReactEventFromInput): Callback = {
@@ -57,31 +69,45 @@ class InputSliderR(
       }
     }
 
-    def render(propsOptProxy: Props): VdomElement = {
-      propsOptProxy.value.whenDefinedEl { props =>
-        val C = lkCss.RangeInput
-        <.span(
-          <.input(
-            C.slider,
-            ^.`type`  := HtmlConstants.Input.range,
-            ^.value   := props.value,
-            ^.min     := props.min,
-            ^.max     := props.max,
-            ^.onChange ==> onValueChange
-          ),
-
-          HtmlConstants.NBSP_STR,
-
-          <.span(
-            ^.`class` := Css.Input.INPUT,
+    def render(propsOptProxy: Props, s: State): VdomElement = {
+      // Генератор контента.
+      lazy val content = <.span(
+        // Слайдер:
+        s.propsValOptC { propsValOptProxy =>
+          propsValOptProxy.value.whenDefinedEl { props =>
             <.input(
-              C.textInput,
-              ^.`type`    := HtmlConstants.Input.text,
+              lkCss.RangeInput.slider,
+              ^.`type`    := HtmlConstants.Input.range,
               ^.value     := props.value,
-              ^.onChange  ==> onValueChange
+              ^.min       := props.min,
+              ^.max       := props.max,
+              ^.onChange ==> onValueChange
             )
-          )
+          }
+        },
+
+        HtmlConstants.NBSP_STR,
+
+        <.span(
+          ^.`class` := Css.Input.INPUT,
+
+          // Текстовый инпут для ручного ввода значения:
+          s.valueOptC { valueOptProxy =>
+            valueOptProxy.value.whenDefinedEl { value =>
+              <.input(
+                lkCss.RangeInput.textInput,
+                ^.`type`    := HtmlConstants.Input.text,
+                ^.value     := value,
+                ^.onChange ==> onValueChange
+              )
+            }
+          },
+
         )
+      )
+
+      s.isVisibleSomeC { isVisibleSomeProxy =>
+        ReactCommonUtil.maybeEl( isVisibleSomeProxy.value.value )(content)
       }
     }
 
@@ -90,7 +116,15 @@ class InputSliderR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+        isVisibleSomeC = propsProxy.connect { m =>
+          OptionUtil.SomeBool( m.isDefined )
+        }( FastEq.AnyRefEq ),
+        propsValOptC   = propsProxy.connect(identity)( OptFastEq.Wrapped(InputSliderValuesPropsValFastEq) ),
+        valueOptC = propsProxy.connect { _.map(_.value) }( OptFastEq.OptValueEq ),
+      )
+    }
     .renderBackend[Backend]
     .build
 

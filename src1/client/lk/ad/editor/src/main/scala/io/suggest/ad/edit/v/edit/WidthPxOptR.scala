@@ -2,9 +2,9 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.RotateSet
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.JdConst
+import io.suggest.jd.edit.m.ResizeContent
 import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
@@ -17,14 +17,14 @@ import japgolly.univeq._
   * Created: 19.03.18 22:14
   * Description: Компонент галочки и слайдера ротации.
   */
-class RotateR(
-               sliderOptR       : SliderOptR,
-             ) {
+class WidthPxOptR(
+                   sliderOptR       : SliderOptR,
+                 ) {
 
   case class PropsVal(
                        value: Option[Int]
                      )
-  implicit object RotateRPropsValFastEq extends FastEq[PropsVal] {
+  implicit object WidthPxPropsValPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       a.value ==* b.value
     }
@@ -35,21 +35,22 @@ class RotateR(
 
 
   val component = ScalaComponent
-    .builder[Props](getClass.getSimpleName)
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsOptProxy =>
-      val label = Messages( MsgCodes.`Rotation` ): VdomNode
-      val onChange = RotateSet.apply _
+      val label = Messages( MsgCodes.`Width` ): VdomNode
+      val onChange = ResizeContent.apply _
 
       propsOptProxy.wrap { propsOpt =>
         for (props <- propsOpt) yield {
+          val min = JdConst.ContentWidth.MIN_PX
           sliderOptR.PropsVal(
             label     = label,
             value     = props.value,
             onChange  = onChange,
-            min       = -JdConst.ROTATE_MAX_ABS,
-            max       =  JdConst.ROTATE_MAX_ABS,
-            default   = 15,
+            min       = min,
+            max       = JdConst.ContentWidth.MAX_PX,
+            default   = min * 2,
           )
         }
       }( sliderOptR.apply )(implicitly, OptFastEq.Wrapped(sliderOptR.SliderOptRPropsValFastEq))
