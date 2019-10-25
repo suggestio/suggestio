@@ -81,4 +81,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def PLATFORM_NOT_READY                     = E(62)
 
+  def NODE_PATH_MISSING_INVALID              = E(63)
+
 }

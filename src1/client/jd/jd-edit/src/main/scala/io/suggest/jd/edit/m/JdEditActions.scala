@@ -2,6 +2,7 @@ package io.suggest.jd.edit.m
 
 import com.github.react.dnd.IItem
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
@@ -17,13 +18,15 @@ import japgolly.univeq.UnivEq
 sealed trait IJdEditAction extends IJdAction
 
 
-
-/** Клик по стрипу. */
-case class JdTagSelect(jdTag: JdTag ) extends IJdAction
+/** Клик по стрипу.
+  * @param silent Постараться не шуметь и не лезть в иные части состояния.
+  *               Нужно для авто-сброса MDndS или запрета этого сброса:
+  */
+case class JdTagSelect(jdTag: JdTag, jdId: MJdTagId, silent: Boolean = false) extends IJdAction
 
 
 /** Начато перетаскивание тега. */
-case class JdTagDragStart( jdTag: JdTag ) extends IJdAction
+case class JdTagDragStart( jdTag: JdTag, jdId: MJdTagId ) extends IJdAction
 case object JdTagDragEnd extends IJdAction
 
 

@@ -101,9 +101,10 @@ class JdEditR(
     ^.onClick ==> { e =>
       e.stopPropagationCB >>
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
-          props: P  =>
-            val jdt = p2RrrPF(props).subTree.rootLabel
-            JdTagSelect( jdt )
+          props: P =>
+            val s = p2RrrPF(props)
+            val jdt = s.subTree.rootLabel
+            JdTagSelect( jdt, s.tagId, silent = false )
         }
     }
   }
@@ -247,7 +248,7 @@ class JdEditR(
           // Запустить обработку по circuit в фоне. По логике кажется, что должно быть асинхронно, но не факт: рендер перетаскивания может нарушаться.
           val s = props.p.value
           val jdt = s.subTree.rootLabel
-          props.p dispatchNow JdTagDragStart(jdt)
+          props.p dispatchNow JdTagDragStart(jdt, s.tagId)
 
           val el = contentRef.unsafeGet()
           val xyOff: XY = if (s.parent.exists(_.name ==* MJdTagNames.STRIP)) {
@@ -395,7 +396,7 @@ class JdEditR(
               )
 
               props.p dispatchNow JdDropToBlock(
-                targetBlock       = rrr.subTree.rootLabel,
+                targetBlock = rrr.subTree.rootLabel,
                 clXy        = topLeftXy,
                 foreignTag  = None   // TODO Решить, должно ли тут быть что-либо?
               )
@@ -422,8 +423,9 @@ class JdEditR(
         val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
           (props, monitor, _) =>
             // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
-            val jdt = props.p.value.subTree.rootLabel
-            props.p dispatchNow JdTagDragStart(jdt)
+            val s = props.p.value
+            val jdt = s.subTree.rootLabel
+            props.p dispatchNow JdTagDragStart(jdt, s.tagId)
             // Отрендерить в json данные, которые будут переданы в DropTarget.
             MJsDropInfo( DCT.STRIP )
         }

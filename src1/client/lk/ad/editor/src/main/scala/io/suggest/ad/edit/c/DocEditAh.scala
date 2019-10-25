@@ -35,6 +35,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
 import io.suggest.common.BooleanUtil.Implicits._
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.scalaz.NodePath_t
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
@@ -335,12 +336,13 @@ class DocEditAh[M](
       val oldSelectedTag = v0.jdDoc.jdArgs.selJdt
         .treeLocOpt
         .map(_.getLabel)
+
       if ( oldSelectedTag contains m.jdTag ) {
-        if (v0.jdDoc.jdArgs.renderArgs.dnd.nonEmpty) {
+        if (!m.silent && v0.jdDoc.jdArgs.renderArgs.dnd.nonEmpty) {
           // Была какая-то ошибка во время перетаскивания. Надо сбросить dnd-состояние.
           // Если не сбросить, то тег останется невыделенным.
-          val v2 = _jdArgs_renderArgs_dnd_LENS.set( MJdDndS.empty )(v0)
-          updated(v2)
+          val fx = JdTagDragEnd.toEffectPure
+          effectOnly( fx )
         } else {
           // Бывают повторные щелчки по уже выбранным элементам, это нормально.
           noChange
@@ -350,11 +352,21 @@ class DocEditAh[M](
         val oldTagName = oldSelectedTag.map(_.name)
 
         // Юзер выбрал какой-то новый элемент. Залить новый тег в seleted:
-        val newSelJdtTreeLoc = v0.jdDoc.jdArgs.data.doc.template
-          .loc
-          .findByLabel( m.jdTag )
+        val nodePath = m.jdId.selPathRev.reverse: NodePath_t
+        val (newSelJdt, newSelJdtTreeLoc) = v0.jdDoc.jdArgs.data.doc.template
+          .pathToNode( nodePath )
+          .map( nodePath -> _ )
+          .orElse {
+            // fallback на медленный поиск в дереве перебором тегов:
+            LOG.warn(WarnMsgs.NODE_PATH_MISSING_INVALID, msg = (m, nodePath) )
+            v0.jdDoc.jdArgs.data.doc.template
+              .loc
+              .findByLabel( m.jdTag )
+              .map { loc =>
+                loc.toNodePath -> loc
+              }
+          }
           .get
-        val newSelJdt = newSelJdtTreeLoc.toNodePath
 
         var v2 = MDocS.jdDoc
           .composeLens( MJdDocEditS.jdArgs )
@@ -371,14 +383,14 @@ class DocEditAh[M](
             edges = v2.jdDoc.jdArgs.data.edges
           )
           //println( "selJdt\n" + JSON.stringify(delta2) )
-            MDocS.editors.modify(
-              MEditorsS.qdEdit
-                .set( Some(
-                  MQdEditS( initDelta = delta2 )
-                )) andThen
-              MEditorsS.slideBlocks
-                .composeLens( MSlideBlocks.expanded )
-                .set( Some(SlideBlockKeys.CONTENT) )
+          MDocS.editors.modify(
+            MEditorsS.qdEdit
+              .set( Some(
+                MQdEditS( initDelta = delta2 )
+              )) andThen
+            MEditorsS.slideBlocks
+              .composeLens( MSlideBlocks.expanded )
+              .set( Some(SlideBlockKeys.CONTENT) )
           )(v2)
 
         } else {
@@ -425,19 +437,18 @@ class DocEditAh[M](
           jdt = jdtTree.rootLabel
           dataEdges0 = v0.jdDoc.jdArgs.data.edges
           if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
-            QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
-            v2.jdDoc.jdArgs.data.doc.template.contains(jdt)
+             QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
+             (v2.jdDoc.jdArgs.data.doc.template contains jdt)
         } {
           val tpl1 = v2.jdDoc.jdArgs.data.doc.template
-          val tpl2 = tpl1
-            .loc
-            .findByLabel(jdt)
-            .flatMap(_.delete)
+          val tpl2 = newSelJdtTreeLoc
+            .delete
             .map(_.toTree)
             .getOrElse {
               LOG.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
               tpl1
             }
+
           // Очистить эджи от лишнего контента
           val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
           val jdDoc2 = (MJdDoc.template set tpl2)( v2.jdDoc.jdArgs.data.doc )
@@ -456,12 +467,15 @@ class DocEditAh[M](
 
         // Если состояние dnd непустое, то значит была ошибка перетакивания, и надо принудительно сбросить dnd-состояние.
         // Если этого не сделать, то рамочка вокруг текущего тега не будет рендерится.
-        val fxOpt = OptionUtil.maybe(v2.jdDoc.jdArgs.renderArgs.dnd.nonEmpty)( JdTagDragEnd.toEffectPure )
+        val fxOpt = OptionUtil.maybe(!m.silent && v2.jdDoc.jdArgs.renderArgs.dnd.nonEmpty)( JdTagDragEnd.toEffectPure )
 
         // Обновить список color-preset'ов.
         val bgColorsAppend = for {
           // Закинуть цвет фона нового тега в самое начало списка презетов. Затем - окончательный фон предыдущего тега.
-          jdt <- m.jdTag :: v0.jdDoc.jdArgs.selJdt.treeLocOpt.map(_.getLabel).toList
+          jdt <- m.jdTag :: v0.jdDoc.jdArgs.selJdt
+            .treeLocOpt
+            .map(_.getLabel)
+            .toList
           bgColor <- jdt.props1.bgColor
           if !v2.editors.colorsState.colorPresets.contains(bgColor)
         } yield {
@@ -704,10 +718,13 @@ class DocEditAh[M](
       val dnd0Jdt = v0.jdDoc.jdArgs.draggingTagLoc
       if (dnd0Jdt.toLabelOpt contains m.jdTag) {
         noChange
+
       } else {
+        val nodePath = m.jdId.selPathRev.reverse
         val v2 = _jdArgs_renderArgs_dnd_LENS
           .composeLens( MJdDndS.jdt )
-          .set( v0.jdDoc.jdArgs.data.doc.template.nodeToPath(m.jdTag) )(v0)
+          //.set( v0.jdDoc.jdArgs.data.doc.template.nodeToPath(m.jdTag) )(v0)
+          .set( Some(nodePath) )(v0)
 
         // Если запускается перетаскивание тега, который не является текущим, то надо "выбрать" таскаемый тег.
         if ( v0.jdDoc.jdArgs.selJdt.treeLocOpt.toLabelOpt contains m.jdTag ) {
@@ -715,7 +732,7 @@ class DocEditAh[M](
           updated( v2 )
         } else {
           // Активировать текущий тег
-          val fx = JdTagSelect(m.jdTag).toEffectPure
+          val fx = JdTagSelect(m.jdTag, m.jdId, silent = true).toEffectPure
           updated( v2, fx )
         }
       }
