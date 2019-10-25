@@ -2,9 +2,11 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.JdConst
 import io.suggest.jd.edit.m.ResizeContent
+import io.suggest.lk.r.SliderOptR
 import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
@@ -50,7 +52,7 @@ class WidthPxOptR(
             onChange  = onChange,
             min       = min,
             max       = JdConst.ContentWidth.MAX_PX,
-            default   = min * 2,
+            default   = BlockWidths.min.value,
           )
         }
       }( sliderOptR.apply )(implicitly, OptFastEq.Wrapped(sliderOptR.SliderOptRPropsValFastEq))

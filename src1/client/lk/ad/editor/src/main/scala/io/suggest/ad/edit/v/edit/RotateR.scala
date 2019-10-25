@@ -5,6 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.ad.edit.m.RotateSet
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.JdConst
+import io.suggest.lk.r.SliderOptR
 import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._

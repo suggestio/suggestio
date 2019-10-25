@@ -109,5 +109,15 @@ class JdCssStatic extends StyleSheet.Inline {
     overflow.hidden,
   )
 
+  /** Доп.стиль для самого внешнего тега jd-контента, который используется
+    * непосредственно для позиционировани в плитке.
+    * Нужно, чтобы обычные блоки всегда были над qd-blockless.
+    */
+  val smBlockOuter = style(
+    // 3, потому что в stone-cutter жестко прописано 2, а прыгать далеко может быть небезопасно.
+    // https://github.com/dantrain/react-stonecutter/blob/master/src/components/CSSGridItem.jsx#L79
+    zIndex(3).important
+  )
+
 }
 

@@ -25,6 +25,7 @@ import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -41,6 +42,16 @@ class JdR(
 
   type Props_t = MJdArgs
   type Props = ModelProxy[Props_t]
+
+
+  /** Чтобы qd-blockless с ротацией не наезжал слоем на блоки, надо их развести по этажам плитки.
+    * Вызывается при сборке CSSGrid children.
+    *
+    * @param jdt jd-тег.
+    * @return Пустой или непустой TagMod.
+    */
+  def fixZIndexIfBlock(jdt: JdTag): TagMod =
+    ReactCommonUtil.maybe( jdt.name ==* MJdTagNames.STRIP )( jdCssStatic.smBlockOuter )
 
 
   /** Для разделения edit и read-only режима используется этот трейт,
@@ -334,7 +345,7 @@ class JdR(
           GridBuilderUtilJs.mkCssGridArgs(
             gbRes = state.gridBuildRes.getOrElse {
               LOG.error( ErrorMsgs.GRID_BUILD_RES_MISSING, msg = state.tagId.toString )
-              throw new IllegalArgumentException( ErrorMsgs.GRID_BUILD_RES_MISSING )
+              throw new NoSuchElementException( ErrorMsgs.GRID_BUILD_RES_MISSING )
             },
             conf = state.jdArgs.conf,
             tagName = GridComponents.DIV,
@@ -342,9 +353,10 @@ class JdR(
         } (
           renderChildrenWithId( propsProxy )
             // Тут тег-обёртка-костыль - что для CSSGrid нужен обязательно теги, а НЕ react-компоненты в children.
-            .map { case (id, p) =>
+            .map { case (id, jdTree, p) =>
               <.div(
                 ^.key := id.toString,
+                fixZIndexIfBlock( jdTree.rootLabel ),
                 p
               )
             }: _*
@@ -380,7 +392,7 @@ class JdR(
     /** Отрендерить дочерние элементы тега обычным методом.
       * @return Итератор отрендеренных vdom-узлов.
       */
-    def renderChildrenWithId(proxy: ModelProxy[MJdRrrProps]): Stream[(MJdTagId, VdomNode)] = {
+    def renderChildrenWithId(proxy: ModelProxy[MJdRrrProps]): Stream[(MJdTagId, Tree[JdTag], VdomNode)] = {
       val p = proxy.value
       val chs = p.subTree.subForest
 
@@ -408,7 +420,7 @@ class JdR(
             // Вместо wrap используем прямой зум, чтобы избежать вызова цепочек функций, создающих множественные
             // инстансы одинаковых MJdRrrProps, которые будут удлиняться с каждым под-уровнем.
             val proxy2 = proxy.resetZoom( p2 )
-            tagId -> renderTag( proxy2 )
+            (tagId, childJdTree, renderTag(proxy2) )
           }
       } else {
         Stream.empty
@@ -416,7 +428,7 @@ class JdR(
     }
     def renderChildren(proxy: ModelProxy[MJdRrrProps]): Stream[VdomNode] = {
       renderChildrenWithId(proxy)
-        .map(_._2)
+        .map(_._3)
     }
 
 

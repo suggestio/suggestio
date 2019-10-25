@@ -41,6 +41,8 @@ object LkCommonModule {
 
   lazy val lkCheckBoxR = wire[LkCheckBoxR]
 
+  lazy val sliderOptR = wire[SliderOptR]
+
 
   lazy val saveR = wire[SaveR]
 

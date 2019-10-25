@@ -1,7 +1,6 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.BlockWidths
-import io.suggest.common.maps.rad.IMinMaxM
+import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 
 /**
   * Suggest.io
@@ -43,7 +42,7 @@ object JdConst {
   }
 
   object ContentWidth {
-    def MIN_PX = 10
+    def MIN_PX = BlockPaddings.default.fullBetweenBlocksPx
     def MAX_PX = 4 * BlockWidths.NORMAL.value
   }
 

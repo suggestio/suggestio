@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
-import io.suggest.jd.render.v.JdR
+import io.suggest.jd.render.v.{JdCssStatic, JdR}
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._
@@ -25,10 +25,8 @@ import japgolly.univeq._
   */
 class GridCoreR(
                  jdR                        : JdR,
+                 jdCssStatic                : JdCssStatic,
                ) {
-
-  import MJdArgs.MJdArgsFastEq
-
 
   type Props_t = MGridCoreS
   type Props = ModelProxy[Props_t]
@@ -94,8 +92,12 @@ class GridCoreR(
               ^.onClick ==> onBlockClick(nodeId)
             },
 
-            {
-              val jdArgsProxy2 = mgridProxy.resetZoom(
+            // Выставить класс для ремонта z-index контейнера блока.
+            jdR.fixZIndexIfBlock( jdDoc2.template.rootLabel ),
+
+            jdR.apply {
+              // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
+              mgridProxy.resetZoom(
                 MJdArgs(
                   data = MJdDataJs(
                     doc      = jdDoc2,
@@ -106,9 +108,8 @@ class GridCoreR(
                   renderArgs  = jdRenderArgs,
                 )
               )
-              // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
-              jdR.apply(jdArgsProxy2)
             }
+
           )
         }
         iter.toVdomArray
@@ -118,7 +119,8 @@ class GridCoreR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

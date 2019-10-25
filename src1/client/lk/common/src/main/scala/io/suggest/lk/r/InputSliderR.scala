@@ -10,8 +10,7 @@ import io.suggest.spa.{DAction, OptFastEq}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.ReactDiodeUtil
 
 /**
   * Suggest.io
@@ -71,19 +70,18 @@ class InputSliderR(
 
     def render(propsOptProxy: Props, s: State): VdomElement = {
       // Генератор контента.
-      lazy val content = <.span(
+      val content = <.span(
         // Слайдер:
         s.propsValOptC { propsValOptProxy =>
-          propsValOptProxy.value.whenDefinedEl { props =>
-            <.input(
-              lkCss.RangeInput.slider,
-              ^.`type`    := HtmlConstants.Input.range,
-              ^.value     := props.value,
-              ^.min       := props.min,
-              ^.max       := props.max,
-              ^.onChange ==> onValueChange
-            )
-          }
+          val propsOpt = propsValOptProxy.value
+          <.input(
+            lkCss.RangeInput.slider,
+            ^.`type`    := HtmlConstants.Input.range,
+            ^.value     := propsOpt.fold(0)(_.value),
+            ^.min       := propsOpt.fold(0)(_.min),
+            ^.max       := propsOpt.fold(0)(_.max),
+            ^.onChange ==> onValueChange,
+          )
         },
 
         HtmlConstants.NBSP_STR,
@@ -93,21 +91,24 @@ class InputSliderR(
 
           // Текстовый инпут для ручного ввода значения:
           s.valueOptC { valueOptProxy =>
-            valueOptProxy.value.whenDefinedEl { value =>
-              <.input(
-                lkCss.RangeInput.textInput,
-                ^.`type`    := HtmlConstants.Input.text,
-                ^.value     := value,
-                ^.onChange ==> onValueChange
-              )
-            }
+            val valueOpt = valueOptProxy.value
+            <.input(
+              lkCss.RangeInput.textInput,
+              ^.`type`    := HtmlConstants.Input.text,
+              ^.value     := valueOpt.fold("")(_.toString),
+              ^.onChange ==> onValueChange
+            )
           },
 
         )
       )
 
       s.isVisibleSomeC { isVisibleSomeProxy =>
-        ReactCommonUtil.maybeEl( isVisibleSomeProxy.value.value )(content)
+        content(
+          ^.classSet(
+            Css.Display.INVISIBLE -> !isVisibleSomeProxy.value.value,
+          ),
+        )
       }
     }
 
@@ -121,8 +122,8 @@ class InputSliderR(
         isVisibleSomeC = propsProxy.connect { m =>
           OptionUtil.SomeBool( m.isDefined )
         }( FastEq.AnyRefEq ),
-        propsValOptC   = propsProxy.connect(identity)( OptFastEq.Wrapped(InputSliderValuesPropsValFastEq) ),
-        valueOptC = propsProxy.connect { _.map(_.value) }( OptFastEq.OptValueEq ),
+        propsValOptC = propsProxy.connect(identity)( OptFastEq.Wrapped(InputSliderValuesPropsValFastEq) ),
+        valueOptC = propsProxy.connect( _.map(_.value) )( OptFastEq.OptValueEq ),
       )
     }
     .renderBackend[Backend]

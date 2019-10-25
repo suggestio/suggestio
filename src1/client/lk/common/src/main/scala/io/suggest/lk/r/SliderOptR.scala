@@ -1,10 +1,9 @@
-package io.suggest.ad.edit.v.edit
+package io.suggest.lk.r
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
-import io.suggest.lk.r.{InputSliderR, LkCheckBoxR}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.{DAction, OptFastEq}
 import japgolly.scalajs.react._
@@ -35,7 +34,12 @@ class SliderOptR(
                      )
   implicit object SliderOptRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.value ==* b.value
+      (a.label eq b.label) &&
+      (a.value ==* b.value) &&
+      (a.onChange eq b.onChange) &&
+      (a.min ==* b.min) &&
+      (a.max ==* b.max) &&
+      (a.default ==* b.default)
     }
   }
 
@@ -49,17 +53,10 @@ class SliderOptR(
   class Backend($: BackendScope[Props, State]) {
 
     def render(propsOptProxy: Props, s: State): VdomElement = {
-
-      // Галочка опционального значения
-      lazy val checkBox =
-        /*
-        val label = Messages( MsgCodes.`Width` ): VdomNode
-        val onChange = { isEnabled: Boolean =>
-          val widthPxOpt = OptionUtil.maybe(isEnabled)()
-          SetWidthPx(widthPxOpt)
-        }
-        */
-        propsOptProxy.wrap { propsOpt =>
+      // Для ускорения первичного рендера, тут - общий lazy val, который хранит компоненты и чекбокса, и слайдера.
+      lazy val (checkBox, slider) = {
+        // Галочка опционального значения:
+        val c = propsOptProxy.wrap { propsOpt =>
           for (props <- propsOpt) yield {
             lkCheckBoxR.PropsVal(
               label     = props.label,
@@ -70,12 +67,8 @@ class SliderOptR(
           }
         }( lkCheckBoxR.apply )(implicitly, OptFastEq.Wrapped(lkCheckBoxR.LkCheckBoxMinimalFastEq) )
 
-      // Слайдер выставления значения:
-      lazy val slider = {
-        //val onChange = { newValue: Int =>
-        //  SetWidthPx( Some(newValue) )
-        //}
-        propsOptProxy.wrap { propsOpt =>
+        // Слайдер выставления значения:
+        val s = propsOptProxy.wrap { propsOpt =>
           for (props <- propsOpt; v <- props.value) yield {
             inputSliderR.PropsVal(
               min       = props.min,
@@ -85,6 +78,8 @@ class SliderOptR(
             )
           }
         }( inputSliderR.apply )(implicitly, OptFastEq.Wrapped(inputSliderR.InputSliderValuesPropsValFastEq) )
+
+        (c, s)
       }
 
       // Надо вообще рендерить или нет - решается тут:
@@ -99,6 +94,7 @@ class SliderOptR(
       }
 
     }
+
   }
 
 
@@ -108,7 +104,7 @@ class SliderOptR(
       State(
         isVisibleSomeC = propsProxy.connect { m =>
           OptionUtil.SomeBool( m.isDefined )
-        },
+        }( FastEq.AnyRefEq ),
       )
     }
     .renderBackend[Backend]

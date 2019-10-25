@@ -65,7 +65,6 @@ class LkAdEditModule {
 
   lazy val laePopupsR = wire[LaePopupsR]
 
-  lazy val sliderOptR = wire[SliderOptR]
   lazy val rotateR = wire[RotateR]
   lazy val widthPxOptR = wire[WidthPxOptR]
 

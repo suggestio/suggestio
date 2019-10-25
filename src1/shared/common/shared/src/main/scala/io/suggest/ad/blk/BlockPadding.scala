@@ -56,12 +56,7 @@ object BlockPaddings extends IntEnum[BlockPadding] {
 
 
 /** Класс одного варианта block padding'а. */
-sealed abstract class BlockPadding(override val value: Int) extends IntEnumEntry {
-
-  final def fullBetweenBlocksPx = value
-  final def outlinePx = value / 2
-
-}
+sealed abstract class BlockPadding(override val value: Int) extends IntEnumEntry
 
 
 object BlockPadding {
@@ -73,6 +68,10 @@ object BlockPadding {
 
   @inline implicit def univEq: UnivEq[BlockPadding] = UnivEq.derive
 
+  implicit class BlockPaddingOps(val bp: BlockPadding) extends AnyVal {
+    def fullBetweenBlocksPx: Int = bp.value
+    def outlinePx: Int = bp.value / 2
+  }
 
   /** Утиль для опциональных [[BlockPadding]]. */
   implicit class BlockPaddingOptOps(val opt: Option[BlockPadding]) extends AnyVal {

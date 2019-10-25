@@ -89,7 +89,8 @@ class LkCss extends StyleSheet.Inline {
       style(
         addClassNames( ColorBtnR.defaultCssClasses: _* ),
         width( whPx ),
-        height( whPx )
+        height( whPx ),
+        verticalAlign.middle,
       )
     }
 

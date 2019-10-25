@@ -1641,7 +1641,7 @@ class DocEditAh[M](
               hOffset = 4,
               vOffset = 4,
               color   = None,
-              blur    = Some(1)
+              blur    = Some(32)
             )
           }
         }
