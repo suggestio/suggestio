@@ -29,8 +29,8 @@
     }
   </p>
 
-  @for(bm <- ctx.api.advUtil.getAdvMainBlockMeta(args.mad)) {
-    <p>Размеры карточки: ширина=@bm.width высота=@bm.height css-пикселей.</p>
+  @for(jdtTree <- ctx.api.advUtil.getAdvMainBlock(args.mad); wh <- jdtTree.rootLabel.props1.wh) {
+    <p>Размеры карточки: ширина=@wh.width высота=@wh.height css-пикселей.</p>
   }
 
   <p>
@@ -80,7 +80,7 @@
             <a href="@routes.SysImg.showOne(ei.img)">
               <strong>@messages(ei.edge.predicate.singular)</strong>
             </a>
-            <a href="@routes.SysImg.makeForm(ei.img, ctx.api.advUtil.getAdvMainBlockMeta(args.mad))">
+            <a href="@routes.SysImg.makeForm(ei.img)">
               [make]
             </a>
           </li>

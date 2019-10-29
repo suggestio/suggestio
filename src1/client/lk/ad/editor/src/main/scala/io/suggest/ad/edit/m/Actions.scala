@@ -22,17 +22,20 @@ import scalaz.Tree
 sealed trait ILkEditAction extends DAction
 
 
-trait IStripAction extends ILkEditAction
+trait IBlockAction extends ILkEditAction
 
 /** Клик по какой-то кнопке управления размером блока.
   *
   * @param model Модель, указывающая на ширину или высоту блока?
   * @param direction Направление: увеличить или уменьшить.
   */
-case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends IStripAction
+case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends IBlockAction
+// TODO Переехать на сие.
+/** Изменение какого-либо размера блока . */
+//case class JdtSetHeight(isHeight: Boolean, value: Int) extends IBlockAction
 
 
-sealed trait IStripDeleteAction extends IStripAction
+sealed trait IStripDeleteAction extends IBlockAction
 /** Экшен клика по кнопке удаления текущего выделенного strip'а.
   *
   * @param confirmed true - Юзер подтверждает удаление.

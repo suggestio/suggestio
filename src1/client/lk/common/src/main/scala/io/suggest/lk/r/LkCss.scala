@@ -60,7 +60,8 @@ class LkCss extends StyleSheet.Inline {
   object RangeInput {
 
     val slider = style(
-      verticalAlign.middle
+      verticalAlign.middle,
+      width(150.px).important,
     )
 
     val textInput = style(

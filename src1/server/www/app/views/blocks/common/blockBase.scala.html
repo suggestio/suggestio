@@ -23,9 +23,13 @@
          @PRODUCER_ID_ATTR="@producerId"
        }
      }
-     @for(bm <- ctx.api.advUtil.getAdvMainBlockMeta(mad)) {
-       @WIDTH_ATTR="@szMulted(bm.width, args.szMult)"
-       @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
+     @for(jdtTree <- ctx.api.advUtil.getAdvMainBlock(mad); p1 = jdtTree.rootLabel.props1) {
+       @for(widthPx <- p1.widthPx) {
+         @WIDTH_ATTR="@szMulted(widthPx, args.szMult)"
+       }
+       @for(heightPx <- p1.heightPx) {
+         @HEIGHT_ATTR="@szMulted(heightPx, args.szMult)"
+       }
      }
      data-wide-bg="@args.wideBg.isDefined"
      >

@@ -20,7 +20,7 @@
     <div class="adv-item_preview-container">
       @_adNormalTpl(brArgs)
     </div>
-    @if( ctx.api.advUtil.getAdvMainBlockMeta(brArgs.mad).exists(_.height > adsListMinZzHeight.value) ) {
+    @for( jdtTree <- ctx.api.advUtil.getAdvMainBlock(brArgs.mad); heightPx <- jdtTree.rootLabel.props1.heightPx  if heightPx > adsListMinZzHeight.value) {
       <div class="adv-item_preview-border"></div>
     }
   </div>

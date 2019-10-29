@@ -69,7 +69,10 @@ class SliderOptR(
 
         // Слайдер выставления значения:
         val s = propsOptProxy.wrap { propsOpt =>
-          for (props <- propsOpt; v <- props.value) yield {
+          for {
+            props <- propsOpt
+            v <- props.value
+          } yield {
             inputSliderR.PropsVal(
               min       = props.min,
               max       = props.max,

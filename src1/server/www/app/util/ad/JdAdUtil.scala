@@ -4,7 +4,7 @@ import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
 import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
@@ -644,12 +644,11 @@ class JdAdUtil @Inject()(
               isWide ||
               (allowWide && jdLoc.parents.exists(_._2.props1.expandMode.nonEmpty))
             ) {
-              jdTag.props1.bm.flatMap { bm =>
-                val r = GridCalc.wideSzMult( bm, jdConf.gridColumnsCount )
-                LOGGER.warn(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=$r")
-                r
+              jdTag.props1.wh.flatMap { wh =>
+                GridCalc.wideSzMult( wh, jdTag.props1.expandMode, jdConf.gridColumnsCount )
               }
             }
+            LOGGER.trace(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=${wideSzMult.orNull}")
             EdgeImgTag( medge, mimg, jdTag, isWide, wideSzMult )
           }
           iter.toList
@@ -679,7 +678,7 @@ class JdAdUtil @Inject()(
               eit <- edgedImgTags.iterator
               isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
 
-              tgImgSz: ISize2di <- if (isQd) {
+              tgImgSz: MSize2di <- if (isQd) {
                 lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
                 for {
                   mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.dynImgId.original.mediaId )
@@ -749,7 +748,7 @@ class JdAdUtil @Inject()(
                   )
                 }
                 // Если нет wide-мультипликатора, то оставить исходный размер блока.
-                wideTgSzOpt.orElse[ISize2di] {
+                wideTgSzOpt.orElse[MSize2di] {
                   val whOpt = eit.jdTag.props1.wh
                   LOGGER.trace(s"$logPrefix Using block meta as img.wh: ${whOpt.orNull}")
                   whOpt
@@ -782,11 +781,9 @@ class JdAdUtil @Inject()(
               )
 
               // Выбираем img maker исходя из конфигурации рендера.
-              val maker = if ( eit.isWide ) {
-                wideImgMaker
-              } else {
-                blkImgMaker
-              }
+              val maker =
+                if (eit.isWide) wideImgMaker
+                else blkImgMaker
 
               // Дописать в результат рассчёта картинки инфу по оригинальной картинке:
               for {

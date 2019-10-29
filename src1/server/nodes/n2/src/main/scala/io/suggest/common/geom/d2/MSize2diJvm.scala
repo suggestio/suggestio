@@ -5,6 +5,7 @@ import java.awt.geom.RectangularShape
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil.{DocField, DocFieldTypes, FieldNumber}
 import io.suggest.media.MediaConst.NamesShort
+import play.api.data.Mapping
 
 /**
   * Suggest.io
@@ -44,6 +45,19 @@ object MSize2diJvm extends IGenEsMappingProps {
 
     }
 
+  }
+
+
+  /** Form-маппинг для SysImgMake. Код вынесен из BlockMetaJvm. */
+  def formMapping: Mapping[MSize2di] = {
+    import play.api.data.Forms._
+    val sizeMapping = number(1, 5000)
+    mapping(
+      "width"   -> sizeMapping,
+      "height"  -> sizeMapping,
+    )
+    { MSize2di.apply }
+    { MSize2di.unapply }
   }
 
 }

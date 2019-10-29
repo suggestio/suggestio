@@ -50,7 +50,7 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
       _doTransform( true, value )
 
     case m if m == DocBodyClick ||
-      m.isInstanceOf[IStripAction] ||
+      m.isInstanceOf[IBlockAction] ||
       m.isInstanceOf[IAddAction] ||
       m.isInstanceOf[IJdAction] =>
       _maybeSetNewTrasform(Some(BG_IMG_ALL_TRANSFORM), value)

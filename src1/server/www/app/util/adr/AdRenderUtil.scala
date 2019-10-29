@@ -92,11 +92,16 @@ class AdRenderUtil @Inject() (
    * @return Фьючерс с байтами картинки.
    */
   def renderAd2img(adArgs: OneAdQsArgs, mad: MNode): Future[File] = {
-    val bm = advUtil.getAdvMainBlockMeta(mad).get
+    val wh = advUtil.getAdvMainBlock(mad)
+      .get
+      .rootLabel
+      .props1
+      .wh
+      .get
 
     // Высота отрендеренной карточки с учетом мультипликатора
-    lazy val width0 = szMulted(bm.width, adArgs.szMult)
-    val height = szMulted(bm.height, adArgs.szMult)
+    lazy val width0 = szMulted(wh.width, adArgs.szMult)
+    val height = szMulted(wh.height, adArgs.szMult)
 
     // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
     // Внешняя полная ширина отрендеренной широкой карточки.

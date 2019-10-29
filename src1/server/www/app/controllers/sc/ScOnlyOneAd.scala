@@ -50,10 +50,11 @@ trait ScOnlyOneAd
           for {
             wideCtx <- bgImgOpt
             if wideCtx.isWide
-            bm      <- advUtil.getAdvMainBlockMeta(mad)
+            mainTpl      <- advUtil.getAdvMainBlock(mad)
+            widthPx      <- mainTpl.rootLabel.props1.widthPx
           } yield {
             // TODO Нужно сдвигать sm-block div согласно запланированной в BgImg центровке, а не на середину.
-            val blockWidth = szMulted(bm.width, args.szMult)
+            val blockWidth = szMulted(widthPx, args.szMult)
             val leftPx = (wideCtx.szCss.width - blockWidth) / 2
             OnlyOneAdTopLeft(leftPx)
           }

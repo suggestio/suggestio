@@ -73,12 +73,12 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
   // Тестим вычислитель szMult для открытой рекламной карточки.
   "fitBlockToScreen() for focused ad" must {
     def t(bw: BlockWidth, bh: BlockHeight, dscr: MScreen, res: SzMult_t): Unit = {
-      val bm = BlockMeta(
-        h = bh,
-        w = bw
+      val wh = MSize2di(
+        height = bh.value,
+        width  = bw.value
       )
       // TODO !isWide не соответствует действительности.
-      fitBlockToScreen(bm, dscr) mustBe res
+      fitBlockToScreen(wh, expandMode = None, dscr) mustBe res
     }
 
     "resize by x1.0 on 320x480 for 300x300 ad" in {

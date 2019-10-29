@@ -1,6 +1,7 @@
 package controllers
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
+import io.suggest.ad.blk.BlockMeta
+import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
 import io.suggest.dev.{MScreenJvm, MSzMults}
 import io.suggest.util.logs.IMacroLogs
 import javax.inject.Singleton
@@ -31,20 +32,14 @@ class SysImgMakeUtil {
   /** Маппинг для [[models.im.make.MImgMakeArgs]] под нужды этого контроллера. */
   def makeArgsM(img: MImgT): Mapping[MImgMakeArgs] = {
     mapping(
-      "blockMeta" -> BlockMetaJvm.formMapping,
+      "blockMeta" -> MSize2diJvm.formMapping,
       "szMult"    -> FormUtil.szMultM,
       "devScreen" -> optional(MScreenJvm.mappingFat),
       "compress"  -> CompressMode.mappingOpt
     )
     { MImgMakeArgs(img, _, _, _, _) }
     {ima =>
-      // После отвязки MakeArgs от BlockMeta возникла необходимость этого костыля:
-      val bmsz = ima.targetSz
-      val bm = BlockMeta(
-        w = BlockWidths.withValue( bmsz.width ),
-        h = BlockHeights.withValue( bmsz.height )
-      )
-      Some((bm, ima.szMult, ima.devScreenOpt, ima.compressMode))
+      Some((ima.targetSz, ima.szMult, ima.devScreenOpt, ima.compressMode))
     }
   }
 
@@ -76,10 +71,9 @@ trait SysImgMake
   /**
    * Рендер страницы с формой задания произвольных параметров вызова maker'а для указанного изображения.
    * @param img Обрабатываемая картинка.
-   * @param bmDflt Необязательные дефолтовые данные полей block-meta. Заливаются в начальную форму.
    * @return 200 ok со страницей с формой описания img make-задачи.
    */
-  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = csrf.AddToken {
+  def makeForm(img: MImgT) = csrf.AddToken {
     isSu().async { implicit request =>
       implicit val ctx = implicitly[Context]
       // Забиндить дефолтовые данные в форму
@@ -87,7 +81,7 @@ trait SysImgMake
         MImgMakers.StrictWide,
         MImgMakeArgs(
           img = img,
-          targetSz = bmDflt getOrElse BlockMeta.DEFAULT,
+          targetSz = MSize2di(BlockMeta.DEFAULT),
           szMult = MSzMults.`1.0`.toFloat,
           devScreenOpt = ctx.deviceScreenOpt
         )

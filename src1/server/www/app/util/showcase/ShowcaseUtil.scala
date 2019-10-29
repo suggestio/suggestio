@@ -1,7 +1,7 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockWidths, MBlockExpandMode}
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.grid.{GridCalc, MGridCalcConf}
 import io.suggest.model.n2.node.{MNode, MNodes}
@@ -14,6 +14,7 @@ import models.mproj.ICommonDi
 import util.adv.AdvUtil
 import util.n2u.N2NodesUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.EsModel
 import io.suggest.jd.MJdConf
 import util.adn.NodesUtil
@@ -67,12 +68,15 @@ class ShowcaseUtil @Inject() (
   def groupNarrowAds[T <: MNode](ads: Seq[T]): Seq[T] = {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
-        val bwidth = advUtil
-          .getAdvMainBlockMeta(e)
-          .fold[BlockWidth] (BlockWidths.default) { bm =>
-            BlockWidths.withValue(bm.width)
+        val isNarrow = advUtil
+          .getAdvMainBlock(e)
+          .fold[Boolean] (true) { jdtTree =>
+            jdtTree.rootLabel.props1.widthPx
+              .exists { widthPx =>
+                BlockWidths.min.value <= widthPx
+              }
           }
-        if (bwidth.isNarrow) {
+        if (isNarrow) {
           enOpt match {
             case Some(en) =>
               (None, en :: e :: acc)
@@ -101,10 +105,12 @@ class ShowcaseUtil @Inject() (
   def focusedBrArgsFor(mad: MNode, deviceScreenOpt: Option[MScreen] = None): Future[blk.RenderArgs] = {
     val szMult: SzMult_t = {
       val dscrSz = for {
-        dscr <- deviceScreenOpt
-        bm   <- advUtil.getAdvMainBlockMeta(mad)
+        dscr    <- deviceScreenOpt
+        treeTpl <- advUtil.getAdvMainBlock(mad)
+        p1 = treeTpl.rootLabel.props1
+        wh      <- p1.wh
       } yield {
-        fitBlockToScreen(bm, dscr)
+        fitBlockToScreen(wh, p1.expandMode, dscr)
       }
       dscrSz getOrElse {
         TILES_SZ_MULTS.last
@@ -180,24 +186,24 @@ class ShowcaseUtil @Inject() (
 
   /**
    * Вписывание блока по ширине и высоте в экран устройства. Прикидываются разные szMult.
-   * @param bm Метаданные блока.
+   * @param wh Метаданные блока.
    * @param dscr Данные по экрану устройства.
    * @return Значение SzMult, пригодное для рендера блока.
    */
-  def fitBlockToScreen(bm: BlockMeta, dscr: MScreen): SzMult_t = {
-    val hfloat = bm.height.toFloat
+  def fitBlockToScreen(wh: MSize2di, expandMode: Option[MBlockExpandMode], dscr: MScreen): SzMult_t = {
+    val hfloat = wh.height.toFloat
 
     val szMultIter0 = for {
       bh <- BlockHeights.values.iterator
       heightPx = bh.value
       if (heightPx < dscr.wh.height) &&
-         (heightPx >= bm.height)
+         (heightPx >= wh.height)
     } yield {
       heightPx.toFloat / hfloat
     }
 
     // для не-wide карточек также возможно отображение в двойном размере.
-    val szMultIter1: Iterator[SzMult_t] = if (bm.expandMode.nonEmpty) {
+    val szMultIter1: Iterator[SzMult_t] = if (expandMode.nonEmpty) {
       szMultIter0
     } else {
       Iterator.single(FOCUSED_SZ_MULT) ++ szMultIter0
@@ -205,7 +211,7 @@ class ShowcaseUtil @Inject() (
 
     val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator).filter { szMult =>
       // Проверяем, влезает ли ширина на экран при таком раскладе?
-      val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.wh.width, paddingPx = FOCUSED_PADDING_CSSPX)
+      val w1 = getW1(szMult, colCnt = 1, blockWidth = wh.width, scrWidth = dscr.wh.width, paddingPx = FOCUSED_PADDING_CSSPX)
       w1 >= MIN_W1
     }
 

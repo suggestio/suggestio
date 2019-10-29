@@ -35,10 +35,15 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
       // Вычисляем мультипликатор размера исходя из отношения высот.
       val srv = serviceHelper
       val sz = adRenderMaxSz
-      val bm = advUtil.getAdvMainBlockMeta(mad).get
+      val jdtP1 = advUtil.getAdvMainBlock(mad)
+        .get
+        .rootLabel
+        .props1
+      val widthPx  = jdtP1.widthPx.get
+      val heightPx = jdtP1.heightPx.get
       val whSzM = Math.min(
-        sz.whPx.height.toFloat / bm.height.toFloat,
-        sz.whPx.width.toFloat  / bm.width.toFloat
+        sz.whPx.height.toFloat / heightPx,
+        sz.whPx.width.toFloat  / widthPx,
       )
       // Нужно домножить на минимально необходимый размер для сервиса.
       // TODO Проквантовать полученный szMult?
@@ -51,7 +56,7 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
         wide   = wideWidthOpt,
         wh = MSize2di(
           width  = wideWidthOpt.fold {
-            szMulted(bm.width, srv.szMult)
+            szMulted(widthPx, srv.szMult)
           }(_.width),
           height = szMulted(sz.whPx.height, szMultV)
         ),

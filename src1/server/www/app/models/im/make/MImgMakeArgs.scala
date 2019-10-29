@@ -1,6 +1,6 @@
 package models.im.make
 
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
 import models.blk.SzMult_t
 import models.im.{CompressMode, MImgT}
@@ -14,7 +14,7 @@ import models.im.{CompressMode, MImgT}
 
 case class MImgMakeArgs(
                          img          : MImgT,
-                         targetSz     : ISize2di,
+                         targetSz     : MSize2di,
                          szMult       : SzMult_t,
                          devScreenOpt : Option[MScreen],
                          compressMode : Option[CompressMode] = None

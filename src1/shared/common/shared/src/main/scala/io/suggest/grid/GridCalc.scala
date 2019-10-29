@@ -1,8 +1,8 @@
 package io.suggest.grid
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockPaddings, BlockWidth, BlockWidths, MBlockExpandModes}
+import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidth, BlockWidths, MBlockExpandMode, MBlockExpandModes}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.d2.IWidth
+import io.suggest.common.geom.d2.{IWidth, MSize2di}
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
@@ -81,35 +81,41 @@ object GridCalc {
 
   /** Определение szMult для wide-рендера одного блока.
     *
-    * @param bm Метаданные исходного блока.
+    * @param wh Метаданные исходного блока.
     * @param gridColumnsCount Конфиг рендера плитки.
     * @return Избранный szMult.
     *         None, если szMult изменять нет необходимости.
     */
-  def wideSzMult(bm: BlockMeta, gridColumnsCount: Int): Option[MSzMult] = {
+  def wideSzMult(wh: MSize2di, expandMode: Option[MBlockExpandMode], gridColumnsCount: Int): Option[MSzMult] = {
     // Мультипликатор размера рендера нужен только для full-expand.
     // Обычный wide-режим просто растягивает только фон силами ScWideMaker, и дополнительный szMult не нужен.
-    OptionUtil.maybeOpt( bm.expandMode contains MBlockExpandModes.Full ) {
+    OptionUtil.maybeOpt( expandMode contains MBlockExpandModes.Full ) {
       Option {
-        bm.h match {
+        /* ~ bm.w.relSz = 1 | 2 | ... */
+        val padOutLinePx = BlockPaddings.default.outlinePx
+        def hModulesCount = wh.width / (BlockWidths.min.value + padOutLinePx)
+
+        if (wh.height <= BlockHeights.H140.value + padOutLinePx) {
           // Малый блок можно увеличивать в 1,2,3,4 раза:
-          case BlockHeights.H140 =>
-            val szMultI = gridColumnsCount / bm.w.relSz
-            val szMultI2 = Math.min(4, szMultI)
-            MSzMult.fromInt( szMultI2 )
+          val szMultI = gridColumnsCount / hModulesCount
+          val szMultI2 = Math.min(4, szMultI)
+          MSzMult.fromInt( szMultI2 )
+
+        } else if (wh.height <= BlockHeights.H300.value + padOutLinePx) {
           // Обычный блок-300 можно в 1 и 2 раза только:
-          case BlockHeights.H300 =>
-            val szMultI = gridColumnsCount / bm.w.relSz
-            val szMultI2 = Math.min(2, szMultI)
-            MSzMult.fromInt( szMultI2 )
+          val szMultI = gridColumnsCount / hModulesCount
+          val szMultI2 = Math.min(2, szMultI)
+          MSzMult.fromInt( szMultI2 )
+
+        } else if (wh.height <= BlockHeights.H460.value + padOutLinePx) {
           // Остальное - без растяжки.
-          case BlockHeights.H460 =>
-            val szMultI = gridColumnsCount.toDouble / bm.w.relSz.toDouble
-            if (szMultI >= 1.5) MSzMults.`1.5`
-            else null
+          val szMultI = gridColumnsCount.toDouble / hModulesCount
+          if (szMultI >= 1.5) MSzMults.`1.5`
+          else null
+
+        } else {
           // Макс.блок - слишком жирен, чтобы ужирнять ещё:
-          case _ =>
-            null
+          null
         }
       }
     }
@@ -129,10 +135,10 @@ object GridCalc {
         tplJdt = tpl.rootLabel
         // Посчитать wideSzMult блока, если wide
         if tplJdt.name ==* MJdTagNames.STRIP
-        bm          <- tplJdt.props1.bm.iterator
-        expandMode  <- bm.expandMode.iterator
+        bm          <- tplJdt.props1.wh.iterator
+        expandMode  <- tplJdt.props1.expandMode.iterator
         if expandMode ==* MBlockExpandModes.Full
-        wideSzMult  <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount ).iterator
+        wideSzMult  <- GridCalc.wideSzMult( bm, tplJdt.props1.expandMode, jdConf.gridColumnsCount ).iterator
         jdt         <- tpl.flatten
       } yield {
         jdt -> wideSzMult

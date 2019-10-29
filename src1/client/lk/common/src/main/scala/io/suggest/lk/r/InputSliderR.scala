@@ -1,5 +1,7 @@
 package io.suggest.lk.r
 
+import com.materialui.MuiSliderProps.Value_t
+import com.materialui.{MuiSlider, MuiSliderClasses, MuiSliderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -10,7 +12,10 @@ import io.suggest.spa.{DAction, OptFastEq}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -53,18 +58,27 @@ class InputSliderR(
                     valueOptC           : ReactConnectProxy[Option[Int]],
                   )
 
+  private lazy val _sliderCss = new MuiSliderClasses {
+    override val root = lkCss.RangeInput.slider.htmlClass
+  }
+
   class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на движение слайдера градусов наклона. */
     private def onValueChange(e: ReactEventFromInput): Callback = {
       val v = e.target.value
+      onValueChange(v)
+    }
+    private def onValueChange(v: String): Callback = {
       if (v.isEmpty) {
         Callback.empty
       } else {
-        val newValue = v.toInt
-        ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-          props.value.get.onChange( newValue )
-        }
+        onValueChange( v.toInt )
+      }
+    }
+    private def onValueChange(v: Int): Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        props.value.get.onChange( v )
       }
     }
 
@@ -74,14 +88,22 @@ class InputSliderR(
         // Слайдер:
         s.propsValOptC { propsValOptProxy =>
           val propsOpt = propsValOptProxy.value
-          <.input(
-            lkCss.RangeInput.slider,
-            ^.`type`    := HtmlConstants.Input.range,
-            ^.value     := propsOpt.fold(0)(_.value),
-            ^.min       := propsOpt.fold(0)(_.min),
-            ^.max       := propsOpt.fold(0)(_.max),
-            ^.onChange ==> onValueChange,
-          )
+          MuiSlider {
+            val _value = propsOpt.fold(0)(_.value)
+            val _min   = propsOpt.fold(0)(_.min)
+            val _max   = propsOpt.fold(0)(_.max)
+            val _onChange = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEventFromHtml, value2: Value_t) =>
+              onValueChange(value2)
+            }
+            new MuiSliderProps {
+              override val max        = _max
+              override val min        = _min
+              @JSName("onChange")
+              override val onChange2  = js.defined( _onChange )
+              override val value      = js.defined( _value: Value_t )
+              override val classes    = _sliderCss
+            }
+          }
         },
 
         HtmlConstants.NBSP_STR,

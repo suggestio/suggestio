@@ -87,8 +87,8 @@ trait IExtServiceHelper
   /** Исповедовать ли широкое отображение при рендере карточки для размещения карточки на сервисе? */
   def isAdvExtWide(mad: MNode): Boolean = {
     advUtil
-      .getAdvMainBlockMeta(mad)
-      .hasExpandMode
+      .getAdvMainBlock(mad)
+      .exists(_.rootLabel.props1.expandMode.nonEmpty)
   }
 
   /** Формат рендера в картинку загружаемой карточки. */

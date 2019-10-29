@@ -1,14 +1,16 @@
 package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{SetBlurTextShadow, SetHorizOffTextShadow, SetTextShadowEnabled, SetVertOffTextShadow}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.JdConst
 import io.suggest.jd.tags.MJdShadow
 import io.suggest.lk.r.{InputSliderR, LkCheckBoxR}
 import io.suggest.lk.r.color.ColorCheckBoxR
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -38,12 +40,13 @@ class TextShadowR(
   type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
 
+  case class State(
+                    isVisible     : ReactConnectProxy[Some[Boolean]],
+                  )
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, State]) {
 
-    def render(propsOptProxy: Props): VdomElement = {
-      val propsOpt = propsOptProxy.value
-
+    def render(propsOptProxy: Props, s: State): VdomElement = {
       <.div(
 
         // Галочка включения тени.
@@ -127,14 +130,17 @@ class TextShadowR(
             }( colorCheckBoxR.apply )(implicitly, OptFastEq.Wrapped(colorCheckBoxR.ColorCheckBoxPropsValFastEq))
           }
 
-          propsOpt.whenDefined { props =>
-            <.div(
-              horizOff,
-              vertOff,
-              blur,
-              shadColor,
-            )
+          s.isVisible { isVisibleSomeProxy =>
+            ReactCommonUtil.maybeEl( isVisibleSomeProxy.value.value ) {
+              <.div(
+                horizOff,
+                vertOff,
+                blur,
+                shadColor,
+              )
+            }
           }
+
         },
 
       )
@@ -145,7 +151,13 @@ class TextShadowR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+        isVisible = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.isDefined )
+        }( FastEq.AnyRefEq )
+      )
+    }
     .renderBackend[Backend]
     .build
 

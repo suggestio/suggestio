@@ -138,7 +138,6 @@ routesImport ++= Seq(
   "io.suggest.geo.MGeoLocJvm._",
   "io.suggest.geo.MLocEnvJvm._",
 
-  "io.suggest.ad.blk.BlockMetaJvm._",
   "io.suggest.model.n2.edge.MPredicatesJvm._",
 
   "io.suggest.crypto.hash.HashesHexJvm._",

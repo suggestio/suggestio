@@ -2,12 +2,14 @@ package util.adv
 
 import java.time.{DayOfWeek, LocalDate}
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidths}
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dt.MYmd
 import io.suggest.es.model.EsModel
+import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
@@ -17,6 +19,7 @@ import models.mcal.MCalsCtx
 import models.mctx.Context
 import models.mdt.IDateStartEnd
 import models.mproj.ICommonDi
+import scalaz.Tree
 import util.TplDataFormatUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
@@ -53,16 +56,13 @@ class AdvUtil @Inject() (
 
 
   /** Извлечь главный BlockMeta из узла-карточки. */
-  def getAdvMainBlockMeta(mad: MNode): Option[BlockMeta] = {
-    mad.extras.doc.fold {
-      // v1-карточка.
-      mad.ad.blockMeta
-    } { doc =>
+  def getAdvMainBlock(mad: MNode): Option[Tree[JdTag]] = {
+    for {
+      doc <- mad.extras.doc
+    } yield {
       // v2-карточки, брать block-meta от главного блока
       doc.template
         .getMainBlockOrFirst
-        .rootLabel
-        .props1.bm
     }
   }
 
@@ -78,19 +78,28 @@ class AdvUtil @Inject() (
   def getAdModulesCount(mad: MNode): Int = {
     // Тут поддержка разных кар
     // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
-    val bm = getAdvMainBlockMeta(mad).get
-    getAdModulesCount(bm)
+    val jdt = getAdvMainBlock(mad)
+      .get
+      .rootLabel
+    getAdModulesCount(jdt)
   }
-  def getAdModulesCount(bm: BlockMeta): Int = {
+  def getAdModulesCount(jdt: JdTag): Int = {
+    val wh = jdt.props1
+      .wh
+      .get
+    getAdModulesCount(wh)
+  }
+  def getAdModulesCount(bm: MSize2di): Int = {
+    val outlinePx = BlockPaddings.default.outlinePx
     // Мультипликатор по ширине
-    val wmul = BlockWidths.withValue(bm.width).relSz
+    val wmul = bm.width / (BlockWidths.min.value + outlinePx) + 1
     // Мультипликатор по высоте
-    val hmul = BlockHeights.withValue(bm.height).relSz
+    val hmul = bm.height / (BlockHeights.min.value + outlinePx) + 1
     wmul * hmul
   }
   def maybeAdModulesCount(mad: MNode): Option[Int] = {
-    getAdvMainBlockMeta(mad)
-      .map( getAdModulesCount )
+    getAdvMainBlock(mad)
+      .map { m => getAdModulesCount(m.rootLabel) }
   }
 
 

@@ -578,10 +578,10 @@ class DocEditAh[M](
     case m: BlockSizeBtnClick =>
       val v0 = value
 
-      val stripTreeLoc0 = v0.jdDoc.jdArgs.selJdt.treeLocOpt.get
+      val stripTreeLoc0 = v0.jdDoc.jdArgs.selJdt
+        .treeLocOpt
+        .get
       val blk0 = stripTreeLoc0.getLabel
-
-      val jdt_p1_bm_LENS = JdTag.props1
 
       blk0.props1.bm
         // Сконвертить в функцию обновления, если значение требует изменения:
@@ -742,10 +742,12 @@ class DocEditAh[M](
     case JdTagDragEnd =>
       val v0 = value
       val l = _jdArgs_renderArgs_dnd_LENS
-      l.get(v0).jdt.fold(noChange) { _ =>
-        val v2 = l.set( MJdDndS.empty )(v0)
-        updated( v2 )
-      }
+      l.get(v0)
+        .jdt
+        .fold(noChange) { _ =>
+          val v2 = l.set( MJdDndS.empty )(v0)
+          updated( v2 )
+        }
 
 
     // Юзер отпустил перетаскиваемый объект на какой-то стрип. Нужно запихать этот объект в дерево нового стрипа.

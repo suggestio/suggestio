@@ -1,11 +1,6 @@
 package io.suggest.ad.blk
 
-import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.playx.FormMappingUtil
-import play.api.data.Mapping
-import play.api.mvc.QueryStringBindable
 
 /**
   * Suggest.io
@@ -33,86 +28,6 @@ object BlockMetaJvm extends IGenEsMappingProps {
       _fint( F.WIDTH),
       FieldKeyword( F.EXPAND_MODE, index = true, include_in_all = false ),
     )
-  }
-
-
-  /** Поддержка QSB для модели BlockWidths. */
-  implicit def blockWidthQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[BlockWidth] =
-    EnumeratumJvmUtil.valueEnumQsb( BlockWidths )
-
-  /** Поддержка QSB для модели BlockHeights. */
-  implicit def blockHeightQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[BlockHeight] =
-    EnumeratumJvmUtil.valueEnumQsb( BlockHeights )
-
-  implicit def blockExpandModeQsb(implicit stringB: QueryStringBindable[String]): QueryStringBindable[MBlockExpandMode] =
-    EnumeratumJvmUtil.valueEnumQsb( MBlockExpandModes )
-
-
-  /** Поддержка сериализации/десериализации в URL query string. */
-  implicit def blockMetaQsb(implicit
-                            blockWidthB   : QueryStringBindable[BlockWidth],
-                            blockHeightB  : QueryStringBindable[BlockHeight],
-                            expandModeB   : QueryStringBindable[Option[MBlockExpandMode]],
-                           ): QueryStringBindable[BlockMeta] = {
-    new QueryStringBindableImpl[BlockMeta] {
-      def WIDTH_FN     = "a"
-      def HEIGHT_FN    = "b"
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, BlockMeta]] = {
-        val k = key1F(key)
-        for {
-          bWidthE     <- blockWidthB.bind  (k(WIDTH_FN), params)
-          bHeightE    <- blockHeightB.bind (k(HEIGHT_FN), params)
-          expandModeE <- expandModeB.bind  (k( BlockMeta.Fields.EXPAND_MODE ), params)
-        } yield {
-          for {
-            width         <- bWidthE.right
-            height        <- bHeightE.right
-            expandMode    <- expandModeE.right
-          } yield {
-            BlockMeta(
-              w           = width,
-              h           = height,
-              expandMode  = expandMode,
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: BlockMeta): String = {
-        val k = key1F(key)
-        _mergeUnbinded1(
-          blockWidthB.unbind  ( k(WIDTH_FN),     value.w),
-          blockHeightB.unbind ( k(HEIGHT_FN),    value.h),
-          expandModeB.unbind  ( k( BlockMeta.Fields.EXPAND_MODE ), value.expandMode ),
-        )
-      }
-    }
-  }
-
-  def blockHeightMapping: Mapping[BlockHeight] = {
-    FormMappingUtil.optMapping2required(
-      EnumeratumJvmUtil.intIdOptMapping( BlockHeights ) )
-  }
-
-  def blockWidthMapping: Mapping[BlockWidth] = {
-    FormMappingUtil.optMapping2required(
-      EnumeratumJvmUtil.intIdOptMapping( BlockWidths ) )
-  }
-
-  def expandModeMapping: Mapping[Option[MBlockExpandMode]] =
-    EnumeratumJvmUtil.stringIdOptMapping( MBlockExpandModes )
-
-  /** Маппинг для интерфейса IBlockMeta. */
-  def formMapping: Mapping[BlockMeta] = {
-    import play.api.data.Forms._
-    mapping(
-      "width"   -> blockWidthMapping,
-      "height"  -> blockHeightMapping,
-      "expandMode" -> expandModeMapping,
-    )
-    { BlockMeta.apply }
-    { BlockMeta.unapply }
   }
 
 }

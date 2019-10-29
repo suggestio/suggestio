@@ -7,7 +7,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-materialui"
 
-version := "4.1.3"
+version := "4.5.2"
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -16,7 +16,7 @@ scalacOptions += "-feature"
 
 npmDependencies in Compile ++= Seq(
   "@material-ui/core"  -> version.value,
-  "@material-ui/icons" -> "4.2.1"
+  "@material-ui/icons" -> "4.5.1"
 )
 
 useYarn := true

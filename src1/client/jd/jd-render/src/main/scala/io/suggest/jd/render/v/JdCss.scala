@@ -332,8 +332,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       val jdt = jdCssArgs.data.jdTagsById( jdtId )
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
         val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
+        val gridWidthPx = jdCssArgs.conf.gridInnerWidthPx
         styleS(
-          width( _szMulted(widthPx, wideSzMultOpt).px )
+          width( Math.min(gridWidthPx, _szMulted(widthPx, wideSzMultOpt)).px )
         )
       }
     },
