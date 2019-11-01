@@ -112,8 +112,8 @@ class JdR(
           contTagModsAcc ::= jdCss.contentShadowF( state.tagId )
 
         // Общие стили для текстов внутри (line-height):
-        if (qdTag.props1.lineHeight.nonEmpty)
-          contTagModsAcc ::= jdCss.lineHeightF( state.tagId )
+        for (lineHeightPx <- qdTag.props1.lineHeight)
+          contTagModsAcc ::= jdCss.lineHeightF( lineHeightPx )
 
         <.div( contTagModsAcc : _* )
       }

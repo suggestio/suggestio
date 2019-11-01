@@ -408,10 +408,10 @@ case class QdRrrHtml(
       // Выставить lineHeight, если он не выставлен на уровне qd-content тега:
       for {
         szSU <- attrs.size
-        if szSU.nonEmpty &&
-           !rrrProps.parent.exists(_.props1.lineHeight.nonEmpty)
+        if !rrrProps.parent.exists(_.props1.lineHeight.nonEmpty)
+        sz   <- szSU
       } {
-        val tm: TagMod = rrrProps.jdArgs.jdRuntime.jdCss.lineHeightF( jdtQdOp.jdTagId )
+        val tm: TagMod = rrrProps.jdArgs.jdRuntime.jdCss.lineHeightF( sz.lineHeight )
         val tms = tm :: textStyleOpt.toList
         TagMod( tms: _* )
       }

@@ -361,38 +361,34 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Межстрочка может быть задана вручную, но и может быть задана в рамках размера шрифта. */
   val lineHeightF = {
     val _lineHeightAttr = lineHeight
+
     styleF(
       new Domain.OverSeq(
-        _filteredTagIds { jdt =>
-          jdt.props1.lineHeight.nonEmpty || jdt.qdProps.exists { qdOp =>
-            qdOp
-              .attrsText
-              .exists(_.size.nonEmpty)
-          }
-        }
-      )
-    )(
-      {jdtId =>
-        val jdt = jdCssArgs.data.jdTagsById( jdtId )
-        var acc = List.empty[ToStyle]
-        lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
-
-        for {
-          lineHeight <- jdt.props1
+        (for {
+          (_, jdt) <- jdCssArgs.data
+            .jdTagsById
+            .iterator
+          lineHeightPx <- jdt.props1
             .lineHeight
             .orElse {
-              for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText;
-                   szSU <- attrsText.size; sz <- szSU.toOption)
-              yield sz.lineHeight
+              for {
+                qd          <- jdt.qdProps
+                attrsText   <- qd.attrsText
+                szSU        <- attrsText.size
+                sz          <- szSU.toOption
+              } yield sz.lineHeight
             }
-        } {
-          acc ::= _lineHeightAttr( _szMulted(lineHeight, wideSzMultOpt).px )
-        }
-
-        // Вернуть скомпонованный стиль.
-        styleS( acc: _* )
+        } yield lineHeightPx)
+          .toSet
+          .toIndexedSeq
+      )
+    )(
+      {lineHeightPx =>
+        styleS(
+          _lineHeightAttr( lineHeightPx.px ),
+        )
       },
-      JdCss._jdIdToStringF,
+      (lineHeight, _) => lineHeight.toString
     )
   }
 
@@ -404,7 +400,6 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val _bgColorAttr = backgroundColor
     val _fontFamilyAttr = fontFamily.attr
     val _fontSizeAttr = fontSize
-    val _lineHeightAttr = lineHeight
 
     styleF(
       new Domain.OverSeq(
