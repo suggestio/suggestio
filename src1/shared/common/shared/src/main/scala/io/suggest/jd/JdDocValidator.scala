@@ -47,6 +47,7 @@ class JdDocValidator(
   private def MAIN    = "main"
   private def ROTATE  = "rot"
   private def TEXT_SHADOW = "txSh"
+  private def LINE_HEIGHT = "lineHeight"
 
   import ErrorConstants.Words._
 
@@ -148,7 +149,8 @@ class JdDocValidator(
       ScalazUtil.liftNelSome(props1.heightPx, errMsgF(HEIGHT + `.` + MISSING)) { heightPx =>
         Validation.liftNel( heightPx )( BlockHeights.withValueOpt(_).isEmpty, errMsgF(WIDTH + `.` + INVALID) )
       } |@|
-      ScalazUtil.liftNelOpt(props1.expandMode)( Validation.success )
+      ScalazUtil.liftNelOpt(props1.expandMode)( Validation.success ) |@|
+      ScalazUtil.liftNelNone(props1.lineHeight, errMsgF(LINE_HEIGHT))
     )( MJdtProps1.apply )
   }
 
@@ -253,7 +255,10 @@ class JdDocValidator(
         )
       } |@|
       ScalazUtil.liftNelNone(qdProps1.heightPx, errMsgF(HEIGHT + `.` + UNEXPECTED)) |@|
-      ScalazUtil.liftNelNone(qdProps1.expandMode, errMsgF(EXPAND_MODE + `.` + UNEXPECTED))
+      ScalazUtil.liftNelNone(qdProps1.expandMode, errMsgF(EXPAND_MODE + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelOpt( qdProps1.lineHeight ) { lineHeight =>
+        Validation.liftNel( lineHeight )( !MJdtProps1.LineHeight.isValid(_) , errMsgF(LINE_HEIGHT))
+      }
     )( MJdtProps1.apply )
   }
 

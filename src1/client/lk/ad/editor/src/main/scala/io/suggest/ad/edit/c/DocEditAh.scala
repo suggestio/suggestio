@@ -7,7 +7,6 @@ import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.{MDocS, MEditorsS, MJdDocEditS, MQdEditS, MSlideBlocks, MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
-import io.suggest.common.MHands
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
@@ -137,6 +136,38 @@ class DocEditAh[M](
     v0.jdDoc.jdArgs.selJdt
       .treeLocOpt
       .shadowUpdated(v0)(f)
+  }
+
+
+  private def _updateQdContentProps(selJdt2: JdTag, v0: MDocS): ActionResult[M] = {
+    val jdArgs0 = v0.jdDoc.jdArgs
+    val selJdtLoc0 = jdArgs0.selJdt.treeLocOpt.get
+
+    val tpl2 = selJdtLoc0
+      .setLabel(selJdt2)
+      .toTree
+    val jdDoc2 = MJdDoc.template.set(tpl2)( jdArgs0.data.doc )
+
+    // Выставить Pot.pending в qdBlockLess для текущего тега, а потом только пересобирать новый рантайм.
+    val jdRuntime1 = if (isQdBlockless(selJdtLoc0)) {
+      DocEditAh.qdBlockLess2Pending( jdArgs0 )
+    } else {
+      jdArgs0.jdRuntime
+    }
+
+    val v2 = MDocS.jdDoc.modify(
+      MJdDocEditS.jdArgs.modify(
+        MJdArgs.data
+          .composeLens( MJdDataJs.doc )
+          .set( jdDoc2 ) andThen
+        MJdArgs.jdRuntime.set(
+          mkJdRuntime2(jdDoc2, jdArgs0.conf, jdRuntime1)
+            .result
+        )
+      )
+    )( v0 )
+
+    updated( v2 )
   }
 
 
@@ -281,13 +312,38 @@ class DocEditAh[M](
       }
 
 
+    // Изменение высоты строки (межстрочки).
+    case m: LineHeightSet =>
+      val v0 = value
+      val jdArgs0 = v0.jdDoc.jdArgs
+
+      (for {
+        selJdtLoc0 <- jdArgs0.selJdt.treeLocOpt
+        jdt0 = selJdtLoc0.getLabel
+
+        if (jdt0.props1.lineHeight !=* m.lineHeight) && (
+          // Убедится, что значение не выходит за допустымые пределы поворота:
+          m.lineHeight
+            .fold(true)( MJdtProps1.LineHeight.isValid )
+        )
+
+      } yield {
+        val jdt2 = JdTag.props1
+          .composeLens( MJdtProps1.lineHeight )
+          .set( m.lineHeight )( jdt0 )
+
+        _updateQdContentProps(jdt2, v0)
+      })
+        .getOrElse(noChange)
+
+
     // Изменения состояния ротации текущего jd-тега.
     case m: RotateSet =>
       val v0 = value
       val jdArgs0 = v0.jdDoc.jdArgs
 
       (for {
-        selJdtLoc0 <- jdArgs0.selJdt.treeLocOpt
+        selJdtLoc0 <- v0.jdDoc.jdArgs.selJdt.treeLocOpt
         jdt0 = selJdtLoc0.getLabel
 
         if (jdt0.props1.rotateDeg !=* m.degrees) && (
@@ -301,31 +357,8 @@ class DocEditAh[M](
         val jdt2 = JdTag.props1
           .composeLens( MJdtProps1.rotateDeg )
           .set( m.degrees )( jdt0 )
-        val tpl2 = selJdtLoc0
-          .setLabel(jdt2)
-          .toTree
-        val jdDoc2 = MJdDoc.template.set(tpl2)( jdArgs0.data.doc )
 
-        // Выставить Pot.pending в qdBlockLess для текущего тега, а потом только пересобирать новый рантайм.
-        val jdRuntime1 = if (isQdBlockless(selJdtLoc0)) {
-          DocEditAh.qdBlockLess2Pending( jdArgs0 )
-        } else {
-          jdArgs0.jdRuntime
-        }
-
-        val v2 = MDocS.jdDoc.modify(
-          MJdDocEditS.jdArgs.modify(
-            MJdArgs.data
-              .composeLens( MJdDataJs.doc )
-              .set( jdDoc2 ) andThen
-            MJdArgs.jdRuntime.set(
-              mkJdRuntime2(jdDoc2, jdArgs0.conf, jdRuntime1)
-                .result
-            )
-          )
-        )( v0 )
-
-        updated( v2 )
+        _updateQdContentProps(jdt2, v0)
       })
        .getOrElse( noChange )
 
@@ -583,54 +616,39 @@ class DocEditAh[M](
         .get
       val blk0 = stripTreeLoc0.getLabel
 
-      blk0.props1.bm
-        // Сконвертить в функцию обновления, если значение требует изменения:
-        .flatMap { bm0 =>
-          val (szOpt3, lens) = m.model match {
-            case bhs @ BlockHeights =>
-              val sz0 = bm0.h
-              val szOpt2 = m.direction match {
-                case MHands.Left  => bhs.previousOf( sz0 )
-                case MHands.Right => bhs.nextOf( sz0 )
-              }
-              szOpt2 -> MJdtProps1.heightPx
+      val (sz3, lens) = m.model match {
+        case bhs @ BlockHeights =>
+          val sz2 = bhs.withValue( m.value )
+          sz2 -> MJdtProps1.heightPx
+        case bws @ BlockWidths =>
+          val sz2 = bws.withValue( m.value )
+          sz2 -> MJdtProps1.widthPx
+      }
+      val bmUpdateF = lens.set( Some(sz3.value) )
 
-            case bws @ BlockWidths =>
-              val sz0 = bm0.w
-              val szOpt2 = m.direction match {
-                case MHands.Left  => bws.previousOf( sz0 )
-                case MHands.Right => bws.nextOf( sz0 )
-              }
-              szOpt2 -> MJdtProps1.widthPx
-          }
-          for (sz3 <- szOpt3) yield
-            lens.set( Some(sz3.value) )
-        }
-        .fold(noChange) { bmUpdateF =>
-          val blk2 = JdTag.props1
-            .modify(bmUpdateF)(blk0)
+      val blk2 = JdTag.props1
+        .modify(bmUpdateF)(blk0)
 
-          val template2 = stripTreeLoc0
-            .setLabel(blk2)
-            .toTree
-          val jdDoc2 = (MJdDoc.template set template2)( v0.jdDoc.jdArgs.data.doc )
-          val jdArgs2 = (
-            MJdArgs.data
-              .composeLens( MJdDataJs.doc )
-              .set( jdDoc2 ) andThen
-            MJdArgs.jdRuntime.set(
-              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
-            )
-          )(v0.jdDoc.jdArgs)
+      val template2 = stripTreeLoc0
+        .setLabel(blk2)
+        .toTree
+      val jdDoc2 = (MJdDoc.template set template2)( v0.jdDoc.jdArgs.data.doc )
+      val jdArgs2 = (
+        MJdArgs.data
+          .composeLens( MJdDataJs.doc )
+          .set( jdDoc2 ) andThen
+        MJdArgs.jdRuntime.set(
+          mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
+        )
+      )(v0.jdDoc.jdArgs)
 
-          // Обновить и дерево, и currentTag новым инстансом.
-          val v2 = MDocS.jdDoc.modify(
-            (MJdDocEditS.jdArgs set jdArgs2) andThen
-            (MJdDocEditS.gridBuild set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2))
-          )(v0)
+      // Обновить и дерево, и currentTag новым инстансом.
+      val v2 = MDocS.jdDoc.modify(
+        (MJdDocEditS.jdArgs set jdArgs2) andThen
+        (MJdDocEditS.gridBuild set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2))
+      )(v0)
 
-          updated( v2 )
-        }
+      updated( v2 )
 
 
     // Клик по кнопке удаления или подтверждения удаления текущего стрипа
@@ -1094,11 +1112,12 @@ class DocEditAh[M](
                   } { qdProps0 =>
                     JdTag.qdProps.set( Some(
                       MQdOp.attrsText.set( Some(
-                        qdProps0.attrsText
-                          .getOrElse( MQdAttrsText.empty )
-                          .withBackground(
-                            topColorMcdOpt.map( SetVal.apply )
-                          )
+                        MQdAttrsText.background.set(
+                          topColorMcdOpt.map( SetVal.apply )
+                        )(
+                          qdProps0.attrsText
+                            .getOrElse( MQdAttrsText.empty )
+                        )
                       ))(qdProps0)
                     ))(el1)
                   }
@@ -1160,23 +1179,7 @@ class DocEditAh[M](
         // Сохранить новую ширину в состояние текущего тега:
         val jdt2 = jdt_p1_width_LENS
           .set( m.widthPx )( jdt0 )
-        val loc2 = loc0.setLabel( jdt2 )
-        val tpl2 = loc2.toTree
-        val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
-
-        val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
-
-        val v2 = MDocS.jdDoc
-          .composeLens(MJdDocEditS.jdArgs)
-          .modify(
-            MJdArgs.data
-              .composeLens( MJdDataJs.doc )
-              .set(jdDoc2) andThen
-            MJdArgs.jdRuntime
-              .set( jdRuntime2 )
-          )(v0)
-
-        updated(v2)
+        _updateQdContentProps(jdt2, v0)
       }
 
 

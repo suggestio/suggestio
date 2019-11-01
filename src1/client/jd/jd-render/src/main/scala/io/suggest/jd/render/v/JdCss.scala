@@ -102,18 +102,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // Strip
 
-  /** Внутри wide-блока находится контейнер контентов (это strip). Ширина wide-стрипа задаётся здесь: */
-  //private lazy val wideBlockWidthPx = jdCssArgs.conf.gridWidthPx * 0.70
-
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val bmStyleF = {
     // Для wide - ширина и длина одинаковые.
-    /*
-    lazy val (wideLeftAv, wideWidthAv) = {
-      val wLeftPx  = (jdCssArgs.conf.gridWidthPx * 0.15).px
-      (left(wLeftPx), width(wideBlockWidthPx.px))
-    }
-    */
     val pc50 = 50.%%.value
     val left0px = left( 0.px )
 
@@ -153,14 +144,8 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           }
         }
 
-        for (heightPx0 <- blk.props1.heightPx) {
+        for (heightPx0 <- blk.props1.heightPx)
           accS ::= height( _szMulted(heightPx0, wideSzMultOpt).px )
-        }
-
-        // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
-        for (_ <- wideSzMultOpt) {
-          accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
-        }
 
         // Скомпилировать акк стилей:
         styleS( accS: _* )
@@ -246,14 +231,17 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       }
 
       // Цвет фона
-      for (bgColor <- strip.props1.bgColor) {
+      for (bgColor <- strip.props1.bgColor)
         accS ::= backgroundColor( Color(bgColor.hexCode) )
-      }
+
+      // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
+      if (wideSzMultOpt.nonEmpty)
+        accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
 
       // Если нет фона, выставить ширину принудительно.
-      if (strip.props1.bgImg.isEmpty  &&  !jdCssArgs.conf.isEdit) {
+      if (strip.props1.bgImg.isEmpty  &&  !jdCssArgs.conf.isEdit)
         accS ::= width( jdCssArgs.conf.plainWideBlockWidthPx.px )
-      }
+
       // Объеденить все стили:
       styleS( accS: _* )
     },
@@ -382,7 +370,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(
       new Domain.OverSeq(
         _filteredTagIds { jdt =>
-          jdt.qdProps.exists { qdOp =>
+          jdt.props1.isContentCssStyled || jdt.qdProps.exists { qdOp =>
             qdOp.attrsText
               .exists(_.isCssStyled)
           }
@@ -391,41 +379,53 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     ) (
       {jdtId =>
         val jdt = jdCssArgs.data.jdTagsById( jdtId )
-        val attrsText = jdt.qdProps.get.attrsText.get
 
         var acc = List.empty[ToStyle]
 
-        // Отрендерить аттрибут одного цвета.
-        // cssAttr не всегда обязателен, но его обязательная передача компенсируется через _colorAttr и _bgColorAttr.
-        def __applyToColor(cssAttr: TypedAttr_Color,  mcdSuOpt: Option[ISetUnset[MColorData]]): Unit = {
-          for (colorSU <- mcdSuOpt; color <- colorSU)
-            acc ::= cssAttr( Color(color.hexCode) )
+        lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
+
+        // Межстрочка может быть задана вручную, но и может быть задана в рамках размера шрифта.
+        for {
+          lineHeight <- jdt.props1
+            .lineHeight
+            .orElse {
+              for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText;
+                   szSU <- attrsText.size; sz <- szSU.toOption)
+              yield sz.lineHeight
+            }
+        } {
+          acc ::= _lineHeightAttr( _szMulted(lineHeight, wideSzMultOpt).px )
         }
 
-        __applyToColor( _colorAttr, attrsText.color )
-        __applyToColor( _bgColorAttr, attrsText.background )
+        for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText) {
+          // Отрендерить аттрибут одного цвета.
+          // cssAttr не всегда обязателен, но его обязательная передача компенсируется через _colorAttr и _bgColorAttr.
+          def __applyToColor(cssAttr: TypedAttr_Color,  mcdSuOpt: Option[ISetUnset[MColorData]]): Unit = {
+            for (colorSU <- mcdSuOpt; color <- colorSU)
+              acc ::= cssAttr( Color(color.hexCode) )
+          }
 
-        // Если задан font, то нужно отрендерить font-family:
-        for (fontSU <- attrsText.font; font <- fontSU) {
-          val av = _fontFamilyAttr := Css.quoted( font.cssFontFamily )
-          acc ::= av
+          __applyToColor( _colorAttr, attrsText.color )
+          __applyToColor( _bgColorAttr, attrsText.background )
+
+          // Если задан font, то нужно отрендерить font-family:
+          for (fontSU <- attrsText.font; font <- fontSU) {
+            val av = _fontFamilyAttr := Css.quoted( font.cssFontFamily )
+            acc ::= av
+          }
+
+          // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
+          for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
+            // Отрендерить размер шрифта
+            acc ::= _fontSizeAttr( _szMulted(fontSizePx.value, wideSzMultOpt).px )
+
+            // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
+            if (fontSizePx.forceRenderBlockHtml5)
+              acc ::= display.block
+          }
+
+          //!!! При добавлении поддержки сюда новых аттрибутов attrsText, надо не забывать про набивку .isCssStyled .
         }
-
-        // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
-        for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
-          val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
-
-          // Рендер размера шрифта
-          acc ::= _lineHeightAttr( _szMulted(fontSizePx.lineHeight, wideSzMultOpt).px )
-          // Отрендерить размер шрифта
-          acc ::= _fontSizeAttr( _szMulted(fontSizePx.value, wideSzMultOpt).px )
-
-          // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
-          if (fontSizePx.forceRenderBlockHtml5)
-            acc ::= display.block
-        }
-
-        //!!! При добавлении поддержки сюда новых аттрибутов attrsText, надо не забывать про набивку .isCssStyled .
 
         // Вернуть скомпонованный стиль.
         styleS( acc: _* )

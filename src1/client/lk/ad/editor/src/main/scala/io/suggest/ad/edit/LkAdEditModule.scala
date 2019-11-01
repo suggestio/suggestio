@@ -67,6 +67,7 @@ class LkAdEditModule {
 
   lazy val rotateR = wire[RotateR]
   lazy val widthPxOptR = wire[WidthPxOptR]
+  lazy val lineHeightR = wire[LineHeightR]
 
   lazy val contentEditCssR = wire[ContentEditCssR]
 

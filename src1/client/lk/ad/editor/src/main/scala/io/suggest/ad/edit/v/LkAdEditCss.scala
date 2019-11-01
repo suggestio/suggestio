@@ -16,11 +16,6 @@ class LkAdEditCss
 
   import dsl._
 
-
-  /** Стиль для поля редактора. */
-  val editorFieldContainer = _classNameStyle( "edit-ad_block-field" )
-
-
   /** Короткий код для создания стилей-алиасов, указывающих на внешние стили. */
   private def _classNameStyle(cn: String) = {
     style(
@@ -32,23 +27,10 @@ class LkAdEditCss
   /** Стили элементов управление высотой/шириной блока. */
   object WhControls {
 
-    private def _CSS_PREFIX = "block-height-editor"
-
-    val outer = style(
-      display.tableCell
+    val slider = style(
+      width( 400.px ),
+      marginBottom( 10.px ),
     )
-
-    val contWidth  = _classNameStyle( "__width" )
-    val contHeight = _classNameStyle( "__height" )
-
-    val btnsContainer = _classNameStyle( _CSS_PREFIX )
-
-    val label = _classNameStyle( _CSS_PREFIX + "_label" )
-
-    val btn = _classNameStyle( _CSS_PREFIX + "_btn" )
-
-    val increase = _classNameStyle( "__increase" )
-    val decrease = _classNameStyle( "__decrease" )
 
     val marginLeft0 = style(
       marginLeft( 0.px ).important
@@ -102,6 +84,23 @@ class LkAdEditCss
   }
 
 
+  object TextShadow {
+    val cont = style(
+      height( 70.px ),
+    )
+
+    val first = style(
+      marginTop( -30.px ).important,
+    )
+    val second = style(
+      marginTop( 0.px ),
+    )
+    val third = style(
+      marginTop( 30.px ),
+    )
+  }
+
+
   /** Стили для кропа. */
   object Crop {
 
@@ -125,8 +124,9 @@ class LkAdEditCss
 
 
   initInnerObjects(
-    WhControls.contWidth,
+    WhControls.marginRight40,
     Layout.editorsCont,
+    TextShadow.second,
     Crop.popup,
     StripMain.showAll,
   )

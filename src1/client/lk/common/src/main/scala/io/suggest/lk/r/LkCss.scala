@@ -61,7 +61,17 @@ class LkCss extends StyleSheet.Inline {
 
     val slider = style(
       verticalAlign.middle,
-      width(150.px).important,
+      width(300.px).important,
+    )
+
+    val sliderCont = style(
+      position.absolute,
+      right( 20.px ),
+      marginTop( -8.px ),
+    )
+
+    val sliderOuter = style(
+      height( 30.px ),
     )
 
     val textInput = style(

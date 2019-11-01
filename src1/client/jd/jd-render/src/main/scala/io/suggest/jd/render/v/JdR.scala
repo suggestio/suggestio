@@ -111,6 +111,10 @@ class JdR(
         if( qdTag.props1.textShadow.nonEmpty )
           contTagModsAcc ::= jdCss.contentShadowF( state.tagId )
 
+        // Общие стили для текстов внутри (line-height):
+        if (qdTag.props1.isContentCssStyled)
+          contTagModsAcc ::= jdCss.textStyleF( state.tagId )
+
         <.div( contTagModsAcc : _* )
       }
 
@@ -239,92 +243,81 @@ class JdR(
 
         val isWide = s.props1.expandMode.nonEmpty
 
-        val bgColor = _bgColorOpt(s, state.jdArgs)
-
-        val groupOutlineTm = state.jdArgs.renderArgs
-          .groupOutLined
-          .whenDefined { mcd =>
-            TagMod(
-              C.blockGroupOutline,
-              ^.outlineColor := mcd.hexCode
-            )
-          }
-
-        val bgImgOpt = for {
-          bgImgData <- s.props1.bgImg
-          edge      <- state.jdArgs.data.edges.get( bgImgData.edgeUid )
-          if edge.jdEdge.predicate ==>> MPredicates.JdContent.Image
-          bgImgSrc  <- edge.origImgSrcOpt
-        } yield {
-          <.img(
-            ^.`class` := Css.Block.BG,
-            ^.src := bgImgSrc,
-
-            _bgImgAddons(bgImgData, edge, state),
-
-            // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
-            state.jdArgs.renderArgs.selJdtBgImgMod
-              .filter(_ => state.isCurrentSelected)
-              .whenDefined
-          )
-        }
-        val bgImgTm = bgImgOpt.whenDefined
-
-        val maybeSelAV = _outerContainerAddons(state)
-
-        // Скрывать не-main-стрипы, если этого требует рендер.
-        // Это касается только стрипов, у которых нет isMain = Some(true)
-        val hideNonMainStrip = ReactCommonUtil.maybe(
-          state.jdArgs.renderArgs.hideNonMainStrips &&
-            !s.props1.isMain.getOrElseFalse
-        ) {
-          // Данный стип надо приглушить с помощью указанных css-стилей.
-          ^.visibility.hidden
-        }
-
-        val smBlock = <.div(
-          jdCssStatic.smBlockS,
-          C.smBlock,
-          C.contentOuter,
-          C.bmStyleF( state.tagId ),
-
-          if (isWide) {
-            jdCssStatic.wideBlockStyle
-          } else {
-            TagMod(
-              hideNonMainStrip,
-              bgColor,
-              maybeSelAV,
-              groupOutlineTm
-            )
-          },
-
-          _smBlockAddons(state),
-
-          // Если задана фоновая картинка, от отрендерить её.
-          bgImgTm.unless(isWide),
-
-          renderChildren( propsProxy )
-            .toVdomArray
-        )
-
-        if (isWide) {
+        val container = if (isWide) {
           // Широкоформатное отображение, рендерим фон без ограничений блока:
           <.div(
-            groupOutlineTm,
-            hideNonMainStrip,
-            bgColor,
             C.wideContStyleF(state.tagId),
-            maybeSelAV,
             ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
-            bgImgTm.when(isWide),
-            smBlock
           )
         } else {
           // Обычное отображение, просто вернуть блок.
-          smBlock
+          <.div(
+            jdCssStatic.smBlockS,
+            C.smBlock,
+            C.bmStyleF( state.tagId ),
+          )
         }
 
+        // Наборчик vdom-аттрибутов для внешнего контейнера текущего блока:
+        container(
+
+          // Статические и полустатические css-стили
+          jdCssStatic.contentOuterS,
+          C.contentOuter,
+
+          // Скрывать не-main-стрипы, если этого требует рендер.
+          // Это касается только стрипов, у которых нет isMain = Some(true)
+          ReactCommonUtil.maybe(
+            state.jdArgs.renderArgs.hideNonMainStrips &&
+              !s.props1.isMain.getOrElseFalse
+          ) {
+            // Данный стип надо приглушить с помощью указанных css-стилей.
+            ^.visibility.hidden
+          },
+
+          _bgColorOpt(s, state.jdArgs),
+
+          // Для maybeSelected в редакторе:
+          _outerContainerAddons(state),
+
+          // Объединение цветом группы блоков для раскрытой карточки.
+          state.jdArgs.renderArgs
+            .groupOutLined
+            .whenDefined { mcd =>
+              TagMod(
+                C.blockGroupOutline,
+                ^.outlineColor := mcd.hexCode,
+              )
+            },
+
+          // Если задана фоновая картинка, от отрендерить её.
+          (for {
+            bgImgData <- s.props1.bgImg
+            edge      <- state.jdArgs.data.edges.get( bgImgData.edgeUid )
+            if edge.jdEdge.predicate ==>> MPredicates.JdContent.Image
+            bgImgSrc  <- edge.origImgSrcOpt
+          } yield {
+            <.img(
+              ^.`class` := Css.Block.BG,
+              ^.src := bgImgSrc,
+
+              _bgImgAddons(bgImgData, edge, state),
+
+              // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
+              state.jdArgs.renderArgs.selJdtBgImgMod
+                .filter(_ => state.isCurrentSelected)
+                .whenDefined
+            )
+          })
+            .whenDefined,
+
+          _smBlockAddons(state),
+
+          // Наконец, рендер дочерних элементов jd-дерева.
+          pureChildren( renderChildrenWithId( propsProxy ) )
+            .toVdomArray,
+
+        )
       }
 
     }
@@ -426,9 +419,9 @@ class JdR(
         Stream.empty
       }
     }
-    def renderChildren(proxy: ModelProxy[MJdRrrProps]): Stream[VdomNode] = {
-      renderChildrenWithId(proxy)
-        .map(_._3)
+
+    def pureChildren(chs: Stream[(MJdTagId, Tree[JdTag], VdomNode)]): Stream[VdomNode] = {
+      chs.map(_._3)
     }
 
 

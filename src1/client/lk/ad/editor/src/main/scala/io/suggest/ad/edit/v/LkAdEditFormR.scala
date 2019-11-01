@@ -5,7 +5,7 @@ import com.github.react.dnd.backend.touch.TouchBackend
 import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
+import io.suggest.ad.blk.{BlockHeights, BlockWidths, MBlockExpandMode}
 import io.suggest.ad.edit.c.DocEditAh
 import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
@@ -26,7 +26,7 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.edit.v.JdEditR
-import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
+import io.suggest.jd.tags.{JdTag, MJdShadow, MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, TouchSwitchR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
@@ -39,6 +39,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
+import scalaz.TreeLoc
 
 
 /**
@@ -68,6 +69,7 @@ class LkAdEditFormR(
                      val colorCheckBoxR         : ColorCheckBoxR,
                      rotateR                    : RotateR,
                      widthPxOptR                : WidthPxOptR,
+                     lineHeightR                : LineHeightR,
                      val slideBlockR            : SlideBlockR,
                      val colorPickerR           : ColorPickerR,
                      val quillEditorR           : QuillEditorR,
@@ -91,10 +93,10 @@ class LkAdEditFormR(
                               savePropsC                      : ReactConnectProxy[saveR.PropsVal],
                               useAsMainStripPropsOptC         : ReactConnectProxy[Option[useAsMainR.PropsVal]],
                               deletePropsOptC                 : ReactConnectProxy[Option[deleteBtnR.PropsVal]],
-                              heightPropsOptC                 : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
-                              widthPropsOptC                  : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
+                              heightPropsOptC                 : ReactConnectProxy[Option[Int]],
+                              widthPropsOptC                  : ReactConnectProxy[Option[Int]],
                               stripEdSOptC                    : ReactConnectProxy[Option[MStripEdS]],
-                              blockExpandModeOptC             : ReactConnectProxy[Option[MBlockExpandMode]],
+                              expandModeOptC                  : ReactConnectProxy[Option[MBlockExpandMode]],
                               slideBlocks                     : SlideBlocksState,
                               colors                          : ColorsState,
                               quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]],
@@ -173,20 +175,49 @@ class LkAdEditFormR(
 
           // Рендер редакторов: собираем все редакторы вне контекста функции общего div'а.
           {
+            val plusMinusOptFeq = OptFastEq.Wrapped(plusMinusControlsR.PlusMinusControlsPropsValFastEq)
+
             // Редактор strip'а
             val slideBlockBodyDiv = <.div(
               // Кнопки управление шириной и высотой блока.
               <.div(
                 // Галочка широкого рендера фона.
-                lkAdEditCss.WhControls.outer,
+                //lkAdEditCss.WhControls.outer,
+                ^.`class` := Css.Overflow.HIDDEN,
 
-                s.heightPropsOptC { plusMinusControlsR.apply },
-                s.widthPropsOptC { plusMinusControlsR.apply },
-                <.br,
+                s.heightPropsOptC { heightPxOptProxy =>
+                  heightPxOptProxy.wrap { heightPxOpt =>
+                    for {
+                      heightPx  <- heightPxOpt
+                      h         <- BlockHeights.withValueOpt(heightPx)
+                    } yield {
+                      plusMinusControlsR.PropsVal(
+                        labelMsgCode  = MsgCodes.`Height`,
+                        model         = BlockHeights,
+                        current       = h,
+                      )
+                    }
+                  }(plusMinusControlsR.apply)(implicitly, plusMinusOptFeq)
+                },
+
+                s.widthPropsOptC { widthPxOptProxy =>
+                  widthPxOptProxy.wrap { widthPxOpt =>
+                    for {
+                      widthPx <- widthPxOpt
+                      w       <- BlockWidths.withValueOpt(widthPx)
+                    } yield {
+                      plusMinusControlsR.PropsVal(
+                        labelMsgCode  = MsgCodes.`Width`,
+                        model         = BlockWidths,
+                        current       = w,
+                      )
+                    }
+                  }( plusMinusControlsR.apply )( implicitly, plusMinusOptFeq )
+                },
+
               ),
 
-              <.br,
-              s.blockExpandModeOptC { showWideR.apply },
+              s.expandModeOptC { showWideR.apply },
               <.br, <.br, <.br,
 
               // Управление main-блоками.
@@ -232,6 +263,15 @@ class LkAdEditFormR(
               slideBlockR(propsOpt)( blockBgBodyDiv )
             }
 
+            /** Дедубликация кода доступа к текущему выделенному jd-тегу. */
+            def __qdContentSelected[T](mroot: MAeRoot)(f: JdTag => T) = {
+              for {
+                selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
+                selJdt = selJdtLoc.getLabel
+                if selJdt.name ==* MJdTagNames.QD_CONTENT
+              } yield f(selJdt)
+            }
+
             val contentBodyDiv = <.div(
               // Доп.стили для редактора контента:
               s.contentEditCssC { contentEditCssR.apply },
@@ -244,30 +284,18 @@ class LkAdEditFormR(
               s.colors.contentBgCbOptC { colorCheckBoxR.apply },
 
               // Вращение: галочка + опциональный слайдер.
-              p.wrap { mroot =>
-                for {
-                  selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
-                  selJdt = selJdtLoc.getLabel
-                  if selJdt.name ==* MJdTagNames.QD_CONTENT
-                } yield {
-                  rotateR.PropsVal(
-                    value = selJdt.props1.rotateDeg
-                  )
-                }
-              }(rotateR.apply)( implicitly, OptFastEq.Wrapped(rotateR.RotateRPropsValFastEq) ),
+              p.wrap {
+                __qdContentSelected(_)(_.props1.rotateDeg)
+              }(rotateR.apply)( implicitly, FastEq.ValueEq ),
 
               // Галочка управления шириной.
-              p.wrap { mroot =>
-                for {
-                  selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
-                  selJdt = selJdtLoc.getLabel
-                  if selJdt.name ==* MJdTagNames.QD_CONTENT
-                } yield {
-                  widthPxOptR.PropsVal(
-                    value = selJdt.props1.widthPx
-                  )
-                }
-              }(widthPxOptR.apply)(implicitly, OptFastEq.Wrapped(widthPxOptR.WidthPxPropsValPropsValFastEq)),
+              p.wrap {
+                __qdContentSelected(_)(_.props1.widthPx)
+              }(widthPxOptR.apply)(implicitly, FastEq.ValueEq),
+
+              p.wrap {
+                __qdContentSelected(_)(_.props1.lineHeight)
+              }(lineHeightR.apply)(implicitly, FastEq.ValueEq),
 
               <.br,
               // Управление тенью текста:
@@ -284,7 +312,6 @@ class LkAdEditFormR(
 
               // Управление слоями
               s.contentLayersC { contentLayersR.apply },
-
             )
             // Редактор контента (текста)
             val contentSlideBlock = s.slideBlocks.content { propsOpt =>
@@ -364,18 +391,16 @@ class LkAdEditFormR(
     .initialStateFromProps { p =>
 
       // Фунция с дедублицированным кодом сборки коннекшена до пропертисов plus-minus control'ов (для стрипов).
-      def __mkStripBmC[T](f: BlockMeta => Option[T])(implicit tFeq: FastEq[T]) = {
+      def __mkBlockFilteredC[T](f: TreeLoc[JdTag] => Option[T])
+                               (implicit feq: FastEq[T]): ReactConnectProxy[Option[T]] = {
         p.connect { mroot =>
-          for {
-            selJdtTreeLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
-            selJdt = selJdtTreeLoc.getLabel
-            if selJdt.name ==* MJdTagNames.STRIP
-            bm     <- selJdt.props1.bm
-            t      <- f(bm)
-          } yield {
-            t
-          }
-        }( OptFastEq.Wrapped(tFeq) )
+          // Без for, чтобы финальные Option-инстансы не пересобирались из-за финального yield/.map()
+          mroot.doc.jdDoc.jdArgs
+            .selJdt
+            .treeLocOpt
+            .filter(_.getLabel.name ==* MJdTagNames.STRIP)
+            .flatMap(f)
+        }( OptFastEq.Wrapped( feq ) )
       }
 
       val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
@@ -396,6 +421,8 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Wrapped(colorCheckBoxR.ColorCheckBoxPropsValFastEq) )
       }
+
+      val intFastEq = FastEqUtil.AnyValueEq[Int]
 
       State(
         jdPreviewArgsC = p.connect(_.doc.jdDoc.toRrrProps)( MJdRrrProps.MJdRrrPropsFastEq ),
@@ -449,31 +476,13 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Wrapped(deleteBtnR.DeleteBtnRPropsValFastEq) ),
 
-        heightPropsOptC = __mkStripBmC { bm =>
-          val r = plusMinusControlsR.PropsVal(
-            labelMsgCode  = MsgCodes.`Height`,
-            contCss       = lkAdEditCss.WhControls.contHeight,
-            model         = BlockHeights,
-            current       = bm.h
-          )
-          Some(r)
-        }( plusMinusControlsR.PlusMinusControlsPropsValFastEq ),
+        heightPropsOptC = __mkBlockFilteredC( _.getLabel.props1.heightPx )(intFastEq),
 
-        widthPropsOptC = __mkStripBmC { bm =>
-          val r = plusMinusControlsR.PropsVal(
-            labelMsgCode  = MsgCodes.`Width`,
-            contCss       = lkAdEditCss.WhControls.contWidth,
-            model         = BlockWidths,
-            current       = bm.w
-          )
-          Some(r)
-        }( plusMinusControlsR.PlusMinusControlsPropsValFastEq ),
+        widthPropsOptC = __mkBlockFilteredC( _.getLabel.props1.widthPx )(intFastEq),
 
-        stripEdSOptC = p.connect { mroot =>
-          mroot.doc.editors.stripEd
-        }( OptFastEq.Wrapped(MStripEdS.MStripEdSFastEq) ),
+        stripEdSOptC = p.connect( _.doc.editors.stripEd )( OptFastEq.Wrapped(MStripEdS.MStripEdSFastEq) ),
 
-        blockExpandModeOptC = __mkStripBmC ( _.expandMode )(FastEqUtil.AnyRefFastEq),
+        expandModeOptC = __mkBlockFilteredC(_.getLabel.props1.expandMode)( FastEqUtil.AnyRefFastEq ),
 
         slideBlocks = SlideBlocksState(
           block = {

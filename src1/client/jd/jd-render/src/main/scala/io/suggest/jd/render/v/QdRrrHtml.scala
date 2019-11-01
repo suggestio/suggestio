@@ -202,7 +202,10 @@ case class QdRrrHtml(
         (^.src := imgSrc) ::
         imgArgsAcc
 
-      for (attrsText <- jdtQdOp.qdOp.attrsText if attrsText.isCssStyled) {
+      for {
+        attrsText <- jdtQdOp.qdOp.attrsText
+        if jdtQdOp.jdTag.props1.isContentCssStyled || attrsText.isCssStyled
+      } {
         imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textStyleF( jdtQdOp.jdTagId )
       }
 

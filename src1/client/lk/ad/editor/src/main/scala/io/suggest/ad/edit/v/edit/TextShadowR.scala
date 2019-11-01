@@ -3,6 +3,7 @@ package io.suggest.ad.edit.v.edit
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{SetBlurTextShadow, SetHorizOffTextShadow, SetTextShadowEnabled, SetVertOffTextShadow}
+import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.JdConst
@@ -13,6 +14,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
+import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -26,6 +28,7 @@ class TextShadowR(
                    val inputSliderR : InputSliderR,
                    colorCheckBoxR   : ColorCheckBoxR,
                    lkCheckBoxR      : LkCheckBoxR,
+                   lkAdEditCss      : LkAdEditCss,
                  ) {
 
   case class PropsVal(
@@ -48,6 +51,7 @@ class TextShadowR(
 
     def render(propsOptProxy: Props, s: State): VdomElement = {
       <.div(
+        lkAdEditCss.TextShadow.cont,
 
         // Галочка включения тени.
         {
@@ -71,6 +75,7 @@ class TextShadowR(
           // Горизонтальный сдвиг
           lazy val horizOff = {
             val onChange = SetHorizOffTextShadow.apply _
+            val css = Some( lkAdEditCss.TextShadow.first.htmlClass )
             propsOptProxy.wrap { propsOpt =>
               for (props <- propsOpt) yield {
                 val h = C.HORIZ_OFFSET_MIN_MAX
@@ -79,6 +84,7 @@ class TextShadowR(
                   max       = h,
                   value     = props.jdShadow.hOffset,
                   onChange  = onChange,
+                  css       = css,
                 )
               }
             }( inputSliderR.apply )(implicitly, sliderPropsOptFeq)
@@ -87,6 +93,7 @@ class TextShadowR(
           // Вертикальный сдвиг
           lazy val vertOff = {
             val onChange = SetVertOffTextShadow.apply _
+            val css = Some( lkAdEditCss.TextShadow.second.htmlClass )
             propsOptProxy.wrap { propsOpt =>
               for (props <- propsOpt) yield {
                 val v = C.VERT_OFFSET_MIN_MAX
@@ -94,7 +101,8 @@ class TextShadowR(
                   min       = -v,
                   max       = v,
                   value     = props.jdShadow.vOffset,
-                  onChange  = onChange
+                  onChange  = onChange,
+                  css       = css,
                 )
               }
             }( inputSliderR.apply )(implicitly, sliderPropsOptFeq)
@@ -103,6 +111,7 @@ class TextShadowR(
           // Блюр тени:
           lazy val blur = {
             val onChange = SetBlurTextShadow.apply _
+            val css = Some( lkAdEditCss.TextShadow.third.htmlClass )
             propsOptProxy.wrap { propsOpt =>
               for (props <- propsOpt) yield {
                 inputSliderR.PropsVal(
@@ -110,6 +119,7 @@ class TextShadowR(
                   max       = C.BLUR_MAX * C.BLUR_FRAC,
                   value     = props.jdShadow.blur.getOrElse(0),
                   onChange  = onChange,
+                  css       = css,
                 )
               }
             }( inputSliderR.apply )(implicitly, sliderPropsOptFeq)

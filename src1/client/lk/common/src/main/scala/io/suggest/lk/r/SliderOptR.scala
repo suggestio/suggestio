@@ -10,6 +10,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
@@ -22,6 +23,7 @@ import japgolly.univeq._
 class SliderOptR(
                   inputSliderR     : InputSliderR,
                   lkCheckBoxR      : LkCheckBoxR,
+                  lkCss            : LkCss,
                 ) {
 
   case class PropsVal(
@@ -89,6 +91,7 @@ class SliderOptR(
       s.isVisibleSomeC { isVisibleSomeProxy =>
         ReactCommonUtil.maybeEl( isVisibleSomeProxy.value.value ) {
           <.div(
+            lkCss.RangeInput.sliderOuter,
             checkBox,
             HtmlConstants.NBSP_STR,
             slider,

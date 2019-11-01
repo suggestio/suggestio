@@ -13,6 +13,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -32,12 +33,14 @@ class InputSliderR(
                        max      : Int,
                        value    : Int,
                        onChange : Int => DAction,
+                       css      : Option[String] = None,
                      )
   object InputSliderValuesPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.min ==* b.min) &&
       (a.max ==* b.max) &&
-      (a.value ==* b.value)
+      (a.value ==* b.value) &&
+      (a.css ===* b.css)
     }
   }
   implicit object InputSliderRPropsValFastEq extends FastEq[PropsVal] {
@@ -85,6 +88,15 @@ class InputSliderR(
     def render(propsOptProxy: Props, s: State): VdomElement = {
       // Генератор контента.
       val content = <.span(
+        lkCss.RangeInput.sliderCont,
+
+        propsOptProxy
+          .value
+          .flatMap(_.css)
+          .whenDefined { css =>
+            ^.`class` := css
+          },
+
         // Слайдер:
         s.propsValOptC { propsValOptProxy =>
           val propsOpt = propsValOptProxy.value

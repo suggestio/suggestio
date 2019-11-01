@@ -37,7 +37,8 @@ object MJdtProps1 extends IEmpty {
       (__ \ "s").formatNullable[MJdShadow] and
       (__ \ "f").formatNullable[Int] and
       (__ \ "h").formatNullable[Int] and
-      (__ \ "x").formatNullable[MBlockExpandMode]
+      (__ \ "x").formatNullable[MBlockExpandMode] and
+      (__ \ "l").formatNullable[Int]
     )(apply, unlift(unapply))
   }
 
@@ -52,6 +53,15 @@ object MJdtProps1 extends IEmpty {
   val widthPx     = GenLens[MJdtProps1](_.widthPx)
   val heightPx    = GenLens[MJdtProps1](_.heightPx)
   val expandMode  = GenLens[MJdtProps1](_.expandMode)
+  val lineHeight  = GenLens[MJdtProps1](_.lineHeight)
+
+
+  object LineHeight {
+    def MIN = 2
+    def MAX = 300
+    def isValid(lineHeight: Int): Boolean =
+      (lineHeight >= 2) || (lineHeight <= MAX)
+  }
 
 }
 
@@ -69,6 +79,7 @@ object MJdtProps1 extends IEmpty {
   *                Изначально была только для qd-контента, а ширина блока жила отдельно в bm.width .
   * @param heightPx Высота. Вынесена из BlockMeta.height.
   * @param expandMode Режим расширения тега. Вынесено из BlockMeta.expandMode
+  * @param lineHeight Межстрочный интервал.
   */
 case class MJdtProps1(
                        bgColor    : Option[MColorData]        = None,
@@ -80,7 +91,8 @@ case class MJdtProps1(
                        widthPx    : Option[Int]               = None,
                        heightPx   : Option[Int]               = None,
                        expandMode : Option[MBlockExpandMode]  = None,
-                     )
+                       lineHeight : Option[Int]               = None,
+)
   extends EmptyProduct
 {
 
@@ -104,5 +116,8 @@ case class MJdtProps1(
     for (w <- widthPx; h <- heightPx)
       yield MSize2di(w, height = h)
   }
+
+  def isContentCssStyled: Boolean =
+    lineHeight.nonEmpty
 
 }

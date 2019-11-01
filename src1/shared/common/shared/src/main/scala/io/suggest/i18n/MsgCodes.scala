@@ -395,5 +395,6 @@ object MsgCodes {
 
   val `Expand` = "Expand"
   val `Dont.expand` = "Dont.expand"
+  val `Line.height` = "Line.height"
 
 }

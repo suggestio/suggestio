@@ -64,26 +64,9 @@ object MFontSizes extends IntEnum[MFontSize] {
   */
 sealed abstract class MFontSize(override val value: Int) extends IntEnumEntry {
 
-  private def _lineHeightDiff: Int = if (value >= 32) 4 else 2
-
-  /** CSS line-height */
-  def lineHeight: Int = value - _lineHeightDiff
-
   override final def hashCode = value
 
   override final def toString = value.toString
-
-  /** В HTML5 задан принудительный минимальный line-height для inline-элементов.
-    * И это сказывается на мелких шрифтах: межстрочка не поспевает, и получаются большие интервалы
-    * между соседними строками.
-    *
-    * Чтобы это исправить, надо помечать тексты как display:block.
-    *
-    * @return true, если пора фиксить местрочку
-    */
-  def forceRenderBlockHtml5: Boolean = {
-    value < 18
-  }
 
 }
 
@@ -97,6 +80,27 @@ object MFontSize {
   }
 
   @inline implicit def univEq: UnivEq[MFontSize] = UnivEq.derive
+
+
+  implicit class FontSizeOpsExt( val fs: MFontSize ) extends AnyVal {
+
+    /** В HTML5 задан принудительный минимальный line-height для inline-элементов.
+      * И это сказывается на мелких шрифтах: межстрочка не поспевает, и получаются большие интервалы
+      * между соседними строками.
+      *
+      * Чтобы это исправить, надо помечать тексты как display:block.
+      *
+      * @return true, если пора фиксить местрочку
+      */
+    def forceRenderBlockHtml5: Boolean = {
+      fs.value < 18
+    }
+
+    /** CSS line-height */
+    def lineHeight: Int =
+      fs.value - (if (fs.value >= 32) 4 else 2)
+
+  }
 
 }
 

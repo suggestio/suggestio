@@ -40,7 +40,7 @@ trait MuiSliderProps
     * $2 index: The thumb label's index to format.
     */
   val getAriaValueText: js.UndefOr[js.Function2[Value_t, Index_t, String]] = js.undefined
-  val marks: js.UndefOr[Boolean | js.Array[Value_t]] = js.undefined
+  val marks: js.UndefOr[Boolean | js.Array[MuiSliderMark]] = js.undefined
   val max: js.UndefOr[Value_t] = js.undefined
   val min: js.UndefOr[Value_t] = js.undefined
   val name: js.UndefOr[String] = js.undefined
@@ -60,6 +60,12 @@ trait MuiSliderProps
 object MuiSliderProps extends MuiPropsBaseStatic[MuiSliderProps] {
   type Index_t = Int
   type Value_t = Index_t
+}
+
+
+trait MuiSliderMark extends js.Object {
+  val value: MuiSliderProps.Value_t
+  val label: js.UndefOr[String] = js.undefined
 }
 
 

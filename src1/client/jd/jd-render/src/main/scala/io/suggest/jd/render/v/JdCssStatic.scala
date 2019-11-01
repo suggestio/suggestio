@@ -38,15 +38,6 @@ class JdCssStatic extends StyleSheet.Inline {
     resize.both
   )
 
-  val wideBlockStyle = {
-    val zeroPx = 0.px
-    style(
-      // TODO Переместить top в smBlock?
-      top(zeroPx)
-      //left(zeroPx)
-    )
-  }
-
   /** Общий стиль для всех AbsPos-тегов. */
   val absPosStyleAll = style(
     position.absolute,
@@ -104,7 +95,6 @@ class JdCssStatic extends StyleSheet.Inline {
 
   /** Статический стиль для блока. Надо не забывать про contentOuterS. */
   val smBlockS = style(
-    addClassName( contentOuterS.htmlClass ),
     // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
     overflow.hidden,
   )

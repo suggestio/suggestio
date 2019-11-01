@@ -1069,3 +1069,6 @@ _Block.expand.w=Фон горизонтально
 _Block.expand.f=Полностью
 Expand=Растягивать
 Dont.expand=Не растягивать
+
+Line.height=Высота строк
+

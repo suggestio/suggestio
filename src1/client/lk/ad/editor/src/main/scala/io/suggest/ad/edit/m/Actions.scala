@@ -29,10 +29,7 @@ trait IBlockAction extends ILkEditAction
   * @param model Модель, указывающая на ширину или высоту блока?
   * @param direction Направление: увеличить или уменьшить.
   */
-case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends IBlockAction
-// TODO Переехать на сие.
-/** Изменение какого-либо размера блока . */
-//case class JdtSetHeight(isHeight: Boolean, value: Int) extends IBlockAction
+case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], value: Int) extends IBlockAction
 
 
 sealed trait IStripDeleteAction extends IBlockAction
@@ -100,6 +97,8 @@ case class DeleteAdResp( tryResp: Try[String] ) extends ILkEditAction
 /** Переключательство галочки вращения элемента. */
 case class RotateSet( degrees: Option[Int] ) extends ILkEditAction
 
+/** Редактирование межстрочного интервала. */
+case class LineHeightSet( lineHeight: Option[Int] ) extends ILkEditAction
 
 /** Управление тенью текста. */
 case class SetTextShadowEnabled(enabled: Boolean) extends ILkEditAction

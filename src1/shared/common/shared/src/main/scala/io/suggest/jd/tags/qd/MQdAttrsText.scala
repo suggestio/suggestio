@@ -5,11 +5,12 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.err.ErrorConstants
 import io.suggest.font.{MFont, MFontSize}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
+import io.suggest.scalaz.ScalazUtil
 import io.suggest.text.UrlUtil2
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 
@@ -57,7 +58,6 @@ object MQdAttrsText {
 
   @inline implicit def univEq: UnivEq[MQdAttrsText] = UnivEq.derive
 
-
   /** Провалидировать для сохранения в БД.
     * Все Unset считаются невалидными.
     * Цвета минифицируются до hex-only.
@@ -92,6 +92,8 @@ object MQdAttrsText {
     )(apply)
   }
 
+  val background = GenLens[MQdAttrsText](_.background)
+
 }
 
 
@@ -109,7 +111,7 @@ case class MQdAttrsText(
                          src         : Option[ISetUnset[String]]        = None,
                          font        : Option[ISetUnset[MFont]]         = None,
                          size        : Option[ISetUnset[MFontSize]]     = None,
-                         script      : Option[ISetUnset[MQdScript]]     = None
+                         script      : Option[ISetUnset[MQdScript]]     = None,
                        )
   extends EmptyProduct
   // Для ScalaCSS-рендера: Максимальная скорость работы `==` и hashCode()
@@ -124,7 +126,5 @@ case class MQdAttrsText(
       color.isDefined ||
       background.isDefined
   }
-
-  def withBackground(background: Option[ISetUnset[MColorData]]) = copy(background = background)
 
 }

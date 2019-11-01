@@ -1,6 +1,5 @@
 package io.suggest.ad.edit.v.edit
 
-import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.ad.edit.m.RotateSet
 import io.suggest.i18n.MsgCodes
@@ -22,16 +21,7 @@ class RotateR(
                sliderOptR       : SliderOptR,
              ) {
 
-  case class PropsVal(
-                       value: Option[Int]
-                     )
-  implicit object RotateRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.value ==* b.value
-    }
-  }
-
-  type Props_t = Option[PropsVal]
+  type Props_t = Option[Option[Int]]
   type Props = ModelProxy[Props_t]
 
 
@@ -42,11 +32,11 @@ class RotateR(
       val label = Messages( MsgCodes.`Rotation` ): VdomNode
       val onChange = RotateSet.apply _
 
-      propsOptProxy.wrap { propsOpt =>
-        for (props <- propsOpt) yield {
+      propsOptProxy.wrap { valueOpt =>
+        for (value <- valueOpt) yield {
           sliderOptR.PropsVal(
             label     = label,
-            value     = props.value,
+            value     = value,
             onChange  = onChange,
             min       = -JdConst.ROTATE_MAX_ABS,
             max       =  JdConst.ROTATE_MAX_ABS,

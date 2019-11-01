@@ -311,6 +311,7 @@ class JsMessagesUtil @Inject() (
       MC.`Shadow.color` ::
       MC.`Expand` ::
       MC.`Dont.expand` ::
+      MC.`Line.height` ::
       MBlockExpandModes.values.iterator.map(_.msgCode).toList
   }
 

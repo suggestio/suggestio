@@ -1061,3 +1061,6 @@ _Block.expand.w=Background horizontally
 _Block.expand.f=Full
 Expand=Expand
 Dont.expand=Don't expand
+
+Line.height=Line height
+
