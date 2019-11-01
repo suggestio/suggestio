@@ -3,7 +3,7 @@ package io.suggest.quill.v
 import com.github.zenoamaro.react.quill._
 import com.quilljs.delta.Delta
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.msg.ErrorMsgs
 import io.suggest.quill.m.TextChanged
@@ -113,7 +113,6 @@ class QuillEditorR(
     .renderBackend[Backend]
     .build
 
-  def _apply(textOptProxy: Props) = component( textOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(textOptProxy: Props) = component( textOptProxy )
 
 }

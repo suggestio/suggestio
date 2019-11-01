@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.ad.edit.m.{MainStripChange, ShowMainStrips}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
@@ -123,12 +123,12 @@ class UseAsMainR(
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build
 
-  def _apply(propsOptProxy: Props) = component( propsOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsOptProxy: Props) = component( propsOptProxy )
 
 }

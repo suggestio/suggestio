@@ -405,6 +405,17 @@ case class QdRrrHtml(
         rrrProps.jdArgs.jdRuntime.jdCss.textStyleF( jdtQdOp.jdTagId )
       }
 
+      // Выставить lineHeight, если он не выставлен на уровне qd-content тега:
+      for {
+        szSU <- attrs.size
+        if szSU.nonEmpty &&
+           !rrrProps.parent.exists(_.props1.lineHeight.nonEmpty)
+      } {
+        val tm: TagMod = rrrProps.jdArgs.jdRuntime.jdCss.lineHeightF( jdtQdOp.jdTagId )
+        val tms = tm :: textStyleOpt.toList
+        TagMod( tms: _* )
+      }
+
       val keyTm = ^.key := keyPrefix
 
       // Рендер f() только по true-флагу внутри SetVal().

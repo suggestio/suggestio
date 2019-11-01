@@ -1,7 +1,7 @@
 package io.suggest.lk.r.img
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.common.html.HtmlConstants
@@ -201,8 +201,7 @@ class ImgEditBtnR(
     // Сравниваем только p.resKey и p.css:
     .build
 
-  def _apply(propsValProxy: Props) = componentDrop( propsValProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsValProxy: Props) = componentDrop( propsValProxy )
 
 }
 

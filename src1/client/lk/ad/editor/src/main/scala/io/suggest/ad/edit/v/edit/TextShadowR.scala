@@ -31,16 +31,8 @@ class TextShadowR(
                    lkAdEditCss      : LkAdEditCss,
                  ) {
 
-  case class PropsVal(
-                       jdShadow: MJdShadow
-                     )
-  implicit object TextShadowRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.jdShadow ===* b.jdShadow)
-    }
-  }
 
-  type Props_t = Option[PropsVal]
+  type Props_t = Option[MJdShadow]
   type Props = ModelProxy[Props_t]
 
   case class State(
@@ -82,7 +74,7 @@ class TextShadowR(
                 inputSliderR.PropsVal(
                   min       = -h,
                   max       = h,
-                  value     = props.jdShadow.hOffset,
+                  value     = props.hOffset,
                   onChange  = onChange,
                   css       = css,
                 )
@@ -100,7 +92,7 @@ class TextShadowR(
                 inputSliderR.PropsVal(
                   min       = -v,
                   max       = v,
-                  value     = props.jdShadow.vOffset,
+                  value     = props.vOffset,
                   onChange  = onChange,
                   css       = css,
                 )
@@ -117,7 +109,7 @@ class TextShadowR(
                 inputSliderR.PropsVal(
                   min       = 0,
                   max       = C.BLUR_MAX * C.BLUR_FRAC,
-                  value     = props.jdShadow.blur.getOrElse(0),
+                  value     = props.blur.getOrElse(0),
                   onChange  = onChange,
                   css       = css,
                 )
@@ -132,7 +124,7 @@ class TextShadowR(
             propsOptProxy.wrap { propsOpt =>
               for (props <- propsOpt) yield {
                 colorCheckBoxR.PropsVal(
-                  color  = props.jdShadow.color,
+                  color  = props.color,
                   label  = label,
                   marker = marker,
                 )

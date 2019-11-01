@@ -1,25 +1,20 @@
 package io.suggest.ad.edit.v.edit.strip
 
-import com.materialui.{MuiFormControl, MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInputLabel, MuiInputLabelProps, MuiInputValue_t, MuiLabelPlacements, MuiSelectProps, MuiTextField, MuiTextFieldProps}
-import diode.react.{ModelProxy, ReactConnectProps}
+import com.materialui.{MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInputValue_t, MuiLabelPlacements, MuiSelectProps, MuiTextField, MuiTextFieldProps}
+import diode.react.ModelProxy
 import io.suggest.ad.blk.{MBlockExpandMode, MBlockExpandModes}
 import io.suggest.ad.edit.m.BlockExpand
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.html.HtmlConstants.NBSP_STR
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import japgolly.scalajs.react.raw.React
-import japgolly.scalajs.react.raw.React.Node
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
 import japgolly.univeq._
 
 import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -104,7 +99,6 @@ class ShowWideR(
     .renderBackend[Backend]
     .build
 
-  def _apply(propsOptProxy: Props) = component(propsOptProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsOptProxy: Props) = component(propsOptProxy)
 
 }

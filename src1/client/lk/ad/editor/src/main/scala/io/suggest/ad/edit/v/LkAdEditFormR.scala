@@ -264,7 +264,7 @@ class LkAdEditFormR(
             }
 
             /** Дедубликация кода доступа к текущему выделенному jd-тегу. */
-            def __qdContentSelected[T](mroot: MAeRoot)(f: JdTag => T) = {
+            def __qdContentSelected[T](mroot: MAeRoot)(f: JdTag => T): Option[T] = {
               for {
                 selJdtLoc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
                 selJdt = selJdtLoc.getLabel
@@ -300,15 +300,12 @@ class LkAdEditFormR(
               <.br,
               // Управление тенью текста:
               p.wrap { mroot =>
-                for {
-                  loc <- mroot.doc.jdDoc.jdArgs.selJdt.treeLocOpt
-                  textShadow <- loc.getLabel.props1.textShadow
-                } yield {
-                  textShadowR.PropsVal(
-                    jdShadow = textShadow
-                  )
-                }
-              }( textShadowR.apply )( implicitly, OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) ),
+                mroot.doc.jdDoc.jdArgs.selJdt
+                  .treeLocOpt
+                  .flatMap { loc =>
+                    loc.getLabel.props1.textShadow
+                  }
+              }( textShadowR.apply )( implicitly, FastEq.AnyRefEq ),
 
               // Управление слоями
               s.contentLayersC { contentLayersR.apply },

@@ -1,7 +1,7 @@
 package io.suggest.lk.r.color
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.color.MColorData
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorChanged
@@ -88,7 +88,6 @@ class ColorsSuggestR {
     .renderBackend[Backend]
     .build
 
-  def _apply(propsProxy: Props) = component(propsProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsProxy: Props) = component(propsProxy)
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.lk.r.img
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -50,12 +50,12 @@ class CropBtnR {
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build
 
-  def _apply(resKeyOptProxy: Props) = component( resKeyOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(resKeyOptProxy: Props) = component( resKeyOptProxy )
 
 }

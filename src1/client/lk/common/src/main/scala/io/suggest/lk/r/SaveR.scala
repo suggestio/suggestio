@@ -2,7 +2,7 @@ package io.suggest.lk.r
 
 import diode.FastEq
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -104,7 +104,6 @@ class SaveR {
     .renderBackend[Backend]
     .build
 
-  def _apply(propsProxy: Props) = component( propsProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsProxy: Props) = component( propsProxy )
 
 }

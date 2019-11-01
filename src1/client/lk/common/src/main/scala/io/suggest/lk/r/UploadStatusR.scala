@@ -3,7 +3,7 @@ package io.suggest.lk.r
 import diode.data.Pot
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
@@ -80,7 +80,6 @@ class UploadStatusR {
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
 
-  def _apply(upStateOptProxy: Props) = component( upStateOptProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(upStateOptProxy: Props) = component( upStateOptProxy)
 
 }

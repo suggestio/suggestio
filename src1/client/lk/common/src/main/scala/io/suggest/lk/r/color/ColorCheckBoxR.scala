@@ -1,7 +1,7 @@
 package io.suggest.lk.r.color
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -136,7 +136,6 @@ class ColorCheckBoxR(
     .renderBackend[Backend]
     .build
 
-  def _apply(propsValOptProxy: Props) = component( propsValOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsValOptProxy: Props) = component( propsValOptProxy )
 
 }

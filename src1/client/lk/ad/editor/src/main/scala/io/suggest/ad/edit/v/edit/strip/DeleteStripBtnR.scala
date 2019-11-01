@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.v.edit.strip
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.ad.edit.m.edit.MStripEdS
 import io.suggest.ad.edit.m.{StripDelete, StripDeleteCancel}
 import io.suggest.common.html.HtmlConstants
@@ -87,12 +87,12 @@ class DeleteStripBtnR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("StripDel")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
 
-  def _apply(stripEdSOptProxy: Props) = component( stripEdSOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(stripEdSOptProxy: Props) = component( stripEdSOptProxy )
 
 }

@@ -70,6 +70,8 @@ sealed trait ISetUnset[+T] extends NonEmpty {
   def toList: List[T]
   def toOption: Option[T]
   def map[A](f: T => A): ISetUnset[A]
+  def exists(f: T => Boolean): Boolean =
+    isSet && f(get)
   def foreach[U](f: T => U): Unit
 }
 

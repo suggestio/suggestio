@@ -358,6 +358,45 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   )
 
 
+  /** Межстрочка может быть задана вручную, но и может быть задана в рамках размера шрифта. */
+  val lineHeightF = {
+    val _lineHeightAttr = lineHeight
+    styleF(
+      new Domain.OverSeq(
+        _filteredTagIds { jdt =>
+          jdt.props1.lineHeight.nonEmpty || jdt.qdProps.exists { qdOp =>
+            qdOp
+              .attrsText
+              .exists(_.size.nonEmpty)
+          }
+        }
+      )
+    )(
+      {jdtId =>
+        val jdt = jdCssArgs.data.jdTagsById( jdtId )
+        var acc = List.empty[ToStyle]
+        lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
+
+        for {
+          lineHeight <- jdt.props1
+            .lineHeight
+            .orElse {
+              for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText;
+                   szSU <- attrsText.size; sz <- szSU.toOption)
+              yield sz.lineHeight
+            }
+        } {
+          acc ::= _lineHeightAttr( _szMulted(lineHeight, wideSzMultOpt).px )
+        }
+
+        // Вернуть скомпонованный стиль.
+        styleS( acc: _* )
+      },
+      JdCss._jdIdToStringF,
+    )
+  }
+
+
   /** styleF для стилей текстов. */
   val textStyleF = {
     // Получаем на руки инстансы, чтобы по-быстрее использовать их в цикле и обойтись без lazy call-by-name cssAttr в __applyToColor().
@@ -383,19 +422,6 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         var acc = List.empty[ToStyle]
 
         lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
-
-        // Межстрочка может быть задана вручную, но и может быть задана в рамках размера шрифта.
-        for {
-          lineHeight <- jdt.props1
-            .lineHeight
-            .orElse {
-              for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText;
-                   szSU <- attrsText.size; sz <- szSU.toOption)
-              yield sz.lineHeight
-            }
-        } {
-          acc ::= _lineHeightAttr( _szMulted(lineHeight, wideSzMultOpt).px )
-        }
 
         for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText) {
           // Отрендерить аттрибут одного цвета.

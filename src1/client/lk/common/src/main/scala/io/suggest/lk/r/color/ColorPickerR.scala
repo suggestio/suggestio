@@ -2,7 +2,7 @@ package io.suggest.lk.r.color
 
 import com.github.casesandberg.react.color.{Color, PresetColor_t, Sketch, SketchProps}
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.lk.m.ColorChanged
@@ -100,12 +100,12 @@ class ColorPickerR {
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
 
-  private def _apply(propsOptProxy: Props) = component( propsOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsOptProxy: Props) = component( propsOptProxy )
 
 }
