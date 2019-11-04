@@ -20,7 +20,7 @@ package object css {
   object Prod extends Exports with Settings {
     override          def cssRegisterNameGen     : NameGen          = NameGen.short()
 
-    //Ignore  // TODO Есть проблемы со стилями в ScCss при перерендерах и кэшировании инстанса. Если Ignore, то можно задействовать штатный ProdDefaults
+    // TODO Не совместимо со стилями в ScCss при перерендерах без пере-рендера VDOM. Если Ignore, то можно задействовать штатный ProdDefaults
     override          def cssRegisterMacroName   : MacroName        = MacroName.Use
 
     override          val cssRegisterErrorHandler: ErrorHandler     = ErrorHandler.silent

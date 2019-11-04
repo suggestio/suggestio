@@ -136,7 +136,6 @@ object JdUtil {
           ),
         )
 
-        // Обновить данные по qd blockless (внеблоковому контенту).
         MJdRuntime(
           jdCss   = JdCss( MJdCssArgs(
             conf    = args.jdConf,

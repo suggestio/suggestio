@@ -14,19 +14,10 @@ import monocle.macros.GenLens
   */
 object MJdRuntime {
 
-  implicit object MJdRuntimeFastEq extends FastEq[MJdRuntime] {
-    override def eqv(a: MJdRuntime, b: MJdRuntime): Boolean = {
-      //(a.jdCss ===* b.jdCss) &&
-      //MJdRuntimeData.MJdRuntimeDataFastEq.eqv( a.data, b.data )
-      (a.gen ==* b.gen)
-    }
-  }
-
   @inline implicit def univEq: UnivEq[MJdRuntime] = UnivEq.derive
 
   val jdCss   = GenLens[MJdRuntime](_.jdCss)
   val data    = GenLens[MJdRuntime](_.data)
-  val gen     = GenLens[MJdRuntime](_.gen)
 
 }
 
@@ -35,12 +26,8 @@ object MJdRuntime {
   *
   * @param jdCss Отрендеренный css.
   * @param data Пошаренный контейнер данных рантайма.
-  * @param gen Счётчик поколения инстанса модели, чтобы управлять необходимостью пере-рендеривания плитки.
-  *            Счётчик инкрементируется сам по умолчанию, но можно вручную управлять значением,
-  *            которое непосредственно влияет на FastEq.eqv().
   */
 case class MJdRuntime(
                        jdCss      : JdCss,
                        data       : MJdRuntimeData,
-                       gen        : Long            = System.currentTimeMillis(),
                      )

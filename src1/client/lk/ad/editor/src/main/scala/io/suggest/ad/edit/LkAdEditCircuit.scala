@@ -170,7 +170,7 @@ class LkAdEditCircuit(
 
   private val jdDocRW = mkLensZoomRW(mDocSRw, MDocS.jdDoc)( MJdDocEditS.MJdDocEditSFastEq )
   private val jdArgsRW = mkLensZoomRW(jdDocRW, MJdDocEditS.jdArgs)( MJdArgs.MJdArgsFastEq )
-  private val jdRuntimeRW = mkLensZoomRW(jdArgsRW, MJdArgs.jdRuntime)( MJdRuntime.MJdRuntimeFastEq )
+  private val jdRuntimeRW = mkLensZoomRW(jdArgsRW, MJdArgs.jdRuntime)( FastEqUtil.AnyRefFastEq )
 
   private val isTouchDevRW = mkLensZoomRW( confRW, MAdEditFormConf.touchDev )( FastEq.AnyValEq.asInstanceOf[FastEq[Boolean]] )
 

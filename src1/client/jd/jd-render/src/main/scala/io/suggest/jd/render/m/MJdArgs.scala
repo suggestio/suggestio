@@ -25,7 +25,7 @@ object MJdArgs {
       // data пересобирается (jdId и др.) при рендере JdR на каждом шаге рендера:
       ((a.data ===* b.data) || MJdDataJs.MJdDataJsFastEq.eqv(a.data, b.data)) &&
       // jdRuntime пересобирается на каждый чих, поэтому сравниваем внутренне:
-      ((a.jdRuntime ===* b.jdRuntime) || MJdRuntime.MJdRuntimeFastEq.eqv(a.jdRuntime, b.jdRuntime)) &&
+      //((a.jdRuntime ===* b.jdRuntime) || MJdRuntime.MJdRuntimeFastEq.eqv(a.jdRuntime, b.jdRuntime)) &&
       (a.conf ===* b.conf) &&
       // Бывает, что инстансы генерятся на лету. Поэтому сравниваем глубинно:
       ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))

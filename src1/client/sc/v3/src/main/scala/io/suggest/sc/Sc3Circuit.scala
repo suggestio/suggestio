@@ -176,7 +176,7 @@ class Sc3Circuit(
 
   private[sc] val gridRW          = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
   private     val gridCoreRW      = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
-  private     val jdRuntimeRW     = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( MJdRuntime.MJdRuntimeFastEq )
+  private     val jdRuntimeRW     = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
   private[sc] val scScreenRW      = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
