@@ -9,24 +9,20 @@
   "installed_plugins": {
     "cordova-plugin-ble-central": {
       "BLUETOOTH_USAGE_DESCRIPTION": "Monitoring Bluetooth-Beacons",
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
     },
     "cordova-plugin-geolocation": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
     },
     "cordova-plugin-splashscreen": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
     },
     "cordova-plugin-whitelist": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.cordova.hellocordova"
+      "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
     }
   },
-  "dependent_plugins": {
-    "cordova-plugin-compat": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
-    }
-  }
+  "dependent_plugins": {}
 }

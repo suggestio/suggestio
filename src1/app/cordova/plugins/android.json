@@ -7,16 +7,16 @@
     "files": {}
   },
   "installed_plugins": {
-    "cordova-plugin-whitelist": {
+    "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
     },
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
     },
-    "cordova-plugin-ble-central": {
+    "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
     },
-    "cordova-plugin-splashscreen": {
+    "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
     },
     "cordova.plugins.diagnostic": {

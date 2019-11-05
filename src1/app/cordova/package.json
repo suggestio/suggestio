@@ -10,24 +10,23 @@
     "author": "Konstantin Nikiforov",
     "license": "CBCA",
     "dependencies": {
-        "cordova-android": "^7.0.0",
-        "cordova-ios": "^4.5.4",
-        "cordova-plugin-ble-central": "^1.2.2",
-        "cordova-plugin-compat": "^1.2.0",
+        "cordova-android": "^8.1.0",
+        "cordova-ios": "^5.0.1",
+        "cordova-plugin-ble-central": "1.2.4",
         "cordova-plugin-geolocation": "^4.0.1",
         "cordova-plugin-splashscreen": "^5.0.2",
-        "cordova-plugin-whitelist": "^1.3.3",
+        "cordova-plugin-whitelist": "1.3.4",
         "cordova.plugins.diagnostic": "^4.0.10"
     },
     "cordova": {
         "plugins": {
-            "cordova-plugin-whitelist": {},
             "cordova-plugin-geolocation": {},
-            "cordova-plugin-ble-central": {
-                "BLUETOOTH_USAGE_DESCRIPTION": "Monitoring Bluetooth beacons"
-            },
             "cordova-plugin-splashscreen": {},
-            "cordova.plugins.diagnostic": {}
+            "cordova.plugins.diagnostic": {},
+            "cordova-plugin-whitelist": {},
+            "cordova-plugin-ble-central": {
+                "BLUETOOTH_USAGE_DESCRIPTION": "Monitoring Bluetooth-Beacons"
+            }
         },
         "platforms": [
             "android",
