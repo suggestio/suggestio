@@ -3,6 +3,7 @@ package io.suggest.jd.render.v
 import diode.FastEq
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -117,35 +118,36 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     )(
       {jdId =>
-        val blk = jdCssArgs.data.jdTagsById( jdId )
         var accS = List.empty[ToStyle]
 
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( blk )
+        for (blk <- jdCssArgs.data.jdTagsById.get( jdId )) {
+          val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
 
-        for (widthPx0 <- blk.props1.widthPx) {
-          val widthPxMulted = _szMulted( widthPx0, wideSzMultOpt )
-          accS ::= width ( widthPxMulted.px )
+          for (widthPx0 <- blk.props1.widthPx) {
+            val widthPxMulted = _szMulted( widthPx0, wideSzMultOpt )
+            accS ::= width ( widthPxMulted.px )
 
-          // Выравнивание блока внутри внешнего контейнера:
-          if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
-            // Если wide, то надо отцентровать блок внутри wide-контейнера.
-            // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
-            import io.suggest.common.html.HtmlConstants._
-            accS ::= {
-              val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPxMulted / 2).px.value
-              left.attr := Css.Calc( calcFormula )
+            // Выравнивание блока внутри внешнего контейнера:
+            if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
+              // Если wide, то надо отцентровать блок внутри wide-контейнера.
+              // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
+              import io.suggest.common.html.HtmlConstants._
+              accS ::= {
+                val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPxMulted / 2).px.value
+                left.attr := Css.Calc( calcFormula )
+              }
+
+              //accS ::= wideLeftAv
+              //accS ::= wideWidthAv
+            } else {
+              // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
+              accS ::= left0px
             }
-
-            //accS ::= wideLeftAv
-            //accS ::= wideWidthAv
-          } else {
-            // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
-            accS ::= left0px
           }
-        }
 
-        for (heightPx0 <- blk.props1.heightPx)
-          accS ::= height( _szMulted(heightPx0, wideSzMultOpt).px )
+          for (heightPx0 <- blk.props1.heightPx)
+            accS ::= height( _szMulted(heightPx0, wideSzMultOpt).px )
+        }
 
         // Скомпилировать акк стилей:
         styleS( accS: _* )
@@ -178,21 +180,22 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {jdId =>
-      val blk = jdCssArgs.data.jdTagsById( jdId )
-      val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( blk )
-
-      // Записываем одну из двух сторон картинки:
-      (for {
-        heightPx    <- blk.props1.heightPx
-        if blk.props1.expandMode.nonEmpty
-      } yield {
-        // wide-картинки можно прессовать только по высоте блока
-        height( _szMulted( heightPx, wideSzMultOpt ).px )
-      })
-        .orElse {
-          // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-          for (widthPx <- blk.props1.widthPx)
-            yield width( _szMulted( widthPx, wideSzMultOpt ).px )
+      jdCssArgs.data.jdTagsById
+        .get( jdId )
+        .flatMap { blk =>
+          lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
+          // Записываем одну из двух сторон картинки:
+          OptionUtil
+            .maybeOpt( blk.props1.expandMode.nonEmpty ) {
+              // wide-картинки можно прессовать только по высоте блока
+              for (heightPx    <- blk.props1.heightPx)
+              yield height( _szMulted( heightPx, wideSzMultOpt ).px )
+            }
+            .orElse {
+              // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
+              for (widthPx <- blk.props1.widthPx)
+              yield width( _szMulted( widthPx, wideSzMultOpt ).px )
+            }
         }
         .whenDefinedStyleS( styleS(_) )
     },
@@ -212,35 +215,38 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {stripId =>
-      val strip = jdCssArgs.data.jdTagsById( stripId )
       var accS: List[ToStyle] = Nil
 
-      val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( strip )
+      for {
+        strip <- jdCssArgs.data.jdTagsById.get(stripId)
+      } {
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( stripId )
 
-      for (h <- strip.props1.heightPx)
-        accS ::= height( _szMulted(h, wideSzMultOpt).px )
+        for (h <- strip.props1.heightPx)
+          accS ::= height( _szMulted(h, wideSzMultOpt).px )
 
-      for (w <- strip.props1.widthPx) {
-        // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
-        accS ::= minWidth(
-          if (jdCssArgs.conf.isEdit)
-            _szMulted(w, wideSzMultOpt).px
-          else
-            jdCssArgs.conf.gridWidthPx.px
-        )
+        for (w <- strip.props1.widthPx) {
+          // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
+          accS ::= minWidth(
+            if (jdCssArgs.conf.isEdit)
+              _szMulted(w, wideSzMultOpt).px
+            else
+              jdCssArgs.conf.gridWidthPx.px
+          )
+        }
+
+        // Цвет фона
+        for (bgColor <- strip.props1.bgColor)
+          accS ::= backgroundColor( Color(bgColor.hexCode) )
+
+        // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
+        if (wideSzMultOpt.nonEmpty)
+          accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
+
+        // Если нет фона, выставить ширину принудительно.
+        if (strip.props1.bgImg.isEmpty  &&  !jdCssArgs.conf.isEdit)
+          accS ::= width( jdCssArgs.conf.plainWideBlockWidthPx.px )
       }
-
-      // Цвет фона
-      for (bgColor <- strip.props1.bgColor)
-        accS ::= backgroundColor( Color(bgColor.hexCode) )
-
-      // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
-      if (wideSzMultOpt.nonEmpty)
-        accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
-
-      // Если нет фона, выставить ширину принудительно.
-      if (strip.props1.bgImg.isEmpty  &&  !jdCssArgs.conf.isEdit)
-        accS ::= width( jdCssArgs.conf.plainWideBlockWidthPx.px )
 
       // Объеденить все стили:
       styleS( accS: _* )
@@ -279,31 +285,33 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {jdtId =>
-      val jdt = jdCssArgs.data.jdTagsById( jdtId )
-      // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
-      jdt.props1.topLeft.fold[StyleS] {
-        // qd-blockless?
-        jdCssArgs.data.qdBlockLess
-          .get( jdtId )
-          .flatMap(_.toOption)
-          .whenDefinedStyleS { qdBlSz =>
-            styleS(
-              // Вертикальный отступ сверху, чтобы повёрнутый контент не наезжал на блоки вверху/внизу,
-              // а повёрнутый на 45..90+45 градусов - чтобы автоматом смещался вверх.
-              marginTop( ((qdBlSz.bounds.height - qdBlSz.client.height) / 2).px ),
-              // 2019-10-23 Горизонтальной центровкой по ширине плитки занимается gridBuilder.
-            )
-          }
+      var acc: List[ToStyle] = Nil
 
-      } { topLeft =>
-        // Обычное ручное позиционирование.
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
-        // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
-        styleS(
-          top( _szMulted(topLeft.y, wideSzMultOpt).px ),
-          left( _szMulted(topLeft.x, wideSzMultOpt).px ),
-        )
+      for (jdt <- jdCssArgs.data.jdTagsById.get(jdtId)) {
+        // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
+        jdt.props1.topLeft.fold[Unit] {
+          // qd-blockless?
+          for {
+            qdBlSzPot <- jdCssArgs.data.qdBlockLess.get( jdtId )
+            qdBlSz <- qdBlSzPot.toOption
+          } {
+            // Вертикальный отступ сверху, чтобы повёрнутый контент не наезжал на блоки вверху/внизу,
+            // а повёрнутый на 45..90+45 градусов - чтобы автоматом смещался вверх.
+            acc ::= marginTop( ((qdBlSz.bounds.height - qdBlSz.client.height) / 2).px )
+            // 2019-10-23 Горизонтальной центровкой по ширине плитки занимается gridBuilder.
+          }
+        } { topLeft =>
+          // Обычное ручное позиционирование.
+          val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
+          // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
+          acc =
+            (top( _szMulted(topLeft.y, wideSzMultOpt).px ): ToStyle) ::
+            (left( _szMulted(topLeft.x, wideSzMultOpt).px ): ToStyle) ::
+            acc
+        }
       }
+
+      styleS( acc: _* )
     },
     JdCss._jdIdToStringF,
   )
@@ -319,7 +327,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     {jdtId =>
       val jdt = jdCssArgs.data.jdTagsById( jdtId )
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
         val gridWidthPx = jdCssArgs.conf.gridInnerWidthPx
         styleS(
           width( Math.min(gridWidthPx, _szMulted(widthPx, wideSzMultOpt)).px )
@@ -340,16 +348,19 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {jdtId =>
-      val jdt = jdCssArgs.data.jdTagsById( jdtId )
-      val shadow = jdt.props1.textShadow.get
       var acc: List[String] = Nil
-      for (mcd <- shadow.color)
-        acc ::= mcd.hexCode
-      for (blur <- shadow.blur)
-        acc ::= (blur.toDouble / JdConst.Shadow.TextShadow.BLUR_FRAC).px.value
-      val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
-      acc ::= _szMulted(shadow.vOffset, wideSzMultOpt).px.value
-      acc ::= _szMulted(shadow.hOffset, wideSzMultOpt).px.value
+      for {
+        jdt     <- jdCssArgs.data.jdTagsById.get( jdtId )
+        shadow  <- jdt.props1.textShadow
+      } yield {
+        for (mcd <- shadow.color)
+          acc ::= mcd.hexCode
+        for (blur <- shadow.blur)
+          acc ::= (blur.toDouble / JdConst.Shadow.TextShadow.BLUR_FRAC).px.value
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
+        acc ::= _szMulted(shadow.vOffset, wideSzMultOpt).px.value
+        acc ::= _szMulted(shadow.hOffset, wideSzMultOpt).px.value
+      }
       styleS(
         textShadow := acc.mkString( HtmlConstants.SPACE )
       )
@@ -412,13 +423,13 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     ) (
       {jdtId =>
-        val jdt = jdCssArgs.data.jdTagsById( jdtId )
-
         var acc = List.empty[ToStyle]
 
-        lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
-
-        for (qdProps <- jdt.qdProps; attrsText <- qdProps.attrsText) {
+        for {
+          jdt       <- jdCssArgs.data.jdTagsById.get( jdtId )
+          qdProps   <- jdt.qdProps
+          attrsText <- qdProps.attrsText
+        } {
           // Отрендерить аттрибут одного цвета.
           // cssAttr не всегда обязателен, но его обязательная передача компенсируется через _colorAttr и _bgColorAttr.
           def __applyToColor(cssAttr: TypedAttr_Color,  mcdSuOpt: Option[ISetUnset[MColorData]]): Unit = {
@@ -437,6 +448,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
           // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
           for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
+            val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
             // Отрендерить размер шрифта
             acc ::= _fontSizeAttr( _szMulted(fontSizePx.value, wideSzMultOpt).px )
 
@@ -468,14 +480,15 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       {jdtId =>
         val jdt = jdCssArgs.data.jdTagsById( jdtId )
 
-        val embedAttrs = jdt.qdProps.get.attrsEmbed.get
         var acc = List.empty[ToStyle]
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdt )
+        lazy val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
 
-        for (heightSU <- embedAttrs.height; heightPx <- heightSU)
-          acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
-        for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-          acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
+        for (embedAttrs <- jdt.qdProps.get.attrsEmbed) {
+          for (heightSU <- embedAttrs.height; heightPx <- heightSU)
+            acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
+          for (widthSU <- embedAttrs.width; widthPx <- widthSU)
+            acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
+        }
 
         styleS(
           acc: _*

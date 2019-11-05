@@ -3,7 +3,7 @@ package io.suggest.ad.edit
 import diode.{FastEq, ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
-import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
+import io.suggest.jd.render.m.{MJdArgs, MJdDataJs}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._

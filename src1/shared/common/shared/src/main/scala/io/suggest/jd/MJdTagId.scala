@@ -4,7 +4,7 @@ import diode.FastEq
 import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.jd.tags.JdTag
 import io.suggest.primo.IHashCodeLazyVal
 import io.suggest.scalaz.NodePath_t
 import japgolly.univeq._
@@ -52,48 +52,9 @@ object MJdTagId extends IEmpty {
   val selPathRev = GenLens[MJdTagId](_.selPathRev)
   val blockExpand = GenLens[MJdTagId](_.blockExpand)
 
-
-  def mkTreesIndexSeg(jdDocs: Stream[MJdDoc]): Stream[(MJdTagId, JdTag)] =
-    jdDocs.flatMap( mkTreeIndexSeg )
-
-
-  /** Создать сегмент для будущего jd-индекса по id.
-    *
-    * @param jdDoc Данные исходного документа.
-    * @return Максимально ленивый Stream, на основе которого можно создать индекс.
-    */
-  def mkTreeIndexSeg(jdDoc: MJdDoc): Stream[(MJdTagId, JdTag)] = {
-    // Если текущий тег - это блок, то надо сбросить значение expand на текущее значение.
-    val jdt = jdDoc.template.rootLabel
-    val expandMode2 = jdt.props1.expandMode
-
-    val jdTagId2 = if (
-      (jdt.name ==* MJdTagNames.STRIP) &&
-      (expandMode2 !=* jdDoc.jdId.blockExpand)
-    ) {
-      blockExpand.set(expandMode2)( jdDoc.jdId )
-    } else {
-      jdDoc.jdId
-    }
-
-    // Отработать текущий элемент
-    val el0 = jdTagId2 -> jdt
-
-    el0 #:: {
-      // И отработать дочерние элементы:
-      jdDoc
-        .template
-        .subForest
-        .zipWithIndex
-        .flatMap { case (subJdt, i) =>
-          val jdDocCh = jdDoc.copy(
-            template  = subJdt,
-            jdId      = selPathRev.modify(i :: _)( jdTagId2 ),
-          )
-          mkTreeIndexSeg( jdDocCh )
-        }
-    }
-  }
+  /** Добавление под-уровня в [[MJdTagId]] происходит обычно через это действие: */
+  def selPathRevNextLevel(subIndex: Int) =
+    selPathRev.modify(subIndex :: _)
 
 
   def mkTreeIndex(segments: Stream[(MJdTagId, JdTag)]*): HashMap[MJdTagId, JdTag] =

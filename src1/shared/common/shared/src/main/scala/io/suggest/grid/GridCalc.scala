@@ -4,7 +4,7 @@ import io.suggest.ad.blk.{BlockHeights, BlockPaddings, BlockWidth, BlockWidths, 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{IWidth, MSize2di}
 import io.suggest.dev.{MSzMult, MSzMults}
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import japgolly.univeq._
 import scalaz.Tree
@@ -128,20 +128,21 @@ object GridCalc {
     * @param jdConf Конфиг рендера плитки.
     * @return Карта szMults по тегам.
     */
-  def wideSzMults(tpls: TraversableOnce[Tree[JdTag]], jdConf: MJdConf): HashMap[JdTag, MSzMult] = {
+  def wideSzMults(tpls: TraversableOnce[Tree[(MJdTagId, JdTag)]], jdConf: MJdConf): HashMap[MJdTagId, MSzMult] = {
     (
-      HashMap.newBuilder[JdTag, MSzMult] ++= (for {
+      HashMap.newBuilder[MJdTagId, MSzMult] ++= (for {
         tpl         <- tpls.toIterator
-        tplJdt = tpl.rootLabel
+        tplJdtWithId = tpl.rootLabel
+        tplJdt = tplJdtWithId._2
         // Посчитать wideSzMult блока, если wide
         if tplJdt.name ==* MJdTagNames.STRIP
         bm          <- tplJdt.props1.wh.iterator
         expandMode  <- tplJdt.props1.expandMode.iterator
         if expandMode ==* MBlockExpandModes.Full
         wideSzMult  <- GridCalc.wideSzMult( bm, tplJdt.props1.expandMode, jdConf.gridColumnsCount ).iterator
-        jdt         <- tpl.flatten
+        (jdId, _) <- tpl.flatten
       } yield {
-        jdt -> wideSzMult
+        jdId -> wideSzMult
       })
     )
       .result()

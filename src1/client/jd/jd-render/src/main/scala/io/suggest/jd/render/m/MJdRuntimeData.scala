@@ -29,19 +29,19 @@ object MJdRuntimeData {
 }
 
 
-/** @param jdtWideSzMults Ассоц.массив информации wideSzMult'ов по jd-тегам.
+/** @param jdtWideSzMults Ассоц.массив информации wideSzMult'ов по jdId.
   *                       Появился для возможности увеличения wide-блоков без влияния на остальную плитку.
   * @param qdBlockLess Состояния безблоковых qd-тегов с динамическими размерами в плитке.
   *                    Оно заполняется асинхронно через callback'и из react-measure и др.
   *                    Только HashMap, чтобы гарантировать быстрое добавление новых элементов в массив.
-  *                    Используется MJdTagId, иначе возникает лютый гемор.
+  *                    Используется MJdTagId: прямая адресация по JdTag создаёт лютый гемор на уровне кода,
+  *                    т.к. react-measure асинхронен.
   *                    Pot.pending() означает, что запрошен принудительный вызов measure()-функции.
   *                    pending() нельзя выставлять до первого рендера, т.к. вызов measure() будет фейлить.
   * @param jdTagsById Теги по ключу. Для связывания стабильных названий стилей в JdCss с JdR.
   */
 case class MJdRuntimeData(
-                           jdtWideSzMults     : HashMap[JdTag, MSzMult],
-                           // TODO Перевести qdBlockLess JdTag на MJdTagId. Обязательно.
-                           qdBlockLess        : HashMap[MJdTagId, Pot[MQdBlSize]]     = HashMap.empty,
-                           jdTagsById         : HashMap[MJdTagId, JdTag]              = HashMap.empty,
+                           jdtWideSzMults     : HashMap[MJdTagId, MSzMult],
+                           qdBlockLess        : HashMap[MJdTagId, Pot[MQdBlSize]],
+                           jdTagsById         : HashMap[MJdTagId, JdTag],
                          )

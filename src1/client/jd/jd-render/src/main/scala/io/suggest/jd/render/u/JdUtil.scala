@@ -2,7 +2,6 @@ package io.suggest.jd.render.u
 
 import diode.data.Pot
 import io.suggest.grid.GridCalc
-import io.suggest.jd.MJdTagId.{blockExpand, selPathRev}
 import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdDataJs, MJdRrrProps, MJdRuntime, MJdRuntimeData, MQdBlSize}
 import io.suggest.jd.render.v.JdCss
@@ -87,12 +86,12 @@ object JdUtil {
         var updAcc = List.empty[MJdTagId => MJdTagId]
 
         if (jdt ne rootJdt)
-          updAcc ::= selPathRev.modify(i :: _)
+          updAcc ::= MJdTagId.selPathRevNextLevel(i)
 
         if (jdt.name ==* MJdTagNames.STRIP) {
           val expandMode2 = jdt.props1.expandMode
           if (expandMode2 !=* jdId.blockExpand)
-            updAcc ::= blockExpand.set(expandMode2)
+            updAcc ::= MJdTagId.blockExpand.set(expandMode2)
         }
 
         // Выставить blockExpand, если требуется:
@@ -123,13 +122,11 @@ object JdUtil {
       /** Финальная сборка состояния рантайма. Сравнительно ресурсоёмкая операция. */
       def result: MJdRuntime = {
         val tplsIndexed = args.jdDocs.map( mkTreeIndexed )
-        val jdTagsById = MJdTagId.mkTreeIndex( tplsIndexed.flatMap(_.flatten) )
-
-        val tpls = args.jdDocs.map(_.template)
+        val jdtsIndexed = tplsIndexed.flatMap(_.flatten)
 
         val jdRtData = MJdRuntimeData(
-          jdtWideSzMults  = GridCalc.wideSzMults(tpls, args.jdConf),
-          jdTagsById      = jdTagsById,
+          jdtWideSzMults  = GridCalc.wideSzMults(tplsIndexed, args.jdConf),
+          jdTagsById      = MJdTagId.mkTreeIndex( jdtsIndexed ),
           qdBlockLess     = mkQdBlockLessData(
             tpls    = tplsIndexed,
             prevOpt = args.prevOpt,

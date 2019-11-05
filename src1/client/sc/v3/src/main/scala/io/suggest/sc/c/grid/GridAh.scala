@@ -67,14 +67,12 @@ object GridAh {
   def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
 
     /** Конвертация одной карточки в один блок для рендера в плитке. */
-    def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
+    def blockRenderData2GbPayload(nodeId: Option[String], blk: JdTag, brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
       Tree.Leaf {
-        val stripJdt = stripTpl.rootLabel
-
         val wideBgBlk = for {
-          bg      <- stripJdt.props1.bgImg
-          if stripJdt.props1.expandMode.nonEmpty
+          bg      <- blk.props1.bgImg
+          if blk.props1.expandMode.nonEmpty
           // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
           // TODO Нужна поддержка wide-фона без картинки.
           bgEdge  <- brd.edges.get( bg.edgeUid )
@@ -84,10 +82,11 @@ object GridAh {
         }
 
         MGbBlock(
-          size   = GridBuilderUtilJs.gbSizeFromJdt(jdId, stripJdt, jdRuntime, jdConf),
-          nodeId = nodeId,
-          jdtOpt = Some(stripJdt),
-          wideBgSz = wideBgBlk
+          jdId      = jdId,
+          size      = GridBuilderUtilJs.gbSizeFromJdt(jdId, blk, jdRuntime, jdConf),
+          nodeId    = nodeId,
+          jdt       = blk,
+          wideBgSz  = wideBgBlk,
         )
       }
     }
@@ -100,30 +99,33 @@ object GridAh {
         scAdData.focused.fold [Tree[MGbBlock]] {
           // Несфокусированная карточка. Вернуть bm единственного стрипа.
           val brd = scAdData.main
-          blockRenderData2GbPayload( scAdData.nodeId, brd.doc.template, brd, brd.doc.jdId )
+          blockRenderData2GbPayload( scAdData.nodeId, brd.doc.template.rootLabel, brd, brd.doc.jdId )
         } { foc =>
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
+          import foc.blkData.doc
           Tree.Node(
-            root = MGbBlock(
-              size = GridBuilderUtilJs.gbSizeFromJdt(
-                jdt = foc.blkData
-                  .doc.template
-                  .rootLabel,
-                jdRuntime = jdRuntime,
-                jdConf    = jdConf,
-                jdId      = foc.blkData.doc.jdId,
-              ),
-              nodeId = scAdData.nodeId,
-              jdtOpt = None,
-            ),
-            forest = foc.blkData
-              .doc.template
-              .subForest
-              .zipWithIndex
-              .map { case (subTpl, i) =>
-                val subJdId = MJdTagId.selPathRev.modify(i :: _)(foc.blkData.doc.jdId)
-                blockRenderData2GbPayload( scAdData.nodeId, subTpl, foc.blkData, subJdId)
-              }
+            root = {
+              val jdt = doc.template.rootLabel
+              val jdId = doc.jdId
+
+              MGbBlock(
+                jdId = jdId,
+                size = GridBuilderUtilJs.gbSizeFromJdt(
+                  jdt       = jdt,
+                  jdRuntime = jdRuntime,
+                  jdConf    = jdConf,
+                  jdId      = jdId,
+                ),
+                nodeId = scAdData.nodeId,
+                jdt = jdt,
+              )
+            },
+            forest = for {
+              tplIndexedTree <- JdUtil.mkTreeIndexed( doc ).subForest
+            } yield {
+              val (subJdId, subJdt) = tplIndexedTree.rootLabel
+              blockRenderData2GbPayload( scAdData.nodeId, subJdt, foc.blkData, subJdId )
+            },
           )
         }
       }
@@ -284,7 +286,6 @@ class GridRespHandler
       .map { sc3AdData =>
         // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
         sc3AdData.jd.doc.jdId.nodeId
-          .filter( _ => reusableAdsMap.nonEmpty )
           .flatMap( reusableAdsMap.get )
           // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
           .getOrElse {
@@ -546,7 +547,7 @@ class GridAh[M](
                 offset = Some(offset)
               ),
             common = MScCommonQs.searchGridAds
-              .set( Some(false) )(args0.common)
+              .set( OptionUtil.SomeBool.someFalse )(args0.common)
           )
 
           // Запустить запрос с почищенными аргументами...

@@ -56,7 +56,6 @@ object GridBuilderUtil {
     * @return Результат сборки.
     */
   def buildGrid(args: MGridBuildArgs): MGridBuildResult = {
-    // TODO XXX args.jdtWideSzMults содежит данные, которые надо тут задействовать для рассчёта wide height:
     // MColumnState перевести на список пиксельных промежутков с указателем на оккупирующие промежутки теги.
 
     // Чисто самоконтроль, потом можно выкинуть.
@@ -65,14 +64,13 @@ object GridBuilderUtil {
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
 
     val szMultedF = MSzMult.szMultedF( args.jdConf.szMult )
-    val szMultD = szMultedF.szMultBaseOpt.get
 
     val cellWidthPx  = szMultedF( BlockWidths.min.value )
     //val cellHeightPx = szMultedF( BlockHeights.min.value )
 
     val paddingMultedPx = szMultedF( args.jdConf.blockPadding.fullBetweenBlocksPx )
-    val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
-    //val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
+    val cellPaddingWidthPx  = paddingMultedPx
+    //val cellPaddingHeightPx = paddingMultedPx
 
     //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
     // TODO Тут проблема: если padding != 20, то эта примитивная формула рассчёта средней ширины ячейки ошибается, т.к. нет такой ширины:
@@ -151,8 +149,7 @@ object GridBuilderUtil {
 
             // Это block-meta. Позиционируем ровно один (текущий) блок:
             case Tree.Leaf(gb) =>
-              val wideSzMultOpt = gb.jdtOpt
-                .flatMap( args.jdtWideSzMults.get )
+              val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
               val gbSize = gb.size.get
 
               val blockHeightPx =
@@ -226,15 +223,15 @@ object GridBuilderUtil {
                     wideBgSz.width * img2blkSzMult
                   }
                   .orElse[Double] {
-                    if (gb.jdtOpt.exists(_.name ==* MJdTagNames.QD_CONTENT)) {
-                      val r = gb.jdtOpt
-                        .flatMap( _.props1.widthPx )
+                    if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
+                      val r = gb.jdt
+                        .props1.widthPx
                         .map { szMultedF(_, wideSzMultOpt) }
                         .orElse {
-                          val isSwapWh = gb.jdtOpt.exists(_.props1.rotateDeg.exists { deg =>
+                          val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
                             val degAbs = Math.abs( deg )
                             degAbs > 45 && degAbs <= (90+45)
-                          })
+                          }
                           for {
                             horizSzPx <- if (isSwapWh) Some(gbSize.heightPx)
                                          else gbSize.widthPx

@@ -4,7 +4,7 @@ import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.tags.JdTag
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -29,7 +29,7 @@ case class MGridBuildArgs(
                            itemsExtDatas : Stream[Tree[MGbBlock]],
                            jdConf        : MJdConf,
                            offY          : Int,
-                           jdtWideSzMults: Map[JdTag, MSzMult],
+                           jdtWideSzMults: Map[MJdTagId, MSzMult],
                          )
 
 
@@ -40,9 +40,10 @@ case class MGridBuildArgs(
   * @param orderN внутренний порядковый номер, заполняется и используется внутри [[GridBuilderUtil]].
   */
 case class MGbBlock(
+                     jdId                          : MJdTagId,
+                     jdt                           : JdTag,
                      size                          : Option[MGbSize],
                      nodeId                        : Option[String],
-                     jdtOpt                        : Option[JdTag],
                      wideBgSz                      : Option[MSize2di]  = None,
                      orderN                        : Option[Int]       = None,
                    )

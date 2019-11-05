@@ -1,6 +1,5 @@
 package io.suggest.jd.render.m
 
-import diode.FastEq
 import io.suggest.jd.render.v.JdCss
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -13,6 +12,9 @@ import monocle.macros.GenLens
   * при изменении плитки (шаблонов, jd-конфига и т.д.).
   */
 object MJdRuntime {
+
+  // Без FastEq, т.к. модель склонна пересобираться на каждый чих.
+  // Для оптимизации, считаем что она просто не меняется, и это заложено в использование MJdTagId для внутренней адресации.
 
   @inline implicit def univEq: UnivEq[MJdRuntime] = UnivEq.derive
 

@@ -148,9 +148,10 @@ object GridBuilderUtilJs {
           val jdId = MJdTagId.selPathRev
             .modify(i :: _)(jdArgs.data.doc.jdId)
           MGbBlock(
+            jdId    = jdId,
             size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),
             nodeId  = None,
-            jdtOpt  = Some(jdt),
+            jdt     = jdt,
             orderN  = Some(i),
           )
         }
