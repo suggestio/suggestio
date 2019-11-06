@@ -22,7 +22,7 @@ import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.common.geom.d2.IWidth
+import io.suggest.common.geom.d2.{IWidth, MSize2di}
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.primo.id.OptId
 import io.suggest.sjs.common.log.Log
@@ -66,19 +66,29 @@ object GridAh {
   /** Выполнение ребилда плитки. */
   def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
 
+    lazy val szMultedF = MSzMult.szMultedF(jdConf.szMult)
+
     /** Конвертация одной карточки в один блок для рендера в плитке. */
     def blockRenderData2GbPayload(nodeId: Option[String], blk: JdTag, brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
       Tree.Leaf {
-        val wideBgBlk = for {
-          bg      <- blk.props1.bgImg
-          if blk.props1.expandMode.nonEmpty
-          // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
-          // TODO Нужна поддержка wide-фона без картинки.
-          bgEdge  <- brd.edges.get( bg.edgeUid )
-          imgWh   <- bgEdge.origWh
-        } yield {
-          imgWh
+        val wideBgBlk = OptionUtil.maybe(blk.props1.expandMode.nonEmpty) {
+          (for {
+            bg      <- blk.props1.bgImg
+            if !bg.outImgFormat.exists(_.isVector)
+            bgEdge  <- brd.edges.get( bg.edgeUid )
+            imgWh   <- bgEdge.origWh
+          } yield {
+            // Растровая картинка фона.
+            imgWh
+          })
+            .getOrElse {
+              // wide-фон без картинки или с svg-фоном (размеры которой не важны).
+              MSize2di(
+                width   = jdConf.plainWideBlockWidthPx,
+                height  = szMultedF( blk.props1.heightPx.get ),
+              )
+            }
         }
 
         MGbBlock(

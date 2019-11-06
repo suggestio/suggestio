@@ -50,8 +50,8 @@ object JdUtil {
     } else {
       val potEmpty = Pot.empty[MQdBlSize]
       val wantedQdBlsMap = HashMap(
-        wantedQdBls
-          .map { kv => (kv._1, potEmpty) } : _*
+        (for (kv <- wantedQdBls)
+         yield (kv._1, potEmpty)): _*
       )
 
       // Есть старая карта данных. Дополнить её, замёржив новые данные, и но удаляя ненужные

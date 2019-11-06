@@ -29,7 +29,7 @@ object ImgUtilRJs {
       origWh  <- origWhOpt
     } yield {
       // Рассчёт коэффициента масштабирования:
-      val outer2cropRatio = szMult.toDouble * outerWh.height.toDouble / crop.height.toDouble
+      val outer2cropRatio = szMult.toDouble * outerWh.width.toDouble / crop.width.toDouble
 
       // Проецируем это отношение на натуральные размеры картинки, top и left:
       TagMod(

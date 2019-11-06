@@ -7,7 +7,6 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
 import io.suggest.dev.MSzMult
-import io.suggest.img.ImgUtilRJs
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
@@ -164,14 +163,6 @@ class JdEditR(
           _maybeSelected(qdTag, state.jdArgs),
           _selectableOnClick( $ )( _.p.value ),
 
-          /* TODO унести в react-dnd spec.canDrag()
-          ReactCommonUtil.maybe(
-            !state.parent.exists(state.jdArgs.selJdt.treeLocOpt.containsLabel)
-          ) {
-            _draggableUsing($) { qdTagDragStart }
-          },
-           */
-
           // Рендерить особые указатели мыши в режиме редактирования.
           if (state.isCurrentSelected) {
             // Текущий тег выделен. Значит, пусть будет move-указатель
@@ -242,7 +233,6 @@ class JdEditR(
 
       private val contentRef = Ref[html.Element]
 
-
       private val _qdBeginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
         (props, mon, _) =>
           // Запустить обработку по circuit в фоне. По логике кажется, что должно быть асинхронно, но не факт: рендер перетаскивания может нарушаться.
@@ -250,14 +240,13 @@ class JdEditR(
           val jdt = s.subTree.rootLabel
           props.p dispatchNow JdTagDragStart(jdt, s.tagId)
 
-          val el = contentRef.unsafeGet()
-          val xyOff: XY = if (s.parent.exists(_.name ==* MJdTagNames.STRIP)) {
-            // Контент внутри блока.
-            _getDragElTopLeft(el, mon)
-          } else {
+          var el = contentRef.unsafeGet()
+          if (!s.parent.exists(_.name ==* MJdTagNames.STRIP)) {
             // qd-blockless. Ищем координаты для родительского контейнера.
-            _getDragElTopLeft(el.parentElement, mon)
+            el = el.parentElement
           }
+
+          val xyOff = _getDragElTopLeft(el, mon)
 
           // Отрендерить в json данные, которые будут переданы в DropTarget.
           MJsDropInfo( DCT.CONTENT_ELEMENT, xyOff )
@@ -319,10 +308,7 @@ class JdEditR(
       override def _smBlockAddons(state: MJdRrrProps): TagMod = {
         // Если текущий стрип выделен, то его можно таскать:
         ReactCommonUtil.maybe( state.isCurrentSelected ) {
-          TagMod(
-            //_draggableUsing($)(blockDragStart),
-            ^.`class` := Css.Cursor.GRAB
-          )
+          ^.`class` := Css.Cursor.GRAB
         }
       }
 

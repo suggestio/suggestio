@@ -2,7 +2,7 @@ package io.suggest.ad.blk
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -40,6 +40,9 @@ object MBlockExpandMode {
   implicit class MBlockExpandModeExt( val mbem: MBlockExpandMode ) extends AnyVal {
     def msgCode: String =
       "_Block.expand." + mbem.value
+
+    def hasWideSzMult: Boolean =
+      mbem ==* MBlockExpandModes.Full
   }
 
 }

@@ -182,7 +182,7 @@ case class QdRrrHtml(
       // width/height экранного представления картинки задаётся в CSS:
       // Контейнер ресайза также требует этот стиль, поэтому кэшируем стиль в переменной:
       val embedStyleOpt = for (ae <- jdtQdOp.qdOp.attrsEmbed if ae.nonEmpty) yield {
-        rrrProps.jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdtQdOp.jdTagId )
+        rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( jdtQdOp.jdTagId )
       }
       embedStyleOpt.foreach( imgArgsAcc ::= _ )
 
@@ -206,7 +206,7 @@ case class QdRrrHtml(
         attrsText <- jdtQdOp.qdOp.attrsText
         if jdtQdOp.jdTag.props1.isContentCssStyled || attrsText.isCssStyled
       } {
-        imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textStyleF( jdtQdOp.jdTagId )
+        imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textF( jdtQdOp.jdTagId )
       }
 
       var finalTm: TagMod = <.img(
@@ -270,8 +270,8 @@ case class QdRrrHtml(
     } yield {
       val whStyl = jdtQdOp.qdOp.attrsEmbed
         .filter(_.nonEmpty)
-        .fold( rrrProps.jdArgs.jdRuntime.jdCss.videoStyle ) { _ =>
-          rrrProps.jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdtQdOp.jdTagId )
+        .fold( rrrProps.jdArgs.jdRuntime.jdCss.video ) { _ =>
+          rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( jdtQdOp.jdTagId )
         }
       val keyV = "V" + i
       val iframe = <.iframe(
@@ -402,7 +402,7 @@ case class QdRrrHtml(
       // Отрендерить цвет текста и цвет фона, одним style.
       // Стилизуем текст только через самый внутренний тег оформления текста, управляя этим через переменную.
       var textStyleOpt = OptionUtil.maybe[TagMod]( attrs.isCssStyled ) {
-        rrrProps.jdArgs.jdRuntime.jdCss.textStyleF( jdtQdOp.jdTagId )
+        rrrProps.jdArgs.jdRuntime.jdCss.textF( jdtQdOp.jdTagId )
       }
 
       // Выставить lineHeight, если он не выставлен на уровне qd-content тега:

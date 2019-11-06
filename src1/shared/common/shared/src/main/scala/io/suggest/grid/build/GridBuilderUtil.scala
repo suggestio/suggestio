@@ -149,7 +149,7 @@ object GridBuilderUtil {
 
             // Это block-meta. Позиционируем ровно один (текущий) блок:
             case Tree.Leaf(gb) =>
-              val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
+              lazy val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
               val gbSize = gb.size.get
 
               val blockHeightPx =
@@ -218,7 +218,6 @@ object GridBuilderUtil {
                   .map { wideBgSz =>
                     // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
                     // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
-                    // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
                     val img2blkSzMult = blockHeightPx / wideBgSz.height.toDouble
                     wideBgSz.width * img2blkSzMult
                   }
@@ -261,7 +260,7 @@ object GridBuilderUtil {
                 )
                 //println(s"RES: Node#${itemExt.nodeId.orNull} topLeft=" + xyAbs + " orderN=" + orderN + " gb=" + gb.size + (if(gb.size.expandMode.nonEmpty) " WIDE" else ""))
 
-                val mwlAbsOpt = for (_ <- gbSize.expandMode) yield currWide
+                val mwlAbsOpt = OptionUtil.maybe(gbSize.expandMode.nonEmpty)( currWide )
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
                 val s1DeConflictedOpt = for {
@@ -331,7 +330,7 @@ object GridBuilderUtil {
                   )
                 }
 
-                val s1 = s1DeConflictedOpt.getOrElse {
+                val s1 = s1DeConflictedOpt getOrElse {
                   // Не-wide блок. Просто закинуть данные в состояние.
                   s0.copy(
                     levels        = currLvl2 :: s0.levels.tail,

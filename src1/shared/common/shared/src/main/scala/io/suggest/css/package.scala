@@ -23,7 +23,9 @@ package object css {
     // TODO Не совместимо со стилями в ScCss при перерендерах без пере-рендера VDOM. Если Ignore, то можно задействовать штатный ProdDefaults
     override          def cssRegisterMacroName   : MacroName        = MacroName.Use
 
-    override          val cssRegisterErrorHandler: ErrorHandler     = ErrorHandler.silent
+    // TODO isDev нужен, но это надо спустить все css-стили на sjs-уровень.
+    override          val cssRegisterErrorHandler: ErrorHandler     = ErrorHandler.noisy
+
     override implicit def cssStringRenderer      : Renderer[String] = StringRenderer.formatTiny
     override implicit def cssComposition         : Compose          = Compose.trust
   }

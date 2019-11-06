@@ -703,7 +703,6 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
 
       }
 
-
     }
 
   }

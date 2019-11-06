@@ -17,6 +17,7 @@ import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import diode.data.PendingBase
+import io.suggest.dev.MSzMult
 import io.suggest.img.ImgUtilRJs
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
@@ -82,7 +83,7 @@ class JdR(
         )
 
         // Поддержка абсолютного позиционирования внутри контейнера:
-        val absPosStyl: TagMod = jdCss.absPosStyleF( state.tagId )
+        val absPosStyl: TagMod = jdCss.absPosF( state.tagId )
 
         if (qdTag.props1.topLeft.nonEmpty) {
           // Обычный контент внутри блока.
@@ -105,10 +106,10 @@ class JdR(
 
         // CSS-класс принудительной ширины, если задан.
         if (qdTag.props1.widthPx.nonEmpty)
-          contTagModsAcc ::= jdCss.forcedWidthStyleF( state.tagId )
+          contTagModsAcc ::= jdCss.contentWidthF( state.tagId )
 
         // Стиль для теней
-        if( qdTag.props1.textShadow.nonEmpty )
+        if (qdTag.props1.textShadow.nonEmpty)
           contTagModsAcc ::= jdCss.contentShadowF( state.tagId )
 
         // Общие стили для текстов внутри (line-height):
@@ -206,24 +207,63 @@ class JdR(
 
       /** Доп.наполнение для тега фоновой картинки блока. */
       def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
-        OptionUtil.maybeOpt(
-          // В редакторе: все картинки - всегда оригиналы с эмуляцией кропа на клиенте:
-          state.jdArgs.conf.isEdit ||
-          // За пределами редактора: только векторные картинки подлежат эмуляции кропа на клиенте:
+        val jdt = state.subTree.rootLabel
+        // За пределами редактора: только векторные картинки подлежат эмуляции кропа на клиенте (кроме wide-блоков):
+        val isVector =
           bgImgData.outImgFormat.exists(_.isVector)
+
+        OptionUtil.maybe(
+          // В редакторе: все картинки - всегда оригиналы с эмуляцией кропа на клиенте:
+          jdt.props1.expandMode.isEmpty ||
+          state.jdArgs.conf.isEdit
         ) {
           // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
+          val whOpt = jdt.props1.wh
+          val origWh = edge.origWh
+          val szMult = state.jdArgs.conf.szMult
+
           ImgUtilRJs.htmlImgCropEmuAttrsOpt(
             cropOpt     = bgImgData.crop,
-            outerWhOpt  = state.subTree.rootLabel.props1.wh,
-            origWhOpt   = edge.origWh,
-            szMult      = state.jdArgs.conf.szMult
+            outerWhOpt  = whOpt,
+            origWhOpt   = origWh,
+            szMult      = szMult,
           )
+            .orElse {
+              // Кроп не задан. Отталкиваемся от высоты блока.
+              for (wh <- whOpt) yield {
+                val szMultedF = MSzMult.szMultedF( szMult )
+                if (wh.width > wh.height)
+                  ^.width := szMultedF(wh.width).px
+                else
+                  ^.height := szMultedF(wh.height).px
+              }
+            }
+            .get
         }
           .getOrElse {
             // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
             // на px ratio, надо подогнать картинку по размерам:
-            state.jdArgs.jdRuntime.jdCss.stripBgStyleF( state.tagId )
+            val css0 = state.jdArgs.jdRuntime.jdCss.blockBgF( state.tagId ): TagMod
+
+            // Векторные фоновые картинки на wide-карточках желательно отпедалировать по вертикали.
+            // Для wideVec нужно добавить вертикальную центровку картинки.
+            (for {
+              expandMode      <- jdt.props1.expandMode
+              origWh          <- edge.origWh
+              blockHeightPx   <- jdt.props1.heightPx
+            } yield {
+              val img2BlockRatio = state.jdArgs.conf.plainWideBlockWidthPx.toDouble / origWh.width.toDouble
+              val wideSzMultOpt = OptionUtil.maybeOpt(expandMode.hasWideSzMult)(
+                state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
+              )
+              val blockHeightMultedPx = MSzMult.szMultedF( state.jdArgs.conf.szMult )(blockHeightPx, wideSzMultOpt)
+              val offsetTopPx = (blockHeightMultedPx - (origWh.height * img2BlockRatio)) / 2
+              TagMod(
+                css0,
+                ^.marginTop := offsetTopPx.px,
+              )
+            })
+              .getOrElse( css0 )
           }
       }
 
@@ -243,33 +283,42 @@ class JdR(
 
         val isWide = s.props1.expandMode.nonEmpty
 
-        val container = if (isWide) {
-          // Широкоформатное отображение, рендерим фон без ограничений блока:
-          <.div(
-            C.wideContStyleF(state.tagId),
-            ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
-          )
-        } else {
-          // Обычное отображение, просто вернуть блок.
-          <.div(
-            jdCssStatic.smBlockS,
-            C.smBlock,
-            C.bmStyleF( state.tagId ),
-          )
-        }
+        val blockCss = jdCssStatic.smBlockS: TagMod
 
-        // Наборчик vdom-аттрибутов для внешнего контейнера текущего блока:
-        container(
+        // Обычное отображение, просто вернуть блок.
+        val block = <.div(
+          blockCss,
+          C.smBlock,
+          C.blockF( state.tagId ),
 
           // Статические и полустатические css-стили
           jdCssStatic.contentOuterS,
           C.contentOuter,
 
+          // Наконец, рендер дочерних элементов jd-дерева.
+          pureChildren( renderChildrenWithId( propsProxy ) )
+            .toVdomArray,
+        )
+
+        val container = if (isWide) {
+          // Широкоформатное отображение, рендерим фон без ограничений блока:
+          <.div(
+            C.wideContF(state.tagId),
+            blockCss,
+            block
+          )
+        } else {
+          block
+        }
+
+        // Наборчик vdom-аттрибутов для внешнего контейнера текущего блока:
+        container(
+
           // Скрывать не-main-стрипы, если этого требует рендер.
           // Это касается только стрипов, у которых нет isMain = Some(true)
           ReactCommonUtil.maybe(
             state.jdArgs.renderArgs.hideNonMainStrips &&
-              !s.props1.isMain.getOrElseFalse
+            !s.props1.isMain.getOrElseFalse
           ) {
             // Данный стип надо приглушить с помощью указанных css-стилей.
             ^.visibility.hidden
@@ -312,11 +361,6 @@ class JdR(
             .whenDefined,
 
           _smBlockAddons(state),
-
-          // Наконец, рендер дочерних элементов jd-дерева.
-          pureChildren( renderChildrenWithId( propsProxy ) )
-            .toVdomArray,
-
         )
       }
 
@@ -515,7 +559,7 @@ class JdR(
   /** Рендер опционального цвета фона. */
   private def _bgColorOpt(jdTag: JdTag, jdArgs: MJdArgs): TagMod = {
     jdTag.props1.bgColor.whenDefined { mcd =>
-      jdArgs.jdRuntime.jdCss.bgColorOptStyleF( mcd.hexCode )
+      jdArgs.jdRuntime.jdCss.bgColorF( mcd.hexCode )
     }
   }
 

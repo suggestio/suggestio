@@ -59,15 +59,21 @@ case class MJdConf(
                     gridColumnsCount    : Int
                   ) {
 
-  /** Внутренняя ширина плитки без окружающего обода. */
-  def gridInnerWidthPx =
-    (gridColumnsCount * szMult.toDouble) * (BlockWidths.min.value + BlockPaddings.default.outlinePx)
-
   /** Фактическая ширина внутреннего контейнера плитки в пикселях вместе с ободом вокруг. */
-  def gridWidthPx = gridInnerWidthPx + BlockPaddings.default.fullBetweenBlocksPx
+  lazy val gridWidthPx: Int = {
+    val d = (gridColumnsCount / 2) *
+      (BlockWidths.NORMAL.value + BlockPaddings.default.value) *
+      szMult.toDouble
+    d.toInt
+  }
+
+  /** Внутренняя ширина плитки без окружающего обода. */
+  def gridInnerWidthPx: Int =
+    gridWidthPx - BlockPaddings.default.fullBetweenBlocksPx
 
   /** Ширина wide-блока без фоновой картинки.  */
-  def plainWideBlockWidthPx = gridWidthPx * 1.5
+  def plainWideBlockWidthPx: Int =
+    gridWidthPx + BlockPaddings.default.value * 2
 
 }
 
