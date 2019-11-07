@@ -209,9 +209,6 @@ class JdR(
       def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         val jdt = state.subTree.rootLabel
         // За пределами редактора: только векторные картинки подлежат эмуляции кропа на клиенте (кроме wide-блоков):
-        val isVector =
-          bgImgData.outImgFormat.exists(_.isVector)
-
         OptionUtil.maybe(
           // В редакторе: все картинки - всегда оригиналы с эмуляцией кропа на клиенте:
           jdt.props1.expandMode.isEmpty ||

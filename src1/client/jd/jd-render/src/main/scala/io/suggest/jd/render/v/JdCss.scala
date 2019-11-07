@@ -3,7 +3,6 @@ package io.suggest.jd.render.v
 import diode.FastEq
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -171,29 +170,19 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   ) (
     {jdId =>
-      jdCssArgs.data.jdTagsById
-        .get( jdId )
-        .flatMap { blk =>
-          // Записываем одну из двух сторон картинки:
-          /*OptionUtil
-            .maybeOpt( blk.props1.expandMode.nonEmpty ) {
-              // wide-картинки можно прессовать только по высоте блока
-              for (heightPx <- blk.props1.heightPx)
-              yield height( _szMulted( heightPx, wideSzMultOpt ).px )
-            }
-            .orElse {*/
-              // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-              for {
-                widthPx <- (
-                  if (blk.props1.expandMode.isEmpty) blk.props1.widthPx
-                  else Some(jdCssArgs.conf.plainWideBlockWidthPx)
-                )
-              } yield {
-                val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
-                width( _szMulted( widthPx, wideSzMultOpt ).px )
-              }
-            //}
+      (for {
+        blk <- jdCssArgs.data.jdTagsById.get( jdId )
+        widthPx <- if (blk.props1.expandMode.isEmpty) {
+          for (w <- blk.props1.widthPx) yield {
+            val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
+            _szMulted( w, wideSzMultOpt )
+          }
+        } else {
+          Some( jdCssArgs.conf.plainWideBlockWidthPx )
         }
+      } yield {
+        width( widthPx.px )
+      })
         .whenDefinedStyleS( styleS(_) )
     },
     JdCss._jdIdToStringF,

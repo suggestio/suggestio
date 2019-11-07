@@ -73,22 +73,10 @@ object GridAh {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
       Tree.Leaf {
         val wideBgBlk = OptionUtil.maybe(blk.props1.expandMode.nonEmpty) {
-          (for {
-            bg      <- blk.props1.bgImg
-            if !bg.outImgFormat.exists(_.isVector)
-            bgEdge  <- brd.edges.get( bg.edgeUid )
-            imgWh   <- bgEdge.origWh
-          } yield {
-            // Растровая картинка фона.
-            imgWh
-          })
-            .getOrElse {
-              // wide-фон без картинки или с svg-фоном (размеры которой не важны).
-              MSize2di(
-                width   = jdConf.plainWideBlockWidthPx,
-                height  = szMultedF( blk.props1.heightPx.get ),
-              )
-            }
+          MSize2di(
+            width   = jdConf.plainWideBlockWidthPx,
+            height  = szMultedF( blk.props1.heightPx.get ),
+          )
         }
 
         MGbBlock(

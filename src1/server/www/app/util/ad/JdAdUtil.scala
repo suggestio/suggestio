@@ -378,9 +378,8 @@ class JdAdUtil @Inject()(
 
     // Собрать инфу по хостам, хранящим интересующие media-файлы.
     def mediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]] = {
-      mediasForMediaHostsFut.flatMap {
-        cdnUtil.mediasHosts
-      }
+      mediasForMediaHostsFut
+        .flatMap( cdnUtil.mediasHosts )
     }
 
     // Скомпилить jd-эджи для видосов:
@@ -547,7 +546,7 @@ class JdAdUtil @Inject()(
         } yield {
           LOGGER.trace(s"$logPrefix ${origImgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.uid).mkString(", ")}]\n mediaHostsMap[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(",  ")}")
           val imgPred = imgPredicate
-          val iter = for {
+          (for {
             imgMakeRes <- imgsRendered.iterator
             edgeUid    <- imgMakeRes.medge.doc.uid
           } yield {
@@ -564,9 +563,9 @@ class JdAdUtil @Inject()(
                 whPx   = Some( imgMakeRes.imgSzReal )
               ))
             )
-          }
-          // Для явной подготовки данных строго в текущем потоке, используем toList вместо toStream/toVector.
-          iter.toList
+          })
+            // Для явной подготовки данных строго в текущем потоке, используем toList вместо toStream/toVector.
+            .toList
         }
       }
 
@@ -624,35 +623,35 @@ class JdAdUtil @Inject()(
                              )
 
         // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
-        val edgedImgTags = {
-          val iter = for {
-            (medge, mimg) <- origImgsEdges.toIterator
-            edgeUid       <- medge.doc.uid
-            jdLoc         <- tpl
-              .loc
-              .find { jdTagTree =>
-                jdTagTree
-                  .getLabel
-                  .edgeUids
-                  .exists(_.edgeUid ==* edgeUid)
-              }
-          } yield {
-            val jdTag = jdLoc.getLabel
-            // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
-            val isWide = allowWide && jdTag.props1.expandMode.nonEmpty
-            val wideSzMult = OptionUtil.maybeOpt(
-              isWide ||
-              (allowWide && jdLoc.parents.exists(_._2.props1.expandMode.nonEmpty))
-            ) {
-              jdTag.props1.wh.flatMap { wh =>
-                GridCalc.wideSzMult( wh, jdTag.props1.expandMode, jdConf.gridColumnsCount )
-              }
+        val edgedImgTags = (for {
+          (medge, mimg) <- origImgsEdges.toIterator
+          edgeUid       <- medge.doc.uid
+          jdLoc         <- tpl
+            .loc
+            .find { jdTagTree =>
+              jdTagTree
+                .getLabel
+                .edgeUids
+                .exists(_.edgeUid ==* edgeUid)
             }
-            LOGGER.trace(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=${wideSzMult.orNull}")
-            EdgeImgTag( medge, mimg, jdTag, isWide, wideSzMult )
+        } yield {
+          val jdTag = jdLoc.getLabel
+          // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
+          val _isJdtWide = (_: JdTag).props1.expandMode.nonEmpty
+          val isWideThis = allowWide && _isJdtWide(jdTag)
+          val wideSzMult = OptionUtil.maybeOpt(
+            isWideThis ||
+            (allowWide && jdLoc.parents.exists { parent => _isJdtWide(parent._2) })
+          ) {
+            jdTag.props1.wh.flatMap { wh =>
+              GridCalc.wideSzMult( wh, jdConf.gridColumnsCount )
+            }
           }
-          iter.toList
-        }
+          LOGGER.trace(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=${wideSzMult.orNull}")
+          EdgeImgTag( medge, mimg, jdTag, isWideThis, wideSzMult )
+        })
+          .toList
+
 
         // 2018-02-06 Из-за при ресайзе embed-картинок, в аттрибутах фигурирует только только ширина.
         // Но для рассчёта финальной картинки, в ImgMakeArgs нужна и ширина, и высота.
@@ -674,7 +673,7 @@ class JdAdUtil @Inject()(
               BlockWidths.max.value ::
               wideImgMaker.WIDE_WIDTHS_PX.tail
 
-            val iter = for {
+            (for {
               eit <- edgedImgTags.iterator
               isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
 
@@ -791,9 +790,8 @@ class JdAdUtil @Inject()(
               } yield {
                 MImgRenderInfo(eit.medge, eit.mimg, imakeRes.dynCallArgs, imakeRes.szReal)
               }
-            }
-
-            iter.toSeq
+            })
+              .toSeq
           }
 
         } yield {

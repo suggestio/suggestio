@@ -216,12 +216,10 @@ object GridBuilderUtil {
                 // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
                 val wideBgWidthOpt = gb.wideBgSz
                   .map { wideBgSz =>
-                    // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
-                    // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
-                    val img2blkSzMult = blockHeightPx / wideBgSz.height.toDouble
-                    wideBgSz.width * img2blkSzMult
+                    // Задан размер широкого фона. Берём его как есть без лишних манипуляций.
+                    wideBgSz.width
                   }
-                  .orElse[Double] {
+                  .orElse[Int] {
                     if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
                       val r = gb.jdt
                         .props1.widthPx
@@ -479,7 +477,7 @@ object GridBuilderUtil {
             res.topLeft.x * paddedCellWidthPx
           } { widthOrigPx =>
             // Отцентровать используя указанный сдвиг относительно центра плитки. И никакого szMult тут быть не должно, иначе опять всё пойдёт вразнос.
-            ((gridWidthPx - widthOrigPx) / 2).toInt
+            (gridWidthPx - widthOrigPx) / 2
           },
           y = res.topLeft.y + args.offY, //Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )
@@ -700,7 +698,7 @@ case class MGbLevelState(
 case class MGbItemRes(
                        orderN           : Int,
                        topLeft          : MCoords2di,
-                       forceCenterX     : Option[Double]   = None,
+                       forceCenterX     : Option[Int]   = None,
                        gbBlock          : MGbBlock,
                        wide             : MWideLine,
                      )
