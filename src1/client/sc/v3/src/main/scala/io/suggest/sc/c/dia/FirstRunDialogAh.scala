@@ -170,14 +170,12 @@ class FirstRunDialogAh[M](
         noChange
 
       } { view00 =>
-        println(1)
         // Сохранить в состояние полученный снапшот с данными.
         val first0: MWzFirstOuterS = m.res match {
           // Нет смысла заливать таймаут в состояние.
           case Failure(_: NoSuchElementException) =>
             first00
           case _ =>
-            println(2)
             val permState0 = first00.perms.getOrElse( m.phase, Pot.empty )
             val permState2 = permState0.withTry( m.res )
             MWzFirstOuterS.perms
@@ -200,7 +198,6 @@ class FirstRunDialogAh[M](
           val isGrantedOpt =
             for (permState <- m.res.toOption)
             yield permState.isGranted
-          println(3, isGrantedOpt)
 
           // Это текущая фаза.
           view00.frame match {
@@ -249,7 +246,6 @@ class FirstRunDialogAh[M](
           // Надо показать на экране текущий диалог в разном состоянии.
           val hasPending = first0.perms
             .exists(_._2.isPending)
-          println(4, view00.phase, hasPending)
           if (hasPending) {
             // Есть ещё pending в задачах. Просто убедиться, что диалог ожидания виден, оставаясь в Starting/InProgress.
             if (view00.visible) {
@@ -265,7 +261,6 @@ class FirstRunDialogAh[M](
 
           } else {
             // Больше нет pending-задач. Переключиться на следующую фазу диалога.
-            println(5)
             _wzGoToNextPhase( v1 )
           }
 
@@ -406,7 +401,6 @@ class FirstRunDialogAh[M](
             }
             .orElse[MWzFirstOuterS] {
               for (ex <- permPot.exceptionOption) yield {
-                println("222", ex)
                 // Ошибка проверки фазы.
                 // Для dev: вывести info-окошко с ошибкой.
                 // Для prod: пока только логгирование.
@@ -525,7 +519,7 @@ object FirstRunDialogAh extends Log {
     val tryR = Try {
       // Если уже был запуск, то снова не надо.
       val frStoredOpt = MFirstRunStored.get()
-      LOG.log(s"stored=$frStoredOpt current=${MFirstRunStored.Versions.CURRENT} dev?${Sc3ConfUtil.isDevMode}")
+      //LOG.log(s"stored=$frStoredOpt current=${MFirstRunStored.Versions.CURRENT} dev?${Sc3ConfUtil.isDevMode}")
       frStoredOpt.fold(true) { stored =>
         stored.version < MFirstRunStored.Versions.CURRENT
       } ||

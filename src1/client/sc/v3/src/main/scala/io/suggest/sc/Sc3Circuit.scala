@@ -47,7 +47,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, LoggingAllActionsProcessor, OptFastEq}
+import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.CircuitUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 
@@ -432,7 +432,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  addProcessor( LoggingAllActionsProcessor[MScRoot] )
+  //addProcessor( LoggingAllActionsProcessor[MScRoot] )
 
 
   // Отработать инициализацию js-роутера в самом начале конструктора.
