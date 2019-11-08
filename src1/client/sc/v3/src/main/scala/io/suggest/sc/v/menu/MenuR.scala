@@ -20,6 +20,7 @@ import io.suggest.ueq.UnivEqUtil._
   */
 class MenuR(
              leftR          : LeftR,
+             versionR       : VersionR,
              scReactCtxP    : React.Context[MScReactCtx],
            ) {
 
@@ -43,6 +44,8 @@ class MenuR(
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
+      val vsn = versionR.component()
+
       scReactCtxP.consume { scReactCtx =>
         val menuCss = scReactCtx.scCss.Menu
 
@@ -67,9 +70,12 @@ class MenuR(
             <.div(
               ScCssStatic.Menu.Rows.rowsContainer,
 
-              children
+              children,
+
             )  // .rowsContainer
-          )
+          ),
+
+          vsn,
 
         )    // .panel
       }

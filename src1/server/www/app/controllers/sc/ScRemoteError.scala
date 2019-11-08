@@ -1,6 +1,6 @@
 package controllers.sc
 
-import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag, MStats}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.msc.MScRemoteDiag
@@ -32,6 +32,11 @@ trait ScRemoteError
   import mCommonDi._
 
   //private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(1)
+
+  private def SAVE_TO_MSTAT = false
+
+  private lazy val mstats = current.injector.instanceOf[MStats]
+
 
   /** Маппинг для вычитывания результата из тела POST. */
   private val errorFormM: Form[MScRemoteDiag] = {
@@ -86,11 +91,11 @@ trait ScRemoteError
           val userSaOptFut = statUtil.userSaOptFutFromRequest()
           val _ctx = implicitly[Context]
 
-          for {
+          val stat2Fut = for {
             _geoLocOpt <- geoLocOptFut
             _userSaOpt <- userSaOptFut
-
-            stat2 = new statUtil.Stat2 {
+          } yield {
+            new statUtil.Stat2 {
               override def uri: Option[String] = {
                 merr0.url.orElse( super.uri )
               }
@@ -113,11 +118,26 @@ trait ScRemoteError
               override def ctx = _ctx
               override def geoIpLoc = _geoLocOpt
             }
+          }
 
-            // Сохраняем в базу отчёт об ошибке.
-            merrId <- statUtil.saveStat(stat2)
-          } yield {
-            LOGGER.trace(logPrefix + s" Saved remote error as stat[$merrId]." )
+          // Куда сохранять? В логи или просто на сервере в логи отрендерить?
+          val saveFut = if (SAVE_TO_MSTAT) {
+            for (stat2 <- stat2Fut) yield {
+              LOGGER.info(s"$logPrefix Error info received from remote client:\n${mstats.toJsonPretty(stat2.mstat)}")
+              stat2Fut
+            }
+          } else {
+            for {
+              stat2  <- stat2Fut
+              // Сохраняем в базу отчёт об ошибке.
+              merrId <- statUtil.saveStat(stat2)
+            } yield {
+              LOGGER.trace(s"$logPrefix Saved remote error as stat[$merrId]." )
+              merrId
+            }
+          }
+
+          for (_ <- saveFut) yield {
             NoContent
               // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
               // ошибку, что нет root тега в ответе /sc/error.

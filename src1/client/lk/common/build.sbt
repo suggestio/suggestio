@@ -12,7 +12,7 @@ scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
     "org.scala-js"  %%% "scalajs-dom"                 % Common.sjsDomVsn,
-    "io.suzaku"     %%% "diode-react"                 % Common.diodeVsn,
+    "io.suzaku"     %%% "diode-react"                 % Common.diodeReactVsn,
     "com.github.japgolly.scalacss" %%% "ext-react"    % Common.Vsn.SCALACSS,
     "com.softwaremill.macwire"     %% "macros"        % Common.Vsn.MACWIRE % "provided"
 )

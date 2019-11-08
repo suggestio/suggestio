@@ -89,6 +89,7 @@ class Sc3Module {
 
   // menu
   lazy val menuR = wire[MenuR]
+  lazy val versionR = wire[VersionR]
   lazy val enterLkRowR = wire[EnterLkRowR]
   lazy val aboutSioR = wire[AboutSioR]
   lazy val editAdR = wire[EditAdR]

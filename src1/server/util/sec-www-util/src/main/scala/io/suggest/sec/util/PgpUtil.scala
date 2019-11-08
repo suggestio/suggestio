@@ -50,7 +50,7 @@ class PgpUtil @Inject() (
   private def KF: KeyFactory = KeyFactoryFactory.newInstance()
 
   /** Пароль для секретного ключа сервиса. Можно добавить префикс пароля через конфиг. */
-  private val SEC_KEY_PASSWORD: String = {
+  private lazy val SEC_KEY_PASSWORD: String = {
     val passwordRoot = """Y$mo[@QS-=S!A+W#ZMi;m]l9!,SNC]Ad_(9txd,?jb&"i{O#y'(\!)1yrTsI3m(@"""
     configuration.getOptional[String]("pgp.key.password.prefix")
       .fold (passwordRoot) { _ + passwordRoot }

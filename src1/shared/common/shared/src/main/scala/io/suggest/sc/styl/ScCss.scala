@@ -411,6 +411,13 @@ object ScCssStatic extends StyleSheet.Inline {
 
     }
 
+    val version = style(
+      position.absolute,
+      bottom( 0.px ),
+      right( 0.px ),
+      fontSize.xxSmall,
+    )
+
   }
 
 
@@ -426,6 +433,7 @@ object ScCssStatic extends StyleSheet.Inline {
     Search.NodesFound.listDiv,
     Search.TextBar.bar,
     Menu.Rows.rowContent,
+    Menu.version,
   )
 
 }

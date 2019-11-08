@@ -6,16 +6,6 @@ version := "1.2.0"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-/*
-resolvers ++= {
-  import Common.Repo._
-  Seq(
-    "typesafe-releases"     at TYPESAFE_RELEASES_URL,
-    "sonatype-oss-releases" at SONATYPE_OSS_RELEASES_URL
-  )
-}
-*/
-
 libraryDependencies ++= {
   Seq(
     "com.google.inject"     %  "guice"                % Common.Vsn.GUICE,

@@ -10,7 +10,7 @@ import Keys._
 object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
-  val SCALA_VSN = "2.12.8"
+  val SCALA_VSN = "2.12.10"
   //val SCALA_VSN = "2.13.1"
   
 
@@ -90,7 +90,7 @@ object Common {
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
       */
-    val UNIVEQ = "1.1.+"
+    val UNIVEQ = "1.1.0-RC3"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]
@@ -255,7 +255,7 @@ object Common {
 
 
   /** Версия BouncyCastle. */
-  def bcVsn           = "1.+"
+  def bcVsn           = "1.64"
 
   /** Версия scalatest+play. */
   def scalaTestPlusPlayVsn = "3.0.0"
@@ -346,6 +346,7 @@ object Common {
     def JCENTER_URL                   = ARTIFACTORY_URL + "jcenter"
 
     val JROPER_MAVEN_REPO             = ARTIFACTORY_URL + "jroper-maven"
+    def JBROTLI                       = ARTIFACTORY_URL + "bintray-nitram509-jbrotli"
 
     //val CONJARS_REPO_URL            = ARTIFACTORY_URL + "conjars-repo"
     //val MAVEN_TWTTR_COM_URL         = ARTIFACTORY_URL + "maven-twttr-com"

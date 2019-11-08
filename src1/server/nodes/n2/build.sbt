@@ -7,9 +7,9 @@ version := "0.0.0"
 resolvers ++= {
   import Common.Repo._
   Seq(
-    "typesafe-releases"       at TYPESAFE_RELEASES_URL,
-    "sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL,
-    "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL
+    ("typesafe-releases"       at TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true),
+    ("sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL).withAllowInsecureProtocol(true),
+    ("sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL).withAllowInsecureProtocol(true)
   )
 }
 

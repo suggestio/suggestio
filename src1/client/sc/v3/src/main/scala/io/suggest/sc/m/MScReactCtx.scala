@@ -33,7 +33,7 @@ object MScReactCtx {
 /** Контейнер данных sc-контекста react.
   *
   * @see [[https://reactjs.org/docs/context.html]]
-  * @param scCss ScCss.
+  * @param getScCss ScCss.
   * @param routerCtl Контроллер роутера, пробрасываемый вниз по цепочке.
   */
 case class MScReactCtx(

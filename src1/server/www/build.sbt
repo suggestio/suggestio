@@ -105,16 +105,15 @@ resolvers ~= {
 resolvers ++= {
   import Common.Repo._
   Seq(
-    //"typesafe-releases"       at TYPESAFE_RELEASES_URL,
-    "sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL,
-    "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL,
-    // kaptcha:
-    "sonatype-groups-forge"   at SONATYPE_GROUPS_FORGE_URL,
-    "apache-releases"         at APACHE_RELEASES_URL,
+    ("sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL).withAllowInsecureProtocol(true),
+    ("sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL).withAllowInsecureProtocol(true),
+    ("sonatype-groups-forge"   at SONATYPE_GROUPS_FORGE_URL).withAllowInsecureProtocol(true),
+    ("apache-releases"         at APACHE_RELEASES_URL).withAllowInsecureProtocol(true),
     // brotli
-    "bintray-nitram509-jbrotli" at s"${ARTIFACTORY_URL}bintray-nitram509-jbrotli",
+    ("bintray-nitram509-jbrotli" at JBROTLI).withAllowInsecureProtocol(true),
     // Для решения проблемы с oauth2-odic-sdk:
-    "typesafe-releases"       at "http://central.maven.org/maven2"
+    //("typesafe-releases"       at "http://central.maven.org/maven2").withAllowInsecureProtocol(true)
+    ("typesafe-releases"       at TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true)
     //"jcenter"                 at JCENTER_URL
   )
 }

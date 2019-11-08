@@ -6,6 +6,10 @@ version := "0.0.0"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
+resolvers ++= Seq(
+  ("jbrotli" at Common.Repo.JBROTLI).withAllowInsecureProtocol(true)
+)
+
 libraryDependencies ++= {
   Seq(
     // jbrotli

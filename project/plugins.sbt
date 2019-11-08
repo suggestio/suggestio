@@ -8,12 +8,12 @@
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  "typesafe-releases"            at "http://ci.suggest.io/artifactory/typesafe-releases",
-  "bintray-nitram509-jbrotli"    at "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli"
+  ("typesafe-releases"            at "http://ci.suggest.io/artifactory/typesafe-releases").withAllowInsecureProtocol(true),
+  ("bintray-nitram509-jbrotli"    at "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli").withAllowInsecureProtocol(true)
 )
 
 // Для ускорения update на куче subprojects.
-addSbtPlugin("nz.co.bottech" % "sbt-cached-updates" % "1.0.+")
+//addSbtPlugin("nz.co.bottech" % "sbt-cached-updates" % "1.0.+")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
 
