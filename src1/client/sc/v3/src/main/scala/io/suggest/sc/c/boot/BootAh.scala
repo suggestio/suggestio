@@ -4,7 +4,7 @@ import diode._
 import diode.data.Pot
 import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.m.RcvrMarkersInit
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.Sc3Circuit
 import io.suggest.sc.c.dia.FirstRunDialogAh
 import io.suggest.sc.m.boot._
@@ -295,7 +295,6 @@ class BootAh[M](
 
     // Сигнал к запуску какого-либо процесса.
     case m: Boot =>
-      //println(m)
       val v0 = value
 
       // Нужно залить в состояние список запрошенных целей, которые ещё не запущены:
@@ -305,7 +304,6 @@ class BootAh[M](
 
     // Сигнал завершения какого-то этапа.
     case m: BootStartCompleted =>
-      //println(m)
       // У какой-то запускаемой службы завершился start-эффект. Залить данные в состояние.
       val v0 = value
       v0.services
@@ -338,19 +336,8 @@ class BootAh[M](
 
 
     // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
-    case m @ BootLocDataWz =>
-      /*if (
-        circuit.internalsRW
-          .value
-          .info.currRoute
-          .exists { cr =>
-            !cr.needGeoLoc
-          }
-      ) {
-        // Уже есть какие-то данные о текущей локации - не нужно ждать геолокацию.
-        _afterWzDone()
-
-      } else*/ if (FirstRunDialogAh.isNeedWizardFlow()) {
+    case BootLocDataWz =>
+      if (FirstRunDialogAh.isNeedWizardFlow()) {
         // Нет уже заданных гео-данных, и требуется запуск мастера.
         // Текущий эффект передаёт управление в WizardAh, мониторя завершение визарда.
         val initFirstWzFx = InitFirstRunWz(true).toEffectPure
@@ -375,7 +362,7 @@ class BootAh[M](
       if (firstRO.value.view.isEmpty) {
         // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
         LOG.warn( WarnMsgs.INIT_FLOW_UNEXPECTED, msg = m )
-        _afterWzDone( Some(startedAtMs), started = true )
+        _afterWzDone( Some(startedAtMs), started = true, runned = false )
 
       } else {
         // Есть какая-то деятельность в визарде. Подписаться

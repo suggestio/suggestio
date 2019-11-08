@@ -567,7 +567,7 @@ class Sc3Circuit(
         val action = GridLoadAds(
           clean         = true,
           ignorePending = true,
-          silent        = Some(true)
+          silent        = OptionUtil.SomeBool.someTrue
         )
         dispatch( action )
       }
