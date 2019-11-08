@@ -14,9 +14,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import diode.data.PendingBase
 import io.suggest.dev.MSzMult
 import io.suggest.img.ImgUtilRJs
 import io.suggest.sjs.common.log.Log
@@ -148,9 +148,8 @@ class JdR(
               val __onResizeF = ReactCommonUtil.cbFun1ToJsCb(
                 blocklessQdContentBoundsMeasuredJdCb(
                   for {
-                    qdBl <- qdBlOpt
-                    if qdBl.isPending
-                    qdBlPend = qdBl.asInstanceOf[PendingBase]
+                    qdBl      <- qdBlOpt
+                    qdBlPend  <- qdBl.pendingOpt
                   } yield {
                     qdBlPend.startTime
                   }

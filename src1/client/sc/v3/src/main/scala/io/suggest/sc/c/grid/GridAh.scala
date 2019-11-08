@@ -72,19 +72,17 @@ object GridAh {
     def blockRenderData2GbPayload(nodeId: Option[String], blk: JdTag, brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
       Tree.Leaf {
-        val wideBgBlk = OptionUtil.maybe(blk.props1.expandMode.nonEmpty) {
-          MSize2di(
-            width   = jdConf.plainWideBlockWidthPx,
-            height  = szMultedF( blk.props1.heightPx.get ),
-          )
-        }
-
         MGbBlock(
           jdId      = jdId,
           size      = GridBuilderUtilJs.gbSizeFromJdt(jdId, blk, jdRuntime, jdConf),
           nodeId    = nodeId,
           jdt       = blk,
-          wideBgSz  = wideBgBlk,
+          wideBgSz  = OptionUtil.maybe(blk.props1.expandMode.nonEmpty) {
+            MSize2di(
+              width   = jdConf.plainWideBlockWidthPx,
+              height  = szMultedF( blk.props1.heightPx.get ),
+            )
+          },
         )
       }
     }

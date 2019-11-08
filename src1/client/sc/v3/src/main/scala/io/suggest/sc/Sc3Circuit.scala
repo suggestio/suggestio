@@ -13,7 +13,6 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
-import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
@@ -48,7 +47,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, LoggingAllActionsProcessor, OptFastEq}
 import io.suggest.spa.CircuitUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 
@@ -432,6 +431,9 @@ class Sc3Circuit(
   // TODO Opt Или лучше в конец action handler? Оно жило в конце TailAh.
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
+  // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
+  addProcessor( LoggingAllActionsProcessor[MScRoot] )
+
 
   // Отработать инициализацию js-роутера в самом начале конструктора.
   // По факту, инициализация уже наверное запущена в main(), но тут ещё и подписка на события...
@@ -511,7 +513,7 @@ class Sc3Circuit(
       // Надо попытаться всё-равно включить геолокацию в DEV-mode, т.к. браузеры не дают геолокацию без ssl в локалке.
       val isToEnable = (
         enable && !isEnabled &&
-        (scalajs.LinkingInfo.developmentMode || !mgl.switch.hardLock)
+        (Sc3ConfUtil.isDevMode || !mgl.switch.hardLock)
       )
       // Надо запускать обновление выдачи, если включение геолокации и панель карты закрыта.
       val isRunGeoLocInx = isToEnable && !mroot.index.search.panel.opened

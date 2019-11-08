@@ -80,14 +80,15 @@ class CspUtil @Inject() (
               s"$wsProto://$nodesWildcard"
             )
           },
-          reportUri = Some( routes.Static.handleCspReport().url ),
+          reportUri = Some( contextUtil.SC_URL_PREFIX + routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
           childSrc = IFRAMES_SRCS,
           // default-src не распространяется на form-action:
           formAction = commonSources,
           // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
           //objectSrc = Set( Csp.Sources.NONE )
-          //workerSrc = commonSources,
+          // service-worker: нужна задать собственный домен
+          workerSrc = Set( Csp.Sources.SELF ),
         ),
         reportOnly = CSP_REPORT_ONLY
       )

@@ -20,6 +20,14 @@ import scala.util.Try
   */
 object Sc3ConfUtil extends Log {
 
+  /** Форсировать поведение */
+  @inline def FORCE_PRODUCTION_MODE = true
+
+  /** Некоторые шаги поведения выдачи определяются режимом компиляции, но это можно переопределять здесь. */
+  @inline def isDevMode: Boolean =
+    !FORCE_PRODUCTION_MODE && scalajs.LinkingInfo.developmentMode
+
+
   /** Сохранить конфигурацию выдачи в постоянное хранилище.
     *
     * @param init Инстанс конфигурации.

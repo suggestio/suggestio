@@ -124,7 +124,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
           for (widthPx0 <- blk.props1.widthPx) {
             val widthPxMulted = _szMulted( widthPx0, wideSzMultOpt )
-            accS ::= width ( widthPxMulted.px )
+            accS ::= width( widthPxMulted.px )
 
             // Выравнивание блока внутри внешнего контейнера:
             if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {

@@ -24,7 +24,7 @@ package object css {
     override          def cssRegisterMacroName   : MacroName        = MacroName.Use
 
     // TODO isDev нужен, но это надо спустить все css-стили на sjs-уровень.
-    override          val cssRegisterErrorHandler: ErrorHandler     = ErrorHandler.noisy
+    override          val cssRegisterErrorHandler: ErrorHandler     = ErrorHandler.silent
 
     override implicit def cssStringRenderer      : Renderer[String] = StringRenderer.formatTiny
     override implicit def cssComposition         : Compose          = Compose.trust

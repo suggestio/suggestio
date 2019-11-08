@@ -21,6 +21,7 @@ import japgolly.univeq._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
+import io.suggest.sc.u.Sc3ConfUtil
 
 /**
   * Suggest.io
@@ -80,17 +81,18 @@ class FirstRunDialogAh[M](
               accessFxOpt.fold {
                 // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
                 _wzGoToNextPhase(first0)
+
               } { accessFx =>
                 // Эффект разблокировки диалога, чтобы крутилка ожидания не вертелась бесконечно.
                 val inProgressTimeoutFx = Effect {
                   // Если доступ поддерживает подписку на изменение статуса, то подписаться + frame=InProgress с долгим таймаутом.
                   // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в 1-2 секунды.
                   // Отказ юзера можно будет перехватить позже.
-                  val inProgressTimeoutSec = first0.perms
-                    .get( view0.phase )
-                    .flatMap(_.toOption)
-                    .filter(_.hasOnChangeApi)
-                    .filter { permState =>
+                  val inProgressTimeoutSec = (for {
+                    permStatePot  <- first0.perms.get( view0.phase )
+                    permState     <- permStatePot.toOption
+
+                    if permState.hasOnChangeApi && {
                       // API доступно, но это не значит, что оно работает. Подписаться:
                       // TODO Надо бы перенести подписку прямо в WzPhasePermRes. Возможна ситуация, что диалог-мастер и фактический запрос геолокации отображаются одновременно.
                       val tryRes = Try(
@@ -104,10 +106,13 @@ class FirstRunDialogAh[M](
                         LOG.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, (permState, m) )
                       tryRes.isSuccess
                     }
-                    // Если, нет возможности подписаться на события, то надо InProgress закрывать по таймаут.
-                    // Когда подписка удалась, надо InProgress с длинным таймаутом.
+                  } yield {
+                    // Подписка удалась: надо InProgress с длинным таймаутом.
                     // TODO 5 увеличить до 10 секунд, когда в браузерах стабилизируется PermissionStatus.onchange
-                    .fold [Int](2)(_ => 5)
+                    5
+                  })
+                    // Нет возможности подписаться на события. Надо InProgress закрывать по таймауту.
+                    .getOrElse( 2 )
 
                   DomQuick
                     .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis )(
@@ -273,7 +278,7 @@ class FirstRunDialogAh[M](
             stored.version < MFirstRunStored.Versions.CURRENT
           } ||
           // Но надо, если dev-режим. И *после* запроса к БД, чтобы отладить сам запрос.
-          scalajs.LinkingInfo.developmentMode
+          Sc3ConfUtil.isDevMode
         )
       ) {
         // Акк для эффектов:
@@ -399,7 +404,7 @@ class FirstRunDialogAh[M](
 
               // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
               MWzFirstOuterS.view.set {
-                OptionUtil.maybe( scalajs.LinkingInfo.developmentMode ) {
+                OptionUtil.maybe( Sc3ConfUtil.isDevMode ) {
                   view0.copy(
                     phase   = nextPhase,
                     visible = true,
@@ -511,7 +516,7 @@ object FirstRunDialogAh extends Log {
         stored.version < MFirstRunStored.Versions.CURRENT
       } ||
       // Но надо, если dev-режим. И *после* запроса к БД, чтобы отладить сам запрос.
-      scalajs.LinkingInfo.developmentMode
+      Sc3ConfUtil.isDevMode
     }
 
     for (ex <- tryR.failed)

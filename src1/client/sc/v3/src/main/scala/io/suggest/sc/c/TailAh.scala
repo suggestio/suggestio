@@ -460,8 +460,9 @@ class TailAh[M](
           }
 
         // Если demandLocTest, то и остановиться на этой ошибке:
-        if (!m.switchCtx.demandLocTest)
+        if (!m.switchCtx.demandLocTest) {
           fxsAcc ::= TailAh.getIndexFx( m.switchCtx )
+        }
 
         ah.updatedSilentMaybeEffect(v2, fxsAcc.mergeEffects)
       }

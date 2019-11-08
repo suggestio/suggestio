@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
-import io.suggest.jd.render.v.{JdCssStatic, JdR}
+import io.suggest.jd.render.v.JdR
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._
@@ -25,7 +25,6 @@ import japgolly.univeq._
   */
 class GridCoreR(
                  jdR                        : JdR,
-                 jdCssStatic                : JdCssStatic,
                ) {
 
   type Props_t = MGridCoreS
@@ -55,11 +54,13 @@ class GridCoreR(
         )
       } {
         // TODO routerCtl.urlFor() внутри <a.href>
-        val iter = for {
-          (ad, i) <- mgrid.ads.iterator
+        (for {
+          (ad, i) <- mgrid.ads
+            .iterator
             .flatten
             .zipWithIndex
-          rootId = ad.nodeId.getOrElse(i.toString)
+
+          rootId = ad.nodeId getOrElse i.toString
           edges  = ad.flatGridEdges
 
           // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
@@ -77,7 +78,9 @@ class GridCoreR(
           }
 
           // Пройтись по шаблонам карточки
-          (jdDoc2, j) <- ad.flatGridTemplates.zipWithIndex
+          (jdDoc2, j) <- ad.flatGridTemplates
+            .iterator
+            .zipWithIndex
 
         } yield {
           // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
@@ -111,8 +114,8 @@ class GridCoreR(
             }
 
           )
-        }
-        iter.toVdomArray
+        })
+          .toVdomArray
       }
     }
 
