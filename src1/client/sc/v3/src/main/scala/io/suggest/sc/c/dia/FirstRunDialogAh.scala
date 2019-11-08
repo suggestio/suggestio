@@ -164,14 +164,20 @@ class FirstRunDialogAh[M](
     // Сигнал результата нативного диалога проверки прав или таймаута.
     case m: WzPhasePermRes =>
       val first00 = value
-      first00.view.fold(noChange) { view00 =>
+      first00.view.fold {
+        // warn, т.к. это признак нарушения в процессе инициализации.
+        LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
+        noChange
 
+      } { view00 =>
+        println(1)
         // Сохранить в состояние полученный снапшот с данными.
         val first0: MWzFirstOuterS = m.res match {
           // Нет смысла заливать таймаут в состояние.
           case Failure(_: NoSuchElementException) =>
             first00
           case _ =>
+            println(2)
             val permState0 = first00.perms.getOrElse( m.phase, Pot.empty )
             val permState2 = permState0.withTry( m.res )
             MWzFirstOuterS.perms
@@ -191,14 +197,17 @@ class FirstRunDialogAh[M](
 
         // Надо понять, сейчас текущая фаза или какая-то другая уже. Всякое бывает.
         if (m.phase ==* view00.phase) {
-          val isGrantedOpt = m.res.toOption.map(_.isGranted)
+          val isGrantedOpt =
+            for (permState <- m.res.toOption)
+            yield permState.isGranted
+          println(3, isGrantedOpt)
 
           // Это текущая фаза.
           view00.frame match {
 
             // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
             case MWzFrames.InProgress =>
-              if (isGrantedOpt contains false) {
+              if (isGrantedOpt contains[Boolean] false) {
                 // Юзер не разрешил. Вывести Info с сожалением.
                 val v2 = MWzFirstOuterS.view.set( Some(
                   MWzFirstS.frame.set( MWzFrames.Info )(view00)
@@ -238,7 +247,9 @@ class FirstRunDialogAh[M](
         } else if (view00.phase ==* MWzPhases.Starting) {
           // TODO Чтобы объеденить экшен с PermissionState, надо тут разрулить фазу Starting.
           // Надо показать на экране текущий диалог в разном состоянии.
-          val hasPending = first0.perms.exists(_._2.isPending)
+          val hasPending = first0.perms
+            .exists(_._2.isPending)
+          println(4, view00.phase, hasPending)
           if (hasPending) {
             // Есть ещё pending в задачах. Просто убедиться, что диалог ожидания виден, оставаясь в Starting/InProgress.
             if (view00.visible) {
@@ -254,6 +265,7 @@ class FirstRunDialogAh[M](
 
           } else {
             // Больше нет pending-задач. Переключиться на следующую фазу диалога.
+            println(5)
             _wzGoToNextPhase( v1 )
           }
 
@@ -272,14 +284,8 @@ class FirstRunDialogAh[M](
       val v0 = value
       if (
         m.showHide &&
-        v0.view.isEmpty && (
-          // Если уже был запуск, то снова не надо.
-          MFirstRunStored.get().fold(true) { stored =>
-            stored.version < MFirstRunStored.Versions.CURRENT
-          } ||
-          // Но надо, если dev-режим. И *после* запроса к БД, чтобы отладить сам запрос.
-          Sc3ConfUtil.isDevMode
-        )
+        v0.view.isEmpty &&
+        FirstRunDialogAh.isNeedWizardFlow()
       ) {
         // Акк для эффектов:
         var fxsAcc: List[Effect] = Nil
@@ -363,14 +369,13 @@ class FirstRunDialogAh[M](
           permPot <- v0.perms.get( nextPhase )
 
           // Основная логика упакована сюда:
-          v9 = {
+          v9 <- permPot
             // По идее, тут или ready, или failed.
-            if (permPot.nonEmpty) {
-              // Есть значение - проанализировать значение.
-              val perm = permPot.get
+            .toOption
+            .flatMap[MWzFirstOuterS] { perm =>
               if (perm.isPrompt) {
                 // Надо задать вопрос юзеру, т.к. доступ ещё не запрашивался.
-                MWzFirstOuterS.view.set {
+                val v2 = MWzFirstOuterS.view.set {
                   Some(
                     view0.copy(
                       phase = nextPhase,
@@ -379,9 +384,11 @@ class FirstRunDialogAh[M](
                     )
                   )
                 }(v0)
+                Some(v2)
+
               } else if (perm.isDenied) {
                 // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
-                MWzFirstOuterS.view.set {
+                val v2 = MWzFirstOuterS.view.set {
                   Some(
                     view0.copy(
                       phase   = nextPhase,
@@ -390,36 +397,41 @@ class FirstRunDialogAh[M](
                     )
                   )
                 }(v0)
+                Some(v2)
+
               } else {
-                // granted или что-то неведомое - пропуск фазы.
+                // granted или что-то неведомое - пропуск фазы или завершение, если не осталось больше фаз для обработки.
+                OptionUtil.maybe(v0.perms.exists(_._2.isPending))( v0 )
+              }
+            }
+            .orElse[MWzFirstOuterS] {
+              for (ex <- permPot.exceptionOption) yield {
+                println("222", ex)
+                // Ошибка проверки фазы.
+                // Для dev: вывести info-окошко с ошибкой.
+                // Для prod: пока только логгирование.
+                LOG.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
+
+                // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
+                MWzFirstOuterS.view.set {
+                  OptionUtil.maybe( Sc3ConfUtil.isDevMode ) {
+                    view0.copy(
+                      phase   = nextPhase,
+                      visible = true,
+                      frame   = MWzFrames.Info
+                    )
+                  }
+                }(v0)
+                // Можно пропускать фазу - наврядли end-юзер будет что-то дебажить.
+              }
+            }
+            .orElse[MWzFirstOuterS] {
+              OptionUtil.maybe( permPot.isPending || permPot.isEmpty ) {
+                // pending|empty - тут быть не должно, т.к. код вызывается после всех проверок.
+                LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
                 v0
               }
-
-            } else if (permPot.isFailed) {
-              // Ошибка проверки фазы.
-              // Для dev: вывести info-окошко с ошибкой.
-              // Для prod: пока только логгирование.
-              val ex = permPot.exceptionOption.get
-              LOG.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
-
-              // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
-              MWzFirstOuterS.view.set {
-                OptionUtil.maybe( Sc3ConfUtil.isDevMode ) {
-                  view0.copy(
-                    phase   = nextPhase,
-                    visible = true,
-                    frame   = MWzFrames.Info
-                  )
-                }
-              }(v0)
-              // Можно пропускать фазу - наврядли end-юзер будет что-то дебажить.
-
-            } else {
-              // pending|empty - тут быть не должно, т.к. код вызывается после всех проверок.
-              LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
-              v0
             }
-          }
         } yield {
           // Следующая фаза одобрена:
           updated(v9)
@@ -512,17 +524,19 @@ object FirstRunDialogAh extends Log {
   def isNeedWizardFlow(): Boolean = {
     val tryR = Try {
       // Если уже был запуск, то снова не надо.
-      MFirstRunStored.get().fold(true) { stored =>
+      val frStoredOpt = MFirstRunStored.get()
+      LOG.log(s"stored=$frStoredOpt current=${MFirstRunStored.Versions.CURRENT} dev?${Sc3ConfUtil.isDevMode}")
+      frStoredOpt.fold(true) { stored =>
         stored.version < MFirstRunStored.Versions.CURRENT
       } ||
-      // Но надо, если dev-режим. И *после* запроса к БД, чтобы отладить сам запрос.
-      Sc3ConfUtil.isDevMode
+        // Но надо, если dev-режим. И *после* запроса к БД, чтобы отладить сам запрос.
+        Sc3ConfUtil.isDevMode
     }
 
     for (ex <- tryR.failed)
       LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex )
 
-    tryR.getOrElse(true)
+    tryR getOrElse true
   }
 
 }

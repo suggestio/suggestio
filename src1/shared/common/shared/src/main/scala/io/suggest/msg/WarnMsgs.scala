@@ -83,4 +83,8 @@ object WarnMsgs extends MsgsStaticT {
 
   def NODE_PATH_MISSING_INVALID              = E(63)
 
+  /** Какой-то шаг в ходе инициализации тихо пошёл по сценарию,
+    * неожиданному с точки зрения над-стоящей логики. */
+  def INIT_FLOW_UNEXPECTED                   = E(64)
+
 }

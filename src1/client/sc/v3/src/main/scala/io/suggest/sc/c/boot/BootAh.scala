@@ -13,7 +13,6 @@ import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.DAction
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.concurrent.{Future, Promise}
@@ -82,18 +81,6 @@ class BootAh[M](
         }
     }
 
-    private def _oneShotStartFx(serviceId: MBootServiceId)(actions: => List[DAction]): Effect = {
-      Effect {
-        actions
-          .iterator
-          .++( Iterator.single( _svcStartDoneAction(serviceId) ) )
-          .map(_.toEffectPure)
-          .mergeEffects
-          .get
-          .toFuture
-          .asInstanceOf[Future[DAction]]
-      }
-    }
 
     /** Описание процедуры js-роутера. */
     class JsRouterSvc extends IBootService {
@@ -122,9 +109,8 @@ class BootAh[M](
         MBootServiceIds.JsRouter :: Nil
 
       override def startFx: Effect = {
-        val fx = Effect( _startWithPot( serviceId, circuit.geoTabDataRW.zoom(_.rcvrsCache) ) )
         circuit.dispatch( RcvrMarkersInit )
-        fx
+        Effect( _startWithPot( serviceId, circuit.geoTabDataRW.zoom(_.rcvrsCache) ) )
       }
 
     }
@@ -152,35 +138,6 @@ class BootAh[M](
 
     }
 
-    /** Спека для инициализации геолокации. */
-    /*
-    class GpsSvc extends IBootService {
-      override def serviceId = MBootServiceIds.Gps
-      override def depends = MBootServiceIds.Platform :: Nil
-      override def startFx: Effect = {
-        _oneShotStartFx(serviceId) {
-          val action = GeoLocOnOff(enabled = true, isHard = false)
-          action :: Nil
-        }
-      }
-    }
-
-    /** Спека для инициализации слушанья маячков Bluetooth. */
-    class BlueToothBeaconingSvc extends IBootService {
-      override def serviceId = MBootServiceIds.BlueToothBeaconing
-      override def depends = MBootServiceIds.Platform :: Nil
-      override def startFx: Effect = {
-        _oneShotStartFx(serviceId) {
-          // В хвост списка - сразу уведомление о завершении запуска.
-          if (circuit.platformRW.value.hasBle)
-            // Отправить команду
-            BtOnOff( isEnabled = true ) :: Nil
-          else
-            Nil
-        }
-      }
-    }
-    */
 
     /** Сбор данных геолокации для первого запуска. */
     class GeoLocDataAccSvc extends IBootService {
@@ -194,8 +151,6 @@ class BootAh[M](
         case MBootServiceIds.JsRouter               => new JsRouterSvc
         case MBootServiceIds.RcvrsMap               => new RcvrsMapSvc
         case MBootServiceIds.Platform               => new PlatformSvc
-        //case MBootServiceIds.Gps                  => new GpsSvc
-        //case MBootServiceIds.BlueToothBeaconing   => new BlueToothBeaconingSvc
         case MBootServiceIds.GeoLocDataAcc          => new GeoLocDataAccSvc
       }
     }
@@ -384,39 +339,42 @@ class BootAh[M](
 
     // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
     case m @ BootLocDataWz =>
-      if (
-        circuit.internalsRW.value.info.currRoute.exists { cr =>
-          !cr.needGeoLoc
-        }
+      /*if (
+        circuit.internalsRW
+          .value
+          .info.currRoute
+          .exists { cr =>
+            !cr.needGeoLoc
+          }
       ) {
         // Уже есть какие-то данные о текущей локации - не нужно ждать геолокацию.
         _afterWzDone()
 
-      } else if (FirstRunDialogAh.isNeedWizardFlow()) {
+      } else*/ if (FirstRunDialogAh.isNeedWizardFlow()) {
         // Нет уже заданных гео-данных, и требуется запуск мастера.
         // Текущий эффект передаёт управление в WizardAh, мониторя завершение визарда.
         val initFirstWzFx = InitFirstRunWz(true).toEffectPure
         val afterInitFx = BootLocDataWzAfterInit.toEffectPure
 
         // Выставить в состояние факт запуска wzFirst:
-        val v2 = MScBoot.done.set( Some(false) )(value)
+        val v2 = MScBoot.wzFirstDone.set( Some(false) )(value)
         val fx = initFirstWzFx >> afterInitFx
 
         updatedSilent(v2, fx)
 
       } else {
-        // Не заданы
-        LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = m )
-        _afterWzDone()
+        // Мастер 1го запуска не требуется, а геолокация нужна. Переходим на следующих шаг:
+        _afterWzDone( runned = false, started = false )
       }
 
 
     // После init-wz-вызова произвести анализ результатов выполненной деятельности.
-    case BootLocDataWzAfterInit =>
+    case m @ BootLocDataWzAfterInit =>
       val startedAtMs = System.currentTimeMillis()
       val firstRO = circuit.firstRunDiaRW
       if (firstRO.value.view.isEmpty) {
         // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
+        LOG.warn( WarnMsgs.INIT_FLOW_UNEXPECTED, msg = m )
         _afterWzDone( Some(startedAtMs), started = true )
 
       } else {
@@ -466,7 +424,7 @@ class BootAh[M](
       .fold[IScRootAction](ResetUrlRoute)(RouteTo.apply)
     val v0 = value
 
-    val v2 = MScBoot.done.set( Some(true) )(v0)
+    val v2 = MScBoot.wzFirstDone.set( Some(true) )(v0)
     // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
     //if (!runned && started) {
     //}
