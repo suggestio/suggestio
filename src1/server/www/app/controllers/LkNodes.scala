@@ -81,8 +81,12 @@ class LkNodes @Inject() (
       val iter = mad.edges
         .withNodePred(nodeId, MPredicates.Receiver)
       val isAdv = iter.nonEmpty
-      val edgeOpt = iter.toStream.headOption
-      val isShowOpened = edgeOpt.flatMap(_.info.flag).getOrElseFalse
+      val edgeOpt = iter
+        .buffered
+        .headOption
+      val isShowOpened = edgeOpt
+        .flatMap(_.info.flag)
+        .getOrElseFalse
       (isAdv, isShowOpened)
     }
   }
@@ -734,7 +738,7 @@ class LkNodes @Inject() (
 
       val madEdgeSelfOpt = request.mad.edges
         .withNodePred(nodeId, pred)
-        .toStream
+        .buffered
         .headOption
 
       madEdgeSelfOpt.fold [Future[Result]] {

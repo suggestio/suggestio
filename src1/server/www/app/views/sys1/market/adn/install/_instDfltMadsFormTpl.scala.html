@@ -13,12 +13,12 @@
     options = langs.map(l =>
       l.code -> langCode2msgs.get(l.code).fold(l.code)( _.apply( MsgCodes.`__This.lang.name__` ) )
     ),
-    '_label -> "Локализация"
+    Symbol("_label") -> "Локализация"
   )
 
   @inputText(
     ff("count"),
-    '_label -> "Кол-во устанавливаемых карточек"
+    Symbol("_label") -> "Кол-во устанавливаемых карточек"
   )
 
   <input type="submit" value="@messages("Install")" />

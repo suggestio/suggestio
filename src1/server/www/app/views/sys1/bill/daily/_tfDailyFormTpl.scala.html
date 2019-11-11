@@ -12,7 +12,7 @@
   <table class="input-w __size-L">
     @inputText(
       tf("currencyCode"),
-      '_label -> "Валюта тарифа (RUB, USD, EUR, ...)"
+      Symbol("_label") -> "Валюта тарифа (RUB, USD, EUR, ...)"
     )
   </table>
 
@@ -24,21 +24,21 @@
         <table class="input-w __size-L">
           @inputText(
             cf("name"),
-            '_label       -> "Название",
-            'placeholder  -> "Например, 'Будни' или 'Выходные'",
-            'title        -> "Название условия, например 'Будни'."
+            Symbol("_label")       -> "Название",
+            Symbol("placeholder")  -> "Например, 'Будни' или 'Выходные'",
+            Symbol("title")        -> "Название условия, например 'Будни'."
           )
           @inputText(
             cf("amount"),
-            '_label       -> "Стоимость",
-            'placeholder  -> "1.50",
-            'title        -> "Цена в единицах текущей валюты, например '1.05'"
+            Symbol("_label")       -> "Стоимость",
+            Symbol("placeholder")  -> "1.50",
+            Symbol("title")        -> "Цена в единицах текущей валюты, например '1.05'"
           )
           @select(
             cf("calId"),
             options = mcalsOptions,
-            '_label -> "Календарь",
-            '_class -> "sys-checkbox"
+            Symbol("_label") -> "Календарь",
+            Symbol("_class") -> "sys-checkbox"
           )
         </table>
       }
@@ -50,8 +50,8 @@
   <table class="input-w __size-L">
     @inputText(
       tf("comission"),
-      '_label -> "Доля комиссии",
-      'title  -> "Доля комиссии в тарифе, не более 1.0. Если 1, 1.0 или пусто -- значит всё уйдёт в CBCA."
+      Symbol("_label") -> "Доля комиссии",
+      Symbol("title")  -> "Доля комиссии в тарифе, не более 1.0. Если 1, 1.0 или пусто -- значит всё уйдёт в CBCA."
     )
   </table>
 

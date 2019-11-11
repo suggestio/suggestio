@@ -217,8 +217,10 @@ class ShowcaseUtil @Inject() (
 
     if (maxHiter.isEmpty)
       MIN_SZ_MULT
-    else
+    else {
+      import Ordering.Float.TotalOrdering
       maxHiter.max
+    }
   }
 
 

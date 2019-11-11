@@ -71,6 +71,7 @@ case class MAeRoot(
         jdArgs
           .data
           .edges
+          .view
           .mapValues { e =>
             var jde = e.jdEdge
             if (jde.predicate !=* videoPred)

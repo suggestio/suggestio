@@ -41,7 +41,7 @@ object EmptyProduct {
   def nonEmpty(v: Any): Boolean = {
     v match {
       case opt: Option[_]           => opt.nonEmpty
-      case col: TraversableOnce[_]  => col.nonEmpty
+      case col: IterableOnce[_]     => col.nonEmpty
       case m: INonEmpty             => m.nonEmpty
       case m: IIsEmpty              => !m.isEmpty
       case _                        => true

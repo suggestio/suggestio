@@ -34,8 +34,8 @@ object MAssignedStorage {
           storageE          <- mediaStorageB.bind( k(F.STORAGE_FN), params )
         } yield {
           for {
-            host            <- hostE.right
-            storage         <- storageE.right
+            host            <- hostE
+            storage         <- storageE
           } yield {
             MAssignedStorage(
               host          = host,

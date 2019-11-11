@@ -14,7 +14,7 @@ import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Success
 
 /**
@@ -51,7 +51,7 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
 
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(): TraversableOnce[MCronTask] = {
+  override def cronTasks(): Iterable[MCronTask] = {
     if (DNEIP_ENABLED) {
       val task = MCronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
         for (ex <- dneipFindAndDeleteAsync().failed)
@@ -83,7 +83,8 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
           val rowKeyStr = currDir.getName
           val dynImgId = MDynImgId(rowKeyStr, MImgFmts.default, Nil)
           val mimg = MLocalImg(dynImgId).toWrappedImg
-          mImgs3.existsInPermanent(mimg)
+          mImgs3
+            .existsInPermanent(mimg)
             .filter(!_)
             .andThen { case _: Success[_] =>
               LOGGER.debug("Deleting permanent-less img-dir: " + currDir)

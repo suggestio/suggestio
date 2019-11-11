@@ -48,7 +48,7 @@ class SecretModelsInit @Inject() (
   /** Сбросить все значения на исходную при выключении. Чисто на всякий случай. */
   applicationLifecycle.addStopHook { () =>
     secretKeyInitializer.resetAll( MODELS: _* )
-    Future.successful( Unit )
+    Future.successful( () )
   }
 
 }

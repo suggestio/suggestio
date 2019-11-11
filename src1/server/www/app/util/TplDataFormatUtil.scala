@@ -47,7 +47,7 @@ object TplDataFormatUtil {
   def formatRgbHexColorCss(colorHex: String, withOpacity: Option[Float] = None): String = {
     formatRgbColorCss(colorHex2rgb(colorHex), withOpacity)
   }
-  def formatRgbColorCss(rgb: TraversableOnce[Int], withOpacity: Option[Float] = None): String = {
+  def formatRgbColorCss(rgb: Iterable[Int], withOpacity: Option[Float] = None): String = {
     val withOp = withOpacity.isDefined
     val l0 = if (withOp) 22 else 16
     val sb = new StringBuilder(l0, "rgb")
@@ -61,7 +61,7 @@ object TplDataFormatUtil {
     if (withOp) {
       sb.append(withOpacity.get)
     } else {
-      sb.length = sb.length - 1
+      sb.setLength( sb.length() - 1 )
     }
     sb.append(')')
       .toString

@@ -33,8 +33,8 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
           bottomRightEith <- geoPointB.bind ( k(Qs.BOTTOM_RIGHT_FN),  params )
         } yield {
           for {
-            topLeft       <- topLeftEith.right
-            bottomRight   <- bottomRightEith.right
+            topLeft       <- topLeftEith
+            bottomRight   <- bottomRightEith
           } yield {
             EnvelopeGs(
               topLeft     = topLeft,

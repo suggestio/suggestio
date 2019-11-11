@@ -6,13 +6,12 @@ import javax.imageio.{ImageIO, ImageReader}
 import javax.imageio.stream.FileImageInputStream
 import javax.inject.Inject
 
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImpl
 import org.im4java.core.Info
 import util.up.FileUtil
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io

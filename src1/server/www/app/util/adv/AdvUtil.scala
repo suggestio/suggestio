@@ -116,7 +116,7 @@ class AdvUtil @Inject() (
     // Извлечь подходящий тариф из карты тарифов узлов.
     abc.tfsMap.get(tfRcvrId).fold[IPriceDslTerm] {
       // TODO Валюта нулевого ценника берётся с потолка. Нужен более адекватный источник валюты.
-      val res = MPrice(0, MCurrencies.default)
+      val res = MPrice(0L, MCurrencies.default)
       LOGGER.debug(s"$logPrefix Missing TF for $tfRcvrId. Guessing adv as free: $res")
       BaseTfPrice(
         price = res

@@ -33,10 +33,10 @@ object MScIndexArgsJvm {
           retUserLocOptE      <- boolOptB.bind(f(RET_GEO_LOC_FN),     params)
         } yield {
           for {
-            _adnIdOpt         <- adnIdOptE.right
-            _withWelcome      <- withWelcomeE.right
-            _geoIntoRcvr      <- geoIntoRcvrE.right
-            _retUserLocOpt    <- retUserLocOptE.right
+            _adnIdOpt         <- adnIdOptE
+            _withWelcome      <- withWelcomeE
+            _geoIntoRcvr      <- geoIntoRcvrE
+            _retUserLocOpt    <- retUserLocOptE
           } yield {
             MScIndexArgs(
               withWelcome     = _withWelcome,

@@ -82,9 +82,11 @@ final class SmsRuClient @Inject() (
         .map { smsForReq =>
           smsForReq
             .groupBy(_._1)
+            .view
             .mapValues(_.map(_._2))
+            .toMap
         }
-        .toStream
+        .toSeq
     } { formData =>
       // Запустить запрос к sms.ru
       val reqId = System.currentTimeMillis()

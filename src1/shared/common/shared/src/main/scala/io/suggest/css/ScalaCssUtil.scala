@@ -55,12 +55,12 @@ object ScalaCssUtil {
     }
 
 
-    implicit class StyleATravOnceOpsExt( val styles: TraversableOnce[StyleA] ) extends AnyVal {
+    implicit class StyleATravOnceOpsExt( val styles: IterableOnce[StyleA] ) extends AnyVal {
 
       /** Объединить в html css-класс. */
       def toHtmlClass: String = {
         styles
-          .toIterator
+          .iterator
           // Можно сделать инлайнинг val .htmlClass, но зачем инлайнить val?
           .map(_.htmlClass)
           .mkString( HtmlConstants.SPACE )

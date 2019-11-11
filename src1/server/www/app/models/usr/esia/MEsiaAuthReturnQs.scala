@@ -30,14 +30,14 @@ object MEsiaAuthReturnQs {
           codeOptE    <- strOptB .bind( F.CODE_FN,   params )
           errorOptE   <- strOptB .bind( F.ERROR_FN,  params )
           // Фильтровать, чтобы code || error были обязательно заданы: TODO Сделать по-красивее этот if.
-          if codeOptE.right.exists(_.nonEmpty) || errorOptE.right.exists(_.nonEmpty)
+          if codeOptE.exists(_.nonEmpty) || errorOptE.exists(_.nonEmpty)
           // state не особо нужен, поэтому просто биндим вслепую.
           stateOptE   <- uuidOptB.bind( F.STATE_FN,  params )
         } yield {
           for {
-            codeOpt   <- codeOptE.right
-            stateOpt  <- stateOptE.right
-            errorOpt  <- errorOptE.right
+            codeOpt   <- codeOptE
+            stateOpt  <- stateOptE
+            errorOpt  <- errorOptE
           } yield {
             MEsiaAuthReturnQs(
               code  = codeOpt,

@@ -1,7 +1,6 @@
 package util.acl
 
 import javax.inject.Inject
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -73,7 +72,7 @@ class CanUploadFile @Inject()(
           resp <- {
             LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs => $swfsEith")
             val mreq = MUploadReq(
-              swfsOpt = swfsEith.right.toOption,
+              swfsOpt = swfsEith.toOption,
               request = request0,
               user    = user
             )

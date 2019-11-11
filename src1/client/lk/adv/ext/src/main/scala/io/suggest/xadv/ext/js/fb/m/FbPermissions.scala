@@ -71,15 +71,17 @@ object FbPermission {
 
   /** Facebook принимает списки пермишшенов строкой через запятую.
     * Этот метод компилит список пермишшенов в строку. */
-  def permsToString(perms: TraversableOnce[FbPermission]): String = {
-    perms.toIterator
+  def permsToString(perms: IterableOnce[FbPermission]): String = {
+    perms
+      .iterator
       .map(_.fbName)
       .mkString(",")
   }
 
   /** Сериализация списка пермишшенов в JSON. */
-  def permsToJson(perms: TraversableOnce[FbPermission]): Array[Any] = {
-    perms.toIterator
+  def permsToJson(perms: IterableOnce[FbPermission]): Array[Any] = {
+    perms
+      .iterator
       .map { _.toJson }
       .toJSArray
   }

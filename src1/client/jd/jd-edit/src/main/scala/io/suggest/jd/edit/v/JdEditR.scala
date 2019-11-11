@@ -392,57 +392,61 @@ class JdEditR(
           js.undefined
       }
 
-      val blockDndComp = DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
-        // Сверху на блок можно скидывать qd-контент
-        itemType = DCT.CONTENT_ELEMENT,
-        spec = new DropTargetSpec[MRrrEdit with MRrrEditCollectDrop, MJsDropInfo] {
-          override val drop = js.defined( _blockDropF )
-        },
-        collect = { (conn, mon) =>
-          new MRrrEditCollectDrop {
-            override val dropF = conn.dropTarget()
-          }
-        }
-      ) {
 
-        /** Реакция на начало перетаскивания qd-контента. */
-        val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
-          (props, monitor, _) =>
-            // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
-            val s = props.p.value
-            val jdt = s.subTree.rootLabel
-            props.p dispatchNow JdTagDragStart(jdt, s.tagId)
-            // Отрендерить в json данные, которые будут переданы в DropTarget.
-            MJsDropInfo( DCT.STRIP )
-        }
+      // TODO Косяк scalac-2.13.1 - не получается собрать эту функцию внутри DragSource()()
+      /** Реакция на начало перетаскивания qd-контента. */
+      private val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
+        (props, _, _) =>
+          // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
+          val s = props.p.value
+          val jdt = s.subTree.rootLabel
+          props.p dispatchNow JdTagDragStart(jdt, s.tagId)
+          // Отрендерить в json данные, которые будут переданы в DropTarget.
+          MJsDropInfo( DCT.STRIP )
+      }
 
-        DragSource[MRrrEdit with MRrrEditCollectDrop, MRrrEditCollectDrag, MJsDropInfo, Children.None](
-          itemType = DCT.STRIP,
-          spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, MJsDropInfo] {
-            override val beginDrag = _beginDragF
-            override val canDrag   = _blockCanDragF
+      val blockDndComp = {
+        DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
+          // Сверху на блок можно скидывать qd-контент
+          itemType = DCT.CONTENT_ELEMENT,
+          spec = new DropTargetSpec[MRrrEdit with MRrrEditCollectDrop, MJsDropInfo] {
+            override val drop = js.defined( _blockDropF )
           },
           collect = { (conn, mon) =>
-            // Пробросить collecting function + какие-то возможные данные к общим props'ам.
-            new MRrrEditCollectDrag {
-              override val dragF = conn.dragSource()
+            new MRrrEditCollectDrop {
+              override val dropF = conn.dropTarget()
             }
-          },
-        )(
-          ScalaComponent
-            .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockB].getSimpleName )
-            .initialStateFromProps( rrrEdit2mproxyValueF )
-            .backend( new BlockB(blockRef, _) )
-            .renderBackend
-            .configure( ReactDiodeUtil.p2sShouldComponentUpdate( rrrEdit2mproxyValueF.compose[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag](identity) )(MJdRrrProps.MJdRrrPropsFastEq) )
-            .build
+          }
+        ) {
+
+          DragSource[MRrrEdit with MRrrEditCollectDrop, MRrrEditCollectDrag, MJsDropInfo, Children.None](
+            itemType = DCT.STRIP,
+            spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, MJsDropInfo] {
+              override val beginDrag = _beginDragF
+              override val canDrag   = _blockCanDragF
+            },
+            collect = { (conn, mon) =>
+              // Пробросить collecting function + какие-то возможные данные к общим props'ам.
+              new MRrrEditCollectDrag {
+                override val dragF = conn.dragSource()
+              }
+            },
+          )(
+            ScalaComponent
+              .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockB].getSimpleName )
+              .initialStateFromProps( rrrEdit2mproxyValueF )
+              .backend( new BlockB(blockRef, _) )
+              .renderBackend
+              .configure( ReactDiodeUtil.p2sShouldComponentUpdate( rrrEdit2mproxyValueF.compose[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag](identity) )(MJdRrrProps.MJdRrrPropsFastEq) )
+              .build
+              .toJsComponent
+              .raw
+          )
             .toJsComponent
             .raw
-        )
-          .toJsComponent
-          .raw
+        }
+          .cmapCtorProps( _rrrPropsCMap )
       }
-        .cmapCtorProps( _rrrPropsCMap )
 
       def render(props: ModelProxy[MJdRrrProps]): VdomElement =
         blockDndComp(props)

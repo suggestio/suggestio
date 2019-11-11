@@ -4,7 +4,7 @@ import java.io.File
 
 import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
-import io.suggest.ahc.upload.IMpUploadArgs
+import io.suggest.ahc.upload.MpUploadArgs
 import io.suggest.ext.svc.MExtService
 import io.suggest.fsm.FsmActor
 import io.suggest.model.n2.edge.MPredicates
@@ -115,7 +115,7 @@ class OAuth1TargetActor @Inject() (
     override def upUrl: String = args.target.target.url
 
     /** Формирование данных для сборки тела multipart. */
-    override def mkUpArgs: IMpUploadArgs = {
+    override def mkUpArgs: MpUploadArgs = {
       mpUploadClient.uploadArgsSimple(
         file      = imgFile,
         ct        = serviceHelper.imgFmt.mime,

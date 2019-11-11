@@ -152,14 +152,14 @@ class LkAdEdFormUtil @Inject() (
   }
 
 
-  def mkEdgeTextsMap(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, String] = {
-    val iter = for {
-      e <- edges.toIterator
+  def mkEdgeTextsMap(edges: IterableOnce[MJdEdge]): Map[EdgeUid_t, String] = {
+    (for {
+      e <- edges.iterator
       text <- e.text
     } yield {
       e.id -> text
-    }
-    iter.toMap
+    })
+      .toMap
   }
 
   def mkTechName(tpl: Tree[JdTag], edgeTextsMap: Map[EdgeUid_t, String]): Option[String] = {

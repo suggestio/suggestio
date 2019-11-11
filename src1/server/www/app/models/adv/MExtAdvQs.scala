@@ -51,10 +51,10 @@ object MExtAdvQs extends SecretKeyInit {
           maybeWsId           <- strB.bind   (k(WS_ID_FN),            params1)
         } yield {
           for {
-            createdAt         <- maybeCreatedAt.right
-            targetInfos       <- maybeTargetInfos.right
-            adId              <- maybeAdId.right
-            wsId              <- maybeWsId.right
+            createdAt         <- maybeCreatedAt
+            targetInfos       <- maybeTargetInfos
+            adId              <- maybeAdId
+            wsId              <- maybeWsId
           } yield {
             MExtAdvQs(
               adId            = adId,

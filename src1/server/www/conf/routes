@@ -258,16 +258,6 @@ POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: 
 GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImgT)
 POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImgT)
 
-## sys/AI
-GET  /sys/ai                             @controllers.SysAi.index
-GET  /sys/ai/mad                         @controllers.SysAi.madIndex
-GET  /sys/ai/mad/create                  @controllers.SysAi.createMadAi
-POST /sys/ai/mad/create                  @controllers.SysAi.createMadAiSubmit
-GET  /sys/ai/mad/edit/:id                @controllers.SysAi.editMadAi(id)
-POST /sys/ai/mad/edit/:id                @controllers.SysAi.editMadAiSubmit(id)
-POST /sys/ai/mad/run/:id                 @controllers.SysAi.runMadAi(id)
-POST /sys/ai/mad/delete/:id              @controllers.SysAi.deleteMadAi(id)
-
 ## sys.adn.install
 GET  /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMads(adnId)
 POST /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMadsSubmit(adnId)

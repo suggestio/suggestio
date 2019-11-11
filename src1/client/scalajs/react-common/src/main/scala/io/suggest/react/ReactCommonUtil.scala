@@ -6,6 +6,7 @@ import japgolly.scalajs.react.{Callback, CallbackTo, ReactEvent}
 import japgolly.scalajs.react.internal.OptionLike
 import japgolly.scalajs.react.vdom.html_<^._
 
+import scala.collection.immutable.ArraySeq
 import scala.scalajs.js
 import scala.language.{higherKinds, implicitConversions}
 
@@ -158,13 +159,15 @@ object ReactCommonUtil {
         */
       def spacingToVdomNbspStrings: VdomArray = {
         val nbsp = HtmlConstants.NBSP_STR
-        str
-          .split("\\s+")
-          .iterator
-          .flatMap( nbsp :: _ :: Nil )
-          .toStream
+        (for {
+          part <- str.split("\\s+").iterator
+          delimited <- (nbsp :: part :: Nil)
+        } yield {
+          delimited: VdomNode
+        })
+          .to( LazyList )
           .tail
-          .toVdomArray(m => m: VdomNode)
+          .toVdomArray
       }
 
     }

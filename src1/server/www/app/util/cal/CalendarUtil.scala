@@ -64,7 +64,7 @@ class CalendarUtil @Inject() (
     * @param calIds id календарей, из которых требуется сформировать контекст.
     * @return Фьючерс с инстансом контекста.
     */
-  def getCalsCtx(calIds: Traversable[String]): Future[MCalsCtx] = {
+  def getCalsCtx(calIds: Iterable[String]): Future[MCalsCtx] = {
     // TODO Opt Кеш ОЧЕНЬ нужен для multiGet на стороне MCalendar. Вообще лучше эту модель запилить внутрь MNod и заюзать mNodeCache
     val mcalsFut = mCalendars.multiGetMap(calIds)
     // TODO Получать по multiGet календари пачкой из MCalendars, заворачивать их в HolydayManager'ы.

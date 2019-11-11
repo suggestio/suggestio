@@ -48,7 +48,7 @@ trait AbstractFsm {
   /** Выставление указанного ресивера в качестве обработчика событий. */
   protected def _installReceiver(newReceiver: Receive): Unit
 
-  protected def combineReceivers(rcvrs: TraversableOnce[Receive]): Receive
+  protected def combineReceivers(rcvrs: IterableOnce[Receive]): Receive
 
   /** Интерфейс одного состояния. */
   protected trait FsmState {
@@ -94,7 +94,7 @@ trait StateData extends AbstractFsm {
 object AbstractFsmUtil {
 
   /** Собрать несколько partial-функций в одну. */
-  def combinePfs[A,B](pfs: TraversableOnce[PartialFunction[A, B]]): PartialFunction[A, B] = {
+  def combinePfs[A,B](pfs: IterableOnce[PartialFunction[A, B]]): PartialFunction[A, B] = {
     pfs.reduceLeft(_ orElse _)
   }
 

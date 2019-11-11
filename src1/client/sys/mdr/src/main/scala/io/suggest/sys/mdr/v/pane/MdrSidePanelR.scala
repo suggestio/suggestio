@@ -227,12 +227,12 @@ class MdrSidePanelR(
 
                         }
                       }
-                      .toStream
+                      .to(LazyList)
 
                     itypeCaption #::
                       itemRows #:::
                       divider #::
-                      Stream.empty
+                      LazyList.empty
                   }
                   .toVdomArray,
 

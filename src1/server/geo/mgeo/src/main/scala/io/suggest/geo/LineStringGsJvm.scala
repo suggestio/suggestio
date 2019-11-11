@@ -1,7 +1,6 @@
 package io.suggest.geo
 
 import org.elasticsearch.common.geo.builders.ShapeBuilders
-import play.api.libs.json.JsArray
 import au.id.jazzy.play.geojson.{LineString, LngLat}
 
 /**

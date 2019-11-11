@@ -1,6 +1,6 @@
 package util.adv.ext.ut
 
-import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
+import io.suggest.ahc.upload.{MpUploadArgs, UploadRefusedException}
 import io.suggest.di.IWsClient
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
@@ -35,7 +35,7 @@ trait S2sMpUpload
     }
 
     /** Формирование данных для сборки тела multipart. */
-    def mkUpArgs: IMpUploadArgs
+    def mkUpArgs: MpUploadArgs
 
     /** Быстрый доступ к Service Upload API. */
     def mpUploadClient = serviceHelper.maybeMpUpload.get

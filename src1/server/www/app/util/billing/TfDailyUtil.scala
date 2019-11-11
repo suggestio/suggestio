@@ -152,7 +152,7 @@ class TfDailyUtil @Inject()(
 
 
   /** Собрать карту тарифов для узлов. */
-  def getNodesTfsMap(nodes: TraversableOnce[MNode]): Future[Map[String, MTfDaily]] = {
+  def getNodesTfsMap(nodes: Iterable[MNode]): Future[Map[String, MTfDaily]] = {
     for {
       // TODO Opt запрашивать тарифы по узлам всей пачкой. Не делать кучи параллельных запросов узлов.
       dailyTfsOpts  <- Future.traverse(nodes) { mnode =>
@@ -162,7 +162,6 @@ class TfDailyUtil @Inject()(
       }
     } yield {
       dailyTfsOpts
-        .toIterator
         .toMap
     }
   }
@@ -227,14 +226,14 @@ class TfDailyUtil @Inject()(
     *              Если слишком много уровней, то будет IllegalStateException.
     * @return Фьючерс с найденным тарифом.
     */
-  private def _inheritedNodeTf(mnodes: TraversableOnce[MNode], level: Int = 1): Future[MTfDaily] = {
+  private def _inheritedNodeTf(mnodes: IterableOnce[MNode], level: Int = 1): Future[MTfDaily] = {
     // Запретить погружаться слишком глубоко.
     if (level > 8)
       throw new IllegalStateException(s"Too much recursion steps: $level")
 
     // Собрать id узлов-овнеров, в сторону которых ссылаются текущий список узлов.
     val ownNodeIds = mnodes
-      .toIterator
+      .iterator
       .flatMap { mnode =>
         mnode.edges
           .withPredicateIterIds(MPredicates.OwnedBy)
@@ -257,7 +256,7 @@ class TfDailyUtil @Inject()(
         // Поискать первый тариф среди найденных родительских узлов.
         val ownTfDailyOpt = ownNodes.iterator
           .flatMap( _.billing.tariffs.daily )
-          .toStream
+          .buffered
           .headOption
         LOGGER.trace(s"$logPrefix ownTfDailyOpt => $ownTfDailyOpt")
 
@@ -321,11 +320,14 @@ class TfDailyUtil @Inject()(
       for (ftf <- fallbackTf()) yield {
         val minClauseAmount = ftf.defaultClause
         val tf2 = ftf.copy(
-          clauses = ftf.clauses.mapValues { mdc =>
-            mdc.withAmount(
-              mdc.amount * manTf.amount / minClauseAmount.amount
-            )
-          },
+          clauses = ftf.clauses
+            .view
+            .mapValues { mdc =>
+              mdc.withAmount(
+                mdc.amount * manTf.amount / minClauseAmount.amount
+              )
+            }
+            .toMap,
           // Переносим размер данные о размере комиссии в обновлённый тариф.
           // Размер комиссии может быть задан вручную администрацией s.io, но не юзером.
           comissionPc = nodeTfOpt0.flatMap(_.comissionPc)
@@ -380,7 +382,7 @@ class TfDailyUtil @Inject()(
           clause.amount
         }
       }
-      .toStream
+      .buffered
       .headOption
       .fold [ITfDailyMode] (InheritTf) { manAmount =>
         ManualTf( manAmount )

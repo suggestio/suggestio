@@ -23,7 +23,7 @@ object Lists {
    * [{a,[1,2,3]}, {b,[1,5,7]}, ...]  =>  [{1,[a,b]}, {2,[b]}, ...]
    * @param source исходная мапа, подлежащая выворачиванию.
    */
-  def insideOut[K,V](source: Map[K, Traversable[V]]): Map[V, Set[K]] = {
+  def insideOut[K,V](source: Map[K, Iterable[V]]): Map[V, Set[K]] = {
     // разворачиваем исходный список в [{1,a}, {2,a}, .., {1,b}, ...]
     val flatVKList = source.foldLeft(List[(V,K)]()) { case (_acc, (_k, _vl)) =>
       _vl.foldLeft(_acc) { case (__acc, __v) =>  (__v, _k) :: __acc }
@@ -287,11 +287,11 @@ object Lists {
    * @tparam Acc Тип аккамулятора.
    * @return Кортеж из аккамулятора и отмаппленной коллекции.
    */
-  def mapFoldLeft[A, Coll[X] <: TraversableOnce[X], B, Acc]
+  def mapFoldLeft[A, Coll[X] <: IterableOnce[X], B, Acc]
                  (src: Coll[A], acc0: Acc)
                  (f: (Acc, A) => (Acc, B))
                  (implicit cbf: CanBuildFrom[Coll[A], B, Coll[B]]): (Acc, Coll[B]) = {
-    val seqb = cbf.apply()
+    val seqb = cbf.newBuilder( src )
     val acc1 = src.foldLeft(acc0) { (_acc0, _el) =>
       val (_acc1, b) = f(_acc0, _el)
       seqb += b
@@ -317,9 +317,10 @@ object Lists {
   /** Аналог flatten для списка/коллекции, но в обратном порядке и без билдеров.
     * Это бывает эффективно на больших коллекциях, когда не важен порядок.
     */
-  def flattenRev[T](elems: TraversableOnce[TraversableOnce[T]]): List[T] = {
+  def flattenRev[T](elems: IterableOnce[IterableOnce[T]]): List[T] = {
     toListRev {
-      elems.toIterator
+      elems
+        .iterator
         .flatten
     }
   }
@@ -331,15 +332,15 @@ object Lists {
     * @param elems Исходная коллекция или итератор.
     * @return Список исходных элементов в обратном порядке.
     */
-  def toListRev[T](elems: TraversableOnce[T], acc0: List[T] = Nil): List[T] = {
+  def toListRev[T](elems: IterableOnce[T], acc0: List[T] = Nil): List[T] = {
     elems
       .foldLeft(acc0) { (acc, e) => e :: acc }
   }
 
 
   /** Быстро сравнить (eq) содержимое двух последовательных коллекций без учёта типов коллекций. */
-  def isElemsEqs[T <: AnyRef: UnivEq](tr1: TraversableOnce[T], tr2: TraversableOnce[T]): Boolean = {
-    isElemsEqsIter( tr1.toIterator, tr2.toIterator )
+  def isElemsEqs[T <: AnyRef: UnivEq](tr1: IterableOnce[T], tr2: IterableOnce[T]): Boolean = {
+    isElemsEqsIter( tr1.iterator, tr2.iterator )
   }
 
   /** Пройти по двум итераторам, сравнивая элементы через eq. */
@@ -401,7 +402,7 @@ object Lists {
     }
 
 
-    implicit class TraversableOnceListsOps[T](val source: TraversableOnce[T]) extends AnyVal {
+    implicit class IterableOnceListsOps[T](val source: IterableOnce[T]) extends AnyVal {
 
       /** Добавить все элементы этой коллекции в начало указанного списка в обратном порядке. */
       def prependRevTo(list: List[T]): List[T] = {

@@ -15,7 +15,7 @@
   @select(
     mf("maker"),
     options = makers.iterator.map(m => m.value -> m.longName).toSeq,
-    'title -> "Какой image-maker использовать?"
+    Symbol("title") -> "Какой image-maker использовать?"
   )
 
   <br/>
@@ -25,24 +25,24 @@
   @select(
     mf("args.blockMeta.width"),
     options = toSelectOptions( BlockWidths ),
-    '_label -> "Ширина блока (cssPx)"
+    Symbol("_label") -> "Ширина блока (cssPx)"
   )
 
   @select(
     mf("args.blockMeta.height"),
     options = toSelectOptions( BlockHeights ),
-    '_label -> "Высота блока (cssPx)"
+    Symbol("_label") -> "Высота блока (cssPx)"
   )
 
   @checkbox(
     mf("args.blockMeta.wide"),
-    '_label -> "Широкоэкранное отображение?"
+    Symbol("_label") -> "Широкоэкранное отображение?"
   )
 
   @select(
     mf("args.blockMeta.expandMode"),
     options = ("" -> messages(MsgCodes.`Dont.expand`)) :: MBlockExpandModes.values.iterator.map(mbem => mbem.value -> messages(mbem.msgCode)).toList,
-    '_label -> "Растягивать"
+    Symbol("_label") -> "Растягивать"
   )
 
   <br/>
@@ -51,18 +51,18 @@
   <p><strong>Экран клиентского устройства</strong></p>
   @inputText(
     mf("args.devScreen.width"),
-    '_label -> messages("Width")
+    Symbol("_label") -> messages("Width")
   )
 
   @inputText(
     mf("args.devScreen.height"),
-    '_label -> messages("Height")
+    Symbol("_label") -> messages("Height")
   )
 
   @select(
     mf("args.devScreen.pxRatio"),
     options = ("", "default") :: MPxRatios.values.iterator.map(r => r.toString -> r.pixelRatio.toString).toList,
-    '_label -> "Плотность пикселей"
+    Symbol("_label") -> "Плотность пикселей"
   )
 
   <br/>
@@ -71,13 +71,13 @@
   <p><strong>Рендер</strong></p>
   @inputText(
     mf("args.szMult"),
-    '_label -> "Коэфф.масштабирования"
+    Symbol("_label") -> "Коэфф.масштабирования"
   )
 
   @select(
     mf("args.compress"),
     options = im.CompressModes.values.iterator.map(c => c.value -> c.nameI18n).toSeq,
-    '_label -> "Сжимать как"
+    Symbol("_label") -> "Сжимать как"
   )
 
 

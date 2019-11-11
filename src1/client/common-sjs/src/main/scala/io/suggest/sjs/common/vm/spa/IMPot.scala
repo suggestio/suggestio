@@ -12,7 +12,7 @@ trait IMPot[+T] extends IMPots {
 
   def _pot: Pot[T]
 
-  override def _pots: TraversableOnce[Pot[T]] = {
+  override def _pots: Seq[Pot[T]] = {
     _pot :: Nil
   }
 
@@ -21,6 +21,6 @@ trait IMPot[+T] extends IMPots {
 
 trait IMPots {
 
-  def _pots: TraversableOnce[Pot[_]]
+  def _pots: Seq[Pot[_]]
 
 }

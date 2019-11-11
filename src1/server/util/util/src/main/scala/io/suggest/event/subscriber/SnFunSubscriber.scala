@@ -16,7 +16,7 @@ case class SnFunSubscriber(f: PartialFunction[SioNotifier.Event, Unit]) extends 
    * @param event событие.
    * @param ctx контекст sio-notifier.
    */
-  def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
+  def publish(event: SioNotifier.Event)(implicit ctx: ActorContext): Unit = {
     if (f isDefinedAt event) {
       val r = new Runnable {
         def run() { f(event) }

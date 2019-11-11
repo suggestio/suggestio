@@ -84,7 +84,11 @@ trait IAdvBuilder
     * в любом порядке, желательно через "::" . */
   def supportedItemTypes: List[MItemType] = Nil
 
-  def supportedItemTypesStrSet = supportedItemTypes.iterator.map(_.value).toSet
+  def supportedItemTypesStrSet =
+    supportedItemTypes
+      .iterator
+      .map(_.value)
+      .toSet
 
   /** Финализировать все размещения карточки по базе биллинга. */
   def finalizeBilling(statuses: MItemStatus*): IAdvBuilder = {
@@ -179,7 +183,7 @@ trait IAdvBuilder
     this
   }
 
-  private def _logUnsupportedItems(logPrefix: String, items: Traversable[MItem]): Unit = {
+  private def _logUnsupportedItems(logPrefix: String, items: Iterable[MItem]): Unit = {
     LOGGER.error(s"$logPrefix ${items.size} items have unsupported types, they are skipped:${items.mkString("\n", ",\n", "")}")
   }
 

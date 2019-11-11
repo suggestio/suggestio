@@ -18,7 +18,7 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
   def inlineIndex   : Option[Html] = None
   /** Закинуть сие в конец тега head. */
-  def headAfter     : Traversable[Html] = Nil
+  def headAfter     : Iterable[Html] = Nil
   /** В зависимости от версии API надо рендерить разные скрипты. */
   def scriptHtml    : Html
   /** Версия API выдачи. */

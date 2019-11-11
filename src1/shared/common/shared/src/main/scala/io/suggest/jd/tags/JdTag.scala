@@ -16,6 +16,8 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Show, Tree, TreeLoc}
 
+import scala.collection.MapView
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -229,7 +231,7 @@ object JdTag {
     * @tparam E Тип эджа (любой).
     * @return Прочищенная карта эджей.
     */
-  def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
+  def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): MapView[EdgeUid_t, E] = {
     EdgesUtil.purgeUnusedEdgesFromMap(
       usedEdgeIds = tpl.deepEdgesUids.toSet,
       edgesMap    = edgesMap

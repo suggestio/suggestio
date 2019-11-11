@@ -2,9 +2,11 @@
 
 @* внешняя обёртка prop-таблицы личного кабинета. *@
 
-@attrsMap = @{ attrs.toMap }
-
-<table class="prop @attrsMap.get('class)"
-       @toHtmlArgs( attrsMap.filterKeys(_ != 'class) )>
+@defining( attrs.toMap ) { attrsMap =>
+@defining( Symbol("class") ) { _classSym =>
+<table class="prop @attrsMap.get( _classSym )"
+       @toHtmlArgs( attrsMap.view.filterKeys(_ != _classSym).toMap )>
   @content
 </table>
+}
+}

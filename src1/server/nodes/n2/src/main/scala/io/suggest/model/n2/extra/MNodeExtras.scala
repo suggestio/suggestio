@@ -163,6 +163,6 @@ final case class MNodeExtras(
   def adnLogo = adn.flatMap(_.resView.logo)
   def adnWcFg = adn.flatMap(_.resView.wcFg)
   def adnGalImgs = adn.toList.flatMap(_.resView.galImgs)
-  def adnEdgeUids = adn.iterator.flatMap(_.resView.edgeUids)
+  def adnEdgeUidsIter = adn.iterator.flatMap(_.resView.edgeUids)
 
 }

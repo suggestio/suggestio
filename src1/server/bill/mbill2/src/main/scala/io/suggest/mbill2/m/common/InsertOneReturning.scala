@@ -44,10 +44,10 @@ trait InsertManyReturning extends InsertOneReturningBase {
     * @param els Элементы для инзерта.
     * @return Список сохраненных элементов, скорее всего в исходном порядке..
     */
-  def insertMany(els: TraversableOnce[El_t]): DBIOAction[Seq[El_t], NoStream, Effect.Write] = {
-    val acts = for (el <- els.toIterator) yield {
-      insertOne(el)
-    }
+  def insertMany(els: IterableOnce[El_t]): DBIOAction[Seq[El_t], NoStream, Effect.Write] = {
+    val acts = for (el <- els.iterator)
+               yield insertOne(el)
+
     DBIO.sequence( acts.toSeq )
   }
 

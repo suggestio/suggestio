@@ -1,7 +1,6 @@
 package io.suggest.geo
 
 import org.elasticsearch.common.geo.builders._
-import play.api.libs.json._
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
 
 /**
@@ -23,7 +22,7 @@ object PolygonGsJvm extends GsStaticJvmQuerable {
           .map { lsgs =>
             LineStringGsJvm.toPlayGeoJsonGeom(lsgs).coordinates
           }
-          .toStream
+          .toSeq
       }
     )
   }

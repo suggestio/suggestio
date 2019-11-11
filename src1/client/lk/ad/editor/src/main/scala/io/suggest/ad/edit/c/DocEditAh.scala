@@ -208,7 +208,9 @@ class DocEditAh[M](
         val tpl1 = __updateTpl( qdSubTree2 )
 
         // 10. Очистить эджи от неиспользуемых.
-        val edgesData3 = JdTag.purgeUnusedEdges( tpl1, edgesData2 )
+        val edgesData3 = JdTag
+          .purgeUnusedEdges( tpl1, edgesData2 )
+          .toMap
 
         // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
         val dataPrefix = HtmlConstants.Proto.DATA_
@@ -483,7 +485,9 @@ class DocEditAh[M](
             }
 
           // Очистить эджи от лишнего контента
-          val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
+          val dataEdges2 = JdTag
+            .purgeUnusedEdges(tpl2, dataEdges0)
+            .toMap
           val jdDoc2 = (MJdDoc.template set tpl2)( v2.jdDoc.jdArgs.data.doc )
           v2 = MDocS.jdDoc.modify(
             MJdDocEditS.jdArgs.modify(
@@ -567,7 +571,9 @@ class DocEditAh[M](
         noChange
       } { case (dataEdge2, blobUrl) =>
         val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
-        val dataEdgesMap2 = JdTag.purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
+        val dataEdgesMap2 = JdTag
+          .purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
+          .toMap
         val v2 = MDocS.jdDoc
           .composeLens( MJdDocEditS.jdArgs )
           .composeLens( MJdArgs.data )
@@ -584,7 +590,10 @@ class DocEditAh[M](
     case PurgeUnusedEdges =>
       val v0 = value
       val edges0 = v0.jdDoc.jdArgs.data.edges
-      val edges2 = JdTag.purgeUnusedEdges( v0.jdDoc.jdArgs.data.doc.template, edges0 )
+      val edges2 = JdTag
+        .purgeUnusedEdges( v0.jdDoc.jdArgs.data.doc.template, edges0 )
+        .toMap
+
       if ( edges0.size ==* edges2.size ) {
         noChange
       } else {
@@ -1558,14 +1567,14 @@ class DocEditAh[M](
             .getMainBlock
             .map(_.rootLabel)
         }
-        .toIterator
+        .iterator
         // Поискать цвет фона среди всех стрипов.
         .++ {
           v0.jdDoc.jdArgs.data.doc.template
             .deepOfType( MJdTagNames.STRIP )
         }
         .flatMap( _.props1.bgColor )
-        .toStream
+        .buffered
         // Взять первый цвет
         .headOption
         .orElse {

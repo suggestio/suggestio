@@ -61,7 +61,7 @@ trait SioNotifierStaticClientI {
    * @param subscriber подписчик SubscriberT
    * @param classifier классификатор события
    */
-  def subscribe(subscriber:Subscriber, classifier:Classifier)
+  def subscribe(subscriber: Subscriber, classifier: Classifier): Unit
 
   /**
    * Неблокирующая подпись на события с подтверждением от SioNotifier.
@@ -69,26 +69,26 @@ trait SioNotifierStaticClientI {
    * @param classifier классификатор события.
    * @return Фьючерс с boolean внутри. true если всё ок.
    */
-  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean]
+  def subscribeSync(subscriber: Subscriber, classifier: Classifier): Future[Boolean]
 
   /**
    * Отправить событие в шину.
    * @param event событие
    */
-  def publish(event:Event)
+  def publish(event: Event): Unit
 
   /**
    * Отписать актора от событий.
    * @param subscriber описалово подписчика
    * @param classifier классификатор, такой же как был в subscribe
    */
-  def unsubscribe(subscriber:Subscriber, classifier:Classifier)
+  def unsubscribe(subscriber: Subscriber, classifier: Classifier): Unit
 
   /**
    * Отписать актора от всех событий в карте шины.
    * @param subscriber подписавшийся
    */
-  def unsubscribe(subscriber:Subscriber)
+  def unsubscribe(subscriber: Subscriber): Unit
 
   /**
    * Клиент просит атомарно заменить одного подписчика на другого.
@@ -98,7 +98,7 @@ trait SioNotifierStaticClientI {
    * @param classifier классификатор для обоих
    * @param subscriberNew новый подписчик
    */
-  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
+  def replaceSubscriber(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Unit
 
   /**
    * ask-версия функции replaceSubscriber.
@@ -107,7 +107,7 @@ trait SioNotifierStaticClientI {
    * @param subscriberNew новый подписчик, который точно будет на шине.
    * @return Фьючерс с булевым. true, если всё нормально.
    */
-  def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber): Future[Boolean]
+  def replaceSubscriberSync(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Future[Boolean]
 
 }
 
@@ -138,31 +138,31 @@ trait SioNotifierStaticActorSelection extends SioNotifierStaticClientI {
   def actorSelection = getSystem.actorSelection(actorPath)
 
 
-  def subscribe(subscriber:Subscriber, classifier:Classifier) {
+  def subscribe(subscriber: Subscriber, classifier: Classifier): Unit = {
     actorSelection ! SnSubscribe(subscriber, classifier)
   }
 
-  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean] = {
+  def subscribeSync(subscriber: Subscriber, classifier: Classifier): Future[Boolean] = {
     (actorSelection ? SnSubscribeSync(subscriber, classifier)).asInstanceOf[Future[Boolean]]
   }
 
-  def publish(event:Event) {
+  def publish(event: Event): Unit = {
     actorSelection ! event
   }
 
-  def unsubscribe(subscriber:Subscriber, classifier:Classifier) {
+  def unsubscribe(subscriber: Subscriber, classifier: Classifier): Unit = {
     actorSelection ! SnUnsubscribe(subscriber, classifier)
   }
 
-  def unsubscribe(subscriber:Subscriber) {
+  def unsubscribe(subscriber: Subscriber): Unit = {
     actorSelection ! SnUnsubscribeAll(subscriber)
   }
 
-  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
+  def replaceSubscriber(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Unit = {
     actorSelection ! SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)
   }
 
-  def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) = {
+  def replaceSubscriberSync(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Future[Boolean] = {
     (actorSelection ? SnReplaceSubscriberSync(subscriberOld, classifier, subscriberNew)).asInstanceOf[Future[Boolean]]
   }
 
@@ -191,22 +191,22 @@ trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
   protected def staticSubscribeAllSync() = applyForeachSC(subscribe)
   protected def staticUnsubscribeAllSync() = applyForeachSC(unsubscribe)    // TODO а надо ли оно вообще?
 
-  protected def applyForeachSC(f: (Subscriber, Classifier) => Unit) {
+  protected def applyForeachSC(f: (Subscriber, Classifier) => Unit): Unit = {
     getStaticSubscribers foreach { snss =>
       applyOneSC(snss, f)
     }
   }
 
-  def subscribeStatic(snss: SNStaticSubscriber) {
+  def subscribeStatic(snss: SNStaticSubscriber): Unit = {
     applyOneSC(snss, subscribe)
   }
-  def unsubscribeStatic(snss: SNStaticSubscriber) {
+  def unsubscribeStatic(snss: SNStaticSubscriber): Unit = {
     applyOneSC(snss, unsubscribe)
   }
 
-  protected def applyOneSC(snss: SNStaticSubscriber, f: (Subscriber, Classifier) => Unit) {
-    snss.snMap foreach { case (c, sss) =>
-      sss foreach { ss => f(ss, c) }
+  protected def applyOneSC(snss: SNStaticSubscriber, f: (Subscriber, Classifier) => Unit): Unit = {
+    for ((c, sss) <- snss.snMap) {
+      for (ss <- sss) f(ss, c)
     }
   }
 }
@@ -257,12 +257,12 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
 
   // Функции обработки вынесены сюда для возможности их простого переопределения в классах-потомках.
 
-  protected def handleEvent(event: Event) {
+  protected def handleEvent(event: Event): Unit = {
     trace(s"handleEvent($event)")
     bus.publish(event)
   }
 
-  protected def watchSubscriber(subscriber:Subscriber) {
+  protected def watchSubscriber(subscriber: Subscriber): Unit = {
     lazy val logPrefix = s"watchSubscriber($subscriber): "
     subscriber.getActor match {
       case Some(ref) =>
@@ -274,7 +274,7 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
     }
   }
 
-  protected def unwatchSubscriber(subscriber:Subscriber) {
+  protected def unwatchSubscriber(subscriber: Subscriber): Unit = {
     lazy val logPrefix = s"unwatchSubscriber($subscriber): "
     subscriber.getActor match {
       case Some(ref) =>
@@ -286,31 +286,31 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
     }
   }
 
-  protected def subscribeOne(subscriber:Subscriber, classifier:Classifier) {
+  protected def subscribeOne(subscriber: Subscriber, classifier: Classifier): Unit = {
     val busHasChanges = bus.subscribe(subscriber, classifier)
     debug(s"subscribeOne($subscriber, $classifier) => $busHasChanges")
     watchSubscriber(subscriber)
   }
 
-  protected def unsubscribeOne(subscriber:Subscriber, classifier:Classifier) {
+  protected def unsubscribeOne(subscriber: Subscriber, classifier: Classifier): Unit = {
     val busHasChanges = bus.unsubscribe(subscriber, classifier)
     debug(s"unsubscribeOne($subscriber, $classifier) => $busHasChanges")
     unwatchSubscriber(subscriber)
   }
 
-  protected def unsubscribeAll(subscriber: Subscriber) {
+  protected def unsubscribeAll(subscriber: Subscriber): Unit = {
     debug(s"unsubscribeAll($subscriber)")
     bus.unsubscribe(subscriber)
     unwatchSubscriber(subscriber)
   }
 
-  protected def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
+  protected def replaceSubscriber(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Unit = {
     trace(s"replaceSubscriber(classifier = $classifier): $subscriberOld -> $subscriberNew")
     unsubscribeOne(subscriberOld, classifier)
     subscribeOne(subscriberNew, classifier)
   }
 
-  protected def subscriberTerminated(actorRef: ActorRef) {
+  protected def subscriberTerminated(actorRef: ActorRef): Unit = {
     trace(s"subscriberTerminated($actorRef)")
     bus.unsubscribe(SnActorRefSubscriber(actorRef))
   }
@@ -352,7 +352,7 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
      * @param event событие
      * @param subscriber подписчик
      */
-    protected def publish(event: Event, subscriber: Subscriber) {
+    protected def publish(event: Event, subscriber: Subscriber): Unit = {
       val fut = Future {
         subscriber.publish(event)
       }

@@ -111,7 +111,8 @@ object MHttpCaches {
         cacheKeysForDelete = allCacheKeys
           .iterator
           .filter( _ >= maxKey )
-          .toStream
+          .to( LazyList )
+
         if cacheKeysForDelete.nonEmpty
 
         results <- Future.traverse( cacheKeysForDelete ) { ck4d =>

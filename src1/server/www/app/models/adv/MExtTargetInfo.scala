@@ -27,7 +27,7 @@ object MExtTargetInfo extends ExtTargetInfoParsers with MacroLogsDyn {
         for {
           ser <- strB.bind(key, params)
         } yield {
-          ser.right.flatMap { s =>
+          ser.flatMap { s =>
             val pr = parse(targetInfoParserP, s)
             if (pr.successful) {
               Right(pr.get)

@@ -1,9 +1,9 @@
 package io.suggest.es.model
 
 import io.suggest.primo.TypeT
-import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonWrapper
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.common.unit.TimeValue
@@ -136,7 +136,12 @@ trait EsModelCommonT extends OptStrId {
 }
 
 
-trait BulkProcessorListenerT extends BulkProcessor.Listener {
+object BulkProcessorListener extends MacroLogsImpl
+trait BulkProcessorListenerT
+  extends BulkProcessor.Listener
+{
+  import BulkProcessorListener.LOGGER
+
   def _logPrefix: String
 
   /** Перед отправкой каждого bulk-реквеста. */

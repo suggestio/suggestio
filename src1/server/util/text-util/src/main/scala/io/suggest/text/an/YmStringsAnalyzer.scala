@@ -12,7 +12,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.analysis._
 import org.tartarus.snowball.ext.{EnglishStemmer, RussianStemmer}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**

@@ -26,8 +26,8 @@ object MGsPtr {
           gsIdEith    <- intB.bind(k(GS_ID_FN),   params)
         } yield {
           for {
-            nodeId    <- nodeIdEith.right
-            gsId      <- gsIdEith.right
+            nodeId    <- nodeIdEith
+            gsId      <- gsIdEith
           } yield {
             MGsPtr(nodeId, gsId)
           }

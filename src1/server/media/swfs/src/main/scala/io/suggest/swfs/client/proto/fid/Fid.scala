@@ -49,14 +49,13 @@ object Fid extends MacroLogsDyn {
         val fidStrRaw = strB.bind(key, params)
         for (fidStrE <- fidStrRaw) yield {
           for {
-            fidStr <- fidStrE.right
+            fidStr <- fidStrE
             parsed <- Try( Fid(fidStr) )
               .toEither
               .left.map { ex =>
                 LOGGER.error(s"qsb: failed to bind $fidStrRaw", ex)
                 ex.getMessage
               }
-              .right
           } yield {
             parsed
           }

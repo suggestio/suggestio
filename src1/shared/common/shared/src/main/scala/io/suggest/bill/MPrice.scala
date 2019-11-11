@@ -5,6 +5,8 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.Monoid
 
+import scala.collection.MapView
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -31,7 +33,7 @@ object MPrice {
     /** Монойд для amount_t. */
     implicit def AmountMonoid: Monoid[Amount_t] = {
       new Monoid[Amount_t] {
-        override def zero: Amount_t = 0
+        override def zero: Amount_t = 0L
         override def append(f1: Amount_t, f2: => Amount_t): Amount_t = f1 + f2
       }
     }
@@ -44,14 +46,15 @@ object MPrice {
     * @param prices Входная пачка цен.
     * @return Итератор с результирующими ценами.
     */
-  def sumPricesByCurrency(prices: Seq[MPrice]): Map[MCurrency, MPrice] = {
+  def sumPricesByCurrency(prices: Iterable[MPrice]): MapView[MCurrency, MPrice] = {
     if (prices.isEmpty) {
-      Map.empty
+      MapView.empty
     } else {
       prices
         .groupBy {
           _.currency
         }
+        .view
         .mapValues { ps =>
           MPrice(
             amount   = ps.map(_.amount).sum,
@@ -69,9 +72,9 @@ object MPrice {
 
 
   /** Сконверить входной список элементов в список цен этих элементов без какой-либо доп.обработки. */
-  def toPricesIter(items: TraversableOnce[IMPrice]): Iterator[MPrice] = {
+  def toPricesIter(items: IterableOnce[IMPrice]): Iterator[MPrice] = {
     items
-      .toIterator
+      .iterator
       .map(_.price)
   }
 
@@ -80,7 +83,7 @@ object MPrice {
     * @param items Исхондая коллекция элементов.
     * @return Карта цен по валютам.
     */
-  def toSumPricesByCurrency(items: TraversableOnce[IMPrice]): Map[MCurrency, MPrice] = {
+  def toSumPricesByCurrency(items: IterableOnce[IMPrice]): MapView[MCurrency, MPrice] = {
     val prices = toPricesIter(items).toSeq
     sumPricesByCurrency(prices)
   }
@@ -102,7 +105,10 @@ object MPrice {
     }
   }
 
-  def unapply2(m: MPrice) = unapply(m).map { case (amount,curr,_) => (amount,curr) }
+  def unapply2(m: MPrice) = {
+    for ( (amount, curr, _) <- unapply(m) )
+    yield (amount, curr)
+  }
 
 
   /** Поддержка play-json. */
@@ -121,7 +127,7 @@ object MPrice {
 
   /** С появлением целочисленных копеечных цен, возникла необходимость конвертации цен в целые и обратно.
     *
-    * @param amount Сырая человекопонятая цена: 1.5 - полтора [рубля].
+    * @param realAmount Сырая человекопонятая цена: 1.5 - полтора [рубля].
     * @param currency Валюта цены.
     * @return Инстанс MPrice с системным представлением цены.
     */

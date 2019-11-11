@@ -60,7 +60,7 @@ trait WsKeeper {
     }
 
     // В зависимости от полученной команды принять решение какое-то.
-    cmdFut onSuccess {
+    cmdFut.foreach {
       // Это js. Нужно запустить его на исполнение.
       case cmd: MJsCommand =>
         val fn = { () =>
@@ -77,7 +77,7 @@ trait WsKeeper {
       case cmd: MActionCmd =>
         val fut = AdaptersSupport.handleAction(cmd.mctx, appState)
         // Если успех, то логгируем результат.
-        fut onSuccess { case mctx2 =>
+        fut.foreach { mctx2 =>
           console.info("Action finished. New ctx = " + mctx2)
         }
         // Если ошибка, то берём исходный контекст.

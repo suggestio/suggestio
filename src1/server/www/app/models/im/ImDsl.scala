@@ -122,9 +122,9 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
     * @param opsRev Im-операции в ОБРАТНОМ порядке.
     * @return Опционально: найденный размер выхлопа.
     */
-  def getWhFromOpsRev(opsRev: TraversableOnce[ImOp]): Option[Option[ISize2di]] = {
+  def getWhFromOpsRev(opsRev: IterableOnce[ImOp]): Option[Option[ISize2di]] = {
     opsRev
-      .toIterator
+      .iterator
       // Надо найти операцию, затрагивающую фактический размер, и попытаться извлечь из неё wh.
       .flatMap {
         case op: AbsCropOp =>
@@ -138,7 +138,7 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
         case _ =>
           Nil
       }
-      .toStream
+      .buffered
       // Интересует только первая с конца возможная операция, задающая картинке достоверный размер:
       .headOption
   }
@@ -207,7 +207,7 @@ class ImOpsQsb extends QueryStringBindableImpl[Seq[ImOp]] {
 /** Действие, запрограммирование в аргументах. */
 trait ImOp {
   def opCode: ImOpCode
-  def addOperation(op: IMOperation)
+  def addOperation(op: IMOperation): Unit
   def qsValue: String
   def i18nValueCode: Option[String] = None
   def unwrappedValue: Option[String] = None

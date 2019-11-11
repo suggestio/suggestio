@@ -61,7 +61,7 @@ trait Sn4EsModelCache
    * @param event событие.
    * @param ctx контекст sio-notifier.
    */
-  def publish(event: Event)(implicit ctx: ActorContext) {
+  def publish(event: Event)(implicit ctx: ActorContext): Unit = {
     val idOrNull = event2id(event)
     if (idOrNull != null) {
       val ck = model.cacheKey(idOrNull)

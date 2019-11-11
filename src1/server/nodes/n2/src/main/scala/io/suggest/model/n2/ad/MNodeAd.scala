@@ -88,8 +88,8 @@ object MNodeAd extends IGenEsMappingProps with IEmpty {
   def toEntMap(es: MEntity*): EntMap_t = {
     toEntMap1(es)
   }
-  def toEntMap1(es: TraversableOnce[MEntity]): EntMap_t = {
-    es.toIterator
+  def toEntMap1(es: IterableOnce[MEntity]): EntMap_t = {
+    es.iterator
       .map { e => e.id -> e }
       .toMap
   }

@@ -135,7 +135,7 @@ object CspPolicy {
     val rulesDelim = Csp.DELIM
 
     // Добавить список значений в аккамулятор.
-    def __append(k: String, vs: TraversableOnce[String]): Unit = {
+    def __append(k: String, vs: IterableOnce[String]): Unit = {
       sb.append(k)
       for (v <- vs) {
         sb.append( srcDelim )

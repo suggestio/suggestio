@@ -89,7 +89,7 @@ object GridAh {
 
     // Приведение списка карточек к grid-блокам и подблоков обсчёта плитки.
     val itmDatas = ads
-      .toIterator
+      .iterator
       .flatten
       .map { scAdData =>
         scAdData.focused.fold [Tree[MGbBlock]] {

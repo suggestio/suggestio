@@ -42,9 +42,9 @@ object SiteQsArgs {
           maybeApiVsnOpt    <- apiVsnOptB.bind(f(VSN_FN),    params)
         } yield {
           for {
-            adnIdOpt        <- maybeAdnIdOpt.right
-            povAdIdOpt      <- maybePovAdIdOpt.right
-            apiVsnOpt       <- maybeApiVsnOpt.right
+            adnIdOpt        <- maybeAdnIdOpt
+            povAdIdOpt      <- maybePovAdIdOpt
+            apiVsnOpt       <- maybeApiVsnOpt
           } yield {
             SiteQsArgs(
               apiVsnOpt     = apiVsnOpt,

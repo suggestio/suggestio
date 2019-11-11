@@ -80,12 +80,12 @@ class SwfsStorages @Inject() (
     }
   }
 
-  override def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]] = {
+  override def getStoragesHosts(ptrs: Iterable[T]): Future[Map[T, Seq[MHostInfo]]] = {
     // Собрать множество всех необходимых volumeId.
     val volumeId2ptrs = ptrs
       .groupBy(_.fid.volumeId)
 
-    val perVolFut = Future.traverse(volumeId2ptrs) { case (volumeId, volPtrs) =>
+    val perVolFut = Future.traverse(volumeId2ptrs.toSeq) { case (volumeId, volPtrs) =>
       for {
         lookupResp <- volCache.getLocations( volPtrs.head.fid.volumeId )
       } yield {
@@ -192,7 +192,7 @@ object SwfsStorage {
     new QueryStringBindableImpl[SwfsStorage] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SwfsStorage]] = {
         for (fidE <- fidB.bind(key, params)) yield {
-          for (fid <- fidE.right) yield {
+          for (fid <- fidE) yield {
             SwfsStorage(
               fid = fid
             )

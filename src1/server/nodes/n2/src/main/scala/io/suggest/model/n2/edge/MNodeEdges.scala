@@ -130,7 +130,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
   def edgesToMapIter(edges: MEdge*): Seq[MEdge] = {
     edges
   }
-  def edgesToMap1(edges: TraversableOnce[MEdge]): Seq[MEdge] = {
+  def edgesToMap1(edges: IterableOnce[MEdge]): Seq[MEdge] = {
     edges.toSeq
   }
   def edgesToMap(edges: MEdge*): Seq[MEdge] = {
@@ -143,8 +143,10 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
     * @param edges Эджи.
     * @return Значение Order id, пригодное для сборки нового [[MEdge]].
     */
-  def nextOrderId(edges: TraversableOnce[MEdge]): Int = {
-    val iter = edges.toIterator.flatMap(_.order)
+  def nextOrderId(edges: IterableOnce[MEdge]): Int = {
+    val iter = edges
+      .iterator
+      .flatMap(_.order)
     if (iter.isEmpty) 0
     else iter.max + 1
   }
@@ -152,7 +154,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
 
   object Filters {
 
-    def hasUidF(edgeUids: Traversable[EdgeUid_t])(medge: MEdge): Boolean = {
+    def hasUidF(edgeUids: Iterable[EdgeUid_t])(medge: MEdge): Boolean = {
       edgeUids.exists( medge.doc.uid.contains )
     }
 
@@ -161,7 +163,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
         medge.predicate ==>> predicate
     }
 
-    def predsF(preds: Traversable[MPredicate])(medge: MEdge): Boolean = {
+    def predsF(preds: Iterable[MPredicate])(medge: MEdge): Boolean = {
       preds.exists { p =>
         medge.predicate ==>> p
       }
@@ -196,7 +198,7 @@ case class MNodeEdges(
   }
 
 
-  def withIndexUpdated(i: Int)(f: MEdge => TraversableOnce[MEdge]): Iterator[MEdge] = {
+  def withIndexUpdated(i: Int)(f: MEdge => IterableOnce[MEdge]): Iterator[MEdge] = {
     iterator
       .zipWithIndex
       .flatMap { case (e, x) =>
@@ -252,7 +254,7 @@ case class MNodeEdges(
 
   /** Фильтрация по edge uid. */
   def withUid(edgeUids: EdgeUid_t*) = withUid1(edgeUids)
-  def withUid1(edgeUids: Traversable[EdgeUid_t]): MNodeEdges = {
+  def withUid1(edgeUids: Iterable[EdgeUid_t]): MNodeEdges = {
     withFilter( MNodeEdges.Filters.hasUidF(edgeUids) )
   }
 
@@ -261,15 +263,18 @@ case class MNodeEdges(
     withFilterNot( MNodeEdges.Filters.hasUidF(edgeUids) )
   }
 
-  def outView = if (out.isInstanceOf[SeqView[_,_]]) {
-    out
-  } else {
-    out.view
+  def outView = {
+    out match {
+      case v: SeqView[MEdge] => v
+      case _ => out.view
+    }
   }
 
   def withFilter(f: MEdge => Boolean): MNodeEdges = {
     withOut(
-      out = outView.filter(f)
+      out = outView
+        .filter(f)
+        .toSeq
     )
   }
   def withFilterNot(f: MEdge => Boolean): MNodeEdges = {
@@ -283,18 +288,18 @@ case class MNodeEdges(
       this
     } else {
       withOut(
-        out = outView ++ edges
+        out = (outView ++ edges).toSeq
       )
     }
   }
 
   /** Докинуть коллекции эджей. */
-  def withEdges(edgess: TraversableOnce[MEdge]*): MNodeEdges = {
+  def withEdges(edgess: IterableOnce[MEdge]*): MNodeEdges = {
     if (edgess.isEmpty) {
       this
     } else {
       withOut(
-        out = outView ++ edgess.iterator.flatten
+        out = (outView ++ edgess.iterator.flatten).toSeq
       )
     }
   }

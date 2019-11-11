@@ -6,8 +6,8 @@ import java.nio.file.Files
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
+import com.github.fkoehler.play.htmlcompressor.HTMLCompressorFilter
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
-import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.playx.IsAppModes
 import javax.inject.{Inject, Singleton}
 import play.api.http.HttpEntity

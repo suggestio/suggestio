@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.play
 
-import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
+import io.suggest.ahc.upload.{MpUploadArgs, MpUploadSupportDflt}
 import io.suggest.swfs.client.proto.put.{PutResponse, IPutRequest}
 import play.api.libs.ws.WSResponse
 
@@ -16,11 +16,11 @@ import scala.concurrent.Future
 
 trait Put extends ISwfsClientWs with MpUploadSupportDflt {
 
-  override def getUploadUrl(args: IMpUploadArgs): String = {
+  override def getUploadUrl(args: MpUploadArgs): String = {
     args.url.get
   }
 
-  override def isRespOk(args: IMpUploadArgs, resp: WSResponse): Boolean = {
+  override def isRespOk(args: MpUploadArgs, resp: WSResponse): Boolean = {
     SwfsClientWs.isStatus2xx( resp.status )
   }
 
@@ -41,7 +41,7 @@ trait Put extends ISwfsClientWs with MpUploadSupportDflt {
     LOGGER.trace(s"$logPrefix Started PUT file for $req, file size = ${req.file.length()} bytes.")
 
     // Залоггировать ошибки
-    putFut.onFailure { case ex: Throwable =>
+    putFut.failed.foreach { ex =>
       LOGGER.error(s"$logPrefix Failed to PUT: $req", ex)
     }
 

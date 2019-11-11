@@ -49,7 +49,7 @@ object VkPerm {
 
   @inline implicit def univEq: UnivEq[VkPerm] = UnivEq.derive
 
-  def toBitMask(perms: TraversableOnce[VkPerm]): Int = {
+  def toBitMask(perms: IterableOnce[VkPerm]): Int = {
     perms.foldLeft(0)(_ + _.toInt)
   }
 

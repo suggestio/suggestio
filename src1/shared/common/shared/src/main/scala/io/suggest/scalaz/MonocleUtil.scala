@@ -43,7 +43,7 @@ object MonocleUtil {
 
     /** filterKey-траверс для одного ключа. */
     // TODO Opt Лучше юзать composeOptional( at(key) ) - должно быть быстрее.
-    def get[K: UnivEq, V](key: K) = filterKey[K, V](key ==* )
+    def get[K: UnivEq, V](key: K) = filterKey[K, V](key ==* _)
 
   }
 

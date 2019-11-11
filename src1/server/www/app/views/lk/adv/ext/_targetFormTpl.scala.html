@@ -9,7 +9,7 @@
 
 
 @* Форма редактирования одной цели: название, ссылка. *@
-@form(CSRF(routes.LkAdvExt.writeTargetSubmit(adnId)), 'class -> CLASS_ONE_TARGET_FORM_INNER) {
+@form(CSRF(routes.LkAdvExt.writeTargetSubmit(adnId)), Symbol("class") -> CLASS_ONE_TARGET_FORM_INNER) {
 
   @defining( tf("tg.id").value ) { tgId =>
     @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
@@ -22,9 +22,9 @@
   <div class="social-target_left">
     @inputText(
       tf("tg.name"),
-      '_label -> messages("Name"),
-      '_class -> CLASS_ONE_TARGET_INPUT,
-      'title  -> messages("adv.ext.tg.name.hint")
+      Symbol("_label") -> messages("Name"),
+      Symbol("_class") -> CLASS_ONE_TARGET_INPUT,
+      Symbol("title")  -> messages("adv.ext.tg.name.hint")
     )
 
     @* Иконка соц-сети, если есть. *@
@@ -32,9 +32,9 @@
 
     @inputText(
       tf("tg.url"),
-      '_label -> messages("Page.link"),
-      '_class -> CLASS_ONE_TARGET_INPUT,
-      'title  -> messages("adv.ext.tg.url.hint")
+      Symbol("_label") -> messages("Page.link"),
+      Symbol("_class") -> CLASS_ONE_TARGET_INPUT,
+      Symbol("title")  -> messages("adv.ext.tg.url.hint")
     )
   </div> @* .social-target-left *@
 

@@ -24,7 +24,7 @@ object NodesTreeWalkSpec extends NodesTreeWalkerSpecT with NodesTreeUpdateSpecT 
   protected object Nodes extends NodesTreeApiIId with NodesTreeWalk with NodeTreeUpdate {
     override type T = Node
     override def _subNodesOf(node: Node) = node.children
-    override def withNodeChildren(node: Node, children2: TraversableOnce[Node]): Node = {
+    override def withNodeChildren(node: Node, children2: IterableOnce[Node]): Node = {
       node.copy(children = children2.toSeq)
     }
   }

@@ -116,7 +116,7 @@ class LkAdnMapBillUtil @Inject() (
 
     val itemActions = priceDsl
       .splitOnSumTillItemLevel
-      .toIterator
+      .iterator
       .flatMap { priceTerm0 =>
         val priceTerm = advUtil.prepareForSave( priceTerm0 )
         lazy val logPrefix2 = s"$logPrefix (${priceTerm.getClass.getSimpleName}#${priceTerm.hashCode()}) "

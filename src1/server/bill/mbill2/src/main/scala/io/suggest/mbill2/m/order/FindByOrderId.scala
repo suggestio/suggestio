@@ -1,6 +1,5 @@
 package io.suggest.mbill2.m.order
 
-import io.suggest.mbill2.m.common.ModelContainer
 import io.suggest.mbill2.m.gid.{GidSlick, Gid_t}
 
 /**
@@ -17,9 +16,8 @@ trait FindByOrderId extends OrderIdSlick with GidSlick {
 
   def findByOrderIdBuilder(orderIds: Gid_t*) = _findByOrderIdBuilder(orderIds)
 
-  private def _findByOrderIdBuilder(orderIds: Traversable[Gid_t]) = {
+  private def _findByOrderIdBuilder(orderIds: Iterable[Gid_t]) =
     query.filter(_.orderId inSet orderIds)
-  }
 
   def findByOrderId(orderIds: Gid_t*): DBIOAction[Seq[El_t], Streaming[El_t], Effect.Read] = {
     _findByOrderIdBuilder(orderIds)

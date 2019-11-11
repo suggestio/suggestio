@@ -2,7 +2,7 @@ package io.suggest.stat.m
 
 import _root_.play.api.libs.json._
 import io.suggest.primo.TypeT
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io

@@ -44,7 +44,7 @@ case class FbCtx(
   def nonEmpty: Boolean = {
     productIterator.exists {
       case opt: Option[_]           => opt.nonEmpty
-      case col: TraversableOnce[_]  => col.nonEmpty
+      case col: IterableOnce[_]     => col.nonEmpty
       case null => false
       case _    => true
     }

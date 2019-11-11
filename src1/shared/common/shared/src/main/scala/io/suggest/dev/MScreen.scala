@@ -35,7 +35,7 @@ object MScreen {
   implicit def mScreenFormat: Format[MScreen] = {
     implicitly[Format[String]]
       .inmap[MScreen](
-        maybeFromString(_).right.get,
+        maybeFromString(_).getOrElse(throw new NoSuchElementException("no screen defined")),
         _.toQsValue
       )
   }

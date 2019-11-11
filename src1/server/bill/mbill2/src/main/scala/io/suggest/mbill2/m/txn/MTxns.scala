@@ -94,7 +94,7 @@ class MTxns @Inject() (
     * @param offset Абсолютный сдвиг в результатах.
     * @return DBIOAction со списком транзакций.
     */
-  def findLatestTxns(balanceIds: Traversable[Gid_t] = Nil, limit: Int, offset: Int = 0) = {
+  def findLatestTxns(balanceIds: Iterable[Gid_t] = Nil, limit: Int, offset: Int = 0) = {
     findByBalanceIdsBuilder(balanceIds)
       .drop(offset)
       .take(limit)

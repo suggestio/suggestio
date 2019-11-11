@@ -32,8 +32,8 @@ object LoginFormPagesJvm {
           returnUrlOptB     <- stringOptB.bind( k(F.RETURN_URL_FN), params )
         } yield {
           for {
-            loginTab        <- loginTabE.right
-            returnUrlOpt    <- returnUrlOptB.right
+            loginTab        <- loginTabE
+            returnUrlOpt    <- returnUrlOptB
           } yield {
             ILoginFormPages.Login(
               currTab       = loginTab,

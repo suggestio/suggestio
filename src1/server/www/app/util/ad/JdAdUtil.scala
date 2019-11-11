@@ -66,10 +66,10 @@ class JdAdUtil @Inject()(
     * @param imgsEdges Данные по картинкам из prepareImgEdges().
     * @return Фьючерс с картой MMedia.
     */
-  def prepareImgMedias(imgsEdges: TraversableOnce[(MEdge, MImg3)]): Future[Map[String, MMedia]] = {
+  def prepareImgMedias(imgsEdges: IterableOnce[(MEdge, MImg3)]): Future[Map[String, MMedia]] = {
     mMedias.multiGetMapCache {
       imgsEdges
-        .toIterator
+        .iterator
         .map(_._2.dynImgId.mediaId)
         .toSet
     }
@@ -95,11 +95,11 @@ class JdAdUtil @Inject()(
     * @param imgsEdges Подготовленные img-эджи, полученные из prepareImgEdges().
     * @param videoEdges Подготовленные video-эджи, полученные из prepareVideoEdges().
     */
-  def prepareMediaNodes(imgsEdges: TraversableOnce[(MEdge, MImg3)], videoEdges: Seq[MEdge]): Future[Map[String, MNode]] = {
+  def prepareMediaNodes(imgsEdges: IterableOnce[(MEdge, MImg3)], videoEdges: Seq[MEdge]): Future[Map[String, MNode]] = {
     mNodes.multiGetMapCache {
       // Перечисляем все интересующие img-ноды:
       val imgNodeIdsIter = imgsEdges
-        .toIterator
+        .iterator
         .map(_._1)
       // Присунуть сюда же video-ноды:
       val videoNodeIdsIter = videoEdges
@@ -138,7 +138,7 @@ class JdAdUtil @Inject()(
     * @return Список jd-эджей, готовых к использованию в редакторе.
     */
   def mkJdImgEdgesForEdit(
-                           imgsEdges      : TraversableOnce[(MEdge, MImg3)],
+                           imgsEdges      : IterableOnce[(MEdge, MImg3)],
                            mediasMap      : Map[String, MMedia],
                            mediaNodes     : Map[String, MNode],
                            mediaHosts     : Map[String, Seq[MHostInfo]]
@@ -148,7 +148,7 @@ class JdAdUtil @Inject()(
     // Получены медиа-файлы на руки.
     val iter = for {
       // Пройти по BgImg-эджам карточки:
-      ((medge, mimg), i) <- imgsEdges.toIterator.zipWithIndex
+      ((medge, mimg), i) <- imgsEdges.iterator.zipWithIndex
       // id узла эджа -- это идентификатор картинки.
       nodeId          <- medge.nodeIds.iterator
       mmedia          <- mediasMap.get(mimg.dynImgId.mediaId).iterator
@@ -516,14 +516,14 @@ class JdAdUtil @Inject()(
           renderedImgs <- renderAdDocImgsFut
           mmedias <- mMedias.multiGetCache {
             // Интересуют только деривативы, которые могут прямо сейчас существовать в медиа-хранилище. Оригиналы возьмём из _origMediasForMediaHostsFut.
-            val iter = for {
+            (for {
               renderedImg <- renderedImgs.iterator
               dynImgId = renderedImg.dynCallArgs.dynImgId
               if dynImgId.hasImgOps
             } yield {
               dynImgId.mediaId
-            }
-            iter.toIterable
+            })
+              .to( Iterable )
           }
 
           origMedias <- _origMediasForMediaHostsFut
@@ -624,7 +624,7 @@ class JdAdUtil @Inject()(
 
         // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
         val edgedImgTags = (for {
-          (medge, mimg) <- origImgsEdges.toIterator
+          (medge, mimg) <- origImgsEdges.iterator
           edgeUid       <- medge.doc.uid
           jdLoc         <- tpl
             .loc

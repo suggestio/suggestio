@@ -1,6 +1,6 @@
 package util.ext.vk
 
-import io.suggest.ahc.upload.IMpUploadArgs
+import io.suggest.ahc.upload.MpUploadArgs
 import models.mext._
 import play.api.libs.ws.WSResponse
 import util.ext.ExtServiceHelperMpUpload
@@ -20,12 +20,12 @@ trait VkMpUpload
    * @param args Аргументы upload.
    * @return Содержимое args.url.get.
    */
-  override def getUploadUrl(args: IMpUploadArgs): String = {
+  override def getUploadUrl(args: MpUploadArgs): String = {
     args.url.get
   }
 
   /** Является ли ответ по запросу правильным. false - если ошибка. */
-  override def isRespOk(args: IMpUploadArgs, resp: WSResponse): Boolean = {
+  override def isRespOk(args: MpUploadArgs, resp: WSResponse): Boolean = {
     val s = resp.status
     s >= 200 && s <= 299
   }

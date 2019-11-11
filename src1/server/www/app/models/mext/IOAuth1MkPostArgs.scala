@@ -29,7 +29,7 @@ trait IOAuth1MkPostArgs {
   def target: MExtTarget
 
   /** Приложения к посту, если есть. */
-  def attachments: TraversableOnce[IPostAttachmentId]
+  def attachments: Iterable[IPostAttachmentId]
 
   override def toString: String = {
     val sb = new StringBuilder(192)

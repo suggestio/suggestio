@@ -94,6 +94,6 @@ class HttpGetToFile @Inject() (
 
 /** Модель ответа от [[HttpGetToFile]].AbstractDownloader.request() */
 case class DlResp(
-                   headers  : Map[String, Seq[String]],
+                   headers  : Map[String, collection.Seq[String]],
                    file     : File
                  )

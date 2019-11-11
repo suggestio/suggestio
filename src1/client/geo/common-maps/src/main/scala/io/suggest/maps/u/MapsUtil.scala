@@ -66,7 +66,7 @@ object MapsUtil {
     // Изображаем дробь:
     val dLon = geoCircle.radiusM / (
       earthRadiusM * Math.cos(
-        Math.PI * geoCircle.center.lat.doubleValue() / D180
+        Math.PI * geoCircle.center.lat.doubleValue / D180
       )
     )
     geoCircle.center.withLon(

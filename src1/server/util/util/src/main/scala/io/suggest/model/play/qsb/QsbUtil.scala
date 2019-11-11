@@ -56,7 +56,7 @@ object QsbUtil {
 
   /** Короткая и простая проверялка внутренносей опционального забинденного значения. */
   def _checkOptValue[T](valueOptE: Either[String, Option[T]])(f: T => Either[String, Option[T]]): Either[String, Option[T]] = {
-    valueOptE.right.flatMap { valueOpt =>
+    valueOptE.flatMap { valueOpt =>
       valueOpt.fold(valueOptE)(f)
     }
   }
@@ -72,7 +72,7 @@ object QsbUtil {
     * @return Выверенный результат бинда.
     */
   def ensureStrLen(strValueE: StrE_t, minLen: Int, maxLen: Int): StrE_t = {
-    strValueE.right.flatMap { strValue =>
+    strValueE.flatMap { strValue =>
       _checkStrLen(strValueE, strValue, minLen = minLen, maxLen = maxLen)
     }
   }

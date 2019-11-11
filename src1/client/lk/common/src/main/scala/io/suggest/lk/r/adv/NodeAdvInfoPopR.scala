@@ -48,16 +48,13 @@ object NodeAdvInfoPopR {
     private def _tableHeaderRow(clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
       val firstCalTypeOpt = clauses.headOption.map(_._1)
 
-      val head = <.td(
-        ^.colSpan := 2,
-        HtmlConstants.NBSP_STR
-      )
+      val td = <.td
 
       val tail = clauses
         .iterator
         .flatMap { case (mCalType, _) =>
           // Ячейка заголовка с описанием названия (типа) календаря и затрагиваемых дней недели.
-          val payloadCell = <.td(
+          val payloadCell = td(
             ^.key := mCalType.value,
             ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_INFO_TITLE ),
             Messages( mCalType.i18nCode ),
@@ -75,7 +72,7 @@ object NodeAdvInfoPopR {
 
           // Из-за "особенностей" верстки макса требуется добавлять пустые ячейки между столбцами.
           if ( !firstCalTypeOpt.contains( mCalType ) ) {
-            val delimTd = <.td(
+            val delimTd = td(
               ^.key := (mCalType.value + HtmlConstants.MINUS)
             )
             delimTd :: acc0
@@ -83,9 +80,14 @@ object NodeAdvInfoPopR {
             acc0
           }
         }
-        .toStream
+        .to( LazyList )
 
-      val children = head #:: tail
+      val children =
+        td(
+          ^.colSpan := 2,
+          HtmlConstants.NBSP_STR
+        ) #::
+        tail
 
       <.tr(
         children: _*
@@ -96,37 +98,39 @@ object NodeAdvInfoPopR {
     /** Ячейки ряда с ценами. */
     private def _pricesRow(rowTitle1: String, rowTitle2: String, clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
       val sutki = Messages( MsgCodes.`day24h` )
-      val td = Css.Table.Td.TD
 
-      // Левая колонка: описание принадлежности перечисленных цен.
-      val head = <.td(
-        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_GREEN, Css.Font.Sz.XS, Css.Colors.WHITE ),
-        rowTitle1,
-        <.br,
-        rowTitle2
-      )
+      val td = <.td
+      val tdCss = Css.Table.Td.TD
 
       val tail = clauses
         .iterator
         .flatMap { case (mCalType, mPrice) =>
           // td-разделитель, из-за особенностей вёрстки.
-          val td1 = <.td(
+          val td1 = td(
             ^.key := (mCalType.value + HtmlConstants.UNDERSCORE),
-            ^.`class` := td
+            ^.`class` := tdCss
           )
           // Непосредственный контент.
-          val td2 = <.td(
+          val td2 = td(
             ^.key := mCalType.value,
-            ^.`class` := Css.flat( td, Css.Lk.Adv.NodeInfo.TARIFF_INFO_VALUE ),
+            ^.`class` := Css.flat( tdCss, Css.Lk.Adv.NodeInfo.TARIFF_INFO_VALUE ),
             JsFormatUtil.formatPrice( mPrice ),
             HtmlConstants.SLASH,
             sutki
           )
           td1 :: td2 :: Nil
         }
-        .toStream
+        .to( LazyList )
 
-      val children = head #:: tail
+      // Левая колонка: описание принадлежности перечисленных цен.
+      val children =
+        td(
+          ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_GREEN, Css.Font.Sz.XS, Css.Colors.WHITE ),
+          rowTitle1,
+          <.br,
+          rowTitle2
+        ) #::
+        tail
 
       <.tr(
         children: _*

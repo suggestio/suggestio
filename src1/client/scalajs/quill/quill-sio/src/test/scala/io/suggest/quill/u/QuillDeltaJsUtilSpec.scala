@@ -211,7 +211,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     assertEquals( qdTagTree2.qdOps.size, 3 )
     assertEquals( edges2.size, 3 )
 
-    val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
+    val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2.toMap)
     assertEquals( revDelta.ops.length, 3 )
 
     val diffDelta = delta2.diff(revDelta)

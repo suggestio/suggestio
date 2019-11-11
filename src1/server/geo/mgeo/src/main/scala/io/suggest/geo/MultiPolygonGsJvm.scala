@@ -20,7 +20,7 @@ object MultiPolygonGsJvm extends GsStaticJvmQuerable {
         .map { pgs =>
           PolygonGsJvm.toPlayGeoJsonGeom( pgs ).coordinates
         }
-        .toStream
+        .toSeq
     )
   }
 

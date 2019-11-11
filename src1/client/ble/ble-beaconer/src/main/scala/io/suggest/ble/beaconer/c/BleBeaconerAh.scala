@@ -277,17 +277,17 @@ class BleBeaconerAh[M](
     * Можно вызывать часто и много раз, главное правильные данные на вход подавать.
     * Метод имеет сайд-эффекты в виде запуска/остановки таймера.
     *
-    * @param beacons Текущая карта видимых маячков.
-    *                Если пустая, то таймер будет остановлен.
-    *                Иначе - запущен.
+    * @param beaconsEmpty Есть ли маячки в карте маячков? true - если нет.
+    *                     Если карта пустая, то таймер будет остановлен.
+    *                     Иначе - запущен.
     * @param gcIntervalOpt Данные текущего запущенного gc-таймера, если есть.
     *
     * @return Обновлённые (или те же) данные gc-таймера.
     */
-  def ensureGcInterval(beacons: Map[String, MBeaconData], gcIntervalOpt: Option[Int]): Option[Int] = {
+  def ensureGcInterval(beaconsEmpty: Boolean, gcIntervalOpt: Option[Int]): Option[Int] = {
     gcIntervalOpt.fold {
       // Таймер сейчас не запущен.
-      if (beacons.isEmpty) {
+      if (beaconsEmpty) {
         gcIntervalOpt
       } else {
         // Есть маячки, таймер не запущен. Запустить новый таймер.
@@ -299,7 +299,7 @@ class BleBeaconerAh[M](
 
     } { intervalId =>
       // Уже запущен gc-таймер. Проверить, актуален ли он сейчас?
-      if (beacons.isEmpty) {
+      if (beaconsEmpty) {
         // Нет смысла в gc-таймере: нечего чистить.
         DomQuick.clearInterval( intervalId )
         None
@@ -367,7 +367,7 @@ class BleBeaconerAh[M](
             val (notifyAllTimerOpt2, notifyFxOpt) = BleBeaconerAh.ensureNotifyAllDirtyTimer( v0.notifyAllTimer, beacons2, v0.envFingerPrint )
 
             // Убедиться, что gc-таймер сейчас запущен:
-            val gcIvl2 = ensureGcInterval( beacons2, v0.gcIntervalId )
+            val gcIvl2 = ensureGcInterval( beacons2.isEmpty, v0.gcIntervalId )
 
             val v2 = v0.copy(
               notifyAllTimer  = notifyAllTimerOpt2,
@@ -384,7 +384,7 @@ class BleBeaconerAh[M](
       val v0 = value
       // v0.beacons.isEmpty можно не проверять, но проверяем на всякий случай.
       if (v0.beacons.isEmpty) {
-        val v2 = v0.withGcIntervalId( ensureGcInterval(v0.beacons, v0.gcIntervalId) )
+        val v2 = v0.withGcIntervalId( ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId) )
         updated(v2)
 
       } else {
@@ -409,13 +409,16 @@ class BleBeaconerAh[M](
         } else {
           // Есть маячки, которые требуют удаления из основной карты. Для снижения нагрузки на CPU делаем view, а ребилд всей карты будет потом.
           val beacons2 = v0.beacons
+            .view
             .filterKeys( !keys2delete.contains(_) )
+            .toMap
+
           val (notifyAllTimerOpt2, notifyFxOpt) = BleBeaconerAh.ensureNotifyAllDirtyTimer( v0.notifyAllTimer, beacons2, v0.envFingerPrint )
 
           // Проверить, остались ли ещё маячки в списке. Если нет, то gc-таймер более не нужен.
           val gcIvl2 = if (keys2delete.size ==* v0.beacons.size) {
             // Кажется, что не осталось маячков. gc-таймер можно грохать.
-            ensureGcInterval(beacons2, v0.gcIntervalId)
+            ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId)
           } else {
             v0.gcIntervalId
           }
@@ -495,7 +498,7 @@ class BleBeaconerAh[M](
               isEnabled     = v0.isEnabled.ready(true).pending(),
               bleBeaconsApi = v0.bleBeaconsApi.pending(),
               // По идее, тут всегда None. Но в теории возможно и что-то невероятное...
-              gcIntervalId  = ensureGcInterval( v0.beacons, v0.gcIntervalId ),
+              gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
               hardOff       = false
             )
             updated( v2, apiActFx )
@@ -538,7 +541,7 @@ class BleBeaconerAh[M](
           envFingerPrint    = None,
           bleBeaconsApi     = Pot.empty,
           // Надо грохнуть gc-таймер. Имитируем для этого естественный ход событий:
-          gcIntervalId      = ensureGcInterval(beacons2, v0.gcIntervalId),
+          gcIntervalId      = ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId),
           hardOff           = m.hard,
           nearbyReport      = if (beacons2.isEmpty) Nil else v0.nearbyReport,
           beacons           = beacons2
@@ -566,7 +569,7 @@ class BleBeaconerAh[M](
         m.listenTryRes.fold(
           {ex =>
             val beacons2 = Map.empty[String, MBeaconData]
-            val gcTimer2 = ensureGcInterval(beacons2, v0.gcIntervalId)
+            val gcTimer2 = ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId)
             LOG.error(ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex = ex, msg = m)
             // Какая-то ошибка активации API. Ошибочное API уже должно быть выключено само.
             val v2 = v0.copy(
@@ -586,7 +589,7 @@ class BleBeaconerAh[M](
               notifyAllTimer    = Some(timerInfo),
               isEnabled         = v0.isEnabled.ready(true),
               bleBeaconsApi     = v0.bleBeaconsApi.ready( bbApi ),
-              gcIntervalId      = ensureGcInterval(v0.beacons, v0.gcIntervalId)
+              gcIntervalId      = ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId)
             )
             updated(v2, fx)
           }

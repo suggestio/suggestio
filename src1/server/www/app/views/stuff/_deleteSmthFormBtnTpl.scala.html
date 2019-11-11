@@ -6,7 +6,7 @@
 @import ctx._
 @import io.suggest.i18n.MsgCodes
 
-@form(call, 'class -> formClass) {
+@form(call, Symbol("class") -> formClass) {
   <input type="submit"
          class="btn @btnClass"
          value="@btnText.getOrElse( messages(MsgCodes.`Delete`) )"/>

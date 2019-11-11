@@ -247,9 +247,9 @@ class StatUtil @Inject()(
     /** Подготовка stat-action'ов по маячкам. */
     def beaconsStats: Seq[MAction] = {
       val bcns = locEnvOpt
-        .iterator
+        .to( LazyList )
         .flatMap(_.bleBeacons)
-        .toStream
+
       if (bcns.isEmpty) {
         Nil
       } else {

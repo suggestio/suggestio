@@ -39,7 +39,7 @@ import play.api.libs.json.JsError
 import play.api.libs.ws.{EmptyBody, WSClient}
 import play.api.mvc.{AnyContent, QueryStringBindable, Results, Session}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /**

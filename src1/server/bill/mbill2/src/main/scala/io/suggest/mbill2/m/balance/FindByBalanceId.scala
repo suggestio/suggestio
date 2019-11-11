@@ -27,7 +27,7 @@ trait FindByBalanceId extends BalanceIdSlick with ModelContainer with GidSlick {
   }
 
 
-  def findByBalanceIdsBuilder(balanceIds: Traversable[Gid_t]) = {
+  def findByBalanceIdsBuilder(balanceIds: Iterable[Gid_t]) = {
     if (balanceIds.isEmpty) {
       query
     } else {
@@ -37,7 +37,7 @@ trait FindByBalanceId extends BalanceIdSlick with ModelContainer with GidSlick {
   }
 
   /** Найти все ряды, у которых id кошелька находится в множестве указанных. */
-  def findByBalanceIds(balanceIds: Traversable[Gid_t]) = {
+  def findByBalanceIds(balanceIds: Iterable[Gid_t]) = {
     // Нанооптимизация: отработать пустой balanceIds без фактического запроса к БД.
     if (balanceIds.nonEmpty) {
       findByBalanceIdsBuilder(balanceIds)

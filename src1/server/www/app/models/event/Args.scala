@@ -48,7 +48,7 @@ object IArgsInfo {
 
   implicit def writes: Writes[IArgsInfo] = (
     (__ \ AdnId).writeNullable[String] and
-    (__ \ AdvExtTarget).write[Seq[String]] and
+    (__ \ AdvExtTarget).write[Iterable[String]] and
     (__ \ AdId).writeNullable[String]
   ){ s => (s.adnIdOpt, s.advExtTgIds, s.adIdOpt) }
 
@@ -61,7 +61,7 @@ trait IArgsInfo extends IArgs with Event {
   def adnIdOpt: Option[String]
 
   /** id цели внешнего размещения, если есть. */
-  def advExtTgIds: Seq[String]
+  def advExtTgIds: Iterable[String]
 
   /** Опциональный id рекламной карточки, с которой связано это событие. */
   def adIdOpt: Option[String]
@@ -80,11 +80,11 @@ object ArgsInfo {
 
   import ArgNames._
 
-  implicit val reads: Reads[ArgsInfo] = (
-    (__ \ AdnId).readNullable[String] and
-    (__ \ AdvExtTarget).read[Seq[String]] and
-    (__ \ AdId).readNullable[String]
-  )(apply _)
+  implicit def argsInfoFormat: OFormat[ArgsInfo] = (
+    (__ \ AdnId).formatNullable[String] and
+    (__ \ AdvExtTarget).format[Iterable[String]] and
+    (__ \ AdId).formatNullable[String]
+  )(apply, unlift(unapply))
 
   /** Исторически, для десериализации используется jackson. Тут костыли для десериализации из java Map. */
   def fromJacksonJson: PartialFunction[Any, ArgsInfo] = {
@@ -131,7 +131,7 @@ object ArgsInfo {
  */
 case class ArgsInfo(
   adnIdOpt        : Option[String]  = None,
-  advExtTgIds     : Seq[String]     = Nil,
+  advExtTgIds     : Iterable[String]     = Nil,
   adIdOpt         : Option[String]  = None
 )
   extends IArgsInfo

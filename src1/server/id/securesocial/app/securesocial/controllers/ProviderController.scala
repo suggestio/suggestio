@@ -33,9 +33,12 @@ object ProviderControllerHelper extends LoggerImpl {
       OAuth1Provider.CacheKey
     )
     s.copy(
-      data = s.data.filterKeys { k =>
-        !(filteredKeys contains k)
-      }
+      data = s.data
+        .view
+        .filterKeys { k =>
+          !(filteredKeys contains k)
+        }
+        .toMap
     )
   }
 

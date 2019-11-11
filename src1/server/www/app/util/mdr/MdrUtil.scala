@@ -284,7 +284,7 @@ class MdrUtil @Inject() (
             } yield {
               ownerId -> childNodeId
             })
-            .toStream
+            .toSeq
             .groupBy(_._1)
             .map { case (k, kvs) =>
               val vs = kvs.iterator
@@ -295,7 +295,7 @@ class MdrUtil @Inject() (
         }
 
         // Рендер и отправка email-сообщений
-        _ <- Future.traverse(personId2EmailsMap) { case (personId, emails) =>
+        _ <- Future.traverse(personId2EmailsMap.to(Iterable)) { case (personId, emails) =>
           val personNodeOpt = personsMap.get( personId )
 
           // Разобраться с языком для рендера контекста.
@@ -623,7 +623,7 @@ class MdrUtil @Inject() (
 
 
   def findPaidNodeIds4MdrQ(hideNodeIdOpt    : Option[String]        = None,
-                           rcvrIds          : Traversable[String]   = Nil): Query[Rep[String], String, Seq] = {
+                           rcvrIds          : Iterable[String]      = Nil): Query[Rep[String], String, Seq] = {
     var q = awaitingPaidMdrItemsSql
 
     // Пропуск произвольного узла

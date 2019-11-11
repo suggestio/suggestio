@@ -80,7 +80,7 @@ class AdvGeoLocUtil @Inject() (
   }
 
   /** Попытаться получить последние координаты текущей карточки из предыдущих размещений. */
-  def getGeoPointFromAdsGeoAdvs(adIds: Traversable[String]): Future[Option[MGeoPoint]] = {
+  def getGeoPointFromAdsGeoAdvs(adIds: Iterable[String]): Future[Option[MGeoPoint]] = {
     val resFut = _getPointFromItemId(
       mItems.query
         .filter { q =>
@@ -118,7 +118,7 @@ class AdvGeoLocUtil @Inject() (
       gsOpts.iterator
         .flatten
         .flatMap(_.centerPoint)
-        .toStream
+        .buffered
         .headOption
     }
   }
@@ -215,7 +215,7 @@ class AdvGeoLocUtil @Inject() (
   object Detectors {
 
     /** Определение по предыдущим георазмещениям карточек. */
-    case class FromAdsGeoAdvs(adIds: Traversable[String]) extends GeoPointDetectorOpt {
+    case class FromAdsGeoAdvs(adIds: Iterable[String]) extends GeoPointDetectorOpt {
       override def getOpt: Future[Option[MGeoPoint]] = {
         getGeoPointFromAdsGeoAdvs(adIds)
       }

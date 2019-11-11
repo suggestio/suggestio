@@ -114,7 +114,7 @@ class PictureAh[V, M](
                   e
                 }
               }
-              .toStream
+              .buffered
               .headOption
               .fold [(MEdgeDataJs, Map[EdgeUid_t, MEdgeDataJs], Option[Effect])] {
                 // Новый файл выбран юзером, который пока неизвестен.
@@ -800,7 +800,7 @@ class PictureAh[V, M](
   }
 
 
-  private def _errorPopupWithMessages(errorPopupOpt0: Option[MErrorPopupS], messages: TraversableOnce[MMessage]): Some[MErrorPopupS] = {
+  private def _errorPopupWithMessages(errorPopupOpt0: Option[MErrorPopupS], messages: IterableOnce[MMessage]): Some[MErrorPopupS] = {
     val ep0 = errorPopupOpt0.getOrElse( MErrorPopupS.empty )
     val ep2 = MErrorPopupS.messages.modify(_ ++ messages)(ep0)
     Some(ep2)

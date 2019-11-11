@@ -19,18 +19,19 @@ object OptId extends IdUtil[OptId] {
     * @tparam Id_t Тип id'шника.
     * @return Итератор id'шников.
     */
-  override def els2ids[Id_t](els: TraversableOnce[OptId[Id_t]]): Iterator[Id_t] = {
-    els.toIterator
+  override def els2ids[Id_t](els: IterableOnce[OptId[Id_t]]): Iterator[Id_t] = {
+    els
+      .iterator
       .flatMap(_.id)
   }
 
   /** Приведение списка элеменов в итератору, пригодному к дальнейшему конвертацию в карту. */
-  override def els2idMapIter[Id_t, T <: OptId[Id_t]](els: TraversableOnce[T]): Iterator[(Id_t, T)] = {
+  override def els2idMapIter[Id_t, T <: OptId[Id_t]](els: IterableOnce[T]): Iterator[(Id_t, T)] = {
     if (els.isEmpty) {
       Iterator.empty
     } else {
       els
-        .toIterator
+        .iterator
         .flatMap { el =>
           for (id <- el.id) yield {
             id -> el
@@ -47,9 +48,9 @@ object OptId extends IdUtil[OptId] {
     * @tparam Id_t Тип id.
     * @return Итератор элементов типа Id_t.
     */
-  def optIds2ids[Id_t](optIds: TraversableOnce[Option[Id_t]]): Iterator[Id_t] = {
+  def optIds2ids[Id_t](optIds: IterableOnce[Option[Id_t]]): Iterator[Id_t] = {
     optIds
-      .toIterator
+      .iterator
       .flatMap(_.iterator)
   }
 
@@ -62,8 +63,12 @@ object OptId extends IdUtil[OptId] {
     * @tparam T Тип одного элемента модели.
     * @return Итоговая отсортированная коллекция.
     */
-  def orderByIds[Id_t, T <: OptId[Id_t]](ids: TraversableOnce[Id_t], els: Seq[T]): Seq[T] = {
-    val idsMap = ids.toIterator.zipWithIndex.toMap
+  def orderByIds[Id_t, T <: OptId[Id_t]](ids: IterableOnce[Id_t], els: Seq[T]): Seq[T] = {
+    val idsMap = ids
+      .iterator
+      .zipWithIndex
+      .toMap
+
     els.sortBy { e =>
       e.id
         .flatMap(idsMap.get)

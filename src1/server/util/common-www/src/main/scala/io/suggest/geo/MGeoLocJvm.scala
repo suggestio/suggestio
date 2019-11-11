@@ -28,8 +28,8 @@ object MGeoLocJvm {
           accuracyOptE      <- doubleOptB.bind(k(ACCURACY_M_FN),  params)
         } yield {
           for {
-            center          <- centerE.right
-            accuracyOptM    <- accuracyOptE.right
+            center          <- centerE
+            accuracyOptM    <- accuracyOptE
           } yield {
             MGeoLoc(
               point        = center,

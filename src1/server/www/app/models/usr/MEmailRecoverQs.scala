@@ -63,11 +63,11 @@ object MEmailRecoverQs extends SecretKeyInit {
           checkSessionE <- boolB.bind   (k(Fields.CHECK_SESSION), params1 )
         } yield {
           for {
-            email       <- emailE.right
-            nodeIdOpt   <- nodeIdOptE.right
-            nowSec      <- nowSecE.right
-            nonce       <- nonceE.right
-            checkSession <- checkSessionE.right
+            email       <- emailE
+            nodeIdOpt   <- nodeIdOptE
+            nowSec      <- nowSecE
+            nonce       <- nonceE
+            checkSession <- checkSessionE
           } yield {
             MEmailRecoverQs(
               email     = email,

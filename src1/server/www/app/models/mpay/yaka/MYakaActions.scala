@@ -49,7 +49,7 @@ object MYakaReturnActions extends StringEnum[MYakaAction] {
         for {
           strIdEith <- strB.bind(key, params)
         } yield {
-          strIdEith.right.flatMap { strId =>
+          strIdEith.flatMap { strId =>
             withValueOpt(strId)
               .toRight("e.invalid.yaka.action")
           }

@@ -385,7 +385,9 @@ object FormUtil {
     parseToPairs(data, encoding)
       .toSeq
       .groupBy(_._1)
+      .view
       .mapValues { _.map { _._2 } }
+      .toMap
   }
 
 

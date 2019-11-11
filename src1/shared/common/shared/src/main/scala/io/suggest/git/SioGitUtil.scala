@@ -2,6 +2,7 @@ package io.suggest.git
 
 import scala.language.experimental.macros
 import scala.reflect.macros.Context
+import scala.language.postfixOps
 
 /**
   * Suggest.io

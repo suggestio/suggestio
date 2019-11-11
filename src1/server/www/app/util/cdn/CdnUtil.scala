@@ -51,13 +51,14 @@ class CdnUtil @Inject() (
 
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
-    configuration.getOptional[Seq[String]]("cdn.protocols")
-      .fold [TraversableOnce[String]] (HttpConst.Proto.HTTP :: HttpConst.Proto.HTTPS :: Nil) { protosRaw =>
+    configuration
+      .getOptional[Seq[String]]("cdn.protocols")
+      .fold [IterableOnce[String]] (HttpConst.Proto.HTTP :: HttpConst.Proto.HTTPS :: Nil) { protosRaw =>
         protosRaw
           .iterator
           .map(_.trim.toLowerCase)
       }
-      .toIterator
+      .iterator
       .map { proto =>
         proto -> getCdnHostsForProto(proto)
       }
@@ -309,7 +310,7 @@ class CdnUtil @Inject() (
       case _ =>
         def logPrefix = s"forMediaCall($mediaIds):"
         val newCallIter = for {
-          mediaId <- mediaIds.toIterator
+          mediaId <- mediaIds.iterator
           hosts   <- mediaHostsMap.get(mediaId)
           host    <- chooseMediaHost(mediaIds.last, hosts)
         } yield {
@@ -319,7 +320,7 @@ class CdnUtil @Inject() (
         }
         // Отработать запасной вариант, когда внезапно нет хостов:
         newCallIter
-          .toStream
+          .buffered
           .headOption
           .getOrElse {
             LOGGER.warn(s"$logPrefix Not found any dist-CDN host\n mediaIds = [${mediaIds.mkString(" | ")}]\n mediaHosts = $mediaHostsMap\n orig call = $call")

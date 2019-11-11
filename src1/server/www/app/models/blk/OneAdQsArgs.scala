@@ -57,11 +57,11 @@ object OneAdQsArgs extends SecretKeyInit {
           maybeWideOpt    <- wideOptB.bind(k(WIDE_FN),    params1)
         } yield {
           for {
-            adId        <- maybeAdId.right
-            szMult      <- maybeSzMult.right
-            vsnOpt      <- maybeVsnOpt.right
-            imgFmtOpt   <- maybeImgFmtOpt.right
-            wideOpt     <- maybeWideOpt.right
+            adId        <- maybeAdId
+            szMult      <- maybeSzMult
+            vsnOpt      <- maybeVsnOpt
+            imgFmtOpt   <- maybeImgFmtOpt
+            wideOpt     <- maybeWideOpt
           } yield {
             val imgFmt = imgFmtOpt getOrElse MImgFmts.default
             OneAdQsArgs(

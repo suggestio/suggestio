@@ -1,6 +1,5 @@
 package io.suggest.model.n2.node
 
-import io.suggest.adn.edit.m
 import io.suggest.adn.edit.m.MAdnResView
 import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.ad.MNodeAd
@@ -27,7 +26,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.std.option._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
@@ -220,7 +219,7 @@ final class MNodes @Inject() (
       throw new IllegalArgumentException(s"id == None, but node type [${m.common.ntype}] does NOT allow random ids.")
     } else {
       val saveFut = super._save(m)(f)
-      saveFut.onSuccess { case adnId =>
+      for (adnId <- saveFut) {
         val mnode2 = m.copy(id = Option(adnId))
         val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)
         sn.publish(evt)
@@ -292,33 +291,37 @@ case class MNode(
     object Adn {
 
       /** Подготовить эджи для картинки из MAdnResView. */
-      private def _jdIdWithEdge(f: MAdnResView => TraversableOnce[MJdEdgeId]): Stream[(MJdEdgeId, MEdge)] = {
-        val iter = for {
+      private def _jdIdWithEdge(f: MAdnResView => IterableOnce[MJdEdgeId]): Iterator[(MJdEdgeId, MEdge)] = {
+        for {
           adn     <- extras.adn.iterator
           jdId    <- f(adn.resView)
           medge   <- edges.withUid( jdId.edgeUid ).out.iterator
         } yield {
           (jdId, medge)
         }
-        iter.toStream
       }
 
       /** Эдж картинки-логотипа adn-узла. */
       lazy val logo = _jdIdWithEdge(
         (MAdnResView.logo composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
           .getAll
-      ).headOption
+      )
+        .buffered
+        .headOption
 
       /** Эдж картинки приветствия adn-узла. */
       lazy val wcFg = _jdIdWithEdge(
         (MAdnResView.wcFg composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
           .getAll
-      ).headOption
+      )
+        .buffered
+        .headOption
 
       /** Списочек галеры картинок adn-узла. */
       lazy val galImgs = _jdIdWithEdge(
         MAdnResView.galImgs.get
       )
+        .to( LazyList )
 
     }
 

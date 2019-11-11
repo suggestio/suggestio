@@ -9,7 +9,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import play.api.{Configuration, Environment, Mode}
 import play.api.inject.Injector
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**

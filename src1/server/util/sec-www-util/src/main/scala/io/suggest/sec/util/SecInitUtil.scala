@@ -20,7 +20,7 @@ final class SecInitUtil {
 
   // API
 
-  def ensureBcJce() {
+  def ensureBcJce(): Unit = {
     Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) match {
       case null => Security.addProvider(new BouncyCastleProvider)
       case _ => // do nothing

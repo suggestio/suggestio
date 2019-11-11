@@ -17,7 +17,7 @@ object MPredicatesJvm {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MPredicate]] = {
         for (strIdEith <- strB.bind(key, params)) yield {
-          strIdEith.right.flatMap { strId =>
+          strIdEith.flatMap { strId =>
             MPredicates.withValueOpt(strId)
               .toRight("e.predicate.unknown")
           }

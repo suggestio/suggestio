@@ -78,9 +78,14 @@ trait DynSearchArgs {
   }
 
   /** Вспомогательное форматирование аргумента-коллекции строкой внутрь StringBuilder'а. */
-  final protected def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): StringBuilder = {
-    if (coll.nonEmpty)
-      sb.append("\n  ").append(name).append(" = ").append(coll.mkString(", "))
+  final protected def fmtColl2sb(name: String, coll: IterableOnce[_], sb: StringBuilder): StringBuilder = {
+    val iter = coll.iterator
+    if (iter.nonEmpty)
+      sb.append("\n  ")
+        .append(name)
+        .append(" = ")
+        .append(iter.mkString(", "))
+
     sb
   }
 

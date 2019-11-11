@@ -47,7 +47,7 @@ class FileUtil @Inject()(
   }
 
   // TODO Удалить этот код следом за заливкой 1-го поколения.
-  def mkHashesHexAsync(file: File, hashes: TraversableOnce[MHash], flags: Set[Short]): Future[Seq[MFileMetaHash]] = {
+  def mkHashesHexAsync(file: File, hashes: Iterable[MHash], flags: Set[Short]): Future[Seq[MFileMetaHash]] = {
     val futs = Future.traverse(hashes) { mhash =>
       Future {
         MFileMetaHash(
@@ -57,9 +57,8 @@ class FileUtil @Inject()(
         )
       }
     }
-    for (kvs <- futs) yield {
+    for (kvs <- futs) yield
       kvs.toSeq
-    }
   }
 
   private def _hashStream(file: File)(f: FileInputStream => String): String = {

@@ -100,19 +100,19 @@ object EnumeratumUtil {
       (k, v)
     }
   }
-  def toSelectOptions[EE](items: TraversableOnce[EE])(kvF: EE => (String, String)): Seq[(String, String)] = {
+  def toSelectOptions[EE](items: IterableOnce[EE])(kvF: EE => (String, String)): Seq[(String, String)] = {
     items
-      .toIterator
+      .iterator
       .map(kvF)
       .toSeq
   }
 
 
-  implicit class ValueEnumEntriesOps[V](val vees: TraversableOnce[ValueEnumEntry[V]]) extends AnyVal {
+  implicit class ValueEnumEntriesOps[V](val vees: IterableOnce[ValueEnumEntry[V]]) extends AnyVal {
 
     def onlyIds: Iterator[V] = {
       vees
-        .toIterator
+        .iterator
         .map(_.value)
     }
 

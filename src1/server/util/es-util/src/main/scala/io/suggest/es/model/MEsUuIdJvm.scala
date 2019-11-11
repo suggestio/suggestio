@@ -17,7 +17,7 @@ object MEsUuIdJvm {
     new QueryStringBindableImpl[MEsUuId] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsUuId]] = {
         for (esIdE <- strB.bind(key, params)) yield {
-          esIdE.right
+          esIdE
             .flatMap(MEsUuId.fromStringEith)
         }
       }

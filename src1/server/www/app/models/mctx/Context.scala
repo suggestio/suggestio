@@ -283,19 +283,14 @@ trait Context {
 
   /** Параметры экрана клиентского устройства. Эти данные можно обнаружить внутри query string. */
   lazy val deviceScreenOpt: Option[MScreen] = {
-    request.queryString
-      .iterator
-      .filter { case (k, _) =>
-        ctxUtil.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
-      }
-      .flatMap {
-        case kv @ (k, _) =>
-          MScreenJvm.devScreenQsb
-            .bind(k, Map(kv))
-            .filter(_.isRight)
-            .map(_.right.get)
-      }
-      .toStream
+    (for {
+      (k, v) <- request.queryString.iterator
+      // TODO Искать по ключу, а не перебирать все ключи?
+      if ctxUtil.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
+      bindedE <- MScreenJvm.devScreenQsb.bind(k, new Map.Map1(k, v))
+      mscreen <- bindedE.toOption
+    } yield mscreen)
+      .buffered
       .headOption
   }
 

@@ -20,10 +20,10 @@ object MAdvDeclKv {
   )(apply, unlift(unapply))
 
   /** Доп утиль для коллекций с абстрактными спеками размещений. */
-  implicit class AdvDeclKvsExtOps(val kvs: TraversableOnce[MAdvDeclKv]) extends AnyVal {
+  implicit class AdvDeclKvsExtOps(val kvs: IterableOnce[MAdvDeclKv]) extends AnyVal {
     def declsToMap: AdvDeclsMap_t = {
       kvs
-        .toIterator
+        .iterator
         .map( _.tuple )
         .toMap
     }

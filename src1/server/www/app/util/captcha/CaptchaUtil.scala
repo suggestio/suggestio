@@ -370,7 +370,7 @@ final class CaptchaUtil @Inject() (
             },
             _captchaInvalidMsg
           )
-          .right.map { idToken =>
+          .map { idToken =>
             val captchaIdMsg = idToken.idMsgs
               .find(_.rcptType ==* MPredicates.JdContent.Image)
               .get

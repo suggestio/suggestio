@@ -53,51 +53,88 @@
   </table>
 
   <table class="input-w __size-L">
-    @checkbox(af("common.isEnabled"), '_label -> "Включён?", '_class -> "sys-checkbox")
+    @checkbox(
+      af("common.isEnabled"),
+      Symbol("_label") -> "Включён?",
+      Symbol("_class") -> "sys-checkbox"
+    )
   </table>
 
   <table class="input-w __size-L">
     @checkbox(
       af("common.isDependent"),
-      '_label -> "Подчинён?",
-      '_class -> "sys-checkbox",
-      '_title -> "Узел должен существовать, имея родительский узел N2?"
+      Symbol("_label") -> "Подчинён?",
+      Symbol("_class") -> "sys-checkbox",
+      Symbol("_title") -> "Узел должен существовать, имея родительский узел N2?"
     )
   </table>
 
 
   @* meta *@
   <table class="input-w __size-L">
-    @inputText(af("meta.name"),    '_label -> "Название")
+    @inputText(
+      af("meta.name"),
+      Symbol("_label") -> "Название"
+    )
   </table>
   <table class="input-w __size-L">
-    @inputText(af("meta.nameShort"),    '_label -> "Короткое название")
+    @inputText(
+      af("meta.nameShort"),
+      Symbol("_label") -> "Короткое название"
+    )
   </table>
   <table class="input-w __size-L">
-      @textarea(af("meta.hiddenDescr"),  '_label -> "Скрытое описание", 'title -> "Доступно только администрации suggest.io.")
+    @textarea(
+      af("meta.hiddenDescr"),
+      Symbol("_label") -> "Скрытое описание",
+      Symbol("title") -> "Доступно только администрации suggest.io."
+    )
   </table>
   <table class="input-w __size-L">
-    @inputText(af("meta.town"),    '_label -> "Город")
+    @inputText(
+      af("meta.town"),
+      Symbol("_label") -> "Город"
+    )
   </table>
   <table class="input-w __size-L">
-    @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1",  '_label -> "Адрес в городе")
+    @inputText(
+      af("meta.address"),
+      Symbol("placeholder") -> "пр.Ленина, д.1",
+      Symbol("_label") -> "Адрес в городе"
+    )
   </table>
   <table class="input-w __size-L">
-    @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
+    @inputText(
+      af("meta.siteUrl"),
+      Symbol("placeholder") -> "http://",
+      Symbol("_label") -> "Адрес сайта в интернете"
+    )
   </table>
 
   @for(adnRight <- MAdnRights.values.iterator) {
     <table class="input-w __size-L">
-      @checkbox(af(s"adn.rights.${adnRight.longName}"), '_label -> adnRight.longName, '_class -> "sys-checkbox")
+      @checkbox(
+        af(s"adn.rights.${adnRight.longName}"),
+        Symbol("_label") -> adnRight.longName,
+        Symbol("_class") -> "sys-checkbox"
+      )
     </table>
   }
 
   <table class="input-w __size-L">
-    @checkbox(af("adn.testNode"), '_label -> "Тестовый узел?", '_class -> "sys-checkbox")
+    @checkbox(
+      af("adn.testNode"),
+      Symbol("_label") -> "Тестовый узел?",
+      Symbol("_class") -> "sys-checkbox"
+    )
   </table>
 
   <table class="input-w __size-L">
-    @checkbox(af("adn.isUser"), '_label -> "Пользовательский узел?", '_class -> "sys-checkbox")
+    @checkbox(
+      af("adn.isUser"),
+      Symbol("_label") -> "Пользовательский узел?",
+      Symbol("_class") -> "sys-checkbox"
+    )
   </table>
 
   @formAfter

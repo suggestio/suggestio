@@ -86,14 +86,14 @@ object MSzMult {
 
   }
 
-  implicit class SzMultsDOpsExt( val szMults: TraversableOnce[Double] ) extends AnyVal {
+  implicit class SzMultsDOpsExt( val szMults: IterableOnce[Double] ) extends AnyVal {
     def reduceMults: Double =
       szMults.reduce(_ * _)
   }
-  implicit class SzMultsOpsExt( val szMults: TraversableOnce[MSzMult] ) extends AnyVal {
+  implicit class SzMultsOpsExt( val szMults: IterableOnce[MSzMult] ) extends AnyVal {
     def mapToDoubleIter = {
       szMults
-        .toIterator
+        .iterator
         .map(_.toDouble)
     }
 

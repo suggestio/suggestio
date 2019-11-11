@@ -36,9 +36,9 @@ object MFile4UpPropsJvm {
           mimeTypeE       <- strB.bind        ( k(F.MIME_TYPE_FN),  params )
         } yield {
           for {
-            sizeBytes     <- sizeE.right
-            hashesHex     <- hashesHexE.right
-            mimeType      <- mimeTypeE.right
+            sizeBytes     <- sizeE
+            hashesHex     <- hashesHexE
+            mimeType      <- mimeTypeE
           } yield {
             MFile4UpProps(
               sizeB       = sizeBytes,

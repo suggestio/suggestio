@@ -57,14 +57,16 @@ object MCurrencies extends StringEnum[MCurrency] {
     * @param prices Исходные валютные модели.
     * @return Карта исходных моделей по валютам БЕЗ учёта дубликатов.
     */
-  def hardMapByCurrency[T <: IMCurrency](prices: TraversableOnce[T]): Map[MCurrency, T] = {
-    prices.toIterator
+  def hardMapByCurrency[T <: IMCurrency](prices: IterableOnce[T]): Map[MCurrency, T] = {
+    prices
+      .iterator
       .map { p => p.currency -> p }
       .toMap
   }
 
-  def toCurrenciesIter(items: TraversableOnce[IMCurrency]): Iterator[MCurrency] = {
-    items.toIterator
+  def toCurrenciesIter(items: IterableOnce[IMCurrency]): Iterator[MCurrency] = {
+    items
+      .iterator
       .map(_.currency)
   }
 

@@ -143,7 +143,7 @@ object EnumeratumJvmUtil {
         for {
           vEith <- vQsb.bind(key, params)
         } yield {
-          vEith.right.flatMap { v =>
+          vEith.flatMap { v =>
             withValueOpt(v).toRight("e.invalid")
           }
         }
@@ -175,7 +175,6 @@ object EnumeratumJvmUtil {
     new PathBindableImpl[VEE] {
       override def bind(key: String, value: String): Either[String, VEE] = {
         kPb.bind(key, value)
-          .right
           .flatMap { k =>
             withValueOpt(k)
               .toRight("Undefined value")

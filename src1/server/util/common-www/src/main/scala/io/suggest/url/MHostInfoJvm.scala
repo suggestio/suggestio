@@ -22,8 +22,8 @@ object MHostInfoJvm {
           hostPubE    <- strB.bind( k(F.NAME_PUBLIC_FN),   params )
         } yield {
           for {
-            hostInt   <- hostIntE.right
-            hostPub   <- hostPubE.right
+            hostInt   <- hostIntE
+            hostPub   <- hostPubE
           } yield {
             MHostInfo(
               nameInt     = hostInt,

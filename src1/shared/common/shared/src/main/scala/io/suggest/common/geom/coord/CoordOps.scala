@@ -42,7 +42,7 @@ object CoordOps {
       dp2(helper.getX) +
       dp2(helper.getY)
 
-    math.sqrt( v2.toDouble() )
+    math.sqrt( v2.toDouble )
   }
 
 
@@ -57,7 +57,7 @@ object CoordOps {
       dp2(helper.getY) +
       dp2(helper.getZ)
 
-    math.sqrt( v2.toDouble() )
+    math.sqrt( v2.toDouble )
   }
 
 }

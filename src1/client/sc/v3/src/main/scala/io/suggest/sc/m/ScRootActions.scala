@@ -52,7 +52,7 @@ case object ScreenRszTimer extends IScRootAction
 case class GeoLocOnOff(
                         enabled     : Boolean,
                         isHard      : Boolean,
-                        onlyTypes   : Traversable[GeoLocType] = Nil,
+                        onlyTypes   : Iterable[GeoLocType] = Nil,
                         // TODO Записывать это напрямую в состояние из circuit? Или эффектом отдельным? Или...?
                         scSwitch    : Option[MScSwitchCtx]    = None,
                       )

@@ -7,7 +7,7 @@ import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.IMacroLogs
 import org.im4java.core.{ConvertCmd, IMOperation, Info}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io

@@ -15,12 +15,12 @@
 
   @* Список целей. *@
   <div id="eaTargets">
-    @args.targets.iterator.zipWithIndex.map { case (target, i) =>
+    @for( (target, i) <- args.targets.iterator.zipWithIndex) {
       @_createTargetTpl(target.adnId, args.oneTgForm(target), Some(target))
     }
   </div>
 
-  @form( CSRF(routes.LkAdvExt.forAdSubmit(args.mad.id.get)), 'id -> ID_ADV_FORM ) {
+  @form( CSRF(routes.LkAdvExt.forAdSubmit(args.mad.id.get)), Symbol("id") -> ID_ADV_FORM ) {
 
     @args.advForm("adv").errors.map { error =>
       <div class="event __bg-4 __icon-5">

@@ -36,7 +36,7 @@ class StatCronTasks @Inject()(
   def IS_ENABLED = configuration.getOptional[Boolean](_CONF_KEY).getOrElseFalse
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(): TraversableOnce[MCronTask] = {
+  override def cronTasks(): Iterable[MCronTask] = {
     if (IS_ENABLED) {
       List(
         // Создание новых stat-индексов и переключение на них

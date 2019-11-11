@@ -23,7 +23,7 @@ object MPwaManifestQsJvm {
           apiVsnE       <- apiVsnB.bind(k(MPwaManifestQs.Fields.API_VSN_FN), params)
         } yield {
           for {
-            apiVsn      <- apiVsnE.right
+            apiVsn      <- apiVsnE
           } yield {
             MPwaManifestQs(
               apiVsn = apiVsn

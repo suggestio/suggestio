@@ -2,8 +2,8 @@ package controllers
 
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
-
 import akka.stream.scaladsl.{Keep, Sink}
+import au.id.jazzy.play.geojson.{GeoJson, LngLatCrs}
 import io.suggest.adv.geo._
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.mbill2.m.gid.Gid_t
@@ -17,7 +17,6 @@ import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.mctx.Context
 import models.mproj.MCommonDi
 import models.req.IReq
-import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.acl.CanAccessItem
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil}
@@ -63,8 +62,11 @@ protected class LkGeoCtlUtil @Inject() (
     * @param request Исходный HTTP-реквест.
     * @return HTTP-ответ.
     */
-  def currentNodeItemsGsToGeoJson(nodeId: String, itemTypes: TraversableOnce[MItemType])
+  def currentNodeItemsGsToGeoJson(nodeId: String, itemTypes: Iterable[MItemType])
                                  (implicit request: IReq[_]): Future[Result] = {
+    // scalac-2.13.1: проблемы с implicit-автоматикой для .toJson()(implicit...)
+    val gjFeatureWrites = GeoJson.geoJsonWrites( LngLatCrs )
+
     // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
     val jsonsSrc = slick.db
       .stream {
@@ -80,7 +82,7 @@ protected class LkGeoCtlUtil @Inject() (
       // Сконвертить в GeoJSON и сериализовать в промежуточное JSON-представление.
       .map { si =>
         val gjFeature = advGeoFormUtil.shapeInfo2geoJson(si)
-        Json.toJson( gjFeature )
+        gjFeatureWrites.writes( gjFeature )
       }
       .maybeTraceCount(this) { totalCount =>
         s"currentNodeItemsGsToGeoJson($nodeId): streamed $totalCount GeoJSON features"

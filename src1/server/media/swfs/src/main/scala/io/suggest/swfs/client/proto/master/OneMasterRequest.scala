@@ -77,9 +77,8 @@ trait OneMasterRequest
 
       // Логгируем ответы на запросы трейсом
       if (LOGGER.underlying.isTraceEnabled()) {
-        fut.onSuccess { case resp =>
+        for (resp <- fut)
           LOGGER.trace(s"${_method} $url =>\n ${resp.body}")
-        }
       }
 
       // Отправляем реквест на итоговую обработку.

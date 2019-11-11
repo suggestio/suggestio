@@ -9,8 +9,8 @@ import org.elasticsearch.search.fetch.subphase.FetchSourceContext
  * Description: Модель редко-используемых параметров для GET и Multi-GET.
  */
 case class SourceFiltering(
-                            includes: Traversable[String] = List("*"),
-                            excludes: Traversable[String] = Nil
+                            includes: Iterable[String] = List("*"),
+                            excludes: Iterable[String] = Nil
                           ) {
 
   def toFetchSourceCtx: FetchSourceContext = {

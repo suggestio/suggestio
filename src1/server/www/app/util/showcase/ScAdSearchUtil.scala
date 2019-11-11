@@ -227,8 +227,8 @@ class ScAdSearchUtil @Inject() (
         // Учитывать только маячки до этого расстояния. Остальные не учитывать
         val maxDistance = BeaconUtil.DIST_CM_FAR
 
-        val bcns2Iter = bcns
-          .iterator
+        val bcns2 = bcns
+          .to(LazyList)
           .filter { bcn =>
             val isExistBcn = uids.contains( bcn.uid )
             if (!isExistBcn)
@@ -237,7 +237,7 @@ class ScAdSearchUtil @Inject() (
           }
           // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
 
-        if (bcns2Iter.isEmpty) {
+        if (bcns2.isEmpty) {
           LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
           Nil
         } else {
@@ -245,7 +245,7 @@ class ScAdSearchUtil @Inject() (
             maxBoost = 20000000F,
             //TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
             predicates = MPredicates.Receiver :: Nil,
-            bcns = bcns2Iter
+            bcns = bcns2
           )
 
           val sub = MSubSearch(

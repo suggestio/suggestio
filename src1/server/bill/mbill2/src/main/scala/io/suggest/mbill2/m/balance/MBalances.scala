@@ -167,7 +167,7 @@ class MBalances @Inject() (
   def getByContractCurrency(contractId: Gid_t, currencies: MCurrency*): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
     getByContractCurrency1(contractId, currencies)
   }
-  def getByContractCurrency1(contractId: Gid_t, currencies: Traversable[MCurrency]): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
+  def getByContractCurrency1(contractId: Gid_t, currencies: Iterable[MCurrency]): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
     assert(currencies.nonEmpty)
     query
       .filter { b =>

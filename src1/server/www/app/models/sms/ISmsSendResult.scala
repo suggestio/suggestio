@@ -2,6 +2,8 @@ package models.sms
 
 import io.suggest.bill.MPrice
 
+import scala.collection.MapView
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

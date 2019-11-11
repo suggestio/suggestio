@@ -37,13 +37,13 @@ class GeoLocAh[M](
   import GeoLocAh.WatchersExtOps
 
   /** Доп.операции для списка типов наблюдателей за геолокацией. */
-  implicit class GeoLocTypesOps(val wTypes: TraversableOnce[GeoLocType]) {
+  implicit class GeoLocTypesOps(val wTypes: IterableOnce[GeoLocType]) {
 
     def startWatchers(glApi: Geolocation): Iterator[(GeoLocType, MGeoLocWatcher)] = {
       // Время кэша, чтобы можно было задействовать старую геолокацию.
       val maxAgeMs = 2.minutes.toMillis.toDouble
       wTypes
-        .toIterator
+        .iterator
         .flatMap { wtype =>
           try {
             val posOpts = new PositionOptions {
@@ -196,7 +196,7 @@ class GeoLocAh[M](
       Some(m.enabled)
         // Нельзя менять состояние off=>off или on=>on:
         .filterNot {
-          v0.switch.onOff contains
+          v0.switch.onOff contains _
         }
         // Нельзя включать геолокацию, если она жестко выключена юзером:
         .filter { nextEnabled =>
@@ -352,12 +352,12 @@ object GeoLocAh {
 
 
   /** Доп.операции для списков "наблюдателей" за геолокацией. */
-  implicit class WatchersExtOps(val watchers: TraversableOnce[(GeoLocType, MGeoLocWatcher)]) {
+  implicit class WatchersExtOps(val watchers: IterableOnce[(GeoLocType, MGeoLocWatcher)]) {
 
     def clearWatchers(): Iterator[(GeoLocType, MGeoLocWatcher)] = {
       for {
         glApi         <- _geoLocApiOpt.iterator
-        (wtype, w1)   <- watchers.toIterator
+        (wtype, w1)   <- watchers.iterator
         w2 = w1.watchId.fold(w1) { watchId =>
           glApi.clearWatch2(watchId)
           w1.copy(watchId = None)

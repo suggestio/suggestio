@@ -55,7 +55,7 @@ object RcvrKeyUtil {
             qsbSeqE <- qsbSeqStrB.bind(key, params)
           } yield {
             for {
-              qsbSeq <- qsbSeqE.right
+              qsbSeq <- qsbSeqE
             } yield {
               RcvrKey.from( qsbSeq.items )
             }

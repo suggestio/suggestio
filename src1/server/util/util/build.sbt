@@ -21,7 +21,7 @@ libraryDependencies ++= {
     "org.im4java" % "im4java" % "1.+",
 
     // JSON
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.+",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.10.+",
     "com.typesafe.play"            %% "play-json"            % Common.Vsn.PLAY_JSON_VSN,
     ws,
     cacheApi,

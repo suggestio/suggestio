@@ -68,7 +68,7 @@ class ScryptUtil {
     *   com.lambdaworks.crypto.SCryptUtil.check(Ljava/lang/String;Ljava/lang/String;)Z+118
     * @see com.lambdaworks.jni.LibraryLoaders.loader().
     */
-  def disableNativeCode() {
+  def disableNativeCode(): Unit = {
     val scryptJniProp = "com.lambdaworks.jni.loader"
     if (System.getProperty(scryptJniProp) != "nil")
       System.setProperty(scryptJniProp, "nil")

@@ -118,6 +118,7 @@ class ExtRscUtil @Inject()(
       // Объединяем разные ссылки по одинаковым распарсенным данным видео.
       .toSeq
       .groupBy(_._1)
+      .view
       .mapValues(_.map(_._2))
 
     LOGGER.trace(s"$logPrefix Detected ${rscNodeId2UrlsMap.size} ext-videos from ${videoUrls.size} video URLs")
@@ -137,7 +138,11 @@ class ExtRscUtil @Inject()(
       existVideoNodesMap <- existVideoNodesMapFut
 
       // Нужно выяснить какие ноды уже существуют, а каких не хватает:
-      missingVideoExtNodes = rscNodeId2UrlsMap.filterKeys( nodeId => !existVideoNodesMap.contains(nodeId) )
+      missingVideoExtNodes = rscNodeId2UrlsMap
+        .view
+        .filterKeys { nodeId =>
+          !(existVideoNodesMap contains nodeId)
+        }
 
       allNodesMap <- if (missingVideoExtNodes.isEmpty) {
         LOGGER.trace(s"$logPrefix No need to create any video-ext nodes")
@@ -161,10 +166,11 @@ class ExtRscUtil @Inject()(
         val newNodesByIdAcc = missingVideoExtNodes.foldLeft( List.empty[(String, MNode)] ) {
           case (acc0, (nodeId, infos)) =>
             // Дедубликация кода извлечения первого заданного поля из списка RscInfo.
-            def __getInfoField[T](f: RscInfo => TraversableOnce[T]): Option[T] = {
-              infos.iterator
+            def __getInfoField[T](f: RscInfo => IterableOnce[T]): Option[T] = {
+              infos
+                .iterator
                 .flatMap(f)
-                .toStream
+                .buffered
                 .headOption
             }
 
@@ -248,7 +254,7 @@ class ExtRscUtil @Inject()(
 
   /** Используя нормализованный URL, сгенерить id узла для ресурса.
     *
-    * @param normUrl Нормализованная ссылка на ресурс.
+    * @param url Нормализованная ссылка на ресурс.
     * @return Строка с id узла для нормальной ссылки.
     */
   def resourceUrl2nodeId(url: URL): String = {

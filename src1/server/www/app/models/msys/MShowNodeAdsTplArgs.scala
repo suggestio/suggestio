@@ -17,6 +17,6 @@ case class MShowNodeAdsTplArgs(
                                 nodeOpt      : Option[MNode],
                                 rcvrsMap     : Map[String, Seq[MNode]],
                                 qs           : MScQs,
-                                ad2advMap    : Map[String, Traversable[MItem]],
+                                ad2advMap    : Map[String, Iterable[MItem]],
                                 msearch      : MNodeSearch
                               )

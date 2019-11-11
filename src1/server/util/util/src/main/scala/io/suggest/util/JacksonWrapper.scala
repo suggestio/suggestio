@@ -31,11 +31,11 @@ object JacksonWrapper {
     writer.toString
   }
 
-  def serialize(os:OutputStream, value:Any) {
+  def serialize(os:OutputStream, value:Any): Unit = {
     mapper.writeValue(os, value)
   }
 
-  def serializePretty(os:OutputStream, value:Any) {
+  def serializePretty(os:OutputStream, value:Any): Unit = {
     prettyWriter.writeValue(os, value)
   }
 
@@ -46,7 +46,7 @@ object JacksonWrapper {
   }
 
   /** Распарсить строку json и отрендерить назад в красивую строку. */
-  def prettify(jsonStr: String) = {
+  def prettify(jsonStr: String): String = {
     val json = mapper.readValue(jsonStr, classOf[Object])
     prettyWriter.writeValueAsString(json)
   }

@@ -20,7 +20,7 @@ object MPaySystemsJvm {
         for {
           strIdOptEith <- strOptB.bind(key, params)
         } yield {
-          strIdOptEith.right.flatMap { strIdOpt =>
+          strIdOptEith.flatMap { strIdOpt =>
             strIdOpt.fold[Either[String, Option[MPaySystem]]] {
               Right(None)
             } { strId =>

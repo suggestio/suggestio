@@ -3,7 +3,7 @@ package io.suggest.es.model
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.search.SearchHit
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io

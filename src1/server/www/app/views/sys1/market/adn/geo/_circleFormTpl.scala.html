@@ -13,16 +13,16 @@
   @_glevelSelectTpl(cf("glevel"))
 
   <table class="input-w __size-L">
-    @inputText(cf("circle.center.lat"),  '_label -> "Широта")
-    @inputText(cf("circle.center.lon"),  '_label -> "Долгота")
+    @inputText(cf("circle.center.lat"),  Symbol("_label") -> "Широта")
+    @inputText(cf("circle.center.lon"),  Symbol("_label") -> "Долгота")
   </table>
 
   <table class="input-w __size-L">
-    @inputText(cf("circle.radius.value"),  '_label -> "Радиус")
+    @inputText(cf("circle.radius.value"),  Symbol("_label") -> "Радиус")
     @select(
       field     = cf("circle.radius.units"),
-      options   = options( DistanceUnit.values.toList.map(du => du.toString -> du.name).sortBy(_._2) : _* ),
-      '_label   -> "Единицы расстояния"
+      options   = options( DistanceUnit.values.iterator.map(du => du.toString -> du.name).toList.sortBy(_._2) : _* ),
+      Symbol("_label") -> "Единицы расстояния"
     )
   </table>
 

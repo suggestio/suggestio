@@ -12,7 +12,7 @@ import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Suggest.io
@@ -46,7 +46,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
 
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(): TraversableOnce[MCronTask] = {
+  override def cronTasks(): Iterable[MCronTask] = {
     if (DELETE_EMPTY_DIRS_ENABLED) {
       val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
         for (ex <- findAndDeleteEmptyDirsAsync().failed)

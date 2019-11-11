@@ -22,7 +22,6 @@ object MScreenJvm {
           devScreenStrE <- strB.bind(key, params)
         } yield {
           devScreenStrE
-            .right
             .flatMap { MScreen.maybeFromString }
         }
       }

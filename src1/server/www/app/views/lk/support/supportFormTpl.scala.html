@@ -20,28 +20,28 @@
     <table class="input-w __size-L">
       @inputText(
         sf("name"),
-        '_label -> (messages( MsgCodes.`Your.name` ) + ":")
+        Symbol("_label") -> (messages( MsgCodes.`Your.name` ) + ":")
       )
     </table>
 
     <table class="input-w __size-L">
       @inputText(
         sf("phone"),
-        '_label -> (messages( MsgCodes.`Phone` ) + ":")
+        Symbol("_label") -> (messages( MsgCodes.`Phone` ) + ":")
       )
     </table>
 
     <table class="input-w __size-L">
       @inputText(
         sf("email"),
-        '_label -> "E-mail:"
+        Symbol("_label") -> "E-mail:"
       )
     </table>
 
     <table class="input-w __size-L">
       @textarea(
         sf("msg"),
-         '_label -> (messages( MsgCodes.`Describe.problem` ) + ":")
+        Symbol("_label") -> (messages( MsgCodes.`Describe.problem` ) + ":")
       )
     </table>
 

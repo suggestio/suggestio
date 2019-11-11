@@ -47,9 +47,9 @@ object MNodeEdgeIdQs {
           edgeIdE     <- intB.bind  (k(EDGE_ID_FN),   params)
         } yield {
           for {
-            nodeId    <- nodeIdE.right
-            nodeVsn   <- nodeVsnE.right
-            edgeId    <- edgeIdE.right
+            nodeId    <- nodeIdE
+            nodeVsn   <- nodeVsnE
+            edgeId    <- edgeIdE
           } yield {
             MNodeEdgeIdQs(
               nodeId  = nodeId,

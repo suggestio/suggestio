@@ -43,11 +43,8 @@ object MLkTagsSearchQs {
           // TODO Нужно избегать пустого критерия поиска, т.е. возвращать None, когда нет параметров для поиска.
           for {
             _tagsQuery      <- QsbUtil.ensureStrLen(tagsQueryE, 1, TAGS_QUERY_MAXLEN)
-              .right
             _limitOpt       <- QsbUtil.ensureIntOptRange(limitOptE, 1, LIMIT_MAX)
-              .right
             _offsetOpt      <- QsbUtil.ensureIntOptRange(offsetOptE, 0, OFFSET_MAX)
-              .right
           } yield {
             MLkTagsSearchQs(
               tagsQuery = _tagsQuery,

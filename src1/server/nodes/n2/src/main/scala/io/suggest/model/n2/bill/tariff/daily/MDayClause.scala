@@ -47,8 +47,9 @@ object MDayClause extends IGenEsMappingProps {
   def clauses2map(clauses: MDayClause*): ClausesMap_t = {
     clauses2map1(clauses)
   }
-  def clauses2map1(clauses: TraversableOnce[MDayClause]): ClausesMap_t = {
-    clauses.toIterator
+  def clauses2map1(clauses: IterableOnce[MDayClause]): ClausesMap_t = {
+    clauses
+      .iterator
       .map { v => v.name -> v }
       .toMap
   }

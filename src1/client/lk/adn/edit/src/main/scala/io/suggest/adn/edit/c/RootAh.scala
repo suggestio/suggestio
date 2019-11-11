@@ -80,7 +80,10 @@ class RootAh[M](
               val newEdgeIds = IId.els2idsSet( form2.edges )
               v0.node.copy(
                 meta    = form2.meta,
-                edges   = v0.node.edges.filterKeys( newEdgeIds.contains ),
+                edges   = v0.node.edges
+                  .view
+                  .filterKeys( newEdgeIds.contains )
+                  .toMap,
                 resView = form2.resView,
                 errors  = MAdnEditErrors.empty
               )

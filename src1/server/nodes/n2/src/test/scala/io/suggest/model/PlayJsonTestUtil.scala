@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import io.suggest.primo.TypeT
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import _root_.play.api.libs.json._
 import io.suggest.event.{MockedSioNotifierStaticClient, SioNotifierStaticClientI}
 import _root_.play.api.{Application, Mode}

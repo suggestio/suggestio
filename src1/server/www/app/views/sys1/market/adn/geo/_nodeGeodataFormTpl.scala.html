@@ -11,20 +11,20 @@
 @form( CSRF(submitCall) ) {
 
   <table class="input-w __size-L">
-    @inputText(gf("point.lat"),  '_label -> "Широта")
-    @inputText(gf("point.lon"),  '_label -> "Долгота")
+    @inputText(gf("point.lat"),  Symbol("_label") -> "Широта")
+    @inputText(gf("point.lon"),  Symbol("_label") -> "Долгота")
   </table>
 
   @select(
     gf("parentAdnId"),
     options = options(
       ("" -> "") ::
-      nodesMap.mapValues(mnode =>
+      nodesMap.view.mapValues(mnode =>
         messages(AdnShownTypes.node2val(mnode).singular) + ": " +
         mnode.meta.basic.name + mnode.meta.address.town.fold("")(" (" + _ + ")")
       ).toList.sortBy(_._2) :  _*
     ),
-    'title -> "id узла-геородителя"
+    Symbol("title") -> "id узла-геородителя"
   )
 
   <div class="btn-w __size-M">

@@ -2,6 +2,8 @@ package io.suggest.model.n2.edge
 
 import io.suggest.primo.id.IId
 
+import scala.collection.MapView
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,7 +14,7 @@ object EdgesUtil {
 
   def nextEdgeUid: EdgeUid_t = 0
 
-  def nextEdgeUidFrom(edgeUids: TraversableOnce[EdgeUid_t]): EdgeUid_t = {
+  def nextEdgeUidFrom(edgeUids: IterableOnce[EdgeUid_t]): EdgeUid_t = {
     if (edgeUids.nonEmpty) {
       edgeUids.max + 1
     } else {
@@ -24,8 +26,9 @@ object EdgesUtil {
     nextEdgeUidFrom( edgeUidMap.keys )
   }
 
-  def purgeUnusedEdgesFromMap[E](usedEdgeIds: Set[EdgeUid_t], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
+  def purgeUnusedEdgesFromMap[E](usedEdgeIds: Set[EdgeUid_t], edgesMap: Map[EdgeUid_t, E]): MapView[EdgeUid_t, E] = {
     edgesMap
+      .view
       .filterKeys { usedEdgeIds.contains }
   }
 

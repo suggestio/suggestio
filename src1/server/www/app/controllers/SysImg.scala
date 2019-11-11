@@ -68,7 +68,7 @@ class SysImg @Inject() (
               val qsMap = FormUtil.parseQsToMap(qs)
               MImgT.qsbStandalone
                 .bind("i", qsMap)
-                .flatMap { e => if (e.isLeft) None else Some(e.right.get) }
+                .flatMap( _.toOption )
           }
         },
         { _.fold("")(_.dynImgId.fileName) }

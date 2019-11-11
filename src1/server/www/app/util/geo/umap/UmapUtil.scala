@@ -5,6 +5,7 @@ import javax.inject.Inject
 import io.suggest.geo.{GsTypes, MultiPolygonGs}
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.MNode
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -24,16 +25,18 @@ class UmapUtil @Inject() () {
    * @param nodes Коллекция или итератор фигур, которые надо рендерить в слое.
    * @return Обновлённый или тот же список фигур в исходном порядке.
    */
-  def prepareDataLayerGeos(nodes: TraversableOnce[MNode]): TraversableOnce[MNode] = {
+  def prepareDataLayerGeos(nodes: Iterable[MNode]): Iterable[MNode] = {
     // Если включена какая-то опция модификации списка geo-фигур, то нужно запустить обход списка.
     if (SPLIT_MULTIPOLYGON) {
-      for (mnode <- nodes) yield {
-        val p = MPredicates.NodeLocation
-
+      val p = MPredicates.NodeLocation
+      for {
+        // Вместо итератора явно используем lazy-коллекцию.
+        mnode <- nodes.to(LazyList)
+      } yield {
         val edges1iter = mnode.edges
           .iterator
           .map {
-            case e if e.predicate == p && e.info.geoShapes.nonEmpty =>
+            case e if (e.predicate ==* p) && e.info.geoShapes.nonEmpty =>
               e.copy(
                 info = e.info.copy(
                   geoShapes = e.info.geoShapes.flatMap {
@@ -55,11 +58,9 @@ class UmapUtil @Inject() () {
             case e => e
           }
 
-        mnode.copy(
-          edges = mnode.edges.copy(
-            out = MNodeEdges.edgesToMap1( edges1iter )
-          )
-        )
+        MNode.edges
+          .composeLens( MNodeEdges.out )
+          .set( MNodeEdges.edgesToMap1( edges1iter ) )(mnode)
       }
 
     } else {

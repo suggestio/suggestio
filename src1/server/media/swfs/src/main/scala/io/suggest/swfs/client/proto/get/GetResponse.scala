@@ -15,7 +15,7 @@ import play.api.http.HeaderNames
 trait IGetResponse extends IDataSource {
 
   /** Сырые заголовки HTTP-ответа. */
-  def headers: Map[String, Seq[String]]
+  def headers: Map[String, collection.Seq[String]]
 
   override def contentType: String = {
     headers
@@ -40,7 +40,7 @@ trait IGetResponse extends IDataSource {
         // Если пришла неизвестная кодировка ответа, то пусть сразу будет ошибка.
         MCompressAlgos.withHttpContentEncoding(ce).get
       }
-      .toStream
+      .buffered
       .headOption
   }
 
@@ -48,7 +48,7 @@ trait IGetResponse extends IDataSource {
 
 
 case class GetResponse(
-                        override val headers      : Map[String, Seq[String]],
+                        override val headers      : Map[String, collection.Seq[String]],
                         override val data         : Source[ByteString, _]
                       )
   extends IGetResponse

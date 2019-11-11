@@ -93,7 +93,7 @@ class IsNodeAdmin @Inject()(
     * Удобна для проверки доступа к узлам, которые известны только по id.
     * Появилась для проверки доступа юзеров на управление размещением на ресиверах.
     *
-    * @param mnode Узел.
+    * @param nodeId id проверяемого узла.
     * @param user Данные пользователя.
     * @param maxLevels Макс.кол-во итераций поднятия наверх.
     * @return Фьючерс с цепочкой вычисленных узлов от юзера до узла.
@@ -127,7 +127,7 @@ class IsNodeAdmin @Inject()(
             res <- {
               lazy val ownerEdges = mnode.edges
                 .withPredicateIter( MPredicates.OwnedBy )
-                .toStream
+                .to( LazyList )
 
               val userIsSuper = user.isSuper
               if ( userIsSuper || isNodeAdminCheckStrict(mnode, userIdSet) ) {

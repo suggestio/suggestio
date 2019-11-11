@@ -37,7 +37,7 @@ object DiodeUtil {
       *
       * @param effects Эффекты.
       */
-    implicit class EffectsOps(val effects: TraversableOnce[Effect]) extends AnyVal {
+    implicit class EffectsOps(val effects: IterableOnce[Effect]) extends AnyVal {
 
       /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
         *
@@ -46,7 +46,7 @@ object DiodeUtil {
         */
       def mergeEffects: Option[Effect] = {
         OptionUtil.maybe(effects.nonEmpty) {
-          val iter = effects.toIterator
+          val iter = effects.iterator
           val fx1 = iter.next()
           if (iter.hasNext) {
             new EffectSet(fx1, iter.toSet, defaultExecCtx)

@@ -41,11 +41,11 @@ object MEsiaStep1Qs {
           esiaAccessTypeE       <- esiaAccessTypeB.bind ( F.ACCESS_TYPE_FN,     params )
         } yield {
           for {
-            signContent         <- signContentE.right
-            clientSecret        <- clientSecretE.right
-            esiaRespType        <- esiaRespTypeE.right
-            redirectUri         <- redirectUriE.right
-            esiaAccessType      <- esiaAccessTypeE.right
+            signContent         <- signContentE
+            clientSecret        <- clientSecretE
+            esiaRespType        <- esiaRespTypeE
+            redirectUri         <- redirectUriE
+            esiaAccessType      <- esiaAccessTypeE
           } yield {
             MEsiaStep1Qs(
               signContent       = signContent,

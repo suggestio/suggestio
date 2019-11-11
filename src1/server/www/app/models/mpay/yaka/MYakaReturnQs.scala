@@ -56,12 +56,12 @@ object MYakaReturnQs {
           onNodeIdEith  <- esUuIdB.bind     (SIO_NODE_ID_FN,    params)
         } yield {
           for {
-            retAction   <- retActionEith.right
-            orderId     <- orderIdEith.right
-            personId    <- personIdEith.right
-            invoiceId   <- invoiceIdEith.right
-            shopId      <- shopIdEith.right
-            onNodeId    <- onNodeIdEith.right
+            retAction   <- retActionEith
+            orderId     <- orderIdEith
+            personId    <- personIdEith
+            invoiceId   <- invoiceIdEith
+            shopId      <- shopIdEith
+            onNodeId    <- onNodeIdEith
           } yield {
             MYakaReturnQs(
               action    = retAction,

@@ -28,9 +28,9 @@ trait QsbKey1T {
   }
 
   /** Когда несколько полей, часто бывает актуально их конкатенировать в qs-строку с помощью этого метода. */
-  def _mergeUnbinded(unbinded: TraversableOnce[String]): String = {
+  def _mergeUnbinded(unbinded: IterableOnce[String]): String = {
     unbinded
-      .toIterator
+      .iterator
       .filter(_.nonEmpty)
       .mkString("&")
   }

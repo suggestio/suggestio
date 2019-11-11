@@ -57,7 +57,7 @@ final class ReqUtil @Inject() (
             LOGGER.error(s"$logPrefix Request body is null or empty.")
             Results.UnprocessableEntity("Request body expected.")
           }
-          .right.flatMap { byteStr =>
+          .flatMap { byteStr =>
             try {
               val bbuf = byteStr.asByteBuffer
               val mfs = PickleUtil.unpickle[T](bbuf)

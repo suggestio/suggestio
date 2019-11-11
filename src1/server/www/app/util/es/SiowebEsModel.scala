@@ -9,7 +9,6 @@ import io.suggest.sec.m.MAsymKeys
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
-import models.ai.MAiMads
 import models.mcal.MCalendars
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -30,7 +29,6 @@ class SiowebEsModel @Inject() (
                                 mMedias             : MMedias,
                                 mCalendars          : MCalendars,
                                 mExtTargets         : MExtTargets,
-                                mAiMads             : MAiMads,
                                 mAsymKeys           : MAsymKeys,
                                 configuration             : Configuration,
                                 implicit private val ec   : ExecutionContext,
@@ -53,14 +51,13 @@ class SiowebEsModel @Inject() (
   def ES_MODELS = Seq[EsModelCommonStaticT](
     mNodes,
     mCalendars,
-    mAiMads,
     mExtTargets,
     mAsymKeys,
     mMedias,
   )
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
-  def maybeErrorIfIncorrectModels() {
+  def maybeErrorIfIncorrectModels(): Unit = {
     if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElseTrue)
       esModel.errorIfIncorrectModels(ES_MODELS)
   }
@@ -188,8 +185,9 @@ final class SiowebEsModelJmx @Inject() (
   }
 
   protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelCommonStaticT]): Future[String] = {
-    val addrs = remotes.split("[\\s,]+")
-      .toIterator
+    val addrs = remotes
+      .split("[\\s,]+")
+      .iterator
       .map { hostPortStr =>
         val sockAddr = EsClientUtil.parseHostPortStr(hostPortStr)
         new InetSocketTransportAddress(sockAddr)

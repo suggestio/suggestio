@@ -333,20 +333,20 @@ class SysMdr @Inject() (
       val selfRcvrsNeedMdrFut = for {
         mad <- billedNodeOrExFut
       } yield {
-        val selfEdges = mad.edges
+        val selfEdgesIter = mad.edges
           .withPredicateIter( MPredicates.Receiver.Self )
-          .toStream
-        val isMdrNotNeeded = selfEdges.isEmpty || {
+
+        val isMdrNotNeeded = selfEdgesIter.isEmpty || {
           // Уже есть mdr-true-эдж?
           mad.edges
             .withPredicateIter( MPredicates.ModeratedBy )
             .exists(_.info.flag contains true)
         }
+
         if (isMdrNotNeeded) {
           Set.empty[String]
         } else {
-          selfEdges
-            .iterator
+          selfEdgesIter
             .flatMap(_.nodeIds)
             .toSet
         }

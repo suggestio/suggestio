@@ -98,7 +98,7 @@ object ListsSpec extends SimpleTestSuite {
   }
   test("isElemsEqs() should true for same lists") {
     val l1 = List("1", "2", "b", "ft")
-    val l2 = l1.toStream
+    val l2 = l1.to(LazyList)
     assert( isElemsEqs(l1, l2) )
   }
   test("isElemsEq() for slightly different lists with same length") {

@@ -2,7 +2,7 @@ package io.suggest.swfs.client.play
 
 import io.suggest.swfs.client.proto.get.IGetRequest
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -37,9 +37,8 @@ trait IsExist extends ISwfsClientWs {
     }
 
     // Log possible errors.
-    fut.onFailure { case ex: Throwable =>
+    for (ex <- fut.failed)
       LOGGER.error(s"$logPrefix Failed to make request for $args, HEAD $url ", ex)
-    }
 
     fut
   }

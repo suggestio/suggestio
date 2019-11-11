@@ -296,7 +296,7 @@ class BillDebugUtil @Inject() (
     *
     * @return Экшен обновления всего-всего необходимого для этого действа.
     */
-  def findAndInterruptItemsLike(nodeIds: Traversable[String], itypes: MItemType*): DBIOAction[Int, NoStream, RWT] = {
+  def findAndInterruptItemsLike(nodeIds: Iterable[String], itypes: MItemType*): DBIOAction[Int, NoStream, RWT] = {
     lazy val logPrefix = s"findAndInterruptItemsLike()[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix Starting, nodeIds=[${nodeIds.mkString(",")}] ; itypes=[${itypes.mkString(",")}]")
 

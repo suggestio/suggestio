@@ -62,7 +62,7 @@ class GeoTagsUtil @Inject() (
     MItemTypes
       .tagTypes
       .onlyIds
-      .toTraversable
+      .toList
   }
 
   /**
@@ -345,7 +345,7 @@ class GeoTagsUtil @Inject() (
               val e0Opt = mnode0
                 .edges
                 .withPredicateIter(p)
-                .toStream
+                .buffered
                 .headOption
 
               // Собрать единый эдж self-тега для всех геошейпов.
@@ -405,18 +405,18 @@ class GeoTagsUtil @Inject() (
     * @param tagNodes Узлы-теги перед ребилдом.
     * @return Фьючерс со списком отребилденных тегов.
     */
-  def rebuildTags(tagNodes: Iterable[MNode]): Future[Stream[MNode]] = {
+  def rebuildTags(tagNodes: Iterable[MNode]): Future[Seq[MNode]] = {
     if (tagNodes.isEmpty) {
-      Future.successful( Stream.empty )
+      Future.successful( Nil )
     } else {
       for {
         res <- Future.traverse(tagNodes)(rebuildTag)
       } yield {
-        // Собрать явно-ленивый Stream из обновлённых тегов. Ленивость, т.к. результат этой функции обычно не нужен.
+        // Явно ленивый список обновлённых тегов. Результат этого метода игнорируется.
         res
           .iterator
           .flatten
-          .toStream
+          .to( LazyList )
       }
     }
   }

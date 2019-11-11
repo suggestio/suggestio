@@ -335,7 +335,7 @@ class QuillDeltaJsUtil extends Log {
 
     // Пройтись по delta-операциям:
     val qdOps = d.ops
-      .toIterator
+      .iterator
       .map { dOp =>
         val deltaAttrsOpt = dOp.attributes.toOption
         val qdOp = MQdOp(

@@ -14,6 +14,8 @@ import play.api.data._
 import util.FormUtil._
 import util.FormUtil
 
+import scala.collection.immutable.ArraySeq
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -216,15 +218,19 @@ class SysMarketUtil extends MacroLogsDyn {
   def nodeCreateParamsFormM = Form(nodeCreateParamsM)
 
 
-  def _setMapping[T](strMapping: Mapping[String])(f: Seq[String] => TraversableOnce[T]): Mapping[Set[T]] = {
+  def _setMapping[T](strMapping: Mapping[String])(f: Seq[String] => IterableOnce[T]): Mapping[Set[T]] = {
     optional(
       strMapping
         .transform(strTrimSanitizeF, strIdentityF)
     )
       .transform[Option[String]] ( emptyStrOptToNone, identity )
       .transform[Set[T]] (
-        {case None    => Set.empty
-         case Some(s) => f(s.split("\\s*[,;]\\s*")).toSet
+        { _.fold(Set.empty[T]) { s =>
+           val r = ArraySeq.unsafeWrapArray( s.split("\\s*[,;]\\s*") )
+           f(r)
+             .iterator
+             .toSet
+          }
         },
         { ids =>
           if (ids.isEmpty) None else Some( ids.mkString(", ") )

@@ -10,6 +10,7 @@ import org.elasticsearch.common.lucene.search.function.{CombineFunction, Filters
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import Ordering.Float.TotalOrdering
 
 /**
   * Suggest.io
@@ -24,28 +25,27 @@ class BleUtil {
     * Новый поиск нод маячков, завязанный на function-score и ровно один нижележащий
     * поисковый запрос для всех id маячков.
     */
-  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: TraversableOnce[MUidBeacon]): Option[MNodeSearch] = {
+  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: Iterable[MUidBeacon]): Option[MNodeSearch] = {
     if (bcns.isEmpty) {
       None
 
     } else {
-
       // Строим карту маячков, где ключ -- Uid маячка
       val bcnsMap = bcns
-        .toIterator
         .map { bcn =>
           val dCm = Math.max(1, bcn.distanceCm)
           val weightFactor = 1.0F / dCm
           bcn.uid -> weightFactor
         }
-        .toSeq
         .groupBy(_._1)
+        .view
         .mapValues { vals =>
-          vals.iterator
+          vals
+            .iterator
             .map(_._2)
             .min
         }
-
+        .toMap
 
       // Итоговый поисковый запросец: поиск в эджах + кастомный скоринг поверх.
       val msearch = new MNodeSearchDfltImpl {

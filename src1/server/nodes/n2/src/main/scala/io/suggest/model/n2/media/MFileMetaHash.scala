@@ -63,8 +63,9 @@ object MFileMetaHash extends IGenEsMappingProps {
 
 
   /** Сконвертить список [[MFileMetaHash]] в карту хешей. */
-  def toHashesHex(hhs: TraversableOnce[MFileMetaHash]): HashesHex = {
-    hhs.toIterator
+  def toHashesHex(hhs: IterableOnce[MFileMetaHash]): HashesHex = {
+    hhs
+      .iterator
       .map(_.hashHexTuple)
       .toMap
   }

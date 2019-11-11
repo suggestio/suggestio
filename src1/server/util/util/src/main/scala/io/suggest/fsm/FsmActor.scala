@@ -49,7 +49,7 @@ trait FsmActor extends Actor with IMacroLogs with AbstractFsm {
     context stop self
   }
 
-  override protected def combineReceivers(rcvrs: TraversableOnce[Receive]): Receive = {
+  override protected def combineReceivers(rcvrs: IterableOnce[Receive]): Receive = {
     AbstractFsmUtil.combinePfs(rcvrs)
   }
 

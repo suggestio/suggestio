@@ -3,7 +3,6 @@ package util.jsa
 import play.api.http.{Writeable, ContentTypes, ContentTypeOf}
 import play.api.mvc.Codec
 import scala.language.implicitConversions
-import play.api.libs.concurrent.Execution.Implicits.defaultContext    // хз зачем, но цепочка implicit'ов требует.
 
 /**
  * Suggest.io

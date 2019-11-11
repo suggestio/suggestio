@@ -38,11 +38,11 @@ object MScQsJvm {
           searchNodesOptE       <- boolOptB.bind    ( k(SEARCH_TAGS_FN),        params )
         } yield {
           for {
-            screenOpt           <- screenOptE.right
-            apiVsn              <- apiVsnE.right
-            locEnv              <- locEnvE.right
-            searchGridAdsOpt    <- searchGridAdsOptE.right
-            searchNodesOpt      <- searchNodesOptE.right
+            screenOpt           <- screenOptE
+            apiVsn              <- apiVsnE
+            locEnv              <- locEnvE
+            searchGridAdsOpt    <- searchGridAdsOptE
+            searchNodesOpt      <- searchNodesOptE
           } yield {
             MScCommonQs(
               screen          = screenOpt,
@@ -94,13 +94,13 @@ object MScQsJvm {
           textQueryOptE     <- strOptB.bind   (k(TEXT_QUERY_FN),      params)
         } yield {
           for {
-            prodIdOpt       <- prodIdOptE.right
-            rcvrIdOpt       <- rcvrIdOptE.right
-            genOpt          <- genOptE.right
-            limitOpt        <- limitOptE.right
-            offsetOpt       <- offsetOptE.right
-            tagNodeIdOpt    <- tagNodeIdOptE.right
-            textQueryOpt    <- textQueryOptE.right
+            prodIdOpt       <- prodIdOptE
+            rcvrIdOpt       <- rcvrIdOptE
+            genOpt          <- genOptE
+            limitOpt        <- limitOptE
+            offsetOpt       <- offsetOptE
+            tagNodeIdOpt    <- tagNodeIdOptE
+            textQueryOpt    <- textQueryOptE
           } yield {
             MAdsSearchReq(
               prodId        = prodIdOpt,
@@ -150,10 +150,10 @@ object MScQsJvm {
           scFocusArgsOptE     <- scFocusArgsOptB.bind ( k(FOCUSED_ARGS_FN),   params )
         } yield {
           for {
-            commonQs          <- commonQsE.right
-            adsSearchReq      <- adsSearchReqE.right
-            scIndexArgsOpt    <- scIndexArgsOptE.right
-            scFocusArgsOpt    <- scFocusArgsOptE.right
+            commonQs          <- commonQsE
+            adsSearchReq      <- adsSearchReqE
+            scIndexArgsOpt    <- scIndexArgsOptE
+            scFocusArgsOpt    <- scFocusArgsOptE
           } yield {
             MScQs(
               common  = commonQs,
@@ -197,9 +197,9 @@ object MScQsJvm {
           lookupAdIdE             <- strB.bind          ( k(LOOKUP_AD_ID_FN),         params )
         } yield {
           for {
-            focIndexAllowed       <- focJumpAllowedE.right
-            lookupModeOpt         <- lookupModeOptE.right
-            lookupAdId            <- lookupAdIdE.right
+            focIndexAllowed       <- focJumpAllowedE
+            lookupModeOpt         <- lookupModeOptE
+            lookupAdId            <- lookupAdIdE
           } yield {
             MScFocusArgs(
               focIndexAllowed     = focIndexAllowed,

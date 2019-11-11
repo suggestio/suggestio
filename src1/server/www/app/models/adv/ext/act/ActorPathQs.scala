@@ -43,7 +43,7 @@ object ActorPathQs extends MacroLogsDyn with SecretKeyInit {
             .signedOrNone(k(""), params0)
           maybePath <- strB.bind(k(PATH_FN), params)
         } yield {
-          maybePath.right.flatMap { path =>
+          maybePath.flatMap { path =>
             try {
               val apath = ActorPath.fromString(path)
               Right(ActorPathQs(apath))

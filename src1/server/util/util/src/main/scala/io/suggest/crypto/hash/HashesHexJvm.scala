@@ -40,7 +40,7 @@ object HashesHexJvm {
           } else {
             val hhMap: HashesHex = hashesHexEithSeq
               .iterator
-              .flatMap(_.right.toOption)
+              .flatMap(_.toOption)
               .toMap
             Right(hhMap)
           }

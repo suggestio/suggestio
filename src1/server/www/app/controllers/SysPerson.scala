@@ -111,7 +111,7 @@ class SysPerson @Inject() (
         } yield {
           val idents = mnode.edges
             .withPredicateIter( MPredicates.Ident )
-            .toStream
+            .toSeq
           mnode -> idents
         }
         Ok(IdentsListTpl(
@@ -149,7 +149,7 @@ class SysPerson @Inject() (
 
       val idents = request.mperson.edges
         .withPredicateIter( MPredicates.Ident )
-        .toStream
+        .toSeq
 
       implicit val ctx = implicitly[Context]
 

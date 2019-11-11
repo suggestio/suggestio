@@ -128,13 +128,9 @@ class LkAdnEdit @Inject() (
     val ctxFut = ctxFutOpt
       .getOrElse( Future.successful(getContext2) )
 
-    val imgEdgesJdIds = request.mnode.extras
-      .adnEdgeUids
-      .toStream
-
     // Какие предикаты и эджи здесь интересуют?
-    val imgEdgeUids = imgEdgesJdIds
-      .iterator
+    val imgEdgeUids = request.mnode.extras
+      .adnEdgeUidsIter
       .map(e => e.edgeUid -> e)
       .toMap
     val imgEdges = request.mnode

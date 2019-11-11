@@ -27,8 +27,8 @@
   @form(routes.SysCalendar.newCalendarFromTemplateSubmit) {
     @select(
       cf("tplId"),
-      options = hcs.toSeq.map(hk => hk.toString -> hk.toString),
-      '_label -> "Исходный шаблон календаря"
+      options = hcs.iterator.map(hk => hk.toString -> hk.toString).toSeq,
+      Symbol("_label") -> "Исходный шаблон календаря"
     )
     <input type="submit" value="Далее" />
   }

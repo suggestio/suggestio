@@ -102,25 +102,25 @@ class MItems @Inject() (
     // DSL для быстрой сборки query.filter(...)
     def withIds(ids: Gid_t*): Rep[Boolean] =
       withIds1( ids )
-    def withIds1(ids: Traversable[Gid_t]): Rep[Boolean] =
+    def withIds1(ids: Iterable[Gid_t]): Rep[Boolean] =
       id inSet ids
     def withNodeId(nodeIds: String*): Rep[Boolean] =
       withNodeIds(nodeIds)
-    def withNodeIds(nodeIds: Traversable[String]): Rep[Boolean] =
+    def withNodeIds(nodeIds: Iterable[String]): Rep[Boolean] =
       nodeId.inSet( nodeIds )
     def withTypes1(types: MItemType*): Rep[Boolean] =
       withTypes(types)
-    def withTypes(types: TraversableOnce[MItemType]): Rep[Boolean] =
-      iTypeStr.inSet( types.toIterator.onlyIds.toTraversable )
+    def withTypes(types: IterableOnce[MItemType]): Rep[Boolean] =
+      iTypeStr.inSet( types.iterator.onlyIds.to(Iterable) )
     def withStatus(status1: MItemStatus): Rep[Boolean] =
       statusStr === status1.value
-    def withStatuses(statuses: TraversableOnce[MItemStatus]): Rep[Boolean] =
-      statusStr.inSet( statuses.toIterator.onlyIds.toTraversable )
-    def withRcvrIds(rcvrIds: Traversable[String]): Rep[Option[Boolean]] =
+    def withStatuses(statuses: IterableOnce[MItemStatus]): Rep[Boolean] =
+      statusStr.inSet( statuses.iterator.onlyIds.to(Iterable) )
+    def withRcvrIds(rcvrIds: Iterable[String]): Rep[Option[Boolean]] =
       rcvrIdOpt.inSet( rcvrIds )
     def withOrderId(orderIds: Gid_t*): Rep[Boolean] =
       withOrderIds(orderIds)
-    def withOrderIds(orderIds: Traversable[Gid_t]): Rep[Boolean] =
+    def withOrderIds(orderIds: Iterable[Gid_t]): Rep[Boolean] =
       orderId inSet orderIds
 
   }
@@ -141,32 +141,32 @@ class MItems @Inject() (
 
       def withId(ids: Gid_t*) =
         withIds(ids)
-      def withIds(ids: Traversable[Gid_t]) =
+      def withIds(ids: Iterable[Gid_t]) =
         q.filter { _.id inSet ids }
 
       def withNodeId(nodeIds: String*) =
         withNodeIds(nodeIds)
-      def withNodeIds(nodeIds: Traversable[String])  =
+      def withNodeIds(nodeIds: Iterable[String])  =
         q.filter { _.nodeId inSet nodeIds }
 
       def withType(itypes: MItemType*) =
         withTypes(itypes)
-      def withTypes(itypes: TraversableOnce[MItemType]) =
+      def withTypes(itypes: IterableOnce[MItemType]) =
         q.filter { _.withTypes(itypes) }
 
       def withStatus(statuses: MItemStatus*) =
         withStatuses(statuses)
-      def withStatuses(statuses: TraversableOnce[MItemStatus]) =
+      def withStatuses(statuses: IterableOnce[MItemStatus]) =
         q.filter { _.withStatuses(statuses) }
 
       def withOrderId(orderIds: Gid_t*) =
         withOrderIds( orderIds )
-      def withOrderIds(orderIds: Traversable[Gid_t]) =
+      def withOrderIds(orderIds: Iterable[Gid_t]) =
         q.filter { _.withOrderIds(orderIds) }
 
       def withRcvrId(rcvrIds: String*) =
         withRcvrIds(rcvrIds)
-      def withRcvrIds(rcvrIds: Traversable[String]) =
+      def withRcvrIds(rcvrIds: Iterable[String]) =
         q.filter { _.withRcvrIds(rcvrIds) }
 
     }
@@ -196,7 +196,7 @@ class MItems @Inject() (
   def updateStatus1(status: MItemStatus, ids: Gid_t*) = {
     updateStatus2(status, ids)
   }
-  def updateStatus2(status: MItemStatus, ids: Traversable[Gid_t]) = {
+  def updateStatus2(status: MItemStatus, ids: Iterable[Gid_t]) = {
     if (ids.isEmpty) {
       throw new IllegalArgumentException("ids must be non-empty")
     } else {
@@ -222,9 +222,8 @@ class MItems @Inject() (
   }
 
   /** Concat списка элементов в строку, содержащую sql-список строк для отправки в IN (...). */
-  private def _mkSqlInString(es: TraversableOnce[Any]): String = {
+  private def _mkSqlInString(es: Iterator[Any]): String =
     es.mkString("'", "','", "'")
-  }
 
   /**
     * Для списка перечисленных карточек найти вернуть статусы из множества интересующих.
@@ -233,16 +232,16 @@ class MItems @Inject() (
     * @param statuses Интересующие статусы item'ов или все возможные.
     * @return Пары adId -> [[io.suggest.mbill2.m.item.MAdItemStatuses]].
     */
-  def findStatusesForAds(adIds: Traversable[String], statuses: Traversable[MItemStatus]) = {
+  def findStatusesForAds(adIds: Iterable[String], statuses: Iterable[MItemStatus]) = {
     // TODO Sec Возможность SQL injection, нужно передавать список через args, но slick sql не умеет IN (...) синтаксис.
     // Возможно, стоит попробовать эту пионерскую поделку https://github.com/tarao/slick-jdbc-extension-scala
-    val adIdsStr = _mkSqlInString( adIds )
+    val adIdsStr = _mkSqlInString( adIds.iterator )
     val statusesStr = _mkSqlInString( statuses.onlyIds )
     sql"SELECT #$NODE_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE #$NODE_ID_FN IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY #$NODE_ID_FN"
       .as[MAdItemStatuses]
   }
 
-  def countByIdStatus(itemIds: Traversable[Gid_t], statuses: Traversable[MItemStatus] = Nil): DBIOAction[Int, NoStream, Effect.Read] = {
+  def countByIdStatus(itemIds: Iterable[Gid_t], statuses: Iterable[MItemStatus] = Nil): DBIOAction[Int, NoStream, Effect.Read] = {
     var q0: Query0 = query
     if (itemIds.nonEmpty)
       q0 = q0.withIds( itemIds )
@@ -252,7 +251,7 @@ class MItems @Inject() (
       .result
   }
 
-  def getOrderIds(itemIds: Traversable[Gid_t]): DBIOAction[Seq[Gid_t], Streaming[Gid_t], Effect.Read] = {
+  def getOrderIds(itemIds: Iterable[Gid_t]): DBIOAction[Seq[Gid_t], Streaming[Gid_t], Effect.Read] = {
     query
       .withIds(itemIds)
       .map(_.orderId)
@@ -293,7 +292,7 @@ class MItems @Inject() (
 
 
   /** Сборка query для поиска текущих item'ов карточки. */
-  def findCurrentForNode(nodeId: String, itypes: TraversableOnce[MItemType], query0: Query0 = query): Query0 = {
+  def findCurrentForNode(nodeId: String, itypes: Iterable[MItemType], query0: Query0 = query): Query0 = {
     var q2 = query0
       .withNodeId( nodeId )
       .withStatuses( MItemStatuses.advBusy )

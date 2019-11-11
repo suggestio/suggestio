@@ -65,7 +65,7 @@ object HashesHex {
     (
       Validation.liftNel( hashesHex.size )( { _ !=* mustBeHashes.size }, ePrefix + "size" ) |@|
       Validation.liftNel( hashesHex.keySet ) ( { _ !=* mustBeHashes }, ePrefix + "set" ) |@|
-      ScalazUtil.validateAll(hashesHex)(hashHexPairV)
+      ScalazUtil.validateAll(hashesHex.to(Iterable))(hashHexPairV)
     ) { (_,_,_) => hashesHex }
   }
 

@@ -52,7 +52,7 @@ sealed trait IPriceDslTerm extends NonEmpty {
 
   /** Разделить текущий терм на список термов по суммарторам, которые выкидываются.
     * Полезно для детализации рассчёта по составляющим. */
-  final def splitOnSum: TraversableOnce[IPriceDslTerm] = {
+  final def splitOnSum: IterableOnce[IPriceDslTerm] = {
     splitOnSumUntil(_ => true)
   }
 
@@ -63,18 +63,18 @@ sealed trait IPriceDslTerm extends NonEmpty {
     *          Если false, то текущий элемент будет возвращён списком as-is, и обходчик перейдёт к след.элементу.
     * @return Обычно итератор термов. Но может быть и коллекция.
     */
-  def splitOnSumUntil(f: IPriceDslTerm => Boolean): TraversableOnce[IPriceDslTerm] = {
+  def splitOnSumUntil(f: IPriceDslTerm => Boolean): IterableOnce[IPriceDslTerm] = {
     if (f(this))
       _doSplitUntil(f)
     else
       _doNotSplitThis
   }
-  protected def _doSplitUntil(f: IPriceDslTerm => Boolean): TraversableOnce[IPriceDslTerm]
+  protected def _doSplitUntil(f: IPriceDslTerm => Boolean): IterableOnce[IPriceDslTerm]
   protected def _doNotSplitThis = this :: Nil
 
 
   /** Сплиттинг по сумматорам в глубину, но только до уровня item'ов. */
-  def splitOnSumTillItemLevel: TraversableOnce[IPriceDslTerm] = {
+  def splitOnSumTillItemLevel: IterableOnce[IPriceDslTerm] = {
     splitOnSumUntil {
       // Маппер содержит причину трансформации. Резать можно только до уровня item'а.
       case m: Mapper =>
@@ -111,7 +111,7 @@ sealed trait IPriceDslTerm extends NonEmpty {
         children
           .iterator
           .flatMap(_.findOpt(f))
-          .toStream
+          .buffered
           .headOption
       }
   }
@@ -166,7 +166,7 @@ case class BaseTfPrice(
   extends IPriceDslTerm
 {
 
-  override protected def _doSplitUntil(f: (IPriceDslTerm) => Boolean): TraversableOnce[IPriceDslTerm] = {
+  override protected def _doSplitUntil(f: (IPriceDslTerm) => Boolean): IterableOnce[IPriceDslTerm] = {
     _doNotSplitThis
   }
 
@@ -216,11 +216,13 @@ final case class Mapper(
     }
   }
 
-  override protected def _doSplitUntil(f: (IPriceDslTerm) => Boolean): TraversableOnce[IPriceDslTerm] = {
+  override protected def _doSplitUntil(f: (IPriceDslTerm) => Boolean): IterableOnce[IPriceDslTerm] = {
     // underlying-множитель будет разбит, если содержит суммартор в своём составе.
     // На каждый разбитое слагаемое надо переналожить текущий маппер.
     for {
-      term <- underlying.splitOnSumUntil(f).toIterator
+      term <- underlying
+        .splitOnSumUntil(f)
+        .iterator
     } yield {
       withUnderlying( term )
     }
@@ -293,7 +295,7 @@ case class Sum(
     }
   }
 
-  override protected def _doSplitUntil(f: (IPriceDslTerm) => Boolean): TraversableOnce[IPriceDslTerm] = {
+  override protected def _doSplitUntil(f: (IPriceDslTerm) => Boolean): IterableOnce[IPriceDslTerm] = {
     // Суммартор разбиваем, его куски возможно тоже содержат сумматоры: их тоже дробим.
     children
       .iterator

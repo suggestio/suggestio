@@ -29,8 +29,8 @@ object MLocEnvJvm {
           beaconsE      <- beaconsB.bind   (k(BLE_BEACONS_FN), params)
         } yield {
           for {
-            geoLocOpt   <- geoLocOptE.right
-            beacons     <- beaconsE.right
+            geoLocOpt   <- geoLocOptE
+            beacons     <- beaconsE
           } yield {
             MLocEnv(
               geoLocOpt   = geoLocOpt,

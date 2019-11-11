@@ -44,7 +44,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
     new QueryStringBindableImpl[String] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, String]] = {
         for (rawEith <- strB.bind(key, params)) yield {
-          rawEith.right.flatMap { raw =>
+          rawEith.flatMap { raw =>
             try {
               // TODO Может спилить отсюда проверку эту?
               UuidUtil.base64ToUuid(raw)
@@ -101,12 +101,12 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
           compressAlgoOptE    <- compressAlgoOptB.bind(k(COMPRESS_ALGO_FN), params2)
         } yield {
           for {
-            imgId             <- nodeIdE.right
-            dynFormat         <- dynFormatE.right
-            imOpsOpt          <- imOpsOptE.right
-            compressAlgoOpt   <- compressAlgoOptE.right
+            imgId             <- nodeIdE
+            dynFormat         <- dynFormatE
+            imOpsOpt          <- imOpsOptE
+            compressAlgoOpt   <- compressAlgoOptE
           } yield {
-            val imOps = imOpsOpt.getOrElse(Nil)
+            val imOps = imOpsOpt getOrElse Nil
             val dynImgId = MDynImgId(
               rowKeyStr     = imgId,
               dynFormat     = dynFormat,

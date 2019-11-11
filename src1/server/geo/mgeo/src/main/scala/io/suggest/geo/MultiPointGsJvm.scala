@@ -24,7 +24,7 @@ object MultiPointGsJvm extends MultiPointShapeStatic {
   override def toEsShapeBuilder(gs: MultiPointGs) = ShapeBuilders.newMultiPoint( gsCoords2esCoords(gs) )
 
   def geoPoints2esCoords(points: Seq[MGeoPoint]): ju.List[Coordinate] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     points
       .map { GeoPoint.toJtsCoordinate }
       .asJava
@@ -40,11 +40,11 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
   override type Shape_t <: MultiPointShape
 
   /** Сборка immutable-коллекции из инстансов LatLng. */
-  def coords2latLngs(coords: TraversableOnce[MGeoPoint]): Stream[LngLat] = {
+  def coords2latLngs(coords: IterableOnce[MGeoPoint]): Seq[LngLat] = {
     coords
-      .toIterator
+      .iterator
       .map( GeoPoint.toLngLat )
-      .toStream
+      .toSeq
   }
 
   def gsCoords2esCoords(gs: Shape_t): ju.List[Coordinate] = {

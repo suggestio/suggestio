@@ -34,20 +34,20 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
                                intB: QueryStringBindable[Int]): QueryStringBindable[MNodeGeoLevel] = {
     new QueryStringBindableImpl[MNodeGeoLevel] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeGeoLevel]] = {
-        val nglOpt: Option[MNodeGeoLevel] = intB.bind(key, params)
-          .filter(_.isRight)
-          .flatMap { eith => MNodeGeoLevels.withIdOption(eith.right.get) }
+        val result = (for {
+          bindedE <- intB.bind(key, params)
+          binded  <- bindedE.toOption
+          ngl <- MNodeGeoLevels.withIdOption( binded )
+        } yield ngl)
           .orElse {
-            strB.bind(key, params)
-              .filter(_.isRight)
-              .flatMap { eith => MNodeGeoLevels.withNameOption(eith.right.get) }
+            for {
+              bindedE <- strB.bind(key, params)
+              binded  <- bindedE.toOption
+              ngl     <- MNodeGeoLevels.withNameOption( binded )
+            } yield ngl
           }
-        val result = nglOpt match {
-          case Some(ngl) =>
-            Right(ngl)
-          case None =>
-            Left("Unknown geo level id")
-        }
+          .toRight( "Unknown geo level id" )
+
         Some(result)
       }
 
@@ -70,7 +70,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
     new QueryStringBindableImpl[MSize2di] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSize2di]] = {
         strB.bind(key, params).map { maybeWxh =>
-          maybeWxh.right.flatMap { wxh =>
+          maybeWxh.flatMap { wxh =>
             val pr = parseWxH(wxh)
             if (pr.successful)
               Right(pr.get)

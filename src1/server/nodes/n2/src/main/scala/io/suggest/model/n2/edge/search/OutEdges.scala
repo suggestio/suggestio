@@ -22,12 +22,12 @@ object OutEdges extends MacroLogsImpl {
   private def _isToAssignQueryName = LOGGER.underlying.isTraceEnabled
 
   /** Сборка edge-критериев в nested query. */
-  private def _crs2query(crs: TraversableOnce[Criteria]): QueryBuilder = {
+  private def _crs2query(crs: IterableOnce[Criteria]): QueryBuilder = {
     val nestPath = E_OUT_FN
     val withQname = _isToAssignQueryName
 
     val clauses = (for {
-      oe <- crs.toIterator
+      oe <- crs.iterator
       // Сборка nested queries.
       q <- {
         // TODO Opt Тут куча вложенных bool-query, а можно сделать одну bool-query. Это это будет проще и красивее.
@@ -100,7 +100,7 @@ object OutEdges extends MacroLogsImpl {
               _withGjsCompatFilter(qb0)
             }
             // Объединяем сгенеренные queries в одну.
-            val queries = queriesIter.toStream
+            val queries = queriesIter.toList
             if (queries.tail.isEmpty) {
               queries.head
             } else {
@@ -271,7 +271,7 @@ object OutEdges extends MacroLogsImpl {
         _qn.queryName(s"nested: $nestPath must?${oe.must} cr=$oe")
       MWrapClause(oe.must, _qn)
     })
-      .toStream
+      .toSeq
 
     // Объеденить запросы в единый запрос.
     IMust.maybeWrapToBool(clauses)

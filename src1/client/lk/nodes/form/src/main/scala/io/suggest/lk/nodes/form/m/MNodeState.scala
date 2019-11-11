@@ -64,7 +64,7 @@ object MNodeState
 
   override type T = MNodeState
 
-  override protected def _subNodesOf(node: MNodeState): TraversableOnce[MNodeState] = {
+  override protected def _subNodesOf(node: MNodeState): IterableOnce[MNodeState] = {
     node.children.getOrElse(Nil)
   }
 
@@ -85,7 +85,7 @@ object MNodeState
     )
   }
 
-  override def withNodeChildren(node: MNodeState, children2: TraversableOnce[MNodeState]): MNodeState = {
+  override def withNodeChildren(node: MNodeState, children2: IterableOnce[MNodeState]): MNodeState = {
     // Хз, надо ли проверять Pot.empty. Скорее всего, этот метод никогда не вызывается для Empty Pot.
     if (node.children.isEmpty) {
       LOG.warn( WarnMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )

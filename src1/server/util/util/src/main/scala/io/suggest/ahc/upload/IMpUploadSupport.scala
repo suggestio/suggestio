@@ -31,10 +31,10 @@ trait IMpUploadSupport {
    * @param args Аргументы для аплоада.
    * @return Фьючерс с ответом сервера.
    */
-  def mpUpload(args: IMpUploadArgs): Future[WSResponse]
+  def mpUpload(args: MpUploadArgs): Future[WSResponse]
 
   def uploadArgsSimple(file: File, ct: String, url: Option[String], fileName: String,
-                       oa1AcTok: Option[RequestToken] = None): IMpUploadArgs = {
+                       oa1AcTok: Option[RequestToken] = None): MpUploadArgs = {
     val upPart = new FilePart(mpFieldNameDflt, file, ct, null, fileName)
     MpUploadArgs(
       parts = Seq(upPart),
@@ -62,19 +62,19 @@ trait MpUploadSupportDflt
    * @param args Аргументы upload.
    * @return
    */
-  def getUploadUrl(args: IMpUploadArgs): String
+  def getUploadUrl(args: MpUploadArgs): String
 
   /** Создание экземпляра нового реквеста. */
-  def newRequest(args: IMpUploadArgs, client: AsyncHttpClient) = {
+  def newRequest(args: MpUploadArgs, client: AsyncHttpClient) = {
     client.preparePost( getUploadUrl(args) )
       .setHeader(HeaderNames.CONTENT_TYPE, MimeConst.MULTIPART_FORM_DATA)
   }
 
   /** Является ли ответ по запросу правильным. false - если ошибка. */
-  def isRespOk(args: IMpUploadArgs, resp: WSResponse): Boolean
+  def isRespOk(args: MpUploadArgs, resp: WSResponse): Boolean
 
   /** Запуск HTTP-запроса. */
-  def mkRequest(args: IMpUploadArgs): Future[WSResponse] = {
+  def mkRequest(args: MpUploadArgs): Future[WSResponse] = {
     // TODO Play 2.5 использовать play.api.ws MultiPart вместо прямого дерганья http-клиента.
     val ningClient = wsClient.underlying[AsyncHttpClient]
     val rb = newRequest(args, ningClient)
@@ -87,7 +87,7 @@ trait MpUploadSupportDflt
   }
 
   /** Обработать запрос, отсеивая ошибки. */
-  def processResponse(args: IMpUploadArgs, resp: WSResponse): Future[WSResponse] = {
+  def processResponse(args: MpUploadArgs, resp: WSResponse): Future[WSResponse] = {
     if ( isRespOk(args, resp) ) {
       Future.successful(resp)
     } else {
@@ -96,7 +96,7 @@ trait MpUploadSupportDflt
     }
   }
 
-  override def mpUpload(args: IMpUploadArgs): Future[WSResponse] = {
+  override def mpUpload(args: MpUploadArgs): Future[WSResponse] = {
     FutureUtil.tryCatchFut {
       for {
         resp0 <- mkRequest(args)
@@ -110,28 +110,12 @@ trait MpUploadSupportDflt
 }
 
 
-/** Аргументы для запуска аплода. */
-trait IMpUploadArgs {
-
-  /** Части для запроса. */
-  def parts     : TraversableOnce[Part]
-
-  /** Ссылка для аплоада, если динамическая. */
-  def url       : Option[String]
-
-  /** access token, если oauth1 сервис. Иначе None. */
-  def oa1AcTok  : Option[RequestToken]
-
-}
-
-
-/** Дефолтовая реализацяи [[IMpUploadArgs]]. */
+/** Дефолтовая реализацяи [[MpUploadArgs]]. */
 case class MpUploadArgs(
-  override val parts    : Traversable[Part],
-  override val url      : Option[String] = None,
-  override val oa1AcTok : Option[RequestToken] = None
-)
-  extends IMpUploadArgs
+                         parts    : Seq[Part],
+                         url      : Option[String] = None,
+                         oa1AcTok : Option[RequestToken] = None
+                       )
 
 
 /** Сервис отказал в аплоаде. */

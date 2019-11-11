@@ -22,7 +22,7 @@ object MGeoPointJs {
   }
 
   /** Массив координат в стандартной нотации: [lon,lat] т.е. [x,y]. */
-  def toArray(gp: MGeoPoint): GjCoord_t = js.Array[Double](gp.lon.doubleValue(), gp.lat.doubleValue())
+  def toArray(gp: MGeoPoint): GjCoord_t = js.Array[Double](gp.lon.doubleValue, gp.lat.doubleValue)
 
   def toJsArray(gp: MGeoPoint) = toArray(gp)//.asInstanceOf[ js.Array[js.Any] ]
 
@@ -34,7 +34,7 @@ object MGeoPointJs {
   }
 
   /** leaflet использовать массивы в традиционной нотации: [y, x] то бишь [lat, lon]. */
-  def toLatLngArray(gp: MGeoPoint) = js.Array[Double](gp.lat.doubleValue(), gp.lon.doubleValue())
+  def toLatLngArray(gp: MGeoPoint) = js.Array[Double](gp.lat.doubleValue, gp.lon.doubleValue)
 
   def toGjPoint(gp: MGeoPoint): GjGeometry = {
     GjGeometry(
@@ -44,8 +44,8 @@ object MGeoPointJs {
   }
 
   def toJsObject(gp: MGeoPoint) = js.Dictionary[Double](
-    Lat.QS_FN -> gp.lat.doubleValue(),
-    Lon.QS_FN -> gp.lon.doubleValue()
+    Lat.QS_FN -> gp.lat.doubleValue,
+    Lon.QS_FN -> gp.lon.doubleValue
   )
 
 }

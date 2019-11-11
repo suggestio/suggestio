@@ -63,7 +63,7 @@ class MDebugs @Inject() (
   def deleteByObjectId(objectId: Gid_t*): DBIOAction[Int, NoStream, Effect.Write] = {
     deleteByObjectIds( objectId )
   }
-  def deleteByObjectIds(objectId: Traversable[Gid_t]): DBIOAction[Int, NoStream, Effect.Write] = {
+  def deleteByObjectIds(objectId: Iterable[Gid_t]): DBIOAction[Int, NoStream, Effect.Write] = {
     query
       .filter(_.objectId inSet objectId)
       .delete

@@ -39,7 +39,6 @@ class Crontab @Inject() (
   extends MacroLogsImplLazy
 {
 
-  import LOGGER._
   import mCommonDi._
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
@@ -75,10 +74,10 @@ class Crontab @Inject() (
           c.cancel()
         } catch {
           case ex: Throwable =>
-            warn(s"Cannot stop cron task $c", ex)
+            LOGGER.warn(s"Cannot stop cron task $c", ex)
         }
       }
-      trace(s"Stopped all ${_startedTimers.size} crontab tasks.")
+      LOGGER.trace(s"Stopped all ${_startedTimers.size} crontab tasks.")
       _startedTimers = Nil
     }
   }
@@ -87,12 +86,12 @@ class Crontab @Inject() (
   // API ---------------------------------------
 
   def sched: Scheduler = {
-    try
+    try {
       actorSystem.scheduler
-    catch {
+    } catch {
       // There is no started application
       case e: RuntimeException =>
-        warn(s"${e.getClass.getSimpleName}: play-akka failed. Wait and retry... :: ${e.getMessage}", e)
+        LOGGER.warn(s"${e.getClass.getSimpleName}: play-akka failed. Wait and retry... :: ${e.getMessage}", e)
         Thread.sleep(250)
         sched
     }
@@ -102,28 +101,30 @@ class Crontab @Inject() (
   def startTimers(): List[Cancellable] = {
     val _sched = sched
 
-    val iter = for {
+    (for {
       clazz <- TASK_PROVIDERS.iterator
       task  <- clazz.cronTasks()
     } yield {
-      trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")
-      _sched.schedule(task.startDelay, task.every) {
-        try {
-          trace(s"Executing task ${task.displayName}...")
-          task.run()
-        } catch {
-          case ex: Throwable =>
-            error(s"Cron task ${clazz.getClass.getSimpleName}/'${task.displayName}' failed to complete", ex)
+      LOGGER.trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")
+      _sched.scheduleWithFixedDelay(task.startDelay, task.every) {
+        new Runnable {
+          override def run(): Unit = {
+            try {
+              LOGGER.trace(s"Executing task ${task.displayName}...")
+              task.run()
+            } catch {
+              case ex: Throwable =>
+                LOGGER.error(s"Cron task ${clazz.getClass.getSimpleName}/'${task.displayName}' failed to complete", ex)
+            }
+          }
         }
       }
-    }
-
-    iter.toList
+    })
+      .toList
   }
 
-  def stopTimers(timers: Seq[Cancellable]) {
+  def stopTimers(timers: Seq[Cancellable]): Unit =
     timers.foreach { _.cancel() }
-  }
 
 }
 
@@ -132,11 +133,6 @@ class Crontab @Inject() (
 trait ICronTasksProvider {
 
   /** Список задач, которые надо вызывать по таймеру. */
-  def cronTasks(): TraversableOnce[MCronTask]
-}
+  def cronTasks(): Iterable[MCronTask]
 
-
-/** При использование stackable trait и abstract override имеет смысл подмешивать этот трейт с дефолтовой пустой реализацией. */
-trait CronTasksProviderEmpty extends ICronTasksProvider {
-  override def cronTasks(): TraversableOnce[MCronTask] = Nil
 }

@@ -103,7 +103,7 @@ class MPersonIdentModel @Inject()(
         * @param password Пароль.
         * @return Узел.
         */
-      def onlyWithPassword(password: String): Stream[MNode] = {
+      def onlyWithPassword(password: String): LazyList[MNode] = {
         (for {
           mnode <- nodesFound.iterator
           pwEdge <- mnode.edges.withPredicateIter( MPredicates.Ident.Password )
@@ -112,7 +112,7 @@ class MPersonIdentModel @Inject()(
         } yield {
           mnode
         })
-          .toStream
+          .to( LazyList )
       }
 
     }

@@ -35,13 +35,11 @@ class QsbSigner(secretKey: String, signKeyName: String)
   with MacroLogsImpl
 {
 
-  import LOGGER._
-
   if (secretKey == null)
     throw new IllegalStateException(getClass.getSimpleName + " not initialized: missing secret key")
 
   /** Итератор по карте параметров, который возвращает только подписанные параметры. */
-  def onlyParamsForKey(key: String, params: Map[String, Seq[String]]): Iterator[(String, Seq[String])] = {
+  def onlyParamsForKey(key: String, params: Iterable[(String, Seq[String])]): Iterator[(String, Seq[String])] = {
     params
       .iterator
       .filter { case (k, _) => k.startsWith(key) && k != signKeyName }
@@ -54,32 +52,38 @@ class QsbSigner(secretKey: String, signKeyName: String)
 
 
   /** Посчитать подпись для указанной карты параметров. */
-  def mkSignForMap(key: String, params: Map[String, Seq[String]]): String = {
+  def mkSignForMap(key: String, params: Iterable[(String, Seq[String])]): String = {
     val params2 = onlyParamsForKey(key, params)
     mkSignForMap(params2)
   }
-  def mkSignForMap(params: TraversableOnce[(String, Seq[String])]): String = {
+  def mkSignForMap(params: IterableOnce[(String, Seq[String])]): String = {
     val mac = mkMac()
     // Объявляем вне цикла используемые разделители ключей, значений и их пар:
     val kvDelim = "=".getBytes
     val kkDelim = "&".getBytes
+
     // Нужно отсортировать все данные:
-    params.toIterator
-      .map { case (k, vs) =>
-        k -> vs.sorted
+    for {
+      (k, vs) <- {
+        params
+          .iterator
+          .map { case (a, avs) =>
+            a -> avs.sorted
+          }
+          .toSeq
+          .sortBy(_._1)
       }
-      .toSeq
-      .sortBy(_._1)
+
+      v <- vs
+    } {
       // Последовательно закидываем все данные в mac-аккамулятор:
-      .foreach { case (k, vs) =>
-        vs.foreach { v =>
-          // Имитируем ввода данных типа "k=aasdasd&b=123&..."
-          mac.update(k.getBytes)
-          mac.update(kvDelim)
-          mac.update(v.getBytes)
-          mac.update(kkDelim)
-        }
-      }
+      // Имитируем ввода данных типа "k=aasdasd&b=123&..."
+      mac.update(k.getBytes)
+      mac.update(kvDelim)
+      mac.update(v.getBytes)
+      mac.update(kkDelim)
+    }
+
     // Переводим результат в строку.
     Hex.encodeHexString(mac.doFinal())
   }
@@ -94,16 +98,16 @@ class QsbSigner(secretKey: String, signKeyName: String)
    */
   override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Map[String, Seq[String]]]] = {
     for (maybeSignature <- strB.bind(signKeyName, params)) yield {
-      maybeSignature.right.flatMap { signature =>
-        val pfk = onlyParamsForKey(key, params).toStream
-        trace(s"bind($key): Params:\n All: ${params.mkString(" & ")};\n onlyForKey: ${pfk.mkString(" & ")}")
+      maybeSignature.flatMap { signature =>
+        val pfk = onlyParamsForKey(key, params).toSeq
+        LOGGER.trace(s"bind($key): Params:\n All: ${params.mkString(" & ")};\n onlyForKey: ${pfk.mkString(" & ")}")
 
         val realSignature = mkSignForMap(pfk)
         if (realSignature equalsIgnoreCase signature) {
           // Всё ок, собираем подходящие результаты в кучу.
           Right(pfk.toMap)
         } else {
-          warn(s"Invalid QSB signature for key '$key': expected=$signature real=$realSignature\n params = $params")
+          LOGGER.warn(s"Invalid QSB signature for key '$key': expected=$signature real=$realSignature\n params = $params")
           Left(SIG_INVALID_MSG)
         }
       }
@@ -114,7 +118,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
   def signedOrNone(key: String, params: Map[String, Seq[String]]): Option[Map[String, Seq[String]]] = {
     bind(key, params)
       .flatMap {
-        _.right.toOption
+        _.toOption
       }
   }
 
@@ -137,12 +141,14 @@ class QsbSigner(secretKey: String, signKeyName: String)
    * @return Подписанная строка qs.
    */
   def mkSigned(key: String, qsStr: String): String = {
-    val paramsMap = FormUrlEncodedParser.parse(qsStr)
+    val paramsMap = FormUrlEncodedParser
+      .parse(qsStr)
       // play-2.5: почему-то этот метод для пустой строки возвращает "" -> ArrayBuffer().
+      .view
       .filterKeys(_.nonEmpty)
 
-    val signature = mkSignForMap(key, paramsMap)
-    trace(s"mkSigned($key):\n qsStr = $qsStr\n paramsMap = ${paramsMap.mkString(" & ")}\n signature = $signature")
+    val signature = mkSignForMap(key, paramsMap.toMap)
+    LOGGER.trace(s"mkSigned($key):\n qsStr = $qsStr\n paramsMap = ${paramsMap.mkString(" & ")}\n signature = $signature")
 
     val sb = new StringBuilder(qsStr)
     if (!qsStr.isEmpty)

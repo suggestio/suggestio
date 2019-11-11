@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.stat
 
+import scala.collection.View
 import scala.scalajs.js
 
 /**
@@ -45,8 +46,8 @@ trait RunningAverage {
 
   def divide(a: V, divider: Int): V
 
-  def measurments: Seq[V] = {
-    (_measurments: Seq[V])
+  def measurments: collection.View[V] = {
+    (_measurments: collection.Seq[V])
       .view(I0, _countMeasured)
   }
 
@@ -82,7 +83,7 @@ trait TopBottomFiltered extends RunningAverage {
     */
   def filteredPerSide: Double = 0.1
 
-  override def measurments: Seq[V] = {
+  override def measurments: View[V] = {
     val measurments = super.measurments
     val l = countMeasured
     val dropPerSide = Math.round( l * filteredPerSide ).toInt

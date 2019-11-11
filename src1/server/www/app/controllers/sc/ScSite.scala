@@ -197,7 +197,7 @@ trait ScSite
       } yield {
         new ScSiteArgs {
           override def nodeOpt    = _nodeOpt
-          override def headAfter: Traversable[Html] = {
+          override def headAfter: Iterable[Html] = {
             super.headAfter ++ _headAfter
           }
           override def scriptHtml = _scriptHtml

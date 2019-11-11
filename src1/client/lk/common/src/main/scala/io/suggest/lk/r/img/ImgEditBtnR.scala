@@ -64,7 +64,7 @@ class ImgEditBtnR(
       }
     }
 
-    private def _picFileChanged(files: Seq[dom.File]): Callback = {
+    private def _picFileChanged(files: collection.Seq[dom.File]): Callback = {
       dispatchOnProxyScopeCBf($) { props: Props =>
         PictureFileChanged(files, props.value.resKey)
       }

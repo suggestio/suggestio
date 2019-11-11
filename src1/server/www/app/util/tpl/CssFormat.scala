@@ -13,9 +13,9 @@ object CssFormat {
 
   /** Добавить пробелы в коллекцию/итератор и вернуть новый итератор.
     * Перед каждым исходным элементом добавляется по одному пробелу. */
-  def classesPreSpaced(cssClasses: TraversableOnce[String]): Iterator[String] = {
+  def classesPreSpaced(cssClasses: IterableOnce[String]): Iterator[String] = {
     cssClasses
-      .toIterator
+      .iterator
       .filter(!_.isEmpty)
       .flatMap { cc =>
         HtmlConstants.SPACE :: cc :: Nil

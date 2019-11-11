@@ -62,12 +62,12 @@ object MUploadTargetQs extends SecretKeyInit {
           colorDetectE      <- cdArgsOptB.bind        ( k(F.COLOR_DETECT_FN), params )
         } yield {
           for {
-            fileProps       <- filePropsE.right
-            fileHandlerOpt  <- fileHandlerOptE.right
-            personIdOpt     <- personIdOptE.right
-            validTill       <- validTillE.right
-            storage         <- storageE.right
-            colorDetect     <- colorDetectE.right
+            fileProps       <- filePropsE
+            fileHandlerOpt  <- fileHandlerOptE
+            personIdOpt     <- personIdOptE
+            validTill       <- validTillE
+            storage         <- storageE
+            colorDetect     <- colorDetectE
           } yield {
             MUploadTargetQs(
               fileProps     = fileProps,

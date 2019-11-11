@@ -24,7 +24,7 @@ object GeometryCollectionGsJvm extends GsStaticJvm {
       gs.geoms
         .iterator
         .map( GeoShapeJvm.toPlayGeoJsonGeom )
-        .toStream
+        .toSeq
     )
   }
 

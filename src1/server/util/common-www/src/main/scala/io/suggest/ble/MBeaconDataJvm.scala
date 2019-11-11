@@ -28,8 +28,8 @@ object MBeaconDataJvm {
           distanceCmE     <- intB.bind  (k(DISTANCE_CM_FN),  params)
         } yield {
           for {
-            uuidStr       <- uuidStrE.right
-            distanceCm    <- distanceCmE.right
+            uuidStr       <- uuidStrE
+            distanceCm    <- distanceCmE
           } yield {
             MUidBeacon(
               uid         = uuidStr,

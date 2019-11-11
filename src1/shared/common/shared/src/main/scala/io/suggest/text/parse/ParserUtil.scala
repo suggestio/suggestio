@@ -26,12 +26,12 @@ object ParserUtil {
   }
 
   /** Регэксп для человеческих double-чисел. */
-  final def DOUBLE_RE_STR = """-?(\d+([.,]+\d*)?|\d*[.,]+\d+)"""
+  final def DOUBLE_RE_STR = """-?(\\d+([.,]+\\d*)?|\\d*[.,]+\\d+)"""
   final def doubleRE = DOUBLE_RE_STR.r
 
   /** Генератор регэкспов для форматированных float-чисел. */
   def floatGroupedRE(groupingSepRE: String, fracSepRE: String): String = {
-    s"""(?U)-?(\d(\d|$groupingSepRE)*($fracSepRE+\d*)?|\d*$fracSepRE+\d+)"""
+    s"""(?U)-?(\\d(\\d|$groupingSepRE)*($fracSepRE+\\d*)?|\\d*$fracSepRE+\\d+)"""
   }
 
 

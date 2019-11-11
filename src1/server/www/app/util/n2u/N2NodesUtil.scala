@@ -19,7 +19,7 @@ class N2NodesUtil {
   def madProducerId(mad: MNode): Option[String] = {
     mad.edges
       .withPredicateIterIds( MPredicates.OwnedBy )
-      .toStream
+      .buffered
       .headOption
   }
 
@@ -42,8 +42,9 @@ class N2NodesUtil {
   }
 
   /** Попытаться узнать ресиверов в поисковых критериях эджей. */
-  def receiverIds(crs: TraversableOnce[Criteria]): Iterator[String] = {
-    crs.toIterator
+  def receiverIds(crs: IterableOnce[Criteria]): Iterator[String] = {
+    crs
+      .iterator
       .filter { _.containsPredicate(MPredicates.Receiver) }
       .flatMap( _.nodeIds )
   }
@@ -70,7 +71,7 @@ class N2NodesUtil {
     // Тот редкий случай, когда в карте эджей можно поискать по ключу.
     mad.edges
       .withNodePred(nodeId, MPredicates.Receiver)
-      .toStream
+      .buffered
       .headOption
   }
 

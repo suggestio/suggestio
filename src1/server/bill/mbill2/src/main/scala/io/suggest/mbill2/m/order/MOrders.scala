@@ -9,7 +9,6 @@ import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, Find
 import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateStatusSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.util.PgaNamesMaker
-import io.suggest.primo.id.OptId
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import slick.lifted.ProvenShape
 
@@ -111,9 +110,9 @@ class MOrders @Inject() (
   }
 
 
-  def countByIdStatusContract(ids: Traversable[Gid_t],
-                              statuses: Traversable[MOrderStatus] = Nil,
-                              contractIds: Traversable[Gid_t] = Nil
+  def countByIdStatusContract(ids: Iterable[Gid_t],
+                              statuses: Iterable[MOrderStatus] = Nil,
+                              contractIds: Iterable[Gid_t] = Nil
                              ): DBIOAction[Int, NoStream, Effect.Read] = {
     var q = if (ids.isEmpty)
       query

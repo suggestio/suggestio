@@ -155,7 +155,7 @@ class Umap @Inject() (
     val features: Seq[Feature] = {
 
       val shapeFeaturesIter = for {
-        mnode     <- umapUtil.prepareDataLayerGeos(nodes.iterator)
+        mnode     <- umapUtil.prepareDataLayerGeos(nodes).iterator
         locEdge   <- mnode.edges.withPredicateIter( MPredicates.NodeLocation)
         shape     <- locEdge.info.geoShapes
         if shape.shape.shapeType.isGeoJsonCompatible
@@ -282,7 +282,9 @@ class Umap @Inject() (
 
       val updAllFut = mnodesMapFut.flatMap { mnodesMap =>
         // Для каждого узла произвести персональное обновление.
-        Future.traverse( nodeFeatures ) { case (adnId, features) =>
+        // TODO scala-2.13.1 - почему-то проблемы, если занести to() внутрь traverse(...)
+        val mnodesInfo = nodeFeatures.to(Iterable)
+        Future.traverse( mnodesInfo ) { case (adnId, features) =>
 
           // Собираем шейпы для узла
           val shapes = features

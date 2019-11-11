@@ -4,7 +4,8 @@ import io.suggest.common.empty.{EmptyUtil, IIsEmpty}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 
-import scala.collection.{AbstractIterable, AbstractIterator, AbstractSeq}
+import scala.collection.{AbstractIterable, AbstractIterator}
+import scala.collection.immutable.AbstractSeq
 import scalaz.{Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
 
@@ -31,14 +32,13 @@ object ScalazUtil {
     * @see Пародия на код, взятый отсюда [[https://www.47deg.com/blog/fp-for-the-average-joe-part-1-scalaz-validation/]]
     * @return Результат валидации.
     */
-  // TODO Сделать B[_] вместо B?
+  // TODO Map[_,_] перестал работать в scala-2.13 с scalaz-7.2.29.
   def validateAll[F[_] : Foldable, A, B: Monoid, E]
                  (in: F[A])
                  (out: A => ValidationNel[E, B]): ValidationNel[E, B] = {
-    in.foldMap { a =>
-      out(a)
-    }
+    in.foldMap(out)
   }
+
 
   def liftNelOptMust[E, T](opt: Option[T], mustBeSome: Boolean, errMsg: => E)(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
     if (mustBeSome && opt.isDefined)

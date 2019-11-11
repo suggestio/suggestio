@@ -169,7 +169,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
 
   import java.{util => ju}
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   /** Общий код парсинга и добавления элементов в хранилище вынесен сюда. */
   private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {

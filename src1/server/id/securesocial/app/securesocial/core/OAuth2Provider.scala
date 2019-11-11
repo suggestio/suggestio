@@ -29,7 +29,7 @@ import play.api.mvc._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import securesocial.util.LoggerImpl
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait OAuth2Client {
@@ -54,7 +54,7 @@ object OAuth2Client {
         OAuth2Constants.GrantType -> Seq(OAuth2Constants.AuthorizationCode),
         OAuth2Constants.Code -> Seq(code),
         OAuth2Constants.RedirectUri -> Seq(callBackUrl)
-      ) ++ settings.accessTokenUrlParams.mapValues(Seq(_))
+      ) ++ settings.accessTokenUrlParams.view.mapValues(Seq(_))
       httpService.url(settings.accessTokenUrl).post(params).map(builder)
     }
 
@@ -224,12 +224,17 @@ class OAuth2SettingsUtil @Inject() (
       val authorizationUrlParams: Map[String, String] =
         config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AuthorizationUrlParams).map { o =>
           o.unwrapped.asScala
+            .view
             .mapValues(_.toString)
             .toMap
         }.getOrElse(Map())
 
       val accessTokenUrlParams: Map[String, String] = config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AccessTokenUrlParams).map { o =>
-        o.unwrapped.asScala.mapValues(_.toString).toMap
+        o.unwrapped
+          .asScala
+          .view
+          .mapValues(_.toString)
+          .toMap
       }.getOrElse(Map())
       OAuth2Settings(authorizationUrl, accessToken, clientId, clientSecret, scope, authorizationUrlParams, accessTokenUrlParams)
     }

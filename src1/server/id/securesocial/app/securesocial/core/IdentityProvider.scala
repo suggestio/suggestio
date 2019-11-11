@@ -77,7 +77,7 @@ object IdentityProvider extends LazyLoggerImpl {
 
   def SessionId = "sid"
 
-  def throwMissingPropertiesException(id: String) {
+  def throwMissingPropertiesException(id: String): Unit = {
     val msg = s"[securesocial] Missing properties for provider '$id'. Verify your configuration file is properly set."
     logger.error(msg)
     throw new RuntimeException(msg)

@@ -123,7 +123,7 @@ class Img @Inject() (
           Ok.sendFile(
             content   = imgFile,
             inline    = true,
-            fileName  = { _ => mimg.dynImgId.fileName }
+            fileName  = { _ => Some(mimg.dynImgId.fileName) }
           )
             .as {
               Try( MimeUtilJvm.probeContentType(imgFile.toPath) )

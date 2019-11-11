@@ -70,7 +70,7 @@ class SiowebSupActor @Inject() (
   /**
    * Нужно запустить все дочерние процессы.
    */
-  override def preStart() {
+  override def preStart(): Unit = {
     super.preStart()
     // Запускаем все дочерние процессы.
     siowebNotifier.startLink(context)

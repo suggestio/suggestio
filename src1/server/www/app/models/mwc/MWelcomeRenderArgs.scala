@@ -37,7 +37,7 @@ final case class MWelcomeRenderArgs(
 
 
   def allImgsWithWhInfoIter: Iterator[MImgWithWhInfo] = {
-    (bg.right.toOption :: fgImage :: Nil)
+    (bg.toOption :: fgImage :: Nil)
       .iterator
       .flatten
   }

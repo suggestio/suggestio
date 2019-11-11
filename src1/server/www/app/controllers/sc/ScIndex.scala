@@ -241,7 +241,7 @@ trait ScIndex
         val fut1 = for (rs <- nglsResultsFut) yield {
           rs.iterator
             .flatten
-            .foldLeft( (false, List.empty[MIndexNodeInfo]) ) {
+            .foldLeft( (false: Boolean, List.empty[MIndexNodeInfo]) ) {
               case (acc0 @ (haveNonRcvrNode, nodeInfoAcc0), nodeInfo) =>
                 if (!nodeInfo.isRcvr) {
                   if (haveNonRcvrNode) {
@@ -418,7 +418,7 @@ trait ScIndex
       def welcomeInfoOptFut: Future[Option[MWelcomeInfo]] = {
         welcomeOptFut.flatMap { wcOpt =>
           FutureUtil.optFut2futOpt(wcOpt) { wc =>
-            val bgImageFut = _imgWithWhOpt2mediaInfo( wc.bg.right.toOption )
+            val bgImageFut = _imgWithWhOpt2mediaInfo( wc.bg.toOption )
             for {
               fgImage <- _imgWithWhOpt2mediaInfo( wc.fgImage )
               bgImage <- bgImageFut
@@ -462,7 +462,7 @@ trait ScIndex
           // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
           val nodeLocEdges = mnode.edges
             .withPredicateIter( MPredicates.NodeLocation )
-            .toStream
+            .to( LazyList )
 
           // Ленивая коллекция гео-точек для NodeLocation-эджей
           val edgesPoints = nodeLocEdges
@@ -490,10 +490,11 @@ trait ScIndex
             .filter { _ => edgesPoints.lengthCompare(1) > 0 }
             .map { geoLoc =>
               // Есть геолокация. Найти ближайшую точку среди имеющихся.
+              import Ordering.Float.TotalOrdering
               edgesPoints.minBy { centerPoint =>
                 CoordOps.distanceXY[MGeoPoint, GeoCoord_t]( centerPoint, geoLoc.point )
                   .abs
-                  .doubleValue()
+                  .doubleValue
               }
             }
             // Нет геолокации - ищем первую попавщуюся центральную точку:

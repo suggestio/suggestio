@@ -1,5 +1,7 @@
 package io.suggest.math
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -31,6 +33,7 @@ object SimpleArithmetics {
     with Fractional[Int]
   {
     override def div(x: Int, y: Int): Int = x / y
+    override def parseString(str: String): Option[Int] = Try(str.toInt).toOption
   }
 
   implicit class SimpleArithmeticsOps[T, Value_t](val v0: T )(implicit support: SimpleArithmetics[T, Value_t]) {

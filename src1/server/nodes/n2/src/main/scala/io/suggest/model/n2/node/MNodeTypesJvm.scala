@@ -70,7 +70,7 @@ object MNodeTypesJvm {
         mnode.edges
           .iterator
           .flatMap(_.info.tags)
-          .toStream
+          .buffered
           .headOption
 
       // Для остальных типов узлов это всё неактуально.
@@ -85,7 +85,7 @@ object MNodeTypesJvm {
     new QueryStringBindableImpl[MNodeType] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeType]] = {
         for (strIdEith <- strB.bind(key, params)) yield {
-          strIdEith.right.flatMap { strId =>
+          strIdEith.flatMap { strId =>
             MNodeTypes
               .withValueOpt(strId)
               .toRight( "node.type.invalid" )

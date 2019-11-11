@@ -198,7 +198,7 @@ class LkAdEdit @Inject() (
                   val edgesAcc0Fut = for {
                     extRscEdges <- extRscEdgesFut
                   } yield {
-                    LOGGER.trace(s"$logPrefix ${extRscEdges.size} ExtRscEdges = [${extRscEdges.mapValues(_.idOrNull).mkString(", ")}]")
+                    LOGGER.trace(s"$logPrefix ${extRscEdges.size} ExtRscEdges = [${extRscEdges.view.mapValues(_.idOrNull).mkString(", ")}]")
 
                     var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
                       MEdge(

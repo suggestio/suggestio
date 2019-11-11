@@ -22,7 +22,7 @@ object MultiLineStringGsJvm extends GsStaticJvmQuerable {
         .map { lsGs =>
           LineStringGsJvm.toPlayGeoJsonGeom( lsGs ).coordinates
         }
-        .toStream
+        .toSeq
     )
   }
 

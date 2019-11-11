@@ -47,7 +47,7 @@ class BillingCronTasks @Inject()(
 
 
   /** Сборщик спеки периодических задач биллинга. */
-  override def cronTasks(): TraversableOnce[MCronTask] = {
+  override def cronTasks(): Iterable[MCronTask] = {
     val enabled = CRON_BILLING_CHECK_ENABLED
     info("enabled = " + enabled)
     if (enabled) {
@@ -83,8 +83,8 @@ class BillingCronTasks @Inject()(
 
       // Удаление старых одноразовых токенов, которые живут в биллинге.
       val ottDeleteOld = MCronTask(
-        startDelay = 1 minute,
-        every = 5 minutes,
+        startDelay = 1.minute,
+        every = 5.minutes,
         displayName = "deleteOldOtt"
       ) {
         for {

@@ -27,7 +27,7 @@ object OneAdWideQsArgs {
           maybeWidth <- intB.bind( key1(key,WIDTH_FN), params )
         } yield {
           for {
-            width <- maybeWidth.right
+            width <- maybeWidth
           } yield {
             OneAdWideQsArgs(
               width = width

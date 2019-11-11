@@ -137,10 +137,10 @@ object GridCalc {
     * @param jdConf Конфиг рендера плитки.
     * @return Карта szMults по тегам.
     */
-  def wideSzMults(tpls: TraversableOnce[Tree[(MJdTagId, JdTag)]], jdConf: MJdConf): HashMap[MJdTagId, MSzMult] = {
+  def wideSzMults(tpls: IterableOnce[Tree[(MJdTagId, JdTag)]], jdConf: MJdConf): HashMap[MJdTagId, MSzMult] = {
     (
       HashMap.newBuilder[MJdTagId, MSzMult] ++= (for {
-        tpl         <- tpls.toIterator
+        tpl         <- tpls.iterator
         tplJdtWithId = tpl.rootLabel
         tplJdt = tplJdtWithId._2
         // Посчитать wideSzMult блока, если wide

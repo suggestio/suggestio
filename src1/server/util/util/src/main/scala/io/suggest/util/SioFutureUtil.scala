@@ -106,9 +106,8 @@ object SioFutureUtil extends MacroLogsImpl {
   }
 
 
-  private def warnError(hash: Long, h:Any, ex:Throwable) {
+  private def warnError(hash: Long, h:Any, ex:Throwable): Unit =
     warn(s"foldLeftSequentally()#$hash: Suppressed exception in/before future for element $h", ex)
-  }
 
 
   /** Обычно (почти всегда) ExecutionContext является и java-executor'ом. Но всё же предостерегаемся. */

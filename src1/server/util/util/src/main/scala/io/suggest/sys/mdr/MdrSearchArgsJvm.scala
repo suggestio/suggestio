@@ -34,10 +34,10 @@ object MdrSearchArgsJvm {
           mdrConfE              <- mdrConfB.bind    (k1(F.MDR_CONF_FN),               params)
         } yield {
           for {
-            offsetOpt           <- offsetOptE.right
-            freeAdvIsAllowed    <- freeAdvIsAllowedE.right
-            hideAdIdOpt         <- hideAdIdOptE.right
-            mdrConf             <- mdrConfE.right
+            offsetOpt           <- offsetOptE
+            freeAdvIsAllowed    <- freeAdvIsAllowedE
+            hideAdIdOpt         <- hideAdIdOptE
+            mdrConf             <- mdrConfE
           } yield {
             MdrSearchArgs(
               offsetOpt         = offsetOpt,
@@ -83,10 +83,10 @@ object MdrSearchArgsJvm {
           directSelfIdOptE    <- strOptB.bind       ( k(F.DIRECT_SELF_ID_FN),   params )
         } yield {
           for {
-            itemIdOpt         <- itemIdOptE.right
-            itemTypeOpt       <- itemTypeOptE.right
-            directSelfAllOpt  <- directSelfAllOptE.right
-            directSelfIdOpt   <- directSelfIdOptE.right
+            itemIdOpt         <- itemIdOptE
+            itemTypeOpt       <- itemTypeOptE
+            directSelfAllOpt  <- directSelfAllOptE
+            directSelfIdOpt   <- directSelfIdOptE
           } yield {
             MMdrActionInfo(
               itemId          = itemIdOpt,
@@ -132,10 +132,10 @@ object MdrSearchArgsJvm {
           mdrConfE      <- mdrConfB.bind        ( k(F.MDR_CONF_FN),     params )
         } yield {
           for {
-            nodeId      <- nodeIdE.right
-            info        <- infoE.right
-            reasonOpt   <- reasonOptE.right
-            mdrConf     <- mdrConfE.right
+            nodeId      <- nodeIdE
+            info        <- infoE
+            reasonOpt   <- reasonOptE
+            mdrConf     <- mdrConfE
           } yield {
             MMdrResolution(
               nodeId    = nodeId,
@@ -177,8 +177,8 @@ object MdrSearchArgsJvm {
           onNodeKeyOptE   <- qsbSeqStrOptB.bind( k(F.ON_NODE_KEY_FN), params )
         } yield {
           for {
-            isSys         <- isSysE.right
-            onNodeKeyOpt  <- onNodeKeyOptE.right
+            isSys         <- isSysE
+            onNodeKeyOpt  <- onNodeKeyOptE
           } yield {
             MMdrConf(
               isSu       = isSys,

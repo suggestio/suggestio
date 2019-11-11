@@ -189,7 +189,7 @@ class AdvGeoBillUtil @Inject() (
 
     val itemActions = calcAdvGeoPrice(abc)
       .splitOnSumTillItemLevel
-      .toIterator
+      .iterator
       .flatMap { term =>
         val term2 = advUtil.prepareForSave(term)
         lazy val logPrefix2 = s"$logPrefix (${term2.getClass.getSimpleName}#${term2.hashCode()}) "
@@ -312,7 +312,8 @@ class AdvGeoBillUtil @Inject() (
       .map { billDebugUtil.insertItemWithPriceDebug }
       .toSeq
 
-    DBIO.sequence(itemActions)
+    DBIO
+      .sequence(itemActions)
       .transactionally
   }
 
@@ -571,7 +572,7 @@ class AdvGeoBillUtil @Inject() (
     * @param limitOpt Предел кол-ва результатов.
     * @return DB-экшен, возвращающий список item'ом в неопределенном порядке.
     */
-  def findCurrForAdToRcvrs(adId: String, rcvrIds: Traversable[String], statuses: TraversableOnce[MItemStatus], limitOpt: Option[Int] = None): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+  def findCurrForAdToRcvrs(adId: String, rcvrIds: Iterable[String], statuses: IterableOnce[MItemStatus], limitOpt: Option[Int] = None): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
     val q = mItems.query
       .filter { i =>
         // Интересует только указанная карточка...

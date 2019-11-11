@@ -11,12 +11,12 @@ import io.suggest.adv.rcvr.RcvrKey
 
 trait NodeTreeUpdate extends NodesTreeApi {
 
-  def withNodeChildren(node: T, children2: TraversableOnce[T]): T
+  def withNodeChildren(node: T, children2: IterableOnce[T]): T
 
-  type FlatMapF_t = T => TraversableOnce[T]
+  type FlatMapF_t = T => IterableOnce[T]
 
 
-  def flatMapNode(rcvrKey: RcvrKey, node: T)(updateF: FlatMapF_t): TraversableOnce[T] = {
+  def flatMapNode(rcvrKey: RcvrKey, node: T)(updateF: FlatMapF_t): IterableOnce[T] = {
     // Случай пустого rcvrKey НЕ игнорируем, т.к. это скорее защита от самого себя.
     val nodeId = _nodeIdOf(node)
     if ( rcvrKey.headOption.contains(nodeId) )
@@ -35,7 +35,7 @@ trait NodeTreeUpdate extends NodesTreeApi {
     *                [...] элемет будет заменён на указанные элементы..
     * @return Обновлённое дерево узлов.
     */
-  def flatMapSubNode(rcvrKey: RcvrKey, parent: T)(updateF: FlatMapF_t): TraversableOnce[T] = {
+  def flatMapSubNode(rcvrKey: RcvrKey, parent: T)(updateF: FlatMapF_t): IterableOnce[T] = {
     if (rcvrKey.isEmpty) {
       updateF( parent )
     } else {
@@ -47,9 +47,9 @@ trait NodeTreeUpdate extends NodesTreeApi {
     }
   }
 
-  def flatMapSubNode(rcvrKey: RcvrKey, nodes: TraversableOnce[T])(updateF: FlatMapF_t): Iterator[T] = {
+  def flatMapSubNode(rcvrKey: RcvrKey, nodes: IterableOnce[T])(updateF: FlatMapF_t): Iterator[T] = {
     nodes
-      .toIterator
+      .iterator
       .flatMap { node =>
         if ( _nodeIdOf(node) == rcvrKey.head ) {
           // Этот элемент подходит под ключ. Значит, надо погружаться в него.
@@ -62,7 +62,7 @@ trait NodeTreeUpdate extends NodesTreeApi {
   }
 
 
-  def updateChildren(rcvrKey: RcvrKey, nodes: TraversableOnce[T])(updateF: TraversableOnce[T] => TraversableOnce[T]): TraversableOnce[T] = {
+  def updateChildren(rcvrKey: RcvrKey, nodes: IterableOnce[T])(updateF: IterableOnce[T] => IterableOnce[T]): IterableOnce[T] = {
     if (rcvrKey.isEmpty) {
       updateF(nodes)
     } else {

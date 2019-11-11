@@ -51,8 +51,8 @@ object MGeoPoint {
   }
 
   def unapplyDouble(mgp: MGeoPoint) = {
-    for ((a, b) <- unapply(mgp)) yield
-      (a.doubleValue(), b.doubleValue())
+    for ((a, b) <- unapply(mgp))
+    yield (a.doubleValue, b.doubleValue)
   }
 
   /** Проверить точку на валидность координат. */
@@ -91,7 +91,7 @@ object MGeoPoint {
   import play.api.libs.functional.syntax._
 
   val READS_GEO_ARRAY = Reads[MGeoPoint] {
-    case JsArray(Seq(lonV, latV)) =>
+    case JsArray( collection.Seq(lonV, latV) ) =>
       val latOpt = latV.asOpt[GeoCoord_t]
       if ( !latOpt.exists(Lat.isValid) ) {
         JsError( Lat.E_INVALID )

@@ -10,7 +10,7 @@ trait IOverMPots extends Product {
       .flatMap {
         case opt: Option[_] =>
           opt.toList
-        case seqs: TraversableOnce[_] =>
+        case seqs: IterableOnce[_] =>
           seqs
         case x =>
           x :: Nil
@@ -23,11 +23,13 @@ trait IOverMPots extends Product {
       }
   }
 
-  private def _firstPotRes[T](f: Pot[_] => TraversableOnce[T]): Option[T] = {
-    _mPotsIterator
-      .flatMap(_._pots)
-      .flatMap(f)
-      .toStream
+  private def _firstPotRes[T](f: Pot[_] => IterableOnce[T]): Option[T] = {
+    (for {
+      pots <- _mPotsIterator
+      pot <- pots._pots
+      r <- f(pot)
+    } yield r)
+      .buffered
       .headOption
   }
 

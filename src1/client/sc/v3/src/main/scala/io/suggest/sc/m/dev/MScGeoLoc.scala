@@ -67,7 +67,7 @@ case class MScGeoLoc(
         glType -> gl
       }
     )
-      .toStream
+      .toSeq
     // Вернуть наиболее точный из элементов.
     OptionUtil.maybe( elements.nonEmpty ) {
       elements.maxBy( _._1.precision )

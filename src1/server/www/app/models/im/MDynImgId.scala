@@ -98,12 +98,11 @@ final case class MDynImgId(
   }
 
   def mediaIdAndOrigMediaId: Seq[String] = {
-    Stream.cons(
-      mediaId,
-      maybeOriginal.fold(Stream.empty[String]) { d =>
-        d.mediaId #:: Stream.empty[String]
-      }
-    )
+    val ll0 = LazyList.empty[String]
+    mediaId #::
+    maybeOriginal.fold(ll0) { d =>
+      d.mediaId #:: ll0
+    }
   }
 
 

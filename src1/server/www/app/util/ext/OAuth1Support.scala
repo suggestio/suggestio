@@ -201,7 +201,10 @@ trait OAuth1Support
     // Приаттачить аттачменты к твиту.
     val medias = args.attachments
     if (medias.nonEmpty) {
-      val v = medias.toIterator.map(_.strId).mkString(",")
+      val v = medias
+        .iterator
+        .map(_.strId)
+        .mkString(",")
       nreq.addFormParam("media_ids", v)
     }
     // Начать постинг.

@@ -13,7 +13,7 @@ import models.mproj.IMCommonDi
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Suggest.io

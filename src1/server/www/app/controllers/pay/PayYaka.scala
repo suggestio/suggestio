@@ -243,9 +243,10 @@ class PayYaka @Inject() (
     }
   }
 
-  private def formatReqBody(body: Map[String, Traversable[Any]]): String = {
+  private def formatReqBody(body: Map[String, Iterable[Any]]): String = {
     val d = "\n "
     body
+      .view
       .mapValues(_.mkString(", "))
       .mkString(d, d, "")
   }

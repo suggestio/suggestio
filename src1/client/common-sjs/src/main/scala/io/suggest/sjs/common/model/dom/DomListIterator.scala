@@ -51,7 +51,7 @@ case class DomListSeq[T](
   override val domList: DOMList[T]
 )
   extends mutable.AbstractSeq[T]
-    with DomListCollUtil[T]
+  with DomListCollUtil[T]
 {
   override def iterator = DomListIterator(domList)
   override def length   = size
@@ -65,14 +65,14 @@ case class DomListSeq[T](
 
 
 /** Утиль для scala-коллекций вокруг DOMList. */
-trait DomListCollUtil[T] extends TraversableOnce[T] {
+trait DomListCollUtil[T] extends IterableOnce[T] {
 
   /** Инстанс исходного DOMList'а. */
   val domList: DOMList[T]
 
-  /** Существенная оптимизация подсчета длины коллекции на базе DOMList.
+  /** Оптимизация подсчета длины коллекции на базе DOMList.
     * Возможно даже до O(1), но это зависит реализации списка на стороне браузера. */
-  override def size = domList.length
+  override def knownSize: Int = domList.length
 
 }
 

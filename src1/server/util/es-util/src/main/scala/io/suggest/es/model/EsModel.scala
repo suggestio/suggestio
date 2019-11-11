@@ -39,10 +39,10 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io
@@ -65,7 +65,7 @@ final class EsModel @Inject()(
   import esClientP.esClient
 
   /** Сконвертить распарсенные результаты в карту. */
-  private def resultsToMap[T <: OptId[String]](results: TraversableOnce[T]): Map[String, T] =
+  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): Map[String, T] =
     OptId.els2idMap[String, T](results)
 
   /** Список результатов в список id. */
@@ -415,7 +415,7 @@ final class EsModel @Inject()(
     val indices = models.map { esModel =>
       esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
     }.toMap
-    Future.traverse(indices) {
+    Future.traverse(indices.toSeq) {
       case (inxName, (shards, replicas)) =>
         esModel.ensureIndex(inxName, shards=shards, replicas=replicas)
     }
@@ -776,7 +776,6 @@ final class EsModel @Inject()(
       /** Быстрый рассчёт контрольной суммы для всех найденных документов.
         *
         * @param q Query.
-        * @param sourceFields Полные названия полей документа, которые участвую в рассчёте хэша.
         * @return Фьючерс с Int'ом внутри.
         */
       def docsHashSum(scripts: IAggScripts, q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
@@ -1068,8 +1067,8 @@ final class EsModel @Inject()(
       }
 
       /** Отрендерить экземпляры моделей в JSON. */
-      def toEsJsonDocs(e: TraversableOnce[T1]): String = {
-        e.toIterator
+      def toEsJsonDocs(e: IterableOnce[T1]): String = {
+        e.iterator
           .map { toEsJsonDoc }
           .mkString("[",  ",\n",  "]")
       }
@@ -1395,10 +1394,9 @@ final class EsModel @Inject()(
        * Прочитать из базы все перечисленные id разом.
        *
        * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
-       * @param acc0 Начальный аккамулятор.
        * @return Список результатов в порядке ответа.
        */
-      def multiGet(ids: TraversableOnce[String], options: GetOpts = model._getArgsDflt): Future[Stream[T1]] = {
+      def multiGet(ids: IterableOnce[String], options: GetOpts = model._getArgsDflt): Future[Stream[T1]] = {
         if (ids.isEmpty) {
           Future.successful( Stream.empty )
         } else {
@@ -1406,7 +1404,7 @@ final class EsModel @Inject()(
             .map( model.mgetResp2Stream )
         }
       }
-      def multiGetRaw(ids: TraversableOnce[String], options: GetOpts = model._getArgsDflt): Future[MultiGetResponse] = {
+      def multiGetRaw(ids: IterableOnce[String], options: GetOpts = model._getArgsDflt): Future[MultiGetResponse] = {
         val req = esClient.prepareMultiGet()
           .setRealtime(true)
         val indexName = model.ES_INDEX_NAME
@@ -1425,10 +1423,9 @@ final class EsModel @Inject()(
         * Враппер над multiget, но ещё вызывает resultsToMap над результатами.
         *
         * @param ids Коллекция или итератор необходимых id'шников.
-        * @param acc0 Необязательный начальный акк. полезен, когда некоторые инстансы уже есть на руках.
         * @return Фьючерс с картой результатов.
         */
-      def multiGetMap(ids: TraversableOnce[String], options: GetOpts = model._getArgsDflt): Future[Map[String, T1]] = {
+      def multiGetMap(ids: IterableOnce[String], options: GetOpts = model._getArgsDflt): Future[Map[String, T1]] = {
         multiGet(ids, options = options)
           // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
           .map { resultsToMap }
@@ -1452,7 +1449,7 @@ final class EsModel @Inject()(
             if (items.isEmpty) {
               Source.empty
             } else {
-              Source( items.toStream )
+              Source( items.toSeq )
             }
           }
           Source
@@ -1518,7 +1515,7 @@ final class EsModel @Inject()(
       /** Обойти с помощью функции, которая выдаёт узлы для следующего шага.
         * Можно применить Пригодно для поиска
         *
-        * @param els Узлы, начиная от которых надо плясать.
+        * @param ids id узлов, начиная от которых надо плясать.
         * @param acc0 Начальный аккамулятор.
         * @param f Функция, определяющая новый акк и список узлов, которые тоже надо тоже отработать.
         * @tparam A Тип аккамулятора.
@@ -1661,7 +1658,7 @@ final class EsModel @Inject()(
                 case Right(r) => r
               }
               // Максимально лениво, чтобы отложить это всё напотом без lazy val или def:
-              .toStream
+              .to( LazyList )
 
             // Если есть отсутствующие в кэше элементы, то поискать их в хранилищах:
             if (nonCachedIds.nonEmpty) {
@@ -1704,7 +1701,7 @@ final class EsModel @Inject()(
         // TODO Реализовать нормальную выкачку, более оптимальную по сравнению с multiGet()
         Source.fromFutureSource {
           for (els <- multiGetCache(ids)) yield
-            Source( els.toStream )
+            Source( els.toSeq )
         }
       }
 
@@ -1725,7 +1722,7 @@ final class EsModel @Inject()(
         cacheThese1(results)
 
       /** Принудительное кэширование для всех указанных item'ов. */
-      def cacheThese1(results: TraversableOnce[T1]): Unit =
+      def cacheThese1(results: IterableOnce[T1]): Unit =
         results.foreach( cacheThat )
 
 
@@ -1746,7 +1743,6 @@ final class EsModel @Inject()(
       /**
        * Прочитать из хранилища документ, и если всё нормально, то отправить его в кеш.
        * @param id id документа.
-       * @param ck0 Ключ в кеше.
        * @return Тоже самое, что и исходный getById().
        */
       def getByIdAndCache(id: String): Future[Option[T1]] = {

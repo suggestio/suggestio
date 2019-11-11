@@ -28,8 +28,8 @@ object MColorDetectArgs {
           wsPaletteSizeE         <- intB.bind( k(F.WS_PALETTE_SIZE_FN),   params )
         } yield {
           for {
-            paletteSize          <- paletteSizeE.right
-            wsPaletteSize        <- wsPaletteSizeE.right
+            paletteSize          <- paletteSizeE
+            wsPaletteSize        <- wsPaletteSizeE
           } yield {
             MColorDetectArgs(
               paletteSize     = paletteSize,

@@ -19,7 +19,7 @@ case class SnActorPathSubscriber(actorPath:ActorPath) extends SnSubscriberT {
    * @param event событие.
    * @param ctx для возможности резолва ActorPath в системе Akka.
    */
-  def publish(event: Event)(implicit ctx:ActorContext) {
+  def publish(event: Event)(implicit ctx:ActorContext): Unit = {
     ctx.actorSelection(actorPath) ! event
   }
 

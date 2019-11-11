@@ -129,7 +129,7 @@ class EsPublishActor @Inject() (
 
   private def send(k: Long): Unit = {
     require(queue.size >= k)
-    for ( _ <- 0l until k ) {
+    for ( _ <- 0L until k ) {
       if (max == 0 || processed < max) {
         s.onNext(queue.dequeue)
         processed = processed + 1
@@ -208,7 +208,7 @@ class EsPublishActor @Inject() (
     // more results and we can unleash the beast (stashed requests) and switch back to ready mode
     case Success(resp: SearchResponse) =>
       scrollIdOpt = Option( resp.getScrollId )
-      queue.enqueue(resp.getHits.getHits: _*)
+      queue.enqueueAll(resp.getHits.getHits)
       context.become( ready )
       unstashAll()
   }

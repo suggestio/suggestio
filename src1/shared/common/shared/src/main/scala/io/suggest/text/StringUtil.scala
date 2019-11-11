@@ -48,7 +48,7 @@ object StringUtil {
   }
 
 
-  implicit class StringCollUtil(private val coll: TraversableOnce[String]) extends AnyVal {
+  implicit class StringCollUtil(private val coll: IterableOnce[String]) extends AnyVal {
 
     /** Ленивая конкатенация строки из коллекции строк.
       * Использутся для ограниченного mkString над неограниченно-большой коллекцией.
@@ -56,7 +56,7 @@ object StringUtil {
     def mkStringLimitLen(maxLen: Int, ellipsis: String = ""): String = {
       assert(maxLen > 0)
 
-      val iter = coll.toIterator
+      val iter = coll.iterator
       val sb = new StringBuilder(maxLen)
 
       @tailrec

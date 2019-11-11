@@ -29,7 +29,7 @@ class JsMessagesUtil @Inject() (
   private val MC = MsgCodes
 
   /** Локализация для периодов рекламного размещения. */
-  private def ADV_DATES_PERIOD_MSGS: TraversableOnce[String] = {
+  private def ADV_DATES_PERIOD_MSGS: IterableOnce[String] = {
     val static = "Today" ::
       "Date.choosing" ::
       "Advertising.period" ::
@@ -53,7 +53,7 @@ class JsMessagesUtil @Inject() (
 
 
   /** Сообщения редактора тегов. */
-  private def TAGS_EDITOR_MSGS: TraversableOnce[String] = {
+  private def TAGS_EDITOR_MSGS: IterableOnce[String] = {
     MC.`Add` ::
       "Tags.choosing" ::
       MC.`Add.tags` ::
@@ -61,7 +61,7 @@ class JsMessagesUtil @Inject() (
       Nil
   }
 
-  private def DAYS_OF_WEEK_MSGS: TraversableOnce[String] = {
+  private def DAYS_OF_WEEK_MSGS: IterableOnce[String] = {
     DAYS_OF_WEEK.iterator.flatMap { dow =>
       MC.`DayOfWeek.N.`(dow) ::
         MC.`DayOfW.N.`(dow) ::
@@ -69,19 +69,19 @@ class JsMessagesUtil @Inject() (
     }
   }
 
-  private def OF_MONTHS_OF_YEAR: Traversable[String] = {
+  private def OF_MONTHS_OF_YEAR: Iterable[String] = {
     for (m <- MONTHS_OF_YEAR) yield {
       MC.`ofMonth.N.`( m )
     }
   }
 
-  private def DATE_TIME_ABBREVATIONS: TraversableOnce[String] = {
+  private def DATE_TIME_ABBREVATIONS: IterableOnce[String] = {
     "year_abbrevated" ::
       Nil
   }
 
   /** Локализация для client-side нужд формы георазмещения. */
-  private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
+  private def ADV_GEO_FORM_MSGS: IterableOnce[String] = {
     MC.`Adv.on.map` :: MC.`Adv.on.map.hint` ::
       MC.`Main.screen` ::
       MC.`GeoTag` ::
@@ -106,7 +106,7 @@ class JsMessagesUtil @Inject() (
   }
 
   /** Коды ошибок форм. */
-  private def FORM_ERRORS: TraversableOnce[String] = {
+  private def FORM_ERRORS: IterableOnce[String] = {
     MC.`Error` ::
       "Something.gone.wrong" ::
       "error.maxLength" ::
@@ -116,7 +116,7 @@ class JsMessagesUtil @Inject() (
   }
 
   /** Сообщения для формы управления узлами/подузлами. */
-  private def LK_NODES_MSGS: TraversableOnce[String] = {
+  private def LK_NODES_MSGS: IterableOnce[String] = {
     val l1 = MC.`Create` ::
       MC.`Name` ::
       "Identifier" ::
@@ -152,14 +152,14 @@ class JsMessagesUtil @Inject() (
       .flatten
   }
 
-  private def DIST_UNITS: TraversableOnce[String] = {
+  private def DIST_UNITS: IterableOnce[String] = {
     MC.`n.km._kilometers` ::
       MC.`n.m._meters` ::
       Nil
   }
 
   /** Коды платежных вещей в формах размещения. */
-  private def ADV_PRICING: TraversableOnce[String] = {
+  private def ADV_PRICING: IterableOnce[String] = {
     val prices = MCurrencies.values
       .iterator
       .flatMap { c =>
@@ -175,19 +175,19 @@ class JsMessagesUtil @Inject() (
 
 
   /** пн, вт, ср, ... */
-  private def DOWS_LC: TraversableOnce[String] = {
+  private def DOWS_LC: IterableOnce[String] = {
     DAYS_OF_WEEK.map { MC.`dayOfW.N.` }
   }
 
   /** Названия календарей. */
-  private def CAL_TYPES: TraversableOnce[String] = {
+  private def CAL_TYPES: IterableOnce[String] = {
     MCalTypes.values
       .iterator
       .map(_.i18nCode)
   }
 
   /** Коды сообщений инфы по размещению. */
-  private def ADV_INFO: TraversableOnce[String] = {
+  private def ADV_INFO: IterableOnce[String] = {
     val msgs = MC.`Please.try.again.later` ::
       MC.`Tariff.rate.of.0` ::
       MC.`Information` ::
@@ -209,7 +209,7 @@ class JsMessagesUtil @Inject() (
       .flatten
   }
 
-  private def LK_COMMON: TraversableOnce[String] = {
+  private def LK_COMMON: IterableOnce[String] = {
     MC.`Something.gone.wrong` ::
     MC.`Input.text.from.picture`  ::
     Nil
@@ -223,7 +223,7 @@ class JsMessagesUtil @Inject() (
       .toList
   }
 
-  private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
+  private def LK_ADN_MAP_MSGS: IterableOnce[String] = {
     MC.`You.can.place.adn.node.on.map.below` ::
       MC.`Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle` ::
       MReasonTypes.GeoLocCapture.msgCodeI18n ::
@@ -232,7 +232,7 @@ class JsMessagesUtil @Inject() (
 
 
   /** Сообщения для react-выдачи. */
-  private def SC: TraversableOnce[String] = {
+  private def SC: IterableOnce[String] = {
       MC.`Map` ::
       MC.`Tags` ::
       MC.`No.tags.here` ::
@@ -270,7 +270,7 @@ class JsMessagesUtil @Inject() (
 
 
   /** Сообщения для react-редактора карточек. */
-  private def LK_AD_EDIT_MSGS: TraversableOnce[String] = {
+  private def LK_AD_EDIT_MSGS: IterableOnce[String] = {
     MC.`Width` ::
       MC.`Height` ::
       MC.`Delete.block` ::
@@ -316,7 +316,7 @@ class JsMessagesUtil @Inject() (
   }
 
 
-  private def LK_ADS_MSGS: TraversableOnce[String] = {
+  private def LK_ADS_MSGS: IterableOnce[String] = {
     MC.`Ad.cards` ::
       MC.`You.can.look.on.ads.in` ::
       MC.`_ad.showcase.link` ::
@@ -327,7 +327,7 @@ class JsMessagesUtil @Inject() (
       Nil
   }
 
-  private def LK_ADN_EDIT_MSGS: TraversableOnce[String] = {
+  private def LK_ADN_EDIT_MSGS: IterableOnce[String] = {
     MC.`Name` ::
       MC.`Town` ::
       MC.`Address` ::
@@ -367,7 +367,7 @@ class JsMessagesUtil @Inject() (
   }
 
   /** Клиент-сайд корзина/биллинг. */
-  private def BILL_CART_MSGS: TraversableOnce[String] = {
+  private def BILL_CART_MSGS: IterableOnce[String] = {
     MC.`_order.Items` ::
       MC.`Price` ::
       MC.`Delete` ::
@@ -392,7 +392,7 @@ class JsMessagesUtil @Inject() (
       (ORDER_STATUSES_I18N reverse_::: ITEM_STATUSES_I18N reverse_::: NODE_TYPES_I18N)
   }
 
-  private def SYS_MDR_MSGS: TraversableOnce[String] = {
+  private def SYS_MDR_MSGS: IterableOnce[String] = {
     MC.`All` ::
       MPredicates.Receiver.Self.singular ::
       MC.`Something.gone.wrong` ::
@@ -415,7 +415,7 @@ class JsMessagesUtil @Inject() (
   }
 
 
-  private def LOGIN_FORM_MSGS: TraversableOnce[String] = {
+  private def LOGIN_FORM_MSGS: IterableOnce[String] = {
     MC.`Login.page.title` ::
     MC.`Login` ::
     MC.`Username` ::

@@ -3,6 +3,7 @@ package io.suggest.common.tree
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.primo.TypeT
 import io.suggest.primo.id.IId
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -14,7 +15,7 @@ import io.suggest.primo.id.IId
 trait NodesTreeApi extends TypeT {
 
   /** Вернуть все подузлы для указанного инстанса узла. */
-  protected def _subNodesOf(node: T): TraversableOnce[T]
+  protected def _subNodesOf(node: T): IterableOnce[T]
 
   /** Извлечь id узла. */
   protected def _nodeIdOf(node: T): String
@@ -62,14 +63,15 @@ trait NodesTreeWalk extends NodesTreeApi {
     * @param nodes Список узлов верхнего уровня.
     * @return Опционально найденный узел.
     */
-  def findSubNode(rcvrKey: RcvrKey, nodes: TraversableOnce[T]): Option[T] = {
-    nodes
-      .toIterator
-      .filter { node => _nodeIdOf(node) == rcvrKey.head }
-      .flatMap { subNode =>
-        findSubNode(rcvrKey.tail, subNode)
-      }
-      .toStream
+  def findSubNode(rcvrKey: RcvrKey, nodes: IterableOnce[T]): Option[T] = {
+    (for {
+      node <- nodes.iterator
+      if _nodeIdOf(node) ==* rcvrKey.head
+      subNode <- findSubNode(rcvrKey.tail, node)
+    } yield {
+      subNode
+    })
+      .buffered
       .headOption
   }
 
@@ -84,8 +86,7 @@ trait NodesTreeApiIId extends NodesTreeApi {
 
   override type T <: IId[String]
 
-  override protected def _nodeIdOf(node: T): String = {
+  override protected def _nodeIdOf(node: T): String =
     node.id
-  }
 
 }

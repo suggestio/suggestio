@@ -480,7 +480,6 @@ class IndexAh[M](
 
     // Клик по кнопке перехода на другой узел.
     case m @ GoToPrevIndexView =>
-      println(m)
       val v0 = value
       v0.state.prevNodeOpt.fold(noChange) { prevNodeView =>
         // Контекст переключения.
@@ -498,7 +497,8 @@ class IndexAh[M](
         _getIndex(
           silentUpdate  = false,
           v0            = v0,
-          reason        = m,
+          // TODO m.asInstanceOf[IScIndexRespReason] - Ошибка в scalac-2.13.1. Потом - убрать asInstanceOf[].
+          reason        = m.asInstanceOf[IScIndexRespReason],
           switchCtx     = switchCtx
         )
       }

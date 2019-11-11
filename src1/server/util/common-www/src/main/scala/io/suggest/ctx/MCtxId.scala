@@ -148,7 +148,7 @@ object MCtxId extends MacroLogsImplLazy {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MCtxId]] = {
         for (ctxIdStrE <- strB.bind(key, params)) yield {
-          ctxIdStrE.right.flatMap { ctxStr =>
+          ctxIdStrE.flatMap { ctxStr =>
             _fromStringOpt2eith(
               fromString(ctxStr)
             )

@@ -40,12 +40,12 @@ object MEsiaAcTokQs {
           tokenTypeE          <- esiaTokenTypeB .bind( F.TOKEN_TYPE_FN,       params )
         } yield {
           for {
-            signContent       <- signContentE.right
-            clientSecret      <- clientSecretE.right
-            authCode          <- authCodeE.right
-            grantType         <- grantTypeE.right
-            redirectUri       <- redirectUriE.right
-            tokenToken        <- tokenTypeE.right
+            signContent       <- signContentE
+            clientSecret      <- clientSecretE
+            authCode          <- authCodeE
+            grantType         <- grantTypeE
+            redirectUri       <- redirectUriE
+            tokenToken        <- tokenTypeE
           } yield {
             MEsiaAcTokQs(
               signContent   = signContent,

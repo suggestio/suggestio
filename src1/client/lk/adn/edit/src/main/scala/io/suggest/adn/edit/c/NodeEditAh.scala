@@ -205,7 +205,10 @@ class NodeEditAh[M](
         .toSet
       // Профильтровать карту эджей в состоянии.
       val v2 = v0.withEdges(
-        v0.edges.filterKeys(edgeUids.contains)
+        v0.edges
+          .view
+          .filterKeys(edgeUids.contains)
+          .toMap
       )
       updatedSilent(v2)
 

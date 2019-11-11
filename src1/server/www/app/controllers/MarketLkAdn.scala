@@ -314,7 +314,7 @@ class MarketLkAdn @Inject() (
                       .modify(_ :+ ownEdge)
                   }
                 } else {
-                  Future.successful(Unit)
+                  Future.successful(())
                 }
               }
 

@@ -4,7 +4,7 @@ import java.io.File
 
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
-import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
+import io.suggest.ahc.upload.{MpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.fsm.FsmActor
@@ -282,7 +282,7 @@ class AdvExtTargetActor @Inject()(
 
     override def upUrl = uploadCtx.url
 
-    override def mkUpArgs: IMpUploadArgs = {
+    override def mkUpArgs: MpUploadArgs = {
       mpUploadClient.uploadArgsSimple(
         file      = imgFile,
         ct        = serviceHelper.imgFmt.mime,

@@ -3,7 +3,6 @@ package io.suggest.es.util
 import java.io.ByteArrayInputStream
 
 import io.suggest.util.SioConstants._
-import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse}
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
@@ -25,10 +24,9 @@ import scala.concurrent.{Future, Promise}
  * Description: Функции для работы с ElasticSearch. В основном - функции генерации json-спек индексов.
  */
 
-object SioEsUtil extends MacroLogsImpl {
+object SioEsUtil {
 
   import DocFieldTypes.DocFieldType
-  import LOGGER._
   import TermVectorVariants.TermVectorVariant
 
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
@@ -102,7 +100,7 @@ object SioEsUtil extends MacroLogsImpl {
     * @param f Функция заполнения json-объекта данными.
     * @return Билдер с уже выстроенной структурой.
     */
-  def jsonGenerator(f: XContentBuilder => JsonObject) : XContentBuilder = {
+  def jsonGenerator(f: XContentBuilder => JsonObject): XContentBuilder = {
     val b = jsonBuilder().startObject()
     f(b).builder(b).endObject()
   }
@@ -112,7 +110,7 @@ object SioEsUtil extends MacroLogsImpl {
    * Билдер настроек для индекса.
    * Тут генерится в представление в виде дерева scala-классов и сразу конвертится в XContent.
    */
-  def getNewIndexSettings(shards: Int, replicas: Int = 1) = {
+  def getNewIndexSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
     val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
     // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
     jsonGenerator { implicit b =>
@@ -222,7 +220,7 @@ object SioEsUtil extends MacroLogsImpl {
    * @param replicas Кол-во реплик.
    * @return XCB с сеттингами.
    */
-  def getIndexSettingsV2(shards: Int, replicas: Int = 1) = {
+  def getIndexSettingsV2(shards: Int, replicas: Int = 1): XContentBuilder = {
     jsonGenerator { implicit b =>
       IndexSettings(
         number_of_replicas = replicas,
@@ -295,7 +293,7 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
-  private def multiFieldFtsNgram(name: String, boostFts: Float, boostNGram: Float) = {
+  private def multiFieldFtsNgram(name: String, boostFts: Float, boostNGram: Float): FieldText = {
     FieldText(
       id = name,
       include_in_all  = true,
@@ -321,7 +319,7 @@ object SioEsUtil extends MacroLogsImpl {
     *
     * @return
    */
-  def getPageMapping(typeName: String, compressSource: Boolean = true) = {
+  def getPageMapping(typeName: String, compressSource: Boolean = true): XContentBuilder = {
     jsonGenerator { implicit b =>
       IndexMapping(
         typ = typeName,
@@ -428,7 +426,7 @@ case class IndexSettings(
 
   override def id = null
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     // Рендерим настройки всякие. Всякие неизменяемые вещи не должны рендерится, если не задано это.
     if (number_of_shards > 0)
       b.field("number_of_shards",   number_of_shards)
@@ -454,7 +452,7 @@ case class IndexSettings(
    * @param b XContentBuilder
    * @return
    */
-  protected def maybeRenderListOf(list:Seq[Renderable], name:String)(implicit b:XContentBuilder) {
+  protected def maybeRenderListOf(list:Seq[Renderable], name:String)(implicit b:XContentBuilder): Unit = {
     if (list.nonEmpty) {
       b.startObject(name)
         list map { _.builder }
@@ -480,7 +478,7 @@ trait JsonObject extends Renderable {
     b
   }
 
-  def fieldsBuilder(implicit b:XContentBuilder) {}
+  def fieldsBuilder(implicit b:XContentBuilder): Unit = {}
 }
 
 
@@ -489,7 +487,7 @@ trait JsonObject extends Renderable {
 trait TypedJsonObject extends JsonObject {
   def typ: String
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     if (typ != null)
       b.field("type", typ)
     super.fieldsBuilder(b)
@@ -508,7 +506,7 @@ case class CustomAnalyzer(
   
   override def typ = "custom"
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (charFilters.nonEmpty)
       b.array("char_filter", charFilters : _*)
@@ -534,7 +532,7 @@ case class TokenizerStandard(
   
   override def typ = "standard"
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (max_token_length != 255)
       b.field("max_token_length", max_token_length)
@@ -603,7 +601,7 @@ case class FilterStopwords(
 
   override def typ = "stop"
 
-  override def fieldsBuilder(implicit b:XContentBuilder) {
+  override def fieldsBuilder(implicit b:XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("stopwords", stopwords)
   }
@@ -619,7 +617,7 @@ case class FilterWordDelimiter(
 
   override def typ = "word_delimiter"
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (preserve_original)
       b.field("preserve_original", preserve_original)
@@ -636,7 +634,7 @@ case class FilterStemmer(
 
   override def typ = "stemmer"
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("language", language)
   }
@@ -685,7 +683,7 @@ case class FilterEdgeNgram(
 
   override def typ = "edgeNGram"
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (side != "front")
       b.field("side", side)
@@ -721,7 +719,7 @@ trait DocField extends Field with TypedJsonObject {
 trait FieldInxName extends Field {
   def index_name: String
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder(b)
     if (index_name != null)
       b.field("index_name", index_name)
@@ -731,7 +729,7 @@ trait FieldInxName extends Field {
 trait FieldStoreable extends Field {
   def store: Boolean
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (store)
       b.field("store", "yes")
@@ -740,7 +738,7 @@ trait FieldStoreable extends Field {
 
 trait FieldIndexable extends Field {
   def index : Boolean
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("index", index)
   }
@@ -750,7 +748,7 @@ trait FieldIndexable extends Field {
 trait FieldNullable extends Field {
   def null_value : String
   
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (null_value != null)
       b.field("null_value", null_value)
@@ -761,7 +759,7 @@ trait FieldNullable extends Field {
 @deprecated("not supported anymore", "ES >= 6.0")
 trait FieldIncludeInAll extends Field {
   def include_in_all : Boolean
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("include_in_all", include_in_all)
   }
@@ -771,7 +769,7 @@ trait FieldIncludeInAll extends Field {
 trait FieldBoostable extends Field {
   def boost : Option[Float]
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (boost.isDefined)
       b.field("boost", boost.get)
@@ -806,13 +804,13 @@ case class FieldText(
   search_analyzer : String = null,
   ignore_above : Option[Boolean] = None,
   position_offset_gap : Option[Int] = None,
-  override val fields: Traversable[DocField] = Nil
+  override val fields: Iterable[DocField] = Nil
 
 ) extends DocFieldIndexable with TextField with MultiFieldT {
 
   override def fieldType = DocFieldTypes.text
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
 
     if (omit_norms.isDefined)
@@ -837,13 +835,13 @@ case class FieldKeyword(
   null_value : String = null,
   // _field_string
   ignore_above : Option[Boolean] = None,
-  override val fields: Traversable[DocField] = Nil
+  override val fields: Iterable[DocField] = Nil
 
 ) extends DocFieldIndexable with MultiFieldT {
 
   override def fieldType = DocFieldTypes.keyword
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
 
     if (ignore_above.isDefined)
@@ -857,7 +855,7 @@ trait FieldApprox extends DocFieldIndexable {
   def precision_step : Option[Int]
   def ignore_malformed : Option[Boolean]
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
 
     if (precision_step.isDefined)
@@ -901,7 +899,7 @@ trait FieldDocValues extends Field {
     */
   def docValues: Option[Boolean]
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     for (dv <- docValues)
       b.field("doc_values", dv)
@@ -922,7 +920,7 @@ case class FieldNumber(
   null_value : String = null,
   precision_step : Option[Int] = None,
   ignore_malformed : Option[Boolean] = None,
-  fields: Traversable[DocField] = Nil
+  fields: Iterable[DocField] = Nil
 ) extends FieldApprox with MultiFieldT
 
 
@@ -968,7 +966,7 @@ case class FieldBinary(
 trait FieldEnableable extends Field {
   def enabled: Boolean
   
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("enabled", enabled)
   }
@@ -979,7 +977,7 @@ trait TextField extends Field {
   def search_analyzer: String
   def analyzer : String
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (term_vector != null)
       b.field("term_vector", term_vector.toString)
@@ -1024,7 +1022,7 @@ case class FieldParent(typ: String) extends Field with TypedJsonObject {
 trait FieldWithPath extends Field {
   def path: String
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (path != null)
       b.field("path", path)
@@ -1040,7 +1038,7 @@ case class FieldRouting(
 ) extends FieldStoreable with FieldIndexable with FieldWithPath {
   override def id = FIELD_ROUTING
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (required)
       b.field("required", required)
@@ -1051,7 +1049,7 @@ case class FieldRouting(
 /** Трейт для сборки multi-поля. В новом синтаксисе ElasticSearch, это должно примешиваться
   * к полям, в FieldString например. */
 sealed trait MultiFieldT extends JsonObject {
-  def fields: TraversableOnce[JsonObject]
+  def fields: Iterable[JsonObject]
 
   override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
@@ -1067,7 +1065,7 @@ sealed trait MultiFieldT extends JsonObject {
 trait FieldWithProperties extends Field {
   def properties: Seq[DocField]
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (properties.nonEmpty) {
       b.startObject("properties")
@@ -1087,7 +1085,7 @@ extends JsonObject {
   if (!mapping1.startsWith("{") || mapping1.endsWith("}"))
     throw new IllegalArgumentException("'mapping' field should contain json OBJECT")
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
 
     b.field("match", nameMatch)
@@ -1100,7 +1098,7 @@ extends JsonObject {
 case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocField], dynTemplates: Seq[DynTemplate] = Nil) extends FieldWithProperties {
   override def id = typ
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     staticFields map { _.builder }
     super.fieldsBuilder(b)
     if (dynTemplates.nonEmpty) {
@@ -1132,7 +1130,7 @@ case class FieldNestedObject(
 ) extends DocField with FieldWithProperties with FieldEnableable {
   override def fieldType = DocFieldTypes.nested
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("include_in_parent", includeInParent)
      .field("include_in_root", includeInRoot)
@@ -1144,7 +1142,7 @@ case class FieldNestedObject(
 trait Validate extends Field {
   def validate: Boolean
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("validate", validate)
   }
@@ -1154,7 +1152,7 @@ trait ValidateLatLon extends Field {
   def validateLat: Boolean
   def validateLon: Boolean
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("validate_lat", validateLat)
      .field("validate_lon", validateLon)
@@ -1164,7 +1162,7 @@ trait ValidateLatLon extends Field {
 trait Normalize extends Field {
   def normalize: Boolean
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     b.field("normalize", normalize)
   }
@@ -1174,7 +1172,7 @@ trait NormalizeLatLon extends Field {
   def normalizeLat: Boolean
   def normalizeLon: Boolean
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (normalizeLat)
       b.field("normalize_lat", normalizeLat)
@@ -1186,7 +1184,7 @@ trait NormalizeLatLon extends Field {
 trait PrecisionStep extends Field {
   def precisionStep: Int
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (precisionStep > 0)
       b.field("precision_step", precisionStep)

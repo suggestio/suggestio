@@ -35,7 +35,7 @@ import japgolly.univeq._
 import monocle.Traversal
 import scalaz.std.option._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
@@ -118,20 +118,17 @@ class DynImgUtil @Inject() (
   }
 
   /** Собрать список MMedia для перечисленных картинок. Порядок любой. */
-  def imgs2medias(imgs: TraversableOnce[MImgT]): Future[Seq[MMedia]] = {
+  def imgs2medias(imgs: Iterable[MImgT]): Future[Seq[MMedia]] = {
     mMedias.multiGetCache {
-      imgs
-        .toIterator
-        .flatMap { mimg =>
-          mimg.dynImgId
-            .mediaIdAndOrigMediaId
-        }
-        .toIterable
+      imgs.flatMap { mimg =>
+        mimg.dynImgId
+          .mediaIdAndOrigMediaId
+      }
     }
   }
 
   /** Сборка media-hosts map для картинок. */
-  def mkMediaHostsMap(imgs: TraversableOnce[MImgT]): Future[Map[String, Seq[MHostInfo]]] = {
+  def mkMediaHostsMap(imgs: Iterable[MImgT]): Future[Map[String, Seq[MHostInfo]]] = {
     if (imgs.isEmpty) {
       Future.successful( Map.empty )
     } else {
@@ -476,7 +473,7 @@ class DynImgUtil @Inject() (
               .sortBy(m => !m.file.isOriginal)
               .iterator
               .flatMap(_.picture.whPx)
-              .toStream
+              .buffered
               .headOption
 
             mediaWhOpt.fold [Future[Option[ISize2di]]] {
@@ -553,7 +550,7 @@ class DynImgUtil @Inject() (
         val edgesByUid = mnode.edges.edgesByUid
         val logPrefix2 = s"$logPrefix Node#${mnode.idOrNull}:"
 
-        val jdImgEdgeIdsIter: TraversableOnce[MJdEdgeId] = mnode.common.ntype match {
+        val jdImgEdgeIdsIter: IterableOnce[MJdEdgeId] = mnode.common.ntype match {
           // Рекламная карточка. Растрясти шаблон документа карточки:
           case MNodeTypes.Ad =>
             for {
@@ -577,7 +574,7 @@ class DynImgUtil @Inject() (
         }
 
         val mediaId2edgeUid = (for {
-          jdEdgeId  <- jdImgEdgeIdsIter.toIterator
+          jdEdgeId  <- jdImgEdgeIdsIter.iterator
           medge     <- edgesByUid.get( jdEdgeId.edgeUid ).iterator
           if medge.predicate ==* MPredicates.JdContent.Image
           imgNodeId <- medge.nodeIds
@@ -586,6 +583,7 @@ class DynImgUtil @Inject() (
           jdEdgeId.edgeUid -> mediaId
         })
           .toMap
+
         LOGGER.trace(s"$logPrefix2 mediaId2edgesUid:\n ${mediaId2edgeUid.mkString(", \n")}")
 
         for {

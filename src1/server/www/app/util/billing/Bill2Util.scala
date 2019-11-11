@@ -391,21 +391,11 @@ class Bill2Util @Inject() (
     * @param mitems Товары для анализа стоимости.
     * @return true, если хотя бы один товар требует денег.
     */
-  def itemsHasPrice(mitems: TraversableOnce[MItem]): Boolean = {
-    hasPositivePrice {
-      mitems.toIterator.map(_.price)
-    }
-  }
-
-  /** Есть ли в списке цен хоть одна позитивная?
-    *
-    * @param prices Список цен для анализа.
-    * @return true, если хотя бы одна цена не бесплатная.
-    */
-  def hasPositivePrice(prices: TraversableOnce[MPrice]): Boolean = {
-    prices.exists { price =>
-      price.amount > 0
-    }
+  def itemsHasPrice(mitems: Iterable[MItem]): Boolean = {
+    mitems
+      .exists { item =>
+        item.price.amount > 0
+      }
   }
 
 
@@ -890,7 +880,7 @@ class Bill2Util @Inject() (
             // Этот узел не подходит и подходящих найденных кандидатов нет, поэтому вернуть ownerIds
             val nextOwnEdges = mnode.edges
               .withPredicateIter( MPredicates.OwnedBy )
-              .toStream
+              .toList
 
             val nextIds = nextOwnEdges
               .iterator
@@ -1266,7 +1256,7 @@ class Bill2Util @Inject() (
     * @param now Дата закрытия [now()].
     * @return Экшен, возвращающий кол-во обновлённых рядов.
     */
-  def justFinalizeItems(itemIds   : Traversable[Gid_t],
+  def justFinalizeItems(itemIds   : Iterable[Gid_t],
                         reasonOpt : Option[String] = None,
                         now       : OffsetDateTime = OffsetDateTime.now
                        ): DBIOAction[Int, NoStream, Effect.Write] = {
@@ -1295,9 +1285,9 @@ class Bill2Util @Inject() (
     * @return write-db-экшен, возвращающий кол-во затронутых рядов.
     */
   def justFinalizeItemsLike(nodeId    : String,
-                            iTypes    : TraversableOnce[MItemType],
-                            statuses  : TraversableOnce[MItemStatus]  = Nil,
-                            rcvrIds   : Traversable[String]           = Nil,
+                            iTypes    : Iterable[MItemType],
+                            statuses  : Iterable[MItemStatus]         = Nil,
+                            rcvrIds   : Iterable[String]              = Nil,
                             reasonOpt : Option[String]                = None,
                             now       : OffsetDateTime                = OffsetDateTime.now
                            ): DBIOAction[Int, NoStream, Effect.Write] = {
@@ -1388,7 +1378,7 @@ class Bill2Util @Inject() (
     * @param orderIds Список ордеров, которые надо обсчитать.
     * @return Карта ценников по ордерам.
     */
-  def getOrdersPrices(orderIds: Traversable[Gid_t]): DBIOAction[Map[Gid_t, Seq[MPrice]], NoStream, Effect.Read] = {
+  def getOrdersPrices(orderIds: Iterable[Gid_t]): DBIOAction[Map[Gid_t, Seq[MPrice]], NoStream, Effect.Read] = {
     for {
       prices <- {
         mItems.query
@@ -1421,9 +1411,12 @@ class Bill2Util @Inject() (
         .toSeq
         .groupBy(_._1)
         // Выкинуть orderId из полученных значений.
+        .view
         .mapValues { orderPrices =>
-          for ( (_, p) <- orderPrices ) yield p
+          for ( (_, p) <- orderPrices )
+          yield p
         }
+        .toMap
     }
   }
 
@@ -1501,7 +1494,7 @@ class Bill2Util @Inject() (
           .filter { o =>
             (o.id === orderId) &&
               (o.contractId === validContractId) &&
-              (o.statusStr inSet MOrderStatuses.canGoToPaySys.onlyIds.toTraversable)
+              (o.statusStr inSet MOrderStatuses.canGoToPaySys.onlyIds.to(Iterable))
           }
           .result
           .headOption

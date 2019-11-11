@@ -118,7 +118,7 @@ class IMediaStorages @Inject() (
     * @param ptrs storage-указатели.
     * @return Карта с хостами.
     */
-  def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]] = {
+  def getStoragesHosts(ptrs: Iterable[T]): Future[Map[T, Seq[MHostInfo]]] = {
     if (ptrs.isEmpty) {
       Future.successful( Map.empty )
     } else {
@@ -195,7 +195,7 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
     * @param ptrs Все указатели.
     * @return Фьючерс с картой хостов.
     */
-  def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]]
+  def getStoragesHosts(ptrs: Iterable[T]): Future[Map[T, Seq[MHostInfo]]]
 
 }
 
@@ -234,7 +234,7 @@ object IMediaStorage {
         val F = Fields
         for {
           storageTypeE <- storageB.bind(k(F.STORAGE_TYPE_FN), params)
-          storageType  <- storageTypeE.right.toOption
+          storageType  <- storageTypeE.toOption
           storageDataE <- storageType match {
             case MStorages.SeaWeedFs =>
               swfsStorageB.bind(k(F.STORAGE_DATA_FN), params)

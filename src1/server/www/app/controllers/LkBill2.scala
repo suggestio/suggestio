@@ -98,11 +98,14 @@ class LkBill2 @Inject() (
         val madTfOpt = for (mad <- madOpt) yield {
           val bmc = advUtil.getAdModulesCount( mad )
           val madTf = tfDaily.withClauses(
-            tfDaily.clauses.mapValues { mdc =>
-              mdc.withAmount(
-                mdc.amount * bmc
-              )
-            }
+            tfDaily.clauses
+              .view
+              .mapValues { mdc =>
+                mdc.withAmount(
+                  mdc.amount * bmc
+                )
+              }
+              .toMap
           )
           MAdTfInfo(bmc, madTf)
         }
@@ -214,10 +217,13 @@ class LkBill2 @Inject() (
         tfInfo <- tfInfoFut
       } yield {
         val tdDaily4ad = tfInfo.withClauses(
-          tfInfo.clauses.mapValues { p0 =>
-            val p2 = p0 * bmc
-            TplDataFormatUtil.setFormatPrice( p2 )(ctx)
-          }
+          tfInfo.clauses
+            .view
+            .mapValues { p0 =>
+              val p2 = p0 * bmc
+              TplDataFormatUtil.setFormatPrice( p2 )(ctx)
+            }
+            .toMap
         )
         val r = MNodeAdvInfo4Ad(
           blockModulesCount = bmc,
@@ -612,6 +618,7 @@ class LkBill2 @Inject() (
       // Дождаться прочитанных узлов:
       allNodesMap <- allNodesMapFut
       adNodesMap = allNodesMap
+        .view
         .filterKeys( itemNodeIds.contains )
         .filter { case (_, mnode) =>
           // Если не отфильтровать только карточки (могут быть и adn-узлы), то зафейлится jd-рендер.
@@ -668,6 +675,7 @@ class LkBill2 @Inject() (
 
       // Оставляем только adn-узлы.
       adnNodes = allNodesMap
+        .view
         .filterKeys( itemNodeIds.contains )
         // Лениво фильтруем в immutable-коллекцию:
         .valuesIterator
@@ -675,7 +683,7 @@ class LkBill2 @Inject() (
         .filter { mnode =>
           mnode.common.ntype ==* MNodeTypes.AdnNode
         }
-        .toStream
+        .toSeq
 
       // Прогоняем через рендер базовых данных по узлам:
       adnNodesPropsShapes <- {

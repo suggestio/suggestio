@@ -9,8 +9,8 @@
 
   @inputText(
     cf("name"),
-    '_label -> "Название календаря",
-    'size   -> 80
+    Symbol("_label") -> "Название календаря",
+    Symbol("size")   -> 80
   )
 
   @select(
@@ -18,14 +18,14 @@
     options = for (mct <- MCalTypes.values) yield {
       mct.value -> messages(mct.i18nCode)
     },
-    '_label -> "Отображаемый тип"
+    Symbol("_label") -> "Отображаемый тип"
   )
 
   @textarea(
     cf("data"),
-    '_label -> "Содержимое календаря",
-    'cols   -> 120,
-    'rows   -> 50
+    Symbol("_label") -> "Содержимое календаря",
+    Symbol("cols")   -> 120,
+    Symbol("rows")   -> 50
   )
 
   <input type="submit" value="@btnText" />

@@ -168,7 +168,7 @@ class SysMarket @Inject() (
               )
             }
           }
-          .toStream
+          .toList
           .sortBy(_.name)
       }
 
@@ -182,7 +182,7 @@ class SysMarket @Inject() (
           ntypeOpt  = None,
           count     = allCount
         )
-        allNti #:: ntypes0
+        allNti :: ntypes0
       }
 
       // Объединение асинхронных результатов:
@@ -212,14 +212,15 @@ class SysMarket @Inject() (
     isSuNode(nodeId).async { implicit request =>
       import request.mnode
 
-      def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
-        eis.toSeq
+      def _prepareEdgeInfos(eis: Iterator[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
+        eis
+          .toSeq
           .sortBy { ei =>
             // Собрать ключ для сортировки
             val nodeName = ei.mnodeEiths
               .iterator
               .map { _.fold [String] (identity, _.guessDisplayNameOrId.getOrElse("")) }
-              .toStream
+              .buffered
               .headOption
               .getOrElse("???")
             (ei.medge.predicate.value,
@@ -240,7 +241,9 @@ class SysMarket @Inject() (
         nmap <- mnodesMapFut
       } yield {
         val iter = for {
-          (medge, index) <- mnode.edges.iterator.zipWithIndex
+          (medge, index) <- mnode.edges
+            .iterator
+            .zipWithIndex
         } yield {
           val mnEiths = medge.nodeIds
             .iterator
@@ -270,7 +273,8 @@ class SysMarket @Inject() (
         for {
           mnodes <- mNodes.dynSearch( msearch )
         } yield {
-          val iter = mnodes.iterator
+          val iter = mnodes
+            .iterator
             .flatMap { mnode =>
               mnode.edges
                 .withNodeId( nodeId )
@@ -288,7 +292,7 @@ class SysMarket @Inject() (
 
       // Определить имена юзеров-владельцев.
       val personNamesFut = for (nmap <- mnodesMapFut) yield {
-        val iter = for {
+        (for {
           nodeId <- mnode.edges
             .withPredicateIterIds( MPredicates.OwnedBy )
             .toSet[String]
@@ -296,8 +300,8 @@ class SysMarket @Inject() (
           mnode <- nmap.get( nodeId ).iterator
         } yield {
           nodeId -> mnode.guessDisplayNameOrIdOrQuestions
-        }
-        iter.toMap
+        })
+          .toMap
       }
 
       // Сгенерить асинхронный результат.
@@ -700,7 +704,8 @@ class SysMarket @Inject() (
         for {
           ad2advsMap  <- ad2advMapFut
           allRcvrs    <- {
-            val allRcvrIdsSet = ad2advsMap.valuesIterator
+            val allRcvrIdsSet = ad2advsMap
+              .valuesIterator
               .flatten
               .flatMap(_.rcvrIdOpt)
               .toSet
@@ -716,12 +721,15 @@ class SysMarket @Inject() (
             }
             .toMap
           // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
-          ad2advsMap.mapValues { advs =>
-            advs.flatMap { adv =>
-              adv.rcvrIdOpt
-                .flatMap(rcvrsMap.get)
+          ad2advsMap
+            .view
+            .mapValues { advs =>
+              advs.flatMap { adv =>
+                adv.rcvrIdOpt
+                  .flatMap(rcvrsMap.get)
+              }
             }
-          }
+            .toMap
         }
       }
 
@@ -792,7 +800,7 @@ class SysMarket @Inject() (
     // Получить ТЦ.
     val mmartFut = n2NodesUtil
       .receiverIds(mad)
-      .toStream
+      .buffered
       .headOption
       .fold [Future[Option[MNode]]] {
         // Тут хрень какая-то. Наугад выбирается случайный узел.
@@ -956,7 +964,7 @@ class SysMarket @Inject() (
 
   /** Залогинится в указанный узел.
     *
-    * @param nodeId id узла.
+    * @param nodeIdU id узла.
     * @return Редирект в ЛК с новой сессией.
     */
   def loginIntoNode(nodeIdU: MEsUuId) = csrf.Check {

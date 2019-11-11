@@ -4,7 +4,6 @@ import javax.inject.Inject
 import io.suggest.model.n2.media.MMediasJmx
 import io.suggest.model.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx
-import models.ai.MAiMadJmx
 import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
 import java.lang.management.ManagementFactory
@@ -42,7 +41,6 @@ case class JmxImpl @Inject()(
                                geoTagsUtilJmx                : GeoTagsUtilJmx,
                                mExtTargetsJmx                : MExtTargetsJmx,
                                mEventsJmx                    : MEventsJmx,
-                               mAiMadJmx                     : MAiMadJmx,
                                mIpRangesJmx                  : MIpRangesJmx,
                                mCitiesJmx                    : MCitiesJmx,
                                mStatsJmx                     : MStatsJmx,

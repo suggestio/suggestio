@@ -28,7 +28,7 @@ object MEsiaQs extends MacroLogsImpl {
           timestampStrE <- strB.bind(key, params)
         } yield {
           for {
-            timestampStr <- timestampStrE.right
+            timestampStr <- timestampStrE
 
             temporal <- Try(
               TIMESTAMP_FORMAT.parse(timestampStr)
@@ -39,7 +39,6 @@ object MEsiaQs extends MacroLogsImpl {
                 LOGGER.warn(msg, ex)
                 msg
               }
-              .right
 
             offDt <- Try(
               OffsetDateTime.from( temporal )
@@ -50,7 +49,6 @@ object MEsiaQs extends MacroLogsImpl {
                 LOGGER.warn(msg, ex)
                 msg
               }
-              .right
 
           } yield {
             offDt

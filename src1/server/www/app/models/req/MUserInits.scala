@@ -46,10 +46,9 @@ object MUserInits {
 
 
   /** Накатить список команд инициализации на экземпляр [[ISioUser]]. */
-  def initUser(user: ISioUser, cmds: TraversableOnce[MUserInit]): Unit = {
-    for (cmd <- cmds) {
+  def initUser(user: ISioUser, cmds: Iterable[MUserInit]): Unit = {
+    for (cmd <- cmds)
       cmd.initUser(user)
-    }
   }
 
 }

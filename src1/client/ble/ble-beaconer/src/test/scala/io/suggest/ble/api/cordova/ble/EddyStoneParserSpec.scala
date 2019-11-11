@@ -34,7 +34,8 @@ object EddyStoneParserSpec extends SimpleTestSuite {
     val rEith = rEithOpt.get
     assert(rEith.isRight, rEith.toString)
 
-    val r = rEith.right.get
+    val r = rEith
+      .getOrElse( throw new NoSuchElementException )
 
     assertEquals(r.rssi, -60)
     //assertEquals(r.rssi0, -61)
@@ -69,7 +70,8 @@ object EddyStoneParserSpec extends SimpleTestSuite {
     val rEith = rEithOpt.get
     assert( rEith.isRight, rEith.toString )
 
-    val r = rEith.right.get
+    val r = rEith
+      .getOrElse( throw new NoSuchElementException )
 
     assertEquals( r.txPower, -29 )
     assertEquals( r.beaconUid, Some("ba1c51bab3147efee8e5-252423222120") )

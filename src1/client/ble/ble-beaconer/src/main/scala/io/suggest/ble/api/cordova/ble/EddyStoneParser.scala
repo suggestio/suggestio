@@ -74,7 +74,7 @@ case class EddyStoneParser(override val dev: BtDevice)
     * @return Опциональный EddyStone или exception.
     */
   override def parse(): ParseRes_t = {
-    val iter = for {
+    val s = (for {
       // A device might be an Eddystone if it has advertisementData...
       advDataRaw <- dev.advertising.iterator
       if advDataRaw != null
@@ -83,7 +83,7 @@ case class EddyStoneParser(override val dev: BtDevice)
       // Логика разветвляется, т.к. здесь многое зависит от платформы этого [мобильного] устройства.
       // Android зачем-то возвращает только сырой блобик с advertising data.
       // iOS возвращает разобранный объект с бинарями в некоторых местах.
-      esAdBytes <- {
+      esAdBytes: Uint8Array <- {
         val rawType = js.typeOf(advDataRaw.asInstanceOf[js.Any])
 
         if ( rawType ==* JsTypes.OBJECT ) {
@@ -130,10 +130,10 @@ case class EddyStoneParser(override val dev: BtDevice)
       }
 
     } yield {
-
       // Это eddystone какого-то типа. На руках есть service data, заявленная для eddystone uuid.
       // Надо разобрать байты, сверить тип с UID:
       val frameCode = esAdBytes(0)
+
       if (
         // 2017.mar.29: Бывают инновационные маячки, которые излишне длинные фреймы, что не противоречит стандарту.
         // Могут и 20 байт прислать, где в хвосте 0x0000. Первый такой маячок был обнаружен в ТК Гулливер.
@@ -155,11 +155,10 @@ case class EddyStoneParser(override val dev: BtDevice)
       } else {
         Left(frameCode)
       }
-
-    }
-
+    })
     // Вернуть первый найденный uid
-    val s = iter.toStream
+      .to( LazyList )
+
     // Найти первый eddystone-UID. Если нет, то вернуть первый попавшийся элемент.
     s .find(_.isRight)
       .orElse( s.headOption )

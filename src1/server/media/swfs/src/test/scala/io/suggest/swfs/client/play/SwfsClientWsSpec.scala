@@ -130,7 +130,7 @@ class SwfsClientWsSpec extends PlaySpec with GuiceOneAppPerSuite {
         "have positive lookup result" in {
           assert(lcResp.isRight, lcResp)
         }
-        val r = lcResp.right.get
+        val r = lcResp.getOrElse(throw new NoSuchElementException("Lookup resp invalid: " + lcResp))
         "contain requested volumeId" in {
           r.volumeId  shouldBe  lcArgs.volumeId
         }

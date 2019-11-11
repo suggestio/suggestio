@@ -12,7 +12,7 @@ trait MultiGetById extends ModelContainer with GidSlick {
 
   import profile.api._
 
-  def getByIds(ids: Traversable[Gid_t]) = {
+  def getByIds(ids: Iterable[Gid_t]) = {
     query
       .filter(_.id inSet ids)
       .result

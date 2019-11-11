@@ -13,7 +13,6 @@ import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.LngLat
-import io.suggest.common.geom.coord.GeoCoord_t
 
 /**
   * Suggest.io
@@ -50,10 +49,11 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** Бывает, что идёт выковыривание сырых значений из документов elasticsearch. */
-  def fromArraySeq(lonLatColl: TraversableOnce[Any]): Option[MGeoPoint] = {
+  def fromArraySeq(lonLatColl: IterableOnce[Any]): Option[MGeoPoint] = {
     lazy val logPrefix = s"fromArraySeq(${System.currentTimeMillis()}):"
+
     val doubleSeq = lonLatColl
-      .toIterator
+      .iterator
       .flatMap {
         case v: java.lang.Number =>
           val n = JsNumber( v.doubleValue() )
@@ -63,6 +63,7 @@ object GeoPoint extends MacroLogsImpl {
           Nil
       }
       .toSeq
+
     val jsRes = GeoPoint.READS_ANY
       .reads( JsArray(doubleSeq) )
     if (jsRes.isError)
@@ -103,8 +104,8 @@ object GeoPoint extends MacroLogsImpl {
         }
       case mgp: MGeoPoint =>
         Some( mgp )
-      // TraversableOnce наверное не нужен вообще, был нужен для es-2.x и ранее.
-      case lonLatColl: TraversableOnce[Any] =>
+      // IterableOnce наверное не нужен вообще, был нужен для es-2.x и ранее.
+      case lonLatColl: IterableOnce[Any] =>
         fromArraySeq( lonLatColl )
       case _ =>
         LOGGER.warn(s"$logPrefix Totally unknown geopoint format type.")
@@ -146,13 +147,13 @@ object GeoPoint extends MacroLogsImpl {
   def toEsStr(gp: MGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 
   /** Пространственная координата в терминах JTS. */
-  def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon.doubleValue(), gp.lat.doubleValue())
+  def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon.doubleValue, gp.lat.doubleValue)
 
   /** (Lon,lat,alt) является основным порядком гео.координат в sio2. */
   def toLngLat(gp: MGeoPoint): LngLat = {
     LngLat(
-      lng = gp.lon.doubleValue(),
-      lat = gp.lat.doubleValue()
+      lng = gp.lon.doubleValue,
+      lat = gp.lat.doubleValue
     )
   }
 
@@ -198,8 +199,8 @@ object GeoPoint extends MacroLogsImpl {
           _mergeUnbinded {
             val k = key1F(key)
             Seq(
-              doubleB.unbind(k(Lat.QS_FN), value.lat.doubleValue()),
-              doubleB.unbind(k(Lon.QS_FN), value.lon.doubleValue())
+              doubleB.unbind(k(Lat.QS_FN), value.lat.doubleValue),
+              doubleB.unbind(k(Lon.QS_FN), value.lon.doubleValue)
             )
           }
         }
@@ -223,7 +224,7 @@ object GeoPoint extends MacroLogsImpl {
         for {
           rawEith <- strB.bind(key, params)
         } yield {
-          rawEith.right.flatMap { raw =>
+          rawEith.flatMap { raw =>
             MGeoPoint.fromString(raw)
               .toRight("e.geo.point")
           }
@@ -243,7 +244,7 @@ object GeoPoint extends MacroLogsImpl {
         for {
           rawOptEith <- strOptB.bind(key, params)
         } yield {
-          rawOptEith.right.flatMap { rawOpt =>
+          rawOptEith.flatMap { rawOpt =>
             rawOpt.fold[Either[String, Option[MGeoPoint]]] {
               Right(None)
             } { raw =>

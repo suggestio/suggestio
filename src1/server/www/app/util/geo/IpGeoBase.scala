@@ -32,7 +32,7 @@ class IpGeoBaseImport @Inject() (
   def IS_ENABLED: Boolean = configuration.getOptional[Boolean]("ipgeobase.import.enabled")
     .getOrElseFalse
 
-  override def cronTasks(): TraversableOnce[MCronTask] = {
+  override def cronTasks(): Iterable[MCronTask] = {
     if (IS_ENABLED) {
       // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
       val task = MCronTask(
@@ -42,7 +42,8 @@ class IpGeoBaseImport @Inject() (
       ) {
         ipgbImporter.updateIpBase()
       }
-      Seq(task)
+      task :: Nil
+
     } else {
       Nil
     }

@@ -10,8 +10,8 @@ import Keys._
 object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
-  val SCALA_VSN = "2.12.10"
-  //val SCALA_VSN = "2.13.1"
+  //val SCALA_VSN = "2.12.10"
+  val SCALA_VSN = "2.13.1"
   
 
   /** Версия scala для scala.js. */
@@ -40,9 +40,9 @@ object Common {
     val PLAY_SLICK   = "4.0.+"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.7.+"
+    val PLAY_JSON_VSN = "2.8.0-M7"
 
-    val PLAY_GEOJSON = "1.5.0"
+    val PLAY_GEOJSON = "1.6.0"
 
 
     /** Версия elasticsearch. */
@@ -78,14 +78,15 @@ object Common {
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
-    val SCALAZ = "7.2.+"
+    val SCALAZ = "7.2.29"
 
     /** Версия scalaCSS. Изначально появилась в sc-v3 для замены около-динамических стилей,
       * геморройно подгружаемых с сервера.
       *
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    val SCALACSS = "0.5.6.20190304"
+    //val SCALACSS = "0.5.6.20190304"
+    val SCALACSS = "0.6.0-RC1"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -183,7 +184,7 @@ object Common {
     /** Версия pathikrit/better-files для удобной работы с файлами.
       * @see [[https://github.com/pathikrit/better-files]]
       */
-    val BETTER_FILES = "3.4.0"
+    //val BETTER_FILES = "3.8.0"
 
     /** Используемая в проекте версия akka. */
     val AKKA = "2.5.+"
@@ -258,27 +259,27 @@ object Common {
   def bcVsn           = "1.64"
 
   /** Версия scalatest+play. */
-  def scalaTestPlusPlayVsn = "3.0.0"
+  def scalaTestPlusPlayVsn = "5.0.0-RC1"
 
   /** Версия используемого плагина play-mailer. */
-  def playMailerVsn     = "6.0.0"
+  def playMailerVsn     = "7.0.1"
 
 
   /** Версия jquery-фасада для scalajs.
    * @see [[https://github.com/scala-js/scala-js-jquery]]
    */
-  def sjsJqueryVsn      = "0.9.1"
+  def sjsJqueryVsn      = "0.9.5"
 
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  def sjsDomVsn         = "0.9.6"
+  def sjsDomVsn         = "0.9.7"
 
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.6"
 
   /** Версия scalatest. */
-  def scalaTestVsn       = "3.0.1"
+  def scalaTestVsn       = "3.1.0-RC2"
 
   /** 
    *  Версия react.js, используемая в проекте. 
@@ -290,7 +291,7 @@ object Common {
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.4.2" // И контроллировать суффикс diodeReactVsn ниже!
+  val reactSjsVsn        = "1.5.0-RC2" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -311,8 +312,8 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.5"
-  val diodeReactVsn = diodeVsn + ".142"
+  val diodeVsn = "1.1.6.sio-20191111"
+  val diodeReactVsn = diodeVsn + ".150-RC2"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]

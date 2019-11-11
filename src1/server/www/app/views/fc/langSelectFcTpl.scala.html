@@ -2,10 +2,10 @@
 
 @* Кастрированная производная defaultFieldConstructor, не генерирующая лишнего шума. *@
 
-<dl class="@elements.args.get('_class) @if(elements.hasErrors) {error}"
-    id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
+<dl class="@elements.args.get(Symbol("_class")) @if(elements.hasErrors) {error}"
+    id="@elements.args.get(Symbol("_id")).getOrElse(elements.id + "_field")">
     <dd>@elements.input</dd>
-    @elements.errors.map { error =>
+    @for(error <- elements.errors) {
       <dd class="error">@error</dd>
     }
 </dl>

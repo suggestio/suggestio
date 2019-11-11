@@ -167,7 +167,7 @@ class LkAds @Inject() (
             .findStatusesForAds(
               // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
               adIds    = madIds,
-              statuses = MItemStatuses.advBusy.toStream
+              statuses = MItemStatuses.advBusy.to( Iterable )
             )
             .forPgStreaming(30)
         )

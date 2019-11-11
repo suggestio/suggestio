@@ -15,8 +15,9 @@ object UrlUtilJs {
     * @param acc Выхлоп toUrlHashAcc().
     * @return Строка, пригодная для записи в URL.
     */
-  def qsPairsToString[T <: (String, Any)](acc: TraversableOnce[T]): String = {
-    acc.toIterator
+  def qsPairsToString[T <: (String, Any)](acc: IterableOnce[T]): String = {
+    acc
+      .iterator
       .map { kv =>
         kv.productIterator
           .map { s =>

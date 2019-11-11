@@ -38,16 +38,20 @@ class DummySmsSendClient @Inject()(
   override def smsSend(sms: MSmsSend): Future[Seq[ISmsSendResult]] = {
     val p = Promise[Seq[ISmsSendResult]]()
 
-    actorSystem.scheduler.scheduleOnce( 500 milliseconds ) {
-      LOGGER.info(s"smsSend(): FAKE sent sms to\n ${sms.msgs.mapValues(_.mkString(" | ")).mkString("\n ")}")
+    actorSystem.scheduler.scheduleOnce( 500.milliseconds ) {
+      LOGGER.info(s"smsSend(): FAKE sent sms to\n ${sms.msgs.view.mapValues(_.mkString(" | ")).mkString("\n ")}")
+      val smsStatusOk = MSmsSendStatus(
+        isOk = true,
+      )
       val r = MSmsSendResult(
         isOk        = true,
         statusText  = None,
-        smsInfo     = sms.msgs.mapValues { _ =>
-          MSmsSendStatus(
-            isOk = true,
-          )
-        }
+        smsInfo     = sms.msgs
+          .view
+          .mapValues { _ =>
+            smsStatusOk
+          }
+          .toMap
       )
       p.success( r :: Nil )
     }

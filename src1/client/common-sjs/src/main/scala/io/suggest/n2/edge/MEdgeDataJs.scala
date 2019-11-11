@@ -25,10 +25,10 @@ import monocle.macros.GenLens
   */
 object MEdgeDataJs {
 
-  def jdEdges2EdgesDataMap(jdEdges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
+  def jdEdges2EdgesDataMap(jdEdges: Iterable[MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
     IId.els2idMap(
       jdEdges
-        .toIterator
+        .iterator
         .map( MEdgeDataJs(_) )
     )
   }

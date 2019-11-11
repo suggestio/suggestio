@@ -145,250 +145,253 @@ object GridBuilderUtil {
           _stepper( s2 )
 
         } else if (currLvl.restItems.nonEmpty) {
-          currLvl.restItems.head match {
+          val gbTree = currLvl.restItems.head
 
+          // Здесь был match{Tree.Node/Tree.Leaf}, но scalac-2.13.1 ругается на unreachable code, поэтому используется if.
+          val subItems = gbTree.subForest
+          if (subItems.isEmpty) {
             // Это block-meta. Позиционируем ровно один (текущий) блок:
-            case Tree.Leaf(gb) =>
-              lazy val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
-              val gbSize = gb.size.get
+            val gb = gbTree.rootLabel
+            lazy val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
+            val gbSize = gb.size.get
 
-              val blockHeightPx =
-                if (gbSize.heightPx.isSzMulted) gbSize.heightPx.sizePx
-                else szMultedF( gbSize.heightPx.sizePx, wideSzMultOpt )
+            val blockHeightPx =
+              if (gbSize.heightPx.isSzMulted) gbSize.heightPx.sizePx
+              else szMultedF( gbSize.heightPx.sizePx, wideSzMultOpt )
 
-              val topPxAbs = currLvl.ctx.lineToAbs( xy.line )
-              val currWide = MWideLine(
-                topPx     = topPxAbs,
-                heightPx  = blockHeightPx,
+            val topPxAbs = currLvl.ctx.lineToAbs( xy.line )
+            val currWide = MWideLine(
+              topPx     = topPxAbs,
+              heightPx  = blockHeightPx,
+            )
+
+            if (
+              // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
+              (s0.wides overlaps currWide) ||
+              // Широкий блок подразумевает пустую строку для себя, в т.ч. на самом ВЕРХНЕМ уровне.
+              (if (gbSize.expandMode.nonEmpty) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
+               // !wide: Ширина текущего блока влезает в текущую строку?
+               else gbSize.widthCells > currLvl.getMaxCellWidthCurrLineCol() )
+            ) {
+              // Здесь нет места для текущего блока.
+              val (searchLvl, searchTopPx) =
+                // Для wide-блока надо считать место с помощью root-уровня.
+                if (gbSize.expandMode.nonEmpty) rootLvl -> currWide.topPx
+                // Для обычного блока ищем место на текущем уровне.
+                else currLvl -> xy.line
+
+              // Рассчитать следующую строку для перехода. Для wide-блока рассчёт идёт на root-уровне, поэтому требуется обратный маппинг координату назад в проекцию текущего уровня.
+              var nextLinePx = searchLvl.ctx.minHeightUsedAfterLine( searchTopPx )
+              if (searchLvl.ctx.isRoot && !currLvl.ctx.isRoot)
+                nextLinePx = currLvl.ctx.absLineToRel( nextLinePx )
+              nextLinePx += paddingMultedPx
+
+              //println(s"step to next line, $xy => $nextLinePx, overlaps?${s0.wides overlaps currWide} wideLine=${currWide.topPx} root.maxWidthCL=${rootLvl.ctx.getMaxCellWidth(currWide.topPx, 0)} root.colsCount=${rootLvl.ctx.colsCount}")
+              val currLvlUpdF = MGbLevelState.stepToNextLine( nextLinePx )
+              _stepper(
+                MGbStepState.replaceCurrLevel( currLvlUpdF(currLvl) )(s0)
               )
 
-              if (
-                // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
-                (s0.wides overlaps currWide) ||
-                // Широкий блок подразумевает пустую строку для себя, в т.ч. на самом ВЕРХНЕМ уровне.
-                (if (gbSize.expandMode.nonEmpty) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
-                 // !wide: Ширина текущего блока влезает в текущую строку?
-                 else gbSize.widthCells > currLvl.getMaxCellWidthCurrLineCol() )
-              ) {
-                // Здесь нет места для текущего блока.
-                val (searchLvl, searchTopPx) =
-                  // Для wide-блока надо считать место с помощью root-уровня.
-                  if (gbSize.expandMode.nonEmpty) rootLvl -> currWide.topPx
-                  // Для обычного блока ищем место на текущем уровне.
-                  else currLvl -> xy.line
+            } else {
+              // Здесь влезет блок текущей ширины и высоты.
+              // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
+              val endColumnIndex = xy.column + gbSize.widthCells
+              val pxIvl2 = MPxInterval(
+                startPx = topPxAbs,
+                sizePx  = blockHeightPx,
+                block   = gb,
+              )
+              // Обновить состояние: проинкрементить col/line курсоры:
+              val updateColumnStateF = MColumnState.occupiedRev.modify( pxIvl2 :: _ )
+              for ( ci <- xy.column until endColumnIndex )
+                currLvl.ctx.updateHeightUsed( ci )(updateColumnStateF)
 
-                // Рассчитать следующую строку для перехода. Для wide-блока рассчёт идёт на root-уровне, поэтому требуется обратный маппинг координату назад в проекцию текущего уровня.
-                var nextLinePx = searchLvl.ctx.minHeightUsedAfterLine( searchTopPx )
-                if (searchLvl.ctx.isRoot && !currLvl.ctx.isRoot)
-                  nextLinePx = currLvl.ctx.absLineToRel( nextLinePx )
-                nextLinePx += paddingMultedPx
+              val currLvl2 = currLvl.copy(
+                restItems   = currLvl.restItems.tail,
+                currLineCol = MCoords2di.x.set(endColumnIndex)(xy),
+              )
+              val xyAbs = currLvl.ctx.colLineToAbs( xy )
 
-                //println(s"step to next line, $xy => $nextLinePx, overlaps?${s0.wides overlaps currWide} wideLine=${currWide.topPx} root.maxWidthCL=${rootLvl.ctx.getMaxCellWidth(currWide.topPx, 0)} root.colsCount=${rootLvl.ctx.colsCount}")
-                val currLvlUpdF = MGbLevelState.stepToNextLine( nextLinePx )
-                _stepper(
-                  MGbStepState.replaceCurrLevel( currLvlUpdF(currLvl) )(s0)
-                )
+              val orderN = gb.orderN
+                .getOrElse( stepCounter )
 
-              } else {
-                // Здесь влезет блок текущей ширины и высоты.
-                // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
-                val endColumnIndex = xy.column + gbSize.widthCells
-                val pxIvl2 = MPxInterval(
-                  startPx = topPxAbs,
-                  sizePx  = blockHeightPx,
-                  block   = gb,
-                )
-                // Обновить состояние: проинкрементить col/line курсоры:
-                val updateColumnStateF = MColumnState.occupiedRev.modify( pxIvl2 :: _ )
-                for ( ci <- xy.column until endColumnIndex )
-                  currLvl.ctx.updateHeightUsed( ci )(updateColumnStateF)
-
-                val currLvl2 = currLvl.copy(
-                  restItems   = currLvl.restItems.tail,
-                  currLineCol = MCoords2di.x.set(endColumnIndex)(xy),
-                )
-                val xyAbs = currLvl.ctx.colLineToAbs( xy )
-
-                val orderN = gb.orderN
-                  .getOrElse( stepCounter )
-
-                // Т.к. фон wide-блока центруется независимо от контента, для этого используется искусственный wide-блок,
-                // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
-                val wideBgWidthOpt = gb.wideBgSz
-                  .map { wideBgSz =>
-                    // Задан размер широкого фона. Берём его как есть без лишних манипуляций.
-                    wideBgSz.width
-                  }
-                  .orElse[Int] {
-                    if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
-                      val r = gb.jdt
-                        .props1.widthPx
-                        .map { szMultedF(_, wideSzMultOpt) }
-                        .orElse {
-                          val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
-                            val degAbs = Math.abs( deg )
-                            degAbs > 45 && degAbs <= (90+45)
-                          }
-                          for {
-                            horizSzPx <- if (isSwapWh) Some(gbSize.heightPx)
-                                         else gbSize.widthPx
-                          } yield {
-                            if (horizSzPx.isSzMulted) horizSzPx.sizePx
-                            else szMultedF(horizSzPx.sizePx, wideSzMultOpt)
-                          }
+              // Т.к. фон wide-блока центруется независимо от контента, для этого используется искусственный wide-блок,
+              // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
+              val wideBgWidthOpt = gb.wideBgSz
+                .map { wideBgSz =>
+                  // Задан размер широкого фона. Берём его как есть без лишних манипуляций.
+                  wideBgSz.width
+                }
+                .orElse[Int] {
+                  if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
+                    val r = gb.jdt
+                      .props1.widthPx
+                      .map { szMultedF(_, wideSzMultOpt) }
+                      .orElse {
+                        val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
+                          val degAbs = Math.abs( deg )
+                          degAbs > 45 && degAbs <= (90+45)
                         }
-                        .getOrElse( gbSize.widthCells * paddedCellWidthPx )
-                      Some(r)
-
-                    } else {
-                      // wide-блок без фоновой картинки. Взять ширину такого блока из jdConf:
-                      OptionUtil.maybe( gbSize.expandMode.nonEmpty && !args.jdConf.isEdit ) {
-                        args.jdConf.plainWideBlockWidthPx
+                        for {
+                          horizSzPx <- if (isSwapWh) Some(gbSize.heightPx)
+                                       else gbSize.widthPx
+                        } yield {
+                          if (horizSzPx.isSzMulted) horizSzPx.sizePx
+                          else szMultedF(horizSzPx.sizePx, wideSzMultOpt)
+                        }
                       }
+                      .getOrElse( gbSize.widthCells * paddedCellWidthPx )
+                    Some(r)
+
+                  } else {
+                    // wide-блок без фоновой картинки. Взять ширину такого блока из jdConf:
+                    OptionUtil.maybe( gbSize.expandMode.nonEmpty && !args.jdConf.isEdit ) {
+                      args.jdConf.plainWideBlockWidthPx
                     }
                   }
+                }
 
-                val res = MGbItemRes(
-                  // Восстановить порядок, если индекс был передан из reDo-ветви.
-                  orderN        = orderN,
-                  topLeft       = xyAbs,
-                  forceCenterX  = wideBgWidthOpt,
-                  gbBlock       = gb,
-                  wide          = currWide,
-                )
-                //println(s"RES: Node#${itemExt.nodeId.orNull} topLeft=" + xyAbs + " orderN=" + orderN + " gb=" + gb.size + (if(gb.size.expandMode.nonEmpty) " WIDE" else ""))
+              val res = MGbItemRes(
+                // Восстановить порядок, если индекс был передан из reDo-ветви.
+                orderN        = orderN,
+                topLeft       = xyAbs,
+                forceCenterX  = wideBgWidthOpt,
+                gbBlock       = gb,
+                wide          = currWide,
+              )
+              //println(s"RES: Node#${itemExt.nodeId.orNull} topLeft=" + xyAbs + " orderN=" + orderN + " gb=" + gb.size + (if(gb.size.expandMode.nonEmpty) " WIDE" else ""))
 
-                val mwlAbsOpt = OptionUtil.maybe(gbSize.expandMode.nonEmpty)( currWide )
+              val mwlAbsOpt = OptionUtil.maybe(gbSize.expandMode.nonEmpty)( currWide )
 
-                // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
-                val s1DeConflictedOpt = for {
-                  // Если у нас wide-блок
-                  mwlAbs <- mwlAbsOpt
+              // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
+              val s1DeConflictedOpt = for {
+                // Если у нас wide-блок
+                mwlAbs <- mwlAbsOpt
 
-                  if s0.resultsAccRev.nonEmpty
+                if s0.resultsAccRev.nonEmpty
 
-                  // Найти id карточек, которые конфликтуют с указанным блоком.
-                  conflictingNodeIds = (
-                    for {
-                      gbRes0      <- s0.resultsAccRev.iterator
-                      gbResNodeId <- gbRes0.gbBlock.nodeId
-                      if !(gbRes0.gbBlock.nodeId contains gbResNodeId) &&
-                         (mwlAbs overlaps gbRes0.wide)
-                    } yield
-                      gbResNodeId
-                  )
-                    .toSet
-
-                  if conflictingNodeIds.nonEmpty
-
-                  (conflicting, ok) = s0.resultsAccRev.partition { gbRes0 =>
-                    gbRes0.gbBlock.nodeId
-                      // Если блок без id, то надо проверить, не пересекается ли он с текущей wide-карточкой.
-                      // Если блок с id, то проверить его id по множеству конфликтующих id.
-                      .fold( gbRes0.wide overlaps mwlAbs )( conflictingNodeIds.contains )
-                  }
-                  // conflicting.nonEmpty не проверяем, т.к. conflictingNodeIds.nonEmpty выше - эквивалентен по сути
-
-                } yield {
-                  //println("conflicting = " + conflictingNodeIds)
-                  // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
-                  val parentLvlOpt = s0.levels.tail.headOption
-                  val modLvl0 = parentLvlOpt getOrElse currLvl2
-                  val modLvl2 = MGbLevelState.reDoItems
-                    .modify(conflicting reverse_::: _)( modLvl0 )
-
-                  // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
+                // Найти id карточек, которые конфликтуют с указанным блоком.
+                conflictingNodeIds = (
                   for {
-                    e  <- conflicting
-                    updateLens = MColumnState.occupiedRev.modify { mcs0 =>
-                      mcs0.filter { pxIvl =>
-                        pxIvl.block !===* e.gbBlock
-                      }
+                    gbRes0      <- s0.resultsAccRev.iterator
+                    gbResNodeId <- gbRes0.gbBlock.nodeId
+                    if !(gbRes0.gbBlock.nodeId contains gbResNodeId) &&
+                       (mwlAbs overlaps gbRes0.wide)
+                  } yield
+                    gbResNodeId
+                )
+                  .toSet
+
+                if conflictingNodeIds.nonEmpty
+
+                (conflicting, ok) = s0.resultsAccRev.partition { gbRes0 =>
+                  gbRes0.gbBlock.nodeId
+                    // Если блок без id, то надо проверить, не пересекается ли он с текущей wide-карточкой.
+                    // Если блок с id, то проверить его id по множеству конфликтующих id.
+                    .fold( gbRes0.wide overlaps mwlAbs )( conflictingNodeIds.contains )
+                }
+                // conflicting.nonEmpty не проверяем, т.к. conflictingNodeIds.nonEmpty выше - эквивалентен по сути
+
+              } yield {
+                //println("conflicting = " + conflictingNodeIds)
+                // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
+                val parentLvlOpt = s0.levels.tail.headOption
+                val modLvl0 = parentLvlOpt getOrElse currLvl2
+                val modLvl2 = MGbLevelState.reDoItems
+                  .modify(conflicting reverse_::: _)( modLvl0 )
+
+                // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
+                for {
+                  e  <- conflicting
+                  updateLens = MColumnState.occupiedRev.modify { mcs0 =>
+                    mcs0.filter { pxIvl =>
+                      pxIvl.block !===* e.gbBlock
                     }
-                    eGbSize <- e.gbBlock.size
-                    lastConflictColumn = eGbSize.expandMode
-                      .fold { e.topLeft.left + eGbSize.widthCells } { _ => args.jdConf.gridColumnsCount }
-
-                    ci <- e.topLeft.left until lastConflictColumn
-                  } {
-                    rootLvl.ctx.updateHeightUsed(ci)( updateLens )
                   }
+                  eGbSize <- e.gbBlock.size
+                  lastConflictColumn = eGbSize.expandMode
+                    .fold { e.topLeft.left + eGbSize.widthCells } { _ => args.jdConf.gridColumnsCount }
 
-                  // Обновить состояние билдера:
-                  s0.copy(
-                    resultsAccRev = res :: ok,
-                    levels = parentLvlOpt.fold {
-                      // Родительского уровня не было, работа была на верхнем уровне.
-                      modLvl2 :: s0.levels.tail
-                    } { _ =>
-                      // Был родительский уровень. Обновить оба уровня.
-                      currLvl2 :: modLvl2 :: s0.levels.tail.tail
-                    },
-                    wides = mwlAbs :: s0.wides
-                  )
+                  ci <- e.topLeft.left until lastConflictColumn
+                } {
+                  rootLvl.ctx.updateHeightUsed(ci)( updateLens )
                 }
 
-                val s1 = s1DeConflictedOpt getOrElse {
-                  // Не-wide блок. Просто закинуть данные в состояние.
-                  s0.copy(
-                    levels        = currLvl2 :: s0.levels.tail,
-                    resultsAccRev = res :: s0.resultsAccRev,
-                    wides         = mwlAbsOpt :?: s0.wides,
-                  )
-                }
-
-                // 2018-01-24 Решено, что после wide-карточки на focused-уровне надо рендерить дальнейшую карточку не в столбик,
-                // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
-                // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
-                val s2 = if (
-                  gbSize.expandMode.nonEmpty &&
-                  !currLvl2.ctx.isRoot &&
-                  // Нельзя делать сброс, если последующий элемент тоже wide. Это решает только последний из первых wide-элементов.
-                  !currLvl2.restItems
-                    .headOption
-                    .exists(
-                     _.flatten
-                      .headOption
-                      .exists(_.size.exists(_.expandMode.nonEmpty))
-                    ) &&
-                  // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
-                  (currLvl2.restItems.lengthCompare(1) > 0)
-                ) {
-                  //println( itemExt, currLvl2.restItems.headOption, !currLvl2.restItems.headOption.exists(_.headIsWide) )
-                  val currLvl3 = s1.levels.head.copy(
-                    ctx = rootLvl.ctx,
-                    // Надо, чтобы оставшиеся блоки рендерились строго ПОСЛЕ wide-блока.
-                    // Если не подправить curr.line, то возможно, что мелкий блок отрендерится в пустоте перед широким блоком.
-                    // Поэтому надо подправить currLineCol с учётом высоты вставленного wide-блока.
-                    currLineCol = rootLvl.currLineCol.copy(
-                      x = 0,
-                      y = currWide.bottomPx + paddingMultedPx,
-                    ),
-                  )
-                  MGbStepState.replaceCurrLevel( currLvl3 )(s1)
-                } else {
-                  s1
-                }
-
-                _stepper(s2)
+                // Обновить состояние билдера:
+                s0.copy(
+                  resultsAccRev = res :: ok,
+                  levels = parentLvlOpt.fold {
+                    // Родительского уровня не было, работа была на верхнем уровне.
+                    modLvl2 :: s0.levels.tail
+                  } { _ =>
+                    // Был родительский уровень. Обновить оба уровня.
+                    currLvl2 :: modLvl2 :: s0.levels.tail.tail
+                  },
+                  wides = mwlAbs :: s0.wides
+                )
               }
 
-            // ПодСписок блоков, значит это открытая focused-карточка. Позиционируем эти блоки вертикально:
-            case Tree.Node(_, subItems)  =>
-              // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
-              // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
-              val lineCol2 = MCoords2di.y.modify(_ + paddingMultedPx + paddingMultedPx)( currLvl.currLineCol )
-              val nextLvl = MGbLevelState(
-                ctx = currLvl.ctx.verticalSubGrid( lineCol2 ),
-                restItems = subItems
-              )
-              // Выкидываем текущий пройденный элемент с текущего уровня.
-              val currLvl2 = MGbLevelState.restItems.modify(_.tail)(currLvl)
-              val s2 = MGbStepState.levels.modify { levels0 =>
-                nextLvl :: currLvl2 :: levels0.tail
-              }(s0)
+              val s1 = s1DeConflictedOpt getOrElse {
+                // Не-wide блок. Просто закинуть данные в состояние.
+                s0.copy(
+                  levels        = currLvl2 :: s0.levels.tail,
+                  resultsAccRev = res :: s0.resultsAccRev,
+                  wides         = mwlAbsOpt :?: s0.wides,
+                )
+              }
 
-              _stepper( s2 )
+              // 2018-01-24 Решено, что после wide-карточки на focused-уровне надо рендерить дальнейшую карточку не в столбик,
+              // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
+              // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
+              val s2 = if (
+                gbSize.expandMode.nonEmpty &&
+                !currLvl2.ctx.isRoot &&
+                // Нельзя делать сброс, если последующий элемент тоже wide. Это решает только последний из первых wide-элементов.
+                !currLvl2.restItems
+                  .headOption
+                  .exists(
+                   _.flatten
+                    .headOption
+                    .exists(_.size.exists(_.expandMode.nonEmpty))
+                  ) &&
+                // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
+                (currLvl2.restItems.lengthCompare(1) > 0)
+              ) {
+                //println( itemExt, currLvl2.restItems.headOption, !currLvl2.restItems.headOption.exists(_.headIsWide) )
+                val currLvl3 = s1.levels.head.copy(
+                  ctx = rootLvl.ctx,
+                  // Надо, чтобы оставшиеся блоки рендерились строго ПОСЛЕ wide-блока.
+                  // Если не подправить curr.line, то возможно, что мелкий блок отрендерится в пустоте перед широким блоком.
+                  // Поэтому надо подправить currLineCol с учётом высоты вставленного wide-блока.
+                  currLineCol = rootLvl.currLineCol.copy(
+                    x = 0,
+                    y = currWide.bottomPx + paddingMultedPx,
+                  ),
+                )
+                MGbStepState.replaceCurrLevel( currLvl3 )(s1)
+              } else {
+                s1
+              }
+
+              _stepper(s2)
+            }
+
+          // ПодСписок блоков, значит это открытая focused-карточка. Позиционируем эти блоки вертикально:
+          } else {
+            // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
+            // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
+            val lineCol2 = MCoords2di.y.modify(_ + paddingMultedPx + paddingMultedPx)( currLvl.currLineCol )
+            val nextLvl = MGbLevelState(
+              ctx = currLvl.ctx.verticalSubGrid( lineCol2 ),
+              restItems = subItems
+            )
+            // Выкидываем текущий пройденный элемент с текущего уровня.
+            val currLvl2 = MGbLevelState.restItems.modify(_.tail)(currLvl)
+            val s2 = MGbStepState.levels.modify { levels0 =>
+              nextLvl :: currLvl2 :: levels0.tail
+            }(s0)
+
+            _stepper( s2 )
           }
 
         } else {

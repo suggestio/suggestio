@@ -120,7 +120,7 @@ class SysBilling @Inject() (
         for {
           txns      <- mTxns.findLatestTxns(limit = 10)
           if txns.nonEmpty
-          balances  <- mBalances.getByIds( txns.iterator.map(_.balanceId).toTraversable )
+          balances  <- mBalances.getByIds( txns.iterator.map(_.balanceId).toSet )
         } yield {
           (txns, balances)
         }

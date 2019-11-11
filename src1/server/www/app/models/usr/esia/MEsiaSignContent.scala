@@ -41,10 +41,10 @@ object MEsiaSignContent {
           scopeE                <- stringB.bind         ( F.SCOPE_FN,           params )
         } yield {
           for {
-            clientId            <- clientIdE.right
-            timestamp           <- timestampE.right
-            state               <- stateE.right
-            scope               <- scopeE.right
+            clientId            <- clientIdE
+            timestamp           <- timestampE
+            state               <- stateE
+            scope               <- scopeE
           } yield {
             MEsiaSignContent(
               clientId          = clientId,

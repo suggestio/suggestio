@@ -1,6 +1,6 @@
 package util.ext.tw
 
-import io.suggest.ahc.upload.IMpUploadArgs
+import io.suggest.ahc.upload.MpUploadArgs
 import models.mext.tw.TwMediaAtt
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth.OAuthCalculator
@@ -23,18 +23,18 @@ trait TwMpUpload
    * @param args ignored.
    * @return Upload resource URL string.
    */
-  override def getUploadUrl(args: IMpUploadArgs): String = {
+  override def getUploadUrl(args: MpUploadArgs): String = {
     "https://upload.twitter.com/1.1/media/upload.json"
   }
 
   /** Является ли ответ по запросу правильным. false - если ошибка. */
-  override def isRespOk(args: IMpUploadArgs, resp: WSResponse): Boolean = {
+  override def isRespOk(args: MpUploadArgs, resp: WSResponse): Boolean = {
     val s = resp.status
     s >= 200 && s <= 299
   }
 
   /** Создание экземпляра нового реквеста. */
-  override def newRequest(args: IMpUploadArgs, client: AsyncHttpClient) = {
+  override def newRequest(args: MpUploadArgs, client: AsyncHttpClient) = {
     super.newRequest(args, client)
       .setSignatureCalculator( new OAuthCalculator(consumerKey, args.oa1AcTok.get) )
   }

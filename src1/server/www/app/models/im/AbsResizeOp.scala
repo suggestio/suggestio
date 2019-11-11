@@ -22,7 +22,9 @@ object AbsResizeOp extends JavaTokenParsers {
     flags.foreach { flag =>
       sb append flag.urlSafeChar
     }
-    sb.append("]").r
+    sb.append("]")
+      .toString()
+      .r
   }
   val whDelimRe = "[xX]".r
 

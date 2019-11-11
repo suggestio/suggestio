@@ -33,7 +33,7 @@ libraryDependencies ++= {
   "com.typesafe.play" %% "play-mailer-guice" % Common.playMailerVsn,
 
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-  "com.mohiva" %% "play-html-compressor" % "0.7.1",  // https://github.com/mohiva/play-html-compressor
+  "com.github.fkoehler" %% "play-html-compressor" % "1.0.0",
   // io.suggest stuff
   Common.ORG %% "util" % "2.0.1"
     exclude("org.jruby", "jruby-complete")
@@ -63,17 +63,17 @@ libraryDependencies ++= {
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
-  "org.clapper" %% "scalasti" % "2.+",
+  //"org.clapper" %% "scalasti" % "2.+",
 
   // Для будущей работы с файлами добавлено вот это:
-  "com.github.pathikrit" %% "better-files"       % Common.Vsn.BETTER_FILES,
+  //"com.github.pathikrit" %% "better-files"       % Common.Vsn.BETTER_FILES,
   //"com.typesafe.akka"    %% "akka-contrib-extra" % Common.Vsn.AKKA_CONTRIB_EXTRA,
   
   // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
   //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,
 
   // Поддержка JsMessages для client-side локализации сообщений
-  "org.julienrf" %% "play-jsmessages" % "3.0.0",
+  "org.julienrf" %% "play-jsmessages" % "4.0.0",
   // Parsers
   "org.apache.tika" % "tika-core" % tikaVsn,
   "org.apache.tika" % "tika-parsers" % tikaVsn

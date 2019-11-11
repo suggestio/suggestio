@@ -69,10 +69,13 @@ trait ScFocusedAds
       * @param mads найденные рекламные карточки.
       * @param ids id запрошенных рекламных карточек.
       */
-    protected def logMissingFirstIds(mads: Iterable[MNode], ids: Traversable[String]): Unit = {
+    protected def logMissingFirstIds(mads: Iterable[MNode], ids: Iterable[String]): Unit = {
       if (mads.size != ids.size) {
         // Выявить, какие id не были найдены.
-        val idsFound = mads.iterator.flatMap(_.id).toSet
+        val idsFound = mads
+          .iterator
+          .flatMap(_.id)
+          .toSet
         val idsWant = ids.toSet
         val idsNotFound = idsWant -- idsFound
         val sb = new StringBuilder(128, "logInvalidFirstIds(): Client requested inexisting ad ids: ")

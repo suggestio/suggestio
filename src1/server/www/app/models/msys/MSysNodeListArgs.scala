@@ -37,10 +37,10 @@ object MSysNodeListArgs {
           offsetOptEith     <- intOptB    .bind(k(OFFSET_FN),       params)
         } yield {
           for {
-            ntypeOpt        <- ntypeOptEith.right
-            stiOpt          <- stiOptEith.right
-            limitOpt        <- limitOptEith.right
-            offsetOpt       <- offsetOptEith.right
+            ntypeOpt        <- ntypeOptEith
+            stiOpt          <- stiOptEith
+            limitOpt        <- limitOptEith
+            offsetOpt       <- offsetOptEith
           } yield {
             MSysNodeListArgs(
               ntypeOpt = ntypeOpt,

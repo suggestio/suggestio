@@ -12,7 +12,7 @@ object SetUtil {
     * Тут мы пытаемся залить в исходное множество новые элементы,
     * но если ничего не изменилось, то вернуть исходный указатель на исходное множество.
     */
-  def addToSetOrKeepRef1[T](set0: Set[T], newEls: TraversableOnce[T]): Set[T] = {
+  def addToSetOrKeepRef1[T](set0: Set[T], newEls: IterableOnce[T]): Set[T] = {
     val set1 = set0 ++ newEls
     if (set1.size > set0.size) set1 else set0
   }
@@ -24,7 +24,7 @@ object SetUtil {
   def delFromSetOrKeepRef[T](set0: Set[T], els: T*): Set[T] = {
     delFromSetOrKeepRef(set0, els)
   }
-  def delFromSetOrKeepRef[T](set0: Set[T], els: TraversableOnce[T]): Set[T] = {
+  def delFromSetOrKeepRef[T](set0: Set[T], els: IterableOnce[T]): Set[T] = {
     val set1 = set0 -- els
     if (set1.size < set0.size) set1 else set0
   }

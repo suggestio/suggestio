@@ -60,7 +60,7 @@
               @(i+1).
             }
 
-            @for(mnode <- eith.right.toOption) {
+            @for(mnode <- eith.toOption) {
               @* nbsp внутри ссылки нужны для случая, когда название узла невидимое, чтобы ссылка НЕ рендерилась невидимой. *@
               <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">&nbsp;@mnode.guessDisplayName.fold {
                 @mnode.id

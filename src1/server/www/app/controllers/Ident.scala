@@ -389,7 +389,7 @@ class Ident @Inject() (
           .left.map { emsg =>
             throw new IllegalArgumentException(emsg)
           }
-          .right.get
+          .getOrElse(throw new NoSuchElementException("captcha invalid"))
 
         // Распарсить введённые юзером реквизиты регистрации.
         creds02 = idToken0.payload.as[MRegCreds0]
@@ -890,7 +890,8 @@ class Ident @Inject() (
                         case _ => true
                       }
                     }
-                    .toStream
+                    .to( LazyList )
+
                   // Отработать email-эдж. Если он уже есть для текущей почты, то оставить как есть. Иначе - создать новый, неподтверждённый эдж.
                   val edges2 = edges1
                     .find { e =>
@@ -1263,7 +1264,9 @@ class Ident @Inject() (
                 .modify { edges0 =>
                   // Найти существующий email-эдж, если он есть (а это не обязательно)
                   var hasChangedEdge = false
-                  val edges2 = for (e <- edges0.toStream) yield {
+                  val edges2 = for {
+                    e <- edges0.to(LazyList)
+                  } yield {
                     if (
                       (e.predicate ==* MPredicates.Ident.Email) &&
                       (e.nodeIds contains qs.email) &&

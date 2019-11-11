@@ -296,20 +296,23 @@ class NodeMdrAh[M](
       val v0 = value
       if (v0.node.info isPendingWithStartTime m.timestampMs) {
         // Это ожидаемый ответ сервера. Обработать его:
-        val infoReq2 = v0.node.info.withTry( m.tryResp.map(MMdrNextRespJs.apply) )
+        val infoRespPot2 = v0.node.info
+          .withTry( m.tryResp.map(MMdrNextRespJs.apply) )
         val jdRuntime2 = SysMdrUtil.mkJdRuntime(
           jdRuntimeOpt = Some(v0.node.jdRuntime),
-          docs = infoReq2
-            .iterator
-            .flatMap(_.nodeOpt)
-            .flatMap(_.info.ad)
-            .map(_.doc)
+          docs = (for {
+            infoResp2 <- infoRespPot2.iterator
+            node      <- infoResp2.nodeOpt
+            nodeAd    <- node.info.ad
+          } yield {
+            nodeAd.doc
+          })
             .toStream
         )
 
         val v2 = MSysMdrRootS.node.modify(
           _.copy(
-            info        = infoReq2,
+            info        = infoRespPot2,
             jdRuntime   = jdRuntime2,
             mdrPots     = Map.empty,
             nodeOffset = {

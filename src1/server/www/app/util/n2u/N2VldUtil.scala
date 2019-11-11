@@ -40,13 +40,13 @@ class N2VldUtil @Inject()(
     * @param edges Эджи.
     * @return Мапа: id эджа -> nodeId картинки.
     */
-  def collectNeededImgIds(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MDynImgId] = {
+  def collectNeededImgIds(edges: IterableOnce[MJdEdge]): Map[EdgeUid_t, MDynImgId] = {
     // Формат дефолтовый, потому что для оригинала он игнорируется, и будет перезаписан в imgsNeededMap()
     val imgFmtDflt = MImgFmts.default
     val needImgsIter = for {
-      e <- edges.toIterator
+      e         <- edges.iterator
       if e.predicate ==>> MPredicates.JdContent.Image
-      fileSrv <- e.fileSrv
+      fileSrv   <- e.fileSrv
     } yield {
       e.id -> MDynImgId(fileSrv.nodeId, dynFormat = imgFmtDflt)
     }
@@ -56,10 +56,10 @@ class N2VldUtil @Inject()(
 
 
   /** Собрать ноды, упомянутые в исходном списке эджей. */
-  def edgedNodes(edges: TraversableOnce[MJdEdge]): Future[Map[String, MNode]] = {
+  def edgedNodes(edges: IterableOnce[MJdEdge]): Future[Map[String, MNode]] = {
     // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
     val edgeNodeIds = (for {
-      jdEdge  <- edges.toIterator
+      jdEdge  <- edges.iterator
       fileSrv <- jdEdge.fileSrv
     } yield {
       fileSrv.nodeId
@@ -89,11 +89,11 @@ class N2VldUtil @Inject()(
     * @param edgeImgIdsMap выхлоп collectNeededImgIds().values
     * @return Фьючерс с картой MMedia.
     */
-  def imgsMedias(edgeImgIdsMap: TraversableOnce[MDynImgId]): Future[Map[String, MMedia]] = {
+  def imgsMedias(edgeImgIdsMap: IterableOnce[MDynImgId]): Future[Map[String, MMedia]] = {
     mMedias.multiGetMapCache(
       // Собрать id запрашиваемых media-оригиналов.
       edgeImgIdsMap
-        .toIterator
+        .iterator
         .map(_.mediaId)
         .toSet
     )
@@ -106,17 +106,17 @@ class N2VldUtil @Inject()(
     * @param edge2imgId Выхлоп collectNeededImgIds()
     * @return Карта эджей и готовых к использованию данных по картинкам.
     */
-  def imgsNeededMap(imgsMediasMap: Map[String, MMedia], edge2imgId: TraversableOnce[(EdgeUid_t, MDynImgId)]): Map[EdgeUid_t, MImg3] = {
-    val iter2 = for {
-      (edgeUid, dynImgId) <- edge2imgId.toIterator
+  def imgsNeededMap(imgsMediasMap: Map[String, MMedia], edge2imgId: IterableOnce[(EdgeUid_t, MDynImgId)]): Map[EdgeUid_t, MImg3] = {
+    (for {
+      (edgeUid, dynImgId) <- edge2imgId.iterator
       mmedia <- imgsMediasMap.get( dynImgId.mediaId )
       imgFormat <- mmedia.file.imgFormatOpt
     } yield {
       val dynImgId2 = MDynImgId.dynFormat.set(imgFormat)( dynImgId )
       val mimg = MImg3( dynImgId2 )
       edgeUid -> mimg
-    }
-    iter2.toMap
+    })
+      .toMap
   }
 
 

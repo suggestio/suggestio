@@ -6,7 +6,7 @@
 @import views.html.helper._
 
 
-@defining( elements.args.get('_class) ) { inputClass =>
+@defining( elements.args.get( Symbol("_class") ) ) { inputClass =>
 
   @inputClass match {
 
@@ -36,7 +36,8 @@
       </td>
 
       <td>
-        <div class="input clearfix @inputClass @if(elements.hasErrors){__error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
+        <div class="input clearfix @inputClass @if(elements.hasErrors){__error}"
+             id="@elements.args.get( Symbol("_id") ).getOrElse(elements.id + "_field")">
         <div class="input_shadow js-input-w">
           @elements.input
         </div>

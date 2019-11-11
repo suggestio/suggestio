@@ -52,7 +52,7 @@ trait ElementsParserT
   protected var relationsAccRev: List[OsmRelationParsed] = Nil
 
     /** Начало работы с документом. Нужно выставить дефолтовый обработчик в стек. */
-  override def startDocument() {
+  override def startDocument(): Unit = {
     become(new TopLevelHandler)
   }
 
@@ -91,7 +91,7 @@ trait ElementsParserT
 
   /** Самый начальный обработчик докумена. С него начинается парсинг. Тут ожидается тэг osm.  */
   class TopLevelHandler extends TopLevelHandlerT {
-    override def startTag(tagName: String, attributes: Attributes) {
+    override def startTag(tagName: String, attributes: Attributes): Unit = {
       if (tagName == TAG_OSM) {
         become(new OsmTagHandler(attributes))
       } else {

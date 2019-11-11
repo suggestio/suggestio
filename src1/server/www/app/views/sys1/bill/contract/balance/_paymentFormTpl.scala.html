@@ -13,7 +13,7 @@
   @_tdFcTableTpl("L") {
     @inputText(
       field    = args.bf(AMOUNT_FN),
-      '_label -> messages("Amount._money")
+      Symbol("_label") -> messages("Amount._money")
     )
   }
 
@@ -21,14 +21,14 @@
     @select(
       field     = args.bf(CURRENCY_CODE_FN),
       options   = args.currencyOpts,
-      '_label  -> messages("Currency")
+      Symbol("_label")  -> messages("Currency")
     )
   }
 
   @_tdFcTableTpl("L") {
     @inputText(
       field    = args.bf(COMMENT_FN),
-      '_label -> messages("Payment.comment")
+      Symbol("_label") -> messages("Payment.comment")
     )
   }
 

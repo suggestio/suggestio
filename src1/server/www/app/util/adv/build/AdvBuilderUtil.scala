@@ -103,15 +103,15 @@ class AdvBuilderUtil @Inject() (
     * @param mitems Итемы биллинга или же итератор оных.
     * @return Итератор из награбленных точек.
     */
-  def grabGeoPoints4Stats(mitems: TraversableOnce[MItem]): Iterator[MGeoPoint] = {
-    mitems
-      .toIterator
-      .flatMap(_.geoShape)
-      .map { gs =>
-        gs.centerPoint
-          // Плевать, если не центральная точка: в работе самой геолокации это не используется, только для всякой статистики.
-          .getOrElse( gs.firstPoint )
-      }
+  def grabGeoPoints4Stats(mitems: IterableOnce[MItem]): Iterator[MGeoPoint] = {
+    for {
+      mitem <- mitems.iterator
+      gs <- mitem.geoShape
+    } yield {
+      gs.centerPoint
+        // Плевать, если не центральная точка: в работе самой геолокации это не используется, только для всякой статистики.
+        .getOrElse( gs.firstPoint )
+    }
   }
 
 
