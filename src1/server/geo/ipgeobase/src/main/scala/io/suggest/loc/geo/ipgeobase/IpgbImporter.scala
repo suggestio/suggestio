@@ -41,7 +41,6 @@ class IpgbImporter @Inject() (
 {
 
   import esClientP.esClient
-  import LOGGER._
   import esModel.api._
 
   /** Ссылка для скачивания текущей базы. */
@@ -85,9 +84,8 @@ class IpgbImporter @Inject() (
     // TODO Нужно ограничивать max-size для возвращаемых данных. 5 метров макс. будет достаточно.
     val downloader = httpGetToFile.Downloader(dlUrlStr, followRedirects = true)
     val resultFut = downloader.request()
-    for (ex <- resultFut.failed) {
-      info(s"download(): Failed to fetch $dlUrlStr into file.", ex)
-    }
+    for (ex <- resultFut.failed)
+      LOGGER.info(s"download(): Failed to fetch $dlUrlStr into file.", ex)
 
     for {
       resp <- resultFut
@@ -107,12 +105,12 @@ class IpgbImporter @Inject() (
             in.close()
           }
           val result = magic == ARCHIVE_MAGIC_NUMBER
-          trace(s"download(): Testing fetched file ${archiveFile.getAbsolutePath}: $result")
+          LOGGER.trace(s"download(): Testing fetched file ${archiveFile.getAbsolutePath}: $result")
           result
         }
       }
     } yield {
-      trace(s"download(): Downloaded file size = ${archiveFile.length} bytes.")
+      LOGGER.trace(s"download(): Downloaded file size = ${archiveFile.length} bytes.")
       archiveFile
     }
   }
@@ -151,19 +149,19 @@ class IpgbImporter @Inject() (
     val listener = new BulkProcessor.Listener {
       /** Перед отправкой каждого bulk-реквеста... */
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        trace(s"$logPrefix $executionId Before bulk import of ${request.numberOfActions} docs...")
+        LOGGER.trace(s"$logPrefix $executionId Before bulk import of ${request.numberOfActions} docs...")
       }
 
       /** Документы в очереди успешно удалены. */
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
         val countImported = response.getItems.length
-        trace(s"$logPrefix $executionId Successfully imported $countImported, ${response.buildFailureMessage()}")
+        LOGGER.trace(s"$logPrefix $executionId Successfully imported $countImported, ${response.buildFailureMessage()}")
         counter.addAndGet(countImported)
       }
 
       /** Ошибка bulk-удаления. */
       override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+        LOGGER.error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
       }
     }
 
@@ -191,11 +189,11 @@ class IpgbImporter @Inject() (
     // Распаковка архива во временную директорию, удаление исходной папки.
     val unpackedDirFut = for (archiveFile <- downloadFut) yield {
       // Распаковать в директорию, удалить скачанный архив.
-      trace(s"$logPrefix Unpacking downloaded archive $archiveFile")
+      LOGGER.trace(s"$logPrefix Unpacking downloaded archive $archiveFile")
       try {
         unpack(archiveFile)
       } finally {
-        trace(s"$logPrefix Deleting downloaded archive $archiveFile")
+        LOGGER.trace(s"$logPrefix Deleting downloaded archive $archiveFile")
         archiveFile.delete()
       }
     }
@@ -207,7 +205,7 @@ class IpgbImporter @Inject() (
 
       // Создание нового ES-индекса
       createIndexFut = {
-        debug(s"$logPrefix Will create new index: $newIndexName")
+        LOGGER.debug(s"$logPrefix Will create new index: $newIndexName")
         esModel.createIndex(newIndexName, mIndexes.indexSettingsCreate)
       }
 
@@ -240,19 +238,22 @@ class IpgbImporter @Inject() (
       oldIndexNames <- oldIndexNamesFut
 
       // Переключить всю систему на новый индекс.
-      _             <- esModel.resetAliasToIndex( newIndexName, mIndexes.INDEX_ALIAS_NAME )
+      _             <- esModel.resetAliasToIndex(
+        indexName  = newIndexName,
+        aliasName     = mIndexes.INDEX_ALIAS_NAME,
+      )
 
       // Удалить старые индексы, если есть.
       _             <- Future.traverse(oldIndexNames)(esModel.deleteIndex)
     } yield {
-      info(logPrefix + s"Done, took = ${System.currentTimeMillis - startedAtMs} ms.")
+      LOGGER.info(logPrefix + s"Done, took = ${System.currentTimeMillis - startedAtMs} ms.")
     }
 
     // Удалить временную директорию, когда всё будет закончено (не важно, ошибка или всё ок).
     doFut.onComplete { _ =>
       for (unpackedDir <- unpackedDirFut) {
         if (unpackedDir.exists()) {
-          trace(s"$logPrefix Deleting temporary unpacked dir ${unpackedDir.getAbsolutePath} ...")
+          LOGGER.trace(s"$logPrefix Deleting temporary unpacked dir ${unpackedDir.getAbsolutePath} ...")
           FileUtils.deleteDirectory(unpackedDir)
         }
       }
@@ -260,7 +261,7 @@ class IpgbImporter @Inject() (
 
     // Если была ошибка во время doFut, то удалить новый индекс.
     for (ex <- doFut.failed) {
-      error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
+      LOGGER.error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
       esModel.deleteIndex( newIndexName )
     }
 
@@ -278,13 +279,14 @@ class IpgbImporter @Inject() (
     lazy val logPrefix = s"importCities($startedAtMs):"
     val citiesFile = new File(dir, CITIES_FILENAME)
 
-    debug(s"$logPrefix Bulk loading cities into ES...")
+    LOGGER.debug(s"$logPrefix Bulk loading cities into ES...")
 
     val parsers = new CityParsers
     val p = parsers.cityLineP
 
     for (_ <- putMappingFut) yield {
-      val linesTotal = Source.fromFile(citiesFile, CITIES_FILE_ENCODING)
+      val linesTotal = Source
+        .fromFile(citiesFile, CITIES_FILE_ENCODING)
         .getLines()
         .foldLeft(1) { (counter, cityLine) =>
           val pr = parsers.parse(p, cityLine)
@@ -294,14 +296,14 @@ class IpgbImporter @Inject() (
               mCitiesTmp.prepareIndexNoVsn(mcity).request()
             }
           } else {
-            warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
+            LOGGER.warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
           }
           if (counter % 300 == 0)
-            trace(s"${logPrefix}Still importing... ($counter)")
+            LOGGER.trace(s"${logPrefix}Still importing... ($counter)")
           counter + 1
         }
 
-      info(s"$logPrefix$linesTotal lines total. Took ${System.currentTimeMillis - startedAtMs} ms.")
+      LOGGER.info(s"$logPrefix$linesTotal lines total. Took ${System.currentTimeMillis - startedAtMs} ms.")
     }
   }
 
@@ -317,7 +319,7 @@ class IpgbImporter @Inject() (
     val startedAtMs = System.currentTimeMillis
     lazy val logPrefix = s"importIpRanges($startedAtMs):"
     val cidrFile = new File(dir, IP_RANGES_FILENAME)
-    debug(s"$logPrefix Will read $cidrFile ...")
+    LOGGER.debug(s"$logPrefix Will read $cidrFile ...")
 
 
     // Собираем инстанс парсера для всех строк:
@@ -336,14 +338,14 @@ class IpgbImporter @Inject() (
               mRangesTmp.prepareIndexNoVsn(mrange).request()
             }
           } else {
-            warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
+            LOGGER.warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
           }
           if (counter % 20000 == 0)
-            trace(s"$logPrefix Still converting... ($counter)")
+            LOGGER.trace(s"$logPrefix Still converting... ($counter)")
           counter + 1
         }
 
-      info(s"$logPrefix $linesTotal lines converted total. Took ${System.currentTimeMillis - startedAtMs} ms.")
+      LOGGER.info(s"$logPrefix $linesTotal lines converted total. Took ${System.currentTimeMillis - startedAtMs} ms.")
     }
   }
 

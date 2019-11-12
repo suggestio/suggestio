@@ -18,8 +18,6 @@ import io.suggest.util.logs.MacroLogsImpl
  */
 object SioFutureUtil extends MacroLogsImpl {
 
-  import LOGGER._
-
   /**
    * Функция последовательного неблокирующего обхода последовательности.
    * @param in входная последовательность
@@ -29,7 +27,9 @@ object SioFutureUtil extends MacroLogsImpl {
    * @tparam B Тип возвращаемых элементов.
    * @return Фьючерс с последовательностью результатов последовательно вызванных фьючерсов.
    */
-  def mapLeftSequentally[A, B](in: Seq[A], ignoreErrors: Boolean = false)(f: A => Future[B])(implicit executor:ExecutionContext): Future[List[B]] = {
+  def mapLeftSequentally[A, B](in: Seq[A], ignoreErrors: Boolean = false)
+                              (f: A => Future[B])
+                              (implicit executor:ExecutionContext): Future[List[B]] = {
     val acc0: List[B] = Nil
     val foldF: (List[B], A) => Future[List[B]] = {
       case (acc, a) => f(a) map( _ :: acc)
@@ -54,7 +54,7 @@ object SioFutureUtil extends MacroLogsImpl {
                                (implicit executor: ExecutionContext): Future[Acc] = {
     val p = Promise[Acc]()
     lazy val logPrefix = System.currentTimeMillis()
-    def foldLeftStep(acc: Acc, inRest: Seq[A]) {
+    def foldLeftStep(acc: Acc, inRest: Seq[A]): Unit = {
       if (inRest.isEmpty) {
         // Закончить обход. Вернуть результат
         p success acc
@@ -99,7 +99,8 @@ object SioFutureUtil extends MacroLogsImpl {
   def timeoutFuture[A](messageFut: Future[A], duration: FiniteDuration)(implicit ec: ExecutionContext): Future[A] = {
     val p = Promise[A]()
     val task = new TimerTask {
-      def run() { p completeWith messageFut }
+      def run(): Unit =
+        p completeWith messageFut
     }
     timer.schedule(task, duration.toMillis)
     p.future
@@ -107,7 +108,7 @@ object SioFutureUtil extends MacroLogsImpl {
 
 
   private def warnError(hash: Long, h:Any, ex:Throwable): Unit =
-    warn(s"foldLeftSequentally()#$hash: Suppressed exception in/before future for element $h", ex)
+    LOGGER.warn(s"foldLeftSequentally()#$hash: Suppressed exception in/before future for element $h", ex)
 
 
   /** Обычно (почти всегда) ExecutionContext является и java-executor'ом. Но всё же предостерегаемся. */

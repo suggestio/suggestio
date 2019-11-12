@@ -58,7 +58,10 @@ class StatIndexUtil @Inject() (
       _ <- mStatsTmp.putMapping()
 
       // Подготовка исходного индекса завершена, переставить index alias на новый индекс.
-      _ <- esModel.resetAliasToIndex( newInxName, mStatIndexes.INDEX_ALIAS_NAME )
+      _ <- esModel.resetAliasToIndex(
+        indexName = newInxName,
+        aliasName = mStatIndexes.INDEX_ALIAS_NAME,
+      )
 
     } yield {
       LOGGER.info(s"$newInxName Done ok.")

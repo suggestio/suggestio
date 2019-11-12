@@ -41,7 +41,7 @@ object DateTimePrettyPrinter {
    * @return
    */
   private def minutesFormatterRu(mSuffix: String, isFuture: Boolean) = {
-    val suffix = " минут" + mSuffix + " назад"
+    val suffix = s" минут$mSuffix назад"
     new PeriodFormatterBuilder()
       .appendMinutes.appendSuffix(suffix)
       .printZeroNever
@@ -53,9 +53,14 @@ object DateTimePrettyPrinter {
   private def hoursFormatterRu(hSuffix: String, isFuture: Boolean) = {
     val builder = new PeriodFormatterBuilder()
     if (isFuture) {
-      builder.appendPrefix("Через ").appendHours().appendSuffix(" час" + hSuffix)
+      builder
+        .appendPrefix("Через ")
+        .appendHours()
+        .appendSuffix(s" час$hSuffix")
     } else {
-      builder.appendHours().appendSuffix(" час" + hSuffix + " назад")
+      builder
+        .appendHours()
+        .appendSuffix(s" час$hSuffix назад")
     }
     builder.printZeroNever()
       .toFormatter
@@ -210,7 +215,7 @@ object DateTimePrettyPrinter {
     if (isCapitalized) {
       result
     } else {
-      result.head.toLower + result.tail
+      s"${result.head.toLower}${result.tail}"
     }
   }
 

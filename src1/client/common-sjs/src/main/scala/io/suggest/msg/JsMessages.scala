@@ -1,10 +1,12 @@
 package io.suggest.msg
 
 import io.suggest.i18n.{I18nConst, IMessage, MessagesF_t}
+import io.suggest.sjs.common.log.Log
 import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -44,7 +46,7 @@ object JsMessagesSingleLangNative extends IJsMessagesSingleLang
 
 
 /** Класс Messages для возможности переключения языков в будущем. (надо бы через JSON) */
-sealed trait Messages {
+sealed trait Messages extends Log {
 
   /** Локализовать инстанс IMessage. */
   def apply(fe: IMessage): String = {
@@ -56,10 +58,21 @@ sealed trait Messages {
     apply1(message, args.asInstanceOf[Seq[js.Any]])
   }
 
+  private var _suppressErrors: Boolean = false
+
   def apply1(message: String, args: Seq[Any]): String = {
-    // Шаманство с аргументами из-за конфликта между Any, AnyRef и js.Any.
-    val argsJs = args.asInstanceOf[Seq[js.Any]]
-    _applyJs(message, argsJs)
+    try {
+      // Шаманство с аргументами из-за конфликта между Any, AnyRef и js.Any.
+      val argsJs = args.asInstanceOf[Seq[js.Any]]
+      _applyJs(message, argsJs)
+    } catch { case ex: Throwable =>
+      // Если с messages проблемы, то ошибки будут сыпать десятками и сотнями. Поэтому рендерим только первую ошибку, остальные глушим.
+      if (!_suppressErrors) {
+        _suppressErrors = true
+        Try( LOG.error(ErrorMsgs.MESSAGES_FAILURE, ex, (message, args)) )
+      }
+      message
+    }
   }
 
   /** Нативный запрос к JSON-словарю или JS-API. */

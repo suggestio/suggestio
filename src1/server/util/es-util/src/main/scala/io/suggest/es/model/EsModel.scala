@@ -153,8 +153,8 @@ final class EsModel @Inject()(
 
 
   /** Выставить алиас на текущий индекс, забыв о предыдущих данных алиаса. */
-  def resetAliasToIndex(aliasName: String, newIndexName: String): Future[_] = {
-    lazy val logPrefix = s"installIndexAliasTo($newIndexName <= $aliasName)[${System.currentTimeMillis()}]:"
+  def resetAliasToIndex(indexName: String, aliasName: String): Future[_] = {
+    lazy val logPrefix = s"resetIndexAliasTo(index[$indexName] alias[$aliasName])[${System.currentTimeMillis()}]:"
     LOGGER.info(s"$logPrefix Starting, alias = $aliasName")
 
     val fut = esClient.admin().indices()
@@ -162,7 +162,7 @@ final class EsModel @Inject()(
       // Удалить все алиасы с необходимым именем.
       .removeAlias("*", aliasName)
       // Добавить алиас на новый индекс.
-      .addAlias(newIndexName, aliasName)
+      .addAlias(indexName, aliasName)
       .executeFut()
       .map( _.isAcknowledged )
 

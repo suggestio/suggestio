@@ -163,4 +163,6 @@ object ErrorMsgs extends MsgsStaticT {
     */
   def GRID_BUILD_RES_MISSING           = E(93)
 
+  def MESSAGES_FAILURE                 = E(94)
+
 }

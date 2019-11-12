@@ -165,7 +165,7 @@ class LkLang @Inject() (
   def lkMessagesJs(langCode: String, hash: Int) = maybeAuth().async { implicit request =>
 
     // Проверить хеш
-    if (hash == jsMessagesUtil.hash) {
+    if (hash ==* jsMessagesUtil.hash) {
       val messages = implicitly[Messages]
 
       // Проверить langCode
