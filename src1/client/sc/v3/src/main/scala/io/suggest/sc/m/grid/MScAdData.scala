@@ -70,7 +70,7 @@ final case class MScAdData(
     *
     * @return Список шаблонов на рендер.
     */
-  def flatGridTemplates: Stream[MJdDoc] = {
+  def flatGridTemplates: LazyList[MJdDoc] = {
     focused.fold {
       val blkExp2 = MScAdData._mkJdIdBlkExpand( main.doc.template, main.doc.jdId )
 
@@ -80,12 +80,13 @@ final case class MScAdData(
         MScAdData._jdId_blockExpand_LENS
           .set(blkExp2)(main.doc)
 
-      doc2 #:: Stream.empty
+      doc2 #:: LazyList.empty
 
     } { foc =>
       foc
         .blkData.doc.template
         .subForest
+        .iterator
         .zipWithIndex
         .map { case (blkJdt, i) =>
           main.doc.copy(
@@ -99,6 +100,7 @@ final case class MScAdData(
             }
           )
         }
+        .to( LazyList )
     }
   }
 

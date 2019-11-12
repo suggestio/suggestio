@@ -45,9 +45,12 @@ class IpgbUtil @Inject() (
       ipRanges  <- mIpRanges.findForIp(ip)
 
       // Выявить id городов, связанных с найденными диапазонами.
-      cityEsIds = ipRanges.iterator
-        .flatMap(_.cityId)
-        .map(MCity.cityId2esId)
+      cityEsIds = (for {
+        ipRange <- ipRanges.iterator
+        cityId  <- ipRange.cityId
+      } yield
+        MCity.cityId2esId( cityId )
+      )
         .toSet
 
       // Получить города по city ids.

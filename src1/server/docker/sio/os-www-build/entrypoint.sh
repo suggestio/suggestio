@@ -21,13 +21,19 @@ password=$K8S_SECRET_IVY2_PASSWORD
 EOF
 
 ## Подготовить конфиг sbt, чтобы активнее работал с локальной artifactory:
-echo "global.sbt..."
-cat > $HOME/.sbt/${SBT_VERSION_ABI}/global.sbt <<EOF
+GLOBAL_SBT="$HOME/.sbt/${SBT_VERSION_ABI}/global.sbt"
+if [ ! -f ]
+echo -n "$GLOBAL_SBT ... "
+if [ -f $GLOBAL_SBT ]; then
+  echo " (Skipped, already exist)"
+else
+  cat > $HOME/.sbt/${SBT_VERSION_ABI}/global.sbt <<EOF
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
-val ARTIFACTORY_URL = "http://${K8S_SECRET_IVY2_HOST}/artifactory"
+//val ARTIFACTORY_URL = "http://ivy2-internal.cbca.ru/artifactory"
+val ARTIFACTORY_URL = "http://ci.suggest.io/artifactory"
 
-val corpRepoResolver = "cbca-corp-repo" at s"\$ARTIFACTORY_URL/corp-repo"
+val corpRepoResolver = ("cbca-corp-repo" at s"$ARTIFACTORY_URL/corp-repo").withAllowInsecureProtocol(true)
 
 publishTo := Some(corpRepoResolver)
 
@@ -37,10 +43,12 @@ externalResolvers ~= { extResolvers =>
 }
 
 resolvers ++= Seq(
-  "repo1"   at  s"\$ARTIFACTORY_URL/repo1",
+  ("repo1"   at  s"$ARTIFACTORY_URL/repo1").withAllowInsecureProtocol(true),
   corpRepoResolver
 )
 EOF
+  echo "Saved ok."
+fi
 
 _fatal() {
   echo "$1\n Waiting for admin for debugging..." >&2

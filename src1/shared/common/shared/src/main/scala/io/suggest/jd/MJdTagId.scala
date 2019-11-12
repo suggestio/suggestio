@@ -57,12 +57,12 @@ object MJdTagId extends IEmpty {
     selPathRev.modify(subIndex :: _)
 
 
-  def mkTreeIndex(segments: Stream[(MJdTagId, JdTag)]*): HashMap[MJdTagId, JdTag] =
+  def mkTreeIndex(segments: LazyList[(MJdTagId, JdTag)]*): HashMap[MJdTagId, JdTag] =
     mkTreeIndex1( segments )
 
   /** Сборка кусков-сегментов в единый индекс. */
-  def mkTreeIndex1(segments: IterableOnce[Stream[(MJdTagId, JdTag)]]): HashMap[MJdTagId, JdTag] = {
-    (HashMap.newBuilder[MJdTagId, JdTag] ++= segments.toStream.iterator.flatten)
+  def mkTreeIndex1(segments: IterableOnce[LazyList[(MJdTagId, JdTag)]]): HashMap[MJdTagId, JdTag] = {
+    (HashMap.newBuilder[MJdTagId, JdTag] ++= segments.iterator.flatten)
       .result()
   }
 

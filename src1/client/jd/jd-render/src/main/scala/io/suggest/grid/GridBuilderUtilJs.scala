@@ -141,7 +141,9 @@ object GridBuilderUtilJs {
       itemsExtDatas = for {
         (jdtTree, i) <- jdArgs.data.doc.template
           .subForest
+          .iterator
           .zipWithIndex
+          .to(LazyList)
         jdt = jdtTree.rootLabel
       } yield {
         Tree.Leaf {

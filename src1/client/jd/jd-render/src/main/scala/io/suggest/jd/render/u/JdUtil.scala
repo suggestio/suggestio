@@ -27,7 +27,7 @@ object JdUtil {
     * @param prevOpt Предыдущее состояние.
     * @return Карта состояний.
     */
-  def mkQdBlockLessData(tpls      : Stream[Tree[(MJdTagId, JdTag)]],
+  def mkQdBlockLessData(tpls      : LazyList[Tree[(MJdTagId, JdTag)]],
                         prevOpt   : Option[MJdRuntime]    = None,
                        ): HashMap[MJdTagId, Pot[MQdBlSize]] = {
     // Какие теги нужны (на основе шаблонов)
@@ -154,22 +154,22 @@ object JdUtil {
     */
   case class mkRuntime(
                         jdConf        : MJdConf,
-                        jdDocs        : Stream[MJdDoc]        = Stream.empty,
+                        jdDocs        : LazyList[MJdDoc]      = LazyList.empty,
                         prevOpt       : Option[MJdRuntime]    = None,
                       )
 
 
   /** typeclass-извлекалка значения Stream[MJdDoc] из произвольного типа. */
   trait JdDocsGetter[T] {
-    def apply(from: T): Stream[MJdDoc]
+    def apply(from: T): LazyList[MJdDoc]
   }
   object JdDocsGetter {
 
-    implicit object ManyDocs extends JdDocsGetter[Stream[MJdDoc]] {
-      override def apply(from: Stream[MJdDoc]) = from
+    implicit object ManyDocs extends JdDocsGetter[LazyList[MJdDoc]] {
+      override def apply(from: LazyList[MJdDoc]) = from
     }
     implicit object OneDoc extends JdDocsGetter[MJdDoc] {
-      override def apply(from: MJdDoc) = ManyDocs( from #:: Stream.empty )
+      override def apply(from: MJdDoc) = ManyDocs( from #:: LazyList.empty )
     }
     implicit object JdDataJs extends JdDocsGetter[MJdDataJs] {
       override def apply(from: MJdDataJs) = OneDoc( from.doc )

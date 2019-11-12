@@ -64,9 +64,9 @@ object MSzMult {
         .reduceMults
     }
 
-    def withAddSzMults(addSzMults: Seq[Option[MSzMult]]): Stream[Double] = {
+    def withAddSzMults(addSzMults: Seq[Option[MSzMult]]): LazyList[Double] = {
       (addSzMults.iterator.flatten.mapToDoubleIter ++ szMultBaseOpt.iterator)
-        .toStream
+        .to( LazyList )
     }
 
     /** sizePx обычно Int, поэтому можно прооптимизировать отсутсвие изменений. */

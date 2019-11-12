@@ -15,7 +15,7 @@ resolvers ++= Seq(
 // Для ускорения update на куче subprojects.
 //addSbtPlugin("nz.co.bottech" % "sbt-cached-updates" % "1.0.+")
 
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.2")
 
@@ -46,12 +46,14 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.1.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.29")
+//addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.0.0-M8")
 
 //addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")
 
 // Плагины для интеграции scalajs + npm + webpack.
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.14.0")
+//addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.15.0")
 
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
 

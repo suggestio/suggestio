@@ -1204,7 +1204,7 @@ final class EsModel @Inject()(
 
 
       /** Лениво распарсить выхлоп multi-GET. */
-      final def mgetResp2Stream(mgetResp: MultiGetResponse): Stream[T1] = {
+      final def mgetResp2Stream(mgetResp: MultiGetResponse): LazyList[T1] = {
         mgetResp
           .getResponses
           .iterator
@@ -1216,7 +1216,7 @@ final class EsModel @Inject()(
               model.deserializeOne2(mgetItem.getResponse) :: Nil
             }
           }
-          .toStream
+          .to( LazyList )
       }
 
 
@@ -1229,11 +1229,11 @@ final class EsModel @Inject()(
           .map(f)
       }
 
-      // Stream! Нельзя менять тип. На ленивость завязана работа akka-stream Source, который имитируется поверх этого метода.
-      def searchResp2stream(searchResp: SearchResponse): Stream[T1] = {
+      // На ленивость LazyList (Stream) завязана работа akka-stream Source, который имитируется поверх этого метода.
+      def searchResp2stream(searchResp: SearchResponse): LazyList[T1] = {
         searchRespMap(searchResp)( model.deserializeSearchHit )
           // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
-          .toStream
+          .to( LazyList )
       }
 
     }
@@ -1396,16 +1396,18 @@ final class EsModel @Inject()(
        * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
        * @return Список результатов в порядке ответа.
        */
-      def multiGet(ids: IterableOnce[String], options: GetOpts = model._getArgsDflt): Future[Stream[T1]] = {
+      def multiGet(ids: Iterable[String],
+                   options: GetOpts = model._getArgsDflt): Future[LazyList[T1]] = {
         if (ids.isEmpty) {
-          Future.successful( Stream.empty )
+          Future.successful( LazyList.empty )
         } else {
           multiGetRaw(ids, options)
             .map( model.mgetResp2Stream )
         }
       }
-      def multiGetRaw(ids: IterableOnce[String], options: GetOpts = model._getArgsDflt): Future[MultiGetResponse] = {
-        val req = esClient.prepareMultiGet()
+      def multiGetRaw(ids: Iterable[String], options: GetOpts = model._getArgsDflt): Future[MultiGetResponse] = {
+        val req = esClient
+          .prepareMultiGet()
           .setRealtime(true)
         val indexName = model.ES_INDEX_NAME
         val typeName = model.ES_TYPE_NAME
@@ -1425,15 +1427,17 @@ final class EsModel @Inject()(
         * @param ids Коллекция или итератор необходимых id'шников.
         * @return Фьючерс с картой результатов.
         */
-      def multiGetMap(ids: IterableOnce[String], options: GetOpts = model._getArgsDflt): Future[Map[String, T1]] = {
+      def multiGetMap(ids: Iterable[String],
+                      options: GetOpts = model._getArgsDflt): Future[Map[String, T1]] = {
         multiGet(ids, options = options)
           // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
-          .map { resultsToMap }
+          .map( resultsToMap )
       }
 
 
       /** Тоже самое, что и multiget, но этап разбора ответа сервера поточный: элементы возвращаются по мере парсинга. */
-      def multiGetSrc(ids: Traversable[String], options: GetOpts = model._getArgsDflt): Source[T1, _] = {
+      def multiGetSrc(ids: Iterable[String],
+                      options: GetOpts = model._getArgsDflt): Source[T1, _] = {
         if (ids.isEmpty) {
           Source.empty
         } else {
@@ -1677,7 +1681,6 @@ final class EsModel @Inject()(
                 nonCachedResultsFut
               } else {
                 for (nonCachedResults <- nonCachedResultsFut) yield
-                  // Vector ++ Stream.
                   nonCachedResults ++ cachedResults
               }
 
@@ -1722,7 +1725,7 @@ final class EsModel @Inject()(
         cacheThese1(results)
 
       /** Принудительное кэширование для всех указанных item'ов. */
-      def cacheThese1(results: IterableOnce[T1]): Unit =
+      def cacheThese1(results: Iterable[T1]): Unit =
         results.foreach( cacheThat )
 
 
@@ -1834,9 +1837,9 @@ final class EsModel @Inject()(
       }
 
       /** typeclass: возвращает результаты в виде инстансом моделей. */
-      implicit def LazyStreamMapper: EsSearchFutHelper[Stream[T1]] = {
-        new EsSearchFutHelper[Stream[T1]] {
-          override def mapSearchResp(searchResp: SearchResponse): Future[Stream[T1]] = {
+      implicit def LazyStreamMapper: EsSearchFutHelper[LazyList[T1]] = {
+        new EsSearchFutHelper[LazyList[T1]] {
+          override def mapSearchResp(searchResp: SearchResponse): Future[LazyList[T1]] = {
             val result = model.searchResp2stream(searchResp)
             Future.successful(result)
           }
@@ -1934,8 +1937,8 @@ final class EsModel @Inject()(
         *
         * @return Список рекламных карточек, подходящих под требования.
         */
-      def dynSearch(dsa: A): Future[Stream[T1]] =
-        search[Stream[T1]] (dsa)
+      def dynSearch(dsa: A): Future[LazyList[T1]] =
+        search[LazyList[T1]] (dsa)
 
       /** Поиск с возвратом akka-streams.
         * Source эмулируется поверх dynSearch, никакого scroll'а тут нет, т.к. scroll не умеет сортировку, скоринг, лимиты.

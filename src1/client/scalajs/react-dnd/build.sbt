@@ -1,5 +1,3 @@
-import org.scalajs.sbtplugin.ScalaJSPluginInternal.scalaJSRequestsDOM
-
 Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)

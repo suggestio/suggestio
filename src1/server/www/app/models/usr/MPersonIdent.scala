@@ -1,5 +1,6 @@
 package models.usr
 
+import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.ext.svc.MExtService
@@ -61,24 +62,27 @@ class MPersonIdentModel @Inject()(
         * @param emailOrPhone Выверенный нормализованный адрес электронной почты.
         * @return Фьючерс с узлами, подходящими под запрос.
         */
-      def findUsersByEmailPhoneWithPw(emailOrPhone: String): Future[Stream[MNode]] = {
+      def findUsersByEmailPhoneWithPw(emailOrPhone: String): Future[LazyList[MNode]] = {
         mNodes.dynSearch {
           new MNodeSearchDfltImpl {
             // По идее, тут не более одного.
             override def limit = 2
-            override val testNode = Some(false)
-            override val isEnabled = Some(true)
+            override val testNode = OptionUtil.SomeBool.someFalse
+            override val isEnabled = OptionUtil.SomeBool.someTrue
             override val nodeTypes = MNodeTypes.Person :: Nil
             override val outEdges: Seq[Criteria] = {
               val must = IMust.MUST
               // Есть проверенный email:
               val emailCr = Criteria(
-                predicates  = MPredicates.Ident.Email :: MPredicates.Ident.Phone :: Nil,
+                predicates  =
+                  MPredicates.Ident.Email ::
+                  MPredicates.Ident.Phone ::
+                  Nil,
                 nodeIds     = Set(
                   Validators.normalizeEmail(emailOrPhone),
                   Validators.normalizePhoneNumber(emailOrPhone)
                 ).toSeq,
-                flag        = Some(true),
+                flag        = OptionUtil.SomeBool.someTrue,
                 must        = must
               )
               // И есть пароль

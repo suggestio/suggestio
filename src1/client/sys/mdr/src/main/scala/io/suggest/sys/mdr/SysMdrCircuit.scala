@@ -32,7 +32,7 @@ object SysMdrCircuit {
     MSysMdrRootS(
       node = MMdrNodeS(
         jdRuntime = SysMdrUtil.mkJdRuntime(
-          docs = Stream.empty
+          docs = LazyList.empty
         ),
       ),
       conf  = mconf,

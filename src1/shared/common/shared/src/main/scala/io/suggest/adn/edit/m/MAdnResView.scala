@@ -98,11 +98,11 @@ case class MAdnResView(
   extends EmptyProduct
 {
 
-  def edgeUids: Stream[MJdEdgeId] = {
+  def edgeUids: LazyList[MJdEdgeId] = {
     (logo.iterator #::
      wcFg.iterator #::
      galImgs.iterator #::
-     Stream.empty)
+     LazyList.empty)
       .flatten
   }
 

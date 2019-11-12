@@ -122,22 +122,32 @@ object JdTag {
 
     import io.suggest.scalaz.ZTreeUtil._
 
-    def qdOps: Stream[MQdOp] = {
+    def qdOps: LazyList[MQdOp] = {
       tree
         .flatten
         .tail
+        .iterator
         .flatMap(_.qdProps)
+        .to( LazyList )
     }
 
-    def deepEdgesUids: Stream[EdgeUid_t] = {
+    def deepEdgesUids: LazyList[EdgeUid_t] = {
       val jdt = tree.rootLabel
+
       val iter1 = tree
         .qdOps
         .flatMap(_.edgeInfo)
-      val iter12 = (iter1 #::: jdt.props1.bgImg.toStream)
+
+      val iter12 = (iter1 #::: jdt.props1.bgImg.to(LazyList))
         .map(_.edgeUid)
-      iter12 #::: tree.subForest
+
+      val iter3 = tree
+        .subForest
+        .iterator
         .flatMap(_.deepEdgesUids)
+        .to(LazyList)
+
+      iter12 #::: iter3
     }
 
 
@@ -264,10 +274,10 @@ final case class JdTag(
   with IEqualsEq
 {
 
-  def edgeUids: Stream[MJdEdgeId] = {
+  def edgeUids: LazyList[MJdEdgeId] = {
     (props1.bgImg #::
       qdProps.flatMap(_.edgeInfo) #::
-      Stream.empty
+      LazyList.empty
     )
       .flatten
   }

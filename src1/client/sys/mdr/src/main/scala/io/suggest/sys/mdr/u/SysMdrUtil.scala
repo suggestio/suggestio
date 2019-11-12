@@ -18,7 +18,7 @@ object SysMdrUtil {
   val JD_CONF = SysMdrConst.JD_CONF
 
   /** Ленивая сборка jdCss на основе шаблонов. */
-  def mkJdRuntime(docs: Stream[MJdDoc],
+  def mkJdRuntime(docs: LazyList[MJdDoc],
                   jdRuntimeOpt: Option[MJdRuntime] = None): MJdRuntime = {
     val jdRuntime2 = JdUtil
       .mkRuntime(JD_CONF)

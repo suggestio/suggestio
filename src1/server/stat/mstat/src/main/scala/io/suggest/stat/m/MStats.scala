@@ -349,9 +349,9 @@ final class MStatsJmx @Inject() (
     LOGGER.trace(s"countBefore($dtStr)")
     try {
       val dt = dtParse(dtStr)
-      val fut = for (count <- companion.countBefore(dt)) yield {
-        count + " items before " + dt
-      }
+      val fut =
+        for (count <- companion.countBefore(dt))
+        yield s"$count items before $dt"
       awaitString(fut)
 
     } catch {

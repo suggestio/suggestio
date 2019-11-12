@@ -26,7 +26,7 @@ import scalaz.Tree
   * @param jdtWideSzMults Данные по доп.ресайзу wide-блоков.
   */
 case class MGridBuildArgs(
-                           itemsExtDatas : Stream[Tree[MGbBlock]],
+                           itemsExtDatas : LazyList[Tree[MGbBlock]],
                            jdConf        : MJdConf,
                            offY          : Int,
                            jdtWideSzMults: Map[MJdTagId, MSzMult],

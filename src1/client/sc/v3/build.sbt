@@ -37,9 +37,14 @@ webpackBundlingMode in fullOptJS := BundlingMode.Application
 // Use a different Webpack configuration file for production
 webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
 
+// TODO scalajs-1.0: leaflet-markercluster и locatecontrol мешают переезду на ES2015.
+//scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(false)) }
+
+// TODO scalajs-1.0: Выставить в scalaJSLinkerConfig emitSourceMaps:
 emitSourceMaps := true
 
-emitSourceMaps in fullOptJS := false
+(emitSourceMaps in fullOptJS) := false
+
 
 scalaJSUseMainModuleInitializer := true
 

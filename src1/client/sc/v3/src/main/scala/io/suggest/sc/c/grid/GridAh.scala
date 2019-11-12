@@ -125,7 +125,7 @@ object GridAh {
           )
         }
       }
-      .toStream
+      .to( LazyList )
 
     GridBuilderUtil.buildGrid(
       MGridBuildArgs(
@@ -149,7 +149,7 @@ object GridAh {
           .iterator
           .flatten
           .flatMap(_.flatGridTemplates)
-          .toStream
+          .to( LazyList )
       )
       .prev( jdRuntime )
       .result
@@ -165,18 +165,19 @@ object GridAh {
     // Нужно узнать координату в плитке карточке
     Effect.action {
       val nodeIdOpt = toAd.nodeId
-      val yCoordsIter = gbRes.coords
+      val yCoords = gbRes.coords
         .iterator
         .zip( ads.iterator.flatten )
         .filter { case (_, scAdData) =>
           scAdData.nodeId ==* nodeIdOpt
         }
+        .map(_._1.y)
+        .to( LazyList )
 
-      if (yCoordsIter.nonEmpty) {
+      if (yCoords.nonEmpty) {
         // Выбрать самый верхний блок карточки, он не обязательно первый по порядку идёт.
-        val toY = yCoordsIter
-          .map(_._1.y)
-          .min
+        val toY = yCoords.min
+
         AnimateScroll.scrollTo(
           // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
           to = Math.max(0, toY - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),

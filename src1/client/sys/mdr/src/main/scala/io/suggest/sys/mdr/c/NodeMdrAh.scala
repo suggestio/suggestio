@@ -307,7 +307,7 @@ class NodeMdrAh[M](
           } yield {
             nodeAd.doc
           })
-            .toStream
+            .to( LazyList )
         )
 
         val v2 = MSysMdrRootS.node.modify(

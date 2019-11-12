@@ -134,7 +134,7 @@ object GridBuilderUtil {
           // Используем rootLvl для сборки под-контекста, т.к. reDoItm.topLeft задано в абсолютных (root) координатах.
           val subLvl = MGbLevelState(
             ctx       = rootLvl.ctx.verticalSubGrid( reDoItm.topLeft ),
-            restItems = gb2 #:: Stream.empty,
+            restItems = gb2 #:: LazyList.empty,
           )
           // Обновить пока-текущий уровень, выкинув пройденный redo-элемент:
           val currLvl2 = MGbLevelState.reDoItems.modify(_.tail)(currLvl)
@@ -383,7 +383,7 @@ object GridBuilderUtil {
             val lineCol2 = MCoords2di.y.modify(_ + paddingMultedPx + paddingMultedPx)( currLvl.currLineCol )
             val nextLvl = MGbLevelState(
               ctx = currLvl.ctx.verticalSubGrid( lineCol2 ),
-              restItems = subItems
+              restItems = subItems.to( LazyList ),    // TODO Opt конвертация Stream=>LazyList
             )
             // Выкидываем текущий пройденный элемент с текущего уровня.
             val currLvl2 = MGbLevelState.restItems.modify(_.tail)(currLvl)
@@ -676,7 +676,7 @@ object MGbLevelState {
   */
 case class MGbLevelState(
                           ctx         : IGridBuildCtx,
-                          restItems   : Stream[Tree[MGbBlock]],
+                          restItems   : LazyList[Tree[MGbBlock]],
                           currLineCol : MCoords2di              = MCoords2di(0, 0),
                           reDoItems   : List[MGbItemRes]        = Nil,
                         ) {

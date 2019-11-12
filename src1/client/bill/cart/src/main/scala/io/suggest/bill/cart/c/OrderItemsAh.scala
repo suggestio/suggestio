@@ -111,10 +111,13 @@ class OrderItemsAh[M](
         val v2 = v0.copy(
           orderContents = req2,
           jdRuntime = CartUtil.mkJdRuntime(
-            req2.iterator
-              .flatMap(_.content.adsJdDatas)
-              .map(_.doc)
-              .toStream
+            (for {
+              oc        <- req2.iterator
+              adJdData  <- oc.content.adsJdDatas
+            } yield
+              adJdData.doc
+            )
+              .to( LazyList )
           ),
           // Сброс (перефильтровать?) выделенных элементов, т.к. список item'ов изменился.
           itemsSelected =

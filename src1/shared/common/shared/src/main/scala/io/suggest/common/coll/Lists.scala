@@ -257,6 +257,7 @@ object Lists {
       val el = head.head
       tail match {
         case l: List[T]   => el :: l
+        case ll: LazyList[T] => el #:: ll
         case s: Stream[T] => el #:: s
         case _            => _appendSeqMaybeStream(head, tail)
       }
@@ -268,6 +269,8 @@ object Lists {
 
   private def _appendSeqMaybeStream[T](head: Seq[T], tail: Seq[T]): Seq[T] = {
     head match {
+      case ll: LazyList[T] =>
+        ll appendedAll tail
       case stream: Stream[T] =>
         stream append tail    // Если tail тоже Stream, то это будет ~O(1). Иначе O(tail.size).
       case _ =>

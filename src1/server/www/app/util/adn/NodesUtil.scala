@@ -216,11 +216,13 @@ final class NodesUtil @Inject() (
       .flatMap { madIdsRes =>
         val count = madIdsRes.length
         val rnd = new Random()
+
         val madIds2 = for {
-          _ <- (0 until Math.min(count, count)).iterator
+          _ <- 0 until Math.min(count, count)
         } yield {
           madIdsRes( rnd.nextInt(count) )
         }
+
         mNodes.multiGet(madIds2)
       }
 

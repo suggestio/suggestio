@@ -53,10 +53,11 @@ trait IdUtil[IId_t[_]] {
     */
   def els2idMap[Id_t, T <: IId_t[Id_t]](els: IterableOnce[T]): Map[Id_t, T] = {
     // TODO Надо сделать, чтобы Id_t определялось автоматом.
-    if (els.isEmpty)
+    val iter = els.iterator
+    if (iter.isEmpty)
       Map.empty
     else
-      els2idMapIter[Id_t, T](els)
+      els2idMapIter[Id_t, T](iter)
         .toMap
   }
 

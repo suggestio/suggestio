@@ -170,7 +170,8 @@ class NodeAdsAh[M](
             .modify(_.fail(ex))(v0)
         },
         {respAds =>
-          val adsPropsResp = respAds.iterator
+          val adsPropsResp = respAds
+            .iterator
             .map(a => MAdProps(adResp = a) )
             .toVector
 
@@ -187,7 +188,7 @@ class NodeAdsAh[M](
                 ads2
                   .iterator
                   .map(_.adResp.jdAdData.doc)
-                  .toStream
+                  .to( LazyList )
               )
               .prev( v0.jdRuntime )
               .result,

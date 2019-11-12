@@ -7,6 +7,9 @@ enablePlugins(ScalaJSBundlerPlugin)
 version := "0.0.0"
 
 libraryDependencies ++= Seq(
+  // scala.js 1.+
+  //"org.scala-js"        %% "scalajs-env-jsdom-nodejs" % "1.0.0-M8",
+
   "org.scala-js"        %%% "scalajs-dom"         % Common.sjsDomVsn,
   
   // Некоторые небольшие скрипты для личного кабинета зависят от jquery. А тут живёт jq-утиль для них.

@@ -275,7 +275,8 @@ class LkAdvExt @Inject() (
       // Запустить поиск списка целей размещения
       targetsFut: Future[ActorTargets_t] = {
         val _targetsFut = mExtTargets.multiGet {
-          for (t <- qsArgs.targets.iterator) yield t.targetId
+          for (t <- qsArgs.targets)
+          yield t.targetId
         }
 
         val targetsMap = qsArgs.targets

@@ -425,7 +425,7 @@ class JdR(
     /** Отрендерить дочерние элементы тега обычным методом.
       * @return Итератор отрендеренных vdom-узлов.
       */
-    def renderChildrenWithId(proxy: ModelProxy[MJdRrrProps]): Stream[(MJdTagId, Tree[JdTag], VdomNode)] = {
+    def renderChildrenWithId(proxy: ModelProxy[MJdRrrProps]): LazyList[(MJdTagId, Tree[JdTag], VdomNode)] = {
       val p = proxy.value
       val chs = p.subTree.subForest
 
@@ -434,6 +434,7 @@ class JdR(
         // Для qd-content-тегов надо указывать родительский тег.
         val parentSome = OptionUtil.maybe(parent.name ==* MJdTagNames.STRIP)( parent )
         chs
+          .iterator
           .zipWithIndex
           .map { case (childJdTree, i) =>
             val ch = childJdTree.rootLabel
@@ -455,12 +456,14 @@ class JdR(
             val proxy2 = proxy.resetZoom( p2 )
             (tagId, childJdTree, renderTag(proxy2) )
           }
+          .to( LazyList )
+
       } else {
-        Stream.empty
+        LazyList.empty
       }
     }
 
-    def pureChildren(chs: Stream[(MJdTagId, Tree[JdTag], VdomNode)]): Stream[VdomNode] = {
+    def pureChildren(chs: LazyList[(MJdTagId, Tree[JdTag], VdomNode)]): LazyList[VdomNode] = {
       chs.map(_._3)
     }
 

@@ -67,10 +67,11 @@ case class QdRrrHtml(
   /** Набор delta-операций, подлежащих проработке.
     * В конце работы должен остаться Nil.
     */
-  private var _restOps: Stream[MQdOpCont] = {
-    for {
+  private var _restOps: LazyList[MQdOpCont] = {
+    (for {
       (jdtTree, i) <- rrrProps.subTree
         .subForest
+        .iterator
         .zipWithIndex
       jdt = jdtTree.rootLabel
       qdOp <- jdt.qdProps
@@ -81,7 +82,8 @@ case class QdRrrHtml(
         jdTagId = MJdTagId.selPathRev
           .modify(i :: _)(rrrProps.tagId),
       )
-    }
+    })
+      .to( LazyList )
   }
 
   /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */

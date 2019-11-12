@@ -22,7 +22,7 @@ object CartUtil {
   )
 
   /** Сборка пустого стиля для jd-рендера. */
-  def mkJdRuntime(templates: Stream[MJdDoc] = Stream.empty): MJdRuntime = {
+  def mkJdRuntime(templates: LazyList[MJdDoc] = LazyList.empty): MJdRuntime = {
     JdUtil
       .mkRuntime(JD_CONF)
       .docs(templates)
