@@ -237,29 +237,58 @@ class JdR(
             .get
         }
           .getOrElse {
-            // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
-            // на px ratio, надо подогнать картинку по размерам:
-            val css0 = state.jdArgs.jdRuntime.jdCss.blockBgF( state.tagId ): TagMod
+            var tmAcc = List.empty[TagMod]
 
-            // Векторные фоновые картинки на wide-карточках желательно отпедалировать по вертикали.
-            // Для wideVec нужно добавить вертикальную центровку картинки.
-            (for {
-              expandMode      <- jdt.props1.expandMode
-              origWh          <- edge.origWh
+            for {
+              origWh <- edge.origWh
               blockHeightPx   <- jdt.props1.heightPx
-            } yield {
-              val img2BlockRatio = state.jdArgs.conf.plainWideBlockWidthPx.toDouble / origWh.width.toDouble
-              val wideSzMultOpt = OptionUtil.maybeOpt(expandMode.hasWideSzMult)(
-                state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
-              )
-              val blockHeightMultedPx = MSzMult.szMultedF( state.jdArgs.conf.szMult )(blockHeightPx, wideSzMultOpt)
-              val offsetTopPx = (blockHeightMultedPx - (origWh.height * img2BlockRatio)) / 2
-              TagMod(
-                css0,
-                ^.marginTop := offsetTopPx.px,
-              )
-            })
-              .getOrElse( css0 )
+            } {
+              val wideSzMultOpt = jdt.props1
+                .expandMode
+                .filter(_.hasWideSzMult)
+                .flatMap { _ =>
+                  state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
+                }
+
+              val szMultedF = MSzMult.szMultedF( state.jdArgs.conf.szMult )
+
+              // Нужно понять, как правильно выравнивать картинку по размерам: по ширине или по высоте.
+              // Сопоставить размеры контейнера и размеры отмасштабированной под контейнер картинки.
+              val contWidthPx = jdt.props1.widthPx
+                .filter { _ => jdt.props1.expandMode.isEmpty }
+                .fold( state.jdArgs.conf.plainWideBlockWidthPx )( szMultedF(_, wideSzMultOpt) )
+
+              // Отношение размера блока и размера картинки по горизонтали.
+              val img2BlockRatioW = contWidthPx.toDouble / origWh.width.toDouble
+
+              // Отношение размера блока и размера картинки по вертикали.
+              val blockHeightMultedPx = szMultedF(blockHeightPx, wideSzMultOpt)
+              val img2BlockRatioH = blockHeightMultedPx.toDouble / origWh.height.toDouble
+
+              val useWidth = img2BlockRatioW > img2BlockRatioH
+
+              tmAcc ::= {
+                if (useWidth) {
+                  ^.width := contWidthPx.px
+                } else {
+                  ^.height := blockHeightMultedPx.px
+                }
+              }
+
+              // Векторные фоновые картинки на wide-карточках желательно отпедалировать по вертикали.
+              // Для wideVec нужно добавить вертикальную центровку картинки.
+              if (jdt.props1.expandMode.nonEmpty && useWidth) {
+                val offsetTopPx = (blockHeightMultedPx - (origWh.height * img2BlockRatioW)) / 2
+                tmAcc ::= {
+                  ^.marginTop := offsetTopPx.px
+                }
+              }
+
+            }
+
+            if (tmAcc.isEmpty) TagMod.empty
+            else if (tmAcc.tail.isEmpty) tmAcc.head
+            else TagMod( tmAcc: _* )
           }
       }
 

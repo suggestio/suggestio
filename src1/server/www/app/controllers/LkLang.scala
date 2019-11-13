@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.I18nConst
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
@@ -107,36 +108,20 @@ class LkLang @Inject() (
           _showLangSwitcher(formWithErrors, r, NotAcceptable)
         },
         {newLang =>
-          val saveUserLangFut: Future[_] = {
-            FutureUtil.optFut2futOpt( request.user.personIdOpt ) { personId =>
-              val newLangCode = newLang.code
-              for {
-                personNodeOpt <- request.user.personNodeOptFut
+          val saveUserLangFut = FutureUtil.optFut2futOpt( request.user.personIdOpt ) { _ =>
+            val newLangCode = newLang.code
+            for {
+              personNodeOpt <- request.user.personNodeOptFut
+              personNode = personNodeOpt.get
 
-                personNode = {
-                  personNodeOpt.fold [MNode] {
-                    warn("User logged in, but not found in MPerson. Creating...")
-                    mNodes.applyPerson(
-                      lang = newLangCode,
-                      id = Some(personId)
-                    )
-                  } { mperson0 =>
-                    mperson0.copy(
-                      meta = mperson0.meta.copy(
-                        basic = mperson0.meta.basic.copy(
-                          langs = List(newLangCode)
-                        )
-                      )
-                    )
-                  }
-                }
-
-                id <- mNodes.save(personNode)
-
-              } yield {
-                Some(id)
+              res <- mNodes.tryUpdate( personNode ) {
+                MNode.meta
+                  .composeLens( MMeta.basic )
+                  .composeLens( MBasicMeta.langs )
+                  .set( newLangCode :: Nil )
               }
-            }
+
+            } yield res.id
           }
 
           // Залоггировать ошибки.
@@ -163,7 +148,6 @@ class LkLang @Inject() (
     * @return js asset с локализованными мессагами внутрях.
     */
   def lkMessagesJs(langCode: String, hash: Int) = maybeAuth().async { implicit request =>
-
     // Проверить хеш
     if (hash ==* jsMessagesUtil.hash) {
       val messages = implicitly[Messages]
@@ -172,7 +156,9 @@ class LkLang @Inject() (
       if (messages.lang.code equalsIgnoreCase langCode) {
         val js = jsMessagesUtil.lkJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(messages)
         Ok(js)
-          .withHeaders(CACHE_CONTROL -> ("public, max-age=" + LK_MESSAGES_CACHE_MAX_AGE_SECONDS))
+          .withHeaders(
+            CACHE_CONTROL -> s"public, max-age=$LK_MESSAGES_CACHE_MAX_AGE_SECONDS"
+          )
 
       } else {
         errorHandler.onClientError(request, NOT_FOUND, s"Lang: $langCode")

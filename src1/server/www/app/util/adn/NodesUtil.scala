@@ -56,9 +56,6 @@ final class NodesUtil @Inject() (
   import mCommonDi._
   import esModel.api._
 
-  /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
-  private def NODE_CREATED_SUCCESS_RDR_AFTER: Int = 5
-
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
   def ADN_IDS_INIT_ADS_SOURCE = Nil
@@ -270,7 +267,7 @@ final class NodesUtil @Inject() (
       // Если не было adnId узлов-источников, то
       .recover { case _: NoSuchElementException =>
         LOGGER.warn(logPrefix + " Node default ads installer is disabled!")
-        Stream.empty
+        LazyList.empty
       }
   }
 

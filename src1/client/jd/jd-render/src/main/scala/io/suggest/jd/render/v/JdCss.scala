@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
-import io.suggest.ad.blk.BlockPaddings
+import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -152,41 +152,6 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       JdCss._jdIdToStringF,
     )
   }
-
-
-  /** Стили для фоновых картинок стрипов. */
-  val blockBgF = styleF(
-    new Domain.OverSeq(
-      if (jdCssArgs.conf.isEdit) {
-        // В редакторе эти стили не дёргаются: используется эмулятор кропа прямо в аттрибутах для всех картинок.
-        Vector.empty
-      } else {
-        _filteredTagIds { jdt =>
-          // Интересуют только стрипы c bgImg, но без wide
-          (jdt.name ==* MJdTagNames.STRIP) &&
-           jdt.props1.bgImg.nonEmpty
-        }
-      }
-    )
-  ) (
-    {jdId =>
-      (for {
-        blk <- jdCssArgs.data.jdTagsById.get( jdId )
-        widthPx <- if (blk.props1.expandMode.isEmpty) {
-          for (w <- blk.props1.widthPx) yield {
-            val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
-            _szMulted( w, wideSzMultOpt )
-          }
-        } else {
-          Some( jdCssArgs.conf.plainWideBlockWidthPx )
-        }
-      } yield {
-        width( widthPx.px )
-      })
-        .whenDefinedStyleS( styleS(_) )
-    },
-    JdCss._jdIdToStringF,
-  )
 
 
   /** Стили контейнера блока с широким фоном. */

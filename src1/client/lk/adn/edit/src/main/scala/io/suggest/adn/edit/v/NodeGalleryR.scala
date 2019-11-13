@@ -65,7 +65,6 @@ class NodeGalleryR(
       val galImgs = propsProxy.value
       lazy val uploadStatusOptFeq = OptFastEq.Wrapped(MFileUploadS.MFileUploadSFastEq)
 
-      println("NodeGallery render()")
       <.div(
         ^.`class` := Css.PropTable.TABLE,
 

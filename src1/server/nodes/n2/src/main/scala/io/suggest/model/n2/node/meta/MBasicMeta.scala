@@ -73,8 +73,9 @@ object MBasicMeta extends IGenEsMappingProps {
     )
   }
 
-  val nameOpt = GenLens[MBasicMeta](_.nameOpt)
+  val nameOpt  = GenLens[MBasicMeta](_.nameOpt)
   val techName = GenLens[MBasicMeta](_.techName)
+  val langs    = GenLens[MBasicMeta](_.langs)
 
 }
 

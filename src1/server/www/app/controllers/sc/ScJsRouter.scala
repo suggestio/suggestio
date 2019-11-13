@@ -3,7 +3,6 @@ package controllers.sc
 import controllers.routes
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
-import play.twirl.api.JavaScript
 import util.acl.IIgnoreAuth
 import views.js.sc.jsRouterTpl
 import japgolly.univeq._
@@ -20,13 +19,10 @@ object ScJsRouter {
 
   def jsRouterCacheHash(implicit ctx: Context): Int = {
     // Рендер зависит только от констант и прочего DI-инстансов в контексте: request.host, .api и т.д.
-    jsRouterCacheHash( jsRouterTpl() )
+    jsRouterCacheHash( jsRouterTpl().body )
   }
-  def jsRouterCacheHash(jsRouterTplJS: JavaScript): Int = {
-    jsRouterCacheHash( jsRouterTplJS.body )
-  }
-  def jsRouterCacheHash(jsRouterTplJsStr: String): Int = {
-    jsRouterTplJsStr.hashCode
+  def jsRouterCacheHash(jsRouterTplBody: String): Int = {
+    jsRouterTplBody.hashCode
   }
 
 }
@@ -66,9 +62,12 @@ trait ScJsRouter
       val realHashCodeStringQuouted = s""""$realHashCodeString""""
       val ifNoneMatchOpt = request.headers.get( IF_NONE_MATCH )
 
-      if ( ifNoneMatchOpt.exists { inm =>
-        (inm ==* realHashCodeString) || (inm ==* realHashCodeStringQuouted)
-      }) {
+      if (
+        ifNoneMatchOpt.exists { inm =>
+          (inm ==* realHashCodeString) ||
+          (inm ==* realHashCodeStringQuouted)
+        }
+      ) {
         LOGGER.trace(s"$logPrefix 304, $ifNoneMatchOpt == $realHashCodeString")
         NotModified
 
