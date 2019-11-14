@@ -15,6 +15,7 @@ import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Show, Tree, TreeLoc}
+import io.suggest.scalaz.ZTreeUtil._
 
 import scala.collection.MapView
 
@@ -107,20 +108,8 @@ object JdTag {
   }
 
 
-  /** Дополнительные методы для Option[IDocTag]. */
-  implicit class DocTagOptExt(val opt: Option[JdTag]) extends AnyVal {
-
-    /** Быстрая фильтрация Option'а по типу.  */
-    def filterByType(jdtName: MJdTagName): Option[JdTag] = {
-      opt.filter(_.name ==* jdtName)
-    }
-
-  }
-
   /** Утиль для поддержки z.Tree с jd-тегами. */
-  implicit class JdTagTreeOps(private val tree: Tree[JdTag]) extends AnyVal {
-
-    import io.suggest.scalaz.ZTreeUtil._
+  implicit class JdTagTreeOps[From: IJdTagGetter](private val tree: Tree[From]) {
 
     def qdOps: LazyList[MQdOp] = {
       tree
@@ -151,13 +140,13 @@ object JdTag {
     }
 
 
-    def deepChildrenOfType(jdtName: MJdTagName): Stream[JdTag] = {
+    def deepChildrenOfType(jdtName: MJdTagName): Stream[From] = {
       tree
         .deepChildren
         .filter( _.name ==* jdtName )
     }
 
-    def deepOfType(jdtName: MJdTagName): Stream[JdTag] = {
+    def deepOfType(jdtName: MJdTagName): Stream[From] = {
       val chs = deepChildrenOfType(jdtName)
       val jdt = tree.rootLabel
       if (jdt.name ==* jdtName) {
@@ -168,13 +157,13 @@ object JdTag {
     }
 
     /** Вернуть главый блок, либо первый блок. */
-    def getMainBlock: Option[Tree[JdTag]] = {
+    def getMainBlock: Option[Tree[From]] = {
       tree.subForest
         .find( _.rootLabel.props1.isMain.getOrElseFalse )
     }
 
     /** Вернуть главый блок, либо первый блок. */
-    def getMainBlockOrFirst: Tree[JdTag] = {
+    def getMainBlockOrFirst: Tree[From] = {
       getMainBlock.getOrElse {
         tree.subForest.head
       }
@@ -192,40 +181,29 @@ object JdTag {
 
 
   /** Дополнительная утиль для TreeLoc[IDocTag]. */
-  implicit class JdTagTreeLocOps(private val treeLoc: TreeLoc[JdTag]) extends AnyVal {
+  implicit class JdTagTreeLocOps[From: IJdTagGetter](private val treeLoc: TreeLoc[From]) {
 
-    // TODO Унести в ScalazUtil
-    def findUp(f: TreeLoc[JdTag] => Boolean): Option[TreeLoc[JdTag]] = {
-      if ( f(treeLoc) ) {
-        Some(treeLoc)
-      } else {
-        treeLoc
-          .parent
-          .flatMap( _.findUp(f) )
-      }
-    }
-
-    def findUpByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
+    def findUpByType(typ: MJdTagName): Option[TreeLoc[From]] = {
       treeLoc.findUp( treeLocByTypeFilterF(typ) )
     }
 
-    def findByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
+    def findByType(typ: MJdTagName): Option[TreeLoc[From]] = {
       treeLoc.find( treeLocByTypeFilterF(typ) )
     }
 
-    def findByEdgeUid(edgeUid: EdgeUid_t): Option[TreeLoc[JdTag]] = {
-      treeLoc.find(
+    def findByEdgeUid(edgeUid: EdgeUid_t): Option[TreeLoc[From]] = {
+      treeLoc.find {
         _.getLabel.qdProps.exists(
           _.edgeInfo.exists(
             _.edgeUid ==* edgeUid))
-      )
+      }
     }
 
   }
 
 
-  def treeLocByTypeFilterF(typ: MJdTagName) = {
-    loc: TreeLoc[JdTag] =>
+  def treeLocByTypeFilterF[From: IJdTagGetter](typ: MJdTagName) = {
+    loc: TreeLoc[From] =>
       loc.getLabel.name ==* typ
   }
 
@@ -258,10 +236,11 @@ object JdTag {
 
 /** Интерфейс для всех "тегов" структуры документа.
   *
-  * IIdentityFastEq:
+  * IEqualsEq:
   * Теги из дерева используются как ключи в ScalaCSS styleF Map[X,_] прямо во время рендера.
   * Во время тормозных react-рендеров и перерендеров в браузере, ключи должны **очень** быстро работать,
   * поэтому всё оптимизировано по самые уши ценой невозможности сравнивания разных тегов между собой.
+  *
   * @param qdProps Список qd-операций для постройки контента (quill-delta).
   */
 final case class JdTag(
@@ -269,8 +248,9 @@ final case class JdTag(
                         props1    : MJdtProps1    = MJdtProps1.empty,
                         qdProps   : Option[MQdOp] = None
                       )
+  // lazy val hashCode: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
+  // TODO После ввода MJdTagId становится не ясно, надо ли *val* hashCode. Может теперь def достаточно?
   extends IHashCodeLazyVal
-  // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
   with IEqualsEq
 {
 

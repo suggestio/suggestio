@@ -173,7 +173,7 @@ class LkAdEdFormUtil @Inject() (
 
       str <- {
         // Внутри одного qd-тега склеить все тексты без разделителей
-        def iter0 = for {
+        val edgeTexts0 = for {
           s <- qdTree.deepEdgesUids
           et <- edgeTextsMap.get(s)
           if et.trim.nonEmpty && et.length >= 2
@@ -182,9 +182,9 @@ class LkAdEdFormUtil @Inject() (
         }
         // Добавить разделитель, если требутся.
         if (i > 0 && delim.nonEmpty)
-          delim #:: iter0
+          delim #:: edgeTexts0
         else
-          iter0
+          edgeTexts0
       }
     } yield str)
       .mkStringLimitLen(40)

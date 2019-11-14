@@ -74,8 +74,12 @@ object ZTreeUtil {
       tree.flatten.tail
     }
 
-    def deepSubtrees: Stream[Tree[A]] = {
-      Stream(tree) #::: tree.subForest.flatMap(_.deepSubtrees)
+    def deepSubtrees: LazyList[Tree[A]] = {
+      tree #:: tree
+        .subForest
+        .iterator
+        .flatMap(_.deepSubtrees)
+        .to(LazyList)
     }
 
     def contains(jdt: A): Boolean = {
@@ -189,6 +193,16 @@ object ZTreeUtil {
         .find { node =>
           node.getLabel ==* a
         }
+    }
+
+    def findUp(f: TreeLoc[A] => Boolean): Option[TreeLoc[A]] = {
+      if ( f(treeLoc) ) {
+        Some(treeLoc)
+      } else {
+        treeLoc
+          .parent
+          .flatMap( _.findUp(f) )
+      }
     }
 
   }

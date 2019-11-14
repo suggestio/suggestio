@@ -1,10 +1,13 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import io.suggest.jd.MJdConf
+import io.suggest.jd.tags.JdTag
+import io.suggest.jd.{MJdConf, MJdTagId}
+import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import monocle.macros.GenLens
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -18,7 +21,8 @@ object MJdCssArgs {
   implicit object MJdCssArgsFastEq extends FastEq[MJdCssArgs] {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
       (a.conf ===* b.conf) &&
-      (a.data ===* b.data)
+      (a.data ===* b.data) &&
+      (a.tplsIndexed ===* b.tplsIndexed)
     }
   }
 
@@ -39,5 +43,6 @@ object MJdCssArgs {
 final case class MJdCssArgs(
                              conf             : MJdConf,
                              data             : MJdRuntimeData,
+                             tplsIndexed      : Seq[Tree[(MJdTagId, JdTag)]],
                              quirks           : Boolean = true,
                            )

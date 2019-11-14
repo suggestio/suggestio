@@ -1,17 +1,16 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
-import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
+import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
-import io.suggest.dev.MSzMult
 import io.suggest.font.MFontSizes
 import io.suggest.jd.{JdConst, MJdTagId}
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.jd.tags.{IJdTagGetter, JdTag, MJdTagName, MJdTagNames}
 import io.suggest.primo.ISetUnset
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -19,6 +18,7 @@ import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.DslMacros
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
+import scalaz.TreeLoc
 
 /**
   * Suggest.io
@@ -27,6 +27,11 @@ import scalacss.internal.mutable.StyleSheet
   * Description: Динамические CSS-стили для рендера блоков плитки.
   *
   * Таблица стилей плоская для всех документов сразу.
+  *
+  * 2019-11-14 Произведена оптимизация обхода дерева тегов, чтобы избежать множества лишних шагов обхода при опускании
+  * на нижние уровни. Все стили, не касающиеся QD_OP-уровней, используют управляемый обход дерева, завёрнутый в unfold(),
+  * что позволяет оставаться на наиболее верхних уровнях дерева.
+  * Это даст значительный прирост генерации стилей на реальных больших-сложных карточках с кучей текстов-картинок-видео.
   */
 
 object JdCss {
@@ -46,6 +51,97 @@ object JdCss {
 
   val jdCssArgs = GenLens[JdCss](_.jdCssArgs)
 
+  def isWide(parent: JdTag): Boolean = {
+    (parent.name ==* MJdTagNames.STRIP) &&
+    parent.props1.expandMode.nonEmpty
+  }
+  def isWideOpt(parentOpt: Option[JdTag]): Boolean =
+    parentOpt.fold(false)(isWide)
+
+
+  /** Извлечь прямые подтеги из TreeLoc. */
+  private def _directChildrenOfType[From: IJdTagGetter](loc: TreeLoc[From], name: MJdTagName): LazyList[From] = {
+    loc.tree
+      .subForest
+      .iterator
+      .map(_.rootLabel)
+      .filter(_.name ==* name)
+      .to( LazyList )
+  }
+
+
+  /** walk-функция для оптимального обхода дерева jd-тегов, выдающая блоки по наиболее короткому пути. */
+  private def _blocksTreeWalker[From: IJdTagGetter](locOrNull0: TreeLoc[From]): Option[(LazyList[From], TreeLoc[From])] = {
+    if (locOrNull0 == null) {
+      None
+
+    } else {
+      val loc0 = locOrNull0
+      val jd = loc0.getLabel
+
+      val r = jd.name match {
+        case MJdTagNames.STRIP =>
+          val emit = jd #:: LazyList.empty
+          val loc2 = loc0.right.orNull
+          emit -> loc2
+        case MJdTagNames.DOCUMENT =>
+          val emit = _directChildrenOfType(loc0, MJdTagNames.STRIP)
+          val loc2 = loc0.right.orNull
+          emit -> loc2
+        // На qd-уровни не должно опускаться, но всё же отработать:
+        case _ =>
+          val loc2 = loc0.parent.orNull
+          LazyList.empty -> loc2
+      }
+
+      Some(r)
+    }
+  }
+
+
+  /** walk-функция для оптимального обхода дерева jd-тегов, выдающая qd-content-теги по наиболее короткому пути. */
+  private def _qdContentTreeWalker[From: IJdTagGetter](locOrNull0: TreeLoc[From]): Option[(LazyList[From], TreeLoc[From])] = {
+    if (locOrNull0 == null) {
+      None
+
+    } else {
+      val loc0 = locOrNull0
+      val jd = loc0.getLabel
+
+      val r = jd.name match {
+        // Блок - перейти на следующий тег вправо, вернув children'ы текущего блока.
+        case MJdTagNames.STRIP =>
+          val emit = _directChildrenOfType(loc0, MJdTagNames.QD_CONTENT)
+          val loc2 = loc0.right.orNull
+          emit -> loc2
+
+        // Вернуть данный тег + перейти на следующий тег вправо.
+        case MJdTagNames.QD_CONTENT =>
+          val emit = jd #:: LazyList.empty
+          val loc2 = loc0.right.orNull
+          emit -> loc2
+
+        // Документ - спустится на уровень блоков.
+        case MJdTagNames.DOCUMENT =>
+          val loc2 = loc0
+            .firstChild
+            .orElse( loc0.right )
+            .orNull
+          LazyList.empty -> loc2
+
+        // Элемент контента - не должно этого быть тут. Просто подняться наверх:
+        case MJdTagNames.QD_OP =>
+          val loc2 = loc0
+            .parent
+            .orNull
+          LazyList.empty -> loc2
+      }
+
+      Some(r)
+    }
+  }
+
+
 }
 
 
@@ -56,7 +152,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   /** Мультипликация стороны на указанные пиксели. */
-  private val _szMulted = MSzMult.szMultedF( jdCssArgs.conf.szMult )
+  import jdCssArgs.conf.{szMultF => _szMulted}
 
 
   /** Стиль выделения группы блоков. */
@@ -80,14 +176,50 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   )
 
 
-  private def _allJdTagsIter: Iterator[JdTag] = {
+  /** Функция управляемого максимально-оптимального обхода дерева jd-тегов.
+    * с целью обойти как можно МЕНЬШЕ элементов ценой повышения средней сложности одного шага.
+    * Позволяет НЕ опускаться на тяжелый нижний уровень QD_OP, а гарантированно оставаться выше.
+    * @param walkF walk-функция из статического JdCss.
+    * @param filterF Функция финальной фильтрации тегов, испускаемых walk-функцией.
+    * @return jdId отфильтрованных тегов.
+    */
+  private def _walkerFiltered(walkF: TreeLoc[(MJdTagId, JdTag)] => Option[(LazyList[(MJdTagId, JdTag)], TreeLoc[(MJdTagId, JdTag)])])
+                             (filterF: JdTag => Boolean): IndexedSeq[MJdTagId] = {
     jdCssArgs
-      .data
-      .jdTagsById
-      .valuesIterator
-  }
+      .tplsIndexed
+      .iterator
+      .flatMap { tpl =>
+        // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
+        LazyList.unfold( tpl.loc ) { locOrNull0 =>
+          for {
+            r0 <- walkF( locOrNull0 )
+          } yield {
+            val (emit0, nextLoc) = r0
 
-  private def _filteredTagIds(filter: JdTag => Boolean): IndexedSeq[MJdTagId] = {
+            val emit2 = for {
+              (jdId, jdt) <- emit0
+              if filterF(jdt)
+            } yield jdId
+
+            emit2 -> nextLoc
+          }
+        }
+      }
+      .flatten
+      .toIndexedSeq
+  }
+  /** Оптимальный обход QD_CONTENT-тегов. */
+  private def _qdContentFiltered(filterF: JdTag => Boolean): IndexedSeq[MJdTagId] =
+    _walkerFiltered(JdCss._qdContentTreeWalker)(filterF)
+
+  /** Оптимальный сбор блоков. */
+  private def _blocksFiltered(filterF: JdTag => Boolean): IndexedSeq[MJdTagId] =
+    _walkerFiltered(JdCss._blocksTreeWalker)(filterF)
+
+
+  /** Пройтись по ВСЕМ тегам с использованием фильтра, вернув id тегов.
+    * Пригодно для обхода уровня QD_OP или вообще всех уровней: быстро и просто. */
+  private def _allTagsIdsFiltered(filter: JdTag => Boolean): IndexedSeq[MJdTagId] = {
     (for {
       (jdId, jdt) <- jdCssArgs.data
         .jdTagsById
@@ -98,6 +230,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     })
       .toIndexedSeq
   }
+
 
   // -------------------------------------------------------------------------------
   // Strip
@@ -110,7 +243,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     styleF(
       new Domain.OverSeq(
-        _filteredTagIds { jdt =>
+        _blocksFiltered { jdt =>
           val p1 = jdt.props1
           p1.widthPx.nonEmpty && p1.heightPx.nonEmpty
         }
@@ -157,15 +290,17 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стили контейнера блока с широким фоном. */
   val wideContF = styleF(
     new Domain.OverSeq(
-      _filteredTagIds { jdt =>
+      _blocksFiltered { jdt =>
         val p1 = jdt.props1
         p1.expandMode.nonEmpty &&
         p1.widthPx.nonEmpty &&
         p1.heightPx.nonEmpty
       }
     )
-  ) (
-    {jdtId =>
+  )({
+    val wideWidthPx = jdCssArgs.conf.plainWideBlockWidthPx
+
+    jdtId =>
       var accS: List[ToStyle] = Nil
 
       for {
@@ -180,7 +315,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
           val minWidthCssPx =
             if (jdCssArgs.conf.isEdit) _szMulted(w, wideSzMultOpt)
-            else jdCssArgs.conf.plainWideBlockWidthPx
+            else wideWidthPx
           accS ::= minWidth( minWidthCssPx.px )
         }
 
@@ -194,7 +329,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
         // Если нет фона, выставить ширину принудительно.
         if (jdt.props1.bgImg.isEmpty  &&  !jdCssArgs.conf.isEdit)
-          accS ::= width( jdCssArgs.conf.plainWideBlockWidthPx.px )
+          accS ::= width( wideWidthPx.px )
       }
 
       // Объеденить все стили:
@@ -208,12 +343,41 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val bgColorF =
     styleF(
       new Domain.OverSeq(
-        (for {
-          jdt     <- _allJdTagsIter
-          bgColor <- jdt.props1.bgColor
-        } yield {
-          bgColor.hexCode
-        })
+        // Надо пройти и QD_CONTENT, и блоки.
+        jdCssArgs
+          .tplsIndexed
+          .iterator
+          .flatMap { tpl =>
+            // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
+            LazyList.unfold( tpl.loc ) { locOrNull0 =>
+              for {
+                (emit0, nextLoc) <- JdCss._qdContentTreeWalker( locOrNull0 )
+              } yield {
+                // Эмиссия кода фонового цвета:
+                val emit2 = (for {
+                  // Пройти блоки + qd-content:
+                  jdt <- {
+                    val emit1 = emit0.map(_._2)
+                    val jdtParent = locOrNull0.getLabel._2
+                    // Добавить текущий блок:
+                    if (jdtParent.name ==* MJdTagNames.STRIP)
+                      jdtParent #:: emit1
+                    else
+                      emit1
+                  }
+                    .iterator
+                  // Извлечь цвет фон.
+                  bgColor <- jdt.props1.bgColor
+                } yield {
+                  bgColor.hexCode
+                })
+                  .to(LazyList)
+
+                emit2 -> nextLoc
+              }
+            }
+          }
+          .flatten
           .toSet
           .toIndexedSeq
       )
@@ -231,15 +395,48 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // AbsPos
 
   /** Стили для элементов, отпозиционированных абсолютно. */
-  val absPosF = styleF(
+  val absPosF = styleF {
     new Domain.OverSeq(
-      _filteredTagIds { _.name ==* MJdTagNames.QD_CONTENT }
+      jdCssArgs
+        .tplsIndexed
+        .iterator
+        .flatMap { tpl =>
+          // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
+          LazyList.unfold( tpl.loc ) { locOrNull0 =>
+            for {
+              (emit0, nextLoc) <- JdCss._qdContentTreeWalker( locOrNull0 )
+            } yield {
+              val jdt = locOrNull0.getLabel._2
+
+              // Узнать, является ли родительский элемент wide-блоком:
+              val isParentWide = jdt.name match {
+                case MJdTagNames.STRIP =>
+                  JdCss.isWide( jdt )
+                case MJdTagNames.QD_CONTENT =>
+                  locOrNull0
+                    .parent
+                    .fold(false) { parentLoc =>
+                      JdCss.isWide( parentLoc.getLabel._2 )
+                    }
+                case _ =>
+                  false
+              }
+
+              val emit2 = for (m <- emit0) yield m._1 -> isParentWide
+              emit2 -> nextLoc
+            }
+          }
+        }
+        .flatten
+        .toIndexedSeq
     )
-  ) (
-    {jdtId =>
+  } (
+    {case (jdtId, parentIsWide) =>
       var acc: List[ToStyle] = Nil
 
-      for (jdt <- jdCssArgs.data.jdTagsById.get(jdtId)) {
+      for {
+        jdt <- jdCssArgs.data.jdTagsById.get( jdtId )
+      } {
         // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
         jdt.props1.topLeft.fold[Unit] {
           // qd-blockless?
@@ -256,6 +453,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           // Обычное ручное позиционирование.
           val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
           // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
+          // TODO Растягивать, если parentIsWide
           acc =
             (top( _szMulted(topLeft.y, wideSzMultOpt).px ): ToStyle) ::
             (left( _szMulted(topLeft.x, wideSzMultOpt).px ): ToStyle) ::
@@ -265,14 +463,16 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       styleS( acc: _* )
     },
-    JdCss._jdIdToStringF,
+    {(r, i) =>
+      JdCss._jdIdToStringF( r._1, i )
+    }
   )
 
 
   /** Стили ширин для элементов, у которых задана принудительная ширина. */
   val contentWidthF = styleF(
     new Domain.OverSeq(
-      _filteredTagIds { _.props1.widthPx.nonEmpty }
+      _qdContentFiltered(_.props1.widthPx.nonEmpty)
     )
   ) (
     {jdtId =>
@@ -298,7 +498,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Тени текста. */
   val contentShadowF = styleF(
     new Domain.OverSeq(
-      _filteredTagIds { _.props1.textShadow.nonEmpty }
+      _qdContentFiltered(_.props1.textShadow.nonEmpty)
     )
   ) (
     {jdtId =>
@@ -333,6 +533,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           (_, jdt) <- jdCssArgs.data
             .jdTagsById
             .iterator
+
           lineHeightPx <- jdt.props1
             .lineHeight
             .orElse {
@@ -343,7 +544,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
                 sz          <- szSU.toOption
               } yield sz.lineHeight
             }
-        } yield lineHeightPx)
+        } yield
+          lineHeightPx
+        )
           .toSet
           .toIndexedSeq
       )
@@ -368,7 +571,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     styleF(
       new Domain.OverSeq(
-        _filteredTagIds { jdt =>
+        _allTagsIdsFiltered { jdt =>
           jdt.props1.isContentCssStyled || jdt.qdProps.exists { qdOp =>
             qdOp.attrsText
               .exists(_.isCssStyled)
@@ -428,7 +631,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val embedAttrF = {
     styleF(
       new Domain.OverSeq(
-        _filteredTagIds( _.qdProps.exists(_.attrsEmbed.exists(_.nonEmpty)) )
+        _allTagsIdsFiltered( _.qdProps.exists(_.attrsEmbed.exists(_.nonEmpty)) )
       )
     ) (
       {jdtId =>
@@ -454,11 +657,29 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
 
+  /** Стили вращения. Индексируется по значению угла поворота. */
   val rotateF =
-    styleF.apply(
+    styleF(
       new Domain.OverSeq(
-        _allJdTagsIter
-          .flatMap(_.props1.rotateDeg)
+        jdCssArgs
+          .tplsIndexed
+          .iterator
+          .flatMap { tpl =>
+            // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
+            LazyList.unfold( tpl.loc ) { locOrNull0 =>
+              for {
+                r0 <- JdCss._qdContentTreeWalker( locOrNull0 )
+              } yield {
+                val (emit0, nextLoc) = r0
+
+                val emit2 = emit0
+                  .flatMap(_._2.props1.rotateDeg)
+
+                emit2 -> nextLoc
+              }
+            }
+          }
+          .flatten
           // Порядок не важен, но нужно избегать одинаковых углов поворота в списке допустимых значений:
           .toSet
           .toIndexedSeq

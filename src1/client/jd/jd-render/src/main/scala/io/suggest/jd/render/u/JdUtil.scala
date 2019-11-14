@@ -121,8 +121,11 @@ object JdUtil {
 
       /** Финальная сборка состояния рантайма. Сравнительно ресурсоёмкая операция. */
       def result: MJdRuntime = {
-        val tplsIndexed = args.jdDocs.map( mkTreeIndexed )
-        val jdtsIndexed = tplsIndexed.flatMap(_.flatten)
+        val tplsIndexed = args.jdDocs
+          .map( mkTreeIndexed )
+
+        val jdtsIndexed = tplsIndexed
+          .flatMap(_.flatten)
 
         val jdRtData = MJdRuntimeData(
           jdtWideSzMults  = GridCalc.wideSzMults(tplsIndexed, args.jdConf),
@@ -134,10 +137,13 @@ object JdUtil {
         )
 
         MJdRuntime(
-          jdCss   = JdCss( MJdCssArgs(
-            conf    = args.jdConf,
-            data    = jdRtData
-          )),
+          jdCss   = JdCss(
+            MJdCssArgs(
+              conf        = args.jdConf,
+              data        = jdRtData,
+              tplsIndexed = tplsIndexed,
+            )
+          ),
           data    = jdRtData,
         )
       }

@@ -17,7 +17,6 @@ import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import io.suggest.dev.MSzMult
 import io.suggest.img.ImgUtilRJs
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
@@ -83,7 +82,7 @@ class JdR(
         )
 
         // Поддержка абсолютного позиционирования внутри контейнера:
-        val absPosStyl: TagMod = jdCss.absPosF( state.tagId )
+        val absPosStyl = jdCss.absPosF( state.tagId -> JdCss.isWideOpt(state.parent) ): TagMod
 
         if (qdTag.props1.topLeft.nonEmpty) {
           // Обычный контент внутри блока.
@@ -95,8 +94,7 @@ class JdR(
         } else {
           // Внеблоковый контент. Бывает, что высота уже измерена и не измерена. Отработать обе ситуации:
           contTagModsAcc ::= jdCssStatic.qdBl
-          val qdBlOpt = state.jdArgs.jdRuntime.data.qdBlockLess.get( state.tagId )
-          if ( qdBlOpt.exists(_.nonEmpty) )
+          if ( state.qdBlOpt.exists(_.nonEmpty) )
             contTagModsAcc ::= absPosStyl
         }
 
@@ -122,20 +120,16 @@ class JdR(
       def _doRender(state: MJdRrrProps): TagOf[html.Element] = {
         // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
         val tag0 = _renderQdContentTag(state)
+
         if (
           state.parent
             .exists(_.name ==* MJdTagNames.STRIP)
         ) {
           // Рендер внутри блока, просто пропускаем контент на выход
           tag0
+
         } else {
           // Для наружной обёртки react-dnd требуется только нативный тег:
-          val qdBlOpt = state.jdArgs
-            .jdRuntime
-            .data
-            .qdBlockLess
-            .get( state.tagId )
-
           <.div(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
@@ -148,7 +142,7 @@ class JdR(
               val __onResizeF = ReactCommonUtil.cbFun1ToJsCb(
                 blocklessQdContentBoundsMeasuredJdCb(
                   for {
-                    qdBl      <- qdBlOpt
+                    qdBl      <- state.qdBlOpt
                     qdBlPend  <- qdBl.pendingOpt
                   } yield {
                     qdBlPend.startTime
@@ -164,7 +158,7 @@ class JdR(
               def __mkChildrenF(chArgs: MeasureChildrenArgs): raw.PropsChildren = {
                 // Запустить повторное измерение, когда это требуется состоянием.
                 if (
-                  !isReMeasured && qdBlOpt.exists(_.isPending)
+                  !isReMeasured && state.qdBlOpt.exists(_.isPending)
                 ) {
                   isReMeasured = true
                   chArgs.measure()
@@ -207,27 +201,28 @@ class JdR(
       /** Доп.наполнение для тега фоновой картинки блока. */
       def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         val jdt = state.subTree.rootLabel
+        import state.jdArgs.conf.{szMultF => szMultedF}
+
         // За пределами редактора: только векторные картинки подлежат эмуляции кропа на клиенте (кроме wide-блоков):
         OptionUtil.maybe(
-          // В редакторе: все картинки - всегда оригиналы с эмуляцией кропа на клиенте:
           jdt.props1.expandMode.isEmpty ||
+          // В редакторе: все фоновые картинки блоков- всегда оригиналы с эмуляцией кропа на клиенте:
           state.jdArgs.conf.isEdit
         ) {
           // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
           val whOpt = jdt.props1.wh
           val origWh = edge.origWh
-          val szMult = state.jdArgs.conf.szMult
 
+          // При обычном рендере кропа обычно нет, поэтому сразу идёт перескок на orElse
           ImgUtilRJs.htmlImgCropEmuAttrsOpt(
             cropOpt     = bgImgData.crop,
             outerWhOpt  = whOpt,
             origWhOpt   = origWh,
-            szMult      = szMult,
+            szMult      = state.jdArgs.conf.szMult,
           )
             .orElse {
-              // Кроп не задан. Отталкиваемся от высоты блока.
+              // Кроп не задан и это не редактор. Значит - это уже подготовленная сервером картинка под блок. Отталкиваемся от высоты блока:
               for (wh <- whOpt) yield {
-                val szMultedF = MSzMult.szMultedF( szMult )
                 if (wh.width > wh.height)
                   ^.width := szMultedF(wh.width).px
                 else
@@ -235,61 +230,61 @@ class JdR(
               }
             }
             .get
-        }
-          .getOrElse {
-            var tmAcc = List.empty[TagMod]
 
-            for {
-              origWh <- edge.origWh
-              blockHeightPx   <- jdt.props1.heightPx
-            } {
-              val wideSzMultOpt = jdt.props1
-                .expandMode
-                .filter(_.hasWideSzMult)
-                .flatMap { _ =>
-                  state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
-                }
+        }.getOrElse {
+          // Широкая карточка за пределами редактора.
+          var tmAcc = List.empty[TagMod]
 
-              val szMultedF = MSzMult.szMultedF( state.jdArgs.conf.szMult )
-
-              // Нужно понять, как правильно выравнивать картинку по размерам: по ширине или по высоте.
-              // Сопоставить размеры контейнера и размеры отмасштабированной под контейнер картинки.
-              val contWidthPx = jdt.props1.widthPx
-                .filter { _ => jdt.props1.expandMode.isEmpty }
-                .fold( state.jdArgs.conf.plainWideBlockWidthPx )( szMultedF(_, wideSzMultOpt) )
-
-              // Отношение размера блока и размера картинки по горизонтали.
-              val img2BlockRatioW = contWidthPx.toDouble / origWh.width.toDouble
-
-              // Отношение размера блока и размера картинки по вертикали.
-              val blockHeightMultedPx = szMultedF(blockHeightPx, wideSzMultOpt)
-              val img2BlockRatioH = blockHeightMultedPx.toDouble / origWh.height.toDouble
-
-              val useWidth = img2BlockRatioW > img2BlockRatioH
-
-              tmAcc ::= {
-                if (useWidth) {
-                  ^.width := contWidthPx.px
-                } else {
-                  ^.height := blockHeightMultedPx.px
-                }
+          for {
+            origWh <- edge.origWh
+            blockHeightPx   <- jdt.props1.heightPx
+          } {
+            val wideSzMultOpt = jdt.props1
+              .expandMode
+              .filter(_.hasWideSzMult)
+              .flatMap { _ =>
+                state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
               }
 
-              // Векторные фоновые картинки на wide-карточках желательно отпедалировать по вертикали.
-              // Для wideVec нужно добавить вертикальную центровку картинки.
-              if (jdt.props1.expandMode.nonEmpty && useWidth) {
-                val offsetTopPx = (blockHeightMultedPx - (origWh.height * img2BlockRatioW)) / 2
-                tmAcc ::= {
-                  ^.marginTop := offsetTopPx.px
-                }
-              }
 
+            // Нужно понять, как правильно выравнивать картинку по размерам: по ширине или по высоте.
+            // Сопоставить размеры контейнера и размеры отмасштабированной под контейнер картинки.
+            val contWidthPx = jdt.props1.widthPx
+              .filter { _ => jdt.props1.expandMode.isEmpty }
+              .fold( state.jdArgs.conf.plainWideBlockWidthPx )( szMultedF(_, wideSzMultOpt) )
+
+            // Отношение размера блока и размера картинки по горизонтали.
+            val img2BlockRatioW = contWidthPx.toDouble / origWh.width.toDouble
+
+            // Отношение размера блока и размера картинки по вертикали.
+            val blockHeightMultedPx = szMultedF(blockHeightPx, wideSzMultOpt)
+            val img2BlockRatioH = blockHeightMultedPx.toDouble / origWh.height.toDouble
+
+            val useWidth = img2BlockRatioW > img2BlockRatioH
+
+            tmAcc ::= {
+              if (useWidth) {
+                ^.width := contWidthPx.px
+              } else {
+                ^.height := blockHeightMultedPx.px
+              }
             }
 
-            if (tmAcc.isEmpty) TagMod.empty
-            else if (tmAcc.tail.isEmpty) tmAcc.head
-            else TagMod( tmAcc: _* )
+            // Векторные фоновые картинки на wide-карточках желательно отпедалировать по вертикали.
+            // Для wideVec нужно добавить вертикальную центровку картинки.
+            if (jdt.props1.expandMode.nonEmpty && useWidth) {
+              val offsetTopPx = (blockHeightMultedPx - (origWh.height * img2BlockRatioW)) / 2
+              tmAcc ::= {
+                ^.marginTop := offsetTopPx.px
+              }
+            }
+
           }
+
+          if (tmAcc.isEmpty) TagMod.empty
+          else if (tmAcc.tail.isEmpty) tmAcc.head
+          else TagMod( tmAcc: _* )
+        }
       }
 
       /** Доп.наполнение для sm-block div'a. */

@@ -48,5 +48,8 @@ case class MJdRrrProps(
   lazy val isCurrentSelected: Boolean =
     jdArgs.selJdt.treeLocOpt containsLabel subTree.rootLabel
 
+  /** Данные qd-blockless. */
+  lazy val qdBlOpt = jdArgs.jdRuntime.data.qdBlockLess.get( tagId )
+
 }
 

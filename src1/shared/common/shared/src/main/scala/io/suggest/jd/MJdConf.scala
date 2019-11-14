@@ -75,5 +75,7 @@ case class MJdConf(
   def plainWideBlockWidthPx: Int =
     gridWidthPx + BlockPaddings.default.value * 2
 
+  lazy val szMultF = MSzMult.szMultedF( szMult )
+
 }
 
