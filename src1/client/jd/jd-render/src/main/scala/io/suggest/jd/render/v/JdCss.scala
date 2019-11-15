@@ -258,13 +258,13 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val blockF = {
     // Для wide - ширина и длина одинаковые.
 
-    //import io.suggest.common.html.HtmlConstants._
-    //val pc50 = 50.%%.value + SPACE + MINUS + SPACE
+    import io.suggest.common.html.HtmlConstants._
+    val pc50 = 50.%%.value + SPACE + MINUS + SPACE
     val left0px = left( 0.px ): ToStyle
 
-    val innerWidth = jdCssArgs.conf.gridInnerWidthPx
-    val wideWidth = width( innerWidth.px ): ToStyle
-    val wideLeft = left( (jdCssArgs.conf.plainWideBlockWidthPx - innerWidth).px ): ToStyle
+    //val innerWidth = jdCssArgs.conf.gridInnerWidthPx
+    //val wideWidth = width( innerWidth.px ): ToStyle
+    //val wideLeft = left( (jdCssArgs.conf.plainWideBlockWidthPx - innerWidth).px ): ToStyle
 
     styleF(
       new Domain.OverSeq(
@@ -281,17 +281,20 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
 
           for (widthPx0 <- blk.props1.widthPx) {
+            val widthPxMulted = _szMulted( widthPx0, wideSzMultOpt )
+            accS ::= width( widthPxMulted.px )
 
             // Выравнивание блока внутри внешнего контейнера:
             accS = if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
               // Если wide, то надо отцентровать блок внутри wide-контейнера.
               // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
-              //val calcFormula = pc50 + (widthPxMulted / 2).px.value
-              //left.attr := Css.Calc( calcFormula )
-              wideWidth :: wideLeft :: accS
+              val calcFormula = pc50 + (widthPxMulted / 2).px.value
+              val wideLeft = {
+                left.attr := Css.Calc( calcFormula ): ToStyle
+              }
+              wideLeft :: accS
 
             } else {
-              (width( _szMulted( widthPx0, wideSzMultOpt ).px ): ToStyle) ::
               left0px ::
               accS
             }
@@ -474,16 +477,17 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         } { topLeft =>
           // Обычное ручное позиционирование.
           val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
+          
           // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
-          val x2 = parentWideRatioOpt.fold[Int] {
-            _szMulted(topLeft.x, wideSzMultOpt)
-          } { ratio =>
-            (topLeft.x * ratio).toInt
-          }
+          //val x2 = parentWideRatioOpt.fold[Int] {
+          //  _szMulted(topLeft.x, wideSzMultOpt)
+          //} { ratio =>
+          //  (topLeft.x * ratio).toInt
+          //}
 
           acc =
             (top( _szMulted(topLeft.y, wideSzMultOpt).px ): ToStyle) ::
-            (left( x2.px ): ToStyle) ::
+            (left( _szMulted(topLeft.x, wideSzMultOpt).px ): ToStyle) ::
             acc
         }
       }
