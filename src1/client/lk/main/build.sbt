@@ -17,7 +17,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 // https://github.com/scalacenter/scalajs-bundler/issues/178
 webpackBundlingMode := BundlingMode.LibraryOnly()
 
-//webpackBundlingMode in fullOptJS := BundlingMode.Application
+webpackBundlingMode in fullOptJS := BundlingMode.Application
 
 // Use a different Webpack configuration file for production
 //[info] ERROR in lk-sjs-opt-library.js from UglifyJs
