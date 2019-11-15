@@ -82,7 +82,7 @@ class JdR(
         )
 
         // Поддержка абсолютного позиционирования внутри контейнера:
-        val absPosStyl = jdCss.absPosF( state.tagId -> JdCss.isWideOpt(state.parent) ): TagMod
+        val absPosStyl = jdCss.absPosF( state.tagId -> state.parent.flatMap(JdCss.wideWidthRatio(_, state.jdArgs.conf)) ): TagMod
 
         if (qdTag.props1.topLeft.nonEmpty) {
           // Обычный контент внутри блока.

@@ -1,14 +1,14 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
-import io.suggest.ad.blk.BlockPaddings
+import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.MFontSizes
-import io.suggest.jd.{JdConst, MJdTagId}
+import io.suggest.jd.{JdConst, MJdConf, MJdTagId}
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.{IJdTagGetter, JdTag, MJdTagName, MJdTagNames}
 import io.suggest.primo.ISetUnset
@@ -18,7 +18,7 @@ import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.DslMacros
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
-import scalaz.TreeLoc
+import scalaz.{Tree, TreeLoc}
 
 /**
   * Suggest.io
@@ -51,12 +51,31 @@ object JdCss {
 
   val jdCssArgs = GenLens[JdCss](_.jdCssArgs)
 
-  def isWide(parent: JdTag): Boolean = {
-    (parent.name ==* MJdTagNames.STRIP) &&
-    parent.props1.expandMode.nonEmpty
+
+  /** Выдать коэфф.расширения контента в wide-блоке.
+    *
+    * @param jd источник jd-тега.
+    * @param jdConf Конфиг рендера плитки.
+    * @tparam From Тип источника jd-тега.
+    * @return Коэффициент соотношения wide-блока.
+    */
+  def wideWidthRatio[From: IJdTagGetter](jd: From, jdConf: MJdConf): Option[Double] = {
+    val jdt = jd: JdTag
+
+    // Вычислить соотношение ширины блока и ширины плитки. ratio > 1.0, т.к. выше есть проверка кол-ва колонок плитки.
+    for {
+      widthPx <- jdt.props1.widthPx
+      if {
+        (jdt.name ==* MJdTagNames.STRIP) &&
+        jdt.props1.expandMode.nonEmpty &&
+        // Нет смысла считать отношение ширин блока-плитки, если
+        (jdConf.gridColumnsCount > BlockWidths.max.relSz)
+      }
+    } yield {
+      // Не домножаем widthPx на szMult, т.к. gridInnerWidth уже домножен, и коэффициент будет включать szMult в себя автоматом.
+      jdConf.gridInnerWidthPx.toDouble / widthPx.toDouble
+    }
   }
-  def isWideOpt(parentOpt: Option[JdTag]): Boolean =
-    parentOpt.fold(false)(isWide)
 
 
   /** Извлечь прямые подтеги из TreeLoc. */
@@ -142,6 +161,39 @@ object JdCss {
   }
 
 
+  /** Функция управляемого максимально-оптимального обхода дерева jd-тегов.
+    * с целью обойти как можно МЕНЬШЕ элементов ценой повышения средней сложности одного шага.
+    * Позволяет НЕ опускаться на тяжелый нижний уровень QD_OP, а гарантированно оставаться выше.
+    * @param walkF walk-функция из JdCss.
+    * @param filterF Функция финальной фильтрации тегов, испускаемых walk-функцией.
+    * @return jdId отфильтрованных тегов.
+    */
+  private def _walkerFiltered(tplsIndexed: Iterable[Tree[(MJdTagId, JdTag)]],
+                              walkF: TreeLoc[(MJdTagId, JdTag)] => Option[(LazyList[(MJdTagId, JdTag)], TreeLoc[(MJdTagId, JdTag)])] )
+                             (filterF: JdTag => Boolean): IndexedSeq[MJdTagId] = {
+    tplsIndexed
+      .iterator
+      .flatMap { tpl =>
+        // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
+        LazyList.unfold( tpl.loc ) { locOrNull0 =>
+          for {
+            r0 <- walkF( locOrNull0 )
+          } yield {
+            val (emit0, nextLoc) = r0
+
+            val emit2 = for {
+              (jdId, jdt) <- emit0
+              if filterF(jdt)
+            } yield jdId
+
+            emit2 -> nextLoc
+          }
+        }
+      }
+      .flatten
+      .toIndexedSeq
+  }
+
 }
 
 
@@ -175,46 +227,13 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     else position.relative,
   )
 
-
-  /** Функция управляемого максимально-оптимального обхода дерева jd-тегов.
-    * с целью обойти как можно МЕНЬШЕ элементов ценой повышения средней сложности одного шага.
-    * Позволяет НЕ опускаться на тяжелый нижний уровень QD_OP, а гарантированно оставаться выше.
-    * @param walkF walk-функция из статического JdCss.
-    * @param filterF Функция финальной фильтрации тегов, испускаемых walk-функцией.
-    * @return jdId отфильтрованных тегов.
-    */
-  private def _walkerFiltered(walkF: TreeLoc[(MJdTagId, JdTag)] => Option[(LazyList[(MJdTagId, JdTag)], TreeLoc[(MJdTagId, JdTag)])])
-                             (filterF: JdTag => Boolean): IndexedSeq[MJdTagId] = {
-    jdCssArgs
-      .tplsIndexed
-      .iterator
-      .flatMap { tpl =>
-        // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
-        LazyList.unfold( tpl.loc ) { locOrNull0 =>
-          for {
-            r0 <- walkF( locOrNull0 )
-          } yield {
-            val (emit0, nextLoc) = r0
-
-            val emit2 = for {
-              (jdId, jdt) <- emit0
-              if filterF(jdt)
-            } yield jdId
-
-            emit2 -> nextLoc
-          }
-        }
-      }
-      .flatten
-      .toIndexedSeq
-  }
   /** Оптимальный обход QD_CONTENT-тегов. */
   private def _qdContentFiltered(filterF: JdTag => Boolean): IndexedSeq[MJdTagId] =
-    _walkerFiltered(JdCss._qdContentTreeWalker)(filterF)
+    JdCss._walkerFiltered(jdCssArgs.tplsIndexed, JdCss._qdContentTreeWalker)(filterF)
 
   /** Оптимальный сбор блоков. */
   private def _blocksFiltered(filterF: JdTag => Boolean): IndexedSeq[MJdTagId] =
-    _walkerFiltered(JdCss._blocksTreeWalker)(filterF)
+    JdCss._walkerFiltered(jdCssArgs.tplsIndexed, JdCss._blocksTreeWalker)(filterF)
 
 
   /** Пройтись по ВСЕМ тегам с использованием фильтра, вернув id тегов.
@@ -238,8 +257,14 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val blockF = {
     // Для wide - ширина и длина одинаковые.
-    val pc50 = 50.%%.value
-    val left0px = left( 0.px )
+
+    //import io.suggest.common.html.HtmlConstants._
+    //val pc50 = 50.%%.value + SPACE + MINUS + SPACE
+    val left0px = left( 0.px ): ToStyle
+
+    val innerWidth = jdCssArgs.conf.gridInnerWidthPx
+    val wideWidth = width( innerWidth.px ): ToStyle
+    val wideLeft = left( (jdCssArgs.conf.plainWideBlockWidthPx - innerWidth).px ): ToStyle
 
     styleF(
       new Domain.OverSeq(
@@ -256,22 +281,19 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdId )
 
           for (widthPx0 <- blk.props1.widthPx) {
-            val widthPxMulted = _szMulted( widthPx0, wideSzMultOpt )
-            accS ::= width( widthPxMulted.px )
 
             // Выравнивание блока внутри внешнего контейнера:
-            if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
+            accS = if (blk.props1.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
               // Если wide, то надо отцентровать блок внутри wide-контейнера.
               // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
-              import io.suggest.common.html.HtmlConstants._
-              val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPxMulted / 2).px.value
-              accS ::= {
-                left.attr := Css.Calc( calcFormula )
-              }
+              //val calcFormula = pc50 + (widthPxMulted / 2).px.value
+              //left.attr := Css.Calc( calcFormula )
+              wideWidth :: wideLeft :: accS
 
             } else {
-              // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
-              accS ::= left0px
+              (width( _szMulted( widthPx0, wideSzMultOpt ).px ): ToStyle) ::
+              left0px ::
+              accS
             }
           }
 
@@ -396,42 +418,42 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** Стили для элементов, отпозиционированных абсолютно. */
   val absPosF = styleF {
-    new Domain.OverSeq(
+    new Domain.OverSeq({
       jdCssArgs
         .tplsIndexed
         .iterator
         .flatMap { tpl =>
           // Надо извлечь из шаблона QD_CONTENT-теги и инфу по родительским wide-блокам:
-          LazyList.unfold( tpl.loc ) { locOrNull0 =>
+          LazyList.unfold(tpl.loc) { locOrNull0 =>
             for {
-              (emit0, nextLoc) <- JdCss._qdContentTreeWalker( locOrNull0 )
+              (emit0, nextLoc) <- JdCss._qdContentTreeWalker(locOrNull0)
             } yield {
               val jdt = locOrNull0.getLabel._2
 
               // Узнать, является ли родительский элемент wide-блоком:
-              val isParentWide = jdt.name match {
+              val parentWideRatio: Option[Double] = jdt.name match {
                 case MJdTagNames.STRIP =>
-                  JdCss.isWide( jdt )
+                  JdCss.wideWidthRatio(jdt, jdCssArgs.conf)
                 case MJdTagNames.QD_CONTENT =>
                   locOrNull0
                     .parent
-                    .fold(false) { parentLoc =>
-                      JdCss.isWide( parentLoc.getLabel._2 )
+                    .flatMap { parentLoc =>
+                      JdCss.wideWidthRatio(parentLoc.getLabel, jdCssArgs.conf)
                     }
                 case _ =>
-                  false
+                  None
               }
 
-              val emit2 = for (m <- emit0) yield m._1 -> isParentWide
+              val emit2 = for (m <- emit0) yield m._1 -> parentWideRatio
               emit2 -> nextLoc
             }
           }
         }
         .flatten
         .toIndexedSeq
-    )
+    })
   } (
-    {case (jdtId, parentIsWide) =>
+    {case (jdtId, parentWideRatioOpt) =>
       var acc: List[ToStyle] = Nil
 
       for {
@@ -453,10 +475,15 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           // Обычное ручное позиционирование.
           val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
           // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
-          // TODO Растягивать, если parentIsWide
+          val x2 = parentWideRatioOpt.fold[Int] {
+            _szMulted(topLeft.x, wideSzMultOpt)
+          } { ratio =>
+            (topLeft.x * ratio).toInt
+          }
+
           acc =
             (top( _szMulted(topLeft.y, wideSzMultOpt).px ): ToStyle) ::
-            (left( _szMulted(topLeft.x, wideSzMultOpt).px ): ToStyle) ::
+            (left( x2.px ): ToStyle) ::
             acc
         }
       }
