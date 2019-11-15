@@ -7,7 +7,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-materialui"
 
-version := "4.5.2"
+version := "4.6.1"
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
