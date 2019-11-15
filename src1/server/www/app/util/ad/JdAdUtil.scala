@@ -427,8 +427,9 @@ class JdAdUtil @Inject()(
         MJdData(
           doc = MJdDoc(
             template  = _finalTpl,
-            jdId = MJdTagId(
-              nodeId    = nodeId,
+            jdId      = MJdTagId(
+              nodeId      = nodeId,
+              blockExpand = _finalTpl.getMainBlockOrFirst.rootLabel.props1.expandMode,
             ),
           ),
           edges       = edEdges,

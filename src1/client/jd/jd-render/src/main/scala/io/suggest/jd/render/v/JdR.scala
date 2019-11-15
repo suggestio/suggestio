@@ -17,7 +17,7 @@ import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import io.suggest.img.ImgUtilRJs
+import io.suggest.img.{ImgCommonUtil, ImgUtilRJs}
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -246,34 +246,26 @@ class JdR(
                 state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
               }
 
-
-            // Нужно понять, как правильно выравнивать картинку по размерам: по ширине или по высоте.
-            // Сопоставить размеры контейнера и размеры отмасштабированной под контейнер картинки.
-            val contWidthPx = jdt.props1.widthPx
-              .filter { _ => jdt.props1.expandMode.isEmpty }
-              .fold( state.jdArgs.conf.plainWideBlockWidthPx )( szMultedF(_, wideSzMultOpt) )
-
-            // Отношение размера блока и размера картинки по горизонтали.
-            val img2BlockRatioW = contWidthPx.toDouble / origWh.width.toDouble
-
-            // Отношение размера блока и размера картинки по вертикали.
-            val blockHeightMultedPx = szMultedF(blockHeightPx, wideSzMultOpt)
-            val img2BlockRatioH = blockHeightMultedPx.toDouble / origWh.height.toDouble
-
-            val useWidth = img2BlockRatioW > img2BlockRatioH
+            val isUseWidthCalc = ImgCommonUtil.isUseWidthForBlockBg(
+              blockHeightPx = blockHeightPx,
+              origWh        = origWh,
+              jdt           = jdt,
+              jdConf        = state.jdArgs.conf,
+              wideSzMultOpt = wideSzMultOpt
+            )
 
             tmAcc ::= {
-              if (useWidth) {
-                ^.width := contWidthPx.px
+              if (isUseWidthCalc.isUseWidth) {
+                ^.width := isUseWidthCalc.contWidthPx.px
               } else {
-                ^.height := blockHeightMultedPx.px
+                ^.height := isUseWidthCalc.blockHeightMultedPx.px
               }
             }
 
             // Векторные фоновые картинки на wide-карточках желательно отпедалировать по вертикали.
             // Для wideVec нужно добавить вертикальную центровку картинки.
-            if (jdt.props1.expandMode.nonEmpty && useWidth) {
-              val offsetTopPx = (blockHeightMultedPx - (origWh.height * img2BlockRatioW)) / 2
+            if (jdt.props1.expandMode.nonEmpty && isUseWidthCalc.isUseWidth) {
+              val offsetTopPx = (isUseWidthCalc.blockHeightMultedPx - (origWh.height * isUseWidthCalc.img2BlockRatioW)) / 2
               tmAcc ::= {
                 ^.marginTop := offsetTopPx.px
               }

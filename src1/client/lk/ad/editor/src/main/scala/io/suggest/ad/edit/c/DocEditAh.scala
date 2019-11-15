@@ -1357,7 +1357,7 @@ class DocEditAh[M](
 
 
     // Изменение галочки управления main-флагом текущего блока.
-    case m: MainStripChange =>
+    case m: MainBlockSet =>
       val v0 = value
 
       // Фунция для ленивого обновления стрипа новым значением.
@@ -1389,14 +1389,19 @@ class DocEditAh[M](
           // Собрать корневой элемент с обновлённым стрипами:
           val tpl2 = Tree.Node(
             root = tpl0.rootLabel,
-            forest = for (stripTree <- v0.jdDoc.jdArgs.data.doc.template.subForest) yield {
+            forest = for {
+              stripTree <- tpl0.subForest
+            } yield {
               val lbl = stripTree.rootLabel
-              require( lbl.name ==* MJdTagNames.STRIP )
+              // Тут может быть и qd-blockless.
+              //require( lbl.name ==* MJdTagNames.STRIP, lbl.name.toString )
               val label2 = __updateLocLabel(
                 label     = lbl,
                 newValue  =
-                  if (lbl ===* currStrip) currTagNewMainValue
-                  else otherStripsNewMainValue
+                  if ((lbl ===* currStrip) && (lbl.name ==* MJdTagNames.STRIP))
+                    currTagNewMainValue
+                  else
+                    otherStripsNewMainValue
               )
               // Собрать узел стрипа:
               Tree.Node(

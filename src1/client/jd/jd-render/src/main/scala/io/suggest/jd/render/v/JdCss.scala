@@ -477,7 +477,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         } { topLeft =>
           // Обычное ручное позиционирование.
           val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
-          
+
           // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
           //val x2 = parentWideRatioOpt.fold[Int] {
           //  _szMulted(topLeft.x, wideSzMultOpt)

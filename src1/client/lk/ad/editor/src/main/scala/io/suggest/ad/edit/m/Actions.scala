@@ -83,7 +83,7 @@ case class BlockExpand( expandMode: Option[MBlockExpandMode] ) extends ILkEditAc
 
 
 /** Сигнал изменения флага текущего стрипа. */
-case class MainStripChange(isMain: Boolean) extends ILkEditAction
+case class MainBlockSet(isMain: Boolean) extends ILkEditAction
 /** Сигнал к сокрытию/отображению главных стрипов. */
 case class ShowMainStrips(showing: Boolean) extends ILkEditAction
 

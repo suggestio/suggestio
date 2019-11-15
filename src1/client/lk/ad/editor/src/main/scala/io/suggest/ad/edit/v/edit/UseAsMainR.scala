@@ -2,7 +2,7 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.{MainStripChange, ShowMainStrips}
+import io.suggest.ad.edit.m.{MainBlockSet, ShowMainStrips}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
@@ -54,7 +54,7 @@ class UseAsMainR(
 
     private def _onCheckedChange(e: ReactEventFromInput): Callback = {
       val isChecked = e.target.checked
-      dispatchOnProxyScopeCB($, MainStripChange(isChecked))
+      dispatchOnProxyScopeCB($, MainBlockSet(isChecked))
     }
 
     private def _onShowAllMouseEnterLeave(isEnter: Boolean): Callback = {

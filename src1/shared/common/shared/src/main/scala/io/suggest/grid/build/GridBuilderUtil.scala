@@ -1,12 +1,13 @@
 package io.suggest.grid.build
 
-import io.suggest.ad.blk.BlockWidths
+import io.suggest.ad.blk.{BlockWidths, MBlockExpandModes}
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
+import io.suggest.img.ImgCommonUtil
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.msg.ErrorMsgs
 import monocle.macros.GenLens
@@ -152,7 +153,15 @@ object GridBuilderUtil {
           if (subItems.isEmpty) {
             // Это block-meta. Позиционируем ровно один (текущий) блок:
             val gb = gbTree.rootLabel
-            lazy val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
+
+            lazy val wideSzMultOpt = {
+              val rOpt = args.jdtWideSzMults.get( gb.jdId )
+              // Была проблема: заранее развёрнутая карточка с неправильным id с сервера вызывает неправильное позиционирование в плитке.
+              if (rOpt.isEmpty && (gb.jdt.props1.expandMode contains MBlockExpandModes.Full))
+                println( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, args.jdtWideSzMults.view.filterKeys(_.toString startsWith gb.jdId.toString).mkString(HtmlConstants.PIPE)) )
+              rOpt
+            }
+
             val gbSize = gb.size.get
 
             val blockHeightPx =
@@ -220,7 +229,17 @@ object GridBuilderUtil {
               val wideBgWidthOpt = gb.wideBgSz
                 .map { wideBgSz =>
                   // Задан размер широкого фона. Берём его как есть без лишних манипуляций.
-                  wideBgSz.width
+                  val r = ImgCommonUtil.isUseWidthForBlockBg(
+                    blockHeightPx = gb.jdt.props1.heightPx.get,
+                    origWh = wideBgSz,
+                    jdt = gb.jdt,
+                    jdConf = args.jdConf,
+                    wideSzMultOpt = wideSzMultOpt
+                  )
+                  // При горизонтальном выравнивании - берётся wideBgSz.width
+                  if (r.isUseWidth) args.jdConf.plainWideBlockWidthPx
+                  // При вертикальном выравнивании вычислить ширину на основе коэфф.высоты картинки к блоку:
+                  else (r.img2BlockRatioH * wideBgSz.width).toInt
                 }
                 .orElse[Int] {
                   if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
@@ -397,7 +416,6 @@ object GridBuilderUtil {
         } else {
           // Нет на текущем уровне ничего, что следует делать. Подняться уровнем выше.
           val s2 = MGbStepState.levels.modify(_.tail)(s0)
-          //println(s"level up. ${s0.levels.head} => ${s2.levels.headOption.orNull}")
           _stepper( s2 )
         }
       }

@@ -22,7 +22,7 @@ import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.common.geom.d2.{IWidth, MSize2di}
+import io.suggest.common.geom.d2.IWidth
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.primo.id.OptId
 import io.suggest.sjs.common.log.Log
@@ -77,11 +77,14 @@ object GridAh {
           size      = GridBuilderUtilJs.gbSizeFromJdt(jdId, blk, jdRuntime, jdConf),
           nodeId    = nodeId,
           jdt       = blk,
-          wideBgSz  = OptionUtil.maybe(blk.props1.expandMode.nonEmpty) {
-            MSize2di(
-              width   = jdConf.plainWideBlockWidthPx,
-              height  = szMultedF( blk.props1.heightPx.get ),
-            )
+          wideBgSz  = OptionUtil.maybeOpt(blk.props1.expandMode.nonEmpty) {
+            for {
+              bgImgEdgeId <- blk.props1.bgImg
+              edge <- brd.edges.get( bgImgEdgeId.edgeUid )
+              origWh <- edge.origWh
+            } yield {
+              origWh
+            }
           },
         )
       }
