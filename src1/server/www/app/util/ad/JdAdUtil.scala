@@ -429,7 +429,7 @@ class JdAdUtil @Inject()(
             template  = _finalTpl,
             jdId      = MJdTagId(
               nodeId      = nodeId,
-              blockExpand = _finalTpl.getMainBlockOrFirst.rootLabel.props1.expandMode,
+              blockExpand = _finalTpl.rootLabel.props1.expandMode,
             ),
           ),
           edges       = edEdges,

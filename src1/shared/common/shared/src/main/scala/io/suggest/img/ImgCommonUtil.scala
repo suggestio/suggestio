@@ -45,8 +45,6 @@ object ImgCommonUtil {
 
     val isUseWidth = img2BlockRatioW > img2BlockRatioH
 
-    println( productIterator.mkString(" | "), "contWidthPx=" + contWidthPx.toString )
-
   }
 
 }

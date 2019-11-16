@@ -165,4 +165,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def MESSAGES_FAILURE                 = E(94)
 
+  def JD_TREE_UNEXPECTED_ROOT_TAG      = E(95)
+  def JD_TREE_UNEXPECTED_CHILDREN      = E(96)
+
 }

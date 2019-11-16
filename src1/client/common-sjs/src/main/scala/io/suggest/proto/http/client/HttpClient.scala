@@ -7,6 +7,7 @@ import io.suggest.proto.http.client.adp.xhr.XhrAdp
 import io.suggest.proto.http.model.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import japgolly.univeq._
 import io.suggest.text.UrlUtil2
 import org.scalajs.dom
 
@@ -16,18 +17,21 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.05.15 11:14
-  * Description: HTTP-клиент, .
+  * Description: HTTP-клиент.
   */
 object HttpClient extends Log {
 
   private def myProto: Option[String] = {
-    Option( dom.window.location )
-      .filterNot(js.isUndefined)
-      .flatMap( l => Option(l.protocol) )
-      .filter { p =>
-        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != String.valueOf( null.asInstanceOf[Object] )
-      }
-      .map(_.toLowerCase())
+    for {
+      location <- Option( dom.window.location )
+      if !js.isUndefined( location )
+      proto <- Option(location.protocol)
+      if !js.isUndefined(proto) &&
+         proto.nonEmpty &&
+         proto !=* String.valueOf( null.asInstanceOf[Object] )
+    } yield {
+      proto.toLowerCase
+    }
   }
 
   private def myHttpProto: Option[String] = {

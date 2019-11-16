@@ -9,6 +9,7 @@ import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.primo.id.IId
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -164,8 +165,23 @@ object JdTag {
 
     /** Вернуть главый блок, либо первый блок. */
     def getMainBlockOrFirst: Tree[From] = {
-      getMainBlock.getOrElse {
-        tree.subForest.head
+      tree.rootLabel.name match {
+        case MJdTagNames.DOCUMENT =>
+          getMainBlock
+            .orElse {
+              tree
+                .subForest
+                .headOption
+            }
+            .getOrElse {
+              // Поиск блока в пустом документе - это ненормально, падаем.
+              throw new IllegalStateException( (ErrorMsgs.JD_TREE_UNEXPECTED_CHILDREN, tree.rootLabel).toString() )
+            }
+        case MJdTagNames.STRIP =>
+          // По идее, поиск главного блока в блоке - это логическая ошибка. Но шаблон бывает разный, и это может быть предосторожность, поэтому реагируем молча.
+          tree
+        case other =>
+          throw new IllegalArgumentException( (ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, other).toString() )
       }
     }
 
