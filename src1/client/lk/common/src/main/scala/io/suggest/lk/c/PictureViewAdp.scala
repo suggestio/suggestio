@@ -6,6 +6,7 @@ import io.suggest.form.MFormResourceKey
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
+import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.model.n2.edge.EdgeUid_t
 import scalaz.Tree
 import scalaz.std.option._
@@ -66,8 +67,6 @@ object IPictureViewAdp {
   /** Поддержка управления представлением картинок, которые хранятся в дереве jd-тегов. */
   implicit object JdTagTreeBgImgAdp extends IPictureViewAdp[Tree[JdTag]] {
 
-    import io.suggest.scalaz.ZTreeUtil.ZTreeOps
-
     private def _cmpEdgeUid(keyEdgeUid: Option[EdgeUid_t], edgeUids: Iterable[MJdEdgeId]): Boolean = {
       (keyEdgeUid.isEmpty && edgeUids.isEmpty) ||
         keyEdgeUid.exists(ei => edgeUids.exists(_.edgeUid ==* ei))
@@ -76,7 +75,9 @@ object IPictureViewAdp {
     override def get(view: Tree[JdTag], resKey: MFormResourceKey): Option[MJdEdgeId] = {
       val nodePath = resKey.nodePath.get
       for {
-        jdtLoc   <- view.pathToNode( nodePath )
+        jdtLoc <- view
+          .loc
+          .pathToNode( nodePath )
         jdt = jdtLoc.getLabel
         // Само-контроль: убедится, что данные тега содержат или НЕ содержат эдж, указанный в resKey:
         if _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids)
@@ -99,7 +100,10 @@ object IPictureViewAdp {
     override def updated(view: Tree[JdTag], resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): Tree[JdTag] = {
       // Найти и обновить bgImg для тега, который подпадает под запрашиваемый ключ.
       val nodePath = resKey.nodePath.get
-      val jdtLoc = view.pathToNode(nodePath).get
+      val jdtLoc = view
+        .loc
+        .pathToNode(nodePath)
+        .get
       val jdt = jdtLoc.getLabel
       ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids) )
 

@@ -342,7 +342,6 @@ class DocEditAh[M](
     // Изменения состояния ротации текущего jd-тега.
     case m: RotateSet =>
       val v0 = value
-      val jdArgs0 = v0.jdDoc.jdArgs
 
       (for {
         selJdtLoc0 <- v0.jdDoc.jdArgs.selJdt.treeLocOpt
@@ -389,6 +388,7 @@ class DocEditAh[M](
         // Юзер выбрал какой-то новый элемент. Залить новый тег в seleted:
         val nodePath = m.jdId.selPathRev.reverse: NodePath_t
         val (newSelJdt, newSelJdtTreeLoc) = v0.jdDoc.jdArgs.data.doc.template
+          .loc
           .pathToNode( nodePath )
           .map( nodePath -> _ )
           .orElse {
@@ -410,14 +410,14 @@ class DocEditAh[M](
           .set( Some(newSelJdt) )(v0)
 
         // Если это QdTag, то отработать состояние quill-delta:
-        v2 = if (m.jdTag.name ==* MJdTagNames.QD_CONTENT) {
+        v2 = (if (m.jdTag.name ==* MJdTagNames.QD_CONTENT) {
           // Это qd-тег, значит нужно собрать и залить текущую дельту текста в состояние.
           // Нужно получить текущее qd-под-дерево (для сборки дельты)
           val delta2 = quillDeltaJsUtil.qdTag2delta(
             qd    = newSelJdtTreeLoc.tree,
             edges = v2.jdDoc.jdArgs.data.edges
           )
-          //println( "selJdt\n" + JSON.stringify(delta2) )
+
           MDocS.editors.modify(
             MEditorsS.qdEdit
               .set( Some(
@@ -426,13 +426,13 @@ class DocEditAh[M](
             MEditorsS.slideBlocks
               .composeLens( MSlideBlocks.expanded )
               .set( Some(SlideBlockKeys.CONTENT) )
-          )(v2)
+          )
 
         } else {
           // Очистить состояние от дельты.
           MDocS.editors
-            .modify(_.withOutQdEdit)(v2)
-        }
+            .modify(_.withOutQdEdit)
+        })(v2)
 
         // Если это strip, то активировать состояние strip-редактора.
         m.jdTag.name match {
@@ -443,8 +443,7 @@ class DocEditAh[M](
                 val hasManyStrips = v2.jdDoc.jdArgs.data.doc.template
                   .deepOfType( n )
                   // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
-                  .slice(0, 2)
-                  .size > 1
+                  .lengthIs > 1
                 !hasManyStrips
               }
             )
@@ -453,7 +452,7 @@ class DocEditAh[M](
               .set( Some(s2) )(v2)
 
             // Если тип текущего тега изменился, то сбросить текущий slide-блок.
-            if ( !oldTagName.contains(n) ) {
+            if ( !(oldTagName contains n) ) {
               v2 = MDocS.editors
                 .composeLens( MEditorsS.slideBlocks )
                 .composeLens( MSlideBlocks.expanded )
@@ -474,15 +473,18 @@ class DocEditAh[M](
           if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
              QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
              (v2.jdDoc.jdArgs.data.doc.template contains jdt)
+          // v0, т.к. надо удалять исходный тег:
+          selPath0 <- v0.jdDoc.jdArgs.renderArgs.selPath
+          oldSelectedJdt <- newSelJdtTreeLoc
+            .root
+            .pathToNode( selPath0 )
         } {
-          val tpl1 = v2.jdDoc.jdArgs.data.doc.template
-          val tpl2 = newSelJdtTreeLoc
+          val tpl2 = oldSelectedJdt
             .delete
-            .map(_.toTree)
-            .getOrElse {
+            .fold {
               LOG.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
-              tpl1
-            }
+              v2.jdDoc.jdArgs.data.doc.template
+            }(_.toTree)
 
           // Очистить эджи от лишнего контента
           val dataEdges2 = JdTag
@@ -507,24 +509,26 @@ class DocEditAh[M](
         val fxOpt = OptionUtil.maybe(!m.silent && v2.jdDoc.jdArgs.renderArgs.dnd.nonEmpty)( JdTagDragEnd.toEffectPure )
 
         // Обновить список color-preset'ов.
-        val bgColorsAppend = for {
+        val bgColorsAppend = (for {
           // Закинуть цвет фона нового тега в самое начало списка презетов. Затем - окончательный фон предыдущего тега.
-          jdt <- m.jdTag :: v0.jdDoc.jdArgs.selJdt
+          jdt <- m.jdTag #:: v0.jdDoc.jdArgs.selJdt
             .treeLocOpt
             .map(_.getLabel)
-            .toList
+            .to( LazyList )
           bgColor <- jdt.props1.bgColor
-          if !v2.editors.colorsState.colorPresets.contains(bgColor)
+          if !(v2.editors.colorsState.colorPresets contains bgColor)
         } yield {
           bgColor
-        }
+        })
+
         if (bgColorsAppend.nonEmpty) {
-          val presets2 = bgColorsAppend.foldLeft(v2.editors.colorsState.colorPresets) { MColorsState.prependPresets }
-          // то закинуть его цвет фона в color-презеты.
+          // закинуть его цвет фона в color-презеты.
           v2 = MDocS.editors
             .composeLens( MEditorsS.colorsState )
             .composeLens( MColorsState.colorPresets )
-            .set( presets2 )(v2)
+            .modify {
+              bgColorsAppend.foldLeft(_) { MColorsState.prependPresets }
+            }(v2)
         }
 
         ah.updatedMaybeEffect( v2, fxOpt )
@@ -1366,9 +1370,8 @@ class DocEditAh[M](
 
       def __updateLocLabel(label: JdTag, newValue: Option[Boolean]): JdTag = {
         if ( p1_isMain_LENS.get(label) !=* newValue) {
-          val jdt2 = p1_isMain_LENS
+          p1_isMain_LENS
             .set( newValue )( label )
-          jdt2
         } else {
           label
         }
@@ -1432,13 +1435,17 @@ class DocEditAh[M](
     case m: ShowMainStrips =>
       val v0 = value
       val hideNonMainStrips2 = m.showing
-      if (v0.jdDoc.jdArgs.renderArgs.hideNonMainStrips ==* hideNonMainStrips2) {
+
+      val jd_doc_args_render_hideNonMain_LENS = MDocS.jdDoc
+        .composeLens( MJdDocEditS.jdArgs )
+        .composeLens( MJdArgs.renderArgs )
+        .composeLens( MJdRenderArgs.hideNonMainStrips )
+
+      if (jd_doc_args_render_hideNonMain_LENS.get(v0) ==* hideNonMainStrips2) {
         noChange
+
       } else {
-        val v2 = MDocS.jdDoc
-          .composeLens( MJdDocEditS.jdArgs )
-          .composeLens( MJdArgs.renderArgs )
-          .composeLens( MJdRenderArgs.hideNonMainStrips )
+        val v2 = jd_doc_args_render_hideNonMain_LENS
           .set( hideNonMainStrips2 )(v0)
 
         updated(v2)

@@ -9,7 +9,7 @@ import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.id.IId
 import japgolly.univeq._
 import monocle.macros.GenLens

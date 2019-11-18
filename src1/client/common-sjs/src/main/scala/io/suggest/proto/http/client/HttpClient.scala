@@ -25,7 +25,7 @@ object HttpClient extends Log {
     for {
       location <- Option( dom.window.location )
       if !js.isUndefined( location )
-      proto <- Option(location.protocol)
+      proto <- Option( location.protocol )
       if !js.isUndefined(proto) &&
          proto.nonEmpty &&
          proto !=* String.valueOf( null.asInstanceOf[Object] )
@@ -59,14 +59,16 @@ object HttpClient extends Log {
   /** Функция доп.обработки URL для допиливания их до ранга абсолютных, когда это необходимо.
     * Бывает, что требуются строго абсолютные URL (cordova). Тут - собираем фунцкию для причёсывания исходных ссылок.
     */
-  val mkAbsUrlIfPreferred: String => String = if (HttpClient.PREFER_ABS_URLS) {
-    // Фунция на случай, когда требуется причёсывать ссылки:
-    url0: String =>
-      UrlUtil2.mkAbsUrl( protoPrefix = HttpConst.Proto.HTTP, secure = true, relUrl = url0 )
+  val mkAbsUrlIfPreferred: String => String = {
+    if (HttpClient.PREFER_ABS_URLS) {
+      // Фунция на случай, когда требуется причёсывать ссылки:
+      url0: String =>
+        UrlUtil2.mkAbsUrl( protoPrefix = HttpConst.Proto.HTTP, secure = true, relUrl = url0 )
 
-  } else {
-    // Причёсывать ссылки не требуется. Просто используем исходные ссылки.
-    identity[String]
+    } else {
+      // Причёсывать ссылки не требуется. Просто используем исходные ссылки.
+      identity[String]
+    }
   }
 
 

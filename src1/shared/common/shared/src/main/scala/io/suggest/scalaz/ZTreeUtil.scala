@@ -57,16 +57,6 @@ object ZTreeUtil {
     }
 
 
-    /** Найти узел дерева по указанному пути.
-      *
-      * @param path Путь в дереве, полученный из nodePathTo().
-      * @return Найденный тег, если найден.
-      */
-    def pathToNode(path: NodePath_t): Option[TreeLoc[A]] = {
-      _pathToNodeLoc(tree.loc, path)
-    }
-
-
     // Старое API из IDocTag-дерева. Желательно портировать такой код на использование Tree/TreeLoc API напрямую.
 
     /** Итератор всех дочерних элементов со всех под-уровней. */
@@ -185,6 +175,16 @@ object ZTreeUtil {
         }
       // Отбросить 0 с нулевого уровня.
       pathWithTop0.tail
+    }
+
+
+    /** Найти узел дерева по указанному пути.
+      *
+      * @param path Путь в дереве, полученный из nodePathTo().
+      * @return Найденный тег, если найден.
+      */
+    def pathToNode(path: NodePath_t): Option[TreeLoc[A]] = {
+      _pathToNodeLoc(treeLoc, path)
     }
 
 

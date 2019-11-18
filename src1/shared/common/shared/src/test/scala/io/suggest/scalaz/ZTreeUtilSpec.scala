@@ -51,7 +51,10 @@ object ZTreeUtilSpec extends SimpleTestSuite {
 
   test("Handle Nil tree path") {
     assertEquals(
-      tree1.pathToNode(Nil).toLabelOpt,
+      tree1
+        .loc
+        .pathToNode(Nil)
+        .toLabelOpt,
       Some("root1")
     )
   }
@@ -66,7 +69,10 @@ object ZTreeUtilSpec extends SimpleTestSuite {
 
   test("Handle path for level 1: leaf12") {
     assertEquals(
-      tree1.pathToNode(List(1)).toLabelOpt,
+      tree1
+        .loc
+        .pathToNode(List(1))
+        .toLabelOpt,
       Some("leaf12")
     )
   }
@@ -82,7 +88,10 @@ object ZTreeUtilSpec extends SimpleTestSuite {
 
   test("Handle path for level2: leaf132") {
     assertEquals(
-      tree1.pathToNode( List(2,1) ).toLabelOpt,
+      tree1
+        .loc
+        .pathToNode( List(2,1) )
+        .toLabelOpt,
       Some("leaf132")
     )
   }

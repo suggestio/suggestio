@@ -119,7 +119,7 @@ trait ScFocusedAds
 
     def prodIdsFut: Future[Set[String]] = {
       for (mads2 <- mads2Fut) yield {
-        val iter = for {
+        (for {
           mad <- mads2.iterator
           e   <- mad.edges.withPredicateIter(MPredicates.OwnedBy)
           // TODO В теории тут может выскочить person, который узлом-продьюсером не является.
@@ -127,8 +127,8 @@ trait ScFocusedAds
           nodeId <- e.nodeIds
         } yield {
           nodeId
-        }
-        iter.toSet
+        })
+          .toSet
       }
     }
 
@@ -240,14 +240,14 @@ trait ScFocusedAds
 
           // Сохранить фактический search limit
           MAction(
-            actions = Seq( MActionTypes.SearchLimit ),
-            count   = Seq( _adSearch.limit )
+            actions = MActionTypes.SearchLimit :: Nil,
+            count   = _adSearch.limit :: Nil,
           ),
 
           // Сохранить фактически search offset
           MAction(
-            actions = Seq( MActionTypes.SearchOffset ),
-            count   = Seq( _adSearch.offset )
+            actions = MActionTypes.SearchOffset :: Nil,
+            count   = _adSearch.offset :: Nil,
           )
         )
 
@@ -259,8 +259,8 @@ trait ScFocusedAds
           } {
             saAcc ::= MAction(
               actions   = MActionTypes.ScAdsFocusingOnAd :: Nil,
-              nodeId    = mad0.id.toSeq,
-              nodeName  = mad0.guessDisplayName.toSeq
+              nodeId    = mad0.id.toList,
+              nodeName  = mad0.guessDisplayName.toList,
             )
           }
         }
@@ -379,7 +379,7 @@ trait ScFocusedAds
     def _doAdIdsLookup(adId: String, lm: MLookupMode,
                        neededCount: Int, limit1: Int = 50, offset1: Int = 0, tryN: Int = 1): Future[AdsLookupRes] = {
 
-      assert(tryN <= 20)
+      require(tryN <= 20, "Too many iterations")
 
       // Необходимо поискать id focused-карточек в корректном порядке с начала списка.
       val fadsIdsSearchQs = _qs.search.withLimitOffset(
@@ -418,7 +418,8 @@ trait ScFocusedAds
 
           // Добавить индексы элементам итератора с поправкой на текущий offset1.
           // Получаться порядковые номера карточек: 0, 1, 2, ...
-          val fadsIdsInxed = fadIds.iterator
+          val fadsIdsInxed = fadIds
+            .iterator
             .zipWithIndex
             .map { case (id, index0) =>
               NodeIdIndexed(id, offset1 + index0)
