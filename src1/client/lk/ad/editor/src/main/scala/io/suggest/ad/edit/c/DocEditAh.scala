@@ -1181,9 +1181,18 @@ class DocEditAh[M](
         .selJdt.treeLocOpt
         .get
       val jdt0 = loc0.getLabel
+
+      // Прогнать по min/max-ограничениям, т.к. юзер таскать можно куда угодно.
+      val widthPxOpt2 = for(widthPx0 <- m.widthPx) yield {
+        Math.max(
+          JdConst.ContentWidth.MIN_PX,
+          Math.min(JdConst.ContentWidth.MAX_PX, widthPx0)
+        )
+      }
+
       val jdt_p1_width_LENS = JdTag.props1
         .composeLens( MJdtProps1.widthPx )
-      if (jdt_p1_width_LENS.get(jdt0) ==* m.widthPx) {
+      if (jdt_p1_width_LENS.get(jdt0) ==* widthPxOpt2) {
         // Ширина изменилась в исходное значение.
         noChange
 
@@ -1191,7 +1200,7 @@ class DocEditAh[M](
         require( jdt0.name ==* MJdTagNames.QD_CONTENT )
         // Сохранить новую ширину в состояние текущего тега:
         val jdt2 = jdt_p1_width_LENS
-          .set( m.widthPx )( jdt0 )
+          .set( widthPxOpt2 )( jdt0 )
         _updateQdContentProps(jdt2, v0)
       }
 

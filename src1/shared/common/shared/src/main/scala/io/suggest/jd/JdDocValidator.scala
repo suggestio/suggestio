@@ -251,7 +251,7 @@ class JdDocValidator(
           v = widthPx,
           min = JdConst.ContentWidth.MIN_PX,
           max = JdConst.ContentWidth.MAX_PX,
-          errMsgF(WIDTH) + `.`
+          errMsgF(WIDTH)
         )
       } |@|
       ScalazUtil.liftNelNone(qdProps1.heightPx, errMsgF(HEIGHT + `.` + UNEXPECTED)) |@|
@@ -271,13 +271,13 @@ class JdDocValidator(
         v   = shadow.hOffset,
         min = -C.HORIZ_OFFSET_MIN_MAX,
         max = C.HORIZ_OFFSET_MIN_MAX,
-        errMsgF(WIDTH) + `.`
+        errMsgF(WIDTH)
       ) |@|
       MathConst.Counts.validateMinMax(
         v   = shadow.vOffset,
         min = -C.VERT_OFFSET_MIN_MAX,
         max = C.VERT_OFFSET_MIN_MAX,
-        errMsgF(HEIGHT) + `.`
+        errMsgF(HEIGHT)
       ) |@|
       ScalazUtil.liftNelOpt( shadow.color ) { MColorData.validateHexCodeOnly } |@|
       ScalazUtil.liftNelOpt( shadow.blur ) { blur =>
@@ -285,7 +285,7 @@ class JdDocValidator(
           v   = blur,
           min = 0,
           max = C.BLUR_MAX * C.BLUR_FRAC,
-          errMsgF(BLUR) + `.`
+          errMsgF(BLUR)
         )
       }
     )( MJdShadow.apply )
