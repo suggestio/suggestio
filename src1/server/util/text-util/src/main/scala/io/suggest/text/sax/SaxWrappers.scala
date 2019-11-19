@@ -15,47 +15,47 @@ trait SaxContentHandlerWrapper extends ContentHandler {
 
   def contentHandler: ContentHandler
 
-  override def setDocumentLocator(locator: Locator) {
+  override def setDocumentLocator(locator: Locator): Unit = {
     contentHandler.setDocumentLocator(locator)
   }
 
-  override def startDocument() {
+  override def startDocument(): Unit = {
     contentHandler.startDocument()
   }
 
-  override def endDocument() {
+  override def endDocument(): Unit = {
     contentHandler.endDocument()
   }
 
-  override def startPrefixMapping(prefix: String, uri: String) = {
+  override def startPrefixMapping(prefix: String, uri: String): Unit = {
     contentHandler.startPrefixMapping(prefix, uri)
   }
 
-  override def endPrefixMapping(prefix: String) = {
+  override def endPrefixMapping(prefix: String): Unit = {
     contentHandler.endPrefixMapping(prefix)
   }
 
-  override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
+  override def startElement(uri: String, localName: String, qName: String, attributes: Attributes): Unit = {
     contentHandler.startElement(uri, localName, qName, attributes)
   }
 
-  override def endElement(uri: String, localName: String, qName: String) {
+  override def endElement(uri: String, localName: String, qName: String): Unit = {
     contentHandler.endElement(uri, localName, qName)
   }
 
-  override def characters(ch: Array[Char], start: Int, length: Int) {
+  override def characters(ch: Array[Char], start: Int, length: Int): Unit = {
     contentHandler.characters(ch, start, length)
   }
 
-  override def ignorableWhitespace(ch: Array[Char], start: Int, length: Int) {
+  override def ignorableWhitespace(ch: Array[Char], start: Int, length: Int): Unit = {
     contentHandler.ignorableWhitespace(ch, start, length)
   }
 
-  override def processingInstruction(target: String, data: String) {
+  override def processingInstruction(target: String, data: String): Unit = {
     contentHandler.processingInstruction(target, data)
   }
 
-  override def skippedEntity(name: String) {
+  override def skippedEntity(name: String): Unit = {
     contentHandler.skippedEntity(name)
   }
 }

@@ -158,8 +158,8 @@ object GridBuilderUtil {
               val rOpt = args.jdtWideSzMults.get( gb.jdId )
               // Была проблема: заранее развёрнутая карточка с неправильным id с сервера вызывает неправильное позиционирование в плитке.
               if (rOpt.isEmpty && (gb.jdt.props1.expandMode contains MBlockExpandModes.Full))
-                throw new IllegalArgumentException( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.jdId.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
-                //println( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
+                //throw new IllegalArgumentException( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.jdId.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
+                println( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.jdId.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
               rOpt
             }
 

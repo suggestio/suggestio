@@ -77,7 +77,7 @@ object StringUtil {
       inx
   }
 
-  private def bytea2lowerCase(bytea: Array[Byte], start: Int, length: Int) {
+  private def bytea2lowerCase(bytea: Array[Byte], start: Int, length: Int): Unit = {
     if (length > 0) {
       val ch1 = Character.toLowerCase(bytea(start).toChar)
       bytea(start) = ch1.toByte

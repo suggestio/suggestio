@@ -10,6 +10,7 @@ import japgolly.univeq.UnivEq
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 import scala.util.Try
 
@@ -214,6 +215,8 @@ object MGeoPoint {
     override def getY(mgp: MGeoPoint): GeoCoord_t = mgp.lat
   }
 
+  val lon = GenLens[MGeoPoint](_.lon)
+
 }
 
 
@@ -225,7 +228,6 @@ case class MGeoPoint(
                       lon: GeoCoord_t,
                     ) {
 
-  def withLat(lat2: GeoCoord_t) = copy(lat = lat2)
   def withLon(lon2: GeoCoord_t) = copy(lon = lon2)
 
   // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.

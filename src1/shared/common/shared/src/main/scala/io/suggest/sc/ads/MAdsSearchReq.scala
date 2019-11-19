@@ -36,6 +36,19 @@ object MAdsSearchReq extends IEmpty {
   @inline implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
 
   val rcvrId = GenLens[MAdsSearchReq](_.rcvrId)
+  val genOpt = GenLens[MAdsSearchReq](_.genOpt)
+  val offset = GenLens[MAdsSearchReq](_.offset)
+
+
+  implicit class AsrOpsExt( val req: MAdsSearchReq ) extends AnyVal {
+
+    def withOffset(offset: Option[Int] = None) =
+      MAdsSearchReq.offset.set(offset)(req)
+
+    def withLimitOffset(limit: Option[Int], offset: Option[Int]) =
+      req.copy(limit = limit, offset = offset)
+
+  }
 
 }
 
@@ -50,12 +63,4 @@ case class MAdsSearchReq(
                           textQuery   : Option[String]        = None,
                         )
   extends EmptyProduct
-{
 
-  def withOffset(offset: Option[Int] = None) = copy(offset = offset)
-  def withLimit(limit: Option[Int] = None)   = copy(limit = limit)
-  def withGenOpt(genOpt: Option[Long])       = copy(genOpt = genOpt)
-
-  def withLimitOffset(limit: Option[Int], offset: Option[Int]) = copy(limit = limit, offset = offset)
-
-}

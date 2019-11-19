@@ -1,17 +1,20 @@
 package io.suggest.sc.u.api
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.proto.http.model.{Route, _}
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.sc3.{MSc3Resp, MScQs}
+import io.suggest.sc.ads.MAdsSearchReq
+import io.suggest.sc.sc3.{MSc3Resp, MScCommonQs, MScQs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 import io.suggest.ueq.UnivEqUtil._
+import monocle.Traversal
 
 import scala.concurrent.Future
+import scalaz.std.option._
 
 /**
   * Suggest.io
@@ -45,30 +48,37 @@ object ScUniApi {
     *         None - значит ничего не изменилось.
     */
   def stripQsForCaching(scQs: MScQs): Option[MScQs] = {
-    var scQs2 = scQs
+    var updateFuns = List.empty[MScQs => MScQs]
 
     // Удалить gen random:
-    if (scQs2.search.genOpt.nonEmpty) {
-      scQs2 = scQs2.withSearch(
-        scQs2.search.withGenOpt(None)
-      )
+    if (scQs.search.genOpt.nonEmpty) {
+      updateFuns ::= MScQs.search
+        .composeLens( MAdsSearchReq.genOpt )
+        .set( None )
     }
 
     // Нормализовать гео-координаты до нескольких цифр после запятой: 4 цифры достаточно для кэша.
-    if (scQs2.common.locEnv.geoLocOpt.nonEmpty) {
-      scQs2 = scQs2.withCommon(
-        scQs2.common.withLocEnv(
-          scQs2.common.locEnv.withGeoLocOpt {
-            val mloc0 = scQs2.common.locEnv.geoLocOpt.get
-            val mloc2 = mloc0.copy(
-              point = mloc0.point.withCoordScale( MGeoPoint.FracScale.NEAR ),
-              accuracyOptM = None,
-            )
-            Some(mloc2)
-          }
-        )
-      )
+    val qs_common_locEnv_geoLoc_LENS = MScQs.common
+      .composeLens( MScCommonQs.locEnv )
+      .composeLens( MLocEnv.geoLocOpt )
+
+    for {
+      mloc0 <- qs_common_locEnv_geoLoc_LENS.get( scQs )
+    } {
+      var glModF = MGeoLoc.point
+        .modify( _.withCoordScale(MGeoPoint.FracScale.NEAR) )
+
+      if (mloc0.accuracyOptM.nonEmpty)
+        glModF = glModF andThen MGeoLoc.accuracyOptM.set( None )
+
+      updateFuns ::= qs_common_locEnv_geoLoc_LENS
+        .composeTraversal( Traversal.fromTraverse[Option, MGeoLoc] )
+        .modify( glModF )
     }
+
+    val scQs2 =
+      if (updateFuns.isEmpty) scQs
+      else updateFuns.reduceLeft(_ andThen _)(scQs)
 
     OptionUtil.maybe(scQs !===* scQs2)(scQs2)
   }

@@ -125,8 +125,8 @@ class JdDocValidator(
             jdts.take(maxBlkCount)
           }
       }
-      .andThen { jdts2 =>
-        ScalazUtil.validateAll(jdts2)( validateDocChildTree )
+      .andThen {
+        ScalazUtil.validateAll(_)( validateDocChildTree )
       }
   }
 
@@ -215,8 +215,8 @@ class JdDocValidator(
     val maxElemsCount = JdConst.MAX_ELEMENTS_PER_MIN_BLOCK * bm.h.relSz * bm.w.relSz
     Validation.liftNel(contents)( _.lengthIs > maxElemsCount, TOO_MANY )
       .recoverTolerant { contents.take(maxElemsCount) }
-      .andThen { contents2 =>
-        ScalazUtil.validateAll(contents2) { validateQdTree(_, Some(bm)) }
+      .andThen {
+        ScalazUtil.validateAll(_) { validateQdTree(_, Some(bm)) }
       }
   }
 

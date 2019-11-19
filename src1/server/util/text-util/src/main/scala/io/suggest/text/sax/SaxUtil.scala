@@ -31,7 +31,7 @@ trait StackFsmSax extends SaxContentHandlerWrapper with ErrorHandler {
   }
 
   /** Стековое переключение состояние этого ContentHandler'а. */
-  def become(h: TagHandler) {
+  def become(h: TagHandler): Unit = {
     tagDepth += 1
     if (tagDepth > maxTagDepth)
       throw new IllegalStateException("Tag depth limit exceeded.")
@@ -60,7 +60,7 @@ trait StackFsmSax extends SaxContentHandlerWrapper with ErrorHandler {
     def thisTagName: String
     def thisTagAttrs: Attributes
 
-    def startTag(tagName:String, attributes: Attributes) {}
+    def startTag(tagName:String, attributes: Attributes): Unit = {}
 
     def getTagNameFor(uri:String, localName:String, qName:String): String = {
       if (localName.isEmpty) {
@@ -76,14 +76,14 @@ trait StackFsmSax extends SaxContentHandlerWrapper with ErrorHandler {
       }
     }
 
-    override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
+    override def startElement(uri: String, localName: String, qName: String, attributes: Attributes): Unit = {
       // Т.к. нет нормального неймспейса, усредняем тут localName и qName.
       super.startElement(uri, localName, qName, attributes)
       val tagName = getTagNameFor(uri, localName, qName)
       startTag(tagName, attributes)
     }
 
-    def endTag(tagName: String) {
+    def endTag(tagName: String): Unit = {
       if ((tagName equalsIgnoreCase thisTagName) && (handlersStack.head == this)) {
         onTagEnd(tagName)
         unbecome()
@@ -93,16 +93,16 @@ trait StackFsmSax extends SaxContentHandlerWrapper with ErrorHandler {
       }
     }
 
-    def unexpectedClosingTag(tagName: String) {
+    def unexpectedClosingTag(tagName: String): Unit = {
       fatalError(new SAXParseException(s"Unexpected closing tag: '$tagName', but close-tag '$tagName' expected.", locator))
     }
 
     /** Этот метод вызывается, когда наступает пора завершаться.
       * В этот момент обычно отпавляются в коллектор накопленные данные. */
-    def onTagEnd(tagName: String) {}
+    def onTagEnd(tagName: String): Unit = {}
 
     /** Выход из текущего элемента у всех одинаковый. */
-    override def endElement(uri: String, localName: String, qName: String) {
+    override def endElement(uri: String, localName: String, qName: String): Unit = {
       super.endElement(uri, localName, qName)
       val tagName = getTagNameFor(uri, localName, qName)
       endTag(tagName)

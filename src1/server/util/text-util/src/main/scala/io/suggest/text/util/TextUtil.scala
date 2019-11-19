@@ -270,7 +270,7 @@ object TextUtil {
    * @param start Начало массива.
    * @param len Длина массива.
    */
-  def mischarFixChArr(chArr: Array[Char], start:Int, len:Int) {
+  def mischarFixChArr(chArr: Array[Char], start:Int, len:Int): Unit = {
     mischarDetectRepairChArr(chArr, start=start, len=len, mischarChPeriodMap)
   }
 
@@ -282,7 +282,7 @@ object TextUtil {
    * @param len Кол-во символов для обработки.
    * @param mischarChPeriodRest Карта-список для обнаружения и исправления проблем.
    */
-  @tailrec private def mischarDetectRepairChArr(chArr: Array[Char], start:Int, len:Int, mischarChPeriodRest: MischarChPeriodMap_t) {
+  @tailrec private def mischarDetectRepairChArr(chArr: Array[Char], start:Int, len:Int, mischarChPeriodRest: MischarChPeriodMap_t): Unit = {
     if (mischarChPeriodRest.nonEmpty) {
       val e = mischarChPeriodRest.head
       val cc = countCharsForChPeriod(chArr, start=start, len=len, alpChPeriods=e._1)
@@ -349,7 +349,7 @@ object TextUtil {
    * @param len Конец подстроки в массиве.
    * @param fixF Функция исправления ошибок.
    */
-  @tailrec private def repairChArrUsing(chArr:Array[Char], start:Int, len:Int, fixF:MischarMapperPf_t) {
+  @tailrec private def repairChArrUsing(chArr:Array[Char], start:Int, len:Int, fixF:MischarMapperPf_t): Unit = {
     if (len > 0) {
       val ch0 = chArr(start)
       val ch1 = fixF(ch0)

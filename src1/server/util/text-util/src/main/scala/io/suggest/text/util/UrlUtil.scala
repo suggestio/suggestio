@@ -8,6 +8,7 @@ import io.suggest.util.logs.MacroLogsImplLazy
 
 import scala.annotation.tailrec
 import scala.collection.SortedSet
+import scala.collection.immutable.ArraySeq
 import scala.util.matching.Regex
 
 
@@ -219,7 +220,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     sb.toString()
   }
 
-  private def humanizeUrlHost(host: String, sb: StringBuilder) {
+  private def humanizeUrlHost(host: String, sb: StringBuilder): Unit = {
     sb append IDNA.toUnicode(host)
   }
 
@@ -382,7 +383,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     // Разбить строку по &. Для каждого элемента выполнить функцию нормализацию, кот. генерит токены '&','asd','=','1'
     // Затем выпилить leading '&' и превратить в строку.
     // Вместо sort+distinct используем SortedSet как более быструю замену usort.
-    val resultSb = SortedSet(query.split('&') : _*)
+    val resultSb = SortedSet( ArraySeq.unsafeWrapArray(query.split('&')) : _* )
       .foldLeft(new StringBuilder) { (sb, queryPart) =>
         if (queryPart.length == 0 || QS_BAD_KEY_PATTERN.matcher(queryPart).find)
           sb

@@ -1072,17 +1072,14 @@ class DocEditAh[M](
     // Появилась новая гистограмма в карте гисторамм. Нужно поправить эджи, у которых фон соответствует связанной картинке.
     case m: HandleNewHistogramInstalled =>
       val v0 = value
-      val edgeUids4mod = v0.jdDoc.jdArgs
-        .data.edges
-        .valuesIterator
-        .flatMap { e =>
-          for {
-            fileSrv <- e.jdEdge.fileSrv
-            if m.nodeId ==* fileSrv.nodeId
-          } yield {
-            e.id
-          }
-        }
+
+      val edgeUids4mod = (for {
+        e <- v0.jdDoc.jdArgs.data.edges.valuesIterator
+        fileSrv <- e.jdEdge.fileSrv
+        if m.nodeId ==* fileSrv.nodeId
+      } yield {
+        e.id
+      })
         .toSet
 
       if (edgeUids4mod.isEmpty) {
@@ -1092,84 +1089,89 @@ class DocEditAh[M](
 
       } else {
         // Найти гистограмму в карте
-        v0.editors
-          .colorsState
-          .histograms
-          .get(m.nodeId)
-          .filter( _.sorted.nonEmpty )
-          .fold {
-            // Should never happen: не найдена гистограмма, указанная в событии.
-            LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
-            noChange
-          } { mhist =>
-            // Надо пробежаться по template, и всем элеметам, которые изменились, выставить обновлённые значения.
-            val topColorMcd = mhist.sorted
-              .maxBy { mcd =>
-                mcd.freqPc
-                  .getOrElse(-1)
-              }
-            val topColorMcdOpt = Some(topColorMcd)
-
-            lazy val p1_bgColor_LENS = JdTag.props1
-              .composeLens( MJdtProps1.bgColor )
-
-            val tpl2 = for (el1 <- v0.jdDoc.jdArgs.data.doc.template) yield {
-              el1
-                .edgeUids
-                .map(_.edgeUid)
-                .find(edgeUids4mod.contains)
-                .fold(el1) { _ =>
-                  el1.qdProps.fold {
-                    p1_bgColor_LENS
-                      .set( topColorMcdOpt )(el1)
-                  } { qdProps0 =>
-                    JdTag.qdProps.set( Some(
-                      MQdOp.attrsText.set( Some(
-                        MQdAttrsText.background.set(
-                          topColorMcdOpt.map( SetVal.apply )
-                        )(
-                          qdProps0.attrsText
-                            .getOrElse( MQdAttrsText.empty )
-                        )
-                      ))(qdProps0)
-                    ))(el1)
-                  }
-                }
+        (for {
+          mhist <- v0.editors
+            .colorsState
+            .histograms
+            .get(m.nodeId)
+          if mhist.sorted.nonEmpty
+        } yield {
+          // Надо пробежаться по template, и всем элеметам, которые изменились, выставить обновлённые значения.
+          val topColorMcd = mhist
+            .sorted
+            .maxBy { mcd =>
+              mcd.freqPc
+                .getOrElse(-1)
             }
-            val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
+          val topColorMcdOpt = Some(topColorMcd)
 
-            // Сохранить новые темплейт в состояние.
-            var v2 = MDocS.jdDoc
-              .composeLens( MJdDocEditS.jdArgs )
-              .modify(
-                MJdArgs.data
-                  .composeLens( MJdDataJs.doc )
-                  .set(jdDoc2) andThen
+          lazy val p1_bgColor_LENS = JdTag.props1
+            .composeLens( MJdtProps1.bgColor )
+
+          val tpl2 = for {
+            el1 <- v0.jdDoc.jdArgs.data.doc.template
+          } yield {
+            el1
+              .edgeUids
+              .map(_.edgeUid)
+              .find(edgeUids4mod.contains)
+              .fold(el1) { _ =>
+                el1.qdProps.fold {
+                  p1_bgColor_LENS
+                    .set( topColorMcdOpt )(el1)
+                } { qdProps0 =>
+                  JdTag.qdProps.set( Some(
+                    MQdOp.attrsText.set( Some(
+                      MQdAttrsText.background.set(
+                        topColorMcdOpt.map( SetVal.apply )
+                      )(
+                        qdProps0.attrsText
+                          .getOrElse( MQdAttrsText.empty )
+                      )
+                    ))(qdProps0)
+                  ))(el1)
+                }
+              }
+          }
+          val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
+
+          // Сохранить новые темплейт в состояние.
+          var v2 = MDocS.jdDoc
+            .composeLens( MJdDocEditS.jdArgs )
+            .modify(
+              MJdArgs.data
+                .composeLens( MJdDataJs.doc )
+                .set(jdDoc2) andThen
                 MJdArgs.jdRuntime.set(
                   mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
                     .result
                 )
-              )(v0)
+            )(v0)
 
-            // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
-            for {
-              qdEdit0     <- v0.editors.qdEdit
-              qdTag2      <- v2.jdDoc.jdArgs.selJdt.treeOpt
-              if qdTag2.rootLabel.name ==* MJdTagNames.QD_CONTENT
-              // Перерендеривать quill только если изменение гистограммы коснулось эджа внутри текущего qd-тега:
-              qdTag0      <- v0.jdDoc.jdArgs.selJdt.treeOpt
-              if qdTag0 !=* qdTag2
-            } {
-              v2 = MDocS.editors
-                .composeLens(MEditorsS.qdEdit)
-                .set( Some(
-                  qdEdit0.withInitRealDelta(
-                    initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdDoc.jdArgs.data.edges )
-                  )
-                ))(v0)
-            }
+          // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
+          for {
+            qdEdit0     <- v0.editors.qdEdit
+            qdTag2      <- v2.jdDoc.jdArgs.selJdt.treeOpt
+            if qdTag2.rootLabel.name ==* MJdTagNames.QD_CONTENT
+            // Перерендеривать quill только если изменение гистограммы коснулось эджа внутри текущего qd-тега:
+            qdTag0      <- v0.jdDoc.jdArgs.selJdt.treeOpt
+            if qdTag0 !=* qdTag2
+          } {
+            v2 = MDocS.editors
+              .composeLens(MEditorsS.qdEdit)
+              .set( Some(
+                qdEdit0.withInitRealDelta(
+                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdDoc.jdArgs.data.edges )
+                )
+              ))(v0)
+          }
 
-            updated( v2 )
+          updated( v2 )
+        })
+          .getOrElse {
+            // Should never happen: не найдена гистограмма, указанная в событии.
+            LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+            noChange
           }
       }
 
@@ -1522,11 +1524,12 @@ class DocEditAh[M](
             topLeft = coordsRnd,
           )
         },
-        forest = Stream(
+        forest = {
           Tree.Leaf(
             JdTag.edgeQdOp( edgeUid )
-          )
-        )
+          ) #::
+          Stream.empty
+        }
       )
 
       val qdtLoc = intoStripLoc.insertDownLast( qdtTree )

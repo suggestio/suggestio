@@ -4,8 +4,8 @@ import boopickle.Default._
 import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.primo.IApply1
 import japgolly.univeq._
-import io.suggest.ueq.UnivEqUtil._   // НАДО!
-
+import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 import play.api.libs.json._
@@ -202,6 +202,9 @@ object CircleGs extends IGeoShapeCompanion[CircleGs] {
 
   @inline implicit def univEq: UnivEq[CircleGs] = UnivEq.derive
 
+  val center  = GenLens[CircleGs](_.center)
+  val radiusM = GenLens[CircleGs](_.radiusM)
+
 }
 case class CircleGs(
                      center   : MGeoPoint,
@@ -216,7 +219,6 @@ case class CircleGs(
   // API взято из MGeoCircle, которая была замёржена прямо сюда.
   def radiusKm = radiusM / 1000d
   def withCenter(center: MGeoPoint) = copy(center = center)
-  def withRadiusM(radiusM: Double) = copy(radiusM = radiusM)
 }
 
 

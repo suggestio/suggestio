@@ -43,12 +43,17 @@ object MScQs {
   val index  = GenLens[MScQs](_.index)
   val foc    = GenLens[MScQs](_.foc)
 
+
+  implicit class MScQsExt(val scQs: MScQs) extends AnyVal {
+    def withSearch = MScQs.search.set(_: MAdsSearchReq)(scQs)
+  }
+
 }
 
 
 /** Класс-контейнер qs-аргументов для Sc3 UApi, позволяющего делать сложный запрос к Sc-контроллеру.
   *
-  * @param ads Запрос поиска grid-ads
+  * @param search Запрос поиска grid-ads
   * @param index Запрос index
   * @param foc Запрос фокусировки.
   * @param common Пошаренные части запросов.
@@ -68,10 +73,5 @@ case class MScQs(
       search.prodId.nonEmpty ||
       search.tagNodeId.nonEmpty
   }
-
-  def withSearch(search: MAdsSearchReq) = copy(search = search)
-  def withFoc(foc: Option[MScFocusArgs]) = copy(foc = foc)
-  def withIndex(index: Option[MScIndexArgs]) = copy(index = index)
-  def withCommon(common: MScCommonQs) = copy(common = common)
 
 }

@@ -3,7 +3,7 @@ package io.suggest.maps.c
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.common.maps.rad.IMinMaxM
-import io.suggest.geo.{IGeoPointField, MGeoPoint}
+import io.suggest.geo.{CircleGs, IGeoPointField, MGeoPoint}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 
@@ -12,13 +12,13 @@ object RadAhUtil {
 
   def radCenterDragging[V <: MRadT[V]](v0: V, rcd: RadCenterDragging): V = {
     v0.withState(
-      v0.state.withCenterDragging( Some(rcd.geoPoint) )
+      MRadS.centerDragging.set( Some(rcd.geoPoint) )(v0.state)
     )
   }
 
   def radCenterDragStart[V <: MRadT[V]](v0: V): V = {
     v0.withState(
-      v0.state.withCenterDragging( Some(v0.circle.center) )
+      MRadS.centerDragging.set( Some(v0.circle.center) )(v0.state)
     )
   }
 
@@ -29,7 +29,7 @@ object RadAhUtil {
 
     v0.withCircleState(
       // Выставить новый центр круга в состояние.
-      circle = v0.circle.withCenter( c2 ),
+      circle = CircleGs.center.set(c2)(v0.circle),
       state  = v0.state.copy(
         centerDragging = None,
         // Пересчитать координаты маркера радиуса.
@@ -44,7 +44,7 @@ object RadAhUtil {
 
   def radiusDragStart[V <: MRadT[V]](v0: V): V = {
     v0.withState(
-      v0.state.withRadiusDragging( true )
+      MRadS.radiusDragging.set(true)(v0.state)
     )
   }
 
@@ -70,7 +70,7 @@ object RadAhUtil {
       Math.min( contraints.MAX_M, distanceM )
     )
 
-    val circle2 = v0.circle.withRadiusM( radius2m )
+    val circle2 = CircleGs.radiusM.set(radius2m)( v0.circle )
 
     // Не двигать радиус, вылезающий за пределы допустимых значений:
     val rmGp2 = if (radius2m != distanceM) {
@@ -164,11 +164,11 @@ class RadAh[M](
     case hlf: HandleLocationFound =>
       _valueFold { mrad =>
         val center2 = hlf.geoPoint
-        val mgc2 = mrad.circle.withCenter(center2)
+        val mgc2 = CircleGs.center.set(center2)(mrad.circle)
         val radiusXy = MapsUtil.radiusMarkerLatLng(mgc2)
         val mrad2 = mrad.copy(
           circle = mgc2,
-          state  = mrad.state.withRadiusMarkerCoords(radiusXy)
+          state  = MRadS.radiusMarkerCoords.set(radiusXy)(mrad.state),
         )
         updated( Some(mrad2) )
       }

@@ -2,6 +2,7 @@ package io.suggest.maps.m
 
 import io.suggest.geo.MGeoPoint
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -17,15 +18,15 @@ case class MRadS(
                   radiusMarkerCoords  : MGeoPoint,
                   centerDragging      : Option[MGeoPoint] = None,
                   radiusDragging      : Boolean           = false
-                ) {
-
-  def withRadiusMarkerCoords(mgp: MGeoPoint) = copy(radiusMarkerCoords = mgp)
-  def withCenterDragging(cd2: Option[MGeoPoint]) = copy(centerDragging = cd2)
-  def withRadiusDragging(rd2: Boolean) = copy(radiusDragging = rd2)
-
-}
+                )
 
 
 object MRadS {
+
   @inline implicit def univEq: UnivEq[MRadS] = UnivEq.derive
+
+  val radiusMarkerCoords = GenLens[MRadS](_.radiusMarkerCoords)
+  val centerDragging = GenLens[MRadS](_.centerDragging)
+  val radiusDragging = GenLens[MRadS](_.radiusDragging)
+
 }

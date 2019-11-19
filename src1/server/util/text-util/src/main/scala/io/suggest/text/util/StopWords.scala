@@ -55,9 +55,9 @@ object StopWords {
 trait StopWordsParser {
   type AccT = mutable.Set[String]
 
-  protected def loadStopwordsBR(reader:BufferedReader, acc:AccT)
+  protected def loadStopwordsBR(reader:BufferedReader, acc:AccT): Unit
 
-  def loadStopwords(reader:Reader, acc:AccT) {
+  def loadStopwords(reader:Reader, acc:AccT): Unit = {
     var br : BufferedReader = null
     try {
       br = new BufferedReader(reader)
@@ -77,7 +77,7 @@ class SnowballStopWordsParser extends StopWordsParser {
    * @param acc аккамулятор
    * @return
    */
-  protected def loadStopwordsBR(reader: BufferedReader, acc: AccT) {
+  protected def loadStopwordsBR(reader: BufferedReader, acc: AccT): Unit = {
     var line:String = null
     // Проход по файлу в java-стиле.
     while({line = reader.readLine(); line != null}) {
@@ -104,7 +104,7 @@ class SimpleStopWordsParser extends StopWordsParser {
    * @param acc аккамулятор
    * @return
    */
-  protected def loadStopwordsBR(reader: BufferedReader, acc: AccT) {
+  protected def loadStopwordsBR(reader: BufferedReader, acc: AccT): Unit = {
     var line:String = null
     while({line = reader.readLine(); line != null}) {
       acc.add(line.trim)

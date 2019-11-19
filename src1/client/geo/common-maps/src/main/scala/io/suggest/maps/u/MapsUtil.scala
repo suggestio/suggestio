@@ -69,10 +69,10 @@ object MapsUtil {
         Math.PI * geoCircle.center.lat.doubleValue / D180
       )
     )
-    geoCircle.center.withLon(
+    MGeoPoint.lon.modify { lon0 =>
       // OffsetPosition, decimal degrees
-      geoCircle.center.lon + dLon * D180 / Math.PI
-    )
+      lon0 + dLon * D180 / Math.PI
+    }(geoCircle.center)
   }
 
 

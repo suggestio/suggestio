@@ -386,7 +386,7 @@ trait ScFocusedAds
         limit  = Some(limit1),
         offset = Some(offset1)
       )
-      val qs2 = _qs.withSearch( fadsIdsSearchQs )
+      val qs2 = MScQs.search.set(fadsIdsSearchQs)( _qs )
 
       // TODO Далее какой-то быдлокод с реализацией нетривиальной выборки сегмента последовательности foc-карточек.
       scAdSearchUtil.qsArgs2nodeSearch(qs2).flatMap { msearch =>

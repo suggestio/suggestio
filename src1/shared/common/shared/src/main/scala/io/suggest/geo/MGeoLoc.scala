@@ -7,6 +7,7 @@ import MGeoPoint.JsonFormatters.QS_OBJECT
 import diode.FastEq
 import io.suggest.spa.OptFastEq
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -48,6 +49,9 @@ object MGeoLoc {
       AccuracyMOptNearbyFastEq.eqv( a.accuracyOptM, b.accuracyOptM )
     }
   }
+
+  val point = GenLens[MGeoLoc](_.point)
+  val accuracyOptM = GenLens[MGeoLoc](_.accuracyOptM)
 
 }
 
