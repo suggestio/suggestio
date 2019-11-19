@@ -18,6 +18,7 @@ import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import models.mctx.Context
+import play.api.{Environment, Mode}
 
 import scala.concurrent.Future
 import scalaz.{Tree, Validation, ValidationNel}
@@ -32,7 +33,8 @@ import util.n2u.N2VldUtil
  */
 @Singleton
 class LkAdEdFormUtil @Inject() (
-                                 n2VldUtil    : N2VldUtil
+                                 n2VldUtil    : N2VldUtil,
+                                 env          : Environment,
                                )
   extends MacroLogsImpl
 {
@@ -143,7 +145,10 @@ class LkAdEdFormUtil @Inject() (
     lazy val logPrefix = s"validateTpl()[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix Starting with ${vldEdgesMap.size} vld-edges.")
 
-    val vldtor = new JdDocValidator(vldEdgesMap)
+    val vldtor = new JdDocValidator(
+      tolerant  = env.mode == Mode.Prod,
+      edges     = vldEdgesMap,
+    )
     val vldRes = vldtor.validateDocumentTree( template )
 
     LOGGER.trace(s"$logPrefix Validation completed => $vldRes")

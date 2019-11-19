@@ -1,6 +1,6 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -8,6 +8,7 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.tags.{JdTag, MJdShadow, MJdTagNames, MJdtProps1}
 import io.suggest.common.html.HtmlConstants.`.`
+import io.suggest.img.MImgFmt
 import io.suggest.jd.tags.qd._
 import io.suggest.math.MathConst
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
@@ -26,9 +27,7 @@ import scalaz.syntax.apply._
   * Проверка дерева документа [[JdTag]] -- комплексная вещь, которую лучше вынести за пределы модели.
   * Конструктор содержит связанные с шаблоном данные для рендера.
   */
-class JdDocValidator(
-                      edges: Map[EdgeUid_t, MJdEdgeVldInfo]
-                    ) {
+object JdDocValidator {
 
   private def QD      = "qd"
   private def BM      = "bm"
@@ -49,7 +48,44 @@ class JdDocValidator(
   private def TEXT_SHADOW = "txSh"
   private def LINE_HEIGHT = "lineHeight"
 
+}
+
+
+class JdDocValidator(
+                      tolerant      : Boolean,
+                      edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
+                    ) {
+
+  import JdDocValidator._
   import ErrorConstants.Words._
+
+
+  implicit private class VldResExt[E, T]( val vldNel: ValidationNel[E, T] ) {
+
+    /** Для внещне-управляемого восстановления после ошибки используется этот метод:
+      * при ошибке - сброс ошибочного значения на указанное.
+      * @param onError Значение, возвращаемое при любой ошибке.
+      */
+    def recoverTolerant(onError: => T): ValidationNel[E, T] = {
+      if (tolerant && vldNel.isFailure) {
+        Validation.success( onError )
+      } else {
+        vldNel
+      }
+    }
+
+  }
+
+
+  implicit private class VldOptResExt[E, T]( val vldOptNel: ValidationNel[E, Option[T]] ) {
+
+    def recoverToNoneTolerant: ValidationNel[E, Option[T]] = {
+      vldOptNel
+        .recoverTolerant( None )
+    }
+
+  }
+
 
   /** Запуск валидации документа, представленного в виде дерева
     *
@@ -68,8 +104,10 @@ class JdDocValidator(
     def eDocPfx(suf: String) = ErrorConstants.EMSG_CODE_PREFIX + "doc" + `.` + suf
     (
       Validation.liftNel( jdDoc.name )( _ !=* MJdTagNames.DOCUMENT, eDocPfx( EXPECTED ) ) |@|
-      Validation.liftNel( jdDoc.props1 )( _.nonEmpty, eDocPfx(PROPS1) ) |@|
+      Validation.liftNel( jdDoc.props1 )( _.nonEmpty, eDocPfx(PROPS1) )
+        .recoverTolerant( MJdtProps1.empty ) |@|
       ScalazUtil.liftNelNone( jdDoc.qdProps, eDocPfx(QD) )
+        .recoverToNoneTolerant
     ) { JdTag.apply }
   }
 
@@ -78,13 +116,18 @@ class JdDocValidator(
   private def validateDocTags(jdts: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
     // На втором уровне могут быть только стрипы, хотя бы один должен там быть.
     def eStripsPfx(suf: String) = ErrorConstants.EMSG_CODE_PREFIX + STRIPS + `.` + suf
-    (
-      Validation.liftNel(jdts.size)( _ > JdConst.MAX_STRIPS_COUNT, eStripsPfx( TOO_MANY )) |@|
-      Validation.liftNel(jdts.isEmpty)( identity, eStripsPfx( MISSING )) |@|
-      ScalazUtil.validateAll(jdts)( validateDocChildTree )
-    ) { (_,_, subTags2) =>
-      subTags2
-    }
+
+    Validation.liftNel(jdts.isEmpty)( identity, eStripsPfx( MISSING ))
+      .andThen { _ =>
+        val maxBlkCount = JdConst.MAX_STRIPS_COUNT
+        Validation.liftNel(jdts)( _.lengthIs > maxBlkCount, eStripsPfx( TOO_MANY ))
+          .recoverTolerant {
+            jdts.take(maxBlkCount)
+          }
+      }
+      .andThen { jdts2 =>
+        ScalazUtil.validateAll(jdts2)( validateDocChildTree )
+      }
   }
 
 
@@ -118,7 +161,8 @@ class JdDocValidator(
       Validation.liftNel(stripJdt.name)( _ !=* MJdTagNames.STRIP, eStripPfx( EXPECTED ) ) |@|
       validateStripProps1(stripJdt.props1) |@|
       ScalazUtil.liftNelNone( stripJdt.qdProps, eStripPfx(QD + `.` + UNEXPECTED) )
-    ) { JdTag.apply }
+        .recoverToNoneTolerant
+    )( JdTag.apply )
   }
 
 
@@ -130,27 +174,35 @@ class JdDocValidator(
   private def validateStripProps1(props1: MJdtProps1): ValidationNel[String, MJdtProps1] = {
     val errMsgF = ErrorConstants.emsgF(STRIP + `.` + PROPS1)
     (
-      ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly ) |@|
+      ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly )
+        .recoverToNoneTolerant |@|
       ScalazUtil.liftNelOpt(props1.bgImg) { jdId =>
         MJdEdgeId.validate(jdId, edges,
           // TODO imgContSz=70x70 - Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
           imgContSzOpt = OptionUtil.maybe(props1.widthPx.nonEmpty && props1.heightPx.nonEmpty)(MSize2di(70, 70))
         )
-      } |@|
-      ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
+      }
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
       ScalazUtil.liftNelOpt( props1.isMain ) {
         Validation.liftNel(_)(!_, errMsgF(`MAIN` + `.` + INVALID))
-      } |@|
-      ScalazUtil.liftNelNone(props1.rotateDeg, errMsgF(ROTATE + `.` + UNEXPECTED)) |@|
-      ScalazUtil.liftNelNone(props1.textShadow, errMsgF(TEXT_SHADOW + `.` + UNEXPECTED)) |@|
+      }
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(props1.rotateDeg, errMsgF(ROTATE + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(props1.textShadow, errMsgF(TEXT_SHADOW + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
       ScalazUtil.liftNelSome(props1.widthPx, errMsgF(WIDTH + `.` + MISSING)) { widthPx =>
         Validation.liftNel( widthPx )( BlockWidths.withValueOpt(_).isEmpty, errMsgF(WIDTH + `.` + INVALID) )
       } |@|
       ScalazUtil.liftNelSome(props1.heightPx, errMsgF(HEIGHT + `.` + MISSING)) { heightPx =>
         Validation.liftNel( heightPx )( BlockHeights.withValueOpt(_).isEmpty, errMsgF(WIDTH + `.` + INVALID) )
       } |@|
-      ScalazUtil.liftNelOpt(props1.expandMode)( Validation.success ) |@|
+      ScalazUtil.liftNelOpt[String, MBlockExpandMode](props1.expandMode)( Validation.success )
+        .recoverToNoneTolerant |@|
       ScalazUtil.liftNelNone(props1.lineHeight, errMsgF(LINE_HEIGHT))
+        .recoverToNoneTolerant
     )( MJdtProps1.apply )
   }
 
@@ -160,10 +212,12 @@ class JdDocValidator(
     * @param contents Содержимое.
     */
   private def validateContents(contents: Stream[Tree[JdTag]], bm: BlockMeta): ValidationNel[String, Stream[Tree[JdTag]]] = {
-    (
-      Validation.liftNel(contents.size)( _ > JdConst.MAX_ELEMENTS_PER_MIN_BLOCK * bm.h.relSz * bm.w.relSz, TOO_MANY ) |@|
-      ScalazUtil.validateAll(contents) { validateQdTree(_, Some(bm)) }
-    ) { (_, tree2) => tree2 }
+    val maxElemsCount = JdConst.MAX_ELEMENTS_PER_MIN_BLOCK * bm.h.relSz * bm.w.relSz
+    Validation.liftNel(contents)( _.lengthIs > maxElemsCount, TOO_MANY )
+      .recoverTolerant { contents.take(maxElemsCount) }
+      .andThen { contents2 =>
+        ScalazUtil.validateAll(contents2) { validateQdTree(_, Some(bm)) }
+      }
   }
 
 
@@ -225,18 +279,22 @@ class JdDocValidator(
     val errMsgF = ErrorConstants.emsgF(QD + `.` + PROPS1)
     // Для qd-тега допустимы цвет фона, и обязательна координата top-left. Остальное - дропаем.
     (
-      ScalazUtil.liftNelOpt (qdProps1.bgColor)( MColorData.validateHexCodeOnly ) |@|
-      ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") ) |@|
-        contSzOpt.fold [ValidationNel[String, Option[MCoords2di]]] {
-          // qd-blockless
-          ScalazUtil.liftNelNone(qdProps1.topLeft, errMsgF(XY + `.` + UNEXPECTED))
-        } { contSz =>
-          // контент внутри блока
-          ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))(
-            validateQdTagXY(_, contSz, qdProps1.rotateDeg)
-          )
-        } |@|
-      ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelOpt (qdProps1.bgColor)( MColorData.validateHexCodeOnly )
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") )
+        .recoverToNoneTolerant |@|
+      contSzOpt.fold [ValidationNel[String, Option[MCoords2di]]] {
+        // qd-blockless
+        ScalazUtil.liftNelNone(qdProps1.topLeft, errMsgF(XY + `.` + UNEXPECTED))
+          .recoverToNoneTolerant
+      } { contSz =>
+        // контент внутри блока
+        ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))(
+          validateQdTagXY(_, contSz, qdProps1.rotateDeg)
+        )
+      } |@|
+      ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
       ScalazUtil.liftNelOpt(qdProps1.rotateDeg.filter(_ !=* 0)) { rotateDeg =>
         MathConst.Counts.validateMinMax(
           v   = rotateDeg,
@@ -244,21 +302,27 @@ class JdDocValidator(
           max = JdConst.ROTATE_MAX_ABS,
           errMsgF(ROTATE)
         )
-      } |@|
-      ScalazUtil.liftNelOpt(qdProps1.textShadow)( validateQdTextShadow ) |@|
-      ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
+      }
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelOpt(qdProps1.textShadow)( validateQdTextShadow )
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelOpt(qdProps1.widthPx) { widthPx =>
         MathConst.Counts.validateMinMax(
           v = widthPx,
           min = JdConst.ContentWidth.MIN_PX,
           max = JdConst.ContentWidth.MAX_PX,
           errMsgF(WIDTH)
         )
-      } |@|
-      ScalazUtil.liftNelNone(qdProps1.heightPx, errMsgF(HEIGHT + `.` + UNEXPECTED)) |@|
-      ScalazUtil.liftNelNone(qdProps1.expandMode, errMsgF(EXPAND_MODE + `.` + UNEXPECTED)) |@|
+      }
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(qdProps1.heightPx, errMsgF(HEIGHT + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(qdProps1.expandMode, errMsgF(EXPAND_MODE + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
       ScalazUtil.liftNelOpt( qdProps1.lineHeight ) { lineHeight =>
         Validation.liftNel( lineHeight )( !MJdtProps1.LineHeight.isValid(_) , errMsgF(LINE_HEIGHT))
       }
+        .recoverToNoneTolerant
     )( MJdtProps1.apply )
   }
 
@@ -323,14 +387,14 @@ class JdDocValidator(
 
   /** Валидация содержимого контейнера QD-контента.
     *
-    * @param qdOpsTags Список qd-op-тегов.
+    * @param qdOps Список qd-op-тегов.
     * @return
     */
-  private def validateQdTagContents(qdOpsTags: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
-    (
-      Validation.liftNel(qdOpsTags.size)(_ > JdConst.MAX_QD_OPS_COUNT, QD + `.` + OPS + `.` + TOO_MANY ) |@|
-      ScalazUtil.validateAll(qdOpsTags)(validateQdOpTree)
-    ) { (_, ops) => ops }
+  private def validateQdTagContents(qdOps: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+    val qdOpsMax = JdConst.MAX_QD_OPS_COUNT
+    Validation.liftNel(qdOps)(_.lengthIs > qdOpsMax, QD + `.` + OPS + `.` + TOO_MANY )
+      .recoverTolerant { qdOps.take(qdOpsMax) }
+      .andThen { ScalazUtil.validateAll(_)(validateQdOpTree) }
   }
 
   /** Валидация одного дерева тега одной qd-операции.
@@ -356,7 +420,8 @@ class JdDocValidator(
     val errMsgF = ErrorConstants.emsgF(QD_OP)
     (
       Validation.liftNel( qdOp.name )( _ !=* MJdTagNames.QD_OP, errMsgF( EXPECTED ) ) |@|
-      ScalazUtil.liftNelEmpty( qdOp.props1, errMsgF(PROPS1 + `.` + UNEXPECTED) ) |@|
+      ScalazUtil.liftNelEmpty( qdOp.props1, errMsgF(PROPS1 + `.` + UNEXPECTED) )
+        .recoverTolerant( MJdtProps1.empty ) |@|
       ScalazUtil.liftNelSome( qdOp.qdProps, errMsgF( QD + `.` + EXPECTED) )( validateQdOpProps )
     ) { JdTag.apply }
   }
@@ -375,11 +440,16 @@ class JdDocValidator(
     // Далее, в зависимости от данных эджа, валидация разветвляется:
     (
       Validation.liftNel(qdOpProps.opType)(_ !=* MQdOpTypes.Insert, errMsgF("type")) |@|
-      ScalazUtil.liftNelOpt(qdOpProps.edgeInfo)( validateQdEdgeId(_, edgeInfoOpt) ) |@|
-      ScalazUtil.liftNelNone(qdOpProps.index, errMsgF("index" + `.` + UNEXPECTED)) |@|
-      validateQdAttrsText(qdOpProps.attrsText, edgeInfoOpt) |@|
-      validateQdAttrsLine(qdOpProps.attrsLine, edgeInfoOpt) |@|
+      ScalazUtil.liftNelOpt(qdOpProps.edgeInfo)( validateQdEdgeId(_, edgeInfoOpt) )
+        .recoverToNoneTolerant |@|
+      ScalazUtil.liftNelNone(qdOpProps.index, errMsgF("index" + `.` + UNEXPECTED))
+        .recoverToNoneTolerant |@|
+      validateQdAttrsText(qdOpProps.attrsText, edgeInfoOpt)
+        .recoverToNoneTolerant |@|
+      validateQdAttrsLine(qdOpProps.attrsLine, edgeInfoOpt)
+        .recoverToNoneTolerant |@|
       validateQdAttrsEmbed(qdOpProps.attrsEmbed, edgeInfoOpt)
+        .recoverToNoneTolerant
     ){ MQdOp.apply }
   }
 
@@ -391,13 +461,15 @@ class JdDocValidator(
       Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id" + `.` + INVALID)) |@|
       // Перенести данные формата из эджа.
       // TODO Это наверное не правильно - управлять форматом на уровне валидации. Надо унести это куда?
-      ScalazUtil.liftNelOpt(
+      ScalazUtil.liftNelOpt[String, MImgFmt](
         edgeOpt
           .flatMap(_.img)
           .flatMap(_.dynFmt)
-      )(Validation.success) |@|
+      )(Validation.success)
+        .recoverToNoneTolerant |@|
       // Кроп для qd-эджей сейчас не поддерживается в интерфейсе редактора. Когда будет работать - надо будет заменить эту часть.
       ScalazUtil.liftNelNone(ei.crop, errMsgF(""))
+        .recoverToNoneTolerant
     )( MJdEdgeId.apply )
   }
 
@@ -416,8 +488,8 @@ class JdDocValidator(
       Validation.success( None )
     } { _ =>
       // Есть контент. Значит аттрибуты оформления применимы.
-      val attrsTextOpt2 = attrsTextOpt.filter(_.nonEmpty)
-      ScalazUtil.liftNelOpt(attrsTextOpt2)( MQdAttrsText.validateForStore )
+      ScalazUtil.liftNelOpt( attrsTextOpt.filter(_.nonEmpty) )( MQdAttrsText.validateForStore )
+        .recoverToNoneTolerant
     }
   }
 
@@ -432,6 +504,7 @@ class JdDocValidator(
     // TODO Уточнить, возможно ли аттрибуты строки скрещивать с эджем. И если да, то с каким.
     val attrsLineOpt2 = attrsLineOpt.filter(_.nonEmpty)
     ScalazUtil.liftNelOpt( attrsLineOpt2 )( MQdAttrsLine.validateForStore )
+      .recoverToNoneTolerant
   }
 
 
@@ -445,14 +518,14 @@ class JdDocValidator(
     edgeOpt
       .filter { edge =>
         val P = MPredicates.JdContent
-        List(P.Frame, P.Image)
+        (P.Frame :: P.Image :: Nil)
           .contains( edge.jdEdge.predicate )
       }
       .fold [ValidationNel[String, Option[MQdAttrsEmbed]]] {
         Validation.success( None )
       } { _ =>
-        val attrsEmbedOpt2 = attrsEmbedOpt.filter(_.nonEmpty)
-        ScalazUtil.liftNelOpt( attrsEmbedOpt2 )( MQdAttrsEmbed.validateForStore )
+        ScalazUtil.liftNelOpt( attrsEmbedOpt.filter(_.nonEmpty) )( MQdAttrsEmbed.validateForStore )
+          .recoverToNoneTolerant
       }
   }
 

@@ -23,6 +23,7 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
       val v0 = value
 
       val vld = new JdDocValidator(
+        tolerant = false,
         edges = v0.jdData.edges
           .view
           .mapValues { eData =>
