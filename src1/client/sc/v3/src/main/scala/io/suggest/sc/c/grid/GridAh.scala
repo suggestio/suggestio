@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
-import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
+import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -66,16 +66,13 @@ object GridAh {
   /** Выполнение ребилда плитки. */
   def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
 
-    lazy val szMultedF = MSzMult.szMultedF(jdConf.szMult)
-
     /** Конвертация одной карточки в один блок для рендера в плитке. */
-    def blockRenderData2GbPayload(nodeId: Option[String], blk: JdTag, brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
+    def blockRenderData2GbPayload(blk: JdTag, brd: MJdDataJs, jdId: MJdTagId): Tree[MGbBlock] = {
       // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
       Tree.Leaf {
         MGbBlock(
           jdId      = jdId,
           size      = GridBuilderUtilJs.gbSizeFromJdt(jdId, blk, jdRuntime, jdConf),
-          nodeId    = nodeId,
           jdt       = blk,
           wideBgSz  = OptionUtil.maybeOpt(blk.props1.expandMode.nonEmpty) {
             for {
@@ -91,21 +88,24 @@ object GridAh {
     }
 
     // Приведение списка карточек к grid-блокам и подблоков обсчёта плитки.
-    val itmDatas = ads
-      .iterator
-      .flatten
-      .map { scAdData =>
-        scAdData.focused.fold [Tree[MGbBlock]] {
-          // Несфокусированная карточка. Вернуть bm единственного стрипа.
+    val itmDatas = (for {
+      scAdData <- ads
+        .iterator
+        .flatten
+    } yield {
+      scAdData
+        .focOrAlwaysOpened
+        .fold [Tree[MGbBlock]] {
+          // Несфокусированная карточка. Вернуть данные единственного блока.
           val brd = scAdData.main
-          blockRenderData2GbPayload( scAdData.nodeId, brd.doc.template.rootLabel, brd, brd.doc.jdId )
-        } { foc =>
+          blockRenderData2GbPayload( brd.doc.template.rootLabel, brd, brd.doc.jdId )
+
+        } { fullAdData =>
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
-          import foc.blkData.doc
           Tree.Node(
             root = {
-              val jdt = doc.template.rootLabel
-              val jdId = doc.jdId
+              val jdt = fullAdData.doc.template.rootLabel
+              val jdId = fullAdData.doc.jdId
 
               MGbBlock(
                 jdId = jdId,
@@ -115,19 +115,20 @@ object GridAh {
                   jdConf    = jdConf,
                   jdId      = jdId,
                 ),
-                nodeId = scAdData.nodeId,
                 jdt = jdt,
               )
             },
             forest = for {
-              tplIndexedTree <- JdUtil.mkTreeIndexed( doc ).subForest
+              tplIndexedTree <- JdUtil
+                .mkTreeIndexed( fullAdData.doc )
+                .subForest
             } yield {
               val (subJdId, subJdt) = tplIndexedTree.rootLabel
-              blockRenderData2GbPayload( scAdData.nodeId, subJdt, foc.blkData, subJdId )
+              blockRenderData2GbPayload( subJdt, fullAdData, subJdId )
             },
           )
         }
-      }
+    })
       .to( LazyList )
 
     GridBuilderUtil.buildGrid(
@@ -161,32 +162,27 @@ object GridAh {
 
   /** Эффект скроллинга к указанной карточке. */
   def scrollToAdFx(toAd    : MScAdData,
-                   ads     : Pot[Seq[MScAdData]],
                    gbRes   : MGridBuildResult
                   ): Effect = {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
     // Нужно узнать координату в плитке карточке
     Effect.action {
-      val nodeIdOpt = toAd.nodeId
-      val yCoords = gbRes.coords
+      toAd
+        .flatGridTemplates
         .iterator
-        .zip( ads.iterator.flatten )
-        .filter { case (_, scAdData) =>
-          scAdData.nodeId ==* nodeIdOpt
+        .flatMap { scAd =>
+          gbRes.coordsById.get( scAd.jdId )
         }
-        .map(_._1.y)
-        .to( LazyList )
-
-      if (yCoords.nonEmpty) {
-        // Выбрать самый верхний блок карточки, он не обязательно первый по порядку идёт.
-        val toY = yCoords.min
-
-        AnimateScroll.scrollTo(
-          // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
-          to = Math.max(0, toY - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
-          options = GridScrollUtil.scrollOptions
-        )
-      }
+        // Взять только самый верхний блок карточки. Он должен быть первым по порядку:
+        .buffered
+        .headOption
+        .foreach { toXY =>
+          AnimateScroll.scrollTo(
+            // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
+            to = Math.max(0, toXY.y - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
+            options = GridScrollUtil.scrollOptions
+          )
+        }
 
       DoNothing
     }
@@ -294,28 +290,19 @@ class GridRespHandler
             // Главное - их сразу пропихивать и в focused, и в обычные блоки.
             val jdDoc0 = sc3AdData.jd.doc
             val isFocused = jdDoc0.template.rootLabel.name ==* MJdTagNames.DOCUMENT
-            val jsEdgesMap = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges )
+            val jdDataJs = MJdDataJs(
+              doc   = jdDoc0,
+              edges = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges ),
+            )
 
             MScAdData(
-              main = MJdDataJs(
-                doc = {
-                  if (isFocused) {
-                    // Найти главный блок в шаблоне focused-карточки документа.
-                    MJdDoc.template
-                      .set(jdDoc0.template.getMainBlockOrFirst)( jdDoc0 )
-                  } else jdDoc0
-                },
-                edges   = jsEdgesMap,
-              ),
+              main = jdDataJs,
               focused = if (isFocused) {
                 // Сервер прислал focused-карточку.
                 val v = MScFocAdData(
-                  MJdDataJs(
-                    doc   = jdDoc0,
-                    edges = jsEdgesMap,
-                  ),
+                  jdDataJs,
                   canEdit = sc3AdData.canEdit.getOrElseFalse,
-                  userFoc = false
+                  userFoc = false,
                 )
                 Ready(v)
               } else {
@@ -325,7 +312,7 @@ class GridRespHandler
             )
           }
       }
-      .toVector
+      .to( Vector )
 
     // Самоконтроль для отладки: Проверить, совпадает ли SzMult между сервером и клиентом?
     //if (gridResp.szMult !=* g0.core.jdConf.szMult)
@@ -467,7 +454,7 @@ class GridFocusRespHandler
           )
         )(g0)
         // Надо проскроллить выдачу на начало открытой карточки:
-        val scrollFx = GridAh.scrollToAdFx( ad1, adsPot2, gridBuild2 )
+        val scrollFx = GridAh.scrollToAdFx( ad1, gridBuild2 )
         val resetRouteFx = ResetUrlRoute.toEffectPure
 
         val v2 = MScRoot.grid.set(g2)( ctx.value0 )
@@ -587,60 +574,67 @@ class GridAh[M](
           noChange
 
         } { case (ad0, index) =>
-          ad0.focused.fold {
-            // Карточка сейчас скрыта, её нужно раскрыть.
-            // Собрать запрос фокусировки на ровно одной рекламной карточке.
-            val fx = Effect {
-              val args0 = scQsRO.value
-              val args1 = args0.copy(
-                search = MAdsSearchReq(
-                  rcvrId = args0.search.rcvrId
-                ),
-                // TODO common: надо выставлять подгрузку grid-карточек при перескоке foc->index, чтобы плитка приходила сразу?
-                foc = Some(
-                  MScFocusArgs(
-                    focIndexAllowed  = true,
-                    lookupMode       = None,
-                    lookupAdId       = m.nodeId
+          if (ad0.isAlwaysOpened) {
+            // Клик по всегда развёрнутой карточке должен приводить к скроллу к началу карточки без загрузки.
+            val scrollFx = GridAh.scrollToAdFx( ad0, v0.core.gridBuild )
+            effectOnly(scrollFx)
+
+          } else {
+            ad0.focused.fold {
+              // Карточка сейчас скрыта, её нужно раскрыть.
+              // Собрать запрос фокусировки на ровно одной рекламной карточке.
+              val fx = Effect {
+                val args0 = scQsRO.value
+                val args1 = args0.copy(
+                  search = MAdsSearchReq(
+                    rcvrId = args0.search.rcvrId
+                  ),
+                  // TODO common: надо выставлять подгрузку grid-карточек при перескоке foc->index, чтобы плитка приходила сразу?
+                  foc = Some(
+                    MScFocusArgs(
+                      focIndexAllowed  = true,
+                      lookupMode       = None,
+                      lookupAdId       = m.nodeId
+                    )
                   )
                 )
-              )
-              api.pubApi( args1 )
-                .transform { tryResp =>
-                  val r = HandleScApiResp(
-                    reqTimeStamp  = None,
-                    qs            = args1,
-                    tryResp       = tryResp,
-                    reason        = m,
-                  )
-                  Success(r)
-                }
+                api.pubApi( args1 )
+                  .transform { tryResp =>
+                    val r = HandleScApiResp(
+                      reqTimeStamp  = None,
+                      qs            = args1,
+                      tryResp       = tryResp,
+                      reason        = m,
+                    )
+                    Success(r)
+                  }
+              }
+
+              // выставить текущей карточке, что она pending
+              val ad1 = MScAdData.focused
+                .modify(_.pending())(ad0)
+
+              val v2 = GridAh.saveAdIntoValue(index, ad1, v0)
+              updated(v2, fx)
+
+            } { _ =>
+              val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
+              val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
+              val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
+              val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
+              val v2          = MGridS.core.modify { core0 =>
+                core0.copy(
+                  ads       = ads2,
+                  jdRuntime = jdRuntime2,
+                  gridBuild = gridBuild2
+                )
+              }(v0)
+              // В фоне - запустить скроллинг к началу карточки.
+              val scrollFx      = GridAh.scrollToAdFx( ad0, gridBuild2 )
+              val resetRouteFx  = ResetUrlRoute.toEffectPure
+              val fxs           = scrollFx + resetRouteFx
+              updated(v2, fxs)
             }
-
-            // выставить текущей карточке, что она pending
-            val ad1 = MScAdData.focused
-              .modify(_.pending())(ad0)
-
-            val v2 = GridAh.saveAdIntoValue(index, ad1, v0)
-            updated(v2, fx)
-
-          } { _ =>
-            val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
-            val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
-            val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
-            val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
-            val v2          = MGridS.core.modify { core0 =>
-              core0.copy(
-                ads       = ads2,
-                jdRuntime = jdRuntime2,
-                gridBuild = gridBuild2
-              )
-            }(v0)
-            // В фоне - запустить скроллинг к началу карточки.
-            val scrollFx      = GridAh.scrollToAdFx( ad0, ads2, gridBuild2 )
-            val resetRouteFx  = ResetUrlRoute.toEffectPure
-            val fxs           = scrollFx + resetRouteFx
-            updated(v2, fxs)
           }
         }
 

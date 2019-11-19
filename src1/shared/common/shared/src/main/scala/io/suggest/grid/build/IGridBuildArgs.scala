@@ -43,7 +43,6 @@ case class MGbBlock(
                      jdId                          : MJdTagId,
                      jdt                           : JdTag,
                      size                          : Option[MGbSize],
-                     nodeId                        : Option[String],
                      wideBgSz                      : Option[MSize2di]  = None,
                      orderN                        : Option[Int]       = None,
                    )
@@ -100,9 +99,13 @@ object MGbSidePx {
   * @param gridWh Размеры собранной плитки.
   */
 case class MGridBuildResult(
-                             coords   : List[MCoords2di],
+                             coords   : List[(MJdTagId, MCoords2di)],
                              gridWh   : MSize2di
-                           )
+                           ) {
+
+  lazy val coordsById = coords.toMap
+
+}
 
 object MGridBuildResult {
 

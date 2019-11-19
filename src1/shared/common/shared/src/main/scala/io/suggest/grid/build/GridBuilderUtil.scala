@@ -158,7 +158,8 @@ object GridBuilderUtil {
               val rOpt = args.jdtWideSzMults.get( gb.jdId )
               // Была проблема: заранее развёрнутая карточка с неправильным id с сервера вызывает неправильное позиционирование в плитке.
               if (rOpt.isEmpty && (gb.jdt.props1.expandMode contains MBlockExpandModes.Full))
-                println( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, args.jdtWideSzMults.view.filterKeys(_.toString startsWith gb.jdId.toString).mkString(HtmlConstants.PIPE)) )
+                throw new IllegalArgumentException( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.jdId.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
+                //println( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
               rOpt
             }
 
@@ -293,8 +294,8 @@ object GridBuilderUtil {
                 conflictingNodeIds = (
                   for {
                     gbRes0      <- s0.resultsAccRev.iterator
-                    gbResNodeId <- gbRes0.gbBlock.nodeId
-                    if !(gbRes0.gbBlock.nodeId contains gbResNodeId) &&
+                    gbResNodeId <- gbRes0.gbBlock.jdId.nodeId
+                    if !(gbRes0.gbBlock.jdId.nodeId contains gbResNodeId) &&
                        (mwlAbs overlaps gbRes0.wide)
                   } yield
                     gbResNodeId
@@ -304,7 +305,7 @@ object GridBuilderUtil {
                 if conflictingNodeIds.nonEmpty
 
                 (conflicting, ok) = s0.resultsAccRev.partition { gbRes0 =>
-                  gbRes0.gbBlock.nodeId
+                  gbRes0.gbBlock.jdId.nodeId
                     // Если блок без id, то надо проверить, не пересекается ли он с текущей wide-карточкой.
                     // Если блок с id, то проверить его id по множеству конфликтующих id.
                     .fold( gbRes0.wide overlaps mwlAbs )( conflictingNodeIds.contains )
@@ -492,7 +493,7 @@ object GridBuilderUtil {
       .iterator
       // Заменить колонки и строки на пиксели.
       .map { res =>
-        MCoords2di(
+        val finalCoords = MCoords2di(
           // Эксплуатация костыля по абсолютной центровке какого-то блока вместо расположения в плитке:
           x = res.forceCenterX.fold {
             res.topLeft.x * paddedCellWidthPx
@@ -502,6 +503,7 @@ object GridBuilderUtil {
           },
           y = res.topLeft.y + args.offY, //Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )
+        res.gbBlock.jdId -> finalCoords
       }
       .toList
 

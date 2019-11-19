@@ -104,6 +104,7 @@ class IndexSwitchAskR(
           val cssClasses = new MuiSnackBarContentClasses {
             // Чтобы кнопки выравнивались вертикально, а не горизонтально
             override val action = scCss.snackActionCont.htmlClass
+            override val message = scCss.snackMsg.htmlClass
           }
 
           // Объединяем всё:

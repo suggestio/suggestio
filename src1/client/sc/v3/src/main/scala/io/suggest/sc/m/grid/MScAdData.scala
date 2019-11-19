@@ -3,9 +3,10 @@ package io.suggest.sc.m.grid
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.ad.blk.MBlockExpandMode
+import io.suggest.common.empty.OptionUtil
 import io.suggest.jd.{MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.MJdDataJs
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptStrId
@@ -65,43 +66,63 @@ final case class MScAdData(
   extends OptStrId
 {
 
+  /** Всегда раскрытая карточка в данной плитке. */
+  def isAlwaysOpened: Boolean = {
+    main.doc.template.rootLabel.name ==* MJdTagNames.DOCUMENT
+  }
+
+  // 2019-11-18 Может быть ситуация, что уже развёрнутая карточка прямо в плитке, и вместо одного блока тут целый DOCUMENT.
+  def alwaysOpened: Option[MJdDataJs] =
+    OptionUtil.maybe( isAlwaysOpened )(main)
+
+  def focOrAlwaysOpened: Option[MJdDataJs] = {
+    focused
+      .toOption
+      .map { foc =>
+        foc.blkData
+      }
+      .orElse {
+        alwaysOpened
+      }
+  }
+
+
   /** Вернуть последовательность шаблонов для "плоской" плитки, т.е. где и focused и не-focused одновременно.
     * val - для стабильности инстансов.
     *
     * @return Список шаблонов на рендер.
     */
   def flatGridTemplates: LazyList[MJdDoc] = {
-    focused.fold {
-      val blkExp2 = MScAdData._mkJdIdBlkExpand( main.doc.template, main.doc.jdId )
+    focOrAlwaysOpened
+      .fold {
+        {
+          val blkExp2 = MScAdData._mkJdIdBlkExpand( main.doc.template, main.doc.jdId )
 
-      val doc2 = if (main.doc.jdId.blockExpand ==* blkExp2)
-        main.doc
-      else
-        MScAdData._jdId_blockExpand_LENS
-          .set(blkExp2)(main.doc)
+          if (main.doc.jdId.blockExpand ==* blkExp2)
+            main.doc
+          else
+            (MScAdData._jdId_blockExpand_LENS set blkExp2)(main.doc)
+        } #:: LazyList.empty
 
-      doc2 #:: LazyList.empty
-
-    } { foc =>
-      foc
-        .blkData.doc.template
-        .subForest
-        .iterator
-        .zipWithIndex
-        .map { case (blkJdt, i) =>
-          main.doc.copy(
-            template = blkJdt,
-            jdId = {
-              val id = main.doc.jdId
-              id.copy(
-                selPathRev  = i :: id.selPathRev,
-                blockExpand = MScAdData._mkJdIdBlkExpand(blkJdt, id),
-              )
-            }
-          )
-        }
-        .to( LazyList )
-    }
+      } { fullBlkData =>
+        fullBlkData.doc.template
+          .subForest
+          .iterator
+          .zipWithIndex
+          .map { case (blkJdt, i) =>
+            main.doc.copy(
+              template = blkJdt,
+              jdId = {
+                val id = main.doc.jdId
+                id.copy(
+                  selPathRev  = i :: id.selPathRev,
+                  blockExpand = MScAdData._mkJdIdBlkExpand(blkJdt, id),
+                )
+              }
+            )
+          }
+          .to( LazyList )
+      }
   }
 
   /** Вернуть карту эджей для плоской плитки.

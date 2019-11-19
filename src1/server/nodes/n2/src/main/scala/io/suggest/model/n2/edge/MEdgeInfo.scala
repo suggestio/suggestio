@@ -202,6 +202,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 final case class MEdgeInfo(
                             dateNi       : Option[OffsetDateTime]  = None,
                             textNi       : Option[String]          = None,
+                          // TODO flag надо переделать в индексируемое поле flags: Set[MEdgeFlag].
                             flag         : Option[Boolean]         = None,
                             tags         : Set[String]             = Set.empty,
                             geoShapes    : List[MEdgeGeoShape]     = Nil,

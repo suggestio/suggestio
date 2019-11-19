@@ -64,18 +64,6 @@ class DocEditAh[M](
 
   import DocEditAh._
 
-
-  private def _loc2width(imgOpLoc: TreeLoc[JdTag]) = {
-    for {
-      qd          <- imgOpLoc.getLabel.qdProps
-      attrsEmbed  <- qd.attrsEmbed
-      widthSU     <- attrsEmbed.width
-      width       <- widthSU.toOption
-    } yield {
-      width
-    }
-  }
-
   private def _qdUpdateWidth(imgOpLoc0: TreeLoc[JdTag], width: Int, heightPxOpt: Option[Int] = None): TreeLoc[JdTag] = {
     imgOpLoc0.modifyLabel {
       JdTag.qdProps
@@ -257,22 +245,20 @@ class DocEditAh[M](
         val qdSubTree3 = dataEdgesForUpload
           .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
             // Новая картинка. Найти и уменьшить её ширину в шаблоне.
-            val edgeUid = edgeData.jdEdge.id
-            qdLoc
-              .findByEdgeUid( edgeUid )
-              .filter { imgOpLoc =>
-                val widthPxOpt = _loc2width(imgOpLoc)
-                widthPxOpt.fold(true) { widthPx =>
-                  widthPx > maxEmbedWidth || widthPx <= 0
-                }
+            (for {
+              imgOpLoc <- qdLoc.findByEdgeUid( edgeData.jdEdge.id )
+              widthPxOpt = _loc2width(imgOpLoc)
+              if widthPxOpt.fold(true) { widthPx =>
+                widthPx > maxEmbedWidth || widthPx <= 0
               }
-              .fold(qdLoc) {
-                _qdUpdateWidth(
-                  _,
-                  width = maxEmbedWidth,
-                  heightPxOpt = None,
-                )
-              }
+            } yield {
+              _qdUpdateWidth(
+                imgOpLoc,
+                width = maxEmbedWidth,
+                heightPxOpt = None,
+              )
+            })
+              .getOrElse( qdLoc )
           }
           .toTree
 
@@ -440,11 +426,9 @@ class DocEditAh[M](
           case n @ MJdTagNames.STRIP =>
             val s2 = MStripEdS(
               isLastStrip = {
-                val hasManyStrips = v2.jdDoc.jdArgs.data.doc.template
+                v2.jdDoc.jdArgs.data.doc.template
                   .deepOfType( n )
-                  // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
-                  .lengthIs > 1
-                !hasManyStrips
+                  .lengthIs <= 1
               }
             )
             v2 = MDocS.editors
@@ -487,15 +471,16 @@ class DocEditAh[M](
             }(_.toTree)
 
           // Очистить эджи от лишнего контента
-          val dataEdges2 = JdTag
-            .purgeUnusedEdges(tpl2, dataEdges0)
-            .toMap
           val jdDoc2 = (MJdDoc.template set tpl2)( v2.jdDoc.jdArgs.data.doc )
           v2 = MDocS.jdDoc.modify(
             MJdDocEditS.jdArgs.modify(
               MJdArgs.data.modify(
                 MJdDataJs.doc.set( jdDoc2 ) andThen
-                MJdDataJs.edges.set( dataEdges2 )
+                MJdDataJs.edges.set(
+                  JdTag
+                    .purgeUnusedEdges(tpl2, dataEdges0)
+                    .toMap
+                )
               ) andThen
               MJdArgs.jdRuntime.set(
                 mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs).result
@@ -543,9 +528,11 @@ class DocEditAh[M](
       // Вычислить обновлённый эдж, если есть старый эдж для данной картинки.
       val dataEdgeOpt2 = for {
         // Поиска по исходной URL, потому что карта эджей могла изменится за время фоновой задачи.
-        dataEdge0 <- dataEdgesMap0.valuesIterator.find { e =>
-          e.jdEdge.imgSrcOpt contains m.b64Url
-        }
+        dataEdge0 <- dataEdgesMap0
+          .valuesIterator
+          .find { e =>
+            e.jdEdge.imgSrcOpt contains m.b64Url
+          }
       } yield {
         // Найден исходный эдж. Залить в него инфу по блобу, выкинув оттуда dataURL:
         val blobUrl = URL.createObjectURL( m.blob )
@@ -574,15 +561,16 @@ class DocEditAh[M](
         LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m.blob )
         noChange
       } { case (dataEdge2, blobUrl) =>
-        val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
-        val dataEdgesMap2 = JdTag
-          .purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
-          .toMap
         val v2 = MDocS.jdDoc
           .composeLens( MJdDocEditS.jdArgs )
           .composeLens( MJdArgs.data )
           .composeLens( MJdDataJs.edges )
-          .set( dataEdgesMap2 )(v0)
+          .set {
+            val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
+            JdTag
+              .purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
+              .toMap
+          }(v0)
 
         // Запустить эффект хэширования и дальнейшей закачки файла на сервер.
         val hashFx = FileHashStart(dataEdge2.id, blobUrl).toEffectPure
@@ -642,10 +630,12 @@ class DocEditAh[M](
       val blk2 = JdTag.props1
         .modify(bmUpdateF)(blk0)
 
-      val template2 = stripTreeLoc0
-        .setLabel(blk2)
-        .toTree
-      val jdDoc2 = (MJdDoc.template set template2)( v0.jdDoc.jdArgs.data.doc )
+      val jdDoc2 = MJdDoc.template.set(
+        stripTreeLoc0
+          .setLabel(blk2)
+          .toTree
+      )( v0.jdDoc.jdArgs.data.doc )
+
       val jdArgs2 = (
         MJdArgs.data
           .composeLens( MJdDataJs.doc )
@@ -689,10 +679,9 @@ class DocEditAh[M](
           .selJdt.treeLocOpt
           .get
 
-        val tpl0 = v0.jdDoc.jdArgs.data.doc.template
         val tpl2 = strip4delLoc
           .delete
-          .fold(tpl0)( _.toTree )
+          .fold( v0.jdDoc.jdArgs.data.doc.template )( _.toTree )
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
         if (tpl2.subForest.nonEmpty) {
@@ -731,11 +720,13 @@ class DocEditAh[M](
       val stripEdS0 = v0.editors.stripEd.get
       if (stripEdS0.confirmingDelete) {
         // Юзер отменяет удаление
-        val s2 = MStripEdS.confirmingDelete
-          .set(false)(stripEdS0)
         val v2 = MDocS.editors
           .composeLens(MEditorsS.stripEd)
-          .set( Some(s2) )(v0)
+          .set {
+            val s2 = MStripEdS.confirmingDelete
+              .set(false)(stripEdS0)
+            Some(s2)
+          }(v0)
         updated(v2)
       } else {
         // Какой-то левый экшен пришёл. Возможно, просто дублирующийся.
@@ -853,8 +844,9 @@ class DocEditAh[M](
           else (m.targetBlock, fromBlock, +1)
 
         // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
-        val subDocJdtsHeights = for {
+        val subDocJdtsHeights = (for {
           jdtWithId <- blockAndQdBlsId
+            .iterator
             .dropWhile { m => m._2 !===* topStrip }
             .takeWhile { m => m._2 !===* bottomStrip }
 
@@ -862,11 +854,11 @@ class DocEditAh[M](
           sz <- DocEditAh.getJdtWh(jdtWithId, v0)
         } yield {
           sz.height
-        }
+        })
+          .to( LazyList )
 
         if (subDocJdtsHeights.nonEmpty) {
-          val yDiff = subDocJdtsHeights
-            .sum
+          val yDiff = subDocJdtsHeights.sum
           val y2 = clXy0.y + yModSign * yDiff
           //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
           MCoords2di.y.set(y2)( clXy0 )
@@ -941,12 +933,19 @@ class DocEditAh[M](
 
       // Сброс может быть на блок (на верхнюю или нижнюю половины блока) или в промежутки между блоков.
       val droppedNear = (for {
-        (jdIdTree, topLeft) <- allBlocks
+        // По идее, в редакторе все блоки и плитки в том числе - идут в прямом порядке.
+        // Но если что-то не так, то будет логгироваться.
+        (jdIdTree, (jdId, topLeft)) <- allBlocks
+          .iterator
           .zip( v0.jdDoc.gridBuild.coords )
 
         jdtWithId = jdIdTree.rootLabel
         jdtWh <- DocEditAh.getJdtWh( jdtWithId, v0 )
       } yield {
+        // Пока просто логгируем ошибку
+        if (jdId !=* jdtWithId._1)
+          LOG.error( ErrorMsgs.JD_TREE_UNEXPECTED_ID, msg = (jdId, jdtWithId._1) )
+
         MJdtWithXy(
           jdt = jdIdTree,
           topLeft = topLeft,
@@ -967,6 +966,7 @@ class DocEditAh[M](
         }
         // Отсеять элементы снизу: т.е. оставить только элементы, которые ощутимо ниже нижней границе блока (кроме смежного/пересекающегося c точкой блока).
         .takeWhile( _.isDownerTl )
+        .to( LazyList )
 
       // droppedNear содержит один или два элемента (хотя не исключены и иные ситуации).
       if (droppedNear.exists(_.jdt.rootLabel._2 ==* droppedBlockLabel)) {
@@ -985,20 +985,20 @@ class DocEditAh[M](
         // Разобраться, как именно нужно обновить jd-дерево.
         val (nearJdtTree, isUpper) = droppedNear match {
           // Если один блок - то сброс произошёл прямо в конкретный блок, и нужно по высоте оценить: выше или ниже.
-          case Stream(jdtXy) =>
+          case LazyList(jdtXy) =>
             val innerY = m.docXy.y - jdtXy.topLeft.y
             val isUp = innerY < jdtXy.wh.height / 2
             (jdtXy.jdt, isUp)
 
           // Если два блока, то сброс был в щель между двумя блоками.
-          case Stream(_ /*before*/, after) =>
+          case LazyList(_ /*before*/, after) =>
             (after.jdt, true)
 
           // Неопределённая ситуация. Переносим блок или в начало или в конец документа.
           case other =>
             LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
             val coord0 = v0.jdDoc.gridBuild.coords.head
-            if (m.docXy.y > coord0.y) {
+            if (m.docXy.y > coord0._2.y) {
               // Положительная координата перетаскивания по вертикали: просто переносим таскаемый блок в конец документа.
               (allBlocks.last, false)
             } else {
@@ -1718,6 +1718,22 @@ class DocEditAh[M](
 
   }
 
+}
+
+
+object DocEditAh {
+
+  private def _loc2width(imgOpLoc: TreeLoc[JdTag]) = {
+    for {
+      qd          <- imgOpLoc.getLabel.qdProps
+      attrsEmbed  <- qd.attrsEmbed
+      widthSU     <- attrsEmbed.width
+      width       <- widthSU.toOption
+    } yield {
+      width
+    }
+  }
+
 
   private def _jdArgs_renderArgs_dnd_LENS = {
     MDocS.jdDoc
@@ -1726,9 +1742,6 @@ class DocEditAh[M](
       .composeLens( MJdRenderArgs.dnd )
   }
 
-}
-
-object DocEditAh {
 
   def mkJdRuntime(jdDoc: MJdDoc, jdArgs: MJdArgs) =
     mkJdRuntime2(jdDoc, jdArgs.conf, jdArgs.jdRuntime)

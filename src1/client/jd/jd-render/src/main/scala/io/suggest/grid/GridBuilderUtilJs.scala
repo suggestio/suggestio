@@ -31,7 +31,8 @@ object GridBuilderUtilJs {
     // Привести список координат к формату stonecutter: массив из массивов-пар координат.
     val gbsPositions = buildRes.coords
       .iterator
-      .map { mcoord =>
+      .map { data =>
+        val mcoord = data._2
         js.Array( mcoord.x, mcoord.y )
       }
       .toJSArray
@@ -152,7 +153,6 @@ object GridBuilderUtilJs {
           MGbBlock(
             jdId    = jdId,
             size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),
-            nodeId  = None,
             jdt     = jdt,
             orderN  = Some(i),
           )

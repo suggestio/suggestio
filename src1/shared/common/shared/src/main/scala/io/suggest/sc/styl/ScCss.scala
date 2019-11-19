@@ -239,6 +239,10 @@ object ScCssStatic extends StyleSheet.Inline {
       display.block
     )
 
+    val snackMsg = style(
+      width( 100.%% )
+    )
+
     /** Внутренняя иконка кнопки требует выравнивания вручную. */
     val smallBtnSvgIcon = style(
       paddingRight( 4.px ),
