@@ -1,8 +1,8 @@
 package io.suggest.geo
 
 import org.elasticsearch.common.unit.DistanceUnit
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.libs.json.{JsString, Json}
 
 /**
@@ -11,7 +11,7 @@ import play.api.libs.json.{JsString, Json}
  * Created: 22.08.14 14:31
  * Description: Тесты для модели Distance, описывающей неизменяемое расстояние.
  */
-class DistanceSpec extends FlatSpec {
+class DistanceSpec extends AnyFlatSpec {
 
   /** Значения дистанций для тестов без указания единиц. */
   private val vs: Seq[Double] = Seq(12.0, 1.0, 100.0, 0.244, 10.5, 123.0, 3545.0, 56.56)

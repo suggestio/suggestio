@@ -2,8 +2,8 @@ package io.suggest.dt
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -11,7 +11,7 @@ import org.scalatest._
   * Created: 06.02.17 12:14
   * Description: Тесты для серверной утили даты-времени: [[DateTimeUtil]].
   */
-class DateTimeUtilSpec extends FlatSpec {
+class DateTimeUtilSpec extends AnyFlatSpec {
 
   "minutesOffset2TzOff()" should "handle MSK tz from browser" in {
     // Время на стороне сервера:

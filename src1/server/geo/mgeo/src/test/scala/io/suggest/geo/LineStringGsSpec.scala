@@ -1,7 +1,7 @@
 package io.suggest.geo
 
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 import play.api.libs.json.{Json, OFormat}
 
 /**
@@ -37,7 +37,7 @@ class LineStringGsSpec extends MultiPoingGeoShapeTest {
 
 
 /** Общий код multipoint-фигур лежит здесь. */
-trait MultiPoingGeoShapeTest extends FlatSpec with CoordLineRnd {
+trait MultiPoingGeoShapeTest extends AnyFlatSpec with CoordLineRnd {
 
   override val minCoordLineLen = 2
   override val coordLineLenRnd = 40

@@ -1,8 +1,8 @@
 package io.suggest.geo
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.libs.json._
 
 /**
@@ -11,7 +11,7 @@ import play.api.libs.json._
  * Created: 22.08.14 14:46
  * Description: Тесты для модели геоточки.
  */
-class GeoPointSpec extends FlatSpec with LatLonRnd[MGeoPoint] with PlayJsonTestUtil {
+class GeoPointSpec extends AnyFlatSpec with LatLonRnd[MGeoPoint] with PlayJsonTestUtil {
 
   import GeoPoint.Implicits._
 

@@ -2,7 +2,7 @@ package io.suggest.model.n2.media
 
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 27.09.15 22:09
  * Description: Тесты для модели [[MPictureMeta]].
  */
-class MPictureMetaSpec extends FlatSpec with PlayJsonTestUtil {
+class MPictureMetaSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MPictureMeta
 

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest.FlatSpec
  * Created: 06.10.15 12:24
  * Description: Тесты для json-модели [[MEdge]].
  */
-class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
+class MEdgeSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MEdge
 

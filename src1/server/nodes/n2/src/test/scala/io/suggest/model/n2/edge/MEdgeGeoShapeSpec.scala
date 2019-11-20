@@ -5,7 +5,7 @@ import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 import io.suggest.geo._
 import io.suggest.test.json.PlayJsonTestUtil
 import org.elasticsearch.common.unit.DistanceUnit
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -13,7 +13,7 @@ import org.scalatest.FlatSpec
   * Created: 24.03.16 16:02
   * Description: Тесты для модели геошейпов внутри эджей.
   */
-class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
+class MEdgeGeoShapeSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MEdgeGeoShape
 

@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 25.09.15 13:22
  * Description: Тесты для модели метаданных [[MAddress]].
  */
-class MMetaSpec extends FlatSpec with PlayJsonTestUtil {
+class MMetaSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MMeta
 

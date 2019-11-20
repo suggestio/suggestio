@@ -1,7 +1,7 @@
 package io.suggest.geo
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.libs.json.Json
 
 /**
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
  * Created: 16.10.15 11:35
  * Description:
  */
-class MultiPolygonGsSpec extends FlatSpec {
+class MultiPolygonGsSpec extends AnyFlatSpec {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_www_geojson_org_geojson_spec_html_id7_multipolygon_ulink]]

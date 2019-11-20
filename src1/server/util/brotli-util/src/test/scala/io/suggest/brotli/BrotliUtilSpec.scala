@@ -8,8 +8,8 @@ import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.util.ByteString
 import io.suggest.streams.ByteStringsChunker
 import org.meteogroup.jbrotli.BrotliStreamDeCompressor
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import org.scalatest.concurrent.ScalaFutures._
 
 import scala.concurrent.duration._
@@ -20,7 +20,7 @@ import scala.concurrent.duration._
   * Created: 20.02.18 20:11
   * Description: Тесты для [[BrotliUtil]].
   */
-class BrotliUtilSpec extends FlatSpec {
+class BrotliUtilSpec extends AnyFlatSpec {
 
   implicit val system = ActorSystem("TestSystem")
   implicit val materializer = ActorMaterializer()

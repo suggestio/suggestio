@@ -3495,6 +3495,13 @@ react-dnd-html5-backend-cjs@9.3.9:
   dependencies:
     dnd-core-cjs "^9.3.9"
 
+react-dnd-test-backend-cjs@9.3.9:
+  version "9.3.9"
+  resolved "https://registry.yarnpkg.com/react-dnd-test-backend-cjs/-/react-dnd-test-backend-cjs-9.3.9.tgz#7ab649b67b3f647f3d4e917cb93c7247cea1c339"
+  integrity sha512-Fk1fZ/I18erVgSAqupWk2mbY3TQfHuCYkP4V3B/3oqzviT812FOMvrg5f2oVDkAlLfmH25c5TY3S18wpIjmRlw==
+  dependencies:
+    dnd-core-cjs "^9.3.9"
+
 react-dnd-touch-backend-cjs@9.3.9:
   version "9.3.9"
   resolved "https://registry.yarnpkg.com/react-dnd-touch-backend-cjs/-/react-dnd-touch-backend-cjs-9.3.9.tgz#80fbddd17806a3df09dae3ef4c145e270b7f9185"

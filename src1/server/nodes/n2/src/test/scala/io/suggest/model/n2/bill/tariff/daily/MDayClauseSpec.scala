@@ -2,7 +2,7 @@ package io.suggest.model.n2.bill.tariff.daily
 
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
   * Created: 18.01.17 12:07
   * Description: Тесты для модели [[MDayClause]].
   */
-class MDayClauseSpec extends FlatSpec with PlayJsonTestUtil {
+class MDayClauseSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MDayClause
 

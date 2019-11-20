@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import io.suggest.geo.{CircleGs, Distance, MGeoPoint, MNodeGeoLevels}
 import io.suggest.test.json.PlayJsonTestUtil
 import org.elasticsearch.common.unit.DistanceUnit
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ import org.scalatest.FlatSpec
  * Created: 06.10.15 12:54
  * Description: Тесты для json-модели [[MEdgeInfo]].
  */
-class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
+class MEdgeInfoSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MEdgeInfo
 

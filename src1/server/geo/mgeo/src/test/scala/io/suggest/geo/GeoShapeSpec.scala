@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 
 /**
@@ -10,7 +10,7 @@ import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
  * Created: 16.10.15 12:35
  * Description: Тесты для надмодели [[GeoShapeJvm]].
  */
-class GeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
+class GeoShapeSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = IGeoShape
 

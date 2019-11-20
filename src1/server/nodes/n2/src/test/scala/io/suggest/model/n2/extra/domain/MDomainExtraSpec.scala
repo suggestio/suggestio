@@ -1,7 +1,7 @@
 package io.suggest.model.n2.extra.domain
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest.FlatSpec
   * Created: 06.09.16 18:54
   * Description: Тесты для модели [[MDomainExtra]].
   */
-class MDomainExtraSpec extends FlatSpec with PlayJsonTestUtil {
+class MDomainExtraSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MDomainExtra
 

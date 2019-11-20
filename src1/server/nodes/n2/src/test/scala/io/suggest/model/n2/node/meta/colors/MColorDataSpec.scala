@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.meta.colors
 
 import io.suggest.color.MColorData
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 25.09.15 16:50
  * Description: Тесты для модели [[MColorData]].
  */
-class MColorDataSpec extends FlatSpec with PlayJsonTestUtil {
+class MColorDataSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MColorData
 

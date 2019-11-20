@@ -1,7 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.geo.MGeoPoint
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest.FlatSpec
   * Created: 22.09.16 11:12
   * Description: Тесты для модели [[MGeoLocData].
   */
-class MGeoLocDataSpec extends FlatSpec with PlayJsonTestUtil {
+class MGeoLocDataSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MGeoLocData
 

@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.geo.{CircleGs, MGeoPoint, MNodeGeoLevels}
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import org.scalatest.FlatSpec
  * Created: 02.10.15 13:09
  * Description: Тести для модели [[MNodeEdges]], которая является подмоделью [[io.suggest.model.n2.node.MNode]].
  */
-class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
+class MNodeEdgesSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MNodeEdges
 

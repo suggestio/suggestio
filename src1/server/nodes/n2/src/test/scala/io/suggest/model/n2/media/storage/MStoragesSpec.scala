@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media.storage
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest._
  * Created: 30.09.15 11:02
  * Description: Тесты для модели [[MStorages]].
  */
-class MStoragesSpec extends FlatSpec with PlayJsonTestUtil {
+class MStoragesSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MStorage
 

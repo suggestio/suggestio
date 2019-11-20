@@ -1,7 +1,7 @@
 package io.suggest.text.parse.price
 
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest.Matchers._
  * Created: 27.03.14 20:31
  * Description: Тесты для парсеров цен.
  */
-class PriceParsersSpec extends FlatSpec {
+class PriceParsersSpec extends AnyFlatSpec {
 
   private lazy val pp = new PriceParsersImpl
 

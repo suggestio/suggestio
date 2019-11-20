@@ -3,8 +3,8 @@ package io.suggest.ctx
 import java.util.UUID
 
 import io.suggest.util.UuidUtil
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.Configuration
 import japgolly.univeq._
 
@@ -14,7 +14,7 @@ import japgolly.univeq._
   * Created: 06.10.17 12:28
   * Description: Тесты для [[MCtxId]] и [[MCtxIds]].
   */
-class MCtxIdSpec extends FlatSpec {
+class MCtxIdSpec extends AnyFlatSpec {
 
   private val mCtxIds = {
     val configuration = Configuration(

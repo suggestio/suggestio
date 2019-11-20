@@ -4,7 +4,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import io.suggest.swfs.client.proto.fid.Fid
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
 /**

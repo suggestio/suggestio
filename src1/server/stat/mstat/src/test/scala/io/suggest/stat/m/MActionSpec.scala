@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -8,7 +8,7 @@ import org.scalatest.FlatSpec
   * Created: 22.09.16 11:00
   * Description: Тесты для модели [[MAction]].
   */
-class MActionSpec extends FlatSpec with PlayJsonTestUtil {
+class MActionSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MAction
 

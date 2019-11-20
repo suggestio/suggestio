@@ -2,7 +2,7 @@ package io.suggest.ad.blk.ent
 
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 30.10.15 17:48
  * Description: Тесты для json-модели [[MEntity]].
  */
-class MEntitySpec extends FlatSpec with PlayJsonTestUtil {
+class MEntitySpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MEntity
 

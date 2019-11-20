@@ -1,7 +1,8 @@
 package io.suggest.text.util
 
 import TextQueryUtil.splitQueryStr
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +11,7 @@ import org.scalatest._
  * Description: Тесты для TextQueryUtil, портированы из web21 (где раньше располагалась TextQueryUtil).
  */
 
-class TextQueryUtilTest extends FlatSpec with Matchers {
+class TextQueryUtilTest extends AnyFlatSpec {
 
   "splitQueryStr()" should "split user's ASCII string query into fts and engram parts" in {
     splitQueryStr("kpss asd").get         shouldBe ("kpss", "asd")

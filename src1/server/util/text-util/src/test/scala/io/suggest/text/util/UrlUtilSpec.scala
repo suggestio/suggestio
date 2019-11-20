@@ -3,8 +3,8 @@ package io.suggest.text.util
 import java.net.URL
 
 import UrlUtil._
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import org.scalatest._
  * Created: 06.03.13 10:44
  * Description: scalatests for UrlUtils.
  */
-class UrlUtilSpec extends FlatSpec {
+class UrlUtilSpec extends AnyFlatSpec {
 
   "ensureAbsoluteUrl()" should "absolutize relative urls if baseUrl = suggest.io/a/" in {
     val baseUrl1 = new URL("https://suggest.io/a/")

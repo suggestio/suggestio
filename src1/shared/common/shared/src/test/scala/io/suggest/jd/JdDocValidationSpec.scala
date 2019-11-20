@@ -150,7 +150,10 @@ object JdDocValidationSpec extends SimpleTestSuite {
       }
       .toMap
 
-    val vld = new JdDocValidator(edgesMap)
+    val vld = new JdDocValidator(
+      tolerant = false,
+      edges    = edgesMap,
+    )
 
     val vldRes = vld.validateDocumentTree( tplTree )
     assert(vldRes.isSuccess, vldRes.toString)

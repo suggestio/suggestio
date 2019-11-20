@@ -1,7 +1,7 @@
 package io.suggest.geo
 
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 import play.api.libs.json.Json
 
 /**
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
  * Created: 22.08.14 15:22
  * Description: Тесты для CircleGs.
  */
-class CircleGsSpec extends FlatSpec with CoordRnd {
+class CircleGsSpec extends AnyFlatSpec with CoordRnd {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_circle]]

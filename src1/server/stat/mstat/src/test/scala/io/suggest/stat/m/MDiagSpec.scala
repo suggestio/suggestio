@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -8,7 +8,7 @@ import org.scalatest.FlatSpec
   * Created: 23.09.16 14:22
   * Description: Тесты для модели [[MDiag]].
   */
-class MDiagSpec extends FlatSpec with PlayJsonTestUtil {
+class MDiagSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MDiag
 

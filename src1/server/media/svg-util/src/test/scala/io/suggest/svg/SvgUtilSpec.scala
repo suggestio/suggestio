@@ -2,8 +2,8 @@ package io.suggest.svg
 
 import java.io.File
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io
@@ -11,7 +11,7 @@ import org.scalatest.Matchers._
  * Created: 26.09.14 13:37
  * Description: Тесты для SvgUtil.
  */
-class SvgUtilSpec extends FlatSpec {
+class SvgUtilSpec extends AnyFlatSpec {
 
   private val RSC_DIR = ""
 

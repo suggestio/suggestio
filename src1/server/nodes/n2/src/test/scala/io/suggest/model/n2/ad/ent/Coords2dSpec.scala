@@ -2,7 +2,7 @@ package io.suggest.model.n2.ad.ent
 
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 30.10.15 14:38
  * Description: Тесты для модели [[MCoords2di]].
  */
-class Coords2dSpec extends FlatSpec with PlayJsonTestUtil {
+class Coords2dSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MCoords2di
 

@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.meta
 
-import org.scalatest._, Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.libs.json.Json
 /**
  * Suggest.io
@@ -8,7 +9,7 @@ import play.api.libs.json.Json
  * Created: 25.09.15 10:50
  * Description: Тесты для модели [[MPersonMeta]].
  */
-class MPersonMetaSpec extends FlatSpec {
+class MPersonMetaSpec extends AnyFlatSpec {
 
   private def t(mpm: MPersonMeta): Unit = {
     val jsv = Json.toJson(mpm)

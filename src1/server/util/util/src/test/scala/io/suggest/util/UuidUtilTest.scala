@@ -2,7 +2,8 @@ package io.suggest.util
 
 import java.util.UUID
 import UuidUtil._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io
@@ -10,7 +11,7 @@ import org.scalatest._
  * Created: 22.09.14 17:08
  * Description: Тесты для [[io.suggest.util.UuidUtil]].
  */
-class UuidUtilTest extends FlatSpec with Matchers {
+class UuidUtilTest extends AnyFlatSpec {
 
   private def cn = UuidUtil.getClass.getSimpleName
 

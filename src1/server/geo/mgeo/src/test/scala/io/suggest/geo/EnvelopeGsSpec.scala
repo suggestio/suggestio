@@ -1,7 +1,7 @@
 package io.suggest.geo
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.libs.json.Json
 
 /**
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
   * Created: 19.04.16 15:18
   * Description: Тесты для модели гео-шейпов [[EnvelopeGsJvm]].
   */
-class EnvelopeGsSpec extends FlatSpec {
+class EnvelopeGsSpec extends AnyFlatSpec {
 
   private def fmt =
     IGeoShape.JsonFormats.allStoragesEsFormatter.envelope

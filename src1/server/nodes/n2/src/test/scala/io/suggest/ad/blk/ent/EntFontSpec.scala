@@ -3,7 +3,7 @@ package io.suggest.ad.blk.ent
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.text.MTextAligns
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -11,7 +11,7 @@ import org.scalatest.FlatSpec
  * Created: 30.10.15 14:59
  * Description: Тесты для модели [[EntFont]].
  */
-class EntFontSpec extends FlatSpec with PlayJsonTestUtil {
+class EntFontSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = EntFont
 

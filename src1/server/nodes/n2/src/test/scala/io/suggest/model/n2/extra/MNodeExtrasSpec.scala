@@ -4,7 +4,7 @@ import java.util.UUID
 
 import io.suggest.model.n2.extra.domain.{MDomainExtra, MDomainModes}
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import org.scalatest.FlatSpec
  * Created: 02.10.15 22:57
  * Description: Тесты для модели [[MNodeExtras]].
  */
-class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
+class MNodeExtrasSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MNodeExtras
 

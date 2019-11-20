@@ -1,7 +1,7 @@
 package io.suggest.geo
 
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 import play.api.libs.json.Json
 
 /**
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
  * Created: 22.08.14 15:10
  * Description: Тесты для модели точки, заданной через индексируемые spatial4j-поля.
  */
-class PointGsSpec extends FlatSpec {
+class PointGsSpec extends AnyFlatSpec {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_geojson_org_geojson_spec_html_id2_point_ulink]]

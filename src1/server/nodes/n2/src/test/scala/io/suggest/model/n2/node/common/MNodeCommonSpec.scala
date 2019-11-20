@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.common
 
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 24.09.15 9:46
  * Description: Тесты для модели [[MNodeCommon]].
  */
-class MNodeCommonSpec extends FlatSpec with PlayJsonTestUtil {
+class MNodeCommonSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MNodeCommon
 

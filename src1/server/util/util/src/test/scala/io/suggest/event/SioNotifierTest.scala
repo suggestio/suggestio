@@ -1,7 +1,7 @@
 package io.suggest.event
 
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import akka.actor._
 import akka.actor.ActorDSL._
 import SioNotifier._
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.global
   turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
   */
 
-class SioNotifierTest extends FlatSpec with MacroLogsImpl {
+class SioNotifierTest extends AnyFlatSpec with MacroLogsImpl {
 
   // Определяем контекст тестов
   def fixture = new {

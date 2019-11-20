@@ -2,7 +2,7 @@ package io.suggest.model.n2.ad.blk
 
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 03.11.15 13:09
  * Description: Тесты для модели [[BlockMeta]].
  */
-class BlockMetaSpec extends FlatSpec with PlayJsonTestUtil {
+class BlockMetaSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = BlockMeta
 

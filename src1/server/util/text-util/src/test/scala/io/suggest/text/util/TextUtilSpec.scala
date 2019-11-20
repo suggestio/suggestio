@@ -1,7 +1,8 @@
 package io.suggest.text.util
 
 import TextUtil._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io
@@ -10,7 +11,7 @@ import org.scalatest._
  * Description: Различные тесты для TextUtil.
  */
 
-class TextUtilSpec extends FlatSpec with Matchers {
+class TextUtilSpec extends AnyFlatSpec {
 
   "trgm_token_std()" should "trigrammize ASCII string tokens" in {
     trgmTokenStd("asdfgh") shouldEqual List(" as", "asd", "sdf", "dfg", "fgh", "gh ").reverse

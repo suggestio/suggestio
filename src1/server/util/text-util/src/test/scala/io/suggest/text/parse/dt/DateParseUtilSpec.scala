@@ -4,8 +4,8 @@ import java.time.LocalDate
 import java.util.Locale
 
 import io.suggest.text.parse.dt.DateParseUtil._
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ import org.scalatest._
  * Created: 18.03.13 18:06
  * Description: Тесты к парсеру дат. Сначала идут простые числовые, затем локализованные.
  */
-class DateParseUtilSpec extends FlatSpec {
+class DateParseUtilSpec extends AnyFlatSpec {
 
   private val locale_ru = new Locale("ru", "RU")
 

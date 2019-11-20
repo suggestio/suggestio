@@ -1,7 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.geom.d2.MOrientations2d
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest.FlatSpec
   * Created: 22.09.16 10:42
   * Description: Тесты для модели [[MStat]].
   */
-class MStatSpec extends FlatSpec with PlayJsonTestUtil {
+class MStatSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MStat
 

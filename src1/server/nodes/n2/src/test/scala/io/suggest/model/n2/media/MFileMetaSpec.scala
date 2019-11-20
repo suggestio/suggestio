@@ -2,7 +2,7 @@ package io.suggest.model.n2.media
 
 import io.suggest.crypto.hash.MHashes
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import org.scalatest.FlatSpec
  * Created: 27.09.15 21:59
  * Description: Тесты для модели [[MFileMeta]].
  */
-class MFileMetaSpec extends FlatSpec with PlayJsonTestUtil {
+class MFileMetaSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MFileMeta
 

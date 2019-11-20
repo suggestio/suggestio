@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Suggest.io
@@ -8,7 +8,7 @@ import org.scalatest.FlatSpec
   * Created: 22.09.16 17:20
   * Description: Тесты для модели [[MCommon]].
   */
-class MCommonSpec extends FlatSpec with PlayJsonTestUtil {
+class MCommonSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MCommon
 

@@ -1,7 +1,7 @@
 package io.suggest.bill
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 import play.api.libs.json.{Format, Json}
 
 /**
@@ -10,7 +10,7 @@ import play.api.libs.json.{Format, Json}
   * Created: 18.01.17 12:16
   * Description: Тесты для серверной модели [[MCurrencies]].
   */
-class MCurrenciesJvmSpec extends FlatSpec {
+class MCurrenciesJvmSpec extends AnyFlatSpec {
 
   "JSON Format" should "work for all supported currencies" in {
     for (v <- MCurrencies.values) {

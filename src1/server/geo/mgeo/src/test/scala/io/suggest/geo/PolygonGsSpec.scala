@@ -1,7 +1,7 @@
 package io.suggest.geo
 
-import org.scalatest.Matchers._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.flatspec.AnyFlatSpec
 import play.api.libs.json.Json
 
 /**
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
  * Created: 22.08.14 15:37
  * Description: Тест для полигонов, которые используются для описания площадей узлов.
  */
-class PolygonGsSpec extends FlatSpec with CoordLineRnd {
+class PolygonGsSpec extends AnyFlatSpec with CoordLineRnd {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_www_geojson_org_geojson_spec_html_id4_polygon_ulink]]

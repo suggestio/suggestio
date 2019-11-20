@@ -3,7 +3,7 @@ package io.suggest.model.n2.node.meta
 import java.time.OffsetDateTime
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -11,7 +11,7 @@ import org.scalatest.FlatSpec
  * Created: 25.09.15 12:53
  * Description: Тесты для модели [[MBasicMeta]].
  */
-class MBasicMetaSpec extends FlatSpec with PlayJsonTestUtil {
+class MBasicMetaSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = MBasicMeta
 

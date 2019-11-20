@@ -10,7 +10,6 @@ import Keys._
 object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
-  //val SCALA_VSN = "2.12.10"
   val SCALA_VSN = "2.13.1"
   
 
@@ -141,9 +140,10 @@ object Common {
 
     /** AsmCrypto.js hi-speed crypto routines.
       *
-      * @see [[https://github.com/vibornoff/asmcrypto.js]]
+      * @see [[https://github.com/asmcrypto/asmcrypto.js]]
       * @see [[https://www.npmjs.com/package/asmcrypto.js]]
       */
+    // TODO "2.3.2" или выше. API сменилось на java-подобное.
     val ASM_CRYPTO_JS = "0.0.11"
 
     /** Версия Apache Batik для работы с SVG.

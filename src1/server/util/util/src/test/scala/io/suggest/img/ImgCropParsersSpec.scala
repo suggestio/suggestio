@@ -1,7 +1,8 @@
 package io.suggest.img
 
 import io.suggest.img.crop.MCrop
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers._
 
 /**
  * Suggest.io
@@ -9,7 +10,7 @@ import org.scalatest._
  * Created: 30.10.14 13:23
  * Description: Тесты для парсинга сериализованного кропа.
  */
-class ImgCropParsersSpec extends FlatSpec with Matchers {
+class ImgCropParsersSpec extends AnyFlatSpec {
 
   private val p = new ImgCropParsers {}
   import p._

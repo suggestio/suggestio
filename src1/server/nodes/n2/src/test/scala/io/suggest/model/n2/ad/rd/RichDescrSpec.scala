@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.rd
 
 import io.suggest.test.json.PlayJsonTestUtil
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Suggest.io
@@ -9,7 +9,7 @@ import org.scalatest.FlatSpec
  * Created: 30.10.15 21:31
  * Description: Тесты для json-модели [[RichDescr]].
  */
-class RichDescrSpec extends FlatSpec with PlayJsonTestUtil {
+class RichDescrSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   override type T = RichDescr
 
