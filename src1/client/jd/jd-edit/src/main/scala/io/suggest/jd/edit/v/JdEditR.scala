@@ -224,7 +224,7 @@ class JdEditR(
       (props, mon) =>
         // Не таскать, если сейчас выделен родительский элемент.
         val p = props.p.value
-        !p.parent.exists( p.jdArgs.selJdt.treeLocOpt.containsLabel )
+        !p.parents.exists( p.jdArgs.selJdt.treeLocOpt.containsLabel )
     }
 
     class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
@@ -241,7 +241,7 @@ class JdEditR(
           props.p dispatchNow JdTagDragStart(jdt, s.tagId)
 
           var el = contentRef.unsafeGet()
-          if (!s.parent.exists(_.name ==* MJdTagNames.STRIP)) {
+          if (!s.parents.exists(_.name ==* MJdTagNames.STRIP)) {
             // qd-blockless. Ищем координаты для родительского контейнера.
             el = el.parentElement
           }

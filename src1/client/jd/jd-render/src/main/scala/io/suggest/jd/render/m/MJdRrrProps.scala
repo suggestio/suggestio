@@ -24,7 +24,7 @@ object MJdRrrProps {
         (a.subTree        ===* b.subTree) &&
         (a.tagId          ===* b.tagId) &&
         (a.jdArgs         ===* b.jdArgs) &&
-        (a.parent         ===* b.parent) &&
+        (a.parents        ===* b.parents) &&
         (a.gridBuildRes   ===* b.gridBuildRes)
       }
     }
@@ -41,7 +41,7 @@ case class MJdRrrProps(
                         subTree         : Tree[JdTag],
                         tagId           : MJdTagId,
                         jdArgs          : MJdArgs,
-                        parent          : Option[JdTag]    = None,
+                        parents         : List[JdTag]               = Nil,
                         gridBuildRes    : Option[MGridBuildResult]  = None,
                       ) {
 

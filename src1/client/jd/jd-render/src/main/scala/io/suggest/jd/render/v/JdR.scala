@@ -82,7 +82,13 @@ class JdR(
         )
 
         // Поддержка абсолютного позиционирования внутри контейнера:
-        val absPosStyl = jdCss.absPosF( state.tagId -> state.parent.flatMap(JdCss.wideWidthRatio(_, state.jdArgs.conf)) ): TagMod
+        val absPosWideK = state
+          .parents
+          .iterator
+          .flatMap( JdCss.wideWidthRatio(_, state.jdArgs.conf) )
+          .buffered
+          .headOption
+        val absPosStyl = jdCss.absPosF( state.tagId -> absPosWideK ): TagMod
 
         if (qdTag.props1.topLeft.nonEmpty) {
           // Обычный контент внутри блока.
@@ -112,7 +118,8 @@ class JdR(
 
         // Общие стили для текстов внутри (line-height):
         for (lineHeightPx <- qdTag.props1.lineHeight)
-          contTagModsAcc ::= jdCss.lineHeightF( lineHeightPx )
+          contTagModsAcc ::= jdCss.lineHeightF( lineHeightPx -> JdCss.lineHeightJdIdOpt(state.tagId, qdTag) )
+
 
         <.div( contTagModsAcc : _* )
       }
@@ -122,7 +129,7 @@ class JdR(
         val tag0 = _renderQdContentTag(state)
 
         if (
-          state.parent
+          state.parents
             .exists(_.name ==* MJdTagNames.STRIP)
         ) {
           // Рендер внутри блока, просто пропускаем контент на выход
@@ -446,9 +453,7 @@ class JdR(
       val chs = p.subTree.subForest
 
       if (chs.nonEmpty) {
-        val parent = p.subTree.rootLabel
-        // Для qd-content-тегов надо указывать родительский тег.
-        val parentSome = OptionUtil.maybe(parent.name ==* MJdTagNames.STRIP)( parent )
+        val parents2 = p.subTree.rootLabel :: p.parents
         chs
           .iterator
           .zipWithIndex
@@ -465,7 +470,7 @@ class JdR(
             val p2 = p.copy(
               subTree = childJdTree,
               tagId   = tagId,
-              parent  = parentSome,
+              parents = parents2,
             )
             // Вместо wrap используем прямой зум, чтобы избежать вызова цепочек функций, создающих множественные
             // инстансы одинаковых MJdRrrProps, которые будут удлиняться с каждым под-уровнем.

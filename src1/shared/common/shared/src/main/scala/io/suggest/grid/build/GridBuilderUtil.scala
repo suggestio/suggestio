@@ -1,6 +1,6 @@
 package io.suggest.grid.build
 
-import io.suggest.ad.blk.{BlockWidths, MBlockExpandModes}
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -154,14 +154,7 @@ object GridBuilderUtil {
             // Это block-meta. Позиционируем ровно один (текущий) блок:
             val gb = gbTree.rootLabel
 
-            lazy val wideSzMultOpt = {
-              val rOpt = args.jdtWideSzMults.get( gb.jdId )
-              // Была проблема: заранее развёрнутая карточка с неправильным id с сервера вызывает неправильное позиционирование в плитке.
-              if (rOpt.isEmpty && (gb.jdt.props1.expandMode contains MBlockExpandModes.Full))
-                //throw new IllegalArgumentException( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.jdId.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
-                println( (ErrorMsgs.GRID_CONFIGURATION_INVALID, gb.jdId, MBlockExpandModes.Full, rOpt, gb.jdId.nodeId.fold(args.jdtWideSzMults.view) { nodeId => args.jdtWideSzMults.view.filterKeys(_.toString startsWith nodeId) }.mkString(HtmlConstants.PIPE)).toString() )
-              rOpt
-            }
+            lazy val wideSzMultOpt = args.jdtWideSzMults.get( gb.jdId )
 
             val gbSize = gb.size.get
 

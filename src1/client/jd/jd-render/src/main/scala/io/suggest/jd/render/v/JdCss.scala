@@ -3,11 +3,13 @@ package io.suggest.jd.render.v
 import diode.FastEq
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.MFontSizes
+import io.suggest.grid.GridCalc
 import io.suggest.jd.{JdConst, MJdConf, MJdTagId}
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.{IJdTagGetter, JdTag, MJdTagName, MJdTagNames}
@@ -192,6 +194,10 @@ object JdCss {
       }
       .flatten
       .toIndexedSeq
+  }
+
+  def lineHeightJdIdOpt(jdId: MJdTagId, jdt: JdTag): Option[MJdTagId] = {
+    OptionUtil.maybe( GridCalc.mayHaveWideSzMult(jdt) )(jdId)
   }
 
 }
@@ -554,40 +560,59 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   )
 
 
-  /** Межстрочка может быть задана вручную, но и может быть задана в рамках размера шрифта. */
+  /** Межстрочка может быть задана вручную, но и может быть задана в рамках размера шрифта.
+    * Поэтому именование двойственное: может быть число, а может быть и jd-id.
+    */
   val lineHeightF = {
     val _lineHeightAttr = lineHeight
 
     styleF(
       new Domain.OverSeq(
         (for {
-          (_, jdt) <- jdCssArgs.data
+          (jdId, jdt) <- jdCssArgs.data
             .jdTagsById
             .iterator
 
-          lineHeightPx <- jdt.props1
-            .lineHeight
-            .orElse {
-              for {
-                qd          <- jdt.qdProps
-                attrsText   <- qd.attrsText
-                szSU        <- attrsText.size
-                sz          <- szSU.toOption
-              } yield sz.lineHeight
-            }
-        } yield
-          lineHeightPx
-        )
+          lineHeightWithJdIdOpt <- {
+            jdt.props1
+              .lineHeight
+              .map { jdtLineHeight =>
+                val jdIdOpt = JdCss.lineHeightJdIdOpt(jdId, jdt)
+                jdtLineHeight -> jdIdOpt
+              }
+              .orElse {
+                // TODO Надо ли рендерить межстрочку для дефолтовых размеров шрифта, которые не заданы исходнике?
+                for {
+                  qd          <- jdt.qdProps
+                  attrsText   <- qd.attrsText
+                  szSU        <- attrsText.size
+                  sz          <- szSU.toOption
+                } yield {
+                  sz.lineHeight -> (None: Option[MJdTagId])
+                }
+              }
+          }
+        } yield {
+          lineHeightWithJdIdOpt
+        })
+          // Можно в toSet загонять только с jdId=None, а потом объединить коллекции. Но не ясно, ускоряет ли это что-либо на самом деле.
           .toSet
           .toIndexedSeq
       )
     )(
-      {lineHeightPx =>
+      {case (lineHeightPx, jdIdOpt) =>
+        val wideSzMultOpt = jdIdOpt
+          .flatMap( jdCssArgs.data.jdtWideSzMults.get )
+
         styleS(
-          _lineHeightAttr( lineHeightPx.px ),
+          _lineHeightAttr( _szMulted(lineHeightPx, wideSzMultOpt).px ),
         )
       },
-      (lineHeight, _) => lineHeight.toString
+      {case ((lineHeight, jdIdOpt), _) =>
+        jdIdOpt
+          .getOrElse( lineHeight )
+          .toString
+      }
     )
   }
 

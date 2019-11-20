@@ -125,8 +125,9 @@ object GridCalc {
     * @param jdt Тег блока.
     * @return true, если для блока возможно наличие
     */
-  def blockHasWideSzMult(jdt: JdTag): Boolean = {
+  def mayHaveWideSzMult(jdt: JdTag): Boolean = {
     val p1 = jdt.props1
+    (jdt.name ==* MJdTagNames.STRIP) &&
     (p1.expandMode contains[MBlockExpandMode] MBlockExpandModes.Full) &&
     p1.widthPx.nonEmpty && p1.heightPx.nonEmpty
   }
@@ -144,8 +145,7 @@ object GridCalc {
         tplJdtWithId = tpl.rootLabel
         tplJdt = tplJdtWithId._2
         // Посчитать wideSzMult блока, если wide
-        if (tplJdt.name ==* MJdTagNames.STRIP) &&
-           blockHasWideSzMult(tplJdt)
+        if mayHaveWideSzMult(tplJdt)
         wh          <- tplJdt.props1.wh.iterator
         wideSzMult  <- GridCalc.wideSzMult( wh, jdConf.gridColumnsCount ).iterator
         (jdId, _)   <- tpl.flatten
