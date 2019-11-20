@@ -27,9 +27,8 @@ libraryDependencies ++= Seq(
   "io.monix"            %%% "minitest"            % Common.minitestVsn  % Test
 )
 
-// Scala.js < 1.x, sjs-bundler 0.15+
-jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
-
 testFrameworks += new TestFramework("minitest.runner.Framework")
+
+requireJsDomEnv in Test := true
 
 useYarn := true

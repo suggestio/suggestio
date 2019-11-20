@@ -50,7 +50,7 @@ object Base64JsUtilSpec extends SimpleTestSuite {
   }
 
 
-  test(s"b64Url2BlobPlainConv() against $sz-bytes Blob") {
+  testAsync(s"b64Url2BlobPlainConv() against $sz-bytes Blob") {
     val blob = Base64JsUtil.b64Url2BlobPlainConv( b64Url )
     _matchBlob( blob )
   }
@@ -71,7 +71,7 @@ object Base64JsUtilSpec extends SimpleTestSuite {
   }
   */
 
-  test(s"b64Url2Blob($sz bytes PNG)") {
+  testAsync(s"b64Url2Blob($sz bytes PNG)") {
     Base64JsUtil.b64Url2Blob( b64Url )
       .flatMap( _matchBlob )
   }

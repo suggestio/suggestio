@@ -9,10 +9,12 @@ import io.suggest.jd.render.v.JdR
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._
-import japgolly.scalajs.react.vdom.VdomElement
+import io.suggest.tv.SmartTvUtil
+import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactMouseEvent, ScalaComponent}
 import japgolly.univeq._
+import org.scalajs.dom.html
 
 /**
   * Suggest.io
@@ -53,6 +55,13 @@ class GridCoreR(
           tagName   = GridComponents.DIV
         )
       } {
+        // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
+        // для кликов подсвечиваются только ссылки.
+        // Поэтому для SmartTV используется <A>-тег, хотя это вызовет ошибку ссылка-внутри-ссылки и ругань react-dev.
+        val gridElTag: TagOf[html.Element] =
+          if (SmartTvUtil.isSmartTvUserAgentCached) <.a
+          else <.div
+
         // TODO routerCtl.urlFor() внутри <a.href>
         (for {
           (ad, i) <- mgrid.ads
@@ -86,10 +95,7 @@ class GridCoreR(
 
         } yield {
           // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
-          // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
-          // для кликов подсвечиваются только ссылки.
-          // Поэтому тут используется <A>-тег, хотя div был бы уместнее.
-          <.a(
+          gridElTag(
             ^.key := (rootId + `.` + j),
 
             // Реакция на клики, когда nodeId задан.

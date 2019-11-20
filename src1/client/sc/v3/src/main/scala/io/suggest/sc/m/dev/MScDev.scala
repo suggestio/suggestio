@@ -47,11 +47,4 @@ case class MScDev(
                    platform     : MPlatformS,
                    geoLoc       : MScGeoLoc        = MScGeoLoc.empty,
                    beaconer     : MBeaconerS       = MBeaconerS.empty,
-                 ) {
-
-  def withScreen(screen: MScScreenS)      = copy(screen = screen)
-  def withPlatform(platform: MPlatformS)  = copy(platform = platform)
-  def withGeoLoc(geo: MScGeoLoc)          = copy(geoLoc = geo)
-  def withBeaconer(beaconer: MBeaconerS)  = copy(beaconer = beaconer)
-
-}
+                 )

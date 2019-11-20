@@ -122,22 +122,23 @@ object JdTag {
     }
 
     def deepEdgesUids: LazyList[EdgeUid_t] = {
-      val jdt = tree.rootLabel
-
-      val iter1 = tree
-        .qdOps
-        .flatMap(_.edgeInfo)
-
-      val iter12 = (iter1 #::: jdt.props1.bgImg.to(LazyList))
+      (
+        (
+          tree
+            .qdOps
+            .flatMap(_.edgeInfo) #:::
+          tree
+            .rootLabel
+            .props1
+            .bgImg
+            .to(LazyList)
+        )
         .map(_.edgeUid)
-
-      val iter3 = tree
+      ) #::: tree
         .subForest
         .iterator
         .flatMap(_.deepEdgesUids)
         .to(LazyList)
-
-      iter12 #::: iter3
     }
 
 
