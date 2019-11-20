@@ -64,18 +64,20 @@ class GridCoreR(
           edges  = ad.flatGridEdges
 
           // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
-          groupOutlineColorOpt = ad.focused
-            .toOption
-            .flatMap { _ =>
-              ad.main.doc.template.rootLabel.props1.bgColor
-            }
-
-          // Сборка контейнера настроек рендера всех плиток группы:
-          jdRenderArgs = groupOutlineColorOpt.fold(MJdRenderArgs.empty) { _ =>
+          jdRenderArgs = (for {
+            blk <- ad.focOrAlwaysOpened
+            bgColorOpt = blk.doc.template
+              .getMainBlockOrFirst
+              .rootLabel
+              .props1
+              .bgColor
+            if bgColorOpt.nonEmpty
+          } yield {
             MJdRenderArgs(
-              groupOutLined = groupOutlineColorOpt
+              groupOutLined = bgColorOpt
             )
-          }
+          })
+            .getOrElse( MJdRenderArgs.empty )
 
           // Пройтись по шаблонам карточки
           (jdDoc2, j) <- ad.flatGridTemplates

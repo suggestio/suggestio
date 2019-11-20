@@ -120,7 +120,6 @@ class JdR(
         for (lineHeightPx <- qdTag.props1.lineHeight)
           contTagModsAcc ::= jdCss.lineHeightF( lineHeightPx -> JdCss.lineHeightJdIdOpt(state.tagId, qdTag) )
 
-
         <.div( contTagModsAcc : _* )
       }
 

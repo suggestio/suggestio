@@ -187,7 +187,8 @@ object JdTag {
 
     def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {
       IId.els2idMap[EdgeUid_t, MJdEdgeId](
-        tree.flatten
+        tree
+          .flatten
           .iterator
           .flatMap(_.edgeUids)
       )
