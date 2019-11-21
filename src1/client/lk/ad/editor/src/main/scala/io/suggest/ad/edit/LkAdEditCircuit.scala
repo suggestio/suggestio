@@ -253,7 +253,7 @@ class LkAdEditCircuit(
 
     override def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]] = {
       super.getSelTagLoc(mdoc)
-        .filter( JdTag.treeLocByTypeFilterF(jdtName) )
+        .filter( JdTag.treeLocByTypeFilterF(jdtName :: Nil) )
     }
 
   }
@@ -261,7 +261,7 @@ class LkAdEditCircuit(
   /** Цвет тени RW. */
   private val shadowColorRW = {
     val zoomer = new ZoomToBgColorPick {
-      lazy val jdt_p1_textShadow_color_TRAV = JdTag.props1
+      def jdt_p1_textShadow_color_TRAV = JdTag.props1
         .composeLens( MJdtProps1.textShadow )
         .composeTraversal( Traversal.fromTraverse[Option, MJdShadow] )
         .composeLens( MJdShadow.color )

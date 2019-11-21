@@ -274,7 +274,7 @@ class JsMessagesUtil @Inject() (
     MC.`Width` ::
       MC.`Height` ::
       MC.`Delete.block` ::
-      MC.`What.to.add` ::
+      MC.`Description` ::
       MC.`Block` ::
       MC.`Content` ::
       MC.`Example.text` ::

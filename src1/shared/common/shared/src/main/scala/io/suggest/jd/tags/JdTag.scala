@@ -201,12 +201,12 @@ object JdTag {
   /** Дополнительная утиль для TreeLoc[IDocTag]. */
   implicit class JdTagTreeLocOps[From: IJdTagGetter](private val treeLoc: TreeLoc[From]) {
 
-    def findUpByType(typ: MJdTagName): Option[TreeLoc[From]] = {
-      treeLoc.findUp( treeLocByTypeFilterF(typ) )
+    def findUpByType(types: MJdTagName*): Option[TreeLoc[From]] = {
+      treeLoc.findUp( treeLocByTypeFilterF(types) )
     }
 
-    def findByType(typ: MJdTagName): Option[TreeLoc[From]] = {
-      treeLoc.find( treeLocByTypeFilterF(typ) )
+    def findByType(types: MJdTagName*): Option[TreeLoc[From]] = {
+      treeLoc.find( treeLocByTypeFilterF(types) )
     }
 
     def findByEdgeUid(edgeUid: EdgeUid_t): Option[TreeLoc[From]] = {
@@ -220,9 +220,13 @@ object JdTag {
   }
 
 
-  def treeLocByTypeFilterF[From: IJdTagGetter](typ: MJdTagName) = {
-    loc: TreeLoc[From] =>
-      loc.getLabel.name ==* typ
+  def treeLocByTypeFilterF[From: IJdTagGetter](types: Iterable[MJdTagName]): TreeLoc[From] => Boolean = {
+    if (types.isEmpty) {
+      throw new IllegalArgumentException( types.toString() )
+    } else {
+      loc: TreeLoc[From] =>
+        types.exists(_ ==* loc.getLabel.name)
+    }
   }
 
 

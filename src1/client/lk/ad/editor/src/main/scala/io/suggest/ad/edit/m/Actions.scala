@@ -48,7 +48,10 @@ sealed trait IAddAction extends ILkEditAction
 /** Клик по кнопке добавления контента. */
 case object AddContentClick extends IAddAction
 /** Клик по кнопке добавления стрипа. */
-case object AddStripClick extends IAddAction
+case object AddBlockClick extends IAddAction
+/** Добавить внеблоковый контент. */
+case object AddBlockLessContentClick extends IAddAction
+
 
 
 /** Сообщение о завершении фоновой конвертации из base64 data-URL в натуральный блоб. */

@@ -159,6 +159,95 @@ class DocEditAh[M](
   }
 
 
+  private def _addContent(v0: MDocS, qdContentTag: JdTag)(insertToLocF: Tree[JdTag] => TreeLoc[JdTag]): ActionResult[M] = {
+
+    val textL10ed = Messages( MsgCodes.`Example.text` )
+
+    val textPred = MPredicates.JdContent.Text
+    val edgesMap0 = v0.jdDoc.jdArgs.data.edges
+    val (edgesMap2, edgeUid) = edgesMap0
+      .valuesIterator
+      .find { e =>
+        (e.jdEdge.predicate ==* textPred) &&
+        (e.jdEdge.text contains textL10ed)
+      }
+      .fold [(Map[EdgeUid_t, MEdgeDataJs], Int)] {
+        // Нет примера текста в эджах: добавить его туда.
+        val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( edgesMap0 )
+        val e = MEdgeDataJs(
+          jdEdge = MJdEdge(
+            predicate = textPred,
+            id        = nextEdgeUid,
+            text      = Some(textL10ed)
+          )
+        )
+        val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
+        (edgesMap1, nextEdgeUid)
+      } { exampleTextEdge =>
+        (edgesMap0, exampleTextEdge.id)
+      }
+
+    val qdtTree = Tree.Node[JdTag](
+      root = qdContentTag,
+      forest = {
+        Tree.Leaf(
+          JdTag.edgeQdOp( edgeUid )
+        ) #::
+          Stream.empty
+      }
+    )
+
+    val loc2 = insertToLocF( qdtTree )
+    val tpl2 = loc2.toTree
+    val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
+
+    val v2 = (
+      MDocS.jdDoc.modify {
+        val jdArgs2 = (
+          MJdArgs.data.modify(
+            MJdDataJs.doc.set( jdDoc2 ) andThen
+            MJdDataJs.edges.set( edgesMap2 )
+          ) andThen
+            MJdArgs.jdRuntime.set(
+              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                .result
+            ) andThen
+            MJdArgs.renderArgs
+              .composeLens( MJdRenderArgs.selPath )
+              .set( Some(loc2.toNodePath) )
+        )(v0.jdDoc.jdArgs)
+
+        var modF = MJdDocEditS.jdArgs.set(jdArgs2)
+
+        // Это qd-blockless? Надо пересчитать плитку.
+        if (qdContentTag.props1.topLeft.isEmpty) {
+          modF = modF andThen MJdDocEditS.gridBuild
+            .set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+        }
+
+        modF
+      } andThen
+      MDocS.editors.modify(
+        MEditorsS.qdEdit.set( Some {
+          MQdEditS(
+            initDelta = quillDeltaJsUtil.qdTag2delta(
+              qd    = qdtTree,
+              edges = edgesMap2
+            )
+          )
+        }) andThen
+        MEditorsS.stripEd
+          .set( None ) andThen
+        MEditorsS.slideBlocks
+          .composeLens( MSlideBlocks.expanded )
+          .set( Some(SlideBlockKeys.CONTENT) )
+      )
+    )(v0)
+
+    updated(v2)
+  }
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Набор текста в wysiwyg-редакторе.
@@ -472,21 +561,26 @@ class DocEditAh[M](
 
           // Очистить эджи от лишнего контента
           val jdDoc2 = (MJdDoc.template set tpl2)( v2.jdDoc.jdArgs.data.doc )
-          v2 = MDocS.jdDoc.modify(
-            MJdDocEditS.jdArgs.modify(
-              MJdArgs.data.modify(
-                MJdDataJs.doc.set( jdDoc2 ) andThen
-                MJdDataJs.edges.set(
-                  JdTag
-                    .purgeUnusedEdges(tpl2, dataEdges0)
-                    .toMap
-                )
-              ) andThen
-              MJdArgs.jdRuntime.set(
-                mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs).result
+          val jdArgs2 = (
+            MJdArgs.data.modify(
+              MJdDataJs.doc.set( jdDoc2 ) andThen
+              MJdDataJs.edges.set(
+                JdTag
+                  .purgeUnusedEdges(tpl2, dataEdges0)
+                  .toMap
               )
+            ) andThen
+            MJdArgs.jdRuntime.set(
+              mkJdRuntime(jdDoc2, v2.jdDoc.jdArgs).result
             )
-          )(v2)
+          )(v2.jdDoc.jdArgs)
+
+          var jdDocModF = MJdDocEditS.jdArgs.set( jdArgs2 )
+
+          if ( isQdBlockless( oldSelectedJdt ) )
+            jdDocModF = jdDocModF andThen MJdDocEditS.gridBuild.set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+
+          v2 = MDocS.jdDoc.modify( jdDocModF )(v2)
         }
 
         // Если состояние dnd непустое, то значит была ошибка перетакивания, и надо принудительно сбросить dnd-состояние.
@@ -1463,118 +1557,64 @@ class DocEditAh[M](
       }
 
 
+    // Добавить внеблоковый контент.
+    case AddBlockLessContentClick =>
+      val v0 = value
+
+      _addContent( v0, JdTag.qd() )(
+        // Определить блок или qd-bl, после которого надо добавить новый qd-bl.
+        // Если None - первый элемент дерева
+        (for {
+          currLoc <- v0.jdDoc.jdArgs.selJdt.treeLocOpt
+          rootLoc = currLoc.root
+          rootLabel = rootLoc.getLabel
+          parentLoc <- currLoc.findUp(_.parent.exists(_.getLabel ==* rootLabel))
+        } yield {
+          parentLoc.insertRight _
+        })
+          .getOrElse( v0.jdDoc.jdArgs.data.doc.template.loc.insertDownFirst _ )
+      )
+
+
     // Реакция на клик по кнопке создания "контента", который у нас является синонимом QdTag.
     case AddContentClick =>
       val v0 = value
-      val stripName = MJdTagNames.STRIP
+      val jdtName = MJdTagNames.STRIP
       val intoStripLoc = v0.jdDoc.jdArgs.selJdt.treeLocOpt
         .fold {
           // Сейчас нет выделенных тегов. Найти первый попавшийся strip
           v0.jdDoc.jdArgs.data.doc.template
             .loc
-            .findByType( stripName )
+            .findByType( jdtName )
         } { selLoc =>
           // Если выбран какой-то не-strip элемент, то найти его strip. Если выделен strip, то вернуть его.
-          selLoc.findUpByType( stripName )
+          selLoc.findUpByType( jdtName )
         }
         .get
 
-
-      val textL10ed = Messages( MsgCodes.`Example.text` )
-
-      val textPred = MPredicates.JdContent.Text
-      val edgesMap0 = v0.jdDoc.jdArgs.data.edges
-      val (edgesMap2, edgeUid) = edgesMap0
-        .valuesIterator
-        .find { e =>
-          e.jdEdge.predicate ==* textPred &&
-          (e.jdEdge.text contains textL10ed)
-        }
-        .fold [(Map[EdgeUid_t, MEdgeDataJs], Int)] {
-          // Нет примера текста в эджах: добавить его туда.
-          val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( edgesMap0 )
-          val e = MEdgeDataJs(
-            jdEdge = MJdEdge(
-              predicate = textPred,
-              id        = nextEdgeUid,
-              text      = Some(textL10ed)
-            )
-          )
-          val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
-          (edgesMap1, nextEdgeUid)
-        } { exampleTextEdge =>
-          (edgesMap0, exampleTextEdge.id)
-        }
-
-      val qdtTree = Tree.Node(
-        root = {
-          val p1 = intoStripLoc.getLabel.props1
-          val rnd = new Random()
-          val coordsRnd = MCoords2di(
-            x = {
-              val w0 = p1.widthPx getOrElse BlockWidths.min.value
-              10 + rnd.nextInt( w0 / 3 )
-            },
-            y = {
-              val h0 = p1.heightPx getOrElse BlockHeights.min.value
-              rnd.nextInt( (h0 * 0.75).toInt ) + (h0 * 0.12).toInt
-            }
-          )
-          JdTag.qd(
-            topLeft = coordsRnd,
-          )
-        },
-        forest = {
-          Tree.Leaf(
-            JdTag.edgeQdOp( edgeUid )
-          ) #::
-          Stream.empty
-        }
-      )
-
-      val qdtLoc = intoStripLoc.insertDownLast( qdtTree )
-
-      val tpl2 = qdtLoc.toTree
-      val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
-
-      val v2 = (
-        MDocS.jdDoc
-          .composeLens( MJdDocEditS.jdArgs )
-          .modify (
-            MJdArgs.data.modify(
-              MJdDataJs.doc.set( jdDoc2 ) andThen
-              MJdDataJs.edges.set( edgesMap2 )
-            ) andThen
-            MJdArgs.jdRuntime.set(
-              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                .result
-            ) andThen
-            MJdArgs.renderArgs
-              .composeLens( MJdRenderArgs.selPath )
-              .set( tpl2.nodeToPath( qdtTree.rootLabel ) )
-          ) andThen
-        MDocS.editors.modify(
-          MEditorsS.qdEdit.set( Some {
-            MQdEditS(
-              initDelta = quillDeltaJsUtil.qdTag2delta(
-                qd    = qdtTree,
-                edges = edgesMap2
-              )
-            )
-          }) andThen
-          MEditorsS.stripEd
-            .set( None ) andThen
-          MEditorsS.slideBlocks
-            .composeLens( MSlideBlocks.expanded )
-            .set( Some(SlideBlockKeys.CONTENT) )
+      val qdContentTag = {
+        val p1 = intoStripLoc.getLabel.props1
+        val rnd = new Random()
+        val coordsRnd = MCoords2di(
+          x = {
+            val w0 = p1.widthPx getOrElse BlockWidths.min.value
+            10 + rnd.nextInt( w0 / 3 )
+          },
+          y = {
+            val h0 = p1.heightPx getOrElse BlockHeights.min.value
+            rnd.nextInt( (h0 * 0.75).toInt ) + (h0 * 0.12).toInt
+          }
         )
-      )(v0)
+        JdTag.qd(
+          topLeft = coordsRnd,
+        )
+      }
 
-      updated(v2)
+      _addContent(v0, qdContentTag)( intoStripLoc.insertDownLast )
 
 
     // Клик по кнопке добавления нового стрипа.
-    case AddStripClick =>
+    case AddBlockClick =>
       val v0 = value
 
       val currStripLocOpt = v0.jdDoc.jdArgs.selJdt.treeLocOpt

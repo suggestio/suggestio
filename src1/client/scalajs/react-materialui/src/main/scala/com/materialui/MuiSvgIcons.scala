@@ -374,12 +374,12 @@ object MuiSvgIcons {
   object ActionSpeakerNotes extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/spellcheck", JSImport.Default)
   object ActionSpellcheck extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/stars", JSImport.Default)
-  object ActionStars extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/store", JSImport.Default)
-  object ActionStore extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/subject", JSImport.Default)
-  object ActionSubject extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Stars", JSImport.Default)
+  object Stars extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Store", JSImport.Default)
+  object Store extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Subject", JSImport.Default)
+  object Subject extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/supervisor-account", JSImport.Default)
   object ActionSupervisorAccount extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/swap-horiz", JSImport.Default)
@@ -995,32 +995,32 @@ object MuiSvgIcons {
   object EditorAttachFile extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/attach-money", JSImport.Default)
   object EditorAttachMoney extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-all", JSImport.Default)
-  object EditorBorderAll extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-bottom", JSImport.Default)
-  object EditorBorderBottom extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-clear", JSImport.Default)
-  object EditorBorderClear extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-color", JSImport.Default)
-  object EditorBorderColor extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-horizontal", JSImport.Default)
-  object EditorBorderHorizontal extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-inner", JSImport.Default)
-  object EditorBorderInner extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-left", JSImport.Default)
-  object EditorBorderLeft extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-outer", JSImport.Default)
-  object EditorBorderOuter extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-right", JSImport.Default)
-  object EditorBorderRight extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-style", JSImport.Default)
-  object EditorBorderStyle extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-top", JSImport.Default)
-  object EditorBorderTop extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/border-vertical", JSImport.Default)
-  object EditorBorderVertical extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/bubble-chart", JSImport.Default)
-  object EditorBubbleChart extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderAll", JSImport.Default)
+  object BorderAll extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderBottom", JSImport.Default)
+  object BorderBottom extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderClear", JSImport.Default)
+  object BorderClear extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderColor", JSImport.Default)
+  object BorderColor extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderHorizontal", JSImport.Default)
+  object BorderHorizontal extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderInner", JSImport.Default)
+  object BorderInner extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderLeft", JSImport.Default)
+  object BorderLeft extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderOuter", JSImport.Default)
+  object BorderOuter extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderRight", JSImport.Default)
+  object BorderRight extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderStyle", JSImport.Default)
+  object BorderStyle extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderTop", JSImport.Default)
+  object BorderTop extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BorderVertical", JSImport.Default)
+  object BorderVertical extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BubbleChart", JSImport.Default)
+  object BubbleChart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/drag-handle", JSImport.Default)
   object EditorDragHandle extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/format-align-center", JSImport.Default)
@@ -1107,8 +1107,8 @@ object MuiSvgIcons {
   object EditorPieChart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/publish", JSImport.Default)
   object EditorPublish extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/short-text", JSImport.Default)
-  object EditorShortText extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ShortText", JSImport.Default)
+  object ShortText extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/show-chart", JSImport.Default)
   object EditorShowChart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/space-bar", JSImport.Default)

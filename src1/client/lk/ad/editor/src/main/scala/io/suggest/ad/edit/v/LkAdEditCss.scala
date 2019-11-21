@@ -75,6 +75,13 @@ class LkAdEditCss
       minHeight( 500.px )
     )
 
+    val addCont = style(
+      padding( 10.px ),
+    )
+
+    val fabIcon = style(
+      margin( 2.px )
+    )
 
     val scaleInputCont = style(
       addClassNames( Css.Input.INPUT, "ad-ed_scale-cont" ),
