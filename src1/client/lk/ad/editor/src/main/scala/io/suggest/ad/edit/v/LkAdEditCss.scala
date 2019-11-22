@@ -28,7 +28,7 @@ class LkAdEditCss
   object WhControls {
 
     val slider = style(
-      width( 400.px ),
+      width( 93.%% ),
       marginBottom( 10.px ),
     )
 

@@ -232,8 +232,15 @@ class LkAdnEdit @Inject() (
         lazy val logPrefix = s"save($nodeId)#${System.currentTimeMillis()}:"
 
         // Для прочистки карты эджей, надо узнать все пустующие эджи:
-        val usedEdgeIds = request.body.usedEdgeUidsSet
-        val jdEdges0 = EdgesUtil.purgeUnusedEdgesFrom(usedEdgeIds, request.body.edges)
+        val jdEdges0 = EdgesUtil.purgeUnusedEdgesFrom(
+          usedEdgeIds = request.body
+            .resView
+            .edgeUids
+            .iterator
+            .map(_.edgeUid)
+            .toSet,
+          edges = request.body.edges
+        )
 
         // Надо распарсенный реквест провалидировать.
         n2VldUtil.earlyValidateEdges( jdEdges0 ).fold(

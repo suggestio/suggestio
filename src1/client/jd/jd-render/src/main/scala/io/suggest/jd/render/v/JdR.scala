@@ -59,6 +59,18 @@ class JdR(
     */
   trait JdRrrBase {
 
+    /** Рендер линии-обводки для плитки. */
+    def _groupOutlineRender(state: MJdRrrProps): TagMod = {
+      state.jdArgs.renderArgs
+        .groupOutLined
+        .whenDefined { mcd =>
+          TagMod(
+            state.jdArgs.jdRuntime.jdCss.blockGroupOutline,
+            ^.outlineColor := mcd.hexCode,
+          )
+        }
+    }
+
     trait QdContentBase {
 
       def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
@@ -140,6 +152,9 @@ class JdR(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
             state.jdArgs.jdRuntime.jdCss.contentOuter,
+
+            // Если карточка имеет цвет outline-выделения, то выделить и контент:
+            _groupOutlineRender(state),
 
             // Сборка измерителя размеров тега:
             Measure {
@@ -348,14 +363,7 @@ class JdR(
           _outerContainerAddons(state),
 
           // Объединение цветом группы блоков для раскрытой карточки.
-          state.jdArgs.renderArgs
-            .groupOutLined
-            .whenDefined { mcd =>
-              TagMod(
-                C.blockGroupOutline,
-                ^.outlineColor := mcd.hexCode,
-              )
-            },
+          _groupOutlineRender(state),
 
           // Если задана фоновая картинка, от отрендерить её.
           (for {

@@ -53,10 +53,4 @@ case class MAdnEditForm(
                          meta     : MMetaPub,
                          resView  : MAdnResView,
                          edges    : Seq[MJdEdge]
-                       ) {
-
-  def usedEdgeUids = resView.edgeUids
-
-  def usedEdgeUidsSet = usedEdgeUids.map(_.edgeUid).toSet
-
-}
+                       )

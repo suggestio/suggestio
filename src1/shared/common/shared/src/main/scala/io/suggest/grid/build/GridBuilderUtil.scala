@@ -237,23 +237,20 @@ object GridBuilderUtil {
                 }
                 .orElse[Int] {
                   if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
-                    val r = gb.jdt
-                      .props1.widthPx
-                      .map { szMultedF(_, wideSzMultOpt) }
-                      .orElse {
-                        val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
-                          val degAbs = Math.abs( deg )
-                          degAbs > 45 && degAbs <= (90+45)
-                        }
-                        for {
-                          horizSzPx <- if (isSwapWh) Some(gbSize.heightPx)
-                                       else gbSize.widthPx
-                        } yield {
-                          if (horizSzPx.isSzMulted) horizSzPx.sizePx
-                          else szMultedF(horizSzPx.sizePx, wideSzMultOpt)
-                        }
-                      }
+                    val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
+                      val degAbs = Math.abs( deg )
+                      degAbs > 45 && degAbs <= (90+45)
+                    }
+                    
+                    val r = (for {
+                      sideSzPx <- if (isSwapWh) Some(gbSize.heightPx)
+                      else gbSize.widthPx
+                    } yield {
+                      if (sideSzPx.isSzMulted) sideSzPx.sizePx
+                      else szMultedF(sideSzPx.sizePx, wideSzMultOpt)
+                    })
                       .getOrElse( gbSize.widthCells * paddedCellWidthPx )
+
                     Some(r)
 
                   } else {

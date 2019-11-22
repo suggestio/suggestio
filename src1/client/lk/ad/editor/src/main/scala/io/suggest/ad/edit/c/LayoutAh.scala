@@ -51,7 +51,7 @@ class LayoutAh[M](
         val docHeight = mdoc0.jdDoc.jdArgs.templateHeightCssPx
         // TODO Нужна реальная фактическая контейнера редактора или текущего выделенного элемента.
         // Нужно отцентровать контейнер редакторов относительно текущего выделенного элемента.
-        val editorContHeightCssPx = 350
+        val editorContHeightCssPx = 370
 
         val maxY = docHeight - editorContHeightCssPx
         val newY2 = Math.max(0,

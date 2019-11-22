@@ -575,12 +575,14 @@ class DocEditAh[M](
             )
           )(v2.jdDoc.jdArgs)
 
-          var jdDocModF = MJdDocEditS.jdArgs.set( jdArgs2 )
+          v2 = MDocS.jdDoc.modify {
+            var jdDocModF = MJdDocEditS.jdArgs.set( jdArgs2 )
 
-          if ( isQdBlockless( oldSelectedJdt ) )
-            jdDocModF = jdDocModF andThen MJdDocEditS.gridBuild.set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+            if ( isQdBlockless( oldSelectedJdt ) )
+              jdDocModF = jdDocModF andThen MJdDocEditS.gridBuild.set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
 
-          v2 = MDocS.jdDoc.modify( jdDocModF )(v2)
+            jdDocModF
+          }(v2)
         }
 
         // Если состояние dnd непустое, то значит была ошибка перетакивания, и надо принудительно сбросить dnd-состояние.

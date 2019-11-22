@@ -6,8 +6,10 @@ import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
+import io.suggest.err.HttpResultingException
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.jd.tags.JdTag
 import io.suggest.jd.{MJdData, MJdDoc, MJdTagId}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
@@ -15,6 +17,7 @@ import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.primo.id.IId
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -83,44 +86,26 @@ class LkAdEdit @Inject() (
     val producerId = producerIdU.id
     isNodeAdmin(producerId, U.Lk).async { implicit request =>
       // Сразу собираем контекст, так как он как бы очень нужен здесь.
-      val ctxFut = _ctxDataFut.map { implicit ctxData0 =>
-        implicitly[Context]
-      }
-
-      val adDataFut = ctxFut.flatMap(lkAdEdFormUtil.defaultEmptyDocument(_))
-
-      // Конфиг формы содержит только данные о родительском узле-продьюсере.
-      val formConfFut = for (ctx <- ctxFut) yield {
-        MAdEditFormConf(
-          producerId  = producerId,
-          adId        = None,
-          ctxId       = ctx.ctxIdStr
-        )
-      }
-
-      // Собрать модель инициализации формы редактора
-      val formInitJsonStrFut0 = for {
-        adData    <- adDataFut
-        formConf  <- formConfFut
+      for {
+        ctx <- _mkAdEditHtmlCtx
+        adData <- lkAdEdFormUtil.defaultEmptyDocument(ctx)
       } yield {
+        // Конфиг формы содержит только данные о родительском узле-продьюсере.
         val formInit = MAdEditFormInit(
-          conf          = formConf,
+          conf          = MAdEditFormConf(
+            producerId  = producerId,
+            adId        = None,
+            ctxId       = ctx.ctxIdStr
+          ),
           adData        = adData,
           blockPadding  = prodBlockPadding(request.mnode)
         )
-        _formInit2str( formInit )
-      }
 
-      // Отрендерить страницы с формой, когда всё будет готово.
-      for {
-        ctx             <- ctxFut
-        formInitJsonStr <- formInitJsonStrFut0
-      } yield {
         // Используем тот же edit-шаблон. что и при редактировании. Они отличаются только заголовками страниц.
         val html = adEditTpl(
           mad     = None,
           parent  = request.mnode,
-          state0  = formInitJsonStr
+          state0  = _formInit2str( formInit ),
         )(ctx)
 
         // Вернуть ответ с коррективами в CSP-политике.
@@ -143,210 +128,211 @@ class LkAdEdit @Inject() (
         // Взять форму из реквеста, провалидировать
         lazy val logPrefix = s"saveAdSubmit(${request.madOpt.fold("pro")(_ => "a")}d#${adIdOptU.orElse(producerIdU).orNull}):"
 
-        lkAdEdFormUtil.earlyValidateEdges( request.body ).fold(
-          // Не удалось понять присланные эджи:
-          {errorsNel =>
-            val msg = errorsNel.iterator.mkString(", ")
-            LOGGER.warn(s"$logPrefix Failed to validate remote edges: $msg")
-            errorHandler.onClientError(request, NOT_ACCEPTABLE, s"edges: $msg")
-          },
-
-          // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
-          {edges2 =>
-            // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
-            val edgesVldLogic = n2VldUtil.EdgesValidator(edges2)
-
-            // Когда будут собраны данные, произвести валидацию шаблона:
-            val vldResFut = for {
-              vldEdgesMap <- edgesVldLogic.vldEdgesMapFut
-            } yield {
-              lkAdEdFormUtil.validateTpl(
-                template      = request.body.doc.template,
-                vldEdgesMap   = vldEdgesMap,
-              )
-            }
-
-            // Дождаться результата валидации...
-            vldResFut.flatMap { vldRes =>
-              vldRes.fold(
-                // Не удалось провалидировать шаблон.
-                {failedMsgs =>
-                  val msgsConcat = failedMsgs.iterator.mkString(", ")
-                  LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
-                  errorHandler.onClientError(request, NOT_ACCEPTABLE, s"tpl: $msgsConcat")
+        (for {
+          // Сначала early-валидация эджей. Для валидации шаблона нужны рабочие эджи, поэтому валидация идёт в несколько шагов.
+          edges1 <- Future {
+            lkAdEdFormUtil
+              .earlyValidateEdges( request.body )
+              .fold(
+                // Не удалось понять присланные эджи:
+                {errorsNel =>
+                  val msg = errorsNel
+                    .iterator
+                    .mkString(", ")
+                  LOGGER.warn(s"$logPrefix Failed to validate remote edges: $msg")
+                  val resFut = errorHandler.onClientError(request, NOT_ACCEPTABLE, s"edges: $msg")
+                  throw new HttpResultingException( resFut )
                 },
-
-                // Есть на руках валидный шаблон. Можно создавать новую карточку.
-                {tpl2 =>
-                  LOGGER.trace(s"$logPrefix Successfully validated template:\n${tpl2.drawTree}")
-
-                  val framePred = MPredicates.JdContent.Frame
-                  // Сграбить ссылки на внешние фрейморесурсы -- для них надо создать ext-узлы, этим занимается VideoUtil:
-                  val extRscEdgesFut = {
-                    val extRscUrls = (
-                      for {
-                        jdEdge <- edges2.iterator
-                        if jdEdge.predicate ==>> framePred
-                        url    <- jdEdge.url
-                      } yield {
-                        url -> jdEdge.id
-                      }
-                    ).toMap
-                    extRscUtil.ensureExtRscNodes(extRscUrls.keys, request.user.personIdOpt)
-                  }
-
-                  val edgesAcc0Fut = for {
-                    extRscEdges <- extRscEdgesFut
-                  } yield {
-                    LOGGER.trace(s"$logPrefix ${extRscEdges.size} ExtRscEdges = [${extRscEdges.view.mapValues(_.idOrNull).mkString(", ")}]")
-
-                    var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
-                      MEdge(
-                        predicate = jdEdge.predicate,
-                        nodeIds = {
-                          val extRscNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> framePred) {
-                            jdEdge.url
-                              .flatMap( extRscEdges.get )
-                              .flatMap( _.id )
-                          }
-                          extRscNodeIdOpt
-                            .orElse {
-                              jdEdge.fileSrv.map(_.nodeId)
-                            }
-                            .toSet
-                        },
-                        doc = MEdgeDoc(
-                          uid   = Some( jdEdge.id ),
-                          text  = jdEdge.text.toSeq
-                        )
-                      ) :: acc0
-                    }
-
-                    // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
-                    if (request.user.isSuper)
-                      _acc0 ::= mdrUtil.mdrEdge(request.user, mdrUtil.mdrEdgeInfo(None))
-
-                    _acc0
-                  }
-
-                  // Создать/обновить строковое название для узла карточки (на основе текстовых эджей)
-                  val edges2Map = lkAdEdFormUtil.mkEdgeTextsMap( edges2 )
-
-                  val nodeTechNameOpt = lkAdEdFormUtil.mkTechName(tpl2, edges2Map)
-                  LOGGER.trace(s"$logPrefix nodeTechName = ${nodeTechNameOpt.orNull}")
-
-                  // В зависимости от создания или редактирования карточки, делаем тот или иной апдейт.
-                  val madSavedFut = edgesAcc0Fut.flatMap { edgesAcc0 =>
-                    LOGGER.trace(s"$logPrefix JdEE->MEdge edges: [${edgesAcc0.mkString(", ")}]")
-
-                    request.madOpt.fold[Future[MNode]] {
-                      LOGGER.trace(s"$logPrefix Creating new ad...")
-                      // Создание новой карточки. Инициализировать новую карточку.
-                      val mad0 = MNode(
-                        common = MNodeCommon(
-                          ntype       = MNodeTypes.Ad,
-                          isDependent = true
-                        ),
-                        extras  = MNodeExtras(
-                          doc = Some(MNodeDoc(
-                            template = tpl2
-                          ))
-                        ),
-                        edges = MNodeEdges(
-                          out = {
-                            // Нужно собрать в кучу все эджи: producer, creator, эджи от связанных узлов (картинок/файлов) итд.
-                            // Пропихиваем jd-эджи:
-                            var edgesAcc = edgesAcc0
-                            // Собираем эдж до текущего узла-продьюсера:
-                            edgesAcc ::= MEdge(
-                              predicate = MPredicates.OwnedBy,
-                              nodeIds   = Set( request.producer.id.get )
-                            )
-
-                            // Собираем эдж до текущего узла юзера-создателя:
-                            edgesAcc ::= MEdge(
-                              predicate = MPredicates.CreatedBy,
-                              nodeIds   = request.user.personIdOpt.toSet
-                            )
-
-                            edgesAcc
-                          }
-                        ),
-                        meta = MMeta(
-                          basic = MBasicMeta(
-                            techName = nodeTechNameOpt
-                          )
-                        )
-                      )
-                      for (adId <- mNodes.save( mad0 )) yield {
-                        LOGGER.trace(s"$logPrefix Created new ad#$adId")
-                        MNode.id.set( Some(adId) )(mad0)
-                      }
-                    } { mad00 =>
-                      LOGGER.trace(s"$logPrefix Will update existing ad: ${mad00.idOrNull}")
-                      if (mad00.extras.doc.isEmpty)
-                        LOGGER.info(s"$logPrefix Initialized new jd-template, previous ad template was empty.")
-
-                      // Сохраняемая карточка уже существует: перезаписать в ней некоторые эджи.
-                      val filteredPreds = MPredicates.JdContent :: MPredicates.ModeratedBy :: Nil
-                      mNodes.tryUpdate(mad00)(
-                        MNode.edges
-                          .modify { edges0 =>
-                            MNodeEdges(
-                              MNodeEdges.edgesToMap1(
-                                // Убрать все существующие jd-content-эджи.
-                                edges0.withoutPredicateIter(filteredPreds: _*) ++ edgesAcc0
-                              )
-                            )
-                          } andThen
-                        // Залить новый шаблон:
-                        MNode.extras
-                          .composeLens( MNodeExtras.doc )
-                          .modify { mdoc0 =>
-                            val mdoc2 = mdoc0.fold( MNodeDoc(template = tpl2) )( MNodeDoc.template.set(tpl2) )
-                            Some( mdoc2 )
-                          } andThen
-                        MNode.meta
-                          .composeLens( MMeta.basic )
-                          .composeLens( MBasicMeta.techName )
-                          .set( nodeTechNameOpt )
-                      )
-                    }
-                  }
-
-                  // Сохранить карточку и вернуть результат.
-                  for {
-                    mad2 <- madSavedFut
-                  } yield {
-                    LOGGER.trace(s"$logPrefix Saved ok, ad#${mad2.idOrNull}")
-                    implicit val ctx = implicitly[Context]
-
-                    // Сохранено успешно. Вернуть ответ в виде обновлённой формы.
-                    val formReInit2 = MAdEditFormInit(
-                      conf = MAdEditFormConf(
-                        producerId  = request.producer.id.get,
-                        adId        = mad2.id,
-                        ctxId       = ctx.ctxIdStr
-                      ),
-                      adData = MJdData(
-                        doc = MJdDoc(
-                          template  = tpl2,
-                          jdId      = MJdTagId(
-                            nodeId = mad2.id,
-                          ),
-                        ),
-                        edges = edges2,
-                      ),
-                      blockPadding = prodBlockPadding(request.producer)
-                    )
-
-                    Ok( Json.toJson(formReInit2) )
-                  }
-                }
+                identity
               )
-            }
           }
-        )
+
+          // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
+          vldEdgesMap <- n2VldUtil.EdgesValidator(edges1).vldEdgesMapFut
+
+          tpl2 = lkAdEdFormUtil.validateTpl(
+            template      = request.body.doc.template,
+            vldEdgesMap   = vldEdgesMap,
+          ).fold(
+            // Не удалось провалидировать шаблон.
+            {failedMsgs =>
+              val msgsConcat = failedMsgs
+                .iterator
+                .mkString(", ")
+              LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
+              val resFut = errorHandler.onClientError(request, NOT_ACCEPTABLE, s"tpl: $msgsConcat")
+              throw new HttpResultingException( resFut )
+            },
+            identity
+          )
+
+          // -- Есть на руках валидный шаблон. Можно создавать новую карточку и др.узлы. dry-run-часть завершена --
+
+          // Повторная чистка эджей по финальному шаблону.
+          // Т.к. JdDocValidator теперь может удалять из шаблона невалидные куски, то тут требуется дополнительная зачистка эджей:
+          edges2Map = JdTag.purgeUnusedEdges( tpl2, IId.els2idMap(edges1) )
+
+          framePred = MPredicates.JdContent.Frame
+
+          // Сграбить ссылки на внешние фрейморесурсы -- для них надо создать ext-узлы, этим занимается VideoUtil:
+          extRscEdgesFut = extRscUtil.ensureExtRscNodes(
+            videoUrls = (for {
+              jdEdge <- edges2Map.valuesIterator
+              if jdEdge.predicate ==>> framePred
+              url    <- jdEdge.url
+            } yield {
+              url
+            })
+              .toSet,
+            personIdOpt = request.user.personIdOpt
+          )
+
+          // Создать/обновить строковое название для узла карточки (на основе текстовых эджей)
+          edgesTexts2Map = lkAdEdFormUtil.mkEdgeTextsMap( edges2Map.valuesIterator )
+
+          nodeTechNameOpt = lkAdEdFormUtil.mkTechName(tpl2, edgesTexts2Map)
+          //LOGGER.trace(s"$logPrefix nodeTechName = ${nodeTechNameOpt.orNull}")
+
+          extRscEdges <- extRscEdgesFut
+
+          edgesAcc0 = {
+            LOGGER.trace(s"$logPrefix ${extRscEdges.size} ExtRscEdges = [${extRscEdges.view.mapValues(_.idOrNull).mkString(", ")}]")
+
+            var _acc0 = edges2Map.valuesIterator.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
+              MEdge(
+                predicate = jdEdge.predicate,
+                nodeIds = {
+                  val extRscNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> framePred) {
+                    jdEdge.url
+                      .flatMap( extRscEdges.get )
+                      .flatMap( _.id )
+                  }
+                  extRscNodeIdOpt
+                    .orElse {
+                      jdEdge.fileSrv.map(_.nodeId)
+                    }
+                    .toSet
+                },
+                doc = MEdgeDoc(
+                  uid   = Some( jdEdge.id ),
+                  text  = jdEdge.text.toSeq
+                )
+              ) :: acc0
+            }
+
+            // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
+            if (request.user.isSuper)
+              _acc0 ::= mdrUtil.mdrEdge(request.user, mdrUtil.mdrEdgeInfo(None))
+
+            LOGGER.trace(s"$logPrefix JdEE->MEdge edges: [${_acc0.mkString(", ")}]")
+            _acc0
+          }
+
+          // В зависимости от создания или редактирования карточки, делаем тот или иной апдейт.
+          madSaved <- request.madOpt.fold[Future[MNode]] {
+            LOGGER.trace(s"$logPrefix Creating new ad...")
+            // Создание новой карточки. Инициализировать новую карточку.
+            val mad0 = MNode(
+              common = MNodeCommon(
+                ntype       = MNodeTypes.Ad,
+                isDependent = true
+              ),
+              extras  = MNodeExtras(
+                doc = Some(MNodeDoc(
+                  template = tpl2
+                ))
+              ),
+              edges = MNodeEdges(
+                out = {
+                  // Нужно собрать в кучу все эджи: producer, creator, эджи от связанных узлов (картинок/файлов) итд.
+                  // Пропихиваем jd-эджи:
+                  var edgesAcc = edgesAcc0
+                  // Собираем эдж до текущего узла-продьюсера:
+                  edgesAcc ::= MEdge(
+                    predicate = MPredicates.OwnedBy,
+                    nodeIds   = Set( request.producer.id.get )
+                  )
+
+                  // Собираем эдж до текущего узла юзера-создателя:
+                  edgesAcc ::= MEdge(
+                    predicate = MPredicates.CreatedBy,
+                    nodeIds   = request.user.personIdOpt.toSet
+                  )
+
+                  edgesAcc
+                }
+              ),
+              meta = MMeta(
+                basic = MBasicMeta(
+                  techName = nodeTechNameOpt
+                )
+              )
+            )
+            for (adId <- mNodes.save( mad0 )) yield {
+              LOGGER.trace(s"$logPrefix Created new ad#$adId")
+              MNode.id.set( Some(adId) )(mad0)
+            }
+
+          } { mad00 =>
+            LOGGER.trace(s"$logPrefix Will update existing ad: ${mad00.idOrNull}")
+            if (mad00.extras.doc.isEmpty)
+              LOGGER.info(s"$logPrefix Initialized new jd-template, previous ad template was empty.")
+
+            // Сохраняемая карточка уже существует: перезаписать в ней некоторые эджи.
+            val filteredPreds = MPredicates.JdContent :: MPredicates.ModeratedBy :: Nil
+            mNodes.tryUpdate(mad00)(
+              MNode.edges
+                .modify { edges0 =>
+                  MNodeEdges(
+                    MNodeEdges.edgesToMap1(
+                      // Убрать все существующие jd-content-эджи.
+                      edges0.withoutPredicateIter(filteredPreds: _*) ++ edgesAcc0
+                    )
+                  )
+                } andThen
+                // Залить новый шаблон:
+                MNode.extras
+                  .composeLens( MNodeExtras.doc )
+                  .modify { mdoc0 =>
+                    val mdoc2 = mdoc0.fold( MNodeDoc(template = tpl2) )( MNodeDoc.template.set(tpl2) )
+                    Some( mdoc2 )
+                  } andThen
+                MNode.meta
+                  .composeLens( MMeta.basic )
+                  .composeLens( MBasicMeta.techName )
+                  .set( nodeTechNameOpt )
+            )
+          }
+
+        } yield {
+          LOGGER.trace(s"$logPrefix Saved ok, ad#${madSaved.idOrNull}")
+          implicit val ctx = implicitly[Context]
+
+          // Сохранено успешно. Вернуть ответ в виде обновлённой формы.
+          val formReInit2 = MAdEditFormInit(
+            conf = MAdEditFormConf(
+              producerId  = request.producer.id.get,
+              adId        = madSaved.id,
+              ctxId       = ctx.ctxIdStr
+            ),
+            adData = MJdData(
+              doc = MJdDoc(
+                template  = tpl2,
+                jdId      = MJdTagId(
+                  nodeId = madSaved.id,
+                ),
+              ),
+              edges = edges2Map.values,
+            ),
+            blockPadding = prodBlockPadding(request.producer)
+          )
+
+          Ok( Json.toJson(formReInit2) )
+        })
+          .recoverWith {
+            case hresEx: HttpResultingException =>
+              hresEx.httpResFut
+          }
       }
     }
   }
@@ -358,28 +344,18 @@ class LkAdEdit @Inject() (
     * @return 200 OK с HTML-страницей для формы редактирования карточки.
     */
   def editAd(adIdU: MEsUuId) = csrf.AddToken {
-    val adId = adIdU.id
-    canEditAd(adId, U.Lk).async { implicit request =>
-      //lazy val logPrefix = s"editAd($adId):"
+    canEditAd(adIdU.id, U.Lk).async { implicit request =>
+      for {
+        // Сразу заготовить контекст рендера, он нужен на всех последующих шагах:
+        ctx <- _mkAdEditHtmlCtx
 
-      // Сразу заготовить контекст рендера, он нужен на всех последующих шагах:
-      val ctxData1Fut = _ctxDataFut
-      val ctxFut = ctxData1Fut.map { implicit ctxData0 =>
-        getContext2
-      }
-
-      // Запустить сбоку карточки.
-      // Тут зависимость от контекста. Если тормозит, то для ускорения можно передавать неполный контекст без ctxData - на jd-рендер это не влияет.
-      val jdAdDataFut = ctxFut.flatMap { implicit ctx =>
-        jdAdUtil.mkJdAdDataFor
+        // Запустить сбоку карточки.
+        // Тут зависимость от контекста. Если тормозит, то для ускорения можно передавать неполный контекст без ctxData - на jd-рендер это не влияет.
+        jdAdData <- jdAdUtil
+          .mkJdAdDataFor
           .edit( request.mad )(ctx)
           .execute()
-      }
 
-      // Собрать модель и отрендерить:
-      val formInitStrFut = for {
-        ctx         <- ctxFut
-        jdAdData    <- jdAdDataFut
       } yield {
         val formInit = MAdEditFormInit(
           conf = MAdEditFormConf(
@@ -390,14 +366,8 @@ class LkAdEdit @Inject() (
           adData = jdAdData,
           blockPadding = prodBlockPadding(request.producer)
         )
-        _formInit2str( formInit )
-      }
+        val formInitStr = _formInit2str( formInit )
 
-      // Дождаться готовности фоновых операций и отрендерить результат.
-      for {
-        ctx         <- ctxFut
-        formInitStr <- formInitStrFut
-      } yield {
         // Вернуть HTTP-ответ, т.е. страницу с формой.
         val html = adEditTpl(
           mad     = Some(request.mad),
@@ -444,6 +414,12 @@ class LkAdEdit @Inject() (
       ctxData0.withJsInitTargets(
         MJsInitTargets.LkAdEditR :: ctxData0.jsInitTargets
       )
+    }
+  }
+
+  private def _mkAdEditHtmlCtx(implicit request: IReq[_]): Future[Context] = {
+    _ctxDataFut.map { implicit ctxData0 =>
+      getContext2
     }
   }
 
