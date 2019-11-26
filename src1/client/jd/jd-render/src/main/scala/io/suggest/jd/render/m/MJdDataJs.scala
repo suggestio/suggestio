@@ -23,7 +23,8 @@ object MJdDataJs {
   implicit object MJdDataJsFastEq extends FastEq[MJdDataJs] {
     override def eqv(a: MJdDataJs, b: MJdDataJs): Boolean = {
       ((a.doc ===* b.doc) || MJdDoc.MJdDocFastEq.eqv(a.doc, b.doc)) &&
-      (a.edges ===* b.edges)
+      (a.edges ===* b.edges) &&
+      (a.info ===* b.info)
     }
   }
 

@@ -7,6 +7,7 @@ import io.suggest.sc.pwa.MPwaManifestQs
 import models.im.MFavIcons
 import play.api.libs.json.Json
 import util.acl.IMaybeAuth
+import util.cdn.ICorsUtilDi
 
 /**
   * Suggest.io
@@ -19,6 +20,7 @@ import util.acl.IMaybeAuth
 trait ScPwaManifest
   extends ScController
   with IMaybeAuth
+  with ICorsUtilDi
 {
   import sioControllerApi._
 
@@ -42,6 +44,7 @@ trait ScPwaManifest
       .as( MimeConst.WEB_APP_MANIFEST )
       // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
       .cacheControl(86400)
+      .withHeaders( corsUtil.SIMPLE_CORS_HEADERS: _* )
   }
 
 }

@@ -7,6 +7,7 @@ import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.JdR
+import io.suggest.jd.tags.MJdTagNames
 import io.suggest.model.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
@@ -66,24 +67,21 @@ class GridCoreR(
 
         // TODO routerCtl.urlFor() внутри <a.href>
         (for {
-          (ad, i) <- mgrid.ads
+          ad <- mgrid.ads
             .iterator
             .flatten
-            .zipWithIndex
 
-          rootId = ad.nodeId getOrElse i.toString
-          isFocused = ad.isFocused
           adData = ad.focOrMain
 
           // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
           jdRenderArgs = (for {
-            blk <- {
+            adDataForJdRenderArgs <- {
               if (adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOutlined))
-                Some(ad.focOrMain)
+                Some(adData)
               else
                 ad.focOrAlwaysOpened
             }
-            bgColorOpt = blk.doc.template
+            bgColorOpt = adDataForJdRenderArgs.doc.template
               .getMainBlockOrFirst
               .rootLabel
               .props1
@@ -97,15 +95,13 @@ class GridCoreR(
             .getOrElse( MJdRenderArgs.empty )
 
           // Пройтись по шаблонам карточки
-          (jdDoc2, j) <- JdUtil
-            .flatGridTemplates( isFocused, adData )
-            .iterator
-            .zipWithIndex
+          jdDoc2 <- JdUtil.flatGridTemplates( adData )
 
         } yield {
           // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
           gridElTag(
-            ^.key := (rootId + `.` + j),
+            // TODO key: Какой ключ генерить, когда одна карточка повторяется в плитке? Сейчас этого нет, но это ведь возможно в будущем.
+            ^.key := jdDoc2.jdId.toString,
 
             // Реакция на клики, когда nodeId задан.
             ad.nodeId.whenDefined { nodeId =>

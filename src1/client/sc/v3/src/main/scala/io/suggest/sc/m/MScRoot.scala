@@ -65,12 +65,6 @@ case class MScRoot(
                     dialogs       : MScDialogs    = MScDialogs.empty,
                   ) {
 
-  def withDev( dev: MScDev )                        = copy(dev = dev)
-  def withIndex( index: MScIndex )                  = copy(index = index)
-  def withInternals( internals: MScInternals )      = copy(internals = internals)
-  def withGrid( grid: MGridS )                      = copy(grid = grid)
-  def withDialogs( dialogs: MScDialogs )            = copy(dialogs = dialogs)
-
   def userLocOpt: Option[MGeoLoc] = {
     index.search.geo.mapInit.userLoc
   }

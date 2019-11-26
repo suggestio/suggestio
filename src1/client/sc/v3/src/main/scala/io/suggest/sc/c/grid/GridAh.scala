@@ -152,7 +152,7 @@ object GridAh {
           .iterator
           .flatten
           .flatMap { adData =>
-            JdUtil.flatGridTemplates(adData.isFocused, adData.focOrMain)
+            JdUtil.flatGridTemplates( adData.focOrMain )
           }
           .to( LazyList )
       )
@@ -168,7 +168,7 @@ object GridAh {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
     // Нужно узнать координату в плитке карточке
     Effect.action {
-      JdUtil.flatGridTemplates(toAd.isFocused, toAd.focOrMain)
+      JdUtil.flatGridTemplates( toAd.focOrMain )
         .iterator
         .flatMap { scAd =>
           gbRes.coordsById.get( scAd.jdId )
@@ -341,7 +341,7 @@ class GridRespHandler
     )
 
     // И вернуть новый акк:
-    val v2 = ctx.value0.withGrid(g2)
+    val v2 = MScRoot.grid.set(g2)(ctx.value0)
     ActionResult(Some(v2), scrollFxOpt)
   }
 
@@ -375,7 +375,7 @@ class GridFocusRespHandler
         val ad1 = MScAdData.focused
           .modify(_.fail(ex))(ad0)
         val g2 = GridAh.saveAdIntoValue(index, ad1, g0)
-        ctx.value0.withGrid( g2 )
+        MScRoot.grid.set(g2)( ctx.value0 )
       }
   }
 
@@ -597,6 +597,7 @@ class GridAh[M](
               updated(v2, fx)
 
             } { _ =>
+              // Карточка уже раскрыта. Синхронное сокрытие карточки.
               val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
               val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
               val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
@@ -609,7 +610,7 @@ class GridAh[M](
                 )
               }(v0)
               // В фоне - запустить скроллинг к началу карточки.
-              val scrollFx      = GridAh.scrollToAdFx( ad0, gridBuild2 )
+              val scrollFx      = GridAh.scrollToAdFx( ad1, gridBuild2 )
               val resetRouteFx  = ResetUrlRoute.toEffectPure
               val fxs           = scrollFx + resetRouteFx
               updated(v2, fxs)

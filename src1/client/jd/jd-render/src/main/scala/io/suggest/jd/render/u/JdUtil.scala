@@ -39,10 +39,10 @@ object JdUtil {
     *
     * @return Список шаблонов на рендер.
     */
-  def flatGridTemplates(isFocused: Boolean, adData: MJdDataJs): LazyList[MJdDoc] = {
+  def flatGridTemplates(adData: MJdDataJs): LazyList[MJdDoc] = {
     val doc = adData.doc
 
-    if (isFocused) {
+    if (doc.template.rootLabel.name ==* MJdTagNames.DOCUMENT) {
       doc.template
         .subForest
         .iterator

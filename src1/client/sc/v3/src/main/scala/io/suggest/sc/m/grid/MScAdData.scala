@@ -49,8 +49,6 @@ final case class MScAdData(
   extends OptStrId
 {
 
-  def isFocused = focused.isReady
-
   def focOrMain: MJdDataJs =
     focused getOrElse main
 
