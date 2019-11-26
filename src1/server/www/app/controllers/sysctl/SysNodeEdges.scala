@@ -3,7 +3,7 @@ package controllers.sysctl
 import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.util.logs.IMacroLogs
 import models.msys.MNodeEdgeIdQs
 import models.req.{INodeEdgeReq, INodeReq}
@@ -48,19 +48,19 @@ trait SysNodeEdges
     isSuNodeEdge(qs).async { implicit request =>
       LOGGER.trace(s"deleteEdgePost($qs): Deleting edge ${request.medge} of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
 
-      val mnode2 = request.mnode.withEdges(
-        request.mnode.edges.copy(
-          out = MNodeEdges.edgesToMap1(
-            request.mnode.edges
-              .iterator
-              .filter { e => e ne request.medge }
-          )
-        )
-      )
-
       // Сохранить собранный эдж.
       for {
-        _ <- mNodes.save(mnode2)
+        _ <- mNodes.tryUpdate( request.mnode )(
+          MNode.edges
+            .composeLens( MNodeEdges.out )
+            .modify { edgesOut0 =>
+              MNodeEdges.edgesToMap1(
+                edgesOut0
+                  .iterator
+                  .filter( _ ne request.medge )
+              )
+            }
+        )
       } yield {
         Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )
           .flashing( FLASH.SUCCESS -> s"Удалён эдж #${qs.edgeId} из узла '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''." )
@@ -94,14 +94,13 @@ trait SysNodeEdges
         },
         {medge =>
           LOGGER.trace(s"$logPrefix Creating edge $medge on node ''${request.mnode.guessDisplayNameOrIdOrEmpty}''")
-          val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
-            mnode.withEdges(
-              mnode.edges.copy(
-                out = mnode.edges.out ++ Seq(medge)
-              )
+          for {
+            _ <- mNodes.tryUpdate(request.mnode)(
+              MNode.edges
+                .composeLens( MNodeEdges.out )
+                .modify( _ appended medge )
             )
-          }
-          for (_ <- saveFut) yield {
+          } yield {
             Redirect( routes.SysMarket.showAdnNode(nodeId) )
               .flashing( FLASH.SUCCESS -> s"Создан новый эдж на узле ''${request.mnode.guessDisplayNameOrIdOrEmpty}''." )
           }
@@ -137,23 +136,21 @@ trait SysNodeEdges
         {medge2 =>
           LOGGER.trace(s"$logPrefix Update of edge ${request.medge} using $medge2 on node ${request.mnode.guessDisplayNameOrIdOrEmpty}")
 
-          // Заменить эдж в инстансе узла.
-          val mnode2 = request.mnode.withEdges(
-            request.mnode.edges.copy(
-              MNodeEdges.edgesToMap1(
-                request.mnode.edges
-                  .withIndexUpdated( qs.edgeId ) { e0 =>
-                    Seq(
-                      sysMarketUtil.updateEdge(e0, medge2)
-                    )
-                  }
-              )
-            )
-          )
-
           // Запустить сохранение
           for {
-            _ <- mNodes.save(mnode2)
+            _ <- mNodes.tryUpdate(request.mnode)(
+              // Функция замены эджа по id в инстансе узла.
+              MNode.edges.modify { edges0 =>
+                MNodeEdges.out.set(
+                  MNodeEdges.edgesToMap1(
+                    edges0.withIndexUpdated( qs.edgeId ) { e0 =>
+                      sysMarketUtil.updateEdge(e0, medge2) ::
+                        Nil
+                    }
+                  )
+                )(edges0)
+              }
+            )
           } yield {
             // Отредиректить на sys-страницу узла.
             Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )

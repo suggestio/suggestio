@@ -139,6 +139,7 @@ class SysAdnGeo @Inject() (
               mNodes.tryUpdate(request.mnode) { mnode0 =>
                 // Найти текущий эдж, если есть.
                 val locEdgeOpt = mnode0.edges
+                  .out
                   .iterator
                   .find(_.predicate == p)
 

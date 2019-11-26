@@ -2,7 +2,7 @@ package io.suggest.sc.c.grid
 
 import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
-import diode.data.{PendingBase, Pot, Ready}
+import diode.data.{PendingBase, Pot}
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
@@ -10,7 +10,7 @@ import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBu
 import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.jd.tags.JdTag
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
@@ -21,7 +21,6 @@ import io.suggest.sc.sc3._
 import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.primo.id.OptId
@@ -152,7 +151,9 @@ object GridAh {
         ads
           .iterator
           .flatten
-          .flatMap(_.flatGridTemplates)
+          .flatMap { adData =>
+            JdUtil.flatGridTemplates(adData.isFocused, adData.focOrMain)
+          }
           .to( LazyList )
       )
       .prev( jdRuntime )
@@ -167,8 +168,7 @@ object GridAh {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
     // Нужно узнать координату в плитке карточке
     Effect.action {
-      toAd
-        .flatGridTemplates
+      JdUtil.flatGridTemplates(toAd.isFocused, toAd.focOrMain)
         .iterator
         .flatMap { scAd =>
           gbRes.coordsById.get( scAd.jdId )
@@ -288,27 +288,12 @@ class GridRespHandler
             // Собрать начальное состояние карточки.
             // Сервер может присылать уже открытые карточи - это нормально.
             // Главное - их сразу пропихивать и в focused, и в обычные блоки.
-            val jdDoc0 = sc3AdData.jd.doc
-            val isFocused = jdDoc0.template.rootLabel.name ==* MJdTagNames.DOCUMENT
-            val jdDataJs = MJdDataJs(
-              doc   = jdDoc0,
-              edges = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges ),
-            )
-
             MScAdData(
-              main = jdDataJs,
-              focused = if (isFocused) {
-                // Сервер прислал focused-карточку.
-                val v = MScFocAdData(
-                  jdDataJs,
-                  canEdit = sc3AdData.canEdit.getOrElseFalse,
-                  userFoc = false,
-                )
-                Ready(v)
-              } else {
-                // Обычный grid-block.
-                Pot.empty
-              }
+              main = MJdDataJs(
+                doc   = sc3AdData.jd.doc,
+                edges = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges ),
+                info  = sc3AdData.info,
+              ),
             )
           }
       }
@@ -322,9 +307,7 @@ class GridRespHandler
     // Опциональный эффект скролла вверх.
     val scrollFxOpt = {
       // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?
-      val isScrollUp = isSilentOpt
-        .map(!_)
-        .getOrElse( isCleanLoad )
+      val isScrollUp = isSilentOpt.fold(isCleanLoad)(!_)
       // А если вручную не задано, то определить нужность скроллинга автоматически:
       OptionUtil.maybe(isScrollUp) {
         Effect.action {
@@ -416,11 +399,7 @@ class GridFocusRespHandler
         val ad1 = MScAdData.focused
           .modify(
             _.ready(
-              MScFocAdData(
-                blkData = MJdDataJs( focAd.jd ),
-                canEdit = focAd.canEdit contains true,
-                userFoc = true
-              )
+              MJdDataJs.fromJdData( focAd.jd, focAd.info ),
             )
           )(ad0)
 

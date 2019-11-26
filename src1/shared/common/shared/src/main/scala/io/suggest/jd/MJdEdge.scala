@@ -69,7 +69,14 @@ object MJdEdge {
       val idVld = Validation.success(e.id)
 
       val textVld = if (e.predicate ==>> P.Text ) {
-        Validation.liftNel(e.text)({ textOpt => !textOpt.exists { text => text.nonEmpty && text.length < JdConst.MAX_TEXT_LEN } }, errMsgF("len"))
+        Validation.liftNel(e.text)(
+          {textOpt =>
+            !textOpt.exists { text =>
+              text.nonEmpty && text.length < JdConst.MAX_TEXT_LEN
+            }
+          },
+          errMsgF("len")
+        )
       } else {
         ScalazUtil.liftNelNone(e.text, errMsgF("text" + `.` + ErrorConstants.Words.UNEXPECTED))
       }
@@ -133,10 +140,6 @@ case class MJdEdge(
                   )
   extends IId[EdgeUid_t]
 {
-
-  def withText(text: Option[String])              = copy(text = text)
-  def withUrl(url: Option[String] = None)         = copy(url = url)
-  def withFileSrv(fileSrv: Option[MSrvFileInfo])  = copy(fileSrv = fileSrv)
 
   def fileSrvUrl = fileSrv.flatMap(_.url)
 

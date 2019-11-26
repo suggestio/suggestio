@@ -3,6 +3,7 @@ package io.suggest.adn.edit.m
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -15,12 +16,16 @@ object MLkAdnEditRoot {
   implicit object MLkAdnEditRootFastEq extends FastEq[MLkAdnEditRoot] {
     override def eqv(a: MLkAdnEditRoot, b: MLkAdnEditRoot): Boolean = {
       (a.node ===* b.node) &&
-        (a.popups ===* b.popups) &&
-        (a.internals ===* b.internals)
+      (a.popups ===* b.popups) &&
+      (a.internals ===* b.internals)
     }
   }
 
   @inline implicit def univEq: UnivEq[MLkAdnEditRoot] = UnivEq.derive
+
+  val node = GenLens[MLkAdnEditRoot](_.node)
+  val internals = GenLens[MLkAdnEditRoot](_.internals)
+  val popups = GenLens[MLkAdnEditRoot](_.popups)
 
 }
 
@@ -34,10 +39,6 @@ case class MLkAdnEditRoot(
                            internals    : MAdnEditInternals,
                            popups       : MAdnEditPopups    = MAdnEditPopups.empty
                          ) {
-
-  def withNode(node: MAdnNodeS)             = copy(node = node)
-  def withInternals(internals: MAdnEditInternals) = copy(internals = internals)
-  def withPopups(popups: MAdnEditPopups)    = copy(popups = popups)
 
   /** Экспорт в кросс-платформенный класс формы редактирования adn-узла. */
   def toForm: MAdnEditForm = {

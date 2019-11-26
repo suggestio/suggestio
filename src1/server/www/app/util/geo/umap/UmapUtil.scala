@@ -34,6 +34,7 @@ class UmapUtil @Inject() () {
         mnode <- nodes.to(LazyList)
       } yield {
         val edges1iter = mnode.edges
+          .out
           .iterator
           .map {
             case e if (e.predicate ==* p) && e.info.geoShapes.nonEmpty =>

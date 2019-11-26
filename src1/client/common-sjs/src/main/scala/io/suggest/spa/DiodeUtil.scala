@@ -59,6 +59,12 @@ object DiodeUtil {
     }
 
 
+    implicit class PotBoolOpsExt(val pot: Pot[Boolean]) extends AnyVal {
+      def getOrElseFalse = pot contains true
+      def getOrElseTrue = pot getOrElse true
+    }
+
+
     /** Расширенная утиль для Pot'ов. */
     implicit class PotOpsExt[T](val pot: Pot[T]) extends AnyVal {
 

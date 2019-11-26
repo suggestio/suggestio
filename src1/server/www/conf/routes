@@ -98,6 +98,7 @@ POST /lk/subnodes/madv/:adId/:isEnabled/*onNode     @controllers.LkNodes.setAdv(
 GET  /lk/subnodes/mad/:adId                         @controllers.LkNodes.nodesForAd(adId: MEsUuId)
 POST /lk/subnodes/tfd/*onNode                       @controllers.LkNodes.setTfDaily(onNode: RcvrKey)
 POST /lk/subnodes/aso/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdvShowOpened(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
+POST /lk/subnodes/out/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAlwaysOutlined(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 
 
 ## ЛК: Размещение ADN-узла на карте

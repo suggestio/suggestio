@@ -9,7 +9,7 @@ import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import scala.collection.SeqView
+import scala.collection.{MapView, SeqView}
 
 /**
  * Suggest.io
@@ -184,14 +184,47 @@ case class MNodeEdges(
   extends EmptyProduct
 {
 
-  def iterator = out.iterator
+  lazy val edgesByPred: MapView[MPredicate, Seq[MEdge]] = {
+    if (out.isEmpty) {
+      MapView.empty
+    } else {
+      (for {
+        e <- out.iterator
+        // Т.к. предикаты имеют иерархию, на каждый эдж может быть сразу несколько элементов в карте.
+        pred <- e.predicate.meAndParentsIterator
+      } yield {
+        pred -> e
+      })
+        .to( LazyList )
+        .groupBy(_._1)
+        .view
+        .mapValues(_.map(_._2))
+    }
+  }
+
+
+  lazy val edgesByUid: Map[EdgeUid_t, MEdge] = {
+    if (out.isEmpty) {
+      Map.empty
+    } else {
+      (for {
+        e   <- out
+        uid <- e.doc.uid
+      } yield {
+        (uid, e)
+      })
+        .toMap
+    }
+  }
+
 
   /** Отковырять первый элемент из 2-кортежа с эджем.  */
   private def _first(e: (MEdge,_)) = e._1
 
   /** Найти эдж с указанным порядковым номером. */
   def withIndex(i: Int): Option[MEdge] = {
-    iterator
+    out
+      .iterator
       .zipWithIndex
       .find(_._2 == i)
       .map(_first)
@@ -199,7 +232,8 @@ case class MNodeEdges(
 
 
   def withIndexUpdated(i: Int)(f: MEdge => IterableOnce[MEdge]): Iterator[MEdge] = {
-    iterator
+    out
+      .iterator
       .zipWithIndex
       .flatMap { case (e, x) =>
         if (x == i) {
@@ -212,50 +246,89 @@ case class MNodeEdges(
 
 
   def withPredicate(preds: MPredicate*): MNodeEdges = {
-    withFilter( MNodeEdges.Filters.predsF(preds) )
+    MNodeEdges.out.set(
+      withPredicateIter(preds: _*)
+        .to(LazyList)
+    )(this)
   }
   def withoutPredicate(preds: MPredicate*): MNodeEdges = {
-    withFilterNot( MNodeEdges.Filters.predsF(preds) )
+    MNodeEdges.out.set(
+      withoutPredicateIter(preds: _*)
+        .to(LazyList)
+    )(this)
   }
 
-  // TODO deprecated withPredicate
   def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    withPredicate(preds: _*).iterator
+    if (preds.isEmpty) {
+      throw new IllegalArgumentException("preds must be non-empty")
+    } else {
+      preds
+        .iterator
+        .flatMap( edgesByPred.get )
+        .flatten
+    }
   }
 
-  // TODO deprecated withoutPredicate
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    withoutPredicate( preds: _* )
-      .iterator
+    // Оптимизировано через edgesByPred на случай больших списков эджей: так эджи фильтруются сразу группами.
+    if (preds.isEmpty) {
+      MNodeEdges.LOGGER.warn(s"withoutPredicateIter() called with zero args from\n${Thread.currentThread().getStackTrace.iterator.take(3).mkString("\n")}")
+      out.iterator
+    } else {
+      edgesByPred
+        .view
+        .filterKeys { k =>
+          val matches = preds.exists { p =>
+            k ==>> p
+          }
+          !matches
+        }
+        .valuesIterator
+        .flatten
+    }
   }
 
   def withPredicateIterIds(pred: MPredicate*): Iterator[String] = {
     withPredicateIter(pred: _*)
-      .flatMap { _.nodeIds }
+      .flatMap( _.nodeIds )
   }
 
   def withNodeId(nodeIds: String*): Iterator[MEdge] = {
-    iterator
+    out
+      .iterator
       .filter { medge =>
         medge.nodeIds.exists(nodeIds.contains)
       }
   }
 
   def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
-    iterator
-      .filter( MNodeEdges.Filters.nodePredF(nodeId, predicate) )
+    edgesByPred
+      .get( predicate )
+      .iterator
+      .flatten
+      .filter( _.nodeIds contains nodeId )
   }
 
   def withoutNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
-    iterator
+    out
+      .iterator
       .filterNot( MNodeEdges.Filters.nodePredF(nodeId, predicate) )
   }
 
 
   /** Фильтрация по edge uid. */
-  def withUid(edgeUids: EdgeUid_t*) = withUid1(edgeUids)
+  def withUid(edgeUids: EdgeUid_t*) = withUid1( edgeUids )
   def withUid1(edgeUids: Iterable[EdgeUid_t]): MNodeEdges = {
-    withFilter( MNodeEdges.Filters.hasUidF(edgeUids) )
+    if (edgeUids.isEmpty) {
+      throw new IllegalArgumentException( "edgeUids must be non-empty" )
+    } else {
+      MNodeEdges.out.set(
+        edgeUids
+          .iterator
+          .flatMap( edgesByUid.get )
+          .to( LazyList )
+      )(this)
+    }
   }
 
   /** Фильтрация по отсутствую указанных edge uid. */
@@ -271,11 +344,11 @@ case class MNodeEdges(
   }
 
   def withFilter(f: MEdge => Boolean): MNodeEdges = {
-    withOut(
-      out = outView
+    MNodeEdges.out.set(
+      outView
         .filter(f)
         .toSeq
-    )
+    )(this)
   }
   def withFilterNot(f: MEdge => Boolean): MNodeEdges = {
     withFilter( f.andThen(!_) )
@@ -287,9 +360,8 @@ case class MNodeEdges(
     if (edges.isEmpty) {
       this
     } else {
-      withOut(
-        out = (outView ++ edges).toSeq
-      )
+      MNodeEdges.out
+        .set( (outView ++ edges).toSeq )(this)
     }
   }
 
@@ -298,28 +370,11 @@ case class MNodeEdges(
     if (edgess.isEmpty) {
       this
     } else {
-      withOut(
-        out = (outView ++ edgess.iterator.flatten).toSeq
-      )
+      MNodeEdges.out
+        .set( (outView ++ edgess.iterator.flatten).toSeq )(this)
     }
   }
 
-  lazy val edgesByUid: Map[EdgeUid_t, MEdge] = {
-    if (out.isEmpty) {
-      Map.empty
-    } else {
-      val iter = for {
-        e   <- out
-        uid <- e.doc.uid
-      } yield {
-        (uid, e)
-      }
-      iter.toMap
-    }
-  }
-
-  /** Название сбивает с толку, но это метод для перезаписи out на случай возможного появления других полей case-класса. */
-  def withOut(out: Seq[MEdge]) = copy(out = out)
 
   /**
     * Найти и обновить с помощью функции эдж, который соответствует предикату.
@@ -329,15 +384,15 @@ case class MNodeEdges(
     * @return Обновлённый экземпляр [[MNodeEdges]].
     */
   def updateAll(findF: MEdge => Boolean)(updateF: MEdge => Option[MEdge]): MNodeEdges = {
-    withOut(
-      out = this.out.flatMap { e =>
+    MNodeEdges.out.modify(
+      _.flatMap { e =>
         if (findF(e)) {
           updateF(e)
         } else {
           e :: Nil
         }
       }
-    )
+    )(this)
   }
 
 }

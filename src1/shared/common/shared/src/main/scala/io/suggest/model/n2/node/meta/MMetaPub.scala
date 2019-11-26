@@ -6,6 +6,7 @@ import io.suggest.color.MColors
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.scalaz.StringValidationNel
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.syntax.apply._
@@ -48,6 +49,11 @@ object MMetaPub {
     )(apply _)
   }
 
+  val name      = GenLens[MMetaPub](_.name)
+  val address   = GenLens[MMetaPub](_.address)
+  val business  = GenLens[MMetaPub](_.business)
+  val colors    = GenLens[MMetaPub](_.colors)
+
 }
 
 
@@ -65,11 +71,3 @@ case class MMetaPub(
                      colors        : MColors         = MColors.empty
                    )
   extends EmptyProduct
-{
-
-  def withName(name: String)                  = copy(name = name)
-  def withAddress(address: MAddress)          = copy(address = address)
-  def withBusiness(business: MBusinessInfo)   = copy(business = business)
-  def withColors(colors: MColors)             = copy(colors = colors)
-
-}

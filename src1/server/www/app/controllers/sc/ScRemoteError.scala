@@ -96,6 +96,8 @@ trait ScRemoteError
             _userSaOpt <- userSaOptFut
           } yield {
             new statUtil.Stat2 {
+              override def logMsg = Some("Sc-remote-error")
+
               override def uri: Option[String] = {
                 merr0.url.orElse( super.uri )
               }
@@ -121,23 +123,10 @@ trait ScRemoteError
           }
 
           // Куда сохранять? В логи или просто на сервере в логи отрендерить?
-          val saveFut = if (SAVE_TO_MSTAT) {
-            for (stat2 <- stat2Fut) yield {
-              LOGGER.info(s"$logPrefix Error info received from remote client:\n${mstats.toJsonPretty(stat2.mstat)}")
-              stat2Fut
-            }
-          } else {
-            for {
-              stat2  <- stat2Fut
-              // Сохраняем в базу отчёт об ошибке.
-              merrId <- statUtil.saveStat(stat2)
-            } yield {
-              LOGGER.trace(s"$logPrefix Saved remote error as stat[$merrId]." )
-              merrId
-            }
-          }
-
-          for (_ <- saveFut) yield {
+          for {
+            stat2 <- stat2Fut
+            _ <- statUtil.maybeSaveGarbageStat( stat2 )
+          } yield {
             NoContent
               // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
               // ошибку, что нет root тега в ответе /sc/error.

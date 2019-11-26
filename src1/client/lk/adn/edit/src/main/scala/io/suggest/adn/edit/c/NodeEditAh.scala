@@ -31,15 +31,16 @@ class NodeEditAh[M](
     case m: SetName =>
       val v0 = value
       val name2 = m.name
-      if (name2 ==* v0.meta.name) {
+
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.name )
+
+      if (name2 ==* lens.get(v0)) {
         noChange
 
       } else {
         // Есть текст, выставить его в состояние. Финальный трим будет на сервере.
-        val v1 = v0.withMeta(
-          v0.meta
-            .withName( m.name )
-        )
+        val v1 = (lens set m.name)(v0)
 
         // Проверить корректность
         val trimmed = m.name.trim
@@ -56,15 +57,15 @@ class NodeEditAh[M](
       val townOpt = Option(m.town)
         .filter(_filterStrTrimmed)
 
-      if (townOpt ==* v0.meta.address.town) {
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.address)
+        .composeLens( MAddress.town )
+
+      if (townOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = v0.withMeta(
-          v0.meta.withAddress(
-            v0.meta.address.withTown( townOpt )
-          )
-        )
+        val v1 = (lens set townOpt)( v0 )
 
         val v2 = _updateErrors(v1, MAddress.validateTown(townOpt))( _.town )( _.withTown(_) )
 
@@ -79,17 +80,15 @@ class NodeEditAh[M](
       val addressOpt = Option(m.address)
         .filter( _filterStrTrimmed )
 
-      if (addressOpt ==* v0.meta.address.address) {
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.address )
+        .composeLens( MAddress.address )
+
+      if (addressOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = v0.withMeta(
-          v0.meta.withAddress(
-            v0.meta.address.withAddress(
-              addressOpt
-            )
-          )
-        )
+        val v1 = (lens set addressOpt)(v0)
 
         val v2 = _updateErrors(v1, MAddress.validateAddress(addressOpt))( _.address )( _.withAddress(_) )
 
@@ -105,16 +104,15 @@ class NodeEditAh[M](
         .map(_.trim)
         .filter(_.nonEmpty)
 
-      if (urlOpt ==* v0.meta.business.siteUrl) {
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.business )
+        .composeLens( MBusinessInfo.siteUrl )
+
+      if (urlOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = v0.withMeta(
-          v0.meta.withBusiness(
-            v0.meta.business
-              .withSiteUrl( urlOpt )
-          )
-        )
+        val v1 = (lens set urlOpt)(v0)
 
         // Попытаться распарсить ссылку в тексте.
         val v2 = _updateErrors(v1, MBusinessInfo.validateSiteUrl( urlOpt ))( _.siteUrl )( _.withSiteUrl(_) )
@@ -130,17 +128,15 @@ class NodeEditAh[M](
       val infoOpt = Option(m.infoAboutProducts)
         .filter( _filterStrTrimmed )
 
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.business )
+        .composeLens( MBusinessInfo.info )
+
       if (infoOpt ==* v0.meta.business.info) {
         noChange
 
       } else {
-        val v1 = v0.withMeta(
-          v0.meta.withBusiness(
-            v0.meta.business
-              .withInfo( infoOpt )
-          )
-        )
-
+        val v1 = (lens set infoOpt)(v0)
         val v2 = _updateErrors(v1, MBusinessInfo.validateInfo( infoOpt ))( _.info )( _.withInfo(_) )
 
         updated(v2)
@@ -154,16 +150,15 @@ class NodeEditAh[M](
       val htOpt = Option(m.humanTraffic)
         .filter( _filterStrTrimmed )
 
-      if (htOpt ==* v0.meta.business.humanTraffic) {
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.business )
+        .composeLens( MBusinessInfo.humanTraffic )
+
+      if (htOpt ==* lens.get(v0)) {
         noChange
 
       } else {
-        val v1 = v0.withMeta(
-          v0.meta.withBusiness(
-            v0.meta.business
-              .withHumanTraffic( htOpt )
-          )
-        )
+        val v1 = (lens set htOpt)(v0)
 
         val v2 = _updateErrors(v1, MBusinessInfo.validateHumanTraffic( htOpt ))( _.humanTraffic )( _.withHumanTraffic(_) )
 
@@ -175,21 +170,20 @@ class NodeEditAh[M](
     case m: SetAudienceDescr =>
       val v0 = value
 
-      val adOpt = Option(m.audienceDescr)
+      val audOpt = Option(m.audienceDescr)
         .filter( _filterStrTrimmed )
 
-      if (adOpt ==* v0.meta.business.audienceDescr) {
+      val lens = MAdnNodeS.meta
+        .composeLens( MMetaPub.business )
+        .composeLens( MBusinessInfo.audienceDescr )
+
+      if (audOpt ==* v0.meta.business.audienceDescr) {
         noChange
 
       } else {
-        val v1 = v0.withMeta(
-          v0.meta.withBusiness(
-            v0.meta.business
-              .withAudienceDescr( adOpt )
-          )
-        )
+        val v1 = (lens set audOpt)(v0)
 
-        val v2 = _updateErrors(v1, MBusinessInfo.validateAudienceDescr(adOpt))( _.audienceDescr )( _.withAudienceDescr(_) )
+        val v2 = _updateErrors(v1, MBusinessInfo.validateAudienceDescr(audOpt))( _.audienceDescr )( _.withAudienceDescr(_) )
 
         updated(v2)
       }
@@ -198,18 +192,21 @@ class NodeEditAh[M](
     // Очистка эджей в состоянии от неактуальных элементов.
     case PurgeUnusedEdges =>
       val v0 = value
+
       // Собрать множество id используемых эджей.
       val edgeUids = v0.resView
         .edgeUids
         .map(_.edgeUid)
         .toSet
+
       // Профильтровать карту эджей в состоянии.
-      val v2 = v0.withEdges(
-        v0.edges
+      val v2 = MAdnNodeS.edges.modify { edges0 =>
+        edges0
           .view
           .filterKeys(edgeUids.contains)
           .toMap
-      )
+      }(v0)
+
       updatedSilent(v2)
 
   }
@@ -234,16 +231,18 @@ class NodeEditAh[M](
         if (readF(v0.errors) contains e2) {
           v0
         } else {
-          v0.withErrors(
-            writeF(v0.errors, Some(e2))
-          )
+          MAdnNodeS.errors.modify { errors0 =>
+            writeF(errors0, Some(e2))
+          }(v0)
         }
       },
       // Всё ок, нет ошибки
       {_ =>
         if (readF(v0.errors).nonEmpty) {
           // стереть ошибку из состояния.
-          v0.withErrors( writeF(v0.errors, None) )
+          MAdnNodeS.errors.modify { errors0 =>
+            writeF(errors0, None)
+          }(v0)
         } else {
           v0
         }

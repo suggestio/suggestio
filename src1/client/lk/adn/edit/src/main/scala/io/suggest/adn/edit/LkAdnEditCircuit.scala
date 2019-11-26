@@ -1,6 +1,7 @@
 package io.suggest.adn.edit
 
 import diode.react.ReactConnector
+import io.suggest.spa.CircuitUtil
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
 import io.suggest.adn.edit.c.{NodeEditAh, RootAh}
 import io.suggest.adn.edit.m._
@@ -8,6 +9,7 @@ import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes}
 import io.suggest.lk.c.{ColorPickAh, PictureAh}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
+import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.routes
@@ -28,8 +30,6 @@ class LkAdnEditCircuit
   with ReactConnector[MLkAdnEditRoot]
 {
 
-  import MLkAdnEditRoot.MLkAdnEditRootFastEq
-  import MAdnNodeS.MAdnNodeSFastEq
   import MPictureAh.MPictureAhFastEq
   import MColorPick.MColorPickFastEq
 
@@ -62,7 +62,7 @@ class LkAdnEditCircuit
   // Models
   private[edit] val rootRW = zoomRW(identity(_))((_, root2) => root2)
 
-  private val nodeRW = zoomRW(_.node)(_.withNode(_))
+  private val nodeRW = CircuitUtil.mkLensRootZoomRW(this, MLkAdnEditRoot.node)(MAdnNodeS.MAdnNodeSFastEq)
 
   private val mPictureAhRW = zoomRW [MPictureAh[MAdnResView]] { mroot =>
     MPictureAh(
@@ -82,7 +82,7 @@ class LkAdnEditCircuit
         edges   = mPictureAh2.edges,
         resView = mPictureAh2.view
       )
-      mroot2 = mroot2.withNode( node2 )
+      mroot2 = (MLkAdnEditRoot.node set node2)(mroot2)
     }
 
     // Импортировать изменившиеся попапы:
@@ -92,15 +92,15 @@ class LkAdnEditCircuit
         cropPopup = mPictureAh2.cropPopup,
         errorPopup = mPictureAh2.errorPopup
       )
-      mroot2 = mroot2.withPopups( popups2 )
+      mroot2 = (MLkAdnEditRoot.popups set popups2)(mroot2)
     }
 
     mroot2
   }
 
-  private val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
+  private val internalsRW = CircuitUtil.mkLensRootZoomRW(this, MLkAdnEditRoot.internals)( MAdnEditInternals.MAdnEditInternalsFastEq )
 
-  private val confRO = internalsRW.zoom(_.conf)
+  private val confRO = CircuitUtil.mkLensZoomRO(internalsRW, MAdnEditInternals.conf)
 
 
   // API
@@ -126,19 +126,17 @@ class LkAdnEditCircuit
         )
         Some(mcp)
       } { (mroot0, mcpOpt2) =>
-        val mroot2 = mcpOpt2.fold(mroot0) { mcp2 =>
-          mroot0.copy(
-            node = mroot0.node.withMeta(
-              mroot0.node.meta.withColors(
-                mroot0.node.meta.colors
-                  .withColorOfType(colorOfType, mcp2.colorOpt)
-              )
-            ),
-            internals = mroot0.internals
-              .withColorState( mcp2.colorsState )
-          )
+        mcpOpt2.fold(mroot0) { mcp2 =>
+          (
+            MLkAdnEditRoot.node
+              .composeLens( MAdnNodeS.meta )
+              .composeLens( MMetaPub.colors )
+              .modify( _.withColorOfType(colorOfType, mcp2.colorOpt) ) andThen
+            MLkAdnEditRoot.internals
+              .composeLens( MAdnEditInternals.colorState )
+              .set( mcp2.colorsState )
+          )(mroot0)
         }
-        mroot2
       }( OptFastEq.Wrapped(MColorPickFastEq) )
     )
   }

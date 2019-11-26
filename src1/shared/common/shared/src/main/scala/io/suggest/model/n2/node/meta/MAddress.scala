@@ -4,6 +4,7 @@ import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.ValidationNel
@@ -58,6 +59,9 @@ object MAddress extends IEmpty {
       validateAddress( maddress.address )
     )(apply _)
   }
+
+  val town = GenLens[MAddress](_.town)
+  val address = GenLens[MAddress](_.address)
 
 }
 

@@ -13,7 +13,7 @@ import io.suggest.dev.MScreen
 import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MRcvrsMapUrlArgs}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -162,7 +162,7 @@ class AdvGeoRcvrsUtil @Inject()(
 
   /** Карта ресиверов, размещённых через lk-adn-map.
     *
-    * @param msearch Источник MNode. См. mNodes.source[MNode](...).
+    * @param nodesSrc Источник MNode. См. mNodes.source[MNode](...).
     * @return Фьючерс с картой узлов.
     *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
     *         всегда возвращали один и тот же результат.
@@ -522,20 +522,22 @@ class AdvGeoRcvrsUtil @Inject()(
     ) { mnode0 =>
       // Есть NodeLocation-эджи, которые требуют заполнения поля tags.
       val nodeLocEdgeTags = advBuilderUtil.nodeGeoLocTags(mnode0)
-      val mnode2 = mnode0.withEdges(
-        mnode0.edges.withOut(
-          for (e0 <- mnode0.edges.out) yield {
+
+      val edge_info_tags_LENS = MEdge.info
+        .composeLens( MEdgeInfo.tags )
+      val mnode2 = MNode.edges
+        .composeLens( MNodeEdges.out )
+        .modify { edges0 =>
+          for (e0 <- edges0) yield {
             if (e0.predicate ==>> pred) {
               // Апдейт tags
-              e0.withInfo(
-                e0.info.withTags( nodeLocEdgeTags )
-              )
+              (edge_info_tags_LENS set nodeLocEdgeTags)(e0)
             } else {
               e0
             }
           }
-        )
-      )
+        }(mnode0)
+
       LOGGER.trace(s"$logPrefix Node#${mnode2.idOrNull} => tags=[${nodeLocEdgeTags.mkString(", ")}]")
       Future.successful( mnode2 )
     }

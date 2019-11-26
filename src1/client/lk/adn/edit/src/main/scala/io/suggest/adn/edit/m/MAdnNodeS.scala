@@ -2,6 +2,7 @@ package io.suggest.adn.edit.m
 
 import diode.FastEq
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
+import io.suggest.jd.MJdEdge
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.n2.edge.MEdgeDataJs
@@ -47,17 +48,16 @@ case class MAdnNodeS(
                       errors        : MAdnEditErrors                = MAdnEditErrors.empty,
                     ) {
 
-  def withMeta(meta: MMetaPub)                                    = copy(meta = meta)
-  def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])               = copy(edges = edges)
-  def withResView(resView: MAdnResView)                           = copy(resView = resView)
-  def withErrors(errors: MAdnEditErrors)                          = copy(errors = errors)
-
   def toForm: MAdnEditForm = {
+    val resetUrlF = MJdEdge.url.set( None )
+
     MAdnEditForm(
       meta = meta,
-      edges = edges.values
-        .iterator
-        .map(_.jdEdge.withUrl())
+      edges = (for {
+        jdEdgeJs <- edges.values.iterator
+      } yield {
+        resetUrlF( jdEdgeJs.jdEdge )
+      })
         .toSeq,
       resView = resView
     )

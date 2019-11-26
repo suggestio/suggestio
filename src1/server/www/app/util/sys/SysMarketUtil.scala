@@ -303,7 +303,7 @@ class SysMarketUtil extends MacroLogsDyn {
       info      = {
         val i = e.info
         mEdge0.info.copy(
-          textNi   = i.textNi,
+          textNi      = i.textNi,
           flag        = i.flag,
           tags        = i.tags
         )

@@ -135,7 +135,7 @@ class LkAdnEdit @Inject() (
       .toMap
     val imgEdges = request.mnode
       .edges
-      .withUid1(imgEdgeUids.keys)
+      .withUid1( imgEdgeUids.keySet )
 
     val imgsEdges = jdAdUtil.collectImgEdges( imgEdges, imgEdgeUids )
 

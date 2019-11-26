@@ -80,6 +80,15 @@ trait ILkNodesApi {
     */
   def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[_]
 
+  /** Запустить запрос обновления флага AlwaysOutlined, для указанного узла и карточки.
+    *
+    * @param adId id рекламной карточки.
+    * @param isAlwaysOutlined Новое значение флага AlwaysOutlined.
+    * @param onNode На каком узле размещение карточки.
+    * @return Фьючерс.
+    */
+  def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[_]
+
   /** Выставить новый режим тарификации указанного узла.
     *
     * @param onNode Интересующий узел.
@@ -198,6 +207,16 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
     val S = HttpConst.Status
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode))
+    )
+    HttpClient.execute( req )
+      .respAuthFut
+      .successIfStatus( S.OK, S.NO_CONTENT )
+  }
+
+  override def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[_] = {
+    val S = HttpConst.Status
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.setAlwaysOutlined(adId, isAlwaysOutlined, RcvrKey.rcvrKey2urlPath(onNode))
     )
     HttpClient.execute( req )
       .respAuthFut

@@ -152,15 +152,15 @@ class CspUtil @Inject() (
   }
 
 
+  /** Поддержка JSON-парсинга полного JSON-отчёта CSP. */
+  def WRAP_REPORT_READS: Reads[CspViolationReport] = {
+    // Нежелательно .read[CspViolationReport]: если сделать implicit def, то будет бесконечная рекурсия.
+    (__ \ "csp-report").read( CspViolationReport.REPORT_BODY_READS )
+  }
+
 
   /** Контейнер неявных вещей и относящихся к ним. */
   object Implicits {
-
-    /** Поддержка JSON-парсинга полного JSON-отчёта CSP. */
-    implicit def WRAP_REPORT_READS: Reads[CspViolationReport] = {
-      (__ \ "csp-report").read[CspViolationReport]
-    }
-
 
     implicit class ResultCspExt( result: Result ) {
 

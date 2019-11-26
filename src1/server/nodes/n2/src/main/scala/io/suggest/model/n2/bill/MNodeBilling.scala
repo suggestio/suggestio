@@ -8,6 +8,7 @@ import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.PrefixedFn
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -61,6 +62,9 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
       FieldObject(TARIFFS_FN, enabled = true, properties = MNodeTariffs.generateMappingProps)
     )
   }
+
+  val contractId = GenLens[MNodeBilling](_.contractId)
+  val tariffs = GenLens[MNodeBilling](_.tariffs)
 
 }
 

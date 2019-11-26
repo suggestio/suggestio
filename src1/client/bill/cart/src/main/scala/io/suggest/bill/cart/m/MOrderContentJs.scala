@@ -51,7 +51,7 @@ case class MOrderContentJs(
     OptId.els2idMap[String, MJdDataJs](
       content.adsJdDatas
         .iterator
-        .map( MJdDataJs.apply )
+        .map( MJdDataJs.fromJdData(_) )
     )
   }
 

@@ -30,7 +30,7 @@ class N2NodesUtil {
     */
   def withoutExtReceivers(mad: MNode): Iterator[MEdge] = {
     val producerIdOpt = madProducerId(mad)
-    mad.edges.iterator.filter { e =>
+    mad.edges.out.iterator.filter { e =>
       e.predicate.eqOrHasParent(MPredicates.Receiver) || producerIdOpt.exists(e.nodeIds.contains)
     }
   }

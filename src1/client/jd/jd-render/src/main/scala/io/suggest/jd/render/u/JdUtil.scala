@@ -1,6 +1,7 @@
 package io.suggest.jd.render.u
 
 import diode.data.Pot
+import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.grid.GridCalc
 import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdDataJs, MJdRrrProps, MJdRuntime, MJdRuntimeData, MQdBlSize}
@@ -20,6 +21,58 @@ import scala.collection.immutable.HashMap
   * Description: Разная утиль для JD-рендера.
   */
 object JdUtil {
+
+  private def _mkJdIdBlkExpand(blkJdt: Tree[JdTag], jdId0: MJdTagId): Option[MBlockExpandMode] = {
+    blkJdt.rootLabel
+      .props1
+      .expandMode
+      .orElse( jdId0.blockExpand )
+  }
+
+  private def _jdId_blockExpand_LENS = {
+    MJdDoc.jdId
+      .composeLens( MJdTagId.blockExpand )
+  }
+
+
+  /** Вернуть последовательность шаблонов для "плоской" плитки, т.е. где и focused и не-focused одновременно.
+    *
+    * @return Список шаблонов на рендер.
+    */
+  def flatGridTemplates(isFocused: Boolean, adData: MJdDataJs): LazyList[MJdDoc] = {
+    val doc = adData.doc
+
+    if (isFocused) {
+      doc.template
+        .subForest
+        .iterator
+        .zipWithIndex
+        .map { case (blkJdt, i) =>
+          doc.copy(
+            template = blkJdt,
+            jdId = {
+              val id = doc.jdId
+              id.copy(
+                selPathRev  = i :: id.selPathRev,
+                blockExpand = _mkJdIdBlkExpand(blkJdt, id),
+              )
+            }
+          )
+        }
+        .to( LazyList )
+
+    } else {
+      {
+        val blkExp2 = _mkJdIdBlkExpand( doc.template, doc.jdId )
+
+        if (doc.jdId.blockExpand ==* blkExp2)
+          doc
+        else
+          (_jdId_blockExpand_LENS set blkExp2)(doc)
+      } #:: LazyList.empty
+    }
+  }
+
 
   /** Сборка карты состояний QdBlockLess.
     *

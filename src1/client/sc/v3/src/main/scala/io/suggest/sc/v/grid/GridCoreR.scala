@@ -5,7 +5,9 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
+import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.JdR
+import io.suggest.model.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._
@@ -70,11 +72,17 @@ class GridCoreR(
             .zipWithIndex
 
           rootId = ad.nodeId getOrElse i.toString
-          edges  = ad.flatGridEdges
+          isFocused = ad.isFocused
+          adData = ad.focOrMain
 
           // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
           jdRenderArgs = (for {
-            blk <- ad.focOrAlwaysOpened
+            blk <- {
+              if (adData.info.flags.exists(_.flag ==* MEdgeFlags.AlwaysOutlined))
+                Some(ad.focOrMain)
+              else
+                ad.focOrAlwaysOpened
+            }
             bgColorOpt = blk.doc.template
               .getMainBlockOrFirst
               .rootLabel
@@ -89,7 +97,8 @@ class GridCoreR(
             .getOrElse( MJdRenderArgs.empty )
 
           // Пройтись по шаблонам карточки
-          (jdDoc2, j) <- ad.flatGridTemplates
+          (jdDoc2, j) <- JdUtil
+            .flatGridTemplates( isFocused, adData )
             .iterator
             .zipWithIndex
 
@@ -110,10 +119,7 @@ class GridCoreR(
               // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
               mgridProxy.resetZoom(
                 MJdArgs(
-                  data = MJdDataJs(
-                    doc      = jdDoc2,
-                    edges    = edges,
-                  ),
+                  data        = (MJdDataJs.doc set jdDoc2)(adData),
                   jdRuntime   = mgrid.jdRuntime,
                   conf        = mgrid.jdConf,
                   renderArgs  = jdRenderArgs,

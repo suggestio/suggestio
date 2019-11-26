@@ -818,12 +818,11 @@ class PictureAh[V, M](
 
   // Объединяем старый и новый набор данных по файлу на сервере.
   private def _srvFileIntoJdEdge(fileInfo: MSrvFileInfo, jdEdge0: MJdEdge): MJdEdge = {
-    val srvFileInfo0 = jdEdge0
-      .fileSrv
-      .getOrElse(MSrvFileInfo.empty)
-    val srvFileInfo2 = srvFileInfo0.updateFrom( fileInfo )
-    jdEdge0
-      .withFileSrv( Some(srvFileInfo2) )
+    MJdEdge.fileSrv.modify { fileSrvOpt0 =>
+      val fileSrv1 = fileSrvOpt0 getOrElse MSrvFileInfo.empty
+      val fileSrv2 = fileSrv1.updateFrom( fileSrv1 )
+      Some( fileSrv2 )
+    }( jdEdge0 )
   }
 
 

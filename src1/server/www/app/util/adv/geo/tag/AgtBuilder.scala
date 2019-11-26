@@ -110,7 +110,7 @@ trait AgtBuilder extends IAdvBuilder {
             mnode = acc0.mnode.withEdges(
               acc0.mnode.edges.copy(
                 out = MNodeEdges.edgesToMap1(
-                  acc0.mnode.edges.iterator ++ agtEdgesIter
+                  acc0.mnode.edges.out.iterator ++ agtEdgesIter
                 )
               )
             )

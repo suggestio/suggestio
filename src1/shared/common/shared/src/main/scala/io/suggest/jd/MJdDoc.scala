@@ -3,7 +3,6 @@ package io.suggest.jd
 import diode.FastEq
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.tags.JdTag
-import io.suggest.primo.id.OptId
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -21,7 +20,7 @@ import scalaz.Tree
   */
 object MJdDoc {
 
-  implicit object MJdTplFastEq extends FastEq[MJdDoc] {
+  implicit object MJdDocFastEq extends FastEq[MJdDoc] {
     override def eqv(a: MJdDoc, b: MJdDoc): Boolean = {
       (a.template ===* b.template) &&
       // Инстанс JdID собирается динамически при рендере JdCss и JdR, поэтому его следует сравнивать изнутри.

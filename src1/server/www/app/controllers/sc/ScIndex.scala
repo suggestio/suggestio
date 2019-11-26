@@ -490,12 +490,11 @@ trait ScIndex
             .filter { _ => edgesPoints.lengthCompare(1) > 0 }
             .map { geoLoc =>
               // Есть геолокация. Найти ближайшую точку среди имеющихся.
-              import Ordering.Float.TotalOrdering
               edgesPoints.minBy { centerPoint =>
                 CoordOps.distanceXY[MGeoPoint, GeoCoord_t]( centerPoint, geoLoc.point )
                   .abs
                   .doubleValue
-              }
+              }( Ordering.Double.TotalOrdering )
             }
             // Нет геолокации - ищем первую попавщуюся центральную точку:
             .orElse {

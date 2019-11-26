@@ -6,6 +6,7 @@ import play.api.libs.json._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -41,6 +42,8 @@ object MNodeCommon extends IGenEsMappingProps {
       FieldText(DISABLE_REASON_FN, index = false, include_in_all = false)
     )
   }
+
+  val isEnabled = GenLens[MNodeCommon](_.isEnabled)
 
 }
 

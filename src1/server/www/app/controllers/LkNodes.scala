@@ -13,7 +13,7 @@ import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.lk.nodes._
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MEdgeFlagData, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
@@ -28,6 +28,8 @@ import util.acl._
 import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.model.n2.bill.MNodeBilling
+import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -76,18 +78,27 @@ class LkNodes @Inject() (
 
 
   // TODO Этот говнокод надо заменить на нормальную common-модель с JSON и всеми делами.
-  private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[(Boolean, Boolean)] = {
+  private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[(Boolean, Boolean, Boolean)] = {
     for (mad <- madOpt) yield {
-      val iter = mad.edges
+      val rcvrEdges = mad.edges
         .withNodePred(nodeId, MPredicates.Receiver)
-      val isAdv = iter.nonEmpty
-      val edgeOpt = iter
-        .buffered
-        .headOption
+        .to( LazyList )
+      val isAdv = rcvrEdges.nonEmpty
+
+      val edgeOpt = rcvrEdges.headOption
+
       val isShowOpened = edgeOpt
         .flatMap(_.info.flag)
         .getOrElseFalse
-      (isAdv, isShowOpened)
+
+      val alwaysOutlined = edgeOpt.exists(
+        _.info
+          .flagsMap
+          .get( MEdgeFlags.AlwaysOutlined )
+          .nonEmpty
+      )
+
+      (isAdv, isShowOpened, alwaysOutlined)
     }
   }
 
@@ -129,7 +140,8 @@ class LkNodes @Inject() (
           canChangeAvailability = Some( canChangeAvailability ),
           hasAdv                = hasAdvOpt.map(_._1),
           tf                    = tfDailyInfoOpt,
-          advShowOpened         = hasAdvOpt.map(_._2)
+          advShowOpened         = hasAdvOpt.map(_._2),
+          alwaysOutlined        = hasAdvOpt.map(_._3)
         ),
 
         children = for (mnode <- subNodes) yield {
@@ -144,7 +156,8 @@ class LkNodes @Inject() (
             canChangeAvailability = None,
             hasAdv            = hasAdvOpt.map(_._1),
             tf                = None,
-            advShowOpened     = hasAdvOpt.map(_._2)
+            advShowOpened     = hasAdvOpt.map(_._2),
+            alwaysOutlined    = hasAdvOpt.map(_._3)
           )
         }
       )
@@ -176,14 +189,16 @@ class LkNodes @Inject() (
     // Поискать другие пользовательские узлы верхнего уровня. TODO А что будет, если текущий узел не является прямо-подчинённым текущему юзеру? Каша из узлов?
     val otherPersonNodesFut = request.user.personIdOpt
       .fold[Future[List[MLknNodeResp]]] (Nil) { personId =>
+        val msearch = nodesUtil.personNodesSearch(
+          personId    = personId,
+          withoutIds1 = onNode.id.toList
+        )
         for {
-          mnodes <- mNodes.dynSearch {
-            nodesUtil.personNodesSearch(personId, withoutIds1 = onNode.id.toList)
-          }
+          mnodes <- mNodes.dynSearch( msearch )
         } yield {
-          val someTrue = Some(true)
+          val someTrue = OptionUtil.SomeBool.someTrue
 
-          val iter = for {
+          (for {
             mnode <- mnodes.iterator
             mnodeId <- mnode.id
           } yield {
@@ -196,12 +211,12 @@ class LkNodes @Inject() (
               canChangeAvailability     = someTrue,
               hasAdv                    = hasAdvOpt.map(_._1),
               tf                        = None, // Не факт, что это важно.
-              advShowOpened             = hasAdvOpt.map(_._2)
+              advShowOpened             = hasAdvOpt.map(_._2),
+              alwaysOutlined            = hasAdvOpt.map(_._3),
             )
             MLknNodeResp(mLknNode, Nil)
-          }
-
-          iter.toList
+          })
+            .toList
         }
       }
 
@@ -394,10 +409,11 @@ class LkNodes @Inject() (
                 ntype     = ntype,
                 isEnabled = isEnabled,
                 // Текущий юзер создал юзер, значит он может его и удалить.
-                canChangeAvailability = Some(true),
+                canChangeAvailability = OptionUtil.SomeBool.someTrue,
                 hasAdv    = None,
                 tf        = Some(tfDailyInfo),
-                advShowOpened = None
+                advShowOpened = None,
+                alwaysOutlined = None,
               )
               Ok( Json.toJson(mResp) )
             }
@@ -427,18 +443,15 @@ class LkNodes @Inject() (
       canChangeNodeAvailability(nodeId).async { implicit request =>
 
         // Запустить обновление узла.
-        val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
-          mnode.copy(
-            common = mnode.common.copy(
-              isEnabled = isEnabled
-            ),
-            meta = mnode.meta.copy(
-              basic = mnode.meta.basic.copy(
-                dateEdited = Some(OffsetDateTime.now())
-              )
-            )
-          )
-        }
+        val saveFut = mNodes.tryUpdate(request.mnode)(
+          MNode.common
+            .composeLens( MNodeCommon.isEnabled )
+            .set( isEnabled ) andThen
+          MNode.meta
+            .composeLens( MMeta.basic )
+            .composeLens( MBasicMeta.dateEdited )
+            .set( Some(OffsetDateTime.now()) )
+        )
 
         // В фоне собрать инфу по тарифу текущему.
         val tfDailyInfoFut = tfDailyUtil.getTfInfo( request.mnode )
@@ -454,10 +467,11 @@ class LkNodes @Inject() (
             name                    = request.mnode.guessDisplayNameOrIdOrQuestions,
             ntype                   = request.mnode.common.ntype,
             isEnabled               = isEnabled,
-            canChangeAvailability   = Some(true),
+            canChangeAvailability   = OptionUtil.SomeBool.someTrue,
             hasAdv                  = None,
             tf                      = Some(tfDailyInfo),
-            advShowOpened           = None
+            advShowOpened           = None,
+            alwaysOutlined          = None,
           )
           Ok( Json.toJson(mLknNode) )
         }
@@ -513,19 +527,17 @@ class LkNodes @Inject() (
             LOGGER.trace(s"$logPrefix Binded: $binded")
 
             // Запустить апдейт узла.
-            val updateFut = mNodes.tryUpdate( request.mnode ) { mnode =>
-              mnode.copy(
-                meta = mnode.meta.copy(
-                  basic = {
-                    val nameOpt = Some( binded.name )
-                    mnode.meta.basic.copy(
-                      nameOpt       = nameOpt,
-                      nameShortOpt  = nameOpt,
-                      dateEdited    = Some( OffsetDateTime.now() )
-                    )
-                  }
-                )
-              )
+            val updateFut = mNodes.tryUpdate( request.mnode ) {
+              val nameOpt = Some( binded.name )
+              MNode.meta
+                .composeLens( MMeta.basic )
+                .modify {
+                  _.copy(
+                    nameOpt       = nameOpt,
+                    nameShortOpt  = nameOpt,
+                    dateEdited    = Some( OffsetDateTime.now() )
+                  )
+                }
             }
 
             // В фоне собрать инфу по тарифу текущему.
@@ -542,10 +554,11 @@ class LkNodes @Inject() (
                 name                    = mnode.guessDisplayNameOrIdOrQuestions,
                 ntype                   = mnode.common.ntype,
                 isEnabled               = mnode.common.isEnabled,
-                canChangeAvailability   = Some(true),
+                canChangeAvailability   = OptionUtil.SomeBool.someTrue,
                 hasAdv                  = None,
                 tf                      = Some(tfDailyInfo),
-                advShowOpened           = None
+                advShowOpened           = None,
+                alwaysOutlined          = None,
               )
               Ok( Json.toJson(m) )
             }
@@ -606,27 +619,25 @@ class LkNodes @Inject() (
 
       val selfPred = MPredicates.Receiver.Self
       // Запустить обновление узла на стороне ES.
-      val updateNodeFut = mNodes.tryUpdate( request.mad ) { mad =>
-        mad.withEdges(
-          edges = mad.edges.copy(
-            out = {
-              // Удалить эдж текущего размещения. Даже если isEnabled=true, всё равно надо отфильтровать старый эдж, чтобы перезаписать его.
-              val edgesIter1 = mad.edges.withoutNodePred( nodeId, MPredicates.Receiver )
-              val edgesIter2 = if (isEnabled) {
-                // Найти/добавить эдж до указанного узла.
-                val medge = MEdge(
-                  predicate = selfPred,
-                  nodeIds   = nodeIds
-                )
-                edgesIter1 ++ (medge :: Nil)
-              } else {
-                // isEnabled=false, удаление эджа размещения уже было выше.
-                edgesIter1
-              }
-              MNodeEdges.edgesToMap1( edgesIter2 )
-            }
-          )
-        )
+      val updateNodeFut = mNodes.tryUpdate( request.mad ) {
+        MNode.edges.modify { edges0 =>
+          // Удалить эдж текущего размещения. Даже если isEnabled=true, всё равно надо отфильтровать старый эдж, чтобы перезаписать его.
+          val edgesIter1 = edges0
+            .withoutNodePred( nodeId, MPredicates.Receiver )
+          val edgesIter2 = if (isEnabled) {
+            // Найти/добавить эдж до указанного узла.
+            val medge = MEdge(
+              predicate = selfPred,
+              nodeIds   = nodeIds
+            )
+            edgesIter1 ++ (medge :: Nil)
+          } else {
+            // isEnabled=false, удаление эджа размещения уже было выше.
+            edgesIter1
+          }
+          val out2 = MNodeEdges.edgesToMap1( edgesIter2 )
+          MNodeEdges.out.set( out2 )(edges0)
+        }
       }
 
       for {
@@ -634,6 +645,7 @@ class LkNodes @Inject() (
         mnode2            <- updateNodeFut
       } yield {
         LOGGER.trace(s"setAdv(ad#$adId, node#$nodeId): adv => $isEnabled, suppressed $itemsSuppressed in billing")
+        val hasAdvOpt = _hasAdv(nodeId, Some(mnode2))
 
         // Собрать ответ.
         val mLknNode = MLknNode(
@@ -641,10 +653,11 @@ class LkNodes @Inject() (
           name      = request.mnode.guessDisplayNameOrIdOrQuestions,
           ntype     = request.mnode.common.ntype,
           isEnabled = request.mnode.common.isEnabled,
-          canChangeAvailability = Some(true),
-          hasAdv    = Some(isEnabled),
+          canChangeAvailability = OptionUtil.SomeBool.someTrue,
+          hasAdv    = OptionUtil.SomeBool( isEnabled ),
           tf        = None, // На странице размещения это не важно
-          advShowOpened = Some( mnode2.edges.withNodePred(nodeId, selfPred).exists(_.info.flag contains true) )
+          advShowOpened = hasAdvOpt.map(_._2),
+          alwaysOutlined = hasAdvOpt.map(_._3),
         )
 
         // Отправить сериализованные данные по узлу.
@@ -686,14 +699,11 @@ class LkNodes @Inject() (
             // Обновить узел новым тарифом.
             mnode2 <- {
               LOGGER.trace(s"$logPrefix mode=$tfdm ==>> tf = $tfDailyOpt")
-              mNodes.tryUpdate( request.mnode ) { mnode =>
-                mnode.copy(
-                  billing = mnode.billing.copy(
-                    tariffs = mnode.billing.tariffs.copy(
-                      daily = tfDailyOpt
-                    )
-                  )
-                )
+              mNodes.tryUpdate( request.mnode ) {
+                MNode.billing
+                  .composeLens( MNodeBilling.tariffs )
+                  .composeLens( MNodeTariffs.daily )
+                  .set( tfDailyOpt )
               }
             }
 
@@ -709,10 +719,11 @@ class LkNodes @Inject() (
               name      = mnode2.guessDisplayNameOrIdOrQuestions,
               ntype     = mnode2.common.ntype,
               isEnabled = mnode2.common.isEnabled,
-              canChangeAvailability = Some(true),
+              canChangeAvailability = OptionUtil.SomeBool.someTrue,
               hasAdv    = None,
               advShowOpened = None,
-              tf        = Some(tfInfo)
+              tf        = Some(tfInfo),
+              alwaysOutlined = None,
             )
 
             // Собрать HTTP-ответ клиенту
@@ -754,40 +765,43 @@ class LkNodes @Inject() (
           LOGGER.trace(s"$logPrefix Will update mad#$adIdU with showOpened=$isEnabled on $nodeId")
 
           // Запустить обновление карточки на стороне ES: перезаписать эдж:
-          val updateNodeFut = mNodes.tryUpdate( request.mad ) { mad =>
-            mad.withEdges(
-              edges = mad.edges.copy(
-                out = {
-                  // Заменить эдж текущего размещения.
-                  val edgesIter2 = mad.edges
+          val updateNodeFut = mNodes.tryUpdate( request.mad ) {
+            MNode.edges
+              .composeLens( MNodeEdges.out )
+              .modify { edges0 =>
+                // Заменить эдж текущего размещения.
+                MNodeEdges.edgesToMap1(
+                  edges0
                     .iterator
                     .flatMap { e =>
-                      if (e.predicate ==* pred && e.nodeIds.contains(nodeId)) {
+                      if (
+                        (e.predicate ==* pred) &&
+                        (e.nodeIds contains nodeId)
+                      ) {
                         // Выкорчевать эдж текущего узла. Вдруг nodeId лежит в другом эдже, вместе с другими нодами?
-                        val eThisNode = e.copy(
-                          nodeIds = Set(nodeId),
-                          info = e.info.copy(
-                            flag = OptionUtil.maybeTrue(isEnabled)
-                          )
-                        )
-                        val eTail = if (e.nodeIds.size > 1) {
-                          val eOld2 = e.copy(
-                            nodeIds = e.nodeIds - nodeId
-                          )
+                        val eThisNode = (
+                          MEdge.nodeIds
+                            .set( Set(nodeId) ) andThen
+                          MEdge.info
+                            .composeLens( MEdgeInfo.flag )
+                            .set( OptionUtil.maybeTrue(isEnabled) )
+                        )(e)
+
+                        val eTail = if (e.nodeIds.sizeIs > 1) {
+                          val eOld2 = MEdge.nodeIds.modify(_ - nodeId)(e)
                           eOld2 :: Nil
                         } else {
                           Nil
                         }
+
                         eThisNode :: eTail
                       } else {
                         // Это не тот эдж, который требуется обновлять.
                         e :: Nil
                       }
                     }
-                  MNodeEdges.edgesToMap1( edgesIter2 )
-                }
-              )
-            )
+                )
+              }
           }
 
           // Дождаться завершения апдейта.
@@ -802,5 +816,90 @@ class LkNodes @Inject() (
     }
   }
 
+
+  /** Выставление флага isShowOpened.
+    *
+    * @param adIdU id карточки.
+    * @param isEnabled Состояние галочки.
+    * @param rcvrKey Узел-ресивера.
+    */
+  def setAlwaysOutlined(adIdU: MEsUuId, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
+    canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
+      val nodeId = request.mnode.id.get
+      val pred = MPredicates.Receiver.Self
+      lazy val logPrefix = s"setAlwaysOutlined($adIdU, $isEnabled, $nodeId):"
+
+      val madEdgeSelfOpt = request.mad.edges
+        .withNodePred(nodeId, pred)
+        .buffered
+        .headOption
+
+      madEdgeSelfOpt.fold [Future[Result]] {
+        LOGGER.warn(s"$logPrefix Cannot modify AlwaysOutlined on in-exising edge $pred")
+        errorHandler.onClientError(request, NOT_FOUND, s"!pred: $pred for $nodeId")
+
+      } { edge0 =>
+        if (edge0.info.flagsMap.get(MEdgeFlags.AlwaysOutlined).nonEmpty ==* isEnabled) {
+          LOGGER.debug(s"$logPrefix Nothing to do.")
+          NoContent
+
+        } else {
+          LOGGER.trace(s"$logPrefix Will update mad#$adIdU with AlwaysOutlined=$isEnabled on $nodeId")
+
+          // Запустить обновление карточки на стороне ES: перезаписать эдж:
+          val updateNodeFut = mNodes.tryUpdate( request.mad ) {
+            MNode.edges
+              .composeLens( MNodeEdges.out )
+              .modify { edges0 =>
+                // Заменить эдж текущего размещения.
+                MNodeEdges.edgesToMap1(
+                  edges0
+                    .iterator
+                    .flatMap { e =>
+                      if (
+                        (e.predicate ==* pred) &&
+                        (e.nodeIds contains nodeId)
+                      ) {
+                        // Выкорчевать эдж текущего узла. Вдруг nodeId лежит в другом эдже, вместе с другими нодами?
+                        val eThisNode = (
+                          MEdge.nodeIds
+                            .set( Set(nodeId) ) andThen
+                          MEdge.info.modify { info0 =>
+                            val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
+                            val flags2 =
+                              if (isEnabled) info0.flags.toSeq appended fd
+                              else (info0.flagsMap - fd.flag).values
+                            MEdgeInfo.flags.set( flags2 )(info0)
+                          }
+                        )(e)
+
+                        val eTail = if (e.nodeIds.sizeIs > 1) {
+                          val eOld2 = MEdge.nodeIds.modify(_ - nodeId)(e)
+                          eOld2 :: Nil
+                        } else {
+                          Nil
+                        }
+
+                        eThisNode :: eTail
+                      } else {
+                        // Это не тот эдж, который требуется обновлять.
+                        e :: Nil
+                      }
+                    }
+                )
+              }
+          }
+
+          // Дождаться завершения апдейта.
+          for {
+            _ <- updateNodeFut
+          } yield {
+            LOGGER.trace(s"$logPrefix Done.")
+            Ok
+          }
+        }
+      }
+    }
+  }
 
 }

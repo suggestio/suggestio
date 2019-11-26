@@ -78,7 +78,7 @@ class LkAdEditCircuit(
       .parse( jsonStr )
       .as[MAdEditFormInit]
 
-    val jdDataJs = MJdDataJs( mFormInit.adData )
+    val jdDataJs = MJdDataJs.fromJdData( mFormInit.adData )
 
     MAeRoot(
       conf = {

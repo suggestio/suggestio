@@ -6,6 +6,7 @@ import io.suggest.jd.{MJdData, MJdDoc}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptId
+import io.suggest.sc.ads.MScAdInfo
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -21,7 +22,7 @@ object MJdDataJs {
   /** Поддержка FastEq для инстансов [[MJdDataJs]]. */
   implicit object MJdDataJsFastEq extends FastEq[MJdDataJs] {
     override def eqv(a: MJdDataJs, b: MJdDataJs): Boolean = {
-      ((a.doc ===* b.doc) || MJdDoc.MJdTplFastEq.eqv(a.doc, b.doc)) &&
+      ((a.doc ===* b.doc) || MJdDoc.MJdDocFastEq.eqv(a.doc, b.doc)) &&
       (a.edges ===* b.edges)
     }
   }
@@ -30,10 +31,11 @@ object MJdDataJs {
   @inline implicit def univEq: UnivEq[MJdDataJs] = UnivEq.derive
 
   /** Сборка на основе MJdAdData. */
-  def apply( jdAdData: MJdData ): MJdDataJs = {
+  def fromJdData( jdAdData: MJdData, info: MScAdInfo = MScAdInfo.empty ): MJdDataJs = {
     apply(
       doc      = jdAdData.doc,
       edges    = MEdgeDataJs.jdEdges2EdgesDataMap( jdAdData.edges ),
+      info     = info,
     )
   }
 
@@ -51,6 +53,7 @@ object MJdDataJs {
 final case class MJdDataJs(
                             doc         : MJdDoc,
                             edges       : Map[EdgeUid_t, MEdgeDataJs],
+                            info        : MScAdInfo,
                           )
   extends OptId[String]
 {

@@ -35,7 +35,7 @@ case class MNodeMdrInfoJs(
                            info: MNodeMdrInfo
                          ) {
 
-  val ad = info.ad.map(MJdDataJs.apply)
+  val ad = info.ad.map(MJdDataJs.fromJdData(_))
 
   /** Сгруппированные item'ы по типам. */
   val itemsByType = info.items.groupBy(_.iType)

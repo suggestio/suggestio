@@ -231,6 +231,7 @@ class SysMarket @Inject() (
 
       val mnodesMapFut = mNodes.multiGetMapCache {
         mnode.edges
+          .out
           .iterator
           .flatMap(_.nodeIds)
           .toSet
@@ -242,6 +243,7 @@ class SysMarket @Inject() (
       } yield {
         val iter = for {
           (medge, index) <- mnode.edges
+            .out
             .iterator
             .zipWithIndex
         } yield {

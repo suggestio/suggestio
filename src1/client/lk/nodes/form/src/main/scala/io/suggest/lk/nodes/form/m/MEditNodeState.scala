@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -35,6 +36,9 @@ trait IEditNodeState[T <: IEditNodeState[T]] {
 
 object MEditNodeState {
   @inline implicit def univEq: UnivEq[MEditNodeState] = UnivEq.force
+
+  val saving = GenLens[MEditNodeState](_.saving)
+
 }
 
 

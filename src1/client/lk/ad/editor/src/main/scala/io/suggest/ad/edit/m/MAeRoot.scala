@@ -5,7 +5,7 @@ import io.suggest.ad.edit.m.edit.MDocS
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.save.MSaveS
-import io.suggest.jd.MJdData
+import io.suggest.jd.{MJdData, MJdEdge}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
@@ -68,15 +68,16 @@ case class MAeRoot(
       doc = jdArgs.data.doc,
       edges = {
         val videoPred = MPredicates.JdContent.Frame
+        val resetUrlF = MJdEdge.url.set( None )
         jdArgs
           .data
           .edges
           .view
           .mapValues { e =>
-            var jde = e.jdEdge
-            if (jde.predicate !=* videoPred)
-              jde = e.jdEdge.withUrl()
-            jde
+            if (e.jdEdge.predicate !=* videoPred)
+              resetUrlF( e.jdEdge )
+            else
+              e.jdEdge
           }
           .values
       },

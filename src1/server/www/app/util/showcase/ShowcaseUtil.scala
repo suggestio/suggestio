@@ -17,6 +17,7 @@ import io.suggest.common.empty.OptionUtil.Implicits._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.EsModel
 import io.suggest.jd.MJdConf
+import io.suggest.model.n2.edge.{MEdgeFlagData, MPredicates}
 import util.adn.NodesUtil
 
 import scala.concurrent.Future
@@ -276,6 +277,27 @@ class ShowcaseUtil @Inject() (
       .recover { case _: NoSuchElementException =>
         None
       }
+  }
+
+
+  /** Собрать edge-флаги для ресивера, для отправки в выдачу клиента.
+    *
+    * @param qs распарсенные qs
+    * @param mad Узел рекламной карточки.
+    * @return Множество найденных edge-флагов.
+    */
+  def collectScRcvrFlags(qs: MScQs, mad: MNode): Iterable[MEdgeFlagData] = {
+    (for {
+      rcvrIdU <- qs.search.rcvrId.iterator
+      rcvrId = rcvrIdU.id
+      e <- mad.edges.withPredicateIter( MPredicates.Receiver )
+      if e.nodeIds contains rcvrId
+      eFlagData <- e.info.flags
+      if eFlagData.flag.isScClientSide
+    } yield {
+      eFlagData
+    })
+      .toSeq
   }
 
 }

@@ -34,9 +34,3 @@ case class MAdnEditPopups(
                            cropPopup      : Option[MPictureCropPopup]   = None,
                          )
   extends EmptyProduct
-{
-
-  def withErrorPopup(errorPopup: Option[MErrorPopupS])        = copy(errorPopup = errorPopup)
-  def withCropPopup(cropPopup: Option[MPictureCropPopup])     = copy(cropPopup = cropPopup)
-
-}

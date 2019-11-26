@@ -98,7 +98,7 @@ class DocEditAh[M](
               .modify(f)
           }
         val tpl2 = treeLoc2.toTree
-        val jdDoc2 = MJdDoc.template.set( tpl2 )( v0.jdDoc.jdArgs.data.doc )
+        val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
         val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
           .result
@@ -134,7 +134,7 @@ class DocEditAh[M](
     val tpl2 = selJdtLoc0
       .setLabel(selJdt2)
       .toTree
-    val jdDoc2 = MJdDoc.template.set(tpl2)( jdArgs0.data.doc )
+    val jdDoc2 = (MJdDoc.template set tpl2)( jdArgs0.data.doc )
 
     // Выставить Pot.pending в qdBlockLess для текущего тега, а потом только пересобирать новый рантайм.
     val jdRuntime1 = if (isQdBlockless(selJdtLoc0)) {
@@ -159,7 +159,14 @@ class DocEditAh[M](
   }
 
 
-  private def _addContent(v0: MDocS, qdContentTag: JdTag)(insertToLocF: Tree[JdTag] => TreeLoc[JdTag]): ActionResult[M] = {
+  /** Общий код добавления контента как вне блока, так и внутри блока.
+    *
+    * @param qdContentTag Добавляемый тег.
+    * @param insertToLocF Функция вставки в необходимый tree loc.
+    * @return ActionResult.
+    */
+  private def _addContent(v0: MDocS, qdContentTag: JdTag)
+                         (insertToLocF: Tree[JdTag] => TreeLoc[JdTag]): ActionResult[M] = {
 
     val textL10ed = Messages( MsgCodes.`Example.text` )
 

@@ -248,6 +248,7 @@ object MsgCodes {
   val `Show._ad` = "Show._ad"
   val `ad.Manage` = "ad.Manage"
   val `Show.ad.opened` = "Show.ad.opened"
+  val `Always.outlined` = "Always.outlined"
 
   val `invalid_url` = "invalid_url"
   val `Welcome.screen` = "Welcome.screen"

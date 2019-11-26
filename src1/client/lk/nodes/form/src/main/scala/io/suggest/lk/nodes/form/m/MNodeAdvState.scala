@@ -2,6 +2,8 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
+import io.suggest.spa.DiodeUtil.Implicits._
 
 /**
   * Suggest.io
@@ -13,19 +15,21 @@ object MNodeAdvState {
 
   @inline implicit def univEq: UnivEq[MNodeAdvState] = UnivEq.force
 
+  val newIsEnabledPot = GenLens[MNodeAdvState](_.newIsEnabledPot)
+  val isShowOpenedPot = GenLens[MNodeAdvState](_.isShowOpenedPot)
+  val alwaysOutlined  = GenLens[MNodeAdvState](_.alwaysOutlinedPot)
+
 }
 
+
 case class MNodeAdvState(
-                          newIsEnabledPot               : Pot[Boolean]  = Pot.empty,
-                          isShowOpenedPot   : Pot[Boolean]  = Pot.empty
+                          newIsEnabledPot   : Pot[Boolean]  = Pot.empty,
+                          isShowOpenedPot   : Pot[Boolean]  = Pot.empty,
+                          alwaysOutlinedPot : Pot[Boolean]  = Pot.empty,
                         ) {
 
-  def withReq(req2: Pot[Boolean]) = copy(newIsEnabledPot = req2)
-
-  def withIsShowOpenedPot(isShowOpenedPot: Pot[Boolean])    = copy(isShowOpenedPot = isShowOpenedPot)
-
-  def isShowOpened = isShowOpenedPot.getOrElse(false)
-  def newIsEnabled = newIsEnabledPot.getOrElse(false)
-
+  def newIsEnabled = newIsEnabledPot.getOrElseFalse
+  def isShowOpened = isShowOpenedPot.getOrElseFalse
+  def alwaysOutlined = alwaysOutlinedPot.getOrElseFalse
 
 }

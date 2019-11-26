@@ -4,6 +4,7 @@ import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.bill.tariff.daily.MTfDaily
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -49,6 +50,8 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
       FieldObject(DAILY_FN, enabled = true, properties = MTfDaily.generateMappingProps)
     )
   }
+
+  val daily = GenLens[MNodeTariffs](_.daily)
 
 }
 

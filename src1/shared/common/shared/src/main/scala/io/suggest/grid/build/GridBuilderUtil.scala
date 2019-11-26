@@ -239,7 +239,9 @@ object GridBuilderUtil {
                   if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
                     val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
                       val degAbs = Math.abs( deg )
-                      degAbs > 45 && degAbs <= (90+45)
+                      val a = 45
+                      // Поворот на 45..135 градусов?
+                      (degAbs > a) && (degAbs <= a*3)
                     }
                     
                     val r = (for {

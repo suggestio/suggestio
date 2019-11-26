@@ -6,6 +6,7 @@ import io.suggest.lk.m.color.MColorsState
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -26,6 +27,10 @@ object MAdnEditInternals {
 
   @inline implicit def univEq: UnivEq[MAdnEditInternals] = UnivEq.derive
 
+  val conf = GenLens[MAdnEditInternals](_.conf)
+  val saving = GenLens[MAdnEditInternals](_.saving)
+  val colorState = GenLens[MAdnEditInternals](_.colorState)
+
 }
 
 
@@ -39,9 +44,4 @@ case class MAdnEditInternals(
                               conf          : MAdnEditFormConf,
                               saving        : Pot[MAdnEditForm] = Pot.empty,
                               colorState    : MColorsState      = MColorsState.empty,
-                            ) {
-
-  def withSaving(saving: Pot[MAdnEditForm]) = copy(saving = saving)
-  def withColorState(colorState: MColorsState) = copy(colorState = colorState)
-
-}
+                            )

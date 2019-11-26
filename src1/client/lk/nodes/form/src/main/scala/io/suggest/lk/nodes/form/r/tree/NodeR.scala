@@ -20,6 +20,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.model.n2.edge.MEdgeFlags.AlwaysOutlined
 
 /**
   * Suggest.io
@@ -125,6 +126,13 @@ class NodeR(
     private def onShowOpenedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
       e.stopPropagationCB >> _dispatchCB(
         AdvShowOpenedChange(rcvrKey, e.target.checked)
+      )
+    }
+
+    /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
+    private def onAlwaysOutlinedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
+      e.stopPropagationCB >> _dispatchCB(
+        AlwaysOutlinedSet(rcvrKey, e.target.checked)
       )
     }
 
@@ -564,7 +572,7 @@ class NodeR(
 
               <.tbody(
 
-                // id узла.
+                // Галочка отображения постоянного раскрытия карточки.
                 <.tr(
                   _kvTdKey(
                     Messages( MsgCodes.`Show.ad.opened` )
@@ -587,7 +595,31 @@ class NodeR(
                       Messages( MsgCodes.yesNo( isShowOpened ) )
                     )
                   }
-                )
+                ),
+
+                <.tr(
+                  _kvTdKey(
+                    Messages( MsgCodes.`Always.outlined` )
+                  ),
+                  _kvTdValue {
+                    val isAlwaysOutlined = node.adv
+                      .map(_.alwaysOutlined)
+                      .orElse(node.info.alwaysOutlined)
+                      .getOrElseFalse
+                    // Чек-бокс для управления isEnabled-флагом узла.
+                    <.label(
+                      ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE, Css.Lk.Nodes.Inputs.INPUT70 ),
+                      <.input(
+                        ^.`type` := HtmlConstants.Input.checkbox,
+                        // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
+                        ^.checked := isAlwaysOutlined,
+                        ^.onChange ==> onAlwaysOutlinedClick(rcvrKey)
+                      ),
+                      <.span(),
+                      Messages( MsgCodes.yesNo( isAlwaysOutlined ) )
+                    )
+                  },
+                ),
 
               )
             )

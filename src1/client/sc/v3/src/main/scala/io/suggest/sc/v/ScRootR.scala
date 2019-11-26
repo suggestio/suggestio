@@ -426,7 +426,7 @@ class ScRootR (
             scJsRouter      <- props.internals.jsRouter.jsRouter.toOption
             focusedAdOuter  <- props.grid.core.focusedAdOpt
             focusedData     <- focusedAdOuter.focused.toOption
-            if focusedData.canEdit
+            if focusedData.info.canEdit
             focusedAdId     <- focusedAdOuter.nodeId
           } yield {
             editAdR.PropsVal(

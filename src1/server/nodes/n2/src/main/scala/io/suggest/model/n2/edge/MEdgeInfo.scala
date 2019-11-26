@@ -8,6 +8,7 @@ import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
+import io.suggest.primo.id.IId
 import io.suggest.text.StringUtil
 import io.suggest.util.SioConstants
 import japgolly.univeq.UnivEq
@@ -39,6 +40,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val DATE_NI_FN        = "dtni"
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
+    val FLAGS_FN          = "f"
     val GEO_SHAPES_FN     = "gss"
     val TAGS_FN           = "tags"
     val GEO_POINT_FN      = "gpt"
@@ -70,6 +72,14 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 
     }
 
+    /** Имена полей флагов. */
+    object Flags extends PrefixedFn {
+      import MEdgeFlagData.{Fields => Fs}
+
+      override protected def _PARENT_FN = FLAGS_FN
+      def FLAG_FN = _fullFn( Fs.FLAG_FN )
+    }
+
   }
 
 
@@ -81,6 +91,11 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
       (__ \ COMMENT_NI_FN).formatNullable[String] and
       (__ \ FLAG_FN).formatNullable[Boolean] and
+      (__ \ FLAGS_FN).formatNullable[Iterable[MEdgeFlagData]]
+        .inmap[Iterable[MEdgeFlagData]](
+          EmptyUtil.opt2ImplEmptyF( Nil ),
+          { flags => if (flags.isEmpty) None else Some(flags) }
+        ) and
       (__ \ TAGS_FN).formatNullable[Set[String]]
         .inmap [Set[String]] (
           EmptyUtil.opt2ImplEmptyF( Set.empty ),
@@ -101,9 +116,16 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   }
 
 
-
-
   import io.suggest.es.util.SioEsUtil._
+
+  /** Пока EsUtil dsl живёт вне shared, тут описываем модель данных флага. */
+  def edgeFlagDataMapping = List[DocField](
+    FieldKeyword(
+      id              = MEdgeFlagData.Fields.FLAG_FN,
+      index           = true,
+      include_in_all  = false,
+    )
+  )
 
   /** Сборка полей ES-маппинга. */
   override def generateMappingProps: List[DocField] = {
@@ -118,11 +140,19 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         index           = false,
         include_in_all  = false
       ),
+
       FieldBoolean(
         id              = FLAG_FN,
         index           = true,
         include_in_all  = false
       ),
+
+      FieldNestedObject(
+        id          = FLAGS_FN,
+        enabled     = true,
+        properties  = edgeFlagDataMapping,
+      ),
+
       // 2016.mar.24 Теперь теги живут внутри эджей.
       FieldText(
         id              = TAGS_FN,
@@ -174,6 +204,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   val dateNi = GenLens[MEdgeInfo](_.dateNi)
   val textNi = GenLens[MEdgeInfo](_.textNi)
   val flag = GenLens[MEdgeInfo](_.flag)
+  val flags = GenLens[MEdgeInfo](_.flags)
   val tags = GenLens[MEdgeInfo](_.tags)
   val geoShapes = GenLens[MEdgeInfo](_.geoShapes)
   val geoPoints = GenLens[MEdgeInfo](_.geoPoints)
@@ -191,7 +222,8 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   * @param textNi Неиндексируемый текст при эдже.
   *                  Используется для хэша пароля в Password-эджах с 2019-02-28.
   *                  Изначально использовался как произвольный служебный комментарий от/для админа.
-  * @param flag Индексируемое значение некоторого флага.
+  * @param flag Индексируемое значение некоторого флага. Следует использовать flags вместо этого поля.
+  * @param flags Новый формат флагов.
   * @param tags Названия тегов, которые индексируются для полноценного поиска по тегам.
   *             2018-07-24 Сюда же падает индексируемые названия узла на карте.
   * @param geoShapes Список геошейпов, которые связаны с данным эджем.
@@ -202,8 +234,9 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 final case class MEdgeInfo(
                             dateNi       : Option[OffsetDateTime]  = None,
                             textNi       : Option[String]          = None,
-                          // TODO flag надо переделать в индексируемое поле flags: Set[MEdgeFlag].
+                            // TODO flag надо убрать, чтобы использовалось множество флагов flags.
                             flag         : Option[Boolean]         = None,
+                            flags        : Iterable[MEdgeFlagData] = Nil,
                             tags         : Set[String]             = Set.empty,
                             geoShapes    : List[MEdgeGeoShape]     = Nil,
                             geoPoints    : Seq[MGeoPoint]          = Nil,
@@ -212,8 +245,8 @@ final case class MEdgeInfo(
   extends EmptyProduct
 {
 
-  def withTags(tags: Set[String]) = copy(tags = tags)
-  def withGeoPoints(geoPoints: Seq[MGeoPoint]) = copy(geoPoints = geoPoints)
+  /** Карта флагов, если вдруг нужна будет. */
+  lazy val flagsMap = IId.els2idMap[MEdgeFlag, MEdgeFlagData]( flags )
 
   /** Форматирование для вывода в шаблонах. */
   override def toString: String = {
@@ -234,25 +267,22 @@ final case class MEdgeInfo(
     for (flag1 <- flag)
       sb.append(flag1)
 
-    val _tags = tags
-    if (_tags.nonEmpty) {
+    if (tags.nonEmpty) {
       sb.append("tags=")
-      for (tag <- _tags) {
+      for (tag <- tags) {
         sb.append(tag).append(',')
       }
       sb.append(' ')
     }
 
-    val _geoShapes = geoShapes
-    if (_geoShapes.nonEmpty) {
-      sb.append(_geoShapes.size)
+    if (geoShapes.nonEmpty) {
+      sb.append(geoShapes.size)
         .append("gss")
     }
 
-    val _geoPoints = geoPoints
-    if (_geoPoints.nonEmpty) {
+    if (geoPoints.nonEmpty) {
       sb.append(",geoPoints={")
-      for (gp <- _geoPoints) {
+      for (gp <- geoPoints) {
         sb.append( GeoPoint.toEsStr(gp) )
       }
       sb.append('}')

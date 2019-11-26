@@ -42,6 +42,6 @@ case class MAdProps(
                      shownAtParentReq   : Pot[MLknNode] = Pot.empty
                    ) {
 
-  val jdDataJs = MJdDataJs( adResp.jdAdData )
+  val jdDataJs = MJdDataJs.fromJdData( adResp.jdAdData )
 
 }

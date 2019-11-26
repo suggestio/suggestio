@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
-import io.suggest.sc.ads.{MLookupMode, MLookupModes, MSc3AdData, MSc3AdsResp}
+import io.suggest.sc.ads.{MLookupMode, MLookupModes, MSc3AdData, MSc3AdsResp, MScAdInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
@@ -606,7 +606,10 @@ trait ScFocusedAds
         for (jd <- jdFut) yield {
           MSc3AdData(
             jd = jd,
-            canEdit = Some(isEditAllowed)
+            info = MScAdInfo(
+              canEditOpt = Some(isEditAllowed),
+              flags      = scUtil.collectScRcvrFlags(_qs, args.brArgs.mad)
+            )
           )
         }
       }

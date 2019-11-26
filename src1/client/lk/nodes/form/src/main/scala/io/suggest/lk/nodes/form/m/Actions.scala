@@ -180,9 +180,17 @@ case object TfDailyManualMode
 /** Изменилось значение галочки раскрытости карточки по дефолту. */
 case class AdvShowOpenedChange(rcvrKey: RcvrKey, isChecked: Boolean)
   extends LkNodesTreeAction
+
 /** Ответ сервера на запрос изменения отображения рекламной карточки. */
 case class AdvShowOpenedChangeResp(reason: AdvShowOpenedChange, tryResp: Try[_])
   extends LkNodesTreeAction {
   override def rcvrKey = reason.rcvrKey
 }
 
+/** Изменение галочки постоянной обводки. */
+case class AlwaysOutlinedSet(rcvrKey: RcvrKey, isChecked: Boolean)
+  extends LkNodesTreeAction
+case class AlwaysOutlinedResp(reason: AlwaysOutlinedSet, tryResp: Try[_])
+  extends LkNodesTreeAction {
+  override def rcvrKey = reason.rcvrKey
+}

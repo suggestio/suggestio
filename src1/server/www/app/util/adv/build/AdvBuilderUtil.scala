@@ -192,7 +192,7 @@ class AdvBuilderUtil @Inject() (
           mnode = acc0.mnode.withEdges(
             acc0.mnode.edges.copy(
               out = {
-                val iter = acc0.mnode.edges.iterator ++ (e :: Nil)
+                val iter = acc0.mnode.edges.out.iterator ++ (e :: Nil)
                 MNodeEdges.edgesToMap1(iter)
               }
             )

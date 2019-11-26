@@ -30,13 +30,13 @@ import scala.concurrent.Future
   * Этот велосипед возник из-за необъятности модели MStat и необходимости заполнять её немного по-разному
   * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
   */
-class StatUtil @Inject()(
-  statCookiesUtil         : StatCookiesUtil,
-  playStatSaver           : PlayStatSaver,
-  contextUtil             : ContextUtil,
-  geoIpUtil               : GeoIpUtil,
-  mCommonDi               : ICommonDi
-)
+final class StatUtil @Inject()(
+                                statCookiesUtil         : StatCookiesUtil,
+                                playStatSaver           : PlayStatSaver,
+                                contextUtil             : ContextUtil,
+                                geoIpUtil               : GeoIpUtil,
+                                mCommonDi               : ICommonDi
+                              )
   extends MacroLogsImpl
 {
 
@@ -107,6 +107,8 @@ class StatUtil @Inject()(
 
   /** Что-то типа builder'а для создания и сохранения одного элемента статистики второго поколения. */
   abstract class Stat2 {
+
+    def logMsg: Option[String] = None
 
     /** Контекст запроса. */
     def ctx: Context
@@ -336,16 +338,37 @@ class StatUtil @Inject()(
   }
 
 
-  // TODO X-Requested-With:io.suggest.Sio2m
+  /** Сохранять ли всякий шум в mstat? */
+  def SAVE_GARBAGE_TO_MSTAT = false
+  lazy val mstats = current.injector.instanceOf[MStats]
 
+  /** Всякий мусор (CSP-отчёты, Sc-отчёты об ошибках) можно сохранять или не сохранять.
+    *
+    * @param stat2 Данные статистики.
+    * @return Фьючерс сохранения (или несохранения).
+    */
+  def maybeSaveGarbageStat(stat2: Stat2): Future[_] = {
+    def msg = stat2.logMsg getOrElse "Remote info-report"
+
+    if (SAVE_GARBAGE_TO_MSTAT) {
+      // Сохраняем в базу отчёт об ошибке.
+      for {
+        merrId <- saveStat(stat2)
+      } yield {
+        LOGGER.trace(s"$msg saved to mstat[$merrId]." )
+      }
+    } else {
+      LOGGER.info(s"$msg not saving, logging:\n${mstats.toJsonPretty(stat2.mstat)}")
+      Future.successful(())
+    }
+  }
+
+
+  // TODO X-Requested-With:io.suggest.Sio2m
   /** Отправить v2-статистику на сохранение в БД. */
   def saveStat(stat2: Stat2): Future[_] = {
-    saveStat( stat2.mstat )
-  }
-  /** Отправить v2-статистику на сохранение в БД. */
-  def saveStat(mstat: MStat): Future[_] = {
     playStatSaver.BACKEND
-      .save(mstat)
+      .save( stat2.mstat )
   }
 
 }

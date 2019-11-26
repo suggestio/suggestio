@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.m
 import diode.FastEq
 import io.suggest.adv.rcvr.RcvrKey
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,6 +25,9 @@ object MTree {
     UnivEq.derive
   }
 
+  val nodes = GenLens[MTree](_.nodes)
+  val showProps = GenLens[MTree](_.showProps)
+
 }
 
 
@@ -39,6 +43,5 @@ case class MTree(
 {
 
   def withNodes(nodes2: Seq[MNodeState]) = copy(nodes = nodes2)
-  def withShowProps(showProps2: Option[RcvrKey]) = copy(showProps = showProps2)
 
 }

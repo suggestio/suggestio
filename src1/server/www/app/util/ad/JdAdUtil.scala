@@ -235,12 +235,13 @@ class JdAdUtil @Inject()(
       textEdge <- edges
         .withPredicateIter( textPred )
       edgeUid  <- textEdge.doc.uid.iterator
-      text     <- textEdge.doc.text
+      textOpt = textEdge.doc.text.headOption
+      if textOpt.nonEmpty
     } yield {
       MJdEdge(
         predicate = textPred,
         id        = edgeUid,
-        text      = Some(text)
+        text      = textOpt
       )
     }
     // Для явной генерации всех эджей в текущем потоке, параллельно с остальными (img, video, ...) эджами.

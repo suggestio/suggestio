@@ -1,5 +1,6 @@
 package io.suggest.sc.ads
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdData
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
@@ -17,7 +18,11 @@ object MSc3AdData {
   /** Поддержка play-json. */
   implicit def MSC3_AD_DATA: OFormat[MSc3AdData] = (
     (__ \ "j").format[MJdData] and
-    (__ \ "e").formatNullable[Boolean]
+    (__ \ "i").formatNullable[MScAdInfo]
+      .inmap[MScAdInfo](
+        EmptyUtil.opt2ImplMEmptyF( MScAdInfo ),
+        EmptyUtil.implEmpty2OptF
+      )
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MSc3AdData] = UnivEq.derive
@@ -28,9 +33,8 @@ object MSc3AdData {
 /** Класс модели-контейнера данных по рекламной карточке для выдачи sc3.
   *
   * @param jd Данные для рендера карточки.
-  * @param canEdit Есть ли право на редактирование карточки у юзера?
   */
 case class MSc3AdData(
                        jd       : MJdData,
-                       canEdit  : Option[Boolean] = None
+                       info     : MScAdInfo,
                      )

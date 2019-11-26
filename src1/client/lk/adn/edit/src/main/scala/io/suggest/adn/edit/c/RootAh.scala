@@ -2,7 +2,7 @@ package io.suggest.adn.edit.c
 
 import diode._
 import io.suggest.adn.edit.api.ILkAdnEditApi
-import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
+import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
 import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled, Save}
 import io.suggest.msg.WarnMsgs
 import io.suggest.primo.id.IId
@@ -25,6 +25,11 @@ class RootAh[M](
   with Log
 {
 
+  private def _root_internals_saving_LENS = {
+    MLkAdnEditRoot.internals
+      .composeLens( MAdnEditInternals.saving)
+  }
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Реакция на кнопку сохранения формы.
@@ -42,12 +47,8 @@ class RootAh[M](
             }
         }
 
-        val v2 = v0.withInternals(
-          v0.internals.withSaving(
-            v0.internals.saving
-              .pending()
-          )
-        )
+        val v2 = _root_internals_saving_LENS
+          .modify( _.pending() )(v0)
 
         updated(v2, fx)
       }
@@ -59,28 +60,23 @@ class RootAh[M](
       m.tryResp.fold(
         // Ошибка при запросе или на сервере.
         {ex =>
-          val v2 = v0.withInternals(
-            v0.internals.withSaving(
-              v0.internals.saving
-                .fail(ex)
-            )
-          )
+          val v2 = _root_internals_saving_LENS
+            .modify( _.fail(ex) )(v0)
+
           updated(v2)
         },
         // Положительный ответ
         {form2 =>
           // Залить данные с сервера в форму.
-          val v2 = v0.copy(
-            internals = v0.internals.withSaving(
-              saving = v0.internals.saving
-                .ready(form2)
-            ),
-            node = {
+          val v2 = (
+            _root_internals_saving_LENS
+              .modify(_.ready(form2)) andThen
+            MLkAdnEditRoot.node.modify { node0 =>
               // Для ускорения и упрощения: Новые эджи не заливаем (в них нет fileSrv), а просто фильтруем существующие эджи по edge uid.
               val newEdgeIds = IId.els2idsSet( form2.edges )
-              v0.node.copy(
+              node0.copy(
                 meta    = form2.meta,
-                edges   = v0.node.edges
+                edges   = node0.edges
                   .view
                   .filterKeys( newEdgeIds.contains )
                   .toMap,
@@ -88,7 +84,8 @@ class RootAh[M](
                 errors  = MAdnEditErrors.empty
               )
             }
-          )
+          )(v0)
+
           updated( v2 )
         }
       )
@@ -100,9 +97,7 @@ class RootAh[M](
     // Закрытие всех попапов.
     case CloseAllPopups =>
       val v0 = value
-      val v2 = v0.withPopups(
-        MAdnEditPopups.empty
-      )
+      val v2 = (MLkAdnEditRoot.popups set MAdnEditPopups.empty)(v0)
       updated( v2 )
 
     // DocBodyClick используется для сокрытия color picker'а

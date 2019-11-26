@@ -7,6 +7,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.{Validation, ValidationNel}
@@ -96,6 +97,11 @@ object MBusinessInfo extends IEmpty {
     )(apply _)
   }
 
+  val siteUrl       = GenLens[MBusinessInfo](_.siteUrl)
+  val audienceDescr = GenLens[MBusinessInfo](_.audienceDescr)
+  val humanTraffic  = GenLens[MBusinessInfo](_.humanTraffic)
+  val info          = GenLens[MBusinessInfo](_.info)
+
 }
 
 
@@ -106,11 +112,3 @@ case class MBusinessInfo(
                           info                : Option[String]  = None
                         )
   extends EmptyProduct
-{
-
-  def withSiteUrl(siteUrl: Option[String])              = copy(siteUrl = siteUrl)
-  def withAudienceDescr(audienceDescr: Option[String])  = copy(audienceDescr = audienceDescr)
-  def withHumanTraffic(humanTraffic: Option[String])    = copy(humanTraffic = humanTraffic)
-  def withInfo(info: Option[String])                    = copy(info = info)
-
-}

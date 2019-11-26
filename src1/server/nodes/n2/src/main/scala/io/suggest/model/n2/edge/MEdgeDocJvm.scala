@@ -15,7 +15,9 @@ object MEdgeDocJvm extends IGenEsMappingProps {
   /** Список ES-полей модели. */
   override def generateMappingProps: List[DocField] = {
     val F = MEdgeDoc.Fields
+
     List(
+
       FieldNumber(
         id = F.UID_FN,
         fieldType = DocFieldTypes.integer,
@@ -31,7 +33,8 @@ object MEdgeDocJvm extends IGenEsMappingProps {
         // Скопипасчено с MNode._all. Начиная с ES-6.0, поле _all покидает нас, поэтому тут свой индекс.
         analyzer = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN
-      )
+      ),
+
     )
   }
 

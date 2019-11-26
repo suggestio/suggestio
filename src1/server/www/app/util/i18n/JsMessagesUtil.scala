@@ -146,6 +146,7 @@ class JsMessagesUtil @Inject() (
       MC.`_per_.day` ::
       MC.`Comission.0.pct.for.sio` ::
       MC.`Cost` ::
+      MC.`Always.outlined` ::
       Nil
 
     Iterator(l1, CAL_TYPES)

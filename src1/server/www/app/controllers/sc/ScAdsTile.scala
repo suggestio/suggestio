@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp}
+import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
@@ -322,7 +322,10 @@ trait ScAdsTile
         } yield {
           MSc3AdData(
             jd      = jd,
-            canEdit = canEditOpt
+            info = MScAdInfo(
+              canEditOpt = canEditOpt,
+              flags      = scUtil.collectScRcvrFlags( _qs, brArgs.mad )
+            )
           )
         }
       }

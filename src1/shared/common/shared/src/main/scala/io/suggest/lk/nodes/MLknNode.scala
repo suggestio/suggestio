@@ -4,6 +4,7 @@ import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.model.n2.node.MNodeType
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -26,8 +27,12 @@ object MLknNode {
     (__ \ "a").formatNullable[Boolean] and
     (__ \ "d").formatNullable[Boolean] and
     (__ \ "o").formatNullable[Boolean] and
-    (__ \ "f").formatNullable[MTfDailyInfo]
+    (__ \ "f").formatNullable[MTfDailyInfo] and
+    (__ \ "u").formatNullable[Boolean]
   )(apply, unlift(unapply))
+
+  val advShowOpened = GenLens[MLknNode](_.advShowOpened)
+  val alwaysOutlined = GenLens[MLknNode](_.alwaysOutlined)
 
 }
 
@@ -60,11 +65,8 @@ case class MLknNode(
                      advShowOpened          : Option[Boolean],
 
                      /** Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос. */
-                     tf                     : Option[MTfDailyInfo]
+                     tf                     : Option[MTfDailyInfo],
+                     /** Постоянная обводка? */
+                     alwaysOutlined         : Option[Boolean],
                    )
   extends IId[String]
-{
-
-  def withAdvShowOpened(advShowOpened: Option[Boolean]) = copy(advShowOpened = advShowOpened)
-
-}

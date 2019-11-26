@@ -250,6 +250,8 @@ sealed trait LkNodesCtlRoutes extends js.Object {
 
   def setAdvShowOpened(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
 
+  def setAlwaysOutlined(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
+
 }
 
 

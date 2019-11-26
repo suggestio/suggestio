@@ -13,7 +13,7 @@ import io.suggest.ueq.UnivEqUtil._
   * Created: 23.08.17 13:50
   * Description: Модель-контейнер для хранения какой-то документарной вещи внутри эджа.
   *
-  * Это неявно-пустая модель.
+  * Это неявно-пустая модель и КЛИЕНТ-серверная целиком.
   */
 object MEdgeDoc extends IEmpty {
 
@@ -32,9 +32,8 @@ object MEdgeDoc extends IEmpty {
 
   }
 
-
   /** Поддержка play-json. */
-  implicit val MEDGE_DOC_FORMAT: OFormat[MEdgeDoc] = (
+  implicit val edgeDocJson: OFormat[MEdgeDoc] = (
     (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and
     (__ \ Fields.TEXT_FN).formatNullable[Seq[String]]
       .inmap[Seq[String]](
@@ -59,34 +58,32 @@ object MEdgeDoc extends IEmpty {
   */
 case class MEdgeDoc(
                      uid    : Option[EdgeUid_t]   = None,
-                     text   : Seq[String]         = Nil
+                     text   : Seq[String]         = Nil,
                    )
   extends EmptyProduct
 {
 
-  def withUid(uid: Option[EdgeUid_t]) = copy(uid = uid)
-  def withText(text: Seq[String]) = copy(text = text)
-
   override def toString: String = {
     val sb = new StringBuilder(64)
     for (u <- uid)
-      sb.append("#")
+      sb.append('#')
         .append(u)
-        .append(",")
+        .append(',')
 
     if (text.nonEmpty) {
       val isMany = text.lengthCompare(1) > 0
       if (isMany)
-        sb.append("[")
+        sb.append('[')
       for (t <- text) {
         sb.append(t)
           .append(", ")
       }
       if (isMany)
-        sb.append("]")
+        sb.append(']')
     }
 
     sb.toString()
   }
+
 }
 

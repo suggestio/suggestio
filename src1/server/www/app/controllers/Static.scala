@@ -12,7 +12,6 @@ import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
-import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.CompressUtilJvm
@@ -76,7 +75,6 @@ class Static @Inject() (
 
   import sioControllerApi._
   import mCommonDi._
-  import cspUtil.Implicits._
   import streamsUtil.Implicits._
   import esModel.api._
 
@@ -187,7 +185,7 @@ class Static @Inject() (
       val requestBodyStr = request.body.toString()
       LOGGER.info(s"$logPrefix From ip#${request.remoteClientAddress} Body:\n $requestBodyStr")
 
-      request.body.validate[CspViolationReport].fold(
+      request.body.validate( cspUtil.WRAP_REPORT_READS ).fold(
         // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
         {violations =>
           val msg = s"Invalid JSON: ${violations.mkString(", ")}"
@@ -205,6 +203,7 @@ class Static @Inject() (
             _userSaOpt <- userSaOptFut
 
             stat2 = new statUtil.Stat2 {
+              override def logMsg = Some("CSP-report")
               override def ctx = _ctx
               override def uri = Some( cspViol.documentUri )
               override def components = {
@@ -218,7 +217,7 @@ class Static @Inject() (
               )
             }
 
-            r <- statUtil.saveStat(stat2)
+            r <- statUtil.maybeSaveGarbageStat( stat2 )
 
           } yield {
             LOGGER.trace(s"$logPrefix Saved csp-report -> $r")
@@ -235,7 +234,6 @@ class Static @Inject() (
     *
     * @param contentType Тип содержимого ответа.
     * @param gzip gzip-пожатый ответ.
-    * @param etag Фьючерс со значением etag в виде целого.
     * @param brotli Фьючрес с brotli-пожатый ответ.
     */
   private case class MAdvRcvrsMapRespData(

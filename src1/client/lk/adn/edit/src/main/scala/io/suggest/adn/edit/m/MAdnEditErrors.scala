@@ -13,6 +13,9 @@ import japgolly.univeq.UnivEq
   */
 object MAdnEditErrors {
 
+  // TODO Надо заменить эту модель на MMetaPub, поля использовать как поля ошибки.
+  //      Единственная проблема, что поле name там не опциональное, а поле colors вообще не нужно.
+
   def empty = MAdnEditErrors()
 
   implicit object MAdnEditErrorsFastEq extends FastEq[MAdnEditErrors] {

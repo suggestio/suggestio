@@ -61,7 +61,6 @@ object TailAh {
       focusedAdId   = for {
         scAdData <- v0.grid.core.focusedAdOpt
         focData  <- scAdData.focused.toOption
-        if focData.userFoc
         adNodeId <- scAdData.nodeId
       } yield {
         adNodeId

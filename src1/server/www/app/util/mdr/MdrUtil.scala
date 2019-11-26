@@ -498,59 +498,57 @@ class MdrUtil @Inject() (
       LOGGER.trace(s"$logPrefix Will process mdr-edges for free mdr, applyAll?$infoApplyAll")
 
       // Тут два варианта: полный аппрув выставлением mdr-эджа, или отказ в размещении на узле/узлах.
-      mNodes.tryUpdate(mnode) { mnode0 =>
+      mNodes.tryUpdate(mnode)(
         // выполнить обновление эджей узла.
-        mnode0.withEdges(
-          mnode0.edges.withOut {
-            // Если isApproved, то просто выставить эдж
-            // Если !isApproved и directSelfAll, то удалить все rcvr.self-эджи
-            // Если !isApproved и directSelfId.nonEmpty, то удалить только конкретный rcvr-self-эдж.
-            val mdrEdge2 = mdrEdge(
-              mdrUser,
-              mdrEdgeInfo( mdrRes.reason )
-            )
+        MNode.edges.modify { edges0 =>
+          // Если isApproved, то просто выставить эдж
+          // Если !isApproved и directSelfAll, то удалить все rcvr.self-эджи
+          // Если !isApproved и directSelfId.nonEmpty, то удалить только конкретный rcvr-self-эдж.
+          val mdrEdge2 = mdrEdge(
+            mdrUser,
+            mdrEdgeInfo( mdrRes.reason )
+          )
 
-            // Какие предикаты вычищать полностью?
-            var rmPredicates: List[MPredicate] =
-              MPredicates.ModeratedBy :: Nil
+          // Какие предикаты вычищать полностью?
+          var rmPredicates: List[MPredicate] =
+            MPredicates.ModeratedBy :: Nil
 
-            // Удалить Rcvr.self-эджи при отрицательном вердикте.
-            if (isRefused && mdrRes.info.directSelfAll) {
-              LOGGER.trace(s"$logPrefix rm * self-rcvrs")
-              rmPredicates ::= MPredicates.Receiver.Self
-            }
-
-            var edgesIter2: Iterator[MEdge] = mnode0.edges
-              .withoutPredicateIter( rmPredicates: _* )
-              .++( mdrEdge2 :: Nil )
-
-            // Выпилить rcvrs.self с указанным node-id:
-            for {
-              selfId <- mdrRes.info.directSelfId
-              // TODO !isRefused, т.к. откат забана не реализован тут.
-              if isRefused && !mdrRes.info.directSelfAll
-            } {
-              LOGGER.trace(s"$logPrefix rm selfId=$selfId")
-              edgesIter2 = edgesIter2
-                .flatMap { medge =>
-                  if ((medge.predicate ==* MPredicates.Receiver.Self) &&
-                      (medge.nodeIds contains selfId)) {
-                    if (medge.nodeIds.size ==* 1) {
-                      Nil
-                    } else {
-                      val medge2 = medge.withNodeIds(medge.nodeIds - selfId)
-                      medge2 :: Nil
-                    }
-                  } else {
-                    medge :: Nil
-                  }
-                }
-            }
-
-            MNodeEdges.edgesToMap1( edgesIter2 )
+          // Удалить Rcvr.self-эджи при отрицательном вердикте.
+          if (isRefused && mdrRes.info.directSelfAll) {
+            LOGGER.trace(s"$logPrefix rm * self-rcvrs")
+            rmPredicates ::= MPredicates.Receiver.Self
           }
-        )
-      }
+
+          var edgesIter2: Iterator[MEdge] = edges0
+            .withoutPredicateIter( rmPredicates: _* )
+            .++( mdrEdge2 :: Nil )
+
+          // Выпилить rcvrs.self с указанным node-id:
+          for {
+            selfId <- mdrRes.info.directSelfId
+            // TODO !isRefused, т.к. откат забана не реализован тут.
+            if isRefused && !mdrRes.info.directSelfAll
+          } {
+            LOGGER.trace(s"$logPrefix rm selfId=$selfId")
+            edgesIter2 = edgesIter2
+              .flatMap { medge =>
+                if ((medge.predicate ==* MPredicates.Receiver.Self) &&
+                    (medge.nodeIds contains selfId)) {
+                  if (medge.nodeIds.size ==* 1) {
+                    Nil
+                  } else {
+                    val medge2 = medge.withNodeIds(medge.nodeIds - selfId)
+                    medge2 :: Nil
+                  }
+                } else {
+                  medge :: Nil
+                }
+              }
+          }
+
+          (MNodeEdges.out set MNodeEdges.edgesToMap1(edgesIter2))( edges0 )
+        }
+      )
     } else {
       // Нет элементов для набега на биллинг.
       Future.successful( mnode )

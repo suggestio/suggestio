@@ -68,6 +68,7 @@ object MNodeTypesJvm {
       // Для тега: ковыряемся в эджах узла на предмет тегов.
       case MNodeTypes.Tag =>
         mnode.edges
+          .out
           .iterator
           .flatMap(_.info.tags)
           .buffered
