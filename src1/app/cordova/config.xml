@@ -8,18 +8,34 @@
       Konstantin Nikiforov
     </author>
     <content src="index.html" />
-    <access origin="*" />
+    <access origin="https://suggest.io/" />
+    <allow-navigation href="https://*.suggest.io/*" />
+    <allow-navigation href="https://*.cdnvideo.ru/*" />
+    <allow-navigation href="https://*.openstreetmap.org/*" />
+    <allow-navigation href="https://*.*.openstreetmap.org/*" />
+    <allow-navigation href="data:*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <allow-intent href="tel:*" />
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
-    <allow-navigation href="https://suggest.io/*" />
-    <allow-navigation href="https://youtube.com/*" />
     <allow-navigation href="https://*.youtube.com/*" />
-    <allow-navigation href="https://vimeo.com/*" />
+    <allow-navigation href="https://*.googlevideo.com/*" />
+    <allow-navigation href="https://*.ytimg.com/*" />
     <allow-navigation href="https://*.vimeo.com/*" />
+    <allow-navigation href="https://*.vk.com/*" />
+    <allow-navigation href="https://*.userapi.com/*" />
+    <allow-navigation href="https://*.vkuservideo.net/*" />
+    <!-- Внешние web-приложения для демки на Бирже -->
+    <allow-navigation href="https://deanhume.github.io/*" />
+    <allow-navigation href="https://storage.googleapis.com/*" />
+    <allow-navigation href="https://paperplanes.world/*" />
+    <allow-navigation href="https://polytimer.rocks/*" />
+    <allow-navigation href="https://sii.im/*" />
+    <allow-navigation href="https://relay.socketnetwork.io/*" />
+    <allow-navigation href="https://fonts.googleapis.com/*" />
+    <!-- А потом эти внешние костыли - надо будет удалить. -->
     <platform name="android">
         <allow-intent href="market:*" />
         <splash density="land-hdpi" src="res/screen/android/screen-hdpi-landscape.png" />
