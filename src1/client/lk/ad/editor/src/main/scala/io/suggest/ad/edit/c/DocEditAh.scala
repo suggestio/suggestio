@@ -320,7 +320,7 @@ class DocEditAh[M](
           .toSeq
 
         // Собрать эффект запуска аплоада на сервер для всех найденных картинок.
-        val uploadFxOpt = dataEdgesForUpload
+        val toB64FxOpt = dataEdgesForUpload
           .iterator
           .map [Effect] { case (dataUrl, _) =>
             // Это новая картинка. Организовать перегонку в blob.
@@ -392,7 +392,7 @@ class DocEditAh[M](
         )(v0)
 
         // Вернуть итоговую карту эджей и объединённый эффект.
-        ah.updatedMaybeEffect(v2, uploadFxOpt)
+        ah.updatedMaybeEffect(v2, toB64FxOpt)
       }
 
 

@@ -594,14 +594,23 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped( MFileUploadS.MFileUploadSFastEq ) ),
 
         colSuggPropsOptC = p.connect { mroot =>
+          val selJdt = mroot.doc.jdDoc.jdArgs.selJdt
           for {
-            bgEdge  <- mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
+            bgEdge  <- selJdt.bgEdgeDataOpt
             fileSrv <- bgEdge._2.jdEdge.fileSrv
             hist    <- mroot.doc.editors.colorsState.histograms.get( fileSrv.nodeId )
+            // Определить colorpicker-маркер:
+            selLoc  <- selJdt.treeLocOpt
+            markerOpt = selLoc.getLabel.name match {
+              case m: IColorPickerMarker => Some(m)
+              case _ => None
+            }
+            if markerOpt.nonEmpty
           } yield {
             colorsSuggestR.PropsVal(
               titleMsgCode = MsgCodes.`Suggested.bg.colors`,
-              colors       = hist.sorted
+              colors       = hist.sorted,
+              marker       = markerOpt
             )
           }
         }( OptFastEq.Wrapped(colorsSuggestR.ColorsSuggestPropsValFastEq) ),

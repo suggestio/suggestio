@@ -27,14 +27,18 @@ class ColorPickAh[M](
   private def isMyMarker(marker: Option[IColorPickerMarker]): Boolean =
     marker ==* myMarker
 
-  private def isMyPickerOpened(): Boolean =
-    value.exists(_.colorsState.picker.exists(_.marker ==* myMarker))
+  private def isMyPickerOpened(): Boolean = {
+    value.exists(
+      _.colorsState.picker
+        .exists { c => isMyMarker(c.marker) }
+    )
+  }
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Сигнал об изменении цвета.
-    case m: ColorChanged if isMyPickerOpened()  =>
+    // Сигнал об изменении цвета. m.marker - используется в ColorSuggestR, чтобы заменять цвета без picker'а.
+    case m: ColorChanged if isMyPickerOpened() || isMyMarker(m.marker) =>
       val v0 = value.get
       var v2 = v0.withColorOpt(
         colorOpt = Some( m.mcd )

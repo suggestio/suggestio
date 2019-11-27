@@ -54,10 +54,13 @@ case class SlideBlockClick(key: String) extends ILkCommonAction
   * @param isCompleted Окончательное выставление цвета?
   *                    Если false, то юзер пока ещё выбирает.
   * @param forceTransform Если цвет пришёл из ColorSuggest или иного источника, то выставляется true.
+  * @param marker Маркер для мимикрирования под какой-то color-picker.
   */
 case class ColorChanged(mcd: MColorData,
                         isCompleted: Boolean,
-                        forceTransform: Boolean = false) extends ILkCommonAction
+                        forceTransform: Boolean = false,
+                        marker: Option[IColorPickerMarker] = None,
+                       ) extends ILkCommonAction
 
 /** Клик на "цвете" для выбора цвета. */
 case class ColorBtnClick(vpXy: MCoords2di, marker: Option[IColorPickerMarker]) extends ILkCommonAction

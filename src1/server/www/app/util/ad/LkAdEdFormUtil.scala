@@ -126,10 +126,11 @@ class LkAdEdFormUtil @Inject() (
     // Ранняя валидация корректности присланных эджей:
     val edgesVlds = n2VldUtil.earlyValidateEdges( edges1.values )
 
-    def logPrefix = s"validateEdges(${form.edges.size})[${System.currentTimeMillis()}]:"
-
     if (edgesVlds.isFailure) {
-      LOGGER.warn(s"$logPrefix Failed to validate edges: $edgesVlds\n edges = $edges1")
+      LOGGER.warn {
+        val logPrefix = s"earlyValidateEdges(${form.edges.size})[${System.currentTimeMillis()}]:"
+        s"$logPrefix Failed to validate edges: $edgesVlds\n edges = \n ${edges1.mkString("\n ")}"
+      }
     }
 
     nodeIdVld *> edgesVlds

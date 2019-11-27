@@ -2,13 +2,12 @@ package io.suggest.lk.r.color
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.color.MColorData
+import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorChanged
 import io.suggest.msg.Messages
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -30,13 +29,14 @@ class ColorsSuggestR {
     */
   case class PropsVal(
                        titleMsgCode   : String,
-                       colors         : Seq[MColorData]
+                       colors         : Seq[MColorData],
+                       marker         : Option[IColorPickerMarker],
                      )
   /** Поддержка FastEq для [[PropsVal]]. */
   implicit object ColorsSuggestPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.titleMsgCode ===* b.titleMsgCode) &&
-        (a.colors ===* b.colors)
+      (a.colors ===* b.colors)
     }
   }
 
@@ -48,7 +48,14 @@ class ColorsSuggestR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private def _onColorClick(mcd: MColorData): Callback = {
-      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = true, forceTransform = true))
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        ColorChanged(
+          mcd = mcd,
+          isCompleted = true,
+          forceTransform = true,
+          marker = props.value.flatMap(_.marker),
+        )
+      }
     }
 
     def render(p: Props): VdomElement = {

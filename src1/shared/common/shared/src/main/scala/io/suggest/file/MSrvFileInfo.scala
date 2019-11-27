@@ -9,10 +9,10 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.crypto.hash.HashesHex.MHASHES_HEX_FORMAT_TRASPORT
 import io.suggest.err.ErrorConstants
+import io.suggest.msg.ErrorMsgs
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
-
 import scalaz.Validation
 
 /**
@@ -32,7 +32,7 @@ object MSrvFileInfo {
   }
 
   /** Поддержка play-json для связи между клиентом и сервером. */
-  implicit val MSRV_FILE_INFO: OFormat[MSrvFileInfo] = (
+  implicit def MSRV_FILE_INFO: OFormat[MSrvFileInfo] = (
     (__ \ "n").format[String] and
     (__ \ "u").formatNullable[String] and
     (__ \ "s").formatNullable[Long] and
@@ -56,7 +56,12 @@ object MSrvFileInfo {
     */
   def validateC2sForStore(fi: MSrvFileInfo): StringValidationNel[MSrvFileInfo] = {
     Validation
-      .liftNel(fi.nodeId)( {nodeId => !nodeId.matches("^[a-z0-9A-Z_-]{10,50}$") }, "e.nodeid." + ErrorConstants.Words.INVALID )
+      .liftNel(fi.nodeId)(
+        {nodeId =>
+          !nodeId.matches("^[a-z0-9A-Z_-]{10,50}$")
+        },
+        "e.nodeid." + ErrorConstants.Words.INVALID + ": " + fi.nodeId
+      )
       .map { nodeId =>
         MSrvFileInfo( nodeId = nodeId )
       }
@@ -97,7 +102,8 @@ case class MSrvFileInfo(
     */
   def updateFrom(newInfo: MSrvFileInfo): MSrvFileInfo = {
     if (newInfo ===* this) {
-      this
+      // По идее, такого быть не должно: обновление без обновлений должно быть отфильтровано где-то выше по стактрейсу.
+      throw new IllegalArgumentException( ErrorMsgs.SHOULD_NEVER_HAPPEN )
     } else {
       // БЕЗ copy(), чтобы при добавлении новых полей тут сразу подсвечивалась ошибка.
       MSrvFileInfo(
