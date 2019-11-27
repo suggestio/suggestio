@@ -392,9 +392,8 @@ object GridBuilderUtil {
           } else {
             // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
             // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
-            val lineCol2 = MCoords2di.y.modify(_ + paddingMultedPx + paddingMultedPx)( currLvl.currLineCol )
             val nextLvl = MGbLevelState(
-              ctx = currLvl.ctx.verticalSubGrid( lineCol2 ),
+              ctx = currLvl.ctx.verticalSubGrid( currLvl.currLineCol ),
               restItems = subItems.to( LazyList ),    // TODO Opt конвертация Stream=>LazyList
             )
             // Выкидываем текущий пройденный элемент с текущего уровня.
@@ -576,6 +575,7 @@ object IGridBuildCtx {
       * @return Новый контекст [[IGridBuildCtx]].
       */
     def verticalSubGrid(outerLineCol: MCoords2di): IGridBuildCtx = {
+      println( outerLineCol )
       val cellWidth = BlockWidths.max.relSz
       // Бывает, что запрашиваемая плитка вылезает за пределамы исходной.
       // Исправляем это прямо здесь.
