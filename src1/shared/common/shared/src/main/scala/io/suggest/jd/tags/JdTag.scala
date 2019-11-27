@@ -159,19 +159,23 @@ object JdTag {
     }
 
     /** Вернуть главый блок, либо первый блок. */
-    def getMainBlock: Option[Tree[From]] = {
-      tree.subForest
-        .find( _.rootLabel.props1.isMain.getOrElseFalse )
+    def getMainBlock: Option[(Tree[From], Int)] = {
+      tree
+        .subForest
+        .iterator
+        .zipWithIndex
+        .find( _._1.rootLabel.props1.isMain.getOrElseFalse )
     }
 
     /** Вернуть главый блок, либо первый блок. */
-    def getMainBlockOrFirst: Tree[From] = {
+    def getMainBlockOrFirst: (Tree[From], Int) = {
       tree.rootLabel.name match {
         case MJdTagNames.DOCUMENT =>
           getMainBlock
             .orElse {
               tree
                 .subForest
+                .zipWithIndex
                 .headOption
             }
             .getOrElse {
@@ -180,7 +184,7 @@ object JdTag {
             }
         case MJdTagNames.STRIP =>
           // По идее, поиск главного блока в блоке - это логическая ошибка. Но шаблон бывает разный, и это может быть предосторожность, поэтому реагируем молча.
-          tree
+          tree -> 0
         case other =>
           throw new IllegalArgumentException( (ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, other).toString() )
       }

@@ -15,6 +15,7 @@ import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMedias}
 import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.scalaz.NodePath_t
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
@@ -252,12 +253,6 @@ class JdAdUtil @Inject()(
   def getNodeTpl(mad: MNode) = mad.extras.doc.get.template
 
 
-  /** Узнать главный блок в карточке. */
-  def getMainBlockTpl(mad: MNode): Tree[JdTag] = {
-    getNodeTpl(mad)
-      .getMainBlockOrFirst
-  }
-
   /** traversal от JdTag до bm.isWide-флага. */
   private def _jdt_p1_bm_wide_LENS = {
     JdTag.props1
@@ -328,6 +323,9 @@ class JdAdUtil @Inject()(
     lazy val logPrefix = s"$productPrefix[${System.currentTimeMillis}]:"
 
     def nodeId: Option[String]
+
+    /** Для сборки jd-id верхнего уровня используется сие значение поля selPathRev: */
+    def selPathRev: NodePath_t
 
     // Сразу получаем шаблон, чтобы при вызове поверх левых узлов сразу была ошибка.
     def tpl: Tree[JdTag]
@@ -431,6 +429,7 @@ class JdAdUtil @Inject()(
             jdId      = MJdTagId(
               nodeId      = nodeId,
               blockExpand = _finalTpl.rootLabel.props1.expandMode,
+              selPathRev  = selPathRev,
             ),
           ),
           edges       = edEdges,
@@ -458,6 +457,11 @@ class JdAdUtil @Inject()(
       */
     case class edit(mad: MNode)
                    (implicit ctx: Context) extends JdAdDataMakerBase {
+
+
+      /** jdId.selPathRev всегда Nil, т.к. тут редактируется карточка целиком, и документ всегда top-level.
+        * Если в будущем это изменится (по-блоковое редактирование), то надо унести это в конструктор edit(). */
+      override def selPathRev = Nil
 
       override lazy val tpl = getNodeTpl(mad)
 
@@ -498,6 +502,9 @@ class JdAdUtil @Inject()(
       * @param ctx Контекст рендера.
       * @param allowWide Допускается ли широкий рендер, если это требуется шаблоном?
       *                  Для плитке -- нет, для фокусировки -- да.
+      * @param selPathRev Значения для jdId.selPathRev для JdDoc на выходе.
+      *                   В случае целикового рендера всей карточки (документа) тут Nil
+      *                   Если рендер одного блока из документа, то надо указать порядковый индекс блока (по zipWithIndex).
       */
     case class show(override val nodeId     : Option[String],
                     override val nodeEdges  : MNodeEdges,
@@ -505,6 +512,7 @@ class JdAdUtil @Inject()(
                     jdConf                  : MJdConf,
                     allowWide               : Boolean,
                     forceAbsUrls            : Boolean,
+                    override val selPathRev : NodePath_t,
                    )(implicit ctx: Context)
       extends JdAdDataMakerBase {
 

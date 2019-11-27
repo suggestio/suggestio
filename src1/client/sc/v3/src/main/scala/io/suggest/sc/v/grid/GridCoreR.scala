@@ -81,6 +81,7 @@ class GridCoreR(
             }
             bgColorOpt = adDataForJdRenderArgs.doc.template
               .getMainBlockOrFirst
+              ._1
               .rootLabel
               .props1
               .bgColor

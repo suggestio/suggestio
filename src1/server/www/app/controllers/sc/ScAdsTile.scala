@@ -286,13 +286,13 @@ trait ScAdsTile
           }
 
         // Узнать, какой шаблон рендерить.
-        val tpl2 = if (isDisplayOpened) {
+        val (tpl2, selPathRev) = if (isDisplayOpened) {
           LOGGER.trace(s"$logPrefix Ad#${brArgs.mad.idOrNull} renders focused by default.")
-          jdAdUtil.getNodeTpl( brArgs.mad )
+          jdAdUtil.getNodeTpl( brArgs.mad ) -> List.empty[Int]
         } else {
-          val tpl1 = jdAdUtil.getMainBlockTpl( brArgs.mad )
+          val (tpl1, i) = jdAdUtil.getNodeTpl(brArgs.mad).getMainBlockOrFirst
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-          jdAdUtil.resetBlkWide( tpl1 )
+          jdAdUtil.resetBlkWide( tpl1 ) -> (i :: List.empty)
         }
 
         // Собираем необходимые эджи и упаковываем в переносимый контейнер:
@@ -304,7 +304,8 @@ trait ScAdsTile
             tpl           = tpl2,
             jdConf        = tileArgs,
             allowWide     = isDisplayOpened,
-            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls
+            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
+            selPathRev    = selPathRev,
           )(ctx)
           .execute()
 
@@ -323,8 +324,8 @@ trait ScAdsTile
           MSc3AdData(
             jd      = jd,
             info = MScAdInfo(
-              canEditOpt = canEditOpt,
-              flags      = scUtil.collectScRcvrFlags( _qs, brArgs.mad )
+              canEditOpt      = canEditOpt,
+              flags           = scUtil.collectScRcvrFlags( _qs, brArgs.mad ),
             )
           )
         }

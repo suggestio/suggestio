@@ -1638,7 +1638,7 @@ class DocEditAh[M](
           // Попытаться взять цвет из главного блока или любого первого попавшегося блока с цветом фона.
           v0.jdDoc.jdArgs.data.doc.template
             .getMainBlock
-            .map(_.rootLabel)
+            .map(_._1.rootLabel)
         }
         .iterator
         // Поискать цвет фона среди всех стрипов.

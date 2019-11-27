@@ -32,13 +32,14 @@ object MScAdInfo extends IEmpty {
 
 }
 
-/**
+/** Контейнер разной инфы по карточке с сервера, которая пробрасывается в состояние выдачи без доп.обработки.
+  *
   * @param canEditOpt Может ли юзер редактировать карточку?
   * @param flags Какие-то доп-флаги, обрабатываемые на клиенте.
   */
 case class MScAdInfo(
-                      canEditOpt  : Option[Boolean]           = None,
-                      flags       : Iterable[MEdgeFlagData]   = Nil,
+                      canEditOpt      : Option[Boolean]           = None,
+                      flags           : Iterable[MEdgeFlagData]   = Nil,
                     )
   extends EmptyProduct
 {

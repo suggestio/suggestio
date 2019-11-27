@@ -63,6 +63,7 @@ class AdvUtil @Inject() (
       // v2-карточки, брать block-meta от главного блока
       doc.template
         .getMainBlockOrFirst
+        ._1
     }
   }
 

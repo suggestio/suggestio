@@ -321,7 +321,8 @@ class SysMdr @Inject() (
             tpl           = tpl,
             jdConf        = SysMdrConst.JD_CONF,
             allowWide     = true,
-            forceAbsUrls  = false
+            forceAbsUrls  = false,
+            selPathRev    = List.empty,
           )(ctx)
           .execute()
 

@@ -10,7 +10,7 @@ import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.{MJdEdgeId, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
-import io.suggest.model.n2.edge.{MEdgeFlags, MPredicates}
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._

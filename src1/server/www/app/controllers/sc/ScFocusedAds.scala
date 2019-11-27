@@ -592,7 +592,8 @@ trait ScFocusedAds
             tpl           = tpl,
             jdConf        = tileArgs,
             allowWide     = true,
-            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls
+            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
+            selPathRev    = List.empty,
           )(ctx)
           .execute()
 
