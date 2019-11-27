@@ -45,7 +45,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 //addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.1.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.29")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.31")
 //addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.0.0-M8")
 
 //addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
