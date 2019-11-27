@@ -2,12 +2,10 @@ package io.suggest.sc.v.grid
 
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.JdR
-import io.suggest.jd.tags.MJdTagNames
 import io.suggest.model.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._

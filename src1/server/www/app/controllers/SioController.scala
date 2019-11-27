@@ -13,7 +13,9 @@ import play.api.mvc.Result
 
 import scala.language.implicitConversions
 import io.suggest.flash.FlashConstants
+import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -46,6 +48,7 @@ final class SioControllerApi @Inject()(
   with I18nSupport
   with CtlJsInitT
   with IMCommonDi
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -116,15 +119,27 @@ final class SioControllerApi @Inject()(
     val messages0 = super.request2Messages
     val lang0 = messages0.lang
     if (lang0.country.nonEmpty) {
+      LOGGER.trace(s"request2messages: lang0=${lang0.code} <= cookie#${request.cookies.get(messagesApi.langCookieName).getOrElse("")} accepted=${request.acceptLanguages.iterator.map(_.code).mkString("|")} avails=${langs.availables.iterator.map(_.code).mkString(",")} ${request.transientLang().fold("")(" transient=" + _)}")
       messages0
     } else {
       // Нужно трансформировать язык к локаль исходя из доступных messages-локалей
       val avails = langs.availables
       val lang2 = avails
-        .find { _.language == lang0.language }
-        .orElse { Lang.get("en-US") }
-        .orElse { avails.headOption }
-        .getOrElse { Lang.defaultLang }
+        .find { _.language ==* lang0.language }
+        .orElse {
+          LOGGER.trace(s"request2messages: lang0=${lang0.code} avails=[${avails.iterator.map(_.code).mkString("|")}] - nothing matched")
+          Lang.get("en")
+        }
+        .orElse {
+          LOGGER.debug(s"request2messages: en-US not found in lang.avails=[${avails.iterator.map(_.code).mkString("|")}], lang0=${lang0.code}")
+          avails.headOption
+        }
+        .getOrElse {
+          val r = Lang.defaultLang
+          LOGGER.warn(s"request2messages: lang.avails is empty! default-lang=$r  lang0=${lang0.code}")
+          r
+        }
+
       messagesApi.preferred( lang2 :: lang0 :: Nil )
     }
   }
