@@ -3,6 +3,7 @@ package io.suggest.es.util
 import java.io.ByteArrayInputStream
 
 import io.suggest.util.SioConstants._
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse}
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
@@ -24,10 +25,12 @@ import scala.concurrent.{Future, Promise}
  * Description: Функции для работы с ElasticSearch. В основном - функции генерации json-спек индексов.
  */
 
-object SioEsUtil {
+object SioEsUtil extends MacroLogsImpl {
 
   import DocFieldTypes.DocFieldType
   import TermVectorVariants.TermVectorVariant
+
+  def ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS = 1000
 
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
 
@@ -379,11 +382,24 @@ object SioEsUtil {
     /** Запуск экшена с возвращением Future[AResp]. */
     def executeFut(): Future[AResp] = {
       val p = Promise[AResp]()
+      val startedAtMs = System.currentTimeMillis()
+
+      lazy val logPrefix = s"executeFut()#$startedAtMs:"
+
+
       val l = new ActionListener[AResp] {
-        override def onResponse(response: AResp): Unit =
+        override def onResponse(response: AResp): Unit = {
+          val doneAtMs = System.currentTimeMillis()
           p.success(response)
-        override def onFailure(e: Exception): Unit =
+          val tookMs = doneAtMs - startedAtMs
+          if (tookMs > ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS) {
+            LOGGER.warn(s"$logPrefix ES-request took ${tookMs}ms:\n $esActionBuilder. Stacktrace if TRACE enabled")
+          }
+        }
+
+        override def onFailure(e: Exception): Unit = {
           p.failure(e)
+        }
       }
       esActionBuilder.execute(l)
       p.future

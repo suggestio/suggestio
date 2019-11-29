@@ -190,9 +190,4 @@ case class MEdge(
       }
   }
 
-
-  def withPredicate(predicate: MPredicate) = copy(predicate = predicate)
-  def withNodeIds(nodeIds: Set[String]) = copy(nodeIds = nodeIds)
-  def withInfo(info: MEdgeInfo) = copy(info = info)
-
 }

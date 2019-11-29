@@ -39,8 +39,13 @@ class SiowebEsModel @Inject() (
 
   import esModel.api._
 
-  // Constructor
-  initializeEsModels()
+  // Устанавливать ES-mapping'и сразу при запуске? [true]
+  {
+    val ck = "es.mapping.install_on_start"
+    val r = configuration.getOptional[Boolean](ck).getOrElseTrue
+    if (r) initializeEsModels()
+    else LOGGER.warn(s"NOT installing ES-mappings, because $ck = $r")
+  }
 
 
   /**

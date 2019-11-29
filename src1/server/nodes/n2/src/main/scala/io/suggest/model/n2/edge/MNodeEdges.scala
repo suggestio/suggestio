@@ -8,6 +8,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import japgolly.univeq._
 
 import scala.collection.{MapView, SeqView}
 
@@ -270,21 +271,31 @@ case class MNodeEdges(
   }
 
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    // Оптимизировано через edgesByPred на случай больших списков эджей: так эджи фильтруются сразу группами.
     if (preds.isEmpty) {
       MNodeEdges.LOGGER.warn(s"withoutPredicateIter() called with zero args from\n${Thread.currentThread().getStackTrace.iterator.take(3).mkString("\n")}")
       out.iterator
     } else {
-      edgesByPred
-        .view
-        .filterKeys { k =>
-          val matches = preds.exists { p =>
-            k ==>> p
+      //out
+      //  .iterator
+      //  .filterNot( MNodeEdges.Filters.predsF(preds) )
+      // Оптимизировано через edgesByPred на случай больших списков эджей: так эджи фильтруются сразу группами.
+      for {
+        (k, vs) <- edgesByPred
+          .view
+          .filterKeys { k =>
+            val matches = preds.exists { p =>
+              k ==>> p
+            }
+            !matches
           }
-          !matches
-        }
-        .valuesIterator
-        .flatten
+          .iterator
+        v <- vs
+        // Оптимизация через карту: у предикатов есть parent-предикаты в карте, которые дублируют ряды эджей,
+        // и values надо дофильтровывать, отсеивая искусственные parent-значения.
+        if v.predicate ==* k
+      } yield {
+        v
+      }
     }
   }
 

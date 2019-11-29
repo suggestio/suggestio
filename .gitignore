@@ -16,7 +16,6 @@ RUNNING_PID
 *.swp
 *.rej
 *.orig
-conf/application.conf*
 .DS_Store
 dout/
 *.log
@@ -26,7 +25,6 @@ picture
 *.zip
 *.rar
 *.gz
-conf/elasticsearch.yml*
 node_modules/
 ui/node_modules
 ui/dist
@@ -35,12 +33,10 @@ ui/.sass-cache
 ui/bower_components
 ui/twirl
 app-2.11/
-conf/log*.xml
 *_jb_tmp_*
 
-src1/server/www/conf/application.conf
-src1/server/www/conf/application.conf.dev
-src1/server/www/conf/elasticsearch.yml
-src1/server/www/conf/logback.xml
+src1/server/www/conf/application.conf*
+src1/server/www/conf/elasticsearch.yml*
+src1/server/www/conf/logback.xml*
 
 src1/app/

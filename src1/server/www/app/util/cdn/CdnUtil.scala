@@ -78,7 +78,7 @@ class CdnUtil @Inject() (
       .fold (Set.empty[String]) (_.toSet)
   }
 
-  val HAS_ANY_CDN: Boolean = CDN_PROTO_HOSTS.nonEmpty
+  def hasAnyCdn = CDN_PROTO_HOSTS.nonEmpty
 
 
   // Печатаем карту в консоль при запуске.
@@ -122,7 +122,7 @@ class CdnUtil @Inject() (
     if (c.isInstanceOf[ExternalCall]) {
       // Уже внешний Call, там уже хост должен быть прописан.
       c
-    } else if (!HAS_ANY_CDN ) {
+    } else if (!hasAnyCdn ) {
       // CDN сейчас не задана, но она обычно есть на продакшене. Поэтому используем текущий хост в качестве CDN-хоста.
       new ExternalCall( ctx.relUrlPrefix + c.url )
     } else {

@@ -763,45 +763,39 @@ class LkNodes @Inject() (
 
         } else {
           LOGGER.trace(s"$logPrefix Will update mad#$adIdU with showOpened=$isEnabled on $nodeId")
+          val edge2 = (
+            MEdge.nodeIds
+              .set( Set(nodeId) ) andThen
+            MEdge.info
+              .composeLens( MEdgeInfo.flag )
+              .set( OptionUtil.maybeTrue(isEnabled) )
+          )(edge0)
+
+          // Если в данном эдже было несколко nodeIds, то распилить на несколько эджей.
+          val eTail = if (edge0.nodeIds.sizeIs > 1) {
+            val eOld2 = MEdge.nodeIds.modify(_ - nodeId)(edge0)
+            eOld2 :: Nil
+          } else {
+            Nil
+          }
+          val es2 = edge2 :: eTail
 
           // Запустить обновление карточки на стороне ES: перезаписать эдж:
           val updateNodeFut = mNodes.tryUpdate( request.mad ) {
-            MNode.edges
-              .composeLens( MNodeEdges.out )
-              .modify { edges0 =>
-                // Заменить эдж текущего размещения.
+            // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
+            MNode.edges.modify { edges0 =>
+              MNodeEdges.out.set(
                 MNodeEdges.edgesToMap1(
-                  edges0
+                  List[IterableOnce[MEdge]](
+                    edges0
+                      .withoutNodePred(nodeId, pred),
+                    es2
+                  )
                     .iterator
-                    .flatMap { e =>
-                      if (
-                        (e.predicate ==* pred) &&
-                        (e.nodeIds contains nodeId)
-                      ) {
-                        // Выкорчевать эдж текущего узла. Вдруг nodeId лежит в другом эдже, вместе с другими нодами?
-                        val eThisNode = (
-                          MEdge.nodeIds
-                            .set( Set(nodeId) ) andThen
-                          MEdge.info
-                            .composeLens( MEdgeInfo.flag )
-                            .set( OptionUtil.maybeTrue(isEnabled) )
-                        )(e)
-
-                        val eTail = if (e.nodeIds.sizeIs > 1) {
-                          val eOld2 = MEdge.nodeIds.modify(_ - nodeId)(e)
-                          eOld2 :: Nil
-                        } else {
-                          Nil
-                        }
-
-                        eThisNode :: eTail
-                      } else {
-                        // Это не тот эдж, который требуется обновлять.
-                        e :: Nil
-                      }
-                    }
+                    .flatten
                 )
-              }
+              )(edges0)
+            }
           }
 
           // Дождаться завершения апдейта.
@@ -846,48 +840,43 @@ class LkNodes @Inject() (
         } else {
           LOGGER.trace(s"$logPrefix Will update mad#$adIdU with AlwaysOutlined=$isEnabled on $nodeId")
 
+          val edge2 = (
+            MEdge.nodeIds
+              .set( Set(nodeId) ) andThen
+              MEdge.info.modify { info0 =>
+                val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
+                val flags2 =
+                  if (isEnabled) info0.flags.toSeq appended fd
+                  else (info0.flagsMap - fd.flag).values
+                MEdgeInfo.flags.set( flags2 )(info0)
+              }
+            )(edge0)
+
+          // Если в данном эдже было несколко nodeIds, то распилить на несколько эджей.
+          val eTail = if (edge0.nodeIds.sizeIs > 1) {
+            val eOld2 = MEdge.nodeIds.modify(_ - nodeId)(edge0)
+            eOld2 :: Nil
+          } else {
+            Nil
+          }
+          val es2 = edge2 :: eTail
+
           // Запустить обновление карточки на стороне ES: перезаписать эдж:
           val updateNodeFut = mNodes.tryUpdate( request.mad ) {
-            MNode.edges
-              .composeLens( MNodeEdges.out )
-              .modify { edges0 =>
-                // Заменить эдж текущего размещения.
+            // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
+            MNode.edges.modify { edges0 =>
+              MNodeEdges.out.set(
                 MNodeEdges.edgesToMap1(
-                  edges0
+                  List[IterableOnce[MEdge]](
+                    edges0
+                      .withoutNodePred(nodeId, pred),
+                    es2
+                  )
                     .iterator
-                    .flatMap { e =>
-                      if (
-                        (e.predicate ==* pred) &&
-                        (e.nodeIds contains nodeId)
-                      ) {
-                        // Выкорчевать эдж текущего узла. Вдруг nodeId лежит в другом эдже, вместе с другими нодами?
-                        val eThisNode = (
-                          MEdge.nodeIds
-                            .set( Set(nodeId) ) andThen
-                          MEdge.info.modify { info0 =>
-                            val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
-                            val flags2 =
-                              if (isEnabled) info0.flags.toSeq appended fd
-                              else (info0.flagsMap - fd.flag).values
-                            MEdgeInfo.flags.set( flags2 )(info0)
-                          }
-                        )(e)
-
-                        val eTail = if (e.nodeIds.sizeIs > 1) {
-                          val eOld2 = MEdge.nodeIds.modify(_ - nodeId)(e)
-                          eOld2 :: Nil
-                        } else {
-                          Nil
-                        }
-
-                        eThisNode :: eTail
-                      } else {
-                        // Это не тот эдж, который требуется обновлять.
-                        e :: Nil
-                      }
-                    }
+                    .flatten
                 )
-              }
+              )(edges0)
+            }
           }
 
           // Дождаться завершения апдейта.

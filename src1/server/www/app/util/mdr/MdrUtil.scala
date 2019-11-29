@@ -537,7 +537,7 @@ class MdrUtil @Inject() (
                   if (medge.nodeIds.size ==* 1) {
                     Nil
                   } else {
-                    val medge2 = medge.withNodeIds(medge.nodeIds - selfId)
+                    val medge2 = MEdge.nodeIds.modify(_ - selfId)(medge)
                     medge2 :: Nil
                   }
                 } else {

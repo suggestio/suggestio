@@ -13,6 +13,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.stat.m.{MComponents, MDiag}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.CompressUtilJvm
 import models.mctx.Context
@@ -78,6 +79,9 @@ class Static @Inject() (
   import streamsUtil.Implicits._
   import esModel.api._
 
+  private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
+  /** Полностью игнорить CSP-отчёты? [false] */
+  private val _IGNORE_CSP_REPORTS = configuration.getOptional[Boolean]( _IGNORE_CSP_REPORS_CONF_KEY ).getOrElseFalse
 
   /**
    * Страница с политикой приватности.
@@ -178,53 +182,64 @@ class Static @Inject() (
     * Данная ошибка возникла из-за stylish, который подмешивает стили через data:
     *
     */
-  def handleCspReport = bruteForceProtect {
-    maybeAuth().async( _cspJsonBp ) { implicit request =>
-      // Залить ошибку в MStat.
-      lazy val logPrefix = s"cspReportHandler[${System.currentTimeMillis()}]:"
-      val requestBodyStr = request.body.toString()
-      LOGGER.info(s"$logPrefix From ip#${request.remoteClientAddress} Body:\n $requestBodyStr")
+  def handleCspReport = {
+    lazy val logPrefix = s"cspReportHandler[${System.currentTimeMillis()}]:"
+    if (_IGNORE_CSP_REPORTS) {
+      maybeAuth() (_cspJsonBp) { implicit request =>
+        LOGGER.trace(s"$logPrefix Ignored CSP-report from [${request.remoteClientAddress}] because conf.: '${_IGNORE_CSP_REPORS_CONF_KEY}' = ${_IGNORE_CSP_REPORTS}")
+        NoContent
+      }
 
-      request.body.validate( cspUtil.WRAP_REPORT_READS ).fold(
-        // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
-        {violations =>
-          val msg = s"Invalid JSON: ${violations.mkString(", ")}"
-          LOGGER.warn(s"$logPrefix $msg")
-          errorHandler.onClientError(request, BAD_REQUEST, msg)
-        },
+    } else {
+      bruteForceProtect {
+        maybeAuth().async( _cspJsonBp ) { implicit request =>
+          // Залить ошибку в MStat.
 
-        // Всё ок распарсилось.
-        {cspViol =>
-          // Сам результат парсинга не особо важен, это скорее контроль контента.
-          val userSaOptFut = statUtil.userSaOptFutFromRequest()
-          val _ctx = implicitly[Context]
+          val requestBodyStr = request.body.toString()
+          LOGGER.info(s"$logPrefix From ip#${request.remoteClientAddress} Body:\n $requestBodyStr")
 
-          for {
-            _userSaOpt <- userSaOptFut
+          request.body.validate( cspUtil.WRAP_REPORT_READS ).fold(
+            // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
+            {violations =>
+              val msg = s"Invalid JSON: ${violations.mkString(", ")}"
+              LOGGER.warn(s"$logPrefix $msg")
+              errorHandler.onClientError(request, BAD_REQUEST, msg)
+            },
 
-            stat2 = new statUtil.Stat2 {
-              override def logMsg = Some("CSP-report")
-              override def ctx = _ctx
-              override def uri = Some( cspViol.documentUri )
-              override def components = {
-                MComponents.CSP :: MComponents.Error :: super.components
+            // Всё ок распарсилось.
+            {cspViol =>
+              // Сам результат парсинга не особо важен, это скорее контроль контента.
+              val userSaOptFut = statUtil.userSaOptFutFromRequest()
+              val _ctx = implicitly[Context]
+
+              for {
+                _userSaOpt <- userSaOptFut
+
+                stat2 = new statUtil.Stat2 {
+                  override def logMsg = Some("CSP-report")
+                  override def ctx = _ctx
+                  override def uri = Some( cspViol.documentUri )
+                  override def components = {
+                    MComponents.CSP :: MComponents.Error :: super.components
+                  }
+                  override def statActions = Nil
+                  override def userSaOpt = _userSaOpt
+
+                  override def diag = MDiag(
+                    message = Some( requestBodyStr )
+                  )
+                }
+
+                r <- statUtil.maybeSaveGarbageStat( stat2 )
+
+              } yield {
+                LOGGER.trace(s"$logPrefix Saved csp-report -> $r")
+                NoContent
               }
-              override def statActions = Nil
-              override def userSaOpt = _userSaOpt
-
-              override def diag = MDiag(
-                message = Some( requestBodyStr )
-              )
             }
-
-            r <- statUtil.maybeSaveGarbageStat( stat2 )
-
-          } yield {
-            LOGGER.trace(s"$logPrefix Saved csp-report -> $r")
-            NoContent
-          }
+          )
         }
-      )
+      }
     }
   }
 

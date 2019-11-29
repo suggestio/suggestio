@@ -292,12 +292,16 @@ class ShowcaseUtil @Inject() (
       rcvrId = rcvrIdU.id
       e <- mad.edges.withPredicateIter( MPredicates.Receiver )
       if e.nodeIds contains rcvrId
-      eFlagData <- e.info.flags
-      if eFlagData.flag.isScClientSide
+      // Могут быть одинаковые флаги, слать их много раз смысла нет.
+      flagData <- e.info
+        .flags
+        .iterator
+      if flagData.flag.isScClientSide
     } yield {
-      eFlagData
+      flagData.flag -> flagData
     })
-      .toSeq
+      .toMap
+      .values
   }
 
 }
