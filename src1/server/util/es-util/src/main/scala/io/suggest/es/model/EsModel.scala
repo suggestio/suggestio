@@ -362,15 +362,22 @@ final class EsModel @Inject()(
       .map(esModelId)
       .toSet
       .size
+
     if (uniqModelsCnt < allModels.size) {
       // Найдены модели, которые испрользуют один и тот же индекс+тип. Нужно вычислить их и вернуть в экзепшене.
-      val errModelsStr = allModels
-        .map { m => esModelId(m) -> m.getClass.getName }
-        .groupBy(_._1)
-        .valuesIterator
-        .filter { _.size > 1 }
-        .map { _.mkString(", ") }
+      val errModelsStr = (for {
+        v <- allModels
+          .map { m =>
+            esModelId(m) -> m.getClass.getName
+          }
+          .groupBy(_._1)
+          .valuesIterator
+        if v.sizeIs > 1
+      } yield {
+        v.mkString(", ")
+      })
         .mkString("\n")
+
       throw new InternalError("Two or more es models using same index+type for data store:\n" + errModelsStr)
     }
   }
@@ -581,7 +588,7 @@ final class EsModel @Inject()(
           IndexMapping(
             typ           = model.ES_TYPE_NAME,
             staticFields  = model.generateMappingStaticFields,
-            properties    = model.generateMappingProps
+            properties    = model.generateMappingProps,
           )
         }
       }
@@ -819,7 +826,7 @@ final class EsModel @Inject()(
        * @return Фьючерс, подлежащий дальнейшей обработке.
        */
       def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = model.SCROLL_SIZE_DFLT,
-                            keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
+                      keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
         val query = queryOpt.getOrElse {
           QueryBuilders.matchAllQuery()
         }

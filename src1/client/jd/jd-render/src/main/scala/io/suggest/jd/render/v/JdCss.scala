@@ -230,7 +230,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val sidePx = _szMulted( jdCssArgs.conf.blockPadding.fullBetweenBlocksPx ).px
     style(
       paddingLeft( sidePx ),
-      paddingRight( sidePx ),
+      paddingRight( sidePx * 3 ),
     )
   }
 

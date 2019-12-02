@@ -121,7 +121,6 @@ object Sc3Main extends Log {
         doc._underlying
           .getElementById( id )
       }
-        .logFailure( ErrorMsgs.NODE_NOT_FOUND, id )
         .getOrElse {
           val div = VUtil.newDiv()
           div.setAttribute( "id", id )
@@ -132,16 +131,16 @@ object Sc3Main extends Log {
 
     val modules = new Sc3Module
 
-    def __activateRmeLogger(): Unit = {
-      // Активировать отправку логов на сервер, когда js-роутер будет готов.
-      Try {
-        if ( !Logging.LOGGERS.exists(_.isInstanceOf[ScRmeLogAppender]) )
-          Logging.LOGGERS ::= new ScRmeLogAppender
-      }
-        .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
-    }
-
     Try {
+      def __activateRmeLogger(): Unit = {
+        // Активировать отправку логов на сервер, когда js-роутер будет готов.
+        Try {
+          if ( !Logging.LOGGERS.exists(_.isInstanceOf[ScRmeLogAppender]) )
+            Logging.LOGGERS ::= new ScRmeLogAppender
+        }
+          .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
+      }
+
       if (jsRouterFut.isCompleted) {
         __activateRmeLogger()
       } else {

@@ -149,12 +149,12 @@ class JdR(
         } else {
           // Для наружной обёртки react-dnd требуется только нативный тег:
           val jdCss = state.jdArgs.jdRuntime.jdCss
+          val innerTm: TagMod = jdCss.qdBlOuter
 
           <.div(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
             jdCss.contentOuter,
-            jdCss.qdBlOuter,
 
             // Если карточка имеет цвет outline-выделения, то выделить и контент:
             _groupOutlineRender(state),
@@ -190,6 +190,7 @@ class JdR(
 
                 // ref должен быть прямо в теге как можно ближе к контенту, чтобы правильно измерить размер react-measure.
                 tag0(
+                  innerTm,
                   ^.genericRef := chArgs.measureRef,
                 )
                   .rawElement

@@ -35,9 +35,5 @@ object MScDialogs {
   * @param first Диалог первого запуска, когда открыт.
   */
 case class MScDialogs(
-                       first      : MWzFirstOuterS      = MWzFirstOuterS.empty
-                     ) {
-
-  def withFirst(first: MWzFirstOuterS) = copy(first = first)
-
-}
+                       first      : MWzFirstOuterS      = MWzFirstOuterS.empty,
+                     )
