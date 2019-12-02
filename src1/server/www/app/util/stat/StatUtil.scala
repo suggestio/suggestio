@@ -1,7 +1,6 @@
 package util.stat
 
 import javax.inject.Inject
-
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MOrientations2d
 import io.suggest.es.model.MEsUuId
@@ -20,6 +19,7 @@ import play.mvc.Http.HeaderNames
 import util.geo.GeoIpUtil
 
 import scala.concurrent.Future
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -82,24 +82,26 @@ final class StatUtil @Inject()(
   /** Завернуть данные по карточкам в stat-экшен. */
   def madsAction(mads: Seq[MNode], acType: MActionType): MAction = {
     MAction(
-      actions   = Seq( acType ),
+      actions   = acType :: Nil,
       nodeId    = mads.iterator
         .flatMap(_.id)
         .toSeq,
       nodeName  = mads.iterator
         .flatMap(_.guessDisplayName)
         .toSeq,
-      count     = Seq( mads.size )
+      count     = mads.size :: Nil,
     )
   }
 
   def withNodeAction(acType: MActionType, nodeIdOpt: Option[MEsUuId], nodeOpt: Option[MNode])(acc0: List[MAction]): List[MAction] = {
     nodeIdOpt.fold(acc0) { nodeId =>
       MAction(
-        actions   = Seq( acType ),
-        nodeId    = Seq( nodeId ),
-        nodeName  = nodeOpt.flatMap(_.guessDisplayName).toSeq,
-        count     = Seq( nodeOpt.size )
+        actions   = acType :: Nil,
+        nodeId    = nodeId :: Nil,
+        nodeName  = nodeOpt
+          .flatMap(_.guessDisplayName)
+          .toSeq,
+        count     = nodeOpt.size :: Nil,
       ) :: acc0
     }
   }
@@ -117,23 +119,30 @@ final class StatUtil @Inject()(
     def statActions: List[MAction]
 
     lazy val uaOpt = {
-      ctx.request
-        .headers
-        .get(USER_AGENT)
-        .map(_.trim)
-        .filter(!_.isEmpty)
+      for {
+        ua <- ctx.request
+          .headers
+          .get(USER_AGENT)
+        uaTrimmed = ua.trim
+        if uaTrimmed.nonEmpty
+      } yield {
+        uaTrimmed
+      }
     }
 
     def browser = uaOpt.flatMap { ua =>
       // try-catch для самозащиты от возможных багов в православной либе uadetector.
-      try {
+      Try {
         val uaParser = UADetectorServiceFactory.getResourceModuleParser
-        Some(uaParser.parse(ua))
-      } catch {
-        case ex: Throwable =>
-          warn("agent: Unable to use UADetector for parsing UA: " + ua, ex)
-          None
+        Option( uaParser.parse(ua) )
       }
+        .recover {
+          case ex: Throwable =>
+            warn("agent: Unable to use UADetector for parsing UA: " + ua, ex)
+            None
+        }
+        .toOption
+        .flatten
     }
 
     def clUidOpt: Option[String] = {
@@ -151,7 +160,8 @@ final class StatUtil @Inject()(
 
     /** Является ли текущий клиент "локальным", т.е. не очень-то интересным для статистики. */
     def isLocalClient: Boolean = {
-      remoteAddr.isLocal.contains(true) || ctx.request.user.isSuper
+      (remoteAddr.isLocal contains true) ||
+      ctx.request.user.isSuper
     }
 
 
@@ -184,20 +194,28 @@ final class StatUtil @Inject()(
       }
       MUa(
         ua      = uaOpt,
-        browser = _browser
-          .flatMap { _agent => Option(_agent.getName) }
-          .filter(isStrUseful),
-        device  = _browser
-          .flatMap { _agent => Option(_agent.getDeviceCategory) }
-          .flatMap { dc => Option(dc.getName) }
-          .filter(isStrUseful),
-        osFamily = browserOs
-          .flatMap { os => Option(os.getFamilyName) }
-          .filter(isStrUseful),
-        osVsn    = browserOs
-          .flatMap { os => Option(os.getVersionNumber) }
-          .flatMap { vsn => Option(vsn.getMajor) }
-          .filter(isStrUseful),
+        browser = for {
+          agent <- _browser
+          agentName <- Option(agent.getName)
+          if isStrUseful(agentName)
+        } yield agentName,
+        device  = for {
+          agent       <- _browser
+          devCat      <- Option( agent.getDeviceCategory )
+          devCatName  <- Option( devCat.getName )
+          if isStrUseful( devCatName )
+        } yield devCatName,
+        osFamily = for {
+          agentOs <- browserOs
+          osFamilyName <- Option( agentOs.getFamilyName )
+          if isStrUseful( osFamilyName )
+        } yield osFamilyName,
+        osVsn    = for {
+          agentOs <- browserOs
+          osVsn   <- Option( agentOs.getVersionNumber )
+          osVsnMajor <- Option( osVsn.getMajor )
+          if isStrUseful( osVsnMajor )
+        } yield osVsnMajor,
         uaType = uaTypes
       )
     }
@@ -270,11 +288,11 @@ final class StatUtil @Inject()(
         geo = {
           val _geoOpt = locEnvOpt.flatMap(_.geoLocOpt)
           MGeoLocData(
-            coords = _geoOpt
-              .map(_.point),
-            accuracy = _geoOpt
-              .flatMap(_.accuracyOptM)
-              .map(_.toInt)
+            coords = for (geo <- _geoOpt) yield geo.point,
+            accuracy = for (
+              geo <- _geoOpt;
+              accurM <- geo.accuracyOptM
+            ) yield accurM.toInt,
           )
         },
         geoIp = {

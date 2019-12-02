@@ -148,10 +148,13 @@ class JdR(
 
         } else {
           // Для наружной обёртки react-dnd требуется только нативный тег:
+          val jdCss = state.jdArgs.jdRuntime.jdCss
+
           <.div(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
-            state.jdArgs.jdRuntime.jdCss.contentOuter,
+            jdCss.contentOuter,
+            jdCss.qdBlOuter,
 
             // Если карточка имеет цвет outline-выделения, то выделить и контент:
             _groupOutlineRender(state),

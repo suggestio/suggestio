@@ -225,6 +225,15 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     fontSize( _szMulted(MFontSizes.default.value).px ),
   )
 
+  /** Для qd-blockless нужны поля, чтобы текст не упирался в край экрана/карточки. */
+  val qdBlOuter = {
+    val sidePx = _szMulted( jdCssArgs.conf.blockPadding.fullBetweenBlocksPx ).px
+    style(
+      paddingLeft( sidePx ),
+      paddingRight( sidePx ),
+    )
+  }
+
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
@@ -704,9 +713,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
             acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
         }
 
-        styleS(
-          acc: _*
-        )
+        styleS( acc: _* )
       },
       JdCss._jdIdToStringF,
     )
@@ -714,7 +721,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   /** Стили вращения. Индексируется по значению угла поворота. */
-  val rotateF =
+  val rotateF = {
     styleF(
       new Domain.OverSeq(
         jdCssArgs
@@ -748,6 +755,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       },
       DslMacros.defaultStyleFClassNameSuffixI
     )
+  }
 
 
   val video = {

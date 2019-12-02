@@ -283,9 +283,10 @@ class LkAdnEdit @Inject() (
                   val saveFut = mNodes.tryUpdate( request.mnode )(
                     MNode.edges.modify { edges0 =>
                       // Стираем все jd-эджи. На момент описания результат был эквивалентен
-                      edges0
-                        .withoutPredicate( MPredicates.JdContent )
-                        .withEdges( addNodeEdges )
+                      MNodeEdges.out.modify(_ ++ addNodeEdges)(
+                        edges0
+                          .withoutPredicate( MPredicates.JdContent )
+                      )
                     } andThen
                     MNode.extras
                       .composeLens( MNodeExtras.adn )

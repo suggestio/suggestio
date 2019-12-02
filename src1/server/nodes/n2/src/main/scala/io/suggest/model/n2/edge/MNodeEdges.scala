@@ -10,7 +10,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import japgolly.univeq._
 
-import scala.collection.{MapView, SeqView}
+import scala.collection.MapView
 
 /**
  * Suggest.io
@@ -73,7 +73,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
     }
   }
 
-  implicit val FORMAT: Format[MNodeEdges] = {
+  implicit val nodeEdgesJson: Format[MNodeEdges] = {
     (__ \ Fields.OUT_FN)
       // Парсинг в два этапа, чтобы можно отсеивать некорректные эджи.
       .formatNullable[Seq[JsObject]]
@@ -155,19 +155,9 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
 
   object Filters {
 
-    def hasUidF(edgeUids: Iterable[EdgeUid_t])(medge: MEdge): Boolean = {
-      edgeUids.exists( medge.doc.uid.contains )
-    }
-
     def nodePredF(nodeId: String, predicate: MPredicate)(medge: MEdge): Boolean = {
       medge.nodeIds.contains(nodeId) &&
         medge.predicate ==>> predicate
-    }
-
-    def predsF(preds: Iterable[MPredicate])(medge: MEdge): Boolean = {
-      preds.exists { p =>
-        medge.predicate ==>> p
-      }
     }
 
   }
@@ -270,6 +260,7 @@ case class MNodeEdges(
     }
   }
 
+
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
     if (preds.isEmpty) {
       MNodeEdges.LOGGER.warn(s"withoutPredicateIter() called with zero args from\n${Thread.currentThread().getStackTrace.iterator.take(3).mkString("\n")}")
@@ -280,7 +271,7 @@ case class MNodeEdges(
       //  .filterNot( MNodeEdges.Filters.predsF(preds) )
       // Оптимизировано через edgesByPred на случай больших списков эджей: так эджи фильтруются сразу группами.
       for {
-        (k, vs) <- edgesByPred
+        (groupPred, edgesGroup) <- edgesByPred
           .view
           .filterKeys { k =>
             val matches = preds.exists { p =>
@@ -289,12 +280,12 @@ case class MNodeEdges(
             !matches
           }
           .iterator
-        v <- vs
+        edge <- edgesGroup
         // Оптимизация через карту: у предикатов есть parent-предикаты в карте, которые дублируют ряды эджей,
         // и values надо дофильтровывать, отсеивая искусственные parent-значения.
-        if v.predicate ==* k
+        if edge.predicate ==* groupPred
       } yield {
-        v
+        edge
       }
     }
   }
@@ -344,48 +335,14 @@ case class MNodeEdges(
 
   /** Фильтрация по отсутствую указанных edge uid. */
   def withoutUid(edgeUids: EdgeUid_t*): MNodeEdges = {
-    withFilterNot( MNodeEdges.Filters.hasUidF(edgeUids) )
-  }
-
-  def outView = {
-    out match {
-      case v: SeqView[MEdge] => v
-      case _ => out.view
-    }
-  }
-
-  def withFilter(f: MEdge => Boolean): MNodeEdges = {
     MNodeEdges.out.set(
-      outView
-        .filter(f)
-        .toSeq
+      MNodeEdges.edgesToMap1(
+        edgeUids
+          .foldLeft( edgesByUid )( _ - _ )
+          .values
+      )
     )(this)
   }
-  def withFilterNot(f: MEdge => Boolean): MNodeEdges = {
-    withFilter( f.andThen(!_) )
-  }
-
-
-  /** Докинуть эджей. */
-  def withEdge(edges: MEdge*): MNodeEdges = {
-    if (edges.isEmpty) {
-      this
-    } else {
-      MNodeEdges.out
-        .set( (outView ++ edges).toSeq )(this)
-    }
-  }
-
-  /** Докинуть коллекции эджей. */
-  def withEdges(edgess: IterableOnce[MEdge]*): MNodeEdges = {
-    if (edgess.isEmpty) {
-      this
-    } else {
-      MNodeEdges.out
-        .set( (outView ++ edgess.iterator.flatten).toSeq )(this)
-    }
-  }
-
 
   /**
     * Найти и обновить с помощью функции эдж, который соответствует предикату.

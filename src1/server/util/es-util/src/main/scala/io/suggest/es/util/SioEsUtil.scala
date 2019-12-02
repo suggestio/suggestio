@@ -384,16 +384,17 @@ object SioEsUtil extends MacroLogsImpl {
       val p = Promise[AResp]()
       val startedAtMs = System.currentTimeMillis()
 
-      lazy val logPrefix = s"executeFut()#$startedAtMs:"
-
-
       val l = new ActionListener[AResp] {
         override def onResponse(response: AResp): Unit = {
           val doneAtMs = System.currentTimeMillis()
           p.success(response)
           val tookMs = doneAtMs - startedAtMs
           if (tookMs > ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS) {
-            LOGGER.warn(s"$logPrefix ES-request took ${tookMs}ms:\n $esActionBuilder. Stacktrace if TRACE enabled")
+            val logPrefix = s"executeFut()#$startedAtMs:"
+            LOGGER.info(s"$logPrefix ES-request took ${tookMs}ms")
+            // Бывают ложные срабатывания, например при запуске, когда большая параллельная нагрузка.
+            // Чтобы не заваливать логи мусором, логгируем что-то серьёзное только при TRACE.
+            LOGGER.trace(s"$logPrefix $esActionBuilder")
           }
         }
 
@@ -402,6 +403,7 @@ object SioEsUtil extends MacroLogsImpl {
         }
       }
       esActionBuilder.execute(l)
+
       p.future
     }
 
