@@ -2,6 +2,7 @@ package io.suggest.sc.m.boot
 
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 import scala.util.Try
 
@@ -14,6 +15,8 @@ import scala.util.Try
 object MBootServiceState {
 
   @inline implicit def univEq: UnivEq[MBootServiceState] = UnivEq.derive
+
+  val started = GenLens[MBootServiceState](_.started)
 
 }
 
@@ -43,7 +46,5 @@ case class MBootServiceState(
   /** Завершился ли start() успешно? */
   def isStartCompleted: Boolean =
     _foldStarted( identity[Boolean] )
-
-  def withStarted(started: Option[Try[Boolean]]) = copy(started = started)
 
 }

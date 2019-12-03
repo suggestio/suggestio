@@ -154,6 +154,7 @@ object Sc3Main extends Log {
     // Отрендерить компонент spa-роутера в целевой контейнер.
     Try {
       modules.sc3SpaRouter
+        .state
         .router()
         .renderIntoDOM(rootDiv)
     }

@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import com.softwaremill.macwire._
 import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.first.WzFirstR
@@ -26,6 +27,16 @@ class Sc3Module {
   import io.suggest.ReactCommonModule._
 
 
+  lazy val sc3SpaRouter: Sc3SpaRouter = {
+    new Sc3SpaRouter(
+      scReactCtxContF = () => scReactCtx,
+      sc3CircuitF     = _sc3CircuitF,
+      scRootR         = () => scRootR,
+    )
+  }
+
+  import sc3SpaRouter.state.routerCtl
+
   // Костыли для js-роутера.
   // Без костылей вероятна проблема курицы и яйца в виде циклической зависимости инстансов:
   // - Шаблонам нужен routerCtl (react-контекст) для рендера ссылок и прочего.
@@ -38,17 +49,7 @@ class Sc3Module {
   // Для явной разводки доступа к инстансам,
   // используются 0-arg функции, которые скрывают за собой lazy-инстансы.
   // Костыль для инжекции ленивого доступа к инстансу ScRootR.
-  private def _sc3CircuitF(routerCtl: RouterCtl[Sc3Pages]) = wire[Sc3Circuit]
-
-  lazy val sc3SpaRouter: Sc3SpaRouter = {
-    new Sc3SpaRouter(
-      scReactCtxContF = () => scReactCtx,
-      sc3CircuitF     = _sc3CircuitF,
-      scRootR         = () => scRootR,
-    )
-  }
-
-  import sc3SpaRouter.routerCtl
+  def _sc3CircuitF(routerState: MSpaRouterState) = wire[Sc3Circuit]
 
   /** Сборка контейнера контекста, который будет распихан по sc-шаблонам. */
   lazy val scReactCtx: React.Context[MScReactCtx] =
@@ -106,6 +107,5 @@ class Sc3Module {
   // sc3
   lazy val scRootR = wire[ScRootR]
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
-  def sc3Circuit(routerCtl: RouterCtl[Sc3Pages]) = wire[Sc3Circuit]
 
 }

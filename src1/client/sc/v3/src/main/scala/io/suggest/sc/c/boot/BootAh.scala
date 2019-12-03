@@ -2,6 +2,7 @@ package io.suggest.sc.c.boot
 
 import diode._
 import diode.data.Pot
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.msg.WarnMsgs
@@ -109,8 +110,9 @@ class BootAh[M](
         MBootServiceIds.JsRouter :: Nil
 
       override def startFx: Effect = {
-        circuit.dispatch( RcvrMarkersInit )
-        Effect( _startWithPot( serviceId, circuit.geoTabDataRW.zoom(_.rcvrsCache) ) )
+        RcvrMarkersInit.toEffectPure >> Effect {
+          _startWithPot( serviceId, circuit.geoTabDataRW.zoom(_.rcvrsCache) )
+        }
       }
 
     }
@@ -232,9 +234,7 @@ class BootAh[M](
             acc2.fxAcc
 
           val svcData2 = if (isWillStart)
-            svcData0.withStarted(
-              started = Some( Success(false) )
-            )
+            MBootServiceState.started.set( Some(Success(false)) )(svcData0)
           else
             svcData0
 
@@ -312,12 +312,13 @@ class BootAh[M](
           LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
           noChange
         } { svcData0 =>
-          val svcData2 = svcData0.withStarted(
+          val svcData2 = MBootServiceState.started.set(
             Some(
               m.tryRes
-               .map(_ => true)
+                .map(_ => true)
             )
-          )
+          )(svcData0)
+
           // Залить полученную инфу в состояние.
           val v1 = v0.copy(
             services = v0.services + (m.svcId -> svcData2),
@@ -330,7 +331,8 @@ class BootAh[M](
           if (v1.targets.nonEmpty) {
             _processStartState( v1, v1.targets.toList )
           } else {
-            updatedSilent( v1 )
+            val fx = _reRouteFx( allowRouteTo = true )
+            updatedSilent(v1, fx)
           }
         }
 
@@ -391,12 +393,21 @@ class BootAh[M](
 
   }
 
+  private def _reRouteFx(allowRouteTo: Boolean): Effect = {
+    Effect.action {
+      circuit.internalsRW
+        .value
+        .info.currRoute
+        .filter { _ => allowRouteTo }
+        .fold[IScRootAction](ResetUrlRoute)(RouteTo.apply)
+    }
+  }
 
   /** Мастер уже завершился или не запускался и не планирует. Быстро или медленно.
     * Но суть исходная - заняться получением гео.данных, если их ещё нет.
     */
-  private def _afterWzDone(wzStartedAtMs: Option[Long] = None, runned: Boolean = false, started: Boolean = false): ActionResult[M] = {
-    //println( s"_afterWzClosed(${wzStartedAtMs.orNull}): Need geo loc? route=" + circuit.internalsRW.value.info.currRoute )
+  private def _afterWzDone(wzStartedAtMs: Option[Long] = None, runned: Boolean = false, started: Boolean = false, v0: MScBoot = value): ActionResult[M] = {
+    println( s"_afterWzDone(${wzStartedAtMs.orNull}): Need geo loc? route=" + circuit.internalsRW.value.info.currRoute )
 
     // Тут несколько вариантов:
     // - гео-данные уже накоплены
@@ -405,17 +416,12 @@ class BootAh[M](
 
     // Экшен, сигнализирующий о завершении запуска сервиса:
     val doneMyselfFx = _svcStartDoneAction( MBootServiceIds.GeoLocDataAcc ).toEffectPure
-    val internals = circuit.internalsRW.value
-    val reRoute = internals.info.currRoute
-      .filter { _ => !(started || runned) }
-      .fold[IScRootAction](ResetUrlRoute)(RouteTo.apply)
-    val v0 = value
 
-    val v2 = MScBoot.wzFirstDone.set( Some(true) )(v0)
+    val v2 = (MScBoot.wzFirstDone set OptionUtil.SomeBool.someTrue)(v0)
     // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
-    //if (!runned && started) {
-    //}
-    val fx = doneMyselfFx >> reRoute.toEffectPure
+    val fx = doneMyselfFx >> _reRouteFx(
+      allowRouteTo = !(started || runned)
+    )
 
     updated(v2, fx)
   }

@@ -32,7 +32,7 @@ import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
-import io.suggest.sc.m.boot.{Boot, MBootServiceIds}
+import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
@@ -40,7 +40,7 @@ import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
-import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs, Sc3Pages}
+import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.search.SearchCss
@@ -49,7 +49,6 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.CircuitUtil._
-import japgolly.scalajs.react.extra.router.RouterCtl
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -62,7 +61,7 @@ import scala.util.Try
   */
 class Sc3Circuit(
                   // Явные аргументы:
-                  routerCtl                 : RouterCtl[Sc3Pages],
+                  routerState               : MSpaRouterState,
                   // Автоматические DI-аргументы:
                   api                       : ISc3Api,
                 )
@@ -292,7 +291,7 @@ class Sc3Circuit(
   // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
   private val tailAh = new TailAh(
     modelRW               = rootRW,
-    routerCtl             = routerCtl,
+    routerCtl             = routerState.routerCtl,
     scRespHandlers        = respHandlers,
     scRespActionHandlers  = respActionHandlers,
   )
@@ -440,8 +439,14 @@ class Sc3Circuit(
   {
     // Немедленный запуск инициализации/загрузки
     Try {
+      val needGeoLoc = routerState.canonicalRoute.fold(true)(_.needGeoLoc)
+      val svcsTail = if (needGeoLoc) {
+        MBootServiceIds.GeoLocDataAcc :: Nil
+      } else {
+        Nil
+      }
       dispatch(
-        Boot( MBootServiceIds.RcvrsMap :: MBootServiceIds.GeoLocDataAcc :: Nil )
+        Boot( MBootServiceIds.RcvrsMap :: svcsTail )
       )
     }
 

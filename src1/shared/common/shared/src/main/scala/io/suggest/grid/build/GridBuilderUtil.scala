@@ -483,7 +483,7 @@ object GridBuilderUtil {
             // Отцентровать используя указанный сдвиг относительно центра плитки. И никакого szMult тут быть не должно, иначе опять всё пойдёт вразнос.
             (gridWidthPx - widthOrigPx) / 2
           },
-          y = res.topLeft.y + args.offY, //Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
+          y = res.topLeft.y + args.offY,
         )
         res.gbBlock.jdId -> finalCoords
       }

@@ -20,12 +20,8 @@ object OptionUtil {
     * @return Опциональный результат выполнения функции f в зависимости от значения isSome.
     */
   @inline
-  def maybe[T](isSome: Boolean)(someF: => T): Option[T] = {
-    if (isSome)
-      Some(someF)
-    else
-      None
-  }
+  def maybe[T](isSome: Boolean)(someF: => T): Option[T] =
+    Option.when(isSome)(someF)
 
   /** Вернуть Some(true) или None. */
   def maybeTrue(isSome: Boolean): Option[Boolean] =
