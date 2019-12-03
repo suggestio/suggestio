@@ -73,11 +73,17 @@ object GridBuilderUtilJs {
 
       case MJdTagNames.QD_CONTENT =>
         // Внеблоковые элементы. Надо узнать их высоту.
-        val qdBlSzOpt = for {
-          qdBlSzPot <- jdRuntime.data.qdBlockLess.get( jdId )
-          qdBlSz    <- qdBlSzPot.toOption
+        val qdBlSzOpt = jdRuntime.data.qdBlockLess
+          .get( jdId )
+          .flatMap(_.toOption)
+
+        lazy val jdtWidthPxGbSzOpt = for {
+          widthPx <- jdt.props1.widthPx
         } yield {
-          qdBlSz.bounds
+          MGbSidePx(
+            sizePx      = widthPx,
+            isSzMulted  = false,
+          )
         }
 
         val sz = MGbSize(
@@ -85,22 +91,17 @@ object GridBuilderUtilJs {
           widthPx = qdBlSzOpt
             .map { qdBl =>
               MGbSidePx(
-                sizePx      = qdBl.width,
+                sizePx      = qdBl.bounds.width,
                 isSzMulted  = true,
               )
             }
             .orElse {
-              for (widthPx <- jdt.props1.widthPx) yield {
-                MGbSidePx(
-                  sizePx      = widthPx,
-                  isSzMulted  = false,
-                )
-              }
+              jdtWidthPxGbSzOpt
             },
           heightPx = qdBlSzOpt
             .map { qdBl =>
               MGbSidePx(
-                sizePx      = qdBl.height,
+                sizePx      = qdBl.bounds.height,
                 isSzMulted  = true,
               )
             }
@@ -121,6 +122,16 @@ object GridBuilderUtilJs {
               )
             },
           expandMode = Some( MBlockExpandModes.Wide ),
+          widthUnRotatedPx = qdBlSzOpt
+            .map { qdBlSz =>
+              MGbSidePx(
+                sizePx = qdBlSz.client.width,
+                isSzMulted = true,
+              )
+            }
+            .orElse {
+              jdtWidthPxGbSzOpt
+            },
         )
         Some(sz)
 

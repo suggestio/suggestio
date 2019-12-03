@@ -16,6 +16,10 @@ import play.api.libs.functional.syntax._
 
 object MJdConf {
 
+  /** Коэфф. "заезжания" wide-блока за inner-границу плитки по горизонтали, чтобы гарантированно уйти за экран.
+    * Если 2, то плитка MGridCalcConf.EVEN_GRID.cellPadding = outlinePx (половинное расстояние). */
+  def WIDE_OFFGRID_HPADDING_MULT = 4
+
   /** Поддержка play-json. */
   implicit def MJD_CONF_FORMAT: OFormat[MJdConf] = (
     (__ \ "e").format[Boolean] and
@@ -63,16 +67,16 @@ case class MJdConf(
 
   /** Фактическая ширина внутреннего контейнера плитки в пикселях вместе с ободом вокруг. */
   lazy val gridWidthPx: Int = {
-    szMultF( (gridColumnsCount / 2) * (BlockWidths.NORMAL.value + BlockPaddings.default.value) )
+    szMultF( (gridColumnsCount / 2) * (BlockWidths.NORMAL.value + blockPadding.value) )
   }
 
   /** Внутренняя ширина плитки без окружающего обода. */
   def gridInnerWidthPx: Int =
-    gridWidthPx - szMultF( BlockPaddings.default.fullBetweenBlocksPx )
+    gridWidthPx - szMultF( blockPadding.fullBetweenBlocksPx )
 
   /** Ширина wide-блока без фоновой картинки.  */
   def plainWideBlockWidthPx: Int =
-    gridWidthPx + szMultF( BlockPaddings.default.value * 2 )
+    gridWidthPx + szMultF( blockPadding.value * MJdConf.WIDE_OFFGRID_HPADDING_MULT )
 
 }
 

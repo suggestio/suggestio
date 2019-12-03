@@ -67,10 +67,11 @@ object MGbBlock {
   * @param expandMode Режим развёртывания по горизонтали.
   */
 case class MGbSize(
-                    widthCells      : Int,
-                    widthPx         : Option[MGbSidePx] = None,
-                    heightPx        : MGbSidePx,
-                    expandMode      : Option[MBlockExpandMode],
+                    widthCells          : Int,
+                    widthPx             : Option[MGbSidePx] = None,
+                    heightPx            : MGbSidePx,
+                    widthUnRotatedPx    : Option[MGbSidePx] = None,
+                    expandMode          : Option[MBlockExpandMode],
                   )
 object MGbSize {
   @inline implicit def univEq: UnivEq[MGbSize] = UnivEq.derive

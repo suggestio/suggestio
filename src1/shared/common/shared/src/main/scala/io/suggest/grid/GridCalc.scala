@@ -32,9 +32,16 @@ object GridCalc {
     */
   def getColumnsCount(contSz: IWidth, conf: MGridCalcConf, minSzMult: Double = MSzMults.GRID_MIN_SZMULT_D): Int = {
     val padding = conf.cellPadding * minSzMult
-    val targetCount = ((contSz.width - padding) / (conf.cellWidth.value * minSzMult + padding)).toInt
-    val evenGridColsCount = Math.min(conf.maxColumns,
-      Math.max(1, targetCount))
+
+    val targetCount = (
+      (contSz.width - padding) /
+      (conf.cellWidth.value * minSzMult + padding)
+    ).toInt
+
+    val evenGridColsCount = Math.min(
+      conf.maxColumns,
+      Math.max(1, targetCount)
+    )
     //println(s"getColsCnt(contSz=$contSz, conf=$conf, minSzMult=$minSzMult): padding=$padding, tgCount=$targetCount, r=>$r")
 
     // Для EVEN_GRID результат надо домножить на 2 (cell-ширина одного блока).
@@ -164,35 +171,36 @@ object GridCalc {
   *
   * @param cellWidth Ширина одной рассчётной ячейки в css-пикселях.
   * @param maxColumns Максимально допустимое кол-во колонок.
+  * @param cellPadding Ширина обрамления вокруг одного блока.
   */
 case class MGridCalcConf(
                           cellWidth      : BlockWidth,
-                          maxColumns     : Int
+                          maxColumns     : Int,
+                          cellPadding    : Int,
                         ) {
 
   def colUnitWidthPx = cellWidth.value
-
-  /** Ширина обрамления вокруг одного блока. */
-  def cellPadding = BlockPaddings.Bp20.outlinePx
 
 }
 
 object MGridCalcConf {
 
   /** Настройки для дефолтовой сетки. */
-  def PLAIN_GRID: MGridCalcConf = {
+  private def PLAIN_GRID: MGridCalcConf = {
     MGridCalcConf(
       cellWidth    = BlockWidths.NARROW,
-      maxColumns   = GridConst.CELL140_COLUMNS_MAX
+      maxColumns   = GridConst.CELL140_COLUMNS_MAX,
+      cellPadding = BlockPaddings.Bp20.outlinePx,
     )
   }
 
   /** Чётная сетка -- сетка с чётным кол-вом колонок. */
   def EVEN_GRID: MGridCalcConf = {
-    val bw = BlockWidths.NORMAL
     MGridCalcConf(
+      cellWidth   = BlockWidths.NORMAL,
       maxColumns  = GridConst.CELL300_COLUMNS_MAX,
-      cellWidth   = bw
+      // Тут для правильного рассчёта в GridCalc надо использовать
+      cellPadding = BlockPaddings.Bp20.fullBetweenBlocksPx,
     )
   }
 

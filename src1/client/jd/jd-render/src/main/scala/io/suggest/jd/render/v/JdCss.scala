@@ -121,6 +121,39 @@ object JdCss {
 
 
   /** walk-функция для оптимального обхода дерева jd-тегов, выдающая qd-content-теги по наиболее короткому пути. */
+  private def _qdBlContentTreeWalker[From: IJdTagGetter](locOrNull0: TreeLoc[From]): Option[(LazyList[From], TreeLoc[From])] = {
+    if (locOrNull0 == null) {
+      None
+
+    } else {
+      val loc0 = locOrNull0
+      val jd = loc0.getLabel
+
+      val r = jd.name match {
+        // Вернуть данный тег + перейти на следующий тег вправо.
+        case MJdTagNames.QD_CONTENT =>
+          val emit = jd #:: LazyList.empty
+          val loc2 = loc0.right.orNull
+          emit -> loc2
+        // Документ - спустится на уровень блоков.
+        case MJdTagNames.DOCUMENT =>
+          val loc2 = loc0
+            .firstChild
+            .orElse( loc0.right )
+            .orNull
+          LazyList.empty -> loc2
+        case _ =>
+          val loc2 = loc0.right
+            .orNull
+          LazyList.empty -> loc2
+      }
+
+      Some(r)
+    }
+  }
+
+
+  /** walk-функция для оптимального обхода дерева jd-тегов, выдающая qd-content-теги по наиболее короткому пути. */
   private def _qdContentTreeWalker[From: IJdTagGetter](locOrNull0: TreeLoc[From]): Option[(LazyList[From], TreeLoc[From])] = {
     if (locOrNull0 == null) {
       None
@@ -227,10 +260,10 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** Для qd-blockless нужны поля, чтобы текст не упирался в край экрана/карточки. */
   val qdBlOuter = {
-    val sidePx = _szMulted( jdCssArgs.conf.blockPadding.fullBetweenBlocksPx ).px
+    val sidePx = _szMulted( jdCssArgs.conf.blockPadding.outlinePx ).px
     style(
       paddingLeft( sidePx ),
-      paddingRight( sidePx * 3 ),
+      paddingRight( sidePx ),
     )
   }
 
@@ -429,6 +462,35 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       },
       (colorHex, _) => MColorData.stripDiez(colorHex)
     )
+
+
+  /** Костыли для qd-blockless. */
+  val qdBlF = styleF(
+    new Domain.OverSeq({
+      jdCssArgs
+        .tplsIndexed
+        .iterator
+        .flatMap { tpl =>
+          LazyList.unfold(tpl.loc)( JdCss._qdBlContentTreeWalker(_) )
+        }
+        .flatten
+        .map(_._1)
+        .toIndexedSeq
+    })
+  )(
+    {jdId =>
+      var acc = List.empty[ToStyle]
+      for {
+        qdBlPot <- jdCssArgs.data.qdBlockLess.get( jdId )
+        qdBl    <- qdBlPot.toOption
+      } {
+        // Для qd-blockless желательно указать высоту, чтобы при ротации не было наезда outline'а на последующие описания.
+        acc ::= height( qdBl.bounds.height.px )
+      }
+      styleS( acc: _* )
+    },
+    JdCss._jdIdToStringF,
+  )
 
 
   // -------------------------------------------------------------------------------

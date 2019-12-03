@@ -225,9 +225,9 @@ object GridBuilderUtil {
                   // Задан размер широкого фона. Берём его как есть без лишних манипуляций.
                   val r = ImgCommonUtil.isUseWidthForBlockBg(
                     blockHeightPx = gb.jdt.props1.heightPx.get,
-                    origWh = wideBgSz,
-                    jdt = gb.jdt,
-                    jdConf = args.jdConf,
+                    origWh        = wideBgSz,
+                    jdt           = gb.jdt,
+                    jdConf        = args.jdConf,
                     wideSzMultOpt = wideSzMultOpt
                   )
                   // При горизонтальном выравнивании - берётся wideBgSz.width
@@ -237,21 +237,12 @@ object GridBuilderUtil {
                 }
                 .orElse[Int] {
                   if (gb.jdt.name ==* MJdTagNames.QD_CONTENT) {
-                    val isSwapWh = gb.jdt.props1.rotateDeg.exists { deg =>
-                      val degAbs = Math.abs( deg )
-                      val a = 45
-                      // Поворот на 45..135 градусов?
-                      (degAbs > a) && (degAbs <= a*3)
-                    }
-                    
-                    val r = (for {
-                      sideSzPx <- if (isSwapWh) Some(gbSize.heightPx)
-                      else gbSize.widthPx
-                    } yield {
-                      if (sideSzPx.isSzMulted) sideSzPx.sizePx
-                      else szMultedF(sideSzPx.sizePx, wideSzMultOpt)
-                    })
-                      .getOrElse( gbSize.widthCells * paddedCellWidthPx )
+                    val r = gbSize
+                      .widthUnRotatedPx
+                      .fold (gbSize.widthCells * paddedCellWidthPx) { sideSzPx =>
+                        if (sideSzPx.isSzMulted) sideSzPx.sizePx
+                        else szMultedF(sideSzPx.sizePx, wideSzMultOpt)
+                      }
 
                     Some(r)
 
@@ -575,7 +566,6 @@ object IGridBuildCtx {
       * @return Новый контекст [[IGridBuildCtx]].
       */
     def verticalSubGrid(outerLineCol: MCoords2di): IGridBuildCtx = {
-      println( outerLineCol )
       val cellWidth = BlockWidths.max.relSz
       // Бывает, что запрашиваемая плитка вылезает за пределамы исходной.
       // Исправляем это прямо здесь.

@@ -55,7 +55,7 @@ object GridAh {
 
     val gridColsCount = GridCalc.getColumnsCount(
       contSz = mscreen,
-      conf   = gridConf
+      conf   = gridConf,
     )
     val gridSzMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf)
     (gridColsCount, gridSzMult)

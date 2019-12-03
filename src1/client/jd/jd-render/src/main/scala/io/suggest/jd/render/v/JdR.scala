@@ -155,6 +155,7 @@ class JdR(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
             jdCss.contentOuter,
+            jdCss.qdBlF( state.tagId ),
 
             // Если карточка имеет цвет outline-выделения, то выделить и контент:
             _groupOutlineRender(state),

@@ -575,7 +575,6 @@ class IndexAh[M](
           )
         )
 
-        println(m)
         _getIndex(
           silentUpdate  = false,
           v0            = v1,

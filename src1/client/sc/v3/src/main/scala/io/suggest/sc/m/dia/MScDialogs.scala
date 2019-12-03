@@ -2,6 +2,7 @@ package io.suggest.sc.m.dia
 
 import io.suggest.ueq.UnivEqUtil._
 import diode.FastEq
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.dia.first.MWzFirstOuterS
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -19,13 +20,15 @@ object MScDialogs {
 
   implicit object MScDialogsFastEq extends FastEq[MScDialogs] {
     override def eqv(a: MScDialogs, b: MScDialogs): Boolean = {
-      (a.first ===* b.first)
+      (a.first ===* b.first) &&
+      (a.error ===* b.error)
     }
   }
 
   @inline implicit def univEq: UnivEq[MScDialogs] = UnivEq.derive
 
   val first = GenLens[MScDialogs](_.first)
+  val error = GenLens[MScDialogs](_.error)
 
 }
 
@@ -36,4 +39,5 @@ object MScDialogs {
   */
 case class MScDialogs(
                        first      : MWzFirstOuterS      = MWzFirstOuterS.empty,
+                       error      : Option[MScErrorDia] = None,
                      )
