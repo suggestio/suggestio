@@ -56,8 +56,4 @@ case class MGeoTabData(
                         delay           : Option[MMapDelay]     = None,
                         lmap            : Option[LMap]          = None,
                         selTagIds       : Set[String]           = Set.empty,
-                      ) {
-
-  def withDelay(delay: Option[MMapDelay]) = copy(delay = delay)
-
-}
+                      )

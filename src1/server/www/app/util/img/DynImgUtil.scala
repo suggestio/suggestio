@@ -8,6 +8,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.img.{MImgFmt, MImgFmts}
@@ -380,7 +381,7 @@ class DynImgUtil @Inject() (
     // Сборка поисковых аргументов для файла.
     val searchArgs = new MMediaSearchDfltImpl {
       override def limit = 20
-      override def isOriginalFile = Some(false)
+      override def isOriginalFile = OptionUtil.SomeBool.someFalse
       override def fileMimes: Seq[String] = {
         MImgFmts.allMimesIter.toSeq
       }

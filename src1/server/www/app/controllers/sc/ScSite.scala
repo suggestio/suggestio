@@ -399,7 +399,7 @@ trait ScSite
         _geoSiteResult(logic)
 
       } else {
-        errorHandler.onClientError(request, NOT_IMPLEMENTED, s"sc.api.vsn=${siteArgs.apiVsn} not implemented")
+        errorHandler.onClientError(request, UPGRADE_REQUIRED, s"API version '${siteArgs.apiVsn}' not implemented.")
       }
     }
   }

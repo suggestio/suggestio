@@ -847,7 +847,7 @@ class Ident @Inject() (
                       predicate = MPredicates.Ident.Phone,
                       nodeIds   = Set( regCreds.phone ),
                       info = MEdgeInfo(
-                        flag = Some(true),
+                        flag = OptionUtil.SomeBool.someTrue,
                       )
                     ),
                     // Электронная почта.
@@ -1273,7 +1273,7 @@ class Ident @Inject() (
                       !(e.info.flag contains true)
                     ) {
                       hasChangedEdge = true
-                      (MEdge.info composeLens MEdgeInfo.flag set Some(true))(e)
+                      (MEdge.info composeLens MEdgeInfo.flag set OptionUtil.SomeBool.someTrue)(e)
                     } else {
                       e
                     }
@@ -1284,7 +1284,7 @@ class Ident @Inject() (
                       predicate = MPredicates.Ident.Email,
                       nodeIds = Set( qs.email ),
                       info = MEdgeInfo(
-                        flag = Some(true),
+                        flag = OptionUtil.SomeBool.someTrue,
                       )
                     )
                     ee #:: edges2

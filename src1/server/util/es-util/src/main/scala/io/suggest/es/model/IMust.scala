@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.common.empty.OptionUtil
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
@@ -13,8 +14,8 @@ object IMust {
 
   // Множество значений поля must.
   def SHOULD    : Must_t  = None
-  def MUST      : Must_t  = Some(true)
-  def MUST_NOT  : Must_t  = Some(false)
+  def MUST      : Must_t  = OptionUtil.SomeBool.someTrue
+  def MUST_NOT  : Must_t  = OptionUtil.SomeBool.someFalse
 
 
   /** Вернуть MUST или MUST_NOT в зависимости от значения флага.

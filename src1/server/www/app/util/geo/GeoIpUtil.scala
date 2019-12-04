@@ -1,8 +1,9 @@
 package util.geo
 
 import java.net.InetAddress
-import javax.inject.{Inject, Singleton}
 
+import io.suggest.common.empty.OptionUtil
+import javax.inject.{Inject, Singleton}
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoLoc}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -91,12 +92,12 @@ class GeoIpUtil @Inject() (
         LOGGER.trace(s"$logPrefix Local ip detected: $remoteAddr0. Rewriting ip with $ra1")
         MRemoteAddrInfo(
           remoteAddr    = ra1,
-          isLocal       = Some(true)
+          isLocal       = OptionUtil.SomeBool.someTrue
         )
       } else {
         MRemoteAddrInfo(
           remoteAddr    = remoteAddr0,
-          isLocal       = Some(false)
+          isLocal       = OptionUtil.SomeBool.someFalse
         )
       }
     } catch {

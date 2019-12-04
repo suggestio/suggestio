@@ -1,5 +1,6 @@
 package models.usr
 
+import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -96,7 +97,7 @@ class MSuperUsers @Inject()(
               predicates        = MPredicates.Ident.Email :: Nil,
               nodeIds           = suEmails,
               nodeIdsMatchAll   = false,
-              flag              = Some(true),
+              flag              = OptionUtil.SomeBool.someTrue,
             )
             cr :: Nil
           }

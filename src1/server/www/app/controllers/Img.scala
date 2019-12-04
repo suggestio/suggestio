@@ -187,7 +187,7 @@ class Img @Inject() (
             case _ =>
               LOGGER.error(s"$logPrefix Failed to read image from ${request.storageInfo}", ex)
               for (
-                resp <- errorHandler.onClientError(request, SERVICE_UNAVAILABLE, "Internal error occured during fetching/creating an image.")
+                resp <- errorHandler.onClientError(request, FAILED_DEPENDENCY, "Internal error occured during fetching/creating an image.")
               ) yield
                 resp.withHeaders(RETRY_AFTER -> "60")
           }

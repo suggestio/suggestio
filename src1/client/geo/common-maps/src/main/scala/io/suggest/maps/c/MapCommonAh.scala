@@ -1,6 +1,7 @@
 package io.suggest.maps.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
@@ -68,10 +69,10 @@ class MapCommonAh[M](
       // Выставить в состояние флаг, что больше не требуется принимать сигнал геолокации. Это нужно, чтобы избежать передёргивания карты.
       // TODO Снимать флаг, при повторной геолокации.
       val v0 = value
-      if (value.locationFound.contains(true)) {
+      if (value.locationFound contains true) {
         noChange
       } else {
-        val v2 = MMapS.locationFound.set( Some(true) )(v0)
+        val v2 = (MMapS.locationFound set OptionUtil.SomeBool.someTrue)(v0)
         _setMapCenter(hlf, v2)
       }
 

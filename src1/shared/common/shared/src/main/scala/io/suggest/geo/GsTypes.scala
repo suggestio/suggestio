@@ -1,6 +1,7 @@
 package io.suggest.geo
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.enum2.EnumeratumUtil
 import play.api.libs.json.{Format, Reads, Writes}
 import play.api.libs.functional.syntax._
@@ -93,37 +94,37 @@ object GsTypes extends StringEnum[GsType] {
 
   case object Point extends GsType("point") with GsTypeGeoJsonCompatible {
     override def geoJsonName  = "Point"
-    override def isArea       = Some(false)
+    override def isArea       = OptionUtil.SomeBool.someFalse
   }
 
   case object Polygon extends GsType("polygon") with GsTypeGeoJsonCompatible {
     override def geoJsonName  = "Polygon"
-    override def isArea       = Some(true)
+    override def isArea       = OptionUtil.SomeBool.someTrue
   }
 
   case object Circle extends GsType("circle") {
     override def isCircle     = true
-    override def isArea       = Some(true)
+    override def isArea       = OptionUtil.SomeBool.someTrue
   }
 
   case object LineString extends GsType("linestring") with GsTypeGeoJsonCompatible {
     override def geoJsonName  = "LineString"
-    override def isArea       = Some(false)
+    override def isArea       = OptionUtil.SomeBool.someFalse
   }
 
   case object MultiPoint extends GsType("multipoint") with GsTypeGeoJsonCompatible {
     override def geoJsonName  = "MultiPoint"
-    override def isArea       = Some(false)
+    override def isArea       = OptionUtil.SomeBool.someFalse
   }
 
   case object MultiLineString extends GsType("multilinestring") with GsTypeGeoJsonCompatible {
     override def geoJsonName  = "MultiLineString"
-    override def isArea       = Some(false)
+    override def isArea       = OptionUtil.SomeBool.someFalse
   }
 
   case object MultiPolygon extends GsType("multipolygon") with GsTypeGeoJsonCompatible {
     override def geoJsonName  = "MultiPolygon"
-    override def isArea       = Some(true)
+    override def isArea       = OptionUtil.SomeBool.someTrue
   }
 
   case object GeometryCollection extends GsType("geometrycollection") with GsTypeGeoJsonCompatible {
@@ -132,7 +133,7 @@ object GsTypes extends StringEnum[GsType] {
   }
 
   case object Envelope extends GsType("envelope") {
-    override def isArea       = Some(true)
+    override def isArea       = OptionUtil.SomeBool.someTrue
   }
 
 

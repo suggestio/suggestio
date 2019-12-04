@@ -348,7 +348,7 @@ class LkAdvExt @Inject() (
           Future.successful(res)
         case ex: Throwable =>
           LOGGER.error(s"$logPrefix Failure, qs = $qsArgs", ex)
-          errorHandler.onClientError(requestHeader, INTERNAL_SERVER_ERROR)
+          errorHandler.onServerError(requestHeader, ex)
       }
       resFut
         .map( Left.apply )

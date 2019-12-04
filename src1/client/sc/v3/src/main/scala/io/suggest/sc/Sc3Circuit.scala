@@ -223,7 +223,7 @@ class Sc3Circuit(
             )
           )
           if (pxRatio2.value > scr0.pxRatio.value)
-            MScreen.pxRatio.set (pxRatio2 )(scr0)
+            (MScreen.pxRatio set pxRatio2)(scr0)
           else
             scr0
         },
@@ -242,20 +242,16 @@ class Sc3Circuit(
 
   /** Аргументы для поиска тегов. */
   private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot)
-  }
-
-  private def _searchQs(mroot: MScRoot): MScQs = {
     MScQs(
       common = MScCommonQs(
         locEnv      = getLocEnv(mroot),
         apiVsn      = mroot.internals.conf.apiVsn,
-        searchNodes = Some( false ),
-        screen      = Some( mroot.dev.screen.info.screen )
+        searchNodes = OptionUtil.SomeBool.someFalse,
+        screen      = Some( mroot.dev.screen.info.screen ),
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
-        rcvrId    = mroot.index.state.rcvrId.toEsUuIdOpt
+        rcvrId    = mroot.index.state.rcvrId.toEsUuIdOpt,
       )
     )
   }
