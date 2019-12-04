@@ -1,6 +1,6 @@
 package io.suggest.spa
 
-import diode.{Circuit, FastEq, ModelRO, ModelRW}
+import diode.{Circuit, FastEq, ModelR, ModelRO, ModelRW}
 
 /**
   * Suggest.io
@@ -23,8 +23,8 @@ object CircuitUtil {
     * @return Инстанс ModelRW Root<=>Child.
     */
   def mkLensZoomRW[Root_t <: AnyRef, Parent_t, Child_t]( modelRW: ModelRW[Root_t, Parent_t], lens: monocle.Lens[Parent_t, Child_t] )
-                                                       ( implicit feq: FastEq[Child_t] ): ModelRW[Root_t, Child_t] = {
-    mkLensZoomRwUsing(lens) { modelRW.zoomRW[Child_t](_)(_)(_) }
+                                                       ( implicit feq: FastEq[_ >: Child_t] ): ModelRW[Root_t, Child_t] = {
+    mkLensZoomRwUsing(lens) { modelRW.zoomRW[Child_t](_)(_)(feq) }
   }
 
   /** Сборка ModelRW для корневой модели, которая недоступна напрямую, на основе lens.
@@ -37,8 +37,8 @@ object CircuitUtil {
     * @return Инстанс ModelRW Root<=>Child.
     */
   def mkLensRootZoomRW[Root_t <: AnyRef, Child_t]( circuit: Circuit[Root_t], lens: monocle.Lens[Root_t, Child_t] )
-                                                 ( implicit feq: FastEq[Child_t] ): ModelRW[Root_t, Child_t] = {
-    mkLensZoomRwUsing(lens) { circuit.zoomRW[Child_t](_)(_)(_) }
+                                                 ( implicit feq: FastEq[_ >: Child_t] ): ModelRW[Root_t, Child_t] = {
+    mkLensZoomRwUsing(lens) { circuit.zoomRW[Child_t](_)(_)(feq) }
   }
 
 
@@ -48,20 +48,17 @@ object CircuitUtil {
     *
     * @param lens Линза.
     * @param mkRwF Фунция, унифицирующая доступ к обоим .zoomRW-методам.
-    * @param feq FastEq Child-модели.
     * @tparam Root_t Тип корневой модели circuit.
     * @tparam Parent_t Тип модели внутри root-модели.
     * @tparam Child_t Тип дочерней модели отновительно Parent-модели.
     * @return Инстанс ModelRW Root<=>Child.
     */
   private def mkLensZoomRwUsing[Root_t <: AnyRef, Parent_t, Child_t]
-  (lens: monocle.Lens[Parent_t, Child_t] )
-  ( mkRwF: (Parent_t => Child_t, (Parent_t, Child_t) => Parent_t, FastEq[_ >: Child_t]) => ModelRW[Root_t, Child_t] )
-  ( implicit feq: FastEq[Child_t] ): ModelRW[Root_t, Child_t] = {
+              (lens: monocle.Lens[Parent_t, Child_t] )
+              (mkRwF: (Parent_t => Child_t, (Parent_t, Child_t) => Parent_t) => ModelRW[Root_t, Child_t]): ModelRW[Root_t, Child_t] = {
     mkRwF(
       lens.get,
-      (parent0, child2) => lens.set(child2)(parent0),
-      feq
+      (parent0, child2) => (lens set child2)(parent0),
     )
   }
 
@@ -73,15 +70,15 @@ object CircuitUtil {
     * @param feq FastEq Child-модели.
     * @tparam Parent_t Тип модели внутри root-модели.
     * @tparam Child_t Тип дочерней модели отновительно Parent-модели.
-    * @return Инстанс ModelRO Parent=>Child.
+    * @return Инстанс ModelRO/ModelR Parent=>Child.
     */
-  def mkLensZoomRO[Parent_t, Child_t](modelRO: ModelRO[Parent_t], lens: monocle.Lens[Parent_t, Child_t] )
-                                     (implicit feq: FastEq[_ >: Child_t]): ModelRO[Child_t] = {
+  def mkLensZoomRO[Parent_t, Child_t, M <: ModelRO[Parent_t]](modelRO: M, lens: monocle.Lens[Parent_t, Child_t])
+                                                             (implicit feq: FastEq[_ >: Child_t]): modelRO.NewR[Child_t] = {
     modelRO.zoom( lens.get )(feq)
   }
 
   def mkLensRootZoomRO[Root_t <: AnyRef, Child_t]( circuit: Circuit[Root_t], lens: monocle.Lens[Root_t, Child_t] )
-                                                 ( implicit feq: FastEq[Child_t] ): ModelRO[Child_t] = {
+                                                 ( implicit feq: FastEq[_ >: Child_t] ): ModelR[Root_t, Child_t] = {
     circuit.zoom( lens.get )(feq)
   }
 

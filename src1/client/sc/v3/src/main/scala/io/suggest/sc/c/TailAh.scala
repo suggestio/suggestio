@@ -3,6 +3,7 @@ package io.suggest.sc.c
 import diode._
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m._
@@ -175,7 +176,9 @@ class TailAh[M](
 
       // Возможно js-роутер ещё не готов, и нужно отложить полную обработку состояния:
       val isFullyReady = v0.internals.jsRouter.jsRouter.isReady &&
-        (v0.internals.boot.wzFirstDone contains[Boolean] true)
+        (v0.internals.boot.wzFirstDone.getOrElseTrue /*isEmpty || contains[Boolean] true*/)
+
+      //println( isFullyReady, getClass.getSimpleName, m )
 
       // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
       var jsRouterAwaitRoute = false

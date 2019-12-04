@@ -4,6 +4,7 @@ import diode._
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
+import io.suggest.dev.MPlatformS
 import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.msg.WarnMsgs
 import io.suggest.sc.Sc3Circuit
@@ -11,9 +12,12 @@ import io.suggest.sc.c.dia.FirstRunDialogAh
 import io.suggest.sc.m.boot._
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m._
+import io.suggest.sc.m.in.MJsRouterS
+import io.suggest.sc.m.search.MGeoTabData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dom.DomQuick
+import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.concurrent.{Future, Promise}
@@ -65,7 +69,7 @@ class BootAh[M](
           val v = jsRouterRO.value
           implicitly[IValueReadySubscriber[X]]
             .maybeCompletePromise( doneP, v )
-          // Отменить таймаут закрытия фьючерса:
+          // Возможно, Promise был исполнен строкой выше. И если это так, то отменить таймаут закрытия фьючерса:
           if (doneP.isCompleted)
             for (tp <- tpOkOpt)
               DomQuick.clearTimeout( tp.timerId )
@@ -89,12 +93,12 @@ class BootAh[M](
       override def serviceId = MBootServiceIds.JsRouter
 
       override def startFx: Effect = {
-        val fx = Effect {
-          val z = circuit.jsRouterRW.zoom(_.jsRouter)
+        val bootSvcFx = Effect {
+          val z = CircuitUtil.mkLensZoomRO( circuit.jsRouterRW, MJsRouterS.jsRouter )
           _startWithPot( serviceId, z )
         }
-        circuit.dispatch( JsRouterInit )
-        fx
+        val bgFx = JsRouterInit.toEffectPure
+        bootSvcFx + bgFx
       }
       // TODO Sc3Main содержит свой запуск jsRouter-инициализации, который ещё активирует RmeLogging.
 
@@ -107,12 +111,15 @@ class BootAh[M](
       override def serviceId = MBootServiceIds.RcvrsMap
 
       override def depends =
-        MBootServiceIds.JsRouter :: Nil
+        MBootServiceIds.JsRouter :: super.depends
 
       override def startFx: Effect = {
-        RcvrMarkersInit.toEffectPure >> Effect {
-          _startWithPot( serviceId, circuit.geoTabDataRW.zoom(_.rcvrsCache) )
+        val bgFx = RcvrMarkersInit.toEffectPure
+        val bootSvcFx = Effect {
+          val z = CircuitUtil.mkLensZoomRO( circuit.geoTabDataRW, MGeoTabData.rcvrsCache )
+          _startWithPot( serviceId, z )
         }
+        bootSvcFx + bgFx
       }
 
     }
@@ -130,7 +137,8 @@ class BootAh[M](
 
           if (plat.isCordova) {
             // cordova - Нужно повесится на platform-ready.
-            _startWithPot( serviceId, circuit.platformRW.zoom(_.isReady), timeoutOkMs = Some(7000) )
+            val isReadyRO = CircuitUtil.mkLensZoomRO(circuit.platformRW, MPlatformS.isReady)
+            _startWithPot( serviceId, isReadyRO, timeoutOkMs = Some(7000) )
           } else {
             // browser - сразу вернуть ответ.
             Future.successful( this.finished() )
@@ -346,7 +354,7 @@ class BootAh[M](
         val afterInitFx = BootLocDataWzAfterInit.toEffectPure
 
         // Выставить в состояние факт запуска wzFirst:
-        val v2 = MScBoot.wzFirstDone.set( Some(false) )(value)
+        val v2 = (MScBoot.wzFirstDone set OptionUtil.SomeBool.someFalse)(value)
         val fx = initFirstWzFx >> afterInitFx
 
         updatedSilent(v2, fx)
@@ -407,7 +415,7 @@ class BootAh[M](
     * Но суть исходная - заняться получением гео.данных, если их ещё нет.
     */
   private def _afterWzDone(wzStartedAtMs: Option[Long] = None, runned: Boolean = false, started: Boolean = false, v0: MScBoot = value): ActionResult[M] = {
-    println( s"_afterWzDone(${wzStartedAtMs.orNull}): Need geo loc? route=" + circuit.internalsRW.value.info.currRoute )
+    //println( s"_afterWzDone(${wzStartedAtMs.orNull}): Need geo loc? route=" + circuit.internalsRW.value.info.currRoute )
 
     // Тут несколько вариантов:
     // - гео-данные уже накоплены
