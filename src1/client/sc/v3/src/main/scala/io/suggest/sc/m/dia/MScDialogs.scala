@@ -36,8 +36,9 @@ object MScDialogs {
 /** Модель-контейнер верхнего уровня для состояний диалогов.
   *
   * @param first Диалог первого запуска, когда открыт.
+  * @param error Состояние диалога возникшей ошибки.
   */
 case class MScDialogs(
-                       first      : MWzFirstOuterS      = MWzFirstOuterS.empty,
-                       error      : Option[MScErrorDia] = None,
+                       first      : MWzFirstOuterS          = MWzFirstOuterS.empty,
+                       error      : Option[MScErrorDia]     = None,
                      )

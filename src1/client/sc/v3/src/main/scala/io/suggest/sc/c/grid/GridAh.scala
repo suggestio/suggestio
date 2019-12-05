@@ -15,7 +15,7 @@ import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
-import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute, SetErrorState}
 import io.suggest.sc.m.grid._
 import io.suggest.sc.sc3._
 import io.suggest.sc.styl.ScCss
@@ -24,6 +24,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.primo.id.OptId
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -232,11 +233,23 @@ class GridRespHandler
     Some( ctx.value0.grid.core.ads )
   }
 
-  override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
-    MScRoot.grid
+  override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
+    val lens = MScRoot.grid
       .composeLens(MGridS.core)
       .composeLens( MGridCoreS.ads )
-      .modify( _.fail(ex) )( ctx.value0 )
+
+    val v2 = (lens modify (_.fail(ex)) )( ctx.value0 )
+
+    val errFx = Effect.action {
+      val m = MScErrorDia(
+        messageCode = ErrorMsgs.XHR_UNEXPECTED_RESP,
+        pot         = lens.get(v2),
+        retryAction = Some(ctx.m.reason),
+      )
+      SetErrorState(m)
+    }
+
+    ActionResult.ModelUpdateEffect(v2, errFx)
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
@@ -365,17 +378,32 @@ class GridFocusRespHandler
       .map(_.focused)
   }
 
-  override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
-    LOG.error(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, msg = ctx.m)
+  override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
+    val eMsg = ErrorMsgs.XHR_UNEXPECTED_RESP
+    LOG.error(eMsg, ex, msg = ctx.m)
+
+    val errFx = Effect.action {
+      val m = MScErrorDia(
+        messageCode = eMsg,
+        pot         = Pot.empty[None.type].fail(ex),
+        retryAction = Some( ctx.m.reason ),
+      )
+      SetErrorState(m)
+    }
+
     val g0 = ctx.value0.grid
     val reason = ctx.m.reason.asInstanceOf[GridBlockClick]
+
     GridAh
       .findAd(reason.nodeId, g0.core)
-      .fold( ctx.value0 ) { case (ad0, index) =>
+      .fold[ActionResult[MScRoot]] {
+        ActionResult.EffectOnly( errFx )
+      } { case (ad0, index) =>
         val ad1 = MScAdData.focused
           .modify(_.fail(ex))(ad0)
         val g2 = GridAh.saveAdIntoValue(index, ad1, g0)
-        MScRoot.grid.set(g2)( ctx.value0 )
+        val v2 = (MScRoot.grid set g2)( ctx.value0 )
+        ActionResult.ModelUpdateEffect(v2, errFx)
       }
   }
 

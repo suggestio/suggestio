@@ -24,6 +24,7 @@ import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.search.SearchAh
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
@@ -202,13 +203,25 @@ class IndexRah
     Some( ctx.value0.index.resp )
   }
 
-  override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
-    LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = ctx.m )
+  override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
+    val eMsg = ErrorMsgs.GET_NODE_INDEX_FAILED
+    LOG.error( eMsg, ex, msg = ctx.m )
+
     var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
     if (ctx.value0.index.search.geo.mapInit.loader.nonEmpty)
       actionsAccF = actionsAccF andThen MScIndex.search.modify(_.resetMapLoader)
 
-    MScRoot.index.modify( actionsAccF )(ctx.value0)
+    val v2 = (MScRoot.index modify actionsAccF)(ctx.value0)
+    val errFx = Effect.action {
+      val m = MScErrorDia(
+        messageCode = eMsg,
+        pot         = v2.index.resp,
+        retryAction = Some(ctx.m.reason),
+      )
+      SetErrorState(m)
+    }
+
+    ActionResult.ModelUpdateEffect( v2, errFx )
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {

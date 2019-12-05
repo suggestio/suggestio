@@ -22,7 +22,7 @@ trait MuiTypoGraphyPropsBase extends MuiPropsBase {
   val align: js.UndefOr[String] = js.undefined
   val color: js.UndefOr[String] = js.undefined
   val gutterBottom: js.UndefOr[Boolean] = js.undefined
-  val dispaly: js.UndefOr[String] = js.undefined
+  val display: js.UndefOr[String] = js.undefined
   val variantMapping: js.UndefOr[MuiTypoGraphyVariantMapping] = js.undefined
   val noWrap: js.UndefOr[Boolean] = js.undefined
   val paragraph: js.UndefOr[Boolean] = js.undefined

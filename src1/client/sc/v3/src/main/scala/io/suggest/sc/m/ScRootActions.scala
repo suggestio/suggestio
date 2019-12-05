@@ -2,6 +2,7 @@ package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.ScJsRoutes
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
@@ -157,3 +158,17 @@ case object SetPlatformReady extends IPlatformAction
 
 
 case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScRootAction
+
+
+
+/** Маркер-интерфейс для экшенов для ErrorAh: */
+sealed trait IScErrorAction extends IScRootAction
+
+/** Команда повтора при ошибке. */
+case object RetryError extends IScErrorAction
+
+/** Закрытие диалога об ошибке. */
+case object CloseError extends IScErrorAction
+
+/** Выставление состояния ошибки. */
+case class SetErrorState(scErr: MScErrorDia) extends IScErrorAction

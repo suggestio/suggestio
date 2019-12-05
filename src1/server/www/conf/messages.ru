@@ -1071,4 +1071,5 @@ Dont.expand=Не растягивать
 
 Line.height=Высота строк
 Always.outlined=Постоянная обводка
+Try.again=Попробовать ещё раз
 

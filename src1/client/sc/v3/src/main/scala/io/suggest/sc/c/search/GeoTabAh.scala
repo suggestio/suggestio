@@ -12,9 +12,10 @@ import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx.{MScIndex, MScSideBars, SideBarOpenClose}
-import io.suggest.sc.m.{HandleScApiResp, MScRoot}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot, SetErrorState}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.styl.ScCss
@@ -341,7 +342,7 @@ class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
     Some( ctx.value0.index.search.geo.found.req )
   }
 
-  override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
+  override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
     val t0 = ctx.value0.index.search.geo
     val req2 = t0.found.req.fail(ex)
     val t2 = t0.copy(
@@ -353,7 +354,9 @@ class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
         searchCssOrNull = t0.css
       )
     )
-    _withGeo(ctx, t2)
+    val v2 = _withGeo(ctx, t2)
+
+    ActionResult.ModelUpdate(v2)
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {

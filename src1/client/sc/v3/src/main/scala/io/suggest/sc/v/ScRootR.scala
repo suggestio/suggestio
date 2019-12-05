@@ -11,10 +11,12 @@ import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.styl.{ScCss, ScCssStatic}
+import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
@@ -57,6 +59,7 @@ class ScRootR (
                 val goBackR             : GoBackR,
                 val wzFirstR            : WzFirstR,
                 commonReactCtx          : React.Context[MCommonReactCtx],
+                scErrorDiaR             : ScErrorDiaR,
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
@@ -94,7 +97,7 @@ class ScRootR (
                                     menuGeoLocC               : ReactConnectProxy[geoLocR.Props_t],
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                     goBackC                   : ReactConnectProxy[goBackR.Props_t],
-                                    firstRunWzC               : ReactConnectProxy[wzFirstR.Props_t],
+                                    wzFirstC               : ReactConnectProxy[wzFirstR.Props_t],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
                                   )
 
@@ -359,7 +362,10 @@ class ScRootR (
         s.indexSwitchAskC { indexSwitchAskR.apply },
 
         // Диалог первого запуска.
-        s.firstRunWzC { wzFirstR.apply },
+        s.wzFirstC { wzFirstR.apply },
+
+        // Диалог ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
+        mrootProxy.wrap(_.dialogs.error)( scErrorDiaR.apply )(implicitly, OptFastEq.Plain),
 
       )
 
@@ -528,7 +534,7 @@ class ScRootR (
           }
         }( OptFastEq.Plain ),
 
-        firstRunWzC = propsProxy.connect { mroot =>
+        wzFirstC = propsProxy.connect { mroot =>
           for (firstV <- mroot.dialogs.first.view) yield {
             wzFirstR.PropsVal(
               first      = firstV,

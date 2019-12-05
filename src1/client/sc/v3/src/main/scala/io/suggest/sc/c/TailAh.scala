@@ -520,8 +520,9 @@ class TailAh[M](
         .flatMap { _ =>
           // Если ошибка запроса, то залить её в состояние
           for (ex <- m.tryResp.toEither.left) yield {
-            val v2 = respHandler.handleReqError(ex, rhCtx0)
-            updated(v2)
+            val ares = respHandler.handleReqError(ex, rhCtx0)
+            // Костыль, чтобы безопасно скастовать MScRoot и M. На деле происходит просто копипаст инстанса, т.к. всегда M == MScRoot.
+            ActionResult[M]( ares.newModelOpt.map(modelRW.updated), ares.effectOpt )
           }
         }
         // Если запрос ок, то значит пора выполнить свёрстку respActions на состояние и эффекты

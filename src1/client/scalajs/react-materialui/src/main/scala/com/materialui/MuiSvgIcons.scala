@@ -92,8 +92,8 @@ object MuiSvgIcons {
   object ActionBugReport extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Build", JSImport.Default)
   object Build extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/cached", JSImport.Default)
-  object ActionCached extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Cached", JSImport.Default)
+  object Cached extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/camera-enhance", JSImport.Default)
   object ActionCameraEnhance extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/card-giftcard", JSImport.Default)
@@ -1425,8 +1425,8 @@ object MuiSvgIcons {
   object ImageHdrStrong extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/hdr-weak", JSImport.Default)
   object ImageHdrWeak extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/image/healing", JSImport.Default)
-  object ImageHealing extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Healing", JSImport.Default)
+  object Healing extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/image-aspect-ratio", JSImport.Default)
   object ImageImageAspectRatio extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/image", JSImport.Default)

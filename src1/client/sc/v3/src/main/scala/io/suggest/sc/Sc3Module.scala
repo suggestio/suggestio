@@ -5,6 +5,7 @@ import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.v._
+import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
@@ -100,8 +101,9 @@ class Sc3Module {
   lazy val geoLocR = wire[GeoLocR]
 
 
-  // wizard
+  // dia
   lazy val wzFirstR = wire[WzFirstR]
+  lazy val scErrorDiaR = wire[ScErrorDiaR]
 
 
   // sc3

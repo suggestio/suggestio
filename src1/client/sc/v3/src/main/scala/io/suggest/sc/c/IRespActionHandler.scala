@@ -29,13 +29,11 @@ trait IRespHandler {
 
   /** Залить ошибку в состояние выдачи.
     *
-    * @param reason Экшен причины реквеста.
-    * @param value0 Состояние выдачи.
     * @param ex Ошибка реквеста.
     * @return None - не сюда запрос.
     *         Some(новое состояние выдачи).
     */
-  def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot
+  def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot]
 
 }
 

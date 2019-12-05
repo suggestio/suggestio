@@ -24,7 +24,7 @@ import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.boot.BootAh
-import io.suggest.sc.c.dia.FirstRunDialogAh
+import io.suggest.sc.c.dia.{FirstRunDialogAh, ScErrorDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
@@ -35,6 +35,7 @@ import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
@@ -47,7 +48,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.CircuitUtil._
 
 import scala.concurrent.{Future, Promise}
@@ -192,6 +193,7 @@ class Sc3Circuit(
 
   private[sc] val bootRW          = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
   private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
+  private     val scErrorDiaRW    = mkLensZoomRW(dialogsRW, MScDialogs.error)( OptFastEq.Wrapped(MScErrorDia.MScErrorDiaFastEq) )
 
 
   private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
@@ -362,6 +364,10 @@ class Sc3Circuit(
     modelRW = jdRuntimeRW,
   )
 
+  private val scErrorDiaAh = new ScErrorDiaAh(
+    modelRW = scErrorDiaRW,
+  )
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
   override protected val actionHandler: HandlerFunction = {
@@ -372,6 +378,8 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+
+    acc ::= scErrorDiaAh
 
     // Диалоги обычно закрыты. Тоже - в хвост.
     acc ::= firstRunDialogAh
@@ -574,6 +582,41 @@ class Sc3Circuit(
       }
     }
 
+  }
+
+
+  private def _errFrom(action: Any, ex: Throwable): Unit = {
+    action match {
+      case dAction: DAction =>
+        val m = MScErrorDia(
+          messageCode = ErrorMsgs.SC_FSM_EVENT_FAILED,
+          pot = Pot
+            .empty[None.type]
+            .fail(ex),
+          retryAction = Some(dAction),
+        )
+        dispatch( SetErrorState(m) )
+      case _ => // should never happen
+    }
+  }
+
+  override def handleFatal(action: Any, e: Throwable): Unit = {
+    super.handleFatal(action, e)
+    _errFrom(action, e)
+  }
+
+  override def handleError(msg: String): Unit = {
+    super.handleError(msg)
+    // TODO Это некритические ошибки. Надо будет потом приглушить, до snack'а например.
+    val m = MScErrorDia(
+      messageCode = msg,
+    )
+    dispatch( SetErrorState(m) )
+  }
+
+  override def handleEffectProcessingError[A](action: A, error: Throwable): Unit = {
+    super.handleEffectProcessingError(action, error)
+    _errFrom(action, error)
   }
 
 }
