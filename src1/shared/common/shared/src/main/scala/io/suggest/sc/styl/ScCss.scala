@@ -260,6 +260,11 @@ object ScCssStatic extends StyleSheet.Inline {
       top(-5.px),
     )
 
+    /** Дополнение к cancel-стилю, чтобы к правому верхнему углу прижать. */
+    val cancelTopRight = style(
+      right( -20.px ),
+    )
+
   }
 
   object Welcome {

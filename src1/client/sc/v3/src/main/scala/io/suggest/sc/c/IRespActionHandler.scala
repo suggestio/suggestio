@@ -1,9 +1,10 @@
 package io.suggest.sc.c
 
-import diode.ActionResult
+import diode.{ActionResult, ModelRW}
 import diode.data.Pot
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType}
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -67,6 +68,10 @@ trait IRespWithActionHandler
 
 /** Класс контекста для методов [[IRespActionHandler]] и [[IRespHandler]]. */
 case class MRhCtx(
-                   value0 : MScRoot,
-                   m      : HandleScApiResp
+                   value0     : MScRoot,
+                   m          : HandleScApiResp,
+                   modelRW    : ModelRW[MScRoot, MScRoot],
                  )
+object MRhCtx {
+  val value0 = GenLens[MRhCtx](_.value0)
+}

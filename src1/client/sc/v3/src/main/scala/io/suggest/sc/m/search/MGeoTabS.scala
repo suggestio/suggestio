@@ -17,9 +17,9 @@ object MGeoTabS {
   implicit object MGeoTabSFastEq extends FastEq[MGeoTabS] {
     override def eqv(a: MGeoTabS, b: MGeoTabS): Boolean = {
       (a.mapInit  ===* b.mapInit) &&
-        (a.css    ===* b.css) &&
-        (a.found  ===* b.found) &&
-        (a.data   ===* b.data)
+      (a.css    ===* b.css) &&
+      (a.found  ===* b.found) &&
+      (a.data   ===* b.data)
     }
   }
 

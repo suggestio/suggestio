@@ -54,6 +54,7 @@ object UnivEqUtil {
 
   @inline implicit def throwableUe        : UnivEq[Throwable]       = UnivEq.force
 
+  @inline implicit def fun0Ue[R]          : UnivEq[() => R]         = UnivEq.force
   @inline implicit def fun1Ue[T, R]       : UnivEq[(T) => R]        = UnivEq.force
 
   @inline implicit def jsValueUe          : UnivEq[JsValue]         = UnivEq.force

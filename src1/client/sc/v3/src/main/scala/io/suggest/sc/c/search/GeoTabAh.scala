@@ -65,6 +65,18 @@ object GeoTabAh {
     }
   }
 
+
+  def scRoot_index_search_geo_LENS = {
+    MScRoot.index
+      .composeLens( MScIndex.search )
+      .composeLens( MScSearch.geo )
+  }
+  def scRoot_index_search_geo_found_req_LENS = {
+    scRoot_index_search_geo_LENS
+      .composeLens( MGeoTabS.found )
+      .composeLens( MNodesFoundS.req )
+  }
+
 }
 
 
@@ -326,37 +338,46 @@ class GeoTabAh[M](
 class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
   extends IRespWithActionHandler {
 
-  private def _withGeo(ctx: MRhCtx, geo2: MGeoTabS): MScRoot = {
-    MScRoot.index
-      .composeLens( MScIndex.search )
-      .composeLens( MScSearch.geo )
-      .set(geo2)(ctx.value0)
-  }
-
-
   override def isMyReqReason(ctx: MRhCtx): Boolean = {
     ctx.m.reason.isInstanceOf[DoNodesSearch]
   }
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
-    Some( ctx.value0.index.search.geo.found.req )
+    Some( GeoTabAh.scRoot_index_search_geo_found_req_LENS.get(ctx.value0) )
   }
 
+  /** Рендер ошибки идёт прямо в списке узлов. */
   override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
-    val t0 = ctx.value0.index.search.geo
-    val req2 = t0.found.req.fail(ex)
-    val t2 = t0.copy(
-      found = t0.found.withReq( req2 ),
-      // При ошибках надо обновлять css, иначе ширина может быть неверной.
-      css = GeoTabAh._mkSearchCss(
-        req             = req2,
-        screenInfo      = screenInfoRO.value,
-        searchCssOrNull = t0.css
-      )
-    )
-    val v2 = _withGeo(ctx, t2)
+    val req_LENS = GeoTabAh.scRoot_index_search_geo_found_req_LENS
 
-    ActionResult.ModelUpdate(v2)
+    val errorFx = Effect.action {
+      val errDia = MScErrorDia(
+        messageCode = ErrorMsgs.XHR_UNEXPECTED_RESP,
+        potRO       = Some( ctx.modelRW.zoom( req_LENS.get )),
+        retryAction = Some( ctx.m.reason ),
+      )
+      SetErrorState( errDia )
+    }
+
+    val req2 = req_LENS
+      .get(ctx.value0)
+      .fail(ex)
+
+    val v2 = GeoTabAh.scRoot_index_search_geo_LENS.modify(
+      MGeoTabS.found
+        .composeLens( MNodesFoundS.req )
+        .set(req2) andThen
+      // При ошибках надо обновлять css, иначе ширина может быть неверной.
+      MGeoTabS.css.modify { css0 =>
+        GeoTabAh._mkSearchCss(
+          req             = req2,
+          screenInfo      = screenInfoRO.value,
+          searchCssOrNull = css0,
+        )
+      }
+    )(ctx.value0)
+
+    ActionResult.ModelUpdateEffect(v2, errorFx)
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
@@ -437,7 +458,7 @@ class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
     val mapRszFxOpt = for (lmap <- g2.data.lmap) yield
       SearchAh.mapResizeFx(lmap)
 
-    val v2 = _withGeo(ctx, g2)
+    val v2 = (GeoTabAh.scRoot_index_search_geo_LENS set g2)(ctx.value0)
     ActionResult( Some(v2), mapRszFxOpt )
   }
 

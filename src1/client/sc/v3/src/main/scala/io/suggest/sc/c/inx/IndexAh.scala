@@ -215,8 +215,8 @@ class IndexRah
     val errFx = Effect.action {
       val m = MScErrorDia(
         messageCode = eMsg,
-        pot         = v2.index.resp,
-        retryAction = Some(ctx.m.reason),
+        potRO       = Some( ctx.modelRW.zoom(_.index.resp) ),
+        retryAction = Some( ctx.m.reason ),
       )
       SetErrorState(m)
     }

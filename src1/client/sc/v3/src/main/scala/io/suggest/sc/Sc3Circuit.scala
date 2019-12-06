@@ -160,40 +160,40 @@ class Sc3Circuit(
 
   private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
   private[sc] val titleOptRO      = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
-  private[sc] val indexWelcomeRW  = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
+  private val indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
 
   val scCssRO: ModelRO[ScCss]     = mkLensZoomRO( indexRW, MScIndex.scCss )( FastEq.AnyRefEq )
 
-  private[sc] val searchRW        = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
-  private[sc] val geoTabRW        = mkLensZoomRW(searchRW, MScSearch.geo)( MGeoTabSFastEq )
+  private val searchRW            = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
+  private val geoTabRW            = mkLensZoomRW(searchRW, MScSearch.geo)( MGeoTabSFastEq )
 
-  private[sc] val mapInitRW       = mkLensZoomRW(geoTabRW, MGeoTabS.mapInit)( MMapInitStateFastEq )
-  private[sc] val mmapsRW         = mkLensZoomRW(mapInitRW, MMapInitState.state)( MMapSFastEq4Map )
-  private[sc] val searchTextRW    = mkLensZoomRW(searchRW, MScSearch.text)( MScSearchTextFastEq )
+  private val mapInitRW           = mkLensZoomRW(geoTabRW, MGeoTabS.mapInit)( MMapInitStateFastEq )
+  private val mmapsRW             = mkLensZoomRW(mapInitRW, MMapInitState.state)( MMapSFastEq4Map )
+  private val searchTextRW        = mkLensZoomRW(searchRW, MScSearch.text)( MScSearchTextFastEq )
   private[sc] val geoTabDataRW    = mkLensZoomRW(geoTabRW, MGeoTabS.data)( MGeoTabData.MGeoTabDataFastEq )
-  private[sc] val mapDelayRW      = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
+  private val mapDelayRW          = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
-  private[sc] val gridRW          = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
-  private     val gridCoreRW      = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
-  private     val jdRuntimeRW     = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
+  private val gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
+  private val gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
+  private val jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
-  private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
-  private[sc] val scScreenRW      = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
-  private[sc] val scGeoLocRW      = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
+  private val devRW               = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
+  private val scScreenRW          = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
+  private val scGeoLocRW          = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
 
-  private[sc] val confRO          = mkLensZoomRO(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
-  private[sc] val rcvrsMapUrlRO   = mkLensZoomRO(confRO, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
+  private val confRO              = mkLensZoomRO(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
+  private val rcvrsMapUrlRO       = mkLensZoomRO(confRO, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
 
   private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformSFastEq )
 
-  private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
+  private val beaconerRW          = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
 
-  private[sc] val dialogsRW       = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
+  private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
 
-  private[sc] val bootRW          = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
+  private val bootRW              = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
   private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
-  private     val scErrorDiaRW    = mkLensZoomRW(dialogsRW, MScDialogs.error)( OptFastEq.Wrapped(MScErrorDia.MScErrorDiaFastEq) )
+  private val scErrorDiaRW        = mkLensZoomRW(dialogsRW, MScDialogs.error)( OptFastEq.Wrapped(MScErrorDia.MScErrorDiaFastEq) )
 
 
   private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
@@ -366,6 +366,7 @@ class Sc3Circuit(
 
   private val scErrorDiaAh = new ScErrorDiaAh(
     modelRW = scErrorDiaRW,
+    circuit = this,
   )
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
@@ -589,11 +590,9 @@ class Sc3Circuit(
     action match {
       case dAction: DAction =>
         val m = MScErrorDia(
-          messageCode = ErrorMsgs.SC_FSM_EVENT_FAILED,
-          pot = Pot
-            .empty[None.type]
-            .fail(ex),
-          retryAction = Some(dAction),
+          messageCode   = ErrorMsgs.SC_FSM_EVENT_FAILED,
+          exceptionOpt  = Some( ex ),
+          retryAction   = Some(dAction),
         )
         dispatch( SetErrorState(m) )
       case _ => // should never happen

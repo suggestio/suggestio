@@ -1,5 +1,6 @@
 package io.suggest.ueq
 
+import diode.{ModelR, ModelRO}
 import diode.data.Pot
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.experimental.permissions.{PermissionName, PermissionState}
@@ -35,6 +36,9 @@ object JsUnivEqUtil {
   @inline implicit def jsAnyUe          : UnivEq[js.Any]            = UnivEq.force
 
   @inline implicit def permissionStatusUe: UnivEq[PermissionState]  = UnivEq.force
-  @inline implicit def permissionNameUe: UnivEq[PermissionName]     = UnivEq.force
+  @inline implicit def permissionNameUe : UnivEq[PermissionName]    = UnivEq.force
+
+  @inline implicit def modelRoUe[T: UnivEq]: UnivEq[ModelRO[T]]     = UnivEq.force
+  @inline implicit def modelRUe[M: UnivEq, T: UnivEq]: UnivEq[ModelR[M,T]] = UnivEq.force
 
 }

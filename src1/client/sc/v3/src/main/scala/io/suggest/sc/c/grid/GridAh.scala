@@ -243,8 +243,8 @@ class GridRespHandler
     val errFx = Effect.action {
       val m = MScErrorDia(
         messageCode = ErrorMsgs.XHR_UNEXPECTED_RESP,
-        pot         = lens.get(v2),
-        retryAction = Some(ctx.m.reason),
+        potRO       = Some( ctx.modelRW.zoom(lens.get) ),
+        retryAction = Some( ctx.m.reason ),
       )
       SetErrorState(m)
     }
@@ -381,18 +381,24 @@ class GridFocusRespHandler
   override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
     val eMsg = ErrorMsgs.XHR_UNEXPECTED_RESP
     LOG.error(eMsg, ex, msg = ctx.m)
+    val reason = ctx.m.reason.asInstanceOf[GridBlockClick]
 
     val errFx = Effect.action {
       val m = MScErrorDia(
         messageCode = eMsg,
-        pot         = Pot.empty[None.type].fail(ex),
+        potRO       = Some(
+          ctx.modelRW.zoom { mroot =>
+            GridAh
+              .findAd(reason.nodeId, mroot.grid.core)
+              .fold( Pot.empty[MJdDataJs] )( _._1.focused )
+          }
+        ),
         retryAction = Some( ctx.m.reason ),
       )
       SetErrorState(m)
     }
 
     val g0 = ctx.value0.grid
-    val reason = ctx.m.reason.asInstanceOf[GridBlockClick]
 
     GridAh
       .findAd(reason.nodeId, g0.core)
@@ -540,8 +546,7 @@ class GridAh[M](
                 limit  = Some( GridAh.adsPerReqLimit ),
                 offset = Some(offset)
               ),
-            common = MScCommonQs.searchGridAds
-              .set( OptionUtil.SomeBool.someFalse )(args0.common)
+            common = (MScCommonQs.searchGridAds set OptionUtil.SomeBool.someFalse)(args0.common)
           )
 
           // Запустить запрос с почищенными аргументами...

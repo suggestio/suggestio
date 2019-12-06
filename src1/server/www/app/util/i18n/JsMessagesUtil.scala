@@ -267,6 +267,7 @@ class JsMessagesUtil @Inject() (
       MC.`Settings.done.0.ready.for.using` ::
       MC.`_to.Finish` ::
       MC.`Try.again` ::
+      MC.`Close` ::
       Nil
   }
 

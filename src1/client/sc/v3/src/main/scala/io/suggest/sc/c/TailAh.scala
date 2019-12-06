@@ -131,17 +131,17 @@ object TailAh {
 
 
 /** Непосредственный контроллер "последних" сообщений. */
-class TailAh[M](
-                 routerCtl                : RouterCtl[Sc3Pages],
-                 modelRW                  : ModelRW[M, MScRoot],
-                 scRespHandlers           : Seq[IRespHandler],
-                 scRespActionHandlers     : Seq[IRespActionHandler],
-               )
+class TailAh(
+              routerCtl                : RouterCtl[Sc3Pages],
+              modelRW                  : ModelRW[MScRoot, MScRoot],
+              scRespHandlers           : Seq[IRespHandler],
+              scRespActionHandlers     : Seq[IRespActionHandler],
+            )
   extends ActionHandler(modelRW)
   with Log
 { ah =>
 
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
 
     // Заставить роутер собрать новую ссылку.
     case ResetUrlRoute =>
@@ -486,7 +486,7 @@ class TailAh[M](
     case m: HandleScApiResp =>
       val value0 = value
 
-      val rhCtx0 = MRhCtx(value0, m)
+      val rhCtx0 = MRhCtx(value0, m, modelRW)
       val respHandler = scRespHandlers
         .find { rh =>
           rh.isMyReqReason(rhCtx0)
@@ -507,60 +507,59 @@ class TailAh[M](
       }
 
       // Сборка сложной логики внутри Either: по левому борту ошибки, по правому - нормальный ход действий.
-      Either
-        .cond(
-          isActualResp,
+      (for {
+        _ <- Either.cond(
+          test = isActualResp,
           left = {
             LOG.log(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (respHandler.getClass.getSimpleName, rhPotOpt.flatMap(_.pendingOpt).map(_.startTime), m.reqTimeStamp) )
             noChange
           },
-          right = None
+          right = None,
         )
+
         // Раскрыть содержимое tryResp.
-        .flatMap { _ =>
+        scResp <- {
           // Если ошибка запроса, то залить её в состояние
           for (ex <- m.tryResp.toEither.left) yield {
-            val ares = respHandler.handleReqError(ex, rhCtx0)
             // Костыль, чтобы безопасно скастовать MScRoot и M. На деле происходит просто копипаст инстанса, т.к. всегда M == MScRoot.
-            ActionResult[M]( ares.newModelOpt.map(modelRW.updated), ares.effectOpt )
+            //ActionResult( ares.newModelOpt.map(modelRW.updated), ares.effectOpt )
+            respHandler.handleReqError(ex, rhCtx0)
           }
         }
-        // Если запрос ок, то значит пора выполнить свёрстку respActions на состояние и эффекты
-        .map { scResp =>
-          val acc9 = scResp.respActions.foldLeft( RaFoldAcc() ) { (acc0, ra) =>
-            val rhCtx1 = rhCtx0.copy(
-              value0 = acc0.v1
-            )
-            scRespActionHandlers
-              .find { rah =>
-                rah.isMyRespAction( ra.acType, rhCtx0 )
-              }
-              .map { rah =>
-                rah.applyRespAction( ra, rhCtx1 )
-              }
-              .fold {
-                // Resp-экшен не поддерживается системой. Такое возможно, только когда есть тип экшена, для которого забыли накодить RespActionHandler.
-                LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = ra )
-                acc0
-              } { actRes =>
-                acc0.copy(
-                  v1        = actRes.newModelOpt getOrElse acc0.v1,
-                  fxAccRev  = actRes.effectOpt :?: acc0.fxAccRev,
-                )
-              }
-          }
 
-          // Если value изменилась, то надо её обновлять:
-          val v9Opt = OptionUtil.maybe(acc9.v1 !===* value0)( acc9.v1 )
-
-          // Эффекты - объеденить:
-          val fxOpt9 = acc9.fxAccRev
-            .reverse
-            .mergeEffects
-
-          ah.optionalResult( v9Opt, fxOpt9 )
+      } yield {
+        val acc9 = scResp.respActions.foldLeft( RaFoldAcc() ) { (acc0, ra) =>
+          val rhCtx1 = (MRhCtx.value0 set acc0.v1)(rhCtx0)
+          scRespActionHandlers
+            .find { rah =>
+              rah.isMyRespAction( ra.acType, rhCtx0 )
+            }
+            .map { rah =>
+              rah.applyRespAction( ra, rhCtx1 )
+            }
+            .fold {
+              // Resp-экшен не поддерживается системой. Такое возможно, только когда есть тип экшена, для которого забыли накодить RespActionHandler.
+              LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = ra )
+              acc0
+            } { actRes =>
+              acc0.copy(
+                v1        = actRes.newModelOpt getOrElse acc0.v1,
+                fxAccRev  = actRes.effectOpt :?: acc0.fxAccRev,
+              )
+            }
         }
-        // Вернуть Left или Right.
+
+        // Если value изменилась, то надо её обновлять:
+        val v9Opt = OptionUtil.maybe(acc9.v1 !===* value0)( acc9.v1 )
+
+        // Эффекты - объеденить:
+        val fxOpt9 = acc9.fxAccRev
+          .reverse
+          .mergeEffects
+
+        ah.optionalResult( v9Opt, fxOpt9 )
+      })
+        // Вернуть содержимое Left или Right.
         .fold(identity, identity)
 
 

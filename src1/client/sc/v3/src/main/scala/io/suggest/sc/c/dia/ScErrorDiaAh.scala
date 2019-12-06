@@ -1,9 +1,15 @@
 package io.suggest.sc.c.dia
 
-import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.sc.m.{CloseError, RetryError, SetErrorState}
+import diode.{ActionHandler, ActionResult, Circuit, Effect, ModelRW}
+import io.suggest.msg.ErrorMsgs
+import io.suggest.sc.m.{CheckRetryError, CloseError, MScRoot, RetryError, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.spa.DoNothing
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -11,20 +17,42 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   * Created: 06.12.2019 0:23
   * Description: Контроллер диалога ошибки.
   */
-class ScErrorDiaAh[M](
-                       modelRW: ModelRW[M, Option[MScErrorDia]]
-                     )
-  extends ActionHandler(modelRW)
-{
+object ScErrorDiaAh extends Log {
 
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+  /** Сборка опционального эффекта отказа от подписки на события pot'а с ошибкой. */
+  private def _maybeUnSubscribeFx(errDia0: MScErrorDia): Option[Effect] = {
+    for {
+      f <- errDia0.potUnSubscribe
+    } yield {
+      Effect.action {
+        for (ex <- Try( f() ).failed)
+          LOG.warn( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, f )
+        DoNothing
+      }
+    }
+  }
+
+}
+
+class ScErrorDiaAh(
+                    circuit: Circuit[MScRoot],
+                    modelRW: ModelRW[MScRoot, Option[MScErrorDia]],
+                  )
+  extends ActionHandler(modelRW)
+  with Log
+{ ah =>
+
+  override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
 
     case m: SetErrorState =>
       val v0 = value
 
-      if (v0.fold(true)(_.pot.isPending)) {
+      if (v0.fold(true)(_.potRO.exists(_.value.isPending))) {
+        // Если перезапись, то надо отписаться от любой предыдущей подписки на событие:
+        val unSubFxOpt = v0.flatMap( ScErrorDiaAh._maybeUnSubscribeFx )
         val v2 = Some(m.scErr)
-        updated(v2)
+        // Надо подписаться на события изменения связанного pot'а, чтобы после error-диалог после retry мог сам скрыться с экрана.
+        ah.updatedMaybeEffect( v2, unSubFxOpt )
 
       } else {
         // Две+ статические ошибки не выводим, просто оставляем всё как есть.
@@ -38,20 +66,56 @@ class ScErrorDiaAh[M](
 
       (for {
         errDia0 <- v0
-        if !errDia0.pot.isPending
+        // retry-pending-ошибки можно перезаписывать новыми ошибками:
+        if !errDia0.potIsPending
         retryAction <- errDia0.retryAction
       } yield {
-        val fx = retryAction.toEffectPure
-        val v2 = (MScErrorDia.pot modify (_.pending()))( errDia0 )
-        updated(Some(v2), fx)
+        val retryFx = retryAction.toEffectPure
+
+        errDia0.potRO.fold {
+          // Без pot для слежения - сразу скрыть диалог.
+          val closeFx = CloseError.toEffectPure
+          effectOnly( retryFx + closeFx )
+
+        } { potModelRO =>
+          // Есть zoom Pot -- подписаться на события, оставив диалог на экране.
+          val unsubscribeF = circuit.subscribe( potModelRO ) { _ =>
+            circuit.dispatch( CheckRetryError )
+          }
+
+          // (SNH) Если в состоянии есть старая unSubscribe-функция, то использовать её перед перезаписью:
+          val oldUnSubscribeFxOpt = ScErrorDiaAh._maybeUnSubscribeFx( errDia0 )
+
+          val errDia2 = (MScErrorDia.potUnSubscribe set Some(unsubscribeF))(errDia0)
+          val allFx = (retryFx :: oldUnSubscribeFxOpt.toList)
+            .mergeEffects
+            .get
+
+          updatedSilent( Some(errDia2), allFx )
+        }
       })
         .getOrElse( noChange )
 
 
+    // Сигнал о том, что retry-pot, подписанный на события, изменился. Нужно проверить, что там...
+    case CheckRetryError =>
+      (for {
+        errDia0 <- value
+        potZoom <- errDia0.potRO
+        pot = potZoom.value
+        if !pot.isPending && !pot.isFailed
+      } yield {
+        // Убрать диалог с экрана, т.к. pot завершился не ошибкой:
+        effectOnly( CloseError.toEffectPure )
+      })
+        .getOrElse(noChange)
+
+
     // Закрыть диалог ошибки.
     case CloseError =>
-      value.fold(noChange) { _ =>
-        updated( None )
+      value.fold(noChange) { errDia0 =>
+        val fxOpt = ScErrorDiaAh._maybeUnSubscribeFx( errDia0 )
+        ah.updatedMaybeEffect( None, fxOpt )
       }
 
   }

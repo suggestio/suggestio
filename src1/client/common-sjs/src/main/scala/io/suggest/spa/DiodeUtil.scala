@@ -37,7 +37,7 @@ object DiodeUtil {
       *
       * @param effects Эффекты.
       */
-    implicit class EffectsOps(val effects: IterableOnce[Effect]) extends AnyVal {
+    implicit class EffectsOps(private val effects: IterableOnce[Effect]) extends AnyVal {
 
       /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
         *

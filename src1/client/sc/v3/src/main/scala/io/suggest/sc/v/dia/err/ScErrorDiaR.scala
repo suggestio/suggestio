@@ -1,9 +1,10 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -48,34 +49,45 @@ class ScErrorDiaR(
       val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb( _onCloseClick )
       val C = ScCssStatic.Notifies
 
+      val closeMsg = commonReactCtxProv.consume { crCtx =>
+        crCtx.messages( MsgCodes.`Close` )
+      }
+
       // Дочерние элементы диалога:
       val dialogChildren = List[VdomElement](
 
         // Заголовок диалога:
         MuiDialogTitle()(
           // ErrorOutline | Healing | Rowing | Bathtub
-          Mui.SvgIcons.Healing()(),
+          //Mui.SvgIcons.Healing()(),
+
           commonReactCtxProv.consume { crCtx =>
             crCtx.messages( MsgCodes.`Something.gone.wrong` )
           },
 
           // Кнопка закрытия диалога ошибки - справа.
-          MuiIconButton.component {
-            val cssClasses = new MuiIconButtonClasses {
-              override val root = C.cancel.htmlClass
+          MuiToolTip(
+            new MuiToolTipProps {
+              override val title = closeMsg.rawElement
             }
-            new MuiIconButtonProps {
-              override val onClick  = _onCloseCbF
-              //override val color    = MuiColorTypes.inherit
-              override val classes  = cssClasses
-            }
-          } (
-            Mui.SvgIcons.CancelOutlined(
-              // TODO Надо это? Скопипасчено из IndexSwitchAskR:
-              new MuiSvgIconProps {
-                override val className = C.smallBtnSvgIcon.htmlClass
+          )(
+            MuiIconButton.component {
+              val cssClasses = new MuiIconButtonClasses {
+                override val root = Css.flat( C.cancel.htmlClass, C.cancelTopRight.htmlClass )
               }
-            )(),
+              new MuiIconButtonProps {
+                override val onClick  = _onCloseCbF
+                //override val color    = MuiColorTypes.inherit
+                override val classes  = cssClasses
+              }
+            } (
+              Mui.SvgIcons.CancelOutlined(
+                // TODO Надо это? Скопипасчено из IndexSwitchAskR:
+                new MuiSvgIconProps {
+                  override val className = C.smallBtnSvgIcon.htmlClass
+                }
+              )(),
+            )
           ),
         ),
 
@@ -83,20 +95,22 @@ class ScErrorDiaR(
         MuiDialogContent()(
 
           // Текст ошибки:
-          MuiTypoGraphy(
-            new MuiTypoGraphyProps {
-              override val variant = MuiTypoGraphyVariants.h3
-            }
-          )(
-            commonReactCtxProv.consume { crCtx =>
-              s.messageCodeOptC {
-                _.value.whenDefinedEl { messageCode =>
-                  MuiDialogContentText()(
-                    crCtx.messages( messageCode ),
-                  )
+          MuiDialogContentText()(
+            MuiTypoGraphy(
+              new MuiTypoGraphyProps {
+                override val variant = MuiTypoGraphyVariants.h3
+              }
+            )(
+              commonReactCtxProv.consume { crCtx =>
+                s.messageCodeOptC {
+                  _.value.whenDefinedEl { messageCode =>
+                    <.span(
+                      crCtx.messages( messageCode ),
+                    )
+                  }
                 }
               }
-            }
+            )
           ),
 
 
@@ -148,6 +162,16 @@ class ScErrorDiaR(
             }
           },
 
+          // Кнопка сокрытия сообщения об ошибке.
+          MuiFab {
+            new MuiFabProps {
+              override val variant = MuiFabVariants.extended
+              override val onClick = _onCloseCbF
+            }
+          } (
+            closeMsg
+          ),
+
         ),
 
       )
@@ -177,11 +201,11 @@ class ScErrorDiaR(
 
         messageCodeOptC = propsProxy.connect( _.map(_.messageCode) )( OptFastEq.Plain ),
 
-        retryPendingOptC = propsProxy.connect(
+        retryPendingOptC = propsProxy.connect {
           _.flatMap { m =>
-            OptionUtil.SomeBool( m.pot.isPending )
+            OptionUtil.SomeBool( m.potIsPending )
           }
-        )( FastEq.AnyRefEq ),
+        }( FastEq.AnyRefEq ),
 
       )
     }

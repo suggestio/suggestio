@@ -167,6 +167,8 @@ sealed trait IScErrorAction extends IScRootAction
 /** Команда повтора при ошибке. */
 case object RetryError extends IScErrorAction
 
+case object CheckRetryError extends IScErrorAction
+
 /** Закрытие диалога об ошибке. */
 case object CloseError extends IScErrorAction
 
