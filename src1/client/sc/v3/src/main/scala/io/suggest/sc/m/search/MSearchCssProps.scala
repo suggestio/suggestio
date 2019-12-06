@@ -38,8 +38,6 @@ case class MSearchCssProps(
                             screenInfo   : MScreenInfo,
                           ) {
 
-  def withScreenInfo(screenInfo: MScreenInfo) = copy(screenInfo = screenInfo)
-
   /** Карта узлов. */
   def nodesMap: Map[String, MSc3IndexResp] =
     req.fold(Map.empty[String, MSc3IndexResp])(_.resp.nodesMap)

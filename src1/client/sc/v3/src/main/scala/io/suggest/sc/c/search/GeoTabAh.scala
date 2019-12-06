@@ -151,7 +151,7 @@ class GeoTabAh[M](
             }
         }
 
-        val found2 = v0.found.withReqWithArgs(
+        val found2 = v0.found.copy(
           req = req2,
           reqSearchArgs = Some(args2)
         )

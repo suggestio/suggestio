@@ -50,8 +50,8 @@ object MMapInitState {
   *
   * @param state Состояние карты, даже если она не инициализирована.
   * @param ready Запущена ли карта?
-  * @param rcvrsCache Кэш с данными всех ресиверов.
-  *                   Закэшированные данные возвращаются на карту, когда поиск завершён.
+  * @param rcvrs Кэш с данными всех ресиверов.
+  *              Закэшированные данные возвращаются на карту, когда поиск завершён.
   * @param loader Координата для отображения маркера текущей подгрузки выдачи.
   * @param userLoc Геолокация юзера, записанная в состояния.
   */
@@ -61,14 +61,4 @@ case class MMapInitState(
                           rcvrs           : Pot[MSearchRespInfo[MGeoNodesResp]]    = Pot.empty,
                           loader          : Option[MGeoPoint]     = None,
                           userLoc         : Option[MGeoLoc]       = None,
-                        ) {
-
-  def withState(state: MMapS)                       = copy( state = state )
-  def withReady(ready: Boolean)                     = copy( ready = ready )
-  def withRcvrs(rcvrs: Pot[MSearchRespInfo[MGeoNodesResp]]) = copy( rcvrs = rcvrs )
-  def withLoader(loader: Option[MGeoPoint])         = copy( loader = loader )
-  def withUserLoc(userLoc: Option[MGeoLoc])         = copy( userLoc = userLoc )
-
-  def someReady = Some(ready)
-
-}
+                        )

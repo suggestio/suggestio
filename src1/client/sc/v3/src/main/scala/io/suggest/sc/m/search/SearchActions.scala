@@ -20,7 +20,6 @@ case object InitSearchMap extends ISc3Action
 
 /** Клик по тегу.
   * @param nodeId id узла.
-  * @param marker маркер для различания различных источников события.
   */
 case class NodeRowClick(nodeId: String) extends ISearchAction
 

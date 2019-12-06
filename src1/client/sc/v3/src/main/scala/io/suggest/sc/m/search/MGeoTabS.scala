@@ -30,6 +30,35 @@ object MGeoTabS {
   val found   = GenLens[MGeoTabS](_.found)
   val data    = GenLens[MGeoTabS](_.data)
 
+
+  implicit class GeoTabExt( private val m: MGeoTabS ) extends AnyVal {
+
+    /** Дедубликация кода сброса значения this.mapInit.loader. */
+    def resetMapLoader: MGeoTabS = {
+      mapInit
+        .composeLens( MMapInitState.loader )
+        .set(None)(m)
+    }
+
+    /** В mapInit.rcvrs лежит закэшированная карта или нет? */
+    def isRcvrsEqCached: Boolean = {
+      m.mapInit.rcvrs.exists { rcvrs0 =>
+        m.data.rcvrsCache
+          .exists(_ ===* rcvrs0)
+      }
+    }
+
+    /** Вернуть ресиверы, но только если не кэшированные. */
+    def rcvrsNotCached = {
+      m.mapInit.rcvrs
+        .filter { _ =>
+          // Если в значении лежат данные из кэша ресиверов карты, то отсеять содержимое безусловно.
+          !isRcvrsEqCached
+        }
+    }
+
+  }
+
 }
 
 /** Класс-контейнер данных гео-таба.
@@ -44,37 +73,4 @@ case class MGeoTabS(
                      css        : SearchCss,
                      found      : MNodesFoundS       = MNodesFoundS.empty,
                      data       : MGeoTabData        = MGeoTabData.empty,
-                   ) {
-
-  def withMapInit(mapr: MMapInitState) = copy( mapInit = mapr )
-  def withCss(css: SearchCss) = copy(css = css)
-  def withData(data: MGeoTabData) = copy( data = data )
-  def withFound(found: MNodesFoundS) = copy(found = found)
-
-
-  /** Дедубликация кода сброса значения this.mapInit.loader. */
-  def resetMapLoader: MGeoTabS = {
-    withMapInit(
-      mapInit
-        .withLoader( None )
-    )
-  }
-
-  /** В mapInit.rcvrs лежит закэшированная карта или нет? */
-  def isRcvrsEqCached: Boolean = {
-    mapInit.rcvrs.exists { rcvrs0 =>
-      data.rcvrsCache
-        .exists(_ ===* rcvrs0)
-    }
-  }
-
-  /** Вернуть ресиверы, но только если не кэшированные. */
-  def rcvrsNotCached = {
-    mapInit.rcvrs
-      .filter { _ =>
-        // Если в значении лежат данные из кэша ресиверов карты, то отсеять содержимое безусловно.
-        !isRcvrsEqCached
-      }
-  }
-
-}
+                   )

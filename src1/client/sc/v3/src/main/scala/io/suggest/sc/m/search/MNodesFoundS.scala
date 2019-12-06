@@ -62,12 +62,6 @@ case class MNodesFoundS(
   extends NonEmpty
 {
 
-  def withReq(req: Pot[MSearchRespInfo[MGeoNodesResp]]) = copy(req = req)
-  def withReqSearchArgs(reqSearchArgs : Option[MScQs]) = copy(reqSearchArgs = reqSearchArgs)
-  def withReqWithArgs(req: Pot[MSearchRespInfo[MGeoNodesResp]], reqSearchArgs : Option[MScQs]) =
-    copy(req = req, reqSearchArgs = reqSearchArgs)
-  def withHasMore(hasMore: Boolean) = copy(hasMore = hasMore)
-
   override def isEmpty: Boolean =
     MNodesFoundS.empty ===* this
 

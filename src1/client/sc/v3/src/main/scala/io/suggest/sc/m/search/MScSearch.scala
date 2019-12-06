@@ -1,7 +1,6 @@
 package io.suggest.sc.m.search
 
 import diode.FastEq
-import io.suggest.common.empty.OptionUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -29,12 +28,42 @@ object MScSearch {
   val panel = GenLens[MScSearch](_.panel)
   val text  = GenLens[MScSearch](_.text)
 
+
+  implicit class ScSearchExt( private val scSearch: MScSearch ) extends AnyVal {
+
+    /** Сброс состояния найденных узлов (тегов), если возможно. */
+    def maybeResetNodesFound: MScSearch = {
+      resetNodesFoundIfAny getOrElse scSearch
+    }
+
+    /** Вернуть обновлённый инстанс [[MScSearch]], если теги изменились в ходе сброса. */
+    def resetNodesFoundIfAny: Option[MScSearch] = {
+      Option.when( scSearch.geo.found.nonEmpty ) {
+        resetTagsForce
+      }
+    }
+
+    def resetTagsForce: MScSearch = {
+      geo
+        .composeLens(MGeoTabS.found)
+        .set( MNodesFoundS.empty )(scSearch)
+    }
+
+
+    /** Дедубликация кода сброса значения this.mapInit.loader. */
+    // TODO Заинлайнить? Код по факту переместился в под-модель geo, а тут просто дёргается.
+    def resetMapLoader: MScSearch = {
+      geo.modify(_.resetMapLoader)(scSearch)
+    }
+
+  }
+
 }
 
 
 /** Класс состояния панели поиска.
   *
-  * @param mapInit Состояние инициализации карты.
+  * @param geo Состояние панели с картой.
   * @param text Состояние текстового поиска.
   * @param panel Состояние компонента панели на экране для панели поиска?
   */
@@ -42,34 +71,4 @@ case class MScSearch(
                       geo                 : MGeoTabS,
                       panel               : MSearchPanelS         = MSearchPanelS.default,
                       text                : MScSearchText         = MScSearchText.empty,
-                    ) {
-
-  def withGeo       ( geo: MGeoTabS )                   = copy( geo = geo )
-  def withText      ( text: MScSearchText )             = copy( text = text )
-  def withPanel     ( panel: MSearchPanelS )            = copy( panel = panel )
-
-
-  /** Сброс состояния найденных узлов (тегов), если возможно. */
-  def maybeResetNodesFound: MScSearch = {
-    resetNodesFoundIfAny.getOrElse(this)
-  }
-
-  /** Вернуть обновлённый инстанс [[MScSearch]], если теги изменились в ходе сброса. */
-  def resetNodesFoundIfAny: Option[MScSearch] = {
-    OptionUtil.maybe( geo.found.nonEmpty ) {
-      resetTagsForce
-    }
-  }
-
-  def resetTagsForce: MScSearch = {
-    withGeo( geo.withFound( MNodesFoundS.empty ) )
-  }
-
-
-  /** Дедубликация кода сброса значения this.mapInit.loader. */
-  // TODO Заинлайнить? Код по факту переместился в под-модель geo, а тут просто дёргается.
-  def resetMapLoader: MScSearch = {
-    withGeo( geo.resetMapLoader )
-  }
-
-}
+                    )

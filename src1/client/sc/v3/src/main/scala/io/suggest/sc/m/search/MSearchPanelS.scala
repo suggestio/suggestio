@@ -27,17 +27,9 @@ object MSearchPanelS {
 }
 
 /**
-  *
   * @param opened Открыта ли панель?
-  * @param fixed Форсировать, что панель открыта и сворачивается.
-  *              Нужно, чтобы таскание карты не конфликтовало с touch-событиями панели.
   */
 case class MSearchPanelS(
                           opened : Boolean = false,
                         )
   extends UseValueEq
-{
-
-  def withOpened(opened: Boolean) = copy(opened = opened)
-
-}
