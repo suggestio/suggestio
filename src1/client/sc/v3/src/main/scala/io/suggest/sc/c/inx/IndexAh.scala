@@ -168,6 +168,7 @@ object IndexAh {
 
       (tpFx, mWcS)
     }
+
     i1 = MScIndex.welcome
       .set( mWcSFutOpt.map(_._2) )(i1)
 

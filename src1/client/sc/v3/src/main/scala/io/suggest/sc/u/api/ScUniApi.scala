@@ -99,24 +99,25 @@ trait ScUniApiHttpImpl extends IScUniApi {
 
   override def pubApi(scQs: MScQs): Future[MSc3Resp] = {
     // Сборка реквеста. В API выдачи все реквесты считают кэшируемыми.
-    val req = HttpReq.routed(
-      route = ScUniApi.scQs2Route(scQs),
-      data  = HttpReqData(
-        headers   = HttpReqData.headersJsonAccept,
-        timeoutMs = ScUniApi.REQ_TIMEOUT_MS,
-        cache = MHttpCacheInfo(
-          policy = MHttpCachingPolicies.NetworkFirst,
-          // Кэшировать следует по оптимизированной ссылке, в которой отсутствуют всякие неважные типа gen, чтобы в аварийной ситуации долго не думать.
-          rewriteUrl = for {
-            scQs4Caching <- ScUniApi.stripQsForCaching(scQs)
-          } yield {
-            val route = ScUniApi.scQs2Route(scQs4Caching)
-            HttpClient.route2url(route)
-          }
+    HttpClient.execute(
+      HttpReq.routed(
+        route = ScUniApi.scQs2Route(scQs),
+        data  = HttpReqData(
+          headers   = HttpReqData.headersJsonAccept,
+          timeoutMs = ScUniApi.REQ_TIMEOUT_MS,
+          cache = MHttpCacheInfo(
+            policy = MHttpCachingPolicies.NetworkFirst,
+            // Кэшировать следует по оптимизированной ссылке, в которой отсутствуют всякие неважные типа gen, чтобы в аварийной ситуации долго не думать.
+            rewriteUrl = for {
+              scQs4Caching <- ScUniApi.stripQsForCaching(scQs)
+            } yield {
+              val route = ScUniApi.scQs2Route(scQs4Caching)
+              HttpClient.route2url(route)
+            }
+          )
         )
       )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MSc3Resp]

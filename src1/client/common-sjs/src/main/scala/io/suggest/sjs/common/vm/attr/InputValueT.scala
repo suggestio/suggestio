@@ -23,10 +23,6 @@ trait InputValueT[VT] extends IVm {
 
   protected def _parseInputValue(v: String): VT
 
-  def value_=(v: VT): Unit = {
-    _underlying.value = v.toString
-  }
-
 }
 
 

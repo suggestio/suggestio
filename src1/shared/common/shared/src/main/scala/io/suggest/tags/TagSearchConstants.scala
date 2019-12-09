@@ -1,4 +1,4 @@
-package io.suggest.sc
+package io.suggest.tags
 
 /**
  * Suggest.io
@@ -20,11 +20,15 @@ object TagSearchConstants {
     /** Абсолютный сдвиг в результатах поиска. */
     def OFFSET_FN         = "o"
 
-    /** Данные геолокации, если есть. */
-    def LOC_ENV_FN        = ScConstants.ReqArgs.LOC_ENV_FN
 
-    /** id узла-ресивера, в рамках которого надо искать. */
-    def RCVR_ID_FN        = "r"
+    /** Макс.длина текстового поискового запроса. */
+    def TAGS_QUERY_MAXLEN   = 64
+
+    /** Максимальное значение limit в qs. */
+    def LIMIT_MAX           = 50
+
+    /** Максимальное значение offset в qs. */
+    def OFFSET_MAX          = 200
 
   }
 

@@ -1,6 +1,5 @@
 package io.suggest.sjs.common.vm.attr
 
-import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.{Element, NamedNodeMap, Node}
@@ -65,38 +64,6 @@ trait AttrVmUtilT extends IVm {
     }
   }
 
-  /** Расширенный Helper с поддержкой безопасного выставления class-аттрибута. */
-  protected trait SetterHelper[T] extends Helper[T] {
-
-    // Режимы нужны для передачи результатов логики execute в setAttribute().
-    protected def MODE_UNKNOWN      = 0
-    protected def MODE_EL_GET_ATTR  = 1
-    protected def MODE_NODE_ATTRS   = 2
-
-    protected var _mode: Int = MODE_UNKNOWN
-
-    override protected def _usingElGetAttrValue(attrValue: Option[String]): T = {
-      _mode = MODE_EL_GET_ATTR
-      super._usingElGetAttrValue(attrValue)
-    }
-
-    override protected def _usingNodeAttrsGetValue(attrValue: Option[String]): T = {
-      _mode = MODE_NODE_ATTRS
-      super._usingNodeAttrsGetValue(attrValue)
-    }
-
-    /** Безопасно выставить аттрибут class для текущего тега/узла, когда classList недоступен. */
-    def setAttribute(v: String): Unit = {
-      if (_mode == MODE_EL_GET_ATTR) {
-        _underlying.asInstanceOf[Element].setAttribute(attrName, v)
-      } else if (_mode == MODE_NODE_ATTRS) {
-        _underlying.attributes.getNamedItem(attrName).value = v
-      } else {
-        notFound
-      }
-    }
-  }
-
 }
 
 
@@ -128,44 +95,11 @@ trait AttrVmT extends AttrVmUtilT {
       .filter(nonEmptyF)
   }
 
-  /** Извлечь целочисленное значение аттрибута. Значение аттрибута должно содержать только цифры. */
-  def getIntAttributeStrict(name: String): Option[Int] = {
-    getNonEmptyAttribute(name)
-      .map(_.toInt)
-  }
 
   /** Извлечь целочисленное значение аттрибута, даже если тот содержит какие-то строковые данные. */
   def getIntAttribute(name: String): Option[Int] = {
     getNonEmptyAttribute(name)
       .flatMap { DataUtil.extractInt(_) }
-  }
-
-  /**
-   * Выставить новое значение аттрибута в узел.
-   * @param name Имя редактируемого аттрибута.
-   * @param value Новое значение аттрибута.
-   */
-  def setAttribute(name: String, value: String): Unit = {
-    val h = new SetterHelper[Unit] {
-      override def attrName = name
-      override def withAttrValue(attrValue: Option[String]): Unit = {
-        setAttribute(value)
-      }
-      override def notFoundExceptionMsg: String = {
-        ErrorMsgs.SET_ATTR_NOT_FOUND + super.notFoundExceptionMsg
-      }
-    }
-    h.execute()
-  }
-
-
-  /**
-   * Удаление аттрибута текущего тега.
-   * @param name Название аттрибута.
-   */
-  def removeAttribute(name: String): Unit = {
-    // TODO Opt Наверное надо как-то по-лучше это сделать. Ведь есть всякие .removeAttribute() и прочее.
-    setAttribute(name, "")
   }
 
 }

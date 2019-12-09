@@ -1,9 +1,11 @@
 package io.suggest.sjs.common.tags.search
 
 import io.suggest.common.tags.search.MTagsFound
-import io.suggest.common.tags.search.MTagsFound.pickler
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{Route, _}
+import io.suggest.proto.http.model._
+import io.suggest.tags.MTagsSearchQs
+import io.suggest.xplay.json.PlayJsonSjsUtil
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -17,7 +19,7 @@ import scala.scalajs.js
 trait ITagsApi {
 
   /** Метод запроса к серверу для поиска тегов. */
-  def tagsSearch(args: MTagSearchArgs): Future[MTagsFound]
+  def tagsSearch(args: MTagsSearchQs): Future[MTagsFound]
 
 }
 
@@ -28,9 +30,11 @@ trait TagsHttpApiImpl extends ITagsApi {
   /** Функция-генератор роуты для поиска тегов на сервере. */
   protected def _tagsSearchRoute: js.Dictionary[js.Any] => Route
 
-  override def tagsSearch(args: MTagSearchArgs): Future[MTagsFound] = {
+  override def tagsSearch(args: MTagsSearchQs): Future[MTagsFound] = {
     val req = HttpReq.routed(
-      route = _tagsSearchRoute( MTagSearchArgs.toJson(args) ),
+      route = _tagsSearchRoute(
+        PlayJsonSjsUtil.toNativeJsonObj(
+          Json.toJsObject(args) ) ),
       data  = HttpReqData(
         headers  = HttpReqData.headersBinaryAccept,
         respType = HttpRespTypes.ArrayBuffer
@@ -39,7 +43,7 @@ trait TagsHttpApiImpl extends ITagsApi {
     HttpClient.execute( req )
       .respAuthFut
       .successIf200
-      .unBooPickle[MTagsFound]
+      .unJson[MTagsFound]
   }
 
 }

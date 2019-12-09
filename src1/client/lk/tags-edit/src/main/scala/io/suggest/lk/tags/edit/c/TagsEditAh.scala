@@ -11,7 +11,8 @@ import scala.concurrent.duration._
 import diode.Implicits.runAfterImpl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.tags.search.{ITagsApi, MTagSearchArgs}
+import io.suggest.sjs.common.tags.search.ITagsApi
+import io.suggest.tags.MTagsSearchQs
 
 import scala.concurrent.Future
 
@@ -197,8 +198,8 @@ class TagsEditAh[M](
 
   /** Код эффекта запроса поиска тегов. */
   def startTagsSearch(now: Long): Future[HandleTagsFound] = {
-    val qsArgs = MTagSearchArgs(
-      faceFts = Some( value.props.query.text ),
+    val qsArgs = MTagsSearchQs(
+      faceFts = value.props.query.text,
       limit   = Some( TagsEditConstants.Search.LIVE_SEARCH_RESULTS_LIMIT )
     )
     for (resp <- api.tagsSearch(qsArgs)) yield {

@@ -1,8 +1,8 @@
-package models.mlk
+package models.mtag
 
-import io.suggest.common.empty.EmptyProduct
 import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}
-import io.suggest.sc.TagSearchConstants.Req._
+import io.suggest.tags.MTagsSearchQs
+import io.suggest.tags.TagSearchConstants.Req._
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -12,28 +12,18 @@ import play.api.mvc.QueryStringBindable
  * Description: Модель аргументов поискового запроса тегов, например в поисковой выдаче.
  * Поиск происходит по узлам графа N2, где теги -- лишь частный случай вершин.
  */
-object MLkTagsSearchQs {
-
-  /** Макс.длина текстового поискового запроса. */
-  private def TAGS_QUERY_MAXLEN   = 64
-
-  /** Максимальное значение limit в qs. */
-  private def LIMIT_MAX           = 50
-
-  /** Максимальное значение offset в qs. */
-  private def OFFSET_MAX          = 200
-
+object MTagsSearchQsJvm {
 
   /** Поддержка интеграции с play-роутером в области URL Query string. */
   implicit def mLkTagsSearchQsQsb(implicit
                                   strB       : QueryStringBindable[String],
                                   intOptB    : QueryStringBindable[Option[Int]]
-                                 ): QueryStringBindable[MLkTagsSearchQs] = {
+                                 ): QueryStringBindable[MTagsSearchQs] = {
 
-    new QueryStringBindableImpl[MLkTagsSearchQs] {
+    new QueryStringBindableImpl[MTagsSearchQs] {
 
-      /** Биндинг значения [[MLkTagsSearchQs]] из URL qs. */
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLkTagsSearchQs]] = {
+      /** Биндинг значения [[MTagsSearchQs]] из URL qs. */
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MTagsSearchQs]] = {
         val k = key1F(key)
         for {
           tagsQueryE           <- strB.bind    (k(FACE_FTS_QUERY_FN),  params)
@@ -46,34 +36,25 @@ object MLkTagsSearchQs {
             _limitOpt       <- QsbUtil.ensureIntOptRange(limitOptE, 1, LIMIT_MAX)
             _offsetOpt      <- QsbUtil.ensureIntOptRange(offsetOptE, 0, OFFSET_MAX)
           } yield {
-            MLkTagsSearchQs(
-              tagsQuery = _tagsQuery,
-              limitOpt  = _limitOpt,
-              offsetOpt = _offsetOpt
+            MTagsSearchQs(
+              faceFts = _tagsQuery,
+              limit   = _limitOpt,
+              offset  = _offsetOpt
             )
           }
         }
       }
 
-      /** Разбиндивание значения [[MLkTagsSearchQs]] в URL qs. */
-      override def unbind(key: String, value: MLkTagsSearchQs): String = {
+      /** Разбиндивание значения [[MTagsSearchQs]] в URL qs. */
+      override def unbind(key: String, value: MTagsSearchQs): String = {
         val k = key1F(key)
         _mergeUnbinded1(
-          strB.unbind     (k(FACE_FTS_QUERY_FN),  value.tagsQuery ),
-          intOptB.unbind  (k(LIMIT_FN),           value.limitOpt  ),
-          intOptB.unbind  (k(OFFSET_FN),          value.offsetOpt )
+          strB.unbind     (k(FACE_FTS_QUERY_FN),  value.faceFts ),
+          intOptB.unbind  (k(LIMIT_FN),           value.limit  ),
+          intOptB.unbind  (k(OFFSET_FN),          value.offset )
         )
       }
     }
   }
 
 }
-
-
-/** Дефолтовая реализация модели аргументов поиска тегов. */
-case class MLkTagsSearchQs(
-  tagsQuery   : String,
-  limitOpt    : Option[Int] = None,
-  offsetOpt   : Option[Int] = None
-)
-  extends EmptyProduct

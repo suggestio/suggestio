@@ -75,7 +75,7 @@ case class MNodesFoundS(
         req.getClass.getSimpleName + COLON +
           req.fold(0)(_.resp.nodes.length) + COLON +
           req.exceptionOption.fold("") { ex =>
-            ex.getClass + HtmlConstants.SPACE + ex.getMessage
+            ex.getClass.getName + HtmlConstants.SPACE + ex.getMessage
           }
       )
       .append( COMMA )

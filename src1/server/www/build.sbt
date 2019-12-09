@@ -156,6 +156,7 @@ routesImport ++= Seq(
   "io.suggest.sys.mdr.MdrSearchArgsJvm._",
   "models.mext.MExtServicesJvm._",
   "io.suggest.id.login.LoginFormPagesJvm._",
+  "models.mtag.MTagsSearchQsJvm._",
   "io.suggest.captcha.MCaptchaJvm._"
 )
 

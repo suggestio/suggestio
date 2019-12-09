@@ -1,6 +1,6 @@
 package io.suggest.model.n2.tag
 
-import io.suggest.sc.TagSearchConstants.Resp._
+import io.suggest.tags.TagSearchConstants.Resp._
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Writes, __}
 

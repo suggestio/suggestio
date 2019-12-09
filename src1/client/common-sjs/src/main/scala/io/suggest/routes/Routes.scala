@@ -193,9 +193,6 @@ sealed trait ScCtlRoutes extends js.Object {
 @js.native
 sealed trait LkAdvGeoCtlRoutes extends js.Object {
 
-  /** Роута постинга добавления нового тега. */
-  def tagEditorAddTag(): Route = js.native
-
   /** Роута для поиска тегов  */
   def tagsSearch2(args: js.Dictionary[js.Any]): Route = js.native
 

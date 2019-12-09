@@ -1,8 +1,8 @@
 package io.suggest.common.tags.search
 
-import boopickle.Default._
-import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -13,7 +13,11 @@ import japgolly.univeq.UnivEq
 
 object MTagFound {
 
-  implicit val pickler: Pickler[MTagFound] = generatePickler[MTagFound]
+  implicit def tagFoundJson: OFormat[MTagFound] = (
+    (__ \ "f").format[String] and
+    (__ \ "c").format[Int] and
+    (__ \ "i").formatNullable[String]
+  )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MTagFound] = UnivEq.derive
 
@@ -29,9 +33,10 @@ case class MTagFound(
 
 object MTagsFound {
 
-  implicit val pickler: Pickler[MTagsFound] = {
-    implicit val mtfP = MTagFound.pickler
-    generatePickler[MTagsFound]
+  implicit def tagsFoundJson: OFormat[MTagsFound] = {
+    (__ \ "t")
+      .format[Seq[MTagFound]]
+      .inmap[MTagsFound]( apply, _.tags )
   }
 
   @inline implicit def univEq: UnivEq[MTagsFound] = UnivEq.derive
@@ -40,5 +45,5 @@ object MTagsFound {
 
 /** Контейнер результата аггрегации тегов. */
 case class MTagsFound(
-  tags  : Seq[MTagFound]
-)
+                       tags  : Seq[MTagFound]
+                     )

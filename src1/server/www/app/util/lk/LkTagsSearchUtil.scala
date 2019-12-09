@@ -9,7 +9,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import models.mlk.MLkTagsSearchQs
+import io.suggest.tags.MTagsSearchQs
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,15 +33,15 @@ class LkTagsSearchUtil @Inject() (
   private def LIMIT_DFLT    = 10
 
  /** Компиляция qs в аргументы поиска узлов. */
-  def qs2TagNodesSearch(qs: MLkTagsSearchQs): Future[MNodeSearch] = {
+  def qs2TagNodesSearch(qs: MTagsSearchQs): Future[MNodeSearch] = {
 
-    val _limit = qs.limitOpt
+    val _limit = qs.limit
       .getOrElse( LIMIT_DFLT )
 
-    val _offset = qs.offsetOpt
+    val _offset = qs.offset
       .getOrElse( 0 )
 
-    val tags: Seq[String] = TagFacesUtil.query2tags( qs.tagsQuery )
+    val tags: Seq[String] = TagFacesUtil.query2tags( qs.faceFts )
     val searchTagOpt  = tags.lastOption
 
     val tcrOpt = for (q <- searchTagOpt) yield {
@@ -53,10 +53,10 @@ class LkTagsSearchUtil @Inject() (
     )
 
     val r = new MNodeSearchDfltImpl {
-      override def outEdges  = Seq(_edgeSearchCr)
+      override def outEdges  = _edgeSearchCr :: Nil
       override def limit     = _limit
       override def offset    = _offset
-      override def nodeTypes = Seq( MNodeTypes.Tag )
+      override def nodeTypes = MNodeTypes.Tag :: Nil
     }
 
     Future.successful(r)
@@ -95,7 +95,7 @@ class LkTagsSearchUtil @Inject() (
 
 
   /** Комбо из liveSearchTags() и qs2TagNodesSearch(). */
-  def liveSearchTagsFromQs(qs: MLkTagsSearchQs): Future[MTagsFound] = {
+  def liveSearchTagsFromQs(qs: MTagsSearchQs): Future[MTagsFound] = {
     qs2TagNodesSearch(qs)
       .flatMap(tagsSearchHint)
   }

@@ -10,8 +10,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   override protected def _PREFIX = "E"
 
-  def SET_ATTR_NOT_FOUND         = E(2)
-
   def GEO_LOC_FAILED             = E(3)
 
   def GET_NODE_INDEX_FAILED      = E(4)
@@ -30,7 +28,6 @@ object ErrorMsgs extends MsgsStaticT {
   def FOC_LOOKUP_MISSING_AD        = E(21)
 
   def BLE_BEACONS_API_SHUTDOWN_FAILED = E(23)
-  def CANT_PARSE_IBEACON           = E(24)
   def CANT_PARSE_EDDY_STONE        = E(25)
   def BLE_BEACONS_API_AVAILABILITY_FAILED = E(26)
   def BLE_BEACONS_API_UNAVAILABLE  = E(27)
@@ -38,8 +35,6 @@ object ErrorMsgs extends MsgsStaticT {
   def BLE_BEACONS_API_CHECK_ENABLED_FAILED = E(29)
 
   def UNEXPECTED_FSM_RUNTIME_ERROR = E(30)
-
-  def FSM_MSG_PROCESS_ERROR        = E(31)
 
   def BLE_SCAN_ERROR               = E(33)
 

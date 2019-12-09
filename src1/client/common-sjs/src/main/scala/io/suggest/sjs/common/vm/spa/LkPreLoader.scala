@@ -3,7 +3,6 @@ package io.suggest.sjs.common.vm.spa
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.rm.SelfRemoveT
-import io.suggest.sjs.common.vm.style.ShowHideDisplayT
 import io.suggest.spa.SpaConst
 import org.scalajs.dom.raw.HTMLImageElement
 
@@ -31,7 +30,7 @@ object LkPreLoader extends FindElT {
 import LkPreLoader.Dom_t
 
 
-case class LkPreLoader(override val _underlying: Dom_t) extends VmT with ShowHideDisplayT with SelfRemoveT {
+case class LkPreLoader(override val _underlying: Dom_t) extends VmT with SelfRemoveT {
 
   override type T = Dom_t
 

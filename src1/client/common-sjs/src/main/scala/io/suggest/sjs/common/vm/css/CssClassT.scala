@@ -58,17 +58,6 @@ trait CssClassT extends AttrVmUtilT {
     }
   }
 
-  /** Расширенный Helper с поддержкой безопасного выставления class-аттрибута. */
-  protected trait SetterHelper[T] extends Helper[T] with super.SetterHelper[T] {
-    // Режимы нужны для передачи результатов логики execute в setAttribute().
-    protected def MODE_CLL          = 3
-
-    // Для возможности дополнения логики в setter helper'е используются эти методы.
-    override protected def _usingCll(cll: DOMTokenList): T = {
-      _mode = MODE_CLL
-      super._usingCll(cll)
-    }
-  }
 
   /**
    * Содержится ли указанный css-класс у текущего элемента?
@@ -86,56 +75,6 @@ trait CssClassT extends AttrVmUtilT {
         _containsClassViaAttr(name, classAttr)
       }
       override def notFound = false
-    }
-    h.execute()
-  }
-
-
-  /**
-   * Дописать css-класс, если указанный класс ещё не задан.
-   * @param names Названия добавляемых классов.
-   */
-  def addClasses(names: String*): Unit = {
-    val h = new SetterHelper[Unit] {
-      override def withClassList(classList: DOMTokenList): Unit = {
-        names.foreach { classList.add }
-      }
-
-      override def withAttrValue(classAttr: Option[String]): Unit = {
-        val iter = names.iterator
-          .filter { name =>
-            !_containsClassViaAttr(name, classAttr)
-          }
-        if (iter.nonEmpty) {
-          val css2 = iter.mkString(" ")
-          val css1 = classAttr match {
-            case None       => css2
-            case Some(css0) => css0 + " " + css2
-          }
-          setAttribute(css1)
-        }
-      }
-    }
-    h.execute()
-  }
-
-  /**
-   * Удалить css-класс из текущего тега.
-   * @param name Название удаляемого класса.
-   */
-  def removeClass(name: String): Unit = {
-    val h = new SetterHelper[Unit] {
-      override def withClassList(classList: DOMTokenList): Unit = {
-        classList.remove(name)
-      }
-      override def withAttrValue(classAttr: Option[String]): Unit = {
-        classAttr.foreach { classAttr1 =>
-          val re = _subStrRegex(classAttr1)
-          val v = classAttr1.replaceAll(re, " ")
-          setAttribute(v)
-        }
-      }
-      override def notFound: Unit = {}
     }
     h.execute()
   }
