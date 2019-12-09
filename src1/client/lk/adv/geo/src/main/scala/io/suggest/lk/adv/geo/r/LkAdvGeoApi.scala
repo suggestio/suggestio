@@ -68,27 +68,29 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   }
 
   override def existGeoAdvsMap(): Future[js.Array[GjFeature]] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkAdvGeo.existGeoAdvsMap(
-        adId = confRO().adId
-      ),
-      data = HttpReqData.justAcceptJson
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkAdvGeo.existGeoAdvsMap(
+          adId = confRO().adId
+        ),
+        data = HttpReqData.justAcceptJson
+      )
     )
-    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .nativeJsonFut[js.Array[GjFeature]]
   }
 
   override def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId),
-      data  = HttpReqData(
-        headers  = HttpReqData.headersBinaryAccept,
-        respType = HttpRespTypes.ArrayBuffer
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId),
+        data  = HttpReqData(
+          headers  = HttpReqData.headersBinaryAccept,
+          respType = HttpRespTypes.ArrayBuffer
+        )
       )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MGeoAdvExistPopupResp]
@@ -96,34 +98,36 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
 
   /** Запросить у сервера рассчёт цены. */
   override def getPrice(mFormS: MFormS): Future[MGetPriceResp] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkAdvGeo.getPriceSubmit(
-        adId = confRO().adId
-      ),
-      data = HttpReqData(
-        headers   = HttpReqData.headersBinarySendAccept,
-        body      = PickleUtil.pickle(mFormS),
-        respType  = HttpRespTypes.ArrayBuffer
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkAdvGeo.getPriceSubmit(
+          adId = confRO().adId
+        ),
+        data = HttpReqData(
+          headers   = HttpReqData.headersBinarySendAccept,
+          body      = PickleUtil.pickle(mFormS),
+          respType  = HttpRespTypes.ArrayBuffer
+        )
       )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MGetPriceResp]
   }
 
   override def forAdSubmit(mFormS: MFormS): Future[String] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkAdvGeo.forAdSubmit(
-        adId = confRO().adId
-      ),
-      data = HttpReqData(
-        headers   = HttpReqData.headersBinarySend,
-        body      = PickleUtil.pickle(mFormS),
-        respType  = HttpRespTypes.Default
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkAdvGeo.forAdSubmit(
+          adId = confRO().adId
+        ),
+        data = HttpReqData(
+          headers   = HttpReqData.headersBinarySend,
+          body      = PickleUtil.pickle(mFormS),
+          respType  = HttpRespTypes.Default
+        )
       )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .responseTextFut

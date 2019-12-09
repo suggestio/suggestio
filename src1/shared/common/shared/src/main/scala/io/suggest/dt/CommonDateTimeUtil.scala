@@ -51,11 +51,12 @@ object CommonDateTimeUtil {
         // Не совместим ни с чем, поэтому из-за elasticsearch его придётся дропнуть в будущем.
         case JsArray( valuesJsv ) =>
           try {
-            val Seq(OFFSET_DATE_TIME_FORMAT_VSN_1, year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffsetTotalSeconds) =
+            // Явно кастовать collection.Seq вместо s.c.i.Seq, т.к. valuesJsv содержит collection.IndexedSeq = ArraySeq, но это может меняться от версии к версии.
+            val collection.Seq(OFFSET_DATE_TIME_FORMAT_VSN_1, year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffsetTotalSeconds) =
               valuesJsv
-                .asInstanceOf[Seq[JsNumber]]
-                // O(n)-операция, не делающая ровным счётом ничего. Для ускорения можно попробовать .asInstanceOf[Int].
-                .map(_.value.toInt)
+                .iterator
+                .map(_.asInstanceOf[JsNumber].value.toInt)
+                .toSeq
 
             val zoneOffset = ZoneOffset.ofTotalSeconds( zoneOffsetTotalSeconds )
             val offsetDt = OffsetDateTime.of( year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffset )

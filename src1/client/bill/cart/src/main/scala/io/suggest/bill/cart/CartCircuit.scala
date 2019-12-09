@@ -6,7 +6,7 @@ import io.suggest.bill.cart.m.{LoadCurrentOrder, MCartRootS, MOrderItemsS}
 import io.suggest.bill.cart.u.CartUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.spa.StateInp
+import io.suggest.spa.{CircuitUtil, StateInp}
 import play.api.libs.json.Json
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -51,15 +51,14 @@ abstract class CartCircuitBase
   with ReactConnector[MCartRootS]
 {
 
-  import io.suggest.bill.cart.m.MOrderItemsS.MOrderItemsSFastEq
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.CART_CIRCUIT_ERROR
 
 
   // Модели
   //private lazy val rootRO = zoom(identity)
-  private val orderRW = zoomRW(_.order)(_.withOrder(_))
-  private val confRW = zoomRW(_.conf)(_.withConf(_))
+  private val orderRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.order)( MOrderItemsS.MOrderItemsSFastEq )
+  private val confRW = CircuitUtil.mkLensRootZoomRW(this, MCartRootS.conf)
 
 
   // server-API для контроллеров.

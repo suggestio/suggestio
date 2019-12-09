@@ -47,7 +47,8 @@ object UnivEqUtil {
   @inline implicit def jBigIntUe          : UnivEq[java.math.BigInteger] = UnivEq.force
 
 
-  @inline implicit def seqUe[T: UnivEq]         : UnivEq[Seq[T]]          = UnivEq.force
+  @inline implicit def scSeqUe[T: UnivEq]       : UnivEq[collection.Seq[T]] = UnivEq.force
+  @inline implicit def sciSeqUe[T: UnivEq]      : UnivEq[Seq[T]]          = UnivEq.force
   @inline implicit def setUe[T: UnivEq]         : UnivEq[Set[T]]          = UnivEq.force
   @inline implicit def indexedSeqUe[T: UnivEq]  : UnivEq[IndexedSeq[T]]   = UnivEq.force
   @inline implicit def iterableUe[T: UnivEq]    : UnivEq[Iterable[T]]     = UnivEq.force

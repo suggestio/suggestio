@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.bill.cart.MCartConf
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +23,9 @@ object MCartRootS {
 
   @inline implicit def univEq: UnivEq[MCartRootS] = UnivEq.derive
 
+  val conf = GenLens[MCartRootS](_.conf)
+  val order = GenLens[MCartRootS](_.order)
+
 }
 
 
@@ -34,9 +38,4 @@ object MCartRootS {
 case class MCartRootS(
                        conf        : MCartConf,
                        order       : MOrderItemsS,
-                     ) {
-
-  def withConf(conf: MCartConf) = copy(conf = conf)
-  def withOrder(order: MOrderItemsS) = copy(order = order)
-
-}
+                     )
