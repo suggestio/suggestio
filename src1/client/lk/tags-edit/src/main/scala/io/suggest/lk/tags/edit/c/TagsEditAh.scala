@@ -11,8 +11,7 @@ import scala.concurrent.duration._
 import diode.Implicits.runAfterImpl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.tags.search.ITagsApi
-import io.suggest.tags.MTagsSearchQs
+import io.suggest.tags.{ITagsApi, MTagsSearchQs}
 
 import scala.concurrent.Future
 

@@ -39,26 +39,28 @@ trait ILkCartApi {
 class LkCartApiXhrImpl extends ILkCartApi {
 
   override def getOrder(orderId: Option[Gid_t]): Future[MOrderContent] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkBill2.getOrder(
-        orderId = orderId.mapDefined(_.toDouble)
-      ),
-      data = HttpReqData.justAcceptJson
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkBill2.getOrder(
+          orderId = orderId.mapDefined(_.toDouble)
+        ),
+        data = HttpReqData.justAcceptJson
+      )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MOrderContent]
   }
 
   override def deleteItems(itemIds: Iterable[Gid_t]): Future[MOrderContent] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkBill2.deleteItems(
-        itemIds = itemIds.iterator.map(_.toDouble).toJSArray
-      ),
-      data = HttpReqData.justAcceptJson
+    HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.LkBill2.deleteItems(
+          itemIds = itemIds.iterator.map(_.toDouble).toJSArray
+        ),
+        data = HttpReqData.justAcceptJson
+      )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MOrderContent]

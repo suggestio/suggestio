@@ -44,7 +44,6 @@ import models.adv.geo.MForAdTplArgs
 import models.mtag.{MAddTagReplyOk, MTagBinded, MTagsAddFormBinded}
 import play.api.libs.json.Json
 import util.adv.direct.AdvRcvrsUtil
-import views.html.lk.tag.edit._
 
 import scala.concurrent.Future
 

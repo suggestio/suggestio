@@ -129,9 +129,13 @@ trait ScAdsTile
       }
       val ads404Fut = mNodes.dynSearch(msearchAds404)
 
-      if (LOGGER.underlying.isTraceEnabled)
-        for (ads404 <- ads404Fut)
-          LOGGER.trace(s"$logPrefix Returning ${ads404.length} of 404-ads: [${ads404.iterator.flatMap(_.id).mkString(", ")}]")
+      if (LOGGER.underlying.isWarnEnabled)
+        for (ads404 <- ads404Fut) {
+          if (ads404.isEmpty)
+            LOGGER.warn(s"$logPrefix NO 404-ADS found for 404-node#$nodeId404")
+          else
+            LOGGER.trace(s"$logPrefix Returning ${ads404.length} of 404-ads: [${ads404.iterator.flatMap(_.id).mkString(", ")}]")
+        }
 
       ads404Fut
     }
@@ -156,6 +160,8 @@ trait ScAdsTile
           }
         }
       } yield {
+        if (mads2.isEmpty)
+          LOGGER.debug(s"$logPrefix Missing all/any ads, NO 404 ads from [$nodeId404], something going wrong.")
         mads2.zipWithIndex
       }
 

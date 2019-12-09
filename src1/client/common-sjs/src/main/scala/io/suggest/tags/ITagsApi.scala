@@ -1,9 +1,8 @@
-package io.suggest.sjs.common.tags.search
+package io.suggest.tags
 
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
-import io.suggest.tags.MTagsSearchQs
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 
@@ -31,16 +30,17 @@ trait TagsHttpApiImpl extends ITagsApi {
   protected def _tagsSearchRoute: js.Dictionary[js.Any] => Route
 
   override def tagsSearch(args: MTagsSearchQs): Future[MTagsFound] = {
-    val req = HttpReq.routed(
-      route = _tagsSearchRoute(
-        PlayJsonSjsUtil.toNativeJsonObj(
-          Json.toJsObject(args) ) ),
-      data  = HttpReqData(
-        headers  = HttpReqData.headersBinaryAccept,
-        respType = HttpRespTypes.ArrayBuffer
+    HttpClient.execute(
+      HttpReq.routed(
+        route = _tagsSearchRoute(
+          PlayJsonSjsUtil.toNativeJsonObj(
+            Json.toJsObject(args) ) ),
+        data  = HttpReqData(
+          headers  = HttpReqData.headersBinaryAccept,
+          respType = HttpRespTypes.ArrayBuffer
+        )
       )
     )
-    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MTagsFound]

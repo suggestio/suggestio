@@ -5,6 +5,7 @@ import diode.data.{Pending, Pot}
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
+import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
 import io.suggest.sc.m.GeoLocOnOff
@@ -463,7 +464,7 @@ class FirstRunDialogAh[M](
         }
         // Надо скрыть диалог анимированно:
         val d2 = MWzFirstOuterS.view.set(
-          Some( MWzFirstS.visible.set(false)( view0 ) )
+          Some( (MWzFirstS.visible set false)( view0 ) )
         )(v0)
         val allFx = saveFx + unRenderFx
         updated( d2, allFx )
@@ -492,7 +493,7 @@ class FirstRunDialogAh[M](
     // Геолокация
     PermissionSpec(
       phase     = MWzPhases.GeoLocPerm,
-      supported = platform.hasGeoLoc,
+      supported = GeoLocUtilJs.envHasGeoLoc(),
       askPermF  =
         if (platform.isCordova) CordovaDiagonsticPermissionUtil.getGeoLocPerm
         else Html5PermissionApi.getGeoLocPerm
@@ -503,7 +504,7 @@ class FirstRunDialogAh[M](
       supported = platform.hasBle,
       askPermF  = CordovaDiagonsticPermissionUtil.getBlueToothState
     ) #::
-    Stream.empty[PermissionSpec]
+    LazyList.empty[PermissionSpec]
   }
 
 }

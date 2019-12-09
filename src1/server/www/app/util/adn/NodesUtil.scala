@@ -18,6 +18,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.url.MHostInfo
+import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.{MExtTarget, MExtTargets}
 import models.im.MImgT
@@ -26,10 +27,11 @@ import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
 import play.api.i18n.{Lang, Langs, Messages}
+import play.api.inject.Injector
 import play.api.mvc.Call
 import util.img.DynImgUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 /**
@@ -290,10 +292,12 @@ final class NodesUtil @Inject() (
                        ): Future[Map[String, Seq[MHostInfo]]] = {
     var allImgsAcc = gallery
 
-    allImgsAcc = welcomeOpt
-      .iterator
-      .flatMap( _.allImgsWithWhInfoIter )
-      .map(_.mimg)
+    allImgsAcc = (for {
+      wc    <- welcomeOpt
+      imgWh <- wc.allImgsWithWhInfoIter
+    } yield {
+      imgWh.mimg
+    })
       .prependRevTo( allImgsAcc )
 
     allImgsAcc = logoImgOpt.prependRevTo(allImgsAcc)
@@ -416,6 +420,7 @@ final class NodesUtil @Inject() (
   def MAX_404_ADS_ONCE = 10
 
   /** Запуск инициализации пустых 404-узлов.
+    * Вызывается вручную.
     *
     * @return Фьючерс.
     */
@@ -467,7 +472,8 @@ final class NodesUtil @Inject() (
   }
 
 
-  // Конструктор - зарегать все 404-узлы:
+  // Конструктор - зарегать все 404-узлы.
+  // По идее, это безопасно, т.к. id узлов стабильные постоянные.
   init404nodes()
 
 }
@@ -476,4 +482,32 @@ final class NodesUtil @Inject() (
 /** Интерфейс для DI-поля, содержащего инжектируемый экземпляр [[util.adn.NodesUtil]]. */
 trait INodesUtil {
   def nodesUtil: NodesUtil
+}
+
+
+trait NodesUtilJmxMBean {
+  def init404nodes(): String
+}
+final class NodesUtilJmx @Inject() (
+                                     injector: Injector,
+                                   )
+  extends NodesUtilJmxMBean
+  with JmxBase
+{
+  import JmxBase._
+
+  override def _jmxType = JmxBase.Types.UTIL
+
+  private def nodesUtil = injector.instanceOf[NodesUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
+  override def init404nodes(): String = {
+    val fut = for {
+      _ <- nodesUtil.init404nodes()
+    } yield {
+      "done, see logs for more info"
+    }
+    awaitString(fut)
+  }
+
 }

@@ -43,7 +43,9 @@ class SetNewPwAh[M](
         // Сбросить не валидность нового пароля, если он валиден.
         if (!pw0.isValid && Validators.isPasswordValid(m.value)) {
           updAccF = updAccF andThen
-            pwLens.composeLens( MTextFieldS.isValid ).set(true)
+            pwLens
+              .composeLens( MTextFieldS.isValid )
+              .set(true)
         }
 
         val v2 = updAccF( v0 )
@@ -56,12 +58,12 @@ class SetNewPwAh[M](
 
       // Если password mismatch, то подсветить несовпадение паролей.
       val updAccF0 = if (!v0.showPwMisMatch && !v0.isPasswordsMatch)
-        MPwNew.showPwMisMatch.set(true) #:: Stream.empty
+        (MPwNew.showPwMisMatch set true) #:: LazyList.empty
       else
-        Stream.empty
+        LazyList.empty
 
       val validUpdFs = for {
-        lens <- (MPwNew.password1 #:: MPwNew.password2 #:: Stream.empty)
+        lens <- (MPwNew.password1 #:: MPwNew.password2 #:: LazyList.empty)
         pw0 = lens.get(v0)
         isValid = Validators.isPasswordValid( pw0.value )
         if isValid !=* pw0.isValid

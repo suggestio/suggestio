@@ -94,7 +94,7 @@ object ListsSpec extends SimpleTestSuite {
 
 
   test("isElemsEqs() for two empty lists") {
-    assert( isElemsEqs[String](List.empty, Stream.empty) )
+    assert( isElemsEqs[String](List.empty, LazyList.empty) )
   }
   test("isElemsEqs() should true for same lists") {
     val l1 = List("1", "2", "b", "ft")

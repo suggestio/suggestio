@@ -34,11 +34,15 @@ class OrderItemsAh[M](
       val selItemIds2 = m.itemId.fold [Set[Gid_t]] {
         // Управление всеми элементами.
         if (m.checked) {
-          v0.orderContents
-            .iterator
-            .flatMap(_.content.items)
-            .flatMap(_.id)
+          (for {
+            oc      <- v0.orderContents.iterator
+            item    <- oc.content.items
+            itemId  <- item.id
+          } yield {
+            itemId
+          })
             .toSet
+
         } else {
           Set.empty
         }
@@ -52,7 +56,7 @@ class OrderItemsAh[M](
           v0.itemsSelected -- itemIdSet
         }
       }
-      val v2 = MOrderItemsS.itemsSelected.set(selItemIds2)(v0)
+      val v2 = (MOrderItemsS.itemsSelected set selItemIds2)(v0)
       updated( v2 )
 
 
@@ -74,7 +78,7 @@ class OrderItemsAh[M](
               Success( action )
             }
         }
-        val v2 = MOrderItemsS.orderContents.set( req2 )(v0)
+        val v2 = (MOrderItemsS.orderContents set req2)(v0)
         updated( v2, fx )
       }
 
@@ -96,7 +100,7 @@ class OrderItemsAh[M](
               Success( action )
             }
         }
-        val v2 = MOrderItemsS.orderContents.set(req2)(v0)
+        val v2 = (MOrderItemsS.orderContents set req2)(v0)
         updated( v2, fx )
       }
 

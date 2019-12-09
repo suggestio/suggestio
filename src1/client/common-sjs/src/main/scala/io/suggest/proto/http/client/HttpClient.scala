@@ -93,9 +93,9 @@ object HttpClient extends Log {
 
   /** Вернуть реальное API для отправки http-запросов. */
   val execute: HttpClientAdp = {
-    Stream.cons[HttpClientAdp](
-      FetchAdp,
-      XhrAdp #:: Stream.empty[HttpClientAdp]
+    ( FetchAdp #::
+      XhrAdp #::
+      LazyList.empty[HttpClientAdp]
     )
       .find(_.isAvailable)
       .get

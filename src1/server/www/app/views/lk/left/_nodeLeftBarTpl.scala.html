@@ -7,9 +7,24 @@
 @import mlk.LkLeftPanelLinks._
 @import util.tpl.CssFormat._
 
+@* Кнопка вызова системной панели. *@
+@__sysBtn( call: Call ) = {
+  @if(ctx.user.isSuper) {
+    @_leftBarItemTpl(
+      title = "System",
+      href  = call,
+      css   = classesAct(false, "__sys")
+    )()
+  }
+}
+
 @__topItems = {
 
-  @for(nodeId <- nodeIdOpt) {
+  @nodeIdOpt.fold {
+    @* lk-list или что-то такое: Для админа нужна кнопка sys на список узлов: *@
+    @__sysBtn( routes.SysMarket.adnNodesList() )
+
+  } { nodeId =>
 
     @* TODO Nodes LkAds требует RcvrKey, а у нас тут на руках только лишь nodeId. *@
     @_leftBarItemTpl(
@@ -40,14 +55,8 @@
       }
     }
 
-    @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@
-    @if(ctx.user.isSuper) {
-      @_leftBarItemTpl(
-        title = "System",
-        href  = routes.SysMarket.showAdnNode(nodeId),
-        css   = classesAct(false, "__sys")
-      )()
-    }
+    @__sysBtn( routes.SysMarket.showAdnNode(nodeId) )
+
 
   } @* nodeId *@
 

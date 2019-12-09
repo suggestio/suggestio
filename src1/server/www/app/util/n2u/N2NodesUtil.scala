@@ -63,7 +63,7 @@ class N2NodesUtil {
   def mdrs(mad: MNode): Iterator[MEdge] = {
     mad.edges
       .withPredicateIter(MPredicates.ModeratedBy)
-      .filter( _.info.flag.contains(false) )
+      .filter( _.info.flag contains false )
   }
 
   /** Найти указанный ресивер среди эджей. */

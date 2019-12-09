@@ -15,6 +15,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
+import io.suggest.geo.GeoLocUtilJs
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
@@ -302,7 +303,7 @@ class TailAh(
           v0.dialogs.first.view.isEmpty
       ) {
         // Если геолокация ещё не запущена, то запустить:
-        if (v0.dev.platform.hasGeoLoc && !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) && !isGeoLocRunning) {
+        if (GeoLocUtilJs.envHasGeoLoc() && !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) && !isGeoLocRunning) {
           fxsAcc ::= GeoLocOnOff(enabled = true, isHard = false).toEffectPure
           isGeoLocRunning = true
         }

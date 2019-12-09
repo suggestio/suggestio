@@ -1,7 +1,6 @@
 package io.suggest.dev
 
 import diode.FastEq
-import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.univeq._
 import monocle.macros.GenLens
 
@@ -50,14 +49,6 @@ case class MPlatformS(
                        isCordova      : Boolean,
                        hasBle         : Boolean
                      ) {
-
-  /** Заглушка на случай возможной надобности в будущем. */
-  def hasGeoLoc: Boolean = {
-    WindowVm()
-      .navigator
-      .exists( _.geolocation.nonEmpty )
-  }
-
 
   def isBrowser = !isCordova
 

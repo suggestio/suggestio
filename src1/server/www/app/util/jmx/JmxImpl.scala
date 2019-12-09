@@ -15,6 +15,7 @@ import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.inject.ApplicationLifecycle
+import util.adn.NodesUtilJmx
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
@@ -53,6 +54,7 @@ case class JmxImpl @Inject()(
                                billDebugUtilJmx              : BillDebugUtilJmx,
                                bill2UtilJmx                  : Bill2UtilJmx,
                                tfDailyUtilJmx                : TfDailyUtilJmx,
+                               nodesUtilJmx                  : NodesUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext,
                              )
