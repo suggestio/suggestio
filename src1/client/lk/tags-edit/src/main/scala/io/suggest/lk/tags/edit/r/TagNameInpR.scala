@@ -64,7 +64,6 @@ object TagNameInpR {
               ^.`class` := (Css.Input.INPUT_SHADOW + SPACE + Css.Input.JS_INPUT_W),
               <.input(
                 ^.`type`   := HtmlConstants.Input.text,
-                ^.name     := TagsEditConstants.ADD_TAGS_FN,
                 ^.value    := p().text,
                 ^.onChange ==> onQueryChange,
                 ^.onKeyUp  ==> onKeyUp

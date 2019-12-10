@@ -1,7 +1,6 @@
-package models.mtag
+package io.suggest.tags
 
 import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}
-import io.suggest.tags.MTagsSearchQs
 import io.suggest.tags.TagSearchConstants.Req._
 import play.api.mvc.QueryStringBindable
 

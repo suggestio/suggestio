@@ -19,7 +19,6 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.n2.node.MNode
-import io.suggest.model.n2.tag.MTagSearchResp
 import io.suggest.pick.PickleUtil
 import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.OptId
@@ -35,15 +34,14 @@ import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoRcvrsU
 import util.billing.{Bill2Conf, Bill2Util}
 import util.lk.LkTagsSearchUtil
 import util.sec.CspUtil
-import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.streams.StreamsUtil
 import io.suggest.tags.MTagsSearchQs
 import models.adv.geo.MForAdTplArgs
-import models.mtag.{MAddTagReplyOk, MTagBinded, MTagsAddFormBinded}
 import play.api.libs.json.Json
 import util.adv.direct.AdvRcvrsUtil
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -71,7 +69,6 @@ class LkAdvGeo @Inject() (
                            canAdvAd                        : CanAdvAd,
                            isAuth                          : IsAuth,
                            tagSearchUtil                   : LkTagsSearchUtil,
-                           tagsEditFormUtil                : TagsEditFormUtil,
                            sioControllerApi                : SioControllerApi,
                            mCommonDi                       : ICommonDi,
                          )
@@ -523,7 +520,7 @@ class LkAdvGeo @Inject() (
         // Собрать множество id узлов, у которых есть хотя бы одно online-размещение:
         .alsoToMat {
           Flow[MItem]
-            .filter( _.status == MItemStatuses.Online )
+            .filter( _.status ==* MItemStatuses.Online )
             .toMat( items2rcvrIdsSink )(Keep.right)
         }( Keep.both )
         // И собрать карту интервалов размещения по id узлов:
