@@ -55,7 +55,7 @@ object MTagsEditQueryProps {
 /** Состояние поиска. */
 case class MTagsEditQueryProps(
   text    : String = "",
-  errors  : Seq[MMessage] = Nil
+  errors  : Seq[MMessage] = Nil,
 ) {
 
   def withText(t: String) = copy(text = t)

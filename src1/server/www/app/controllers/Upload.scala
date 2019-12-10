@@ -110,7 +110,10 @@ class Upload @Inject()(
       {errorsNel =>
         LOGGER.warn(s"$logPrefix Failed to verify body: ${errorsNel.iterator.mkString(", ")}\n ${request.body}")
         val resp = MUploadResp(
-          errors = errorsNel.iterator.map { msg => MMessage(msg) }.toSeq
+          errors = errorsNel
+            .iterator
+            .map( MMessage(_) )
+            .toSeq,
         )
         NotAcceptable( Json.toJson(resp) )
       },

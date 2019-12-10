@@ -12,6 +12,7 @@ import diode.Implicits.runAfterImpl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.tags.{ITagsApi, MTagsSearchQs}
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -142,15 +143,15 @@ class TagsEditAh[M](
         val maxLen = TagsEditConstants.Constraints.TAG_LEN_MAX
         faces.flatMap { q =>
           val ql = q.length
+
           if (ql < minLen) {
-            MMessage.a("error.minLength", minLen) :: Nil
+            // Слишком короткое имя тега:
+            MMessage("error.minLength", Json.arr(minLen) ) :: Nil
+          } else if (ql > maxLen) {
+            // Максимальную длина превышена:
+            MMessage("error.maxLength", Json.arr(maxLen) ) :: Nil
           } else {
-            // Проверяем максимальную длину.
-            if (ql > maxLen) {
-              MMessage.a("error.maxLength", maxLen) :: Nil
-            } else {
-              Nil
-            }
+            Nil
           }
         }
       }

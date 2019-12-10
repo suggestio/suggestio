@@ -43,11 +43,11 @@ object PriceReasonI18n {
 
 
   def i18nPayloadCircle(circleGs: CircleGs): String = {
-    val distanceStr = DistanceUtil.formatDistanceM( circleGs.radiusM )(Messages.f)
+    val distanceStr = Messages( DistanceUtil.formatDistanceM( circleGs.radiusM ) )
     val coordsStr = circleGs.center.toHumanFriendlyString
     Messages(
       MsgCodes.`in.radius.of.0.from.1`,
-      distanceStr :: coordsStr :: Nil: _*
+      distanceStr, coordsStr,
     )
   }
 

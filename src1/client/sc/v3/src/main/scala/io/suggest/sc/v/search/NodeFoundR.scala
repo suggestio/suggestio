@@ -41,7 +41,7 @@ class NodeFoundR(
     *
     * @param node Данные по узлу, который рендерится.
     * @param searchCss Инстанс класса SearchCss.
-    * @param withDistanceTo Отображать расстояние до указанной точки.
+    * @param withDistanceToNull Отображать расстояние до указанной точки.
     * @param selected Является ли элемент списка выбранным (текущим)?
     */
   case class PropsVal(
@@ -185,7 +185,7 @@ class NodeFoundR(
           val text2ndOpt = distanceMOpt
             .map { distanceM =>
               commonReactCtxProv.consume { crCtx =>
-                val distanceFmt = DistanceUtil.formatDistanceM(distanceM)(crCtx.messages.f)
+                val distanceFmt = crCtx.messages( DistanceUtil.formatDistanceM(distanceM) )
                 (HtmlConstants.`~` + distanceFmt): raw.React.Node
               }.rawNode
             }

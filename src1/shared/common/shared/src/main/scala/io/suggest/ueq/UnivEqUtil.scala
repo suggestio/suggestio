@@ -63,6 +63,7 @@ object UnivEqUtil {
   @inline implicit def jsStringUe         : UnivEq[JsString]        = UnivEq.force
   @inline implicit def jsNumberUe         : UnivEq[JsNumber]        = UnivEq.force
   @inline implicit def jsNullUe           : UnivEq[JsNull.type]     = UnivEq.force
+  @inline implicit def jsArrayUe          : UnivEq[JsArray]         = UnivEq.force
 
   @inline implicit def mapUe[K: UnivEq, V: UnivEq]: UnivEq[Map[K, V]] = UnivEq.force
   @inline implicit def immListMapUe[K: UnivEq, V: UnivEq]: UnivEq[ListMap[K, V]] = UnivEq.force

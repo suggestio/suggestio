@@ -1,7 +1,8 @@
 package io.suggest.msg
 
-import io.suggest.i18n.{I18nConst, IMessage, MessagesF_t}
+import io.suggest.i18n.{I18nConst, MMessage}
 import io.suggest.sjs.common.log.Log
+import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
@@ -49,22 +50,27 @@ object JsMessagesSingleLangNative extends IJsMessagesSingleLang
 sealed trait Messages extends Log {
 
   /** Локализовать инстанс IMessage. */
-  def apply(fe: IMessage): String = {
-    apply1(fe.message, fe.args)
+  def apply(fe: MMessage): String = {
+    apply1(
+      fe.message,
+      fe.args.value
+        .iterator
+        .map(PlayJsonSjsUtil.toNativeJson)
+        .toSeq,
+    )
   }
 
   /** Локализовать сообщение по коду и опциональным аргументам. */
-  def apply(message: String, args: Any*): String = {
-    apply1(message, args.asInstanceOf[Seq[js.Any]])
+  def apply(message: String, args: js.Any*): String = {
+    apply1(message, args)
   }
 
   private var _suppressErrors: Boolean = false
 
-  def apply1(message: String, args: Seq[Any]): String = {
+  def apply1(message: String, args: Seq[js.Any]): String = {
     try {
       // Шаманство с аргументами из-за конфликта между Any, AnyRef и js.Any.
-      val argsJs = args.asInstanceOf[Seq[js.Any]]
-      _applyJs(message, argsJs)
+      _applyJs(message, args)
     } catch { case ex: Throwable =>
       // Если с messages проблемы, то ошибки будут сыпать десятками и сотнями. Поэтому рендерим только первую ошибку, остальные глушим.
       if (!_suppressErrors) {
@@ -77,9 +83,6 @@ sealed trait Messages extends Log {
 
   /** Нативный запрос к JSON-словарю или JS-API. */
   protected def _applyJs(message: String, argsJs: Seq[js.Any]): String
-
-  /** Вернуть инстанс MessagesF_t, который можно передавать в т.ч. кросс-платформенный код. */
-  def f: MessagesF_t = apply1
 
 }
 

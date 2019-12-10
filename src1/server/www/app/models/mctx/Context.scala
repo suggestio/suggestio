@@ -6,7 +6,6 @@ import java.time.{Instant, OffsetDateTime, ZoneId}
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
@@ -197,7 +196,7 @@ trait Context {
   implicit val messages: Messages
 
   /** Функция типа MessagesF_t, которую можно использовать в кросс-платформенном коде. */
-  def messagesF: MessagesF_t = messages( _, _: _* )
+  def messagesF: (String, Seq[Any]) => String = messages( _, _: _* )
 
   def withMessages(messages: Messages): Context
 
