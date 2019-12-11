@@ -80,8 +80,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def EVENT_LISTENER_SUBSCRIBE_ERROR   = E(55)
 
-  def JS_ROUTER_INIT_FAILED            = E(56)
-
   def AD_EDIT_CIRCUIT_ERROR            = E(57)
 
   /** На вход ожидалось изображение, а пришло что-то иное. */
@@ -97,8 +95,6 @@ object ErrorMsgs extends MsgsStaticT {
   def INSERT_PAYLOAD_EXPECTED          = E(64)
 
   def EMBEDDABLE_MEDIA_INFO_EXPECTED   = E(65)
-
-  def DND_DROP_ERROR                   = E(67)
 
   def BASE64_TO_BLOB_FAILED            = E(68)
 
@@ -148,9 +144,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   /** Косяк в форме логина. */
   def LOGIN_FORM_ERROR                 = E(91)
-
-  /** Ошибка в форме смены пароля. */
-  def PW_CHANGE_FORM_ERROR             = E(92)
 
   /** Отсутствуют GridBuild-данные плитки, когда они так нужны.
     * Простая плитка из JdR далеко не всегда нужна: в выдаче своя плитка, а в ЛК в основном рендер без плитки,

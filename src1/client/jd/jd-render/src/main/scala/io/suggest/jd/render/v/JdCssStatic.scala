@@ -93,8 +93,8 @@ class JdCssStatic extends StyleSheet.Inline {
     color.black
   )
 
-  /** Статический стиль для блока. Надо не забывать про contentOuterS. */
-  val smBlockS = style(
+  /** Статический стиль для блока или qd-blockless. Надо не забывать про contentOuterS. */
+  val gridItemS = style(
     // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
     overflow.hidden,
   )

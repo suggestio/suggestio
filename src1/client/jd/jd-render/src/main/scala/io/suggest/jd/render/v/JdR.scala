@@ -15,6 +15,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.img.{ImgCommonUtil, ImgUtilRJs}
@@ -26,6 +27,8 @@ import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.Tree
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -87,6 +90,7 @@ class JdR(
         val qdTag = state.subTree.rootLabel
 
         var contTagModsAcc = List[TagMod](
+          jdCssStatic.gridItemS,
           _bgColorOpt( qdTag, state.jdArgs ),
 
           // Рендер qd-контента в html.
@@ -151,6 +155,11 @@ class JdR(
           val jdCss = state.jdArgs.jdRuntime.jdCss
           val innerTm: TagMod = jdCss.qdBlOuter
 
+          // Флаг для костыля принудительного ручного re-measure в mkChildrenF().
+          // Отнесена по-дальше от самой функции, т.к. есть подозрение, что эта внешняя переменная склонна к
+          // самозабвению из-за каких-то косяков в sjs-компиляторе.
+          var isReMeasured = false
+
           <.div(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
@@ -175,18 +184,18 @@ class JdR(
                 )
               )
 
-              // Локальная переменная для блокирования бесконечного вызова mkChildrenF().
-              // Вызов args.measure() вызывает тело mkChildrenF() из requestAnimationFrame().
-              // Без ручной переменной isReMeasured снаружи от mkChildrenF() рендер будет бесконечен после однократного вызова measure().
-              var isReMeasured = false
-
+              // Функция __mkChildrenF() вызывается 2-3 раза с одного react-рендера!
               def __mkChildrenF(chArgs: MeasureChildrenArgs): raw.PropsChildren = {
-                // Запустить повторное измерение, когда это требуется состоянием.
-                if (
-                  !isReMeasured && state.qdBlOpt.exists(_.isPending)
-                ) {
-                  isReMeasured = true
-                  chArgs.measure()
+                // Костыль для принудительного запуска одного повторного измерения, если в состоянии задано (Pot[QdBl*].pending).
+                // Запуск измерения вызывает повторный __mkChildrenF(), поэтому нужна максимально жесткая и гарантированная
+                // система предотвращения бесконечного цикла.
+                isReMeasured.synchronized {
+                  if (!isReMeasured && state.qdBlOpt.exists(_.isPending)) {
+                    isReMeasured = true
+                    Future {
+                      chArgs.measure()
+                    }
+                  }
                 }
 
                 // ref должен быть прямо в теге как можно ближе к контенту, чтобы правильно измерить размер react-measure.
@@ -321,7 +330,7 @@ class JdR(
 
         val isWide = s.props1.expandMode.nonEmpty
 
-        val blockCss = jdCssStatic.smBlockS: TagMod
+        val blockCss = jdCssStatic.gridItemS: TagMod
 
         // Обычное отображение, просто вернуть блок.
         val block = <.div(

@@ -4,7 +4,7 @@ import diode.react.ModelProxy
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.JdConst
-import io.suggest.jd.edit.m.ResizeContent
+import io.suggest.jd.edit.m.SetContentWidth
 import io.suggest.lk.r.SliderOptR
 import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq
@@ -30,7 +30,7 @@ class WidthPxOptR(
     .stateless
     .render_P { propsOptProxy =>
       val label = Messages( MsgCodes.`Width` ): VdomNode
-      val onChange = ResizeContent.apply _
+      val onChange = SetContentWidth.apply _
 
       propsOptProxy.wrap { valueOpt =>
         for (value <- valueOpt) yield {

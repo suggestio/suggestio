@@ -69,6 +69,7 @@ class JdAh[M](
           val v2 = MJdRuntime.data
             .composeLens(MJdRuntimeData.qdBlockLess)
             .set(qdBlMap2)(v0)
+
           updatedSilent(v2)
 
         } else {
@@ -81,7 +82,9 @@ class JdAh[M](
               .set(data2)(v0.jdCss),
             data = data2,
           )
-          updated(v2, GridRebuild(force = true).toEffectPure)
+          val rebuildFx = GridRebuild(force = true).toEffectPure
+
+          updated(v2, rebuildFx)
         }
       })
         .getOrElse {

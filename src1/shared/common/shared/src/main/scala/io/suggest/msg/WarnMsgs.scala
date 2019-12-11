@@ -26,15 +26,7 @@ object WarnMsgs extends MsgsStaticT {
   /** Подавление повторной подписки на события со стороны какого-то листенера. */
   def EVENT_ALREADY_LISTENED_BY             = E(35)
 
-  def UNKNOWN_BLE_DEVICE                    = E(38)
-
   def INIT_ROUTER_NO_TARGET_SPECIFIED       = E(39)
-
-  /**
-    * BLE-девайс отсеян. т.е. например это BLE-девайс, но тип у него неподходящий
-    * т.е. BeaconParser.parse() вернуло Some(Left(...)).
-    */
-  def FILTERED_OUT_BLE_DEVICE               = E(40)
 
   def BLE_BEACON_EMPTY_UID                  = E(41)
 
@@ -62,8 +54,6 @@ object WarnMsgs extends MsgsStaticT {
   /** Отработка какой-то проблемы, связанные с отсутствием завершающего \n в документе. */
   def QDELTA_FINAL_NEWLINE_PROBLEM           = E(53)
 
-  def DND_DROP_UNSUPPORTED                   = E(54)
-
   /** Файл (изображение) потерялось куда-то в ходе блобификации. */
   def SOURCE_FILE_NOT_FOUND   = E(56)
 
@@ -78,8 +68,6 @@ object WarnMsgs extends MsgsStaticT {
 
   /** Событие проигнорено (подавлено), потому что причин для реагирования недостаточно. */
   def SUPPRESSED_INSUFFICIENT                = E(61)
-
-  def PLATFORM_NOT_READY                     = E(62)
 
   def NODE_PATH_MISSING_INVALID              = E(63)
 

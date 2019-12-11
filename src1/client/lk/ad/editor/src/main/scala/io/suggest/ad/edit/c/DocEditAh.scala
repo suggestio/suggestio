@@ -13,7 +13,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.edit.m.{JdChangeLayer, JdDropToBlock, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize, ResizeContent}
+import io.suggest.jd.edit.m.{JdChangeLayer, JdDropToBlock, JdDropToDocument, JdTagDragEnd, JdTagDragStart, JdTagSelect, QdEmbedResize, SetContentWidth}
 import io.suggest.jd.{JdConst, MJdConf, MJdDoc, MJdEdge, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.u.JdUtil
@@ -380,7 +380,7 @@ class DocEditAh[M](
               for (qdEdit <- qdEditOpt0) yield {
                 if (dataEdgesForUpload.isEmpty) {
                   // Перерендер не требуется, тихо сохранить текущую дельту в состояние.
-                  MQdEditS.realDelta.set( Some(m.fullDelta) )(qdEdit)
+                  (MQdEditS.realDelta set Some(m.fullDelta))(qdEdit)
                 } else {
                   // Если был новый embed, то надо перерендерить редактор новой дельтой, т.к. наверняка изменились размеры чего-либо.
                   qdEdit.withInitRealDelta(
@@ -1279,8 +1279,8 @@ class DocEditAh[M](
       }
 
 
-    // Ручной ресайз контента (по ширине).
-    case m: ResizeContent =>
+    // Ручной ресайз контента по ширине.
+    case m: SetContentWidth =>
       val v0 = value
       val loc0 = v0.jdDoc.jdArgs
         .selJdt.treeLocOpt
@@ -1288,7 +1288,7 @@ class DocEditAh[M](
       val jdt0 = loc0.getLabel
 
       // Прогнать по min/max-ограничениям, т.к. юзер таскать можно куда угодно.
-      val widthPxOpt2 = for(widthPx0 <- m.widthPx) yield {
+      val widthPxOpt2 = for (widthPx0 <- m.widthPx) yield {
         Math.max(
           JdConst.ContentWidth.MIN_PX,
           Math.min(JdConst.ContentWidth.MAX_PX, widthPx0)
@@ -1297,15 +1297,14 @@ class DocEditAh[M](
 
       val jdt_p1_width_LENS = JdTag.props1
         .composeLens( MJdtProps1.widthPx )
+
       if (jdt_p1_width_LENS.get(jdt0) ==* widthPxOpt2) {
         // Ширина изменилась в исходное значение.
         noChange
-
       } else {
         require( jdt0.name ==* MJdTagNames.QD_CONTENT )
         // Сохранить новую ширину в состояние текущего тега:
-        val jdt2 = jdt_p1_width_LENS
-          .set( widthPxOpt2 )( jdt0 )
+        val jdt2 = (jdt_p1_width_LENS set widthPxOpt2)( jdt0 )
         _updateQdContentProps(jdt2, v0)
       }
 

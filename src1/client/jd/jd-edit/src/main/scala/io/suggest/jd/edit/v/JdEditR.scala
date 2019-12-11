@@ -167,7 +167,7 @@ class JdEditR(
           if (state.isCurrentSelected) {
             // Текущий тег выделен. Значит, пусть будет move-указатель
             TagMod(
-              ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Cursor.MOVE ),
+              ^.`class` := Css.Cursor.MOVE,
               jdCssStatic.horizResizable,
               // TODO onResize -> ...
               ^.onMouseUp ==> onQdTagResize,
@@ -200,7 +200,7 @@ class JdEditR(
       /** Самописная поддержка ресайза контента только силами браузера. */
       private def onQdTagResize(e: ReactMouseEventFromHtml): Callback = {
         _parseWidth(e).fold(Callback.empty) { widthPx =>
-          ReactDiodeUtil.dispatchOnProxyScopeCB( $, ResizeContent( Some(widthPx) ) )
+          ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetContentWidth( Some(widthPx) ) )
         }
       }
 
