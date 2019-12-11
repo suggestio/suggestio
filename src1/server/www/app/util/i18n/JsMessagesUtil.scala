@@ -14,6 +14,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.msg.ErrorMsgs
 
 /**
   * Suggest.io
@@ -268,6 +269,7 @@ class JsMessagesUtil @Inject() (
       MC.`_to.Finish` ::
       MC.`Try.again` ::
       MC.`Close` ::
+      ErrorMsgs.SC_FSM_EVENT_FAILED ::
       Nil
   }
 

@@ -6,7 +6,7 @@ import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
 import io.suggest.sc.m.GeoLocOnOff
 import io.suggest.sc.m.dia.first._
@@ -167,7 +167,7 @@ class FirstRunDialogAh[M](
       val first00 = value
       first00.view.fold {
         // warn, т.к. это признак нарушения в процессе инициализации.
-        LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
+        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
         noChange
 
       } { view00 =>
@@ -322,7 +322,7 @@ class FirstRunDialogAh[M](
         updated( v2 )
 
       } else {
-        LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        LOG.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       }
 

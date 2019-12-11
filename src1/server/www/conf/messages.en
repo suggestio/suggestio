@@ -1065,3 +1065,4 @@ Line.height=Line height
 Always.outlined=Always outlined
 Try.again=Try again
 
+Get.node.index.failed=Failed node/server connection.

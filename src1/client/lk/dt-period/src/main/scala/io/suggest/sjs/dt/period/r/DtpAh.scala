@@ -8,7 +8,7 @@ import io.suggest.sjs.common.dt.JsDateUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dt.period.m.{DtpInputFns, SetDateStartEnd, SetQap}
 import io.suggest.dt.moment.MomentJsUtil.Implicits._
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 
 /**
   * Suggest.io
@@ -53,7 +53,7 @@ class DtpAh[M](
     case s: SetDateStartEnd =>
       val v0 = value
       v0.info.customRangeOpt.fold {
-        LOG.warn( WarnMsgs.DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL )
+        LOG.warn( ErrorMsgs.DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL )
         noChange
 
       } { oldRange =>

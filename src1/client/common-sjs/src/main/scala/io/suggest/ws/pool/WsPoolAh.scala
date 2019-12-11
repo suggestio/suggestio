@@ -3,7 +3,7 @@ package io.suggest.ws.pool
 import diode.data.Pending
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.event.DomEvents
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
@@ -48,7 +48,7 @@ class WsPoolAh[M](
       val v0 = value
       v0.conns.get( m.target ).fold {
         // Внезапно, не найден коннекшен.
-        LOG.warn( WarnMsgs.UNKNOWN_CONNECTION, msg = m )
+        LOG.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = m )
         noChange
 
       } { _ =>
@@ -110,7 +110,7 @@ class WsPoolAh[M](
       val key = m.target
       v0.conns.get( key ).fold {
         // Should never happen: было выполнено открытие закрытого/неизвестного коннекшена.
-        LOG.warn( WarnMsgs.UNKNOWN_CONNECTION, msg = m )
+        LOG.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = m )
         for (ws <- m.ws) {
           _safeCloseWs( ws )
         }
@@ -238,7 +238,7 @@ class WsPoolAh[M](
       ws.close()
     } catch {
       case ex: Throwable =>
-        LOG.warn( WarnMsgs.CANNOT_CLOSE_SOMETHING, ex, msg = ws.url )
+        LOG.warn( ErrorMsgs.CANNOT_CLOSE_SOMETHING, ex, msg = ws.url )
     }
   }
 

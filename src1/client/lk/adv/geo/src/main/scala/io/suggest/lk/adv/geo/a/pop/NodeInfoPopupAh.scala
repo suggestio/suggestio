@@ -6,7 +6,7 @@ import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, OpenNodeInfoResp}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.lk.adv.m.OpenNodeInfoClick
 import io.suggest.lk.m.ILkCommonPopupCloseAction
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -66,7 +66,7 @@ class NodeInfoPopupAh[M](
         updated( Some(v2) )
 
       } else {
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.rcvrKey )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.rcvrKey )
         noChange
       }
 

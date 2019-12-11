@@ -6,7 +6,7 @@ import io.suggest.geo.MGeoLoc
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
-import io.suggest.msg.{Messages, WarnMsgs}
+import io.suggest.msg.{Messages, ErrorMsgs}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
@@ -52,11 +52,11 @@ object MapIcons extends Log {
 
     // Leaflet начал сыпать ошибками после ~1.3, если поле .iconUrl пустовато. Нужно отследить, откуда приходят ошибочные данные.
     if (iconFindRes.isEmpty)
-      LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = iconModel )
+      LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = iconModel )
 
     for (img <- iconFindRes) {
       if (img.srcOpt.isEmpty)
-        LOG.warn( WarnMsgs.IMG_URL_EXPECTED, msg = (img, iconModel) )
+        LOG.warn( ErrorMsgs.IMG_URL_EXPECTED, msg = (img, iconModel) )
 
       for (src <- img.srcOpt) {
         o.iconUrl = src

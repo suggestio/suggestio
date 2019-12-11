@@ -11,7 +11,7 @@ import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, 
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.JdTag
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
@@ -527,7 +527,7 @@ class GridAh[M](
       val v0 = value
       //println(m)
       if (v0.core.ads.isPending && !m.ignorePending) {
-        LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
+        LOG.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange
 
       } else {

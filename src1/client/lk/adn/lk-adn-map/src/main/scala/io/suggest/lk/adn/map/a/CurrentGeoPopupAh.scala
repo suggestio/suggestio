@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adn.map.m.HandleAdvGeoExistPopupResp
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -59,7 +59,7 @@ class CurrentGeoPopupAh[M](
 
       } else {
         // Неактуальный ответ.
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.open )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.open )
         noChange
       }
 

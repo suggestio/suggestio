@@ -6,7 +6,7 @@ import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.u.LknFormUtilR
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -37,7 +37,7 @@ class CreateNodeAh[M](
         updated( Some( MCreateNodeS() ) )
       } { existing =>
         // should never happen
-        LOG.log( WarnMsgs.EVENT_ALREADY_LISTENED_BY, msg = existing )
+        LOG.log( ErrorMsgs.EVENT_ALREADY_LISTENED_BY, msg = existing )
         noChange
       }
 

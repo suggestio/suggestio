@@ -18,7 +18,7 @@ import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.m.OpenAdvGeoExistPopup
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js
@@ -73,7 +73,7 @@ object ExistAdvGeoShapesR extends Log {
           override val style: UndefOr[js.Function1[GjFeature, PathOptions]] = js.defined { gjFeature =>
             // Десериализовать пропертисы.
             if (gjFeature.properties.isEmpty)
-              LOG.warn( WarnMsgs.GJ_PROPS_EMPTY_OR_MISS, msg = JSON.stringify(gjFeature) )
+              LOG.warn( ErrorMsgs.GJ_PROPS_EMPTY_OR_MISS, msg = JSON.stringify(gjFeature) )
 
             new PathOptions {
               override val clickable: UndefOr[Boolean]  = true

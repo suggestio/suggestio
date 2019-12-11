@@ -2,7 +2,7 @@ package io.suggest.sc
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{MScReactCtx, RouteTo}
 import io.suggest.sc.v.ScRootR
 import io.suggest.sjs.common.log.Log
@@ -67,7 +67,7 @@ class Sc3SpaRouter(
                     (k2 -> v2) :: Nil
 
                   case other =>
-                    LOG.warn( WarnMsgs.MSC_STATE_URL_HASH_UNKNOWN_TOKEN, msg = other )
+                    LOG.warn( ErrorMsgs.SC_URL_HASH_UNKNOWN_TOKEN, msg = other )
                     Nil
                 }
               }

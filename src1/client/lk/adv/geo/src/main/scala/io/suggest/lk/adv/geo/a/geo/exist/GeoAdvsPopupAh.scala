@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -49,7 +49,7 @@ class GeoAdvsPopupAh[M](
         updated(v1)
 
       } else {
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = h.open )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = h.open )
         // Какой-то неактуальный ответ сервера пришёл.
         noChange
       }

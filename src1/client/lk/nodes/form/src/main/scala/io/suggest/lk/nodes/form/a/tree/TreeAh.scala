@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.lk.nodes.{MLknConf, MLknNode, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.text.StringUtil
@@ -194,7 +194,7 @@ class TreeAh[M](
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {
@@ -533,7 +533,7 @@ class TreeAh[M](
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {
@@ -622,7 +622,7 @@ class TreeAh[M](
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {

@@ -17,7 +17,7 @@ import io.suggest.js.UploadConstants
 import io.suggest.lk.m._
 import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.proto.http.model.Route
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -214,11 +214,11 @@ class PictureAh[V, M](
     case m: FileHashStart =>
       val v0 = value
       _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
-        LOG.warn(WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
+        LOG.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
         noChange
       } { eData =>
         eData.fileJs.fold {
-          LOG.warn(WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = (eData, m))
+          LOG.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = (eData, m))
           noChange
         } { fileJs0 =>
           // Есть js-файл на руках. Огранизовать хеширование:
@@ -264,7 +264,7 @@ class PictureAh[V, M](
           _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl)
             .fold {
               // Нет такого файла. Вероятно, пока считался хэш, юзер уже выбрал какой-то другой файл.
-              LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
+              LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
               noChange
             } { edge0 =>
               // Дедубликация кода обновления текущего эджа:
@@ -336,7 +336,7 @@ class PictureAh[V, M](
     case m: PrepUploadResp =>
       val v0 = value
       _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
       } { edge0 =>
@@ -442,7 +442,7 @@ class PictureAh[V, M](
     case m: UploadRes =>
       val v0 = value
       _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
       } { edge0 =>

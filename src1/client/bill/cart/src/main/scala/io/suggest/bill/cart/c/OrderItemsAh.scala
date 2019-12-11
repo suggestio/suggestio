@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.cart.m._
 import io.suggest.bill.cart.u.CartUtil
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -131,7 +131,7 @@ class OrderItemsAh[M](
         updated( v2 )
 
       } else {
-        LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        LOG.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 

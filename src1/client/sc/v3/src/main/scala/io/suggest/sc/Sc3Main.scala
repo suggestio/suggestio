@@ -3,7 +3,7 @@ package io.suggest.sc
 import io.suggest.common.event.WndEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
-import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
+import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.log.ScRmeLogAppender
@@ -202,7 +202,7 @@ object Sc3Main extends Log {
         dom.document.title = title1
       }
     }
-      .logFailure( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+      .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
 
   }
 

@@ -4,7 +4,7 @@ import diode._
 import io.suggest.adn.edit.api.ILkAdnEditApi
 import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
 import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled, Save}
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -36,7 +36,7 @@ class RootAh[M](
     case m @ Save =>
       val v0 = value
       if (v0.internals.saving.isPending) {
-        LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
+        LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
         noChange
       } else {
         val fx = Effect {

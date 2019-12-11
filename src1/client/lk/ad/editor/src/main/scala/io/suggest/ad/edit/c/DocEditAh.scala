@@ -22,7 +22,7 @@ import io.suggest.jd.tags.qd._
 import io.suggest.lk.m.color.MColorsState
 import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
-import io.suggest.msg.{ErrorMsgs, Messages, WarnMsgs}
+import io.suggest.msg.{ErrorMsgs, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.Base64JsUtil
 import io.suggest.primo.SetVal
@@ -266,7 +266,7 @@ class DocEditAh[M](
         noChange
 
       } else if (v0.jdDoc.jdArgs.selJdt.treeLocOpt.isEmpty) {
-        LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m.getClass.getName )
+        LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m.getClass.getName )
         noChange
 
       } else {
@@ -475,7 +475,7 @@ class DocEditAh[M](
           .map( nodePath -> _ )
           .orElse {
             // fallback на медленный поиск в дереве перебором тегов:
-            LOG.warn(WarnMsgs.NODE_PATH_MISSING_INVALID, msg = (m, nodePath) )
+            LOG.warn(ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (m, nodePath) )
             v0.jdDoc.jdArgs.data.doc.template
               .loc
               .findByLabel( m.jdTag )
@@ -661,7 +661,7 @@ class DocEditAh[M](
 
       // Залить в состояние обновлённый эдж.
       dataEdgeOpt2.fold {
-        LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m.blob )
+        LOG.warn( ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m.blob )
         noChange
       } { case (dataEdge2, blobUrl) =>
         val v2 = MDocS.jdDoc
@@ -1099,7 +1099,7 @@ class DocEditAh[M](
 
           // Неопределённая ситуация. Переносим блок или в начало или в конец документа.
           case other =>
-            LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
+            LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
             val coord0 = v0.jdDoc.gridBuild.coords.head
             if (m.docXy.y > coord0._2.y) {
               // Положительная координата перетаскивания по вертикали: просто переносим таскаемый блок в конец документа.
@@ -1187,7 +1187,7 @@ class DocEditAh[M](
 
       if (edgeUids4mod.isEmpty) {
         // Если эджа для указанной гистограммы не найдено, то это палево какое-то.
-        LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m )
+        LOG.warn( ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m )
         noChange
 
       } else {
@@ -1321,7 +1321,7 @@ class DocEditAh[M](
         _qdUpdateWidth(embedLoc, width = m.widthPx, heightPxOpt = m.heightPx)
       })
         .fold {
-          LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+          LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
           noChange
         } { qdSubTreeLoc2 =>
           val qdSubTree2 = qdSubTreeLoc2.toTree

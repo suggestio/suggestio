@@ -4,7 +4,7 @@ import diode._
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
@@ -512,7 +512,7 @@ class TailAh(
         _ <- Either.cond(
           test = isActualResp,
           left = {
-            LOG.log(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (respHandler.getClass.getSimpleName, rhPotOpt.flatMap(_.pendingOpt).map(_.startTime), m.reqTimeStamp) )
+            LOG.log(ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (respHandler.getClass.getSimpleName, rhPotOpt.flatMap(_.pendingOpt).map(_.startTime), m.reqTimeStamp) )
             noChange
           },
           right = None,

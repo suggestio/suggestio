@@ -8,7 +8,7 @@ import io.suggest.ble.beaconer.m._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.radio.RadioUtil
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -186,7 +186,7 @@ object BleBeaconerAh extends Log {
           (k, MUidBeacon(uid, accuracyCm))
         }
         if (res.isEmpty)
-          LOG.warn( WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
+          LOG.warn( ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
         res
       }
       //.filter { tuple =>
@@ -319,7 +319,7 @@ class BleBeaconerAh[M](
       val v0 = value
 
       if (v0.isEnabled contains false) {
-        LOG.info( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        LOG.info( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
 
       } else {
@@ -331,7 +331,7 @@ class BleBeaconerAh[M](
           .filter(_.nonEmpty)
           // Интересуют только маячки с идентификаторами.
           .fold {
-            LOG.warn(WarnMsgs.BLE_BEACON_EMPTY_UID, msg = m)
+            LOG.warn(ErrorMsgs.BLE_BEACON_EMPTY_UID, msg = m)
             noChange
           } { bUid =>
             val distanceOptM = RadioUtil.calculateAccuracy(m.beacon)
@@ -351,7 +351,7 @@ class BleBeaconerAh[M](
               }
 
             val distanceM: Double = distanceOptM.getOrElse {
-              LOG.warn(WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.beacon)
+              LOG.warn(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.beacon)
               99
             }
             // Нам проще работать с целочисленной дистанцией в сантиметрах
@@ -471,7 +471,7 @@ class BleBeaconerAh[M](
 
       } else {
         // Неожиданный таймер, игнор.
-        LOG.log( WarnMsgs.INACTUAL_NOTIFICATION, msg = m )
+        LOG.log( ErrorMsgs.INACTUAL_NOTIFICATION, msg = m )
         __maybeRmTimer()
       }
 
@@ -484,7 +484,7 @@ class BleBeaconerAh[M](
         val isCanBeEnabled = m.hard || !v0.hardOff
         // Активировать BleBeaconer: запустить подписание на API.
         if (!isCanBeEnabled) {
-          LOG.log( WarnMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, v0.isEnabled, v0.hardOff) )
+          LOG.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, v0.isEnabled, v0.hardOff) )
           noChange
 
         } else {
@@ -551,7 +551,7 @@ class BleBeaconerAh[M](
 
       } else {
         // Уже включёно или уже выключено.
-        LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
+        LOG.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
         noChange
       }
 
@@ -602,7 +602,7 @@ class BleBeaconerAh[M](
       val v0 = value
       if (!v0.isEnabled.isPending) {
         // Вообще, такого бывать не должно, чтобы pending слетал до ReadyEnabled
-        LOG.log( WarnMsgs.INACTUAL_NOTIFICATION, msg = m )
+        LOG.log( ErrorMsgs.INACTUAL_NOTIFICATION, msg = m )
         noChange
       } else {
         // Система ожидает инициализации.
@@ -623,7 +623,7 @@ class BleBeaconerAh[M](
               updated(v2)
             } else {
               // Внезапно, сигнал о готовности мимо кассы: ожидается обратная готовность (включение вместо выключения и наоборот).
-              LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
+              LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
               noChange
             }
           }

@@ -7,7 +7,7 @@ import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.lk.m.NodeInfoPopupClose
 import io.suggest.maps.m.{HandleRcvrPopupTryResp, OpenMapRcvr}
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -67,7 +67,7 @@ class LamRcvrMarkerPopupAh[M](
         updated(v2)
 
       } else {
-        LOG.info( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        LOG.info( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 

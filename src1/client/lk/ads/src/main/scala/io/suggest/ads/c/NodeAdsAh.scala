@@ -8,7 +8,7 @@ import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.lk.nodes.form.a.ILkNodesApi
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits.PotOpsExt
 import io.suggest.sjs.common.vsz.ViewportSz
@@ -111,7 +111,7 @@ class NodeAdsAh[M](
                 )
               } else {
                 // Неактуальный реквест.
-                LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+                LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
                 adProps0
               }
             } else {
@@ -129,12 +129,12 @@ class NodeAdsAh[M](
       val v0 = value
       if (!v0.hasMoreAds) {
         // Больше нет карточек на сервере
-        LOG.log( WarnMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = m )
+        LOG.log( ErrorMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = m )
         noChange
 
       } else if (v0.ads.isPending) {
         // Запрос к серверу уже запущен.
-        LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
+        LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
         noChange
 
       } else {

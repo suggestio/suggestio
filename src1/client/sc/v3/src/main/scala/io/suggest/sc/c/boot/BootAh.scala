@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MPlatformS
 import io.suggest.maps.m.RcvrMarkersInit
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.Sc3Circuit
 import io.suggest.sc.c.dia.FirstRunDialogAh
 import io.suggest.sc.m.boot._
@@ -317,7 +317,7 @@ class BootAh[M](
       v0.services
         .get( m.svcId )
         .fold {
-          LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+          LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
           noChange
         } { svcData0 =>
           val svcData2 = MBootServiceState.started.set(
@@ -371,7 +371,7 @@ class BootAh[M](
       val firstRO = circuit.firstRunDiaRW
       if (firstRO.value.view.isEmpty) {
         // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
-        LOG.warn( WarnMsgs.INIT_FLOW_UNEXPECTED, msg = m )
+        LOG.warn( ErrorMsgs.INIT_FLOW_UNEXPECTED, msg = m )
         _afterWzDone( Some(startedAtMs), started = true, runned = false )
 
       } else {

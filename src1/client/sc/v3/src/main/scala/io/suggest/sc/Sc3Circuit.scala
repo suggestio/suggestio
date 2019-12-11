@@ -18,7 +18,7 @@ import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
-import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
+import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
@@ -569,7 +569,7 @@ class Sc3Circuit(
       //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
       val mroot = rootRW.value
       if (mroot.index.resp.isPending) {
-        LOG.log( WarnMsgs.SUPPRESSED_INSUFFICIENT, msg = "ble!inx" )
+        LOG.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = "ble!inx" )
         // TODO Если сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление отправлять в очередь?
 
       } else {

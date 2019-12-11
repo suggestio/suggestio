@@ -4,7 +4,7 @@ import diode.data.{FailedStale, Ready}
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
 import io.suggest.sjs.common.log.Log
@@ -102,7 +102,7 @@ class GeoLocAh[M](
         } else {
 
           val mglw1 = mglw0.fold {
-            LOG.warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
+            LOG.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
             MGeoLocWatcher( watchId = None, lastPos = Ready(loc.location) )
           } { mgl0 =>
             mgl0.withLastPos(
@@ -281,7 +281,7 @@ class GeoLocAh[M](
       }
 
       resOpt.getOrElse {
-        LOG.warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
+        LOG.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
         noChange
       }
 
@@ -295,7 +295,7 @@ class GeoLocAh[M](
         .get( m.glType )
         .fold {
           // Should never happen.
-          LOG.error( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
+          LOG.error( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
           noChange
         } { watcher0 =>
           // Если onOff - pending, то сохранить ошибку:

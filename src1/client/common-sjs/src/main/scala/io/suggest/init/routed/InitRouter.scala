@@ -1,6 +1,6 @@
 package io.suggest.init.routed
 
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -33,7 +33,7 @@ trait InitRouter extends Log with SafeSyncVoid {
       .filter { !_.isEmpty }
 
     attrOpt.fold [Unit] {
-      LOG.log( WarnMsgs.INIT_ROUTER_NO_TARGET_SPECIFIED )
+      LOG.log( ErrorMsgs.INIT_ROUTER_NO_TARGET_SPECIFIED )
 
     } { attr =>
       val all = attr.split("\\s*;\\s*")

@@ -8,7 +8,7 @@ import io.suggest.id.login.m.pwch.{MPwChangeS, MPwNew}
 import io.suggest.id.pwch.MPwChangeForm
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -35,11 +35,11 @@ class PwChangeAh[M](
       val v0 = value
 
       if (!v0.canSubmit) {
-        LOG.warn( WarnMsgs.VALIDATION_FAILED, msg = (m, v0) )
+        LOG.warn( ErrorMsgs.VALIDATION_FAILED, msg = (m, v0) )
         noChange
 
       } else if (v0.submitReq.isPending) {
-        LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.submitReq) )
+        LOG.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.submitReq) )
         noChange
 
       } else {
@@ -67,7 +67,7 @@ class PwChangeAh[M](
     case m: PwChangeSubmitRes =>
       val v0 = value
       if (!(v0.submitReq isPendingWithStartTime m.timestampMs)) {
-        LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.submitReq) )
+        LOG.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.submitReq) )
         noChange
 
       } else {

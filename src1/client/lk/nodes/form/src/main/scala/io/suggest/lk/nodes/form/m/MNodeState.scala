@@ -6,7 +6,7 @@ import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.Log
 import io.suggest.common.html.HtmlConstants.SPACE
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.ErrorMsgs
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 
@@ -50,7 +50,7 @@ object MNodeState
   override def withNodeChildren(node: MNodeState, children2: IterableOnce[MNodeState]): MNodeState = {
     // Хз, надо ли проверять Pot.empty. Скорее всего, этот метод никогда не вызывается для Empty Pot.
     if (node.children.isEmpty) {
-      LOG.warn( WarnMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
+      LOG.warn( ErrorMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
       node
     } else {
       node.withChildren(

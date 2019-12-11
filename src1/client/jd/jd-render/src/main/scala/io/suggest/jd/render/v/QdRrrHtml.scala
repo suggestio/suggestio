@@ -8,7 +8,7 @@ import io.suggest.jd.render.m.MJdRrrProps
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
@@ -115,7 +115,7 @@ case class QdRrrHtml(
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
           //throw new IllegalStateException("CR/LF error: " + qdTag)
-          LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = rrrProps.subTree )
+          LOG.warn( ErrorMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = rrrProps.subTree )
           // Надо принудительно закрыть кривую строку.
           _handleEol()
         }

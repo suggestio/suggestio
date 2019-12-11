@@ -1073,3 +1073,4 @@ Line.height=Высота строк
 Always.outlined=Постоянная обводка
 Try.again=Попробовать ещё раз
 
+Get.node.index.failed=Нет связи с узлом/сервером.

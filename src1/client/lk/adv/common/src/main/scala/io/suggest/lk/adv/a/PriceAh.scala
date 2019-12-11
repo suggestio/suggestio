@@ -3,7 +3,7 @@ package io.suggest.lk.adv.a
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.m._
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
@@ -65,7 +65,7 @@ class PriceAh[M](
         )
         updated( v1 )
       } else {
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = sp )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = sp )
         noChange
       }
 

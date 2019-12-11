@@ -3,7 +3,7 @@ package io.suggest.sys.mdr.c
 import diode.data.{PendingBase, Pot}
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sys.mdr.{MMdrActionInfo, MMdrConf, MMdrNextResp, MMdrResolution, MNodeMdrInfo, MdrSearchArgs}
 import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -185,7 +185,7 @@ class NodeMdrAh[M](
 
           } else {
             // Есть ещё какой-то запущенный запрос, который более актуален.
-            LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+            LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
             noChange
           }
         }
@@ -331,7 +331,7 @@ class NodeMdrAh[M](
 
       } else {
         // Левый ответ какой-то, уже другой запрос запущен.
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 
@@ -385,7 +385,7 @@ class NodeMdrAh[M](
             updated(v2)
 
           } else {
-            LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+            LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
             noChange
           }
         }

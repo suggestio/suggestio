@@ -2,7 +2,7 @@ package io.suggest.dev
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{MOrientations2d, MSize2di}
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vsz.ViewportSz
@@ -21,12 +21,12 @@ object JsScreenUtil extends Log {
   def getScreen(): MScreen = {
     val vszOpt = ViewportSz.getViewportSize()
     if (vszOpt.isEmpty)
-      LOG.warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
+      LOG.warn( ErrorMsgs.NO_SCREEN_VSZ_DETECTED )
 
     val pxRatio = WindowVm()
       .devicePixelRatio
       .fold {
-        LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
+        LOG.warn( ErrorMsgs.SCREEN_PX_RATIO_MISSING )
         MPxRatios.default
       }( MPxRatios.forRatio(_) )
 
