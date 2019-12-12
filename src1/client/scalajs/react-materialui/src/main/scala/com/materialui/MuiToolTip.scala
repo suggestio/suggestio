@@ -1,7 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.React
+import japgolly.scalajs.react.raw
 import japgolly.scalajs.react.vdom._
 
 import scala.scalajs.js
@@ -40,7 +40,7 @@ trait MuiToolTipProps extends MuiPropsBase {
   val open: js.UndefOr[Boolean] = js.undefined
   val placement: js.UndefOr[String] = js.undefined
   val PopperProps: js.UndefOr[js.Object] = js.undefined
-  val title: React.Node
+  val title: raw.React.Node
   val TransitionComponent: js.UndefOr[String | js.Function | js.Object] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
 }

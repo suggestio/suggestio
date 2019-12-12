@@ -269,7 +269,8 @@ class JsMessagesUtil @Inject() (
       MC.`_to.Finish` ::
       MC.`Try.again` ::
       MC.`Close` ::
-      ErrorMsgs.SC_FSM_EVENT_FAILED ::
+      ErrorMsgs.GET_NODE_INDEX_FAILED ::
+      ErrorMsgs.XHR_UNEXPECTED_RESP ::
       Nil
   }
 

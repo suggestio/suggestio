@@ -1074,3 +1074,5 @@ Always.outlined=Постоянная обводка
 Try.again=Попробовать ещё раз
 
 Get.node.index.failed=Нет связи с узлом/сервером.
+Http.response.unexpected=Нет связи с сервером.
+

@@ -1066,3 +1066,5 @@ Always.outlined=Always outlined
 Try.again=Try again
 
 Get.node.index.failed=Failed node/server connection.
+Http.response.unexpected=No server connection.
+

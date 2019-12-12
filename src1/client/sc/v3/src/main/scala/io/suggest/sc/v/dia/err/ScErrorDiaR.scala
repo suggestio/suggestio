@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -16,11 +16,12 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 05.12.2019 12:06
-  * Description: Диалог ошибки выдачи.
+  * Description: wrap-компонент диалога ошибки выдачи.
   */
 class ScErrorDiaR(
                    commonReactCtxProv     : React.Context[MCommonReactCtx],
@@ -49,141 +50,125 @@ class ScErrorDiaR(
       val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb( _onCloseClick )
       val C = ScCssStatic.Notifies
 
-      val closeMsg = commonReactCtxProv.consume { crCtx =>
-        crCtx.messages( MsgCodes.`Close` )
-      }
-
-      // Дочерние элементы диалога:
-      val dialogChildren = List[VdomElement](
-
-        // Заголовок диалога:
-        MuiDialogTitle()(
-          // ErrorOutline | Healing | Rowing | Bathtub
-          //Mui.SvgIcons.Healing()(),
-
-          commonReactCtxProv.consume { crCtx =>
-            crCtx.messages( MsgCodes.`Something.gone.wrong` )
-          },
-
-          // Кнопка закрытия диалога ошибки - справа.
-          MuiToolTip(
-            new MuiToolTipProps {
-              override val title = closeMsg.rawElement
-            }
-          )(
-            MuiIconButton.component {
-              val cssClasses = new MuiIconButtonClasses {
-                override val root = Css.flat( C.cancel.htmlClass, C.cancelTopRight.htmlClass )
-              }
-              new MuiIconButtonProps {
-                override val onClick  = _onCloseCbF
-                //override val color    = MuiColorTypes.inherit
-                override val classes  = cssClasses
-              }
-            } (
-              Mui.SvgIcons.CancelOutlined(
-                // TODO Надо это? Скопипасчено из IndexSwitchAskR:
-                new MuiSvgIconProps {
-                  override val className = C.smallBtnSvgIcon.htmlClass
-                }
-              )(),
-            )
-          ),
-        ),
-
-        // Содержимое диалога:
-        MuiDialogContent()(
-
-          // Текст ошибки:
-          MuiDialogContentText()(
-            MuiTypoGraphy(
-              new MuiTypoGraphyProps {
-                override val variant = MuiTypoGraphyVariants.h3
-              }
-            )(
-              commonReactCtxProv.consume { crCtx =>
-                s.messageCodeOptC {
-                  _.value.whenDefinedEl { messageCode =>
-                    <.span(
-                      crCtx.messages( messageCode ),
-                    )
-                  }
-                }
-              }
-            )
-          ),
-
-
-          // Горизонтальный прогресс-бар для pending-запросов.
-          s.retryPendingOptC {
-            _.value.whenDefinedEl { isPending =>
-              <.div(
-                if (isPending) ^.visibility.visible
-                else ^.visibility.hidden,
-
-                MuiLinearProgress(
-                  new MuiLinearProgressProps {
-                    override val variant = {
-                      if (isPending) MuiProgressVariants.indeterminate
-                      else MuiProgressVariants.static
-                    }
-                  }
-                ),
-              )
-            }
+      val _message = <.div(
+        // Кнопка закрытия диалога ошибки - справа.
+        MuiToolTip {
+          val closeMsg = commonReactCtxProv.consume { crCtx =>
+            crCtx.messages( MsgCodes.`Close` )
           }
-
+          new MuiToolTipProps {
+            override val title = closeMsg.rawElement
+          }
+        } (
+          MuiIconButton.component {
+            val cssClasses = new MuiIconButtonClasses {
+              override val root = Css.flat( C.cancel.htmlClass, C.cancelTopRight.htmlClass )
+            }
+            new MuiIconButtonProps {
+              override val onClick  = _onCloseCbF
+              //override val color    = MuiColorTypes.inherit
+              override val classes  = cssClasses
+            }
+          } (
+            Mui.SvgIcons.CancelOutlined(
+              // TODO Надо это? Скопипасчено из IndexSwitchAskR:
+              new MuiSvgIconProps {
+                override val className = C.smallBtnSvgIcon.htmlClass
+              }
+            )(),
+          )
         ),
 
-
-        // Кнопка "Повторить" запрос или что-то такое.
-        MuiDialogActions()(
-
-          // Кнопка "Повторить", когда возможно.
-          {
-            val onClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onRetryClick )
-            val retryIcon = Mui.SvgIcons.Cached()()
-            val retryText = commonReactCtxProv.consume { crCtx =>
-              crCtx.messages( MsgCodes.`Try.again` )
-            }
-            s.retryPendingOptC {
-              _.value.whenDefinedEl { isPending =>
-                MuiFab {
-                  new MuiFabProps {
-                    override val variant = MuiFabVariants.extended
-                    override val onClick = onClickCbF
-                    override val disabled = isPending
-                  }
-                } (
-                  retryIcon,
-                  retryText,
+        // Текст ошибки:
+        MuiTypoGraphy(
+          new MuiTypoGraphyProps {
+            override val variant = MuiTypoGraphyVariants.body1
+          }
+        )(
+          commonReactCtxProv.consume { crCtx =>
+            s.messageCodeOptC {
+              _.value.whenDefinedEl { messageCode =>
+                <.span(
+                  crCtx.messages( messageCode ),
                 )
               }
             }
-          },
-
-          // Кнопка сокрытия сообщения об ошибке.
-          MuiFab {
-            new MuiFabProps {
-              override val variant = MuiFabVariants.extended
-              override val onClick = _onCloseCbF
-            }
-          } (
-            closeMsg
-          ),
-
+          }
         ),
+
+        // Горизонтальный прогресс-бар для pending-запросов.
+        s.retryPendingOptC {
+          _.value.whenDefinedEl { isPending =>
+            <.div(
+              if (isPending) ^.visibility.visible
+              else ^.visibility.hidden,
+
+              MuiLinearProgress(
+                new MuiLinearProgressProps {
+                  override val variant = {
+                    if (isPending) MuiProgressVariants.indeterminate
+                    else MuiProgressVariants.static
+                  }
+                }
+              ),
+            )
+          }
+        },
 
       )
 
-      // Весь диалог:
-      s.isVisibleSomeC { isVisibleSomeProxy =>
-        MuiDialog(
-          new MuiDialogProps {
-            override val open     = isVisibleSomeProxy.value.value
-            override val onClose  = _onCloseCbF
+
+      // Экшены snack-контента.
+      val _retryBtn = {
+        // Кнопка "Повторить", когда возможно.
+        val onClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onRetryClick )
+        val retryIcon = Mui.SvgIcons.Cached()()
+        val retryText = commonReactCtxProv.consume { crCtx =>
+          crCtx.messages( MsgCodes.`Try.again` )
+        }
+        MuiToolTip(
+          new MuiToolTipProps {
+            override val title = retryText.rawNode
           }
-        )( dialogChildren: _* )
+        )(
+          s.retryPendingOptC {
+            _.value.whenDefinedEl { isPending =>
+              MuiFab {
+                new MuiFabProps {
+                  override val variant = MuiFabVariants.extended
+                  override val onClick = onClickCbF
+                  override val disabled = isPending
+                }
+              } (
+                retryIcon,
+              )
+            }
+          }
+        )
+      }
+
+      val snackContent = MuiSnackBarContent {
+        new MuiSnackBarContentProps {
+          override val action  = _message.rawNode
+          override val message = _retryBtn.rawNode
+        }
+      }
+
+      // Рендерить снизу посередине.
+      val _anchorOrigin = new MuiSnackBarAnchorOrigin {
+        override val vertical   = MuiSnackBarAnchorOrigin.bottom
+        override val horizontal = MuiSnackBarAnchorOrigin.center
+      }
+      s.isVisibleSomeC { isVisibleSomeProxy =>
+        MuiSnackBar {
+          new MuiSnackBarProps {
+            override val open         = isVisibleSomeProxy.value.value
+            override val anchorOrigin = _anchorOrigin
+            override val onClose      = _onCloseCbF
+          }
+        } (
+          snackContent
+        )
       }
     }
 
