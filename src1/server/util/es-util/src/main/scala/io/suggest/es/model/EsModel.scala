@@ -2056,15 +2056,6 @@ abstract class EsModelStatic extends EsModelStaticT
 trait EsModelT extends EsModelCommonT
 // TODO Объеденить EsModelT и EsModelCommonT?
 
-/** Доп.API для инстансов ES-моделей с явной поддержкой версий. */
-trait EsModelVsnedT[T <: EsModelVsnedT[T]] extends EsModelCommonT {
-
-  def withVersion(versionOpt: Option[Long]): T // = copy(versionOpt = versionOpt)
-
-  // После самого первого сохранения выставляется вот эта вот версия:
-  def withFirstVersion = withVersion( Some(1L) )
-
-}
 
 /**
   * Самый абстрактный интерфейс для всех хелперов DynSearch.

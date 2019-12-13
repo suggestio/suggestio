@@ -271,6 +271,7 @@ class JsMessagesUtil @Inject() (
       MC.`Close` ::
       ErrorMsgs.GET_NODE_INDEX_FAILED ::
       ErrorMsgs.XHR_UNEXPECTED_RESP ::
+      MC.`Application` ::
       Nil
   }
 

@@ -147,7 +147,7 @@ class JdAdUtil @Inject()(
     lazy val logPrefix = s"mkImgJdEdgesForEdit[${System.currentTimeMillis()}]:"
 
     // Получены медиа-файлы на руки.
-    val iter = for {
+    (for {
       // Пройти по BgImg-эджам карточки:
       ((medge, mimg), i) <- imgsEdges.iterator.zipWithIndex
       // id узла эджа -- это идентификатор картинки.
@@ -177,17 +177,18 @@ class JdAdUtil @Inject()(
           colors    = OptionUtil.maybe( mmedia.picture.colors.nonEmpty ) {
             MHistogram( mmedia.picture.colors )
           },
-          name = mediaNodes.get( nodeId )
+          name = mediaNodes
+            .get( nodeId )
             .flatMap(_.guessDisplayName),
-          whPx = mmedia.picture.whPx
+          whPx = mmedia.picture.whPx,
         ))
       )
 
       LOGGER.trace(s"$logPrefix Img edge compiled: $jdEdge")
       jdEdge
-    }
-    // Явный неленивый рендер эджей в текущем потоке, поэтому toList.
-    iter.toList
+    })
+      // Явный неленивый рендер эджей в текущем потоке, поэтому toList.
+      .toList
   }
 
 
@@ -198,7 +199,7 @@ class JdAdUtil @Inject()(
     * @return Список jd-эджей.
     */
   def mkJdVideoEdges(videoEdges: Seq[MEdge], videoNodes: Map[String, MNode]): List[MJdEdge] = {
-    val iter = for {
+    (for {
       medge       <- videoEdges.iterator
       edgeUid     <- medge.doc.uid.iterator
       nodeId      <- medge.nodeIds.iterator
@@ -219,9 +220,9 @@ class JdAdUtil @Inject()(
         id        = edgeUid,
         url       = Some( extUrl )
       )
-    }
-    // Явная подготовка без ленивости, т.к. эджей обычно мало, и всё это в отдельном потоке генерится.
-    iter.toList
+    })
+      // Явная подготовка без ленивости, т.к. эджей обычно мало, и всё это в отдельном потоке генерится.
+      .toList
   }
 
 
@@ -232,7 +233,7 @@ class JdAdUtil @Inject()(
     */
   def mkTextEdges(edges: MNodeEdges): List[MJdEdge] = {
     val textPred = MPredicates.JdContent.Text
-    val textJdEdgesIter = for {
+    (for {
       textEdge <- edges
         .withPredicateIter( textPred )
       edgeUid  <- textEdge.doc.uid.iterator
@@ -244,9 +245,9 @@ class JdAdUtil @Inject()(
         id        = edgeUid,
         text      = textOpt
       )
-    }
-    // Для явной генерации всех эджей в текущем потоке, параллельно с остальными (img, video, ...) эджами.
-    textJdEdgesIter.toList
+    })
+      // Для явной генерации всех эджей в текущем потоке, параллельно с остальными (img, video, ...) эджами.
+      .toList
   }
 
 
@@ -289,7 +290,7 @@ class JdAdUtil @Inject()(
     lazy val logPrefix = s"collectImgEdges()#${System.currentTimeMillis()}:"
     LOGGER.trace(s"$logPrefix nodeEdges=${nodeEdges.out.length}edges, uids2jdEdgeId=${uids2jdEdgeId.size}map")
 
-    val iter = for {
+    (for {
       medge <- nodeEdges.withPredicateIter( imgPredicate )
       imgNodeId <- {
         if (medge.nodeIds.isEmpty)
@@ -310,9 +311,8 @@ class JdAdUtil @Inject()(
       )
       val origImg = MImg3(dynImgId)
       medge -> origImg
-    }
-
-    iter.toSeq
+    })
+      .toSeq
   }
 
 
@@ -342,13 +342,13 @@ class JdAdUtil @Inject()(
     }
 
     lazy val imgsEdgesMap = {
-      val iter = for {
+      (for {
         edgeAndImg <- origImgsEdges.iterator
         edgeUid <- edgeAndImg._1.doc.uid
       } yield {
         edgeUid -> edgeAndImg
-      }
-      iter.toMap
+      })
+        .toMap
     }
 
     // Собрать связанные инстансы MMedia. Т.к. эджи всегда указывают на оригинал, то тут тоже оригиналы.

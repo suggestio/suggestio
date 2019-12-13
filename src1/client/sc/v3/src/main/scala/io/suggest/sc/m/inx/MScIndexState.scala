@@ -38,9 +38,6 @@ object MScIndexState {
 /** Класс модели состояния индекса выдачи.
   *
   * @param generation Random seed выдачи.
-  * @param rcvrId id текущего отображаемого узла в начале списка.
-  * @param inxGeoPoint Гео-точка текущего загруженного индекса.
-  *                    Обычно совпадает с центром гео-карты, но не всегда.
   * @param switchAsk Состояния на-экранного вопроса на тему переключения в новый узел.
   */
 case class MScIndexState(
@@ -52,9 +49,5 @@ case class MScIndexState(
   def rcvrId: Option[String] = views.head.rcvrId
   def inxGeoPoint: Option[MGeoPoint] = views.head.inxGeoPoint
   lazy val prevNodeOpt = views.tail.headOption
-
-  def withGeneration(generation: Long)            = copy( generation = generation )
-  def withSwitchAsk( switchAsk: Option[MInxSwitchAskS] ) = copy( switchAsk = switchAsk )
-  def withViews(views: NonEmptyList[MIndexView]) = copy(views = views)
 
 }

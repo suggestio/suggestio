@@ -22,9 +22,11 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.proto.http.model.Route
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DoNothing
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
 import io.suggest.ws.MWsMsgTypes
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
 import io.suggest.ww._
 import japgolly.univeq._
@@ -102,18 +104,15 @@ class PictureAh[V, M](
 
           } { fileNew =>
             // Попробовать найти в состоянии файл с такими же характеристиками.
-            val (dataEdge9, edges9, fxOpt) = v0.edges
-              .valuesIterator
-              .flatMap { e =>
-                for {
-                  fileJs <- e.fileJs
-                  if fileJs.blob.size ==* fileNew.size &&
-                    // TODO Нужен хэш вместо имени, надо бы через asm-crypto.js SHA1 это реализовать.
-                    fileJs.fileName.contains( fileNew.name )
-                } yield {
-                  e
-                }
-              }
+            val (dataEdge9, edges9, fxOpt) = (for {
+              e <- v0.edges.valuesIterator
+              fileJs <- e.fileJs
+              if (fileJs.blob.size ==* fileNew.size) &&
+                 // TODO Нужен хэш вместо имени, надо бы через asm-crypto.js SHA1 это реализовать.
+                 (fileJs.fileName contains[String] fileNew.name)
+            } yield {
+              e
+            })
               .buffered
               .headOption
               .fold [(MEdgeDataJs, Map[EdgeUid_t, MEdgeDataJs], Option[Effect])] {
@@ -122,6 +121,42 @@ class PictureAh[V, M](
                 val bgImgOldOpt = picViewContAdp.get(v0.view, m.resKey)
                 val edgeUidOldOpt = bgImgOldOpt.map(_.edgeUid)
                 val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
+
+                // Если есть старый файл, то нужно позаботиться о его удалении...
+                val blobPurgeFx = Effect {
+                  Future {
+                    for {
+                      dataEdgeOld   <- dataEdgeOldOpt
+                      fileJsOld     <- dataEdgeOld.fileJs
+                    } {
+                      // Закрыть старый blobURL в фоне, после пере-рендера.
+                      for (blobUrlOld <- fileJsOld.blobUrl) {
+                        Future {
+                          URL.revokeObjectURL(blobUrlOld)
+                        }
+                      }
+
+                      // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
+                      Future {
+                        fileJsOld.blob.close()
+                      }
+
+                      // Прервать upload файла на сервер, есть возможно.
+                      for {
+                        fUpload     <- fileJsOld.upload
+                        upXhrOld    <- fUpload.reqHolder
+                      } {
+                        try {
+                          upXhrOld.abort()
+                        } catch {
+                          case ex: Throwable =>
+                            LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
+                        }
+                      }
+                    }
+                  }
+                    .map(_ => DoNothing)
+                }
 
                 // Вычислить новый edgeUid.
                 val edgeUid2 = edgeUidOldOpt.getOrElse {
@@ -144,46 +179,10 @@ class PictureAh[V, M](
                   ))
                 )
 
-                // Если есть старый файл, то нужно позаботиться о его удалении...
-                Future {
-                  for {
-                    dataEdgeOld   <- dataEdgeOldOpt
-                    fileJsOld     <- dataEdgeOld.fileJs
-                  } {
-                    // Закрыть старый blobURL в фоне, после пере-рендера.
-                    for (blobUrlOld <- fileJsOld.blobUrl) {
-                      Future {
-                        URL.revokeObjectURL(blobUrlOld)
-                      }
-                    }
-
-                    // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
-                    Future {
-                      fileJsOld.blob.close()
-                    }
-
-                    // Прервать upload файла на сервер, есть возможно.
-                    for {
-                      fUpload     <- fileJsOld.upload
-                      upXhrOld    <- fUpload.xhr
-                    } {
-                      try {
-                        upXhrOld.abort()
-                      } catch {
-                        case ex: Throwable =>
-                          LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
-                      }
-                    }
-                  }
-                } .failed
-                  .foreach { ex =>
-                    LOG.error( ErrorMsgs.FILE_CLEANUP_FAIL, ex, msg = dataEdgeOldOpt )
-                  }
-
                 // Запустить хеширование файла в фоне:
                 val hashFx = FileHashStart(edgeUid2, blobUrlNew).toEffectPure
                 val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
-                (dataEdge2, edges2, Some(hashFx))
+                (dataEdge2, edges2, Some(hashFx + blobPurgeFx))
 
               } { edge =>
                 // Внезапно, этот файл уже известен.
@@ -205,15 +204,14 @@ class PictureAh[V, M](
             v1 -> fxOpt
           }
 
-        fxOpt9
-          .fold(updated(v9))(updated(v9, _))
+        ah.updatedMaybeEffect(v9, fxOpt9)
       }
 
 
     // Сигнал к запуску хеширования файлов.
     case m: FileHashStart =>
       val v0 = value
-      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
+      _findEdgeByIdOrBlobUrl(v0.edges, m).fold {
         LOG.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
         noChange
       } { eData =>
@@ -230,7 +228,7 @@ class PictureAh[V, M](
                   .runTask( HashWwTask(mhash, fileJs0.blob) )
                   // Обернуть результат работы в понятный экшен:
                   .transform { tryRes =>
-                    Success( FileHashRes(m.edgeUid, m.blobUrl, mhash, tryRes) )
+                    Success( FileHashRes(m, mhash, tryRes) )
                   }
               }
             }
@@ -261,7 +259,7 @@ class PictureAh[V, M](
         },
         { hashHex =>
           // Сохранить рассчётный хэш в состояние.
-          _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl)
+          _findEdgeByIdOrBlobUrl(v0.edges, m.src)
             .fold {
               // Нет такого файла. Вероятно, пока считался хэш, юзер уже выбрал какой-то другой файл.
               LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
@@ -269,8 +267,7 @@ class PictureAh[V, M](
             } { edge0 =>
               // Дедубликация кода обновления текущего эджа:
               def __v2F(fileJs9: MJsFileInfo): MPictureAh[V] = {
-                val edge2 = MEdgeDataJs.fileJs
-                  .set( Some(fileJs9) )(edge0)
+                val edge2 = (MEdgeDataJs.fileJs set Some(fileJs9))(edge0)
                 v0.withEdges(
                   v0.edges.updated( edge0.id, edge2 )
                 )
@@ -279,7 +276,13 @@ class PictureAh[V, M](
               val fileJs0 = edge0.fileJs.get
               val hashesHex2: HashesHex = fileJs0.hashesHex + (m.hash -> hashHex)
 
-              val fileJs1 = MJsFileInfo.hashesHex.set(hashesHex2)( fileJs0 )
+              val fileJs1 = (MJsFileInfo.hashesHex set hashesHex2)( fileJs0 )
+
+              // Пересборка m.src
+              val src2 = FileHashStart(
+                edgeUid = edge0.id,
+                blobUrl = fileJs0.blobUrl.get,
+              )
 
               // Попытаться провалидировать хеши так же, как это сделает сервер.
               // Это поможет определить достаточность собранной карты хешей для запуска аплоада.
@@ -298,18 +301,16 @@ class PictureAh[V, M](
                         hashesHex = hashesHex2,
                         mimeType  = fileJs0.blob.`type`
                       )
-                      val edgeUid = edge0.id
-                      val blobUrl = fileJs0.blobUrl.get
                       val reqRoute = prepareUploadRoute(
                         MFormResourceKey(
-                          edgeUid = Some( edgeUid ),
+                          edgeUid = Some( src2.edgeUid ),
                           nodePath = None
                         )
                       )
                       uploadApi
                         .prepareUpload( reqRoute, upProps )
                         .transform { tryRes =>
-                          Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
+                          Success( PrepUploadResp(tryRes, src2) )
                         }
                     }
 
@@ -335,7 +336,7 @@ class PictureAh[V, M](
     // Сигнал о завершении запроса подготовки к аплоаду файла.
     case m: PrepUploadResp =>
       val v0 = value
-      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
+      _findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
         LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
@@ -345,16 +346,16 @@ class PictureAh[V, M](
           // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
           {ex =>
             val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs) {
-              MFileUploadS.xhr.set(None) andThen
+              (MFileUploadS.reqHolder set None) andThen
               MFileUploadS.prepareReq.modify( _.fail(ex) )
             }
-            val edge2 = MEdgeDataJs.fileJs.set(fileJsOpt2)(edge0)
-            val errPopup0 = v0.errorPopup.getOrElse( MErrorPopupS.empty )
+            val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
+            val errPopup0 = v0.errorPopup getOrElse MErrorPopupS.empty
             val v2 = v0
               .withEdges( v0.edges + (edge0.id -> edge2) )
               // Распахнуть попап с ошибкой закачки файла:
               .withErrorPopup( Some(
-                MErrorPopupS.exception.set( Some(ex) )(errPopup0)
+                (MErrorPopupS.exception set Some(ex))(errPopup0)
               ))
             updated(v2)
           },
@@ -371,19 +372,18 @@ class PictureAh[V, M](
 
                 } { fileJs =>
                   // Есть ссылка для заливки файла. Залить.
-                  val uploadFx = Effect {
-                    val upRespFut = uploadApi.doFileUpload(firstUpUrl, fileJs)
-                    // TODO Пописаться на события xhr.upload.onprogress, чтобы мониторить ход заливки.
-                    // Завернуть ответ сервера в итоговый Action:
-                    upRespFut.transform { tryRes =>
-                      Success( UploadRes(tryRes, m.edgeUid, m.blobUrl, firstUpUrl) )
-                    }
+                  val uploadStartFx = Effect.action {
+                    UploadReqStarted(
+                      respHolder  = uploadApi.doFileUpload(firstUpUrl, fileJs),
+                      src         = m.src,
+                      hostUrl     = firstUpUrl,
+                    )
                   }
 
                   // Залить изменения в состояние:
                   val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs) { upload0 =>
                     upload0.copy(
-                      xhr         = None,
+                      reqHolder   = None,
                       prepareReq  = upload0.prepareReq.ready(resp),
                       uploadReq   = upload0.uploadReq.pending()
                     )
@@ -392,7 +392,7 @@ class PictureAh[V, M](
                     .set(fileJsOpt2)(edge0)
                   val v2 = v0
                     .withEdges( v0.edges + (edge0.id -> edge2) )
-                  updated(v2, uploadFx)
+                  updated(v2, uploadStartFx)
                 }
               }
               // Нет ссылок для аплоада. Проверить fileExists-поле:
@@ -402,7 +402,7 @@ class PictureAh[V, M](
                   val edge2 = edge0.copy(
                     jdEdge = _srvFileIntoJdEdge( fe, edge0.jdEdge ),
                     fileJs = _fileJsWithUpload(edge0.fileJs) {
-                      MFileUploadS.xhr.set( None ) andThen
+                      MFileUploadS.reqHolder.set( None ) andThen
                       MFileUploadS.prepareReq.modify( _.ready(resp) )
                     }
                   )
@@ -421,7 +421,7 @@ class PictureAh[V, M](
                   val v2 = v0.copy(
                     // Удалить эдж текущего файла.
                     edges      = v0.edges - edge0.id,
-                    view       = picViewContAdp.forgetEdge(v0.view, m.edgeUid),
+                    view       = picViewContAdp.forgetEdge(v0.view, m.src.edgeUid),
                     // Вывести попап с ошибками, присланными сервером:
                     errorPopup = _errorPopupWithMessages( v0.errorPopup, resp.errors )
                   )
@@ -438,10 +438,49 @@ class PictureAh[V, M](
       }
 
 
+    // Запущен реквест аплоада на сервер: отработать состояние реквеста.
+    case m: UploadReqStarted =>
+      val v0 = value
+
+      (for {
+        edge0   <- _findEdgeByIdOrBlobUrl(v0.edges, m.src)
+        fileJs0 <- edge0.fileJs
+        if fileJs0.upload.nonEmpty
+      } yield {
+        // Эффект окончания загрузки.
+        // Сайд-эффект запуска запроса уже произошёл ранее, а здесь просто эффект подписки на событие завершения запроса:
+        val uploadFinishFx = Effect {
+          // Завернуть ответ сервера в итоговый Action:
+          m.respHolder
+            .resultFut
+            .transform { tryRes =>
+              Success( UploadRes(tryRes, m.src, m.hostUrl) )
+            }
+        }
+
+        // TODO Подписаться на события upload progress, чтобы мониторить ход заливки.
+
+        // Сохранить httpReq.httpRespHolder в состояние для возможности взаимодействия с закачкой:
+        val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs)(
+          MFileUploadS.reqHolder set Some( m.respHolder.httpRespHolder )
+        )
+
+        val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
+        val v2 = v0
+          .withEdges( v0.edges + (edge0.id -> edge2) )
+        updatedSilent(v2, uploadFinishFx)
+
+      })
+        .getOrElse {
+          LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+          noChange
+        }
+
+
     // Выполнен аплоад на сервер. Пришёл результат выполнения запроса.
     case m: UploadRes =>
       val v0 = value
-      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
+      _findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
         LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
@@ -452,7 +491,7 @@ class PictureAh[V, M](
             val edge2 = MEdgeDataJs.fileJs.set(
               _fileJsWithUpload(edge0.fileJs) { upload0 =>
                 upload0.copy(
-                  xhr       = None,
+                  reqHolder = None,
                   uploadReq = upload0.uploadReq.fail(ex),
                   progress  = None
                 )
@@ -474,9 +513,10 @@ class PictureAh[V, M](
                   jdEdge = _srvFileIntoJdEdge(fileExist, edge0.jdEdge),
                   fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
                     upload0.copy(
-                      xhr       = None,
+                      reqHolder = None,
+                      // TODO reqHolder/progress: если было Some(), то отписаться от onprogress эффектом.
                       uploadReq = upload0.uploadReq.ready(resp),
-                      progress  = None
+                      progress  = None,
                     )
                   }
                 )
@@ -493,13 +533,14 @@ class PictureAh[V, M](
                     updated(v2)
                   } { _ =>
                     // Есть ctxId - нужен веб-сокет
-                    val wsMsg = WsEnsureConn(
-                      target = MWsConnTg(
-                        host = m.hostUrl.host
-                      ),
-                      closeAfterSec = Some(120)
-                    )
-                    val wsEnsureFx = wsMsg.toEffectPure
+                    val wsEnsureFx = Effect.action {
+                      WsEnsureConn(
+                        target = MWsConnTg(
+                          host = m.hostUrl.host
+                        ),
+                        closeAfterSec = Some(120)
+                      )
+                    }
                     updated(v2, wsEnsureFx)
                   }
 
@@ -770,7 +811,7 @@ class PictureAh[V, M](
       mcrop2  = _cropPopupS2mcrop(cropPopup, origWh)
       bgImg   <- picViewContAdp.get(v0.view, resKey)
       // Не обновлять ничего, если ничего не изменилось.
-      if !bgImg.crop.contains( mcrop2 )
+      if !(bgImg.crop contains[MCrop] mcrop2)
     } yield {
       MJdEdgeId.crop.set( Some(mcrop2) )( bgImg )
     }
@@ -784,12 +825,13 @@ class PictureAh[V, M](
 
 
 
-  private def _findEdgeByIdOrBlobUrl(edges: Map[EdgeUid_t, MEdgeDataJs], edgeUid: EdgeUid_t, blobUrl: String): Option[MEdgeDataJs] = {
+  private def _findEdgeByIdOrBlobUrl(edges: Map[EdgeUid_t, MEdgeDataJs], src: FileHashStart): Option[MEdgeDataJs] = {
     val blobUrlFilterF = { e: MEdgeDataJs =>
-      e.fileJs.exists(_.blobUrl.contains( blobUrl ))
+      e.fileJs
+        .exists(_.blobUrl contains[String] src.blobUrl)
     }
     edges
-      .get(edgeUid)
+      .get(src.edgeUid)
       .filter(blobUrlFilterF)
       .orElse {
         // Нет эджа с таким id и url, возможна карта эджей изменилась с тех пор.

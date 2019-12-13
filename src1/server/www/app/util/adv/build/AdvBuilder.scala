@@ -20,6 +20,7 @@ import util.adv.geo.tag.AgtBuilder
 import util.billing.Bill2Util
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
 import io.suggest.mbill2.m.item.MItemJvm.Implicits._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -99,9 +100,7 @@ trait IAdvBuilder
         statuses  = statuses,
         now       = now
       )
-      acc0.withDbActions(
-        dbAction :: acc0.dbActions
-      )
+      Acc.dbActions.modify(dbAction :: _)(acc0)
     }
   }
 
@@ -162,14 +161,12 @@ trait IAdvBuilder
               .update( (MItemStatuses.Online, Some(dateStart2), Some(dateEnd2), dateStart2) )
               .filter { rowsUpdated =>
                 LOGGER.trace(s"$logPrefix Updated item[$mitemId]: dateEnd => $dateEnd2")
-                rowsUpdated == 1
+                rowsUpdated ==* 1
               }
           }
           dbAction :: dbas0
         }
-        acc0.withDbActions(
-          dbActions = dbas1
-        )
+        (Acc.dbActions set dbas1)(acc0)
       }
 
     } else {
@@ -206,17 +203,15 @@ trait IAdvBuilder
         .justFinalizeItems(itemIds, reasonOpt, _now)
         .filter { rowsUpdated =>
           val itemIdsLen = itemIds.size
-          val r = rowsUpdated == itemIdsLen
+          val r = (rowsUpdated ==* itemIdsLen)
           if (!r)
             LOGGER.warn(s"$logPrefix Unexpected rows deleted: $rowsUpdated, expected $itemIdsLen")
           r
         }
 
       // Собрать новый акк.
-      withAccUpdated { acc0 =>
-        acc0.withDbActions(
-          dbActions = dbAction :: acc0.dbActions
-        )
+      withAccUpdated {
+        Acc.dbActions.modify(dbAction :: _)
       }
 
     } else {

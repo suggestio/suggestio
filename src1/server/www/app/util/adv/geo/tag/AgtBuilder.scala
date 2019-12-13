@@ -58,7 +58,9 @@ trait AgtBuilder extends IAdvBuilder {
       // Хотя это может вызвать неточности при аггрегации документов по тегам.
       // id узлов-тегов достаём из outer ctx.
       this2.withAccUpdatedFut { acc0 =>
-        for (ctxOuter <- acc0.ctxOuterFut) yield {
+        for {
+          ctxOuter <- acc0.ctxOuterFut
+        } yield {
           val pred = _PRED
           val agtEdgesIter = tagItems
             .iterator
@@ -96,25 +98,19 @@ trait AgtBuilder extends IAdvBuilder {
                 nodeIds   = nodeIdsSet,
                 info      = MEdgeInfo(
                   tags      = tagFacesSet,
-                  geoShapes = List(MEdgeGeoShape(
+                  geoShapes = MEdgeGeoShape(
                     id      = MEdgeGeoShape.SHAPE_ID_START,
                     glevel  = MNodeGeoLevels.geoTag,
                     shape   = gs
-                  )),
+                  ) :: Nil,
                   geoPoints = geoPoints
                 )
               )
             }
 
-          acc0.withMnode(
-            mnode = acc0.mnode.withEdges(
-              acc0.mnode.edges.copy(
-                out = MNodeEdges.edgesToMap1(
-                  acc0.mnode.edges.out.iterator ++ agtEdgesIter
-                )
-              )
-            )
-          )
+          advBuilderUtil
+            .acc_node_edges_out_LENS
+            .modify(_ ++ agtEdgesIter)(acc0)
         }
       }
 

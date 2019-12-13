@@ -470,10 +470,10 @@ class IndexAh[M](
           }
 
         case MScSideBars.Menu =>
-          if (v0.menu.opened !=* m.open) {
-            var v2 = v0.withMenu(
-              v0.menu.withOpened( m.open )
-            )
+          val menu_opened_LENS = MScIndex.menu
+            .composeLens( MMenuS.opened )
+          if (menu_opened_LENS.get(v0) !=* m.open) {
+            var v2 = (menu_opened_LENS set m.open)(v0)
             // Обновить URL.
             val fx = ResetUrlRoute.toEffectPure
 
@@ -522,15 +522,15 @@ class IndexAh[M](
     case m: NodeRowClick if value.state.switchAsk.nonEmpty =>
       val v0 = value
       // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
+      val inx_state_switchAsk_LENS = MScIndex.state
+        .composeLens( MScIndexState.switchAsk )
       val actResOpt = for {
-        switchS <- v0.state.switchAsk
+        switchS <- inx_state_switchAsk_LENS.get(v0)
         inxPs2  <- switchS.nodesResp.nodes
           .find(_.props.idOrNameOrEmpty ==* m.nodeId)
       } yield {
         IndexAh.indexUpdated(
-          i0      = v0.withState(
-            v0.state.withSwitchAsk( None )
-          ),
+          i0      = (inx_state_switchAsk_LENS set None)(v0),
           inx     = inxPs2.props,
           m       = switchS.okAction,
           mscreen = rootRO.value.dev.screen.info,

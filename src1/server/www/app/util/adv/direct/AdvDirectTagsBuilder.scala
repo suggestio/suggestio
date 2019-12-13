@@ -84,16 +84,9 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
               )
             }
 
-          acc0.withMnode(
-            mnode = acc0.mnode.withEdges(
-              edges = acc0.mnode.edges.copy(
-                out = MNodeEdges.edgesToMap1(
-                  acc0.mnode.edges.out.iterator ++ directTagEdgesIter
-                )
-              )
-            )
-          )
-
+          advBuilderUtil
+            .acc_node_edges_out_LENS
+            .modify(_ ++ directTagEdgesIter)(acc0)
         }
       }
     }

@@ -10,6 +10,7 @@ import io.suggest.file.up.MUploadResp
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.proto.http.model.{HttpRespHolder, HttpRespMapped}
 import io.suggest.spa.DAction
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.File
@@ -105,13 +106,18 @@ case class CropSave(resKey: MFormResourceKey) extends IPictureCropAction
 case class FileHashStart(edgeUid: EdgeUid_t, blobUrl: String) extends ILkCommonAction
 
 /** Завершение асинхронного хэширования файла. */
-case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkCommonAction
+case class FileHashRes(src: FileHashStart, hash: MHash, hex: Try[String]) extends ILkCommonAction
 
 /** Завершён запрос подготовки сервера к аплоаду файла. */
-case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid: EdgeUid_t, blobUrl: String) extends ILkCommonAction
+case class PrepUploadResp(tryRes: Try[MUploadResp], src: FileHashStart) extends ILkCommonAction
+
+/** Запущен (но ещё не исполнен) запрос фактической закачки файла на сервер.
+  * Запрос делается в два шага, чтобы пробросить в состояние request-holder для возможности доступа к abort/progress-функциям.
+  */
+case class UploadReqStarted(respHolder: HttpRespMapped[MUploadResp], src: FileHashStart, hostUrl: MHostUrl) extends ILkCommonAction
 
 /** Завершён запрос заливки файла на сервер. */
-case class UploadRes(tryRes: Try[MUploadResp], edgeUid: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkCommonAction
+case class UploadRes(tryRes: Try[MUploadResp], src: FileHashStart, hostUrl: MHostUrl) extends ILkCommonAction
 // TODO Объеденить оба case class'а?
 
 

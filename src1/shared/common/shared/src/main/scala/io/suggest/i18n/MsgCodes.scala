@@ -398,4 +398,6 @@ object MsgCodes {
   val `Line.height` = "Line.height"
   val `Try.again` = "Try.again"
 
+  val `Application` = "Application"
+
 }

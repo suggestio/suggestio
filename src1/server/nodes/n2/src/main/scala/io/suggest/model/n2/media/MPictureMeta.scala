@@ -5,6 +5,7 @@ import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
 import io.suggest.es.model.IGenEsMappingProps
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -74,6 +75,10 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
+
+
+  val whPx = GenLens[MPictureMeta](_.whPx)
+  val colors = GenLens[MPictureMeta](_.colors)
 
 }
 

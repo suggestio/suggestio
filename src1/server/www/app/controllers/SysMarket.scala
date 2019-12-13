@@ -449,7 +449,7 @@ class SysMarket @Inject() (
                 // Инициализировать новосозданный узел согласно заданным параметрам.
                 maybeInitializeNode(ncp, nodeId)
 
-                val mnode2 = mnode1.withId( Some(nodeId) )
+                val mnode2 = (MNode.id set Some(nodeId))( mnode1 )
                 // Отредиректить админа в созданный узел.
                 Redirect(routes.SysMarket.showAdnNode(nodeId))
                   .flashing(FLASH.SUCCESS -> s"Создан узел сети: ${mnode2.guessDisplayNameOrIdOrEmpty}")

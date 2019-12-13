@@ -21,11 +21,15 @@ import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
+import io.suggest.model.n2.bill.MNodeBilling
+import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JmxBase
+import monocle.Traversal
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.std.option._
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -359,7 +363,7 @@ class TfDailyUtil @Inject()(
           val mcalOpt = mClause.calId
             .flatMap( calsMap.get )
           val calType = mcalOpt.fold [MCalType] {
-            if (tf.clauses.size == 1)
+            if (tf.clauses.size ==* 1)
               MCalTypes.All
             else
               MCalTypes.WeekDay
@@ -444,6 +448,13 @@ class TfDailyUtil @Inject()(
     )
     val counter = new AtomicInteger(0)
 
+    val nodeResetTfComissionF = MNode.billing
+      .composeLens( MNodeBilling.tariffs )
+      .composeLens( MNodeTariffs.daily )
+      .composeTraversal( Traversal.fromTraverse[Option, MTfDaily] )
+      .composeLens( MTfDaily.comissionPc )
+      .set( None )
+
     mNodes
       .source[MNode](
         searchQuery = new MNodeSearchDfltImpl {
@@ -456,15 +467,7 @@ class TfDailyUtil @Inject()(
         if (mnode.billing.tariffs.daily.exists(_.comissionPc.nonEmpty)) {
           LOGGER.trace(s"$logPrefix Will update ${mnode.idOrNull}, tf0=${mnode.billing.tariffs.daily.orNull}")
           // Есть тариф с заданной комиссей. Надо сбросить значение поля.
-          val mnode2 = mnode.withBilling(
-            mnode.billing.withTariffs(
-              mnode.billing.tariffs.copy(
-                daily = mnode.billing.tariffs.daily.map { tfDaily0 =>
-                  tfDaily0.withComission( None )
-                }
-              )
-            )
-          )
+          val mnode2 = nodeResetTfComissionF( mnode )
           bp.add( mNodes.prepareIndex(mnode2).request() )
           counter.incrementAndGet()
         } else {

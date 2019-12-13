@@ -9,7 +9,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
-import models.adv.build.MCtxOuter
+import models.adv.build.{Acc, MCtxOuter}
 import models.mproj.ICommonDi
 import util.adv.geo.tag.GeoTagsUtil
 import util.billing.BillDebugUtil
@@ -73,25 +73,29 @@ class AdvBuilderUtil @Inject() (
     geoTagsUtil.afterUnInstall(ctxOuterFut)
   }
 
+  def acc_node_edges_LENS =
+    Acc.mnode
+      .composeLens( MNode.edges )
+
+  def acc_node_edges_out_LENS =
+    acc_node_edges_LENS
+      .composeLens( MNodeEdges.out )
 
   def clearByPredicate(b0: IAdvBuilder, preds: Seq[MPredicate]): IAdvBuilder = {
     // Вычистить теги из эджей карточки
     val acc2Fut = for {
       acc0 <- b0.accFut
     } yield {
-      val mad2 = acc0.mnode.withEdges(
-        acc0.mnode.edges.copy(
-          out = {
-            val iter = acc0.mnode
-              .edges
-              // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
-              .withoutPredicateIter( preds: _* )
-            MNodeEdges.edgesToMap1( iter )
-          }
-        )
-      )
-      // Сохранить почищенную карточку в возвращаемый акк.
-      acc0.withMnode( mad2 )
+      acc_node_edges_LENS
+        .modify { edges0 =>
+          MNodeEdges.out.set(
+            MNodeEdges.edgesToMap1(
+              edges0
+                // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
+                .withoutPredicateIter( preds: _* )
+            )
+          )(edges0)
+        }(acc0)
     }
     b0.withAcc( acc2Fut )
   }
@@ -178,6 +182,7 @@ class AdvBuilderUtil @Inject() (
         } else {
           Set.empty
         }
+
         // Собираем единый эдж для геолокации карточки в месте на гео.карте.
         val e = MEdge(
           predicate = predicate,
@@ -187,17 +192,10 @@ class AdvBuilderUtil @Inject() (
             tags      = tags
           )
         )
+
         // Патчим mnode новым эджем...
-        acc0.withMnode(
-          mnode = acc0.mnode.withEdges(
-            acc0.mnode.edges.copy(
-              out = {
-                val iter = acc0.mnode.edges.out.iterator ++ (e :: Nil)
-                MNodeEdges.edgesToMap1(iter)
-              }
-            )
-          )
-        )
+        acc_node_edges_out_LENS
+          .modify(_ :+ e)(acc0)
       }
 
     } else {
@@ -235,15 +233,13 @@ class AdvBuilderUtil @Inject() (
 
         if (myNodeIds.nonEmpty) {
           LOGGER.trace(s"$logPrefix Will search for online items for nodes#[${myNodeIds.mkString(", ")}] to interruption...")
+          // dbAction: ПЕРЕД выполнением остальных экшенов надо выполнить данную зачистку.
           val dbAction = billDebugUtil.findAndInterruptItemsLike(myNodeIds, itypes: _*)
-          acc0
-            .withDbActions(
-              // ПЕРЕД выполнением остальных экшенов надо выполнить данную зачистку.
-              dbActions = dbAction :: acc0.dbActions
-            )
-            .withInterruptedTypes(
-              acc0.interruptedTypes ++ needInterruptItypes
-            )
+          (
+            Acc.dbActions.modify(dbAction :: _) andThen
+            Acc.interruptedTypes.modify(_ ++ needInterruptItypes)
+          )(acc0)
+
         } else {
           LOGGER.trace(s"$logPrefix No related nodes found for itypes [${needInterruptItypes.mkString(", ")}]")
           acc0
@@ -311,9 +307,7 @@ class AdvBuilderUtil @Inject() (
             }
             dbAction :: dbas0
           }
-          acc0.withDbActions(
-            dbActions = dbas1
-          )
+          (Acc.dbActions set dbas1)(acc0)
         }
       }
   }

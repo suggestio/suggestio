@@ -6,6 +6,7 @@ import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
+import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreen, MScreenInfo}
@@ -39,6 +40,7 @@ import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
+import io.suggest.sc.m.menu.{MMenuNativeApp, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs}
@@ -131,7 +133,10 @@ class Sc3Circuit(
         ),
         scCss = ScCss(
           MScCssArgs.from(scIndexResp, screenInfo)
-        )
+        ),
+        menu = MMenuS(
+          nativeApp = Option.when( mplatform.isBrowser )( MMenuNativeApp.empty ),
+        ),
       ),
       grid = {
         val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen.wh)

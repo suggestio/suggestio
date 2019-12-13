@@ -4,6 +4,7 @@ import io.suggest.es.model.ITryUpdateData
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.util.effect.RWT
 import io.suggest.model.n2.node.MNode
+import monocle.macros.GenLens
 import slick.dbio.{DBIOAction, NoStream}
 
 import scala.concurrent.Future
@@ -18,12 +19,12 @@ case class Acc(
                 dbActions         : List[DBIOAction[_, NoStream, RWT]]  = Nil,
                 ctxOuterFut       : Future[MCtxOuter]                   = MCtxOuter.emptyFut,
                 interruptedTypes  : Set[MItemType]                      = Set.empty
-              ) {
+              )
 
-  def withMnode(mnode: MNode) = copy(mnode = mnode)
-  def withDbActions(dbActions: List[DBIOAction[_, NoStream, RWT]]) = copy(dbActions = dbActions)
-  def withInterruptedTypes(interruptedTypes: Set[MItemType]) = copy(interruptedTypes = interruptedTypes)
-
+object Acc {
+  val mnode = GenLens[Acc](_.mnode)
+  val dbActions = GenLens[Acc](_.dbActions)
+  val interruptedTypes = GenLens[Acc](_.interruptedTypes)
 }
 
 
@@ -33,7 +34,7 @@ final case class TryUpdateBuilder(acc: Acc) extends ITryUpdateData[MNode, TryUpd
   override def _saveable = acc.mnode
 
   override def _instance(m: MNode) = {
-    val acc2 = acc.withMnode(m)
+    val acc2 = (Acc.mnode set m)(acc)
     TryUpdateBuilder( acc2 )
   }
 

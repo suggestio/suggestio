@@ -252,8 +252,7 @@ class LkAdnEditFormR(
 
   private def __getImgUploadOpt(mroot: MLkAdnEditRoot)(lens: Lens[MAdnResView, Option[MJdEdgeId]]): Option[MFileUploadS] = {
     __getImgEdgeOpt(mroot)(lens)
-      .flatMap(_._2.fileJs)
-      .flatMap(_.upload)
+      .flatMap(_._2.upload)
   }
 
 

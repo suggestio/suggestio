@@ -69,19 +69,20 @@ trait AdvDirectBuilder extends IAdvBuilder {
       } else {
         PREDICATES_STRICT
       }
-      val mnode2 = acc0.mnode.withEdges(
-        acc0.mnode.edges.copy(
-          out = {
-            // Собрать новую карту эджей.
+      val acc2 = advBuilderUtil
+        .acc_node_edges_LENS
+        .modify { edges0 =>
+          // Собрать новую карту эджей.
+          MNodeEdges.out.set(
             MNodeEdges.edgesToMap1(
-              acc0.mnode.edges
+              edges0
                 .withoutPredicateIter( predsForClear : _* )
             )
-          }
-        )
-      )
-      LOGGER.debug(s"clearNode($full): Cleared node#${acc0.mnode.idOrNull} ${acc0.mnode.edges.out.size}=>${mnode2.edges.out.size} edges from predicates: [${predsForClear.mkString(", ")}]")
-      acc0.withMnode( mnode2 )
+          )(edges0)
+        }(acc0)
+
+      LOGGER.debug(s"clearNode($full): Cleared node#${acc0.mnode.idOrNull} ${acc0.mnode.edges.out.size}=>${acc2.mnode.edges.out.size} edges from predicates: [${predsForClear.mkString(", ")}]")
+      acc2
     }
     withAcc( accFut2 )
   }
@@ -110,13 +111,11 @@ trait AdvDirectBuilder extends IAdvBuilder {
       LOGGER.trace(s"$logPrefix Built new edge: item ##[${ditems.flatMap(_.id).mkString(",")}] => $e")
 
       this2.withAccUpdated { acc0 =>
-        val mnode2 = acc0.mnode.withEdges(
-          acc0.mnode.edges.copy(
-            out = acc0.mnode.edges.out ++ (e :: Nil)
-          )
-        )
-        LOGGER.debug(s"$logPrefix Edges count changed: ${acc0.mnode.edges.out.size} => ${mnode2.edges.out.size}. 1 edge created:\n $e")
-        acc0.withMnode( mnode2 )
+        val acc2 = advBuilderUtil
+          .acc_node_edges_out_LENS
+          .modify(_ :+ e)(acc0)
+        LOGGER.debug(s"$logPrefix Edges count changed: ${acc0.mnode.edges.out.size} => ${acc2.mnode.edges.out.size}. 1 edge created:\n $e")
+        acc2
       }
     }
   }

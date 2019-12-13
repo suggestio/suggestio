@@ -2,11 +2,13 @@ package io.suggest.file.up
 
 import diode.FastEq
 import diode.data.Pot
-import org.scalajs.dom.raw.XMLHttpRequest
+import io.suggest.proto.http.model.HttpRespHolder
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -21,16 +23,16 @@ object MFileUploadS {
   /** Поддержка FastEq для инстансов [[MFileUploadS]]. */
   implicit object MFileUploadSFastEq extends FastEq[MFileUploadS] {
     override def eqv(a: MFileUploadS, b: MFileUploadS): Boolean = {
-      (a.xhr ===* b.xhr) &&
-        (a.prepareReq ===* b.prepareReq) &&
-        (a.uploadReq ===* b.uploadReq) &&
-        (a.progress ===* b.progress)
+      (a.reqHolder ===* b.reqHolder) &&
+      (a.prepareReq ===* b.prepareReq) &&
+      (a.uploadReq ===* b.uploadReq) &&
+      (a.progress ===* b.progress)
     }
   }
 
   @inline implicit def univEq: UnivEq[MFileUploadS] = UnivEq.derive
 
-  val xhr = GenLens[MFileUploadS](_.xhr)
+  val reqHolder = GenLens[MFileUploadS](_.reqHolder)
   val prepareReq = GenLens[MFileUploadS](_.prepareReq)
   //val uploadReq = GenLens[MFileUploadS](_.uploadReq)
 
@@ -39,14 +41,14 @@ object MFileUploadS {
 
 /** Класс модели состояния аплоада файла на сервер.
   *
-  * @param xhr XHR-инстанс происходящего сейчас реквеста (для возможности отмены).
+  * @param reqHolder XHR-инстанс происходящего сейчас реквеста (для возможности отмены).
   *            С учётом FetctAPI, инстанса может и не быть.
   * @param prepareReq Pot реквеста подготовки к аплода.
   * @param uploadReq Pot реквеста аплоада файла.
   * @param progress Сколько процентов файла уже отправлено пройдено.
   */
 case class MFileUploadS(
-                         xhr          : Option[XMLHttpRequest]     = None,
+                         reqHolder    : Option[HttpRespHolder]     = None,
                          prepareReq   : Pot[MUploadResp]           = Pot.empty,
                          uploadReq    : Pot[MUploadResp]           = Pot.empty,
                          progress     : Option[Int]                = None

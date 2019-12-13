@@ -5,6 +5,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -52,6 +53,8 @@ object MTfDaily extends IGenEsMappingProps {
       FieldNumber(COMISSION_PC_FN, fieldType = DocFieldTypes.double, index = false, include_in_all = false)
     )
   }
+
+  val comissionPc = GenLens[MTfDaily](_.comissionPc)
 
 }
 

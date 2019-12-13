@@ -53,8 +53,8 @@ object MWebManifest {
     (__ \ "dir").writeNullable[MPwaTextDirection] and
     (__ \ "icons").write[Seq[MIconInfo]] and
     (__ \ "related_applications")
-      .writeNullable[Seq[MPwaRelApp]]
-      .contramap[Seq[MPwaRelApp]] { relApps =>
+      .writeNullable[Seq[MAppPlatformData]]
+      .contramap[Seq[MAppPlatformData]] { relApps =>
         if (relApps.isEmpty) None else Some(relApps)
       }
   )(unlift(unapply))
@@ -94,5 +94,5 @@ case class MWebManifest(
                          description      : Option[String]              = None,
                          textDirection    : Option[MPwaTextDirection]   = None,
                          icons            : Seq[MIconInfo],
-                         relatedApps      : Seq[MPwaRelApp]             = Nil
+                         relatedApps      : Seq[MAppPlatformData]             = Nil
                        )

@@ -40,7 +40,7 @@ trait IUploadApi {
     * @param file Данные по файлу.
     * @return Фьючерс с ответом сервера.
     */
-  def doFileUpload(upData: MHostUrl, file: MJsFileInfo): Future[MUploadResp]
+  def doFileUpload(upData: MHostUrl, file: MJsFileInfo): HttpRespMapped[MUploadResp]
 
 }
 
@@ -65,14 +65,15 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
       )
     )
     val S = HttpConst.Status
-    HttpClient.execute( req )
+    HttpClient
+      .execute( req )
       .respAuthFut
       .successIfStatus( S.CREATED, S.ACCEPTED, S.NOT_ACCEPTABLE )
       .unJson[MUploadResp]
   }
 
 
-  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo): Future[MUploadResp] = {
+  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo): HttpRespMapped[MUploadResp] = {
     // Отправить как обычно, т.е. через multipart/form-data:
     val formData = new FormData()
     formData.append(
@@ -99,10 +100,13 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
       )
     )
 
-    HttpClient.execute( req )
-      .respAuthFut
-      .successIf200
-      .unJson[MUploadResp]
+    HttpClient
+      .execute( req )
+      .mapResult {
+        _.reloadIfUnauthorized()
+         .successIf200
+         .unJson[MUploadResp]
+      }
   }
 
 }

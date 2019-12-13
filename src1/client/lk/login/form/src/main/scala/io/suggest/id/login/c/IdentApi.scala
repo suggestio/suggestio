@@ -98,7 +98,7 @@ class IdentApiHttp extends IIdentApi {
           )
         )
       )
-        .respFut
+        .httpResponseFut
         .successIf200
       rdrUrl <- resp.text()
     } yield {
@@ -127,7 +127,7 @@ class IdentApiHttp extends IIdentApi {
         )
       )
     )
-      .respFut
+      .httpResponseFut
       // И распарсить ответ:
       .unJson[MRegTokenResp]
   }
@@ -158,7 +158,7 @@ class IdentApiHttp extends IIdentApi {
     )
     HttpClient
       .execute( httpReq )
-      .respFut
+      .httpResponseFut
       .flatMap { httpResp =>
         // Разобрать ответ сервера: пароль сохранён | ошибка клиента | ошибка сервера
         if (httpResp.status ==* HttpConst.Status.NO_CONTENT) {

@@ -47,7 +47,6 @@ class GeoTagsUtil @Inject() (
   extends MacroLogsImpl
 {
 
-  import LOGGER._
   import mCommonDi._
   import slick.profile.api._
   import streamsUtil.Implicits._
@@ -126,7 +125,7 @@ class GeoTagsUtil @Inject() (
       tagNodes <- mNodes.dynSearch(msearch)
     } yield {
       if (tagNodes.lengthCompare(1) > 0) {
-        warn(s"$logPrefix Too many tag-nodes found for single-tag request:\n ${tagNodes.iterator.map(n => n.idOrNull -> n.guessDisplayName.orNull).mkString(", ")}")
+        LOGGER.warn(s"$logPrefix Too many tag-nodes found for single-tag request:\n ${tagNodes.iterator.map(n => n.idOrNull -> n.guessDisplayName.orNull).mkString(", ")}")
       }
       // TODO Нужно запускать тут мерж tag-узлов при выявлении коллизии: 2+ узлов относяться к одному и тому же тегу.
       tagNodes.headOption
@@ -219,7 +218,7 @@ class GeoTagsUtil @Inject() (
         // Залоггировать результат, если он есть.
         val rSize = r.size
         if (rSize > 0)
-          trace(s"$logPrefix Found $rSize tag faces. First tagFace = ${r.head}")
+          LOGGER.trace(s"$logPrefix Found $rSize tag faces. First tagFace = ${r.head}")
 
         r
       }
@@ -231,7 +230,7 @@ class GeoTagsUtil @Inject() (
 
       val mSize = gtMap.size
       if (mSize > 0)
-        debug(s"$logPrefix Have Map[tagFace,node] with $mSize keys. Took ${System.currentTimeMillis - startTs}ms.")
+        LOGGER.debug(s"$logPrefix Have Map[tagFace,node] with $mSize keys. Took ${System.currentTimeMillis - startTs}ms.")
 
       // Собрать и вернуть результат.
       MCtxOuter(
@@ -270,8 +269,8 @@ class GeoTagsUtil @Inject() (
     val basicQuery = mItems.query
       .filter { i =>
         (i.tagNodeIdOpt === mnodeId) &&
-          (i.statusStr === MItemStatuses.Online.value) &&
-          (i.iTypeStr inSet TAG_ITEM_TYPES)
+        (i.statusStr === MItemStatuses.Online.value) &&
+        (i.iTypeStr inSet TAG_ITEM_TYPES)
       }
 
     // Запуск сбора шейпов для geo-тегов.
@@ -473,7 +472,7 @@ class GeoTagsUtil @Inject() (
     } yield {
       val tnMapSize = tagNodesMap.size
       if (tnMapSize > 0)
-        trace(s"prepareUnInstall(): Found $tnMapSize nodes for ${tagIds.size} tagIds. Took ${System.currentTimeMillis - startTs}ms.")
+        LOGGER.trace(s"prepareUnInstall(): Found $tnMapSize nodes for ${tagIds.size} tagIds. Took ${System.currentTimeMillis - startTs}ms.")
 
       MCtxOuter(
         tagNodesMap = tagNodesMap
@@ -509,15 +508,15 @@ class GeoTagsUtil @Inject() (
       startTs   = System.currentTimeMillis()
       logPrefix = s"$logPrefixPrefix($tmapSize $startTs):"
       _         <- {
-        info(s"$logPrefix Starting tags rebuild, $tmapSize tags to go.")
+        LOGGER.info(s"$logPrefix Starting tags rebuild, $tmapSize tags to go.")
         val rebuildTagsFut = rebuildTags(tmap.values)
         for (ex <- rebuildTagsFut.failed) {
-          error(s"$logPrefix Failed to rebuild the tags", ex)
+          LOGGER.error(s"$logPrefix Failed to rebuild the tags", ex)
         }
         rebuildTagsFut
       }
     } yield {
-      info(s"$logPrefix Rebuilt $tmapSize tags in ${System.currentTimeMillis - startTs}ms.")
+      LOGGER.info(s"$logPrefix Rebuilt $tmapSize tags in ${System.currentTimeMillis - startTs}ms.")
     }
 
     // Подавляем оптимизацию if tmap.nonEmpty, приводящую к экзепшену.

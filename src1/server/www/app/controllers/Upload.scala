@@ -10,6 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
 import io.suggest.es.model.{EsModel, IMust}
+import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
@@ -483,7 +484,7 @@ class Upload @Inject()(
 
           // Сразу в фоне запускаем анализ цветов картинки, если он был запрошен.
           // Очень маловероятно, что сохранение сломается и будет ошибка, поэтому и параллелимся со спокойной душой.
-          colorDetectOptFut = for {
+          colorDetectFutOpt = for {
             mimg        <- request.body.localImg
             cdArgs      <- uploadArgs.colorDetect
           } yield {
@@ -546,16 +547,17 @@ class Upload @Inject()(
           // Собрать в голове сохранённый инстанс MMedia:  // TODO надо бы lazy, т.к. он может не понадобится.
           mmedia1 = {
             LOGGER.info(s"$logPrefix Created mmedia#$mmediaId")
-            mmedia0
-              .withFirstVersion
-              .withId( Some(mmediaId) )
+            (
+              (MMedia.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
+              (MMedia.id set Some(mmediaId))
+            )(mmedia0)
           }
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
             mMedias.putToCache( mmedia1 )
 
-            for (colorDetectFut <- colorDetectOptFut) {
+            for (colorDetectFut <- colorDetectFutOpt) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
                 if (colorHist.sorted.nonEmpty) {
                   // Считаем общее кол-во пикселей для нормировки частот цветов:
@@ -564,11 +566,11 @@ class Upload @Inject()(
 
                   LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.sorted.iterator.map(_.hexCode).mkString(", ")}")
 
-                  val mmedia2OptFut = mMedias.tryUpdate(mmedia1) { m =>
-                    m.withPicture(
-                      m.picture.withColors( colorsHist2.sorted )
-                    )
-                  }
+                  val mmedia2OptFut = mMedias.tryUpdate(mmedia1)(
+                    MMedia.picture
+                      .composeLens( MPictureMeta.colors )
+                      .set( colorsHist2.sorted )
+                  )
 
                   mmedia2OptFut.onComplete {
                     case Success(res) => LOGGER.debug(s"$logPrefix Updated MMedia#$mmediaId with $mcdsCount main colors, v=${res.versionOpt.orNull}.")
@@ -611,26 +613,19 @@ class Upload @Inject()(
 
           // Пытаемся синхронно получить цвета из асихронного фьючерса, чтобы доставить их клиенту наиболее
           // оптимальным путём и снижая race-condition между WebSocket и http-ответом этого экшена:
-          val colorsOpt: Option[MHistogram] = {
-            colorDetectOptFut
-              .flatMap(_.value)
-              .flatMap(_.toOption)
+          val colorsOpt: Option[MHistogram] = for {
+            colorDetectFut      <- colorDetectFutOpt
+            syncCurrentValueTry <- colorDetectFut.value
+            syncCurrentValue    <- syncCurrentValueTry.toOption
+          } yield {
+            syncCurrentValue
           }
 
           // Вернуть 200 Ok с данными по файлу
           val srvFileInfo = MSrvFileInfo(
             nodeId    = mnodeId,
-            url       = if ( upCtx.isImage ) {
-              Some("TODO.need.good.abs.img.link")   // TODO XXX
-            } else {
-              LOGGER.error(s"$logPrefix TODO URL-generation not implemented for !isImg")
-              None
-            },
+            // TODO url: Надо бы вернуть ссылку. Для img - routes.Img.*, для других - по другим адресам.
             // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
-            sizeB     = None,
-            name      = None,
-            mimeType  = None,
-            hashesHex = Map.empty,
             colors    = colorsOpt
           )
           val resp = MUploadResp(
@@ -644,7 +639,7 @@ class Upload @Inject()(
           if (colorsOpt.isEmpty) {
             LOGGER.trace(s"$logPrefix ColorDetector not completed yet. Connect it with websocket.")
             for {
-              colorDetectFut <- colorDetectOptFut
+              colorDetectFut <- colorDetectFutOpt
               cdArgs         <- uploadArgs.colorDetect
               ctxId          <- ctxIdOpt
               hasTransparentColorFut <- upCtx.imageHasTransparentColors

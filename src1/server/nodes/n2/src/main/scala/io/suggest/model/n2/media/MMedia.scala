@@ -1,13 +1,13 @@
 package io.suggest.model.n2.media
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.model.n2.media.search.MMediaSearch
 import io.suggest.model.n2.media.storage.{IMediaStorage, IMediaStorages}
 import io.suggest.util.logs.MacroLogsImpl
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -108,7 +108,11 @@ class MMedias @Inject() (
 
 
 object MMedia {
-
+  val file        = GenLens[MMedia](_.file)
+  val storage     = GenLens[MMedia](_.storage)
+  val id          = GenLens[MMedia](_.id)
+  val picture     = GenLens[MMedia](_.picture)
+  val versionOpt  = GenLens[MMedia](_.versionOpt)
 }
 
 
@@ -130,15 +134,9 @@ case class MMedia(
   override val versionOpt   : Option[Long]          = None
 )
   extends EsModelT
-  with EsModelVsnedT[MMedia]
 {
 
   def withDocMeta(dmeta: IEsDocMeta)          : MMedia  = copy(id = dmeta.id, versionOpt = dmeta.version)
-
-  def withStorage(storage: IMediaStorage)     : MMedia  = copy(storage = storage)
-  def withId(id: Option[String])              : MMedia  = copy(id = id)
-  def withPicture(picture: MPictureMeta)      : MMedia  = copy(picture = picture)
-  override def withVersion(versionOpt: Option[Long]): MMedia = copy(versionOpt = versionOpt)
 
 }
 

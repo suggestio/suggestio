@@ -16,8 +16,9 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
-import util.adv.build.AdvBuilderFactory
+import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 import util.n2u.N2NodesUtil
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,6 +38,7 @@ class AdvRcvrsUtil @Inject()(
                               mNodes                  : MNodes,
                               advBuilderFactory       : AdvBuilderFactory,
                               n2NodesUtil             : N2NodesUtil,
+                              advBuilderUtil          : AdvBuilderUtil,
                               mCommonDi               : ICommonDi
                             )
   extends MacroLogsImpl
@@ -88,8 +90,8 @@ class AdvRcvrsUtil @Inject()(
       mItems.query
         .filter { i =>
           (i.nodeId === madId) &&
-            (i.statusStr === MItemStatuses.Online.value) &&
-            (i.iTypeStr inSet itypes)
+          (i.statusStr === MItemStatuses.Online.value) &&
+          (i.iTypeStr inSet itypes)
         }
         .result
     }
@@ -123,13 +125,9 @@ class AdvRcvrsUtil @Inject()(
 
         } else {
           // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
-          acc3.withMnode(
-            acc3.mnode.withEdges(
-              acc3.mnode.edges.copy(
-                out = acc3.mnode.edges.out ++ Seq(rcvrEdge)
-              )
-            )
-          )
+          advBuilderUtil
+            .acc_node_edges_out_LENS
+            .modify(_ :+ rcvrEdge)(acc3)
         }
       }
     }
@@ -145,11 +143,14 @@ class AdvRcvrsUtil @Inject()(
     * @return Boolean, который обычно не имеет смысла.
     */
   def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
-    mNodes
-      .getByIdCache(adId)
-      .withNodeType(MNodeTypes.Ad)
-      .map(_.get)
-      .flatMap(depublishAdOn(_, rcvrIdOpt.toSet))
+    for {
+      mnodeOpt <- mNodes.getByIdCache(adId)
+      mnode = mnodeOpt.get
+      if mnode.common.ntype eqOrHasParent MNodeTypes.Ad
+      mnode2 <- depublishAdOn(mnode, rcvrIdOpt.toSet)
+    } yield {
+      mnode2
+    }
   }
 
   /**
@@ -165,9 +166,9 @@ class AdvRcvrsUtil @Inject()(
 
     // Радуемся в логи
     if (rcvrIds.isEmpty) {
-      warn(logPrefix + "Starting removing ALL advs...")
+      LOGGER.warn(logPrefix + "Starting removing ALL advs...")
     } else {
-      info(logPrefix + "Starting removing advs with rcvrs: " + rcvrIds.mkString(", "))
+      LOGGER.info(logPrefix + "Starting removing advs with rcvrs: " + rcvrIds.mkString(", "))
     }
 
     val acc0 = Acc(mad)
@@ -178,8 +179,8 @@ class AdvRcvrsUtil @Inject()(
     val onlineItemsAction = mItems.query
       .filter { i =>
         (i.nodeId === adId) &&
-          (i.iTypeStr inSet b0.supportedItemTypesStrSet) &&
-          (i.statusStr === MItemStatuses.Online.value)
+        (i.iTypeStr inSet b0.supportedItemTypesStrSet) &&
+        (i.statusStr === MItemStatuses.Online.value)
       }
       .result
 
@@ -248,7 +249,7 @@ class AdvRcvrsUtil @Inject()(
   final def resetAllReceivers(): Future[Int] = {
     lazy val logPrefix = s"resetAllReceivers(${System.currentTimeMillis}):"
     val search = new MNodeSearchDfltImpl {
-      override def nodeTypes = Seq( MNodeTypes.Ad )
+      override def nodeTypes = MNodeTypes.Ad :: Nil
     }
     mNodes.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
       // Запустить пересчет ресиверов с сохранением.
@@ -264,7 +265,7 @@ class AdvRcvrsUtil @Inject()(
         counter <- counterFut
       } yield {
         val counter2 = counter + 1
-        trace(s"$logPrefix [$counter2] Re-saved ${mnode0.idOrNull}")
+        LOGGER.trace(s"$logPrefix [$counter2] Re-saved ${mnode0.idOrNull}")
         counter2
       }
     }
@@ -272,7 +273,7 @@ class AdvRcvrsUtil @Inject()(
 
   private def _orderedRcvrs(rs: Seq[MEdge]) = rs.sortBy(_.toString)
   def isRcvrsMapEquals(map1: Seq[MEdge], map2: Seq[MEdge]): Boolean = {
-    _orderedRcvrs(map1) == _orderedRcvrs(map2)
+    _orderedRcvrs(map1) ==* _orderedRcvrs(map2)
   }
 
 
@@ -283,17 +284,16 @@ class AdvRcvrsUtil @Inject()(
     * @return Новый экземпляр карточки.
     */
   def cleanReceiverFor(mad0: MNode): Future[MNode] = {
-    mNodes.tryUpdate(mad0) { mad =>
-      mad.copy(
-        edges = mad.edges.copy(
-          out = {
-            val iter = mad.edges
+    mNodes.tryUpdate(mad0)(
+      MNode.edges.modify { edges0 =>
+        MNodeEdges.out.set(
+          MNodeEdges.edgesToMap1(
+            edges0
               .withoutPredicateIter( MPredicates.Receiver )
-            MNodeEdges.edgesToMap1(iter)
-          }
-        )
-      )
-    }
+          )
+        )(edges0)
+      }
+    )
   }
 
   /**

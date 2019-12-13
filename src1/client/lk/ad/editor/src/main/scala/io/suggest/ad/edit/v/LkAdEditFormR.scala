@@ -589,8 +589,7 @@ class LkAdEditFormR(
 
         upStateOptC = p.connect { mroot =>
           mroot.doc.jdDoc.jdArgs.selJdt.bgEdgeDataOpt
-            .flatMap(_._2.fileJs)
-            .flatMap(_.upload)
+            .flatMap(_._2.upload)
         }( OptFastEq.Wrapped( MFileUploadS.MFileUploadSFastEq ) ),
 
         colSuggPropsOptC = p.connect { mroot =>

@@ -48,20 +48,13 @@ case class MScIndex(
                      welcome    : Option[MWelcomeState]   = None,
                      search     : MScSearch,
                      scCss      : ScCss,
-                     menu       : MMenuS                  = MMenuS.default,
+                     menu       : MMenuS,
                    ) {
 
   /** Выбранные id узлов. */
   lazy val searchNodesSelectedIds: Set[String] = {
     search.geo.data.selTagIds ++ state.rcvrId
   }
-
-  def withState(state: MScIndexState)             = copy(state = state)
-  def withResp(resp: Pot[MSc3IndexResp])          = copy(resp = resp)
-  def withWelcome(welcome: Option[MWelcomeState]) = copy(welcome = welcome)
-  def withSearch(search: MScSearch)               = copy(search = search)
-  def withScCss(scCss: ScCss)                     = copy(scCss = scCss)
-  def withMenu(menu: MMenuS)                      = copy(menu = menu)
 
   def isAnyPanelOpened: Boolean = {
     search.panel.opened || menu.opened

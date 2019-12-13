@@ -244,7 +244,6 @@ case class MNode(
   override val versionOpt     : Option[Long]    = None
 )
   extends EsModelT
-  with EsModelVsnedT[MNode]
 {
 
   def withDocMeta(dmeta: IEsDocMeta): MNode = {
@@ -275,13 +274,6 @@ case class MNode(
   def guessDisplayNameOrIdOr(or: => String): String = {
     guessDisplayNameOrId.getOrElse(or)
   }
-
-  def withBilling(billing: MNodeBilling) = copy(billing = billing)
-  def withEdges(edges: MNodeEdges) = copy(edges = edges)
-  def withId(idOpt: Option[String]) = copy(id = idOpt)
-  override def withVersion(versionOpt: Option[Long]) = copy(versionOpt = versionOpt)
-  def withExtras(extras: MNodeExtras) = copy(extras = extras)
-  def withMeta(meta: MMeta) = copy(meta = meta)
 
 
   /** Система быстрого доступа к рутинным операциям с полями класса. */

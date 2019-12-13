@@ -3,6 +3,7 @@ package io.suggest.n2.edge
 import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
+import io.suggest.file.up.MFileUploadS
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
@@ -96,5 +97,8 @@ case class MEdgeDataJs(
       .flatMap(_.whPx)
       .orElse( jdEdge.fileSrv.flatMap(_.whPx) )
   }
+
+  def upload: Option[MFileUploadS] =
+    fileJs.flatMap(_.upload)
 
 }

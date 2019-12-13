@@ -30,6 +30,8 @@ object SioEsUtil extends MacroLogsImpl {
   import DocFieldTypes.DocFieldType
   import TermVectorVariants.TermVectorVariant
 
+
+
   def ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS = 1000
 
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name

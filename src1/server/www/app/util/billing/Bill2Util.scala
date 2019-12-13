@@ -28,6 +28,7 @@ import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
+import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
@@ -1987,10 +1988,9 @@ class Bill2Util @Inject() (
           } else {
             LOGGER.info(s"$logPrefix Repair node#${mnode.idOrNull}, contract#${contractId} NOT exist.")
             val mnode2 = mNodes.prepareIndex(
-              mnode.withBilling(
-                mnode.billing
-                  .withContractId( None )
-              )
+              MNode.billing
+                .composeLens( MNodeBilling.contractId )
+                .set( None )(mnode)
             )
             bp.add( mnode2.request() )
             repairCounter.incrementAndGet()
