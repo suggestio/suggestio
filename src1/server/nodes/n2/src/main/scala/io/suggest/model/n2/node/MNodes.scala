@@ -283,14 +283,15 @@ case class MNode(
     object Adn {
 
       /** Подготовить эджи для картинки из MAdnResView. */
-      private def _jdIdWithEdge(f: MAdnResView => IterableOnce[MJdEdgeId]): Iterator[(MJdEdgeId, MEdge)] = {
-        for {
+      private def _jdIdWithEdge(f: MAdnResView => IterableOnce[MJdEdgeId]): LazyList[(MJdEdgeId, MEdge)] = {
+        (for {
           adn     <- extras.adn.iterator
-          jdId    <- f(adn.resView)
+          jdId    <- f(adn.resView).iterator
           medge   <- edges.withUid( jdId.edgeUid ).out.iterator
         } yield {
           (jdId, medge)
-        }
+        })
+          .to( LazyList )
       }
 
       /** Эдж картинки-логотипа adn-узла. */
@@ -298,7 +299,6 @@ case class MNode(
         (MAdnResView.logo composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
           .getAll
       )
-        .buffered
         .headOption
 
       /** Эдж картинки приветствия adn-узла. */
@@ -306,14 +306,12 @@ case class MNode(
         (MAdnResView.wcFg composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
           .getAll
       )
-        .buffered
         .headOption
 
       /** Списочек галеры картинок adn-узла. */
       lazy val galImgs = _jdIdWithEdge(
         MAdnResView.galImgs.get
       )
-        .to( LazyList )
 
     }
 

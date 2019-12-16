@@ -215,13 +215,13 @@ class DocEditAh[M](
             MJdDataJs.doc.set( jdDoc2 ) andThen
             MJdDataJs.edges.set( edgesMap2 )
           ) andThen
-            MJdArgs.jdRuntime.set(
-              mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                .result
-            ) andThen
-            MJdArgs.renderArgs
-              .composeLens( MJdRenderArgs.selPath )
-              .set( Some(loc2.toNodePath) )
+          MJdArgs.jdRuntime.set(
+            mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+              .result
+          ) andThen
+          MJdArgs.renderArgs
+            .composeLens( MJdRenderArgs.selPath )
+            .set( Some(loc2.toNodePath) )
         )(v0.jdDoc.jdArgs)
 
         var modF = MJdDocEditS.jdArgs.set(jdArgs2)
@@ -1245,10 +1245,10 @@ class DocEditAh[M](
               MJdArgs.data
                 .composeLens( MJdDataJs.doc )
                 .set(jdDoc2) andThen
-                MJdArgs.jdRuntime.set(
-                  mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-                    .result
-                )
+              MJdArgs.jdRuntime.set(
+                mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+                  .result
+              )
             )(v0)
 
           // Надо заставить перерендерить quill, если он изменился и открыт сейчас:

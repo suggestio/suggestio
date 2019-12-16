@@ -325,7 +325,6 @@ class MSioUsers @Inject() (
     * factory-метод с дефолтовыми значениями некоторых аргументов.
     *
     * @param personIdOpt Опциональный id юзера. Экстрактиться из сессии с помощью SessionUtil.
-    * @param jsiTgs Список целей js-инициализации [Nil].
     * @return Инстанс какой-то реализации [[ISioUser]].
     */
   def apply(personIdOpt: Option[String]): ISioUser = {

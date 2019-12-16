@@ -322,7 +322,18 @@ case class MNodeEdges(
   def withUid(edgeUids: EdgeUid_t*) = withUid1( edgeUids )
   def withUid1(edgeUids: Iterable[EdgeUid_t]): MNodeEdges = {
     if (edgeUids.isEmpty) {
-      throw new IllegalArgumentException( "edgeUids must be non-empty" )
+      // Если пришёл пустой список, то вероятно, что что-то не так: в лучшем случае неоптимально, в худшем - логическая ошибка.
+      MNodeEdges.LOGGER.warn(
+        "withUid1([]): Edge UIDs are empty from:\n " +
+          Thread
+            .currentThread()
+            .getStackTrace
+            .iterator
+            .drop(1)
+            .take(4)
+            .mkString("\n ")
+      )
+      MNodeEdges.empty
     } else {
       MNodeEdges.out.set(
         edgeUids

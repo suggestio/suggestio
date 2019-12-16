@@ -147,13 +147,6 @@ class GeoTagsUtil @Inject() (
       .map(_.get)
       .recoverWith { case _: NoSuchElementException =>
 
-        val e = MEdge(
-          predicate = _PRED,
-          info = MEdgeInfo(
-            tags = Set(tagFace)
-          )
-        )
-
         // Собрать заготовку узла.
         val tagNode0 = MNode(
           common = MNodeCommon(
@@ -164,7 +157,14 @@ class GeoTagsUtil @Inject() (
             basic = MBasicMeta()
           ),
           edges = MNodeEdges(
-            out = MNodeEdges.edgesToMap(e)
+            out = MNodeEdges.edgesToMap(
+              MEdge(
+                predicate = _PRED,
+                info = MEdgeInfo(
+                  tags = Set(tagFace)
+                )
+              )
+            )
           )
         )
 
@@ -376,15 +376,15 @@ class GeoTagsUtil @Inject() (
                 null
               } else {
                 // Есть изменения. Заливаем в инстанс MNode и сохраняем:
-                mnode0.copy(
-                  edges = mnode0.edges.copy(
-                    out = MNodeEdges.edgesToMap1(
-                      mnode0.edges
+                MNode.edges.modify { edges0 =>
+                  MNodeEdges.out.set(
+                    MNodeEdges.edgesToMap1(
+                      edges0
                         .withoutPredicateIter(p)
                         .++( e1 :: Nil )
                     )
-                  )
-                )
+                  )(edges0)
+                }(mnode0)
               }
             }
             .map( EmptyUtil.someF )
@@ -527,7 +527,7 @@ class GeoTagsUtil @Inject() (
   }
 
 
-  class AllTagNodesSearch extends MNodeSearchDfltImpl {
+  private class AllTagNodesSearch extends MNodeSearchDfltImpl {
     override def nodeTypes = MNodeTypes.Tag :: Nil
   }
 

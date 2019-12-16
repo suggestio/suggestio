@@ -63,7 +63,11 @@ object HttpClient extends Log {
     if (HttpClient.PREFER_ABS_URLS) {
       // Фунция на случай, когда требуется причёсывать ссылки:
       url0: String =>
-        UrlUtil2.mkAbsUrl( protoPrefix = HttpConst.Proto.HTTP, secure = true, relUrl = url0 )
+        UrlUtil2.mkAbsUrl(
+          protoPrefix = HttpConst.Proto.HTTP,
+          secure = true,
+          relUrl = url0,
+        )
 
     } else {
       // Причёсывать ссылки не требуется. Просто используем исходные ссылки.

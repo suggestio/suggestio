@@ -41,22 +41,22 @@ class IsSuPerson @Inject()(
 
           // Если юзер запрашивает сам себя, то заполняем user.personNodeOptFut. Иначе запрашиваем узел целевого юзера напрямую.
           val mpersonOptFut: Future[Option[MNode]] = {
-            val _personId = personId
-            if (user.personIdOpt.contains(_personId)) {
+            if (user.personIdOpt contains personId) {
               user.personNodeOptFut
             } else {
               mNodes
-                .getByIdCache(_personId)
+                .getByIdCache(personId)
                 .withNodeType(MNodeTypes.Person)
             }
           }
 
           mpersonOptFut.flatMap {
-            case Some(mperson) =>
+            _.fold {
+              personNotFound(request)
+            } { mperson =>
               val req1 = MPersonReq(mperson, request, user)
               block(req1)
-            case None =>
-              personNotFound(request)
+            }
           }
 
         } else {

@@ -5,6 +5,7 @@ import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.jd.MJdEdge
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
@@ -128,44 +129,56 @@ class LkAdnEdit @Inject() (
     val ctxFut = ctxFutOpt
       .getOrElse( Future.successful(getContext2) )
 
-    // Какие предикаты и эджи здесь интересуют?
-    val imgEdgeUids = request.mnode.extras
-      .adnEdgeUidsIter
-      .map(e => e.edgeUid -> e)
-      .toMap
-    val imgEdges = request.mnode
-      .edges
-      .withUid1( imgEdgeUids.keySet )
-
-    val imgsEdges = jdAdUtil.collectImgEdges( imgEdges, imgEdgeUids )
-
-    // Запустить сбор данных по интересующим картинкам:
-    val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )
-    val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges, videoEdges = Nil )
-
     lazy val logPrefix = s"_mkForm(${request.mnode.idOrNull})#${System.currentTimeMillis()}:"
 
-    val mediaHostsMapFut = for {
-      imgMedias  <- imgMediasMapFut
-      mediaHosts <- cdnUtil.mediasHosts( imgMedias.values )
-    } yield {
-      LOGGER.trace(s"$logPrefix For ${imgMedias.size} medias (${imgMedias.keysIterator.mkString(", ")}) found ${mediaHosts.size} media hosts = ${mediaHosts.values.flatMap(_.headOption).map(_.namePublic).mkString(", ")}")
-      mediaHosts
-    }
+    val imgEdgeIds = request.mnode.extras
+      .adnEdgeUidsIter
+      .to(LazyList)
 
-    // Скомпилить в jd-эджи собранную инфу, затем завернуть в edit-imgs:
-    val jdEdgesFut = for {
-      imgMediasMap  <- imgMediasMapFut
-      mediaNodesMap <- mediaNodesMapFut
-      mediaHostsMap <- mediaHostsMapFut
-      ctx           <- ctxFut
-    } yield {
-      jdAdUtil.mkJdImgEdgesForEdit(
-        imgsEdges  = imgsEdges,
-        mediasMap  = imgMediasMap,
-        mediaNodes = mediaNodesMap,
-        mediaHosts = mediaHostsMap
-      )(ctx)
+    // Если есть инфа по img-эджам - собрать инфу:
+    val jdEdgesFut: Future[List[MJdEdge]] = {
+      if (imgEdgeIds.isEmpty) {
+        Future.successful( Nil )
+
+      } else {
+        // Какие предикаты и эджи здесь интересуют?
+        val imgEdgeUids = request.mnode.extras
+          .adnEdgeUidsIter
+          .map(e => e.edgeUid -> e)
+          .toMap
+        val imgEdges = request.mnode
+          .edges
+          .withUid1( imgEdgeUids.keySet )
+
+        val imgsEdges = jdAdUtil.collectImgEdges( imgEdges, imgEdgeUids )
+
+        // Запустить сбор данных по интересующим картинкам:
+        val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )
+        val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges, videoEdges = Nil )
+
+        val mediaHostsMapFut = for {
+          imgMedias  <- imgMediasMapFut
+          mediaHosts <- cdnUtil.mediasHosts( imgMedias.values )
+        } yield {
+          LOGGER.trace(s"$logPrefix For ${imgMedias.size} medias (${imgMedias.keysIterator.mkString(", ")}) found ${mediaHosts.size} media hosts = ${mediaHosts.values.flatMap(_.headOption).map(_.namePublic).mkString(", ")}")
+          mediaHosts
+        }
+
+        // Скомпилить в jd-эджи собранную инфу, затем завернуть в edit-imgs:
+        for {
+          imgMediasMap  <- imgMediasMapFut
+          mediaNodesMap <- mediaNodesMapFut
+          mediaHostsMap <- mediaHostsMapFut
+          ctx           <- ctxFut
+        } yield {
+          jdAdUtil.mkJdImgEdgesForEdit(
+            imgsEdges  = imgsEdges,
+            mediasMap  = imgMediasMap,
+            mediaNodes = mediaNodesMap,
+            mediaHosts = mediaHostsMap
+          )(ctx)
+        }
+      }
     }
 
     // Подготовить метаданные узла:
