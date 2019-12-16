@@ -4,6 +4,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
+import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdConf
@@ -67,9 +68,7 @@ class LkAds @Inject() (
       val ctxFut = for {
         lkCtxData0 <- request.user.lkCtxDataFut
       } yield {
-        implicit val lkCtxData2 = lkCtxData0.withJsInitTargets(
-          MJsInitTargets.LkAdsForm :: lkCtxData0.jsInitTargets
-        )
+        implicit val lkCtxData2 = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkAdsForm )(lkCtxData0)
         implicitly[Context]
       }
 

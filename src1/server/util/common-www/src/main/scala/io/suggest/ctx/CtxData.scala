@@ -10,6 +10,38 @@ import monocle.macros.GenLens
  * Created: 21.12.15 8:26
  * Description: Модель дополнительных произвольных данных, передаваемых по шаблонам внутри Context.
  */
+object CtxData {
+
+  /** Часто-используемый пустой инстанс [[CtxData]]. */
+  val empty = apply()
+
+  val jsInitTargets = GenLens[CtxData](_.jsInitTargets)
+
+  def jsInitTargetsAppendOne(v: MJsInitTarget) =
+    jsInitTargets.modify(v :: _)
+
+
+  implicit class CtxDataOpsExt( val ctxData0: CtxData ) extends AnyVal {
+
+    /**
+      * Заменить jsInitTargets на список списков.
+      * @param jsInitTarget2 Списки новых целей js-инициализации.
+      * @return this, либо обновлённый экземпляр.
+      */
+    def appendJsInitTargetsAll(jsInitTarget2: List[MJsInitTarget]*): CtxData = {
+      if (jsInitTarget2.exists(_.nonEmpty)) {
+        CtxData.jsInitTargets.modify { jsInitTargets0 =>
+          (jsInitTargets0.iterator ++ jsInitTarget2.iterator.flatten)
+            .toList
+        }(ctxData0)
+      } else {
+        ctxData0
+      }
+    }
+
+  }
+
+}
 
 
 /**
@@ -24,35 +56,4 @@ case class CtxData(
                     mUsrBalances     : Seq[MBalance]          = Nil,
                     mdrNodesCount    : Option[Int]            = None,
                     cartItemsCount   : Option[Int]            = None,
-                  ) {
-
-  def withJsInitTargets(jsInitTargets: List[MJsInitTarget]) = copy(jsInitTargets = jsInitTargets)
-
-  /**
-   * Заменить jsInitTargets на список списков.
-   * @param jsInitTarget2 Списки новых целей js-инициализации.
-   * @return this, либо обновлённый экземпляр.
-   */
-  def appendJsInitTargetsAll(jsInitTarget2: List[MJsInitTarget]*): CtxData = {
-    if (jsInitTarget2.exists(_.nonEmpty)) {
-      withJsInitTargets(
-        jsInitTargets =
-          (jsInitTargets.iterator ++ jsInitTarget2.iterator.flatten)
-            .toList
-      )
-    } else {
-      this
-    }
-  }
-
-}
-
-
-object CtxData {
-
-  /** Часто-используемый пустой инстанс [[CtxData]]. */
-  val empty = apply()
-
-  val jsInitTargets = GenLens[CtxData](_.jsInitTargets)
-
-}
+                  )

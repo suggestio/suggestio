@@ -86,9 +86,7 @@ class SysMdr @Inject() (
     isNodeAdmin(rcvrKey, U.Lk).async { implicit request =>
       // Готовим контекст...
       val ctxFut = request.user.lkCtxDataFut.map { lkCtxData =>
-        implicit val ctxData2 = lkCtxData.withJsInitTargets(
-          MJsInitTargets.SysMdrForm :: lkCtxData.jsInitTargets
-        )
+        implicit val ctxData2 = CtxData.jsInitTargetsAppendOne( MJsInitTargets.SysMdrForm )(lkCtxData)
         implicitly[Context]
       }
 

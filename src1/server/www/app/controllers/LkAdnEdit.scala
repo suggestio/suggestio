@@ -1,6 +1,7 @@
 package controllers
 
 import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit}
+import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
@@ -78,9 +79,7 @@ class LkAdnEdit @Inject() (
       val ctxFut = for {
         ctxData0 <- request.user.lkCtxDataFut
       } yield {
-        implicit val ctxData1 = ctxData0.withJsInitTargets(
-          jsInitTargets = MJsInitTargets.LkAdnEditForm :: ctxData0.jsInitTargets
-        )
+        implicit val ctxData1 = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkAdnEditForm )(ctxData0)
         implicitly[Context]
       }
 

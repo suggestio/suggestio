@@ -296,14 +296,16 @@ case class MNode(
 
       /** Эдж картинки-логотипа adn-узла. */
       lazy val logo = _jdIdWithEdge(
-        (MAdnResView.logo composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
+        MAdnResView.logo
+          .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
           .getAll
       )
         .headOption
 
       /** Эдж картинки приветствия adn-узла. */
       lazy val wcFg = _jdIdWithEdge(
-        (MAdnResView.wcFg composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
+        MAdnResView.wcFg
+          .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
           .getAll
       )
         .headOption

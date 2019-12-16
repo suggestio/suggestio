@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtServices
 import io.suggest.init.routed.MJsInitTargets
@@ -160,9 +161,7 @@ class LkAdvExt @Inject() (
         advForm     = form,
         oneTgForm   = advExtFormUtil.formForTarget
       )
-      implicit val ctxData = ctxData0.withJsInitTargets(
-        MJsInitTargets.LkAdvExtForm :: ctxData0.jsInitTargets
-      )
+      implicit val ctxData = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkAdvExtForm )(ctxData0)
       rs( forAdTpl(args) )
     }
   }
@@ -224,9 +223,7 @@ class LkAdvExt @Inject() (
         } else {
 
           for (ctxData0 <- request.user.lkCtxDataFut) yield {
-            implicit val ctxData = ctxData0.withJsInitTargets(
-              MJsInitTargets.AdvExtRunner :: ctxData0.jsInitTargets
-            )
+            implicit val ctxData = CtxData.jsInitTargetsAppendOne( MJsInitTargets.AdvExtRunner )(ctxData0)
             implicit val ctx = implicitly[Context]
             val wsArgs2 = wsArgs.copy(
               wsId = ctx.ctxIdStr,

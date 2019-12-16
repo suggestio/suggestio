@@ -8,6 +8,7 @@ import io.suggest.adv.rcvr._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.tags.edit.MTagsEditProps
+import io.suggest.ctx.CtxData
 import io.suggest.dt.MAdvPeriod
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.es.model.MEsUuId
@@ -167,9 +168,7 @@ class LkAdvGeo @Inject() (
     }
 
     val _ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
-      implicit val ctxData = ctxData0.withJsInitTargets(
-        MJsInitTargets.AdvGeoForm :: ctxData0.jsInitTargets
-      )
+      implicit val ctxData = CtxData.jsInitTargetsAppendOne( MJsInitTargets.AdvGeoForm )(ctxData0)
       getContext2
     }
 

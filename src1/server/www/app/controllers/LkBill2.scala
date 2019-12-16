@@ -7,6 +7,7 @@ import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.color.MColors
 import io.suggest.common.fut.FutureUtil
+import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
@@ -412,9 +413,7 @@ class LkBill2 @Inject() (
       val ctxFut = for {
         lkCtxData <- request.user.lkCtxDataFut
       } yield {
-        implicit val ctxData = lkCtxData.withJsInitTargets(
-          MJsInitTargets.LkCartPageForm :: lkCtxData.jsInitTargets
-        )
+        implicit val ctxData = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkCartPageForm )(lkCtxData)
         implicitly[Context]
       }
 

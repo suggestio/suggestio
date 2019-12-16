@@ -28,6 +28,7 @@ import util.acl._
 import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.ctx.CtxData
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import util.lk.nodes.LkNodesUtil
@@ -224,9 +225,7 @@ class LkNodes @Inject() (
     val ctxFut = for {
       lkCtxData <- request.user.lkCtxDataFut
     } yield {
-      implicit val lkCtxData2 = lkCtxData.withJsInitTargets(
-        MJsInitTargets.LkNodesForm :: lkCtxData.jsInitTargets
-      )
+      implicit val lkCtxData2 = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkNodesForm )(lkCtxData)
       getContext2
     }
 

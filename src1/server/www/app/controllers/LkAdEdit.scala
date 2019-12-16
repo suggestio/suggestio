@@ -410,11 +410,10 @@ class LkAdEdit @Inject() (
 
   /** Собрать инстанс ctxData. */
   private def _ctxDataFut(implicit request: IReq[_]): Future[CtxData] = {
-    for (ctxData0 <- request.user.lkCtxDataFut) yield {
-      ctxData0.withJsInitTargets(
-        MJsInitTargets.LkAdEditR :: ctxData0.jsInitTargets
+    request.user.lkCtxDataFut
+      .map(
+        CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkAdEditR )
       )
-    }
   }
 
   private def _mkAdEditHtmlCtx(implicit request: IReq[_]): Future[Context] = {

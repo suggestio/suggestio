@@ -14,6 +14,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.madn.mapf.MAdnMapTplArgs
 import io.suggest.bill.MGetPriceResp.getPriceRespPickler
 import io.suggest.bin.ConvCodecs
+import io.suggest.ctx.CtxData
 import io.suggest.dt.MAdvPeriod
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -92,9 +93,7 @@ class LkAdnMap @Inject() (
       val geoPointFut = getGeoPoint0(nodeId)
 
       val ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
-        implicit val ctxData = ctxData0.withJsInitTargets(
-          MJsInitTargets.AdnMapForm :: ctxData0.jsInitTargets
-        )
+        implicit val ctxData = CtxData.jsInitTargetsAppendOne(MJsInitTargets.AdnMapForm)(ctxData0)
         getContext2
       }
 
