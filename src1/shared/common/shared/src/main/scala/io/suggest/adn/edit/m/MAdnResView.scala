@@ -35,15 +35,18 @@ object MAdnResView extends IEmpty {
     val GAL_IMGS_FN = "g"
   }
 
-  implicit def mAdnImgsFormat: OFormat[MAdnResView] = (
-    (__ \ Fields.LOGO_FN).formatNullable[MJdEdgeId] and
-    (__ \ Fields.WC_FG_FN).formatNullable[MJdEdgeId] and
-    (__ \ Fields.GAL_IMGS_FN).formatNullable[Seq[MJdEdgeId]]
-      .inmap[Seq[MJdEdgeId]](
-        EmptyUtil.opt2ImplEmptyF(Nil),
-        { galImgs => if (galImgs.isEmpty) None else Some(galImgs) }
-      )
-  )(apply, unlift(unapply))
+  implicit def mAdnImgsFormat: OFormat[MAdnResView] = {
+    val F = Fields
+    (
+      (__ \ F.LOGO_FN).formatNullable[MJdEdgeId] and
+      (__ \ F.WC_FG_FN).formatNullable[MJdEdgeId] and
+      (__ \ F.GAL_IMGS_FN).formatNullable[Seq[MJdEdgeId]]
+        .inmap[Seq[MJdEdgeId]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          galImgs => Option.when(galImgs.nonEmpty)(galImgs)
+        )
+    )(apply, unlift(unapply))
+  }
 
   @inline implicit def univEq: UnivEq[MAdnResView] = {
     import io.suggest.ueq.UnivEqUtil._

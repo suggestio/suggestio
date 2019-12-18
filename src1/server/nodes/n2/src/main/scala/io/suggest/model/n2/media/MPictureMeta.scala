@@ -93,9 +93,3 @@ case class MPictureMeta(
                          colors     : Seq[MColorData]   = Nil
                        )
   extends EmptyProduct
-{
-
-  def withWhPx(whPx: Option[MSize2di])        = copy(whPx = whPx)
-  def withColors(colors: Seq[MColorData])     = copy(colors = colors)
-
-}

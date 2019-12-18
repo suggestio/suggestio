@@ -25,13 +25,15 @@ trait NodeTypes extends DynSearchArgs {
       val fn = MNodeFields.Common.NODE_TYPE_FN
       val strNodeTypes = _nodeTypes.map(_.value)
       val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
-      qbOpt0.map { qb0 =>
-        QueryBuilders.boolQuery()
-          .must(qb0)
-          .filter(ntq)
-      }.orElse {
-        Some(ntq)
-      }
+      qbOpt0
+        .map { qb0 =>
+          QueryBuilders.boolQuery()
+            .must(qb0)
+            .filter(ntq)
+        }
+        .orElse {
+          Some(ntq)
+        }
     }
   }
 

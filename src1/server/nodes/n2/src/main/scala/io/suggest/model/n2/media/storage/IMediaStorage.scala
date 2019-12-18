@@ -1,13 +1,12 @@
 package io.suggest.model.n2.media.storage
 
 import javax.inject.Inject
-
 import io.suggest.compress.MCompressAlgo
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.fio.{IDataSource, IWriteRequest}
+import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil.DocField
-import io.suggest.model.n2.media.storage.swfs.SwfsStorage
+import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.url.MHostInfo
 import play.api.inject.Injector
@@ -31,13 +30,17 @@ class IMediaStorages @Inject() (
 
   override type T = IMediaStorage
 
+  def storageImpl: PartialFunction[MStorage, IMediaStorageStaticImpl] = {
+    case MStorages.SeaWeedFs =>
+      injector.instanceOf[SwfsStorages]
+  }
+
   /** Карта инстансов статических моделей поддерживаемых media-сторэджей. */
   val STORAGES_MAP: Map[MStorage, IMediaStorageStaticImpl] = {
     MStorages.values
       .iterator
       .map { mStorType =>
-        val inst = injector.instanceOf( mStorType.companionCt )
-        mStorType -> inst
+        mStorType -> storageImpl( mStorType)
       }
       .toMap
   }
@@ -92,7 +95,7 @@ class IMediaStorages @Inject() (
       .delete( ptr )
   }
 
-  override def write(ptr: T, data: IWriteRequest): Future[_] = {
+  override def write(ptr: T, data: WriteRequest): Future[_] = {
     _getModel(ptr)
       .write( ptr, data )
   }
@@ -164,7 +167,7 @@ trait IMediaStorageStatic extends TypeT {
    * @param data Асинхронный поток данных.
    * @return Фьючерс для синхронизации.
    */
-  def write(ptr: T, data: IWriteRequest): Future[_]
+  def write(ptr: T, data: WriteRequest): Future[_]
 
   /** Есть ли в хранилище текущий файл? */
   def isExist(ptr: T): Future[Boolean]

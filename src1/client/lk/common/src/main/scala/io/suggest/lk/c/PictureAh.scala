@@ -49,7 +49,7 @@ class PictureAh[V, M](
                        prepareUploadRoute  : MFormResourceKey => Route,
                        uploadApi           : IUploadApi,
                        modelRW             : ModelRW[M, MPictureAh[V]]
-                     )(implicit picViewContAdp: IPictureViewAdp[V])
+                     )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
   extends ActionHandler(modelRW)
   with Log
 { ah =>
@@ -296,17 +296,19 @@ class PictureAh[V, M](
                   // Собрано достаточно хешей для аплоада. Запустить процедуру аплоада на сервер:
                   {_ =>
                     val fx = Effect {
+                      val reqRoute = prepareUploadRoute(
+                        MFormResourceKey(
+                          edgeUid  = Some( src2.edgeUid ),
+                          nodePath = None
+                        )
+                      )
+
                       val upProps = MFile4UpProps(
                         sizeB     = fileJs0.blob.size.toLong,
                         hashesHex = hashesHex2,
                         mimeType  = fileJs0.blob.`type`
                       )
-                      val reqRoute = prepareUploadRoute(
-                        MFormResourceKey(
-                          edgeUid = Some( src2.edgeUid ),
-                          nodePath = None
-                        )
-                      )
+
                       uploadApi
                         .prepareUpload( reqRoute, upProps )
                         .transform { tryRes =>

@@ -43,7 +43,8 @@ object MNodeTypes extends StringEnum[MNodeType] {
     /** Файл, не относящийся ни к картикам, ни к видео, ни к иным категориям из Media. */
     case object OtherFile extends MNodeType("mf") with _Child
 
-    override def children = List[MNodeType](Image, OtherFile)
+    override def children: LazyList[MNodeType]  =
+      Image #:: OtherFile #:: super.children
 
   }
 
@@ -76,8 +77,8 @@ object MNodeTypes extends StringEnum[MNodeType] {
       * Ресурс доступен по http/https, и обычно пригоден для использования через фрейм. */
     case object Resource extends MNodeType("er") with _Child
 
-    override def children: List[MNodeType] =
-      VideoExt :: Resource :: Nil
+    override def children: LazyList[MNodeType] =
+      VideoExt #:: Resource #:: super.children
 
   }
 

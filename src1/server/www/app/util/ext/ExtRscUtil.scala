@@ -226,15 +226,15 @@ class ExtRscUtil @Inject()(
 
     } yield {
       // Используя карту всех VideoExt-узлов, собрать итоговую карту ответа: ориг.ссылка -> MNode
-      val resIter = for {
+      val resMap = (for {
         (nodeId, mnode) <- allNodesMap.iterator
         rscInfos  <- rscNodeId2UrlsMap.get(nodeId).iterator
         rscInfo   <- rscInfos.iterator
       } yield {
         rscInfo.remoteUrl -> mnode
-      }
+      })
+        .toMap
 
-      val resMap = resIter.toMap
       LOGGER.info(s"$logPrefix Done ensuring ${allNodesMap.size} video-ext-nodes from ${videoUrls.size} urls into result[${resMap.size}]:\n ${resMap.mkString("\n ")}")
 
       resMap

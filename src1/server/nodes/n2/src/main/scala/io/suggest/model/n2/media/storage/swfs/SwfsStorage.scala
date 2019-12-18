@@ -3,7 +3,7 @@ package io.suggest.model.n2.media.storage.swfs
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.compress.MCompressAlgo
-import io.suggest.fio.{IDataSource, IWriteRequest}
+import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.model.n2.media.storage.MStorage.STYPE_FN_FORMAT
 import io.suggest.model.n2.media.storage._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -152,7 +152,7 @@ class SwfsStorages @Inject() (
     }
   }
 
-  override def write(ptr: T, data: IWriteRequest): Future[IPutResponse] = {
+  override def write(ptr: T, data: WriteRequest): Future[IPutResponse] = {
     for {
       vlocs     <- _vlocsFut(ptr)
       putResp   <- {

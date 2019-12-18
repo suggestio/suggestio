@@ -111,55 +111,6 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
 
-  /**
-   * Билдер настроек для индекса.
-   * Тут генерится в представление в виде дерева scala-классов и сразу конвертится в XContent.
-   */
-  def getNewIndexSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
-    val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
-    // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
-    jsonGenerator { implicit b =>
-      IndexSettings(
-        number_of_shards = shards,
-        number_of_replicas = replicas,
-
-        filters = Seq(
-          FilterStandard(STD_FN),
-          FilterLowercase(LOWERCASE_FN),
-          FilterStopwords(STOP_EN_FN, "english"),
-          FilterStopwords(STOP_RU_FN, "russian"),
-          FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
-          FilterStemmer(STEM_RU_FN, "russian"),
-          FilterStemmer(STEM_EN_FN, "english"),
-          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front")
-        ),
-
-        analyzers = Seq(
-          CustomAnalyzer(
-            id = MINIMAL_AN,
-            tokenizer = STD_TN,
-            filters = filters0
-          ),
-          CustomAnalyzer(
-            id = ENGRAM_AN_2,
-            tokenizer = STD_TN,
-            filters = filters0 ++ List(EDGE_NGRAM_FN_2)
-          ),
-          CustomAnalyzer(
-            id = FTS_RU_AN,
-            tokenizer = STD_TN,
-            filters = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
-          )
-        ),
-
-        tokenizers = Seq(
-          TokenizerStandard(STD_TN)
-        )
-      )
-    }
-  }
-
-
   // Сеттинги для suggest.io / isuggest.ru и их обновления.
   // v2.1 Поддержка deep-ngram analyzer'а.
 
@@ -254,7 +205,7 @@ object SioEsUtil extends MacroLogsImpl {
         ),
 
         analyzers = {
-          val chFilters = Seq("html_strip")
+          val chFilters = "html_strip" :: Nil
           val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
           val filters1 = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           Seq(
@@ -400,9 +351,8 @@ object SioEsUtil extends MacroLogsImpl {
           }
         }
 
-        override def onFailure(e: Exception): Unit = {
+        override def onFailure(e: Exception): Unit =
           p.failure(e)
-        }
       }
       esActionBuilder.execute(l)
 
@@ -1099,7 +1049,12 @@ trait FieldWithProperties extends Field {
   *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-root-object-type.html#_dynamic_templates]]
   */
-case class DynTemplate(id: String, nameMatch: String, matchMappingType: String = "{dynamic_type}", mapping: String)
+case class DynTemplate(
+                        id: String,
+                        nameMatch: String,
+                        matchMappingType: String = "{dynamic_type}",
+                        mapping: String
+                      )
 extends JsonObject {
   val mapping1 = mapping.trim
   if (!mapping1.startsWith("{") || mapping1.endsWith("}"))
@@ -1115,7 +1070,7 @@ extends JsonObject {
 }
 
 /** Генератор маппинга индекса со всеми полями и блекджеком. */
-case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocField], dynTemplates: Seq[DynTemplate] = Nil) extends FieldWithProperties {
+case class IndexMapping(typ: String, staticFields: Seq[Field], properties: Seq[DocField], dynTemplates: Seq[DynTemplate] = Nil) extends FieldWithProperties {
   override def id = typ
 
   override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
@@ -1157,49 +1112,6 @@ case class FieldNestedObject(
   }
 }
 
-
-/** Поле с флагом для валидации. */
-trait Validate extends Field {
-  def validate: Boolean
-
-  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
-    super.fieldsBuilder
-    b.field("validate", validate)
-  }
-}
-
-trait ValidateLatLon extends Field {
-  def validateLat: Boolean
-  def validateLon: Boolean
-
-  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
-    super.fieldsBuilder
-    b.field("validate_lat", validateLat)
-     .field("validate_lon", validateLon)
-  }
-}
-
-trait Normalize extends Field {
-  def normalize: Boolean
-
-  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
-    super.fieldsBuilder
-    b.field("normalize", normalize)
-  }
-}
-
-trait NormalizeLatLon extends Field {
-  def normalizeLat: Boolean
-  def normalizeLon: Boolean
-
-  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
-    super.fieldsBuilder
-    if (normalizeLat)
-      b.field("normalize_lat", normalizeLat)
-    if (normalizeLon)
-      b.field("normalize_lon", normalizeLon)
-  }
-}
 
 trait PrecisionStep extends Field {
   def precisionStep: Int

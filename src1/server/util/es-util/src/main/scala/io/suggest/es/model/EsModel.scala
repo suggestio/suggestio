@@ -419,9 +419,11 @@ final class EsModel @Inject()(
 
   /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
   def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT]): Future[_] = {
-    val indices = models.map { esModel =>
-      esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
-    }.toMap
+    val indices = models
+      .map { esModel =>
+        esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
+      }
+      .toMap
     Future.traverse(indices.toSeq) {
       case (inxName, (shards, replicas)) =>
         esModel.ensureIndex(inxName, shards=shards, replicas=replicas)

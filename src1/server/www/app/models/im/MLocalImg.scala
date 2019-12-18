@@ -76,10 +76,9 @@ class MLocalImgs @Inject() (
   }
 
   override def toLocalImg(mimg: MLocalImg): Future[Option[MLocalImg]] = {
-    val result = if (isExists(mimg))
-      Some(mimg.toLocalInstance)
-    else
-      None
+    val result = Option.when( isExists(mimg) )(
+      mimg.toLocalInstance
+    )
     Future.successful(result)
   }
 

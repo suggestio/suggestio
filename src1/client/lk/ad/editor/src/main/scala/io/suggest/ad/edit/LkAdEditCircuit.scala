@@ -117,16 +117,14 @@ class LkAdEditCircuit(
           editors = MEditorsS(
             // Залить гистограммы в общий словарь гистограмм, т.к. именно оттуда идёт рендер.
             colorsState = MColorsState(
-              histograms = {
-                val iter = for {
-                  jdEdge    <- mFormInit.adData.edges.iterator
-                  srvFile   <- jdEdge.fileSrv
-                  colorHist <- srvFile.colors
-                } yield {
-                  srvFile.nodeId -> colorHist
-                }
-                iter.toMap
-              }
+              histograms = (for {
+                jdEdge    <- mFormInit.adData.edges.iterator
+                srvFile   <- jdEdge.fileSrv
+                colorHist <- srvFile.colors
+              } yield {
+                srvFile.nodeId -> colorHist
+              })
+                .toMap,
             )
           ),
         )
@@ -207,7 +205,7 @@ class LkAdEditCircuit(
       } { (mdoc0, mColorAhOpt) =>
         // Что-то изменилось с моделью MColorAhOpt во время деятельности контроллера.
         // Нужно обновить текущий стрип.
-        val mdoc2Opt = for {
+        (for {
           jdtLoc0     <- getSelTagLoc( mdoc0 )
           mColorAh    <- mColorAhOpt
         } yield {
@@ -235,12 +233,12 @@ class LkAdEditCircuit(
               .composeLens(MEditorsS.colorsState)
               .set( mColorAh.colorsState )
           )(mdoc0)
-        }
-        // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
-        mdoc2Opt.getOrElse {
-          LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = s"$mdoc0 + $mColorAhOpt = $mdoc2Opt" )
-          mdoc0
-        }
+        })
+          // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
+          .getOrElse {
+            LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = s"$mdoc0 + $mColorAhOpt is empty" )
+            mdoc0
+          }
       }(OptFastEq.Wrapped)
     }
 
@@ -339,8 +337,9 @@ class LkAdEditCircuit(
           // Разобраться, изменился ли шаблон в реальности:
           val (jdDoc2, jdRuntime2) = if (isTplChanged) {
             // Изменился шаблон. Вернуть новый шаблон, пересобрать css
-            val jdDoc1 = MJdDoc.template.set( mPictureAh.view )( jdDoc0 )
-            val jdRuntime11 = DocEditAh.mkJdRuntime(jdDoc1, jdArgs0)
+            val jdDoc1 = (MJdDoc.template set mPictureAh.view)( jdDoc0 )
+            val jdRuntime11 = DocEditAh
+              .mkJdRuntime(jdDoc1, jdArgs0)
               .result
             (jdDoc1, jdRuntime11)
           } else {
@@ -368,7 +367,7 @@ class LkAdEditCircuit(
       mdoc1
     } else {
       MDocS.editors
-        .composeLens(MEditorsS.colorsState)
+        .composeLens( MEditorsS.colorsState )
         .composeLens( MColorsState.histograms )
         .set( mPictureAh.histograms )( mdoc1 )
     }

@@ -225,4 +225,7 @@ object ErrorMsgs {
     * неожиданному с точки зрения над-стоящей логики. */
   def INIT_FLOW_UNEXPECTED = "Init.flow.unexpected"
 
+  /** Ошибка в какой-либо форме. */
+  def FORM_ERROR = "Form.error"
+
 }

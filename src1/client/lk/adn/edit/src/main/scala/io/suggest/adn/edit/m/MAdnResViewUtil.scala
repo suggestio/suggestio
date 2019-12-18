@@ -2,7 +2,7 @@ package io.suggest.adn.edit.m
 
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.jd.MJdEdgeId
-import io.suggest.lk.c.IPictureViewAdp
+import io.suggest.lk.c.IJdEdgeIdViewAdp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
@@ -15,7 +15,7 @@ import japgolly.univeq._
   */
 object MAdnResViewUtil extends Log {
 
-  implicit object ResViewAdp extends IPictureViewAdp[MAdnResView] {
+  implicit object ResViewAdp extends IJdEdgeIdViewAdp[MAdnResView] {
 
     override def get(view: MAdnResView, resKey: MFormResourceKey): Option[MJdEdgeId] = {
       resKey.frkType.get match {

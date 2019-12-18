@@ -5,6 +5,7 @@ import io.suggest.crypto.hash.{HashHex, HashesHex, MHash}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.IId
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -45,7 +46,7 @@ object MFileMetaHash extends IGenEsMappingProps {
         .inmap[Set[Short]](
           // Изначально, никаких флагов не было. Поэтому имитируем наличие флага TRULY_ORIGINAL. TODO Надо resaveMany() для окончательной фиксации флагов.
           EmptyUtil.opt2ImplEmpty1F( Set(Flags.TRULY_ORIGINAL) ),
-          { flags => if (flags.isEmpty) None else Some(flags) }
+          { flags => Option.when(flags.nonEmpty)(flags) }
         )
     )(apply, unlift(unapply))
   }
@@ -69,6 +70,8 @@ object MFileMetaHash extends IGenEsMappingProps {
       .map(_.hashHexTuple)
       .toMap
   }
+
+  @inline implicit def univEq: UnivEq[MFileMetaHash] = UnivEq.derive
 
 }
 

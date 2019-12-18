@@ -46,9 +46,8 @@ object MPredicates extends StringEnum[MPredicate] {
     /** Проплаченный узел-ресивер, купленный через подсистемы adv. */
     case object AdvDirect extends MPredicate("ka") with _Child
 
-    override def children: List[MPredicate] = {
-      Self :: AdvDirect :: super.children
-    }
+    override def children: LazyList[MPredicate] =
+      Self #:: AdvDirect #:: super.children
 
   }
 
@@ -70,9 +69,8 @@ object MPredicates extends StringEnum[MPredicate] {
       */
     case object DirectTag extends MPredicate("ld") with _Child
 
-    override def children: List[MPredicate] = {
-      Agt :: Self :: DirectTag :: super.children
-    }
+    override def children: LazyList[MPredicate] =
+      Agt #:: Self #:: DirectTag #:: super.children
 
   }
 
@@ -93,9 +91,8 @@ object MPredicates extends StringEnum[MPredicate] {
       */
     case object Paid extends MPredicate("np") with _Child
 
-    override def children: List[MPredicate] = {
-      Paid :: super.children
-    }
+    override def children: LazyList[MPredicate] =
+      Paid #:: super.children
 
   }
 
@@ -128,9 +125,8 @@ object MPredicates extends StringEnum[MPredicate] {
       * До 2018-08-23 здесь было только видео, поэтому v. */
     case object Frame extends MPredicate("sv") with _Child
 
-    override def children: List[MPredicate] = {
-      Text :: Image :: Frame :: super.children
-    }
+    override def children: LazyList[MPredicate] =
+      Text #:: Image #:: Frame #:: super.children
 
   }
 
@@ -161,8 +157,8 @@ object MPredicates extends StringEnum[MPredicate] {
       */
     case object Password extends MPredicate("qw") with _Child
 
-    override def children: List[MPredicate] =
-      Email :: Phone :: Id :: Password :: Nil
+    override def children: LazyList[MPredicate] =
+      Email #:: Phone #:: Id #:: Password #:: super.children
 
   }
 
@@ -177,14 +173,6 @@ object MPredicates extends StringEnum[MPredicate] {
 sealed abstract class MPredicate(override val value: String)
   extends StringEnumEntry
   with TreeEnumEntry[MPredicate]
-{ that: MPredicate =>
-
-  /** Код i18n-сообщения с названием предиката в единственном числе. */
-  def singular: String = {
-    "edge.predicate." + value
-  }
-
-}
 
 
 object MPredicate {
@@ -209,7 +197,7 @@ object MPredicate {
         val preds = mpred
           .meAndParentsIterator
           .map( p.writes )
-          .toSeq
+          .to( LazyList )
         JsArray( preds )
       }
     }
@@ -233,5 +221,14 @@ object MPredicate {
   }
 
   @inline implicit def univEq: UnivEq[MPredicate] = UnivEq.derive
+
+
+  implicit class PredicateOpsExt( private val pred: MPredicate ) extends AnyVal {
+
+    /** Код i18n-сообщения с названием предиката в единственном числе. */
+    def singular: String =
+      "edge.predicate." + pred.value
+
+  }
 
 }

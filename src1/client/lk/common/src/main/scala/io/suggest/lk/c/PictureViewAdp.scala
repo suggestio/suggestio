@@ -22,9 +22,8 @@ import monocle.Traversal
   * но не высокоуровневые вещи: кроп, id'шник, наличие картинки вообще.
   *
   * type-class нужен как простая прослойка между абстрактной моделью представления (дерево jd-тегов, adn-узел, и т.д.)
-  * и
   */
-trait IPictureViewAdp[V] {
+trait IJdEdgeIdViewAdp[V] {
 
   /** Прочитать текущие данные по отображению изображения. */
   def get(view: V, resKey: MFormResourceKey): Option[MJdEdgeId]
@@ -33,28 +32,27 @@ trait IPictureViewAdp[V] {
   def updated(view: V, resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): V
 
   def updateWith(view: V, resKey: MFormResourceKey)(f: Option[MJdEdgeId] => Option[MJdEdgeId]): V = {
-    updated(view, resKey) {
-      f( get(view, resKey) )
-    }
+    val v2 = f( get(view, resKey) )
+    updated(view, resKey)(v2)
   }
 
-  /** Стереть все упоминония картинки с указанным id эджа из хранилища.
+  /** Стереть все упоминания картинки с указанным id эджа из хранилища.
     * Пригодно для всяких экстренных случаев, например когда выяснилось, что картинка невалидна. */
   def forgetEdge(view: V, edgeUid: EdgeUid_t): V
 
 }
 
 
-object IPictureViewAdp {
+object IJdEdgeIdViewAdp {
 
   /** Самый твивиальный view-контейнер значения - это само значение. Тут typeclass поддержки такого контейнера. */
-  implicit object DummyAdp extends IPictureViewAdp[Option[MJdEdgeId]] {
-    override def get(view: Option[MJdEdgeId], resKey: MFormResourceKey): Option[MJdEdgeId] = {
+  implicit object PlainAdp extends IJdEdgeIdViewAdp[Option[MJdEdgeId]] {
+    override def get(view: Option[MJdEdgeId], resKey: MFormResourceKey): Option[MJdEdgeId] =
       view
-    }
-    override def updated(view: Option[MJdEdgeId], resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): Option[MJdEdgeId] = {
+
+    override def updated(view: Option[MJdEdgeId], resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): Option[MJdEdgeId] =
       newValue
-    }
+
     override def forgetEdge(view: Option[MJdEdgeId], edgeUid: EdgeUid_t): Option[MJdEdgeId] = {
       view
         .filterNot { p =>
@@ -65,11 +63,13 @@ object IPictureViewAdp {
 
 
   /** Поддержка управления представлением картинок, которые хранятся в дереве jd-тегов. */
-  implicit object JdTagTreeBgImgAdp extends IPictureViewAdp[Tree[JdTag]] {
+  implicit object JdTagTreeBgImgAdp extends IJdEdgeIdViewAdp[Tree[JdTag]] {
 
     private def _cmpEdgeUid(keyEdgeUid: Option[EdgeUid_t], edgeUids: Iterable[MJdEdgeId]): Boolean = {
       (keyEdgeUid.isEmpty && edgeUids.isEmpty) ||
-        keyEdgeUid.exists(ei => edgeUids.exists(_.edgeUid ==* ei))
+      keyEdgeUid.exists { ei =>
+        edgeUids.exists(_.edgeUid ==* ei)
+      }
     }
 
     override def get(view: Tree[JdTag], resKey: MFormResourceKey): Option[MJdEdgeId] = {
@@ -109,18 +109,19 @@ object IPictureViewAdp {
 
       jdtLoc
         .setLabel {
-          jdt.name match {
+          val setF = jdt.name match {
             case MJdTagNames.QD_OP =>
               JdTag.qdProps
                 .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
                 .composeLens( MQdOp.edgeInfo )
-                .set( newValue )(jdt)
+                .set _
             case MJdTagNames.STRIP =>
               _jdtag_p1_bgImg_LENS
-                .set( newValue )(jdt)
+                .set _
             case jdtName =>
-              throw new UnsupportedOperationException(resKey + HtmlConstants.SPACE + newValue + HtmlConstants.SPACE + jdtName)
+              throw new UnsupportedOperationException(resKey.toString + HtmlConstants.SPACE + newValue + HtmlConstants.SPACE + jdtName)
           }
+          setF( newValue )(jdt)
         }
         .toTree
     }
@@ -130,7 +131,7 @@ object IPictureViewAdp {
       val lens = _jdtag_p1_bgImg_LENS
       for (jdt0 <- view) yield {
         if ( lens.get(jdt0).exists(_.edgeUid ==* edgeUid) ) {
-          lens.set(None)(jdt0)
+          (lens set None)(jdt0)
         } else {
           jdt0
         }

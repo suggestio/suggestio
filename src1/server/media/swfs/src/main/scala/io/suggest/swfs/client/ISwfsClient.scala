@@ -5,7 +5,7 @@ import io.suggest.di.IExecutionContext
 import io.suggest.swfs.client.play.SwfsClientWs
 import io.suggest.swfs.client.proto.assign.{IAssignResponse, IAssignRequest, AssignRequest}
 import io.suggest.swfs.client.proto.delete.{IDeleteResponse, IDeleteRequest}
-import io.suggest.swfs.client.proto.get.{IGetRequest, IGetResponse}
+import io.suggest.swfs.client.proto.get.{IGetRequest, GetResponse}
 import io.suggest.swfs.client.proto.lookup.{ILookupError, ILookupResponse, ILookupRequest}
 import io.suggest.swfs.client.proto.put.{IPutResponse, IPutRequest}
 
@@ -56,7 +56,7 @@ trait ISwfsClient extends IExecutionContext {
    *         None -- файл не найден.
    *         Some() с содержимым ответа.
    */
-  def get(args: IGetRequest): Future[Option[IGetResponse]]
+  def get(args: IGetRequest): Future[Option[GetResponse]]
 
 
   /**

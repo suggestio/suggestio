@@ -7,21 +7,12 @@ import java.io.File
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 12.10.15 22:36
  * Description: Модель аргументов запроса сохранения файла в абстрактное хранилище.
+ * @param contentType Тип данных в файле.
+ * @param file Файл в файловой системе.
+ * @param origFileName Оригинальное имя файла, если есть.
  */
-trait IWriteRequest extends IContentType {
-
-  /** Файл в файловой системе. */
-  def file: File
-
-  /** Оригинальное имя файла, если есть. */
-  def origFileName: Option[String]
-
-}
-
-
 case class WriteRequest(
-  override val contentType  : String,
-  override val file         : File,
-  override val origFileName : Option[String] = None
-)
-  extends IWriteRequest
+                         contentType  : String,
+                         file         : File,
+                         origFileName : Option[String]  = None,
+                       )

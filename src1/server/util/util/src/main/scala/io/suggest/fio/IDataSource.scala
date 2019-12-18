@@ -8,10 +8,12 @@ import io.suggest.compress.MCompressAlgo
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 12.10.15 23:03
- * Description: Модель данных о результате чтения.
+ * Description: Интерфейс доступа к данным на чтение.
  */
 
-trait IDataSource extends IContentType {
+trait IDataSource {
+
+  def contentType  : String
 
   /** Содержимое файла.
     * Считается, что возвращает один и тот же инстанс Source[].

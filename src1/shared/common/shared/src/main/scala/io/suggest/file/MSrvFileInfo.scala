@@ -89,6 +89,7 @@ case class MSrvFileInfo(
                          name       : Option[String]      = None,
                          mimeType   : Option[String]      = None,
                          hashesHex  : HashesHex           = Map.empty,
+                         // Это модель MPictureMeta:
                          colors     : Option[MHistogram]  = None,
                          whPx       : Option[MSize2di]    = None
                        ) {
@@ -112,9 +113,11 @@ case class MSrvFileInfo(
         // Сервер, на ранних этапах запиливания кода, может возвращать TO*DO-мусор вместо ссылок.
         url = {
           val urls = newInfo.url ++ url
-          urls.headOption.flatMap { _ =>
-            StringUtil.firstStringMakesSence(urls.toSeq: _*)
-          }
+          urls
+            .headOption
+            .flatMap { _ =>
+              StringUtil.firstStringMakesSence(urls.toSeq: _*)
+            }
         },
         sizeB = newInfo.sizeB
           .orElse(sizeB),
@@ -125,7 +128,8 @@ case class MSrvFileInfo(
         hashesHex = (newInfo.hashesHex :: hashesHex :: Nil)
           .find(_.nonEmpty)
           .getOrElse(hashesHex),
-        colors = newInfo.colors.orElse( colors ),
+        colors = newInfo.colors
+          .orElse( colors ),
         whPx = newInfo.whPx
           .orElse(whPx)
       )

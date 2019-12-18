@@ -7,6 +7,7 @@ import io.suggest.crypto.hash.MHashes
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -99,6 +100,8 @@ object MFileMeta extends IGenEsMappingProps {
       FieldDate(F.DATE_CREATED_FN, index = true, include_in_all = false)
     )
   }
+
+  @inline implicit def univEq: UnivEq[MFileMeta] = UnivEq.derive
 
 }
 

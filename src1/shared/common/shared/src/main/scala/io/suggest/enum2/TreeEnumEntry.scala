@@ -23,7 +23,7 @@ object TreeEnumEntry {
   def deepFindValue[T <: TreeEnumEntry[T]](findValuesRes: immutable.IndexedSeq[T]): immutable.IndexedSeq[T] = {
     findValuesRes
       .flatMap { v =>
-        v :: v.deepChildren
+        v #:: v.deepChildren
       }
   }
 
@@ -33,12 +33,12 @@ object TreeEnumEntry {
 trait TreeEnumEntry[T <: TreeEnumEntry[T]] { that: T =>
 
   /** Подтипы этого типа. */
-  def children: List[T] = Nil
+  def children: LazyList[T] = LazyList.empty
 
   /** Вернуть все дочерние элементы с вообще всех подуровней. */
-  final def deepChildren: List[T] = {
+  final def deepChildren: LazyList[T] = {
     children.flatMap { v =>
-      v :: v.deepChildren
+      v #:: v.deepChildren
     }
   }
 

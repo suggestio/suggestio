@@ -14,6 +14,8 @@ import play.api.libs.functional.syntax._
 import scala.collection.Map
 import scala.concurrent.duration._
 
+// TODO Вероятно, модель надо замёржить в MEdge в отдельное поле?
+//      И возможно даже сделать один файл - один узел MNode с одним или несколькими File-эджами для картинок (файлов) оригиналов и деривативов...
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

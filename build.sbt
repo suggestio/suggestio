@@ -497,6 +497,13 @@ lazy val reactMaterialUiSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Форма организации заливки какого-либо файла на сервер. */
+lazy val fileUploadSjs = {
+  val id = "file-upload"
+  Project(id = id + "-sjs", base = file(DIR0 + "client/sys/" + id))
+    .dependsOn( lkCommonSjs, reactMaterialUiSjs )
+}
+
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
