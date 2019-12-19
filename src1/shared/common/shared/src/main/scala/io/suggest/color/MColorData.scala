@@ -3,6 +3,7 @@ package io.suggest.color
 import boopickle.Default._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.math.MathConst
 import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
@@ -19,7 +20,9 @@ import scalaz.syntax.apply._
   * Description: Пошаренная модель данных по одному цвету.
   */
 
-object MColorData {
+object MColorData
+  extends IEsMappingProps
+{
 
   object Fields {
     /** Название поля с hex-кодом цвета. */
@@ -82,6 +85,23 @@ object MColorData {
   def validateHexCodeOnly(mcd: MColorData): ValidationNel[String, MColorData] = {
     _validateHexCode(mcd.code)
       .map { MColorData(_) }
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.CODE_FN     -> FKeyWord.indexedJs,
+      F.RGB_FN      -> FObject.nested( properties = MRgb.esMappingProps ),
+      F.FREQ_PC_FN -> FNumber(
+        typ = DocFieldTypes.Integer,
+        index = someTrue,
+      ),
+      F.COUNT_FN -> FNumber(
+        typ   = DocFieldTypes.Long,
+        index = someFalse,
+      )
+    )
   }
 
   val code    = GenLens[MColorData](_.code)

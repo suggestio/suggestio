@@ -1,6 +1,7 @@
 package io.suggest.model.n2.media
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil.{DocField, FieldKeyword, FieldObject}
 import io.suggest.model.PrefixedFn
@@ -20,7 +21,10 @@ import play.api.libs.functional.syntax._
   *
   * Явно-пустая модель, т.к. несёт в себе обязательные поля.
   */
-object MEdgeMedia extends IGenEsMappingProps {
+object MEdgeMedia
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   object Fields {
 
@@ -81,6 +85,21 @@ object MEdgeMedia extends IGenEsMappingProps {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.FileMeta.FILE_META_FN -> FObject.plain(
+        enabled     = someTrue,
+        properties  = Some( MFileMeta.esMappingProps ),
+      ),
+      F.Storage.STORAGE_FN -> FKeyWord.indexedJs,
+      F.PictureMeta.PICTURE_META_FN -> FObject.plain(
+        enabled     = someTrue,
+        properties  = Some( MPictureMeta.esMappingProps ),
+      ),
+    )
+  }
 
   val file        = GenLens[MEdgeMedia](_.file)
   val storage     = GenLens[MEdgeMedia](_.storage)

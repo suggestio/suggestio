@@ -1,11 +1,9 @@
 package io.suggest.model.n2.ad
 
-import io.suggest.ad.blk.ent.{MEntity, MEntityJvm}
-import io.suggest.ad.blk.{BlockMeta, BlockMetaJvm}
+import io.suggest.ad.blk.ent.MEntity
+import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.n2.ad.rd.RichDescr
-import io.suggest.es.util.SioEsUtil.{DocField, FieldNestedObject, FieldObject}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -18,7 +16,7 @@ import play.api.libs.functional.syntax._
  *
  * При отсутствие данных внутри, это неявно-пустая модель.
  */
-object MNodeAd extends IGenEsMappingProps with IEmpty {
+object MNodeAd extends IEmpty {
 
   override type T = MNodeAd
 
@@ -41,25 +39,6 @@ object MNodeAd extends IGenEsMappingProps with IEmpty {
 
   }
 
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldNestedObject(
-        id          = Fields.Entities.ENTITIES_FN,
-        enabled     = true,
-        properties  = MEntityJvm.generateMappingProps
-      ),
-      FieldObject(
-        id          = Fields.RDescr.RDESCR_FN,
-        enabled     = true,
-        properties  = RichDescr.generateMappingProps
-      ),
-      FieldObject(
-        id          = Fields.BlockMeta.BLOCK_META_FN,
-        enabled     = true,
-        properties  = BlockMetaJvm.generateMappingProps
-      )
-    )
-  }
 
   implicit val FORMAT: OFormat[MNodeAd] = (
     (__ \ Fields.Entities.ENTITIES_FN).formatNullable[Seq[MEntity]]

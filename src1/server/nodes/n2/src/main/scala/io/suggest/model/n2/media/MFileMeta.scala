@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.MHashes
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
@@ -17,7 +18,10 @@ import play.api.libs.functional.syntax._
  * Created: 27.09.15 18:24
  * Description: Метаданные файла для модели [[MMedia]].
  */
-object MFileMeta extends IGenEsMappingProps {
+object MFileMeta
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   object Fields {
     /** Название поля, где mime индексируется как keyword. */
@@ -98,6 +102,28 @@ object MFileMeta extends IGenEsMappingProps {
       FieldNestedObject(F.HASHES_HEX_FN, enabled = true, properties = MFileMetaHash.generateMappingProps),
       //FieldKeyword(F.SHA1_FN, index = false, include_in_all = false),
       FieldDate(F.DATE_CREATED_FN, index = true, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.MIME_FN -> FKeyWord(
+        index  = someTrue,
+        fields = Some( Json.obj(
+          F.MIME_AS_TEXT_FN -> FText.indexedJs,
+        )),
+      ),
+      F.SIZE_B_FN -> FNumber(
+        typ   = DocFieldTypes.Long,
+        index = someTrue,
+      ),
+      F.IS_ORIGINAL_FN -> FBoolean.indexedJs,
+      F.HASHES_HEX_FN -> FObject.nested(
+        properties = MFileMetaHash.esMappingProps,
+      ),
+      F.DATE_CREATED_FN -> FDate.indexedJs,
     )
   }
 

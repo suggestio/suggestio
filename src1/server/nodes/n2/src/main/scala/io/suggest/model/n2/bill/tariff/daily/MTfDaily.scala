@@ -1,6 +1,7 @@
 package io.suggest.model.n2.bill.tariff.daily
 
 import io.suggest.bill.{IMCurrency, MCurrency, MPrice}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.es.model.IGenEsMappingProps
@@ -13,7 +14,10 @@ import monocle.macros.GenLens
  * Created: 23.12.15 21:14
  * Description: Модель тарифа посуточного размещения на узле.
  */
-object MTfDaily extends IGenEsMappingProps {
+object MTfDaily
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   /** Названия полей. */
   object Fields {
@@ -51,6 +55,22 @@ object MTfDaily extends IGenEsMappingProps {
       FieldKeyword(CURRENCY_FN, index = true, include_in_all = false),
       FieldObject(CLAUSES_FN, enabled = true, properties = MDayClause.generateMappingProps),
       FieldNumber(COMISSION_PC_FN, fieldType = DocFieldTypes.double, index = false, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.CURRENCY_FN -> FKeyWord.indexedJs,
+      F.CLAUSES_FN  -> FObject.plain(
+        enabled = someTrue,
+        properties = Some(MDayClause.esMappingProps)
+      ),
+      F.COMISSION_PC_FN -> FNumber(
+        typ = DocFieldTypes.Double,
+        index = someFalse,
+      )
     )
   }
 

@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
@@ -26,7 +27,11 @@ import io.suggest.ueq.UnivEqUtil._
  *
  * Это неявно-пустая модель, т.е. все поля модели могут быть пустыми.
  */
-object MEdgeInfo extends IGenEsMappingProps with IEmpty {
+object MEdgeInfo
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MEdgeInfo
 
@@ -113,6 +118,49 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         ) and
       (__ \ EXT_SERVICE_FN).formatNullable[MExtService]
     )(apply, unlift(unapply))
+  }
+
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.DATE_NI_FN -> FDate.notIndexedJs,
+      F.COMMENT_NI_FN -> FText.notIndexedJs,
+      F.FLAG_FN -> FBoolean.indexedJs,
+      F.FLAGS_FN -> FObject.nested(
+        properties = Json.obj(
+          MEdgeFlagData.Fields.FLAG_FN -> FKeyWord.indexedJs,
+        ),
+      ),
+      // Теги
+      F.TAGS_FN -> FText(
+        index           = someTrue,
+        analyzer        = Some( SioConstants.ENGRAM_AN_1 ),
+        searchAnalyzer  = Some( SioConstants.DFLT_AN ),
+        fields = Some( Json.obj(
+          // При поиске тегов надо игнорить регистр:
+          F.Tags.RAW_FN -> FText(
+            index = someTrue,
+            analyzer = Some( SioConstants.KW_LC_AN ),
+            // TODO Нужна поддержка аггрегации тут: нужен какой-то параметр тут + переиндексация. И можно удалить KW_FN.
+          ),
+          // Для аггрегации нужно keyword-термы. Они позволят получать необрезанные слова.
+          // Появилась для DirectTagsUtil, но из-за других проблем там, это поле не используется.
+          F.Tags.KW_FN -> FKeyWord.indexedJs,
+        ))
+      ),
+      // Список геошейпов идёт как nested object, чтобы расширить возможности индексации (ценой усложнения запросов).
+      F.GEO_SHAPES_FN -> FObject.nested( MEdgeGeoShape.esMappingProps ),
+      // 2016.sep.29 Геоточки, используются как для информации, так и для индексации.
+      // Пока не очень ясно, какие именно настройки индексации поля здесь необходимы.
+      // Изначальное назначение: экспорт на карту узлов выдачи, чтобы в кружках с цифрами отображались.
+      // Окружности и прочее фигурное добро для этого элементарного действа не подходят ни разу.
+      F.GEO_POINT_FN -> FGeoPoint.indexedJs,
+      // Маркер связи с внешним сервисом, интегрированным с s.io.
+      // Появился с переездом идентов в n2.
+      F.EXT_SERVICE_FN -> FKeyWord.indexedJs,
+    )
   }
 
 

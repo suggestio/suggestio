@@ -1,11 +1,13 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.util.SioConstants
 
 /**
   * Suggest.io
@@ -15,7 +17,10 @@ import io.suggest.ueq.UnivEqUtil._
   *
   * Это неявно-пустая модель и КЛИЕНТ-серверная целиком.
   */
-object MEdgeDoc extends IEmpty {
+object MEdgeDoc
+  extends IEmpty
+  with IEsMappingProps
+{
 
   override type T = MEdgeDoc
 
@@ -47,6 +52,24 @@ object MEdgeDoc extends IEmpty {
   val text = GenLens[MEdgeDoc](_.text)
 
   @inline implicit def univEq: UnivEq[MEdgeDoc] = UnivEq.derive
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.UID_FN -> FNumber(
+        typ = DocFieldTypes.Integer,
+        index = someFalse,
+      ),
+      // Текст следует индексировать по-нормальному. Потом в будущем схема индексации неизбежно будет расширена.
+      F.TEXT_FN -> FText(
+        index = someTrue,
+        // Скопипасчено с MNode._all. Начиная с ES-6.0, поле _all покидает нас, поэтому тут свой индекс.
+        analyzer = Some(SioConstants.ENGRAM_AN_1),
+        searchAnalyzer = Some(SioConstants.DFLT_AN),
+      ),
+    )
+  }
 
 }
 

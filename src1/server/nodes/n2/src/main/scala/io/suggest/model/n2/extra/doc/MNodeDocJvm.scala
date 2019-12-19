@@ -9,6 +9,7 @@ import io.suggest.es.util.SioEsUtil._
   * Created: 23.08.17 16:10
   * Description: JVM-only поддержка для модели документа внутри узла.
   */
+@deprecated
 object MNodeDocJvm extends IGenEsMappingProps {
 
   /** Сборка схемы ES. */

@@ -3,6 +3,7 @@ package models.adv
 import java.time.OffsetDateTime
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
+import io.suggest.es.MappingDsl
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
@@ -60,10 +61,8 @@ class MExtTargets
   override def generateMappingStaticFields: List[Field] = {
     List(
       FieldSource(enabled = true),
-      FieldAll(enabled = true)
     )
   }
-
 
   import MExtTargetFields._
 
@@ -77,6 +76,27 @@ class MExtTargets
       FieldDate(DATE_CREATED_ESFN, index = true, include_in_all = false)
     )
   }
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    val F = MExtTargetFields
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some( FSource(enabled = someTrue) ),
+      properties = Some {
+        Json.obj(
+          F.URL_ESFN -> FText.indexedJs,
+          F.SERVICE_ID_ESFN -> FKeyWord.indexedJs,
+          F.NAME_ESFN -> FText.indexedJs,
+          F.ADN_ID_ESFN -> FKeyWord.indexedJs,
+          // Для сортировке по дате требуется индексация.
+          F.DATE_CREATED_ESFN -> FDate.indexedJs,
+        )
+      }
+    )
+  }
+
 
   @deprecated("Delete it, replaced by deserializeOne2().", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
@@ -119,11 +139,6 @@ class MExtTargets
     toJsTargetPlayJsonFields
   }
 
-}
-
-/** Интерфейс для инжектируемых полей [[MExtTargets]]. */
-trait IMExtTargets {
-  def mExtTargets: MExtTargets
 }
 
 

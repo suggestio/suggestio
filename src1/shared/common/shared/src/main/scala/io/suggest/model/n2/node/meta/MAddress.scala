@@ -2,6 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -17,7 +18,7 @@ import scalaz.syntax.apply._
   * Description: Модель метаданных городского адреса узла.
   */
 
-object MAddress extends IEmpty {
+object MAddress extends IEmpty with IEsMappingProps {
 
   object Fields {
     val TOWN_FN         = "t"
@@ -32,6 +33,14 @@ object MAddress extends IEmpty {
     (__ \ ADDRESS_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    Json.obj(
+      TOWN_FN       -> FText.indexedJs,
+      ADDRESS_FN    -> FText.indexedJs,
+    )
+  }
 
   override type T = MAddress
 

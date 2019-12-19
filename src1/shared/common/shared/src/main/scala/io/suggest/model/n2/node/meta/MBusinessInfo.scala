@@ -1,8 +1,9 @@
 package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty, OptionUtil}
 import io.suggest.err.ErrorConstants
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
@@ -20,7 +21,7 @@ import scalaz.syntax.apply._
   * Description: Кросс-платформенная модель бизнес-инфы по узлу.
   */
 
-object MBusinessInfo extends IEmpty {
+object MBusinessInfo extends IEmpty with IEsMappingProps {
 
   override type T = MBusinessInfo
 
@@ -35,13 +36,14 @@ object MBusinessInfo extends IEmpty {
 
   /** Поддержка JSON. */
   implicit val MBUSINESS_INFO_FORMAT: OFormat[MBusinessInfo] = {
+    val F = Fields
     // TODO 2018-04-06 Удалить потом. Миграция с Int на String-поле
     val humanTrafficFormat0 = {
-      val pathStr = (__ \ Fields.HUMAN_TRAFFIC_FN)
+      val pathStr = (__ \ F.HUMAN_TRAFFIC_FN)
       val r = pathStr.read[String]
         .map( EmptyUtil.someF )
         .orElse {
-          (__ \ Fields.HUMAN_TRAFFIC_INT_FN).readNullable[Int]
+          (__ \ F.HUMAN_TRAFFIC_INT_FN).readNullable[Int]
             .map(_.map(_.toString))
         }
       val w = pathStr.writeNullable[String]
@@ -49,11 +51,33 @@ object MBusinessInfo extends IEmpty {
     }
 
     (
-      (__ \ Fields.SITE_URL_FN).formatNullable[String] and
-      (__ \ Fields.AUDIENCE_DESCR_FN).formatNullable[String] and
+      (__ \ F.SITE_URL_FN).formatNullable[String] and
+      (__ \ F.AUDIENCE_DESCR_FN).formatNullable[String] and
       humanTrafficFormat0 and
-      (__ \ Fields.BDESCR_FN).formatNullable[String]
+      (__ \ F.BDESCR_FN).formatNullable[String]
     )(apply, unlift(unapply))
+  }
+
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+
+    Json.obj(
+      F.SITE_URL_FN -> FText(
+        index = someTrue,
+        boost = Some(0.33)
+      ),
+      F.AUDIENCE_DESCR_FN -> FText( index = someTrue ),
+      F.HUMAN_TRAFFIC_INT_FN -> FNumber(
+        typ   = DocFieldTypes.Integer,
+        index = someTrue,
+      ),
+      F.BDESCR_FN -> FText(
+        index = someTrue,
+        boost = Some(0.1)
+      )
+    )
   }
 
 

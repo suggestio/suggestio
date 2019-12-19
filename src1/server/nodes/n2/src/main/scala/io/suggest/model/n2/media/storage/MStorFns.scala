@@ -1,8 +1,10 @@
 package io.suggest.model.n2.media.storage
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.es.util.SioEsUtil._
+import play.api.libs.json.{JsObject, Json}
 
 /**
  * Suggest.io
@@ -18,6 +20,14 @@ object MStorFns extends StringEnum[MStorFn] {
     override def esMappingProp: DocField = {
       FieldKeyword(fn, index = true, include_in_all = false)
     }
+
+    override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+      import dsl._
+      Json.obj(
+        fn -> FKeyWord.indexedJs,
+      )
+    }
+
   }
 
 
@@ -31,16 +41,34 @@ object MStorFns extends StringEnum[MStorFn] {
         FieldKeyword(F.FILE_ID_FN, index = false, include_in_all = false)
       ))
     }
+
+    override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+      import dsl._
+      val F = Fid.Fields
+      Json.obj(
+        fn -> FObject.plain(
+          enabled    = someTrue,
+          properties = Some( Json.obj(
+            F.VOLUME_ID_FN -> FNumber(
+              typ   = DocFieldTypes.Integer,
+              index = someTrue,
+            ),
+            F.FILE_ID_FN -> FKeyWord.notIndexedJs,
+          ))
+        )
+      )
+    }
+
   }
 
 
-  override val values = findValues
+  override def values = findValues
 
 }
 
 
 /** Класс модели названий полей storage-моделей. */
-sealed abstract class MStorFn(override val value: String) extends StringEnumEntry {
+sealed abstract class MStorFn(override val value: String) extends StringEnumEntry with IEsMappingProps {
 
   /** Идентификатор (название) поля на стороне ES. */
   final def fn: String = value

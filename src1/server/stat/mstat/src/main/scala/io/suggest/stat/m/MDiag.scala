@@ -1,6 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -16,7 +17,11 @@ import play.api.libs.functional.syntax._
   * развёрнутых структурированных отчётов, для возможности обзора статистики по ним.
   * Например, поля serverity (warn, error, ...) и int_code (целочисленный код проблемы по ErrorMsgs или WarnMsgs).
   */
-object MDiag extends IGenEsMappingProps with IEmpty {
+object MDiag
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MDiag
 
@@ -53,6 +58,15 @@ object MDiag extends IGenEsMappingProps with IEmpty {
     List(
       FieldText(MESSAGE_FN, index = false, include_in_all = true),
       FieldText(STATE_FN,   index = false, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.MESSAGE_FN -> FText.notIndexedJs,
+      F.STATE_FN   -> FText.notIndexedJs,
     )
   }
 

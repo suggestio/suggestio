@@ -11,8 +11,8 @@ import io.suggest.es.util.SioEsUtil.{DocField, DocFieldTypes, FieldKeyword, Fiel
   *
   * Изначально, цвета не индексировались вообще, и данная ES-поддержка -- тоже не является обязательной.
   */
+@deprecated
 object MColorDataEs extends IGenEsMappingProps {
-
 
   /** Список ES-полей модели. */
   override def generateMappingProps: List[DocField] = {

@@ -5,6 +5,7 @@ import io.suggest.model.PrefixedFn
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import monocle.macros.GenLens
 
@@ -17,7 +18,7 @@ import monocle.macros.GenLens
  * более конкретные поля.
  */
 
-object MMeta extends IGenEsMappingProps {
+object MMeta extends IEsMappingProps with IGenEsMappingProps {
 
   /** Названия ES-полей модели и подмоделей. */
   object Fields {
@@ -110,6 +111,23 @@ object MMeta extends IGenEsMappingProps {
     FieldObject(COLORS_FN, enabled = false, properties = Nil) ::
       acc0
   }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+
+    val info = List[(String, IEsMappingProps)](
+      BASIC_FN -> MBasicMeta,
+      PERSON_FN -> MPersonMeta,
+      ADDRESS_FN -> MAddress,
+      BUSINESS_FN -> MBusinessInfo,
+    )
+      .esSubModelsJsObjects( nested = false )
+
+    info ++ Json.obj(
+      COLORS_FN -> FObject.plain( someFalse ),
+    )
+  }
+
 
   val basic     = GenLens[MMeta](_.basic)
   val person    = GenLens[MMeta](_.person)

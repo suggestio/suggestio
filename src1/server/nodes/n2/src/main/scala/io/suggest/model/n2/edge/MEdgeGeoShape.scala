@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
@@ -23,7 +24,10 @@ import scala.util.Random
   * ngl (геоуровень, масштаб (индексации)) -- определяет название поля на стороне ES.
   * Используется для облегчения индексации больших шейпов.
   */
-object MEdgeGeoShape extends IGenEsMappingProps {
+object MEdgeGeoShape
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   /** Названия полей модели на стороне ElasticSearch. */
   object Fields {
@@ -145,8 +149,37 @@ object MEdgeGeoShape extends IGenEsMappingProps {
 
   def SHAPE_ID_START = 1
 
-
   @inline implicit def univEq: UnivEq[MEdgeGeoShape] = UnivEq.derive
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    val nglJson = MNodeGeoLevels
+      .values
+      .iterator
+      .map { ngl =>
+        Json.obj(
+          F.SHAPE_FN(ngl) -> FGeoShape(
+            precision = Some(ngl.precision),
+            index     = someTrue,
+          )
+        )
+      }
+      .reduce(_ ++ _)
+
+    val fields2 = Json.obj(
+      F.GLEVEL_FN       -> FKeyWord( index = someTrue, store = someTrue ),
+      F.GJSON_COMPAT_FN -> FBoolean.indexedJs,
+      F.FROM_URL_FN     -> FText.notIndexedJs,
+      F.DATE_EDITED_FN  -> FDate.notIndexedJs,
+      F.ID_FN           -> FNumber(
+        typ = DocFieldTypes.Integer,
+        index = someFalse,
+      ),
+    )
+
+    fields2 ++ nglJson
+  }
 
 }
 

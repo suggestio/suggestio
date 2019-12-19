@@ -1,5 +1,6 @@
 package io.suggest.stat.m
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -10,7 +11,10 @@ import play.api.libs.functional.syntax._
   * Created: 21.09.16 15:12
   * Description: Суб-модель всякой очень общей статистики.
   */
-object MCommon extends IGenEsMappingProps {
+object MCommon
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   /** Имена es-полей модели. */
   object Fields {
@@ -50,6 +54,22 @@ object MCommon extends IGenEsMappingProps {
       FieldKeyword(DOMAIN_3P_FN, index = true, include_in_all = true),
       FieldBoolean(IS_LOCAL_CLIENT_FN, index = true, include_in_all = false),
       FieldNumber(GEN_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    Json.obj(
+      COMPONENT_FN -> FKeyWord.indexedJs,
+      CLIENT_IP_FN -> FIp.indexedJs,
+      CLIENT_UID_FN -> FKeyWord.indexedJs,
+      REQ_URI_FN -> FText.notIndexedJs,
+      DOMAIN_3P_FN -> FKeyWord.indexedJs,
+      IS_LOCAL_CLIENT_FN -> FBoolean.indexedJs,
+      GEN_FN -> FNumber(
+        typ = DocFieldTypes.Long,
+        index = someTrue,
+      ),
     )
   }
 

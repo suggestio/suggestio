@@ -6,6 +6,7 @@ import play.api.libs.json._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import monocle.macros.GenLens
 
 /**
@@ -14,7 +15,7 @@ import monocle.macros.GenLens
  * Created: 23.09.15 14:41
  * Description: Модель общих для всех N2-узлов полей [[io.suggest.model.n2.node.MNode]].
  */
-object MNodeCommon extends IGenEsMappingProps {
+object MNodeCommon extends IEsMappingProps with IGenEsMappingProps {
 
   val NODE_TYPE_FN          = "t"
   val IS_DEPEND_FN          = "d"
@@ -40,6 +41,16 @@ object MNodeCommon extends IGenEsMappingProps {
       FieldBoolean(IS_DEPEND_FN, index = true, include_in_all = false),
       FieldBoolean(IS_ENABLED_FN, index = true, include_in_all = false),
       FieldText(DISABLE_REASON_FN, index = false, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    Json.obj(
+      NODE_TYPE_FN -> FKeyWord.indexedJs,
+      IS_DEPEND_FN -> FBoolean.indexedJs,
+      IS_ENABLED_FN -> FBoolean.indexedJs,
+      DISABLE_REASON_FN -> FText.notIndexedJs,
     )
   }
 

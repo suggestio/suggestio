@@ -9,6 +9,7 @@ import MBusinessInfo.Fields._
  * Created: 25.09.15 15:04
  * Description: Модель метаданных по описанию делишек узла: инфа о товарах, посетителях, сайте и т.д.
  */
+@deprecated
 object MBusinessInfoEs extends IGenEsMappingProps {
 
   import io.suggest.es.util.SioEsUtil._

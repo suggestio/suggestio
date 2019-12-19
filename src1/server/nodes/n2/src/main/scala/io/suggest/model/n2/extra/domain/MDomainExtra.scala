@@ -1,5 +1,6 @@
 package io.suggest.model.n2.extra.domain
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.text.util.UrlUtil
 import play.api.libs.json._
@@ -19,7 +20,10 @@ import play.api.libs.functional.syntax._
   * Это очищенное нормализованное и почищенное доменное имя без всяких www. вначале.
   * Например: "suggest.io".
   */
-object MDomainExtra extends IGenEsMappingProps {
+object MDomainExtra
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   /** ES-названия полей живут здесь. */
   object Fields {
@@ -47,6 +51,14 @@ object MDomainExtra extends IGenEsMappingProps {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.DKEY_FN -> FKeyWord.indexedJs,
+      F.MODE_FN -> FKeyWord.indexedJs,
+    )
+  }
 
   import play.api.data.Mapping
   import play.api.data.Forms._

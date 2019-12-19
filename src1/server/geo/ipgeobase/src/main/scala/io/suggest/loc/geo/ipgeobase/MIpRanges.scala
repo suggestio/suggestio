@@ -1,6 +1,7 @@
 package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
+import io.suggest.es.MappingDsl
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.logs.MacroLogsImpl
@@ -94,9 +95,9 @@ class MIpRangesModel @Inject()(esModel      : EsModel)
   */
 abstract class MIpRangesAbstract
   extends EsModelStatic
-    with EsmV2Deserializer
-    with EsModelJsonWrites
-    with MacroLogsImpl
+  with EsmV2Deserializer
+  with EsModelJsonWrites
+  with MacroLogsImpl
 {
 
   override type T = MIpRange
@@ -127,6 +128,27 @@ abstract class MIpRangesAbstract
       FieldKeyword(COUNTRY_CODE_FN, index = true, include_in_all = true),
       FieldIp(IP_RANGE_FN, index = true, include_in_all = true),
       FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = true, include_in_all = true)
+    )
+  }
+
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some( FSource(enabled = someTrue) ),
+      properties = Some {
+        val F = MIpRange.Fields
+        Json.obj(
+          F.COUNTRY_CODE_FN -> FKeyWord.indexedJs,
+          F.IP_RANGE_FN     -> FIp.indexedJs,
+          F.CITY_ID_FN      -> FNumber(
+            typ   = DocFieldTypes.Short,
+            index = someTrue,
+          ),
+        )
+      }
     )
   }
 

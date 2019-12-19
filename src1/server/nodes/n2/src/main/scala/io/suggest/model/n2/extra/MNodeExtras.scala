@@ -1,6 +1,7 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
@@ -18,7 +19,11 @@ import play.api.libs.json.{OFormat, _}
  * Description: Модель-контейнер для различных субмоделей (ADN node, ad, tag, place, etc) одного узла N2.
  * В рамках extra-моделей узел N2 как бы "специализируется" на своей задаче.
  */
-object MNodeExtras extends IGenEsMappingProps with IEmpty {
+object MNodeExtras
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MNodeExtras
 
@@ -110,10 +115,10 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 
   import io.suggest.es.util.SioEsUtil._
 
-  private def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
-    FieldObject(fn, enabled = true, properties = model.generateMappingProps)
-  }
   override def generateMappingProps: List[DocField] = {
+    def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
+      FieldObject(fn, enabled = true, properties = model.generateMappingProps)
+    }
     List(
       _obj(Fields.Adn.ADN_FN,                 MAdnExtra),
       _obj(Fields.Beacon.BEACON_FN,           MBeaconExtra),
@@ -124,6 +129,22 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    val objs1 = List[(String, IEsMappingProps)](
+      F.Adn.ADN_FN            -> MAdnExtra,
+      F.Beacon.BEACON_FN      -> MBeaconExtra,
+      F.MNDoc.MNDOC_FN        -> MNodeDoc,
+      F.VideoExt.VIDEO_EXT_FN -> MVideoExtInfo,
+      F.Resource.RESOURCE_FN  -> MRscExtra,
+    )
+      .esSubModelsJsObjects( nested = false )
+
+    objs1 ++ Json.obj(
+      F.Domain.DOMAIN_FN -> FObject.nested( MDomainExtra.esMappingProps ),
+    )
+  }
 
   val adn       = GenLens[MNodeExtras](_.adn)
   val beacon    = GenLens[MNodeExtras](_.beacon)

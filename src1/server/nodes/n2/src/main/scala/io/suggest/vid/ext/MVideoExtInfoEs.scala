@@ -9,6 +9,7 @@ import io.suggest.es.util.SioEsUtil._
   * Created: 25.10.17 21:02
   * Description: Доп.поддержка кросс-платформенной модели MVideoExtInfo на стороне сервера.
   */
+@deprecated
 object MVideoExtInfoEs extends IGenEsMappingProps {
 
   /** Список ES-полей модели. */

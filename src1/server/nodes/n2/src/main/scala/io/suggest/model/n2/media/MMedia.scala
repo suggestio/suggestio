@@ -2,6 +2,7 @@ package io.suggest.model.n2.media
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.model.n2.media.search.MMediaSearch
@@ -103,6 +104,30 @@ class MMedias @Inject() (
       FieldObject(F.FileMeta.FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
       FieldObject(F.Storage.STORAGE_FN, enabled = true, properties = iMediaStorages.generateMappingProps),
       FieldObject(F.PictureMeta.PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
+    )
+  }
+
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some(FSource(enabled = someTrue)),
+      properties = Some {
+        val F = MMediaFields
+
+        val objs = List[(String, IEsMappingProps)](
+          F.FileMeta.FILE_META_FN -> MFileMeta,
+          F.Storage.STORAGE_FN -> iMediaStorages,
+          F.PictureMeta.PICTURE_META_FN -> MPictureMeta,
+        )
+          .esSubModelsJsObjects( nested = false )
+
+        objs ++ Json.obj(
+          F.NODE_ID_FN -> FKeyWord.indexedJs,
+        )
+      }
     )
   }
 

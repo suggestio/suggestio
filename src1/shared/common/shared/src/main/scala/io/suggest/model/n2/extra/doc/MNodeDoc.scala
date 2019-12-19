@@ -1,5 +1,6 @@
 package io.suggest.model.n2.extra.doc
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.jd.tags.JdTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -16,11 +17,13 @@ import scalaz.Tree
   * Эта модель подразумевает использование JSON-документа и эджи вместо списка текстовых полей
   * с текстом, графикой и всем остальным.
   *
-  * Явно непустая-модель, подразумевается использование Option[MNodeAd2] для пустой модели.
+  * Явно непустая-модель, подразумевается использование Option[MNodeDoc] для пустой модели.
   *
   * Модель используется в первую очередь на сервере внутри mnode.extras.ad.
   */
-object MNodeDoc {
+object MNodeDoc
+  extends IEsMappingProps
+{
 
   /** Модель названий полей модели [[MNodeDoc]]. */
   object Fields {
@@ -36,6 +39,15 @@ object MNodeDoc {
       .inmap[MNodeDoc](apply, _.template)
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.TEMPLATE_FN -> FObject.plain(
+        enabled = someFalse,
+      )
+    )
+  }
 
   val template = GenLens[MNodeDoc](_.template)
 

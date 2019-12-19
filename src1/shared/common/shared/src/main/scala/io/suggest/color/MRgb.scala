@@ -3,6 +3,7 @@ package io.suggest.color
 import io.suggest.common.geom.coord.ICoord3dHelper
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -22,7 +23,9 @@ import io.suggest.ueq.UnivEqUtil._
 case class MRgb(red: Int, green: Int, blue: Int, alpha: Option[Double] = None)
 
 
-object MRgb {
+object MRgb
+  extends IEsMappingProps
+{
 
   implicit object RgbCoord3dHelper extends ICoord3dHelper[MRgb, Int] {
     override def getX(rgb: MRgb): Int = rgb.red
@@ -113,6 +116,22 @@ object MRgb {
     // Не ясно, нужна ли пересборка инстанса. С очевидной стороны -- не нужна,
     // а с другой: если вдруг появится новое поле в классе, но забыть дописать
     // валидатор для нового поля, то тут сразу будет ошибка компиляции.
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = MRgb.Fields
+    val fNumberJson = Json.toJsObject(
+      FNumber(
+        typ   = DocFieldTypes.Integer,
+        index = someTrue,
+      )
+    )
+    Json.obj(
+      F.RED_FN -> fNumberJson,
+      F.GREEN_FN -> fNumberJson,
+      F.BLUE_FN -> fNumberJson,
+    )
   }
 
 }

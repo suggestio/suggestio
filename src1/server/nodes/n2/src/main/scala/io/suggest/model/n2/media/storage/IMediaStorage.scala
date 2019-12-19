@@ -2,6 +2,7 @@ package io.suggest.model.n2.media.storage
 
 import javax.inject.Inject
 import io.suggest.compress.MCompressAlgo
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.primo.TypeT
@@ -24,7 +25,8 @@ import scala.concurrent.Future
 class IMediaStorages @Inject() (
                                  injector  : Injector
                                )
-  extends IGenEsMappingProps
+  extends IEsMappingProps
+  with IGenEsMappingProps
   with IMediaStorageStatic
 {
 
@@ -66,10 +68,19 @@ class IMediaStorages @Inject() (
   }
 
   override def generateMappingProps: List[DocField] = {
-    MStorFns.values
+    MStorFns
+      .values
       .iterator
       .map { _.esMappingProp }
       .toList
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    MStorFns
+      .values
+      .iterator
+      .map(_.esMappingProps)
+      .reduce(_ ++ _)
   }
 
   private type X = T

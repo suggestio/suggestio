@@ -5,6 +5,7 @@ import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.PrefixedFn
@@ -16,7 +17,11 @@ import monocle.macros.GenLens
  * Created: 04.12.15 14:09
  * Description: Billing v2 подразумевает, что узлы хранят свои тарифы внутри себя,
  */
-object MNodeBilling extends IGenEsMappingProps with IEmpty {
+object MNodeBilling
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MNodeBilling
 
@@ -63,6 +68,21 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.CONTRACT_ID_FN -> FNumber(
+        typ     = DocFieldTypes.Long,
+        index   = someTrue,
+      ),
+      F.TARIFFS_FN -> FObject.plain(
+        enabled     = someTrue,
+        properties  = Some(MNodeTariffs.esMappingProps)
+      ),
+    )
+  }
+
   val contractId = GenLens[MNodeBilling](_.contractId)
   val tariffs = GenLens[MNodeBilling](_.tariffs)
 
@@ -74,9 +94,4 @@ case class MNodeBilling(
                          tariffs       : MNodeTariffs      = MNodeTariffs.empty
                        )
   extends EmptyProduct
-{
 
-  def withContractId(contractId: Option[Gid_t]) = copy(contractId = contractId)
-  def withTariffs(tariffs: MNodeTariffs) = copy(tariffs = tariffs)
-
-}

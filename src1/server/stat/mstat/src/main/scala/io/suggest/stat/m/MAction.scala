@@ -1,5 +1,6 @@
 package io.suggest.stat.m
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -14,7 +15,10 @@ import play.api.libs.functional.syntax._
   * Из возможных проблем: kibana vs nested objects: [[https://github.com/elastic/kibana/issues/1084]]
   * Как вариант, отказ от Nested object (со всеми вытекающими) или использовать форк kibana с поддержкой nested.
   */
-object MAction extends IGenEsMappingProps {
+object MAction
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   object Fields {
 
@@ -70,17 +74,31 @@ object MAction extends IGenEsMappingProps {
 
   import io.suggest.es.util.SioEsUtil._
 
-  private def _strField(id: String) = {
-    FieldKeyword(id, index = true, include_in_all = true)
-  }
-
   override def generateMappingProps: List[DocField] = {
+    def _strField(id: String) = {
+      FieldKeyword(id, index = true, include_in_all = true)
+    }
+
     List(
       _strField(ACTION_FN),
       _strField(NODE_ID_FN),
       _strField(NODE_NAME_FN),
       FieldNumber(COUNT_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = true),
       FieldText(TEXT_NI_FN, index = false, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    Json.obj(
+      ACTION_FN     -> FKeyWord.indexedJs,
+      NODE_ID_FN    -> FKeyWord.indexedJs,
+      NODE_NAME_FN  -> FKeyWord.indexedJs,
+      COUNT_FN -> FNumber(
+        typ   = DocFieldTypes.Integer,
+        index = someTrue,
+      ),
+      TEXT_NI_FN    -> FText.notIndexedJs,
     )
   }
 

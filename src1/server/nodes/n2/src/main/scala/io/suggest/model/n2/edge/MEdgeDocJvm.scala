@@ -10,6 +10,7 @@ import io.suggest.util.SioConstants
   * Created: 23.08.17 14:13
   * Description: Jvm-only утиль для кросс-платформенной модели MEdgeDoc.
   */
+@deprecated
 object MEdgeDocJvm extends IGenEsMappingProps {
 
   /** Список ES-полей модели. */

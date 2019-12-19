@@ -13,16 +13,17 @@ import play.api.data.Mapping
   * Created: 06.10.17 15:32
   * Description: Поддержка ES для кросс-платформенной модели MSize2di.
   */
-object MSize2diJvm extends IGenEsMappingProps {
+object MSize2diJvm
+  extends IGenEsMappingProps
+{
 
   // Имена полей короткие, заданы в MediaConst.NamesShort.
 
-  private def _numberField(fn: String) = {
-    FieldNumber(fn, fieldType = DocFieldTypes.integer, index = true, include_in_all = false)
-  }
-
   /** Список ES-полей модели. */
   override def generateMappingProps: List[DocField] = {
+    def _numberField(fn: String) = {
+      FieldNumber(fn, fieldType = DocFieldTypes.integer, index = true, include_in_all = false)
+    }
     val F = NamesShort
     List(
       _numberField( F.WIDTH_FN ),

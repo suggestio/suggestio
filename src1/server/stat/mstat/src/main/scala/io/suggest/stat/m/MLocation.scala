@@ -1,6 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,7 +12,11 @@ import play.api.libs.functional.syntax._
   * Created: 21.09.16 15:47
   * Description: Под-модель для представления статистики, связанной с географией.
   */
-object MLocation extends IGenEsMappingProps with IEmpty {
+object MLocation
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MLocation
 
@@ -45,6 +50,21 @@ object MLocation extends IGenEsMappingProps with IEmpty {
     List(
       FieldObject(GEO_LOC_FN, enabled = true, properties = glDataProps),
       FieldObject(GEO_IP_FN, enabled = true, properties = glDataProps)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val glDataProps = Json.toJsObject(
+      FObject.plain(
+        enabled    = someTrue,
+        properties = Some( MGeoLocData.esMappingProps ),
+      )
+    )
+    val F = Fields
+    Json.obj(
+      F.GEO_LOC_FN -> glDataProps,
+      F.GEO_IP_FN  -> glDataProps,
     )
   }
 

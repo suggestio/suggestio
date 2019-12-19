@@ -9,12 +9,12 @@ import io.suggest.es.util.SioEsUtil.{DocField, DocFieldTypes, FieldNumber}
   * Created: 09.10.17 10:49
   * Description: ES-поддержка для кросс-платформенной модели MRgb.
   */
+@deprecated
 object MRgbEs extends IGenEsMappingProps {
-
-  private def _field(fn: String) = FieldNumber(fn, fieldType = DocFieldTypes.integer, index = true, include_in_all = false)
 
   /** Список ES-полей модели. */
   override def generateMappingProps: List[DocField] = {
+    def _field(fn: String) = FieldNumber(fn, fieldType = DocFieldTypes.integer, index = true, include_in_all = false)
     val F = MRgb.Fields
     List(
       _field( F.RED_FN ),

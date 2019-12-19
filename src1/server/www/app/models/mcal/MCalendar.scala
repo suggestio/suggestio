@@ -2,6 +2,7 @@ package models.mcal
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.cal.m.{MCalType, MCalTypes}
+import io.suggest.es.MappingDsl
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.JacksonParsing
@@ -45,7 +46,6 @@ class MCalendars @Inject() (
   override def generateMappingStaticFields: List[Field] = {
     List(
       FieldSource(),
-      FieldAll()
     )
   }
 
@@ -57,6 +57,21 @@ class MCalendars @Inject() (
     FieldText(DATA_FN, index = false, include_in_all = false),
     FieldKeyword(CAL_TYPE_FN, index = true, include_in_all = false)
   )
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    val F = Fields
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some( FSource(someTrue) ),
+      properties = Some( Json.obj(
+        F.NAME_FN       -> FText.indexedJs,
+        F.DATA_FN       -> FText.notIndexedJs,
+        F.CAL_TYPE_FN   -> FKeyWord.indexedJs,
+      ))
+    )
+  }
 
   @deprecated("Use deserializeOne2() instead", "2015.sep.05")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {

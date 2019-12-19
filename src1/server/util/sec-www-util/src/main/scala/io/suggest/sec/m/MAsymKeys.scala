@@ -1,5 +1,6 @@
 package io.suggest.sec.m
 
+import io.suggest.es.MappingDsl
 import javax.inject.Singleton
 import io.suggest.es.model._
 import io.suggest.es.util.SioEsUtil._
@@ -47,6 +48,22 @@ class MAsymKeys
     List(
       FieldText(PUB_KEY_FN, index = false, include_in_all = false),
       FieldText(SEC_KEY_FN, index = false, include_in_all = false)
+    )
+  }
+
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    dsl.IndexMapping(
+      typ    = ES_TYPE_NAME,
+      source = Some( FSource(
+        enabled = someTrue,
+      )),
+      properties = Some( Json.obj(
+        PUB_KEY_FN -> FText.notIndexedJs,
+        SEC_KEY_FN -> FText.notIndexedJs,
+      )),
     )
   }
 

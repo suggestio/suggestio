@@ -13,6 +13,7 @@ import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.es.MappingDsl
 
 import scala.collection.Map
 
@@ -79,11 +80,12 @@ class MEvents
   override def generateMappingStaticFields: List[Field] = {
     List(
       FieldSource(enabled = true),
-      FieldAll(enabled = true)
     )
   }
 
   override def generateMappingProps: List[DocField] = {
+    throw new UnsupportedOperationException("MEvent deprecated")
+    /*
     List(
       FieldKeyword(EVT_TYPE_ESFN, index = true, include_in_all = false),
       FieldKeyword(OWNER_ID_ESFN, index = true, include_in_all = false),
@@ -91,8 +93,12 @@ class MEvents
       FieldDate(DATE_CREATED_ESFN, index = true, include_in_all = false),
       FieldBoolean(IS_CLOSEABLE_ESFN, index = false, include_in_all = false),
       FieldBoolean(IS_UNSEEN_ESFN, index = true, include_in_all = false)
-    )
+    )*/
   }
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping =
+    throw new UnsupportedOperationException("MEvent deprecated")
 
   @deprecated("Delete it, v2 is ready here", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
@@ -158,11 +164,6 @@ class MEvents
   }
 
 
-}
-
-/** Интерфейс к полю MEvents, инстанс которого приходит через DI. */
-trait IMEvents {
-  def mEvents: MEvents
 }
 
 

@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
 import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
 import japgolly.univeq._
@@ -26,7 +27,10 @@ import play.api.libs.functional.syntax._
   * было решено хранить и индексировать куски текста в эджах, наравне с отсылками к Media-узлам и прочим вещам.
   * Таким образом, эджи стали абстрактной удобной моделью представления данных на базе nested-объектов.
   */
-object MEdge extends IGenEsMappingProps {
+object MEdge
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   /** Контейнер имён полей. */
   object Fields {
@@ -121,6 +125,27 @@ object MEdge extends IGenEsMappingProps {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.PREDICATE_FN -> FKeyWord.indexedJs,
+      F.NODE_ID_FN -> FKeyWord.indexedJs,
+      // orderId -- not_analyzed, используется в т.ч. для хранения статистики использования геотегов, как это не странно...
+      F.ORDER_FN -> FNumber(
+        typ   = DocFieldTypes.Integer,
+        index = someTrue,
+      ),
+      F.INFO_FN -> FObject.plain(
+        enabled    = someTrue,
+        properties = Some(MEdgeInfo.esMappingProps)
+      ),
+      F.DOC_FN -> FObject.plain(
+        enabled    = someTrue,
+        properties = Some(MEdgeDoc.esMappingProps)
+      ),
+    )
+  }
 
   val predicate = GenLens[MEdge](_.predicate)
   val nodeIds   = GenLens[MEdge](_.nodeIds)

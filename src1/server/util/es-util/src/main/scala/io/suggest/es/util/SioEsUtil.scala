@@ -55,6 +55,7 @@ object SioEsUtil extends MacroLogsImpl {
 
   /** Стандартные имена полей ES. */
   object StdFns {
+    @deprecated("_all field is removed in ES-6.x", "ES-6.x")
     def FIELD_ALL           = AllFieldMapper.NAME
     def FIELD_SOURCE        = SourceFieldMapper.NAME
     def FIELD_ROUTING       = RoutingFieldMapper.NAME
@@ -267,63 +268,6 @@ object SioEsUtil extends MacroLogsImpl {
         )
       )
     )
-  }
-
-
-  /**
-   * Маппинг для страниц, подлежащих индексированию.
-    *
-    * @return
-   */
-  def getPageMapping(typeName: String, compressSource: Boolean = true): XContentBuilder = {
-    jsonGenerator { implicit b =>
-      IndexMapping(
-        typ = typeName,
-
-        staticFields = Seq(
-          FieldSource(enabled = true),
-          FieldAll(enabled = true, analyzer = FTS_RU_AN)
-        ),
-
-        properties = Seq(
-          FieldText(
-            id = FIELD_URL,
-            index = false,
-            include_in_all = false
-          ),
-          FieldText(
-            id = FIELD_IMAGE_ID,
-            index = false,
-            include_in_all = false
-          ),
-          FieldNumber(
-            id = FIELD_DATE_KILOSEC,
-            fieldType = DocFieldTypes.long,
-            index = false,
-            include_in_all = false
-          ),
-          multiFieldFtsNgram(FIELD_TITLE, 4.1f, 2.7f),
-          multiFieldFtsNgram(FIELD_CONTENT_TEXT, 1.0f, 0.7f),
-          FieldKeyword(
-            id = FIELD_LANGUAGE,
-            index = true,
-            include_in_all = false
-          ),
-          FieldKeyword(
-            id = FIELD_DKEY,
-            index = false,
-            include_in_all = false
-          ),
-          // Тут array-поле, но для ES одинакого -- одно значение в поле или целый массив.
-          FieldKeyword(
-            id = FIELD_PAGE_TAGS,
-            index = true,
-            store = false,
-            include_in_all = false
-          )
-        )
-      )
-    }
   }
 
 
@@ -960,6 +904,7 @@ trait TextField extends Field {
 
 
 /** Поле _all */
+@deprecated("_all field is removed in ES-6.x", "ES-6.x")
 case class FieldAll(
   enabled : Boolean = true,
   store : Boolean = false,
@@ -1070,7 +1015,13 @@ extends JsonObject {
 }
 
 /** Генератор маппинга индекса со всеми полями и блекджеком. */
-case class IndexMapping(typ: String, staticFields: Seq[Field], properties: Seq[DocField], dynTemplates: Seq[DynTemplate] = Nil) extends FieldWithProperties {
+case class IndexMapping(typ: String,
+                        staticFields: Seq[Field],
+                        properties: Seq[DocField],
+                        dynTemplates: Seq[DynTemplate] = Nil
+                       )
+  extends FieldWithProperties
+{
   override def id = typ
 
   override def fieldsBuilder(implicit b: XContentBuilder): Unit = {

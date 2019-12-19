@@ -8,6 +8,7 @@ import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
@@ -19,7 +20,10 @@ import monocle.macros.GenLens
  * Description: Данные сугубо узла ADN теперь живут здесь.
  * Сюда попали поля из полей-моделей AdNetMember и NodeConf.
  */
-object MAdnExtra extends IGenEsMappingProps {
+object MAdnExtra
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   /** В качестве эксперимента, имена полей этой модели являются отдельной моделью. */
   object Fields {
@@ -70,6 +74,18 @@ object MAdnExtra extends IGenEsMappingProps {
       FieldBoolean(IS_BY_USER, index = true, include_in_all = false),
       FieldKeyword(SHOWN_TYPE, index = true, include_in_all = false),
       FieldBoolean(IS_TEST, index = true, include_in_all = false),
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.RES_VIEW_FN -> FObject.plain( enabled = someFalse ),
+      F.RIGHTS      -> FKeyWord.indexedJs,
+      F.IS_BY_USER  -> FBoolean.indexedJs,
+      F.SHOWN_TYPE  -> FKeyWord.indexedJs,
+      F.IS_TEST     -> FBoolean.indexedJs,
     )
   }
 

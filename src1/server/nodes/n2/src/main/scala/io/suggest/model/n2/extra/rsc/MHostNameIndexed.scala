@@ -1,5 +1,6 @@
 package io.suggest.model.n2.extra.rsc
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
@@ -11,7 +12,10 @@ import play.api.libs.functional.syntax._
   * Created: 23.08.18 11:39
   * Description: Модель данных по индексируемому хосту. Должна жить как Nested object.
   */
-object MHostNameIndexed extends IGenEsMappingProps {
+object MHostNameIndexed
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   object Fields {
     val HOST_FN = "h"
@@ -21,6 +25,14 @@ object MHostNameIndexed extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldKeyword( Fields.HOST_FN, index = true, include_in_all = true )
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.HOST_FN -> FKeyWord.indexedJs,
     )
   }
 

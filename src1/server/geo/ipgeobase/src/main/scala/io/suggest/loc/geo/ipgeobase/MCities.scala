@@ -1,6 +1,7 @@
 package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
+import io.suggest.es.MappingDsl
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.geo.MGeoPoint
@@ -87,6 +88,23 @@ abstract class MCitiesAbstract
     )
   }
 
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some( FSource(someTrue) ),
+      properties = Some( Json.obj(
+        CITY_ID_FN -> FNumber(
+          typ   = DocFieldTypes.Short,
+          index = someFalse,
+        ),
+        NAME_FN   -> FText.notIndexedJs,
+        REGION_FN -> FText.notIndexedJs,
+        CENTER_FN -> FGeoPoint.indexedJs,
+      ))
+    )
+  }
 
 }
 

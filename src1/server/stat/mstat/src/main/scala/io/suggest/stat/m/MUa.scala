@@ -1,6 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -12,7 +13,10 @@ import play.api.libs.functional.syntax._
   * Description: Суб-модель данных по юзер-агенту и его кускам индексируемым.
   */
 
-object MUa extends IGenEsMappingProps with IEmpty {
+object MUa
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty {
 
   override type T = MUa
 
@@ -55,11 +59,11 @@ object MUa extends IGenEsMappingProps with IEmpty {
 
   import io.suggest.es.util.SioEsUtil._
 
-  private def _fieldString(id: String) = {
-    FieldKeyword(id, index = true, include_in_all = true)
-  }
-
   override def generateMappingProps: List[DocField] = {
+    def _fieldString(id: String) = {
+      FieldKeyword(id, index = true, include_in_all = true)
+    }
+
     List(
       FieldText(UA_STR_FN, index = false, include_in_all = true),
       _fieldString(BROWSER_FN),
@@ -71,6 +75,19 @@ object MUa extends IGenEsMappingProps with IEmpty {
   }
 
   override def empty = MUa()
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+
+    Json.obj(
+      UA_STR_FN     -> FText.notIndexedJs,
+      BROWSER_FN    -> FKeyWord.indexedJs,
+      DEVICE_FN     -> FKeyWord.indexedJs,
+      OS_FAMILY_FN  -> FKeyWord.indexedJs,
+      OS_VSN_FN     -> FKeyWord.indexedJs,
+      UA_TYPE_FN    -> FKeyWord.indexedJs,
+    )
+  }
 
 }
 

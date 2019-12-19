@@ -545,7 +545,7 @@ case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
         val whMx = args.wcFgWh.fold(StyleS.empty) { wh0 =>
           val wh2 = wh0 / 2
           val margin0 = wh2 / (-2)
-          val margin2 = margin0.withHeight( margin0.height + 25 )
+          val margin2 = MSize2di.height.modify(_ + 25)(margin0)
           _imgWhMixin( wh2, margin2 )
         }
 

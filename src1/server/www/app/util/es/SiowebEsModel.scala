@@ -68,7 +68,7 @@ class SiowebEsModel @Inject() (
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT]): Future[Boolean] = {
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
     LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
@@ -119,12 +119,14 @@ class SiowebEsModel @Inject() (
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
     maybeErrorIfIncorrectModels()
     val esModels = ES_MODELS
+
     val futInx = esModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx.onComplete {
       case Success(result) => LOGGER.trace(s"$logPrefix ensure() -> $result")
       case Failure(ex)     => LOGGER.error(s"$logPrefix ensureIndex() failed", ex)
     }
+
     val futMappings = futInx.flatMap { _ =>
       putAllMappings(esModels)
     }
@@ -132,6 +134,7 @@ class SiowebEsModel @Inject() (
       case Success(_)  => LOGGER.info(s"$logPrefix Finishied successfully.")
       case Failure(ex) => LOGGER.error(s"$logPrefix Failure", ex)
     }
+
     // Это код обновления на следующую версию. Его можно держать и после обновления.
     /*
     import org.elasticsearch.index.mapper.MapperException
@@ -143,6 +146,7 @@ class SiowebEsModel @Inject() (
         }
     }
     */
+
     futMappings
   }
 

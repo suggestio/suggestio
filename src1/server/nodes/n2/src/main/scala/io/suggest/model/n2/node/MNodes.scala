@@ -12,6 +12,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.event.SioNotifierStaticClientI
@@ -57,7 +58,6 @@ final class MNodes @Inject() (
   extends EsModelStatic
   with EsmV2Deserializer
   with MacroLogsImpl
-  with IGenEsMappingProps
   with EsModelJsonWrites
   with EsDynSearchStatic[MNodeSearch]
   with EsModelStaticCacheableT
@@ -172,19 +172,39 @@ final class MNodes @Inject() (
   }
 
 
-  private def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
-    FieldObject(fn, enabled = true, properties = model.generateMappingProps)
-  }
   override def generateMappingProps: List[DocField] = {
+    def _obj(fn: String, model: IGenEsMappingProps): FieldObject =
+      FieldObject(fn, enabled = true, properties = model.generateMappingProps)
     List(
       _obj(Fields.Common.COMMON_FN,   MNodeCommon),
       _obj(Fields.Meta.META_FN,       MMeta),
       _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
       _obj(Fields.Edges.EDGES_FN,     MNodeEdges),
-      _obj(Fields.Ad.AD_FN,           MNodeAd),
       _obj(Fields.Billing.BILLING_FN, MNodeBilling)
     )
   }
+
+
+  /** Сборка маппинга индекса по новому формату. */
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some( FSource(enabled = someTrue) ),
+      properties = Some {
+        val F = Fields
+        List[(String, IEsMappingProps)](
+          F.Common.COMMON_FN     -> MNodeCommon,
+          F.Meta.META_FN         -> MMeta,
+          F.Extras.EXTRAS_FN     -> MNodeExtras,
+          F.Edges.EDGES_FN       -> MNodeEdges,
+          F.Billing.BILLING_FN   -> MNodeBilling,
+        )
+          .esSubModelsJsObjects( nested = false )
+      }
+    )
+  }
+
 
   override def _deleteById(id: String)(fut: Future[Boolean]): Future[Boolean] = {
     val delFut = super._deleteById(id)(fut)

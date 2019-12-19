@@ -10,6 +10,7 @@ import MAddress.Fields._
  * Created: 25.09.15 12:51
  * Description: ES-утиль для модель [[MAddress]].
  */
+@deprecated
 object MAddressEs extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {

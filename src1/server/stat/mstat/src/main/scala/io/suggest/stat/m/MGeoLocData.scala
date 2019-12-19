@@ -1,6 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MGeoPoint
 import play.api.libs.json._
@@ -13,7 +14,11 @@ import io.suggest.geo.GeoPoint.Implicits._
   * Created: 21.09.16 15:56
   * Description: Суб-модель для представления каких-то данных геолокации.
   */
-object MGeoLocData extends IGenEsMappingProps with IEmpty {
+object MGeoLocData
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MGeoLocData
 
@@ -49,6 +54,20 @@ object MGeoLocData extends IGenEsMappingProps with IEmpty {
       FieldNumber(ACCURACY_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
       FieldKeyword(TOWN_FN, index = true, include_in_all = true),
       FieldKeyword(COUNTRY_FN, index = true, include_in_all = true)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.COORDS_FN -> FGeoPoint.indexedJs,
+      F.ACCURACY_FN -> FNumber(
+        typ = DocFieldTypes.Integer,
+        index = someTrue,
+      ),
+      F.TOWN_FN -> FKeyWord.indexedJs,
+      F.COUNTRY_FN -> FKeyWord.indexedJs,
     )
   }
 

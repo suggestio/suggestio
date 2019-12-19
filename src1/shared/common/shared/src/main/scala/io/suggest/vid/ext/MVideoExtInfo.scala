@@ -1,5 +1,6 @@
 package io.suggest.vid.ext
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -9,7 +10,7 @@ import play.api.libs.functional.syntax._
   * Created: 25.10.17 14:29
   * Description: Модель инфы о "внешнем" видео.
   */
-object MVideoExtInfo {
+object MVideoExtInfo extends IEsMappingProps {
 
   object Fields {
     val VIDEO_SERVICE_FN = "s"
@@ -24,6 +25,15 @@ object MVideoExtInfo {
       (__ \ F.VIDEO_SERVICE_FN).format[MVideoService] and
       (__ \ F.REMOTE_ID_FN).format[String]
     )(apply, unlift(unapply))
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = MVideoExtInfo.Fields
+    Json.obj(
+      F.VIDEO_SERVICE_FN  -> FKeyWord.indexedJs,
+      F.REMOTE_ID_FN      -> FKeyWord.indexedJs,
+    )
   }
 
 }

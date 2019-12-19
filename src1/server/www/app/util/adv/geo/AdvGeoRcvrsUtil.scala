@@ -252,9 +252,9 @@ class AdvGeoRcvrsUtil @Inject()(
                 val szCss = logoMakeRes.szCss
                 val szFinal = if (logoMakeRes.isFake) {
                   // Фейковый рендер, значит на выходе оригинальный размер. Надо спроецировать этот размер на targetWh по высоте:
-                  targetWh.withWidth(
+                  MSize2di.width.set(
                     (szCss.width.toDouble / (szCss.height.toDouble / targetWh.height.toDouble)).toInt
-                  )
+                  )(targetWh)
                 } else {
                   szCss
                 }

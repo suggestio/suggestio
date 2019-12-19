@@ -2,6 +2,7 @@ package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.d2.MOrientation2d
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -12,7 +13,11 @@ import play.api.libs.functional.syntax._
   * Created: 21.09.16 12:27
   * Description: Суб-модель для описания данных экрана устройства.
   */
-object MScreen extends IGenEsMappingProps with IEmpty {
+object MScreen
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MScreen
 
@@ -45,7 +50,20 @@ object MScreen extends IGenEsMappingProps with IEmpty {
     )
   }
 
-  override def empty = MScreen()
+  override def empty = apply()
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+
+    val vportFields = MViewPort.esMappingProps
+
+    val F = Fields
+    Json.obj(
+      F.ORIENTATION_FN    -> FKeyWord.indexedJs,
+      F.VPORT_PHYS_FN     -> vportFields,
+      F.VPORT_QUANTED_FN  -> vportFields,
+    )
+  }
 
 }
 

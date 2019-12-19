@@ -1,6 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty, OptionUtil}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.model.PrefixedFn
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
@@ -27,7 +28,12 @@ import scala.collection.MapView
  * эджи возвращаются внутрь моделей, из которых они исходят. Это как бы золотая середина
  * для исходной архитектуры и новой.
  */
-object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
+object MNodeEdges
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+  with MacroLogsImpl
+{
 
   override type T = MNodeEdges
 
@@ -125,6 +131,14 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldNestedObject(Fields.OUT_FN, enabled = true, properties = MEdge.generateMappingProps)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.OUT_FN -> FObject.nested( MEdge.esMappingProps ),
     )
   }
 

@@ -7,6 +7,7 @@ import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import org.elasticsearch.index.query.QueryBuilders
@@ -220,12 +221,12 @@ abstract class MStatsAbstract
     )
   }
 
-  private def _fieldObject(id: String, m: IGenEsMappingProps): FieldObject = {
-    FieldObject(id, enabled = true, properties = m.generateMappingProps)
-  }
 
   override def generateMappingProps: List[DocField] = {
     import MStat.Fields._
+    def _fieldObject(id: String, m: IGenEsMappingProps): FieldObject = {
+      FieldObject(id, enabled = true, properties = m.generateMappingProps)
+    }
     List(
       _fieldObject(COMMON_FN,     MCommon),
       FieldNestedObject(ACTIONS_FN, enabled = true, properties = MAction.generateMappingProps),
@@ -234,6 +235,37 @@ abstract class MStatsAbstract
       _fieldObject(SCREEN_FN,     MScreen),
       _fieldObject(LOCATION_FN,   MLocation),
       _fieldObject(DIAG_FN,       MDiag)
+    )
+  }
+
+
+  override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
+    import dsl._
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      source = Some( FSource(enabled = someTrue) ),
+      properties = Some {
+        val F = MStat.Fields
+
+        val objects1 = List[(String, IEsMappingProps)](
+          F.COMMON_FN   -> MCommon,
+          F.UA_FN       -> MUa,
+          F.SCREEN_FN   -> MScreen,
+          F.LOCATION_FN -> MLocation,
+          F.DIAG_FN     -> MDiag,
+        )
+          .esSubModelsJsObjects( nested = false )
+
+        val other = Json.obj(
+          F.ACTIONS_FN -> FObject.nested(
+            enabled     = someTrue,
+            properties  = MAction.esMappingProps,
+          ),
+          F.TIMESTAMP_FN -> FDate.indexedJs,
+        )
+
+        objects1 ++ other
+      }
     )
   }
 

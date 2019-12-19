@@ -6,13 +6,14 @@ import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 
 
 /** Модель метаданных по блоку рекламной карточки.
   * 2019-10-22 Модель стала живущей вне БД, переведена в раздел устаревших.
   * Надо от неё потихоньку избавляться.
   */
-object BlockMeta {
+object BlockMeta extends IEsMappingProps {
 
   object Fields {
     def HEIGHT          = "height"
@@ -54,6 +55,20 @@ object BlockMeta {
 
   implicit class BmOptExt(val bmOpt: Option[BlockMeta]) extends AnyVal {
     def hasExpandMode: Boolean = bmOpt.exists( _.expandMode.nonEmpty )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val side = Json.toJsObject( FNumber(
+      typ   = DocFieldTypes.Integer,
+      index = someTrue,
+    ))
+    val F = Fields
+    Json.obj(
+      F.HEIGHT -> side,
+      F.WIDTH -> side,
+      F.EXPAND_MODE -> FKeyWord.indexedJs,
+    )
   }
 
 }

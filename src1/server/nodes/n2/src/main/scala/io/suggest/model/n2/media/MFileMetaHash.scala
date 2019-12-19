@@ -2,6 +2,7 @@ package io.suggest.model.n2.media
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.{HashHex, HashesHex, MHash}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.IId
@@ -16,7 +17,10 @@ import play.api.libs.json._
   * Description: ES-модель для представления хеша файла.
   * Является ES-аналогом для модели [[io.suggest.crypto.hash.HashHex]].
   */
-object MFileMetaHash extends IGenEsMappingProps {
+object MFileMetaHash
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   object Fields {
     val HASH_TYPE_FN = "t"
@@ -51,6 +55,18 @@ object MFileMetaHash extends IGenEsMappingProps {
     )(apply, unlift(unapply))
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.HASH_TYPE_FN -> FKeyWord.indexedJs,
+      F.HEX_VALUE_FN -> FKeyWord.indexedJs,
+      F.FLAGS_FN     -> FNumber(
+        typ   = DocFieldTypes.Short,
+        index = someTrue,
+      )
+    )
+  }
 
   /** Список ES-полей модели. */
   override def generateMappingProps: List[DocField] = {

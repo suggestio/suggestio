@@ -1,6 +1,7 @@
 package io.suggest.common.geom.d2
 
 import enumeratum.values.StringEnumEntry
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.math.SimpleArithmetics
 import io.suggest.media.MediaConst
 import japgolly.univeq.UnivEq
@@ -83,7 +84,7 @@ trait IHeight {
 }
 
 
-object MSize2di {
+object MSize2di extends IEsMappingProps {
 
   import play.api.libs.json._
   import play.api.libs.functional.syntax._
@@ -140,6 +141,22 @@ object MSize2di {
   val width = GenLens[MSize2di](_.width)
   val height = GenLens[MSize2di](_.height)
 
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl.{DocFieldTypes => Dft, _}
+    val numField = Json.toJsObject(
+      FNumber(
+        typ   = Dft.Integer,
+        index = someTrue,
+      )
+    )
+    val F = MediaConst.NamesShort
+    Json.obj(
+      F.WIDTH_FN -> numField,
+      F.HEIGHT_FN -> numField,
+    )
+  }
+
 }
 
 /** Дефолтовая реализация [[ISize2di]]. */
@@ -148,12 +165,6 @@ final case class MSize2di(
                           override val height : Int
                         )
   extends ISize2di
-{
-
-  def withWidth(width: Int)   = copy( width = width )
-  def withHeight(height: Int) = copy( height = height )
-
-}
 
 
 /** Интерфейс для именованной обёртки над [[MSize2di]]. Полезно для enum'ов.

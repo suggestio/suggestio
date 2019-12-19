@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.es.MappingDsl
 import io.suggest.es.util.SioEsUtil.{DocField, Field}
 
 /**
@@ -10,7 +11,7 @@ import io.suggest.es.util.SioEsUtil.{DocField, Field}
  */
 
 
-/** Интерфейс для статически чаастей ES-моделей для метода генерации описалова ES-полей. */
+/** Интерфейс для статически частей ES-моделей для метода генерации описалова ES-полей. */
 trait IGenEsMappingProps {
   /** Список ES-полей модели. */
   def generateMappingProps: List[DocField]
@@ -26,7 +27,9 @@ trait EsModelStaticMapping extends IGenEsMappingProps {
   def REPLICAS_COUNT  = EsModelUtil.REPLICAS_COUNT_DFLT
 
   def generateMappingStaticFields: List[Field]
-  def generateMappingProps: List[DocField]
+
+  /** Сборка маппинга индекса по новому формату. */
+  def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping
 
 }
 

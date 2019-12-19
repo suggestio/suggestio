@@ -2,6 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import java.time.OffsetDateTime
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import monocle.macros.GenLens
@@ -17,7 +18,7 @@ import play.api.libs.functional.syntax._
  * Эта meta-модель может иметь обязательные поля.
  */
 
-object MBasicMeta extends IGenEsMappingProps {
+object MBasicMeta extends IEsMappingProps with IGenEsMappingProps {
 
   object Fields {
 
@@ -70,6 +71,23 @@ object MBasicMeta extends IGenEsMappingProps {
       FieldDate(DATE_CREATED_FN, index = true, include_in_all = false),
       FieldDate(DATE_EDITED_FN, index = true, include_in_all = false),
       FieldKeyword(LANGS_ESFN, index = true, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    Json.obj(
+      NAME_FN -> FText.indexedJs,
+      NAME_SHORT_FN -> FText(
+        index = someTrue,
+        fields = Some( Json.obj(
+          NOTOK_SUF -> FText.indexedJs,
+        )),
+      ),
+      TECHNICAL_NAME_FN -> FText.notIndexedJs,
+      HIDDEN_DESCR_FN -> FText.notIndexedJs,
+      DATE_CREATED_FN -> FDate.indexedJs,
+      DATE_EDITED_FN -> FDate.indexedJs,
     )
   }
 

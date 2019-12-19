@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.meta
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,7 +12,11 @@ import play.api.libs.functional.syntax._
  * Created: 25.09.15 10:15
  * Description: Модель инфы о человеке (фио и т.д.), живёт внутри MNodeMeta.
  */
-object MPersonMeta extends IGenEsMappingProps with IEmpty {
+object MPersonMeta
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MPersonMeta
 
@@ -57,6 +62,17 @@ object MPersonMeta extends IGenEsMappingProps with IEmpty {
       FieldText(NAME_LAST_FN,     index = true, include_in_all = true),
       FieldText(EXT_AVA_URL_FN,   index = false, include_in_all = false),
       FieldText(EMAIL_FN,         index = false, include_in_all = false)
+    )
+  }
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.NAME_FIRST_FN   -> FText.indexedJs,
+      F.NAME_LAST_FN    -> FText.indexedJs,
+      F.EXT_AVA_URL_FN  -> FText.notIndexedJs,
+      F.EMAIL_FN        -> FText.notIndexedJs,
     )
   }
 

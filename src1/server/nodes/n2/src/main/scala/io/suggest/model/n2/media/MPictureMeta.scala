@@ -3,6 +3,7 @@ package io.suggest.model.n2.media
 import io.suggest.color.{MColorData, MColorDataEs}
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -19,7 +20,11 @@ import play.api.libs.functional.syntax._
   * 2017-10-06: Модель полностью перепиливается: поля w и h выносятся в отдельное поле,
   * а сама становится неявно-пустой. Это решит кучу проблем, мешающих нормальному пользованию моделью.
   */
-object MPictureMeta extends IGenEsMappingProps with IEmpty {
+object MPictureMeta
+  extends IEsMappingProps
+  with IGenEsMappingProps
+  with IEmpty
+{
 
   override type T = MPictureMeta
   override def empty = apply()
@@ -42,9 +47,22 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.WH_PX_FN -> FObject.plain(
+        enabled = someTrue,
+        properties = Some(MSize2di.esMappingProps)
+      ),
+      F.COLORS_FN -> FObject.nested(
+        properties = MColorData.esMappingProps,
+      ),
+    )
+  }
 
   /** Поддержка play-json. */
-  implicit val MPICTURE_META_FORMAT: OFormat[MPictureMeta] = {
+  implicit val pictureMetaJson: OFormat[MPictureMeta] = {
     val F = Fields
 
     val modernFormat = (

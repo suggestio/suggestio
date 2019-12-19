@@ -1,6 +1,7 @@
 package io.suggest.model.n2.extra.rsc
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
@@ -13,7 +14,10 @@ import play.api.libs.functional.syntax._
   * Description: Когда узел описывает удалённый ресурс (страницу) сюда запихиваются данные той страницы:
   * ссылка, хост и т.д.
   */
-object MRscExtra extends IGenEsMappingProps {
+object MRscExtra
+  extends IEsMappingProps
+  with IGenEsMappingProps
+{
 
   object Fields {
     val URL_FN = "u"
@@ -31,9 +35,20 @@ object MRscExtra extends IGenEsMappingProps {
     )
   }
 
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.URL_FN -> FText.notIndexedJs,
+      F.HOST_NAMES_FN -> FObject.nested(
+        properties = MHostNameIndexed.esMappingProps,
+      ),
+      F.HOST_TOKENS_FN -> FKeyWord.indexedJs,
+    )
+  }
 
   /** Поддержка play-json. */
-  implicit def mRscExtraFormat: OFormat[MRscExtra] = (
+  implicit def mRscExtraJson: OFormat[MRscExtra] = (
     (__ \ Fields.URL_FN).format[String] and
     (__ \ Fields.HOST_NAMES_FN).formatNullable[Seq[MHostNameIndexed]]
       .inmap[Seq[MHostNameIndexed]](
