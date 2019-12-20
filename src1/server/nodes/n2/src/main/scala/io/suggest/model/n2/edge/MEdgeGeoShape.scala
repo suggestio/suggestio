@@ -161,7 +161,6 @@ object MEdgeGeoShape
         Json.obj(
           F.SHAPE_FN(ngl) -> FGeoShape(
             precision = Some(ngl.precision),
-            index     = someTrue,
           )
         )
       }

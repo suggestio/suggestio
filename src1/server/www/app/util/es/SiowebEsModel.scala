@@ -12,6 +12,7 @@ import models.adv.MExtTargets
 import models.mcal.MCalendars
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.es.MappingDsl
 import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -69,6 +70,7 @@ class SiowebEsModel @Inject() (
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT]): Future[Boolean] = {
+    import MappingDsl.Implicits._
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
     LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)

@@ -1,7 +1,8 @@
 package io.suggest.es.model
 
+import io.suggest.es.MappingDsl.Implicits._
 import io.suggest.util.logs.MacroLogsImplLazy
-import io.suggest.util.{JmxBase, JacksonWrapper}
+import io.suggest.util.{JacksonWrapper, JmxBase}
 import javax.inject.{Inject, Singleton}
 import japgolly.univeq._
 
@@ -113,7 +114,9 @@ trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with Macr
     val logPrefix = "generateMapping()"
     LOGGER.debug(s"$logPrefix called")
     JmxBase.tryCatch { () =>
-      val mappingText = companion.generateMapping.string()
+      val mappingText = companion
+        .generateMapping()
+        .toString()
       JacksonWrapper.prettify(mappingText)
     }
   }

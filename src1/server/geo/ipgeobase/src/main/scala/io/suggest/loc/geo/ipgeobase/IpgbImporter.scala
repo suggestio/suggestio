@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
+import io.suggest.es.MappingDsl
 import io.suggest.es.model.{EsIndexUtil, EsModel}
 import io.suggest.es.util.IEsClient
 import io.suggest.util.JmxBase
@@ -198,6 +199,8 @@ class IpgbImporter @Inject() (
       }
     }
 
+    implicit val dsl = MappingDsl.Implicits.mkNewDsl
+
     // Теперь большой for, описывающий асинхронную логику заливки данных в базу.
     val doFut = for {
       // Дождаться успешной распаковки скачанного архива...
@@ -271,7 +274,7 @@ class IpgbImporter @Inject() (
 
 
   /** Импорт таблицы городов. */
-  def importCities(dir: File, bp: BulkProcessor, newIndexName: String): Future[_] = {
+  def importCities(dir: File, bp: BulkProcessor, newIndexName: String)(implicit dsl: MappingDsl): Future[_] = {
     val mCitiesTmp = mCitiesTmpFactory.create(newIndexName)
     val putMappingFut = mCitiesTmp.putMapping()
 
@@ -312,7 +315,7 @@ class IpgbImporter @Inject() (
    * Импорт диапазонов ip-адресов. Используется Pg COPY table FROM source.
    * @param dir директория с распакованными файлами.
    */
-  def importIpRanges(dir: File, bp: BulkProcessor, newIndexName: String): Future[_] = {
+  def importIpRanges(dir: File, bp: BulkProcessor, newIndexName: String)(implicit dsl: MappingDsl): Future[_] = {
     val mRangesTmp = mIpRangesTmpFactory.create(newIndexName)
     val putMappingFut = mRangesTmp.putMapping()
 

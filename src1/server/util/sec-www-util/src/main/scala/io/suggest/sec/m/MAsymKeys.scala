@@ -56,7 +56,6 @@ class MAsymKeys
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._
     dsl.IndexMapping(
-      typ    = ES_TYPE_NAME,
       source = Some( FSource(
         enabled = someTrue,
       )),

@@ -81,7 +81,7 @@ object MBasicMeta extends IEsMappingProps with IGenEsMappingProps {
       NAME_SHORT_FN -> FText(
         index = someTrue,
         fields = Some( Json.obj(
-          NOTOK_SUF -> FText.indexedJs,
+          NOTOK_SUF -> FKeyWord.indexedJs,
         )),
       ),
       TECHNICAL_NAME_FN -> FText.notIndexedJs,

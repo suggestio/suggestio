@@ -82,7 +82,6 @@ class MExtTargets
     import dsl._
     val F = MExtTargetFields
     IndexMapping(
-      typ = ES_TYPE_NAME,
       source = Some( FSource(enabled = someTrue) ),
       properties = Some {
         Json.obj(

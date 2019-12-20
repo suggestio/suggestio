@@ -189,7 +189,6 @@ final class MNodes @Inject() (
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._
     IndexMapping(
-      typ = ES_TYPE_NAME,
       source = Some( FSource(enabled = someTrue) ),
       properties = Some {
         val F = Fields

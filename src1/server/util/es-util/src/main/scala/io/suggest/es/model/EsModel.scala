@@ -14,6 +14,7 @@ import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.es.MappingDsl
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
@@ -31,13 +32,14 @@ import org.elasticsearch.action.support.WriteRequest.RefreshPolicy
 import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
+import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
+import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -384,7 +386,7 @@ final class EsModel @Inject()(
 
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
     import api._
 
     Future.traverse(models) { esModelStatic =>
@@ -403,7 +405,7 @@ final class EsModel @Inject()(
               if (isOk) LOGGER.trace(s"$logPrefix -> OK" )
               else LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
             case Failure(ex)    =>
-              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping.string()}\n-------------\n", ex)
+              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping().toString()}\n-------------\n", ex)
           }
           fut
 
@@ -552,7 +554,7 @@ final class EsModel @Inject()(
       val model: EsModelStaticMapping
 
       /** Отправить маппинг в elasticsearch. */
-      def putMapping(): Future[Boolean] = {
+      def putMapping()(implicit dsl: MappingDsl): Future[Boolean] = {
         lazy val logPrefix = s"$model.putMapping[${System.currentTimeMillis()}]:"
         val indexName = model.ES_INDEX_NAME
         val typeName = model.ES_TYPE_NAME
@@ -561,9 +563,9 @@ final class EsModel @Inject()(
         val fut = esClient.admin().indices()
           .preparePutMapping(indexName)
           .setType(typeName)
-          .setSource(model.generateMapping)
+          .setSource( model.generateMapping().toString(), XContentType.JSON )
           .executeFut()
-          .map { _.isAcknowledged }
+          .map( _.isAcknowledged )
 
         fut.onComplete {
           case Success(res) => LOGGER.trace(s"$logPrefix Done, ack=$res")
@@ -582,18 +584,12 @@ final class EsModel @Inject()(
           .executeFut()
       }
 
-
-      def generateMapping: XContentBuilder = {
-        import io.suggest.es.util.SioEsUtil.{jsonGenerator, IndexMapping}
-        jsonGenerator { implicit b =>
-          // Собираем маппинг индекса.
-          IndexMapping(
-            typ           = model.ES_TYPE_NAME,
-            staticFields  = model.generateMappingStaticFields,
-            properties    = model.generateMappingProps,
-          )
-        }
+      def generateMapping()(implicit dsl: MappingDsl): JsObject = {
+        Json.obj(
+          model.ES_TYPE_NAME -> model.indexMapping
+        )
       }
+
     }
     implicit final class EsModelStaticMappingOps( override val model: EsModelStaticMapping )
       extends EsModelStaticMappingOpsT

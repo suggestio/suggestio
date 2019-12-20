@@ -2,6 +2,7 @@ package io.suggest.stat.inx
 
 import java.time.Instant
 
+import io.suggest.es.MappingDsl.Implicits._
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil

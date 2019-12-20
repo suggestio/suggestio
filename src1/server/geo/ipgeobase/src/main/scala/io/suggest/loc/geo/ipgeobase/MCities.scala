@@ -92,7 +92,6 @@ abstract class MCitiesAbstract
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._
     IndexMapping(
-      typ = ES_TYPE_NAME,
       source = Some( FSource(someTrue) ),
       properties = Some( Json.obj(
         CITY_ID_FN -> FNumber(

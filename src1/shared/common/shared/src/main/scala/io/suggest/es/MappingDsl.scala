@@ -20,8 +20,7 @@ final class MappingDsl { dsl =>
   val someFalse = OptionUtil.SomeBool.someFalse
 
   private object Util {
-    val typPath = (__ \ "type")
-    val typ = typPath.format[String]
+    val typ = (__ \ "_type").format[String]
   }
 
   sealed abstract class TermVectorVariant(override val value: String) extends StringEnumEntry
@@ -371,7 +370,7 @@ final class MappingDsl { dsl =>
   private object FieldsUtil {
 
     lazy val docFieldType =
-      Util.typPath.format[DocFieldType]
+      (__ \ "type").format[DocFieldType]
 
     lazy val indexName =
       (__ \ "index_name").formatNullable[String]
@@ -549,7 +548,7 @@ final class MappingDsl { dsl =>
     lazy val notIndexedJs = Json.toJsObject( apply(index = someFalse) )
   }
   case class FBoolean(
-                       typ                  : DocFieldType                  = DocFieldTypes.Date,
+                       typ                  : DocFieldType                  = DocFieldTypes.Boolean,
                        indexName            : Option[String]                = None,
                        store                : Option[Boolean]               = None,
                        index                : Option[Boolean]               = None,
@@ -637,30 +636,20 @@ final class MappingDsl { dsl =>
 
   object FGeoShape {
     implicit val fieldGeoShapeJson: OFormat[FGeoShape] = (
-      FieldsUtil.fieldJson and
       (__ \ "tree").formatNullable[GeoShapeTree] and
       (__ \ "precision").formatNullable[String] and
       (__ \ "tree_levels").formatNullable[Int] and
-      (__ \ "distance_error_pct").formatNullable[Double]
+      (__ \ "distance_error_pct").formatNullable[Double] and
+      FieldsUtil.docFieldType
     )(apply, unlift(unapply))
-
-    lazy val indexedJs = Json.toJsObject( apply(index = someTrue) )
-    lazy val notIndexedJs = Json.toJsObject( apply(index = someFalse) )
   }
   case class FGeoShape(
-                        typ                  : DocFieldType                  = DocFieldTypes.GeoShape,
-                        indexName            : Option[String]                = None,
-                        store                : Option[Boolean]               = None,
-                        index                : Option[Boolean]               = None,
-                        nullValue            : Option[String]                = None,
-                        boost                : Option[Double]                = None,
-                        fields               : Option[JsObject]              = None,
-                        docValues            : Option[Boolean]               = None,
                         // GeoShape
                         tree                 : Option[GeoShapeTree]          = None,
                         precision            : Option[String]                = None, // "10m"
                         treeLevels           : Option[Int]                   = None,
                         distanceErrorPct     : Option[Double]                = None,
+                        typ                  : DocFieldType                  = DocFieldTypes.GeoShape,
                       )
 
 
@@ -732,7 +721,6 @@ final class MappingDsl { dsl =>
 
   object IndexMapping {
     implicit val indexMappingJson: OFormat[IndexMapping] = (
-      Util.typ and
       FieldsUtil.properties and
       (__ \ "_id").formatNullable[FId] and
       (__ \ "_source").formatNullable[FSource] and
@@ -747,7 +735,6 @@ final class MappingDsl { dsl =>
   }
   case class IndexMapping(
                            // TODO typ: ES-6.x: удалить при/после апдейта.
-                           typ              : String,
                            properties       : Option[JsObject],
                            id               : Option[FId]          = None,
                            source           : Option[FSource]      = None,
@@ -780,6 +767,15 @@ final class MappingDsl { dsl =>
 
   }
 
+}
+
+
+object MappingDsl {
+  /** Для ручного импорта - завёрнуто в под-объект. */
+  object Implicits {
+    implicit def mkNewDsl: MappingDsl =
+      new MappingDsl
+  }
 }
 
 /** Интерфейс для сборки пропертисов. */

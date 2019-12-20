@@ -63,7 +63,6 @@ class MCalendars @Inject() (
     import dsl._
     val F = Fields
     IndexMapping(
-      typ = ES_TYPE_NAME,
       source = Some( FSource(someTrue) ),
       properties = Some( Json.obj(
         F.NAME_FN       -> FText.indexedJs,
