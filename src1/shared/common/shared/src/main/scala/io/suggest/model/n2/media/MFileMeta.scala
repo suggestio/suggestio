@@ -7,9 +7,10 @@ import io.suggest.crypto.hash.MHashes
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
-import japgolly.univeq.UnivEq
-import play.api.libs.json._
+import japgolly.univeq._
+import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io

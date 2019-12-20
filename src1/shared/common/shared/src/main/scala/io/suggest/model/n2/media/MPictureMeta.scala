@@ -6,8 +6,8 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -78,7 +78,6 @@ object MPictureMeta
   }
 
   @inline implicit def univEq: UnivEq[MPictureMeta] = {
-    import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
 

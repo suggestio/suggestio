@@ -2,7 +2,7 @@ package util.es
 
 import javax.inject.Inject
 import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
-import io.suggest.es.util.{EsClientUtil, IEsClient, SioEsUtil, TransportEsClient}
+import io.suggest.es.util.{EsClientUtil, IEsClient, TransportEsClient}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.MAsymKeys
@@ -26,15 +26,9 @@ import scala.util.{Failure, Success}
  * Description: Дополнительная утиль для ES-моделей.
  */
 class SiowebEsModel @Inject() (
-                                esModel             : EsModel,
-                                mNodes              : MNodes,
-                                mMedias             : MMedias,
-                                mCalendars          : MCalendars,
-                                mExtTargets         : MExtTargets,
-                                mAsymKeys           : MAsymKeys,
+                                esModel                   : EsModel,
                                 configuration             : Configuration,
                                 implicit private val ec   : ExecutionContext,
-                                esClientP                 : IEsClient,
                                 injector                  : Injector,
                               )
   extends MacroLogsImplLazy
@@ -56,13 +50,14 @@ class SiowebEsModel @Inject() (
    *
    * @return Список EsModelMinimalStaticT.
    */
-  def ES_MODELS = Seq[EsModelCommonStaticT](
-    mNodes,
-    mCalendars,
-    mExtTargets,
-    mAsymKeys,
-    mMedias,
-  )
+  def ES_MODELS: Seq[EsModelCommonStaticT] = {
+    injector.instanceOf[MNodes] #::
+    injector.instanceOf[MCalendars] #::
+    injector.instanceOf[MExtTargets] #::
+    injector.instanceOf[MAsymKeys] #::
+    injector.instanceOf[MMedias] #::
+    LazyList.empty
+  }
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels(): Unit = {
@@ -94,7 +89,7 @@ class SiowebEsModel @Inject() (
         LOGGER.error(s"Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
-    val toClient = esClientP.esClient
+    val toClient = injector.instanceOf[IEsClient].esClient
     val resultFut = Future.traverse(esModels) { esM =>
       val copyResultFut = esM.copyContent(fromClient, toClient)
       copyResultFut.onComplete {

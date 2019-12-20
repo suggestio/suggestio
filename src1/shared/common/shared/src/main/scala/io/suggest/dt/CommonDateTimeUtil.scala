@@ -1,5 +1,6 @@
 package io.suggest.dt
 
+import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
 
 import io.suggest.dt.interval.MRangeYmdOpt
@@ -47,6 +48,14 @@ object CommonDateTimeUtil {
     /** Поддержка десериализации java.time.OffsetDateTime из sio-формата в виде json-массива. */
     implicit def offsetDateTimeReads: Reads[OffsetDateTime] = {
       Reads[OffsetDateTime] {
+        // Для кросс-платформенных моделей:
+        case JsString(formatted) =>
+          try {
+            JsSuccess( OffsetDateTime.parse( formatted, DateTimeFormatter.ISO_OFFSET_DATE_TIME ) )
+          } catch { case ex: Throwable =>
+            JsError("dtFmt? " + ex)
+          }
+
         // Внутренний нестандартизированный человеко-читабельный sio-формат даты-времени: [VERSON, Y, M, D, H, i, S, ns, +sec]
         // Не совместим ни с чем, поэтому из-за elasticsearch его придётся дропнуть в будущем.
         case JsArray( valuesJsv ) =>
@@ -80,6 +89,7 @@ object CommonDateTimeUtil {
               JsError("epochS? " + ex)
           }
         */
+
         case other =>
           JsError( "[]? " + other )
       }
@@ -88,7 +98,10 @@ object CommonDateTimeUtil {
     /** Поддержка сериализации даты-времени OffsetDateTime в Array[Int]-формат. */
     implicit def offsetDateTimeWrites: Writes[OffsetDateTime] = {
       Writes[OffsetDateTime] { o =>
-        Json.arr(
+        val fmt = o.format( DateTimeFormatter.ISO_OFFSET_DATE_TIME )
+        JsString(fmt)
+        // Формат передачи даты, когда были сомнения в JSR-310 на scala.js
+        /*Json.arr(
           OFFSET_DATE_TIME_FORMAT_VSN_1,
           o.getYear,
           o.getMonthValue,
@@ -98,7 +111,7 @@ object CommonDateTimeUtil {
           o.getSecond,
           o.getNano,
           o.getOffset.getTotalSeconds
-        )
+        )*/
       }
     }
 
