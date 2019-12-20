@@ -3,7 +3,6 @@ package io.suggest.sec.m
 import io.suggest.es.MappingDsl
 import javax.inject.Singleton
 import io.suggest.es.model._
-import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.JacksonParsing
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.logs.MacroLogsImpl
@@ -36,20 +35,6 @@ class MAsymKeys
   // Имена полей для ключей.
   def PUB_KEY_FN = "pk"
   def SEC_KEY_FN = "sk"
-
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldSource(enabled = true),
-      FieldAll(enabled = false)
-    )
-  }
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldText(PUB_KEY_FN, index = false, include_in_all = false),
-      FieldText(SEC_KEY_FN, index = false, include_in_all = false)
-    )
-  }
 
 
   /** Сборка маппинга индекса по новому формату. */

@@ -6,7 +6,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import monocle.macros.GenLens
 
 /**
@@ -18,7 +17,7 @@ import monocle.macros.GenLens
  * более конкретные поля.
  */
 
-object MMeta extends IEsMappingProps with IGenEsMappingProps {
+object MMeta extends IEsMappingProps {
 
   /** Названия ES-полей модели и подмоделей. */
   object Fields {
@@ -93,24 +92,6 @@ object MMeta extends IEsMappingProps with IGenEsMappingProps {
       )
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    // Сформировать анализируемые поля-объекты.
-    val info = List[(String, IGenEsMappingProps)](
-      (BASIC_FN,        MBasicMeta),
-      (PERSON_FN,       MPersonMeta),
-      (ADDRESS_FN,      MAddressEs),
-      (BUSINESS_FN,     MBusinessInfoEs)
-    )
-    val acc0 = for ((fn, model) <- info) yield {
-      FieldObject(fn, enabled = true, properties = model.generateMappingProps)
-    }
-    // Добавить неанализируемые поля.
-    FieldObject(COLORS_FN, enabled = false, properties = Nil) ::
-      acc0
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

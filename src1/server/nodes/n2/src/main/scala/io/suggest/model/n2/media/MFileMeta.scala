@@ -5,7 +5,6 @@ import java.time.OffsetDateTime
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.MHashes
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
 import japgolly.univeq.UnivEq
@@ -20,7 +19,6 @@ import play.api.libs.functional.syntax._
  */
 object MFileMeta
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -88,22 +86,6 @@ object MFileMeta
     )(apply, unlift(unapply))
   }
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    val F = Fields
-    List(
-      FieldKeyword(F.MIME_FN, index = true, include_in_all = true, fields = Seq(
-        FieldText(F.MIME_AS_TEXT_FN, index = true, include_in_all = true)
-      )),
-      FieldNumber(F.SIZE_B_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false),
-      FieldBoolean(F.IS_ORIGINAL_FN, index = true, include_in_all = false),
-      FieldNestedObject(F.HASHES_HEX_FN, enabled = true, properties = MFileMetaHash.generateMappingProps),
-      //FieldKeyword(F.SHA1_FN, index = false, include_in_all = false),
-      FieldDate(F.DATE_CREATED_FN, index = true, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

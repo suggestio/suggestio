@@ -4,7 +4,6 @@ import io.suggest.bill.{IMCurrency, MCurrency, MPrice}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import monocle.macros.GenLens
 
@@ -16,7 +15,6 @@ import monocle.macros.GenLens
  */
 object MTfDaily
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** Названия полей. */
@@ -46,17 +44,6 @@ object MTfDaily
     (__ \ COMISSION_PC_FN).formatNullable[Double]
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldKeyword(CURRENCY_FN, index = true, include_in_all = false),
-      FieldObject(CLAUSES_FN, enabled = true, properties = MDayClause.generateMappingProps),
-      FieldNumber(COMISSION_PC_FN, fieldType = DocFieldTypes.double, index = false, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

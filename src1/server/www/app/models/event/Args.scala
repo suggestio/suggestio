@@ -111,15 +111,6 @@ object ArgsInfo {
     case _ => EmptyArgsInfo
   }
 
-  import io.suggest.es.util.SioEsUtil._
-
-  /** Поля аргументов тоже индексируются. В первую очередь, чтобы их можно было легко и быстро удалять. */
-  def generateMappingProps: List[DocField] = List(
-    FieldKeyword(AdnId, index = true, include_in_all = false),
-    FieldKeyword(AdvExtTarget, index = true, include_in_all = false),
-    FieldKeyword(AdId, index = true, include_in_all = false)
-  )
-
 }
 
 

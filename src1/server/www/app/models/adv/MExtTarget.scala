@@ -5,7 +5,6 @@ import java.time.OffsetDateTime
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.es.MappingDsl
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.util.JacksonParsing
@@ -58,25 +57,6 @@ class MExtTargets
   override def ES_TYPE_NAME: String = "aet"
 
 
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldSource(enabled = true),
-    )
-  }
-
-  import MExtTargetFields._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldText(URL_ESFN, index = true, include_in_all = true),
-      FieldKeyword(SERVICE_ID_ESFN, index = true, include_in_all = true),
-      FieldText(NAME_ESFN, index = true, include_in_all = true),
-      FieldKeyword(ADN_ID_ESFN, index = true, include_in_all = false),
-      // Для сортировке по дате требуется индексация.
-      FieldDate(DATE_CREATED_ESFN, index = true, include_in_all = false)
-    )
-  }
-
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._
@@ -99,6 +79,7 @@ class MExtTargets
 
   @deprecated("Delete it, replaced by deserializeOne2().", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
+    import MExtTargetFields._
     MExtTarget(
       id          = id,
       versionOpt  = version,
@@ -114,11 +95,12 @@ class MExtTargets
 
   /** Кешируем почти собранный десериализатор. */
   private val _reads0 = {
-    (__ \ URL_ESFN).read[String] and
-    (__ \ SERVICE_ID_ESFN).read[MExtService] and
-    (__ \ ADN_ID_ESFN).read[String] and
-    (__ \ NAME_ESFN).readNullable[String] and
-    (__ \ DATE_CREATED_ESFN).read[OffsetDateTime]
+    val F = MExtTargetFields
+    (__ \ F.URL_ESFN).read[String] and
+    (__ \ F.SERVICE_ID_ESFN).read[MExtService] and
+    (__ \ F.ADN_ID_ESFN).read[String] and
+    (__ \ F.NAME_ESFN).readNullable[String] and
+    (__ \ F.DATE_CREATED_ESFN).read[OffsetDateTime]
   }
 
   /** JSON deserializer. */
@@ -132,9 +114,10 @@ class MExtTargets
 
   override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
     import m._
-    SERVICE_ID_ESFN   -> JsString(service.value) ::
-    ADN_ID_ESFN       -> JsString(adnId) ::
-    DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated) ::
+    val F = MExtTargetFields
+    F.SERVICE_ID_ESFN   -> JsString(service.value) ::
+    F.ADN_ID_ESFN       -> JsString(adnId) ::
+    F.DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated) ::
     toJsTargetPlayJsonFields
   }
 

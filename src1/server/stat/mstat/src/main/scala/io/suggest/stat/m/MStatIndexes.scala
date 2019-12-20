@@ -4,7 +4,6 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.util.IEsClient
 import org.elasticsearch.common.settings.Settings
-import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.{Configuration, Environment, Mode}
 import play.api.inject.Injector
@@ -24,12 +23,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class MStatIndexes @Inject() (
                                injector                 : Injector,
                                esClientP                : IEsClient,
+                               esModel                  : EsModel,
                                implicit private val ec  : ExecutionContext,
                              )
   extends MacroLogsImpl
 {
 
   import esClientP.esClient
+  import esModel.api._
 
   /** Имя глобального алиаса. */
   def INDEX_ALIAS_NAME = "stat"

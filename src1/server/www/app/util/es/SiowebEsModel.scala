@@ -2,7 +2,7 @@ package util.es
 
 import javax.inject.Inject
 import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
-import io.suggest.es.util.{EsClientUtil, IEsClient, SioEsUtil}
+import io.suggest.es.util.{EsClientUtil, IEsClient, SioEsUtil, TransportEsClient}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.MAsymKeys
@@ -14,6 +14,7 @@ import org.elasticsearch.common.transport.{InetSocketTransportAddress, Transport
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
 import play.api.Configuration
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -34,6 +35,7 @@ class SiowebEsModel @Inject() (
                                 configuration             : Configuration,
                                 implicit private val ec   : ExecutionContext,
                                 esClientP                 : IEsClient,
+                                injector                  : Injector,
                               )
   extends MacroLogsImplLazy
 {
@@ -69,8 +71,7 @@ class SiowebEsModel @Inject() (
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT]): Future[Boolean] = {
-    import MappingDsl.Implicits._
+  def putAllMappings(models: Seq[EsModelCommonStaticT])(implicit dsl: MappingDsl): Future[Boolean] = {
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
     LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
@@ -85,7 +86,9 @@ class SiowebEsModel @Inject() (
     val esModelsCount = esModels.size
     LOGGER.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
     val fromClient = try {
-      SioEsUtil.newTransportClient(addrs, clusterName = None)
+      injector
+        .instanceOf[TransportEsClient]
+        .newTransportClient( addrs, clusterName = None )
     } catch {
       case ex: Throwable =>
         LOGGER.error(s"Failed to create transport client: addrs=$addrs", ex)
@@ -121,6 +124,7 @@ class SiowebEsModel @Inject() (
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
     maybeErrorIfIncorrectModels()
     val esModels = ES_MODELS
+    implicit val dsl = MappingDsl.Implicits.mkNewDsl
 
     val futInx = esModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "

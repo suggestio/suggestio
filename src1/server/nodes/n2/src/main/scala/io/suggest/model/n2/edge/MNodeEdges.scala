@@ -3,7 +3,6 @@ package io.suggest.model.n2.edge
 import io.suggest.common.empty.{EmptyProduct, IEmpty, OptionUtil}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.model.PrefixedFn
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.util.logs.MacroLogsImpl
 import monocle.macros.GenLens
@@ -30,7 +29,6 @@ import scala.collection.MapView
  */
 object MNodeEdges
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
   with MacroLogsImpl
 {
@@ -125,14 +123,6 @@ object MNodeEdges
       )
   }
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldNestedObject(Fields.OUT_FN, enabled = true, properties = MEdge.generateMappingProps)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

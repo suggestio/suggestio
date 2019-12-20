@@ -7,7 +7,6 @@ import io.suggest.es.util.IEsClient
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.search.SearchHit
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import org.elasticsearch.action.search.SearchResponse
 
 import scala.collection.mutable

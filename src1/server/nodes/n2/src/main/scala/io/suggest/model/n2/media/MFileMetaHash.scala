@@ -3,8 +3,6 @@ package io.suggest.model.n2.media
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.{HashHex, HashesHex, MHash}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
@@ -19,7 +17,6 @@ import play.api.libs.json._
   */
 object MFileMetaHash
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -67,17 +64,6 @@ object MFileMetaHash
       )
     )
   }
-
-  /** Список ES-полей модели. */
-  override def generateMappingProps: List[DocField] = {
-    val F = Fields
-    List(
-      FieldKeyword(F.HASH_TYPE_FN, index = true, include_in_all = false),
-      FieldKeyword(F.HEX_VALUE_FN, index = true, include_in_all = true),
-      FieldNumber(F.FLAGS_FN, fieldType = DocFieldTypes.short, index = true, include_in_all = false)
-    )
-  }
-
 
   /** Сконвертить список [[MFileMetaHash]] в карту хешей. */
   def toHashesHex(hhs: IterableOnce[MFileMetaHash]): HashesHex = {

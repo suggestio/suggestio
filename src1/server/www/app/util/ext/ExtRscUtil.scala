@@ -4,7 +4,6 @@ import java.net.URL
 
 import io.suggest.es.model.EsModel
 import io.suggest.es.util.{IEsClient, SioEsUtil}
-import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.rsc.{MHostNameIndexed, MRscExtra}

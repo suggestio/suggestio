@@ -2,9 +2,6 @@ package io.suggest.common.geom.d2
 
 import java.awt.geom.RectangularShape
 
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil.{DocField, DocFieldTypes, FieldNumber}
-import io.suggest.media.MediaConst.NamesShort
 import play.api.data.Mapping
 
 /**
@@ -13,23 +10,7 @@ import play.api.data.Mapping
   * Created: 06.10.17 15:32
   * Description: Поддержка ES для кросс-платформенной модели MSize2di.
   */
-object MSize2diJvm
-  extends IGenEsMappingProps
-{
-
-  // Имена полей короткие, заданы в MediaConst.NamesShort.
-
-  /** Список ES-полей модели. */
-  override def generateMappingProps: List[DocField] = {
-    def _numberField(fn: String) = {
-      FieldNumber(fn, fieldType = DocFieldTypes.integer, index = true, include_in_all = false)
-    }
-    val F = NamesShort
-    List(
-      _numberField( F.WIDTH_FN ),
-      _numberField( F.HEIGHT_FN )
-    )
-  }
+object MSize2diJvm {
 
   object Implicits {
 

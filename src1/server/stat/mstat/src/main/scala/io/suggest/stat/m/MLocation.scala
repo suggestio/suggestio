@@ -2,7 +2,6 @@ package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -14,7 +13,6 @@ import play.api.libs.functional.syntax._
   */
 object MLocation
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -42,16 +40,6 @@ object MLocation
       .inmap( EmptyUtil.opt2ImplMEmptyF(MGeoLocData), EmptyUtil.implEmpty2OptF[MGeoLocData] )
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    val glDataProps = MGeoLocData.generateMappingProps
-    List(
-      FieldObject(GEO_LOC_FN, enabled = true, properties = glDataProps),
-      FieldObject(GEO_IP_FN, enabled = true, properties = glDataProps)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

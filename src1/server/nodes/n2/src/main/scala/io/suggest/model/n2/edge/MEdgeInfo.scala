@@ -4,10 +4,9 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
-import io.suggest.geo.GeoPoint.Implicits._
+import io.suggest.geo.GeoPoint.Implicits.GEO_POINT_FORMAT  // Не удалять: надо для Json format.
 import io.suggest.model.PrefixedFn
 import io.suggest.primo.id.IId
 import io.suggest.text.StringUtil
@@ -29,7 +28,6 @@ import io.suggest.ueq.UnivEqUtil._
  */
 object MEdgeInfo
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -163,91 +161,6 @@ object MEdgeInfo
     )
   }
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  /** Пока EsUtil dsl живёт вне shared, тут описываем модель данных флага. */
-  def edgeFlagDataMapping = List[DocField](
-    FieldKeyword(
-      id              = MEdgeFlagData.Fields.FLAG_FN,
-      index           = true,
-      include_in_all  = false,
-    )
-  )
-
-  /** Сборка полей ES-маппинга. */
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldDate(
-        id              = DATE_NI_FN,
-        index           = false,
-        include_in_all  = false
-      ),
-      FieldText(
-        id              = COMMENT_NI_FN,
-        index           = false,
-        include_in_all  = false
-      ),
-
-      FieldBoolean(
-        id              = FLAG_FN,
-        index           = true,
-        include_in_all  = false
-      ),
-
-      FieldNestedObject(
-        id          = FLAGS_FN,
-        enabled     = true,
-        properties  = edgeFlagDataMapping,
-      ),
-
-      // 2016.mar.24 Теперь теги живут внутри эджей.
-      FieldText(
-        id              = TAGS_FN,
-        index           = true,
-        include_in_all  = true,
-        analyzer        = SioConstants.ENGRAM_AN_1,
-        search_analyzer = SioConstants.DFLT_AN,
-        fields = Seq(
-          // При поиске тегов надо игнорить регистр:
-          FieldText(
-            id              = Tags.RAW_FN,
-            include_in_all  = false,
-            index           = true,
-            analyzer        = SioConstants.KW_LC_AN
-            // TODO Нужна поддержка аггрегации тут: нужен какой-то параметр тут + переиндексация. И можно удалить KW_FN.
-          ),
-          // Для аггрегации нужно keyword-термы. Они позволят получать необрезанные слова.
-          // Появилась для DirectTagsUtil, но из-за других проблем там, это поле не используется.
-          FieldKeyword(
-            id              = Tags.KW_FN,
-            include_in_all  = false,
-            index           = true
-          )
-        )
-      ),
-      // Список геошейпов идёт как nested object, чтобы расширить возможности индексации (ценой усложнения запросов).
-      FieldNestedObject(
-        id              = GEO_SHAPES_FN,
-        enabled         = true,
-        properties      = MEdgeGeoShape.generateMappingProps
-      ),
-      // 2016.sep.29 Геоточки, используются как для информации, так и для индексации.
-      // Пока не очень ясно, какие именно настройки индексации поля здесь необходимы.
-      // Изначальное назначение: экспорт на карту узлов выдачи, чтобы в кружках с цифрами отображались.
-      // Окружности и прочее фигурное добро для этого элементарного действа не подходят ни разу.
-      FieldGeoPoint( GEO_POINT_FN ),
-
-      // Маркер связи с внешним сервисом, интегрированным с s.io.
-      // Появился с переездом идентов в n2.
-      FieldKeyword(
-        id              = EXT_SERVICE_FN,
-        index           = true,
-        include_in_all  = false,
-      )
-
-    )
-  }
 
   val dateNi = GenLens[MEdgeInfo](_.dateNi)
   val textNi = GenLens[MEdgeInfo](_.textNi)

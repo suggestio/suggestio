@@ -2,8 +2,6 @@ package io.suggest.model.n2.extra.rsc
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -16,7 +14,6 @@ import play.api.libs.functional.syntax._
   */
 object MRscExtra
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -25,15 +22,6 @@ object MRscExtra
     val HOST_TOKENS_FN = "ht"
   }
 
-
-  /** Список ES-полей модели. */
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldText( Fields.URL_FN, index = false, include_in_all = false ),
-      FieldNestedObject( Fields.HOST_NAMES_FN, enabled = true, properties = MHostNameIndexed.generateMappingProps ),
-      FieldKeyword( Fields.HOST_TOKENS_FN, index = true, include_in_all = false )
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._
@@ -48,19 +36,22 @@ object MRscExtra
   }
 
   /** Поддержка play-json. */
-  implicit def mRscExtraJson: OFormat[MRscExtra] = (
-    (__ \ Fields.URL_FN).format[String] and
-    (__ \ Fields.HOST_NAMES_FN).formatNullable[Seq[MHostNameIndexed]]
-      .inmap[Seq[MHostNameIndexed]](
-        EmptyUtil.opt2ImplEmpty1F(Nil),
-        hosts => if (hosts.isEmpty) None else Some(hosts)
-      ) and
-    (__ \ Fields.HOST_TOKENS_FN).formatNullable[Set[String]]
-      .inmap[Set[String]](
-        EmptyUtil.opt2ImplEmptyF( Set.empty ),
-        hToks => if (hToks.isEmpty) None else Some(hToks)
-      )
-  )(apply, unlift(unapply))
+  implicit def mRscExtraJson: OFormat[MRscExtra] = {
+    val F = Fields
+    (
+      (__ \ F.URL_FN).format[String] and
+      (__ \ F.HOST_NAMES_FN).formatNullable[Seq[MHostNameIndexed]]
+        .inmap[Seq[MHostNameIndexed]](
+          EmptyUtil.opt2ImplEmpty1F(Nil),
+          hosts => if (hosts.isEmpty) None else Some(hosts)
+        ) and
+      (__ \ F.HOST_TOKENS_FN).formatNullable[Set[String]]
+        .inmap[Set[String]](
+          EmptyUtil.opt2ImplEmptyF( Set.empty ),
+          hToks => if (hToks.isEmpty) None else Some(hToks)
+        )
+    )(apply, unlift(unapply))
+  }
 
 }
 

@@ -1,7 +1,6 @@
 package io.suggest.stat.m
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -17,7 +16,6 @@ import play.api.libs.functional.syntax._
   */
 object MAction
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -71,22 +69,6 @@ object MAction
       )
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    def _strField(id: String) = {
-      FieldKeyword(id, index = true, include_in_all = true)
-    }
-
-    List(
-      _strField(ACTION_FN),
-      _strField(NODE_ID_FN),
-      _strField(NODE_NAME_FN),
-      FieldNumber(COUNT_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = true),
-      FieldText(TEXT_NI_FN, index = false, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

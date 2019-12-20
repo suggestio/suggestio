@@ -88,26 +88,6 @@ class MMedias @Inject() (
   }
 
 
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldAll(enabled = false),
-      FieldSource(enabled = true)
-    )
-  }
-
-  override def generateMappingProps: List[DocField] = {
-    val F = MMediaFields
-    List(
-      FieldKeyword(F.NODE_ID_FN, index = true, include_in_all = true),
-      FieldObject(F.FileMeta.FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
-      FieldObject(F.Storage.STORAGE_FN, enabled = true, properties = iMediaStorages.generateMappingProps),
-      FieldObject(F.PictureMeta.PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
-    )
-  }
-
-
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._

@@ -47,7 +47,6 @@ class MIpRangesModel @Inject()(esModel      : EsModel)
 
   import esModel.api._
   import MIpRange.Fields._
-  import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 
   object api {
 
@@ -110,27 +109,6 @@ abstract class MIpRangesAbstract
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MIpRange = {
     throw new UnsupportedOperationException("Deprecated API not implemented.")
   }
-
-
-  import io.suggest.es.util.SioEsUtil._
-  import MIpRange.Fields._
-
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldAll(enabled = false),
-      FieldSource(enabled = true)
-    )
-  }
-
-  override def generateMappingProps: List[DocField] = {
-    // Индексируем все поля. ip - чтобы искать, остальное -- для возможности просмотра индекса в kibana.
-    List(
-      FieldKeyword(COUNTRY_CODE_FN, index = true, include_in_all = true),
-      FieldIp(IP_RANGE_FN, index = true, include_in_all = true),
-      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = true, include_in_all = true)
-    )
-  }
-
 
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {

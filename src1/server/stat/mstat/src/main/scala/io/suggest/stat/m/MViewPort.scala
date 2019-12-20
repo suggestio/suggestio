@@ -1,7 +1,6 @@
 package io.suggest.stat.m
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,7 +12,6 @@ import play.api.libs.functional.syntax._
   */
 object MViewPort
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -33,16 +31,6 @@ object MViewPort
     (__ \ PX_RATIO_FN).formatNullable[Float]
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldNumber(WIDTH_PX_FN,  fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-      FieldNumber(HEIGHT_PX_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-      FieldNumber(PX_RATIO_FN,  fieldType = DocFieldTypes.float,   index = true, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

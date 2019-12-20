@@ -6,7 +6,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.PrefixedFn
 import monocle.macros.GenLens
@@ -19,7 +18,6 @@ import monocle.macros.GenLens
  */
 object MNodeBilling
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -59,14 +57,6 @@ object MNodeBilling
     }
   }
 
-
-  import io.suggest.es.util.SioEsUtil._
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldNumber(CONTRACT_ID_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false),
-      FieldObject(TARIFFS_FN, enabled = true, properties = MNodeTariffs.generateMappingProps)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

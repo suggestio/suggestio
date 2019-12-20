@@ -2,7 +2,6 @@ package io.suggest.model.n2.bill.tariff.daily
 
 import io.suggest.bill.Amount_t
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -18,7 +17,6 @@ import play.api.libs.functional.syntax._
  */
 object MDayClause
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -69,15 +67,6 @@ object MDayClause
       .toSeq
   }
 
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldText(NAME_FN, index = false, include_in_all = false),
-      FieldNumber(AMOUNT_FN, fieldType = DocFieldTypes.long, index = false, include_in_all = false),
-      FieldKeyword(CAL_ID_FN, index = true, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

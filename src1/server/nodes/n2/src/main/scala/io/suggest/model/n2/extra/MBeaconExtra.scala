@@ -3,7 +3,6 @@ package io.suggest.model.n2.extra
 import java.util.UUID
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -15,7 +14,6 @@ import play.api.libs.functional.syntax._
   */
 object MBeaconExtra
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** Названия ES-полей модели. */
@@ -30,30 +28,12 @@ object MBeaconExtra
   import Fields._
 
   /** Поддержка сериализации/десериализации JSON. */
-  implicit val FORMAT: OFormat[MBeaconExtra] = (
+  implicit val beaconExtraJson: OFormat[MBeaconExtra] = (
     (__ \ UUID_FN).format[String] and
     (__ \ MAJOR_FN).format[Int] and
     (__ \ MINOR_FN).format[Int]
   )(apply, unlift(unapply))
 
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    def _fieldNumber(fn: String) = {
-      FieldNumber(
-        id              = fn,
-        fieldType       = DocFieldTypes.integer,
-        index           = true,
-        include_in_all  = true
-      )
-    }
-
-    List(
-      FieldKeyword(UUID_FN, index = true, include_in_all = true),
-      _fieldNumber(MAJOR_FN),
-      _fieldNumber(MINOR_FN)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

@@ -2,12 +2,11 @@ package io.suggest.model.n2.extra
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
-import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
+import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.rsc.MRscExtra
-import io.suggest.vid.ext.{MVideoExtInfo, MVideoExtInfoEs}
+import io.suggest.vid.ext.MVideoExtInfo
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
@@ -21,7 +20,6 @@ import play.api.libs.json.{OFormat, _}
  */
 object MNodeExtras
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -99,7 +97,7 @@ object MNodeExtras
 
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
-  implicit val FORMAT: OFormat[MNodeExtras] = (
+  implicit val nodeExtrasJson: OFormat[MNodeExtras] = (
     (__ \ Fields.Adn.ADN_FN).formatNullable[MAdnExtra] and
     (__ \ Fields.Beacon.BEACON_FN).formatNullable[MBeaconExtra] and
     (__ \ Fields.Domain.DOMAIN_FN).formatNullable[Seq[MDomainExtra]]
@@ -112,22 +110,6 @@ object MNodeExtras
     (__ \ Fields.Resource.RESOURCE_FN).formatNullable[MRscExtra]
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
-      FieldObject(fn, enabled = true, properties = model.generateMappingProps)
-    }
-    List(
-      _obj(Fields.Adn.ADN_FN,                 MAdnExtra),
-      _obj(Fields.Beacon.BEACON_FN,           MBeaconExtra),
-      FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps),
-      _obj(Fields.MNDoc.MNDOC_FN,             MNodeDocJvm),
-      _obj(Fields.VideoExt.VIDEO_EXT_FN,      MVideoExtInfoEs),
-      _obj(Fields.Resource.RESOURCE_FN,       MRscExtra),
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

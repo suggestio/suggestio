@@ -4,7 +4,6 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 import play.api.libs.json._
@@ -26,7 +25,6 @@ import scala.util.Random
   */
 object MEdgeGeoShape
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** Названия полей модели на стороне ElasticSearch. */
@@ -115,23 +113,6 @@ object MEdgeGeoShape
     }
 
     Format[MEdgeGeoShape](READS, WRITES)
-  }
-
-
-  import io.suggest.es.util.SioEsUtil._
-
-  /** ES-маппинги полей. */
-  override def generateMappingProps: List[DocField] = {
-    val nglFields = MNodeGeoLevels.values
-      .foldLeft( List.empty[DocField] ) { (acc, ngl)  =>
-        FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
-      }
-    FieldKeyword(Fields.GLEVEL_FN, index = true, include_in_all = false, store = true) ::
-      FieldBoolean(Fields.GJSON_COMPAT_FN, index = true, include_in_all = false) ::
-      FieldText(Fields.FROM_URL_FN, index = false, include_in_all = false) ::
-      FieldDate(Fields.DATE_EDITED_FN, index = false, include_in_all = false) ::
-      FieldNumber(Fields.ID_FN, fieldType = DocFieldTypes.integer, index = false, include_in_all = false) ::
-      nglFields
   }
 
 

@@ -312,11 +312,13 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @return
    */
   def normalizeHostname(host: String) : String = {
-    var result = host.toLowerCase
-    if (result.endsWith(".")) {
+    var result = host
+      .trim
+      .toLowerCase
+    if (result endsWith ".") {
       result = result.substring(0, result.length - 1)
     }
-    if (result.startsWith("."))
+    if (result startsWith ".")
       result = result.tail
     //
     idnaToAsciiSafe( host )

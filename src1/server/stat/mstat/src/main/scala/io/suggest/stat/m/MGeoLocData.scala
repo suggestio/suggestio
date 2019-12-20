@@ -2,7 +2,6 @@ package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MGeoPoint
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -16,7 +15,6 @@ import io.suggest.geo.GeoPoint.Implicits._
   */
 object MGeoLocData
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -35,27 +33,13 @@ object MGeoLocData
   import Fields._
 
   implicit val FORMAT: OFormat[MGeoLocData] = (
-    // TODO Почему-то этот код не видит GeoPoint.Implicits.FORMAT, поэтому тут он вписан явно.
     (__ \ COORDS_FN).formatNullable[MGeoPoint] and
     (__ \ ACCURACY_FN).formatNullable[Int] and
     (__ \ TOWN_FN).formatNullable[String] and
     (__ \ COUNTRY_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
-
   override def empty = MGeoLocData()
-
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldGeoPoint( COORDS_FN ),
-      FieldNumber(ACCURACY_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-      FieldKeyword(TOWN_FN, index = true, include_in_all = true),
-      FieldKeyword(COUNTRY_FN, index = true, include_in_all = true)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

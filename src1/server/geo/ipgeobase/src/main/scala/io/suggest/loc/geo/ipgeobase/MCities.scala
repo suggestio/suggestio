@@ -69,38 +69,20 @@ abstract class MCitiesAbstract
     throw new UnsupportedOperationException("Deprecated API not implemented.")
   }
 
-  import io.suggest.es.util.SioEsUtil._
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldAll(enabled = false),
-      FieldSource(enabled = true)
-    )
-  }
-
-  import MCity.Fields._
-  override def generateMappingProps: List[DocField] = {
-    List(
-      // Ничего не индексируется за ненадобность. При необходимости всегда можно пересоздать свежий индекс с иными параметрами.
-      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = false, include_in_all = false),
-      FieldText(NAME_FN, index = false, include_in_all = true),
-      FieldText(REGION_FN, index = false, include_in_all = true),
-      FieldGeoPoint(CENTER_FN)
-    )
-  }
-
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._
+    val F = MCity.Fields
     IndexMapping(
       source = Some( FSource(someTrue) ),
       properties = Some( Json.obj(
-        CITY_ID_FN -> FNumber(
+        F.CITY_ID_FN -> FNumber(
           typ   = DocFieldTypes.Short,
           index = someFalse,
         ),
-        NAME_FN   -> FText.notIndexedJs,
-        REGION_FN -> FText.notIndexedJs,
-        CENTER_FN -> FGeoPoint.indexedJs,
+        F.NAME_FN   -> FText.notIndexedJs,
+        F.REGION_FN -> FText.notIndexedJs,
+        F.CENTER_FN -> FGeoPoint.indexedJs,
       ))
     )
   }

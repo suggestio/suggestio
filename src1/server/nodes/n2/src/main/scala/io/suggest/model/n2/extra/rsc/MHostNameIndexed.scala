@@ -1,8 +1,6 @@
 package io.suggest.model.n2.extra.rsc
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -14,18 +12,10 @@ import play.api.libs.functional.syntax._
   */
 object MHostNameIndexed
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
     val HOST_FN = "h"
-  }
-
-  /** Спека для индексации. */
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldKeyword( Fields.HOST_FN, index = true, include_in_all = true )
-    )
   }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
@@ -38,7 +28,8 @@ object MHostNameIndexed
 
   /** Поддержка play-json. */
   implicit def mHostNameIndexedFormat: OFormat[MHostNameIndexed] = {
-    (__ \ Fields.HOST_FN).format[String]
+    val F = Fields
+    (__ \ F.HOST_FN).format[String]
       .inmap[MHostNameIndexed](apply, _.host)
   }
 

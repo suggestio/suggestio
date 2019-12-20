@@ -1,7 +1,6 @@
 package io.suggest.model.n2.extra.domain
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.text.util.UrlUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -22,7 +21,6 @@ import play.api.libs.functional.syntax._
   */
 object MDomainExtra
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** ES-названия полей живут здесь. */
@@ -32,24 +30,15 @@ object MDomainExtra
   }
 
 
-  import Fields._
-
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MDomainExtra] = (
-    (__ \ DKEY_FN).format[String] and
-    (__ \ MODE_FN).format[MDomainMode]
-  )(apply, unlift(unapply))
-
-
-  import io.suggest.es.util.SioEsUtil._
-
-  /** Описание полей суб-модели для elasticsearch. */
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldKeyword(DKEY_FN, index = true, include_in_all = true),
-      FieldKeyword(MODE_FN, index = true, include_in_all = false)
-    )
+  implicit val domainExtraJson: OFormat[MDomainExtra] = {
+    val F = Fields
+    (
+      (__ \ F.DKEY_FN).format[String] and
+      (__ \ F.MODE_FN).format[MDomainMode]
+    )(apply, unlift(unapply))
   }
+
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

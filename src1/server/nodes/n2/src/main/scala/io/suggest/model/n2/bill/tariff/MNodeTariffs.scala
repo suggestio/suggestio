@@ -2,7 +2,6 @@ package io.suggest.model.n2.bill.tariff
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.bill.tariff.daily.MTfDaily
 import monocle.macros.GenLens
@@ -17,7 +16,6 @@ import play.api.libs.functional.syntax._
  */
 object MNodeTariffs
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -45,15 +43,6 @@ object MNodeTariffs
   implicit val FORMAT: Format[MNodeTariffs] = {
     (__ \ DAILY_FN).formatNullable[MTfDaily]
       .inmap[MNodeTariffs](apply, _.daily)
-  }
-
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldObject(DAILY_FN, enabled = true, properties = MTfDaily.generateMappingProps)
-    )
   }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {

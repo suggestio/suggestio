@@ -9,8 +9,7 @@ import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
 import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
-import io.suggest.es.util.{IEsClient, SioEsUtil}
-import io.suggest.es.util.SioEsUtil._
+import io.suggest.es.util.{SioEsUtil, IEsClient}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -25,7 +24,7 @@ import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
 import org.elasticsearch.ResourceNotFoundException
-import org.elasticsearch.action.DocWriteRequest
+import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse, DocWriteRequest}
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy
@@ -41,7 +40,7 @@ import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 import play.api.libs.json.{JsObject, Json}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 import scala.jdk.CollectionConverters._
@@ -66,474 +65,6 @@ final class EsModel @Inject()(
 
   import esClientP.esClient
 
-  /** Сконвертить распарсенные результаты в карту. */
-  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): Map[String, T] =
-    OptId.els2idMap[String, T](results)
-
-  /** Список результатов в список id. */
-  def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
-    val hitsArr = searchResp.getHits.getHits
-    new AbstractSearchResp[String] {
-      override def total: Long =
-        searchResp.getHits.getTotalHits
-      override def length: Int =
-        hitsArr.length
-      override def apply(idx: Int): String =
-        hitsArr(idx).getId
-    }
-  }
-
-  /** Собрать новый индекс для заливки туда моделей ipgeobase. */
-  def createIndex(newIndexName: String, settings: Settings): Future[_] = {
-    val fut = esClient.admin().indices()
-      .prepareCreate(newIndexName)
-      // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
-      .setSettings( settings )
-      .executeFut()
-      .map(_.isShardsAcked)
-
-    lazy val logPrefix = s"createIndex($newIndexName):"
-    fut.onComplete {
-      case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
-      case Failure(ex)  => LOGGER.error(s"$logPrefix failed", ex)
-    }
-
-    fut
-  }
-
-  /** Логика удаления старого ненужного индекса. */
-  def deleteIndex(oldIndexName: String): Future[_] = {
-    val fut: Future[_] = esClient.admin().indices()
-      .prepareDelete(oldIndexName)
-      .executeFut()
-      .map { _.isAcknowledged }
-
-    val logPrefix = s"deleteIndex($oldIndexName):"
-
-    // Отрабатывать ситуацию, когда индекс не найден.
-    val fut1 = fut.recover { case ex: ResourceNotFoundException =>
-      LOGGER.debug(s"$logPrefix Looks like, index not exist, already deleted?", ex)
-      false
-    }
-
-    // Логгировать завершение команды.
-    fut1.onComplete {
-      case Success(res) => LOGGER.debug(s"$logPrefix Index deleted ok: $res")
-      case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to delete index", ex)
-    }
-
-    fut1
-  }
-
-  /**
-    * Убедиться, что индекс существует.
-    *
-    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
-    *         Если индекс уже существует, то false.
-    */
-  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1): Future[Boolean] = {
-    for {
-      existsResp <- esClient.admin().indices()
-        .prepareExists(indexName)
-        .executeFut()
-
-      _ <- if (existsResp.isExists) {
-        Future.successful(false)
-      } else {
-        val indexSettings = SioEsUtil
-          .getIndexSettingsV2(shards=shards, replicas=replicas)
-        esClient.admin().indices()
-          .prepareCreate(indexName)
-          .setSettings(indexSettings)
-          .executeFut()
-          .map { _ => true }
-      }
-    } yield {
-      true
-    }
-  }
-
-
-  /** Выставить алиас на текущий индекс, забыв о предыдущих данных алиаса. */
-  def resetAliasToIndex(indexName: String, aliasName: String): Future[_] = {
-    lazy val logPrefix = s"resetIndexAliasTo(index[$indexName] alias[$aliasName])[${System.currentTimeMillis()}]:"
-    LOGGER.info(s"$logPrefix Starting, alias = $aliasName")
-
-    val fut = esClient.admin().indices()
-      .prepareAliases()
-      // Удалить все алиасы с необходимым именем.
-      .removeAlias("*", aliasName)
-      // Добавить алиас на новый индекс.
-      .addAlias(indexName, aliasName)
-      .executeFut()
-      .map( _.isAcknowledged )
-
-    // Подключить логгирование к работе...
-    fut.onComplete {
-      case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
-      case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
-    }
-
-    fut
-  }
-
-
-  /** Узнать имя индекса, сокрытого за алиасом. */
-  def getAliasedIndexName(aliasName: String): Future[Set[String]] = {
-    def logPrefix = "getAliasesIndexName():"
-    esClient.admin().indices()
-      .prepareGetAliases( aliasName )
-      .executeFut()
-      .map { resp =>
-        LOGGER.trace(s"$logPrefix Ok, found ${resp.getAliases.size()} indexes.")
-        resp.getAliases
-          .keysIt()
-          .asScala
-          .toSet
-      }
-      .recover { case ex: ResourceNotFoundException =>
-        // Если алиасов не найдено, ES обычно возвращает ошибку 404. Это тоже отработать надо бы.
-        LOGGER.warn(s"$logPrefix 404, suppressing error to empty result.", ex)
-        Set.empty
-      }
-  }
-
-
-  /** Когда заливка данных закончена, выполнить подготовку индекса к эсплуатации.
-    * elasticsearch 2.0+: переименовали операцию optimize в force merge. */
-  def optimizeAfterBulk(indexName: String, indexSettingsAfterBulk: Option[Settings] = None): Future[_] = {
-    val startedAt = System.currentTimeMillis()
-
-    // Запустить оптимизацию всего ES-индекса.
-    val inxOptFut: Future[_] = {
-      esClient.admin().indices()
-        .prepareForceMerge(indexName)
-        .setMaxNumSegments(1)
-        .setFlush(true)
-        .executeFut()
-    }
-
-    lazy val logPrefix = s"optimizeAfterBulk($indexName):"
-
-    // Потом нужно выставить не-bulk настройки для готового к работе индекса.
-    val inxSettingsFut = inxOptFut.flatMap { _ =>
-      val updInxSettingsAt = System.currentTimeMillis()
-
-      val fut2: Future[_] = indexSettingsAfterBulk.fold[Future[_]] {
-        Future.successful(None)
-      } { settings2 =>
-        esClient.admin().indices()
-          .prepareUpdateSettings(indexName)
-          .setSettings( settings2 )
-          .executeFut()
-      }
-
-      LOGGER.trace(s"$logPrefix Optimize took ${updInxSettingsAt - startedAt} ms")
-      for (_ <- fut2)
-        LOGGER.trace(s"$logPrefix Update index settings took ${System.currentTimeMillis() - updInxSettingsAt} ms.")
-
-      fut2
-    }
-
-    inxSettingsFut
-  }
-
-
-  /**
-   * Собрать указанные значения id'шников в аккамулятор-множество.
-   *
-   * @param searchResp Экземпляр searchResponse.
-   * @param acc0 Начальный акк.
-   * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
-   * @return Фьчерс с результирующим аккамулятором-множеством.
-   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
-   */
-  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0,
-                           acc0: List[String] = Nil, keepAliveMs: Long = 60000L): Future[List[String]] = {
-    val hits = searchResp.getHits.getHits
-    if (!firstReq && hits.isEmpty) {
-      Future successful acc0
-    } else {
-      val nextAccLen = currAccLen + hits.length
-      val canContinue = maxAccLen <= 0 || nextAccLen < maxAccLen
-      val nextScrollRespFut = if (canContinue) {
-        // Лимит длины акк-ра ещё не пробит. Запустить в фоне получение следующей порции результатов...
-        esClient
-          .prepareSearchScroll(searchResp.getScrollId)
-          .setScroll(new TimeValue(keepAliveMs))
-          .executeFut()
-      } else {
-        null
-      }
-      // Если акк заполнен, то надо запустить очистку курсора на стороне ES.
-      if (!canContinue) {
-        esClient
-          .prepareClearScroll()
-          .addScrollId( searchResp.getScrollId )
-          .executeFut()
-      }
-      // Синхронно залить результаты текущего реквеста в аккамулятор
-      val accNew = hits.foldLeft[List[String]] (acc0) { (acc1, hit) =>
-        hit.getId :: acc1
-      }
-      if (canContinue) {
-        // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
-        nextScrollRespFut flatMap { searchResp2 =>
-          searchScrollResp2ids(searchResp2, maxAccLen, firstReq = false, currAccLen = nextAccLen, acc0 = accNew, keepAliveMs = keepAliveMs)
-        }
-      } else {
-        // Пробит лимит аккамулятора по maxAccLen - вернуть акк не продолжая обход.
-        Future successful accNew
-      }
-    }
-  }
-
-
-  /**
-   * Узнать метаданные индекса.
-   *
-   * @param indexName Название индекса.
-   * @return Фьючерс с опциональными метаданными индекса.
-   */
-  def getIndexMeta(indexName: String): Future[Option[IndexMetaData]] = {
-    esClient.admin().cluster()
-      .prepareState()
-      .setIndices(indexName)
-      .executeFut()
-      .map { cs =>
-        val maybeResult = cs.getState
-          .getMetaData
-          .index(indexName)
-        Option(maybeResult)
-      }
-  }
-
-  /**
-   * Прочитать метаданные маппинга.
-   *
-   * @param indexName Название индекса.
-   * @param typeName Название типа.
-   * @return Фьючерс с опциональными метаданными маппинга.
-   */
-  def getIndexTypeMeta(indexName: String, typeName: String): Future[Option[MappingMetaData]] = {
-    for (imdOpt <- getIndexMeta(indexName)) yield {
-      for {
-        imd <- imdOpt
-        mappingOrNull = imd.mapping(typeName)
-        r   <- Option( mappingOrNull )
-      } yield {
-        r
-      }
-    }
-  }
-
-  /**
-   * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
-   * внутри общего индекса.
-   *
-   * @param typeName Имя типа.
-   * @return Да/нет.
-   */
-  def isMappingExists(indexName: String, typeName: String): Future[Boolean] = {
-    for {
-      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
-    } yield {
-      metaOpt.isDefined
-    }
-  }
-
-  /** Прочитать текст маппинга из хранилища. */
-  def getCurrentMapping(indexName: String, typeName: String): Future[Option[String]] = {
-    for {
-      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
-    } yield {
-      for (meta <- metaOpt) yield
-        meta.source().string()
-    }
-  }
-
-
-  /** Сгенерить InternalError, если хотя бы две es-модели испрользуют одно и тоже хранилище для данных.
-    * В сообщении экзепшена будут перечислены конфликтующие модели. */
-  def errorIfIncorrectModels(allModels: Iterable[EsModelCommonStaticT]): Unit = {
-    // Запускаем проверку, что в моделях не используются одинаковые типы в одинаковых индексах.
-    def esModelId(esModel: EsModelCommonStaticT): String =
-      s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
-
-    val uniqModelsCnt = allModels.iterator
-      .map(esModelId)
-      .toSet
-      .size
-
-    if (uniqModelsCnt < allModels.size) {
-      // Найдены модели, которые испрользуют один и тот же индекс+тип. Нужно вычислить их и вернуть в экзепшене.
-      val errModelsStr = (for {
-        v <- allModels
-          .map { m =>
-            esModelId(m) -> m.getClass.getName
-          }
-          .groupBy(_._1)
-          .valuesIterator
-        if v.sizeIs > 1
-      } yield {
-        v.mkString(", ")
-      })
-        .mkString("\n")
-
-      throw new InternalError("Two or more es models using same index+type for data store:\n" + errModelsStr)
-    }
-  }
-
-
-  /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
-    import api._
-
-    Future.traverse(models) { esModelStatic =>
-      val logPrefix = s"${esModelStatic.getClass.getSimpleName}.putMapping():"
-      val imeFut = if (ignoreExists) {
-        Future.successful(false)
-      } else {
-        esModelStatic.isMappingExists()
-      }
-      imeFut.flatMap {
-        case false =>
-          LOGGER.trace(s"$logPrefix Trying to push mapping for model...")
-          val fut = esModelStatic.putMapping()
-          fut.onComplete {
-            case Success(isOk)  =>
-              if (isOk) LOGGER.trace(s"$logPrefix -> OK" )
-              else LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
-            case Failure(ex)    =>
-              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping().toString()}\n-------------\n", ex)
-          }
-          fut
-
-        case true =>
-          LOGGER.trace(s"$logPrefix Mapping already exists in index. Skipping...")
-          Future successful true
-      }
-    }.map {
-      _.reduceLeft { _ && _ }
-    }
-  }
-
-
-  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
-  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT]): Future[_] = {
-    val indices = models
-      .map { esModel =>
-        esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
-      }
-      .toMap
-    Future.traverse(indices.toSeq) {
-      case (inxName, (shards, replicas)) =>
-        esModel.ensureIndex(inxName, shards=shards, replicas=replicas)
-    }
-  }
-
-
-  /** Рекурсивная асинхронная сверстка скролл-поиска в ES.
-    * Перед вызовом функции надо выпонить начальный поисковый запрос, вызвав с setScroll() и,
-    * по возможности, включив SCAN.
-    *
-    * @param searchResp Результат выполненного поиского запроса с активным scroll'ом.
-    * @param acc0 Исходное значение аккамулятора.
-    * @param firstReq Флаг первого запроса. По умолчанию = true.
-    *                 В первом и последнем запросах не приходит никаких результатов, и их нужно различать.
-    * @param keepAliveMs Значение keep-alive для курсора на стороне ES.
-    * @param f fold-функция, генереящая на основе результатов поиска и старого аккамулятора новый аккамулятор типа A.
-    * @tparam A Тип аккамулятора.
-    * @return Данные по результатам операции, включающие кол-во удач и ошибок.
-    */
-  def foldSearchScroll[A](searchResp: SearchResponse, acc0: A, firstReq: Boolean = true,
-                          keepAliveMs: Long = EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT, fromClient: Client = esClient)
-                         (f: (A, SearchHits) => Future[A]): Future[A] = {
-    val hits = searchResp.getHits
-    val scrollId = searchResp.getScrollId
-    lazy val logPrefix = s"foldSearchScroll($scrollId, 1st=$firstReq):"
-    if (!firstReq  &&  hits.getHits.isEmpty) {
-      LOGGER.trace(s"$logPrefix no more hits.")
-      Future.successful(acc0)
-    } else {
-      // Запустить в фоне получение следующей порции результатов
-      LOGGER.trace(s"$logPrefix has ${hits.getHits.length} hits, total = ${hits.getTotalHits}")
-      // Убеждаемся, что scroll выставлен. Имеет смысл проверять это только на первом запросе.
-      if (firstReq)
-        assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
-      val nextScrollRespFut: Future[SearchResponse] = {
-        fromClient
-          .prepareSearchScroll(scrollId)
-          .setScroll(new TimeValue(keepAliveMs))
-          .executeFut()
-      }
-      // Синхронно залить результаты текущего реквеста в аккамулятор
-      val acc1Fut = f(acc0, hits)
-      // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
-      nextScrollRespFut.flatMap { searchResp2 =>
-        acc1Fut.flatMap { acc1 =>
-          foldSearchScroll(searchResp2, acc1, firstReq = false, keepAliveMs, fromClient)(f)
-        }
-      }
-    }
-  }
-
-
-  /**
-    * Обновление какого-то элемента с использованием es save и es optimistic locking.
-    * В отличии от оригинального [[EsModelStaticT]].tryUpdate(), здесь обновляемые данные не обязательно
-    * являются элементами той же модели, а являются контейнером для них..
-    *
-    * @param data0 Обновляемые данные.
-    * @param maxRetries Максимальное кол-во попыток [5].
-    * @param updateF Обновление
-    * @tparam D Тип обновляемых данных.
-    * @return Удачно-сохраненный экземпляр data: T.
-    */
-  def tryUpdateM[X <: EsModelT, D <: ITryUpdateData[X, D]]
-                (companion: EsModelStaticT { type T = X }, data0: D, maxRetries: Int = 5)
-                (updateF: D => Future[D]): Future[D] = {
-    import api._
-    lazy val logPrefix = s"tryUpdateM(${System.currentTimeMillis}):"
-
-    val data1Fut = updateF(data0)
-
-    if (data1Fut == null) {
-      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update")
-      Future.successful(data0)
-
-    } else {
-      data1Fut.flatMap { data1 =>
-        val m2 = data1._saveable
-        if (m2 == null) {
-          LOGGER.debug(logPrefix + " updateF() data with `null`-saveable, leaving update")
-          Future.successful(data1)
-        } else {
-          // TODO Спилить обращение к companion, принимать статическую модель в аргументах
-          companion
-            .save(m2)
-            .map { _ => data1 }
-            .recoverWith {
-              case exVsn: VersionConflictEngineException =>
-                if (maxRetries > 0) {
-                  val n1 = maxRetries - 1
-                  LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
-                  companion
-                    .reget( data1._saveable )
-                    .flatMap { opt =>
-                      val data2  = data1._instance(opt.get)
-                      tryUpdateM[X, D](companion, data2, n1)(updateF)
-                    }
-                } else {
-                  val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
-                  Future.failed(ex2)
-                }
-            }
-        }
-      }
-    }
-  }
-
 
   /** По аналогии со slick, тут собраны методы для es-моделей.
     *
@@ -547,6 +78,40 @@ final class EsModel @Inject()(
     * }}}
     */
   class Api {
+
+    /** Класс для ActionRequestBuilder'ов, который явно возвращает Future.
+      * Для ES >= 6.x, возможно для младших версий.
+      */
+    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse](val esActionBuilder: ActionRequestBuilder[_, AResp, _]) {
+
+      /** Запуск экшена с возвращением Future[AResp]. */
+      def executeFut(): Future[AResp] = {
+        val p = Promise[AResp]()
+        val startedAtMs = System.currentTimeMillis()
+
+        val l = new ActionListener[AResp] {
+          override def onResponse(response: AResp): Unit = {
+            val doneAtMs = System.currentTimeMillis()
+            p.success(response)
+            val tookMs = doneAtMs - startedAtMs
+            if (tookMs > SioEsUtil.ES_EXECUTE_WARN_IF_TAKES_TOO_LONG_MS) {
+              val logPrefix = s"executeFut()#$startedAtMs:"
+              LOGGER.info(s"$logPrefix ES-request took ${tookMs}ms")
+              // Бывают ложные срабатывания, например при запуске, когда большая параллельная нагрузка.
+              // Чтобы не заваливать логи мусором, логгируем что-то серьёзное только при TRACE.
+              LOGGER.trace(s"$logPrefix $esActionBuilder")
+            }
+          }
+
+          override def onFailure(e: Exception): Unit =
+            p.failure(e)
+        }
+        esActionBuilder.execute(l)
+
+        p.future
+      }
+
+    }
 
     /** Поддержка API для StaticMapping. */
     trait EsModelStaticMappingOpsT {
@@ -663,7 +228,7 @@ final class EsModel @Inject()(
         srb
           .setScroll(keepAlive)
           // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
-          .addSort( SortBuilders.fieldSort( StdFns.FIELD_DOC ) )
+          .addSort( SortBuilders.fieldSort( SioEsUtil.StdFns.FIELD_DOC ) )
       }
 
       /** Прочитать маппинг текущей ES-модели из ES. */
@@ -1061,7 +626,7 @@ final class EsModel @Inject()(
 
       /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
       def toEsJsonDoc(e: T1): String = {
-        import StdFns._
+        import SioEsUtil.StdFns._
 
         var kvs = List[String] (s""" "$FIELD_SOURCE": ${model.toJson(e)}""")
         if (e.versionOpt.isDefined)
@@ -2006,6 +1571,477 @@ final class EsModel @Inject()(
 
   }
   val api = new Api
+  import api._
+
+  /** Сконвертить распарсенные результаты в карту. */
+  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): Map[String, T] =
+    OptId.els2idMap[String, T](results)
+
+  /** Список результатов в список id. */
+  def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
+    val hitsArr = searchResp.getHits.getHits
+    new AbstractSearchResp[String] {
+      override def total: Long =
+        searchResp.getHits.getTotalHits
+      override def length: Int =
+        hitsArr.length
+      override def apply(idx: Int): String =
+        hitsArr(idx).getId
+    }
+  }
+
+  /** Собрать новый индекс для заливки туда моделей ipgeobase. */
+  def createIndex(newIndexName: String, settings: Settings): Future[_] = {
+    val fut = esClient.admin().indices()
+      .prepareCreate(newIndexName)
+      // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
+      .setSettings( settings )
+      .executeFut()
+      .map(_.isShardsAcked)
+
+    lazy val logPrefix = s"createIndex($newIndexName):"
+    fut.onComplete {
+      case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
+      case Failure(ex)  => LOGGER.error(s"$logPrefix failed", ex)
+    }
+
+    fut
+  }
+
+  /** Логика удаления старого ненужного индекса. */
+  def deleteIndex(oldIndexName: String): Future[_] = {
+    val fut: Future[_] = esClient.admin().indices()
+      .prepareDelete(oldIndexName)
+      .executeFut()
+      .map { _.isAcknowledged }
+
+    val logPrefix = s"deleteIndex($oldIndexName):"
+
+    // Отрабатывать ситуацию, когда индекс не найден.
+    val fut1 = fut.recover { case ex: ResourceNotFoundException =>
+      LOGGER.debug(s"$logPrefix Looks like, index not exist, already deleted?", ex)
+      false
+    }
+
+    // Логгировать завершение команды.
+    fut1.onComplete {
+      case Success(res) => LOGGER.debug(s"$logPrefix Index deleted ok: $res")
+      case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to delete index", ex)
+    }
+
+    fut1
+  }
+
+  /**
+    * Убедиться, что индекс существует.
+    *
+    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
+    *         Если индекс уже существует, то false.
+    */
+  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)(implicit dsl: MappingDsl): Future[Boolean] = {
+    for {
+      existsResp <- esClient.admin().indices()
+        .prepareExists(indexName)
+        .executeFut()
+
+      _ <- if (existsResp.isExists) {
+        Future.successful(false)
+      } else {
+        val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
+        val settingsJson = Json
+          .toJson( indexSettings )
+          .toString()
+        esClient.admin().indices()
+          .prepareCreate( indexName )
+          .setSettings( settingsJson, XContentType.JSON )
+          .executeFut()
+          .map { _ => true }
+      }
+    } yield {
+      true
+    }
+  }
+
+
+  /** Выставить алиас на текущий индекс, забыв о предыдущих данных алиаса. */
+  def resetAliasToIndex(indexName: String, aliasName: String): Future[_] = {
+    lazy val logPrefix = s"resetIndexAliasTo(index[$indexName] alias[$aliasName])[${System.currentTimeMillis()}]:"
+    LOGGER.info(s"$logPrefix Starting, alias = $aliasName")
+
+    val fut = esClient.admin().indices()
+      .prepareAliases()
+      // Удалить все алиасы с необходимым именем.
+      .removeAlias("*", aliasName)
+      // Добавить алиас на новый индекс.
+      .addAlias(indexName, aliasName)
+      .executeFut()
+      .map( _.isAcknowledged )
+
+    // Подключить логгирование к работе...
+    fut.onComplete {
+      case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
+      case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
+    }
+
+    fut
+  }
+
+
+  /** Узнать имя индекса, сокрытого за алиасом. */
+  def getAliasedIndexName(aliasName: String): Future[Set[String]] = {
+    def logPrefix = "getAliasesIndexName():"
+    esClient.admin().indices()
+      .prepareGetAliases( aliasName )
+      .executeFut()
+      .map { resp =>
+        LOGGER.trace(s"$logPrefix Ok, found ${resp.getAliases.size()} indexes.")
+        resp.getAliases
+          .keysIt()
+          .asScala
+          .toSet
+      }
+      .recover { case ex: ResourceNotFoundException =>
+        // Если алиасов не найдено, ES обычно возвращает ошибку 404. Это тоже отработать надо бы.
+        LOGGER.warn(s"$logPrefix 404, suppressing error to empty result.", ex)
+        Set.empty
+      }
+  }
+
+
+  /** Когда заливка данных закончена, выполнить подготовку индекса к эсплуатации.
+    * elasticsearch 2.0+: переименовали операцию optimize в force merge. */
+  def optimizeAfterBulk(indexName: String, indexSettingsAfterBulk: Option[Settings] = None): Future[_] = {
+    val startedAt = System.currentTimeMillis()
+
+    // Запустить оптимизацию всего ES-индекса.
+    val inxOptFut: Future[_] = {
+      esClient.admin().indices()
+        .prepareForceMerge(indexName)
+        .setMaxNumSegments(1)
+        .setFlush(true)
+        .executeFut()
+    }
+
+    lazy val logPrefix = s"optimizeAfterBulk($indexName):"
+
+    // Потом нужно выставить не-bulk настройки для готового к работе индекса.
+    val inxSettingsFut = inxOptFut.flatMap { _ =>
+      val updInxSettingsAt = System.currentTimeMillis()
+
+      val fut2: Future[_] = indexSettingsAfterBulk.fold[Future[_]] {
+        Future.successful(None)
+      } { settings2 =>
+        esClient.admin().indices()
+          .prepareUpdateSettings(indexName)
+          .setSettings( settings2 )
+          .executeFut()
+      }
+
+      LOGGER.trace(s"$logPrefix Optimize took ${updInxSettingsAt - startedAt} ms")
+      for (_ <- fut2)
+        LOGGER.trace(s"$logPrefix Update index settings took ${System.currentTimeMillis() - updInxSettingsAt} ms.")
+
+      fut2
+    }
+
+    inxSettingsFut
+  }
+
+
+  /**
+    * Собрать указанные значения id'шников в аккамулятор-множество.
+    *
+    * @param searchResp Экземпляр searchResponse.
+    * @param acc0 Начальный акк.
+    * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
+    * @return Фьчерс с результирующим аккамулятором-множеством.
+    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
+    */
+  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0,
+                           acc0: List[String] = Nil, keepAliveMs: Long = 60000L): Future[List[String]] = {
+    val hits = searchResp.getHits.getHits
+    if (!firstReq && hits.isEmpty) {
+      Future successful acc0
+    } else {
+      val nextAccLen = currAccLen + hits.length
+      val canContinue = maxAccLen <= 0 || nextAccLen < maxAccLen
+      val nextScrollRespFut = if (canContinue) {
+        // Лимит длины акк-ра ещё не пробит. Запустить в фоне получение следующей порции результатов...
+        esClient
+          .prepareSearchScroll(searchResp.getScrollId)
+          .setScroll(new TimeValue(keepAliveMs))
+          .executeFut()
+      } else {
+        null
+      }
+      // Если акк заполнен, то надо запустить очистку курсора на стороне ES.
+      if (!canContinue) {
+        esClient
+          .prepareClearScroll()
+          .addScrollId( searchResp.getScrollId )
+          .executeFut()
+      }
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val accNew = hits.foldLeft[List[String]] (acc0) { (acc1, hit) =>
+        hit.getId :: acc1
+      }
+      if (canContinue) {
+        // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+        nextScrollRespFut flatMap { searchResp2 =>
+          searchScrollResp2ids(searchResp2, maxAccLen, firstReq = false, currAccLen = nextAccLen, acc0 = accNew, keepAliveMs = keepAliveMs)
+        }
+      } else {
+        // Пробит лимит аккамулятора по maxAccLen - вернуть акк не продолжая обход.
+        Future successful accNew
+      }
+    }
+  }
+
+
+  /**
+    * Узнать метаданные индекса.
+    *
+    * @param indexName Название индекса.
+    * @return Фьючерс с опциональными метаданными индекса.
+    */
+  def getIndexMeta(indexName: String): Future[Option[IndexMetaData]] = {
+    esClient.admin().cluster()
+      .prepareState()
+      .setIndices(indexName)
+      .executeFut()
+      .map { cs =>
+        val maybeResult = cs.getState
+          .getMetaData
+          .index(indexName)
+        Option(maybeResult)
+      }
+  }
+
+  /**
+    * Прочитать метаданные маппинга.
+    *
+    * @param indexName Название индекса.
+    * @param typeName Название типа.
+    * @return Фьючерс с опциональными метаданными маппинга.
+    */
+  def getIndexTypeMeta(indexName: String, typeName: String): Future[Option[MappingMetaData]] = {
+    for (imdOpt <- getIndexMeta(indexName)) yield {
+      for {
+        imd <- imdOpt
+        mappingOrNull = imd.mapping(typeName)
+        r   <- Option( mappingOrNull )
+      } yield {
+        r
+      }
+    }
+  }
+
+  /**
+    * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
+    * внутри общего индекса.
+    *
+    * @param typeName Имя типа.
+    * @return Да/нет.
+    */
+  def isMappingExists(indexName: String, typeName: String): Future[Boolean] = {
+    for {
+      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
+    } yield {
+      metaOpt.isDefined
+    }
+  }
+
+  /** Прочитать текст маппинга из хранилища. */
+  def getCurrentMapping(indexName: String, typeName: String): Future[Option[String]] = {
+    for {
+      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
+    } yield {
+      for (meta <- metaOpt) yield
+        meta.source().string()
+    }
+  }
+
+
+  /** Сгенерить InternalError, если хотя бы две es-модели испрользуют одно и тоже хранилище для данных.
+    * В сообщении экзепшена будут перечислены конфликтующие модели. */
+  def errorIfIncorrectModels(allModels: Iterable[EsModelCommonStaticT]): Unit = {
+    // Запускаем проверку, что в моделях не используются одинаковые типы в одинаковых индексах.
+    def esModelId(esModel: EsModelCommonStaticT): String =
+      s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
+
+    val uniqModelsCnt = allModels.iterator
+      .map(esModelId)
+      .toSet
+      .size
+
+    if (uniqModelsCnt < allModels.size) {
+      // Найдены модели, которые испрользуют один и тот же индекс+тип. Нужно вычислить их и вернуть в экзепшене.
+      val errModelsStr = (for {
+        v <- allModels
+          .map { m =>
+            esModelId(m) -> m.getClass.getName
+          }
+          .groupBy(_._1)
+          .valuesIterator
+        if v.sizeIs > 1
+      } yield {
+        v.mkString(", ")
+      })
+        .mkString("\n")
+
+      throw new InternalError("Two or more es models using same index+type for data store:\n" + errModelsStr)
+    }
+  }
+
+
+  /** Отправить маппинги всех моделей в ES. */
+  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)(implicit dsl: MappingDsl): Future[Boolean] = {
+    import api._
+
+    Future.traverse(models) { esModelStatic =>
+      val logPrefix = s"${esModelStatic.getClass.getSimpleName}.putMapping():"
+      val imeFut = if (ignoreExists) {
+        Future.successful(false)
+      } else {
+        esModelStatic.isMappingExists()
+      }
+      imeFut.flatMap {
+        case false =>
+          LOGGER.trace(s"$logPrefix Trying to push mapping for model...")
+          val fut = esModelStatic.putMapping()
+          fut.onComplete {
+            case Success(isOk)  =>
+              if (isOk) LOGGER.trace(s"$logPrefix -> OK" )
+              else LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
+            case Failure(ex)    =>
+              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping().toString()}\n-------------\n", ex)
+          }
+          fut
+
+        case true =>
+          LOGGER.trace(s"$logPrefix Mapping already exists in index. Skipping...")
+          Future successful true
+      }
+    }.map {
+      _.reduceLeft { _ && _ }
+    }
+  }
+
+
+  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
+  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT])(implicit dsl: MappingDsl): Future[_] = {
+    val indices = models
+      .map { esModel =>
+        esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
+      }
+      .toMap
+    Future.traverse(indices.toSeq) {
+      case (inxName, (shards, replicas)) =>
+        esModel.ensureIndex(inxName, shards=shards, replicas=replicas)
+    }
+  }
+
+
+  /** Рекурсивная асинхронная сверстка скролл-поиска в ES.
+    * Перед вызовом функции надо выпонить начальный поисковый запрос, вызвав с setScroll() и,
+    * по возможности, включив SCAN.
+    *
+    * @param searchResp Результат выполненного поиского запроса с активным scroll'ом.
+    * @param acc0 Исходное значение аккамулятора.
+    * @param firstReq Флаг первого запроса. По умолчанию = true.
+    *                 В первом и последнем запросах не приходит никаких результатов, и их нужно различать.
+    * @param keepAliveMs Значение keep-alive для курсора на стороне ES.
+    * @param f fold-функция, генереящая на основе результатов поиска и старого аккамулятора новый аккамулятор типа A.
+    * @tparam A Тип аккамулятора.
+    * @return Данные по результатам операции, включающие кол-во удач и ошибок.
+    */
+  def foldSearchScroll[A](searchResp: SearchResponse, acc0: A, firstReq: Boolean = true,
+                          keepAliveMs: Long = EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT, fromClient: Client = esClient)
+                         (f: (A, SearchHits) => Future[A]): Future[A] = {
+    val hits = searchResp.getHits
+    val scrollId = searchResp.getScrollId
+    lazy val logPrefix = s"foldSearchScroll($scrollId, 1st=$firstReq):"
+    if (!firstReq  &&  hits.getHits.isEmpty) {
+      LOGGER.trace(s"$logPrefix no more hits.")
+      Future.successful(acc0)
+    } else {
+      // Запустить в фоне получение следующей порции результатов
+      LOGGER.trace(s"$logPrefix has ${hits.getHits.length} hits, total = ${hits.getTotalHits}")
+      // Убеждаемся, что scroll выставлен. Имеет смысл проверять это только на первом запросе.
+      if (firstReq)
+        assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
+      val nextScrollRespFut: Future[SearchResponse] = {
+        fromClient
+          .prepareSearchScroll(scrollId)
+          .setScroll(new TimeValue(keepAliveMs))
+          .executeFut()
+      }
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val acc1Fut = f(acc0, hits)
+      // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+      nextScrollRespFut.flatMap { searchResp2 =>
+        acc1Fut.flatMap { acc1 =>
+          foldSearchScroll(searchResp2, acc1, firstReq = false, keepAliveMs, fromClient)(f)
+        }
+      }
+    }
+  }
+
+
+  /**
+    * Обновление какого-то элемента с использованием es save и es optimistic locking.
+    * В отличии от оригинального [[EsModelStaticT]].tryUpdate(), здесь обновляемые данные не обязательно
+    * являются элементами той же модели, а являются контейнером для них..
+    *
+    * @param data0 Обновляемые данные.
+    * @param maxRetries Максимальное кол-во попыток [5].
+    * @param updateF Обновление
+    * @tparam D Тип обновляемых данных.
+    * @return Удачно-сохраненный экземпляр data: T.
+    */
+  def tryUpdateM[X <: EsModelT, D <: ITryUpdateData[X, D]]
+  (companion: EsModelStaticT { type T = X }, data0: D, maxRetries: Int = 5)
+  (updateF: D => Future[D]): Future[D] = {
+    import api._
+    lazy val logPrefix = s"tryUpdateM(${System.currentTimeMillis}):"
+
+    val data1Fut = updateF(data0)
+
+    if (data1Fut == null) {
+      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update")
+      Future.successful(data0)
+
+    } else {
+      data1Fut.flatMap { data1 =>
+        val m2 = data1._saveable
+        if (m2 == null) {
+          LOGGER.debug(logPrefix + " updateF() data with `null`-saveable, leaving update")
+          Future.successful(data1)
+        } else {
+          // TODO Спилить обращение к companion, принимать статическую модель в аргументах
+          companion
+            .save(m2)
+            .map { _ => data1 }
+            .recoverWith {
+              case exVsn: VersionConflictEngineException =>
+                if (maxRetries > 0) {
+                  val n1 = maxRetries - 1
+                  LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
+                  companion
+                    .reget( data1._saveable )
+                    .flatMap { opt =>
+                      val data2  = data1._instance(opt.get)
+                      tryUpdateM[X, D](companion, data2, n1)(updateF)
+                    }
+                } else {
+                  val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
+                  Future.failed(ex2)
+                }
+            }
+        }
+      }
+    }
+  }
 
 }
 

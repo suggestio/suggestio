@@ -2,7 +2,6 @@ package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -19,7 +18,6 @@ import play.api.libs.functional.syntax._
   */
 object MDiag
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -51,15 +49,6 @@ object MDiag
     (__ \ STATE_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldText(MESSAGE_FN, index = false, include_in_all = true),
-      FieldText(STATE_FN,   index = false, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

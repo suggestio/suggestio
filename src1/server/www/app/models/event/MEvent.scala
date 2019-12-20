@@ -4,7 +4,6 @@ import java.time.OffsetDateTime
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import javax.inject.{Inject, Singleton}
@@ -75,26 +74,6 @@ class MEvents
 
   override type T = MEvent
   override val ES_TYPE_NAME = "ntf"
-
-
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldSource(enabled = true),
-    )
-  }
-
-  override def generateMappingProps: List[DocField] = {
-    throw new UnsupportedOperationException("MEvent deprecated")
-    /*
-    List(
-      FieldKeyword(EVT_TYPE_ESFN, index = true, include_in_all = false),
-      FieldKeyword(OWNER_ID_ESFN, index = true, include_in_all = false),
-      FieldObject(ARGS_ESFN, enabled = false, properties = ArgsInfo.generateMappingProps),
-      FieldDate(DATE_CREATED_ESFN, index = true, include_in_all = false),
-      FieldBoolean(IS_CLOSEABLE_ESFN, index = false, include_in_all = false),
-      FieldBoolean(IS_UNSEEN_ESFN, index = true, include_in_all = false)
-    )*/
-  }
 
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping =

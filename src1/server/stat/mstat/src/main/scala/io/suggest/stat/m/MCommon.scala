@@ -1,7 +1,6 @@
 package io.suggest.stat.m
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,7 +12,6 @@ import play.api.libs.functional.syntax._
   */
 object MCommon
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** Имена es-полей модели. */
@@ -42,20 +40,6 @@ object MCommon
     (__ \ GEN_FN).formatNullable[Long]
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldKeyword(COMPONENT_FN, index = true, include_in_all = true),
-      FieldIp(CLIENT_IP_FN, index = true, include_in_all = true),
-      FieldKeyword(CLIENT_UID_FN, index = true, include_in_all = true),
-      FieldText(REQ_URI_FN, index = false, include_in_all = false),
-      FieldKeyword(DOMAIN_3P_FN, index = true, include_in_all = true),
-      FieldBoolean(IS_LOCAL_CLIENT_FN, index = true, include_in_all = false),
-      FieldNumber(GEN_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

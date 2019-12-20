@@ -1,10 +1,9 @@
 package io.suggest.model.n2.media
 
-import io.suggest.color.{MColorData, MColorDataEs}
+import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -22,7 +21,6 @@ import play.api.libs.functional.syntax._
   */
 object MPictureMeta
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -36,16 +34,6 @@ object MPictureMeta
 
   }
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    val F = Fields
-    List(
-      FieldObject(F.WH_PX_FN, enabled = true, properties = MSize2diJvm.generateMappingProps),
-      FieldNestedObject(F.COLORS_FN, enabled = true, properties = MColorDataEs.generateMappingProps)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

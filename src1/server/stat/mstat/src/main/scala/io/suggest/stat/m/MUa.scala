@@ -2,7 +2,6 @@ package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -15,7 +14,6 @@ import play.api.libs.functional.syntax._
 
 object MUa
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty {
 
   override type T = MUa
@@ -55,24 +53,6 @@ object MUa
         { uaTypes => if (uaTypes.isEmpty) None else Some(uaTypes) }
       )
   )(apply, unlift(unapply))
-
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    def _fieldString(id: String) = {
-      FieldKeyword(id, index = true, include_in_all = true)
-    }
-
-    List(
-      FieldText(UA_STR_FN, index = false, include_in_all = true),
-      _fieldString(BROWSER_FN),
-      _fieldString(DEVICE_FN),
-      _fieldString(OS_FAMILY_FN),
-      _fieldString(OS_VSN_FN),
-      _fieldString(UA_TYPE_FN)
-    )
-  }
 
   override def empty = MUa()
 

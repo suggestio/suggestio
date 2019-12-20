@@ -10,7 +10,6 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.es.util.SioEsUtil._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
@@ -70,17 +69,11 @@ final class MNodes @Inject() (
   override type T = MNode
   override def ES_TYPE_NAME = MNodeFields.ES_TYPE_NAME
 
-  def Fields = MNodeFields
+  @inline def Fields = MNodeFields
 
   @deprecated("Delete it, use deserializeOne2() instead.", "2015.sep.11")
   override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): MNode = {
     throw new UnsupportedOperationException("Deprecated API NOT IMPLEMENTED.")
-  }
-
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldSource(enabled = true)
-    )
   }
 
   /** Почти-собранный play.json.Format. */
@@ -158,7 +151,8 @@ final class MNodes @Inject() (
       )
       .executeFut()
       .map { resp =>
-        resp.getAggregations
+        resp
+          .getAggregations
           .get[Terms](aggName)
           .getBuckets
           .iterator()
@@ -169,19 +163,6 @@ final class MNodes @Inject() (
           }
           .toMap
       }
-  }
-
-
-  override def generateMappingProps: List[DocField] = {
-    def _obj(fn: String, model: IGenEsMappingProps): FieldObject =
-      FieldObject(fn, enabled = true, properties = model.generateMappingProps)
-    List(
-      _obj(Fields.Common.COMMON_FN,   MNodeCommon),
-      _obj(Fields.Meta.META_FN,       MMeta),
-      _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
-      _obj(Fields.Edges.EDGES_FN,     MNodeEdges),
-      _obj(Fields.Billing.BILLING_FN, MNodeBilling)
-    )
   }
 
 

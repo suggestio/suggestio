@@ -97,7 +97,6 @@ final class MStatsModel @Inject()(
 {
 
   import esModel.api._
-  import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
   import MStat.Fields.TIMESTAMP_FN
 
   object api {
@@ -201,8 +200,6 @@ abstract class MStatsAbstract
   with EsModelJsonWrites
 {
 
-  import io.suggest.es.util.SioEsUtil._
-
   override type T = MStat
 
   override def ES_TYPE_NAME  = "stat"
@@ -212,32 +209,6 @@ abstract class MStatsAbstract
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MStat = {
     throw new UnsupportedOperationException("deprecated API not implemented")
   }
-
-
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldAll(enabled = false),
-      FieldSource(enabled = true)
-    )
-  }
-
-
-  override def generateMappingProps: List[DocField] = {
-    import MStat.Fields._
-    def _fieldObject(id: String, m: IGenEsMappingProps): FieldObject = {
-      FieldObject(id, enabled = true, properties = m.generateMappingProps)
-    }
-    List(
-      _fieldObject(COMMON_FN,     MCommon),
-      FieldNestedObject(ACTIONS_FN, enabled = true, properties = MAction.generateMappingProps),
-      FieldDate(TIMESTAMP_FN, index = true, include_in_all = false),
-      _fieldObject(UA_FN,         MUa),
-      _fieldObject(SCREEN_FN,     MScreen),
-      _fieldObject(LOCATION_FN,   MLocation),
-      _fieldObject(DIAG_FN,       MDiag)
-    )
-  }
-
 
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._

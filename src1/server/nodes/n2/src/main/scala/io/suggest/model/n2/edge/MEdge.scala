@@ -4,7 +4,6 @@ import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
 import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -29,7 +28,6 @@ import play.api.libs.functional.syntax._
   */
 object MEdge
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** Контейнер имён полей. */
@@ -109,21 +107,6 @@ object MEdge
       )
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    // Все поля эджей должны быть include_in_all = false, ибо это сугубо техническая вещь.
-    def _fieldKw(id: String) = FieldKeyword(id, index = true, include_in_all = false)
-    List(
-      _fieldKw(PREDICATE_FN),
-      _fieldKw(NODE_ID_FN),
-      // orderId -- not_analyzed, используется в т.ч. для хранения статистики использования геотегов, как это не странно...
-      FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-      FieldObject(INFO_FN, enabled = true, properties = MEdgeInfo.generateMappingProps),
-      FieldObject(DOC_FN, enabled = true, properties = MEdgeDocJvm.generateMappingProps)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

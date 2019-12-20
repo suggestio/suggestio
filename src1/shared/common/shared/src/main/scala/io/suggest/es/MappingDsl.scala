@@ -141,7 +141,7 @@ final class MappingDsl { dsl =>
     def custom(
                 charFilters: Seq[String] = Nil,
                 tokenizer: String,
-                filters : Seq[String]
+                filters : Seq[String] = Nil,
               ) = apply(
       charFilters = charFilters,
       tokenizer   = Some(tokenizer),
@@ -174,9 +174,9 @@ final class MappingDsl { dsl =>
 
   object Tokenizer {
 
-    def standard(id: String, maxTokenLen: Int) = apply(
+    def standard(maxTokenLen: Option[Int] = None) = apply(
       typ           = "standard",
-      maxTokenLen   = Some(maxTokenLen),
+      maxTokenLen   = maxTokenLen,
     )
 
     def nGram( minGram    : Int,

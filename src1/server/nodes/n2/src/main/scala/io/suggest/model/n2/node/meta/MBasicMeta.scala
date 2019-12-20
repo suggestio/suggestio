@@ -3,7 +3,6 @@ package io.suggest.model.n2.node.meta
 import java.time.OffsetDateTime
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -18,7 +17,7 @@ import play.api.libs.functional.syntax._
  * Эта meta-модель может иметь обязательные поля.
  */
 
-object MBasicMeta extends IEsMappingProps with IGenEsMappingProps {
+object MBasicMeta extends IEsMappingProps {
 
   object Fields {
 
@@ -56,23 +55,6 @@ object MBasicMeta extends IEsMappingProps with IGenEsMappingProps {
         {ls => if (ls.isEmpty) None else Some(ls)}
       )
   )(apply, unlift(unapply))
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldText(NAME_FN, index = true, include_in_all = true),
-      // 2014.oct.01: Разделение поля на analyzed и not_analyzed. Последнее нужно для сортировки.
-      FieldText(NAME_SHORT_FN, index = true, include_in_all = true, fields = Seq(
-        FieldKeyword(NOTOK_SUF, index = true, include_in_all = true)
-      )),
-      FieldText(TECHNICAL_NAME_FN, index = false, include_in_all = false),
-      FieldText(HIDDEN_DESCR_FN, index = false, include_in_all = false),
-      FieldDate(DATE_CREATED_FN, index = true, include_in_all = false),
-      FieldDate(DATE_EDITED_FN, index = true, include_in_all = false),
-      FieldKeyword(LANGS_ESFN, index = true, include_in_all = false)
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

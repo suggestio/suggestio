@@ -7,10 +7,12 @@ import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.transport.InetSocketTransportAddress
+import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import play.api.Configuration
 import play.api.inject.{ApplicationLifecycle, Injector}
 import io.suggest.conf.PlayConfigUtil._
+import org.elasticsearch.common.settings.Settings
+import org.elasticsearch.transport.client.PreBuiltTransportClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,7 +62,6 @@ class IEsClientMock extends IEsClient {
 @Singleton
 final class TransportEsClient @Inject() (
                                           injector        : Injector,
-                                          implicit val ec : ExecutionContext
                                         )
   extends IEsClient
   with Provider[Client]
@@ -75,6 +76,27 @@ final class TransportEsClient @Inject() (
     else
       _trClient
   }
+
+  /**
+    * Собрать новый transport client для прозрачной связи с внешним es-кластером.
+    *
+    * @param addrs Адреса узлов.
+    * @param clusterName Название удалённого кластера. Если None, то клиент будет игнорить проверку имени кластера.
+    * @return TransportClient
+    */
+  def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
+    val settingsBuilder = Settings.builder()
+    //.classLoader(classOf[Settings].getClassLoader)
+    clusterName.fold {
+      settingsBuilder.put("client.transport.ignore_cluster_name", true)
+    } { _clusterName =>
+      settingsBuilder.put("cluster.name", _clusterName)
+    }
+    val settings = settingsBuilder.build()
+    new PreBuiltTransportClient(settings)
+      .addTransportAddresses(addrs : _*)
+  }
+
 
   def _installClient(): TransportClient = {
     def logPrefix = s"_installClient():"
@@ -95,12 +117,12 @@ final class TransportEsClient @Inject() (
         )
         Iterator.single(local)
       } { addrsStrs =>
-        addrsStrs
-          .iterator
-          .filter(_.nonEmpty)
-          .map { addrStr =>
-            EsClientUtil.parseHostPortStr(addrStr)
-          }
+        for {
+          addr <- addrsStrs.iterator
+          if addr.nonEmpty
+        } yield {
+          EsClientUtil.parseHostPortStr( addr )
+        }
       }
       .map( new InetSocketTransportAddress(_) )
       // TODO ES-6.0+: .map( new TransportAddress(_) )
@@ -108,7 +130,7 @@ final class TransportEsClient @Inject() (
 
     LOGGER.trace(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}\n Transport addrs: ${addrs.mkString(", ")}")
 
-    _trClient = SioEsUtil.newTransportClient(addrs, clusterNameOpt)
+    _trClient = newTransportClient(addrs, clusterNameOpt)
     _trClient
   }
 
@@ -119,6 +141,7 @@ final class TransportEsClient @Inject() (
 
   // При завершении работы надо зарубить клиент.
   injector.instanceOf[ApplicationLifecycle].addStopHook { () =>
+    implicit val _ec = injector.instanceOf[ExecutionContext]
     Future {
       try {
         for ( c <- Option(_trClient) ) {

@@ -6,7 +6,6 @@ import io.suggest.es.MappingDsl
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.JacksonParsing
-import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.functional.syntax._
@@ -43,20 +42,6 @@ class MCalendars @Inject() (
     val CAL_TYPE_FN   = "ctype"
   }
 
-  override def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldSource(),
-    )
-  }
-
-
-  import Fields._
-
-  override def generateMappingProps: List[DocField] = List(
-    FieldText(NAME_FN, index = true, include_in_all = true),
-    FieldText(DATA_FN, index = false, include_in_all = false),
-    FieldKeyword(CAL_TYPE_FN, index = true, include_in_all = false)
-  )
 
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
@@ -76,21 +61,22 @@ class MCalendars @Inject() (
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
       id          = id,
-      name        = m.get(NAME_FN).fold("WTF?")(JacksonParsing.stringParser),
-      calType     = m.get(CAL_TYPE_FN)
+      name        = m.get(Fields.NAME_FN).fold("WTF?")(JacksonParsing.stringParser),
+      calType     = m.get(Fields.CAL_TYPE_FN)
         .map(JacksonParsing.stringParser)
         .flatMap(MCalTypes.withValueOpt)
         .getOrElse( _dfltCalType(id) ),
-      data        = JacksonParsing.stringParser( m(DATA_FN) ),
+      data        = JacksonParsing.stringParser( m(Fields.DATA_FN) ),
       versionOpt  = version
     )
   }
 
   // Кеш для частично-собранного десериализатора.
   private val _dataReads0 = {
-    (__ \ NAME_FN).read[String] and
-    (__ \ DATA_FN).read[String] and
-    (__ \ CAL_TYPE_FN).readNullable[MCalType]
+    val F = Fields
+    (__ \ F.NAME_FN).read[String] and
+    (__ \ F.DATA_FN).read[String] and
+    (__ \ F.CAL_TYPE_FN).readNullable[MCalType]
   }
 
   /**

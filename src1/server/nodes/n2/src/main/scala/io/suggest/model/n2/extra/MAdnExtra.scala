@@ -4,7 +4,6 @@ import io.suggest.adn.edit.m.MAdnResView
 import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.empty.EmptyUtil._
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -22,7 +21,6 @@ import monocle.macros.GenLens
  */
 object MAdnExtra
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   /** В качестве эксперимента, имена полей этой модели являются отдельной моделью. */
@@ -64,18 +62,6 @@ object MAdnExtra
       )
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldObject(RES_VIEW_FN, enabled = false, properties = Nil),
-      FieldKeyword(RIGHTS, index = true, include_in_all = false),
-      FieldBoolean(IS_BY_USER, index = true, include_in_all = false),
-      FieldKeyword(SHOWN_TYPE, index = true, include_in_all = false),
-      FieldBoolean(IS_TEST, index = true, include_in_all = false),
-    )
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

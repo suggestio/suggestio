@@ -3,7 +3,6 @@ package io.suggest.stat.m
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.d2.MOrientation2d
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -15,7 +14,6 @@ import play.api.libs.functional.syntax._
   */
 object MScreen
   extends IEsMappingProps
-  with IGenEsMappingProps
   with IEmpty
 {
 
@@ -38,17 +36,6 @@ object MScreen
     (__ \ VPORT_QUANTED_FN).formatNullable[MViewPort]
   )(apply, unlift(unapply))
 
-
-  import io.suggest.es.util.SioEsUtil._
-
-  override def generateMappingProps: List[DocField] = {
-    val vportFields = MViewPort.generateMappingProps
-    List(
-      FieldKeyword(ORIENTATION_FN, index = true, include_in_all = false),
-      FieldObject(VPORT_PHYS_FN, enabled = true, properties = vportFields),
-      FieldObject(VPORT_QUANTED_FN, enabled = true, properties = vportFields)
-    )
-  }
 
   override def empty = apply()
 

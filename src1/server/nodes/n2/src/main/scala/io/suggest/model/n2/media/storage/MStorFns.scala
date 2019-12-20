@@ -17,10 +17,6 @@ object MStorFns extends StringEnum[MStorFn] {
   // common
   case object STYPE extends MStorFn("t") {
 
-    override def esMappingProp: DocField = {
-      FieldKeyword(fn, index = true, include_in_all = false)
-    }
-
     override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
       import dsl._
       Json.obj(
@@ -33,14 +29,6 @@ object MStorFns extends StringEnum[MStorFn] {
 
   // seaweedfs
   case object FID extends MStorFn("i") {
-
-    override def esMappingProp: DocField = {
-      val F = Fid.Fields
-      FieldObject(fn, enabled = true, properties = Seq(
-        FieldNumber(F.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-        FieldKeyword(F.FILE_ID_FN, index = false, include_in_all = false)
-      ))
-    }
 
     override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
       import dsl._
@@ -72,9 +60,6 @@ sealed abstract class MStorFn(override val value: String) extends StringEnumEntr
 
   /** Идентификатор (название) поля на стороне ES. */
   final def fn: String = value
-
-  /** ES-описание поля. */
-  def esMappingProp: DocField
 
 }
 

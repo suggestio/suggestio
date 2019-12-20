@@ -2,8 +2,6 @@ package io.suggest.model.n2.media
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil.{DocField, FieldKeyword, FieldObject}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.media.storage.MStorage
 import japgolly.univeq._
@@ -23,7 +21,6 @@ import play.api.libs.functional.syntax._
   */
 object MEdgeMedia
   extends IEsMappingProps
-  with IGenEsMappingProps
 {
 
   object Fields {
@@ -74,15 +71,6 @@ object MEdgeMedia
           EmptyUtil.implEmpty2OptF[MPictureMeta]
         )
     )( apply, unlift(unapply) )
-  }
-
-  override def generateMappingProps: List[DocField] = {
-    val F = Fields
-    List(
-      FieldObject(F.FileMeta.FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
-      FieldKeyword(F.Storage.STORAGE_FN, index = true, include_in_all = false),
-      FieldObject(F.PictureMeta.PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps),
-    )
   }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
