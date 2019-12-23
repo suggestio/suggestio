@@ -150,7 +150,7 @@ class Img @Inject() (
           .map { dataSource =>
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
             LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${mmedia.file.sizeB}b")
-            var respHeadersAcc = List( cacheControlHdr )
+            var respHeadersAcc = cacheControlHdr :: Nil
 
             // Пробросить content-encoding, который вернул media-storage.
             for (compression <- dataSource.compression) {
@@ -168,8 +168,6 @@ class Img @Inject() (
             )
               .withHeaders( respHeadersAcc: _* )
               .withDateHeaders(
-                // Раньше был ручной рендер даты, но в play появилась поддержка иного форматирования даты, пытаемся жить с ней:
-                //LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.format( mmedia.file.dateCreated.atZoneSimilarLocal(ZoneOffset.UTC) ),
                 LAST_MODIFIED -> mmedia.file.dateCreated.toZonedDateTime
               )
           }

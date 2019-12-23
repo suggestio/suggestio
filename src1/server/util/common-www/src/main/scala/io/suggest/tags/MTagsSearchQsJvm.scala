@@ -1,7 +1,7 @@
 package io.suggest.tags
 
-import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}
 import io.suggest.tags.TagSearchConstants.Req._
+import io.suggest.xplay.qsb.{QsbUtil, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable
 
 /**

@@ -7,12 +7,12 @@ import org.locationtech.spatial4j.io.GeohashUtils
 import org.locationtech.spatial4j.shape.Point
 import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.LngLat
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 
 /**
   * Suggest.io

@@ -1,10 +1,10 @@
 package models.adv.ext.act
 
 import akka.actor.ActorPath
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

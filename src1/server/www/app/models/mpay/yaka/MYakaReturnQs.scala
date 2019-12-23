@@ -2,9 +2,9 @@ package models.mpay.yaka
 
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import io.suggest.pay.yaka.YakaConst._
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 
 /**
   * Suggest.io

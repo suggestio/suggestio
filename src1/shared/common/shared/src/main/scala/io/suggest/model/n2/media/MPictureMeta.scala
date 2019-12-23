@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media
 
-import io.suggest.color.MColorData
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.color.MHistogram
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq.UnivEq
@@ -13,11 +13,9 @@ import play.api.libs.json._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.09.15 18:47
-  * Description: Модель метаданных по картинке в рамках модели [[MMedia]].
+  * Description: Модель метаданных по картинке в рамках модели MMedia, переехавшая в MEdgeMedia,
+  * и заодно на клиент.
   * Модель может использоваться как характеристики для файлов изображений, так и для видео-файлов.
-  *
-  * 2017-10-06: Модель полностью перепиливается: поля w и h выносятся в отдельное поле,
-  * а сама становится неявно-пустой. Это решит кучу проблем, мешающих нормальному пользованию моделью.
   */
 object MPictureMeta
   extends IEsMappingProps
@@ -25,12 +23,12 @@ object MPictureMeta
 {
 
   override type T = MPictureMeta
-  override def empty = apply()
+  override val empty = apply()
 
   object Fields {
 
     val WH_PX_FN        = "wh"
-    val COLORS_FN       = "c"
+    val HISTOGRAM_FN    = "hst"
 
   }
 
@@ -43,30 +41,29 @@ object MPictureMeta
         enabled = someTrue,
         properties = Some(MSize2di.esMappingProps)
       ),
-      F.COLORS_FN -> FObject.nested(
-        properties = MColorData.esMappingProps,
+      F.HISTOGRAM_FN -> FObject.plain(
+        enabled    = someTrue,
+        properties = Some( MHistogram.esMappingProps ),
       ),
     )
   }
 
   /** Поддержка play-json. */
-  implicit val pictureMetaJson: OFormat[MPictureMeta] = {
+  implicit def pictureMetaJson: OFormat[MPictureMeta] = {
     val F = Fields
 
     val modernFormat = (
       (__ \ F.WH_PX_FN).formatNullable[MSize2di] and
-      (__ \ F.COLORS_FN).formatNullable[Seq[MColorData]]
-        .inmap[Seq[MColorData]](
-          EmptyUtil.opt2ImplEmpty1F(Nil),
-          { colors => if (colors.isEmpty) None else Some(colors) }
-        )
+      (__ \ F.HISTOGRAM_FN).formatNullable[MHistogram]
     )(apply, unlift(unapply))
 
     // До 2017-10-06 модель почему-то повторяла собой MSize2di полностью... TODO Удалить после resaveMany().
     val compatReads = {
-      for ( mSize2d <- implicitly[Reads[MSize2di]]) yield {
+      for {
+        mSize2d <- implicitly[Reads[MSize2di]]
+      } yield {
         MPictureMeta(
-          whPx = Some(mSize2d)
+          whPx = Some(mSize2d),
         )
       }
     }
@@ -77,13 +74,11 @@ object MPictureMeta
     )
   }
 
-  @inline implicit def univEq: UnivEq[MPictureMeta] = {
-    UnivEq.derive
-  }
+  @inline implicit def univEq: UnivEq[MPictureMeta] = UnivEq.derive
 
 
-  val whPx = GenLens[MPictureMeta](_.whPx)
-  val colors = GenLens[MPictureMeta](_.colors)
+  val whPx      = GenLens[MPictureMeta](_.whPx)
+  val histogram = GenLens[MPictureMeta](_.histogram)
 
 }
 
@@ -91,10 +86,10 @@ object MPictureMeta
 /** Неявно-пустой класс модели данных по картинке (видео, изображение).
   *
   * @param whPx Пиксельный двумерный размер картинки.
-  * @param colors Основные цвета.
+  * @param histogram Основные цвета.
   */
 case class MPictureMeta(
-                         whPx       : Option[MSize2di]  = None,
-                         colors     : Seq[MColorData]   = Nil
+                         whPx       : Option[MSize2di]      = None,
+                         histogram  : Option[MHistogram]    = None,
                        )
   extends EmptyProduct

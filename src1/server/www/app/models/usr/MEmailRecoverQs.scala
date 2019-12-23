@@ -2,11 +2,11 @@ package models.usr
 
 import java.util.UUID
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

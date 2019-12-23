@@ -3,8 +3,7 @@ package io.suggest.model.n2.media.storage
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.swfs.client.proto.fid.Fid
-import io.suggest.es.util.SioEsUtil._
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -12,10 +11,10 @@ import play.api.libs.json.{JsObject, Json}
  * Created: 29.09.15 20:57
  * Description: Модель имён полей для моделей [[IMediaStorage]].
  */
-object MStorFns extends StringEnum[MStorFn] {
+object MStoragesFieldNames extends StringEnum[MStoragesFieldName] {
 
   // common
-  case object STYPE extends MStorFn("t") {
+  case object STYPE extends MStoragesFieldName("t") {
 
     override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
       import dsl._
@@ -28,7 +27,7 @@ object MStorFns extends StringEnum[MStorFn] {
 
 
   // seaweedfs
-  case object FID extends MStorFn("i") {
+  case object FID extends MStoragesFieldName("i") {
 
     override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
       import dsl._
@@ -50,13 +49,17 @@ object MStorFns extends StringEnum[MStorFn] {
   }
 
 
+  /** JSON format для поля типа storage модели MMedia. */
+  def STYPE_FN_FORMAT: OFormat[MStorage] =
+    (__ \ MStoragesFieldNames.STYPE.fn).format[MStorage]
+
   override def values = findValues
 
 }
 
 
 /** Класс модели названий полей storage-моделей. */
-sealed abstract class MStorFn(override val value: String) extends StringEnumEntry with IEsMappingProps {
+sealed abstract class MStoragesFieldName(override val value: String) extends StringEnumEntry with IEsMappingProps {
 
   /** Идентификатор (название) поля на стороне ES. */
   final def fn: String = value

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media.storage
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.url.MHostInfo
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

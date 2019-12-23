@@ -1197,11 +1197,11 @@ class DocEditAh[M](
             .colorsState
             .histograms
             .get(m.nodeId)
-          if mhist.sorted.nonEmpty
+          if mhist.colors.nonEmpty
         } yield {
           // Надо пробежаться по template, и всем элеметам, которые изменились, выставить обновлённые значения.
           val topColorMcd = mhist
-            .sorted
+            .colors
             .maxBy { mcd =>
               mcd.freqPc
                 .getOrElse(-1)

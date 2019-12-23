@@ -5,7 +5,7 @@ import java.net.InetAddress
 import java.nio.file.Path
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.color.{MColorData, MHistogram, MHistogramWs}
+import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
@@ -184,7 +184,9 @@ class Upload @Inject()(
               (Created, upDataFut)
 
             } { foundFile =>
-              val existColors = foundFile.picture.colors
+              val existColors = foundFile.picture.histogram
+                .colorsOrNil
+
               LOGGER.debug(s"$logPrefix Found existing file media#${foundFile.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}] with ${existColors.size} colors.")
 
               // Тут шаринг инстанса возможной картинки. Но надо быть осторожнее: если не картинка, то может быть экзепшен.
@@ -203,9 +205,9 @@ class Upload @Inject()(
                   // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
                   if (origMediaOpt.isEmpty)
                     LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFile.idOrNull} is here: $foundFile")
-                  origMediaOpt.fold(Seq.empty[MColorData]) { origMedia =>
-                    origMedia.picture.colors
-                  }
+                  origMediaOpt
+                    .flatMap(_.picture.histogram)
+                    .colorsOrNil
                 }
               } else {
                 LOGGER.trace(s"$logPrefix Existing color histogram for media#${foundFile.idOrNull}: [${existColors.iterator.map(_.hexCode).mkString(", ")}]")
@@ -227,25 +229,20 @@ class Upload @Inject()(
                       LOGGER.error(s"$logPrefix MIME ${foundFile.file.mime} don't know how to build URL")
                       None
                     },
-                    sizeB     = Some( foundFile.file.sizeB ),
-                    name      = None,     // Имя пока не раскрываем. Файл мог быть был загружен другим юзером под иным именем.
-                    mimeType  = Some( foundFile.file.mime ),
-                    hashesHex = MFileMetaHash.toHashesHex {
-                      // TODO Это всё надо вообще? может отправить на клиент просто исходные модели? Или вообще ничего не отправлять?
-                      foundFile.file.hashesHex
-                        .iterator
-                        .filter(_.flags contains MFileMetaHash.Flags.TRULY_ORIGINAL)
-                    },
-                    colors    = {
+                    // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
+                    fileMeta  = Some( foundFile.file ),
+                    pictureMeta = MPictureMeta(
                       // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
-                      OptionUtil.maybe( mediaColors.nonEmpty ) {
+                      histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
                         MHistogram(
-                          sorted = mediaColors
-                            .sortBy(p => -p.freqPc.getOrElse(0))
+                          colors = mediaColors
+                            .sortBy { p =>
+                              p.freqPc.fold(0)(-_)
+                            }
                             .toList
                         )
                       }
-                    }
+                    )
                   ))
                 )
               }
@@ -559,17 +556,17 @@ class Upload @Inject()(
 
             for (colorDetectFut <- colorDetectFutOpt) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
-                if (colorHist.sorted.nonEmpty) {
+                if (colorHist.colors.nonEmpty) {
                   // Считаем общее кол-во пикселей для нормировки частот цветов:
                   val colorsHist2 = colorHist.withRelFrequences
-                  lazy val mcdsCount = colorsHist2.sorted.size
+                  lazy val mcdsCount = colorsHist2.colors.size
 
-                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.sorted.iterator.map(_.hexCode).mkString(", ")}")
+                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.colors.iterator.map(_.hexCode).mkString(", ")}")
 
                   val mmedia2OptFut = mMedias.tryUpdate(mmedia1)(
                     MMedia.picture
-                      .composeLens( MPictureMeta.colors )
-                      .set( colorsHist2.sorted )
+                      .composeLens( MPictureMeta.histogram )
+                      .set( Option.when(colorsHist2.nonEmpty)(colorsHist2) )
                   )
 
                   mmedia2OptFut.onComplete {
@@ -626,7 +623,9 @@ class Upload @Inject()(
             nodeId    = mnodeId,
             // TODO url: Надо бы вернуть ссылку. Для img - routes.Img.*, для других - по другим адресам.
             // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
-            colors    = colorsOpt
+            pictureMeta = MPictureMeta(
+              histogram = colorsOpt,
+            )
           )
           val resp = MUploadResp(
             fileExist = Some(srvFileInfo)
@@ -784,5 +783,4 @@ protected class UploadBpRes(
   }
 
 }
-
 

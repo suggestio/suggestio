@@ -3,8 +3,8 @@ package models.usr.esia
 import java.time.OffsetDateTime
 import java.util.UUID
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import japgolly.univeq.UnivEq
 import play.api.mvc.QueryStringBindable
 

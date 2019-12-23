@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 

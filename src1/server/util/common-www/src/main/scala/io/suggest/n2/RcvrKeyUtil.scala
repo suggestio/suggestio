@@ -2,8 +2,8 @@ package io.suggest.n2
 
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.html.HtmlConstants
-import io.suggest.model.play.psb.PathBindableImpl
-import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
+import io.suggest.xplay.psb.PathBindableImpl
+import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**

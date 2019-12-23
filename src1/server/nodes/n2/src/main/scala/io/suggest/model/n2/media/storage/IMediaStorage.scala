@@ -6,8 +6,8 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.primo.TypeT
 import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages}
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.url.MHostInfo
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.inject.Injector
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
@@ -39,16 +39,16 @@ class IMediaStorages @Inject() (
     MStorages.values
       .iterator
       .map { mStorType =>
-        mStorType -> storageImpl( mStorType)
+        mStorType -> storageImpl( mStorType )
       }
       .toMap
   }
 
   /** Поддержка кросс-модельной JSON-сериализации/десериализации. */
-  implicit val FORMAT: OFormat[T] = {
+  override implicit val FORMAT: OFormat[T] = {
     val READS: Reads[T] = new Reads[T] {
       override def reads(json: JsValue): JsResult[T] = {
-        json.validate( MStorage.STYPE_FN_FORMAT )
+        json.validate( MStoragesFieldNames.STYPE_FN_FORMAT )
           .flatMap { stype =>
             json.validate( getModel(stype).FORMAT )
           }
@@ -65,7 +65,7 @@ class IMediaStorages @Inject() (
   }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
-    MStorFns
+    MStoragesFieldNames
       .values
       .iterator
       .map(_.esMappingProps)

@@ -2,13 +2,13 @@ package io.suggest.ctx
 
 import java.util.UUID
 import java.util.regex.Pattern
-import javax.inject.{Inject, Singleton}
 
-import io.suggest.model.play.psb.PathBindableImpl
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import javax.inject.{Inject, Singleton}
 import io.suggest.sec.{HmacAlgos, HmacUtil}
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.xplay.psb.PathBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import org.apache.commons.codec.binary.Base64
 import play.api.Configuration
 import japgolly.univeq._

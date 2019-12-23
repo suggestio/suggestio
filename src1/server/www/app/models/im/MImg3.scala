@@ -8,8 +8,9 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.EsModel
 import io.suggest.fio.{IDataSource, WriteRequest}
+import io.suggest.img
+import io.suggest.img.ImgSzDated
 import io.suggest.js.UploadConstants
-import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.media._
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -80,7 +81,7 @@ class MImgs3 @Inject() (
   private def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
     for (mmediaOpt <- mediaOptFut(mimg)) yield {
       for (mmedia <- mmediaOpt; whPx <- mmedia.picture.whPx) yield {
-        ImgSzDated(
+        img.ImgSzDated(
           sz          = whPx,
           dateCreated = mmedia.file.dateCreated
         )

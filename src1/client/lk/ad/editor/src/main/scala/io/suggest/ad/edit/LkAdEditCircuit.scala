@@ -120,7 +120,7 @@ class LkAdEditCircuit(
               histograms = (for {
                 jdEdge    <- mFormInit.adData.edges.iterator
                 srvFile   <- jdEdge.fileSrv
-                colorHist <- srvFile.colors
+                colorHist <- srvFile.pictureMeta.histogram
               } yield {
                 srvFile.nodeId -> colorHist
               })

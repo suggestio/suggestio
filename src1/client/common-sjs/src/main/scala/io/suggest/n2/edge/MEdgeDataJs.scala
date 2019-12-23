@@ -95,7 +95,11 @@ case class MEdgeDataJs(
   def origWh: Option[MSize2di] = {
     fileJs
       .flatMap(_.whPx)
-      .orElse( jdEdge.fileSrv.flatMap(_.whPx) )
+      .orElse(
+        jdEdge
+          .fileSrv
+          .flatMap( _.pictureMeta.whPx )
+      )
   }
 
   def upload: Option[MFileUploadS] =

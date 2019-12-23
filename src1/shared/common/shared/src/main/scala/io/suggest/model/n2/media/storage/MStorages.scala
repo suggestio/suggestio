@@ -1,10 +1,9 @@
 package io.suggest.model.n2.media.storage
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
-import io.suggest.enum2.{EnumeratumJvmUtil, EnumeratumUtil}
-import japgolly.univeq.UnivEq
+import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq._
 import play.api.libs.json._
-import play.api.mvc.QueryStringBindable
 
 /**
  * Suggest.io
@@ -29,20 +28,9 @@ sealed abstract class MStorage(override val value: String) extends StringEnumEnt
 
 object MStorage {
 
-  implicit val MSTORAGE_FORMAT: Format[MStorage] = {
+  implicit def MSTORAGE_FORMAT: Format[MStorage] =
     EnumeratumUtil.valueEnumEntryFormat( MStorages )
-  }
 
-  /** JSON format для поля типа storage модели MMedia. */
-  val STYPE_FN_FORMAT: OFormat[MStorage] = {
-    (__ \ MStorFns.STYPE.fn).format[MStorage]
-  }
-
-
-  /** QSB для инстансов [[MStorage]]. */
-  implicit def mStorageQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MStorage] = {
-    EnumeratumJvmUtil.valueEnumQsb( MStorages )
-  }
 
   @inline implicit def univEq: UnivEq[MStorage] = UnivEq.derive
 

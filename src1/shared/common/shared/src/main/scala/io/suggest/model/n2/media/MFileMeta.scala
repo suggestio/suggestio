@@ -53,17 +53,24 @@ object MFileMeta
     // 2017.10.02 Костыль для поддержки старого и нового формата контрольных сумм одновременно.
     // TODO Удалить compat-костыли после MMedias.resaveMany()
     val hhFormat: OFormat[Seq[MFileMetaHash]] = {
-      val newFmt = (__ \ F.HASHES_HEX_FN).formatNullable[Seq[MFileMetaHash]]
+      val newFmt = (__ \ F.HASHES_HEX_FN)
+        .formatNullable[Seq[MFileMetaHash]]
         .inmap[Seq[MFileMetaHash]](
-          { EmptyUtil.opt2ImplEmpty1F(Nil) },
-          { hh => if (hh.isEmpty) None else Some(hh) }
+          EmptyUtil.opt2ImplEmpty1F(Nil),
+          hh => Option.when(hh.nonEmpty)(hh)
         )
       val readsCompat = newFmt.orElse {
         // Пытаемся прочитать старое поле SHA1
         (__ \ F.SHA1_FN).formatNullable[String]
           .map[Seq[MFileMetaHash]] {
-            case Some(sha1hex) => MFileMetaHash(MHashes.Sha1, sha1hex.toLowerCase, Set(MFileMetaHash.Flags.TRULY_ORIGINAL)) :: Nil
-            case None          => Nil
+            case Some(sha1hex) =>
+              MFileMetaHash(
+                hType     = MHashes.Sha1,
+                hexValue  = sha1hex.toLowerCase,
+                flags     = Set(MFileMetaHash.Flags.TRULY_ORIGINAL),
+              ) :: Nil
+            case None =>
+              Nil
           }
       }
       OFormat(readsCompat, newFmt)
@@ -128,8 +135,7 @@ case class MFileMeta(
   sizeB         : Long,
   isOriginal    : Boolean,
   hashesHex     : Seq[MFileMetaHash]  = Nil,
-                    // TODO Сделать тип поля dateCreated более переносимым между js/jvm, и унифицировать модель с MSrvFileInfo.
-  dateCreated   : OffsetDateTime      = OffsetDateTime.now()
+  dateCreated   : OffsetDateTime      = OffsetDateTime.now(),
 ) {
 
   /** Если картинка, то вернуть её формат по модели MImgFmts. */

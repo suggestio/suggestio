@@ -3,7 +3,7 @@ package io.suggest.model.n2.node
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import japgolly.univeq._
 

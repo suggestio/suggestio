@@ -1,7 +1,7 @@
 package io.suggest.ble
 
 import io.suggest.ble.BleConstants.Beacon.Qs._
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

@@ -3,8 +3,8 @@ package models.msc
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.MGeoPoint
 import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t

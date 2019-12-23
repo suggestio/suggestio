@@ -18,12 +18,12 @@ import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
 import javax.inject.{Inject, Singleton}
 import models.mbill._

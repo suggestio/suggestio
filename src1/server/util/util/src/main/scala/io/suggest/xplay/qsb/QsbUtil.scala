@@ -1,4 +1,4 @@
-package io.suggest.model.play.qsb
+package io.suggest.xplay.qsb
 
 /**
   * Suggest.io

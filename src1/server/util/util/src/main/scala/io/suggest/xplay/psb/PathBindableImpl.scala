@@ -1,4 +1,4 @@
-package io.suggest.model.play.psb
+package io.suggest.xplay.psb
 
 import play.api.mvc.PathBindable
 

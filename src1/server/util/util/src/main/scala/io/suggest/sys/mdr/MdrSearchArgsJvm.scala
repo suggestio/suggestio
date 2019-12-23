@@ -3,9 +3,9 @@ package io.suggest.sys.mdr
 import io.suggest.common.empty.OptionUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
 
 /**
  * Suggest.io

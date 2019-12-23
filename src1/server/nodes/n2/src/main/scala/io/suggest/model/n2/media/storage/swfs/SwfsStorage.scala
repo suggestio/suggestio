@@ -1,12 +1,10 @@
 package io.suggest.model.n2.media.storage.swfs
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.compress.MCompressAlgo
 import io.suggest.fio.{IDataSource, WriteRequest}
-import io.suggest.model.n2.media.storage.MStorage.STYPE_FN_FORMAT
+import io.suggest.model.n2.media.storage.MStoragesFieldNames
 import io.suggest.model.n2.media.storage._
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
 import io.suggest.swfs.client.proto.assign.{AssignRequest, IAssignResponse}
@@ -17,6 +15,7 @@ import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.Configuration
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -207,20 +206,20 @@ object SwfsStorage {
   }
 
   /** JSON-маппер для поля file id. */
-  private val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
+  private val FID_FORMAT = (__ \ MStoragesFieldNames.FID.fn).format[Fid]
 
   /** Поддержка JSON сериализации/десериализации. */
   implicit val FORMAT: OFormat[SwfsStorage] = {
     val READS: Reads[SwfsStorage] = (
       // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      STYPE_FN_FORMAT.filter { _ ==* MStorages.SeaWeedFs } and
+      MStoragesFieldNames.STYPE_FN_FORMAT.filter { _ ==* MStorages.SeaWeedFs } and
       FID_FORMAT
     ) { (_, fid) =>
       SwfsStorage(fid)
     }
     val WRITES: OWrites[SwfsStorage] = (
       // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      (STYPE_FN_FORMAT: OWrites[MStorage]) and
+      (MStoragesFieldNames.STYPE_FN_FORMAT: OWrites[MStorage]) and
         FID_FORMAT
       ) { ss =>
       (ss.storageType, ss.fid)

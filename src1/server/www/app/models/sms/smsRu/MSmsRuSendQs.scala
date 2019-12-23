@@ -3,7 +3,7 @@ package models.sms.smsRu
 import java.time.Instant
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import models.sms.MSmsSend
 import play.api.mvc.QueryStringBindable
 

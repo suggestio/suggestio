@@ -4,8 +4,8 @@ import java.text.DecimalFormat
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import org.im4java.core.IMOperation
 import util.FormUtil
 

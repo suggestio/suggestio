@@ -1,14 +1,12 @@
 package io.suggest.file
 
-import io.suggest.color.MHistogram
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.geom.d2.MSize2di
 import io.suggest.crypto.hash.{HashesHex, MHash}
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.crypto.hash.HashesHex.MHASHES_HEX_FORMAT_TRASPORT
 import io.suggest.err.ErrorConstants
+import io.suggest.model.n2.media.{MFileMeta, MFileMetaHash, MPictureMeta}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil
@@ -32,19 +30,16 @@ object MSrvFileInfo {
   }
 
   /** Поддержка play-json для связи между клиентом и сервером. */
-  implicit def MSRV_FILE_INFO: OFormat[MSrvFileInfo] = (
+  implicit def srvFileInfoJson: OFormat[MSrvFileInfo] = (
     (__ \ "n").format[String] and
     (__ \ "u").formatNullable[String] and
-    (__ \ "s").formatNullable[Long] and
     (__ \ "a").formatNullable[String] and
-    (__ \ "m").formatNullable[String] and
-    (__ \ "h").formatNullable[Map[MHash, String]]
-      .inmap[Map[MHash, String]](
-        EmptyUtil.opt2ImplEmpty1F(Map.empty),
-        { mapa => if (mapa.isEmpty) None else Some(mapa) }
-      ) and
-    (__ \ "c").formatNullable[MHistogram] and
-    (__ \ "w").formatNullable[MSize2di]
+    (__ \ "f").formatNullable[MFileMeta] and
+    (__ \ "p").formatNullable[MPictureMeta]
+      .inmap[MPictureMeta](
+        EmptyUtil.opt2ImplMEmptyF( MPictureMeta ),
+        EmptyUtil.implEmpty2Opt
+      )
   )(apply, unlift(unapply))
 
 
@@ -76,23 +71,24 @@ object MSrvFileInfo {
   *
   * @param nodeId Уникальный id узла, в т.ч. эфемерный.
   * @param url Ссылка для скачивания файла.
-  * @param sizeB Размер файла в байтах.
   * @param name Пользовательское название файла, если есть.
-  * @param mimeType MIME-тип файла.
-  * @param hashesHex Хэши файла, если есть.
+  * @param fileMeta Метаданные файла, которые могут быть нужны на клиенте.
   */
 case class MSrvFileInfo(
                          nodeId     : String,
                          url        : Option[String]      = None,
                          // TODO Поля ниже очень сильно дублируют n2 MFileMeta (MMedia.file). Сходу не удаётся унифицировать из-за поля date_created.
-                         sizeB      : Option[Long]        = None,
                          name       : Option[String]      = None,
-                         mimeType   : Option[String]      = None,
-                         hashesHex  : HashesHex           = Map.empty,
-                         // Это модель MPictureMeta:
-                         colors     : Option[MHistogram]  = None,
-                         whPx       : Option[MSize2di]    = None
+                         fileMeta   : Option[MFileMeta]   = None,
+                         pictureMeta: MPictureMeta        = MPictureMeta.empty,
                        ) {
+
+  /** Карта хэшей генерится на основе всех имеющихся в исходнике хэшей. */
+  lazy val hashesHex: HashesHex = {
+    fileMeta.fold( Map.empty[MHash, String] ) { fMeta =>
+      MFileMetaHash.toHashesHex( fMeta.hashesHex )
+    }
+  }
 
   /** Объединить данные данного инстанса и данные из более свежего инстанса.
     * Сервер может не утруждать себя сбором данных, которые есть на клиенте.
@@ -110,28 +106,22 @@ case class MSrvFileInfo(
       MSrvFileInfo(
         nodeId = newInfo.nodeId,
         // Велосипед для фильтрации корректных ссылок.
-        // Сервер, на ранних этапах запиливания кода, может возвращать TO*DO-мусор вместо ссылок.
         url = {
-          val urls = newInfo.url ++ url
+          val urls = (newInfo.url #:: url #:: LazyList.empty)
+            .flatten
           urls
             .headOption
             .flatMap { _ =>
               StringUtil.firstStringMakesSence(urls.toSeq: _*)
             }
         },
-        sizeB = newInfo.sizeB
-          .orElse(sizeB),
         name = newInfo.name
           .orElse( name ),
-        mimeType = newInfo.mimeType
-          .orElse( mimeType ),
-        hashesHex = (newInfo.hashesHex :: hashesHex :: Nil)
-          .find(_.nonEmpty)
-          .getOrElse(hashesHex),
-        colors = newInfo.colors
-          .orElse( colors ),
-        whPx = newInfo.whPx
-          .orElse(whPx)
+        fileMeta = newInfo.fileMeta
+          .fold( this.fileMeta )(_ => newInfo.fileMeta),
+        pictureMeta =
+          if (newInfo.pictureMeta.isEmpty) this.pictureMeta
+          else newInfo.pictureMeta,
       )
     }
   }

@@ -1,8 +1,8 @@
 package io.suggest.swfs.client.proto.fid
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.swfs.client.proto.VolumeId_t
 import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable

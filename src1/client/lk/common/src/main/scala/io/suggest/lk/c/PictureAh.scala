@@ -527,7 +527,7 @@ class PictureAh[V, M](
                 )
 
                 // В ответе может быть гистограмма. Это важно проаналализировать и вынести решение:
-                fileExist.colors.fold {
+                fileExist.pictureMeta.histogram.fold {
                   // Сервер не прислал гистограмму. Она придёт по websocket'у.
                   // В фоне: запустить открытие websocket'а для связи с сервером по поводу гистограммы.
                   uploadApi.conf.ctxIdOpt.fold {
@@ -875,11 +875,12 @@ class PictureAh[V, M](
 
 
   private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MPictureAh[V]): ActionResult[M] = {
-    fe.colors
-      .filter(_.nonEmpty)
-      .fold(updated(v0)) { hist =>
+    fe.pictureMeta
+      .histogram
+      .filter(_.colors.nonEmpty)
+      .fold( updated(v0) ) { hist2 =>
         _resPair2res(
-          _withHistogram(fe.nodeId, hist, v0)
+          _withHistogram(fe.nodeId, hist2, v0)
         )
       }
   }

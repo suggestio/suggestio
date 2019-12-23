@@ -1,4 +1,4 @@
-package io.suggest.model.img
+package io.suggest.img
 
 import java.time.OffsetDateTime
 

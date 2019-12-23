@@ -1,8 +1,8 @@
 package models.adv
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

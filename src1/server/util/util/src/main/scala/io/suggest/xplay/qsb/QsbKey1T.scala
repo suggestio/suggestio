@@ -1,7 +1,6 @@
-package io.suggest.model.play.qsb
+package io.suggest.xplay.qsb
 
 import io.suggest.common.qs.QsConstants
-import play.api.mvc.QueryStringBindable
 
 /**
  * Suggest.io
@@ -39,22 +38,3 @@ trait QsbKey1T {
   }
 
 }
-
-
-/** Использовать навороченный вариант javascript Unbind из sio jsRevRouterTpl. */
-trait QsbSioJsRevRouter[T] extends QueryStringBindable[T] {
-  override def javascriptUnbind: String = {
-    QsConstants.JSRR_OBJ_TO_QS_F
-  }
-}
-
-
-/**
-  * Обычно в проекте используется смесь QueryStringBindable with [[QsbKey1T]].
-  * Тут -- абстрактный класс, облегчающий жизнь компилятора и снижающий ресурсопотребление
-  * скомпиленных реализаций QSB.
-  */
-abstract class QueryStringBindableImpl[T]
-  extends QueryStringBindable[T]
-  with QsbKey1T
-  with QsbSioJsRevRouter[T]

@@ -144,7 +144,6 @@ routesImport ++= Seq(
   "io.suggest.file.up.MFile4UpPropsJvm._",
   "io.suggest.url.MHostInfoJvm._",
   "io.suggest.sc.ads.MLookupModesJvm._",
-  "io.suggest.sc.MScApiVsnsJvm._",
   "io.suggest.img.MImgFmtJvm._",
   "io.suggest.compress.MCompressAlgosJvm._",
   "models.msc.MPwaManifestQsJvm._",
@@ -152,12 +151,13 @@ routesImport ++= Seq(
   "io.suggest.dev.MScreenJvm._",
   "io.suggest.sc.index.MScIndexArgsJvm._",
   "io.suggest.sc.sc3.MScQsJvm._",
-  "io.suggest.model.play.qsb.QsbSeq",
+  "io.suggest.xplay.qsb.QsbSeq",
   "io.suggest.sys.mdr.MdrSearchArgsJvm._",
   "models.mext.MExtServicesJvm._",
   "io.suggest.id.login.LoginFormPagesJvm._",
   "io.suggest.tags.MTagsSearchQsJvm._",
-  "io.suggest.captcha.MCaptchaJvm._"
+  "io.suggest.captcha.MCaptchaJvm._",
+  "io.suggest.model.CommonModelsJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

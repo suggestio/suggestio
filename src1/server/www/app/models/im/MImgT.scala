@@ -3,12 +3,12 @@ package models.im
 import io.suggest.compress.MCompressAlgo
 import io.suggest.img.MImgFmt
 import io.suggest.model.n2.media.storage.MStorage
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

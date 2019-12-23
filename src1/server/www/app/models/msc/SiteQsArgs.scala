@@ -1,7 +1,7 @@
 package models.msc
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 import scala.language.implicitConversions

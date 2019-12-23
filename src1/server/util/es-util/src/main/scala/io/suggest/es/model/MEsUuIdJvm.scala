@@ -1,7 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.model.play.psb.PathBindableImpl
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.psb.PathBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**

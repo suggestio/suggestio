@@ -3,8 +3,8 @@ package models.usr.esia
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 import scala.util.Try

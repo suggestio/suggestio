@@ -1,9 +1,8 @@
 package io.suggest.sec
 
 import javax.crypto.Mac
-
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import org.apache.commons.codec.binary.Hex
 import play.api.mvc.QueryStringBindable
 import play.core.parsers.FormUrlEncodedParser

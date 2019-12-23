@@ -2,7 +2,6 @@ package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
-import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
@@ -13,7 +12,7 @@ import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMedias}
+import io.suggest.model.n2.media.{MMedia, MMedias, MPictureMeta}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.url.MHostInfo
@@ -171,16 +170,11 @@ class JdAdUtil @Inject()(
             mkDistMediaUrl(dynImgUtil.imgCall(mimg), mimg.dynImgId, mediaHosts, forceAbsUrls = false)
           },
           // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
-          sizeB     = Some( mmedia.file.sizeB ),
-          mimeType  = Some( mmedia.file.mime ),
-          hashesHex = MFileMetaHash.toHashesHex( mmedia.file.hashesHex ),
-          colors    = OptionUtil.maybe( mmedia.picture.colors.nonEmpty ) {
-            MHistogram( mmedia.picture.colors )
-          },
+          fileMeta  = Some( mmedia.file ),
           name = mediaNodes
             .get( nodeId )
             .flatMap(_.guessDisplayName),
-          whPx = mmedia.picture.whPx,
+          pictureMeta = mmedia.picture,
         ))
       )
 
@@ -568,10 +562,12 @@ class JdAdUtil @Inject()(
                 val url = mkDistMediaUrl(dynImgUtil.imgCall(resImg), resImg.dynImgId, mediaHostsMap, forceAbsUrls)
                 Some(url)
               },
-              fileSrv = Some(MSrvFileInfo(
+              fileSrv = Some( MSrvFileInfo(
                 nodeId = imgMakeRes.sourceImg.dynImgId.rowKeyStr,
-                whPx   = Some( imgMakeRes.imgSzReal )
-              ))
+                pictureMeta = MPictureMeta(
+                  whPx   = Some( imgMakeRes.imgSzReal ),
+                ),
+              )),
             )
           })
             // Для явной подготовки данных строго в текущем потоке, используем toList вместо toStream/toVector.
@@ -633,7 +629,7 @@ class JdAdUtil @Inject()(
                              )
 
         // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
-        val edgedImgTags = (for {
+        val edgedImgTags: Seq[EdgeImgTag] = (for {
           (medge, mimg) <- origImgsEdges.iterator
           edgeUid       <- medge.doc.uid
           jdLoc         <- tpl
@@ -660,7 +656,11 @@ class JdAdUtil @Inject()(
           LOGGER.trace(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=${wideSzMult.orNull}")
           EdgeImgTag( medge, mimg, jdTag, isWideThis, wideSzMult )
         })
-          .toList
+          // Отработать все img-эджи, пока в фоне идёт подготовка mediaMap. Иначе - отрабатывать лениво асинхронно в Future.sequence().
+          .to(
+            if (_origImgsMediasMapFut.isCompleted) LazyList
+            else List
+          )
 
 
         // 2018-02-06 Из-за при ресайзе embed-картинок, в аттрибутах фигурирует только только ширина.
@@ -801,7 +801,8 @@ class JdAdUtil @Inject()(
                 MImgRenderInfo(eit.medge, eit.mimg, imakeRes.dynCallArgs, imakeRes.szReal)
               }
             })
-              .toSeq
+              // Явно запустить на исполнение все future в списке:
+              .to( List )
           }
 
         } yield {

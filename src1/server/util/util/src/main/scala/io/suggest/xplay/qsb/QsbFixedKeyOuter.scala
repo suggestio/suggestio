@@ -1,4 +1,4 @@
-package io.suggest.model.play.qsb
+package io.suggest.xplay.qsb
 
 import io.suggest.util.logs.IMacroLogs
 
@@ -29,5 +29,3 @@ trait QsbFixedKeyOuter extends IMacroLogs {
   }
 
 }
-
-

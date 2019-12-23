@@ -2,14 +2,15 @@ package models.im
 
 import java.io.File
 import java.time.{Instant, ZoneOffset}
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.FileIO
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MimeUtilJvm
 import io.suggest.fio.IDataSource
-import io.suggest.model.img.ImgSzDated
+import io.suggest.img
+import io.suggest.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
@@ -145,7 +146,7 @@ class MLocalImgs @Inject() (
           val dt = Instant
             .ofEpochMilli( file.lastModified() )
             .atOffset( ZoneOffset.UTC )
-          ImgSzDated(meta, dt)
+          img.ImgSzDated(meta, dt)
         }
       }
     } else {

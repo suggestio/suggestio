@@ -1,10 +1,10 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoConstants.Qs
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import org.elasticsearch.common.geo.builders.{ShapeBuilder, ShapeBuilders}
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 
 /**
   * Suggest.io

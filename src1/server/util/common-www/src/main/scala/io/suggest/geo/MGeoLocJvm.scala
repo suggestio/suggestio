@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoConstants.GeoLocQs._
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

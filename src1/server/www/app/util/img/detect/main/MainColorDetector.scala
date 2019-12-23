@@ -203,7 +203,7 @@ class MainColorDetector @Inject() (
           )
         } yield {
           MHistogram(
-            sorted = hist.sortBy(v => -v.count.getOrElse(0L))
+            colors = hist.sortBy(v => -v.count.getOrElse(0L))
           )
         }
 

@@ -1,8 +1,8 @@
 package models.adv
 
 import io.suggest.es.model.MEsUuId
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 import scala.util.parsing.combinator.JavaTokenParsers

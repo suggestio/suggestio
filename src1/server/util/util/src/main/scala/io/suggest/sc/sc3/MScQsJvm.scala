@@ -2,12 +2,12 @@ package io.suggest.sc.sc3
 
 import io.suggest.dev.MScreen
 import io.suggest.sc.MScApiVsn
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.sc.ads.{MAdsSearchReq, MLookupMode, MScFocusArgs}
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 
 
 /**

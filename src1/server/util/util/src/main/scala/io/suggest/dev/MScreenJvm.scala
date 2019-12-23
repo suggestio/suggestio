@@ -1,7 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 

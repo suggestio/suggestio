@@ -1,7 +1,9 @@
 package io.suggest.color
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,21 +15,38 @@ import play.api.libs.functional.syntax._
   * Полезна при передаче гистограммы между акторами, у которых динамическая типизация в receive().
   */
 
-object MHistogram {
+object MHistogram
+  extends IEsMappingProps
+{
 
   object Fields {
     val COLORS_FN = "c"
   }
 
   /** Поддержка play-json. Используется в т.ч. для веб-сокетов. */
-  implicit val MHISTOGRAM_FORMAT: OFormat[MHistogram] = {
+  implicit def histogramJson: OFormat[MHistogram] = {
     val F = Fields
-    (__ \ F.COLORS_FN).formatNullable[Seq[MColorData]]
+    val mcdsJson = implicitly[Format[Seq[MColorData]]]
+
+    val normalFormat = (__ \ F.COLORS_FN)
+      .formatNullable( mcdsJson )
       .inmap[Seq[MColorData]](
-        EmptyUtil.opt2ImplEmpty1F(Nil),
-        { colors => if (colors.isEmpty) None else Some(colors) }
+        EmptyUtil.opt2ImplEmpty1F( Nil ),
+        colors => Option.when(colors.nonEmpty)(colors)
       )
-      .inmap[MHistogram](apply, _.sorted)
+
+    // 2019-12-23 - Список цветов жил сам по себе, но теперь хранится MHistogram.
+    val fallbackReads = Reads {
+      case jsObj: JsObject =>
+        jsObj.validate( normalFormat )
+      case jsArr: JsArray =>
+        jsArr.validate( mcdsJson )
+      case other =>
+        JsError( other.toString() )
+    }
+
+    OFormat( fallbackReads, normalFormat )
+      .inmap[MHistogram]( apply, _.colors )
   }
 
   @inline implicit def univEq: UnivEq[MHistogram] = {
@@ -35,56 +54,78 @@ object MHistogram {
     UnivEq.derive
   }
 
+  val sorted = GenLens[MHistogram](_.colors)
+
+
+  implicit class MHistogramOpsExt( private val hist0: MHistogram ) extends AnyVal {
+
+    def relFreqsCalculated: MHistogram = {
+      val iter0 = hist0.colors
+        .iterator
+        .flatMap(_.count)
+
+      if (iter0.isEmpty) {
+        hist0
+      } else {
+        val totalCount = iter0.sum
+        MHistogram.sorted.modify { sorted0 =>
+          for (e <- sorted0) yield {
+            e.count.fold(e) { eCount =>
+              (MColorData.freqPc set Some((eCount * 100 / totalCount).toInt) )(e)
+            }
+          }
+        }(hist0)
+      }
+    }
+
+
+    /** Сделать гистограмму, которая содержит только N первых по списку цветов.
+      * Считаем, что массив отсортирован.
+      */
+    def shrinkColorsCount(maxColors: Int): MHistogram = {
+      if (hist0.colors.sizeIs > maxColors) {
+        MHistogram.sorted
+          .modify( _.take(maxColors) )(hist0)
+      } else {
+        hist0
+      }
+    }
+
+  }
+
+
+  implicit class MHistogramOptOpsExt( private val histOpt0: Option[MHistogram] ) extends AnyVal {
+
+    def colorsOrNil: Seq[MColorData] =
+      histOpt0.fold[Seq[MColorData]] (Nil) (_.colors)
+
+  }
+
+
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+    Json.obj(
+      F.COLORS_FN -> FObject.nested(
+        properties = MColorData.esMappingProps,
+      ),
+    )
+  }
+
 }
 
 
 /** Класс модели гистограммы.
   *
-  * @param sorted Отсортированная гистограмма.
+  * @param colors Отсортированная гистограмма.
   */
 case class MHistogram(
-                       sorted: Seq[MColorData]
+                       colors     : Seq[MColorData],
                      )
   extends EmptyProduct
 {
 
   /** Выставить всем цветам freqPc но основе поля count. */
-  lazy val withRelFrequences: MHistogram = {
-    val iter0 = sorted
-      .iterator
-      .flatMap(_.count)
-
-    if (iter0.isEmpty) {
-      this
-    } else {
-      val totalCount = iter0.sum
-      withSorted(
-        sorted = for (e <- sorted) yield {
-          e.count.fold(e) { eCount =>
-            e.withFreqPc(
-              Some((eCount * 100 / totalCount).toInt)
-            )
-          }
-        }
-      )
-    }
-  }
-
-
-  /** Сделать гистограмму, которая содержит только N первых по списку цветов.
-    * Считаем, что массив отсортирован.
-    */
-  def shrinkColorsCount(maxColors: Int): MHistogram = {
-    if (sorted.size > maxColors) {
-      withSorted(
-        sorted.take(maxColors)
-      )
-    } else {
-      this
-    }
-  }
-
-
-  def withSorted(sorted: Seq[MColorData]) = copy(sorted = sorted)
+  lazy val withRelFrequences = this.relFreqsCalculated
 
 }

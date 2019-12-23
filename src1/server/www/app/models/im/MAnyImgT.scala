@@ -1,12 +1,11 @@
 package models.im
 
 import javax.inject.{Inject, Singleton}
-
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.IDataSource
-import io.suggest.model.img.ImgSzDated
+import io.suggest.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.{ICommonDi, IMCommonDi}
 

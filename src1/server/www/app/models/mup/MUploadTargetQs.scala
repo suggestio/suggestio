@@ -2,9 +2,9 @@ package models.mup
 
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.n2.media.storage.MAssignedStorage
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
+import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**

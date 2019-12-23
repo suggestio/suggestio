@@ -608,7 +608,7 @@ class LkAdEditFormR(
           } yield {
             colorsSuggestR.PropsVal(
               titleMsgCode = MsgCodes.`Suggested.bg.colors`,
-              colors       = hist.sorted,
+              colors       = hist.colors,
               marker       = markerOpt
             )
           }
