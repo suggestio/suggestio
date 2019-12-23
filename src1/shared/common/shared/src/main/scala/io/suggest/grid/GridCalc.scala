@@ -98,7 +98,12 @@ object GridCalc {
 
     /* ~ bm.w.relSz = 1 | 2 | ... */
     val padOutLinePx = BlockPaddings.default.outlinePx
-    def hModulesCount = wh.width / (BlockWidths.min.value + padOutLinePx)
+
+    // Тут min = 1, т.к. может быть и ноль в формуле, приводящий к division by zero.
+    def hModulesCount = Math.max(
+      1,
+      wh.width / (BlockWidths.min.value + padOutLinePx)
+    )
 
     Option {
       if (wh.height <= BlockHeights.H140.value + padOutLinePx) {
