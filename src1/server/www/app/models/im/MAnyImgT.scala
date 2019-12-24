@@ -56,10 +56,10 @@ trait MAnyImgsT[T <: MAnyImgT] extends IMCommonDi {
 
   /** Асинхронно стримить картинку из хранилища. */
   final def getStream(mimg: T): Source[ByteString, _] = {
-    val srcFut = for (ds <- getDataSource(mimg)) yield {
-      ds.data
-    }
-    Source.fromFutureSource(srcFut)
+    Source.fromFutureSource(
+      getDataSource(mimg)
+        .map(_.data)
+    )
   }
 
   /** Получить ширину и длину картинки. */

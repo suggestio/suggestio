@@ -94,7 +94,10 @@ final class ClamAvUtil @Inject()(
     LOGGER.trace(s"scanClamdRemote(): File = ${req.file}")
     // Используем lazy-source, чтобы файл не читался, пока сокет не будет открыт:
     val src = Source.lazily { () =>
-      FileIO.fromPath(new File(req.file).toPath, chunkSize = 8192)
+      FileIO.fromPath(
+        new File(req.file).toPath,
+        chunkSize = 8192
+      )
     }
     scanClamdRemoteTcp(src)
   }

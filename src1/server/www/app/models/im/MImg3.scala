@@ -124,15 +124,15 @@ class MImgs3 @Inject() (
         id = Some( mimg.dynImgId.rowKeyStr ),
         common = MNodeCommon(
           ntype         = MNodeTypes.Media.Image,
-          isDependent   = true
+          isDependent   = true,
         ),
         meta = MMeta(
           basic = MBasicMeta(
-            techName    = Some(fname),
-            dateCreated = perm.map(_.dateCreated)
-              .getOrElse { OffsetDateTime.now() }
-          )
-        )
+            techName    = Some( fname ),
+            dateCreated = perm
+              .fold( OffsetDateTime.now() )(_.dateCreated),
+          ),
+        ),
       )
     }
 
@@ -165,7 +165,11 @@ class MImgs3 @Inject() (
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
       val whOptFut = mLocalImgs.getImageWH(loc)
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
-      val hashesHexFut = fileUtil.mkHashesHexAsync(imgFile, UploadConstants.CleverUp.PICTURE_FILE_HASHES, Set(MFileMetaHash.Flags.TRULY_ORIGINAL))
+      val hashesHexFut = fileUtil.mkHashesHexAsync(
+        file   = imgFile,
+        hashes = UploadConstants.CleverUp.PICTURE_FILE_HASHES,
+        flags  = Set(MFileMetaHash.Flags.TRULY_ORIGINAL),
+      )
       // TODO Ассигновать картинку на том же узле sio, что и оригинал. Надо удалить весь этот метод, чтобы руление картинками шло вне модели, в DynImgs, например.
       val storFut = iMediaStorages.assignNew( mimg.storage )
 
@@ -192,7 +196,7 @@ class MImgs3 @Inject() (
           picture = MPictureMeta(
             whPx = whOpt
           ),
-          storage = stor._1
+          storage = stor.storage,
         )
       }
     }
@@ -202,8 +206,8 @@ class MImgs3 @Inject() (
         mmedia      <- mediaFut
         mediaId2    <- mMedias.save(mmedia)
       } yield {
-        assert( mmedia.id.contains( mediaId2 ) )
-        mMedias.putToCache(mmedia)
+        assert( mmedia.id contains[String] mediaId2 )
+        mMedias.putToCache( mmedia )
         LOGGER.info(s"$logPrefix Saved to permanent: media#$mediaId2")
         mmedia
       }
@@ -231,7 +235,7 @@ class MImgs3 @Inject() (
     }
 
     for (_ <- storWriteFut.failed)
-      LOGGER.error("Failed to send to storage local image: " + loc)
+      LOGGER.error(s"$logPrefix Failed to send to storage local image: $loc")
 
     // Дождаться завершения всех паралельных операций.
     for {

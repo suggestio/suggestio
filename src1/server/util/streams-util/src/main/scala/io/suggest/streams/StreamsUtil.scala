@@ -235,23 +235,22 @@ class StreamsUtil @Inject() (
     // Собираем многоразовый синк, который будет наиболее эффективным путём собирать финальную ByteString.
     // Используется mutable ByteString builder, который инициализируется с фактическим началом потока, поэтому тут lazyInit().
     Sink
-      .lazyInitAsync[ByteString, Future[ByteString]](
+      .lazyInitAsync[ByteString, Future[ByteString]] { () =>
         // При поступлении первых данных, инициализировать builder и собрать фактический sink:
-        sinkFactory = { () =>
-          val b = ByteString.newBuilder
-          // Закидываем все данные в общий builder:
-          val realSink = Sink.foreach { b.append }
-            .mapMaterializedValue { doneFut =>
-              for (_ <- doneFut) yield {
-                b.result()
-              }
+        val b = ByteString.newBuilder
+        // Закидываем все данные в общий builder:
+        val realSink = Sink
+          .foreach { b.append }
+          .mapMaterializedValue { doneFut =>
+            for (_ <- doneFut) yield {
+              b.result()
             }
-          Future.successful( realSink )
-        }
-      )
+          }
+        Future.successful( realSink )
+      }
       .mapMaterializedValue(
         _.map(_.getOrElse( Future.successful( ByteString.empty ) ))
-         .flatten
+          .flatten
       )
   }
 
@@ -262,7 +261,7 @@ class StreamsUtil @Inject() (
   def gzipFlow(bufferSize: Int = 8192): Flow[ByteString, ByteString, _] = {
     Flow[ByteString]
       .via( ByteStringsChunker(bufferSize) )
-      .via(Compression.gzip)
+      .via( Compression.gzip )
   }
 
 }

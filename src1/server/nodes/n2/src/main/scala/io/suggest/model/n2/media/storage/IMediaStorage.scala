@@ -106,7 +106,7 @@ class IMediaStorages @Inject() (
   }
 
   /** Награбить новый указатель в хранилище указанного типа. */
-  def assignNew(stype: MStorage): Future[(IMediaStorage, AnyRef)] = {
+  def assignNew(stype: MStorage): Future[MAssignedStorage] = {
     getModel(stype)
       .assignNew()
   }
@@ -184,7 +184,7 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
     * Подготовить новый указатель в текущем хранилище для загрузки очередного блобика.
     * @return Фьючерс с инстансом свежего указателя.
     */
-  def assignNew(): Future[(T, AnyRef)]
+  def assignNew(): Future[MAssignedStorage]
 
   /** Вернуть данные Assigned storage для указанных метаданных хранилища.
     *

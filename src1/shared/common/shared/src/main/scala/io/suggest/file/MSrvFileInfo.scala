@@ -22,13 +22,6 @@ import scalaz.Validation
   */
 object MSrvFileInfo {
 
-  /** Собрать невалидный пустой инстанс. Использовать только когда ОЧЕНЬ надо. */
-  def empty: MSrvFileInfo = {
-    MSrvFileInfo(
-      nodeId = ""
-    )
-  }
-
   /** Поддержка play-json для связи между клиентом и сервером. */
   implicit def srvFileInfoJson: OFormat[MSrvFileInfo] = (
     (__ \ "n").format[String] and
@@ -77,7 +70,6 @@ object MSrvFileInfo {
 case class MSrvFileInfo(
                          nodeId     : String,
                          url        : Option[String]      = None,
-                         // TODO Поля ниже очень сильно дублируют n2 MFileMeta (MMedia.file). Сходу не удаётся унифицировать из-за поля date_created.
                          name       : Option[String]      = None,
                          fileMeta   : Option[MFileMeta]   = None,
                          pictureMeta: MPictureMeta        = MPictureMeta.empty,

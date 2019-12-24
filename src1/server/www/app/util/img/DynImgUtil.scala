@@ -49,19 +49,19 @@ import scala.util.{Failure, Success}
  * В основном -- это прослойка между img-контроллером и моделью orig img и смежными ей.
  */
 @Singleton
-class DynImgUtil @Inject() (
-                             esModel                   : EsModel,
-                             mImgs3                    : MImgs3,
-                             mLocalImgs                : MLocalImgs,
-                             im4jAsyncUtil             : Im4jAsyncUtil,
-                             cdnUtil                   : CdnUtil,
-                             // Для каких-то регламентных операций в MNodes:
-                             mNodes                    : MNodes,
-                             // Только для удаления и чистки базы:
-                             iMediaStorages            : IMediaStorages,
-                             mMedias                   : MMedias,
-                             mCommonDi                 : ICommonDi
-                           )
+final class DynImgUtil @Inject() (
+                                   esModel                   : EsModel,
+                                   mImgs3                    : MImgs3,
+                                   mLocalImgs                : MLocalImgs,
+                                   im4jAsyncUtil             : Im4jAsyncUtil,
+                                   cdnUtil                   : CdnUtil,
+                                   // Для каких-то регламентных операций в MNodes:
+                                   mNodes                    : MNodes,
+                                   // Только для удаления и чистки базы:
+                                   iMediaStorages            : IMediaStorages,
+                                   mMedias                   : MMedias,
+                                   mCommonDi                 : ICommonDi
+                                 )
   extends MacroLogsImpl
 {
 
@@ -72,8 +72,8 @@ class DynImgUtil @Inject() (
     * Кеш используется для подавления параллельных запросов. */
   private val ENSURE_DYN_CACHE_TTL = 10.seconds
 
-  /** Если true, то производные от оригинала картники будут дублироваться в cassandra.
-    * Если false, то производные будут только на локалхосте. */
+  /** Если true, то производные от оригинала картники будут дублироваться в распределённое хранилище.
+    * Если false, то производные будут только в файловом кэше. */
   private def SAVE_DERIVATIVES_TO_PERMANENT = true
 
   /** Активен ли префетчинг, т.е. опережающая подготовка картинки?
@@ -157,24 +157,23 @@ class DynImgUtil @Inject() (
    *         Фьючерс с Throwable при иных ошибках.
    */
   def mkReadyImgToFile(args: MImgT): Future[MLocalImg] = {
-    val fut = mImgs3.toLocalImg(args.original)
-      .map(_.get)
-      .flatMap { localImg =>
-        // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
-        val newLocalImg = args.toLocalInstance
-        // Запустить конвертацию исходной картинки
-        for {
-          _ <- convert(
-            in     = mLocalImgs.fileOf(localImg),
-            out    = mLocalImgs.fileOf(newLocalImg),
-            outFmt = newLocalImg.dynImgId.dynFormat,
-            imOps  = args.dynImgId.dynImgOps
-          )
-        } yield {
-          // Вернуть финальную картинку, т.к. с оригиналом и так всё ясно.
-          newLocalImg
-        }
-      }
+    val fut = for {
+      localImgOpt <- mImgs3.toLocalImg( args.original )
+      localImg = localImgOpt.get
+      // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
+      newLocalImg = args.toLocalInstance
+      // Запустить конвертацию исходной картинки
+      _ <- convert(
+        in     = mLocalImgs.fileOf(localImg),
+        out    = mLocalImgs.fileOf(newLocalImg),
+        outFmt = newLocalImg.dynImgId.dynFormat,
+        imOps  = args.dynImgId.dynImgOps
+      )
+    } yield {
+      // Вернуть финальную картинку, т.к. с оригиналом и так всё ясно.
+      newLocalImg
+    }
+
     for (ex <- fut.failed) {
       val logPrefix = s"mkReadyImgToFile($args): "
       ex match {
@@ -184,6 +183,7 @@ class DynImgUtil @Inject() (
           LOGGER.error(s"$logPrefix Unknown exception during image prefetch", ex)
       }
     }
+
     fut
   }
 
@@ -247,19 +247,18 @@ class DynImgUtil @Inject() (
           cache.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL)
         // Готовим асинхронный результат работы:
         localImgResult.onComplete {
-          case Success(Some(img)) =>
-            resultP.success( img )
-
-          // Картинки в указанном виде нету. Нужно сделать её из оригинала:
-          case Success(None) =>
-            val localResultFut = mkReadyImgToFile(args)
-            // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
-            if (SAVE_DERIVATIVES_TO_PERMANENT) {
-              for (localImg2 <- localResultFut)
-                mImgs3.saveToPermanent( localImg2.toWrappedImg )
-            }
-            // Заполняем результат, который уже в кеше:
-            resultP.completeWith( localResultFut )
+          case Success(imgOpt) =>
+            imgOpt.fold {
+              // Картинки в указанном виде нету. Нужно сделать её из оригинала:
+              val localResultFut = mkReadyImgToFile(args)
+              // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
+              if (SAVE_DERIVATIVES_TO_PERMANENT) {
+                for (localImg2 <- localResultFut)
+                  mImgs3.saveToPermanent( localImg2.toWrappedImg )
+              }
+              // Заполняем результат, который уже в кеше:
+              resultP.completeWith( localResultFut )
+            } { resultP.success }
 
           case Failure(ex) =>
             resultP.failure(ex)

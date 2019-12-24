@@ -107,9 +107,6 @@ class Img @Inject() (
 
     } else {
 
-      // TODO Надо имя файла записать. Его нужно кодировать, а там какое-то play private api...
-      //CONTENT_DISPOSITION -> s"inline; filename=$fileName"
-
       // Надо всё-таки вернуть картинку. Возможно, картинка ещё не создана. Уточняем:
       request.mmediaOpt.fold [Future[Result]] {
         // Готовой картинки сейчас не существует. Возможно, что она создаётся прямо сейчас.

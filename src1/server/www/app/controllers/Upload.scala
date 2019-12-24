@@ -443,7 +443,8 @@ class Upload @Inject()(
           // Создаём новый узел для загруженного файла.
           mnodeIdFut = {
             // Проверки закончены. Пора переходить к действиям по сохранению и анализу файла.
-            val nodeIdOpt0 = request.body.localImg.map(_.dynImgId.rowKeyStr)
+            val nodeIdOpt0 = request.body.localImg
+              .map(_.dynImgId.rowKeyStr)
             val MediaTypes = MNodeTypes.Media
             val mnode0 = MNode(
               id = nodeIdOpt0,
@@ -460,7 +461,7 @@ class Upload @Inject()(
                 basic = MBasicMeta(
                   techName    = Option( filePart.filename )
                 )
-              )
+              ),
             )
             val fut = mNodes.save( mnode0 )
 

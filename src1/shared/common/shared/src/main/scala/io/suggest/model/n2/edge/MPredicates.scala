@@ -163,6 +163,28 @@ object MPredicates extends StringEnum[MPredicate] {
   }
 
 
+  /** Предикат для эджа, описывающего файл (ссылку, id на уд.сервисе) приложения,
+    * для скачивания на устройство пользователя.
+    */
+  case object Application extends MPredicate("i") {
+
+    /** Файл установки приложения, доступный для скачивания.
+      * Эдж указывает на конкретный файл в каком-либо хранилище. */
+    case object AppFile extends MPredicate("iF") with _Child
+
+    /** Какой-то сервис дистрибуции приложений: itunes, gplay, итд.
+      * Сам сервис дистрибуции описывается в поле e.info.extService
+      */
+    case object Distributor extends MPredicate("iD") with _Child
+
+    // case object FileNode - указатель на другой узел, отвечающий за залитый в хранилище файл?
+
+    override def children: LazyList[MPredicate] =
+      AppFile #:: Distributor #:: super.children
+
+  }
+
+
   /** Используется только в конструкторе, в тестах, в редкой sys edgeForm. */
   override def values = TreeEnumEntry.deepFindValue( findValues )
 

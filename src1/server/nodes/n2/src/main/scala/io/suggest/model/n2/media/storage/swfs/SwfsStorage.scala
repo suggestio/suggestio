@@ -7,7 +7,7 @@ import io.suggest.model.n2.media.storage.MStoragesFieldNames
 import io.suggest.model.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
-import io.suggest.swfs.client.proto.assign.{AssignRequest, IAssignResponse}
+import io.suggest.swfs.client.proto.assign.AssignRequest
 import io.suggest.swfs.client.proto.delete.{DeleteRequest, IDeleteResponse}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.swfs.client.proto.get.GetRequest
@@ -60,12 +60,15 @@ class SwfsStorages @Inject() (
 
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
-  override def assignNew(): Future[(SwfsStorage, IAssignResponse)] = {
+  override def assignNew(): Future[MAssignedStorage] = {
     val areq = AssignRequest(DATA_CENTER_DFLT, REPLICATION_DFLT)
     for {
       resp <- client.assign(areq)
     } yield {
-      SwfsStorage(resp.fidParsed) -> resp
+      MAssignedStorage(
+        host    = resp.hostInfo,
+        storage = SwfsStorage( resp.fidParsed ),
+      )
     }
   }
 
@@ -193,7 +196,7 @@ object SwfsStorage {
         for (fidE <- fidB.bind(key, params)) yield {
           for (fid <- fidE) yield {
             SwfsStorage(
-              fid = fid
+              fid = fid,
             )
           }
         }
@@ -222,8 +225,8 @@ object SwfsStorage {
       (MStoragesFieldNames.STYPE_FN_FORMAT: OWrites[MStorage]) and
         FID_FORMAT
       ) { ss =>
-      (ss.storageType, ss.fid)
-    }
+        (ss.storageType, ss.fid)
+      }
     OFormat(READS, WRITES)
   }
 

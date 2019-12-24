@@ -5,8 +5,8 @@ import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.n2.media.MMedia
-import io.suggest.model.n2.media.storage._
-import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages, SwfsVolumeCache}
+import io.suggest.model.n2.media.storage.{MStorages, _}
+import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsVolumeCache}
 import io.suggest.playx.ExternalCall
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
@@ -213,21 +213,16 @@ class CdnUtil @Inject() (
     * @return Фьючерс с результатом.
     */
   def assignDist(upProps: MFile4UpProps): Future[MAssignedStorage] = {
-    val storageType = DIST_STORAGE
-    val storageFacade = iMediaStorages.getModel( storageType ).asInstanceOf[SwfsStorages]
-    val assignRespFut = storageFacade.assignNew()
+    val storageFacade = iMediaStorages.getModel( DIST_STORAGE )
+    val assignFut = storageFacade.assignNew()
 
-    for {
-      assignResp <- assignRespFut
-    } yield {
-      LOGGER.trace(s"assignDist[${System.currentTimeMillis()}]: Assigned ok:\n props = $upProps\n resp = $assignResp")
-      val swfsAssignResp = assignResp._2
-      MAssignedStorage(
-        host    = swfsAssignResp.hostInfo,
-        storage = assignResp._1
-      )
-    }
+    if (LOGGER.underlying.isTraceEnabled())
+      for (assignedStorage <- assignFut)
+        LOGGER.trace(s"assignDist[${System.currentTimeMillis()}]: Assigned ok:\n props = $upProps\n resp = $assignedStorage")
+
+    assignFut
   }
+
 
 
   /** Проверка возможности аплоада прямо сюда на текущую ноду.

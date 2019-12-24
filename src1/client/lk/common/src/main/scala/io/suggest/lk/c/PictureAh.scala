@@ -866,8 +866,8 @@ class PictureAh[V, M](
       jdEdge0
     } else {
       MJdEdge.fileSrv.modify { fileSrvOpt0 =>
-        val fileSrv1 = fileSrvOpt0 getOrElse MSrvFileInfo.empty
-        val fileSrv2 = fileSrv1.updateFrom( fileInfo )
+        val fileSrv2 = fileSrvOpt0
+          .fold( fileInfo )( _ updateFrom fileInfo )
         Some( fileSrv2 )
       }( jdEdge0 )
     }

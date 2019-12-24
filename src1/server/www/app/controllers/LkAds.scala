@@ -185,7 +185,7 @@ class LkAds @Inject() (
 
     // Собираем source из карточек, которые были найдены в поиске:
     val normalAdsSrc = Source
-      .fromFuture(madIdsFut)
+      .fromFuture( madIdsFut )
       .flatMapConcat( mNodes.multiGetSrc(_) )
 
     // Запихнуть свеже-созданную карточку newAdId в начало общего Source, если есть такая карточка.

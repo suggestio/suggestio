@@ -28,6 +28,7 @@ import scala.concurrent.duration._
  * Поле _id должно формироваться клиентом и включать в себя значение поля nodeId.
  */
 @Singleton
+@deprecated
 class MMedias @Inject() (
                           iMediaStorages          : IMediaStorages,
                         )
@@ -113,6 +114,7 @@ class MMedias @Inject() (
 }
 
 
+@deprecated
 object MMedia {
   val file        = GenLens[MMedia](_.file)
   val storage     = GenLens[MMedia](_.storage)
@@ -131,6 +133,7 @@ object MMedia {
   * @param picture Метаданные картинки, если это картинка.
   * @param versionOpt Версия.
   */
+@deprecated
 case class MMedia(
   nodeId                    : String,
   file                      : MFileMeta,
@@ -148,8 +151,10 @@ case class MMedia(
 
 
 // Поддержка JMX.
+@deprecated
 trait MMediasJmxMBean extends EsModelJMXMBeanI
 
+@deprecated
 final class MMediasJmx @Inject()(
                                   override val companion      : MMedias,
                                   override val esModelJmxDi   : EsModelJmxDi,
@@ -158,10 +163,5 @@ final class MMediasJmx @Inject()(
   with MMediasJmxMBean
 {
   override type X = MMedia
-}
-
-/** Интерфейс для поля с DI-инстансом [[MMedias]]. */
-trait IMMedias {
-  def mMedias: MMedias
 }
 
