@@ -19,150 +19,11 @@ import monocle.macros.GenLens
   * Description: Модель идентификатора dyn-картинки.
   * Является контейнером, вынесенный за пределы MImg* моделей, чтобы унифицировать передачу пачек данных конструкторов.
   */
-
-/** Контейнер данных для идентификации картинки.
-  *
-  * @param rowKeyStr Ключ (id узла-картинки).
-  * @param dynFormat Динамический формат картинки.
-  * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
-  *                  необходимою картинку.
-  * @param compressAlgo Опциональный финальный алгоритм сжатия.
-  *                     Нужен для сборки SVG, пожатых через brotli или иным алгоритмом.
-  */
-final case class MDynImgId(
-                            rowKeyStr     : String,
-                            dynFormat     : MImgFmt,
-                            dynImgOps     : Seq[ImOp]             = Nil,
-                            compressAlgo  : Option[MCompressAlgo] = None
-                            // TODO svgo=()?
-                          ) {
-
-  // TODO Переименовать поле rowKeyStr в nodeId.
-  def nodeId: String = rowKeyStr
-
-  // TODO Допилить и активировать ассерты правил применения формата изображения.
-  // assert( hasImgOps && dynFormat.nonEmpty )
-
-  /** Ключ ряда картинок, id для оригинала и всех производных. */
-  lazy val rowKey: UUID = UuidUtil.base64ToUuid(rowKeyStr)
-
-  /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
-  def cropOpt: Option[MCrop] = {
-    val iter = dynImgOps
-      .iterator
-      .flatMap {
-        case AbsCropOp(crop) => crop :: Nil
-        case _ => Nil
-      }
-    OptionUtil.maybe(iter.hasNext)( iter.next() )
-  }
-
-  def isCropped: Boolean = {
-    dynImgOps
-      .exists { _.isInstanceOf[ImCropOpT] }
-  }
-
-  def hasImgOps: Boolean = dynImgOps.nonEmpty
-
-  lazy val fileName: String = fileNameSb().toString()
-
-  /**
-   * Билдер filename-строки
-   * @param sb Исходный StringBuilder.
-   * @return StringBuilder.
-   */
-  def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
-    sb.append(rowKeyStr)
-    if (hasImgOps) {
-      sb.append('~')
-      dynImgOpsStringSb(sb)
-    }
-    sb.append( '.' )
-      .append( dynFormat.fileExt )
-    for (algo <- compressAlgo) {
-      sb.append('.')
-        .append(algo.fileExtension)
-    }
-    sb
-  }
-
-  /** Хранилка инстанса оригинала.
-    * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
-  private lazy val _originalHolder = MDynImgId.dynImgOps.set(Nil)(this)
-  def original: MDynImgId = {
-    if (hasImgOps) _originalHolder
-    else this
-  }
-  def maybeOriginal: Option[MDynImgId] = {
-    OptionUtil.maybe(hasImgOps)(_originalHolder)
-  }
-
-  def mediaIdAndOrigMediaId: Seq[String] = {
-    val ll0 = LazyList.empty[String]
-    mediaId #::
-    maybeOriginal.fold(ll0) { d =>
-      d.mediaId #:: ll0
-    }
-  }
-
-
-  /** Добавить операции в конец списка операций. */
-  def addDynImgOps(addDynImgOps: Seq[ImOp]): MDynImgId = {
-    if (addDynImgOps.isEmpty) {
-      this
-    } else {
-      val ops2 = if (dynImgOps.isEmpty) addDynImgOps
-                 else dynImgOps ++ addDynImgOps
-      MDynImgId.dynImgOps.set(ops2)(this)
-    }
-  }
-
-  /** id для модели MMedia. */
-  lazy val mediaId = MDynImgId.mkMediaId(this)
-
-  /** Исторически, это column qualifier, который использовался в column-oriented dbms.
-    * Сейчас используется тоже в качестве id, либо части id.
-    */
-  def qOpt: Option[String] = {
-    // TODO XXX dynFormat, compressAlgo
-    OptionUtil.maybe(hasImgOps)(dynImgOpsString)
-  }
-
-
-  // Быдлокод скопирован из MImgT.
-  def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
-    // TODO XXX dynFormat, compressAlgo
-    ImOp.unbindImOpsSb(
-      keyDotted     = "",
-      value         = dynImgOps,
-      withOrderInx  = false,
-      sb            = sb
-    )
-  }
-
-  lazy val dynImgOpsString: String = {
-    dynImgOpsStringSb()
-      .toString()
-  }
-
-
-  lazy val fsFileName: String = {
-    if (hasImgOps) {
-      // TODO Тут надо формат дописать?
-      dynImgOpsString + "." + dynFormat.fileExt
-    } else {
-      "__ORIG__"
-    }
-  }
-
-}
-
-
 object MDynImgId {
 
   /** Рандомный id для нового оригинала картинки. */
   def randomOrig(dynFormat: MImgFmt) = MDynImgId(
-    rowKeyStr = UuidUtil.uuidToBase64( UUID.randomUUID() ),
+    origNodeId = UuidUtil.uuidToBase64( UUID.randomUUID() ),
     dynFormat = dynFormat
   )
 
@@ -189,9 +50,9 @@ object MDynImgId {
 
     // Финальная сборка полного id.
     if (acc.isEmpty)
-      dynImgId.rowKeyStr
+      dynImgId.origNodeId
     else
-      (dynImgId.rowKeyStr :: acc).mkString
+      (dynImgId.origNodeId :: acc).mkString
   }
 
 
@@ -204,7 +65,7 @@ object MDynImgId {
     */
   def fromJdEdge(jdId: MJdEdgeId, medge: MEdge): MDynImgId = {
     apply(
-      rowKeyStr = medge.nodeIds.head,
+      origNodeId = medge.nodeIds.head,
       dynFormat = jdId.outImgFormat.get,
       dynImgOps = {
         var acc = List.empty[ImOp]
@@ -216,9 +77,158 @@ object MDynImgId {
   }
 
 
-  val rowKeyStr = GenLens[MDynImgId](_.rowKeyStr)
+  val rowKeyStr = GenLens[MDynImgId](_.origNodeId)
   val dynFormat = GenLens[MDynImgId](_.dynFormat)
   val dynImgOps = GenLens[MDynImgId](_.dynImgOps)
   val compressAlgo = GenLens[MDynImgId](_.compressAlgo)
 
+
+  implicit class DynImgIdOpsExt( private val dynImgId: MDynImgId) extends AnyVal {
+
+    /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
+    def cropOpt: Option[MCrop] = {
+      val iter = dynImgId
+        .dynImgOps
+        .iterator
+        .flatMap {
+          case AbsCropOp(crop) => crop :: Nil
+          case _ => Nil
+        }
+      OptionUtil.maybe(iter.hasNext)( iter.next() )
+    }
+
+    def isCropped: Boolean = {
+      dynImgId
+        .dynImgOps
+        .exists { _.isInstanceOf[ImCropOpT] }
+    }
+
+    def hasImgOps: Boolean = dynImgId.dynImgOps.nonEmpty
+    def isOriginal = !hasImgOps
+
+    /**
+      * Билдер filename-строки
+      * @param sb Исходный StringBuilder.
+      * @return StringBuilder.
+      */
+    def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
+      sb.append( dynImgId.origNodeId )
+      if (hasImgOps) {
+        sb.append('~')
+        dynImgId.dynImgOpsStringSb(sb)
+      }
+      val dot = '.'
+      sb.append( dot )
+        .append( dynImgId.dynFormat.fileExt )
+      for (algo <- dynImgId.compressAlgo) {
+        sb.append(dot)
+          .append( algo.fileExtension )
+      }
+      sb
+    }
+
+    def original: MDynImgId = {
+      if (hasImgOps) dynImgId._originalHolder
+      else dynImgId
+    }
+
+    def maybeOriginal: Option[MDynImgId] = {
+      OptionUtil.maybe(hasImgOps)( dynImgId._originalHolder )
+    }
+
+    def imgIdAndOrig: Seq[MDynImgId] = {
+      val ll0 = LazyList.empty[MDynImgId]
+      dynImgId #:: {
+        maybeOriginal.fold(ll0) { d =>
+          d #:: ll0
+        }
+      }
+    }
+
+    def mediaIdAndOrigMediaId: Seq[String] =
+      imgIdAndOrig.map(_.mediaId)
+
+
+    /** Добавить операции в конец списка операций. */
+    def addDynImgOps(addDynImgOps: Seq[ImOp]): MDynImgId = {
+      if (addDynImgOps.isEmpty) {
+        dynImgId
+      } else {
+        val ops2 =
+          if (dynImgId.dynImgOps.isEmpty) addDynImgOps
+          else dynImgId.dynImgOps ++ addDynImgOps
+        (MDynImgId.dynImgOps set ops2)(dynImgId)
+      }
+    }
+
+    /** Исторически, это column qualifier, который использовался в column-oriented dbms.
+      * Сейчас используется тоже в качестве id, либо части id.
+      */
+    def qOpt: Option[String] = {
+      // TODO XXX dynFormat, compressAlgo
+      OptionUtil.maybe(hasImgOps)( dynImgId.dynImgOpsString )
+    }
+
+    // Быдлокод скопирован из MImgT.
+    def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
+      // TODO XXX dynFormat, compressAlgo
+      ImOp.unbindImOpsSb(
+        keyDotted     = "",
+        value         = dynImgId.dynImgOps,
+        withOrderInx  = false,
+        sb            = sb
+      )
+    }
+
+  }
+
 }
+
+
+/** Контейнер данных для идентификации картинки.
+  *
+  * @param origNodeId id узла-картинки оригинала. Обычный id узла без dynOps-суффиксов.
+  * @param dynFormat Динамический формат картинки.
+  * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
+  *                  необходимою картинку.
+  * @param compressAlgo Опциональный финальный алгоритм сжатия.
+  *                     Нужен для сборки SVG, пожатых через brotli или иным алгоритмом.
+  */
+final case class MDynImgId(
+                            origNodeId    : String,
+                            dynFormat     : MImgFmt,
+                            dynImgOps     : Seq[ImOp]             = Nil,
+                            compressAlgo  : Option[MCompressAlgo] = None
+                            // TODO svgo=()?
+                          ) {
+
+  // TODO Допилить и активировать ассерты правил применения формата изображения.
+  // assert( dynFormat.nonEmpty )
+
+  lazy val fileName: String = this.fileNameSb().toString()
+
+  /** Хранилка инстанса оригинала.
+    * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
+  private lazy val _originalHolder =
+    (MDynImgId.dynImgOps set Nil)(this)
+
+  /** id для модели MMedia. */
+  lazy val mediaId = MDynImgId.mkMediaId(this)
+
+  lazy val dynImgOpsString: String = {
+    this
+      .dynImgOpsStringSb()
+      .toString()
+  }
+
+  lazy val fsFileName: String = {
+    if (this.hasImgOps) {
+      // TODO Тут надо формат дописать?
+      dynImgOpsString + "." + dynFormat.fileExt
+    } else {
+      "__ORIG__"
+    }
+  }
+
+}
+

@@ -244,6 +244,7 @@ class LkAdvExt @Inject() (
     }
   }
 
+  // TODO Заменить на пошаренный ResultingException[Result].
   private sealed case class ExceptionWithResult(result: Result) extends Exception
 
   /**

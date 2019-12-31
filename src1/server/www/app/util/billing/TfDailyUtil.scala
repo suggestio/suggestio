@@ -444,7 +444,7 @@ class TfDailyUtil @Inject()(
     LOGGER.warn(s"$logPrefix Starting")
 
     val bp = mNodes.bulkProcessor(
-      listener = new BulkProcessorListener( logPrefix )
+      listener = BulkProcessorListener( logPrefix )
     )
     val counter = new AtomicInteger(0)
 

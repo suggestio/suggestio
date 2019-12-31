@@ -40,8 +40,8 @@ object IMust {
     * @param clauses Входящий список критериев и готовых QueryBuilder'ов.
     * @return Итоговый QueryBuilder.
     */
-  def maybeWrapToBool(clauses: Seq[MWrapClause]): QueryBuilder = {
-    if (clauses.lengthCompare(1) > 0 || clauses.exists(_.must.contains(false)) ) {
+  def maybeWrapToBool(clauses: Iterable[MWrapClause]): QueryBuilder = {
+    if ((clauses.sizeIs > 1) || clauses.exists(_.must contains false)) {
       // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
       var shouldClauses = 0
       val nq = QueryBuilders.boolQuery()

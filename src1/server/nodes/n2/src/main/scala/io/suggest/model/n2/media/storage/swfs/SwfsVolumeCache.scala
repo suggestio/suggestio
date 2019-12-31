@@ -21,31 +21,29 @@ import scala.concurrent.duration._
  * Используется play-cache в качестве backend-хранилища.
  */
 @Singleton
-class SwfsVolumeCache @Inject() (
-  cache                     : AsyncCacheApi,
-  cacheUtil                 : CacheApiUtil,
-  configuration             : Configuration,
-  client                    : ISwfsClient,
-  actorSystem               : ActorSystem,
-  implicit private val ec   : ExecutionContext
-)
+final class SwfsVolumeCache @Inject() (
+                                        cache                     : AsyncCacheApi,
+                                        cacheUtil                 : CacheApiUtil,
+                                        configuration             : Configuration,
+                                        client                    : ISwfsClient,
+                                        actorSystem               : ActorSystem,
+                                        implicit private val ec   : ExecutionContext,
+                                      )
   extends MacroLogsImpl
 {
 
-  def CACHE_PREFIX = "swfs.vloc."
+  private def CACHE_PREFIX = "swfs.vloc."
 
-  val CACHE_DURATION = configuration.getOptional[Int]("swfs.vloc.cache.seconds")
-    .getOrElse(3600)
-    .seconds
+  private def CACHE_DURATION = 300.seconds
 
   /**
    * Сгенерить строку ключа кеша.
    * @param volumeId id раздела swfs.
    * @return Ключ кеша.
    */
-  def _ck(volumeId: VolumeId_t): String = {
+  def _ck(volumeId: VolumeId_t): String =
     CACHE_PREFIX + volumeId
-  }
+
 
   /**
    * Узнать volume locations с использование кеша.
@@ -95,6 +93,4 @@ class SwfsVolumeCache @Inject() (
   }
 
 }
-
-
 

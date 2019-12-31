@@ -3,7 +3,6 @@ package io.suggest.model.n2.media.storage.swfs
 import javax.inject.{Inject, Singleton}
 import io.suggest.compress.MCompressAlgo
 import io.suggest.fio.{IDataSource, WriteRequest}
-import io.suggest.model.n2.media.storage.MStoragesFieldNames
 import io.suggest.model.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
@@ -15,12 +14,8 @@ import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.Configuration
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
 import japgolly.univeq._
-import play.api.mvc.QueryStringBindable
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,17 +28,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * @see [[https://github.com/chrislusf/seaweedfs]]
  */
 @Singleton
-class SwfsStorages @Inject() (
-                               volCache                      : SwfsVolumeCache,
-                               configuration                 : Configuration,
-                               client                        : ISwfsClient,
-                               implicit private val ec       : ExecutionContext
-                             )
+final class SwfsStorage @Inject()(
+                                   volCache                      : SwfsVolumeCache,
+                                   configuration                 : Configuration,
+                                   client                        : ISwfsClient,
+                                   implicit private val ec       : ExecutionContext,
+                                 )
   extends MacroLogsImpl
-  with IMediaStorageStaticImpl
+  with IMediaStorageStatic
 {
-
-  override type T = SwfsStorage
 
   /** Инстанс с дефолтовыми настройками репликации. */
   val REPLICATION_DFLT: Option[Replication] = {
@@ -56,8 +49,7 @@ class SwfsStorages @Inject() (
     configuration.getOptional[String]("swfs.assign.dc")
   }
 
-  LOGGER.info(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
-
+  LOGGER.debug(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
   override def assignNew(): Future[MAssignedStorage] = {
@@ -67,14 +59,20 @@ class SwfsStorages @Inject() (
     } yield {
       MAssignedStorage(
         host    = resp.hostInfo,
-        storage = SwfsStorage( resp.fidParsed ),
+        storage = MStorageInfo(
+          storage = MStorages.SeaWeedFs,
+          data = MStorageInfoData(
+            data = resp.fid,
+          ),
+        ),
       )
     }
   }
 
-  override def getStorageHost(ptr: SwfsStorage): Future[Seq[MHostInfo]] = {
+  override def getStorageHost(ptr: MStorageInfoData): Future[Seq[MHostInfo]] = {
+    val fid = ptr.swfsFid.get
     for {
-      lookupResp <- volCache.getLocations( ptr.fid.volumeId )
+      lookupResp <- volCache.getLocations( fid.volumeId )
     } yield {
       LOGGER.trace(s"getAssignedStorage($ptr): Resp => ${lookupResp.mkString(", ")}")
       // TODO Берём только первый ответ, с остальными что делать-то?
@@ -82,32 +80,37 @@ class SwfsStorages @Inject() (
     }
   }
 
-  override def getStoragesHosts(ptrs: Iterable[T]): Future[Map[T, Seq[MHostInfo]]] = {
+  override def getStoragesHosts(ptrs: Iterable[MStorageInfoData]): Future[Map[MStorageInfoData, Seq[MHostInfo]]] = {
     // Собрать множество всех необходимых volumeId.
-    val volumeId2ptrs = ptrs
-      .groupBy(_.fid.volumeId)
+    if (ptrs.isEmpty) {
+      Future.successful( Map.empty )
 
-    val perVolFut = Future.traverse(volumeId2ptrs.toSeq) { case (volumeId, volPtrs) =>
+    } else {
+      val volumeId2ptrs = ptrs
+        .groupBy(_.swfsFid.get.volumeId)
+
       for {
-        lookupResp <- volCache.getLocations( volPtrs.head.fid.volumeId )
-      } yield {
-        LOGGER.trace(s"getAssignedStorages(): Resp for vol#$volumeId => ${lookupResp.mkString(", ")}")
-        for (ptr <- volPtrs) yield {
-          ptr -> _assignedStorResp(ptr, lookupResp)
+        perVol <- Future.traverse( volumeId2ptrs.toSeq ) { case (volumeId, volPtrs) =>
+          for {
+            lookupResp <- volCache.getLocations( volumeId )
+          } yield {
+            LOGGER.trace(s"getAssignedStorages(): Resp for vol#$volumeId => ${lookupResp.mkString(", ")}")
+            for (ptr <- volPtrs) yield {
+              ptr -> _assignedStorResp(ptr, lookupResp)
+            }
+          }
         }
+      } yield {
+        perVol
+          .iterator
+          .flatten
+          .toMap
       }
-    }
-
-    for (perVol <- perVolFut) yield {
-      perVol
-        .iterator
-        .flatten
-        .toMap
     }
   }
 
   /** Общий код сборки результата getAssignedStorage() и getAssignedStorages(). */
-  private def _assignedStorResp(ptr: T, lookupResp: Seq[IVolumeLocation]): Seq[MHostInfo] = {
+  private def _assignedStorResp(ptr: MStorageInfoData, lookupResp: Seq[IVolumeLocation]): Seq[MHostInfo] = {
     for (r <- lookupResp) yield {
       MHostInfo(
         nameInt       = r.url,
@@ -117,16 +120,20 @@ class SwfsStorages @Inject() (
   }
 
 
-  /** Короткий код для получения списка локаций volume, связанного с [[SwfsStorages]]. */
-  private def _vlocsFut(ptr: T) = volCache.getLocations(ptr.fid.volumeId)
+  /** Короткий код для получения списка локаций volume, связанного с [[SwfsStorage]]. */
+  private def _vlocsFut(ptr: MStorageInfoData): Future[Seq[IVolumeLocation]] = {
+    val fid = ptr.swfsFid.get
+    volCache.getLocations( fid.volumeId )
+  }
 
-  override def read(ptr: SwfsStorage, acceptCompression: Iterable[MCompressAlgo]): Future[IDataSource] = {
+  override def read(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo]): Future[IDataSource] = {
     for {
       vlocs   <- _vlocsFut(ptr)
       getResp <- {
+        val fid = ptr.swfsFid.get
         val getReq = GetRequest(
           volUrl              = vlocs.head.url,
-          fid                 = ptr.fid.toString,
+          fid                 = fid.toString,
           acceptCompression   = acceptCompression
         )
         client.get(getReq)
@@ -136,31 +143,33 @@ class SwfsStorages @Inject() (
     }
   }
 
-  override def delete(ptr: T): Future[Option[IDeleteResponse]] = {
-    lazy val logPrefix = s"delete(${ptr.fid}):"
+  override def delete(ptr: MStorageInfoData): Future[Option[IDeleteResponse]] = {
+    val fid = ptr.swfsFid.get
+    lazy val logPrefix = s"delete($fid):"
     for {
       vlocs   <- _vlocsFut(ptr)
       delResp <- {
         LOGGER.trace(s"$logPrefix vlocs = [${vlocs.mkString(", ")}]")
         val delReq = DeleteRequest(
           volUrl  = vlocs.head.url,
-          fid     = ptr.fid.toString
+          fid     = fid.toString
         )
         client.delete(delReq)
       }
     } yield {
-      LOGGER.trace(s"$logPrefix Delete ${ptr.fid} returned: $delResp")
+      LOGGER.trace(s"$logPrefix Delete $fid returned: $delResp")
       delResp
     }
   }
 
-  override def write(ptr: T, data: WriteRequest): Future[IPutResponse] = {
+  override def write(ptr: MStorageInfoData, data: WriteRequest): Future[IPutResponse] = {
     for {
       vlocs     <- _vlocsFut(ptr)
       putResp   <- {
+        val fid = ptr.swfsFid.get
         val putReq = PutRequest.fromRr(
           volUrl        = vlocs.head.url,
-          fid           = ptr.fid.toString,
+          fid           = fid.toString,
           rr            = data
         )
         client.put(putReq)
@@ -170,73 +179,15 @@ class SwfsStorages @Inject() (
     }
   }
 
-  override def isExist(ptr: T): Future[Boolean] = {
+  override def isExist(ptr: MStorageInfoData): Future[Boolean] = {
     _vlocsFut(ptr).flatMap { vlocs =>
+      val fid = ptr.swfsFid.get
       val getReq = GetRequest(
         volUrl = vlocs.head.url,
-        fid    = ptr.fid.toString
+        fid    = fid.toString
       )
       client.isExist(getReq)
     }
   }
 
-  override def FORMAT = SwfsStorage.FORMAT
-
-}
-
-
-/** Совсем статический объект-компаниьон для инстансов модели.
-  * Однако, всё его содержимое можно перекинуть назад в [[SwfsStorages]]. */
-object SwfsStorage {
-
-  /** Поддержка биндинга из URL qs. По сути проброс Fid'а, т.к. поле у модели всего одно. */
-  implicit def swfsStorageQsb(implicit fidB: QueryStringBindable[Fid]): QueryStringBindable[SwfsStorage] = {
-    new QueryStringBindableImpl[SwfsStorage] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SwfsStorage]] = {
-        for (fidE <- fidB.bind(key, params)) yield {
-          for (fid <- fidE) yield {
-            SwfsStorage(
-              fid = fid,
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: SwfsStorage): String = {
-        fidB.unbind(key, value.fid)
-      }
-    }
-  }
-
-  /** JSON-маппер для поля file id. */
-  private val FID_FORMAT = (__ \ MStoragesFieldNames.FID.fn).format[Fid]
-
-  /** Поддержка JSON сериализации/десериализации. */
-  implicit val FORMAT: OFormat[SwfsStorage] = {
-    val READS: Reads[SwfsStorage] = (
-      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      MStoragesFieldNames.STYPE_FN_FORMAT.filter { _ ==* MStorages.SeaWeedFs } and
-      FID_FORMAT
-    ) { (_, fid) =>
-      SwfsStorage(fid)
-    }
-    val WRITES: OWrites[SwfsStorage] = (
-      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      (MStoragesFieldNames.STYPE_FN_FORMAT: OWrites[MStorage]) and
-        FID_FORMAT
-      ) { ss =>
-        (ss.storageType, ss.fid)
-      }
-    OFormat(READS, WRITES)
-  }
-
-}
-
-
-/** Инстанс модели [[SwfsStorages]]. Содержит координаты media-блоба внутри SeaweedFS. */
-final case class SwfsStorage(fid: Fid)
-  extends IMediaStorage
-{
-  override def storageType = MStorages.SeaWeedFs
-  override def storageInfo = fid.toString
 }

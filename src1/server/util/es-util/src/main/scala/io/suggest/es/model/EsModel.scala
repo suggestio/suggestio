@@ -525,8 +525,9 @@ final class EsModel @Inject()(
 
         val logPrefix = s"update(${System.currentTimeMillis}):"
 
-        val bpListener = new BulkProcessorListener(logPrefix)
-        val bp = model.bulkProcessor(bpListener)
+        val bp = model.bulkProcessor(
+          listener = BulkProcessorListener(logPrefix),
+        )
 
         // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
         // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
@@ -655,8 +656,9 @@ final class EsModel @Inject()(
         val src = source[T1]( QueryBuilders.matchAllQuery() )
 
         val logPrefix = s"resaveMany()#${System.currentTimeMillis()}:"
-        val listener = new BulkProcessorListener(logPrefix)
-        val bp = model.bulkProcessor(listener)
+        val bp = model.bulkProcessor(
+          listener = BulkProcessorListener(logPrefix),
+        )
 
         val counter = new AtomicInteger(0)
 

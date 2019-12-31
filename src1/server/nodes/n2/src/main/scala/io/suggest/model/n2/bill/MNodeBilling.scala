@@ -66,10 +66,7 @@ object MNodeBilling
         typ     = DocFieldTypes.Long,
         index   = someTrue,
       ),
-      F.TARIFFS_FN -> FObject.plain(
-        enabled     = someTrue,
-        properties  = Some(MNodeTariffs.esMappingProps)
-      ),
+      F.TARIFFS_FN -> FObject.plain( MNodeTariffs ),
     )
   }
 

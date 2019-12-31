@@ -20,10 +20,10 @@ object MAssignedStorage {
   }
 
   /** Поддержка биндинга для URL qs. */
-  implicit def mDistAssignRespQsb(implicit
-                                  hostB           : QueryStringBindable[MHostInfo],
-                                  mediaStorageB   : QueryStringBindable[IMediaStorage]
-                                 ): QueryStringBindable[MAssignedStorage] = {
+  implicit def mAssignedStorageQsb(implicit
+                                   hostB           : QueryStringBindable[MHostInfo],
+                                   mediaStorageB   : QueryStringBindable[MStorageInfo],
+                                  ): QueryStringBindable[MAssignedStorage] = {
     new QueryStringBindableImpl[MAssignedStorage] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MAssignedStorage]] = {
@@ -39,7 +39,7 @@ object MAssignedStorage {
           } yield {
             MAssignedStorage(
               host          = host,
-              storage       = storage
+              storage       = storage,
             )
           }
         }
@@ -50,7 +50,7 @@ object MAssignedStorage {
         val F = Fields
         _mergeUnbinded1(
           hostB.unbind          ( k(F.HOST_FN),         value.host ),
-          mediaStorageB.unbind  ( k(F.STORAGE_FN),      value.storage )
+          mediaStorageB.unbind  ( k(F.STORAGE_FN),      value.storage ),
         )
       }
 
@@ -66,5 +66,5 @@ object MAssignedStorage {
   */
 case class MAssignedStorage(
                              host        : MHostInfo,
-                             storage     : IMediaStorage
+                             storage     : MStorageInfo,
                            )

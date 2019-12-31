@@ -27,7 +27,7 @@ object MHostInfoJvm {
           } yield {
             MHostInfo(
               nameInt     = hostInt,
-              namePublic  = hostPub
+              namePublic  = hostPub,
             )
           }
         }
@@ -38,7 +38,7 @@ object MHostInfoJvm {
         val F = MHostInfo.Fields
         _mergeUnbinded1(
           strB.unbind( k(F.NAME_INTERNAL_FN), value.nameInt),
-          strB.unbind( k(F.NAME_PUBLIC_FN),   value.namePublic )
+          strB.unbind( k(F.NAME_PUBLIC_FN),   value.namePublic ),
         )
       }
     }

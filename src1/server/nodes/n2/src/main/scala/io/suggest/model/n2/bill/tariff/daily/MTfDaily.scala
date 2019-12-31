@@ -50,14 +50,11 @@ object MTfDaily
     val F = Fields
     Json.obj(
       F.CURRENCY_FN -> FKeyWord.indexedJs,
-      F.CLAUSES_FN  -> FObject.plain(
-        enabled = someTrue,
-        properties = Some(MDayClause.esMappingProps)
-      ),
+      F.CLAUSES_FN  -> FObject.plain( MDayClause ),
       F.COMISSION_PC_FN -> FNumber(
         typ = DocFieldTypes.Double,
         index = someFalse,
-      )
+      ),
     )
   }
 

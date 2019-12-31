@@ -10,7 +10,7 @@ import io.suggest.jd.MJdEdge
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.mctx.Context
@@ -152,11 +152,10 @@ class LkAdnEdit @Inject() (
         val imgsEdges = jdAdUtil.collectImgEdges( imgEdges, imgEdgeUids )
 
         // Запустить сбор данных по интересующим картинкам:
-        val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )
         val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges, videoEdges = Nil )
 
         val mediaHostsMapFut = for {
-          imgMedias  <- imgMediasMapFut
+          imgMedias  <- mediaNodesMapFut
           mediaHosts <- cdnUtil.mediasHosts( imgMedias.values )
         } yield {
           LOGGER.trace(s"$logPrefix For ${imgMedias.size} medias (${imgMedias.keysIterator.mkString(", ")}) found ${mediaHosts.size} media hosts = ${mediaHosts.values.flatMap(_.headOption).map(_.namePublic).mkString(", ")}")
@@ -165,14 +164,12 @@ class LkAdnEdit @Inject() (
 
         // Скомпилить в jd-эджи собранную инфу, затем завернуть в edit-imgs:
         for {
-          imgMediasMap  <- imgMediasMapFut
           mediaNodesMap <- mediaNodesMapFut
           mediaHostsMap <- mediaHostsMapFut
           ctx           <- ctxFut
         } yield {
           jdAdUtil.mkJdImgEdgesForEdit(
             imgsEdges  = imgsEdges,
-            mediasMap  = imgMediasMap,
             mediaNodes = mediaNodesMap,
             mediaHosts = mediaHostsMap
           )(ctx)
@@ -209,7 +206,8 @@ class LkAdnEdit @Inject() (
         logPrefix           = s"${getClass.getSimpleName}.uploadImg($nodeIdU):",
         validated           = image4UploadPropsV(request.body),
         uploadFileHandler   = Some( MUploadFileHandlers.Picture ),
-        colorDetect         = None
+        colorDetect         = None,
+        nodeType            = MNodeTypes.Media.Image,
       )
     }
   }

@@ -6,7 +6,8 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.model.n2.media.search.MMediaSearch
-import io.suggest.model.n2.media.storage.{IMediaStorage, IMediaStorages}
+import io.suggest.model.n2.media.storage.IMediaStorages
+import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.util.logs.MacroLogsImpl
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -40,8 +41,6 @@ class MMedias @Inject() (
   with EsModelStaticCacheableT
 { that =>
 
-  import iMediaStorages.FORMAT
-
   override val EXPIRE = 10.seconds
   override val CACHE_KEY_SUFFIX = ".mme"
 
@@ -55,12 +54,12 @@ class MMedias @Inject() (
   }
 
   /** Поддержка JSON для сериализации-десериализации тела документа elasticsearch. */
-  val FORMAT_DATA: OFormat[T] = {
+  private val FORMAT_DATA: OFormat[T] = {
     val F = MMediaFields
     (
       (__ \ F.NODE_ID_FN).format[String] and
       (__ \ F.FileMeta.FILE_META_FN).format[MFileMeta] and
-      (__ \ F.Storage.STORAGE_FN).format[IMediaStorage] and
+      (__ \ F.Storage.STORAGE_FN).format[MMediaSwfsStorage] and
       (__ \ F.PictureMeta.PICTURE_META_FN).formatNullable[MPictureMeta]
         .inmap[MPictureMeta](
           EmptyUtil.opt2ImplMEmptyF(MPictureMeta),
@@ -99,7 +98,8 @@ class MMedias @Inject() (
 
         val objs = List[(String, IEsMappingProps)](
           F.FileMeta.FILE_META_FN -> MFileMeta,
-          F.Storage.STORAGE_FN -> iMediaStorages,
+          // Закомменчено, т.к. модель под удаление, и этот метод (скорее всего) уже не вызывается вообще.
+          //F.Storage.STORAGE_FN -> iMediaStorages,
           F.PictureMeta.PICTURE_META_FN -> MPictureMeta,
         )
           .esSubModelsJsObjects( nested = false )
@@ -137,7 +137,7 @@ object MMedia {
 case class MMedia(
   nodeId                    : String,
   file                      : MFileMeta,
-  storage                   : IMediaStorage,
+  storage                   : MMediaSwfsStorage,
   override val id           : Option[String],
   picture                   : MPictureMeta          = MPictureMeta.empty,
   override val versionOpt   : Option[Long]          = None
@@ -165,3 +165,16 @@ final class MMediasJmx @Inject()(
   override type X = MMedia
 }
 
+
+
+/** Старый формат SwfsStorage, который связан с MMedia. Удалить следом за закапыванием MMedia. */
+@deprecated
+case class MMediaSwfsStorage(fid: Fid)
+
+@deprecated
+object MMediaSwfsStorage {
+  implicit def mmSwfsStorageJson: OFormat[MMediaSwfsStorage] = {
+    (__ \ "i").format[Fid]
+      .inmap[MMediaSwfsStorage](MMediaSwfsStorage.apply, _.fid)
+  }
+}

@@ -580,12 +580,17 @@ final class MappingDsl { dsl =>
       (__ \ "include_in_root").formatNullable[Boolean]
     )(apply, unlift(unapply))
 
-    def plain( enabled       : Option[Boolean],
-               properties    : Option[JsObject]     = None,
-             ) = apply(
+    def disabled = apply(
       typ         = DocFieldTypes.Object,
-      enabled     = enabled,
-      properties  = properties,
+      enabled     = someFalse,
+    )
+
+    def plain( esProps: IEsMappingProps ): FObject =
+      plain( esProps.esMappingProps(dsl) )
+    def plain( properties: JsObject ): FObject = apply(
+      typ         = DocFieldTypes.Object,
+      enabled     = someTrue,
+      properties  = Some( properties ),
     )
 
     def nested( properties        : JsObject,
@@ -601,14 +606,14 @@ final class MappingDsl { dsl =>
     )
 
   }
-  case class FObject private(
-                              typ               : DocFieldType,
-                              enabled           : Option[Boolean],
-                              properties        : Option[JsObject],
-                              // nested:
-                              includeInParent   : Option[Boolean]     = None,
-                              includeInRoot     : Option[Boolean]     = None,
-                            )
+  case class FObject(
+                      typ               : DocFieldType        = DocFieldTypes.Object,
+                      enabled           : Option[Boolean],
+                      properties        : Option[JsObject]    = None,
+                      // nested:
+                      includeInParent   : Option[Boolean]     = None,
+                      includeInRoot     : Option[Boolean]     = None,
+                    )
 
 
   object FGeoPoint {

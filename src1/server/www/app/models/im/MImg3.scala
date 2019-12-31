@@ -11,6 +11,7 @@ import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.img
 import io.suggest.img.ImgSzDated
 import io.suggest.js.UploadConstants
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.media._
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -32,14 +33,15 @@ import scala.concurrent.duration._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.09.15 17:27
- * Description: Реализация модели [[MImgT]] на базе MMedia, вместо прямого взаимодействия с кассандрой.
+ * Description: Реализация модели [[MImgT]], вместо прямого взаимодействия с хранилищем.
  * [[MImgs3]] -- DI-реализация объекта-компаньона.
+  *
+ * TODO Надо удалить эту модель, дораспилив на MDynImgId + DynImgUtil.
  */
 @Singleton
 class MImgs3 @Inject() (
                          esModel                   : EsModel,
                          iMediaStorages            : IMediaStorages,
-                         mMedias                   : MMedias,
                          mNodes                    : MNodes,
                          fileUtil                  : FileUtil,
                          streamsUtil               : StreamsUtil,
@@ -57,12 +59,20 @@ class MImgs3 @Inject() (
   override def delete(mimg: MImgT): Future[_] = {
     mediaOptFut(mimg).flatMap {
       case Some(mm) =>
-        for {
-          _ <- iMediaStorages.delete( mm.storage )
-          _ <- mMedias.deleteById(mm.id.get)
-        } yield {
-          true
+        _fileEdge( mm )
+          .flatMap(_.media)
+          .fold( Future.successful(false) ) { media =>
+            val s = media.storage
+            for {
+              _ <- iMediaStorages
+                .client( s.storage )
+                .delete( s.data )
+              _ <- mNodes.deleteById( mm.id.get )
+            } yield {
+              true
+            }
         }
+
       case None =>
         Future.successful(false)
     }
@@ -72,7 +82,13 @@ class MImgs3 @Inject() (
   override def getDataSource(mimg: MImgT): Future[IDataSource] = {
     for {
       mm <- _mediaFut( mediaOptFut(mimg) )
-      rr <- iMediaStorages.read( mm.storage )
+      stor = _fileEdge(mm)
+        .flatMap(_.media)
+        .get
+        .storage
+      rr <- iMediaStorages
+        .client( stor.storage )
+        .read( stor.data )
     } yield {
       rr
     }
@@ -80,10 +96,15 @@ class MImgs3 @Inject() (
 
   private def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
     for (mmediaOpt <- mediaOptFut(mimg)) yield {
-      for (mmedia <- mmediaOpt; whPx <- mmedia.picture.whPx) yield {
+      for {
+        mnode   <- mmediaOpt
+        fEdge   <- _fileEdge( mnode )
+        eMedia  <- fEdge.media
+        whPx    <- eMedia.picture.whPx
+      } yield {
         img.ImgSzDated(
           sz          = whPx,
-          dateCreated = mmedia.file.dateCreated
+          dateCreated = eMedia.file.dateCreated,
         )
       }
     }
@@ -103,7 +124,7 @@ class MImgs3 @Inject() (
     * Если нет, то создрать и сохранить. */
   def ensureMnode(mimg: MImgT): Future[MNode] = {
     mNodes
-      .getByIdCache( mimg.dynImgId.rowKeyStr )
+      .getByIdCache( mimg.dynImgId.origNodeId )
       .map(_.get)
       .recoverWith { case _: NoSuchElementException =>
         saveMnode(mimg)
@@ -121,7 +142,7 @@ class MImgs3 @Inject() (
     } yield {
       // Собираем новый узел n2, когда все необходимые данные уже собраны...
       MNode(
-        id = Some( mimg.dynImgId.rowKeyStr ),
+        id = Some( mimg.dynImgId.origNodeId ),
         common = MNodeCommon(
           ntype         = MNodeTypes.Media.Image,
           isDependent   = true,
@@ -156,22 +177,27 @@ class MImgs3 @Inject() (
 
     if (LOGGER.underlying.isTraceEnabled()) {
       for (res <- media0Fut)
-        LOGGER.trace(s"$logPrefix MMedia already exist: $res")
+        LOGGER.trace(s"$logPrefix Node already exist: $res")
     }
 
     val imgFile = mLocalImgs.fileOf(loc)
-    // Вернуть экземпляр MMedia.
-    val mediaFut: Future[MMedia] = media0Fut.recoverWith { case ex: Throwable =>
-      // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
+
+    // TODO Ассигновать картинку на том же узле sio, что и оригинал. Надо удалить весь этот метод, чтобы руление картинками шло вне модели, в DynImgs, например.
+
+    lazy val storClient = iMediaStorages.client( mimg.storage )
+
+    // Вернуть экземпляр MNode.
+    val mediaSavedFut: Future[MNode] = media0Fut.recoverWith { case ex: Throwable =>
+      // Перезаписывать нечего, т.к. узел ещё не существует.
       val whOptFut = mLocalImgs.getImageWH(loc)
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
       val hashesHexFut = fileUtil.mkHashesHexAsync(
         file   = imgFile,
         hashes = UploadConstants.CleverUp.PICTURE_FILE_HASHES,
-        flags  = Set(MFileMetaHash.Flags.TRULY_ORIGINAL),
+        flags  = Set( MFileMetaHash.Flags.TRULY_ORIGINAL ),
       )
-      // TODO Ассигновать картинку на том же узле sio, что и оригинал. Надо удалить весь этот метод, чтобы руление картинками шло вне модели, в DynImgs, например.
-      val storFut = iMediaStorages.assignNew( mimg.storage )
+
+      val storAssignFut = storClient.assignNew()
 
       if (!ex.isInstanceOf[NoSuchElementException])
         LOGGER.warn(s"$logPrefix _mediaFut() returned error, mimg = $mimg", ex)
@@ -182,34 +208,47 @@ class MImgs3 @Inject() (
         whOpt       <- whOptFut
         mime        <- mimeFut
         hashesHex   <- hashesHexFut
-        stor        <- storFut
-      } yield {
-        MMedia(
-          nodeId  = mimg.dynImgId.rowKeyStr,
-          id      = Some( mimg.mediaId ),
-          file    = MFileMeta(
-            mime        = mime,
-            sizeB       = szB,
-            isOriginal  = !mimg.dynImgId.hasImgOps,
-            hashesHex   = hashesHex
-          ),
-          picture = MPictureMeta(
-            whPx = whOpt
-          ),
-          storage = stor.storage,
-        )
-      }
-    }
+        stor        <- storAssignFut
+        mnode = MNode(
+          id = Some( mimg.mediaId ),
+          edges = MNodeEdges(
+            out = {
+              val toOriginalEdge = Option.when( mimg.dynImgId.isOriginal ) {
+                MEdge(
+                  predicate = MPredicates.OwnedBy,
+                  nodeIds   = Set( mimg.dynImgId.origNodeId ),
+                )
+              }
+              val fileEdge = MEdge(
+                predicate = MPredicates.File,
+                media = Some(MEdgeMedia(
+                  file = MFileMeta(
+                    mime        = mime,
+                    sizeB       = szB,
+                    isOriginal  = !mimg.dynImgId.hasImgOps,
+                    hashesHex   = hashesHex
+                  ),
+                  picture = MPictureMeta(
+                    whPx = whOpt
+                  ),
+                  storage = stor.storage,
+                ))
+              )
 
-    val mediaSavedFut = media0Fut.recoverWith { case _: Throwable =>
-      for {
-        mmedia      <- mediaFut
-        mediaId2    <- mMedias.save(mmedia)
+              fileEdge :: toOriginalEdge.toList
+            }
+          ),
+          common = MNodeCommon(
+            ntype         = MNodeTypes.Media.Image,
+            isDependent   = true,
+          )
+        )
+        mediaId2    <- mNodes.save( mnode )
       } yield {
-        assert( mmedia.id contains[String] mediaId2 )
-        mMedias.putToCache( mmedia )
+        assert( mnode.id contains[String] mediaId2 )
+        mNodes.putToCache( mnode )
         LOGGER.info(s"$logPrefix Saved to permanent: media#$mediaId2")
-        mmedia
+        mnode
       }
     }
 
@@ -219,16 +258,20 @@ class MImgs3 @Inject() (
     for (_ <- mnodeSaveFut.failed)
       LOGGER.error(s"$logPrefix Failed to save picture MNode for local img " + loc)
 
-    // Параллельно выполнить заливку файла в постоянное надежное хранилище.
+    // Выполнить заливку файла в постоянное надежное хранилище:
     val storWriteFut = for {
-      mm   <- mediaFut
-      mime <- mimeFut
+      mnode       <- mediaSavedFut
       res  <- {
+        val edgeMedia = mnode.edges
+          .withPredicateIter( MPredicates.File )
+          .next()
+          .media
+          .get
         val wargs = WriteRequest(
-          contentType = mime,
+          contentType = edgeMedia.file.mime,
           file        = imgFile
         )
-        iMediaStorages.write( mm.storage, wargs )
+        storClient.write( edgeMedia.storage.data, wargs )
       }
     } yield {
       res
@@ -250,33 +293,52 @@ class MImgs3 @Inject() (
   /** Существует ли картинка в хранилище? */
   def existsInPermanent(mimg: MImgT): Future[Boolean] = {
     val isExistsFut = _mediaFut( mediaOptFut(mimg) )
-      .flatMap { mmedia =>
-        iMediaStorages.isExist( mmedia.storage )
+      .flatMap { mnode =>
+        (for {
+          fileEdge <- mnode.edges
+            .withPredicateIter( MPredicates.File )
+            .nextOption()
+          edgeMedia <- fileEdge.media
+          s = edgeMedia.storage
+        } yield {
+          iMediaStorages
+            .client( s.storage )
+            .isExist( s.data )
+        })
+          .getOrElse( Future.successful(false) )
       }
 
-    // возвращать false при ошибках.
-    val resFut = isExistsFut.recover {
-      // Если подавлять все ошибки связи, то система будет удалять все local imgs.
-      case _: NoSuchElementException =>
-        false
-    }
     // Залоггировать неожиданные экзепшены.
     for (ex <- isExistsFut.failed) {
       if (!ex.isInstanceOf[NoSuchElementException])
         LOGGER.warn("existsInPermanent($mimg) or _mediaFut failed", ex)
     }
-    resFut
+
+    // возвращать false при ошибках.
+    isExistsFut.recover {
+      // Если подавлять все ошибки связи, то система будет удалять все local imgs.
+      case _: NoSuchElementException =>
+        false
+    }
   }
 
 
   // Сюда замёржен MImgT:
 
-  def mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
-    mMedias.getByIdCache(mimg.dynImgId.mediaId)
+  private def mediaOptFut(mimg: MImgT): Future[Option[MNode]] =
+    mNodes.getByIdCache( mimg.dynImgId.mediaId )
+
+  private def _fileEdge(mnode: MNode) = {
+    mnode.edges
+      .withPredicateIter( MPredicates.File )
+      .buffered
+      .headOption
   }
-  protected def _mediaFut(mediaOptFut: Future[Option[MMedia]]): Future[MMedia] = {
+
+  private def _mediaFut(mediaOptFut: Future[Option[MNode]]): Future[MNode] = {
     mediaOptFut.map(_.get)
   }
+
 
   override def toLocalImg(mimg: MImgT): Future[Option[MLocalImg]] = {
     val inst = mimg.toLocalInstance
@@ -321,8 +383,7 @@ class MImgs3 @Inject() (
     }
   }
 
-  val ORIG_META_CACHE_SECONDS: Int = configuration.getOptional[Int]("m.img.org.meta.cache.ttl.seconds")
-    .getOrElse(60)
+  private def ORIG_META_CACHE_SECONDS = 60
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */
   def permMetaCached(mimg: MImgT): Future[Option[ImgSzDated]] = {
@@ -379,6 +440,7 @@ class MImgs3 @Inject() (
         whOptFut
       }
     }
+
     // Любое исключение тут можно подавить:
     fut.recover {
       case ex: Exception =>
@@ -431,8 +493,11 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
   }
 
+  def parse(fileName: String) =
+    (new Parsers).fromFileName(fileName)
+
   override def apply(fileName: String): MImg3 = {
-    val pr = (new Parsers).fromFileName(fileName)
+    val pr = parse( fileName )
     if (!pr.successful)
       LOGGER.error(s"""Failed to parse img from fileName <<$fileName>>:\n$pr""")
     pr.get
@@ -451,6 +516,31 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
       mimg0
     }
   }
+
+  /** Сброка инстанса MImg3 на основе эджа. */
+  def fromEdge(nodeId: String, e: MEdge): Option[MImg3] = {
+    for {
+      edgeMedia <- e.media
+      dynFmt    <- edgeMedia.file.imgFormatOpt
+      parseResult = parse( nodeId )
+      mimg0 <- parseResult
+        .map( Some.apply )
+        .getOrElse {
+          LOGGER.warn(s"fromEdge(): Cannot parse imgId: $nodeId\n edge = $e\n$parseResult")
+          None
+        }
+    } yield {
+      // Костыль для выставления формата в картинку. Надо разобраться в актуальности этого действия:
+      if (mimg0.dynImgId.dynFormat !=* dynFmt) {
+        MImg3.dynImgId
+          .composeLens( MDynImgId.dynFormat )
+          .set( dynFmt )(mimg0)
+      } else {
+        mimg0
+      }
+    }
+  }
+
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
     val dynImgId0 = img.dynImgId

@@ -1,10 +1,12 @@
 package util.img
 
 import io.suggest.es.model.EsModel
+import io.suggest.model.n2.edge.MPredicates
 import javax.inject.Inject
-import io.suggest.model.n2.media.MMedias
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import models.im._
 import models.im.make.MakeResult
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -15,11 +17,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Утиль для img-maker'ов.
   */
 
-class ImgMakerUtil @Inject() (
-                                esModel                   : EsModel,
-                                mMedias                   : MMedias,
-                                implicit private val ec   : ExecutionContext
-                              ) {
+final class ImgMakerUtil @Inject() (
+                                     esModel                   : EsModel,
+                                     mNodes                    : MNodes,
+                                     implicit private val ec   : ExecutionContext
+                                   ) {
 
   import esModel.api._
 
@@ -30,11 +32,18 @@ class ImgMakerUtil @Inject() (
     */
   def returnImg(dynImgId: MDynImgId): Future[MakeResult] = {
     for {
-      mediaOpt <- mMedias.getByIdCache( dynImgId.mediaId )
+      mediaOpt <- mNodes.getByIdCache( dynImgId.mediaId )
     } yield {
-      val szReal = mediaOpt
-        .get
-        .picture.whPx
+      val szReal = (for {
+        mediaNode <- mediaOpt
+        if mediaNode.common.ntype ==* MNodeTypes.Media.Image
+        fileEdge  <- mediaNode.edges
+          .withPredicateIter( MPredicates.File )
+          .nextOption()
+        edgeMedia <- fileEdge.media
+        whPx      <- edgeMedia.picture.whPx
+      } yield whPx)
+        // TODO А если нет размера вдруг?
         .get
 
       MakeResult(

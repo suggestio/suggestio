@@ -154,5 +154,5 @@ trait BulkProcessorListenerT
   override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit =
     LOGGER.error(s"${_logPrefix} Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
 }
-class BulkProcessorListener(override val _logPrefix: String) extends BulkProcessorListenerT
+case class BulkProcessorListener(override val _logPrefix: String) extends BulkProcessorListenerT
 

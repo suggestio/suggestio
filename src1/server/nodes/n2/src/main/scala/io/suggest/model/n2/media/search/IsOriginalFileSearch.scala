@@ -19,7 +19,7 @@ trait IsOriginalFileSearch extends DynSearchArgs {
     val qbOpt0 = super.toEsQueryOpt
     isOriginalFile.fold(qbOpt0) { isOrig =>
       // Есть искомое значение флага. Собираем фильтр:
-      val isOrigQb = QueryBuilders.termQuery( MMediaFields.FileMeta.IS_ORIGINAL_FN, isOrig )
+      val isOrigQb = QueryBuilders.termQuery( MMediaFields.FileMeta.FM_IS_ORIGINAL_FN, isOrig )
       qbOpt0
         .map { qb0 =>
           QueryBuilders.boolQuery()

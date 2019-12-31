@@ -26,20 +26,30 @@ object Fid extends MacroLogsDyn {
   final def VOL_FID_DELIM_CH = ','
 
 
-  implicit val FID_FORMAT: OFormat[Fid] = (
+  implicit def FID_FORMAT: OFormat[Fid] = (
     (__ \ Fields.VOLUME_ID_FN).format[VolumeId_t] and
     (__ \ Fields.FILE_ID_FN).format[String]
   )(apply, unlift(unapply))
 
 
-  /** Распарсить модель из строки. */
-  def apply(fid: String): Fid = {
-    val Array(volumeIdStr, fileId) = fid.split( VOL_FID_DELIM_CH )
-    val volumeId = volumeIdStr.toInt
-    new Fid(volumeId, fileId) {
-      override def toString = fid
+  def parse(fidStr: String): Option[Fid] = {
+    fidStr.split( VOL_FID_DELIM_CH ) match {
+      case Array(volumeIdStr, fileId) =>
+        val volumeId = volumeIdStr.toInt
+        val fid = new Fid(volumeId, fileId) {
+          override def toString = fidStr
+        }
+        Some(fid)
+      case other =>
+        LOGGER.debug(s"parse($fidStr): Cannot tokenize Swfs FID: ${other.mkString(" ")}")
+        None
     }
   }
+
+
+  /** Распарсить модель из строки. */
+  def apply(fid: String): Fid =
+    parse(fid).get
 
 
   /** Поддержка сырого биндинга из query-string. */
@@ -71,19 +81,15 @@ object Fid extends MacroLogsDyn {
 }
 
 
-case class Fid(
-                override val volumeId   : VolumeId_t,
-                fileId                  : String
-              )
+sealed case class Fid(
+                       override val volumeId   : VolumeId_t,
+                       fileId                  : String,
+                     )
   extends IVolumeId
 {
 
   /** Сериализовать в строку. */
-  override def toString: String = {
-    val sb = new StringBuilder(16)
-    sb.append( volumeId )
-      .append(  )
+  override def toString: String =
     s"$volumeId${Fid.VOL_FID_DELIM_CH}$fileId"
-  }
 
 }

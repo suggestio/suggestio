@@ -22,7 +22,7 @@ trait FileSizeSearch extends DynSearchArgs {
     if (byteSizes.isEmpty) {
       qbOpt0
     } else {
-      val fn = MMediaFields.FileMeta.SIZE_B_FN
+      val fn = MMediaFields.FileMeta.FM_SIZE_B_FN
       // Задан размер файла для поиска.
       val bsClauses = for (byteSize <- byteSizes) yield {
         MWrapClause(

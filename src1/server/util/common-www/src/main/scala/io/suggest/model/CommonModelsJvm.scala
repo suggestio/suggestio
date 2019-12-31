@@ -4,7 +4,6 @@ import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.model.n2.media.storage.{MStorage, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.xplay.qsb.QueryStringBindableImpl
 
 /**
   * Suggest.io

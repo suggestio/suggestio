@@ -62,7 +62,7 @@ class MLocalImgs @Inject() (
 
   DIR.mkdirs()
 
-  def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.dynImgId.rowKeyStr)
+  def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.dynImgId.origNodeId)
   def getFsImgDir(rowKeyStr: String): File  = new File(DIR, rowKeyStr)
 
 
@@ -209,7 +209,7 @@ class MLocalImgs @Inject() (
 
 
   def generateFileName(mimg: MLocalImg): String = {
-    mimg.dynImgId.rowKeyStr + "." + mimg.dynImgId.dynFormat.fileExt
+    mimg.dynImgId.origNodeId + "." + mimg.dynImgId.dynFormat.fileExt
   }
 
   def isExists(mimg: MLocalImg): Boolean = {

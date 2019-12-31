@@ -221,7 +221,7 @@ class MainColorDetector @Inject() (
   /** Закэшировать выполнение detectPaletteFor(). */
   def cached(bgImg4s: MAnyImgT)(detectF: => Future[MHistogram]): Future[MHistogram] = {
     cacheApiUtil.getOrElseFut(
-      key         = "mcd." + bgImg4s.dynImgId.rowKeyStr + ".hist",
+      key         = "mcd." + bgImg4s.dynImgId.origNodeId + ".hist",
       expiration  = CACHE_COLOR_HISTOGRAM_DURATION
     )(detectF)
   }

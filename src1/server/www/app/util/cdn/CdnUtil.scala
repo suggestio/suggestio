@@ -4,9 +4,8 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.media.storage.{MStorages, _}
-import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsVolumeCache}
+import io.suggest.model.n2.media.storage.swfs.SwfsVolumeCache
 import io.suggest.playx.ExternalCall
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
@@ -16,9 +15,11 @@ import models.mup.MSwfsFidInfo
 import play.api.Configuration
 import play.api.mvc.Call
 import OptionUtil.BoolOptOps
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.proto.http.HttpConst
 import util.up.UploadUtil
 import japgolly.univeq._
+import models.MNode
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -213,8 +214,9 @@ class CdnUtil @Inject() (
     * @return Фьючерс с результатом.
     */
   def assignDist(upProps: MFile4UpProps): Future[MAssignedStorage] = {
-    val storageFacade = iMediaStorages.getModel( DIST_STORAGE )
-    val assignFut = storageFacade.assignNew()
+    val assignFut = iMediaStorages
+      .client( DIST_STORAGE )
+      .assignNew()
 
     if (LOGGER.underlying.isTraceEnabled())
       for (assignedStorage <- assignFut)
@@ -231,14 +233,15 @@ class CdnUtil @Inject() (
     * @return Расширенные данные для аплоада, если Some.
     *         None, значит доступ закрыт.
     */
-  def checkStorageForThisNode(storage: IMediaStorage): Future[Either[Seq[IVolumeLocation], MSwfsFidInfo]] = {
+  def checkStorageForThisNode(storage: MStorageInfo): Future[Either[Seq[IVolumeLocation], MSwfsFidInfo]] = {
     // Распарсить Swfs FID из URL и сопоставить полученный volumeID с текущей нодой sio.
     lazy val logPrefix = s"checkStorageForThisNode($storage)#${System.currentTimeMillis()}:"
 
-    storage match {
-      case swfsStorage: SwfsStorage =>
+    storage.storage match {
+      case MStorages.SeaWeedFs =>
+        val fid = storage.data.swfsFid.get
         for {
-          volLocs <- swfsVolumeCache.getLocations( swfsStorage.fid.volumeId )
+          volLocs <- swfsVolumeCache.getLocations( fid.volumeId )
         } yield {
           // Может быть несколько результатов, если у volume существуют реплики.
           // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
@@ -249,11 +252,11 @@ class CdnUtil @Inject() (
               // Не проверяем nameInt/url, потому что там полу-рандомный порт swfs
             }
             .map { myVol =>
-              LOGGER.trace(s"$logPrefix Ok, local vol = $myVol\n fid = ${swfsStorage.fid.toString}\n all vol locs = ${volLocs.mkString(", ")}")
-              MSwfsFidInfo(swfsStorage.fid, myVol, volLocs)
+              LOGGER.trace(s"$logPrefix Ok, local vol = $myVol\n fid = ${fid.toString}\n all vol locs = ${volLocs.mkString(", ")}")
+              MSwfsFidInfo(fid, myVol, volLocs)
             }
             .toRight {
-              LOGGER.error(s"$logPrefix Failed to find vol#${swfsStorage.fid.volumeId} for fid='${swfsStorage.fid}' nearby. My=$myExtHost, storage=$storage Other available volumes considered non-local: ${volLocs.mkString(", ")}")
+              LOGGER.error(s"$logPrefix Failed to find vol#${fid.volumeId} for fid='$fid' nearby. My=$myExtHost, storage=$storage Other available volumes considered non-local: ${volLocs.mkString(", ")}")
               volLocs
             }
         }
@@ -263,27 +266,51 @@ class CdnUtil @Inject() (
 
   /** Вернуть карту медиа-хосты для указанных media.
     *
-    * @param medias Список интересующих media.
+    * @param fileNodes Список интересующих media.
     * @return Карта mediaId -> hostname.
     */
-  def mediasHosts(medias: Iterable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
-    if (medias.isEmpty) {
+  def mediasHosts(fileNodes: Iterable[MNode]): Future[Map[String, Seq[MHostInfo]]] = {
+    val node2storage = (for {
+      fileNode  <- fileNodes.iterator
+      nodeId    <- fileNode.id.iterator
+      fileEdge  <- fileNode.edges
+        .withoutPredicateIter( MPredicates.File )
+      edgeMedia <- fileEdge.media.iterator
+    } yield {
+      (nodeId, edgeMedia.storage)
+    })
+      .to( LazyList )
+
+    if (node2storage.isEmpty) {
       Future.successful( Map.empty )
+
     } else {
+      // Есть ноды для анализа. Надо сгруппировать по типам стораджей.
       for {
-        storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage).toSet )
+        storages2hostsMaps <- Future.sequence {
+          (for {
+            (storType, nodeIdInfos) <- node2storage
+              .groupBy( _._2.storage )
+              .iterator
+          } yield {
+            val storClient = iMediaStorages.client( storType )
+            val storInfos = nodeIdInfos.map( _._2.data )
+            storClient.getStoragesHosts( storInfos )
+          })
+            .toSeq
+        }
       } yield {
-        LOGGER.trace(s"mediaHosts(${medias.size} medias): Done\n mediaIds = ${medias.iterator.map(_.idOrNull).mkString(", ")}\n storages = ${storages2hostsMap.keys.mkString(", ")}")
-        val iter = for {
-          media <- medias.iterator
-          key   <- media.id
-          value <- storages2hostsMap.get(media.storage)
+        LOGGER.trace(s"mediaHosts(${fileNodes.size} medias): Done\n mediaIds = ${fileNodes.iterator.flatMap(_.id).mkString(", ")}")
+        val storages2hostsMap = storages2hostsMaps.reduce(_ ++ _)
+        (for {
+          (nodeId, storage) <- node2storage
+          value <- storages2hostsMap.get( storage.data )
           // Нет необходимости возвращать пустой набор данных:
           if value.nonEmpty
         } yield {
-          key -> value
-        }
-        iter.toMap
+          nodeId -> value
+        })
+          .toMap
       }
     }
   }

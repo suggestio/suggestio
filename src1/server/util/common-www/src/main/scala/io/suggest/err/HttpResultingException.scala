@@ -18,3 +18,6 @@ case class HttpResultingException(
                                  )
   extends RuntimeException
 
+
+/** Произвольное исключение с абстрактным результатом вычисления внутри. */
+case class ResultingException[T](result: T) extends RuntimeException

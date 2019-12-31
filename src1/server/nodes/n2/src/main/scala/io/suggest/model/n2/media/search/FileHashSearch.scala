@@ -1,9 +1,8 @@
 package io.suggest.model.n2.media.search
 
-import io.suggest.common.empty.EmptyProduct
-import io.suggest.crypto.hash.MHash
-import io.suggest.es.model.{IMust, MWrapClause, Must_t}
+import io.suggest.es.model.{IMust, MWrapClause}
 import io.suggest.es.search.DynSearchArgs
+import io.suggest.model.n2.edge.search.MHashCriteria
 import io.suggest.model.n2.media.MMediaFields
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -33,11 +32,11 @@ trait FileHashSearch extends DynSearchArgs {
     } else {
       // Заданы хэш-суммы искомого файла. TODO Подготовить матчинг. Тут у нас nested search требуется..
       val F = MMediaFields.FileMeta
-      val hashesTypeFn = F.HASHES_TYPE_FN
-      val hashesValueFn = F.HASHES_VALUE_FN
-      val nestedPath = F.HASHES_FN
+      lazy val hashesTypeFn = F.FM_HASHES_TYPE_FN
+      lazy val hashesValueFn = F.FM_HASHES_VALUE_FN
+      lazy val nestedPath = F.FM_HASHES_FN
 
-      val crQbsIter = for (cr <- fhhIter) yield {
+      val crQbs = (for (cr <- fhhIter) yield {
         // Сборка одной query по одному критерию (внутри nested).
         val qb = QueryBuilders.boolQuery()
 
@@ -58,8 +57,8 @@ trait FileHashSearch extends DynSearchArgs {
           must          = cr.must,
           queryBuilder  = qbNest
         )
-      }
-      val crQbs = crQbsIter.toSeq
+      })
+        .toSeq
 
       // Объеденить все qb как must.
       val allCrsQb = IMust.maybeWrapToBool( crQbs )
@@ -82,17 +81,4 @@ trait FileHashSearch extends DynSearchArgs {
 trait FileHashSearchDflt extends FileHashSearch {
   override def fileHashesHex: Seq[MHashCriteria] = Nil
 }
-
-
-/** Критерий поиска по hash value.
-  *
-  * @param hTypes Искомые типы хешей.
-  * @param hexValues Искомые значение хешей.
-  */
-case class MHashCriteria(
-                              hTypes     : Seq[MHash]    = Nil,
-                              hexValues  : Seq[String]   = Nil,
-                              must       : Must_t        = IMust.MUST
-                            )
-  extends EmptyProduct
 

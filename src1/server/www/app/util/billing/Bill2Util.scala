@@ -1970,7 +1970,7 @@ class Bill2Util @Inject() (
     )
 
     val bp = mNodes.bulkProcessor(
-      new BulkProcessorListener(logPrefix)
+      listener = BulkProcessorListener(logPrefix),
     )
     val totalCounter = new AtomicInteger(0)
     val repairCounter = new AtomicInteger(0)

@@ -19,8 +19,6 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.{MMedia, MMedias}
-import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
 import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -59,7 +57,6 @@ final class DynImgUtil @Inject() (
                                    mNodes                    : MNodes,
                                    // Только для удаления и чистки базы:
                                    iMediaStorages            : IMediaStorages,
-                                   mMedias                   : MMedias,
                                    mCommonDi                 : ICommonDi
                                  )
   extends MacroLogsImpl
@@ -70,7 +67,7 @@ final class DynImgUtil @Inject() (
 
   /** Сколько времени кешировать результат подготовки картинки?
     * Кеш используется для подавления параллельных запросов. */
-  private val ENSURE_DYN_CACHE_TTL = 10.seconds
+  private def ENSURE_DYN_CACHE_TTL = 10.seconds
 
   /** Если true, то производные от оригинала картники будут дублироваться в распределённое хранилище.
     * Если false, то производные будут только в файловом кэше. */
@@ -118,15 +115,6 @@ final class DynImgUtil @Inject() (
     )
   }
 
-  /** Собрать список MMedia для перечисленных картинок. Порядок любой. */
-  def imgs2medias(imgs: Iterable[MImgT]): Future[Seq[MMedia]] = {
-    mMedias.multiGetCache {
-      imgs.flatMap { mimg =>
-        mimg.dynImgId
-          .mediaIdAndOrigMediaId
-      }
-    }
-  }
 
   /** Сборка media-hosts map для картинок. */
   def mkMediaHostsMap(imgs: Iterable[MImgT]): Future[Map[String, Seq[MHostInfo]]] = {
@@ -135,7 +123,13 @@ final class DynImgUtil @Inject() (
     } else {
       for {
         // Получить на руки media-инстансы для оригиналов картинок:
-        medias <- imgs2medias(imgs)
+        medias <- {
+          val nodeIds = imgs
+            .iterator
+            .flatMap( _.dynImgId.mediaIdAndOrigMediaId )
+            .toSet
+          mNodes.multiGetCache( nodeIds )
+        }
 
         // Узнать узлы, на которых хранятся связанные картинки.
         mediaHostsMap <- cdnUtil.mediasHosts( medias )
@@ -175,7 +169,7 @@ final class DynImgUtil @Inject() (
     }
 
     for (ex <- fut.failed) {
-      val logPrefix = s"mkReadyImgToFile($args): "
+      val logPrefix = s"mkReadyImgToFile($args):"
       ex match {
         case _: NoSuchElementException =>
           LOGGER.error(s"$logPrefix Image original does not exists in storage")
@@ -271,11 +265,7 @@ final class DynImgUtil @Inject() (
     resultFut
   }
 
-  val CONVERT_CACHE_TTL: FiniteDuration = {
-    configuration.getOptional[Int]("dyn.img.convert.cache.seconds")
-      .getOrElse(10)
-      .seconds
-  }
+  private def CONVERT_CACHE_TTL: FiniteDuration = 10.seconds
 
 
   /**
@@ -365,7 +355,7 @@ final class DynImgUtil @Inject() (
     * @return Фьючерс с кол-вом обработанных (удалённых) элементов.
     */
   def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): Future[Int] = {
-    import mMedias.Implicits._
+    import mNodes.Implicits._
 
     // Нельзя использовать deleteByQuery, ведь надо media-storage прочистить.
     // Поэтому рубим по хитрому:
@@ -377,56 +367,66 @@ final class DynImgUtil @Inject() (
     val logPrefix = s"deleteAllDerivatives()#${System.currentTimeMillis()}:"
     LOGGER.trace(s"$logPrefix Started. deleteEvenStorageMissing=$deleteEvenStorageMissing")
 
-    // Сборка поисковых аргументов для файла.
-    val searchArgs = new MMediaSearchDfltImpl {
-      override def limit = 20
-      override def isOriginalFile = OptionUtil.SomeBool.someFalse
-      override def fileMimes: Seq[String] = {
-        MImgFmts.allMimesIter.toSeq
-      }
-    }
-
-    val src = mMedias.source[MMedia]( searchArgs.toEsQuery )
-
     // Создаём и запускаем BulkProcessor:
-    val bp = mMedias.bulkProcessor(
-      listener = new BulkProcessorListener( logPrefix + "BULK:" )
+    val bp = mNodes.bulkProcessor(
+      listener = BulkProcessorListener( logPrefix + "BULK:" )
     )
 
-    // Заготовить чтение элементов из elasticsearch:
-    src
-      .runFoldAsync( 0 ) { (counter0, mmedia) =>
-        // Убедиться, что пришёл ожидавшийся элемент:
-        if (mmedia.file.isOriginal) {
-          // should never happen: оригинал картинки пришёл на вход
-          LOGGER.warn( s"$logPrefix Original mmedia#${mmedia.idOrNull}, skipping it:\n $mmedia" )
-          Future.successful(counter0)
-
-        } else if (mmedia.file.imgFormatOpt.isEmpty) {
-          // should never happen: Пришла не-картинка, а что-то другое.
-          LOGGER.warn( s"$logPrefix Media#${mmedia.idOrNull} not an image: ${mmedia.file.mime}:\n $mmedia" )
-          Future.successful(counter0)
-
-        } else {
-          for {
-            // Удалить из хранилища:
-            _ <- {
-              LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#${mmedia.idOrNull} of type ${mmedia.file.mime} size=${mmedia.file.sizeB}b wh=${mmedia.picture.whPx.orNull} storage=${mmedia.storage}")
-              iMediaStorages
-                .delete( mmedia.storage )
-                .recover { case _: NoSuchElementException if deleteEvenStorageMissing =>
-                  LOGGER.warn(s"$logPrefix Not found file ${mmedia.storage} in storage")
-                  // TODO А что делать если вдруг шарда отвалилась?
-                }
-            }
-          } yield {
-            // Удалить из MMedia:
-            bp.add( mMedias.deleteRequestBuilder(mmedia.id.get).request() )
-            LOGGER.info(s"$logPrefix [$counter0] done with mmedia#${mmedia.idOrNull} | ${mmedia.storage}")
-
-            counter0 + 1
-          }
+    mNodes
+      .source[MNode] {
+        // Сборка поисковых аргументов для файла.
+        val crs = Criteria(
+          predicates      = MPredicates.File :: Nil,
+          fileIsOriginal  = OptionUtil.SomeBool.someFalse,
+          fileMimes       = MImgFmts.allMimesIter.toSeq,
+        ) :: Nil
+        new MNodeSearchDfltImpl {
+          override def outEdges = crs
+          override def limit = 20
         }
+          .toEsQuery
+      }
+      .runFoldAsync( 0 ) { (counter0, fileNode) =>
+        val futs = (for {
+          fileEdge  <- fileNode.edges.withPredicateIter( MPredicates.File )
+          nodeId    <- fileNode.id
+          edgeMedia <- fileEdge.media
+        } yield {
+          // Убедиться, что пришёл ожидавшийся элемент:
+          if (edgeMedia.file.isOriginal) {
+            // should never happen: оригинал картинки пришёл на вход
+            LOGGER.warn( s"$logPrefix Unexpected original mmedia#${nodeId}, skipping it:\n $fileNode" )
+            Future.successful(counter0)
+
+          } else if (edgeMedia.file.imgFormatOpt.isEmpty) {
+            // should never happen: Пришла не-картинка, а что-то другое.
+            LOGGER.warn( s"$logPrefix Media#$nodeId not an image: ${edgeMedia.file.mime}:\n $edgeMedia #$nodeId" )
+            Future.successful(counter0)
+
+          } else {
+            for {
+              // Удалить из хранилища:
+              _ <- {
+                LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#$nodeId of type ${edgeMedia.file.mime} size=${edgeMedia.file.sizeB}b wh=${edgeMedia.picture.whPx.orNull} storage=${edgeMedia.storage}")
+                iMediaStorages
+                  .client( edgeMedia.storage.storage )
+                  .delete( edgeMedia.storage.data )
+                  .recover { case _: NoSuchElementException if deleteEvenStorageMissing =>
+                    LOGGER.warn(s"$logPrefix Not found file ${edgeMedia.storage} in storage")
+                    // TODO А что делать если вдруг шарда отвалилась?
+                  }
+              }
+            } yield {
+              // Удалить из MMedia:
+              bp.add( mNodes.deleteRequestBuilder( nodeId ).request() )
+              LOGGER.info(s"$logPrefix [$counter0] done with mmedia#$nodeId | ${edgeMedia.storage}")
+
+              counter0 + 1
+            }
+          }
+        })
+          .toList
+        Future.foldLeft(futs)( counter0 )(_ + _)
       }
       .andThen { case tryRes =>
         LOGGER.info(s"$logPrefix Completed with $tryRes")
@@ -446,52 +446,63 @@ final class DynImgUtil @Inject() (
 
     ImOp.getWhFromOps( dynImgId.dynImgOps ) match {
       case Some(whOpt @ Some(wh)) =>
-        // Размер картинки уже очевиден из
+        // Размер картинки уже очевиден из кропа или ресайза картинки-дериватива.
         LOGGER.trace(s"$logPrefix Extracted WH from dynOps: $wh")
         Future.successful(whOpt)
 
       case other =>
-        val mediasFut = mMedias.multiGetCache {
-          // Если getWhFromOps() позволяет, то попытаться скопировать WH с оригинала.
-          if (other.isEmpty) {
-            LOGGER.trace(s"$logPrefix Ok to use orig.img#${dynImgId.rowKeyStr} as fallback. Will fetch both orig. and derivative MMedias...")
-            dynImgId.mediaIdAndOrigMediaId
-          } else {
-            LOGGER.trace(s"$logPrefix Cannot copy wh from orig, because it differs. Try to fetch only derivative MMedia...")
-            dynImgId.mediaId :: Nil
-          }
-        }
 
-        mediasFut.flatMap { medias =>
-          if (medias.isEmpty) {
-            LOGGER.warn(s"$logPrefix Requested MMedia (orig&dyn) not exist.")
-            Future.successful(None)
+        case class ResultingExceptionSz2dOpt( szOpt: Option[ISize2di] ) extends RuntimeException
 
-          } else {
-            LOGGER.trace(s"$logPrefix Found ${medias.size} mmedias")
-            val mediaWhOpt = medias
-              .sortBy(m => !m.file.isOriginal)
-              .iterator
-              .flatMap(_.picture.whPx)
-              .buffered
-              .headOption
-
-            mediaWhOpt.fold [Future[Option[ISize2di]]] {
-              for {
-                // Защита от запуска действий по доступу к несуществующей картинке.
-                mimg  <- ensureLocalImgReady(MImg3(dynImgId), cacheResult = true)
-                whOpt <- mLocalImgs.getImageWH( mimg )
-              } yield {
-                LOGGER.trace(s"$logPrefix WH derived from handly-converted img: $whOpt")
-                whOpt
-              }
-            } { wh =>
-              // Размер картинки уже очевиден из dynOps.
-              LOGGER.trace(s"$logPrefix WH derived from MMedia: $wh")
-              Future.successful( Some(wh) )
+        (for {
+          // Поиск узлов
+          fileNodes <- mNodes.multiGetCache {
+            // Если getWhFromOps() позволяет, то попытаться скопировать WH с оригинала.
+            if (other.isEmpty) {
+              LOGGER.trace(s"$logPrefix Ok to use orig.img#${dynImgId.origNodeId} as fallback. Will fetch both orig. and derivative...")
+              dynImgId.mediaIdAndOrigMediaId
+            } else {
+              LOGGER.trace(s"$logPrefix Cannot copy wh from orig, because it differs. Try to fetch only derivative MMedia...")
+              dynImgId.mediaId :: Nil
             }
           }
-        }
+
+          if fileNodes.nonEmpty || {
+            LOGGER.warn(s"$logPrefix Requested file media Nodes (orig&dyn) not exist.")
+            throw ResultingExceptionSz2dOpt( None )
+          }
+
+          _ = {
+            LOGGER.trace(s"$logPrefix Found ${fileNodes.size} medias-nodes:\n ${fileNodes.iterator.flatMap(_.id).mkString("\n ")}")
+            (for {
+              fileNode  <- fileNodes.iterator
+              e         <- fileNode.edges.withPredicateIter( MPredicates.File )
+              media     <- e.media.iterator
+              whPx      <- media.picture.whPx.iterator
+            } yield {
+              val isDerivedImg = !media.file.isOriginal
+              isDerivedImg -> whPx
+            })
+              .toSeq
+              .sortBy( _._1 )
+              .headOption
+              .foreach { wh =>
+                throw ResultingExceptionSz2dOpt( Some(wh._2) )
+              }
+          }
+
+          // Защита от запуска действий по доступу к несуществующей картинке.
+          mimg  <- ensureLocalImgReady( MImg3(dynImgId), cacheResult = true )
+          whOpt <- mLocalImgs.getImageWH( mimg )
+
+        } yield {
+          LOGGER.trace(s"$logPrefix WH derived from handly-converted img: $whOpt")
+          whOpt
+        })
+          .recover {
+            case ResultingExceptionSz2dOpt( whOpt ) =>
+              whOpt
+          }
     }
   }
 
@@ -522,7 +533,7 @@ final class DynImgUtil @Inject() (
     }
 
     val bp = mNodes.bulkProcessor(
-      new BulkProcessorListener(logPrefix)
+      listener = BulkProcessorListener( logPrefix ),
     )
     val origImgFmt = MImgFmts.default
 
@@ -588,22 +599,27 @@ final class DynImgUtil @Inject() (
 
         for {
           // Поискать оригинал картинки через media-кэш. Это даст ускорение.
-          mmediasMap <- mMedias.multiGetMapCache( mediaId2edgeUid.values.toSet )
+          mmediasMap <- mNodes.multiGetMapCache( mediaId2edgeUid.values.toSet )
         } yield {
           def _upgradeJdIdOpt(jdIdOpt: Option[MJdEdgeId]): Option[MJdEdgeId] = {
-            val resOpt = for {
+            (for {
               jdId        <- jdIdOpt
               jdMediaId   <- mediaId2edgeUid.get( jdId.edgeUid )
-              mmedia      <- mmediasMap.get( jdMediaId )
+              mNode       <- mmediasMap.get( jdMediaId )
+              fileEdge    <- mNode.edges.withPredicateIter( MPredicates.File )
+                // TODO Может ли быть тут несколько File-эджей?
+                .buffered
+                .headOption
+              edgeMedia   <- fileEdge.media
             } yield {
-              val jdId2 = MJdEdgeId.outImgFormat.set( mmedia.file.imgFormatOpt )(jdId)
+              val jdId2 = (MJdEdgeId.outImgFormat set edgeMedia.file.imgFormatOpt)(jdId)
               LOGGER.debug(s"$logPrefix2 UPGRADED edge: $jdId2")
               jdId2
-            }
-            resOpt.orElse {
-              LOGGER.trace(s"$logPrefix2 Ignored edge $jdIdOpt")
-              jdIdOpt
-            }
+            })
+              .orElse {
+                LOGGER.trace(s"$logPrefix2 Ignored edge $jdIdOpt")
+                jdIdOpt
+              }
           }
 
           val mnode2: MNode = mnode.common.ntype match {
@@ -627,7 +643,6 @@ final class DynImgUtil @Inject() (
                 }(mnode)
 
             case MNodeTypes.AdnNode =>
-
               mnode_extras_adn_resView_LENS
                 .modify { rv =>
                   rv.copy(

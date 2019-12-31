@@ -5,6 +5,7 @@ import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MNodeGeoLevel
+import io.suggest.model.n2.media.MEdgeMedia
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
@@ -38,6 +39,28 @@ object MEdge
     val ORDER_FN      = "o"
     val INFO_FN       = "n"
     val DOC_FN        = "d"
+    val MEDIA_FN      = "m"
+
+
+    object Media extends PrefixedFn {
+      override protected def _PARENT_FN = MEDIA_FN
+
+      import MEdgeMedia.Fields.{FileMeta => FM}
+
+      def MEDIA_FM_MIME_FN = _fullFn( FM.FM_MIME_FN )
+      def MEDIA_FM_MIME_AS_TEXT_FN = _fullFn( FM.FM_MIME_AS_TEXT_FN )
+
+      /** Full FN nested-поля с хешами. */
+      def MEDIA_FM_HASHES_FN = _fullFn( FM.FM_HASHES_FN )
+
+      def MEDIA_FM_HASHES_TYPE_FN = _fullFn( FM.FM_HASHES_TYPE_FN )
+      def MEDIA_FM_HASHES_VALUE_FN = _fullFn( FM.FM_HASHES_VALUE_FN )
+
+      def MEDIA_FM_SIZE_B_FN = _fullFn( FM.FM_SIZE_B_FN )
+
+      def MEDIA_FM_IS_ORIGINAL_FN = _fullFn( FM.FM_IS_ORIGINAL_FN )
+
+    }
 
 
     /** Модель названий полей, проброшенных сюда из полей [[MEdgeInfo]]-модели. */
@@ -104,7 +127,8 @@ object MEdge
       .inmap [MEdgeDoc] (
         opt2ImplMEmptyF( MEdgeDoc ),
         implEmpty2OptF
-      )
+      ) and
+    (__ \ MEDIA_FN).formatNullable[MEdgeMedia]
   )(apply, unlift(unapply))
 
 
@@ -119,14 +143,9 @@ object MEdge
         typ   = DocFieldTypes.Integer,
         index = someTrue,
       ),
-      F.INFO_FN -> FObject.plain(
-        enabled    = someTrue,
-        properties = Some(MEdgeInfo.esMappingProps)
-      ),
-      F.DOC_FN -> FObject.plain(
-        enabled    = someTrue,
-        properties = Some(MEdgeDoc.esMappingProps)
-      ),
+      F.INFO_FN -> FObject.plain( MEdgeInfo ),
+      F.DOC_FN -> FObject.plain( MEdgeDoc ),
+      F.MEDIA_FN -> FObject.plain( MEdgeMedia ),
     )
   }
 
@@ -135,6 +154,7 @@ object MEdge
   val order     = GenLens[MEdge](_.order)
   val info      = GenLens[MEdge](_.info)
   val doc       = GenLens[MEdge](_.doc)
+  val media     = GenLens[MEdge](_.media)
 
 
   @inline implicit def univEq: UnivEq[MEdge] = UnivEq.derive
@@ -150,6 +170,8 @@ object MEdge
   * @param order Для поддержкания порядка эджей можно использовать это опциональное поле.
   *              Можно также использовать для некоего внутреннего доп.идентификатора.
   * @param info Контейнер доп.данных текущего эджа.
+  * @param media Эдж, указывающий на файл, хранит здесь мета-данные файла.
+  *              Сюда была замёржена модель MMedia.
   */
 case class MEdge(
                   predicate  : MPredicate,
@@ -157,7 +179,8 @@ case class MEdge(
                   nodeIds    : Set[String]    = Set.empty,
                   order      : Option[Int]    = None,
                   info       : MEdgeInfo      = MEdgeInfo.empty,
-                  doc        : MEdgeDoc       = MEdgeDoc.empty
+                  doc        : MEdgeDoc       = MEdgeDoc.empty,
+                  media      : Option[MEdgeMedia] = None,
                 ) {
 
   override def toString: String = {

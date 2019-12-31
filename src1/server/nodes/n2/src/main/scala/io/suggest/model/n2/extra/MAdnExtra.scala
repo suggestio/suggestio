@@ -67,7 +67,7 @@ object MAdnExtra
     import dsl._
     val F = Fields
     Json.obj(
-      F.RES_VIEW_FN -> FObject.plain( enabled = someFalse ),
+      F.RES_VIEW_FN -> FObject.disabled,
       F.RIGHTS      -> FKeyWord.indexedJs,
       F.IS_BY_USER  -> FBoolean.indexedJs,
       F.SHOWN_TYPE  -> FKeyWord.indexedJs,

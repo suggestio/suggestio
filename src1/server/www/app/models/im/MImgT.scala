@@ -108,7 +108,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
           } yield {
             val imOps = imOpsOpt getOrElse Nil
             val dynImgId = MDynImgId(
-              rowKeyStr     = imgId,
+              origNodeId     = imgId,
               dynFormat     = dynFormat,
               dynImgOps     = imOps,
               compressAlgo  = compressAlgoOpt
@@ -121,7 +121,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
       override def unbind(key: String, value: MImgT): String = {
         val k = key1F(key)
         val unsignedRes = _mergeUnbinded1(
-          rowKeyB.unbind  (k(IMG_ID_FN),      value.dynImgId.rowKeyStr),
+          rowKeyB.unbind  (k(IMG_ID_FN),      value.dynImgId.origNodeId),
           imgFmtB.unbind  (k(DYN_FORMAT_FN),  value.dynImgId.dynFormat),
           imOpsOptB.unbind(s"$key.",          if (value.dynImgId.hasImgOps) Some(value.dynImgId.dynImgOps) else None),
           compressAlgoOptB.unbind(k(COMPRESS_ALGO_FN), value.dynImgId.compressAlgo)

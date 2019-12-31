@@ -34,7 +34,7 @@ object MPredicates extends StringEnum[MPredicate] {
 
   /** Предикат на юзера, выполнившего модерацию текущего узла.
     * Такой эдж модерации должен содержать инфу о результате модерации. */
-  case object ModeratedBy extends MPredicate("j")
+  case object ModeratedBy extends MPredicate("g")
 
 
   /** Предикат для ресивера. Изначально, ресивером был узел (с ЛК), а объектом предиката -- рекламная карточка. */
@@ -169,20 +169,34 @@ object MPredicates extends StringEnum[MPredicate] {
   case object Application extends MPredicate("i") {
 
     /** Файл установки приложения, доступный для скачивания.
-      * Эдж указывает на конкретный файл в каком-либо хранилище. */
-    case object AppFile extends MPredicate("iF") with _Child
+      * Эдж указывает на узел-файл:
+      *   e.media = None
+      *   e.nodeId -> ["..esId.."]
+      *     type=MNodeType.Media.* с File-эджем
+      */
+    case object FromFile extends MPredicate("iF") with _Child
 
     /** Какой-то сервис дистрибуции приложений: itunes, gplay, итд.
       * Сам сервис дистрибуции описывается в поле e.info.extService
       */
     case object Distributor extends MPredicate("iD") with _Child
 
-    // case object FileNode - указатель на другой узел, отвечающий за залитый в хранилище файл?
-
     override def children: LazyList[MPredicate] =
-      AppFile #:: Distributor #:: super.children
+      FromFile #:: Distributor #:: super.children
 
   }
+
+
+  /** Эдж описания файла в хранилище s.io.
+    * Максимум один File-эдж на узел. Производные файлы сохраняются в связанные узлы со своими File-эджами.
+    *
+    * Тип файла - описывается вне эджа, тут только хранение этого абстрактного файла.
+    * (есть MNodeTypes.Media.*, где можно описывать типы файлов-узлов).
+    *
+    * e.media = Some(...) для такого эджа всегда.
+    * e.nodeIds = [] | [originalNodeId] - Узел-исходник файла, если это не оригинал.
+    */
+  case object File extends MPredicate("j")
 
 
   /** Используется только в конструкторе, в тестах, в редкой sys edgeForm. */

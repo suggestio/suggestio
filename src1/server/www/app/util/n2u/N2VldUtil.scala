@@ -5,7 +5,6 @@ import io.suggest.es.model.EsModel
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.model.n2.media.{MMedia, MMedias}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
@@ -26,7 +25,6 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class N2VldUtil @Inject()(
                            esModel                    : EsModel,
-                           mMedias                    : MMedias,
                            mNodes                     : MNodes,
                            implicit private val ec    : ExecutionContext
                          )
@@ -87,10 +85,10 @@ class N2VldUtil @Inject()(
   /** Чтение media-инстансов из БД.
     *
     * @param edgeImgIdsMap выхлоп collectNeededImgIds().values
-    * @return Фьючерс с картой MMedia.
+    * @return Фьючерс с картой media MNodes.
     */
-  def imgsMedias(edgeImgIdsMap: IterableOnce[MDynImgId]): Future[Map[String, MMedia]] = {
-    mMedias.multiGetMapCache(
+  private def imgsMedias(edgeImgIdsMap: IterableOnce[MDynImgId]): Future[Map[String, MNode]] = {
+    mNodes.multiGetMapCache(
       // Собрать id запрашиваемых media-оригиналов.
       edgeImgIdsMap
         .iterator
@@ -106,13 +104,16 @@ class N2VldUtil @Inject()(
     * @param edge2imgId Выхлоп collectNeededImgIds()
     * @return Карта эджей и готовых к использованию данных по картинкам.
     */
-  def imgsNeededMap(imgsMediasMap: Map[String, MMedia], edge2imgId: IterableOnce[(EdgeUid_t, MDynImgId)]): Map[EdgeUid_t, MImg3] = {
+  def imgsNeededMap(imgsMediasMap: Map[String, MNode], edge2imgId: IterableOnce[(EdgeUid_t, MDynImgId)]): Map[EdgeUid_t, MImg3] = {
     (for {
       (edgeUid, dynImgId) <- edge2imgId.iterator
       mmedia <- imgsMediasMap.get( dynImgId.mediaId )
-      imgFormat <- mmedia.file.imgFormatOpt
+      if mmedia.common.ntype ==* MNodeTypes.Media.Image
+      fileEdge  <- mmedia.edges.withPredicateIter( MPredicates.File ).nextOption()
+      mediaEdge <- fileEdge.media
+      imgFormat <- mediaEdge.file.imgFormatOpt
     } yield {
-      val dynImgId2 = MDynImgId.dynFormat.set(imgFormat)( dynImgId )
+      val dynImgId2 = (MDynImgId.dynFormat set imgFormat)( dynImgId )
       val mimg = MImg3( dynImgId2 )
       edgeUid -> mimg
     })
@@ -131,7 +132,7 @@ class N2VldUtil @Inject()(
   def validateEdges( jdEdges        : Iterable[MJdEdge],
                      imgsNeededMap  : Map[EdgeUid_t, MImg3],
                      nodesMap       : Map[String, MNode],
-                     mediasMap      : Map[String, MMedia]
+                     mediasMap      : Map[String, MNode]
                    ): Map[EdgeUid_t, MJdEdgeVldInfo] = {
     lazy val logPrefix = s"validateEdges()[${System.currentTimeMillis()}]:"
 
@@ -142,11 +143,15 @@ class N2VldUtil @Inject()(
         val vldEdge = MJdEdgeVldInfo(
           jdEdge = jdEdge,
           img    = OptionUtil.maybe( jdEdge.predicate ==>> MPredicates.JdContent.Image ) {
-            val mmediaOpt = imgsNeededMap
-              .get( jdEdge.id )
-              .flatMap { mimg3 =>
-                mediasMap.get( mimg3.dynImgId.mediaId )
-              }
+            val mmediaOpt = for {
+              mimg      <- imgsNeededMap.get( jdEdge.id )
+              imgNode   <- mediasMap.get( mimg.dynImgId.mediaId )
+              if imgNode.common.ntype ==* MNodeTypes.Media.Image
+              fileEdge  <- imgNode.edges.withPredicateIter( MPredicates.File ).nextOption()
+              mediaEdge <- fileEdge.media
+            } yield {
+              mediaEdge
+            }
 
             MEdgePicInfo(
               isImg = nodeIdOpt

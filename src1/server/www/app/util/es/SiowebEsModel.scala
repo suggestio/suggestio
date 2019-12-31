@@ -3,7 +3,6 @@ package util.es
 import javax.inject.Inject
 import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
 import io.suggest.es.util.{EsClientUtil, IEsClient, TransportEsClient}
-import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.MAsymKeys
 import io.suggest.util.JmxBase
@@ -55,7 +54,6 @@ class SiowebEsModel @Inject() (
     injector.instanceOf[MCalendars] #::
     injector.instanceOf[MExtTargets] #::
     injector.instanceOf[MAsymKeys] #::
-    injector.instanceOf[MMedias] #::
     LazyList.empty
   }
 

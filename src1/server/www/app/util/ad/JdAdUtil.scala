@@ -12,8 +12,8 @@ import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.media.{MMedia, MMedias, MPictureMeta}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.model.n2.media.MPictureMeta
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
@@ -43,7 +43,6 @@ class JdAdUtil @Inject()(
                           esModel                     : EsModel,
                           @Named("blk") blkImgMaker   : IImgMaker,
                           wideImgMaker                : ScWideMaker,
-                          mMedias                     : MMedias,
                           mNodes                      : MNodes,
                           dynImgUtil                  : DynImgUtil,
                           cdnUtil                     : CdnUtil,
@@ -59,21 +58,6 @@ class JdAdUtil @Inject()(
   def imgPredicate = MPredicates.JdContent.Image
 
   def framePredicate = MPredicates.JdContent.Frame
-
-
-  /** Получить на руки список MMedia для подготавливаемых картинок.
-    *
-    * @param imgsEdges Данные по картинкам из prepareImgEdges().
-    * @return Фьючерс с картой MMedia.
-    */
-  def prepareImgMedias(imgsEdges: IterableOnce[(MEdge, MImg3)]): Future[Map[String, MMedia]] = {
-    mMedias.multiGetMapCache {
-      imgsEdges
-        .iterator
-        .map(_._2.dynImgId.mediaId)
-        .toSet
-    }
-  }
 
 
   /** Подготовка видео-эджей к эксплуатации на дальнейших шагах.
@@ -96,19 +80,21 @@ class JdAdUtil @Inject()(
     * @param videoEdges Подготовленные video-эджи, полученные из prepareVideoEdges().
     */
   def prepareMediaNodes(imgsEdges: IterableOnce[(MEdge, MImg3)], videoEdges: Seq[MEdge]): Future[Map[String, MNode]] = {
-    mNodes.multiGetMapCache {
-      // Перечисляем все интересующие img-ноды:
-      val imgNodeIdsIter = imgsEdges
-        .iterator
-        .map(_._1)
-      // Присунуть сюда же video-ноды:
-      val videoNodeIdsIter = videoEdges
-        .iterator
-      // Всё объеденить и дедублицировать.
-      (imgNodeIdsIter ++ videoNodeIdsIter)
-        .flatMap(_.nodeIds)
-        .toSet
-    }
+    // Перечисляем все интересующие img-ноды:
+    val imgNodeIdsIter = imgsEdges
+      .iterator
+      .flatMap(_._2.dynImgId.mediaIdAndOrigMediaId)
+
+    // Присунуть сюда же video-ноды:
+    val videoNodeIdsIter = videoEdges
+      .iterator
+      .flatMap(_.nodeIds)
+
+    // Всё объеденить и дедублицировать.
+    val mediaNodeIds = (imgNodeIdsIter ++ videoNodeIdsIter)
+      .toSet
+
+    mNodes.multiGetMapCache( mediaNodeIds )
   }
 
 
@@ -132,14 +118,12 @@ class JdAdUtil @Inject()(
     * От выдачи отличается использованием fileName'ов и оригиналов картинок.
     *
     * @param imgsEdges Выхлоп prepareImgEdges().
-    * @param mediasMap Выхлоп prepareImgMedias().
     * @param mediaNodes Выхлоп prepareMediaNodes().
     * @param mediaHosts Выхлоп prepareDistMediaHosts().
     * @return Список jd-эджей, готовых к использованию в редакторе.
     */
   def mkJdImgEdgesForEdit(
                            imgsEdges      : IterableOnce[(MEdge, MImg3)],
-                           mediasMap      : Map[String, MMedia],
                            mediaNodes     : Map[String, MNode],
                            mediaHosts     : Map[String, Seq[MHostInfo]]
                          )(implicit ctx: Context): List[MJdEdge] = {
@@ -151,12 +135,15 @@ class JdAdUtil @Inject()(
       ((medge, mimg), i) <- imgsEdges.iterator.zipWithIndex
       // id узла эджа -- это идентификатор картинки.
       nodeId          <- medge.nodeIds.iterator
-      mmedia          <- mediasMap.get(mimg.dynImgId.mediaId).iterator
+      imgNode         <- mediaNodes.get(mimg.dynImgId.mediaId).iterator
+      if imgNode.common.ntype ==* MNodeTypes.Media.Image
+      fileEdge        <- imgNode.edges.withPredicateIter( MPredicates.File )
+      edgeMedia       <- fileEdge.media.iterator
     } yield {
       // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
       val edgeUid = medge.doc.uid.getOrElse( -i )
 
-      LOGGER.trace(s"$logPrefix E#$edgeUid ${mmedia.idOrNull} imgFmt=${mmedia.file.imgFormatOpt} ${mmedia.file.mime}")
+      LOGGER.trace(s"$logPrefix E#$edgeUid ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime}")
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
         // Тут раньше безусловно выставлялся предикат imgPredicate, но с adn-редактором понадобились и другие предикаты.
@@ -170,11 +157,11 @@ class JdAdUtil @Inject()(
             mkDistMediaUrl(dynImgUtil.imgCall(mimg), mimg.dynImgId, mediaHosts, forceAbsUrls = false)
           },
           // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
-          fileMeta  = Some( mmedia.file ),
+          fileMeta  = Some( edgeMedia.file ),
           name = mediaNodes
             .get( nodeId )
             .flatMap(_.guessDisplayName),
-          pictureMeta = mmedia.picture,
+          pictureMeta = edgeMedia.picture,
         ))
       )
 
@@ -293,7 +280,7 @@ class JdAdUtil @Inject()(
       }
     } yield {
       val dynImgId = MDynImgId(
-        rowKeyStr = imgNodeId,
+        origNodeId = imgNodeId,
         // TODO По идее, тут достаточно MImgFmts.defaults, но почему-то всё тогда сглючивает.
         dynFormat = medge.doc.uid
           .flatMap(uids2jdEdgeId.get)
@@ -346,7 +333,7 @@ class JdAdUtil @Inject()(
     }
 
     // Собрать связанные инстансы MMedia. Т.к. эджи всегда указывают на оригинал, то тут тоже оригиналы.
-    lazy val origImgMediasMapFut = prepareImgMedias( origImgsEdges )
+    lazy val origImgMediasMapFut = prepareMediaNodes( origImgsEdges, videoEdges = Nil )
 
     // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
     lazy val videoEdges = {
@@ -365,7 +352,7 @@ class JdAdUtil @Inject()(
     // TODO Нужно lazy val тут. Можно сделать через def + lazy val.
     def imgJdEdgesFut: Future[List[MJdEdge]]
 
-    def mediasForMediaHostsFut: Future[Iterable[MMedia]] = {
+    def mediasForMediaHostsFut: Future[Iterable[MNode]] = {
       origImgMediasMapFut.map(_.values)
     }
 
@@ -476,7 +463,6 @@ class JdAdUtil @Inject()(
           LOGGER.trace(s"$logPrefix Found ${mediasMap.size} linked img medias.")
           mkJdImgEdgesForEdit(
             imgsEdges   = origImgsEdges,
-            mediasMap   = mediasMap,
             mediaNodes  = mediaNodesMap,
             mediaHosts  = imgMedia2hostsMap
           )
@@ -514,11 +500,11 @@ class JdAdUtil @Inject()(
       override def imgEdgesNeedNodes = Nil
 
       /** Нужно собрать все MMedia из имеющихся: помимо оригиналов надо и скомпиленные картинки. */
-      override def mediasForMediaHostsFut: Future[Iterable[MMedia]] = {
+      override def mediasForMediaHostsFut: Future[Iterable[MNode]] = {
         val _origMediasForMediaHostsFut = super.mediasForMediaHostsFut
         for {
           renderedImgs <- renderAdDocImgsFut
-          mmedias <- mMedias.multiGetCache {
+          mmedias <- mNodes.multiGetCache {
             // Интересуют только деривативы, которые могут прямо сейчас существовать в медиа-хранилище. Оригиналы возьмём из _origMediasForMediaHostsFut.
             (for {
               renderedImg <- renderedImgs.iterator
@@ -563,7 +549,7 @@ class JdAdUtil @Inject()(
                 Some(url)
               },
               fileSrv = Some( MSrvFileInfo(
-                nodeId = imgMakeRes.sourceImg.dynImgId.rowKeyStr,
+                nodeId = imgMakeRes.sourceImg.dynImgId.origNodeId,
                 pictureMeta = MPictureMeta(
                   whPx   = Some( imgMakeRes.imgSzReal ),
                 ),
@@ -688,10 +674,15 @@ class JdAdUtil @Inject()(
               isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
 
               tgImgSz: MSize2di <- if (isQd) {
-                lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
+                lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.origNodeId}:"
                 for {
                   mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.dynImgId.original.mediaId )
-                  origWh      <- mmediaOrig.picture.whPx
+                  if mmediaOrig.common.ntype ==* MNodeTypes.Media.Image
+                  fileEdge    <- mmediaOrig.edges
+                    .withPredicateIter( MPredicates.File )
+                    .nextOption()
+                  edgeMedia   <- fileEdge.media
+                  origWh      <- edgeMedia.picture.whPx
                 } yield {
                   // Узнать ширину, заданную в теге (если есть).
                   val jdTagWidthCssPxOpt = for {
@@ -702,7 +693,7 @@ class JdAdUtil @Inject()(
                   } yield {
                     width
                   }
-                  LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
+                  LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.origNodeId} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
 
                   // Картинка есть. Но надо разобраться, надо ли её ресайзить.
                   val origWidthNorm = wideImgMaker.normWideBgSz( origWh.width, wideNorms )

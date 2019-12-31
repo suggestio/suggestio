@@ -43,9 +43,7 @@ object MNodeDoc
     import dsl._
     val F = Fields
     Json.obj(
-      F.TEMPLATE_FN -> FObject.plain(
-        enabled = someFalse,
-      )
+      F.TEMPLATE_FN -> FObject.disabled,
     )
   }
 

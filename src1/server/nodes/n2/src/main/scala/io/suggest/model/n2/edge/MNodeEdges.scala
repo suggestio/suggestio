@@ -45,26 +45,46 @@ object MNodeEdges
       import MEdge.Fields._
 
       // Префиксируем поля в out-объектах.
-      def OUT_PREDICATE_FN  = _fullFn( PREDICATE_FN )
-      def OUT_NODE_ID_FN    = _fullFn( NODE_ID_FN )
-      def OUT_ORDER_FN      = _fullFn( ORDER_FN )
-      def OUT_INFO_FLAG_FN  = _fullFn( Info.FLAG_FN )
+      def O_PREDICATE_FN  = _fullFn( PREDICATE_FN )
+      def O_NODE_ID_FN    = _fullFn( NODE_ID_FN )
+      def O_ORDER_FN      = _fullFn( ORDER_FN )
+
+
+      // Info
+      def O_INFO_FLAG_FN  = _fullFn( Info.FLAG_FN )
 
       // Теги
-      def OUT_INFO_TAGS_FN        = _fullFn( Info.TAGS_FN )
-      def OUT_INFO_TAGS_RAW_FN    = _fullFn( Info.TAGS_RAW_FN )
+      def O_INFO_TAGS_FN        = _fullFn( Info.TAGS_FN )
+      def O_INFO_TAGS_RAW_FN    = _fullFn( Info.TAGS_RAW_FN )
 
       // Гео-шейпы
-      def OUT_INFO_GS_FN                = _fullFn( Info.INFO_GS_FN )
-      def OUT_INFO_GS_GLEVEL_FN         = _fullFn( Info.INFO_GS_GLEVEL_FN )
-      def OUT_INFO_GS_GJSON_COMPAT_FN   = _fullFn( Info.INFO_GS_GJSON_COMPAT_FN )
-      def OUT_INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Info.INFO_GS_SHAPE_FN(ngl) )
+      def O_INFO_GS_FN                = _fullFn( Info.INFO_GS_FN )
+      def O_INFO_GS_GLEVEL_FN         = _fullFn( Info.INFO_GS_GLEVEL_FN )
+      def O_INFO_GS_GJSON_COMPAT_FN   = _fullFn( Info.INFO_GS_GJSON_COMPAT_FN )
+      def O_INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Info.INFO_GS_SHAPE_FN(ngl) )
 
       // Гео-точки
-      def OUT_INFO_GEO_POINTS_FN        = _fullFn( Info.INFO_GEO_POINTS_FN )
+      def O_INFO_GEO_POINTS_FN        = _fullFn( Info.INFO_GEO_POINTS_FN )
 
       // Внешние сервисы
-      def OUT_INFO_EXT_SERVICE_FN       = _fullFn( Info.INFO_EXT_SERVICE_FN )
+      def O_INFO_EXT_SERVICE_FN       = _fullFn( Info.INFO_EXT_SERVICE_FN )
+
+
+      // Edge media
+      import MEdge.Fields.{Media => EM}
+
+      def O_MEDIA_FM_MIME_FN = _fullFn( EM.MEDIA_FM_MIME_FN )
+      def O_MEDIA_FM_MIME_AS_TEXT_FN = _fullFn( EM.MEDIA_FM_MIME_AS_TEXT_FN )
+
+      /** Full FN nested-поля с хешами. */
+      def O_MEDIA_FM_HASHES_FN = _fullFn( EM.MEDIA_FM_HASHES_FN )
+
+      def O_MEDIA_FM_HASHES_TYPE_FN = _fullFn( EM.MEDIA_FM_HASHES_TYPE_FN )
+      def O_MEDIA_FM_HASHES_VALUE_FN = _fullFn( EM.MEDIA_FM_HASHES_VALUE_FN )
+
+      def O_MEDIA_FM_SIZE_B_FN = _fullFn( EM.MEDIA_FM_SIZE_B_FN )
+
+      def O_MEDIA_FM_IS_ORIGINAL_FN = _fullFn( EM.MEDIA_FM_IS_ORIGINAL_FN )
 
     }
 
@@ -132,9 +152,6 @@ object MNodeEdges
     )
   }
 
-  def edgesToMapIter(edges: MEdge*): Seq[MEdge] = {
-    edges
-  }
   def edgesToMap1(edges: IterableOnce[MEdge]): Seq[MEdge] = {
     edges.toSeq
   }
@@ -160,8 +177,8 @@ object MNodeEdges
   object Filters {
 
     def nodePredF(nodeId: String, predicate: MPredicate)(medge: MEdge): Boolean = {
-      medge.nodeIds.contains(nodeId) &&
-        medge.predicate ==>> predicate
+      (medge.nodeIds contains nodeId) &&
+      medge.predicate ==>> predicate
     }
 
   }

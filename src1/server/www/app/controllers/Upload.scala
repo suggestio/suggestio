@@ -17,12 +17,14 @@ import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
 import io.suggest.js.UploadConstants
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.search.{Criteria, MHashCriteria}
 import io.suggest.model.n2.media._
-import io.suggest.model.n2.media.search.{MHashCriteria, MMediaSearchDfltImpl}
 import io.suggest.model.n2.media.storage.IMediaStorages
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeType, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -41,6 +43,7 @@ import util.acl.{CanUploadFile, IgnoreAuth}
 import util.cdn.CdnUtil
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
+import monocle.Traversal
 import util.img.ImgFileUtil
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
@@ -48,6 +51,7 @@ import util.ws.WsDispatcherActors
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scalaz.ValidationNel
+import scalaz.std.option._
 
 /**
   * Suggest.io
@@ -58,7 +62,6 @@ import scalaz.ValidationNel
 @Singleton
 class Upload @Inject()(
                         esModel                   : EsModel,
-                        mMedias                   : MMedias,
                         uploadUtil                : UploadUtil,
                         canUploadFile             : CanUploadFile,
                         ignoreAuth                : IgnoreAuth,
@@ -96,16 +99,19 @@ class Upload @Inject()(
   /** Тело экшена подготовки к аплоаду.
     * Только тело, потому что ACL-проверки выносятся в основной контроллер, в контексте которого происходит загрузка.
     *
+    * @param nodeType Тип (создаваемого) узла.
+    *                 Узел файла указанного типа будет создан при успешной заливке файла.
     * @param validated Провалидированные JSON-метаданные файла.
     * @param uploadFileHandler Если требуется принимать файл не в /tmp/, а сразу куда-то, то здесь Some().
     *
     * @return Created | Accepted | NotAcceptable  + JSON-body в формате MFile4UpProps.
     */
   def prepareUploadLogic(logPrefix          : String,
+                         nodeType           : MNodeType,
                          validated          : ValidationNel[String, MFile4UpProps],
                          uploadFileHandler  : Option[MUploadFileHandler] = None,
-                         colorDetect        : Option[MColorDetectArgs] = None)
-                        (implicit request: IReq[MFile4UpProps]) : Future[Result] = {
+                         colorDetect        : Option[MColorDetectArgs] = None,
+                        )(implicit request: IReq[MFile4UpProps]) : Future[Result] = {
     validated.fold(
       // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
       {errorsNel =>
@@ -123,28 +129,30 @@ class Upload @Inject()(
       {upFileProps =>
         LOGGER.trace(s"$logPrefix Body validated, user#${request.user.personIdOpt.orNull}:\n ${request.body} => $upFileProps")
 
-        // Нужно поискать файл с такими параметрами в MMedia:
-        val sameFileSearch = new MMediaSearchDfltImpl {
-          override def fileSizeB = upFileProps.sizeB :: Nil
-          override def fileHashesHex = {
-            upFileProps.hashesHex
-              .iterator
-              .map { case (mhash, hexValue) =>
-                MHashCriteria(
-                  hTypes    = mhash :: Nil,
-                  hexValues = hexValue :: Nil,
-                  must      = IMust.MUST
-                )
-              }
-              .toSeq
-          }
-          override def limit = 1
-        }
-        val fileSearchResFut = mMedias.dynSearch( sameFileSearch )
+        for {
+          // Поискать файл с такими параметрами в MMedia:
+          fileSearchRes <- mNodes.dynSearch(
+            new MNodeSearchDfltImpl {
+              // Тут по предикату - надо ли фильтровать?
+              val crs = Criteria(
+                fileSizeB = upFileProps.sizeB :: Nil,
+                fileHashesHex = (for {
+                  (mhash, hexValue) <- upFileProps.hashesHex.iterator
+                } yield {
+                  MHashCriteria(
+                    hTypes    = mhash :: Nil,
+                    hexValues = hexValue :: Nil,
+                    must      = IMust.MUST
+                  )
+                })
+                  .toSeq,
+              ) :: Nil
+              override def outEdges = crs
+              override def limit = 1
+            }
+          )
 
-        // Собрать ответ с результатом поиска
-        fileSearchResFut.flatMap { fileSearchRes =>
-          val (respStatus, respDataFut) = fileSearchRes
+          (respStatus, respDataFut) = fileSearchRes
             .headOption
             .fold [(Status, Future[MUploadResp])] {
               val assignRespFut = cdnUtil.assignDist(upFileProps)
@@ -161,7 +169,8 @@ class Upload @Inject()(
                   personId    = request.user.personIdOpt,
                   validTillS  = uploadUtil.ttlFromNow(),
                   storage     = assignResp,
-                  colorDetect = colorDetect
+                  colorDetect = colorDetect,
+                  nodeType    = nodeType,
                 )
                 // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
                 val hostnames = List(
@@ -183,34 +192,54 @@ class Upload @Inject()(
               }
               (Created, upDataFut)
 
-            } { foundFile =>
-              val existColors = foundFile.picture.histogram
+            } { foundFileNode =>
+              val fileEdge = foundFileNode
+                .edges
+                .withPredicateIter( MPredicates.File )
+                .next()
+              val edgeMedia = fileEdge.media.get
+
+              val existColors = edgeMedia
+                .picture
+                .histogram
                 .colorsOrNil
 
-              LOGGER.debug(s"$logPrefix Found existing file media#${foundFile.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}] with ${existColors.size} colors.")
+              LOGGER.debug(s"$logPrefix Found existing file media#${foundFileNode.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}] with ${existColors.size} colors.")
 
               // Тут шаринг инстанса возможной картинки. Но надо быть осторожнее: если не картинка, то может быть экзепшен.
-              lazy val foundFileImg = MImg3( foundFile )
+              lazy val foundFileImg = MImg3.fromEdge( foundFileNode.id.get, fileEdge ).get
 
               // Собираем гистограмму цветов.
-              val mediaColorsFut = if (existColors.isEmpty &&
-                                       !foundFile.file.isOriginal &&
-                                       foundFile.picture.nonEmpty) {
+              val mediaColorsFut = if (
+                existColors.isEmpty &&
+                !edgeMedia.file.isOriginal &&
+                edgeMedia.picture.nonEmpty
+              ) {
                 // Для получения гистограммы цветов надо получить на руки оригинал картинки.
                 val origImg3 = foundFileImg.original
-                LOGGER.trace(s"$logPrefix Will try original img for colors histogram: $origImg3")
                 for {
-                  origMediaOpt <- mMedias.getByIdCache( origImg3.dynImgId.mediaId )
+                  origMediaOpt <- mNodes.getByIdCache( origImg3.dynImgId.mediaId )
                 } yield {
                   // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
                   if (origMediaOpt.isEmpty)
-                    LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFile.idOrNull} is here: $foundFile")
-                  origMediaOpt
-                    .flatMap(_.picture.histogram)
+                    LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFileNode.idOrNull} is here: $foundFileNode")
+
+                  // Поиск гистограммы цветов в узле оригинала:
+                  (for {
+                    origMedia <- origMediaOpt.iterator
+                    e <- origMedia.edges.withPredicateIter( MPredicates.File )
+                    edgeMedia <- e.media
+                    histogram <- edgeMedia.picture.histogram
+                    if histogram.colors.nonEmpty
+                  } yield {
+                    histogram
+                  })
+                    .buffered
+                    .headOption
                     .colorsOrNil
                 }
               } else {
-                LOGGER.trace(s"$logPrefix Existing color histogram for media#${foundFile.idOrNull}: [${existColors.iterator.map(_.hexCode).mkString(", ")}]")
+                LOGGER.trace(s"$logPrefix Existing color histogram for media#${foundFileNode.idOrNull}: [${existColors.iterator.map(_.hexCode).mkString(", ")}]")
                 Future.successful( existColors )
               }
 
@@ -218,19 +247,19 @@ class Upload @Inject()(
               val upRespFut = for (mediaColors <- mediaColorsFut) yield {
                 MUploadResp(
                   fileExist = Some(MSrvFileInfo(
-                    nodeId    = foundFile.nodeId,
+                    nodeId  = foundFileNode.id.get,
                     // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                    url       = if (foundFile.file.imgFormatOpt.nonEmpty) {
+                    url       = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
                       // TODO IMG_DIST: Вписать хост расположения картинки.
                       // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
                       Some( routes.Img.dynImg( foundFileImg ).url )
                     } else {
                       // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
-                      LOGGER.error(s"$logPrefix MIME ${foundFile.file.mime} don't know how to build URL")
+                      LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime} don't know how to build URL")
                       None
                     },
                     // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
-                    fileMeta  = Some( foundFile.file ),
+                    fileMeta  = Some( edgeMedia.file ),
                     pictureMeta = MPictureMeta(
                       // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
                       histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
@@ -242,16 +271,15 @@ class Upload @Inject()(
                             .toList
                         )
                       }
-                    )
-                  ))
+                    ),
+                  )),
                 )
               }
               (Accepted, upRespFut)
             }
-
-          for (respData <- respDataFut) yield {
-            respStatus( Json.toJson(respData) )
-          }
+          respData <- respDataFut
+        } yield {
+          respStatus( Json.toJson(respData) )
         }
       }
     )
@@ -422,8 +450,9 @@ class Upload @Inject()(
 
           fileNameOpt = Option( filePart.filename )
 
-          // Собираем MediaStorage ptr:
-          mediaStor = uploadArgs.storage.storage
+          // Собираем MediaStorage ptr и клиент:
+          storageInfo = uploadArgs.storage.storage
+          storageClient = iMediaStorages.client( storageInfo.storage )
 
           // TODO Если требуется img-форматом, причесать оригинал, расширив исходную карту хэшей новыми значениями.
           // Например, JPEG можно пропустить через jpegtran -copy.
@@ -435,46 +464,59 @@ class Upload @Inject()(
               file         = upCtx.file,
               origFileName = fileNameOpt
             )
-            LOGGER.trace(s"$logPrefix Will save file $wr to storage $mediaStor ...")
-            iMediaStorages
-              .write( mediaStor, wr )
+            LOGGER.trace(s"$logPrefix Will save file $wr to storage $storageInfo ...")
+            storageClient.write( storageInfo.data, wr )
           }
+
+          // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
+          mnode0 = MNode(
+            id = request.body.localImg
+              .map( _.dynImgId.mediaId ),
+            common = MNodeCommon(
+              ntype         = uploadArgs.nodeType,
+              isDependent   = true,
+            ),
+            meta = MMeta(
+              basic = MBasicMeta(
+                techName    = Option( filePart.filename ),
+              ),
+            ),
+            edges = MNodeEdges(
+              out = {
+                val e = MEdge(
+                  predicate = MPredicates.File,
+                  media = Some( MEdgeMedia(
+                    file = MFileMeta(
+                      mime       = detectedMimeType,
+                      sizeB      = uploadArgs.fileProps.sizeB,
+                      isOriginal = true,
+                      hashesHex  = hashesHex2,
+                    ),
+                    picture = MPictureMeta(
+                      whPx = upCtx.imageWh,
+                    ),
+                    storage = storageInfo,
+                  )),
+                )
+                MNodeEdges.edgesToMap( e )
+              },
+            ),
+          )
 
           // Создаём новый узел для загруженного файла.
           mnodeIdFut = {
-            // Проверки закончены. Пора переходить к действиям по сохранению и анализу файла.
-            val nodeIdOpt0 = request.body.localImg
-              .map(_.dynImgId.rowKeyStr)
-            val MediaTypes = MNodeTypes.Media
-            val mnode0 = MNode(
-              id = nodeIdOpt0,
-              common = MNodeCommon(
-                ntype         = if (upCtx.isImage) {
-                  MediaTypes.Image
-                } else {
-                  LOGGER.info(s"$logPrefix Node will be created as OtherFile: no ideas here, mime=$detectedMimeType")
-                  MediaTypes.OtherFile
-                },
-                isDependent   = true
-              ),
-              meta = MMeta(
-                basic = MBasicMeta(
-                  techName    = Option( filePart.filename )
-                )
-              ),
-            )
             val fut = mNodes.save( mnode0 )
 
             // При ошибке сохранения узла надо удалить файл из saveFileToShardFut
             for {
               _ <- fut.failed
               _ <- {
-                LOGGER.error(s"$logPrefix Failed to save MNode#${nodeIdOpt0.orNull}. Deleting file storage#$mediaStor...")
+                LOGGER.error(s"$logPrefix Failed to save MNode#${mnode0.id.orNull}. Deleting file storage#$storageInfo...")
                 saveFileToShardFut
               }
-              delFileRes <- iMediaStorages.delete(mediaStor)
+              delFileRes <- storageClient.delete( storageInfo.data )
             } {
-              LOGGER.warn(s"$logPrefix Emergency deleted ok file#$mediaStor => $delFileRes")
+              LOGGER.warn(s"$logPrefix Emergency deleted ok file#$storageInfo => $delFileRes")
             }
 
             fut
@@ -494,85 +536,51 @@ class Upload @Inject()(
           // Ожидаем окончания сохранения узла.
           mnodeId <- mnodeIdFut
 
-          // Наконец, переходим к MMedia:
-          mmedia0 = {
-            LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
-
-            val mimg3Opt = for {
-              // Если что-то не так, то пусть будет ошибка прямо здесь.
-              imgFormat <- upCtx.imgFmtOpt
-            } yield {
-              MImg3( MDynImgId(mnodeId, imgFormat), fileNameOpt )
-            }
-            val mediaIdOpt0 = mimg3Opt.map(_.dynImgId.mediaId)
-            MMedia(
-              nodeId = mnodeId,
-              id   = mediaIdOpt0,
-              file = MFileMeta(
-                mime       = detectedMimeType,
-                sizeB      = uploadArgs.fileProps.sizeB,
-                isOriginal = true,
-                hashesHex  = hashesHex2
-              ),
-              picture = MPictureMeta(
-                whPx = upCtx.imageWh
-              ),
-              storage = mediaStor
-            )
-          }
-
-          // И сохраняем MMedia:
-          mmediaId <- {
-            val fut = mMedias.save( mmedia0 )
-
-            // При ошибке сохранения MMedia надо удалить узел и файл:
-            for {
-              ex <- fut.failed
-              delNodeResFut = {
-                LOGGER.error(s"$logPrefix Failed to save MMedia, deleting file storage#$mediaStor and MNode#$mnodeId ...", ex)
-                mNodes.deleteById( mnodeId )
-              }
-              _ <- saveFileToShardFut
-              delFileRes <- iMediaStorages.delete(mediaStor)
-              delNodeRes <- delNodeResFut
-            } {
-              LOGGER.warn(s"$logPrefix Emergency deleted file storage#$mediaStor=>$delFileRes and MNode#$mnodeId=>$delNodeRes")
-            }
-
-            fut
-          }
-
           // Собрать в голове сохранённый инстанс MMedia:  // TODO надо бы lazy, т.к. он может не понадобится.
-          mmedia1 = {
-            LOGGER.info(s"$logPrefix Created mmedia#$mmediaId")
+          mnode1 = {
+            LOGGER.debug(s"$logPrefix Created MNode#$mnodeId")
             (
-              (MMedia.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
-              (MMedia.id set Some(mmediaId))
-            )(mmedia0)
+              (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
+              (MNode.id set Some(mnodeId))
+            )(mnode0)
           }
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
-            mMedias.putToCache( mmedia1 )
+            mNodes.putToCache( mnode1 )
 
             for (colorDetectFut <- colorDetectFutOpt) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
                 if (colorHist.colors.nonEmpty) {
                   // Считаем общее кол-во пикселей для нормировки частот цветов:
                   val colorsHist2 = colorHist.withRelFrequences
-                  lazy val mcdsCount = colorsHist2.colors.size
+                  lazy val colorsCount = colorsHist2.colors.size
 
-                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.colors.iterator.map(_.hexCode).mkString(", ")}")
+                  LOGGER.trace(s"$logPrefix Detected $colorsCount top-colors on node#$mnodeId:\n ${colorsHist2.colors.iterator.map(_.hexCode).mkString(", ")}")
 
-                  val mmedia2OptFut = mMedias.tryUpdate(mmedia1)(
-                    MMedia.picture
-                      .composeLens( MPictureMeta.histogram )
-                      .set( Option.when(colorsHist2.nonEmpty)(colorsHist2) )
+                  val mmedia2OptFut = mNodes.tryUpdate(mnode1)(
+                    MNode.edges.modify { edges0 =>
+                      MNodeEdges.out.set(
+                        MNodeEdges.edgesToMap1(
+                          edges0
+                            .withPredicateIter( MPredicates.File )
+                            .map(
+                              MEdge.media
+                                .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
+                                .composeLens( MEdgeMedia.picture )
+                                .composeLens( MPictureMeta.histogram )
+                                .set( Some(colorsHist2) )
+                            )
+                        )
+                      )(edges0)
+                    }
                   )
 
                   mmedia2OptFut.onComplete {
-                    case Success(res) => LOGGER.debug(s"$logPrefix Updated MMedia#$mmediaId with $mcdsCount main colors, v=${res.versionOpt.orNull}.")
-                    case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to update MMedia#$mmediaId with main colors", ex)
+                    case Success(res) =>
+                      LOGGER.debug(s"$logPrefix Updated MNode#$mnodeId with $colorsCount main colors, v=${res.versionOpt.orNull}.")
+                    case Failure(ex) =>
+                      LOGGER.error(s"$logPrefix Failed to update MMedia#$mnodeId with main colors", ex)
                   }
 
                 } else {
@@ -593,13 +601,20 @@ class Upload @Inject()(
             for {
               ex <- saveFileToShardFut.failed
               delNodeResFut = {
-                LOGGER.error(s"$logPrefix Failed to send file into storage#$mediaStor . Deleting MNode#$mnodeId and mmedia#$mmediaId ...", ex)
+                LOGGER.error(s"$logPrefix Failed to send file into storage#$storageInfo . Deleting MNode#$mnodeId ...", ex)
                 mNodes.deleteById( mnodeId )
               }
-              delMediaRes <- mMedias.deleteById( mmediaId )
-              delNodeRes  <- delNodeResFut
+
+              // Запустить в фоне чистку хранилища, на случай если там что-то всё-таки осело, несмотря на ошибку.
+              _ = storageClient
+                .delete( storageInfo.data )
+                .onComplete { tryRes =>
+                  LOGGER.debug(s"$logPrefix Storage clean-up after error => $tryRes")
+                }
+
+              delNodeRes <- delNodeResFut
             } {
-              LOGGER.warn(s"$logPrefix Emergency deleted MNode#$mnodeId=>$delNodeRes and mmedia#$mmediaId=>$delMediaRes")
+              LOGGER.warn(s"$logPrefix Emergency deleted MNode#$mnodeId => $delNodeRes")
             }
 
             saveFileToShardFut
@@ -730,7 +745,7 @@ class Upload @Inject()(
 
     override def delete(file: TemporaryFile): Try[Boolean] = {
       Try {
-        mLocalImgs.deleteAllSyncFor(mLocalImg.dynImgId.rowKeyStr)
+        mLocalImgs.deleteAllSyncFor(mLocalImg.dynImgId.origNodeId)
         true
       }
     }

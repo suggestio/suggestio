@@ -84,17 +84,15 @@ class Img @Inject() (
     lazy val logPrefix = s"dynImg(${mimg.dynImgId.fileName})#${System.currentTimeMillis()}:"
 
     // Сначала обработать 304-кэширование, если есть что-то:
-    val isNotModified = request.mmediaOpt.exists { mmedia =>
-      request.headers
-        .get(IF_MODIFIED_SINCE)
-        .exists { ifModifiedSince =>
-          val dateCreated = mmedia.file.dateCreated
-          val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
-          val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
-          LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
-          r
-        }
-    }
+    val isNotModified = request.headers
+      .get(IF_MODIFIED_SINCE)
+      .exists { ifModifiedSince =>
+        val dateCreated = request.edgeMedia.file.dateCreated
+        val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
+        val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
+        LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
+        r
+      }
 
     // HTTP-заголовок для картинок.
     val cacheControlHdr =
@@ -108,7 +106,7 @@ class Img @Inject() (
     } else {
 
       // Надо всё-таки вернуть картинку. Возможно, картинка ещё не создана. Уточняем:
-      request.mmediaOpt.fold [Future[Result]] {
+      request.derivedOpt.fold [Future[Result]] {
         // Готовой картинки сейчас не существует. Возможно, что она создаётся прямо сейчас.
         // TODO Использовать асинхронную streamed-готовилку dyn-картинок (которую надо написать!).
         for {
@@ -142,11 +140,13 @@ class Img @Inject() (
 
         // Пробрсывать в swfs "Accept-Encoding: gzip", если задан в запросе на клиенте.
         // Всякие SVG сжимаются на стороне swfs, их надо раздавать сжатыми.
+        val stor = request.edgeMedia.storage
         iMediaStorages
-          .read( mmedia.storage, request.acceptCompressEncodings )
+          .client( stor.storage )
+          .read( stor.data, request.acceptCompressEncodings )
           .map { dataSource =>
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
-            LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${mmedia.file.sizeB}b")
+            LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB}b")
             var respHeadersAcc = cacheControlHdr :: Nil
 
             // Пробросить content-encoding, который вернул media-storage.
@@ -160,12 +160,12 @@ class Img @Inject() (
               HttpEntity.Streamed(
                 data          = dataSource.data,
                 contentLength = Some(dataSource.sizeB),
-                contentType   = Some(mmedia.file.mime)
+                contentType   = Some(request.edgeMedia.file.mime)
               )
             )
               .withHeaders( respHeadersAcc: _* )
               .withDateHeaders(
-                LAST_MODIFIED -> mmedia.file.dateCreated.toZonedDateTime
+                LAST_MODIFIED -> request.edgeMedia.file.dateCreated.toZonedDateTime
               )
           }
       }

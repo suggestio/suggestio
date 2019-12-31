@@ -20,18 +20,18 @@ object MMediaFields {
     val FILE_META_FN    = "fm"
     override protected def _PARENT_FN = FILE_META_FN
 
-    def MIME_FN               = _fullFn( MFileMeta.Fields.MIME_FN )
-    def MIME_AS_TEXT_FN       = _fullFn( MFileMeta.Fields.MIME_FN + "." + MFileMeta.Fields.MIME_AS_TEXT_FN )
+    def FM_MIME_FN               = _fullFn( MFileMeta.Fields.MIME_FN )
+    def FM_MIME_AS_TEXT_FN       = _fullFn( MFileMeta.Fields.MIME_FN + "." + MFileMeta.Fields.MIME_AS_TEXT_FN )
 
     /** Full FN nested-поля с хешами. */
-    def HASHES_FN             = _fullFn( MFileMeta.Fields.HASHES_HEX_FN )
+    def FM_HASHES_FN             = _fullFn( MFileMeta.Fields.HASHES_HEX_FN )
 
-    def HASHES_TYPE_FN        = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_TYPE_FN )
-    def HASHES_VALUE_FN       = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_VALUE_FN )
+    def FM_HASHES_TYPE_FN        = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_TYPE_FN )
+    def FM_HASHES_VALUE_FN       = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_VALUE_FN )
 
-    def SIZE_B_FN             = _fullFn( MFileMeta.Fields.SIZE_B_FN )
+    def FM_SIZE_B_FN             = _fullFn( MFileMeta.Fields.SIZE_B_FN )
 
-    def IS_ORIGINAL_FN        = _fullFn( MFileMeta.Fields.IS_ORIGINAL_FN )
+    def FM_IS_ORIGINAL_FN        = _fullFn( MFileMeta.Fields.IS_ORIGINAL_FN )
 
   }
 

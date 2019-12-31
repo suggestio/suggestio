@@ -37,14 +37,8 @@ object MPictureMeta
     import dsl._
     val F = Fields
     Json.obj(
-      F.WH_PX_FN -> FObject.plain(
-        enabled = someTrue,
-        properties = Some(MSize2di.esMappingProps)
-      ),
-      F.HISTOGRAM_FN -> FObject.plain(
-        enabled    = someTrue,
-        properties = Some( MHistogram.esMappingProps ),
-      ),
+      F.WH_PX_FN -> FObject.plain( MSize2di ),
+      F.HISTOGRAM_FN -> FObject.plain( MHistogram ),
     )
   }
 

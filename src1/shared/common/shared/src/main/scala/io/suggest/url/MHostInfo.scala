@@ -37,5 +37,5 @@ object MHostInfo {
   */
 case class MHostInfo(
                       nameInt      : String,
-                      namePublic   : String
+                      namePublic   : String,
                     )

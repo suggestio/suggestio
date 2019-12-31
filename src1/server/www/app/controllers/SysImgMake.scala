@@ -108,7 +108,7 @@ trait SysImgMake
     isSu().async { implicit request =>
       sysImgMakeUtil.makeFormM(img).bindFromRequest().fold(
         {formWithErrors =>
-          LOGGER.debug(s"makeFormSubmit(${img.dynImgId.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          LOGGER.debug(s"makeFormSubmit(${img.dynImgId.origNodeId}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
           _makeFormRender(img, formWithErrors, NotAcceptable)
         },
         {case (maker, makeArgs) =>

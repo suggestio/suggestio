@@ -10,6 +10,7 @@ import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
 import util.img.cron.{PeriodicallyDeleteEmptyDirs, PeriodicallyDeleteNotExistingInPermanent}
 import util.stat.StatCronTasks
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.Future
 
@@ -41,6 +42,10 @@ class Crontab @Inject() (
 
   import mCommonDi._
 
+  def CRON_TASKS_ENABLED = false && current.configuration
+    .getOptional[Boolean]("cron.enabled")
+    .getOrElseTrue
+
   /** Список классов, которые являются поставщиками периодических задач при старте. */
   def TASK_PROVIDERS = Seq[ICronTasksProvider](
     billingCronTasks,
@@ -54,34 +59,36 @@ class Crontab @Inject() (
   private var _startedTimers = List.empty[Cancellable]
 
   // akka-2.5+: Чтобы избегать экзепшенов прямо в конструкторе, запуск таймеров скидываем в отдельный тред.
-  for {
-    ex <- {
-      val fut = Future {
-        _startedTimers = startTimers()
-      }
-      fut.failed
-    }
-  } {
-    LOGGER.error("startTimers() totally failed! Crontab doesn't work at all.", ex)
-  }
-
-
-  // Destructor --------------------------------
-  lifecycle.addStopHook { () =>
-    Future {
-      for (c <- _startedTimers) {
-        try {
-          c.cancel()
-        } catch {
-          case ex: Throwable =>
-            LOGGER.warn(s"Cannot stop cron task $c", ex)
+  if (CRON_TASKS_ENABLED) {
+    for {
+      ex <- {
+        val fut = Future {
+          _startedTimers = startTimers()
         }
+        fut.failed
       }
-      LOGGER.trace(s"Stopped all ${_startedTimers.size} crontab tasks.")
-      _startedTimers = Nil
+    } {
+      LOGGER.error("startTimers() totally failed! Crontab doesn't work at all.", ex)
     }
-  }
 
+    // Убрать таймеры по завершению:
+    lifecycle.addStopHook { () =>
+      Future {
+        for (c <- _startedTimers) {
+          try {
+            c.cancel()
+          } catch {
+            case ex: Throwable =>
+              LOGGER.warn(s"Cannot stop cron task $c", ex)
+          }
+        }
+        LOGGER.trace(s"Stopped all ${_startedTimers.size} crontab tasks.")
+        _startedTimers = Nil
+      }
+    }
+  } else {
+    LOGGER.warn(s"${getClass.getSimpleName} DISABLED in configuration/code.")
+  }
 
   // API ---------------------------------------
 

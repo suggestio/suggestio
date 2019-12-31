@@ -54,7 +54,7 @@ object MHistogram
     UnivEq.derive
   }
 
-  val sorted = GenLens[MHistogram](_.colors)
+  val colors = GenLens[MHistogram](_.colors)
 
 
   implicit class MHistogramOpsExt( private val hist0: MHistogram ) extends AnyVal {
@@ -68,7 +68,7 @@ object MHistogram
         hist0
       } else {
         val totalCount = iter0.sum
-        MHistogram.sorted.modify { sorted0 =>
+        MHistogram.colors.modify { sorted0 =>
           for (e <- sorted0) yield {
             e.count.fold(e) { eCount =>
               (MColorData.freqPc set Some((eCount * 100 / totalCount).toInt) )(e)
@@ -84,7 +84,7 @@ object MHistogram
       */
     def shrinkColorsCount(maxColors: Int): MHistogram = {
       if (hist0.colors.sizeIs > maxColors) {
-        MHistogram.sorted
+        MHistogram.colors
           .modify( _.take(maxColors) )(hist0)
       } else {
         hist0

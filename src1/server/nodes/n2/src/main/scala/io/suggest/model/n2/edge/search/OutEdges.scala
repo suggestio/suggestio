@@ -4,7 +4,6 @@ import io.suggest.es.model.{IMust, MWrapClause}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.geo.{GeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
@@ -23,7 +22,7 @@ object OutEdges extends MacroLogsImpl {
 
   /** Сборка edge-критериев в nested query. */
   private def _crs2query(crs: IterableOnce[Criteria]): QueryBuilder = {
-    val nestPath = E_OUT_FN
+    val EF = MNodeFields.Edges
     val withQname = _isToAssignQueryName
 
     val clauses = (for {
@@ -39,16 +38,19 @@ object OutEdges extends MacroLogsImpl {
           val tQueries = for (tcr <- oe.tags) yield {
             // Узнаём имя поля для матчинга тега.
             val fn = if (tcr.exact)
-              E_OUT_INFO_TAGS_RAW_FN
+              EF.EO_INFO_TAGS_RAW_FN
             else
-              E_OUT_INFO_TAGS_FN
+              EF.EO_INFO_TAGS_FN
+
             // Узнать желаемый тип запроса
             val tq = if (tcr.isPrefix)
               QueryBuilders.matchPhrasePrefixQuery(fn, tcr.face)
             else
               QueryBuilders.matchPhraseQuery(fn, tcr.face)
+
             if (withQname)
               tq.queryName(s"oe.tag:$fn^=${tcr.face}")
+
             // Собрать match query
             MWrapClause(tcr.must, tq)
           }
@@ -70,7 +72,7 @@ object OutEdges extends MacroLogsImpl {
           /** Добавить в query фильтр по флагу */
           def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
             gsi.gjsonCompat.fold(qb0) { gjsCompat =>
-              val fn = MNodeFields.Edges.E_OUT_INFO_GS_GJSON_COMPAT_FN
+              val fn = EF.EO_INFO_GS_GJSON_COMPAT_FN
               val gjsFr = QueryBuilders.termQuery(fn, gjsCompat)
               if (withQname)
                 gjsFr.queryName(s"GeoJSON compat q: $fn=$gjsCompat")
@@ -93,7 +95,7 @@ object OutEdges extends MacroLogsImpl {
               shape   <- gsi.shapes.iterator
               glevel  <- levels1.iterator
             } yield {
-              val shapeFn = MNodeFields.Edges.E_OUT_INFO_GS_SHAPE_FN( glevel )
+              val shapeFn = EF.EO_INFO_GS_SHAPE_FN( glevel )
               val qb0 = shape.toEsQuery(shapeFn)
               if (withQname)
                 qb0.queryName(s"shape q: gnl=$glevel fn=$shapeFn shape=${shape.getClass.getSimpleName}")
@@ -116,7 +118,7 @@ object OutEdges extends MacroLogsImpl {
 
           } else if (gsi.levels.nonEmpty) {
             // Нет шейпов, это значит есть уровни.
-            val fn = MNodeFields.Edges.E_OUT_INFO_GS_GLEVEL_FN
+            val fn = EF.EO_INFO_GS_GLEVEL_FN
             val levelNames = gsi.levels.map(_.esfn)
             val qb0 = QueryBuilders.termsQuery(fn, levelNames: _*)
             if (withQname)
@@ -126,14 +128,14 @@ object OutEdges extends MacroLogsImpl {
           } else {
             // Нужно искать по флагу совместимости с GeoJSON.
             val gjsCompat = gsi.gjsonCompat.get
-            val q = QueryBuilders.termQuery(MNodeFields.Edges.E_OUT_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+            val q = QueryBuilders.termQuery(EF.EO_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
             if (withQname)
               q.queryName(s"gjs compat: $gjsCompat")
             q
           }
 
           // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
-          val fn = MNodeFields.Edges.E_OUT_INFO_GS_FN
+          val fn = EF.EO_INFO_GS_FN
           val gqNf = QueryBuilders.nestedQuery(fn, nq, ScoreMode.Max)
           if (withQname)
             gqNf.queryName(s"nested: e.info.geoShape fn=${fn}")
@@ -146,9 +148,10 @@ object OutEdges extends MacroLogsImpl {
           }
         }
 
+
         // Поиск по id узлов, на которые указывают эджи.
         if (oe.nodeIds.nonEmpty) {
-          val fn = EDGE_OUT_NODE_ID_FULL_FN
+          val fn = EF.EO_NODE_ID_FULL_FN
 
           val nodeIdsQb: QueryBuilder = if (oe.nodeIdsMatchAll) {
             // AND-матчинг всех пересленных nodeIds одновременно
@@ -182,9 +185,10 @@ object OutEdges extends MacroLogsImpl {
           }
         }
 
+
         // Предикаты рёбер добавить через фильтр либо query.
         if (oe.predicates.nonEmpty) {
-          val fn = EDGE_OUT_PREDICATE_FULL_FN
+          val fn = EF.EO_PREDICATE_FULL_FN
           val predIds = oe.predicates
             .map(_.value)
           val predf = QueryBuilders.termsQuery(fn, predIds: _*)
@@ -202,10 +206,10 @@ object OutEdges extends MacroLogsImpl {
           }
         }
 
+
         // Ищем/фильтруем по info.flag
-        if (oe.flag.nonEmpty) {
-          val flag = oe.flag.get
-          val flagFn = EDGE_OUT_INFO_FLAG_FN
+        for (flag <- oe.flag) {
+          val flagFn = EF.EO_INFO_FLAG_FN
           val flagFl = QueryBuilders.termQuery(flagFn, flag)
           if (withQname)
             flagFl.queryName(s"flag: $flagFn=$flag")
@@ -218,9 +222,10 @@ object OutEdges extends MacroLogsImpl {
           }
         }
 
+
         // Сортировка по удалённости путём выставления score.
         for (mgp <- oe.geoDistanceSort) {
-          val fn = MNodeFields.Edges.E_OUT_INFO_GEO_POINTS_FN
+          val fn = EF.EO_INFO_GEO_POINTS_FN
           val geoPointStr = GeoPoint.toEsStr(mgp)
           val scale = "100km"
 
@@ -239,9 +244,10 @@ object OutEdges extends MacroLogsImpl {
           _qOpt = Some(fq)
         }
 
+
         // Отработать фильтрацию по внешним сервисам:
         for ( extServices <- oe.extService ) {
-          val fn = MNodeFields.Edges.E_OUT_INFO_EXT_SERVICE_FN
+          val fn = EF.EO_INFO_EXT_SERVICE_FN
           val qb9 = if (oe.extService.nonEmpty) {
             val extServicesIds = extServices.iterator.map(_.value).toSeq
             QueryBuilders.termsQuery(fn, extServicesIds: _*)
@@ -250,7 +256,7 @@ object OutEdges extends MacroLogsImpl {
           }
           if (withQname)
             qb9.queryName( s"f-ext-services[${extServices.length}]" )
-          val fq =_qOpt.fold [QueryBuilder](qb9) { qOpt0 =>
+          val fq = _qOpt.fold [QueryBuilder](qb9) { qOpt0 =>
             QueryBuilders.boolQuery()
               .must( qOpt0 )
               .filter( qb9 )
@@ -259,12 +265,131 @@ object OutEdges extends MacroLogsImpl {
         }
 
 
+        // Отработать хэши при поиске файлов.
+        if (oe.fileHashesHex.nonEmpty) {
+          // Заданы хэш-суммы искомого файла. TODO Подготовить матчинг. Тут у нас nested search требуется..
+          lazy val hashesTypeFn = EF.EO_MEDIA_FM_HASHES_TYPE_FN
+          lazy val hashesValueFn = EF.EO_MEDIA_FM_HASHES_VALUE_FN
+          lazy val nestedPath = EF.EO_MEDIA_FM_HASHES_FN
+
+          val crQbs = (for {
+            cr <- oe.fileHashesHex
+            if cr.nonEmpty
+          } yield {
+            // Сборка одной query по одному критерию (внутри nested).
+            val qb = QueryBuilders.boolQuery()
+
+            // TODO Возможно, тут ошибка: все одновременно хэши быть не могут ведь? Надо сделать по аналогии с NodeIdSearch, где через пачку SHOULD сделано.
+            if (cr.hTypes.nonEmpty) {
+              val hTypesQb = QueryBuilders.termsQuery( hashesTypeFn, cr.hTypes.map(_.value): _* )
+              qb.filter( hTypesQb )
+            }
+
+            if (cr.hexValues.nonEmpty) {
+              val hValuesQb = QueryBuilders.termsQuery( hashesValueFn, cr.hexValues: _* )
+              qb.filter( hValuesQb )
+            }
+
+            val qbNest = QueryBuilders.nestedQuery( nestedPath, qb, ScoreMode.None )
+
+            MWrapClause(
+              must          = cr.must,
+              queryBuilder  = qbNest
+            )
+          })
+            .to( LazyList )
+
+          if (crQbs.nonEmpty) {
+            // Объеденить все qb как must.
+            val allCrsQb = IMust.maybeWrapToBool( crQbs )
+
+            if (withQname)
+              allCrsQb.queryName( s"fileHashes[${oe.fileHashesHex.size}]" )
+
+            // Сборка итоговой query
+            _qOpt = _qOpt.map { qb0 =>
+              QueryBuilders.boolQuery()
+                .must( qb0 )
+                .filter( allCrsQb )
+            }.orElse {
+              Some( allCrsQb )
+            }
+          }
+        }
+
+
+        // Поиск по MIME-типам.
+        if (oe.fileMimes.nonEmpty) {
+          // Указаны допустимые mime-типы, значит будем фильтровать:
+          val fn = EF.EO_MEDIA_FM_MIME_FN
+
+          // Т.к. нам нужен любой из списка допустимых mime-типов, надо делать пачку SHOULD clause:
+          val nodeIdsWraps = for (mime <- oe.fileMimes) yield {
+            MWrapClause(
+              must = IMust.SHOULD,
+              queryBuilder = QueryBuilders.termQuery( fn, mime )
+            )
+          }
+
+          val mimesQb = IMust.maybeWrapToBool( nodeIdsWraps )
+
+          _qOpt = _qOpt.map { qb0 =>
+            QueryBuilders.boolQuery()
+              .must( qb0 )
+              .filter( mimesQb )
+          }.orElse {
+            Some( mimesQb )
+          }
+        }
+
+
+        // Поиск/фильтрация по имени файла.
+        if (oe.fileSizeB.nonEmpty) {
+          val fn = EF.EO_MEDIA_FM_SIZE_B_FN
+          // Задан размер файла для поиска.
+          val bsClauses = for (byteSize <- oe.fileSizeB) yield {
+            MWrapClause(
+              must          = IMust.SHOULD,
+              queryBuilder  = QueryBuilders.termQuery( fn, byteSize )
+            )
+          }
+          val qb2 = IMust.maybeWrapToBool( bsClauses )
+
+          _qOpt = _qOpt
+            .map { qb0 =>
+              QueryBuilders.boolQuery()
+                .must(qb0)
+                .filter(qb2)
+            }
+            .orElse {
+              Some( qb2 )
+            }
+        }
+
+
+        // Поиск/фильтрация по флагу fileMeta.isOriginal.
+        for (fileIsOriginal <- oe.fileIsOriginal) {
+          // Есть искомое значение флага. Собираем фильтр:
+          val isOrigQb = QueryBuilders.termQuery( EF.EO_MEDIA_FM_IS_ORIGINAL_FN, fileIsOriginal )
+          _qOpt = _qOpt
+            .map { qb0 =>
+              QueryBuilders.boolQuery()
+                .must( qb0 )
+                .filter( isOrigQb )
+            }
+            .orElse {
+              Some(isOrigQb)
+            }
+        }
+
+
         if (_qOpt.isEmpty)
-          LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)
+          LOGGER.warn(s"edge.NestedSearch: suppressed empty bool query for $oe")
 
         _qOpt.iterator
       }
     } yield {
+      val nestPath = EF.E_OUT_FN
       // TODO ScoreMode.Avg -- с потолка взято, надо разобраться на тему оптимального варианта.
       val _qn = QueryBuilders.nestedQuery(nestPath, q, ScoreMode.Max)
       if (withQname)

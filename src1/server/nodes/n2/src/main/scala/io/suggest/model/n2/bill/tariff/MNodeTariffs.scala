@@ -49,7 +49,8 @@ object MNodeTariffs
     import dsl._
     val F = Fields
     Json.obj(
-      F.DAILY_FN -> FObject.plain(
+      F.DAILY_FN -> FObject(
+        typ        = DocFieldTypes.Object,
         enabled    = someFalse,
         properties = Some( MTfDaily.esMappingProps ),
       ),

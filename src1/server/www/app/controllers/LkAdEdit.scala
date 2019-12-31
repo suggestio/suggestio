@@ -473,7 +473,8 @@ class LkAdEdit @Inject() (
             paletteSize   = sz,
             wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
           )
-        }
+        },
+        nodeType = MNodeTypes.Media.Image,
       )
     }
   }

@@ -44,10 +44,7 @@ object MLocation
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._
     val glDataProps = Json.toJsObject(
-      FObject.plain(
-        enabled    = someTrue,
-        properties = Some( MGeoLocData.esMappingProps ),
-      )
+      FObject.plain( MGeoLocData ),
     )
     val F = Fields
     Json.obj(

@@ -2,6 +2,7 @@ package io.suggest.model.n2.node
 
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
@@ -80,25 +81,8 @@ object MNodeTypesJvm {
     }
   }
 
-
-  /** Поддержка binding'а из URL query string, для play router'а. */
-  implicit def mNodeTypeQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MNodeType] = {
-    new QueryStringBindableImpl[MNodeType] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeType]] = {
-        for (strIdEith <- strB.bind(key, params)) yield {
-          strIdEith.flatMap { strId =>
-            MNodeTypes
-              .withValueOpt(strId)
-              .toRight( "node.type.invalid" )
-          }
-        }
-      }
-      override def unbind(key: String, value: MNodeType): String = {
-        strB.unbind(key, value.value)
-      }
-    }
-  }
-
+  implicit def nodeTypeQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MNodeType] =
+    EnumeratumJvmUtil.valueEnumQsb( MNodeTypes )
 
   import play.api.data._, Forms._
 

@@ -9,7 +9,7 @@
   mimg  = mimg
 ) {
 
-  <img src="@dynImgUtil.thumb256Call(mimg, fillArea = false)" alt="@mimg.dynImgId.rowKeyStr" />
+  <img src="@dynImgUtil.thumb256Call(mimg, fillArea = false)" alt="@mimg.dynImgId.origNodeId" />
 
   @_formTpl(
     submitCall  = routes.SysImg.makeFormSubmit(mimg),

@@ -25,7 +25,7 @@ trait FileMimeSearch extends DynSearchArgs {
 
     } else {
       // Указаны допустимые mime-типы, значит будем фильтровать:
-      val fn = MMediaFields.FileMeta.MIME_FN
+      val fn = MMediaFields.FileMeta.FM_MIME_FN
 
       // Т.к. нам нужен любой из списка допустимых mime-типов, надо делать пачку SHOULD clause:
       val nodeIdsWraps = for (mime <- mimes) yield {

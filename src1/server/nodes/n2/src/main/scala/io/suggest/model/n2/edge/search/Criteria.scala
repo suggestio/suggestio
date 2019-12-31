@@ -24,17 +24,26 @@ import io.suggest.model.n2.edge.MPredicate
   *                        true значит объединять запрошенные nodeId через AND.
   *                        false - OR.
   * @param extService Искомые внешние сервисы.
+  * @param fileHashesHex Поиск по файловым хэшам.
+  * @param fileMimes Поиск по mime-типам файлов.
+  * @param fileSizeB Поиск по размеру (размерам) хранимых файлов.
   */
 final case class Criteria(
                            nodeIds           : Seq[String]          = Nil,
                            predicates        : Seq[MPredicate]      = Nil,
                            must              : Must_t               = IMust.SHOULD,
+                           // info
                            flag              : Option[Boolean]      = None,
                            tags              : Seq[TagCriteria]     = Nil,
                            gsIntersect       : Option[IGsCriteria]  = None,
                            nodeIdsMatchAll   : Boolean              = false,
                            geoDistanceSort   : Option[MGeoPoint]    = None,
                            extService        : Option[Seq[MExtService]] = None,
+                           // media
+                           fileHashesHex     : Iterable[MHashCriteria]  = Nil,
+                           fileMimes         : Iterable[String]         = Nil,
+                           fileSizeB         : Iterable[Long]           = Nil,
+                           fileIsOriginal    : Option[Boolean]          = None,
                          )
   extends EmptyProduct
   with IMust

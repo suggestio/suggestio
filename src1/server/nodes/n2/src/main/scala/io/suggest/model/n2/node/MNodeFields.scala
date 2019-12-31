@@ -77,39 +77,44 @@ object MNodeFields {
     override protected def _PARENT_FN = EDGES_FN
 
     /** Адрес nested-объектов, хранящих данные по эджам. */
-    def E_OUT_FN                   = _fullFn( MNodeEdges.Fields.OUT_FN )
+    def E_OUT_FN = _fullFn( MNodeEdges.Fields.OUT_FN )
 
     import MNodeEdges.Fields.Out
 
-    def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( Out.OUT_PREDICATE_FN )
-    def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( Out.OUT_NODE_ID_FN )
-    def EDGE_OUT_ORDER_FULL_FN     = _fullFn( Out.OUT_ORDER_FN )
-    def EDGE_OUT_INFO_FLAG_FN      = _fullFn( Out.OUT_INFO_FLAG_FN )
+    def EO_PREDICATE_FULL_FN = _fullFn( Out.O_PREDICATE_FN )
+    def EO_NODE_ID_FULL_FN = _fullFn( Out.O_NODE_ID_FN )
+    def EO_ORDER_FULL_FN = _fullFn( Out.O_ORDER_FN )
+    def EO_INFO_FLAG_FN = _fullFn( Out.O_INFO_FLAG_FN )
 
     // Теги
-    def E_OUT_INFO_TAGS_FN         = _fullFn( Out.OUT_INFO_TAGS_FN )
-    def E_OUT_INFO_TAGS_RAW_FN     = _fullFn( Out.OUT_INFO_TAGS_RAW_FN )
+    def EO_INFO_TAGS_FN = _fullFn( Out.O_INFO_TAGS_FN )
+    def EO_INFO_TAGS_RAW_FN = _fullFn( Out.O_INFO_TAGS_RAW_FN )
 
     // Гео-шейпы
-    def E_OUT_INFO_GS_FN                          = _fullFn( Out.OUT_INFO_GS_FN )
-    def E_OUT_INFO_GS_GLEVEL_FN                   = _fullFn( Out.OUT_INFO_GS_GLEVEL_FN )
-    def E_OUT_INFO_GS_GJSON_COMPAT_FN             = _fullFn( Out.OUT_INFO_GS_GJSON_COMPAT_FN )
-    def E_OUT_INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Out.OUT_INFO_GS_SHAPE_FN(ngl) )
+    def EO_INFO_GS_FN = _fullFn( Out.O_INFO_GS_FN )
+    def EO_INFO_GS_GLEVEL_FN = _fullFn( Out.O_INFO_GS_GLEVEL_FN )
+    def EO_INFO_GS_GJSON_COMPAT_FN = _fullFn( Out.O_INFO_GS_GJSON_COMPAT_FN )
+    def EO_INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Out.O_INFO_GS_SHAPE_FN(ngl) )
 
     // Гео-точки
-    def E_OUT_INFO_GEO_POINTS_FN                  = _fullFn( Out.OUT_INFO_GEO_POINTS_FN )
+    def EO_INFO_GEO_POINTS_FN = _fullFn( Out.O_INFO_GEO_POINTS_FN )
 
     // Внешние сервисы
-    def E_OUT_INFO_EXT_SERVICE_FN                 = _fullFn( Out.OUT_INFO_EXT_SERVICE_FN )
-
-  }
+    def EO_INFO_EXT_SERVICE_FN = _fullFn( Out.O_INFO_EXT_SERVICE_FN )
 
 
-  /** Поля, касающиеся рекламо-карточной стороны узла. */
-  object Ad {
+    // Edge media
+    def EO_MEDIA_FM_MIME_FN = _fullFn( Out.O_MEDIA_FM_MIME_FN )
+    def EO_MEDIA_FM_MIME_AS_TEXT_FN = _fullFn( Out.O_MEDIA_FM_MIME_AS_TEXT_FN )
 
-    /** Название корневого поля с контейнером данных рекламной карточки. */
-    def AD_FN = "a"
+    /** Full FN nested-поля с хешами. */
+    def EO_MEDIA_FM_HASHES_FN = _fullFn( Out.O_MEDIA_FM_HASHES_FN )
+    def EO_MEDIA_FM_HASHES_TYPE_FN = _fullFn( Out.O_MEDIA_FM_HASHES_TYPE_FN )
+    def EO_MEDIA_FM_HASHES_VALUE_FN = _fullFn( Out.O_MEDIA_FM_HASHES_VALUE_FN )
+
+    def EO_MEDIA_FM_SIZE_B_FN = _fullFn( Out.O_MEDIA_FM_SIZE_B_FN )
+
+    def EO_MEDIA_FM_IS_ORIGINAL_FN = _fullFn( Out.O_MEDIA_FM_IS_ORIGINAL_FN )
 
   }
 

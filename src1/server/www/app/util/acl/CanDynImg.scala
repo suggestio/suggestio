@@ -1,8 +1,7 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.media.{MMedia, MMedias}
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MImgT
@@ -10,7 +9,9 @@ import models.req.MMediaOptNodeReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.proto.http.HttpConst
 import play.api.http.{HttpErrorHandler, Status}
 import util.cdn.CdnUtil
@@ -28,7 +29,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class CanDynImg @Inject() (
                             esModel                 : EsModel,
                             mNodes                  : MNodes,
-                            mMedias                 : MMedias,
                             aclUtil                 : AclUtil,
                             reqUtil                 : ReqUtil,
                             cdnUtil                 : CdnUtil,
@@ -49,108 +49,114 @@ class CanDynImg @Inject() (
     new reqUtil.SioActionBuilderImpl[MMediaOptNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: MMediaOptNodeReq[A] => Future[Result]): Future[Result] = {
-        // Запустить в фоне считывание инстансов MNode и MMedia.
-        val mnodeOptFut = mNodes.getByIdCache( mimg.dynImgId.nodeId )
-        val mmediaOptFut = mMedias.getByIdCache( mimg.dynImgId.mediaId )
 
-        // TODO Различия формата с оригиналом тут не определить. Как выкручиваться из такой ситуации? Сделать dynFormat как Option?
-        val isImgOrig = !mimg.dynImgId.hasImgOps
+        /** Ответ клиенту, когда картинка не найдена или недоступна. */
+        def _imageNotFoundThrow = throw HttpResultingException(
+          errorHandler.onClientError( request, Status.NOT_FOUND, "Image not found." )
+        )
 
-        // Сразу запрашиваем оригинал картинки. Он может и не понадобиться в данной логике, поэтому lazy.
-        lazy val mmediaOrigOptFut = if (isImgOrig) {
-          mmediaOptFut
-        } else {
-          mMedias.getByIdCache(mimg.dynImgId.original.mediaId)
-        }
+        val isImgOrig = mimg.dynImgId.isOriginal
 
         lazy val logPrefix = s"(${mimg.dynImgId.mediaId})#${System.currentTimeMillis()}:"
 
-        /** Ответ клиенту, когда картинка не найдена или недоступна. */
-        def _imageNotFound: Future[Result] =
-          errorHandler.onClientError( request, Status.NOT_FOUND, "Image not found." )
+        // Запустить в фоне считывание инстансов MNode и MMedia.
+        (for {
 
-        mnodeOptFut.flatMap {
-          case Some( mnode ) if mnode.common.isEnabled && (mnode.common.ntype ==* MNodeTypes.Media.Image) =>
-            if (!mnode.common.isEnabled) {
-              LOGGER.debug(s"$logPrefix 404. Img node is disabled.")
-              _imageNotFound
+          fileNodesMap <- mNodes.multiGetMapCache( mimg.dynImgId.mediaIdAndOrigMediaId.toSet )
 
-            } else if (mnode.common.ntype !=* MNodeTypes.Media.Image) {
-              LOGGER.warn(s"$logPrefix 404. Node type is ${mnode.common.ntype}, but image expected.")
-              _imageNotFound
-
-            } else {
-              val user = aclUtil.userFromRequest( request )
-              LOGGER.trace(s"$logPrefix Found img node#${mnode.idOrNull}, user=${user.personIdOpt.orNull}")
-
-              def __mediaFoundResp(mmedia: MMedia, respMediaOpt: Option[MMedia]): Future[Result] = {
-                // Сравнить узел картинки с текущим узлом:
-                cdnUtil.checkStorageForThisNode(mmedia.storage).flatMap {
-                  // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
-                  case Right(storageInfo) =>
-                    LOGGER.trace(s"$logPrefix Passed. Storage=$storageInfo respMedia=${respMediaOpt.orNull}")
-                    val req1 = MMediaOptNodeReq(
-                      mmediaOpt         = respMediaOpt,
-                      mmediaOrigOptFut  = () => mmediaOrigOptFut,
-                      storageInfo       = storageInfo,
-                      mnode             = mnode,
-                      user              = user,
-                      request           = request
-                    )
-                    block(req1)
-
-                  // Это не тот узел, а какой-то другой. Скорее всего, distUtil уже ругнулось в логи на эту тему.
-                  // По идее, это отработка какой-то ошибки в кластере, либо клиент подменил URL неправильным хостом.
-                  case Left(volLocs) =>
-                    LOGGER.warn(s"$logPrefix DistUtil refused media request: NOT related to this node. media#${mmedia.idOrNull} storage is ${mmedia.storage}, volume locations = ${volLocs.mkString(", ")}")
-                    // Попытаться отредиректить на правильный узел.
-                    volLocs.headOption.fold(_imageNotFound) { volLoc =>
-                      val correctUrl = HttpConst.Proto.CURR_PROTO + cdnUtil.reWriteHostToCdn( volLoc.publicUrl ) + request.uri
-                      LOGGER.info(s"$logPrefix Redirected user#${user.personIdOpt.orNull} to volume#$volLoc:\n $correctUrl")
-                      Results.Redirect(correctUrl)
-                    }
-                }
-              }
-
-              // Картинку можно отображать юзеру. Но нужно понять, на текущем узле она обслуживается или на каком-то другом.
-              mmediaOptFut.flatMap {
-                // Нет такой картинки в хранилище. dyn-картинка ещё не существует. Возможно, она генерится прямо сейчас.
-                // Но вот вопрос: относится ли данная картинка к данному узлу? Это можно узнать с помощью картинки-оригинала:
-                case None =>
-                  // Убедиться, что на руках НЕ оригинал. Иначе - ситуация непонятная получается.
-                  if (isImgOrig) {
-                    LOGGER.error(s"$logPrefix Img original mmedia not found, but node exist. Should never happen, possibly errors in database. mnode = $mnode")
-                    _imageNotFound
-
-                  } else {
-                    LOGGER.trace(s"$logPrefix Derivative img missing, will try to use original...")
-                    mmediaOrigOptFut.flatMap {
-                      case Some(mmediaOrig) =>
-                        __mediaFoundResp(mmediaOrig, respMediaOpt = None)
-
-                      // Не найден оригинал, это какой-то косяк в MNodes, возможно заливка происходит прямо сейчас.
-                      case None =>
-                        // should never happen
-                        LOGGER.error(s"$logPrefix Img medias not found, neither derivative, nor original. mnode is invalid: $mnode")
-                        _imageNotFound
-                    }
-                  }
-
-
-                // Уже есть такая картинка, хранится где-то в кластере. TODO Пора сравнивать media-сервер с текущим сервером.
-                case respMediaSome @ Some(mmedia) =>
-                  LOGGER.trace(s"$logPrefix Found media#${mmedia.idOrNull} wh=${mmedia.picture.whPx.orNull} mime=${mmedia.file.mime} sz=${mmedia.file.sizeB}b at storage ${mmedia.storage}")
-                  __mediaFoundResp(mmedia, respMediaOpt = respMediaSome)
+          nodeOrig = fileNodesMap
+            .get( mimg.dynImgId.origNodeId )
+            .filter { mnode =>
+              {
+                val r1 = mnode.common.isEnabled
+                if (!r1) LOGGER.debug(s"$logPrefix 404. Img node is disabled.")
+                r1
+              } && {
+                val r2 = mnode.common.ntype ==* MNodeTypes.Media.Image
+                if (!r2) LOGGER.warn(s"$logPrefix 404. Node type is ${mnode.common.ntype}, but image expected.")
+                r2
               }
             }
+            .getOrElse {
+              // Узел не найден или выключен. Считаем, что картинка просто не существует
+              LOGGER.trace(s"$logPrefix Img node not found or unrelated filtered-out.")
+              _imageNotFoundThrow
+            }
 
-          // Узел не найден или выключен. Считаем, что картинка просто не существует
-          case None =>
-            LOGGER.trace(s"$logPrefix Img node not found")
-            _imageNotFound
-        }
+          // Далее у нас два режима работы:
+          (mmedia: MNode, respMediaOpt: Option[MNode]) = {
+            val respMediaOpt = fileNodesMap.get( mimg.dynImgId.mediaId )
+            respMediaOpt.fold {
+              // Нет такой картинки в хранилище. dyn-картинка ещё не существует. Возможно, она генерится прямо сейчас.
+              // Но вот вопрос: относится ли данная картинка к данному узлу? Это можно узнать с помощью картинки-оригинала:
+              // Убедиться, что на руках НЕ оригинал. Иначе - ситуация непонятная получается.
+              if (isImgOrig) {
+                LOGGER.error(s"$logPrefix Img original mmedia not found, but node exist. Should never happen, possibly errors in database. mnode = ${nodeOrig.idOrNull}")
+                _imageNotFoundThrow
+
+              } else {
+                LOGGER.trace(s"$logPrefix Derivative img missing, bypass action with original...")
+                (nodeOrig, Option.empty[MNode])
+              }
+
+            } { mmedia =>
+              LOGGER.trace(s"$logPrefix Found media#${mmedia.idOrNull} edgeMedia=${mmedia.edges.withPredicateIter(MPredicates.File).nextOption().orNull}")
+              (mmedia, respMediaOpt)
+            }
+          }
+
+          edgeMedia = mmedia
+            .edges
+            .withPredicateIter( MPredicates.File )
+            .nextOption()
+            .flatMap(_.media)
+            .getOrElse {
+              LOGGER.warn(s"$logPrefix Missing edges with predicate ${MPredicates.File}. Possibly invalid/corrupted node#${mmedia.idOrNull}")
+              _imageNotFoundThrow
+            }
+
+          result <- {
+            val storCheckFut = cdnUtil.checkStorageForThisNode( edgeMedia.storage )
+
+            val user = aclUtil.userFromRequest( request )
+            LOGGER.trace(s"$logPrefix Found img node#${nodeOrig.idOrNull}, user=${user.personIdOpt.orNull}")
+
+            // Картинку можно отображать юзеру. Но нужно понять, на текущем узле она обслуживается или на каком-то другом.
+            storCheckFut.flatMap {
+              // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
+              case Right(storageInfo) =>
+                LOGGER.trace(s"$logPrefix Passed. Storage=$storageInfo respMedia=${respMediaOpt.orNull}")
+                val req1 = MMediaOptNodeReq(
+                  derivedOpt        = respMediaOpt,
+                  storageInfo       = storageInfo,
+                  mnode             = nodeOrig,
+                  user              = user,
+                  request           = request,
+                  edgeMedia         = edgeMedia,
+                )
+                block(req1)
+
+              // Это не тот узел, а какой-то другой. Скорее всего, distUtil уже ругнулось в логи на эту тему.
+              // По идее, это отработка какой-то ошибки в кластере, либо клиент подменил URL неправильным хостом.
+              case Left(volLocs) =>
+                LOGGER.warn(s"$logPrefix DistUtil refused media request: NOT related to this node. media#${mmedia.idOrNull} storage is ${edgeMedia.storage}, volume locations = ${volLocs.mkString(", ")}")
+                // Попытаться отредиректить на правильный узел.
+                volLocs
+                  .headOption
+                  .fold( _imageNotFoundThrow ) { volLoc =>
+                    val correctUrl = HttpConst.Proto.CURR_PROTO + cdnUtil.reWriteHostToCdn( volLoc.publicUrl ) + request.uri
+                    LOGGER.info(s"$logPrefix Redirected user#${user.personIdOpt.orNull} to volume#$volLoc:\n $correctUrl")
+                    Results.Redirect( correctUrl )
+                  }
+            }
+          }
+
+        } yield result)
+          // И финальный перехват всех прерываний логики работы action-builder'а:
+          .recoverWith {
+            case HttpResultingException(resFut) => resFut
+          }
       }
-
 
     }
   }

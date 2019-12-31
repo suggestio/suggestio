@@ -16,8 +16,8 @@
 
   @* Рендер разных метаданных о картинке. *@
   @_ptableTpl() {
-    @_ptableRowTpl("rowKey", title = Some("rowKey: " + img.dynImgId.rowKeyStr)) {
-      @img.dynImgId.rowKeyStr
+    @_ptableRowTpl("nodeId", title = Some("nodeId: " + img.dynImgId.origNodeId)) {
+      @img.dynImgId.origNodeId
     }
 
     @_ptableRowTpl("make", title = Some("Оформить проивольный рендер картинки")) {

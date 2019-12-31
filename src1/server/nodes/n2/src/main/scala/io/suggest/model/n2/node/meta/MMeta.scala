@@ -105,7 +105,7 @@ object MMeta extends IEsMappingProps {
       .esSubModelsJsObjects( nested = false )
 
     info ++ Json.obj(
-      COLORS_FN -> FObject.plain( someFalse ),
+      COLORS_FN -> FObject.disabled,
     )
   }
 

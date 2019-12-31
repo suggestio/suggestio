@@ -3,7 +3,7 @@ package io.suggest.model.n2.media
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.model.PrefixedFn
-import io.suggest.model.n2.media.storage.MStorage
+import io.suggest.model.n2.media.storage.MStorageInfo
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -27,47 +27,46 @@ object MEdgeMedia
 
   object Fields {
 
-    /** Поля [[MFileMeta]] */
-    object FileMeta extends PrefixedFn {
-
-      val FILE_META_FN    = "fm"
-      override protected def _PARENT_FN = FILE_META_FN
-
-      def MIME_FN               = _fullFn( MFileMeta.Fields.MIME_FN )
-      def MIME_AS_TEXT_FN       = _fullFn( MFileMeta.Fields.MIME_FN + "." + MFileMeta.Fields.MIME_AS_TEXT_FN )
-
-      /** Full FN nested-поля с хешами. */
-      def HASHES_FN             = _fullFn( MFileMeta.Fields.HASHES_HEX_FN )
-
-      def HASHES_TYPE_FN        = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_TYPE_FN )
-      def HASHES_VALUE_FN       = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_VALUE_FN )
-
-      def SIZE_B_FN             = _fullFn( MFileMeta.Fields.SIZE_B_FN )
-
-      def IS_ORIGINAL_FN        = _fullFn( MFileMeta.Fields.IS_ORIGINAL_FN )
-
-    }
+    /** Имя поля базовых метаданных файла. Модель [[MFileMeta]]. */
+    val FILE_META_FN    = "fm"
 
     /** Поля [[MPictureMeta]] */
-    object PictureMeta {
-      val PICTURE_META_FN = "pm"
-    }
+    val PICTURE_META_FN = "pm"
 
     /** Поля [[io.suggest.model.n2.media.storage.MStorages]]. */
-    object Storage {
-      val STORAGE_FN      = "st"
+    val STORAGE_FN      = "o"
+
+    /** Поля [[MFileMeta]] */
+    object FileMeta extends PrefixedFn {
+      override protected def _PARENT_FN = FILE_META_FN
+
+      import MFileMeta.{Fields => F}
+
+      def FM_MIME_FN               = _fullFn( F.MIME_FN )
+      def FM_MIME_AS_TEXT_FN       = _fullFn( F.MIME_FN + "." + F.MIME_AS_TEXT_FN )
+
+      /** Full FN nested-поля с хешами. */
+      def FM_HASHES_FN             = _fullFn( F.HASHES_HEX_FN )
+
+      def FM_HASHES_TYPE_FN        = _fullFn( F.HashesHexFields.HASH_TYPE_FN )
+      def FM_HASHES_VALUE_FN       = _fullFn( F.HashesHexFields.HASH_VALUE_FN )
+
+      def FM_SIZE_B_FN             = _fullFn( F.SIZE_B_FN )
+
+      def FM_IS_ORIGINAL_FN        = _fullFn( F.IS_ORIGINAL_FN )
+
     }
 
   }
 
 
   /** Поддержка JSON для сериализации-десериализации тела документа elasticsearch. */
-  val FORMAT_DATA: OFormat[MEdgeMedia] = {
+  implicit def edgeMediaJson: OFormat[MEdgeMedia] = {
     val F = Fields
     (
-      (__ \ F.Storage.STORAGE_FN).format[MStorage] and
-      (__ \ F.FileMeta.FILE_META_FN).format[MFileMeta] and
-      (__ \ F.PictureMeta.PICTURE_META_FN).formatNullable[MPictureMeta]
+      (__ \ F.STORAGE_FN).format[MStorageInfo] and
+      (__ \ F.FILE_META_FN).format[MFileMeta] and
+      (__ \ F.PICTURE_META_FN).formatNullable[MPictureMeta]
         .inmap[MPictureMeta](
           EmptyUtil.opt2ImplMEmptyF(MPictureMeta),
           EmptyUtil.implEmpty2OptF[MPictureMeta]
@@ -79,15 +78,9 @@ object MEdgeMedia
     import dsl._
     val F = Fields
     Json.obj(
-      F.FileMeta.FILE_META_FN -> FObject.plain(
-        enabled     = someTrue,
-        properties  = Some( MFileMeta.esMappingProps ),
-      ),
-      F.Storage.STORAGE_FN -> FKeyWord.indexedJs,
-      F.PictureMeta.PICTURE_META_FN -> FObject.plain(
-        enabled     = someTrue,
-        properties  = Some( MPictureMeta.esMappingProps ),
-      ),
+      F.FILE_META_FN -> FObject.plain( MFileMeta ),
+      F.STORAGE_FN   -> FObject.plain( MStorageInfo ),
+      F.PICTURE_META_FN -> FObject.plain( MPictureMeta ),
     )
   }
 
@@ -107,7 +100,7 @@ object MEdgeMedia
   * @param picture Метаданные картинки, если это картинка.
   */
 case class MEdgeMedia(
-                       storage          : MStorage,
+                       storage          : MStorageInfo,
                        file             : MFileMeta,
                        picture          : MPictureMeta        = MPictureMeta.empty,
                      )

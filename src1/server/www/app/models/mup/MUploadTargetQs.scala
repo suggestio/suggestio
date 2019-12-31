@@ -2,6 +2,7 @@ package models.mup
 
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.n2.media.storage.MAssignedStorage
+import io.suggest.model.n2.node.MNodeType
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.xplay.qsb.QueryStringBindableImpl
@@ -25,6 +26,7 @@ object MUploadTargetQs extends SecretKeyInit {
     val VALID_TILL_FN     = "c"
     val STORAGE_FN        = "s"
     val COLOR_DETECT_FN   = "l"
+    val NODE_TYPE_FN      = "n"
 
     val SIGNATURE_FN      = "z"
 
@@ -43,7 +45,8 @@ object MUploadTargetQs extends SecretKeyInit {
                                  fileHandlerOptB    : QueryStringBindable[Option[MUploadFileHandler]],
                                  assignedStorageB   : QueryStringBindable[MAssignedStorage],
                                  strOptB            : QueryStringBindable[Option[String]],
-                                 cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]]
+                                 cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]],
+                                 nodeTypeB          : QueryStringBindable[MNodeType],
                                 ): QueryStringBindable[MUploadTargetQs] = {
     new QueryStringBindableImpl[MUploadTargetQs] {
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
@@ -60,6 +63,7 @@ object MUploadTargetQs extends SecretKeyInit {
           validTillE        <- longB.bind             ( k(F.VALID_TILL_FN),   params )
           storageE          <- assignedStorageB.bind  ( k(F.STORAGE_FN),      params )
           colorDetectE      <- cdArgsOptB.bind        ( k(F.COLOR_DETECT_FN), params )
+          nodeTypeE         <- nodeTypeB.bind         ( k(F.NODE_TYPE_FN),    params )
         } yield {
           for {
             fileProps       <- filePropsE
@@ -68,6 +72,7 @@ object MUploadTargetQs extends SecretKeyInit {
             validTill       <- validTillE
             storage         <- storageE
             colorDetect     <- colorDetectE
+            nodeType        <- nodeTypeE
           } yield {
             MUploadTargetQs(
               fileProps     = fileProps,
@@ -75,7 +80,8 @@ object MUploadTargetQs extends SecretKeyInit {
               personId      = personIdOpt,
               validTillS    = validTill,
               storage       = storage,
-              colorDetect   = colorDetect
+              colorDetect   = colorDetect,
+              nodeType      = nodeType,
             )
           }
         }
@@ -92,7 +98,8 @@ object MUploadTargetQs extends SecretKeyInit {
           strOptB.unbind            ( k(F.PERSON_ID_FN),        value.personId    ),
           longB.unbind              ( k(F.VALID_TILL_FN),       value.validTillS  ),
           assignedStorageB.unbind   ( k(F.STORAGE_FN),          value.storage     ),
-          cdArgsOptB.unbind         ( k(F.COLOR_DETECT_FN),     value.colorDetect )
+          cdArgsOptB.unbind         ( k(F.COLOR_DETECT_FN),     value.colorDetect ),
+          nodeTypeB.unbind          ( k(F.NODE_TYPE_FN),        value.nodeType    ),
         )
         // Подписать это всё.
         getQsbSigner(key)
@@ -114,6 +121,7 @@ object MUploadTargetQs extends SecretKeyInit {
 
   * @param colorDetect Запустить MainColorDetector после.
   *                    Значение -- кол-во цветов, которые надо отправить на клиент.
+  * @param nodeType Тип создаваемого узла.
   */
 case class MUploadTargetQs(
                             fileProps   : MFile4UpProps,
@@ -121,5 +129,6 @@ case class MUploadTargetQs(
                             personId    : Option[String],
                             validTillS  : Long,
                             storage     : MAssignedStorage,
-                            colorDetect : Option[MColorDetectArgs]
+                            colorDetect : Option[MColorDetectArgs],
+                            nodeType    : MNodeType,
                           )
