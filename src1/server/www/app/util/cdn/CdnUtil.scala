@@ -274,7 +274,7 @@ class CdnUtil @Inject() (
       fileNode  <- fileNodes.iterator
       nodeId    <- fileNode.id.iterator
       fileEdge  <- fileNode.edges
-        .withoutPredicateIter( MPredicates.File )
+        .withPredicateIter( MPredicates.File )
       edgeMedia <- fileEdge.media.iterator
     } yield {
       (nodeId, edgeMedia.storage)
@@ -331,17 +331,16 @@ class CdnUtil @Inject() (
         throw new IllegalArgumentException("External calls cannot be here. Check code, looks like this method called twice: " + ext)
       case _ =>
         def logPrefix = s"forMediaCall($mediaIds):"
-        val newCallIter = for {
+        (for {
           mediaId <- mediaIds.iterator
-          hosts   <- mediaHostsMap.get(mediaId)
+          hosts   <- mediaHostsMap.get( mediaId )
           host    <- chooseMediaHost(mediaIds.last, hosts)
         } yield {
           val url = distNodeCdnUrlNoCheck(host, call)
           LOGGER.trace(s"$logPrefix URL gen ok\n mediaId = $mediaId\n host = $host\n url => $url\n mediaHosts[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(", ")}")
           new ExternalCall( url )
-        }
-        // Отработать запасной вариант, когда внезапно нет хостов:
-        newCallIter
+        })
+          // Отработать запасной вариант, когда внезапно нет хостов:
           .buffered
           .headOption
           .getOrElse {

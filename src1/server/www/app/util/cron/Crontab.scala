@@ -42,7 +42,7 @@ class Crontab @Inject() (
 
   import mCommonDi._
 
-  def CRON_TASKS_ENABLED = false && current.configuration
+  def CRON_TASKS_ENABLED = current.configuration
     .getOptional[Boolean]("cron.enabled")
     .getOrElseTrue
 
