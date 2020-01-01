@@ -213,14 +213,12 @@ class MImgs3 @Inject() (
           id = Some( mimg.mediaId ),
           edges = MNodeEdges(
             out = {
-              val toOriginalEdge = Option.when( mimg.dynImgId.isOriginal ) {
-                MEdge(
-                  predicate = MPredicates.OwnedBy,
-                  nodeIds   = Set( mimg.dynImgId.origNodeId ),
-                )
-              }
               val fileEdge = MEdge(
                 predicate = MPredicates.File,
+                nodeIds = mimg.dynImgId
+                  .maybeOriginal
+                  .map(_.mediaId)
+                  .toSet,
                 media = Some(MEdgeMedia(
                   file = MFileMeta(
                     mime        = mime,
@@ -235,7 +233,7 @@ class MImgs3 @Inject() (
                 ))
               )
 
-              fileEdge :: toOriginalEdge.toList
+              fileEdge :: Nil
             }
           ),
           common = MNodeCommon(

@@ -483,7 +483,7 @@ class Upload @Inject()(
             ),
             edges = MNodeEdges(
               out = {
-                val e = MEdge(
+                val fileEdge = MEdge(
                   predicate = MPredicates.File,
                   media = Some( MEdgeMedia(
                     file = MFileMeta(
@@ -498,7 +498,18 @@ class Upload @Inject()(
                     storage = storageInfo,
                   )),
                 )
-                MNodeEdges.edgesToMap( e )
+
+                // Записываем id юзера, который первым загрузил этот файл.
+                val createdBy = request.user
+                  .personIdOpt
+                  .fold( List.empty[MEdge] ) { personId =>
+                    MEdge(
+                      predicate = MPredicates.CreatedBy,
+                      nodeIds   = Set( personId ),
+                    ) :: Nil
+                  }
+
+                MNodeEdges.edgesToMap1( fileEdge :: createdBy )
               },
             ),
           )

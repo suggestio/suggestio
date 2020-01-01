@@ -27,6 +27,10 @@ import scala.concurrent.{ExecutionContext, Future}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 31.12.2019 12:58
   * Description: Код для переноса данных из старой MMedia в MNode + File edge.
+  *
+  * TODO на 2020-01:
+  *      - Выполнить purgeMMedia(), проверить работоспособность. Выполнить чистку на мастере.
+  *      - Вычистить MMedia, этот файл и прочие останки MMedia из проекта.
   */
 final class Media2NodeMigration @Inject() (
                                             esModel   : EsModel,
@@ -131,7 +135,7 @@ final class Media2NodeMigration @Inject() (
               MNode.edges.modify { edges0 =>
                 MNodeEdges.out.set(
                   MNodeEdges.edgesToMap1(
-                    edges0.withoutPredicateIter( MPredicates.File ) ++ (fileEdge :: Nil)
+                    edges0.withoutPredicateIter( MPredicates.File, MPredicates.OwnedBy ) ++ (fileEdge :: Nil)
                   )
                 )(edges0)
               }
