@@ -27,41 +27,37 @@ class StatCronTasks @Inject()(
 
   private def statIndexUtil = current.injector.instanceOf[StatIndexUtil]
 
-  private def _CONF_KEY = "stat.cron.enabled"
-
   /**
     * Флаг активности этих cron-задач.
     * По умолчанию - выключено, т.е. надо вручную активировать в конфиге.
     */
-  def IS_ENABLED = configuration.getOptional[Boolean](_CONF_KEY).getOrElseFalse
+  override def isEnabled = configuration
+    .getOptional[Boolean]( "stat.cron.enabled" )
+    .getOrElseFalse
+
+  /** Создание новых stat-индексов и переключение на них */
+  private def _reNewCurrentIndexTask = MCronTask(
+    startDelay  = 10.second,
+    every       = 12.hours,
+    displayName = "stat inx renew"
+  ) { () =>
+    statIndexUtil.maybeReNewCurrIndex()
+  }
+
+  /** Удаление слишком старых индексов. */
+  private def _deleteTooOldIndex = MCronTask(
+    startDelay  = 1.minute,
+    every       = 24.hour,
+    displayName = "stat inx old delete"
+  ) { () =>
+    statIndexUtil.maybeDeleteTooOldIndex()
+  }
 
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(): Iterable[MCronTask] = {
-    if (IS_ENABLED) {
-      List(
-        // Создание новых stat-индексов и переключение на них
-        MCronTask(
-          startDelay  = 10.second,
-          every       = 12.hours,
-          displayName = "stat inx renew"
-        ) {
-          statIndexUtil.maybeReNewCurrIndex()
-        },
-
-        // Удаление слишком старых индексов.
-        MCronTask(
-          startDelay  = 1.minute,
-          every       = 24.hour,
-          displayName = "stat inx old delete"
-        ) {
-          statIndexUtil.maybeDeleteTooOldIndex()
-        }
-      )
-
-    } else {
-      LOGGER.info(s"cron module disabled: ${_CONF_KEY}")
-      Nil
-    }
+    _reNewCurrentIndexTask #::
+    _deleteTooOldIndex #::
+    LazyList.empty
   }
 
 }

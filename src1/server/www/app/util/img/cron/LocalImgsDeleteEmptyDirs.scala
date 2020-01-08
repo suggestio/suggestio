@@ -21,11 +21,11 @@ import scala.jdk.CollectionConverters._
   * Description: Периодически стирать пустые директории через Cron.
   * Внутри, для работы с ФС, используется java.nio.
   */
-class PeriodicallyDeleteEmptyDirs @Inject() (
-  mLocalImgs    : MLocalImgs,
-  asyncUtil     : AsyncUtil,
-  mCommonDi     : ICommonDi
-)
+class LocalImgsDeleteEmptyDirs @Inject()(
+                                          mLocalImgs    : MLocalImgs,
+                                          asyncUtil     : AsyncUtil,
+                                          mCommonDi     : ICommonDi
+                                        )
   extends ICronTasksProvider
   with MacroLogsImpl
 {
@@ -33,29 +33,25 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
   import mCommonDi._
 
 
-  private def EDD_CONF_PREFIX = "m.img.local.edd"
-
-  /** Включено ли периодическое удаление пустых директорий из под картинок? */
-  private def DELETE_EMPTY_DIRS_ENABLED = true
-
   /** Как часто инициировать проверку? */
   private def DELETE_EMPTY_DIRS_EVERY = 12.hours
 
   /** На сколько отодвигать старт проверки. */
   private def DELETE_EMPTY_DIRS_START_DELAY = 60.seconds
 
+  private def _deleteEmptyImgsTask = MCronTask(
+    startDelay  = DELETE_EMPTY_DIRS_START_DELAY,
+    every       = DELETE_EMPTY_DIRS_EVERY,
+    displayName = "m.img.local.edd",
+  ) { () =>
+    for (ex <- findAndDeleteEmptyDirsAsync().failed)
+      LOGGER.warn("cronTasks(): Failed to findAndDeleteEmptyDirs()", ex)
+  }
 
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(): Iterable[MCronTask] = {
-    if (DELETE_EMPTY_DIRS_ENABLED) {
-      val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
-        for (ex <- findAndDeleteEmptyDirsAsync().failed)
-          LOGGER.warn("cronTasks(): Failed to findAndDeleteEmptyDirs()", ex)
-      }
-      ct2 :: Nil
-    } else {
-      Nil
-    }
+    _deleteEmptyImgsTask #::
+    LazyList.empty
   }
 
   /** Выполнить в фоне всё необходимое. */

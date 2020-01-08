@@ -24,12 +24,12 @@ import scala.util.Success
   * Description: Надо периодичеки удалять директории с картинками, если они долго лежат,
   * а в permanent ещё/уже нет картинок с данным id.
   */
-class PeriodicallyDeleteNotExistingInPermanent @Inject() (
-  mLocalImgs  : MLocalImgs,
-  mImgs3      : MImgs3,
-  asyncUtil   : AsyncUtil,
-  mCommonDi   : ICommonDi
-)
+class LocalImgsDeleteNotExistingInPermanent @Inject()(
+                                                       mLocalImgs  : MLocalImgs,
+                                                       mImgs3      : MImgs3,
+                                                       asyncUtil   : AsyncUtil,
+                                                       mCommonDi   : ICommonDi
+                                                     )
   extends ICronTasksProvider
   with MacroLogsImpl
 {
@@ -37,9 +37,6 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
   import mCommonDi._
 
   private def DNEIP_CONF_PREFIX = "m.img.local.dneip"
-
-  /** Включено ли автоудаление директорий? */
-  private def DNEIP_ENABLED = true
 
   /** Задержка первого запуска после старта play. */
   private def DNEIP_START_DELAY = 15.seconds
@@ -50,17 +47,19 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
   private def DNEIP_OLD_DIR_AGE = 2.hours
 
 
+  private def _dneipCronTask = MCronTask(
+    startDelay  = DNEIP_START_DELAY,
+    every       = DNEIP_EVERY,
+    displayName = DNEIP_CONF_PREFIX,
+  ) { () =>
+    for (ex <- dneipFindAndDeleteAsync().failed)
+      LOGGER.error("DNEIP: Clean-up failed.", ex)
+  }
+
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(): Iterable[MCronTask] = {
-    if (DNEIP_ENABLED) {
-      val task = MCronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
-        for (ex <- dneipFindAndDeleteAsync().failed)
-          LOGGER.error("DNEIP: Clean-up failed.", ex)
-      }
-      task :: Nil
-    } else {
-      Nil
-    }
+    _dneipCronTask #::
+    LazyList.empty
   }
 
   def dneipFindAndDeleteAsync(): Future[_] = {

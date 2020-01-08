@@ -7,13 +7,10 @@ import scala.concurrent.duration.FiniteDuration
  * @param startDelay Задержка после старта перед первым исполнением задачи.
  * @param every Интервал повторения задачи.
  * @param displayName Отображаемое название задачи. Обычно, название вызываемого метода.
- * @param actionF Тело задачи.
+  *                    Должно быть уникально в рамках одного контейнера.
  */
 case class MCronTask(
                       startDelay    : FiniteDuration,
                       every         : FiniteDuration,
-                      displayName   : String
-                    )(actionF: => Unit)
-{
-  def run(): Unit = actionF
-}
+                      displayName   : String,
+                    )( val run: () => Unit )

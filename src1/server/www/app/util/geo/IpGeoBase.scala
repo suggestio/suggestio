@@ -23,30 +23,26 @@ class IpGeoBaseImport @Inject() (
 
   import mCommonDi._
 
-  /** Вернуть инстанс класса для импорта IP Geo Base.
-    * Т.к. этот инстанс нужен раз в день, то нет никакого смысла его хранить в голове. */
-  private def ipgbImporter = current.injector.instanceOf[IpgbImporter]
-
   /** Активация импорта требует явного включения этой функции в конфиге.
     * Отключена по умолчанию, т.к. она должна быть активна только на одной ноде. */
-  def IS_ENABLED: Boolean = configuration.getOptional[Boolean]("ipgeobase.import.enabled")
+  override def isEnabled: Boolean = configuration
+    .getOptional[Boolean]("ipgeobase.import.enabled")
     .getOrElseFalse
 
-  override def cronTasks(): Iterable[MCronTask] = {
-    if (IS_ENABLED) {
-      // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
-      val task = MCronTask(
-        startDelay  = 20.seconds,
-        every       = 1.day,
-        displayName = "updateIpBase()"
-      ) {
-        ipgbImporter.updateIpBase()
-      }
-      task :: Nil
+  private def _ipgbReImportTask = MCronTask(
+    // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
+    startDelay  = 20.seconds,
+    every       = 1.day,
+    displayName = "updateIpBase()"
+  ) { () =>
+    current.injector
+      .instanceOf[IpgbImporter]
+      .updateIpBase()
+  }
 
-    } else {
-      Nil
-    }
+  override def cronTasks(): Iterable[MCronTask] = {
+    _ipgbReImportTask #::
+    LazyList.empty
   }
 
 }
