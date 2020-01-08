@@ -5,7 +5,7 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MImgT
-import models.req.MMediaOptNodeReq
+import models.req.MDynImgReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
@@ -43,12 +43,12 @@ class CanDynImg @Inject() (
   /** Проверка доступа к динамической картинке.
     *
     * @param mimg DynImgId
-    * @return ActionBuilder, генерящия [[models.req.MMediaOptNodeReq]] для экшена.
+    * @return ActionBuilder, генерящия [[models.req.MDynImgReq]] для экшена.
     */
-  def apply(mimg: MImgT): ActionBuilder[MMediaOptNodeReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MMediaOptNodeReq] {
+  def apply(mimg: MImgT): ActionBuilder[MDynImgReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MDynImgReq] {
 
-      override def invokeBlock[A](request: Request[A], block: MMediaOptNodeReq[A] => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request: Request[A], block: MDynImgReq[A] => Future[Result]): Future[Result] = {
 
         /** Ответ клиенту, когда картинка не найдена или недоступна. */
         def _imageNotFoundThrow = throw HttpResultingException(
@@ -126,7 +126,7 @@ class CanDynImg @Inject() (
               // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
               case Right(storageInfo) =>
                 LOGGER.trace(s"$logPrefix Passed. Storage=$storageInfo respMedia=${respMediaOpt.orNull}")
-                val req1 = MMediaOptNodeReq(
+                val req1 = MDynImgReq(
                   derivedOpt        = respMediaOpt,
                   storageInfo       = storageInfo,
                   mnode             = nodeOrig,

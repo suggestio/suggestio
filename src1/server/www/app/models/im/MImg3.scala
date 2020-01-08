@@ -501,19 +501,6 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     pr.get
   }
 
-  /** Извлечение данных картинки из MMedia. */
-  def apply(mmedia: MMedia): MImg3 = {
-    val dynFmt = mmedia.file.imgFormatOpt.get
-    // TODO Безопасно ли? По идее да, но лучше потестить или использовать какие-то данные из иных мест.
-    val mimg0 = apply( mmedia.id.get )
-    if (mimg0.dynImgId.dynFormat !=* dynFmt) {
-      MImg3.dynImgId
-        .composeLens( MDynImgId.dynFormat )
-        .set( dynFmt )(mimg0)
-    } else {
-      mimg0
-    }
-  }
 
   /** Сброка инстанса MImg3 на основе эджа. */
   def fromEdge(nodeId: String, e: MEdge): Option[MImg3] = {

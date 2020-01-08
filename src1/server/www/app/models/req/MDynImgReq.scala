@@ -12,7 +12,7 @@ import play.api.mvc.Request
   * Description: Интерфейс абстрактной модели реквеста за MMedia.
   */
 
-/** Модель реквеста с данными запроса к MMedia.
+/** Модель реквеста с данными запроса к dyn-картинке, которой может ещё пока не существовать.
   *
   * @param derivedOpt Опциональное выведенное значение.
   * @param mnode Узел, соотносящийся с MMedia.
@@ -20,13 +20,13 @@ import play.api.mvc.Request
   * @param request Исходный HTTP-реквест.
   * @tparam A Тип body реквеста.
   */
-case class MMediaOptNodeReq[A](
-                                derivedOpt               : Option[MNode],
-                                edgeMedia                : MEdgeMedia,
-                                storageInfo              : MSwfsFidInfo,
-                                override val mnode       : MNode,
-                                override val user        : ISioUser,
-                                override val request     : Request[A]
-                              )
+case class MDynImgReq[A](
+                          derivedOpt               : Option[MNode],
+                          edgeMedia                : MEdgeMedia,
+                          storageInfo              : MSwfsFidInfo,
+                          override val mnode       : MNode,
+                          override val user        : ISioUser,
+                          override val request     : Request[A]
+                        )
   extends MReqWrap[A]
   with INodeReq[A]

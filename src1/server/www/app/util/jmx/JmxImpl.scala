@@ -1,7 +1,6 @@
 package util.jmx
 
 import javax.inject.Inject
-import io.suggest.model.n2.media.MMediasJmx
 import io.suggest.model.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx
 import models.event.MEventsJmx
@@ -21,7 +20,6 @@ import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
-import util.compat.Media2NodeMigrationJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
 
@@ -35,7 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 case class JmxImpl @Inject()(
-                               mMediasJmx                    : MMediasJmx,
                                siowebEsModelJmx              : SiowebEsModelJmx,
                                advRcvrsUtilJmx               : AdvRcvrsUtilJmx,
                                mCalendarJmx                  : MCalendarJmx,
@@ -56,7 +53,6 @@ case class JmxImpl @Inject()(
                                bill2UtilJmx                  : Bill2UtilJmx,
                                tfDailyUtilJmx                : TfDailyUtilJmx,
                                nodesUtilJmx                  : NodesUtilJmx,
-                               media2NodeMigrationJmx        : Media2NodeMigrationJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext,
                              )
