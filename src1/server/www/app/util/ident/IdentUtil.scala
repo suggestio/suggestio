@@ -6,7 +6,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import models.mproj.ICommonDi
 import models.usr.MSuperUsers
 import play.api.mvc._
@@ -35,7 +35,7 @@ class IdentUtil @Inject() (
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
 
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
-    val msearch = new MNodeSearchDfltImpl {
+    val msearch = new MNodeSearch {
       override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           nodeIds     = personId :: Nil,
@@ -88,7 +88,7 @@ class IdentUtil @Inject() (
         // TODO Отправить на форму регистрации, если логин через внешнего id прова.
         for {
           n <- mNodes.dynExists {
-            new MNodeSearchDfltImpl {
+            new MNodeSearch {
               override def limit = 1
               override val withIds = personId :: Nil
               override val outEdges: Seq[Criteria] = {

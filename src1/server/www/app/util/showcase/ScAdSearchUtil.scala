@@ -8,7 +8,7 @@ import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -145,7 +145,7 @@ class ScAdSearchUtil @Inject() (
         generation = args.search.genOpt.getOrElse(1L),
         weight     = Some(0.0000001F)
       )
-      val normalSearch = new MNodeSearchDfltImpl {
+      val normalSearch = new MNodeSearch {
         override def outEdges = _outEdges
         override def nodeTypes = _nodeTypes
         override def randomSort = Some(_mrs)
@@ -186,7 +186,7 @@ class ScAdSearchUtil @Inject() (
       // Собрать и вернуть результат.
       // Пока что всё работает синхронно.
       // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
-      new MNodeSearchDfltImpl {
+      new MNodeSearch {
         override def limit = _limit
         override def offset = _offset
         override def nodeTypes = _nodeTypes
@@ -207,7 +207,7 @@ class ScAdSearchUtil @Inject() (
         .toSet
       // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
       val bcnUidsClearedFut = mNodes.dynSearchIds(
-        new MNodeSearchDfltImpl {
+        new MNodeSearch {
           override def withIds    = uids.toSeq
           override def limit      = uids.size
           override def nodeTypes  = MNodeTypes.BleBeacon :: Nil

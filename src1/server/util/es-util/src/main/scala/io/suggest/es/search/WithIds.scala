@@ -11,7 +11,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait WithIds extends DynSearchArgs with IEsTypes {
 
   /** Искать только результаты, имеющие указанные _id. */
-  def withIds: Seq[String]
+  def withIds: Seq[String] = Nil
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -43,10 +43,4 @@ trait WithIds extends DynSearchArgs with IEsTypes {
     fmtColl2sb("withIds", withIds, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация [[WithIds]]. */
-trait WithIdsDflt extends WithIds {
-  override def withIds: Seq[String] = Nil
 }

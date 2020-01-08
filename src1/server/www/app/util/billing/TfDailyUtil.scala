@@ -23,7 +23,7 @@ import MPrice.HellImplicits.AmountMonoid
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.bill.tariff.MNodeTariffs
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.util.JmxBase
 import monocle.Traversal
 import scalaz._
@@ -457,7 +457,7 @@ class TfDailyUtil @Inject()(
 
     mNodes
       .source[MNode](
-        searchQuery = new MNodeSearchDfltImpl {
+        searchQuery = new MNodeSearch {
           override val withoutIds = bill2Conf.CBCA_NODE_ID :: Nil
           // TODO Не работает фильтрация по валюте тарифа, надо разобраться.
           //override def tfDailyCurrencies = Some( Nil )

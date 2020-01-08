@@ -6,7 +6,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
@@ -110,7 +110,7 @@ class CanUseNodeInvite @Inject()(
 
             // Нужно поискать юзера, который вообще владеет подобным email.
             existsingUsersWithEmail <- mNodes.dynSearch {
-              new MNodeSearchDfltImpl {
+              new MNodeSearch {
                 override val outEdges: Seq[Criteria] = {
                   val cr = Criteria(
                     predicates = MPredicates.Ident.Email :: Nil,

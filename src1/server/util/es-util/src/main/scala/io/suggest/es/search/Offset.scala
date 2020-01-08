@@ -6,18 +6,12 @@ import org.elasticsearch.action.search.SearchRequestBuilder
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 14.09.15 17:38
+ * Description: Поддержка поля offset для сдвига в возвращаемых результатах запроса.
  */
-
-/** Интерфейс для поля offset: Int. */
-trait IOffset {
+trait Offset extends DynSearchArgs {
 
   /** Абсолютный сдвиг в возвращаемых результатах поиска. */
-  def offset: Int
-}
-
-
-/** Поддержка поля offset для сдвига в возвращаемых результатах запроса. */
-trait Offset extends DynSearchArgs with IOffset {
+  def offset: Int = 0
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
@@ -29,10 +23,4 @@ trait Offset extends DynSearchArgs with IOffset {
   }
   override def sbInitSize: Int = super.sbInitSize + 16
 
-}
-
-
-/** Выставить дефолтовое значение оффсета.  */
-trait OffsetDflt extends Offset {
-  override def offset: Int = 0
 }

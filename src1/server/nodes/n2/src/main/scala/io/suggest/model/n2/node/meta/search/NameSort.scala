@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta.search
 
-import io.suggest.es.search.{NameSortBase, NameSortBaseDflt}
+import io.suggest.es.search.NameSortBase
 import io.suggest.model.n2.node.MNodeFields
 
 /**
@@ -12,8 +12,3 @@ import io.suggest.model.n2.node.MNodeFields
 trait NameSort extends NameSortBase {
   override protected def _NAME_FN = MNodeFields.Meta.BASIC_NAME_SHORT_NOTOK_FN
 }
-
-
-trait NameSortDflt
-  extends NameSort
-  with NameSortBaseDflt

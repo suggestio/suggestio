@@ -9,7 +9,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl}
@@ -52,7 +52,7 @@ class ScSitemapsXml @Inject() (
    * и поточность, а не на скорость исполнения.
    */
   override def siteMapXmlSrc(): Source[SiteMapUrl, _] = {
-    val adSearch = new MNodeSearchDfltImpl {
+    val adSearch = new MNodeSearch {
 
       override def isEnabled = Some(true)
 

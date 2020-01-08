@@ -13,7 +13,7 @@ import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
@@ -100,7 +100,7 @@ class GeoTagsUtil @Inject() (
   def findTagNode(tagFace: String): Future[Option[MNode]] = {
     lazy val logPrefix = s"findTagNode($tagFace):"
 
-    val msearch = new MNodeSearchDfltImpl {
+    val msearch = new MNodeSearch {
       override def outEdges: Seq[Criteria] = {
         val tcr = TagCriteria(
           face      = tagFace,
@@ -527,7 +527,7 @@ class GeoTagsUtil @Inject() (
   }
 
 
-  private class AllTagNodesSearch extends MNodeSearchDfltImpl {
+  private class AllTagNodesSearch extends MNodeSearch {
     override def nodeTypes = MNodeTypes.Tag :: Nil
   }
 

@@ -6,19 +6,12 @@ import org.elasticsearch.action.search.SearchRequestBuilder
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 14.09.15 17:29
- * Description:
+ * Description: DynSearch-аддон для ограничевания количества возвращаемых результатов поиска.
  */
-
-/** Интерфейс для поля limit: Int. */
-trait ILimit {
+trait Limit extends DynSearchArgs {
 
   /** Макс.кол-во результатов. */
-  def limit: Int
-}
-
-
-/** DynSearch-аддон для ограничевания количества возвращаемых результатов поиска. */
-trait Limit extends DynSearchArgs with ILimit {
+  def limit: Int = 10
 
   /** Жесткое ограничение сверху по кол-ву результатов поиска. По идее, оно не должно влиять на выдачу никогда.
     * Нужно для защиты от ddos при недостаточной проверке значения maxResults на верхнем уровне. */
@@ -39,9 +32,4 @@ trait Limit extends DynSearchArgs with ILimit {
   }
   override def sbInitSize: Int = super.sbInitSize + 16
 
-}
-
-
-trait LimitDflt extends Limit {
-  override def limit: Int = 10
 }

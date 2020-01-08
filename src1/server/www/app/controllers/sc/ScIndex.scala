@@ -15,7 +15,7 @@ import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
@@ -149,7 +149,7 @@ trait ScIndex
           search = bcnSearch,
           must   = IMust.MUST
         )
-        val msearch = new MNodeSearchDfltImpl {
+        val msearch = new MNodeSearch {
           override def subSearches  = subSearch :: Nil
           override def isEnabled    = Some(true)
           override def nodeTypes    = MNodeTypes.AdnNode :: Nil
@@ -199,7 +199,7 @@ trait ScIndex
         }
 
         val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
-          val msearch = new MNodeSearchDfltImpl {
+          val msearch = new MNodeSearch {
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[Criteria] = {

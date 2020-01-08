@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, TryUpdateBuilder}
@@ -248,7 +248,7 @@ class AdvRcvrsUtil @Inject()(
     */
   final def resetAllReceivers(): Future[Int] = {
     lazy val logPrefix = s"resetAllReceivers(${System.currentTimeMillis}):"
-    val search = new MNodeSearchDfltImpl {
+    val search = new MNodeSearch {
       override def nodeTypes = MNodeTypes.Ad :: Nil
     }
     mNodes.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
@@ -318,7 +318,7 @@ class AdvRcvrsUtil @Inject()(
 
   /** Поиск под-ресиверов по отношению к указанным ресиверам. */
   def subRcvrsSearch(parentIds: Seq[String], onlyWithIds: Seq[String] = Nil, limit1: Int = 100 ): MNodeSearch = {
-    new MNodeSearchDfltImpl {
+    new MNodeSearch {
       override def isEnabled = Some(true)
       override def outEdges: Seq[Criteria] = {
         val cr = Criteria(

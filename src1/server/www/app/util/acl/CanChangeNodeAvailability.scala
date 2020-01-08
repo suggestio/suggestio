@@ -7,7 +7,7 @@ import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MNodeReq}
@@ -74,7 +74,7 @@ class CanChangeNodeAvailability @Inject() (
 
       // Поискать какие-либо подчиненные узлы, указывающие на этот узел.
       val hasRefNodesFut = mNodes.dynCount {
-        new MNodeSearchDfltImpl {
+        new MNodeSearch {
           override def outEdges: Seq[Criteria] = {
             val cr = Criteria(
               nodeIds    = nodeId :: Nil

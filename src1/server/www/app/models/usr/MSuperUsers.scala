@@ -11,7 +11,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import play.api.Configuration
 import play.api.inject.Injector
 
@@ -90,7 +90,7 @@ class MSuperUsers @Inject()(
 
       // Найти текущие узлы, ассоциированные с указанными мыльниками:
       userNodes <- mNodes.dynSearch {
-        new MNodeSearchDfltImpl {
+        new MNodeSearch {
           override val nodeTypes = MNodeTypes.Person :: Nil
           override val outEdges: Seq[Criteria] = {
             val cr = Criteria(

@@ -18,7 +18,7 @@ trait RandomSort extends DynSearchArgs {
    * @return None, то значит random-сортировка отключена.
    *         Some() с random seed, которое будет использовано для сортировки.
    */
-  def randomSort: Option[MRandomSortData]
+  def randomSort: Option[MRandomSortData] = None
 
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
     * Здесь можно навешивать дополнительные фильтры, выполнять pre- и post-процессинг запроса. */
@@ -50,11 +50,6 @@ trait RandomSort extends DynSearchArgs {
     fmtColl2sb("randomSort", randomSort, super.toStringBuilder)
   }
 
-}
-
-/** Дефолтовая реализация [[RandomSort]]. */
-trait RandomSortDflt extends RandomSort {
-  override def randomSort: Option[MRandomSortData] = None
 }
 
 

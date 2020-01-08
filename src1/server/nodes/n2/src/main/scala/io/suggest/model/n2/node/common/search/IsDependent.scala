@@ -13,7 +13,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait IsDependent extends DynSearchArgs {
 
   /** Критерий для поиска/фильтрации. */
-  def isDependent: Option[Boolean]
+  def isDependent: Option[Boolean] = None
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qbOpt0 = super.toEsQueryOpt
@@ -52,10 +52,4 @@ trait IsDependent extends DynSearchArgs {
     fmtColl2sb("isDepend", isDependent, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация поискового аддона [[IsDependent]]. */
-trait IsDependentDflt extends IsDependent {
-  override def isDependent: Option[Boolean] = None
 }

@@ -16,7 +16,7 @@ import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MSc3IndexResp
@@ -89,7 +89,7 @@ class AdvGeoRcvrsUtil @Inject()(
     * @return Инстанс MNodeSearch.
     */
   def onMapRcvrsSearch(limit1: Int, onlyWithIds: Seq[String] = Nil): MNodeSearch = {
-    new MNodeSearchDfltImpl {
+    new MNodeSearch {
       override def outEdges: Seq[Criteria] = {
         val crNodeLoc = Criteria(
           predicates  = MPredicates.NodeLocation :: Nil
@@ -505,7 +505,7 @@ class AdvGeoRcvrsUtil @Inject()(
 
     val pred = MPredicates.NodeLocation
 
-    val geoLocNodesSearch = new MNodeSearchDfltImpl {
+    val geoLocNodesSearch = new MNodeSearch {
       override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           predicates = pred :: Nil,

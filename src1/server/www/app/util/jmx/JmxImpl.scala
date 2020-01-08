@@ -59,8 +59,6 @@ case class JmxImpl @Inject()(
   extends MacroLogsImplLazy
 {
 
-  import LOGGER._
-
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private def JMX_MODELS = {
     productIterator
@@ -92,9 +90,9 @@ case class JmxImpl @Inject()(
         srv.registerMBean(jmxMB, JmxBase.string2objectName(name) )
       } catch {
         case _: javax.management.InstanceAlreadyExistsException =>
-          warn("Instance already registered: " + jmxMB)
+          LOGGER.warn(s"Instance already registered: $jmxMB")
         case ex: Exception =>
-          error("Cannot register " + name, ex)
+          LOGGER.error(s"Cannot register $name", ex)
       }
     }
   }
@@ -108,9 +106,9 @@ case class JmxImpl @Inject()(
         srv.unregisterMBean( JmxBase.string2objectName(name) )
       } catch {
         case _: javax.management.InstanceNotFoundException =>
-          warn("JMX instance not registered: " + jmxMB)
+          LOGGER.warn(s"JMX instance not registered: $jmxMB")
         case ex: Exception =>
-          warn("Cannot unregister " + name, ex)
+          LOGGER.warn(s"Cannot unregister $name", ex)
       }
     }
   }

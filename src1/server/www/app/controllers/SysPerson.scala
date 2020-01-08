@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.usr._
@@ -48,7 +48,7 @@ class SysPerson @Inject() (
   def index = csrf.AddToken {
     isSu().async { implicit request =>
       val personsCntFut: Future[Long] = {
-        val psearch = new MNodeSearchDfltImpl {
+        val psearch = new MNodeSearch {
           override def nodeTypes  = Seq(MNodeTypes.Person)
           override def limit      = Int.MaxValue    // TODO Надо ли оно тут вообще?
         }
@@ -56,7 +56,7 @@ class SysPerson @Inject() (
       }
 
       val identsCntFut = mNodes.dynCount(
-        new MNodeSearchDfltImpl {
+        new MNodeSearch {
           override def outEdges: Seq[Criteria] = {
             val cr = Criteria(
               predicates = MPredicates.Ident :: Nil
@@ -93,7 +93,7 @@ class SysPerson @Inject() (
   def allIdents(theOffset: Int) = csrf.AddToken {
     isSu().async { implicit request =>
       val theLimit = 5
-      val msearch = new MNodeSearchDfltImpl {
+      val msearch = new MNodeSearch {
         override def limit = theLimit
         override def offset = theOffset
         override def outEdges: Seq[Criteria] = {
@@ -132,7 +132,7 @@ class SysPerson @Inject() (
   def showPerson(personId: String) = csrf.AddToken {
     isSuPerson(personId).async { implicit request =>
       // Сразу запускаем поиск узлов: он самый тяжелый тут.
-      val msearch = new MNodeSearchDfltImpl {
+      val msearch = new MNodeSearch {
         override val outEdges = {
           val cr = Criteria(
             nodeIds    = personId :: Nil,

@@ -14,7 +14,7 @@ trait NodeTypes extends DynSearchArgs {
 
   /** Искомые типы узлов.
     * Если Seq(null), то будет поиск документов без сохранного значения. */
-  def nodeTypes: Seq[MNodeType]
+  def nodeTypes: Seq[MNodeType] = Nil
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qbOpt0 = super.toEsQueryOpt
@@ -53,10 +53,4 @@ trait NodeTypes extends DynSearchArgs {
     fmtColl2sb("nodeTypes", nodeTypes, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация поисковых полей [[NodeTypes]] */
-trait NodeTypesDflt extends NodeTypes {
-  override def nodeTypes: Seq[MNodeType] = Nil
 }

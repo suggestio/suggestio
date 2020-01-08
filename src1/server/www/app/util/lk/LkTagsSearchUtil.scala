@@ -8,7 +8,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.tags.MTagsSearchQs
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,7 +52,7 @@ class LkTagsSearchUtil @Inject() (
       tags        = tcrOpt.toSeq
     )
 
-    val r = new MNodeSearchDfltImpl {
+    val r = new MNodeSearch {
       override def outEdges  = _edgeSearchCr :: Nil
       override def limit     = _limit
       override def offset    = _offset

@@ -15,10 +15,10 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait AdnRights extends DynSearchArgs {
 
   /** Права, которые должны быть у узла. */
-  def withAdnRights: Seq[MAdnRight]
+  def withAdnRights: Seq[MAdnRight] = Nil
 
   /** Вместо must использовать mustNot по отношению к заданным withAdnRights. */
-  def adnRightsMustOrNot: Boolean
+  def adnRightsMustOrNot: Boolean = true
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -61,11 +61,4 @@ trait AdnRights extends DynSearchArgs {
     fmtColl2sb("withAdnRights", withAdnRights, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация абстрактных кусков [[AdnRights]]. */
-trait AdnRightsDflt extends AdnRights {
-  override def withAdnRights: Seq[MAdnRight] = Seq.empty
-  override def adnRightsMustOrNot: Boolean = true
 }

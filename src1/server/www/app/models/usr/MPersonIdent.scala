@@ -6,7 +6,7 @@ import io.suggest.es.model._
 import io.suggest.ext.svc.MExtService
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.ScryptUtil
 import io.suggest.text.Validators
@@ -41,7 +41,7 @@ class MPersonIdentModel @Inject()(
         * @return Фьючерс с опционально-найденым юзером-узлом.
         */
       def getByUserIdProv(extService: MExtService, remoteUserId: String): Future[Option[MNode]] = {
-        val msearch = new MNodeSearchDfltImpl {
+        val msearch = new MNodeSearch {
           override def nodeTypes =
             MNodeTypes.Person :: Nil
           override def limit = 1
@@ -64,7 +64,7 @@ class MPersonIdentModel @Inject()(
         */
       def findUsersByEmailPhoneWithPw(emailOrPhone: String): Future[LazyList[MNode]] = {
         mNodes.dynSearch {
-          new MNodeSearchDfltImpl {
+          new MNodeSearch {
             // По идее, тут не более одного.
             override def limit = 2
             override val testNode = OptionUtil.SomeBool.someFalse

@@ -13,7 +13,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait AdnIsTest extends DynSearchArgs {
 
   /** Искать/фильтровать по полю extra.adn.testNode. */
-  def testNode: Option[Boolean]
+  def testNode: Option[Boolean] = None
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -62,10 +62,4 @@ trait AdnIsTest extends DynSearchArgs {
     fmtColl2sb("testNode", testNode, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация абстрактных полей [[AdnIsTest]]. */
-trait AdnIsTestDflt extends AdnIsTest {
-  override def testNode: Option[Boolean] = None
 }

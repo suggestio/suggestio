@@ -408,7 +408,7 @@ object OutEdges extends MacroLogsImpl {
 trait OutEdges extends DynSearchArgs {
 
   /** Поиск/фильтрация по out-эджам согласно описанным критериям. */
-  def outEdges: Seq[Criteria]
+  def outEdges: Seq[Criteria] = Nil
 
 
   /** Накатить эти сложные критерии на query. */
@@ -452,10 +452,4 @@ trait OutEdges extends DynSearchArgs {
     fmtColl2sb("outEdges", outEdges, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация [[OutEdges]]. */
-trait OutEdgesDflt extends OutEdges {
-  override def outEdges: Seq[Criteria] = Nil
 }

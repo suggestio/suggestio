@@ -13,7 +13,7 @@ import org.elasticsearch.search.sort.SortOrder
   */
 trait DateCreatedSort extends DynSearchArgs {
 
-  def withDateCreatedSort: Option[SortOrder]
+  def withDateCreatedSort: Option[SortOrder] = None
 
   /**
    * Сборка search-реквеста. Можно переопределить чтобы добавить в реквест какие-то дополнительные вещи,
@@ -32,12 +32,5 @@ trait DateCreatedSort extends DynSearchArgs {
   override def toStringBuilder: StringBuilder = {
     fmtColl2sb("dateCreatedSort", withDateCreatedSort, super.toStringBuilder)
   }
-
-}
-
-
-trait DateCreatedSortDflt extends DateCreatedSort {
-
-  override def withDateCreatedSort: Option[SortOrder] = None
 
 }

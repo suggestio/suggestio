@@ -11,7 +11,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait ConstScore extends DynSearchArgs {
 
   /** Выставлять этот скор для всех результатов. */
-  def constScore: Option[Float]
+  def constScore: Option[Float] = None
 
   override def toEsQuery: QueryBuilder = {
     val q0 = super.toEsQuery
@@ -33,9 +33,4 @@ trait ConstScore extends DynSearchArgs {
     fmtColl2sb("constScore", constScore, super.toStringBuilder)
   }
 
-}
-
-/** Дефолтовая реализация [[ConstScore]]. */
-trait ConstScoreDflt extends ConstScore {
-  override def constScore: Option[Float] = None
 }

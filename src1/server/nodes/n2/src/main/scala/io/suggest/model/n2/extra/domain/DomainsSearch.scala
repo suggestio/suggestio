@@ -12,12 +12,13 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 06.09.16 16:29
   * Description: Поиск доменных ключей.
+  * TODO Надо перенести домены в эджи. Modes - в флаги, dkeys - в теги.
   */
 trait DomainsSearch extends DynSearchArgs {
 
   /** Данные для поиска узла по домену и каким-то доменным характеристикам.
     * Списки с несколькими значениями объединяются через ИЛИ. */
-  def domains: Seq[DomainCriteria]
+  def domains: Seq[DomainCriteria] = Nil
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -64,11 +65,6 @@ trait DomainsSearch extends DynSearchArgs {
     }
   }
 
-}
-
-/** Дефолтовая реализация полей трейта [[DomainsSearch]]. */
-trait DomainsSearchDflt extends DomainsSearch {
-  override def domains: Seq[DomainCriteria] = Nil
 }
 
 

@@ -4,7 +4,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
@@ -74,7 +74,7 @@ class CanRecoverPw @Inject() (
 
         if (qsAgeSec > 0L && qsAgeSec <= 6.hours.toSeconds && qs.nodeId.isEmpty) {
           val searchPersonsFut = mNodes.dynSearch {
-            new MNodeSearchDfltImpl {
+            new MNodeSearch {
               override val nodeTypes = MNodeTypes.Person :: Nil
               override val outEdges: Seq[Criteria] = {
                 val cr = Criteria(

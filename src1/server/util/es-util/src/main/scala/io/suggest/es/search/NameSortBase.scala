@@ -16,7 +16,7 @@ trait NameSortBase extends DynSearchArgs {
   protected def _NAME_FN: String
 
   /** Сортировать по названиям? */
-  def withNameSort: Option[SortOrder]
+  def withNameSort: Option[SortOrder] = None
 
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
@@ -45,9 +45,4 @@ trait NameSortBase extends DynSearchArgs {
     fmtColl2sb("nameSort", withNameSort, super.toStringBuilder)
   }
 
-}
-
-
-trait NameSortBaseDflt extends NameSortBase {
-  override def withNameSort: Option[SortOrder] = None
 }

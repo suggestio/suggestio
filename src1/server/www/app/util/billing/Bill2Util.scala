@@ -30,7 +30,7 @@ import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
 import japgolly.univeq._
@@ -1964,7 +1964,7 @@ class Bill2Util @Inject() (
 
     // Не ясно, даёт ли вынос source() за пределы for ускорение. По идее - нет.
     val src0 = mNodes.source[MNode](
-      searchQuery = new MNodeSearchDfltImpl {
+      searchQuery = new MNodeSearch {
         override def contractIdDefined = someTrue
       }.toEsQuery
     )

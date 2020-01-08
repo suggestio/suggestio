@@ -11,7 +11,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -127,7 +127,7 @@ class AdvGeoLocUtil @Inject() (
   /** Если вдруг не найдено размещений у текущей карточки, то поискать локации других карточек этого же продьюсера. */
   def getGeoPointFromProducer(producerIds: Seq[String], excludeAdIds: Seq[String]): Future[Option[MGeoPoint]] = {
     // Найти id всех карточек этого продьюсера
-    val prodAdsSearch = new MNodeSearchDfltImpl {
+    val prodAdsSearch = new MNodeSearch {
       override def nodeTypes = Seq( MNodeTypes.Ad )
       override def outEdges: Seq[Criteria] = {
         val cr = Criteria(

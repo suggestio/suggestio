@@ -8,7 +8,7 @@ import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc, MNodeGeoLevels}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeType, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 
 import scala.concurrent.Future
@@ -126,7 +126,7 @@ class ScSearchUtil @Inject()(
     // TODO with distance sort - актуально для списка результатов. Менее актуально для карты (но всё-таки тоже актуально).
 
     // Собрать итоговый поиск.
-    val r = new MNodeSearchDfltImpl {
+    val r = new MNodeSearch {
       override def outEdges  = edgesCrs
       override def limit     = _limit
       override def offset    = _offset

@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
@@ -231,7 +231,7 @@ class MdrUtil @Inject() (
         personId2EmailsMapFut = {
           mNodes
             .dynSearchSource {
-              new MNodeSearchDfltImpl {
+              new MNodeSearch {
                 override val withIds = personsMap.keySet.toSeq
                 override val nodeTypes = MNodeTypes.Person :: Nil
                 override val outEdges: Seq[Criteria] = {
@@ -653,7 +653,7 @@ class MdrUtil @Inject() (
 
   /** Аргументы для поиска узлов (карточек), требующих бесплатной модерации. */
   def freeMdrNodeSearchArgs(args: MdrSearchArgs, rcvrIds: Seq[String], limit1: Int): MNodeSearch = {
-    new MNodeSearchDfltImpl {
+    new MNodeSearch {
 
       /** Интересуют только карточки. */
       override def nodeTypes =

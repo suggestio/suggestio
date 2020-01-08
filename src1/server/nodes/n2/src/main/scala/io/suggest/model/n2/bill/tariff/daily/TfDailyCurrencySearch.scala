@@ -19,7 +19,7 @@ trait TfDailyCurrencySearch extends DynSearchArgs {
     *         Some([]) - пустой список внутри Some означает, что валюта не важна, главное чтобы она была.
     *         Some(...) - искать узлы, которые имеют только указанные валюты в тарифах.
     */
-  def tfDailyCurrencies: Option[Iterable[MCurrency]]
+  def tfDailyCurrencies: Option[Iterable[MCurrency]] = None
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -62,10 +62,4 @@ trait TfDailyCurrencySearch extends DynSearchArgs {
     fmtColl2sb("tfDailyCurrencies", tfDailyCurrencies.iterator.flatten, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализация [[TfDailyCurrencySearch]]. */
-trait TfDailyCurrencySearchDflt extends TfDailyCurrencySearch {
-  override def tfDailyCurrencies: Option[Iterable[MCurrency]] = None
 }

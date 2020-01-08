@@ -13,7 +13,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait ShownTypeId extends DynSearchArgs {
 
   /** Искать/фильтровать по shownTypeId узла. */
-  def shownTypeIds: Seq[String]
+  def shownTypeIds: Seq[String] = Nil
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -44,9 +44,4 @@ trait ShownTypeId extends DynSearchArgs {
   override def toStringBuilder: StringBuilder = {
     fmtColl2sb("shownTypeIds", shownTypeIds, super.toStringBuilder)
   }
-}
-
-
-trait ShownTypeIdDflt extends ShownTypeId {
-  override def shownTypeIds: Seq[String] = Nil
 }

@@ -15,7 +15,7 @@ trait FtsAll extends DynSearchArgs {
   private def qOptField = SioEsUtil.StdFns.FIELD_ALL
 
   /** Произвольный текстовый запрос, если есть. */
-  def qOpt: Option[String]
+  def qOpt: Option[String] = None
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
@@ -32,9 +32,4 @@ trait FtsAll extends DynSearchArgs {
     fmtColl2sb("qStr", qOptWithFn, super.toStringBuilder)
   }
 
-}
-
-
-trait FtsAllDflt extends FtsAll {
-  override def qOpt: Option[String] = None
 }

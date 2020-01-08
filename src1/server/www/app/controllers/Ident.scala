@@ -22,7 +22,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.csp.Csp
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
@@ -775,7 +775,7 @@ class Ident @Inject() (
           existingPersonNodeOpt <- DBIO.from {
             for {
               existingPersonNodes <- mNodes.dynSearch {
-                new MNodeSearchDfltImpl {
+                new MNodeSearch {
                   override def nodeTypes = MNodeTypes.Person :: Nil
                   override def outEdges: Seq[Criteria] = {
                     val cr = Criteria(
@@ -1022,7 +1022,7 @@ class Ident @Inject() (
             Future.successful( List.empty[String] )
           } else {
             mNodes.dynSearchIds {
-              new MNodeSearchDfltImpl {
+              new MNodeSearch {
                 override val nodeTypes = MNodeTypes.AdnNode :: Nil
                 override val outEdges: Seq[Criteria] = {
                   val cr = Criteria(

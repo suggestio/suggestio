@@ -12,7 +12,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -109,7 +109,7 @@ class LkAds @Inject() (
     // Макс кол-во карточек за один запрос.
     val maxAdsPerTime = LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST
 
-    val adsSearch0 = new MNodeSearchDfltImpl {
+    val adsSearch0 = new MNodeSearch {
       override val nodeTypes = MNodeTypes.Ad :: Nil
       override val outEdges  = {
         // Поиск по узлу-владельцу

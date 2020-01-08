@@ -13,7 +13,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait IsEnabled extends DynSearchArgs {
 
   /** Искать/фильтровать по галочки активности узла. */
-  def isEnabled: Option[Boolean]
+  def isEnabled: Option[Boolean] = None
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -42,10 +42,4 @@ trait IsEnabled extends DynSearchArgs {
     fmtColl2sb("isEnabled", isEnabled, super.toStringBuilder)
   }
 
-}
-
-
-/** Дефолтовая реализция аддона [[IsEnabled]]. */
-trait IsEnabledDflt extends IsEnabled {
-  override def isEnabled: Option[Boolean] = None
 }

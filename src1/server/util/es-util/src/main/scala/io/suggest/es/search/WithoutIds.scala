@@ -11,7 +11,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait WithoutIds extends DynSearchArgs with IEsTypes {
 
   /** Отбрасывать документы, имеющие указанные id'шники. */
-  def withoutIds: Seq[String]
+  def withoutIds: Seq[String] = Nil
 
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
     * Здесь можно навешивать дополнительные фильтры, выполнять pre- и post-процессинг запроса. */
@@ -40,9 +40,3 @@ trait WithoutIds extends DynSearchArgs with IEsTypes {
     fmtColl2sb("withoutIds", withoutIds, super.toStringBuilder)
   }
 }
-
-
-trait WithoutIdsDflt extends WithoutIds {
-  override def withoutIds: Seq[String] = Seq.empty
-}
-

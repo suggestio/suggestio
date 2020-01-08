@@ -4,7 +4,7 @@ import javax.inject.Inject
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.es.model.EsModel
@@ -56,7 +56,7 @@ class CanConfirmIdpReg @Inject() (
 
         } else {
           // Запустить подсчет имеющихся у юзера магазинов
-          val msearch = new MNodeSearchDfltImpl {
+          val msearch = new MNodeSearch {
             override def outEdges = {
               val cr = Criteria(
                 predicates  = MPredicates.OwnedBy :: Nil,
@@ -69,7 +69,7 @@ class CanConfirmIdpReg @Inject() (
           val pcntFut = mNodes.dynCount(msearch)
           // Запустить поиск имеющихся внешних идентов
           val hasExtIdentFut = mNodes.dynExists {
-            new MNodeSearchDfltImpl {
+            new MNodeSearch {
               override val withIds = personId :: Nil
               override val nodeTypes = MNodeTypes.Person :: Nil
               override val outEdges: Seq[Criteria] = {

@@ -8,7 +8,7 @@ import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
@@ -111,7 +111,7 @@ trait ScAdsTile
       LOGGER.trace(s"$logPrefix No ads found, will open from 404-node#${_nodeId404}")
 
       // Ищем карточки в узле-404 и их возвращаем:
-      val msearchAds404 = new MNodeSearchDfltImpl {
+      val msearchAds404 = new MNodeSearch {
         override val nodeTypes = MNodeTypes.Ad :: Nil
         override val outEdges: Seq[Criteria] = {
           val cr = Criteria(

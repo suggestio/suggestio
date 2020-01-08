@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.rsc.{MHostNameIndexed, MRscExtra}
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -123,7 +123,7 @@ class ExtRscUtil @Inject()(
     LOGGER.trace(s"$logPrefix Detected ${rscNodeId2UrlsMap.size} ext-videos from ${videoUrls.size} video URLs")
 
     // Запустить поиск узлов, хранящих данные по запрошенным видео.
-    val existVideoExtNodesSearch = new MNodeSearchDfltImpl {
+    val existVideoExtNodesSearch = new MNodeSearch {
       override def withIds    = rscNodeId2UrlsMap.keySet.toSeq
       // Фильтруем только по типу узла: если узел неожиданного типа живёт под ожидаемым id, пусть будет перезаписан.
       override def nodeTypes  = ntypes.children

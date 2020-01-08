@@ -6,7 +6,7 @@ import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.search.sort.SortOrder
 import util.FormUtil
@@ -28,7 +28,7 @@ class LkNodesUtil
   def SUB_NODES_LIMIT = 40
 
   def subNodesSearch(nodeId: String, offset1: Int = 0): MNodeSearch = {
-    new MNodeSearchDfltImpl {
+    new MNodeSearch {
       // Если вдруг понадобиться больше, то браузер должен будет подгрузить ещё отдельным запросом.
       override def limit  = SUB_NODES_LIMIT
       override def offset = offset1

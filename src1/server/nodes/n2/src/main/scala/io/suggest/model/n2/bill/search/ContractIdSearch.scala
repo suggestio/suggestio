@@ -14,10 +14,10 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait ContractIdSearch extends DynSearchArgs {
 
   /** contractId содержит любой из перечисленных id. */
-  def contractIds: Seq[Gid_t]
+  def contractIds: Seq[Gid_t] = Nil
 
   /** contractId содержит/не содержит какое-либо значение. */
-  def contractIdDefined: Option[Boolean]
+  def contractIdDefined: Option[Boolean] = None
 
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -56,10 +56,4 @@ trait ContractIdSearch extends DynSearchArgs {
     qbOpt
   }
 
-}
-
-
-trait ContractIdSearchDflt extends ContractIdSearch {
-  override def contractIds: Seq[Gid_t] = Nil
-  override def contractIdDefined: Option[Boolean] = None
 }

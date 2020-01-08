@@ -24,7 +24,7 @@ import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -132,7 +132,7 @@ class Upload @Inject()(
         for {
           // Поискать файл с такими параметрами в MMedia:
           fileSearchRes <- mNodes.dynSearch(
-            new MNodeSearchDfltImpl {
+            new MNodeSearch {
               // Тут по предикату - надо ли фильтровать?
               val crs = Criteria(
                 fileSizeB = upFileProps.sizeB :: Nil,

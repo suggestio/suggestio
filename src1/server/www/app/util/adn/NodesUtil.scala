@@ -16,7 +16,7 @@ import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
@@ -74,7 +74,7 @@ final class NodesUtil @Inject() (
 
   /** Собрать критерии поиска узлов, прямо принадлежащих текущему юзеру. */
   def personNodesSearch(personId: String, limit1: Int = 200, withoutIds1: Seq[String] = Nil): MNodeSearch = {
-    new MNodeSearchDfltImpl {
+    new MNodeSearch {
       override def outEdges = Seq(
         Criteria(
           nodeIds     = personId :: Nil,
@@ -196,7 +196,7 @@ final class NodesUtil @Inject() (
       // Собрать id карточек, относящиеся к заданным узлам-источникам.
       .flatMap { prodIds =>
         val _limit = Math.max(50, count * 2)
-        val dsa0 = new MNodeSearchDfltImpl {
+        val dsa0 = new MNodeSearch {
           override val nodeTypes = MNodeTypes.Ad :: Nil
           override val outEdges: Seq[Criteria] = {
             val cr = Criteria(
@@ -328,7 +328,7 @@ final class NodesUtil @Inject() (
               nodeIds     = parentNodeIdsCurrent.toSeq,
               predicates  = _predicates
             ) :: Nil
-            new MNodeSearchDfltImpl {
+            new MNodeSearch {
               override def outEdges = crs
               override def limit = perStepLimit
             }

@@ -20,7 +20,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.media.storage.IMediaStorages
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
@@ -380,7 +380,7 @@ final class DynImgUtil @Inject() (
           fileIsOriginal  = OptionUtil.SomeBool.someFalse,
           fileMimes       = MImgFmts.allMimesIter.toSeq,
         ) :: Nil
-        new MNodeSearchDfltImpl {
+        new MNodeSearch {
           override def outEdges = crs
           override def limit = 20
         }
@@ -521,7 +521,7 @@ final class DynImgUtil @Inject() (
 
     val nodesPerTime = 10
 
-    val msearch = new MNodeSearchDfltImpl {
+    val msearch = new MNodeSearch {
       override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           predicates = MPredicates.JdContent.Image :: Nil

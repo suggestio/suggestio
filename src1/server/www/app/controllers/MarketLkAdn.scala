@@ -9,7 +9,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.{Csrf, ScryptUtil}
 import io.suggest.session.MSessionKeys
@@ -107,7 +107,7 @@ class MarketLkAdn @Inject() (
 
       // Собрать статистику по подчинённым узлам:
       val ownedNodesStatsFut = mNodes.ntypeStats(
-        new MNodeSearchDfltImpl {
+        new MNodeSearch {
           override val outEdges: Seq[Criteria] = {
             val cr = Criteria(
               predicates  = MPredicates.OwnedBy :: Nil,

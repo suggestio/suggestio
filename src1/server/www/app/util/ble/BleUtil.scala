@@ -5,7 +5,7 @@ import javax.inject.Singleton
 import io.suggest.ble.MUidBeacon
 import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -48,7 +48,7 @@ class BleUtil {
         .toMap
 
       // Итоговый поисковый запросец: поиск в эджах + кастомный скоринг поверх.
-      val msearch = new MNodeSearchDfltImpl {
+      val msearch = new MNodeSearch {
 
         // Искать исходные ноды по наличию эджей на искомые маячки
         override def outEdges = {
@@ -71,7 +71,7 @@ class BleUtil {
                 predicates = predicates,
                 nodeIds    = Seq(uid)
               )
-              val bcnFilterDynSearch = new MNodeSearchDfltImpl {
+              val bcnFilterDynSearch = new MNodeSearch {
                 override def outEdges = Seq(bcnEdgeCr)
               }
               val filter = bcnFilterDynSearch.toEsQuery

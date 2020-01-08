@@ -13,7 +13,7 @@ import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.meta.MMeta
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
@@ -119,7 +119,7 @@ class SysMarket @Inject() (
       val ntypeStatsFut = mNodes.ntypeStats()
 
       // Собрать es-запрос согласно запросу, описанному в URL.
-      val msearch = new MNodeSearchDfltImpl {
+      val msearch = new MNodeSearch {
         override def nodeTypes = args.ntypeOpt.toSeq
         override def shownTypeIds = args.stiOpt.toSeq.map(_.value)
         override def limit = args.limit
@@ -265,7 +265,7 @@ class SysMarket @Inject() (
 
       // Узнаём входящие ребра
       val inEdgesFut = {
-        val msearch = new MNodeSearchDfltImpl {
+        val msearch = new MNodeSearch {
           override def outEdges: Seq[Criteria] = {
             val cr = Criteria(nodeIds = nodeId :: Nil)
             cr :: Nil
@@ -807,7 +807,7 @@ class SysMarket @Inject() (
       .fold [Future[Option[MNode]]] {
         // Тут хрень какая-то. Наугад выбирается случайный узел.
         mNodes.dynSearchOne {
-          new MNodeSearchDfltImpl {
+          new MNodeSearch {
             override def nodeTypes = MNodeTypes.AdnNode :: Nil
             override def withAdnRights = MAdnRights.RECEIVER :: Nil
             override def limit = 1

@@ -4,7 +4,7 @@ import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
@@ -50,7 +50,7 @@ class ReActivateCurrentAdvs @Inject() (
     */
   def reBuildAllExistingNodes(): Future[Int] = {
     // Типы узлов, которые будут ребилдится:
-    val msearch = new MNodeSearchDfltImpl {
+    val msearch = new MNodeSearch {
       override val nodeTypes = MNodeTypes.AdnNode :: MNodeTypes.Ad :: Nil
     }
     lazy val logPrefix = s"reBuildAllExistingNodes()#${System.currentTimeMillis()}:"
