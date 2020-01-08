@@ -39,9 +39,3 @@ trait ConstScore extends DynSearchArgs {
 trait ConstScoreDflt extends ConstScore {
   override def constScore: Option[Float] = None
 }
-
-/** Wrap-реализация [[ConstScore]]. */
-trait ConstScoreWrap extends ConstScore with DynSearchArgsWrapper {
-  override type WT <: ConstScore
-  override def constScore = _dsArgsUnderlying.constScore
-}

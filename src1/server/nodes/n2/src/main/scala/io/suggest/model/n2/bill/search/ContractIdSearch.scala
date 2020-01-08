@@ -1,6 +1,6 @@
 package io.suggest.model.n2.bill.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -62,11 +62,4 @@ trait ContractIdSearch extends DynSearchArgs {
 trait ContractIdSearchDflt extends ContractIdSearch {
   override def contractIds: Seq[Gid_t] = Nil
   override def contractIdDefined: Option[Boolean] = None
-}
-
-
-trait ContractIdSearchWrap extends DynSearchArgsWrapper with ContractIdSearch {
-  override type WT <: ContractIdSearch
-  override def contractIds          = _dsArgsUnderlying.contractIds
-  override def contractIdDefined  = _dsArgsUnderlying.contractIdDefined
 }

@@ -324,7 +324,8 @@ final class EsModel @Inject()(
             foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = model.SCROLL_KEEPALIVE_MS_DFLT) {
               (acc01, hits) =>
                 for (hit <- hits.iterator().asScala) {
-                  val req = esClient.prepareDelete(hit.getIndex, hit.getType, hit.getId)
+                  val req = esClient
+                    .prepareDelete(hit.getIndex, hit.getType, hit.getId)
                     .request()
                   bp.add(req)
                 }

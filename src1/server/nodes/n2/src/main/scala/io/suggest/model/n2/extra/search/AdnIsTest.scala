@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -68,11 +68,4 @@ trait AdnIsTest extends DynSearchArgs {
 /** Дефолтовая реализация абстрактных полей [[AdnIsTest]]. */
 trait AdnIsTestDflt extends AdnIsTest {
   override def testNode: Option[Boolean] = None
-}
-
-
-/** wrap-реализация аддона [[AdnIsTest]]. */
-trait AdnIsTestWrap extends AdnIsTest with DynSearchArgsWrapper {
-  override type WT <: AdnIsTest
-  override def testNode = _dsArgsUnderlying.testNode
 }

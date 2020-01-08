@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.common.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -58,11 +58,4 @@ trait IsDependent extends DynSearchArgs {
 /** Дефолтовая реализация поискового аддона [[IsDependent]]. */
 trait IsDependentDflt extends IsDependent {
   override def isDependent: Option[Boolean] = None
-}
-
-
-/** Wrap-реализация поискового аддона [[IsDependent]]. */
-trait IsDependentWrap extends IsDependent with DynSearchArgsWrapper {
-  override type WT <: IsDependent
-  override def isDependent = _dsArgsUnderlying.isDependent
 }

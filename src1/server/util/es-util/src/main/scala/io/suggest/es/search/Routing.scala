@@ -34,8 +34,3 @@ trait Routing extends DynSearchArgs {
 trait RoutingDflt extends Routing {
   override def withRouting: Seq[String] = Nil
 }
-
-trait RoutingWrap extends Routing with DynSearchArgsWrapper {
-  override type WT <: Routing
-  override def withRouting = _dsArgsUnderlying.withRouting
-}

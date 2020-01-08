@@ -38,9 +38,3 @@ trait FtsAll extends DynSearchArgs {
 trait FtsAllDflt extends FtsAll {
   override def qOpt: Option[String] = None
 }
-
-
-trait FtsAllWrap extends FtsAll with DynSearchArgsWrapper {
-  override type WT <: FtsAll
-  override def qOpt = _dsArgsUnderlying.qOpt
-}

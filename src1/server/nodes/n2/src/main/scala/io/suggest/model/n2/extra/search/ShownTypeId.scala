@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -49,10 +49,4 @@ trait ShownTypeId extends DynSearchArgs {
 
 trait ShownTypeIdDflt extends ShownTypeId {
   override def shownTypeIds: Seq[String] = Nil
-}
-
-
-trait ShownTypeIdWrap extends ShownTypeId with DynSearchArgsWrapper {
-  override type WT <: ShownTypeId
-  override def shownTypeIds = _dsArgsUnderlying.shownTypeIds
 }

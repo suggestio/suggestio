@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.common.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.{MNodeFields, MNodeType}
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -59,11 +59,4 @@ trait NodeTypes extends DynSearchArgs {
 /** Дефолтовая реализация поисковых полей [[NodeTypes]] */
 trait NodeTypesDflt extends NodeTypes {
   override def nodeTypes: Seq[MNodeType] = Nil
-}
-
-
-/** Wrap-реализация поисковых полей [[NodeTypes]]. */
-trait NodeTypesWrap extends NodeTypes with DynSearchArgsWrapper {
-  override type WT <: NodeTypes
-  override def nodeTypes = _dsArgsUnderlying.nodeTypes
 }

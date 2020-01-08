@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra.search
 
 import io.suggest.adn.MAdnRight
 import io.suggest.es.model.{IMust, MWrapClause}
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -68,11 +68,4 @@ trait AdnRights extends DynSearchArgs {
 trait AdnRightsDflt extends AdnRights {
   override def withAdnRights: Seq[MAdnRight] = Seq.empty
   override def adnRightsMustOrNot: Boolean = true
-}
-
-
-/** Wrap-реализация [[AdnRights]]. */
-trait AdnRightsWrap extends AdnRights with DynSearchArgsWrapper {
-  override type WT <: AdnRights
-  override def withAdnRights = _dsArgsUnderlying.withAdnRights
 }

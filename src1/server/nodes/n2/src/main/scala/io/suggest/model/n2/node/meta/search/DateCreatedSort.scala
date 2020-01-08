@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.sort.SortOrder
@@ -40,10 +40,4 @@ trait DateCreatedSortDflt extends DateCreatedSort {
 
   override def withDateCreatedSort: Option[SortOrder] = None
 
-}
-
-
-trait DateCreatedSortWrap extends DateCreatedSort with DynSearchArgsWrapper {
-  override type WT <: DateCreatedSort
-  override def withDateCreatedSort = _dsArgsUnderlying.withDateCreatedSort
 }

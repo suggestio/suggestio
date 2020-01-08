@@ -50,10 +50,3 @@ trait WithIds extends DynSearchArgs with IEsTypes {
 trait WithIdsDflt extends WithIds {
   override def withIds: Seq[String] = Nil
 }
-
-
-/** Wrap-реализация [[WithIds]]. */
-trait WithIdsWrap extends WithIds with DynSearchArgsWrapper {
-  override type WT <: WithIds
-  override def withIds = _dsArgsUnderlying.withIds
-}

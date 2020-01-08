@@ -1,10 +1,10 @@
 package io.suggest.model.n2.node.search
 
 import io.suggest.es.search._
-import io.suggest.model.n2.bill.search.{ContractIdSearch, ContractIdSearchDflt, ContractIdSearchWrap}
-import io.suggest.model.n2.bill.tariff.daily.{TfDailyCurrencySearch, TfDailyCurrencySearchDflt, TfDailyCurrencySearchWrap}
+import io.suggest.model.n2.bill.search.{ContractIdSearch, ContractIdSearchDflt}
+import io.suggest.model.n2.bill.tariff.daily.{TfDailyCurrencySearch, TfDailyCurrencySearchDflt}
 import io.suggest.model.n2.edge.search._
-import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
+import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt}
 import io.suggest.model.n2.extra.search._
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.common.search._
@@ -75,31 +75,3 @@ trait MNodeSearchDflt
 class MNodeSearchDfltImpl
   extends MNodeSearchImpl
   with MNodeSearchDflt
-
-
-/** Wrapper-реализация поисковых критериев [[MNodeSearch]] узла. */
-trait MNodeSearchWrap
-  extends MNodeSearch
-  with SubSearchesWrap
-  with FtsAllWrap
-  with WithIdsWrap
-  with DomainsSearchWrap
-  with OutEdgesWrap
-  with TfDailyCurrencySearchWrap
-  with ShownTypeIdWrap
-  with AdnRightsWrap
-  with AdnIsTestWrap
-  with NodeTypesWrap
-  with WithoutIdsWrap
-  with IsEnabledWrap
-  with IsDependentWrap
-  with NameSortWrap
-  with RandomSortWrap
-  with ConstScoreWrap
-  with LimitWrap
-  with OffsetWrap
-  with DateCreatedSortWrap
-  with ContractIdSearchWrap
-{
-  override type WT <: MNodeSearch
-}

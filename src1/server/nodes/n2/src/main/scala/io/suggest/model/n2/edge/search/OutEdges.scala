@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge.search
 
 import io.suggest.es.model.{IMust, MWrapClause}
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.geo.{GeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.util.logs.MacroLogsImpl
@@ -459,11 +459,3 @@ trait OutEdges extends DynSearchArgs {
 trait OutEdgesDflt extends OutEdges {
   override def outEdges: Seq[Criteria] = Nil
 }
-
-
-/** Враппер для аддона [[OutEdges]]. */
-trait OutEdgesWrap extends OutEdges with DynSearchArgsWrapper {
-  override type WT <: OutEdges
-  override def outEdges = _dsArgsUnderlying.outEdges
-}
-

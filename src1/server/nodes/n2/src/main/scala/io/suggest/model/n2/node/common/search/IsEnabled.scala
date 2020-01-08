@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.common.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -48,11 +48,4 @@ trait IsEnabled extends DynSearchArgs {
 /** Дефолтовая реализция аддона [[IsEnabled]]. */
 trait IsEnabledDflt extends IsEnabled {
   override def isEnabled: Option[Boolean] = None
-}
-
-
-/** Wrap-реализация аддона [[IsEnabled]]. */
-trait IsEnabledWrap extends IsEnabled with DynSearchArgsWrapper {
-  override type WT <: IsEnabled
-  override def isEnabled = _dsArgsUnderlying.isEnabled
 }

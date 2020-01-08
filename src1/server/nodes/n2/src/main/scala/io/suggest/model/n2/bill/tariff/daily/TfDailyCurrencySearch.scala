@@ -1,7 +1,7 @@
 package io.suggest.model.n2.bill.tariff.daily
 
 import io.suggest.bill.MCurrency
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -68,11 +68,4 @@ trait TfDailyCurrencySearch extends DynSearchArgs {
 /** Дефолтовая реализация [[TfDailyCurrencySearch]]. */
 trait TfDailyCurrencySearchDflt extends TfDailyCurrencySearch {
   override def tfDailyCurrencies: Option[Iterable[MCurrency]] = None
-}
-
-
-/** Wrap-реализация для [[TfDailyCurrencySearch]]. */
-trait TfDailyCurrencySearchWrap extends TfDailyCurrencySearch with DynSearchArgsWrapper {
-  override type WT <: TfDailyCurrencySearch
-  override def tfDailyCurrencies = _dsArgsUnderlying.tfDailyCurrencies
 }

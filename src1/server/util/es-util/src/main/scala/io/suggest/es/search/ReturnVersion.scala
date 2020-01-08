@@ -39,9 +39,3 @@ trait ReturnVersion extends DynSearchArgs {
 trait ReturnVersionDflt extends ReturnVersion {
   override def returnVersion: Option[Boolean] = None
 }
-
-
-trait ReturnVersionWrap extends ReturnVersion with DynSearchArgsWrapper {
-  override type WT <: ReturnVersion
-  override def returnVersion = _dsArgsUnderlying.returnVersion
-}

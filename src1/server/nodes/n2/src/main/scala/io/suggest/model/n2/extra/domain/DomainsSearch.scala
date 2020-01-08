@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra.domain
 
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.enum2.EnumeratumUtil
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.node.MNodeFields
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -69,12 +69,6 @@ trait DomainsSearch extends DynSearchArgs {
 /** Дефолтовая реализация полей трейта [[DomainsSearch]]. */
 trait DomainsSearchDflt extends DomainsSearch {
   override def domains: Seq[DomainCriteria] = Nil
-}
-
-/** Wrap-реализация полей трейта [[DomainsSearch]]. */
-trait DomainsSearchWrap extends DomainsSearch with DynSearchArgsWrapper {
-  override type WT <: DomainsSearch
-  override def domains = _dsArgsUnderlying.domains
 }
 
 

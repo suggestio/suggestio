@@ -57,13 +57,6 @@ trait RandomSortDflt extends RandomSort {
   override def randomSort: Option[MRandomSortData] = None
 }
 
-/** Враппер-реализация [[RandomSort]]. */
-trait RandomSortWrap extends RandomSort with DynSearchArgsWrapper {
-  override type WT <: RandomSort
-
-  override def randomSort = _dsArgsUnderlying.randomSort
-}
-
 
 case class MRandomSortData(
   generation  : Long,

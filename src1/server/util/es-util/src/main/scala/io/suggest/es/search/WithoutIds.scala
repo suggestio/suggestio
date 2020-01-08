@@ -46,8 +46,3 @@ trait WithoutIdsDflt extends WithoutIds {
   override def withoutIds: Seq[String] = Seq.empty
 }
 
-
-trait WithoutIdsWrap extends WithoutIds with DynSearchArgsWrapper {
-  override type WT <: WithoutIds
-  override def withoutIds = _dsArgsUnderlying.withoutIds
-}

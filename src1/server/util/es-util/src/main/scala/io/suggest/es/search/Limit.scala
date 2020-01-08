@@ -45,11 +45,3 @@ trait Limit extends DynSearchArgs with ILimit {
 trait LimitDflt extends Limit {
   override def limit: Int = 10
 }
-
-
-trait LimitWrap extends Limit with DynSearchArgsWrapper {
-  override type WT <: Limit
-
-  override def limit = _dsArgsUnderlying.limit
-  override def MAX_RESULTS_HARD = _dsArgsUnderlying.MAX_RESULTS_HARD
-}

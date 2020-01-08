@@ -51,9 +51,3 @@ trait NameSortBase extends DynSearchArgs {
 trait NameSortBaseDflt extends NameSortBase {
   override def withNameSort: Option[SortOrder] = None
 }
-
-
-trait NameSortBaseWrap extends NameSortBase with DynSearchArgsWrapper {
-  override type WT <: NameSortBase
-  override def withNameSort = _dsArgsUnderlying.withNameSort
-}

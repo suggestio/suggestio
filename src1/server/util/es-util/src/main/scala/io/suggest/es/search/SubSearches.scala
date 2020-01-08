@@ -73,12 +73,6 @@ trait SubSearchesDflt extends SubSearches {
   override def subSearches: Iterable[MSubSearch] = Nil
 }
 
-/** Wrap-реализация [[SubSearches]]. */
-trait SubSearchesWrap extends SubSearches with DynSearchArgsWrapper {
-  override type WT <: SubSearches
-  override def subSearches = _dsArgsUnderlying.subSearches
-}
-
 
 /** Контейнер данных по sub-аргументам. */
 case class MSubSearch(

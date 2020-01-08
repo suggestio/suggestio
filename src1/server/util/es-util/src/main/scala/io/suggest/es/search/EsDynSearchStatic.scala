@@ -90,10 +90,3 @@ trait DynSearchArgs {
   }
 
 }
-
-
-/** Интерфейс для врапперов search-результатов контейнера аргументов dyn-поиска. */
-trait DynSearchArgsWrapper extends DynSearchArgs {
-  type WT <: DynSearchArgs
-  def _dsArgsUnderlying: WT
-}

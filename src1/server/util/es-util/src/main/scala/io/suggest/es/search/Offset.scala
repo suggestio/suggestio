@@ -36,11 +36,3 @@ trait Offset extends DynSearchArgs with IOffset {
 trait OffsetDflt extends Offset {
   override def offset: Int = 0
 }
-
-
-/** Враппинг значения другой реализации оффсета. */
-trait OffsetWrap extends Offset with DynSearchArgsWrapper {
-  override type WT <: Offset
-
-  override def offset = _dsArgsUnderlying.offset
-}
