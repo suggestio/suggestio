@@ -398,7 +398,7 @@ class Upload @Inject()(
         val isFileValidFut = upCtx.validateFileFut
 
         for {
-          // Рассчитать хэш-суммы файла.
+          // Рассчитать хэш-суммы файла (digest).
           hashesHex2 <- upCtx.hashesHexFut
           hashesHexMap = IId.els2idMap[MHash, MFileMetaHash]( hashesHex2 )
 

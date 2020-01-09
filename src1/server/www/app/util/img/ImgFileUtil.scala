@@ -10,6 +10,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImpl
 import org.im4java.core.Info
 import util.up.FileUtil
+import scala.concurrent.blocking
 
 import scala.jdk.CollectionConverters._
 
@@ -48,12 +49,14 @@ class ImgFileUtil @Inject()(
 
   def forImageWithMime[T](mimeType: String, imgFile: File)(f: (ImageReader, FileImageInputStream) => T): T = {
     forMimeType(mimeType) { reader =>
-      val stream = new FileImageInputStream(imgFile)
-      try {
-        reader.setInput(stream)
-        f(reader, stream)
-      } finally {
-        stream.close()
+      blocking {
+        val stream = new FileImageInputStream(imgFile)
+        try {
+          reader.setInput(stream)
+          f(reader, stream)
+        } finally {
+          stream.close()
+        }
       }
     }
   }

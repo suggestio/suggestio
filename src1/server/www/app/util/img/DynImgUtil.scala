@@ -36,6 +36,7 @@ import scalaz.std.option._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
+import scala.concurrent.blocking
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
@@ -317,7 +318,9 @@ final class DynImgUtil @Inject() (
       // Запускаем генерацию картинки.
       val listener = new im4jAsyncUtil.Im4jAsyncSuccessProcessListener
       cmd.addProcessEventListener(listener)
-      cmd.run(op)
+      blocking {
+        cmd.run(op)
+      }
       val resFut = listener.future
       if (LOGGER.underlying.isTraceEnabled()) {
         val logPrefix = s"convert($in=>$out)#${System.currentTimeMillis()}:"

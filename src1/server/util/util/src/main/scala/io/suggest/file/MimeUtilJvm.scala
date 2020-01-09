@@ -2,6 +2,8 @@ package io.suggest.file
 
 import java.nio.file.{Files, Path}
 
+import scala.concurrent.blocking
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -21,9 +23,8 @@ object MimeUtilJvm {
     *         None, если тип остался неизвестен по итогам определения.
     */
   def probeContentType(path: Path): Option[String] = {
-    Option(
-      Files.probeContentType(path)
-    )
+    val r = blocking( Files.probeContentType(path) )
+    Option(r)
   }
 
 }

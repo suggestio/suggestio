@@ -7,6 +7,7 @@ import io.suggest.crypto.hash.{MHash, MHashes}
 import io.suggest.model.n2.media.MFileMetaHash
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.codec.digest.DigestUtils
+import scala.concurrent.blocking
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -62,11 +63,13 @@ class FileUtil @Inject()(
   }
 
   private def _hashStream(file: File)(f: FileInputStream => String): String = {
-    val is = new FileInputStream(file)
-    try {
-      f(is)
-    } finally {
-      is.close()
+    blocking {
+      val is = new FileInputStream(file)
+      try {
+        f(is)
+      } finally {
+        is.close()
+      }
     }
   }
 

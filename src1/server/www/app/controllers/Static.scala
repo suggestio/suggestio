@@ -80,6 +80,7 @@ class Static @Inject() (
   import esModel.api._
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
+
   /** Полностью игнорить CSP-отчёты? [false] */
   private val _IGNORE_CSP_REPORTS = configuration.getOptional[Boolean]( _IGNORE_CSP_REPORS_CONF_KEY ).getOrElseFalse
 
@@ -94,9 +95,8 @@ class Static @Inject() (
 
   /** Содержимое проверочного попап-окна. */
   def popupCheckContent = maybeAuth() { implicit request =>
-    Ok(popups.popupCheckTpl()).withHeaders(
-      CACHE_CONTROL -> "public, max-age=86400"
-    )
+    Ok( popups.popupCheckTpl() )
+      .withHeaders( CACHE_CONTROL -> "public, max-age=86400" )
   }
 
   /**
@@ -106,10 +106,10 @@ class Static @Inject() (
    * @return Экшен раздачи ассетов с сильно урезанным кешированием на клиенте.
    */
   def vassetsSudo(path: String, asset: Assets.Asset) = isSuOrDevelOr404().async { implicit request =>
-    // TODO Запретить раздачу привелигированных ассетов через CDN в продакшене? Чтобы отладка главной страницы шла только по vpn.
-    val resFut = assets.versioned(path, asset)(request)
     // Для привелегированных ассетов нужно запретить промежуточные кеширования.
-    resFut.map { res =>
+    for {
+      res <- assets.versioned(path, asset)(request)
+    } yield {
       val ttl = if (isProd) 300 else 10
       res.withHeaders(CACHE_CONTROL -> s"private, max-age=$ttl")
     }

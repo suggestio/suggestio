@@ -14,10 +14,12 @@ import io.suggest.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
-import util.img.{ImgFileUtil, OrigImageUtil}
+import org.im4java.core.Info
+import util.img.ImgFileUtil
 import util.up.FileUtil
 
 import scala.concurrent.duration._
+import scala.concurrent.blocking
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -37,7 +39,6 @@ import scala.util.Try
 
 @Singleton
 class MLocalImgs @Inject() (
-                             origImageUtil               : OrigImageUtil,
                              imgFileUtil                 : ImgFileUtil,
                              asyncUtil                   : AsyncUtil,
                              fileUtil                    : FileUtil,
@@ -67,7 +68,8 @@ class MLocalImgs @Inject() (
 
 
   def deleteSync(mimg: MLocalImg): Boolean = {
-    fileOf(mimg).delete()
+    val f = fileOf(mimg)
+    blocking( f.delete() )
   }
 
   override def delete(mimg: MLocalImg): Future[_] = {
@@ -92,7 +94,7 @@ class MLocalImgs @Inject() (
     Future {
       val tms = System.currentTimeMillis()
       val file = fileOf(mimg)
-      file.setLastModified(tms)
+      blocking( file.setLastModified(tms) )
     }(asyncUtil.singleThreadIoContext)
   }
 
@@ -100,7 +102,7 @@ class MLocalImgs @Inject() (
     val file = fileOf(mimg)
     val ds = new IDataSource {
       override lazy val data        = FileIO.fromPath( file.toPath )
-      override lazy val sizeB       = file.length()
+      override lazy val sizeB       = blocking( file.length() )
       override lazy val contentType = getMimeSync(mimg)
       // Без скрытого сжатия, тут его не бывает.
       override def compression = None
@@ -111,9 +113,11 @@ class MLocalImgs @Inject() (
   def identify(mimg: MLocalImg) = {
     Future {
       val file = fileOf(mimg)
-      if (file.exists())
-        origImageUtil.identify(mimg.dynImgId.dynFormat.imFormat + ":" + file.getAbsolutePath)
-      else
+      if ( blocking(file.exists()) ) {
+        val fmtAndPath = mimg.dynImgId.dynFormat.imFormat + ":" + file.getAbsolutePath
+        blocking( new Info(fmtAndPath, true) )
+
+      } else
         throw new NoSuchElementException("identify(): File is missing: " + file)
     }(asyncUtil.singleThreadCpuContext)
   }
@@ -161,7 +165,9 @@ class MLocalImgs @Inject() (
    */
   def deleteAllSyncFor(rowKeyStr: String): Unit = {
     val dir = getFsImgDir(rowKeyStr)
-    FileUtils.deleteDirectory(dir)
+    blocking {
+      FileUtils.deleteDirectory(dir)
+    }
   }
 
   /**
@@ -179,10 +185,12 @@ class MLocalImgs @Inject() (
   /** Подготовка к записи в файл указанного локального изображения. */
   def prepareWriteFile(mimg: MLocalImg): Unit = {
     val _fsImgDir = getFsImgDir(mimg)
-    if (!_fsImgDir.isDirectory)
-      _fsImgDir.delete()
-    if (!_fsImgDir.exists())
-      _fsImgDir.mkdirs()
+    blocking {
+      if (!_fsImgDir.isDirectory)
+        _fsImgDir.delete()
+      if (!_fsImgDir.exists())
+        _fsImgDir.mkdirs()
+    }
   }
 
   def getMimeOptSync(mimg: MLocalImg): Option[String] = {
@@ -213,7 +221,8 @@ class MLocalImgs @Inject() (
   }
 
   def isExists(mimg: MLocalImg): Boolean = {
-    fileOf(mimg).exists()
+    val f = fileOf(mimg)
+    blocking( f.exists() )
   }
 
   def fileOf(mimg: MLocalImg): File = {

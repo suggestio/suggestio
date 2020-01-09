@@ -148,15 +148,19 @@ case class Crontab @Inject() (
 
   /** Срабатывание какого-то таймера. Заново найти задачу среди task-классов. */
   private def _onTaskTimer(clazzName: String, taskDisplayName: String): Unit = {
-    for {
-      clazzCt <- TASK_CLASSES
+    (for {
+      clazzCt <- TASK_CLASSES.iterator
       if clazzCt.runtimeClass.getName ==* clazzName
       clazz = current.injector
         .instanceOf( clazzCt )
       task <- clazz.cronTasks()
       if task.displayName ==* taskDisplayName
-    }
-      task.run()
+    } yield
+      task
+    )
+      // По идее, может быть только одна задача с указанным идентификатором. Поэтому headOption и только первый элемент.
+      .next()
+      .run()
   }
 
 }

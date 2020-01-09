@@ -53,11 +53,7 @@ class Umap @Inject() (
   import cspUtil.Implicits._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
-  val GLOBAL_MAP_EDIT_ALLOWED: Boolean = {
-    configuration
-      .getOptional[Boolean]("umap.global.map.edit.allowed")
-      .contains(true)
-  }
+  def GLOBAL_MAP_EDIT_ALLOWED = true
 
   private def _withUmapCsp(result: Result): Result = {
     result

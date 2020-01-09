@@ -25,7 +25,7 @@ object Common {
     /** Версия moment.js. */
     def momentJs = "2.24.0"
 
-    val GUICE = "4.2.+"
+    val GUICE = "4.+"
 
     /** Версия typesafe slick. */
     val SLICK        = "3.3.+"
@@ -187,7 +187,7 @@ object Common {
     //val BETTER_FILES = "3.8.0"
 
     /** Используемая в проекте версия akka. */
-    val AKKA = "2.6.0-M8"
+    val AKKA = "2.6.+"
 
     /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
       * @see [[https://github.com/typesafehub/akka-contrib-extra]]
@@ -252,7 +252,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.7.4"
+  val playVsn         = "2.8.0"
 
 
   /** Версия BouncyCastle. */

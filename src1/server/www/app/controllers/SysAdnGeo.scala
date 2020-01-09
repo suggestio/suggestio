@@ -80,15 +80,13 @@ class SysAdnGeo @Inject() (
         .toSeq
 
       val mapStateHash: Option[String] = {
-        geos
-          .headOption
-          .map(_.shape.firstPoint)
-          .map { point =>
-            val scale = geos
-              .headOption
-              .fold(10)(_.glevel.osmMapScale)
-            "#" + scale + "/" + point.lat + "/" + point.lon
-          }
+        for (geo <- geos.headOption) yield {
+          val point = geo.shape.firstPoint
+          val scale = geos
+            .headOption
+            .fold(10)(_.glevel.osmMapScale)
+          "#" + scale + "/" + point.lat + "/" + point.lon
+        }
       }
 
       val rargs = MSysGeoForNodeTplArgs(
@@ -106,7 +104,7 @@ class SysAdnGeo @Inject() (
 
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
   def createForNodeOsm(adnId: String) = csrf.AddToken {
-    isSuNode(adnId).apply { implicit request =>
+    isSuNode(adnId) { implicit request =>
       val form = guessGeoLevel.fold(createOsmNodeFormM) { ngl =>
         val pr = OsmUrlParseResult("", null, -1)
         val formRes = (ngl, pr)
