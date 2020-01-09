@@ -25,7 +25,6 @@ import scala.concurrent.Future
  * Created: 21.04.15 15:50
  * Description: sys-раздел для отладки рендера карточек в картинки или html.
  */
-@Singleton
 class SysAdRenderUtil {
 
   import play.api.data.Forms._

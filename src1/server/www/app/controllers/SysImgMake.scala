@@ -4,7 +4,6 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
 import io.suggest.dev.{MScreenJvm, MSzMults}
 import io.suggest.util.logs.IMacroLogs
-import javax.inject.Singleton
 import models.im.{CompressMode, MImgT}
 import models.im.make.{MImgMakeArgs, MImgMaker, MImgMakers, SysForm_t}
 import models.mctx.Context
@@ -24,7 +23,6 @@ import scala.concurrent.Future
  * Created: 21.04.15 22:50
  * Description: Аддон для SysImg-контроллера, добавляющий экшены для отладки make-движков.
  */
-@Singleton
 class SysImgMakeUtil {
 
   import play.api.data.Forms._

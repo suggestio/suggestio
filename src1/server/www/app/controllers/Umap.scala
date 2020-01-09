@@ -6,13 +6,13 @@ import _root_.util.acl._
 import _root_.util.geo.umap._
 import _root_.util.sec.CspUtil
 import io.suggest.es.model.EsModel
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.madn.AdnShownTypes
 import models.maps.umap._
 import models.mproj.ICommonDi
@@ -33,7 +33,6 @@ import scala.concurrent.Future
  * Created: 15.09.14 12:09
  * Description: Контроллер для umap-backend'ов.
  */
-@Singleton
 class Umap @Inject() (
                        esModel                         : EsModel,
                        umapUtil                        : UmapUtil,
@@ -44,8 +43,9 @@ class Umap @Inject() (
                        sioControllerApi                : SioControllerApi,
                        mCommonDi                       : ICommonDi,
                      )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
+  // Редко-нужный контроллер, поэтому без @Singleton и с лёгким конструктором.
 
   import sioControllerApi._
   import mCommonDi._

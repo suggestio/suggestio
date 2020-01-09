@@ -7,7 +7,7 @@ import io.suggest.i18n.I18nConst
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.sec.util.Csrf
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.mctx.Context
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages}
@@ -28,7 +28,6 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
-@Singleton
 class LkLang @Inject() (
                          esModel                         : EsModel,
                          mNodes                          : MNodes,
@@ -39,11 +38,10 @@ class LkLang @Inject() (
                          csrf                            : Csrf,
                          implicit private val ec         : ExecutionContext,
                        )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   import sioControllerApi._
-  import LOGGER._
   import esModel.api._
 
   private def chooseLangFormM(currLang: Lang): Form[Lang] = {
@@ -104,7 +102,7 @@ class LkLang @Inject() (
     maybeAuth().async { implicit request =>
       chooseLangFormM( request.messages.lang ).bindFromRequest().fold(
         {formWithErrors =>
-          debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
+          LOGGER.debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
           _showLangSwitcher(formWithErrors, r, NotAcceptable)
         },
         {newLang =>
@@ -126,7 +124,7 @@ class LkLang @Inject() (
 
           // Залоггировать ошибки.
           for (ex <- saveUserLangFut.failed)
-            error("Failed to save lang for mperson", ex)
+            LOGGER.error("Failed to save lang for mperson", ex)
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
           RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
@@ -138,7 +136,7 @@ class LkLang @Inject() (
 
 
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
-  private val LK_MESSAGES_CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
+  private def LK_MESSAGES_CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
 
   /** 2016.dec.6: Из-за опытов с react.js возникла необходимость использования client-side messages.
     * Тут экшен, раздающий messages для личного кабинета.

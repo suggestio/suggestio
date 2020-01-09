@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.model.n2.bill.tariff.daily.MTfDaily
 import io.suggest.model.n2.node.MNodes
 import io.suggest.primo.id.OptId
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import javax.inject.{Inject, Singleton}
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
@@ -36,7 +36,6 @@ import scala.concurrent.Future
  * Description: Контроллер sys-биллинга второго поколения.
  * Второй биллинг имеет тарифы внутри узлов и контракты-ордеры-item'ы в РСУБД.
  */
-@Singleton
 class SysBilling @Inject() (
                              esModel                    : EsModel,
                              tfDailyUtil                : TfDailyUtil,
@@ -55,7 +54,7 @@ class SysBilling @Inject() (
                              sioControllerApi           : SioControllerApi,
                              mCommonDi                  : ICommonDi,
                            )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   import sioControllerApi._

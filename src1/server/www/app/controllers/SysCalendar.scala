@@ -3,12 +3,12 @@ package controllers
 import java.io.{ByteArrayInputStream, StringWriter}
 import java.nio.charset.StandardCharsets
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import io.suggest.cal.m.MCalTypes
 import io.suggest.es.model.EsModel
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.mcal.{MCalTypesJvm, MCalendar, MCalendars}
 import models.mproj.ICommonDi
 import models.req.ICalendarReq
@@ -31,7 +31,6 @@ import scala.concurrent.Future
  *
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
-@Singleton
 class SysCalendar @Inject() (
                               esModel                     : EsModel,
                               mCalendars                  : MCalendars,
@@ -42,11 +41,10 @@ class SysCalendar @Inject() (
                               sioControllerApi            : SioControllerApi,
                               mCommonDi                   : ICommonDi,
                             )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi._
   import esModel.api._
 
@@ -59,7 +57,7 @@ class SysCalendar @Inject() (
             Some(HolidayCalendar.valueOf(code))
           } catch {
             case ex: Exception =>
-              debug("newCalTplFormM.tplId: Failed to bind form field, value = " + code, ex)
+              LOGGER.debug("newCalTplFormM.tplId: Failed to bind form field, value = " + code, ex)
               None
           }
         },
@@ -86,7 +84,7 @@ class SysCalendar @Inject() (
           }
         } catch {
           case ex: Exception =>
-            error("calFormM failed to parse calendar data", ex)
+            LOGGER.error("calFormM failed to parse calendar data", ex)
             false
         }
     }
@@ -120,7 +118,7 @@ class SysCalendar @Inject() (
       newCalTplFormM.bindFromRequest().fold(
         {formWithErrors =>
           val calsFut = mCalendars.getAll(maxResults = 500)
-          debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
+          LOGGER.debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
           calsFut.map { cals =>
             NotAcceptable(listCalsTpl(cals, formWithErrors))
           }
@@ -157,7 +155,7 @@ class SysCalendar @Inject() (
     isSu().async { implicit request =>
       calFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug("createCalendarSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
+          LOGGER.debug("createCalendarSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
           NotAcceptable(createCalFormTpl(formWithErrors))
         },
         {mcal =>
@@ -198,7 +196,7 @@ class SysCalendar @Inject() (
     isSuCalendar(calId).async { implicit request =>
       calFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+          LOGGER.debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
           editCalendarRespBody(calId, formWithErrors, NotAcceptable)
         },
         {mcal2 =>

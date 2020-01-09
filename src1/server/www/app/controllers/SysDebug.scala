@@ -13,7 +13,6 @@ import views.html.sys1.debug._
  * Created: 18.06.15 16:16
  * Description: Sys-контроллер для отладки.
  */
-@Singleton
 class SysDebug @Inject() (
                            advRcvrsUtil                  : AdvRcvrsUtil,
                            dynImgUtil                    : DynImgUtil,

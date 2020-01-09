@@ -85,7 +85,6 @@ class SysMarket @Inject() (
 {
 
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil, slick}
   import sysMarketUtil._
   import esModel.api._
@@ -345,7 +344,7 @@ class SysMarket @Inject() (
         .recoverWith {
           case _: NoSuchElementException =>
             val msg = "Node not found. Anyway, resources re-erased."
-            warn(s"deleteAdnNodeSubmit($nodeId): $msg")
+            LOGGER.warn(s"deleteAdnNodeSubmit($nodeId): $msg")
             errorHandler.onClientError(request, NOT_FOUND, msg)
         }
     }
@@ -386,7 +385,7 @@ class SysMarket @Inject() (
 
       def __onError(formWithErrors: Form[_], formName: String): Future[Result] = {
         val renderFut = createAdnNodeRender(nodeForm, ncpForm, NotAcceptable)
-        debug(s"$logPrefix Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
+        LOGGER.debug(s"$logPrefix Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
         renderFut
       }
 
@@ -479,7 +478,7 @@ class SysMarket @Inject() (
       if (flag) {
         val fut: Future[_] = action
         for (ex <- fut.failed) {
-          warn(errMsg, ex)
+          LOGGER.warn(errMsg, ex)
         }
         fut
       } else {
@@ -520,7 +519,7 @@ class SysMarket @Inject() (
       val formBinded = adnNodeFormM.bindFromRequest()
       formBinded.fold(
         {formWithErrors =>
-          debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+          LOGGER.debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
           editAdnNodeBody(adnId, formWithErrors, NotAcceptable)
         },
         {adnNode2 =>
@@ -556,7 +555,7 @@ class SysMarket @Inject() (
       import request.mnode
       nodeOwnerInviteFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
+          LOGGER.debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
           _nodeOwnerInviteFormSubmit(formWithErrors, NotAcceptable)
         },
         {email1 =>
@@ -759,9 +758,9 @@ class SysMarket @Inject() (
       lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
       // Радуемся в лог.
       rcvrIdOpt.fold {
-        warn(logPrefix + "Starting removing ALL rcvrs...")
+        LOGGER.warn(logPrefix + "Starting removing ALL rcvrs...")
       } { _ =>
-        info(logPrefix + "Starting removing for single rcvr...")
+        LOGGER.info(logPrefix + "Starting removing for single rcvr...")
       }
 
       // Начинаем асинхронно генерить ответ клиенту.

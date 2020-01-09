@@ -2,8 +2,8 @@ package controllers
 
 import java.net.{MalformedURLException, URL}
 
-import javax.inject.{Inject, Singleton}
-import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.Inject
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mproj.ICommonDi
 import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
 import play.api.data.Forms._
@@ -21,7 +21,6 @@ import views.html.sys1.img._
  * Изначально была потребность быстро получать оригиналы картинок и получать прочую информацию по хранимым
  * изображениям.
  */
-@Singleton
 class SysImg @Inject() (
                          mImgs3                          : MImgs3,
                          override val sysImgMakeUtil     : SysImgMakeUtil,
@@ -31,12 +30,11 @@ class SysImg @Inject() (
                          override val sioControllerApi   : SioControllerApi,
                          override val mCommonDi          : ICommonDi
                        )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
   with SysImgMake
 {
 
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi._
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */
@@ -97,7 +95,7 @@ class SysImg @Inject() (
     isSu() { implicit request =>
       imgFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug("searchFormSubmit(): Failed to bind search form:\n " + formatFormErrors(formWithErrors))
+          LOGGER.debug("searchFormSubmit(): Failed to bind search form:\n " + formatFormErrors(formWithErrors))
           NotAcceptable( indexTpl(Seq.empty, formWithErrors) )
         },
         {img =>

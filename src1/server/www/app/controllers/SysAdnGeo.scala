@@ -31,7 +31,6 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
-@Singleton
 class SysAdnGeo @Inject() (
                             esModel                           : EsModel,
                             mNodes                            : MNodes,
@@ -44,7 +43,6 @@ class SysAdnGeo @Inject() (
 {
 
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi._
   import esModel.api._
 
@@ -124,7 +122,7 @@ class SysAdnGeo @Inject() (
       lazy val logPrefix = s"createForNodeOsmSubmit($adnId): "
       createOsmNodeFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          LOGGER.debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
           NotAcceptable(createAdnGeoOsmTpl(formWithErrors, request.mnode))
         },
         {case (glevel, urlPr) =>
@@ -210,7 +208,7 @@ class SysAdnGeo @Inject() (
         case ocex: OsmClientStatusCodeInvalidException =>
           s"osm.org returned unexpected http status: ${ocex.statusCode} for $rest"
         case _ =>
-          warn("Exception occured while fetch/parsing of " + rest, ex)
+          LOGGER.warn("Exception occured while fetch/parsing of " + rest, ex)
           s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage
       }
       NotFound(respBody)
@@ -315,7 +313,7 @@ class SysAdnGeo @Inject() (
         lazy val logPrefix = s"editNodeOsmSubmit(${g.nodeId}#${g.gsId}): "
         editOsmNodeFormM.bindFromRequest().fold(
           {formWithErrors =>
-            debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+            LOGGER.debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
             val rargs = MSysNodeGeoOsmEditTplArgs(mgs, formWithErrors, request.mnode, g)
             NotAcceptable( editAdnGeoOsmTpl(rargs) )
           },
@@ -407,7 +405,7 @@ class SysAdnGeo @Inject() (
     {geo =>
       val circleOpt = CircleGsJvm.maybeFromGs(geo.shape)
       if (circleOpt.isEmpty)
-        warn(s"circleFormM(): Unable to unbind geo shape of class ${geo.shape.getClass.getSimpleName} into circle.")
+        LOGGER.warn(s"circleFormM(): Unable to unbind geo shape of class ${geo.shape.getClass.getSimpleName} into circle.")
       for (circle <- circleOpt) yield {
         (geo.glevel, circle)
       }
@@ -442,7 +440,7 @@ class SysAdnGeo @Inject() (
       lazy val logPrefix = s"createCircleSubmit($adnId): "
       circleFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          LOGGER.debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
           NotAcceptable(createCircleTpl(formWithErrors, request.mnode))
         },
         {circle0 =>
@@ -516,7 +514,7 @@ class SysAdnGeo @Inject() (
         lazy val logPrefix = s"editCircleSubmit(${g.nodeId}#${g.gsId}): "
         circleFormM.bindFromRequest().fold(
           {formWithErrors =>
-            debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+            LOGGER.debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
             _editCircleResp(g, formWithErrors, mgs, NotAcceptable)
           },
 

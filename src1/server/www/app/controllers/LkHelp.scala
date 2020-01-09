@@ -25,7 +25,6 @@ import scala.concurrent.Future
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
-@Singleton
 class LkHelp @Inject()(
                         mNodes                          : MNodes,
                         mailer                          : IMailerWrapper,
@@ -42,7 +41,6 @@ class LkHelp @Inject()(
 {
 
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi._
 
   // TODO Объеденить node и не-node вызовы в единые экшены.
@@ -143,14 +141,13 @@ class LkHelp @Inject()(
     lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
     supportFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
+        LOGGER.debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
         _supportForm2(nodeOpt, formWithErrors, r, NotAcceptable)
       },
 
       {lsr =>
         val personId = request.user.personIdOpt.get
         val userEmailsFut = getEmails( request.user.personNodeOptFut )
-        trace(logPrefix + "Processing from ip=" + request.remoteClientAddress)
 
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)

@@ -25,7 +25,6 @@ import scala.concurrent.Future
  * Description: sys-контроллер для доступа к юзерам.
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
-@Singleton
 class SysPerson @Inject() (
                             esModel                   : EsModel,
                             mNodes                    : MNodes,

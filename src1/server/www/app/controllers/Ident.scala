@@ -912,7 +912,12 @@ class Ident @Inject() (
 
               DBIO.from {
                 for (_ <- mNodes.save( mnode1 ))
-                yield MNode.versionOpt.modify { vOpt => Some(vOpt.fold(1L)(_ + 1L)) }(mnode1)
+                yield (
+                  MNode.versionOpt
+                    .modify { vOpt =>
+                      Some( vOpt.fold(1L)(_ + 1L) )
+                    }
+                )(mnode1)
               }
             }
           }
@@ -1068,13 +1073,12 @@ class Ident @Inject() (
                 userAdnNodesIds.head
               }
             }
-            .map { toNodeId =>
-              // Редирект на единственный узел (созданный или существующий).
-              routes.LkAds.adsPage(toNodeId :: Nil)
-            }
-            .getOrElse {
+            .fold {
               // 2 или более узлов. Отправить юзера в lkList. (Или даже 0, внезапно: восстановление пароля без ранее созданного узла).
               routes.MarketLkAdn.lkList()
+            } { toNodeId =>
+              // Редирект на единственный узел (созданный или существующий).
+              routes.LkAds.adsPage(toNodeId :: Nil)
             }
 
           _tokenResp( rdrTo.url )
