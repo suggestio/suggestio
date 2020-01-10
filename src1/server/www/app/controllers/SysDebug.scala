@@ -1,7 +1,10 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImplLazy
+import javax.inject.Inject
 import models.mproj.ICommonDi
+import play.api.Environment
+import play.api.mvc.Result
 import util.acl.IsSu
 import util.adv.direct.AdvRcvrsUtil
 import util.img.DynImgUtil
@@ -14,15 +17,19 @@ import views.html.sys1.debug._
  * Description: Sys-контроллер для отладки.
  */
 class SysDebug @Inject() (
-                           advRcvrsUtil                  : AdvRcvrsUtil,
-                           dynImgUtil                    : DynImgUtil,
                            isSu                          : IsSu,
                            sioControllerApi              : SioControllerApi,
                            mCommonDi                     : ICommonDi,
-) {
+                         )
+  extends MacroLogsImplLazy
+{
 
   import sioControllerApi._
   import mCommonDi._
+
+  private lazy val advRcvrsUtil = current.injector.instanceOf[AdvRcvrsUtil]
+  private lazy val dynImgUtil = current.injector.instanceOf[DynImgUtil]
+  private lazy val env = current.injector.instanceOf[Environment]
 
   /** Экшен для отображения индексной страницы. */
   def index = csrf.AddToken {
@@ -61,6 +68,50 @@ class SysDebug @Inject() (
       } yield {
         Ok(s"$res imgs deleted.")
       }
+    }
+  }
+
+
+  private def _CP_PATH_LEN_MAX = 255
+  private def _cpPathForm = {
+    import play.api.data._, Forms._
+    Form(
+      single(
+        "cpPath" -> nonEmptyText(maxLength = _CP_PATH_LEN_MAX, minLength = 3)
+      )
+    )
+  }
+
+
+  /** Рендер формы запроса ресурса из classpath. */
+  def getClassPathResourceInfoGet = csrf.AddToken {
+    isSu() { implicit request =>
+      val form = _cpPathForm
+      Ok( CpResFormTpl(form) )
+    }
+  }
+
+  /** Сабмит формы запроса ресурса из classpath. */
+  def getClassPathResourceInfoPost = csrf.Check {
+    isSu() { implicit request =>
+      _cpPathForm.bindFromRequest().fold(
+        {errors =>
+          val msg = s"failed to bind form: ${formatFormErrors(errors)}"
+          LOGGER.warn(msg)
+          NotAcceptable(msg)
+        },
+        {cpPath =>
+          env
+            .resource(cpPath)
+            .fold[Result] {
+              NotFound(s"Resource not found in ClassPath: $cpPath")
+            } { resUrl =>
+              val conn = resUrl.openConnection()
+              val msg = s"$cpPath : ${conn.getContentType} ${conn.getContentLength} bytes"
+              Ok(msg)
+            }
+        }
+      )
     }
   }
 

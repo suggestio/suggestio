@@ -1,7 +1,6 @@
 package io.suggest.routes
 
-import io.suggest.js.JsRoutesConst.GLOBAL_NAME
-import io.suggest.proto.http.model.Route
+import JsRoutesConst.GLOBAL_NAME
 import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
@@ -84,10 +83,10 @@ sealed trait Controllers extends js.Object {
 @js.native
 sealed trait StaticCtlRoutes extends js.Object {
 
-  def popupCheckContent(): Route = js.native
+  def popupCheckContent(): PlayRoute = js.native
 
   /** Роута для доступа к унифицированному websocket channel. */
-  def wsChannel(ctxId: String): Route = js.native
+  def wsChannel(ctxId: String): PlayRoute = js.native
 
   /** Роута до JSON-карты ресиверов.
     *
@@ -95,9 +94,9 @@ sealed trait StaticCtlRoutes extends js.Object {
     *                Но используется undefined для контр-аварийного кэширования в js (через cache.rewriteUrl).
     * @return Роута.
     */
-  def advRcvrsMapJson(hashSum: js.UndefOr[Int]): Route = js.native
+  def advRcvrsMapJson(hashSum: js.UndefOr[Int]): PlayRoute = js.native
 
-  def privacyPolicy(): Route = js.native
+  def privacyPolicy(): PlayRoute = js.native
 
 }
 
@@ -107,7 +106,7 @@ sealed trait StaticCtlRoutes extends js.Object {
 sealed trait ImgCtlRoutes extends js.Object {
 
   /** Запрос картинки-капчи. */
-  def getCaptcha(token: String): Route = js.native
+  def getCaptcha(token: String): PlayRoute = js.native
 
 }
 
@@ -115,9 +114,9 @@ sealed trait ImgCtlRoutes extends js.Object {
 @js.native
 sealed trait AssetsCtlRoutes extends js.Object {
 
-  def versioned(file: String): Route = js.native
+  def versioned(file: String): PlayRoute = js.native
 
-  def at(file: String): Route = js.native
+  def at(file: String): PlayRoute = js.native
 
 }
 
@@ -125,23 +124,23 @@ sealed trait AssetsCtlRoutes extends js.Object {
 @js.native
 sealed trait IdentCtlRoutes extends js.Object {
 
-  def loginFormPage(args: js.Object = js.native): Route = js.native
+  def loginFormPage(args: js.Object = js.native): PlayRoute = js.native
 
-  def rdrUserSomewhere(): Route = js.native
+  def rdrUserSomewhere(): PlayRoute = js.native
 
-  def epw2LoginSubmit(r: js.UndefOr[String] = js.undefined): Route = js.native
+  def epw2LoginSubmit(r: js.UndefOr[String] = js.undefined): PlayRoute = js.native
 
-  def epw2RegSubmit(): Route = js.native
+  def epw2RegSubmit(): PlayRoute = js.native
 
-  def regStep0Submit(): Route = js.native
+  def regStep0Submit(): PlayRoute = js.native
 
-  def idViaProvider(extServiceId: String, r: js.UndefOr[String] = js.undefined): Route = js.native
+  def idViaProvider(extServiceId: String, r: js.UndefOr[String] = js.undefined): PlayRoute = js.native
 
-  def smsCodeCheck(): Route = js.native
+  def smsCodeCheck(): PlayRoute = js.native
 
-  def regFinalSubmit(): Route = js.native
+  def regFinalSubmit(): PlayRoute = js.native
 
-  def pwChangeSubmit(): Route = js.native
+  def pwChangeSubmit(): PlayRoute = js.native
 
 }
 
@@ -149,9 +148,9 @@ sealed trait IdentCtlRoutes extends js.Object {
 @js.native
 sealed trait MarketLkAdnCtlRoutes extends js.Object {
 
-  def lkList(): Route = js.native
+  def lkList(): PlayRoute = js.native
 
-  def showNodeAds(nodeId: String): Route = js.native
+  def showNodeAds(nodeId: String): PlayRoute = js.native
 
 }
 
@@ -160,15 +159,15 @@ sealed trait MarketLkAdnCtlRoutes extends js.Object {
 @js.native
 sealed trait LkAdEditCtlRoutes extends js.Object {
 
-  def createAd(adId: String): Route = js.native
+  def createAd(adId: String): PlayRoute = js.native
 
-  def editAd(adId: String): Route = js.native
+  def editAd(adId: String): PlayRoute = js.native
 
-  def prepareImgUpload(adId: String = null, nodeId: String = null): Route = js.native
+  def prepareImgUpload(adId: String = null, nodeId: String = null): PlayRoute = js.native
 
-  def saveAdSubmit(adId: String = null, producerId: String = null): Route = js.native
+  def saveAdSubmit(adId: String = null, producerId: String = null): PlayRoute = js.native
 
-  def deleteSubmit(adId: String): Route = js.native
+  def deleteSubmit(adId: String): PlayRoute = js.native
 
 }
 
@@ -178,13 +177,13 @@ sealed trait LkAdEditCtlRoutes extends js.Object {
 sealed trait ScCtlRoutes extends js.Object {
 
   /** Ссылка на корень. */
-  def geoSite(scJsState: js.Dictionary[js.Any] = js.native, siteQsArgs: js.Dictionary[js.Any] = js.native): Route = js.native
+  def geoSite(scJsState: js.Dictionary[js.Any] = js.native, siteQsArgs: js.Dictionary[js.Any] = js.native): PlayRoute = js.native
 
   /** Роута для доступа к pubApi. */
-  def pubApi(args: js.Dictionary[js.Any]): Route = js.native
+  def pubApi(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
   /** Роута для автоматического сабмита ошибок на сервер. */
-  def handleScError(): Route = js.native
+  def handleScError(): PlayRoute = js.native
 
 }
 
@@ -194,28 +193,28 @@ sealed trait ScCtlRoutes extends js.Object {
 sealed trait LkAdvGeoCtlRoutes extends js.Object {
 
   /** Роута для поиска тегов  */
-  def tagsSearch2(args: js.Dictionary[js.Any]): Route = js.native
+  def tagsSearch2(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
 
   /** Роута для запроса ценника текущего размещения. */
-  def getPriceSubmit(adId: String): Route = js.native
+  def getPriceSubmit(adId: String): PlayRoute = js.native
 
   /** Роута на страницу гео-размещения карточки. */
-  def forAd(adId: String): Route = js.native
+  def forAd(adId: String): PlayRoute = js.native
 
   /** Роута для итогового сабмита формы. */
-  def forAdSubmit(adId: String): Route = js.native
+  def forAdSubmit(adId: String): PlayRoute = js.native
 
 
   /** Роута получения содержимого попапа узла географической карты. */
-  def rcvrMapPopup(adId: String, nodeId: String): Route = js.native
+  def rcvrMapPopup(adId: String, nodeId: String): PlayRoute = js.native
 
 
   /** Роута получения карты текущих георазмещений. */
-  def existGeoAdvsMap(adId: String): Route = js.native
+  def existGeoAdvsMap(adId: String): PlayRoute = js.native
 
   /** Роута для получения содержимого попапа над указанной областью георазмещения. */
-  def existGeoAdvsShapePopup(itemId: Double): Route = js.native
+  def existGeoAdvsShapePopup(itemId: Double): PlayRoute = js.native
 
 }
 
@@ -225,29 +224,29 @@ sealed trait LkAdvGeoCtlRoutes extends js.Object {
 sealed trait LkNodesCtlRoutes extends js.Object {
 
   /** Роута списка под-узлов для указанного узла. */
-  def nodeInfo(nodeId: String): Route = js.native
+  def nodeInfo(nodeId: String): PlayRoute = js.native
 
   /** Роута сабмита формы добавления нового узла. */
-  def createSubNodeSubmit(parentId: String): Route = js.native
+  def createSubNodeSubmit(parentId: String): PlayRoute = js.native
 
   /** Роута сабмита нового значения флага isEnabled. */
-  def setNodeEnabled(nodeId: String, isEnabled: Boolean): Route = js.native
+  def setNodeEnabled(nodeId: String, isEnabled: Boolean): PlayRoute = js.native
 
   /** Роута для удаления узла. */
-  def deleteNode(nodeId: String): Route = js.native
+  def deleteNode(nodeId: String): PlayRoute = js.native
 
   /** Сабмит редактирования узла. */
-  def editNode(nodeId: String): Route = js.native
+  def editNode(nodeId: String): PlayRoute = js.native
 
   /** Сабмит обновления данных размещения какой-то карточки на каком-то узле по rcvrKey. */
-  def setAdv(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
+  def setAdv(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
 
   /** Сабмит обновлённых данных по тарификацию размещений на узле. */
-  def setTfDaily(onNodeRcvrKey: String): Route = js.native
+  def setTfDaily(onNodeRcvrKey: String): PlayRoute = js.native
 
-  def setAdvShowOpened(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
+  def setAdvShowOpened(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
 
-  def setAlwaysOutlined(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
+  def setAlwaysOutlined(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
 
 }
 
@@ -256,9 +255,9 @@ sealed trait LkNodesCtlRoutes extends js.Object {
 @js.native
 sealed trait LkAdsCtlRoutes extends js.Object {
 
-  def adsPage(nodeKey: String): Route = js.native
+  def adsPage(nodeKey: String): PlayRoute = js.native
 
-  def getAds(rcvrKey: String, offset: Int): Route = js.native
+  def getAds(rcvrKey: String, offset: Int): PlayRoute = js.native
 
 }
 
@@ -267,11 +266,11 @@ sealed trait LkAdsCtlRoutes extends js.Object {
 @js.native
 sealed trait LkAdnEditCtlRoutes extends js.Object {
 
-  def editNodePage(nodeId: String): Route = js.native
+  def editNodePage(nodeId: String): PlayRoute = js.native
 
-  def uploadImg(nodeId: String): Route = js.native
+  def uploadImg(nodeId: String): PlayRoute = js.native
 
-  def save(nodeId: String): Route = js.native
+  def save(nodeId: String): PlayRoute = js.native
 
 }
 
@@ -280,14 +279,14 @@ sealed trait LkAdnEditCtlRoutes extends js.Object {
 @js.native
 sealed trait LkBill2CtlRoutes extends js.Object {
 
-  def getOrder(orderId: js.UndefOr[Double]): Route = js.native
+  def getOrder(orderId: js.UndefOr[Double]): PlayRoute = js.native
 
-  def deleteItems( itemIds: js.Array[Double]): Route = js.native
+  def deleteItems( itemIds: js.Array[Double]): PlayRoute = js.native
 
-  def cartSubmit(onNodeId: String): Route = js.native
+  def cartSubmit(onNodeId: String): PlayRoute = js.native
 
   /** Получить бинарь с данными размещения по узлу. */
-  def nodeAdvInfo(nodeId: String, forAdId: String = null): Route = js.native
+  def nodeAdvInfo(nodeId: String, forAdId: String = null): PlayRoute = js.native
 
 }
 
@@ -296,11 +295,11 @@ sealed trait LkBill2CtlRoutes extends js.Object {
 @js.native
 sealed trait SysMdrCtlRoutes extends js.Object {
 
-  def nextMdrInfo(args: js.Dictionary[js.Any]): Route = js.native
+  def nextMdrInfo(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
-  def doMdr(mdrRes: js.Dictionary[js.Any]): Route = js.native
+  def doMdr(mdrRes: js.Dictionary[js.Any]): PlayRoute = js.native
 
-  def fixNode(nodeId: String): Route = js.native
+  def fixNode(nodeId: String): PlayRoute = js.native
 
 }
 
@@ -309,6 +308,6 @@ sealed trait SysMdrCtlRoutes extends js.Object {
 @js.native
 trait SysMarketCtlRoutes extends js.Object {
 
-  def showAdnNode(nodeId: String): Route = js.native
+  def showAdnNode(nodeId: String): PlayRoute = js.native
 
 }

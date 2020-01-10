@@ -1,7 +1,5 @@
 package io.suggest.routes
 
-import io.suggest.proto.http.model.Route
-
 import scala.scalajs.js
 
 /**
@@ -14,6 +12,6 @@ import scala.scalajs.js
 sealed trait MarketAdFormCtl extends js.Object {
 
   /** Вебсокет редактора для связи с сервером. */
-  def ws(wsId: String): Route = js.native
+  def ws(wsId: String): PlayRoute = js.native
 
 }

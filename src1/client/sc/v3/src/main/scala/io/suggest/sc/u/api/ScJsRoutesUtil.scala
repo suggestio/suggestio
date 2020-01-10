@@ -1,7 +1,8 @@
 package io.suggest.sc.u.api
 
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{Route, _}
+import io.suggest.proto.http.model._
+import io.suggest.routes.PlayRoute
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.{Json, OWrites, Reads}
@@ -29,11 +30,11 @@ object ScJsRoutesUtil {
     * @tparam ArgsT Тип модели аргументов запроса.
     * @return Фьючерс с ответом сервера в стандартном формате.
     */
-  def mkSc3Request[ArgsT: OWrites](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[MSc3Resp] = {
+  def mkSc3Request[ArgsT: OWrites](args: ArgsT, route: js.Dictionary[js.Any] => PlayRoute): Future[MSc3Resp] = {
     mkRequest[ArgsT, MSc3Resp](args, route)
   }
 
-  def mkRequest[ArgsT: OWrites, RespT: Reads](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[RespT] = {
+  def mkRequest[ArgsT: OWrites, RespT: Reads](args: ArgsT, route: js.Dictionary[js.Any] => PlayRoute): Future[RespT] = {
     val argsPj = Json.toJsObject( args )
     val argsJsDict = PlayJsonSjsUtil.toNativeJsonObj( argsPj )
     val req = HttpReq.routed(

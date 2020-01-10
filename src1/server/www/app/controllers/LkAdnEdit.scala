@@ -7,7 +7,6 @@ import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdEdge
-import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -26,6 +25,7 @@ import scalaz.ValidationNel
 import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.up.UploadConstants
 import models.req.MNodeReq
 import monocle.Traversal
 import scalaz.std.option._

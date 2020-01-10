@@ -5,7 +5,8 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
-import io.suggest.proto.http.model.{Route, _}
+import io.suggest.proto.http.model._
+import io.suggest.routes.PlayRoute
 import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.text.StringUtil
@@ -25,11 +26,11 @@ abstract class RmeLogAppender extends ILogAppender {
   //private var _isReady: Boolean = false
 
   /** Куда делать реквест. Функция, возвращающая route. */
-  def route: Route
+  def route: PlayRoute
 
   def minSeverity: Severity //= Severities.Warn
 
-  private def _logAppendInto(logMsg: LogMsg, route: Route): Future[_] = {
+  private def _logAppendInto(logMsg: LogMsg, route: PlayRoute): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.
     val req = HttpReq.routed(
       // TODO Отработать отсутствие роуты через /sc/error

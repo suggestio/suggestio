@@ -1,4 +1,4 @@
-package io.suggest.js
+package io.suggest.routes
 
 /**
   * Suggest.io

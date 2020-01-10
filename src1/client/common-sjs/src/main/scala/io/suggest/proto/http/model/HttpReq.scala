@@ -1,6 +1,7 @@
 package io.suggest.proto.http.model
 
 import io.suggest.proto.http.client.HttpClient
+import io.suggest.routes.HttpRouteExtractor
 import japgolly.univeq.UnivEq
 
 /**

@@ -13,7 +13,7 @@ import io.suggest.compress.MCompressAlgo
 
 trait IDataSource {
 
-  def contentType  : String
+  def contentType: String
 
   /** Содержимое файла.
     * Считается, что возвращает один и тот же инстанс Source[].

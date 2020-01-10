@@ -5,11 +5,11 @@ import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.geo.json.GjFeature
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{Route, _}
+import io.suggest.proto.http.model._
 import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.pick.PickleUtil
-import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
+import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, PlayRoute, routes}
 import io.suggest.tags.{ITagsApi, TagsHttpApiImpl}
 
 import scala.concurrent.Future
@@ -60,7 +60,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = routes.controllers.LkAdvGeo.tagsSearch2
 
-  override protected def _rcvrPopupRoute(nodeId: String): Route = {
+  override protected def _rcvrPopupRoute(nodeId: String): PlayRoute = {
     routes.controllers.LkAdvGeo.rcvrMapPopup(
       adId    = confRO().adId,
       nodeId  = nodeId
@@ -134,7 +134,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   }
 
 
-  override protected[this] def _nodeAdvInfoRoute(nodeId: String): Route = {
+  override protected[this] def _nodeAdvInfoRoute(nodeId: String): PlayRoute = {
     routes.controllers.LkBill2.nodeAdvInfo(
       nodeId  = nodeId,
       forAdId = confRO().adId

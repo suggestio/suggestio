@@ -121,6 +121,7 @@ resolvers ++= {
 
 // Импорты для play-роутера.
 routesImport ++= Seq(
+  "io.suggest.routes.RoutesJvmConst._",
   "models._",
   "util.qsb._",
   "util.qsb.QSBs._",
@@ -233,9 +234,9 @@ dockerUpdateLatest := true
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
-excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.br"
+excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.br" || "*.apk" || "*.ipa"
 
-excludeFilter in brotli := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.gz"
+excludeFilter in brotli := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.gz" || "*.apk" || "*.ipa"
 
 // Дополнительные импорты для twirl-шаблонов.
 TwirlKeys.templateImports ++= Seq(

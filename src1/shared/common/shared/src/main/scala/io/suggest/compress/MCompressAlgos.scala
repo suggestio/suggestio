@@ -61,9 +61,6 @@ sealed abstract class MCompressAlgo(override val value: String) extends StringEn
   /** Значение HTTP-заголовка кодировки контента. */
   def httpContentEncoding: String
 
-  /** Суффикс имени файла (без точки). */
-  def fileExtension: String = httpContentEncoding
-
   // Чтобы два раза не хранить почти одинаковые строки, переопределяем toString.
   override final def toString = httpContentEncoding
 
@@ -76,6 +73,13 @@ object MCompressAlgo {
 
   implicit def MCOMPRESS_ALGO_FORMAT: Format[MCompressAlgo] = {
     EnumeratumUtil.valueEnumEntryFormat( MCompressAlgos )
+  }
+
+  implicit class CompAlgoOpsExt( private val compAlgo: MCompressAlgo ) extends AnyVal {
+
+    /** Суффикс имени файла (без точки). */
+    def fileExtension: String = compAlgo.httpContentEncoding
+
   }
 
 }

@@ -1,4 +1,4 @@
-package io.suggest.proto.http.model
+package io.suggest.routes
 
 import japgolly.univeq.UnivEq
 
@@ -12,7 +12,7 @@ import scala.scalajs.js
  */
 
 @js.native
-sealed trait Route extends js.Object {
+sealed trait PlayRoute extends js.Object {
 
   /** Используемый HTTP-метод. GET, POST и т.д. */
   val method: String = js.native
@@ -35,7 +35,22 @@ sealed trait Route extends js.Object {
 
 }
 
-object Route {
-  @inline implicit def univEq: UnivEq[Route] = UnivEq.force
+object PlayRoute {
+
+  @inline implicit def univEq: UnivEq[PlayRoute] = UnivEq.force
+
+
+  /** Поддержка экстракции роут для инстансов [[PlayRoute]]. */
+  implicit object PlayRouteExtractor extends HttpRouteExtractor[PlayRoute] {
+    override def url(t: PlayRoute)    = t.url
+    override def method(t: PlayRoute) = t.method
+
+    override def absoluteUrl(t: PlayRoute, secure: Boolean): String =
+      t.absoluteURL(secure)
+
+    override def webSocketUrl(t: PlayRoute, secure: Boolean): String =
+      t.webSocketURL(secure)
+  }
+
 }
 

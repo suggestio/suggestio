@@ -9,8 +9,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{HttpReq, HttpReqData, Route}
-import io.suggest.routes.routes
+import io.suggest.proto.http.model.{HttpReq, HttpReqData}
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil.Implicits._
 import play.api.libs.json.{Json, Writes}
@@ -114,7 +114,7 @@ class IdentApiHttp extends IIdentApi {
     * @tparam A Тип тела запроса.
     * @return Фьючерс с token resp.
     */
-  private def _tokenReq[A: Writes](data: A, route: Route): Future[MRegTokenResp] = {
+  private def _tokenReq[A: Writes](data: A, route: PlayRoute): Future[MRegTokenResp] = {
     HttpClient.execute(
       HttpReq.routed(
         route = route,

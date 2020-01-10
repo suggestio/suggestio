@@ -4,7 +4,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
-import io.suggest.proto.http.model.HttpRouteExtractor
+import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._

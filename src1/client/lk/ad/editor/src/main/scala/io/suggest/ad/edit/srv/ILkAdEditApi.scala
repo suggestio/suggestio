@@ -4,8 +4,8 @@ import diode.ModelRO
 import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.jd.MJdData
-import io.suggest.proto.http.model.{Route, _}
-import io.suggest.routes.routes
+import io.suggest.proto.http.model._
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.up.IUploadApi
 import play.api.libs.json.Json
 
@@ -53,7 +53,7 @@ class LkAdEditApiHttp(
     (adIdOpt, producerIdOpt)
   }
 
-  def prepareUploadRoute: Route = {
+  def prepareUploadRoute: PlayRoute = {
     val (adIdNull, producerIdNull) = _adProdArgs()
     routes.controllers.LkAdEdit.prepareImgUpload(
       adId   = adIdNull,

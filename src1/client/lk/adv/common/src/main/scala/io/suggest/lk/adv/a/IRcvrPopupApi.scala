@@ -2,7 +2,8 @@ package io.suggest.lk.adv.a
 
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{Route, _}
+import io.suggest.proto.http.model._
+import io.suggest.routes.PlayRoute
 
 import scala.concurrent.Future
 
@@ -22,7 +23,7 @@ trait IRcvrPopupApi {
 
 trait RcvrPopupHttpApiImpl extends IRcvrPopupApi {
 
-  protected def _rcvrPopupRoute(nodeId: String): Route
+  protected def _rcvrPopupRoute(nodeId: String): PlayRoute
 
 
   /** Запрос с сервера попапа над ресивером. */

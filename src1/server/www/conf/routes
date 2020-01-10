@@ -3,10 +3,10 @@
 
 ## Если path начинается с /~, то jsRevRouterTpl НЕ будет приписывать CSRF-токен к роуте.
 ## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
-GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt(-bundle)?\.js).*>       @controllers.Static.vassetsSudo(path="/public", file: Asset)
+GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt(-bundle)?\.js).*>       @controllers.Static.vassetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
 
 ## Map static resources from the /public folder to the /assets URL path
-GET  /vassets/*file                     @controllers.Assets.versioned(path="/public", file: Asset)
+GET  /vassets/*file                     @controllers.Assets.versioned(path = ASSETS_PUBLIC_ROOT, file: Asset)
 
 
 ## Home page
@@ -14,7 +14,7 @@ GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState
 
 ## "... most browsers of all types will request /favicon.ico by default" https://stackoverflow.com/a/1445016
 ## TODO Заменить на moved temporary + versioned-роута, чтобы усилить кэширование?
-GET  /favicon.ico                       @controllers.Assets.at(path = "/public", file = "images/favicon/114.ico")
+GET  /favicon.ico                       @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file = "images/favicon/114.ico")
 
 ## sc3+ Объединённое API:
 GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
@@ -30,7 +30,7 @@ GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.sug
 POST /sc/error                          @controllers.Sc.handleScError
 
 ## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
-GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path="/public", file: Asset )
+GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
 
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 
@@ -292,6 +292,8 @@ GET  /sys/debug                          @controllers.SysDebug.index
 POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
 POST /sys/debug/dynimg/jdedges/reset     @controllers.SysDebug.resetImgsToOrig
 POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDerivatives
+GET  /sys/debug/cpRes                    @controllers.SysDebug.getClassPathResourceInfoGet
+POST /sys/debug/cpRes                    @controllers.SysDebug.getClassPathResourceInfoPost
 
 ## ident v2: react-форма логина.
 ## Password change v2
@@ -323,6 +325,6 @@ GET  /st/popup/check                    @controllers.Static.popupCheckContent
 POST /_/csp/report                      @controllers.Static.handleCspReport
 
 ## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
-GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path="/public", file: Asset)
-GET  /assets/*file                      @controllers.Assets.at(path="/public", file)
+GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
+GET  /assets/*file                      @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file)
 

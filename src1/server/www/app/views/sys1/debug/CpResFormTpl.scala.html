@@ -1,0 +1,20 @@
+@(cpResForm: Form[String])(implicit ctx: Context)
+
+@* Форма для запроса ресурса из classpath. *@
+
+@import helper._
+@import ctx.{request, messages}
+
+
+@dbgBase("Ресурсы Classpath") {
+
+  @form( CSRF(routes.SysDebug.getClassPathResourceInfoPost()) ) {
+    @inputText(
+      cpResForm("cpPath"),
+      Symbol("_label") -> "Путь cp:",
+    )
+
+    <button type="submit">Запрос ресурса CLASSPATH</button>
+  }
+
+}

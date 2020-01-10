@@ -3,6 +3,7 @@ package io.suggest.tags
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
+import io.suggest.routes.PlayRoute
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 
@@ -27,7 +28,7 @@ trait ITagsApi {
 trait TagsHttpApiImpl extends ITagsApi {
 
   /** Функция-генератор роуты для поиска тегов на сервере. */
-  protected def _tagsSearchRoute: js.Dictionary[js.Any] => Route
+  protected def _tagsSearchRoute: js.Dictionary[js.Any] => PlayRoute
 
   override def tagsSearch(args: MTagsSearchQs): Future[MTagsFound] = {
     HttpClient.execute(

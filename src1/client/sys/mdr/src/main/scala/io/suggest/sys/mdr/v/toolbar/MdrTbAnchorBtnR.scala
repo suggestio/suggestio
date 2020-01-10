@@ -5,8 +5,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.proto.http.model.Route
-import io.suggest.routes.routes
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
@@ -23,14 +22,14 @@ class MdrTbAnchorBtnR {
 
   case class PropsVal(
                        hintCode   : String,
-                       route      : Route,
+                       route      : PlayRoute,
                        icon       : MuiSvgIcon,
                      )
   object PropsVal {
     def SysNodeShow(nodeId: String) =
       PropsVal( MsgCodes.`Node`, routes.controllers.SysMarket.showAdnNode( nodeId ), Mui.SvgIcons.Settings )
 
-    def Edit(route: Route ) = PropsVal(MsgCodes.`Edit`, route, Mui.SvgIcons.Edit)
+    def Edit(route: PlayRoute ) = PropsVal(MsgCodes.`Edit`, route, Mui.SvgIcons.Edit)
     def LkAdEdit(nodeId: String) = Edit( routes.controllers.LkAdEdit.editAd( nodeId ) )
     def LkAdnEdit(nodeId: String) = Edit( routes.controllers.LkAdnEdit.editNodePage( nodeId ) )
 

@@ -4,8 +4,7 @@ import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.proto.http.model.Route
-import io.suggest.routes.IJsRouter
+import io.suggest.routes.{IJsRouter, PlayRoute}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -52,7 +51,7 @@ class EnterLkRowR(
       propsProxy.value.whenDefinedEl { props =>
         val R = ScCssStatic.Menu.Rows
 
-        val (hrefRoute, msgCode) = props.isMyAdnNodeId.fold [(Route, String)] {
+        val (hrefRoute, msgCode) = props.isMyAdnNodeId.fold [(PlayRoute, String)] {
           if (props.isLoggedIn) {
             // Ссылка на личный кабинет
             val r = props.scJsRouter.controllers.Ident.rdrUserSomewhere()

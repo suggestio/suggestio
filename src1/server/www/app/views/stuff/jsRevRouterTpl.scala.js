@@ -1,4 +1,4 @@
-@(name: String = io.suggest.js.JsRoutesConst.GLOBAL_NAME, csrfAll: Boolean = false,
+@(name: String = io.suggest.routes.JsRoutesConst.GLOBAL_NAME, csrfAll: Boolean = false,
   cdn: Boolean = false)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
 
 @* JS-шаблон генерации play js reverse router.

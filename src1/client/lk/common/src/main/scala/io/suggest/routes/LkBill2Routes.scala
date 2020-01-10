@@ -2,7 +2,7 @@ package io.suggest.routes
 
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{Route, _}
+import io.suggest.proto.http.model.{_}
 
 import scala.concurrent.Future
 
@@ -25,7 +25,7 @@ trait ILkBill2NodeAdvInfoApi {
 /** HTTP-реализация [[ILkBill2NodeAdvInfoApi]]. */
 trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
 
-  protected[this] def _nodeAdvInfoRoute(nodeId: String): Route = {
+  protected[this] def _nodeAdvInfoRoute(nodeId: String): PlayRoute = {
     routes.controllers.LkBill2.nodeAdvInfo( nodeId = nodeId )
   }
 

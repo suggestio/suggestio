@@ -5,10 +5,10 @@ import io.suggest.ctx.ICtxIdStrOpt
 import io.suggest.file.MJsFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{Route, _}
-import io.suggest.js.UploadConstants
+import io.suggest.proto.http.model._
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
+import io.suggest.routes.PlayRoute
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.FormData
 import play.api.libs.json.Json
@@ -31,7 +31,7 @@ trait IUploadApi {
     * @param file4UpProps Данные по файлу, который планируется загружать.
     * @return Фьючерс с ответом сервера.
     */
-  def prepareUpload(route: Route, file4UpProps: MFile4UpProps): Future[MUploadResp]
+  def prepareUpload(route: PlayRoute, file4UpProps: MFile4UpProps): Future[MUploadResp]
 
 
   /** Произвести непосредственную заливку файла на сервер.
@@ -56,7 +56,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
     * @param file4UpProps Данные файла.
     * @return Фьючерс с ответом сервера.
     */
-  override def prepareUpload(route: Route, file4UpProps: MFile4UpProps): Future[MUploadResp] = {
+  override def prepareUpload(route: PlayRoute, file4UpProps: MFile4UpProps): Future[MUploadResp] = {
     val req = HttpReq.routed(
       route = route,
       data = HttpReqData(

@@ -10,11 +10,11 @@ import io.suggest.img.MImgFmts
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.scalaz.ZTreeUtil._
-import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil.StringCollUtil
+import io.suggest.up.UploadConstants
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import models.mctx.Context

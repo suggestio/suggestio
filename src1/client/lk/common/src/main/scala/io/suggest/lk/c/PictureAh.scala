@@ -13,18 +13,17 @@ import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
-import io.suggest.js.UploadConstants
 import io.suggest.lk.m._
 import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.proto.http.model.Route
+import io.suggest.routes.PlayRoute
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DoNothing
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.up.IUploadApi
+import io.suggest.up.{IUploadApi, UploadConstants}
 import io.suggest.ws.MWsMsgTypes
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
@@ -46,7 +45,7 @@ import scala.util.Success
   * Description: Контроллер управления картинками.
   */
 class PictureAh[V, M](
-                       prepareUploadRoute  : MFormResourceKey => Route,
+                       prepareUploadRoute  : MFormResourceKey => PlayRoute,
                        uploadApi           : IUploadApi,
                        modelRW             : ModelRW[M, MPictureAh[V]]
                      )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])

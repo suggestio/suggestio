@@ -205,13 +205,13 @@ final class DynImgUtil @Inject() (
             } yield {
               mLocalImgs.getStream(mLocImg)
             }
-            Source.fromFutureSource(streamFut)
+            Source.futureSource( streamFut )
               // TODO Тут хрень какая-то: конфликт между _ и NotUsed. _ приходит из play-ws.
               .asInstanceOf[Source[ByteString, NotUsed]]
           })
         Future.successful(src)
       }
-      Source.fromFutureSource(srcFutCached)
+      Source.futureSource( srcFutCached )
     }
   }
 
