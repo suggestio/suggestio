@@ -3,8 +3,8 @@ package util.geo.umap
 import javax.inject.Inject
 
 import io.suggest.geo.{GsTypes, MultiPolygonGs}
-import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.edge.{MNodeEdges, MPredicates}
+import io.suggest.n2.node.MNode
 import japgolly.univeq._
 
 /**

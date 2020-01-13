@@ -11,12 +11,12 @@ import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.{MJdData, MJdDoc, MJdTagId}
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.extra.MNodeExtras
-import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge._
+import io.suggest.n2.extra.MNodeExtras
+import io.suggest.n2.extra.doc.MNodeDoc
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl

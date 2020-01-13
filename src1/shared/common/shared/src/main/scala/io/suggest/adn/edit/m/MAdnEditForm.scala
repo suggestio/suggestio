@@ -1,8 +1,8 @@
 package io.suggest.adn.edit.m
 
 import io.suggest.jd.{MJdEdge, MJdEdgeVldInfo}
-import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.model.n2.node.meta.MMetaPub
+import io.suggest.n2.edge.EdgeUid_t
+import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.scalaz.StringValidationNel
 import japgolly.univeq._
 import play.api.libs.functional.syntax._

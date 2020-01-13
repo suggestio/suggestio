@@ -4,8 +4,8 @@ import java.time.OffsetDateTime
 
 import io.suggest.es.model.EsModel
 import io.suggest.geo._
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.edge._
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.{Inject, Singleton}
 import models.madn.AdnShownTypes

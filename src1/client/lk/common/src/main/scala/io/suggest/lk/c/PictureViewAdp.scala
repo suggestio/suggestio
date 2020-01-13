@@ -7,7 +7,7 @@ import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.scalaz.ZTreeUtil._
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import scalaz.Tree
 import scalaz.std.option._
 import japgolly.univeq._

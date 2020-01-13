@@ -9,7 +9,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
-import io.suggest.model.n2.edge.MPredicate
+import io.suggest.n2.edge.MPredicate
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}

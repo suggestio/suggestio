@@ -15,7 +15,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.util.effect.WT
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.AdvGeoBasicInfo_t

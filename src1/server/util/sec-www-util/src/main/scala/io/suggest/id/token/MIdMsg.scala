@@ -3,7 +3,7 @@ package io.suggest.id.token
 import java.time.Instant
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.model.n2.edge.MPredicate
+import io.suggest.n2.edge.MPredicate
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens

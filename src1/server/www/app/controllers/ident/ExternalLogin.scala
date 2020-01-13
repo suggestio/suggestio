@@ -6,10 +6,10 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelDi
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import io.suggest.n2.edge._
+import io.suggest.n2.node.{IMNodes, MNode, MNodeTypes}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.session.{CustomTtl, MSessionKeys}
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context

@@ -4,7 +4,7 @@ import io.suggest.adn.edit.NodeEditConstants
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MPxRatios
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.url.MHostInfo
 import models.im._
 import models.mctx.Context

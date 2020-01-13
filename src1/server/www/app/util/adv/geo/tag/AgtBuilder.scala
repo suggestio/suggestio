@@ -3,7 +3,7 @@ package util.adv.geo.tag
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.model.n2.edge._
+import io.suggest.n2.edge._
 import japgolly.univeq._
 import util.adv.build.IAdvBuilder
 

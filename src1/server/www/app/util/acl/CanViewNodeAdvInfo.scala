@@ -6,7 +6,7 @@ import models.req.{IAdProdReq, MNodeMaybeAdminReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
 

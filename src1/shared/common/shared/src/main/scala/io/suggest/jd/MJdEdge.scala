@@ -2,7 +2,7 @@ package io.suggest.jd
 
 import io.suggest.err.ErrorConstants
 import io.suggest.file.MSrvFileInfo
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MPredicate, MPredicates}
 import io.suggest.primo.id.IId
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}

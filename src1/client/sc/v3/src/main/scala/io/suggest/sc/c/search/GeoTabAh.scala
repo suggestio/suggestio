@@ -9,7 +9,7 @@ import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.{MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.maps.u.IAdvRcvrsMapApi
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.dia.err.MScErrorDia

@@ -4,9 +4,9 @@ import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.es.model.EsModelDi
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{IMNodes, MNode}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.{MLookupMode, MLookupModes, MSc3AdData, MSc3AdsResp, MScAdInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}

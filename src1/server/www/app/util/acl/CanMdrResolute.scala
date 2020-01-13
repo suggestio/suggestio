@@ -5,7 +5,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.sys.mdr.MMdrResolution
 import io.suggest.util.logs.MacroLogsImpl

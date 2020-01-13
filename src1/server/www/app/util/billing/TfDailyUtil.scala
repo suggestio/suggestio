@@ -7,9 +7,9 @@ import io.suggest.bill.tf.daily._
 import io.suggest.bill.{Amount_t, MCurrencies, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.bill.tariff.daily.{MDayClause, MTfDaily}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.scalaz.ScalazUtil
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.mcal.MCalendars
@@ -21,9 +21,9 @@ import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
-import io.suggest.model.n2.bill.MNodeBilling
-import io.suggest.model.n2.bill.tariff.MNodeTariffs
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.bill.MNodeBilling
+import io.suggest.n2.bill.tariff.MNodeTariffs
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.JmxBase
 import monocle.Traversal
 import scalaz._

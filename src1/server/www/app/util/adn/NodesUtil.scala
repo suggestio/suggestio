@@ -10,13 +10,13 @@ import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtServices
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl

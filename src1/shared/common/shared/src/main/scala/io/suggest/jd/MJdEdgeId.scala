@@ -4,7 +4,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFmt
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq

@@ -1,7 +1,7 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MImgT
@@ -11,7 +11,7 @@ import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import io.suggest.proto.http.HttpConst
 import play.api.http.{HttpErrorHandler, Status}
 import util.cdn.CdnUtil

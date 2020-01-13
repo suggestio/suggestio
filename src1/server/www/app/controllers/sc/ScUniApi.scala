@@ -9,7 +9,7 @@ import util.acl.IMaybeAuth
 import japgolly.univeq._
 import io.suggest.es.model.MEsUuId.Implicits._
 import io.suggest.geo.{MGeoLoc, MLocEnv}
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import models.req.IReq
 import play.api.libs.json.Json
 import util.showcase.IScUtil

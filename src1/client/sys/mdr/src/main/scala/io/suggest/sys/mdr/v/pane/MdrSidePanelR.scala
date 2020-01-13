@@ -12,8 +12,8 @@ import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.MNodeType
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.MNodeType
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._

@@ -4,7 +4,7 @@ import java.io.{File, FileInputStream}
 import javax.inject.Inject
 
 import io.suggest.crypto.hash.{MHash, MHashes}
-import io.suggest.model.n2.media.MFileMetaHash
+import io.suggest.n2.media.MFileMetaHash
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.codec.digest.DigestUtils
 import scala.concurrent.blocking

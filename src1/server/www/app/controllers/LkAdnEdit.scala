@@ -7,9 +7,9 @@ import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdEdge
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge._
+import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.mctx.Context

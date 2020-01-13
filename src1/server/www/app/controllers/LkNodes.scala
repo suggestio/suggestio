@@ -13,11 +13,11 @@ import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.lk.nodes._
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.edge.{MEdge, MEdgeFlagData, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.{MEdge, MEdgeFlagData, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -29,8 +29,8 @@ import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.CtxData
-import io.suggest.model.n2.bill.MNodeBilling
-import io.suggest.model.n2.bill.tariff.MNodeTariffs
+import io.suggest.n2.bill.MNodeBilling
+import io.suggest.n2.bill.tariff.MNodeTariffs
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._

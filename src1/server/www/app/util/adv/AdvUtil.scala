@@ -10,7 +10,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dt.MYmd
 import io.suggest.es.model.EsModel
 import io.suggest.jd.tags.JdTag
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject

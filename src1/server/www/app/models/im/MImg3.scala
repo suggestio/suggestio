@@ -10,12 +10,12 @@ import io.suggest.es.model.EsModel
 import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.img
 import io.suggest.img.ImgSzDated
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
-import io.suggest.model.n2.media._
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.media.storage.{IMediaStorages, MStorages}
+import io.suggest.n2.media._
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.streams.StreamsUtil
 import io.suggest.up.UploadConstants

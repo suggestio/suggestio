@@ -5,7 +5,7 @@ import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.{MJdEdgeId, MJdEdgeVldInfo}
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._

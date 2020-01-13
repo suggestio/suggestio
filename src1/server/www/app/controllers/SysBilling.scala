@@ -7,8 +7,8 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.txn.MTxns
-import io.suggest.model.n2.bill.tariff.daily.MTfDaily
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.bill.tariff.daily.MTfDaily
+import io.suggest.n2.node.MNodes
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import javax.inject.{Inject, Singleton}

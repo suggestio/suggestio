@@ -1,7 +1,7 @@
 package models.adv
 
-import io.suggest.model.n2.bill.tariff.daily.MTfDaily
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.bill.tariff.daily.MTfDaily
+import io.suggest.n2.node.MNode
 import models.mcal.ICalsCtx
 import models.mdt.IDateStartEnd
 

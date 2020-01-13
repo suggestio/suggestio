@@ -5,7 +5,7 @@ import javax.inject.{Inject, Named, Singleton}
 
 import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im.make.MakeResult

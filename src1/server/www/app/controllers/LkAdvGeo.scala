@@ -19,7 +19,7 @@ import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.pick.PickleUtil
 import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.OptId

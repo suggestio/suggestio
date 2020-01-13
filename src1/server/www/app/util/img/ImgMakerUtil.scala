@@ -1,9 +1,9 @@
 package util.img
 
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import javax.inject.Inject
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNodeTypes, MNodes}
 import models.im._
 import models.im.make.MakeResult
 import japgolly.univeq._

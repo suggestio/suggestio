@@ -6,7 +6,7 @@ import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import japgolly.univeq.UnivEq
 
 /**

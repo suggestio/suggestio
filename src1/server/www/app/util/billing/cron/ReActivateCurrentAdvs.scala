@@ -4,8 +4,8 @@ import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
 import models.mproj.ICommonDi

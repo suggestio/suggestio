@@ -3,10 +3,10 @@ package util.acl
 import akka.stream.Materializer
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject

@@ -8,12 +8,12 @@ import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge._
+import io.suggest.n2.edge.search.{Criteria, TagCriteria}
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase

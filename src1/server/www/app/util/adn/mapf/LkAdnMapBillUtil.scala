@@ -15,7 +15,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.util.effect.WT
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mctx.Context

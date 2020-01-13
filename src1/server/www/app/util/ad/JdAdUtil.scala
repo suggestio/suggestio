@@ -11,9 +11,9 @@ import io.suggest.grid.GridCalc
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
-import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.media.MPictureMeta
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.media.MPictureMeta
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl

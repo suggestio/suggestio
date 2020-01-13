@@ -7,8 +7,8 @@ import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import play.api.http.Status
 

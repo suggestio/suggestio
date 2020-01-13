@@ -2,7 +2,7 @@ package controllers.sysctl
 
 import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.EsModelDi
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.msys.MSysNodeInstallFormData

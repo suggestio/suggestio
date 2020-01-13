@@ -4,8 +4,8 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}

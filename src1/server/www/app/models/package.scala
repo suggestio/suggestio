@@ -12,8 +12,8 @@ package object models {
   def MAIN_PAGE_CALL        = controllers.routes.Sc.geoSite()
 
 
-  type MNode                = io.suggest.model.n2.node.MNode
+  type MNode                = io.suggest.n2.node.MNode
 
-  type MEdge                = io.suggest.model.n2.edge.MEdge
+  type MEdge                = io.suggest.n2.edge.MEdge
 
 }

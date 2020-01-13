@@ -13,11 +13,11 @@ import io.suggest.dev.MScreen
 import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MRcvrsMapUrlArgs}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.JmxBase

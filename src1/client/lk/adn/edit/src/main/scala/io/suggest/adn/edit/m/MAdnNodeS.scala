@@ -3,8 +3,8 @@ package io.suggest.adn.edit.m
 import diode.FastEq
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.jd.MJdEdge
-import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.model.n2.node.meta.MMetaPub
+import io.suggest.n2.edge.EdgeUid_t
+import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

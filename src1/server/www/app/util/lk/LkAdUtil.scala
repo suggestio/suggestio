@@ -2,7 +2,7 @@ package util.lk
 
 import io.suggest.dev.MScreen
 import io.suggest.di.IExecutionContext
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import javax.inject.Inject
 import models.blk
 import models.blk.SzMult_t

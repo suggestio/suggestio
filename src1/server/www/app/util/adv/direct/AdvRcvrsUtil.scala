@@ -7,10 +7,10 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, TryUpdateBuilder}

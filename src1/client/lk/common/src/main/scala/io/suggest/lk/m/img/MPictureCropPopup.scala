@@ -3,7 +3,7 @@ package io.suggest.lk.m.img
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import diode.FastEq
 import io.suggest.img.crop.MCrop
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.ueq.ReactImageCropUnivEqUtil._

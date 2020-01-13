@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import models.adv.MExtAdvQs
 
 /**

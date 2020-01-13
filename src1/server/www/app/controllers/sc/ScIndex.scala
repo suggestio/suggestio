@@ -13,10 +13,10 @@ import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes, NodeNotFoundException}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.{Criteria, GsCriteria}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{IMNodes, MNode, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}

@@ -1,7 +1,7 @@
 package models.mlk
 
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.model.n2.node.{MNode, MNodeType}
+import io.suggest.n2.node.{MNode, MNodeType}
 import play.api.mvc.Call
 
 /**

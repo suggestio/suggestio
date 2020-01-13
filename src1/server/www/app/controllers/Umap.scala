@@ -8,10 +8,10 @@ import _root_.util.sec.CspUtil
 import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
-import io.suggest.model.n2.node.{MNode, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge._
+import io.suggest.n2.edge.search.{Criteria, GsCriteria}
+import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.madn.AdnShownTypes
 import models.maps.umap._

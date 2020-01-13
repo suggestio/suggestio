@@ -4,7 +4,7 @@ import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.contract.MContracts
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

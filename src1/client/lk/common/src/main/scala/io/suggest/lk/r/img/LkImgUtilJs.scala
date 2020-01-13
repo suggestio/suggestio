@@ -3,7 +3,7 @@ package io.suggest.lk.r.img
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.lk.m.SetImgWh
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.msg.ErrorMsgs
 import io.suggest.react.Props2ModelProxy
 import io.suggest.react.ReactDiodeUtil

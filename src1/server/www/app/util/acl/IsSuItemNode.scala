@@ -4,7 +4,7 @@ import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

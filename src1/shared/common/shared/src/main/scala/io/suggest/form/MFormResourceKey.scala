@@ -1,7 +1,7 @@
 package io.suggest.form
 
 import diode.FastEq
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.scalaz.NodePath_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

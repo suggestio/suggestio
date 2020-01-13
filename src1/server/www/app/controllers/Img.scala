@@ -5,7 +5,7 @@ import java.time.{Instant, ZonedDateTime}
 import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.dt.DateTimeUtil
 import io.suggest.file.MimeUtilJvm
-import io.suggest.model.n2.media.storage.IMediaStorages
+import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}

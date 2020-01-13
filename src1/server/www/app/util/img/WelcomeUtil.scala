@@ -5,7 +5,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.dev.MScreen
 import io.suggest.img.{MImgFmt, MImgFmts}
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mctx.Context

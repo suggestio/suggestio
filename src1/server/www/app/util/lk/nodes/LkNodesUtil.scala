@@ -3,10 +3,10 @@ package util.lk.nodes
 import javax.inject.Singleton
 
 import io.suggest.lk.nodes.MLknNodeReq
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.MNodeTypes
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.search.sort.SortOrder
 import util.FormUtil

@@ -1,13 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MNodeReq}

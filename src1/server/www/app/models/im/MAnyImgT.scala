@@ -56,7 +56,7 @@ trait MAnyImgsT[T <: MAnyImgT] extends IMCommonDi {
 
   /** Асинхронно стримить картинку из хранилища. */
   final def getStream(mimg: T): Source[ByteString, _] = {
-    Source.fromFutureSource(
+    Source.futureSource(
       getDataSource(mimg)
         .map(_.data)
     )

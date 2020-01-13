@@ -1,10 +1,10 @@
 package util.n2u
 
 import javax.inject.Singleton
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.extra.domain.MDomainModes
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.extra.domain.MDomainModes
+import io.suggest.n2.node.MNode
 
 /**
   * Suggest.io

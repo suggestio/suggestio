@@ -5,7 +5,7 @@ import javax.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import models.adv.build.{MCtxOuter, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import org.threeten.extra.Interval

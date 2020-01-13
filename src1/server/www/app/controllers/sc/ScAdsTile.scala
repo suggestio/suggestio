@@ -6,10 +6,10 @@ import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.es.search.MRandomSortData
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo}

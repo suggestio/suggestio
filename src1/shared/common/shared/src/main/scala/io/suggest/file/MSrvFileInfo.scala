@@ -6,7 +6,7 @@ import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.err.ErrorConstants
-import io.suggest.model.n2.media.{MFileMeta, MFileMetaHash, MPictureMeta}
+import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MPictureMeta}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil

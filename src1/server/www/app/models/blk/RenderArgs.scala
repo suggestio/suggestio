@@ -3,7 +3,7 @@ package models.blk
 import io.suggest.ad.blk.ent.MEntity
 import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import models.blk
 import models.im.make.MakeResult

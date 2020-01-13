@@ -16,14 +16,14 @@ import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.edge.search.{Criteria, MHashCriteria}
-import io.suggest.model.n2.media._
-import io.suggest.model.n2.media.storage.IMediaStorages
-import io.suggest.model.n2.node.{MNode, MNodeType, MNodes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
+import io.suggest.n2.media._
+import io.suggest.n2.media.storage.IMediaStorages
+import io.suggest.n2.node.{MNode, MNodeType, MNodes}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._

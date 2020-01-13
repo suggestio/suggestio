@@ -3,7 +3,7 @@ package io.suggest.jd.render.m
 import diode.FastEq
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.jd.{MJdData, MJdDoc}
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.MScAdInfo

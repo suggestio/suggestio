@@ -1,6 +1,6 @@
 package controllers.sc
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.sc3.MScQs
 import models.req.IReq

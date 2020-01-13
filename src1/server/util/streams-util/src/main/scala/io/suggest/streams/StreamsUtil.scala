@@ -55,7 +55,7 @@ class StreamsUtil @Inject() (
     implicit class PublisherFutUtil[T](val pubFut: Future[Publisher[T]]) {
       def toSource: Source[T, NotUsed] = {
         Source
-          .fromFuture(pubFut)
+          .future(pubFut)
           .flatMapConcat( _.toSource )
       }
     }
@@ -235,7 +235,7 @@ class StreamsUtil @Inject() (
     // Собираем многоразовый синк, который будет наиболее эффективным путём собирать финальную ByteString.
     // Используется mutable ByteString builder, который инициализируется с фактическим началом потока, поэтому тут lazyInit().
     Sink
-      .lazyInitAsync[ByteString, Future[ByteString]] { () =>
+      .lazyFutureSink[ByteString, Future[ByteString]] { () =>
         // При поступлении первых данных, инициализировать builder и собрать фактический sink:
         val b = ByteString.newBuilder
         // Закидываем все данные в общий builder:
@@ -248,10 +248,7 @@ class StreamsUtil @Inject() (
           }
         Future.successful( realSink )
       }
-      .mapMaterializedValue(
-        _.map(_.getOrElse( Future.successful( ByteString.empty ) ))
-          .flatten
-      )
+      .mapMaterializedValue( _.flatten )
   }
 
 

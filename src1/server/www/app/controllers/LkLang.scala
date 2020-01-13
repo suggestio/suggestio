@@ -4,8 +4,8 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.I18nConst
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.mctx.Context

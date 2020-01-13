@@ -5,7 +5,7 @@ import javax.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

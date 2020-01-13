@@ -6,7 +6,7 @@ import io.suggest.es.model.EsModelDi
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.streams.IStreamsUtilDi
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, MCtxOuter, TryUpdateBuilder}

@@ -7,7 +7,7 @@ import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.MpUploadArgs
 import io.suggest.ext.svc.MExtService
 import io.suggest.fsm.FsmActor
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.IOAuth1AdvTargetActorArgs
 import models.adv.ext.Mad2ImgUrlCalcOuter

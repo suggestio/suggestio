@@ -1,7 +1,7 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNodeTypes, MNodes}
 import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
 import play.api.mvc._

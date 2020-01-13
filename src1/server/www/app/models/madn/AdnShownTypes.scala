@@ -3,8 +3,8 @@ package models.madn
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.{EnumeratumJvmUtil, EnumeratumUtil}
 import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
-import io.suggest.model.n2.extra.MAdnExtra
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.extra.MAdnExtra
+import io.suggest.n2.node.MNode
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 import play.api.mvc.QueryStringBindable

@@ -15,7 +15,7 @@ import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.lk.m._
 import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
-import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.PlayRoute

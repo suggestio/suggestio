@@ -2,7 +2,7 @@ package util.adv.direct
 
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.model.n2.edge._
+import io.suggest.n2.edge._
 import util.adv.build.IAdvBuilder
 
 /**

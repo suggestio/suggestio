@@ -12,8 +12,8 @@ import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 
 /**

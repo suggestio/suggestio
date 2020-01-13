@@ -15,13 +15,13 @@ import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.jd.tags.{JdTag, MJdtProps1}
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.storage.IMediaStorages
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.n2.extra.doc.MNodeDoc
+import io.suggest.n2.media.storage.IMediaStorages
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}

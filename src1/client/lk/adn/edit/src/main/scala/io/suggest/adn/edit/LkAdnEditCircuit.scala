@@ -9,7 +9,7 @@ import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes}
 import io.suggest.lk.c.{ColorPickAh, PictureAh}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
-import io.suggest.model.n2.node.meta.MMetaPub
+import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.routes

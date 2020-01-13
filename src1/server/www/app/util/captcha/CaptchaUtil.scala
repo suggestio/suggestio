@@ -12,7 +12,7 @@ import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.id.token.{MIdMsg, MIdToken}
 import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.mbill2.util.effect
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import io.suggest.playx.CacheApiUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.sec.util.{CipherUtil, PgpUtil}

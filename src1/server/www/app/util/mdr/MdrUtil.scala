@@ -8,10 +8,10 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order.MOrderWithItems
-import io.suggest.model.n2.edge._
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
+import io.suggest.n2.edge._
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl

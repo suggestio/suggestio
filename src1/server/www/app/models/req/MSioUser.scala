@@ -13,7 +13,7 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
 import play.api.db.slick.DatabaseConfigProvider

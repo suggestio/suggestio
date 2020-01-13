@@ -4,7 +4,7 @@ import com.materialui.{MuiChip, MuiChipProps, MuiChipVariants}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants._
-import io.suggest.model.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.OptFastEq
 import io.suggest.sys.mdr.MMdrQueueReport
 import japgolly.scalajs.react._

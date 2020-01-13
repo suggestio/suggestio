@@ -3,7 +3,7 @@ package util.acl
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.req._
 import play.api.mvc._

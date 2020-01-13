@@ -3,7 +3,7 @@ package models.adv.build
 import io.suggest.es.model.ITryUpdateData
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.util.effect.RWT
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import monocle.macros.GenLens
 import slick.dbio.{DBIOAction, NoStream}
 

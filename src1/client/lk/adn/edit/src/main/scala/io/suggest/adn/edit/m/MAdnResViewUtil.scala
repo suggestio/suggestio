@@ -3,7 +3,7 @@ package io.suggest.adn.edit.m
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.c.IJdEdgeIdViewAdp
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 

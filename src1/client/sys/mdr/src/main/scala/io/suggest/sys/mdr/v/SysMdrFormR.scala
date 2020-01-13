@@ -5,7 +5,7 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssStatic}
-import io.suggest.model.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import io.suggest.sys.mdr.v.dia.MdrDiaRefuseR

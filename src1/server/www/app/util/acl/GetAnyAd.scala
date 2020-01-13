@@ -2,7 +2,7 @@ package util.acl
 
 import io.suggest.es.model.EsModel
 import javax.inject.Inject
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNodeTypes, MNodes}
 import models.mproj.ICommonDi
 import models.req.MAdReq
 import play.api.mvc._

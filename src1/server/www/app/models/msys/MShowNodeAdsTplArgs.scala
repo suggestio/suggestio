@@ -1,8 +1,8 @@
 package models.msys
 
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.model.n2.node.MNode
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.node.MNode
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import models.blk
 

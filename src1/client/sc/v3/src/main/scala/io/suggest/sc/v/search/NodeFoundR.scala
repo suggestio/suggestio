@@ -18,7 +18,7 @@ import ReactCommonUtil.Implicits._
 import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._

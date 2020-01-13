@@ -5,7 +5,7 @@ import util._
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import akka.util.Timeout
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.MNodesCacheListener
+import io.suggest.n2.node.MNodesCacheListener
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext

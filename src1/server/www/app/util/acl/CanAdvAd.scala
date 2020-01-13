@@ -2,7 +2,7 @@ package util.acl
 
 import io.suggest.es.model.EsModel
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

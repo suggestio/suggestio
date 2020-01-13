@@ -12,7 +12,7 @@ import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR

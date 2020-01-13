@@ -6,7 +6,7 @@ import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.save.MSaveS
 import io.suggest.jd.{MJdData, MJdEdge}
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
 import japgolly.univeq._

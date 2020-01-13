@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MPxRatio, MPxRatios, MScreen}
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.sc.ScConstants
 import models.blk._
 import models.im._

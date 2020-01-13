@@ -1,7 +1,7 @@
 package models.msys
 
-import io.suggest.model.n2.extra.domain.MDomainExtra
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.extra.domain.MDomainExtra
+import io.suggest.n2.node.MNode
 import play.api.data.Form
 
 /**

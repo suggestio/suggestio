@@ -9,10 +9,10 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.IReqHdr

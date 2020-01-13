@@ -9,7 +9,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.dt.DateTimeUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo._
-import io.suggest.model.n2.edge.{MPredicate, MPredicates}
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.util.UrlUtil
 import models.blk.SzMult_t

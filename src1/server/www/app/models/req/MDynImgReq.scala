@@ -1,7 +1,7 @@
 package models.req
 
-import io.suggest.model.n2.media.MEdgeMedia
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.media.MEdgeMedia
+import io.suggest.n2.node.MNode
 import models.mup.MSwfsFidInfo
 import play.api.mvc.Request
 

@@ -3,7 +3,7 @@ package io.suggest.sc.v.search
 import diode.FastEq
 import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.sc.styl.ScScalaCssDefaults._
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq

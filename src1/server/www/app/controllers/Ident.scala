@@ -18,12 +18,12 @@ import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0, MRegTokenResp
 import io.suggest.id.token.{MIdMsg, MIdToken, MIdTokenConstaints, MIdTokenDates, MIdTokenTypes}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.csp.Csp
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}

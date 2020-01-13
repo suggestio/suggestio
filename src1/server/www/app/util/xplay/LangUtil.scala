@@ -1,7 +1,7 @@
 package util.xplay
 
 import controllers.ISioControllerApi
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.{IMNodes, MNode}
 import models.mproj.IMCommonDi
 import play.api.i18n.Lang
 import play.api.mvc.Result

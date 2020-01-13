@@ -10,7 +10,7 @@ import io.suggest.brotli.BrotliUtil
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.stat.m.{MComponents, MDiag}
 import io.suggest.common.empty.OptionUtil.BoolOptOps

@@ -2,8 +2,8 @@ package controllers.sysctl
 
 import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.{EsModelDi, MEsUuId}
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.n2.edge.{MEdge, MNodeEdges}
+import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.util.logs.IMacroLogs
 import models.msys.MNodeEdgeIdQs
 import models.req.{INodeEdgeReq, INodeReq}

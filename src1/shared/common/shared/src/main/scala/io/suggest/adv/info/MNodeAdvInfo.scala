@@ -3,7 +3,7 @@ package io.suggest.adv.info
 import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.media.IMediaInfo
-import io.suggest.model.n2.node.meta.MMetaPub
+import io.suggest.n2.node.meta.MMetaPub
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 

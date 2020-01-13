@@ -5,7 +5,7 @@ import java.{util => ju}
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.ext.svc.MExtService
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.util.JacksonParsing
 import models.adv.MExtTarget
 import models.blk

@@ -1030,7 +1030,7 @@ final class EsModel @Inject()(
             }
           }
           Source
-            .fromFutureSource( srcFut )
+            .futureSource( srcFut )
             .filterNot { i =>
               val r = i.isFailed || !i.getResponse.isExists
               if (r)
@@ -1275,7 +1275,7 @@ final class EsModel @Inject()(
         */
       def multiGetCacheSrc(ids: Iterable[String])(implicit classTag: ClassTag[T1]): Source[T1, _] = {
         // TODO Реализовать нормальную выкачку, более оптимальную по сравнению с multiGet()
-        Source.fromFutureSource {
+        Source.futureSource {
           for (els <- multiGetCache(ids)) yield
             Source( els.toSeq )
         }
@@ -1518,7 +1518,7 @@ final class EsModel @Inject()(
         * Просто для удобства сделано или на.
         */
       def dynSearchSource(dsa: A): Source[T1, _] = {
-        Source.fromFutureSource {
+        Source.futureSource {
           dynSearch(dsa)
             .map { Source.apply }
         }

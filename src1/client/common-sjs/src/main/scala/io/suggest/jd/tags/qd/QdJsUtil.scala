@@ -1,7 +1,7 @@
 package io.suggest.jd.tags.qd
 
 import io.suggest.jd.tags.JdTag
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import scalaz.Tree
 

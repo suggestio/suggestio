@@ -5,7 +5,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MOrientations2d
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.{IGeoFindIpResult, MLocEnv}
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil

@@ -3,7 +3,7 @@ package models.mbill
 import io.suggest.bill.MPrice
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrder
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 
 /**
   * Suggest.io

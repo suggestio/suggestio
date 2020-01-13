@@ -5,10 +5,10 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.es.model.IMust
 import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc, MNodeGeoLevels}
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
-import io.suggest.model.n2.node.{MNodeType, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
+import io.suggest.n2.node.{MNodeType, MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 
 import scala.concurrent.Future

@@ -18,7 +18,7 @@ import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystem
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
@@ -28,9 +28,9 @@ import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
-import io.suggest.model.n2.bill.MNodeBilling
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.bill.MNodeBilling
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
 import japgolly.univeq._

@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFmts
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import models.blk.SzMult_t
 import models.mproj.ICommonDi
 import util.adv.AdvUtil

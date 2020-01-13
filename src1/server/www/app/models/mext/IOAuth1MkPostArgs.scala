@@ -1,7 +1,7 @@
 package models.mext
 
 import io.suggest.geo.MGeoPoint
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import models.adv.{MExtReturn, MExtTarget}
 import play.api.libs.oauth._
 import util.ext.IOAuth1Support

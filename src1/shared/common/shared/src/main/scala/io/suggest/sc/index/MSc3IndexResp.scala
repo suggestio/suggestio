@@ -4,7 +4,7 @@ import io.suggest.color.MColors
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
-import io.suggest.model.n2.node.MNodeType
+import io.suggest.n2.node.MNodeType
 import io.suggest.primo.id.OptStrId
 import japgolly.univeq._
 import play.api.libs.functional.syntax._

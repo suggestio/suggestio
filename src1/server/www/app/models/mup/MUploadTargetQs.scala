@@ -1,8 +1,8 @@
 package models.mup
 
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.model.n2.media.storage.MAssignedStorage
-import io.suggest.model.n2.node.MNodeType
+import io.suggest.n2.media.storage.MAssignedStorage
+import io.suggest.n2.node.MNodeType
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.xplay.qsb.QueryStringBindableImpl

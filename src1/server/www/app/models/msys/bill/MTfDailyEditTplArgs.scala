@@ -1,7 +1,7 @@
 package models.msys.bill
 
-import io.suggest.model.n2.bill.tariff.daily.MTfDaily
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.bill.tariff.daily.MTfDaily
+import io.suggest.n2.node.MNode
 import models.mcal.MCalendar
 import play.api.data.Form
 

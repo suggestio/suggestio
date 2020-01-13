@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths, MBlockExpandMode}
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.grid.{GridCalc, MGridCalcConf}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -17,7 +17,7 @@ import io.suggest.common.empty.OptionUtil.Implicits._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.EsModel
 import io.suggest.jd.MJdConf
-import io.suggest.model.n2.edge.{MEdgeFlagData, MPredicates}
+import io.suggest.n2.edge.{MEdgeFlagData, MPredicates}
 import util.adn.NodesUtil
 
 import scala.concurrent.Future

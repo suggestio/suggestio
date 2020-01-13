@@ -2,8 +2,8 @@ package controllers.sysctl.domain
 
 import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.EsModelDi
-import io.suggest.model.n2.extra.domain.MDomainExtra
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.n2.extra.domain.MDomainExtra
+import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.util.logs.IMacroLogs
 import models.msys.{MSysNodeDomainCreateFormTplArgs, MSysNodeDomainEditFormTplArgs}
 import models.req.INodeReq

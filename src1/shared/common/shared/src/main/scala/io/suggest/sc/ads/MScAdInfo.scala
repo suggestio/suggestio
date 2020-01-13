@@ -1,7 +1,7 @@
 package io.suggest.sc.ads
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import io.suggest.model.n2.edge.MEdgeFlagData
+import io.suggest.n2.edge.MEdgeFlagData
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

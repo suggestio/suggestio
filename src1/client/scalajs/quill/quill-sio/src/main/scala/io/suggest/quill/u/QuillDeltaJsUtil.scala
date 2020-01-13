@@ -8,7 +8,7 @@ import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}

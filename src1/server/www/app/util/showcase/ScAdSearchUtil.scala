@@ -5,10 +5,10 @@ import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
-import io.suggest.model.n2.edge.{MPredicate, MPredicates}
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.{MPredicate, MPredicates}
+import io.suggest.n2.edge.search.{Criteria, GsCriteria}
+import io.suggest.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

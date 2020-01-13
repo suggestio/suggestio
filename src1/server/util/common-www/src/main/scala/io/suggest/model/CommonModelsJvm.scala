@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import io.suggest.enum2.EnumeratumJvmUtil
-import io.suggest.model.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
+import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid

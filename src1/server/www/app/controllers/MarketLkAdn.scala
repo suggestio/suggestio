@@ -5,12 +5,12 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.{Csrf, ScryptUtil}
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl

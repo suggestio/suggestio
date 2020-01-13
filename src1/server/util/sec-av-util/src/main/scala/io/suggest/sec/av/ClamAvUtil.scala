@@ -93,7 +93,7 @@ final class ClamAvUtil @Inject()(
   def scanClamdRemote(req: ClamAvScanRequest): Future[ClamAvScanResult] = {
     LOGGER.trace(s"scanClamdRemote(): File = ${req.file}")
     // Используем lazy-source, чтобы файл не читался, пока сокет не будет открыт:
-    val src = Source.lazily { () =>
+    val src = Source.lazySource { () =>
       FileIO.fromPath(
         new File(req.file).toPath,
         chunkSize = 8192

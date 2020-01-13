@@ -7,7 +7,7 @@ import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m.MJdRrrProps
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd._
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset

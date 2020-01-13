@@ -8,7 +8,7 @@ import io.suggest.compress.MCompressAlgo
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFmt
 import io.suggest.jd.MJdEdgeId
-import io.suggest.model.n2.edge.MEdge
+import io.suggest.n2.edge.MEdge
 import io.suggest.util.UuidUtil
 import monocle.macros.GenLens
 

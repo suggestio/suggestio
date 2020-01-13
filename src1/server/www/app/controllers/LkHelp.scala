@@ -1,8 +1,8 @@
 package controllers
 
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MPredicates
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
 import models.mproj.ICommonDi

@@ -11,7 +11,7 @@ import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.img.MImgFmt
 import io.suggest.jd.tags.qd._
 import io.suggest.math.MathConst
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.scalaz.ScalazUtil
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._

@@ -6,7 +6,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
-import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil}
+import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs

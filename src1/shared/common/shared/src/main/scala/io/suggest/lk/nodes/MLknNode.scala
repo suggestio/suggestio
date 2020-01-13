@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes
 
 import io.suggest.bill.tf.daily.MTfDailyInfo
-import io.suggest.model.n2.node.MNodeType
+import io.suggest.n2.node.MNodeType
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens

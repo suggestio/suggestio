@@ -16,7 +16,7 @@ import play.api.libs.Files.TemporaryFile
 import play.api.mvc.MultipartFormData
 import util.img.ImgFileUtil
 import io.suggest.common.geom.d2.MSize2diJvm.Implicits._
-import io.suggest.model.n2.media.MFileMetaHash
+import io.suggest.n2.media.MFileMetaHash
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.batik.gvt.GraphicsNode
 import org.im4java.core.Info

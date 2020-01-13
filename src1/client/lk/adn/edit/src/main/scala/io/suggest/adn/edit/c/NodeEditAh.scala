@@ -3,7 +3,7 @@ package io.suggest.adn.edit.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.adn.edit.m._
 import io.suggest.lk.m.PurgeUnusedEdges
-import io.suggest.model.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
+import io.suggest.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._

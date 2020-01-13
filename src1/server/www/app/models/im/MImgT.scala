@@ -2,7 +2,7 @@ package models.im
 
 import io.suggest.compress.MCompressAlgo
 import io.suggest.img.MImgFmt
-import io.suggest.model.n2.media.storage.MStorage
+import io.suggest.n2.media.storage.MStorage
 import io.suggest.primo.TypeT
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit

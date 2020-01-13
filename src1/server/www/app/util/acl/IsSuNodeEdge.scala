@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import javax.inject.Inject
 import models.mproj.ICommonDi
 import models.msys.MNodeEdgeIdQs

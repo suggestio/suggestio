@@ -4,12 +4,12 @@ import java.net.URL
 
 import io.suggest.es.model.EsModel
 import io.suggest.es.util.{IEsClient, SioEsUtil}
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.extra.MNodeExtras
-import io.suggest.model.n2.extra.rsc.{MHostNameIndexed, MRscExtra}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
+import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.extra.MNodeExtras
+import io.suggest.n2.extra.rsc.{MHostNameIndexed, MRscExtra}
+import io.suggest.n2.node.common.MNodeCommon
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.{MVideoExtInfo, VideoExtUrlParsers}

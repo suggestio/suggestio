@@ -4,10 +4,10 @@ import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.ext.svc.MExtService
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.ScryptUtil
 import io.suggest.text.Validators
 

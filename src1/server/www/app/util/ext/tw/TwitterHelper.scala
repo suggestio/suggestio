@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFmts
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.mctx.{Context, ContextUtil}

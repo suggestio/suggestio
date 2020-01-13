@@ -9,8 +9,8 @@ import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr._

@@ -17,7 +17,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil

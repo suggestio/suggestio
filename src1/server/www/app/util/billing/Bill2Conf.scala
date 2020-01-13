@@ -3,7 +3,7 @@ package util.billing
 import akka.actor.ActorSystem
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsDyn
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration

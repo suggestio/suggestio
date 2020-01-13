@@ -3,7 +3,7 @@ package controllers
 import javax.inject.{Inject, Named, Singleton}
 import controllers.sc._
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi

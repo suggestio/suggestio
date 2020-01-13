@@ -14,7 +14,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.model.n2.node.meta.MMetaPub
+import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.dom.DomQuick

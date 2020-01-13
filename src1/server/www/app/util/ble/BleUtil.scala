@@ -3,9 +3,9 @@ package util.ble
 import javax.inject.Singleton
 
 import io.suggest.ble.MUidBeacon
-import io.suggest.model.n2.edge.MPredicate
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicate
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.search.MNodeSearch
 import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders

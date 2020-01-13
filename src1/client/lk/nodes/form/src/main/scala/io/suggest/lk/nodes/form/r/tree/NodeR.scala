@@ -20,7 +20,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.model.n2.edge.MEdgeFlags.AlwaysOutlined
+import io.suggest.n2.edge.MEdgeFlags.AlwaysOutlined
 
 /**
   * Suggest.io

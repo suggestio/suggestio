@@ -6,7 +6,7 @@ import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtServices
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.model.n2.node.MNodes
+import io.suggest.n2.node.MNodes
 import io.suggest.sec.csp.Csp
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._

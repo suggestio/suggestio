@@ -3,8 +3,8 @@ package controllers.sc
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.suggest.es.model.EsModelDi
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
-import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
@@ -156,7 +156,7 @@ trait ScSearch
             advNodePropsShapes
           }
       }
-      Source.fromFutureSource( srcFut )
+      Source.futureSource( srcFut )
     }
 
   }

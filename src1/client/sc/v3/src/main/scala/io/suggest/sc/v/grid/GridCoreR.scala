@@ -6,7 +6,7 @@ import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.render.v.JdR
-import io.suggest.model.n2.edge.MEdgeFlags
+import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._

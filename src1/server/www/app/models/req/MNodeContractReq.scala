@@ -1,7 +1,7 @@
 package models.req
 
 import io.suggest.mbill2.m.contract.MContract
-import io.suggest.model.n2.node.MNode
+import io.suggest.n2.node.MNode
 import play.api.mvc.Request
 
 /**

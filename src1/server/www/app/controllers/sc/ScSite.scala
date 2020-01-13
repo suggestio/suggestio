@@ -6,10 +6,10 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.{I18nConst, MsgCodes}
 import io.suggest.maps.MMapProps
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
-import io.suggest.model.n2.node.{IMNodes, MNode}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.extra.domain.{DomainCriteria, MDomainModes}
+import io.suggest.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}

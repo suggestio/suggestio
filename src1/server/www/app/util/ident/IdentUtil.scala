@@ -3,10 +3,10 @@ package util.ident
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.search.Criteria
+import io.suggest.n2.node.{MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
 import models.mproj.ICommonDi
 import models.usr.MSuperUsers
 import play.api.mvc._
