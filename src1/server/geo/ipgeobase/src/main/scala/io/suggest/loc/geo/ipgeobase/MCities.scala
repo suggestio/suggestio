@@ -5,7 +5,6 @@ import io.suggest.es.MappingDsl
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.geo.MGeoPoint
-import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -40,7 +39,7 @@ object MCity {
   import Fields._
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MCity] = (
+  implicit def cityJson: OFormat[MCity] = (
     (__ \ CITY_ID_FN).format[CityId_t] and
     (__ \ NAME_FN).format[String] and
     (__ \ REGION_FN).formatNullable[String] and

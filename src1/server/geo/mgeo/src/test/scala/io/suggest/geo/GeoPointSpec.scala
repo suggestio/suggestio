@@ -13,8 +13,6 @@ import play.api.libs.json._
  */
 class GeoPointSpec extends AnyFlatSpec with LatLonRnd[MGeoPoint] with PlayJsonTestUtil {
 
-  import GeoPoint.Implicits._
-
   override type T = MGeoPoint
 
   override protected def mkInstance = MGeoPoint(lat = newLat, lon = newLon)

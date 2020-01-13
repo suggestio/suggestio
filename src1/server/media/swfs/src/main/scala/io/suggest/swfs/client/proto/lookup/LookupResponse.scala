@@ -1,7 +1,7 @@
 package io.suggest.swfs.client.proto.lookup
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.swfs.client.proto.fid.{IVolumeId, VolumeId}
+import io.suggest.swfs.fid.{IVolumeId, VolumeId}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

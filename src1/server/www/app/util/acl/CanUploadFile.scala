@@ -66,13 +66,13 @@ class CanUploadFile @Inject()(
         httpErrorHandler.onClientError(request0, Status.FORBIDDEN, msg)
 
       } else {
-        val respFut = for {
+        (for {
           swfsEith <- cdnUtil.checkStorageForThisNode( upTg.storage.storage )
           if swfsEith.isRight
           resp <- {
             LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs => $swfsEith")
             val mreq = MUploadReq(
-              swfsOpt = swfsEith.toOption,
+              swfsOpt = swfsEith.toOption.flatten,
               request = request0,
               user    = user
             )
@@ -80,13 +80,13 @@ class CanUploadFile @Inject()(
           }
         } yield {
           resp
-        }
-        respFut.recoverWith { case ex: Throwable =>
-          // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
-          // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
-          LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
-          httpErrorHandler.onClientError(request0, Status.EXPECTATION_FAILED, s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storage} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
-        }
+        })
+          .recoverWith { case ex: Throwable =>
+            // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
+            // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
+            LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
+            httpErrorHandler.onClientError(request0, Status.EXPECTATION_FAILED, s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storage} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
+          }
       }
     }
 

@@ -217,18 +217,50 @@ object MGeoPoint {
 
   val lon = GenLens[MGeoPoint](_.lon)
 
+  def toEsStr(gp: MGeoPoint): String =
+    gp.lat.toString + "," + gp.lon.toString
+
+
+  def fromLatLonComma(latLon: String): MGeoPoint = {
+    import java.{lang => jl}
+    val commaIndex = latLon indexOf ','
+    val lat = jl.Double.parseDouble( latLon.substring(0, commaIndex).trim )
+    val lon = jl.Double.parseDouble( latLon.substring(commaIndex + 1).trim )
+    MGeoPoint(
+      lat = Lat.ensureInBounds(lat),
+      lon = Lon.ensureInBounds(lon)
+    )
+  }
+
+  /** Десериализация из строки вида "45.34,-13.22". */
+  val READS_STRING = Reads[MGeoPoint] {
+    case JsString(raw) =>
+      JsSuccess( MGeoPoint.fromLatLonComma(raw) )
+    case other =>
+      JsError( JsonValidationError("expected.jsstring", other) )
+  }
+
+  /** Десериализация из JSON из различных видов представления геоточки. */
+  val READS_ANY: Reads[MGeoPoint] = {
+    MGeoPoint.FORMAT_GEO_ARRAY
+      .orElse( MGeoPoint.FORMAT_ES_OBJECT )
+      .orElse( READS_STRING )
+  }
+
+  /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
+    * но сериализации в JSON object с полями lat и lon. */
+  implicit val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, MGeoPoint.FORMAT_GEO_ARRAY)
+
 }
 
 
 /** Дефолтовая, пошаренная между клиентом и сервером. */
 case class MGeoPoint(
                       // TODO Надо обменять порядок аргументов на (lon,lat).
-                      // TODO Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT, в Sc3Router
+                      //      Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT, в Sc3Router
                       lat: GeoCoord_t,
                       lon: GeoCoord_t,
                     ) {
-
-  def withLon(lon2: GeoCoord_t) = copy(lon = lon2)
 
   // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.
   override def toString: String =

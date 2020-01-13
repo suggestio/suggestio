@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import javax.inject.{Inject, Singleton}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.swfs.client.ISwfsClient
-import io.suggest.swfs.client.proto.VolumeId_t
 import io.suggest.swfs.client.proto.lookup.{IVolumeLocation, LookupRequest}
+import io.suggest.swfs.fid.SwfsVolumeId_t
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.cache.AsyncCacheApi
@@ -41,7 +41,7 @@ final class SwfsVolumeCache @Inject() (
    * @param volumeId id раздела swfs.
    * @return Ключ кеша.
    */
-  def _ck(volumeId: VolumeId_t): String =
+  def _ck(volumeId: SwfsVolumeId_t): String =
     CACHE_PREFIX + volumeId
 
 
@@ -50,7 +50,7 @@ final class SwfsVolumeCache @Inject() (
    * @param volumeId id swfs-раздела.
    * @return Фьючерс со списком volume-адресов.
    */
-  def getLocations(volumeId: VolumeId_t): Future[Seq[IVolumeLocation]] = {
+  def getLocations(volumeId: SwfsVolumeId_t): Future[Seq[IVolumeLocation]] = {
     val ck = _ck(volumeId)
 
     cacheUtil.getOrElseFut(ck, CACHE_DURATION) {
@@ -88,7 +88,7 @@ final class SwfsVolumeCache @Inject() (
     }
   }
 
-  def uncache(volumeId: VolumeId_t): Unit = {
+  def uncache(volumeId: SwfsVolumeId_t): Unit = {
     cache.remove( _ck(volumeId) )
   }
 

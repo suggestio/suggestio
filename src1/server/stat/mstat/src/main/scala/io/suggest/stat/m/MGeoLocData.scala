@@ -5,7 +5,6 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MGeoPoint
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.geo.GeoPoint.Implicits._
 
 /**
   * Suggest.io
@@ -30,14 +29,15 @@ object MGeoLocData
   }
 
 
-  import Fields._
-
-  implicit val FORMAT: OFormat[MGeoLocData] = (
-    (__ \ COORDS_FN).formatNullable[MGeoPoint] and
-    (__ \ ACCURACY_FN).formatNullable[Int] and
-    (__ \ TOWN_FN).formatNullable[String] and
-    (__ \ COUNTRY_FN).formatNullable[String]
-  )(apply, unlift(unapply))
+  implicit def geoLocDataJson: OFormat[MGeoLocData] = {
+    val F = Fields
+    (
+      (__ \ F.COORDS_FN).formatNullable[MGeoPoint] and
+      (__ \ F.ACCURACY_FN).formatNullable[Int] and
+      (__ \ F.TOWN_FN).formatNullable[String] and
+      (__ \ F.COUNTRY_FN).formatNullable[String]
+    )(apply, unlift(unapply))
+  }
 
   override def empty = MGeoLocData()
 

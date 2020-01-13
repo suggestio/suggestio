@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge.search
 
 import io.suggest.es.model.{IMust, MWrapClause}
 import io.suggest.es.search.DynSearchArgs
-import io.suggest.geo.{GeoPoint, MNodeGeoLevel, MNodeGeoLevels}
+import io.suggest.geo.{MGeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.lucene.search.join.ScoreMode
@@ -226,7 +226,7 @@ object OutEdges extends MacroLogsImpl {
         // Сортировка по удалённости путём выставления score.
         for (mgp <- oe.geoDistanceSort) {
           val fn = EF.EO_INFO_GEO_POINTS_FN
-          val geoPointStr = GeoPoint.toEsStr(mgp)
+          val geoPointStr = MGeoPoint.toEsStr(mgp)
           val scale = "100km"
 
           val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPointStr, scale, 0, 0.5)

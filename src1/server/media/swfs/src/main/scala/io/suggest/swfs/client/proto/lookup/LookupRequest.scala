@@ -1,7 +1,7 @@
 package io.suggest.swfs.client.proto.lookup
 
 import io.suggest.swfs.client.proto.IToQs
-import io.suggest.swfs.client.proto.fid.IVolumeId
+import io.suggest.swfs.fid.IVolumeId
 
 /**
  * Suggest.io

@@ -1,8 +1,7 @@
-package io.suggest.swfs.client.proto.fid
+package io.suggest.swfs.fid
 
-import io.suggest.swfs.client.proto.VolumeId_t
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -14,7 +13,7 @@ object VolumeId {
 
   val FORMAT_STR = {
     (__ \ "volumeId").format[String]
-      .inmap[VolumeId_t](_.toInt, _.toString)
+      .inmap[SwfsVolumeId_t](_.toInt, _.toString)
   }
 
 }
@@ -23,7 +22,7 @@ object VolumeId {
 trait IVolumeId {
 
   /** Номер volume. */
-  def volumeId  : VolumeId_t
+  def volumeId  : SwfsVolumeId_t
 
 }
 

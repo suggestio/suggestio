@@ -2,16 +2,12 @@ package io.suggest.model.n2.edge
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import io.suggest.ueq.UnivEqUtil._
+import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import japgolly.univeq.UnivEq
-
-import scala.util.Random
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -50,18 +46,13 @@ object MEdgeGeoShape
     // Всё разом закинуто внутрь метода, чтобы GC мог вычистить ненужное из кучи Format'ов.
 
     import Fields._
+    import io.suggest.dt.CommonDateTimeUtil.Implicits._
 
     val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[MNodeGeoLevel]
     val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
     val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
     val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime]
-    val ID_FORMAT           = (__ \ ID_FN).formatNullable[Int]
-      // TODO Возникла проблема во время запиливания, id стал опционален, потом снова обязательным, это вызвало проблемы.
-      // Удалять Nullable можно сразу после обновления мастера (с апреля 2016).
-      .inmap [Int] (
-        EmptyUtil.opt2ImplEmpty1F( Math.abs( new Random().nextInt ) ),
-        EmptyUtil.someF
-      )
+    val ID_FORMAT           = (__ \ ID_FN).format[Int]
 
     def _shapeFormat(ngl: MNodeGeoLevel): OFormat[IGeoShape] = {
       (__ \ SHAPE_FN(ngl)).format[IGeoShape]

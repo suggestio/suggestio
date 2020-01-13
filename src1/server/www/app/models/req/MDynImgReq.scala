@@ -23,7 +23,7 @@ import play.api.mvc.Request
 case class MDynImgReq[A](
                           derivedOpt               : Option[MNode],
                           edgeMedia                : MEdgeMedia,
-                          storageInfo              : MSwfsFidInfo,
+                          storageInfo              : Option[MSwfsFidInfo],
                           override val mnode       : MNode,
                           override val user        : ISioUser,
                           override val request     : Request[A]

@@ -2,12 +2,10 @@ package io.suggest.model.n2.media.storage
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.swfs.client.proto.fid.Fid
-import io.suggest.xplay.qsb.QueryStringBindableImpl
-import japgolly.univeq.UnivEq
-import play.api.libs.json._
+import io.suggest.swfs.fid.Fid
+import japgolly.univeq._
 import play.api.libs.functional.syntax._
-import play.api.mvc.QueryStringBindable
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -35,42 +33,6 @@ object MStorageInfoData extends IEsMappingProps {
     )(apply, unlift(unapply))
   }
 
-  implicit def storageInfoDataQsb(implicit
-                                  strB         : QueryStringBindable[String],
-                                  strSetB      : QueryStringBindable[Seq[String]],
-                                 ): QueryStringBindable[MStorageInfoData] = {
-    new QueryStringBindableImpl[MStorageInfoData] {
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MStorageInfoData]] = {
-        val F = Fields
-        val k = key1F(key)
-        for {
-          dataE       <- strB.bind( k(F.DATA_FN), params )
-          hostsE      <- strSetB.bind( k(F.HOST_FN), params )
-        } yield {
-          for {
-            data      <- dataE
-            hosts     <- hostsE
-          } yield {
-            MStorageInfoData(
-              data  = data,
-              hosts = hosts,
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: MStorageInfoData): String = {
-        val F = Fields
-        val k = key1F(key)
-        _mergeUnbinded1(
-          strB.unbind( k(F.DATA_FN), value.data ),
-          strSetB.unbind( k(F.HOST_FN), value.hosts ),
-        )
-      }
-
-    }
-  }
 
   @inline implicit def univEq: UnivEq[MStorageInfoData] = UnivEq.derive
 
@@ -98,7 +60,7 @@ object MStorageInfoData extends IEsMappingProps {
   */
 final case class MStorageInfoData(
                                    data      : String,
-                                   hosts     : Seq[String]      = Seq.empty,
+                                   hosts     : Seq[String]      = Nil,
                                  ) {
 
   /** Кэширование распарсенного SeaweedFS FID. */

@@ -1,8 +1,7 @@
 package io.suggest.swfs.client.proto.assign
 
-import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.swfs.client.proto.lookup.{IVolumeLocation, VolumeLocation}
-import io.suggest.url.MHostInfo
+import io.suggest.swfs.fid.Fid
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

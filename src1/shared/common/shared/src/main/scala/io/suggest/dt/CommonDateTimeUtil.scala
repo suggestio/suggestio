@@ -37,10 +37,6 @@ object CommonDateTimeUtil {
   }
 
 
-  /** Версия формата для переносимого json-array-формата даты.
-    * Используются отрицательные числа, т.к. 0 и положительные числа используются для даты или её частей. */
-  val OFFSET_DATE_TIME_FORMAT_VSN_1 = -1
-
   object Implicits {
 
     // Используем представление в виде JsArray[Int] от большего к меньшему, и tzHH,MM в самом хвосте.
@@ -54,25 +50,6 @@ object CommonDateTimeUtil {
             JsSuccess( OffsetDateTime.parse( formatted, DateTimeFormatter.ISO_OFFSET_DATE_TIME ) )
           } catch { case ex: Throwable =>
             JsError("dtFmt? " + ex)
-          }
-
-        // Внутренний нестандартизированный человеко-читабельный sio-формат даты-времени: [VERSON, Y, M, D, H, i, S, ns, +sec]
-        // Не совместим ни с чем, поэтому из-за elasticsearch его придётся дропнуть в будущем.
-        case JsArray( valuesJsv ) =>
-          try {
-            // Явно кастовать collection.Seq вместо s.c.i.Seq, т.к. valuesJsv содержит collection.IndexedSeq = ArraySeq, но это может меняться от версии к версии.
-            val collection.Seq(OFFSET_DATE_TIME_FORMAT_VSN_1, year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffsetTotalSeconds) =
-              valuesJsv
-                .iterator
-                .map(_.asInstanceOf[JsNumber].value.toInt)
-                .toSeq
-
-            val zoneOffset = ZoneOffset.ofTotalSeconds( zoneOffsetTotalSeconds )
-            val offsetDt = OffsetDateTime.of( year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffset )
-            JsSuccess( offsetDt )
-          } catch {
-            case ex: Throwable =>
-              JsError("dt? " + ex)
           }
 
         // TODO Для совместимости с ES и для простоты надо заюзать epoch-millis, но scala.js имеет проблемы с Long. Использовать Int без миллисекунд?

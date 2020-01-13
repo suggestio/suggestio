@@ -5,14 +5,14 @@ import java.time.OffsetDateTime
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.ext.svc.MExtService
-import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
-import io.suggest.geo.GeoPoint.Implicits.GEO_POINT_FORMAT  // Не удалять: надо для Json format.
+import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
 import io.suggest.model.PrefixedFn
 import io.suggest.primo.id.IId
 import io.suggest.text.StringUtil
 import io.suggest.util.SioConstants
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.ueq.UnivEqUtil._
@@ -244,7 +244,7 @@ final case class MEdgeInfo(
     if (geoPoints.nonEmpty) {
       sb.append(",geoPoints={")
       for (gp <- geoPoints) {
-        sb.append( GeoPoint.toEsStr(gp) )
+        sb.append( MGeoPoint.toEsStr(gp) )
       }
       sb.append('}')
     }

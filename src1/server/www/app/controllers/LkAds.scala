@@ -185,12 +185,12 @@ class LkAds @Inject() (
 
     // Собираем source из карточек, которые были найдены в поиске:
     val normalAdsSrc = Source
-      .fromFuture( madIdsFut )
+      .future( madIdsFut )
       .flatMapConcat( mNodes.multiGetSrc(_) )
 
     // Запихнуть свеже-созданную карточку newAdId в начало общего Source, если есть такая карточка.
     val allAdsSrc = newAdIdOpt.fold[Source[MNode, _]](normalAdsSrc) { _ =>
-      Source.fromFutureSource {
+      Source.futureSource {
         for (createdAdOpt <- createdAdOptFut) yield {
           LOGGER.trace(s"$logPrefix Newly created ad: ${createdAdOpt.flatMap(_.id)}")
           createdAdOpt.fold[Source[MNode, _]](normalAdsSrc) { newAd =>
@@ -241,7 +241,7 @@ class LkAds @Inject() (
       }
 
     // Поток отрендеренного JSON'а, который уже готов для отправки клиенту:
-    val adsSrcJsonBytes = Source.fromFutureSource {
+    val adsSrcJsonBytes = Source.futureSource {
       for {
         madId2advStatusesMap <- madId2advStatusesMapFut
       } yield {

@@ -1,22 +1,21 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
-import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.MNodeGeoLevel
+import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.media.MEdgeMedia
 import japgolly.univeq._
-import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 02.10.15 11:09
-  * Description: Модель эджа, карта которых хранится внутри N2-узла [[io.suggest.model.n2.node.MNode]].
+  * Description: Модель эджа, карта которых хранится внутри N2-узла MNode.
   *
   * Изначально, этот эдж был направленным ребром N2-графа.
   * Потом, появилась параметризация эджа каким-то дополнительным payload'ом.
@@ -110,7 +109,7 @@ object MEdge
   import Fields._
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MEdge] = (
+  implicit val edgeJson: OFormat[MEdge] = (
     (__ \ PREDICATE_FN).format(MPredicate.MPREDICATE_DEEP_FORMAT) and
     (__ \ NODE_ID_FN).formatNullable[Set[String]]
       .inmap [Set[String]] (

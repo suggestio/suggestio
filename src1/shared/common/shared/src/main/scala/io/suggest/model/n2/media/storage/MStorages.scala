@@ -18,9 +18,9 @@ object MStorages extends StringEnum[MStorage] {
   case object SeaWeedFs extends MStorage("s")
 
   /** Используется для Asset'ов. */
-  //case object Asset extends MStorage("a")
+  case object ClassPathResource extends MStorage("c")
 
-  // HostPath, Asset,
+  // HostPath?
 
   override def values = findValues
 

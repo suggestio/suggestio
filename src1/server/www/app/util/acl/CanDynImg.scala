@@ -124,11 +124,11 @@ class CanDynImg @Inject() (
             // Картинку можно отображать юзеру. Но нужно понять, на текущем узле она обслуживается или на каком-то другом.
             storCheckFut.flatMap {
               // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
-              case Right(storageInfo) =>
-                LOGGER.trace(s"$logPrefix Passed. Storage=$storageInfo respMedia=${respMediaOpt.orNull}")
+              case Right(storageInfoOpt) =>
+                LOGGER.trace(s"$logPrefix Passed. Storage=${storageInfoOpt.fold("this")(_.toString)} respMedia=${respMediaOpt.orNull}")
                 val req1 = MDynImgReq(
                   derivedOpt        = respMediaOpt,
-                  storageInfo       = storageInfo,
+                  storageInfo       = storageInfoOpt,
                   mnode             = nodeOrig,
                   user              = user,
                   request           = request,

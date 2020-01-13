@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.proto.lookup
 
-import io.suggest.swfs.client.proto.fid.{VolumeId, IVolumeId}
+import io.suggest.swfs.fid.{IVolumeId, VolumeId}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

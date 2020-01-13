@@ -2,7 +2,7 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-name := "file-upload-sjs"
+name := "sys-edge-edit-sjs"
 
 version := "0.0.0"
 

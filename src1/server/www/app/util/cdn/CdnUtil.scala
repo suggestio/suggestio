@@ -233,7 +233,7 @@ class CdnUtil @Inject() (
     * @return Расширенные данные для аплоада, если Some.
     *         None, значит доступ закрыт.
     */
-  def checkStorageForThisNode(storage: MStorageInfo): Future[Either[Seq[IVolumeLocation], MSwfsFidInfo]] = {
+  def checkStorageForThisNode(storage: MStorageInfo): Future[Either[Seq[IVolumeLocation], Option[MSwfsFidInfo]]] = {
     // Распарсить Swfs FID из URL и сопоставить полученный volumeID с текущей нодой sio.
     lazy val logPrefix = s"checkStorageForThisNode($storage)#${System.currentTimeMillis()}:"
 
@@ -253,13 +253,17 @@ class CdnUtil @Inject() (
             }
             .map { myVol =>
               LOGGER.trace(s"$logPrefix Ok, local vol = $myVol\n fid = ${fid.toString}\n all vol locs = ${volLocs.mkString(", ")}")
-              MSwfsFidInfo(fid, myVol, volLocs)
+              Some( MSwfsFidInfo(fid, myVol, volLocs) )
             }
             .toRight {
               LOGGER.error(s"$logPrefix Failed to find vol#${fid.volumeId} for fid='$fid' nearby. My=$myExtHost, storage=$storage Other available volumes considered non-local: ${volLocs.mkString(", ")}")
               volLocs
             }
         }
+
+      case MStorages.ClassPathResource =>
+        // Всегда и на любом хосте.
+        Future.successful( Right(None) )
     }
   }
 

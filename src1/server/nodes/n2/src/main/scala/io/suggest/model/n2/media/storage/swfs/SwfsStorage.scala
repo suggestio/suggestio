@@ -8,7 +8,6 @@ import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
 import io.suggest.swfs.client.proto.assign.AssignRequest
 import io.suggest.swfs.client.proto.delete.{DeleteRequest, IDeleteResponse}
-import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.swfs.client.proto.get.GetRequest
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}

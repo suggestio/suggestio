@@ -498,9 +498,8 @@ lazy val reactMaterialUiSjs = {
 }
 
 /** Форма организации заливки какого-либо файла на сервер. */
-lazy val fileUploadSjs = {
-  val id = "file-upload"
-  Project(id = id + "-sjs", base = file(DIR0 + "client/sys/" + id))
+lazy val sysEdgeEditSjs = {
+  Project(id = "sys-edge-edit-sjs", base = file(DIR0 + "client/sys/edge-edit"))
     .dependsOn( lkCommonSjs, reactMaterialUiSjs )
 }
 

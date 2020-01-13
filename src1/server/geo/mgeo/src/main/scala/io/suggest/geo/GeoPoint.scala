@@ -1,7 +1,5 @@
 package io.suggest.geo
 
-import java.{lang => jl}
-
 import org.locationtech.spatial4j.context.SpatialContext
 import org.locationtech.spatial4j.io.GeohashUtils
 import org.locationtech.spatial4j.shape.Point
@@ -29,122 +27,21 @@ import io.suggest.xplay.qsb.QueryStringBindableImpl
 
 object GeoPoint extends MacroLogsImpl {
 
-  import LOGGER._
+  def apply(v: String): MGeoPoint =
+    MGeoPoint.fromLatLonComma(v)
 
-  def apply(v: String): MGeoPoint = {
-    val commaIndex = getCommaIndex(v)
-    if (commaIndex != -1) {
-      fromLatLonComma(v, commaIndex)
-    } else {
-      fromGeoHash(v)
-    }
-  }
-
-  def apply(esgp: EsGeoPoint): MGeoPoint = {
+  def apply(esgp: EsGeoPoint): MGeoPoint =
     MGeoPoint(lat = esgp.lat,  lon = esgp.lon)
-  }
 
-  def apply(point: Point): MGeoPoint = {
+  def apply(point: Point): MGeoPoint =
     MGeoPoint(lon = point.getX, lat = point.getY)
-  }
 
-  /** Бывает, что идёт выковыривание сырых значений из документов elasticsearch. */
-  def fromArraySeq(lonLatColl: IterableOnce[Any]): Option[MGeoPoint] = {
-    lazy val logPrefix = s"fromArraySeq(${System.currentTimeMillis()}):"
-
-    val doubleSeq = lonLatColl
-      .iterator
-      .flatMap {
-        case v: java.lang.Number =>
-          val n = JsNumber( v.doubleValue() )
-          Seq(n)
-        case other =>
-          warn(s"$logPrefix Unable to parse agg.value='''$other''' as Number.")
-          Nil
-      }
-      .toSeq
-
-    val jsRes = GeoPoint.READS_ANY
-      .reads( JsArray(doubleSeq) )
-    if (jsRes.isError)
-      error(s"$logPrefix Agg.values parsing failed:\n $jsRes")
-    jsRes.asOpt
-  }
-
-  def fromLatLon(latLon: String): MGeoPoint = {
-    val commaInx = getCommaIndex(latLon)
-    fromLatLonComma(latLon, commaInx)
-  }
 
   def fromGeoHash(geoHash: String): MGeoPoint = {
     val esgp = GeohashUtils.decode(geoHash, SpatialContext.GEO)
     apply(esgp)
   }
 
-
-  /** Извлечение гео-точки из различных форматов данных.
-    *
-    * @param r Исходный инстанс.
-    * @return Опциональная точка.
-    */
-  def from(r: AnyRef): Option[MGeoPoint] = {
-    def logPrefix = s"from($r):"
-    Option(r).flatMap {
-      case esgp: EsGeoPoint =>
-        Some( apply(esgp) )
-      case sp4jPoint: Point =>
-        Some( apply(sp4jPoint) )
-      case str: String =>
-        try {
-          Option( apply(str) )
-        } catch {
-          case ex: Throwable =>
-            LOGGER.warn(s"$logPrefix Failed to parse geo point from string", ex)
-            None
-        }
-      case mgp: MGeoPoint =>
-        Some( mgp )
-      // IterableOnce наверное не нужен вообще, был нужен для es-2.x и ранее.
-      case lonLatColl: IterableOnce[Any] =>
-        fromArraySeq( lonLatColl )
-      case _ =>
-        LOGGER.warn(s"$logPrefix Totally unknown geopoint format type.")
-        None
-    }
-  }
-
-  private def getCommaIndex(str: String) = str indexOf ','
-
-  private def fromLatLonComma(latLon: String, commaIndex: Int): MGeoPoint = {
-    val lat = jl.Double.parseDouble(latLon.substring(0, commaIndex).trim)
-    val lon = jl.Double.parseDouble(latLon.substring(commaIndex + 1).trim)
-    MGeoPoint(
-      lat = Lat.ensureInBounds(lat),
-      lon = Lon.ensureInBounds(lon)
-    )
-  }
-
-  /** Десериализация из строки вида "45.34,-13.22". */
-  val READS_STRING = Reads[MGeoPoint] {
-    case JsString(raw) =>
-      JsSuccess( apply(raw) )
-    case other =>
-      JsError( JsonValidationError("expected.jsstring", other) )
-  }
-
-  /** Десериализация из JSON из различных видов представления геоточки. */
-  val READS_ANY: Reads[MGeoPoint] = {
-    MGeoPoint.FORMAT_GEO_ARRAY
-      .orElse( MGeoPoint.FORMAT_ES_OBJECT )
-      .orElse( READS_STRING )
-  }
-
-  /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
-    * но сериализации в JSON object с полями lat и lon. */
-  val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, MGeoPoint.FORMAT_GEO_ARRAY)
-
-
-  def toEsStr(gp: MGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 
   /** Пространственная координата в терминах JTS. */
   def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon.doubleValue, gp.lat.doubleValue)
@@ -157,15 +54,9 @@ object GeoPoint extends MacroLogsImpl {
     )
   }
 
-  // Предвартильно выпилено на корню в целях борьбы с зоопарком форматов координат.
-  //def toLatLng(gp: IGeoPoint): LatLng = {
-  //  LatLng(lat = gp.lat, lng = gp.lon)
-  //}
 
   /** Всякие неявности изолированы в отдельном namespace. */
   object Implicits {
-
-    implicit def GEO_POINT_FORMAT: Format[MGeoPoint] = FORMAT_ANY_TO_ARRAY
 
     /** Поддержка биндинга из/в Query string в play router. */
     implicit def geoPointQsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[MGeoPoint] = {

@@ -6,8 +6,8 @@ import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.media.storage.MStorageInfo
 import japgolly.univeq._
 import monocle.macros.GenLens
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io

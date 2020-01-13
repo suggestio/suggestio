@@ -1,11 +1,9 @@
 package io.suggest.model.n2.media.storage
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.xplay.qsb.QueryStringBindableImpl
 import japgolly.univeq.UnivEq
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.mvc.QueryStringBindable
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -31,39 +29,6 @@ object MStorageInfo extends IEsMappingProps {
 
 
   @inline implicit def univEq: UnivEq[MStorageInfo] = UnivEq.derive
-
-  implicit def storageInfoQsb(implicit
-                              storageB   : QueryStringBindable[MStorage],
-                              infoDataB  : QueryStringBindable[MStorageInfoData],
-                             ): QueryStringBindable[MStorageInfo] = {
-    new QueryStringBindableImpl[MStorageInfo] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MStorageInfo]] = {
-        val k = key1F(key)
-        for {
-          storageE <- storageB.bind( k(Fields.STORAGE_FN), params )
-          infoE    <- infoDataB.bind( k(Fields.DATA_FN), params )
-        } yield {
-          for {
-            storage <- storageE
-            info    <- infoE
-          } yield {
-            MStorageInfo(
-              storage = storage,
-              data    = info,
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: MStorageInfo): String = {
-        val k = key1F(key)
-        _mergeUnbinded1(
-          storageB.unbind( k(Fields.STORAGE_FN), value.storage ),
-          infoDataB.unbind( k(Fields.DATA_FN), value.data ),
-        )
-      }
-    }
-  }
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._

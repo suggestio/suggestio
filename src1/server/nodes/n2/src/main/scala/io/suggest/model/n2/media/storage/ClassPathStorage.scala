@@ -25,9 +25,9 @@ import scala.util.Try
   * Description: Доступ к ассетам как к media-стораджу.
   * Используется для подгонки узла-файла под
   */
-class AssetStorage @Inject() (
-                               injector: Injector,
-                             )
+class ClassPathStorage @Inject()(
+                                  injector: Injector,
+                                )
   extends IMediaStorageStatic
   with MacroLogsImplLazy
 {
@@ -45,39 +45,43 @@ class AssetStorage @Inject() (
     new File(RoutesJvmConst.ASSETS_PUBLIC_ROOT, ptr.data)
 
   def readSync(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo]): IDataSource = {
-    lazy val logPrefix = s"read(${ptr.data}):"
+    lazy val logPrefix = s"readSync(${ptr.data}):"
 
     // Нужно залесть в getResource*() или иные методы, и оттуда достать всё необходимое.
     val file = _fileOf(ptr)
     val cpPath = file.getPath
 
-    // Если в acceptCompression пусто, то нет смысла проверять файловые расширения на сжатость
-    val isUnCompressed = acceptCompression.nonEmpty && {
-      // Клиент допускает какой-либо пожатый ответ. Проверить, может ли быть сжатым файл с таким именем?
-      val fileName = file.getName
-      val fileExtensionPos = fileName.lastIndexOf('.')
-      (fileExtensionPos > 0) && {
-        // Сверить расширение искомого файла: может файл всегда сжат?
-        val fileExt = fileName.substring( fileExtensionPos )
-        val isNeverCompressed = fileExt.matches("(?i)\\.(apk|ip(a|sw)|zip|woff2?|jpe?g|png|gif|ico|gz|br|md5|sha1)$")
-        !isNeverCompressed
-      }
-    }
-
     // Найти пожатый вариант согласно запрошенному acceptCompression.
     (for {
       compressAlgoOpt <- {
-        val last = Iterator.single(Option.empty[MCompressAlgo])
+        // Если в acceptCompression пусто, то нет смысла проверять файловые расширения на сжатость
+        val isMayBeCompressed = acceptCompression.nonEmpty && {
+          // Клиент допускает какой-либо пожатый ответ. Проверить, может ли быть сжатым файл с таким именем?
+          val fileName = file.getName
+          val fileExtensionPos = fileName.lastIndexOf('.')
+          (fileExtensionPos > 0) && {
+            // Сверить расширение искомого файла: может файл всегда сжат?
+            val fileExt = fileName.substring( fileExtensionPos )
+            val isNeverCompress = fileExt.matches("(?i)\\.(apk|ip(a|sw)|zip|woff2?|jpe?g|png|gif|ico|gz|br|md5|sha1)$")
+            !isNeverCompress
+          }
+        }
+        val last = Iterator.single( Option.empty[MCompressAlgo] )
         // Запрещать поиск сжатых версий файла (ресурса), если имя файла (ресурса) намекает, что формат файла всегда сжатый.
-        if (isUnCompressed && acceptCompression.nonEmpty)
-          acceptCompression.iterator.map(Some.apply) ++ last
-        else
+        if (isMayBeCompressed && acceptCompression.nonEmpty) {
+          acceptCompression
+            .iterator
+            .map(Some.apply) ++ last
+        } else {
           last
+        }
       }
+
       compressedPath = compressAlgoOpt.fold(cpPath) {
         compAlgo =>
           s"${cpPath}.${compAlgo.fileExtension}"
       }
+
       res <- env.resource( compressedPath ).iterator
     } yield {
       (compressedPath, res, compressAlgoOpt)
@@ -94,7 +98,6 @@ class AssetStorage @Inject() (
         val path = Paths.get( resUrl.toURI )
         LOGGER.trace(s"$logPrefix Serving resource $resCpPath compress=${compAlgoOpt getOrElse ""}: $path")
 
-        // Делаем по аналогии с assets: определяем длину файла через istream
         new IDataSource {
           override lazy val contentType: String = {
             // TODO Opt определять MIME-тип на основе имени запрошенного файла оригинала? По идее, в CLASSPATH ошибочного мусора быть не должно.

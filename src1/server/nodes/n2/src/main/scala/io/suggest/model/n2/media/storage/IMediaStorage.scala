@@ -24,6 +24,8 @@ final class IMediaStorages @Inject() (
     storage match {
       case MStorages.SeaWeedFs =>
         injector.instanceOf[SwfsStorage]
+      case MStorages.ClassPathResource =>
+        injector.instanceOf[ClassPathStorage]
     }
   }
 
