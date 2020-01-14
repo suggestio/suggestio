@@ -231,9 +231,8 @@ object MPredicate {
       Writes[MPredicate] { mpred =>
         val p = implicitly[Writes[MPredicate]]
         val preds = mpred
-          .meAndParentsIterator
+          .meAndParents
           .map( p.writes )
-          .to( LazyList )
         JsArray( preds )
       }
     }

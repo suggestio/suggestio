@@ -16,7 +16,7 @@
   <h1>Управление рекламной карточкой @args.mad.id</h1>
 
   <p>Продьюсер карточки:
-    @args.madProducerIdOpt.map { producerId =>
+    @for( producerId <- args.madProducerIdOpt) {
       <a href="@routes.SysMarket.showAdnNode(producerId)">
     }
       @args.producerOpt.fold {
@@ -74,7 +74,7 @@
       отсутствуют.
     } else {
       <ul>
-        @args.imgs.map { ei =>
+        @for(ei <- args.imgs) {
           <li>
             -
             <a href="@routes.SysImg.showOne(ei.img)">

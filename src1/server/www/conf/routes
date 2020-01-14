@@ -202,11 +202,14 @@ POST /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomainFor
 POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysMarket.deleteNodeDomainFormSubmit(nodeId, dkey)
 
 ## SysNodeEdges: работа с эджами узлов
-POST /sys/node/edge/del                 @controllers.SysMarket.deleteEdgePost(e: msys.MNodeEdgeIdQs)
+POST /sys/node/edge/del                 @controllers.SysMarket.deleteEdgePost(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 GET  /sys/node/edge/add/:nodeId         @controllers.SysMarket.createEdgeGet(nodeId)
 POST /sys/node/edge/add/:nodeId         @controllers.SysMarket.createEdgePost(nodeId)
-GET  /sys/node/edge/edit                @controllers.SysMarket.editEdgeGet(e: msys.MNodeEdgeIdQs)
-POST /sys/node/edge/edit                @controllers.SysMarket.editEdgePost(e: msys.MNodeEdgeIdQs)
+GET  /sys/node/edge/edit                @controllers.SysMarket.editEdgeGet(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+POST /sys/node/edge/edit                @controllers.SysMarket.editEdgePost(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+## v2
+GET  /sys/node/edge2/edit               @controllers.SysNodeEdges.editEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+POST /sys/node/edge2/edit               @controllers.SysNodeEdges.editEdgePost(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 
 
 ## sys: Календари

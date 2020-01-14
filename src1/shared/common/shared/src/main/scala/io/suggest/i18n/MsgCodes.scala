@@ -400,4 +400,6 @@ object MsgCodes {
 
   val `Application` = "Application"
 
+  val `Predicate` = "Predicate"
+
 }

@@ -1,10 +1,12 @@
 package util.acl
 
+import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
+import io.suggest.n2.edge.MEdge
+import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.node.MNodes
 import javax.inject.Inject
 import models.mproj.ICommonDi
-import models.msys.MNodeEdgeIdQs
 import models.req._
 import play.api.mvc._
 import io.suggest.req.ReqUtil
@@ -38,44 +40,59 @@ class IsSuNodeEdge @Inject() (
     *
     * @param qs query string.
     */
-  def apply(qs: MNodeEdgeIdQs): ActionBuilder[MNodeEdgeReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MNodeEdgeReq] {
+  def apply(qs: MNodeEdgeIdQs): ActionBuilder[MNodeEdgeOptReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeEdgeOptReq] {
 
       protected[this] def logPrefix = s"${getClass.getSimpleName}(${qs.nodeId}/v=${qs.nodeVsn}/e=${qs.edgeId}):"
 
-      override def invokeBlock[A](request: Request[A], block: (MNodeEdgeReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request: Request[A], block: (MNodeEdgeOptReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodes.getByIdCache(qs.nodeId)
-          mnodeOptFut.flatMap {
+          def req1 = MReq(request, user)
 
-            // Запрошенный узел найден.
-            case Some(mnode) =>
-              def nodeReq = MNodeReq(mnode, request, user)
+          (for {
+            // Поискать запрашиваемый узел:
+            mnodeOpt <- mNodes.getByIdCache(qs.nodeId)
+            mnode = mnodeOpt getOrElse {
+              LOGGER.trace(s"$logPrefix Node#${qs.nodeId} not found")
+              throw HttpResultingException( nodeNotFound(req1) )
+            }
 
-              if (mnode.versionOpt.contains(qs.nodeVsn)) {
-                mnode.edges
-                  .withIndex(qs.edgeId)
-                  .fold[Future[Result]] {
-                    // Нет запрошенного эджа
-                    edgeNotFound(nodeReq)
-                  } { medge =>
-                    val req1 = MNodeEdgeReq(mnode, medge, request, user)
-                    block(req1)
-                  }
+            nodeReq = () => MNodeReq(mnode, request, user)
 
-              } else {
-                // Узел был изменён до начала этого запроса. Порядок эджей может быть нарушен.
+            // Сверить es-версию узла:
+            if {
+              val r = mnode.versionOpt contains[Long] qs.nodeVsn
+              if (!r) {
                 LOGGER.debug(s"$logPrefix node version invalid. Expected=${qs.nodeVsn}, real=${mnode.versionOpt}")
-                nodeVsnInvalid(nodeReq)
+                throw HttpResultingException( nodeVsnInvalid(nodeReq()) )
+              } else {
+                r
               }
+            }
 
-            // Нет узла, почему-то.
-            case None =>
-              val req1 = MReq(request, user)
-              nodeNotFound(req1)
-          }
+            // Если edgeId задан, то извлечь и проверить это.
+            edgeOpt: Option[MEdge] = qs.edgeId.flatMap { edgeId =>
+              val edgeOpt2 = mnode.edges.withIndex( edgeId )
+              if (edgeOpt2.isEmpty) {
+                LOGGER.debug(s"$logPrefix Edge index#$edgeId missing.")
+                throw HttpResultingException( edgeNotFound(nodeReq()) )
+              } else {
+                edgeOpt2
+              }
+            }
+
+            // Исполнение реквеста:
+            req1 = MNodeEdgeOptReq(mnode, edgeOpt, request, user)
+            res <- block( req1 )
+          } yield {
+            res
+          })
+            .recoverWith {
+              case HttpResultingException(resFut) =>
+                resFut
+            }
 
         } else {
           val req1 = MReq(request, user)

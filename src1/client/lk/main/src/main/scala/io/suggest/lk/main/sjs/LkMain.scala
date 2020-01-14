@@ -12,6 +12,7 @@ import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
 import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.msg.ErrorMsgs
+import io.suggest.n2.edge.edit.EdgeEditInit
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sys.mdr.SysMdrInit
@@ -67,5 +68,6 @@ class LkInitRouter
   with FlashInitRouter
   with LkAdnEditInit
   with CartPageInit
-  // TODO унести в SysInitRouter, когда он будет
   with SysMdrInit
+  // TODO унести в SysInitRouter, когда он будет
+  with EdgeEditInit

@@ -1,0 +1,28 @@
+@(stateStr: String, mnode: MNode)(implicit ctx: Context)
+
+@* Страница редактирования эджа на react-форме. *@
+
+@import views.html.sys1.market.adn.adnBase
+@import views.html.stuff.jsTpl2HtmlTpl
+@import views.js.stuff.jsRevRouterTpl
+@import ctx.messages
+@import io.suggest.n2.edge.edit.EdgeEditConst
+@import lk.lkwdgts._formStateInputTpl
+
+@adnBase(
+  title   = s"Редактирование эджа",
+  nodeOpt = Some(mnode)
+) {
+
+  @_formStateInputTpl( stateStr )
+
+  @* Контейнер для рендера react-формы. *@
+  <div id="@EdgeEditConst.FORM_ID"></div>
+
+  @* js-роутер. *@
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl()(
+    )
+  )
+
+}

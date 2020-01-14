@@ -7,6 +7,7 @@
 @import lk.lkBlock
 @import sys1.stuff.ntable._
 @import ctx.messages
+@import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 
 @if( eis.isEmpty ) {
 
@@ -95,7 +96,7 @@
         @for( mnode <- onNode ) {
           @_td("XS") {
             @for( edgeId <- ei.edgeId;  nodeId <- mnode.id;  nodeVsn <- mnode.versionOpt ) {
-              <a href="@routes.SysMarket.editEdgeGet( msys.MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn, edgeId = edgeId) )">
+              <a href="@routes.SysMarket.editEdgeGet( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn, edgeId = Some(edgeId) ) )">
                 &#x270e;
               </a>
             }

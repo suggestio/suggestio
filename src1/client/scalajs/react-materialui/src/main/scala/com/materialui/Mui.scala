@@ -69,6 +69,7 @@ object Mui {
   //@js.native @JSImport("@material-ui/core/List/makeSelectable", JSImport.Default) object makeSelectable extends js.Any
   @js.native @JSImport("@material-ui/core/Menu", JSImport.Default) object Menu         extends js.Any
   @js.native @JSImport("@material-ui/core/MenuItem", JSImport.Default) object MenuItem extends js.Any
+  @js.native @JSImport("@material-ui/core/MenuList", JSImport.Default) object MenuList extends js.Any
   @js.native @JSImport("@material-ui/core/Modal", JSImport.Default) object Modal extends js.Any
 
   @js.native @JSImport("@material-ui/core/Paper", JSImport.Default) object Paper     extends js.Any

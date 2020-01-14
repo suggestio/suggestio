@@ -203,7 +203,7 @@ case class MNodeEdges(
       (for {
         e <- out.iterator
         // Т.к. предикаты имеют иерархию, на каждый эдж может быть сразу несколько элементов в карте.
-        pred <- e.predicate.meAndParentsIterator
+        pred <- e.predicate.meAndParents
       } yield {
         pred -> e
       })

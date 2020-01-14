@@ -2,11 +2,11 @@ package controllers.sysctl
 
 import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.{EsModelDi, MEsUuId}
+import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.util.logs.IMacroLogs
-import models.msys.MNodeEdgeIdQs
-import models.req.{INodeEdgeReq, INodeReq}
+import models.req.{INodeEdgeOptReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
 import util.acl.{IIsSuNodeDi, IsSuNodeEdge}
@@ -46,7 +46,7 @@ trait SysNodeEdges
     */
   def deleteEdgePost(qs: MNodeEdgeIdQs) = csrf.Check {
     isSuNodeEdge(qs).async { implicit request =>
-      LOGGER.trace(s"deleteEdgePost($qs): Deleting edge ${request.medge} of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
+      LOGGER.trace(s"deleteEdgePost($qs): Deleting edge ${request.edgeOpt} of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
 
       // Сохранить собранный эдж.
       for {
@@ -57,7 +57,7 @@ trait SysNodeEdges
               MNodeEdges.edgesToMap1(
                 edgesOut0
                   .iterator
-                  .filter( _ ne request.medge )
+                  .filterNot( request.edgeOpt.contains )
               )
             }
         )
@@ -114,13 +114,13 @@ trait SysNodeEdges
   def editEdgeGet(qs: MNodeEdgeIdQs) = csrf.AddToken {
     isSuNodeEdge(qs).async { implicit request =>
       val eform = sysMarketUtil.edgeFormM
-        .fill( request.medge )
+        .fill( request.edgeOpt.get )
       _editEdgeBody(qs, Ok, eform)
     }
   }
 
   private def _editEdgeBody(qs: MNodeEdgeIdQs, rs: Status, ef: Form[MEdge])
-                           (implicit request: INodeEdgeReq[_]): Future[Result] = {
+                           (implicit request: INodeEdgeOptReq[_]): Future[Result] = {
     rs( editEdgeTpl(qs, ef, request.mnode) )
   }
 
@@ -134,7 +134,7 @@ trait SysNodeEdges
           _editEdgeBody(qs, NotAcceptable, formWithErrors)
         },
         {medge2 =>
-          LOGGER.trace(s"$logPrefix Update of edge ${request.medge} using $medge2 on node ${request.mnode.guessDisplayNameOrIdOrEmpty}")
+          LOGGER.trace(s"$logPrefix Update of edge ${request.edgeOpt} using $medge2 on node ${request.mnode.guessDisplayNameOrIdOrEmpty}")
 
           // Запустить сохранение
           for {
@@ -143,7 +143,7 @@ trait SysNodeEdges
               MNode.edges.modify { edges0 =>
                 MNodeEdges.out.set(
                   MNodeEdges.edgesToMap1(
-                    edges0.withIndexUpdated( qs.edgeId ) { e0 =>
+                    edges0.withIndexUpdated( qs.edgeId.get ) { e0 =>
                       sysMarketUtil.updateEdge(e0, medge2) ::
                         Nil
                     }

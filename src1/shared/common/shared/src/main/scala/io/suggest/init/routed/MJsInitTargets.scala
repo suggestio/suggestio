@@ -55,6 +55,8 @@ object MJsInitTargets extends StringEnum[MJsInitTarget] {
   /** Цель инициализации формы смены пароля. */
   case object PwChange extends MJsInitTarget("w")
 
+  /** Инициализация редактора эджа. */
+  case object EdgeEditForm extends MJsInitTarget("x")
 
   override def values = findValues
 

@@ -10,26 +10,26 @@ import play.api.mvc.Request
   * Created: 17.10.16 16:28
   * Description: Модель для реквестов, завязанных на какой-то эдж узла.
   */
-trait IEdgeReq[A]
+trait IEdgeOptReq[A]
   extends IReq[A]
 {
-  def medge: MEdge
+  def edgeOpt: Option[MEdge]
 }
 
 
-/** Гибрид [[IEdgeReq]] и [[INodeReq]]. */
-trait INodeEdgeReq[A]
+/** Гибрид [[IEdgeOptReq]] и [[INodeReq]]. */
+trait INodeEdgeOptReq[A]
   extends INodeReq[A]
-  with IEdgeReq[A]
+  with IEdgeOptReq[A]
 
 
 
 /** Реализация модели реквеста, завязанного на узел и какой-то его эдж. */
-case class MNodeEdgeReq[A](
-  override val mnode    : MNode,
-  override val medge    : MEdge,
-  override val request  : Request[A],
-  override val user     : ISioUser
+case class MNodeEdgeOptReq[A](
+                               override val mnode    : MNode,
+                               override val edgeOpt  : Option[MEdge],
+                               override val request  : Request[A],
+                               override val user     : ISioUser
 )
   extends MReqWrap[A]
-  with INodeEdgeReq[A]
+  with INodeEdgeOptReq[A]

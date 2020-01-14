@@ -449,7 +449,7 @@ lazy val lkSjs = {
     .enablePlugins(WebScalaJS)
     .dependsOn(
       lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs,
-      lkAdsSjs, lkAdnEditSjs, cartSjs, sysMdrSjs, loginFormSjs
+      lkAdsSjs, lkAdnEditSjs, cartSjs, sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
     )
 }
 

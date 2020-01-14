@@ -1,6 +1,5 @@
 package io.suggest.enum2
 
-import scala.collection.AbstractIterator
 import scala.collection.immutable
 
 /**
@@ -27,6 +26,49 @@ object TreeEnumEntry {
       }
   }
 
+
+  implicit final class TreeEnumEntryOpsExt[T <: TreeEnumEntry[T]]( private val that: T ) extends AnyVal {
+
+    /** Вернуть все дочерние элементы с вообще всех подуровней. */
+    def deepChildren: LazyList[T] = {
+      that
+        .children
+        .flatMap { v =>
+          v #:: v.deepChildren
+        }
+    }
+
+    /** Является ли текущий элемент дочерним по отношению к указанному? */
+    def hasParent(ntype: T): Boolean = {
+      that.parent.exists { p =>
+        p == ntype || p.hasParent(ntype)
+      }
+    }
+    /** Короткий враппер для hasParent(). */
+    def >>(ntype: T) = hasParent(ntype)
+
+    /** Является ли текущий элемент указанным или дочерним? */
+    def eqOrHasParent(ntype: T): Boolean = {
+      that == ntype || hasParent(ntype)
+    }
+    /** Короткий враппер к eqOrHasParent(). */
+    def ==>>(ntype: T) = eqOrHasParent(ntype)
+
+
+    /** Итератор родительских элементов. */
+    def parents: LazyList[T] = {
+      LazyList.unfold(that) { that2 =>
+        for (parent2 <- that2.parent)
+        yield (parent2, parent2)
+      }
+    }
+
+    /** Итератор из текущего и родительских элементов. */
+    def meAndParents: LazyList[T] =
+      that #:: parents
+
+  }
+
 }
 
 
@@ -35,64 +77,8 @@ trait TreeEnumEntry[T <: TreeEnumEntry[T]] { that: T =>
   /** Подтипы этого типа. */
   def children: LazyList[T] = LazyList.empty
 
-  /** Вернуть все дочерние элементы с вообще всех подуровней. */
-  final def deepChildren: LazyList[T] = {
-    children.flatMap { v =>
-      v #:: v.deepChildren
-    }
-  }
-
   /** Родительский элемент, если есть. */
   def parent: Option[T] = None
-
-  /** Является ли текущий элемент дочерним по отношению к указанному? */
-  def hasParent(ntype: T): Boolean = {
-    parent.exists { p =>
-      p == ntype || p.hasParent(ntype)
-    }
-  }
-  /** Короткий враппер для hasParent(). */
-  def >>(ntype: T): Boolean = {
-    hasParent(ntype)
-  }
-
-  /** Является ли текущий элемент указанным или дочерним? */
-  def eqOrHasParent(ntype: T): Boolean = {
-    this == ntype || hasParent(ntype)
-  }
-  /** Короткий враппер к eqOrHasParent(). */
-  def ==>>(ntype: T): Boolean = {
-    eqOrHasParent(ntype)
-  }
-
-  private abstract class _Iterator extends AbstractIterator[T] {
-    var _parentOpt: Option[T]
-
-    override def hasNext: Boolean = {
-      _parentOpt.isDefined
-    }
-
-    override def next(): T = {
-      val res = _parentOpt.get
-      _parentOpt = res.parent
-      res
-    }
-  }
-
-  /** Итератор родительских элементов. */
-  def parentsIterator: Iterator[T] = {
-    new _Iterator {
-      override var _parentOpt: Option[T] = parent
-    }
-  }
-
-  /** Итератор из текущего и родительских элементов. */
-  def meAndParentsIterator: Iterator[T] = {
-    new _Iterator {
-      override var _parentOpt: Option[T] = Some(that)
-    }
-  }
-
 
   /** Трейт для дочерних элементов. Они обычно наследуют черты родителей. */
   trait _Child { child: T =>

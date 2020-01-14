@@ -33,12 +33,9 @@ trait SysMdrInit extends InitRouter {
   private def _initSysMdr(): Unit = {
     val modules = new SysMdrModules
 
-    // Выполнить инициализацию circuit'а:
-    val circuit = modules.sysMdrCircuit
-
     // Линковка circuit - react views - DOM:
     val domContainer = VUtil.getElementById[html.Div]( SysMdrConst.FORM_ID ).get
-    val reactForm = circuit.wrap( identity(_) )( modules.sysMdrFormR.apply )
+    val reactForm = modules.sysMdrCircuit.wrap( identity(_) )( modules.sysMdrFormR.apply )
     reactForm.renderIntoDOM( domContainer )
   }
 

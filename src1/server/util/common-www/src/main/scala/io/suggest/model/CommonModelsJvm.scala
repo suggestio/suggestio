@@ -3,6 +3,7 @@ package io.suggest.model
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
+import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
 import io.suggest.util.logs.MacroLogsDyn
@@ -124,6 +125,50 @@ object CommonModelsJvm extends MacroLogsDyn {
           infoDataB.unbind( k(F.DATA_FN), value.data ),
         )
       }
+    }
+  }
+
+
+  /** Поддержка в play router. */
+  implicit def mNodeEdgeIdQsQsb(implicit
+                                strB      : QueryStringBindable[String],
+                                longB     : QueryStringBindable[Long],
+                                intOptB   : QueryStringBindable[Option[Int]],
+                               ): QueryStringBindable[MNodeEdgeIdQs] = {
+    new QueryStringBindableImpl[MNodeEdgeIdQs] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeEdgeIdQs]] = {
+        val k = key1F(key)
+        val F = MNodeEdgeIdQs.Fields
+        for {
+          nodeIdE     <- strB.bind      (k(F.NODE_ID_FN),   params)
+          nodeVsnE    <- longB.bind     (k(F.NODE_VSN_FN),  params)
+          edgeIdE     <- intOptB.bind   (k(F.EDGE_ID_FN),   params)
+        } yield {
+          for {
+            nodeId    <- nodeIdE
+            nodeVsn   <- nodeVsnE
+            edgeId    <- edgeIdE
+          } yield {
+            MNodeEdgeIdQs(
+              nodeId  = nodeId,
+              nodeVsn = nodeVsn,
+              edgeId  = edgeId,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MNodeEdgeIdQs): String = {
+        val k = key1F(key)
+        val F = MNodeEdgeIdQs.Fields
+        _mergeUnbinded1(
+          strB.unbind( k(F.NODE_ID_FN),   value.nodeId ),
+          longB.unbind( k(F.NODE_VSN_FN),  value.nodeVsn ),
+          intOptB.unbind( k(F.EDGE_ID_FN),   value.edgeId ),
+        )
+      }
+
     }
   }
 
