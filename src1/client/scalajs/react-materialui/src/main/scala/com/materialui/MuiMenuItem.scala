@@ -28,6 +28,8 @@ trait MuiMenuItemProps
 {
   val dense: js.UndefOr[Boolean] = js.undefined
   val disableGutters: js.UndefOr[Boolean] = js.undefined
+  // value: В доках этого поля нет, но селектах - используется.
+  val value: js.UndefOr[String] = js.undefined
 }
 
 

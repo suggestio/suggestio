@@ -3,7 +3,7 @@ package io.suggest.ad.edit
 import com.softwaremill.macwire._
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.init.routed.InitRouter
-import io.suggest.lk.pop.PopupsContR
+import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.up.UploadConstants

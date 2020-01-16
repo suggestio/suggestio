@@ -1,15 +1,17 @@
-package io.suggest.lk.pop
+package io.suggest.lk.r.popup
 
-import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
+import diode.{FastEq, UseValueEq}
 import io.suggest.css.Css
 import io.suggest.lk.m.CloseAllPopups
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -29,8 +31,8 @@ object PopupsContR {
 
   implicit object PopContPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.visible == b.visible) &&
-        (a.css eq b.css)
+      (a.visible ==* b.visible) &&
+      (a.css ===* b.css)
     }
   }
 

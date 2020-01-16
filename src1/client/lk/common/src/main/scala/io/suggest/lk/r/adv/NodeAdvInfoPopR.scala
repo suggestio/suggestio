@@ -2,7 +2,6 @@ package io.suggest.lk.r.adv
 
 import diode.react.ModelProxy
 import io.suggest.lk.m.NodeInfoPopupClose
-import io.suggest.lk.pop.PopupR
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -14,6 +13,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.lk.r.popup.PopupR
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil

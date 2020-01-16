@@ -449,7 +449,17 @@ lazy val lkSjs = {
     .enablePlugins(WebScalaJS)
     .dependsOn(
       lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs,
-      lkAdsSjs, lkAdnEditSjs, cartSjs, sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
+      lkAdsSjs, lkAdnEditSjs, cartSjs, sysMdrSjs, loginFormSjs,
+    )
+}
+
+/** Объединение мелких модулей для /sys-раздела по аналогии с lk-sjs. */
+lazy val sysSjs = {
+  Project(id = "sys-sjs", base = file(DIR0 + "client/sys/main"))
+    .enablePlugins( WebScalaJS )
+    .dependsOn(
+      sysMdrSjs,
+      sysEdgeEditSjs,
     )
 }
 
@@ -601,7 +611,7 @@ lazy val www = project
     svgUtil, ipgeobase, stat
   )
   .settings(
-    scalaJSProjects := Seq(lkSjs, sc3Sjs, scSwSjs),
+    scalaJSProjects := Seq(lkSjs, sc3Sjs, scSwSjs, sysSjs),
     pipelineStages in Assets ++= Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
     // react DatePicker
@@ -649,7 +659,7 @@ lazy val sio2 = {
       commonSjs, commonReactSjs,
       reactMaterialUiSjs,
       leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
-      lkSjs,
+      lkSjs, sysSjs,
       scCommonSjs, sc3Sjs,
       scSwSjs, swToolBoxSjs,
       momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
@@ -662,7 +672,7 @@ lazy val sio2 = {
       lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
       streamsUtil, brotliUtil,
       asmCryptoJsSjs, asmCryptoSioSjs,
-      sysMdrSjs, loginFormSjs,
+      sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
       mgeo, commonWww, nodesWww,

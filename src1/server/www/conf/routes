@@ -151,6 +151,7 @@ GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId:
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
 POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
 GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
+GET  /syslang/:lang/:hash/messages.js   @controllers.LkLang.sysMessagesJs(lang: String, hash: Int)
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            @controllers.Img.getCaptchaImg(captchaId, cp: io.suggest.captcha.MCaptchaCookiePath)

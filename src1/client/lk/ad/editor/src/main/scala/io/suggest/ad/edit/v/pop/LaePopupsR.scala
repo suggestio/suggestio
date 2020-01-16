@@ -5,8 +5,8 @@ import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
-import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.img.CropPopupR
+import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.lk.r.{DeleteConfirmPopupR, ErrorPopupR}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement

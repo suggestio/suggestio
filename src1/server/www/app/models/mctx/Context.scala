@@ -301,7 +301,16 @@ trait Context {
   def lkMessagesJs: Call = {
     routes.LkLang.lkMessagesJs(
       lang = messages.lang.code.toLowerCase,
-      hash = api.jsMessagesUtil.hash
+      hash = api.jsMessagesUtil.lk.hash
+    )
+  }
+
+  /** Генератор ссылки на ассет lk-messages.js, который содержит локализованные сообщения для client-side i18n
+    * и кэшируется на клиенте. */
+  def sysMessagesJs: Call = {
+    routes.LkLang.sysMessagesJs(
+      lang = messages.lang.code.toLowerCase,
+      hash = api.jsMessagesUtil.sys.hash
     )
   }
 

@@ -457,49 +457,92 @@ class JsMessagesUtil @Inject() (
   }
 
 
-  /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
-  val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
-    val msgs = Iterator(
-      ADV_DATES_PERIOD_MSGS,
-      TAGS_EDITOR_MSGS,
-      ADV_GEO_FORM_MSGS,
-      FORM_ERRORS,
-      OF_MONTHS_OF_YEAR,
-      DAYS_OF_WEEK_MSGS,
-      DATE_TIME_ABBREVATIONS,
-      ADV_PRICING,
-      ADV_INFO,
-      DIST_UNITS,
-      ITEM_TYPES,
-      LK_ADN_MAP_MSGS,
-      LK_COMMON,
-      LK_NODES_MSGS,
-      LK_AD_EDIT_MSGS,
-      LK_ADS_MSGS,
-      LK_ADN_EDIT_MSGS,
-      BILL_CART_MSGS,
-      SYS_MDR_MSGS,
-      LOGIN_FORM_MSGS,
-    )
-      .flatten
-      .toSet
+  private def EDGE_EDIT_FORM_MSGS: IterableOnce[String] = {
+    // Одиночные строки перечиляются здесь:
+    val heads =
+      MC.`Predicate` ::
+      Nil
 
+    // Оптовые списки сообщений - тут:
+    ( heads #::
+      MPredicates.values.iterator.map(_.singular) #::
+      LazyList.empty
+    )
+      .iterator
+      .flatten
+  }
+
+
+  /** Контейнер информации для js-сообщений. */
+  case class JsMsgsInfo(
+                         jsMessages     : JsMessages,
+                         hash           : Int,
+                       )
+
+  private def _mkMsgsInfo(msgs: Set[String]): JsMsgsInfo = {
     // НЕ используем .subset() т.к. он медленнный O(N), но код и результат эквивалентен .filtering( coll.contains )
     // При использовании Set[String] сложность будет O(ln2 N), + дедубликация одинаковых ключей.
     val jsm = jsMessagesFactory.filtering( msgs.contains )
     val hash = msgs.hashCode()
-    (jsm, hash)
+    JsMsgsInfo(jsm, hash)
   }
+
+
+  /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
+  val lk = _mkMsgsInfo(
+    (
+      ADV_DATES_PERIOD_MSGS #::
+      TAGS_EDITOR_MSGS #::
+      ADV_GEO_FORM_MSGS #::
+      FORM_ERRORS #::
+      OF_MONTHS_OF_YEAR #::
+      DAYS_OF_WEEK_MSGS #::
+      DATE_TIME_ABBREVATIONS #::
+      ADV_PRICING #::
+      ADV_INFO #::
+      DIST_UNITS #::
+      ITEM_TYPES #::
+      LK_ADN_MAP_MSGS #::
+      LK_COMMON #::
+      LK_NODES_MSGS #::
+      LK_AD_EDIT_MSGS #::
+      LK_ADS_MSGS #::
+      LK_ADN_EDIT_MSGS #::
+      BILL_CART_MSGS #::
+      SYS_MDR_MSGS #::
+      LOGIN_FORM_MSGS #::
+      LazyList.empty
+    )
+      .iterator
+      .flatten
+      .toSet
+  )
+
+
+  /** Сообщения для системной панели. */
+  lazy val sys = _mkMsgsInfo(
+    (
+      SYS_MDR_MSGS #::
+      EDGE_EDIT_FORM_MSGS #::
+      LazyList.empty
+    )
+      .iterator
+      .flatten
+      .toSet
+  )
 
 
   /** jsMessages для выдачи. */
   val scJsMsgsFactory: JsMessages = {
-    val msgs = Iterator(
-      SC,
-      DIST_UNITS
+    val msgs = (
+      SC #::
+      DIST_UNITS #::
+      LazyList.empty
     )
+      .iterator
       .flatten
       .toSet
+
     val jsm = jsMessagesFactory.filtering( msgs.contains )
     // TODO Вычислять hash для кеширования?
     jsm

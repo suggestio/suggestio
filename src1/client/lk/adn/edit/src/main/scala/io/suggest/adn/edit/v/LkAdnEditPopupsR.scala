@@ -4,9 +4,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.m.MLkAdnEditRoot
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.m.MErrorPopupS
-import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.img.CropPopupR
+import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement

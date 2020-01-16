@@ -1,4 +1,4 @@
-package io.suggest.lk.main.sjs
+package io.suggest.lk
 
 import io.suggest.ad.edit.LkAdEditInit
 import io.suggest.adn.edit.LkAdnEditInit
@@ -8,11 +8,8 @@ import io.suggest.id.login.LoginFormInit
 import io.suggest.lk.adn.map.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
 import io.suggest.lk.flash.FlashInitRouter
-import io.suggest.lk.ident.center.CenterContentInitRouter
-import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
 import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.msg.ErrorMsgs
-import io.suggest.n2.edge.edit.EdgeEditInit
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sys.mdr.SysMdrInit
@@ -43,9 +40,8 @@ object LkMain extends Log {
         .init()
     } catch {
       case ex: Throwable =>
-        LOG.error( ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, js.Dynamic.global.L.toString )
+        LOG.error( ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex )
     }
-
   }
 
 }
@@ -59,9 +55,6 @@ class LkInitRouter
   with AdvGeoFormInitRouter
   with LkAdsInit
   with LkAdnMapFormInitRouter
-  with CenterContentInitRouter
-  with CaptchaFormInit
-  with HiddenCaptchaInit
   with LkNodesInitRouter
   with AdvExtRunnerInitRouter
   with FormEventsInitRouter
@@ -69,5 +62,3 @@ class LkInitRouter
   with LkAdnEditInit
   with CartPageInit
   with SysMdrInit
-  // TODO унести в SysInitRouter, когда он будет
-  with EdgeEditInit

@@ -61,7 +61,8 @@
 
     <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
 
-    @_sjsScript("lk-sjs")
+    <script src="@ctx.api.cdn.forCall( ctx.sysMessagesJs )"></script>
+    @_sjsScript("sys-sjs")
   </body>
 
 </html>

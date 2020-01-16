@@ -1,23 +1,25 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.I18nConst
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.sec.util.Csrf
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.Context
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages}
 import play.api.mvc.Result
 import util.FormUtil.uiLangM
-import util.acl.MaybeAuth
+import util.acl.{IsSu, MaybeAuth}
 import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
 import japgolly.univeq._
+import models.req.IReq
 import play.api.http.HttpErrorHandler
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,20 +31,23 @@ import scala.concurrent.{ExecutionContext, Future}
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
-                         esModel                         : EsModel,
-                         mNodes                          : MNodes,
-                         maybeAuth                       : MaybeAuth,
-                         jsMessagesUtil                  : JsMessagesUtil,
                          sioControllerApi                : SioControllerApi,
-                         errorHandler                    : HttpErrorHandler,
-                         csrf                            : Csrf,
+                         injector                        : Injector,
                          implicit private val ec         : ExecutionContext,
                        )
   extends MacroLogsImplLazy
 {
 
+  // Т.к. тут НЕ сингтон, то описываем DI для необязательных кусков:
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val csrf = injector.instanceOf[Csrf]
+  private lazy val isSu = injector.instanceOf[IsSu]
+
   import sioControllerApi._
-  import esModel.api._
 
   private def chooseLangFormM(currLang: Lang): Form[Lang] = {
     Form(
@@ -106,6 +111,7 @@ class LkLang @Inject() (
           _showLangSwitcher(formWithErrors, r, NotAcceptable)
         },
         {newLang =>
+          import esModel.api._
           val saveUserLangFut = FutureUtil.optFut2futOpt( request.user.personIdOpt ) { _ =>
             val newLangCode = newLang.code
             for {
@@ -138,34 +144,53 @@ class LkLang @Inject() (
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
   private def LK_MESSAGES_CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
 
-  /** 2016.dec.6: Из-за опытов с react.js возникла необходимость использования client-side messages.
-    * Тут экшен, раздающий messages для личного кабинета.
-    *
-    * @param hash PROJECT LAST_MODIFIED hash code.
-    * @param langCode Изначальное не проверяется, но для решения проблем с кешированием вбит в адрес ссылки.
-    * @return js asset с локализованными мессагами внутрях.
-    */
-  def lkMessagesJs(langCode: String, hash: Int) = maybeAuth().async { implicit request =>
+
+  /** Сборка ответа messages.js */
+  private def _messagesResp(msgsInfo: jsMessagesUtil.JsMsgsInfo, langCode: String, hash: Int)
+                           (implicit request: IReq[_]): Future[Result] = {
     // Проверить хеш
-    if (hash ==* jsMessagesUtil.hash) {
+    if (hash ==* msgsInfo.hash) {
       val messages = implicitly[Messages]
 
       // Проверить langCode
       if (messages.lang.code equalsIgnoreCase langCode) {
-        val js = jsMessagesUtil.lkJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(messages)
+        val js = msgsInfo.jsMessages( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(messages)
         Ok(js)
           .withHeaders(
             CACHE_CONTROL -> s"public, max-age=$LK_MESSAGES_CACHE_MAX_AGE_SECONDS"
           )
 
       } else {
+        LOGGER.trace(s"${request.path} lang=$langCode must be ${messages.lang.code}")
         errorHandler.onClientError(request, NOT_FOUND, s"Lang: $langCode")
       }
 
     } else {
-      LOGGER.trace(s"${request.path} hash=$hash must be ${jsMessagesUtil.hash}")
+      LOGGER.trace(s"${request.path} hash=$hash must be ${msgsInfo.hash}")
       errorHandler.onClientError(request, NOT_FOUND, s"hash: $hash")
     }
+  }
+
+
+  /** 2016.dec.6: Из-за опытов с react.js возникла необходимость использования client-side messages.
+    * Тут экшен, раздающий messages для личного кабинета.
+    *
+    * @param hash Ключ кэширования.
+    * @param langCode Изначальное не проверяется, но для решения проблем с кешированием вбит в адрес ссылки.
+    * @return js asset с локализованными мессагами внутрях.
+    */
+  def lkMessagesJs(langCode: String, hash: Int) = maybeAuth().async { implicit request =>
+    _messagesResp( jsMessagesUtil.lk, langCode, hash )(request)
+  }
+
+  /** Раздача messages для системной админки по аналогии с lkMessagesJs.
+    *
+    * @param langCode Язык.
+    * @param hash Ключ кэшировния.
+    * @return messages.js для сисадминки.
+    */
+  def sysMessagesJs(langCode: String, hash: Int) = isSu().async { implicit request =>
+    _messagesResp( jsMessagesUtil.sys, langCode, hash )(request)
   }
 
 }

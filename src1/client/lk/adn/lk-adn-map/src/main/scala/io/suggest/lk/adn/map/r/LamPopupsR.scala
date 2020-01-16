@@ -4,7 +4,6 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.lk.adn.map.m.MRoot
 import io.suggest.lk.m.MErrorPopupS
-import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -12,6 +11,7 @@ import io.suggest.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import MErrorPopupS.MErrorPopupSFastEq
+import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.spa.OptFastEq
 
 /**

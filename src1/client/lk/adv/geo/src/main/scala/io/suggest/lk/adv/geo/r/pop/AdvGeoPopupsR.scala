@@ -2,16 +2,15 @@ package io.suggest.lk.adv.geo.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, MPopupsS}
-import io.suggest.lk.pop.PopupsContR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.spa.OptFastEq.Wrapped
-import PopupsContR.PopContPropsValFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.r.{ErrorPopupR, PleaseWaitPopupR}
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import MErrorPopupS.MErrorPopupSFastEq
+import io.suggest.lk.r.popup.PopupsContR
 
 /**
   * Suggest.io

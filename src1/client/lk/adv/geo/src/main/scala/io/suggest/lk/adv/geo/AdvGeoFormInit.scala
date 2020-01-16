@@ -9,7 +9,7 @@ import io.suggest.lk.adv.geo.m.MPopupsS.MPopupsFastEq
 import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.r.PriceR
-import io.suggest.lk.pop.PopupsContR
+import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import org.scalajs.dom.raw.HTMLDivElement

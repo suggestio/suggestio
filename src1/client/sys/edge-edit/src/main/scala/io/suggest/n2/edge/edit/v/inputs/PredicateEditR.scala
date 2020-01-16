@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.edit.v.inputs
 
-import com.materialui.{MuiMenuItem, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiMenuItem, MuiMenuItemProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -9,6 +9,8 @@ import io.suggest.n2.edge.edit.m.PredicateChanged
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react.{React, _}
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -42,7 +44,11 @@ class PredicateEditR(
         val _children = for {
           pred <- MPredicates.values
         } yield {
-          MuiMenuItem()(
+          MuiMenuItem(
+            new MuiMenuItemProps {
+              override val value = pred.value
+            }
+          )(
             HtmlConstants.NBSP_STR * pred.parents.size,
             crCtx.messages( pred.singular ),
           ): VdomElement

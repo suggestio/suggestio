@@ -25,9 +25,6 @@ object IdentConst {
     /** Можно повторно отправлять смс после этого времени. */
     def SMS_CAN_RE_SEND_AFTER_SECONDS = 30
 
-    /** Сколько времени валиден смс-код. */
-    def SMS_CODE_VALID_SECONDS = 300
-
     /** Сколько времени валиден id-токен. */
     def ID_TOKEN_VALIDITY_SECONDS = 15 * 60
 

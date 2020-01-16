@@ -1,4 +1,4 @@
-package io.suggest.lk.pop
+package io.suggest.lk.r.popup
 
 import diode.FastEq
 import diode.react.ModelProxy
@@ -6,8 +6,8 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.ReactUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._

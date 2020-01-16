@@ -6,8 +6,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
-import io.suggest.lk.pop.PopupR
-import io.suggest.lk.pop.PopupR.PopupPropsValFastEq
+import io.suggest.lk.r.popup.PopupR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -112,14 +111,15 @@ object DeleteConfirmPopupR {
 
             )
           }
-        }
+        }(implicitly, PopupR.PopupPropsValFastEq)
       }
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

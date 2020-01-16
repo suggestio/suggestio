@@ -16,15 +16,6 @@ object MJsInitTargets extends StringEnum[MJsInitTarget] {
   /** js-исполнитель внешнего размещения. */
   case object AdvExtRunner extends MJsInitTarget("d")
 
-  /** Вертикальная центровка в ident. */
-  case object IdentVCenterContent extends MJsInitTarget("e")
-
-  /** init-target для включения js к форме ввода капчи. */
-  case object CaptchaForm extends MJsInitTarget("j")
-
-  /** Цель инициализации для поддержки скрытой капчи, загружаемой и отображаемой опционально. */
-  case object HiddenCaptcha extends MJsInitTarget("k")
-
   /** Цель для инициализации страницы размещения в геотегах. */
   case object AdvGeoForm extends MJsInitTarget("m")
 
