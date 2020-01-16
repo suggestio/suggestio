@@ -1070,4 +1070,5 @@ Try.again=Try again
 Get.node.index.failed=Failed node/server connection.
 Http.response.unexpected=No server connection.
 Application=Application
-
+Node.ids.or.keys=Node ids or keys
+Flag.value=Flag value

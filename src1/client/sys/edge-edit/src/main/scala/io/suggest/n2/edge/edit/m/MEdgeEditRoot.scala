@@ -19,7 +19,8 @@ object MEdgeEditRoot {
   implicit object EdgeEditRootFastEq extends FastEq[MEdgeEditRoot] {
     override def eqv(a: MEdgeEditRoot, b: MEdgeEditRoot): Boolean = {
       (a.edge ===* b.edge) &&
-      (a.conf ===* b.conf)
+      (a.conf ===* b.conf) &&
+      (a.edit ===* b.edit)
     }
   }
 
@@ -27,6 +28,29 @@ object MEdgeEditRoot {
 
   val edge = GenLens[MEdgeEditRoot](_.edge)
   val conf = GenLens[MEdgeEditRoot](_.conf)
+  val edit = GenLens[MEdgeEditRoot](_.edit)
+
+
+  implicit class EdgeEditRootExt( val mroot: MEdgeEditRoot ) extends AnyVal {
+
+    /** Сборка обновлённого инстанса эджа. */
+    def toEdgeIfUpdated: Option[MEdge] = {
+      var edgeUpdAcc = List.empty[MEdge => MEdge]
+      val e0 = mroot.edge
+
+      val nodeIds2 = mroot.edit.nodeIds.toSet
+      if (nodeIds2 !=* e0.nodeIds)
+        edgeUpdAcc ::= (MEdge.nodeIds set nodeIds2)
+
+      Option.when( edgeUpdAcc.nonEmpty ) {
+        edgeUpdAcc.reduce(_ andThen _)(e0)
+      }
+    }
+
+    def toEdge: MEdge =
+      toEdgeIfUpdated getOrElse mroot.edge
+
+  }
 
 }
 
@@ -35,8 +59,10 @@ object MEdgeEditRoot {
   *
   * @param edge Редактируемый сейчас эдж.
   * @param conf Конфигурация.
+  * @param edit Разные состояния под-редакторов.
   */
 case class MEdgeEditRoot(
                           edge      : MEdge,
                           conf      : MNodeEdgeIdQs,
+                          edit      : MEdgeEditS        = MEdgeEditS.empty,
                         )

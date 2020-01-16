@@ -401,5 +401,7 @@ object MsgCodes {
   val `Application` = "Application"
 
   val `Predicate` = "Predicate"
+  val `Node.ids.or.keys` = "Node.ids.or.keys"
+  val `Flag.value` = "Flag.value"
 
 }

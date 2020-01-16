@@ -38,7 +38,7 @@ class LkLang @Inject() (
   extends MacroLogsImplLazy
 {
 
-  // Т.к. тут НЕ сингтон, то описываем DI для необязательных кусков:
+  // Контроллер НЕ сингтон, то описываем DI для необязательных кусков:
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
@@ -71,7 +71,8 @@ class LkLang @Inject() (
     val langCodes = mCommonDi.langs
       .availables
 
-    val langCode2msgs = mCommonDi.langs.availables
+    val langCode2msgs = mCommonDi.langs
+      .availables
       .iterator
       .map { lang =>
         val msgs = messagesApi.preferred( lang :: Nil )

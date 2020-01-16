@@ -1,12 +1,15 @@
 package io.suggest.n2.edge.edit.v
 
-import com.materialui.MuiPaper
+import com.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup}
 import diode.react.ModelProxy
+import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.edge.edit.m.MEdgeEditRoot
-import io.suggest.n2.edge.edit.v.inputs.PredicateEditR
+import io.suggest.n2.edge.edit.v.inputs.{InfoFlagR, NodeIdsR, PredicateR}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -15,7 +18,9 @@ import japgolly.scalajs.react._
   * Description: Компонент формы заливки файла.
   */
 class EdgeEditFormR(
-                     predicateEditR       : PredicateEditR,
+                     predicateEditR       : PredicateR,
+                     nodeIdsR             : NodeIdsR,
+                     infoFlagR            : InfoFlagR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -26,11 +31,28 @@ class EdgeEditFormR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(p: Props): VdomElement = {
-      crCtxProv.provide( MCommonReactCtx.default )(
-        MuiPaper()(
+      val css = p.wrap(_ => EdgeEditCss)( CssR.apply )
 
-          // Предикат:
-          p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
+      crCtxProv.provide( MCommonReactCtx.default )(
+        MuiFormControl(
+          new MuiFormControlProps {
+            override val component = js.defined( <.fieldset.name )
+          }
+        )(
+          css,
+
+          MuiFormGroup()(
+
+            // Предикат:
+            p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
+
+            // id узлов:
+            p.wrap( _.edit.nodeIds )( nodeIdsR.component.apply ),
+
+            // legacy-флаг эджа:
+            p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
+
+          )
 
         )
       )

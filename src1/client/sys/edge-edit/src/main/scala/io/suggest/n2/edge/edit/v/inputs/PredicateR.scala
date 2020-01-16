@@ -1,16 +1,15 @@
 package io.suggest.n2.edge.edit.v.inputs
 
-import com.materialui.{MuiMenuItem, MuiMenuItemProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiFormControlClasses, MuiMenuItem, MuiMenuItemProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.m.PredicateChanged
+import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react.{React, _}
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -18,9 +17,9 @@ import scala.scalajs.js.UndefOr
   * Created: 14.01.2020 7:53
   * Description: Компонент редактирования предиката эджа.
   */
-class PredicateEditR(
-                      crCtxProv: React.Context[MCommonReactCtx],
-                    ) {
+class PredicateR(
+                  crCtxProv: React.Context[MCommonReactCtx],
+                ) {
 
   type Props_t = MPredicate
   type Props = ModelProxy[Props_t]
@@ -49,20 +48,24 @@ class PredicateEditR(
               override val value = pred.value
             }
           )(
-            HtmlConstants.NBSP_STR * pred.parents.size,
+            HtmlConstants.NBSP_STR * (pred.parents.size * 2),
             crCtx.messages( pred.singular ),
           ): VdomElement
         }
 
         s.predicateC { predicateProxy =>
-          MuiTextField(
+          MuiTextField {
+            val css = new MuiFormControlClasses {
+              override val root = EdgeEditCss.input.htmlClass
+            }
             new MuiTextFieldProps {
               override val select   = true
               override val label    = _label.rawNode
               override val value    = predicateProxy.value.value
               override val onChange = _onPredicateChangeCbF
+              override val classes  = css
             }
-          )(
+          } (
             _children: _*
           )
         }

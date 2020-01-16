@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit
 
 import com.softwaremill.macwire._
 import io.suggest.n2.edge.edit.v.EdgeEditFormR
-import io.suggest.n2.edge.edit.v.inputs.PredicateEditR
+import io.suggest.n2.edge.edit.v.inputs.{InfoFlagR, NodeIdsR, PredicateR}
 
 /**
   * Suggest.io
@@ -15,9 +15,13 @@ class EdgeEditModule {
   import io.suggest.ReactCommonModule._
 
   // view
-  lazy val predicateEditR = wire[PredicateEditR]
+  lazy val predicateR = wire[PredicateR]
 
   lazy val edgeEditFormR = wire[EdgeEditFormR]
+
+  lazy val nodeIdsR = wire[NodeIdsR]
+
+  lazy val infoFlagR = wire[InfoFlagR]
 
 
   // circuit

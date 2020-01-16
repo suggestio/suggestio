@@ -1,8 +1,8 @@
 package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.n2.edge.MEdge
-import io.suggest.n2.edge.edit.m.PredicateChanged
+import io.suggest.n2.edge.{MEdge, MEdgeInfo}
+import io.suggest.n2.edge.edit.m.{FlagSet, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, PredicateChanged}
 import japgolly.univeq._
 
 /**
@@ -12,7 +12,7 @@ import japgolly.univeq._
   * Description: Контроллер заливки файла в форме.
   */
 class EdgeEditAh[M](
-                     modelRW: ModelRW[M, MEdge],
+                     modelRW: ModelRW[M, MEdgeEditRoot],
                    )
   extends ActionHandler(modelRW)
 {
@@ -22,13 +22,87 @@ class EdgeEditAh[M](
     // Смена предиката.
     case m: PredicateChanged =>
       val v0 = value
-      if (m.pred2 ==* v0.predicate) {
+
+      val lens = MEdgeEditRoot.edge
+        .composeLens( MEdge.predicate )
+
+      if ( m.pred2 ==* lens.get(v0) ) {
         noChange
+
       } else {
-        val v2 = (MEdge.predicate set m.pred2)(v0)
+        val v2 = (lens set m.pred2)(v0)
         updated(v2)
       }
 
+
+    // Редактирования id узла из списка узлов.
+    case m: NodeIdChange =>
+      val v0 = value
+
+      val lens = EdgeEditAh.root_edit_nodeIds_LENS
+      val nodeIds0 = lens.get( v0 )
+      val nodeId0 = nodeIds0( m.i )
+      val nodeId2 = m.nodeId.trim
+
+      if (nodeId0 ==* nodeId2) {
+        // Не изменилось ничего.
+        noChange
+
+      } else {
+        val nodeIds2 = nodeIds0.updated(m.i, nodeId2)
+
+        val v2 = (lens set nodeIds2)( v0 )
+        updated(v2)
+      }
+
+
+    // Нажатие кнопки добавления узла.
+    case NodeIdAdd =>
+      val v0 = value
+
+      val lens = EdgeEditAh.root_edit_nodeIds_LENS
+      val nodeIds0 = lens.get( v0 )
+
+      val emptyStr = ""
+      if (nodeIds0.lastOption.map(_.trim) contains emptyStr) {
+        noChange
+
+      } else {
+        val nodeIds2 = nodeIds0 :+ emptyStr
+        val v2 = (lens set nodeIds2)(v0)
+        updated(v2)
+      }
+
+
+    // Изменение legacy-флага:
+    case m: FlagSet =>
+      val v0 = value
+
+      val lens = MEdgeEditRoot.edge
+        .composeLens( MEdge.info )
+        .composeLens( MEdgeInfo.flag )
+
+      val flag0 = lens.get(v0)
+      val flag2 =
+        if ((flag0 contains false) && (m.flag2 contains true)) None
+        else m.flag2
+      if ( flag0 ==* flag2 ) {
+        noChange
+      } else {
+        val v2 = (lens set flag2)(v0)
+        updated(v2)
+      }
+
+  }
+
+}
+
+
+object EdgeEditAh {
+
+  def root_edit_nodeIds_LENS = {
+    MEdgeEditRoot.edit
+      .composeLens( MEdgeEditS.nodeIds )
   }
 
 }

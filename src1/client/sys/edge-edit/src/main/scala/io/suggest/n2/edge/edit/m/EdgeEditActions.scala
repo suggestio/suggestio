@@ -12,3 +12,11 @@ import io.suggest.spa.DAction
 sealed trait IEdgeEditAction extends DAction
 
 case class PredicateChanged( pred2: MPredicate ) extends IEdgeEditAction
+
+
+case class NodeIdChange(i: Int, nodeId: String) extends IEdgeEditAction
+
+case object NodeIdAdd extends IEdgeEditAction
+
+
+case class FlagSet( flag2: Option[Boolean] ) extends IEdgeEditAction

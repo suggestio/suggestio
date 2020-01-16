@@ -748,8 +748,8 @@ object MuiSvgIcons {
   object ContentAddCircleOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/add-circle", JSImport.Default)
   object ContentAddCircle extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/add", JSImport.Default)
-  object ContentAdd extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Add", JSImport.Default)
+  object Add extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Archive", JSImport.Default)
   object Archive extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Backspace", JSImport.Default)

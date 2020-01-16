@@ -461,6 +461,9 @@ class JsMessagesUtil @Inject() (
     // Одиночные строки перечиляются здесь:
     val heads =
       MC.`Predicate` ::
+      MC.`Node.ids.or.keys` ::
+      MC.`Add` ::
+      MC.`Flag.value` ::
       Nil
 
     // Оптовые списки сообщений - тут:
@@ -548,9 +551,4 @@ class JsMessagesUtil @Inject() (
     jsm
   }
 
-}
-
-/** Интерфейс для DI-поля с инстансом [[JsMessagesUtil]]. */
-trait IJsMessagesUtilDi {
-  val jsMessagesUtil: JsMessagesUtil
 }

@@ -6,7 +6,7 @@ import io.suggest.n2.edge.{MEdge, MPredicates}
 import io.suggest.n2.edge.edit.c.EdgeEditAh
 import io.suggest.n2.edge.edit.m.MEdgeEditRoot
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.spa.{CircuitUtil, StateInp}
+import io.suggest.spa.StateInp
 import play.api.libs.json.Json
 
 /**
@@ -38,11 +38,13 @@ class EdgeEditCircuit
   }
 
 
-  private val edgeRW = CircuitUtil.mkLensRootZoomRW(this, MEdgeEditRoot.edge)
+  private val rootRW = zoomRW(identity)( (_, v2) => v2 )( MEdgeEditRoot.EdgeEditRootFastEq )
+
+  //private val edgeRW = CircuitUtil.mkLensRootZoomRW(this, MEdgeEditRoot.edge)
 
 
   private val edgeEditAh = new EdgeEditAh(
-    modelRW = edgeRW,
+    modelRW = rootRW,
   )
 
   override protected val actionHandler: HandlerFunction = {

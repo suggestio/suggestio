@@ -1078,4 +1078,5 @@ Try.again=Попробовать ещё раз
 Get.node.index.failed=Нет связи с узлом/сервером.
 Http.response.unexpected=Нет связи с сервером.
 Application=Приложение
-
+Node.ids.or.keys=ID узлов/ключи
+Flag.value=Значение флага
