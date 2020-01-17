@@ -467,6 +467,9 @@ class JsMessagesUtil @Inject() (
       MC.`Ordering` ::
       MC.`Not.indexed.text` ::
       MC.`Type.text...` ::
+      MC.`Delete` ::
+      MC.`Are.you.sure` ::
+      MC.`Deletion` ::
       Nil
 
     // Оптовые списки сообщений - тут:

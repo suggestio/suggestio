@@ -29,3 +29,18 @@ case class OrderSet( order: Option[Int] ) extends IEdgeEditAction
 
 /** Редактирование неиндексируемого текста. */
 case class TextNiSet(commentNi: Option[String] ) extends IEdgeEditAction
+
+
+
+sealed trait IEdgeAction extends DAction
+
+/** @param isDelete false - запрос диалога удаления.
+  *                 true - подтверждение удаления.
+  */
+case class DeleteEdge(isDelete: Boolean ) extends IEdgeAction
+
+/** Сокрытие диалога удаления эджа. */
+case object DeleteCancel extends IEdgeAction
+
+/** Сохранение эджа. */
+case object Save extends IEdgeAction

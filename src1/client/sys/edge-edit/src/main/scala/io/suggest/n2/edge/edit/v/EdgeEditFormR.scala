@@ -2,9 +2,12 @@ package io.suggest.n2.edge.edit.v
 
 import com.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiPaper}
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.n2.edge.edit.m.MEdgeEditRoot
+import io.suggest.lk.r.DeleteConfirmPopupR
+import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
+import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR}
 import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
 import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -24,6 +27,8 @@ class EdgeEditFormR(
                      infoFlagR            : InfoFlagR,
                      orderR               : OrderR,
                      infoTextNiR          : InfoTextNiR,
+                     deleteBtnR           : DeleteBtnR,
+                     deleteDiaR           : DeleteDiaR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -38,32 +43,44 @@ class EdgeEditFormR(
 
       MuiPaper()(
         crCtxProv.provide( MCommonReactCtx.default )(
-          MuiFormControl(
-            new MuiFormControlProps {
-              override val component = js.defined( <.fieldset.name )
-            }
-          )(
-            css,
+          <.div(
+            MuiFormControl(
+              new MuiFormControlProps {
+                override val component = js.defined( <.fieldset.name )
+              }
+            )(
+              css,
 
-            MuiFormGroup()(
+              MuiFormGroup()(
 
-              // Предикат
-              p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
+                // Предикат
+                p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
 
-              // id узлов
-              p.wrap( _.edit.nodeIds )( nodeIdsR.component.apply ),
+                // id узлов
+                p.wrap( _.edit.nodeIds )( nodeIdsR.component.apply ),
 
-              // порядковые номера эджей
-              p.wrap( _.edge.order )( orderR.component.apply ),
+                // порядковые номера эджей
+                p.wrap( _.edge.order )( orderR.component.apply ),
 
-              // legacy-флаг эджа
-              MuiPaper()(
-                p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
-                p.wrap( _.edge.info.textNi )( infoTextNiR.component.apply ),
-              ),
+                // legacy-флаг эджа
+                MuiPaper()(
+                  p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
+                  p.wrap( _.edge.info.textNi )( infoTextNiR.component.apply ),
+                ),
 
-            )
+                // Кнопка удаления
+                p.wrap { m =>
+                  OptionUtil.SomeBool( !m.edit.deleteDia.opened )
+                }( deleteBtnR.component.apply ),
 
+                // Кнопка сохранения
+                // TODO
+              )
+
+            ),
+
+            // Диалог подтверждения удаления.
+            p.wrap( _.edit.deleteDia )( deleteDiaR.component.apply )(implicitly, MDeleteDiaS.MDeleteDiaSFastEq),
           )
         )
       )

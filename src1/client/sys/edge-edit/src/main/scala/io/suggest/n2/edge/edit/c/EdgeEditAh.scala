@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{TextNiSet, FlagSet, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged}
+import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged, TextNiSet}
 import japgolly.univeq._
 
 /**
@@ -126,6 +126,41 @@ class EdgeEditAh[M](
         updated(v2)
       }
 
+    case m: DeleteEdge =>
+      val v0 = value
+      if (v0.edit.saveReq.isPending) {
+        noChange
+
+      } else if (m.isDelete) {
+        // Отправка запроса удаления на сервер
+        ???
+
+      } else {
+        // Отрендерить диалог удаления.
+        val lens = EdgeEditAh.root_edit_deleteDia_LENS
+        if ( lens.get(v0) ) {
+          noChange
+        } else {
+          val v2 = (lens set true)(v0)
+          updated( v2 )
+        }
+      }
+
+
+    // Отмена удаления эджа.
+    case DeleteCancel =>
+      val v0 = value
+      val lens = EdgeEditAh.root_edit_deleteDia_LENS
+
+      if ( !lens.get(v0) ) {
+        // Диалог удаления уже скрыт.
+        noChange
+
+      } else {
+        val v2 = (lens set false)(v0)
+        updated(v2)
+      }
+
   }
 
 }
@@ -137,5 +172,10 @@ object EdgeEditAh {
     MEdgeEditRoot.edit
       .composeLens( MEdgeEditS.nodeIds )
   }
+
+  def root_edit_deleteDia_LENS =
+    MEdgeEditRoot.edit
+      .composeLens( MEdgeEditS.deleteDia )
+      .composeLens( MDeleteDiaS.opened )
 
 }
