@@ -11,12 +11,18 @@ import io.suggest.spa.DAction
   */
 sealed trait IEdgeEditAction extends DAction
 
+/** Изменение edge.predicate. */
 case class PredicateChanged( pred2: MPredicate ) extends IEdgeEditAction
 
-
+/** Редактирование edge.nodeIds[i]. */
 case class NodeIdChange(i: Int, nodeId: String) extends IEdgeEditAction
 
+/** Создание edge.nodeIds[n+1]. */
 case object NodeIdAdd extends IEdgeEditAction
 
 
+/** Выставление edge.info.flag. */
 case class FlagSet( flag2: Option[Boolean] ) extends IEdgeEditAction
+
+/** Выставление edge.order. */
+case class OrderSet( order: Option[Int] ) extends IEdgeEditAction

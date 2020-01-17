@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.edge.edit.m.MEdgeEditRoot
-import io.suggest.n2.edge.edit.v.inputs.{InfoFlagR, NodeIdsR, PredicateR}
+import io.suggest.n2.edge.edit.v.inputs.{InfoFlagR, NodeIdsR, OrderR, PredicateR}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 
@@ -21,6 +21,7 @@ class EdgeEditFormR(
                      predicateEditR       : PredicateR,
                      nodeIdsR             : NodeIdsR,
                      infoFlagR            : InfoFlagR,
+                     orderR               : OrderR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -43,13 +44,16 @@ class EdgeEditFormR(
 
           MuiFormGroup()(
 
-            // Предикат:
+            // Предикат
             p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
 
-            // id узлов:
+            // id узлов
             p.wrap( _.edit.nodeIds )( nodeIdsR.component.apply ),
 
-            // legacy-флаг эджа:
+            // порядковые номера эджей
+            p.wrap( _.edge.order )( orderR.component.apply ),
+
+            // legacy-флаг эджа
             p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
 
           )

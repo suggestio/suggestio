@@ -81,6 +81,7 @@ object HtmlConstants {
     val file = "file"
     val range = "range"
     val password = "password"
+    val number = "number"
   }
 
 

@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{FlagSet, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, PredicateChanged}
+import io.suggest.n2.edge.edit.m.{FlagSet, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged}
 import japgolly.univeq._
 
 /**
@@ -83,14 +83,31 @@ class EdgeEditAh[M](
         .composeLens( MEdgeInfo.flag )
 
       val flag0 = lens.get(v0)
+
       val flag2 =
         if ((flag0 contains false) && (m.flag2 contains true)) None
         else m.flag2
+
       if ( flag0 ==* flag2 ) {
         noChange
       } else {
         val v2 = (lens set flag2)(v0)
         updated(v2)
+      }
+
+
+    // Сигнал выставления порядка эджей.
+    case m: OrderSet =>
+      val v0 = value
+
+      val lens = MEdgeEditRoot.edge
+        .composeLens( MEdge.order )
+
+      if (lens.get(v0) ==* m.order) {
+        noChange
+      } else {
+        val v2 = (lens set m.order)(v0)
+        updated( v2 )
       }
 
   }

@@ -110,6 +110,7 @@ case class Crontab @Inject() (
       cronTaskProvCt <- TASK_CLASSES
       clazz = current.injector
         .instanceOf( cronTaskProvCt )
+      if clazz.isEnabled
       task  <- clazz.cronTasks()
     } yield {
       LOGGER.trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")

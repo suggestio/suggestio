@@ -464,6 +464,7 @@ class JsMessagesUtil @Inject() (
       MC.`Node.ids.or.keys` ::
       MC.`Add` ::
       MC.`Flag.value` ::
+      MC.`Ordering` ::
       Nil
 
     // Оптовые списки сообщений - тут:
