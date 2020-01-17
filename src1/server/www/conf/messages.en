@@ -1073,4 +1073,6 @@ Application=Application
 Node.ids.or.keys=Node ids or keys
 Flag.value=Flag value
 Ordering=Ordering
+Not.indexed.text=Not-indexed text
+Type.text...=Type text...
 

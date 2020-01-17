@@ -14,6 +14,14 @@ object MuiTextField {
   def apply(props: MuiTextFieldProps = MuiTextFieldProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
+
+  type Variant <: js.Any
+  object Variants {
+    def standard = "standard".asInstanceOf[Variant]
+    def outlined = "outlined".asInstanceOf[Variant]
+    def filled = "filled".asInstanceOf[Variant]
+  }
+
 }
 
 
@@ -37,6 +45,7 @@ trait MuiTextFieldProps extends MuiFormControlProps {
   val select: js.UndefOr[Boolean] = js.undefined
   val SelectProps: js.UndefOr[MuiSelectProps] = js.undefined
   val `type`: js.UndefOr[String] = js.undefined
+  val variant: js.UndefOr[MuiTextField.Variant] = js.undefined
   val value: js.UndefOr[MuiInputValue_t | js.Array[MuiInputValue_t]] = js.undefined
 }
 object MuiTextFieldProps extends MuiPropsBaseStatic[MuiTextFieldProps]

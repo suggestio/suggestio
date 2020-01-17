@@ -26,3 +26,6 @@ case class FlagSet( flag2: Option[Boolean] ) extends IEdgeEditAction
 
 /** Выставление edge.order. */
 case class OrderSet( order: Option[Int] ) extends IEdgeEditAction
+
+/** Редактирование неиндексируемого текста. */
+case class TextNiSet(commentNi: Option[String] ) extends IEdgeEditAction

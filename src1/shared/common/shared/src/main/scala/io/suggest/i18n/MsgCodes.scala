@@ -404,5 +404,7 @@ object MsgCodes {
   val `Node.ids.or.keys` = "Node.ids.or.keys"
   val `Flag.value` = "Flag.value"
   val `Ordering` = "Ordering"
+  val `Not.indexed.text` = "Not.indexed.text"
+  val `Type.text...` = "Type.text..."
 
 }

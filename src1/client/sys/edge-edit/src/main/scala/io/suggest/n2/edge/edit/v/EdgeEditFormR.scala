@@ -1,11 +1,12 @@
 package io.suggest.n2.edge.edit.v
 
-import com.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup}
+import com.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiPaper}
 import diode.react.ModelProxy
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.edge.edit.m.MEdgeEditRoot
-import io.suggest.n2.edge.edit.v.inputs.{InfoFlagR, NodeIdsR, OrderR, PredicateR}
+import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
+import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 
@@ -22,6 +23,7 @@ class EdgeEditFormR(
                      nodeIdsR             : NodeIdsR,
                      infoFlagR            : InfoFlagR,
                      orderR               : OrderR,
+                     infoTextNiR          : InfoTextNiR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -34,30 +36,35 @@ class EdgeEditFormR(
     def render(p: Props): VdomElement = {
       val css = p.wrap(_ => EdgeEditCss)( CssR.apply )
 
-      crCtxProv.provide( MCommonReactCtx.default )(
-        MuiFormControl(
-          new MuiFormControlProps {
-            override val component = js.defined( <.fieldset.name )
-          }
-        )(
-          css,
+      MuiPaper()(
+        crCtxProv.provide( MCommonReactCtx.default )(
+          MuiFormControl(
+            new MuiFormControlProps {
+              override val component = js.defined( <.fieldset.name )
+            }
+          )(
+            css,
 
-          MuiFormGroup()(
+            MuiFormGroup()(
 
-            // Предикат
-            p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
+              // Предикат
+              p.wrap( _.edge.predicate )( predicateEditR.component.apply ),
 
-            // id узлов
-            p.wrap( _.edit.nodeIds )( nodeIdsR.component.apply ),
+              // id узлов
+              p.wrap( _.edit.nodeIds )( nodeIdsR.component.apply ),
 
-            // порядковые номера эджей
-            p.wrap( _.edge.order )( orderR.component.apply ),
+              // порядковые номера эджей
+              p.wrap( _.edge.order )( orderR.component.apply ),
 
-            // legacy-флаг эджа
-            p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
+              // legacy-флаг эджа
+              MuiPaper()(
+                p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
+                p.wrap( _.edge.info.textNi )( infoTextNiR.component.apply ),
+              ),
+
+            )
 
           )
-
         )
       )
     }

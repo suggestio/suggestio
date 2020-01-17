@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{FlagSet, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged}
+import io.suggest.n2.edge.edit.m.{TextNiSet, FlagSet, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged}
 import japgolly.univeq._
 
 /**
@@ -108,6 +108,22 @@ class EdgeEditAh[M](
       } else {
         val v2 = (lens set m.order)(v0)
         updated( v2 )
+      }
+
+
+    // Редактирование неиндексируемого текста.
+    case m: TextNiSet =>
+      val v0 = value
+
+      val lens = MEdgeEditRoot.edge
+        .composeLens( MEdge.info )
+        .composeLens( MEdgeInfo.textNi )
+
+      if (lens.get(v0) ==* m.commentNi) {
+        noChange
+      } else {
+        val v2 = (lens set m.commentNi)(v0)
+        updated(v2)
       }
 
   }

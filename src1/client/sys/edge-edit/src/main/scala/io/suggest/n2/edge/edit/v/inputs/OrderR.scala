@@ -1,7 +1,6 @@
 package io.suggest.n2.edge.edit.v.inputs
 
 import com.materialui.{MuiFormControlClasses, MuiTextField, MuiTextFieldProps}
-import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}

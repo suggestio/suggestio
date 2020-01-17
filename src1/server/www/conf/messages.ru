@@ -1081,4 +1081,6 @@ Application=Приложение
 Node.ids.or.keys=ID узлов/ключи
 Flag.value=Значение флага
 Ordering=Порядок
+Not.indexed.text=Неиндексируемый текст
+Type.text...=Введите текст...
 

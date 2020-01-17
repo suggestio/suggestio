@@ -1,4 +1,4 @@
-package io.suggest.n2.edge.edit.v.inputs
+package io.suggest.n2.edge.edit.v.inputs.info
 
 import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
