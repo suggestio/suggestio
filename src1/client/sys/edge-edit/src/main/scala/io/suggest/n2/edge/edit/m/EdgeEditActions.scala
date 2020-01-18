@@ -3,6 +3,8 @@ package io.suggest.n2.edge.edit.m
 import io.suggest.n2.edge.MPredicate
 import io.suggest.spa.DAction
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -39,8 +41,12 @@ sealed trait IEdgeAction extends DAction
   */
 case class DeleteEdge(isDelete: Boolean ) extends IEdgeAction
 
+case class DeleteResp( startTimeMs: Long, tryResp: Try[None.type] ) extends IEdgeAction
+
 /** Сокрытие диалога удаления эджа. */
 case object DeleteCancel extends IEdgeAction
 
 /** Сохранение эджа. */
 case object Save extends IEdgeAction
+
+case class SaveResp( startTimeMs: Long, tryResp: Try[None.type] ) extends IEdgeAction

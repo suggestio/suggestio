@@ -3,13 +3,11 @@ package io.suggest.n2.edge.edit.v.inputs.act
 import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants, MuiProgressVariants}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.m.Save
+import io.suggest.n2.edge.edit.m.Save
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io

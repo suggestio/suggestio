@@ -64,5 +64,5 @@ object MEdgeEditRoot {
 case class MEdgeEditRoot(
                           edge      : MEdge,
                           conf      : MNodeEdgeIdQs,
-                          edit      : MEdgeEditS        = MEdgeEditS.empty,
+                          edit      : MEdgeEditS,
                         )

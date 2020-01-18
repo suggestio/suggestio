@@ -22,7 +22,7 @@ import scalacss.ScalaCssReact._
   */
 class AboutSioR(
                  scReactCtxP            : React.Context[MScReactCtx],
-                 commonReactCtxProv     : React.Context[MCommonReactCtx],
+                 crCtxProv     : React.Context[MCommonReactCtx],
                ) {
 
   type Props_t = Option[PropsVal]
@@ -40,39 +40,40 @@ class AboutSioR(
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(propsValProxy: Props): VdomElement = {
-      propsValProxy.value.whenDefinedEl { props =>
-        scReactCtxP.consume { scReactCtx =>
-          val R = ScCssStatic.Menu.Rows
-
-          // Это типа ссылка <a>, но уже с выставленным href + go-событие.
-          val linkVdom = scReactCtx
-            .routerCtl
-            .link( Sc3Pages.MainScreen(
-              nodeId = Some( props.aboutNodeId )
-            ))
-
-          commonReactCtxProv.consume { crCtx =>
-            linkVdom(
-              R.rowLink,
-              ^.title := crCtx.messages( MsgCodes.`Suggest.io._transcription` ),
-
-              MuiListItem(
-                new MuiListItemProps {
-                  override val disableGutters = true
-                  override val button = true
-                }
-              )(
-                MuiListItemText()(
-                  <.span(
-                    R.rowContent,
-                    scReactCtx.scCss.fgColor,
-                    crCtx.messages( MsgCodes.`Suggest.io.Project` ),
-                  )
-                )
-              )
-            )
+      scReactCtxP.consume { scReactCtx =>
+        val R = ScCssStatic.Menu.Rows
+        lazy val _listItem = MuiListItem(
+          new MuiListItemProps {
+            override val disableGutters = true
+            override val button = true
           }
+        )(
+          MuiListItemText()(
+            <.span(
+              R.rowContent,
+              scReactCtx.scCss.fgColor,
+              crCtxProv.message( MsgCodes.`Suggest.io.Project` ),
+            )
+          )
+        )
 
+        crCtxProv.consume { crCtx =>
+          lazy val linkChildren = List[TagMod](
+            R.rowLink,
+            ^.title := crCtx.messages( MsgCodes.`Suggest.io._transcription` ),
+            _listItem,
+          )
+
+          propsValProxy.value.whenDefinedEl { props =>
+            // Это типа ссылка <a>, но уже с выставленным href + go-событие.
+            scReactCtx
+              .routerCtl
+              .link( Sc3Pages.MainScreen(
+                nodeId = Some( props.aboutNodeId )
+              ))(
+                linkChildren: _*
+              )
+          }
         }
       }
     }

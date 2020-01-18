@@ -23,7 +23,7 @@ import scalacss.ScalaCssReact._
   */
 class EnterLkRowR(
                    scReactCtxP            : React.Context[MScReactCtx],
-                   commonReactCtxProv     : React.Context[MCommonReactCtx],
+                   crCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
   type Props_t = Option[PropsVal]
@@ -90,9 +90,7 @@ class EnterLkRowR(
                 <.span(
                   R.rowContent,
                   scReactCtx.scCss.fgColor,
-                  commonReactCtxProv.consume { crCtx =>
-                    crCtx.messages( msgCode )
-                  }
+                  crCtxProv.message( msgCode ),
                 )
               )
             )

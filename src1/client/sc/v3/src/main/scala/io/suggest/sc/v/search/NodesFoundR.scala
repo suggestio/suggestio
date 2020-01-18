@@ -20,6 +20,8 @@ import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -28,7 +30,7 @@ import io.suggest.css.ScalaCssUtil.Implicits._
   */
 class NodesFoundR(
                    nodeFoundR             : NodeFoundR,
-                   commonReactCtxProv     : React.Context[MCommonReactCtx],
+                   crCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
   import NodesFoundR._
@@ -77,12 +79,13 @@ class NodesFoundR(
               // Надо, чтобы юзер понимал, что запрос поиска отработан.
               MuiListItem()(
                 MuiListItemText()(
-                  commonReactCtxProv.consume { crCtx =>
-                    nodesRi.textQuery.fold {
-                      crCtx.messages( MsgCodes.`No.tags.here` )
+                  {
+                    val (msgCode, msgArgs) =  nodesRi.textQuery.fold {
+                      MsgCodes.`No.tags.here` -> List.empty[js.Any]
                     } { query =>
-                      crCtx.messages( MsgCodes.`No.tags.found.for.1.query`, query )
+                      MsgCodes.`No.tags.found.for.1.query` -> List[js.Any]( query )
                     }
+                    crCtxProv.message( msgCode, msgArgs: _* )
                   }
                 )
               )
@@ -134,9 +137,7 @@ class NodesFoundR(
               )(
                 MuiListItem(emptyProps)(
                   MuiListItemText()(
-                    commonReactCtxProv.consume { crCtx =>
-                      crCtx.messages( MsgCodes.`Something.gone.wrong` )
-                    }
+                    crCtxProv.message( MsgCodes.`Something.gone.wrong` ),
                   ),
                   MuiListItemIcon()(
                     Mui.SvgIcons.ErrorOutline()()

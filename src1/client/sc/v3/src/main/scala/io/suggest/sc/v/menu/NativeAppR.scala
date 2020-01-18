@@ -17,7 +17,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-компонент пункта меню, содержащего данные для скачивания мобильного приложения.
   */
 class NativeAppR(
-                  commonReactCtx          : React.Context[MCommonReactCtx],
+                  crCtxProv          : React.Context[MCommonReactCtx],
                 ) {
 
   type Props_t = Option[MMenuNativeApp]
@@ -50,9 +50,7 @@ class NativeAppR(
             override val onClick        = _onOpenCloseClickCbF
           }
         )(
-          commonReactCtx.consume { crCtx =>
-            crCtx.messages( MsgCodes.`Application` )
-          }
+          crCtxProv.message( MsgCodes.`Application` ),
         )
 
         // Если раскрыт пункт, то показать данные для скачивания приложения.

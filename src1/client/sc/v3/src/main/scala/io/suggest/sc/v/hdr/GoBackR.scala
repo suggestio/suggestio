@@ -10,6 +10,8 @@ import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonPr
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,7 +19,7 @@ import io.suggest.sc.styl.ScCssStatic
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
 class GoBackR(
-               commonReactCtxProv     : React.Context[MCommonReactCtx],
+               crCtxProv     : React.Context[MCommonReactCtx],
              ) {
 
   type Props_t = Option[MIndexView]
@@ -34,13 +36,13 @@ class GoBackR(
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { miv =>
         MuiToolTip {
-          val titleText = commonReactCtxProv.consume { crCtx =>
-            miv.name.fold {
-              crCtx.messages( MsgCodes.`Go.back` )
-            } { prevNodeName =>
-              crCtx.messages( MsgCodes.`Go.back.to.0`, prevNodeName )
-            }
+          val (msgCode, msgArgs) = miv.name.fold {
+            MsgCodes.`Go.back` -> List.empty[js.Any]
+          } { prevNodeName =>
+            MsgCodes.`Go.back.to.0` -> List[js.Any]( prevNodeName )
           }
+          val titleText = crCtxProv.message( msgCode, msgArgs: _*)
+
           new MuiToolTipProps {
             override val title = titleText.rawNode
           }

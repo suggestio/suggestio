@@ -24,7 +24,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-компонент диалога ошибки выдачи.
   */
 class ScErrorDiaR(
-                   commonReactCtxProv     : React.Context[MCommonReactCtx],
+                   crCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
   type Props_t = MScErrorDia
@@ -53,9 +53,8 @@ class ScErrorDiaR(
       val _message = <.div(
         // Кнопка закрытия диалога ошибки - справа.
         MuiToolTip {
-          val closeMsg = commonReactCtxProv.consume { crCtx =>
-            crCtx.messages( MsgCodes.`Close` )
-          }
+          val closeMsg = crCtxProv.message( MsgCodes.`Close` )
+
           new MuiToolTipProps {
             override val title = closeMsg.rawElement
           }
@@ -85,7 +84,7 @@ class ScErrorDiaR(
             override val variant = MuiTypoGraphyVariants.body1
           }
         )(
-          commonReactCtxProv.consume { crCtx =>
+          crCtxProv.consume { crCtx =>
             s.messageCodeOptC {
               _.value.whenDefinedEl { messageCode =>
                 <.span(
@@ -123,9 +122,8 @@ class ScErrorDiaR(
         // Кнопка "Повторить", когда возможно.
         val onClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onRetryClick )
         val retryIcon = Mui.SvgIcons.Cached()()
-        val retryText = commonReactCtxProv.consume { crCtx =>
-          crCtx.messages( MsgCodes.`Try.again` )
-        }
+        val retryText = crCtxProv.message( MsgCodes.`Try.again` )
+
         MuiToolTip(
           new MuiToolTipProps {
             override val title = retryText.rawNode

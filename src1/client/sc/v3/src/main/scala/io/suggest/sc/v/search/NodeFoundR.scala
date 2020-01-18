@@ -34,7 +34,7 @@ import scala.scalajs.js
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
 class NodeFoundR(
-                  commonReactCtxProv     : React.Context[MCommonReactCtx],
+                  crCtxProv     : React.Context[MCommonReactCtx],
                 ) {
 
   /** Контейнер пропертисов компонента.
@@ -184,7 +184,7 @@ class NodeFoundR(
 
           val text2ndOpt = distanceMOpt
             .map { distanceM =>
-              commonReactCtxProv.consume { crCtx =>
+              crCtxProv.consume { crCtx =>
                 val distanceFmt = crCtx.messages( DistanceUtil.formatDistanceM(distanceM) )
                 (HtmlConstants.`~` + distanceFmt): raw.React.Node
               }.rawNode

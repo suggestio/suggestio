@@ -76,6 +76,8 @@ sealed trait Controllers extends js.Object {
 
   def SysMarket: SysMarketCtlRoutes = js.native
 
+  def SysNodeEdges: SysNodeEdgesRoutes = js.native
+
 }
 
 

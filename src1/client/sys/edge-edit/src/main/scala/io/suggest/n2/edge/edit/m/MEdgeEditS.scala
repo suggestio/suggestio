@@ -15,8 +15,6 @@ import io.suggest.ueq.JsUnivEqUtil._
   */
 object MEdgeEditS {
 
-  def empty = apply()
-
   implicit object MEdgeEditFastEq extends FastEq[MEdgeEditS] {
     override def eqv(a: MEdgeEditS, b: MEdgeEditS): Boolean = {
       (a.nodeIds ===* b.nodeIds) &&
@@ -41,7 +39,7 @@ object MEdgeEditS {
   * @param deleteDia Диалог подтверждения удаления эджа.
   */
 case class MEdgeEditS(
-                       nodeIds            : Seq[String]           = Nil,
-                       saveReq            : Pot[_]                = Pot.empty,
+                       nodeIds            : Seq[String],
+                       saveReq            : Pot[None.type]        = Pot.empty,
                        deleteDia          : MDeleteDiaS           = MDeleteDiaS.empty,
                      )

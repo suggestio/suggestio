@@ -22,7 +22,7 @@ import scalacss.ScalaCssReact._
   */
 class EditAdR(
                scReactCtxP            : React.Context[MScReactCtx],
-               commonReactCtxProv     : React.Context[MCommonReactCtx],
+               crCtxProv     : React.Context[MCommonReactCtx],
              ) {
 
   type Props_t = Option[PropsVal]
@@ -63,9 +63,7 @@ class EditAdR(
                 <.span(
                   R.rowContent,
                   scReactCtx.scCss.fgColor,
-                  commonReactCtxProv.consume { crCtx =>
-                    crCtx.messages( MsgCodes.`Edit` )
-                  }
+                  crCtxProv.message( MsgCodes.`Edit` ),
                 )
               )
             )

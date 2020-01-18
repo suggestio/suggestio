@@ -59,9 +59,9 @@ class WzFirstR(
     def render(propsOptProxy: Props): VdomElement = {
       // TODO Надо бы, чтобы компонент диалога был отрендерен всегда и один на всех. Сейчас - слетает анимация сокрытия из-за деинициализации.
 
-      propsOptProxy.value.whenDefinedEl { props =>
-        // Общие пропертисы для любых собранных диалогов:
-        commonReactCtxProv.consume { crCtx =>
+      commonReactCtxProv.consume { crCtx =>
+        propsOptProxy.value.whenDefinedEl { props =>
+          // Общие пропертисы для любых собранных диалогов:
           MuiDialog {
             new MuiDialogProps {
               override val open = props.first.visible

@@ -26,7 +26,7 @@ import scala.scalajs.js.|
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
 class STextR(
-              commonReactCtxProv     : React.Context[MCommonReactCtx],
+              crCtxProv     : React.Context[MCommonReactCtx],
             ) {
 
   type Props_t = MScSearchText
@@ -84,7 +84,7 @@ class STextR(
             override val classes = formCtlCss
           }
         )(
-          commonReactCtxProv.consume { crCtx =>
+          crCtxProv.consume { crCtx =>
             MuiInput {
               //val inputCss = new MuiInputClasses {
               //  override val root = TextBarCSS.inputRoot.htmlClass

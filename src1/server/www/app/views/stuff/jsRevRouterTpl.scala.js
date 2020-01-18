@@ -42,7 +42,7 @@ var @(name) = {};
     var viaCdn = url.startsWith("/~");
     @* Выставление CSRF-токена: влияет наличие CSRF в реквесте, method или значение csrfAll,
      * или наличие '/~' в начале URL (viaCdn) в качестве принудительного глобального запрета CSRF для роуты. *@
-    if (csrfQsExist && !viaCdn@if(!csrfAll){ && method == "POST"}) {
+    if (csrfQsExist && !viaCdn@if(!csrfAll){ && (method == "POST" || method == "DELETE")}) {
       var delim;
       var qmark = '?';
       if (url.indexOf(qmark) >= 0) {

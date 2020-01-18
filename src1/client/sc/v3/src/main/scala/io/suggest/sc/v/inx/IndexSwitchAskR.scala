@@ -19,7 +19,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class IndexSwitchAskR(
                        nodesFoundR          : NodesFoundR,
-                       commonReactCtxProv   : React.Context[MCommonReactCtx],
+                       crCtxProv   : React.Context[MCommonReactCtx],
                      ) {
 
   type Props_t = Option[MInxSwitchAskS]
@@ -60,9 +60,7 @@ class IndexSwitchAskR(
           val _message: VdomNode = <.div(
             ^.`class` := scCss.content.htmlClass,
 
-            commonReactCtxProv.consume { crCtx =>
-              crCtx.messages( MsgCodes.`Location.changed` )
-            },
+            crCtxProv.message( MsgCodes.`Location.changed` ),
 
             // Кнопка сокрытия уведомления:
             MuiButton.component {
@@ -78,9 +76,7 @@ class IndexSwitchAskR(
               }
             } (
               Mui.SvgIcons.CancelOutlined(btnIconProps)(),
-              commonReactCtxProv.consume { crCtx =>
-                crCtx.messages( MsgCodes.`Cancel` )
-              }
+              crCtxProv.message( MsgCodes.`Cancel` ),
             ),
 
             <.br,

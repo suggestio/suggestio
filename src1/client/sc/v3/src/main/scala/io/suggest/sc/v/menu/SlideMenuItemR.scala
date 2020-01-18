@@ -31,7 +31,7 @@ import scala.scalajs.js
   */
 class SlideMenuItemR(
                       scReactCtxP             : React.Context[MScReactCtx],
-                      commonReactCtxProv      : React.Context[MCommonReactCtx],
+                      crCtxProv      : React.Context[MCommonReactCtx],
                     ) {
 
   /** Модель данных для рендера пункта меню со слайдером. */
@@ -85,7 +85,7 @@ class SlideMenuItemR(
             override val onClick = _onClickF
           }
         } (
-          commonReactCtxProv.consume { crCtx =>
+          crCtxProv.consume { crCtx =>
             MuiListItemText {
               val cssClasses = new MuiListItemTextClasses {
                 override val root = R.rowText.htmlClass
