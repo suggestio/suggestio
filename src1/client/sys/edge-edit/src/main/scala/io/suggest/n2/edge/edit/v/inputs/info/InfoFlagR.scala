@@ -57,9 +57,7 @@ class InfoFlagR(
           }
         }
 
-        val _label = crCtxProv.consume { crCtx =>
-          crCtx.messages( MsgCodes.`Flag.value` )
-        }
+        val _label = crCtxProv.message( MsgCodes.`Flag.value` )
 
         new MuiFormControlLabelProps {
           override val control = _control.rawElement

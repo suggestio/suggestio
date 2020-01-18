@@ -25,7 +25,7 @@ import scala.scalajs.js
   * Description: Подформа для ввода смс-кода подтверждения.
   */
 class SmsCodeFormR(
-                    commonReactCtxProv    : React.Context[MCommonReactCtx],
+                    crCtxProv    : React.Context[MCommonReactCtx],
                   ) {
 
   case class PropsVal(
@@ -70,25 +70,24 @@ class SmsCodeFormR(
 
     def render(s: State): VdomElement = {
 
+      val labelText = crCtxProv.message( MsgCodes.`Code.from.sms` )
+
       // Поле ввода отправленного смс-кода.
-      val smsCodeInput = commonReactCtxProv.consume { commonReactCtx =>
-        val labelText = commonReactCtx.messages( MsgCodes.`Code.from.sms` )
-        s.codeInputC { codeInputProxy =>
-          codeInputProxy.value.whenDefinedEl { v =>
-            MuiTextField(
-              new MuiTextFieldProps {
-                override val onChange = _onSmsCodeTypingCbF
-                override val value = js.defined {
-                  v.typed.value: MuiInputValue_t
-                }
-                override val label        = labelText
-                override val `type`       = HtmlConstants.Input.text
-                override val error        = !v.typed.isValid
-                override val onBlur       = _onInputBlurCbF
-                override val disabled     = v.disabled
+      val smsCodeInput = s.codeInputC { codeInputProxy =>
+        codeInputProxy.value.whenDefinedEl { v =>
+          MuiTextField(
+            new MuiTextFieldProps {
+              override val onChange = _onSmsCodeTypingCbF
+              override val value = js.defined {
+                v.typed.value: MuiInputValue_t
               }
-            )()
-          }
+              override val label        = labelText.rawNode
+              override val `type`       = HtmlConstants.Input.text
+              override val error        = !v.typed.isValid
+              override val onBlur       = _onInputBlurCbF
+              override val disabled     = v.disabled
+            }
+          )()
         }
       }
 

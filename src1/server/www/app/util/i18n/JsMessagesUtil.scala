@@ -470,6 +470,7 @@ class JsMessagesUtil @Inject() (
       MC.`Delete` ::
       MC.`Are.you.sure` ::
       MC.`Deletion` ::
+      MC.`Save` ::
       Nil
 
     // Оптовые списки сообщений - тут:

@@ -32,7 +32,7 @@ class LoginFormR(
                   extFormR              : ExtFormR,
                   regR                  : RegR,
                   pwChangeR             : PwChangeR,
-                  commonReactCtxProv    : React.Context[MCommonReactCtx],
+                  crCtxProv             : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
 
@@ -50,9 +50,8 @@ class LoginFormR(
   private def _tabBtn( tab: MLoginTab ): VdomElement = {
     MuiTab {
       // Получить messages через контекст:
-      val labelText = commonReactCtxProv.consume { crCtx =>
-        crCtx.messages( tab.msgCode )
-      }
+      val labelText = crCtxProv.message( tab.msgCode )
+
       new MuiTabProps {
         override val value = js.defined( tab.value )
         override val label = js.defined {

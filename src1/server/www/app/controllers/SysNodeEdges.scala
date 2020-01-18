@@ -2,6 +2,7 @@ package controllers
 
 import io.suggest.ctx.CtxData
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.n2.edge.MEdge
 import io.suggest.n2.edge.edit.{MEdgeEditFormInit, MNodeEdgeIdQs}
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
@@ -58,7 +59,18 @@ final class SysNodeEdges @Inject() (
     * @param qs Координата редактируемого эджа.
     * @return
     */
-  def editEdgePost(qs: MNodeEdgeIdQs) = csrf.Check {
+  def saveEdge(qs: MNodeEdgeIdQs) = csrf.Check {
+    isSuNodeEdge(qs).async( parse.json[MEdge] ) { implicit request =>
+      ???
+    }
+  }
+
+  /** Сабмит удаления эджа.
+    *
+    * @param qs Координата эджа.
+    * @return
+    */
+  def deleteEdge(qs: MNodeEdgeIdQs) = csrf.Check {
     isSuNodeEdge(qs).async { implicit request =>
       ???
     }

@@ -23,7 +23,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class ExtFormR(
                 loginProgressR              : LoginProgressR,
-                commonReactCtxProv          : React.Context[MCommonReactCtx],
+                crCtxProv                   : React.Context[MCommonReactCtx],
               ) {
 
   type Props_t = MExtLoginFormS
@@ -49,12 +49,12 @@ class ExtFormR(
           val btnIcon = <.div(
             ^.`class` := Css.GosUslugi.LOGO,
           )
+
           val btnTitle = <.div(
             ^.`class` := Css.GosUslugi.ESIA_TITLE,
-            commonReactCtxProv.consume { crCtx =>
-              crCtx.messages( MsgCodes.`ESIA._unabbrevated` )
-            },
+            crCtxProv.message( MsgCodes.`ESIA._unabbrevated` ),
           )
+
           s.loginUrlReqPendingSomeC { loginUrlReqPendingSomeProxy =>
             val isDisabled = loginUrlReqPendingSomeProxy.value.value
             <.span(

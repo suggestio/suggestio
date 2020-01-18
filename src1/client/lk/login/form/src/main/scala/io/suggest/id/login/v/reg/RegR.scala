@@ -35,7 +35,7 @@ class RegR(
             reg3CheckBoxesR    : Reg3CheckBoxesR,
             reg4SetPasswordR   : Reg4SetPasswordR,
             loginProgressR     : LoginProgressR,
-            commonReactCtxProv : React.Context[MCommonReactCtx],
+            crCtxProv          : React.Context[MCommonReactCtx],
             loginFormCssCtxP   : React.Context[LoginFormCss],
           ) {
 
@@ -98,9 +98,7 @@ class RegR(
       lazy val stepSetPassword = reg4SetPasswordR.component( pRoot )
 
       // Сообщение кнопки "Назад".
-      val backMsg = commonReactCtxProv.consume { commonReactCtx =>
-        commonReactCtx.messages( MsgCodes.`Back` )
-      }
+      val backMsg = crCtxProv.message( MsgCodes.`Back` )
       val backBtn = s.backBtnDisabledC { disabledSomeProxy =>
         MuiButton(
           new MuiButtonProps {
@@ -115,7 +113,7 @@ class RegR(
       }
 
       // Сообщение кнопки "Вперёд". На последнем шаге надо "Завершить".
-      val nextMsg = commonReactCtxProv.consume { commonReactCtx =>
+      val nextMsg = crCtxProv.consume { commonReactCtx =>
         s.isLastStepSomeC { isLastStepSomeProxy =>
           val msgCode =
             if (isLastStepSomeProxy.value.value) MsgCodes.`_to.Finish`

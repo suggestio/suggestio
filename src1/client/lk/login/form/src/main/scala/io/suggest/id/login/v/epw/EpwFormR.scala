@@ -29,7 +29,7 @@ class EpwFormR(
                 textFieldR                  : TextFieldR,
                 checkBoxR                   : CheckBoxR,
                 loginProgressR              : LoginProgressR,
-                commonReactCtxProv          : React.Context[MCommonReactCtx],
+                crCtxProv                   : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
                 routerCtlRctx               : React.Context[RouterCtl[ILoginFormPages]],
               ) {
@@ -112,9 +112,8 @@ class EpwFormR(
 
             // Галочка "Чужой компьютер".
             MuiFormControlLabel {
-              val labelText = commonReactCtxProv.consume { crCtx =>
-                crCtx.messages( MsgCodes.`Not.my.pc` )
-              }
+              val labelText = crCtxProv.message( MsgCodes.`Not.my.pc` )
+
               val cbx = propsProxy.wrap { p =>
                 checkBoxR.PropsVal(
                   checked   = p.isForeignPc,
@@ -141,9 +140,7 @@ class EpwFormR(
                     override val classes = css
                   }
                 } (
-                  commonReactCtxProv.consume { crCtx =>
-                    crCtx.messages( MsgCodes.`Forgot.password` )
-                  }
+                  crCtxProv.message( MsgCodes.`Forgot.password` )
                 )
               }
             },
@@ -153,9 +150,8 @@ class EpwFormR(
 
             // Кнопка "Войти", аналог сабмита формы.
             {
-              val loginBtnText = commonReactCtxProv.consume { crCtx =>
-                crCtx.messages( MsgCodes.`Login` )
-              }
+              val loginBtnText = crCtxProv.message( MsgCodes.`Login` )
+
               loginFormCssCtx.consume { loginFormCss =>
                 val btnCss = new MuiButtonClasses {
                   override val root = loginFormCss.formControl.htmlClass

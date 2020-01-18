@@ -37,9 +37,7 @@ class DeleteBtnR(
 
     def render(s: State): VdomElement = {
       val deleteText = <.span(
-        crCtxProv.consume { crCtx =>
-          crCtx.messages( MsgCodes.`Delete` )
-        },
+        crCtxProv.message( MsgCodes.`Delete` ),
         HtmlConstants.ELLIPSIS,
       )
 

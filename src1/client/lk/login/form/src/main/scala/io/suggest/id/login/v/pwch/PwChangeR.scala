@@ -32,7 +32,7 @@ class PwChangeR (
                   pwNewR                : PwNewR,
                   loginProgressR        : LoginProgressR,
                   errorSnackR           : ErrorSnackR,
-                  commonReactCtxProv    : React.Context[MCommonReactCtx],
+                  crCtxProv             : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
 
@@ -59,9 +59,7 @@ class PwChangeR (
 
       // Заголовок диалога
       val dialogTitle = MuiDialogTitle()(
-        commonReactCtxProv.consume { crCtx =>
-          crCtx.messages( MsgCodes.`Password.change` )
-        }
+        crCtxProv.message( MsgCodes.`Password.change` )
       )
 
       // Наполнение диалога.
@@ -110,9 +108,8 @@ class PwChangeR (
           }(pwNewR.component.apply)(implicitly, pwNewR.PwNewRPropsValFastEq),
 
           {
-            lazy val successMsg = commonReactCtxProv.consume { crCtx =>
-              crCtx.messages( MsgCodes.`New.password.saved` )
-            }
+            lazy val successMsg = crCtxProv.message( MsgCodes.`New.password.saved` )
+
             // Рендер сообщения о том, что новый пароль успешно сохранён.
             loginFormCssCtx.consume { lfCssCtx =>
               s.submitReqC { submitReqProxy =>
@@ -170,9 +167,8 @@ class PwChangeR (
 
         // Кнопка сохранения нового пароля.
         {
-          val saveMsg = commonReactCtxProv.consume { commonReactCtx =>
-            commonReactCtx.messages( MsgCodes.`Save` )
-          }
+          val saveMsg = crCtxProv.message( MsgCodes.`Save` )
+
           s.submitEnabledSomeC { submitEnableSomeProxy =>
             MuiButton(
               new MuiButtonProps {

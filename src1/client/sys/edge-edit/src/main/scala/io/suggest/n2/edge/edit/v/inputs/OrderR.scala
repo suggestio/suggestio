@@ -40,9 +40,7 @@ class OrderR(
     }
 
     def render(s: State): VdomElement = {
-      val _label = crCtxProv.consume { crCtx =>
-        crCtx.messages( MsgCodes.`Ordering` )
-      }
+      val _label = crCtxProv.message( MsgCodes.`Ordering` )
 
       val css = new MuiFormControlClasses {
         override val root = EdgeEditCss.input.htmlClass

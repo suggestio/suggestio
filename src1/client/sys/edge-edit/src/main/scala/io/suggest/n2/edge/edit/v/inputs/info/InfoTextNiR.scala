@@ -67,9 +67,9 @@ class InfoTextNiR(
               }
             )
           }
-          val _checkBoxLabel = crCtxProv.consume { crCtx =>
-            crCtx.messages( MsgCodes.`Not.indexed.text` )
-          }
+
+          val _checkBoxLabel = crCtxProv.message( MsgCodes.`Not.indexed.text` )
+
           new MuiFormControlLabelProps {
             override val control  = _checkBox.rawElement
             override val label    = _checkBoxLabel.rawNode

@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged, TextNiSet}
+import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged, Save, TextNiSet}
 import japgolly.univeq._
 
 /**
@@ -160,6 +160,11 @@ class EdgeEditAh[M](
         val v2 = (lens set false)(v0)
         updated(v2)
       }
+
+
+    // Запуск сохранения эджа.
+    case Save =>
+      ???
 
   }
 

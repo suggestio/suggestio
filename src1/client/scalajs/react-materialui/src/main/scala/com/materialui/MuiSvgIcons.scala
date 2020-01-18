@@ -812,8 +812,8 @@ object MuiSvgIcons {
   object ContentReply extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Report", JSImport.Default)
   object Report extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/save", JSImport.Default)
-  object ContentSave extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Save", JSImport.Default)
+  object Save extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/select-all", JSImport.Default)
   object ContentSelectAll extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/send", JSImport.Default)

@@ -1,7 +1,11 @@
 package io.suggest.i18n
 
 import io.suggest.msg.Messages
+import japgolly.scalajs.react.React
 import japgolly.univeq.UnivEq
+import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -16,6 +20,23 @@ object MCommonReactCtx {
   lazy val default = MCommonReactCtx(
     messages = Messages
   )
+
+
+  implicit class CrCtxOpsExt( private val crCtxProv: React.Context[MCommonReactCtx] ) extends AnyVal {
+
+    /** Короткий wrapper для рендера одного текстового сообщения.
+      *
+      * @param msgCode Код сообщеня.
+      * @param args Аргументы сообщения.
+      * @return VdomElement.
+      */
+    def message(msgCode: String, args: js.Any*): VdomElement = {
+      crCtxProv.consume { crCtx =>
+        crCtx.messages(msgCode, args: _*)
+      }
+    }
+
+  }
 
 }
 

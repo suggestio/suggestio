@@ -23,7 +23,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaC
 class Reg0CredsR(
                   textFieldR      : TextFieldR,
                   errorSnackR     : ErrorSnackR,
-                  commonReactCtxP : React.Context[MCommonReactCtx],
+                  crCtxProv       : React.Context[MCommonReactCtx],
                 ) {
 
   type Props = ModelProxy[MReg0Creds]
@@ -52,9 +52,8 @@ class Reg0CredsR(
         // Подсказка о восстановлении пароля через регистрацию.
         {
           lazy val msgSnack = {
-            val _msg = commonReactCtxP.consume { crCtx =>
-              crCtx.messages( MsgCodes.`Type.previous.signup.data.to.start.password.recovery` )
-            }
+            val _msg = crCtxProv.message( MsgCodes.`Type.previous.signup.data.to.start.password.recovery` )
+
             val _close = MuiIconButton(
               new MuiIconButtonProps {
                 override val color = MuiColorTypes.inherit

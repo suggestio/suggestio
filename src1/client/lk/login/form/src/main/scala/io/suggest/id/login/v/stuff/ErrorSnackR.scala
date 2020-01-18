@@ -16,7 +16,7 @@ import io.suggest.react.ReactCommonUtil
   * Description: Уведомление об ошибке.
   */
 class ErrorSnackR(
-                   commonReactCtxProv    : React.Context[MCommonReactCtx],
+                   crCtxProv    : React.Context[MCommonReactCtx],
                  ) {
 
   type Props_t = Throwable
@@ -30,18 +30,14 @@ class ErrorSnackR(
       ReactCommonUtil.maybeEl( throwableOrNull != null ) {
         MuiSnackBarContent {
           val msg = <.span(
-            commonReactCtxProv.consume { crCtx =>
-              crCtx.messages( MsgCodes.`Error` )
-            },
+            crCtxProv.message( MsgCodes.`Error` ),
             HtmlConstants.COLON, HtmlConstants.SPACE,
             throwableOrNull match {
               case mce: MCheckException =>
                 mce
                   .localizedMessage
                   .fold[VdomNode] {
-                    commonReactCtxProv.consume { crCtx =>
-                      crCtx.messages( mce.getMessage )
-                    }
+                    crCtxProv.message( mce.getMessage )
                   } { localized => localized: VdomNode }
               case _ =>
                 throwableOrNull.getMessage: VdomNode

@@ -20,7 +20,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class Reg3CheckBoxesR(
                        checkBoxR           : CheckBoxR,
-                       commonReactCtx      : React.Context[MCommonReactCtx],
+                       crCtx               : React.Context[MCommonReactCtx],
                      ) {
 
   type Props = ModelProxy[MReg3CheckBoxes]
@@ -37,7 +37,7 @@ class Reg3CheckBoxesR(
 
         // Галочка согласия с офертой suggest.io:
         MuiFormControlLabel {
-          val acceptTosText = commonReactCtx.consume { crCtx =>
+          val acceptTosText = crCtx.consume { crCtx =>
             <.span(
               crCtx.messages( MsgCodes.`I.accept` ),
               HtmlConstants.SPACE,
@@ -63,9 +63,8 @@ class Reg3CheckBoxesR(
 
         // Галочка разрешения на обработку ПДн:
         MuiFormControlLabel {
-          val pdnText = commonReactCtx.consume { crCtx =>
-            crCtx.messages( MsgCodes.`I.allow.personal.data.processing` )
-          }
+          val pdnText = crCtx.message( MsgCodes.`I.allow.personal.data.processing` )
+
           val cbx = p.wrap { props =>
             checkBoxR.PropsVal(
               checked   = props.pdn.isChecked,

@@ -311,3 +311,12 @@ trait SysMarketCtlRoutes extends js.Object {
   def showAdnNode(nodeId: String): PlayRoute = js.native
 
 }
+
+
+/** Роуты для SysNodeEdges. */
+@js.native
+sealed trait SysNodeEdgesRoutes extends js.Object {
+  def editEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
+  def saveEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
+  def deleteEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
+}

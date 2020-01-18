@@ -209,8 +209,9 @@ POST /sys/node/edge/add/:nodeId         @controllers.SysMarket.createEdgePost(no
 GET  /sys/node/edge/edit                @controllers.SysMarket.editEdgeGet(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 POST /sys/node/edge/edit                @controllers.SysMarket.editEdgePost(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 ## v2
-GET  /sys/node/edge2/edit               @controllers.SysNodeEdges.editEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
-POST /sys/node/edge2/edit               @controllers.SysNodeEdges.editEdgePost(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+GET  /sys/node/edge2                    @controllers.SysNodeEdges.editEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+POST /sys/node/edge2                    @controllers.SysNodeEdges.saveEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+DELETE /sys/node/edge2                  @controllers.SysNodeEdges.deleteEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 
 
 ## sys: Календари

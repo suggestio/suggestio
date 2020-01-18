@@ -5,9 +5,8 @@ import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.lk.r.DeleteConfirmPopupR
 import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
-import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR}
+import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, SaveBtnR}
 import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
 import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -29,6 +28,7 @@ class EdgeEditFormR(
                      infoTextNiR          : InfoTextNiR,
                      deleteBtnR           : DeleteBtnR,
                      deleteDiaR           : DeleteDiaR,
+                     saveBtnR             : SaveBtnR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -74,7 +74,9 @@ class EdgeEditFormR(
                 }( deleteBtnR.component.apply ),
 
                 // Кнопка сохранения
-                // TODO
+                p.wrap { m =>
+                  OptionUtil.SomeBool( m.edit.saveReq.isPending )
+                }( saveBtnR.component.apply ),
               )
 
             ),

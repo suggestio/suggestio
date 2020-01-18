@@ -44,9 +44,7 @@ class NodeIdsR(
     def render(s: State): VdomElement = {
       val addSvg = Mui.SvgIcons.Add()()
 
-      val addMsg = crCtxProv.consume { crCtx =>
-        crCtx.messages( MsgCodes.`Add` )
-      }
+      val addMsg = crCtxProv.message( MsgCodes.`Add` )
 
       MuiFormControl {
         val css = new MuiFormControlClasses {
@@ -58,9 +56,7 @@ class NodeIdsR(
       } (
 
         MuiFormLabel()(
-          crCtxProv.consume { crCtx =>
-            crCtx.messages( MsgCodes.`Node.ids.or.keys` )
-          },
+          crCtxProv.message( MsgCodes.`Node.ids.or.keys` ),
         ),
 
         // Список id узлов.

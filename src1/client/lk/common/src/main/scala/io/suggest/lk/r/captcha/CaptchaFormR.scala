@@ -26,7 +26,7 @@ import scala.scalajs.js
   * Description: React-компонент ввода капчи. Монтируется через wrap(), обладая внутренним состоянием.
   */
 class CaptchaFormR(
-                    commonReactCtxProv    : React.Context[MCommonReactCtx],
+                    crCtxProv    : React.Context[MCommonReactCtx],
                   ) {
 
   import CaptchaFormR._
@@ -76,25 +76,24 @@ class CaptchaFormR(
           }
       }
 
+      val placeHolderText = crCtxProv.message( MsgCodes.`Input.text.from.picture` )
+
       // Рендер инпута для ввода капчи:
-      val input = commonReactCtxProv.consume { commonReactCtx =>
-        val placeHolderText = commonReactCtx.messages( MsgCodes.`Input.text.from.picture` )
-        s.captchaTypedC { captchaProxy =>
-          captchaProxy.value.whenDefinedEl { captchaS =>
-            MuiTextField(
-              new MuiTextFieldProps {
-                override val onChange = _onTypedChangeCbF
-                override val value = js.defined {
-                  captchaS.typed.value: MuiInputValue_t
-                }
-                override val label        = placeHolderText
-                override val `type`       = HtmlConstants.Input.text
-                override val error        = !captchaS.typed.isValid
-                override val onBlur       = _onInputBlurCbF
-                override val disabled     = captchaS.disabled
+      val input = s.captchaTypedC { captchaProxy =>
+        captchaProxy.value.whenDefinedEl { captchaS =>
+          MuiTextField(
+            new MuiTextFieldProps {
+              override val onChange = _onTypedChangeCbF
+              override val value = js.defined {
+                captchaS.typed.value: MuiInputValue_t
               }
-            )()
-          }
+              override val label        = placeHolderText.rawNode
+              override val `type`       = HtmlConstants.Input.text
+              override val error        = !captchaS.typed.isValid
+              override val onBlur       = _onInputBlurCbF
+              override val disabled     = captchaS.disabled
+            }
+          )()
         }
       }
 
