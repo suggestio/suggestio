@@ -66,7 +66,6 @@ class SysMarket @Inject() (
                             override val sysAdRenderUtil    : SysAdRenderUtil,
                             mItems                          : MItems,
                             override val advUtil            : AdvUtil,
-                            override val isSuNodeEdge       : IsSuNodeEdge,
                             override val isSuNode           : IsSuNode,
                             override val isSuMad            : IsSuMad,
                             isSu                            : IsSu,
@@ -81,7 +80,6 @@ class SysMarket @Inject() (
   with SysNodeInstall
   with SysAdRender
   with SmDomains
-  with SysNodeEdges
 {
 
   import sioControllerApi._

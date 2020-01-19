@@ -49,5 +49,5 @@ object MNodeEdgeIdQs {
 case class MNodeEdgeIdQs(
                           nodeId      : String,
                           nodeVsn     : Long,
-                          edgeId      : Option[Int],
+                          edgeId      : Option[Int] = None,
                         )

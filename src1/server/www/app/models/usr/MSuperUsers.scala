@@ -12,10 +12,10 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
-import play.api.Configuration
+import play.api.{Configuration, Environment, Mode}
 import play.api.inject.Injector
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -48,15 +48,27 @@ class MSuperUsers @Inject()(
   onAppStart()
 
   /** Логика реакции на запуск приложения: нужно создать суперюзеров в БД. */
-  def onAppStart(): Future[_] = {
+  private def onAppStart(): Future[_] = {
     // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
     // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
     // юзеров в MNode, при наличии уже существующих в MPerson.
     val ck = "start.ensure.superusers"
-    val createIfMissing = injector.instanceOf[Configuration].getOptional[Boolean](ck).getOrElseFalse
-    val fut = resetSuperuserIds(createIfMissing)
+    val createIfMissing = injector
+      .instanceOf[Configuration]
+      .getOptional[Boolean](ck)
+      .getOrElseFalse
+    val fut = resetSuperuserIds( createIfMissing )
+
+    // Если app.mode=dev, надо заблокироваться до завершения fut.
+    // Это надо, чтобы не слетали открытые вкладки в /sys/ во время пиления и перезагрузки dev-сервера:
+    if ( injector.instanceOf[Environment].mode == Mode.Dev ) {
+      LOGGER.trace("Dev mode, awaiting superuser ids...")
+      Await.ready( fut, 5.seconds )
+    }
+
     if (!createIfMissing)
       LOGGER.debug("Does not ensuring superusers in permanent models: " + ck + " != true")
+
     fut
   }
 

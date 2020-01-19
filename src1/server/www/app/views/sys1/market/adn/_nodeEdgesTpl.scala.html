@@ -96,7 +96,7 @@
         @for( mnode <- onNode ) {
           @_td("XS") {
             @for( edgeId <- ei.edgeId;  nodeId <- mnode.id;  nodeVsn <- mnode.versionOpt ) {
-              <a href="@routes.SysMarket.editEdgeGet( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn, edgeId = Some(edgeId) ) )">
+              <a href="@routes.SysNodeEdges.editEdge( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn, edgeId = Some(edgeId) ) )">
                 &#x270e;
               </a>
             }
@@ -109,3 +109,8 @@
   } @* defining sz *@
 
 }   @* if nonEmpty *@
+
+@* Ссылка на создание нового эджа под списком исходящих связей: *@
+@for(mnode <- onNode; nodeId <- mnode.id; nodeVsn <- mnode.versionOpt) {
+  <a href="@routes.SysNodeEdges.editEdge( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn) )">@messages("Create")...</a>
+}

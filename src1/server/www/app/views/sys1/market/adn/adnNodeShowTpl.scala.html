@@ -84,9 +84,6 @@
   @if( args.outEdges.nonEmpty ) {
     @lkBlock("Исходящие связи (" + args.outEdges.size + ")") {
       @_nodeEdgesTpl( args.outEdges, arrow = "=>", onNode = Some(args.mnode) )
-      @for(mnodeId <- args.mnode.id) {
-        <a href="@routes.SysMarket.createEdgeGet(mnodeId)">@messages("Create")...</a>
-      }
     }
   }
 
