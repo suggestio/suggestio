@@ -57,6 +57,16 @@ object MEdgeMedia
 
     }
 
+
+    object StorageFns extends PrefixedFn {
+      import MStorageInfo.{Fields => F}
+
+      override protected def _PARENT_FN = STORAGE_FN
+
+      def S_TYPE_FN = _fullFn( F.STORAGE_FN )
+      def S_DATA_META_FN = _fullFn( F.Data.DATA_META_FN )
+    }
+
   }
 
 
@@ -84,9 +94,9 @@ object MEdgeMedia
     )
   }
 
-  val file        = GenLens[MEdgeMedia](_.file)
-  val storage     = GenLens[MEdgeMedia](_.storage)
-  val picture     = GenLens[MEdgeMedia](_.picture)
+  lazy val file        = GenLens[MEdgeMedia](_.file)
+  lazy val storage     = GenLens[MEdgeMedia](_.storage)
+  lazy val picture     = GenLens[MEdgeMedia](_.picture)
 
   @inline implicit def univEq: UnivEq[MEdgeMedia] = UnivEq.derive
 

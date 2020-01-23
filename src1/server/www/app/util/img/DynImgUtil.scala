@@ -403,14 +403,14 @@ final class DynImgUtil @Inject() (
 
           } else if (edgeMedia.file.imgFormatOpt.isEmpty) {
             // should never happen: Пришла не-картинка, а что-то другое.
-            LOGGER.warn( s"$logPrefix Media#$nodeId not an image: ${edgeMedia.file.mime}:\n $edgeMedia #$nodeId" )
+            LOGGER.warn( s"$logPrefix Media#$nodeId not an image: ${edgeMedia.file.mime getOrElse ""}:\n $edgeMedia #$nodeId" )
             Future.successful(counter0)
 
           } else {
             for {
               // Удалить из хранилища:
               _ <- {
-                LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#$nodeId of type ${edgeMedia.file.mime} size=${edgeMedia.file.sizeB}b wh=${edgeMedia.picture.whPx.orNull} storage=${edgeMedia.storage}")
+                LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#$nodeId of type ${edgeMedia.file.mime getOrElse ""} size=${edgeMedia.file.sizeB.fold("?")(_.toString)}b wh=${edgeMedia.picture.whPx.orNull} storage=${edgeMedia.storage}")
                 iMediaStorages
                   .client( edgeMedia.storage.storage )
                   .delete( edgeMedia.storage.data )

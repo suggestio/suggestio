@@ -118,6 +118,7 @@ class EpwFormR(
                 checkBoxR.PropsVal(
                   checked   = p.isForeignPc,
                   onChange  = EpwSetForeignPc,
+                  disabled  = p.loginReq.isPending,
                 )
               }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
               new MuiFormControlLabelProps {

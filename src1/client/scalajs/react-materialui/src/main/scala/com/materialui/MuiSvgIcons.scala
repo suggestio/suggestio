@@ -924,8 +924,8 @@ object MuiSvgIcons {
   object DeviceScreenLockRotation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/screen-rotation", JSImport.Default)
   object DeviceScreenRotation extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/sd-storage", JSImport.Default)
-  object DeviceSdStorage extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SdStorage", JSImport.Default)
+  object SdStorage extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/settings-system-daydream", JSImport.Default)
   object DeviceSettingsSystemDaydream extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/signal-cellular-0-bar", JSImport.Default)
@@ -979,8 +979,8 @@ object MuiSvgIcons {
   object DeviceSignalWifi4Bar extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/signal-wifi-off", JSImport.Default)
   object DeviceSignalWifiOff extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/storage", JSImport.Default)
-  object DeviceStorage extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Storage", JSImport.Default)
+  object Storage extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/usb", JSImport.Default)
   object DeviceUsb extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/wallpaper", JSImport.Default)
@@ -991,8 +991,10 @@ object MuiSvgIcons {
   object DeviceWifiLock extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/wifi-tethering", JSImport.Default)
   object DeviceWifiTethering extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/attach-file", JSImport.Default)
-  object EditorAttachFile extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AttachFile", JSImport.Default)
+  object AttachFile extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/FileCopy", JSImport.Default)
+  object FileCopy extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/attach-money", JSImport.Default)
   object EditorAttachMoney extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/BorderAll", JSImport.Default)

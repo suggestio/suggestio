@@ -1,14 +1,14 @@
 package util.up
 
 import java.io.{File, FileInputStream}
-import javax.inject.Inject
 
+import javax.inject.Inject
 import io.suggest.crypto.hash.{MHash, MHashes}
-import io.suggest.n2.media.MFileMetaHash
+import io.suggest.n2.media.{MFileMetaHash, MFileMetaHashFlag}
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.codec.digest.DigestUtils
-import scala.concurrent.blocking
 
+import scala.concurrent.blocking
 import scala.concurrent.{ExecutionContext, Future}
 
 // TODO Унести в [util] или ещё куда-нибудь. Нет необходимости держать это в [www].
@@ -48,7 +48,7 @@ class FileUtil @Inject()(
   }
 
   // TODO Удалить этот код следом за заливкой 1-го поколения.
-  def mkHashesHexAsync(file: File, hashes: Iterable[MHash], flags: Set[Short]): Future[Seq[MFileMetaHash]] = {
+  def mkHashesHexAsync(file: File, hashes: Iterable[MHash], flags: Set[MFileMetaHashFlag]): Future[Seq[MFileMetaHash]] = {
     val futs = Future.traverse(hashes) { mhash =>
       Future {
         MFileMetaHash(

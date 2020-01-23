@@ -1,9 +1,12 @@
 package io.suggest.n2.media.storage
 
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.model.PrefixedFn
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -17,6 +20,11 @@ object MStorageInfo extends IEsMappingProps {
   object Fields {
     def STORAGE_FN = "s"
     def DATA_FN = "i"
+    object Data extends PrefixedFn {
+      import MStorageInfoData.{Fields => F}
+      override protected def _PARENT_FN = DATA_FN
+      def DATA_META_FN = _fullFn( F.META_FN )
+    }
   }
 
   implicit def mediaStorageInfoJson: OFormat[MStorageInfo] = {
@@ -38,6 +46,19 @@ object MStorageInfo extends IEsMappingProps {
       F.DATA_FN    -> FObject.plain( MStorageInfoData ),
     )
   }
+
+
+  implicit class StorageInfoOpsExt( val storage1: MStorageInfo ) extends AnyVal {
+
+    def isSameFile( storage2: MStorageInfo ): Boolean = {
+      (storage1.storage ==* storage2.storage) &&
+      (storage1.data.meta ==* storage2.data.meta)
+    }
+
+  }
+
+  lazy val storage = GenLens[MStorageInfo](_.storage)
+  lazy val data = GenLens[MStorageInfo](_.data)
 
 }
 

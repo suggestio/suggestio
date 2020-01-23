@@ -5,6 +5,7 @@ import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
 import io.suggest.n2.edge.MPredicate
+import io.suggest.n2.media.storage.MStorage
 
 /**
   * Suggest.io
@@ -44,6 +45,8 @@ final case class Criteria(
                            fileMimes         : Iterable[String]         = Nil,
                            fileSizeB         : Iterable[Long]           = Nil,
                            fileIsOriginal    : Option[Boolean]          = None,
+                           fileStorType      : Set[MStorage]            = Set.empty,
+                           fileStorMetaData  : Set[String]              = Set.empty,
                          )
   extends EmptyProduct
   with IMust

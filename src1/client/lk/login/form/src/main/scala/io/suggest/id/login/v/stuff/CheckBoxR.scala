@@ -3,7 +3,6 @@ package io.suggest.id.login.v.stuff
 import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.m.ICheckBoxActionStatic
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -29,11 +28,13 @@ class CheckBoxR(
   case class PropsVal(
                        checked    : Boolean,
                        onChange   : ICheckBoxActionStatic,
+                       disabled   : Boolean                 = false,
                      )
   implicit object CheckBoxRFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.checked ==* b.checked) &&
-      (a.onChange ===* b.onChange)
+      //(a.onChange ===* b.onChange) && // Не нужно для рендера - оно дёргается из callback.
+      (a.disabled ==* b.disabled)
     }
   }
 
@@ -42,7 +43,7 @@ class CheckBoxR(
 
 
   case class State(
-                    checkedSomeC    : ReactConnectProxy[Some[Boolean]],
+                    propsC    : ReactConnectProxy[PropsVal],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -57,16 +58,18 @@ class CheckBoxR(
 
     def render(p: Props, s: State): VdomElement = {
       loginFormCssCtx.consume { loginFormCss =>
-        s.checkedSomeC { checkedSomeProxy =>
-          val cbCss = new MuiCheckBoxClasses {
-            override val root = loginFormCss.formControl.htmlClass
-          }
+        val cbCss = new MuiCheckBoxClasses {
+          override val root = loginFormCss.formControl.htmlClass
+        }
+        s.propsC { propsProxy =>
+          val props = propsProxy.value
           MuiCheckBox(
             new MuiCheckBoxProps {
               @JSName("onChange")
               override val onChange2 = _onForeignPcChangeCbF
-              override val checked = js.defined( checkedSomeProxy.value.value )
+              override val checked = js.defined( props.checked )
               override val classes = cbCss
+              override val disabled = props.disabled
             }
           )
         }
@@ -80,9 +83,7 @@ class CheckBoxR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        checkedSomeC = propsProxy.connect { p =>
-          OptionUtil.SomeBool( p.checked )
-        }( FastEq.AnyRefEq ),
+        propsC = propsProxy.connect( identity )( FastEq.AnyRefEq ),
       )
     }
     .renderBackend[Backend]

@@ -36,6 +36,22 @@ object MFileUploadS {
   val prepareReq = GenLens[MFileUploadS](_.prepareReq)
   //val uploadReq = GenLens[MFileUploadS](_.uploadReq)
 
+
+  implicit class FileUploadOpsExt( private val fUp: MFileUploadS ) extends AnyVal {
+
+    /** Выбрать текущий реквест из двух.
+      *
+      * @return
+      */
+    def currentReq: Pot[MUploadResp] = {
+      if (fUp.uploadReq ===* Pot.empty)
+        fUp.prepareReq
+      else
+        fUp.uploadReq
+    }
+
+  }
+
 }
 
 
@@ -49,6 +65,7 @@ object MFileUploadS {
   */
 case class MFileUploadS(
                          reqHolder    : Option[HttpRespHolder]     = None,
+                         // Может быть, надо объеденить оба реквеста?
                          prepareReq   : Pot[MUploadResp]           = Pot.empty,
                          uploadReq    : Pot[MUploadResp]           = Pot.empty,
                          progress     : Option[Int]                = None

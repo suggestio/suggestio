@@ -8,6 +8,7 @@ import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
 import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, SaveBtnR}
 import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
+import io.suggest.n2.edge.edit.v.inputs.media.MediaR
 import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
@@ -29,6 +30,7 @@ class EdgeEditFormR(
                      deleteBtnR           : DeleteBtnR,
                      deleteDiaR           : DeleteDiaR,
                      saveBtnR             : SaveBtnR,
+                     mediaR               : MediaR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -67,6 +69,14 @@ class EdgeEditFormR(
                   p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
                   p.wrap( _.edge.info.textNi )( infoTextNiR.component.apply ),
                 ),
+
+                // edge media
+                p.wrap { m =>
+                  mediaR.PropsVal(
+                    media     = m.edge.media,
+                    uploadReq = m.edit.upload,
+                  )
+                }( mediaR.component.apply )( implicitly, mediaR.MediaRPropsValFeq ),
 
                 // Кнопка удаления
                 p.wrap { m =>

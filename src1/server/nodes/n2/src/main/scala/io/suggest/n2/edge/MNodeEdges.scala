@@ -86,6 +86,9 @@ object MNodeEdges
 
       def O_MEDIA_FM_IS_ORIGINAL_FN = _fullFn( EM.MEDIA_FM_IS_ORIGINAL_FN )
 
+      def O_MEDIA_S_TYPE_FN = _fullFn( EM.MEDIA_S_TYPE_FN )
+      def O_MEDIA_S_DATA_META_FN = _fullFn( EM.MEDIA_S_DATA_META_FN )
+
     }
 
   }

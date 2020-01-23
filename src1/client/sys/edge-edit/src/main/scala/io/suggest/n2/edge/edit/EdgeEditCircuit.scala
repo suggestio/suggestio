@@ -36,8 +36,8 @@ class EdgeEditCircuit
         edge = edge1,
         conf = state0.edgeId,
         edit = MEdgeEditS(
-          nodeIds = edge1.nodeIds.toList,
-        )
+          nodeIds  = edge1.nodeIds.toList,
+        ),
       )
     })
       .get

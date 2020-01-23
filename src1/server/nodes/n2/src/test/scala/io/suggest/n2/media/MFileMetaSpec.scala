@@ -16,8 +16,8 @@ class MFileMetaSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
   private val minV = {
     MFileMeta(
-      mime  = "application/json",
-      sizeB = 132421,
+      mime  = Some( "application/json" ),
+      sizeB = Some( 132421 ),
       isOriginal = true,
       hashesHex = Nil,
     )

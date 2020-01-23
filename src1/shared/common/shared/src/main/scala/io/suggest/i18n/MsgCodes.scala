@@ -406,5 +406,14 @@ object MsgCodes {
   val `Ordering` = "Ordering"
   val `Not.indexed.text` = "Not.indexed.text"
   val `Type.text...` = "Type.text..."
+  val `Size` = "Size"
+  val `Original` = "Original"
+  val `File` = "File"
+  val `Storage` = "Storage"
+  val `Metadata` = "Metadata"
+  val `Type` = "Type"
+  val `Picture` = "Picture"
+  val `Mime.type` = "Mime.type"
+  val `Media` = "Media"
 
 }

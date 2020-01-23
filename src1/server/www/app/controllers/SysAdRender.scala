@@ -4,7 +4,6 @@ import io.suggest.es.model.EsModelDi
 import io.suggest.img.{MImgFmtJvm, MImgFmts}
 import io.suggest.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
-import javax.inject.Singleton
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.msc.{OneAdRenderVariant, OneAdRenderVariants}
 import models.msys.MShowOneAdFormTplArgs

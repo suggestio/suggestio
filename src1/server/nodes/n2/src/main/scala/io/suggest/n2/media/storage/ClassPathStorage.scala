@@ -42,10 +42,10 @@ class ClassPathStorage @Inject()(
     throw new ReadOnlyFileSystemException
 
   private def _fileOf(ptr: MStorageInfoData) =
-    new File(RoutesJvmConst.ASSETS_PUBLIC_ROOT, ptr.data)
+    new File(RoutesJvmConst.ASSETS_PUBLIC_ROOT, ptr.meta)
 
   def readSync(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo]): IDataSource = {
-    lazy val logPrefix = s"readSync(${ptr.data}):"
+    lazy val logPrefix = s"readSync(${ptr.meta}):"
 
     // Нужно залесть в getResource*() или иные методы, и оттуда достать всё необходимое.
     val file = _fileOf(ptr)

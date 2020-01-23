@@ -5,6 +5,7 @@ import io.suggest.crypto.hash.{HashHex, HashesHex, MHash}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -25,28 +26,17 @@ object MFileMetaHash
     val FLAGS_FN     = "f"
   }
 
-  /** Допустимые значения флагов. */
-  object Flags {
-
-    /** Флаг истинного оригинала (который был залит на сервер). */
-    val TRULY_ORIGINAL              = 1.toShort
-
-    /** Флаг lossless-дериватива из оригинала (причёсанный и почищенный оригинал). */
-    val LOSSLESS_DERIVATIVE         = TRULY_ORIGINAL * 2
-
-  }
-
 
   /** Поддержка play-json для модели. */
-  implicit val MFILE_META_HASH_FORMAT: OFormat[MFileMetaHash] = {
+  implicit def fileMetaHashJson: OFormat[MFileMetaHash] = {
     val F = Fields
     (
       (__ \ F.HASH_TYPE_FN).format[MHash] and
       (__ \ F.HEX_VALUE_FN).format[String] and
-      (__ \ F.FLAGS_FN).formatNullable[Set[Short]]
-        .inmap[Set[Short]](
+      (__ \ F.FLAGS_FN).formatNullable[Set[MFileMetaHashFlag]]
+        .inmap[Set[MFileMetaHashFlag]](
           // Изначально, никаких флагов не было. Поэтому имитируем наличие флага TRULY_ORIGINAL. TODO Надо resaveMany() для окончательной фиксации флагов.
-          EmptyUtil.opt2ImplEmpty1F( Set(Flags.TRULY_ORIGINAL) ),
+          EmptyUtil.opt2ImplEmpty1F( Set(MFileMetaHashFlags.TrulyOriginal) ),
           { flags => Option.when(flags.nonEmpty)(flags) }
         )
     )(apply, unlift(unapply))
@@ -75,6 +65,9 @@ object MFileMetaHash
 
   @inline implicit def univEq: UnivEq[MFileMetaHash] = UnivEq.derive
 
+  lazy val hexValue = GenLens[MFileMetaHash](_.hexValue)
+  lazy val flags = GenLens[MFileMetaHash](_.flags)
+
 }
 
 
@@ -84,11 +77,11 @@ object MFileMetaHash
   * @param hexValue Вычисленный хеш.a
   * @param flags Разные флаги.
   */
-case class MFileMetaHash(
-                          hType           : MHash,
-                          hexValue        : String,
-                          flags           : Set[Short]
-                        )
+final case class MFileMetaHash(
+                                hType           : MHash,
+                                hexValue        : String,
+                                flags           : Set[MFileMetaHashFlag],
+                              )
   extends IId[MHash]
 {
 

@@ -471,6 +471,15 @@ class JsMessagesUtil @Inject() (
       MC.`Are.you.sure` ::
       MC.`Deletion` ::
       MC.`Save` ::
+      MC.`Size` ::
+      MC.`Original` ::
+      MC.`Media` ::
+      MC.`Mime.type` ::
+      MC.`File` ::
+      MC.`Storage` ::
+      MC.`Type` ::
+      MC.`Metadata` ::
+      MsgCodes.yesNo(true) :: MsgCodes.yesNo(false) ::
       Nil
 
     // Оптовые списки сообщений - тут:

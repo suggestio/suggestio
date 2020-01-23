@@ -59,6 +59,12 @@ object MEdge
 
       def MEDIA_FM_IS_ORIGINAL_FN = _fullFn( FM.FM_IS_ORIGINAL_FN )
 
+
+      import MEdgeMedia.Fields.{StorageFns => S}
+
+      def MEDIA_S_TYPE_FN = _fullFn( S.S_TYPE_FN )
+      def MEDIA_S_DATA_META_FN = _fullFn( S.S_DATA_META_FN )
+
     }
 
 
@@ -210,11 +216,13 @@ case class MEdge(
 
 
   /** Т.к. doc получился вне info, бывает нужно объеденить их, если там есть данные. */
-  def edgeDatas: Iterator[EmptyProduct] = {
+  def edgeDatas: Iterator[Any] = {
     productIterator
       .flatMap {
         case pe: EmptyProduct if pe.nonEmpty =>
           pe :: Nil
+        case Some(x) =>
+          x :: Nil
         case _ =>
           Nil
       }

@@ -87,7 +87,7 @@ class Img @Inject() (
     val isNotModified = request.headers
       .get(IF_MODIFIED_SINCE)
       .exists { ifModifiedSince =>
-        val dateCreated = request.edgeMedia.file.dateCreated
+        val dateCreated = request.mnode.meta.basic.dateCreated
         val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
         val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
         LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
@@ -146,7 +146,7 @@ class Img @Inject() (
           .read( stor.data, request.acceptCompressEncodings )
           .map { dataSource =>
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
-            LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB}b")
+            LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB.fold("?")(_.toString)}b")
             var respHeadersAcc = cacheControlHdr :: Nil
 
             // Пробросить content-encoding, который вернул media-storage.
@@ -160,12 +160,12 @@ class Img @Inject() (
               HttpEntity.Streamed(
                 data          = dataSource.data,
                 contentLength = Some(dataSource.sizeB),
-                contentType   = Some(request.edgeMedia.file.mime)
+                contentType   = request.edgeMedia.file.mime,
               )
             )
               .withHeaders( respHeadersAcc: _* )
               .withDateHeaders(
-                LAST_MODIFIED -> request.edgeMedia.file.dateCreated.toZonedDateTime
+                LAST_MODIFIED -> request.mnode.meta.basic.dateCreated.toZonedDateTime,
               )
           }
       }

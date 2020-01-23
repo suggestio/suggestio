@@ -255,7 +255,7 @@ class Upload @Inject()(
                       Some( routes.Img.dynImg( foundFileImg ).url )
                     } else {
                       // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
-                      LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime} don't know how to build URL")
+                      LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime getOrElse ""} don't know how to build URL")
                       None
                     },
                     // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
@@ -487,8 +487,8 @@ class Upload @Inject()(
                   predicate = MPredicates.File,
                   media = Some( MEdgeMedia(
                     file = MFileMeta(
-                      mime       = detectedMimeType,
-                      sizeB      = uploadArgs.fileProps.sizeB,
+                      mime       = Some( detectedMimeType ),
+                      sizeB      = Some( uploadArgs.fileProps.sizeB ),
                       isOriginal = true,
                       hashesHex  = hashesHex2,
                     ),

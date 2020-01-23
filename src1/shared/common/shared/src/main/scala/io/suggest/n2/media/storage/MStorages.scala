@@ -39,4 +39,16 @@ object MStorage {
 
   @inline implicit def univEq: UnivEq[MStorage] = UnivEq.derive
 
+
+  implicit class StorageOpsExt( private val stor: MStorage ) extends AnyVal {
+
+    /** Возможно ли вообще заливать файл в данное хранилище? */
+    def canUpload: Boolean =
+      stor ==* MStorages.SeaWeedFs
+
+    def canDelete: Boolean =
+      canUpload
+
+  }
+
 }

@@ -104,7 +104,7 @@ class MImgs3 @Inject() (
       } yield {
         img.ImgSzDated(
           sz          = whPx,
-          dateCreated = eMedia.file.dateCreated,
+          dateCreated = mnode.meta.basic.dateCreated,
         )
       }
     }
@@ -194,7 +194,7 @@ class MImgs3 @Inject() (
       val hashesHexFut = fileUtil.mkHashesHexAsync(
         file   = imgFile,
         hashes = UploadConstants.CleverUp.PICTURE_FILE_HASHES,
-        flags  = Set( MFileMetaHash.Flags.TRULY_ORIGINAL ),
+        flags  = Set( MFileMetaHashFlags.TrulyOriginal ),
       )
 
       val storAssignFut = storClient.assignNew()
@@ -221,8 +221,8 @@ class MImgs3 @Inject() (
                   .toSet,
                 media = Some(MEdgeMedia(
                   file = MFileMeta(
-                    mime        = mime,
-                    sizeB       = szB,
+                    mime        = Some( mime ),
+                    sizeB       = Some( szB ),
                     isOriginal  = !mimg.dynImgId.hasImgOps,
                     hashesHex   = hashesHex
                   ),
@@ -266,8 +266,8 @@ class MImgs3 @Inject() (
           .media
           .get
         val wargs = WriteRequest(
-          contentType = edgeMedia.file.mime,
-          file        = imgFile
+          contentType = edgeMedia.file.mime.get,
+          file        = imgFile,
         )
         storClient.write( edgeMedia.storage.data, wargs )
       }

@@ -4,6 +4,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.swfs.fid.Fid
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -17,14 +18,14 @@ import play.api.libs.json._
 object MStorageInfoData extends IEsMappingProps {
 
   object Fields {
-    def DATA_FN = "d"
+    def META_FN = "d"
     def HOST_FN = "h"
   }
 
   implicit def mediaStorageInfoDataJson: OFormat[MStorageInfoData] = {
     val F = Fields
     (
-      (__ \ F.DATA_FN).format[String] and
+      (__ \ F.META_FN).format[String] and
       (__ \ F.HOST_FN).formatNullable[Seq[String]]
         .inmap[Seq[String]](
           EmptyUtil.opt2ImplEmptyF( Seq.empty ),
@@ -42,29 +43,32 @@ object MStorageInfoData extends IEsMappingProps {
     Json.obj(
       // Индексируем идентификатор файла в хранилище, чтобы можно было делать GC по хранилищу:
       // получать от хранилища листинг всех файлов, прогнать каждый файл по поиску, выявить и удалить лишние файлы из хранилища.
-      F.DATA_FN -> FKeyWord.indexedJs,
+      F.META_FN -> FKeyWord.indexedJs,
       // Хосты индексируем просто на будущее. Это не для всех хранилищ, и индекс будет очень маленький и не уникальный.
       F.HOST_FN -> FKeyWord.indexedJs,
     )
   }
+
+
+  lazy val meta = GenLens[MStorageInfoData](_.meta)
+  //lazy val hosts = GenLens[MStorageInfoData](_.hosts)
 
 }
 
 
 /** @param hosts Данные хоста, если необходимо.
   *              Поле предусмотрено для HostPath-хранилища, которое может быть ограничено по хостам.
-  * @param data Текстовый указатель
+  * @param meta Текстовый указатель (метаданные хранилища).
   *             Для swfs - это fid.
   *             Для ассета - это неизменяемая часть названия.
-  *             Для хост-файла - это путь до файла, опционально с указанием хоста: /path/to/file, ./file, s2:/path/to
   */
 final case class MStorageInfoData(
-                                   data      : String,
+                                   meta      : String,
                                    hosts     : Seq[String]      = Nil,
                                  ) {
 
   /** Кэширование распарсенного SeaweedFS FID. */
   lazy val swfsFid: Option[Fid] =
-    Fid.parse( data )
+    Fid.parse( meta )
 
 }

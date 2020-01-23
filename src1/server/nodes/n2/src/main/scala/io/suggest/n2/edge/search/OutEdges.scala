@@ -383,6 +383,34 @@ object OutEdges extends MacroLogsImpl {
         }
 
 
+        // Поиск по критериям file-storage.
+        if (oe.fileStorType.nonEmpty) {
+          val qbStorType = QueryBuilders.termsQuery( EF.EO_MEDIA_S_TYPE_FN, oe.fileStorType.iterator.map(_.value).toSeq: _* )
+          _qOpt = _qOpt
+            .map { qb0 =>
+              QueryBuilders.boolQuery()
+                .must( qb0 )
+                .must( qbStorType )
+            }
+            .orElse {
+              Some( qbStorType )
+            }
+        }
+
+        if (oe.fileStorMetaData.nonEmpty) {
+          val qbStorMeta = QueryBuilders.termsQuery( EF.EO_MEDIA_S_DATA_META_FN, oe.fileStorMetaData.toSeq: _* )
+          _qOpt = _qOpt
+            .map { qb0 =>
+              QueryBuilders.boolQuery()
+                .must( qb0 )
+                .must( qbStorMeta )
+            }
+            .orElse {
+              Some( qbStorMeta )
+            }
+        }
+
+
         if (_qOpt.isEmpty)
           LOGGER.warn(s"edge.NestedSearch: suppressed empty bool query for $oe")
 

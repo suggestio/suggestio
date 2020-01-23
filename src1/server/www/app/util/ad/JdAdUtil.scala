@@ -143,7 +143,7 @@ class JdAdUtil @Inject()(
       // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
       val edgeUid = medge.doc.uid.getOrElse( -i )
 
-      LOGGER.trace(s"$logPrefix E#$edgeUid ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime}")
+      LOGGER.trace(s"$logPrefix E#$edgeUid ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime getOrElse ""}")
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
         // Тут раньше безусловно выставлялся предикат imgPredicate, но с adn-редактором понадобились и другие предикаты.

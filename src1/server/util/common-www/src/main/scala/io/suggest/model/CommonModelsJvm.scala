@@ -65,7 +65,7 @@ object CommonModelsJvm extends MacroLogsDyn {
         val F = MStorageInfoData.Fields
         val k = key1F(key)
         for {
-          dataE       <- strB.bind( k(F.DATA_FN), params )
+          dataE       <- strB.bind( k(F.META_FN), params )
           hostsE      <- strSetB.bind( k(F.HOST_FN), params )
         } yield {
           for {
@@ -73,7 +73,7 @@ object CommonModelsJvm extends MacroLogsDyn {
             hosts     <- hostsE
           } yield {
             MStorageInfoData(
-              data  = data,
+              meta  = data,
               hosts = hosts,
             )
           }
@@ -84,7 +84,7 @@ object CommonModelsJvm extends MacroLogsDyn {
         val F = MStorageInfoData.Fields
         val k = key1F(key)
         _mergeUnbinded1(
-          strB.unbind( k(F.DATA_FN), value.data ),
+          strB.unbind( k(F.META_FN), value.meta ),
           strSetB.unbind( k(F.HOST_FN), value.hosts ),
         )
       }

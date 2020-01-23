@@ -8,6 +8,7 @@
 @import sys1.stuff.ntable._
 @import ctx.messages
 @import io.suggest.n2.edge.edit.MNodeEdgeIdQs
+@import io.suggest.i18n.MsgCodes
 
 @if( eis.isEmpty ) {
 
@@ -19,11 +20,11 @@
   @_ntable() {
 
     @_th(sz) {
-      @messages("Predicate")
+      @messages( MsgCodes.`Predicate` )
     }
 
     @_th(sz) {
-      @messages("Name")
+      @messages( MsgCodes.`Name` )
     }
 
     @_th(sz) {
@@ -50,7 +51,7 @@
 
         @_td(sz) {
           @defining(ei.mnodeEiths.size) { eithsCount =>
-          @for((eith, i)<- ei.mnodeEiths.iterator.zipWithIndex) {
+          @for((eith, i) <- ei.mnodeEiths.iterator.zipWithIndex) {
             @* На втором и последующих узлах надо начинать с новой строки. *@
             @if(i >= 1) {
               <br/>
@@ -112,5 +113,5 @@
 
 @* Ссылка на создание нового эджа под списком исходящих связей: *@
 @for(mnode <- onNode; nodeId <- mnode.id; nodeVsn <- mnode.versionOpt) {
-  <a href="@routes.SysNodeEdges.editEdge( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn) )">@messages("Create")...</a>
+  <a href="@routes.SysNodeEdges.editEdge( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn) )">@messages( MsgCodes.`Create` )...</a>
 }

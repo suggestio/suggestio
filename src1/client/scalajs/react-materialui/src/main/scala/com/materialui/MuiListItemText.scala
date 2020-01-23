@@ -2,7 +2,6 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
-import japgolly.scalajs.react.raw.React
 
 import scala.scalajs.js
 
@@ -27,9 +26,9 @@ trait MuiListItemTextProps
 {
   val disableTypography: js.UndefOr[Boolean] = js.undefined
   val inset: js.UndefOr[Boolean] = js.undefined
-  val primary: js.UndefOr[React.Node] = js.undefined
+  val primary: js.UndefOr[raw.React.Node] = js.undefined
   val primaryTypographyProps: js.UndefOr[js.Object] = js.undefined
-  val secondary: js.UndefOr[React.Node] = js.undefined
+  val secondary: js.UndefOr[raw.React.Node] = js.undefined
   val secondaryTypographyProps: js.UndefOr[js.Object] = js.undefined
 }
 object MuiListItemTextProps extends MuiPropsBaseStatic[MuiListItemTextProps]

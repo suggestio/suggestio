@@ -2,14 +2,18 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged, Save, SaveResp, TextNiSet}
+import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged, Save, SaveResp, TextNiSet}
 import io.suggest.n2.edge.edit.u.IEdgeEditApi
+import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData}
+import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
 import io.suggest.routes.routes
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
+import monocle.Traversal
+import scalaz.std.option._
 
 import scala.util.Success
 
@@ -20,8 +24,8 @@ import scala.util.Success
   * Description: Контроллер заливки файла в форме.
   */
 class EdgeEditAh[M](
-                     edgeEditApi: IEdgeEditApi,
-                     modelRW: ModelRW[M, MEdgeEditRoot],
+                     edgeEditApi    : IEdgeEditApi,
+                     modelRW        : ModelRW[M, MEdgeEditRoot],
                    )
   extends ActionHandler(modelRW)
 {
@@ -241,7 +245,7 @@ class EdgeEditAh[M](
 
         } else {
           // Ошибка. Не скрывать диалог, отрендерить ошибку.
-          val v2 = lens.set( req2 )(v0)
+          val v2 = (lens set req2)(v0)
           updated(v2)
         }
       }
@@ -261,12 +265,173 @@ class EdgeEditAh[M](
         updated(v2)
       }
 
+
+    // Редактирование MIME-типа файла.
+    case m: FileMimeSet =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_file_LENS
+        .composeLens( MFileMeta.mime )
+
+      if ( lens.exist( _ ==* m.fileMime )(v0) ) {
+        noChange
+      } else {
+        val v2 = (lens set m.fileMime)(v0)
+        updated(v2)
+      }
+
+
+    // Редактирование байтового размера файла.
+    case m: FileSizeSet =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_file_LENS
+        .composeLens( MFileMeta.sizeB )
+
+      if ( lens.exist( _ ==* m.sizeB )(v0) ) {
+        noChange
+      } else {
+        val v2 = (lens set m.sizeB)(v0)
+        updated(v2)
+      }
+
+
+    // Редактирование флага isOriginal
+    case m: FileIsOriginalSet =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_file_LENS
+        .composeLens( MFileMeta.isOriginal )
+
+      if (lens.exist(_ ==* m.isOriginal)(v0)) {
+        noChange
+      } else {
+        val v2 = (lens set m.isOriginal)(v0)
+        updated(v2)
+      }
+
+
+    // Редактор хэша.
+    case m: FileHashEdit =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_file_LENS
+        .composeLens( MFileMeta.hashesHex )
+
+      val hashes0 = lens
+        .getAll(v0)
+        .flatten
+      val hashOldOpt = hashes0
+        .find(_.hType ==* m.mhash)
+
+      if (
+        hashOldOpt.exists { h =>
+          m.hash ==* h.hexValue
+        }
+      ) {
+        noChange
+      } else {
+        // Удалить из списка хэши текущего типа
+        val hashes1 = hashes0
+          .filterNot( _.hType ==* m.mhash )
+        // Если задан обновлённое значение хэша, добавить его в список.
+        val hashes2 = if (m.hash.isEmpty) {
+          hashes1
+        } else {
+          val fmHash2 = hashOldOpt.fold[MFileMetaHash] {
+            MFileMetaHash(m.mhash, m.hash, Set.empty)
+          }( MFileMetaHash.hexValue.set(m.hash) )
+          fmHash2 :: hashes1
+        }
+        val v2 = lens.set( hashes2 )(v0)
+        updated(v2)
+      }
+
+
+    // Редактирование флагов хэша.
+    case m: FileHashFlagSet =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_file_LENS
+        .composeLens( MFileMeta.hashesHex )
+
+      val hashes0 = lens
+        .getAll(v0)
+        .flatten
+
+      hashes0
+        .find(_.hType ==* m.mhash)
+        .filterNot { h =>
+          // Проверить, изменится ли хоть что-нибудь от смены флага? По идее, тут всегда true.
+          val hasFlag = h.flags contains m.flag
+          if (m.checked) hasFlag
+          else !hasFlag
+        }
+        .fold(noChange) { h0 =>
+          // Удалить из списка хэши текущего типа
+          val hashes1 = hashes0
+            .filterNot( _.hType ==* m.mhash )
+          // Обновить старый хэш.
+          val h2 = MFileMetaHash.flags.set {
+            if (m.checked) h0.flags + m.flag
+            else h0.flags - m.flag
+          }(h0)
+
+          val v2 = lens.set( h2 :: hashes1 )(v0)
+          updated(v2)
+        }
+
+
+    // Смена типа хранилища.
+    case m: FileStorageTypeSet =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_storage_LENS
+        .composeLens( MStorageInfo.storage )
+
+      if ( lens.exist(_ ==* m.storageType)(v0) ) {
+        noChange
+      } else {
+        val v2 = lens.set( m.storageType )(v0)
+        updated(v2)
+      }
+
+
+    case m: FileStorageMetaDataSet =>
+      val v0 = value
+      val lens = EdgeEditAh
+        .root_edge_media_storage_LENS
+        .composeLens( MStorageInfo.data )
+        .composeLens( MStorageInfoData.meta )
+
+      if ( lens.exist(_ ==* m.storageData)(v0) ) {
+        noChange
+      } else {
+        val v2 = lens.set( m.storageData )(v0)
+        updated(v2)
+      }
+
   }
 
 }
 
 
 object EdgeEditAh {
+
+  private def root_edge_media_LENS = {
+    MEdgeEditRoot.edge
+      .composeLens( MEdge.media )
+      .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
+  }
+
+  private def root_edge_media_file_LENS = {
+    root_edge_media_LENS
+      .composeLens( MEdgeMedia.file )
+  }
+  private def root_edge_media_storage_LENS = {
+    root_edge_media_LENS
+      .composeLens( MEdgeMedia.storage )
+  }
 
   private def root_edit_nodeIds_LENS = {
     MEdgeEditRoot.edit

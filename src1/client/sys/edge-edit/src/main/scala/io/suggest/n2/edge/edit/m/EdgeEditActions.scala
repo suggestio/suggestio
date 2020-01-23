@@ -1,7 +1,11 @@
 package io.suggest.n2.edge.edit.m
 
+import io.suggest.crypto.hash.MHash
 import io.suggest.n2.edge.MPredicate
+import io.suggest.n2.media.MFileMetaHashFlag
+import io.suggest.n2.media.storage.MStorage
 import io.suggest.spa.DAction
+import org.scalajs.dom.File
 
 import scala.util.Try
 
@@ -50,3 +54,15 @@ case object DeleteCancel extends IEdgeAction
 case object Save extends IEdgeAction
 
 case class SaveResp( startTimeMs: Long, tryResp: Try[None.type] ) extends IEdgeAction
+
+
+/** Выставлен файл. */
+case class FileSet( file: File ) extends IEdgeAction
+
+case class FileMimeSet( fileMime: Option[String] ) extends IEdgeAction
+case class FileSizeSet( sizeB: Option[Long] ) extends IEdgeAction
+case class FileIsOriginalSet( isOriginal: Boolean ) extends IEdgeAction
+case class FileHashEdit( mhash: MHash, hash: String ) extends IEdgeAction
+case class FileHashFlagSet( mhash: MHash, flag: MFileMetaHashFlag, checked: Boolean ) extends IEdgeAction
+case class FileStorageTypeSet( storageType: MStorage ) extends IEdgeAction
+case class FileStorageMetaDataSet( storageData: String ) extends IEdgeAction

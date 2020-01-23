@@ -4,6 +4,7 @@ import com.softwaremill.macwire._
 import io.suggest.n2.edge.edit.v.EdgeEditFormR
 import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, SaveBtnR}
 import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
+import io.suggest.n2.edge.edit.v.inputs.media.MediaR
 import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 
 /**
@@ -29,6 +30,8 @@ class EdgeEditModule {
   lazy val deleteDiaR = wire[DeleteDiaR]
   lazy val saveBtnR = wire[SaveBtnR]
 
+  // media
+  lazy val mediaR = wire[MediaR]
 
   // circuit
   lazy val edgeEditCircuit = wire[EdgeEditCircuit]
