@@ -173,7 +173,7 @@ class MUploadCtx @Inject() (
   lazy val colorDetectOptFut: Option[Future[MHistogram]] = {
     for {
       mimg        <- mLocalImgOpt
-      cdArgs      <- uploadArgs.colorDetect
+      cdArgs      <- uploadArgs.info.colorDetect
     } yield {
       mainColorDetector.cached(mimg) {
         mainColorDetector.detectPaletteFor(mimg, maxColors = cdArgs.paletteSize)

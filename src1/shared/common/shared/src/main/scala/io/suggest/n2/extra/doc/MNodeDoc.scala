@@ -34,7 +34,7 @@ object MNodeDoc
 
 
   /** Поддержка play-json. */
-  implicit val MNODE_AD2_FORMAT: OFormat[MNodeDoc] = {
+  implicit val nodeDocJson: OFormat[MNodeDoc] = {
     (__ \ Fields.TEMPLATE_FN).format[Tree[JdTag]]
       .inmap[MNodeDoc](apply, _.template)
   }

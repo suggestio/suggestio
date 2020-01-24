@@ -1,6 +1,7 @@
 package models.mup
 
 import io.suggest.xplay.qsb.QueryStringBindableImpl
+import japgolly.univeq.UnivEq
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -50,6 +51,8 @@ object MColorDetectArgs {
 
     }
   }
+
+  @inline implicit def univEq: UnivEq[MColorDetectArgs] = UnivEq.derive
 
 }
 

@@ -1,5 +1,6 @@
 package models.mup
 
+import io.suggest.n2.node.MNode
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.swfs.fid.Fid
 import models.req.{ISioUser, MReqWrap}
@@ -13,6 +14,7 @@ import play.api.mvc.Request
   */
 case class MUploadReq[A](
                           swfsOpt                           : Option[MSwfsFidInfo],
+                          existNodeOpt                      : Option[MNode],
                           override val request              : Request[A],
                           override val user                 : ISioUser
                         )

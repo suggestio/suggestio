@@ -20,7 +20,7 @@ import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
 import io.suggest.n2.media._
 import io.suggest.n2.media.storage.IMediaStorages
-import io.suggest.n2.node.{MNode, MNodeType, MNodes}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
@@ -97,18 +97,14 @@ final class Upload @Inject()(
   /** Тело экшена подготовки к аплоаду.
     * Только тело, потому что ACL-проверки выносятся в основной контроллер, в контексте которого происходит загрузка.
     *
-    * @param nodeType Тип (создаваемого) узла.
-    *                 Узел файла указанного типа будет создан при успешной заливке файла.
     * @param validated Провалидированные JSON-метаданные файла.
-    * @param uploadFileHandler Если требуется принимать файл не в /tmp/, а сразу куда-то, то здесь Some().
+    * @param upInfo Контейнер данных, пробрасываемых целиком во вторую фазу.
     *
     * @return Created | Accepted | NotAcceptable  + JSON-body в формате MFile4UpProps.
     */
   def prepareUploadLogic(logPrefix          : String,
-                         nodeType           : MNodeType,
                          validated          : ValidationNel[String, MFile4UpProps],
-                         uploadFileHandler  : Option[MUploadFileHandler] = None,
-                         colorDetect        : Option[MColorDetectArgs] = None,
+                         upInfo             : MUploadInfoQs,
                         )(implicit request: IReq[MFile4UpProps]) : Future[Result] = {
     validated.fold(
       // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
@@ -133,20 +129,22 @@ final class Upload @Inject()(
           fileSearchRes <- mNodes.dynSearch(
             new MNodeSearch {
               // Тут по предикату - надо ли фильтровать?
-              val crs = Criteria(
-                fileSizeB = upFileProps.sizeB :: Nil,
-                fileHashesHex = (for {
-                  (mhash, hexValue) <- upFileProps.hashesHex.iterator
-                } yield {
-                  MHashCriteria(
-                    hTypes    = mhash :: Nil,
-                    hexValues = hexValue :: Nil,
-                    must      = IMust.MUST
-                  )
-                })
-                  .toSeq,
-              ) :: Nil
-              override def outEdges = crs
+              override val outEdges = {
+                val cr = Criteria(
+                  fileSizeB = upFileProps.sizeB :: Nil,
+                  fileHashesHex = (for {
+                    (mhash, hexValue) <- upFileProps.hashesHex.iterator
+                  } yield {
+                    MHashCriteria(
+                      hTypes    = mhash :: Nil,
+                      hexValues = hexValue :: Nil,
+                      must      = IMust.MUST
+                    )
+                  })
+                    .toSeq,
+                )
+                cr :: Nil
+              }
               override def limit = 1
             }
           )
@@ -164,18 +162,18 @@ final class Upload @Inject()(
 
                 val upData = MUploadTargetQs(
                   fileProps   = upFileProps,
-                  fileHandler = uploadFileHandler,
                   personId    = request.user.personIdOpt,
                   validTillS  = uploadUtil.ttlFromNow(),
                   storage     = assignResp,
-                  colorDetect = colorDetect,
-                  nodeType    = nodeType,
+                  info        = upInfo,
                 )
+
                 // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
-                val hostnames = List(
-                  assignResp.host.namePublic
+                val hostnames =
+                  assignResp.host.namePublic ::
                   // TODO Вписать запасные хостнеймы для аплоада?
-                )
+                  Nil
+
                 val relUrl = routes.Upload.doFileUpload(upData).url
                 MUploadResp(
                   // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
@@ -276,6 +274,7 @@ final class Upload @Inject()(
               }
               (Accepted, upRespFut)
             }
+
           respData <- respDataFut
         } yield {
           respStatus( Json.toJson(respData) )
@@ -288,7 +287,7 @@ final class Upload @Inject()(
   /** BodyParser для запросов, содержащих файлы для аплоада. */
   private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[UploadBpRes] = {
     // Если картинка, то заливать сразу в MLocalImg/ORIG.
-    val fileHandler = uploadArgs.fileHandler
+    val fileHandler = uploadArgs.info.fileHandler
       .fold[TemporaryFileCreator] (SingletonTemporaryFileCreator) {
         // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
         case MUploadFileHandlers.Picture =>
@@ -469,60 +468,85 @@ final class Upload @Inject()(
           }
 
           // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
-          mnode0 = MNode(
-            id = request.body.localImg
-              .map( _.dynImgId.mediaId ),
-            common = MNodeCommon(
-              ntype         = uploadArgs.nodeType,
-              isDependent   = true,
-            ),
-            meta = MMeta(
-              basic = MBasicMeta(
-                techName    = Option( filePart.filename ),
-              ),
-            ),
-            edges = MNodeEdges(
-              out = {
-                val fileEdge = MEdge(
-                  predicate = MPredicates.File,
-                  media = Some( MEdgeMedia(
-                    file = MFileMeta(
-                      mime       = Some( detectedMimeType ),
-                      sizeB      = Some( uploadArgs.fileProps.sizeB ),
-                      isOriginal = true,
-                      hashesHex  = hashesHex2,
-                    ),
-                    picture = MPictureMeta(
-                      whPx = upCtx.imageWh,
-                    ),
-                    storage = storageInfo,
-                  )),
-                )
+          mnode1Fut = {
+            val fileEdge = MEdge(
+              predicate = MPredicates.File,
+              media = Some( MEdgeMedia(
+                file = MFileMeta(
+                  mime       = Some( detectedMimeType ),
+                  sizeB      = Some( uploadArgs.fileProps.sizeB ),
+                  isOriginal = true,
+                  hashesHex  = hashesHex2,
+                ),
+                picture = MPictureMeta(
+                  whPx = upCtx.imageWh,
+                ),
+                storage = storageInfo,
+              )),
+            )
 
-                // Записываем id юзера, который первым загрузил этот файл.
-                val createdBy = request.user
-                  .personIdOpt
-                  .fold( List.empty[MEdge] ) { personId =>
-                    MEdge(
-                      predicate = MPredicates.CreatedBy,
-                      nodeIds   = Set( personId ),
-                    ) :: Nil
+            // Записываем id юзера, который первым загрузил этот файл.
+            val createdBy = request.user
+              .personIdOpt
+              .fold( List.empty[MEdge] ) { personId =>
+                MEdge(
+                  predicate = MPredicates.CreatedBy,
+                  nodeIds   = Set( personId ),
+                ) :: Nil
+              }
+
+            val addEdges = fileEdge :: createdBy
+
+            // Собрать/обновить и сохранить узел в БД.
+            val fut = request.existNodeOpt.fold {
+              // Создание нового узла под файл.
+              val mnode0 = MNode(
+                id = request.body.localImg
+                  .map( _.dynImgId.mediaId ),
+                common = MNodeCommon(
+                  ntype         = uploadArgs.info.nodeType.get,
+                  isDependent   = true,
+                ),
+                meta = MMeta(
+                  basic = MBasicMeta(
+                    techName    = Option( filePart.filename ),
+                  ),
+                ),
+                edges = MNodeEdges(
+                  out = MNodeEdges.edgesToMap1( addEdges ),
+                ),
+              )
+              for {
+                mnodeId <- mNodes.save( mnode0 )
+              } yield {
+                LOGGER.debug(s"$logPrefix Created MNode#$mnodeId")
+                (
+                  (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
+                  (MNode.id set Some(mnodeId))
+                )(mnode0)
+              }
+
+            } { mnode0 =>
+              // Полулегальный патчинг эджей существующего файлового узла новым файлом.
+              LOGGER.trace(s"$logPrefix Will update existing node#${mnode0.idOrNull} with edges: ${addEdges.mkString(", ")}")
+              mNodes.tryUpdate( mnode0 )(
+                MNode.edges
+                  .composeLens( MNodeEdges.out )
+                  .modify { edges0 =>
+                    MNodeEdges.edgesToMap1(
+                      edges0
+                        .iterator
+                        .filter(_.predicate !=* MPredicates.CreatedBy) ++ addEdges
+                    )
                   }
-
-                MNodeEdges.edgesToMap1( fileEdge :: createdBy )
-              },
-            ),
-          )
-
-          // Создаём новый узел для загруженного файла.
-          mnodeIdFut = {
-            val fut = mNodes.save( mnode0 )
+              )
+            }
 
             // При ошибке сохранения узла надо удалить файл из saveFileToShardFut
             for {
               _ <- fut.failed
               _ <- {
-                LOGGER.error(s"$logPrefix Failed to save MNode#${mnode0.id.orNull}. Deleting file storage#$storageInfo...")
+                LOGGER.error(s"$logPrefix Failed to save MNode. Deleting file storage#$storageInfo...")
                 saveFileToShardFut
               }
               delFileRes <- storageClient.delete( storageInfo.data )
@@ -537,7 +561,7 @@ final class Upload @Inject()(
           // Очень маловероятно, что сохранение сломается и будет ошибка, поэтому и параллелимся со спокойной душой.
           colorDetectFutOpt = for {
             mimg        <- request.body.localImg
-            cdArgs      <- uploadArgs.colorDetect
+            cdArgs      <- uploadArgs.info.colorDetect
           } yield {
             mainColorDetector.cached(mimg) {
               mainColorDetector.detectPaletteFor(mimg, maxColors = cdArgs.paletteSize)
@@ -545,16 +569,8 @@ final class Upload @Inject()(
           }
 
           // Ожидаем окончания сохранения узла.
-          mnodeId <- mnodeIdFut
-
-          // Собрать в голове сохранённый инстанс MMedia:  // TODO надо бы lazy, т.к. он может не понадобится.
-          mnode1 = {
-            LOGGER.debug(s"$logPrefix Created MNode#$mnodeId")
-            (
-              (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
-              (MNode.id set Some(mnodeId))
-            )(mnode0)
-          }
+          mnode1 <- mnode1Fut
+          mnodeId = mnode1.id.get
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
@@ -666,7 +682,7 @@ final class Upload @Inject()(
             LOGGER.trace(s"$logPrefix ColorDetector not completed yet. Connect it with websocket.")
             for {
               colorDetectFut <- colorDetectFutOpt
-              cdArgs         <- uploadArgs.colorDetect
+              cdArgs         <- uploadArgs.info.colorDetect
               ctxId          <- ctxIdOpt
               hasTransparentColorFut <- upCtx.imageHasTransparentColors
             } {

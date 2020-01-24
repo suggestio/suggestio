@@ -93,7 +93,7 @@ class EdgeEditFormR(
                   }( saveBtnR.component.apply ),
                 ),
 
-              )
+              ),
 
             ),
 

@@ -2,6 +2,8 @@ package util.acl
 
 import javax.inject.Inject
 import io.suggest.ctx.{MCtxId, MCtxIds}
+import io.suggest.es.model.EsModel
+import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
@@ -29,6 +31,8 @@ class CanUploadFile @Inject()(
   extends MacroLogsImpl
 {
 
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val mSioUsers = injector.instanceOf[MSioUsers]
   private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
@@ -40,13 +44,16 @@ class CanUploadFile @Inject()(
   /** Логика кода проверки прав, заворачивающая за собой фактический экшен, живёт здесь.
     * Это позволяет использовать код и в ActionBuilder, и в Action'ах.
     *
+    * Проверка исполняется ВНЕ ПОЛЬЗОВАТЕЛЬСКОЙ СЕССИИ, на нодах *.nodes.suggest.io.
+    *
     * @param upTg Описание данных аплоада.
     * @param request0 HTTP-реквест.
     * @param f Фунция фактического экшена.
     * @tparam A Тип BodyParser'а.
     * @return Фьючерс результата.
     */
-  private def _apply[A](upTg: MUploadTargetQs, ctxIdOpt: Option[MCtxId], request0: Request[A])(f: MUploadReq[A] => Future[Result]): Future[Result] = {
+  private def _apply[A](upTg: MUploadTargetQs, ctxIdOpt: Option[MCtxId], request0: Request[A])
+                       (f: MUploadReq[A] => Future[Result]): Future[Result] = {
 
     lazy val logPrefix = s"[${System.currentTimeMillis}]:"
 
@@ -70,15 +77,53 @@ class CanUploadFile @Inject()(
         httpErrorHandler.onClientError(request0, Status.FORBIDDEN, msg)
 
       } else {
+        // Если задан id узла для обновления, то поискать узел:
+        val existNodeOptFut = upTg.info.existNodeId.fold {
+          if (upTg.info.nodeType.isEmpty) {
+            val msg = s"$logPrefix nodeType is empty, but existNodeId is empty. Node creation impossible w/o type."
+            Future.failed( new IllegalStateException(msg) )
+          } else {
+            Future.successful( Option.empty[MNode] )
+          }
+        } { nodeId =>
+          import esModel.api._
+
+          for {
+            mnodeOpt <- mNodes.getByIdCache( nodeId )
+            if {
+              val r = mnodeOpt.nonEmpty
+              if (!r)
+                LOGGER.error(s"$logPrefix Requested node#$nodeId not found.")
+              r
+            }
+            mnode = mnodeOpt.get
+            if {
+              val wantedType = (upTg.info.nodeType getOrElse MNodeTypes.Media)
+              val r = mnode.common.ntype eqOrHasParent wantedType
+
+              if (r)
+                LOGGER.trace(s"$logPrefix Target node#$nodeId found with expected type#${upTg.info.nodeType.fold("*")(_.toString)}")
+              else
+                LOGGER.error(s"$logPrefix Node#$nodeId has unexpected type#${mnode.common.ntype}. Should be #$wantedType")
+
+              r
+            }
+          } yield {
+            mnodeOpt
+          }
+        }
+
         (for {
           swfsEith <- cdnUtil.checkStorageForThisNode( upTg.storage.storage )
           if swfsEith.isRight
+          existNodeOpt <- existNodeOptFut
           resp <- {
             LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs => $swfsEith")
             val mreq = MUploadReq(
-              swfsOpt = swfsEith.toOption.flatten,
-              request = request0,
-              user    = user
+              swfsOpt       = swfsEith.toOption.flatten,
+              existNodeOpt  = existNodeOpt,
+              request       = request0,
+              user          = user,
             )
             f(mreq)
           }

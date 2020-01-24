@@ -1,5 +1,7 @@
 package io.suggest.enum2
 
+import japgolly.univeq._
+
 import scala.collection.immutable
 
 /**
@@ -39,20 +41,21 @@ object TreeEnumEntry {
     }
 
     /** Является ли текущий элемент дочерним по отношению к указанному? */
-    def hasParent(ntype: T): Boolean = {
+    def hasParent(ntype: T)(implicit univEq: UnivEq[T]): Boolean = {
       that.parent.exists { p =>
-        p == ntype || p.hasParent(ntype)
+        (p ==* ntype) || p.hasParent(ntype)
       }
     }
     /** Короткий враппер для hasParent(). */
-    def >>(ntype: T) = hasParent(ntype)
+    def >>(ntype: T)(implicit univEq: UnivEq[T]) = hasParent(ntype)
 
     /** Является ли текущий элемент указанным или дочерним? */
-    def eqOrHasParent(ntype: T): Boolean = {
-      that == ntype || hasParent(ntype)
+    def eqOrHasParent(ntype: T)(implicit univEq: UnivEq[T]): Boolean = {
+      (that ==* ntype) || hasParent(ntype)
     }
     /** Короткий враппер к eqOrHasParent(). */
-    def ==>>(ntype: T) = eqOrHasParent(ntype)
+    def ==>>(ntype: T)(implicit univEq: UnivEq[T]) =
+      eqOrHasParent(ntype)
 
 
     /** Итератор родительских элементов. */

@@ -22,7 +22,7 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.mup.{MColorDetectArgs, MUploadFileHandlers}
+import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
 import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -471,17 +471,19 @@ final class LkAdEdit @Inject() (
         uploadCtl.prepareUploadLogic(
           logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:",
           validated = validated,
-          // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
-          uploadFileHandler = Some( MUploadFileHandlers.Picture ),
-          colorDetect       = Some {
-            val cdConst = AdFormConstants.ColorDetect
-            val sz = cdConst.PALETTE_SIZE
-            MColorDetectArgs(
-              paletteSize   = sz,
-              wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
-            )
-          },
-          nodeType = MNodeTypes.Media.Image,
+          upInfo = MUploadInfoQs(
+            // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
+            fileHandler       = Some( MUploadFileHandlers.Picture ),
+            colorDetect       = Some {
+              val cdConst = AdFormConstants.ColorDetect
+              val sz = cdConst.PALETTE_SIZE
+              MColorDetectArgs(
+                paletteSize   = sz,
+                wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
+              )
+            },
+            nodeType = Some( MNodeTypes.Media.Image ),
+          ),
         )
       }
   }

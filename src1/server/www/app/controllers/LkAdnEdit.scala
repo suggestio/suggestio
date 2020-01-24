@@ -19,7 +19,7 @@ import util.acl.{BruteForceProtect, IsNodeAdmin}
 import util.ad.JdAdUtil
 import util.cdn.CdnUtil
 import views.html.lk.adn.edit._
-import models.mup.MUploadFileHandlers
+import models.mup.{MUploadFileHandlers, MUploadInfoQs}
 import play.api.mvc.Result
 import scalaz.ValidationNel
 import util.n2u.N2VldUtil
@@ -207,9 +207,11 @@ final class LkAdnEdit @Inject() (
       upload.prepareUploadLogic(
         logPrefix           = s"${getClass.getSimpleName}.uploadImg($nodeIdU):",
         validated           = image4UploadPropsV(request.body),
-        uploadFileHandler   = Some( MUploadFileHandlers.Picture ),
-        colorDetect         = None,
-        nodeType            = MNodeTypes.Media.Image,
+        upInfo = MUploadInfoQs(
+          fileHandler     = Some( MUploadFileHandlers.Picture ),
+          colorDetect     = None,
+          nodeType        = Some( MNodeTypes.Media.Image ),
+        ),
       )
     }
   }
