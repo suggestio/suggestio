@@ -4,14 +4,14 @@ import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit}
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdEdge
 import io.suggest.n2.edge._
 import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.pick.MimeConst
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
@@ -39,32 +39,34 @@ import scala.concurrent.Future
   * Description: Контроллер для react-формы редактирования метаданных ADN-узла.
   * Контроллер заменяет собой MarketLkAdnEdit, который нужен для
   */
-@Singleton
-class LkAdnEdit @Inject() (
-                            esModel                   : EsModel,
-                            isNodeAdmin               : IsNodeAdmin,
-                            cspUtil                   : CspUtil,
-                            n2VldUtil                 : N2VldUtil,
-                            jdAdUtil                  : JdAdUtil,
-                            mNodes                    : MNodes,
-                            bruteForceProtect         : BruteForceProtect,
-                            upload                    : Upload,
-                            cdnUtil                   : CdnUtil,
-                            sioControllerApi          : SioControllerApi,
-                            mCommonDi                 : ICommonDi,
-                          )
+final class LkAdnEdit @Inject() (
+                                  sioControllerApi          : SioControllerApi,
+                                  mCommonDi                 : ICommonDi,
+                                )
   extends MacroLogsImpl
 {
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val n2VldUtil = injector.instanceOf[N2VldUtil]
+  private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val upload = injector.instanceOf[Upload]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+
 
   import sioControllerApi._
-  import mCommonDi._
-  import esModel.api._
-  import cspUtil.Implicits._
+  import mCommonDi.{ec, csrf, errorHandler}
 
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
-  private def _applyCspToEditPage(res0: Result): Result =
+  private def _applyCspToEditPage(res0: Result): Result = {
+    import cspUtil.Implicits._
     res0.withCspHeader( cspUtil.CustomPolicies.AdEdit )
+  }
 
 
   /** Экшен, возвращающий html-страницу с формой редактирования узла.
@@ -224,9 +226,7 @@ class LkAdnEdit @Inject() (
       // Теоретически, может загружаться очень тривиальный svg-логотип:
       minSizeB      = 200,
       maxSizeB      = 10*1024*1024,
-      mimeVerifierF = { mimeType =>
-        MImgFmts.withMime(mimeType).nonEmpty
-      },
+      mimeVerifierF = MimeConst.MimeChecks.onlyImages,
       mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
     )
   }
@@ -262,6 +262,8 @@ class LkAdnEdit @Inject() (
           },
           // Всё ок, переходим к дальнейшим асинхронным проверкам:
           {edges2 =>
+            import esModel.api._
+
             val evld = n2VldUtil.EdgesValidator( edges2 )
 
             evld.vldEdgesMapFut.flatMap { vldEdgesMap =>

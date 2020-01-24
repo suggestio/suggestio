@@ -1,6 +1,6 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings}
 import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
@@ -43,36 +43,41 @@ import scala.concurrent.Future
   * Description: Контроллер react-формы редактора карточек.
   * Идёт на смену MarketAd, который обслуживал старинную форму редактора.
   */
-@Singleton
-class LkAdEdit @Inject() (
-                           esModel                                : EsModel,
-                           canEditAd                              : CanEditAd,
-                           canCreateOrEditAd                      : CanCreateOrEditAd,
-                           isNodeAdmin                            : IsNodeAdmin,
-                           cspUtil                                : CspUtil,
-                           lkAdEdFormUtil                         : LkAdEdFormUtil,
-                           uploadCtl                              : Upload,
-                           n2VldUtil                              : N2VldUtil,
-                           bruteForceProtect                      : BruteForceProtect,
-                           jdAdUtil                               : JdAdUtil,
-                           mNodes                                 : MNodes,
-                           mdrUtil                                : MdrUtil,
-                           extRscUtil                             : ExtRscUtil,
-                           sioControllerApi                       : SioControllerApi,
-                           mCommonDi                              : ICommonDi,
-                         )
+final class LkAdEdit @Inject() (
+                                 sioControllerApi                       : SioControllerApi,
+                                 mCommonDi                              : ICommonDi,
+                               )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
-  import mCommonDi._
-  import esModel.api._
-  import cspUtil.Implicits._
+  import mCommonDi.current.injector
 
-  private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(2)
+  // Ленивое DI для не-Singleton-режима работы.
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val canEditAd = injector.instanceOf[CanEditAd]
+  private lazy val canCreateOrEditAd = injector.instanceOf[CanCreateOrEditAd]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val lkAdEdFormUtil = injector.instanceOf[LkAdEdFormUtil]
+  private lazy val uploadCtl = injector.instanceOf[Upload]
+  private lazy val n2VldUtil = injector.instanceOf[N2VldUtil]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val extRscUtil = injector.instanceOf[ExtRscUtil]
+  private lazy val mdrUtil = injector.instanceOf[MdrUtil]
+
+
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, errorHandler}
+
+
+  private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT
+    .withTryCountDivisor(2)
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {
+    import cspUtil.Implicits._
     res0.withCspHeader( cspUtil.CustomPolicies.AdEdit )
   }
 
@@ -125,6 +130,8 @@ class LkAdEdit @Inject() (
   def saveAdSubmit(adIdOptU: Option[MEsUuId], producerIdU: Option[MEsUuId]) = bruteForceProtect(_BFP_ARGS) {
     csrf.Check {
       canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MJdData] ) { implicit request =>
+        import esModel.api._
+
         // Взять форму из реквеста, провалидировать
         lazy val logPrefix = s"saveAdSubmit(${request.madOpt.fold("pro")(_ => "a")}d#${adIdOptU.orElse(producerIdU).orNull}):"
 
@@ -391,8 +398,11 @@ class LkAdEdit @Inject() (
     */
   def deleteSubmit(adId: String) = csrf.Check {
     canEditAd(adId).async { implicit request =>
+      import esModel.api._
+
       lazy val logPrefix = s"deleteSubmit($adId):"
       LOGGER.trace(s"$logPrefix Starting by user#${request.user.personIdOpt.orNull}...")
+
       for {
         isDeleted <- mNodes.deleteById(adId)
       } yield {
@@ -452,31 +462,28 @@ class LkAdEdit @Inject() (
     * @return JSON-ответ.
     */
   def prepareImgUpload(adIdU: Option[MEsUuId], nodeIdU: Option[MEsUuId]) = csrf.Check {
-    val bp = uploadCtl.prepareUploadBp
-
     // Не используем canUpload*. Если юзер может создавать/редактировать карточку, то и картинки он может загружать.
-    canCreateOrEditAd(adIdOpt = adIdU, producerIdOpt = nodeIdU).async(bp) { implicit request =>
+    canCreateOrEditAd(adIdOpt = adIdU, producerIdOpt = nodeIdU)
+      .async( uploadCtl.prepareUploadBp ) { implicit request =>
+        val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
 
-      lazy val logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:"
-      val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
-
-      // И просто запустить API-метод prepareUpload() из Upload-контроллера.
-      uploadCtl.prepareUploadLogic(
-        logPrefix = logPrefix,
-        validated = validated,
-        // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
-        uploadFileHandler = Some( MUploadFileHandlers.Picture ),
-        colorDetect       = Some {
-          val cdConst = AdFormConstants.ColorDetect
-          val sz = cdConst.PALETTE_SIZE
-          MColorDetectArgs(
-            paletteSize   = sz,
-            wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
-          )
-        },
-        nodeType = MNodeTypes.Media.Image,
-      )
-    }
+        // И просто запустить API-метод prepareUpload() из Upload-контроллера.
+        uploadCtl.prepareUploadLogic(
+          logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:",
+          validated = validated,
+          // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
+          uploadFileHandler = Some( MUploadFileHandlers.Picture ),
+          colorDetect       = Some {
+            val cdConst = AdFormConstants.ColorDetect
+            val sz = cdConst.PALETTE_SIZE
+            MColorDetectArgs(
+              paletteSize   = sz,
+              wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
+            )
+          },
+          nodeType = MNodeTypes.Media.Image,
+        )
+      }
   }
 
 }

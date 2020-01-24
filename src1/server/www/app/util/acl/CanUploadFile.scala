@@ -8,6 +8,7 @@ import japgolly.univeq._
 import models.mup.{MUploadReq, MUploadTargetQs}
 import models.req.MSioUsers
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 import play.api.mvc._
 import util.cdn.CdnUtil
 import util.up.UploadUtil
@@ -21,17 +22,20 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: ACL-проверка на предмет возможности текущему юзеру производить заливку файла в suggest.io.
   */
 class CanUploadFile @Inject()(
-                               reqUtil                    : ReqUtil,
-                               mSioUsers                  : MSioUsers,
+                               injector                   : Injector,
                                uploadUtil                 : UploadUtil,
-                               dab                        : DefaultActionBuilder,
-                               cdnUtil                    : CdnUtil,
-                               mCtxIds                    : MCtxIds,
-                               httpErrorHandler           : HttpErrorHandler,
                                implicit private val ec    : ExecutionContext,
                              )
   extends MacroLogsImpl
 {
+
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mSioUsers = injector.instanceOf[MSioUsers]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  private lazy val mCtxIds = injector.instanceOf[MCtxIds]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+
 
   /** Логика кода проверки прав, заворачивающая за собой фактический экшен, живёт здесь.
     * Это позволяет использовать код и в ActionBuilder, и в Action'ах.
@@ -105,7 +109,7 @@ class CanUploadFile @Inject()(
 
   /** Сборка заворачивающего экшена, который проверяет возможность для аплоада файла. */
   def A[A](upTg: MUploadTargetQs, ctxIdOpt: Option[MCtxId])(action: Action[A]): Action[A] = {
-    dab.async(action.parser) { request =>
+    defaultActionBuilder.async(action.parser) { request =>
       _apply(upTg, ctxIdOpt, request)(action.apply)
     }
   }

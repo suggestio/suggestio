@@ -3,6 +3,7 @@ package io.suggest.n2.edge.edit.v
 import com.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiPaper}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
+import scalacss.ScalaCssReact._
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
@@ -78,15 +79,20 @@ class EdgeEditFormR(
                   )
                 }( mediaR.component.apply )( implicitly, mediaR.MediaRPropsValFeq ),
 
-                // Кнопка удаления
-                p.wrap { m =>
-                  OptionUtil.SomeBool( !m.edit.deleteDia.opened )
-                }( deleteBtnR.component.apply ),
+                <.div(
+                  EdgeEditCss.btnsCont,
 
-                // Кнопка сохранения
-                p.wrap { m =>
-                  OptionUtil.SomeBool( m.edit.saveReq.isPending )
-                }( saveBtnR.component.apply ),
+                  // Кнопка удаления
+                  p.wrap { m =>
+                    OptionUtil.SomeBool( !m.edit.deleteDia.opened )
+                  }( deleteBtnR.component.apply ),
+
+                  // Кнопка сохранения
+                  p.wrap { m =>
+                    OptionUtil.SomeBool( m.edit.saveReq.isPending )
+                  }( saveBtnR.component.apply ),
+                ),
+
               )
 
             ),

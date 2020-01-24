@@ -4,7 +4,7 @@ import java.io.File
 import java.net.InetAddress
 import java.nio.file.Path
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.crypto.hash.MHash
@@ -41,10 +41,9 @@ import play.api.mvc.{BodyParser, MultipartFormData, Result}
 import play.core.parsers.Multipart
 import util.acl.{CanUploadFile, IgnoreAuth}
 import util.cdn.CdnUtil
-import util.up.{FileUtil, UploadUtil}
+import util.up.UploadUtil
 import japgolly.univeq._
 import monocle.Traversal
-import util.img.ImgFileUtil
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 
@@ -59,32 +58,31 @@ import scalaz.std.option._
   * Created: 04.10.17 12:26
   * Description: Контроллер загрузки файлов на сервера s.io.
   */
-@Singleton
-class Upload @Inject()(
-                        esModel                   : EsModel,
-                        uploadUtil                : UploadUtil,
-                        canUploadFile             : CanUploadFile,
-                        ignoreAuth                : IgnoreAuth,
-                        cdnUtil                   : CdnUtil,
-                        fileUtil                  : FileUtil,
-                        iMediaStorages            : IMediaStorages,
-                        mNodes                    : MNodes,
-                        mImgs3                    : MImgs3,
-                        mLocalImgs                : MLocalImgs,
-                        clamAvUtil                : ClamAvUtil,
-                        imgFileUtil               : ImgFileUtil,
-                        uploadCtxFactory          : IUploadCtxFactory,
-                        mainColorDetector         : MainColorDetector,
-                        wsDispatcherActors        : WsDispatcherActors,
-                        sioControllerApi          : SioControllerApi,
-                        mCommonDi                 : ICommonDi,
-                      )
+final class Upload @Inject()(
+                              sioControllerApi          : SioControllerApi,
+                              mCommonDi                 : ICommonDi,
+                            )
   extends MacroLogsImpl
 {
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val uploadUtil = injector.instanceOf[UploadUtil]
+  private lazy val canUploadFile = injector.instanceOf[CanUploadFile]
+  private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  private lazy val iMediaStorages = injector.instanceOf[IMediaStorages]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mImgs3 = injector.instanceOf[MImgs3]
+  private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
+  private lazy val clamAvUtil = injector.instanceOf[ClamAvUtil]
+  private lazy val uploadCtxFactory = injector.instanceOf[IUploadCtxFactory]
+  private lazy val mainColorDetector = injector.instanceOf[MainColorDetector]
+  private lazy val wsDispatcherActors = injector.instanceOf[WsDispatcherActors]
+
 
   import sioControllerApi._
   import mCommonDi.{ec, errorHandler}
-  import esModel.api._
 
 
   // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет
@@ -127,6 +125,7 @@ class Upload @Inject()(
 
       // Успешно провалидированы данные файла для загрузки.
       {upFileProps =>
+        import esModel.api._
         LOGGER.trace(s"$logPrefix Body validated, user#${request.user.personIdOpt.orNull}:\n ${request.body} => $upFileProps")
 
         for {
@@ -391,6 +390,7 @@ class Upload @Inject()(
         }
 
       } yield {
+        import esModel.api._
         val startMs = System.currentTimeMillis()
         // Лёгкие синхронные проверки завершены успешно. Переходим в асинхрон и в тяжелые проверки.
 

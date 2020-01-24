@@ -35,7 +35,6 @@ import org.scalajs.dom
   */
 class ImgEditBtnR(
                    val filesDropZoneR   : FilesDropZoneR,
-                   imgRenderUtilJs      : LkImgUtilJs
                  ) {
 
 
@@ -74,7 +73,7 @@ class ImgEditBtnR(
     private def _onImgLoaded(e: ReactEvent): Callback = {
       $.props >>= { props: Props =>
         props.value.edge.fold(Callback.empty) { edge =>
-          imgRenderUtilJs.notifyImageLoaded($, edge._1.edgeUid)(e)
+          LkImgUtilJs.notifyImageLoaded($, edge._1.edgeUid)(e)
         }
       }
     }

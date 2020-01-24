@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.actor.ActorSystem
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.stream.scaladsl._
@@ -13,6 +13,7 @@ import io.suggest.async.AsyncUtil
 import io.suggest.util.logs._
 import japgolly.univeq._
 import play.api.Configuration
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
@@ -28,22 +29,21 @@ import scala.sys.process._
   * - Быстрый локальный через unix-сокет (clamdscan --fdpass).
   * - Обычный, с передачей файла по tcp.
   */
-@Singleton
 final class ClamAvUtil @Inject()(
-                                  asyncUtil                         : AsyncUtil,
-                                  configuration                     : Configuration,
-                                  implicit private val actorSystem  : ActorSystem,
-                                  implicit private val mat          : Materializer,
-                                  implicit private val ec           : ExecutionContext
+                                  injector: Injector,
                                 )
   extends MacroLogsImpl
 {
+  private lazy val asyncUtil = injector.instanceOf[AsyncUtil]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  implicit private lazy val actorSystem = injector.instanceOf[ActorSystem]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  private def TCP_CONFIG = configuration.getOptional[Configuration]( "sec.av.clam.tcp" )
 
-  private val CLAM_REMOTE_HOST_PORT: Option[(String, Int)] = {
+  private lazy val CLAM_REMOTE_HOST_PORT: Option[(String, Int)] = {
     for {
-      avConf <- TCP_CONFIG
+      avConf <- configuration.getOptional[Configuration]( "sec.av.clam.tcp" )
       host   <- avConf.getOptional[String]("host")
     } yield {
       val port = avConf.getOptional[Int]("port").getOrElse(3310)

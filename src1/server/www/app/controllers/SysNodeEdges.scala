@@ -15,6 +15,8 @@ import javax.inject.Inject
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl.IsSuNodeEdge
+import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.n2.media.MEdgeMedia
 import views.html.sys1.market.edge.EditEdge2Tpl
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -80,7 +82,7 @@ final class SysNodeEdges @Inject() (
       LOGGER.trace(s"$logPrefix ${if (request.edgeOpt.isEmpty) "Creating" else "Editing"} edge ${request.edgeOpt getOrElse ""} on node ''${request.mnode.guessDisplayNameOrIdOrEmpty}''")
 
       (for {
-        _ <- mNodes.tryUpdate(request.mnode)(
+        mnode2 <- mNodes.tryUpdate(request.mnode)(
           MNode.edges
             .composeLens( MNodeEdges.out )
             .modify { edges0 =>
@@ -108,12 +110,121 @@ final class SysNodeEdges @Inject() (
               }
             }
         )
+
+        // Если в эдже есть файл, то надо решить, надо ли удалять старый файл.
+        edgeMedia4deleteOpt <- request.edgeOpt.fold {
+          Future.successful( Option.empty[MEdgeMedia] )
+        } { edge =>
+          _isNeedDeleteFile( edge, mnode2, reportDupEdge = false )
+        }
+
+        // Удалить файл, если разрешено.
+        _ <- _deleteFile( edgeMedia4deleteOpt )
+
       } yield {
         Ok
       })
         .recoverWith {
           case HttpResultingException(httpResFut) => httpResFut
         }
+    }
+  }
+
+
+  /** Надо ли стирать файл из хранилища?
+    *
+    * @param edge4delete
+    * @param mnode Узел. Если удаление эджа, то исходный узел.
+    *              Если редактирование эджа, то УЖЕ ОТРЕДАКТИРОВАННЫЙ узел.
+    * @param reportDupEdge Надо ли ругаться в логи, если файл всё ещё существует в узле?
+    * @return None - удалять ничего не надо.
+    *         Some() - надо удалить указанный файл.
+    */
+  private def _isNeedDeleteFile(edge4delete: MEdge,
+                                mnode: MNode,
+                                reportDupEdge: Boolean): Future[Option[MEdgeMedia]] = {
+    import esModel.api._
+
+    lazy val logPrefix = s"isNeedDeleteFile(${edge4delete.predicate} ${edge4delete.media.map(_.storage.data.meta).orNull}, node#${mnode.idOrNull}, dup?$reportDupEdge):"
+
+    (for {
+      edgeMediaDelete <- edge4delete.media
+      // Если нельзя это удалять физически, то и шерстить смысла нет.
+      if {
+        val r = edgeMediaDelete.storage.storage.canDelete
+        if (!r)
+          LOGGER.debug(s"$logPrefix Edge have file ${edgeMediaDelete.storage.data.meta}, but delete operation is not supported.")
+        r
+      }
+    } yield {
+      // Если есть ещё file-эджи внутри текущего узла, то поискать.
+      // Вообще, других эджей быть не должно, но всё-равно страхуемся от ошибочных дубликатов эджа...
+      val nodeHasSameFileEdge = (for {
+        nodeEdge          <- mnode.edges.out.iterator
+        if nodeEdge !===* edge4delete
+        nodeEdgeMedia     <- nodeEdge.media.iterator
+        if nodeEdgeMedia.storage isSameFile edgeMediaDelete.storage
+      } yield {
+        def msg = s"$logPrefix node#${mnode.idOrNull} contains file-node. Will NOT delete file."
+
+        if (reportDupEdge)
+          LOGGER.warn(s"$msg\n Duplicated edge:\n  $edge4delete\n duplicate edges:\n  $nodeEdgeMedia")
+        else
+          LOGGER.debug(msg)
+
+        true
+      })
+        .nextOption()
+        .getOrElseFalse
+
+      if (nodeHasSameFileEdge) {
+        Future.successful( None )
+      } else {
+        // Как и ожидалось, эджа с файлом внутри текущего узла нет. Поискать среди других узлов.
+        LOGGER.trace(s"$logPrefix Search for ${edgeMediaDelete.storage} in other nodes...")
+
+        for {
+          isFileExistElsewhereIds <- mNodes.dynSearchIds(
+            new MNodeSearch {
+              override val outEdges: Seq[Criteria] = {
+                val cr = Criteria(
+                  fileStorType      = Set( edgeMediaDelete.storage.storage ),
+                  fileStorMetaData  = Set( edgeMediaDelete.storage.data.meta ),
+                )
+                cr :: Nil
+              }
+              override val withoutIds = mnode.id.toList
+              override def limit = 1
+            }
+          )
+        } yield {
+          val r = isFileExistElsewhereIds.isEmpty
+
+          if (r) LOGGER.trace(s"$logPrefix Stored file ${edgeMediaDelete.storage} is not used anymore.")
+          else LOGGER.warn(s"$logPrefix File ${edgeMediaDelete.storage} will not erased from storage: it is used on node ${isFileExistElsewhereIds.mkString(" ")}")
+
+          Option.when( r )( edgeMediaDelete )
+        }
+      }
+    })
+      .getOrElse( Future.successful(None) )
+  }
+
+
+  /** Произвести удаления файла.
+    *
+    * @param media4deleteOpt Выхлоп _isNeedDeleteFile()
+    * @return Фьючерс с каким-то неопределённым результатом удаления.
+    */
+  private def _deleteFile(media4deleteOpt: Option[MEdgeMedia]): Future[_] = {
+    media4deleteOpt.fold [Future[_]] {
+      Future.successful(None)
+    } { media4delete =>
+      LOGGER.trace(s"_deleteFile(${media4delete.storage.data.meta}) Will delete file $media4delete")
+      val stor = media4delete.storage
+      iMediaStorages
+        .client( stor.storage )
+        .delete( stor.data )
     }
   }
 
@@ -131,59 +242,8 @@ final class SysNodeEdges @Inject() (
       val edge4delete = request.edgeOpt.get
       LOGGER.trace(s"$logPrefix Deleting edge $edge4delete of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
 
-      // Если файловый эдж, то запустить поиск других узлов, которые могут ссылаться на текущий файл.
-      val forDeleteOptFut = (for {
-        edgeMediaDelete <- edge4delete.media
-        // Если нельзя это удалять физически, то и шерстить смысла нет.
-        if {
-          val r = edgeMediaDelete.storage.storage.canDelete
-          if (!r)
-            LOGGER.debug(s"$logPrefix Edge have file ${edgeMediaDelete.storage.data.meta}, but delete operation is not supported.")
-          r
-        }
-      } yield {
-        // Если есть ещё file-эджи внутри текущего узла, то поискать.
-        // Вообще, других эджей быть не должно, но всё-равно страхуемся от ошибочных дубликатов эджа...
-        val nodeHasSameFileEdge = (for {
-          nodeEdge          <- request.mnode.edges.out.iterator
-          if nodeEdge !===* edge4delete
-          nodeEdgeMedia     <- nodeEdge.media.iterator
-          if nodeEdgeMedia.storage isSameFile edgeMediaDelete.storage
-        } yield {
-          LOGGER.warn(s"$logPrefix Duplicate file-edge in node#${request.mnode.idOrNull} for file deletion. Will NOT erase file.\n edge for deletion:\n  $edge4delete\n duplicate edges:\n  $nodeEdgeMedia")
-          true
-        })
-          .nextOption()
-          .getOrElse( false )
-
-        if (nodeHasSameFileEdge) {
-          Future.successful( None )
-        } else {
-          // Как и ожидалось, эджа с файлом внутри текущего узла нет. Поискать среди других узлов.
-          LOGGER.trace(s"$logPrefix Search for ${edgeMediaDelete.storage} in other nodes...")
-          val msearch = new MNodeSearch {
-            override val outEdges: Seq[Criteria] = {
-              val cr = Criteria(
-                fileStorType      = Set( edgeMediaDelete.storage.storage ),
-                fileStorMetaData  = Set( edgeMediaDelete.storage.data.meta ),
-              )
-              cr :: Nil
-            }
-            override val withoutIds = request.mnode.id.toList
-            override def limit = 1
-          }
-
-          mNodes
-            .dynSearchIds( msearch )
-            .map { isFileExistElsewhereIds =>
-              val r = isFileExistElsewhereIds.isEmpty
-              if (r) LOGGER.trace(s"$logPrefix Stored file ${edgeMediaDelete.storage} is not used anymore.")
-              else LOGGER.warn(s"$logPrefix File ${edgeMediaDelete.storage} will not erased from storage: it is used on node ${isFileExistElsewhereIds.mkString(" ")}")
-              Option.when( r )( edgeMediaDelete )
-            }
-        }
-      })
-        .getOrElse( Future.successful(None) )
+      // Если файловый эдж, тaо запустить поиск других узлов, которые могут ссылаться на текущий файл.
+      val forDeleteOptFut = _isNeedDeleteFile( edge4delete, request.mnode, reportDupEdge = true )
 
       // Сохранить собранный эдж.
       for {
@@ -207,20 +267,10 @@ final class SysNodeEdges @Inject() (
         }
 
         // Запустить удаление неиспользуемого файла.
-        _ <- delStorageFileOpt.fold [Future[_]] {
-          Future.successful(None)
-        } { delStorageFile =>
-          LOGGER.trace(s"$logPrefix Will delete file $delStorageFile")
-          val stor = delStorageFile.storage
-          iMediaStorages
-            .client( stor.storage )
-            .delete( stor.data )
-        }
+        _ <- _deleteFile( delStorageFileOpt )
 
       } yield {
         LOGGER.trace(s"$logPrefix Done.")
-        //Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )
-        //  .flashing( FLASH.SUCCESS -> s"Удалён эдж #${qs.edgeId} из узла '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''." )
         NoContent
       }
     }

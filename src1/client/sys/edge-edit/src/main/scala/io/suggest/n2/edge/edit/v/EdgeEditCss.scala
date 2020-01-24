@@ -17,4 +17,14 @@ object EdgeEditCss extends StyleSheet.Inline {
     margin( 16.px ),
   )
 
+  val btn = style(
+    width( 200.px )
+  )
+
+  val btnsCont = style(
+    display.inlineFlex,
+    justifyContent.spaceBetween,
+    flexDirection.row,
+  )
+
 }

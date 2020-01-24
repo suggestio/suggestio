@@ -41,7 +41,6 @@ import scala.scalajs.js
 class JdEditR(
                val jdR            : JdR,
                jdCssStatic        : JdCssStatic,
-               imgRenderUtilJs    : LkImgUtilJs,
              )
   extends Log
 {
@@ -90,7 +89,7 @@ class JdEditR(
   private def _notifyImgWhOnEdit[P: Props2ModelProxy, S]($: BackendScope[P,S], edge: MEdgeDataJs): TagMod = {
     // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
     ReactCommonUtil.maybe( edge.fileJs.exists(_.whPx.isEmpty) ) {
-      ^.onLoad ==> imgRenderUtilJs.notifyImageLoaded($, edge.id)
+      ^.onLoad ==> LkImgUtilJs.notifyImageLoaded($, edge.id)
     }
   }
 

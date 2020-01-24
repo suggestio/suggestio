@@ -2,6 +2,7 @@ package io.suggest.n2.edge.edit.v.inputs.act
 
 import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants, MuiProgressVariants}
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.n2.edge.edit.m.Save
 import io.suggest.n2.edge.edit.v.EdgeEditCss
@@ -37,7 +38,7 @@ class SaveBtnR(
       val _saveMsg = crCtxProv.message( MsgCodes.`Save` )
 
       val css = new MuiFabClasses {
-        override val root = EdgeEditCss.input.htmlClass
+        override val root = Css.flat( EdgeEditCss.input.htmlClass, EdgeEditCss.btn.htmlClass )
       }
 
       s.isPendingSomeC { isPendingSomeProxy =>

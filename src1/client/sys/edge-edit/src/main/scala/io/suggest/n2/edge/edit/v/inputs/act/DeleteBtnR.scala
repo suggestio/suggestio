@@ -3,6 +3,7 @@ package io.suggest.n2.edge.edit.v.inputs.act
 import com.materialui.{Mui, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.n2.edge.edit.m.DeleteEdge
 import io.suggest.n2.edge.edit.v.EdgeEditCss
@@ -42,7 +43,7 @@ class DeleteBtnR(
       )
 
       val _css = new MuiFabClasses {
-        override val root = EdgeEditCss.input.htmlClass
+        override val root = Css.flat( EdgeEditCss.input.htmlClass, EdgeEditCss.btn.htmlClass )
       }
 
       s.isEnabledSomeC { isEnabledSomeProxy =>

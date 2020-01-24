@@ -1,6 +1,6 @@
 package io.suggest.n2.media.storage
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.compress.MCompressAlgo
 import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.n2.media.storage.swfs.SwfsStorage
@@ -15,6 +15,7 @@ import scala.concurrent.Future
  * Created: 29.09.15 18:53
  * Description: Данные по backend-хранилищу, задействованному в хранении файлов.
  */
+@Singleton
 final class IMediaStorages @Inject() (
                                        injector  : Injector
                                      ) {

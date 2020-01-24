@@ -336,20 +336,8 @@ class MediaR(
               }
             },
 
-            // Ссылка на диалог стирания файла из хранилища.
-
           ),
 
-          /*
-          // TODO media.picture
-          __head( crCtx.messages( MsgCodes.`Picture` ) ),
-          __kvRow( "wh" )(
-            edgeMedia.picture.whPx.toString,
-          ),
-          __kvRow( "histogram" )(
-            edgeMedia.picture.histogram.toString,
-          ),
-          */
         )
       }
 

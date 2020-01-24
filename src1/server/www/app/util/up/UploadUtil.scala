@@ -1,6 +1,6 @@
 package util.up
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import play.api.Configuration
 
@@ -13,7 +13,6 @@ import scala.concurrent.duration._
   * Description: Утиль для аплоада файлов второго поколения.
   * Ориентирована на возможность балансировки файлов между нодами.
   */
-@Singleton
 class UploadUtil @Inject()(
                             configuration: Configuration
                           ) {
@@ -23,7 +22,7 @@ class UploadUtil @Inject()(
     * Используется для распределённого хранилища файлов.
     * Ожидается что-то типа "s2.nodes.suggest.io".
     */
-  val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
+  lazy val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
 
 
   /** Текущее время в часах upload util. */

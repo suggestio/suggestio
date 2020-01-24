@@ -31,6 +31,7 @@ import io.suggest.lk.m.{MDeleteConfirmPopupS, color}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
+import io.suggest.pick.MimeConst
 import scalaz.{Tree, TreeLoc}
 import scalaz.std.option._
 import io.suggest.scalaz.ZTreeUtil._
@@ -385,7 +386,8 @@ class LkAdEditCircuit(
   private val pictureAh = new PictureAh(
     uploadApi             = uploadApi,
     modelRW               = mPictureAhRW,
-    prepareUploadRoute    = { _ => adEditApi.prepareUploadRoute }
+    prepareUploadRoute    = { _ => adEditApi.prepareUploadRoute },
+    fileMimeChecker       = MimeConst.MimeChecks.onlyImages,
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )

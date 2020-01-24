@@ -1,5 +1,6 @@
 package io.suggest.pick
 
+import io.suggest.img.MImgFmts
 import scalaz.{Validation, ValidationNel}
 
 /**
@@ -71,6 +72,18 @@ object MimeConst {
     */
   def validateMimeUsing(mime: String, verifierF: String => Boolean): ValidationNel[String, String] = {
     Validation.liftNel(mime)( !verifierF(_), "e.mime.unexpected" )
+  }
+
+
+  /** Проверки для mime-типов загружаемых файлов. */
+  object MimeChecks {
+
+    def onlyImages(mime: String): Boolean =
+      MImgFmts.withMime( mime ).nonEmpty
+
+    def all(mime: String): Boolean =
+      true
+
   }
 
 }

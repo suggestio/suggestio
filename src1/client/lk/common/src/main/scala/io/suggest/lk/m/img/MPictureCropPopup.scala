@@ -48,10 +48,4 @@ case class MPictureCropPopup(
                               imgEdgeUid  : EdgeUid_t,
                               percentCrop : PercentCrop,
                               pixelCrop   : Option[PixelCrop]  = None
-                            ) {
-
-  def withEdgeUid(imgEdgeUid: EdgeUid_t)            = copy(imgEdgeUid = imgEdgeUid)
-  def withPercentCrop(percentCrop: PercentCrop)     = copy(percentCrop = percentCrop)
-  def withPixelCrop(pixelCrop: Option[PixelCrop])   = copy(pixelCrop = pixelCrop)
-
-}
+                            )

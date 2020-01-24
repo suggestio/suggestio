@@ -3,7 +3,7 @@ package util.img.detect.main
 import java.io.File
 import java.nio.file.Files
 import java.text.ParseException
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.util.logs.MacroLogsImpl
@@ -20,17 +20,20 @@ import scala.concurrent.Future
  * Description: Утиль для определения основных цветов на изображении.
  * База для работы: convert 12636786604889.jpg -gravity Center -crop 50%\! -gamma 2.0 -quantize Lab  +dither -colors 8 -format "%c" histogram:info:
  */
-@Singleton
 class MainColorDetector @Inject() (
-                                    mAnyImgs      : MAnyImgs,
-                                    mLocalImgs    : MLocalImgs,
-                                    im4jAsyncUtil : Im4jAsyncUtil,
                                     mCommonDi     : ICommonDi
                                   )
   extends MacroLogsImpl
 {
 
   import mCommonDi.{ec, cacheApiUtil}
+  import mCommonDi.current.injector
+
+  private lazy val mAnyImgs = injector.instanceOf[MAnyImgs]
+  private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
+  private lazy val im4jAsyncUtil = injector.instanceOf[Im4jAsyncUtil]
+
+
 
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
   private def PALETTE_MAX_COLORS_DFLT = 8

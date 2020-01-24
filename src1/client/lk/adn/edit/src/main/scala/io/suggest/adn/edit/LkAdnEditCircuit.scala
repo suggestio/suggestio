@@ -12,6 +12,7 @@ import io.suggest.lk.m.img.MPictureAh
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.pick.MimeConst
 import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.{OptFastEq, StateInp}
@@ -154,7 +155,8 @@ class LkAdnEditCircuit
         )
       },
       uploadApi = uploadApi,
-      modelRW   = mPictureAhRW
+      modelRW   = mPictureAhRW,
+      fileMimeChecker = MimeConst.MimeChecks.onlyImages,
     )
   }
 
