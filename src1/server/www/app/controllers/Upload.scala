@@ -41,7 +41,7 @@ import play.api.mvc.{BodyParser, MultipartFormData, Result}
 import play.core.parsers.Multipart
 import util.acl.{CanUploadFile, IgnoreAuth}
 import util.cdn.CdnUtil
-import util.up.UploadUtil
+import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
 import monocle.Traversal
 import util.img.detect.main.MainColorDetector
@@ -79,6 +79,7 @@ final class Upload @Inject()(
   private lazy val uploadCtxFactory = injector.instanceOf[IUploadCtxFactory]
   private lazy val mainColorDetector = injector.instanceOf[MainColorDetector]
   private lazy val wsDispatcherActors = injector.instanceOf[WsDispatcherActors]
+  private lazy val fileUtil = injector.instanceOf[FileUtil]
 
 
   import sioControllerApi._
@@ -528,17 +529,15 @@ final class Upload @Inject()(
 
             } { mnode0 =>
               // Полулегальный патчинг эджей существующего файлового узла новым файлом.
+              // Удаление старого файла будет после сохранения узла.
               LOGGER.trace(s"$logPrefix Will update existing node#${mnode0.idOrNull} with edges: ${addEdges.mkString(", ")}")
               mNodes.tryUpdate( mnode0 )(
-                MNode.edges
-                  .composeLens( MNodeEdges.out )
-                  .modify { edges0 =>
-                    MNodeEdges.edgesToMap1(
-                      edges0
-                        .iterator
-                        .filter(_.predicate !=* MPredicates.CreatedBy) ++ addEdges
-                    )
-                  }
+                MNode.edges.modify { edges0 =>
+                  val edgesSeq2 = MNodeEdges.edgesToMap1(
+                    edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.File ) ++ addEdges
+                  )
+                  MNodeEdges.out.set( edgesSeq2 )(edges0)
+                }
               )
             }
 
@@ -570,6 +569,44 @@ final class Upload @Inject()(
 
           // Ожидаем окончания сохранения узла.
           mnode1 <- mnode1Fut
+
+          // Файл сохранён. Но если был патчинг уже существующего узла, то надо убрать старый файл из хранилища.
+          _ = {
+            // Поискать старый файловый эдж для удаления.
+            request
+              .existNodeOpt
+              .fold [Future[_]] ( Future.successful(()) ) { mnode0 =>
+                val fut = for {
+                  files4deleteOpts <- Future.traverse(
+                    // В старом узле, в норме, всегда 0 или 1 файловый эдж, поэтому оптимизировать ничего не требуется:
+                    mnode0.edges
+                      .withPredicateIter( MPredicates.File )
+                      .to( List )
+                  ) { oldFileEdge =>
+                    fileUtil.isNeedDeleteFile( oldFileEdge, mnode1, reportDupEdge = true )
+                  }
+                  files4delete = files4deleteOpts.flatten
+                  files4deleteLen = files4delete.length
+                  _ <- {
+                    if (files4delete.nonEmpty) {
+                      LOGGER.info(s"$logPrefix Deleting $files4deleteLen files after patching node#${mnode0.idOrNull}:\n ${files4delete.mkString("\n ")}")
+                      Future.traverse( files4delete )( fileUtil.deleteFile )
+                    } else {
+                      Future.successful(None)
+                    }
+                  }
+                } yield {
+                  if (files4delete.nonEmpty)
+                    LOGGER.debug(s"$logPrefix Successfully erased $files4deleteLen previously existed-files of node#${mnode0.idOrNull}.")
+                }
+
+                for (ex <- fut.failed)
+                  LOGGER.error(s"$logPrefix Failed to delete stored files of node#${mnode0.idOrNull}", ex)
+
+                fut
+              }
+          }
+
           mnodeId = mnode1.id.get
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
@@ -587,19 +624,22 @@ final class Upload @Inject()(
 
                   val mmedia2OptFut = mNodes.tryUpdate(mnode1)(
                     MNode.edges.modify { edges0 =>
-                      MNodeEdges.out.set(
-                        MNodeEdges.edgesToMap1(
-                          edges0
-                            .withPredicateIter( MPredicates.File )
-                            .map(
-                              MEdge.media
-                                .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
-                                .composeLens( MEdgeMedia.picture )
-                                .composeLens( MPictureMeta.histogram )
-                                .set( Some(colorsHist2) )
-                            )
-                        )
-                      )(edges0)
+                      val pred = MPredicates.File
+                      val fileEdges1 = MNodeEdges.edgesToMap1(
+                        edges0
+                          .withPredicateIter( pred )
+                          .map(
+                            MEdge.media
+                              .composeTraversal( Traversal.fromTraverse[Option, MEdgeMedia] )
+                              .composeLens( MEdgeMedia.picture )
+                              .composeLens( MPictureMeta.histogram )
+                              .set( Some(colorsHist2) )
+                          )
+                      )
+                      val edges2 = MNodeEdges.edgesToMap1(
+                        edges0.withoutPredicateIter(pred) ++ fileEdges1
+                      )
+                      MNodeEdges.out.set( edges2 )(edges0)
                     }
                   )
 

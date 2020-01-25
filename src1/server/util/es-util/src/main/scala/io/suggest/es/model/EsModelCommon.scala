@@ -131,8 +131,14 @@ trait EsModelCommonT extends OptStrId {
   /** Модели, желающие версионизации, должны перезаписать это поле. */
   def versionOpt: Option[Long]
 
-  def idOrNull: String = id.orNull
+}
 
+
+object EsModelCommonT {
+  implicit class EsModelCommonOpsExt( private val esModel: EsModelCommonT ) extends AnyVal {
+    def idOrNull: String =
+      esModel.id.orNull
+  }
 }
 
 
