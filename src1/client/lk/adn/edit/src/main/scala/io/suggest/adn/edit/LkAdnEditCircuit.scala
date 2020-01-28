@@ -1,21 +1,20 @@
 package io.suggest.adn.edit
 
 import diode.react.ReactConnector
-import io.suggest.spa.CircuitUtil
+import io.suggest.spa.{CircuitUtil, OptFastEq, StateInp}
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
 import io.suggest.adn.edit.c.{NodeEditAh, RootAh}
 import io.suggest.adn.edit.m._
 import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes}
-import io.suggest.lk.c.{ColorPickAh, PictureAh}
+import io.suggest.lk.c.{ColorPickAh, UploadAh}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
-import io.suggest.lk.m.img.MPictureAh
+import io.suggest.lk.m.img.MUploadAh
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.spa.{OptFastEq, StateInp}
 import play.api.libs.json.Json
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.{IUploadApi, UploadApiHttp}
@@ -31,7 +30,7 @@ class LkAdnEditCircuit
   with ReactConnector[MLkAdnEditRoot]
 {
 
-  import MPictureAh.MPictureAhFastEq
+  import MUploadAh.MPictureAhFastEq
   import MColorPick.MColorPickFastEq
 
 
@@ -65,8 +64,8 @@ class LkAdnEditCircuit
 
   private val nodeRW = CircuitUtil.mkLensRootZoomRW(this, MLkAdnEditRoot.node)(MAdnNodeS.MAdnNodeSFastEq)
 
-  private val mPictureAhRW = zoomRW [MPictureAh[MAdnResView]] { mroot =>
-    MPictureAh(
+  private val mUploadAhRW = zoomRW [MUploadAh[MAdnResView]] { mroot =>
+    MUploadAh(
       edges       = mroot.node.edges,
       view        = mroot.node.resView,
       errorPopup  = mroot.popups.errorPopup,
@@ -105,7 +104,7 @@ class LkAdnEditCircuit
 
 
   // API
-  private val uploadApi: IUploadApi = new UploadApiHttp( confRO )
+  private val uploadApi: IUploadApi = new UploadApiHttp
 
   private val lkAdnEditApi: ILkAdnEditApi = new LKAdnEditApiHttp( confRO )
 
@@ -145,9 +144,9 @@ class LkAdnEditCircuit
   private val bgColorPickAh = _mkColorPickerAh( MColorTypes.Bg )
   private val fgColorPickAh = _mkColorPickerAh( MColorTypes.Fg )
 
-  private val pictureAh = {
+  private val uploadAh = {
     import MAdnResViewUtil._
-    new PictureAh(
+    new UploadAh(
       // Возвращать роуты контроллера LkAdnEdit в зав-ти от предиката и прочих данных из $1?
       prepareUploadRoute = { _ =>
         routes.controllers.LkAdnEdit.uploadImg(
@@ -155,8 +154,9 @@ class LkAdnEditCircuit
         )
       },
       uploadApi = uploadApi,
-      modelRW   = mPictureAhRW,
+      modelRW   = mUploadAhRW,
       fileMimeChecker = MimeConst.MimeChecks.onlyImages,
+      ctxIdOptRO = rootRW.zoom(_ => None),
     )
   }
 
@@ -171,7 +171,7 @@ class LkAdnEditCircuit
       bgColorPickAh,
       fgColorPickAh,
       nodeEditAh,
-      pictureAh,
+      uploadAh,
       rootAh
     )
   }

@@ -157,7 +157,7 @@ class JdAdUtil @Inject()(
             mkDistMediaUrl(dynImgUtil.imgCall(mimg), mimg.dynImgId, mediaHosts, forceAbsUrls = false)
           },
           // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
-          fileMeta  = Some( edgeMedia.file ),
+          fileMeta  = edgeMedia.file,
           name = mediaNodes
             .get( nodeId )
             .flatMap(_.guessDisplayName),

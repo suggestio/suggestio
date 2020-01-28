@@ -26,10 +26,10 @@ import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq, StateInp
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
-import io.suggest.lk.c.{ColorPickAh, IsTouchDevSwitchAh, PictureAh}
+import io.suggest.lk.c.{ColorPickAh, IsTouchDevSwitchAh, UploadAh}
 import io.suggest.lk.m.{MDeleteConfirmPopupS, color}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
-import io.suggest.lk.m.img.MPictureAh
+import io.suggest.lk.m.img.MUploadAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
 import scalaz.{Tree, TreeLoc}
@@ -53,7 +53,7 @@ class LkAdEditCircuit(
   with ReactConnector[MAeRoot]
 {
 
-  import MPictureAh.MPictureAhFastEq
+  import MUploadAh.MPictureAhFastEq
   import MAeRoot.MAeRootFastEq
 
 
@@ -145,7 +145,7 @@ class LkAdEditCircuit(
 
   private val confRW = mkLensRootZoomRW(this, MAeRoot.conf)( FastEqUtil.AnyRefFastEq )
 
-  private val uploadApi = new UploadApiHttp(confRW)
+  private val uploadApi = new UploadApiHttp
 
   private val adEditApi = new LkAdEditApiHttp( confRW, uploadApi )
 
@@ -314,9 +314,9 @@ class LkAdEditCircuit(
     foldHandlers(p2, shadowColorAh)
   }
 
-  private val mPictureAhRW = zoomRW[MPictureAh[Tree[JdTag]]] { mroot =>
+  private val mUploadAhRW = zoomRW[MUploadAh[Tree[JdTag]]] { mroot =>
     val mdoc = mroot.doc
-    MPictureAh(
+    MUploadAh(
       edges       = mdoc.jdDoc.jdArgs.data.edges,
       view        = mdoc.jdDoc.jdArgs.data.doc.template,
       errorPopup  = mroot.popups.error,
@@ -383,11 +383,14 @@ class LkAdEditCircuit(
   }
 
   /** Контроллер изображений. */
-  private val pictureAh = new PictureAh(
+  private val uploadAh = new UploadAh(
     uploadApi             = uploadApi,
-    modelRW               = mPictureAhRW,
+    modelRW               = mUploadAhRW,
     prepareUploadRoute    = { _ => adEditApi.prepareUploadRoute },
     fileMimeChecker       = MimeConst.MimeChecks.onlyImages,
+    ctxIdOptRO            = confRW.zoom { conf =>
+      Some(conf.ctxId)
+    },
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
@@ -463,7 +466,7 @@ class LkAdEditCircuit(
     }
 
     // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
-    acc ::= pictureAh
+    acc ::= uploadAh
 
     // Управление интерфейсом -- ближе к голове.
     acc ::= layoutAh

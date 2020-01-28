@@ -479,7 +479,13 @@ class JsMessagesUtil @Inject() (
       MC.`Storage` ::
       MC.`Type` ::
       MC.`Metadata` ::
-      MsgCodes.yesNo(true) :: MsgCodes.yesNo(false) ::
+      MC.yesNo(true) :: MsgCodes.yesNo(false) ::
+      MC.`Open.file` ::
+      MC.`Go.to.node.0` ::
+      MC.`Replace.node.ids` ::
+      MC.`Append.to.node.ids` ::
+      MC.`Cancel` ::
+      MC.`File.already.exist.on.node.0` ::
       Nil
 
     // Оптовые списки сообщений - тут:

@@ -1082,4 +1082,9 @@ Metadata=Metadata
 Picture=Picture
 Mime.type=MIME-type
 Media=Media
+Open.file=Open file
+Go.to.node.0=Go to node {0}
+Replace.node.ids=Replace node IDs
+Append.to.node.ids=Append id to node IDs
+File.already.exist.on.node.0=File already exists on node {0}.
 

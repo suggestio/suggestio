@@ -33,7 +33,8 @@ object MUploadResp {
       .inmap[Seq[MMessage]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
         { msgs => if (msgs.isEmpty) None else Some(msgs) }
-      )
+      ) and
+    (__ \ "t").formatNullable[String]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MUploadResp] = {
@@ -49,10 +50,13 @@ object MUploadResp {
   * @param upUrls Ссылка для произведения аплоада.
   * @param fileExist Инфа об уже существующем файле на сервере.
   * @param errors Список сообщений об ошибках, из-за которых продолжение не очень возможно.
+  * @param extra Какая-то прочая информация.
+  *              Используется для проброса MEdge/MNodeEdgeIdQs в sys-edge-edit.
   */
 case class MUploadResp(
                         upUrls       : List[MHostUrl]        = Nil,
                         fileExist    : Option[MSrvFileInfo]  = None,
-                        errors       : Seq[MMessage]         = Nil
+                        errors       : Seq[MMessage]         = Nil,
+                        extra        : Option[String]        = None,
                       )
 

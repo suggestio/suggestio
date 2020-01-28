@@ -469,7 +469,6 @@ final class EsModel @Inject()(
       }
 
 
-
       /** Генератор реквеста для генерации запроса для getAll(). */
       def getAllReq(maxResults: Int = model.MAX_RESULTS_DFLT, offset: Int = model.OFFSET_DFLT, withVsn: Boolean = false): SearchRequestBuilder = {
         model

@@ -1090,4 +1090,9 @@ Metadata=Метаданные
 Picture=Картинка
 Mime.type=Тип MIME
 Media=Медиа
+Open.file=Открыть файл
+Go.to.node.0=Перейти к узлу {0}
+Replace.node.ids=Перезаписать в id узлов
+Append.to.node.ids=Дописать в конец id узлов
+File.already.exist.on.node.0=Файл уже существует на узле {0}.
 

@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
-import io.suggest.lk.m.{CropOpen, PictureFileChanged}
+import io.suggest.lk.m.{CropOpen, UploadFile}
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import MEdgeDataJs.MEdgeDataJsTupleFastEq
@@ -65,7 +65,7 @@ class ImgEditBtnR(
 
     private def _picFileChanged(files: collection.Seq[dom.File]): Callback = {
       dispatchOnProxyScopeCBf($) { props: Props =>
-        PictureFileChanged(files, props.value.resKey)
+        UploadFile(files, props.value.resKey)
       }
     }
 
@@ -191,7 +191,7 @@ class ImgEditBtnR(
           filesDropZoneR.PropsVal(
             // Сборка функции доступа к FRK. Т.к. инстанс всегда разный,
             // FastEq проверяет только связанные с рендером стабильные данные, а сама модель props собирается здесь.
-            mkActionF  = PictureFileChanged(_: Seq[dom.File], props.resKey): DAction,
+            mkActionF  = UploadFile(_: Seq[dom.File], props.resKey): DAction,
             cssClasses = props.css,
           )
         }( filesDropZoneR.component(_)(inner) )(implicitly, filesDropZoneR.FilesDropZoneRFastEq)

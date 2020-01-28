@@ -20,6 +20,9 @@ object MFileMeta
   extends IEsMappingProps
 {
 
+  // Как-бы-пустой инстанс.
+  def empty = apply()
+
   object Fields {
     /** Название поля, где mime индексируется как keyword. */
     val MIME_FN             = "mi"

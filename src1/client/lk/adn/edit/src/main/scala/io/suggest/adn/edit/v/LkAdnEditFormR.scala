@@ -387,7 +387,7 @@ class LkAdnEditFormR(
                     cropOnClick = cropOnClickSome
                   ),
                   uploadStatus = edge.fileJs
-                    .flatMap(_.upload)
+                    .map(_.upload)
                 )
               }
               iter.toSeq

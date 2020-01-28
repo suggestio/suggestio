@@ -203,16 +203,18 @@ final class LkAdnEdit @Inject() (
     * @return
     */
   def uploadImg(nodeIdU: MEsUuId) = csrf.Check {
-    isNodeAdmin(nodeIdU).async(upload.prepareUploadBp) { implicit request =>
-      upload.prepareUploadLogic(
-        logPrefix           = s"${getClass.getSimpleName}.uploadImg($nodeIdU):",
-        validated           = image4UploadPropsV(request.body),
-        upInfo = MUploadInfoQs(
-          fileHandler     = Some( MUploadFileHandlers.Picture ),
-          colorDetect     = None,
-          nodeType        = Some( MNodeTypes.Media.Image ),
-        ),
-      )
+    bruteForceProtect {
+      isNodeAdmin(nodeIdU).async(upload.prepareUploadBp) { implicit request =>
+        upload.prepareUploadLogic(
+          logPrefix           = s"${getClass.getSimpleName}.uploadImg($nodeIdU):",
+          validated           = image4UploadPropsV(request.body),
+          upInfo = MUploadInfoQs(
+            fileHandler     = Some( MUploadFileHandlers.Picture ),
+            colorDetect     = None,
+            nodeType        = Some( MNodeTypes.Media.Image ),
+          ),
+        )
+      }
     }
   }
 

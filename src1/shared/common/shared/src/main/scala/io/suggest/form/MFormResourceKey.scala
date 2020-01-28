@@ -17,6 +17,8 @@ import japgolly.univeq._
   */
 object MFormResourceKey {
 
+  def empty = apply()
+
   implicit object MFormImgKeyFastEq extends FastEq[MFormResourceKey] {
     override def eqv(a: MFormResourceKey, b: MFormResourceKey): Boolean = {
       (a.frkType ===* b.frkType) &&

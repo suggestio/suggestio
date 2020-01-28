@@ -56,9 +56,6 @@ case object Save extends IEdgeAction
 case class SaveResp( startTimeMs: Long, tryResp: Try[None.type] ) extends IEdgeAction
 
 
-/** Выставлен файл. */
-case class FileSet( file: File ) extends IEdgeAction
-
 case class FileMimeSet( fileMime: Option[String] ) extends IEdgeAction
 case class FileSizeSet( sizeB: Option[Long] ) extends IEdgeAction
 case class FileIsOriginalSet( isOriginal: Boolean ) extends IEdgeAction
@@ -66,3 +63,9 @@ case class FileHashEdit( mhash: MHash, hash: String ) extends IEdgeAction
 case class FileHashFlagSet( mhash: MHash, flag: MFileMetaHashFlag, checked: Boolean ) extends IEdgeAction
 case class FileStorageTypeSet( storageType: MStorage ) extends IEdgeAction
 case class FileStorageMetaDataSet( storageData: String ) extends IEdgeAction
+
+
+sealed trait IFileExistAction extends DAction
+case object FileExistReplaceNodeIds extends IFileExistAction
+case object FileExistAppendToNodeIds extends IFileExistAction
+case object FileExistCancel extends IFileExistAction

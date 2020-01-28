@@ -188,12 +188,11 @@ class FileUtil @Inject()(
     * @return Фьючерс с каким-то неопределённым результатом удаления.
     */
   def deleteFile(media4delete: MEdgeMedia): Future[_] = {
-    LOGGER.trace(s"_deleteFile(${media4delete.storage.data.meta}) Will delete file $media4delete")
+    LOGGER.info(s"_deleteFile(${media4delete.storage.data.meta}) Erasing file $media4delete from storage")
     val stor = media4delete.storage
     iMediaStorages
       .client( stor.storage )
       .delete( stor.data )
   }
-
 
 }

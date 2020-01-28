@@ -206,6 +206,8 @@ POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysMarket.deleteNodeDomainF
 GET  /sys/node/edge2                    @controllers.SysNodeEdges.editEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 POST /sys/node/edge2                    @controllers.SysNodeEdges.saveEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
 DELETE /sys/node/edge2                  @controllers.SysNodeEdges.deleteEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
+POST /sys/node/edges/up                 @controllers.SysNodeEdges.prepareUploadFile( e: io.suggest.n2.edge.edit.MNodeEdgeIdQs )
+GET  /sys/node/edges/dl                 @controllers.SysNodeEdges.openFile( e: io.suggest.n2.edge.edit.MNodeEdgeIdQs )
 
 
 ## sys: Календари

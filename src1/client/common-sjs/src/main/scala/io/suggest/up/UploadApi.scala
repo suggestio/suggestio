@@ -1,7 +1,5 @@
 package io.suggest.up
 
-import diode.ModelRO
-import io.suggest.ctx.ICtxIdStrOpt
 import io.suggest.file.MJsFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.proto.http.client.HttpClient
@@ -23,8 +21,6 @@ import scala.concurrent.Future
   */
 trait IUploadApi {
 
-  def conf: ICtxIdStrOpt
-
   /** Подготовка к аплоаду: запрос реквизитов для аплоада с сервера.
     *
     * @param route Роута, за которой скрыт prepareUpload-экшен..
@@ -40,15 +36,13 @@ trait IUploadApi {
     * @param file Данные по файлу.
     * @return Фьючерс с ответом сервера.
     */
-  def doFileUpload(upData: MHostUrl, file: MJsFileInfo): HttpRespMapped[MUploadResp]
+  def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String]): HttpRespMapped[MUploadResp]
 
 }
 
 
 /** Реализация [[IUploadApi]] поверх HTTP/XHR. */
-class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUploadApi {
-
-  override def conf: ICtxIdStrOpt = confRO.value
+class UploadApiHttp extends IUploadApi {
 
   /** Код тела подготовки к аплоаду и декодинга результата по HTTP.
     *
@@ -73,7 +67,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
   }
 
 
-  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo): HttpRespMapped[MUploadResp] = {
+  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String]): HttpRespMapped[MUploadResp] = {
     // Отправить как обычно, т.е. через multipart/form-data:
     val formData = new FormData()
     formData.append(
@@ -90,7 +84,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
         HttpConst.Proto.CURR_PROTO +
           upData.host +
           upData.relUrl +
-          conf.ctxIdOpt.fold(""){ ctxId => "&c=" + ctxId }
+          ctxIdOpt.fold(""){ ctxId => "&c=" + ctxId }
       },
       data = HttpReqData(
         headers = Map(

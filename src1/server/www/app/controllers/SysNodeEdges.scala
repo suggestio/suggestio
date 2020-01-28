@@ -13,8 +13,12 @@ import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl.IsSuNodeEdge
 import io.suggest.n2.media.MEdgeMedia
+import io.suggest.n2.media.storage.IMediaStorages
 import views.html.sys1.market.edge.EditEdge2Tpl
 import japgolly.univeq._
+import models.mup.MUploadInfoQs
+import play.api.mvc.Results
+import scalaz.Validation
 import util.up.FileUtil
 
 import scala.concurrent.Future
@@ -34,11 +38,13 @@ final class SysNodeEdges @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{csrf, ec, current}
+  import mCommonDi.{csrf, ec, current, errorHandler}
 
   private lazy val mNodes = current.injector.instanceOf[MNodes]
   private lazy val esModel = current.injector.instanceOf[EsModel]
   private lazy val fileUtil = current.injector.instanceOf[FileUtil]
+  private lazy val uploadCtl = current.injector.instanceOf[Upload]
+  private lazy val iMediaStorages = current.injector.instanceOf[IMediaStorages]
 
 
   /** Страница с формой редактирования эджа.
@@ -139,15 +145,12 @@ final class SysNodeEdges @Inject() (
       val edge4delete = request.edgeOpt.get
       LOGGER.trace(s"$logPrefix Deleting edge $edge4delete of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
 
-      // Если файловый эдж, тaо запустить поиск других узлов, которые могут ссылаться на текущий файл.
-      val forDeleteOptFut = fileUtil.isNeedDeleteFile( edge4delete, request.mnode, reportDupEdge = true )
-
       import esModel.api._
 
       // Сохранить собранный эдж.
       for {
         // Запуск обновления текущего узла.
-        _ <- mNodes.tryUpdate( request.mnode )(
+        mnode2 <- mNodes.tryUpdate( request.mnode )(
           MNode.edges
             .composeLens( MNodeEdges.out )
             .modify { edgesOut0 =>
@@ -159,19 +162,71 @@ final class SysNodeEdges @Inject() (
             }
         )
 
-        // Если это файловый эдж, то надо стереть и файл (если файл более нигде не используется в других узлах/эджах).
-        delStorageFileOpt <- {
-          LOGGER.debug(s"$logPrefix Node#${request.mnode.id.orNull} updated, edge#${qs.edgeId.orNull} deleted.")
-          forDeleteOptFut
-        }
+        // Если файловый эдж, то запустить поиск других узлов, которые могут ссылаться на текущий файл.
+        isNeedDeleteFile <- fileUtil.isNeedDeleteFile( edge4delete, mnode2, reportDupEdge = true )
 
         // Запустить удаление неиспользуемого файла.
-        _ <- fileUtil.deleteFileMaybe( delStorageFileOpt )
+        _ <- fileUtil.deleteFileMaybe( isNeedDeleteFile )
 
       } yield {
         LOGGER.trace(s"$logPrefix Done.")
         NoContent
       }
+    }
+  }
+
+
+  /** Подготовка к upload'у.
+    *
+    * @param qs Координаты эджа.
+    * @return Ответ Upload-контроллера.
+    */
+  def prepareUploadFile(qs: MNodeEdgeIdQs) = csrf.Check {
+    isSuNodeEdge(qs).async( uploadCtl.prepareUploadBp ) { implicit request =>
+      val logPrefix = s"prepareUploadFile($qs)#${System.currentTimeMillis()}:"
+
+      uploadCtl.prepareUploadLogic(
+        logPrefix = logPrefix,
+        validated = Validation.success( request.body ),
+        upInfo = MUploadInfoQs(
+          nodeType    = None,
+          existNodeId = request.mnode.id,
+          systemResp  = Some(true),
+        ),
+      )
+    }
+  }
+
+
+  /** Раздача файла из эджа.
+    *
+    * @param qs Координата эджа.
+    * @return Файл.
+    */
+  def openFile(qs: MNodeEdgeIdQs) = {
+    isSuNodeEdge(qs).async { implicit request =>
+      val edgeMedia = request
+        .edgeOpt.get
+        .media.get
+
+      (for {
+        dataSource <- iMediaStorages
+          .client( edgeMedia.storage.storage )
+          .read( edgeMedia.storage.data, request.acceptCompressEncodings )
+      } yield {
+        sioControllerApi.sendDataSource(
+          dataSource  = dataSource,
+          contentType = edgeMedia.file.mime,
+        )
+          .withHeaders(
+            Results
+              .contentDispositionHeader( inline = false, name = request.mnode.guessDisplayName )
+              .toSeq: _*
+          )
+      })
+        .recoverWith { case _: NoSuchElementException =>
+          errorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
+        }
     }
   }
 

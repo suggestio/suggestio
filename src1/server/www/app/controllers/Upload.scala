@@ -16,6 +16,7 @@ import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
+import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
 import io.suggest.n2.media._
@@ -46,6 +47,7 @@ import japgolly.univeq._
 import monocle.Traversal
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -247,7 +249,7 @@ final class Upload @Inject()(
                   fileExist = Some(MSrvFileInfo(
                     nodeId  = foundFileNode.id.get,
                     // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                    url       = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
+                    url = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
                       // TODO IMG_DIST: Вписать хост расположения картинки.
                       // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
                       Some( routes.Img.dynImg( foundFileImg ).url )
@@ -257,7 +259,7 @@ final class Upload @Inject()(
                       None
                     },
                     // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
-                    fileMeta  = Some( edgeMedia.file ),
+                    fileMeta = edgeMedia.file,
                     pictureMeta = MPictureMeta(
                       // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
                       histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
@@ -270,6 +272,7 @@ final class Upload @Inject()(
                         )
                       }
                     ),
+                    storage = Option.when( upInfo.systemResp contains true )(edgeMedia.storage),
                   )),
                 )
               }
@@ -303,7 +306,7 @@ final class Upload @Inject()(
     )
     // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
     for (mpfd <- bp0) yield {
-      new UploadBpRes(
+      UploadBpRes(
         data = mpfd,
         localImg = fileHandler match {
           case lifc: LocalImgFileCreator => Some( lifc.mLocalImg )
@@ -468,24 +471,26 @@ final class Upload @Inject()(
             storageClient.write( storageInfo.data, wr )
           }
 
+          fileMeta = MFileMeta(
+            mime       = Some( detectedMimeType ),
+            sizeB      = Some( uploadArgs.fileProps.sizeB ),
+            isOriginal = true,
+            hashesHex  = hashesHex2,
+          )
+
+          fileEdge = MEdge(
+            predicate = MPredicates.File,
+            media = Some( MEdgeMedia(
+              file = fileMeta,
+              picture = MPictureMeta(
+                whPx = upCtx.imageWh,
+              ),
+              storage = storageInfo,
+            )),
+          )
+
           // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
           mnode1Fut = {
-            val fileEdge = MEdge(
-              predicate = MPredicates.File,
-              media = Some( MEdgeMedia(
-                file = MFileMeta(
-                  mime       = Some( detectedMimeType ),
-                  sizeB      = Some( uploadArgs.fileProps.sizeB ),
-                  isOriginal = true,
-                  hashesHex  = hashesHex2,
-                ),
-                picture = MPictureMeta(
-                  whPx = upCtx.imageWh,
-                ),
-                storage = storageInfo,
-              )),
-            )
-
             // Записываем id юзера, который первым загрузил этот файл.
             val createdBy = request.user
               .personIdOpt
@@ -531,6 +536,7 @@ final class Upload @Inject()(
               // Полулегальный патчинг эджей существующего файлового узла новым файлом.
               // Удаление старого файла будет после сохранения узла.
               LOGGER.trace(s"$logPrefix Will update existing node#${mnode0.idOrNull} with edges: ${addEdges.mkString(", ")}")
+
               mNodes.tryUpdate( mnode0 )(
                 MNode.edges.modify { edges0 =>
                   val edgesSeq2 = MNodeEdges.edgesToMap1(
@@ -539,6 +545,8 @@ final class Upload @Inject()(
                   MNodeEdges.out.set( edgesSeq2 )(edges0)
                 }
               )
+                // Версия потом иногда отправляется в system-extra, поэтому инкрементим её:
+                .map( MNode.versionOpt.modify(_.map(_ + 1)) )
             }
 
             // При ошибке сохранения узла надо удалить файл из saveFileToShardFut
@@ -586,18 +594,20 @@ final class Upload @Inject()(
                     fileUtil.isNeedDeleteFile( oldFileEdge, mnode1, reportDupEdge = true )
                   }
                   files4delete = files4deleteOpts.flatten
-                  files4deleteLen = files4delete.length
                   _ <- {
                     if (files4delete.nonEmpty) {
+                      val files4deleteLen = files4delete.length
                       LOGGER.info(s"$logPrefix Deleting $files4deleteLen files after patching node#${mnode0.idOrNull}:\n ${files4delete.mkString("\n ")}")
-                      Future.traverse( files4delete )( fileUtil.deleteFile )
+                      val delFut = Future.traverse( files4delete )( fileUtil.deleteFile )
+                      for (_ <- delFut)
+                        LOGGER.debug(s"$logPrefix Successfully erased $files4deleteLen previously existed-files of node#${mnode0.idOrNull}.")
+                      delFut
                     } else {
                       Future.successful(None)
                     }
                   }
                 } yield {
-                  if (files4delete.nonEmpty)
-                    LOGGER.debug(s"$logPrefix Successfully erased $files4deleteLen previously existed-files of node#${mnode0.idOrNull}.")
+                  None
                 }
 
                 for (ex <- fut.failed)
@@ -702,16 +712,39 @@ final class Upload @Inject()(
           }
 
           // Вернуть 200 Ok с данными по файлу
-          val srvFileInfo = MSrvFileInfo(
-            nodeId    = mnodeId,
-            // TODO url: Надо бы вернуть ссылку. Для img - routes.Img.*, для других - по другим адресам.
-            // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
-            pictureMeta = MPictureMeta(
-              histogram = colorsOpt,
-            )
-          )
+          val isSystemResp = uploadArgs.info.systemResp contains true
           val resp = MUploadResp(
-            fileExist = Some(srvFileInfo)
+            fileExist = Some( MSrvFileInfo(
+              nodeId = mnodeId,
+              // TODO url: Надо бы вернуть ссылку. Для img - routes.Img.*, для других - по другим адресам.
+              // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
+              pictureMeta = MPictureMeta(
+                histogram = colorsOpt,
+              ),
+              storage = Option.when( isSystemResp )(storageInfo),
+              // На клиенте есть такой же fileMeta, но всё же возвращаем его в ответе. И это крайне желательно для аплоада через SysNodeEdges.
+              fileMeta = fileMeta,
+            )),
+            extra = Option.when( isSystemResp ) {
+              // Для sys-запросов: В extra-данных надо передать сериализованный обновлённый эдж и обновлённую координату эджа.
+              val edgeExtra = MEdgeWithId(
+                edgeId = MNodeEdgeIdQs(
+                  nodeId  = mnode1.id.get,
+                  nodeVsn = mnode1.versionOpt.get,
+                  edgeId = Some {
+                    mnode1.edges.out
+                      .zipWithIndex
+                      .find(_._1 ===* fileEdge)
+                      .get
+                      ._2
+                  },
+                ),
+                edge = fileEdge,
+              )
+              Json
+                .toJson( edgeExtra )
+                .toString()
+            },
           )
           val respJson = Json.toJson(resp)
 
@@ -854,10 +887,10 @@ final class Upload @Inject()(
 /** Контейнер результата работы BodyParser'а при аплоаде.
   * Вынесен за пределы контроллера из-за проблем с компиляцией routes, если это inner-class.
   */
-protected class UploadBpRes(
-                             val data     : MultipartFormData[TemporaryFile],
-                             val localImg : Option[MLocalImg]
-                           ) {
+protected final case class UploadBpRes(
+                                        data     : MultipartFormData[TemporaryFile],
+                                        localImg : Option[MLocalImg]
+                                      ) {
 
   /** Надо ли удалять залитый файл? */
   def isDeleteFileOnSuccess: Boolean = {

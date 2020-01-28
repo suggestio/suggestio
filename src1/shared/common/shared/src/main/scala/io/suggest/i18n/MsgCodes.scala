@@ -415,5 +415,10 @@ object MsgCodes {
   val `Picture` = "Picture"
   val `Mime.type` = "Mime.type"
   val `Media` = "Media"
+  val `Open.file` = "Open.file"
+  val `Go.to.node.0` = "Go.to.node.0"
+  val `File.already.exist.on.node.0` = "File.already.exist.on.node.0"
+  val `Replace.node.ids` = "Replace.node.ids"
+  val `Append.to.node.ids` = "Append.to.node.ids"
 
 }

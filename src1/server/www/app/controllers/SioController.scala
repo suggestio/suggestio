@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.fio.IDataSource
 import models.mctx.ContextT
 import models.mproj.{ICommonDi, IMCommonDi}
 import models.req.MUserInits
@@ -16,6 +17,7 @@ import io.suggest.flash.FlashConstants
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import japgolly.univeq._
+import play.api.http.HttpEntity
 
 /**
  * Suggest.io
@@ -142,6 +144,35 @@ final class SioControllerApi @Inject()(
 
       messagesApi.preferred( lang2 :: lang0 :: Nil )
     }
+  }
+
+
+  /** Раздача dataSource'ов клиентам.
+    *
+    * @param dataSource Абстрактный источник данных.
+    * @param contentType MIME-тип данных, когда известен.
+    * @return Result.
+    */
+  def sendDataSource(
+                      dataSource: IDataSource,
+                      contentType: Option[String] = None,
+                    ): Result = {
+    val resp = Ok.sendEntity(
+      HttpEntity.Streamed(
+        data          = dataSource.data,
+        contentLength = Some( dataSource.sizeB ),
+        contentType   = Some( contentType getOrElse dataSource.contentType ),
+      )
+    )
+
+    dataSource
+      .compression
+      .fold( resp ) { compression =>
+        // Пробросить content-encoding, который вернул media-storage.
+        resp.withHeaders(
+          CONTENT_ENCODING -> compression.httpContentEncoding
+        )
+      }
   }
 
 }

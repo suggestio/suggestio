@@ -2,6 +2,7 @@ package io.suggest.lk.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
 import diode._
+import diode.data.Pot
 import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
@@ -11,10 +12,9 @@ import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.crop.MCrop
-import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.lk.m._
-import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
+import io.suggest.lk.m.img.{MPictureCropPopup, MUploadAh}
 import io.suggest.lk.r.img.LkImgUtilJs
 import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.ErrorMsgs
@@ -42,26 +42,29 @@ import scala.util.Success
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.09.17 19:03
   * Description: Контроллер управления картинками.
-  * @param fileMimeChecker - [[PictureAh]].FileMimeChecks
+ *
+  * @param fileMimeChecker - [[UploadAh]].FileMimeChecks
+  * @param ctxIdOptRO      Доступ к CtxId.
   */
-class PictureAh[V, M](
-                       prepareUploadRoute  : MFormResourceKey => PlayRoute,
-                       uploadApi           : IUploadApi,
-                       fileMimeChecker     : String => Boolean,
-                       modelRW             : ModelRW[M, MPictureAh[V]]
-                     )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
+class UploadAh[V, M](
+                      prepareUploadRoute  : MFormResourceKey => PlayRoute,
+                      uploadApi           : IUploadApi,
+                      fileMimeChecker     : String => Boolean,
+                      ctxIdOptRO          : ModelRO[Option[String]],
+                      modelRW             : ModelRW[M, MUploadAh[V]],
+                    )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
   extends ActionHandler(modelRW)
   with Log
 { ah =>
 
-  private type ResPair_t = (MPictureAh[V], Effect)
+  private type ResPair_t = (MUploadAh[V], Effect)
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Выставлен файл в input'е заливки картинки.
     // 1. Отрендерить его на экране (т.е. сохранить в состоянии в виде блоба).
     // 2. Запустить фоновую закачку файла на сервер.
-    case m: PictureFileChanged =>
+    case m: UploadFile =>
       val v0 = value
 
       // Посмотреть, что пришло в сообщении...
@@ -91,7 +94,7 @@ class PictureAh[V, M](
           .find { fileNew =>
             fileMimeChecker( fileNew.`type`.toLowerCase )
           }
-          .fold [(MPictureAh[V], Option[Effect])] {
+          .fold [(MUploadAh[V], Option[Effect])] {
             val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )
             // Не найдено картинок среди новых файлов.
             val v1 = v0.withErrorPopup(
@@ -144,8 +147,7 @@ class PictureAh[V, M](
 
                       // Прервать upload файла на сервер, есть возможно.
                       for {
-                        fUpload     <- fileJsOld.upload
-                        upXhrOld    <- fUpload.reqHolder
+                        upXhrOld    <- fileJsOld.upload.reqHolder
                       } {
                         try {
                           upXhrOld.abort()
@@ -176,7 +178,11 @@ class PictureAh[V, M](
                   fileJs = Some(MJsFileInfo(
                     blob      = fileNew,
                     blobUrl   = Option( blobUrlNew ),
-                    fileName  = Option( fileNew.name )
+                    fileName  = Option( fileNew.name ),
+                    // Заливка ещё не началась, а только предподготовка, но можно ведь отрендерить крутилку...
+                    upload    = MFileUploadS(
+                      prepareReq = Pot.empty.pending(),
+                    ),
                   ))
                 )
 
@@ -215,7 +221,7 @@ class PictureAh[V, M](
 
       (for {
         eData <- {
-          val edOpt = PictureAh._findEdgeByIdOrBlobUrl(v0.edges, m)
+          val edOpt = UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m)
           if (edOpt.isEmpty)
             LOG.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
           edOpt
@@ -272,14 +278,14 @@ class PictureAh[V, M](
         },
         { hashHex =>
           // Сохранить рассчётный хэш в состояние.
-          PictureAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
+          UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
             .fold {
               // Нет такого файла. Вероятно, пока считался хэш, юзер уже выбрал какой-то другой файл.
               LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
               noChange
             } { edge0 =>
               // Дедубликация кода обновления текущего эджа:
-              def __v2F(fileJs9: MJsFileInfo): MPictureAh[V] = {
+              def __v2F(fileJs9: MJsFileInfo): MUploadAh[V] = {
                 val edge2 = (MEdgeDataJs.fileJs set Some(fileJs9))(edge0)
                 v0.withEdges(
                   v0.edges.updated( edge0.id, edge2 )
@@ -329,14 +335,15 @@ class PictureAh[V, M](
                         }
                     }
 
-                    val fileJs2 = MJsFileInfo.upload.modify { upState0 =>
-                      val upState2 = MFileUploadS.prepareReq
-                        .modify(_.pending())
-                        .apply {
-                          upState0 getOrElse MFileUploadS.empty
-                        }
-                      Some( upState2 )
-                    }(fileJs0)
+                    val prepareReq_LENS = MJsFileInfo.upload
+                      .composeLens( MFileUploadS.prepareReq )
+                    val fileJs2 = if (prepareReq_LENS.get(fileJs0).isPending) {
+                      fileJs0
+                    } else {
+                      prepareReq_LENS
+                        .modify( _.pending() )( fileJs0 )
+                    }
+
 
                     val v2 = __v2F(fileJs2)
                     updated(v2, fx)
@@ -351,7 +358,7 @@ class PictureAh[V, M](
     // Сигнал о завершении запроса подготовки к аплоаду файла.
     case m: PrepUploadResp =>
       val v0 = value
-      PictureAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
+      UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
         LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
@@ -360,7 +367,7 @@ class PictureAh[V, M](
         m.tryRes.fold(
           // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
           {ex =>
-            val fileJsOpt2 = PictureAh._fileJsWithUpload(edge0.fileJs) {
+            val fileJsOpt2 = UploadAh._fileJsWithUpload(edge0.fileJs) {
               (MFileUploadS.reqHolder set None) andThen
               MFileUploadS.prepareReq.modify( _.fail(ex) )
             }
@@ -389,14 +396,14 @@ class PictureAh[V, M](
                   // Есть ссылка для заливки файла. Залить.
                   val uploadStartFx = Effect.action {
                     UploadReqStarted(
-                      respHolder  = uploadApi.doFileUpload(firstUpUrl, fileJs),
+                      respHolder  = uploadApi.doFileUpload(firstUpUrl, fileJs, ctxIdOptRO.value),
                       src         = m.src,
                       hostUrl     = firstUpUrl,
                     )
                   }
 
                   // Залить изменения в состояние:
-                  val fileJsOpt2 = PictureAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
+                  val fileJsOpt2 = UploadAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
                     upload0.copy(
                       reqHolder   = None,
                       prepareReq  = upload0.prepareReq.ready(resp),
@@ -405,8 +412,12 @@ class PictureAh[V, M](
                   }
                   val edge2 = MEdgeDataJs.fileJs
                     .set(fileJsOpt2)(edge0)
-                  val v2 = v0
+                  var v2 = v0
                     .withEdges( v0.edges + (edge0.id -> edge2) )
+
+                  if (resp.extra !=* v0.uploadExtra)
+                    v2 = v2.withUploadExtra( resp.extra )
+
                   updated(v2, uploadStartFx)
                 }
               }
@@ -415,18 +426,20 @@ class PictureAh[V, M](
                 for (fe <- resp.fileExist) yield {
                   // Файл уже залит на сервер. Это нормально. Залить данные по файлу в состояние:
                   val edge2 = edge0.copy(
-                    jdEdge = PictureAh._srvFileIntoJdEdge( fe, edge0.jdEdge ),
-                    fileJs = PictureAh._fileJsWithUpload(edge0.fileJs) {
+                    jdEdge = UploadAh._srvFileIntoJdEdge( fe, edge0.jdEdge ),
+                    fileJs = UploadAh._fileJsWithUpload(edge0.fileJs) {
                       MFileUploadS.reqHolder.set( None ) andThen
                       MFileUploadS.prepareReq.modify( _.ready(resp) )
                     }
                   )
-                  val v1 = v0.withEdges(
+                  var v2 = v0.withEdges(
                     v0.edges
                       .updated(edge2.id, edge2)
                   )
+                  if (resp.extra !=* v0.uploadExtra)
+                    v2 = v2.withUploadExtra( resp.extra )
                   // Если пришла гистограмма, то залить её в состояние.
-                  _maybeWithHistogram(fe, v1)
+                  _maybeWithHistogram(fe, v2)
                 }
               }
               // Есть проблемы с принятием такого файла: его нельзя отправить на сервер.
@@ -438,7 +451,7 @@ class PictureAh[V, M](
                     edges      = v0.edges - edge0.id,
                     view       = picViewContAdp.forgetEdge(v0.view, m.src.edgeUid),
                     // Вывести попап с ошибками, присланными сервером:
-                    errorPopup = PictureAh._errorPopupWithMessages( v0.errorPopup, resp.errors )
+                    errorPopup = UploadAh._errorPopupWithMessages( v0.errorPopup, resp.errors )
                   )
                   updated(v2)
                 }
@@ -458,9 +471,8 @@ class PictureAh[V, M](
       val v0 = value
 
       (for {
-        edge0   <- PictureAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
-        fileJs0 <- edge0.fileJs
-        if fileJs0.upload.nonEmpty
+        edge0   <- UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
+        if edge0.fileJs.nonEmpty
       } yield {
         // Эффект окончания загрузки.
         // Сайд-эффект запуска запроса уже произошёл ранее, а здесь просто эффект подписки на событие завершения запроса:
@@ -476,7 +488,7 @@ class PictureAh[V, M](
         // TODO Подписаться на события upload progress, чтобы мониторить ход заливки.
 
         // Сохранить httpReq.httpRespHolder в состояние для возможности взаимодействия с закачкой:
-        val fileJsOpt2 = PictureAh._fileJsWithUpload(edge0.fileJs)(
+        val fileJsOpt2 = UploadAh._fileJsWithUpload(edge0.fileJs)(
           MFileUploadS.reqHolder set Some( m.respHolder.httpRespHolder )
         )
 
@@ -495,7 +507,7 @@ class PictureAh[V, M](
     // Выполнен аплоад на сервер. Пришёл результат выполнения запроса.
     case m: UploadRes =>
       val v0 = value
-      PictureAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
+      UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
         LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
@@ -504,7 +516,7 @@ class PictureAh[V, M](
           // Ошибка выполнения upload'а.
           {ex =>
             val edge2 = MEdgeDataJs.fileJs.set(
-              PictureAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
+              UploadAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
                 upload0.copy(
                   reqHolder = None,
                   uploadReq = upload0.uploadReq.fail(ex),
@@ -513,7 +525,7 @@ class PictureAh[V, M](
               }
             )( edge0 )
 
-            val v2 = v0.withEdges(
+            var v2 = v0.withEdges(
               v0.edges.updated(edge2.id, edge2)
             )
             updated( v2 )
@@ -525,8 +537,8 @@ class PictureAh[V, M](
                 // Файл успешно залит на сервер. Сервер присылает только базовые данные по загруженному файлу, надо не забывать это.
                 // Сохранить это в состояние:
                 val edge2 = edge0.copy(
-                  jdEdge = PictureAh._srvFileIntoJdEdge(fileExist, edge0.jdEdge),
-                  fileJs = PictureAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
+                  jdEdge = UploadAh._srvFileIntoJdEdge(fileExist, edge0.jdEdge),
+                  fileJs = UploadAh._fileJsWithUpload(edge0.fileJs) { upload0 =>
                     upload0.copy(
                       reqHolder = None,
                       // TODO reqHolder/progress: если было Some(), то отписаться от onprogress эффектом.
@@ -535,18 +547,20 @@ class PictureAh[V, M](
                     )
                   }
                 )
-                val v2 = v0.withEdges(
+                var v2 = v0.withEdges(
                   v0.edges.updated(edge2.id, edge2)
                 )
+                if (resp.extra !=* v0.uploadExtra)
+                  v2 = v2.withUploadExtra( resp.extra )
 
                 // В ответе может быть гистограмма. Это важно проаналализировать и вынести решение:
                 fileExist.pictureMeta.histogram.fold {
                   // Сервер не прислал гистограмму. Она придёт по websocket'у.
                   // В фоне: запустить открытие websocket'а для связи с сервером по поводу гистограммы.
-                  uploadApi.conf.ctxIdOpt.fold {
+                  if (ctxIdOptRO.value.isEmpty) {
                     // Нет ctxId в аплоаде - не будет веб-сокета с палитрой.
                     updated(v2)
-                  } { _ =>
+                  } else {
                     // Есть ctxId - нужен веб-сокет
                     val wsEnsureFx = Effect.action {
                       WsEnsureConn(
@@ -570,7 +584,7 @@ class PictureAh[V, M](
                 for (_ <- resp.errors.headOption) yield {
                   val v2 = v0
                     .withErrorPopup(
-                      PictureAh._errorPopupWithMessages( v0.errorPopup, resp.errors )
+                      UploadAh._errorPopupWithMessages( v0.errorPopup, resp.errors )
                     )
                   updated(v2)
                 }
@@ -791,7 +805,7 @@ class PictureAh[V, M](
 
 
   /** Когда надо рендерить кроп на экране в карточке, то использовать этот код. */
-  private def _updateSelectedTag(v0: MPictureAh[V], resKey: MFormResourceKey): MPictureAh[V] = {
+  private def _updateSelectedTag(v0: MUploadAh[V], resKey: MFormResourceKey): MUploadAh[V] = {
     val imgEdgeId2 = for {
       cropPopup <- v0.cropPopup
       e       <- v0.edges.get( cropPopup.imgEdgeUid )
@@ -812,7 +826,7 @@ class PictureAh[V, M](
   }
 
 
-  private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MPictureAh[V]): ActionResult[M] = {
+  private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MUploadAh[V]): ActionResult[M] = {
     fe.pictureMeta
       .histogram
       .filter(_.colors.nonEmpty)
@@ -823,7 +837,7 @@ class PictureAh[V, M](
       }
   }
 
-  private def _withHistogram(nodeId: String, colors: MHistogram, v0: MPictureAh[V]): ResPair_t = {
+  private def _withHistogram(nodeId: String, colors: MHistogram, v0: MUploadAh[V]): ResPair_t = {
     val v2 = v0.withHistograms(
       v0.histograms
         .updated(nodeId, colors)
@@ -838,7 +852,7 @@ class PictureAh[V, M](
 }
 
 
-object PictureAh {
+object UploadAh {
 
   private def _findEdgeByIdOrBlobUrl(edges: Map[EdgeUid_t, MEdgeDataJs], src: FileHashStart): Option[MEdgeDataJs] = {
     val blobUrlFilterF = { e: MEdgeDataJs =>
@@ -867,7 +881,6 @@ object PictureAh {
   private def _fileJsWithUpload(fileJsOpt0: Option[MJsFileInfo])(f: MFileUploadS => MFileUploadS): Option[MJsFileInfo] = {
     fileJsOpt0.map(
       MJsFileInfo.upload
-        .composeTraversal( Traversal.fromTraverse[Option, MFileUploadS] )
         .modify(f)
     )
   }

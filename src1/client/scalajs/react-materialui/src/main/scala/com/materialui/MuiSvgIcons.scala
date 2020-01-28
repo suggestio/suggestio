@@ -1713,7 +1713,7 @@ object MuiSvgIcons {
   object ArrowDownward extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowDropDownCircle", JSImport.Default)
   object ArrowDropDownCircle extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/ArrowDropDown", JSImport.Default)
+  @js.native @JSImport("@material-ui/icons/ArrowDropDown", JSImport.Default)
   object ArrowDropDown extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowDropUp", JSImport.Default)
   object ArrowDropUp extends MuiSvgIcon

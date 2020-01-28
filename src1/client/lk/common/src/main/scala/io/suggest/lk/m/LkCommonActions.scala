@@ -76,7 +76,7 @@ case object DocBodyClick extends ILkCommonAction
 
 
 /** Изменилось file-поле выбора картинки. */
-case class PictureFileChanged(files: collection.Seq[File], resKey: MFormResourceKey) extends ILkCommonAction
+case class UploadFile(files: collection.Seq[File], resKey: MFormResourceKey) extends ILkCommonAction
 
 
 sealed trait IPictureCropAction extends ILkCommonAction

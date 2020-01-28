@@ -135,7 +135,7 @@ trait EsModelCommonT extends OptStrId {
 
 
 object EsModelCommonT {
-  implicit class EsModelCommonOpsExt( private val esModel: EsModelCommonT ) extends AnyVal {
+  implicit final class EsModelCommonOpsExt( private val esModel: EsModelCommonT ) extends AnyVal {
     def idOrNull: String =
       esModel.id.orNull
   }

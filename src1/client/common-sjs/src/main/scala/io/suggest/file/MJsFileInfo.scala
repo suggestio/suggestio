@@ -62,6 +62,6 @@ case class MJsFileInfo(
                         fileName          : Option[String]          = None,
                         hashesHex         : HashesHex               = Map.empty,
                         whPx              : Option[MSize2di]        = None,
-                        upload            : Option[MFileUploadS]    = None
+                        upload            : MFileUploadS            = MFileUploadS.empty,
                       )
   extends EmptyProduct

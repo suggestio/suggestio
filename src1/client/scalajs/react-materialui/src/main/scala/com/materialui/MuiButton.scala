@@ -10,7 +10,7 @@ object MuiButton {
 
   val component = JsComponent[MuiButtonProps, Children.Varargs, Null](Mui.Button)
 
-  def apply(props: MuiButtonProps)(children: VdomNode*) =
+  def apply(props: MuiButtonProps = MuiButtonProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }

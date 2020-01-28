@@ -19,6 +19,7 @@ object MUploadInfoQs {
     val COLOR_DETECT_FN   = "l"
     val NODE_TYPE_FN      = "t"
     val EXIST_NODE_ID_FN  = "n"
+    val SYSTEM_RESP_FN    = "S"
   }
 
   implicit def uploadInfoQsb(implicit
@@ -26,6 +27,7 @@ object MUploadInfoQs {
                              cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]],
                              nodeTypeOptB       : QueryStringBindable[Option[MNodeType]],
                              strOptB            : QueryStringBindable[Option[String]],
+                             boolOptB           : QueryStringBindable[Option[Boolean]],
                             ): QueryStringBindable[MUploadInfoQs] = {
     new QueryStringBindableImpl[MUploadInfoQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadInfoQs]] = {
@@ -36,18 +38,21 @@ object MUploadInfoQs {
           colorDetectE      <- cdArgsOptB.bind        ( k(F.COLOR_DETECT_FN),   params )
           nodeTypeOptE      <- nodeTypeOptB.bind      ( k(F.NODE_TYPE_FN),      params )
           nodeIdOptE        <- strOptB.bind           ( k(F.EXIST_NODE_ID_FN),  params )
+          systemRespOptE    <- boolOptB.bind          ( k(F.SYSTEM_RESP_FN),    params )
         } yield {
           for {
             fileHandlerOpt  <- fileHandlerOptE
             colorDetect     <- colorDetectE
             nodeTypeOpt     <- nodeTypeOptE
             existNodeIdOpt  <- nodeIdOptE
+            systemRespOpt   <- systemRespOptE
           } yield {
             MUploadInfoQs(
               fileHandler   = fileHandlerOpt,
               colorDetect   = colorDetect,
               nodeType      = nodeTypeOpt,
-              existNodeId   = existNodeIdOpt
+              existNodeId   = existNodeIdOpt,
+              systemResp    = systemRespOpt,
             )
           }
         }
@@ -61,6 +66,7 @@ object MUploadInfoQs {
           cdArgsOptB.unbind         ( k(F.COLOR_DETECT_FN),     value.colorDetect ),
           nodeTypeOptB.unbind       ( k(F.NODE_TYPE_FN),        value.nodeType    ),
           strOptB.unbind            ( k(F.EXIST_NODE_ID_FN),    value.existNodeId ),
+          boolOptB.unbind           ( k(F.SYSTEM_RESP_FN),      value.systemResp  ),
         )
       }
     }
@@ -80,10 +86,12 @@ object MUploadInfoQs {
   * @param nodeType Тип создаваемого узла.
   *                 Если existingNodeId задан, то можно None.
   * @param existNodeId id существующего узла: не создавать новый узел, а использовать существующий.
+  * @param systemResp Ответ должен содержать в себе системные данные: метаданные серверного хранилища и т.д.
   */
 case class MUploadInfoQs(
                           nodeType          : Option[MNodeType],
-                          fileHandler       : Option[MUploadFileHandler],
-                          colorDetect       : Option[MColorDetectArgs],
+                          fileHandler       : Option[MUploadFileHandler]  = None,
+                          colorDetect       : Option[MColorDetectArgs]    = None,
                           existNodeId       : Option[String]              = None,
+                          systemResp        : Option[Boolean]             = None,
                         )

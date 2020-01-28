@@ -1,8 +1,12 @@
 package io.suggest.n2.edge.edit
 
+import diode.FastEq
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -11,6 +15,14 @@ import play.api.libs.functional.syntax._
   * Description: Конфигурация для формы редактирования эджа.
   */
 object MNodeEdgeIdQs {
+
+  implicit object MNodeEdgeIdQsFeq extends FastEq[MNodeEdgeIdQs] {
+    override def eqv(a: MNodeEdgeIdQs, b: MNodeEdgeIdQs): Boolean = {
+      (a.nodeId ===* b.nodeId) &&
+      (a.nodeVsn ==* b.nodeVsn) &&
+      (a.edgeId ===* b.edgeId)
+    }
+  }
 
   @inline implicit def univEq: UnivEq[MNodeEdgeIdQs] = UnivEq.derive
 
@@ -35,6 +47,8 @@ object MNodeEdgeIdQs {
       (__ \ F.EDGE_ID_FN).formatNullable[Int]
     )(apply, unlift(unapply))
   }
+
+  lazy val nodeVsn = GenLens[MNodeEdgeIdQs]( _.nodeVsn )
 
 }
 

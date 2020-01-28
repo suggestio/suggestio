@@ -6,11 +6,13 @@ import io.suggest.common.empty.OptionUtil
 import scalacss.ScalaCssReact._
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
+import io.suggest.lk.m.MErrorPopupS
 import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
-import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, SaveBtnR}
+import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, ErrorDiaR, FileExistDiaR, SaveBtnR}
 import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
 import io.suggest.n2.edge.edit.v.inputs.media.MediaR
 import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 
@@ -32,6 +34,8 @@ class EdgeEditFormR(
                      deleteDiaR           : DeleteDiaR,
                      saveBtnR             : SaveBtnR,
                      mediaR               : MediaR,
+                     errorDiaR            : ErrorDiaR,
+                     fileExistsDiaR       : FileExistDiaR,
                      crCtxProv            : React.Context[MCommonReactCtx],
                    ) {
 
@@ -76,6 +80,7 @@ class EdgeEditFormR(
                   mediaR.PropsVal(
                     media     = m.edge.media,
                     uploadReq = m.edit.upload,
+                    edgeIdQs  = Some(m.conf),
                   )
                 }( mediaR.component.apply )( implicitly, mediaR.MediaRPropsValFeq ),
 
@@ -98,7 +103,14 @@ class EdgeEditFormR(
             ),
 
             // Диалог подтверждения удаления.
-            p.wrap( _.edit.deleteDia )( deleteDiaR.component.apply )(implicitly, MDeleteDiaS.MDeleteDiaSFastEq),
+            p.wrap( _.edit.deleteDia )( deleteDiaR.component.apply )( implicitly, MDeleteDiaS.MDeleteDiaSFastEq ),
+
+            // Диалог какой-то ошибки.
+            p.wrap( _.edit.errorDia )( errorDiaR.component.apply )( implicitly, OptFastEq.Wrapped(MErrorPopupS.MErrorPopupSFastEq) ),
+
+            // Диалог дубликата файла.
+            p.wrap( _.edit.fileExistNodeId )( fileExistsDiaR.component.apply ),
+
           )
         )
       )

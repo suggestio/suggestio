@@ -11,7 +11,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import models.mproj.ICommonDi
-import play.api.http.HttpEntity
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanDynImg, IsIdTokenValid, MaybeAuth}
 import util.captcha.CaptchaUtil
@@ -147,23 +146,12 @@ class Img @Inject() (
           .map { dataSource =>
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
             LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB.fold("?")(_.toString)}b")
-            var respHeadersAcc = cacheControlHdr :: Nil
 
-            // Пробросить content-encoding, который вернул media-storage.
-            for (compression <- dataSource.compression) {
-              respHeadersAcc ::= (
-                CONTENT_ENCODING -> compression.httpContentEncoding
-              )
-            }
-
-            Ok.sendEntity(
-              HttpEntity.Streamed(
-                data          = dataSource.data,
-                contentLength = Some(dataSource.sizeB),
-                contentType   = request.edgeMedia.file.mime,
-              )
+            sioCtlApi.sendDataSource(
+              dataSource  = dataSource,
+              contentType = request.edgeMedia.file.mime,
             )
-              .withHeaders( respHeadersAcc: _* )
+              .withHeaders( cacheControlHdr )
               .withDateHeaders(
                 LAST_MODIFIED -> request.mnode.meta.basic.dateCreated.toZonedDateTime,
               )

@@ -1,7 +1,6 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
-import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -51,7 +50,3 @@ case class MAdEditFormConf(
                             ctxId       : String,
                             touchDev    : Boolean          = false,
                           )
-  extends ICtxIdStrOpt
-{
-  override def ctxIdOpt = Some(ctxId)
-}

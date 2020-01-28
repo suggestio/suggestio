@@ -8,8 +8,6 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 
-import scala.concurrent.Future
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

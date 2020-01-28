@@ -1,13 +1,14 @@
 package io.suggest.file
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.crypto.hash.{HashesHex, MHash}
+import io.suggest.crypto.hash.HashesHex
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.err.ErrorConstants
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MPictureMeta}
 import io.suggest.msg.ErrorMsgs
+import io.suggest.n2.media.storage.MStorageInfo
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -27,12 +28,13 @@ object MSrvFileInfo {
     (__ \ "n").format[String] and
     (__ \ "u").formatNullable[String] and
     (__ \ "a").formatNullable[String] and
-    (__ \ "f").formatNullable[MFileMeta] and
+    (__ \ "f").format[MFileMeta] and
     (__ \ "p").formatNullable[MPictureMeta]
       .inmap[MPictureMeta](
         EmptyUtil.opt2ImplMEmptyF( MPictureMeta ),
         EmptyUtil.implEmpty2Opt
-      )
+      ) and
+    (__ \ "s").formatNullable[MStorageInfo]
   )(apply, unlift(unapply))
 
 
@@ -68,18 +70,18 @@ object MSrvFileInfo {
   * @param fileMeta Метаданные файла, которые могут быть нужны на клиенте.
   */
 case class MSrvFileInfo(
-                         nodeId     : String,
-                         url        : Option[String]      = None,
-                         name       : Option[String]      = None,
-                         fileMeta   : Option[MFileMeta]   = None,
-                         pictureMeta: MPictureMeta        = MPictureMeta.empty,
+                         nodeId         : String,
+                         url            : Option[String]          = None,
+                         name           : Option[String]          = None,
+                         // TODO Всё, что ниже - это MEdgeMedia. Заменить на модель тут. Всё, что выше - это куски MEdge. Может вообще снести эту модель?
+                         fileMeta       : MFileMeta               = MFileMeta.empty,
+                         pictureMeta    : MPictureMeta            = MPictureMeta.empty,
+                         storage        : Option[MStorageInfo]    = None,
                        ) {
 
   /** Карта хэшей генерится на основе всех имеющихся в исходнике хэшей. */
   lazy val hashesHex: HashesHex = {
-    fileMeta.fold( Map.empty[MHash, String] ) { fMeta =>
-      MFileMetaHash.toHashesHex( fMeta.hashesHex )
-    }
+    MFileMetaHash.toHashesHex( fileMeta.hashesHex )
   }
 
   /** Объединить данные данного инстанса и данные из более свежего инстанса.
@@ -109,8 +111,7 @@ case class MSrvFileInfo(
         },
         name = newInfo.name
           .orElse( name ),
-        fileMeta = newInfo.fileMeta
-          .fold( this.fileMeta )(_ => newInfo.fileMeta),
+        fileMeta = newInfo.fileMeta,
         pictureMeta =
           if (newInfo.pictureMeta.isEmpty) this.pictureMeta
           else newInfo.pictureMeta,

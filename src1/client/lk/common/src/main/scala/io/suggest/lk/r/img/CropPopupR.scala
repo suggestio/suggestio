@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.{CropCancel, CropChanged, CropSave, PictureFileChanged}
+import io.suggest.lk.m.{CropCancel, CropChanged, CropSave, UploadFile}
 import io.suggest.lk.r.popup.PopupR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
@@ -65,7 +65,7 @@ class CropPopupR {
 
     private val deleteBtnClick: Callback = {
       dispatchOnProxyScopeCBf($) { p: Props =>
-        PictureFileChanged(Nil, p.value.get.resKey)
+        UploadFile(Nil, p.value.get.resKey)
       }
     }
 

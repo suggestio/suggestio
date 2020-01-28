@@ -63,6 +63,10 @@
       @mnode.guessDisplayNameOrId
     </strong>
 
+    @for(vsn <- mnode.versionOpt) {
+      v@vsn
+    }
+
     <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(mnode.id.get)">
       @messages( MsgCodes.`Edit` )
     </a>

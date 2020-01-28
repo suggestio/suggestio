@@ -1,6 +1,5 @@
 package io.suggest.adn.edit.m
 
-import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -31,9 +30,3 @@ object MAdnEditFormConf {
 case class MAdnEditFormConf(
                              nodeId: String,
                            )
-  extends ICtxIdStrOpt
-{
-
-  override def ctxIdOpt: Option[String] = None
-
-}

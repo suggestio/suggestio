@@ -461,31 +461,35 @@ final class LkAdEdit @Inject() (
     *                None, если задан id карточки.
     * @return JSON-ответ.
     */
-  def prepareImgUpload(adIdU: Option[MEsUuId], nodeIdU: Option[MEsUuId]) = csrf.Check {
-    // Не используем canUpload*. Если юзер может создавать/редактировать карточку, то и картинки он может загружать.
-    canCreateOrEditAd(adIdOpt = adIdU, producerIdOpt = nodeIdU)
-      .async( uploadCtl.prepareUploadBp ) { implicit request =>
-        val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
+  def prepareImgUpload(adIdU: Option[MEsUuId], nodeIdU: Option[MEsUuId]) = {
+    csrf.Check {
+      bruteForceProtect(_BFP_ARGS) {
+        // Не используем canUpload*. Если юзер может создавать/редактировать карточку, то и картинки он может загружать.
+        canCreateOrEditAd(adIdOpt = adIdU, producerIdOpt = nodeIdU)
+          .async( uploadCtl.prepareUploadBp ) { implicit request =>
+            val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
 
-        // И просто запустить API-метод prepareUpload() из Upload-контроллера.
-        uploadCtl.prepareUploadLogic(
-          logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:",
-          validated = validated,
-          upInfo = MUploadInfoQs(
-            // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
-            fileHandler       = Some( MUploadFileHandlers.Picture ),
-            colorDetect       = Some {
-              val cdConst = AdFormConstants.ColorDetect
-              val sz = cdConst.PALETTE_SIZE
-              MColorDetectArgs(
-                paletteSize   = sz,
-                wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
-              )
-            },
-            nodeType = Some( MNodeTypes.Media.Image ),
-          ),
-        )
+            // И просто запустить API-метод prepareUpload() из Upload-контроллера.
+            uploadCtl.prepareUploadLogic(
+              logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:",
+              validated = validated,
+              upInfo = MUploadInfoQs(
+                // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
+                fileHandler       = Some( MUploadFileHandlers.Picture ),
+                colorDetect       = Some {
+                  val cdConst = AdFormConstants.ColorDetect
+                  val sz = cdConst.PALETTE_SIZE
+                  MColorDetectArgs(
+                    paletteSize   = sz,
+                    wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
+                  )
+                },
+                nodeType = Some( MNodeTypes.Media.Image ),
+              ),
+            )
+          }
       }
+    }
   }
 
 }

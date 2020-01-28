@@ -48,7 +48,7 @@ object MStorageInfo extends IEsMappingProps {
   }
 
 
-  implicit class StorageInfoOpsExt( val storage1: MStorageInfo ) extends AnyVal {
+  implicit class StorageInfoOpsExt( private val storage1: MStorageInfo ) extends AnyVal {
 
     def isSameFile( storage2: MStorageInfo ): Boolean = {
       (storage1.storage ==* storage2.storage) &&

@@ -321,4 +321,6 @@ sealed trait SysNodeEdgesRoutes extends js.Object {
   def editEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
   def saveEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
   def deleteEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
+  def prepareUploadFile( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
+  def openFile( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
 }

@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.edit.v.inputs.media
 
-import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiFormControlClasses, MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInput, MuiInputProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiPaper, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTableRowProps, MuiTextField, MuiTextFieldProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiCheckBox, MuiCheckBoxProps, MuiCircularProgress, MuiCircularProgressProps, MuiFormControlClasses, MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInput, MuiInputClasses, MuiInputProps, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiPaper, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTableRowProps, MuiTextField, MuiTextFieldProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
@@ -10,15 +10,22 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.{MHash, MHashes}
 import io.suggest.file.up.MFileUploadS
+import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.n2.edge.edit.m.{FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet}
+import io.suggest.lk.m.UploadFile
+import io.suggest.n2.edge.edit.MNodeEdgeIdQs
+import io.suggest.n2.edge.edit.m.{FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet}
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.n2.media.storage.{MStorage, MStorages}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import ReactCommonUtil.Implicits._
+import io.suggest.routes.routes
 import io.suggest.sjs.common.model.dom.DomListSeq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.xplay.json.PlayJsonSjsUtil
+import play.api.libs.json.Json
 
 import scala.scalajs.js.annotation.JSName
 import scala.util.Try
@@ -36,11 +43,13 @@ class MediaR(
   case class PropsVal(
                        media        : Option[MEdgeMedia],
                        uploadReq    : MFileUploadS,
+                       edgeIdQs     : Option[MNodeEdgeIdQs],
                      )
   implicit case object MediaRPropsValFeq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.media ===* b.media) &&
-      (a.uploadReq ===* b.uploadReq)
+      (a.uploadReq ===* b.uploadReq) &&
+      (a.edgeIdQs ===* b.edgeIdQs)
     }
   }
 
@@ -57,17 +66,15 @@ class MediaR(
                     fileHashesC             : ReactConnectProxy[Seq[MFileMetaHash]],
                     fileStorageTypeC        : ReactConnectProxy[MStorage],
                     fileStorageDataMetaC    : ReactConnectProxy[String],
+                    edgeIdQsOptC               : ReactConnectProxy[Option[MNodeEdgeIdQs]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на изменение файлового ввода. */
     private lazy val _onFileChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
-      DomListSeq( e.target.files )
-        .headOption
-        .fold( Callback.empty ) { file =>
-          ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileSet(file) )
-        }
+      val files = DomListSeq( e.target.files )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, UploadFile( files, MFormResourceKey.empty ) )
     }
 
     /** Редактирование MIME. */
@@ -122,25 +129,16 @@ class MediaR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, FileStorageMetaDataSet(stor2) )
     }
 
-
     def render(s: State): VdomElement = {
+
+      val _inputCss = EdgeEditCss.input.htmlClass
       val _tfCss = new MuiFormControlClasses {
-        override val root = EdgeEditCss.input.htmlClass
+        override val root = _inputCss
       }
+
       // Ничего нет.
       lazy val _mediaEditors = crCtxProv.consume { crCtx =>
-        MuiList()(
-
-          // edge.media.file
-          MuiListItem()(
-            MuiListItemIcon()(
-              Mui.SvgIcons.FileCopy()(),
-            ),
-            MuiListItemText()(
-              crCtx.messages( MsgCodes.`File` )
-            ),
-          ),
-
+        React.Fragment(
           // MIME-тип файла.
           MuiListItem()(
             {
@@ -201,7 +199,7 @@ class MediaR(
               }
               val _label = crCtx.messages( MsgCodes.`Original` )
               val _css = new MuiFormControlLabelClasses {
-                override val root = EdgeEditCss.input.htmlClass
+                override val root = _inputCss
               }
 
               new MuiFormControlLabelProps {
@@ -323,75 +321,86 @@ class MediaR(
             {
               val _label = crCtx.messages( MsgCodes.`Metadata` )
               s.fileStorageDataMetaC { fileStorageMetaDataProxy =>
+                val fileStorageMetaData = fileStorageMetaDataProxy.value
                 MuiTextField(
                   new MuiTextFieldProps {
                     override val `type`   = HtmlConstants.Input.text
                     override val label    = _label
-                    override val value    = fileStorageMetaDataProxy.value
+                    override val value    = fileStorageMetaData
                     override val onChange = _onFileStorageMetaDataChange
                     override val classes  = _tfCss
                     override val required = true
+                    override val error    = fileStorageMetaData.isEmpty
                   }
                 )()
               }
             },
 
           ),
-
         )
+      }
+
+      lazy val _muiInputCss = new MuiInputClasses {
+        override val root = _inputCss
       }
 
       // Или заливка файла. Или информация по загруженному файлу.
       lazy val _fileUpload = s.uploadReqPotC { uploadReqPotProxy =>
         val pot = uploadReqPotProxy.value
 
-        <.span(
+        React.Fragment(
 
           // Если ничего ещё не загружено - отрендерить input для файло-заливки.
-          pot.renderEmpty {
-            MuiInput(
-              new MuiInputProps {
-                override val `type`   = HtmlConstants.Input.file
-                override val onChange = _onFileChange
-                override val error    = pot.isFailed
-                override val disabled = pot.isPending
-              }
-            )
-          },
+          MuiListItem()(
+            pot.renderEmpty {
+              MuiInput(
+                new MuiInputProps {
+                  override val `type`   = HtmlConstants.Input.file
+                  override val onChange = _onFileChange
+                  override val error    = pot.isFailed
+                  override val disabled = pot.isPending
+                  override val classes  = _muiInputCss
+                }
+              )
+            },
 
-          pot.renderPending { _ =>
-            MuiLinearProgress(
-              new MuiLinearProgressProps {
-                override val variant = MuiProgressVariants.indeterminate
-              }
-            )
-          },
+            pot.renderPending { p =>
+              println( s"PENDING: " + p )
+              MuiCircularProgress(
+                new MuiCircularProgressProps {
+                  override val variant = MuiProgressVariants.indeterminate
+                }
+              )
+            },
+          ),
 
           // Ошибка заливки файла.
           pot.renderFailed { ex =>
-            MuiToolTip {
-              val _title = <.pre(
-                ex.getStackTrace
-                  .iterator
-                  .take(6)
-                  .mkString("\n"),
-              )
-                .rawNode
-              new MuiToolTipProps {
-                override val title = _title
-              }
-            } (
-              MuiTypoGraphy(
-                new MuiTypoGraphyProps {
-                  override val variant = MuiTypoGraphyVariants.h5
+            MuiListItem()(
+              MuiToolTip {
+                val _title = <.pre(
+                  ex.getStackTrace
+                    .iterator
+                    .take(6)
+                    .mkString("\n"),
+                )
+                  .rawNode
+                new MuiToolTipProps {
+                  override val title = _title
                 }
-              )(
-                crCtxProv.message( MsgCodes.`Error` ),
-                HtmlConstants.SPACE,
-                ex.getClass.getSimpleName,
-                HtmlConstants.SPACE,
-                ex.getMessage,
-              )
+              } (
+                MuiTypoGraphy(
+                  new MuiTypoGraphyProps {
+                    override val variant = MuiTypoGraphyVariants.h5
+                  }
+                )(
+                  crCtxProv.message( MsgCodes.`Error` ),
+                  HtmlConstants.SPACE,
+                  ex.getClass.getSimpleName,
+                  HtmlConstants.SPACE,
+                  ex.getMessage,
+                )
+              ),
             )
           },
 
@@ -400,14 +409,46 @@ class MediaR(
 
       // Галочки удаления EdgeMedia не нужно: пусть эдж удаляется целиком, и пересоздаётся заново с перезаливкой файла.
       // Тогда, файл на сервере тоже будет удалён.
+
       MuiPaper()(
-        s.edgeMediaDefinedSomeC { edgeMediaDefinedSomeProxy =>
-          if (edgeMediaDefinedSomeProxy.value.value) {
-            _mediaEditors
-          } else {
-            _fileUpload
-          }
-        },
+        MuiList()(
+
+          // edge.media.file
+          MuiListItem()(
+            MuiListItemIcon()(
+              Mui.SvgIcons.FileCopy()(),
+            ),
+            MuiListItemText()(
+              crCtxProv.message( MsgCodes.`File` )
+            ),
+
+            // Если есть файл, то отрендерить ссылку для открытия файла.
+            {
+              lazy val openFileMsg = crCtxProv.message( MsgCodes.`Open.file` )
+              s.edgeIdQsOptC { edgeIdQsOptProxy =>
+                edgeIdQsOptProxy.value.whenDefinedEl { edgeIdQs =>
+                  val edgeIdQsJson = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(edgeIdQs) )
+                  MuiLink(
+                    new MuiLinkProps {
+                      val href = routes.controllers.SysNodeEdges.openFile( edgeIdQsJson ).url
+                    }
+                  )(
+                    openFileMsg,
+                  )
+                }
+              }
+            }
+          ),
+
+          s.edgeMediaDefinedSomeC { edgeMediaDefinedSomeProxy =>
+            if (edgeMediaDefinedSomeProxy.value.value) {
+              _mediaEditors
+            } else {
+              _fileUpload
+            }
+          },
+
+        ),
       )
     }
 
@@ -447,6 +488,10 @@ class MediaR(
         fileStorageDataMetaC = propsProxy.connect { props =>
           props.media
             .fold(emptyStr)( _.storage.data.meta )
+        },
+        edgeIdQsOptC = propsProxy.connect { props =>
+          props.edgeIdQs
+            .filter(_ => props.media.nonEmpty)
         },
       )
     }

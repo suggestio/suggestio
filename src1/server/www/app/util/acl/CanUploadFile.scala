@@ -5,7 +5,7 @@ import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import models.mup.{MUploadReq, MUploadTargetQs}
 import models.req.MSioUsers
@@ -28,7 +28,7 @@ class CanUploadFile @Inject()(
                                uploadUtil                 : UploadUtil,
                                implicit private val ec    : ExecutionContext,
                              )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -114,13 +114,13 @@ class CanUploadFile @Inject()(
         }
 
         (for {
-          swfsEith <- cdnUtil.checkStorageForThisNode( upTg.storage.storage )
-          if swfsEith.isRight
+          storageEith <- cdnUtil.checkStorageForThisNode( upTg.storage.storage )
+          if storageEith.isRight
           existNodeOpt <- existNodeOptFut
           resp <- {
-            LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs => $swfsEith")
+            LOGGER.trace(s"$logPrefix Allowed to process file upload, storage => $storageEith")
             val mreq = MUploadReq(
-              swfsOpt       = swfsEith.toOption.flatten,
+              swfsOpt       = storageEith.toOption.flatten,
               existNodeOpt  = existNodeOpt,
               request       = request0,
               user          = user,

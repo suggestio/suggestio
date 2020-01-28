@@ -1,12 +1,13 @@
 package io.suggest.n2.edge.edit.v.inputs
 
-import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiFormLabel, MuiIconButton, MuiIconButtonProps, MuiInput, MuiInputLabel, MuiInputProps, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiFormLabel, MuiIconButton, MuiIconButtonProps, MuiInput, MuiInputProps, MuiToolTip, MuiToolTipProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.n2.edge.edit.m.{NodeIdAdd, NodeIdChange}
 import io.suggest.n2.edge.edit.v.EdgeEditCss
+import io.suggest.n2.edge.edit.v.inputs.act.NodeLinkR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -18,6 +19,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Редактор списка id узлов (или иных ключей эджа).
   */
 class NodeIdsR(
+                nodeLinkR: NodeLinkR,
                 crCtxProv: React.Context[MCommonReactCtx],
               ) {
 
@@ -44,72 +46,76 @@ class NodeIdsR(
     def render(s: State): VdomElement = {
       val addSvg = Mui.SvgIcons.Add()()
 
-      val addMsg = crCtxProv.message( MsgCodes.`Add` )
+      crCtxProv.consume { crCtx =>
+        val addMsg = crCtx.messages( MsgCodes.`Add` )
 
-      MuiFormControl {
-        val css = new MuiFormControlClasses {
-          override val root = EdgeEditCss.input.htmlClass
-        }
-        new MuiFormControlProps {
-          override val classes = css
-        }
-      } (
+        MuiFormControl {
+          val css = new MuiFormControlClasses {
+            override val root = EdgeEditCss.input.htmlClass
+          }
+          new MuiFormControlProps {
+            override val classes = css
+          }
+        } (
 
-        MuiFormLabel()(
-          crCtxProv.message( MsgCodes.`Node.ids.or.keys` ),
-        ),
+          MuiFormLabel()(
+            crCtx.messages( MsgCodes.`Node.ids.or.keys` ),
+          ),
 
-        // Список id узлов.
-        s.nodeIdsC { nodeIdsProxy =>
-          <.span(
-            // Список input'ов
-            (for {
-              (nodeId, i) <- nodeIdsProxy
-                .value
-                .iterator
-                .zipWithIndex
-            } yield {
-              <.span(
-                ^.key := i,
-                MuiInput {
-                  val _onChangeF = ReactCommonUtil.cbFun1ToJsCb( _onNodeIdChange(i) )
-                  new MuiInputProps {
-                    override val value = nodeId
-                    override val onChange = _onChangeF
-                  }
-                },
-                HtmlConstants.COMMA, HtmlConstants.NBSP_STR,
-              )
-            })
-              .toVdomArray,
-          )
-        },
+          // Список id узлов.
+          s.nodeIdsC { nodeIdsProxy =>
+            <.span(
+              // Список input'ов
+              (for {
+                (nodeId, i) <- nodeIdsProxy
+                  .value
+                  .iterator
+                  .zipWithIndex
+              } yield {
+                <.span(
+                  ^.key := i,
+                  MuiInput {
+                    val _onChangeF = ReactCommonUtil.cbFun1ToJsCb( _onNodeIdChange(i) )
+                    new MuiInputProps {
+                      override val value = nodeId
+                      override val onChange = _onChangeF
+                    }
+                  },
+                  nodeLinkR.component( nodeId ),
 
-        // Кнопка добавки узла в список узлов:
-        s.showAddBtnC { showAddBtnSomeProxy =>
-          val showAddBtn = showAddBtnSomeProxy.value.value
-          <.span(
-            if (showAddBtn) ^.visibility.visible
-            else ^.visibility.hidden,
+                  HtmlConstants.COMMA, HtmlConstants.NBSP_STR,
+                )
+              })
+                .toVdomArray,
+            )
+          },
 
-            MuiToolTip(
-              new MuiToolTipProps {
-                override val title = addMsg.rawNode
-              }
-            )(
-              MuiIconButton(
-                new MuiIconButtonProps {
-                  override val disabled = !showAddBtn
-                  override val onClick = _onAddClickCbF
+          // Кнопка добавки узла в список узлов:
+          s.showAddBtnC { showAddBtnSomeProxy =>
+            val showAddBtn = showAddBtnSomeProxy.value.value
+            <.span(
+              if (showAddBtn) ^.visibility.visible
+              else ^.visibility.hidden,
+
+              MuiToolTip(
+                new MuiToolTipProps {
+                  override val title = addMsg.rawNode
                 }
               )(
-                addSvg,
+                MuiIconButton(
+                  new MuiIconButtonProps {
+                    override val disabled = !showAddBtn
+                    override val onClick = _onAddClickCbF
+                  }
+                )(
+                  addSvg,
+                ),
               ),
-            ),
-          )
-        },
+            )
+          },
 
-      )
+        )
+      }
     }
 
   }

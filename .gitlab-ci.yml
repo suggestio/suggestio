@@ -18,7 +18,7 @@ www-stage:
   - /sbin/entrypoint.sh
   script:
   - sbt 'project www' stage
-  - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io sio5.suggest.io
+  - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io
 
 ## Развёртывание на серверах. (надо разобраться, почему target/universal недоступен отсюда).
 #www-stage-deploy-nodes:
