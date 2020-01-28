@@ -13,8 +13,6 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 libraryDependencies ++= {
   val slf4jVsn      = Common.Vsn.SLF4J 
-  //val akkaVsn       = "2.5.+"
-  //val morphVsn      = "1.3"
   Seq(
     "org.gnu.inet" % "libidn" % "1.15",
     "org.apache.commons" % "commons-lang3" % Common.Vsn.COMMONS_LANG3,
