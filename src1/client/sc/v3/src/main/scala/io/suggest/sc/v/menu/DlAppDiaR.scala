@@ -8,13 +8,13 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.app.{MScAppDlInfo, MScAppGetResp}
+import io.suggest.sc.app.MScAppGetResp
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.ext.svc.MExtServices
 import io.suggest.msg.JsFormatUtil
-import io.suggest.sc.m.menu.{DlApp, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{OpenCloseAppDl, PlatformSetAppDl}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -55,9 +55,11 @@ class DlAppDiaR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, PlatformSetAppDl( osFamily2 ) )
     }
 
+    /*
     private def _onDownLoadBtnClick(dlInfo: MScAppDlInfo) = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, DlApp(dlInfo) )
     }
+    */
 
 
     def render(s: State): VdomElement = {
@@ -134,7 +136,7 @@ class DlAppDiaR(
                             override val disabled = false
                             override val button = true
                             override val component = js.defined( "a" )
-                            override val onClick = _onDownLoadBtnClick( dlInfo )
+                            //override val onClick = _onDownLoadBtnClick( dlInfo )
                             val href = dlInfo.url
                           }
                         )(

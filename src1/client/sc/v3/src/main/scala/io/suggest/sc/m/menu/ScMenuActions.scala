@@ -1,7 +1,7 @@
 package io.suggest.sc.m.menu
 
 import io.suggest.dev.MOsFamily
-import io.suggest.sc.app.{MScAppDlInfo, MScAppGetResp}
+import io.suggest.sc.app.MScAppGetResp
 import io.suggest.sc.m.ISc3Action
 
 import scala.util.Try
@@ -26,5 +26,3 @@ case class PlatformSetAppDl( osPlatform: MOsFamily ) extends IScAppAction
 /** Экшен обработки ответа на запрос инфы по скачиванию для платформы. */
 case class DlInfoResp( timeStampMs: Long, tryResp: Try[MScAppGetResp] ) extends IScAppAction
 
-/** Запуск закачки. */
-case class DlApp( dlInfo: MScAppDlInfo ) extends IScAppAction
