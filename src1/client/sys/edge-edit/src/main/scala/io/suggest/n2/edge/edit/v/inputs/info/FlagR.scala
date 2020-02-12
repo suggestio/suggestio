@@ -19,9 +19,9 @@ import scala.scalajs.js.annotation.JSName
   * Created: 16.01.2020 23:21
   * Description: Legacy-флаг в info.
   */
-class InfoFlagR(
-                 crCtxProv: React.Context[MCommonReactCtx],
-               ) {
+class FlagR(
+             crCtxProv: React.Context[MCommonReactCtx],
+           ) {
 
   type Props_t = Option[Boolean]
   type Props = ModelProxy[Props_t]
@@ -41,7 +41,7 @@ class InfoFlagR(
 
     def render(s: State): VdomElement = {
       val css = new MuiCheckBoxClasses {
-        override val root = EdgeEditCss.input.htmlClass
+        override val root = EdgeEditCss.inputLeft.htmlClass
       }
       MuiFormControlLabel {
         val _control = s.isCheckedOptC { isCheckedOptProxy =>

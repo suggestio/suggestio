@@ -48,15 +48,12 @@ class CanRecoverPw @Inject() (
 
   /** Собрать ACL ActionBuilder проверки доступа на восстановление пароля.
     *
-    * @param eActId id активатора.
     * @param keyNotFoundF Не найден ключ для восстановления.
     */
   def apply(qs: MEmailRecoverQs, userInits1: MUserInit*)
            (keyNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MNodeReq, AnyContent] = {
 
-    new reqUtil.SioActionBuilderImpl[MNodeReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
@@ -87,7 +84,8 @@ class CanRecoverPw @Inject() (
               override def limit = 2
             }
           }
-          maybeInitUser( user )
+
+          MUserInits.initUser( user, userInits1 )
 
           searchPersonsFut.flatMap { mNodesFound =>
             if (mNodesFound.isEmpty) {

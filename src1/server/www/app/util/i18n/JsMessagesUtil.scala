@@ -10,6 +10,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
+import io.suggest.ext.svc.MExtServices
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.n2.edge.MPredicates
@@ -272,6 +273,11 @@ class JsMessagesUtil @Inject() (
       ErrorMsgs.GET_NODE_INDEX_FAILED ::
       ErrorMsgs.XHR_UNEXPECTED_RESP ::
       MC.`Application` ::
+      MC.`Download.application` ::
+      MC.`Download.0` ::
+      MC.`No.downloads.available` ::
+      MC.`File` ::
+      MC.`Choose...` ::
       Nil
   }
 
@@ -486,11 +492,16 @@ class JsMessagesUtil @Inject() (
       MC.`Append.to.node.ids` ::
       MC.`Cancel` ::
       MC.`File.already.exist.on.node.0` ::
+      MC.`External.service` ::
+      MC.`empty` ::
+      MC.`Info` ::
+      MC.`Operating.system.family` ::
       Nil
 
     // Оптовые списки сообщений - тут:
     ( heads #::
       MPredicates.values.iterator.map(_.singular) #::
+      MExtServices.values.iterator.map(_.nameI18N) #::
       LazyList.empty
     )
       .iterator
@@ -557,11 +568,26 @@ class JsMessagesUtil @Inject() (
   )
 
 
+  /** Короткие (сокращённых) суффиксы для типичных префиксов. */
+  private def KMGT_UNITS: List[String] = {
+    MC.`K._Kilo` ::
+    MC.`M._Mega` ::
+    MC.`G._Giga` ::
+    MC.`T._Tera` ::
+    MC.`Number.frac.delim` ::
+    MC.`Number0.with.units1` ::
+    MC.`Prefixed0.metric.unit1` ::
+    MC.`B._Bytes` ::    // Тут байты, обычно если что-то измеряется, то в байтах.
+    Nil
+  }
+
+
   /** jsMessages для выдачи. */
   val scJsMsgsFactory: JsMessages = {
     val msgs = (
       SC #::
       DIST_UNITS #::
+      KMGT_UNITS #::
       LazyList.empty
     )
       .iterator

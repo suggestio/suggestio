@@ -68,6 +68,8 @@ object MNodeEdges
 
       // Внешние сервисы
       def O_INFO_EXT_SERVICE_FN       = _fullFn( Info.INFO_EXT_SERVICE_FN )
+      def O_INFO_OS_FAMILY_FN         = _fullFn( Info.INFO_OS_FAMILY_FN )
+
 
 
       // Edge media

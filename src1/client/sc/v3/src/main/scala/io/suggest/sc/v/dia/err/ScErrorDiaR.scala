@@ -106,7 +106,7 @@ class ScErrorDiaR(
                 new MuiLinearProgressProps {
                   override val variant = {
                     if (isPending) MuiProgressVariants.indeterminate
-                    else MuiProgressVariants.static
+                    else MuiProgressVariants.determinate
                   }
                 }
               ),

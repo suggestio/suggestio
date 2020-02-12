@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, PredicateChanged, Save, SaveResp, TextNiSet}
+import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, ExtServiceSet, FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, OsFamilySet, PredicateChanged, Save, SaveResp, TextNiSet}
 import io.suggest.n2.edge.edit.u.IEdgeEditApi
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
@@ -136,6 +136,38 @@ class EdgeEditAh[M](
         noChange
       } else {
         val v2 = (lens set m.commentNi)(v0)
+        updated(v2)
+      }
+
+
+    // Редактирование внешнего сервиса.
+    case m: ExtServiceSet =>
+      val v0 = value
+
+      val lens = MEdgeEditRoot.edge
+        .composeLens( MEdge.info )
+        .composeLens( MEdgeInfo.extService )
+
+      if (lens.get(v0) ==* m.extServiceOpt) {
+        noChange
+      } else {
+        val v2 = (lens set m.extServiceOpt)(v0)
+        updated(v2)
+      }
+
+
+    // Редактирование семейства ОС.
+    case m: OsFamilySet =>
+      val v0 = value
+
+      val lens = MEdgeEditRoot.edge
+        .composeLens( MEdge.info )
+        .composeLens( MEdgeInfo.osFamily )
+
+      if (lens.get(v0) ==* m.osFamilyOpt) {
+        noChange
+      } else {
+        val v2 = (lens set m.osFamilyOpt)(v0)
         updated(v2)
       }
 

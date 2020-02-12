@@ -2,8 +2,9 @@ package util.ext
 
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import javax.inject.{Inject, Singleton}
+import models.mctx.Context
 import models.mext.MExtServicesJvm
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 
 /**
   * Suggest.io
@@ -13,9 +14,8 @@ import models.mproj.ICommonDi
   */
 @Singleton
 class ExtServicesUtil @Inject() (
-                                  mCommonDi       : ICommonDi
+                                  injector: Injector,
                                 ) {
-
 
   private def _buildHelpers(services: MExtService*): Iterator[(MExtService, IExtServiceHelper)] = {
     for {
@@ -23,9 +23,7 @@ class ExtServicesUtil @Inject() (
       if msvc.hasAdvExt
     } yield {
       val msvcJvm = MExtServicesJvm.forService( msvc )
-      val helper = mCommonDi.current
-        .injector
-        .instanceOf( msvcJvm.advExt.helperCt )
+      val helper = injector.instanceOf( msvcJvm.advExt.helperCt )
       msvc -> helper
     }
   }
@@ -57,6 +55,18 @@ class ExtServicesUtil @Inject() (
       .buffered
       .headOption
       .map(_._2)
+  }
+
+
+  def applicationUrl(extSvc: MExtService, appId: String)(implicit ctx: => Context): String = {
+    extSvc match {
+      case MExtServices.GooglePlay =>
+        s"${extSvc.mainPageUrl}store/apps/details?id=$appId"
+      case MExtServices.AppleITunes =>
+        s"${extSvc.mainPageUrl}${ctx.messages.lang.country}/app/${appId}"
+      case _ =>
+        throw new UnsupportedOperationException(s"$extSvc does not support apps distibution.")
+    }
   }
 
 }

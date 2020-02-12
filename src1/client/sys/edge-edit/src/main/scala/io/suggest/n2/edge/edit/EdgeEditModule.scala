@@ -1,11 +1,11 @@
 package io.suggest.n2.edge.edit
 
 import com.softwaremill.macwire._
-import io.suggest.n2.edge.edit.v.EdgeEditFormR
-import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, ErrorDiaR, FileExistDiaR, NodeLinkR, SaveBtnR}
-import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
-import io.suggest.n2.edge.edit.v.inputs.media.MediaR
-import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
+import io.suggest.n2.edge.edit.v._
+import io.suggest.n2.edge.edit.v.inputs.act._
+import io.suggest.n2.edge.edit.v.inputs.info._
+import io.suggest.n2.edge.edit.v.inputs.media._
+import io.suggest.n2.edge.edit.v.inputs._
 
 /**
   * Suggest.io
@@ -16,14 +16,22 @@ import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 class EdgeEditModule {
 
   import io.suggest.ReactCommonModule._
+  import io.suggest.sc.ScCommonModule._
 
-  // inputs
+  // edge
   lazy val predicateR = wire[PredicateR]
-  lazy val edgeEditFormR = wire[EdgeEditFormR]
   lazy val nodeIdsR = wire[NodeIdsR]
-  lazy val infoFlagR = wire[InfoFlagR]
   lazy val orderR = wire[OrderR]
-  lazy val infoTextNiR = wire[InfoTextNiR]
+
+  // edge.info
+  lazy val edgeInfoR = wire[EdgeInfoR]
+  lazy val flagR = wire[FlagR]
+  lazy val textNiR = wire[TextNiR]
+  lazy val extServiceR = wire[ExtServiceR]
+  lazy val osFamilyR = wire[OsFamilyR]
+
+  // edge.media
+  lazy val mediaR = wire[MediaR]
 
   // act
   lazy val deleteBtnR = wire[DeleteBtnR]
@@ -33,10 +41,8 @@ class EdgeEditModule {
   lazy val fileExistDiaR = wire[FileExistDiaR]
   lazy val nodeLinkR = wire[NodeLinkR]
 
-  // media
-  lazy val mediaR = wire[MediaR]
-
   // circuit
+  lazy val edgeEditFormR = wire[EdgeEditFormR]
   lazy val edgeEditCircuit = wire[EdgeEditCircuit]
 
 }

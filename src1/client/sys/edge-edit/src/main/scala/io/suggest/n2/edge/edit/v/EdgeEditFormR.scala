@@ -9,7 +9,7 @@ import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
 import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, ErrorDiaR, FileExistDiaR, SaveBtnR}
-import io.suggest.n2.edge.edit.v.inputs.info.{InfoFlagR, InfoTextNiR}
+import io.suggest.n2.edge.edit.v.inputs.info.EdgeInfoR
 import io.suggest.n2.edge.edit.v.inputs.media.MediaR
 import io.suggest.n2.edge.edit.v.inputs.{NodeIdsR, OrderR, PredicateR}
 import io.suggest.spa.OptFastEq
@@ -27,9 +27,8 @@ import scala.scalajs.js
 class EdgeEditFormR(
                      predicateEditR       : PredicateR,
                      nodeIdsR             : NodeIdsR,
-                     infoFlagR            : InfoFlagR,
+                     edgeInfoR            : EdgeInfoR,
                      orderR               : OrderR,
-                     infoTextNiR          : InfoTextNiR,
                      deleteBtnR           : DeleteBtnR,
                      deleteDiaR           : DeleteDiaR,
                      saveBtnR             : SaveBtnR,
@@ -69,11 +68,8 @@ class EdgeEditFormR(
                 // порядковые номера эджей
                 p.wrap( _.edge.order )( orderR.component.apply ),
 
-                // legacy-флаг эджа
-                MuiPaper()(
-                  p.wrap( _.edge.info.flag )( infoFlagR.component.apply ),
-                  p.wrap( _.edge.info.textNi )( infoTextNiR.component.apply ),
-                ),
+                // под-редактор edge.info
+                p.wrap( _.edge.info )( edgeInfoR.component.apply ),
 
                 // edge media
                 p.wrap { m =>

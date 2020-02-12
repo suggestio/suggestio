@@ -19,9 +19,9 @@ import scala.scalajs.js.annotation.JSName
   * Created: 17.01.2020 12:19
   * Description: Редактирование неиндексируемого текста в эдже.
   */
-class InfoTextNiR(
-                   crCtxProv            : React.Context[MCommonReactCtx],
-                 ) {
+class TextNiR(
+               crCtxProv            : React.Context[MCommonReactCtx],
+             ) {
 
   type Props_t = Option[String]
   type Props = ModelProxy[Props_t]
@@ -50,12 +50,12 @@ class InfoTextNiR(
     def render( s: State ): VdomElement = {
       val emptyStr = ""
 
-      MuiPaper()(
+      <.div(
 
         // Галочка отображения редактора неиндексируемого текста.
         MuiFormControlLabel {
           val css = new MuiCheckBoxClasses {
-            override val root = EdgeEditCss.input.htmlClass
+            override val root = EdgeEditCss.inputLeft.htmlClass
           }
           val _checkBox = s.isEnabledSomeC { isEnabledSomeProxy =>
             MuiCheckBox(
@@ -83,7 +83,7 @@ class InfoTextNiR(
 
             ReactCommonUtil.maybeEl( _valueOpt.nonEmpty ) {
               val css = new MuiFormControlClasses {
-                override val root = EdgeEditCss.input.htmlClass
+                override val root = EdgeEditCss.inputLeft.htmlClass
               }
               // textarea с вводом текста.
               MuiTextField(

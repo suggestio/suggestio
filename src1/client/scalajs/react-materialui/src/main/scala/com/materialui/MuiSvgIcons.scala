@@ -58,8 +58,10 @@ object MuiSvgIcons {
   object ActionAlarm extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/all-out", JSImport.Default)
   object ActionAllOut extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/android", JSImport.Default)
-  object ActionAndroid extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Android", JSImport.Default)
+  object Android extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Apple", JSImport.Default)
+  object Apple extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/announcement", JSImport.Default)
   object ActionAnnouncement extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/aspect-ratio", JSImport.Default)
@@ -180,10 +182,10 @@ object MuiSvgIcons {
   object ActionGTranslate extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/gavel", JSImport.Default)
   object ActionGavel extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/get-app", JSImport.Default)
-  object ActionGetApp extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/gif", JSImport.Default)
-  object ActionGif extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/GetApp", JSImport.Default)
+  object GetApp extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Gif", JSImport.Default)
+  object Gif extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/grade", JSImport.Default)
   object ActionGrade extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/group-work", JSImport.Default)
@@ -210,10 +212,10 @@ object MuiSvgIcons {
   object ActionHttps extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/important-devices", JSImport.Default)
   object ActionImportantDevices extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/info-outline", JSImport.Default)
-  object ActionInfoOutline extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/info", JSImport.Default)
-  object ActionInfo extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/InfoOutline", JSImport.Default)    // TODO missing?
+  object InfoOutline extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Info", JSImport.Default)
+  object Info extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/input", JSImport.Default)
   object ActionInput extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/invert-colors", JSImport.Default)
@@ -360,10 +362,10 @@ object MuiSvgIcons {
   object ActionSettingsVoice extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Settings", JSImport.Default)
   object Settings extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/shop-two", JSImport.Default)
-  object ActionShopTwo extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/shop", JSImport.Default)
-  object ActionShop extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ShopTwo", JSImport.Default)
+  object ShopTwo extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Shop", JSImport.Default)
+  object Shop extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/shopping-basket", JSImport.Default)
   object ActionShoppingBasket extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/shopping-cart", JSImport.Default)

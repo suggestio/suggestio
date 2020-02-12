@@ -21,7 +21,7 @@ import scalacss.ScalaCssReact._
   * Description: Кнопка редактирования текущей открытой карточки.
   */
 class EditAdR(
-               scReactCtxP            : React.Context[MScReactCtx],
+               scReactCtxP   : React.Context[MScReactCtx],
                crCtxProv     : React.Context[MCommonReactCtx],
              ) {
 
@@ -45,37 +45,37 @@ class EditAdR(
 
     def render(propsValProxy: Props): VdomElement = {
       propsValProxy.value.whenDefinedEl { props =>
-        scReactCtxP.consume { scReactCtx =>
-          val R = ScCssStatic.Menu.Rows
+        val R = ScCssStatic.Menu.Rows
+        <.a(
+          R.rowLink,
+          ^.href := props.scRoutes.controllers.LkAdEdit.editAd( props.adId ).url,
 
-          <.a(
-            R.rowLink,
-            ^.href := props.scRoutes.controllers.LkAdEdit.editAd( props.adId ).url,
-
-            // Ссылка на вход или на личный кабинет
-            MuiListItem(
-              new MuiListItemProps {
-                override val disableGutters = true
-                override val button = true
-              }
-            )(
-              MuiListItemText()(
+          // Ссылка на вход или на личный кабинет
+          MuiListItem(
+            new MuiListItemProps {
+              override val disableGutters = true
+              override val button = true
+            }
+          )(
+            MuiListItemText()(
+              scReactCtxP.consume { scReactCtx =>
                 <.span(
                   R.rowContent,
                   scReactCtx.scCss.fgColor,
                   crCtxProv.message( MsgCodes.`Edit` ),
                 )
-              )
+              }
             )
           )
-        }
+        )
       }
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

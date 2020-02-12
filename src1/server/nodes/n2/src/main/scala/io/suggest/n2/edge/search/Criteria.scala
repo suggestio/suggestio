@@ -1,6 +1,7 @@
 package io.suggest.n2.edge.search
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.dev.MOsFamily
 import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
@@ -25,6 +26,7 @@ import io.suggest.n2.media.storage.MStorage
   *                        true значит объединять запрошенные nodeId через AND.
   *                        false - OR.
   * @param extService Искомые внешние сервисы.
+  * @param osFamilies Искомые операционки.
   * @param fileHashesHex Поиск по файловым хэшам.
   * @param fileMimes Поиск по mime-типам файлов.
   * @param fileSizeB Поиск по размеру (размерам) хранимых файлов.
@@ -40,6 +42,7 @@ final case class Criteria(
                            nodeIdsMatchAll   : Boolean              = false,
                            geoDistanceSort   : Option[MGeoPoint]    = None,
                            extService        : Option[Seq[MExtService]] = None,
+                           osFamilies          : Option[Seq[MOsFamily]]   = None,
                            // media
                            fileHashesHex     : Iterable[MHashCriteria]  = Nil,
                            fileMimes         : Iterable[String]         = Nil,

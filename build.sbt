@@ -476,10 +476,10 @@ lazy val swToolBoxSjs = {
   Project(id = id + "-sjs", base = file(DIR0 + "client/scalajs/" + id))
 }
 
-/** Утили для выдачи. Общий код выдач разных поколений. */
+/** Аналог lk-common-sjs, но без лишних зависимостей. */
 lazy val scCommonSjs = {
   Project(id = "sc-common", base = file(DIR0 + "client/sc/common"))
-    .dependsOn( commonSjs )
+    .dependsOn( commonSjs, reactMaterialUiSjs )
 }
 
 /** Выдача на scala.js+react. */
@@ -490,7 +490,6 @@ lazy val sc3Sjs = {
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
       mapsSjs, jdRenderSjs, reactSidebar, reactScroll,
-      reactMaterialUiSjs
     )
 }
 
@@ -510,7 +509,7 @@ lazy val reactMaterialUiSjs = {
 /** Форма организации заливки какого-либо файла на сервер. */
 lazy val sysEdgeEditSjs = {
   Project(id = "sys-edge-edit-sjs", base = file(DIR0 + "client/sys/edge-edit"))
-    .dependsOn( lkCommonSjs, reactMaterialUiSjs )
+    .dependsOn( lkCommonSjs, scCommonSjs, reactMaterialUiSjs )
 }
 
 /** json document react renderer */

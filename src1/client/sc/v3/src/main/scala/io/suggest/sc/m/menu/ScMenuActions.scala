@@ -1,6 +1,10 @@
 package io.suggest.sc.m.menu
 
+import io.suggest.dev.MOsFamily
+import io.suggest.sc.app.{MScAppDlInfo, MScAppGetResp}
 import io.suggest.sc.m.ISc3Action
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -11,9 +15,16 @@ import io.suggest.sc.m.ISc3Action
 sealed trait IScMenuAction extends ISc3Action
 
 
-/** Экшены для кнопки скачивания нативного приложения. */
-sealed trait INativeAppAction extends IScMenuAction
+sealed trait IScAppAction extends IScMenuAction
 
+/** Экшен управления диалогом скачивания приложения. */
+case class OpenCloseAppDl( opened: Boolean ) extends IScAppAction
 
-/** MenuNativeApp Open/Close - экшен клика по элементу приложения. */
-case class MenuAppOpenClose(openClose: Boolean) extends IScMenuAction
+/** Смена платформы в селекте платформы диалога скачивания приложения. */
+case class PlatformSetAppDl( osPlatform: MOsFamily ) extends IScAppAction
+
+/** Экшен обработки ответа на запрос инфы по скачиванию для платформы. */
+case class DlInfoResp( timeStampMs: Long, tryResp: Try[MScAppGetResp] ) extends IScAppAction
+
+/** Запуск закачки. */
+case class DlApp( dlInfo: MScAppDlInfo ) extends IScAppAction

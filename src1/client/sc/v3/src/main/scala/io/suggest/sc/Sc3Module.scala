@@ -4,6 +4,7 @@ import com.softwaremill.macwire._
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.sc.u.api.ScAppApiHttp
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
@@ -26,6 +27,7 @@ class Sc3Module {
 
   import io.suggest.jd.render.JdRenderModule._
   import io.suggest.ReactCommonModule._
+  import ScCommonModule._
 
 
   lazy val sc3SpaRouter: Sc3SpaRouter = {
@@ -99,15 +101,18 @@ class Sc3Module {
   lazy val unsafeScreenAreaOffsetR = wire[UnsafeScreenAreaOffsetR]
   lazy val slideMenuItemR = wire[SlideMenuItemR]
   lazy val geoLocR = wire[GeoLocR]
+  lazy val dlAppR = wire[DlAppR]
 
 
   // dia
   lazy val wzFirstR = wire[WzFirstR]
   lazy val scErrorDiaR = wire[ScErrorDiaR]
+  lazy val dlAppDiaR = wire[DlAppDiaR]
 
 
   // sc3
   lazy val scRootR = wire[ScRootR]
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
+  lazy val scAppApiHttp = wire[ScAppApiHttp]
 
 }

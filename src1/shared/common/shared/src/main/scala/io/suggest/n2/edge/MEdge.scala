@@ -94,6 +94,7 @@ object MEdge
 
       // Внешние сервисы.
       def INFO_EXT_SERVICE_FN                   = _fullFn( F.EXT_SERVICE_FN )
+      def INFO_OS_FAMILY_FN                     = _fullFn( F.OS_FAMILY_FN )
 
     }
 

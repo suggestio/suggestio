@@ -3,7 +3,10 @@ package io.suggest.model
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
+import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
+import io.suggest.sc.app.MScAppGetQs
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
 import io.suggest.util.logs.MacroLogsDyn
@@ -129,7 +132,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   }
 
 
-  /** Поддержка в play router. */
+  /** Поддержка MNodeEdgeIdQs в play router. */
   implicit def mNodeEdgeIdQsQsb(implicit
                                 strB      : QueryStringBindable[String],
                                 longB     : QueryStringBindable[Long],
@@ -167,6 +170,103 @@ object CommonModelsJvm extends MacroLogsDyn {
           longB.unbind( k(F.NODE_VSN_FN),  value.nodeVsn ),
           intOptB.unbind( k(F.EDGE_ID_FN),   value.edgeId ),
         )
+      }
+
+    }
+  }
+
+
+  implicit def osPlatformQsb: QueryStringBindable[MOsFamily] =
+    EnumeratumJvmUtil.valueEnumQsb( MOsFamilies )
+
+
+  /** Поддержка MScAppDlQs. */
+  implicit def scAppDlQs: QueryStringBindable[MScAppGetQs] = {
+    new QueryStringBindableImpl[MScAppGetQs] {
+      private def osPlatformB = implicitly[QueryStringBindable[MOsFamily]]
+      private def strOptB = implicitly[QueryStringBindable[Option[String]]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAppGetQs]] = {
+        val F = MScAppGetQs.Fields
+        val k = key1F( key )
+        for {
+          osPlatformE     <- osPlatformB.bind( k(F.OS_FAMILY), params )
+          nodeIdOptE      <- strOptB.bind( k(F.ON_NODE_ID), params )
+        } yield {
+          for {
+            osPlatform    <- osPlatformE
+            nodeIdOpt     <- nodeIdOptE
+          } yield {
+            MScAppGetQs(
+              osFamily  = osPlatform,
+              onNodeId    = nodeIdOpt,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MScAppGetQs): String = {
+        val F = MScAppGetQs.Fields
+        val k = key1F( key )
+        _mergeUnbinded1(
+          osPlatformB.unbind( k(F.OS_FAMILY), value.osFamily ),
+          strOptB.unbind( k(F.ON_NODE_ID), value.onNodeId ),
+        )
+      }
+    }
+  }
+
+
+  implicit def mhashQsb: QueryStringBindable[MHash] =
+    EnumeratumJvmUtil.valueEnumQsb( MHashes )
+
+
+  /** Поддержка URL-qs вида "x.s1=aahh45234234&x.s256=aa543525325..."  */
+  implicit def hashesHexQsb: QueryStringBindable[HashesHex] = {
+   new QueryStringBindableImpl[HashesHex] {
+
+     private def strB = implicitly[QueryStringBindable[String]]
+
+     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, HashesHex]] = {
+        val hashesHexOptEithSeq = for (mhash <- MHashes.values) yield {
+          for {
+            hexValueEith <- strB.bind( key1(key, mhash.value), params )
+          } yield {
+            for (hexValue <- hexValueEith) yield {
+              mhash -> hexValue
+            }
+          }
+        }
+
+        if (hashesHexOptEithSeq.isEmpty || hashesHexOptEithSeq.forall(_.isEmpty)) {
+          None
+
+        } else {
+          val hashesHexEithSeq = hashesHexOptEithSeq
+            .flatten
+          val errorsIter = hashesHexEithSeq
+            .iterator
+            .flatMap(_.left.toOption)
+          val eith = if (errorsIter.nonEmpty) {
+            Left( errorsIter.mkString(",") )
+          } else {
+            val hhMap: HashesHex = hashesHexEithSeq
+              .iterator
+              .flatMap(_.toOption)
+              .toMap
+            Right(hhMap)
+          }
+          Some(eith)
+        }
+      }
+
+
+      override def unbind(key: String, value: HashesHex): String = {
+        _mergeUnbinded {
+          for ((mhash, hexValue) <- value.iterator) yield {
+            strB.unbind(key1(key, mhash.value), hexValue)
+          }
+        }
       }
 
     }

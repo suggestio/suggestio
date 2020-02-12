@@ -29,16 +29,17 @@ class CanMdrResolute @Inject()(
                                 mNodes                  : MNodes,
                                 aclUtil                 : AclUtil,
                                 reqUtil                 : ReqUtil,
-                                mItems                  : MItems,
-                                isNodeAdmin             : IsNodeAdmin,
-                                isAuth                  : IsAuth,
                                 mCommonDi               : ICommonDi,
                               )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{slick, ec, errorHandler => httpErrorHandler}
+  import mCommonDi.{slick, ec, errorHandler => httpErrorHandler, current}
   import esModel.api._
+
+  private lazy val mItems = current.injector.instanceOf[MItems]
+  private lazy val isNodeAdmin = current.injector.instanceOf[IsNodeAdmin]
+  private lazy val isAuth = current.injector.instanceOf[IsAuth]
 
   /** Проверка прав доступа на дальнейшее исполнение резолюции модерации.
     * Следует помнить, что тело экшена также должно понимать, что это su-вызов или обычный юзер это модерирует,

@@ -1,14 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{MNodeOrderReq, MUserInit}
+import models.req.{MNodeOrderReq, MUserInit, MUserInits}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -40,9 +39,7 @@ class CanPayOrder @Inject() (
             userInits1      : MUserInit*
            ): ActionBuilder[MNodeOrderReq, AnyContent] = {
 
-    new reqUtil.SioActionBuilderImpl[MNodeOrderReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MNodeOrderReq] {
 
       override def invokeBlock[A](request0: Request[A], block: (MNodeOrderReq[A]) => Future[Result]): Future[Result] = {
         val request = aclUtil.reqFromRequest( request0 )
@@ -67,7 +64,7 @@ class CanPayOrder @Inject() (
           val nodeAdmOptFut = isNodeAdmin.isAdnNodeAdmin(onNodeId, user)
 
           // Запускаем инициализацию полей модели user, т.к. маловероятно, что этот реквест пойдёт мимо кассы.
-          maybeInitUser(user)
+          MUserInits.initUser(user, userInits1)
 
           lazy val logPrefix = s"invokeBlock($orderId)[${request.remoteClientAddress}]:"
 

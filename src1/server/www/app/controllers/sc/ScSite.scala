@@ -137,7 +137,7 @@ trait ScSite
 
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[List[Html]] = {
-      val fut = for {
+      (for {
         madOpt <- mNodes.maybeGetByIdCached( _siteQsArgs.povAdId )
         mad = madOpt.get
         if mad.edges
@@ -155,13 +155,13 @@ trait ScSite
         }
       } yield {
         renders.flatten
-      }
-      // Отработать случи отсутствия карточки или другие нежелательные варианты.
-      fut.recover { case ex: Throwable =>
-        if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.warn("Failed to collect meta-tags for ad " + _siteQsArgs.povAdId, ex)
-        List.empty[Html]
-      }
+      })
+        // Отработать случи отсутствия карточки или другие нежелательные варианты.
+        .recover { case ex: Throwable =>
+          if (!ex.isInstanceOf[NoSuchElementException])
+            LOGGER.warn("Failed to collect meta-tags for ad " + _siteQsArgs.povAdId, ex)
+          List.empty[Html]
+        }
     }
 
     /** Какой скрипт рендерить? */
@@ -185,7 +185,7 @@ trait ScSite
     def _syncRender: Boolean
 
     /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
-    def renderArgsFut: Future[ScSiteArgs] = {
+    def renderArgsFut: Future[MScSiteArgs] = {
       val _nodeOptFut             = nodeOptFutVal
       val _headAfterFut           = headAfterFut
       val _scriptHtmlFut          = scriptHtmlFut
@@ -196,16 +196,14 @@ trait ScSite
         _scriptHtml               <- _scriptHtmlFut
         _customScStateOpt         <- _customScStateOptFut
       } yield {
-        new ScSiteArgs {
-          override def nodeOpt    = _nodeOpt
-          override def headAfter: Iterable[Html] = {
-            super.headAfter ++ _headAfter
-          }
-          override def scriptHtml = _scriptHtml
-          override def apiVsn     = _siteQsArgs.apiVsn
-          override def jsStateOpt = _customScStateOpt
-          override def syncRender = _syncRender
-        }
+        MScSiteArgs(
+          nodeOpt     = _nodeOpt,
+          headAfter   = _headAfter,
+          scriptHtml  = _scriptHtml,
+          apiVsn      = _siteQsArgs.apiVsn,
+          jsStateOpt  = _customScStateOpt,
+          syncRender  = _syncRender,
+        )
       }
     }
 
@@ -236,19 +234,25 @@ trait ScSite
           override def userSaOpt = _userSaOpt
           override def statActions: List[MAction] = {
             // Возможный stat-экшен POV-просмотра сайта с т.з. карточки.
-            val mPovActions = _siteQsArgs.povAdId.fold [List[MAction]] (Nil) { povAdId =>
-              val mPovAct = MAction(
-                actions   = MActionTypes.PovNode :: Nil,
-                nodeId    = povAdId :: Nil,
-                nodeName  = Nil
-              )
-              mPovAct :: Nil
-            }
+            val mPovActions = _siteQsArgs
+              .povAdId
+              .fold [List[MAction]] (Nil) { povAdId =>
+                val mPovAct = MAction(
+                  actions   = MActionTypes.PovNode :: Nil,
+                  nodeId    = povAdId :: Nil,
+                  nodeName  = Nil
+                )
+                mPovAct :: Nil
+              }
             // Экшен посещения sc site.
             val mSiteAction = MAction(
               actions   = MActionTypes.ScSite :: Nil,
-              nodeId    = _nodeOpt.flatMap(_.id).toSeq,
-              nodeName  = _nodeOpt.flatMap(_.guessDisplayName).toSeq
+              nodeId    = _nodeOpt
+                .flatMap(_.id)
+                .toSeq,
+              nodeName  = _nodeOpt
+                .flatMap(_.guessDisplayName)
+                .toSeq,
             )
             // Объединяем все найденные stat-экшены.
             mSiteAction :: mPovActions
@@ -355,7 +359,7 @@ trait ScSite
             apiVsn            = _siteQsArgs.apiVsn,
             debug             = SC_JS_DEBUG,
             // Хост-порт для запросов через CDN:
-            rcvrsMapUrl          = rcvrsMapUrlArgs,
+            rcvrsMapUrl       = rcvrsMapUrlArgs,
           )
         )
 

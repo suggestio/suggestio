@@ -101,11 +101,9 @@ class CanEditAd @Inject() (
 
 
   def apply(adId1: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MAdProdReq] with AdEditBase with InitUserCmds {
+    new reqUtil.SioActionBuilderImpl[MAdProdReq] with AdEditBase {
 
       override def adId = adId1
-
-      override def userInits = userInits1
 
       def prodNotFound( mreq: IReqHdr, nodeIdOpt: Option[String]): Future[Result] =
         errorHandler.onClientError(mreq, Status.NOT_FOUND, s"Ad producer not found: ${nodeIdOpt.orNull}")
@@ -116,7 +114,7 @@ class CanEditAd @Inject() (
         user.personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
           val producerNodeIfCanEditOptFut = isUserCanEditAd(user, adId)
 
-          maybeInitUser(user)
+          MUserInits.initUser(user, userInits1)
 
           producerNodeIfCanEditOptFut.flatMap {
             case Some(data) =>

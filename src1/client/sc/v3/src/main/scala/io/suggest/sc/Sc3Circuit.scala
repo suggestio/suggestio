@@ -6,7 +6,6 @@ import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
-import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreen, MScreenInfo}
@@ -29,6 +28,7 @@ import io.suggest.sc.c.dia.{FirstRunDialogAh, ScErrorDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
+import io.suggest.sc.c.menu.DlAppAh
 import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
@@ -40,12 +40,13 @@ import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
-import io.suggest.sc.m.menu.{MMenuNativeApp, MMenuS}
+import io.suggest.sc.m.menu.{MMenuS, MDlAppDia}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
+import io.suggest.sc.u.api.IScAppApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -66,7 +67,8 @@ class Sc3Circuit(
                   // Явные аргументы:
                   routerState               : MSpaRouterState,
                   // Автоматические DI-аргументы:
-                  api                       : ISc3Api,
+                  sc3Api                    : ISc3Api,
+                  scAppApi                  : IScAppApi,
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -134,9 +136,6 @@ class Sc3Circuit(
         scCss = ScCss(
           MScCssArgs.from(scIndexResp, screenInfo)
         ),
-        menu = MMenuS(
-          nativeApp = Option.when( mplatform.isBrowser )( MMenuNativeApp.empty ),
-        ),
       ),
       grid = {
         val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen.wh)
@@ -154,7 +153,7 @@ class Sc3Circuit(
       },
       internals = MScInternals(
         conf = scInit.conf
-      )
+      ),
     )
   }
 
@@ -200,6 +199,9 @@ class Sc3Circuit(
   private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
   private val scErrorDiaRW        = mkLensZoomRW(dialogsRW, MScDialogs.error)( OptFastEq.Wrapped(MScErrorDia.MScErrorDiaFastEq) )
 
+  private val menuRW              = mkLensZoomRW( indexRW, MScIndex.menu )( MMenuS.MMenuSFastEq )
+  private val dlAppDiaRW          = mkLensZoomRW( menuRW, MMenuS.dlApp )( MDlAppDia.MDlAppDiaFeq )
+
 
   private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
     MLocEnv(
@@ -208,10 +210,12 @@ class Sc3Circuit(
     )
   }
 
+  private val inxStateRO = mkLensZoomRO( indexRW, MScIndex.state )
+
 
   /** Модель аргументов для поиска новых карточек в плитке. */
   private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
-    val inxState = mroot.index.state
+    val inxState = inxStateRO.value
 
     // TODO Унести сборку этого qs в контроллер или в утиль? Тут используется currRcvrId:
     // nodeId ресивера может быть задан в switchCtx, который известен только в контроллере, и отличаться от значения currRcvrId.
@@ -301,7 +305,7 @@ class Sc3Circuit(
 
   private val geoTabAh = new GeoTabAh(
     modelRW         = geoTabRW,
-    api             = api,
+    api             = sc3Api,
     geoSearchQsRO   = geoSearchQsRO,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
@@ -309,7 +313,7 @@ class Sc3Circuit(
   )
 
   private val indexAh = new IndexAh(
-    api     = api,
+    api     = sc3Api,
     modelRW = indexRW,
     rootRO  = rootRW,
   )
@@ -325,7 +329,7 @@ class Sc3Circuit(
   }
 
   private val gridAh = new GridAh(
-    api           = api,
+    api           = sc3Api,
     scQsRO        = gridAdsQsRO,
     screenRO      = screenRO,
     modelRW       = gridRW
@@ -374,6 +378,12 @@ class Sc3Circuit(
     circuit = this,
   )
 
+  private val menuNativeAppAh = new DlAppAh(
+    modelRW       = dlAppDiaRW,
+    scAppApi      = scAppApi,
+    indexStateRO  = inxStateRO,
+  )
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
   override protected val actionHandler: HandlerFunction = {
@@ -384,6 +394,9 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+
+    // Контроллер для нативного приложения.
+    acc ::= menuNativeAppAh
 
     acc ::= scErrorDiaAh
 

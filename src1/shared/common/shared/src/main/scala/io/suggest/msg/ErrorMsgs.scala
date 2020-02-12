@@ -118,6 +118,8 @@ object ErrorMsgs {
 
   def PLATFORM_READY_NOT_FIRED = "Platform.ready.not.fired"
 
+  def PLATFORM_ID_FAILURE = "Platform.id.failure"
+
   def CATCHED_CONSTRUCTOR_EXCEPTION = "Constructor.exception.catched"
 
   def SCREEN_SAFE_AREA_DETECT_ERROR = "Screen.safe.area.detect.error"

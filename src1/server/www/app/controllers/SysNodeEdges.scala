@@ -185,13 +185,17 @@ final class SysNodeEdges @Inject() (
     isSuNodeEdge(qs).async( uploadCtl.prepareUploadBp ) { implicit request =>
       val logPrefix = s"prepareUploadFile($qs)#${System.currentTimeMillis()}:"
 
+      val someTrue = Some(true)
       uploadCtl.prepareUploadLogic(
         logPrefix = logPrefix,
         validated = Validation.success( request.body ),
         upInfo = MUploadInfoQs(
           nodeType    = None,
           existNodeId = request.mnode.id,
-          systemResp  = Some(true),
+          systemResp  = someTrue,
+          // Принимать MIME от браузера при несовпадении.
+          // MIME будет отображено в форме, админ подправит сам при необходимости.
+          obeyMime    = someTrue,
         ),
       )
     }

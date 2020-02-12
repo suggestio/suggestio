@@ -20,6 +20,7 @@ object MUploadInfoQs {
     val NODE_TYPE_FN      = "t"
     val EXIST_NODE_ID_FN  = "n"
     val SYSTEM_RESP_FN    = "S"
+    val OBEY_MIME_FN      = "o"
   }
 
   implicit def uploadInfoQsb(implicit
@@ -39,6 +40,7 @@ object MUploadInfoQs {
           nodeTypeOptE      <- nodeTypeOptB.bind      ( k(F.NODE_TYPE_FN),      params )
           nodeIdOptE        <- strOptB.bind           ( k(F.EXIST_NODE_ID_FN),  params )
           systemRespOptE    <- boolOptB.bind          ( k(F.SYSTEM_RESP_FN),    params )
+          obeyMimeOptE      <- boolOptB.bind          ( k(F.OBEY_MIME_FN),      params )
         } yield {
           for {
             fileHandlerOpt  <- fileHandlerOptE
@@ -46,6 +48,7 @@ object MUploadInfoQs {
             nodeTypeOpt     <- nodeTypeOptE
             existNodeIdOpt  <- nodeIdOptE
             systemRespOpt   <- systemRespOptE
+            obeyMimeOpt     <- obeyMimeOptE
           } yield {
             MUploadInfoQs(
               fileHandler   = fileHandlerOpt,
@@ -53,6 +56,7 @@ object MUploadInfoQs {
               nodeType      = nodeTypeOpt,
               existNodeId   = existNodeIdOpt,
               systemResp    = systemRespOpt,
+              obeyMime      = obeyMimeOpt,
             )
           }
         }
@@ -67,6 +71,7 @@ object MUploadInfoQs {
           nodeTypeOptB.unbind       ( k(F.NODE_TYPE_FN),        value.nodeType    ),
           strOptB.unbind            ( k(F.EXIST_NODE_ID_FN),    value.existNodeId ),
           boolOptB.unbind           ( k(F.SYSTEM_RESP_FN),      value.systemResp  ),
+          boolOptB.unbind           ( k(F.OBEY_MIME_FN),        value.obeyMime    ),
         )
       }
     }
@@ -87,6 +92,9 @@ object MUploadInfoQs {
   *                 Если existingNodeId задан, то можно None.
   * @param existNodeId id существующего узла: не создавать новый узел, а использовать существующий.
   * @param systemResp Ответ должен содержать в себе системные данные: метаданные серверного хранилища и т.д.
+  * @param obeyMime Если mime-тип принятого файла не совпадает, то
+  *                 true - брать MIME, присланный с клиента (определён браузером или как-то ещё).
+  *                 false - брать MIME, определённый сервером.
   */
 case class MUploadInfoQs(
                           nodeType          : Option[MNodeType],
@@ -94,4 +102,5 @@ case class MUploadInfoQs(
                           colorDetect       : Option[MColorDetectArgs]    = None,
                           existNodeId       : Option[String]              = None,
                           systemResp        : Option[Boolean]             = None,
+                          obeyMime          : Option[Boolean]             = None,
                         )

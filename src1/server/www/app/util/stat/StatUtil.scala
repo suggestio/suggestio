@@ -3,16 +3,19 @@ package util.stat
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MOrientations2d
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.{IGeoFindIpResult, MLocEnv}
 import io.suggest.n2.node.MNode
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImplLazy
+import japgolly.univeq._
 import models.mctx.{Context, ContextUtil}
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser}
+import net.sf.uadetector.OperatingSystemFamily
 import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
 import play.mvc.Http.HeaderNames
@@ -37,12 +40,12 @@ final class StatUtil @Inject()(
                                 geoIpUtil               : GeoIpUtil,
                                 mCommonDi               : ICommonDi
                               )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
-  import LOGGER._
   import mCommonDi._
 
+  @inline implicit def osFamilyUe: UnivEq[OperatingSystemFamily] = UnivEq.force
 
   /** Является ли указанная строка мусорной? */
   def isStrGarbage(str: String): Boolean = {
@@ -107,6 +110,13 @@ final class StatUtil @Inject()(
   }
 
 
+  /** Функкция-конвертер из net.sf.uadetector.OperationSystemFamily в MOsFamily. */
+  def osFamilyConv: PartialFunction[OperatingSystemFamily, MOsFamily] = {
+    case OperatingSystemFamily.ANDROID      => MOsFamilies.Android
+    case OperatingSystemFamily.IOS          => MOsFamilies.Apple_iOS
+  }
+
+
   /** Что-то типа builder'а для создания и сохранения одного элемента статистики второго поколения. */
   abstract class Stat2 {
 
@@ -130,7 +140,7 @@ final class StatUtil @Inject()(
       }
     }
 
-    def browser = uaOpt.flatMap { ua =>
+    lazy val browser = uaOpt.flatMap { ua =>
       // try-catch для самозащиты от возможных багов в православной либе uadetector.
       Try {
         val uaParser = UADetectorServiceFactory.getResourceModuleParser
@@ -138,7 +148,7 @@ final class StatUtil @Inject()(
       }
         .recover {
           case ex: Throwable =>
-            warn("agent: Unable to use UADetector for parsing UA: " + ua, ex)
+            LOGGER.warn(s"agent: Unable to use UADetector for parsing UA: $ua", ex)
             None
         }
         .toOption
@@ -179,19 +189,35 @@ final class StatUtil @Inject()(
           if (xRqWith.endsWith(".Sio2m")) {
             CordovaApp :: acc0
           } else {
-            debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+            LOGGER.debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
             acc0
           }
         }
     }
 
+    /** Семейство ОСи на основе User-Agent в терминах модели s.io.
+      *
+      * Тут напрямую НЕ используется, а нужна в ScSite для формирования конфига выдачи
+      * с предложением установить мобильное приложение.
+      */
+    def sioOsFamily: Option[MOsFamily] = {
+      for {
+        agent     <- browser
+        os        <- Option( agent.getOperatingSystem )
+        osFamily  <- Option( os.getFamily )
+        mOsFamily <- osFamilyConv.lift( osFamily )
+      } yield {
+        mOsFamily
+      }
+    }
 
     /** Скомпиленные под статистику данные юзер-агента. */
     def mua = {
       val _browser  = browser
-      val browserOs = _browser.flatMap { _agent =>
-        Option(_agent.getOperatingSystem)
+      val _browserOs = browser.flatMap { _agent =>
+        Option( _agent.getOperatingSystem )
       }
+
       MUa(
         ua      = uaOpt,
         browser = for {
@@ -206,12 +232,12 @@ final class StatUtil @Inject()(
           if isStrUseful( devCatName )
         } yield devCatName,
         osFamily = for {
-          agentOs <- browserOs
+          agentOs <- _browserOs
           osFamilyName <- Option( agentOs.getFamilyName )
           if isStrUseful( osFamilyName )
         } yield osFamilyName,
         osVsn    = for {
-          agentOs <- browserOs
+          agentOs <- _browserOs
           osVsn   <- Option( agentOs.getVersionNumber )
           osVsnMajor <- Option( osVsn.getMajor )
           if isStrUseful( osVsnMajor )

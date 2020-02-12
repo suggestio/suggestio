@@ -106,9 +106,7 @@ class CanAdvAd @Inject()(
     * @param adId id размещаемой рекламной карточки.
     */
   def apply(adId: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MAdProdReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MAdProdReq] {
 
       def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
         val madFut = mNodes
@@ -118,7 +116,7 @@ class CanAdvAd @Inject()(
         val user = aclUtil.userFromRequest(request)
 
         // Оптимистично запустить сбор запрошенных данных MSioUser.
-        maybeInitUser(user)
+        MUserInits.initUser(user, userInits1)
 
         // Продолжить дальше работу асинхронно...
         val reqBlank = MReq(request, user)

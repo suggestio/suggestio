@@ -1,6 +1,6 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
@@ -39,30 +39,29 @@ import scala.concurrent.Future
  * Description: Этот контроллер руководит взаимодейтсвием пользователя с системой размещения карточек в соц.сетях и
  * иных сервисах, занимающихся PR-деятельстью.
  */
-@Singleton
 class LkAdvExt @Inject() (
-                           esModel                         : EsModel,
-                           canAdvAd                        : CanAdvAd,
-                           mNodes                          : MNodes,
-                           advExtWsActors                  : AdvExtWsActors,
-                           isNodeAdmin                     : IsNodeAdmin,
-                           mExtTargets                     : MExtTargets,
-                           canSubmitExtTargetForNode       : CanSubmitExtTargetForNode,
-                           advExtFormUtil                  : AdvExtFormUtil,
-                           cspUtil                         : CspUtil,
-                           aclUtil                         : AclUtil,
-                           canAccessExtTarget              : CanAccessExtTarget,
                            sioControllerApi                : SioControllerApi,
                            mCommonDi                       : ICommonDi
-)
+                         )
   extends MacroLogsImpl
 {
 
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi._
-  import esModel.api._
-  import cspUtil.Implicits._
+  import mCommonDi.current.injector
+
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val advExtFormUtil = injector.instanceOf[AdvExtFormUtil]
+  private lazy val mExtTargets = injector.instanceOf[MExtTargets]
+  private lazy val canAccessExtTarget = injector.instanceOf[CanAccessExtTarget]
+  private lazy val canSubmitExtTargetForNode = injector.instanceOf[CanSubmitExtTargetForNode]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val advExtWsActors = injector.instanceOf[AdvExtWsActors]
+  private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
 
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
@@ -141,6 +140,8 @@ class LkAdvExt @Inject() (
 
   private def _forAdRender(adId: String, form: ExtAdvForm, rs: Status)
                           (implicit request: IAdProdReq[_]): Future[Result] = {
+    import esModel.api._
+
     val targetsFut: Future[Seq[MExtTarget]] = {
       val args = MExtTargetSearchArgs(
         adnId       = request.producer.id,
@@ -180,7 +181,7 @@ class LkAdvExt @Inject() (
     canAdvAd(adId).async { implicit request =>
       advsFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
+          LOGGER.debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
           _forAdRender(adId, formWithErrors, NotAcceptable)
         },
         {advs =>
@@ -236,6 +237,7 @@ class LkAdvExt @Inject() (
             )
 
             // Запилить CSP-заголовок с сильно-расширенной политикой безопасности.
+            import cspUtil.Implicits._
             Ok( advRunnerTpl(rargs)(ctx) )
               .withCspHeader( _CSP_HDR_OPT )
           }
@@ -256,6 +258,8 @@ class LkAdvExt @Inject() (
   def wsRun(qsArgs: MExtAdvQs) = WebSocket.acceptOrResult[JsValue, JsValue] { implicit requestHeader =>
     lazy val logPrefix = s"wsRun[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix $qsArgs")
+
+    import esModel.api._
 
     val resFut = for {
       // Сначала нужно синхронно проверить права доступа всякие.
@@ -381,10 +385,11 @@ class LkAdvExt @Inject() (
     canSubmitExtTargetForNode(adnId).async { implicit request =>
       request.newTgForm.fold(
         {formWithErrors =>
-          debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
+          LOGGER.debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
           NotAcceptable(_targetFormTpl(adnId, formWithErrors, request.tgExisting))
         },
         {case (tg, ret) =>
+          import esModel.api._
           for (tgId <- mExtTargets.save(tg)) yield {
             // Вернуть форму с выставленным id.
             val tg2 = tg.copy(id = Some(tgId))
@@ -407,13 +412,14 @@ class LkAdvExt @Inject() (
    *         Редирект, если сессия истекла.
    */
   def deleteTargetSubmit(tgId: String) = canAccessExtTarget(tgId).async { implicit request =>
+    import esModel.api._
     for {
       isDeleted <- mExtTargets.deleteById( tgId )
     } yield {
       if (isDeleted) {
         NoContent
       } else {
-        warn(s"deleteTargetSubmit($tgId): Target not exists, already deleted in parallel request?")
+        LOGGER.warn(s"deleteTargetSubmit($tgId): Target not exists, already deleted in parallel request?")
         NotFound
       }
     }
@@ -430,7 +436,7 @@ class LkAdvExt @Inject() (
    *         В норме -- закрытие попапа с выставление шифрованного access-token'а в куку.
    */
   private def oauth1PopupReturn(adnId: String, actorInfoQs: ActorPathQs) = isNodeAdmin(adnId).async { implicit request =>
-    trace(s"${request.method} oauth1return($adnId, $actorInfoQs): " + request.uri)
+    LOGGER.trace(s"${request.method} oauth1return($adnId, $actorInfoQs): ${request.uri}")
     val msg = OAuthVerifier(
       request.getQueryString("oauth_verifier")
     )

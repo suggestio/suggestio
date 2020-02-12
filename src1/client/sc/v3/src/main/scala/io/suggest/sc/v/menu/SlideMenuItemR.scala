@@ -30,7 +30,7 @@ import scala.scalajs.js
   * Description: React-компонент пункта меню для управление геолокацией.
   */
 class SlideMenuItemR(
-                      scReactCtxP             : React.Context[MScReactCtx],
+                      scReactCtxP    : React.Context[MScReactCtx],
                       crCtxProv      : React.Context[MCommonReactCtx],
                     ) {
 

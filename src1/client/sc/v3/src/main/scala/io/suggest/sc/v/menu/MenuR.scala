@@ -1,13 +1,11 @@
 package io.suggest.sc.v.menu
 
-import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.hdr.LeftR
-import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.ueq.UnivEqUtil._
@@ -24,66 +22,58 @@ class MenuR(
              scReactCtxP    : React.Context[MScReactCtx],
            ) {
 
-  type Props = ModelProxy[PropsVal]
-
-  /** Поддержка FastEq для PropsVal. */
-  implicit object MenuRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.menuS ===* b.menuS
-    }
-  }
-
-  /** Контейнер данных для рендера этого компонента-шаблона.
-    *
-    * @param menuS Инстанс модели состояния меню.
-    */
-  case class PropsVal(
-                       menuS        : MMenuS
-                     )
+  type Props = ModelProxy[MMenuS]
 
 
   class Backend($: BackendScope[Props, Unit]) {
+
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
-      val vsn = versionR.component()
+      val vsn = versionR.component(): VdomElement
+
+      // Кнопка сокрытия панели влево
+      val hideBtn = propsProxy.wrap(_ => None)( leftR.apply ): VdomElement
+
+      val panelCommon = ScCssStatic.Root.panelCommon: TagMod
+      val panelBg = ScCssStatic.Root.panelBg: TagMod
+
+      val menuRows = <.div(
+        ScCssStatic.Menu.Rows.rowsContainer,
+        children,
+      )
 
       scReactCtxP.consume { scReactCtx =>
         val menuCss = scReactCtx.scCss.Menu
 
         <.div(
-          ScCssStatic.Root.panelCommon,
+          panelCommon,
           menuCss.panel,
 
           // Фон панели.
           <.div(
-            ScCssStatic.Root.panelBg,
-            scReactCtx.scCss.bgColor
+            panelBg,
+            scReactCtx.scCss.bgColor,
           ),
 
           // Контейнер для непосредственного контента панели.
           <.div(
             menuCss.content,
 
-            // Кнопка сокрытия панели влево
-            propsProxy.wrap(_ => None)( leftR.apply ),
+            hideBtn,
 
             // Менюшка
-            <.div(
-              ScCssStatic.Menu.Rows.rowsContainer,
-
-              children,
-
-            )  // .rowsContainer
+            menuRows,
           ),
 
           vsn,
-
         )    // .panel
       }
     }
+
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackendWithChildren[Backend]
     .build

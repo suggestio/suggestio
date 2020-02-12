@@ -2,7 +2,7 @@ package io.suggest.n2.node
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.{EnumeratumUtil, TreeEnumEntry}
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -19,9 +19,7 @@ object MNodeTypes extends StringEnum[MNodeType] {
 
 
   /** Узел ADN. */
-  case object AdnNode extends MNodeType("n") {
-    override def publicCanReadInfoAboutAdvOn = true
-  }
+  case object AdnNode extends MNodeType("n")
 
 
   /** Рекламная карточка. */
@@ -50,21 +48,7 @@ object MNodeTypes extends StringEnum[MNodeType] {
 
 
   /** Маячок BLE. iBeacon или EddyStone -- системе это не важно. */
-  case object BleBeacon extends MNodeType("b") {
-
-    /** Маячок -- тоже узел для направленного размещения, с какими-то своими правилами. */
-    override def publicCanReadInfoAboutAdvOn = true
-
-    /**
-      * Узлам-маячкам надо хранить свои uid'ы в _id. Так хоть и длинее,
-      * но всё-таки нет необходимости в ведении ещё одного индекса.
-      */
-    override def randomIdAllowed = false
-
-    /** Юзер управляет маячками самостоятельно. */
-    override def userHasExtendedAcccess: Boolean = true
-
-  }
+  case object BleBeacon extends MNodeType("b")
 
 
   /** Тип узла, описывающего некий абстрактный внешний http-ресурс. */
@@ -74,7 +58,7 @@ object MNodeTypes extends StringEnum[MNodeType] {
     case object VideoExt extends MNodeType("ev") with _Child
 
     /** Просто какая-то внешняя страница (внешний ресурс) без какой-либо явной специализации.
-      * Ресурс доступен по http/https, и обычно пригоден для использования через фрейм. */
+      * Ресурс доступен по http/https, и нередко пригоден для использования через фрейм. */
     case object Resource extends MNodeType("er") with _Child
 
     override def children: LazyList[MNodeType] =
@@ -90,32 +74,11 @@ object MNodeTypes extends StringEnum[MNodeType] {
 }
 
 
-  /** Трейт каждого элемента данной модели. */
+/** Класс одного типа. */
 sealed abstract class MNodeType(override val value: String)
   extends StringEnumEntry
   with TreeEnumEntry[MNodeType]
-{
 
-  /** Код сообщения в messages для единственного числа. */
-  def singular = "Ntype." + value
-
-  /** Код сообщений в messages для множественного числа. */
-  def plural   = "Ntypes." + value
-
-
-  /** Разрешается ли использовать рандомные id'шники? [true] */
-  def randomIdAllowed: Boolean = true
-
-  /**
-    * Есть ли у юзера расширенный доступ к управлению узлом?
-    * Это подразумевает возможность удалять узел и управлять значением isEnabled.
-    */
-  def userHasExtendedAcccess: Boolean = false
-
-  /** Разрешено ли неограниченному кругу лиц узнавать данные по узлу на тему размещения на нём? */
-  def publicCanReadInfoAboutAdvOn: Boolean = false
-
-}
 
 object MNodeType {
 
@@ -125,6 +88,47 @@ object MNodeType {
   }
 
   @inline implicit def univEq: UnivEq[MNodeType] = UnivEq.derive
+
+
+  implicit final class NodeTypeOpsExt( private val ntype: MNodeType ) extends AnyVal {
+
+    /** Код сообщения в messages для единственного числа. */
+    def singular = "Ntype." + ntype.value
+
+    /** Код сообщений в messages для множественного числа. */
+    def plural   = "Ntypes." + ntype.value
+
+    /** Разрешается ли использовать рандомные id'шники? [true] */
+    def randomIdAllowed: Boolean = {
+      // Узлам-маячкам надо хранить свои uid'ы в _id. Так хоть и длинее,
+      // но всё-таки нет необходимости в ведении ещё одного индекса.
+      !_isBleBeacon
+    }
+
+    /**
+      * Есть ли у юзера расширенный доступ к управлению узлом?
+      * Это подразумевает возможность удалять узел и управлять значением isEnabled.
+      */
+    def userHasExtendedAcccess: Boolean = {
+      // Юзер управляет маячками самостоятельно.
+      _isBleBeacon
+    }
+
+    /** Разрешено ли неограниченному кругу лиц узнавать данные по узлу на тему размещения на нём? */
+    def publicCanReadInfoAboutAdvOn: Boolean = {
+      _isAdnNode ||
+      // Маячок -- тоже узел для направленного размещения, с какими-то своими правилами.
+      _isBleBeacon
+    }
+
+
+    private def _isAdnNode =
+      ntype ==* MNodeTypes.AdnNode
+
+    private def _isBleBeacon =
+      ntype ==* MNodeTypes.BleBeacon
+
+  }
 
 }
 

@@ -19,7 +19,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class Bill2Conf @Inject() (
-                            configuration             : Configuration,
                             injector                  : Injector,
                           )
   extends MacroLogsDyn
@@ -31,9 +30,10 @@ class Bill2Conf @Inject() (
   private def actorSystem = injector.instanceOf[ActorSystem]
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
-  val CBCA_NODE_ID: String = {
+  lazy val CBCA_NODE_ID: String = {
     val ck = "bill.cbca.node.id"
-    val res = configuration
+    val res = injector
+      .instanceOf[Configuration]
       .getOptional[String](ck)
       .getOrElse {
         val r = "-vr-hrgNRd6noyQ3_teu_A"
@@ -44,7 +44,7 @@ class Bill2Conf @Inject() (
     val esModel = _esModel
     import esModel.api._
 
-    // Проверить в фоне, существует ли узел.
+    // Проверить в фоне, существует ли узел. Если нет, то в системе какая-то неисправность, и надо привлечь к ней внимание.
     for {
       _ <- mNodes.getByIdCache(res)
         .map(_.get)

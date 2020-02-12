@@ -53,11 +53,11 @@ class PredicateR(
           ): VdomElement
         }
 
+        val css = new MuiFormControlClasses {
+          override val root = EdgeEditCss.inputLeft.htmlClass
+        }
         s.predicateC { predicateProxy =>
           MuiTextField {
-            val css = new MuiFormControlClasses {
-              override val root = EdgeEditCss.input.htmlClass
-            }
             new MuiTextFieldProps {
               override val select   = true
               override val label    = _label.rawNode

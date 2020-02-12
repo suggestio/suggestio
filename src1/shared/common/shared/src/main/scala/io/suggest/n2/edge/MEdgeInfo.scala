@@ -3,6 +3,7 @@ package io.suggest.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.dev.MOsFamily
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
@@ -48,6 +49,7 @@ object MEdgeInfo
     val TAGS_FN           = "tags"
     val GEO_POINT_FN      = "gpt"
     val EXT_SERVICE_FN    = "xs"
+    val OS_FAMILY_FN      = "os"
 
     /** Поле тегов внутри является multi-field. Это нужно для аггрегации, например. */
     object Tags extends PrefixedFn {
@@ -114,7 +116,8 @@ object MEdgeInfo
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { gps => if (gps.nonEmpty) Some(gps) else None }
         ) and
-      (__ \ EXT_SERVICE_FN).formatNullable[MExtService]
+      (__ \ EXT_SERVICE_FN).formatNullable[MExtService] and
+      (__ \ OS_FAMILY_FN).formatNullable[MOsFamily]
     )(apply, unlift(unapply))
   }
 
@@ -155,9 +158,8 @@ object MEdgeInfo
       // Изначальное назначение: экспорт на карту узлов выдачи, чтобы в кружках с цифрами отображались.
       // Окружности и прочее фигурное добро для этого элементарного действа не подходят ни разу.
       F.GEO_POINT_FN -> FGeoPoint.indexedJs,
-      // Маркер связи с внешним сервисом, интегрированным с s.io.
-      // Появился с переездом идентов в n2.
       F.EXT_SERVICE_FN -> FKeyWord.indexedJs,
+      F.OS_FAMILY_FN -> FKeyWord.indexedJs,
     )
   }
 
@@ -170,6 +172,7 @@ object MEdgeInfo
   val geoShapes = GenLens[MEdgeInfo](_.geoShapes)
   val geoPoints = GenLens[MEdgeInfo](_.geoPoints)
   val extService = GenLens[MEdgeInfo](_.extService)
+  val osFamily = GenLens[MEdgeInfo](_.osFamily)
 
   @inline implicit def univEq: UnivEq[MEdgeInfo] = UnivEq.derive
 
@@ -191,6 +194,7 @@ object MEdgeInfo
   * Изначально было Seq, но из-за частой пошаговой пересборки этого лучше подходит List.
   * @param geoPoints Некие опорные геокоординаты, если есть.
   * @param extService id внешнего сервиса, с которым ангажированна данная связь.
+  * @param osFamily Привязка эджа к семейству операционных систем.
   */
 final case class MEdgeInfo(
                             dateNi       : Option[OffsetDateTime]  = None,
@@ -202,6 +206,7 @@ final case class MEdgeInfo(
                             geoShapes    : List[MEdgeGeoShape]     = Nil,
                             geoPoints    : Seq[MGeoPoint]          = Nil,
                             extService   : Option[MExtService]     = None,
+                            osFamily     : Option[MOsFamily]       = None,
                           )
   extends EmptyProduct
 {
@@ -252,6 +257,11 @@ final case class MEdgeInfo(
     for (extService <- this.extService) {
       sb.append(",extSvc=")
         .append(extService)
+    }
+
+    for (osFamily <- this.osFamily) {
+      sb.append(",os=")
+        .append(osFamily)
     }
 
     sb.toString()

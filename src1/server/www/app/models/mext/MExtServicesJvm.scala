@@ -22,6 +22,7 @@ object MExtServicesJvm {
       case MExtServices.FaceBook  => new FacebookService
       case MExtServices.Twitter   => new TwitterService
       case MExtServices.GosUslugi => new GosUslugiService
+      case _ => throw new NoSuchElementException
     }
   }
 

@@ -14,7 +14,9 @@
   routes.javascript.Ident.loginFormPage,
   routes.javascript.Ident.rdrUserSomewhere,
   routes.javascript.LkAds.adsPage,
-  routes.javascript.LkAdEdit.editAd
+  routes.javascript.LkAdEdit.editAd,
+
+  routes.javascript.ScApp.appDownloadInfo,
 )
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

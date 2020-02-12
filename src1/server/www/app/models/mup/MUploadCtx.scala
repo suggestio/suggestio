@@ -158,7 +158,8 @@ class MUploadCtx @Inject() (
       }
       .getOrElse {
         // Неизвестный тип файла. Непонятно, как проверять.
-        throw new UnsupportedOperationException(s"Don't know, how to early-validate ${detectedMimeTypeOpt.orNull}")
+        LOGGER.info( s"Don't know, how to early-validate ${detectedMimeTypeOpt.orNull}" )
+        true
       }
   }
 
@@ -225,9 +226,9 @@ class MUploadCtx @Inject() (
     if (isImage) {
       validateImageOptFut.get
     } else {
-      // Это не картинка. Хз, как файл проверять
-      LOGGER.error( s"validateFileFut: Don't know, how to validate file ${detectedMimeTypeOpt.orNull}" )
-      Future.successful(false)
+      // Неизвестно, как проверять файл такого типа.
+      LOGGER.warn( s"validateFileFut: Don't know, how to validate file ${detectedMimeTypeOpt.orNull}" )
+      Future.successful(true)
     }
   }
 

@@ -13,12 +13,21 @@ object EdgeEditCss extends StyleSheet.Inline {
 
   import dsl._
 
+  val inputLeft = style(
+    marginLeft( 16.px ),
+    marginBottom( 2.px ),
+  )
+
   val input = style(
     margin( 16.px ),
   )
 
-  val btn = style(
+  val w200 = style(
     width( 200.px )
+  )
+
+  val w400 = style(
+    width( 400.px )
   )
 
   val btnsCont = style(

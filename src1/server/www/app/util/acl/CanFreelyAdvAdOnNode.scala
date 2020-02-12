@@ -3,7 +3,7 @@ package util.acl
 import javax.inject.{Inject, Singleton}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
-import models.req.{MAdProdNodesChainReq, MUserInit}
+import models.req.{MAdProdNodesChainReq, MUserInit, MUserInits}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
@@ -36,9 +36,7 @@ class CanFreelyAdvAdOnNode @Inject() (
     * @param userInits1 Инициализация user-модели, если требуется.
     */
   def apply(adId: String, nodeKey: RcvrKey, userInits1: MUserInit*): ActionBuilder[MAdProdNodesChainReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MAdProdNodesChainReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MAdProdNodesChainReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdNodesChainReq[A]) => Future[Result]): Future[Result] = {
         val ireq = aclUtil.reqFromRequest(request)
@@ -47,7 +45,7 @@ class CanFreelyAdvAdOnNode @Inject() (
         val user = ireq.user
         val nodesChainOptFut = isNodeAdmin.isNodeChainAdmin(nodeKey, user)
 
-        maybeInitUser(user)
+        MUserInits.initUser(user, userInits1)
 
         def logPrefix = s"apply($adId, ${nodeKey.mkString("/")}):"
 

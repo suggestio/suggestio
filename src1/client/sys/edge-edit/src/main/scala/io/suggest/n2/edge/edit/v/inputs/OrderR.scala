@@ -43,7 +43,7 @@ class OrderR(
       val _label = crCtxProv.message( MsgCodes.`Ordering` )
 
       val css = new MuiFormControlClasses {
-        override val root = EdgeEditCss.input.htmlClass
+        override val root = EdgeEditCss.inputLeft.htmlClass
       }
 
       s.orderOptC { orderOptProxy =>

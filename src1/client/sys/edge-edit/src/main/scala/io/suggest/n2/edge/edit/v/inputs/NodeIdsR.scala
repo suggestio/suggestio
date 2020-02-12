@@ -51,7 +51,7 @@ class NodeIdsR(
 
         MuiFormControl {
           val css = new MuiFormControlClasses {
-            override val root = EdgeEditCss.input.htmlClass
+            override val root = EdgeEditCss.inputLeft.htmlClass
           }
           new MuiFormControlProps {
             override val classes = css

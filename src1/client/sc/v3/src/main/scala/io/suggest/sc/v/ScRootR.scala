@@ -13,6 +13,7 @@ import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
+import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.styl.{ScCss, ScCssStatic}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
@@ -57,12 +58,13 @@ class ScRootR (
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
                 val wzFirstR            : WzFirstR,
+                dlAppR                  : DlAppR,
+                dlAppDiaR               : DlAppDiaR,
                 commonReactCtx          : React.Context[MCommonReactCtx],
                 scErrorDiaR             : ScErrorDiaR,
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
-  import menuR.MenuRPropsValFastEq
   import enterLkRowR.EnterLkRowRPropsValFastEq
   import editAdR.EditAdRPropsValFastEq
   import aboutSioR.AboutSioRPropsValFastEq
@@ -81,7 +83,6 @@ class ScRootR (
                                     editAdC                   : ReactConnectProxy[Option[editAdR.PropsVal]],
                                     aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
                                     searchSideBarC            : ReactConnectProxy[MSearchPanelS],
-                                    menuC                     : ReactConnectProxy[menuR.PropsVal],
                                     menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
                                     menuBlueToothOptC         : ReactConnectProxy[blueToothR.Props_t],
                                     dbgUnsafeOffsetsOptC      : ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
@@ -243,14 +244,12 @@ class ScRootR (
         s.menuBlueToothOptC { blueToothR.OnOffR.apply },
 
         // Пункт скачивания мобильного приложения.
-
+        dlAppR(mrootProxy),
 
         // DEBUG: Если активна отладка, то вот это ещё отрендерить:
         s.dbgUnsafeOffsetsOptC { unsafeScreenAreaOffsetR.apply },
       )
-      val menuSideBarBody = s.menuC { menuPropsProxy =>
-        menuR( menuPropsProxy )( menuSideBarBodyInner )
-      }
+      val menuSideBarBody = mrootProxy.wrap(_.index.menu)( menuR(_)( menuSideBarBodyInner ) )( implicitly, MMenuS.MMenuSFastEq )
 
       val menuSideBar = {
         val menuSideBarStyles = {
@@ -366,6 +365,9 @@ class ScRootR (
         // Диалог первого запуска.
         s.wzFirstC { wzFirstR.apply },
 
+        // Диалог скачивания приложения.
+        dlAppDiaR.component( mrootProxy ),
+
         // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
         mrootProxy.wrap(_.dialogs.error)( scErrorDiaR.apply )(implicitly, OptFastEq.Plain),
 
@@ -403,12 +405,6 @@ class ScRootR (
               state    = wcState
             )
           }
-        },
-
-        menuC = propsProxy.connect { props =>
-          menuR.PropsVal(
-            menuS = props.index.menu
-          )
         },
 
         enterLkRowC = propsProxy.connect { props =>

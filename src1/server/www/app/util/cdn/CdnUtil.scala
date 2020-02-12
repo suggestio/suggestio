@@ -16,10 +16,11 @@ import play.api.Configuration
 import play.api.mvc.Call
 import OptionUtil.BoolOptOps
 import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.media.MEdgeMedia
+import io.suggest.n2.node.MNode
 import io.suggest.proto.http.HttpConst
 import util.up.UploadUtil
 import japgolly.univeq._
-import models.MNode
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -284,7 +285,10 @@ class CdnUtil @Inject() (
       (nodeId, edgeMedia.storage)
     })
       .to( LazyList )
+    mediasHosts1( node2storage )
+  }
 
+  def mediasHosts1(node2storage: Iterable[(String, MStorageInfo)]): Future[Map[String, Seq[MHostInfo]]] = {
     if (node2storage.isEmpty) {
       Future.successful( Map.empty )
 
@@ -304,7 +308,7 @@ class CdnUtil @Inject() (
             .toSeq
         }
       } yield {
-        LOGGER.trace(s"mediaHosts(${fileNodes.size} medias): Done\n mediaIds = ${fileNodes.iterator.flatMap(_.id).mkString(", ")}")
+        LOGGER.trace(s"mediaHosts(${node2storage.size} medias): Done\n mediaIds = ${node2storage.iterator.flatMap(_._1).mkString(", ")}")
         val storages2hostsMap = storages2hostsMaps.reduce(_ ++ _)
         (for {
           (nodeId, storage) <- node2storage

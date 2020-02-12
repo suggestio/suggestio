@@ -19,7 +19,10 @@ object MuiListItem {
 }
 
 
-trait MuiListItemProps extends MuiPropsBase {
+trait MuiListItemProps
+  extends MuiPropsBase
+  with MuiPropsBaseComponent
+{
   val button:                      js.UndefOr[Boolean]                                = js.undefined
   val classes:                     js.UndefOr[MuiListItemClasses]                     = js.undefined
   val selected:                    js.UndefOr[Boolean]                                = js.undefined
@@ -28,7 +31,6 @@ trait MuiListItemProps extends MuiPropsBase {
   val dense:                       js.UndefOr[Boolean]                                = js.undefined
   val disableGutters:              js.UndefOr[Boolean]                                = js.undefined
 
-  val component:                   js.UndefOr[String | React.Element]                 = js.undefined
   val ContainerComponent:          js.UndefOr[String | React.Element]                 = js.undefined
 }
 object MuiListItemProps extends MuiPropsBaseStatic[MuiListItemProps]

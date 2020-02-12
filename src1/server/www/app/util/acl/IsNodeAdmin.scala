@@ -265,7 +265,7 @@ class IsNodeAdmin @Inject()(
     val isAllowedFut = isAdnNodeAdmin(nodeId, user)
 
     if (user.personIdOpt.nonEmpty)
-      InitUserCmds.maybeInitUser(user, userInits)
+      MUserInits.initUser(user, userInits)
 
     isAllowedFut.flatMap {
       case Some(mnode) =>
@@ -306,9 +306,7 @@ class IsNodeAdmin @Inject()(
     * @param nodeKey Цепочка id'шников запрашиваемого узла.
     */
   def apply(nodeKey: RcvrKey, userInits1: MUserInit*): ActionBuilder[MNodesChainReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MNodesChainReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MNodesChainReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodesChainReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
@@ -316,7 +314,7 @@ class IsNodeAdmin @Inject()(
         val isAllowedFut = isNodeChainAdmin(nodeKey, user)
 
         if (user.personIdOpt.nonEmpty)
-          maybeInitUser(user)
+          MUserInits.initUser(user, userInits1)
 
         isAllowedFut.flatMap {
           case Some(mnodes) =>

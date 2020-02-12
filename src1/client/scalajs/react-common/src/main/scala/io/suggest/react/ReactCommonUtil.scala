@@ -118,12 +118,12 @@ object ReactCommonUtil {
        * Рендер Option[A] в VdomElement.
        * Это чтобы не мудрить везде с .orNull и прочими EmptyVdom, и заодно решить проблему с diode connect/wrap.
        */
-      def whenDefinedEl(f: A => VdomElement): VdomElement = {
+      def whenDefinedEl(implicit f: A => VdomElement): VdomElement = {
         O.fold(o, VdomNullElement)(f)
       }
 
       /** Рендер Option[A] в VdomNode. */
-      def whenDefinedNode(f: A => VdomNode): VdomNode = {
+      def whenDefinedNode(implicit f: A => VdomNode): VdomNode = {
         O.fold(o, VdomArray.empty(): VdomNode)(f)
       }
 

@@ -25,8 +25,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class CanUploadFile @Inject()(
                                injector                   : Injector,
-                               uploadUtil                 : UploadUtil,
-                               implicit private val ec    : ExecutionContext,
                              )
   extends MacroLogsImplLazy
 {
@@ -39,6 +37,8 @@ class CanUploadFile @Inject()(
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
   private lazy val mCtxIds = injector.instanceOf[MCtxIds]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val uploadUtil = injector.instanceOf[UploadUtil]
 
 
   /** Логика кода проверки прав, заворачивающая за собой фактический экшен, живёт здесь.

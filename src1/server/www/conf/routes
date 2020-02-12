@@ -24,7 +24,8 @@ GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQs
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
-GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
+GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
+GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 
 ## Дамп ошибок выдачи.
 POST /sc/error                          @controllers.Sc.handleScError
@@ -161,6 +162,7 @@ GET  /captcha/get                       @controllers.Img.getCaptcha(t: String)
 ## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.
 POST /upload/file                       @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs, c: Option[io.suggest.ctx.MCtxId] ?= None)
 GET  /upload/_config                    @controllers.Upload.getConfig
+GET  /download                          @controllers.Upload.download( d: mup.MDownLoadQs )
 
 
 ## sys

@@ -8,7 +8,7 @@ import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{MItemReq, MOrderIdsReq, MUserInit}
+import models.req.{MItemReq, MOrderIdsReq, MUserInit, MUserInits}
 import play.api.mvc._
 import japgolly.univeq._
 import play.api.http.Status
@@ -52,9 +52,7 @@ class CanAccessItem @Inject() (
     val itemIdsLen = itemIds.length
     lazy val logPrefix = s"${getClass.getSimpleName}([$itemIdsLen]:${itemIds.mkString(",")}):"
 
-    new reqUtil.SioActionBuilderImpl[MOrderIdsReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MOrderIdsReq] {
 
       override def invokeBlock[A](request: Request[A], block: MOrderIdsReq[A] => Future[Result]): Future[Result] = {
         // Нужно с помощью нескольких SQL-запросов проверить, что item'ы находятся в статусе Draft,
@@ -125,7 +123,7 @@ class CanAccessItem @Inject() (
             }
 
             // Запустить также инициализацию пользовательских данных в фоне, т.к. скорее всего проверка прав закончится успешно...
-            maybeInitUser(user)
+            MUserInits.initUser(user, userInits1)
 
             // Трансформировать результат проверки в результат запроса:
             checkItemsResFut.transformWith {
@@ -160,9 +158,7 @@ class CanAccessItem @Inject() (
   def apply(itemId: Gid_t, edit: Boolean, userInits1: MUserInit*): ActionBuilder[MItemReq, AnyContent] = {
     lazy val logPrefix = s"${getClass.getSimpleName}($itemId):"
 
-    new reqUtil.SioActionBuilderImpl[MItemReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MItemReq] {
 
       protected def isItemAccessable(mitem: MItem): Boolean = {
         if (edit) {
@@ -201,7 +197,7 @@ class CanAccessItem @Inject() (
           }
 
           // Запустить также инициализацию пользовательских данных в фоне, т.к. скорее всего проверка прав закончится успешно...
-          maybeInitUser(user)
+          MUserInits.initUser(user, userInits1)
 
           // Узнать id контракта ордера, относящиегося к item'у.
           mitemOptFut.flatMap {

@@ -17,18 +17,12 @@ object MExtServices extends StringEnum[MExtService] {
   case object VKontakte extends MExtService("vk") {
     override def mainPageUrl = "https://vk.com/"
     override def nameI18N = "VKontakte"
-    override def hasAdvExt = true
-    /** Пока оставлен, но не ясно зачем. */
-    override def hasLogin = true
   }
 
 
   case object FaceBook extends MExtService("fb") {
     override def mainPageUrl = "https://facebook.com/"
     override def nameI18N = "Facebook"
-    override def hasAdvExt = true
-    /** Куча ботов из помойки. Но логин всё же пока возможен через securesocial, и раньше работал. */
-    override def hasLogin = true
   }
 
 
@@ -36,10 +30,6 @@ object MExtServices extends StringEnum[MExtService] {
     /** Ссылка на главную твиттера, и на собственный акк, если юзер залогинен. */
     override def mainPageUrl = "https://twitter.com/"
     override def nameI18N = "Twitter"
-    override def hasAdvExt = true
-    /** Через эту помойку логинится когда-то раньше было возможно, но очень непродолжительное время. */
-    override def myUserName = Some("@suggest_io")
-    override def hasLogin = false
   }
 
 
@@ -50,16 +40,36 @@ object MExtServices extends StringEnum[MExtService] {
     /** URL главной страницы сервиса. */
     override def mainPageUrl = "https://gosuslugi.ru/"
     override def nameI18N = MsgCodes.`GovServices.ESIA`
-    /** Никакого размещения рекламы на гос.услугах нет. */
-    override def hasAdvExt = false
-    /** С марта-апреля 2019 года -- основной способ входа на сайт для обычных юзеров. */
-    override def hasLogin = true
   }
 
 
+  /** Google Play (Market).
+    *
+    * id взят из спеки для portable web apps:
+    * [[https://developer.mozilla.org/en-US/docs/Web/Manifest/related_applications]]
+    */
+  case object GooglePlay extends MExtService("play") {
+    override def mainPageUrl = "https://play.google.com/"
+    override def nameI18N = "Google Play"
+  }
+
+
+  /** Apple ITunes / App store.
+    *
+    * id взят из спеки для portable web apps:
+    * [[https://developer.mozilla.org/en-US/docs/Web/Manifest/related_applications]]
+    */
+  case object AppleITunes extends MExtService("itunes") {
+    override def mainPageUrl = "https://itunes.apple.com/"
+    override def nameI18N = "Apple AppStore"
+  }
 
 
   override def values = findValues
+
+
+  def appDistrs: List[MExtService] =
+    GooglePlay :: AppleITunes :: Nil
 
 }
 
@@ -73,19 +83,6 @@ sealed abstract class MExtService(override val value: String) extends StringEnum
   /** Отображамое имя, заданное через код в messages. */
   def nameI18N: String
 
-  /** Код локализованного предложения "Я в_этом_сервисе" */
-  def iAtServiceI18N: String =
-    "I.at." + value
-
-  /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
-  def myUserName: Option[String] = None
-
-  /** Доступна ли функция внешнего размещения карточки? Никогда не возвращает exception. */
-  def hasAdvExt: Boolean
-
-  /** Доступен ли логин в s.io через данный сервис? OAuth/OpenID/etc. */
-  def hasLogin: Boolean
-
 }
 
 object MExtService {
@@ -95,6 +92,39 @@ object MExtService {
     EnumeratumUtil.valueEnumEntryFormat( MExtServices )
 
   @inline implicit def univEq: UnivEq[MExtService] = UnivEq.derive
+
+
+  implicit final class MExtServicesOpsExt( private val extService: MExtService ) extends AnyVal {
+
+    /** Доступна ли функция внешнего размещения карточки? Никогда не возвращает exception. */
+    def hasAdvExt: Boolean = {
+      extService match {
+        case MExtServices.VKontakte | MExtServices.FaceBook | MExtServices.Twitter => true
+        case _ => false
+      }
+    }
+
+    /** Доступен ли логин в s.io через данный сервис? OAuth/OpenID/etc. */
+    def hasLogin: Boolean = {
+      extService match {
+        case MExtServices.GosUslugi | MExtServices.VKontakte => true
+        case _ => false
+      }
+    }
+
+    /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
+    def myUserName: Option[String] = {
+      extService match {
+        case MExtServices.Twitter => Some("@suggest_io")
+        case _ => None
+      }
+    }
+
+    /** Код локализованного предложения "Я в_этом_сервисе" */
+    def iAtServiceI18N: String =
+      "I.at." + extService.value
+
+  }
 
 }
 

@@ -140,7 +140,6 @@ routesImport ++= Seq(
 
   "io.suggest.n2.edge.MPredicatesJvm._",
 
-  "io.suggest.crypto.hash.HashesHexJvm._",
   "io.suggest.n2.node.MNodeTypesJvm._",
   "io.suggest.file.up.MFile4UpPropsJvm._",
   "io.suggest.url.MHostInfoJvm._",

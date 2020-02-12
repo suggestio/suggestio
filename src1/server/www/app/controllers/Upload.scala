@@ -38,9 +38,9 @@ import models.mup._
 import models.req.IReq
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
-import play.api.mvc.{BodyParser, MultipartFormData, Result}
+import play.api.mvc.{BodyParser, MultipartFormData, Result, Results}
 import play.core.parsers.Multipart
-import util.acl.{CanUploadFile, IgnoreAuth}
+import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth}
 import util.cdn.CdnUtil
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
@@ -49,6 +49,7 @@ import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
 
+import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scalaz.ValidationNel
@@ -82,6 +83,8 @@ final class Upload @Inject()(
   private lazy val mainColorDetector = injector.instanceOf[MainColorDetector]
   private lazy val wsDispatcherActors = injector.instanceOf[WsDispatcherActors]
   private lazy val fileUtil = injector.instanceOf[FileUtil]
+  private lazy val canDownloadFile = injector.instanceOf[CanDownloadFile]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
 
 
   import sioControllerApi._
@@ -375,13 +378,28 @@ final class Upload @Inject()(
           r
         }
 
-        // Сверить MIME-тип принятого файла с заявленным:
+        // Определить MIME-тип принятого файла:
         detectedMimeType <- upCtx.detectedMimeTypeOpt
-        if {
-          val r = detectedMimeType ==* upCtx.declaredMime
-          if (!r)
-            __appendErr( s"Detected file MIME type '${upCtx.detectedMimeTypeOpt}' does not match to expected ${upCtx.declaredMime}." )
-          r
+        // Бывает, что MIME не совпадает. Решаем, что нужно делать согласно настройкам аплоада. Пример:
+        // Detected file MIME type [application/zip] does not match to expected [application/vnd.android.package-archive]
+        mimeType = {
+          if (detectedMimeType ==* upCtx.declaredMime) {
+            detectedMimeType
+          } else {
+            val msg = s"Detected file MIME type '${upCtx.detectedMimeTypeOpt}' does not match to expected ${upCtx.declaredMime}."
+            LOGGER.warn(s"$logPrefix $msg")
+            uploadArgs.info.obeyMime.fold {
+              __appendErr( msg )
+              throw new NoSuchElementException(msg)
+            } {
+              case false =>
+                LOGGER.info(s"$logPrefix Client-side MIME [${upCtx.declaredMime}] replaced with server-side detected MIME: [$detectedMimeType]")
+                detectedMimeType
+              case true =>
+                LOGGER.info(s"$logPrefix Client-side MIME [${upCtx.declaredMime}] will be saved, instead of detected MIME [$detectedMimeType]")
+                upCtx.declaredMime
+            }
+          }
         }
 
         // Прежде чем запускать тяжелые проверки, надо быстро сверить лимиты для текущего типа файла:
@@ -463,7 +481,7 @@ final class Upload @Inject()(
           // Запускаем в фоне заливку файла из ФС в надёжное распределённое хранилище:
           saveFileToShardFut = {
             val wr = WriteRequest(
-              contentType  = detectedMimeType,
+              contentType  = mimeType,
               file         = upCtx.file,
               origFileName = fileNameOpt
             )
@@ -472,7 +490,7 @@ final class Upload @Inject()(
           }
 
           fileMeta = MFileMeta(
-            mime       = Some( detectedMimeType ),
+            mime       = Some( mimeType ),
             sizeB      = Some( uploadArgs.fileProps.sizeB ),
             isOriginal = true,
             hashesHex  = hashesHex2,
@@ -810,7 +828,7 @@ final class Upload @Inject()(
         __deleteUploadedFiles()
         val errMsg = errSb.toString()
         LOGGER.warn(s"$logPrefix Failed to sync-validate upload data:\n$errMsg")
-        errorHandler.onClientError(request, NOT_ACCEPTABLE, s"Problems:\n\n$errMsg")
+        NotAcceptable( s"Problems:\n\n$errMsg" )
 
       } { resFut =>
         // Если файл не подхвачен файловой моделью (типа MLocalImg или другой), то его надо удалить:
@@ -820,10 +838,10 @@ final class Upload @Inject()(
         }
 
         // Отрендерить ответ клиенту:
-        resFut.recoverWith { case ex: Throwable =>
+        resFut.recover { case ex: Throwable =>
           val errMsg = errSb.toString()
           LOGGER.error(s"$logPrefix Async exception occured, possible reasons:\n$errMsg", ex)
-          errorHandler.onClientError(request, NOT_ACCEPTABLE, s"Errors:\n\n$errMsg")
+          NotAcceptable( s"Errors:\n\n$errMsg" )
         }
       }
     }
@@ -882,7 +900,41 @@ final class Upload @Inject()(
     Ok( sb.toString() )
   }
 
+
+  /** Экшен скачивания какого-либо файла из хранилища.
+    * Дёргается в контексте *.nodes.s.io, поэтому сессия недоступна, хотя personId передаётся в qs+signed.
+    *
+    * @param dlQs Данные для скачки.
+    * @return
+    */
+  def download(dlQs: MDownLoadQs) = bruteForceProtect {
+    // BruteForceProtect: тут для подавления трафика от повторяющихся запросов.
+    canDownloadFile(dlQs).async { implicit request =>
+      // TODO Поддержка If-Modified-Since
+      // TODO Поддержка ETag
+      val s = request.edgeMedia.storage
+      for {
+        ds <- iMediaStorages
+          .client( s.storage )
+          .read( s.data, request.acceptCompressEncodings )
+      } yield {
+        LOGGER.trace(s"download($dlQs): Streaming download file node#${dlQs.nodeId} to ${dlQs.clientAddr}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
+        sendDataSource(ds, contentType = request.edgeMedia.file.mime)
+          .withHeaders(
+            (
+              Results.contentDispositionHeader(
+                inline = dlQs.dispInline,
+                name = request.mnode.guessDisplayName,
+              ) + (CACHE_CONTROL -> s"public, max-age=${2.hour.toSeconds}")
+            )
+              .toSeq: _*
+          )
+      }
+    }
+  }
+
 }
+
 
 /** Контейнер результата работы BodyParser'а при аплоаде.
   * Вынесен за пределы контроллера из-за проблем с компиляцией routes, если это inner-class.

@@ -15,7 +15,6 @@ libraryDependencies ++= Seq(
 
   // Compile-time DI без рантаймового кода (кроме нагенеренной примитивщины):
   "com.softwaremill.macwire"     %% "macros"     % Common.Vsn.MACWIRE % "provided",
-  //"com.softwaremill.macwire"     %% "util"       % Common.Vsn.MACWIRE,
 
   // testing
   "io.monix"      %%% "minitest"                  % Common.minitestVsn  % Test

@@ -399,6 +399,7 @@ object MsgCodes {
   val `Try.again` = "Try.again"
 
   val `Application` = "Application"
+  val `Download.application` = "Download.application"
 
   val `Predicate` = "Predicate"
   val `Node.ids.or.keys` = "Node.ids.or.keys"
@@ -420,5 +421,23 @@ object MsgCodes {
   val `File.already.exist.on.node.0` = "File.already.exist.on.node.0"
   val `Replace.node.ids` = "Replace.node.ids"
   val `Append.to.node.ids` = "Append.to.node.ids"
+  val `External.service` = "External.service"
+  val `empty` = "empty"
+  val `Info` = "Info"
+
+  val `Download.0` = "Download.0"
+  val `No.downloads.available` = "No.downloads.available"
+
+  val `K._Kilo` = "K._Kilo"
+  val `M._Mega` = "M._Mega"
+  val `G._Giga` = "G._Giga"
+  val `T._Tera` = "T._Tera"
+  val `Number.frac.delim` = "Number.frac.delim"
+  val `Number0.with.units1` = "Number0.with.units1"
+  val `Prefixed0.metric.unit1` = "Prefixed0.metric.unit1"
+  val `B._Bytes` = "B._Bytes"
+
+  val `Choose...` = "Choose..."
+  val `Operating.system.family` = "Operating.system.family"
 
 }

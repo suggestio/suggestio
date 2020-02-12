@@ -4,6 +4,7 @@ import com.materialui.{Mui, MuiLink, MuiLinkProps, MuiToolTip, MuiToolTipProps}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.routes.routes
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -18,22 +19,29 @@ class NodeLinkR(
   val component = ScalaComponent
     .builder[String]( getClass.getSimpleName )
     .render_P { nodeId =>
-      MuiToolTip {
-        new MuiToolTipProps {
-          override val title = crCtxProv.message( MsgCodes.`Go.to.node.0`, nodeId ).rawNode
-          val visibility = {
-            if (nodeId.isEmpty) "hidden"
-            else "visible"
+      <.span(
+
+        // Скрывать стрелочку, если нет nodeId.
+        if (nodeId.isEmpty)  ^.visibility.hidden
+        else ^.visibility.visible,
+
+        MuiToolTip {
+          new MuiToolTipProps {
+            override val title = crCtxProv.message( MsgCodes.`Go.to.node.0`, nodeId ).rawNode
+            val visibility = {
+
+            }
           }
-        }
-      } (
-        MuiLink(
-          new MuiLinkProps {
-            val href = routes.controllers.SysMarket.showAdnNode( nodeId ).url
-          }
-        )(
-          Mui.SvgIcons.ArrowForward()(),
-        )
+        } (
+          MuiLink(
+            new MuiLinkProps {
+              val href = routes.controllers.SysMarket.showAdnNode( nodeId ).url
+            }
+          )(
+            Mui.SvgIcons.ArrowForward()(),
+          )
+        ),
+
       )
     }
     .build

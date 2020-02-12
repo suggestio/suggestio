@@ -1,6 +1,8 @@
 package io.suggest.n2.edge.edit.m
 
 import io.suggest.crypto.hash.MHash
+import io.suggest.dev.MOsFamily
+import io.suggest.ext.svc.MExtService
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.media.MFileMetaHashFlag
 import io.suggest.n2.media.storage.MStorage
@@ -37,6 +39,11 @@ case class OrderSet( order: Option[Int] ) extends IEdgeEditAction
 case class TextNiSet(commentNi: Option[String] ) extends IEdgeEditAction
 
 
+/** Редактирование e.info.extService. */
+case class ExtServiceSet( extServiceOpt: Option[MExtService] ) extends IEdgeEditAction
+
+/** Редактирование семейства ОС. */
+case class OsFamilySet( osFamilyOpt: Option[MOsFamily] ) extends IEdgeEditAction
 
 sealed trait IEdgeAction extends DAction
 

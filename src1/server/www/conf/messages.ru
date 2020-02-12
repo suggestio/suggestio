@@ -1078,6 +1078,7 @@ Try.again=Попробовать ещё раз
 Get.node.index.failed=Нет связи с узлом/сервером.
 Http.response.unexpected=Нет связи с сервером.
 Application=Приложение
+Download.application=Скачать приложение
 Node.ids.or.keys=ID узлов/ключи
 Flag.value=Значение флага
 Ordering=Порядок
@@ -1095,4 +1096,21 @@ Go.to.node.0=Перейти к узлу {0}
 Replace.node.ids=Перезаписать в id узлов
 Append.to.node.ids=Дописать в конец id узлов
 File.already.exist.on.node.0=Файл уже существует на узле {0}.
+External.service=Внешний сервис
+empty=пусто
+
+Download.0=Скачать {0}
+
+K._Kilo=К
+M._Mega=М
+G._Giga=Г
+T._Tera=Т
+Number.frac.delim=,
+Number0.with.units1={0} {1}
+Prefixed0.metric.unit1={0}{1}
+B._Bytes=Б
+
+Choose...=Выберите...
+Operating.system.family=Семейство операционных систем
+No.downloads.available=Нет доступных загрузок
 

@@ -5,7 +5,7 @@ import io.suggest.n2.node.MNodes
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
-import models.req.{MNodeOptReq, MUserInit}
+import models.req.{MNodeOptReq, MUserInit, MUserInits}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -36,9 +36,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
     * @param nodeIdOpt id узла, если есть.
     */
   def apply(nodeIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MNodeOptReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MNodeOptReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MNodeOptReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
@@ -47,7 +45,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
           val mnodeOptFut = mNodes.maybeGetByIdCached(nodeIdOpt)
 
           // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
-          maybeInitUser(user)
+          MUserInits.initUser(user, userInits1)
 
           mnodeOptFut.flatMap { mnodeOpt =>
             val mnodeOpt1 = mnodeOpt.filter { mnode =>

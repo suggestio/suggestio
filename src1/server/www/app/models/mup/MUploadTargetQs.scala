@@ -30,7 +30,8 @@ object MUploadTargetQs extends SecretKeyInit {
   }
 
   override def CONF_KEY = "upload.url.sign.secret"
-  private var SIGN_SECRET: String = _
+  // Доступ для mup.*, т.к. download тоже использует этот ключ для упрощения.
+  private[mup] var SIGN_SECRET: String = _
   override def setSignSecret(secretKey: String): Unit = {
     SIGN_SECRET = secretKey
   }
@@ -44,14 +45,14 @@ object MUploadTargetQs extends SecretKeyInit {
                                  upInfoB            : QueryStringBindable[MUploadInfoQs],
                                 ): QueryStringBindable[MUploadTargetQs] = {
     new QueryStringBindableImpl[MUploadTargetQs] {
-      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
+      private def qsbSigner = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
 
       /** Биндинг значения [[MUploadTargetQs]] из URL qs. */
       override def bind(key: String, params0: Map[String, Seq[String]]): Option[Either[String, MUploadTargetQs]] = {
         val F = Fields
         val k = key1F(key)
         for {
-          params            <- getQsbSigner(key).signedOrNone(k(""), params0)
+          params            <- qsbSigner.signedOrNone(k(""), params0)
           filePropsE        <- file4UpPropsB.bind     ( k(F.FILE_PROPS_FN),   params )
           personIdOptE      <- strOptB.bind           ( k(F.PERSON_ID_FN),    params )
           validTillE        <- longB.bind             ( k(F.VALID_TILL_FN),   params )
@@ -89,8 +90,7 @@ object MUploadTargetQs extends SecretKeyInit {
           upInfoB.unbind            ( k(F.INFO_FN),             value.info        ),
         )
         // Подписать это всё.
-        getQsbSigner(key)
-          .mkSigned(key, unsigned)
+        qsbSigner.mkSigned(key, unsigned)
       }     // unbind()
 
     }       // new QSBImpl

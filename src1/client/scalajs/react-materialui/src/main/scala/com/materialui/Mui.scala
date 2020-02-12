@@ -66,7 +66,6 @@ object Mui {
   @js.native @JSImport("@material-ui/core/ListItemIcon", JSImport.Default) object ListItemIcon extends js.Any
   @js.native @JSImport("@material-ui/core/ListItemAvatar", JSImport.Default) object ListItemAvatar extends js.Any
 
-  //@js.native @JSImport("@material-ui/core/List/makeSelectable", JSImport.Default) object makeSelectable extends js.Any
   @js.native @JSImport("@material-ui/core/Menu", JSImport.Default) object Menu         extends js.Any
   @js.native @JSImport("@material-ui/core/MenuItem", JSImport.Default) object MenuItem extends js.Any
   @js.native @JSImport("@material-ui/core/MenuList", JSImport.Default) object MenuList extends js.Any
@@ -82,8 +81,7 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/RefreshIndicator", JSImport.Default) object RefreshIndicator
       extends js.Any
-  @js.native @JSImport("@material-ui/core/SelectField", JSImport.Default) object SelectField
-      extends js.Any
+  @js.native @JSImport("@material-ui/core/Select", JSImport.Default) object Select extends js.Any
   @js.native @JSImport("@material-ui/core/Slider", JSImport.Default) object Slider       extends js.Any
   @js.native @JSImport("@material-ui/core/Subheader", JSImport.Default) object Subheader extends js.Any
   @js.native @JSImport("@material-ui/core/SvgIcon", JSImport.Default) object SvgIcon     extends js.Any

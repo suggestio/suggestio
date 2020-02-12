@@ -38,7 +38,11 @@ object MEdgeEditRoot {
       var edgeUpdAcc = List.empty[MEdge => MEdge]
       val e0 = mroot.edge
 
-      val nodeIds2 = mroot.edit.nodeIds.toSet
+      val nodeIds2 = mroot.edit.nodeIds
+        .iterator
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .toSet
       if (nodeIds2 !=* e0.nodeIds)
         edgeUpdAcc ::= (MEdge.nodeIds set nodeIds2)
 

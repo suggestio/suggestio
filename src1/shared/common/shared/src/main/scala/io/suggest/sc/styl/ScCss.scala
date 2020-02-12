@@ -408,6 +408,11 @@ object ScCssStatic extends StyleSheet.Inline {
         height(28.px)
       )
 
+      val rightIcon = style(
+        position.absolute,
+        right( 4.px ),
+      )
+
       /** Стили строк меню. */
       val rowContent = style(
         position.relative,
@@ -431,6 +436,16 @@ object ScCssStatic extends StyleSheet.Inline {
   }
 
 
+  object AppDl {
+
+    val osFamily = style(
+      padding(4.px),
+      width( 200.px ),
+    )
+
+  }
+
+
   initInnerObjects(
     Body.smBody,
     Root.root,
@@ -444,6 +459,7 @@ object ScCssStatic extends StyleSheet.Inline {
     Search.TextBar.bar,
     Menu.Rows.rowContent,
     Menu.version,
+    AppDl.osFamily,
   )
 
 }

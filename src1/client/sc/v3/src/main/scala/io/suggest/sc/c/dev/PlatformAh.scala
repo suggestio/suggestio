@@ -1,17 +1,22 @@
 package io.suggest.sc.c.dev
 
+import cordova.Cordova
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
 import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.event.DomEvents
 import io.suggest.cordova.CordovaConstants
-import io.suggest.dev.MPlatformS
+import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import org.scalajs.dom
 import org.scalajs.dom.Event
+
+import scala.util.Try
+import scala.util.matching.Regex
 
 /**
   * Suggest.io
@@ -89,14 +94,36 @@ object PlatformAh {
       }
     }
 
+    // Определить платформу. https://stackoverflow.com/a/19883965
+    // navigator.platform содержат Android, Linux, Linux arm*, и т.д.
+    // или iPhone/iPod/iPad [Simulator] для iOS.
+    val osFamilyOpt = Option( dom.window.navigator.platform )
+      // Для браузера: распарсить navigator.platform.
+      .flatMap { platform =>
+        def _isMatch(re: Regex) = re.pattern.matcher(platform).find()
+
+        if ( _isMatch(platformAndroidRe) ) {
+          Some( MOsFamilies.Android )
+        } else if ( _isMatch(platformIosRe) ) {
+          Some( MOsFamilies.Apple_iOS )
+        } else {
+          None
+        }
+      }
+
     MPlatformS(
       // Браузеры - всегда готовы. Cordova готова только по внутреннему сигналу готовности.
       isReady     = isReady,
       isCordova   = isCordova,
       isUsingNow  = isUsingNow,
-      hasBle      = isBleAvail
+      hasBle      = isBleAvail,
+      osFamily    = osFamilyOpt,
     )
   }
+
+
+  private def platformAndroidRe = "(?i)(android|linux(\\s arm)?)".r
+  private def platformIosRe = "^(iP(hone|[ao]d|)".r
 
 }
 
@@ -136,10 +163,29 @@ class PlatformAh[M](
         if (v0.hasBle !=* bleAvail2)
           lens = lens andThen MPlatformS.hasBle.set( bleAvail2 )
 
+        // Определить платформу cordova, если она не была правильно определена на предыдущем шаге.
+        Try( Cordova.platformId )
+          .fold[Unit](
+            {ex =>
+              LOG.warn( ErrorMsgs.PLATFORM_ID_FAILURE, ex )
+            },
+            {cordovaPlatformStr =>
+              val osFamilyOpt = MOsFamilies
+                .values
+                .find { osFamily =>
+                  osFamily.cordovaPlatformId contains[String] cordovaPlatformStr
+                }
+              for {
+                osFamily <- osFamilyOpt
+                if !(v0.osFamily contains[MOsFamily] osFamily)
+              } {
+                lens = lens andThen MPlatformS.osFamily.set( osFamilyOpt )
+              }
+            }
+          )
+
+
         val v2 = lens(v0)
-
-        // TODO Проверять ble avail?
-
         updated(v2)
       }
 

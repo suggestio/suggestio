@@ -1,4 +1,4 @@
-@(args: msc.ScSiteArgs)(implicit ctx: Context)
+@(args: msc.MScSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 
@@ -41,7 +41,7 @@
     <meta name="fragment" content="!"/>
     *@
 
-    <link rel="manifest" href="@cdn.forCall(routes.Sc.webAppManifest( MPwaManifestQs(args.apiVsn) ))"/>
+    <link rel="manifest" href="@cdn.forCall(routes.ScApp.webAppManifest( MPwaManifestQs(args.apiVsn) ))"/>
     @* TODO startUrl meta tag и другие для iOS, не умеющей в manifest. *@
   }
 

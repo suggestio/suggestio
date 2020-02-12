@@ -66,7 +66,7 @@ class MediaR(
                     fileHashesC             : ReactConnectProxy[Seq[MFileMetaHash]],
                     fileStorageTypeC        : ReactConnectProxy[MStorage],
                     fileStorageDataMetaC    : ReactConnectProxy[String],
-                    edgeIdQsOptC               : ReactConnectProxy[Option[MNodeEdgeIdQs]],
+                    edgeIdQsOptC            : ReactConnectProxy[Option[MNodeEdgeIdQs]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -176,10 +176,9 @@ class MediaR(
                   }
                 )()
               }
-            }
-          ),
+            },
 
-          MuiListItem()(
+            // Флаг оригинала файла
             MuiFormControlLabel {
               val _checkBox = s.fileIsOriginalSomeC { fileIsOriginalSomeProxy =>
                 val isOrig = fileIsOriginalSomeProxy.value.value
@@ -199,7 +198,7 @@ class MediaR(
               }
               val _label = crCtx.messages( MsgCodes.`Original` )
               val _css = new MuiFormControlLabelClasses {
-                override val root = _inputCss
+                override val root = EdgeEditCss.inputLeft.htmlClass
               }
 
               new MuiFormControlLabelProps {

@@ -1,5 +1,6 @@
 package io.suggest.pwa.manifest
 
+import io.suggest.ext.svc.MExtService
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -16,7 +17,7 @@ object MAppPlatformData {
   @inline implicit def univEq: UnivEq[MAppPlatformData] = UnivEq.derive
 
   implicit def pwaRelAppJson: OFormat[MAppPlatformData] = (
-    (__ \ "platform").format[MAppDistributor] and
+    (__ \ "platform").format[MExtService] and
     (__ \ "url").format[String] and
     (__ \ "id").formatNullable[String]
   )(apply, unlift(unapply))
@@ -31,7 +32,7 @@ object MAppPlatformData {
   * @param id id приложения внутри платформы.
   */
 case class MAppPlatformData(
-                             platform   : MAppDistributor,
+                             platform   : MExtService,
                              url        : String,
                              id         : Option[String]    = None,
                            )

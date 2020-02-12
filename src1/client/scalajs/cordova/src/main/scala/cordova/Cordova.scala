@@ -19,4 +19,10 @@ object Cordova extends js.Object {
 
   val plugins: CordovaPlugins = js.native
 
+  /** Имя под-директории в app/platforms/
+    * @return "android" | "ios" | ...
+    * @see [[https://stackoverflow.com/a/30800591]]
+    */
+  def platformId: String = js.native
+
 }

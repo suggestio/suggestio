@@ -57,6 +57,7 @@ sealed trait Controllers extends js.Object {
 
   /** Доступ к роутам выдачи. */
   def Sc: ScCtlRoutes = js.native
+  def ScApp: ScAppCtlRoutes = js.native
 
   /** Объект с роутами серверного контроллера LkAdvGeo. */
   def LkAdvGeo: LkAdvGeoCtlRoutes = js.native
@@ -186,6 +187,16 @@ sealed trait ScCtlRoutes extends js.Object {
 
   /** Роута для автоматического сабмита ошибок на сервер. */
   def handleScError(): PlayRoute = js.native
+
+}
+
+
+/** Роуты для контроллера ScApp. */
+@js.native
+sealed trait ScAppCtlRoutes extends js.Object {
+
+  /** Генератор ссылок для доступа к скачиванию приложения. */
+  def appDownloadInfo(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
 }
 

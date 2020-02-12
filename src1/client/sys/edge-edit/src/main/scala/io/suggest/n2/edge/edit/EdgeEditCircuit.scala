@@ -3,6 +3,7 @@ package io.suggest.n2.edge.edit
 import diode.ModelRO
 import diode.react.ReactConnector
 import io.suggest.file.MSrvFileInfo
+import io.suggest.file.up.MFileUploadS
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.lk.c.UploadAh
 import io.suggest.lk.m.MErrorPopupS
@@ -110,8 +111,10 @@ class EdgeEditCircuit
           // Нет данных файла. Удалить файл из состояния.
           (
             MEdgeEditRoot.edit
-              .composeLens( MEdgeEditS.errorDia )
-              .set( v2.errorPopup ) andThen
+              .modify(
+                MEdgeEditS.errorDia.set( v2.errorPopup ) andThen
+                MEdgeEditS.upload.set( MFileUploadS.empty )
+              ) andThen
             MEdgeEditRoot.edge
               .composeLens( MEdge.media )
               .set( None )
@@ -122,8 +125,10 @@ class EdgeEditCircuit
           val rootEditUpdateF = MEdgeEditRoot.edit.modify(
             MEdgeEditS.fileJs
               .set( edgeDataJs2.fileJs ) andThen
-              MEdgeEditS.errorDia
-                .set( v2.errorPopup )
+            MEdgeEditS.errorDia
+              .set( v2.errorPopup ) andThen
+            MEdgeEditS.upload
+              .set( edgeDataJs2.fileJs.fold(MFileUploadS.empty)(_.upload) )
           )
 
           val nodeIdOpt2 = edgeDataJs2.jdEdge.fileSrv.map(_.nodeId)
@@ -143,7 +148,10 @@ class EdgeEditCircuit
                 (
                   rootEditUpdateF andThen
                   MEdgeEditRoot.edge.set( uploadExtra.edge ) andThen
-                  MEdgeEditRoot.conf.set( uploadExtra.edgeId )
+                  MEdgeEditRoot.conf.set( uploadExtra.edgeId ) andThen
+                  MEdgeEditRoot.edit
+                    .composeLens( MEdgeEditS.nodeIds )
+                    .set( uploadExtra.edge.nodeIds.toSeq )
                 )
               })
                 .getOrElse {
@@ -242,8 +250,8 @@ class EdgeEditCircuit
     subscribe( confRO ) { confProxy =>
       val url = routes.controllers.SysNodeEdges
         .editEdge( _confQs(confProxy) )
-        .absoluteURL(true )
-      window.history.replaceState( js.Dynamic.literal(), "", url)
+        .absoluteURL( true )
+      window.history.replaceState( js.Dynamic.literal(), "", url )
     }
   }
 

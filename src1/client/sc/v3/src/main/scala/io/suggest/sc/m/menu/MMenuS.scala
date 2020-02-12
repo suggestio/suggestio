@@ -13,19 +13,19 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MMenuS {
 
-  def default = MMenuS()
+  def empty = apply()
 
   implicit object MMenuSFastEq extends FastEq[MMenuS] {
     override def eqv(a: MMenuS, b: MMenuS): Boolean = {
       (a.opened ==* b.opened) &&
-      (a.nativeApp ===* b.nativeApp)
+      (a.dlApp ===* b.dlApp)
     }
   }
 
   @inline implicit def univEq: UnivEq[MMenuS] = UnivEq.derive
 
-  val opened        = GenLens[MMenuS](_.opened)
-  val nativeApp     = GenLens[MMenuS](_.nativeApp)
+  lazy val dlApp         = GenLens[MMenuS](_.dlApp)
+  lazy val opened        = GenLens[MMenuS](_.opened)
 
 }
 
@@ -33,9 +33,9 @@ object MMenuS {
 /** Состояние меню.
   *
   * @param opened Открыта ли панель меню?
-  * @param nativeApp Состояние пункта нативного приложения.
+  * @param dlApp Состояние пункта нативного приложения.
   */
 case class MMenuS(
-                   nativeApp      : Option[MMenuNativeApp]    = None,
+                   dlApp          : MDlAppDia               = MDlAppDia.empty,
                    opened         : Boolean                     = false,
                  )

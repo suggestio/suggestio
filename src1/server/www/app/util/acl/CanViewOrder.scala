@@ -9,7 +9,7 @@ import io.suggest.n2.node.MNode
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{MNodeOptOrderReq, MUserInit}
+import models.req.{MNodeOptOrderReq, MUserInit, MUserInits}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import japgolly.univeq._
 
@@ -47,9 +47,7 @@ final class CanViewOrder @Inject() (
              userInits1 : MUserInit*
            ): ActionBuilder[MNodeOptOrderReq, AnyContent] = {
 
-    new reqUtil.SioActionBuilderImpl[MNodeOptOrderReq] with InitUserCmds {
-
-      override def userInits = userInits1
+    new reqUtil.SioActionBuilderImpl[MNodeOptOrderReq] {
 
       override def invokeBlock[A](request0: Request[A], block: (MNodeOptOrderReq[A]) => Future[Result]): Future[Result] = {
         val request = aclUtil.reqFromRequest( request0 )
@@ -73,7 +71,7 @@ final class CanViewOrder @Inject() (
           val nodeAdmOptFut = FutureUtil.optFut2futOpt(onNodeId)( isNodeAdmin.isAdnNodeAdmin(_, user) )
 
           // Запускаем инициализацию полей модели user, т.к. маловероятно, что этот реквест пойдёт мимо кассы.
-          maybeInitUser(user)
+          MUserInits.initUser(user, userInits1)
 
           lazy val logPrefix = s"($orderId${onNodeId.fold("")(" node#" + _)})[${request.remoteClientAddress}]:"
 

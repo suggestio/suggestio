@@ -1,9 +1,16 @@
 package util.up
 
-import javax.inject.Inject
-
+import controllers.routes
+import io.suggest.crypto.hash.HashesHex
+import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash}
+import javax.inject.{Inject, Singleton}
+import models.mup.MDownLoadQs
 import play.api.Configuration
+import play.api.inject.Injector
+import play.api.mvc.Call
+import util.cdn.CdnUtil
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -13,9 +20,14 @@ import scala.concurrent.duration._
   * Description: Утиль для аплоада файлов второго поколения.
   * Ориентирована на возможность балансировки файлов между нодами.
   */
+@Singleton
 class UploadUtil @Inject()(
-                            configuration: Configuration
+                            injector: Injector,
                           ) {
+
+  private def configuration = injector.instanceOf[Configuration]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
 
   /**
     * Публичное имя хоста текущего узла.
@@ -24,6 +36,7 @@ class UploadUtil @Inject()(
     */
   lazy val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
 
+  def LINK_TTL = 30.seconds
 
   /** Текущее время в часах upload util. */
   def rightNow() = System.currentTimeMillis().milliseconds
@@ -32,14 +45,44 @@ class UploadUtil @Inject()(
   /** Вычислить текущее значение для ttl.
     * @return Секунды.
     */
-  def ttlFromNow(now: FiniteDuration = rightNow()): Long = {
-    (now + 5.minutes).toSeconds
+  def ttlFromNow( now: FiniteDuration = rightNow(),
+                  linkTtl: FiniteDuration = LINK_TTL ): Long = {
+    (now + LINK_TTL).toSeconds
   }
 
 
   /** Является ли значение ttl валидным на текущий момент? */
   def isTtlValid(ttl: Long, now: FiniteDuration = rightNow()): Boolean = {
     ttl.seconds >= now
+  }
+
+
+  def dlQsHashesHex(edgeMedia: MEdgeMedia): HashesHex = {
+    // Берём только первый хэш из списка. Хэши тут используются для управления кэшированием: обновился файл => изменилась ссылка.
+    MFileMetaHash.toHashesHex(
+      edgeMedia.file
+        .hashesHex
+        .minByOption(_.hType.value)
+        .iterator
+    )
+  }
+
+
+  /** Сборка аргументов для будущей ссылки скачивания файла.
+    *
+    * @param fileNodeId id файлового узла.
+    * @param hashesHex Результат dlQsHashesHex().
+    * @return qs для сборки ссылки через routes.Upload.download().
+    */
+  def mkDlQs(fileNodeId: String, hashesHex: HashesHex): MDownLoadQs = {
+    MDownLoadQs(
+      nodeId      = fileNodeId,
+      // Чтобы не тратить ресурсы на разбор давно неактуальных древних ссылок, ограничиваем ссылки по времени жизни:
+      validTillS  = ttlFromNow( linkTtl = 3.days ),
+      dispInline  = false,
+      hashesHex   = hashesHex,
+      // Без clientAddr, т.к. тут ссылка через CDN
+    )
   }
 
 }

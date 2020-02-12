@@ -177,7 +177,8 @@ object MPredicates extends StringEnum[MPredicate] {
     case object FromFile extends MPredicate("iF") with _Child
 
     /** Какой-то сервис дистрибуции приложений: itunes, gplay, итд.
-      * Сам сервис дистрибуции описывается в поле e.info.extService
+      * Сам сервис дистрибуции описывается в поле e.info.extService.
+      * nodeId содержит id приложения на стороне сервиса дистрибуции и будет использовано для рендера URL.
       */
     case object Distributor extends MPredicate("iD") with _Child
 

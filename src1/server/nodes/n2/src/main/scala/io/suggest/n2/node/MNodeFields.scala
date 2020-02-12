@@ -101,6 +101,7 @@ object MNodeFields {
 
     // Внешние сервисы
     def EO_INFO_EXT_SERVICE_FN = _fullFn( Out.O_INFO_EXT_SERVICE_FN )
+    def EO_INFO_OS_FAMILY_FN = _fullFn( Out.O_INFO_OS_FAMILY_FN )
 
 
     // Edge media

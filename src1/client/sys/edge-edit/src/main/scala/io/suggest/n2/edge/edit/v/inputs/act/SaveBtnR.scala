@@ -38,7 +38,7 @@ class SaveBtnR(
       val _saveMsg = crCtxProv.message( MsgCodes.`Save` )
 
       val css = new MuiFabClasses {
-        override val root = Css.flat( EdgeEditCss.input.htmlClass, EdgeEditCss.btn.htmlClass )
+        override val root = Css.flat( EdgeEditCss.input.htmlClass, EdgeEditCss.w200.htmlClass )
       }
 
       s.isPendingSomeC { isPendingSomeProxy =>

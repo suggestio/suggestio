@@ -2,7 +2,7 @@ package io.suggest.proto.http.model
 
 import boopickle.Pickler
 import io.suggest.id.IdentConst
-import io.suggest.pick.PickleUtil
+import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.http.HttpConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
@@ -86,7 +86,24 @@ object HttpResp {
           if ( isOkF(resp.status) ) {
             Future.successful(resp)
           } else {
-            Future.failed( HttpFailedException(Some(resp)) )
+            val someResp = Some(resp)
+            val H = HttpConst.Headers
+            if (
+              resp
+                .getHeader(H.CONTENT_TYPE)
+                .exists( _.startsWith(MimeConst.TEXT_PLAIN) )
+            ) {
+              resp
+                .text()
+                .flatMap { str =>
+                  val errMsg2 = Option(str)
+                    .filter(_.nonEmpty)
+                    .orNull
+                  Future.failed( HttpFailedException(someResp, errMessage = errMsg2) )
+                }
+            } else {
+              Future.failed( HttpFailedException(someResp) )
+            }
           }
         // Ajax() сыплет exception'ами, на любые не-2хх ответы. Перехватить нежелательный exception, если status в разрешённых:
         case Failure(ex) =>

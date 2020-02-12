@@ -1070,6 +1070,7 @@ Try.again=Try again
 Get.node.index.failed=Failed node/server connection.
 Http.response.unexpected=No server connection.
 Application=Application
+Download.application=Download application
 Node.ids.or.keys=Node ids or keys
 Flag.value=Flag value
 Ordering=Ordering
@@ -1087,4 +1088,21 @@ Go.to.node.0=Go to node {0}
 Replace.node.ids=Replace node IDs
 Append.to.node.ids=Append id to node IDs
 File.already.exist.on.node.0=File already exists on node {0}.
+External.service=External service
+empty=empty
+
+Download.0=Download {0}
+
+K._Kilo=K
+M._Mega=M
+G._Giga=G
+T._Tera=T
+Number.frac.delim=.
+Number0.with.units1={0} {1}
+Prefixed0.metric.unit1={0}{1}
+B._Bytes=B
+
+Choose...=Choose...
+Operating.system.family=Operating system family
+No.downloads.available=No downloads available
 

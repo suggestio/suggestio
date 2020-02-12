@@ -51,12 +51,6 @@ trait MuiTextFieldProps extends MuiFormControlProps {
 object MuiTextFieldProps extends MuiPropsBaseStatic[MuiTextFieldProps]
 
 
-trait MuiSelectProps extends js.Object {
-  val native: js.UndefOr[Boolean] = js.undefined
-  val MenuProps: js.UndefOr[js.Object] = js.undefined
-}
-
-
 @js.native
 trait MuiTextFieldM extends js.Object {
   def blur(): Unit = js.native

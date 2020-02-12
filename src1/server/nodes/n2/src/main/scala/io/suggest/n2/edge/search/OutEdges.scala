@@ -248,7 +248,7 @@ object OutEdges extends MacroLogsImpl {
         // Отработать фильтрацию по внешним сервисам:
         for ( extServices <- oe.extService ) {
           val fn = EF.EO_INFO_EXT_SERVICE_FN
-          val qb9 = if (oe.extService.nonEmpty) {
+          val qb9 = if (extServices.nonEmpty) {
             val extServicesIds = extServices.iterator.map(_.value).toSeq
             QueryBuilders.termsQuery(fn, extServicesIds: _*)
           } else {
@@ -264,6 +264,24 @@ object OutEdges extends MacroLogsImpl {
           _qOpt = Some(fq)
         }
 
+        // Фильтрация по операционным системам.
+        for (osFamilies <- oe.osFamilies) {
+          val fn = EF.EO_INFO_OS_FAMILY_FN
+          val qb9 = if (osFamilies.nonEmpty) {
+            val osFamiliesIds = osFamilies.iterator.map(_.value).toSeq
+            QueryBuilders.termsQuery(fn, osFamiliesIds: _*)
+          } else {
+            QueryBuilders.existsQuery(fn)
+          }
+          if (withQname)
+            qb9.queryName( s"f-os-family[${osFamilies.length}]" )
+          val fq = _qOpt.fold [QueryBuilder](qb9) { qOpt0 =>
+            QueryBuilders.boolQuery()
+              .must( qOpt0 )
+              .filter( qb9 )
+          }
+          _qOpt = Some(fq)
+        }
 
         // Отработать хэши при поиске файлов.
         if (oe.fileHashesHex.nonEmpty) {

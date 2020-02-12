@@ -7,6 +7,7 @@ import models.mctx.{Context, Context2Factory}
 import models.req.IReqHdr
 import play.api._
 import play.api.http.DefaultHttpErrorHandler
+import play.api.http.Status.{BAD_REQUEST, FORBIDDEN, NOT_FOUND}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.routing.Router
@@ -53,6 +54,16 @@ final class ErrorHandler @Inject() (
     }
   }
 
+
+  override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
+    // Разрешить ответы на 5хх ошибки, которые зачем-то теперь запрещены в DefaultHttpErrorHandler.
+    statusCode match {
+      case BAD_REQUEST      => onBadRequest(request, message)
+      case FORBIDDEN        => onForbidden(request, message)
+      case NOT_FOUND        => onNotFound(request, message)
+      case _                => onOtherClientError(request, statusCode, message)
+    }
+  }
 
   /** Контейнер кастомных sio-ответы на запросы. Используются на замену дефолту. */
   class CustomResponces(val ctx: Context) {
