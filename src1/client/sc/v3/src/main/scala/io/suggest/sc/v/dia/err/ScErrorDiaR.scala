@@ -33,6 +33,7 @@ class ScErrorDiaR(
   case class State(
                     isVisibleSomeC      : ReactConnectProxy[Some[Boolean]],
                     messageCodeOptC     : ReactConnectProxy[Option[String]],
+                    hintOptC            : ReactConnectProxy[Option[String]],
                     retryPendingOptC    : ReactConnectProxy[Option[Boolean]],
                   )
 
@@ -79,21 +80,31 @@ class ScErrorDiaR(
         ),
 
         // Текст ошибки:
-        MuiTypoGraphy(
-          new MuiTypoGraphyProps {
-            override val variant = MuiTypoGraphyVariants.body1
-          }
-        )(
-          crCtxProv.consume { crCtx =>
-            s.messageCodeOptC {
-              _.value.whenDefinedEl { messageCode =>
-                <.span(
-                  crCtx.messages( messageCode ),
-                )
-              }
+        crCtxProv.consume { crCtx =>
+          s.messageCodeOptC {
+            _.value.whenDefinedEl { messageCode =>
+              MuiTypoGraphy(
+                new MuiTypoGraphyProps {
+                  override val variant = MuiTypoGraphyVariants.body1
+                }
+              )(
+                crCtx.messages( messageCode ),
+              )
             }
           }
-        ),
+        },
+        <.br,
+
+        s.hintOptC { hintOptProxy =>
+          hintOptProxy.value.whenDefinedEl { hintText =>
+            MuiTypoGraphy(
+              new MuiTypoGraphyProps {
+                override val variant = MuiTypoGraphyVariants.body2
+              }
+            )(
+            )
+          }
+        },
 
         // Горизонтальный прогресс-бар для pending-запросов.
         s.retryPendingOptC {
@@ -189,6 +200,8 @@ class ScErrorDiaR(
             OptionUtil.SomeBool( m.potIsPending )
           }
         }( FastEq.AnyRefEq ),
+
+        hintOptC = propsProxy.connect( _.flatMap(_.hint) ),
 
       )
     }

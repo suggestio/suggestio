@@ -1113,4 +1113,5 @@ B._Bytes=Б
 Choose...=Выберите...
 Operating.system.family=Семейство операционных систем
 No.downloads.available=Нет доступных загрузок
+Malfunction=Неисправность
 

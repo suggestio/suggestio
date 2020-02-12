@@ -277,6 +277,7 @@ class JsMessagesUtil @Inject() (
       MC.`Download.0` ::
       MC.`No.downloads.available` ::
       MC.`File` ::
+      MC.`Malfunction` ::
       MC.`Choose...` ::
       Nil
   }

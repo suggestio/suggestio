@@ -11,6 +11,7 @@ import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreen, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
+import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
@@ -40,7 +41,7 @@ import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
-import io.suggest.sc.m.menu.{MMenuS, MDlAppDia}
+import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs}
@@ -53,6 +54,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.CircuitUtil._
+import org.scalajs.dom
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -155,6 +157,21 @@ class Sc3Circuit(
         conf = scInit.conf
       ),
     )
+  }
+
+  // Сразу подписаться на глобальные ошибки:
+  {
+    import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+    dom.window.addEventListener4s("error") { e: dom.ErrorEvent =>
+      val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
+      LOG.error(msg = msg)
+      dispatch( SetErrorState(
+        MScErrorDia(
+          messageCode = MsgCodes.`Malfunction`,
+          hint        = Some( msg )
+        )
+      ))
+    }
   }
 
   // Кэш zoom'ов модели:

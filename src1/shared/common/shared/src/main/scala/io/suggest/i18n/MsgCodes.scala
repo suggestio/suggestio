@@ -439,5 +439,6 @@ object MsgCodes {
 
   val `Choose...` = "Choose..."
   val `Operating.system.family` = "Operating.system.family"
+  val `Malfunction` = "Malfunction"
 
 }
