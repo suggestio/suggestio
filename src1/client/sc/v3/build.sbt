@@ -40,7 +40,7 @@ webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.confi
 //scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(false)) }
 
 // Выключение оптимизации для дебага нетривиальных ошибок, видимых только на продакшене
-scalaJSLinkerConfig ~= { _.withOptimizer(false) }
+//scalaJSLinkerConfig ~= { _.withOptimizer(false) }
 
 
 // TODO scalajs-1.0: Выставить в scalaJSLinkerConfig emitSourceMaps:
