@@ -24,7 +24,7 @@ import scala.util.matching.Regex
   * Created: 07.06.18 15:48
   * Description: Контроллер платформы, на которой исполняется выдача.
   */
-object PlatformAh {
+object PlatformAh extends Log {
 
   def isBleAvailCheck(): Boolean =
     IBleBeaconsApi.detectApis().nonEmpty
@@ -97,19 +97,37 @@ object PlatformAh {
     // Определить платформу. https://stackoverflow.com/a/19883965
     // navigator.platform содержат Android, Linux, Linux arm*, и т.д.
     // или iPhone/iPod/iPad [Simulator] для iOS.
-    val osFamilyOpt = Option( dom.window.navigator.platform )
-      // Для браузера: распарсить navigator.platform.
-      .flatMap { platform =>
-        def _isMatch(re: Regex) = re.pattern.matcher(platform).find()
+    val osFamilyTryOpt = Try {
+      // В try завёрнут весь код, чтобы избежать не всегда явных проблем с ошибками в regexp'ах в некоторых браузерах.
+      Option( dom.window.navigator.platform )
+        // Для браузера: распарсить navigator.platform.
+        .flatMap { platform =>
+          def _isMatch(re: Regex) = re.pattern.matcher(platform).find()
 
-        if ( _isMatch(platformAndroidRe) ) {
-          Some( MOsFamilies.Android )
-        } else if ( _isMatch(platformIosRe) ) {
-          Some( MOsFamilies.Apple_iOS )
-        } else {
-          None
+          // TODO в dev-режиме надо принудительно вызывать все регэкспы, чтобы выявлять ошибки в не-первых регэкспах как можно раньше.
+          //      в prod-режиме - лениво, упор на эффективность.
+          val resAndOsfs: Seq[(Regex, MOsFamily)] =
+            if (scalajs.LinkingInfo.developmentMode) {
+              platformAndroidRe :: platformIosRe :: Nil
+            } else {
+              platformAndroidRe #:: platformIosRe #:: LazyList.empty
+            }
+
+          // Имитируем ленивый и неленивый полный проход регэкспов через flatMap+headOption, вместо collectFirst.
+          // В случае LazyList тут будет лень, и наименьшее кол-во итераций.
+          resAndOsfs
+            .flatMap {
+              case (re, osFamily) =>
+                if (re.pattern.matcher(platform).find())
+                  osFamily :: Nil
+                else
+                  Nil
+            }
+            .headOption
         }
-      }
+    }
+    for (ex <- osFamilyTryOpt.failed)
+      LOG.warn( ErrorMsgs.PLATFORM_ID_FAILURE, ex )
 
     MPlatformS(
       // Браузеры - всегда готовы. Cordova готова только по внутреннему сигналу готовности.
@@ -117,13 +135,14 @@ object PlatformAh {
       isCordova   = isCordova,
       isUsingNow  = isUsingNow,
       hasBle      = isBleAvail,
-      osFamily    = osFamilyOpt,
+      osFamily    = osFamilyTryOpt.toOption.flatten,
     )
   }
 
 
-  private def platformAndroidRe = "(?i)(android|linux(\\s arm)?)".r
-  private def platformIosRe = "^(iP(hone|[ao]d|)".r
+  private def platformAndroidRe = "(?i)(android|linux(\\s arm)?)".r -> MOsFamilies.Android
+  // Регеэкспы применяются лениво. Поэтому ошибка во втором и следующих регэкспах могут не проявляться, если первый сработал.
+  private def platformIosRe = "^(iP(hone|[ao]d))".r -> MOsFamilies.Apple_iOS
 
 }
 

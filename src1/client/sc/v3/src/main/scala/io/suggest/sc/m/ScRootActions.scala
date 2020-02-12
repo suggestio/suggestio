@@ -8,7 +8,6 @@ import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
 import japgolly.univeq.UnivEq
-import org.scalajs.dom
 
 import scala.util.Try
 
