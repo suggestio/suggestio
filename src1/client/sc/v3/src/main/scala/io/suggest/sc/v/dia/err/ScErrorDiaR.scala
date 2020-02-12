@@ -93,7 +93,6 @@ class ScErrorDiaR(
             }
           }
         },
-        <.br,
 
         s.hintOptC { hintOptProxy =>
           hintOptProxy.value.whenDefinedEl { hintText =>
@@ -102,6 +101,7 @@ class ScErrorDiaR(
                 override val variant = MuiTypoGraphyVariants.body2
               }
             )(
+              hintText
             )
           }
         },

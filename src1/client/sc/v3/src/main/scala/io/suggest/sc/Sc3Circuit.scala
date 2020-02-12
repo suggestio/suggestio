@@ -164,11 +164,12 @@ class Sc3Circuit(
     import io.suggest.sjs.common.vm.evtg.EventTargetVm._
     dom.window.addEventListener4s("error") { e: dom.ErrorEvent =>
       val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
-      LOG.error(msg = msg)
+      // без LOG.error(), т.к. есть риск, что будет повторный рендер ошибки из выдачи.
+      LOG.log(msg = msg)
       dispatch( SetErrorState(
         MScErrorDia(
           messageCode = MsgCodes.`Malfunction`,
-          hint        = Some( msg )
+          hint        = Some( msg ),
         )
       ))
     }
