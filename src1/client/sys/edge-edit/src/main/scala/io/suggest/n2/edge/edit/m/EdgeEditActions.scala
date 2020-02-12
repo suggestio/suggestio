@@ -20,7 +20,7 @@ import scala.util.Try
 sealed trait IEdgeEditAction extends DAction
 
 /** Изменение edge.predicate. */
-case class PredicateChanged( pred2: MPredicate ) extends IEdgeEditAction
+case class PredicateSet(pred2: MPredicate ) extends IEdgeEditAction
 
 /** Редактирование edge.nodeIds[i]. */
 case class NodeIdChange(i: Int, nodeId: String) extends IEdgeEditAction

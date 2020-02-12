@@ -2,7 +2,7 @@ package io.suggest.n2.edge.edit.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo}
-import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, ExtServiceSet, FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, OsFamilySet, PredicateChanged, Save, SaveResp, TextNiSet}
+import io.suggest.n2.edge.edit.m.{DeleteCancel, DeleteEdge, DeleteResp, ExtServiceSet, FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet, FlagSet, MDeleteDiaS, MEdgeEditRoot, MEdgeEditS, NodeIdAdd, NodeIdChange, OrderSet, OsFamilySet, PredicateSet, Save, SaveResp, TextNiSet}
 import io.suggest.n2.edge.edit.u.IEdgeEditApi
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
@@ -33,7 +33,7 @@ class EdgeEditAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Смена предиката.
-    case m: PredicateChanged =>
+    case m: PredicateSet =>
       val v0 = value
 
       val lens = MEdgeEditRoot.edge

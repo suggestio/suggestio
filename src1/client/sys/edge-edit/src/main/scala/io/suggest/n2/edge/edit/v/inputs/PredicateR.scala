@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
-import io.suggest.n2.edge.edit.m.PredicateChanged
+import io.suggest.n2.edge.edit.m.PredicateSet
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react.{React, _}
@@ -32,7 +32,7 @@ class PredicateR(
 
     private lazy val _onPredicateChangeCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val pred = MPredicates.withValue( e.target.value )
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, PredicateChanged(pred) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, PredicateSet(pred) )
     }
 
     def render(s: State): VdomElement = {

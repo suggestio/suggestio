@@ -1,6 +1,7 @@
 package io.suggest.n2.edge.edit
 
 import diode.ModelRO
+import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.MFileUploadS
@@ -11,7 +12,7 @@ import io.suggest.lk.m.img.MUploadAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDataJs, MPredicates}
 import io.suggest.n2.edge.edit.c.{EdgeEditAh, ErrorDiaAh, FileExistAh}
-import io.suggest.n2.edge.edit.m.{MEdgeEditRoot, MEdgeEditS}
+import io.suggest.n2.edge.edit.m.{MEdgeEditRoot, MEdgeEditS, PredicateSet}
 import io.suggest.n2.edge.edit.u.{EdgeEditApiHttp, IEdgeEditApi}
 import io.suggest.n2.media.MEdgeMedia
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData, MStorages}
@@ -23,6 +24,7 @@ import io.suggest.up.{IUploadApi, UploadApiHttp}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
 import org.scalajs.dom.window
 
 import scala.scalajs.js
@@ -252,6 +254,17 @@ class EdgeEditCircuit
         .editEdge( _confQs(confProxy) )
         .absoluteURL( true )
       window.history.replaceState( js.Dynamic.literal(), "", url )
+    }
+  }
+
+  // Если загружен файл, то надо выставить предикат в File
+  subscribe( editRW.zoom(_.upload.currentReq) ) { currUploadPotProxy =>
+    val mroot = rootRW.value
+    if (
+      (!(mroot.edge.predicate eqOrHasParent MPredicates.File)) &&
+      (currUploadPotProxy.value !=* Pot.empty)
+    ) {
+      dispatch( PredicateSet( MPredicates.File ) )
     }
   }
 
