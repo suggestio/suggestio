@@ -3,10 +3,13 @@ package io.suggest.sc.c.menu
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.dev.MOsFamily
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.app.{MScAppGetQs, MScAppGetResp}
+import io.suggest.sc.m.{MScRoot, SetErrorState}
+import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScIndexState
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.m.menu.{DlInfoResp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{DlInfoResp, MDlAppDia, MkAppDlInfoReq, OpenCloseAppDl, PlatformSetAppDl}
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
@@ -19,15 +22,15 @@ import scala.util.Success
   * Created: 05.02.2020 16:16
   * Description: Контроллер под-менюшки пункта скачивания приложения.
   */
-class DlAppAh[M](
-                  scAppApi          : IScAppApi,
-                  modelRW           : ModelRW[M, MDlAppDia],
-                  indexStateRO      : ModelRO[MScIndexState],
-                )
+class DlAppAh(
+               scAppApi          : IScAppApi,
+               modelRW           : ModelRW[MScRoot, MDlAppDia],
+               indexStateRO      : ModelRO[MScIndexState],
+             )
   extends ActionHandler( modelRW )
 { ah =>
 
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
 
     // показать/скрыть диалог
     case m: OpenCloseAppDl =>
@@ -76,6 +79,7 @@ class DlAppAh[M](
       }
 
 
+    // Реакция на ответ инфы по загрузкам с сервера.
     case m: DlInfoResp =>
       val v0 = value
       if ( !(v0.getReq isPendingWithStartTime m.timeStampMs) ) {
@@ -84,8 +88,37 @@ class DlAppAh[M](
       } else {
         val v2 = MDlAppDia.getReq
           .modify( _.withTry(m.tryResp) )(v0)
-        updated(v2)
+
+        val fxOpt = (for (ex <- m.tryResp.failed) yield {
+          Effect.action {
+            val errDiaS = MScErrorDia(
+              messageCode     = ErrorMsgs.XHR_UNEXPECTED_RESP,
+              potRO           = Some( modelRW.zoom[Pot[Any]](_.getReq) ),
+              exceptionOpt    = Some( ex ),
+              retryAction     = Some( MkAppDlInfoReq ),
+            )
+            SetErrorState( errDiaS )
+          }
+        })
+          .toOption
+
+        ah.updatedMaybeEffect( v2, fxOpt )
       }
+
+
+    // Команда к запуску запроса списка закачек на сервер.
+    case MkAppDlInfoReq =>
+      val v0 = value
+
+      (for {
+        osPlatform <- v0.platform
+        if !v0.getReq.isPending
+      } yield {
+        val (infoReqUpdF, fx) = _dlInfoReq( osPlatform )
+        val v2 = infoReqUpdF(v0)
+        updated(v2, fx)
+      })
+        .getOrElse( noChange )
 
   }
 

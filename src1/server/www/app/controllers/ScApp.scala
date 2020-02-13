@@ -11,6 +11,7 @@ import io.suggest.pick.MimeConst
 import io.suggest.pwa.manifest.{MPwaDisplayModes, MWebManifest}
 import io.suggest.sc.app.{MScAppDlInfo, MScAppGetQs, MScAppGetResp}
 import io.suggest.sc.pwa.MPwaManifestQs
+import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import javax.inject.Inject
 import models.im.MFavIcons
@@ -34,7 +35,9 @@ import scala.concurrent.{ExecutionContext, Future}
 final class ScApp @Inject()(
                              sioControllerApi   : SioControllerApi,
                              mCommonDi          : ICommonDi,
-                           ) {
+                           )
+  extends MacroLogsImplLazy
+{
 
   import mCommonDi.current.injector
 

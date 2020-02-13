@@ -8,7 +8,7 @@ import play.api.i18n.{I18nSupport, Lang, Messages}
 import play.api.mvc._
 import util.jsa.init.CtlJsInitT
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import play.api.data.Form
 import play.api.mvc.Result
 
@@ -23,20 +23,14 @@ import play.api.http.HttpEntity
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 11.10.13 11:43
- * Description: Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller.
+ * Логгер вынесен за пределы класса API, чтобы не пробрасывался в контроллеры при import sioControllerApi._
  */
-object SioController {
-
-  def getRdrUrl(rdrPath: Option[String])(dflt: => Future[Call])(implicit ec: ExecutionContext): Future[String] = {
-    rdrPath
-      .filter(_ startsWith "/")
-      .fold { dflt.map(_.url) } { Future.successful }
-  }
-
-}
+object SioControllerApi extends MacroLogsImpl
 
 
-/** Статическое расшаренное API для HTTP-контроллера play.
+/** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller.
+  *
+  * Статическое расшаренное API для HTTP-контроллера play.
   *
   * Стандартные контроллеры хранят кучу инстансов Status и прочего,
   * якобы для какого-то повышения производительности в синтетических тестах.
@@ -50,9 +44,9 @@ final class SioControllerApi @Inject()(
   with I18nSupport
   with CtlJsInitT
   with IMCommonDi
-  with MacroLogsImpl
 {
 
+  import SioControllerApi.LOGGER
   import mCommonDi._
 
   implicit def simpleResult2async(sr: Result): Future[Result] = {
@@ -86,7 +80,7 @@ final class SioControllerApi @Inject()(
 
   def RdrBackOrFut(rdrPath: Option[String])(dflt: => Future[Call]): Future[Result] = {
     for {
-      r <- SioController.getRdrUrl(rdrPath)(dflt)
+      r <- getRdrUrl(rdrPath)(dflt)
     } yield {
       Redirect(r)
     }
@@ -144,6 +138,13 @@ final class SioControllerApi @Inject()(
 
       messagesApi.preferred( lang2 :: lang0 :: Nil )
     }
+  }
+
+
+  def getRdrUrl(rdrPath: Option[String])(dflt: => Future[Call]): Future[String] = {
+    rdrPath
+      .filter(_ startsWith "/")
+      .fold { dflt.map(_.url) } { Future.successful }
   }
 
 

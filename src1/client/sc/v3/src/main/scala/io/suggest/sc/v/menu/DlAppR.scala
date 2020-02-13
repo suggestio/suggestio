@@ -5,6 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
+import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.menu.OpenCloseAppDl
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
@@ -36,7 +37,10 @@ class DlAppR(
     private def _onOpenCloseClick(e: ReactEvent): Callback = {
       $.props >>= { propsProxy: Props =>
         val isOpenedNow = propsProxy.value.index.menu.dlApp.opened
-        propsProxy.dispatchCB( OpenCloseAppDl( !isOpenedNow ) )
+        // Открыть/закрыть диалог
+        propsProxy.dispatchCB( OpenCloseAppDl( !isOpenedNow ) ) >>
+        // И скрыть менюшку, если открыта.
+        propsProxy.dispatchCB( SideBarOpenClose(MScSideBars.Menu, open = false) )
       }
     }
     private lazy val _onOpenCloseClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onOpenCloseClick )

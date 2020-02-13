@@ -201,7 +201,7 @@ class Ident @Inject() (
                 val personId = mperson.id.get
                 LOGGER.debug(s"$logPrefix Epw login ok, person#$personId from ${request.remoteClientAddress}")
 
-                val rdrPathFut = SioController.getRdrUrl(r) {
+                val rdrPathFut = getRdrUrl(r) {
                   identUtil.redirectCallUserSomewhere(personId)
                 }
                 // Реализация длинной сессии при наличии флага rememberMe.

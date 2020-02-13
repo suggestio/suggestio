@@ -102,27 +102,25 @@ object PlatformAh extends Log {
       Option( dom.window.navigator.platform )
         // Для браузера: распарсить navigator.platform.
         .flatMap { platform =>
-          def _isMatch(re: Regex) = re.pattern.matcher(platform).find()
-
-          // TODO в dev-режиме надо принудительно вызывать все регэкспы, чтобы выявлять ошибки в не-первых регэкспах как можно раньше.
-          //      в prod-режиме - лениво, упор на эффективность.
-          val resAndOsfs: Seq[(Regex, MOsFamily)] =
+          ((
             if (scalajs.LinkingInfo.developmentMode) {
+              // в dev-режиме надо принудительно вызывать все регэкспы, чтобы выявлять ошибки в любых регэкспах как можно раньше.
               platformAndroidRe :: platformIosRe :: Nil
             } else {
+              // в prod-режиме - лениво, упор на эффективность.
               platformAndroidRe #:: platformIosRe #:: LazyList.empty
             }
-
-          // Имитируем ленивый и неленивый полный проход регэкспов через flatMap+headOption, вместо collectFirst.
-          // В случае LazyList тут будет лень, и наименьшее кол-во итераций.
-          resAndOsfs
-            .flatMap {
-              case (re, osFamily) =>
-                if (re.pattern.matcher(platform).find())
-                  osFamily :: Nil
-                else
-                  Nil
+            // Ниже задан тип, т.к. опять всплывает баг полиморфизма коллекций в scalac, и без явного типа он тут виснет навсегда.
+          ): Seq[(Regex, MOsFamily)])
+          // Имитируем ленивый и неленивый полный проход регэкспов через filter+headOption, вместо collectFirst.
+          // НЕЛЬЗЯ использовать withFilter() или for-if, чтобы не нарушить замысел.
+          // В случае LazyList тут будет ленивый рассчёт с наименьшим кол-вом итераций.
+            .filter { reAndOs =>
+              reAndOs._1.pattern
+                .matcher( platform )
+                .find()
             }
+            .map(_._2)
             .headOption
         }
     }
@@ -140,9 +138,11 @@ object PlatformAh extends Log {
   }
 
 
-  private def platformAndroidRe = "(?i)(android|linux(\\s arm)?)".r -> MOsFamilies.Android
-  // Регеэкспы применяются лениво. Поэтому ошибка во втором и следующих регэкспах могут не проявляться, если первый сработал.
-  private def platformIosRe = "^(iP(hone|[ao]d))".r -> MOsFamilies.Apple_iOS
+  private def platformAndroidRe =
+    "(?i)(android|linux(\\s arm)?)".r -> MOsFamilies.Android
+
+  private def platformIosRe =
+    "^(iP(hone|[ao]d))".r -> MOsFamilies.Apple_iOS
 
 }
 

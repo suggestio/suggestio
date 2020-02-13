@@ -14,7 +14,7 @@ import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.ext.svc.MExtServices
 import io.suggest.msg.JsFormatUtil
-import io.suggest.sc.m.menu.{OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -39,7 +39,7 @@ class DlAppDiaR(
 
   case class State(
                     diaOpenedSomeC    : ReactConnectProxy[Some[Boolean]],
-                    platformOptC      : ReactConnectProxy[Option[MOsFamily]],
+                    dlAppDiaC         : ReactConnectProxy[MDlAppDia],
                     devPlatformOptC   : ReactConnectProxy[Option[MOsFamily]],
                     appDlRespPotC     : ReactConnectProxy[Pot[MScAppGetResp]],
                   )
@@ -66,7 +66,7 @@ class DlAppDiaR(
       // Отрендерить список платформ в дефолтовом порядке:
       val choosePlatformKey = MsgCodes.`Choose...`
       val chooseText = crCtxProv.message( choosePlatformKey )
-      val platforms: Seq[VdomNode] = MuiMenuItem.component.withKey( choosePlatformKey )(
+      val platformsRows: Seq[VdomNode] = MuiMenuItem.component.withKey( choosePlatformKey )(
         new MuiMenuItemProps {
           override val value = choosePlatformKey
           val disabled = true
@@ -92,20 +92,21 @@ class DlAppDiaR(
                 override val root = ScCssStatic.AppDl.osFamily.htmlClass
               }
 
-              s.platformOptC { platformOptProxy =>
-                val _value = platformOptProxy
-                  .value
+              s.dlAppDiaC { dlAppDiaProxy =>
+                val dlAppDia = dlAppDiaProxy.value
+                val osFamilyStr = dlAppDia.platform
                   .fold( choosePlatformKey )(_.value)
 
                 MuiTextField(
                   new MuiTextFieldProps {
                     override val select   = true
-                    override val value    = _value
+                    override val value    = osFamilyStr
                     override val onChange = _onOsFamilyChange
                     override val classes  = _osFamilyCss
+                    override val disabled = dlAppDia.getReq.isPending
                   }
                 )(
-                  platforms: _*
+                  platformsRows: _*
                 )
               }
             },
@@ -194,6 +195,7 @@ class DlAppDiaR(
                   }
                 },
 
+                /*
                 appDlRespPot.renderFailed { ex =>
                   <.div(
                     MuiTypoGraphy()(
@@ -205,6 +207,7 @@ class DlAppDiaR(
                     )
                   )
                 },
+                */
 
                 appDlRespPot.renderPending { _ =>
                   React.Fragment(
@@ -261,7 +264,7 @@ class DlAppDiaR(
         diaOpenedSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.index.menu.dlApp.opened )
         },
-        platformOptC = propsProxy.connect( _.index.menu.dlApp.platform ),
+        dlAppDiaC = propsProxy.connect( _.index.menu.dlApp )( MDlAppDia.MDlAppDiaFeq ),
         devPlatformOptC = propsProxy.connect( _.dev.platform.osFamily ),
         appDlRespPotC = propsProxy.connect( _.index.menu.dlApp.getReq ),
       )
