@@ -1,5 +1,7 @@
 package models.req
 
+import io.suggest.n2.edge.MEdge
+import io.suggest.n2.media.MEdgeMedia
 import io.suggest.n2.node.MNode
 import play.api.mvc.Request
 
@@ -9,10 +11,19 @@ import play.api.mvc.Request
  * Created: 18.12.15 18:17
  * Description: Модель реквеста с каким-то узлом внутри.
  */
-trait INodeReq[A]
-  extends IReq[A]
-{
+trait INodeReq[A] extends IReq[A] {
   def mnode: MNode
+}
+
+
+trait IEdgeReq[A] extends INodeReq[A] {
+  def edge: MEdge
+}
+
+
+/** Реквест узла с доступом к эджу. */
+trait IEdgeMediaReq[A] extends IEdgeReq[A] {
+  def edgeMedia: MEdgeMedia
 }
 
 

@@ -86,6 +86,7 @@ final class SysNodeEdges @Inject() (
 
       (for {
         mnode2 <- mNodes.tryUpdate(request.mnode)(
+          MNode.node_meta_basic_dateEdited_RESET andThen
           MNode.edges
             .composeLens( MNodeEdges.out )
             .modify { edges0 =>
@@ -151,6 +152,7 @@ final class SysNodeEdges @Inject() (
       for {
         // Запуск обновления текущего узла.
         mnode2 <- mNodes.tryUpdate( request.mnode )(
+          MNode.node_meta_basic_dateEdited_RESET andThen
           MNode.edges
             .composeLens( MNodeEdges.out )
             .modify { edgesOut0 =>

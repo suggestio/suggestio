@@ -16,6 +16,8 @@ object UnivEqUtilJvm {
 
   @inline implicit def playSessionUe    : UnivEq[play.api.mvc.Session] = UnivEq.force
 
-  @inline implicit def playValidationResult: UnivEq[ValidationResult] = UnivEq.force
+  @inline implicit def playValidationResultUe: UnivEq[ValidationResult] = UnivEq.force
+
+  @inline implicit def playModeUe       : UnivEq[play.api.Mode] = UnivEq.force
 
 }

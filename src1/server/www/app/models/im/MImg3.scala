@@ -10,7 +10,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.img
 import io.suggest.img.ImgSzDated
-import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.n2.media._
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -187,7 +187,7 @@ class MImgs3 @Inject() (
     lazy val storClient = iMediaStorages.client( mimg.storage )
 
     // Вернуть экземпляр MNode.
-    val mediaSavedFut: Future[MNode] = media0Fut.recoverWith { case ex: Throwable =>
+    val mediaSavedFut: Future[MNode] = media0Fut.recoverWith { case ex: NoSuchElementException =>
       // Перезаписывать нечего, т.к. узел ещё не существует.
       val whOptFut = mLocalImgs.getImageWH(loc)
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
@@ -198,9 +198,6 @@ class MImgs3 @Inject() (
       )
 
       val storAssignFut = storClient.assignNew()
-
-      if (!ex.isInstanceOf[NoSuchElementException])
-        LOGGER.warn(s"$logPrefix _mediaFut() returned error, mimg = $mimg", ex)
 
       val szB = imgFile.length()
 
@@ -230,7 +227,11 @@ class MImgs3 @Inject() (
                     whPx = whOpt
                   ),
                   storage = stor.storage,
-                ))
+                )),
+                info = MEdgeInfo(
+                  // Эта дата используется для Last-Modified.
+                  dateNi = Some( OffsetDateTime.now() ),
+                )
               )
 
               fileEdge :: Nil

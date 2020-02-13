@@ -1,16 +1,12 @@
 package util.up
 
-import controllers.routes
 import io.suggest.crypto.hash.HashesHex
-import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash}
 import javax.inject.{Inject, Singleton}
 import models.mup.MDownLoadQs
 import play.api.Configuration
 import play.api.inject.Injector
-import play.api.mvc.Call
-import util.cdn.CdnUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 /**
@@ -27,7 +23,6 @@ class UploadUtil @Inject()(
 
   private def configuration = injector.instanceOf[Configuration]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
-  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
 
   /**
     * Публичное имя хоста текущего узла.
@@ -54,17 +49,6 @@ class UploadUtil @Inject()(
   /** Является ли значение ttl валидным на текущий момент? */
   def isTtlValid(ttl: Long, now: FiniteDuration = rightNow()): Boolean = {
     ttl.seconds >= now
-  }
-
-
-  def dlQsHashesHex(edgeMedia: MEdgeMedia): HashesHex = {
-    // Берём только первый хэш из списка. Хэши тут используются для управления кэшированием: обновился файл => изменилась ссылка.
-    MFileMetaHash.toHashesHex(
-      edgeMedia.file
-        .hashesHex
-        .minByOption(_.hType.value)
-        .iterator
-    )
   }
 
 

@@ -5,7 +5,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MImgT
-import models.req.MDynImgReq
+import models.req.MFileReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
@@ -43,12 +43,12 @@ class CanDynImg @Inject() (
   /** Проверка доступа к динамической картинке.
     *
     * @param mimg DynImgId
-    * @return ActionBuilder, генерящия [[models.req.MDynImgReq]] для экшена.
+    * @return ActionBuilder, генерящия [[models.req.MFileReq]] для экшена.
     */
-  def apply(mimg: MImgT): ActionBuilder[MDynImgReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MDynImgReq] {
+  def apply(mimg: MImgT): ActionBuilder[MFileReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MFileReq] {
 
-      override def invokeBlock[A](request: Request[A], block: MDynImgReq[A] => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request: Request[A], block: MFileReq[A] => Future[Result]): Future[Result] = {
 
         /** Ответ клиенту, когда картинка не найдена или недоступна. */
         def _imageNotFoundThrow = throw HttpResultingException(
@@ -105,13 +105,19 @@ class CanDynImg @Inject() (
             }
           }
 
-          edgeMedia = mmedia
+          fileEdge = mmedia
             .edges
             .withPredicateIter( MPredicates.File )
             .nextOption()
-            .flatMap(_.media)
             .getOrElse {
               LOGGER.warn(s"$logPrefix Missing edges with predicate ${MPredicates.File}. Possibly invalid/corrupted node#${mmedia.idOrNull}")
+              _imageNotFoundThrow
+            }
+
+          edgeMedia = fileEdge
+            .media
+            .getOrElse {
+              LOGGER.warn(s"$logPrefix Corrupted ${MPredicates.File} edge (missing edge.media):\n $fileEdge")
               _imageNotFoundThrow
             }
 
@@ -126,13 +132,14 @@ class CanDynImg @Inject() (
               // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
               case Right(storageInfoOpt) =>
                 LOGGER.trace(s"$logPrefix Passed. Storage=${storageInfoOpt.fold("this")(_.toString)} respMedia=${respMediaOpt.orNull}")
-                val req1 = MDynImgReq(
-                  derivedOpt        = respMediaOpt,
+                val req1 = MFileReq(
+                  derivativeOpt        = respMediaOpt,
                   storageInfo       = storageInfoOpt,
                   mnode             = nodeOrig,
                   user              = user,
                   request           = request,
                   edgeMedia         = edgeMedia,
+                  edge          = fileEdge,
                 )
                 block(req1)
 

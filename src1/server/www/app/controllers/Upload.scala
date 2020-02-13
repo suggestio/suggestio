@@ -3,6 +3,7 @@ package controllers
 import java.io.File
 import java.net.InetAddress
 import java.nio.file.Path
+import java.time.OffsetDateTime
 
 import javax.inject.Inject
 import io.suggest.color.{MHistogram, MHistogramWs}
@@ -17,7 +18,7 @@ import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
-import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
 import io.suggest.n2.media._
 import io.suggest.n2.media.storage.IMediaStorages
@@ -33,14 +34,13 @@ import io.suggest.up.UploadConstants
 import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
-import models.mproj.ICommonDi
 import models.mup._
 import models.req.IReq
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, MultipartFormData, Result, Results}
 import play.core.parsers.Multipart
-import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth}
+import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth, IsFileNotModified}
 import util.cdn.CdnUtil
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
@@ -48,9 +48,10 @@ import monocle.Traversal
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
+import play.api.inject.Injector
 
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import scalaz.ValidationNel
 import scalaz.std.option._
@@ -63,11 +64,10 @@ import scalaz.std.option._
   */
 final class Upload @Inject()(
                               sioControllerApi          : SioControllerApi,
-                              mCommonDi                 : ICommonDi,
+                              injector                  : Injector,
                             )
   extends MacroLogsImpl
 {
-  import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val uploadUtil = injector.instanceOf[UploadUtil]
@@ -85,10 +85,10 @@ final class Upload @Inject()(
   private lazy val fileUtil = injector.instanceOf[FileUtil]
   private lazy val canDownloadFile = injector.instanceOf[CanDownloadFile]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
-
+  private lazy val isFileNotModified = injector.instanceOf[IsFileNotModified]
+  implicit private lazy val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
 
   import sioControllerApi._
-  import mCommonDi.{ec, errorHandler}
 
 
   // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет
@@ -505,6 +505,10 @@ final class Upload @Inject()(
               ),
               storage = storageInfo,
             )),
+            info = MEdgeInfo(
+              // 2020-feb-14: Сохранять дату заливки файла в эдж, т.к. используется для Last-Modified, а другие даты узла ненадёжны.
+              dateNi = Some( OffsetDateTime.now() ),
+            )
           )
 
           // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
@@ -556,6 +560,7 @@ final class Upload @Inject()(
               LOGGER.trace(s"$logPrefix Will update existing node#${mnode0.idOrNull} with edges: ${addEdges.mkString(", ")}")
 
               mNodes.tryUpdate( mnode0 )(
+                MNode.node_meta_basic_dateEdited_RESET andThen
                 MNode.edges.modify { edges0 =>
                   val edgesSeq2 = MNodeEdges.edgesToMap1(
                     edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.File ) ++ addEdges
@@ -909,28 +914,30 @@ final class Upload @Inject()(
     */
   def download(dlQs: MDownLoadQs) = bruteForceProtect {
     // BruteForceProtect: тут для подавления трафика от повторяющихся запросов.
-    canDownloadFile(dlQs).async { implicit request =>
-      // TODO Поддержка If-Modified-Since
-      // TODO Поддержка ETag
-      val s = request.edgeMedia.storage
-      for {
-        ds <- iMediaStorages
-          .client( s.storage )
-          .read( s.data, request.acceptCompressEncodings )
-      } yield {
-        LOGGER.trace(s"download($dlQs): Streaming download file node#${dlQs.nodeId} to ${dlQs.clientAddr}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
-        sendDataSource(ds, contentType = request.edgeMedia.file.mime)
-          .withHeaders(
-            (
-              Results.contentDispositionHeader(
-                inline = dlQs.dispInline,
-                name = request.mnode.guessDisplayName,
-              ) + (CACHE_CONTROL -> s"public, max-age=${2.hour.toSeconds}")
-            )
-              .toSeq: _*
+    canDownloadFile(dlQs)
+      .andThen( isFileNotModified.Refiner )
+      .async { ctx304 =>
+        import ctx304.request
+
+        val s = request.edgeMedia.storage
+        for {
+          ds <- iMediaStorages
+            .client( s.storage )
+            .read( s.data, request.acceptCompressEncodings )
+        } yield {
+          LOGGER.trace(s"download($dlQs): Streaming download file node#${dlQs.nodeId} to ${dlQs.clientAddr}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
+          ctx304.with304Headers(
+            sendDataSource(ds, contentType = request.edgeMedia.file.mime)
+              .withHeaders(
+                Results.contentDispositionHeader(
+                  inline = dlQs.dispInline,
+                  name = request.mnode.guessDisplayName,
+                )
+                  .toSeq: _*
+              )
           )
+        }
       }
-    }
   }
 
 }

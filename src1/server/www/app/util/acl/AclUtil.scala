@@ -1,8 +1,9 @@
 package util.acl
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.sec.util.SessionUtil
 import models.req._
+import play.api.inject.Injector
 import play.api.mvc.{Request, RequestHeader}
 
 /**
@@ -11,10 +12,14 @@ import play.api.mvc.{Request, RequestHeader}
   * Created: 06.03.17 12:51
   * Description: Утиль для ACL.
   */
+@Singleton
 class AclUtil @Inject() (
-                          mSioUsers   : MSioUsers,
-                          sessionUtil : SessionUtil
+                          injector: Injector,
                         ) {
+
+  private lazy val mSioUsers = injector.instanceOf[MSioUsers]
+  private lazy val sessionUtil = injector.instanceOf[SessionUtil]
+
 
   /**
     * Извлечь уже готовый инстанс user из абстрактного реквеста, если возможно.

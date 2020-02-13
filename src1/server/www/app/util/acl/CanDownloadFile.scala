@@ -4,18 +4,19 @@ import controllers.routes
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.media.MFileMetaHash
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
-import models.mup.{MDownLoadQs, MDownLoadReq}
+import models.mup.MDownLoadQs
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
 import play.api.mvc.{Action, ActionBuilder, AnyContent, DefaultActionBuilder, Request, RequestHeader, Result, Results}
 import util.cdn.CdnUtil
 import util.up.UploadUtil
 import japgolly.univeq._
-import models.req.MSioUsers
+import models.req.{MFileReq, MSioUsers}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,7 +50,7 @@ class CanDownloadFile @Inject()(
 
 
   private def _apply[A](dlQs: MDownLoadQs, request: Request[A])
-                       (action: MDownLoadReq[A] => Future[Result]): Future[Result] = {
+                       (action: MFileReq[A] => Future[Result]): Future[Result] = {
     import esModel.api._
 
     val mreq = aclUtil.reqFromRequest( request )
@@ -123,7 +124,7 @@ class CanDownloadFile @Inject()(
           val nodeId = dlQs.nodeId.id
           LOGGER.debug(s"$logPrefix Media-node#${dlQs.nodeId} found, but one (or more) URL hashes mismatches:\n URL: ${dlQs.hashesHex.mkString(" | ")}\n expected: ${edgeMedia.file.hashesHex.mkString(" | ")}. Recovering URL...")
           val mediaHostsMapFut = cdnUtil.mediasHosts1( (nodeId, edgeMedia.storage) :: Nil )
-          val dlQs2 = (MDownLoadQs.hashesHex set uploadUtil.dlQsHashesHex(edgeMedia) )(dlQs)
+          val dlQs2 = (MDownLoadQs.hashesHex set MFileMetaHash.toHashesHex( edgeMedia.file.dlHash ) )(dlQs)
           val dlUrlCall = routes.Upload.download( dlQs2 )
           val resFut = for {
             mediaHostsMap <- mediaHostsMapFut
@@ -169,10 +170,10 @@ class CanDownloadFile @Inject()(
       // TODO Когда будет проверка доступа юзера для скачивания, запилить её здесь.
 
       // Запуск экшена на исполнение, т.к. все проверки пройдены.
-      dlReq = MDownLoadReq(
-        swfsOpt       = swfsInfoOpt,
+      dlReq = MFileReq(
+        storageInfo       = swfsInfoOpt,
         mnode         = mnode,
-        fileEdge      = fileEdge,
+        edge      = fileEdge,
         edgeMedia     = edgeMedia,
         request       = mreq,
         // Юзера нет: это работа на хосте *.nodes.suggest.io, и кукисы сюда могут не передаваться.
@@ -190,9 +191,9 @@ class CanDownloadFile @Inject()(
 
 
   /** Сборка ActionBuilder'а, проверяющего возможность для аплоада файла. */
-  def apply(upTg: MDownLoadQs): ActionBuilder[MDownLoadReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MDownLoadReq] {
-      override def invokeBlock[A](request: Request[A], block: (MDownLoadReq[A]) => Future[Result]): Future[Result] = {
+  def apply(upTg: MDownLoadQs): ActionBuilder[MFileReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MFileReq] {
+      override def invokeBlock[A](request: Request[A], block: (MFileReq[A]) => Future[Result]): Future[Result] = {
         _apply(upTg, request)(block)
       }
     }

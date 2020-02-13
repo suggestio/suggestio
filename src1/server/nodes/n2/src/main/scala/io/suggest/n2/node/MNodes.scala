@@ -1,5 +1,7 @@
 package io.suggest.n2.node
 
+import java.time.OffsetDateTime
+
 import io.suggest.adn.edit.m.MAdnResView
 import javax.inject.{Inject, Singleton}
 import io.suggest.n2.ad.MNodeAd
@@ -344,6 +346,14 @@ object MNode {
   val billing = GenLens[MNode](_.billing)
   val id      = GenLens[MNode](_.id)
   val versionOpt = GenLens[MNode](_.versionOpt)
+
+
+  def node_meta_basic_dateEdited_RESET = {
+    MNode.meta
+      .composeLens( MMeta.basic )
+      .composeLens( MBasicMeta.dateEdited )
+      .set( Some(OffsetDateTime.now()) )
+  }
 
 }
 

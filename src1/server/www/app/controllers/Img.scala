@@ -1,9 +1,6 @@
 package controllers
 
-import java.time.{Instant, ZonedDateTime}
-
 import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
-import io.suggest.dt.DateTimeUtil
 import io.suggest.file.MimeUtilJvm
 import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.playx.CacheApiUtil
@@ -11,8 +8,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import models.mproj.ICommonDi
-import play.api.mvc._
-import util.acl.{BruteForceProtect, CanDynImg, IsIdTokenValid, MaybeAuth}
+import util.acl.{BruteForceProtect, CanDynImg, IsIdTokenValid, MaybeAuth, IsFileNotModified}
 import util.captcha.CaptchaUtil
 import util.ident.IdTokenUtil
 import util.img.DynImgUtil
@@ -30,6 +26,7 @@ import scala.util.Try
  */
 @Singleton
 class Img @Inject() (
+                      isFileNotModified               : IsFileNotModified,
                       captchaUtil                     : CaptchaUtil,
                       cacheApiUtil                    : CacheApiUtil,
                       mLocalImgs                      : MLocalImgs,
@@ -49,27 +46,6 @@ class Img @Inject() (
   import sioCtlApi._
   import mCommonDi._
 
-  private def isNotModifiedSinceCached(modelTstampMs: Instant, ifModifiedSince: String): Boolean = {
-    DateTimeUtil.parseRfcDate(ifModifiedSince)
-      .exists { dt => !modelTstampMs.isAfter(dt.toInstant) }
-  }
-
-  /** rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце. */
-  private def withoutMs(timestampMs: Long): Instant = {
-    Instant.ofEpochSecond(timestampMs / 1000)
-  }
-
-
-  /** Сколько времени можно кешировать на клиенте результат dynImg() ? */
-  private val CACHE_DYN_IMG_CLIENT_SECONDS = {
-    val cacheDuration = if (isProd) {
-      365.days
-    } else {
-      30.seconds
-    }
-    cacheDuration.toSeconds
-  }
-
 
   /** Экшен раздачи динамических картинок второго поколения.
     * Динамические картинки теперь привязаны к хостам, на которых они размещены.
@@ -79,35 +55,16 @@ class Img @Inject() (
     * @return 200 OK с картинкой.
     *         404, если нет картинки или она обслуживается не на этом хосте.
     */
-  def dynImg(mimg: MImgT) = canDynImg(mimg).async { implicit request =>
-    lazy val logPrefix = s"dynImg(${mimg.dynImgId.fileName})#${System.currentTimeMillis()}:"
+  def dynImg(mimg: MImgT) = canDynImg(mimg)
+    .andThen( isFileNotModified.Refiner )
+    .async { ctx304 =>
+      import ctx304.request
 
-    // Сначала обработать 304-кэширование, если есть что-то:
-    val isNotModified = request.headers
-      .get(IF_MODIFIED_SINCE)
-      .exists { ifModifiedSince =>
-        val dateCreated = request.mnode.meta.basic.dateCreated
-        val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
-        val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
-        LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
-        r
-      }
+      lazy val logPrefix = s"dynImg(${mimg.dynImgId.fileName})#${System.currentTimeMillis()}:"
 
-    // HTTP-заголовок для картинок.
-    val cacheControlHdr =
-      CACHE_CONTROL -> s"public, max-age=$CACHE_DYN_IMG_CLIENT_SECONDS, immutable"
-
-    if (isNotModified) {
-      // 304 Not modified, т.к. клиент уже скачивал эту картинку ранее.
-      NotModified
-        .withHeaders(cacheControlHdr)
-
-    } else {
-
-      // Надо всё-таки вернуть картинку. Возможно, картинка ещё не создана. Уточняем:
-      request.derivedOpt.fold [Future[Result]] {
-        // Готовой картинки сейчас не существует. Возможно, что она создаётся прямо сейчас.
-        // TODO Использовать асинхронную streamed-готовилку dyn-картинок (которую надо написать!).
+      // Надо всё-таки вернуть картинку. Возможно, картинка-дериватив ещё не создана. Уточняем:
+      (if (request.derivativeOpt.isEmpty && !mimg.dynImgId.isOriginal) {
+        // Запрошен дериватив, который ещё пока не существует.
         for {
           localImg <- dynImgUtil.ensureLocalImgReady(mimg, cacheResult = false)
         } yield {
@@ -126,14 +83,15 @@ class Img @Inject() (
                 .get
             }
             .withHeaders(
-              cacheControlHdr
+              isFileNotModified.CACHE_CONTROL_HDR,
+              // TODO Нужно etag возвращать. Нужно отрефакторить ensureLocalImgReady и saveToPermanent под актуальную архитекутуру.
             )
             .withDateHeaders(
-              LAST_MODIFIED -> ZonedDateTime.now()
+              // TODO Нужно брать дату сохраненённого узла. А тут - возвращается дата узла-оригинала. Поэтому передача файла-дериватива одному клиенту может произойти дважды: в этот запрос и в последующий запрос (уже с +ETag).
+              LAST_MODIFIED -> request.mnode.meta.basic.dateCreated.toZonedDateTime,
             )
         }
-
-      } { mmedia =>
+      } else {
         // В базе уже есть готовая к раздаче картинка. Организуем akka-stream: swfs -> here -> client.
         // Кэшировать это скорее всего небезопасно, да и выигрыша мало (с локалхоста на локалхост), поэтому без кэша.
 
@@ -147,16 +105,14 @@ class Img @Inject() (
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
             LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB.fold("?")(_.toString)}b")
 
-            sioCtlApi.sendDataSource(
-              dataSource  = dataSource,
-              contentType = request.edgeMedia.file.mime,
-            )
-              .withHeaders( cacheControlHdr )
-              .withDateHeaders(
-                LAST_MODIFIED -> request.mnode.meta.basic.dateCreated.toZonedDateTime,
+            ctx304.with304Headers(
+              sioCtlApi.sendDataSource(
+                dataSource  = dataSource,
+                contentType = request.edgeMedia.file.mime,
               )
+            )
           }
-      }
+      })
         .recoverWith { case ex: Throwable =>
           // TODO Пересобрать неисправную картинку, если не-оригинал?
           ex match {
@@ -176,7 +132,6 @@ class Img @Inject() (
           }
         }
     }
-  }
 
 
   /**

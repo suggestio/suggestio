@@ -6,6 +6,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
 import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.media.MFileMetaHash
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.pick.MimeConst
 import io.suggest.pwa.manifest.{MPwaDisplayModes, MWebManifest}
@@ -192,7 +193,7 @@ final class ScApp @Inject()(
 
                 dlUrlQs = uploadUtil.mkDlQs(
                   fileNodeId = fileNodeId,
-                  hashesHex  = uploadUtil.dlQsHashesHex( fileNodeEdgeMedia ),
+                  hashesHex  = MFileMetaHash.toHashesHex( fileNodeEdgeMedia.file.dlHash ),
                 )
                 dlUrlRelCall = routes.Upload.download( dlUrlQs )
 
