@@ -5,6 +5,7 @@ import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MS
 import _root_.play.api.mvc.QueryStringBindable
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.sc.app.MScAppGetQs
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
@@ -181,9 +182,12 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
   /** Поддержка MScAppDlQs. */
-  implicit def scAppDlQs: QueryStringBindable[MScAppGetQs] = {
+  implicit def scAppDlQs(implicit
+                         predicateOptB: QueryStringBindable[Option[MPredicate]],
+                        ): QueryStringBindable[MScAppGetQs] = {
     new QueryStringBindableImpl[MScAppGetQs] {
       private def osPlatformB = implicitly[QueryStringBindable[MOsFamily]]
+      private def boolB = implicitly[QueryStringBindable[Boolean]]
       private def strOptB = implicitly[QueryStringBindable[Option[String]]]
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAppGetQs]] = {
@@ -191,15 +195,22 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F( key )
         for {
           osPlatformE     <- osPlatformB.bind( k(F.OS_FAMILY), params )
+          rdrE            <- boolB.bind( k(F.RDR), params )
           nodeIdOptE      <- strOptB.bind( k(F.ON_NODE_ID), params )
+          predicateOptE   <- predicateOptB.bind( k(F.PREDICATE), params )
+          if predicateOptE.exists(_.fold(true) { _ eqOrHasParent MPredicates.Application })
         } yield {
           for {
             osPlatform    <- osPlatformE
+            rdr           <- rdrE
             nodeIdOpt     <- nodeIdOptE
+            predicateOpt  <- predicateOptE
           } yield {
             MScAppGetQs(
-              osFamily  = osPlatform,
+              osFamily    = osPlatform,
+              rdr         = rdr,
               onNodeId    = nodeIdOpt,
+              predicate   = predicateOpt,
             )
           }
         }
@@ -210,7 +221,9 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F( key )
         _mergeUnbinded1(
           osPlatformB.unbind( k(F.OS_FAMILY), value.osFamily ),
+          boolB.unbind( k(F.RDR), value.rdr ),
           strOptB.unbind( k(F.ON_NODE_ID), value.onNodeId ),
+          predicateOptB.unbind( k(F.PREDICATE), value.predicate ),
         )
       }
     }

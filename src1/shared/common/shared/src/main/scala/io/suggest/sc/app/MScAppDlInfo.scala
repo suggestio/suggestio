@@ -20,6 +20,7 @@ object MScAppDlInfo {
     def EXT_SERVICE   = "s"
     def FILE_NAME     = "f"
     def FILE_SIZE_B   = "b"
+    def FROM_NODE_ID  = "n"
   }
 
   implicit def scAppDlInfoJson: OFormat[MScAppDlInfo] = {
@@ -29,7 +30,8 @@ object MScAppDlInfo {
       (__ \ F.URL).format[String] and
       (__ \ F.EXT_SERVICE).formatNullable[MExtService] and
       (__ \ F.FILE_NAME).formatNullable[String] and
-      (__ \ F.FILE_SIZE_B).formatNullable[Long]
+      (__ \ F.FILE_SIZE_B).formatNullable[Long] and
+      (__ \ F.FROM_NODE_ID).formatNullable[String]
     )(apply, unlift(unapply))
   }
 
@@ -45,11 +47,13 @@ object MScAppDlInfo {
   * @param extSvc Внешний сервис.
   * @param fileName Имя файла.
   * @param fileSizeB Размер файла в байтах.
+  * @param fromNodeIdOpt С какого узла получена инфа по данному вопросу.
   */
 case class MScAppDlInfo(
-                         predicate   : MPredicate,
-                         url         : String,
-                         extSvc      : Option[MExtService] = None,
-                         fileName    : Option[String] = None,
-                         fileSizeB   : Option[Long]   = None,
+                         predicate        : MPredicate,
+                         url              : String,
+                         extSvc           : Option[MExtService] = None,
+                         fileName         : Option[String] = None,
+                         fileSizeB        : Option[Long]   = None,
+                         fromNodeIdOpt    : Option[String] = None,
                        )

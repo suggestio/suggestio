@@ -91,32 +91,51 @@ final class ScApp @Inject()(
     * @return MScAppGetResp - Ссылка для скачивания/редиректа.
     */
   def appDownloadInfo(qs: MScAppGetQs) = {
-    // Найти инфу по эджу в узле:
-    val osFamilyAppDistrServices = qs.osFamily.appDistribServices
-    def __findEdges(mnodeOpt: Option[MNode]) = {
-      (for {
-        mnode <- mnodeOpt.iterator
-        appEdge <- mnode.edges.withPredicateIter( MPredicates.Application )
-        // Поискать подходящий сервис дистрибуции под запрошенную платформу
-        if (appEdge.info.osFamily contains[MOsFamily] qs.osFamily) && {
-          appEdge.info.extService
-            .fold(true) {
-              osFamilyAppDistrServices.contains[MExtService]
-            }
-        }
-      } yield {
-        appEdge
-      })
-        .to( List )
-    }
-
     maybeAuthMaybeNode( qs.onNodeId ).async { implicit request =>
       lazy val logPrefix = s"appDownLoadInfo($qs):"
+
+      // Найти инфу по эджу в узле:
+      val osFamilyAppDistrServices = qs.osFamily.appDistribServices
+      def __findEdges(mnodeOpt: Option[MNode]) = {
+        (for {
+          mnode <- mnodeOpt.iterator
+          appEdge <- {
+            var edges = mnode.edges
+            // Если в qs задан предикат, то сначала отфильтровать по нему.
+            for (qsPred <- qs.predicate)
+              edges = edges.withPredicate( qsPred )
+            // Доп.самоконтроль, чтобы не было выборки по не-Application вариантам.
+            edges.withPredicateIter( MPredicates.Application )
+          }
+          // Поискать подходящий сервис дистрибуции под запрошенную платформу
+          if (appEdge.info.osFamily contains[MOsFamily] qs.osFamily) && {
+            appEdge.info.extService
+              .fold(true) {
+                osFamilyAppDistrServices.contains[MExtService]
+              }
+          }
+        } yield {
+          appEdge
+        })
+          .to( List )
+          // Сортируем по вручную-заданному порядку и по предикату, если порядок не задан.
+          .sortBy { e =>
+            (
+              e.order getOrElse Int.MinValue,
+              e.predicate match {
+                case MPredicates.Application.FromFile     => 0
+                case MPredicates.Application.Distributor  => 50
+                case _ => 100
+              }
+            )
+          }
+      }
 
       (for {
 
         // Поиск описанного эджа среди запрошенного узла и узла CBCA.
-        appEdges <- {
+        // fromNodeIdOpt - содержит инфу, откуда взята инфа по приложению. Это нужно передать клиенту, чтобы там сгенерить наиболее короткую ссылку для qr-кода.
+        (appEdges, fromNodeIdOpt) <- {
           val thisNodeAppEdges0 = __findEdges( request.mnodeOpt )
           if (thisNodeAppEdges0.isEmpty) {
             // Нет в указанном ноде заданного эджа приложения. Поискать в общем узле suggest.io.
@@ -127,11 +146,11 @@ final class ScApp @Inject()(
             } yield {
               val r = __findEdges( commonMnodeOpt )
               LOGGER.trace(s"$logPrefix CBCA node#$commonNodeId, app.edge => ${r.mkString("\n ")}")
-              r
+              r -> Option.empty[String]
             }
           } else {
             LOGGER.trace(s"$logPrefix Found expected application edge on requested node#${qs.onNodeId.orNull}:\n ${thisNodeAppEdges0.mkString("\n ")}")
-            Future.successful(thisNodeAppEdges0)
+            Future.successful( thisNodeAppEdges0 -> qs.onNodeId )
           }
         }
 
@@ -188,23 +207,42 @@ final class ScApp @Inject()(
                     throw HttpResultingException( httpErrorHandler.onClientError(request, INTERNAL_SERVER_ERROR, msg) )
                   }
 
-                // Для сборки cdn-dist ссылки, собрать карту хостов под файловые ноды:
-                mediaHostsMapFut = cdnUtil.mediasHosts1( (fileNodeId, fileNodeEdgeMedia.storage) :: Nil )
+                dlCall <- {
+                  if (qs.rdr) {
+                    // Редирект - рендерим ссылку на закачку напрямую:
+                    // Для сборки cdn-dist ссылки, собрать карту хостов под файловые ноды:
+                    val mediaHostsMapFut = cdnUtil.mediasHosts1( (fileNodeId, fileNodeEdgeMedia.storage) :: Nil )
+                    val dlUrlQs = uploadUtil.mkDlQs(
+                      fileNodeId = fileNodeId,
+                      hashesHex  = MFileMetaHash.toHashesHex( fileNodeEdgeMedia.file.dlHash ),
+                    )
+                    val dlUrlRelCall = routes.Upload.download( dlUrlQs )
 
-                dlUrlQs = uploadUtil.mkDlQs(
-                  fileNodeId = fileNodeId,
-                  hashesHex  = MFileMetaHash.toHashesHex( fileNodeEdgeMedia.file.dlHash ),
-                )
-                dlUrlRelCall = routes.Upload.download( dlUrlQs )
+                    for {
+                      mediaHostsMap <- mediaHostsMapFut
+                    } yield {
+                      // Рендер ссылки для скачивания.
+                      cdnUtil.forMediaCall1(
+                        call          = dlUrlRelCall,
+                        mediaHostsMap = mediaHostsMap,
+                        mediaIds      = fileNodeId :: Nil,
+                      )
+                    }
+                  } else {
+                    // Редирект не требуется. Значит идёт просто рендер списка вариантов. Рендерить непрямую ссылку
+                    val dlInfoCall = routes.ScApp.appDownloadInfo(
+                      MScAppGetQs(
+                        osFamily    = qs.osFamily,
+                        rdr         = true,
+                        onNodeId    = fromNodeIdOpt,
+                        predicate   = Some( appEdge.predicate ),
+                      )
+                    )
+                    Future.successful( dlInfoCall )
+                  }
+                }
 
-                mediaHostsMap <- mediaHostsMapFut
 
-                // Рендер ссылки для скачивания.
-                dlCall = cdnUtil.forMediaCall1(
-                  call          = dlUrlRelCall,
-                  mediaHostsMap = mediaHostsMap,
-                  mediaIds      = fileNodeId :: Nil,
-                )
 
               } yield {
                 val url = dlCall.absoluteURL()
@@ -215,6 +253,7 @@ final class ScApp @Inject()(
                   predicate = appEdge.predicate,
                   fileName  = fileNode.guessDisplayName,
                   fileSizeB = fileNodeEdgeMedia.file.sizeB,
+                  fromNodeIdOpt = fromNodeIdOpt,
                 )
               }
 
@@ -227,12 +266,34 @@ final class ScApp @Inject()(
           }
         }
 
-      } yield {
-        val appGetResp = MScAppGetResp(
-          dlInfos = dlInfos,
-        )
-        Ok( Json.toJson(appGetResp) )
-      })
+        res <- {
+          if (qs.rdr) {
+            // Запрашивается сразу редирект.
+            dlInfos
+              .headOption
+              .fold {
+                LOGGER.warn(s"$logPrefix No dlInfos found, 1 expected for rdr.")
+                httpErrorHandler.onClientError(request, NOT_FOUND)
+              } { dlInfo =>
+                if (dlInfos.lengthIs > 1) {
+                  val len = dlInfos.length
+                  LOGGER.warn(s"$logPrefix Found $len dlInfos, but 1 expected for rdr:\n ${dlInfos.mkString("\n ")}")
+                  httpErrorHandler.onClientError( request, MULTIPLE_CHOICES, s"$len results found, 1 expected." )
+                } else {
+                  Redirect( dlInfo.url )
+                }
+              }
+
+          } else {
+            val appGetResp = MScAppGetResp(
+              dlInfos = dlInfos,
+            )
+            val resp = Ok( Json.toJson(appGetResp) )
+            Future.successful( resp )
+          }
+        }
+
+      } yield res)
         .recoverWith {
           case HttpResultingException(resFut) =>
             resFut

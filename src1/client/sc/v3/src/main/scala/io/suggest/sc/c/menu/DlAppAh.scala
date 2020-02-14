@@ -130,7 +130,8 @@ class DlAppAh(
       val inxState = indexStateRO.value
       val qs = MScAppGetQs(
         osFamily  = osFamily,
-        onNodeId    = inxState.rcvrId,
+        onNodeId  = inxState.rcvrId,
+        rdr       = false,
       )
 
       scAppApi
