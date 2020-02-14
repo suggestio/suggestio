@@ -9,7 +9,7 @@ object MuiCardMedia {
 
   val component = JsComponent[MuiCardMediaProps, Children.Varargs, Null](Mui.CardMedia)
 
-  def apply(props: MuiCardMediaProps = MuiCardMediaProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiCardMediaProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -23,7 +23,6 @@ trait MuiCardMediaProps
   val image: js.UndefOr[String] = js.undefined
   val src: js.UndefOr[String] = js.undefined
 }
-object MuiCardMediaProps extends MuiPropsBaseStatic[MuiCardMediaProps]
 
 
 trait MuiCardMediaClasses extends MuiClassesBase {

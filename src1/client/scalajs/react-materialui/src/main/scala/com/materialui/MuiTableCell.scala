@@ -10,7 +10,7 @@ object MuiTableCell {
 
   val component = JsComponent[MuiTableCellProps, Children.Varargs, Null](Mui.TableCell)
 
-  def apply(props: MuiTableCellProps = MuiTableCellProps.empty)(children: VdomNode*) = {
+  def apply(props: MuiTableCellProps = MuiPropsBaseStatic.empty)(children: VdomNode*) = {
     component(props)(children: _*)
   }
 
@@ -28,7 +28,6 @@ trait MuiTableCellProps extends MuiPropsBase {
   /** @see [[MuiTypoGraphyAligns]]. */
   val align: js.UndefOr[String] = js.undefined
 }
-object MuiTableCellProps extends MuiPropsBaseStatic[MuiTableCellProps]
 
 
 trait MuiTableCellClasses extends js.Object {

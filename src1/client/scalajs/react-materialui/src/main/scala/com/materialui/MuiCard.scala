@@ -9,7 +9,7 @@ case object MuiCard {
 
   val component = JsComponent[MuiCardProps, Children.Varargs, Null](Mui.Card)
 
-  def apply(props: MuiCardProps = MuiCardProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiCardProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -22,7 +22,6 @@ trait MuiCardProps
 {
   val raised: js.UndefOr[Boolean] = js.undefined
 }
-object MuiCardProps extends MuiPropsBaseStatic[MuiCardProps]
 
 
 /** JSON model for [[MuiCardProps.classes]]. */

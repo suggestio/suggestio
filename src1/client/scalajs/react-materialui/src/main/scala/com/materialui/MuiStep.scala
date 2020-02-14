@@ -16,7 +16,8 @@ object MuiStep {
   val component = JsComponent[MuiStepProps, Children.Varargs, Null]( Mui.Step )
 
   /** @param children Should be Step sub-components such as [[MuiStepLabel]], [[MuiStepContent]]. */
-  def apply(props: MuiStepProps = MuiStepProps.empty)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: MuiStepProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
 
@@ -29,7 +30,6 @@ trait MuiStepProps
   val completed: js.UndefOr[Boolean] = js.undefined
   val disabled: js.UndefOr[Boolean] = js.undefined
 }
-object MuiStepProps extends MuiPropsBaseStatic[MuiStepProps]
 
 
 trait MuiStepClasses extends MuiClassesBase {

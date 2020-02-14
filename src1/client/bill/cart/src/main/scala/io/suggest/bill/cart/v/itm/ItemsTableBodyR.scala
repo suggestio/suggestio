@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.itm
 
-import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiPropsBaseStatic, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -14,7 +14,8 @@ import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.render.v.JdR
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}, ReactDiodeUtil.Implicits._
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import ReactDiodeUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -227,7 +228,7 @@ class ItemsTableBodyR(
               }
               resAcc ++= List(
                 // spacer
-                MuiTableRow.component.withKey("s")( MuiTableRowProps.empty )(
+                MuiTableRow.component.withKey("s")( MuiPropsBaseStatic.empty[MuiTableRowProps] )(
                   MuiTableCell(
                     new MuiTableCellProps {
                       val colSpan = columnsCount
@@ -235,7 +236,7 @@ class ItemsTableBodyR(
                   )()
                 ),
                 // Итого-ряд:
-                MuiTableRow.component.withKey("t")(MuiTableRowProps.empty)(
+                MuiTableRow.component.withKey("t")( MuiPropsBaseStatic.empty[MuiTableRowProps] )(
                   emptyCell,
                   MuiTableCell()(
                     MuiTypoGraphy( typoProps )(

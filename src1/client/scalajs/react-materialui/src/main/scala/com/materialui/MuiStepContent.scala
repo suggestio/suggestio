@@ -16,7 +16,8 @@ object MuiStepContent {
 
   val component = JsComponent[MuiStepContentProps, Children.Varargs, Null]( Mui.StepContent )
 
-  def apply(props: MuiStepContentProps = MuiStepContentProps.empty)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: MuiStepContentProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
 
@@ -30,7 +31,6 @@ trait MuiStepContentProps
   val transitionDuration: js.UndefOr[Double | MuiTransitionDuration | String] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
 }
-object MuiStepContentProps extends MuiPropsBaseStatic[MuiStepContentProps]
 
 
 trait MuiStepContentClasses extends MuiClassesBase {

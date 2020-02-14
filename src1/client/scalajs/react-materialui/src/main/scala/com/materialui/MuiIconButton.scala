@@ -10,7 +10,7 @@ object MuiIconButton {
 
   val component = JsComponent[MuiIconButtonProps, Children.Varargs, Null](Mui.IconButton)
 
-  def apply(props: MuiIconButtonProps = MuiIconButtonProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiIconButtonProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -25,7 +25,6 @@ trait MuiIconButtonProps
   val disabled: js.UndefOr[Boolean] = js.undefined
   val disableRipple: js.UndefOr[Boolean] = js.undefined
 }
-object MuiIconButtonProps extends MuiPropsBaseStatic[MuiIconButtonProps]
 
 
 /** JSON для [[MuiIconButtonProps.classes]]. */

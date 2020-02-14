@@ -7,9 +7,9 @@ import scala.scalajs.js
 
 object MuiCardActionArea {
 
-  val component = JsComponent[MuiCardActionAreaProps, Children.Varargs, Null](Mui.CardActionArea)
+  val component = JsComponent[MuiCardActionAreaProps, Children.Varargs, Null]( Mui.CardActionArea )
 
-  def apply(props: MuiCardActionAreaProps = MuiCardActionAreaProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiCardActionAreaProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -18,7 +18,6 @@ object MuiCardActionArea {
 trait MuiCardActionAreaProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiCardActionAreaClasses]
-object MuiCardActionAreaProps extends MuiPropsBaseStatic[MuiCardActionAreaProps]
 
 
 trait MuiCardActionAreaClasses extends MuiClassesBase {

@@ -9,7 +9,7 @@ object MuiTableRow {
 
   val component = JsComponent[MuiTableRowProps, Children.Varargs, Null](Mui.TableRow)
 
-  def apply(props: MuiTableRowProps = MuiTableRowProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTableRowProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -23,7 +23,6 @@ trait MuiTableRowProps
   val hover: js.UndefOr[Boolean] = js.undefined
   val selected: js.UndefOr[Boolean] = js.undefined
 }
-object MuiTableRowProps extends MuiPropsBaseStatic[MuiTableRowProps]
 
 
 trait MuiTableRowClasses

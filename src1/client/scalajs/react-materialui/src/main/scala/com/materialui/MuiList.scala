@@ -13,7 +13,7 @@ object MuiList {
   val component = JsComponent[MuiListProps, Children.Varargs, Null](Mui.List)
 
   /** @param children These are usually `ListItem`s that are passed to be part of the list. */
-  def apply(props: MuiListProps = MuiListProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiListProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -27,7 +27,6 @@ trait MuiListProps extends MuiPropsBase {
   val disablePadding: js.UndefOr[Boolean] = js.undefined
   val subheader:      js.UndefOr[React.Node] = js.undefined
 }
-object MuiListProps extends MuiPropsBaseStatic[MuiListProps]
 
 
 /** JSON для [[MuiListProps.classes]]. */

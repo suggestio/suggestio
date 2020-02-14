@@ -12,7 +12,7 @@ object MuiTableHead {
   /**
     * @param children Children passed to table header.
    */
-  def apply(props: MuiTableHeadProps = MuiTableHeadProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTableHeadProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -22,7 +22,6 @@ trait MuiTableHeadProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiTableHeadClasses]
   with MuiPropsBaseComponent
-object MuiTableHeadProps extends MuiPropsBaseStatic[MuiTableHeadProps]
 
 
 trait MuiTableHeadClasses

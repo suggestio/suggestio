@@ -15,7 +15,7 @@ object MuiInputLabel {
 
   val component = JsComponent[MuiInputLabelProps, Children.Varargs, Null](Mui.InputLabel)
 
-  def apply(props: MuiInputLabelProps = MuiInputLabelProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiInputLabelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -33,7 +33,6 @@ trait MuiInputLabelProps
   val required: js.UndefOr[Boolean] = js.undefined
   val shrink: js.UndefOr[Boolean] = js.undefined
 }
-object MuiInputLabelProps extends MuiPropsBaseStatic[MuiInputLabelProps]
 
 
 trait MuiInputLabelClasses extends MuiFormLabelClasses {

@@ -1,4 +1,4 @@
-package io.suggest.sc.v.menu
+package io.suggest.sc.v.menu.dlapp
 
 import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import diode.react.{ModelProxy, ReactConnectProxy}

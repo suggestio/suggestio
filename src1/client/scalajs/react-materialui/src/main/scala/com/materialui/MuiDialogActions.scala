@@ -14,7 +14,7 @@ object MuiDialogActions {
 
   val component = JsComponent[MuiDialogActionsProps, Children.Varargs, Null](Mui.DialogActions)
 
-  def apply(props: MuiDialogActionsProps = MuiDialogActionsProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiDialogActionsProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -27,7 +27,6 @@ trait MuiDialogActionsProps
 {
   val disableSpacing: js.UndefOr[Boolean] = js.undefined
 }
-object MuiDialogActionsProps extends MuiPropsBaseStatic[MuiDialogActionsProps]
 
 
 /** Props for [[MuiDialogActionsProps.classes]]. */

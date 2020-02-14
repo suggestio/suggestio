@@ -11,7 +11,7 @@ object MuiButtonBase {
 
   val component = JsComponent[MuiButtonBaseProps, Children.Varargs, Null](Mui.Button)
 
-  def apply(props: MuiButtonBaseProps)(children: VdomNode*) =
+  final def apply(props: MuiButtonBaseProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -40,7 +40,6 @@ trait MuiButtonBaseProps
   extends MuiPropsBase
   with MuiButtonBaseCommonProps
   with MuiPropsBaseClasses[MuiButtonBaseClasses]
-object MuiButtonBaseProps extends MuiPropsBaseStatic[MuiButtonBaseProps]
 
 /** JSON для [[MuiButtonBaseProps]].classes. */
 trait MuiButtonBaseClasses extends MuiClassesBase {

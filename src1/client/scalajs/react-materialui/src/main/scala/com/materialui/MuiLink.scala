@@ -15,7 +15,7 @@ object MuiLink {
 
   val component = JsComponent[MuiLinkProps, Children.Varargs, Null](Mui.Link)
 
-  def apply(props: MuiLinkProps = MuiLinkProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiLinkProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -31,7 +31,6 @@ trait MuiLinkProps
   val underline: js.UndefOr[String] = js.undefined
   //val variant: js.UndefOr[String] = js.undefined
 }
-object MuiLinkProps extends MuiPropsBaseStatic[MuiLinkProps]
 
 
 trait MuiLinkClasses extends MuiClassesBase {

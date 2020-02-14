@@ -16,7 +16,8 @@ object MuiSlider {
 
   val component = JsComponent[MuiSliderProps, Children.None, Null](Mui.Slider)
 
-  def apply(props: MuiSliderProps = MuiSliderProps.empty) = component(props)
+  final def apply(props: MuiSliderProps = MuiPropsBaseStatic.empty) =
+    component(props)
 
 }
 
@@ -57,7 +58,7 @@ trait MuiSliderProps
   val valueLabelDisplay: js.UndefOr[MuiSliderValueLabelDisplay.Display_t] = js.undefined
   val valueLabelFormat: js.UndefOr[String | js.Function2[Value_t, Index_t, String]] = js.undefined
 }
-object MuiSliderProps extends MuiPropsBaseStatic[MuiSliderProps] {
+object MuiSliderProps {
   type Index_t = Int
   type Value_t = Index_t
 }

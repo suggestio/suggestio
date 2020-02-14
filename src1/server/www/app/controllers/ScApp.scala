@@ -88,7 +88,9 @@ final class ScApp @Inject()(
 
   /** Поискать приложение под указанный узел.
     * Или приложение под suggest.io.
-    * @return MScAppGetResp - Ссылка для скачивания/редиректа.
+    *
+    * @return Если qs.rdr == true, то возвращается редиретк.
+    *         Иначе, MScAppGetResp() - ссылки для скачивания/редиректа.
     */
   def appDownloadInfo(qs: MScAppGetQs) = {
     maybeAuthMaybeNode( qs.onNodeId ).async { implicit request =>

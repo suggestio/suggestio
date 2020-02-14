@@ -227,6 +227,10 @@ object Common {
     /** @see [[https://www.npmjs.com/package/react-dnd]]. */
     val REACT_DND = "9.3.9"
 
+    /** @see [[https://www.npmjs.com/package/qrcode.react]]
+      * @see [[https://github.com/zpao/qrcode.react]]
+      */
+    val REACT_QRCODE = "1.0.0"
   }
 
 

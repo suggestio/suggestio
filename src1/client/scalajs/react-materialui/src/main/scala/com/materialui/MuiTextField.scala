@@ -11,7 +11,7 @@ object MuiTextField {
 
   val component = JsComponent[MuiTextFieldProps, Children.Varargs, Null](Mui.TextField)
 
-  def apply(props: MuiTextFieldProps = MuiTextFieldProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTextFieldProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 
@@ -48,7 +48,6 @@ trait MuiTextFieldProps extends MuiFormControlProps {
   val variant: js.UndefOr[MuiTextField.Variant] = js.undefined
   val value: js.UndefOr[MuiInputValue_t | js.Array[MuiInputValue_t]] = js.undefined
 }
-object MuiTextFieldProps extends MuiPropsBaseStatic[MuiTextFieldProps]
 
 
 @js.native

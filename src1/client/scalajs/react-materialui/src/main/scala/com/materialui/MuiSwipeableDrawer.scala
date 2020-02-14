@@ -10,7 +10,7 @@ object MuiSwipeableDrawer {
 
   val component = JsComponent[MuiSwipeableDrawerProps, Children.Varargs, Null](Mui.SwipeableDrawer)
 
-  def apply(props: MuiSwipeableDrawerProps)(children: VdomNode*) =
+  def apply(props: MuiSwipeableDrawerProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -29,5 +29,4 @@ trait MuiSwipeableDrawerProps
   val onOpen: js.Function1[ReactEvent, Unit]
   val swipeAreaWidth: js.UndefOr[Double] = js.undefined
 }
-object MuiSwipeableDrawerProps extends MuiPropsBaseStatic[MuiSwipeableDrawerProps]
 

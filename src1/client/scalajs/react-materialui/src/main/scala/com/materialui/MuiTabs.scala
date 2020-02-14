@@ -17,7 +17,7 @@ object MuiTabs {
 
   val component = JsComponent[MuiTabsProps, Children.Varargs, Null]( Mui.Tabs )
 
-  def apply(props: MuiTabsProps = MuiTabsProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTabsProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -52,7 +52,6 @@ trait MuiTabsProps
   /** @see [[MuiTabsVariants]]. */
   val variant: js.UndefOr[String] = js.undefined
 }
-object MuiTabsProps extends MuiPropsBaseStatic[MuiTabsProps]
 
 
 trait MuiTabsClasses extends MuiClassesBase {

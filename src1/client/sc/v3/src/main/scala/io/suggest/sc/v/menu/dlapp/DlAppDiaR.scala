@@ -1,24 +1,23 @@
-package io.suggest.sc.v.menu
+package io.suggest.sc.v.menu.dlapp
 
 import com.materialui.{Mui, MuiButton, MuiButtonBaseCommonProps, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControlClasses, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListItemTextProps, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
+import io.suggest.ext.svc.MExtServices
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.msg.JsFormatUtil
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.app.MScAppGetResp
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import ReactCommonUtil.Implicits._
-import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.ext.svc.MExtServices
-import io.suggest.msg.JsFormatUtil
 import io.suggest.sc.m.menu.{MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 
 import scala.scalajs.js
 

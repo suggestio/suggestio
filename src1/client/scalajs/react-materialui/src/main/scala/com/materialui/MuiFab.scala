@@ -15,7 +15,7 @@ object MuiFab {
 
   val component = JsComponent[MuiFabProps, Children.Varargs, Null](Mui.Fab)
 
-  def apply(props: MuiFabProps = MuiFabProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiFabProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -33,7 +33,6 @@ trait MuiFabProps
   val size: js.UndefOr[String] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
-object MuiFabProps extends MuiPropsBaseStatic[MuiFabProps]
 
 
 object MuiFabVariants {

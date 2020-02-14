@@ -10,7 +10,7 @@ object MuiTableBody {
 
   val component = JsComponent[MuiTableBodyProps, Children.Varargs, Null](Mui.TableBody)
 
-  def apply(props: MuiTableBodyProps = MuiTableBodyProps.empty)(children: VdomNode*) = {
+  def apply(props: MuiTableBodyProps = MuiPropsBaseStatic.empty)(children: VdomNode*) = {
     component(props)(children: _*)
   }
 
@@ -21,7 +21,6 @@ trait MuiTableBodyProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiTableBodyClasses]
   with MuiPropsBaseComponent
-object MuiTableBodyProps extends MuiPropsBaseStatic[MuiTableBodyProps]
 
 
 trait MuiTableBodyClasses

@@ -10,7 +10,7 @@ object MuiTableSortLabel {
 
   val component = JsComponent[MuiTableSortLabelProps, Children.Varargs, Null](Mui.TableSortLabel)
 
-  def apply(props: MuiTableSortLabelProps = MuiTableSortLabelProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTableSortLabelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -25,7 +25,6 @@ trait MuiTableSortLabelProps
   val hideSortIcon: js.UndefOr[Boolean] = js.undefined
   val IconComponent: js.UndefOr[js.Function] = js.undefined
 }
-object MuiTableSortLabelProps extends MuiPropsBaseStatic[MuiTableSortLabelProps]
 
 
 trait MuiTableSortLabelClasses

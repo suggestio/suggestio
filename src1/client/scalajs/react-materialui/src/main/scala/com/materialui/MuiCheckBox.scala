@@ -12,7 +12,7 @@ object MuiCheckBox {
 
   val component = JsComponent[MuiCheckBoxProps, Children.None, Null](Mui.CheckBox)
 
-  def apply(props: MuiCheckBoxProps = MuiCheckBoxProps.empty) =
+  final def apply(props: MuiCheckBoxProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -38,7 +38,6 @@ trait MuiCheckBoxProps
   val `type`: js.UndefOr[String] = js.undefined
   val value: js.UndefOr[String] = js.undefined
 }
-object MuiCheckBoxProps extends MuiPropsBaseStatic[MuiCheckBoxProps]
 
 
 trait MuiCheckBoxClasses extends MuiClassesBase {

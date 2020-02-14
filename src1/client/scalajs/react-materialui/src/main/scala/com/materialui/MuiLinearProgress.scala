@@ -8,7 +8,7 @@ object MuiLinearProgress {
 
   val component = JsComponent[MuiLinearProgressProps, Children.None, Null](Mui.LinearProgress)
 
-  def apply(props: MuiLinearProgressProps = MuiLinearProgressProps.empty) =
+  final def apply(props: MuiLinearProgressProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -23,7 +23,6 @@ trait MuiLinearProgressProps extends MuiPropsBase {
   val color: js.UndefOr[String]                     = js.undefined
   val variant: js.UndefOr[String]                   = js.undefined
 }
-object MuiLinearProgressProps extends MuiPropsBaseStatic[MuiLinearProgressProps]
 
 
 /** JSON для [[MuiLinearProgressProps]].classes. */

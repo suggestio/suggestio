@@ -9,7 +9,7 @@ object MuiCircularProgress {
 
   val component = JsComponent[MuiCircularProgressProps, Children.None, Null](Mui.CircularProgress)
 
-  def apply(props: MuiCircularProgressProps = MuiCircularProgressProps.empty) =
+  final def apply(props: MuiCircularProgressProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -24,7 +24,6 @@ trait MuiCircularProgressProps extends js.Object {
   val value: js.UndefOr[Double] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
-object MuiCircularProgressProps extends MuiPropsBaseStatic[MuiCircularProgressProps]
 
 /** JSON для [[MuiCircularProgressProps]].classes. */
 trait MuiCircularProgressClasses extends js.Object {

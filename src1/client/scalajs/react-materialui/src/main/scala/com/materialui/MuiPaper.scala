@@ -10,7 +10,7 @@ object MuiPaper {
 
   val component = JsComponent[MuiPaperProps, Children.Varargs, Null](Mui.Paper)
 
-  def apply(props: MuiPaperProps = MuiPaperProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiPaperProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -28,7 +28,6 @@ trait MuiPaperPropsBase
 trait MuiPaperProps
   extends MuiPaperPropsBase
   with MuiPropsBaseClasses[MuiPaperClasses]
-object MuiPaperProps extends MuiPropsBaseStatic[MuiPaperProps]
 
 
 trait MuiPaperClasses extends MuiClassesBase {

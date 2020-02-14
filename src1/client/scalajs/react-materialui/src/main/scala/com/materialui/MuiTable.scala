@@ -9,7 +9,7 @@ object MuiTable {
 
   val component = JsComponent[MuiTableProps, Children.Varargs, Null](Mui.Table)
 
-  def apply(props: MuiTableProps = MuiTableProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTableProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -23,7 +23,6 @@ trait MuiTableProps
 {
   val padding: js.UndefOr[String] = js.undefined
 }
-object MuiTableProps extends MuiPropsBaseStatic[MuiTableProps]
 
 
 trait MuiTableClasses

@@ -17,7 +17,8 @@ object MuiStepLabel {
   val component = JsComponent[MuiStepLabelProps, Children.Varargs, Null]( Mui.StepLabel )
 
   /** @param children In most cases will simply be a string containing a title for the label. */
-  def apply(props: MuiStepLabelProps = MuiStepLabelProps.empty)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: MuiStepLabelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
 
@@ -33,7 +34,6 @@ trait MuiStepLabelProps
   val StepIconComponent: js.UndefOr[js.Any] = js.undefined
   val StepIconProps: js.UndefOr[js.Object] = js.undefined
 }
-object MuiStepLabelProps extends MuiPropsBaseStatic[MuiStepLabelProps]
 
 
 trait MuiStepLabelClasses extends MuiClassesBase {

@@ -8,7 +8,7 @@ object MuiChip {
 
   val component = JsComponent[MuiChipProps, Children.None, Null](Mui.Chip)
 
-  def apply(props: MuiChipProps) =
+  final def apply(props: MuiChipProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -26,7 +26,6 @@ trait MuiChipProps extends MuiPropsBase with MuiPropsBaseComponent {
   val onDelete: js.UndefOr[js.Function1[ReactUIEventFromHtml, _]] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
-object MuiChipProps extends MuiPropsBaseStatic[MuiChipProps]
 
 
 /** Values for [[MuiChipProps.variant]]. */

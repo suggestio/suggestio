@@ -9,7 +9,7 @@ object MuiAppBar {
 
   val component = JsComponent[MuiAppBarProps, Children.Varargs, Null](Mui.AppBar)
 
-  def apply(props: MuiAppBarProps = MuiAppBarProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiAppBarProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -22,7 +22,6 @@ trait MuiAppBarProps
   val color: js.UndefOr[String] = js.undefined
   val position: js.UndefOr[String] = js.undefined
 }
-object MuiAppBarProps extends MuiPropsBaseStatic[MuiAppBarProps]
 
 
 trait MuiAppBarClasses extends MuiClassesBase {

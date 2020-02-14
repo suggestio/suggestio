@@ -15,7 +15,7 @@ object MuiFormControl {
 
   val component = JsComponent[MuiFormControlProps, Children.Varargs, Null](Mui.FormControl)
 
-  def apply(props: MuiFormControlProps = MuiFormControlProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiFormControlProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -32,7 +32,6 @@ trait MuiFormControlProps
   val margin: js.UndefOr[String] = js.undefined
   val required: js.UndefOr[Boolean] = js.undefined
 }
-object MuiFormControlProps extends MuiPropsBaseStatic[MuiFormControlProps]
 
 
 trait MuiFormControlClasses extends MuiClassesBase {

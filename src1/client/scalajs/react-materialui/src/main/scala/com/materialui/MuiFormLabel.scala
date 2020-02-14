@@ -15,7 +15,7 @@ object MuiFormLabel {
 
   val component = JsComponent[MuiFormLabelProps, Children.Varargs, Null](Mui.FormLabel)
 
-  def apply(props: MuiFormLabelProps = MuiFormLabelProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiFormLabelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -32,7 +32,6 @@ trait MuiFormLabelProps
   val focused   : js.UndefOr[Boolean] = js.undefined
   val required  : js.UndefOr[Boolean] = js.undefined
 }
-object MuiFormLabelProps extends MuiPropsBaseStatic[MuiFormLabelProps]
 
 
 trait MuiFormLabelClasses extends MuiClassesBase {

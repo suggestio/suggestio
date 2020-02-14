@@ -10,7 +10,7 @@ object MuiDialog {
 
   val component = JsComponent[MuiDialogProps, Children.Varargs, Null](Mui.Dialog)
 
-  def apply(props: MuiDialogProps)(children: VdomNode*) =
+  final def apply(props: MuiDialogProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -36,7 +36,6 @@ trait MuiDialogProps
   val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
 }
-object MuiDialogProps extends MuiPropsBaseStatic[MuiDialogProps]
 
 
 /** JSON props for [[MuiDialogProps.classes]]. */

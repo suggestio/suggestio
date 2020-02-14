@@ -8,7 +8,7 @@ object MuiCardContent {
 
   val component = JsComponent[MuiCardContentProps, Children.Varargs, Null](Mui.CardContent)
 
-  def apply(props: MuiCardContentProps = MuiCardContentProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiCardContentProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -18,7 +18,6 @@ trait MuiCardContentProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiCardContentClasses]
   with MuiPropsBaseComponent
-object MuiCardContentProps extends MuiPropsBaseStatic[MuiCardContentProps]
 
 
 trait MuiCardContentClasses extends MuiClassesBase

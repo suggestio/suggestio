@@ -14,7 +14,7 @@ object MuiDialogTitle {
 
   val component = JsComponent[MuiDialogTitleProps, Children.Varargs, Null](Mui.DialogTitle)
 
-  def apply(props: MuiDialogTitleProps = MuiDialogTitleProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiDialogTitleProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -27,7 +27,6 @@ trait MuiDialogTitleProps
 {
   val disableTypography: js.UndefOr[Boolean] = js.undefined
 }
-object MuiDialogTitleProps extends MuiPropsBaseStatic[MuiDialogTitleProps]
 
 
 /** Props for [[MuiDialogTitleProps.classes]]. */

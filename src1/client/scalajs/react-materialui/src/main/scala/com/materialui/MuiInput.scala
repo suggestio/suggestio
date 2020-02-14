@@ -17,7 +17,7 @@ object MuiInput {
 
   val component = JsComponent[MuiInputProps, Children.None, Null](Mui.Input)
 
-  def apply(props: MuiInputProps = MuiInputProps.empty) =
+  final def apply(props: MuiInputProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -51,7 +51,6 @@ trait MuiInputProps extends MuiPropsBase {
   val `type`: js.UndefOr[String] = js.undefined
   val value: js.UndefOr[MuiInputValue_t | js.Array[MuiInputValue_t]] = js.undefined
 }
-object MuiInputProps extends MuiPropsBaseStatic[MuiInputProps]
 
 
 /** JSON для [[MuiInputProps.classes]]. */

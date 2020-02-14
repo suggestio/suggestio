@@ -12,6 +12,7 @@ import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
+import io.suggest.sc.v.menu.dlapp.{DlAppDiaR, DlAppR}
 import io.suggest.sc.v.search._
 import japgolly.scalajs.react.React
 import japgolly.scalajs.react.extra.router.RouterCtl

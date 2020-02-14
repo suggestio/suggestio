@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListClasses, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListProps, MuiProgressVariants, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps}
+import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListClasses, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListProps, MuiProgressVariants, MuiPropsBaseStatic, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
@@ -123,7 +123,7 @@ class NodesFoundR(
 
           // Рендер ошибки.
           props.req.renderFailed { ex =>
-            val emptyProps = MuiListItemProps.empty
+            val emptyProps = MuiPropsBaseStatic.empty[MuiListItemProps]
             val errHint = Option(ex.getMessage)
               .getOrElse(ex.getClass.getName)
             VdomArray(

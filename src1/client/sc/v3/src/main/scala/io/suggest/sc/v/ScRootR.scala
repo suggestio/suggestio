@@ -22,6 +22,7 @@ import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
 import io.suggest.sc.v.menu._
+import io.suggest.sc.v.menu.dlapp.{DlAppDiaR, DlAppR}
 import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.spa.{FastEqUtil, OptFastEq}

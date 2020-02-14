@@ -67,8 +67,9 @@ trait MuiPropsBase extends js.Object {
 
 }
 
-trait MuiPropsBaseStatic[T <: js.Object] {
-  def empty: T = js.Object().asInstanceOf[T]
+object MuiPropsBaseStatic {
+  def empty[T <: js.Object]: T =
+    js.Object().asInstanceOf[T]
 }
 
 

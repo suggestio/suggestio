@@ -17,7 +17,8 @@ object MuiStepper {
   val component = JsComponent[MuiStepperProps, Children.Varargs, Null]( Mui.Stepper )
 
   /** @param children Two or more <Step /> components. */
-  def apply(props: MuiStepperProps = MuiStepperProps.empty)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: MuiStepperProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
 
@@ -34,7 +35,6 @@ trait MuiStepperProps
   val nonLinear: js.UndefOr[Boolean] = js.undefined
   val orientation: js.UndefOr[String] = js.undefined
 }
-object MuiStepperProps extends MuiPropsBaseStatic[MuiStepperProps]
 
 object MuiStepperOrientations {
   def vertical = "vertical"

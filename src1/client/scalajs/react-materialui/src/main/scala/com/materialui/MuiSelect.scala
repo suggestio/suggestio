@@ -17,7 +17,7 @@ object MuiSelect {
 
   val component = JsComponent[MuiSelectProps, Children.Varargs, Null]( Mui.Select )
 
-  def apply(props: MuiSelectProps = MuiSelectProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiSelectProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -52,7 +52,6 @@ trait MuiSelectProps
   val value: js.UndefOr[js.Any] = js.undefined
   val variant: js.UndefOr[MuiTextField.Variant] = js.undefined
 }
-object MuiSelectProps extends MuiPropsBaseStatic[MuiSelectProps]
 
 
 trait MuiSelectClasses extends MuiClassesBase {

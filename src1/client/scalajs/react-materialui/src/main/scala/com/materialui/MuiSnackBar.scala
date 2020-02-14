@@ -10,7 +10,7 @@ object MuiSnackBar {
 
   val component = JsComponent[MuiSnackBarProps, Children.Varargs, Null](Mui.Snackbar)
 
-  def apply(props: MuiSnackBarProps = MuiSnackBarProps.empty)(children: VdomElement*) =
+  final def apply(props: MuiSnackBarProps = MuiPropsBaseStatic.empty)(children: VdomElement*) =
     component(props)(children: _*)
 
 }
@@ -42,7 +42,6 @@ trait MuiSnackBarProps
   val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
 }
-object MuiSnackBarProps extends MuiPropsBaseStatic[MuiSnackBarProps]
 
 
 /** JSON fop [[MuiSnackBarProps.anchorOrigin]]. */

@@ -12,7 +12,7 @@ object MuiSnackBarContent {
 
   val component = JsComponent[MuiSnackBarContentProps, Children.None, Null](Mui.SnackbarContent)
 
-  def apply(props: MuiSnackBarContentProps = MuiSnackBarContentProps.empty) =
+  final def apply(props: MuiSnackBarContentProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -26,7 +26,6 @@ trait MuiSnackBarContentProps
   val action: js.UndefOr[raw.React.Node] = js.undefined
   val message: js.UndefOr[raw.React.Node] = js.undefined
 }
-object MuiSnackBarContentProps extends MuiPropsBaseStatic[MuiSnackBarContentProps]
 
 
 

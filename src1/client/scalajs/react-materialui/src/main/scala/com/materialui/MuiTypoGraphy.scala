@@ -13,7 +13,7 @@ object MuiTypoGraphy {
 
   val component = JsComponent[MuiTypoGraphyProps, Children.Varargs, Null](Mui.Typography)
 
-  def apply(props: MuiTypoGraphyProps = MuiTypoGraphyProps.empty)(children: VdomNode*) =
+  def apply(props: MuiTypoGraphyProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -34,7 +34,6 @@ trait MuiTypoGraphyProps
   extends MuiTypoGraphyPropsBase
   with MuiPropsBaseClasses[MuiTypoGraphyClasses]
   with MuiPropsBaseComponent
-object MuiTypoGraphyProps extends MuiPropsBaseStatic[MuiTypoGraphyProps]
 
 
 /** Общие поля для [[MuiTypoGraphyProps]] и [[MuiTypoGraphyProps.variantMapping]]. */

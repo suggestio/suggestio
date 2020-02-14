@@ -9,7 +9,7 @@ object MuiToolBar {
 
   val component = JsComponent[MuiToolBarProps, Children.Varargs, Null](Mui.Toolbar)
 
-  def apply(props: MuiToolBarProps = MuiToolBarProps.empty)(children: VdomNode*) =
+  def apply(props: MuiToolBarProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -23,7 +23,6 @@ trait MuiToolBarProps
   val disableGutters: js.UndefOr[Boolean] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
-object MuiToolBarProps extends MuiPropsBaseStatic[MuiToolBarProps]
 
 
 trait MuiToolBarClasses extends MuiClassesBase {

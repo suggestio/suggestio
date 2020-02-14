@@ -14,7 +14,7 @@ object MuiListItemText {
 
   val component = JsComponent[MuiListItemTextProps, Children.Varargs, Null](Mui.ListItemText)
 
-  def apply(props: MuiListItemTextProps = new MuiListItemTextProps {})(children: VdomNode*) =
+  final def apply(props: MuiListItemTextProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -31,7 +31,6 @@ trait MuiListItemTextProps
   val secondary: js.UndefOr[raw.React.Node] = js.undefined
   val secondaryTypographyProps: js.UndefOr[js.Object] = js.undefined
 }
-object MuiListItemTextProps extends MuiPropsBaseStatic[MuiListItemTextProps]
 
 
 trait MuiListItemTextClasses extends js.Object {

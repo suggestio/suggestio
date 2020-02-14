@@ -13,7 +13,7 @@ object MuiListItem {
   val component = JsComponent[MuiListItemProps, Children.Varargs, Null](Mui.ListItem)
 
   /** @param children Children passed into the `ListItem`. */
-  def apply(props: MuiListItemProps = MuiListItemProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiListItemProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -33,7 +33,6 @@ trait MuiListItemProps
 
   val ContainerComponent:          js.UndefOr[String | React.Element]                 = js.undefined
 }
-object MuiListItemProps extends MuiPropsBaseStatic[MuiListItemProps]
 
 
 trait MuiListItemClasses extends js.Object {

@@ -9,7 +9,7 @@ object MuiAvatar {
 
   val component = JsComponent[js.Object, Children.Varargs, Null](Mui.Avatar)
 
-  def apply(props: MuiAvatarProps = MuiAvatarProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiAvatarProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -27,7 +27,6 @@ trait MuiAvatarProps
   val src: js.UndefOr[String] = js.undefined
   val srcSet: js.UndefOr[String] = js.undefined
 }
-object MuiAvatarProps extends MuiPropsBaseStatic[MuiAvatarProps]
 
 
 /** JSON for [[MuiAvatarProps.classes]]. */

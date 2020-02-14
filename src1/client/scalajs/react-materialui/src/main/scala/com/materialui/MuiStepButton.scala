@@ -16,7 +16,8 @@ object MuiStepButton {
 
   val component = JsComponent[MuiStepButtonProps, Children.Varargs, Null]( Mui.StepButton )
 
-  def apply(props: MuiStepButtonProps = MuiStepButtonProps.empty)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: MuiStepButtonProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
 
@@ -28,7 +29,6 @@ trait MuiStepButtonProps
   val icon: js.UndefOr[raw.React.Node] = js.undefined
   val optional: js.UndefOr[raw.React.Node] = js.undefined
 }
-object MuiStepButtonProps extends MuiPropsBaseStatic[MuiStepButtonProps]
 
 
 trait MuiStepButtonClasses extends MuiButtonBaseClasses {

@@ -12,7 +12,7 @@ object MuiSwitch {
 
   val component = JsComponent[MuiSwitchProps, Children.None, Null](Mui.Switch)
 
-  def apply(props: MuiSwitchProps = MuiSwitchProps.empty) =
+  def apply(props: MuiSwitchProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -36,7 +36,6 @@ trait MuiSwitchProps
   val `type`: js.UndefOr[String] = js.undefined
   val value: js.UndefOr[String | Double | Boolean] = js.undefined
 }
-object MuiSwitchProps extends MuiPropsBaseStatic[MuiSwitchProps]
 
 
 trait MuiSwitchClasses extends MuiClassesBase {

@@ -15,7 +15,7 @@ object MuiInputAdornment {
 
   val component = JsComponent[MuiInputAdornmentProps, Children.Varargs, Null](Mui.InputAdornment)
 
-  def apply(props: MuiInputAdornmentProps = MuiInputAdornmentProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiInputAdornmentProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -27,7 +27,6 @@ trait MuiInputAdornmentProps extends MuiPropsBase {
   val disableTypography: js.UndefOr[Boolean] = js.undefined
   val position: js.UndefOr[String] = js.undefined
 }
-object MuiInputAdornmentProps extends MuiPropsBaseStatic[MuiInputAdornmentProps]
 
 
 trait MuiInputAdornmentClasses extends js.Object {

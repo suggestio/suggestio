@@ -486,10 +486,9 @@ lazy val scCommonSjs = {
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
-    // Поддержка BLE и Cordova не реализована. Надо извлечь из прошлой выдачи, которая была удалена 2018-04-03 после 7390c4e0af497795438e67b57e42c28281a100d2 из src1/client/sc/main
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
-      mapsSjs, jdRenderSjs, reactSidebar, reactScroll,
+      mapsSjs, jdRenderSjs, reactSidebar, reactScroll, reactQrCodeSjs,
     )
 }
 
@@ -597,6 +596,14 @@ lazy val payWww = {
     .dependsOn(commonWww, mbill2)
 }
 
+/** Клиент-сайд генератор QR-кодов. */
+lazy val reactQrCodeSjs = {
+  val id = "scalajs-react-qrcode"
+  Project(id = id, base = file(DIR0 + "client/scalajs/react-qrcode"))
+    .dependsOn( commonReactSjs )
+}
+
+
 /** веб-интерфейс suggest.io v2. */
 lazy val www = project
   .in( file(DIR0 + "server/www") )
@@ -656,7 +663,7 @@ lazy val sio2 = {
     .aggregate(
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
-      reactMaterialUiSjs,
+      reactMaterialUiSjs, reactQrCodeSjs,
       leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
       lkSjs, sysSjs,
       scCommonSjs, sc3Sjs,

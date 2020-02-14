@@ -8,7 +8,7 @@ object MuiDivider {
 
   val component = JsComponent[MuiDividerProps, Children.None, Null](Mui.Divider)
 
-  def apply(props: MuiDividerProps = MuiDividerProps.empty) =
+  final def apply(props: MuiDividerProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -23,7 +23,6 @@ trait MuiDividerProps
   val light: js.UndefOr[Boolean] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
-object MuiDividerProps extends MuiPropsBaseStatic[MuiDividerProps]
 
 
 object MuiDividerVariants {

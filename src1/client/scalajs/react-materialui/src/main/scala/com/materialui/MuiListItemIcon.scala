@@ -14,7 +14,7 @@ object MuiListItemIcon {
 
   val component = JsComponent[MuiListItemIconProps, Children.Varargs, Null](Mui.ListItemIcon)
 
-  def apply(props: MuiListItemIconProps = MuiListItemIconProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiListItemIconProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -24,7 +24,6 @@ object MuiListItemIcon {
 trait MuiListItemIconProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiListItemIconClasses]
-object MuiListItemIconProps extends MuiPropsBaseStatic[MuiListItemIconProps]
 
 
 /** JSON для [[MuiListItemIconProps.classes]]. */

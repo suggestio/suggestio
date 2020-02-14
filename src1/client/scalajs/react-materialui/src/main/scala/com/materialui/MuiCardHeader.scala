@@ -10,7 +10,7 @@ object MuiCardHeader {
 
   val component = JsComponent[MuiCardHeaderProps, Children.Varargs, Null](Mui.CardHeader)
 
-  def apply(props: MuiCardHeaderProps = MuiCardHeaderProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiCardHeaderProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -29,7 +29,6 @@ trait MuiCardHeaderProps
   val title: js.UndefOr[raw.React.Node] = js.undefined
   val titleTypographyProps: js.UndefOr[MuiTypoGraphyProps] = js.undefined
 }
-object MuiCardHeaderProps extends MuiPropsBaseStatic[MuiCardHeaderProps]
 
 
 trait MuiCardHeaderClasses extends MuiClassesBase {

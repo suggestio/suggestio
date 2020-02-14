@@ -14,7 +14,8 @@ object MuiStepConnector {
 
   val component = JsComponent[MuiStepConnectorProps, Children.None, Null]( Mui.StepConnector )
 
-  def apply(props: MuiStepConnectorProps = MuiStepConnectorProps.empty) = component(props)
+  def apply(props: MuiStepConnectorProps = MuiPropsBaseStatic.empty) =
+    component(props)
 
 }
 
@@ -22,7 +23,6 @@ object MuiStepConnector {
 trait MuiStepConnectorProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiStepConnectorClasses]
-object MuiStepConnectorProps extends MuiPropsBaseStatic[MuiStepConnectorProps]
 
 trait MuiStepConnectorClasses extends MuiClassesBase {
   val horizontal: js.UndefOr[String] = js.undefined

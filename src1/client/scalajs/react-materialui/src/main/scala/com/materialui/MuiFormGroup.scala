@@ -16,7 +16,7 @@ object MuiFormGroup {
 
   val component = JsComponent[MuiFormGroupProps, Children.Varargs, Null]( Mui.FormGroup )
 
-  def apply(props: MuiFormGroupProps = MuiFormGroupProps.empty)(children: VdomNode*) = component(props)(children: _*)
+  final def apply(props: MuiFormGroupProps = MuiPropsBaseStatic.empty)(children: VdomNode*) = component(props)(children: _*)
 
 }
 
@@ -28,7 +28,6 @@ trait MuiFormGroupProps
 {
   val row: js.UndefOr[Boolean] = js.undefined
 }
-object MuiFormGroupProps extends MuiPropsBaseStatic[MuiFormGroupProps]
 
 
 /** CSS classes JSON for [[MuiFormGroup]] component props [[MuiFormGroupProps]].classes . */

@@ -1,7 +1,7 @@
 package io.suggest.bill.cart.v.txn
 
 import com.materialui
-import com.materialui.{MuiTable, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableHead, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{MuiPropsBaseStatic, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableHead, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.CommonDateTimeUtil
@@ -92,7 +92,7 @@ class TxnsR {
               mtxns.toVdomArray { mtxnPriced =>
                 val mtxn = mtxnPriced.txn
                 MuiTableRow.component
-                  .withKey( mtxn.id.fold(mtxn.toString)(_.toString) )( MuiTableRowProps.empty )(
+                  .withKey( mtxn.id.fold(mtxn.toString)(_.toString) )( MuiPropsBaseStatic.empty[MuiTableRowProps] )(
 
                     MuiTableCell()(
                       mtxn.id.whenDefinedNode(_.toString)

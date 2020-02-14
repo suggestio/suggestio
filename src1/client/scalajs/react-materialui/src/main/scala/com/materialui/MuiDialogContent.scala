@@ -14,7 +14,7 @@ object MuiDialogContent {
 
   val component = JsComponent[MuiDialogContentProps, Children.Varargs, Null](Mui.DialogContent)
 
-  def apply(props: MuiDialogContentProps = MuiDialogContentProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiDialogContentProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -24,7 +24,6 @@ object MuiDialogContent {
 trait MuiDialogContentProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiDialogContentClasses]
-object MuiDialogContentProps extends MuiPropsBaseStatic[MuiDialogContentProps]
 
 
 /** Props for [[MuiDialogContentProps.classes]]. */

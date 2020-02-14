@@ -17,7 +17,7 @@ object MuiFormControlLabel {
 
   val component = JsComponent[MuiFormControlLabelProps, Children.None, Null](Mui.FormControlLabel)
 
-  def apply(props: MuiFormControlLabelProps = MuiFormControlLabelProps.empty) =
+  final def apply(props: MuiFormControlLabelProps = MuiPropsBaseStatic.empty) =
     component(props)
 
 }
@@ -38,7 +38,6 @@ trait MuiFormControlLabelProps
   val onChange2: js.UndefOr[js.Function2[ReactEventFromInput, Boolean, _]] = js.undefined
   val value: js.UndefOr[String] = js.undefined
 }
-object MuiFormControlLabelProps extends MuiPropsBaseStatic[MuiFormControlLabelProps]
 
 
 trait MuiFormControlLabelClasses extends MuiClassesBase {

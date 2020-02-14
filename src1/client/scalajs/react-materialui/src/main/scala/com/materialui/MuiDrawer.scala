@@ -11,7 +11,7 @@ object MuiDrawer {
 
   val component = JsComponent[MuiDrawerProps, Children.Varargs, Null](Mui.Drawer)
 
-  def apply(props: MuiDrawerProps = MuiDrawerProps.empty)(children: VdomNode*) =
+  final def apply(props: MuiDrawerProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -32,7 +32,6 @@ trait MuiDrawerPropsBase
 trait MuiDrawerProps extends MuiDrawerPropsBase {
   val open: js.UndefOr[Boolean] = js.undefined
 }
-object MuiDrawerProps extends MuiPropsBaseStatic[MuiDrawerProps]
 
 
 /** The properties of the Modal component are available when variant="temporary" is set. */
