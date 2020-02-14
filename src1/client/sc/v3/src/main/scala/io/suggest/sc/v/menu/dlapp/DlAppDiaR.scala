@@ -1,25 +1,25 @@
 package io.suggest.sc.v.menu.dlapp
 
-import com.materialui.{Mui, MuiButton, MuiButtonBaseCommonProps, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControlClasses, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListItemTextProps, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
-import diode.data.Pot
+import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
+import com.materialui.{Component_t, Mui, MuiButton, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelActions, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.html.HtmlConstants.`.`
+import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.msg.JsFormatUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.app.MScAppGetResp
-import io.suggest.sc.m.menu.{MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{ExpandDlApp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -40,7 +40,6 @@ class DlAppDiaR(
                     diaOpenedSomeC    : ReactConnectProxy[Some[Boolean]],
                     dlAppDiaC         : ReactConnectProxy[MDlAppDia],
                     devPlatformOptC   : ReactConnectProxy[Option[MOsFamily]],
-                    appDlRespPotC     : ReactConnectProxy[Pot[MScAppGetResp]],
                   )
 
   class Backend( $: BackendScope[Props, State] ) {
@@ -52,6 +51,10 @@ class DlAppDiaR(
     private val _onOsFamilyChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val osFamily2 = MOsFamilies.withValue( e.target.value )
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, PlatformSetAppDl( osFamily2 ) )
+    }
+
+    private def _onExpandChanged(index: Int) = ReactCommonUtil.cbFun2ToJsCb { (_: ReactEvent, isExpanded: Boolean) =>
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ExpandDlApp( index, isExpanded ) )
     }
 
     /*
@@ -77,6 +80,15 @@ class DlAppDiaR(
       // Содержимое диалога
       val diaContent = crCtxProv.consume { crCtx =>
         lazy val bytesMsg = crCtx.messages( MsgCodes.`B._Bytes` )
+        lazy val fileMsg = crCtx.messages( MsgCodes.`File` )
+        lazy val fileMsg_lc = fileMsg.toLowerCase()
+        lazy val sizeMsg = crCtx.messages( MsgCodes.`Size` )
+
+        // "Скачать файл"
+        lazy val donwloadFileMsg = crCtx.messages(
+          MsgCodes.`Download.0`,
+          fileMsg_lc,
+        )
 
         React.Fragment(
 
@@ -113,12 +125,12 @@ class DlAppDiaR(
             <.br,
 
             // Отрендерить кнопки-ссылки для скачивания, данные для ссылок приходят запросом с сервера.
-            s.appDlRespPotC { appDlRespPotProxy =>
-              val appDlRespPot = appDlRespPotProxy.value
+            s.dlAppDiaC { dlAppDiaProxy =>
+              val dlAppDia = dlAppDiaProxy.value
 
               React.Fragment(
 
-                appDlRespPot.render { resp =>
+                dlAppDia.getReq.render { resp =>
                   if (resp.dlInfos.isEmpty) {
                     MuiTypoGraphy(
                       new MuiTypoGraphyProps {
@@ -129,20 +141,24 @@ class DlAppDiaR(
                     )
 
                   } else {
-                    MuiList()(
-                      (for (dlInfo <- resp.dlInfos) yield {
-                        MuiListItem.component.withKey( dlInfo.predicate.value + `.` + dlInfo.extSvc.fold("")(_.value) )(
-                          new MuiListItemProps with MuiButtonBaseCommonProps {
-                            override val disabled = false
-                            override val button = true
-                            override val component = js.defined( "a" )
-                            //override val onClick = _onDownLoadBtnClick( dlInfo )
-                            val href = dlInfo.url
+                    <.div(
+                      (for {
+                        (dlInfo, index) <- resp
+                          .dlInfos
+                          .iterator
+                          .zipWithIndex
+                      } yield {
+                        MuiExpansionPanel.component.withKey( index )(
+                          new MuiExpansionPanelProps {
+                            @JSName("onChange")
+                            override val onChange2 = _onExpandChanged( index )
+                            override val expanded = dlAppDia.expanded contains index
                           }
                         )(
 
-                          // Иконка, если есть.
-                          MuiListItemIcon()(
+                          // Заголовок панели.
+                          MuiExpansionPanelSummary()(
+                            // Левая иконка:
                             dlInfo.extSvc.fold[VdomNode](
                               Mui.SvgIcons.GetApp()()
                             ) {
@@ -153,62 +169,85 @@ class DlAppDiaR(
                               case _ =>
                                 EmptyVdom
                             },
+                            // Что откуда качать:
+                            dlInfo.extSvc.fold[VdomNode](
+                              donwloadFileMsg,
+                            )( _.nameI18N ),
                           ),
 
-                          {
-                            // Первая строка - что откуда качать:
-                            val _primary = dlInfo.extSvc.fold[VdomNode](
-                              // "Скачать файл"
-                              crCtx.messages(
-                                MsgCodes.`Download.0`,
-                                crCtx.messages( MsgCodes.`File` ).toLowerCase(),
-                              )
-                            )( _.nameI18N )
-
-                            // Отрендерить название файла, размер файла.
-                            val _secondary = React.Fragment(
-                              dlInfo.fileName.whenDefinedNode,
-                              <.span(
-                                ^.float.right,
-                                dlInfo.fileSizeB.whenDefined { sizeB =>
-                                  JsFormatUtil.formatKilMegGigTer(
-                                    value     = sizeB,
-                                    baseUnits = bytesMsg,
-                                    use1024   = true,
-                                  )(crCtx.messages)
+                          // Раскрытая часть панели.
+                          MuiExpansionPanelDetails()(
+                            MuiTable()(
+                              MuiTableBody()(
+                                // Имя файла
+                                dlInfo.fileName.whenDefinedNode { fileName =>
+                                  MuiTableRow()(
+                                    MuiTableCell()( fileMsg ),
+                                    MuiTableCell()( fileName ),
+                                  )
                                 },
+                                // Размер файла
+                                dlInfo.fileSizeB.whenDefinedNode { fileSizeB =>
+                                  MuiTableRow()(
+                                    MuiTableCell()( sizeMsg ),
+                                    MuiTableCell()(
+                                      JsFormatUtil.formatKilMegGigTer(
+                                        value     = fileSizeB,
+                                        baseUnits = bytesMsg,
+                                        use1024   = true,
+                                      )(crCtx.messages)
+                                    ),
+                                  )
+                                },
+                                // TODO контрольная сумма.
                               )
-                            )
+                            ),
 
-                            MuiListItemText(
-                              new MuiListItemTextProps {
-                                override val primary = _primary.rawNode
-                                override val secondary = _secondary.rawNode
-                              }
-                            )()
-                          },
+                          ),
 
-                        ): VdomElement
-                      }): _*
+
+                          //MuiExpansionPanelActions()(
+                            MuiList()(
+                              // Ссылка/кнопка скачивания
+                              MuiListItem()(
+                                MuiListItemText()(
+                                  MuiButton(
+                                    new MuiButtonProps {
+                                      override val href = dlInfo.url
+                                      override val component = "a"
+                                      // TODO val target = "_blank" для переходов в play/appstore
+                                    }
+                                  )(
+                                    dlInfo.extSvc.fold {
+                                      crCtx.messages( MsgCodes.`Download.0`, HtmlConstants.ELLIPSIS )
+                                    } { extSvc =>
+                                      crCtx.messages( MsgCodes.`Open.0`, extSvc.nameI18N )
+                                    }
+                                  ),
+                                ),
+                              ),
+
+                              // qr-код
+                              MuiListItem()(
+                                MuiListItemText()(
+                                  ReactQrCode(
+                                    new ReactQrCodeProps {
+                                      override val value = dlInfo.url
+                                    }
+                                  ),
+                                )
+                              )
+                            ),
+                          //),
+
+                        )
+                      })
+                        .toVdomArray
                     )
                   }
                 },
 
-                /*
-                appDlRespPot.renderFailed { ex =>
-                  <.div(
-                    MuiTypoGraphy()(
-                      crCtx.messages( MsgCodes.`Something.gone.wrong` )
-                    ),
-                    <.br,
-                    MuiTypoGraphy()(
-                      ex.getMessage,
-                    )
-                  )
-                },
-                */
-
-                appDlRespPot.renderPending { _ =>
+                dlAppDia.getReq.renderPending { _ =>
                   React.Fragment(
                     MuiCircularProgress(
                       new MuiCircularProgressProps {
@@ -265,7 +304,6 @@ class DlAppDiaR(
         },
         dlAppDiaC = propsProxy.connect( _.index.menu.dlApp )( MDlAppDia.MDlAppDiaFeq ),
         devPlatformOptC = propsProxy.connect( _.dev.platform.osFamily ),
-        appDlRespPotC = propsProxy.connect( _.index.menu.dlApp.getReq ),
       )
     }
     .renderBackend[Backend]

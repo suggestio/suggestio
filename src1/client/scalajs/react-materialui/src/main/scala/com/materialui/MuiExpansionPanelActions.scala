@@ -11,7 +11,7 @@ import scala.scalajs.js
   * Created: 14.02.2020 17:19
   * Description: [[https://material-ui.com/api/expansion-panel-actions/]]
   */
-class MuiExpansionPanelActions {
+object MuiExpansionPanelActions {
 
   val component = JsComponent[MuiExpansionPanelActionsProps, Children.Varargs, Null]( Mui.ExpansionPanelActions )
 

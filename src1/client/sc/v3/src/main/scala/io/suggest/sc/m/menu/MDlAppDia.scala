@@ -24,7 +24,8 @@ object MDlAppDia {
     override def eqv(a: MDlAppDia, b: MDlAppDia): Boolean = {
       (a.opened ==* b.opened) &&
       (a.getReq ===* b.getReq) &&
-      (a.platform ===* b.platform)
+      (a.platform ===* b.platform) &&
+      (a.expanded ===* b.expanded)
     }
   }
 
@@ -33,6 +34,7 @@ object MDlAppDia {
   lazy val opened = GenLens[MDlAppDia](_.opened)
   lazy val getReq = GenLens[MDlAppDia](_.getReq)
   lazy val platform = GenLens[MDlAppDia](_.platform)
+  lazy val expanded = GenLens[MDlAppDia](_.expanded)
 
 }
 
@@ -42,9 +44,11 @@ object MDlAppDia {
   * @param opened Раскрыт ли пункт меню?
   * @param getReq Состояние реквеста к серверу за скачкой.
   * @param platform Текущая платформа/ось в диалоге выбора платформы.
+  * @param expanded Индекс раскрытого пункта списка вариантов скачивания.
   */
 case class MDlAppDia(
-                          opened           : Boolean                  = false,
-                          getReq           : Pot[MScAppGetResp]       = Pot.empty,
-                          platform         : Option[MOsFamily]        = None,
-                        )
+                      opened           : Boolean                  = false,
+                      getReq           : Pot[MScAppGetResp]       = Pot.empty,
+                      platform         : Option[MOsFamily]        = None,
+                      expanded         : Option[Int]              = None,
+                    )

@@ -279,6 +279,8 @@ class JsMessagesUtil @Inject() (
       MC.`File` ::
       MC.`Malfunction` ::
       MC.`Choose...` ::
+      MC.`Open.0` ::
+      MC.`Size` ::
       Nil
   }
 

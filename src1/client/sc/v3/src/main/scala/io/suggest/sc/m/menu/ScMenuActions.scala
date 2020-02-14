@@ -23,6 +23,9 @@ case class OpenCloseAppDl( opened: Boolean ) extends IScAppAction
 /** Смена платформы в селекте платформы диалога скачивания приложения. */
 case class PlatformSetAppDl( osPlatform: MOsFamily ) extends IScAppAction
 
+/** Раскрытие/сокрытие пункта скачивания приложения. */
+case class ExpandDlApp(index: Int, isExpanded: Boolean ) extends IScAppAction
+
 
 /** Экшен ручного запуска запроса инфы по приложению. */
 case object MkAppDlInfoReq extends IScAppAction

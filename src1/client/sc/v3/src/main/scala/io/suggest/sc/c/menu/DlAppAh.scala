@@ -9,7 +9,7 @@ import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScIndexState
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.m.menu.{DlInfoResp, MDlAppDia, MkAppDlInfoReq, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{ExpandDlApp, DlInfoResp, MDlAppDia, MkAppDlInfoReq, OpenCloseAppDl, PlatformSetAppDl}
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
@@ -119,6 +119,31 @@ class DlAppAh(
         updated(v2, fx)
       })
         .getOrElse( noChange )
+
+
+    // Раскрытие/сокрытие панели.
+    case m: ExpandDlApp =>
+      val v0 = value
+
+      if (m.isExpanded) {
+        // Раскрытие плашки
+        if (v0.expanded contains m.index) {
+          // Плашка уже раскрыта
+          noChange
+        } else {
+          val v2 = (MDlAppDia.expanded set Some(m.index))(v0)
+          updated(v2)
+        }
+      } else {
+        // Сокрытие плашки
+        if (v0.expanded contains m.index) {
+          val v2 = (MDlAppDia.expanded set None)(v0)
+          updated(v2)
+        } else {
+          // Эта плашка НЕ раскрыта, и скрывать её не надо.
+          noChange
+        }
+      }
 
   }
 
