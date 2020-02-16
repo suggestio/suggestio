@@ -4,10 +4,12 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.mvc._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.ContextUtil
 
 import scala.concurrent.ExecutionContext
 import play.api.http.HeaderNames._
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -22,7 +24,9 @@ import play.api.http.HeaderNames._
 class CorsUtil @Inject() (
                            configuration: Configuration,
                            contextUtil: ContextUtil
-                         ) {
+                         )
+  extends MacroLogsImplLazy
+{
 
   /** Активен ли механизм CORS вообще? */
   val IS_ENABLED: Boolean = configuration.getOptional[Boolean]("cors.enabled").getOrElseTrue
@@ -79,25 +83,32 @@ class CorsUtil @Inject() (
     acc
   }
 
-  private val lkOriginUrlPrefixRE = ("^" + contextUtil.LK_URL_PREFIX + "(/.*)?$" ).r
-
-  /** На какие запросы навешивать CORS-allow хидеры? */
+  /** На какие запросы всегда навешивать CORS-allow хидеры? */
   private val ADD_HEADERS_URL_RE = "^/(v?assets/|~)".r
+
 
   /** Проверка хидеров на необходимость добавления CORS в ответ. */
   def isAppendAllowHdrsForRequest(rh: RequestHeader): Boolean = {
-    // TODO Отрефакторить этот быдлокод.
-    SIMPLE_CORS_HEADERS.nonEmpty && {
-      val uri = rh.uri
-      ADD_HEADERS_URL_RE.pattern.matcher(uri).find || {
-        // Проверять Origin header -- это наверное правильно. Аплоад можно делать только из LK.
-        rh.headers
-          .get(ORIGIN)
-          .exists(s => lkOriginUrlPrefixRE.pattern.matcher(s).matches() ) &&
-            uri.startsWith("/upload/file")
+    SIMPLE_CORS_HEADERS.nonEmpty &&
+    ADD_HEADERS_URL_RE.pattern.matcher(rh.uri).find
+  }
+
+  def isSioOrigin()(implicit request: RequestHeader): Option[String] = {
+    for {
+      reqOrigin <- request.headers.get( ORIGIN )
+      sioUrlPrefix = contextUtil.URL_PREFIX
+      if {
+        val r = reqOrigin ==* sioUrlPrefix
+        if (!r) LOGGER.warn(s"isSioOrigin(): Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: $sioUrlPrefix")
+        r
       }
+    } yield {
+      sioUrlPrefix
     }
   }
+
+  def withCorsHeaders(resp: Result) =
+    resp.withHeaders( SIMPLE_CORS_HEADERS: _* )
 
 }
 
@@ -127,7 +138,7 @@ class CorsFilter @Inject() (
             resp
           } else {
             // Успешный подходящий запрос, навешиваем хидеры.
-            resp.withHeaders(corsUtil.SIMPLE_CORS_HEADERS: _*)
+            corsUtil.withCorsHeaders( resp )
           }
         }
       } else {

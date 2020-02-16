@@ -41,7 +41,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, MultipartFormData, Result, Results}
 import play.core.parsers.Multipart
 import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth, IsFileNotModified}
-import util.cdn.CdnUtil
+import util.cdn.{CdnUtil, CorsUtil}
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
 import monocle.Traversal
@@ -50,7 +50,6 @@ import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
 import play.api.inject.Injector
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import scalaz.ValidationNel
@@ -86,6 +85,7 @@ final class Upload @Inject()(
   private lazy val canDownloadFile = injector.instanceOf[CanDownloadFile]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val isFileNotModified = injector.instanceOf[IsFileNotModified]
+  private lazy val corsUtil = injector.instanceOf[CorsUtil]
   implicit private lazy val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
 
   import sioControllerApi._
@@ -794,7 +794,7 @@ final class Upload @Inject()(
                     MHistogramWs(
                       nodeId          = mnodeId,
                       hist            = mhist2,
-                      hasTransparent  = hasTransparentColor
+                      hasTransparent  = hasTransparentColor,
                     )
                   }
                 )
@@ -808,8 +808,17 @@ final class Upload @Inject()(
             LOGGER.trace(s"$logPrefix Color detector already finished work. Colors histogram attached to HTTP resp.")
           }
 
-          // HTTP-ответ
-          Ok( respJson )
+          val result = Ok( respJson )
+
+          // Добавить CORS-заголовки ответа?
+          corsUtil.isSioOrigin().fold {
+            // В dev-режиме - отсутствие CORS - это норма. т.к. same-origin и для страницы, и для этого экшена.
+            LOGGER.debug( s"$logPrefix Not adding CORS headers, missing/invalid Origin: ${request.headers.get(ORIGIN).orNull}" )
+            result
+          } { _ =>
+            // На продакшене - аплоад идёт на sX.nodes.suggest.io, а реквест из suggest.io - поэтому CORS тут участвует всегда.
+            corsUtil.withCorsHeaders( result )
+          }
         }
       }
 

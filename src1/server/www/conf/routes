@@ -48,11 +48,6 @@ GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
 GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
 
-## Редактор ADN-узла: v2 react
-GET  /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.editNodePage(nodeId: MEsUuId)
-POST /lk/node/edit2/img/up/:nodeId      @controllers.LkAdnEdit.uploadImg(nodeId: MEsUuId)
-POST /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.save(nodeId: MEsUuId)
-
 ## Управления карточками узла.
 GET  /lk/mads/form/*nodeKey             @controllers.LkAds.adsPage(nodeKey: RcvrKey)
 GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int, newAdId: Option[String] ?= None)
@@ -99,6 +94,11 @@ POST /lk/subnodes/tfd/*onNode                       @controllers.LkNodes.setTfDa
 POST /lk/subnodes/aso/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdvShowOpened(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 POST /lk/subnodes/out/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAlwaysOutlined(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 
+
+## Редактор ADN-узла: v2 react
+GET  /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.editNodePage(nodeId: MEsUuId)
+POST /lk/node/edit2/up/img/:nodeId      @controllers.LkAdnEdit.uploadImg(nodeId: MEsUuId)
+POST /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.save(nodeId: MEsUuId)
 
 ## ЛК: Размещение ADN-узла на карте
 POST /lk/adn/map/price/:nodeId          @controllers.LkAdnMap.getPriceSubmit(nodeId: MEsUuId)

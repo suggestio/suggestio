@@ -27,10 +27,11 @@ object MUploadInfoQs {
                              fileHandlerOptB    : QueryStringBindable[Option[MUploadFileHandler]],
                              cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]],
                              nodeTypeOptB       : QueryStringBindable[Option[MNodeType]],
-                             strOptB            : QueryStringBindable[Option[String]],
-                             boolOptB           : QueryStringBindable[Option[Boolean]],
                             ): QueryStringBindable[MUploadInfoQs] = {
     new QueryStringBindableImpl[MUploadInfoQs] {
+      private lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
+      private lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadInfoQs]] = {
         val F = Fields
         val k = key1F(key)
@@ -51,12 +52,12 @@ object MUploadInfoQs {
             obeyMimeOpt     <- obeyMimeOptE
           } yield {
             MUploadInfoQs(
-              fileHandler   = fileHandlerOpt,
-              colorDetect   = colorDetect,
-              nodeType      = nodeTypeOpt,
-              existNodeId   = existNodeIdOpt,
-              systemResp    = systemRespOpt,
-              obeyMime      = obeyMimeOpt,
+              fileHandler       = fileHandlerOpt,
+              colorDetect       = colorDetect,
+              nodeType          = nodeTypeOpt,
+              existNodeId       = existNodeIdOpt,
+              systemResp        = systemRespOpt,
+              obeyMime          = obeyMimeOpt,
             )
           }
         }
