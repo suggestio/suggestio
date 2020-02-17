@@ -63,7 +63,6 @@ class FileUtil @Inject()(
     }
   }
 
-  // TODO Удалить этот код следом за заливкой 1-го поколения.
   def mkHashesHexAsync(file: File, hashes: Iterable[MHash], flags: Set[MFileMetaHashFlag]): Future[Seq[MFileMetaHash]] = {
     for {
       kvs <- Future.traverse(hashes) { mhash =>

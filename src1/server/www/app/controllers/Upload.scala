@@ -38,7 +38,7 @@ import models.mup._
 import models.req.IReq
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
-import play.api.mvc.{BodyParser, MultipartFormData, Result, Results}
+import play.api.mvc.{BodyParser, Result, Results}
 import play.core.parsers.Multipart
 import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth, IsFileNotModified}
 import util.cdn.{CdnUtil, CorsUtil}
@@ -78,7 +78,6 @@ final class Upload @Inject()(
   private lazy val mImgs3 = injector.instanceOf[MImgs3]
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
   private lazy val clamAvUtil = injector.instanceOf[ClamAvUtil]
-  private lazy val uploadCtxFactory = injector.instanceOf[IUploadCtxFactory]
   private lazy val mainColorDetector = injector.instanceOf[MainColorDetector]
   private lazy val wsDispatcherActors = injector.instanceOf[WsDispatcherActors]
   private lazy val fileUtil = injector.instanceOf[FileUtil]
@@ -292,27 +291,35 @@ final class Upload @Inject()(
 
 
   /** BodyParser для запросов, содержащих файлы для аплоада. */
-  private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[UploadBpRes] = {
+  private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[MUploadBpRes] = {
     // Если картинка, то заливать сразу в MLocalImg/ORIG.
-    val fileHandler = uploadArgs.info.fileHandler
-      .fold[TemporaryFileCreator] (SingletonTemporaryFileCreator) {
-        // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
-        case MUploadFileHandlers.Picture =>
-          val imgFmt = MImgFmts.withMime(uploadArgs.fileProps.mimeType).get
-          val dynImgId = MDynImgId.randomOrig( imgFmt )
-          LocalImgFileCreator( MLocalImg(dynImgId) )
-      }
+    val localImgFileHandler = uploadArgs.info.fileHandler.map {
+      // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
+      case MUploadFileHandlers.Image =>
+        val imgFmt = MImgFmts
+          .withMime( uploadArgs.fileProps.mimeType )
+          .get
+        val dynImgId = MDynImgId.randomOrig( imgFmt )
+        val localImg = MLocalImg( dynImgId )
+        val args = MLocalImgFileCreatorArgs( localImg, imgFmt )
+        LocalImgFileCreator( args )
+    }
+
+    val fileHandler: TemporaryFileCreator = localImgFileHandler
+      .getOrElse( SingletonTemporaryFileCreator )
+
     // Сборка самого BodyParser'а.
     val bp0 = parse.multipartFormData(
       Multipart.handleFilePartAsTemporaryFile( fileHandler ),
-      maxLength = uploadArgs.fileProps.sizeB + 10000L
+      maxLength = uploadArgs.fileProps.sizeB + 10000L,
     )
+
     // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
     for (mpfd <- bp0) yield {
-      UploadBpRes(
+      MUploadBpRes(
         data = mpfd,
-        localImg = fileHandler match {
-          case lifc: LocalImgFileCreator => Some( lifc.mLocalImg )
+        localImgArgs = fileHandler match {
+          case lifc: LocalImgFileCreator => Some( lifc.liArgs )
           case _ => None
         }
       )
@@ -366,11 +373,12 @@ final class Upload @Inject()(
         }
 
         // Сборка Upload-контекста. Дальнейший сбор информации по загруженному файлу должен происходить в контексте.
-        upCtx = uploadCtxFactory.make(filePart, uploadArgs, request.body.localImg)
+        upCtxArgs = MUploadCtxArgs(filePart, uploadArgs, request.body)
+        upCtx = uploadUtil.makeUploadCtx( upCtxArgs )
 
         // Сверить размер файла с заявленным размером
         if {
-          val srcLen = upCtx.fileLength
+          val srcLen = upCtxArgs.fileLength
           val r = srcLen ==* uploadArgs.fileProps.sizeB
           LOGGER.trace(s"$logPrefix File size check: expected=${uploadArgs.fileProps.sizeB} detected=$srcLen ;; match? $r")
           if (!r)
@@ -379,25 +387,25 @@ final class Upload @Inject()(
         }
 
         // Определить MIME-тип принятого файла:
-        detectedMimeType <- upCtx.detectedMimeTypeOpt
+        detectedMimeType <- upCtxArgs.detectedMimeTypeOpt
         // Бывает, что MIME не совпадает. Решаем, что нужно делать согласно настройкам аплоада. Пример:
         // Detected file MIME type [application/zip] does not match to expected [application/vnd.android.package-archive]
         mimeType = {
-          if (detectedMimeType ==* upCtx.declaredMime) {
+          if (detectedMimeType ==* upCtxArgs.declaredMime) {
             detectedMimeType
           } else {
-            val msg = s"Detected file MIME type '${upCtx.detectedMimeTypeOpt}' does not match to expected ${upCtx.declaredMime}."
+            val msg = s"Detected file MIME type '${upCtxArgs.detectedMimeTypeOpt}' does not match to expected ${upCtxArgs.declaredMime}."
             LOGGER.warn(s"$logPrefix $msg")
             uploadArgs.info.obeyMime.fold {
               __appendErr( msg )
               throw new NoSuchElementException(msg)
             } {
               case false =>
-                LOGGER.info(s"$logPrefix Client-side MIME [${upCtx.declaredMime}] replaced with server-side detected MIME: [$detectedMimeType]")
+                LOGGER.info(s"$logPrefix Client-side MIME [${upCtxArgs.declaredMime}] replaced with server-side detected MIME: [$detectedMimeType]")
                 detectedMimeType
               case true =>
-                LOGGER.info(s"$logPrefix Client-side MIME [${upCtx.declaredMime}] will be saved, instead of detected MIME [$detectedMimeType]")
-                upCtx.declaredMime
+                LOGGER.info(s"$logPrefix Client-side MIME [${upCtxArgs.declaredMime}] will be saved, instead of detected MIME [$detectedMimeType]")
+                upCtxArgs.declaredMime
             }
           }
         }
@@ -406,7 +414,7 @@ final class Upload @Inject()(
         if {
           val r = upCtx.validateFileContentEarly
           if (!r)
-            __appendErr( s"Failed to validate size limits: len=${upCtx.fileLength}b img=${upCtx.imgFmtOpt.orNull}/${upCtx.imageWh.orNull}" )
+            __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.imgFmt.orNull}/${upCtx.imageWh.orNull}" )
           r
         }
 
@@ -420,7 +428,11 @@ final class Upload @Inject()(
 
         for {
           // Рассчитать хэш-суммы файла (digest).
-          hashesHex2 <- upCtx.hashesHexFut
+          hashesHex2 <- fileUtil.mkHashesHexAsync(
+            file    = upCtxArgs.file,
+            hashes  = uploadArgs.fileProps.hashesHex.keys,
+            flags   = Set( MFileMetaHashFlags.TrulyOriginal ),
+          )
           hashesHexMap = IId.els2idMap[MHash, MFileMetaHash]( hashesHex2 )
 
           // Сверить рассчётные хэш-суммы с заявленными при загрузке.
@@ -433,7 +445,7 @@ final class Upload @Inject()(
                   .exists { mfhash =>
                     val r = mfhash.hexValue ==* expectedHexVal
                     if (!r) {
-                      LOGGER.error(s"$logPrefix $mfhash != $mhash $expectedHexVal file=${upCtx.file} ${upCtx.fileLength}b user=${request.user.personIdOpt.orNull}")
+                      LOGGER.error(s"$logPrefix $mfhash != $mhash $expectedHexVal file=${upCtxArgs.file} ${upCtxArgs.fileLength}b user=${request.user.personIdOpt.orNull}")
                       errSb.synchronized {
                         __appendErr( s"File hash ${mhash.fullStdName} '${mfhash.hexValue}' doesn't match to declared '$expectedHexVal'." )
                       }
@@ -452,7 +464,7 @@ final class Upload @Inject()(
           // Анти-оптимизация: Запускаем ТОЛЬКО ПОСЛЕ pure-java-проверок, т.к. в clam тоже находят дыры. https://www.opennet.ru/opennews/art.shtml?num=47964
           clamAvScanResFut = clamAvUtil.scan(
             ClamAvScanRequest(
-              file = upCtx.file.getAbsolutePath
+              file = upCtxArgs.file.getAbsolutePath
             )
           )
 
@@ -461,7 +473,7 @@ final class Upload @Inject()(
             val r = clamAvScanRes.isClean
             LOGGER.trace(s"ClamAV: clean?$r took=${System.currentTimeMillis() - startMs} ms. ret=$clamAvScanRes")
             if (!r) {
-              LOGGER.warn(s"ClamAV INFECTED $clamAvScanRes for file ${upCtx.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
+              LOGGER.warn(s"ClamAV INFECTED $clamAvScanRes for file ${upCtxArgs.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
               errSb.synchronized {
                 __appendErr( s"AntiVirus check failed." )
               }
@@ -482,7 +494,7 @@ final class Upload @Inject()(
           saveFileToShardFut = {
             val wr = WriteRequest(
               contentType  = mimeType,
-              file         = upCtx.file,
+              file         = upCtxArgs.file,
               origFileName = fileNameOpt
             )
             LOGGER.trace(s"$logPrefix Will save file $wr to storage $storageInfo ...")
@@ -529,8 +541,8 @@ final class Upload @Inject()(
             val fut = request.existNodeOpt.fold {
               // Создание нового узла под файл.
               val mnode0 = MNode(
-                id = request.body.localImg
-                  .map( _.dynImgId.mediaId ),
+                id = request.body.localImgArgs
+                  .map( _.mLocalImg.dynImgId.mediaId ),
                 common = MNodeCommon(
                   ntype         = uploadArgs.info.nodeType.get,
                   isDependent   = true,
@@ -590,11 +602,11 @@ final class Upload @Inject()(
           // Сразу в фоне запускаем анализ цветов картинки, если он был запрошен.
           // Очень маловероятно, что сохранение сломается и будет ошибка, поэтому и параллелимся со спокойной душой.
           colorDetectFutOpt = for {
-            mimg        <- request.body.localImg
-            cdArgs      <- uploadArgs.info.colorDetect
+            localImgArgs    <- request.body.localImgArgs
+            cdArgs          <- uploadArgs.info.colorDetect
           } yield {
-            mainColorDetector.cached(mimg) {
-              mainColorDetector.detectPaletteFor(mimg, maxColors = cdArgs.paletteSize)
+            mainColorDetector.cached( localImgArgs.mLocalImg ) {
+              mainColorDetector.detectPaletteFor( localImgArgs.mLocalImg, maxColors = cdArgs.paletteSize)
             }
           }
 
@@ -863,7 +875,7 @@ final class Upload @Inject()(
 
 
   /** Реализация перехвата временных файлов сразу в MLocalImg-хранилище. */
-  protected case class LocalImgFileCreator(mLocalImg: MLocalImg)
+  protected case class LocalImgFileCreator( liArgs: MLocalImgFileCreatorArgs )
     extends TemporaryFileCreator { creator =>
 
     override def create(prefix: String, suffix: String): TemporaryFile = _create()
@@ -871,13 +883,13 @@ final class Upload @Inject()(
     override def create(path: Path): TemporaryFile = _create()
 
     private def _create(): TemporaryFile = {
-      mLocalImgs.prepareWriteFile( mLocalImg )
+      mLocalImgs.prepareWriteFile( liArgs.mLocalImg )
       LocalImgFile
     }
 
     override def delete(file: TemporaryFile): Try[Boolean] = {
       Try {
-        mLocalImgs.deleteAllSyncFor(mLocalImg.dynImgId.origNodeId)
+        mLocalImgs.deleteAllSyncFor( liArgs.mLocalImg.dynImgId.origNodeId )
         true
       }
     }
@@ -885,7 +897,7 @@ final class Upload @Inject()(
     /** Маскировка MLocalImg под TemporaryFile. */
     case object LocalImgFile extends TemporaryFile {
 
-      private val _file = mLocalImgs.fileOf( mLocalImg )
+      private val _file = mLocalImgs.fileOf( liArgs.mLocalImg )
 
       override def path: Path = _file.toPath
       override def file: File = _file
@@ -947,23 +959,6 @@ final class Upload @Inject()(
           )
         }
       }
-  }
-
-}
-
-
-/** Контейнер результата работы BodyParser'а при аплоаде.
-  * Вынесен за пределы контроллера из-за проблем с компиляцией routes, если это inner-class.
-  */
-protected final case class UploadBpRes(
-                                        data     : MultipartFormData[TemporaryFile],
-                                        localImg : Option[MLocalImg]
-                                      ) {
-
-  /** Надо ли удалять залитый файл? */
-  def isDeleteFileOnSuccess: Boolean = {
-    // Да, если файл не подхвачен какой-либо файловой моделью (MLocalImg, например).
-    localImg.isEmpty
   }
 
 }

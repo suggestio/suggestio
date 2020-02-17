@@ -14,7 +14,7 @@ import play.api.mvc.QueryStringBindable
 object MUploadFileHandlers extends StringEnum[MUploadFileHandler] {
 
   /** Сохранять файл-картинку сразу в иерархию файлов MLocalImg. */
-  case object Picture extends MUploadFileHandler("i")
+  case object Image extends MUploadFileHandler("i")
 
   override val values = findValues
 

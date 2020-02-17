@@ -475,7 +475,7 @@ final class LkAdEdit @Inject() (
               validated = validated,
               upInfo = MUploadInfoQs(
                 // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
-                fileHandler       = Some( MUploadFileHandlers.Picture ),
+                fileHandler       = Some( MUploadFileHandlers.Image ),
                 colorDetect       = Some {
                   val cdConst = AdFormConstants.ColorDetect
                   val sz = cdConst.PALETTE_SIZE

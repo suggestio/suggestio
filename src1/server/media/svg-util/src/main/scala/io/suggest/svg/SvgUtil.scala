@@ -11,6 +11,7 @@ import org.apache.batik.util.XMLResourceDescriptor
 import org.w3c.dom.{Document, Node}
 
 import scala.util.Try
+import scala.concurrent.blocking
 
 /**
  * Suggest.io
@@ -44,11 +45,15 @@ object SvgUtil extends MacroLogsImpl {
     * @return Документ | null | exception.
     */
   def open(f: File): Document = {
-    val is = new FileInputStream(f)
-    try {
-      open(is, file2svgDocUrl(f))
-    } finally {
-      is.close()
+    val docUrl = file2svgDocUrl(f)
+
+    blocking {
+      val is = new FileInputStream(f)
+      try {
+        open(is, docUrl)
+      } finally {
+        is.close()
+      }
     }
   }
 

@@ -209,7 +209,7 @@ final class LkAdnEdit @Inject() (
           logPrefix           = s"${getClass.getSimpleName}.uploadImg($nodeIdU):",
           validated           = image4UploadPropsV(request.body),
           upInfo = MUploadInfoQs(
-            fileHandler     = Some( MUploadFileHandlers.Picture ),
+            fileHandler     = Some( MUploadFileHandlers.Image ),
             colorDetect     = None,
             nodeType        = Some( MNodeTypes.Media.Image ),
           ),

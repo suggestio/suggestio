@@ -2,9 +2,10 @@ package util.up
 
 import io.suggest.crypto.hash.HashesHex
 import javax.inject.{Inject, Singleton}
-import models.mup.MDownLoadQs
+import models.mup.{MDownLoadQs, MUploadCtxArgs, MUploadFileHandlers}
 import play.api.Configuration
 import play.api.inject.Injector
+import util.up.ctx.{AnyFileUploadCtx, IImgUploadCtxFactory, IUploadCtx}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -23,6 +24,9 @@ class UploadUtil @Inject()(
 
   private def configuration = injector.instanceOf[Configuration]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
+  private lazy val imgUploadCtxFactory = injector.instanceOf[IImgUploadCtxFactory]
+
 
   /**
     * Публичное имя хоста текущего узла.
@@ -67,6 +71,20 @@ class UploadUtil @Inject()(
       hashesHex   = hashesHex,
       // Без clientAddr, т.к. тут ссылка через CDN
     )
+  }
+
+
+  /** Вернуть инстанс IUploadCtx на основе upload-аргументов.
+    *
+    * @param upCtxArgs Upload-аргументы.
+    * @return Инстанс IUploadCtx.
+    */
+  def makeUploadCtx( upCtxArgs: MUploadCtxArgs ): IUploadCtx = {
+    upCtxArgs.uploadArgs.info.fileHandler
+      .fold[IUploadCtx] ( AnyFileUploadCtx ) {
+        case MUploadFileHandlers.Image =>
+          imgUploadCtxFactory.make( upCtxArgs )
+      }
   }
 
 }
