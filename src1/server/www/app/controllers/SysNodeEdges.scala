@@ -53,7 +53,7 @@ final class SysNodeEdges @Inject() (
     * @return Страница с редактором эджа.
     */
   def editEdge(qs: MNodeEdgeIdQs) = csrf.AddToken {
-    isSuNodeEdge(qs) { implicit request =>
+    isSuNodeEdge(qs, noEdgeIdOk = true, canRdr = true) { implicit request =>
       val state0 = MEdgeEditFormInit(
         edge   = request.edgeOpt,
         edgeId = qs,
@@ -78,7 +78,7 @@ final class SysNodeEdges @Inject() (
     * @return
     */
   def saveEdge(qs: MNodeEdgeIdQs) = csrf.Check {
-    isSuNodeEdge(qs).async( parse.json[MEdge] ) { implicit request =>
+    isSuNodeEdge(qs, noEdgeIdOk = true).async( parse.json[MEdge] ) { implicit request =>
       import esModel.api._
 
       lazy val logPrefix = s"saveEdge($qs):"
@@ -126,6 +126,7 @@ final class SysNodeEdges @Inject() (
         _ <- fileUtil.deleteFileMaybe( edgeMedia4deleteOpt )
 
       } yield {
+        LOGGER.trace(s"$logPrefix Edge saved ok.")
         Ok
       })
         .recoverWith {
@@ -184,7 +185,7 @@ final class SysNodeEdges @Inject() (
     * @return Ответ Upload-контроллера.
     */
   def prepareUploadFile(qs: MNodeEdgeIdQs) = csrf.Check {
-    isSuNodeEdge(qs).async( uploadCtl.prepareUploadBp ) { implicit request =>
+    isSuNodeEdge(qs, noEdgeIdOk = true).async( uploadCtl.prepareUploadBp ) { implicit request =>
       val logPrefix = s"prepareUploadFile($qs)#${System.currentTimeMillis()}:"
 
       val someTrue = Some(true)

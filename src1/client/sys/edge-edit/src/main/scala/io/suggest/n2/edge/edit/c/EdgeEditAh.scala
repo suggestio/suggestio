@@ -221,7 +221,7 @@ class EdgeEditAh[M](
 
     case m: DeleteEdge =>
       val v0 = value
-      if (v0.edit.saveReq.isPending) {
+      if (v0.edit.saveReq.isPending || v0.conf.edgeId.isEmpty) {
         noChange
 
       } else if (m.isDelete) {

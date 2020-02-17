@@ -85,7 +85,8 @@ class EdgeEditFormR(
 
                   // Кнопка удаления
                   p.wrap { m =>
-                    OptionUtil.SomeBool( !m.edit.deleteDia.opened )
+                    val isEnabled = !m.edit.deleteDia.opened && m.conf.edgeId.nonEmpty
+                    OptionUtil.SomeBool( isEnabled )
                   }( deleteBtnR.component.apply ),
 
                   // Кнопка сохранения

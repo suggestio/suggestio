@@ -1,5 +1,6 @@
 package util.acl
 
+import controllers.routes
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MEdge
@@ -39,8 +40,9 @@ class IsSuNodeEdge @Inject() (
   /** Комбинация IsSuperuser + IsAdnAdmin + доступ к эджу по индексу.
     *
     * @param qs query string.
+    * @param noEdgeIdOk Разрешить ситуацию, когда эдж не задан (т.е. подразумевается возможность создание нового эджа в экшене).
     */
-  def apply(qs: MNodeEdgeIdQs): ActionBuilder[MNodeEdgeOptReq, AnyContent] = {
+  def apply(qs: MNodeEdgeIdQs, noEdgeIdOk: Boolean = false, canRdr: Boolean = false): ActionBuilder[MNodeEdgeOptReq, AnyContent] = {
     new reqUtil.SioActionBuilderImpl[MNodeEdgeOptReq] {
 
       protected[this] def logPrefix = s"${getClass.getSimpleName}(${qs.nodeId}/v=${qs.nodeVsn}/e=${qs.edgeId}):"
@@ -67,6 +69,20 @@ class IsSuNodeEdge @Inject() (
               if (!r) {
                 LOGGER.debug(s"$logPrefix node version invalid. Expected=${qs.nodeVsn}, real=${mnode.versionOpt}")
                 throw HttpResultingException( nodeVsnInvalid(nodeReq()) )
+              } else {
+                r
+              }
+            }
+
+            // Если edgeId не задан, и !noEdgeIdOk, то прервать исполнение.
+            if {
+              val r = qs.edgeId.isDefined || noEdgeIdOk
+              if (!r) {
+                LOGGER.debug(s"$logPrefix EdgeId is None, but should be defined")
+                val result =
+                  if (canRdr) rdrToSysNode( qs.nodeId )
+                  else edgeNotFound( nodeReq() )
+                throw HttpResultingException( result )
               } else {
                 r
               }
@@ -111,6 +127,9 @@ class IsSuNodeEdge @Inject() (
       /** Не найден эдж с указанным id. */
       def edgeNotFound(req: INodeReq[_]): Future[Result] =
         errorHandler.onClientError(req, Status.NOT_FOUND, s"Node ${qs.nodeId} does NOT have edge #${qs.edgeId}.")
+
+      def rdrToSysNode(nodeId: String): Future[Result] =
+        Future.successful( Results.Redirect( routes.SysMarket.showAdnNode(qs.nodeId) ) )
 
     }
   }
