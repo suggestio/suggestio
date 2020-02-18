@@ -1,7 +1,7 @@
 package io.suggest.common.html
 
 import io.suggest.ad.blk.BlockWidths
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.MSize2di
 
 /**
  * Suggest.io

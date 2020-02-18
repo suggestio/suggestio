@@ -441,5 +441,6 @@ object MsgCodes {
   val `Operating.system.family` = "Operating.system.family"
   val `Malfunction` = "Malfunction"
   val `Open.0` = "Open.0"
+  val `Install` = "Install"
 
 }

@@ -45,6 +45,6 @@ object MIconInfo {
 case class MIconInfo(
                       src      : String,
                       sizes    : Seq[MSize2di],
-                      mimeType : String
+                      mimeType : String,
                     )
 

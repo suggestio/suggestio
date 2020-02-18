@@ -12,13 +12,15 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.msg.JsFormatUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.m.menu.{ExpandDlApp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.scalajs.js.UndefOr
+import scala.scalajs.js.{URIUtils, UndefOr}
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -224,6 +226,21 @@ class DlAppDiaR(
                                       crCtx.messages( MsgCodes.`Open.0`, extSvc.nameI18N )
                                     }
                                   ),
+
+                                  // Если установка на iOS, то отрендерить ссылку для непосредственной установки через манифест.
+                                  ReactCommonUtil.maybeNode( dlInfo.extSvc contains MExtServices.AppleITunes ) {
+                                    val manifestUrl = ScJsRoutes.controllers.ScApp.iosInstallManifest(  dlInfo.fromNodeIdOpt.toUndef).absoluteURL( secure = true )
+                                    val itunesUrl = s"itms-services://?action=download-manifest&url=" + URIUtils.encodeURIComponent( manifestUrl )
+                                    MuiButton {
+                                      new MuiButtonProps {
+                                        override val href = itunesUrl
+                                        override val component = "a"
+                                      }
+                                    } (
+                                      crCtx.messages( MsgCodes.`Install` ),
+                                    )
+                                  },
+
                                 ),
                               ),
 

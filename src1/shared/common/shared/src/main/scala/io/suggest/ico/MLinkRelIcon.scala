@@ -1,5 +1,7 @@
 package io.suggest.ico
 
+import io.suggest.img.MImgFmt
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -13,5 +15,6 @@ package io.suggest.ico
 case class MLinkRelIcon(
                          icon      : MIconInfo,
                          rels      : Seq[String],
-                         ieOnly    : Boolean      = false
+                         ieOnly    : Boolean      = false,
+                         imgFmt    : MImgFmt,
                        )

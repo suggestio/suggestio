@@ -1,14 +1,17 @@
 package controllers
 
-import io.suggest.dev.MOsFamily
+import io.suggest.app.ios.{MIosItem, MIosItemAsset, MIosItemMeta, MIosManifest}
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
-import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.media.MFileMetaHash
+import io.suggest.img.MImgFmts
+import io.suggest.n2.edge.{MEdge, MPredicates}
+import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash}
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.pick.MimeConst
+import io.suggest.plist.ApplePlistUtil
 import io.suggest.pwa.manifest.{MPwaDisplayModes, MWebManifest}
 import io.suggest.sc.app.{MScAppDlInfo, MScAppGetQs, MScAppGetResp}
 import io.suggest.sc.pwa.MPwaManifestQs
@@ -17,8 +20,10 @@ import japgolly.univeq._
 import javax.inject.Inject
 import models.im.MFavIcons
 import models.mproj.ICommonDi
+import models.req.INodeOptReq
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
+import play.api.mvc.{Call, RequestHeader}
 import util.acl.{MaybeAuth, MaybeAuthMaybeNode}
 import util.billing.Bill2Conf
 import util.cdn.{CdnUtil, CorsUtil}
@@ -53,6 +58,7 @@ final class ScApp @Inject()(
   private lazy val extServicesUtil = injector.instanceOf[ExtServicesUtil]
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
   private lazy val uploadUtil = injector.instanceOf[UploadUtil]
+  private lazy val applePlistUtil = injector.instanceOf[ApplePlistUtil]
 
   import sioControllerApi._
 
@@ -73,7 +79,7 @@ final class ScApp @Inject()(
         shortName = Some( sio ),
         startUrl  = routes.Sc.geoSite().url,
         display   = Some( MPwaDisplayModes.Standalone ),
-        icons     = MFavIcons.linkRelIcons.map(_.icon),
+        icons     = MFavIcons.Icons().allIcons.map(_.icon),
       )
 
       Ok( Json.toJson( manifest ) )
@@ -84,6 +90,128 @@ final class ScApp @Inject()(
     }
   }
 
+
+  /** Поиск описанного эджа среди запрошенного узла и узла CBCA.
+    *
+    * result._1 = fromNodeIdOpt - содержит инфу, откуда взята инфа по приложению.
+    * Это нужно передать клиенту, чтобы там сгенерить наиболее короткую ссылку для qr-кода.
+    * @param qs query string.
+    * @param request http-реквест с данными запрошенного узла.
+    * @return Фьючерс с найденными эджами и опциональным id нестандартного узла.
+    */
+  private def _findAppEdge(qs: MScAppGetQs)(implicit request: INodeOptReq[_]): Future[(List[MEdge], Option[String])] = {
+    lazy val logPrefix = s"_findAppEdge($qs):"
+
+    // Найти инфу по эджу в узле:
+    lazy val osFamilyAppDistrServices = qs.osFamily.appDistribServices
+    def __findEdgesByServices(mnodeOpt: Option[MNode]): List[MEdge] = {
+      (for {
+        mnode <- mnodeOpt.iterator
+        appEdge <- {
+          var edges = mnode.edges
+          // Если в qs задан предикат, то сначала отфильтровать по нему.
+          for (qsPred <- qs.predicate)
+            edges = edges.withPredicate( qsPred )
+          // Доп.самоконтроль, чтобы не было выборки по не-Application вариантам.
+          edges.withPredicateIter( MPredicates.Application )
+        }
+        // Поискать подходящий сервис дистрибуции под запрошенную платформу
+        if (appEdge.info.osFamily contains[MOsFamily] qs.osFamily) && {
+          appEdge.info.extService
+            .fold(true) {
+              osFamilyAppDistrServices.contains[MExtService]
+            }
+        }
+      } yield {
+        appEdge
+      })
+        .to( List )
+        // Сортируем по вручную-заданному порядку и по предикату, если порядок не задан.
+        .sortBy { e =>
+          (
+            e.order getOrElse Int.MinValue,
+            e.predicate match {
+              case MPredicates.Application.FromFile     => 0
+              case MPredicates.Application.Distributor  => 50
+              case _ => 100
+            }
+          )
+        }
+    }
+
+    val thisNodeAppEdges0 = __findEdgesByServices( request.mnodeOpt )
+    if (thisNodeAppEdges0.isEmpty) {
+      // Нет в указанном ноде заданного эджа приложения. Поискать в общем узле suggest.io.
+      import esModel.api._
+      val commonNodeId = bill2Conf.CBCA_NODE_ID
+      for {
+        commonMnodeOpt <- mNodes.getByIdCache( commonNodeId )
+      } yield {
+        val r = __findEdgesByServices( commonMnodeOpt )
+        LOGGER.trace(s"$logPrefix CBCA node#$commonNodeId, app.edge => ${r.mkString("\n ")}")
+        r -> Option.empty[String]
+      }
+    } else {
+      LOGGER.trace(s"$logPrefix Found expected application edge on requested node#${qs.onNodeId.orNull}:\n ${thisNodeAppEdges0.mkString("\n ")}")
+      Future.successful( thisNodeAppEdges0 -> qs.onNodeId )
+    }
+  }
+
+
+  /** Сборка данных по файлу из указанного file node. */
+  private def _nodeId2fileEdgeMedia(fileNodeId: String)
+                                   (implicit request: RequestHeader): Future[(MNode, MEdge, MEdgeMedia)] = {
+    import esModel.api._
+
+    lazy val logPrefix = s"_nodeId2fileEdgeMedia($fileNodeId):"
+    for {
+      fileNodeOpt <- mNodes.getByIdCache( fileNodeId )
+    } yield {
+      val fileNode = fileNodeOpt getOrElse {
+        val msg = s"Node not found: $fileNodeId"
+        LOGGER.error(s"$logPrefix $msg - invalid file-edge nodeId(s) or missing node.")
+        throw HttpResultingException( httpErrorHandler.onClientError(request, INTERNAL_SERVER_ERROR, msg) )
+      }
+
+      val (fileEdge, fileEdgeMedia) = (for {
+        fileEdge <- fileNode.edges
+          .withPredicateIter( MPredicates.File )
+        edgeMedia <- fileEdge.media.iterator
+      } yield {
+        (fileEdge, edgeMedia)
+      })
+        .nextOption()
+        .getOrElse {
+          val msg = s"File-node#$fileNodeId have no edge-media"
+          LOGGER.error(s"$logPrefix $msg ntype=${fileNode.common.ntype}\n ${fileNode.edges.out.mkString("\n ")}")
+          throw HttpResultingException( httpErrorHandler.onClientError(request, INTERNAL_SERVER_ERROR, msg) )
+        }
+
+      (fileNode, fileEdge, fileEdgeMedia)
+    }
+  }
+
+
+  /** Сборка ссылки на файл. */
+  private def _mediaUrl(fileNodeId: String, fileEdgeMedia: MEdgeMedia): Future[Call] = {
+    val mediaHostsMapFut = cdnUtil.mediasHosts1( (fileNodeId, fileEdgeMedia.storage) :: Nil )
+    val dlUrlQs = uploadUtil.mkDlQs(
+      fileNodeId = fileNodeId,
+      hashesHex  = MFileMetaHash.toHashesHex( fileEdgeMedia.file.dlHash ),
+    )
+    val dlUrlRelCall = routes.Upload.download( dlUrlQs )
+
+    for {
+      mediaHostsMap <- mediaHostsMapFut
+    } yield {
+      // Рендер ссылки для скачивания.
+      cdnUtil.forMediaCall1(
+        call          = dlUrlRelCall,
+        mediaHostsMap = mediaHostsMap,
+        mediaIds      = fileNodeId :: Nil,
+      )
+    }
+  }
 
 
   /** Поискать приложение под указанный узел.
@@ -96,65 +224,9 @@ final class ScApp @Inject()(
     maybeAuthMaybeNode( qs.onNodeId ).async { implicit request =>
       lazy val logPrefix = s"appDownLoadInfo($qs):"
 
-      // Найти инфу по эджу в узле:
-      val osFamilyAppDistrServices = qs.osFamily.appDistribServices
-      def __findEdges(mnodeOpt: Option[MNode]) = {
-        (for {
-          mnode <- mnodeOpt.iterator
-          appEdge <- {
-            var edges = mnode.edges
-            // Если в qs задан предикат, то сначала отфильтровать по нему.
-            for (qsPred <- qs.predicate)
-              edges = edges.withPredicate( qsPred )
-            // Доп.самоконтроль, чтобы не было выборки по не-Application вариантам.
-            edges.withPredicateIter( MPredicates.Application )
-          }
-          // Поискать подходящий сервис дистрибуции под запрошенную платформу
-          if (appEdge.info.osFamily contains[MOsFamily] qs.osFamily) && {
-            appEdge.info.extService
-              .fold(true) {
-                osFamilyAppDistrServices.contains[MExtService]
-              }
-          }
-        } yield {
-          appEdge
-        })
-          .to( List )
-          // Сортируем по вручную-заданному порядку и по предикату, если порядок не задан.
-          .sortBy { e =>
-            (
-              e.order getOrElse Int.MinValue,
-              e.predicate match {
-                case MPredicates.Application.FromFile     => 0
-                case MPredicates.Application.Distributor  => 50
-                case _ => 100
-              }
-            )
-          }
-      }
-
       (for {
-
-        // Поиск описанного эджа среди запрошенного узла и узла CBCA.
-        // fromNodeIdOpt - содержит инфу, откуда взята инфа по приложению. Это нужно передать клиенту, чтобы там сгенерить наиболее короткую ссылку для qr-кода.
-        (appEdges, fromNodeIdOpt) <- {
-          val thisNodeAppEdges0 = __findEdges( request.mnodeOpt )
-          if (thisNodeAppEdges0.isEmpty) {
-            // Нет в указанном ноде заданного эджа приложения. Поискать в общем узле suggest.io.
-            import esModel.api._
-            val commonNodeId = bill2Conf.CBCA_NODE_ID
-            for {
-              commonMnodeOpt <- mNodes.getByIdCache( commonNodeId )
-            } yield {
-              val r = __findEdges( commonMnodeOpt )
-              LOGGER.trace(s"$logPrefix CBCA node#$commonNodeId, app.edge => ${r.mkString("\n ")}")
-              r -> Option.empty[String]
-            }
-          } else {
-            LOGGER.trace(s"$logPrefix Found expected application edge on requested node#${qs.onNodeId.orNull}:\n ${thisNodeAppEdges0.mkString("\n ")}")
-            Future.successful( thisNodeAppEdges0 -> qs.onNodeId )
-          }
-        }
+        // Найти эдж приложения согласно запрошенным требованиям:
+        (appEdges, fromNodeIdOpt) <- _findAppEdge(qs)
 
         // Есть эдж. Если указание на файловый узел, то прочитать узел.
         dlInfos <- Future.traverse(appEdges) { appEdge =>
@@ -185,51 +257,15 @@ final class ScApp @Inject()(
 
             // Локальный файл. Найти id узла-файла в эдже
             case MPredicates.Application.FromFile =>
-              import esModel.api._
               val fileNodeId = appEdge.nodeIds.head
               for {
-                fileNodeOpt <- mNodes.getByIdCache( fileNodeId )
-                fileNode = fileNodeOpt getOrElse {
-                  val msg = s"Node not found: $fileNodeId"
-                  LOGGER.error(s"$logPrefix $msg - invalid file-edge nodeId(s) or missing node.")
-                  throw HttpResultingException( httpErrorHandler.onClientError(request, INTERNAL_SERVER_ERROR, msg) )
-                }
-
-                fileNodeEdgeMedia = (for {
-                  fileEdge <- fileNode.edges
-                    .withPredicateIter( MPredicates.File )
-                  edgeMedia <- fileEdge.media.iterator
-                } yield {
-                  edgeMedia
-                })
-                  .nextOption()
-                  .getOrElse {
-                    val msg = s"File-node#$fileNodeId have no edge-media"
-                    LOGGER.error(s"$logPrefix $msg ntype=${fileNode.common.ntype}\n ${fileNode.edges.out.mkString("\n ")}")
-                    throw HttpResultingException( httpErrorHandler.onClientError(request, INTERNAL_SERVER_ERROR, msg) )
-                  }
+                (fileNode, _, fileEdgeMedia) <- _nodeId2fileEdgeMedia( fileNodeId )
 
                 dlCall <- {
                   if (qs.rdr) {
                     // Редирект - рендерим ссылку на закачку напрямую:
-                    // Для сборки cdn-dist ссылки, собрать карту хостов под файловые ноды:
-                    val mediaHostsMapFut = cdnUtil.mediasHosts1( (fileNodeId, fileNodeEdgeMedia.storage) :: Nil )
-                    val dlUrlQs = uploadUtil.mkDlQs(
-                      fileNodeId = fileNodeId,
-                      hashesHex  = MFileMetaHash.toHashesHex( fileNodeEdgeMedia.file.dlHash ),
-                    )
-                    val dlUrlRelCall = routes.Upload.download( dlUrlQs )
+                    _mediaUrl(fileNodeId, fileEdgeMedia)
 
-                    for {
-                      mediaHostsMap <- mediaHostsMapFut
-                    } yield {
-                      // Рендер ссылки для скачивания.
-                      cdnUtil.forMediaCall1(
-                        call          = dlUrlRelCall,
-                        mediaHostsMap = mediaHostsMap,
-                        mediaIds      = fileNodeId :: Nil,
-                      )
-                    }
                   } else {
                     // Редирект не требуется. Значит идёт просто рендер списка вариантов. Рендерить непрямую ссылку
                     val dlInfoCall = routes.ScApp.appDownloadInfo(
@@ -244,8 +280,6 @@ final class ScApp @Inject()(
                   }
                 }
 
-
-
               } yield {
                 val url = dlCall.absoluteURL()
                 LOGGER.trace(s"$logPrefix Generated download link for node#${fileNodeId}:\n url = $url")
@@ -254,7 +288,7 @@ final class ScApp @Inject()(
                   url       = url,
                   predicate = appEdge.predicate,
                   fileName  = fileNode.guessDisplayName,
-                  fileSizeB = fileNodeEdgeMedia.file.sizeB,
+                  fileSizeB = fileEdgeMedia.file.sizeB,
                   fromNodeIdOpt = fromNodeIdOpt,
                 )
               }
@@ -300,6 +334,101 @@ final class ScApp @Inject()(
           case HttpResultingException(resFut) =>
             resFut
         }
+    }
+  }
+
+
+  /** Экшен раздачи манифеста для скачивания.
+    *
+    * @param onNodeId id узла с приложением, если не дефолт.
+    * @return Экшен, возвращающий Plist-манифест для установки приложения.
+    */
+  def iosInstallManifest(onNodeId: Option[String]) = {
+    maybeAuthMaybeNode( onNodeId ).async { implicit request =>
+      lazy val logPrefix = s"iosInstallManifest(${onNodeId.orNull}):"
+
+      val appEdgeQs = MScAppGetQs(
+        osFamily  = MOsFamilies.Apple_iOS,
+        rdr       = false,
+        onNodeId  = onNodeId,
+        predicate = Some( MPredicates.Application.FromFile ),
+      )
+
+      for {
+
+        (appEdges, _) <- _findAppEdge( appEdgeQs )
+
+        // Есть хотя бы один эдж?
+        _ = if ( appEdges.isEmpty ) {
+          LOGGER.debug(s"$logPrefix Not found any app edges for $appEdgeQs")
+          val respFut = httpErrorHandler.onClientError(request, NOT_FOUND)
+          throw HttpResultingException( respFut )
+        }
+
+        // Только один эдж? Или несколько?
+        _ = if ( appEdges.lengthIs > 1 ) {
+          LOGGER.warn(s"$logPrefix Too many (${appEdges.length}) app edges found for $appEdgeQs:\n ${appEdges.mkString("\n ")}")
+          val respFut = httpErrorHandler.onClientError(request, MULTIPLE_CHOICES, "Two or more variants.")
+          throw HttpResultingException( respFut )
+        }
+
+        appEdge = appEdges.head
+        fileNodeId = appEdge.nodeIds.head
+
+        _fileEdgeMediaFut = _nodeId2fileEdgeMedia( fileNodeId )
+
+        itemAssets = {
+          val someTrue = Some(true)
+          val favIcons = MFavIcons.Icons()
+          val mkImgAsset = { (kind: String, isWidthOkF: Int => Boolean) =>
+            (for {
+              ico <- favIcons.allIcons
+              if (ico.imgFmt ==* MImgFmts.PNG) &&
+                (ico.icon.sizes.exists { sz => isWidthOkF(sz.width) })
+            } yield {
+              MIosItemAsset(
+                kind = kind,
+                needsShine = someTrue,
+                url = Some( cdnUtil.asset(ico.icon.src).absoluteURL() ),
+              )
+            })
+              .headOption
+          }
+
+          // Параллельно, рассчитать ссылки на картинки.
+          val fullSizeImageAssetOpt = mkImgAsset("full-size-image", _ > 400)
+          val displayImageAssetOpt = mkImgAsset("display-image", _ < 300)
+
+          (fullSizeImageAssetOpt :: displayImageAssetOpt :: Nil).flatten
+        }
+
+        (_, _, fileEdgeMedia) <- _fileEdgeMediaFut
+        pkgMediaCall <- _mediaUrl( fileNodeId, fileEdgeMedia )
+
+      } yield {
+        val manifest = MIosManifest(
+          items = MIosItem(
+            metadata = MIosItemMeta(
+              bundleId  = "io.suggest.app.cordova.ios",
+              bundleVersion = "20200220-2",
+              kind      = "software",
+              title     = "Suggest.io",
+            ),
+            assets = MIosItemAsset(
+              kind = "software-package",
+              url  = Some( pkgMediaCall.absoluteURL(secure = true) ),
+            ) :: itemAssets,
+          ) :: Nil,
+        )
+
+        val manifestJson = Json.toJson( manifest )
+
+        // Вместо JSON отрендерить и вернуть Plist.
+        val plist = applePlistUtil.toPlistDocument( manifestJson )
+        Ok( plist )
+          .as( XML )
+          .cacheControl( 3600 )
+      }
     }
   }
 

@@ -17,6 +17,7 @@
   routes.javascript.LkAdEdit.editAd,
 
   routes.javascript.ScApp.appDownloadInfo,
+  routes.javascript.ScApp.iosInstallManifest,
 )
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

@@ -11,7 +11,7 @@
 @import io.suggest.common.html.HtmlConstants.SPACE
 
 @* Список дефолтовых favicon'ов уехал в статическую модель MFavIcons, а тут только генератор html. *@
-@for(icoRel <- MFavIcons.linkRelIcons.iterator; ico = icoRel.icon; rel <- icoRel.rels) {
+@for(icoRel <- MFavIcons.Icons().allIcons.iterator; ico = icoRel.icon; rel <- icoRel.rels) {
   <link href="@cdn.asset(ico.src)"
         rel="@rel"
         @if(ico.sizes.nonEmpty) {
