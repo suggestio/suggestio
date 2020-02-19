@@ -87,10 +87,8 @@
     @_nodeMetaTpl(mnode.meta)
   }
 
-  @if( args.outEdges.nonEmpty ) {
-    @lkBlock("Исходящие связи (" + args.outEdges.size + ")") {
-      @_nodeEdgesTpl( args.outEdges, arrow = "=>", onNode = Some(args.mnode) )
-    }
+  @lkBlock("Исходящие связи (" + args.outEdges.size + ")") {
+    @_nodeEdgesTpl( args.outEdges, arrow = "=>", onNode = Some(args.mnode) )
   }
 
   @if( args.inEdges.nonEmpty ) {
