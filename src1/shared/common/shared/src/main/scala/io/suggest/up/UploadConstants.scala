@@ -21,7 +21,7 @@ object UploadConstants {
       * Какими алгоритмами требуется хэшировать файл, загружаемый на сервер?
       * И на клиенте, и на сервере.
       */
-    final def PICTURE_FILE_HASHES: Set[MHash] =
+    final def UPLOAD_FILE_HASHES: Set[MHash] =
       Set[MHash](MHashes.Sha1, MHashes.Sha256)
 
   }

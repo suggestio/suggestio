@@ -5,11 +5,11 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.err.ErrorConstants
-import io.suggest.file.up.MFile4UpProps
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.media.MFileMeta
 import io.suggest.pick.MimeConst
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.StringValidationNel
@@ -95,14 +95,14 @@ class LkAdEdFormUtil @Inject() (
     * @param fileProps Присланные клиентом данные по файлу.
     * @return ValidationNel с выверенными данными или ошибкой.
     */
-  def image4UploadPropsV(fileProps: MFile4UpProps): ValidationNel[String, MFile4UpProps] = {
-    MFile4UpProps.validate(
+  def image4UploadPropsV(fileProps: MFileMeta): ValidationNel[String, MFileMeta] = {
+    MFileMeta.validateUpload(
       m             = fileProps,
       // Бывает, что загружается просто png-рамка, например:
       minSizeB      = 256,
       maxSizeB      = IMG_UPLOAD_MAXLEN_BYTES,
       mimeVerifierF = MimeConst.MimeChecks.onlyImages,
-      mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES,
+      mustHashes    = UploadConstants.CleverUp.UPLOAD_FILE_HASHES,
     )
   }
 

@@ -1,6 +1,6 @@
 package models.mup
 
-import io.suggest.file.up.MFile4UpProps
+import io.suggest.n2.media.MFileMeta
 import io.suggest.n2.media.storage.MAssignedStorage
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
@@ -38,7 +38,7 @@ object MUploadTargetQs extends SecretKeyInit {
 
   /** Поддержка QueryStringBindable. */
   implicit def uploadTargetQsQsb(implicit
-                                 file4UpPropsB      : QueryStringBindable[MFile4UpProps],
+                                 file4UpPropsB      : QueryStringBindable[MFileMeta],
                                  longB              : QueryStringBindable[Long],
                                  assignedStorageB   : QueryStringBindable[MAssignedStorage],
                                  strOptB            : QueryStringBindable[Option[String]],
@@ -107,7 +107,7 @@ object MUploadTargetQs extends SecretKeyInit {
   * @param info Инфа, целиком пробрасываемая во вторую фазу заливки.
   */
 case class MUploadTargetQs(
-                            fileProps   : MFile4UpProps,
+                            fileProps   : MFileMeta,
                             personId    : Option[String],
                             validTillS  : Long,
                             storage     : MAssignedStorage,

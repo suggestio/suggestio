@@ -58,10 +58,11 @@ class OsFamilyR(
       }
 
       s.osFamilyOptC { osFamilyOptProxy =>
+        val _value = osFamilyOptProxy.value.fold( emptyKey )( _.value )
         MuiTextField(
           new MuiTextFieldProps {
             override val select = true
-            override val value  = osFamilyOptProxy.value.fold( emptyKey )( _.value )
+            override val value  = _value
             override val label  = _label.rawNode
             override val onChange = _onOsChanged
             override val classes = _css

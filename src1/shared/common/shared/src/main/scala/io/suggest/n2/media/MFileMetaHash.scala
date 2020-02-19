@@ -36,7 +36,7 @@ object MFileMetaHash
       (__ \ F.FLAGS_FN).formatNullable[Set[MFileMetaHashFlag]]
         .inmap[Set[MFileMetaHashFlag]](
           // Изначально, никаких флагов не было. Поэтому имитируем наличие флага TRULY_ORIGINAL. TODO Надо resaveMany() для окончательной фиксации флагов.
-          EmptyUtil.opt2ImplEmpty1F( Set(MFileMetaHashFlags.TrulyOriginal) ),
+          EmptyUtil.opt2ImplEmpty1F( MFileMetaHashFlags.ORIGINAL_FLAGS ),
           { flags => Option.when(flags.nonEmpty)(flags) }
         )
     )(apply, unlift(unapply))
@@ -61,6 +61,19 @@ object MFileMetaHash
       .iterator
       .map(_.hashHexTuple)
       .toMap
+  }
+
+  /** Обратная конвертация из HashexHex. */
+  def fromHashesHex(hhx: HashesHex) = {
+    if (hhx.isEmpty) {
+      Nil
+    } else {
+      val flags = MFileMetaHashFlags.ORIGINAL_FLAGS
+      (for (hh <- hhx.iterator) yield {
+        MFileMetaHash( hh._1, hh._2, flags )
+      })
+        .toSeq
+    }
   }
 
   @inline implicit def univEq: UnivEq[MFileMetaHash] = UnivEq.derive

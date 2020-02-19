@@ -20,6 +20,11 @@ object MFileMetaHashFlags extends ShortEnum[MFileMetaHashFlag] {
 
   override def values = findValues
 
+
+  /** Дефолтовые флаги. */
+  def ORIGINAL_FLAGS: Set[MFileMetaHashFlag] =
+    Set.empty[MFileMetaHashFlag] + MFileMetaHashFlags.TrulyOriginal
+
 }
 
 

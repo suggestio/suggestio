@@ -12,8 +12,10 @@ import javax.inject.Inject
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl.IsSuNodeEdge
-import io.suggest.n2.media.MEdgeMedia
+import io.suggest.n2.media.{MEdgeMedia, MFileMeta}
 import io.suggest.n2.media.storage.IMediaStorages
+import io.suggest.pick.MimeConst
+import io.suggest.up.UploadConstants
 import views.html.sys1.market.edge.EditEdge2Tpl
 import japgolly.univeq._
 import models.mup.MUploadInfoQs
@@ -191,7 +193,13 @@ final class SysNodeEdges @Inject() (
       val someTrue = Some(true)
       uploadCtl.prepareUploadLogic(
         logPrefix = logPrefix,
-        validated = Validation.success( request.body ),
+        validated = MFileMeta.validateUpload(
+          m             = request.body,
+          minSizeB      = 1L,
+          maxSizeB      = 100 * 1024 * 1024,
+          mimeVerifierF = MimeConst.MimeChecks.all,
+          mustHashes    = UploadConstants.CleverUp.UPLOAD_FILE_HASHES,
+        ),
         upInfo = MUploadInfoQs(
           nodeType    = None,
           existNodeId = request.mnode.id,

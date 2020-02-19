@@ -22,8 +22,6 @@ case class MUploadCtxArgs(
 
   lazy val fileLength = file.length()
 
-  def declaredMime = uploadArgs.fileProps.mimeType
-
   lazy val detectedMimeTypeOpt: Option[String] = {
     MimeUtilJvm.probeContentType(path)
   }

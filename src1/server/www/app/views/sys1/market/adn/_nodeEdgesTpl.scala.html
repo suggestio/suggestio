@@ -113,5 +113,7 @@
 
 @* Ссылка на создание нового эджа под списком исходящих связей: *@
 @for(mnode <- onNode; nodeId <- mnode.id; nodeVsn <- mnode.versionOpt) {
-  <a href="@routes.SysNodeEdges.editEdge( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn) )">@messages( MsgCodes.`Create` )...</a>
+  <a href="@routes.SysNodeEdges.editEdge( MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn) )">
+    @messages( MsgCodes.`Create` )...
+  </a>
 }

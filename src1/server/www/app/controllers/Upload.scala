@@ -13,7 +13,6 @@ import io.suggest.ctx.MCtxId
 import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
-import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
@@ -30,7 +29,7 @@ import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sec.av.{ClamAvScanRequest, ClamAvUtil}
-import io.suggest.up.UploadConstants
+import io.suggest.up.{MUploadResp, UploadConstants}
 import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
@@ -95,9 +94,7 @@ final class Upload @Inject()(
   // В качестве параллельных sink'ов надо сразу: swfs, clamav, hashesHex, colorDetector?, ffmpeg, etc... При ошибке - удалять из swfs.
 
   /** Body-parser для prepareUploadLogic. */
-  def prepareUploadBp: BodyParser[MFile4UpProps] = {
-    parse.json[MFile4UpProps]
-  }
+  def prepareUploadBp = parse.json[MFileMeta]
 
   /** Тело экшена подготовки к аплоаду.
     * Только тело, потому что ACL-проверки выносятся в основной контроллер, в контексте которого происходит загрузка.
@@ -105,12 +102,12 @@ final class Upload @Inject()(
     * @param validated Провалидированные JSON-метаданные файла.
     * @param upInfo Контейнер данных, пробрасываемых целиком во вторую фазу.
     *
-    * @return Created | Accepted | NotAcceptable  + JSON-body в формате MFile4UpProps.
+    * @return Created | Accepted | NotAcceptable  + JSON-body в формате MFileMeta.
     */
   def prepareUploadLogic(logPrefix          : String,
-                         validated          : ValidationNel[String, MFile4UpProps],
+                         validated          : ValidationNel[String, MFileMeta],
                          upInfo             : MUploadInfoQs,
-                        )(implicit request: IReq[MFile4UpProps]) : Future[Result] = {
+                        )(implicit request: IReq[MFileMeta]) : Future[Result] = {
     validated.fold(
       // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
       {errorsNel =>
@@ -125,9 +122,9 @@ final class Upload @Inject()(
       },
 
       // Успешно провалидированы данные файла для загрузки.
-      {upFileProps =>
+      {fileMeta =>
         import esModel.api._
-        LOGGER.trace(s"$logPrefix Body validated, user#${request.user.personIdOpt.orNull}:\n ${request.body} => $upFileProps")
+        LOGGER.trace(s"$logPrefix Body validated, user#${request.user.personIdOpt.orNull}:\n ${request.body} => $fileMeta")
 
         for {
           // Поискать файл с такими параметрами в MMedia:
@@ -136,14 +133,14 @@ final class Upload @Inject()(
               // Тут по предикату - надо ли фильтровать?
               override val outEdges = {
                 val cr = Criteria(
-                  fileSizeB = upFileProps.sizeB :: Nil,
+                  fileSizeB = fileMeta.sizeB.get :: Nil,
                   fileHashesHex = (for {
-                    (mhash, hexValue) <- upFileProps.hashesHex.iterator
+                    fmHash <- fileMeta.hashesHex.iterator
                   } yield {
                     MHashCriteria(
-                      hTypes    = mhash :: Nil,
-                      hexValues = hexValue :: Nil,
-                      must      = IMust.MUST
+                      hTypes    = fmHash.hType :: Nil,
+                      hexValues = fmHash.hexValue :: Nil,
+                      must      = IMust.MUST,
                     )
                   })
                     .toSeq,
@@ -157,7 +154,7 @@ final class Upload @Inject()(
           (respStatus, respDataFut) = fileSearchRes
             .headOption
             .fold [(Status, Future[MUploadResp])] {
-              val assignRespFut = cdnUtil.assignDist(upFileProps)
+              val assignRespFut = cdnUtil.assignDist( fileMeta )
               LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
 
               val upDataFut = for {
@@ -166,7 +163,7 @@ final class Upload @Inject()(
                 LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
 
                 val upData = MUploadTargetQs(
-                  fileProps   = upFileProps,
+                  fileProps   = fileMeta,
                   personId    = request.user.personIdOpt,
                   validTillS  = uploadUtil.ttlFromNow(),
                   storage     = assignResp,
@@ -206,7 +203,7 @@ final class Upload @Inject()(
                 .histogram
                 .colorsOrNil
 
-              LOGGER.debug(s"$logPrefix Found existing file media#${foundFileNode.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}] with ${existColors.size} colors.")
+              LOGGER.debug(s"$logPrefix Found existing file media#${foundFileNode.idOrNull} for hashes [${fileMeta.hashesHex.iterator.map(_.hexValue).mkString(", ")}] with ${existColors.size} colors.")
 
               // Тут шаринг инстанса возможной картинки. Но надо быть осторожнее: если не картинка, то может быть экзепшен.
               lazy val foundFileImg = MImg3.fromEdge( foundFileNode.id.get, fileEdge ).get
@@ -297,7 +294,7 @@ final class Upload @Inject()(
       // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
       case MUploadFileHandlers.Image =>
         val imgFmt = MImgFmts
-          .withMime( uploadArgs.fileProps.mimeType )
+          .withMime( uploadArgs.fileProps.mime.get )
           .get
         val dynImgId = MDynImgId.randomOrig( imgFmt )
         val localImg = MLocalImg( dynImgId )
@@ -311,7 +308,7 @@ final class Upload @Inject()(
     // Сборка самого BodyParser'а.
     val bp0 = parse.multipartFormData(
       Multipart.handleFilePartAsTemporaryFile( fileHandler ),
-      maxLength = uploadArgs.fileProps.sizeB + 10000L,
+      maxLength = uploadArgs.fileProps.sizeB.get + 10000L,
     )
 
     // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
@@ -365,10 +362,10 @@ final class Upload @Inject()(
         // Проверить Content-Type, заявленный в теле запроса:
         if {
           val r = filePart.contentType
-            .exists(_ equalsIgnoreCase uploadArgs.fileProps.mimeType)
-          LOGGER.trace(s"$logPrefix Content-type verify: expected=${uploadArgs.fileProps.mimeType} filePart=${filePart.contentType} ;; match?$r")
+            .exists(_ equalsIgnoreCase uploadArgs.fileProps.mime.get)
+          LOGGER.trace(s"$logPrefix Content-type verify: expected=${uploadArgs.fileProps.mime.get} filePart=${filePart.contentType} ;; match?$r")
           if (!r)
-            __appendErr( s"Expected Content-type '${uploadArgs.fileProps.mimeType}' not matching to Multipart part's content-type '${filePart.contentType.orNull}'." )
+            __appendErr( s"Expected Content-type '${uploadArgs.fileProps.mime.get}' not matching to Multipart part's content-type '${filePart.contentType.orNull}'." )
           r
         }
 
@@ -376,36 +373,39 @@ final class Upload @Inject()(
         upCtxArgs = MUploadCtxArgs(filePart, uploadArgs, request.body)
         upCtx = uploadUtil.makeUploadCtx( upCtxArgs )
 
+        sizeB = uploadArgs.fileProps.sizeB.get
         // Сверить размер файла с заявленным размером
         if {
           val srcLen = upCtxArgs.fileLength
-          val r = srcLen ==* uploadArgs.fileProps.sizeB
-          LOGGER.trace(s"$logPrefix File size check: expected=${uploadArgs.fileProps.sizeB} detected=$srcLen ;; match? $r")
+          val r = (srcLen ==* sizeB)
+          LOGGER.trace(s"$logPrefix File size check: expected=$sizeB detected=$srcLen ;; match? $r")
           if (!r)
-            __appendErr(s"Size of file $srcLen bytes, but expected is ${uploadArgs.fileProps.sizeB} bytes.")
+            __appendErr(s"Size of file $srcLen bytes, but expected is $sizeB bytes.")
           r
         }
+
+        declaredMime = uploadArgs.fileProps.mime.get
 
         // Определить MIME-тип принятого файла:
         detectedMimeType <- upCtxArgs.detectedMimeTypeOpt
         // Бывает, что MIME не совпадает. Решаем, что нужно делать согласно настройкам аплоада. Пример:
         // Detected file MIME type [application/zip] does not match to expected [application/vnd.android.package-archive]
         mimeType = {
-          if (detectedMimeType ==* upCtxArgs.declaredMime) {
+          if (detectedMimeType ==* declaredMime) {
             detectedMimeType
           } else {
-            val msg = s"Detected file MIME type '${upCtxArgs.detectedMimeTypeOpt}' does not match to expected ${upCtxArgs.declaredMime}."
+            val msg = s"Detected file MIME type '${upCtxArgs.detectedMimeTypeOpt}' does not match to expected $declaredMime"
             LOGGER.warn(s"$logPrefix $msg")
             uploadArgs.info.obeyMime.fold {
               __appendErr( msg )
               throw new NoSuchElementException(msg)
             } {
               case false =>
-                LOGGER.info(s"$logPrefix Client-side MIME [${upCtxArgs.declaredMime}] replaced with server-side detected MIME: [$detectedMimeType]")
+                LOGGER.info(s"$logPrefix Client-side MIME [$declaredMime] replaced with server-side detected MIME: [$detectedMimeType]")
                 detectedMimeType
               case true =>
-                LOGGER.info(s"$logPrefix Client-side MIME [${upCtxArgs.declaredMime}] will be saved, instead of detected MIME [$detectedMimeType]")
-                upCtxArgs.declaredMime
+                LOGGER.info(s"$logPrefix Client-side MIME [$declaredMime] will be saved, instead of detected MIME [$detectedMimeType]")
+                declaredMime
             }
           }
         }
@@ -430,24 +430,28 @@ final class Upload @Inject()(
           // Рассчитать хэш-суммы файла (digest).
           hashesHex2 <- fileUtil.mkHashesHexAsync(
             file    = upCtxArgs.file,
-            hashes  = uploadArgs.fileProps.hashesHex.keys,
-            flags   = Set( MFileMetaHashFlags.TrulyOriginal ),
+            hashes  = uploadArgs.fileProps
+              .hashesHex
+              .map(_.hType),
+            flags   = MFileMetaHashFlags.ORIGINAL_FLAGS,
           )
           hashesHexMap = IId.els2idMap[MHash, MFileMetaHash]( hashesHex2 )
 
+
           // Сверить рассчётные хэш-суммы с заявленными при загрузке.
           if {
+            hashesHexMap.nonEmpty &&
             uploadArgs.fileProps
               .hashesHex
-              .forall { case (mhash, expectedHexVal) =>
+              .forall { fmHashQs =>
                 hashesHexMap
-                  .get(mhash)
+                  .get( fmHashQs.hType )
                   .exists { mfhash =>
-                    val r = mfhash.hexValue ==* expectedHexVal
+                    val r = mfhash.hexValue ==* fmHashQs.hexValue
                     if (!r) {
-                      LOGGER.error(s"$logPrefix $mfhash != $mhash $expectedHexVal file=${upCtxArgs.file} ${upCtxArgs.fileLength}b user=${request.user.personIdOpt.orNull}")
+                      LOGGER.error(s"$logPrefix $mfhash != ${fmHashQs.hType} ${fmHashQs.hexValue} file=${upCtxArgs.file} ${upCtxArgs.fileLength}b user=${request.user.personIdOpt.orNull}")
                       errSb.synchronized {
-                        __appendErr( s"File hash ${mhash.fullStdName} '${mfhash.hexValue}' doesn't match to declared '$expectedHexVal'." )
+                        __appendErr( s"File hash ${fmHashQs.hType.fullStdName} '${mfhash.hexValue}' doesn't match to declared '${fmHashQs.hexValue}'." )
                       }
                     }
                     r
@@ -503,7 +507,7 @@ final class Upload @Inject()(
 
           fileMeta = MFileMeta(
             mime       = Some( mimeType ),
-            sizeB      = Some( uploadArgs.fileProps.sizeB ),
+            sizeB      = uploadArgs.fileProps.sizeB,
             isOriginal = true,
             hashesHex  = hashesHex2,
           )

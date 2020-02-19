@@ -3,11 +3,11 @@ package controllers
 import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit}
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
-import io.suggest.file.up.MFile4UpProps
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdEdge
 import io.suggest.n2.edge._
 import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.n2.media.MFileMeta
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pick.MimeConst
 import io.suggest.util.logs.MacroLogsImpl
@@ -223,15 +223,15 @@ final class LkAdnEdit @Inject() (
     * @param fileProps Присланные клиентом данные по файлу.
     * @return ValidationNel с выверенными данными или ошибкой.
     */
-  private def image4UploadPropsV(fileProps: MFile4UpProps): ValidationNel[String, MFile4UpProps] = {
+  private def image4UploadPropsV(fileProps: MFileMeta): ValidationNel[String, MFileMeta] = {
     // Тут практически копипаст данных из LkAdEdit/LkAdEdFormUtil:
-    MFile4UpProps.validate(
+    MFileMeta.validateUpload(
       m             = fileProps,
       // Теоретически, может загружаться очень тривиальный svg-логотип:
       minSizeB      = 200,
       maxSizeB      = 10*1024*1024,
       mimeVerifierF = MimeConst.MimeChecks.onlyImages,
-      mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
+      mustHashes    = UploadConstants.CleverUp.UPLOAD_FILE_HASHES
     )
   }
 

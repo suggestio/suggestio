@@ -7,7 +7,7 @@ import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.HashesHex
-import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
+import io.suggest.file.up.MFileUploadS
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MMessage, MsgCodes}
@@ -19,6 +19,8 @@ import io.suggest.lk.r.img.LkImgUtilJs
 import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.n2.media.{MFileMeta, MFileMetaHash}
+import io.suggest.pick.MimeConst
 import io.suggest.routes.PlayRoute
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -237,7 +239,7 @@ class UploadAh[V, M](
         // Есть js-файл на руках. Огранизовать хеширование:
         val hashFx = (for {
           mhash <- UploadConstants.CleverUp
-            .PICTURE_FILE_HASHES
+            .UPLOAD_FILE_HASHES
             .iterator
         } yield {
           Effect {
@@ -306,7 +308,7 @@ class UploadAh[V, M](
               // Попытаться провалидировать хеши так же, как это сделает сервер.
               // Это поможет определить достаточность собранной карты хешей для запуска аплоада.
               HashesHex
-                .hashesHexV(hashesHex2, UploadConstants.CleverUp.PICTURE_FILE_HASHES)
+                .hashesHexV(hashesHex2, UploadConstants.CleverUp.UPLOAD_FILE_HASHES)
                 .fold(
                   // Хешей пока недостаточно, ждать ещё хэшей...
                   {_ =>
@@ -322,10 +324,17 @@ class UploadAh[V, M](
                         )
                       )
 
-                      val upProps = MFile4UpProps(
-                        sizeB     = fileJs0.blob.size.toLong,
-                        hashesHex = hashesHex2,
-                        mimeType  = fileJs0.blob.`type`
+                      val contentType = (for {
+                        ct0 <- Option( fileJs0.blob.`type` )
+                        ct1 = ct0.trim
+                        if MimeConst.MimeChecks.all( ct1 )
+                      } yield ct1)
+                        .getOrElse( MimeConst.APPLICATION_OCTET_STREAM )
+
+                      val upProps = MFileMeta(
+                        mime      = Some( contentType ),
+                        sizeB     = Some( fileJs0.blob.size.toLong ),
+                        hashesHex = MFileMetaHash.fromHashesHex( hashesHex2 ),
                       )
 
                       uploadApi
@@ -343,7 +352,6 @@ class UploadAh[V, M](
                       prepareReq_LENS
                         .modify( _.pending() )( fileJs0 )
                     }
-
 
                     val v2 = __v2F(fileJs2)
                     updated(v2, fx)

@@ -7,13 +7,15 @@ import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
+import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import io.suggest.sc.app.MScAppGetQs
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
 import io.suggest.util.logs.MacroLogsDyn
-import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
 
 import scala.util.Try
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -241,45 +243,146 @@ object CommonModelsJvm extends MacroLogsDyn {
      private def strB = implicitly[QueryStringBindable[String]]
 
      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, HashesHex]] = {
-        val hashesHexOptEithSeq = for (mhash <- MHashes.values) yield {
-          for {
-            hexValueEith <- strB.bind( key1(key, mhash.value), params )
-          } yield {
-            for (hexValue <- hexValueEith) yield {
-              mhash -> hexValue
+       val hashesHexOptEithSeq = for (mhash <- MHashes.values) yield {
+         for {
+           hexValueEith <- strB.bind( key1(key, mhash.value), params )
+         } yield {
+           for (hexValue <- hexValueEith) yield {
+             mhash -> hexValue
+           }
+         }
+       }
+
+       if (hashesHexOptEithSeq.isEmpty || hashesHexOptEithSeq.forall(_.isEmpty)) {
+         None
+
+       } else {
+         val hashesHexEithSeq = hashesHexOptEithSeq
+           .flatten
+         val errorsIter = hashesHexEithSeq
+           .iterator
+           .flatMap(_.left.toOption)
+         val eith = if (errorsIter.nonEmpty) {
+           Left( errorsIter.mkString(",") )
+         } else {
+           val hhMap: HashesHex = hashesHexEithSeq
+             .iterator
+             .flatMap(_.toOption)
+             .toMap
+           Right(hhMap)
+         }
+         Some(eith)
+       }
+     }
+
+
+     override def unbind(key: String, value: HashesHex): String = {
+       _mergeUnbinded {
+         for ((mhash, hexValue) <- value.iterator) yield {
+           strB.unbind(key1(key, mhash.value), hexValue)
+         }
+       }
+     }
+
+   }
+  }
+
+
+
+  implicit def fileMetaHashFlagQsb: QueryStringBindable[MFileMetaHashFlag] =
+    EnumeratumJvmUtil.valueEnumQsb( MFileMetaHashFlags )
+
+
+  implicit def fileMetaHashQsb: QueryStringBindable[MFileMetaHash] = {
+    new QueryStringBindableImpl[MFileMetaHash] {
+      lazy val hashB = implicitly[QueryStringBindable[MHash]]
+      lazy val strB = implicitly[QueryStringBindable[String]]
+      lazy val fmHashFlagsB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHashFlag]]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MFileMetaHash]] = {
+        val F = MFileMetaHash.Fields
+        val k = key1F( key )
+        for {
+          hashE         <- hashB.bind( k(F.HASH_TYPE_FN), params )
+          hexValueE     <- strB.bind( k(F.HEX_VALUE_FN), params )
+          if hexValueE.exists { hashValue =>
+            hashE.exists { mhash =>
+              mhash.hexStrLen ==* hashValue.length
             }
           }
-        }
-
-        if (hashesHexOptEithSeq.isEmpty || hashesHexOptEithSeq.forall(_.isEmpty)) {
-          None
-
-        } else {
-          val hashesHexEithSeq = hashesHexOptEithSeq
-            .flatten
-          val errorsIter = hashesHexEithSeq
-            .iterator
-            .flatMap(_.left.toOption)
-          val eith = if (errorsIter.nonEmpty) {
-            Left( errorsIter.mkString(",") )
-          } else {
-            val hhMap: HashesHex = hashesHexEithSeq
-              .iterator
-              .flatMap(_.toOption)
-              .toMap
-            Right(hhMap)
+          flagsE        <- fmHashFlagsB.bind( k(F.FLAGS_FN), params )
+          // Флаги - игнорим?
+        } yield {
+          for {
+            hash        <- hashE
+            hexValue    <- hexValueE
+            flags       <- flagsE
+          } yield {
+            MFileMetaHash(
+              hType     = hash,
+              hexValue  = hexValue,
+              flags     = flags.items.toSet,
+            )
           }
-          Some(eith)
         }
       }
 
+      override def unbind(key: String, value: MFileMetaHash): String = {
+        val F = MFileMetaHash.Fields
+        val k = key1F( key )
+        _mergeUnbinded1(
+          hashB.unbind( k(F.HASH_TYPE_FN), value.hType ),
+          strB.unbind( k(F.HEX_VALUE_FN), value.hexValue ),
+          fmHashFlagsB.unbind( k(F.FLAGS_FN), QsbSeq(value.flags.toSeq) ),
+        )
+      }
+    }
+  }
 
-      override def unbind(key: String, value: HashesHex): String = {
-        _mergeUnbinded {
-          for ((mhash, hexValue) <- value.iterator) yield {
-            strB.unbind(key1(key, mhash.value), hexValue)
+
+  implicit def fileMetaQsb: QueryStringBindable[MFileMeta] = {
+    new QueryStringBindableImpl[MFileMeta] {
+      lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
+      lazy val longOptB = implicitly[QueryStringBindable[Option[Long]]]
+      lazy val boolB = implicitly[QueryStringBindable[Boolean]]
+      lazy val fmHashesB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHash]]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MFileMeta]] = {
+        val F = MFileMeta.Fields
+        val k = key1F( key )
+        for {
+          contentTypeOptE   <- strOptB.bind( k(F.MIME_FN), params )
+          if contentTypeOptE.exists( _.fold(true)(_.nonEmpty) )
+          sizeBytesOptE     <- longOptB.bind( k(F.SIZE_B_FN), params )
+          if sizeBytesOptE.exists( _.fold(true) { _ >= 0L } )
+          isOriginalE       <- boolB.bind( k(F.IS_ORIGINAL_FN), params )
+          hashesE           <- fmHashesB.bind( k(F.HASHES_HEX_FN), params )
+        } yield {
+          for {
+            contentTypeOpt  <- contentTypeOptE
+            sizeBytesOpt    <- sizeBytesOptE
+            isOriginal      <- isOriginalE
+            hashes          <- hashesE
+          } yield {
+            MFileMeta(
+              mime        = contentTypeOpt,
+              sizeB       = sizeBytesOpt,
+              isOriginal  = isOriginal,
+              hashesHex   = hashes.items,
+            )
           }
         }
+      }
+
+      override def unbind(key: String, value: MFileMeta): String = {
+        val F = MFileMeta.Fields
+        val k = key1F( key )
+        _mergeUnbinded1(
+          strOptB.unbind( k(F.MIME_FN), value.mime ),
+          longOptB.unbind( k(F.SIZE_B_FN), value.sizeB ),
+          boolB.unbind( k(F.IS_ORIGINAL_FN), value.isOriginal ),
+          fmHashesB.unbind( k(F.HASHES_HEX_FN), QsbSeq(value.hashesHex) ),
+        )
       }
 
     }

@@ -78,11 +78,16 @@ object MimeConst {
   /** Проверки для mime-типов загружаемых файлов. */
   object MimeChecks {
 
-    def onlyImages(mime: String): Boolean =
-      MImgFmts.withMime( mime ).nonEmpty
+    def _anyMimeRE = "(application|audio|image|message|multipart|text|video)/(x-|vnd.)?[.a-z0-9-]{2,65}".r
+
+    def onlyImages(mime: String): Boolean = {
+      MImgFmts
+        .withMime( mime )
+        .nonEmpty
+    }
 
     def all(mime: String): Boolean =
-      true
+       _anyMimeRE.matches(mime)
 
   }
 

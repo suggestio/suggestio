@@ -1,7 +1,7 @@
 package io.suggest.up
 
 import io.suggest.file.MJsFileInfo
-import io.suggest.file.up.{MFile4UpProps, MUploadResp}
+import io.suggest.n2.media.MFileMeta
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.pick.MimeConst
@@ -24,10 +24,10 @@ trait IUploadApi {
   /** Подготовка к аплоаду: запрос реквизитов для аплоада с сервера.
     *
     * @param route Роута, за которой скрыт prepareUpload-экшен..
-    * @param file4UpProps Данные по файлу, который планируется загружать.
+    * @param fileMeta Данные по файлу, который планируется загружать.
     * @return Фьючерс с ответом сервера.
     */
-  def prepareUpload(route: PlayRoute, file4UpProps: MFile4UpProps): Future[MUploadResp]
+  def prepareUpload(route: PlayRoute, fileMeta: MFileMeta): Future[MUploadResp]
 
 
   /** Произвести непосредственную заливку файла на сервер.
@@ -47,15 +47,15 @@ class UploadApiHttp extends IUploadApi {
   /** Код тела подготовки к аплоаду и декодинга результата по HTTP.
     *
     * @param route Роута.
-    * @param file4UpProps Данные файла.
+    * @param fileMeta Данные файла.
     * @return Фьючерс с ответом сервера.
     */
-  override def prepareUpload(route: PlayRoute, file4UpProps: MFile4UpProps): Future[MUploadResp] = {
+  override def prepareUpload(route: PlayRoute, fileMeta: MFileMeta): Future[MUploadResp] = {
     val req = HttpReq.routed(
       route = route,
       data = HttpReqData(
         headers = HttpReqData.headersJsonSendAccept,
-        body = Json.toJson(file4UpProps).toString()
+        body = Json.toJson(fileMeta).toString()
       )
     )
     val S = HttpConst.Status

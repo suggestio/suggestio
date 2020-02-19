@@ -3,7 +3,6 @@ package util.cdn
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
-import io.suggest.file.up.MFile4UpProps
 import io.suggest.n2.media.storage.{MStorages, _}
 import io.suggest.n2.media.storage.swfs.SwfsVolumeCache
 import io.suggest.playx.ExternalCall
@@ -16,7 +15,7 @@ import play.api.Configuration
 import play.api.mvc.Call
 import OptionUtil.BoolOptOps
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.media.MEdgeMedia
+import io.suggest.n2.media.MFileMeta
 import io.suggest.n2.node.MNode
 import io.suggest.proto.http.HttpConst
 import util.up.UploadUtil
@@ -214,7 +213,7 @@ class CdnUtil @Inject() (
     * @param upProps Обобщённые данные по заливаемому файлу.
     * @return Фьючерс с результатом.
     */
-  def assignDist(upProps: MFile4UpProps): Future[MAssignedStorage] = {
+  def assignDist(upProps: MFileMeta): Future[MAssignedStorage] = {
     val assignFut = iMediaStorages
       .client( DIST_STORAGE )
       .assignNew()

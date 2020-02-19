@@ -1,14 +1,20 @@
 package io.suggest.n2.media
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.crypto.hash.{HashesHex, MHash}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
 import japgolly.univeq._
-import io.suggest.dt.CommonDateTimeUtil.Implicits._
+import io.suggest.math.MathConst
+import io.suggest.pick.MimeConst
+import io.suggest.scalaz.ScalazUtil
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import scalaz.{Validation, ValidationNel}
+import scalaz._
+import scalaz.syntax.apply._
 
 /**
  * Suggest.io
@@ -85,6 +91,37 @@ object MFileMeta
   lazy val isOriginal   = GenLens[MFileMeta](_.isOriginal)
   lazy val hashesHex    = GenLens[MFileMeta](_.hashesHex)
 
+
+
+  /** Сборка валидатора и валидация данных файла для аплоада.
+    *
+    * @param m Валидируемая модель
+    * @param minSizeB Минимальный размер файла.
+    * @param maxSizeB Максимальный размер файла.
+    * @param mimeVerifierF Фунция для сверки MIME-типа, см. MimeConst.
+    * @param mustHashes Список hash-алгоритмов, которые должны быть уже вычислены.
+    * @return ValidationNel с исходным инстансом модели, если всё ок.
+    */
+  def validateUpload(m              : MFileMeta,
+                     minSizeB       : Long,
+                     maxSizeB       : Long,
+                     mimeVerifierF  : String => Boolean,
+                     mustHashes     : Set[MHash]
+                    ): ValidationNel[String, MFileMeta] = {
+    (
+      ScalazUtil.liftNelOpt( m.mime ) { mime =>
+        MimeConst.validateMimeUsing( mime, mimeVerifierF )
+      } |@|
+      ScalazUtil.liftNelSome( m.sizeB, _eFileSizePrefix + "empty" ) { sizeB =>
+        MathConst.Counts.validateMinMax(sizeB, minSizeB, maxSizeB, _eFileSizePrefix)
+      } |@|
+      Validation.liftNel( m.isOriginal )(!_, "!e.file.isOrig") |@|
+      HashesHex.hashesHexV( MFileMetaHash.toHashesHex(m.hashesHex), mustHashes )
+        .map( MFileMetaHash.fromHashesHex )
+    )(apply)
+  }
+
+  private def _eFileSizePrefix = "e.file.size.too."
 
 
   implicit final class FileMetaOpsExt( private val fileMeta: MFileMeta ) extends AnyVal {

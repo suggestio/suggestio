@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Component_t, Mui, MuiButton, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelActions, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelActions, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -20,7 +20,7 @@ import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.scalajs.js.{URIUtils, UndefOr}
+import scala.scalajs.js.URIUtils
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -208,54 +208,52 @@ class DlAppDiaR(
                           ),
 
 
-                          //MuiExpansionPanelActions()(
-                            MuiList()(
-                              // Ссылка/кнопка скачивания
-                              MuiListItem()(
-                                MuiListItemText()(
-                                  MuiButton(
-                                    new MuiButtonProps {
-                                      override val href = dlInfo.url
-                                      override val component = "a"
-                                      // TODO val target = "_blank" для переходов в play/appstore
-                                    }
-                                  )(
-                                    dlInfo.extSvc.fold {
-                                      crCtx.messages( MsgCodes.`Download.0`, HtmlConstants.ELLIPSIS )
-                                    } { extSvc =>
-                                      crCtx.messages( MsgCodes.`Open.0`, extSvc.nameI18N )
-                                    }
-                                  ),
-
-                                  // Если установка на iOS, то отрендерить ссылку для непосредственной установки через манифест.
-                                  ReactCommonUtil.maybeNode( dlInfo.extSvc contains MExtServices.AppleITunes ) {
-                                    val manifestUrl = ScJsRoutes.controllers.ScApp.iosInstallManifest(  dlInfo.fromNodeIdOpt.toUndef).absoluteURL( secure = true )
-                                    val itunesUrl = s"itms-services://?action=download-manifest&url=" + URIUtils.encodeURIComponent( manifestUrl )
-                                    MuiButton {
-                                      new MuiButtonProps {
-                                        override val href = itunesUrl
-                                        override val component = "a"
-                                      }
-                                    } (
-                                      crCtx.messages( MsgCodes.`Install` ),
-                                    )
-                                  },
-
+                          MuiList()(
+                            // Ссылка/кнопка скачивания
+                            MuiListItem()(
+                              MuiListItemText()(
+                                MuiButton(
+                                  new MuiButtonProps {
+                                    override val href = dlInfo.url
+                                    override val component = "a"
+                                    // TODO val target = "_blank" для переходов в play/appstore
+                                  }
+                                )(
+                                  dlInfo.extSvc.fold {
+                                    crCtx.messages( MsgCodes.`Download.0`, HtmlConstants.ELLIPSIS )
+                                  } { extSvc =>
+                                    crCtx.messages( MsgCodes.`Open.0`, extSvc.nameI18N )
+                                  }
                                 ),
-                              ),
 
-                              // qr-код
-                              MuiListItem()(
-                                MuiListItemText()(
-                                  ReactQrCode(
-                                    new ReactQrCodeProps {
-                                      override val value = dlInfo.url
+                                // Если установка на iOS, то отрендерить ссылку для непосредственной установки через манифест.
+                                ReactCommonUtil.maybeNode( dlInfo.extSvc contains MExtServices.AppleITunes ) {
+                                  val manifestUrl = ScJsRoutes.controllers.ScApp.iosInstallManifest(  dlInfo.fromNodeIdOpt.toUndef).absoluteURL( secure = true )
+                                  val itunesUrl = s"itms-services://?action=download-manifest&url=" + URIUtils.encodeURIComponent( manifestUrl )
+                                  MuiButton {
+                                    new MuiButtonProps {
+                                      override val href = itunesUrl
+                                      override val component = "a"
                                     }
-                                  ),
-                                )
-                              )
+                                  } (
+                                    crCtx.messages( MsgCodes.`Install` ),
+                                  )
+                                },
+
+                              ),
                             ),
-                          //),
+
+                            // qr-код
+                            MuiListItem()(
+                              MuiListItemText()(
+                                ReactQrCode(
+                                  new ReactQrCodeProps {
+                                    override val value = dlInfo.url
+                                  }
+                                ),
+                              )
+                            )
+                          ),
 
                         )
                       })

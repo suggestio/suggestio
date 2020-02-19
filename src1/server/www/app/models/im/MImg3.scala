@@ -193,8 +193,8 @@ class MImgs3 @Inject() (
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
       val hashesHexFut = fileUtil.mkHashesHexAsync(
         file   = imgFile,
-        hashes = UploadConstants.CleverUp.PICTURE_FILE_HASHES,
-        flags  = Set( MFileMetaHashFlags.TrulyOriginal ),
+        hashes = UploadConstants.CleverUp.UPLOAD_FILE_HASHES,
+        flags  = MFileMetaHashFlags.ORIGINAL_FLAGS,
       )
 
       val storAssignFut = storClient.assignNew()

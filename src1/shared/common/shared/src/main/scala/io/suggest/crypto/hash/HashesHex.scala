@@ -45,7 +45,8 @@ object HashesHex {
     val hash = hashHex._1
     Validation.liftNel(hashHex._2)(
       {hex =>
-        val isOk = hex.length ==* hash.hexStrLen &&
+        val isOk =
+          (hex.length ==* hash.hexStrLen) &&
           hexRe.pattern.matcher(hex).matches()
         !isOk
       },
@@ -63,9 +64,9 @@ object HashesHex {
   def hashesHexV(hashesHex: HashesHex, mustBeHashes: Set[MHash]): ValidationNel[String, HashesHex] = {
     val ePrefix = "e.hashes."
     (
-      Validation.liftNel( hashesHex.size )( { _ !=* mustBeHashes.size }, ePrefix + "size" ) |@|
-      Validation.liftNel( hashesHex.keySet ) ( { _ !=* mustBeHashes }, ePrefix + "set" ) |@|
-      ScalazUtil.validateAll(hashesHex.to(Iterable))(hashHexPairV)
+      Validation.liftNel( hashesHex.size )( _ !=* mustBeHashes.size, ePrefix + "size" ) |@|
+      Validation.liftNel( hashesHex.keySet ) ( _ !=* mustBeHashes, ePrefix + "set" ) |@|
+      ScalazUtil.validateAll( hashesHex.to(Iterable) )(hashHexPairV)
     ) { (_,_,_) => hashesHex }
   }
 

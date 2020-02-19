@@ -56,7 +56,7 @@ trait LkAdEditInit extends InitRouter {
       .renderIntoDOM( PopupsContR.initDocBody() )
 
     // Требуются фоновые веб-воркеры для параллельного хэширования разными алгоритмами.
-    WwMgr.start( UploadConstants.CleverUp.PICTURE_FILE_HASHES.size )
+    WwMgr.start( UploadConstants.CleverUp.UPLOAD_FILE_HASHES.size )
   }
 
 }

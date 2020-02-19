@@ -1,4 +1,4 @@
-package io.suggest.file.up
+package io.suggest.up
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.file.MSrvFileInfo
@@ -38,7 +38,6 @@ object MUploadResp {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MUploadResp] = {
-    import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
 
