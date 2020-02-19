@@ -230,7 +230,7 @@ final class ScApp @Inject()(
 
         // Есть эдж. Если указание на файловый узел, то прочитать узел.
         dlInfos <- Future.traverse(appEdges) { appEdge =>
-          appEdge.predicate match {
+          (appEdge.predicate match {
 
             // Отрендерить ответ с ссылкой на сервис.
             case MPredicates.Application.Distributor =>
@@ -247,7 +247,7 @@ final class ScApp @Inject()(
                   extSvc    = extSvcOpt,
                 )
                 LOGGER.trace(s"$logPrefix svc=$extSvc, appId=$appId =>\n URL: ${r.url}")
-                Future.successful( r )
+                Future.successful( r :: Nil )
               })
                 .getOrElse {
                   LOGGER.error(s"$logPrefix Failed to generate app.URL for app.distributor on edge:\n $appEdge")
@@ -284,13 +284,14 @@ final class ScApp @Inject()(
                 val url = dlCall.absoluteURL()
                 LOGGER.trace(s"$logPrefix Generated download link for node#${fileNodeId}:\n url = $url")
 
-                MScAppDlInfo(
+                val r = MScAppDlInfo(
                   url       = url,
                   predicate = appEdge.predicate,
                   fileName  = fileNode.guessDisplayName,
                   fileSizeB = fileEdgeMedia.file.sizeB,
                   fromNodeIdOpt = fromNodeIdOpt,
                 )
+                r :: Nil
               }
 
 
@@ -299,8 +300,14 @@ final class ScApp @Inject()(
               LOGGER.error(s"$logPrefix Unexpected app.predicate#$other")
               throw HttpResultingException( httpErrorHandler.onClientError( request, INTERNAL_SERVER_ERROR ) )
 
-          }
+          })
+            // Подавить возможные ошибки в некоторых элементах.
+            .recover { case ex: Throwable =>
+              LOGGER.error(s"$logPrefix Failed to render app.dl.info for edge $appEdge", ex)
+              Nil
+            }
         }
+          .map( _.flatten )
 
         res <- {
           if (qs.rdr) {

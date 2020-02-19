@@ -3,6 +3,7 @@ package util.acl
 import controllers.routes
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
+import io.suggest.flash.FlashConstants
 import io.suggest.n2.edge.MEdge
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.node.MNodes
@@ -121,8 +122,13 @@ class IsSuNodeEdge @Inject() (
         errorHandler.onClientError(req, Status.NOT_FOUND)
 
       /** Запрошенная версия узла неактуальна. */
-      def nodeVsnInvalid(req: INodeReq[_]): Future[Result] =
-        errorHandler.onClientError(req, Status.CONFLICT, s"Node ${qs.nodeId} has been changed by someone, requested version ${qs.nodeVsn} is outdated.")
+      def nodeVsnInvalid(req: INodeReq[_]): Future[Result] = {
+        // Отредиректить суперюзера в админку, сообщив о проблеме через FLASH.
+        // Так отрабатываем переход в редактор эджа через историю браузера по устаревшей ссылке.
+        val res = Results.Redirect( routes.SysMarket.showAdnNode( qs.nodeId ) )
+          .flashing( FlashConstants.Statuses.ERROR -> "Edge version conflict." )
+        Future.successful(res)
+      }
 
       /** Не найден эдж с указанным id. */
       def edgeNotFound(req: INodeReq[_]): Future[Result] =
