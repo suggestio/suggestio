@@ -420,8 +420,8 @@ final class ScApp @Inject()(
         val manifest = MIosManifest(
           items = MIosItem(
             metadata = MIosItemMeta(
-              bundleId  = "io.suggest.app.cordova.ios",
-              bundleVersion = "20200220-2",
+              bundleId  = "io.suggest.app.cordova.sio2m",
+              bundleVersion = "1.0.0",
               kind      = "software",
               title     = "Suggest.io",
             ),
