@@ -1,5 +1,6 @@
 package io.suggest.sc.app
 
+import io.suggest.dev.MOsFamily
 import io.suggest.ext.svc.MExtService
 import io.suggest.n2.edge.MPredicate
 import japgolly.univeq._
@@ -15,6 +16,7 @@ import play.api.libs.functional.syntax._
 object MScAppDlInfo {
 
   object Fields {
+    def OS_FAMILY     = "o"
     def PREDICATE     = "p"
     def URL           = "u"
     def EXT_SERVICE   = "s"
@@ -28,6 +30,7 @@ object MScAppDlInfo {
     (
       (__ \ F.PREDICATE).format[MPredicate] and
       (__ \ F.URL).format[String] and
+      (__ \ F.OS_FAMILY).formatNullable[MOsFamily] and
       (__ \ F.EXT_SERVICE).formatNullable[MExtService] and
       (__ \ F.FILE_NAME).formatNullable[String] and
       (__ \ F.FILE_SIZE_B).formatNullable[Long] and
@@ -40,10 +43,12 @@ object MScAppDlInfo {
 }
 
 
-/** Инфа по варианту скачивания приложения под одну платформу.
+/** Инфа по варианту скачивания приложения под одну платформу (семейство ОС).
   *
   * @param predicate Предикат.
   * @param url Ссылка для скачивания/редиректа.
+  * @param osFamily Семейство ОС, для которых скомпилировано приложение.
+  *                 Сделан сразу опциональным, просто на всякий случай (вдруг будут какие-то приложения без привязки к ОС).
   * @param extSvc Внешний сервис.
   * @param fileName Имя файла.
   * @param fileSizeB Размер файла в байтах.
@@ -52,6 +57,7 @@ object MScAppDlInfo {
 case class MScAppDlInfo(
                          predicate        : MPredicate,
                          url              : String,
+                         osFamily         : Option[MOsFamily],
                          extSvc           : Option[MExtService] = None,
                          fileName         : Option[String] = None,
                          fileSizeB        : Option[Long]   = None,

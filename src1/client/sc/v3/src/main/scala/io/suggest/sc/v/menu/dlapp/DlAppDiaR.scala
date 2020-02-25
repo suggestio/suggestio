@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelActions, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -41,7 +41,6 @@ class DlAppDiaR(
   case class State(
                     diaOpenedSomeC    : ReactConnectProxy[Some[Boolean]],
                     dlAppDiaC         : ReactConnectProxy[MDlAppDia],
-                    devPlatformOptC   : ReactConnectProxy[Option[MOsFamily]],
                   )
 
   class Backend( $: BackendScope[Props, State] ) {
@@ -79,6 +78,10 @@ class DlAppDiaR(
         chooseText
       ) :: osFamiliesR.osFamiliesMenuItems
 
+      val _osFamilySelectCss = new MuiFormControlClasses {
+        override val root = ScCssStatic.AppDl.osFamily.htmlClass
+      }
+
       // Содержимое диалога
       val diaContent = crCtxProv.consume { crCtx =>
         lazy val bytesMsg = crCtx.messages( MsgCodes.`B._Bytes` )
@@ -100,37 +103,27 @@ class DlAppDiaR(
           ),
 
           MuiDialogContent()(
-            {
-              val _osFamilyCss = new MuiFormControlClasses {
-                override val root = ScCssStatic.AppDl.osFamily.htmlClass
-              }
+            s.dlAppDiaC { dlAppDiaProxy =>
+              val dlAppDia = dlAppDiaProxy.value
+              val osFamilyStr = dlAppDia.platform
+                .fold( choosePlatformKey )(_.value)
 
-              s.dlAppDiaC { dlAppDiaProxy =>
-                val dlAppDia = dlAppDiaProxy.value
-                val osFamilyStr = dlAppDia.platform
-                  .fold( choosePlatformKey )(_.value)
-
+              React.Fragment(
                 MuiTextField(
                   new MuiTextFieldProps {
                     override val select   = true
                     override val value    = osFamilyStr
                     override val onChange = _onOsFamilyChange
-                    override val classes  = _osFamilyCss
+                    override val classes  = _osFamilySelectCss
                     override val disabled = dlAppDia.getReq.isPending
                   }
                 )(
                   platformsRows: _*
-                )
-              }
-            },
+                ),
 
-            <.br,
+                <.br,
 
-            // Отрендерить кнопки-ссылки для скачивания, данные для ссылок приходят запросом с сервера.
-            s.dlAppDiaC { dlAppDiaProxy =>
-              val dlAppDia = dlAppDiaProxy.value
-
-              React.Fragment(
+                // Отрендерить кнопки-ссылки для скачивания, данные для ссылок приходят запросом с сервера.
 
                 dlAppDia.getReq.render { resp =>
                   if (resp.dlInfos.isEmpty) {
@@ -226,8 +219,11 @@ class DlAppDiaR(
                                   }
                                 ),
 
-                                // Если установка на iOS, то отрендерить ссылку для непосредственной установки через манифест.
-                                ReactCommonUtil.maybeNode( dlInfo.extSvc contains MExtServices.AppleITunes ) {
+                                // Если файл для iOS, то отрендерить ссылку для непосредственной установки через манифест:
+                                ReactCommonUtil.maybeNode(
+                                  dlInfo.extSvc.isEmpty &&
+                                  (dlInfo.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS)
+                                ) {
                                   val manifestUrl = ScJsRoutes.controllers.ScApp.iosInstallManifest(  dlInfo.fromNodeIdOpt.toUndef).absoluteURL( secure = true )
                                   val itunesUrl = s"itms-services://?action=download-manifest&url=" + URIUtils.encodeURIComponent( manifestUrl )
                                   MuiButton {
@@ -318,7 +314,6 @@ class DlAppDiaR(
           OptionUtil.SomeBool( props.index.menu.dlApp.opened )
         },
         dlAppDiaC = propsProxy.connect( _.index.menu.dlApp )( MDlAppDia.MDlAppDiaFeq ),
-        devPlatformOptC = propsProxy.connect( _.dev.platform.osFamily ),
       )
     }
     .renderBackend[Backend]

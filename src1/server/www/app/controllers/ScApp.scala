@@ -242,6 +242,7 @@ final class ScApp @Inject()(
                   .orElse( appEdge.nodeIds.headOption )
               } yield {
                 val r = MScAppDlInfo(
+                  osFamily  = appEdge.info.osFamily,
                   predicate = appEdge.predicate,
                   url       = extServicesUtil.applicationUrl( extSvc, appId ),
                   extSvc    = extSvcOpt,
@@ -290,6 +291,7 @@ final class ScApp @Inject()(
                   fileName  = fileNode.guessDisplayName,
                   fileSizeB = fileEdgeMedia.file.sizeB,
                   fromNodeIdOpt = fromNodeIdOpt,
+                  osFamily  = appEdge.info.osFamily,
                 )
                 r :: Nil
               }
