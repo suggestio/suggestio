@@ -25,6 +25,7 @@ import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.pick.MimeConst
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -391,10 +392,14 @@ final class Upload @Inject()(
         // Бывает, что MIME не совпадает. Решаем, что нужно делать согласно настройкам аплоада. Пример:
         // Detected file MIME type [application/zip] does not match to expected [application/vnd.android.package-archive]
         mimeType = {
-          if (detectedMimeType ==* declaredMime) {
+          if (
+            (detectedMimeType ==* declaredMime) ||
+            // игнорить octet-stream, т.к. это означает, что MIME неизвестен на клиенте.
+            declaredMime ==* MimeConst.APPLICATION_OCTET_STREAM
+          ) {
             detectedMimeType
           } else {
-            val msg = s"Detected file MIME type '${upCtxArgs.detectedMimeTypeOpt}' does not match to expected $declaredMime"
+            val msg = s"Detected file MIME type [${upCtxArgs.detectedMimeTypeOpt.orNull}] does not match to expected $declaredMime"
             LOGGER.warn(s"$logPrefix $msg")
             uploadArgs.info.obeyMime.fold {
               __appendErr( msg )

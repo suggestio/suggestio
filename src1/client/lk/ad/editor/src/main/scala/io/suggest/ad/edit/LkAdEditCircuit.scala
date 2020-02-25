@@ -31,7 +31,7 @@ import io.suggest.lk.m.{MDeleteConfirmPopupS, color}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MUploadAh
 import io.suggest.msg.ErrorMsgs
-import io.suggest.pick.MimeConst
+import io.suggest.pick.ContentTypeCheck
 import scalaz.{Tree, TreeLoc}
 import scalaz.std.option._
 import io.suggest.scalaz.ZTreeUtil._
@@ -387,7 +387,7 @@ class LkAdEditCircuit(
     uploadApi             = uploadApi,
     modelRW               = mUploadAhRW,
     prepareUploadRoute    = { _ => adEditApi.prepareUploadRoute },
-    fileMimeChecker       = MimeConst.MimeChecks.onlyImages,
+    contentTypeCheck      = ContentTypeCheck.OnlyImages,
     ctxIdOptRO            = confRW.zoom { conf =>
       Some(conf.ctxId)
     },
@@ -441,7 +441,7 @@ class LkAdEditCircuit(
   )
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
-  override protected def actionHandler: HandlerFunction = {
+  override protected val actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
     var acc = List[HandlerFunction](
       wsPoolAh,

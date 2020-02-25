@@ -87,11 +87,16 @@ class MainColorDetector @Inject() (
                                 preImOps: Seq[ImOp] = Nil): Future[List[MColorData]] = {
     // Создаём временный файл для сохранения выхлопа convert histogram:info:
     val resultFile = File.createTempFile(getClass.getSimpleName, ".txt")
-    val resultFut = convertToHistogram(img.getAbsolutePath, resultFile.getAbsolutePath, maxColors, preImOps) map { _ =>
+
+    val resultFut = for {
+      _ <- convertToHistogram(img.getAbsolutePath, resultFile.getAbsolutePath, maxColors, preImOps)
+    } yield {
       // Читаем и парсим из файла гистограмму.
-      val pr = (new HistogramParsers).parseFromFile(resultFile)
+      val pr = (new HistogramParsers)
+        .parseFromFile( resultFile )
+
       pr.getOrElse {
-        val histContent = Files.readAllBytes(resultFile.toPath)
+        val histContent = Files.readAllBytes( resultFile.toPath )
         val msgSb = new StringBuilder(histContent.length + 128,  "Failed to understand histogram file: \n")
           .append(pr)
           .append('\n')
@@ -106,17 +111,20 @@ class MainColorDetector @Inject() (
         }
       }
     }
+
     resultFut.onComplete { _ =>
       resultFile.delete()
     }
+
     if (suppressErrors) {
       resultFut.recoverWith {
         case ex: Exception =>
           LOGGER.warn(s"Failed to extract palette from picture ${img.getAbsolutePath}", ex)
           Future.successful(Nil)
       }
+    } else {
+      resultFut
     }
-    resultFut
   }
 
   /**

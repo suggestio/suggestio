@@ -4,7 +4,6 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.file.up.MFileUploadS
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.UploadStatusR
@@ -16,6 +15,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.spa.FastEqUtil.CollFastEq
 import io.suggest.spa.OptFastEq
+import io.suggest.up.MFileUploadS
 
 /**
   * Suggest.io
@@ -29,7 +29,7 @@ class NodeGalleryR(
                   ) {
 
   import io.suggest.spa.OptFastEq.Wrapped
-  import io.suggest.file.up.MFileUploadS.MFileUploadSFastEq
+  import io.suggest.up.MFileUploadS.MFileUploadSFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
 
   type Props_t = Seq[PropsValEl]

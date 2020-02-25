@@ -10,7 +10,7 @@ import io.suggest.jd.tags._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.media.MFileMeta
-import io.suggest.pick.MimeConst
+import io.suggest.pick.ContentTypeCheck
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil.StringCollUtil
@@ -101,7 +101,7 @@ class LkAdEdFormUtil @Inject() (
       // Бывает, что загружается просто png-рамка, например:
       minSizeB      = 256,
       maxSizeB      = IMG_UPLOAD_MAXLEN_BYTES,
-      mimeVerifierF = MimeConst.MimeChecks.onlyImages,
+      mimeVerifierF = ContentTypeCheck.OnlyImages,
       mustHashes    = UploadConstants.CleverUp.UPLOAD_FILE_HASHES,
     )
   }
@@ -198,10 +198,3 @@ class LkAdEdFormUtil @Inject() (
   }
 
 }
-
-
-/** Интерфейс для DI-поля с инстаном [[LkAdEdFormUtil]]. */
-trait ILkAdEdFormUtil {
-  def lkAdEdFormUtil: LkAdEdFormUtil
-}
-

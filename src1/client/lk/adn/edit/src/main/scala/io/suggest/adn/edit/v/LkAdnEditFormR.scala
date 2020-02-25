@@ -12,7 +12,6 @@ import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.file.up.MFileUploadS
 import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
@@ -25,6 +24,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.FastEqUtil
+import io.suggest.up.MFileUploadS
 import monocle.Lens
 
 /**

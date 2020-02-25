@@ -3,10 +3,10 @@ package io.suggest.n2.edge
 import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
-import io.suggest.file.up.MFileUploadS
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.primo.id.IId
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.up.MFileUploadS
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 

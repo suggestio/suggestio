@@ -24,7 +24,7 @@ import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedE
 import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.pick.Base64JsUtil
+import io.suggest.pick.{Base64JsUtil, ContentTypeCheck, MimeConst}
 import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
@@ -34,6 +34,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
 import io.suggest.common.BooleanUtil.Implicits._
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.MImgFmts
+import io.suggest.n2.media.MFileMeta
 import io.suggest.scalaz.NodePath_t
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
@@ -628,24 +630,42 @@ class DocEditAh[M](
       val v0 = value
       val dataEdgesMap0 = v0.jdDoc.jdArgs.data.edges
 
+      val dataEdgeOpt0 = dataEdgesMap0
+        .valuesIterator
+        .find { e =>
+          e.jdEdge.imgSrcOpt contains m.b64Url
+        }
+
       // Вычислить обновлённый эдж, если есть старый эдж для данной картинки.
-      val dataEdgeOpt2 = for {
+      val dataEdgeOpt2 = (for {
         // Поиска по исходной URL, потому что карта эджей могла изменится за время фоновой задачи.
-        dataEdge0 <- dataEdgesMap0
-          .valuesIterator
-          .find { e =>
-            e.jdEdge.imgSrcOpt contains m.b64Url
-          }
+        dataEdge0 <- dataEdgeOpt0
+
+        // Убедится, что у нас тут картинка.
+        imgContentTypeOpt = {
+          val ctRaw = m.blob.`type`
+          val r = MimeConst.readContentType(ctRaw, ContentTypeCheck.OnlyImages)
+          if (r.isEmpty)
+            LOG.warn( ErrorMsgs.CONTENT_TYPE_UNEXPECTED, msg = (ctRaw, MImgFmts.values.iterator.flatMap(_.allMimes).mkString(", ") ) )
+          r
+        }
+        if imgContentTypeOpt.nonEmpty
+
       } yield {
         // Найден исходный эдж. Залить в него инфу по блобу, выкинув оттуда dataURL:
         val blobUrl = URL.createObjectURL( m.blob )
         val blobUrlOpt = Option( blobUrl )
+
         // Нельзя забыть Base64 dataURL, потому что quill их не понимает, заменяя их на "//:0".
         // Сохранить инфу по блобу.
         val fileJs2 = dataEdge0.fileJs.fold {
           MJsFileInfo(
             blob    = m.blob,
-            blobUrl = blobUrlOpt
+            blobUrl = blobUrlOpt,
+            fileMeta = MFileMeta(
+              mime  = imgContentTypeOpt,
+              sizeB = Some( m.blob.size.toLong ),
+            ),
           )
         } {
           // Ссылка изменилась на blob, но нельзя трогать delta: quill не поддерживает blob-ссылки.
@@ -653,32 +673,35 @@ class DocEditAh[M](
           MJsFileInfo.blobUrl.set( blobUrlOpt )
         }
 
-        val dataEdge1 = MEdgeDataJs.fileJs
-          .set( Some(fileJs2) )(dataEdge0)
+        val dataEdge1 = (MEdgeDataJs.fileJs set Some(fileJs2))( dataEdge0 )
+        val hashFx = FileHashStart(dataEdge1.id, blobUrl).toEffectPure
+        (dataEdge1, hashFx)
+      })
 
-        (dataEdge1, blobUrl)
-      }
+      val v2Opt = dataEdgeOpt2
+        .map { case (dataEdge2, _) =>
+          dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
+        }
+        .orElse {
+          for (dataEdge0 <- dataEdgeOpt0) yield {
+            // Авто-удаление только что некорректного файла/блоба. TODO Надо вычистить и шаблон следом.
+            dataEdgesMap0.removed( dataEdge0.id )
+          }
+        }
+        .map { dataEdgesMap1 =>
+          val dataEdges2 = JdTag
+            .purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
+            .toMap
 
-      // Залить в состояние обновлённый эдж.
-      dataEdgeOpt2.fold {
-        LOG.warn( ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m.blob )
-        noChange
-      } { case (dataEdge2, blobUrl) =>
-        val v2 = MDocS.jdDoc
-          .composeLens( MJdDocEditS.jdArgs )
-          .composeLens( MJdArgs.data )
-          .composeLens( MJdDataJs.edges )
-          .set {
-            val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
-            JdTag
-              .purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
-              .toMap
-          }(v0)
+          MDocS.jdDoc
+            .composeLens( MJdDocEditS.jdArgs )
+            .composeLens( MJdArgs.data )
+            .composeLens( MJdDataJs.edges )
+            .set( dataEdges2 )(v0)
+        }
 
-        // Запустить эффект хэширования и дальнейшей закачки файла на сервер.
-        val hashFx = FileHashStart(dataEdge2.id, blobUrl).toEffectPure
-        updated(v2, hashFx)
-      }
+      val fxOpt = dataEdgeOpt2.map(_._2)
+      ah.optionalResult(v2Opt, fxOpt)
 
 
     // Поступила команда на проведение чистки карты эджей.

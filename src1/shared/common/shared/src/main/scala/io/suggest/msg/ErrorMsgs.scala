@@ -230,4 +230,6 @@ object ErrorMsgs {
   /** Ошибка в какой-либо форме. */
   def FORM_ERROR = "Form.error"
 
+  def CONTENT_TYPE_UNEXPECTED = "Content.type.unexpected"
+
 }

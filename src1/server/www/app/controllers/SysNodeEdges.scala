@@ -14,13 +14,12 @@ import play.api.libs.json.Json
 import util.acl.IsSuNodeEdge
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta}
 import io.suggest.n2.media.storage.IMediaStorages
-import io.suggest.pick.MimeConst
+import io.suggest.pick.ContentTypeCheck
 import io.suggest.up.UploadConstants
 import views.html.sys1.market.edge.EditEdge2Tpl
 import japgolly.univeq._
 import models.mup.MUploadInfoQs
 import play.api.mvc.Results
-import scalaz.Validation
 import util.up.FileUtil
 
 import scala.concurrent.Future
@@ -197,7 +196,7 @@ final class SysNodeEdges @Inject() (
           m             = request.body,
           minSizeB      = 1L,
           maxSizeB      = 100 * 1024 * 1024,
-          mimeVerifierF = MimeConst.MimeChecks.all,
+          mimeVerifierF = ContentTypeCheck.AllowAll,
           mustHashes    = UploadConstants.CleverUp.UPLOAD_FILE_HASHES,
         ),
         upInfo = MUploadInfoQs(

@@ -17,6 +17,8 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Show, Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
+import monocle.Traversal
+import scalaz.std.option._
 
 import scala.collection.MapView
 

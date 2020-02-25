@@ -12,7 +12,7 @@ import io.suggest.lk.m.img.MUploadAh
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.pick.MimeConst
+import io.suggest.pick.ContentTypeCheck
 import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
@@ -155,7 +155,7 @@ class LkAdnEditCircuit
       },
       uploadApi = uploadApi,
       modelRW   = mUploadAhRW,
-      fileMimeChecker = MimeConst.MimeChecks.onlyImages,
+      contentTypeCheck = ContentTypeCheck.OnlyImages,
       ctxIdOptRO = rootRW.zoom(_ => None),
     )
   }

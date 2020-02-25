@@ -9,7 +9,7 @@ import io.suggest.n2.edge._
 import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.n2.media.MFileMeta
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.pick.MimeConst
+import io.suggest.pick.{ContentTypeCheck, MimeConst}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
 import models.mctx.Context
@@ -230,7 +230,7 @@ final class LkAdnEdit @Inject() (
       // Теоретически, может загружаться очень тривиальный svg-логотип:
       minSizeB      = 200,
       maxSizeB      = 10*1024*1024,
-      mimeVerifierF = MimeConst.MimeChecks.onlyImages,
+      mimeVerifierF = ContentTypeCheck.OnlyImages,
       mustHashes    = UploadConstants.CleverUp.UPLOAD_FILE_HASHES
     )
   }

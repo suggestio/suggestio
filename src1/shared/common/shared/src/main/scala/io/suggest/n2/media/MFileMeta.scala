@@ -7,7 +7,7 @@ import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
 import japgolly.univeq._
 import io.suggest.math.MathConst
-import io.suggest.pick.MimeConst
+import io.suggest.pick.{ContentTypeCheck, MimeConst}
 import io.suggest.scalaz.ScalazUtil
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -105,7 +105,7 @@ object MFileMeta
   def validateUpload(m              : MFileMeta,
                      minSizeB       : Long,
                      maxSizeB       : Long,
-                     mimeVerifierF  : String => Boolean,
+                     mimeVerifierF  : ContentTypeCheck,
                      mustHashes     : Set[MHash]
                     ): ValidationNel[String, MFileMeta] = {
     (

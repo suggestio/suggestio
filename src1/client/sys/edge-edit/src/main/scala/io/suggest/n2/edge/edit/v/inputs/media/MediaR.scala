@@ -9,7 +9,6 @@ import diode.react.ReactPot._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.{MHash, MHashes}
-import io.suggest.file.up.MFileUploadS
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.m.UploadFile
@@ -24,6 +23,7 @@ import io.suggest.sjs.common.model.dom.DomListSeq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.up.MFileUploadS
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 

@@ -7,7 +7,6 @@ import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.HashesHex
-import io.suggest.file.up.MFileUploadS
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MMessage, MsgCodes}
@@ -19,14 +18,14 @@ import io.suggest.lk.r.img.LkImgUtilJs
 import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.n2.media.{MFileMeta, MFileMetaHash}
-import io.suggest.pick.MimeConst
+import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlags}
+import io.suggest.pick.{ContentTypeCheck, MimeConst}
 import io.suggest.routes.PlayRoute
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DoNothing
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.up.{IUploadApi, UploadConstants}
+import io.suggest.up.{IUploadApi, MFileUploadS, UploadConstants}
 import io.suggest.ws.MWsMsgTypes
 import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -45,13 +44,12 @@ import scala.util.Success
   * Created: 18.09.17 19:03
   * Description: Контроллер управления картинками.
  *
-  * @param fileMimeChecker - [[UploadAh]].FileMimeChecks
   * @param ctxIdOptRO      Доступ к CtxId.
   */
 class UploadAh[V, M](
                       prepareUploadRoute  : MFormResourceKey => PlayRoute,
                       uploadApi           : IUploadApi,
-                      fileMimeChecker     : String => Boolean,
+                      contentTypeCheck    : ContentTypeCheck,
                       ctxIdOptRO          : ModelRO[Option[String]],
                       modelRW             : ModelRW[M, MUploadAh[V]],
                     )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
@@ -69,8 +67,8 @@ class UploadAh[V, M](
     case m: UploadFile =>
       val v0 = value
 
-      // Посмотреть, что пришло в сообщении...
-      if (m.files.isEmpty) {
+      // Посмотреть, что пришло в сообщении...a
+      m.files.headOption.fold {
         // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid, если файл более никому не нужен.
         picViewContAdp
           .get(v0.view, m.resKey)
@@ -90,12 +88,18 @@ class UploadAh[V, M](
             updated( v2, fx )
           }
 
-      } else {
+      } { firstFile =>
         // Выставлен новый файл. Надо записать его в состояние.
         val (v9, fxOpt9) = m.files
-          .find { fileNew =>
-            fileMimeChecker( fileNew.`type`.toLowerCase )
+          .iterator
+          .map { fileNew =>
+            val contentType = MimeConst
+              .readContentType( fileNew.`type`, contentTypeCheck )
+              // Для all - возвращать app/octet-stream, для картинок - None тут, чтобы empty-ветвь уходило всё:
+              .orElse( contentTypeCheck.default )
+            contentType -> fileNew
           }
+          .nextOption()
           .fold [(MUploadAh[V], Option[Effect])] {
             val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )
             // Не найдено картинок среди новых файлов.
@@ -106,12 +110,13 @@ class UploadAh[V, M](
             )
             v1 -> None
 
-          } { fileNew =>
+          } { case (contentType, fileNew) =>
+            val fileSize2 = fileNew.size
             // Попробовать найти в состоянии файл с такими же характеристиками.
             val (dataEdge9, edges9, fxOpt) = (for {
               e <- v0.edges.valuesIterator
               fileJs <- e.fileJs
-              if (fileJs.blob.size ==* fileNew.size) &&
+              if (fileJs.blob.size ==* fileSize2) &&
                  // TODO Нужен хэш вместо имени, надо бы через asm-crypto.js SHA1 это реализовать.
                  (fileJs.fileName contains[String] fileNew.name)
             } yield {
@@ -129,38 +134,37 @@ class UploadAh[V, M](
                 val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
 
                 // Если есть старый файл, то нужно позаботиться о его удалении...
-                val blobPurgeFx = Effect {
-                  Future {
-                    for {
-                      dataEdgeOld   <- dataEdgeOldOpt
-                      fileJsOld     <- dataEdgeOld.fileJs
-                    } {
-                      // Закрыть старый blobURL в фоне, после пере-рендера.
-                      for (blobUrlOld <- fileJsOld.blobUrl) {
-                        Future {
-                          URL.revokeObjectURL(blobUrlOld)
-                        }
-                      }
-
-                      // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
+                val blobPurgeFx = Effect.action {
+                  for {
+                    dataEdgeOld   <- dataEdgeOldOpt
+                    fileJsOld     <- dataEdgeOld.fileJs
+                  } {
+                    // Закрыть старый blobURL в фоне, после пере-рендера.
+                    for (blobUrlOld <- fileJsOld.blobUrl) {
                       Future {
-                        fileJsOld.blob.close()
+                        URL.revokeObjectURL(blobUrlOld)
                       }
+                    }
 
-                      // Прервать upload файла на сервер, есть возможно.
-                      for {
-                        upXhrOld    <- fileJsOld.upload.reqHolder
-                      } {
-                        try {
-                          upXhrOld.abort()
-                        } catch {
-                          case ex: Throwable =>
-                            LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
-                        }
+                    // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
+                    Future {
+                      fileJsOld.blob.close()
+                    }
+
+                    // Прервать upload файла на сервер, есть возможно.
+                    for {
+                      upXhrOld    <- fileJsOld.upload.reqHolder
+                    } {
+                      try {
+                        upXhrOld.abort()
+                      } catch {
+                        case ex: Throwable =>
+                          LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
                       }
                     }
                   }
-                    .map(_ => DoNothing)
+
+                  DoNothing
                 }
 
                 // Вычислить новый edgeUid.
@@ -184,6 +188,10 @@ class UploadAh[V, M](
                     // Заливка ещё не началась, а только предподготовка, но можно ведь отрендерить крутилку...
                     upload    = MFileUploadS(
                       prepareReq = Pot.empty.pending(),
+                    ),
+                    fileMeta = MFileMeta(
+                      mime  = contentType,
+                      sizeB = Some( fileSize2.toLong ),
                     ),
                   ))
                 )
@@ -294,21 +302,29 @@ class UploadAh[V, M](
                 )
               }
 
-              val fileJs0 = edge0.fileJs.get
-              val hashesHex2: HashesHex = fileJs0.hashesHex + (m.hash -> hashHex)
-
-              val fileJs1 = (MJsFileInfo.hashesHex set hashesHex2)( fileJs0 )
+              val fileJs1 = MJsFileInfo.fileMeta
+                .composeLens( MFileMeta.hashesHex )
+                .modify { hhs0 =>
+                  MFileMetaHash(
+                    hType     = m.hash,
+                    hexValue  = hashHex,
+                    flags     = MFileMetaHashFlags.ORIGINAL_FLAGS,
+                  ) +: hhs0
+                }( edge0.fileJs.get )
 
               // Пересборка m.src
               val src2 = FileHashStart(
                 edgeUid = edge0.id,
-                blobUrl = fileJs0.blobUrl.get,
+                blobUrl = fileJs1.blobUrl.get,
               )
 
               // Попытаться провалидировать хеши так же, как это сделает сервер.
               // Это поможет определить достаточность собранной карты хешей для запуска аплоада.
               HashesHex
-                .hashesHexV(hashesHex2, UploadConstants.CleverUp.UPLOAD_FILE_HASHES)
+                .hashesHexV(
+                  MFileMetaHash.toHashesHex( fileJs1.fileMeta.hashesHex ),
+                  UploadConstants.CleverUp.UPLOAD_FILE_HASHES
+                )
                 .fold(
                   // Хешей пока недостаточно, ждать ещё хэшей...
                   {_ =>
@@ -324,21 +340,8 @@ class UploadAh[V, M](
                         )
                       )
 
-                      val contentType = (for {
-                        ct0 <- Option( fileJs0.blob.`type` )
-                        ct1 = ct0.trim
-                        if MimeConst.MimeChecks.all( ct1 )
-                      } yield ct1)
-                        .getOrElse( MimeConst.APPLICATION_OCTET_STREAM )
-
-                      val upProps = MFileMeta(
-                        mime      = Some( contentType ),
-                        sizeB     = Some( fileJs0.blob.size.toLong ),
-                        hashesHex = MFileMetaHash.fromHashesHex( hashesHex2 ),
-                      )
-
                       uploadApi
-                        .prepareUpload( reqRoute, upProps )
+                        .prepareUpload( reqRoute, fileJs1.fileMeta )
                         .transform { tryRes =>
                           Success( PrepUploadResp(tryRes, src2) )
                         }
@@ -346,11 +349,11 @@ class UploadAh[V, M](
 
                     val prepareReq_LENS = MJsFileInfo.upload
                       .composeLens( MFileUploadS.prepareReq )
-                    val fileJs2 = if (prepareReq_LENS.get(fileJs0).isPending) {
-                      fileJs0
+                    val fileJs2 = if (prepareReq_LENS.get(fileJs1).isPending) {
+                      fileJs1
                     } else {
                       prepareReq_LENS
-                        .modify( _.pending() )( fileJs0 )
+                        .modify( _.pending() )( fileJs1 )
                     }
 
                     val v2 = __v2F(fileJs2)

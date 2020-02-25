@@ -7,12 +7,12 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
-import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.spa.OptFastEq.Wrapped
+import io.suggest.up.MFileUploadS
 
 /**
   * Suggest.io

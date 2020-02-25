@@ -23,7 +23,6 @@ import io.suggest.jd.render.m.MJdRrrProps
 import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
-import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.edit.v.JdEditR
 import io.suggest.jd.tags.{JdTag, MJdShadow, MJdTagName, MJdTagNames}
@@ -34,6 +33,7 @@ import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.spa.{FastEqUtil, OptFastEq}
+import io.suggest.up.MFileUploadS
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._

@@ -4,7 +4,6 @@ import diode.ModelRO
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.file.MSrvFileInfo
-import io.suggest.file.up.MFileUploadS
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.lk.c.UploadAh
 import io.suggest.lk.m.MErrorPopupS
@@ -16,11 +15,11 @@ import io.suggest.n2.edge.edit.m.{MEdgeEditRoot, MEdgeEditS, PredicateSet}
 import io.suggest.n2.edge.edit.u.{EdgeEditApiHttp, IEdgeEditApi}
 import io.suggest.n2.media.MEdgeMedia
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData, MStorages}
-import io.suggest.pick.MimeConst
+import io.suggest.pick.ContentTypeCheck
 import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.{CircuitUtil, DoNothingActionProcessor, OptFastEq, StateInp}
-import io.suggest.up.{IUploadApi, UploadApiHttp}
+import io.suggest.up.{IUploadApi, MFileUploadS, UploadApiHttp}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 import japgolly.univeq._
@@ -219,7 +218,7 @@ class EdgeEditCircuit
       routes.controllers.SysNodeEdges.prepareUploadFile( _confQs() )
     },
     uploadApi = uploadApi,
-    fileMimeChecker = MimeConst.MimeChecks.all,
+    contentTypeCheck = ContentTypeCheck.AllowAll,
     ctxIdOptRO = ctxIdOptRO,
     modelRW = mUploadRW,
   )

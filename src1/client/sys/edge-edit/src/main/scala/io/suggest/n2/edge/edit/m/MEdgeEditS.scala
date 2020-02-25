@@ -3,12 +3,12 @@ package io.suggest.n2.edge.edit.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.file.MJsFileInfo
-import io.suggest.file.up.MFileUploadS
 import io.suggest.lk.m.MErrorPopupS
 import japgolly.univeq._
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.up.MFileUploadS
 
 /**
   * Suggest.io

@@ -1,11 +1,10 @@
-package io.suggest.file.up
+package io.suggest.up
 
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.proto.http.model.HttpRespHolder
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.up.MUploadResp
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 

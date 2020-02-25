@@ -70,25 +70,51 @@ object MimeConst {
     * @param mime MIME-тип, требующий проверки.
     * @return ValidationNel.
     */
-  def validateMimeUsing(mime: String, verifierF: String => Boolean): ValidationNel[String, String] = {
+  def validateMimeUsing(mime: String, verifierF: ContentTypeCheck): ValidationNel[String, String] = {
     Validation.liftNel(mime)( !verifierF(_), "e.mime.unexpected" )
   }
 
 
-  /** Проверки для mime-типов загружаемых файлов. */
-  object MimeChecks {
+  /** Нормализовать Content-Type
+    *
+    * @param rawCt Сырой контент-тип.
+    * @param contentTypeCheck Функция проверки
+    * @return Нормализованный тип контента.
+    */
+  def readContentType(rawCt: String,
+                      contentTypeCheck: ContentTypeCheck = ContentTypeCheck.AllowAll): Option[String] = {
+    for {
+      ct0 <- Option( rawCt )
+      ct1 = ct0.trim.toLowerCase()
+      if ct1.nonEmpty && contentTypeCheck( ct1 )
+    } yield ct1
+  }
 
-    def _anyMimeRE = "(application|audio|image|message|multipart|text|video)/(x-|vnd.)?[.a-z0-9-]{2,65}".r
+}
 
-    def onlyImages(mime: String): Boolean = {
+
+trait ContentTypeCheck extends Function1[String, Boolean] {
+  def default: Option[String]
+}
+
+object ContentTypeCheck {
+
+  def _anyContentTypeRE = "(application|audio|image|message|multipart|text|video)/(x-|vnd.)?[.a-z0-9-]{2,65}".r
+
+  object AllowAll extends ContentTypeCheck {
+    override def default: Option[String] =
+      Some( MimeConst.APPLICATION_OCTET_STREAM )
+    override def apply(contentType: String): Boolean =
+      _anyContentTypeRE.matches( contentType )
+  }
+
+  object OnlyImages extends ContentTypeCheck {
+    override def default = None
+    override def apply(contentType: String): Boolean = {
       MImgFmts
-        .withMime( mime )
+        .withMime( contentType )
         .nonEmpty
     }
-
-    def all(mime: String): Boolean =
-       _anyMimeRE.matches(mime)
-
   }
 
 }
