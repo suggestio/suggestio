@@ -2,6 +2,7 @@ package io.suggest.plist
 
 import javax.inject.Inject
 import play.api.libs.json._
+import play.twirl.api.utils.StringEscapeUtils
 
 import scala.util.Try
 
@@ -11,7 +12,7 @@ import scala.util.Try
   * Created: 18.02.2020 12:40
   * Description: Поддержка рендера Apple .plist манифестов на основе
   */
-class ApplePlistUtil @Inject() () {
+final class ApplePlistUtil @Inject() () {
 
   /** Префиксы string-значений, для переопределения plist-типа. */
   object TypePrefixes {
@@ -61,7 +62,7 @@ class ApplePlistUtil @Inject() () {
           }
 
           openTag( tagName )
-          sb.append( str2 )
+          sb.append( StringEscapeUtils.escapeXml11(str2) )
           closeTag( tagName )
 
         case JsBoolean(value) =>
@@ -112,6 +113,8 @@ class ApplePlistUtil @Inject() () {
 
       this
     }
+
+    override def toString = sb.toString()
 
   }
 

@@ -12,7 +12,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mup.MSwfsFidInfo
 import play.api.Configuration
-import play.api.mvc.Call
+import play.api.mvc.{Call, RequestHeader}
 import OptionUtil.BoolOptOps
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.media.MFileMeta
@@ -159,17 +159,22 @@ class CdnUtil @Inject() (
     */
   def maybeAbsUrl(forceAbsoluteUrl: Boolean)(call: Call)(implicit ctx: Context): String = {
     if (forceAbsoluteUrl) {
-      import ctx.request
-      val absUrl = call.absoluteURL()
-      if (absUrl startsWith HttpConst.Proto.CURR_PROTO) {
-        // Вот так бывает: протокол не указан, потому что forCall() больше не пишет протокол.
-        // Значит, уже отсылка к CDN, и значит дописываем https:
-        HttpConst.Proto.HTTPS_ + absUrl
-      } else {
-        absUrl
-      }
+      absUrl( call )
     } else {
       call.url
+    }
+  }
+
+
+  def absUrl(call: Call)(implicit ctx: Context): String = {
+    import ctx.request
+    val absUrl = call.absoluteURL( secure = ctx.request.isTransferSecure )
+    if (absUrl startsWith HttpConst.Proto.CURR_PROTO) {
+      // Вот так бывает: протокол не указан, потому что forCall() больше не пишет протокол.
+      // Значит, уже отсылка к CDN, и значит дописываем https (или http, если локалхост):
+      ctx.request.myProto + HttpConst.Proto.COLON + absUrl
+    } else {
+      absUrl
     }
   }
 

@@ -352,7 +352,7 @@ final class ScApp @Inject()(
     */
   def iosInstallManifest(onNodeId: Option[String]) = {
     maybeAuthMaybeNode( onNodeId ).async { implicit request =>
-      lazy val logPrefix = s"iosInstallManifest(${onNodeId.orNull}):"
+      lazy val logPrefix = s"iosInstallManifest(${onNodeId getOrElse ""}):"
 
       val appEdgeQs = MScAppGetQs(
         osFamily  = MOsFamilies.Apple_iOS,
@@ -361,14 +361,14 @@ final class ScApp @Inject()(
         predicate = Some( MPredicates.Application.FromFile ),
       )
 
-      for {
+      (for {
 
         (appEdges, _) <- _findAppEdge( appEdgeQs )
 
         // Есть хотя бы один эдж?
         _ = if ( appEdges.isEmpty ) {
           LOGGER.debug(s"$logPrefix Not found any app edges for $appEdgeQs")
-          val respFut = httpErrorHandler.onClientError(request, NOT_FOUND)
+          val respFut = httpErrorHandler.onClientError(request, NOT_FOUND, "No app found for manifesting.")
           throw HttpResultingException( respFut )
         }
 
@@ -384,6 +384,8 @@ final class ScApp @Inject()(
 
         _fileEdgeMediaFut = _nodeId2fileEdgeMedia( fileNodeId )
 
+        ctx = getContext2
+
         itemAssets = {
           val someTrue = Some(true)
           val favIcons = MFavIcons.Icons()
@@ -396,7 +398,7 @@ final class ScApp @Inject()(
               MIosItemAsset(
                 kind = kind,
                 needsShine = someTrue,
-                url = Some( cdnUtil.asset(ico.icon.src).absoluteURL() ),
+                url = Some( cdnUtil.absUrl( cdnUtil.asset(ico.icon.src)(ctx) )(ctx) ),
               )
             })
               .headOption
@@ -423,7 +425,7 @@ final class ScApp @Inject()(
             ),
             assets = MIosItemAsset(
               kind = "software-package",
-              url  = Some( pkgMediaCall.absoluteURL(secure = true) ),
+              url  = Some( cdnUtil.absUrl( pkgMediaCall )(ctx) ),
             ) :: itemAssets,
           ) :: Nil,
         )
@@ -435,7 +437,10 @@ final class ScApp @Inject()(
         Ok( plist )
           .as( XML )
           .cacheControl( 3600 )
-      }
+      })
+        .recoverWith {
+          case HttpResultingException(respFut) => respFut
+        }
     }
   }
 

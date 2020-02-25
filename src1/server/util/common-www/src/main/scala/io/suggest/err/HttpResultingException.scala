@@ -17,6 +17,10 @@ case class HttpResultingException(
                                    httpResFut: Future[Result]
                                  )
   extends RuntimeException
+{
+  override def toString: String =
+    s"${getClass.getSimpleName}(${httpResFut.value.fold("")(_.toString)})"
+}
 
 
 /** Произвольное исключение с абстрактным результатом вычисления внутри. */
