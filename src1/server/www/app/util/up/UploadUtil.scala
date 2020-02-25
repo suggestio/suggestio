@@ -65,8 +65,7 @@ class UploadUtil @Inject()(
   def mkDlQs(fileNodeId: String, hashesHex: HashesHex): MDownLoadQs = {
     MDownLoadQs(
       nodeId      = fileNodeId,
-      // Чтобы не тратить ресурсы на разбор давно неактуальных древних ссылок, ограничиваем ссылки по времени жизни:
-      validTillS  = ttlFromNow( linkTtl = 3.days ),
+      // Без validTillS, т.к. это ломает кэширование и неудобно при публикации ссылок на стороне.
       dispInline  = false,
       hashesHex   = hashesHex,
       // Без clientAddr, т.к. тут ссылка через CDN

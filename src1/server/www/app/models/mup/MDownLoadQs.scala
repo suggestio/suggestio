@@ -33,7 +33,7 @@ object MDownLoadQs {
     new QueryStringBindableImpl[MDownLoadQs] {
 
       private def strOptB = implicitly[QueryStringBindable[Option[String]]]
-      private def longB = implicitly[QueryStringBindable[Long]]
+      private def longOptB = implicitly[QueryStringBindable[Option[Long]]]
       private def boolB = implicitly[QueryStringBindable[Boolean]]
 
       private def qsbSigner = new QsbSigner(MUploadTargetQs.SIGN_SECRET, Fields.SIGNATURE)
@@ -46,7 +46,7 @@ object MDownLoadQs {
           params            <- qsbSigner.signedOrNone(k(""),    params0 )
           nodeIdE           <- esUuIdB.bind( k(F.NODE_ID),      params )
           personIdOptE      <- strOptB.bind( k(F.PERSON_ID),    params )
-          validTillSE       <- longB.bind( k(F.VALID_TILL_S),   params )
+          validTillSE       <- longOptB.bind( k(F.VALID_TILL_S),   params )
           dispInlineE       <- boolB.bind( k(F.DISP_INLINE),    params )
           clientAddrOptE    <- strOptB.bind( k(F.CLIENT_ADDR),  params )
           hashesHexE        <- hashesHexB.bind( k(F.HASHES),    params )
@@ -78,7 +78,7 @@ object MDownLoadQs {
         val unsigned = _mergeUnbinded1(
           esUuIdB.unbind( k(F.NODE_ID),     value.nodeId ),
           strOptB.unbind( k(F.PERSON_ID),   value.personId ),
-          longB.unbind( k(F.VALID_TILL_S),  value.validTillS ),
+          longOptB.unbind( k(F.VALID_TILL_S), value.validTillS ),
           boolB.unbind( k(F.DISP_INLINE),   value.dispInline ),
           strOptB.unbind( k(F.CLIENT_ADDR), value.clientAddr ),
           hashesHexB.unbind( k(F.HASHES),   value.hashesHex ),
@@ -102,13 +102,14 @@ object MDownLoadQs {
   * @param nodeId id узла.
   * @param personId сессия текущего юзера, т.к. закачка может быть ограничена по публичности доступа.
   * @param validTillS currentTimeMs/1000 + TTL, секунды.
+  *                   None означает, что ссылка без ограничения времени жизни (или это регулируется как-то иначе).
   * @param dispInline Управление заголовком ответа Content-Disposition.
   * @param clientAddr ip-адрес клиента.
   */
 case class MDownLoadQs(
                         nodeId        : MEsUuId,
                         personId      : Option[String]      = None,
-                        validTillS    : Long,   // UploadUtil.ttlFromNow()
+                        validTillS    : Option[Long]        = None,   // UploadUtil.ttlFromNow()
                         dispInline    : Boolean             = true,
                         clientAddr    : Option[String]      = None,
                         hashesHex     : HashesHex           = Map.empty,

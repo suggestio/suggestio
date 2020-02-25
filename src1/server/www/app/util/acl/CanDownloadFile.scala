@@ -56,13 +56,13 @@ class CanDownloadFile @Inject()(
     val mreq = aclUtil.reqFromRequest( request )
     lazy val logPrefix = s"${dlQs.nodeId} [${mreq.remoteClientAddress}]:"
 
-    val rightNow = uploadUtil.rightNow()
-
-    if ( !uploadUtil.isTtlValid(dlQs.validTillS, rightNow) ) {
-      LOGGER.warn(s"$logPrefix Expired Link TTL: now=$rightNow > link till=${dlQs.validTillS}")
+    if ( dlQs.validTillS.fold(false) { validTillS =>
+      !uploadUtil.isTtlValid( validTillS, uploadUtil.rightNow() )
+    }) {
+      LOGGER.warn(s"$logPrefix Expired Link TTL: now=${uploadUtil.rightNow()} > link till=${dlQs.validTillS}")
       httpErrorHandler.onClientError( request, Status.PRECONDITION_FAILED, "Link TTL expired" )
 
-    } else if (!dlQs.clientAddr.fold(true)(_ ==* mreq.remoteClientAddress)) {
+    } else if (dlQs.clientAddr.fold(false)(_ !=* mreq.remoteClientAddress)) {
       LOGGER.warn(s"$logPrefix Client ip address mismatch, expected ${dlQs.clientAddr}, real ${mreq.remoteClientAddress}")
       httpErrorHandler.onClientError( request, Status.EXPECTATION_FAILED, "Client IP mismatch" )
 
@@ -75,23 +75,15 @@ class CanDownloadFile @Inject()(
       }
 
       // Проверить, активен ли узел.
-      if {
-        val r = mnode.common.isEnabled
-        if (!r) {
-          LOGGER.warn(s"$logPrefix Node#${dlQs.nodeId} is disabled.")
-          _throwNotFound( request )
-        }
-        r
+      _ = mnode.common.isEnabled || {
+        LOGGER.warn(s"$logPrefix Node#${dlQs.nodeId} is disabled.")
+        _throwNotFound( request )
       }
 
       // Это media-узел?
-      if {
-        val r = mnode.common.ntype eqOrHasParent MNodeTypes.Media
-        if (!r) {
-          LOGGER.debug(s"$logPrefix Node#${dlQs.nodeId} of ntype#${mnode.common.ntype} is NOT media node.")
-          _throwNotFound( request )
-        }
-        r
+      _ = (mnode.common.ntype eqOrHasParent MNodeTypes.Media) || {
+        LOGGER.debug(s"$logPrefix Node#${dlQs.nodeId} of ntype#${mnode.common.ntype} is NOT media node.")
+        _throwNotFound( request )
       }
 
       fileEdges = mnode.edges.withPredicate( MPredicates.File )
