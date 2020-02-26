@@ -32,4 +32,11 @@ object MScAppGetResp {
   */
 case class MScAppGetResp(
                           dlInfos       : Seq[MScAppDlInfo],
-                        )
+                        ) {
+
+  /** Кэширование на клиенте указателя на инфу по скачиванию файла под iOS.
+    * Нужно для O(1)-оптимизации DlAppDiaR.State().iosFileDlInfoC */
+  lazy val iosFileDl: Option[MScAppDlInfo] =
+    dlInfos.find( _.isIosFileDl )
+
+}

@@ -51,4 +51,8 @@ case class MDlAppDia(
                       getReq           : Pot[MScAppGetResp]       = Pot.empty,
                       platform         : Option[MOsFamily]        = None,
                       expanded         : Option[Int]              = None,
-                    )
+                    ) {
+
+  lazy val getReqOpt = getReq.toOption
+
+}

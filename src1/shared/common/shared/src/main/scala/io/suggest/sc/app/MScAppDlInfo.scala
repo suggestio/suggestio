@@ -1,6 +1,6 @@
 package io.suggest.sc.app
 
-import io.suggest.dev.MOsFamily
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.ext.svc.MExtService
 import io.suggest.n2.edge.MPredicate
 import japgolly.univeq._
@@ -39,6 +39,17 @@ object MScAppDlInfo {
   }
 
   @inline implicit def univEq: UnivEq[MScAppDlInfo] = UnivEq.derive
+
+
+  implicit class ScAppDlInfoOpsExt( val dlInfo: MScAppDlInfo ) extends AnyVal {
+
+    /** @return Это прямая закачка под Apple iOS? */
+    def isIosFileDl: Boolean = {
+      (dlInfo.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS) &&
+      dlInfo.extSvc.isEmpty
+    }
+
+  }
 
 }
 
