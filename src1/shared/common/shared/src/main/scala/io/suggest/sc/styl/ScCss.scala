@@ -443,6 +443,10 @@ object ScCssStatic extends StyleSheet.Inline {
       width( 200.px ),
     )
 
+    val hardWordWrap = style(
+      wordWrap.attr := "anywhere",
+    )
+
   }
 
 

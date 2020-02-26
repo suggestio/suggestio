@@ -9,7 +9,7 @@ import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScIndexState
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.m.menu.{ExpandDlApp, DlInfoResp, MDlAppDia, MkAppDlInfoReq, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{DlInfoResp, ExpandDlApp, MDlAppDia, MkAppDlInfoReq, OpenCloseAppDl, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
@@ -143,6 +143,30 @@ class DlAppAh(
           // Эта плашка НЕ раскрыта, и скрывать её не надо.
           noChange
         }
+      }
+
+
+    // Управление отображением тех.информации.
+    case m: TechInfoDlAppShow =>
+      val v0 = value
+
+      if (v0.showTechInfo ==* m.isShow) {
+        noChange
+      } else {
+        val v2 = (MDlAppDia.showTechInfo set m.isShow)(v0)
+        updated(v2)
+      }
+
+
+    // Раскрыть-свернуть QR-код скачки.
+    case m: QrCodeExpand =>
+      val v0 = value
+
+      if (v0.qrCodeExpanded ==* m.expanded) {
+        noChange
+      } else {
+        val v2 = (MDlAppDia.qrCodeExpanded set m.expanded)(v0)
+        updated(v2)
       }
 
   }

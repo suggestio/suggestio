@@ -222,6 +222,7 @@ object MsgCodes {
   val `This.block.is.the.only.main` = "This.block.is.the.only.main"
   val `This.block.is.not.main`      = "This.block.is.not.main"
   val `Show`                        = "Show"
+  val `Hide`                        = "Hide"
   val `No.main.blocks.First.block.is.main` = "No.main.blocks.First.block.is.main"
   val `Background` = "Background"
   val `Upload.file` = "Upload.file"

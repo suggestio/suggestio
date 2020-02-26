@@ -26,6 +26,11 @@ case class PlatformSetAppDl( osPlatform: MOsFamily ) extends IScAppAction
 /** Раскрытие/сокрытие пункта скачивания приложения. */
 case class ExpandDlApp(index: Int, isExpanded: Boolean ) extends IScAppAction
 
+/** Отображать ли техническую инфу? */
+case class TechInfoDlAppShow( isShow: Boolean ) extends IScAppAction
+
+/** Увеличение QR-кода. */
+case class QrCodeExpand( expanded: Boolean ) extends IScAppAction
 
 /** Экшен ручного запуска запроса инфы по приложению. */
 case object MkAppDlInfoReq extends IScAppAction

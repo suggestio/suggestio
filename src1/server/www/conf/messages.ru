@@ -1115,3 +1115,4 @@ Operating.system.family=Семейство операционных систем
 No.downloads.available=Нет доступных загрузок
 Malfunction=Неисправность
 Open.0=Открыть {0}
+Hide=Скрыть

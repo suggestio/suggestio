@@ -81,13 +81,21 @@ object MFileMetaHash
   lazy val hexValue = GenLens[MFileMetaHash](_.hexValue)
   lazy val flags = GenLens[MFileMetaHash](_.flags)
 
+
+  implicit class FmHashesOpsExt( private val hashes: Iterable[MFileMetaHash] ) extends AnyVal {
+    def dlHash: Option[MFileMetaHash] = {
+      hashes
+        .minByOption(_.hType.value)
+    }
+  }
+
 }
 
 
 /** Класс ES-модели инфы по одному хешу файла.
   *
   * @param hType Тип хеша (алгоритм хеширования).
-  * @param hexValue Вычисленный хеш.a
+  * @param hexValue Вычисленный хеш.
   * @param flags Разные флаги.
   */
 final case class MFileMetaHash(

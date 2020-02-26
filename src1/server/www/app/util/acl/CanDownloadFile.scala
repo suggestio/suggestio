@@ -116,7 +116,7 @@ class CanDownloadFile @Inject()(
           val nodeId = dlQs.nodeId.id
           LOGGER.debug(s"$logPrefix Media-node#${dlQs.nodeId} found, but one (or more) URL hashes mismatches:\n URL: ${dlQs.hashesHex.mkString(" | ")}\n expected: ${edgeMedia.file.hashesHex.mkString(" | ")}. Recovering URL...")
           val mediaHostsMapFut = cdnUtil.mediasHosts1( (nodeId, edgeMedia.storage) :: Nil )
-          val dlQs2 = (MDownLoadQs.hashesHex set MFileMetaHash.toHashesHex( edgeMedia.file.dlHash ) )(dlQs)
+          val dlQs2 = (MDownLoadQs.hashesHex set MFileMetaHash.toHashesHex( edgeMedia.file.hashesHex.dlHash ) )(dlQs)
           val dlUrlCall = routes.Upload.download( dlQs2 )
           val resFut = for {
             mediaHostsMap <- mediaHostsMapFut

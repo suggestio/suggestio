@@ -123,20 +123,6 @@ object MFileMeta
 
   private def _eFileSizePrefix = "e.file.size.too."
 
-
-  implicit final class FileMetaOpsExt( private val fileMeta: MFileMeta ) extends AnyVal {
-
-    /** Берём только первый хэш из списка - download-хэш.
-      * Хэши тут используются для управления кэшированием: обновился файл => изменилась ссылка, изменился ETag.
-      */
-    def dlHash: Option[MFileMetaHash] = {
-      fileMeta
-        .hashesHex
-        .minByOption(_.hType.value)
-    }
-
-  }
-
 }
 
 

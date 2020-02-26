@@ -37,5 +37,5 @@ object MMenuS {
   */
 case class MMenuS(
                    dlApp          : MDlAppDia               = MDlAppDia.empty,
-                   opened         : Boolean                     = false,
+                   opened         : Boolean                 = false,
                  )

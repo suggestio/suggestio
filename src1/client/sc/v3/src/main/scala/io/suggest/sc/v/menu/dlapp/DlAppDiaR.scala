@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiDivider, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -13,7 +13,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.app.MScAppDlInfo
-import io.suggest.sc.m.menu.{ExpandDlApp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl}
+import io.suggest.sc.m.menu.{ExpandDlApp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
@@ -21,7 +21,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
-import scala.scalajs.js.URIUtils
+import scala.scalajs.js
+import scala.scalajs.js.{URIUtils, UndefOr}
 import scala.scalajs.js.annotation.JSName
 import scalajs.LinkingInfo.developmentMode
 
@@ -61,6 +62,18 @@ class DlAppDiaR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ExpandDlApp( index, isExpanded ) )
     }
 
+    private lazy val _onShowTechInfoClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        TechInfoDlAppShow( !propsProxy.value.index.menu.dlApp.showTechInfo )
+      }
+    }
+
+    private lazy val _onQrCodeExpandClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        QrCodeExpand( !propsProxy.value.index.menu.dlApp.qrCodeExpanded )
+      }
+    }
+
     /*
     private def _onDownLoadBtnClick(dlInfo: MScAppDlInfo) = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, DlApp(dlInfo) )
@@ -98,6 +111,10 @@ class DlAppDiaR(
         lazy val installMsg = crCtx.messages( MsgCodes.`Install` ): VdomNode
         lazy val pleaseWaitMsg = crCtx.messages( MsgCodes.`Please.wait` ): VdomNode
 
+        // tech-info
+        lazy val infoMsg = crCtx.messages( MsgCodes.`Information` ): VdomNode
+        lazy val typeMsg = crCtx.messages( MsgCodes.`Type` ): VdomNode
+
         // Кнопка "Установить" для установки на iOS.
         lazy val iosFileInstall = s.iosFileDlInfoC { iosFileDlInfoOptProxy =>
           iosFileDlInfoOptProxy
@@ -118,6 +135,13 @@ class DlAppDiaR(
                 installMsg,
               )
             }
+        }
+
+        val fmCellCss = new MuiTableCellClasses {
+          override val root = ScCssStatic.AppDl.hardWordWrap.htmlClass
+        }
+        val fmCellProps = new MuiTableCellProps {
+          override val classes = fmCellCss
         }
 
         React.Fragment(
@@ -206,12 +230,12 @@ class DlAppDiaR(
                               dlInfo.fileName.whenDefinedNode { fileName =>
                                 MuiTableRow()(
                                   MuiTableCell()( fileMsg ),
-                                  MuiTableCell()( fileName ),
+                                  MuiTableCell(fmCellProps)( fileName ),
                                 )
                               },
 
                               // Размер файла
-                              dlInfo.fileSizeB.whenDefinedNode { fileSizeB =>
+                              dlInfo.fileMeta.flatMap(_.sizeB).whenDefinedNode { fileSizeB =>
                                 MuiTableRow()(
                                   MuiTableCell()( sizeMsg ),
                                   MuiTableCell()(
@@ -224,12 +248,42 @@ class DlAppDiaR(
                                 )
                               },
 
+                              MuiTableRow()(
+                                MuiTableCell()( infoMsg ),
+                                MuiTableCell(fmCellProps)(
+                                  MuiLink(
+                                    new MuiLinkProps {
+                                      override val onClick = _onShowTechInfoClick
+                                    }
+                                  )(
+                                    crCtx.messages( if (dlAppDia.showTechInfo) MsgCodes.`Hide` else MsgCodes.`Show` ),
+                                  )
+                                )
+                              ),
+
                               // TODO контрольная сумма SHA-1
+                              ReactCommonUtil.maybeNode( dlAppDia.showTechInfo ) {
+                                React.Fragment(
+                                  dlInfo.fileMeta.flatMap(_.mime).whenDefinedNode { contentType =>
+                                    MuiTableRow()(
+                                      MuiTableCell()( typeMsg ),
+                                      MuiTableCell(fmCellProps)( contentType ),
+                                    )
+                                  },
+
+                                  dlInfo.fileMeta.flatMap(_.hashesHex.dlHash).whenDefinedNode { dlHash =>
+                                    MuiTableRow()(
+                                      MuiTableCell()( dlHash.hType.fullStdName ),
+                                      MuiTableCell(fmCellProps)( dlHash.hexValue ),
+                                    )
+                                  },
+                                )
+                              },
 
                               MuiTableRow()(
                                 MuiTableCell(
                                   new MuiTableCellProps {
-                                    val colspan = 2
+                                    val colSpan = 2
                                   }
                                 )(
                                   // Если файл для iOS, то отрендерить ссылку для непосредственной установки через манифест:
@@ -274,18 +328,21 @@ class DlAppDiaR(
                               MuiTableRow()(
                                 MuiTableCell(
                                   new MuiTableCellProps {
-                                    val colspan = 2
+                                    val colSpan = 2
                                   }
                                 )(
-                                  MuiListItem()(
-                                    MuiListItemText()(
-                                      ReactQrCode(
-                                        new ReactQrCodeProps {
-                                          override val value = dlInfo.url
-                                          override val renderAs = ReactQrCode.RenderAs.SVG
-                                          override val size = 270
-                                        }
-                                      ),
+                                  MuiButton(
+                                    new MuiButtonProps {
+                                      override val variant = if (dlAppDia.qrCodeExpanded) MuiButtonVariants.text else MuiButtonVariants.outlined
+                                      override val onClick = _onQrCodeExpandClick
+                                    }
+                                  )(
+                                    ReactQrCode(
+                                      new ReactQrCodeProps {
+                                        override val value = dlInfo.url
+                                        override val renderAs = ReactQrCode.RenderAs.SVG
+                                        override val size = if (dlAppDia.qrCodeExpanded) 270 else 70
+                                      }
                                     ),
                                   ),
                                 ),
@@ -357,7 +414,7 @@ class DlAppDiaR(
         diaOpenedSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.index.menu.dlApp.opened )
         },
-        dlAppDiaC = propsProxy.connect( _.index.menu.dlApp )( MDlAppDia.MDlAppDiaFeq ),
+        dlAppDiaC = propsProxy.connect( _.index.menu.dlApp ),
         iosFileDlInfoC = propsProxy.connect { props =>
           for {
             dlInfosResp <- props.index.menu.dlApp.getReqOpt

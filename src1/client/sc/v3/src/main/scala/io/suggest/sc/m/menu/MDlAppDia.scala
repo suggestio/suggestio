@@ -25,7 +25,9 @@ object MDlAppDia {
       (a.opened ==* b.opened) &&
       (a.getReq ===* b.getReq) &&
       (a.platform ===* b.platform) &&
-      (a.expanded ===* b.expanded)
+      (a.expanded ===* b.expanded) &&
+      (a.showTechInfo ==* b.showTechInfo) &&
+      (a.qrCodeExpanded ==* b.qrCodeExpanded)
     }
   }
 
@@ -35,6 +37,8 @@ object MDlAppDia {
   lazy val getReq = GenLens[MDlAppDia](_.getReq)
   lazy val platform = GenLens[MDlAppDia](_.platform)
   lazy val expanded = GenLens[MDlAppDia](_.expanded)
+  lazy val showTechInfo = GenLens[MDlAppDia](_.showTechInfo)
+  lazy val qrCodeExpanded = GenLens[MDlAppDia](_.qrCodeExpanded)
 
 }
 
@@ -51,6 +55,8 @@ case class MDlAppDia(
                       getReq           : Pot[MScAppGetResp]       = Pot.empty,
                       platform         : Option[MOsFamily]        = None,
                       expanded         : Option[Int]              = None,
+                      showTechInfo     : Boolean                  = false,
+                      qrCodeExpanded   : Boolean                  = false,
                     ) {
 
   lazy val getReqOpt = getReq.toOption

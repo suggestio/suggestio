@@ -66,7 +66,7 @@ class IsFileNotModified @Inject()(
   case class Ctx304[A]()( implicit val request: MFileReq[A] ) {
 
     val fileEtagExpectedOpt = for {
-      dlHash <- request.edgeMedia.file.dlHash
+      dlHash <- request.edgeMedia.file.hashesHex.dlHash
     } yield {
       toEtag( dlHash.hexValue )
     }

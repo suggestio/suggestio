@@ -282,6 +282,9 @@ class JsMessagesUtil @Inject() (
       MC.`Open.0` ::
       MC.`Size` ::
       MC.`Install` ::
+      MC.`Type` ::
+      MC.`Information` ::
+      MC.`Show` :: MC.`Hide` ::
       Nil
   }
 

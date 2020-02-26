@@ -8,7 +8,7 @@ import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.{MEdge, MPredicates}
-import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash}
+import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.pick.MimeConst
 import io.suggest.plist.ApplePlistUtil
@@ -197,7 +197,7 @@ final class ScApp @Inject()(
     val mediaHostsMapFut = cdnUtil.mediasHosts1( (fileNodeId, fileEdgeMedia.storage) :: Nil )
     val dlUrlQs = uploadUtil.mkDlQs(
       fileNodeId = fileNodeId,
-      hashesHex  = MFileMetaHash.toHashesHex( fileEdgeMedia.file.dlHash ),
+      hashesHex  = MFileMetaHash.toHashesHex( fileEdgeMedia.file.hashesHex.dlHash ),
     )
     val dlUrlRelCall = routes.Upload.download( dlUrlQs )
 
@@ -289,9 +289,9 @@ final class ScApp @Inject()(
                   url       = url,
                   predicate = appEdge.predicate,
                   fileName  = fileNode.guessDisplayName,
-                  fileSizeB = fileEdgeMedia.file.sizeB,
                   fromNodeIdOpt = fromNodeIdOpt,
                   osFamily  = appEdge.info.osFamily,
+                  fileMeta  = Some( MFileMeta.hashesHex.modify(_.dlHash.toSeq)(fileEdgeMedia.file) ),
                 )
                 r :: Nil
               }
