@@ -108,6 +108,7 @@ object BleBeaconerAh extends Log {
                           true
                         }
                   }
+
                   // Если bt точно выключен, то смысла запускать сканирование нет.
                   if {
                     val r = isEnabled2
@@ -384,7 +385,8 @@ class BleBeaconerAh[M](
       val v0 = value
       // v0.beacons.isEmpty можно не проверять, но проверяем на всякий случай.
       if (v0.beacons.isEmpty) {
-        val v2 = v0.withGcIntervalId( ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId) )
+        val v2 = MBeaconerS.gcIntervalId
+          .modify( ensureGcInterval(v0.beacons.isEmpty, _) )(v0)
         updated(v2)
 
       } else {
@@ -441,7 +443,7 @@ class BleBeaconerAh[M](
 
       def __maybeRmTimer() = {
         if (v0.notifyAllTimer.nonEmpty) {
-          val v2 = v0.withNotifyAllTimerId(None)
+          val v2 = MBeaconerS.notifyAllTimer.set( None )(v0)
           updatedSilent(v2)
         } else {
           noChange
@@ -479,8 +481,11 @@ class BleBeaconerAh[M](
     // Управление активностью BleBeaconer: вкл/выкл.
     case m: BtOnOff =>
       val v0 = value
-      // ! contains true вместо false, т.к. тут обычен случай Pot.empty.
-      if (!v0.isEnabled.contains(true) && m.isEnabled) {
+      if (v0.isEnabled.isPending) {
+        LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = v0.isEnabled )
+        noChange
+        // ! contains true вместо false, т.к. тут обычен случай Pot.empty.
+      } else if (!v0.isEnabled.contains(true) && m.isEnabled) {
         val isCanBeEnabled = m.hard || !v0.hardOff
         // Активировать BleBeaconer: запустить подписание на API.
         if (!isCanBeEnabled) {
@@ -488,8 +493,8 @@ class BleBeaconerAh[M](
           noChange
 
         } else {
-          //println("bb ON @" + System.currentTimeMillis())
-          val resOpt = for {
+          //println("bb ON-OFF @" + System.currentTimeMillis())
+          (for {
             // TODO Запускать асинхронную проверку isEnabled(), и/или вызов enable() и т.д.
             apiActFx <- BleBeaconerAh.startApiActivation( dispatcher )
           } yield {
@@ -502,11 +507,11 @@ class BleBeaconerAh[M](
               hardOff       = false
             )
             updated( v2, apiActFx )
-          }
-          resOpt.getOrElse {
-            LOG.log(ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE, msg = m)
-            noChange
-          }
+          })
+            .getOrElse {
+              LOG.log(ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE, msg = m)
+              noChange
+            }
         }
 
       } else if (v0.isEnabled.contains(true) && !m.isEnabled) {
@@ -577,7 +582,9 @@ class BleBeaconerAh[M](
               bleBeaconsApi     = v0.bleBeaconsApi.fail(ex),
               notifyAllTimer    = None,
               beacons           = beacons2,
-              gcIntervalId      = gcTimer2
+              gcIntervalId      = gcTimer2,
+              // Выставить жесткое выключение:
+              hardOff           = ex.isInstanceOf[NoSuchElementException],
             )
             updated(v2)
           },
@@ -604,22 +611,20 @@ class BleBeaconerAh[M](
         // Вообще, такого бывать не должно, чтобы pending слетал до ReadyEnabled
         LOG.log( ErrorMsgs.INACTUAL_NOTIFICATION, msg = m )
         noChange
+
       } else {
         // Система ожидает инициализации.
+        val v2 = MBeaconerS.isEnabled
+          .modify( _ withTry m.tryEnabled )(v0)
+
         m.tryEnabled.fold(
-          {ex =>
+          {_ =>
             // Ошибка проведения инициализации системы.
-            val v2 = v0.withIsEnabled(
-              v0.isEnabled.fail(ex)
-            )
             updated( v2 )
           },
           {isEnabled2 =>
-            if (v0.isEnabled.contains(isEnabled2)) {
+            if (v0.isEnabled contains isEnabled2) {
               // Завершена ожидавшаяся инициализация или де-инициализация.
-              val v2 = v0.withIsEnabled(
-                v0.isEnabled.ready( isEnabled2 )
-              )
               updated(v2)
             } else {
               // Внезапно, сигнал о готовности мимо кассы: ожидается обратная готовность (включение вместо выключения и наоборот).

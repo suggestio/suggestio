@@ -10,6 +10,7 @@ import io.suggest.sjs.common.model.MTsTimerId
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -36,6 +37,10 @@ object MBeaconerS {
         (a.hardOff ==* b.hardOff)
     }
   }
+
+  def isEnabled = GenLens[MBeaconerS](_.isEnabled)
+  def notifyAllTimer = GenLens[MBeaconerS](_.notifyAllTimer)
+  def gcIntervalId = GenLens[MBeaconerS](_.gcIntervalId)
 
 }
 
@@ -71,24 +76,6 @@ case class MBeaconerS(
                      )
   extends EmptyProduct
 {
-
-  // Изоляция толстых вызовов copy здесь для снижения объемов кодогенерации:
-
-  def withIsEnabled(isEnabled: Pot[Boolean]) =
-    copy( isEnabled = isEnabled )
-  def withBeacons(beacons2: Map[String, MBeaconData]) =
-    copy( beacons = beacons2 )
-  def withEnvFingerPrint(envFingerPrint: Option[Int]) =
-    copy( envFingerPrint = envFingerPrint )
-  def withNotifyAllTimerId(notifyAllTimer: Option[MTsTimerId]) =
-    copy(notifyAllTimer = notifyAllTimer)
-  def withBleBeaconsApi(bleBeaconsApi: Pot[IBleBeaconsApi]) =
-    copy( bleBeaconsApi = bleBeaconsApi )
-  def withGcIntervalId( gcIntervalId: Option[Int] ) =
-    copy( gcIntervalId = gcIntervalId )
-  def withHardOff(hardOff: Boolean) =
-    copy(hardOff = hardOff)
-
 
   // Перезапись toString, чтобы лишний мусор не рендерить.
   override final def toString: String = {

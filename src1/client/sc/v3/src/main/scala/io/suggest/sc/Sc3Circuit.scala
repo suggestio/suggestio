@@ -479,7 +479,8 @@ class Sc3Circuit(
   {
     // Немедленный запуск инициализации/загрузки
     Try {
-      val needGeoLoc = routerState.canonicalRoute.fold(true)(_.needGeoLoc)
+      val needGeoLoc = routerState.canonicalRoute
+        .fold(true)(_.needGeoLoc)
       val svcsTail = if (needGeoLoc) {
         MBootServiceIds.GeoLocDataAcc :: Nil
       } else {
@@ -497,7 +498,7 @@ class Sc3Circuit(
         if (plat.hasBle && plat.isReady) {
           //LOG.warn( "ok, dispatching ble on/off", msg = plat )
           Future {
-            val msg = BtOnOff( isEnabled = plat.isUsingNow)
+            val msg = BtOnOff( isEnabled = plat.isUsingNow )
             dispatch( msg )
           }
         }
@@ -514,7 +515,7 @@ class Sc3Circuit(
       // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
       if ( Try(isPlatformReadyRO.value).getOrElse(false) ) {
         // Платформа уже готова. Запустить эффект активации BLE-маячков.
-        //LOG.log( msg = isPlatformReadyNowTry )
+        //LOG.log( "isPlatformReadyNowTry" )
         __dispatchBleBeaconerOnOff()
       } else {
         // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
@@ -591,10 +592,10 @@ class Sc3Circuit(
     // Реагировать на события активности приложения выдачи.
     subscribe( platformRW.zoom(_.isUsingNow) ) { isUsingNowProxy =>
       // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
+      val isUsingNow = isUsingNowProxy.value
       __dispatchBleBeaconerOnOff()
 
       // Глушить фоновый GPS-мониторинг:
-      val isUsingNow = isUsingNowProxy.value
       __dispatchGeoLocOnOff(isUsingNow)
     }
 

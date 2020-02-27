@@ -111,6 +111,7 @@ class DlAppAh(
                 .iterator
                 .zipWithIndex
                 .nextOption()
+              // Если всего лишь один ответ.
               if resp.dlInfos.lengthIs == 1
             } yield {
               // Эффект, чтобы анимацией сглаживать резкий скачок высоты диалога.
@@ -118,8 +119,6 @@ class DlAppAh(
             }
           }
         )
-
-        // Если всего лишь один ответ.
 
         ah.updatedMaybeEffect( v2, fxOpt )
       }
