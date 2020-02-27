@@ -28,6 +28,7 @@ trait MuiButtonProps
   val mini: js.UndefOr[Boolean] = js.undefined
   val size: js.UndefOr[String] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
+  val startIcon: js.UndefOr[raw.React.Node] = js.undefined
 }
 
 

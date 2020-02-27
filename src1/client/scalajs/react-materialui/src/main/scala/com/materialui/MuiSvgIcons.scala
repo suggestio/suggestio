@@ -708,8 +708,8 @@ object MuiSvgIcons {
   object CommunicationPhonelinkLock extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/phonelink-ring", JSImport.Default)
   object CommunicationPhonelinkRing extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/communication/phonelink-setup", JSImport.Default)
-  object CommunicationPhonelinkSetup extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/PhonelinkSetup", JSImport.Default)
+  object PhonelinkSetup extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/portable-wifi-off", JSImport.Default)
   object CommunicationPortableWifiOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/present-to-all", JSImport.Default)

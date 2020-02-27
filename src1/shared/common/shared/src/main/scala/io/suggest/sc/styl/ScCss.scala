@@ -447,6 +447,14 @@ object ScCssStatic extends StyleSheet.Inline {
       wordWrap.attr := "anywhere",
     )
 
+    val dlLink = style(
+      marginTop( 10.px ),
+    )
+
+    val dlLinkOrBtn = style(
+      float.right,
+    )
+
   }
 
 

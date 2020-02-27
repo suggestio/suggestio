@@ -89,18 +89,37 @@ class DlAppAh(
         val v2 = MDlAppDia.getReq
           .modify( _.withTry(m.tryResp) )(v0)
 
-        val fxOpt = (for (ex <- m.tryResp.failed) yield {
-          Effect.action {
-            val errDiaS = MScErrorDia(
-              messageCode     = ErrorMsgs.XHR_UNEXPECTED_RESP,
-              potRO           = Some( modelRW.zoom[Pot[Any]](_.getReq) ),
-              exceptionOpt    = Some( ex ),
-              retryAction     = Some( MkAppDlInfoReq ),
-            )
-            SetErrorState( errDiaS )
+        // Эффект, если требуется:
+        val fxOpt = m.tryResp.fold[Option[Effect]](
+          {ex =>
+            // Если ошибка, отрендерить всплывающее сообщение:
+            val fx = Effect.action {
+              val errDiaS = MScErrorDia(
+                messageCode     = ErrorMsgs.XHR_UNEXPECTED_RESP,
+                potRO           = Some( modelRW.zoom[Pot[Any]](_.getReq) ),
+                exceptionOpt    = Some( ex ),
+                retryAction     = Some( MkAppDlInfoReq ),
+              )
+              SetErrorState( errDiaS )
+            }
+            Some(fx)
+          },
+          {resp =>
+            // Если только один ответ, то сразу раскрыть его.
+            for {
+              (_, i) <- resp.dlInfos
+                .iterator
+                .zipWithIndex
+                .nextOption()
+              if resp.dlInfos.lengthIs == 1
+            } yield {
+              // Эффект, чтобы анимацией сглаживать резкий скачок высоты диалога.
+              Effect.action( ExpandDlApp(i, isExpanded = true) )
+            }
           }
-        })
-          .toOption
+        )
+
+        // Если всего лишь один ответ.
 
         ah.updatedMaybeEffect( v2, fxOpt )
       }

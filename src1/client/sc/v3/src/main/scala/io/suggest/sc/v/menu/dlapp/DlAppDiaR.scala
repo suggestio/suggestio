@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkProps, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -21,8 +21,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
-import scala.scalajs.js
-import scala.scalajs.js.{URIUtils, UndefOr}
+import scala.scalajs.js.URIUtils
 import scala.scalajs.js.annotation.JSName
 import scalajs.LinkingInfo.developmentMode
 
@@ -115,6 +114,15 @@ class DlAppDiaR(
         lazy val infoMsg = crCtx.messages( MsgCodes.`Information` ): VdomNode
         lazy val typeMsg = crCtx.messages( MsgCodes.`Type` ): VdomNode
 
+        // css для кнопки скачивания/перехода/установки.
+        val goDlInstBtnCss = new MuiButtonClasses {
+          override val root = ScCssStatic.AppDl.dlLinkOrBtn.htmlClass
+        }
+        // css для вторичной ссылки (неприоритетной ссылки по сравнению с основной кнопкой).
+        lazy val dlLinkCss = new MuiLinkClasses {
+          override val root = ScCssStatic.AppDl.dlLinkOrBtn.htmlClass
+        }
+
         // Кнопка "Установить" для установки на iOS.
         lazy val iosFileInstall = s.iosFileDlInfoC { iosFileDlInfoOptProxy =>
           iosFileDlInfoOptProxy
@@ -124,12 +132,15 @@ class DlAppDiaR(
                 .iosInstallManifest( iosFileDlInfo.fromNodeIdOpt.toUndef )
                 .absoluteURL( secure = true )
               val itunesUrl = "itms-services://?action=download-manifest&url=" + URIUtils.encodeURIComponent( manifestUrl )
+              val setupIcon = Mui.SvgIcons.PhonelinkSetup()()
               MuiButton {
                 new MuiButtonProps {
                   override val href = itunesUrl
                   override val component = "a"
                   override val size = MuiButtonSizes.large
                   override val variant = MuiButtonVariants.contained
+                  override val classes = goDlInstBtnCss
+                  override val startIcon = setupIcon.rawNode
                 }
               } (
                 installMsg,
@@ -143,6 +154,8 @@ class DlAppDiaR(
         val fmCellProps = new MuiTableCellProps {
           override val classes = fmCellCss
         }
+
+        lazy val getAppIcon = Mui.SvgIcons.GetApp()(): VdomElement
 
         React.Fragment(
 
@@ -193,6 +206,13 @@ class DlAppDiaR(
                     } yield {
                       val isIosFileDl = dlInfo.isIosFileDl
 
+                      val extSvcIconOpt = dlInfo.extSvc.collect[VdomElement] {
+                        case MExtServices.GooglePlay =>
+                          Mui.SvgIcons.Shop()()
+                        case MExtServices.AppleITunes =>
+                          Mui.SvgIcons.Apple()()
+                      }
+
                       MuiExpansionPanel.component.withKey( index )(
                         new MuiExpansionPanelProps {
                           @JSName("onChange")
@@ -204,15 +224,10 @@ class DlAppDiaR(
                         // Заголовок панели.
                         MuiExpansionPanelSummary()(
                           // Левая иконка:
-                          dlInfo.extSvc.fold[VdomNode](
-                            Mui.SvgIcons.GetApp()()
-                          ) {
-                            case MExtServices.GooglePlay =>
-                              Mui.SvgIcons.Shop()()
-                            case MExtServices.AppleITunes =>
-                              Mui.SvgIcons.Apple()()
-                            case _ =>
-                              EmptyVdom
+                          if (dlInfo.extSvc.isEmpty) {
+                            getAppIcon
+                          } else {
+                            extSvcIconOpt getOrElse EmptyVdom
                           },
                           // Что откуда качать:
                           dlInfo.extSvc.fold[VdomNode](
@@ -248,38 +263,44 @@ class DlAppDiaR(
                                 )
                               },
 
-                              MuiTableRow()(
-                                MuiTableCell()( infoMsg ),
-                                MuiTableCell(fmCellProps)(
-                                  MuiLink(
-                                    new MuiLinkProps {
-                                      override val onClick = _onShowTechInfoClick
-                                    }
-                                  )(
-                                    crCtx.messages( if (dlAppDia.showTechInfo) MsgCodes.`Hide` else MsgCodes.`Show` ),
-                                  )
-                                )
-                              ),
-
-                              // TODO контрольная сумма SHA-1
-                              ReactCommonUtil.maybeNode( dlAppDia.showTechInfo ) {
+                              // Если это файл, то отрендерить доступ техническую информацию.
+                              ReactCommonUtil.maybeNode( dlInfo.extSvc.isEmpty ) {
                                 React.Fragment(
-                                  dlInfo.fileMeta.flatMap(_.mime).whenDefinedNode { contentType =>
-                                    MuiTableRow()(
-                                      MuiTableCell()( typeMsg ),
-                                      MuiTableCell(fmCellProps)( contentType ),
-                                    )
-                                  },
+                                  MuiTableRow()(
+                                    MuiTableCell()( infoMsg ),
+                                    MuiTableCell(fmCellProps)(
+                                      MuiLink(
+                                        new MuiLinkProps {
+                                          override val onClick = _onShowTechInfoClick
+                                        }
+                                      )(
+                                        crCtx.messages( if (dlAppDia.showTechInfo) MsgCodes.`Hide` else MsgCodes.`Show` ),
+                                      )
+                                    ),
+                                  ),
 
-                                  dlInfo.fileMeta.flatMap(_.hashesHex.dlHash).whenDefinedNode { dlHash =>
-                                    MuiTableRow()(
-                                      MuiTableCell()( dlHash.hType.fullStdName ),
-                                      MuiTableCell(fmCellProps)( dlHash.hexValue ),
+                                  // контрольная сумма SHA-1
+                                  ReactCommonUtil.maybeNode( dlAppDia.showTechInfo ) {
+                                    React.Fragment(
+                                      dlInfo.fileMeta.flatMap(_.mime).whenDefinedNode { contentType =>
+                                        MuiTableRow()(
+                                          MuiTableCell()( typeMsg ),
+                                          MuiTableCell(fmCellProps)( contentType ),
+                                        )
+                                      },
+
+                                      dlInfo.fileMeta.flatMap(_.hashesHex.dlHash).whenDefinedNode { dlHash =>
+                                        MuiTableRow()(
+                                          MuiTableCell()( dlHash.hType.fullStdName ),
+                                          MuiTableCell(fmCellProps)( dlHash.hexValue ),
+                                        )
+                                      },
                                     )
                                   },
                                 )
                               },
 
+                              // Ряд с кнопками перехода/скачивания/установки.
                               MuiTableRow()(
                                 MuiTableCell(
                                   new MuiTableCellProps {
@@ -287,22 +308,23 @@ class DlAppDiaR(
                                   }
                                 )(
                                   // Если файл для iOS, то отрендерить ссылку для непосредственной установки через манифест:
-                                  ReactCommonUtil.maybeNode( isIosFileDl )(
-                                    <.div(
-                                      iosFileInstall,
-                                      <.br,
-                                      <.br,
-                                    )
-                                  ),
+                                  ReactCommonUtil.maybeNode( isIosFileDl )( iosFileInstall ),
 
                                   // Кнопка "Скачать" отображается всегда.
                                   if (isIosFileDl) {
                                     // Ссылка, чтобы не оттягивала внимания.
-                                    MuiLink(
-                                      new MuiLinkProps {
-                                        val href = dlInfo.url
-                                      }
-                                    )( dlFileMsg )
+                                    React.Fragment(
+                                      // TODO Нужно выровнять через css.
+                                      <.br,
+                                      <.br,
+                                      <.br,
+                                      MuiLink(
+                                        new MuiLinkProps {
+                                          val href = dlInfo.url
+                                          override val classes = dlLinkCss
+                                        }
+                                      )( dlFileMsg ),
+                                    )
                                   } else {
                                     MuiButton(
                                       new MuiButtonProps {
@@ -311,12 +333,19 @@ class DlAppDiaR(
                                         // TODO val target = "_blank" для переходов в play/appstore
                                         override val size = MuiButtonSizes.large
                                         override val variant = MuiButtonVariants.contained
+                                        override val classes = goDlInstBtnCss
                                       }
                                     )(
-                                      dlInfo.extSvc.fold {
-                                        dlFileMsg
+                                      dlInfo.extSvc.fold[VdomNode] {
+                                        React.Fragment(
+                                          getAppIcon,
+                                          dlFileMsg,
+                                        )
                                       } { extSvc =>
-                                        crCtx.messages( MsgCodes.`Open.0`, extSvc.nameI18N )
+                                        React.Fragment(
+                                          extSvcIconOpt.whenDefinedNode,
+                                          crCtx.messages( MsgCodes.`Open.0`, extSvc.nameI18N ),
+                                        )
                                       }
                                     )
                                   },
