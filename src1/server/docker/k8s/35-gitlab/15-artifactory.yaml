@@ -19,23 +19,23 @@ spec:
         io.suggest.gitlab.here: "true"
       containers:
       - name: artifactory
-        image: docker-registry.suggest.io/sio/sio2/artifactory
+        image: docker-registry.suggest.io:5000/sio/sio2/artifactory
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
         volumeMounts:
         - name: a-etc
-          mountPath: /etc/webapps/artifactory
+          mountPath: /opt/artifactory/etc
         - name: a-data
-          mountPath: /usr/share/webapps/artifactory/data
+          mountPath: /opt/artifactory/data
         - name: a-access
-          mountPath: /usr/share/webapps/artifactory/access
+          mountPath: /opt/artifactory/access
         - name: a-backup
-          mountPath: /usr/share/webapps/artifactory/backup
+          mountPath: /opt/artifactory/backup
         - name: a-replicator
-          mountPath: /usr/share/webapps/artifactory/replicator
+          mountPath: /opt/artifactory/replicator
         - name: a-support
-          mountPath: /usr/share/webapps/artifactory/support
+          mountPath: /opt/artifactory/support
       imagePullSecrets:
       - name: regcred
       volumes:

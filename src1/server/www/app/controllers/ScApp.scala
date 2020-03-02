@@ -413,12 +413,13 @@ final class ScApp @Inject()(
           (fullSizeImageAssetOpt :: displayImageAssetOpt :: Nil).flatten
         }
 
-        (_, _, fileEdgeMedia) <- _fileEdgeMediaFut
+        (fileMnode, _, fileEdgeMedia) <- _fileEdgeMediaFut
         pkgMediaCall <- _mediaUrl( fileNodeId, fileEdgeMedia )
 
       } yield {
         val manifest = MIosManifest(
           items = MIosItem(
+            // TODO Пытаться парсить JSON из fileMnode.meta...techInfo, но надо решить проблему там с ошибочным двойным экранированием текста (SysMarket/SysMarketUtil).
             metadata = MIosItemMeta(
               bundleId  = "io.suggest.appsuggest",
               bundleVersion = "1.0.0",

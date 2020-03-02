@@ -8,19 +8,19 @@
   },
   "installed_plugins": {
     "cordova-plugin-ble-central": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-geolocation": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-splashscreen": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-whitelist": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {}
