@@ -1,6 +1,7 @@
 package cordova.plugins
 
 import cordova.plugins.diagnostic.CordovaPluginDiagnostic
+import cordova.plugins.notification.CordovaPluginNotification
 
 import scala.scalajs.js
 
@@ -14,5 +15,7 @@ import scala.scalajs.js
 sealed trait CordovaPlugins extends js.Object {
 
   val diagnostic: CordovaPluginDiagnostic = js.native
+
+  val notification: CordovaPluginNotification = js.native
 
 }
