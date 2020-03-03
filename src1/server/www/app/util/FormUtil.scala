@@ -40,7 +40,9 @@ object FormUtil {
   def strTrimSanitizeLowerF = strTrimSanitizeF andThen { _.toLowerCase }
   def strFmtTrimF = {s: String =>
     // TODO прогонять через HtmlCompressor
-    HtmlSanitizer.textFmtPolicy.sanitize(s).trim
+    s.trim
+    // TODO Тут было ломание форматирования plain-текста, сейчас просто trim по краям.
+    //HtmlSanitizer.textFmtPolicy.sanitize(s).trim
   }
 
   def strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }

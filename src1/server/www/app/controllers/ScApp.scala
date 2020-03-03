@@ -6,6 +6,7 @@ import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
+import io.suggest.ico.MLinkRelIcon
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.{MEdge, MPredicates}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
@@ -31,6 +32,7 @@ import util.ext.ExtServicesUtil
 import util.up.UploadUtil
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -389,42 +391,61 @@ final class ScApp @Inject()(
         ctx = getContext2
 
         itemAssets = {
+          def _mkIconAbsUrl(relIcon: MLinkRelIcon) =
+            cdnUtil.absUrl( cdnUtil.asset(relIcon.icon.src)(ctx) )(ctx)
+
           val favIcons = MFavIcons.Icons()
-          val mkImgAsset = { (kind: String, isWidthOkF: Int => Boolean) =>
-            (for {
-              ico <- favIcons.allIcons
-              if (ico.imgFmt ==* MImgFmts.PNG) &&
-                (ico.icon.sizes.exists { sz => isWidthOkF(sz.width) })
-            } yield {
-              MIosItemAsset(
-                kind = kind,
-                url = Some( cdnUtil.absUrl( cdnUtil.asset(ico.icon.src)(ctx) )(ctx) ),
-              )
-            })
-              .headOption
-          }
 
           // Параллельно, рассчитать ссылки на картинки.
-          val fullSizeImageAssetOpt = mkImgAsset("full-size-image", _ ==* 512)  // надо 512х512
-          val displayImageAssetOpt = mkImgAsset("display-image", _ < 300)       // TODO надо 57х57
+          val fullSizeImageAsset = MIosItemAsset(
+            kind = "full-size-image",  // тут надо 512х512
+            url = Some( _mkIconAbsUrl( favIcons.appleTouchIcon512 ) ),
+          )
 
-          (fullSizeImageAssetOpt :: displayImageAssetOpt :: Nil).flatten
+          // TODO надо 57х57 !
+          // TODO Когда будет 57х57 картинка, снести этот велосипед
+          val displayImageAssetOpt = (for {
+            ico <- favIcons.allIcons
+            if (ico.imgFmt ==* MImgFmts.PNG) &&
+              (ico.icon.sizes.exists { sz => sz.width < 200 })
+          } yield {
+            MIosItemAsset(
+              kind = "display-image",
+              url  = Some( _mkIconAbsUrl(ico) ),
+            )
+          })
+            .headOption
+
+          fullSizeImageAsset :: displayImageAssetOpt.toList
         }
 
         (fileMnode, _, fileEdgeMedia) <- _fileEdgeMediaFut
         pkgMediaCall <- _mediaUrl( fileNodeId, fileEdgeMedia )
 
       } yield {
-        val manifest = MIosManifest(
-          items = MIosItem(
-            // TODO Пытаться парсить JSON из fileMnode.meta...techInfo, но надо решить проблему там с ошибочным двойным экранированием текста (SysMarket/SysMarketUtil).
-            metadata = MIosItemMeta(
+        // Допускается хранить метаданные в узле в techInfo в виде JSON.
+        val imeta: MIosItemMeta = (for {
+          techInfo <- fileMnode.meta.basic.techName
+          jsonParsed   <- Try( Json.parse(techInfo) ).toOption
+          r <- jsonParsed.asOpt[MIosItemMeta]
+        } yield {
+          LOGGER.trace(s"$logPrefix Using saved meta-info: $r")
+          r
+        })
+          .getOrElse {
+            MIosItemMeta(
               bundleId  = "io.suggest.appsuggest",
               bundleVersion = "1.0.0",
               kind      = "software",
               title     = "Suggest.io",
               platformId = Some( "com.apple.platform.iphoneos" ),
-            ),
+            )
+          }
+
+        val manifest = MIosManifest(
+          items = MIosItem(
+            // TODO Пытаться парсить JSON из fileMnode.meta...techInfo, но надо решить проблему там с ошибочным двойным экранированием текста (SysMarket/SysMarketUtil).
+            metadata = imeta,
             assets = MIosItemAsset(
               kind = "software-package",
               url  = Some( cdnUtil.absUrl( pkgMediaCall )(ctx) ),

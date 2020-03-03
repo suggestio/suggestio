@@ -26,9 +26,9 @@ object MFavIcons {
     val pngMime = png.mime
     val pngFileExt = png.fileExt
 
-    lazy val appleTouchIconOpt = for {
-      sideSzPx <- Iterator.single( 512 )
-    } yield {
+
+    lazy val appleTouchIcon512 ={
+      val sideSzPx = 512
       MLinkRelIcon(
         icon = MIconInfo(
           src       = s"$FAVICON_URL_PREFIX$sideSzPx-${rels.APPLE_TOUCH}.$pngFileExt",
@@ -75,7 +75,9 @@ object MFavIcons {
 
     /** Список иконок для link-rel-рендера. */
     val allIcons: Seq[MLinkRelIcon] = {
-      svgIcon #:: pngIcons #::: appleTouchIconOpt.to( LazyList )
+      svgIcon #::
+      appleTouchIcon512 #::
+      pngIcons
     }
 
   }
