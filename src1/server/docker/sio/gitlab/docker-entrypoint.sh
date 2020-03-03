@@ -94,7 +94,7 @@ EOF
 
 ## Общий код вызова rake target.
 _rakeCmd() {
-  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake $1 RAILS_ENV=production" 
+  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle exec rake $1 RAILS_ENV=production" 
   return $?
 }
 

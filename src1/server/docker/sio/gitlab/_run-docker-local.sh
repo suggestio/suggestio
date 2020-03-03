@@ -6,4 +6,4 @@ docker run -ti \
     -e PG_USERNAME="gitlab" \
     -e PG_PASSWORD="gitlab" \
     --net=host \
-    docker-registry.suggest.io/sio/gitlab $@
+    docker-registry.suggest.io/sio/sio2/gitlab $@

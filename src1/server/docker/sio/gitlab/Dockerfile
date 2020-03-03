@@ -4,10 +4,10 @@
 # Copy /usr/share/doc/gitlab/secrets.yml.example to /etc/webapps/gitlab/secrets.yml and configure it
 # Copy a database example config from /usr/share/doc/gitlab/ to /etc/webapps/gitlab/database.yml and configure it
 # Setup the database:
-# su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; EXECJS_RUNTIME=Disabled bundle-2.5 exec rake gitlab:setup RAILS_ENV=production"
+# su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; EXECJS_RUNTIME=Disabled bundle exec rake gitlab:setup RAILS_ENV=production"
 # Finally run the following commands to check your installation:
-# su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; EXECJS_RUNTIME=Disabled bundle-2.5 exec rake gitlab:env:info RAILS_ENV=production"
-# su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; EXECJS_RUNTIME=Disabled bundle-2.5 exec rake gitlab:check RAILS_ENV=production"
+# su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; EXECJS_RUNTIME=Disabled bundle exec rake gitlab:env:info RAILS_ENV=production"
+# su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; EXECJS_RUNTIME=Disabled bundle exec rake gitlab:check RAILS_ENV=production"
 # Дополнительные зависимости для 'gitlab'
 #    postgresql: database backend [установлено]
 #    mysql: database backend

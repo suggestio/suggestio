@@ -3,13 +3,13 @@
 ## Подготовка к запуску контейнера сборки s.io.
 ## Нужно заполнить конфиги ivy2 и sbt, чтобы всё хорошо собиралось.
 
-set -e
+set -ex
 
 cd $HOME
 
 SBT_VERSION_ABI=1.0
 
-mkdir -p $HOME/.ivy2 $HOME/.sbt/${SBT_VERSION_ABI}
+mkdir -p $HOME/.ivy2 $HOME/.sbt/${SBT_VERSION_ABI} $HOME/.docker
 
 ## Заполнить конфиг для локального кэширования артефактов из artifactory:
 echo ".ivy2/.credentials..."
@@ -22,8 +22,8 @@ EOF
 
 ## Подготовить конфиг sbt, чтобы активнее работал с локальной artifactory:
 GLOBAL_SBT="$HOME/.sbt/${SBT_VERSION_ABI}/global.sbt"
-if [ ! -f ]
 echo -n "$GLOBAL_SBT ... "
+
 if [ -f $GLOBAL_SBT ]; then
   echo " (Skipped, already exist)"
 else

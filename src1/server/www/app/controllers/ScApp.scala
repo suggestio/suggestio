@@ -389,7 +389,6 @@ final class ScApp @Inject()(
         ctx = getContext2
 
         itemAssets = {
-          val someTrue = Some(true)
           val favIcons = MFavIcons.Icons()
           val mkImgAsset = { (kind: String, isWidthOkF: Int => Boolean) =>
             (for {
@@ -399,7 +398,6 @@ final class ScApp @Inject()(
             } yield {
               MIosItemAsset(
                 kind = kind,
-                needsShine = someTrue,
                 url = Some( cdnUtil.absUrl( cdnUtil.asset(ico.icon.src)(ctx) )(ctx) ),
               )
             })
@@ -407,8 +405,8 @@ final class ScApp @Inject()(
           }
 
           // Параллельно, рассчитать ссылки на картинки.
-          val fullSizeImageAssetOpt = mkImgAsset("full-size-image", _ > 400)
-          val displayImageAssetOpt = mkImgAsset("display-image", _ < 300)
+          val fullSizeImageAssetOpt = mkImgAsset("full-size-image", _ ==* 512)  // надо 512х512
+          val displayImageAssetOpt = mkImgAsset("display-image", _ < 300)       // TODO надо 57х57
 
           (fullSizeImageAssetOpt :: displayImageAssetOpt :: Nil).flatten
         }
@@ -425,6 +423,7 @@ final class ScApp @Inject()(
               bundleVersion = "1.0.0",
               kind      = "software",
               title     = "Suggest.io",
+              platformId = Some( "com.apple.platform.iphoneos" ),
             ),
             assets = MIosItemAsset(
               kind = "software-package",

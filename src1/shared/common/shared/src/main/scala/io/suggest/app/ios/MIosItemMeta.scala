@@ -16,6 +16,7 @@ object MIosItemMeta {
     (__ \ "bundle-identifier").format[String] and
     (__ \ "bundle-version").format[String] and
     (__ \ "kind").format[String] and
+    (__ \ "platform-identifier").formatNullable[String] and
     (__ \ "title").format[String]
   )(apply, unlift(unapply))
 
@@ -28,5 +29,6 @@ case class MIosItemMeta(
                          bundleId       : String,
                          bundleVersion  : String,
                          kind           : String,
+                         platformId     : Option[String] = None,
                          title          : String,
                        )
