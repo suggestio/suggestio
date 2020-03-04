@@ -4,7 +4,7 @@
 ##
 ## Обязательный env REGISTRY_HTTP_SECRET - пробрасывается через kubernetes secrets.
 
-FROM docker-registry.suggest.io/sio/sio2/os-base-go
+FROM docker-registry.suggest.io:5000/sio/sio2/os-base-go
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:

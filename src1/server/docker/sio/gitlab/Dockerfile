@@ -14,7 +14,7 @@
 #    python2-docutils: reStructuredText markup language support
 #    smtp-server: mail server in order to receive mail notifications
 
-FROM docker-registry.suggest.io/sio/sio2/redis
+FROM docker-registry.suggest.io:5000/sio/sio2/redis
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG gitlab_home="/var/lib/gitlab"

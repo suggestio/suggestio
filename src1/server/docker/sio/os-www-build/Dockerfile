@@ -1,7 +1,7 @@
 ## Образ контейнера для сборки sioweb с sbt.
 ## Следует монтировать ~/.ivy2/cache хотя бы как hostPath.
 
-FROM docker-registry.suggest.io/sio/sio2/os-base-www
+FROM docker-registry.suggest.io:5000/sio/sio2/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## Поставить зависимости для сборки sio.

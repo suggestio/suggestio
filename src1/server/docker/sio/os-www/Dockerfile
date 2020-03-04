@@ -1,6 +1,6 @@
 ## Образ контейнера для сборки sioweb из sbt.
 
-FROM docker-registry.suggest.io/sio/sio2/os-base-www
+FROM docker-registry.suggest.io:5000/sio/sio2/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## remove all useless stuff

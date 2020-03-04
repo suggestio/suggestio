@@ -2,7 +2,7 @@
 ## Собирает seaweedfs из исходников, создаёт домашнюю директорию и объявляет volume.
 ## Всё остальное должно быть реализовано на уровне volume/master-докерфайлов.
 
-FROM docker-registry.suggest.io/sio/sio2/os-base-go
+FROM docker-registry.suggest.io:5000/sio/sio2/os-base-go
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 RUN sudo -u $PACWRAP $PACWRAP --noconfirm -Sy seaweedfs-git

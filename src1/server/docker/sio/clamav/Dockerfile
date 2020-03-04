@@ -5,7 +5,7 @@
 ##   docker volume create sio-clamav
 ##   docker run -p 3310:3310 -v sio-clamav:/var/lib/clamav sio/clamav
 
-FROM docker-registry.suggest.io/sio/sio2/os-base
+FROM docker-registry.suggest.io:5000/sio/sio2/os-base
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:

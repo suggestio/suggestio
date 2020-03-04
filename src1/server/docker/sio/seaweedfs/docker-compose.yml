@@ -2,13 +2,13 @@ version: '2'
 
 services:
   master:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io:5000/sio/seaweedfs
     ports:
     - 9333:9333
     - 19333:19333
     command: "master"
   volume:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io:5000/sio/seaweedfs
     ports:
     - 8080:8080
     - 18080:18080
@@ -16,7 +16,7 @@ services:
     depends_on:
     - master
   filer:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io:5000/sio/seaweedfs
     ports:
     - 8888:8888
     - 18888:18888
@@ -27,7 +27,7 @@ services:
     - master
     - volume
   cronjob:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io:5000/sio/seaweedfs
     command: 'cronjob'
     environment:
       # Run re-replication every 2 minutes

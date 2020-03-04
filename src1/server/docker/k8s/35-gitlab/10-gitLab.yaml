@@ -36,9 +36,8 @@ spec:
         - mountPath: /var/lib/docker-registry
           name: var-lib-docker-registry
           readOnly: true
-        - name: docker-registry-creds
-          mountPath: /etc/docker-registry/registry.key
-          subPath: registry.key
+        - mountPath: /etc/docker-registry/registry.key
+          name: docker-registry-key
           readOnly: true
         env:
         - name: PG_HOST
@@ -49,25 +48,6 @@ spec:
           value: gitlab
         - name: PG_DATABASE
           value: gitlab
-      ## docker-registry
-      - name: docker-registry-cont
-        image: docker-registry.suggest.io:5000/sio/sio2/docker-registry:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 5000
-        volumeMounts:
-        - name: var-lib-docker-registry
-          mountPath: /var/lib/docker-registry
-        - name: docker-registry-creds
-          mountPath: /etc/docker-registry/registry.crt
-          subPath: registry.crt
-          readOnly: true
-        env:
-        - name: REGISTRY_HTTP_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: docker-registry-creds
-              key: http-secret
       ## pod params
       imagePullSecrets:
       - name: regcred
@@ -82,11 +62,13 @@ spec:
           type: DirectoryOrCreate
       - name: var-lib-docker-registry
         hostPath:
-          path: /var/lib/containers/docker-registry
-          type: DirectoryOrCreate
-      - name: docker-registry-creds
-        secret:
-          secretName: docker-registry-creds
+          path: /var/lib/docker-registry
+          type: Directory
+      - name: docker-registry-key
+        hostPath:
+          path: /etc/docker-registry/registry.key
+          type: File
+
 ---
 apiVersion: v1
 kind: Service
@@ -109,10 +91,6 @@ spec:
     protocol: TCP
     port: 8282
     targetPort: 8282
-  - name: docker-registry
-    protocol: TCP
-    port: 5000
-    targetPort: 5000
 ---
 ## Ингрес для проброса gitlab-а.
 ## Костыли с 8282 связаны с необходимостью доступа из runner'а, а доп.HTTP-хидеры внезапно оказались не нужны.
@@ -133,10 +111,4 @@ spec:
       - backend:
           serviceName: gitlab-svc
           servicePort: webui
-  - host: docker-registry.suggest.io
-    http:
-      paths:
-      - backend:
-          serviceName: gitlab-svc
-          servicePort: docker-registry
 

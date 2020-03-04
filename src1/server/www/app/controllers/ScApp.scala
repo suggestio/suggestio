@@ -426,9 +426,11 @@ final class ScApp @Inject()(
         // Допускается хранить метаданные в узле в techInfo в виде JSON.
         val imeta: MIosItemMeta = (for {
           techInfo <- fileMnode.meta.basic.techName
-          jsonParsed   <- Try( Json.parse(techInfo) ).toOption
+          jsonParsed <- Try( Json.parse(techInfo) ).toOption
           r <- jsonParsed.asOpt[MIosItemMeta]
         } yield {
+          // Метаданные взяты из JSON в techInfo - это и возвращаем.
+          // TODO Opt Тут происходит конвертация JsObject => MIosItemMeta, и MIosItemMeta => JsObject ниже при сериализации манифеста. Нельзя ли это оптимизировать?
           LOGGER.trace(s"$logPrefix Using saved meta-info: $r")
           r
         })
@@ -444,7 +446,6 @@ final class ScApp @Inject()(
 
         val manifest = MIosManifest(
           items = MIosItem(
-            // TODO Пытаться парсить JSON из fileMnode.meta...techInfo, но надо решить проблему там с ошибочным двойным экранированием текста (SysMarket/SysMarketUtil).
             metadata = imeta,
             assets = MIosItemAsset(
               kind = "software-package",
