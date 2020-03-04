@@ -80,7 +80,7 @@ class LaePopupsR(
               percentCrop = mcrop.percentCrop,
               popCssClass = lkAdEditCss.Crop.popup.htmlClass :: Nil,
               resKey      = MFormResourceKey(
-                edgeUid   = Some( edge.jdEdge.id ),
+                edgeUid   = edge.jdEdge.id,
                 nodePath  = root.doc.jdDoc.jdArgs.renderArgs.selPath,
               ),
               withDelete  = false

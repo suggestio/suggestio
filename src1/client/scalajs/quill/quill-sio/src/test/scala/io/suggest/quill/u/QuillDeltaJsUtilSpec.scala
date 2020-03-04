@@ -43,7 +43,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       hwEdgeId -> MEdgeDataJs(
         jdEdge = MJdEdge(
           predicate = MPredicates.JdContent.Text,
-          id        = hwEdgeId,
+          id        = Some( hwEdgeId ),
           text      = Some( theString )
         )
       )
@@ -73,7 +73,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       hwEdgeId -> MEdgeDataJs(
         jdEdge = MJdEdge(
           predicate = MPredicates.JdContent.Text,
-          id        = hwEdgeId,
+          id        = Some( hwEdgeId ),
           text      = Some( "Please write the text here" )
         )
       )
@@ -153,9 +153,9 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // В эджах какой-то мусор. Но он не должен потеряться.
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(1), url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(3), url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, Some(4), url = Some("https://youtu.be/art42364")) )
     )
 
     val jdTag0 = Tree.Leaf(
@@ -198,10 +198,10 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходные эджи содержат только мусор:
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) ),
-      0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(1), url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(3), url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, Some(4), url = Some("https://youtu.be/art42364")) ),
+      0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, Some(0), text = Some("asdasd")) )
     )
 
     val jdTag0 = JdTag.edgeQdTree(0, coords)
@@ -243,11 +243,11 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходные эджи содержат только что-то, отсосящиеся к другим частям документа:
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) ),
-      0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) ),
-      5 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(1), url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(3), url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, Some(4), url = Some("https://youtu.be/art42364")) ),
+      0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, Some(0), text = Some("asdasd")) ),
+      5 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, Some(5), text = Some(strBefore)) )
     )
 
     val jdTag0 = JdTag.edgeQdTree(0, coords)
@@ -305,9 +305,9 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // В эджах какой-то мусор. Но он не должен потеряться.
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(1), url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, Some(3), url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, Some(4), url = Some("https://youtu.be/art42364")) )
     )
 
     val jdTag0 = Tree.Leaf(

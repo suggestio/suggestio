@@ -17,7 +17,7 @@ import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.OptId
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -177,7 +177,7 @@ final class LkAdEdit @Inject() (
 
           // Повторная чистка эджей по финальному шаблону.
           // Т.к. JdDocValidator теперь может удалять из шаблона невалидные куски, то тут требуется дополнительная зачистка эджей:
-          edges2Map = JdTag.purgeUnusedEdges( tpl2, IId.els2idMap(edges1) )
+          edges2Map = JdTag.purgeUnusedEdges( tpl2, OptId.els2idMap(edges1) )
 
           framePred = MPredicates.JdContent.Frame
 
@@ -221,8 +221,8 @@ final class LkAdEdit @Inject() (
                     .toSet
                 },
                 doc = MEdgeDoc(
-                  uid   = Some( jdEdge.id ),
-                  text  = jdEdge.text.toSeq
+                  uid   = jdEdge.id,
+                  text  = jdEdge.text,
                 )
               ) :: acc0
             }

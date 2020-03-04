@@ -82,7 +82,7 @@ class EdgeEditCircuit
       val jdEdge = MEdgeDataJs(
         jdEdge = MJdEdge(
           predicate = mroot.edge.predicate,
-          id        = jdEdgeId.edgeUid,
+          id        = Some( jdEdgeId.edgeUid ),
           fileSrv   = for {
             edgeMedia <- mroot.edge.media
             nodeId    <- mroot.edge.nodeIds.headOption

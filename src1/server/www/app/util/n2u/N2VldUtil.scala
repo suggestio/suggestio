@@ -45,8 +45,9 @@ class N2VldUtil @Inject()(
       e         <- edges.iterator
       if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv   <- e.fileSrv
+      edgeUid   <- e.id
     } yield {
-      e.id -> MDynImgId(fileSrv.nodeId, dynFormat = imgFmtDflt)
+      edgeUid -> MDynImgId(fileSrv.nodeId, dynFormat = imgFmtDflt)
     }
     needImgsIter
       .toMap
@@ -136,37 +137,38 @@ class N2VldUtil @Inject()(
                    ): Map[EdgeUid_t, MJdEdgeVldInfo] = {
     lazy val logPrefix = s"validateEdges()[${System.currentTimeMillis()}]:"
 
-    jdEdges
-      .iterator
-      .map { jdEdge =>
-        val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
-        val vldEdge = MJdEdgeVldInfo(
-          jdEdge = jdEdge,
-          img    = OptionUtil.maybe( jdEdge.predicate ==>> MPredicates.JdContent.Image ) {
-            val mmediaOpt = for {
-              mimg      <- imgsNeededMap.get( jdEdge.id )
-              imgNode   <- mediasMap.get( mimg.dynImgId.mediaId )
-              if imgNode.common.ntype ==* MNodeTypes.Media.Image
-              fileEdge  <- imgNode.edges.withPredicateIter( MPredicates.File ).nextOption()
-              mediaEdge <- fileEdge.media
-            } yield {
-              mediaEdge
-            }
-
-            MEdgePicInfo(
-              isImg = nodeIdOpt
-                .flatMap { nodesMap.get }
-                .exists { _.common.ntype ==* MNodeTypes.Media.Image },
-              imgWh = mmediaOpt
-                .flatMap( _.picture.whPx ),
-              dynFmt = mmediaOpt
-                .flatMap( _.file.imgFormatOpt )
-            )
+    (for {
+      jdEdge <- jdEdges.iterator
+      edgeUid <- jdEdge.id
+    } yield {
+      val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
+      val vldEdge = MJdEdgeVldInfo(
+        jdEdge = jdEdge,
+        img    = OptionUtil.maybe( jdEdge.predicate ==>> MPredicates.JdContent.Image ) {
+          val mmediaOpt = for {
+            mimg      <- imgsNeededMap.get( edgeUid )
+            imgNode   <- mediasMap.get( mimg.dynImgId.mediaId )
+            if imgNode.common.ntype ==* MNodeTypes.Media.Image
+            fileEdge  <- imgNode.edges.withPredicateIter( MPredicates.File ).nextOption()
+            mediaEdge <- fileEdge.media
+          } yield {
+            mediaEdge
           }
-        )
-        LOGGER.trace(s"$logPrefix Edge#${jdEdge.id}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
-        jdEdge.id -> vldEdge
-      }
+
+          MEdgePicInfo(
+            isImg = nodeIdOpt
+              .flatMap { nodesMap.get }
+              .exists { _.common.ntype ==* MNodeTypes.Media.Image },
+            imgWh = mmediaOpt
+              .flatMap( _.picture.whPx ),
+            dynFmt = mmediaOpt
+              .flatMap( _.file.imgFormatOpt )
+          )
+        }
+      )
+      LOGGER.trace(s"$logPrefix Edge#${jdEdge.id}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
+      edgeUid -> vldEdge
+    })
       .toMap
   }
 

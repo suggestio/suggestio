@@ -2,7 +2,7 @@ package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
-import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil, OptionUtil.Implicits._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel
@@ -141,14 +141,15 @@ class JdAdUtil @Inject()(
       edgeMedia       <- fileEdge.media.iterator
     } yield {
       // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
-      val edgeUid = medge.doc.uid.getOrElse( -i )
+      val edgeUidSome = medge.doc.uid
+        .someOrElse( -i )
 
-      LOGGER.trace(s"$logPrefix E#$edgeUid ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime getOrElse ""}")
+      LOGGER.trace(s"$logPrefix E#${edgeUidSome.value} ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime getOrElse ""}")
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
         // Тут раньше безусловно выставлялся предикат imgPredicate, но с adn-редактором понадобились и другие предикаты.
         predicate = medge.predicate,
-        id        = edgeUid,
+        id        = edgeUidSome,
         // url не ставим, потому что очень нужен около-оригинальная картинка, для кропа например.
         fileSrv   = Some(MSrvFileInfo(
           nodeId    = nodeId,
@@ -182,7 +183,7 @@ class JdAdUtil @Inject()(
   def mkJdVideoEdges(videoEdges: Seq[MEdge], videoNodes: Map[String, MNode]): List[MJdEdge] = {
     (for {
       medge       <- videoEdges.iterator
-      edgeUid     <- medge.doc.uid.iterator
+      if medge.doc.uid.nonEmpty
       nodeId      <- medge.nodeIds.iterator
       mnode       <- videoNodes.get( nodeId )
       extUrl      <- {
@@ -198,7 +199,7 @@ class JdAdUtil @Inject()(
     } yield {
       MJdEdge(
         predicate = framePredicate,
-        id        = edgeUid,
+        id        = medge.doc.uid,
         url       = Some( extUrl )
       )
     })
@@ -217,13 +218,13 @@ class JdAdUtil @Inject()(
     (for {
       textEdge <- edges
         .withPredicateIter( textPred )
-      edgeUid  <- textEdge.doc.uid.iterator
-      textOpt = textEdge.doc.text.headOption
+      if textEdge.doc.uid.nonEmpty
+      textOpt = textEdge.doc.text
       if textOpt.nonEmpty
     } yield {
       MJdEdge(
         predicate = textPred,
-        id        = edgeUid,
+        id        = textEdge.doc.uid,
         text      = textOpt
       )
     })
@@ -538,11 +539,10 @@ class JdAdUtil @Inject()(
           val imgPred = imgPredicate
           (for {
             imgMakeRes <- imgsRendered.iterator
-            edgeUid    <- imgMakeRes.medge.doc.uid
           } yield {
             MJdEdge(
               predicate   = imgPred,
-              id          = edgeUid,
+              id          = imgMakeRes.medge.doc.uid,
               url         = {
                 val resImg = imgMakeRes.dynCallArgs
                 val url = mkDistMediaUrl(dynImgUtil.imgCall(resImg), resImg.dynImgId, mediaHostsMap, forceAbsUrls)

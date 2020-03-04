@@ -4,7 +4,6 @@ import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
-import io.suggest.primo.id.IId
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.MFileUploadS
 import japgolly.univeq.UnivEq
@@ -26,11 +25,13 @@ import monocle.macros.GenLens
 object MEdgeDataJs {
 
   def jdEdges2EdgesDataMap(jdEdges: Iterable[MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
-    IId.els2idMap(
-      jdEdges
-        .iterator
-        .map( MEdgeDataJs(_) )
-    )
+    (for {
+      jdEdge <- jdEdges.iterator
+      edgeUid <- jdEdge.id
+    } yield {
+      edgeUid -> MEdgeDataJs(jdEdge)
+    })
+      .toMap
   }
 
   /** Поддержка FastEq для инстансов [[MEdgeDataJs]]. */
@@ -38,7 +39,7 @@ object MEdgeDataJs {
   implicit object MEdgeDataJsFastEq extends FastEq[MEdgeDataJs] {
     override def eqv(a: MEdgeDataJs, b: MEdgeDataJs): Boolean = {
       (a.jdEdge ===* b.jdEdge) &&
-        (a.fileJs ===* b.fileJs)
+      (a.fileJs ===* b.fileJs)
     }
   }
 
@@ -63,15 +64,10 @@ object MEdgeDataJs {
   * @param jdEdge КроссПлатформенная инфа по эджу.
   * @param fileJs JS-only инфа по файлу, если есть. Обычно только в редакторе, например upload progress.
   */
-case class MEdgeDataJs(
-                        jdEdge    : MJdEdge,
-                        fileJs    : Option[MJsFileInfo]   = None
-                      )
-  extends IId[Int]
-{
-
-  override final def id = jdEdge.id
-
+final case class MEdgeDataJs(
+                              jdEdge    : MJdEdge,
+                              fileJs    : Option[MJsFileInfo]   = None
+                            ) {
 
   private def _imgSrcOrDflt(dflt: => Option[String]) = {
     fileJs

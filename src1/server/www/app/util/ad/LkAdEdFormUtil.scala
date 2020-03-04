@@ -11,7 +11,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.media.MFileMeta
 import io.suggest.pick.ContentTypeCheck
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.OptId
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.up.UploadConstants
@@ -118,7 +118,7 @@ class LkAdEdFormUtil @Inject() (
     val nodeIdVld = Validation.liftNel(form.doc.jdId.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
 
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
-    val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( form.edges )
+    val edgesMap = OptId.els2idMap[EdgeUid_t, MJdEdge]( form.edges )
     val edges1 = JdTag.purgeUnusedEdges( form.doc.template, edgesMap )
 
     // Ранняя валидация корректности присланных эджей:
@@ -160,8 +160,9 @@ class LkAdEdFormUtil @Inject() (
     (for {
       e <- edges.iterator
       text <- e.text
+      edgeUid <- e.id
     } yield {
-      e.id -> text
+      edgeUid -> text
     })
       .toMap
   }

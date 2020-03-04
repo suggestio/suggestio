@@ -103,7 +103,17 @@ object OptionUtil {
 
   object Implicits {
 
-    implicit class OptFutOptExtOps[T](val optFutOpt: Option[Future[Option[T]]]) extends AnyVal {
+    implicit final class AnyOptExtOps[T]( private val opt: Option[T] ) extends AnyVal {
+      /** Бывает, что нужно вместо чистого значения вернуть Some(), но стараясь сохранить предыдущий Some-инстанс, если он был. */
+      def someOrElse(v: => T): Some[T] = {
+        opt match {
+          case some: Some[T] => some
+          case None => Some(v)
+        }
+      }
+    }
+
+    implicit final class OptFutOptExtOps[T](val optFutOpt: Option[Future[Option[T]]]) extends AnyVal {
 
       def getOrNoneFut: Future[Option[T]] = {
         optFutOpt.getOrElse( Future.successful(None) )

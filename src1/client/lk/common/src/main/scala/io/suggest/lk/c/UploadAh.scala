@@ -113,20 +113,24 @@ class UploadAh[V, M](
           } { case (contentType, fileNew) =>
             val fileSize2 = fileNew.size
             // Попробовать найти в состоянии файл с такими же характеристиками.
-            val (dataEdge9, edges9, fxOpt) = (for {
+            val (dataEdge9, edges9, fxOpt, edgeUid9) = (for {
               e <- v0.edges.valuesIterator
               fileJs <- e.fileJs
               if (fileJs.blob.size ==* fileSize2) &&
                  // TODO Нужен хэш вместо имени, надо бы через asm-crypto.js SHA1 это реализовать.
                  (fileJs.fileName contains[String] fileNew.name)
+              edgeUid <- e.jdEdge.id
             } yield {
-              e
+              // Внезапно, этот файл уже известен.
+              //println("dup: " + fileNew.name + " | " + fileNew.size + " bytes")
+              (e, v0.edges, None, edgeUid)
             })
               .nextOption()
-              .fold [(MEdgeDataJs, Map[EdgeUid_t, MEdgeDataJs], Option[Effect])] {
+              .getOrElse {
                 // Новый файл выбран юзером, который пока неизвестен.
                 // Найти в состоянии текущий файл, если он там есть.
                 val edgeUidOldOpt = for {
+                  // Хотя m.resKey.edgeUid может содержать id, всё равно прогоняем через adp, т.к. uid может и отсутсовать при наличии эджа.
                   jdEdgeIdOld <- picViewContAdp.get(v0.view, m.resKey)
                 } yield {
                   jdEdgeIdOld.edgeUid
@@ -178,7 +182,7 @@ class UploadAh[V, M](
                 val dataEdge2 = MEdgeDataJs(
                   jdEdge = MJdEdge(
                     predicate   = MPredicates.JdContent.Image,
-                    id          = edgeUid2,
+                    id          = Some( edgeUid2 ),
                     url         = Some( blobUrlNew )
                   ),
                   fileJs = Some(MJsFileInfo(
@@ -199,17 +203,12 @@ class UploadAh[V, M](
                 // Запустить хеширование файла в фоне:
                 val hashFx = FileHashStart(edgeUid2, blobUrlNew).toEffectPure
                 val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
-                (dataEdge2, edges2, Some(hashFx + blobPurgeFx))
-
-              } { edge =>
-                // Внезапно, этот файл уже известен.
-                //println("dup: " + fileNew.name + " | " + fileNew.size + " bytes")
-                (edge, v0.edges, None)
+                (dataEdge2, edges2, Some(hashFx + blobPurgeFx), edgeUid2)
               }
 
             val imgEdgeIdSome2 = Some(
               MJdEdgeId(
-                edgeUid = dataEdge9.id
+                edgeUid = edgeUid9,
               )
             )
 
@@ -298,7 +297,7 @@ class UploadAh[V, M](
               def __v2F(fileJs9: MJsFileInfo): MUploadAh[V] = {
                 val edge2 = (MEdgeDataJs.fileJs set Some(fileJs9))(edge0)
                 v0.withEdges(
-                  v0.edges.updated( edge0.id, edge2 )
+                  v0.edges.updated( m.src.edgeUid, edge2 )
                 )
               }
 
@@ -314,7 +313,7 @@ class UploadAh[V, M](
 
               // Пересборка m.src
               val src2 = FileHashStart(
-                edgeUid = edge0.id,
+                edgeUid = m.src.edgeUid,
                 blobUrl = fileJs1.blobUrl.get,
               )
 
@@ -369,6 +368,7 @@ class UploadAh[V, M](
     // Сигнал о завершении запроса подготовки к аплоаду файла.
     case m: PrepUploadResp =>
       val v0 = value
+
       UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
         LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
@@ -385,7 +385,7 @@ class UploadAh[V, M](
             val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
             val errPopup0 = v0.errorPopup getOrElse MErrorPopupS.empty
             val v2 = v0
-              .withEdges( v0.edges + (edge0.id -> edge2) )
+              .withEdges( v0.edges + (m.src.edgeUid -> edge2) )
               // Распахнуть попап с ошибкой закачки файла:
               .withErrorPopup( Some(
                 (MErrorPopupS.exception set Some(ex))(errPopup0)
@@ -424,7 +424,7 @@ class UploadAh[V, M](
                   val edge2 = MEdgeDataJs.fileJs
                     .set(fileJsOpt2)(edge0)
                   var v2 = v0
-                    .withEdges( v0.edges + (edge0.id -> edge2) )
+                    .withEdges( v0.edges + (m.src.edgeUid -> edge2) )
 
                   if (resp.extra !=* v0.uploadExtra)
                     v2 = v2.withUploadExtra( resp.extra )
@@ -445,7 +445,7 @@ class UploadAh[V, M](
                   )
                   var v2 = v0.withEdges(
                     v0.edges
-                      .updated(edge2.id, edge2)
+                      .updated( m.src.edgeUid, edge2 )
                   )
                   if (resp.extra !=* v0.uploadExtra)
                     v2 = v2.withUploadExtra( resp.extra )
@@ -459,7 +459,7 @@ class UploadAh[V, M](
                 for (_ <- resp.errors.headOption) yield {
                   val v2 = v0.copy(
                     // Удалить эдж текущего файла.
-                    edges      = v0.edges - edge0.id,
+                    edges      = v0.edges - m.src.edgeUid,
                     view       = picViewContAdp.forgetEdge(v0.view, m.src.edgeUid),
                     // Вывести попап с ошибками, присланными сервером:
                     errorPopup = UploadAh._errorPopupWithMessages( v0.errorPopup, resp.errors )
@@ -482,7 +482,7 @@ class UploadAh[V, M](
       val v0 = value
 
       (for {
-        edge0   <- UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
+        edge0 <- UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
         if edge0.fileJs.nonEmpty
       } yield {
         // Эффект окончания загрузки.
@@ -505,7 +505,7 @@ class UploadAh[V, M](
 
         val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
         val v2 = v0
-          .withEdges( v0.edges + (edge0.id -> edge2) )
+          .withEdges( v0.edges + (m.src.edgeUid -> edge2) )
         updatedSilent(v2, uploadFinishFx)
 
       })
@@ -537,7 +537,7 @@ class UploadAh[V, M](
             )( edge0 )
 
             var v2 = v0.withEdges(
-              v0.edges.updated(edge2.id, edge2)
+              v0.edges.updated( m.src.edgeUid, edge2)
             )
             updated( v2 )
           },
@@ -559,7 +559,7 @@ class UploadAh[V, M](
                   }
                 )
                 var v2 = v0.withEdges(
-                  v0.edges.updated(edge2.id, edge2)
+                  v0.edges.updated( m.src.edgeUid, edge2 )
                 )
                 if (resp.extra !=* v0.uploadExtra)
                   v2 = v2.withUploadExtra( resp.extra )
@@ -666,6 +666,7 @@ class UploadAh[V, M](
     // Клик по кнопке открытия попапа для кропа.
     case m: CropOpen =>
       val v0 = value
+
       val bgImg = picViewContAdp
         .get(v0.view, m.resKey)
         .get
@@ -679,7 +680,7 @@ class UploadAh[V, M](
       val c100 = 100d
 
       // Попытаемся восстановить %crop на основе кропа из состояния:
-      val existingPcCrop = for {
+      val (heightPc, xPc, yPc) = (for {
         crop    <- bgImg.crop
         origWh  <- origWhOpt
       } yield {
@@ -688,7 +689,10 @@ class UploadAh[V, M](
         val xPc = crop.offX / origWh.width.toDouble * c100
         val yPc = crop.offY / origWh.height.toDouble * c100
         (/*widthPc,*/ heightPc, xPc, yPc)
-      }
+      })
+        .getOrElse {
+          (100d, 0d, 0d)
+        }
 
       // TODO Надо осилить выставление начального кропа. Тут серьезная проблема в этом быдлокоде
       /*
@@ -715,10 +719,6 @@ class UploadAh[V, M](
       }
       */
 
-      val (heightPc, xPc, yPc) = existingPcCrop.getOrElse {
-        (100d, 0d, 0d)
-      }
-
       val cropPc = new PercentCrop {
         override val aspect = bmWhRatio
         override val height = heightPc
@@ -730,7 +730,7 @@ class UploadAh[V, M](
       val v2 = v0.withCropPopup( Some(
         MPictureCropPopup(
           origCrop    = bgImg.crop,
-          imgEdgeUid  = edge.id,
+          imgEdgeUid  = bgImg.edgeUid,
           percentCrop = cropPc
         )
       ))

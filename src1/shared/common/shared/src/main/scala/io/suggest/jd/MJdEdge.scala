@@ -3,7 +3,7 @@ package io.suggest.jd
 import io.suggest.err.ErrorConstants
 import io.suggest.file.MSrvFileInfo
 import io.suggest.n2.edge.{EdgeUid_t, MPredicate, MPredicates}
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.OptId
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
@@ -40,7 +40,7 @@ object MJdEdge {
     val F = Fields
     (
       (__ \ F.PREDICATE_FN).format[MPredicate] and
-      (__ \ F.UID_FN).format[EdgeUid_t] and
+      (__ \ F.UID_FN).formatNullable[EdgeUid_t] and
       (__ \ F.TEXT_FN).formatNullable[String] and
       (__ \ F.URL_FN).formatNullable[String] and
       (__ \ F.SRV_FILE_FN).formatNullable[MSrvFileInfo]
@@ -66,7 +66,8 @@ object MJdEdge {
         Validation.liftNel(e.predicate)(!expectedPred.contains(_), errMsgF(`PRED` + `.` + ErrorConstants.Words.EXPECTED))
       }
 
-      val idVld = Validation.success(e.id)
+      // При сохранении jd-полей, uid всегда должен быть задан.
+      val idVld = Validation.liftNel(e.id)(_.nonEmpty, errMsgF("uid" + `.`  + ErrorConstants.Words.MISSING))
 
       val textVld = if (e.predicate ==>> P.Text ) {
         Validation.liftNel(e.text)(
@@ -131,14 +132,14 @@ object MJdEdge {
   * @param fileSrv КроссПлатформенная инфа по файлу-узлу на стороне сервера.
   */
 case class MJdEdge(
-                    // TODO Предикат вообще тут неуместен. Это уровень представления, его нужно унести на уровень id или просто удалить: jdEdge описывает один ресурс (файл, текст, etc), а куда его привязать - это уже другой уровень.
                     predicate           : MPredicate,
-                    override val id     : EdgeUid_t,
+                    // TODO Заменить опциональный id + text на MJdEdgeDoc, причесав последнюю модель text: s/Seq/Option/g
+                    override val id     : Option[EdgeUid_t],
                     text                : Option[String] = None,
                     url                 : Option[String] = None,
                     fileSrv             : Option[MSrvFileInfo]  = None
                   )
-  extends IId[EdgeUid_t]
+  extends OptId[EdgeUid_t]
 {
 
   def fileSrvUrl = fileSrv.flatMap(_.url)

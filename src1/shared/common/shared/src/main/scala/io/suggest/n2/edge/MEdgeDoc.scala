@@ -40,11 +40,7 @@ object MEdgeDoc
   /** Поддержка play-json. */
   implicit val edgeDocJson: OFormat[MEdgeDoc] = (
     (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and
-    (__ \ Fields.TEXT_FN).formatNullable[Seq[String]]
-      .inmap[Seq[String]](
-        { _.getOrElse(Nil) },
-        { texts => if (texts.isEmpty) None else Some(texts) }
-      )
+    (__ \ Fields.TEXT_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -81,32 +77,7 @@ object MEdgeDoc
   */
 case class MEdgeDoc(
                      uid    : Option[EdgeUid_t]   = None,
-                     text   : Seq[String]         = Nil,
+                     text   : Option[String]      = None,
                    )
   extends EmptyProduct
-{
-
-  override def toString: String = {
-    val sb = new StringBuilder(64)
-    for (u <- uid)
-      sb.append('#')
-        .append(u)
-        .append(',')
-
-    if (text.nonEmpty) {
-      val isMany = text.lengthCompare(1) > 0
-      if (isMany)
-        sb.append('[')
-      for (t <- text) {
-        sb.append(t)
-          .append(", ")
-      }
-      if (isMany)
-        sb.append(']')
-    }
-
-    sb.toString()
-  }
-
-}
 

@@ -8,6 +8,7 @@ import io.suggest.jd.tags.JdTag
 import io.suggest.n2.edge.MPredicates
 import io.suggest.math.SimpleArithmetics._
 import minitest._
+import japgolly.univeq._
 import scalaz.Tree
 
 /**
@@ -105,49 +106,50 @@ object JdDocValidationSpec extends SimpleTestSuite {
       // strip1
       MJdEdge(
         predicate = textPred,
-        id        = upperBlockEdgeId,
+        id        = Some( upperBlockEdgeId ),
         text      = Some( MsgCodes.`Upper.block` + "\n" ),
       ),
       MJdEdge(
         predicate = textPred,
-        id        = alsoDisplayedInGridEdgeId,
+        id        = Some( alsoDisplayedInGridEdgeId ),
         text      = Some( MsgCodes.`also.displayed.in.grid` + "\n" )
       ),
 
       // strip2
       MJdEdge(
         predicate = textPred,
-        id        = descriptionEdgeId,
+        id        = Some( descriptionEdgeId ),
         text      = Some( MsgCodes.`Description` + "\n" )
       ),
       MJdEdge(
         predicate = textPred,
-        id        = descrContentEdgeId,
+        id        = Some( descrContentEdgeId ),
         text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
       ),
 
       // strip3
       MJdEdge(
         predicate = textPred,
-        id        = fr3text1EdgeId,
+        id        = Some( fr3text1EdgeId ),
         text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
       ),
       MJdEdge(
         predicate = textPred,
-        id        = fr3text2EdgeId,
+        id        = Some( fr3text2EdgeId ),
         text      = Some( "webkit-transition: transform 0.2s linear\n" )
       )
     )
 
-    val edgesMap = edges0
-      .iterator
-      .map { jdEdge =>
-        val vldEdge = MJdEdgeVldInfo(
-          jdEdge  = jdEdge,
-          img     = None
-        )
-        jdEdge.id -> vldEdge
-      }
+    val edgesMap = (for {
+      jdEdge <- edges0.iterator
+      edgeUid <- jdEdge.id
+    } yield {
+      val vldEdge = MJdEdgeVldInfo(
+        jdEdge  = jdEdge,
+        img     = None
+      )
+      edgeUid -> vldEdge
+    })
       .toMap
 
     val vld = new JdDocValidator(
@@ -158,9 +160,12 @@ object JdDocValidationSpec extends SimpleTestSuite {
     val vldRes = vld.validateDocumentTree( tplTree )
     assert(vldRes.isSuccess, vldRes.toString)
 
-    assertEquals(
-      vldRes.getOrElse(null).drawTree,
-      tplTree.drawTree
+    val vldTreeDraw = vldRes.getOrElse(???).drawTree
+    val tplTreeDraw = tplTree.drawTree
+    assert(
+      vldTreeDraw ==* tplTreeDraw,
+      (vldTreeDraw :: tplTreeDraw :: Nil)
+        .mkString("Trees mismatch:\n********************", "\n\n<<<************************************>>>\n\n", "\n*********************")
     )
   }
 

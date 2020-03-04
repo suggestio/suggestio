@@ -1,6 +1,5 @@
 package io.suggest.jd
 
-import io.suggest.primo.id.OptId
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -50,10 +49,3 @@ final case class MJdData(
                           doc         : MJdDoc,
                           edges       : Iterable[MJdEdge],
                         )
-  extends OptId[String]
-{
-
-  // TODO Удалить OptId отсюда.
-  override def id = doc.jdId.nodeId
-
-}

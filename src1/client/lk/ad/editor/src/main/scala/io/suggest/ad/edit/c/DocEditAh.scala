@@ -21,7 +21,7 @@ import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.lk.m.color.MColorsState
 import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
-import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.n2.edge.{EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.{Base64JsUtil, ContentTypeCheck, MimeConst}
@@ -174,26 +174,28 @@ class DocEditAh[M](
 
     val textPred = MPredicates.JdContent.Text
     val edgesMap0 = v0.jdDoc.jdArgs.data.edges
-    val (edgesMap2, edgeUid) = edgesMap0
-      .valuesIterator
-      .find { e =>
-        (e.jdEdge.predicate ==* textPred) &&
-        (e.jdEdge.text contains textL10ed)
-      }
-      .fold [(Map[EdgeUid_t, MEdgeDataJs], Int)] {
+
+    val (edgesMap2, edgeUid) = (for {
+      e <- edgesMap0.valuesIterator
+      if (e.jdEdge.predicate ==* textPred) &&
+         (e.jdEdge.text contains textL10ed)
+      edgeUid <- e.jdEdge.id
+    } yield {
+      (edgesMap0, edgeUid)
+    })
+      .nextOption()
+      .getOrElse {
         // Нет примера текста в эджах: добавить его туда.
         val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( edgesMap0 )
         val e = MEdgeDataJs(
           jdEdge = MJdEdge(
             predicate = textPred,
-            id        = nextEdgeUid,
-            text      = Some(textL10ed)
+            id        = Some( nextEdgeUid ),
+            text      = Some( textL10ed )
           )
         )
         val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
         (edgesMap1, nextEdgeUid)
-      } { exampleTextEdge =>
-        (edgesMap0, exampleTextEdge.id)
       }
 
     val qdtTree = Tree.Node[JdTag](
@@ -306,6 +308,7 @@ class DocEditAh[M](
           for {
             edgeData <- edgesData3.valuesIterator
             jde = edgeData.jdEdge
+            edgeUid <- jde.id
             // Три варианта:
             // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
             // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
@@ -314,7 +317,7 @@ class DocEditAh[M](
             if (dataUrl startsWith dataPrefix) &&
               // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
               // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
-              !(edgesData0 contains jde.id)
+              !(edgesData0 contains edgeUid)
           } yield {
             (dataUrl, edgeData)
           }
@@ -344,7 +347,8 @@ class DocEditAh[M](
           .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
             // Новая картинка. Найти и уменьшить её ширину в шаблоне.
             (for {
-              imgOpLoc <- qdLoc.findByEdgeUid( edgeData.jdEdge.id )
+              edgeUid <- edgeData.jdEdge.id
+              imgOpLoc <- qdLoc.findByEdgeUid( edgeUid )
               widthPxOpt = _loc2width(imgOpLoc)
               if widthPxOpt.fold(true) { widthPx =>
                 widthPx > maxEmbedWidth || widthPx <= 0
@@ -640,6 +644,7 @@ class DocEditAh[M](
       val dataEdgeOpt2 = (for {
         // Поиска по исходной URL, потому что карта эджей могла изменится за время фоновой задачи.
         dataEdge0 <- dataEdgeOpt0
+        edgeUid <- dataEdge0.jdEdge.id
 
         // Убедится, что у нас тут картинка.
         imgContentTypeOpt = {
@@ -674,18 +679,21 @@ class DocEditAh[M](
         }
 
         val dataEdge1 = (MEdgeDataJs.fileJs set Some(fileJs2))( dataEdge0 )
-        val hashFx = FileHashStart(dataEdge1.id, blobUrl).toEffectPure
-        (dataEdge1, hashFx)
+        val hashFx = FileHashStart( edgeUid, blobUrl ).toEffectPure
+        (dataEdge1, hashFx, edgeUid)
       })
 
       val v2Opt = dataEdgeOpt2
-        .map { case (dataEdge2, _) =>
-          dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
+        .map { case (dataEdge2, _, edgeUid) =>
+          dataEdgesMap0.updated( edgeUid, dataEdge2 )
         }
         .orElse {
-          for (dataEdge0 <- dataEdgeOpt0) yield {
+          for {
+            dataEdge0 <- dataEdgeOpt0
+            edgeUid <- dataEdge0.jdEdge.id
+          } yield {
             // Авто-удаление только что некорректного файла/блоба. TODO Надо вычистить и шаблон следом.
-            dataEdgesMap0.removed( dataEdge0.id )
+            dataEdgesMap0.removed( edgeUid )
           }
         }
         .map { dataEdgesMap1 =>
@@ -1203,8 +1211,9 @@ class DocEditAh[M](
         e <- v0.jdDoc.jdArgs.data.edges.valuesIterator
         fileSrv <- e.jdEdge.fileSrv
         if m.nodeId ==* fileSrv.nodeId
+        edgeUid <- e.jdEdge.id
       } yield {
-        e.id
+        edgeUid
       })
         .toSet
 

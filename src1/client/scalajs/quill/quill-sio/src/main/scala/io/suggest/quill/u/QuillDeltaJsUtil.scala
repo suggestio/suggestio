@@ -10,7 +10,6 @@ import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.sjs.common.log.Log
 import io.suggest.text.MTextAligns
@@ -344,13 +343,13 @@ class QuillDeltaJsUtil extends Log {
             val typeOfRaw = js.typeOf(raw)
 
             // Проанализировать тип значения insert-поля: там или строка текста, или object с данными embed'а.
-            val jdEdge = if (typeOfRaw ==* JsTypes.STRING) {
+            val jdEdgeJs = if (typeOfRaw ==* JsTypes.STRING) {
               val text = raw.asInstanceOf[String]
               str2EdgeMap.getOrElseUpdate(text, {
                 MEdgeDataJs(
                   jdEdge = MJdEdge(
                     predicate = jdContPred.Text,
-                    id        = nextEdgeUid(),
+                    id        = Some( nextEdgeUid() ),
                     text      = Some(text)
                   )
                 )
@@ -378,7 +377,7 @@ class QuillDeltaJsUtil extends Log {
                 MEdgeDataJs(
                   jdEdge = MJdEdge(
                     predicate = pred,
-                    id        = nextEdgeUid(),
+                    id        = Some( nextEdgeUid() ),
                     url       = Some( anyStrContent )
                     // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
                   )
@@ -389,7 +388,7 @@ class QuillDeltaJsUtil extends Log {
             }
 
             MJdEdgeId(
-              edgeUid = jdEdge.id
+              edgeUid = jdEdgeJs.jdEdge.id.get,
             )
           },
           index = dOp.delete
@@ -420,7 +419,12 @@ class QuillDeltaJsUtil extends Log {
     )
 
     // Объеденить старую и обновлённые эдж-карты.
-    val edges2 = edges0 ++ IId.els2idMapIter[EdgeUid_t, MEdgeDataJs]( str2EdgeMap.valuesIterator )
+    val edges2 = edges0 ++ (for {
+      jdEdgeJs <- str2EdgeMap.valuesIterator
+      edgeUid <- jdEdgeJs.jdEdge.id
+    } yield {
+      edgeUid -> jdEdgeJs
+    })
 
     (tag, edges2)
   }

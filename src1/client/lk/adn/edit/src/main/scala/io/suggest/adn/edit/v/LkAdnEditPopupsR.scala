@@ -78,7 +78,7 @@ class LkAdnEditPopupsR(
                 percentCrop = mcrop.percentCrop,
                 popCssClass = popupCss,
                 resKey      = MFormResourceKey(
-                  edgeUid   = Some( edge.jdEdge.id ),
+                  edgeUid   = edge.jdEdge.id,
                   frkType   = MFrkTypes.somes.GalImgSome,
                 ),
                 withDelete  = true
