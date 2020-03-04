@@ -305,15 +305,14 @@ class Umap @Inject() (
                 case _          => Nil
               }
             }
-            .buffered
-            .headOption
+            .nextOption()
             .orElse {
-              shapes.iterator
+              shapes
+                .iterator
                 .map { m =>
                   m.shape.centerPoint getOrElse m.shape.firstPoint
                 }
-                .buffered
-                .headOption
+                .nextOption()
             }
 
           // Собираем новый эдж сразу, старый будет удалён без суд и следствия.

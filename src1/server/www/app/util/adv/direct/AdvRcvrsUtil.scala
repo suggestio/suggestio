@@ -73,8 +73,7 @@ class AdvRcvrsUtil @Inject()(
     val rcvrEdgeOpt = prodIdOpt.flatMap { prodId =>
       mad.edges
         .withNodePred(prodId, MPredicates.Receiver)
-        .buffered
-        .headOption
+        .nextOption()
     }
     val needProducer = rcvrEdgeOpt.isDefined
 

@@ -344,8 +344,7 @@ class GeoTagsUtil @Inject() (
               val e0Opt = mnode0
                 .edges
                 .withPredicateIter(p)
-                .buffered
-                .headOption
+                .nextOption()
 
               // Собрать единый эдж self-тега для всех геошейпов.
               val e1 = e0Opt.fold {

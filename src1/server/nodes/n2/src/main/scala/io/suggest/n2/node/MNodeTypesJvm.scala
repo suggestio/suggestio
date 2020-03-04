@@ -72,8 +72,7 @@ object MNodeTypesJvm {
           .out
           .iterator
           .flatMap(_.info.tags)
-          .buffered
-          .headOption
+          .nextOption()
 
       // Для остальных типов узлов это всё неактуально.
       case _ =>

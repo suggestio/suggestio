@@ -748,8 +748,7 @@ class LkNodes @Inject() (
 
       val madEdgeSelfOpt = request.mad.edges
         .withNodePred(nodeId, pred)
-        .buffered
-        .headOption
+        .nextOption()
 
       madEdgeSelfOpt.fold [Future[Result]] {
         LOGGER.warn(s"$logPrefix Cannot modify showOpened on in-exising edge $pred")
@@ -824,8 +823,7 @@ class LkNodes @Inject() (
 
       val madEdgeSelfOpt = request.mad.edges
         .withNodePred(nodeId, pred)
-        .buffered
-        .headOption
+        .nextOption()
 
       madEdgeSelfOpt.fold [Future[Result]] {
         LOGGER.warn(s"$logPrefix Cannot modify AlwaysOutlined on in-exising edge $pred")

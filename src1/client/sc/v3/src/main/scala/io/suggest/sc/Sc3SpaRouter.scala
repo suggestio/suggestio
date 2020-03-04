@@ -169,8 +169,7 @@ class Sc3SpaRouter(
       } yield {
         parsed
       })
-        .buffered
-        .headOption
+        .nextOption()
     } catch {
       case ex: Throwable =>
         LOG.error( ErrorMsgs.CANONICAL_URL_FAILURE, ex )

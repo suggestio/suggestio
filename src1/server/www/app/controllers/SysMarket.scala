@@ -217,8 +217,7 @@ class SysMarket @Inject() (
             val nodeName = ei.mnodeEiths
               .iterator
               .map { _.fold [String] (identity, _.guessDisplayNameOrId.getOrElse("")) }
-              .buffered
-              .headOption
+              .nextOption()
               .getOrElse("???")
             (ei.medge.predicate.value,
               ei.medge.order.getOrElse(Int.MaxValue),
@@ -799,8 +798,7 @@ class SysMarket @Inject() (
     // Получить ТЦ.
     val mmartFut = n2NodesUtil
       .receiverIds(mad)
-      .buffered
-      .headOption
+      .nextOption()
       .fold [Future[Option[MNode]]] {
         // Тут хрень какая-то. Наугад выбирается случайный узел.
         mNodes.dynSearchOne {

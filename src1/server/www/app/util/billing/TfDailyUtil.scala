@@ -260,8 +260,7 @@ class TfDailyUtil @Inject()(
         // Поискать первый тариф среди найденных родительских узлов.
         val ownTfDailyOpt = ownNodes.iterator
           .flatMap( _.billing.tariffs.daily )
-          .buffered
-          .headOption
+          .nextOption()
         LOGGER.trace(s"$logPrefix ownTfDailyOpt => $ownTfDailyOpt")
 
         // Если найден тариф, то вернуть его. Если нет, то подняться ещё на уровень выше в этих поисках.
@@ -386,8 +385,7 @@ class TfDailyUtil @Inject()(
           clause.amount
         }
       }
-      .buffered
-      .headOption
+      .nextOption()
       .fold [ITfDailyMode] (InheritTf) { manAmount =>
         ManualTf( manAmount )
       }

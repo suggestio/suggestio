@@ -330,8 +330,7 @@ class MImgs3 @Inject() (
   private def _fileEdge(mnode: MNode) = {
     mnode.edges
       .withPredicateIter( MPredicates.File )
-      .buffered
-      .headOption
+      .nextOption()
   }
 
   private def _mediaFut(mediaOptFut: Future[Option[MNode]]): Future[MNode] = {

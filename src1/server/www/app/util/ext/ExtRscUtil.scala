@@ -169,8 +169,7 @@ class ExtRscUtil @Inject()(
               infos
                 .iterator
                 .flatMap(f)
-                .buffered
-                .headOption
+                .nextOption()
             }
 
             val mnode0 = MNode(

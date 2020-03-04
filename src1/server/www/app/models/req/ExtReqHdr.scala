@@ -58,8 +58,7 @@ object ExtReqHdr extends MacroLogsImpl {
             false
         }
       }
-      .buffered
-      .headOption
+      .nextOption()
       .getOrElse {
         warn(logPrefix + "No more forwarding tokens. Returning raw value.")
         raw

@@ -609,10 +609,9 @@ final class DynImgUtil @Inject() (
               jdId        <- jdIdOpt
               jdMediaId   <- mediaId2edgeUid.get( jdId.edgeUid )
               mNode       <- mmediasMap.get( jdMediaId )
-              fileEdge    <- mNode.edges.withPredicateIter( MPredicates.File )
-                // TODO Может ли быть тут несколько File-эджей?
-                .buffered
-                .headOption
+              fileEdge    <- mNode.edges
+                .withPredicateIter( MPredicates.File )
+                .nextOption()
               edgeMedia   <- fileEdge.media
             } yield {
               val jdId2 = (MJdEdgeId.outImgFormat set edgeMedia.file.imgFormatOpt)(jdId)

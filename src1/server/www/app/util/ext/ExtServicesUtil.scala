@@ -46,15 +46,13 @@ class ExtServicesUtil @Inject() (
       (_, helper) <- HELPERS
       if helper.isForHost(host)
     } yield helper)
-      .buffered
-      .headOption
+      .nextOption()
   }
 
   def helperFor(mExtService: MExtService): Option[IExtServiceHelper] = {
     _buildHelpers( mExtService )
-      .buffered
-      .headOption
       .map(_._2)
+      .nextOption()
   }
 
 

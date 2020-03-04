@@ -299,16 +299,18 @@ class MdrUtil @Inject() (
           val personNodeOpt = personsMap.get( personId )
 
           // Разобраться с языком для рендера контекста.
-          implicit val ctx2 = personNodeOpt
-            .iterator
-            .flatMap( _.meta.basic.langs )
-            .flatMap( langCode2MessagesMap.get )
-            .buffered
-            .headOption
-            .fold {
+          implicit val ctx2 = (for {
+            personNode    <- personNodeOpt.iterator
+            langCode      <- personNode.meta.basic.langs
+            langMessages  <- langCode2MessagesMap.get( langCode )
+          } yield {
+            ctx.withMessages( langMessages )
+          })
+            .nextOption()
+            .getOrElse {
               LOGGER.warn( s"$logPrefix i18n failed for person#$personId, available langs = [${langCode2MessagesMap.keysIterator.mkString(", ")}]" )
               ctx
-            }(ctx.withMessages)
+            }
 
           // Вычислить id узла, на который генерить ссылку для юзера.
           val mdrNodeId = own2ChildrenMap

@@ -352,88 +352,87 @@ class FirstRunDialogAh[M](
     val currPhase = view0.phase
     val allPhases = MWzPhases.values
 
-    allPhases
-      .iterator
-      // Получить итератор фаз ПОСЛЕ текущей фазы:
-      .dropWhile { nextPhase =>
-        nextPhase !=* currPhase
-      }
-      .drop(1)
-      // Найти и разобраться с pot с пермишшеном фазы:
-      .flatMap { nextPhase =>
-        for {
-          permPot <- v0.perms.get( nextPhase )
-
-          // Основная логика упакована сюда:
-          v9 <- permPot
-            // По идее, тут или ready, или failed.
-            .toOption
-            .flatMap[MWzFirstOuterS] { perm =>
-              if (perm.isPrompt) {
-                // Надо задать вопрос юзеру, т.к. доступ ещё не запрашивался.
-                val v2 = MWzFirstOuterS.view.set {
-                  Some(
-                    view0.copy(
-                      phase = nextPhase,
-                      visible = true,
-                      frame = MWzFrames.AskPerm
-                    )
-                  )
-                }(v0)
-                Some(v2)
-
-              } else if (perm.isDenied) {
-                // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
-                val v2 = MWzFirstOuterS.view.set {
-                  Some(
-                    view0.copy(
-                      phase   = nextPhase,
-                      visible = true,
-                      frame   = MWzFrames.Info
-                    )
-                  )
-                }(v0)
-                Some(v2)
-
-              } else {
-                // granted или что-то неведомое - пропуск фазы или завершение, если не осталось больше фаз для обработки.
-                OptionUtil.maybe(v0.perms.exists(_._2.isPending))( v0 )
-              }
-            }
-            .orElse[MWzFirstOuterS] {
-              for (ex <- permPot.exceptionOption) yield {
-                // Ошибка проверки фазы.
-                // Для dev: вывести info-окошко с ошибкой.
-                // Для prod: пока только логгирование.
-                LOG.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
-
-                // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
-                MWzFirstOuterS.view.set {
-                  OptionUtil.maybe( Sc3ConfUtil.isDevMode ) {
-                    view0.copy(
-                      phase   = nextPhase,
-                      visible = true,
-                      frame   = MWzFrames.Info
-                    )
-                  }
-                }(v0)
-                // Можно пропускать фазу - наврядли end-юзер будет что-то дебажить.
-              }
-            }
-            .orElse[MWzFirstOuterS] {
-              OptionUtil.maybe( permPot.isPending || permPot.isEmpty ) {
-                // pending|empty - тут быть не должно, т.к. код вызывается после всех проверок.
-                LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
-                v0
-              }
-            }
-        } yield {
-          // Следующая фаза одобрена:
-          updated(v9)
+    (for {
+      nextPhase <- allPhases
+        // Обязательно iterator, т.к. тут нужна лень и ТОЛЬКО первый успешный результат.
+        .iterator
+        // Получить итератор фаз ПОСЛЕ текущей фазы:
+        .dropWhile { nextPhase =>
+          nextPhase !=* currPhase
         }
-      }
-      .buffered
-      .headOption
+        .drop(1)
+
+      // Найти и разобраться с pot с пермишшеном фазы:
+      permPot <- v0.perms.get( nextPhase )
+
+      // Основная логика упакована сюда:
+      v9 <- permPot
+        // По идее, тут или ready, или failed.
+        .toOption
+        .flatMap[MWzFirstOuterS] { perm =>
+          if (perm.isPrompt) {
+            // Надо задать вопрос юзеру, т.к. доступ ещё не запрашивался.
+            val v2 = MWzFirstOuterS.view.set {
+              Some(
+                view0.copy(
+                  phase = nextPhase,
+                  visible = true,
+                  frame = MWzFrames.AskPerm
+                )
+              )
+            }(v0)
+            Some(v2)
+
+          } else if (perm.isDenied) {
+            // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
+            val v2 = MWzFirstOuterS.view.set {
+              Some(
+                view0.copy(
+                  phase   = nextPhase,
+                  visible = true,
+                  frame   = MWzFrames.Info
+                )
+              )
+            }(v0)
+            Some(v2)
+
+          } else {
+            // granted или что-то неведомое - пропуск фазы или завершение, если не осталось больше фаз для обработки.
+            OptionUtil.maybe(v0.perms.exists(_._2.isPending))( v0 )
+          }
+        }
+        .orElse[MWzFirstOuterS] {
+          for (ex <- permPot.exceptionOption) yield {
+            // Ошибка проверки фазы.
+            // Для dev: вывести info-окошко с ошибкой.
+            // Для prod: пока только логгирование.
+            LOG.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
+
+            // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
+            MWzFirstOuterS.view.set {
+              OptionUtil.maybe( Sc3ConfUtil.isDevMode ) {
+                view0.copy(
+                  phase   = nextPhase,
+                  visible = true,
+                  frame   = MWzFrames.Info
+                )
+              }
+            }(v0)
+            // Можно пропускать фазу - наврядли end-юзер будет что-то дебажить.
+          }
+        }
+        .orElse[MWzFirstOuterS] {
+          OptionUtil.maybe( permPot.isPending || permPot.isEmpty ) {
+            // pending|empty - тут быть не должно, т.к. код вызывается после всех проверок.
+            LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
+            v0
+          }
+        }
+    } yield {
+      // Следующая фаза одобрена:
+      updated(v9)
+    })
+      .nextOption()
       .getOrElse {
         // Нет больше фаз для переключения - значит пора на выход.
         val saveFx = Effect.action {

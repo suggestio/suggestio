@@ -289,8 +289,7 @@ trait Context {
       bindedE <- MScreenJvm.devScreenQsb.bind(k, new Map.Map1(k, v))
       mscreen <- bindedE.toOption
     } yield mscreen)
-      .buffered
-      .headOption
+      .nextOption()
   }
 
   /** Кастомные данные в контексте. */

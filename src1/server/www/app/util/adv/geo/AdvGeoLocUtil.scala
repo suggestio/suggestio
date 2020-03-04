@@ -115,11 +115,11 @@ class AdvGeoLocUtil @Inject() (
           .result
       }
     } yield {
-      gsOpts.iterator
+      gsOpts
+        .iterator
         .flatten
         .flatMap(_.centerPoint)
-        .buffered
-        .headOption
+        .nextOption()
     }
   }
 

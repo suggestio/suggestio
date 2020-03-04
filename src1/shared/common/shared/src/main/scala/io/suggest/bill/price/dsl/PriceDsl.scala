@@ -111,8 +111,7 @@ sealed trait IPriceDslTerm extends NonEmpty {
         children
           .iterator
           .flatMap(_.findOpt(f))
-          .buffered
-          .headOption
+          .nextOption()
       }
   }
 

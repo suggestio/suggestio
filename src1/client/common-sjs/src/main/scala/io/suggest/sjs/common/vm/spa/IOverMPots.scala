@@ -29,8 +29,7 @@ trait IOverMPots extends Product {
       pot <- pots._pots
       r <- f(pot)
     } yield r)
-      .buffered
-      .headOption
+      .nextOption()
   }
 
 

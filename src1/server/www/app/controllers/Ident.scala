@@ -647,8 +647,7 @@ class Ident @Inject() (
               val smsCode = smsMsgs
                 .iterator
                 .map(_.checkCode)
-                .buffered
-                .headOption
+                .nextOption()
                 .getOrElse( _genSmsCode() )
 
               val phoneNumber = smsMsgs

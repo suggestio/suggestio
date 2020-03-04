@@ -234,8 +234,7 @@ final class Upload @Inject()(
                   } yield {
                     histogram
                   })
-                    .buffered
-                    .headOption
+                    .nextOption()
                     .colorsOrNil
                 }
               } else {

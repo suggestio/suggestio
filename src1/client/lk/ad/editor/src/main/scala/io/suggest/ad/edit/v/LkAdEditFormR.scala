@@ -637,8 +637,7 @@ class LkAdEditFormR(
                   // Найти цвет фона в текущем или в родительских тегах.
                   (Iterator.single(selJdt) ++ selJdtTreeLoc.parents.iterator.map(_._2))
                     .flatMap(_.props1.bgColor)
-                    .buffered
-                    .headOption
+                    .nextOption()
                 }
               } yield {
                 r

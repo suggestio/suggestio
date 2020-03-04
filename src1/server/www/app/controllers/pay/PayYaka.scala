@@ -167,13 +167,13 @@ class PayYaka @Inject() (
       val userEmailOptFut = for {
         personNodeOpt <- request.user.personNodeOptFut
       } yield {
-        val iter = for {
+        (for {
           personNode  <- personNodeOpt.iterator
           email       <- personNode.edges.withPredicateIterIds( MPredicates.Ident.Email )
         } yield {
           email
-        }
-        iter.buffered.headOption
+        })
+          .nextOption()
       }
 
       // Подготовить контекст рендера страницы личного кабинета.

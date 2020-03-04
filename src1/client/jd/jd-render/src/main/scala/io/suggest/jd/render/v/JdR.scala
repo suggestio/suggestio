@@ -102,8 +102,8 @@ class JdR(
           .parents
           .iterator
           .flatMap( JdCss.wideWidthRatio(_, state.jdArgs.conf) )
-          .buffered
-          .headOption
+          .nextOption()
+
         val absPosStyl = jdCss.absPosF( state.tagId -> absPosWideK ): TagMod
 
         if (qdTag.props1.topLeft.nonEmpty) {

@@ -353,8 +353,7 @@ class CdnUtil @Inject() (
           new ExternalCall( url )
         })
           // Отработать запасной вариант, когда внезапно нет хостов:
-          .buffered
-          .headOption
+          .nextOption()
           .getOrElse {
             LOGGER.warn(s"$logPrefix Not found any dist-CDN host\n mediaIds = [${mediaIds.mkString(" | ")}]\n mediaHosts = $mediaHostsMap\n orig call = $call")
             call

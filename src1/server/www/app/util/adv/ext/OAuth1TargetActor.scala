@@ -150,8 +150,7 @@ class OAuth1TargetActor @Inject() (
           args.request.producer.edges
             .withPredicateIter( MPredicates.NodeLocation )
             .flatMap(_.info.geoPoints)
-            .buffered
-            .headOption
+            .nextOption()
         }
         override def attachments = _attachments
       }

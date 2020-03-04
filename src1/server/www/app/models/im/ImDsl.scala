@@ -138,9 +138,8 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
         case _ =>
           Nil
       }
-      .buffered
       // Интересует только первая с конца возможная операция, задающая картинке достоверный размер:
-      .headOption
+      .nextOption()
   }
 
 }

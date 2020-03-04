@@ -19,8 +19,7 @@ class N2NodesUtil {
   def madProducerId(mad: MNode): Option[String] = {
     mad.edges
       .withPredicateIterIds( MPredicates.OwnedBy )
-      .buffered
-      .headOption
+      .nextOption()
   }
 
   /**
@@ -71,8 +70,7 @@ class N2NodesUtil {
     // Тот редкий случай, когда в карте эджей можно поискать по ключу.
     mad.edges
       .withNodePred(nodeId, MPredicates.Receiver)
-      .buffered
-      .headOption
+      .nextOption()
   }
 
   /**

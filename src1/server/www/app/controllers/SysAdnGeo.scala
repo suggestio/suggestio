@@ -419,8 +419,7 @@ class SysAdnGeo @Inject() (
       val gpStub = request.mnode.edges
         .withPredicateIter( MPredicates.NodeLocation )
         .flatMap(_.info.geoPoints)
-        .buffered
-        .headOption
+        .nextOption()
         .getOrElse( MGeoPoint(lat = 0, lon = 0) )
       val stub = MEdgeGeoShape(
         id      = -1,

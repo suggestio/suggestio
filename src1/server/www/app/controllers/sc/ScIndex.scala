@@ -476,8 +476,7 @@ trait ScIndex
                     .flatMap { gs =>
                       gs.shape.centerPoint
                     }
-                    .buffered
-                    .headOption
+                    .nextOption()
                 }
             }
 
@@ -502,12 +501,13 @@ trait ScIndex
             }
             // Нет центральных точек - взять первую попавшуюся из любого шейпа.
             .orElse {
-              nodeLocEdges
-                .iterator
-                .flatMap(_.info.geoShapes)
-                .map(_.shape.firstPoint)
-                .buffered
-                .headOption
+              (for {
+                nlEdge <- nodeLocEdges.iterator
+                gs <- nlEdge.info.geoShapes
+              } yield {
+                gs.shape.firstPoint
+              })
+                .nextOption()
             }
 
           LOGGER.trace(s"$logPrefix Node#${mnode.id} geo pt. => $r")

@@ -118,16 +118,14 @@ class ScSitemapsXml @Inject() (
     val rcvrIdOpt = mad.edges
       .withPredicateIter(MPredicates.Receiver, MPredicates.OwnedBy)
       .flatMap(_.nodeIds)
-      .buffered
-      .headOption
+      .nextOption()
 
     // Поиска текущую геоточку, если карточка там размещена, и на узле её не отобразить.
     val gpOpt = if (rcvrIdOpt.isEmpty) {
       mad.edges
         .withPredicateIter( MPredicates.AdvGeoPlace )
         .flatMap( _.info.geoPoints )
-        .buffered
-        .headOption
+        .nextOption()
     } else {
       // Узел-ресивер уже есть. Точка рендерить не требуется.
       None

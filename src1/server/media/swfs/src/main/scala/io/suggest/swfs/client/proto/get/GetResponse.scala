@@ -28,8 +28,7 @@ case class GetResponse(
     } yield {
       hdr
     })
-      .buffered
-      .headOption
+      .nextOption()
       .getOrElse( MimeConst.APPLICATION_OCTET_STREAM )
   }
 
@@ -41,8 +40,7 @@ case class GetResponse(
     } yield {
       hdr.toLong
     })
-      .buffered
-      .headOption
+      .nextOption()
       .getOrElse( 0L )
   }
 
@@ -57,8 +55,7 @@ case class GetResponse(
         .withHttpContentEncoding(hdr)
         .get
     })
-      .buffered
-      .headOption
+      .nextOption()
   }
 
 }

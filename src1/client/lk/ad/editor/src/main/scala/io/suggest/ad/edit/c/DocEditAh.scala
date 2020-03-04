@@ -1669,9 +1669,8 @@ class DocEditAh[M](
             .deepOfType( MJdTagNames.STRIP )
         }
         .flatMap( _.props1.bgColor )
-        .buffered
         // Взять первый цвет
-        .headOption
+        .nextOption()
         .orElse {
           // Если нет цвета, то использовать белый цвет.
           Some(MColorData.Examples.WHITE)
@@ -1701,13 +1700,13 @@ class DocEditAh[M](
         MJdArgs.data
           .composeLens( MJdDataJs.doc )
           .set(jdDoc2) andThen
-          MJdArgs.renderArgs
-            .composeLens( MJdRenderArgs.selPath )
-            .set( tpl2.nodeToPath( newStripTree.rootLabel ) ) andThen
-          MJdArgs.jdRuntime.set(
-            mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-              .result
-          )
+        MJdArgs.renderArgs
+          .composeLens( MJdRenderArgs.selPath )
+          .set( tpl2.nodeToPath( newStripTree.rootLabel ) ) andThen
+        MJdArgs.jdRuntime.set(
+          mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
+            .result
+        )
       )(v0.jdDoc.jdArgs)
 
       val v2 = (

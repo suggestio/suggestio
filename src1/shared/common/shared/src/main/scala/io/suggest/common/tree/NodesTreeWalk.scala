@@ -71,8 +71,7 @@ trait NodesTreeWalk extends NodesTreeApi {
     } yield {
       subNode
     })
-      .buffered
-      .headOption
+      .nextOption()
   }
 
 }
