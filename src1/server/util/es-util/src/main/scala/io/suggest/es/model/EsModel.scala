@@ -1452,9 +1452,10 @@ final class EsModel @Inject()(
       implicit def MapByIdMapper: EsSearchFutHelper[Map[String, T1]] = {
         new EsSearchFutHelper[Map[String, T1]] {
           override def mapSearchResp(searchResp: SearchResponse): Future[Map[String, T1]] = {
-            val r = OptId.els2idMap[String, T1] {
-              model.searchRespMap(searchResp)( model.deserializeSearchHit )
-            }
+            val r = model
+              .searchRespMap(searchResp)( model.deserializeSearchHit )
+              .zipWithIdIter[String]
+              .to( Map )
             Future.successful(r)
           }
         }
@@ -1576,8 +1577,11 @@ final class EsModel @Inject()(
   import api._
 
   /** Сконвертить распарсенные результаты в карту. */
-  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): Map[String, T] =
-    OptId.els2idMap[String, T](results)
+  private def resultsToMap[T <: OptId[String]](results: IterableOnce[T]): Map[String, T] = {
+    results
+      .zipWithIdIter[String]
+      .to( Map )
+  }
 
   /** Список результатов в список id. */
   def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {

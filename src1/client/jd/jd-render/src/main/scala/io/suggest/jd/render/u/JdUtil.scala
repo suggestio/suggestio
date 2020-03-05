@@ -50,8 +50,8 @@ object JdUtil {
         .map { case (blkJdt, i) =>
           doc.copy(
             template = blkJdt,
-            jdId = {
-              val id = doc.jdId
+            tagId = {
+              val id = doc.tagId
               id.copy(
                 selPathRev  = i :: id.selPathRev,
                 blockExpand = _mkJdIdBlkExpand(blkJdt, id),
@@ -63,9 +63,9 @@ object JdUtil {
 
     } else {
       {
-        val blkExp2 = _mkJdIdBlkExpand( doc.template, doc.jdId )
+        val blkExp2 = _mkJdIdBlkExpand( doc.template, doc.tagId )
 
-        if (doc.jdId.blockExpand ==* blkExp2)
+        if (doc.tagId.blockExpand ==* blkExp2)
           doc
         else
           (_jdId_blockExpand_LENS set blkExp2)(doc)
@@ -134,7 +134,7 @@ object JdUtil {
     jdDoc
       .template
       .zipWithIndex
-      .deepMapFold( jdDoc.jdId ) { case (jdId, (jdt, i)) =>
+      .deepMapFold( jdDoc.tagId ) { case (jdId, (jdt, i)) =>
         // Для каждого не-верхнего элемента требуется увеличить selPath:
         var updAcc = List.empty[MJdTagId => MJdTagId]
 

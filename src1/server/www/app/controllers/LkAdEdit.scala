@@ -10,14 +10,13 @@ import io.suggest.err.HttpResultingException
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.tags.JdTag
-import io.suggest.jd.{MJdData, MJdDoc, MJdTagId}
+import io.suggest.jd.{MJdData, MJdDoc, MJdEdge, MJdTagId}
 import io.suggest.n2.edge._
 import io.suggest.n2.extra.MNodeExtras
 import io.suggest.n2.extra.doc.MNodeDoc
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.primo.id.OptId
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -177,7 +176,12 @@ final class LkAdEdit @Inject() (
 
           // Повторная чистка эджей по финальному шаблону.
           // Т.к. JdDocValidator теперь может удалять из шаблона невалидные куски, то тут требуется дополнительная зачистка эджей:
-          edges2Map = JdTag.purgeUnusedEdges( tpl2, OptId.els2idMap(edges1) )
+          edges2Map = JdTag.purgeUnusedEdges[MJdEdge](
+            tpl2,
+            edges1
+              .zipWithIdIter[EdgeUid_t]
+              .to( Map )
+          )
 
           framePred = MPredicates.JdContent.Frame
 
@@ -325,7 +329,7 @@ final class LkAdEdit @Inject() (
             adData = MJdData(
               doc = MJdDoc(
                 template  = tpl2,
-                jdId      = MJdTagId(
+                tagId      = MJdTagId(
                   nodeId = madSaved.id,
                 ),
               ),

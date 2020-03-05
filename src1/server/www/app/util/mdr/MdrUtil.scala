@@ -30,7 +30,6 @@ import views.html.sys1.mdr._mdrNeededEmailTpl
 import OptionUtil.BoolOptOps
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.i18n.MsgCodes
-import io.suggest.primo.id.OptId
 import play.api.i18n.Lang
 
 import scala.concurrent.Future
@@ -225,7 +224,10 @@ class MdrUtil @Inject() (
           r
         }
 
-        personsMap = OptId.els2idMap[String, MNode]( walkAcc2.personsAcc )
+        personsMap = walkAcc2
+          .personsAcc
+          .zipWithIdIter[String]
+          .to(Map)
 
         // Запустить в фоне сборку email'ы юзеров, которые требуется обработать.
         personId2EmailsMapFut = {

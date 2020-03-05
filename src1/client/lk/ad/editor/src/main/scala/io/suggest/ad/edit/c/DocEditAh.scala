@@ -1863,7 +1863,7 @@ object DocEditAh {
     val jdRuntime_data_qdBlockLess_LENS = MJdRuntime.data
       .composeLens( MJdRuntimeData.qdBlockLess )
     val qdBlMap0 = jdRuntime_data_qdBlockLess_LENS.get( jdRuntime0 )
-    val selJdId = MJdTagId.selPathRev.set( jdArgs.renderArgs.selPath.get )( jdArgs.data.doc.jdId )
+    val selJdId = MJdTagId.selPathRev.set( jdArgs.renderArgs.selPath.get )( jdArgs.data.doc.tagId )
     val qdBlOptPot0 = qdBlMap0.get( selJdId )
     qdBlOptPot0
       .filter(_.isPending)

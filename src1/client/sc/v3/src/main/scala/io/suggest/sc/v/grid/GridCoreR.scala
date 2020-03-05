@@ -100,7 +100,7 @@ class GridCoreR(
           // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
           gridElTag(
             // TODO key: Какой ключ генерить, когда одна карточка повторяется в плитке? Сейчас этого нет, но это ведь возможно в будущем.
-            ^.key := jdDoc2.jdId.toString,
+            ^.key := jdDoc2.tagId.toString,
 
             // Реакция на клики, когда nodeId задан.
             ad.nodeId.whenDefined { nodeId =>

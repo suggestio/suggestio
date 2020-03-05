@@ -60,7 +60,7 @@ final case class MJdDataJs(
 {
 
   // TODO Убрать это отсюда?
-  override def id = doc.jdId.nodeId
+  override def id = doc.tagId.nodeId
 
   override def toString: String = {
     new StringBuilder( productPrefix )

@@ -45,6 +45,29 @@ trait ScFocusedAds
   import mCommonDi._
   import esModel.api._
 
+
+  /** Отсортировать элементы моделей согласно порядку их id.
+    *
+    * @param ids Исходные id'шники в исходном порядке.
+    * @param els Исходная цепочка элементов.
+    * @tparam Id_t Тип используемого id'шника.
+    * @tparam T Тип одного элемента модели.
+    * @return Итоговая отсортированная коллекция.
+    */
+  private def orderByIds[Id_t, T <: OptId[Id_t]](ids: IterableOnce[Id_t], els: Seq[T]): Seq[T] = {
+    val idsMap = ids
+      .iterator
+      .zipWithIndex
+      .toMap
+
+    els.sortBy { e =>
+      e.id
+        .flatMap(idsMap.get)
+        .getOrElse(0)
+    }
+  }
+
+
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
   abstract class FocusedAdsLogic extends LogicCommonT with IRespActionFut {
 
@@ -100,7 +123,7 @@ trait ScFocusedAds
             logMissingFirstIds(mads, firstAdIds)
             // 2016.jul.5 Восстановить исходный порядок first-элементов. v2-выдача плавно переехала на них.
             if (mads.size > 1)
-              OptId.orderByIds(firstAdIds, mads)
+              orderByIds(firstAdIds, mads)
             else
               mads
           }
@@ -143,7 +166,9 @@ trait ScFocusedAds
     /** Карта продьюсеров, относящихся к запрошенным focused-карточкам. */
     def mads2ProdsMapFut: Future[Map[String, MNode]] = {
       for (prods <- mads2ProdsFut) yield {
-        OptId.els2idMap(prods)
+        prods
+          .zipWithIdIter[String]
+          .to(Map)
       }
     }
 

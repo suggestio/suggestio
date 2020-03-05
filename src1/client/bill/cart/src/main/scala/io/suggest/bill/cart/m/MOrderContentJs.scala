@@ -5,7 +5,6 @@ import io.suggest.bill.cart.MOrderContent
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.primo.id.OptId
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -34,8 +33,11 @@ case class MOrderContentJs(
                           ) {
 
   /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */
-  val adnNodesMap: Map[String, MSc3IndexResp] =
-    OptId.els2idMap[String, MSc3IndexResp]( content.adnNodes )
+  val adnNodesMap: Map[String, MSc3IndexResp] = {
+    content.adnNodes
+      .zipWithIdIter[String]
+      .to( Map )
+  }
 
   /** Карта item'ов, сгруппированных по id карточки. */
   val adId2itemsMap: Map[String, Seq[MItem]] =
@@ -48,11 +50,11 @@ case class MOrderContentJs(
 
   /** Карта данных карточек. */
   val adId2jdDataMap: Map[String, MJdDataJs] = {
-    OptId.els2idMap[String, MJdDataJs](
-      content.adsJdDatas
-        .iterator
-        .map( MJdDataJs.fromJdData(_) )
-    )
+    content.adsJdDatas
+      .iterator
+      .map( MJdDataJs.fromJdData(_) )
+      .zipWithIdIter[String]
+      .to( Map )
   }
 
 }

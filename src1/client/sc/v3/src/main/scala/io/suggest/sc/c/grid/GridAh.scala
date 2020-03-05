@@ -94,14 +94,14 @@ object GridAh {
         .fold [Tree[MGbBlock]] {
           // Несфокусированная карточка. Вернуть данные единственного блока.
           val brd = scAdData.main
-          blockRenderData2GbPayload( brd.doc.template.rootLabel, brd, brd.doc.jdId )
+          blockRenderData2GbPayload( brd.doc.template.rootLabel, brd, brd.doc.tagId )
 
         } { fullAdData =>
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
           Tree.Node(
             root = {
               val jdt = fullAdData.doc.template.rootLabel
-              val jdId = fullAdData.doc.jdId
+              val jdId = fullAdData.doc.tagId
 
               MGbBlock(
                 jdId = jdId,
@@ -168,7 +168,7 @@ object GridAh {
       JdUtil.flatGridTemplates( toAd.focOrMain )
         .iterator
         .flatMap { scAd =>
-          gbRes.coordsById.get( scAd.jdId )
+          gbRes.coordsById.get( scAd.tagId )
         }
         // Взять только самый верхний блок карточки. Он должен быть первым по порядку:
         .nextOption()

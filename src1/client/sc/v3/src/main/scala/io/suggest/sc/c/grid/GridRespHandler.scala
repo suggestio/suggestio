@@ -9,7 +9,6 @@ import io.suggest.grid.GridScrollUtil
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.primo.id.OptId
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
@@ -85,11 +84,11 @@ class GridRespHandler
           g0.core.ads.nonEmpty
       ) {
         // Есть условия для сборки карты текущих карточек:
-        OptId.els2idMap(
-          g0.core.ads
-            .iterator
-            .flatten
-        )
+        g0.core.ads
+          .iterator
+          .flatten
+          .zipWithIdIter[String]
+          .to( Map )
       } else {
         // Сборка карты текущих карточек не требуется в данной ситуации.
         Map.empty
@@ -101,7 +100,7 @@ class GridRespHandler
       .iterator
       .map { sc3AdData =>
         // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
-        sc3AdData.jd.doc.jdId.nodeId
+        sc3AdData.jd.doc.tagId.nodeId
           .flatMap( reusableAdsMap.get )
           // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
           .getOrElse {

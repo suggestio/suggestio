@@ -24,7 +24,7 @@ object MJdDoc {
     override def eqv(a: MJdDoc, b: MJdDoc): Boolean = {
       (a.template ===* b.template) &&
       // Инстанс JdID собирается динамически при рендере JdCss и JdR, поэтому его следует сравнивать изнутри.
-      ((a.jdId ===* b.jdId) || MJdTagId.MJdTagIdFastEq.eqv(a.jdId, b.jdId))
+      ((a.tagId ===* b.tagId) || MJdTagId.MJdTagIdFastEq.eqv(a.tagId, b.tagId))
     }
   }
 
@@ -40,15 +40,15 @@ object MJdDoc {
   @inline implicit def univEq: UnivEq[MJdDoc] = UnivEq.derive
 
   val template  = GenLens[MJdDoc](_.template)
-  val jdId      = GenLens[MJdDoc](_.jdId)
+  val jdId      = GenLens[MJdDoc](_.tagId)
 
 }
 
 
 /** @param template Шаблон документа.
-  * @param jdId id документа внутри MJdTagId, если есть.
+  * @param tagId id документа внутри MJdTagId, если есть.
   */
 final case class MJdDoc(
                          template     : Tree[JdTag],
-                         jdId         : MJdTagId,
+                         tagId        : MJdTagId,
                        )

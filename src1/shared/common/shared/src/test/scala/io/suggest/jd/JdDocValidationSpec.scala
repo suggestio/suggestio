@@ -7,6 +7,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.JdTag
 import io.suggest.n2.edge.MPredicates
 import io.suggest.math.SimpleArithmetics._
+import io.suggest.primo.id._
 import minitest._
 import japgolly.univeq._
 import scalaz.Tree
@@ -140,17 +141,15 @@ object JdDocValidationSpec extends SimpleTestSuite {
       )
     )
 
-    val edgesMap = (for {
-      jdEdge <- edges0.iterator
-      edgeUid <- jdEdge.id
-    } yield {
-      val vldEdge = MJdEdgeVldInfo(
-        jdEdge  = jdEdge,
-        img     = None
-      )
-      edgeUid -> vldEdge
-    })
-      .toMap
+    val edgesMap = edges0
+      .iterator
+      .mapZipWithIdIter { jdEdge =>
+        MJdEdgeVldInfo(
+          jdEdge = jdEdge,
+          img    = None,
+        )
+      }
+      .to( Map )
 
     val vld = new JdDocValidator(
       tolerant = false,

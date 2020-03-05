@@ -68,7 +68,7 @@ final case class MScAdData(
   }
 
 
-  def nodeId = main.doc.jdId.nodeId
+  def nodeId = main.doc.tagId.nodeId
   override def id = nodeId
 
 }

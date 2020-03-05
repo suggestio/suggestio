@@ -1,7 +1,6 @@
 package io.suggest.sys.mdr.m
 
 import io.suggest.jd.render.m.MJdDataJs
-import io.suggest.primo.id.OptId
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr.{MMdrNextResp, MNodeMdrInfo}
 import japgolly.univeq.UnivEq
@@ -41,7 +40,11 @@ case class MNodeMdrInfoJs(
   val itemsByType = info.items.groupBy(_.iType)
 
   /** Карта узлов по id. */
-  val nodesMap = OptId.els2idMap[String, MSc3IndexResp]( info.nodes )
+  val nodesMap: Map[String, MSc3IndexResp] = {
+    info.nodes
+      .zipWithIdIter[String]
+      .to( Map )
+  }
 
   /** Список бесплатных размещений на "своих" узлах в обход биллингов. */
   val directSelfNodesSorted: Seq[MSc3IndexResp] = {

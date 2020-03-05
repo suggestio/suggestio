@@ -130,7 +130,7 @@ case class MJdArgs(
   def toRrrProps: MJdRrrProps = {
     MJdRrrProps(
       subTree = data.doc.template,
-      tagId   = data.doc.jdId,
+      tagId   = data.doc.tagId,
       jdArgs  = this,
     )
   }

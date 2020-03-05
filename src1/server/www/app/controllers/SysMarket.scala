@@ -14,7 +14,6 @@ import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.meta.MMeta
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.session.MSessionKeys
@@ -908,8 +907,11 @@ class SysMarket @Inject() (
             mNodes.multiGetCache(newRcvrIds -- adnIds1)
           }
         } yield {
-          val iter = adns1.iterator ++ newAdns.iterator
-          OptId.els2idMap[String, MNode](iter)
+          (adns1 :: newAdns :: Nil)
+            .iterator
+            .flatten
+            .zipWithIdIter[String]
+            .to( Map )
         }
       }
 

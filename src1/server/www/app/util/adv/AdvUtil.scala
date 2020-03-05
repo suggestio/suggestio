@@ -11,7 +11,6 @@ import io.suggest.dt.MYmd
 import io.suggest.es.model.EsModel
 import io.suggest.jd.tags.JdTag
 import io.suggest.n2.node.{MNode, MNodes}
-import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
@@ -256,7 +255,11 @@ class AdvUtil @Inject() (
     val tfsMapFut = rcvrsFut.flatMap( tfDailyUtil.getNodesTfsMap )
 
     // Оформить собранные ресиверы в карту по id.
-    val rcvrsMapFut = OptId.elsFut2idMapFut[String, MNode](rcvrsFut)
+    val rcvrsMapFut = for (rcvrs <- rcvrsFut) yield {
+      rcvrs
+        .zipWithIdIter[String]
+        .to( Map )
+    }
 
     // Получить необходимые календари, также составив карту по id
     val calsCtxFut = tfsMapFut.flatMap { tfsMap =>

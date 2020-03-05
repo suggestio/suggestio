@@ -18,7 +18,7 @@ import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.primo.id.IId
+import io.suggest.primo.id._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
@@ -288,7 +288,7 @@ class LkNodes @Inject() (
       for {
         resp <- _subNodesRespFor(request.mnode, madOpt = None)    // TODO Сделать madOpt универсальным
       } yield {
-        LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
+        LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${resp.children.toIdIter[String].mkString(", ")}")
         Ok( Json.toJson(resp) )
       }
     }

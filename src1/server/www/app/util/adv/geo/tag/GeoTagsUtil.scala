@@ -14,7 +14,6 @@ import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.primo.id.OptId
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
@@ -213,7 +212,10 @@ class GeoTagsUtil @Inject() (
 
       // Создать множество недублирующихся тегов.
       tagFaces = {
-        val r = OptId.optIds2ids(tagFacesOpts).toSet
+        val r = tagFacesOpts
+          .iterator
+          .flatten
+          .toSet
 
         // Залоггировать результат, если он есть.
         val rSize = r.size
@@ -463,7 +465,10 @@ class GeoTagsUtil @Inject() (
       }
 
       // Нормализовать множество id узлов-тегов.
-      tagIds = OptId.optIds2ids(tagIdsOpts).toSet
+      tagIds = tagIdsOpts
+        .iterator
+        .flatten
+        .toSet
 
       // Получить узлы через кеш
       tagNodesMap <- mNodes.multiGetMapCache(tagIds)

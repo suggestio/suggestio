@@ -160,7 +160,7 @@ object GridBuilderUtilJs {
       } yield {
         Tree.Leaf {
           val jdId = MJdTagId.selPathRev
-            .modify(i :: _)(jdArgs.data.doc.jdId)
+            .modify(i :: _)(jdArgs.data.doc.tagId)
           MGbBlock(
             jdId    = jdId,
             size    = gbSizeFromJdt(jdId, jdt, jdArgs.jdRuntime, jdArgs.conf),

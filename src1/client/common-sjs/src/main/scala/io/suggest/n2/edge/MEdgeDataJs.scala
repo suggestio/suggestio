@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
+import io.suggest.primo.id._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.MFileUploadS
 import japgolly.univeq.UnivEq
@@ -25,12 +26,8 @@ import monocle.macros.GenLens
 object MEdgeDataJs {
 
   def jdEdges2EdgesDataMap(jdEdges: Iterable[MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
-    (for {
-      jdEdge <- jdEdges.iterator
-      edgeUid <- jdEdge.id
-    } yield {
-      edgeUid -> MEdgeDataJs(jdEdge)
-    })
+    jdEdges
+      .mapZipWithIdIter[EdgeUid_t, MEdgeDataJs]( MEdgeDataJs(_) )
       .toMap
   }
 
@@ -49,7 +46,7 @@ object MEdgeDataJs {
   implicit object MEdgeDataJsTupleFastEq extends FastEq[(MJdEdgeId, MEdgeDataJs)] {
     override def eqv(a: (MJdEdgeId, MEdgeDataJs), b: (MJdEdgeId, MEdgeDataJs)): Boolean = {
       (a._1 ===* b._1) &&
-        implicitly[FastEq[MEdgeDataJs]].eqv(a._2, b._2)
+      implicitly[FastEq[MEdgeDataJs]].eqv( a._2, b._2 )
     }
   }
 

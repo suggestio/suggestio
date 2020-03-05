@@ -11,69 +11,8 @@ package io.suggest.primo.id
 trait OptId[Id_t] extends IId[Option[Id_t]]
 
 
-object OptId extends IdUtil[OptId] {
+object OptId {
 
-  /** Приведение коллекции инстансов к коллекции id'шников.
-    *
-    * @param els Исходная коллекция инстансов.
-    * @tparam Id_t Тип id'шника.
-    * @return Итератор id'шников.
-    */
-  override def els2ids[Id_t](els: IterableOnce[OptId[Id_t]]): Iterator[Id_t] = {
-    els
-      .iterator
-      .flatMap(_.id)
-  }
-
-  /** Приведение списка элеменов в итератору, пригодному к дальнейшему конвертацию в карту. */
-  override def els2idMapIter[Id_t, T <: OptId[Id_t]](els: IterableOnce[T]): Iterator[(Id_t, T)] = {
-    if (els.isEmpty) {
-      Iterator.empty
-    } else {
-      els
-        .iterator
-        .flatMap { el =>
-          for (id <- el.id) yield {
-            id -> el
-          }
-        }
-    }
-  }
-
-
-  /**
-    * Входящий набор опциональных id'шников в итератор из просто id'шников.
-    *
-    * @param optIds Входящий набор Option[Id].
-    * @tparam Id_t Тип id.
-    * @return Итератор элементов типа Id_t.
-    */
-  def optIds2ids[Id_t](optIds: IterableOnce[Option[Id_t]]): Iterator[Id_t] = {
-    optIds
-      .iterator
-      .flatMap(_.iterator)
-  }
-
-
-  /** Отсортировать элементы моделей согласно порядку их id.
-    *
-    * @param ids Исходные id'шники в исходном порядке.
-    * @param els Исходная цепочка элементов.
-    * @tparam Id_t Тип используемого id'шника.
-    * @tparam T Тип одного элемента модели.
-    * @return Итоговая отсортированная коллекция.
-    */
-  def orderByIds[Id_t, T <: OptId[Id_t]](ids: IterableOnce[Id_t], els: Seq[T]): Seq[T] = {
-    val idsMap = ids
-      .iterator
-      .zipWithIndex
-      .toMap
-
-    els.sortBy { e =>
-      e.id
-        .flatMap(idsMap.get)
-        .getOrElse(0)
-    }
-  }
+  implicit def OptId2idOpt[Id_t](x: OptId[Id_t]): Option[Id_t] = x.id
 
 }

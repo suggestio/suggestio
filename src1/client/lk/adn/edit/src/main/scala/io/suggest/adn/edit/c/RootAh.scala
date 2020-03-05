@@ -5,7 +5,7 @@ import io.suggest.adn.edit.api.ILkAdnEditApi
 import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
 import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled, Save}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.primo.id.OptId
+import io.suggest.primo.id._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -73,7 +73,10 @@ class RootAh[M](
               .modify(_.ready(form2)) andThen
             MLkAdnEditRoot.node.modify { node0 =>
               // Для ускорения и упрощения: Новые эджи не заливаем (в них нет fileSrv), а просто фильтруем существующие эджи по edge uid.
-              val newEdgeIds = OptId.els2idsSet( form2.edges )
+              val newEdgeIds = form2.edges
+                .toIdIter
+                .to( Set )
+
               node0.copy(
                 meta    = form2.meta,
                 edges   = node0.edges

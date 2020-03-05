@@ -26,7 +26,6 @@ import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.pick.MimeConst
-import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sec.av.{ClamAvScanRequest, ClamAvUtil}
@@ -439,8 +438,10 @@ final class Upload @Inject()(
               .map(_.hType),
             flags   = MFileMetaHashFlags.ORIGINAL_FLAGS,
           )
-          hashesHexMap = IId.els2idMap[MHash, MFileMetaHash]( hashesHex2 )
 
+          hashesHexMap = hashesHex2
+            .zipWithIdIter[MHash]
+            .to( Map )
 
           // Сверить рассчётные хэш-суммы с заявленными при загрузке.
           if {

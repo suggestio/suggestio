@@ -8,7 +8,6 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
 import io.suggest.model.PrefixedFn
-import io.suggest.primo.id.IId
 import io.suggest.text.StringUtil
 import io.suggest.util.SioConstants
 import japgolly.univeq.UnivEq
@@ -212,7 +211,9 @@ final case class MEdgeInfo(
 {
 
   /** Карта флагов, если вдруг нужна будет. */
-  lazy val flagsMap = IId.els2idMap[MEdgeFlag, MEdgeFlagData]( flags )
+  lazy val flagsMap = flags
+    .zipWithIdIter[MEdgeFlag]
+    .to( Map )
 
   /** Форматирование для вывода в шаблонах. */
   override def toString: String = {

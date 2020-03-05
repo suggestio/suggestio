@@ -9,9 +9,8 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.n2.bill.tariff.daily.MTfDaily
 import io.suggest.n2.node.MNodes
-import io.suggest.primo.id.OptId
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
-import javax.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImplLazy
+import javax.inject.Inject
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.msys.bill._
@@ -130,7 +129,9 @@ class SysBilling @Inject() (
       val balancesMapFut = for {
         (_, balances) <- txnsBalancesFut
       } yield {
-        OptId.els2idMap[Gid_t, MBalance]( balances )
+        balances
+          .zipWithIdIter[Gid_t]
+          .to( Map )
       }
 
       // Запустить рендер результата

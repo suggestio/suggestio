@@ -517,7 +517,7 @@ class JdR(
         propsProxy.wrap { jdArgs =>
           MJdRrrProps(
             subTree = jdArgs.data.doc.template,
-            tagId   = jdArgs.data.doc.jdId,
+            tagId   = jdArgs.data.doc.tagId,
             jdArgs  = jdArgs,
           )
         }( renderTag )(implicitly, MJdRrrProps.MJdRrrPropsFastEq)

@@ -15,6 +15,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
 import io.suggest.msg.ErrorMsgs
+import io.suggest.primo.id._
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr, |}
@@ -419,12 +420,9 @@ class QuillDeltaJsUtil extends Log {
     )
 
     // Объеденить старую и обновлённые эдж-карты.
-    val edges2 = edges0 ++ (for {
-      jdEdgeJs <- str2EdgeMap.valuesIterator
-      edgeUid <- jdEdgeJs.jdEdge.id
-    } yield {
-      edgeUid -> jdEdgeJs
-    })
+    val edges2 = edges0 ++ str2EdgeMap
+      .valuesIterator
+      .zipWithIdIter[EdgeUid_t]( _.jdEdge.id )
 
     (tag, edges2)
   }

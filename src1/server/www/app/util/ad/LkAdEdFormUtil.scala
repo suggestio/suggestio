@@ -11,7 +11,6 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.media.MFileMeta
 import io.suggest.pick.ContentTypeCheck
-import io.suggest.primo.id.OptId
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.up.UploadConstants
@@ -81,7 +80,7 @@ class LkAdEdFormUtil @Inject() (
     val r = MJdData(
       doc = MJdDoc(
         template  = tplTree,
-        jdId      = MJdTagId.empty,
+        tagId      = MJdTagId.empty,
       ),
       edges    = Nil,
     )
@@ -115,10 +114,13 @@ class LkAdEdFormUtil @Inject() (
     *         exception обозначает ошибку валидации.
     */
   def earlyValidateEdges(form: MJdData): StringValidationNel[List[MJdEdge]] = {
-    val nodeIdVld = Validation.liftNel(form.doc.jdId.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
+    val nodeIdVld = Validation.liftNel(form.doc.tagId.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
 
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
-    val edgesMap = OptId.els2idMap[EdgeUid_t, MJdEdge]( form.edges )
+    val edgesMap = form.edges
+      .zipWithIdIter[EdgeUid_t]
+      .to( Map )
+
     val edges1 = JdTag.purgeUnusedEdges( form.doc.template, edgesMap )
 
     // Ранняя валидация корректности присланных эджей:

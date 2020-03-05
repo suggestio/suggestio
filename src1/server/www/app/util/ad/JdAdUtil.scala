@@ -408,7 +408,7 @@ class JdAdUtil @Inject()(
         MJdData(
           doc = MJdDoc(
             template  = _finalTpl,
-            jdId      = MJdTagId(
+            tagId      = MJdTagId(
               nodeId      = nodeId,
               blockExpand = _finalTpl.rootLabel.props1.expandMode,
               selPathRev  = selPathRev,

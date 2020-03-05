@@ -2,7 +2,7 @@ package io.suggest.jd
 
 import io.suggest.err.ErrorConstants
 import io.suggest.file.MSrvFileInfo
-import io.suggest.n2.edge.{EdgeUid_t, MPredicate, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MEdgeDoc, MPredicate, MPredicates}
 import io.suggest.primo.id.OptId
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
@@ -134,6 +134,7 @@ object MJdEdge {
 case class MJdEdge(
                     predicate           : MPredicate,
                     // TODO Заменить опциональный id + text на MJdEdgeDoc, причесав последнюю модель text: s/Seq/Option/g
+                    //edgeDoc           : MEdgeDoc       = MEdgeDoc.empty,
                     override val id     : Option[EdgeUid_t],
                     text                : Option[String] = None,
                     url                 : Option[String] = None,

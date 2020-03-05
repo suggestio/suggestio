@@ -10,15 +10,12 @@ import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs
-import io.suggest.primo.id.IId
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Show, Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
-import monocle.Traversal
-import scalaz.std.option._
 
 import scala.collection.MapView
 
@@ -193,12 +190,12 @@ object JdTag {
     }
 
     def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {
-      IId.els2idMap[EdgeUid_t, MJdEdgeId](
-        tree
-          .flatten
-          .iterator
-          .flatMap(_.edgeUids)
-      )
+      tree
+        .flatten
+        .iterator
+        .flatMap(_.edgeUids)
+        .zipWithIdIter[EdgeUid_t]
+        .to( Map )
     }
 
   }

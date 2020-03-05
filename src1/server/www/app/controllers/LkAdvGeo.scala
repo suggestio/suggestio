@@ -22,7 +22,6 @@ import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.n2.node.MNode
 import io.suggest.pick.PickleUtil
 import io.suggest.pick.PickleSrvUtil._
-import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -452,7 +451,13 @@ class LkAdvGeo @Inject() (
       lazy val logPrefix = s"rcvrMapPopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
 
       // Нужно получить все суб-узлы из кэша. Текущий узел традиционно уже есть в request'е.
-      val subNodesIdsFut = subNodesFut.map(OptId.els2idsSet)
+      val subNodesIdsFut = for {
+        subNodes <- subNodesFut
+      } yield {
+        subNodes
+          .toIdIter[String]
+          .to( Set )
+      }
 
       // Закинуть во множество подузлов id текущего ресивера.
       val allNodesIdsFut = for {

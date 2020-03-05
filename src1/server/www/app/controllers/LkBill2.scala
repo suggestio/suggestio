@@ -19,7 +19,6 @@ import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pick.PickleUtil
-import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.logs.MacroLogsImpl
@@ -314,7 +313,9 @@ class LkBill2 @Inject() (
 
       // На след.шагах нужно множество id'шников ордеров...
       val orderIdsFut = for (orders <- ordersFut) yield {
-        val r = OptId.els2idsSet(orders)
+        val r = orders
+          .toIdIter[Gid_t]
+          .to( Set )
         LOGGER.trace(s"$logPrefix Found ${orders.size} orders: ${r.mkString(", ")}")
         r
       }

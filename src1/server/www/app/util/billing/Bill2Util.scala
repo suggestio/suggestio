@@ -20,7 +20,7 @@ import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystem
-import io.suggest.primo.id.OptId
+import io.suggest.primo.id._
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
@@ -578,7 +578,7 @@ class Bill2Util @Inject() (
     val contractId = owi.morder.contractId
 
     lazy val logPrefix = s"forceFinalizeOrder($orderId):"
-    LOGGER.trace(s"$logPrefix Starting, items = ${OptId.els2ids(owi.mitems).mkString(", ")}")
+    LOGGER.trace(s"$logPrefix Starting, items = ${owi.mitems.toIdIter[Gid_t].mkString(", ")}")
 
     val a = for {
 
@@ -674,7 +674,9 @@ class Bill2Util @Inject() (
             }
           }
 
-        lazy val skippedItemIds = OptId.els2idsSet(acc9.skipped)
+        lazy val skippedItemIds = acc9.skipped
+          .toIdIter[Gid_t]
+          .to( Set )
 
         LOGGER.debug(s"$logPrefix For finalization ${acc9.okItemsCount} db actions, skipped ${skippedItemIds.size} items. Balances2 =\n ${acc9.balsMap.valuesIterator.mkString(",\n ")}")
         for {
@@ -947,7 +949,10 @@ class Bill2Util @Inject() (
             }
           }
 
-          lazy val nodesMap = OptId.els2idMap[String, MNode]( mrCandidateNodes )
+          lazy val nodesMap = mrCandidateNodes
+            .zipWithIdIter[String]
+            .to( Map )
+
           val r = prioNodeOpt
             .flatMap( nodesMap.get )
             .orElse {
