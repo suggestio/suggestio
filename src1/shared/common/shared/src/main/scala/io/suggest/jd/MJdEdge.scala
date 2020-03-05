@@ -62,7 +62,7 @@ object MJdEdge {
       errMsgF("uid" + `.`  + ErrorConstants.Words.MISSING)
     )
 
-    val textVld = if (p ==>> MPredicates.JdContent.Text ) {
+    val textVld = if (p ==>> MPredicates.JdContent.Text) {
       Validation.liftNel(e.text)(
         {textOpt =>
           !textOpt.exists { text =>

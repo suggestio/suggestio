@@ -5,7 +5,7 @@ import io.suggest.proto.http.model._
 import org.scalajs.dom
 import org.scalajs.dom.{Blob, XMLHttpRequest}
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import japgolly.univeq._

@@ -11,6 +11,7 @@
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
     <allow-navigation href="https://*.cdnvideo.ru/*" />
+    <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="https://*.openstreetmap.org/*" />
     <allow-navigation href="https://*.*.openstreetmap.org/*" />
     <allow-navigation href="data:*" />

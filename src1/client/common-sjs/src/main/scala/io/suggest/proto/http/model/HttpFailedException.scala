@@ -17,20 +17,27 @@ case class HttpFailedException(
                                override val getCause: Throwable = null,
                                errMessage: String = null,
                              )
-  extends RuntimeException {
+  extends RuntimeException
+{
 
   override def getMessage: String = {
     if (errMessage != null) {
       errMessage
     } else {
       val urlStr = Option( url )
-        .fold("")( StringUtil.strLimitLen(_, 25) )
+        .fold("") { url1 =>
+          StringUtil.strLimitLen(url1, 25)
+        }
 
       val methodStr = Option(method) getOrElse ""
 
-      resp.fold("")(r => r.status + SPACE) +
-        methodStr + SPACE +
-        urlStr
+      resp.fold("") { r =>
+        r.status.toString + SPACE
+        // r.body - это Future(), поэтому надо заносить его в errMessage через конструктор.
+      } + Option(getCause).fold("") { ex2 =>
+        ex2.getClass.getSimpleName + SPACE + ex2.getMessage + SPACE
+      } + methodStr +
+        SPACE + urlStr
     }
   }
 
