@@ -289,9 +289,7 @@ final class LkAdnEdit @Inject() (
                       nodeIds = jdEdge.fileSrv
                         .map(_.nodeId)
                         .toSet,
-                      doc = MEdgeDoc(
-                        uid = jdEdge.id
-                      )
+                      doc = jdEdge.edgeDoc,
                     )
                   }
 

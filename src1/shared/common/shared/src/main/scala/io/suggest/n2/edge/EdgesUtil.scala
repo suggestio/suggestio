@@ -1,6 +1,6 @@
 package io.suggest.n2.edge
 
-import io.suggest.primo.id.OptId
+import io.suggest.jd.MJdEdge
 
 import scala.collection.MapView
 
@@ -33,8 +33,8 @@ object EdgesUtil {
   }
 
   // TODO Нужно задействовать CanBuildFrom[].
-  def purgeUnusedEdgesFrom[E <: OptId[EdgeUid_t]](usedEdgeIds: Set[EdgeUid_t], edges: Iterable[E] ): Iterable[E] = {
-    edges.filter(e => e.id.exists(usedEdgeIds.contains))
+  def purgeUnusedEdgesFrom( usedEdgeIds: Set[EdgeUid_t], edges: Iterable[MJdEdge] ): Iterable[MJdEdge] = {
+    edges.filter(e => e.edgeDoc.id.exists(usedEdgeIds.contains))
   }
 
 }

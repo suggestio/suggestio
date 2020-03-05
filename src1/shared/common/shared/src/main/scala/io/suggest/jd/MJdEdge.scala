@@ -1,10 +1,11 @@
 package io.suggest.jd
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.err.ErrorConstants
 import io.suggest.file.MSrvFileInfo
 import io.suggest.n2.edge.{EdgeUid_t, MEdgeDoc, MPredicate, MPredicates}
-import io.suggest.primo.id.OptId
 import io.suggest.common.html.HtmlConstants.`.`
+import io.suggest.primo.id.OptId
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
 import japgolly.univeq._
@@ -29,8 +30,7 @@ object MJdEdge {
   /** Названия полей модели для сериализации в JSON. */
   object Fields {
     val PREDICATE_FN    = "p"
-    val UID_FN          = "i"
-    val TEXT_FN         = "t"
+    val EDGE_DOC_FN     = "d"
     val URL_FN          = "u"
     val SRV_FILE_FN     = "f"
   }
@@ -40,8 +40,11 @@ object MJdEdge {
     val F = Fields
     (
       (__ \ F.PREDICATE_FN).format[MPredicate] and
-      (__ \ F.UID_FN).formatNullable[EdgeUid_t] and
-      (__ \ F.TEXT_FN).formatNullable[String] and
+      (__ \ F.EDGE_DOC_FN).formatNullable[MEdgeDoc]
+        .inmap[MEdgeDoc](
+          EmptyUtil.opt2ImplMEmptyF( MEdgeDoc ),
+          EmptyUtil.implEmpty2OptF
+        ) and
       (__ \ F.URL_FN).formatNullable[String] and
       (__ \ F.SRV_FILE_FN).formatNullable[MSrvFileInfo]
     )(apply, unlift(unapply))
@@ -49,6 +52,31 @@ object MJdEdge {
 
   @inline implicit def univEq: UnivEq[MJdEdge] = UnivEq.derive
 
+
+  def validateEdgeDoc(p: MPredicate, e: MEdgeDoc, errMsg0: => String): StringValidationNel[MEdgeDoc] = {
+    val errMsgF = ErrorConstants.emsgF( errMsg0 + `.` + "doc" )
+
+    // При сохранении jd-полей, uid всегда должен быть задан.
+    val idVld = Validation.liftNel(e.id)(
+      _.nonEmpty,
+      errMsgF("uid" + `.`  + ErrorConstants.Words.MISSING)
+    )
+
+    val textVld = if (p ==>> MPredicates.JdContent.Text ) {
+      Validation.liftNel(e.text)(
+        {textOpt =>
+          !textOpt.exists { text =>
+            text.nonEmpty && text.length < JdConst.MAX_TEXT_LEN
+          }
+        },
+        errMsgF("len")
+      )
+    } else {
+      ScalazUtil.liftNelNone(e.text, errMsgF("text" + `.` + ErrorConstants.Words.UNEXPECTED))
+    }
+
+    (idVld |@| textVld)(MEdgeDoc.apply)
+  }
 
   /** Валидация данных эджа для его сохранения в БД. */
   def validateForStore(e: MJdEdge): StringValidationNel[MJdEdge] = {
@@ -63,24 +91,13 @@ object MJdEdge {
         // TODO Тут какой-то быдлокод: недо-валидация jd-предиката, больше похожая на сравнивание с самим собой.
         val expectedPred = P.children
           .find(pred => e.predicate ==>> pred)
-        Validation.liftNel(e.predicate)(!expectedPred.contains(_), errMsgF(`PRED` + `.` + ErrorConstants.Words.EXPECTED))
-      }
-
-      // При сохранении jd-полей, uid всегда должен быть задан.
-      val idVld = Validation.liftNel(e.id)(_.nonEmpty, errMsgF("uid" + `.`  + ErrorConstants.Words.MISSING))
-
-      val textVld = if (e.predicate ==>> P.Text ) {
-        Validation.liftNel(e.text)(
-          {textOpt =>
-            !textOpt.exists { text =>
-              text.nonEmpty && text.length < JdConst.MAX_TEXT_LEN
-            }
-          },
-          errMsgF("len")
+        Validation.liftNel(e.predicate)(
+          !expectedPred.contains(_),
+          errMsgF(`PRED` + `.` + ErrorConstants.Words.EXPECTED)
         )
-      } else {
-        ScalazUtil.liftNelNone(e.text, errMsgF("text" + `.` + ErrorConstants.Words.UNEXPECTED))
       }
+
+      val edgeDocVld = validateEdgeDoc(e.predicate, e.edgeDoc, errMsgF("doc"))
 
       val urlVld = {
         val URL = "url"
@@ -108,7 +125,7 @@ object MJdEdge {
         }
       }
 
-      (predVld |@| idVld |@| textVld |@| urlVld |@| fileSrvVld)(apply)
+      (predVld |@| edgeDocVld |@| urlVld |@| fileSrvVld)(apply)
 
     } else {
       // Не jd-предикат, а что-то иное.
@@ -116,11 +133,14 @@ object MJdEdge {
     }
   }
 
-  val predicate = GenLens[MJdEdge](_.predicate)
-  val id        = GenLens[MJdEdge](_.id)
-  val text      = GenLens[MJdEdge](_.text)
-  val url       = GenLens[MJdEdge](_.url)
-  val fileSrv   = GenLens[MJdEdge](_.fileSrv)
+  def predicate = GenLens[MJdEdge](_.predicate)
+  def edgeDoc   = GenLens[MJdEdge](_.edgeDoc)
+  def url       = GenLens[MJdEdge](_.url)
+  def fileSrv   = GenLens[MJdEdge](_.fileSrv)
+
+  implicit def jdEdge2idOpt(e: MJdEdge): Option[EdgeUid_t] =
+    implicitly[OptId[EdgeUid_t] => Option[EdgeUid_t]]
+      .apply( e.edgeDoc )
 
 }
 
@@ -131,17 +151,12 @@ object MJdEdge {
   * @param url Ссылка на ресурс, на картинку, например.
   * @param fileSrv КроссПлатформенная инфа по файлу-узлу на стороне сервера.
   */
-case class MJdEdge(
-                    predicate           : MPredicate,
-                    // TODO Заменить опциональный id + text на MJdEdgeDoc, причесав последнюю модель text: s/Seq/Option/g
-                    //edgeDoc           : MEdgeDoc       = MEdgeDoc.empty,
-                    override val id     : Option[EdgeUid_t],
-                    text                : Option[String] = None,
-                    url                 : Option[String] = None,
-                    fileSrv             : Option[MSrvFileInfo]  = None
-                  )
-  extends OptId[EdgeUid_t]
-{
+final case class MJdEdge(
+                          predicate           : MPredicate,
+                          edgeDoc             : MEdgeDoc,
+                          url                 : Option[String] = None,
+                          fileSrv             : Option[MSrvFileInfo]  = None
+                        ) {
 
   def fileSrvUrl = fileSrv.flatMap(_.url)
 

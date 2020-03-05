@@ -89,7 +89,7 @@ class JdEditR(
   private def _notifyImgWhOnEdit[P: Props2ModelProxy, S]($: BackendScope[P,S], edge: MEdgeDataJs): TagMod = {
     // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
     (for {
-      edgeUid <- edge.jdEdge.id
+      edgeUid <- edge.jdEdge.edgeDoc.id
       if edge.fileJs.exists(_.whPx.isEmpty)
     } yield {
       ^.onLoad ==> LkImgUtilJs.notifyImageLoaded($, edgeUid)
@@ -196,7 +196,7 @@ class JdEditR(
           // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
           val heightPxOpt = OptionUtil.maybe(withHeight)(_parseHeight(e).get)
           e.stopPropagationCB >>
-            ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeUid = edgeDataJs.jdEdge.id.get, heightPx = heightPxOpt ) )
+            ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeUid = edgeDataJs.jdEdge.edgeDoc.id.get, heightPx = heightPxOpt ) )
         }
       }
 

@@ -2,6 +2,7 @@ package io.suggest.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.primo.id.OptId
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -25,7 +26,7 @@ object MEdgeDoc
   override type T = MEdgeDoc
 
   /** Частоиспользуемый (на сервере) инстанс модели-пустышки. */
-  override val empty = MEdgeDoc()
+  override lazy val empty = MEdgeDoc()
 
 
   /** Список имён полей модели [[MEdgeDoc]]. */
@@ -38,14 +39,29 @@ object MEdgeDoc
   }
 
   /** Поддержка play-json. */
-  implicit val edgeDocJson: OFormat[MEdgeDoc] = (
-    (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and
-    (__ \ Fields.TEXT_FN).formatNullable[String]
-  )(apply, unlift(unapply))
+  implicit val edgeDocJson: OFormat[MEdgeDoc] = {
+    (
+      (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and {
+        val textPath = (__ \ Fields.TEXT_FN)
+        // TODO После resaveMany() заменить это всё на (__ \ Fields.TEXT_FN).formatNullable[String]
+        // До 2020-03-05 тут был массив строк ["ads"] с одной строкой внутри.
+        val textReadsCompat = textPath
+          .read[String]
+          .map( Option.apply )
+          .orElse {
+            textPath
+              .readNullable[Seq[String]]
+              .map( _.flatMap(_.headOption) )
+          }
+        val textWrites = textPath.writeNullable[String]
+        OFormat( textReadsCompat, textWrites )
+      }
+    )(apply, unlift(unapply))
+  }
 
 
-  val uid = GenLens[MEdgeDoc](_.uid)
-  val text = GenLens[MEdgeDoc](_.text)
+  def id = GenLens[MEdgeDoc](_.id)
+  def text = GenLens[MEdgeDoc](_.text)
 
   @inline implicit def univEq: UnivEq[MEdgeDoc] = UnivEq.derive
 
@@ -72,12 +88,13 @@ object MEdgeDoc
 
 /** Контейнер данных ресурсов документа.
   *
-  * @param uid уникальный id среди эджей, чтобы можно было находить поле среди других полей.
+  * @param id уникальный id среди эджей, чтобы можно было находить поле среди других полей.
   * @param text Строки текста, хранимые и нормально индексирумые на сервере.
   */
-case class MEdgeDoc(
-                     uid    : Option[EdgeUid_t]   = None,
-                     text   : Option[String]      = None,
-                   )
+final case class MEdgeDoc(
+                           override val id    : Option[EdgeUid_t]     = None,
+                           text               : Option[String]        = None,
+                         )
   extends EmptyProduct
+  with OptId[EdgeUid_t]
 

@@ -21,9 +21,8 @@ import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.lk.m.color.MColorsState
 import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
-import io.suggest.n2.edge.{EdgesUtil, MPredicates}
+import io.suggest.n2.edge.{EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages}
-import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.{Base64JsUtil, ContentTypeCheck, MimeConst}
 import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
@@ -178,8 +177,8 @@ class DocEditAh[M](
     val (edgesMap2, edgeUid) = (for {
       e <- edgesMap0.valuesIterator
       if (e.jdEdge.predicate ==* textPred) &&
-         (e.jdEdge.text contains textL10ed)
-      edgeUid <- e.jdEdge.id
+         (e.jdEdge.edgeDoc.text contains textL10ed)
+      edgeUid <- e.jdEdge.edgeDoc.id
     } yield {
       (edgesMap0, edgeUid)
     })
@@ -190,8 +189,10 @@ class DocEditAh[M](
         val e = MEdgeDataJs(
           jdEdge = MJdEdge(
             predicate = textPred,
-            id        = Some( nextEdgeUid ),
-            text      = Some( textL10ed )
+            edgeDoc = MEdgeDoc(
+              id        = Some( nextEdgeUid ),
+              text      = Some( textL10ed ),
+            )
           )
         )
         val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
@@ -308,7 +309,7 @@ class DocEditAh[M](
           for {
             edgeData <- edgesData3.valuesIterator
             jde = edgeData.jdEdge
-            edgeUid <- jde.id
+            edgeUid <- jde.edgeDoc.id
             // Три варианта:
             // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
             // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
@@ -347,7 +348,7 @@ class DocEditAh[M](
           .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
             // Новая картинка. Найти и уменьшить её ширину в шаблоне.
             (for {
-              edgeUid <- edgeData.jdEdge.id
+              edgeUid <- edgeData.jdEdge.edgeDoc.id
               imgOpLoc <- qdLoc.findByEdgeUid( edgeUid )
               widthPxOpt = _loc2width(imgOpLoc)
               if widthPxOpt.fold(true) { widthPx =>
@@ -644,7 +645,7 @@ class DocEditAh[M](
       val dataEdgeOpt2 = (for {
         // Поиска по исходной URL, потому что карта эджей могла изменится за время фоновой задачи.
         dataEdge0 <- dataEdgeOpt0
-        edgeUid <- dataEdge0.jdEdge.id
+        edgeUid <- dataEdge0.jdEdge.edgeDoc.id
 
         // Убедится, что у нас тут картинка.
         imgContentTypeOpt = {
@@ -690,7 +691,7 @@ class DocEditAh[M](
         .orElse {
           for {
             dataEdge0 <- dataEdgeOpt0
-            edgeUid <- dataEdge0.jdEdge.id
+            edgeUid <- dataEdge0.jdEdge.edgeDoc.id
           } yield {
             // Авто-удаление только что некорректного файла/блоба. TODO Надо вычистить и шаблон следом.
             dataEdgesMap0.removed( edgeUid )
@@ -1211,7 +1212,7 @@ class DocEditAh[M](
         e <- v0.jdDoc.jdArgs.data.edges.valuesIterator
         fileSrv <- e.jdEdge.fileSrv
         if m.nodeId ==* fileSrv.nodeId
-        edgeUid <- e.jdEdge.id
+        edgeUid <- e.jdEdge.edgeDoc.id
       } yield {
         edgeUid
       })

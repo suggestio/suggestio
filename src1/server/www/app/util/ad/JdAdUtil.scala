@@ -2,7 +2,8 @@ package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
-import io.suggest.common.empty.OptionUtil, OptionUtil.Implicits._
+import io.suggest.common.empty.OptionUtil
+import OptionUtil.Implicits._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel
@@ -11,7 +12,7 @@ import io.suggest.grid.GridCalc
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
-import io.suggest.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MNodeEdges, MPredicates}
 import io.suggest.n2.media.MPictureMeta
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.NodePath_t
@@ -141,15 +142,19 @@ class JdAdUtil @Inject()(
       edgeMedia       <- fileEdge.media.iterator
     } yield {
       // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
-      val edgeUidSome = medge.doc.uid
-        .someOrElse( -i )
+      val edgeDoc2 = if (medge.doc.id.isEmpty) {
+        MEdgeDoc.id
+          .set( Some(-i) )( medge.doc )
+      } else {
+        medge.doc
+      }
 
-      LOGGER.trace(s"$logPrefix E#${edgeUidSome.value} ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime getOrElse ""}")
+      LOGGER.trace(s"$logPrefix E#${edgeDoc2.id.orNull} ${imgNode.idOrNull} imgFmt=${edgeMedia.file.imgFormatOpt} ${edgeMedia.file.mime getOrElse ""}")
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
         // Тут раньше безусловно выставлялся предикат imgPredicate, но с adn-редактором понадобились и другие предикаты.
         predicate = medge.predicate,
-        id        = edgeUidSome,
+        edgeDoc   = edgeDoc2,
         // url не ставим, потому что очень нужен около-оригинальная картинка, для кропа например.
         fileSrv   = Some(MSrvFileInfo(
           nodeId    = nodeId,
@@ -183,7 +188,7 @@ class JdAdUtil @Inject()(
   def mkJdVideoEdges(videoEdges: Seq[MEdge], videoNodes: Map[String, MNode]): List[MJdEdge] = {
     (for {
       medge       <- videoEdges.iterator
-      if medge.doc.uid.nonEmpty
+      if medge.doc.id.nonEmpty
       nodeId      <- medge.nodeIds.iterator
       mnode       <- videoNodes.get( nodeId )
       extUrl      <- {
@@ -199,7 +204,7 @@ class JdAdUtil @Inject()(
     } yield {
       MJdEdge(
         predicate = framePredicate,
-        id        = medge.doc.uid,
+        edgeDoc   = medge.doc,
         url       = Some( extUrl )
       )
     })
@@ -218,14 +223,11 @@ class JdAdUtil @Inject()(
     (for {
       textEdge <- edges
         .withPredicateIter( textPred )
-      if textEdge.doc.uid.nonEmpty
-      textOpt = textEdge.doc.text
-      if textOpt.nonEmpty
+      if textEdge.doc.text.nonEmpty && textEdge.doc.id.nonEmpty
     } yield {
       MJdEdge(
         predicate = textPred,
-        id        = textEdge.doc.uid,
-        text      = textOpt
+        edgeDoc   = textEdge.doc,
       )
     })
       // Для явной генерации всех эджей в текущем потоке, параллельно с остальными (img, video, ...) эджами.
@@ -283,11 +285,11 @@ class JdAdUtil @Inject()(
       val dynImgId = MDynImgId(
         origNodeId = imgNodeId,
         // TODO По идее, тут достаточно MImgFmts.defaults, но почему-то всё тогда сглючивает.
-        dynFormat = medge.doc.uid
+        dynFormat = medge.doc.id
           .flatMap(uids2jdEdgeId.get)
           .flatMap(_.outImgFormat)
           .getOrElse {
-            LOGGER.warn(s"collectImgEdges(): Not found edge ${medge.doc.uid} in edgesMap:\n ${uids2jdEdgeId.mkString(", ")}")
+            LOGGER.warn(s"collectImgEdges(): Not found edge ${medge.doc.id} in edgesMap:\n ${uids2jdEdgeId.mkString(", ")}")
             MImgFmts.default
           }
       )
@@ -326,7 +328,7 @@ class JdAdUtil @Inject()(
     lazy val imgsEdgesMap = {
       (for {
         edgeAndImg <- origImgsEdges.iterator
-        edgeUid <- edgeAndImg._1.doc.uid
+        edgeUid <- edgeAndImg._1.doc.id
       } yield {
         edgeUid -> edgeAndImg
       })
@@ -535,14 +537,14 @@ class JdAdUtil @Inject()(
           imgsRendered      <- _imgsRenderedFut
           mediaHostsMap     <- _mediaHostsMapFut
         } yield {
-          LOGGER.trace(s"$logPrefix ${origImgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.uid).mkString(", ")}]\n mediaHostsMap[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(",  ")}")
+          LOGGER.trace(s"$logPrefix ${origImgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.id).mkString(", ")}]\n mediaHostsMap[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(",  ")}")
           val imgPred = imgPredicate
           (for {
             imgMakeRes <- imgsRendered.iterator
           } yield {
             MJdEdge(
               predicate   = imgPred,
-              id          = imgMakeRes.medge.doc.uid,
+              edgeDoc     = imgMakeRes.medge.doc,
               url         = {
                 val resImg = imgMakeRes.dynCallArgs
                 val url = mkDistMediaUrl(dynImgUtil.imgCall(resImg), resImg.dynImgId, mediaHostsMap, forceAbsUrls)
@@ -617,7 +619,7 @@ class JdAdUtil @Inject()(
         // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
         val edgedImgTags: Seq[EdgeImgTag] = (for {
           (medge, mimg) <- origImgsEdges.iterator
-          edgeUid       <- medge.doc.uid
+          edgeUid       <- medge.doc.id
           jdLoc         <- tpl
             .loc
             .find { jdTagTree =>
@@ -674,7 +676,7 @@ class JdAdUtil @Inject()(
               isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
 
               tgImgSz: MSize2di <- if (isQd) {
-                lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.origNodeId}:"
+                lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.id.orNull}#${eit.mimg.dynImgId.origNodeId}:"
                 for {
                   mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.dynImgId.original.mediaId )
                   if mmediaOrig.common.ntype ==* MNodeTypes.Media.Image
@@ -693,7 +695,7 @@ class JdAdUtil @Inject()(
                   } yield {
                     width
                   }
-                  LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.origNodeId} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
+                  LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.origNodeId} edge#${eit.medge.doc.id.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
 
                   // Картинка есть. Но надо разобраться, надо ли её ресайзить.
                   val origWidthNorm = wideImgMaker.normWideBgSz( origWh.width, wideNorms )
@@ -756,7 +758,7 @@ class JdAdUtil @Inject()(
               }
 
             } yield {
-              LOGGER.trace(s"$logPrefix img-edge#${eit.medge.doc.uid.orNull} qd?$isQd sz=>$tgImgSz")
+              LOGGER.trace(s"$logPrefix img-edge#${eit.medge.doc.id.orNull} qd?$isQd sz=>$tgImgSz")
 
               // Если есть кроп у текущей картинки, то запихнуть его в dynImgOps
               val mimg2 = eit.jdTag.props1.bgImg
@@ -820,7 +822,7 @@ class JdAdUtil @Inject()(
     } else {
       MNodeEdges.out.modify { out0 =>
         out0.filter { medge =>
-          medge.doc.uid
+          medge.doc.id
             .exists( tplEdgeUids.contains )
         }
       }( edges )

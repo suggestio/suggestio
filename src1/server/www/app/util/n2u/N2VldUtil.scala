@@ -45,7 +45,7 @@ class N2VldUtil @Inject()(
       e         <- edges.iterator
       if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv   <- e.fileSrv
-      edgeUid   <- e.id
+      edgeUid   <- e.edgeDoc.id
     } yield {
       edgeUid -> MDynImgId(fileSrv.nodeId, dynFormat = imgFmtDflt)
     }
@@ -139,7 +139,7 @@ class N2VldUtil @Inject()(
 
     (for {
       jdEdge <- jdEdges.iterator
-      edgeUid <- jdEdge.id
+      edgeUid <- jdEdge.edgeDoc.id
     } yield {
       val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
       val vldEdge = MJdEdgeVldInfo(
@@ -166,7 +166,7 @@ class N2VldUtil @Inject()(
           )
         }
       )
-      LOGGER.trace(s"$logPrefix Edge#${jdEdge.id}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
+      LOGGER.trace(s"$logPrefix Edge#${jdEdge.edgeDoc.id.orNull}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
       edgeUid -> vldEdge
     })
       .toMap

@@ -140,7 +140,7 @@ case class QdRrrHtml(
           e.jdEdge.predicate match {
             case MPredicates.JdContent.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
-              _insertText( e.jdEdge.text.get, jdtQdOp, othersCnt )
+              _insertText( e.jdEdge.edgeDoc.text.get, jdtQdOp, othersCnt )
               othersCnt += 1
             // Рендер картинки.
             case MPredicates.JdContent.Image =>

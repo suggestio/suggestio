@@ -19,6 +19,7 @@ import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.primo.id._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
@@ -224,10 +225,7 @@ final class LkAdEdit @Inject() (
                     }
                     .toSet
                 },
-                doc = MEdgeDoc(
-                  uid   = jdEdge.id,
-                  text  = jdEdge.text,
-                )
+                doc = jdEdge.edgeDoc,
               ) :: acc0
             }
 

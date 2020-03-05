@@ -5,10 +5,9 @@ import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.JdTag
-import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.{EdgeUid_t, MEdgeDoc, MPredicates}
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.primo.id._
-import minitest._
 import japgolly.univeq._
 import scalaz.Tree
 
@@ -107,43 +106,55 @@ object JdDocValidationSpec extends SimpleTestSuite {
       // strip1
       MJdEdge(
         predicate = textPred,
-        id        = Some( upperBlockEdgeId ),
-        text      = Some( MsgCodes.`Upper.block` + "\n" ),
+        edgeDoc = MEdgeDoc(
+          id        = Some( upperBlockEdgeId ),
+          text      = Some( MsgCodes.`Upper.block` + "\n" ),
+        )
       ),
       MJdEdge(
         predicate = textPred,
-        id        = Some( alsoDisplayedInGridEdgeId ),
-        text      = Some( MsgCodes.`also.displayed.in.grid` + "\n" )
+        edgeDoc = MEdgeDoc(
+          id        = Some( alsoDisplayedInGridEdgeId ),
+          text      = Some( MsgCodes.`also.displayed.in.grid` + "\n" ),
+        )
       ),
 
       // strip2
       MJdEdge(
         predicate = textPred,
-        id        = Some( descriptionEdgeId ),
-        text      = Some( MsgCodes.`Description` + "\n" )
+        edgeDoc = MEdgeDoc(
+          id        = Some( descriptionEdgeId ),
+          text      = Some( MsgCodes.`Description` + "\n" ),
+        )
       ),
       MJdEdge(
         predicate = textPred,
-        id        = Some( descrContentEdgeId ),
-        text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
+        edgeDoc = MEdgeDoc(
+          id        = Some( descrContentEdgeId ),
+          text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" ),
+        )
       ),
 
       // strip3
       MJdEdge(
         predicate = textPred,
-        id        = Some( fr3text1EdgeId ),
-        text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
+        edgeDoc = MEdgeDoc(
+          id        = Some( fr3text1EdgeId ),
+          text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" ),
+        )
       ),
       MJdEdge(
         predicate = textPred,
-        id        = Some( fr3text2EdgeId ),
-        text      = Some( "webkit-transition: transform 0.2s linear\n" )
+        edgeDoc = MEdgeDoc(
+          id        = Some( fr3text2EdgeId ),
+          text      = Some( "webkit-transition: transform 0.2s linear\n" ),
+        )
       )
     )
 
     val edgesMap = edges0
       .iterator
-      .mapZipWithIdIter { jdEdge =>
+      .mapZipWithIdIter[EdgeUid_t, MJdEdgeVldInfo] { jdEdge =>
         MJdEdgeVldInfo(
           jdEdge = jdEdge,
           img    = None,

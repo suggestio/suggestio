@@ -226,7 +226,7 @@ case class MNodeEdges(
     } else {
       (for {
         e   <- out
-        uid <- e.doc.uid
+        uid <- e.doc.id
       } yield {
         (uid, e)
       })

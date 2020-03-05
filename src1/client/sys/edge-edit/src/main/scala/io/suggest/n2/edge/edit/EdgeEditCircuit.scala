@@ -9,7 +9,7 @@ import io.suggest.lk.c.UploadAh
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.m.img.MUploadAh
 import io.suggest.msg.ErrorMsgs
-import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDataJs, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.n2.edge.edit.c.{EdgeEditAh, ErrorDiaAh, FileExistAh}
 import io.suggest.n2.edge.edit.m.{MEdgeEditRoot, MEdgeEditS, PredicateSet}
 import io.suggest.n2.edge.edit.u.{EdgeEditApiHttp, IEdgeEditApi}
@@ -76,13 +76,16 @@ class EdgeEditCircuit
 
   private val mUploadRW = {
     val jdEdgeId = MJdEdgeId( edgeUid = 0 )
+    val edgeDoc = MEdgeDoc(
+      id = Some( jdEdgeId.edgeUid ),
+    )
     val jdEdgeIdSome = Some( jdEdgeId )
 
     zoomRW [MUploadAh[Option[MJdEdgeId]]] { mroot =>
       val jdEdge = MEdgeDataJs(
         jdEdge = MJdEdge(
           predicate = mroot.edge.predicate,
-          id        = Some( jdEdgeId.edgeUid ),
+          edgeDoc   = edgeDoc,
           fileSrv   = for {
             edgeMedia <- mroot.edge.media
             nodeId    <- mroot.edge.nodeIds.headOption

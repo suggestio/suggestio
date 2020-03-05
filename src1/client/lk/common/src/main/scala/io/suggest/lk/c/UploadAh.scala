@@ -15,9 +15,8 @@ import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.lk.m._
 import io.suggest.lk.m.img.{MPictureCropPopup, MUploadAh}
 import io.suggest.lk.r.img.LkImgUtilJs
-import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlags}
 import io.suggest.pick.{ContentTypeCheck, MimeConst}
 import io.suggest.routes.PlayRoute
@@ -119,7 +118,7 @@ class UploadAh[V, M](
               if (fileJs.blob.size ==* fileSize2) &&
                  // TODO Нужен хэш вместо имени, надо бы через asm-crypto.js SHA1 это реализовать.
                  (fileJs.fileName contains[String] fileNew.name)
-              edgeUid <- e.jdEdge.id
+              edgeUid <- e.jdEdge.edgeDoc.id
             } yield {
               // Внезапно, этот файл уже известен.
               //println("dup: " + fileNew.name + " | " + fileNew.size + " bytes")
@@ -182,7 +181,9 @@ class UploadAh[V, M](
                 val dataEdge2 = MEdgeDataJs(
                   jdEdge = MJdEdge(
                     predicate   = MPredicates.JdContent.Image,
-                    id          = Some( edgeUid2 ),
+                    edgeDoc = MEdgeDoc(
+                      id = Some( edgeUid2 ),
+                    ),
                     url         = Some( blobUrlNew )
                   ),
                   fileJs = Some(MJsFileInfo(

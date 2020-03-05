@@ -18,6 +18,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import models.mctx.Context
 import play.api.{Environment, Mode}
+import io.suggest.primo.id._
 
 import scala.concurrent.Future
 import scalaz.{Tree, Validation, ValidationNel}
@@ -161,8 +162,8 @@ class LkAdEdFormUtil @Inject() (
   def mkEdgeTextsMap(edges: IterableOnce[MJdEdge]): Map[EdgeUid_t, String] = {
     (for {
       e <- edges.iterator
-      text <- e.text
-      edgeUid <- e.id
+      text <- e.edgeDoc.text
+      edgeUid <- e.edgeDoc.id
     } yield {
       edgeUid -> text
     })

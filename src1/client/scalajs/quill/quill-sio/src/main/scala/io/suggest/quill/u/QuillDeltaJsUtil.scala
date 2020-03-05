@@ -1,6 +1,6 @@
 package io.suggest.quill.u
 
-import com.quilljs.delta.{DeltaInsertData_t, _}
+import com.quilljs.delta._
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
@@ -8,8 +8,7 @@ import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
-import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.n2.edge.{EdgeUid_t, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.sjs.common.log.Log
 import io.suggest.text.MTextAligns
@@ -47,7 +46,7 @@ class QuillDeltaJsUtil extends Log {
               data <- {
                 e.jdEdge.predicate match {
                   case MPredicates.JdContent.Text =>
-                    e.jdEdge.text
+                    e.jdEdge.edgeDoc.text
                       .map(t => t: DeltaInsertData_t)
                   case _ =>
                     val jsObj = js.Object().asInstanceOf[DeltaEmbed]
@@ -312,7 +311,7 @@ class QuillDeltaJsUtil extends Log {
         for {
           e   <- edges0.valuesIterator
           key <- (
-            e.jdEdge.text ::
+            e.jdEdge.edgeDoc.text ::
             e.jdEdge.url ::
             //e.fileJs.flatMap(_.blobUrl) ::    // 2017.sep.28 Quill не поддерживает, игнорим.
             e.jdEdge.fileSrv.flatMap(_.url) ::
@@ -350,8 +349,10 @@ class QuillDeltaJsUtil extends Log {
                 MEdgeDataJs(
                   jdEdge = MJdEdge(
                     predicate = jdContPred.Text,
-                    id        = Some( nextEdgeUid() ),
-                    text      = Some(text)
+                    edgeDoc = MEdgeDoc(
+                      id        = Some( nextEdgeUid() ),
+                      text      = Some( text ),
+                    ),
                   )
                 )
               })
@@ -378,8 +379,10 @@ class QuillDeltaJsUtil extends Log {
                 MEdgeDataJs(
                   jdEdge = MJdEdge(
                     predicate = pred,
-                    id        = Some( nextEdgeUid() ),
-                    url       = Some( anyStrContent )
+                    edgeDoc = MEdgeDoc(
+                      id = Some( nextEdgeUid() ),
+                    ),
+                    url = Some( anyStrContent ),
                     // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
                   )
                 )
@@ -389,7 +392,7 @@ class QuillDeltaJsUtil extends Log {
             }
 
             MJdEdgeId(
-              edgeUid = jdEdgeJs.jdEdge.id.get,
+              edgeUid = jdEdgeJs.jdEdge.edgeDoc.id.get,
             )
           },
           index = dOp.delete
@@ -422,7 +425,7 @@ class QuillDeltaJsUtil extends Log {
     // Объеденить старую и обновлённые эдж-карты.
     val edges2 = edges0 ++ str2EdgeMap
       .valuesIterator
-      .zipWithIdIter[EdgeUid_t]( _.jdEdge.id )
+      .zipWithIdIter[EdgeUid_t]
 
     (tag, edges2)
   }

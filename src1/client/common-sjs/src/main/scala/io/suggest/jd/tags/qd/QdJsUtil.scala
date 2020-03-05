@@ -45,7 +45,7 @@ object QdJsUtil {
     e.fileJs.isEmpty &&
       e.jdEdge.url.isEmpty &&
       e.jdEdge.fileSrv.isEmpty && {
-        e.jdEdge.text
+        e.jdEdge.edgeDoc.text
          .fold(true){ emptyTextRE.pattern.matcher(_).matches() }
       }
   }
