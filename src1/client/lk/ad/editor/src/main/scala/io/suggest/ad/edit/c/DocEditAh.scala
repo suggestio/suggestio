@@ -616,16 +616,27 @@ class DocEditAh[M](
           bgColor
         })
 
+        // Разобраться с цветами: сброс возможного color picker'а, закидон полезного цвета в палитру.
+        var colorStateUpdAccF = List.empty[MColorsState => MColorsState]
+
+        // Если есть обновления по цветам или отображается color picker...
         if (bgColorsAppend.nonEmpty) {
           // закинуть его цвет фона в color-презеты.
-          v2 = MDocS.editors
-            .composeLens( MEditorsS.colorsState )
-            .composeLens( MColorsState.colorPresets )
-            .modify {
-              bgColorsAppend.foldLeft(_) { MColorsState.prependPresets }
-            }(v2)
+          colorStateUpdAccF ::= MColorsState.colorPresets.modify {
+            bgColorsAppend.foldLeft(_) { MColorsState.prependPresets }
+          }
         }
 
+        if (v2.editors.colorsState.picker.nonEmpty)
+          colorStateUpdAccF ::= MColorsState.picker.set( None )
+
+        if (colorStateUpdAccF.nonEmpty) {
+          v2 = MDocS.editors
+            .composeLens( MEditorsS.colorsState )
+            .modify( colorStateUpdAccF.reduce(_ andThen _) )(v2)
+        }
+
+        
         ah.updatedMaybeEffect( v2, fxOpt )
       }
 

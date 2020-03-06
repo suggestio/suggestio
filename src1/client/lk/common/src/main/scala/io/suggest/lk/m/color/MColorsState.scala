@@ -37,9 +37,9 @@ object MColorsState {
     cps
   }
 
-  val colorPresets  = GenLens[MColorsState](_.colorPresets)
-  val histograms    = GenLens[MColorsState](_.histograms)
-  val picker        = GenLens[MColorsState](_.picker)
+  def colorPresets  = GenLens[MColorsState](_.colorPresets)
+  def histograms    = GenLens[MColorsState](_.histograms)
+  def picker        = GenLens[MColorsState](_.picker)
 
 }
 

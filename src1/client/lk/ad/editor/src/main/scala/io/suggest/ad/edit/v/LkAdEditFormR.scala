@@ -560,12 +560,16 @@ class LkAdEditFormR(
                   }
                 }
               } yield {
-                val topY = pickerS.shownAt.y - 235
+                val topLeft2= if (selJdtTreeLoc.getLabel.name ==* MJdTagNames.STRIP)
+                  pickerS.shownAt
+                else
+                  MCoords2di.y.modify(_ - 235)(pickerS.shownAt)
+
                 colorPickerR.PropsVal(
                   color         = bgColor,
                   colorPresets  = mroot.doc.editors.colorsState.colorPresets,
                   cssClass      = cssClassOpt,
-                  topLeftPx     = Some( MCoords2di.y.set(topY)(pickerS.shownAt) )
+                  topLeftPx     = Some( topLeft2 ),
                 )
               }
             }( OptFastEq.Wrapped(colorPickerR.ColorPickerPropsValFastEq) )
