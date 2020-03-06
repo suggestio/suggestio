@@ -199,7 +199,7 @@ sealed trait ScAppCtlRoutes extends js.Object {
   def appDownloadInfo(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
   /** Роута до генератора манифестов установки приложения на Apple iOS. */
-  def iosInstallManifest(onNodeId: js.UndefOr[String] = js.undefined): PlayRoute = js.native
+  def iosInstallManifest(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
 }
 

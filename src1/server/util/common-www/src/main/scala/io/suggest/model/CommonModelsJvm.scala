@@ -8,7 +8,7 @@ import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
-import io.suggest.sc.app.MScAppGetQs
+import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
 import io.suggest.util.logs.MacroLogsDyn
@@ -385,6 +385,37 @@ object CommonModelsJvm extends MacroLogsDyn {
         )
       }
 
+    }
+  }
+
+
+  implicit def scAppManifestQs: QueryStringBindable[MScAppManifestQs] = {
+    val strOptB = implicitly[QueryStringBindable[Option[String]]]
+    val hashesHexB = implicitly[QueryStringBindable[HashesHex]]
+
+    new QueryStringBindableImpl[MScAppManifestQs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAppManifestQs]] = {
+        val k = key1F(key)
+        val F = MScAppManifestQs.Fields
+        for {
+          onNodeIdOptE    <- strOptB.bind( k(F.ON_NODE_ID), params )
+          hashesHexE      <- hashesHexB.bind( k(F.HASHES_HEX), params )
+        } yield {
+          for {
+            onNodeIdOpt   <- onNodeIdOptE
+            hashesHex     <- hashesHexE
+          } yield {
+            MScAppManifestQs(
+              onNodeId = onNodeIdOpt,
+              hashesHex = hashesHex,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MScAppManifestQs): String = {
+        ???
+      }
     }
   }
 

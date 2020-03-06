@@ -14,7 +14,7 @@ import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.pick.MimeConst
 import io.suggest.plist.ApplePlistUtil
 import io.suggest.pwa.manifest.{MPwaDisplayModes, MWebManifest}
-import io.suggest.sc.app.{MScAppDlInfo, MScAppGetQs, MScAppGetResp}
+import io.suggest.sc.app.{MScAppDlInfo, MScAppGetQs, MScAppGetResp, MScAppManifestQs}
 import io.suggest.sc.pwa.MPwaManifestQs
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
@@ -351,17 +351,17 @@ final class ScApp @Inject()(
 
   /** Экшен раздачи манифеста для скачивания.
     *
-    * @param onNodeId id узла с приложением, если не дефолт.
+    * @param qs Данные для манифеста, включая id узла с приложением, если не дефолт.
     * @return Экшен, возвращающий Plist-манифест для установки приложения.
     */
-  def iosInstallManifest(onNodeId: Option[String]) = {
-    maybeAuthMaybeNode( onNodeId ).async { implicit request =>
-      lazy val logPrefix = s"iosInstallManifest(${onNodeId getOrElse ""}):"
+  def iosInstallManifest(qs: MScAppManifestQs) = {
+    maybeAuthMaybeNode( qs.onNodeId ).async { implicit request =>
+      lazy val logPrefix = s"iosInstallManifest(${qs.onNodeId getOrElse ""}):"
 
       val appEdgeQs = MScAppGetQs(
         osFamily  = MOsFamilies.Apple_iOS,
         rdr       = false,
-        onNodeId  = onNodeId,
+        onNodeId  = qs.onNodeId,
         predicate = Some( MPredicates.Application.FromFile ),
       )
 
@@ -420,6 +420,22 @@ final class ScApp @Inject()(
         }
 
         (fileMnode, _, fileEdgeMedia) <- _fileEdgeMediaFut
+
+        // Если заданы хэши, то сверить их с оригиналом, чтобы отсеять ошибочные запросы.
+        if {
+          qs.hashesHex.isEmpty || {
+            fileEdgeMedia.file.hashesHex.forall { fmHash =>
+              qs.hashesHex
+                .get( fmHash.hType )
+                .fold(true)( fmHash.hexValue ==* _ )
+            }
+          } || {
+            LOGGER.warn(s"$logPrefix Hash in QS[${qs.hashesHex}] does not match to fileMeta hashes[${fileEdgeMedia.file.hashesHex.mkString(" | ")}]")
+            val respFut = httpErrorHandler.onClientError(request, NOT_FOUND, "Unexpected hash.")
+            throw HttpResultingException( respFut )
+          }
+        }
+
         pkgMediaCall <- _mediaUrl( fileNodeId, fileEdgeMedia )
 
       } yield {

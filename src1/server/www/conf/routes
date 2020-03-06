@@ -26,7 +26,7 @@ GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
 GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
-GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( n: Option[String] ?= None )
+GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
 
 ## Дамп ошибок выдачи.
 POST /sc/error                          @controllers.Sc.handleScError

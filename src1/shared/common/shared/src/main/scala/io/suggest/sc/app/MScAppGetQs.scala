@@ -1,6 +1,5 @@
 package io.suggest.sc.app
 
-import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 import io.suggest.dev.MOsFamily
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import japgolly.univeq._

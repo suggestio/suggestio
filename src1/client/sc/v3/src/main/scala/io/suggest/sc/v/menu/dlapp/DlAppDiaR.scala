@@ -5,21 +5,24 @@ import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButt
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.crypto.hash.HashesHex
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.msg.JsFormatUtil
+import io.suggest.n2.media.MFileMetaHash
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.app.MScAppDlInfo
+import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
 import io.suggest.sc.m.menu.{ExpandDlApp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import play.api.libs.json.Json
 
 import scala.scalajs.js.URIUtils
 import scala.scalajs.js.annotation.JSName
@@ -128,8 +131,18 @@ class DlAppDiaR(
           iosFileDlInfoOptProxy
             .value
             .whenDefinedEl { iosFileDlInfo =>
+              val manifestQs = MScAppManifestQs(
+                onNodeId = iosFileDlInfo.fromNodeIdOpt,
+                hashesHex = iosFileDlInfo.fileMeta
+                  .fold[HashesHex](Map.empty) { fm =>
+                    MFileMetaHash.toHashesHex( fm.hashesHex )
+                  },
+              )
               val manifestUrl = ScJsRoutes.controllers.ScApp
-                .iosInstallManifest( iosFileDlInfo.fromNodeIdOpt.toUndef )
+                .iosInstallManifest(
+                  PlayJsonSjsUtil.toNativeJsonObj(
+                    Json.toJsObject( manifestQs ))
+                )
                 .absoluteURL( secure = true )
               val itunesUrl = "itms-services://?action=download-manifest&url=" + URIUtils.encodeURIComponent( manifestUrl )
               val setupIcon = Mui.SvgIcons.PhonelinkSetup()()
