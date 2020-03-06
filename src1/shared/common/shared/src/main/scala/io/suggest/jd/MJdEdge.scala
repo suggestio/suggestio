@@ -58,7 +58,7 @@ object MJdEdge {
 
     // При сохранении jd-полей, uid всегда должен быть задан.
     val idVld = Validation.liftNel(e.id)(
-      _.nonEmpty,
+      _.isEmpty,
       errMsgF("uid" + `.`  + ErrorConstants.Words.MISSING)
     )
 

@@ -45,13 +45,13 @@ import scala.util.Success
  *
   * @param ctxIdOptRO      Доступ к CtxId.
   */
-class UploadAh[V, M](
-                      prepareUploadRoute  : MFormResourceKey => PlayRoute,
-                      uploadApi           : IUploadApi,
-                      contentTypeCheck    : ContentTypeCheck,
-                      ctxIdOptRO          : ModelRO[Option[String]],
-                      modelRW             : ModelRW[M, MUploadAh[V]],
-                    )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
+final class UploadAh[V, M](
+                            prepareUploadRoute  : MFormResourceKey => PlayRoute,
+                            uploadApi           : IUploadApi,
+                            contentTypeCheck    : ContentTypeCheck,
+                            ctxIdOptRO          : ModelRO[Option[String]],
+                            modelRW             : ModelRW[M, MUploadAh[V]],
+                          )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
   extends ActionHandler(modelRW)
   with Log
 { ah =>
@@ -294,11 +294,13 @@ class UploadAh[V, M](
               LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
               noChange
             } { edge0 =>
+              val edgeUid = edge0.jdEdge.edgeDoc.id.get
+
               // Дедубликация кода обновления текущего эджа:
               def __v2F(fileJs9: MJsFileInfo): MUploadAh[V] = {
                 val edge2 = (MEdgeDataJs.fileJs set Some(fileJs9))(edge0)
                 v0.withEdges(
-                  v0.edges.updated( m.src.edgeUid, edge2 )
+                  v0.edges.updated( edgeUid, edge2 )
                 )
               }
 
@@ -314,7 +316,7 @@ class UploadAh[V, M](
 
               // Пересборка m.src
               val src2 = FileHashStart(
-                edgeUid = m.src.edgeUid,
+                edgeUid = edgeUid,
                 blobUrl = fileJs1.blobUrl.get,
               )
 
@@ -335,7 +337,7 @@ class UploadAh[V, M](
                     val fx = Effect {
                       val reqRoute = prepareUploadRoute(
                         MFormResourceKey(
-                          edgeUid  = Some( src2.edgeUid ),
+                          edgeUid  = Some( edgeUid ),
                           nodePath = None
                         )
                       )
@@ -375,6 +377,8 @@ class UploadAh[V, M](
         noChange
 
       } { edge0 =>
+        val edgeUid = edge0.jdEdge.edgeDoc.id.get
+
         // Ожидаемый ответ. Разобраться, что там прислал сервер.
         m.tryRes.fold(
           // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
@@ -386,7 +390,7 @@ class UploadAh[V, M](
             val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
             val errPopup0 = v0.errorPopup getOrElse MErrorPopupS.empty
             val v2 = v0
-              .withEdges( v0.edges + (m.src.edgeUid -> edge2) )
+              .withEdges( v0.edges + (edgeUid -> edge2) )
               // Распахнуть попап с ошибкой закачки файла:
               .withErrorPopup( Some(
                 (MErrorPopupS.exception set Some(ex))(errPopup0)
@@ -425,7 +429,7 @@ class UploadAh[V, M](
                   val edge2 = MEdgeDataJs.fileJs
                     .set(fileJsOpt2)(edge0)
                   var v2 = v0
-                    .withEdges( v0.edges + (m.src.edgeUid -> edge2) )
+                    .withEdges( v0.edges + (edgeUid -> edge2) )
 
                   if (resp.extra !=* v0.uploadExtra)
                     v2 = v2.withUploadExtra( resp.extra )
@@ -446,7 +450,7 @@ class UploadAh[V, M](
                   )
                   var v2 = v0.withEdges(
                     v0.edges
-                      .updated( m.src.edgeUid, edge2 )
+                      .updated( edgeUid, edge2 )
                   )
                   if (resp.extra !=* v0.uploadExtra)
                     v2 = v2.withUploadExtra( resp.extra )
@@ -460,8 +464,8 @@ class UploadAh[V, M](
                 for (_ <- resp.errors.headOption) yield {
                   val v2 = v0.copy(
                     // Удалить эдж текущего файла.
-                    edges      = v0.edges - m.src.edgeUid,
-                    view       = picViewContAdp.forgetEdge(v0.view, m.src.edgeUid),
+                    edges      = v0.edges - edgeUid,
+                    view       = picViewContAdp.forgetEdge(v0.view, edgeUid),
                     // Вывести попап с ошибками, присланными сервером:
                     errorPopup = UploadAh._errorPopupWithMessages( v0.errorPopup, resp.errors )
                   )
@@ -505,8 +509,9 @@ class UploadAh[V, M](
         )
 
         val edge2 = (MEdgeDataJs.fileJs set fileJsOpt2)(edge0)
+        val edgeUid = edge0.jdEdge.edgeDoc.id.get
         val v2 = v0
-          .withEdges( v0.edges + (m.src.edgeUid -> edge2) )
+          .withEdges( v0.edges + (edgeUid -> edge2) )
         updatedSilent(v2, uploadFinishFx)
 
       })
@@ -524,6 +529,8 @@ class UploadAh[V, M](
         noChange
 
       } { edge0 =>
+        val edgeUid = edge0.jdEdge.edgeDoc.id.get
+
         m.tryRes.fold(
           // Ошибка выполнения upload'а.
           {ex =>
@@ -538,7 +545,7 @@ class UploadAh[V, M](
             )( edge0 )
 
             var v2 = v0.withEdges(
-              v0.edges.updated( m.src.edgeUid, edge2)
+              v0.edges.updated( edgeUid, edge2)
             )
             updated( v2 )
           },
@@ -560,7 +567,7 @@ class UploadAh[V, M](
                   }
                 )
                 var v2 = v0.withEdges(
-                  v0.edges.updated( m.src.edgeUid, edge2 )
+                  v0.edges.updated( edgeUid, edge2 )
                 )
                 if (resp.extra !=* v0.uploadExtra)
                   v2 = v2.withUploadExtra( resp.extra )
