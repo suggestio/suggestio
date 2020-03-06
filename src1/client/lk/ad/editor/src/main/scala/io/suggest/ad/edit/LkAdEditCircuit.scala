@@ -440,22 +440,43 @@ class LkAdEditCircuit(
     modelRW = isTouchDevRW,
   )
 
+
+  private val _ahsAcc0 = List[HandlerFunction](
+    // В голове -- обработчик всех основных операций на документом.
+    docAh,
+    jdAh,
+    // Управление интерфейсом -- ближе к голове.
+    layoutAh,
+    // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
+    uploadAh,
+    wsPoolAh,
+    slideBlocksAh,
+    saveAh,
+    deleteAh,
+    touchSwitchAh,
+    tailAh
+  )
+  // Начальный аккамулятор параллельного связывания контроллеров параллельной обработки:
+  private val _ahsParAcc0 = {
+    var parAcc = List.empty[HandlerFunction]
+
+    if (DOC_VLD_ON_CLIENT)
+      parAcc ::= jdVldAh
+
+    parAcc ::= stripBgColorPickAfterAh
+
+    parAcc
+  }
   /** Сборка action-handler'а в зависимости от текущего состояния. */
-  override protected val actionHandler: HandlerFunction = {
+  override protected def actionHandler: HandlerFunction = {
+    // TODO Тут def, т.к. ниже велосипед с динамическим выбором ColorPicker'а, где конкретный контроллер выбирается динамически.
     // В хвосте -- перехватчик необязательных событий.
-    var acc = List[HandlerFunction](
-      wsPoolAh,
-      slideBlocksAh,
-      saveAh,
-      deleteAh,
-      touchSwitchAh,
-      tailAh
-    )
+    var acc = _ahsAcc0
 
     // Если допускается выбор цвета фона текущего jd-тега, то подцепить соотв. контроллер.
-    val mDocS = mDocSRw.value
-
-    for (selTagLoc <- mDocS.jdDoc.jdArgs.selJdt.treeLocOpt) {
+    for {
+      selTagLoc <- mDocSRw.value.jdDoc.jdArgs.selJdt.treeLocOpt
+    } {
       selTagLoc.getLabel.name match {
         case MJdTagNames.STRIP =>
           acc ::= stripBgColorAh
@@ -465,30 +486,8 @@ class LkAdEditCircuit(
       }
     }
 
-    // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
-    acc ::= uploadAh
-
-    // Управление интерфейсом -- ближе к голове.
-    acc ::= layoutAh
-
-    acc ::= jdAh
-
-    // В голове -- обработчик всех основных операций на документом.
-    acc ::= docAh
-
-
-    // -----------------------------------------------------------
-    // Аккамулятор параллельного связывания.
-    var parAcc = List.empty[HandlerFunction]
-
-    if (DOC_VLD_ON_CLIENT)
-      parAcc ::= jdVldAh
-
-    parAcc ::= stripBgColorPickAfterAh
-    parAcc ::= composeHandlers(acc: _*)
-
     // Навешиваем параллельные handler'ы.
-    foldHandlers( parAcc: _* )
+    foldHandlers( (composeHandlers(acc: _*) :: _ahsParAcc0): _* )
   }
 
 
