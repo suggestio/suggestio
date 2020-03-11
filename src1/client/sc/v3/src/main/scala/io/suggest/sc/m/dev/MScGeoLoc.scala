@@ -34,9 +34,9 @@ object MScGeoLoc {
 
   @inline implicit def univEq: UnivEq[MScGeoLoc] = UnivEq.derive
 
-  val watchers    = GenLens[MScGeoLoc](_.watchers)
-  val suppressor  = GenLens[MScGeoLoc](_.suppressor)
-  val switch      = GenLens[MScGeoLoc](_.switch)
+  def watchers    = GenLens[MScGeoLoc](_.watchers)
+  def suppressor  = GenLens[MScGeoLoc](_.suppressor)
+  def switch      = GenLens[MScGeoLoc](_.switch)
 
 }
 
@@ -52,10 +52,6 @@ case class MScGeoLoc(
                       suppressor      : Option[Suppressor]                  = None,
                       switch          : MGeoLocSwitchS                      = MGeoLocSwitchS.empty,
                     ) {
-
-  def withWatchers(watchers: Map[GeoLocType, MGeoLocWatcher]) = copy(watchers = watchers)
-  def withSuppressor(suppressor: Option[Suppressor]) = copy(suppressor = suppressor)
-  def withSwitch(switch: MGeoLocSwitchS) = copy(switch = switch)
 
   /** Данные о текущем наиболее точном местоположении. */
   lazy val currentLocation: Option[(GeoLocType, MGeoLoc)] = {
@@ -79,6 +75,7 @@ case class MScGeoLoc(
 
 object MGeoLocSwitchS {
   def empty = apply()
+
   implicit object MGeoLocSwitchSFastEq extends FastEq[MGeoLocSwitchS] {
     override def eqv(a: MGeoLocSwitchS, b: MGeoLocSwitchS): Boolean = {
       (a.onOff        ===* b.onOff) &&
@@ -88,6 +85,17 @@ object MGeoLocSwitchS {
     }
   }
   @inline implicit def univEq: UnivEq[MGeoLocSwitchS] = UnivEq.derive
+
+  def onOff = GenLens[MGeoLocSwitchS](_.onOff)
+  def hardLock = GenLens[MGeoLocSwitchS](_.hardLock)
+  def prevGeoLoc = GenLens[MGeoLocSwitchS](_.prevGeoLoc)
+  def scSwitch = GenLens[MGeoLocSwitchS](_.scSwitch)
+
+  implicit final class GlSwitchS( private val ss: MGeoLocSwitchS ) extends AnyVal {
+    def withOutScSwitch: MGeoLocSwitchS =
+      if (ss.scSwitch.isEmpty) ss else (scSwitch set None)(ss)
+  }
+
 }
 /** Контейнер данных состояния "рубильника" геолокации.
   *
@@ -104,15 +112,7 @@ case class MGeoLocSwitchS(
                            hardLock        : Boolean                             = false,
                            prevGeoLoc      : Option[MGeoLoc]                     = None,
                            scSwitch        : Option[MScSwitchCtx]                = None,
-                         ) {
-
-  def withOnOff(onOff: Pot[Boolean]) = copy(onOff = onOff)
-  def withHardLock(hardLock: Boolean) = copy(hardLock = hardLock)
-  def withPrevGeoLoc(prevGeoLoc: Option[MGeoLoc]) = copy(prevGeoLoc = prevGeoLoc)
-  def withScSwitch(scSwitch: Option[MScSwitchCtx]) = copy(scSwitch = scSwitch)
-  def withOutScSwitch= if (scSwitch.isEmpty) this else withScSwitch(None)
-
-}
+                         )
 
 
 /** Модель данных об одном geo-watcher'е.
@@ -126,11 +126,11 @@ case class MGeoLocWatcher(
                            lastPos    : Pot[MGeoLoc]   = Pot.empty
                          )
   extends EmptyProduct
-{
 
-  def withLastPos(lastPos: Pot[MGeoLoc]) = copy(lastPos = lastPos)
-}
 object MGeoLocWatcher {
+  def lastPos = GenLens[MGeoLocWatcher](_.lastPos)
+  def watchId = GenLens[MGeoLocWatcher](_.watchId)
+
   @inline implicit def univEq: UnivEq[MGeoLocWatcher] = UnivEq.derive
 }
 

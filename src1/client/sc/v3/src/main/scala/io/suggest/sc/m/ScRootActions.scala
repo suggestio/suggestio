@@ -174,3 +174,7 @@ case object CloseError extends IScErrorAction
 
 /** Выставление состояния ошибки. */
 case class SetErrorState(scErr: MScErrorDia) extends IScErrorAction
+
+
+/** Управление отображением диалога настроек выдачи. */
+case class SettingsDiaOpen(opened: Boolean) extends IScErrorAction

@@ -16,13 +16,14 @@ import io.suggest.sc.m.inx._
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.styl.{ScCss, ScCssStatic}
+import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
+import io.suggest.sc.v.dia.settings.{ScSettingsDiaR, SettingsMenuItemR}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
 import io.suggest.sc.v.menu._
-import io.suggest.sc.v.menu.dlapp.{DlAppDiaR, DlAppR}
 import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.spa.{FastEqUtil, OptFastEq}
@@ -46,8 +47,6 @@ class ScRootR (
                 val editAdR             : EditAdR,
                 val aboutSioR           : AboutSioR,
                 val welcomeR            : WelcomeR,
-                val blueToothR          : BlueToothR,
-                val unsafeScreenAreaOffsetR: UnsafeScreenAreaOffsetR,
                 val nodesSearchContR    : NodesSearchContR,
                 val nodesFoundR         : NodesFoundR,
                 rightR                  : RightR,
@@ -55,12 +54,13 @@ class ScRootR (
                 menuBtnR                : MenuBtnR,
                 searchBtnR              : SearchBtnR,
                 val hdrProgressR        : HdrProgressR,
-                val geoLocR             : GeoLocR,
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
                 val wzFirstR            : WzFirstR,
-                dlAppR                  : DlAppR,
+                dlAppMenuItemR          : DlAppMenuItemR,
                 dlAppDiaR               : DlAppDiaR,
+                settingsMenuItemR       : SettingsMenuItemR,
+                scSettingsDiaR          : ScSettingsDiaR,
                 commonReactCtx          : React.Context[MCommonReactCtx],
                 scErrorDiaR             : ScErrorDiaR,
               ) {
@@ -85,8 +85,6 @@ class ScRootR (
                                     aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
                                     searchSideBarC            : ReactConnectProxy[MSearchPanelS],
                                     menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
-                                    menuBlueToothOptC         : ReactConnectProxy[blueToothR.Props_t],
-                                    dbgUnsafeOffsetsOptC      : ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
                                     sTextC                    : ReactConnectProxy[sTextR.Props_t],
@@ -95,7 +93,6 @@ class ScRootR (
                                     hdrLogoOptC               : ReactConnectProxy[Option[logoR.PropsVal]],
                                     hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
                                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
-                                    menuGeoLocC               : ReactConnectProxy[geoLocR.Props_t],
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                     goBackC                   : ReactConnectProxy[goBackR.Props_t],
                                     wzFirstC                  : ReactConnectProxy[wzFirstR.Props_t],
@@ -238,17 +235,12 @@ class ScRootR (
         // Рендер кнопки "О проекте"
         s.aboutSioC { aboutSioR.apply },
 
-        // Рендер переключателя геолокации
-        s.menuGeoLocC { geoLocR.OnOffR.apply },
-
-        // Рендер кнопки/подменю для управления bluetooth.
-        s.menuBlueToothOptC { blueToothR.OnOffR.apply },
-
         // Пункт скачивания мобильного приложения.
-        dlAppR(mrootProxy),
+        dlAppMenuItemR( mrootProxy ),
 
-        // DEBUG: Если активна отладка, то вот это ещё отрендерить:
-        s.dbgUnsafeOffsetsOptC { unsafeScreenAreaOffsetR.apply },
+        // Пункт открытия диалога с настройками выдачи.
+        settingsMenuItemR.component( mrootProxy ),
+
       )
       val menuSideBarBody = mrootProxy.wrap(_.index.menu)( menuR(_)( menuSideBarBodyInner ) )( implicitly, MMenuS.MMenuSFastEq )
 
@@ -372,6 +364,9 @@ class ScRootR (
         // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
         mrootProxy.wrap(_.dialogs.error)( scErrorDiaR.apply )(implicitly, OptFastEq.Plain),
 
+        // Диалог настроек.
+        scSettingsDiaR.component( mrootProxy ),
+
       )
 
       // Зарегистрировать commonReact-контекст, чтобы подцепить динамический messages:
@@ -456,16 +451,6 @@ class ScRootR (
           props.index.search.panel
         }( MSearchPanelS.MSearchPanelSFastEq ),
 
-        menuBlueToothOptC = propsProxy.connect { mroot =>
-          mroot.dev.beaconer.isEnabled
-        }( FastEq.ValueEq ),
-
-        dbgUnsafeOffsetsOptC = propsProxy.connect { mroot =>
-          OptionUtil.maybe( mroot.internals.conf.debug ) {
-            mroot.dev.screen.info.unsafeOffsets
-          }
-        }( OptFastEq.Plain ),
-
         isRenderScC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( !mroot.index.isFirstRun )
         }( FastEq.AnyRefEq ),
@@ -518,10 +503,6 @@ class ScRootR (
             mroot.grid.core.adsHasPending
           Some(r)
         }( OptFastEq.OptValueEq ),
-
-        menuGeoLocC = propsProxy.connect { mroot =>
-          mroot.dev.geoLoc.switch.onOff
-        }( FastEqUtil.RefValFastEq ),
 
         indexSwitchAskC = propsProxy.connect { mroot =>
           mroot.index.state.switchAsk

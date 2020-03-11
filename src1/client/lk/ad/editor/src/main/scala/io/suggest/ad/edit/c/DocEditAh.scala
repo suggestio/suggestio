@@ -636,7 +636,7 @@ class DocEditAh[M](
             .modify( colorStateUpdAccF.reduce(_ andThen _) )(v2)
         }
 
-        
+        // Всё готово, можно вернуть результаты:
         ah.updatedMaybeEffect( v2, fxOpt )
       }
 

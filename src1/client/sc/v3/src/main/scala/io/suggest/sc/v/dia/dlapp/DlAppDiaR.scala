@@ -1,4 +1,4 @@
-package io.suggest.sc.v.menu.dlapp
+package io.suggest.sc.v.dia.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
 import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
@@ -15,18 +15,17 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
-import io.suggest.sc.m.menu.{ExpandDlApp, MDlAppDia, OpenCloseAppDl, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
+import io.suggest.sc.m.menu._
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import play.api.libs.json.Json
 
+import scala.scalajs.LinkingInfo.developmentMode
 import scala.scalajs.js.URIUtils
 import scala.scalajs.js.annotation.JSName
-import scalajs.LinkingInfo.developmentMode
 
 /**
   * Suggest.io
@@ -52,7 +51,7 @@ class DlAppDiaR(
   class Backend( $: BackendScope[Props, State] ) {
 
     private val _onCloseBtnClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, OpenCloseAppDl( opened = false ) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, DlAppOpen( opened = false ) )
     }
 
     private val _onOsFamilyChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>

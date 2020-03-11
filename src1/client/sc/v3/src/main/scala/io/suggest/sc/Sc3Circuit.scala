@@ -25,7 +25,7 @@ import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.boot.BootAh
-import io.suggest.sc.c.dia.{FirstRunDialogAh, ScErrorDiaAh}
+import io.suggest.sc.c.dia.{FirstRunDialogAh, ScErrorDiaAh, ScSettingsDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
@@ -38,6 +38,7 @@ import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.dia.err.MScErrorDia
+import io.suggest.sc.m.dia.settings.MScSettingsDia
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
@@ -401,6 +402,10 @@ class Sc3Circuit(
     indexStateRO  = inxStateRO,
   )
 
+  private val scSettingsDiaAh = new ScSettingsDiaAh(
+    modelRW = mkLensZoomRW( dialogsRW, MScDialogs.settings ),
+  )
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
   override protected val actionHandler: HandlerFunction = {
@@ -416,6 +421,9 @@ class Sc3Circuit(
     acc ::= menuNativeAppAh
 
     acc ::= scErrorDiaAh
+
+    // Контроллер диалога настроек.
+    acc ::= scSettingsDiaAh
 
     // Диалоги обычно закрыты. Тоже - в хвост.
     acc ::= firstRunDialogAh

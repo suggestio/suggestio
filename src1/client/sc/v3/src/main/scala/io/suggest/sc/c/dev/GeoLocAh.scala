@@ -5,7 +5,7 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
+import io.suggest.sc.m.dev.{MGeoLocSwitchS, MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -104,10 +104,8 @@ class GeoLocAh[M](
           val mglw1 = mglw0.fold {
             LOG.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
             MGeoLocWatcher( watchId = None, lastPos = Ready(loc.location) )
-          } { mgl0 =>
-            mgl0.withLastPos(
-              lastPos = mgl0.lastPos.ready( loc.location )
-            )
+          } {
+            MGeoLocWatcher.lastPos.modify(_.ready(loc.location))
           }
 
           // !!! Из-за итераторов тут довольно взрывоопасный код, надо быть осторожнее.
@@ -206,9 +204,8 @@ class GeoLocAh[M](
           // Нельзя включить геолокацию сейчас.
           if (v0.switch.hardLock && !m.isHard) {
             // Жесткое выключение. Уведомить другие подсистемы, что в итоге нет геолокации:
-            val v2 = v0.withSwitch(
-              v0.switch.withOutScSwitch
-            )
+            val v2 = MScGeoLoc.switch
+              .modify(_.withOutScSwitch)(v0)
             updatedSilent(v2, glPubErrFx)
 
           } else {
@@ -220,10 +217,11 @@ class GeoLocAh[M](
         } {
           // Включение геолокации:
           case true =>
-             GeoLocAh._geoLocApiOpt.fold {
+            GeoLocAh._geoLocApiOpt.fold {
               // should never happen(?)
               LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
               effectOnly(glPubErrFx)
+
             } { geoApi =>
               // Запустить мониторинг геолокации.
               val needWatchers =
@@ -234,17 +232,16 @@ class GeoLocAh[M](
                 .startWatchers(geoApi)
                 .toMap
 
-              val onOff2 = v0.switch.onOff.ready( true ).pending()
-
-              var switch2 = v0.switch
-                .withOnOff( onOff2 )
+              var switchModAccF = MGeoLocSwitchS.onOff
+                .modify( _.ready(true).pending() )
               if (m.scSwitch.nonEmpty)
-                switch2 = switch2.withScSwitch( m.scSwitch )
+                switchModAccF = switchModAccF andThen (MGeoLocSwitchS.scSwitch set m.scSwitch)
 
-              val v2 = v0.copy(
-                watchers = v0.watchers ++ watchers2,
-                switch   = switch2,
-              )
+              val v2 = (
+                MScGeoLoc.watchers.modify(_ ++ watchers2) andThen
+                MScGeoLoc.switch.modify( switchModAccF )
+              )(v0)
+
               ah.updateMaybeSilent(v0.switch.onOff ==* v2.switch.onOff)(v2)
             }
 
@@ -304,8 +301,9 @@ class GeoLocAh[M](
           if (m.error.domError.code ==* Html5GeoLocApiErrors.PERMISSION_DENIED) {
             // TODO Отрабатывать так для всех ошибок? Ведь таймаут геолокации и POSITION_UNAVAILABLE аналогичны по сути:
             // Если ошибка DENIED, то выключить геолокацию жестко:
-            val v1 = if (v0.switch.scSwitch.isEmpty) v0
-                     else v0.withSwitch( v0.switch.withOutScSwitch )
+            val v1 =
+              if (v0.switch.scSwitch.isEmpty) v0
+              else MScGeoLoc.switch.modify(_.withOutScSwitch)(v0)
 
             val v2 = GeoLocAh.doDisable(v1, isHard = true, withException = m.error)
             updated(v2, notifyOthersFx)
@@ -315,23 +313,23 @@ class GeoLocAh[M](
             // TODO Возможно, это неправильно, и геолокация надо сразу вырубать при любой ошибке.
             LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
             // Сохранить ошибку в lastLoc
-            val wa2 = watcher0.withLastPos(
-              watcher0.lastPos.fail( m.error )
-            )
+            val wa2 = MGeoLocWatcher.lastPos
+              .modify(_.fail(m.error))(watcher0)
 
-            val v2 = v0.copy(
-              watchers = v0.watchers + (m.glType -> wa2),
-              switch   = v0.switch.withOutScSwitch
-            )
+            val v2 = (
+              MScGeoLoc.watchers
+                .modify( _ + (m.glType -> wa2) ) andThen
+              MScGeoLoc.switch
+                .modify(_.withOutScSwitch)
+            )(v0)
 
             if (v2.switch.onOff.isPending) {
-              val isOnOff2 = v2.switch.onOff.getOrElse(true)
+              val isOnOff2 = v2.switch.onOff getOrElse true
 
               val onOff2 = FailedStale(isOnOff2, m.error)
-              val v3 = v2.withSwitch(
-                v2.switch
-                  .withOnOff( onOff2 )
-              )
+              val v3 = MScGeoLoc.switch
+                .composeLens(MGeoLocSwitchS.onOff)
+                .set(onOff2)(v2)
               updated(v3, notifyOthersFx)
             } else {
               updatedSilent(v2, notifyOthersFx)

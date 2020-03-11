@@ -22,7 +22,7 @@ import scalacss.ScalaCssReact._
   * Description: Компонент строки меню с ссылкой для логина в s.io.
   */
 class EnterLkRowR(
-                   scReactCtxP            : React.Context[MScReactCtx],
+                   scReactCtxP   : React.Context[MScReactCtx],
                    crCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
@@ -74,35 +74,35 @@ class EnterLkRowR(
         }
 
         // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
-        scReactCtxP.consume { scReactCtx =>
-          <.a(
-            R.rowLink,
-            ^.href := hrefRoute.url,
+        <.a(
+          R.rowLink,
+          ^.href := hrefRoute.url,
 
-            // Ссылка на вход или на личный кабинет
-            MuiListItem(
-              new MuiListItemProps {
-                override val disableGutters = true
-                override val button = true
-              }
-            )(
-              MuiListItemText()(
+          // Ссылка на вход или на личный кабинет
+          MuiListItem(
+            new MuiListItemProps {
+              override val disableGutters = true
+              override val button = true
+            }
+          )(
+            MuiListItemText()(
+              scReactCtxP.consume { scReactCtx =>
                 <.span(
                   R.rowContent,
                   scReactCtx.scCss.fgColor,
                   crCtxProv.message( msgCode ),
                 )
-              )
+              }
             )
           )
-        }
+        )
 
       }
-
     }
   }
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

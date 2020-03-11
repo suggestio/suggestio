@@ -1,13 +1,11 @@
-package io.suggest.sc.v.menu.dlapp
+package io.suggest.sc.v.dia.settings
 
 import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
-import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
+import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.m.menu.OpenCloseAppDl
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.{MScReactCtx, MScRoot, SettingsDiaOpen}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,44 +17,38 @@ import scalacss.ScalaCssReact._
   * Created: 12.12.2019 10:09
   * Description: wrap-компонент пункта меню, содержащего данные для скачивания мобильного приложения.
   */
-class DlAppR(
-              scReactCtxP        : React.Context[MScReactCtx],
-              crCtxProv          : React.Context[MCommonReactCtx],
-            ) {
+class SettingsMenuItemR(
+                         scReactCtxP        : React.Context[MScReactCtx],
+                         crCtxProv          : React.Context[MCommonReactCtx],
+                       ) {
 
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
 
-  case class State(
-                    isOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
-                    nodeIdOptC              : ReactConnectProxy[Option[String]],
-                  )
+  class Backend($: BackendScope[Props, Unit]) {
 
-  class Backend($: BackendScope[Props, State]) {
-
-    private def _onOpenCloseClick(e: ReactEvent): Callback = {
+    private lazy val _onClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       $.props >>= { propsProxy: Props =>
-        val isOpenedNow = propsProxy.value.index.menu.dlApp.opened
+        val isOpenedNow = propsProxy.value.dialogs.settings.opened
         // Открыть/закрыть диалог
-        propsProxy.dispatchCB( OpenCloseAppDl( !isOpenedNow ) ) >>
+        propsProxy.dispatchCB( SettingsDiaOpen( opened = !isOpenedNow ) ) >>
         // И скрыть менюшку, если открыта.
         propsProxy.dispatchCB( SideBarOpenClose(MScSideBars.Menu, open = false) )
       }
     }
-    private lazy val _onOpenCloseClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onOpenCloseClick )
 
 
-    def render(s: State): VdomElement = {
+    def render(): VdomElement = {
       val R = ScCssStatic.Menu.Rows
 
       // Основной пункт меню.
       val headlineChs = List[VdomElement](
         <.span(
           R.rowContent,
-          crCtxProv.message( MsgCodes.`Application` ),
+          crCtxProv.message( MsgCodes.`Settings` ),
         ),
         // Иконка закачки.
-        Mui.SvgIcons.GetApp(
+        Mui.SvgIcons.Settings(
           new MuiSvgIconProps {
             override val className = R.rightIcon.htmlClass
           }
@@ -70,7 +62,7 @@ class DlAppR(
         new MuiListItemProps {
           override val disableGutters = true
           override val button         = true
-          override val onClick        = _onOpenCloseClickCbF
+          override val onClick        = _onClickCbF
           override val classes        = css
         }
       } (
@@ -92,20 +84,8 @@ class DlAppR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsOptProxy =>
-      State(
-        isOpenedSomeC = propsOptProxy.connect { props =>
-          OptionUtil.SomeBool( props.index.menu.dlApp.opened )
-        },
-
-        nodeIdOptC = propsOptProxy.connect { props =>
-          props.index.state.rcvrId
-        },
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
 
 }

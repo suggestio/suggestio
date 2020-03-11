@@ -328,8 +328,8 @@ object MuiSvgIcons {
   object ActionSchedule extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/search", JSImport.Default)
   object ActionSearch extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/settings-applications", JSImport.Default)
-  object ActionSettingsApplications extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SettingsApplications", JSImport.Default)
+  object SettingsApplications extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/settings-backup-restore", JSImport.Default)
   object ActionSettingsBackupRestore extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/settings-bluetooth", JSImport.Default)

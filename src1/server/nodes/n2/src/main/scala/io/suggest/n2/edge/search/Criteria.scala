@@ -42,7 +42,7 @@ final case class Criteria(
                            nodeIdsMatchAll   : Boolean              = false,
                            geoDistanceSort   : Option[MGeoPoint]    = None,
                            extService        : Option[Seq[MExtService]] = None,
-                           osFamilies          : Option[Seq[MOsFamily]]   = None,
+                           osFamilies        : Option[Seq[MOsFamily]]   = None,
                            // media
                            fileHashesHex     : Iterable[MHashCriteria]  = Nil,
                            fileMimes         : Iterable[String]         = Nil,

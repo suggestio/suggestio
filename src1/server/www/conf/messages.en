@@ -1,3 +1,4 @@
+Browser=Browser
 I=I
 Adv=Advertise
 When=When
@@ -1108,3 +1109,7 @@ No.downloads.available=No downloads available
 Malfunction=Неисправность
 Open.0=Open {0}
 Hide=Hide
+Settings=Settings
+0.not.supported.on.this.platform.1={0} is not supported on current platform ({1}).
+Install.app.for.access.to.0=Install application to gain {0} access.
+

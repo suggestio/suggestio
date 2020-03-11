@@ -443,5 +443,10 @@ object MsgCodes {
   val `Malfunction` = "Malfunction"
   val `Open.0` = "Open.0"
   val `Install` = "Install"
+  val `Settings` = "Settings"
+
+  val `0.not.supported.on.this.platform.1` = "0.not.supported.on.this.platform.1"
+  val `Install.app.for.access.to.0` = "Install.app.for.access.to.0"
+  val `Browser` = "Browser"
 
 }

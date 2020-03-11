@@ -1,6 +1,5 @@
 package io.suggest.sc.v.menu
 
-import com.materialui
 import com.materialui.{Mui, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSwitch, MuiSwitchClasses, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.data.Pot
@@ -60,7 +59,7 @@ class SlideMenuItemR(
     /** Реакция на переключение состояния.
       * @param isEnable Новое состояние on/off, желаемое пользователем.
       */
-    private def _btOnOffClick(isEnable: Boolean)(e: ReactEvent): Callback = {
+    private def _onOffClick(isEnable: Boolean)(e: ReactEvent): Callback = {
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsPotProxy: Props =>
         propsPotProxy.value.get.onOffAction( isEnable )
       }
@@ -77,7 +76,7 @@ class SlideMenuItemR(
         // Ссылка на вход или на личный кабинет
         MuiListItem {
           val _onClickF = JsOptionUtil.maybeDefined(!isClickDisabled) {
-            ReactCommonUtil.cbFun1ToJsCb( _btOnOffClick(!props.isEnabled) )
+            ReactCommonUtil.cbFun1ToJsCb( _onOffClick(!props.isEnabled) )
           }
           new MuiListItemProps {
             override val disableGutters = true
@@ -123,7 +122,7 @@ class SlideMenuItemR(
                 },
 
                 // Рендер самого переключателя:
-                materialui.MuiToolTip {
+                MuiToolTip {
                   new MuiToolTipProps {
                     override val title: raw.React.Node = crCtx.messages( MsgCodes.onOff(props.isEnabled) )
                   }

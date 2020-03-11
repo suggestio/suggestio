@@ -1,3 +1,4 @@
+Browser=Браузер
 I=Я
 Adv=Размещение
 When=Когда
@@ -1116,3 +1117,7 @@ No.downloads.available=Нет доступных загрузок
 Malfunction=Неисправность
 Open.0=Открыть {0}
 Hide=Скрыть
+Settings=Настройки
+0.not.supported.on.this.platform.1={0} не поддерживается на текущей платформе ({1}).
+Install.app.for.access.to.0=Установите приложение для получения доступа к {0}.
+

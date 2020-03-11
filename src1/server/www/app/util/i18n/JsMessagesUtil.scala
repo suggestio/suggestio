@@ -285,6 +285,9 @@ class JsMessagesUtil @Inject() (
       MC.`Type` ::
       MC.`Information` ::
       MC.`Show` :: MC.`Hide` ::
+      MC.`Settings` ::
+      MC.`0.not.supported.on.this.platform.1` :: MC.`Install.app.for.access.to.0` ::
+      MC.`Browser` ::
       Nil
   }
 

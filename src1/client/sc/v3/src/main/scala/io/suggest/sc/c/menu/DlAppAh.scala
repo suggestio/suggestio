@@ -9,7 +9,7 @@ import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScIndexState
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.m.menu.{DlInfoResp, ExpandDlApp, MDlAppDia, MkAppDlInfoReq, OpenCloseAppDl, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
+import io.suggest.sc.m.menu.{DlInfoResp, ExpandDlApp, MDlAppDia, MkAppDlInfoReq, DlAppOpen, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
@@ -33,7 +33,7 @@ class DlAppAh(
   override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
 
     // показать/скрыть диалог
-    case m: OpenCloseAppDl =>
+    case m: DlAppOpen =>
       val v0 = value
 
       if (v0.opened ==* m.opened) {

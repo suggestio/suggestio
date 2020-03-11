@@ -19,21 +19,17 @@ object MuiSwitch {
 
 
 trait MuiSwitchProps
-  extends MuiPropsBase
+  extends MuiIconButtonPropsBase
   with MuiPropsBaseClasses[MuiSwitchClasses]
 {
   val checked: js.UndefOr[Boolean | String] = js.undefined
   val checkedIcon: js.UndefOr[raw.React.Node] = js.undefined
-  val color: js.UndefOr[String] = js.undefined
-  val disabled: js.UndefOr[Boolean] = js.undefined
-  val disableRipple: js.UndefOr[Boolean] = js.undefined
   val icon: js.UndefOr[raw.React.Node] = js.undefined
   val id: js.UndefOr[String] = js.undefined
   val inputProps: js.UndefOr[js.Object] = js.undefined
   val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] = js.undefined
   @JSName("onChange")
   val onChange2: js.UndefOr[js.Function2[ReactEventFromInput, Boolean, _]] = js.undefined
-  val `type`: js.UndefOr[String] = js.undefined
   val value: js.UndefOr[String | Double | Boolean] = js.undefined
 }
 

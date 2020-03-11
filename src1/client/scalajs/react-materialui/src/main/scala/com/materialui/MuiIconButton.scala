@@ -17,14 +17,12 @@ object MuiIconButton {
 
 
 /** JSON для [[MuiIconButton]] props. */
-trait MuiIconButtonProps
-  extends MuiPropsBase
-  with MuiPropsBaseClasses[MuiIconButtonClasses]
-{
+trait MuiIconButtonPropsBase extends MuiButtonBaseCommonProps {
   val color: js.UndefOr[String] = js.undefined
-  val disabled: js.UndefOr[Boolean] = js.undefined
-  val disableRipple: js.UndefOr[Boolean] = js.undefined
 }
+trait MuiIconButtonProps
+  extends MuiIconButtonPropsBase
+  with MuiPropsBaseClasses[MuiIconButtonClasses]
 
 
 /** JSON для [[MuiIconButtonProps.classes]]. */

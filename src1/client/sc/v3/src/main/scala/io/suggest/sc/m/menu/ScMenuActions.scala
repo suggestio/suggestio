@@ -18,7 +18,7 @@ sealed trait IScMenuAction extends ISc3Action
 sealed trait IScAppAction extends IScMenuAction
 
 /** Экшен управления диалогом скачивания приложения. */
-case class OpenCloseAppDl( opened: Boolean ) extends IScAppAction
+case class DlAppOpen(opened: Boolean ) extends IScAppAction
 
 /** Смена платформы в селекте платформы диалога скачивания приложения. */
 case class PlatformSetAppDl( osPlatform: MOsFamily ) extends IScAppAction

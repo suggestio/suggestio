@@ -3,19 +3,18 @@ package io.suggest.sc
 import com.softwaremill.macwire._
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.boot.MSpaRouterState
-import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.u.api.ScAppApiHttp
 import io.suggest.sc.v._
+import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
+import io.suggest.sc.v.dia.settings.{BlueToothSettingR, BlueToothUnAvailInfoR, GeoLocSettingR, OnOffSettingR, ScSettingsDiaR, SettingsMenuItemR, UnsafeOffsetSettingR}
 import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
-import io.suggest.sc.v.menu.dlapp.{DlAppDiaR, DlAppR}
 import io.suggest.sc.v.search._
 import japgolly.scalajs.react.React
-import japgolly.scalajs.react.extra.router.RouterCtl
 
 /**
   * Suggest.io
@@ -98,11 +97,8 @@ class Sc3Module {
   lazy val enterLkRowR = wire[EnterLkRowR]
   lazy val aboutSioR = wire[AboutSioR]
   lazy val editAdR = wire[EditAdR]
-  lazy val blueToothR = wire[BlueToothR]
-  lazy val unsafeScreenAreaOffsetR = wire[UnsafeScreenAreaOffsetR]
   lazy val slideMenuItemR = wire[SlideMenuItemR]
-  lazy val geoLocR = wire[GeoLocR]
-  lazy val dlAppR = wire[DlAppR]
+  lazy val dlAppMenuItemR = wire[DlAppMenuItemR]
 
 
   // dia
@@ -110,6 +106,14 @@ class Sc3Module {
   lazy val scErrorDiaR = wire[ScErrorDiaR]
   lazy val dlAppDiaR = wire[DlAppDiaR]
 
+  // dia.settings
+  lazy val geoLocSettingR = wire[GeoLocSettingR]
+  lazy val blueToothSettingR = wire[BlueToothSettingR]
+  lazy val unsafeOffsetSettingR = wire[UnsafeOffsetSettingR]
+  lazy val scSettingsDiaR = wire[ScSettingsDiaR]
+  lazy val settingsMenuItemR = wire[SettingsMenuItemR]
+  lazy val onOffSettingR = wire[OnOffSettingR]
+  lazy val blueToothUnAvailInfoR = wire[BlueToothUnAvailInfoR]
 
   // sc3
   lazy val scRootR = wire[ScRootR]
