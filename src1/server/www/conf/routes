@@ -14,7 +14,7 @@ GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState
 
 ## "... most browsers of all types will request /favicon.ico by default" https://stackoverflow.com/a/1445016
 ## TODO Заменить на moved temporary + versioned-роута, чтобы усилить кэширование?
-GET  /favicon.ico                       @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file = "images/favicon/114.ico")
+GET  /favicon.ico                       @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file = "images/favicon/512.ico")
 
 ## sc3+ Объединённое API:
 GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
