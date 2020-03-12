@@ -438,6 +438,7 @@ object OutEdges extends MacroLogsImpl {
       val nestPath = EF.E_OUT_FN
       // TODO ScoreMode.Avg -- с потолка взято, надо разобраться на тему оптимального варианта.
       val _qn = QueryBuilders.nestedQuery(nestPath, q, ScoreMode.Max)
+      // TODO Организовать сборку .innerHits().
       if (withQname)
         _qn.queryName(s"nested: $nestPath must?${oe.must} cr=$oe")
       MWrapClause(oe.must, _qn)
