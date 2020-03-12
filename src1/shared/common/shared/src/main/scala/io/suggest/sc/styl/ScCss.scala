@@ -394,19 +394,11 @@ object ScCssStatic extends StyleSheet.Inline {
         textDecoration := none
       )
 
+      /* Оставлено - вдруг понадобится.
       val rowText = style(
         height( 28.px )
       )
-
-      /** стили для mui-switch в пунктах меню. */
-      val switch = style(
-        marginTop( -16.px )
-      )
-
-      /** стили для mui-switch base в пунктах меню. */
-      val switchBase = style(
-        height(28.px)
-      )
+      */
 
       val rightIcon = style(
         position.absolute,

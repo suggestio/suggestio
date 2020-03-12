@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText}
+import com.materialui.{MuiButton, MuiButtonProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiList}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamily
@@ -9,9 +9,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{MScReactCtx, MScRoot, SettingsDiaOpen}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io

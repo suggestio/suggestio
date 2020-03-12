@@ -5,7 +5,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
 import io.suggest.jd.render.m.GridRebuild
 import io.suggest.sc.m.dev.MScScreenS
-import io.suggest.sc.m.inx.ScCssReBuild
+import io.suggest.sc.m.inx.{MScSideBars, ScCssReBuild, SideBarOpenClose}
 import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.c.search.SearchAh
@@ -116,7 +116,12 @@ class ScreenAh[M](
 
       // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
       // Выполнить ребилд ScCss в фоне:
-      val fx = ScCssReBuild.toEffectPure
+      var fx = ScCssReBuild.toEffectPure
+
+      // Если закрыта левая панель меню, то нужно её раскрыть (нужна как ориентир, иначе непонятно).
+      if (!rootRO.value.index.menu.opened)
+        fx = SideBarOpenClose( MScSideBars.Menu, open = true ).toEffectPure >> fx
+
       updated(v2, fx)
 
   }

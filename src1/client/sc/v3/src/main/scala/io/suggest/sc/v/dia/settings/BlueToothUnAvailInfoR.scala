@@ -6,6 +6,7 @@ import io.suggest.dev.{MOsFamily, MPlatformS}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.m.SettingsDiaOpen
 import japgolly.scalajs.react._
@@ -24,6 +25,12 @@ class BlueToothUnAvailInfoR(
   type Props_t = MPlatformS
   type Props = ModelProxy[Props_t]
 
+  /**
+    *
+    * @param btMissOnOsC Есть Bt LE => None
+    *                    Нет Bt LE, и браузер => Some(None)
+    *                    Нет Bt LE, и приложение => Some( Some(osFamily) ).
+    */
   case class State(
                     btMissOnOsC       : ReactConnectProxy[Option[Option[MOsFamily]]],
                   )
@@ -51,15 +58,18 @@ class BlueToothUnAvailInfoR(
                   ),
                 ),
 
-                MuiListItemText()(
-                  MuiLink(
-                    new MuiLinkProps {
-                      override val onClick = _onInstallAppClickCbF
-                    }
-                  )(
-                    crCtx.messages( MsgCodes.`Install.app.for.access.to.0`, MsgCodes.`Bluetooth` )
-                  ),
-                ),
+                // Если это браузер, то вывести плашку о необходимости установки приложения.
+                ReactCommonUtil.maybeNode( btMissOpt.isEmpty ) {
+                  MuiListItemText()(
+                    MuiLink(
+                      new MuiLinkProps {
+                        override val onClick = _onInstallAppClickCbF
+                      }
+                    )(
+                      crCtx.messages( MsgCodes.`Install.app.for.access.to.0`, MsgCodes.`Bluetooth` )
+                    ),
+                  )
+                },
 
               ),
             )
@@ -76,7 +86,9 @@ class BlueToothUnAvailInfoR(
     .initialStateFromProps { propsProxy =>
       State(
         btMissOnOsC = propsProxy.connect { p =>
-          Option.when( !p.hasBle )( p.osFamily )
+          Option.when( !p.hasBle ) {
+            OptionUtil.maybeOpt( !p.isBrowser )( p.osFamily )
+          }
         },
       )
     }
