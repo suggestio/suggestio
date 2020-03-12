@@ -4,7 +4,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.search.{MTagFound, MTagsFound}
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.n2.node.{MNodeTypes, MNodes}
@@ -34,29 +34,24 @@ class LkTagsSearchUtil @Inject() (
 
  /** Компиляция qs в аргументы поиска узлов. */
   def qs2TagNodesSearch(qs: MTagsSearchQs): Future[MNodeSearch] = {
-
-    val _limit = qs.limit
-      .getOrElse( LIMIT_DFLT )
-
-    val _offset = qs.offset
-      .getOrElse( 0 )
-
-    val tags: Seq[String] = TagFacesUtil.query2tags( qs.faceFts )
-    val searchTagOpt  = tags.lastOption
-
-    val tcrOpt = for (q <- searchTagOpt) yield {
-      TagCriteria(q, isPrefix = true)
-    }
-    val _edgeSearchCr = Criteria(
-      predicates  = MPredicates.TaggedBy.Self :: Nil,
-      tags        = tcrOpt.toSeq
-    )
-
     val r = new MNodeSearch {
-      override def outEdges  = _edgeSearchCr :: Nil
-      override def limit     = _limit
-      override def offset    = _offset
-      override def nodeTypes = MNodeTypes.Tag :: Nil
+      override val outEdges: MEsNestedSearch[Criteria] = {
+        val tags: Seq[String] = TagFacesUtil.query2tags( qs.faceFts )
+        val searchTagOpt  = tags.lastOption
+        val tcrOpt = for (q <- searchTagOpt) yield {
+          TagCriteria(q, isPrefix = true)
+        }
+        val _edgeSearchCr = Criteria(
+          predicates  = MPredicates.TaggedBy.Self :: Nil,
+          tags        = tcrOpt.toSeq
+        )
+        MEsNestedSearch(
+          clauses = _edgeSearchCr :: Nil,
+        )
+      }
+      override val limit = qs.limit getOrElse LIMIT_DFLT
+      override val offset = qs.offset getOrElse 0
+      override val nodeTypes = MNodeTypes.Tag :: Nil
     }
 
     Future.successful(r)

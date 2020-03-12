@@ -1,6 +1,6 @@
 package io.suggest.n2.edge.search
 
-import io.suggest.es.model.{IMust, MWrapClause}
+import io.suggest.es.model.{IMust, MEsNestedSearch, MWrapClause}
 import io.suggest.es.search.DynSearchArgs
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.n2.node.MNodeFields
@@ -454,13 +454,14 @@ object OutEdges extends MacroLogsImpl {
 trait OutEdges extends DynSearchArgs {
 
   /** Поиск/фильтрация по out-эджам согласно описанным критериям. */
-  def outEdges: Seq[Criteria] = Nil
+  def outEdges: MEsNestedSearch[Criteria] = MEsNestedSearch.empty
 
 
   /** Накатить эти сложные критерии на query. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val oes = outEdges
     val _outEdgesIter = oes
+      .clauses
       .iterator
       .filter { _.nonEmpty }
 
@@ -475,7 +476,7 @@ trait OutEdges extends DynSearchArgs {
       qbOpt0.map { qb0 =>
         val q = QueryBuilders.boolQuery()
           .must(qb0)
-        if (oes.exists(_.isContainsSort)) {
+        if (oes.clauses.exists(_.isContainsSort)) {
           // не-filter, когда внутри _score
           q.must(qb2)
         } else {
@@ -490,12 +491,12 @@ trait OutEdges extends DynSearchArgs {
   /** Базовый размер StringBuilder'а. */
   override def sbInitSize: Int = {
     val s0 = super.sbInitSize
-    s0 + outEdges.length * 80
+    s0 + outEdges.clauses.length * 80
   }
 
   /** Построение выхлопа метода toString(). */
   override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("outEdges", outEdges, super.toStringBuilder)
+    fmtColl2sb("outEdges", outEdges.clauses, super.toStringBuilder)
   }
 
 }

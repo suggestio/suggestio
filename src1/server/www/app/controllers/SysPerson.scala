@@ -1,7 +1,7 @@
 package controllers
 
-import io.suggest.es.model.EsModel
-import javax.inject.{Inject, Singleton}
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
+import javax.inject.Inject
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
@@ -48,7 +48,7 @@ class SysPerson @Inject() (
     isSu().async { implicit request =>
       val personsCntFut: Future[Long] = {
         val psearch = new MNodeSearch {
-          override def nodeTypes  = Seq(MNodeTypes.Person)
+          override val nodeTypes  = MNodeTypes.Person :: Nil
           override def limit      = Int.MaxValue    // TODO Надо ли оно тут вообще?
         }
         mNodes.dynCount(psearch)
@@ -56,11 +56,13 @@ class SysPerson @Inject() (
 
       val identsCntFut = mNodes.dynCount(
         new MNodeSearch {
-          override def outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               predicates = MPredicates.Ident :: Nil
             )
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
           }
         }
       )
@@ -95,11 +97,13 @@ class SysPerson @Inject() (
       val msearch = new MNodeSearch {
         override def limit = theLimit
         override def offset = theOffset
-        override def outEdges: Seq[Criteria] = {
+        override val outEdges: MEsNestedSearch[Criteria] = {
           val cr = Criteria(
             predicates = MPredicates.Ident :: Nil
           )
-          cr :: Nil
+          MEsNestedSearch(
+            clauses = cr :: Nil,
+          )
         }
       }
       for {
@@ -132,12 +136,14 @@ class SysPerson @Inject() (
     isSuPerson(personId).async { implicit request =>
       // Сразу запускаем поиск узлов: он самый тяжелый тут.
       val msearch = new MNodeSearch {
-        override val outEdges = {
+        override val outEdges: MEsNestedSearch[Criteria] = {
           val cr = Criteria(
             nodeIds    = personId :: Nil,
             predicates = MPredicates.OwnedBy :: Nil,
           )
-          cr :: Nil
+          MEsNestedSearch(
+            clauses = cr :: Nil,
+          )
         }
         override val withNameSort = Some(SortOrder.ASC)
       }

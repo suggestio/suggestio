@@ -4,7 +4,7 @@ import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -63,7 +63,9 @@ class CanChangeNodeAvailability @Inject() (
       // Тип узла должен подразумевать возможность расширенного управления со стороны юзера.
       mnode.common.ntype.userHasExtendedAcccess &&
         // Не должно быть banned-эджей на узле.
-        !mnode.edges.withPredicateIter( MPredicates.ModeratedBy ).exists( _.info.flag.contains(false) )
+        !mnode.edges
+          .withPredicateIter( MPredicates.ModeratedBy )
+          .exists( _.info.flag contains false )
     ) {
       val nodeId = mnode.id.get
 
@@ -75,11 +77,13 @@ class CanChangeNodeAvailability @Inject() (
       // Поискать какие-либо подчиненные узлы, указывающие на этот узел.
       val hasRefNodesFut = mNodes.dynCount {
         new MNodeSearch {
-          override def outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               nodeIds    = nodeId :: Nil
             )
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
           }
         }
       }

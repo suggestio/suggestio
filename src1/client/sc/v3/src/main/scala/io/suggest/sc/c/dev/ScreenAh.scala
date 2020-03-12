@@ -98,9 +98,11 @@ class ScreenAh[M](
       } else {
         // Обновить только ненулевые значения. Это основной вектор отладки.
         offOpt0: Option[Int] =>
-          offOpt0
-            .map(_ + m.incDecBy)
-            .filter(_ > 0)
+          for {
+            off0 <- offOpt0
+            off1 = off0 + m.incDecBy
+            if off1 > 0
+          } yield off1
       }
 
       val uo2 = uo0.copy(

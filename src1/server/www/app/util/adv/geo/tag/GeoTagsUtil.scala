@@ -19,7 +19,7 @@ import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import models.mproj.ICommonDi
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,7 +100,7 @@ class GeoTagsUtil @Inject() (
     lazy val logPrefix = s"findTagNode($tagFace):"
 
     val msearch = new MNodeSearch {
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val tcr = TagCriteria(
           face      = tagFace,
           isPrefix  = false,
@@ -110,10 +110,12 @@ class GeoTagsUtil @Inject() (
           predicates  = _PRED :: Nil,
           tags        = tcr :: Nil
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
 
-      override def nodeTypes = MNodeTypes.Tag :: Nil
+      override val nodeTypes = MNodeTypes.Tag :: Nil
 
       // Берём поиск с запасом. Возможно появление дублирующихся результатов поиска, и на это надо будет реагировать.
       // Когда всё будет отлажено, тут можно ставить limit=1, и искать через dynSearchOne() и подобных.
@@ -145,7 +147,6 @@ class GeoTagsUtil @Inject() (
     findTagFut
       .map(_.get)
       .recoverWith { case _: NoSuchElementException =>
-
         // Собрать заготовку узла.
         val tagNode0 = MNode(
           common = MNodeCommon(

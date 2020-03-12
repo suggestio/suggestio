@@ -4,7 +4,7 @@ import java.io.{File, FileInputStream}
 
 import javax.inject.Inject
 import io.suggest.crypto.hash.{MHash, MHashes}
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MEdge
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.media.storage.IMediaStorages
@@ -147,12 +147,14 @@ class FileUtil @Inject()(
         for {
           isFileExistElsewhereIds <- mNodes.dynSearchIds(
             new MNodeSearch {
-              override val outEdges: Seq[Criteria] = {
+              override val outEdges: MEsNestedSearch[Criteria] = {
                 val cr = Criteria(
                   fileStorType      = Set( edgeMediaDelete.storage.storage ),
                   fileStorMetaData  = Set( edgeMediaDelete.storage.data.meta ),
                 )
-                cr :: Nil
+                MEsNestedSearch(
+                  clauses = cr :: Nil,
+                )
               }
               override val withoutIds = mnode.id.toList
               override def limit = 1

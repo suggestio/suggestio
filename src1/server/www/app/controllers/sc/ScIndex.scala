@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.es.model.{EsModelDi, IMust}
+import io.suggest.es.model.{EsModelDi, IMust, MEsNestedSearch}
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.i18n.MsgCodes
@@ -185,7 +185,6 @@ trait ScIndex
         LOGGER.trace(s"$logPrefix Detect node using geo-loc: $geoLoc")
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
-        val someTrue = Some(true)
         val circle = CircleGs(geoLoc.point, radiusM = 1)
         val qShape = CircleGsJvm.toEsQueryMaker( circle )
         val nodeLocPred = MPredicates.NodeLocation
@@ -201,8 +200,8 @@ trait ScIndex
         val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
           val msearch = new MNodeSearch {
             // Неактивные узлы сразу вылетают из выдачи.
-            override def isEnabled = someTrue
-            override def outEdges: Seq[Criteria] = {
+            override val isEnabled = Some(true)
+            override val outEdges: MEsNestedSearch[Criteria] = {
               // Возможно, надо сортировать на предмет близости к точке.
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
@@ -212,7 +211,9 @@ trait ScIndex
                 predicates  = nodeLocPred :: Nil,
                 gsIntersect = Some(gsCr)
               )
-              cr :: Nil
+              MEsNestedSearch(
+                clauses = cr :: Nil,
+              )
             }
             override def withAdnRights = withAdnRights1
             override def adnRightsMustOrNot = adnRightsMustOrNot1

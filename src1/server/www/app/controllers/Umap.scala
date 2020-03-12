@@ -5,7 +5,7 @@ import java.io.FileInputStream
 import _root_.util.acl._
 import _root_.util.geo.umap._
 import _root_.util.sec.CspUtil
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import javax.inject.Inject
 import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
 import io.suggest.n2.edge._
@@ -120,16 +120,18 @@ class Umap @Inject() (
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: MNodeGeoLevel) = isSu().async { implicit request =>
     val msearch = new MNodeSearch {
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         // Ищем только с node-location'ами на текущем уровне.
         val cr = Criteria(
-          predicates  = Seq( MPredicates.NodeLocation ),
+          predicates  = MPredicates.NodeLocation :: Nil,
           gsIntersect = Some(GsCriteria(
-            levels      = Seq(ngl),
+            levels      = ngl :: Nil,
             gjsonCompat = Some(true)
           ))
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
 
       override def limit                = 600

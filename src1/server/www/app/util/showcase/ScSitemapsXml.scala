@@ -5,7 +5,7 @@ import java.time.LocalDate
 import akka.stream.scaladsl.Source
 import javax.inject.Inject
 import controllers.routes
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
@@ -14,8 +14,8 @@ import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl}
 import models.mctx.ContextUtil
-import models.mproj.ICommonDi
 import models.msc.ScJsState
+import play.api.inject.Injector
 import play.api.mvc.QueryStringBindable
 import util.seo.SiteMapXmlCtl
 
@@ -31,19 +31,16 @@ import util.seo.SiteMapXmlCtl
  * - Если изменилось вчера или ранее, то значение lastmod уведомит кравлер, что страница изменилась.
 */
 class ScSitemapsXml @Inject() (
-                                esModel                       : EsModel,
-                                mNodes                        : MNodes,
-                                streamsUtil                   : StreamsUtil,
-                                ctxUtil                       : ContextUtil,
-                                mCommonDi                     : ICommonDi
+                                injector                      : Injector,
                               )
   extends SiteMapXmlCtl
   with MacroLogsImpl
 {
 
-  import mNodes.Implicits._
-  import streamsUtil.Implicits._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val ctxUtil = injector.instanceOf[ContextUtil]
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -54,26 +51,28 @@ class ScSitemapsXml @Inject() (
   override def siteMapXmlSrc(): Source[SiteMapUrl, _] = {
     val adSearch = new MNodeSearch {
 
-      override def isEnabled = Some(true)
+      override val isEnabled = Some(true)
 
-      override def nodeTypes: Seq[MNodeType] = {
+      override val nodeTypes: Seq[MNodeType] = {
         MNodeTypes.Ad ::
           // TODO Теги тоже надо индексировать, по идее. Но надо разобраться с выдачей по-лучше на предмет тегов, URL и их заголовков.
           // TODO А что с узлами-ресиверами, с плиткой которые?
           Nil
       }
 
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val preds = MPredicates.AdvGeoPlace ::
           MPredicates.Receiver ::
           MPredicates.TaggedBy.Agt ::
           MPredicates.TaggedBy.DirectTag ::
           Nil
-        for (p <- preds) yield {
-          Criteria(
-            predicates = p :: Nil
-          )
-        }
+        MEsNestedSearch(
+          clauses = for (p <- preds) yield {
+            Criteria(
+              predicates = p :: Nil,
+            )
+          },
+        )
       }
 
       // Кол-во узлов за одну порцию.
@@ -85,6 +84,10 @@ class ScSitemapsXml @Inject() (
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
     val qsb = ScJsState.qsbStandalone
+
+    import mNodes.Implicits._
+    import streamsUtil.Implicits._
+    import esModel.api._
 
     mNodes
       .source[MNode]( adSearch.toEsQuery )

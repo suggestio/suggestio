@@ -38,11 +38,11 @@ import scalacss.ScalaCssReact._
   * Description: Корневой react-компонент для выдачи третьего поколения.
   */
 class ScRootR (
-                val gridR               : GridR,
+                gridR                   : GridR,
                 searchR                 : SearchR,
                 val sTextR              : STextR,
                 val headerR             : HeaderR,
-                val menuR               : MenuR,
+                menuR                   : MenuR,
                 val enterLkRowR         : EnterLkRowR,
                 val editAdR             : EditAdR,
                 val aboutSioR           : AboutSioR,

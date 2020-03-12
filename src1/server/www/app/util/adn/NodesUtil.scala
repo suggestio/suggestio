@@ -8,7 +8,7 @@ import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -75,12 +75,14 @@ final class NodesUtil @Inject() (
   /** Собрать критерии поиска узлов, прямо принадлежащих текущему юзеру. */
   def personNodesSearch(personId: String, limit1: Int = 200, withoutIds1: Seq[String] = Nil): MNodeSearch = {
     new MNodeSearch {
-      override def outEdges = Seq(
-        Criteria(
-          nodeIds     = personId :: Nil,
-          predicates  = MPredicates.OwnedBy :: Nil
+      override val outEdges: MEsNestedSearch[Criteria] = {
+        MEsNestedSearch(
+          clauses = Criteria(
+            nodeIds     = personId :: Nil,
+            predicates  = MPredicates.OwnedBy :: Nil
+          ) :: Nil,
         )
-      )
+      }
       override def limit      = limit1
       override def withoutIds = withoutIds1
     }
@@ -198,14 +200,16 @@ final class NodesUtil @Inject() (
         val _limit = Math.max(50, count * 2)
         val dsa0 = new MNodeSearch {
           override val nodeTypes = MNodeTypes.Ad :: Nil
-          override val outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               nodeIds     = prodIds,
               predicates  = MPredicates.OwnedBy :: Nil
             )
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
           }
-          override def limit  = _limit
+          override def limit = _limit
           override def offset = 0
         }
         mNodes.dynSearchIds( dsa0 )
@@ -324,12 +328,16 @@ final class NodesUtil @Inject() (
       } else {
         mNodes
           .dynSearchIds {
-            val crs = Criteria(
-              nodeIds     = parentNodeIdsCurrent.toSeq,
-              predicates  = _predicates
-            ) :: Nil
             new MNodeSearch {
-              override def outEdges = crs
+              override val outEdges: MEsNestedSearch[Criteria] = {
+                val cr = Criteria(
+                  nodeIds     = parentNodeIdsCurrent.toSeq,
+                  predicates  = _predicates
+                )
+                MEsNestedSearch(
+                  clauses = cr :: Nil,
+                )
+              }
               override def limit = perStepLimit
             }
           }

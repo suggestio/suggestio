@@ -9,7 +9,7 @@ import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.err.MCheckException
-import io.suggest.es.model.{EsModel, MEsUuId}
+import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
@@ -775,13 +775,15 @@ class Ident @Inject() (
             for {
               existingPersonNodes <- mNodes.dynSearch {
                 new MNodeSearch {
-                  override def nodeTypes = MNodeTypes.Person :: Nil
-                  override def outEdges: Seq[Criteria] = {
+                  override val nodeTypes = MNodeTypes.Person :: Nil
+                  override val outEdges: MEsNestedSearch[Criteria] = {
                     val cr = Criteria(
                       nodeIds    = regCreds.phone :: Nil,
                       predicates = MPredicates.Ident.Phone :: Nil,
                     )
-                    cr :: Nil
+                    MEsNestedSearch(
+                      clauses = cr :: Nil,
+                    )
                   }
                   // Надо падать на ситуации, когда есть несколько узлов с одним номером телефона.
                   override def limit = 2
@@ -1028,12 +1030,14 @@ class Ident @Inject() (
             mNodes.dynSearchIds {
               new MNodeSearch {
                 override val nodeTypes = MNodeTypes.AdnNode :: Nil
-                override val outEdges: Seq[Criteria] = {
+                override val outEdges: MEsNestedSearch[Criteria] = {
                   val cr = Criteria(
                     nodeIds = personId :: Nil,
                     predicates = MPredicates.OwnedBy :: Nil
                   )
-                  cr :: Nil
+                  MEsNestedSearch(
+                    clauses = cr :: Nil,
+                  )
                 }
                 // Не важно, сколько точно узлов. Надо понять лишь: 0, 1 или более, чтобы сформулировать правильный редирект.
                 override def limit = 2

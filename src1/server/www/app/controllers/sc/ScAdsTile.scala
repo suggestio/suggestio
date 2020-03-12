@@ -4,7 +4,7 @@ import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
-import io.suggest.es.model.{EsModelDi, MEsUuId}
+import io.suggest.es.model.{EsModelDi, MEsNestedSearch, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
@@ -113,12 +113,14 @@ trait ScAdsTile
       // Ищем карточки в узле-404 и их возвращаем:
       val msearchAds404 = new MNodeSearch {
         override val nodeTypes = MNodeTypes.Ad :: Nil
-        override val outEdges: Seq[Criteria] = {
+        override val outEdges: MEsNestedSearch[Criteria] = {
           val cr = Criteria(
             nodeIds = _nodeId404 :: Nil,
             predicates = MPredicates.Receiver :: Nil
           )
-          cr :: Nil
+          MEsNestedSearch(
+            clauses = cr :: Nil,
+          )
         }
         override val randomSort: Option[MRandomSortData] = {
           for (gen <- _qs.search.genOpt) yield

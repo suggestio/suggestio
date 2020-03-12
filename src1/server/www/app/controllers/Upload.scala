@@ -10,7 +10,7 @@ import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
-import io.suggest.es.model.{EsModel, IMust}
+import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
 import io.suggest.fio.WriteRequest
@@ -131,7 +131,7 @@ final class Upload @Inject()(
           fileSearchRes <- mNodes.dynSearch(
             new MNodeSearch {
               // Тут по предикату - надо ли фильтровать?
-              override val outEdges = {
+              override val outEdges: MEsNestedSearch[Criteria] = {
                 val cr = Criteria(
                   fileSizeB = fileMeta.sizeB.get :: Nil,
                   fileHashesHex = (for {
@@ -145,7 +145,9 @@ final class Upload @Inject()(
                   })
                     .toSeq,
                 )
-                cr :: Nil
+                MEsNestedSearch(
+                  clauses = cr :: Nil,
+                )
               }
               override def limit = 1
             }

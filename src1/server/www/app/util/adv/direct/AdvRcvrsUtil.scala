@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.adn.MAdnRights
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.n2.edge.search.Criteria
@@ -316,18 +316,24 @@ class AdvRcvrsUtil @Inject()(
 
 
   /** Поиск под-ресиверов по отношению к указанным ресиверам. */
-  def subRcvrsSearch(parentIds: Seq[String], onlyWithIds: Seq[String] = Nil, limit1: Int = 100 ): MNodeSearch = {
+  def subRcvrsSearch(
+                      parentIds: Seq[String],
+                      onlyWithIds: Seq[String] = Nil,
+                      limit1: Int = 100,
+                    ): MNodeSearch = {
     new MNodeSearch {
-      override def isEnabled = Some(true)
-      override def outEdges: Seq[Criteria] = {
+      override val isEnabled = Some(true)
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val cr = Criteria(
           nodeIds    = parentIds,
-          predicates = MPredicates.OwnedBy :: Nil
+          predicates = MPredicates.OwnedBy :: Nil,
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
-      override def withAdnRights  = MAdnRights.RECEIVER :: Nil
-      override def withNameSort   = Some( SortOrder.ASC )
+      override val withAdnRights  = MAdnRights.RECEIVER :: Nil
+      override val withNameSort   = Some( SortOrder.ASC )
       override def limit          = limit1
       override def withIds        = onlyWithIds
     }

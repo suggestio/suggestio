@@ -82,7 +82,7 @@ final class EsModel @Inject()(
     /** Класс для ActionRequestBuilder'ов, который явно возвращает Future.
       * Для ES >= 6.x, возможно для младших версий.
       */
-    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse](val esActionBuilder: ActionRequestBuilder[_, AResp, _]) {
+    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse](private val esActionBuilder: ActionRequestBuilder[_, AResp, _]) {
 
       /** Запуск экшена с возвращением Future[AResp]. */
       def executeFut(): Future[AResp] = {
@@ -116,7 +116,7 @@ final class EsModel @Inject()(
     /** Поддержка API для StaticMapping. */
     trait EsModelStaticMappingOpsT {
 
-      val model: EsModelStaticMapping
+      protected val model: EsModelStaticMapping
 
       /** Отправить маппинг в elasticsearch. */
       def putMapping()(implicit dsl: MappingDsl): Future[Boolean] = {
@@ -156,7 +156,7 @@ final class EsModel @Inject()(
       }
 
     }
-    implicit final class EsModelStaticMappingOps( override val model: EsModelStaticMapping )
+    implicit final class EsModelStaticMappingOps( override protected val model: EsModelStaticMapping )
       extends EsModelStaticMappingOpsT
 
 
@@ -165,7 +165,7 @@ final class EsModel @Inject()(
       */
     trait EsModelCommonStaticUntypedOpsT {
 
-      val model: EsModelCommonStaticT
+      protected val model: EsModelCommonStaticT
 
       def prepareSearchViaClient(client: Client): SearchRequestBuilder = {
         client
@@ -412,14 +412,14 @@ final class EsModel @Inject()(
 
     }
 
-    implicit final class EsModelCommonStaticUntypedOps(override val model: EsModelCommonStaticT)
+    implicit final class EsModelCommonStaticUntypedOps(override protected val model: EsModelCommonStaticT)
       extends EsModelCommonStaticUntypedOpsT
 
 
     /** Типизированный API для EsModelCommonStaticT. */
     trait EsModelCommonStaticTypedOpsT[T1 <: EsModelCommonT] {
 
-      val model: EsModelCommonStaticT { type T = T1 }
+      protected val model: EsModelCommonStaticT { type T = T1 }
 
       def prepareIndex(m: T1): IndexRequestBuilder = {
         val irb = prepareIndexNoVsn(m)
@@ -810,14 +810,14 @@ final class EsModel @Inject()(
 
     }
 
-    implicit final class EsModelCommonStaticTypedOps[T1 <: EsModelCommonT]( override val model: EsModelCommonStaticT { type T = T1 } )
+    implicit final class EsModelCommonStaticTypedOps[T1 <: EsModelCommonT]( override protected val model: EsModelCommonStaticT { type T = T1 } )
       extends EsModelCommonStaticTypedOpsT[T1]
 
 
     /** Статические методы для hi-level API: */
     trait EsModelStaticOpsT[T1 <: EsModelT] {
 
-      val model: EsModelStaticT { type T = T1 }
+      protected val model: EsModelStaticT { type T = T1 }
 
       def prepareDelete(id: String) =
         model.prepareDeleteBase(id)
@@ -1172,7 +1172,7 @@ final class EsModel @Inject()(
 
     }
 
-    implicit final class EsModelStaticOps[T1 <: EsModelT] ( override val model: EsModelStaticT { type T = T1 } )
+    implicit final class EsModelStaticOps[T1 <: EsModelT] ( override protected val model: EsModelStaticT { type T = T1 } )
       extends EsModelStaticOpsT[T1]
 
 
@@ -1352,7 +1352,7 @@ final class EsModel @Inject()(
 
 
     /** Поддержка dynSearch (v1) и search (v2). */
-    implicit final class EsDynSearchOps[T1 <: EsModelT, A <: DynSearchArgs]( val model: EsDynSearchStatic[A] { type T = T1 }) {
+    implicit final class EsDynSearchOps[T1 <: EsModelT, A <: DynSearchArgs]( model: EsDynSearchStatic[A] { type T = T1 }) {
 
       // TODO С prepareSearch() пока какой-то говнокод. args.prepareSearchRequest следовало бы вынести за пределы модели DynSearchArgs куда-то сюда.
       /** Сборка билдера поискового запроса. */

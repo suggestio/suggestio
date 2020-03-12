@@ -1,6 +1,6 @@
 package util.acl
 
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.common.MNodeCommon
@@ -73,12 +73,14 @@ class CanRecoverPw @Inject() (
           val searchPersonsFut = mNodes.dynSearch {
             new MNodeSearch {
               override val nodeTypes = MNodeTypes.Person :: Nil
-              override val outEdges: Seq[Criteria] = {
+              override val outEdges: MEsNestedSearch[Criteria] = {
                 val cr = Criteria(
                   predicates  = MPredicates.Ident.Email :: Nil,
                   nodeIds     = qs.email :: Nil,
                 )
-                cr :: Nil
+                MEsNestedSearch(
+                  clauses = cr :: Nil,
+                )
               }
               // Макс. 2 юзера, чтобы определить неопределённую ситуацию.
               override def limit = 2

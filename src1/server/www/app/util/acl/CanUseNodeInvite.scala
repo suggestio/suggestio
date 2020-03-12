@@ -1,7 +1,7 @@
 package util.acl
 
 import akka.stream.Materializer
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.i18n.MsgCodes
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
@@ -111,12 +111,14 @@ class CanUseNodeInvite @Inject()(
             // Нужно поискать юзера, который вообще владеет подобным email.
             existsingUsersWithEmail <- mNodes.dynSearch {
               new MNodeSearch {
-                override val outEdges: Seq[Criteria] = {
+                override val outEdges: MEsNestedSearch[Criteria] = {
                   val cr = Criteria(
                     predicates = MPredicates.Ident.Email :: Nil,
                     nodeIds    = qs.email :: Nil,
                   )
-                  cr :: Nil
+                  MEsNestedSearch(
+                    clauses = cr :: Nil,
+                  )
                 }
                 override def limit = 2
               }

@@ -42,16 +42,18 @@ class MPersonIdentModel @Inject()(
         */
       def getByUserIdProv(extService: MExtService, remoteUserId: String): Future[Option[MNode]] = {
         val msearch = new MNodeSearch {
-          override def nodeTypes =
+          override val nodeTypes =
             MNodeTypes.Person :: Nil
           override def limit = 1
-          override def outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               predicates  = MPredicates.Ident.Id :: Nil,
               nodeIds     = remoteUserId :: Nil,
               extService  = Some(extService :: Nil),
             )
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil
+            )
           }
         }
         mNodes.dynSearchOne( msearch )
@@ -70,7 +72,7 @@ class MPersonIdentModel @Inject()(
             override val testNode = OptionUtil.SomeBool.someFalse
             override val isEnabled = OptionUtil.SomeBool.someTrue
             override val nodeTypes = MNodeTypes.Person :: Nil
-            override val outEdges: Seq[Criteria] = {
+            override val outEdges: MEsNestedSearch[Criteria] = {
               val must = IMust.MUST
               // Есть проверенный email:
               val emailCr = Criteria(
@@ -90,7 +92,9 @@ class MPersonIdentModel @Inject()(
                 predicates  = MPredicates.Ident.Password :: Nil,
                 must        = must,
               )
-              emailCr :: pwCr :: Nil
+              MEsNestedSearch(
+                clauses = emailCr :: pwCr :: Nil
+              )
             }
           }
         }

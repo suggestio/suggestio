@@ -1,7 +1,7 @@
 package util.lk.nodes
 
+import io.suggest.es.model.MEsNestedSearch
 import javax.inject.Singleton
-
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
@@ -10,7 +10,6 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.search.sort.SortOrder
 import util.FormUtil
-
 import scalaz._
 
 /**
@@ -33,12 +32,14 @@ class LkNodesUtil
       override def limit  = SUB_NODES_LIMIT
       override def offset = offset1
 
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val cr = Criteria(
           nodeIds     = nodeId :: Nil,
           predicates  = MPredicates.OwnedBy :: Nil
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
       override def withNameSort = Some( SortOrder.ASC )
       override def nodeTypes = MNodeTypes.BleBeacon :: Nil

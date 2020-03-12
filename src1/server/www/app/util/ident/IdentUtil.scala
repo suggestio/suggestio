@@ -2,7 +2,7 @@ package util.ident
 
 import javax.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
@@ -36,14 +36,16 @@ class IdentUtil @Inject() (
 
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
     val msearch = new MNodeSearch {
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val cr = Criteria(
           nodeIds     = personId :: Nil,
           predicates  = MPredicates.OwnedBy :: Nil
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
-      override def nodeTypes = MNodeTypes.AdnNode :: Nil
+      override val nodeTypes = MNodeTypes.AdnNode :: Nil
       override def limit = 2
     }
 
@@ -91,12 +93,14 @@ class IdentUtil @Inject() (
             new MNodeSearch {
               override def limit = 1
               override val withIds = personId :: Nil
-              override val outEdges: Seq[Criteria] = {
+              override val outEdges: MEsNestedSearch[Criteria] = {
                 val cr = Criteria(
                   predicates = MPredicates.Ident.Id :: Nil,
                   extService = Some(Nil),
                 )
-                cr :: Nil
+                MEsNestedSearch(
+                  clauses = cr :: Nil,
+                )
               }
             }
           }

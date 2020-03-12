@@ -3,7 +3,7 @@ package util.adv.geo
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
@@ -128,21 +128,24 @@ class AdvGeoLocUtil @Inject() (
   def getGeoPointFromProducer(producerIds: Seq[String], excludeAdIds: Seq[String]): Future[Option[MGeoPoint]] = {
     // Найти id всех карточек этого продьюсера
     val prodAdsSearch = new MNodeSearch {
-      override def nodeTypes = Seq( MNodeTypes.Ad )
-      override def outEdges: Seq[Criteria] = {
+      override val nodeTypes = MNodeTypes.Ad :: Nil
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val cr = Criteria(
-          predicates  = Seq( MPredicates.OwnedBy ),
+          predicates  = MPredicates.OwnedBy :: Nil,
           // Заодно выставляем текущего юзера в id продьюсеров, вдруг чего...
           nodeIds     = producerIds
         )
-        Seq(cr)
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
       override def limit = 100
       // Отфильтровываем текущую карточку, т.к. по ней всё равно уже ничего не найдено.
       override def withoutIds = excludeAdIds
     }
 
-    val resFut = mNodes.dynSearchIds(prodAdsSearch)
+    val resFut = mNodes
+      .dynSearchIds(prodAdsSearch)
       .flatMap( getGeoPointFromAdsGeoAdvs )
 
     _traceAsyncRes(resFut, s"getGeoPointFromProducer($producerIds, excl=$excludeAdIds)")

@@ -3,7 +3,7 @@ package util.mdr
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.es.model.{EsModel, IMust}
+import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
@@ -236,11 +236,13 @@ class MdrUtil @Inject() (
               new MNodeSearch {
                 override val withIds = personsMap.keySet.toSeq
                 override val nodeTypes = MNodeTypes.Person :: Nil
-                override val outEdges: Seq[Criteria] = {
+                override val outEdges: MEsNestedSearch[Criteria] = {
                   val cr = Criteria(
                     predicates = MPredicates.Ident.Email :: Nil
                   )
-                  cr :: Nil
+                  MEsNestedSearch(
+                    clauses = cr :: Nil,
+                  )
                 }
               }
             }
@@ -658,15 +660,14 @@ class MdrUtil @Inject() (
   /** Аргументы для поиска узлов (карточек), требующих бесплатной модерации. */
   def freeMdrNodeSearchArgs(args: MdrSearchArgs, rcvrIds: Seq[String], limit1: Int): MNodeSearch = {
     new MNodeSearch {
-
       /** Интересуют только карточки. */
-      override def nodeTypes =
+      override val nodeTypes =
         MNodeTypes.Ad :: Nil
 
       override def offset  = args.offset
       override def limit   = limit1
 
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val must = IMust.MUST
 
         // Собираем self-receiver predicate, поиск бесплатных размещений начинается с этого
@@ -683,13 +684,12 @@ class MdrUtil @Inject() (
           must        = Some( args.isAllowed.isDefined )
         )
 
-        List[Criteria](
-          srp,
-          isAllowedCr
+        MEsNestedSearch(
+          clauses = srp :: isAllowedCr :: Nil,
         )
       }
 
-      override def withoutIds = args.hideAdIdOpt.toSeq
+      override val withoutIds = args.hideAdIdOpt.toSeq
     }
   }
 

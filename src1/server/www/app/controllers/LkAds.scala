@@ -5,7 +5,7 @@ import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
@@ -111,13 +111,15 @@ class LkAds @Inject() (
 
     val adsSearch0 = new MNodeSearch {
       override val nodeTypes = MNodeTypes.Ad :: Nil
-      override val outEdges  = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         // Поиск по узлу-владельцу
         val crOwn = Criteria(
           predicates  = MPredicates.OwnedBy :: Nil,
           nodeIds     = parentNodeId :: Nil
         )
-        crOwn :: Nil
+        MEsNestedSearch(
+          clauses = crOwn :: Nil,
+        )
       }
       override def limit     = maxAdsPerTime
       override val withDateCreatedSort = Some(SortOrder.DESC)

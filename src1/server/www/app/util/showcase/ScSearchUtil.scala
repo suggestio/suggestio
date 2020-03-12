@@ -3,7 +3,7 @@ package util.showcase
 import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.es.model.IMust
+import io.suggest.es.model.{IMust, MEsNestedSearch}
 import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc, MNodeGeoLevels}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
@@ -38,12 +38,6 @@ class ScSearchUtil @Inject()(
 
   /** Компиляция значений query string в MNodeSearch. */
   def qs2NodesSearch(qs: MScQs, geoLocOpt2: Option[MGeoLoc]): Future[MNodeSearch] = {
-    val _limit = qs.search.limit
-      .getOrElse( LIMIT_DFLT )
-
-    val _offset = qs.search.offset
-      .getOrElse( 0 )
-
     // По каким типа узлов фильтровать? Зависит от текущей вкладки поиска.
     //val tabOpt = qs.search.tab
     //val isMultiSearch = tabOpt.isEmpty
@@ -127,10 +121,11 @@ class ScSearchUtil @Inject()(
 
     // Собрать итоговый поиск.
     val r = new MNodeSearch {
-      override def outEdges  = edgesCrs
-      override def limit     = _limit
-      override def offset    = _offset
-      override def nodeTypes = _nodeTypes4search
+      override val outEdges: MEsNestedSearch[Criteria] =
+        MEsNestedSearch( clauses = edgesCrs )
+      override val limit = qs.search.limit getOrElse LIMIT_DFLT
+      override val offset = qs.search.offset getOrElse 0
+      override val nodeTypes = _nodeTypes4search
     }
 
     Future.successful(r)

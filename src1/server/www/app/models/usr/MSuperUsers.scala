@@ -2,7 +2,7 @@ package models.usr
 
 import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
@@ -80,7 +80,7 @@ class MSuperUsers @Inject()(
    */
   def isSuperuserId(personId: String): Boolean = {
     // TODO Нужно, чтобы было Future[Boolean]. Иначе есть проблема, что при запуске суперюзеры отсутствуют на небольшой момент времени.
-    SU_IDS.contains(personId)
+    SU_IDS contains personId
   }
 
   /** Выставить в MNode id'шники суперпользователей.
@@ -104,14 +104,16 @@ class MSuperUsers @Inject()(
       userNodes <- mNodes.dynSearch {
         new MNodeSearch {
           override val nodeTypes = MNodeTypes.Person :: Nil
-          override val outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               predicates        = MPredicates.Ident.Email :: Nil,
               nodeIds           = suEmails,
               nodeIdsMatchAll   = false,
               flag              = OptionUtil.SomeBool.someTrue,
             )
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
           }
         }
       }

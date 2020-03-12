@@ -5,7 +5,7 @@ import controllers.sysctl._
 import controllers.sysctl.domain.SmDomains
 import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.{EsModel, MEsUuId}
+import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -261,28 +261,28 @@ class SysMarket @Inject() (
       // Узнаём входящие ребра
       val inEdgesFut = {
         val msearch = new MNodeSearch {
-          override def outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(nodeIds = nodeId :: Nil)
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
           }
           override def limit = 200
         }
         for {
           mnodes <- mNodes.dynSearch( msearch )
         } yield {
-          val iter = mnodes
-            .iterator
-            .flatMap { mnode =>
-              mnode.edges
-                .withNodeId( nodeId )
-                .map { medge =>
-                  MNodeEdgeInfo(
-                    medge       = medge,
-                    mnodeEiths  = Right(mnode) :: Nil,
-                    edgeId      = None
-                  )
-                }
-            }
+          val iter = for {
+            mnode <- mnodes.iterator
+            medge <- mnode.edges.withNodeId( nodeId )
+          } yield {
+            MNodeEdgeInfo(
+              medge       = medge,
+              mnodeEiths  = Right(mnode) :: Nil,
+              edgeId      = None
+            )
+          }
+
           _prepareEdgeInfos(iter)
         }
       }

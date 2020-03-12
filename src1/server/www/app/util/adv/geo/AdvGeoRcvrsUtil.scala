@@ -10,7 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
-import io.suggest.es.model.{EsModel, IMust}
+import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MRcvrsMapUrlArgs}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
@@ -32,6 +32,7 @@ import util.adv.build.AdvBuilderUtil
 import util.adv.direct.AdvRcvrsUtil
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, FitImgMaker, LogoUtil, WelcomeUtil}
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -90,17 +91,19 @@ class AdvGeoRcvrsUtil @Inject()(
     */
   def onMapRcvrsSearch(limit1: Int, onlyWithIds: Seq[String] = Nil): MNodeSearch = {
     new MNodeSearch {
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val crNodeLoc = Criteria(
           predicates  = MPredicates.NodeLocation :: Nil
         )
-        crNodeLoc :: Nil
+        MEsNestedSearch(
+          clauses = crNodeLoc :: Nil,
+        )
       }
-      override def isEnabled  = Some(true)
-      override def testNode   = Some(false)
+      override val isEnabled  = Some(true)
+      override val testNode   = Some(false)
       // проверка типа узла на верхнем уровне НЕ нужна. MPredicate.AdnMap идёт через биллинг и надо подчиняться
       // воле финансов, даже если узел не очень Adn.
-      override def withAdnRights = MAdnRights.RECEIVER :: Nil
+      override val withAdnRights = MAdnRights.RECEIVER :: Nil
       override def limit      = limit1
       // Фильтровать по id узлов, если таковые заданы... А такое тут часто.
       override def withIds    = onlyWithIds
@@ -485,7 +488,7 @@ class AdvGeoRcvrsUtil @Inject()(
 
     // Получаем на руки обновлённый список на базе исходных rcvrKeys.
     // Почти всегда, он идентичен исходному, поэтому сравниваем множество FROM-ресиверов с исходным:
-    isect == expected
+    isect ==* expected
   }
 
 
@@ -506,12 +509,14 @@ class AdvGeoRcvrsUtil @Inject()(
     val pred = MPredicates.NodeLocation
 
     val geoLocNodesSearch = new MNodeSearch {
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val cr = Criteria(
           predicates = pred :: Nil,
           must = IMust.MUST
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
     }
 

@@ -10,7 +10,7 @@ import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.es.model.{BulkProcessorListener, EsModel}
+import io.suggest.es.model.{BulkProcessorListener, EsModel, MEsNestedSearch}
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
@@ -378,13 +378,17 @@ final class DynImgUtil @Inject() (
     mNodes
       .source[MNode] {
         // Сборка поисковых аргументов для файла.
-        val crs = Criteria(
-          predicates      = MPredicates.File :: Nil,
-          fileIsOriginal  = OptionUtil.SomeBool.someFalse,
-          fileMimes       = MImgFmts.allMimesIter.toSeq,
-        ) :: Nil
         new MNodeSearch {
-          override def outEdges = crs
+          override val outEdges: MEsNestedSearch[Criteria] = {
+            val cr = Criteria(
+              predicates      = MPredicates.File :: Nil,
+              fileIsOriginal  = OptionUtil.SomeBool.someFalse,
+              fileMimes       = MImgFmts.allMimesIter.toSeq,
+            )
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
+          }
           override def limit = 20
         }
           .toEsQuery
@@ -525,11 +529,13 @@ final class DynImgUtil @Inject() (
     val nodesPerTime = 10
 
     val msearch = new MNodeSearch {
-      override def outEdges: Seq[Criteria] = {
+      override val outEdges: MEsNestedSearch[Criteria] = {
         val cr = Criteria(
           predicates = MPredicates.JdContent.Image :: Nil
         )
-        cr :: Nil
+        MEsNestedSearch(
+          clauses = cr :: Nil,
+        )
       }
       override def withIds = nodeIds
       override def limit = nodesPerTime

@@ -2,7 +2,7 @@ package controllers
 
 import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.n2.edge.search.Criteria
@@ -108,12 +108,14 @@ class MarketLkAdn @Inject() (
       // Собрать статистику по подчинённым узлам:
       val ownedNodesStatsFut = mNodes.ntypeStats(
         new MNodeSearch {
-          override val outEdges: Seq[Criteria] = {
+          override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
               predicates  = MPredicates.OwnedBy :: Nil,
               nodeIds     = nodeId :: Nil
             )
-            cr :: Nil
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
           }
           override val nodeTypes = {
             MNodeTypes.adnTreeMemberTypes

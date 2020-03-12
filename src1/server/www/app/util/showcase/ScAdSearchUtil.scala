@@ -2,7 +2,7 @@ package util.showcase
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
-import io.suggest.es.model.{EsModel, IMust}
+import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
@@ -55,8 +55,6 @@ class ScAdSearchUtil @Inject() (
     * Компиляция параметров поиска в MNodeSearch.
     * Код эвакуирован из models.AdSearch.qsb.bind().
     * @param args Данные по выборке карточек, пришедшие из qs.
-    * @param apiVsnOpt Версия API выдачи, если есть.
-    *                  Например, нельзя выдавать jd-карточки в v2-выдачу, и наоборот.
     */
   def qsArgs2nodeSearch(args: MScQs): Future[MNodeSearch] = {
 
@@ -125,7 +123,7 @@ class ScAdSearchUtil @Inject() (
           } yield {
             GsCriteria(
               levels = MNodeGeoLevels.geoTag :: Nil,
-              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
+              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil,
             )
           }
         )
@@ -138,7 +136,6 @@ class ScAdSearchUtil @Inject() (
     // Общие константы выносим за скобки.
 
     val _nodeTypes  = MNodeTypes.Ad :: Nil
-    val someTrue    = Some(true)
 
     val normalSearches = if (_outEdges.nonEmpty) {
       val _mrs = MRandomSortData(
@@ -146,16 +143,16 @@ class ScAdSearchUtil @Inject() (
         weight     = Some(0.0000001F)
       )
       val normalSearch = new MNodeSearch {
-        override def outEdges = _outEdges
+        override val outEdges = MEsNestedSearch( clauses = _outEdges )
         override def nodeTypes = _nodeTypes
-        override def randomSort = Some(_mrs)
-        override def isEnabled = someTrue
+        override val randomSort = Some(_mrs)
+        override val isEnabled = Some(true)
       }
       val subSearch = MSubSearch(
         search = normalSearch,
         must   = IMust.SHOULD
       )
-      Seq(subSearch)
+      subSearch :: Nil
     } else {
       Nil
     }
@@ -202,16 +199,17 @@ class ScAdSearchUtil @Inject() (
       Future.successful( Nil )
 
     } else {
-      val uids = bcns.iterator
+      val uids = bcns
+        .iterator
         .map(_.uid)
         .toSet
       // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
       val bcnUidsClearedFut = mNodes.dynSearchIds(
         new MNodeSearch {
-          override def withIds    = uids.toSeq
-          override def limit      = uids.size
-          override def nodeTypes  = MNodeTypes.BleBeacon :: Nil
-          override def isEnabled  = Some(true)
+          override val withIds    = uids.toSeq
+          override val limit      = uids.size
+          override val nodeTypes  = MNodeTypes.BleBeacon :: Nil
+          override val isEnabled  = Some(true)
         }
       )
 

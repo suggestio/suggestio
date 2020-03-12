@@ -7,7 +7,7 @@ import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
@@ -57,12 +57,14 @@ class CanConfirmIdpReg @Inject() (
         } else {
           // Запустить подсчет имеющихся у юзера магазинов
           val msearch = new MNodeSearch {
-            override def outEdges = {
+            override val outEdges = {
               val cr = Criteria(
                 predicates  = MPredicates.OwnedBy :: Nil,
                 nodeIds     = personId :: Nil,
               )
-              cr :: Nil
+              MEsNestedSearch(
+                clauses = cr :: Nil,
+              )
             }
             override def limit = 5
           }
@@ -72,12 +74,12 @@ class CanConfirmIdpReg @Inject() (
             new MNodeSearch {
               override val withIds = personId :: Nil
               override val nodeTypes = MNodeTypes.Person :: Nil
-              override val outEdges: Seq[Criteria] = {
+              override val outEdges: MEsNestedSearch[Criteria] = {
                 val cr = Criteria(
                   predicates = MPredicates.Ident.Id :: Nil,
                   extService = Some(Nil)
                 )
-                cr :: Nil
+                MEsNestedSearch( cr :: Nil )
               }
               override def limit = 1
             }

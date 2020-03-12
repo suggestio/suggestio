@@ -1,8 +1,8 @@
 package util.ble
 
 import javax.inject.Singleton
-
 import io.suggest.ble.MUidBeacon
+import io.suggest.es.model.MEsNestedSearch
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -10,6 +10,7 @@ import org.elasticsearch.common.lucene.search.function.{CombineFunction, Filters
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+
 import Ordering.Float.TotalOrdering
 
 /**
@@ -51,12 +52,14 @@ class BleUtil {
       val msearch = new MNodeSearch {
 
         // Искать исходные ноды по наличию эджей на искомые маячки
-        override def outEdges = {
+        override val outEdges: MEsNestedSearch[Criteria] = {
           val cr = Criteria(
             predicates    = predicates,
             nodeIds       = bcnsMap.keys.toSeq
           )
-          Seq(cr)
+          MEsNestedSearch(
+            clauses = cr :: Nil,
+          )
         }
 
         // Нетривиальный механизм function score для маячков реализован прямо здесь, потому что очень
@@ -67,12 +70,16 @@ class BleUtil {
           // Собирать критерии скоринга: собрать фильтр по каждому маячку, выставив weight при срабатывании фильтра.
           val ffbs = bcnsMap.iterator
             .map { case (uid, weight) =>
-              val bcnEdgeCr = Criteria(
-                predicates = predicates,
-                nodeIds    = Seq(uid)
-              )
               val bcnFilterDynSearch = new MNodeSearch {
-                override def outEdges = Seq(bcnEdgeCr)
+                override val outEdges: MEsNestedSearch[Criteria] = {
+                  val bcnEdgeCr = Criteria(
+                    predicates = predicates,
+                    nodeIds    = uid :: Nil,
+                  )
+                  MEsNestedSearch(
+                    clauses = bcnEdgeCr :: Nil,
+                  )
+                }
               }
               val filter = bcnFilterDynSearch.toEsQuery
               val scorer = ScoreFunctionBuilders.weightFactorFunction(weight)
