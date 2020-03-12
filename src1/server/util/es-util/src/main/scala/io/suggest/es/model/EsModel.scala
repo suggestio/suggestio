@@ -796,8 +796,8 @@ final class EsModel @Inject()(
       def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
         searchResp
           .getHits
-          .iterator()
-          .asScala
+          .getHits
+          .iterator
           .map(f)
       }
 
