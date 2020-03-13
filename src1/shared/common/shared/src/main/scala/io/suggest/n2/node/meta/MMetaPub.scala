@@ -3,7 +3,7 @@ package io.suggest.n2.node.meta
 import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.color.MColors
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -19,7 +19,11 @@ import scalaz.syntax.apply._
   * публичные метаданные по узлу.
   * Содержит только публичные поля и только с портабельными данными.
   */
-object MMetaPub {
+object MMetaPub extends IEmpty {
+
+  override type T = MMetaPub
+
+  def empty = apply()
 
   implicit lazy val mMetaPubPickler: Pickler[MMetaPub] = {
     implicit val addressP = MAddress.mAddresPickler
@@ -77,10 +81,10 @@ object MMetaPub {
   * @param business Бизнес-информация.
   * @param colors Цвета узла.
   */
-case class MMetaPub(
-                     name          : Option[String]  = None,
-                     address       : MAddress        = MAddress.empty,
-                     business      : MBusinessInfo   = MBusinessInfo.empty,
-                     colors        : MColors         = MColors.empty
-                   )
+final case class MMetaPub(
+                           name          : Option[String]  = None,
+                           address       : MAddress        = MAddress.empty,
+                           business      : MBusinessInfo   = MBusinessInfo.empty,
+                           colors        : MColors         = MColors.empty
+                         )
   extends EmptyProduct

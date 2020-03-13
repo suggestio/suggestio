@@ -29,10 +29,10 @@ object MAdnNodeS {
 
   @inline implicit def univEq: UnivEq[MAdnNodeS] = UnivEq.derive
 
-  val meta = GenLens[MAdnNodeS](_.meta)
-  val edges = GenLens[MAdnNodeS](_.edges)
-  val resView = GenLens[MAdnNodeS](_.resView)
-  val errors = GenLens[MAdnNodeS](_.errors)
+  def meta = GenLens[MAdnNodeS](_.meta)
+  def edges = GenLens[MAdnNodeS](_.edges)
+  def resView = GenLens[MAdnNodeS](_.resView)
+  def errors = GenLens[MAdnNodeS](_.errors)
 
 }
 
@@ -45,7 +45,7 @@ case class MAdnNodeS(
                       meta          : MMetaPub,
                       edges         : Map[EdgeUid_t, MEdgeDataJs],
                       resView       : MAdnResView,
-                      errors        : MAdnEditErrors                = MAdnEditErrors.empty,
+                      errors        : MMetaPub                = MMetaPub.empty,
                     ) {
 
   def toForm: MAdnEditForm = {

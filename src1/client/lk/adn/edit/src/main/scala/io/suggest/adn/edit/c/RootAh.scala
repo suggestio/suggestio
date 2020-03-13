@@ -2,9 +2,10 @@ package io.suggest.adn.edit.c
 
 import diode._
 import io.suggest.adn.edit.api.ILkAdnEditApi
-import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
+import io.suggest.adn.edit.m.{MAdnEditInternals, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
 import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled, Save}
 import io.suggest.msg.ErrorMsgs
+import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.primo.id._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -84,7 +85,7 @@ class RootAh[M](
                   .filterKeys( newEdgeIds.contains )
                   .toMap,
                 resView = form2.resView,
-                errors  = MAdnEditErrors.empty
+                errors  = MMetaPub.empty
               )
             }
           )(v0)

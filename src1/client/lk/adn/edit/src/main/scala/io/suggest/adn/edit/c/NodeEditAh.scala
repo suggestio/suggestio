@@ -7,6 +7,7 @@ import io.suggest.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
+import monocle.Lens
 
 /**
   * Suggest.io
@@ -44,7 +45,11 @@ class NodeEditAh[M](
 
         // Проверить корректность
         val trimmed = m.name.trim
-        val v2 = _updateErrors(v1, MMetaPub.validateName(trimmed))( _.name )( _.withName(_) )
+        val v2 = _updateErrors(
+          v1,
+          MMetaPub.validateName(trimmed),
+          MMetaPub.name
+        )
 
         updated(v2)
       }
@@ -67,7 +72,11 @@ class NodeEditAh[M](
       } else {
         val v1 = (lens set townOpt)( v0 )
 
-        val v2 = _updateErrors(v1, MAddress.validateTown(townOpt))( _.town )( _.withTown(_) )
+        val v2 = _updateErrors(
+          v1,
+          MAddress.validateTown(townOpt),
+          MMetaPub.address composeLens MAddress.town
+        )
 
         updated(v2)
       }
@@ -90,7 +99,11 @@ class NodeEditAh[M](
       } else {
         val v1 = (lens set addressOpt)(v0)
 
-        val v2 = _updateErrors(v1, MAddress.validateAddress(addressOpt))( _.address )( _.withAddress(_) )
+        val v2 = _updateErrors(
+          v1,
+          MAddress.validateAddress(addressOpt),
+          MMetaPub.address composeLens MAddress.address
+        )
 
         updated(v2)
       }
@@ -115,7 +128,11 @@ class NodeEditAh[M](
         val v1 = (lens set urlOpt)(v0)
 
         // Попытаться распарсить ссылку в тексте.
-        val v2 = _updateErrors(v1, MBusinessInfo.validateSiteUrl( urlOpt ))( _.siteUrl )( _.withSiteUrl(_) )
+        val v2 = _updateErrors(
+          v1,
+          MBusinessInfo.validateSiteUrl( urlOpt ),
+          MMetaPub.business composeLens MBusinessInfo.siteUrl
+        )
 
         updated(v2)
       }
@@ -137,7 +154,11 @@ class NodeEditAh[M](
 
       } else {
         val v1 = (lens set infoOpt)(v0)
-        val v2 = _updateErrors(v1, MBusinessInfo.validateInfo( infoOpt ))( _.info )( _.withInfo(_) )
+        val v2 = _updateErrors(
+          v1,
+          MBusinessInfo.validateInfo( infoOpt ),
+          MMetaPub.business composeLens MBusinessInfo.info
+        )
 
         updated(v2)
       }
@@ -160,7 +181,11 @@ class NodeEditAh[M](
       } else {
         val v1 = (lens set htOpt)(v0)
 
-        val v2 = _updateErrors(v1, MBusinessInfo.validateHumanTraffic( htOpt ))( _.humanTraffic )( _.withHumanTraffic(_) )
+        val v2 = _updateErrors(
+          v1,
+          MBusinessInfo.validateHumanTraffic( htOpt ),
+          MMetaPub.business composeLens MBusinessInfo.humanTraffic
+        )
 
         updated(v2)
       }
@@ -183,7 +208,11 @@ class NodeEditAh[M](
       } else {
         val v1 = (lens set audOpt)(v0)
 
-        val v2 = _updateErrors(v1, MBusinessInfo.validateAudienceDescr(audOpt))( _.audienceDescr )( _.withAudienceDescr(_) )
+        val v2 = _updateErrors(
+          v1,
+          MBusinessInfo.validateAudienceDescr(audOpt),
+          MMetaPub.business composeLens MBusinessInfo.audienceDescr
+        )
 
         updated(v2)
       }
@@ -216,33 +245,29 @@ class NodeEditAh[M](
     *
     * @param v0 Начальное состояние.
     * @param vld Результат валидации.
-    * @param readF Чтение текущего значения из состояния ошибок..
-    * @param writeF Запись нового значения
     * @return Обновлённое состояние.
     */
-  private def _updateErrors(v0: MAdnNodeS, vld: StringValidationNel[_])
-                           (readF: MAdnEditErrors => Option[String])
-                           (writeF: (MAdnEditErrors, Option[String]) => MAdnEditErrors): MAdnNodeS = {
+  private def _updateErrors(v0: MAdnNodeS,
+                            vld: StringValidationNel[_],
+                            errLens: Lens[MMetaPub, Option[String]]): MAdnNodeS = {
+    val lens2 = MAdnNodeS.errors
+      .composeLens(errLens)
     vld.fold(
       // Ошибка валидации
       {errors =>
         // Записать первую ошибку в состояние.
         val e2 = errors.head
-        if (readF(v0.errors) contains e2) {
+        if (lens2.get(v0) contains e2) {
           v0
         } else {
-          MAdnNodeS.errors.modify { errors0 =>
-            writeF(errors0, Some(e2))
-          }(v0)
+          (lens2 set Some(e2))(v0)
         }
       },
       // Всё ок, нет ошибки
       {_ =>
-        if (readF(v0.errors).nonEmpty) {
+        if ( lens2.get(v0).nonEmpty ) {
           // стереть ошибку из состояния.
-          MAdnNodeS.errors.modify { errors0 =>
-            writeF(errors0, None)
-          }(v0)
+          (lens2 set None)( v0 )
         } else {
           v0
         }
