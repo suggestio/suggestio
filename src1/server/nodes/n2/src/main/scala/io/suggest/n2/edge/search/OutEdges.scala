@@ -21,7 +21,7 @@ object OutEdges extends MacroLogsImpl {
   private def _isToAssignQueryName = LOGGER.underlying.isTraceEnabled
 
   /** Сборка edge-критериев в nested query. */
-  private def _crs2query(crs: IterableOnce[Criteria]): QueryBuilder = {
+  private def _crs2query(crs: IterableOnce[Criteria], outEdges: MEsNestedSearch[Criteria]): QueryBuilder = {
     val EF = MNodeFields.Edges
     val withQname = _isToAssignQueryName
 
@@ -437,10 +437,15 @@ object OutEdges extends MacroLogsImpl {
     } yield {
       val nestPath = EF.E_OUT_FN
       // TODO ScoreMode.Avg -- с потолка взято, надо разобраться на тему оптимального варианта.
-      val _qn = QueryBuilders.nestedQuery(nestPath, q, ScoreMode.Max)
+      var _qn = QueryBuilders.nestedQuery(nestPath, q, ScoreMode.Max)
+
+      for (innerHitBuilder <- outEdges.innerHits)
+        _qn = _qn.innerHit( innerHitBuilder )
+
       // TODO Организовать сборку .innerHits().
       if (withQname)
         _qn.queryName(s"nested: $nestPath must?${oe.must} cr=$oe")
+
       MWrapClause(oe.must, _qn)
     })
       .toSeq
@@ -472,7 +477,7 @@ trait OutEdges extends DynSearchArgs {
       qbOpt0
 
     } else {
-      val qb2 = OutEdges._crs2query(_outEdgesIter)
+      val qb2 = OutEdges._crs2query(_outEdgesIter, oes)
       // Сборка основной query
       qbOpt0.map { qb0 =>
         val q = QueryBuilders.boolQuery()

@@ -3,8 +3,8 @@ package io.suggest.n2.node.meta
 import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.color.MColors
-import io.suggest.common.empty.EmptyProduct
-import io.suggest.scalaz.StringValidationNel
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -21,38 +21,51 @@ import scalaz.syntax.apply._
   */
 object MMetaPub {
 
-  implicit val mMetaPubPickler: Pickler[MMetaPub] = {
+  implicit lazy val mMetaPubPickler: Pickler[MMetaPub] = {
     implicit val addressP = MAddress.mAddresPickler
     implicit val businessP = MBusinessInfo.mBusinessInfoPickler
     generatePickler[MMetaPub]
   }
 
   implicit def mMetaPubFormat: OFormat[MMetaPub] = (
-    (__ \ "n").format[String] and
-    (__ \ "a").format[MAddress] and
-    (__ \ "b").format[MBusinessInfo] and
-    (__ \ "c").format[MColors]
+    (__ \ "n").formatNullable[String] and
+    (__ \ "a").formatNullable[MAddress]
+      .inmap[MAddress](
+        EmptyUtil.opt2ImplMEmptyF( MAddress ),
+        EmptyUtil.implEmpty2OptF
+      ) and
+    (__ \ "b").formatNullable[MBusinessInfo]
+      .inmap[MBusinessInfo](
+        EmptyUtil.opt2ImplMEmptyF( MBusinessInfo ),
+        EmptyUtil.implEmpty2OptF
+      ) and
+    (__ \ "c").formatNullable[MColors]
+      .inmap[MColors](
+        EmptyUtil.opt2ImplMEmptyF( MColors ),
+        EmptyUtil.implEmpty2OptF
+      )
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
 
 
-  def validateName(name: String): StringValidationNel[String] =
+  def validateName(name: String): StringValidationNel[String] = {
     NodeEditConstants.Name.validateNodeName(name)
+  }
 
   def validate(metaPub: MMetaPub): StringValidationNel[MMetaPub] = {
     (
-      validateName( metaPub.name ) |@|
+      ScalazUtil.liftNelOpt( metaPub.name.map(_.trim).filter(_.nonEmpty) )( validateName ) |@|
       MAddress.validate( metaPub.address ) |@|
       MBusinessInfo.validate( metaPub.business ) |@|
       MColors.validateOrAdnSome( metaPub.colors )
     )(apply _)
   }
 
-  val name      = GenLens[MMetaPub](_.name)
-  val address   = GenLens[MMetaPub](_.address)
-  val business  = GenLens[MMetaPub](_.business)
-  val colors    = GenLens[MMetaPub](_.colors)
+  def name      = GenLens[MMetaPub](_.name)
+  def address   = GenLens[MMetaPub](_.address)
+  def business  = GenLens[MMetaPub](_.business)
+  def colors    = GenLens[MMetaPub](_.colors)
 
 }
 
@@ -65,7 +78,7 @@ object MMetaPub {
   * @param colors Цвета узла.
   */
 case class MMetaPub(
-                     name          : String,
+                     name          : Option[String]  = None,
                      address       : MAddress        = MAddress.empty,
                      business      : MBusinessInfo   = MBusinessInfo.empty,
                      colors        : MColors         = MColors.empty

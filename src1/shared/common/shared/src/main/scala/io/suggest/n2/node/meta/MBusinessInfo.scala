@@ -1,7 +1,7 @@
 package io.suggest.n2.node.meta
 
 import boopickle.Default._
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty, OptionUtil}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.err.ErrorConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.proto.http.HttpConst
@@ -121,10 +121,10 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
     )(apply _)
   }
 
-  val siteUrl       = GenLens[MBusinessInfo](_.siteUrl)
-  val audienceDescr = GenLens[MBusinessInfo](_.audienceDescr)
-  val humanTraffic  = GenLens[MBusinessInfo](_.humanTraffic)
-  val info          = GenLens[MBusinessInfo](_.info)
+  def siteUrl       = GenLens[MBusinessInfo](_.siteUrl)
+  def audienceDescr = GenLens[MBusinessInfo](_.audienceDescr)
+  def humanTraffic  = GenLens[MBusinessInfo](_.humanTraffic)
+  def info          = GenLens[MBusinessInfo](_.info)
 
 }
 

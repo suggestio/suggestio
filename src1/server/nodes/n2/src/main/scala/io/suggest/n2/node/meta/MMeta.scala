@@ -110,11 +110,11 @@ object MMeta extends IEsMappingProps {
   }
 
 
-  val basic     = GenLens[MMeta](_.basic)
-  val person    = GenLens[MMeta](_.person)
-  val address   = GenLens[MMeta](_.address)
-  val business  = GenLens[MMeta](_.business)
-  val colors    = GenLens[MMeta](_.colors)
+  def basic     = GenLens[MMeta](_.basic)
+  def person    = GenLens[MMeta](_.person)
+  def address   = GenLens[MMeta](_.address)
+  def business  = GenLens[MMeta](_.business)
+  def colors    = GenLens[MMeta](_.colors)
 
 }
 
@@ -129,14 +129,12 @@ case class MMeta(
                 ) {
 
   /** Вернуть инстанс модели [[MMetaPub]] на основе данной модели. */
-  def public = MMetaPub(basic.name, address, business, colors)
+  def public = MMetaPub(basic.nameOpt, address, business, colors)
 
   /** Залить данные из MMetaPub в эту модель. */
   def withPublic(metaPub: MMetaPub): MMeta = {
     copy(
-      basic = basic.withNameOpt(
-        nameOpt = Option( metaPub.name )
-      ),
+      basic    = (MBasicMeta.nameOpt set metaPub.name)(basic),
       address  = metaPub.address,
       business = metaPub.business,
       colors   = metaPub.colors

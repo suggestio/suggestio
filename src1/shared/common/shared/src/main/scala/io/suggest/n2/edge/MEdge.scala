@@ -142,7 +142,14 @@ object MEdge
     import dsl._
     val F = Fields
     Json.obj(
-      F.PREDICATE_FN -> FKeyWord.indexedJs,
+      F.PREDICATE_FN -> FKeyWord(
+        index = someTrue,
+        // doc_values: по умолчанию true, но т.к. оно реально нужно, то здесь явно определяем doc_values = true.
+        // Нужно для быстрого возврата значений предиката через inner-hits, чтобы ScAdsTile могло понимать и сообщать на клиент
+        // фактическую причину нахождения каждой карточки (bluetooth, geo, adv-direct и тд). и выдача могла различать,
+        // какие карточки откуда взялись.
+        docValues = someTrue,
+      ),
       F.NODE_ID_FN -> FKeyWord.indexedJs,
       // orderId -- not_analyzed, используется в т.ч. для хранения статистики использования геотегов, как это не странно...
       F.ORDER_FN -> FNumber(
@@ -155,12 +162,12 @@ object MEdge
     )
   }
 
-  val predicate = GenLens[MEdge](_.predicate)
-  val nodeIds   = GenLens[MEdge](_.nodeIds)
-  val order     = GenLens[MEdge](_.order)
-  val info      = GenLens[MEdge](_.info)
-  val doc       = GenLens[MEdge](_.doc)
-  val media     = GenLens[MEdge](_.media)
+  def predicate = GenLens[MEdge](_.predicate)
+  def nodeIds   = GenLens[MEdge](_.nodeIds)
+  def order     = GenLens[MEdge](_.order)
+  def info      = GenLens[MEdge](_.info)
+  def doc       = GenLens[MEdge](_.doc)
+  def media     = GenLens[MEdge](_.media)
 
 
   @inline implicit def univEq: UnivEq[MEdge] = UnivEq.derive

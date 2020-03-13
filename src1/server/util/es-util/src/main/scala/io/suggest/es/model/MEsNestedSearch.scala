@@ -1,6 +1,7 @@
 package io.suggest.es.model
 
 import japgolly.univeq.UnivEq
+import org.elasticsearch.index.query.InnerHitBuilder
 
 /**
   * Suggest.io
@@ -13,10 +14,11 @@ object MEsNestedSearch {
 
   def empty[T] = apply[T]()
 
-  @inline implicit def univEq[T: UnivEq]: UnivEq[MEsNestedSearch[T]] = UnivEq.derive
+  @inline implicit def univEq[T: UnivEq]: UnivEq[MEsNestedSearch[T]] = UnivEq.force
 
 }
 
 case class MEsNestedSearch[T](
-                               clauses: Seq[T] = Nil,
+                               clauses        : Seq[T]                        = Nil,
+                               innerHits      : Option[InnerHitBuilder]       = None,
                              )

@@ -69,8 +69,8 @@ object MAddress extends IEmpty with IEsMappingProps {
     )(apply _)
   }
 
-  val town = GenLens[MAddress](_.town)
-  val address = GenLens[MAddress](_.address)
+  def town = GenLens[MAddress](_.town)
+  def address = GenLens[MAddress](_.address)
 
 }
 

@@ -163,15 +163,15 @@ object MEdgeInfo
   }
 
 
-  val dateNi = GenLens[MEdgeInfo](_.dateNi)
-  val textNi = GenLens[MEdgeInfo](_.textNi)
-  val flag = GenLens[MEdgeInfo](_.flag)
-  val flags = GenLens[MEdgeInfo](_.flags)
-  val tags = GenLens[MEdgeInfo](_.tags)
-  val geoShapes = GenLens[MEdgeInfo](_.geoShapes)
-  val geoPoints = GenLens[MEdgeInfo](_.geoPoints)
-  val extService = GenLens[MEdgeInfo](_.extService)
-  val osFamily = GenLens[MEdgeInfo](_.osFamily)
+  def dateNi = GenLens[MEdgeInfo](_.dateNi)
+  def textNi = GenLens[MEdgeInfo](_.textNi)
+  def flag = GenLens[MEdgeInfo](_.flag)
+  def flags = GenLens[MEdgeInfo](_.flags)
+  def tags = GenLens[MEdgeInfo](_.tags)
+  def geoShapes = GenLens[MEdgeInfo](_.geoShapes)
+  def geoPoints = GenLens[MEdgeInfo](_.geoPoints)
+  def extService = GenLens[MEdgeInfo](_.extService)
+  def osFamily = GenLens[MEdgeInfo](_.osFamily)
 
   @inline implicit def univEq: UnivEq[MEdgeInfo] = UnivEq.derive
 

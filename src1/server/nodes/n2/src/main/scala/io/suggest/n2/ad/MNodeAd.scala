@@ -16,6 +16,7 @@ import play.api.libs.functional.syntax._
  *
  * При отсутствие данных внутри, это неявно-пустая модель.
  */
+// TODO Это deprecated-модель от прошлого поколения карточек. SyncSite и др пока зачем-то зависит от этого дела, и оно тут пока.
 object MNodeAd extends IEmpty {
 
   override type T = MNodeAd
@@ -74,18 +75,14 @@ object MNodeAd extends IEmpty {
   }
 
   /** Пустой экземпляр модели, расшарен между кучей инстансов [[io.suggest.n2.node.MNode]]. */
-  override val empty: MNodeAd = {
-    new MNodeAd() {
-      override def nonEmpty = false
-    }
-  }
+  override val empty = MNodeAd()
 
 }
 
 
-case class MNodeAd(
-  entities      : EntMap_t              = Map.empty,    // TODO Сделать Option[MEntity.type=document]
-  richDescr     : Option[RichDescr]     = None,
-  blockMeta     : Option[BlockMeta]     = None
-)
+final case class MNodeAd(
+                          entities      : EntMap_t              = Map.empty,    // TODO Сделать Option[MEntity.type=document]
+                          richDescr     : Option[RichDescr]     = None,
+                          blockMeta     : Option[BlockMeta]     = None
+                        )
   extends EmptyProduct

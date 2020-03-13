@@ -21,12 +21,12 @@ object MAdnEditErrors {
   implicit object MAdnEditErrorsFastEq extends FastEq[MAdnEditErrors] {
     override def eqv(a: MAdnEditErrors, b: MAdnEditErrors): Boolean = {
       (a.name ===* b.name) &&
-        (a.town ===* b.town) &&
-        (a.address ===* b.address) &&
-        (a.siteUrl ===* b.siteUrl) &&
-        (a.info ===* b.info) &&
-        (a.humanTraffic ===* b.humanTraffic) &&
-        (a.audienceDescr ===* b.audienceDescr)
+      (a.town ===* b.town) &&
+      (a.address ===* b.address) &&
+      (a.siteUrl ===* b.siteUrl) &&
+      (a.info ===* b.info) &&
+      (a.humanTraffic ===* b.humanTraffic) &&
+      (a.audienceDescr ===* b.audienceDescr)
     }
   }
 

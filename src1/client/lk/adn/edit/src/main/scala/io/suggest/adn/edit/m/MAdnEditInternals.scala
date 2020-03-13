@@ -27,9 +27,9 @@ object MAdnEditInternals {
 
   @inline implicit def univEq: UnivEq[MAdnEditInternals] = UnivEq.derive
 
-  val conf = GenLens[MAdnEditInternals](_.conf)
-  val saving = GenLens[MAdnEditInternals](_.saving)
-  val colorState = GenLens[MAdnEditInternals](_.colorState)
+  def conf = GenLens[MAdnEditInternals](_.conf)
+  def saving = GenLens[MAdnEditInternals](_.saving)
+  def colorState = GenLens[MAdnEditInternals](_.colorState)
 
 }
 
@@ -40,8 +40,8 @@ object MAdnEditInternals {
   * @param saving Состояние сохранение формы.
   * @param colorState Состояние цветов для контроллера ColorPickAh и color-picker'ов формы.
   */
-case class MAdnEditInternals(
-                              conf          : MAdnEditFormConf,
-                              saving        : Pot[MAdnEditForm] = Pot.empty,
-                              colorState    : MColorsState      = MColorsState.empty,
-                            )
+final case class MAdnEditInternals(
+                                    conf          : MAdnEditFormConf,
+                                    saving        : Pot[MAdnEditForm] = Pot.empty,
+                                    colorState    : MColorsState      = MColorsState.empty,
+                                  )

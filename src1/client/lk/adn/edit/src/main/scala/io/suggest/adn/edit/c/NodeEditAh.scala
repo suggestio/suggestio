@@ -30,7 +30,7 @@ class NodeEditAh[M](
     // Выставление новое названия узла:
     case m: SetName =>
       val v0 = value
-      val name2 = m.name
+      val name2 = Option.when(m.name.nonEmpty)( m.name )
 
       val lens = MAdnNodeS.meta
         .composeLens( MMetaPub.name )
@@ -40,7 +40,7 @@ class NodeEditAh[M](
 
       } else {
         // Есть текст, выставить его в состояние. Финальный трим будет на сервере.
-        val v1 = (lens set m.name)(v0)
+        val v1 = (lens set name2)(v0)
 
         // Проверить корректность
         val trimmed = m.name.trim

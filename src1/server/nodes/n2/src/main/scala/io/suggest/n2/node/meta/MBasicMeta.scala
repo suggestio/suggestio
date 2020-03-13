@@ -73,10 +73,10 @@ object MBasicMeta extends IEsMappingProps {
     )
   }
 
-  val nameOpt  = GenLens[MBasicMeta](_.nameOpt)
-  val techName = GenLens[MBasicMeta](_.techName)
-  val langs    = GenLens[MBasicMeta](_.langs)
-  val dateEdited = GenLens[MBasicMeta](_.dateEdited)
+  def nameOpt  = GenLens[MBasicMeta](_.nameOpt)
+  def techName = GenLens[MBasicMeta](_.techName)
+  def langs    = GenLens[MBasicMeta](_.langs)
+  def dateEdited = GenLens[MBasicMeta](_.dateEdited)
 
 }
 
@@ -93,7 +93,7 @@ object MBasicMeta extends IEsMappingProps {
  * @param dateEdited Дата редактирования.
  * @param langs Названия языков.
  */
-case class MBasicMeta(
+final case class MBasicMeta(
   nameOpt       : Option[String]          = None,
   nameShortOpt  : Option[String]          = None,
   techName      : Option[String]          = None,
@@ -131,8 +131,5 @@ case class MBasicMeta(
     else
       name
   }
-
-  def withNameOpt(nameOpt: Option[String]) = copy(nameOpt = nameOpt)
-  def withTechName(techName: Option[String] = None) = copy(techName = techName)
 
 }

@@ -14,8 +14,9 @@ object NodeEditConstants {
 
 
   object Name {
-    def LEN_MAX = 64
-    def LEN_MIN = 1
+    def LEN_MAX = 128
+    // 0 - допускать безымянные узлы.
+    def LEN_MIN = 0
 
     /** Валидация названия узла. */
     def validateNodeName(raw: String): ValidationNel[String, String] = {

@@ -16,7 +16,7 @@ class MPredicatesSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
 
   "JSON" should "support all model's elements" in {
-    for (e <- values) {
+    for (e <- MPredicates.values) {
       jsonTest(e)
     }
   }

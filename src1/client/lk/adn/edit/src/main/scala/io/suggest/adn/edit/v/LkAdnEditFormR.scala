@@ -284,43 +284,43 @@ class LkAdnEditFormR(
       State(
         nameC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.name,
+            value = props.node.meta.name getOrElse emptyStrF,
             error = props.node.errors.name
           )
         }( oneRowR.OneRowRValueValFastEq ),
         townC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.address.town.getOrElse(emptyStrF),
+            value = props.node.meta.address.town getOrElse emptyStrF,
             error = props.node.errors.town
           )
         }( oneRowR.OneRowRValueValFastEq ),
         addressC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.address.address.getOrElse(emptyStrF),
+            value = props.node.meta.address.address getOrElse emptyStrF,
             error = props.node.errors.address
           )
         }( oneRowR.OneRowRValueValFastEq ),
         siteUrlC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.business.siteUrl.getOrElse(emptyStrF),
+            value = props.node.meta.business.siteUrl getOrElse emptyStrF,
             error = props.node.errors.siteUrl
           )
         }( oneRowR.OneRowRValueValFastEq ),
         infoAboutC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.business.info.getOrElse(emptyStrF),
+            value = props.node.meta.business.info getOrElse emptyStrF,
             error = props.node.errors.info
           )
         }( oneRowR.OneRowRValueValFastEq ),
         humanTrafficC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.business.humanTraffic.getOrElse(emptyStrF),
+            value = props.node.meta.business.humanTraffic getOrElse emptyStrF,
             error = props.node.errors.humanTraffic
           )
         }( oneRowR.OneRowRValueValFastEq ),
         audienceDescrC = propsProxy.connect { props =>
           oneRowR.ValueVal(
-            value = props.node.meta.business.audienceDescr.getOrElse(emptyStrF),
+            value = props.node.meta.business.audienceDescr getOrElse emptyStrF,
             error = props.node.errors.audienceDescr
           )
         }( oneRowR.OneRowRValueValFastEq ),
