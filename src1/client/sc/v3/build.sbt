@@ -1,3 +1,5 @@
+import org.scalajs.jsenv.nodejs.NodeJSEnv
+
 Common.settingsOrgJS
 
 name := "sc3-sjs"
@@ -55,4 +57,11 @@ useYarn := true
 
 // ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
 //scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
+
+// Ускорить node.js на продакшене.
+jsEnv := new NodeJSEnv(
+  NodeJSEnv.Config()
+    .withArgs( List("--max_old_space_size=4096") )
+)
+
 
