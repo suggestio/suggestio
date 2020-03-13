@@ -16,13 +16,13 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile ++= Seq(
-  "react-dnd-cjs"                 -> version.value,
-  "react-dnd-html5-backend-cjs"   -> version.value,
-  "react-dnd-touch-backend-cjs"   -> version.value,
+  "react-dnd"                     -> version.value,
+  "react-dnd-html5-backend"       -> version.value,
+  "react-dnd-touch-backend"       -> version.value,
 )
 
 npmDependencies in Test ++= Seq(
-  "react-dnd-test-backend-cjs"    -> version.value,
+  "react-dnd-test-backend"        -> version.value,
 )
 
 useYarn := true

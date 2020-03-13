@@ -7,6 +7,6 @@ package com.github.react.dnd.backend
   */
 package object touch {
 
-  final val PACKAGE_NAME = "react-dnd-touch-backend-cjs"
+  final val PACKAGE_NAME = "react-dnd-touch-backend"
 
 }

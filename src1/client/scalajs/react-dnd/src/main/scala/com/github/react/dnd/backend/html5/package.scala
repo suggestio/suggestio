@@ -7,6 +7,6 @@ package com.github.react.dnd.backend
   */
 package object html5 {
 
-  final val PACKAGE_NAME = "react-dnd-html5-backend-cjs"
+  final val PACKAGE_NAME = "react-dnd-html5-backend"
 
 }

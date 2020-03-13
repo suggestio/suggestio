@@ -10,6 +10,7 @@ import io.suggest.math.SimpleArithmetics._
 import io.suggest.primo.id._
 import japgolly.univeq._
 import scalaz.Tree
+import minitest._
 
 /**
   * Suggest.io

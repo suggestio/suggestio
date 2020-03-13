@@ -11,7 +11,6 @@ import org.scalatest.flatspec.AnyFlatSpec
  */
 class MPredicatesSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
-  import MPredicates._
 
   override type T = MPredicate
 
@@ -24,44 +23,44 @@ class MPredicatesSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
 
   "hasParent(p)" should "!self" in {
-    val p = OwnedBy
+    val p = MPredicates.OwnedBy
     assert( !p.hasParent(p), p )
   }
   it should "properly support Receiver << Receiver.Self" in {
-    assert(Receiver.Self hasParent Receiver, Receiver.Self)
+    assert(MPredicates.Receiver.Self hasParent MPredicates.Receiver, MPredicates.Receiver.Self)
   }
 
 
   "eqOrHasParent(p)" should "self" in {
-    val p = OwnedBy
+    val p = MPredicates.OwnedBy
     assert( p.eqOrHasParent(p), p )
   }
   it should "Receiver <<== Receiver.Self" in {
-    assert(Receiver.Self eqOrHasParent Receiver, Receiver.Self)
+    assert(MPredicates.Receiver.Self eqOrHasParent MPredicates.Receiver, MPredicates.Receiver.Self)
   }
   it should "Receiver.Self <<== Receiver.Self" in {
-    val p = Receiver.Self
+    val p = MPredicates.Receiver.Self
     assert(p eqOrHasParent p, p)
   }
 
 
   "parentsIterator()" should "return empty iter for Receiver" in {
-    val pi = Receiver.parentsIterator
+    val pi = MPredicates.Receiver.parentsIterator
     assert( pi.isEmpty, pi )
   }
   it should "return non-empty iter for Receiver.Self" in {
-    val pi = Receiver.Self.parentsIterator
+    val pi = MPredicates.Receiver.Self.parentsIterator
     assert( pi.nonEmpty, pi )
-    assert( pi.next == Receiver, pi )
+    assert( pi.next == MPredicates.Receiver, pi )
     assert( pi.isEmpty, pi )
   }
 
 
   "meAndParentsIterator()" should "return Receiver.Self followed by Receiver" in {
-    val mp = Receiver.Self.meAndParentsIterator.toList
+    val mp = MPredicates.Receiver.Self.meAndParentsIterator.toList
     assert( mp.size == 2, mp )
-    assert( mp.head == Receiver.Self, mp)
-    assert( mp.tail == List(Receiver), mp)
+    assert( mp.head == MPredicates.Receiver.Self, mp)
+    assert( mp.tail == List(MPredicates.Receiver), mp)
   }
 
 }

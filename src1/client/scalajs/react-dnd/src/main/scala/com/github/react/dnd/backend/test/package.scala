@@ -8,6 +8,6 @@ package com.github.react.dnd.backend
   */
 package object test {
 
-  final val PACKAGE_NAME = "react-dnd-test-backend-cjs"
+  final val PACKAGE_NAME = "react-dnd-test-backend"
 
 }

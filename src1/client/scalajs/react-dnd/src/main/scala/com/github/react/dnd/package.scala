@@ -12,7 +12,7 @@ import scala.scalajs.js.|
   */
 package object dnd {
 
-  final val DND_PACKAGE = "react-dnd-cjs"
+  final val DND_PACKAGE = "react-dnd"
 
   type DropAccept_t_0 = String | js.Symbol
   type DropAccept_t_1 = DropAccept_t_0 | js.Array[DropAccept_t_0]

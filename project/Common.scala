@@ -36,10 +36,10 @@ object Common {
     val SLICK_PG     = "0.18.+"
 
     /** Версия play-slick прослойки. */
-    val PLAY_SLICK   = "4.0.+"
+    val PLAY_SLICK   = "5.+"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.8.0-M7"
+    val PLAY_JSON_VSN = "2.8.1"
 
     val PLAY_GEOJSON = "1.6.0"
 
@@ -64,33 +64,32 @@ object Common {
     val LOG4J      = "2.10.0"
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
-    val THREETEN_EXTRA = "1.0"
+    val THREETEN_EXTRA = "1.5.0"
 
+
+    // Это связано с elasticsearch-5.x. Так-то, можно уже обновлять и до 1.16.1 и 0.7 соответстветственно.
     val JTS = "1.14.0"
     val SPATIAL4J = "0.6"
 
 
-    val REACT_IMAGE_GALLERY = "0.8.7"
+    val REACT_IMAGE_GALLERY = "1.0.6"
 
     /** Версия scalaz.
       * Изначально добавлена в проект, чтобы наконец выкинуть вечно-кривую валидацию через wix/accord.
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
-    val SCALAZ = "7.2.29"
+    val SCALAZ = "7.2.30"
 
-    /** Версия scalaCSS. Изначально появилась в sc-v3 для замены около-динамических стилей,
-      * геморройно подгружаемых с сервера.
-      *
+    /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    //val SCALACSS = "0.5.6.20190304"
-    val SCALACSS = "0.6.0-RC1"
+    val SCALACSS = "0.6.0"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
       */
-    val UNIVEQ = "1.1.0-RC3"
+    val UNIVEQ = "1.2.0"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]
@@ -112,13 +111,13 @@ object Common {
       * @see [[https://github.com/quilljs/quill]]
       */
     // TODO Кажется, эти значения ни на что не влияют. react-quill тащит свою версию quill с собой.
-    val QUILL = "1.3.6"
-    val QUILL_DELTA = "3.6.0"
+    val QUILL = "1.3.7"
+    val QUILL_DELTA = "4.2.1"
 
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]
       */
-    val REACT_QUILL = "1.2.6"
+    val REACT_QUILL = "1.3.3"
 
     val REACT_LEAFLET = "1.9.1"
 
@@ -149,7 +148,7 @@ object Common {
     /** Версия Apache Batik для работы с SVG.
       * @see [[https://xmlgraphics.apache.org/batik/download.html]]
       */
-    val APACHE_BATIK = "1.9"
+    val APACHE_BATIK = "1.12"
 
     /** Версия scala-parser-combinators.
       * @see [[https://github.com/scala/scala-parser-combinators]]
@@ -159,7 +158,7 @@ object Common {
     /** Версия react-grid-layout.
       * @see [[https://github.com/strml/react-grid-layout]]
       */
-    val REACT_GRID_LAYOUT = "0.16.6"
+    val REACT_GRID_LAYOUT = "0.18.2"
 
     /** Версия react-stonecutter для организации плитки.
       * @see [[https://github.com/dantrain/react-stonecutter]]
@@ -179,7 +178,7 @@ object Common {
     /** Версия STRML/react-resizable.
       * @see [[https://github.com/STRML/react-resizable]]
       */
-    val REACT_RESIZABLE = "1.8.0"
+    val REACT_RESIZABLE = "1.10.1"
 
     /** Версия pathikrit/better-files для удобной работы с файлами.
       * @see [[https://github.com/pathikrit/better-files]]
@@ -202,7 +201,7 @@ object Common {
     /** Версия react-scroll для управления скроллингом.
       * @see [[https://github.com/fisshy/react-scroll]]
       */
-    val REACT_SCROLL = "1.7.9"
+    val REACT_SCROLL = "1.7.16"
 
     /** Упрощённое API-обёртка над WebBluetooth для работы с маячками eddystone прямо из браузера.
       * @see [[https://github.com/zurfyx/eddystone-web-bluetooth]]
@@ -225,7 +224,7 @@ object Common {
     val REACT_MEASURE = "2.3.0"
 
     /** @see [[https://www.npmjs.com/package/react-dnd]]. */
-    val REACT_DND = "9.3.9"
+    val REACT_DND = "10.0.2"
 
     /** @see [[https://www.npmjs.com/package/qrcode.react]]
       * @see [[https://github.com/zpao/qrcode.react]]
@@ -263,10 +262,10 @@ object Common {
   def bcVsn           = "1.64"
 
   /** Версия scalatest+play. */
-  def scalaTestPlusPlayVsn = "5.0.0-RC1"
+  def scalaTestPlusPlayVsn = "5.0.0"
 
   /** Версия используемого плагина play-mailer. */
-  def playMailerVsn     = "7.0.1"
+  def playMailerVsn     = "8.0.0"
 
 
   /** Версия jquery-фасада для scalajs.
@@ -283,7 +282,7 @@ object Common {
   def apacheCommonsIoVsn = "2.6"
 
   /** Версия scalatest. */
-  def scalaTestVsn       = "3.1.0-RC2"
+  def scalaTestVsn       = "3.1.1"
 
   /** 
    *  Версия react.js, используемая в проекте. 
@@ -295,7 +294,7 @@ object Common {
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.5.0-RC2" // И контроллировать суффикс diodeReactVsn ниже!
+  val reactSjsVsn        = "1.6.0" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -316,8 +315,8 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.6.sio-20191111"
-  val diodeReactVsn = diodeVsn + ".150-RC2"
+  val diodeVsn = "1.1.7"
+  val diodeReactVsn = diodeVsn + ".160"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]
@@ -332,7 +331,7 @@ object Common {
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]
     */
-  val minitestVsn  = "2.5.+"
+  val minitestVsn  = "2.7.+"
 
 
   object Repo {
