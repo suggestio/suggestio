@@ -38,7 +38,6 @@ import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.dia.err.MScErrorDia
-import io.suggest.sc.m.dia.settings.MScSettingsDia
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
@@ -639,7 +638,8 @@ class Sc3Circuit(
           retryAction   = Some(dAction),
         )
         dispatch( SetErrorState(m) )
-      case _ => // should never happen
+      case _ =>
+        // should never happen
     }
   }
 

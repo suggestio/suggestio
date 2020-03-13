@@ -4,7 +4,7 @@ import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import com.materialui.{Mui, MuiColor, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.color.{MColorData, MColors}
+import io.suggest.color.{MColorData, MColorTypes, MColors}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
@@ -286,8 +286,8 @@ class ScRootR (
         }
         s.colorsC { mcolorsProxy =>
           val mcolors = mcolorsProxy.value
-          val bgHex = mcolors.bg.get.hexCode
-          val fgHex = mcolors.fg.get.hexCode
+          val bgHex = mcolors.bg.getOrElse( MColorData(MColorTypes.Bg.scDefaultHex) ).hexCode
+          val fgHex = mcolors.fg.getOrElse( MColorData(MColorTypes.Fg.scDefaultHex) ).hexCode
           // Чтобы избежать Warning: Failed prop type: The following properties are not supported: `paletteRaw$1$f`. Please remove them.
           // тут расписывается весь JSON построчно:
           val primaryColor = new MuiColor {
