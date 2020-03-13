@@ -23,12 +23,11 @@ trait EsmV2Deserializer extends EsModelCommonStaticT with IMacroLogs {
     val meta = EsDocMeta(doc)
     // Получаем десериализатор.
     val reader = esDocReads(meta)
-    // TODO Opt Нужно задействовать byte-доступ к телу ответа вместо string.
-    //      Это должно ускорить работу, сократив лишний memcpy при создании строки.
-    val parseResult = {
-      Json.parse( ev.bodyAsString(doc) )
-        .validate(reader)
-    }
+
+    val parseResult = Json
+      .parse( ev.bodyAsString(doc) )
+      .validate(reader)
+
     if (parseResult.isError)
       LOGGER.error(s"Failed to parse JSON of $ES_TYPE_NAME/${ev.idOrNull(doc)}:\n ${ev.bodyAsString(doc)}\n $parseResult")
     // Надо бы предусмотреть возможность ошибки десериализации...

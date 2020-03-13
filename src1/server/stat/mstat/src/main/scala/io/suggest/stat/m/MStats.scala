@@ -17,7 +17,6 @@ import org.elasticsearch.search.sort.SortOrder
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -203,12 +202,6 @@ abstract class MStatsAbstract
   override type T = MStat
 
   override def ES_TYPE_NAME  = "stat"
-
-
-  @deprecated("Use JSON mappers instead", "2016.sep.21")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MStat = {
-    throw new UnsupportedOperationException("deprecated API not implemented")
-  }
 
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._

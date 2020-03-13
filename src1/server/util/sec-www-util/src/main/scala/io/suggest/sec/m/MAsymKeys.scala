@@ -3,13 +3,9 @@ package io.suggest.sec.m
 import io.suggest.es.MappingDsl
 import javax.inject.Singleton
 import io.suggest.es.model._
-import io.suggest.util.JacksonParsing
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
-import scala.collection.Map
 
 /**
  * Suggest.io
@@ -21,11 +17,11 @@ import scala.collection.Map
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
 @Singleton
-class MAsymKeys
+final class MAsymKeys
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer
-  with EsModelPlayJsonStaticT
+  with EsModelJsonWrites
 {
 
   override type T = MAsymKey
@@ -51,53 +47,34 @@ class MAsymKeys
     )
   }
 
-  /**
-   * Десериализация одного элементам модели.
-   * @param id id документа.
-   * @param m Карта, распарсенное json-тело документа.
-   * @return Экземпляр модели.
-   */
-  @deprecated("Delete it", "2015.sep.07")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    MAsymKey(
-      id          = id,
-      versionOpt  = version,
-      pubKey      = JacksonParsing.stringParser( m(PUB_KEY_FN) ),
-      secKey      = m.get(SEC_KEY_FN).map(JacksonParsing.stringParser)
-    )
-  }
+  private def DATA_FORMAT: OFormat[T] = (
+    (__ \ PUB_KEY_FN).format[String] and
+    (__ \ SEC_KEY_FN).formatNullable[String]
+  )(
+    (pubKey, secKeyOpt) => MAsymKey(pubKey, secKeyOpt),
+    ask => (ask.pubKey, ask.secKey)
+  )
 
-  // Кешируем недособранный десериализатор экземпляров модели.
-  private val _reads0 = {
-    (__ \ PUB_KEY_FN).read[String] and
-    (__ \ SEC_KEY_FN).readNullable[String]
-  }
 
   /** Вернуть JSON reads для десериализации тела документа с имеющимися метаданными. */
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
-    _reads0 {
-      (pubKey, secKeyOpt) =>
-        MAsymKey(pubKey, secKeyOpt, meta.id, meta.version)
+    for (ask <- DATA_FORMAT) yield {
+      ask.copy(
+        id          = meta.id,
+        versionOpt  = meta.version,
+      )
     }
   }
 
-
-  override def writeJsonFields(m: T, acc0: FieldsJsonAcc): FieldsJsonAcc = {
-    import m._
-    var acc: FieldsJsonAcc = PUB_KEY_FN -> JsString(pubKey) :: acc0
-    if (secKey.isDefined)
-      acc ::= SEC_KEY_FN -> JsString(secKey.get)
-    acc
-  }
+  override def esDocWrites = DATA_FORMAT
 
 }
 
 
-
-case class MAsymKey(
-                     pubKey        : String,
-                     secKey        : Option[String],
-                     id            : Option[String],
-                     versionOpt    : Option[Long]    = None
-                   )
+final case class MAsymKey(
+                           pubKey        : String,
+                           secKey        : Option[String],
+                           id            : Option[String]  = None,
+                           versionOpt    : Option[Long]    = None,
+                         )
   extends EsModelT

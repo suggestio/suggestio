@@ -43,15 +43,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def BULK_DELETE_QUEUE_LEN = 200
 
 
-  /**
-   * Десериализация одного элементам модели.
-   *
-   * @param id id документа.
-   * @param m Карта, распарсенное json-тело документа.
-   * @return Экземпляр модели.
-   */
-  def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T
-
   /** Десериализация по новому API: документ передается напрямую, а данные извлекаются через статический typeclass.
     *
     * @param doc Документ, т.е. GetResponse или SearchHit или же ещё что-то...
@@ -59,11 +50,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @tparam D Класс переданного документа.
     * @return Экземпляр модели.
     */
-  def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
-    // Здесь код для совместимости. Когда новая архитектура будет заимплеменчена во всех моделях, этот код нужно удалить,
-    // (метод станет abstract), а deserializeOne() удалить вместе с реализациями.
-    deserializeOne(ev.id(doc), ev.bodyAsScalaMap(doc), ev.version(doc))
-  }
+  def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T
 
 
   final def deserializeSearchHit(hit: SearchHit): T =

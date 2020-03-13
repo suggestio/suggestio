@@ -14,42 +14,28 @@ import scala.jdk.CollectionConverters._
 object IEsDoc {
 
   /** Эксрактор для посковых результатов (/_search). */
-  implicit val esSearchHitEv = new IEsDoc[SearchHit] {
-
-    override def rawVersion(v: SearchHit): Long = {
+  implicit object EsSearchHitEv extends IEsDoc[SearchHit] {
+    override def rawVersion(v: SearchHit): Long =
       v.getVersion
-    }
-
-    override def idOrNull(v: SearchHit): String = {
+    override def idOrNull(v: SearchHit): String =
       v.getId
-    }
-
-    override def bodyAsString(v: SearchHit): String = {
+    override def bodyAsString(v: SearchHit): String =
       v.getSourceAsString
-    }
-    override def bodyAsScalaMap(v: SearchHit): collection.Map[String, AnyRef] = {
+    override def bodyAsScalaMap(v: SearchHit): collection.Map[String, AnyRef] =
       v.getSourceAsMap.asScala
-    }
   }
 
 
   /** Экстрактор для GET by id результатов. */
-  implicit val esGetRespEv = new IEsDoc[GetResponse] {
-
-    override def rawVersion(v: GetResponse): Long = {
+  implicit object EsGetRespEv extends IEsDoc[GetResponse] {
+    override def rawVersion(v: GetResponse): Long =
       v.getVersion
-    }
-
-    override def idOrNull(v: GetResponse): String = {
+    override def idOrNull(v: GetResponse): String =
       v.getId
-    }
-
-    override def bodyAsString(v: GetResponse): String = {
+    override def bodyAsString(v: GetResponse): String =
       v.getSourceAsString
-    }
-    override def bodyAsScalaMap(v: GetResponse): collection.Map[String, AnyRef] = {
+    override def bodyAsScalaMap(v: GetResponse): collection.Map[String, AnyRef] =
       v.getSourceAsMap.asScala
-    }
   }
 
 }
@@ -62,14 +48,13 @@ trait IEsDoc[-T] {
 
   def version(v: T): Option[Long] = {
     val vraw = rawVersion(v)
-    if (vraw < 0L) None else Some(vraw)
+    Option.unless( vraw < 0L )(vraw)
   }
 
   def idOrNull(v: T): String
 
-  def id(v: T): Option[String] = {
+  def id(v: T): Option[String] =
     Option( idOrNull(v) )
-  }
 
   /** Тривиальное извлечение данных через строку. */
   def bodyAsString(v: T): String

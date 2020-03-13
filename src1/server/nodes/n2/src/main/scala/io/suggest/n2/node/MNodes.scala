@@ -73,13 +73,8 @@ final class MNodes @Inject() (
 
   @inline def Fields = MNodeFields
 
-  @deprecated("Delete it, use deserializeOne2() instead.", "2015.sep.11")
-  override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): MNode = {
-    throw new UnsupportedOperationException("Deprecated API NOT IMPLEMENTED.")
-  }
-
   /** Почти-собранный play.json.Format. */
-  val DATA_FORMAT: OFormat[MNode] = (
+  private val DATA_FORMAT: OFormat[MNode] = (
     (__ \ Fields.Common.COMMON_FN).format[MNodeCommon] and
     (__ \ Fields.Meta.META_FN).format[MMeta] and
     (__ \ Fields.Extras.EXTRAS_FN).formatNullable[MNodeExtras]

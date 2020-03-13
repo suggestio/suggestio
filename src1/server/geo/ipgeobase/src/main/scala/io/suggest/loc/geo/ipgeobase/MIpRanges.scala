@@ -105,11 +105,6 @@ abstract class MIpRangesAbstract
   override protected def esDocReads(meta: IEsDocMeta) = implicitly[Reads[MIpRange]]
   override def esDocWrites = implicitly[OWrites[MIpRange]]
 
-  @deprecated("Use deserializeOne2() instead.", "2016.sep.5")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MIpRange = {
-    throw new UnsupportedOperationException("Deprecated API not implemented.")
-  }
-
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._

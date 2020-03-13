@@ -1,11 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil
 import io.suggest.util.JacksonWrapper
-import org.elasticsearch.common.bytes.BytesArray
-import org.elasticsearch.search.lookup.SourceLookup
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -47,17 +42,18 @@ trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
 
   def resave(id: String): String
 
+  // put*() закомменчены, т.к. не используются, и надо переписать реализации.
   /**
    * Отправить в хранилище один экземпляр модели, представленный в виде JSON.
    * @param data Сериализованный в JSON экземпляр модели.
    * @return id сохраненного документа.
    */
-  def putOne(id: String, data: String): String
+  //def putOne(id: String, data: String): String
 
   /** Выхлоп getAll() отправить на сохранение в хранилище.
     * @param all Выхлоп getAll().
     */
-  def putAll(all: String): String
+  //def putAll(all: String): String
 
   def refreshIndex(): String
 
@@ -119,6 +115,8 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     awaitString(fut)
   }
 
+  // Надо переписать на toJson / play-json.
+  /*
   override def putOne(id: String, data: String): String = {
     val id1 = id.trim
     val logPrefix = s"putOne($id1):"
@@ -142,13 +140,15 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     try {
       val raws = JacksonWrapper.deserialize[List[Map[String, AnyRef]]](all)
       val idsFut = Future.traverse(raws) { tmap =>
-        val idOpt = tmap.get( FIELD_ID ).map(_.toString.trim)
+        val idOpt = tmap
+          .get( FIELD_ID )
+          .map(_.toString.trim)
         val sourceStr = JacksonWrapper.serialize(tmap.get( FIELD_SOURCE ))
         val br = new BytesArray(sourceStr)
         val dataMap = SourceLookup.sourceAsMap(br)
         _saveOne(idOpt, dataMap)
       }
-      val resFut = idsFut.map { ids =>
+      val resFut = for (ids <- idsFut) yield {
         (("Total saved: " + ids.size) :: "----" :: ids)
           .mkString("\n")
       }
@@ -159,24 +159,26 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     }
   }
 
+
+  import java.{util => ju}
+  import scala.jdk.CollectionConverters._
+
+  // Общий код парсинга и добавления элементов в хранилище вынесен сюда.
+  private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {
+    val inst = companion
+      // TODO Придумать что-то, использующее deserializeOne2()
+      .deserializeOne2( dataMap.asScala )
+    companion.save(inst)
+  }
+  */
+
+
   override def refreshIndex(): String = {
     LOGGER.debug(s"refreshIndex(): ${companion.ES_INDEX_NAME}")
     val fut = for (res <- companion.refreshIndex()) yield {
       s"Done, res =\n$res"
     }
     awaitString(fut)
-  }
-
-
-  import java.{util => ju}
-  import scala.jdk.CollectionConverters._
-
-  /** Общий код парсинга и добавления элементов в хранилище вынесен сюда. */
-  private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {
-    val inst = companion
-      // TODO Придумать что-то, использующее deserializeOne2()
-      .deserializeOne(idOpt, dataMap.asScala, version = None)
-    companion.save(inst)
   }
 
 }

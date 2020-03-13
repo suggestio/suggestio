@@ -96,11 +96,7 @@ object MNodeEdges
   }
 
   /** Статический пустой экземпляр модели. */
-  override val empty: MNodeEdges = {
-    new MNodeEdges() {
-      override def nonEmpty = false
-    }
-  }
+  override def empty = apply()
 
   implicit val nodeEdgesJson: Format[MNodeEdges] = {
     (__ \ Fields.OUT_FN)
@@ -195,12 +191,14 @@ object MNodeEdges
 // TODO В модели исторически сформировалось какое-то упоротое API.
 //      Оно какое-то топорное, наверное можно придумать что-то по-лучше.
 
-case class MNodeEdges(
-                       out   : Seq[MEdge]    = Nil
-                     )
+final case class MNodeEdges(
+                             out   : Seq[MEdge]    = Nil
+                           )
   extends EmptyProduct
 {
 
+  /** Поиск по предикату - частая операция. Тут - карта для оптимизации данного действа.
+    * Следует помнить, что эта карта трудно-обратима назад в эджи без шаманства: она содержит в себе дублирующиеся значения, т.к. предикаты имеют наследственность. */
   lazy val edgesByPred: MapView[MPredicate, Seq[MEdge]] = {
     if (out.isEmpty) {
       MapView.empty

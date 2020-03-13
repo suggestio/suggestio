@@ -1,12 +1,10 @@
 package models.event
 
-import java.{util => ju}
 
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.ext.svc.MExtService
 import io.suggest.n2.node.MNode
-import io.suggest.util.JacksonParsing
 import models.adv.MExtTarget
 import models.blk
 import play.api.libs.functional.syntax._
@@ -85,31 +83,6 @@ object ArgsInfo {
     (__ \ AdvExtTarget).format[Iterable[String]] and
     (__ \ AdId).formatNullable[String]
   )(apply, unlift(unapply))
-
-  /** Исторически, для десериализации используется jackson. Тут костыли для десериализации из java Map. */
-  def fromJacksonJson: PartialFunction[Any, ArgsInfo] = {
-    case jm: ju.Map[_,_] =>
-      if (jm.isEmpty) {
-        EmptyArgsInfo
-      } else {
-        val f = ArgsInfo(
-          adnIdOpt      = Option(jm get AdnId).map(JacksonParsing.stringParser),
-          advExtTgIds = Option(jm get AdvExtTarget)
-            .iterator
-            .flatMap(JacksonParsing.iteratorParser)
-            .map(JacksonParsing.stringParser)
-            .toSeq,
-          adIdOpt       = Option(jm get AdId).map(JacksonParsing.stringParser)
-        )
-        // На случай появления мусора в карте...
-        if (f.isEmpty)
-          EmptyArgsInfo
-        else
-          f
-      }
-
-    case _ => EmptyArgsInfo
-  }
 
 }
 

@@ -34,7 +34,7 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.search.{SearchHit, SearchHits}
+import org.elasticsearch.search.SearchHits
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
@@ -793,17 +793,17 @@ final class EsModel @Inject()(
 
 
       /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
-      def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
+      def searchRespMap(searchResp: SearchResponse) = {
         searchResp
           .getHits
           .getHits
           .iterator
-          .map(f)
       }
 
       // На ленивость LazyList (Stream) завязана работа akka-stream Source, который имитируется поверх этого метода.
       def searchResp2stream(searchResp: SearchResponse): LazyList[T1] = {
-        searchRespMap(searchResp)( model.deserializeSearchHit )
+        searchRespMap(searchResp)
+          .map( model.deserializeSearchHit )
           // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
           .to( LazyList )
       }
@@ -1453,7 +1453,8 @@ final class EsModel @Inject()(
         new EsSearchFutHelper[Map[String, T1]] {
           override def mapSearchResp(searchResp: SearchResponse): Future[Map[String, T1]] = {
             val r = model
-              .searchRespMap(searchResp)( model.deserializeSearchHit )
+              .searchRespMap(searchResp)
+              .map( model.deserializeSearchHit )
               .zipWithIdIter[String]
               .to( Map )
             Future.successful(r)

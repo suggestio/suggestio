@@ -4,18 +4,14 @@ import java.time.OffsetDateTime
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.es.MappingDsl
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.util.JacksonParsing
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
-import io.suggest.ext.svc.{MExtService, MExtServices}
+import io.suggest.ext.svc.MExtService
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.MExtTargetSearchArgs
-
-import scala.collection.Map
 
 /**
  * Suggest.io
@@ -30,15 +26,15 @@ import scala.collection.Map
 object MExtTargetFields {
 
   /** Имя поле со ссылкой на цель. */
-  val URL_ESFN          = "url"
+  def URL_ESFN          = "url"
   /** Имя поля, в котором хранится id внешнего сервиса, к которому относится эта цель. */
-  val SERVICE_ID_ESFN   = "srv"
+  def SERVICE_ID_ESFN   = "srv"
   /** Имя поля с названием этой цели. */
-  val NAME_ESFN         = "name"
+  def NAME_ESFN         = "name"
   /** Имя поля с id узла, к которому привязан данный интанс. */
-  val ADN_ID_ESFN       = "adnId"
+  def ADN_ID_ESFN       = "adnId"
   /** Поле даты создания. */
-  val DATE_CREATED_ESFN = "dci"
+  def DATE_CREATED_ESFN = "dci"
 
 }
 
@@ -49,7 +45,7 @@ class MExtTargets
   with MacroLogsImpl
   with EsDynSearchStatic[MExtTargetSearchArgs]
   with EsmV2Deserializer
-  with EsModelPlayJsonStaticT
+  with EsModelJsonWrites
 {
 
   override type T = MExtTarget
@@ -77,49 +73,33 @@ class MExtTargets
   }
 
 
-  @deprecated("Delete it, replaced by deserializeOne2().", "2015.sep.07")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    import MExtTargetFields._
-    MExtTarget(
-      id          = id,
-      versionOpt  = version,
-      url         = JacksonParsing.stringParser(m(URL_ESFN)),
-      service     = MExtServices.withValue( JacksonParsing.stringParser(m(SERVICE_ID_ESFN)) ),
-      adnId       = JacksonParsing.stringParser(m(ADN_ID_ESFN)),
-      name        = m.get(NAME_ESFN)
-        .map( JacksonParsing.stringParser ),
-      dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(OffsetDateTime.now)(JacksonParsing.dateTimeParser)
-    )
-  }
-
   /** Кешируем почти собранный десериализатор. */
-  private val _reads0 = {
+  private def DATA_FORMAT: OFormat[MExtTarget] = {
     val F = MExtTargetFields
-    (__ \ F.URL_ESFN).read[String] and
-    (__ \ F.SERVICE_ID_ESFN).read[MExtService] and
-    (__ \ F.ADN_ID_ESFN).read[String] and
-    (__ \ F.NAME_ESFN).readNullable[String] and
-    (__ \ F.DATE_CREATED_ESFN).read[OffsetDateTime]
+    (
+      (__ \ F.URL_ESFN).format[String] and
+      (__ \ F.SERVICE_ID_ESFN).format[MExtService] and
+      (__ \ F.ADN_ID_ESFN).format[String] and
+      (__ \ F.NAME_ESFN).formatNullable[String] and
+      (__ \ F.DATE_CREATED_ESFN).format[OffsetDateTime]
+    )(
+      (url, service, adnId, name, dataCreated) =>
+        MExtTarget(url, service, adnId, name, dataCreated),
+      et => (et.url, et.service, et.adnId, et.name, et.dateCreated)
+    )
   }
 
   /** JSON deserializer. */
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
-    _reads0 {
-      (url, service, adnId, name, dataCreated) =>
-        MExtTarget(url, service, adnId, name, dataCreated, meta.version, meta.id)
+    for (et <- DATA_FORMAT) yield {
+      et.copy(
+        id          = meta.id,
+        versionOpt  = meta.version,
+      )
     }
   }
 
-
-  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
-    import m._
-    val F = MExtTargetFields
-    F.SERVICE_ID_ESFN   -> JsString(service.value) ::
-    F.ADN_ID_ESFN       -> JsString(adnId) ::
-    F.DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated) ::
-    toJsTargetPlayJsonFields
-  }
+  override def esDocWrites = DATA_FORMAT
 
 }
 
@@ -158,23 +138,6 @@ trait IExtTarget {
 
   /** Опциональное название по мнению пользователя. */
   def name: Option[String]
-
-  /** Генерация экземпляра play.json.JsObject на основе имеющихся данных. */
-  def toJsTargetPlayJson: JsObject = JsObject(toJsTargetPlayJsonFields)
-
-  /** Генерация JSON-тела на основе имеющихся данных. */
-  def toJsTargetPlayJsonFields: FieldsJsonAcc = {
-    import MExtTargetFields._
-    var acc: FieldsJsonAcc = List(
-      URL_ESFN            -> JsString(url)
-    )
-    // name
-    val _name = name
-    if (_name.isDefined)
-      acc ::= NAME_ESFN -> JsString(_name.get)
-    // результат
-    acc
-  }
 
 }
 

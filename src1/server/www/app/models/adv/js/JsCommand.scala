@@ -3,7 +3,6 @@ package models.adv.js
 import io.suggest.adv.ext.model.{MJsCmdType, MJsCmdTypes}
 import io.suggest.adv.ext.model.JsCommand._
 import io.suggest.adv.ext.model.ctx.MAskAction
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
 
@@ -35,7 +34,7 @@ sealed trait IWsCmd {
 
   /** Сериализовать в JSON. */
   def toJson: JsObject = JsObject(toJsonAcc)
-  def toJsonAcc: FieldsJsonAcc = {
+  def toJsonAcc: List[(String, JsValue)] = {
     List(TYPE_FN -> Json.toJson(ctype))
   }
 }
@@ -52,7 +51,7 @@ trait IJsCmd extends IWsCmd {
     * js отправит попап в очередь попапов. */
   def isPopup: Boolean
 
-  override def toJsonAcc: FieldsJsonAcc = {
+  override def toJsonAcc: List[(String, JsValue)] = {
     JS_CODE_FN -> Json.toJson(jsCode) ::
     IS_POPUP_FN -> JsBoolean(isPopup) ::
     super.toJsonAcc
@@ -73,7 +72,7 @@ trait IJsonActionCmd extends IWsCmd {
   /** Контекст запроса. */
   def mctx: MJsCtx
 
-  override def toJsonAcc: FieldsJsonAcc = {
+  override def toJsonAcc: List[(String, JsValue)] = {
     var acc = super.toJsonAcc
     acc ::= MCTX_FN -> Json.toJson(mctx)
     val _replyTo = replyTo

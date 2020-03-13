@@ -1,6 +1,5 @@
 package models.adv.js.ctx
 
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import models.event.IErrorInfo
 import play.api.libs.json._
 import io.suggest.adv.ext.model.ctx.MErrorInfo._
@@ -37,7 +36,7 @@ object JsErrorInfo {
   /** Сериализация в JSON. */
   implicit def writes = new Writes[JsErrorInfo] {
     override def writes(o: JsErrorInfo): JsValue = {
-      var acc: FieldsJsonAcc = List(
+      var acc: List[(String, JsValue)] = List(
         MSG_FN -> JsString(o.msg)
       )
       if (o.args.nonEmpty)

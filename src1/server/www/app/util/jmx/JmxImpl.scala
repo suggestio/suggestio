@@ -3,7 +3,6 @@ package util.jmx
 import javax.inject.Inject
 import io.suggest.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx
-import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
 import java.lang.management.ManagementFactory
 
@@ -39,7 +38,6 @@ case class JmxImpl @Inject()(
                                mNodesJmx                     : MNodesJmx,
                                geoTagsUtilJmx                : GeoTagsUtilJmx,
                                mExtTargetsJmx                : MExtTargetsJmx,
-                               mEventsJmx                    : MEventsJmx,
                                mIpRangesJmx                  : MIpRangesJmx,
                                mCitiesJmx                    : MCitiesJmx,
                                mStatsJmx                     : MStatsJmx,

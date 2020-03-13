@@ -4,14 +4,9 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.es.MappingDsl
 import io.suggest.es.model._
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
-import scala.collection.Map
 
 /**
  * Suggest.io
@@ -20,26 +15,23 @@ import scala.collection.Map
  * Description: Модель для хранения календарей в текстовых форматах.
  */
 @Singleton
-class MCalendars @Inject() (
-                             mCalTypesJvm     : MCalTypesJvm,
-                             mCommonDi        : ICommonDi,
-                           )
+final class MCalendars
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer
-  with EsModelPlayJsonStaticT
+  with EsModelJsonWrites
 {
 
   override type T = MCalendar
 
-  override val ES_TYPE_NAME = "holyCal"
+  override def ES_TYPE_NAME = "holyCal"
 
   /** Идентификаторы полей на стороне elasticsearch. */
   object Fields {
-    val NAME_FN       = "name"
-    val DATA_FN       = "data"
+    def NAME_FN       = "name"
+    def DATA_FN       = "data"
     /** Идентификатор локализации календаря среди множества оных. */
-    val CAL_TYPE_FN   = "ctype"
+    def CAL_TYPE_FN   = "ctype"
   }
 
 
@@ -57,26 +49,17 @@ class MCalendars @Inject() (
     )
   }
 
-  @deprecated("Use deserializeOne2() instead", "2015.sep.05")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    MCalendar(
-      id          = id,
-      name        = m.get(Fields.NAME_FN).fold("WTF?")(JacksonParsing.stringParser),
-      calType     = m.get(Fields.CAL_TYPE_FN)
-        .map(JacksonParsing.stringParser)
-        .flatMap(MCalTypes.withValueOpt)
-        .getOrElse( _dfltCalType(id) ),
-      data        = JacksonParsing.stringParser( m(Fields.DATA_FN) ),
-      versionOpt  = version
-    )
-  }
-
   // Кеш для частично-собранного десериализатора.
-  private val _dataReads0 = {
+  private def DATA_FORMAT: OFormat[MCalendar] = {
     val F = Fields
-    (__ \ F.NAME_FN).read[String] and
-    (__ \ F.DATA_FN).read[String] and
-    (__ \ F.CAL_TYPE_FN).readNullable[MCalType]
+    (
+      (__ \ F.NAME_FN).format[String] and
+      (__ \ F.DATA_FN).format[String] and
+      (__ \ F.CAL_TYPE_FN).formatNullable[MCalType]
+    )(
+      (name, data, calType) => MCalendar(name, data, calType.orNull),
+      mcal => (mcal.name, mcal.data, Some(mcal.calType) )
+    )
   }
 
   /**
@@ -92,37 +75,27 @@ class MCalendars @Inject() (
   }
 
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
-    _dataReads0 {
-      (name, data, calTypeOpt) =>
-        MCalendar(
-          name        = name,
-          data        = data,
-          calType     = calTypeOpt.getOrElse(_dfltCalType(meta.id)),
-          id          = meta.id,
-          versionOpt  = meta.version
-        )
+    for (mcal <- DATA_FORMAT) yield {
+      mcal.copy(
+        id          = meta.id,
+        versionOpt  = meta.version,
+        calType     = Option( mcal.calType ) getOrElse _dfltCalType(meta.id),
+      )
     }
   }
 
-
-  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
-    import Fields._, m._
-    NAME_FN       -> JsString(name) ::
-      DATA_FN     -> JsString(data) ::
-      CAL_TYPE_FN -> JsString(calType.value) ::
-      acc
-  }
+  override def esDocWrites = DATA_FORMAT
 
 }
 
 
-case class MCalendar(
-  name                    : String,
-  data                    : String,
-  calType                 : MCalType,
-  id                      : Option[String]  = None,
-  versionOpt              : Option[Long]    = None
-)
+final case class MCalendar(
+                            name                    : String,
+                            data                    : String,
+                            calType                 : MCalType,
+                            id                      : Option[String]  = None,
+                            versionOpt              : Option[Long]    = None
+                          )
   extends EsModelT
 
 
@@ -138,10 +111,4 @@ class MCalendarJmx @Inject() (
   with MCalendarJmxMBean
 {
   override type X = MCalendar
-}
-
-
-/** Интерфейс для DI-поля MCalendars. */
-trait IMCalendars {
-  def mCalendars: MCalendars
 }

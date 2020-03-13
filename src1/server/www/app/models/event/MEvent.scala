@@ -3,18 +3,11 @@ package models.event
 import java.time.OffsetDateTime
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 import io.suggest.es.model._
 import io.suggest.primo.id.OptStrId
-import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.es.MappingDsl
-
-import scala.collection.Map
 
 // TODO Модель оставлена тут только для совместимости с legacy-кодом из lk-adv-ext.
 
@@ -29,15 +22,7 @@ import scala.collection.Map
  */
 object MEvent {
 
-  val EVT_TYPE_ESFN     = "et"
-  val OWNER_ID_ESFN     = "ownerId"
-  val ARGS_ESFN         = "args"
-  val DATE_CREATED_ESFN = "dc"
-  val IS_CLOSEABLE_ESFN = "ic"
-  val IS_UNSEEN_ESFN    = "iu"
-
   def TTL_DAYS_UNSEEN = 90
-  def TTL_DAYS_SEEN   = 30
 
   def isCloseableDflt = true
   def dateCreatedDflt = OffsetDateTime.now()
@@ -65,83 +50,21 @@ object MEvent {
 @Singleton
 class MEvents
   extends EsModelStatic
-    with MacroLogsImpl
-    with EsmV2Deserializer
-    with EsModelPlayJsonStaticT
+  with MacroLogsImpl
 {
 
-  import MEvent._
-
   override type T = MEvent
-  override val ES_TYPE_NAME = "ntf"
+  override def ES_TYPE_NAME = "ntf"
 
+  private def _throwDeprecated =
+    throw new UnsupportedOperationException("MEvent deprecated")
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping =
-    throw new UnsupportedOperationException("MEvent deprecated")
-
-  @deprecated("Delete it, v2 is ready here", "2015.sep.07")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    MEvent(
-      etype       = m.get(EVT_TYPE_ESFN)
-        .map( JacksonParsing.stringParser )
-        .flatMap(MEventTypes.withValueOpt)
-        .get,
-      ownerId     = m.get(OWNER_ID_ESFN)
-        .map( JacksonParsing.stringParser )
-        .get,
-      argsInfo    = m.get(ARGS_ESFN)
-        .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
-      dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(OffsetDateTime.now)(JacksonParsing.dateTimeParser),
-      isCloseable = m.get(IS_CLOSEABLE_ESFN)
-        .fold(isCloseableDflt)(JacksonParsing.booleanParser),
-      isUnseen    = m.get(IS_UNSEEN_ESFN)
-        .fold(false)(JacksonParsing.booleanParser),
-      id          = id,
-      versionOpt  = version
-    )
-  }
-
-  /** Кешируем почти-собранный инстанс десериализатора экземпляров модели. */
-  private val _reads0 = {
-    (__ \ EVT_TYPE_ESFN).read[MEventType] and
-    (__ \ OWNER_ID_ESFN).read[String] and
-    (__ \ ARGS_ESFN).readNullable[ArgsInfo]
-      .map(_.getOrElse(EmptyArgsInfo)) and
-    (__ \ DATE_CREATED_ESFN).readNullable[OffsetDateTime]
-      .map(_.getOrElse( OffsetDateTime.now )) and
-    (__ \ IS_CLOSEABLE_ESFN).readNullable[Boolean]
-      .map(_ getOrElse isCloseableDflt) and
-    (__ \ IS_UNSEEN_ESFN).readNullable[Boolean]
-      .map(_.getOrElseTrue)
-  }
-
-  /** Вернуть JSON reads для десериализации тела документа с имеющимися метаданными. */
-  override protected def esDocReads(meta: IEsDocMeta): Reads[MEvent] = {
-    _reads0 {
-      (etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen) =>
-        MEvent(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = meta.id, versionOpt = meta.version)
-    }
-  }
-
-
-  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
-    import m._
-
-    var acc: FieldsJsonAcc = List(
-      EVT_TYPE_ESFN     -> JsString(etype.value),
-      OWNER_ID_ESFN     -> JsString(ownerId),
-      DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated)
-    )
-    if (isUnseen)
-      acc ::= IS_UNSEEN_ESFN -> JsBoolean(isUnseen)
-    if (argsInfo.nonEmpty)
-      acc ::= ARGS_ESFN -> Json.toJson(argsInfo)
-    if (isCloseable != isCloseableDflt)
-      acc ::= IS_CLOSEABLE_ESFN -> JsBoolean(isCloseable)
-    acc
-  }
-
+    _throwDeprecated
+  override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): MEvent =
+    _throwDeprecated
+  override def toJson(m: MEvent): String =
+    _throwDeprecated
 
 }
 
@@ -161,17 +84,6 @@ case class MEvent(
   extends EsModelT
     with IMEvent
 
-
-trait MEventsJmxMBean extends EsModelJMXMBeanI
-final class MEventsJmx @Inject() (
-                                   override val companion     : MEvents,
-                                   override val esModelJmxDi  : EsModelJmxDi,
-                                 )
-  extends EsModelJMXBaseImpl
-  with MEventsJmxMBean
-{
-  override type X = MEvent
-}
 
 
 /** Минимальный интерфейс абстрактного события.

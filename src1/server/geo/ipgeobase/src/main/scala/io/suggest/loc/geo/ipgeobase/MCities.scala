@@ -64,10 +64,6 @@ abstract class MCitiesAbstract
   override def esDocReads(meta: IEsDocMeta) = implicitly[Reads[T]]
   override def esDocWrites = implicitly[OWrites[T]]
 
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MCity = {
-    throw new UnsupportedOperationException("Deprecated API not implemented.")
-  }
-
   /** Сборка маппинга индекса по новому формату. */
   override def indexMapping(implicit dsl: MappingDsl): dsl.IndexMapping = {
     import dsl._
