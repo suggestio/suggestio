@@ -21,5 +21,6 @@ class GuiceDiModule extends AbstractModule {
       new FactoryModuleBuilder()
         .build( classOf[ISiowebNotifierActorsFactory] )
     )
+
   }
 }

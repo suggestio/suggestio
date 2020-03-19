@@ -46,10 +46,10 @@ object MScCommonQs {
 
   @inline implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
 
-  val screen        = GenLens[MScCommonQs](_.screen)
-  val locEnv        = GenLens[MScCommonQs](_.locEnv)
-  val searchGridAds = GenLens[MScCommonQs](_.searchGridAds)
-  val searchNodes   = GenLens[MScCommonQs](_.searchNodes)
+  def screen        = GenLens[MScCommonQs](_.screen)
+  def locEnv        = GenLens[MScCommonQs](_.locEnv)
+  def searchGridAds = GenLens[MScCommonQs](_.searchGridAds)
+  def searchNodes   = GenLens[MScCommonQs](_.searchNodes)
 
 }
 
@@ -60,6 +60,7 @@ object MScCommonQs {
   * @param apiVsn Версия Sc API.
   * @param locEnv Данные геолокации и физического окружения, если есть.
   * @param searchGridAds Флаг поиска и возврата разных карточек плитки в ответе.
+  *                      true - некий автофокус на карточку при запуске в рамках index+grid+foc.
   * @param searchNodes Флаг поиска узлов/тегов.
   */
 case class MScCommonQs(
@@ -68,8 +69,4 @@ case class MScCommonQs(
                         locEnv            : MLocEnv             = MLocEnv.empty,
                         searchGridAds     : Option[Boolean]     = None,
                         searchNodes       : Option[Boolean]     = None,
-                      ) {
-
-  def withLocEnv(locEnv: MLocEnv) = copy(locEnv = locEnv)
-
-}
+                      )

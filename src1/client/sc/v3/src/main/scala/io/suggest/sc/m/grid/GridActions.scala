@@ -1,5 +1,6 @@
 package io.suggest.sc.m.grid
 
+import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.m.{ISc3Action, IScApiRespReason}
 
 /**
@@ -18,12 +19,18 @@ sealed trait IGridAction extends ISc3Action
   * @param silent Скрытый апдейт плитки: без явной прокрутки куда-то вверх при clean-релоаде.
   *               None - решить самостоятельно.
   *               true - скрытые изменения в плитке.
+  * @param onlyMatching Выборочный патчинг плитки по указанным предикатам, на основе которого были найдены карточки.
+  *                    Предикат также определяет qs-поиска, и возвращённые сервером карточки замещают предыдущий
+  *                    набор карточек, которые содержали в себе данный предикат в поле MScAdInfo().foundIn .
   */
-case class GridLoadAds(clean          : Boolean,
-                       ignorePending  : Boolean,
-                       silent         : Option[Boolean] = None
+case class GridLoadAds(
+                        clean          : Boolean,
+                        ignorePending  : Boolean,
+                        silent         : Option[Boolean] = None,
+                        onlyMatching   : Option[MScNodeMatchInfo] = None,
                       )
-  extends IGridAction with IScApiRespReason
+  extends IGridAction
+  with IScApiRespReason
 
 
 /** Клик по карточке в плитке. */

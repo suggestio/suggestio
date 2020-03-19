@@ -20,9 +20,7 @@ import scala.concurrent.Future
   * Description: Утиль для поиска тегов в выдаче.
   */
 @Singleton
-class ScSearchUtil @Inject()(
-                              mNodes    : MNodes
-                            ) {
+final class ScSearchUtil {
 
   /** Дефолтовое значение limit, если не указано или некорректно. */
   private def LIMIT_DFLT    = 10

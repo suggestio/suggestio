@@ -16,6 +16,8 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
+import scala.scalajs.js
+
 
 /**
   * Suggest.io
@@ -119,6 +121,7 @@ class ScErrorDiaR(
                     if (isPending) MuiProgressVariants.indeterminate
                     else MuiProgressVariants.determinate
                   }
+                  override val value = if (isPending) js.undefined else js.defined(0)
                 }
               ),
             )

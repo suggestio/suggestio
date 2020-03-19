@@ -9,7 +9,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import scala.collection.Map
 import scala.concurrent.Future
 
 /**
@@ -90,14 +89,12 @@ abstract class MCitiesAbstract
   * Она всегда взаимодейтсвует с алиасом какого-либо индекса.
   */
 @Singleton
-class MCities @Inject() (
-                          mIndexes        : MIndexes,
-                        )
+class MCities
   extends MCitiesAbstract
 {
 
   /** Используем алиас для последнего свежего индекса. */
-  override def ES_INDEX_NAME = mIndexes.INDEX_ALIAS_NAME
+  override def ES_INDEX_NAME = MIndexes.INDEX_ALIAS_NAME
 
 }
 

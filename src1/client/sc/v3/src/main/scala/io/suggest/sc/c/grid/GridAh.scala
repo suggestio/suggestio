@@ -12,8 +12,7 @@ import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.JdTag
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
-import io.suggest.sc.m.{HandleScApiResp, ResetUrlRoute}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.grid._
 import io.suggest.sc.sc3._
 import io.suggest.sc.styl.ScCss
@@ -21,6 +20,8 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.jd.render.u.JdUtil
+import io.suggest.n2.node.MNodeTypes
+import io.suggest.sc.u.ScQsUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -37,10 +38,6 @@ import scala.util.Success
 object GridAh {
 
   private def GRID_CONF = MGridCalcConf.EVEN_GRID
-
-  /** Кол-во карточек за один ответ. */
-  // TODO Рассчитывать кол-во карточек за 1 реквест на основе экрана и прочих вещей.
-  def adsPerReqLimit = 10
 
 
   /** Полное переконфигурирование плитки.
@@ -212,11 +209,11 @@ object GridAh {
 
 
 /** Контроллер плитки карточек.
-  * @param scQsRO Доступ к текущим аргументам поиска карточек.
+  * @param scRootRO Доступ к текущим аргументам поиска карточек.
   */
 class GridAh[M](
                  api             : IScUniApi,
-                 scQsRO          : ModelRO[MScQs],
+                 scRootRO        : ModelRO[MScRoot],
                  screenRO        : ModelRO[MScreen],
                  modelRW         : ModelRW[M, MGridS]
                )
@@ -229,6 +226,7 @@ class GridAh[M](
     // Реакция на событие скроллинга плитки: разобраться, стоит ли подгружать ещё карточки с сервера.
     case m: GridScroll =>
       val v0 = value
+
       if (
         !v0.core.ads.isPending &&
         v0.hasMoreAds && {
@@ -257,50 +255,108 @@ class GridAh[M](
     // Сигнал к загрузке карточек с сервера согласно текущему состоянию выдачи.
     case m: GridLoadAds =>
       val v0 = value
+
       //println(m)
       if (v0.core.ads.isPending && !m.ignorePending) {
         LOG.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange
 
       } else {
-        val args0 = scQsRO.value
         val nextReqPot2 = v0.core.ads.pending()
 
-        val fx = Effect {
-          // Если clean, то нужно обнулять offset.
-          val offset = v0.core.ads
-            .filter(_ => !m.clean)
-            .fold(0)(_.size)
+        // Если обновление m.onlyMatching, то возможна ситуация просто удаления каких-то карточек из выдачи:
+        // Например, все маячки исчезли, и маячковые карточки надо удалить БЕЗ каких-либо запросов на сервер.
+        // Используем сюжетные линии Left-Right, чтобы разделить эти два пересекающихся сценария.
 
-          val args2 = args0.copy(
-            search = args0.search
-              .withLimitOffset(
-                limit  = Some( GridAh.adsPerReqLimit ),
-                offset = Some(offset)
-              ),
-            common = (MScCommonQs.searchGridAds set OptionUtil.SomeBool.someFalse)(args0.common)
-          )
-
-          // Запустить запрос с почищенными аргументами...
-          val fut = api.pubApi( args2 )
-
-          // Завернуть ответ сервера в экшен:
-          val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
-          fut.transform { tryRes =>
-            val r = HandleScApiResp(
-              reqTimeStamp  = Some(startTime),
-              qs            = args2,
-              tryResp       = tryRes,
-              reason        = m,
-            )
-            Success(r)
+        // Есть какие-то данные для селективного обновления плитки. Разобраться, что там:
+        // Если частичный патчинг, то возможно, что надо модифицировать args.common:
+        m.onlyMatching
+          .toLeft( Option.empty[MScQs] )
+          .left.flatMap { nodeMatchInfo =>
+            // Есть какие-то правила для сверки узла. Накатить изменения на функцию-модификатор:
+            // TODO Фильтрация по id узла пока не реализована (за ненадобностью).
+            if (nodeMatchInfo.nodeId.nonEmpty)
+              throw new UnsupportedOperationException( nodeMatchInfo.nodeId.toString )
+            nodeMatchInfo.ntype
+              .toLeft( Option.empty[MScQs] )
           }
-        }
+          .left.flatMap {
+            case bleNtype @ MNodeTypes.BleBeacon =>
+              // Требуется запросить и отработать только карточки, которые относятся к bluetooth-маячкам.
+              // Для этого, надо вычистить locEnv до маячков, и убрать остальные критерии запроса.
+              // А есть ли маячки в qs?
+              val mroot = scRootRO.value
+              val bcns0 = mroot.locEnvBleBeacons
 
-        val v2 = MGridS.core
-          .composeLens( MGridCoreS.ads )
-          .set( nextReqPot2 )(v0)
-        updated(v2, fx)
+              lazy val ads2 = v0.core.ads.map { _.filterNot { scAdData =>
+                // true для тех карточек, которые надо удалить.
+                scAdData.main.info.matchInfos.forall {
+                  _.nodeMatchings
+                    .exists(_.ntype contains bleNtype)
+                }
+              }}
+              // ads2.exists(_.isEmpty): Даже если карточек вообще не осталось, то надо отрендерить 404-карточку. Запросить с сервера.
+              if (bcns0.nonEmpty || ads2.exists(_.isEmpty)) {
+                // Есть видимые маячки. И наверное надо cделать запрос на сервер.
+                // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
+                println("3", bleNtype, "do req")
+                // TODO qs4ble: тут надо явно запретить возвращать 404-карточки
+                val qs4Ble= ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value )
+                Right( Some(qs4Ble) )
+              } else {
+                println("3", bleNtype, "CLEANUP")
+                // Нет маячков в qs, но видимо ранее они были.
+                // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
+                val jdRuntime2 = GridAh.mkJdRuntime(ads2, v0.core)
+                val v2 = MGridS.core.modify(
+                  _.copy(
+                    jdRuntime = jdRuntime2,
+                    ads       = ads2,
+                    gridBuild = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2),
+                  )
+                )(v0)
+                Left( updated(v2) )
+              }
+
+            case other =>
+              throw new UnsupportedOperationException( other.toString )
+          }
+          .right.map { reqScQsOpt =>
+            println("4", reqScQsOpt)
+            // Надо делать эффект запроса на сервер с указанными qs.
+            val fx = Effect {
+              val args2 = reqScQsOpt getOrElse {
+                val offset = v0.core.ads
+                  // Если clean, то нужно обнулять offset.
+                  .filter(_ => !m.clean)
+                  .fold(0)(_.size)
+                ScQsUtil.gridAdsQs( scRootRO.value, offset )
+              }
+
+              // Завернуть ответ сервера в экшен:
+              val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
+
+              // Запустить запрос с почищенными аргументами...
+              api
+                .pubApi( args2 )
+                .transform { tryRes =>
+                  println("5", tryRes.getClass.getSimpleName)
+                  val r = HandleScApiResp(
+                    reqTimeStamp  = Some( startTime ),
+                    qs            = args2,
+                    tryResp       = tryRes,
+                    reason        = m,
+                  )
+                  Success(r)
+                }
+            }
+
+            val v2 = MGridS.core
+              .composeLens( MGridCoreS.ads )
+              .set( nextReqPot2 )(v0)
+            updated(v2, fx)
+          }
+          .fold(identity, identity)
       }
 
 
@@ -328,25 +384,13 @@ class GridAh[M](
               // Карточка сейчас скрыта, её нужно раскрыть.
               // Собрать запрос фокусировки на ровно одной рекламной карточке.
               val fx = Effect {
-                val args0 = scQsRO.value
-                val args1 = args0.copy(
-                  search = MAdsSearchReq(
-                    rcvrId = args0.search.rcvrId
-                  ),
-                  // TODO common: надо выставлять подгрузку grid-карточек при перескоке foc->index, чтобы плитка приходила сразу?
-                  foc = Some(
-                    MScFocusArgs(
-                      focIndexAllowed  = true,
-                      lookupMode       = None,
-                      lookupAdId       = m.nodeId
-                    )
-                  )
-                )
-                api.pubApi( args1 )
+                val qs = ScQsUtil.focAdsQs( scRootRO.value, m.nodeId )
+
+                api.pubApi( qs )
                   .transform { tryResp =>
                     val r = HandleScApiResp(
                       reqTimeStamp  = None,
-                      qs            = args1,
+                      qs            = qs,
                       tryResp       = tryResp,
                       reason        = m,
                     )

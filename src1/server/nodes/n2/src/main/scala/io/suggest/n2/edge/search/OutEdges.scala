@@ -151,7 +151,7 @@ object OutEdges extends MacroLogsImpl {
 
         // Поиск по id узлов, на которые указывают эджи.
         if (oe.nodeIds.nonEmpty) {
-          val fn = EF.EO_NODE_ID_FULL_FN
+          val fn = EF.EO_NODE_IDS_FN
 
           val nodeIdsQb: QueryBuilder = if (oe.nodeIdsMatchAll) {
             // AND-матчинг всех пересленных nodeIds одновременно
@@ -188,7 +188,7 @@ object OutEdges extends MacroLogsImpl {
 
         // Предикаты рёбер добавить через фильтр либо query.
         if (oe.predicates.nonEmpty) {
-          val fn = EF.EO_PREDICATE_FULL_FN
+          val fn = EF.EO_PREDICATE_FN
           val predIds = oe.predicates
             .map(_.value)
           val predf = QueryBuilders.termsQuery(fn, predIds: _*)

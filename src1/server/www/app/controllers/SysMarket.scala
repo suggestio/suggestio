@@ -614,16 +614,11 @@ class SysMarket @Inject() (
     isSu().async { implicit request =>
 
       // Ищем все рекламные карточки, подходящие под запрос.
-      val msearchFut = scAdSearchUtil.qsArgs2nodeSearch(a)
       // TODO Нужна устойчивая сортировка.
-      val madsFut = for {
-        msearch <- msearchFut
-        res     <- mNodes.dynSearch(msearch)
-      } yield {
-        res
-      }
+      val msearch = scAdSearchUtil.qsArgs2nodeSearch(a)
+      val madsFut = mNodes.dynSearch( msearch )
 
-      val brArgssFut = madsFut.flatMap { mads =>
+      val brArgsFut = madsFut.flatMap { mads =>
         Future.traverse(mads) { mad =>
           lkAdUtil.tiledAdBrArgs(mad)
         }
@@ -732,11 +727,10 @@ class SysMarket @Inject() (
 
       // Планируем рендер страницы-результата, когда все данные будут собраны.
       for {
-        brArgss       <- brArgssFut
+        brArgss       <- brArgsFut
         adnNodeOpt    <- adnNodeOptFut
         rcvrs         <- rcvrsFut
         ad2advMap     <- ad2advMapFut
-        msearch       <- msearchFut
       } yield {
         val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap, msearch)
         Ok( showAdnNodeAdsTpl(rargs) )

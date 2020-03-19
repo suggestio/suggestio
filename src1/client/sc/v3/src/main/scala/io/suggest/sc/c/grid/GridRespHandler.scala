@@ -9,6 +9,8 @@ import io.suggest.grid.GridScrollUtil
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.n2.node.MNodeType
+import io.suggest.sc.ads.{MScAdMatchInfo, MScNodeMatchInfo}
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
@@ -63,17 +65,21 @@ class GridRespHandler
   }
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
+    println("6")
     val gridResp = ra.ads.get
     val g0 = ctx.value0.grid
 
-    val isSilentOpt = ctx.m.reason match {
-      case gla: GridLoadAds => gla.silent
-      case _ => None
+    val mGla = Some( ctx.m.reason ).collect {
+      case gla: GridLoadAds => gla
     }
 
-    // Нельзя тут использовать ctx.m.reason: причина относится только к начальному resp-экшену (и то необязательно).
-    val isCleanLoad = ctx.m.qs.search.offset
-      .fold(true)(_ ==* 0)
+    val isSilentOpt = mGla.flatMap(_.silent)
+    val qs = ctx.m.qs
+
+    val isCleanLoad =
+      qs.search.offset.fold(true)(_ ==* 0) &&
+      // Если происходит частичный патчинг выдачи, то это не clean-заливка:
+      !mGla.exists(_.onlyMatching.nonEmpty)
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
@@ -122,6 +128,10 @@ class GridRespHandler
     //if (gridResp.szMult !=* g0.core.jdConf.szMult)
     //  LOG.warn(WarnMsgs.SERVER_CLIENT_SZ_MULT_MISMATCH, msg = (gridResp.szMult, g0.core.jdConf.szMult))
 
+    // Новые (добавляемые) карточки по id.
+    lazy val newScAdsById = newScAds
+      .zipWithIdIter[String]
+      .to( Map )
 
     // Опциональный эффект скролла вверх.
     val scrollFxOpt = {
@@ -136,15 +146,47 @@ class GridRespHandler
       }
     }
 
-    val ads2 = if (isCleanLoad) {
-      g0.core.ads.ready( newScAds )
+    // Собрать обновлённый Pot с карточками.
+    val ads2 = g0.core.ads.ready {
+      (for {
+        ads0 <- g0.core.ads.toOption
+        if !isCleanLoad && ads0.nonEmpty
+        // Если активен матчинг, то надо удалить только обновляемые карточки, которые подпадают под матчинг.
+        // В рамках текущей реализации, при пропатчивании выдачи, карточки заменяются (добавляются) только в начало.
+        ads9 = mGla
+          .flatMap(_.onlyMatching)
+          .fold( ads0 ++ newScAds ) { onlyMatching =>
+            newScAds ++ ads0.filterNot { scAd =>
+              // Проверить данные карточки, чтобы решить, надо ли её удалять отсюда:
+              // - если карточка содержит критерии и подпадающие, и НЕподпаюащие => смотрим по newScAdsById, удаляем если она там есть.
+              // - если карточка полностью подпадает под критерий отбора => удаляем
+              // - иначе - карточку оставляем в покое.
+              val scAdNodeMatches = scAd.main.info
+                .matchInfos
+                .flatMap(_.nodeMatchings)
+              def __isMatches(scAnm: MScNodeMatchInfo): Boolean = {
+                onlyMatching.ntype.fold(true)( scAnm.ntype.contains[MNodeType] ) &&
+                onlyMatching.nodeId.fold(true)( scAnm.nodeId.contains[String] )
+              }
+              if ( scAdNodeMatches.forall(__isMatches) ) {
+                // Карточка полностью удалябельна при обновлении (размещена только в ble-маячке)
+                true
+              } else if (scAdNodeMatches.exists(__isMatches)) {
+                // Карточка размещена и в маячке, и как-то ещё, поэтому удалять её можно только
+                // с целью дедубликации между старыми карточками и добавляемым набором выдачи.
+                scAd.nodeId.fold(false)( newScAdsById.contains )
+              } else {
+                false
+              }
+            }
+          }
 
-    } else {
-      val scAds2 = g0.core.ads.toOption
-        .fold(newScAds)(_ ++ newScAds)
-      // ready - обязателен, иначе останется pending и висячий без дела GridLoaderR.
-      g0.core.ads.ready( scAds2 )
+      } yield {
+        ads9
+      })
+        .getOrElse( newScAds )
     }
+    //println(s"+${newScAds.size} have=${g0.core.ads.fold(0)(_.size)} = ${ads2.get.size}")
 
     val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
     val g2 = g0.copy(
@@ -154,10 +196,16 @@ class GridRespHandler
         // Отребилдить плитку:
         gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf, jdRuntime2)
       ),
-      hasMoreAds  = ctx.m.qs.search.limit.fold(true) { limit =>
-        gridResp.ads.lengthCompare(limit) >= 0
+      hasMoreAds = {
+        if (mGla.flatMap(_.onlyMatching).isEmpty)
+          qs.search.limit.fold(true) { limit =>
+            gridResp.ads.lengthCompare(limit) >= 0
+          }
+        else g0.hasMoreAds
       }
     )
+
+    println(9)
 
     // И вернуть новый акк:
     val v2 = (MScRoot.grid set g2)(ctx.value0)

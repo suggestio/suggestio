@@ -9,7 +9,6 @@ import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -129,12 +128,8 @@ abstract class MIpRangesAbstract
 
 /** Дефолтовая статическая часть модели для всех повседневных нужд. */
 @Singleton
-class MIpRanges @Inject() (
-  mIndexes                : MIndexes,
-)
-  extends MIpRangesAbstract
-{
-  override def ES_INDEX_NAME = mIndexes.INDEX_ALIAS_NAME
+final class MIpRanges extends MIpRangesAbstract {
+  override def ES_INDEX_NAME = MIndexes.INDEX_ALIAS_NAME
 }
 
 

@@ -12,7 +12,10 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
+import org.elasticsearch.index.query.InnerHitBuilder
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext
 import util.ble.BleUtil
+import scala.jdk.CollectionConverters._
 
 import scala.concurrent.Future
 
@@ -23,7 +26,7 @@ import scala.concurrent.Future
   * Description: Утиль для поиска карточек в рамках выдачи.
   * Появлась в ходе распиливании исторически-запутанной модели models.AdSearch,
   * т.к. забинденные qs-данные нужно было приводить к MNodeSearch, что может потребовать исполнения
-  * асинхронного кода (например, в случае маячков и ).
+  * асинхронного кода (например, в случае маячков).
   */
 @Singleton
 class ScAdSearchUtil @Inject() (
@@ -55,8 +58,14 @@ class ScAdSearchUtil @Inject() (
     * Компиляция параметров поиска в MNodeSearch.
     * Код эвакуирован из models.AdSearch.qsb.bind().
     * @param args Данные по выборке карточек, пришедшие из qs.
+    * @param innerHitsDocValuesFns Возвращать в ответе в inner_hits указанные поля с поддержкой doc_values.
+    * @param bleSearchCtx Контекст поиска в BLE-маячках.
     */
-  def qsArgs2nodeSearch(args: MScQs): Future[MNodeSearch] = {
+  def qsArgs2nodeSearch(
+                         args: MScQs,
+                         innerHitsDocValuesFns: Seq[String] = Nil,
+                         bleSearchCtx: MBleSearchCtx = MBleSearchCtx.empty,
+                       ): MNodeSearch = {
 
     val _outEdges: Seq[Criteria] = {
       val must = IMust.MUST
@@ -143,7 +152,15 @@ class ScAdSearchUtil @Inject() (
         weight     = Some(0.0000001F)
       )
       val normalSearch = new MNodeSearch {
-        override val outEdges = MEsNestedSearch( clauses = _outEdges )
+        override val outEdges = MEsNestedSearch(
+          clauses = _outEdges,
+          innerHits = Option.when( innerHitsDocValuesFns.nonEmpty )(
+            // Включён возврат предикатов, на основе которых отобраны карточки:
+            new InnerHitBuilder()
+              .setFetchSourceContext( FetchSourceContext.DO_NOT_FETCH_SOURCE )
+              .setDocValueFields( innerHitsDocValuesFns.asJava )
+          ),
+        )
         override def nodeTypes = _nodeTypes
         override val randomSort = Some(_mrs)
         override val isEnabled = Some(true)
@@ -157,10 +174,6 @@ class ScAdSearchUtil @Inject() (
       Nil
     }
 
-    // Карточки в маячках ищутся отдельно от основного набора параметров, вне всяких продьюсеров-ресиверов-географии.
-    // Результаты объединяются в общий выхлоп, но маячковые результаты -- поднимаются в начало этого списка.
-    // Причём, чем ближе маячок -- тем выше результат.
-    val bcnsSearchesFut = _bleBeacons2search( args.common.locEnv.bleBeacons )
 
     // Собрать итоговый запрос.
     val _limit = args.search.limit.fold(LIMIT_DFLT) {
@@ -171,79 +184,83 @@ class ScAdSearchUtil @Inject() (
       Math.min(OFFSET_MAX_ABS, _)
     }
 
-    for {
-      bcnsSearches <- bcnsSearchesFut
-    } yield {
-      val _subSearches = Seq(
-        normalSearches,
-        bcnsSearches
-      )
-        .flatten
+    // Сборка поисков.
+    val _subSearches = (
+      normalSearches #::
+      bleSearchCtx.subSearches #::
+      LazyList.empty
+    )
+      .flatten
 
-      // Собрать и вернуть результат.
-      // Пока что всё работает синхронно.
-      // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
-      new MNodeSearch {
-        override def limit = _limit
-        override def offset = _offset
-        override def nodeTypes = _nodeTypes
-        override def subSearches = _subSearches
-      }
+    // Собрать и вернуть результат.
+    // Пока что всё работает синхронно.
+    // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
+    new MNodeSearch {
+      override def limit = _limit
+      override def offset = _offset
+      override def nodeTypes = _nodeTypes
+      override def subSearches = _subSearches
     }
   }
 
 
-  /** Генерация поисковых запросов по маячкам. */
-  def _bleBeacons2search(bcns: Seq[MUidBeacon]): Future[Iterable[MSubSearch]] = {
-    if (bcns.isEmpty) {
-      Future.successful( Nil )
+  /** Генерация поисковых запросов по маячкам.
+    *
+    * Карточки в маячках ищутся отдельно от основного набора параметров, вне всяких продьюсеров-ресиверов-географии.
+    * Результаты объединяются в общий выхлоп, но маячковые результаты -- поднимаются в начало этого списка.
+    * Причём, чем ближе маячок -- тем выше результат.
+    */
+  def bleBeaconsSearch(scQs: MScQs): Future[MBleSearchCtx] = {
+    val bcnsQs = scQs.common.locEnv.bleBeacons
+    if (bcnsQs.isEmpty) {
+      Future.successful( MBleSearchCtx.empty )
 
     } else {
-      val uids = bcns
+      val uidsQs = bcnsQs
         .iterator
         .map(_.uid)
         .toSet
+
       // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
       val bcnUidsClearedFut = mNodes.dynSearchIds(
         new MNodeSearch {
-          override val withIds    = uids.toSeq
-          override val limit      = uids.size
+          override val withIds    = uidsQs.toSeq
+          override val limit      = uidsQs.size
           override val nodeTypes  = MNodeTypes.BleBeacon :: Nil
           override val isEnabled  = Some(true)
         }
       )
 
-      lazy val logPrefix = s"_bleBeacons2search(${bcns.size}bcns)[${System.currentTimeMillis()}]:"
-      LOGGER.trace(s"$logPrefix Beacons = ${bcns.mkString(", ")}.\n Dirty bcn uids set: ${uids.mkString(", ")}")
+      lazy val logPrefix = s"_bleBeacons2search(${bcnsQs.size}bcns)[${System.currentTimeMillis()}]:"
+      LOGGER.trace(s"$logPrefix Beacons = ${bcnsQs.mkString(", ")}.\n Dirty bcn uids set: ${uidsQs.mkString(", ")}")
 
       for {
         bcnsUidsClear <- bcnUidsClearedFut
       } yield {
-        val uids = bcnsUidsClear.toSet
-        LOGGER.trace(s"$logPrefix Cleared beacons set: ${uids.mkString(", ")}")
+        val uidsClear = bcnsUidsClear.toSet
+        LOGGER.trace(s"$logPrefix Cleared beacons set: ${uidsClear.mkString(", ")}")
 
         // Учитывать только маячки до этого расстояния. Остальные не учитывать
         val maxDistance = BeaconUtil.DIST_CM_FAR
 
-        val bcns2 = bcns
-          .to(LazyList)
-          .filter { bcn =>
-            val isExistBcn = uids.contains( bcn.uid )
-            if (!isExistBcn)
-              LOGGER.trace(s"$logPrefix Beacon uid'''${bcn.uid}''' is unknown. Dropped.")
-            isExistBcn && bcn.distanceCm <= maxDistance
-          }
-          // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
-
-        if (bcns2.isEmpty) {
+        // Фильтруем заявленные в qs id маячков по выверенному списку реально существующих маячков.
+        // Ленивость bcnsQs2 не важна, т.к. коллекция сразу будет перемолота целиком в scoredByDistanceBeaconSearch()
+        val bcnsQs2 = bcnsQs.filter { bcnQs =>
+          val isExistBcn = uidsClear.contains( bcnQs.uid )
+          if (!isExistBcn)
+            LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.uid}''' is unknown. Dropped.")
+          isExistBcn && bcnQs.distanceCm <= maxDistance
+        }
+        // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
+        val subSearches = if (bcnsQs2.isEmpty) {
           LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
           Nil
         } else {
           val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
             maxBoost = 20000000F,
-            //TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
+            // TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
             predicates = MPredicates.Receiver :: Nil,
-            bcns = bcns2
+            bcns = bcnsQs2,
           )
 
           val sub = MSubSearch(
@@ -253,11 +270,36 @@ class ScAdSearchUtil @Inject() (
 
           sub :: Nil
         }
+
+        MBleSearchCtx(
+          uidsQs        = uidsQs,
+          uidsClear     = uidsClear,
+          bcnsQs2       = bcnsQs2,
+          subSearches   = subSearches,
+        )
       }
     }
   }
 
+}
 
+
+/** Модель результата метода ScAdSearchUtil.bleBeaconsSearch().
+  * Содержит в себе разные промежуточные значения обсчёта обстановки, которые могут быть нужны где-то выше по stacktrace.
+  *
+  * @param uidsQs id запрошенных в qs маячков.
+  * @param uidsClear id найденных в БД маячков.
+  * @param bcnsQs2 Отчищенные от мусора qs-данные по мячкам.
+  * @param subSearches Данные для поиска по маячкам в elasticsearch.
+  */
+protected final case class MBleSearchCtx(
+                                          uidsQs      : Set[String] = Set.empty,
+                                          uidsClear   : Set[String] = Set.empty,
+                                          bcnsQs2     : Seq[MUidBeacon] = Nil,
+                                          subSearches : List[MSubSearch] = Nil,
+                                        )
+object MBleSearchCtx {
+  def empty = apply()
 }
 
 

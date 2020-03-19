@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, OffsetDateTime, ZoneId}
 
 import com.google.inject.assistedinject.Assisted
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.{IEsMappingProps, MappingDsl}
@@ -14,6 +14,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.max.Max
 import org.elasticsearch.search.sort.SortOrder
+import play.api.inject.Injector
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -90,10 +91,12 @@ object MStatsAbstract {
 
 /** Всякая статическая утиль для MStats-моделей, вынесенная за пределы ООП-наследования. */
 final class MStatsModel @Inject()(
-                                   esModel: EsModel,
-                                 )(implicit ec: ExecutionContext)
+                                   injector: Injector,
+                                 )
   extends MacroLogsImpl
 {
+  private lazy val esModel = injector.instanceOf[EsModel]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   import esModel.api._
   import MStat.Fields.TIMESTAMP_FN
@@ -239,26 +242,16 @@ abstract class MStatsAbstract
 
 
 /** Инжектируемая статическая es-модель для всех основных нужд статистики. */
-@Singleton
-class MStats @Inject() (
-  mStatIndexes            : MStatIndexes,
-)
-  extends MStatsAbstract
-{
-  override def ES_INDEX_NAME = mStatIndexes.INDEX_ALIAS_NAME
+final class MStats extends MStatsAbstract {
+  override def ES_INDEX_NAME = MStatIndexes.INDEX_ALIAS_NAME
 }
 
 
 /** Инжектируемая временная статическая модель для нужд ротации stat-индексов. */
-class MStatsTmp @Inject() (
-  @Assisted override val ES_INDEX_NAME  : String,
-)
+final case class MStatsTmp @Inject() (
+                                       @Assisted override val ES_INDEX_NAME  : String,
+                                     )
   extends MStatsAbstract
-
-/** Интерфейс для guice-factory, возвращающей инстансы [[MStatsTmp]]. */
-trait MStatsTmpFactory {
-  def create(esIndexName: String): MStatsTmp
-}
 
 
 

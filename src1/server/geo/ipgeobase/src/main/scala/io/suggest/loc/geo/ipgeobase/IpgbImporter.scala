@@ -9,7 +9,6 @@ import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
 import io.suggest.es.MappingDsl
 import io.suggest.es.model.{EsIndexUtil, EsModel}
-import io.suggest.es.util.IEsClient
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
@@ -27,22 +26,21 @@ import scala.util.{Failure, Success}
   * Created: 05.09.16 16:51
   * Description: Система импорта/обновления индексов IP GeoBase.
   */
-class IpgbImporter @Inject() (
-                               esModel             : EsModel,
-                               mIndexes            : MIndexes,
-                               mCitiesTmpFactory   : MCitiesTmpFactory,
-                               mIpRangesTmpFactory : MIpRangesTmpFactory,
-                               httpGetToFile       : HttpGetToFile,
-                               asyncUtil           : AsyncUtil,
-                               configuration       : Configuration,
-                               esClientP           : IEsClient,
-                               implicit private val ec: ExecutionContext,
-                             )
+final class IpgbImporter @Inject() (
+                                     injector            : Injector,
+                                   )
   extends MacroLogsImpl
 {
 
-  import esClientP.esClient
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mIndexes = injector.instanceOf[MIndexes]
+  private lazy val mCitiesTmpFactory = injector.instanceOf[MCitiesTmpFactory]
+  private lazy val mIpRangesTmpFactory = injector.instanceOf[MIpRangesTmpFactory]
+  private lazy val httpGetToFile = injector.instanceOf[HttpGetToFile]
+  private lazy val asyncUtil = injector.instanceOf[AsyncUtil]
+  private lazy val configuration = injector.instanceOf[Configuration]
+  implicit private lazy val esClient = injector.instanceOf[org.elasticsearch.client.Client]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Ссылка для скачивания текущей базы. */
   private def ARCHIVE_DOWNLOAD_URL = configuration.getOptional[String]("ipgeobase.archive.url")
@@ -185,7 +183,7 @@ class IpgbImporter @Inject() (
 
     // Получаем имена временных индексов и файлов за пределами for{} для возможности удаления их за пределами for{}:
     // Подготовить имя для нового индекса.
-    val newIndexName = EsIndexUtil.newIndexName( mIndexes.INDEX_ALIAS_NAME )
+    val newIndexName = EsIndexUtil.newIndexName( MIndexes.INDEX_ALIAS_NAME )
 
     // Распаковка архива во временную директорию, удаление исходной папки.
     val unpackedDirFut = for (archiveFile <- downloadFut) yield {
@@ -234,7 +232,7 @@ class IpgbImporter @Inject() (
       optimizeFut      = esModel.optimizeAfterBulk(newIndexName, mIndexes.indexSettingsAfterBulk)
 
       // Параллельно: узнать имя старого индекса (старых индексов)
-      oldIndexNamesFut = esModel.getAliasedIndexName( mIndexes.INDEX_ALIAS_NAME )
+      oldIndexNamesFut = esModel.getAliasedIndexName( MIndexes.INDEX_ALIAS_NAME )
 
       // Дождаться окончания оптимизациии и чтения имени старого индекса
       _             <- optimizeFut
@@ -243,7 +241,7 @@ class IpgbImporter @Inject() (
       // Переключить всю систему на новый индекс.
       _             <- esModel.resetAliasToIndex(
         indexName  = newIndexName,
-        aliasName     = mIndexes.INDEX_ALIAS_NAME,
+        aliasName  = MIndexes.INDEX_ALIAS_NAME,
       )
 
       // Удалить старые индексы, если есть.
@@ -275,6 +273,8 @@ class IpgbImporter @Inject() (
 
   /** Импорт таблицы городов. */
   def importCities(dir: File, bp: BulkProcessor, newIndexName: String)(implicit dsl: MappingDsl): Future[_] = {
+    import esModel.api._
+
     val mCitiesTmp = mCitiesTmpFactory.create(newIndexName)
     val putMappingFut = mCitiesTmp.putMapping()
 
@@ -288,23 +288,28 @@ class IpgbImporter @Inject() (
     val p = parsers.cityLineP
 
     for (_ <- putMappingFut) yield {
-      val linesTotal = Source
-        .fromFile(citiesFile, CITIES_FILE_ENCODING)
-        .getLines()
-        .foldLeft(1) { (counter, cityLine) =>
-          val pr = parsers.parse(p, cityLine)
-          if (pr.successful) {
-            val mcity = pr.get
-            bp.add {
-              mCitiesTmp.prepareIndexNoVsn(mcity).request()
+      val src = Source.fromFile( citiesFile, CITIES_FILE_ENCODING )
+      val linesTotal = try {
+        src
+          .getLines()
+          .foldLeft(1) { (counter, cityLine) =>
+            val pr = parsers.parse(p, cityLine)
+            if (pr.successful) {
+              val mcity = pr.get
+              val inxReq = mCitiesTmp
+                .prepareIndexNoVsn(mcity)
+                .request()
+              bp.add( inxReq )
+            } else {
+              LOGGER.warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
             }
-          } else {
-            LOGGER.warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
+            if (counter % 500 == 0)
+              LOGGER.trace(s"${logPrefix}Still importing... ($counter)")
+            counter + 1
           }
-          if (counter % 300 == 0)
-            LOGGER.trace(s"${logPrefix}Still importing... ($counter)")
-          counter + 1
-        }
+      } finally {
+        src.close()
+      }
 
       LOGGER.info(s"$logPrefix$linesTotal lines total. Took ${System.currentTimeMillis - startedAtMs} ms.")
     }
@@ -316,7 +321,9 @@ class IpgbImporter @Inject() (
    * @param dir директория с распакованными файлами.
    */
   def importIpRanges(dir: File, bp: BulkProcessor, newIndexName: String)(implicit dsl: MappingDsl): Future[_] = {
-    val mRangesTmp = mIpRangesTmpFactory.create(newIndexName)
+    import esModel.api._
+
+    val mRangesTmp = mIpRangesTmpFactory.create( newIndexName )
     val putMappingFut = mRangesTmp.putMapping()
 
     val startedAtMs = System.currentTimeMillis
@@ -331,22 +338,30 @@ class IpgbImporter @Inject() (
 
     for (_ <- putMappingFut) yield {
       // Делаем итератор для обхода неограниченно большого файла:
-      val linesTotal = Source.fromFile(cidrFile, IP_RANGES_FILE_ENCODING)
-        .getLines()
-        .foldLeft(1) { (counter, cidrLine) =>
-          val pr = parsers.parse(p, cidrLine)
-          if (pr.successful) {
-            val mrange = pr.get
-            bp.add {
-              mRangesTmp.prepareIndexNoVsn(mrange).request()
+
+      val src = Source.fromFile(cidrFile, IP_RANGES_FILE_ENCODING)
+      val linesTotal = try {
+        src
+          .getLines()
+          .foldLeft(1) { (counter, cidrLine) =>
+            val pr = parsers.parse(p, cidrLine)
+            if (pr.successful) {
+              val mrange = pr.get
+              bp.add {
+                mRangesTmp
+                  .prepareIndexNoVsn( mrange )
+                  .request()
+              }
+            } else {
+              LOGGER.warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
             }
-          } else {
-            LOGGER.warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
+            if (counter % 20000 == 0)
+              LOGGER.trace(s"$logPrefix Still converting... ($counter)")
+            counter + 1
           }
-          if (counter % 20000 == 0)
-            LOGGER.trace(s"$logPrefix Still converting... ($counter)")
-          counter + 1
-        }
+      } finally {
+        src.close()
+      }
 
       LOGGER.info(s"$logPrefix $linesTotal lines converted total. Took ${System.currentTimeMillis - startedAtMs} ms.")
     }

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.suggest.appsuggest" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="io.suggest.appsuggest" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>Suggest.io</name>
     <description>
 	Suggest.io client with Bluetooth beacons support.
@@ -10,10 +10,11 @@
     <content src="index.html" />
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
+    <allow-navigation href="http://192.168.222.192:9000/*" />
     <allow-navigation href="https://*.cdnvideo.ru/*" />
     <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="https://*.openstreetmap.org/*" />
-    <allow-navigation href="https://*.*.openstreetmap.org/*" />
+    <allow-navigation href="https://*.tile.openstreetmap.org/*" />
     <allow-navigation href="data:*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
@@ -52,7 +53,10 @@
         <icon density="hdpi" src="res/icon/android/icon-72.png" />
         <icon density="xhdpi" src="res/icon/android/icon-96.png" />
         <icon density="xxhdpi" src="res/icon/android/icon-144.png" />
-        <icon density="xxxhdpi" src="res/icon/android/icon-192.png" />
+	<icon density="xxxhdpi" src="res/icon/android/icon-192.png" />
+	<edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+	    <application android:usesCleartextTraffic="true" />
+	</edit-config>
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />

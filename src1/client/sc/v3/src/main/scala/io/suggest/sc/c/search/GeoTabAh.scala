@@ -19,6 +19,7 @@ import io.suggest.sc.m.{HandleScApiResp, MScRoot, SetErrorState}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.styl.ScCss
+import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -84,7 +85,7 @@ class GeoTabAh[M](
                    api            : IScUniApi,
                    rcvrsMapApi    : IAdvRcvrsMapApi,
                    screenInfoRO   : ModelRO[MScreenInfo],
-                   geoSearchQsRO  : ModelRO[MScQs],
+                   scRootRO       : ModelRO[MScRoot],
                    rcvrMapArgsRO  : ModelRO[MRcvrsMapUrlArgs],
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
@@ -107,7 +108,7 @@ class GeoTabAh[M](
     } else {
       // Надо понять, изменилось ли состояние аргументов поиска?
       // Подготовить аргументы запроса:
-      val args0 = geoSearchQsRO.value
+      val args0 = ScQsUtil.geoSearchQs( scRootRO.value )
 
       val search2 = {
         val offsetOpt = OptionUtil.maybeOpt(!m.clear) {

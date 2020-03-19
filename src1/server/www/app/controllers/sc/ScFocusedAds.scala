@@ -79,9 +79,10 @@ trait ScFocusedAds
 
     lazy val logPrefix = s"foc(${ctx.timestamp}):"
 
-
+    /** Поиск без ble-контекста, т.к. обычно поиск по id карточки. */
     lazy val mAdsSearchFut: Future[MNodeSearch] = {
-      scAdSearchUtil.qsArgs2nodeSearch(_qs)
+      val nodeSearch = scAdSearchUtil.qsArgs2nodeSearch( _qs )
+      Future.successful( nodeSearch )
     }
 
 
@@ -414,25 +415,26 @@ trait ScFocusedAds
       val qs2 = MScQs.search.set(fadsIdsSearchQs)( _qs )
 
       // TODO Далее какой-то быдлокод с реализацией нетривиальной выборки сегмента последовательности foc-карточек.
-      scAdSearchUtil.qsArgs2nodeSearch(qs2).flatMap { msearch =>
+      val msearch = scAdSearchUtil.qsArgs2nodeSearch(qs2)
 
-        val fadIdsFut = mNodes.dynSearchIds(msearch)
-        val __limit = msearch.limit
+      val fadIdsFut = mNodes.dynSearchIds(msearch)
+      val __limit = msearch.limit
 
-        // Собрать сегмент ids, идущих после необходимого id, длины max.
-        def takeIdsAfter(iter: Iterator[NodeIdIndexed], max: Int = __limit): Seq[NodeIdIndexed] = {
-          iter
-            .dropWhile(_.nodeId != adId)
-            .slice(1, max + 1) // Взять только необходимое кол-во элементов, если оно там есть.
-            .toSeq
-        }
+      // Собрать сегмент ids, идущих после необходимого id, длины max.
+      def takeIdsAfter(iter: Iterator[NodeIdIndexed], max: Int = __limit): Seq[NodeIdIndexed] = {
+        iter
+          .dropWhile(_.nodeId != adId)
+          .slice(1, max + 1) // Взять только необходимое кол-во элементов, если оно там есть.
+          .toSeq
+      }
 
-        // Логгируем рекурсию вместе с номером попытки.
-        lazy val logPrefix = s"_doAdLookup(${_currTimeMs}#$tryN): "
-        LOGGER.trace(s"$logPrefix [$adId] ${lm.toVisualString}, need=$neededCount limit=$limit1 offset=$offset1")
+      // Логгируем рекурсию вместе с номером попытки.
+      lazy val logPrefix = s"_doAdLookup(${_currTimeMs}#$tryN): "
+      LOGGER.trace(s"$logPrefix [$adId] ${lm.toVisualString}, need=$neededCount limit=$limit1 offset=$offset1")
 
-        fadIdsFut.flatMap { fadIds =>
-
+      for {
+        fadIds <- fadIdsFut
+        res <- {
           lazy val hasAdId = fadIds.contains(adId)
           lazy val fadIdsSize = fadIds.size
           lazy val fadIdsHasNexts = fadIdsSize >= limit1
@@ -569,8 +571,9 @@ trait ScFocusedAds
             resFut
           }
         }
+      } yield {
+        res
       }
-
     }
 
 

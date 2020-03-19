@@ -2,7 +2,6 @@ package io.suggest.stat.m
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.es.util.IEsClient
 import org.elasticsearch.common.settings.Settings
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.{Configuration, Environment, Mode}
@@ -18,22 +17,31 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Модель обслуживания индексов статистики.
   * Индексы v2-статистики напоминают ipgeobase, но более инертны во времени и без bulk-инициализации.
   */
+object MStatIndexes {
+
+  /** Имя глобального алиаса. */
+  def INDEX_ALIAS_NAME = "stat"
+
+  /** Кол-во шард в ново-создаваемых индексах. */
+  def NUMBER_OF_SHARDS = 1
+
+  /** Обновлять индекс каждые N секунд. */
+  def INDEX_REFRESH_INTERVAL_SEC = 10
+
+}
+
 
 @Singleton
 class MStatIndexes @Inject() (
                                injector                 : Injector,
-                               esClientP                : IEsClient,
-                               esModel                  : EsModel,
-                               implicit private val ec  : ExecutionContext,
                              )
   extends MacroLogsImpl
 {
 
-  import esClientP.esClient
-  import esModel.api._
+  private lazy val esClient = injector.instanceOf[org.elasticsearch.client.Client]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
-  /** Имя глобального алиаса. */
-  def INDEX_ALIAS_NAME = "stat"
 
   /**
     * Кол-во реплик для ES-индекса БД IPGeoBase.
@@ -57,20 +65,14 @@ class MStatIndexes @Inject() (
       }
   }
 
-  /** Кол-во шард в ново-создаваемых индексах. */
-  def NUMBER_OF_SHARDS = 1
-
-  /** Обновлять индекс каждые N секунд. */
-  def INDEX_REFRESH_INTERVAL_SEC = 10
-
 
   /** Сгенерить настройки для создаваемого индекса. */
   def indexSettingsCreate: Settings = {
     Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
-      .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,    s"${INDEX_REFRESH_INTERVAL_SEC}s")
+      .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,    s"${MStatIndexes.INDEX_REFRESH_INTERVAL_SEC}s")
       .put( EsModelUtil.Settings.Index.NUMBER_OF_REPLICAS,  REPLICAS_COUNT)
-      .put( EsModelUtil.Settings.Index.NUMBER_OF_SHARDS,    NUMBER_OF_SHARDS)
+      .put( EsModelUtil.Settings.Index.NUMBER_OF_SHARDS,    MStatIndexes.NUMBER_OF_SHARDS)
       .build()
   }
 
@@ -80,9 +82,11 @@ class MStatIndexes @Inject() (
     * @return Список всех названий stat-индексов в неопределённом порядке.
     */
   def findStatIndices(): Future[Seq[String]] = {
+    import esModel.api._
+
     esClient.admin().indices()
       .prepareGetAliases()
-      .addIndices( INDEX_ALIAS_NAME + EsIndexUtil.DELIM + "*" )
+      .addIndices( MStatIndexes.INDEX_ALIAS_NAME + EsIndexUtil.DELIM + "*" )
       .executeFut()
       .map { resp =>
         val as = resp.getAliases

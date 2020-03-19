@@ -377,7 +377,7 @@ object Lists {
 
   object Implicits {
 
-    implicit class ListExt[T](val source: List[T]) extends AnyVal {
+    implicit class ListExt[T](private val source: List[T]) extends AnyVal {
 
       /** O(n)-аналог List.span(), но true-аккамулятор возвращается в развёрнутом виде.
         * Т.е. [1,2,3,4,5,6] и {x<=3} вернёт результат ([3,2,1], [4,5,6]).
@@ -405,7 +405,7 @@ object Lists {
     }
 
 
-    implicit class IterableOnceListsOps[T](val source: IterableOnce[T]) extends AnyVal {
+    implicit class IterableOnceListsOps[T](private val source: IterableOnce[T]) extends AnyVal {
 
       /** Добавить все элементы этой коллекции в начало указанного списка в обратном порядке. */
       def prependRevTo(list: List[T]): List[T] = {

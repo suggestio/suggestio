@@ -9,7 +9,7 @@ import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
 import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
-import io.suggest.es.util.{SioEsUtil, IEsClient}
+import io.suggest.es.util.{IEsClient, SioEsUtil}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -34,7 +34,7 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.search.SearchHits
+import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
@@ -82,7 +82,7 @@ final class EsModel @Inject()(
     /** Класс для ActionRequestBuilder'ов, который явно возвращает Future.
       * Для ES >= 6.x, возможно для младших версий.
       */
-    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse](private val esActionBuilder: ActionRequestBuilder[_, AResp, _]) {
+    implicit class EsActionBuilderOpsExt[AResp <: ActionResponse]( esActionBuilder: ActionRequestBuilder[_, AResp, _] ) {
 
       /** Запуск экшена с возвращением Future[AResp]. */
       def executeFut(): Future[AResp] = {
@@ -113,10 +113,9 @@ final class EsModel @Inject()(
 
     }
 
-    /** Поддержка API для StaticMapping. */
-    trait EsModelStaticMappingOpsT {
 
-      protected val model: EsModelStaticMapping
+    /** Поддержка API для StaticMapping. */
+    implicit final class EsModelStaticMappingOps( model: EsModelStaticMapping ) {
 
       /** Отправить маппинг в elasticsearch. */
       def putMapping()(implicit dsl: MappingDsl): Future[Boolean] = {
@@ -156,16 +155,12 @@ final class EsModel @Inject()(
       }
 
     }
-    implicit final class EsModelStaticMappingOps( override protected val model: EsModelStaticMapping )
-      extends EsModelStaticMappingOpsT
 
 
     /** Базовый доступ в модель без учёта типа элемента модели.
       * Появилась, т.к. часть кода проекта работает со списками моделей, без определения type-T вообще.
       */
-    trait EsModelCommonStaticUntypedOpsT {
-
-      protected val model: EsModelCommonStaticT
+    implicit final class EsModelCommonStaticUntypedOps( model: EsModelCommonStaticT ) {
 
       def prepareSearchViaClient(client: Client): SearchRequestBuilder = {
         client
@@ -412,14 +407,9 @@ final class EsModel @Inject()(
 
     }
 
-    implicit final class EsModelCommonStaticUntypedOps(override protected val model: EsModelCommonStaticT)
-      extends EsModelCommonStaticUntypedOpsT
-
 
     /** Типизированный API для EsModelCommonStaticT. */
-    trait EsModelCommonStaticTypedOpsT[T1 <: EsModelCommonT] {
-
-      protected val model: EsModelCommonStaticT { type T = T1 }
+    implicit final class EsModelCommonStaticTypedOps[T1 <: EsModelCommonT]( model: EsModelCommonStaticT { type T = T1 } ) {
 
       def prepareIndex(m: T1): IndexRequestBuilder = {
         val irb = prepareIndexNoVsn(m)
@@ -574,7 +564,7 @@ final class EsModel @Inject()(
                 val acc02 = hits
                   .iterator()
                   .asScala
-                  .map { model.deserializeSearchHit }
+                  .map { model.deserializeOne2(_) }
                   .foldLeft(acc01)(f)
                 Future.successful( acc02 )
             }
@@ -609,7 +599,7 @@ final class EsModel @Inject()(
               (acc01, hits) =>
                 hits.iterator()
                   .asScala
-                  .map { model.deserializeSearchHit }
+                  .map { model.deserializeOne2(_) }
                   .foldLeft(Future.successful(acc01))( f )
             }
           }
@@ -691,6 +681,8 @@ final class EsModel @Inject()(
         * @return Source[T, NotUsed].
         */
       def source[To: IEsSourcingHelper](searchQuery: QueryBuilder, maxResults: Option[Long] = None): Source[To, NotUsed] = {
+        // TODO Нужно ругаться, если в searchQuery задан offset. Это явная логическая ошибка.
+
         val helper = implicitly[IEsSourcingHelper[To]]
         // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
         val scrollArgs = MScrollArgs(
@@ -749,7 +741,7 @@ final class EsModel @Inject()(
                 if (iter.nonEmpty) {
                   val bulk = toClient.prepareBulk()
                   for (hit <- iter) {
-                    val el = model.deserializeSearchHit(hit)
+                    val el = model.deserializeOne2( hit )
                     bulk.add( prepareIndexNoVsnUsingClient(el, toClient) )
                   }
                   for {
@@ -776,7 +768,7 @@ final class EsModel @Inject()(
 
 
       /** Лениво распарсить выхлоп multi-GET. */
-      final def mgetResp2Stream(mgetResp: MultiGetResponse): LazyList[T1] = {
+      def mgetResp2Stream(mgetResp: MultiGetResponse): LazyList[T1] = {
         mgetResp
           .getResponses
           .iterator
@@ -803,21 +795,16 @@ final class EsModel @Inject()(
       // На ленивость LazyList (Stream) завязана работа akka-stream Source, который имитируется поверх этого метода.
       def searchResp2stream(searchResp: SearchResponse): LazyList[T1] = {
         searchRespMap(searchResp)
-          .map( model.deserializeSearchHit )
+          .map( model.deserializeOne2(_) )
           // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
           .to( LazyList )
       }
 
     }
 
-    implicit final class EsModelCommonStaticTypedOps[T1 <: EsModelCommonT]( override protected val model: EsModelCommonStaticT { type T = T1 } )
-      extends EsModelCommonStaticTypedOpsT[T1]
-
 
     /** Статические методы для hi-level API: */
-    trait EsModelStaticOpsT[T1 <: EsModelT] {
-
-      protected val model: EsModelStaticT { type T = T1 }
+    implicit final class EsModelStaticOps[T1 <: EsModelT] ( model: EsModelStaticT { type T = T1 } ) {
 
       def prepareDelete(id: String) =
         model.prepareDeleteBase(id)
@@ -1172,9 +1159,6 @@ final class EsModel @Inject()(
 
     }
 
-    implicit final class EsModelStaticOps[T1 <: EsModelT] ( override protected val model: EsModelStaticT { type T = T1 } )
-      extends EsModelStaticOpsT[T1]
-
 
     /** Поддержка кэширования для моделей, помеченных трейтом cacheable. */
     implicit final class EsModelCacheOps[T1 <: EsModelT]( model: EsModelStaticCacheableT { type T = T1 } ) {
@@ -1400,12 +1384,19 @@ final class EsModel @Inject()(
       // Реализации typeclass'ов поиска. Без object, т.к. в этих одноразовых implicit class'ах нет смысла что-то хранить/кэшировать.
 
       /** search-маппер, просто возвращающий сырой ответ. */
-      implicit def RawSearchRespMapper: EsSearchFutHelper[SearchResponse] = {
-        new EsSearchFutHelper[SearchResponse] {
-          /** Парсинг и обработка сырого результата в некий результат. */
-          override def mapSearchResp(searchResp: SearchResponse): Future[SearchResponse] =
-            Future.successful( searchResp )
-        }
+      // TODO implicit тут не работает, поэтому надо явно указывать.
+      object RawSearchRespMapper extends EsSearchFutHelper[SearchResponse] {
+        /** Парсинг и обработка сырого результата в некий результат. */
+        override def mapSearchResp(searchResp: SearchResponse): Future[SearchResponse] =
+          Future.successful( searchResp )
+      }
+
+      /** search-маппер, просто возвращающий сырой ответ. */
+      // TODO implicit тут не работает, поэтому надо явно указывать.
+      object SearchHitsMapper extends EsSearchFutHelper[collection.Seq[SearchHit]] {
+        /** Парсинг и обработка сырого результата в некий результат. */
+        override def mapSearchResp(searchResp: SearchResponse): Future[collection.Seq[SearchHit]] =
+          Future.successful( searchResp.getHits.getHits )
       }
 
       /** typeclass: возвращает результаты в виде инстансом моделей. */
@@ -1454,7 +1445,7 @@ final class EsModel @Inject()(
           override def mapSearchResp(searchResp: SearchResponse): Future[Map[String, T1]] = {
             val r = model
               .searchRespMap(searchResp)
-              .map( model.deserializeSearchHit )
+              .map( model.deserializeOne2(_) )
               .zipWithIdIter[String]
               .to( Map )
             Future.successful(r)
@@ -2056,6 +2047,7 @@ trait EsModelDi {
   val esModel: EsModel
 }
 
+
 object EsModelStaticT {
 
   def delResp2isDeleted(dr: DeleteResponse): Boolean = {
@@ -2131,10 +2123,10 @@ final case class EsUniqCondBrokenException(
   * @param refreshPolicy Политика рефреша шард после сохранения.
   * @param opType Тип операции записи документа.
   */
-case class EsSaveOpts(
-                       refreshPolicy    : Option[RefreshPolicy]             = None,
-                       opType           : Option[DocWriteRequest.OpType]    = None,
-                     )
+final case class EsSaveOpts(
+                             refreshPolicy    : Option[RefreshPolicy]             = None,
+                             opType           : Option[DocWriteRequest.OpType]    = None,
+                           )
 case object EsSaveOpts {
   val empty = apply()
 }

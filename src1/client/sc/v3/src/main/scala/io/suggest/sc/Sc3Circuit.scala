@@ -8,9 +8,7 @@ import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
-import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreen, MScreenInfo}
-import io.suggest.es.model.MEsUuId
-import io.suggest.geo.MLocEnv
+import io.suggest.dev.{JsScreenUtil, MScreenInfo}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
@@ -19,9 +17,10 @@ import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
-import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
+import io.suggest.msg._
+import io.suggest.n2.node.MNodeTypes
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.ads.MAdsSearchReq
+import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.boot.BootAh
@@ -44,7 +43,7 @@ import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
-import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs}
+import io.suggest.sc.sc3.MSc3Conf
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.u.api.IScAppApi
@@ -91,7 +90,6 @@ class Sc3Circuit(
   import io.suggest.sc.m.dia.MScDialogs.MScDialogsFastEq
   import io.suggest.sc.m.dia.first.MWzFirstOuterS.MWzFirstOuterSFastEq
 
-  import MEsUuId.Implicits._
   import io.suggest.dev.MPlatformS.MPlatformSFastEq
   import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
 
@@ -219,70 +217,7 @@ class Sc3Circuit(
   private val menuRW              = mkLensZoomRW( indexRW, MScIndex.menu )( MMenuS.MMenuSFastEq )
   private val dlAppDiaRW          = mkLensZoomRW( menuRW, MMenuS.dlApp )( MDlAppDia.MDlAppDiaFeq )
 
-
-  private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
-    MLocEnv(
-      geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.geoLocOpt ),
-      bleBeacons = mroot.locEnvBleBeacons
-    )
-  }
-
   private val inxStateRO = mkLensZoomRO( indexRW, MScIndex.state )
-
-
-  /** Модель аргументов для поиска новых карточек в плитке. */
-  private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
-    val inxState = inxStateRO.value
-
-    // TODO Унести сборку этого qs в контроллер или в утиль? Тут используется currRcvrId:
-    // nodeId ресивера может быть задан в switchCtx, который известен только в контроллере, и отличаться от значения currRcvrId.
-    val currRcvrId = inxState.rcvrId.toEsUuIdOpt
-
-    MScQs(
-      common = MScCommonQs(
-        apiVsn = mroot.internals.conf.apiVsn,
-        screen = Some {
-          val scr0 = mroot.dev.screen.info.safeScreen
-          // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
-          val pxRatio2 = MPxRatios.forRatio(
-            Math.max(
-              mroot.grid.core.jdConf.szMult.toDouble,
-              scr0.pxRatio.pixelRatio
-            )
-          )
-          if (pxRatio2.value > scr0.pxRatio.value)
-            (MScreen.pxRatio set pxRatio2)(scr0)
-          else
-            scr0
-        },
-        locEnv = getLocEnv(mroot, currRcvrId)
-      ),
-      search = MAdsSearchReq(
-        rcvrId      = currRcvrId,
-        genOpt      = Some( inxState.generation ),
-        tagNodeId   = mroot.index.search.geo.data.selTagIds
-          .headOption      // TODO Научить сервер поддерживать несколько тегов одновременно.
-          .toEsUuIdOpt
-        // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
-      )
-    )
-  }
-
-  /** Аргументы для поиска тегов. */
-  private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    MScQs(
-      common = MScCommonQs(
-        locEnv      = getLocEnv(mroot),
-        apiVsn      = mroot.internals.conf.apiVsn,
-        searchNodes = OptionUtil.SomeBool.someFalse,
-        screen      = Some( mroot.dev.screen.info.screen ),
-      ),
-      search = MAdsSearchReq(
-        textQuery = mroot.index.search.text.searchQuery.toOption,
-        rcvrId    = mroot.index.state.rcvrId.toEsUuIdOpt,
-      )
-    )
-  }
 
 
   private val screenInfoRO  = mkLensZoomRO(scScreenRW, MScScreenS.info)( MScreenInfoFastEq )
@@ -323,7 +258,7 @@ class Sc3Circuit(
   private val geoTabAh = new GeoTabAh(
     modelRW         = geoTabRW,
     api             = sc3Api,
-    geoSearchQsRO   = geoSearchQsRO,
+    scRootRO        = rootRW,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
     rcvrMapArgsRO   = rcvrsMapUrlRO,
@@ -347,7 +282,7 @@ class Sc3Circuit(
 
   private val gridAh = new GridAh(
     api           = sc3Api,
-    scQsRO        = gridAdsQsRO,
+    scRootRO      = rootRW,
     screenRO      = screenRO,
     modelRW       = gridRW
   )
@@ -620,7 +555,10 @@ class Sc3Circuit(
         val action = GridLoadAds(
           clean         = true,
           ignorePending = true,
-          silent        = OptionUtil.SomeBool.someTrue
+          silent        = OptionUtil.SomeBool.someTrue,
+          onlyMatching  = Some( MScNodeMatchInfo(
+            ntype = Some( MNodeTypes.BleBeacon ),
+          ))
         )
         dispatch( action )
       }

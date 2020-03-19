@@ -22,10 +22,10 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
-import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.search.SearchAh
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
+import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
 import scalaz.NonEmptyList
@@ -378,7 +378,7 @@ class IndexAh[M](
         )
       },
       search = MAdsSearchReq(
-        limit  = Some( GridAh.adsPerReqLimit ),
+        limit  = Some( ScQsUtil.adsPerReqLimit ),
         genOpt = Some( root.index.state.generation ),
         offset = Some( 0 ),
         textQuery = OptionUtil.maybeOpt(isSearchNodes) {

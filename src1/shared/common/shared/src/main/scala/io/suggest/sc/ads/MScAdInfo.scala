@@ -27,6 +27,11 @@ object MScAdInfo extends IEmpty {
       .inmap[Iterable[MEdgeFlagData]](
         EmptyUtil.opt2ImplEmptyF( Nil ),
         { flags => if (flags.isEmpty) None else Some(flags) }
+      ) and
+    (__ \ "o").formatNullable[Iterable[MScAdMatchInfo]]
+      .inmap[Iterable[MScAdMatchInfo]](
+        EmptyUtil.opt2ImplEmptyF( Nil ),
+        { matchInfos => Option.when( matchInfos.nonEmpty )( matchInfos ) }
       )
   )(apply, unlift(unapply))
 
@@ -36,10 +41,14 @@ object MScAdInfo extends IEmpty {
   *
   * @param canEditOpt Может ли юзер редактировать карточку?
   * @param flags Какие-то доп-флаги, обрабатываемые на клиенте.
+  * @param matchInfos Как была найдена указанная карточка
+  *                   Предикат, без доп.подробностей, т.к. подробности для выдачи известны ещё на уровне qs.
+  *                   (bt-маячок, геолокация, ресивер и тд.)
   */
 case class MScAdInfo(
                       canEditOpt      : Option[Boolean]           = None,
                       flags           : Iterable[MEdgeFlagData]   = Nil,
+                      matchInfos      : Iterable[MScAdMatchInfo]  = Nil,
                     )
   extends EmptyProduct
 {

@@ -39,10 +39,18 @@ object EsClientUtil {
 
 /** Интерфейс для di-поля с es-клиентом. */
 @ImplementedBy( classOf[TransportEsClient] )
-trait IEsClient {
+trait IEsClient extends Provider[Client] {
 
   /** Инстанс стандартного elasticsearch java client'а. */
   implicit def esClient: Client
+
+  override def get(): Client = {
+    val _esClient = esClient
+    if (_esClient == null)
+      throw new NoSuchElementException("No es-client available/configured")
+    else
+      _esClient
+  }
 
 }
 
@@ -64,18 +72,11 @@ final class TransportEsClient @Inject() (
                                           injector        : Injector,
                                         )
   extends IEsClient
-  with Provider[Client]
   with MacroLogsImpl
 {
 
   private var _trClient: TransportClient = _
   override implicit def esClient: Client = _trClient
-  override def get(): Client = {
-    if (_trClient == null)
-      throw new NoSuchElementException("No es-client available/configured")
-    else
-      _trClient
-  }
 
   /**
     * Собрать новый transport client для прозрачной связи с внешним es-кластером.

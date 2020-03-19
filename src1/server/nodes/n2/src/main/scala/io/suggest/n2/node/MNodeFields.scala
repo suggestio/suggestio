@@ -77,13 +77,14 @@ object MNodeFields {
     override protected def _PARENT_FN = EDGES_FN
 
     /** Адрес nested-объектов, хранящих данные по эджам. */
-    def E_OUT_FN = _fullFn( MNodeEdges.Fields.OUT_FN )
+    val E_OUT_FN = _fullFn( MNodeEdges.Fields.OUT_FN )
 
     import MNodeEdges.Fields.Out
 
-    def EO_PREDICATE_FULL_FN = _fullFn( Out.O_PREDICATE_FN )
-    def EO_NODE_ID_FULL_FN = _fullFn( Out.O_NODE_ID_FN )
-    def EO_ORDER_FULL_FN = _fullFn( Out.O_ORDER_FN )
+    // Корневые поля MEdge. Некоторые поля используются очень часто, поэтому они за'val'ены.
+    val EO_PREDICATE_FN = _fullFn( Out.O_PREDICATE_FN )
+    val EO_NODE_IDS_FN = _fullFn( Out.O_NODE_ID_FN )
+    def EO_ORDER_FN = _fullFn( Out.O_ORDER_FN )
     def EO_INFO_FLAG_FN = _fullFn( Out.O_INFO_FLAG_FN )
 
     // Теги

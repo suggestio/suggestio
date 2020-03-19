@@ -17,6 +17,9 @@ import scala.concurrent.Future
  * Created: 16.10.15 18:24
  * Description: Общий код для обычный и child-моделей.
  * Был вынесен из-за разделения в логике работы обычный и child-моделей.
+ *
+ * TODO Надо распилить на чистую статику и всякие _save(), имеющие DI-зависимость.
+ *      Затем, статика должна жить в object, а динамика - как-то иначе.
  */
 trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
@@ -29,8 +32,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def SCROLL_KEEPALIVE_DFLT = new TimeValue(SCROLL_KEEPALIVE_MS_DFLT)
   def SCROLL_SIZE_DFLT = EsModelUtil.SCROLL_SIZE_DFLT
   def BULK_PROCESSOR_BULK_SIZE_DFLT = EsModelUtil.BULK_PROCESSOR_BULK_SIZE_DFLT
-
-  def HAS_RESOURCES: Boolean = false
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
     *
@@ -51,10 +52,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @return Экземпляр модели.
     */
   def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T
-
-
-  final def deserializeSearchHit(hit: SearchHit): T =
-    deserializeOne2(hit)
 
 
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
@@ -94,7 +91,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       // typeclass для source() для простой десериализации ответов в обычные элементы модели.
       new IEsSourcingHelper[T] {
         override def mapSearchHit(from: SearchHit): T =
-          deserializeSearchHit( from )
+          deserializeOne2( from )
         override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
           super.prepareSrb(srb)
             .setFetchSource(true)

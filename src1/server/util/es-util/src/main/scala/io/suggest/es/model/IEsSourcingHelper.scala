@@ -12,20 +12,24 @@ import org.elasticsearch.search.SearchHit
 
 object IEsSourcingHelper {
 
-  /** Сборка сорсера только id'шников. */
-  implicit def idsHelper: IEsSourcingHelper[String] = {
-    new IEsSourcingHelper[String] {
+  /** Cорсер только id'шников. */
+  implicit object IdsHelper extends IEsSourcingHelper[String] {
 
-      override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
-        super.prepareSrb(srb)
-          .setFetchSource(false)
-      }
-
-      override def mapSearchHit(from: SearchHit): String = {
-        from.getId
-      }
-
+    override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+      super.prepareSrb(srb)
+        .setFetchSource(false)
     }
+
+    override def mapSearchHit(from: SearchHit): String = {
+      from.getId
+    }
+
+  }
+
+
+  /** Сорсер SearchHit'ов. */
+  implicit object SearchHitSH extends IEsSourcingHelper[SearchHit] {
+    override def mapSearchHit(from: SearchHit) = from
   }
 
 }
@@ -33,6 +37,9 @@ object IEsSourcingHelper {
 
 /** Интерфейс SourcingHelper'а.
   * Такие typeclass'ы модифицируют поисковые запросы и их результаты. */
+// TODO Надо явно разделить два этих трейта, иначе нельзя реализовать source-хелперы под id и под полный инстанс.
+//      И тогда для source[] видимо надо два типа: промежуточный невозвращаемый для prepareSrb(), и результирующий для SearchHit-маппера.
+//      Вообще, надо SearchHit-маппинг унести куда-нибудь максимально в статику и максимально абстрактно для всего, а не только для source()-метода.
 trait IEsSourcingHelper[To] extends IEsSrbMutator {
 
   override def toString: String = try {

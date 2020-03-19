@@ -13,11 +13,19 @@ import play.api.inject.Injector
   * Created: 02.09.16 17:56
   * Description: Статическая инжектируемая модель работы со скользящими time-based ES-индексами ipgeobase.
   */
+object MIndexes {
+
+  /** Константа с именем актуального алиаса ipgb-индекса.
+    * val, потому что дёргается по нескольку раз даже в рамках ровно одного запроса. */
+  def INDEX_ALIAS_NAME = "ipgeobase"
+
+}
+
 
 @Singleton
-class MIndexes @Inject() (
-                           injector   : Injector,
-                         )
+final class MIndexes @Inject() (
+                                 injector   : Injector,
+                               )
   extends MacroLogsImpl
 {
 
@@ -45,10 +53,6 @@ class MIndexes @Inject() (
         r
       }
   }
-
-  /** Константа с именем актуального алиаса ipgb-индекса.
-    * val, потому что дёргается по нескольку раз даже в рамках ровно одного запроса. */
-  def INDEX_ALIAS_NAME = "ipgeobase"
 
   /** Сгенерить настройки для создаваемого индекса. */
   def indexSettingsCreate: Settings = {

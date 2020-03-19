@@ -5,7 +5,8 @@ import io.suggest.stat.inx.StatIndexUtil
 import io.suggest.util.logs.MacroLogsDyn
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import models.mcron.MCronTask
-import models.mproj.ICommonDi
+import play.api.Configuration
+import play.api.inject.Injector
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.duration._
@@ -16,16 +17,16 @@ import scala.concurrent.duration._
   * Created: 23.09.16 20:24
   * Description: Поддержка cron-задач для нужд статистики.
   */
-class StatCronTasks @Inject()(
-                               mCommonDi : ICommonDi
-                             )
+final class StatCronTasks @Inject()(
+                                     injector: Injector,
+                                   )
   extends ICronTasksProvider
   with MacroLogsDyn
 {
 
-  import mCommonDi._
 
-  private def statIndexUtil = current.injector.instanceOf[StatIndexUtil]
+  private def configuration = injector.instanceOf[Configuration]
+  private def statIndexUtil = injector.instanceOf[StatIndexUtil]
 
   /**
     * Флаг активности этих cron-задач.

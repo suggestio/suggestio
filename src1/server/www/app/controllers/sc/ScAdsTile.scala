@@ -9,10 +9,10 @@ import io.suggest.es.search.MRandomSortData
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.n2.node.{IMNodes, MNode, MNodeTypes}
+import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo}
+import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo, MScAdMatchInfo, MScNodeMatchInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
@@ -26,6 +26,8 @@ import scala.concurrent.Future
 import models.blk
 import util.ad.IJdAdUtilDi
 import util.adn.INodesUtil
+
+import scala.jdk.CollectionConverters._
 
 /**
  * Suggest.io
@@ -52,6 +54,12 @@ trait ScAdsTile
 
   // TODO Надо переписать рендер на reactive-streams: на больших нагрузка скачки расходования памяти и CPU могут стать нестепримыми.
 
+  /** Контейнер инфы по карточке. */
+  protected case class MAdInfo(
+                                mnode           : MNode,
+                                matchInfos      : Iterable[MScAdMatchInfo] = Nil,
+                              )
+
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends LogicCommonT with IRespActionFut with TypeT {
 
@@ -76,23 +84,136 @@ trait ScAdsTile
       )
     }
 
-    def renderMadAsync(brArgs: blk.RenderArgs): Future[T]
+    def renderMadAsync(brArgs: blk.RenderArgs, adInfo: MAdInfo): Future[T]
 
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
-    lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch( _qs )
+
+    lazy val bleSearchCtxFut = scAdSearchUtil.bleBeaconsSearch( _qs )
+    lazy val adSearch2Fut = for {
+      bleSearchCtx <- bleSearchCtxFut
+    } yield {
+      scAdSearchUtil.qsArgs2nodeSearch(
+        args                  = _qs,
+        innerHitsDocValuesFns = (
+          MNodeFields.Edges.EO_PREDICATE_FN ::
+          MNodeFields.Edges.EO_NODE_IDS_FN ::
+          Nil
+        ),
+        bleSearchCtx          = bleSearchCtx,
+      )
+    }
 
     LOGGER.trace(s"$logPrefix ${_request.uri}")
 
-
     /** Найти все итоговые карточки. */
-    lazy val madsFut: Future[Seq[MNode]] = {
+    lazy val madsFut: Future[Seq[MAdInfo]] = {
       if (_qs.hasAnySearchCriterias) {
+        val _adSearchFut = adSearch2Fut
+        val _bleSearchCtxFut = bleSearchCtxFut
+
+        // Подготовить id для adn-узлов и id узлов-тегов.
+        val adnNodeIds = (_qs.search.rcvrId :: _qs.search.prodId :: Nil)
+          .iterator
+          .flatten
+          .map(_.id)
+          .toSet
+
+        val tagNodeIds = _qs.search.tagNodeId
+          .iterator
+          .map(_.id)
+          .toSet
+
         for {
-          adSearch <- adSearch2Fut
-          res <- mNodes.dynSearch(adSearch)
+          adSearch <- _adSearchFut
+
+          // Чтобы получить доступ к inner-hits-значениям, надо работать с исходным ES-ответом (SearchHit):
+          // EsModel.source() тут использовать НЕЛЬЗЯ, т.к. сорсинг игнорирует критически важные limit/offset
+          searchHits <- mNodes.search( adSearch )( mNodes.SearchHitsMapper )
+          bleSearchCtx <- _bleSearchCtxFut
+
         } yield {
-          LOGGER.trace(s"$logPrefix Found ${res.size} ads")
+          //.source[SearchHit]( adSearch.toEsQuery )
+          val res = (for {
+            searchHit <- searchHits.iterator
+          } yield {
+            // Распарсить узел-карточку:
+            val mNode = mNodes.deserializeOne2( searchHit )
+
+            // Надо получить инфу по найденным предикатам из inner_hits:
+            val ihAdMatchInfos = (for {
+              edgeInnerHits <- Option( searchHit.getInnerHits )
+                .iterator
+              edgesIhHits <- Option {
+                edgeInnerHits.get( MNodeFields.Edges.E_OUT_FN )
+              }
+                .iterator
+
+              edgeIhHit <- edgesIhHits
+                .getHits
+                .iterator
+
+              // Поиск предиката в inner_hit:
+              ihPreds = (for {
+                ihPredField <- Option(
+                  edgeIhHit.getField( MNodeFields.Edges.EO_PREDICATE_FN )
+                )
+                  .iterator
+                // Предикат у эджа один. Но тут возвращается цепочка id предикатов в неопределённом порядке.
+                // В ES-5.x было: от parent к child. В любом случае, reduce до наиболее child-элемент.
+                ihPredValues = ihPredField.getValues
+                ihPredValRaw <- ihPredValues.iterator().asScala
+                ihPredVal = ihPredValRaw.toString
+                pred <- MPredicates.withValueOpt( ihPredVal )
+              } yield {
+                pred
+              })
+                .mostChildest
+                .toSet
+
+              // Поиск nodeIds в inner_hits.
+              ihNodeIds = (for {
+                ihNodeIdsField <- Option(
+                  edgeIhHit.getField( MNodeFields.Edges.EO_NODE_IDS_FN )
+                )
+                  .iterator
+                ihNodeIdsValues = ihNodeIdsField.getValues
+                ihNodeIdRaw <- ihNodeIdsValues.iterator().asScala
+                ihNodeId = ihNodeIdRaw.toString
+              } yield {
+                ihNodeId
+              })
+                .toSet
+
+              if ihPreds.nonEmpty || ihNodeIds.nonEmpty
+            } yield {
+              MScAdMatchInfo(
+                predicates = ihPreds,
+                nodeMatchings = ihNodeIds
+                  .iterator
+                  .map { nodeId =>
+                    val ntype =
+                    // Нужно найти связь с ble-маячком или иным узлом в контексте ble-search, если она есть.
+                      if ( bleSearchCtx.uidsClear contains nodeId ) Some( MNodeTypes.BleBeacon )
+                      else if (adnNodeIds contains nodeId) Some( MNodeTypes.AdnNode )
+                      else if (tagNodeIds contains nodeId) Some( MNodeTypes.Tag )
+                      else None
+                    MScNodeMatchInfo(
+                      nodeId = Some( nodeId ),
+                      ntype  = ntype
+                    )
+                  }
+                  .toSeq
+              )
+            })
+              .toSeq
+
+            MAdInfo( mNode, ihAdMatchInfos )
+          })
+            // Сразу рендерим без лени.
+            .to( List )
+
+          LOGGER.trace(s"$logPrefix Found ${res.length} ads")
           res
         }
 
@@ -106,7 +227,7 @@ trait ScAdsTile
     lazy val nodeId404 = nodesUtil.noAdsFound404NodeId( ctx.messages.lang )
 
     /** Рекламные карточки, когда не найдено рекламных карточек. */
-    def mads404: Future[Seq[MNode]] = {
+    def mads404Fut: Future[Seq[MNode]] = {
       val _nodeId404 = nodeId404
       LOGGER.trace(s"$logPrefix No ads found, will open from 404-node#${_nodeId404}")
 
@@ -156,7 +277,11 @@ trait ScAdsTile
           if (mads.isEmpty  &&  offset <= 0) {
             // TODO Передавать на клиент, что нет больше карточек, чтобы не было дальнейшего запроса подгрузки ещё карточек.
             LOGGER.trace(s"$logPrefix mads[${mads.length}] offset=$offset => 404")
-            mads404
+            for (mads404 <- mads404Fut) yield {
+              for (mad404 <- mads404) yield {
+                MAdInfo(mad404)
+              }
+            }
           } else {
             Future.successful(mads)
           }
@@ -169,18 +294,18 @@ trait ScAdsTile
 
       // Продолжаем асинхронную обработку
       for {
-        madsIndexed   <- _madsFut
+        madInfos      <- _madsFut
         offset        <- offsetFut
         renderStartedAt = System.currentTimeMillis()
         madsRendered  <- {
-          Future.traverse(madsIndexed) { case (mad, relIndex) =>
+          Future.traverse(madInfos) { case (adInfo, relIndex) =>
             val indexOpt = Some(offset + relIndex)
             val brArgs1 = _brArgsFor(
-              mad       = mad,
+              mad       = adInfo.mnode,
               bgImg     = None,
-              indexOpt  = indexOpt
+              indexOpt  = indexOpt,
             )
-            renderMadAsync( brArgs1 )
+            renderMadAsync( brArgs1, adInfo )
           }
         }
       } yield {
@@ -214,7 +339,7 @@ trait ScAdsTile
         val statActionsAcc0 = List[MAction](
 
           // Подготовить данные статистики по отрендеренным карточкам:
-          statUtil.madsAction(_mads, MActionTypes.ScAdsTile),
+          statUtil.madsAction(_mads.map(_.mnode), MActionTypes.ScAdsTile),
 
           // Сохранить фактический search limit
           MAction(
@@ -277,7 +402,7 @@ trait ScAdsTile
     }
 
     // TODO brArgs содержит кучу неактуального мусора, потому что рендер уехал на клиент. Следует удалить лишние поля следом за v2-выдачей.
-    override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
+    override def renderMadAsync(brArgs: RenderArgs, adInfo: MAdInfo): Future[T] = {
       // Требуется рендер только main-блока карточки.
       Future {
         // Можно рендерить карточку сразу целиком, если на данном узле карточка размещена как заранее открытая.
@@ -318,9 +443,9 @@ trait ScAdsTile
           .execute()
 
         val canEditFocusedOptFut = OptionUtil.maybeFut( isDisplayOpened ) {
-          for (
+          for {
             resOpt <- canEditAd.isUserCanEditAd(_request.user, brArgs.mad)
-          ) yield {
+          } yield {
             Some( resOpt.nonEmpty )
           }
         }
@@ -330,10 +455,11 @@ trait ScAdsTile
           canEditOpt <- canEditFocusedOptFut
         } yield {
           MSc3AdData(
-            jd      = jd,
+            jd   = jd,
             info = MScAdInfo(
               canEditOpt      = canEditOpt,
               flags           = scUtil.collectScRcvrFlags( _qs, brArgs.mad ),
+              matchInfos      = adInfo.matchInfos,
             )
           )
         }

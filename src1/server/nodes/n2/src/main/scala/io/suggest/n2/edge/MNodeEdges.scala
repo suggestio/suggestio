@@ -273,13 +273,20 @@ final case class MNodeEdges(
     )(this)
   }
 
-  def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
+  def withPredicateIter(preds: MPredicate*): Iterator[MEdge] =
+    withPredicateIter1( preds )
+  def withPredicateIter1(preds: IterableOnce[MPredicate]): Iterator[MEdge] = {
     if (preds.isEmpty) {
       throw new IllegalArgumentException("preds must be non-empty")
     } else {
+      // В значениях edgesByPred содержатся эджи-дубликаты. Если в preds ошибочно содержатся и родительские,
+      // и дочерние элементы по одной линии, то дубликаты будут на выходе withPredicates*().
+      // Поэтому дедублицируем предикаты в пользу child-элементов через mostChildest():
       preds
+        .mostChildest
         .iterator
         .flatMap( edgesByPred.get )
+        // TODO Если preds содержит
         .flatten
     }
   }

@@ -35,9 +35,10 @@ object MAdsSearchReq extends IEmpty {
 
   @inline implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
 
-  val rcvrId = GenLens[MAdsSearchReq](_.rcvrId)
-  val genOpt = GenLens[MAdsSearchReq](_.genOpt)
-  val offset = GenLens[MAdsSearchReq](_.offset)
+  def rcvrId = GenLens[MAdsSearchReq](_.rcvrId)
+  def genOpt = GenLens[MAdsSearchReq](_.genOpt)
+  def offset = GenLens[MAdsSearchReq](_.offset)
+  def prodId = GenLens[MAdsSearchReq](_.prodId)
 
 
   implicit class AsrOpsExt( val req: MAdsSearchReq ) extends AnyVal {

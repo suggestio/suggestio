@@ -39,8 +39,8 @@ object MLocEnv extends IEmpty {
     UnivEq.derive
   }
 
-  val geoLocOpt   = GenLens[MLocEnv](_.geoLocOpt)
-  val bleBeacons  = GenLens[MLocEnv](_.bleBeacons)
+  def geoLocOpt   = GenLens[MLocEnv](_.geoLocOpt)
+  def bleBeacons  = GenLens[MLocEnv](_.bleBeacons)
 
 }
 

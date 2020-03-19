@@ -3,14 +3,15 @@ package io.suggest.stat.inx
 import java.time.Instant
 
 import io.suggest.es.MappingDsl.Implicits._
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsIndexUtil, EsModel}
-import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsModel, MStatsTmpFactory}
+import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsModel, MStatsTmp}
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import org.threeten.extra.Interval
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,19 +21,16 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 23.09.16 16:16
   * Description: Утиль для работы со stat-индексами.
   */
-@Singleton
-class StatIndexUtil @Inject() (
-                                esModel           : EsModel,
-                                mStatsModel       : MStatsModel,
-                                mStatIndexes      : MStatIndexes,
-                                mStatsTmpFactory  : MStatsTmpFactory,
-                                implicit private val ec   : ExecutionContext,
-                              )
+final class StatIndexUtil @Inject() (
+                                      injector          : Injector,
+                                    )
   extends MacroLogsImpl
 {
 
-  import esModel.api._
-  import mStatsModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mStatsModel = injector.instanceOf[MStatsModel]
+  private lazy val mStatIndexes = injector.instanceOf[MStatIndexes]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Максимальное кол-во документов в одном stat-индексе.
@@ -45,8 +43,10 @@ class StatIndexUtil @Inject() (
 
   /** Переключиться на новый stat-индекс. */
   def reNewCurrIndex(): Future[String] = {
+    import esModel.api._
+
     // Подготовить новое имя индекса.
-    val newInxName = EsIndexUtil.newIndexName( mStatIndexes.INDEX_ALIAS_NAME )
+    val newInxName = EsIndexUtil.newIndexName( MStatIndexes.INDEX_ALIAS_NAME )
     lazy val logPrefix = s"reNewCurrIndex() [$newInxName] :"
     LOGGER.info(s"$logPrefix Starting. newIndexName = $newInxName")
 
@@ -54,14 +54,14 @@ class StatIndexUtil @Inject() (
       // Создать новый индекс
       _ <- esModel.createIndex(newInxName, mStatIndexes.indexSettingsCreate)
 
-      mStatsTmp = mStatsTmpFactory.create(newInxName)
+      mStatsTmp = MStatsTmp( newInxName )
       // Залить туда маппинг модели статистики
       _ <- mStatsTmp.putMapping()
 
       // Подготовка исходного индекса завершена, переставить index alias на новый индекс.
       _ <- esModel.resetAliasToIndex(
         indexName = newInxName,
-        aliasName = mStatIndexes.INDEX_ALIAS_NAME,
+        aliasName = MStatIndexes.INDEX_ALIAS_NAME,
       )
 
     } yield {
@@ -89,7 +89,7 @@ class StatIndexUtil @Inject() (
   def currIndexInfo(): Future[Option[MStatInxInfo]] = {
     for {
       // Прочитать значение алиасов.
-      aliasedNames <- esModel.getAliasedIndexName( mStatIndexes.INDEX_ALIAS_NAME )
+      aliasedNames <- esModel.getAliasedIndexName( MStatIndexes.INDEX_ALIAS_NAME )
 
       // определить текущее (последнее) имя индекса.
       currInxNameOpt = {
@@ -105,8 +105,9 @@ class StatIndexUtil @Inject() (
 
       // Опционально посчитать кол-во записей в текущем индексе.
       indexDocCountOpt <- FutureUtil.optFut2futOpt(currInxNameOpt) { currInxName =>
-        mStatsTmpFactory
-          .create( currInxName )
+        import esModel.api._
+
+        MStatsTmp( currInxName )
           .countAll()
           .map( EmptyUtil.someF )
       }
@@ -144,7 +145,7 @@ class StatIndexUtil @Inject() (
         // - в индексе уже слишком много документов
         val info = infoOpt.get
         val docCountLimitOk = info.docCount < MAX_DOC_COUNT_PER_INDEX
-        docCountLimitOk && info.inxName.startsWith( mStatIndexes.INDEX_ALIAS_NAME )
+        docCountLimitOk && info.inxName.startsWith( MStatIndexes.INDEX_ALIAS_NAME )
       }
       // Если проверка пройдена, то ничего reNew'ить не требуется.
       .map { infoOpt =>
@@ -171,12 +172,13 @@ class StatIndexUtil @Inject() (
         Future.successful( None )
 
       } else {
+        import mStatsModel.api._
 
         // При алфавитной аггрегации самый старый индекс будет в начале списка.
         val oldestInxName = statIndexNames.min
 
         // Проверить дату последней записи в индексе.
-        val mStatsTmp = mStatsTmpFactory.create(oldestInxName)
+        val mStatsTmp = MStatsTmp( oldestInxName )
         for (latestDtOpt <- mStatsTmp.findMaxTimestamp()) yield {
           latestDtOpt.fold [Option[String]] {
             // Пустой старый индекс. Тут два варианта.
@@ -257,13 +259,16 @@ sealed trait StatIndexUtilJmxMBean {
 
 }
 
+
 final class StatIndexUtilJmx @Inject() (
-                                         statIndexUtil            : StatIndexUtil,
-                                         implicit private val ec  : ExecutionContext,
+                                         injector: Injector,
                                        )
   extends JmxBase
   with StatIndexUtilJmxMBean
 {
+
+  private def statIndexUtil = injector.instanceOf[StatIndexUtil]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   import io.suggest.util.JmxBase._
 
