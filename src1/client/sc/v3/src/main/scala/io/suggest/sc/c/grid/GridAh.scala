@@ -26,6 +26,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
+import org.scalajs.dom
 import scalaz.Tree
 
 import scala.util.Success
@@ -223,7 +224,14 @@ object GridAh {
     Option.when( Math.abs(gridHeightDeltaPx) > 2 ) {
       // Есть какой-то заметный глазу скачок высоты плитки. Запустить эффект сдвига скролла плитки.
       Effect.action {
-        AnimateScroll.scrollMore( gridHeightDeltaPx, GridScrollUtil.scrollOptions(isSmooth = false) )
+        // Нужно понять, есть ли скролл прямо сейчас: чтобы не нагружать состояние лишним мусором, дёргаем элемент напрямую.
+        if (
+          Option( dom.document.getElementById( GridScrollUtil.SCROLL_CONTAINER_ID ) )
+            .exists { el => el.scrollTop > 1 }
+        ) {
+          AnimateScroll.scrollMore( gridHeightDeltaPx, GridScrollUtil.scrollOptions(isSmooth = false) )
+        }
+
         DoNothing
       }
     }
@@ -318,6 +326,7 @@ class GridAh[M](
                     .exists(_.ntype contains bleNtype)
                 }
               }}
+
               // ads2.exists(_.isEmpty): Даже если карточек вообще не осталось, то надо отрендерить 404-карточку. Запросить с сервера.
               if (bcns0.nonEmpty || ads2.exists(_.isEmpty)) {
                 // Есть видимые маячки. И наверное надо cделать запрос на сервер.

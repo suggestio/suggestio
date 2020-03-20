@@ -10,6 +10,7 @@ import scalaz.Tree
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.util.Random
 
 /**
   * Suggest.io
@@ -198,7 +199,24 @@ object GridBuilderUtilJs {
     // Рассчёт расстояния между разными блоками.
     val cellPaddingPx = Math.round(conf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
 
-    val ees = EnterExitStyle.fromTop
+    val ees = if (!gbRes.nextRender.animate) {
+      EnterExitStyle.simple
+    } else if (gbRes.nextRender.animFromBottom) {
+      // Требуется явный рендер снизу, чтобы юзер заметил, что наверху что-то появилось.
+      EnterExitStyle.fromBottom
+    } else {
+      // 0..7:
+      new Random().nextInt(8) match {
+        case 0 => EnterExitStyle.foldUp
+        case 1 => EnterExitStyle.fromBottom
+        case 2 => EnterExitStyle.fromCenter
+        case 3 => EnterExitStyle.fromLeftToRight
+        case 4 => EnterExitStyle.fromTop
+        case 5 => EnterExitStyle.newspaper
+        case 6 => EnterExitStyle.simple
+        case 7 => EnterExitStyle.skew
+      }
+    }
 
     new CssGridProps {
       override val duration     = if (gbRes.nextRender.animate) 600 else 0

@@ -6,6 +6,7 @@ import diode.data.Pot
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil
 import io.suggest.grid.GridScrollUtil
+import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
@@ -178,12 +179,22 @@ class GridRespHandler
 
     val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
     val g2 = g0.copy(
-      core = g0.core.copy(
-        jdRuntime   = jdRuntime2,
-        ads         = ads2,
-        // Отребилдить плитку:
-        gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf, jdRuntime2)
-      ),
+      core = {
+        var gbRes = GridAh.rebuildGrid(ads2, g0.core.jdConf, jdRuntime2)
+
+        if (isGridPatching) {
+          gbRes = MGridBuildResult.nextRender
+            .composeLens( MGridRenderInfo.animFromBottom )
+            .set( true )(gbRes)
+        }
+
+        g0.core.copy(
+          jdRuntime   = jdRuntime2,
+          ads         = ads2,
+          // Отребилдить плитку:
+          gridBuild   = gbRes,
+        )
+      },
       hasMoreAds = {
         if (mGla.flatMap(_.onlyMatching).isEmpty)
           qs.search.limit.fold(true) { limit =>

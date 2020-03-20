@@ -53,10 +53,19 @@ object MGridRenderInfo {
   lazy val default = apply()
 
   def animate = GenLens[MGridRenderInfo]( _.animate )
+  def animFromBottom = GenLens[MGridRenderInfo]( _.animFromBottom )
 
   @inline implicit def univEq: UnivEq[MGridRenderInfo] = UnivEq.derive
 
 }
+
+/** Контейнер одноразовых данных, пробрасываемых в обход GridBuilder'а, из контроллера в grid view.
+  * Задумано, что он должен сбрасываться и/или явно пересоздаваться после каждой пересборки плитки.
+  *
+  * @param animate Включить анимацию?
+  * @param animFromBottom Новые карточки анимировать снизу, а не по умолчанию.
+  */
 final case class MGridRenderInfo(
-                                  animate      : Boolean       = true,
+                                  animate             : Boolean       = true,
+                                  animFromBottom      : Boolean       = false,
                                 )
