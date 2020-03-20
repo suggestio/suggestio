@@ -3,6 +3,8 @@ package io.suggest.grid
 import com.github.fisshy.react.scroll.LinkProps
 import io.suggest.text.StringUtil
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -16,9 +18,10 @@ object GridScrollUtil {
   lazy val SCROLL_CONTAINER_ID = StringUtil.randomIdLatLc()
 
 
-  def scrollOptions: LinkProps = {
+  def scrollOptions(isSmooth: Boolean = true): LinkProps = {
     new LinkProps {
-      override val smooth = true
+      override val smooth = isSmooth
+      override val duration = if (isSmooth) js.undefined else js.defined(0)
       // Надо скроллить grid wrapper, а не document:
       override val containerId = SCROLL_CONTAINER_ID
     }

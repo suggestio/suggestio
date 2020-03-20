@@ -47,6 +47,7 @@ object ScQsUtil {
   }
 
 
+  /** Данные экрана для рендера карточек плитки. */
   private def screenForGridAds(mroot: MScRoot): MScreen = {
     val scr0 = mroot.dev.screen.info.safeScreen
     // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
@@ -114,6 +115,7 @@ object ScQsUtil {
   }
 
 
+  /** qs для запроса карточек только по текущим наблюдаемым ble-маячкам. */
   def gridAdsOnlyBleBeaconed(mroot: MScRoot): MScQs = {
     MScQs(
       common = MScCommonQs(

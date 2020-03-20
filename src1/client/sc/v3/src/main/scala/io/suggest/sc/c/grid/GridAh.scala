@@ -23,6 +23,7 @@ import io.suggest.jd.render.u.JdUtil
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import scalaz.Tree
@@ -173,7 +174,7 @@ object GridAh {
           AnimateScroll.scrollTo(
             // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
             to = Math.max(0, toXY.y - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
-            options = GridScrollUtil.scrollOptions
+            options = GridScrollUtil.scrollOptions(isSmooth = true)
           )
         }
 
@@ -203,6 +204,29 @@ object GridAh {
       .flatten
       .zipWithIndex
       .find { _._1.nodeId contains nodeId }
+  }
+
+
+  /** Восстановление скролла после добавления
+    *
+    * @param g0 Начальное состояние плитки.
+    * @param g2 Новое состояние плитки.
+    * @return
+    */
+  def repairScrollPosFx(g0: MGridS, g2: MGridS): Option[Effect] = {
+    // Нужно скроллить НЕанимированно, т.к. неявная коррекция выдачи должна проходить мгновенно и максимально незаметно.
+    // Для этого надо вычислить разницу высоты между старой плиткой и новой плиткой, и скорректировать текущий скролл
+    // на эту разницу без какой-либо анимации TODO (за искл. около-нулевого исходного скролла).
+    val gridHeightPx0 = g0.core.gridBuild.gridWh.height
+    val gridHeightPx2 = g2.core.gridBuild.gridWh.height
+    val gridHeightDeltaPx = gridHeightPx2 - gridHeightPx0
+    Option.when( Math.abs(gridHeightDeltaPx) > 2 ) {
+      // Есть какой-то заметный глазу скачок высоты плитки. Запустить эффект сдвига скролла плитки.
+      Effect.action {
+        AnimateScroll.scrollMore( gridHeightDeltaPx, GridScrollUtil.scrollOptions(isSmooth = false) )
+        DoNothing
+      }
+    }
   }
 
 }
@@ -256,7 +280,6 @@ class GridAh[M](
     case m: GridLoadAds =>
       val v0 = value
 
-      //println(m)
       if (v0.core.ads.isPending && !m.ignorePending) {
         LOG.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange
@@ -299,12 +322,10 @@ class GridAh[M](
               if (bcns0.nonEmpty || ads2.exists(_.isEmpty)) {
                 // Есть видимые маячки. И наверное надо cделать запрос на сервер.
                 // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
-                println("3", bleNtype, "do req")
                 // TODO qs4ble: тут надо явно запретить возвращать 404-карточки
                 val qs4Ble= ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value )
                 Right( Some(qs4Ble) )
               } else {
-                println("3", bleNtype, "CLEANUP")
                 // Нет маячков в qs, но видимо ранее они были.
                 // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
                 val jdRuntime2 = GridAh.mkJdRuntime(ads2, v0.core)
@@ -315,48 +336,51 @@ class GridAh[M](
                     gridBuild = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2),
                   )
                 )(v0)
-                Left( updated(v2) )
+                // Эффект скролла: нужно подправить плитку, чтобы не было рывка.
+                val fxOpt = GridAh.repairScrollPosFx( v0, v2 )
+                val res = ah.updatedMaybeEffect(v2, fxOpt)
+                Left( res )
               }
 
             case other =>
               throw new UnsupportedOperationException( other.toString )
           }
-          .right.map { reqScQsOpt =>
-            println("4", reqScQsOpt)
-            // Надо делать эффект запроса на сервер с указанными qs.
-            val fx = Effect {
-              val args2 = reqScQsOpt getOrElse {
-                val offset = v0.core.ads
-                  // Если clean, то нужно обнулять offset.
-                  .filter(_ => !m.clean)
-                  .fold(0)(_.size)
-                ScQsUtil.gridAdsQs( scRootRO.value, offset )
+          .fold(
+            identity,
+            {reqScQsOpt =>
+              // Надо делать эффект запроса на сервер с указанными qs.
+              val fx = Effect {
+                val args2 = reqScQsOpt getOrElse {
+                  val offset = v0.core.ads
+                    // Если clean, то нужно обнулять offset.
+                    .filter(_ => !m.clean)
+                    .fold(0)(_.size)
+                  ScQsUtil.gridAdsQs( scRootRO.value, offset )
+                }
+
+                // Завернуть ответ сервера в экшен:
+                val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
+
+                // Запустить запрос с почищенными аргументами...
+                api
+                  .pubApi( args2 )
+                  .transform { tryRes =>
+                    val r = HandleScApiResp(
+                      reqTimeStamp  = Some( startTime ),
+                      qs            = args2,
+                      tryResp       = tryRes,
+                      reason        = m,
+                    )
+                    Success(r)
+                  }
               }
 
-              // Завернуть ответ сервера в экшен:
-              val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
-
-              // Запустить запрос с почищенными аргументами...
-              api
-                .pubApi( args2 )
-                .transform { tryRes =>
-                  println("5", tryRes.getClass.getSimpleName)
-                  val r = HandleScApiResp(
-                    reqTimeStamp  = Some( startTime ),
-                    qs            = args2,
-                    tryResp       = tryRes,
-                    reason        = m,
-                  )
-                  Success(r)
-                }
+              val v2 = MGridS.core
+                .composeLens( MGridCoreS.ads )
+                .set( nextReqPot2 )(v0)
+              updated(v2, fx)
             }
-
-            val v2 = MGridS.core
-              .composeLens( MGridCoreS.ads )
-              .set( nextReqPot2 )(v0)
-            updated(v2, fx)
-          }
-          .fold(identity, identity)
+          )
       }
 
 
@@ -453,19 +477,16 @@ class GridAh[M](
           if (!m.force && szMultMatches) v0.core.jdRuntime
           else GridAh.mkJdRuntime(v0.core.ads, jdConf1, v0.core.jdRuntime)
 
-        var coreLens = (
-          MGridCoreS.jdConf.set( jdConf1 ) andThen
-          MGridCoreS.gridBuild.set( GridAh.rebuildGrid(v0.core.ads, jdConf1, jdRuntime2) )
+        var coreModF = (
+          (MGridCoreS.jdConf set jdConf1) andThen
+          (MGridCoreS.gridBuild set GridAh.rebuildGrid(v0.core.ads, jdConf1, jdRuntime2))
         )
 
         // Если изменился szMult, то перепилить css-стили карточек:
         if (!szMultMatches)
-          coreLens = (
-            coreLens andThen
-            MGridCoreS.jdRuntime.set( jdRuntime2 )
-          )
+          coreModF = coreModF andThen (MGridCoreS.jdRuntime set jdRuntime2)
 
-        val v2 = MGridS.core.modify(coreLens)(v0)
+        val v2 = (MGridS.core modify coreModF)(v0)
 
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
         updated(v2)

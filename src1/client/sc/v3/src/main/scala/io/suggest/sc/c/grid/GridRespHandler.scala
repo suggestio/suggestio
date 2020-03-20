@@ -10,7 +10,7 @@ import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.n2.node.MNodeType
-import io.suggest.sc.ads.{MScAdMatchInfo, MScNodeMatchInfo}
+import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
@@ -65,7 +65,6 @@ class GridRespHandler
   }
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
-    println("6")
     val gridResp = ra.ads.get
     val g0 = ctx.value0.grid
 
@@ -76,10 +75,12 @@ class GridRespHandler
     val isSilentOpt = mGla.flatMap(_.silent)
     val qs = ctx.m.qs
 
+    val isGridPathing = mGla.exists(_.onlyMatching.nonEmpty)
+
     val isCleanLoad =
       qs.search.offset.fold(true)(_ ==* 0) &&
       // Если происходит частичный патчинг выдачи, то это не clean-заливка:
-      !mGla.exists(_.onlyMatching.nonEmpty)
+      !isGridPathing
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
@@ -132,19 +133,6 @@ class GridRespHandler
     lazy val newScAdsById = newScAds
       .zipWithIdIter[String]
       .to( Map )
-
-    // Опциональный эффект скролла вверх.
-    val scrollFxOpt = {
-      // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?
-      val isScrollUp = isSilentOpt.fold(isCleanLoad)(!_)
-      // А если вручную не задано, то определить нужность скроллинга автоматически:
-      OptionUtil.maybe(isScrollUp) {
-        Effect.action {
-          AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions )
-          DoNothing
-        }
-      }
-    }
 
     // Собрать обновлённый Pot с карточками.
     val ads2 = g0.core.ads.ready {
@@ -205,7 +193,20 @@ class GridRespHandler
       }
     )
 
-    println(9)
+    // Опциональный эффект скролла вверх.
+    val scrollFxOpt: Option[Effect] = if (isGridPathing) {
+      GridAh.repairScrollPosFx( g0, g2 )
+    } else {
+      // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?
+      val isScrollUp = isSilentOpt.fold(isCleanLoad)(!_)
+      // А если вручную не задано, то определить нужность скроллинга автоматически:
+      OptionUtil.maybe(isScrollUp) {
+        Effect.action {
+          AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions(isSmooth = true) )
+          DoNothing
+        }
+      }
+    }
 
     // И вернуть новый акк:
     val v2 = (MScRoot.grid set g2)(ctx.value0)

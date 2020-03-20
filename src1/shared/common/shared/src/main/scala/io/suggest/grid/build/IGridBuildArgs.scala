@@ -101,7 +101,7 @@ object MGbSidePx {
   */
 case class MGridBuildResult(
                              coords   : List[(MJdTagId, MCoords2di)],
-                             gridWh   : MSize2di
+                             gridWh   : MSize2di,
                            ) {
 
   lazy val coordsById = coords.toMap
