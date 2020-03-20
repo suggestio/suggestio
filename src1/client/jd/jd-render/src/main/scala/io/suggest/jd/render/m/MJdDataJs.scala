@@ -40,8 +40,8 @@ object MJdDataJs {
     )
   }
 
-  val doc      = GenLens[MJdDataJs](_.doc)
-  val edges    = GenLens[MJdDataJs](_.edges)
+  def doc      = GenLens[MJdDataJs](_.doc)
+  def edges    = GenLens[MJdDataJs](_.edges)
 
 }
 

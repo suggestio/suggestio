@@ -136,9 +136,10 @@ class GridRespHandler
       .to( Map )
 
     // Собрать обновлённый Pot с карточками.
-    val ads2 = g0.core.ads.ready {
+    val ads0 = g0.core.ads
+    val ads2 = ads0.ready {
       (for {
-        ads0 <- g0.core.ads.toOption
+        ads0 <- ads0.toOption
         if !isCleanLoad && ads0.nonEmpty
         // Если активен матчинг, то надо удалить только обновляемые карточки, которые подпадают под матчинг.
         // В рамках текущей реализации, при пропатчивании выдачи, карточки заменяются (добавляются) только в начало.
@@ -180,7 +181,7 @@ class GridRespHandler
     val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
     val g2 = g0.copy(
       core = {
-        var gbRes = GridAh.rebuildGrid(ads2, g0.core.jdConf, jdRuntime2)
+        var gbRes = GridAh.rebuildGrid( ads2, g0.core.jdConf, jdRuntime2 )
 
         if (isGridPatching) {
           gbRes = MGridBuildResult.nextRender

@@ -464,6 +464,9 @@ object GridBuilderUtil {
       height  = maxCellHeight + args.offY,
     )
 
+    // Кэш инстанса перед циклом:
+    val _gbItemRes_topLeft_LENS = MGbItemRes.topLeft
+
     // Скомпилировать финальные координаты.
     val coordsFinal = s9
       .resultsAccRev
@@ -485,7 +488,7 @@ object GridBuilderUtil {
           },
           y = res.topLeft.y + args.offY,
         )
-        res.gbBlock.jdId -> finalCoords
+        _gbItemRes_topLeft_LENS.set( finalCoords )(res)
       }
       .toList
 
@@ -692,18 +695,3 @@ case class MGbLevelState(
   }
 
 }
-
-
-/** Результат позиционирования одного блока.
-  *
-  * @param orderN Порядковый номер блока.
-  * @param topLeft Отпозиционированные координаты.
-  * @param forceCenterX Костыль для принудительной центровки по X вместо координат по сетке.
-  */
-case class MGbItemRes(
-                       orderN           : Int,
-                       topLeft          : MCoords2di,
-                       forceCenterX     : Option[Int]   = None,
-                       gbBlock          : MGbBlock,
-                       wide             : MWideLine,
-                     )

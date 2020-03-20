@@ -19,12 +19,19 @@ import monocle.macros.GenLens
   *                   после выполнения GridBuilder'а.
   */
 final case class MGridBuildResult(
-                                   coords       : List[(MJdTagId, MCoords2di)],
+                                   coords       : List[MGbItemRes],
                                    gridWh       : MSize2di,
                                    nextRender   : MGridRenderInfo                 = MGridRenderInfo.default,
                                  ) {
 
-  lazy val coordsById = coords.toMap
+  lazy val coordsById: Map[MJdTagId, MCoords2di] = {
+    coords
+      .iterator
+      .map { gbItemRes =>
+        gbItemRes.gbBlock.jdId -> gbItemRes.topLeft
+      }
+      .toMap
+  }
 
 }
 
@@ -69,3 +76,23 @@ final case class MGridRenderInfo(
                                   animate             : Boolean       = true,
                                   animFromBottom      : Boolean       = false,
                                 )
+
+
+/** Результат позиционирования одного блока.
+  *
+  * @param orderN Порядковый номер блока.
+  * @param topLeft Отпозиционированные координаты.
+  * @param forceCenterX Костыль для принудительной центровки по X вместо координат по сетке.
+  */
+final case class MGbItemRes(
+                             orderN           : Int,
+                             topLeft          : MCoords2di,
+                             forceCenterX     : Option[Int]   = None,
+                             gbBlock          : MGbBlock,
+                             wide             : MWideLine,
+                           )
+object MGbItemRes {
+  @inline implicit def univEq: UnivEq[MGbItemRes] = UnivEq.derive
+
+  def topLeft = GenLens[MGbItemRes]( _.topLeft )
+}

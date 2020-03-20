@@ -7,6 +7,7 @@ import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import scalaz.Tree
+import japgolly.univeq._
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -32,8 +33,8 @@ object GridBuilderUtilJs {
     // Привести список координат к формату stonecutter: массив из массивов-пар координат.
     val gbsPositions = buildRes.coords
       .iterator
-      .map { data =>
-        val mcoord = data._2
+      .map { gbRes =>
+        val mcoord = gbRes.topLeft
         js.Array( mcoord.x, mcoord.y )
       }
       .toJSArray
@@ -205,16 +206,28 @@ object GridBuilderUtilJs {
       // Требуется явный рендер снизу, чтобы юзер заметил, что наверху что-то появилось.
       EnterExitStyle.fromBottom
     } else {
-      // 0..7:
-      new Random().nextInt(8) match {
-        case 0 => EnterExitStyle.foldUp
+
+      // Если среди блоков qd_blockless, то react-measure будет глючить на любых масштабируемых эффектах.
+      // Поэтому надо оставить только эффекты без изменения размеров.
+      val maxAnims = if (gbRes.coords.exists {
+        // TODO Opt Надо бы ограничивать анимацию только на НОВЫХ, впервые добавленных в плитку, элементах qd-blockless, а не для любых.
+        _.gbBlock.jdt.name ==* MJdTagNames.QD_CONTENT
+      }) {
+        2
+      } else {
+        // Только обычные блоки, без qd-blockless. Можно рендерить спокойно любой анимацией.
+        7
+      }
+      new Random().nextInt(maxAnims + 1) match {
+        case 0 => EnterExitStyle.fromTop
         case 1 => EnterExitStyle.fromBottom
-        case 2 => EnterExitStyle.fromCenter
-        case 3 => EnterExitStyle.fromLeftToRight
-        case 4 => EnterExitStyle.fromTop
+        case 2 => EnterExitStyle.fromLeftToRight
+        // Анимации ниже - трансформируют размер. Несовместимо с react-measure, которая используется для qd-blockless (всё будет глючить):
+        case 3 => EnterExitStyle.fromCenter
+        case 4 => EnterExitStyle.foldUp
         case 5 => EnterExitStyle.newspaper
         case 6 => EnterExitStyle.simple
-        case 7 => EnterExitStyle.skew
+        case _ => EnterExitStyle.skew
       }
     }
 

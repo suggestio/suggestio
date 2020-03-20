@@ -1081,7 +1081,7 @@ class DocEditAh[M](
       val droppedNear = (for {
         // По идее, в редакторе все блоки и плитки в том числе - идут в прямом порядке.
         // Но если что-то не так, то будет логгироваться.
-        (jdIdTree, (jdId, topLeft)) <- allBlocks
+        (jdIdTree, gbRes) <- allBlocks
           .iterator
           .zip( v0.jdDoc.gridBuild.coords )
 
@@ -1089,16 +1089,16 @@ class DocEditAh[M](
         jdtWh <- DocEditAh.getJdtWh( jdtWithId, v0 )
       } yield {
         // Пока просто логгируем ошибку
-        if (jdId !=* jdtWithId._1)
-          LOG.error( ErrorMsgs.JD_TREE_UNEXPECTED_ID, msg = (jdId, jdtWithId._1) )
+        if (gbRes.gbBlock.jdId !=* jdtWithId._1)
+          LOG.error( ErrorMsgs.JD_TREE_UNEXPECTED_ID, msg = (gbRes.gbBlock.jdId, jdtWithId._1) )
 
         MJdtWithXy(
           jdt = jdIdTree,
-          topLeft = topLeft,
+          topLeft = gbRes.topLeft,
           wh = jdtWh,
           isDownerTl =
-            (m.docXy.x >= topLeft.x - paddingPx) &&
-            (m.docXy.y >= topLeft.y - paddingPx)
+            (m.docXy.x >= gbRes.topLeft.x - paddingPx) &&
+            (m.docXy.y >= gbRes.topLeft.y - paddingPx)
         )
       })
         // Отсеять элементы сверху.
@@ -1143,8 +1143,8 @@ class DocEditAh[M](
           // Неопределённая ситуация. Переносим блок или в начало или в конец документа.
           case other =>
             LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
-            val coord0 = v0.jdDoc.gridBuild.coords.head
-            if (m.docXy.y > coord0._2.y) {
+            val gbRes0 = v0.jdDoc.gridBuild.coords.head
+            if (m.docXy.y > gbRes0.topLeft.y) {
               // Положительная координата перетаскивания по вертикали: просто переносим таскаемый блок в конец документа.
               (allBlocks.last, false)
             } else {

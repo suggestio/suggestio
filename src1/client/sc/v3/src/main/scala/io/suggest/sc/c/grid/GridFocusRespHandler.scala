@@ -89,11 +89,10 @@ class GridFocusRespHandler
       } { case (ad0, index) =>
         val focResp = ra.ads.get
         val focAd = focResp.ads.head
+        val focJdDataJs = MJdDataJs.fromJdData( focAd.jd, focAd.info )
         val ad1 = MScAdData.focused
           .modify(
-            _.ready(
-              MJdDataJs.fromJdData( focAd.jd, focAd.info ),
-            )
+            _.ready( focJdDataJs )
           )(ad0)
 
         val adsPot2 = for (ads0 <- g0.core.ads) yield {
@@ -117,7 +116,11 @@ class GridFocusRespHandler
         }
 
         val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, g0.core )
-        val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf, jdRuntime2 )
+        val gridBuild2 = GridAh.rebuildGrid(
+          ads = adsPot2,
+          jdConf = g0.core.jdConf,
+          jdRuntime = jdRuntime2,
+        )
         val g2 = MGridS.core.modify(
           _.copy(
             jdRuntime = jdRuntime2,
