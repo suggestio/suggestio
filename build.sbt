@@ -340,7 +340,10 @@ lazy val stat = project
   .dependsOn(logsMacro, esUtil, mgeo)
 
 /** Scala.js API для самой cordova. */
-lazy val cordovaSjs = Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
+lazy val cordovaSjs = {
+  Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
+    .dependsOn( commonSjs )
+}
 
 /** scala.js API для evothings/cordova-ble. */
 lazy val cordovaBleSjs = Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))

@@ -21,7 +21,18 @@
     },
     "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-local-notification": {
+      "ANDROID_SUPPORT_V4_VERSION": "26.+",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
-  "dependent_plugins": {}
+  "dependent_plugins": {
+    "cordova-plugin-device": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-badge": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    }
+  }
 }

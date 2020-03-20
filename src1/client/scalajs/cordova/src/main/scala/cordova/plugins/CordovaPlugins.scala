@@ -1,5 +1,6 @@
 package cordova.plugins
 
+import cordova.plugins.device.CordovaPluginDevice
 import cordova.plugins.diagnostic.CordovaPluginDiagnostic
 import cordova.plugins.notification.CordovaPluginNotification
 
@@ -17,5 +18,7 @@ sealed trait CordovaPlugins extends js.Object {
   val diagnostic: CordovaPluginDiagnostic = js.native
 
   val notification: CordovaPluginNotification = js.native
+
+  val device: CordovaPluginDevice = js.native
 
 }

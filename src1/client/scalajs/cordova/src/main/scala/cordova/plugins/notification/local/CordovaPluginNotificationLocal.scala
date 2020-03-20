@@ -1,6 +1,8 @@
 package cordova.plugins.notification.local
 
-import scala.concurrent.{Future, Promise}
+import io.suggest.sjs.JsApiUtil
+
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.|
 import js.JSConverters._
@@ -88,117 +90,68 @@ object CordovaPluginNotificationLocal {
   /** scala API, для callback-методов, которые заменены на Future. */
   implicit class CnlOpsExt( private val cnl: CordovaPluginNotificationLocal ) extends AnyVal {
 
-    def hasPermissionF(): Future[Boolean] = {
-      val p = Promise[Boolean]()
-      cnl.hasPermission( p.success )
-      p.future
-    }
+    def hasPermissionF(): Future[Boolean] =
+      JsApiUtil.call1Fut[Boolean]( cnl.hasPermission )
 
-    def requestPermissionF(): Future[Boolean] = {
-      val p = Promise[Boolean]()
-      cnl.requestPermission( p.success )
-      p.future
-    }
+    def requestPermissionF(): Future[Boolean] =
+      JsApiUtil.call1Fut[Boolean]( cnl.requestPermission )
 
     def clearF(ids: Int*): Future[Unit] = {
-      val p = Promise[Unit]()
-      cnl.clear(
-        ids.toJSArray,
-        () => p.success(),
+      JsApiUtil.call0Fut( jsCbF =>
+        cnl.clear( ids.toJSArray, jsCbF )
       )
-      p.future
     }
 
-    def clearAllF(): Future[Unit] = {
-      val p = Promise[Unit]()
-      cnl.clearAll(
-        () => p.success(),
-      )
-      p.future
-    }
+    def clearAllF(): Future[Unit] =
+      JsApiUtil.call0Fut( cnl.clearAll )
 
 
     def cancelF(ids: Int*): Future[Unit] = {
-      val p = Promise[Unit]()
-      cnl.cancel(
-        ids.toJSArray,
-        () => p.success(),
+      JsApiUtil.call0Fut( jsCbF =>
+        cnl.cancel( ids.toJSArray, jsCbF )
       )
-      p.future
     }
 
-    def cancelAllF(): Future[Unit] = {
-      val p = Promise[Unit]()
-      cnl.cancelAll(
-        () => p.success(),
-      )
-      p.future
-    }
+    def cancelAllF(): Future[Unit] =
+      JsApiUtil.call0Fut( cnl.cancelAll )
 
 
-    def isPresentF(id: Int): Future[Boolean] = {
-      val p = Promise[Boolean]()
-      cnl.isPresent( id, p.success )
-      p.future
-    }
+    def isPresentF(id: Int): Future[Boolean] =
+      JsApiUtil.call1Fut[Boolean]( cnl.isPresent(id, _) )
 
-    def isScheduledF(id: Int): Future[Boolean] = {
-      val p = Promise[Boolean]()
-      cnl.isScheduled(id, p.success)
-      p.future
-    }
+    def isScheduledF(id: Int): Future[Boolean] =
+      JsApiUtil.call1Fut[Boolean]( cnl.isScheduled(id, _) )
 
-    def isTriggeredF(id: Int): Future[Boolean] = {
-      val p = Promise[Boolean]()
-      cnl.isTriggered(id, p.success)
-      p.future
-    }
+    def isTriggeredF(id: Int): Future[Boolean] =
+      JsApiUtil.call1Fut[Boolean]( cnl.isTriggered(id, _) )
 
-    def getTypeF(id: Int): Future[String] = {
-      val p = Promise[String]()
-      cnl.getType(id, p.success)
-      p.future
-    }
+    def getTypeF(id: Int): Future[String] =
+      JsApiUtil.call1Fut[String]( cnl.getType(id, _) )
 
-    def getScheduledIdsF(): Future[js.Array[Int]] = {
-      val p = Promise[js.Array[Int]]()
-      cnl.getScheduledIds( p.success )
-      p.future
-    }
+    def getScheduledIdsF(): Future[js.Array[Int]] =
+      JsApiUtil.call1Fut[js.Array[Int]]( cnl.getScheduledIds )
 
-    def getTriggeredIdsF(): Future[js.Array[Int]] = {
-      val p = Promise[js.Array[Int]]()
-      cnl.getTriggeredIds( p.success )
-      p.future
-    }
+    def getTriggeredIdsF(): Future[js.Array[Int]] =
+      JsApiUtil.call1Fut[js.Array[Int]]( cnl.getTriggeredIds )
 
-    def getScheduledF(): Future[js.Array[CnlNotification]] = {
-      val p = Promise[js.Array[CnlNotification]]()
-      cnl.getScheduled( p.success )
-      p.future
-    }
+    def getScheduledF(): Future[js.Array[CnlNotification]] =
+      JsApiUtil.call1Fut[js.Array[CnlNotification]]( cnl.getScheduled )
 
-    def getTriggeredF(): Future[js.Array[CnlNotification]] = {
-      val p = Promise[js.Array[CnlNotification]]()
-      cnl.getTriggered( p.success )
-      p.future
-    }
+    def getTriggeredF(): Future[js.Array[CnlNotification]] =
+      JsApiUtil.call1Fut[js.Array[CnlNotification]]( cnl.getTriggered )
 
     def getF(ids: Int*): Future[Option[CnlNotification]] = {
-      val p = Promise[Option[CnlNotification]]()
-      cnl.get(
-        ids.toJSArray,
-        ntfUndef =>
-          p success ntfUndef.toOption,
+      JsApiUtil.call1Fut[Option[CnlNotification]]( jsCbF =>
+        cnl.get(
+          ids.toJSArray,
+          ntfUndef =>
+            jsCbF( ntfUndef.toOption ),
+        )
       )
-      p.future
     }
 
-    def getAllF(): Future[js.Array[CnlNotification]] = {
-      val p = Promise[js.Array[CnlNotification]]()
-      cnl.getAll( p.success )
-      p.future
-    }
+    def getAllF(): Future[js.Array[CnlNotification]] =
+      JsApiUtil.call1Fut[js.Array[CnlNotification]]( cnl.getAll )
 
   }
 
