@@ -6,7 +6,7 @@ import diode.data.{PendingBase, Pot}
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
-import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
+import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult, MGridRenderInfo}
 import io.suggest.grid.{GridBuilderUtilJs, GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{GridRebuild, MJdDataJs, MJdRuntime}
@@ -329,11 +329,16 @@ class GridAh[M](
                 // Нет маячков в qs, но видимо ранее они были.
                 // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
                 val jdRuntime2 = GridAh.mkJdRuntime(ads2, v0.core)
+                val gbRes2 = MGridBuildResult.nextRender
+                  .composeLens( MGridRenderInfo.animate )
+                  .set( false )(
+                    GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
+                  )
                 val v2 = MGridS.core.modify(
                   _.copy(
                     jdRuntime = jdRuntime2,
                     ads       = ads2,
-                    gridBuild = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2),
+                    gridBuild = gbRes2,
                   )
                 )(v0)
                 // Эффект скролла: нужно подправить плитку, чтобы не было рывка.

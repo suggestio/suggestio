@@ -75,12 +75,12 @@ class GridRespHandler
     val isSilentOpt = mGla.flatMap(_.silent)
     val qs = ctx.m.qs
 
-    val isGridPathing = mGla.exists(_.onlyMatching.nonEmpty)
+    val isGridPatching = mGla.exists(_.onlyMatching.nonEmpty)
 
     val isCleanLoad =
       qs.search.offset.fold(true)(_ ==* 0) &&
       // Если происходит частичный патчинг выдачи, то это не clean-заливка:
-      !isGridPathing
+      !isGridPatching
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
@@ -194,7 +194,7 @@ class GridRespHandler
     )
 
     // Опциональный эффект скролла вверх.
-    val scrollFxOpt: Option[Effect] = if (isGridPathing) {
+    val scrollFxOpt: Option[Effect] = if (isGridPatching) {
       GridAh.repairScrollPosFx( g0, g2 )
     } else {
       // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?

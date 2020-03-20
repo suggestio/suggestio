@@ -201,7 +201,7 @@ object GridBuilderUtilJs {
     val ees = EnterExitStyle.fromTop
 
     new CssGridProps {
-      override val duration     = 600
+      override val duration     = if (gbRes.nextRender.animate) 600 else 0
       override val component    = tagName
       override val columns      = conf.gridColumnsCount
       override val columnWidth  = Math.round(BlockWidths.min.value * szMultD).toInt

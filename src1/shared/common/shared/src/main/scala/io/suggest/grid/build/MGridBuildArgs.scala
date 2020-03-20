@@ -1,7 +1,6 @@
 package io.suggest.grid.build
 
 import io.suggest.ad.blk.MBlockExpandMode
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MSzMult
 import io.suggest.jd.{MJdConf, MJdTagId}
@@ -91,33 +90,4 @@ case class MGbSidePx(
                     )
 object MGbSidePx {
   @inline implicit def univEq: UnivEq[MGbSidePx] = UnivEq.derive
-}
-
-
-/** Результат сборки плитки.
-  *
-  * @param coords Координаты блоков.
-  * @param gridWh Размеры собранной плитки.
-  */
-case class MGridBuildResult(
-                             coords   : List[(MJdTagId, MCoords2di)],
-                             gridWh   : MSize2di,
-                           ) {
-
-  lazy val coordsById = coords.toMap
-
-}
-
-object MGridBuildResult {
-
-  def empty = apply(
-    coords = Nil,
-    gridWh = MSize2di(0, 0)
-  )
-
-  @inline implicit def univEq: UnivEq[MGridBuildResult] = {
-    import io.suggest.ueq.UnivEqUtil._
-    UnivEq.derive
-  }
-
 }
