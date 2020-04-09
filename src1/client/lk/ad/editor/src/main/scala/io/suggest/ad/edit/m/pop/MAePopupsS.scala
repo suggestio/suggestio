@@ -29,8 +29,8 @@ object MAePopupsS {
 
   @inline implicit def univEq: UnivEq[MAePopupsS] = UnivEq.derive
 
-  val error = GenLens[MAePopupsS](_.error)
-  val pictureCrop = GenLens[MAePopupsS](_.pictureCrop)
+  def error = GenLens[MAePopupsS](_.error)
+  def pictureCrop = GenLens[MAePopupsS](_.pictureCrop)
   val deleteConfirm = GenLens[MAePopupsS](_.deleteConfirm)
 
 }

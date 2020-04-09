@@ -6,7 +6,7 @@ import io.suggest.lk.adv.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

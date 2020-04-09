@@ -321,6 +321,7 @@ class SysMdr @Inject() (
             allowWide     = true,
             forceAbsUrls  = false,
             selPathRev    = List.empty,
+            nodeTitle     = mad.meta.basic.nameOpt,
           )(ctx)
           .execute()
 

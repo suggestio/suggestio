@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c
 
 import io.suggest.routes.routes
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import org.scalajs.dom
 import org.scalajs.dom.raw.Window
 

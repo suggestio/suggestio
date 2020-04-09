@@ -6,7 +6,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS
 import io.suggest.maps.m.{MExistGeoS, MMapS}
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 
 /**
   * Suggest.io

@@ -25,7 +25,7 @@ object MJdDocEditS {
   @inline implicit def univEq: UnivEq[MJdDocEditS] = UnivEq.derive
 
   val jdArgs      = GenLens[MJdDocEditS](_.jdArgs)
-  val gridBuild   = GenLens[MJdDocEditS](_.gridBuild)
+  def gridBuild   = GenLens[MJdDocEditS](_.gridBuild)
 
 }
 

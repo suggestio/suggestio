@@ -302,11 +302,13 @@ class JdAdUtil @Inject()(
 
 
   /** Настраиваемая логика рендера карточки. */
-  trait JdAdDataMakerBase extends Product {
+  sealed trait JdAdDataMakerBase extends Product {
 
     lazy val logPrefix = s"$productPrefix[${System.currentTimeMillis}]:"
 
     def nodeId: Option[String]
+
+    def nodeTitle: Option[String]
 
     /** Для сборки jd-id верхнего уровня используется сие значение поля selPathRev: */
     def selPathRev: NodePath_t
@@ -417,6 +419,7 @@ class JdAdUtil @Inject()(
             ),
           ),
           edges       = edEdges,
+          title       = nodeTitle,
         )
       }
     }
@@ -442,10 +445,11 @@ class JdAdUtil @Inject()(
     case class edit(mad: MNode)
                    (implicit ctx: Context) extends JdAdDataMakerBase {
 
-
       /** jdId.selPathRev всегда Nil, т.к. тут редактируется карточка целиком, и документ всегда top-level.
         * Если в будущем это изменится (по-блоковое редактирование), то надо унести это в конструктор edit(). */
       override def selPathRev = Nil
+
+      override def nodeTitle = mad.meta.basic.nameOpt
 
       override lazy val tpl = getNodeTpl(mad)
 
@@ -496,6 +500,7 @@ class JdAdUtil @Inject()(
                     allowWide               : Boolean,
                     forceAbsUrls            : Boolean,
                     override val selPathRev : NodePath_t,
+                    override val nodeTitle  : Option[String],
                    )(implicit ctx: Context)
       extends JdAdDataMakerBase {
 

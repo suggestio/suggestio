@@ -4,8 +4,9 @@ import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
-import io.suggest.es.model.{EsModelDi, MEsNestedSearch, MEsUuId}
+import io.suggest.es.model.{EsModelDi, MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
 import io.suggest.es.search.MRandomSortData
+import io.suggest.jd.tags.JdTag
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -24,6 +25,7 @@ import japgolly.univeq._
 
 import scala.concurrent.Future
 import models.blk
+import scalaz.Tree
 import util.ad.IJdAdUtilDi
 import util.adn.INodesUtil
 
@@ -89,17 +91,25 @@ trait ScAdsTile
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
 
-    lazy val bleSearchCtxFut = scAdSearchUtil.bleBeaconsSearch( _qs )
+    /** Данные для поиска bluetooth-маячков. */
+    lazy val bleSearchCtxFut = scAdSearchUtil.bleBeaconsSearch(
+      scQs = _qs,
+      innerHits = Some {
+        MEsInnerHitsInfo(
+          fields = (
+            MNodeFields.Edges.EO_PREDICATE_FN ::
+              MNodeFields.Edges.EO_NODE_IDS_FN ::
+              Nil
+            ),
+        )
+      }
+    )
+
     lazy val adSearch2Fut = for {
       bleSearchCtx <- bleSearchCtxFut
     } yield {
       scAdSearchUtil.qsArgs2nodeSearch(
         args                  = _qs,
-        innerHitsDocValuesFns = (
-          MNodeFields.Edges.EO_PREDICATE_FN ::
-          MNodeFields.Edges.EO_NODE_IDS_FN ::
-          Nil
-        ),
         bleSearchCtx          = bleSearchCtx,
       )
     }
@@ -133,7 +143,6 @@ trait ScAdsTile
           bleSearchCtx <- _bleSearchCtxFut
 
         } yield {
-          //.source[SearchHit]( adSearch.toEsQuery )
           val res = (for {
             searchHit <- searchHits.iterator
           } yield {
@@ -192,21 +201,24 @@ trait ScAdsTile
                 nodeMatchings = ihNodeIds
                   .iterator
                   .map { nodeId =>
-                    val ntype =
                     // Нужно найти связь с ble-маячком или иным узлом в контексте ble-search, если она есть.
+                    val ntype =
                       if ( bleSearchCtx.uidsClear contains nodeId ) Some( MNodeTypes.BleBeacon )
                       else if (adnNodeIds contains nodeId) Some( MNodeTypes.AdnNode )
                       else if (tagNodeIds contains nodeId) Some( MNodeTypes.Tag )
                       else None
                     MScNodeMatchInfo(
                       nodeId = Some( nodeId ),
-                      ntype  = ntype
+                      ntype  = ntype,
                     )
                   }
                   .toSeq
               )
             })
               .toSeq
+
+            if (ihAdMatchInfos.nonEmpty)
+              LOGGER.trace(s"$logPrefix Found ${ihAdMatchInfos.size} ad-matchings for nodeAd#${searchHit.getId}:\n ${ihAdMatchInfos.mkString(",\n ")}")
 
             MAdInfo( mNode, ihAdMatchInfos )
           })
@@ -419,13 +431,13 @@ trait ScAdsTile
           }
 
         // Узнать, какой шаблон рендерить.
-        val (tpl2, selPathRev) = if (isDisplayOpened) {
+        val (tpl2, selPathRev): (Tree[JdTag], List[Int]) = if (isDisplayOpened) {
           LOGGER.trace(s"$logPrefix Ad#${brArgs.mad.idOrNull} renders focused by default.")
-          jdAdUtil.getNodeTpl( brArgs.mad ) -> List.empty[Int]
+          jdAdUtil.getNodeTpl( brArgs.mad ) -> Nil
         } else {
           val (tpl1, i) = jdAdUtil.getNodeTpl(brArgs.mad).getMainBlockOrFirst
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-          jdAdUtil.resetBlkWide( tpl1 ) -> (i :: List.empty)
+          jdAdUtil.resetBlkWide( tpl1 ) -> (i :: Nil)
         }
 
         // Собираем необходимые эджи и упаковываем в переносимый контейнер:
@@ -439,6 +451,10 @@ trait ScAdsTile
             allowWide     = isDisplayOpened,
             forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
             selPathRev    = selPathRev,
+            // Рендерить заголовки карточек в ответе только когда запрошено с клиента. А запрашивается это обычно для нотификаций.
+            nodeTitle     = OptionUtil.maybeOpt( _qs.grid.exists(_.adTitles) )(
+              adInfo.mnode.meta.basic.nameOpt
+            ),
           )(ctx)
           .execute()
 
@@ -450,6 +466,7 @@ trait ScAdsTile
           }
         }
 
+        // Сборка прототипа JSON, описывающего один результат по карточке.
         for {
           jd <- jdFut
           canEditOpt <- canEditFocusedOptFut

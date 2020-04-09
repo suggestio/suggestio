@@ -26,9 +26,6 @@ object MScCommonQs {
     final def SCREEN_FN = ScConstants.ReqArgs.SCREEN_FN
     @inline
     final def LOC_ENV_FN = ScConstants.ReqArgs.LOC_ENV_FN
-
-    val SEARCH_GRID_ADS_FN  = "g"
-    val SEARCH_TAGS_FN      = "t"
   }
 
   /** Поддержка play-json. */
@@ -39,17 +36,13 @@ object MScCommonQs {
       .inmap[MLocEnv](
         EmptyUtil.opt2ImplMEmptyF( MLocEnv ),
         EmptyUtil.implEmpty2OptF
-      ) and
-    (__ \ Fields.SEARCH_GRID_ADS_FN).formatNullable[Boolean] and
-    (__ \ Fields.SEARCH_TAGS_FN).formatNullable[Boolean]
+      )
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
 
   def screen        = GenLens[MScCommonQs](_.screen)
   def locEnv        = GenLens[MScCommonQs](_.locEnv)
-  def searchGridAds = GenLens[MScCommonQs](_.searchGridAds)
-  def searchNodes   = GenLens[MScCommonQs](_.searchNodes)
 
 }
 
@@ -59,14 +52,9 @@ object MScCommonQs {
   * @param screen Параметры экрана клиентского устройства.
   * @param apiVsn Версия Sc API.
   * @param locEnv Данные геолокации и физического окружения, если есть.
-  * @param searchGridAds Флаг поиска и возврата разных карточек плитки в ответе.
-  *                      true - некий автофокус на карточку при запуске в рамках index+grid+foc.
-  * @param searchNodes Флаг поиска узлов/тегов.
   */
 case class MScCommonQs(
                         apiVsn            : MScApiVsn           = MScApiVsns.unknownVsn,
                         screen            : Option[MScreen]     = None,
                         locEnv            : MLocEnv             = MLocEnv.empty,
-                        searchGridAds     : Option[Boolean]     = None,
-                        searchNodes       : Option[Boolean]     = None,
                       )

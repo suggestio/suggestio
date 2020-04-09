@@ -6,7 +6,7 @@ import diode._
 import io.suggest.id.login.m.{ExtLoginVia, ExtLoginViaTimeout}
 import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.routes.routes
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 
 /**

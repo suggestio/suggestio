@@ -5,7 +5,7 @@ import diode.data.Pot
 import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 import io.suggest.geo.{GeoLocType, MGeoLoc}
 import io.suggest.sc.m.inx.MScSwitchCtx
-import io.suggest.sjs.dom.GeoLocWatchId_t
+import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._

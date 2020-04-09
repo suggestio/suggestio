@@ -30,7 +30,7 @@ object MSaveS {
 
   @inline implicit def univEq: UnivEq[MSaveS] = UnivEq.derive
 
-  val saveReq = GenLens[MSaveS](_.saveReq)
+  def saveReq = GenLens[MSaveS](_.saveReq)
 
 }
 

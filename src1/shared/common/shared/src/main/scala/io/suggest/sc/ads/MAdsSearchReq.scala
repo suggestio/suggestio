@@ -41,7 +41,7 @@ object MAdsSearchReq extends IEmpty {
   def prodId = GenLens[MAdsSearchReq](_.prodId)
 
 
-  implicit class AsrOpsExt( val req: MAdsSearchReq ) extends AnyVal {
+  implicit final class AsrOpsExt( val req: MAdsSearchReq ) extends AnyVal {
 
     def withOffset(offset: Option[Int] = None) =
       MAdsSearchReq.offset.set(offset)(req)

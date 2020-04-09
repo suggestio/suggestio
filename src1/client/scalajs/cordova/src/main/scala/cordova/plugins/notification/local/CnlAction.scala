@@ -9,25 +9,10 @@ import scala.scalajs.js
   * Description: notification.actions
   * @see [[https://github.com/katzer/cordova-plugin-local-notifications#actions]]
   */
-
-object CnlAction {
-
-  type CnlActionType_t <: js.Any
-
-  /** @see [[https://github.com/katzer/cordova-plugin-local-notifications#properties-1]] */
-  object Types {
-    private def _input = "input"
-    def `button+input` = ("button+" + _input).asInstanceOf[CnlActionType_t]
-    def `input` = _input.asInstanceOf[CnlActionType_t]
-  }
-
-}
-
-
 trait CnlAction extends js.Object {
   val id: String
   val title: String
-  val `type`: js.UndefOr[CnlAction.CnlActionType_t] = js.undefined
+  val `type`: js.UndefOr[String] = js.undefined
   val launch: js.UndefOr[js.Any] = js.undefined
   val ui: js.UndefOr[js.Any] = js.undefined  // iOS
   val needsAuth: js.UndefOr[js.Any] = js.undefined  // iOS

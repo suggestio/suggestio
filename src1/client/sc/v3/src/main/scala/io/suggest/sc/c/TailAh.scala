@@ -20,7 +20,7 @@ import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.sc3.Sc3Pages
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing

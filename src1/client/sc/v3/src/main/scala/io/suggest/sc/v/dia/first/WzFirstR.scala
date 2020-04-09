@@ -77,6 +77,8 @@ class WzFirstR(
                   Mui.SvgIcons.MyLocation -> crCtx.messages(MsgCodes.`Geolocation`)
                 case MWzPhases.BlueToothPerm =>
                   Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
+                case MWzPhases.NotificationPerm =>
+                  Mui.SvgIcons.Notifications -> crCtx.messages( MsgCodes.`Notifications` )
                 case _ =>
                   Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
               }
@@ -103,11 +105,13 @@ class WzFirstR(
                 // Сборка текста вопроса:
                 props.first.frame match {
                   case MWzFrames.AskPerm =>
-                    val msgCodeOpt = props.first.phase match {
+                    val msgCodeOpt: Option[String] = props.first.phase match {
                       case MWzPhases.GeoLocPerm =>
                         Some( MsgCodes.`0.uses.geoloc.to.find.ads` )
                       case MWzPhases.BlueToothPerm =>
                         Some( MsgCodes.`0.uses.bt.to.find.ads.indoor` )
+                      case MWzPhases.NotificationPerm =>
+                        Some( MsgCodes.`Notify.about.offers.nearby` )
                       case _ =>
                         None
                     }
@@ -124,6 +128,8 @@ class WzFirstR(
                           Right( MsgCodes.`GPS` )
                         case MWzPhases.BlueToothPerm =>
                           Right( MsgCodes.`Bluetooth` )
+                        case MWzPhases.NotificationPerm =>
+                          Right( MsgCodes.`Notifications` )
                         case MWzPhases.Finish =>
                           val msg = crCtx.messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
                           Left( msg )

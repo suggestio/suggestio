@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.conf.ConfConst
 import io.suggest.kv.MKvStorage
 import io.suggest.lk.m.TouchDevSet
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DoNothing
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._

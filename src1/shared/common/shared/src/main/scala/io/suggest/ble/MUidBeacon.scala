@@ -1,6 +1,7 @@
 package io.suggest.ble
 
 import io.suggest.ble.BleConstants.Beacon.Qs._
+import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -32,11 +33,14 @@ object MUidBeacon {
   *            EddyStone: "$gid$bid"
   * @param distanceCm Расстояние в сантиметрах, если известно.
   */
-case class MUidBeacon(
-                       uid          : String,
-                       distanceCm   : Int
-                     ) {
+final case class MUidBeacon(
+                             uid          : String,
+                             distanceCm   : Int
+                           )
+  extends IId[String]
+{
 
+  override def id = uid
   override def toString = "B(" + uid + "," + distanceCm + "cm)"
 
 }

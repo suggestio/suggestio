@@ -7,13 +7,15 @@ import scala.scalajs.js.|
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 28.02.2020 19:06
+  * Description: Одна нотификация.
+  * Этот JSON собирается и на стороне CNL (при сериализации), поэтому НЕ стоит использовать необычные типы.
+  *
+  * @see [[https://github.com/katzer/cordova-plugin-local-notifications#properties]]
   */
-
-/** @see [[https://github.com/katzer/cordova-plugin-local-notifications#properties]] */
-trait CnlNotification extends js.Object {
+trait CnlToast extends js.Object {
 
   val id: js.UndefOr[Int] = js.undefined
-  val data: js.UndefOr[js.Object] = js.undefined
+  val data: js.UndefOr[js.Any] = js.undefined
   val timeoutAfter: js.UndefOr[js.Any] = js.undefined
   val summary: js.UndefOr[String] = js.undefined
   val led: js.UndefOr[CnlLed] = js.undefined
@@ -21,7 +23,7 @@ trait CnlNotification extends js.Object {
   val channel: js.UndefOr[js.Any] = js.undefined
   val actions: js.UndefOr[js.Array[String | CnlAction]] = js.undefined
 
-  val text: js.UndefOr[String | CnlMessage] = js.undefined
+  val text: js.UndefOr[String | js.Array[CnlMessage]] = js.undefined
   val icon: js.UndefOr[String] = js.undefined
   val attachments: js.UndefOr[js.Array[String]] = js.undefined
   val smallIcon: js.UndefOr[String] = js.undefined

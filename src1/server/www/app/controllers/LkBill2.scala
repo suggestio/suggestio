@@ -647,6 +647,7 @@ class LkBill2 @Inject() (
               allowWide     = false,
               forceAbsUrls  = false,
               selPathRev    = mainBlkIndex :: List.empty,
+              nodeTitle     = None,
             )(ctx)
             .execute()
         }

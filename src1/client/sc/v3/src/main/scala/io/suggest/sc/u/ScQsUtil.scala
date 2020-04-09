@@ -2,7 +2,7 @@ package io.suggest.sc.u
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MPxRatios, MScreen}
-import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.es.model.MEsUuId.Implicits._
@@ -36,13 +36,15 @@ object ScQsUtil {
       common = MScCommonQs(
         locEnv      = getLocEnv(mroot, withGeoLoc = true),
         apiVsn      = mroot.internals.conf.apiVsn,
-        searchNodes = OptionUtil.SomeBool.someFalse,
         screen      = Some( mroot.dev.screen.info.screen ),
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
         rcvrId    = mroot.index.state.rcvrId.toEsUuIdOpt,
-      )
+      ),
+      nodes = Some( MScNodesArgs(
+        _searchNodes = false,
+      )),
     )
   }
 
@@ -77,7 +79,6 @@ object ScQsUtil {
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
         locEnv = getLocEnv(mroot, withGeoLoc = currRcvrId.isEmpty),
-        searchGridAds = OptionUtil.SomeBool.someFalse,
       ),
       search = MAdsSearchReq(
         rcvrId      = currRcvrId,
@@ -88,6 +89,9 @@ object ScQsUtil {
         limit = Some( adsPerReqLimit ),
         offset = Some( offset ),
       ),
+      grid = Some( MScGridArgs(
+        focAfterJump = OptionUtil.SomeBool.someFalse,
+      ))
     )
   }
 
@@ -122,13 +126,17 @@ object ScQsUtil {
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
         locEnv = getLocEnv(mroot, withGeoLoc = false),
-        searchGridAds = OptionUtil.SomeBool.someFalse,
       ),
       search = MAdsSearchReq(
         genOpt = Some( mroot.index.state.generation ),
         offset = Some(0),
         limit  = Some( adsPerReqLimit ),
-      )
+      ),
+      grid = Some( MScGridArgs(
+        focAfterJump = OptionUtil.SomeBool.someFalse,
+        // Надо возвращать названия карточек с сервера, чтобы их можно было отрендерить текстом в системной нотификации.
+        adTitles = true
+      )),
     )
   }
 

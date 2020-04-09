@@ -21,7 +21,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
-import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.c.search.SearchAh
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
@@ -360,10 +360,6 @@ class IndexAh[M](
           else MLocEnv.empty
         },
         screen = Some( root.dev.screen.info.screen ),
-        // Не надо плитку присылать, если demandLocTest: вопрос на экране не требует плитки.
-        searchGridAds = OptionUtil.maybeTrue( withStuff ),
-        // Сразу запросить поиск по узлам, если панель поиска открыта.
-        searchNodes = OptionUtil.maybeTrue( isSearchNodes && withStuff ),
       ),
       index = Some( switchCtx.indexQsArgs ),
       // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
@@ -385,7 +381,19 @@ class IndexAh[M](
           Option( root.index.search.text.query )
             .filter(_.nonEmpty)
         }
-      )
+      ),
+      grid = Option.when( withStuff )(
+        MScGridArgs(
+          // Не надо плитку присылать, если demandLocTest: вопрос на экране не требует плитки.
+          focAfterJump = OptionUtil.SomeBool.someTrue,
+        )
+      ),
+      // Сразу запросить поиск по узлам, если панель поиска открыта.
+      nodes = Option.when( isSearchNodes && withStuff )(
+        MScNodesArgs(
+          _searchNodes = true,
+        )
+      ),
     )
 
     // Продолжать, только если reqSearchArgs изменились:

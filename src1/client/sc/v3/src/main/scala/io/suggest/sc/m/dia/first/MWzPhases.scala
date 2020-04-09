@@ -20,6 +20,9 @@ object MWzPhases extends Enum[MWzPhase] {
   /** Описание запроса доступа к bluetooth. */
   case object BlueToothPerm extends MWzPhase
 
+  /** Пермишшен нотификации. */
+  case object NotificationPerm extends MWzPhase
+
   /** Писулька с окончанием писанины и кнопкой завершения настройки. */
   case object Finish extends MWzPhase
 

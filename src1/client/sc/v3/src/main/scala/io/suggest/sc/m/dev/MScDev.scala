@@ -22,17 +22,19 @@ object MScDev {
       (a.screen   ===* b.screen) &&
       (a.platform ===* b.platform) &&
       (a.geoLoc   ===* b.geoLoc) &&
-      (a.beaconer ===* b.beaconer)
+      (a.beaconer ===* b.beaconer) &&
+      (a.osNotify ===* b.osNotify)
     }
   }
 
   @inline implicit def univEq: UnivEq[MScDev] = UnivEq.derive
 
   // "Линзы" для упрощённого доступа к полям нижнего уровня.
-  val screen    = GenLens[MScDev]( _.screen )
-  val platform  = GenLens[MScDev]( _.platform )
-  val geoLoc    = GenLens[MScDev]( _.geoLoc )
-  val beaconer  = GenLens[MScDev]( _.beaconer )
+  val screen = GenLens[MScDev]( _.screen )
+  val platform = GenLens[MScDev]( _.platform )
+  val geoLoc = GenLens[MScDev]( _.geoLoc )
+  val beaconer = GenLens[MScDev]( _.beaconer )
+  val osNotify = GenLens[MScDev]( _.osNotify )
 
 }
 
@@ -41,10 +43,12 @@ object MScDev {
   *
   * @param screen Состояние экрана устройства.
   * @param geoLoc Состояния геолокации.
+  * @param osNotify Состояния внешних уведомлений.
   */
 case class MScDev(
                    screen       : MScScreenS,
                    platform     : MPlatformS,
                    geoLoc       : MScGeoLoc        = MScGeoLoc.empty,
                    beaconer     : MBeaconerS       = MBeaconerS.empty,
+                   osNotify     : MScOsNotifyS     = MScOsNotifyS.empty,
                  )

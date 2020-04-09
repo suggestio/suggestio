@@ -68,7 +68,7 @@ case class MAeRoot(
       doc = jdArgs.data.doc,
       edges = {
         val videoPred = MPredicates.JdContent.Frame
-        val resetUrlF = MJdEdge.url.set( None )
+        val resetUrlF = MJdEdge.url set None
         jdArgs
           .data
           .edges
@@ -81,6 +81,7 @@ case class MAeRoot(
           }
           .values
       },
+      title = jdArgs.data.title,
     )
   }
 

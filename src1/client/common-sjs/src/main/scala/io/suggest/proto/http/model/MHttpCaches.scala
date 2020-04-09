@@ -11,7 +11,7 @@ import org.scalajs.dom.experimental.{Request, Response}
 import scala.concurrent.Future
 import scala.scalajs.js
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.dom.DomWindowCaches._
+import io.suggest.sjs.dom2.DomWindowCaches._
 
 import scala.scalajs.js.JavaScriptException
 

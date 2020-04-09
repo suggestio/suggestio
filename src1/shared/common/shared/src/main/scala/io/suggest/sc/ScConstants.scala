@@ -147,12 +147,12 @@ object ScConstants {
     object FAd {
 
       /** Суффикс id sm-block div для focused-карточек. */
-      def BLOCK_ID_SUFFIX = "fblk"
+      final def BLOCK_ID_SUFFIX = "fblk"
 
     }
 
     /** Надо ли автоматом фокусировать карточку, которая была кликнута, но привела к перескоку в другую выдачу? */
-    def AUTO_FOCUS_AFTER_FOC_INDEX = false
+    final def AUTO_FOCUS_AFTER_FOC_INDEX = false
 
   }
 
@@ -171,10 +171,10 @@ object ScConstants {
     final val ASYNC_INIT_FNAME = NAME + "AsyncInit"
 
     /** id script-тега js-роутера. HTML5 разрешает script.id. */
-    def DOM_ID = "scJsRouterCont"
+    final def DOM_ID = "scJsRouterCont"
 
     /** relative-ссылка на скрипт js-роутера. */
-    def URI = "/sc/router.js"
+    final def URI = "/sc/router.js"
 
   }
 

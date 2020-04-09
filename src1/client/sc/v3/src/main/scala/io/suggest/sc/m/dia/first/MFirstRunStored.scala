@@ -22,8 +22,11 @@ object MFirstRunStored extends Log {
     /** Версия первой инфы о первом запуске. */
     def INITIAL = 0
 
-    /** Текущая версия. */
-    def CURRENT = INITIAL
+    /** Текущая версия.
+      *
+      * 1 - добавлена проверка доступа к Notification API для cordova и browser+DEV-режим.
+      */
+    def CURRENT = 1
 
   }
 

@@ -5,7 +5,7 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success

@@ -7,12 +7,15 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
+import io.suggest.os.notify.NotifyPermission
+import io.suggest.os.notify.api.cnl.CordovaLocalNotificationlUtil
+import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
 import io.suggest.sc.m.GeoLocOnOff
 import io.suggest.sc.m.dia.first._
 import io.suggest.sc.m.dia._
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
@@ -23,6 +26,10 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 import io.suggest.sc.u.Sc3ConfUtil
+import org.scalajs.dom
+import org.scalajs.dom.experimental.permissions.PermissionName
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -36,11 +43,11 @@ import io.suggest.sc.u.Sc3ConfUtil
   * - Если нет доступа к чему-либо, то запросить доступ.
   * - Сохранить в localStorage, что инициализация уже была проведена.
   */
-class FirstRunDialogAh[M](
-                           platformRO       : ModelRO[MPlatformS],
-                           modelRW          : ModelRW[M, MWzFirstOuterS],
-                           dispatcher       : Dispatcher,
-                         )
+class WzFirstDiaAh[M](
+                       platformRO       : ModelRO[MPlatformS],
+                       modelRW          : ModelRW[M, MWzFirstOuterS],
+                       dispatcher       : Dispatcher,
+                     )
   extends ActionHandler( modelRW )
   with Log
 { ah =>
@@ -281,7 +288,7 @@ class FirstRunDialogAh[M](
       if (
         m.showHide &&
         v0.view.isEmpty &&
-        FirstRunDialogAh.isNeedWizardFlow()
+        WzFirstDiaAh.isNeedWizardFlow()
       ) {
         // Акк для эффектов:
         var fxsAcc: List[Effect] = Nil
@@ -339,6 +346,9 @@ class FirstRunDialogAh[M](
       case MWzPhases.BlueToothPerm =>
         val fx = BtOnOff( isEnabled = true )
           .toEffectPure
+        Some(fx)
+      case MWzPhases.NotificationPerm =>
+        val fx = NotifyPermission( isRequest = true ).toEffectPure
         Some(fx)
       case _ =>
         None
@@ -493,9 +503,12 @@ class FirstRunDialogAh[M](
     PermissionSpec(
       phase     = MWzPhases.GeoLocPerm,
       supported = GeoLocUtilJs.envHasGeoLoc(),
-      askPermF  =
-        if (platform.isCordova) CordovaDiagonsticPermissionUtil.getGeoLocPerm
-        else Html5PermissionApi.getGeoLocPerm
+      askPermF  = {
+        if (platform.isCordova)
+          CordovaDiagonsticPermissionUtil.getGeoLocPerm
+        else
+          () => Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+      }
     ) #::
     // Bluetooth
     PermissionSpec(
@@ -503,13 +516,43 @@ class FirstRunDialogAh[M](
       supported = platform.hasBle,
       askPermF  = CordovaDiagonsticPermissionUtil.getBlueToothState
     ) #::
+    // Notifications
+    PermissionSpec(
+      phase = MWzPhases.NotificationPerm,
+      supported = {
+        (platform.isCordova && CordovaLocalNotificationlUtil.isCnlApiAvailable()) ||
+        // Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
+        (platform.isBrowser && !js.isUndefined(dom.experimental.Notification) && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
+      },
+      askPermF = {
+        if (platform.isCordova)
+          CordovaLocalNotificationlUtil.hasPermissionState
+        else { () =>
+          println("ask notify perm")
+          Try {
+            println("perm api ask")
+            Html5PermissionApi.getPermissionState( PermissionName.notifications )
+          }
+            .recover { case _ =>
+              println("html5 direct ask")
+              Html5NotificationUtil.getPermissionState()
+            }
+            .getOrElse( Future.failed(new UnsupportedOperationException) )
+        }
+      }
+    ) #::
+    // И всё на этом.
     LazyList.empty[PermissionSpec]
   }
 
 }
 
 
-object FirstRunDialogAh extends Log {
+object WzFirstDiaAh extends Log {
+
+  // developmentMode - Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
+  /** Запрашивать доступ на нотификацию в браузере. */
+  final def NOTIFICATION_IN_BROWSER = scalajs.LinkingInfo.developmentMode
 
   /** Быстро выдать ответ: надо ли передавать управление запуском в контроллер визарда?
     * Тут только поверхностные проверки без углубления.

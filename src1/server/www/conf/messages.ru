@@ -201,7 +201,7 @@ Input.text.from.picture=Введите текст с картинки
 error.captcha=Неверный код проверки.
 
 blocks.field.isWide=Использовать широкоформатное отображение?
-blocks.field.title=Заголовок
+Title=Заголовок
 blocks.field.bgColor=Цвет фона
 blocks.field.href=Ссылка на внешний ресурс
 Add.text.block=Добавить текстовый блок
@@ -866,8 +866,10 @@ Paid=Оплачено
 
 Radius=Радиус
 in.radius.of.0.from.1=в {0} от {1}
+in.radius.of.0=в радиусе {0}
 n.km._kilometers={0} км
 n.m._meters={0} м
+n.cm._centimeters={0} см
 in.geopoint.x=в точке {0}
 
 Order.status.a=Корзина
@@ -1120,4 +1122,13 @@ Hide=Скрыть
 Settings=Настройки
 0.not.supported.on.this.platform.1={0} не поддерживается на текущей платформе ({1}).
 Install.app.for.access.to.0=Установите приложение для получения доступа к {0}.
+
+Notifications=Уведомления
+Notify.about.offers.nearby=Уведомлять о предложениях поблизости.
+
+0.offers.nearby={0} предложений рядом с вами
+One.offer.nearby=Есть предложение рядом!
+
+0._inDistance.1={0} ({1})
+Show.offers.0=Показать предложения {0}
 

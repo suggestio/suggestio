@@ -135,6 +135,11 @@ object OptionUtil {
       else someFalse
     }
 
+    def orNone(bool: Boolean): Option[Boolean] = {
+      if (bool) someTrue
+      else None
+    }
+
   }
 
 }

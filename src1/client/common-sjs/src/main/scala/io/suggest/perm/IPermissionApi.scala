@@ -61,3 +61,21 @@ case class PermissionStateSnapshot(
   override def onChange(f: IPermissionState => _) = parent.onChange(f)
   override def onChangeReset() = parent.onChangeReset()
 }
+
+
+/** Реализация [[IPermissionState]] поверх опционального true-false. */
+final case class BoolOptPermissionState(
+                                         permitted: Option[Boolean],
+                                       )
+  extends IPermissionState
+{
+  override def isPoweredOn = true
+  override def isGranted = permitted.contains(true)
+  override def isDenied = permitted.contains(false)
+  override def isPrompt = permitted.isEmpty
+
+  /** Можно ли подписаться на измение состояния? */
+  override def hasOnChangeApi = false
+  override def onChange(f: Function[IPermissionState, _]): Unit = ???
+  override def onChangeReset(): Unit = ???
+}

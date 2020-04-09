@@ -25,8 +25,8 @@ object MPlatformS {
 
   @inline implicit def univEq: UnivEq[MPlatformS] = UnivEq.derive
 
-  def isUsingNow  = GenLens[MPlatformS](_.isUsingNow)
-  def isReady     = GenLens[MPlatformS](_.isReady)
+  val isUsingNow  = GenLens[MPlatformS](_.isUsingNow)
+  val isReady     = GenLens[MPlatformS](_.isReady)
   def isCordova   = GenLens[MPlatformS](_.isCordova)
   def hasBle      = GenLens[MPlatformS](_.hasBle)
   def osFamily    = GenLens[MPlatformS](_.osFamily)

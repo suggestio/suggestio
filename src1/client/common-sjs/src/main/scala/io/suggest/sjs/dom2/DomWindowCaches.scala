@@ -1,4 +1,4 @@
-package io.suggest.sjs.dom
+package io.suggest.sjs.dom2
 
 import org.scalajs.dom.Window
 import org.scalajs.dom.experimental.serviceworkers.CacheStorage

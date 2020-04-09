@@ -25,21 +25,27 @@ trait CordovaPluginNotificationLocal extends js.Object {
 
   def requestPermission(cb: js.Function1[Boolean, Unit]): Unit = js.native
 
-  def schedule(notification: CnlNotification): Unit = js.native
-  def schedule(notifications: js.Array[CnlNotification]): Unit = js.native
+  def schedule(
+                toasts: CnlToast | js.Array[CnlToast],
+                cb: js.Function0[Unit] = js.native,
+                scope: js.Any = js.native,
+                opts: js.UndefOr[CnlSheduleOpts] = js.native,
+              ): Unit = js.native
 
   def addActions(name: String, actions: js.Array[CnlAction]): Unit = js.native
 
-  def update(notification: CnlNotification): Unit = js.native
+  def update(notification: CnlToast): Unit = js.native
 
   def on(event: String,
-         callback: js.Function2[CnlNotification, CnlEventOpts, Unit],
+         callback: js.Function,
          scope: js.Any = js.native
         ): Unit = js.native
+
   def un(event: String,
-         callback: js.Function2[CnlNotification, CnlEventOpts, Unit],
-         scope: js.Any = js.native
+         callback: js.Function,
         ): Unit = js.native
+
+  val _listener: js.Dictionary[js.Array[js.Function]]
 
   val core: CnlCore = js.native
 
@@ -73,15 +79,16 @@ trait CordovaPluginNotificationLocal extends js.Object {
 
   def getTriggeredIds( callback: js.Function1[js.Array[Int], Unit] ): Unit = js.native
 
-  def getScheduled( callback: js.Function1[js.Array[CnlNotification], Unit] ): Unit = js.native
+  def getScheduled( callback: js.Function1[js.Array[CnlToast], Unit] ): Unit = js.native
 
-  def getTriggered( callback: js.Function1[js.Array[CnlNotification], Unit] ): Unit = js.native
+  def getTriggered( callback: js.Function1[js.Array[CnlToast], Unit] ): Unit = js.native
 
-  def get(id: Int | js.Array[Int], callback: js.Function1[js.UndefOr[CnlNotification], Unit]): Unit = js.native
+  def get(id: Int, callback: js.Function1[js.UndefOr[CnlToast], Unit]): Unit = js.native
+  def get(ids: js.Array[Int], callback: js.Function1[js.Array[CnlToast], Unit]): Unit = js.native
 
-  def getAll( callback: js.Function1[js.Array[CnlNotification], Unit] ): Unit = js.native
+  def getAll( callback: js.Function1[js.Array[CnlToast], Unit] ): Unit = js.native
 
-  def setDefaults(notification: CnlNotification): Unit = js.native
+  def setDefaults(notification: CnlToast): Unit = js.native
 
 }
 
@@ -89,6 +96,14 @@ object CordovaPluginNotificationLocal {
 
   /** scala API, для callback-методов, которые заменены на Future. */
   implicit class CnlOpsExt( private val cnl: CordovaPluginNotificationLocal ) extends AnyVal {
+
+    def scheduleF(
+                   toasts: CnlToast | js.Array[CnlToast],
+                   scope: js.Any = js.undefined,
+                   opts: js.UndefOr[CnlSheduleOpts] = js.undefined,
+                 ): Future[_] = {
+      JsApiUtil.call0Fut( cnl.schedule(toasts, _, scope, opts) )
+    }
 
     def hasPermissionF(): Future[Boolean] =
       JsApiUtil.call1Fut[Boolean]( cnl.hasPermission )
@@ -134,24 +149,20 @@ object CordovaPluginNotificationLocal {
     def getTriggeredIdsF(): Future[js.Array[Int]] =
       JsApiUtil.call1Fut[js.Array[Int]]( cnl.getTriggeredIds )
 
-    def getScheduledF(): Future[js.Array[CnlNotification]] =
-      JsApiUtil.call1Fut[js.Array[CnlNotification]]( cnl.getScheduled )
+    def getScheduledF(): Future[js.Array[CnlToast]] =
+      JsApiUtil.call1Fut[js.Array[CnlToast]]( cnl.getScheduled )
 
-    def getTriggeredF(): Future[js.Array[CnlNotification]] =
-      JsApiUtil.call1Fut[js.Array[CnlNotification]]( cnl.getTriggered )
+    def getTriggeredF(): Future[js.Array[CnlToast]] =
+      JsApiUtil.call1Fut[js.Array[CnlToast]]( cnl.getTriggered )
 
-    def getF(ids: Int*): Future[Option[CnlNotification]] = {
-      JsApiUtil.call1Fut[Option[CnlNotification]]( jsCbF =>
-        cnl.get(
-          ids.toJSArray,
-          ntfUndef =>
-            jsCbF( ntfUndef.toOption ),
-        )
-      )
+    def getF(ids: Int*): Future[js.Array[CnlToast]] = {
+      JsApiUtil.call1Fut[js.Array[CnlToast]] {
+        cnl.get( ids.toJSArray, _ )
+      }
     }
 
-    def getAllF(): Future[js.Array[CnlNotification]] =
-      JsApiUtil.call1Fut[js.Array[CnlNotification]]( cnl.getAll )
+    def getAllF(): Future[js.Array[CnlToast]] =
+      JsApiUtil.call1Fut[js.Array[CnlToast]]( cnl.getAll )
 
   }
 

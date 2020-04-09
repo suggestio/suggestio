@@ -10,7 +10,7 @@ import scala.scalajs.js
   * Created: 20.12.18 13:00
   * Description: Единый импорт для поддержки улучшенных dom-интерфейсов.
   */
-package object dom {
+package object dom2 {
 
   @inline implicit def posOptsToRaw(posOpts: PositionOptions): raw.PositionOptions =
     posOpts.asInstanceOf[raw.PositionOptions]

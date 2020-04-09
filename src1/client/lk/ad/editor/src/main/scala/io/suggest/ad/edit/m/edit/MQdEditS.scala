@@ -25,8 +25,8 @@ object MQdEditS {
 
   @inline implicit def univEq: UnivEq[MQdEditS] = UnivEq.derive
 
-  val initDelta = GenLens[MQdEditS](_.initDelta)
-  val realDelta = GenLens[MQdEditS](_.realDelta)
+  def initDelta = GenLens[MQdEditS](_.initDelta)
+  def realDelta = GenLens[MQdEditS](_.realDelta)
 
 
   implicit class QdEditExt( val qdEditS: MQdEditS ) extends AnyVal {

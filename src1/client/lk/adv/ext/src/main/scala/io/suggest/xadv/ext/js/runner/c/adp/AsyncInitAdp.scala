@@ -3,7 +3,7 @@ package io.suggest.xadv.ext.js.runner.c.adp
 import io.suggest.sjs.common.async.AsyncUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, DomUpdateException, UrlLoadTimeoutException}
 import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtxT}

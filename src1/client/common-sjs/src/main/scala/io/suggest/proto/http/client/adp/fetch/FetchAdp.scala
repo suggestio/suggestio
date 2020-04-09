@@ -6,7 +6,7 @@ import io.suggest.proto.http.model._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.dom.{AbortController, AbortSignal}
+import io.suggest.sjs.dom2.{AbortController, AbortSignal}
 import org.scalajs.dom.experimental._
 
 import scala.concurrent.Future

@@ -11,6 +11,23 @@ import play.api.libs.json.Json
   */
 object DistanceUtil {
 
+  /** Рендер в сантиметрах.
+    *
+    * @param centiMeters Сантиметры.
+    * @return Меседж.
+    */
+  def formatDistanceCM(centiMeters: Int): MMessage = {
+    if (centiMeters < 100) {
+      MMessage(
+        MsgCodes.`n.cm._centimeters`,
+        Json.arr( centiMeters )
+      )
+    } else {
+      formatDistanceM( centiMeters / 100 )
+    }
+  }
+
+
   /** Рендер дистанции
     *
     * @param meters Расстояние в метрах.

@@ -439,8 +439,8 @@ object OutEdges extends MacroLogsImpl {
       // TODO ScoreMode.Avg -- с потолка взято, надо разобраться на тему оптимального варианта.
       var _qn = QueryBuilders.nestedQuery(nestPath, q, ScoreMode.Max)
 
-      for (innerHitBuilder <- outEdges.innerHits)
-        _qn = _qn.innerHit( innerHitBuilder )
+      for (esInnerHit <- outEdges.innerHits)
+        _qn = _qn.innerHit( esInnerHit )
 
       // TODO Организовать сборку .innerHits().
       if (withQname)

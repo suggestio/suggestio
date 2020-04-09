@@ -67,8 +67,11 @@ object MsgCodes {
 
   val `n.km._kilometers` = "n.km._kilometers"
   val `n.m._meters` = "n.m._meters"
+  val `n.cm._centimeters` = "n.cm._centimeters"
   val `Radius` = "Radius"
   val `in.radius.of.0.from.1` = "in.radius.of.0.from.1"
+  val `in.radius.of.0` = "in.radius.of.0"
+  val `_from.you` = "_from.you"
 
   val `Adv.on.main.screen` = "Adv.on.main.screen"
   val `Coverage.area` = "Coverage.area"
@@ -448,5 +451,17 @@ object MsgCodes {
   val `0.not.supported.on.this.platform.1` = "0.not.supported.on.this.platform.1"
   val `Install.app.for.access.to.0` = "Install.app.for.access.to.0"
   val `Browser` = "Browser"
+
+  val `Notifications` = "Notifications"
+  val `Notify.about.offers.nearby` = "Notify.about.offers.nearby"
+
+  // TODO Переехать на mozilla fluent, чтобы отработать варианты "2 предложениЯ", "5 предложениЙ" и др.
+  val `0.offers.nearby` = "0.offers.nearby"
+  val `One.offer.nearby` = "One.offer.nearby"
+
+  val `0._inDistance.1` = "0._inDistance.1"
+  val `Show.offers.0` = "Show.offers.0"
+
+  val `Title` = "Title"
 
 }

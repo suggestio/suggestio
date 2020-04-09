@@ -75,6 +75,7 @@ class LkAdEditFormR(
                      val quillEditorR           : QuillEditorR,
                      val contentEditCssR        : ContentEditCssR,
                      val contentLayersR         : ContentLayersR,
+                     titleR                     : TitleR,
                      textShadowR                : TextShadowR,
                      val touchSwitchR           : TouchSwitchR,
                    ) {
@@ -147,6 +148,11 @@ class LkAdEditFormR(
         // Рендер jd-css
         p.wrap(_ => jdCssStatic)(CssR.apply)(implicitly, FastEq.AnyRefEq),
         s.jdCssArgsC { CssR.apply },
+
+        // Редактирование заголовка.
+        <.div(
+          p.wrap( _.doc.jdDoc.jdArgs.data.title )( titleR.component.apply ),
+        ),
 
         <.div(
           LCSS.outerCont,
@@ -327,18 +333,20 @@ class LkAdEditFormR(
               s.savePropsC { saveR.apply }
             )
 
+            val editors = <.div(
+              LCSS.editorsCont,
+              slideBlockVdom,
+              blockBgSlide,
+              contentSlideBlock,
+              createSlideBlock,
+              saveBtn,
+            )
             // Редакторы собраны снаружи от этого коннекшена, от которого пока не понятно, как избавляться.
             s.rightYOptC { rightYOptProxy =>
-              <.div(
-                LCSS.editorsCont,
+              editors(
                 rightYOptProxy.value.whenDefined { rightY =>
                   ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
                 },
-                slideBlockVdom,
-                blockBgSlide,
-                contentSlideBlock,
-                createSlideBlock,
-                saveBtn
               )
             }
           },

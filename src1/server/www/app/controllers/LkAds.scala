@@ -225,6 +225,8 @@ class LkAds @Inject() (
             allowWide     = false,
             forceAbsUrls  = false,
             selPathRev    = mainBlkIndex :: List.empty,
+            // title: сейчас в форме названия нигде не рендерятся. Поэтому и на клиент их не отправляем.
+            nodeTitle     = None,
           )(ctx)
           .execute()
 

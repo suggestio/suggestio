@@ -14,8 +14,6 @@ import monocle.macros.GenLens
   */
 object MEditorsS {
 
-  def empty = apply()
-
   implicit object MEditorsSFastEq extends FastEq[MEditorsS] {
     override def eqv(a: MEditorsS, b: MEditorsS): Boolean = {
       (a.qdEdit ===* b.qdEdit) &&
@@ -39,10 +37,10 @@ object MEditorsS {
 
   }
 
-  val qdEdit      = GenLens[MEditorsS](_.qdEdit)
-  val stripEd     = GenLens[MEditorsS](_.stripEd)
+  def qdEdit = GenLens[MEditorsS](_.qdEdit)
+  def stripEd = GenLens[MEditorsS](_.stripEd)
   val slideBlocks = GenLens[MEditorsS](_.slideBlocks)
-  val colorsState = GenLens[MEditorsS](_.colorsState)
+  def colorsState = GenLens[MEditorsS](_.colorsState)
 
   @inline implicit def univEq: UnivEq[MEditorsS] = UnivEq.derive
 

@@ -17,13 +17,15 @@ object MJdData {
   object Fields {
     val DOC_FN      = "d"
     val EDGES_FN    = "e"
+    val TITLE_FN    = "t"
   }
 
   /** Поддержка play-json. */
   implicit def jdDataJson: OFormat[MJdData] = (
     (__ \ Fields.DOC_FN).format[MJdDoc] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
-    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]]
+    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]] and
+    (__ \ Fields.TITLE_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -33,8 +35,9 @@ object MJdData {
     UnivEq.derive
   }
 
-  val doc       = GenLens[MJdData](_.doc)
-  val edges     = GenLens[MJdData](_.edges)
+  def doc       = GenLens[MJdData](_.doc)
+  def edges     = GenLens[MJdData](_.edges)
+  def title = GenLens[MJdData](_.title)
 
 }
 
@@ -44,8 +47,10 @@ object MJdData {
   *
   * @param doc Данные документа.
   * @param edges Эджи с данными для рендера документа.
+  * @param title Строковой заголовок (наименование) карточки/документа.
   */
 final case class MJdData(
                           doc         : MJdDoc,
                           edges       : Iterable[MJdEdge],
+                          title       : Option[String],
                         )

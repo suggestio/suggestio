@@ -5,7 +5,7 @@ import io.suggest.id.IdentConst
 import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.http.HttpConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import org.scalajs.dom.Blob
 import play.api.libs.json.{Json, Reads}

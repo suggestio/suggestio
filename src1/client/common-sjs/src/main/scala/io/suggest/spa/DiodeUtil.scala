@@ -7,6 +7,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
+import scala.concurrent.Future
 import scala.util.Try
 
 /**
@@ -37,7 +38,7 @@ object DiodeUtil {
       *
       * @param effects Эффекты.
       */
-    implicit class EffectsOps(private val effects: IterableOnce[Effect]) extends AnyVal {
+    implicit final class EffectsOps(private val effects: IterableOnce[Effect]) extends AnyVal {
 
       /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
         *
@@ -45,8 +46,8 @@ object DiodeUtil {
         *         Some(fx) с объединённым, либо единственным, эффектом.
         */
       def mergeEffects: Option[Effect] = {
-        OptionUtil.maybe(effects.nonEmpty) {
-          val iter = effects.iterator
+        val iter = effects.iterator
+        OptionUtil.maybe(iter.nonEmpty) {
           val fx1 = iter.next()
           if (iter.hasNext) {
             new EffectSet(fx1, iter.toSet, defaultExecCtx)
@@ -66,7 +67,7 @@ object DiodeUtil {
 
 
     /** Расширенная утиль для Pot'ов. */
-    implicit class PotOpsExt[T](val pot: Pot[T]) extends AnyVal {
+    implicit final class PotOpsExt[T](private val pot: Pot[T]) extends AnyVal {
 
       def pendingOpt: Option[PendingBase] = {
         pot match {
@@ -100,7 +101,7 @@ object DiodeUtil {
 
 
     /** Расширенное API для ActionHandler'ов. */
-    implicit class ActionHandlerExt[M, T](val ah: ActionHandler[M, T]) extends AnyVal {
+    implicit final class ActionHandlerExt[M, T](private val ah: ActionHandler[M, T]) extends AnyVal {
 
       def updateMaybeSilent(silent: Boolean)(v2: T): ActionResult[M] = {
         if (silent) ah.updatedSilent(v2)
@@ -141,6 +142,23 @@ object DiodeUtil {
 
       def updatedSilentMaybeEffect(v2: T, effectOpt: Option[Effect]): ActionResult[M] = {
         effectOpt.fold( ah.updatedSilent(v2) ) { fx => ah.updatedSilent(v2, fx) }
+      }
+
+    }
+
+
+    /** Костыли для Circuit'ов. */
+    implicit final class CircuitOpsExt[M <: AnyRef](private val circuit: Circuit[M]) extends AnyVal {
+
+      // TODO Этот код должен быть дедублицирован в circuit и вынесен в публичное API Circuit-класса.
+      def runEffect[A: ActionType](effect: Effect, action: A): Future[Unit] = {
+        import diode.AnyAction._
+
+        effect
+          .run(a => circuit.dispatch(a))
+          .recover {
+            case e: Throwable => circuit.handleEffectProcessingError(action, e)
+          }(effect.ec)
       }
 
     }

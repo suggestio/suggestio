@@ -622,6 +622,8 @@ trait ScFocusedAds
             allowWide     = true,
             forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
             selPathRev    = List.empty,
+            // Возвращать явно-заданный заголовок карточки, чтобы выводить в заголовке браузера.
+            nodeTitle     = mad.meta.basic.nameOpt,
           )(ctx)
           .execute()
 
@@ -637,7 +639,7 @@ trait ScFocusedAds
             jd = jd,
             info = MScAdInfo(
               canEditOpt = Some(isEditAllowed),
-              flags      = scUtil.collectScRcvrFlags(_qs, args.brArgs.mad)
+              flags      = scUtil.collectScRcvrFlags(_qs, args.brArgs.mad),
             )
           )
         }

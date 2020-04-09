@@ -125,7 +125,7 @@ trait ScUniApi
               foc0 <- qs.foc
               if {
                 // Разрешить авто-фокус, если это запрос при запуске, т.е. в рамках пачки index+grid+foc:
-                (qs.common.searchGridAds contains true) ||
+                qs.grid.exists(_.focAfterJump contains true) ||
                 // Разрешать авто-фокус при любом переходе куда угодно (выключено по итогам разговоров):
                 ScConstants.Focused.AUTO_FOCUS_AFTER_FOC_INDEX
               }
@@ -196,12 +196,15 @@ trait ScUniApi
 
     // Запустить сбор карточек плитки, если требуется:
     def gridAdsRaOptFut: Future[Option[MSc3RespAction]] = {
-      val isWithGridFut = if (qs.common.searchGridAds.nonEmpty) {
+      val isWithGridFut = if (qs.grid.nonEmpty) {
+        LOGGER.trace(s"$logPrefix qs.grid defined = ${qs.grid}")
         Future.successful( true )
       } else {
         // Проверить наличие index+focused в ответе, дополнив ответ автоматически.
-        for (inxSwithOpt <- focJumpToIndexNodeOptFut) yield {
-          inxSwithOpt.isDefined
+        for (inxSwitchOpt <- focJumpToIndexNodeOptFut) yield {
+          val r = inxSwitchOpt.isDefined
+          if (r) LOGGER.trace(s"$logPrefix focJump allowed, will also return grid ads")
+          r
         }
       }
 
@@ -223,7 +226,7 @@ trait ScUniApi
     /** Запуск поиска тегов, если запрошен. */
     def searchRaOptFut: Future[Option[MSc3RespAction]] = {
       val futOpt = for {
-        _ <- qs.common.searchNodes
+        _ <- qs.nodes
       } yield {
         for {
           qs2         <- qsAfterIndexFut

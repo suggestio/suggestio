@@ -157,8 +157,9 @@ class JsMessagesUtil @Inject() (
 
   private def DIST_UNITS: IterableOnce[String] = {
     MC.`n.km._kilometers` ::
-      MC.`n.m._meters` ::
-      Nil
+    MC.`n.m._meters` ::
+    MC.`n.cm._centimeters` ::
+    Nil
   }
 
   /** Коды платежных вещей в формах размещения. */
@@ -288,6 +289,13 @@ class JsMessagesUtil @Inject() (
       MC.`Settings` ::
       MC.`0.not.supported.on.this.platform.1` :: MC.`Install.app.for.access.to.0` ::
       MC.`Browser` ::
+      MC.`Notifications` ::
+      MC.`Notify.about.offers.nearby` ::
+      MC.`0.offers.nearby` :: MC.`One.offer.nearby` ::
+      MC.`0._inDistance.1` ::
+      MC.`in.radius.of.0.from.1` ::
+      MC.`Show.offers.0` ::
+      MC.`in.radius.of.0` ::
       Nil
   }
 
@@ -335,6 +343,7 @@ class JsMessagesUtil @Inject() (
       MC.`Expand` ::
       MC.`Dont.expand` ::
       MC.`Line.height` ::
+      MC.`Title` ::
       MBlockExpandModes.values.iterator.map(_.msgCode).toList
   }
 

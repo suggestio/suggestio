@@ -5,7 +5,7 @@ import io.suggest.sc.MScApiVsn
 import play.api.mvc.QueryStringBindable
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
-import io.suggest.sc.ads.{MAdsSearchReq, MLookupMode, MScFocusArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MLookupMode, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 
@@ -34,22 +34,16 @@ object MScQsJvm {
           screenOptE            <- screenOptB.bind  ( k(SCREEN_FN),             params )
           apiVsnE               <- apiVsnB.bind     ( k(API_VSN_FN),            params )
           locEnvE               <- locEnvB.bind     ( k(LOC_ENV_FN),            params )
-          searchGridAdsOptE     <- boolOptB.bind    ( k(SEARCH_GRID_ADS_FN),    params )
-          searchNodesOptE       <- boolOptB.bind    ( k(SEARCH_TAGS_FN),        params )
         } yield {
           for {
             screenOpt           <- screenOptE
             apiVsn              <- apiVsnE
             locEnv              <- locEnvE
-            searchGridAdsOpt    <- searchGridAdsOptE
-            searchNodesOpt      <- searchNodesOptE
           } yield {
             MScCommonQs(
               screen          = screenOpt,
               apiVsn          = apiVsn,
               locEnv          = locEnv,
-              searchGridAds   = searchGridAdsOpt,
-              searchNodes     = searchNodesOpt
             )
           }
         }
@@ -61,12 +55,42 @@ object MScQsJvm {
           screenOptB.unbind   ( k(SCREEN_FN),             value.screen ),
           apiVsnB.unbind      ( k(API_VSN_FN),            value.apiVsn ),
           locEnvB.unbind      ( k(LOC_ENV_FN),            value.locEnv ),
-          boolOptB.unbind     ( k(SEARCH_GRID_ADS_FN),    value.searchGridAds ),
-          boolOptB.unbind     ( k(SEARCH_TAGS_FN),        value.searchNodes ),
           // TODO SearchTab bind/unbind
         )
       }
 
+    }
+  }
+
+
+  implicit def scNodesArgsQsb(implicit
+                              boolB: QueryStringBindable[Boolean],
+                             ): QueryStringBindable[MScNodesArgs] = {
+    new QueryStringBindableImpl[MScNodesArgs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScNodesArgs]] = {
+        val F = MScNodesArgs.Fields
+        val k = key1F( key )
+        for {
+          // Надо помнить, что должен быть хотя бы один не-Option параметр. Иначе тут всегда будет всё хорошо при None во всех биндерах.
+          searchNodesE <- boolB.bind( k(F.SEARCH_NODES_FN), params )
+        } yield {
+          for {
+            searchNodes <- searchNodesE
+          } yield {
+            MScNodesArgs(
+              _searchNodes = searchNodes,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MScNodesArgs): String = {
+        val F = MScNodesArgs.Fields
+        val k = key1F( key )
+        _mergeUnbinded1(
+          boolB.unbind( k(F.SEARCH_NODES_FN), value._searchNodes ),
+        )
+      }
     }
   }
 
@@ -131,47 +155,93 @@ object MScQsJvm {
   }
 
 
+  implicit def mScGridArgsQsb(implicit
+                              boolB       : QueryStringBindable[Boolean],
+                              boolOptB    : QueryStringBindable[Option[Boolean]],
+                             ): QueryStringBindable[MScGridArgs] = {
+    new QueryStringBindableImpl[MScGridArgs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScGridArgs]] = {
+        val k = key1F(key)
+        val F = MScGridArgs.Fields
+        for {
+          adTitlesE           <- boolB.bind( k(F.AD_TITLES_FN), params )
+          focAfterJumpOptE    <- boolOptB.bind( k(F.FOC_AFTER_JUMP_FN), params )
+        } yield {
+          for {
+            adTitles          <- adTitlesE
+            focAfterJumpOpt   <- focAfterJumpOptE
+          } yield {
+            MScGridArgs(
+              adTitles        = adTitles,
+              focAfterJump    = focAfterJumpOpt,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MScGridArgs): String = {
+        val k = key1F(key)
+        val F = MScGridArgs.Fields
+        _mergeUnbinded1(
+          boolB.unbind( k(F.AD_TITLES_FN), value.adTitles ),
+          boolOptB.unbind( k(F.FOC_AFTER_JUMP_FN), value.focAfterJump ),
+        )
+      }
+    }
+  }
+
+
   /** Поддержка QSB для [[MScQs]]. */
   implicit def mScQsQsb(implicit
                         scUapiCommonQsB    : QueryStringBindable[MScCommonQs],
                         adsSearchReqB      : QueryStringBindable[MAdsSearchReq],
                         scIndexArgsOptB    : QueryStringBindable[Option[MScIndexArgs]],
-                        scFocusArgsOptB    : QueryStringBindable[Option[MScFocusArgs]]
+                        scFocusArgsOptB    : QueryStringBindable[Option[MScFocusArgs]],
+                        scGridArgsOptB     : QueryStringBindable[Option[MScGridArgs]],
+                        scNodesArgsOptB    : QueryStringBindable[Option[MScNodesArgs]],
                        ): QueryStringBindable[MScQs] = {
     new QueryStringBindableImpl[MScQs] {
-      import MScQs.Fields._
-
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScQs]] = {
+        val F = MScQs.Fields
         val k = key1F(key)
         for {
-          commonQsE           <- scUapiCommonQsB.bind ( k(COMMON_FN),         params )
-          adsSearchReqE       <- adsSearchReqB.bind   ( k(ADS_SEARCH_FN),     params )
-          scIndexArgsOptE     <- scIndexArgsOptB.bind ( k(INDEX_FN),          params )
-          scFocusArgsOptE     <- scFocusArgsOptB.bind ( k(FOCUSED_ARGS_FN),   params )
+          commonQsE           <- scUapiCommonQsB.bind ( k(F.COMMON_FN),         params )
+          adsSearchReqE       <- adsSearchReqB.bind   ( k(F.ADS_SEARCH_FN),     params )
+          scIndexArgsOptE     <- scIndexArgsOptB.bind ( k(F.INDEX_FN),          params )
+          scFocusArgsOptE     <- scFocusArgsOptB.bind ( k(F.FOCUSED_ARGS_FN),   params )
+          scGridArgsOptE      <- scGridArgsOptB.bind  ( k(F.GRID_FN),           params )
+          scNodesArgsOptE     <- scNodesArgsOptB.bind ( k(F.NODES_FN),          params )
         } yield {
           for {
             commonQs          <- commonQsE
             adsSearchReq      <- adsSearchReqE
             scIndexArgsOpt    <- scIndexArgsOptE
             scFocusArgsOpt    <- scFocusArgsOptE
+            scGridArgsOpt     <- scGridArgsOptE
+            scNodesArgsOpt    <- scNodesArgsOptE
           } yield {
             MScQs(
               common  = commonQs,
               search  = adsSearchReq,
               index   = scIndexArgsOpt,
-              foc     = scFocusArgsOpt
+              foc     = scFocusArgsOpt,
+              grid    = scGridArgsOpt,
+              nodes   = scNodesArgsOpt,
             )
           }
         }
       }
 
       override def unbind(key: String, value: MScQs): String = {
+        val F = MScQs.Fields
         val k = key1F( key )
         _mergeUnbinded1(
-          scUapiCommonQsB.unbind  ( k(COMMON_FN),         value.common ),
-          adsSearchReqB.unbind    ( k(ADS_SEARCH_FN),     value.search ),
-          scIndexArgsOptB.unbind  ( k(INDEX_FN),          value.index ),
-          scFocusArgsOptB.unbind  ( k(FOCUSED_ARGS_FN),   value.foc )
+          scUapiCommonQsB.unbind  ( k(F.COMMON_FN),         value.common ),
+          adsSearchReqB.unbind    ( k(F.ADS_SEARCH_FN),     value.search ),
+          scIndexArgsOptB.unbind  ( k(F.INDEX_FN),          value.index ),
+          scFocusArgsOptB.unbind  ( k(F.FOCUSED_ARGS_FN),   value.foc ),
+          scGridArgsOptB.unbind   ( k(F.GRID_FN),           value.grid ),
+          scNodesArgsOptB.unbind  ( k(F.NODES_FN),          value.nodes ),
         )
       }
 

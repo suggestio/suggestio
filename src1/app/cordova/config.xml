@@ -53,10 +53,16 @@
         <icon density="hdpi" src="res/icon/android/icon-72.png" />
         <icon density="xhdpi" src="res/icon/android/icon-96.png" />
         <icon density="xxhdpi" src="res/icon/android/icon-144.png" />
-	<icon density="xxxhdpi" src="res/icon/android/icon-192.png" />
-	<edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
-	    <application android:usesCleartextTraffic="true" />
-	</edit-config>
+        <icon density="xxxhdpi" src="res/icon/android/icon-192.png" />
+        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+            <application android:usesCleartextTraffic="true" />
+        </edit-config>
+        <!-- ic_notification icons через resource-file наподобии https://stackoverflow.com/a/35557064 -->
+        <resource-file src="res/icon/android/mipmap-mdpi/ic_notification.png" target="app/src/main/res/mipmap-mdpi/ic_notification.png"/>
+        <resource-file src="res/icon/android/mipmap-hdpi/ic_notification.png" target="app/src/main/res/mipmap-hdpi/ic_notification.png"/>
+        <resource-file src="res/icon/android/mipmap-xhdpi/ic_notification.png" target="app/src/main/res/mipmap-xhdpi/ic_notification.png"/>
+        <resource-file src="res/icon/android/mipmap-xxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxhdpi/ic_notification.png"/>
+        <resource-file src="res/icon/android/mipmap-xxxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxxhdpi/ic_notification.png"/>
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />

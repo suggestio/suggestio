@@ -17,7 +17,7 @@ import io.suggest.lk.r.popup.PopupR
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import react.image.gallery.{IgItem, ImageGalleryPropsR, ImageGalleryR}
 
 import scala.scalajs.js.JSConverters._

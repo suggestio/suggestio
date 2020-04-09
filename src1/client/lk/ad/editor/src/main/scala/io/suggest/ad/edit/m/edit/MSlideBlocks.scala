@@ -23,7 +23,7 @@ object MSlideBlocks {
 
   @inline implicit def univEq: UnivEq[MSlideBlocks] = UnivEq.derive
 
-  val expanded = GenLens[MSlideBlocks](_.expanded)
+  def expanded = GenLens[MSlideBlocks](_.expanded)
 
 }
 

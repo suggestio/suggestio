@@ -29,9 +29,9 @@ object MScDialogs {
 
   @inline implicit def univEq: UnivEq[MScDialogs] = UnivEq.derive
 
-  def first = GenLens[MScDialogs](_.first)
-  def error = GenLens[MScDialogs](_.error)
-  def settings = GenLens[MScDialogs](_.settings)
+  val first = GenLens[MScDialogs](_.first)
+  val error = GenLens[MScDialogs](_.error)
+  val settings = GenLens[MScDialogs](_.settings)
 
 }
 

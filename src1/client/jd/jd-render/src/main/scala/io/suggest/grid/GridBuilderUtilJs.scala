@@ -213,21 +213,22 @@ object GridBuilderUtilJs {
         // TODO Opt Надо бы ограничивать анимацию только на НОВЫХ, впервые добавленных в плитку, элементах qd-blockless, а не для любых.
         _.gbBlock.jdt.name ==* MJdTagNames.QD_CONTENT
       }) {
-        2
+        1   // 0, 1
       } else {
         // Только обычные блоки, без qd-blockless. Можно рендерить спокойно любой анимацией.
-        7
+        4   // 0, 1, 2, 3, 4
       }
       new Random().nextInt(maxAnims + 1) match {
         case 0 => EnterExitStyle.fromTop
         case 1 => EnterExitStyle.fromBottom
-        case 2 => EnterExitStyle.fromLeftToRight
         // Анимации ниже - трансформируют размер. Несовместимо с react-measure, которая используется для qd-blockless (всё будет глючить):
-        case 3 => EnterExitStyle.fromCenter
-        case 4 => EnterExitStyle.foldUp
-        case 5 => EnterExitStyle.newspaper
-        case 6 => EnterExitStyle.simple
-        case _ => EnterExitStyle.skew
+        case 2 => EnterExitStyle.fromCenter
+        case 3 => EnterExitStyle.foldUp
+        case _ => EnterExitStyle.simple
+        // Эти эффекты отключены из дизайнерских соображений:
+        //case 5 => EnterExitStyle.newspaper
+        //case 2 => EnterExitStyle.fromLeftToRight
+        //case _ => EnterExitStyle.skew
       }
     }
 

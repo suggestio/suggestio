@@ -7,6 +7,7 @@ import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdDataJs, MJdRrrProps, MJdRuntime, MJdRuntimeData, MQdBlSize}
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.primo.Keep
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -117,7 +118,7 @@ object JdUtil {
         val jdIdsDeleted = prevMap0.keySet -- wantedQdBlsMap.keySet
         val prevMap1 = prevMap0 -- jdIdsDeleted
         // Объединить старую и новую карты. Уже есть такой тег в старой карте.
-        prevMap1.merged( wantedQdBlsMap ) { (kv0, _) => kv0 }
+        prevMap1.merged( wantedQdBlsMap )( Keep.left )
       })
         .getOrElse( wantedQdBlsMap )
     }

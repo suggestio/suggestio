@@ -24,7 +24,8 @@ object MJdDataJs {
     override def eqv(a: MJdDataJs, b: MJdDataJs): Boolean = {
       ((a.doc ===* b.doc) || MJdDoc.MJdDocFastEq.eqv(a.doc, b.doc)) &&
       (a.edges ===* b.edges) &&
-      (a.info ===* b.info)
+      (a.info ===* b.info) &&
+      (a.title ===* b.title)
     }
   }
 
@@ -34,14 +35,17 @@ object MJdDataJs {
   /** Сборка на основе MJdAdData. */
   def fromJdData( jdAdData: MJdData, info: MScAdInfo = MScAdInfo.empty ): MJdDataJs = {
     apply(
-      doc      = jdAdData.doc,
       edges    = MEdgeDataJs.jdEdges2EdgesDataMap( jdAdData.edges ),
       info     = info,
+      // Далее - проброс всех полей MJdData, кроме edges. TODO Может обойтись без копипаста?
+      doc      = jdAdData.doc,
+      title    = jdAdData.title,
     )
   }
 
   def doc      = GenLens[MJdDataJs](_.doc)
   def edges    = GenLens[MJdDataJs](_.edges)
+  def title = GenLens[MJdDataJs]( _.title )
 
 }
 
@@ -55,6 +59,7 @@ final case class MJdDataJs(
                             doc         : MJdDoc,
                             edges       : Map[EdgeUid_t, MEdgeDataJs],
                             info        : MScAdInfo,
+                            title       : Option[String],
                           )
   extends OptId[String]
 {

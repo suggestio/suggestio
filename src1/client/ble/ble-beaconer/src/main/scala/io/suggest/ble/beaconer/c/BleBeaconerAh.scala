@@ -14,7 +14,7 @@ import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Success

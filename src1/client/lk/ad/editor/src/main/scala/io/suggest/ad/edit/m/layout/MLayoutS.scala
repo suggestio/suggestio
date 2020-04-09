@@ -25,8 +25,8 @@ object MLayoutS {
     }
   }
 
-  val rightPanelTop = GenLens[MLayoutS](_.rightPanelTop)
-  val rightPanelY   = GenLens[MLayoutS](_.rightPanelY)
+  def rightPanelTop = GenLens[MLayoutS](_.rightPanelTop)
+  def rightPanelY   = GenLens[MLayoutS](_.rightPanelY)
 
 }
 

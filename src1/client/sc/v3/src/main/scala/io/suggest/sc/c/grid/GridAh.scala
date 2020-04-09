@@ -20,7 +20,8 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.n2.node.MNodeTypes
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -237,6 +238,11 @@ object GridAh {
     }
   }
 
+  def _isMatches(onlyMatching: MScNodeMatchInfo, scAnm: MScNodeMatchInfo): Boolean = {
+    onlyMatching.ntype.fold(true)( scAnm.ntype.contains[MNodeType] ) &&
+    onlyMatching.nodeId.fold(true)( scAnm.nodeId.contains[String] )
+  }
+
 }
 
 
@@ -359,7 +365,7 @@ class GridAh[M](
             case other =>
               throw new UnsupportedOperationException( other.toString )
           }
-          .fold(
+          .fold [ActionResult[M]] (
             identity,
             {reqScQsOpt =>
               // Надо делать эффект запроса на сервер с указанными qs.
@@ -476,7 +482,11 @@ class GridAh[M](
       val szMultMatches = jdConf0.szMult ==* szMult2
       //println( s"gridColumnCount=$gridColsCount2 $szMultMatches ${jdConf0.szMult} => $szMult2" )
 
-      if (!m.force && szMultMatches && jdConf0.gridColumnsCount ==* gridColsCount2) {
+      if (
+        !m.force &&
+        szMultMatches &&
+        (jdConf0.gridColumnsCount ==* gridColsCount2)
+      ) {
         noChange
 
       } else {
@@ -505,6 +515,13 @@ class GridAh[M](
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
         updated(v2)
       }
+
+
+    // Добавить в акк инфу по исполению после обновления плитки.
+    case m: GridAfterUpdate =>
+      val v0 = value
+      val v2 = MGridS.afterUpdate.modify( m.effect :: _ )(v0)
+      updatedSilent(v2)
 
   }
 

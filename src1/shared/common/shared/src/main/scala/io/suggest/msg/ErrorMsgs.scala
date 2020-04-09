@@ -232,4 +232,6 @@ object ErrorMsgs {
 
   def CONTENT_TYPE_UNEXPECTED = "Content.type.unexpected"
 
+  def NATIVE_API_ERROR = "Native.api.error"
+
 }

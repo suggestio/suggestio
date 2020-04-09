@@ -1938,16 +1938,16 @@ object MuiSvgIcons {
   object SocialMoodBad extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/mood", JSImport.Default)
   object SocialMood extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/notifications-active", JSImport.Default)
-  object SocialNotificationsActive extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/notifications-none", JSImport.Default)
-  object SocialNotificationsNone extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/notifications-off", JSImport.Default)
-  object SocialNotificationsOff extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/notifications-paused", JSImport.Default)
-  object SocialNotificationsPaused extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/notifications", JSImport.Default)
-  object SocialNotifications extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NotificationsActive", JSImport.Default)
+  object NotificationsActive extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NotificationsNone", JSImport.Default)
+  object NotificationsNone extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NotificationsOff", JSImport.Default)
+  object NotificationsOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NotificationsPaused", JSImport.Default)
+  object NotificationsPaused extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Notifications", JSImport.Default)
+  object Notifications extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/pages", JSImport.Default)
   object SocialPages extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/party-mode", JSImport.Default)

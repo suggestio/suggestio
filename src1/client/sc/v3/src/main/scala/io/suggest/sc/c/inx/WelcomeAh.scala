@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick, WcTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.Future
 

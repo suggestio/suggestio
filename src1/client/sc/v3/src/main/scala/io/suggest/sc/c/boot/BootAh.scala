@@ -8,7 +8,7 @@ import io.suggest.dev.MPlatformS
 import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.Sc3Circuit
-import io.suggest.sc.c.dia.FirstRunDialogAh
+import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.m.boot._
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m._
@@ -16,7 +16,7 @@ import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.m.search.MGeoTabData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -347,7 +347,7 @@ class BootAh[M](
 
     // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
     case BootLocDataWz =>
-      if (FirstRunDialogAh.isNeedWizardFlow()) {
+      if (WzFirstDiaAh.isNeedWizardFlow()) {
         // Нет уже заданных гео-данных, и требуется запуск мастера.
         // Текущий эффект передаёт управление в WizardAh, мониторя завершение визарда.
         val initFirstWzFx = InitFirstRunWz(true).toEffectPure

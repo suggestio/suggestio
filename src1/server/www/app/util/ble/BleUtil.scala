@@ -2,7 +2,7 @@ package util.ble
 
 import javax.inject.Singleton
 import io.suggest.ble.MUidBeacon
-import io.suggest.es.model.MEsNestedSearch
+import io.suggest.es.model.{MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
@@ -26,11 +26,9 @@ class BleUtil {
     * Новый поиск нод маячков, завязанный на function-score и ровно один нижележащий
     * поисковый запрос для всех id маячков.
     */
-  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: Iterable[MUidBeacon]): Option[MNodeSearch] = {
-    if (bcns.isEmpty) {
-      None
-
-    } else {
+  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: Iterable[MUidBeacon],
+                                   innerHits: Option[MEsInnerHitsInfo] = None): Option[MNodeSearch] = {
+    Option.when( bcns.nonEmpty ) {
       // Строим карту маячков, где ключ -- Uid маячка
       val bcnsMap = bcns
         .map { bcn =>
@@ -49,7 +47,7 @@ class BleUtil {
         .toMap
 
       // Итоговый поисковый запросец: поиск в эджах + кастомный скоринг поверх.
-      val msearch = new MNodeSearch {
+      new MNodeSearch {
 
         // Искать исходные ноды по наличию эджей на искомые маячки
         override val outEdges: MEsNestedSearch[Criteria] = {
@@ -58,7 +56,8 @@ class BleUtil {
             nodeIds       = bcnsMap.keys.toSeq
           )
           MEsNestedSearch(
-            clauses = cr :: Nil,
+            clauses   = cr :: Nil,
+            innerHits = MEsInnerHitsInfo.buildInfoOpt( innerHits ),
           )
         }
 
@@ -96,8 +95,6 @@ class BleUtil {
             .boost(maxBoost)
         }
       }
-
-      Some(msearch)
     }
   }
 

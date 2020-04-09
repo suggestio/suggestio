@@ -36,5 +36,5 @@ object MDocS {
 
 case class MDocS(
                   jdDoc         : MJdDocEditS,
-                  editors       : MEditorsS             = MEditorsS.empty,
+                  editors       : MEditorsS,
                 )

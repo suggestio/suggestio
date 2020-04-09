@@ -403,6 +403,26 @@ class DocEditAh[M](
       }
 
 
+    // Редактирование заголовка.
+    case m: TitleEdit =>
+      val v0 = value
+
+      val ad_title_LENS = MDocS.jdDoc
+        .composeLens( MJdDocEditS.jdArgs )
+        .composeLens( MJdArgs.data )
+        .composeLens( MJdDataJs.title )
+
+      val titleOpt = Option.when(m.title !=* "")(m.title)
+
+      if (ad_title_LENS.get(v0) ==* titleOpt) {
+        noChange
+
+      } else {
+        val v2 = (ad_title_LENS set titleOpt)(v0)
+        updated(v2)
+      }
+
+
     // Изменение высоты строки (межстрочки).
     case m: LineHeightSet =>
       val v0 = value

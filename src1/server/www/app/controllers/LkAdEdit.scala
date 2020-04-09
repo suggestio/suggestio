@@ -137,9 +137,9 @@ final class LkAdEdit @Inject() (
 
         (for {
           // Сначала early-валидация эджей. Для валидации шаблона нужны рабочие эджи, поэтому валидация идёт в несколько шагов.
-          edges1 <- Future {
+          jdData1 <- Future {
             lkAdEdFormUtil
-              .earlyValidateEdges( request.body )
+              .earlyValidateJdData( request.body )
               .fold(
                 // Не удалось понять присланные эджи:
                 {errorsNel =>
@@ -155,23 +155,25 @@ final class LkAdEdit @Inject() (
           }
 
           // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
-          vldEdgesMap <- n2VldUtil.EdgesValidator(edges1).vldEdgesMapFut
+          vldEdgesMap <- n2VldUtil.EdgesValidator( jdData1.edges ).vldEdgesMapFut
 
-          tpl2 = lkAdEdFormUtil.validateTpl(
-            template      = request.body.doc.template,
-            vldEdgesMap   = vldEdgesMap,
-          ).fold(
-            // Не удалось провалидировать шаблон.
-            {failedMsgs =>
-              val msgsConcat = failedMsgs
-                .iterator
-                .mkString(", ")
-              LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
-              val resFut = errorHandler.onClientError(request, NOT_ACCEPTABLE, s"tpl: $msgsConcat")
-              throw new HttpResultingException( resFut )
-            },
-            identity
-          )
+          tpl2 = lkAdEdFormUtil
+            .validateTpl(
+              template      = request.body.doc.template,
+              vldEdgesMap   = vldEdgesMap,
+            )
+            .fold(
+              // Не удалось провалидировать шаблон.
+              {failedMsgs =>
+                val msgsConcat = failedMsgs
+                  .iterator
+                  .mkString(", ")
+                LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
+                val resFut = errorHandler.onClientError(request, NOT_ACCEPTABLE, s"tpl: $msgsConcat")
+                throw new HttpResultingException( resFut )
+              },
+              identity
+            )
 
           // -- Есть на руках валидный шаблон. Можно создавать новую карточку и др.узлы. dry-run-часть завершена --
 
@@ -179,7 +181,8 @@ final class LkAdEdit @Inject() (
           // Т.к. JdDocValidator теперь может удалять из шаблона невалидные куски, то тут требуется дополнительная зачистка эджей:
           edges2Map = JdTag.purgeUnusedEdges[MJdEdge](
             tpl2,
-            edges1
+            jdData1
+              .edges
               .zipWithIdIter[EdgeUid_t]
               .to( Map )
           )
@@ -202,7 +205,7 @@ final class LkAdEdit @Inject() (
           // Создать/обновить строковое название для узла карточки (на основе текстовых эджей)
           edgesTexts2Map = lkAdEdFormUtil.mkEdgeTextsMap( edges2Map.valuesIterator )
 
-          nodeTechNameOpt = lkAdEdFormUtil.mkTechName(tpl2, edgesTexts2Map)
+          nodeTechNameOpt = OptionUtil.maybeOpt( jdData1.title.isEmpty )( lkAdEdFormUtil.mkTechName(tpl2, edgesTexts2Map) )
           //LOGGER.trace(s"$logPrefix nodeTechName = ${nodeTechNameOpt.orNull}")
 
           extRscEdges <- extRscEdgesFut
@@ -273,7 +276,8 @@ final class LkAdEdit @Inject() (
               ),
               meta = MMeta(
                 basic = MBasicMeta(
-                  techName = nodeTechNameOpt
+                  nameOpt  = jdData1.title,
+                  techName = nodeTechNameOpt,
                 )
               )
             )
@@ -308,8 +312,10 @@ final class LkAdEdit @Inject() (
                   } andThen
                 MNode.meta
                   .composeLens( MMeta.basic )
-                  .composeLens( MBasicMeta.techName )
-                  .set( nodeTechNameOpt )
+                  .modify(
+                    (MBasicMeta.nameOpt set jdData1.title) andThen
+                    (MBasicMeta.techName set nodeTechNameOpt)
+                  )
             )
           }
 
@@ -332,6 +338,7 @@ final class LkAdEdit @Inject() (
                 ),
               ),
               edges = edges2Map.values,
+              title = madSaved.meta.basic.nameOpt,
             ),
             blockPadding = prodBlockPadding(request.producer)
           )

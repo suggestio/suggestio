@@ -30,8 +30,8 @@ object MScAdData {
 
   @inline implicit def univEq: UnivEq[MScAdData] = UnivEq.derive
 
-  val main    = GenLens[MScAdData](_.main)
-  val focused = GenLens[MScAdData](_.focused)
+  def main    = GenLens[MScAdData](_.main)
+  def focused = GenLens[MScAdData](_.focused)
 
 }
 

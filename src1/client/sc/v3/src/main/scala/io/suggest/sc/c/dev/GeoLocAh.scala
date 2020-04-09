@@ -10,7 +10,7 @@ import io.suggest.sc.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.wnd.WindowVm
-import io.suggest.sjs.dom._
+import io.suggest.sjs.dom2._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._

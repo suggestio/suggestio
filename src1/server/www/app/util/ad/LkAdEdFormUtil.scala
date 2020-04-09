@@ -11,7 +11,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.media.MFileMeta
 import io.suggest.pick.ContentTypeCheck
-import io.suggest.scalaz.StringValidationNel
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.up.UploadConstants
 import io.suggest.util.logs.MacroLogsImpl
@@ -19,11 +19,13 @@ import japgolly.univeq._
 import models.mctx.Context
 import play.api.{Environment, Mode}
 import io.suggest.primo.id._
+import io.suggest.text.StringUtil
 
 import scala.concurrent.Future
 import scalaz.{Tree, Validation, ValidationNel}
 import scalaz.syntax.apply._
 import util.n2u.N2VldUtil
+import util.tpl.HtmlSanitizer
 
 /**
  * Suggest.io
@@ -84,6 +86,7 @@ class LkAdEdFormUtil @Inject() (
         tagId      = MJdTagId.empty,
       ),
       edges    = Nil,
+      title    = None,
     )
 
     Future.successful(r)
@@ -114,7 +117,7 @@ class LkAdEdFormUtil @Inject() (
     * @return Фьючерс с результатом валидации.
     *         exception обозначает ошибку валидации.
     */
-  def earlyValidateEdges(form: MJdData): StringValidationNel[List[MJdEdge]] = {
+  def earlyValidateJdData(form: MJdData): StringValidationNel[MJdData] = {
     val nodeIdVld = Validation.liftNel(form.doc.tagId.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
 
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
@@ -127,15 +130,22 @@ class LkAdEdFormUtil @Inject() (
     // Ранняя валидация корректности присланных эджей:
     val edgesVlds = n2VldUtil.earlyValidateEdges( edges1.values )
 
-    if (edgesVlds.isFailure) {
-      LOGGER.warn {
-        val logPrefix = s"earlyValidateEdges(${form.edges.size})[${System.currentTimeMillis()}]:"
-        s"$logPrefix Failed to validate edges: $edgesVlds\n edges = \n ${edges1.mkString("\n ")}"
-      }
-    }
+    if (edgesVlds.isFailure)
+      LOGGER.warn( s"earlyValidateEdges(${form.edges.size})[${System.currentTimeMillis()}]: Failed to validate edges: $edgesVlds\n edges = \n ${edges1.mkString("\n ")}" )
 
-    nodeIdVld *> edgesVlds
+    (
+      (nodeIdVld *> Validation.success(form.doc)) |@|
+      edgesVlds |@|
+      // Заголовок: trim + limitLen
+      ScalazUtil.liftNelOpt( form.title ) { title0 =>
+        val titleSanitized = HtmlSanitizer.stripAllPolicy.sanitize( title0 )
+        val title2 = StringUtil.strLimitLen( titleSanitized.trim, 100 )
+        Validation.success( title2 )
+      } // Убрать пустые строки:
+        .map(_.filter(_.nonEmpty))
+    )( MJdData.apply )
   }
+
 
   /** Какие предикаты относятся к картинкам? */
   def IMAGE_PREDICATES = MPredicates.JdContent.Image :: Nil

@@ -6,7 +6,7 @@ import io.suggest.proto.http.client.adp.fetch.{FetchHttpResp, FetchRequestInit}
 import io.suggest.proto.http.model.{HttpReq, MHttpCaches}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil._
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import org.scalajs.dom.experimental.{Request, Response}
 
 import scala.concurrent.{Future, Promise}

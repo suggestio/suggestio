@@ -1,5 +1,6 @@
 package io.suggest.sc.m.grid
 
+import diode.Effect
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.m.{ISc3Action, IScApiRespReason}
 
@@ -38,3 +39,8 @@ case class GridBlockClick(nodeId: String) extends IGridAction with IScApiRespRea
 
 /** Экшен скроллинга плитки. */
 case class GridScroll(scrollTop: Double) extends IGridAction
+
+/** Экшен отправки в очередь экшена, который будет запущен после ближайшего обновления плитки.
+  * Используется, когда во время обновления плитки/индекса возникла необходимость снова её дообновить.
+  */
+case class GridAfterUpdate( effect: Effect ) extends IGridAction

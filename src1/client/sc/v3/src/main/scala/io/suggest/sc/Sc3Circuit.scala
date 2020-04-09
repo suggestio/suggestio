@@ -1,11 +1,12 @@
 package io.suggest.sc
 
-import diode.{FastEq, ModelRO}
+import diode.{Effect, FastEq, ModelRO}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
-import io.suggest.ble.beaconer.m.BtOnOff
+import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
@@ -18,13 +19,14 @@ import io.suggest.maps.m.MMapS
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg._
-import io.suggest.n2.node.MNodeTypes
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAdp
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.boot.BootAh
-import io.suggest.sc.c.dia.{FirstRunDialogAh, ScErrorDiaAh, ScSettingsDiaAh}
+import io.suggest.sc.c.dia.{ScErrorDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
@@ -34,10 +36,10 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
-import io.suggest.sc.m.dev.{MScDev, MScScreenS}
+import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.dia.err.MScErrorDia
-import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
+import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
@@ -50,10 +52,14 @@ import io.suggest.sc.u.api.IScAppApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
+import io.suggest.dev.MPlatformS
+import io.suggest.os.notify.NotifyStartStop
+import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -90,7 +96,6 @@ class Sc3Circuit(
   import io.suggest.sc.m.dia.MScDialogs.MScDialogsFastEq
   import io.suggest.sc.m.dia.first.MWzFirstOuterS.MWzFirstOuterSFastEq
 
-  import io.suggest.dev.MPlatformS.MPlatformSFastEq
   import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
@@ -203,7 +208,7 @@ class Sc3Circuit(
   private val confRO              = mkLensZoomRO(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
   private val rcvrsMapUrlRO       = mkLensZoomRO(confRO, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
 
-  private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformSFastEq )
+  private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformS.MPlatformSFastEq )
 
   private val beaconerRW          = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
 
@@ -217,21 +222,30 @@ class Sc3Circuit(
   private val menuRW              = mkLensZoomRW( indexRW, MScIndex.menu )( MMenuS.MMenuSFastEq )
   private val dlAppDiaRW          = mkLensZoomRW( menuRW, MMenuS.dlApp )( MDlAppDia.MDlAppDiaFeq )
 
-  private val inxStateRO = mkLensZoomRO( indexRW, MScIndex.state )
+  private val inxStateRO          = mkLensZoomRO( indexRW, MScIndex.state )
 
+  private val screenInfoRO        = mkLensZoomRO(scScreenRW, MScScreenS.info)( MScreenInfoFastEq )
+  private val screenRO            = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
 
-  private val screenInfoRO  = mkLensZoomRO(scScreenRW, MScScreenS.info)( MScreenInfoFastEq )
-  private val screenRO      = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
+  private val osNotifyRW          = mkLensZoomRW(devRW, MScDev.osNotify)( MScOsNotifyS.MScOsNotifyFeq )
 
 
   /** Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах. */
   val (respHandlers, respActionHandlers) = {
     // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
     val mixed = List[IRespWithActionHandler](
-      new GridRespHandler,
+      new GridRespHandler(
+        isDoOsNotify = rootRW.zoom { mroot =>
+          // Разрешается делать нотификацию уровня ОС только если:
+          // 1. Есть разрешение на нотификации.
+          mroot.dev.osNotify.hasPermission //&&
+          // TODO 2. Приложение скрыто, и требует привлечения внимания, и запрос был в фоне.
+          //!mroot.dev.platform.isUsingNow
+        }
+      ),
       new GridFocusRespHandler,
       new IndexRah,
-      new NodesSearchRespHandler( screenInfoRO ),
+      new NodesSearchRah( screenInfoRO ),
     )
 
     val rahs: List[IRespActionHandler] =
@@ -245,7 +259,7 @@ class Sc3Circuit(
   }
 
 
-  // Колелкцияaction-handler'ов:
+  // Action-Handler'ы
 
   // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
   private val tailAh = new TailAh(
@@ -310,7 +324,7 @@ class Sc3Circuit(
     dispatcher  = this
   )
 
-  private val firstRunDialogAh = new FirstRunDialogAh(
+  private val wzFirstDiaAh = new WzFirstDiaAh(
     platformRO  = platformRW,
     modelRW     = firstRunDiaRW,
     dispatcher  = this,
@@ -340,7 +354,27 @@ class Sc3Circuit(
     modelRW = mkLensZoomRW( dialogsRW, MScDialogs.settings ),
   )
 
+  private val notifyAhOrNull: HandlerFunction = {
+    if (CordovaConstants.isCordovaPlatform()) {
+      // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
+      new CordovaLocalNotificationAdp(
+        dispatcher  = this,
+        modelRW     = mkLensZoomRW(osNotifyRW, MScOsNotifyS.cnl),
+      )
+    } else if (Html5NotificationUtil.isApiAvailable()) {
+      new Html5NotificationApiAdp(
+        dispatcher = this,
+        modelRW = mkLensZoomRW( osNotifyRW, MScOsNotifyS.html5 )
+      )
+    } else {
+      null
+    }
+  }
+  private def _hasNotifyAh: Boolean = notifyAhOrNull != null
+
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
+
 
   override protected val actionHandler: HandlerFunction = {
     // TODO На основе конкретного Action-интерфейса роутить сигнал сразу к нужному контроллеру.
@@ -360,7 +394,7 @@ class Sc3Circuit(
     acc ::= scSettingsDiaAh
 
     // Диалоги обычно закрыты. Тоже - в хвост.
-    acc ::= firstRunDialogAh
+    acc ::= wzFirstDiaAh
 
     // Контроллер загрузки
     acc ::= bootAh
@@ -375,6 +409,10 @@ class Sc3Circuit(
 
     // События уровня платформы.
     acc ::= platformAh
+
+    // Контроллер нотификаций.
+    if ( _hasNotifyAh )
+      acc ::= notifyAhOrNull
 
     // События jd-шаблонов в плитке.
     acc ::= jdAh
@@ -415,6 +453,34 @@ class Sc3Circuit(
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
   //addProcessor( LoggingAllActionsProcessor[MScRoot] )
 
+  /** Когда наступает platform ready и BLE доступен,
+    * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
+    */
+  private def _dispatchBleBeaconerOnOff(): Unit = {
+    try {
+      val plat = platformRW.value
+      if (plat.hasBle && plat.isReady) {
+        //LOG.warn( "ok, dispatching ble on/off", msg = plat )
+        Future {
+          val msg = BtOnOff( isEnabled = plat.isUsingNow )
+          dispatch( msg )
+        }
+      }
+    } catch {
+      case ex: Throwable =>
+        LOG.error( ErrorMsgs.CORDOVA_BLE_REQUIRE_FAILED, ex )
+    }
+  }
+
+  /** Реакция на готовность платформы к работе. */
+  private def _onPlatformReady(): Unit = {
+    // Активировать сборку Bluetooth-маячков:
+    _dispatchBleBeaconerOnOff()
+    // Активировать поддержку нотификаций:
+    if (_hasNotifyAh)
+      Future( dispatch( NotifyStartStop(isStart = true) ) )
+  }
+
 
   // Отработать инициализацию js-роутера в самом начале конструктора.
   // По факту, инициализация уже наверное запущена в main(), но тут ещё и подписка на события...
@@ -433,32 +499,15 @@ class Sc3Circuit(
       )
     }
 
-    //  Когда наступает platform ready и BLE доступен, надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
-    def __dispatchBleBeaconerOnOff(): Unit = {
-      try {
-        val plat = platformRW.value
-        if (plat.hasBle && plat.isReady) {
-          //LOG.warn( "ok, dispatching ble on/off", msg = plat )
-          Future {
-            val msg = BtOnOff( isEnabled = plat.isUsingNow )
-            dispatch( msg )
-          }
-        }
-      } catch {
-        case ex: Throwable =>
-          LOG.error( ErrorMsgs.CORDOVA_BLE_REQUIRE_FAILED, ex )
-      }
-    }
-
     // TODO Platform boot - унесено в BootAh.PlatformSvc
-    val isPlatformReadyRO = platformRW.zoom(_.isReady)
+    val isPlatformReadyRO = mkLensZoomRO( platformRW, MPlatformS.isReady )
     // Начинаем юзать платформу прямо в конструкторе circuit. Это может быть небезопасно, поэтому тут try-catch для всей этой логики.
     try {
       // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
       if ( Try(isPlatformReadyRO.value).getOrElse(false) ) {
         // Платформа уже готова. Запустить эффект активации BLE-маячков.
         //LOG.log( "isPlatformReadyNowTry" )
-        __dispatchBleBeaconerOnOff()
+        _onPlatformReady()
       } else {
         // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
         //LOG.warn( WarnMsgs.PLATFORM_NOT_READY, msg = isPlatformReadyNowTry )
@@ -477,7 +526,7 @@ class Sc3Circuit(
           if (isReadyNowProxy.value) {
             DomQuick.clearTimeout( readyTimeoutId )
             // Запустить bluetooth-мониторинг.
-            __dispatchBleBeaconerOnOff()
+            _onPlatformReady()
             // TODO Активировать фоновый GPS-мониторинг, чтобы видеть себя на карте. Нужен маркер на карте и спрашивался о переходе в новую локацию.
             sp.success(None)
           }
@@ -532,39 +581,57 @@ class Sc3Circuit(
     }
 
     // Реагировать на события активности приложения выдачи.
-    subscribe( platformRW.zoom(_.isUsingNow) ) { isUsingNowProxy =>
+    subscribe( mkLensZoomRO(platformRW, MPlatformS.isUsingNow) ) { isUsingNowProxy =>
       // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
       val isUsingNow = isUsingNowProxy.value
-      __dispatchBleBeaconerOnOff()
+      _dispatchBleBeaconerOnOff()
 
       // Глушить фоновый GPS-мониторинг:
       __dispatchGeoLocOnOff(isUsingNow)
     }
 
     // Подписаться на события изменения списка наблюдаемых маячков.
-    // TODO Opt Не подписываться без необходимости.
-    subscribe( beaconerRW.zoom(_.nearbyReport) ) { _ =>
+    // Не подписываться без необходимости? Но для этого надо подписываться на platform.isBleAvail, т.е. смысла в оптимизации нет.
+    subscribe( mkLensZoomRO(beaconerRW, MBeaconerS.nearbyReport) ) { _ =>
       //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
       val mroot = rootRW.value
+
       if (mroot.index.resp.isPending) {
-        LOG.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = "ble!inx" )
-        // TODO Если сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление отправлять в очередь?
+        // Сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление закинуть в очередь.
+        if (
+          !mroot.grid.afterUpdate.exists {
+            case gla: GridLoadAds =>
+              gla.onlyMatching.exists { om =>
+                om.ntype contains[MNodeType] MNodeTypes.BleBeacon
+              }
+            case _ => false
+          }
+        ) {
+          // Нужно забросить в состояние плитки инфу о необходимости обновится после заливки исходной плитки.
+          dispatch( GridAfterUpdate( Effect.action(_gridBleReloadAction) ) )
+        }
 
       } else {
         // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
-        val action = GridLoadAds(
-          clean         = true,
-          ignorePending = true,
-          silent        = OptionUtil.SomeBool.someTrue,
-          onlyMatching  = Some( MScNodeMatchInfo(
-            ntype = Some( MNodeTypes.BleBeacon ),
-          ))
-        )
-        dispatch( action )
+        val glaAction = _gridBleReloadAction
+        dispatch( glaAction )
+        //val glaFx = _gridBleReloadAction.toEffectPure
+        //this.runEffect( glaFx, glaAction )
       }
     }
 
   }
+
+
+  /** Экшен для перезапроса с сервера только BLE-карточек плитки. */
+  private def _gridBleReloadAction = GridLoadAds(
+    clean         = true,
+    ignorePending = true,
+    silent        = OptionUtil.SomeBool.someTrue,
+    onlyMatching  = Some( MScNodeMatchInfo(
+      ntype = Some( MNodeTypes.BleBeacon ),
+    )),
+  )
 
 
   private def _errFrom(action: Any, ex: Throwable): Unit = {

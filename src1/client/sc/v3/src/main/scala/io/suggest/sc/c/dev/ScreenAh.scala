@@ -9,7 +9,7 @@ import io.suggest.sc.m.inx.{MScSideBars, ScCssReBuild, SideBarOpenClose}
 import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.c.search.SearchAh
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 
 /**
   * Suggest.io

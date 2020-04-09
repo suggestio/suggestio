@@ -22,9 +22,9 @@ object MScFocusArgs {
 
   @inline implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
 
-  val focIndexAllowed = GenLens[MScFocusArgs](_.focIndexAllowed)
-  val lookupMode      = GenLens[MScFocusArgs](_.lookupMode)
-  val lookupAdId      = GenLens[MScFocusArgs](_.lookupAdId)
+  def focIndexAllowed = GenLens[MScFocusArgs](_.focIndexAllowed)
+  def lookupMode      = GenLens[MScFocusArgs](_.lookupMode)
+  def lookupAdId      = GenLens[MScFocusArgs](_.lookupAdId)
 
 }
 
@@ -35,7 +35,6 @@ object MScFocusArgs {
   * @param lookupMode Режим перехода между focused-карточками.
   *                   Неактуально для sc3. Будет удалён, если не понадобится.
   * @param lookupAdId id узла фокусируемой карточки.
-  * @param focAfterIndex Возвращать ли результат фокусировки даже после перехода в узел-продьюсер.
   */
 case class MScFocusArgs(
                          focIndexAllowed        : Boolean,

@@ -21,8 +21,8 @@ object MStripEdS {
 
   @inline implicit def univEq: UnivEq[MStripEdS] = UnivEq.derive
 
-  val isLastStrip = GenLens[MStripEdS](_.isLastStrip)
-  val confirmingDelete = GenLens[MStripEdS](_.confirmingDelete)
+  def isLastStrip = GenLens[MStripEdS](_.isLastStrip)
+  def confirmingDelete = GenLens[MStripEdS](_.confirmingDelete)
 
 }
 

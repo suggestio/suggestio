@@ -3,7 +3,7 @@ package io.suggest.sc.c.search
 import diode._
 import io.suggest.sc.m.search._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing

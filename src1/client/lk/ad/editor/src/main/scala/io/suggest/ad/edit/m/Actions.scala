@@ -111,3 +111,6 @@ case class SetHorizOffTextShadow(offset: Int) extends ILkEditAction
 /** Выставление вертикального сдвига тени. */
 case class SetVertOffTextShadow(offset: Int) extends ILkEditAction
 case class SetBlurTextShadow(blur: Int) extends ILkEditAction
+
+/** Редактирование заголовка карточки. */
+case class TitleEdit( title: String ) extends ILkEditAction

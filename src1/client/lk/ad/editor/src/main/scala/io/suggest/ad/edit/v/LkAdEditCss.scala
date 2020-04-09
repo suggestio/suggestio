@@ -24,6 +24,16 @@ class LkAdEditCss
   }
 
 
+  object Title {
+
+    val titleInp = style(
+      width( 700.px ),
+      paddingBottom( 20.px ),
+    )
+
+  }
+
+
   /** Стили элементов управление высотой/шириной блока. */
   object WhControls {
 
@@ -131,6 +141,7 @@ class LkAdEditCss
 
 
   initInnerObjects(
+    Title.titleInp,
     WhControls.marginRight40,
     Layout.editorsCont,
     TextShadow.second,

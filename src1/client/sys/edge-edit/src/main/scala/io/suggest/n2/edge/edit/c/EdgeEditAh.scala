@@ -9,7 +9,7 @@ import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
 import io.suggest.routes.routes
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import monocle.Traversal

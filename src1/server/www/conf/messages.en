@@ -198,7 +198,7 @@ Input.text.from.picture=Type text from picture
 error.captcha=Invalid human-check code
 
 blocks.field.isWide=Display wide?
-blocks.field.title=Title
+Title=Title
 blocks.field.bgColor=Background color
 blocks.field.href=External url address
 Add.text.block=Add text block
@@ -857,8 +857,10 @@ Paid=Paid
 
 Radius=Radius
 in.radius.of.0.from.1=in {0} near {2}
+in.radius.of.0=in radius of {0}
 n.km._kilometers={0} km
 n.m._meters={0} m
+n.cm._centimeters={0} cm
 in.geopoint.x=in geo-point {0}
 
 Order.status.a=Cart
@@ -1112,4 +1114,13 @@ Hide=Hide
 Settings=Settings
 0.not.supported.on.this.platform.1={0} is not supported on current platform ({1}).
 Install.app.for.access.to.0=Install application to gain {0} access.
+
+Notifications=Notifications
+Notify.about.offers.nearby=Notify me about offers nearby.
+
+0.offers.nearby={0} offsers nearby
+One.offer.nearby=Offer nearby you
+
+0._inDistance.1={0} ({1})
+Show.offers.0=Show offers {0}
 

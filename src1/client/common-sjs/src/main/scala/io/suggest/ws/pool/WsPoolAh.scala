@@ -7,7 +7,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.ws.MWsMsg
 import io.suggest.ws.pool.m._
 import org.scalajs.dom

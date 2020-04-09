@@ -25,8 +25,8 @@ object MScScreenS {
 
   @inline implicit def univEq: UnivEq[MScScreenS] = UnivEq.derive
 
-  val info      = GenLens[MScScreenS](_.info)
-  val rszTimer  = GenLens[MScScreenS](_.rszTimer)
+  def info      = GenLens[MScScreenS](_.info)
+  def rszTimer  = GenLens[MScScreenS](_.rszTimer)
 
 }
 
@@ -40,9 +40,4 @@ object MScScreenS {
 case class MScScreenS(
                        info             : MScreenInfo,
                        rszTimer         : Option[Int]       = None
-                     ) {
-
-  def withInfo(info: MScreenInfo)           = copy(info = info)
-  def withRszTimer(rszTimer: Option[Int])   = copy(rszTimer = rszTimer)
-
-}
+                     )

@@ -1,7 +1,5 @@
 package cordova.plugins.notification.local
 
-import scala.scalajs.js
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -10,19 +8,15 @@ import scala.scalajs.js
   */
 object CnlEvents {
 
-  type CnlEvent_t <: js.Any
+  final def ADD = "add"
+  final def TRIGGER = "trigger"
+  final def CLICK = "click"
+  final def CLEAR = "clear"
+  final def CANCEL = "cancel"
+  final def UPDATE = "update"
+  final def CLEAR_ALL = "clearall"
+  final def CANCEL_ALL = "cancelall"
 
-  def add = "add"
-  def trigger = "trigger"
-  def click = "click"
-  def clear = "clear"
-  def cancel = "cancel"
-  def update = "update"
-  def clearAll = "clearall"
-  def cancelAll = "cancelAll"
+  // Помимо этих событий, могут быть ещё произвольные, заданные через notification.action[].id: String
 
 }
-
-
-trait CnlEventOpts extends js.Object
-

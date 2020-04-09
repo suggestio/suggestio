@@ -37,7 +37,7 @@ addSbtPlugin("org.github.ngbinh" % "sbt-simple-url-update" % "1.0.4")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 

@@ -2,7 +2,7 @@ package util.showcase
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
-import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
+import io.suggest.es.model.{EsModel, IMust, MEsInnerHitsInfo, MEsNestedSearch}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
@@ -12,10 +12,7 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import org.elasticsearch.index.query.InnerHitBuilder
-import org.elasticsearch.search.fetch.subphase.FetchSourceContext
 import util.ble.BleUtil
-import scala.jdk.CollectionConverters._
 
 import scala.concurrent.Future
 
@@ -58,12 +55,12 @@ class ScAdSearchUtil @Inject() (
     * Компиляция параметров поиска в MNodeSearch.
     * Код эвакуирован из models.AdSearch.qsb.bind().
     * @param args Данные по выборке карточек, пришедшие из qs.
-    * @param innerHitsDocValuesFns Возвращать в ответе в inner_hits указанные поля с поддержкой doc_values.
+    * @param innerHits Возвращать в ответе в inner_hits указанные поля с поддержкой doc_values.
     * @param bleSearchCtx Контекст поиска в BLE-маячках.
     */
   def qsArgs2nodeSearch(
                          args: MScQs,
-                         innerHitsDocValuesFns: Seq[String] = Nil,
+                         innerHits: Option[MEsInnerHitsInfo] = None,
                          bleSearchCtx: MBleSearchCtx = MBleSearchCtx.empty,
                        ): MNodeSearch = {
 
@@ -147,22 +144,18 @@ class ScAdSearchUtil @Inject() (
     val _nodeTypes  = MNodeTypes.Ad :: Nil
 
     val normalSearches = if (_outEdges.nonEmpty) {
-      val _mrs = MRandomSortData(
-        generation = args.search.genOpt.getOrElse(1L),
-        weight     = Some(0.0000001F)
-      )
       val normalSearch = new MNodeSearch {
         override val outEdges = MEsNestedSearch(
           clauses = _outEdges,
-          innerHits = Option.when( innerHitsDocValuesFns.nonEmpty )(
-            // Включён возврат предикатов, на основе которых отобраны карточки:
-            new InnerHitBuilder()
-              .setFetchSourceContext( FetchSourceContext.DO_NOT_FETCH_SOURCE )
-              .setDocValueFields( innerHitsDocValuesFns.asJava )
-          ),
+          innerHits = MEsInnerHitsInfo.buildInfoOpt( innerHits ),
         )
         override def nodeTypes = _nodeTypes
-        override val randomSort = Some(_mrs)
+        override val randomSort = Some {
+          MRandomSortData(
+            generation = args.search.genOpt.getOrElse(1L),
+            weight     = Some(0.0000001F)
+          )
+        }
         override val isEnabled = Some(true)
       }
       val subSearch = MSubSearch(
@@ -209,8 +202,9 @@ class ScAdSearchUtil @Inject() (
     * Карточки в маячках ищутся отдельно от основного набора параметров, вне всяких продьюсеров-ресиверов-географии.
     * Результаты объединяются в общий выхлоп, но маячковые результаты -- поднимаются в начало этого списка.
     * Причём, чем ближе маячок -- тем выше результат.
+    * @param innerHits Возвращать ли данные inner_hits?
     */
-  def bleBeaconsSearch(scQs: MScQs): Future[MBleSearchCtx] = {
+  def bleBeaconsSearch(scQs: MScQs, innerHits: Option[MEsInnerHitsInfo]): Future[MBleSearchCtx] = {
     val bcnsQs = scQs.common.locEnv.bleBeacons
     if (bcnsQs.isEmpty) {
       Future.successful( MBleSearchCtx.empty )
@@ -257,10 +251,11 @@ class ScAdSearchUtil @Inject() (
           Nil
         } else {
           val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
-            maxBoost = 20000000F,
+            maxBoost    = 20000000F,
             // TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
-            predicates = MPredicates.Receiver :: Nil,
-            bcns = bcnsQs2,
+            predicates  = MPredicates.Receiver :: Nil,
+            bcns        = bcnsQs2,
+            innerHits   = innerHits,
           )
 
           val sub = MSubSearch(
@@ -307,3 +302,4 @@ object MBleSearchCtx {
 trait IScAdSearchUtilDi {
   def scAdSearchUtil: ScAdSearchUtil
 }
+

@@ -1,5 +1,6 @@
 package io.suggest.perm
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.event.DomEvents
 import org.scalajs.dom.experimental.permissions._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -25,7 +26,7 @@ object Html5PermissionApi {
     * @param permName id пермишшена.
     * @return Фьючерс с результатом.
     */
-  private def getPermissionState(permName: PermissionName ): Future[Html5PermissionData] = {
+  def getPermissionState(permName: PermissionName ): Future[IPermissionState] = {
     try {
       dom.window.navigator
         .permissions
@@ -35,17 +36,12 @@ object Html5PermissionApi {
           }
         }
         .toFuture
-        .map( Html5PermissionData.apply )
+        .map( Html5PermissionState.apply )
     } catch {
       case ex: Throwable =>
         Future.failed( new UnsupportedOperationException(ex) )
     }
   }
-
-
-  /** Доступ к геолокации разрешён? */
-  def getGeoLocPerm(): Future[Html5PermissionData] =
-    Html5PermissionApi.getPermissionState( PermissionName.geolocation )
 
 
   /** Дополнительное API для инстансов HTML5 PermissionState. */
@@ -62,13 +58,24 @@ object Html5PermissionApi {
 
   }
 
+
+  /** Парсить значение пермишшена. */
+  def parsePermissionValue(permissionValue: String): Option[Boolean] = {
+    if (permissionValue ==* PermissionState.granted.asInstanceOf[String])
+      OptionUtil.SomeBool.someTrue
+    else if (permissionValue ==* PermissionState.denied.asInstanceOf[String] )
+      OptionUtil.SomeBool.someFalse
+    else /* default для HTML5 Notification API || prompt для HTML5 Permission API */
+      None
+  }
+
 }
 
 
 /** Унифицированная обёртка над [[IPermissionState]]. */
-case class Html5PermissionData(
-                                pStatus: PermissionStatus
-                              )
+case class Html5PermissionState(
+                                 pStatus: PermissionStatus
+                               )
   extends IPermissionState
 {
 

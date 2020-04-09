@@ -21,7 +21,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DoNothing
 import monocle.Traversal
 import scalaz.std.option._

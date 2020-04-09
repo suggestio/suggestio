@@ -23,9 +23,9 @@ object MWzFirstS {
 
   @inline implicit def univEq: UnivEq[MWzFirstS] = UnivEq.derive
 
-  val visible   = GenLens[MWzFirstS](_.visible)
-  val phase     = GenLens[MWzFirstS](_.phase)
-  val frame     = GenLens[MWzFirstS](_.frame)
+  def visible   = GenLens[MWzFirstS](_.visible)
+  def phase     = GenLens[MWzFirstS](_.phase)
+  def frame     = GenLens[MWzFirstS](_.frame)
 
 }
 
@@ -42,10 +42,4 @@ case class MWzFirstS(
                       visible     : Boolean,
                       phase       : MWzPhase,
                       frame       : MWzFrame,
-                   ) {
-
-  def withVisible(visible: Boolean) = copy(visible = visible)
-  def withQuestion(question: MWzPhase) = copy(phase = question)
-  def withFrame(frame: MWzFrame) = copy(frame = frame)
-
-}
+                   )

@@ -6,6 +6,7 @@ import io.suggest.ble.MUidBeacon
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.html.HtmlConstants
+import io.suggest.primo.id.IId
 import io.suggest.sjs.common.model.MTsTimerId
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -41,6 +42,7 @@ object MBeaconerS {
   def isEnabled = GenLens[MBeaconerS](_.isEnabled)
   def notifyAllTimer = GenLens[MBeaconerS](_.notifyAllTimer)
   def gcIntervalId = GenLens[MBeaconerS](_.gcIntervalId)
+  val nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
 
 }
 
@@ -76,6 +78,9 @@ case class MBeaconerS(
                      )
   extends EmptyProduct
 {
+
+  /** Отчёт по id маяков. */
+  lazy val nearbyReportById = nearbyReport.zipWithIdIter.toMap
 
   // Перезапись toString, чтобы лишний мусор не рендерить.
   override final def toString: String = {

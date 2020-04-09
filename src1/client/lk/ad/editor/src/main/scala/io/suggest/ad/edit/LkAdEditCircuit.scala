@@ -79,8 +79,6 @@ class LkAdEditCircuit(
       .parse( jsonStr )
       .as[MAdEditFormInit]
 
-    val jdDataJs = MJdDataJs.fromJdData( mFormInit.adData )
-
     MAeRoot(
       conf = {
         val conf0 = mFormInit.conf
@@ -102,6 +100,7 @@ class LkAdEditCircuit(
           blockPadding      = mFormInit.blockPadding,
           gridColumnsCount  = 2
         )
+        val jdDataJs = MJdDataJs.fromJdData( mFormInit.adData )
         val jdArgs = MJdArgs(
           data        = jdDataJs,
           conf        = jdConf,
@@ -126,7 +125,7 @@ class LkAdEditCircuit(
                 srvFile.nodeId -> colorHist
               })
                 .toMap,
-            )
+            ),
           ),
         )
       },

@@ -1,6 +1,6 @@
 package io.suggest.sc.m.grid
 
-import diode.FastEq
+import diode.{Effect, FastEq}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -17,22 +17,29 @@ object MGridS {
     override def eqv(a: MGridS, b: MGridS): Boolean = {
       (a.core       ===* b.core) &&
       (a.hasMoreAds ==*  b.hasMoreAds)
+      // afterUpdate: игнорим, т.к. живёт только на уровне контроллера.
     }
   }
 
-  @inline implicit def univEq: UnivEq[MGridS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MGridS] = UnivEq.force
 
   val core = GenLens[MGridS](_.core)
   val hasMoreAds = GenLens[MGridS](_.hasMoreAds)
+  def afterUpdate = GenLens[MGridS](_.afterUpdate)
+  def gNotify = GenLens[MGridS](_.gNotify)
 
 }
 
 
-/** Общее состояние плитки: данные в
+/** Общее состояние плитки: данные вне рендера.
   *
   * @param core Отображаемые данные плитки для рендера.
+  * @param afterUpdate После ближайшего обновления карточек плитки, исполнить указанные экшены, обнулив список.
+  * @param gNotify Состояние уведомлений по карточкам плитки.
   */
 case class MGridS(
-                   core         : MGridCoreS,
-                   hasMoreAds   : Boolean               = true,
+                   core             : MGridCoreS,
+                   hasMoreAds       : Boolean               = true,
+                   afterUpdate      : List[Effect]          = List.empty,
+                   gNotify          : MGridNotifyS          = MGridNotifyS.empty,
                  )
