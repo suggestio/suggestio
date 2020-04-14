@@ -8,7 +8,7 @@ import io.suggest.sc.v._
 import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
-import io.suggest.sc.v.dia.settings.{BlueToothSettingR, BlueToothUnAvailInfoR, GeoLocSettingR, OnOffSettingR, ScSettingsDiaR, SettingsMenuItemR, UnsafeOffsetSettingR}
+import io.suggest.sc.v.dia.settings.{BlueToothSettingR, BlueToothUnAvailInfoR, GeoLocSettingR, NotificationSettingsR, OnOffSettingR, ScSettingsDiaR, SettingsMenuItemR, UnsafeOffsetSettingR}
 import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
@@ -113,6 +113,7 @@ class Sc3Module {
   lazy val settingsMenuItemR = wire[SettingsMenuItemR]
   lazy val onOffSettingR = wire[OnOffSettingR]
   lazy val blueToothUnAvailInfoR = wire[BlueToothUnAvailInfoR]
+  lazy val notificationSettingsR = wire[NotificationSettingsR]
 
   // sc3
   lazy val scRootR = wire[ScRootR]

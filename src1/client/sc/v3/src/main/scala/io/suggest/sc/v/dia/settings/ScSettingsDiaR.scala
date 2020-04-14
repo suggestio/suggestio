@@ -22,6 +22,7 @@ class ScSettingsDiaR(
                       blueToothSettingR       : BlueToothSettingR,
                       blueToothUnAvailInfoR   : BlueToothUnAvailInfoR,
                       unsafeOffsetSettingR    : UnsafeOffsetSettingR,
+                      notificationSettingsR   : NotificationSettingsR,
                       scReactCtxP             : React.Context[MScReactCtx],
                       crCtxProv               : React.Context[MCommonReactCtx],
                     ) {
@@ -61,6 +62,9 @@ class ScSettingsDiaR(
 
             // Плашка об отсутствии bluetooth.
             p.wrap(_.dev.platform)( blueToothUnAvailInfoR.component.apply ),
+
+            // Переключалка уведомлений.
+            p.wrap(_.dev.osNotify)( notificationSettingsR.component.apply ),
 
             // debug: unsafe offsets
             unsafeOffsetSettingR( p ),

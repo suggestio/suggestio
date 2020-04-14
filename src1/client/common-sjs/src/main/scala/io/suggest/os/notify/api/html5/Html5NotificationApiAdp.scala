@@ -1,22 +1,24 @@
 package io.suggest.os.notify.api.html5
 
+import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.os.notify.{CloseNotify, NotifyPermission, NotifyStartStop, OsNotifyEvents, ShowNotify}
 import org.scalajs.dom.experimental.Notification
 import io.suggest.msg.ErrorMsgs
 import io.suggest.perm.Html5PermissionApi
+import io.suggest.primo.Keep
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sjs.dom2.NotificationOptions2
-import io.suggest.spa.{DAction, DoNothing}
 import japgolly.univeq._
 
+import scala.collection.immutable.HashMap
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -26,51 +28,76 @@ import scala.util.Try
   */
 final class Html5NotificationApiAdp[M](
                                         dispatcher      : Dispatcher,
-                                        modelRW         : ModelRW[M, Option[MHtml5NotifyAdpS]],
+                                        modelRW         : ModelRW[M, MH5nAdpS],
                                       )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
+
+  /** Эффект сокрытия нотификаций. */
+  private def _closeToastsFx(toastIds: Iterable[String]): Effect = {
+    Effect.action {
+      val v0 = value
+
+      (if ( toastIds.isEmpty ) {
+        // Нет id скрываемых нотификаций - скрыть всё.
+        v0.notifications
+          .valuesIterator
+      } else {
+        toastIds
+          .iterator
+          .flatMap( v0.notifications.get )
+      })
+        .foreach { info =>
+          // Скрыть нотификацию:
+          try {
+            info.h5Not.close()
+          } catch {
+            case ex: Throwable =>
+              LOG.warn( ErrorMsgs.INACTUAL_NOTIFICATION, ex, info.osToast )
+          }
+        }
+
+      H5nRemoveNotifications( toastIds )
+    }
+  }
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запуск/остановка нотификатора.
     case m: NotifyStartStop =>
-      value.fold {
-        if (m.isStart) {
-          val tryRes = Try {
-            val v2Opt = Some( MHtml5NotifyAdpS(
-              permission = Html5PermissionApi.parsePermissionValue( Notification.permission ),
-            ))
-            updatedSilent(v2Opt)
-          }
-          for (ex <- tryRes.failed)
-            LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, msg = m )
+      val v0 = value
 
-          tryRes.getOrElse( noChange )
+      if (m.isStart) {
+        // Сразу парсим пермишен, чтобы exception при ошибке возник как можно раньше.
+        val v2 = (
+          MH5nAdpS.permission set Html5NotificationUtil.readPermissionPot()
+        )(v0)
 
-        } else {
-          noChange
-        }
-      } { _ =>
-        // Скрыть все нотификации.
-        if (m.isStart) {
-          noChange
-        } else {
-          updatedSilent( None )
-        }
+        for (ex <- v2.permission.exceptionOption)
+          LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, msg = m )
+
+        updated(v2)
+
+      } else {
+        // Остановка. Сброс состояния: Скрыть все нотификации.
+        val fx = _closeToastsFx( Nil )
+        val v2Opt = Option.when( v0.permission.nonEmpty )(
+          MH5nAdpS.permission.set( Pot.empty)(v0)
+        )
+        ah.optionalResult( v2Opt, Some(fx) )
       }
 
 
     // Экшен отображения нотификаций.
     case m: ShowNotify =>
-      (for {
-        _ <- value
-        if m.toasts.nonEmpty
-      } yield {
+      if (m.toasts.nonEmpty) {
         val showNotifyFx = Effect.action {
-          for (osToast <- m.toasts) {
-            new Notification(
+          val addNots = (for {
+            osToast <- m.toasts.iterator
+          } yield {
+            // Нотификация рендерится на экран прямо из конструктора нотификации.
+            val h5Not = new Notification(
               title = osToast.title,
               options = {
                 val _body: String = osToast
@@ -87,7 +114,7 @@ final class Html5NotificationApiAdp[M](
                 def __eventOf(evtType: String) = {
                   osToast
                     .onEvent
-                    .get( OsNotifyEvents.CLICK )
+                    .get( evtType )
                     .map[js.Function0[Any]] { dAction =>
                       () =>
                         dispatcher.dispatch( dAction )
@@ -116,34 +143,41 @@ final class Html5NotificationApiAdp[M](
                 }
               }
             )
-          }
+            osToast.uid -> MH5nToastInfo(osToast, h5Not)
+          })
+            .to( HashMap )
 
-          DoNothing
+          H5nAddNotifications( addNots )
         }
 
         effectOnly( showNotifyFx )
-      })
-        .getOrElse( noChange )
+
+      } else {
+        noChange
+      }
+
+
+    // Отрендерены нотификации на экран.
+    case m: H5nAddNotifications =>
+      val v0 = value
+
+      val v2 = MH5nAdpS.notifications.modify(
+        _.merged( m.nots )( Keep.right )
+      )(v0)
+      updatedSilent( v2 )
 
 
     // Сигнал к сокрытию нотификации.
     case m: CloseNotify =>
-      // У нас инстансы НЕ хранятся в состоянии. Чтобы скрыть нотификейшен, надо этот инстанс создать.
-      // Создать нотификейшен с указанным tag и скрыть его.
-      val fx = Effect.action {
-        for (toadId <- m.toastIds) {
-          new Notification(
-            title = "",
-            options = new NotificationOptions2 {
-              override val tag = toadId
-            }
-          )
-            .close()
-        }
-
-        DoNothing
-      }
+      val fx = _closeToastsFx( m.toastIds )
       effectOnly(fx)
+
+
+    // Непосредственное вычищение нотификаций из состояния.
+    case m: H5nRemoveNotifications =>
+      val v0 = value
+      val v2 = MH5nAdpS.notifications.modify(_ -- m.toastIds)(v0)
+      updatedSilent( v2 )
 
 
     // Запрос текущего состояния разрешения на вывод уведомлений.
@@ -157,9 +191,8 @@ final class Html5NotificationApiAdp[M](
         Future.successful( parsed )
       }
 
-
       var fx: Effect = Effect {
-        permResFut.map( H5NaSaveFx )
+        permResFut.map( H5nSavePermFx )
       }
 
       for (onComplete <- m.onComplete) {
@@ -170,24 +203,28 @@ final class Html5NotificationApiAdp[M](
         fx = replySenderFx >> fx0
       }
 
-      effectOnly( fx )
+      // Выставить pending в состояние пермишшена.
+      val v0 = value
+      val v2Opt = if (v0.permission.isPending) {
+        None
+      } else {
+        val v2 = MH5nAdpS.permission.modify( _.pending() )(v0)
+        Some( v2 )
+      }
+
+      ah.optionalResult( v2Opt, Some(fx) )
 
 
     // Сохранить пермишшен в состоянии.
-    case m: H5NaSaveFx =>
-      value.fold(noChange) { v0 =>
-        if (v0.permission ==* m.perm) {
-          noChange
-        } else {
-          val v2 = (MHtml5NotifyAdpS.permission set m.perm)(v0)
-          updatedSilent( Some(v2) )
-        }
-      }
+    case m: H5nSavePermFx =>
+      val v0 = value
+
+      val v2 = MH5nAdpS.permission.modify { permission0 =>
+        m.perm.fold( permission0.unPending )( permission0.ready )
+      }(v0)
+
+      updated( v2 )
 
   }
 
 }
-
-
-/** Закэшировать результат проверки в состоянии. */
-private case class H5NaSaveFx( perm: Option[Boolean] ) extends DAction

@@ -238,7 +238,7 @@ class Sc3Circuit(
         isDoOsNotify = rootRW.zoom { mroot =>
           // Разрешается делать нотификацию уровня ОС только если:
           // 1. Есть разрешение на нотификации.
-          mroot.dev.osNotify.hasPermission //&&
+          (mroot.dev.osNotify.hasPermission contains true) //&&
           // TODO 2. Приложение скрыто, и требует привлечения внимания, и запрос был в фоне.
           //!mroot.dev.platform.isUsingNow
         }

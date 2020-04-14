@@ -1,5 +1,6 @@
 package io.suggest.os.notify.api.cnl
 
+import diode.data.Pot
 import io.suggest.os.notify.MOsToast
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -15,6 +16,8 @@ import scala.scalajs.js
   * Description: Модель состояния cordova-notification адаптера.
   */
 object MCnlNotifierS {
+
+  def empty = apply()
 
   def lastId = GenLens[MCnlNotifierS]( _.lastId )
   def toastsById = GenLens[MCnlNotifierS]( _.toastsById )
@@ -43,5 +46,5 @@ case class MCnlNotifierS(
                           toastsById      : HashMap[Int, MOsToast]              = HashMap.empty,
                           toastUids       : HashMap[String, Int]                = HashMap.empty,
                           listeners       : HashMap[String, js.Function]        = HashMap.empty,
-                          permission      : Option[Boolean]                     = None,
+                          permission      : Pot[Boolean]                        = Pot.empty,
                         )

@@ -13,6 +13,10 @@
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "cordova-plugin-local-notification": {
+      "ANDROID_SUPPORT_V4_VERSION": "26.+",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -21,17 +25,13 @@
     },
     "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-local-notification": {
-      "ANDROID_SUPPORT_V4_VERSION": "26.+",
-      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {
-    "cordova-plugin-device": {
+    "cordova-plugin-badge": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-badge": {
+    "cordova-plugin-device": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   }

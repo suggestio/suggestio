@@ -36,19 +36,20 @@ object CordovaDiagonsticPermissionUtil {
 
   /** Состояние доступности bluetooth. */
   def getBlueToothState(): Future[CdpBlueToothData] = {
+    val btStateP = Promise[BluetoothState_t]()
     try {
-      val btStateP = Promise[BluetoothState_t]()
       Cordova.plugins.diagnostic.getBluetoothState(
         btStateP.success,
         message =>
           btStateP.failure( new RuntimeException(message) )
       )
-      for (btState <- btStateP.future) yield
-        CdpBlueToothData( btState )
     } catch {
       case ex: Throwable =>
-        Future.failed(ex)
+        btStateP.tryFailure( ex )
     }
+
+    for (btState <- btStateP.future) yield
+      CdpBlueToothData( btState )
   }
 
 

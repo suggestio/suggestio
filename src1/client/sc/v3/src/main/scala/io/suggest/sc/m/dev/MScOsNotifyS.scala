@@ -1,12 +1,13 @@
 package io.suggest.sc.m.dev
 
 import diode.FastEq
+import diode.data.Pot
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.os.notify.api.cnl.MCnlNotifierS
-import io.suggest.os.notify.api.html5.MHtml5NotifyAdpS
+import io.suggest.os.notify.api.html5.MH5nAdpS
 import japgolly.univeq._
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 /**
   * Suggest.io
@@ -33,13 +34,12 @@ object MScOsNotifyS {
 
 
   implicit final class ScOsNotifyOpsExt( private val osn: MScOsNotifyS ) extends AnyVal {
-    def hasPermission: Boolean = {
-      osn.cnl
-        .map(_.permission)
-        .orElse(osn.html5.map(_.permission))
-        .flatten
-        .getOrElseFalse
+
+    def hasPermission: Pot[Boolean] = {
+      osn.cnl.permission
+        .orElse( osn.html5.permission )
     }
+
   }
 
 }
@@ -48,8 +48,10 @@ object MScOsNotifyS {
 /** Контейнер состояний различных адаптеров нотификации.
   *
   * @param cnl Состояние адаптера cordova-plugin-local-notification.
+  * @param html5 Состояние адаптера html5-нотификаций.
   */
 case class MScOsNotifyS(
-                         cnl          : Option[MCnlNotifierS]       = None,
-                         html5        : Option[MHtml5NotifyAdpS]    = None,
+                         cnl          : MCnlNotifierS               = MCnlNotifierS.empty,
+                         html5        : MH5nAdpS                    = MH5nAdpS.empty,
                        )
+  extends EmptyProduct

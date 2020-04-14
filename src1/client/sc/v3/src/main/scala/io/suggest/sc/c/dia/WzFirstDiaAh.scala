@@ -250,7 +250,6 @@ class WzFirstDiaAh[M](
           }
 
         } else if (view00.phase ==* MWzPhases.Starting) {
-          // TODO Чтобы объеденить экшен с PermissionState, надо тут разрулить фазу Starting.
           // Надо показать на экране текущий диалог в разном состоянии.
           val hasPending = first0.perms
             .exists(_._2.isPending)
@@ -525,9 +524,10 @@ class WzFirstDiaAh[M](
         (platform.isBrowser && !js.isUndefined(dom.experimental.Notification) && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
       },
       askPermF = {
-        if (platform.isCordova)
+        if (platform.isCordova) {
+          println("cordova sask perm")
           CordovaLocalNotificationlUtil.hasPermissionState
-        else { () =>
+        } else { () =>
           println("ask notify perm")
           Try {
             println("perm api ask")

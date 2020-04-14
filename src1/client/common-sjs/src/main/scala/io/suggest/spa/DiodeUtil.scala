@@ -69,6 +69,20 @@ object DiodeUtil {
     /** Расширенная утиль для Pot'ов. */
     implicit final class PotOpsExt[T](private val pot: Pot[T]) extends AnyVal {
 
+      /** Убрать pending с Pot[]. */
+      def unPending: Pot[T] = {
+        if (pot.isPending) {
+          var pot2 = Pot.empty[T]
+          for (v <- pot)
+            pot2 = pot2.ready(v)
+          for (ex <- pot.exceptionOption)
+            pot2 = pot2.fail(ex)
+          pot2
+        } else {
+          pot
+        }
+      }
+
       def pendingOpt: Option[PendingBase] = {
         pot match {
           case pb: PendingBase => Some(pb)

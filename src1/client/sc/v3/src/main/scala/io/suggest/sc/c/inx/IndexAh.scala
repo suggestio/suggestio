@@ -348,6 +348,7 @@ class IndexAh[M](
 
     // Допускать доп.барахло в ответе (foc-карточк, список нод, список плитки и т.д.)? Да, кроме фоновой проверки геолокации.
     val withStuff = !switchCtx.demandLocTest
+
     val args = MScQs(
       common = MScCommonQs(
         apiVsn = root.internals.conf.apiVsn,

@@ -21,7 +21,7 @@ object NotifyStartStop {
 case class ShowNotify( toasts: Seq[MOsToast] ) extends IOsNotifyAction
 
 /** Скрыть указанные или просто все нотификации. */
-case class CloseNotify( toastIds: Iterable[String] ) extends IOsNotifyAction
+case class CloseNotify( toastIds: Iterable[String] = Nil ) extends IOsNotifyAction
 
 /** Запросить чтение пермишшена.
   *

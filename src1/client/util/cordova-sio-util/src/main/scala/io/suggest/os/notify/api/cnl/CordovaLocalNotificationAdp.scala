@@ -1,6 +1,7 @@
 package io.suggest.os.notify.api.cnl
 
 import cordova.plugins.notification.local.{CnlAction, CnlEventData, CnlMessage, CnlToast}
+import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MsgCodes
@@ -28,7 +29,7 @@ import scala.util.Try
   */
 final class CordovaLocalNotificationAdp[M](
                                             dispatcher    : Dispatcher,
-                                            modelRW       : ModelRW[M, Option[MCnlNotifierS]],
+                                            modelRW       : ModelRW[M, MCnlNotifierS],
                                           )
   extends ActionHandler(modelRW)
   with Log
@@ -38,7 +39,7 @@ final class CordovaLocalNotificationAdp[M](
 
   /** Эффект обновления списка листенеров для нотификаций. */
   private def _updateCnlListenersFx(v0: MCnlNotifierS,
-                                   toastsById2: HashMap[Int, MOsToast]): Option[Effect] = {
+                                    toastsById2: HashMap[Int, MOsToast]): Option[Effect] = {
     // Определить, есть ли изменения в конфигурации listener'ов
     val needEventTypes = toastsById2
       .valuesIterator
@@ -111,329 +112,327 @@ final class CordovaLocalNotificationAdp[M](
       def reDoFx: Effect =
         Effect.action( NotifyStartStop.maxTries.modify(_ - 1)(m) )
 
+      val v0 = value
+
       if (m.maxTries <= 0) {
         LOG.warn( ErrorMsgs.ENDLESS_LOOP_MAYBE, msg = m )
         noChange
 
-      } else value.fold {
-        if ( m.isStart && CordovaLocalNotificationlUtil.isCnlApiAvailable()) {
-          // Инициализация состояния.
-          val v0 = Some( MCnlNotifierS() )
-          // Сразу узнать текущее состояние разрешений доступа:
-          val fx = NotifyPermission(isRequest = false).toEffectPure
-          updatedSilent( v0 , fx )
-        } else {
-          noChange
+      } else if ( m.isStart && CordovaLocalNotificationlUtil.isCnlApiAvailable()) {
+        // Сразу узнать текущее состояние разрешений доступа:
+        val fx = NotifyPermission(isRequest = false).toEffectPure
+        effectOnly( fx )
+
+      } else if (v0.listeners.nonEmpty) {
+        val cancelFx = Effect.action {
+          val listenersCancelled = (for {
+            (eventType, jsFun) <- v0.listeners.iterator
+            if {
+              val tryUn = Try( CNL.un( eventType, jsFun ) )
+              for (ex <- tryUn.failed)
+                LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, (m, eventType) )
+              tryUn.isSuccess
+            }
+          } yield {
+            eventType
+          })
+            .toSet
+          UpdateCnlListeners( HashMap.empty, removeListeners = listenersCancelled )
         }
+        // Повторно запустить этот экшен, чтобы перейти на следующий шаг:
+        effectOnly( cancelFx >> reDoFx )
 
-      } { v0 =>
-        if (m.isStart) {
-          noChange
-
-        } else if (v0.listeners.nonEmpty) {
-          val cancelFx = Effect.action {
-            val listenersCancelled = (for {
-              (eventType, jsFun) <- v0.listeners.iterator
-              if {
-                val tryUn = Try( CNL.un( eventType, jsFun ) )
-                for (ex <- tryUn.failed)
-                  LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, (m, eventType) )
-                tryUn.isSuccess
-              }
-            } yield {
-              eventType
-            })
-              .toSet
-            UpdateCnlListeners( HashMap.empty, removeListeners = listenersCancelled )
-          }
-          // Повторно запустить этот экшен, чтобы перейти на следующий шаг:
-          effectOnly( cancelFx >> reDoFx )
-
-        } else if (v0.toastsById.nonEmpty) {
-          // Скрыть все уведомления:
-          val clearToastsFx = Effect {
-            for (_ <- CNL.clearAllF()) yield
-              SetCnlToasts( Nil, append = false )
-          }
-          // Повторно запустить этот экшен, чтобы перейти на следующий шаг:
-          val fxs = clearToastsFx >> reDoFx
-          effectOnly( fxs )
-
-        } else {
-          // Окончательное отключение.
-          updatedSilent( None )
+      } else if (v0.toastsById.nonEmpty) {
+        // Скрыть все уведомления:
+        val clearToastsFx = Effect {
+          for (_ <- CNL.clearAllF()) yield
+            SetCnlToasts( Nil, append = false )
         }
+        // Повторно запустить этот экшен, чтобы перейти на следующий шаг:
+        val fxs = clearToastsFx >> reDoFx
+        effectOnly( fxs )
+
+      } else if (v0.permission.nonEmpty) {
+        // Окончательное отключение: сброс данных по пермишшену.
+        val v2 = MCnlNotifierS.permission.set( Pot.empty )(v0)
+        updated( v2 )
+
+      } else {
+        noChange
       }
 
 
     // Отображение сообщений на экране.
     case m: ShowNotify =>
-      value.fold(noChange) { v0 =>
-        // Получить последний использованный int-идентификатор нотификации.
-        var counter1 = v0.lastId
+      val v0 = value
+      // Получить последний использованный int-идентификатор нотификации.
+      var counter1 = v0.lastId
 
-        val cnlToasts9 = for {
-          osToast <- m.toasts
-        } yield {
-          // Найти/сгенерить новый целочисленный id для текущей нотификации.
-          // Если uid нотификации совпадает с существующей нотификацией, то нужно чтобы int id тоже совпадал:
-          val _toastIntId = v0.toastUids.getOrElse(
-            osToast.uid,
-            {
-              counter1 += 1
-              counter1
-            }
-          )
-
-          val _textsUndef = JsOptionUtil.maybeDefined[String | js.Array[CnlMessage]]( osToast.text.nonEmpty ) {
-            osToast.text match {
-              case Seq( justText ) if justText.person.isEmpty =>
-                println( justText.text )
-                justText.text
-              case texts if texts.nonEmpty =>
-                (for (osText <- texts.iterator) yield {
-                  new CnlMessage {
-                    override val message = osText.text
-                    override val person = osText.person.orUndefined
-                  }: CnlMessage
-                })
-                  .toJSArray
-            }
+      val cnlToasts9 = for {
+        osToast <- m.toasts
+      } yield {
+        // Найти/сгенерить новый целочисленный id для текущей нотификации.
+        // Если uid нотификации совпадает с существующей нотификацией, то нужно чтобы int id тоже совпадал:
+        val _toastIntId = v0.toastUids.getOrElse(
+          osToast.uid,
+          {
+            counter1 += 1
+            counter1
           }
+        )
 
-          val _actionsUndef = JsOptionUtil.maybeDefined( osToast.actions.nonEmpty ) {
-            (for (osNotAction <- osToast.actions) yield {
-              new CnlAction {
-                override val id = osNotAction.id
-                override val title = osNotAction.title
-                override val `type` = osNotAction.inputType.orUndefined
-                override val emptyText = osNotAction.emptyText.orUndefined
-                override val icon = osNotAction.iconUrl.orUndefined
-              }: String | CnlAction
-            })
-              .toJSArray
-          }
-
-          val attachmentsUndef = osToast
-            .imageUrl
-            .map( js.Array(_) )
-            .orUndefined
-
-          val cnlToast = new CnlToast {
-            override val id = _toastIntId
-            override val title = osToast.title
-            override val text = _textsUndef
-            override val attachments = attachmentsUndef
-            override val smallIcon = osToast.smallIconUrl.orUndefined
-            override val icon = osToast.iconUrl.orUndefined
-            override val data = osToast.data.orUndefined
-            override val vibrate = osToast.vibrate.orUndefined
-            override val silent = osToast.silent.orUndefined
-            override val actions = _actionsUndef
-            override val badge = osToast.appBadgeCounter.orUndefined
-          }
-
-          CnlToastInfo(_toastIntId, osToast, cnlToast)
-        }
-
-        // Отрендерить готовые сообщения:
-        val cnlFx = Effect {
-          // Следует рендерить поштучно или оптом? Если оптом и ошибка, то часть отобразится на экране, но
-          // этот контроллер не будет знать об этом. Сейчас игнорим эту проблему.
-          for {
-            _ <- CNL.scheduleF(
-              cnlToasts9
-                .iterator
-                .map(_.cnlToast)
+        val _textsUndef = JsOptionUtil.maybeDefined[String | js.Array[CnlMessage]]( osToast.text.nonEmpty ) {
+          osToast.text match {
+            case Seq( justText ) if justText.person.isEmpty =>
+              println( justText.text )
+              justText.text
+            case texts if texts.nonEmpty =>
+              (for (osText <- texts.iterator) yield {
+                new CnlMessage {
+                  override val message = osText.text
+                  override val person = osText.person.orUndefined
+                }: CnlMessage
+              })
                 .toJSArray
-            )
-          } yield {
-            // Сообщить контроллеру, что сообщения отображены.
-            SetCnlToasts( cnlToasts9, append = true )
           }
         }
 
-        var fxs: List[Effect] = cnlFx :: Nil
+        val _actionsUndef = JsOptionUtil.maybeDefined( osToast.actions.nonEmpty ) {
+          (for (osNotAction <- osToast.actions) yield {
+            new CnlAction {
+              override val id = osNotAction.id
+              override val title = osNotAction.title
+              override val `type` = osNotAction.inputType.orUndefined
+              override val emptyText = osNotAction.emptyText.orUndefined
+              override val icon = osNotAction.iconUrl.orUndefined
+            }: String | CnlAction
+          })
+            .toJSArray
+        }
 
-        // Обновить состояние адаптера:
-        val v2 = (MCnlNotifierS.lastId set counter1)(v0)
+        val attachmentsUndef = osToast
+          .imageUrl
+          .map( js.Array(_) )
+          .orUndefined
 
-        for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
-          fxs ::= upListenFx
+        val cnlToast = new CnlToast {
+          override val id = _toastIntId
+          override val title = osToast.title
+          override val text = _textsUndef
+          override val attachments = attachmentsUndef
+          override val smallIcon = osToast.smallIconUrl.orUndefined
+          override val icon = osToast.iconUrl.orUndefined
+          override val data = osToast.data.orUndefined
+          override val vibrate = osToast.vibrate.orUndefined
+          override val silent = osToast.silent.orUndefined
+          override val actions = _actionsUndef
+          override val badge = osToast.appBadgeCounter.orUndefined
+        }
 
-        ah.updatedSilentMaybeEffect( Some(v2), fxs.mergeEffects )
+        CnlToastInfo(_toastIntId, osToast, cnlToast)
       }
+
+      // Отрендерить готовые сообщения:
+      val cnlFx = Effect {
+        // Следует рендерить поштучно или оптом? Если оптом и ошибка, то часть отобразится на экране, но
+        // этот контроллер не будет знать об этом. Сейчас игнорим эту проблему.
+        for {
+          _ <- CNL.scheduleF(
+            cnlToasts9
+              .iterator
+              .map(_.cnlToast)
+              .toJSArray
+          )
+        } yield {
+          // Сообщить контроллеру, что сообщения отображены.
+          SetCnlToasts( cnlToasts9, append = true )
+        }
+      }
+
+      var fxs: List[Effect] = cnlFx :: Nil
+
+      // Обновить состояние адаптера:
+      val v2 = (MCnlNotifierS.lastId set counter1)(v0)
+
+      for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
+        fxs ::= upListenFx
+
+      ah.updatedSilentMaybeEffect( v2, fxs.mergeEffects )
 
 
     // Пришло какое-то событие из cordova-plugin:
     case m: HandleCnlEvent =>
       println(s"CNL event: $m")
+      val v0 = value
 
-      value.fold(noChange) { v0 =>
-        val eventType = m.data.event
+      val eventType = m.data.event
 
-        lazy val actionEvent = MOsToastActionEvent(
-          text = m.data.text.toOption,
-        )
+      lazy val actionEvent = MOsToastActionEvent(
+        text = m.data.text.toOption,
+      )
 
-        val toastOpt = m.data
-          .notification
-          .toOption
-          .flatMap( v0.toastsById.get )
+      val toastOpt = m.data
+        .notification
+        .toOption
+        .flatMap( v0.toastsById.get )
 
-        // Нужно найти в карте нотификаций адресата для получения сообщения.
-        var fxs: LazyList[Effect] = (for {
-          toast <- toastOpt.iterator
-          diodeAction <- {
-            val events = (for {
-              action <- toast.actions
-              if action.id ==* eventType
-              mkActionF <- action.onAction
-            } yield {
-              mkActionF( actionEvent )
-            })
-              .to( LazyList )
+      // Нужно найти в карте нотификаций адресата для получения сообщения.
+      var fxs: LazyList[Effect] = (for {
+        toast <- toastOpt.iterator
+        diodeAction <- {
+          val events = (for {
+            action <- toast.actions
+            if action.id ==* eventType
+            mkActionF <- action.onAction
+          } yield {
+            mkActionF( actionEvent )
+          })
+            .to( LazyList )
 
-            toast.onEvent
-              .get( eventType )
-              .fold( events )( _ #:: events )
-          }
-        } yield {
-          diodeAction.toEffectPure
-        })
-          .to( LazyList )
+          toast.onEvent
+            .get( eventType )
+            .fold( events )( _ #:: events )
+        }
+      } yield {
+        diodeAction.toEffectPure
+      })
+        .to( LazyList )
 
-        // Если событие сокрытия нотификаций, то обновить состояние.
-        val v2Opt: Option[MCnlNotifierS] = eventType match {
-          // Убрать одно уведомление из состояния
-          case CnlEvents.CANCEL | CnlEvents.CLEAR =>
-            for {
-              toastIntId <- m.data.notification.toOption
-              toast <- toastOpt
-              // Удалить указанный тост из состояния.
-              v2 = (
-                MCnlNotifierS.toastUids.modify(_ - toast.uid) andThen
-                MCnlNotifierS.toastsById.modify(_ - toastIntId)
-              )(v0)
-            } yield {
-              for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
-                fxs #::= upListenFx
-
-              v2
-            }
-
-          // Сокрытие всех уведомлений
-          case CnlEvents.CANCEL_ALL | CnlEvents.CLEAR_ALL =>
-            val v2 = (
-              MCnlNotifierS.toastUids.set( HashMap.empty ) andThen
-              MCnlNotifierS.toastsById.set( HashMap.empty )
+      // Если событие сокрытия нотификаций, то обновить состояние.
+      val v2Opt: Option[MCnlNotifierS] = eventType match {
+        // Убрать одно уведомление из состояния
+        case CnlEvents.CANCEL | CnlEvents.CLEAR =>
+          for {
+            toastIntId <- m.data.notification.toOption
+            toast <- toastOpt
+            // Удалить указанный тост из состояния.
+            v2 = (
+              MCnlNotifierS.toastUids.modify(_ - toast.uid) andThen
+              MCnlNotifierS.toastsById.modify(_ - toastIntId)
             )(v0)
-
+          } yield {
             for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
               fxs #::= upListenFx
 
-            Some( v2 )
+            v2
+          }
 
-          case _ =>
-            None
-        }
+        // Сокрытие всех уведомлений
+        case CnlEvents.CANCEL_ALL | CnlEvents.CLEAR_ALL =>
+          val v2 = (
+            MCnlNotifierS.toastUids.set( HashMap.empty ) andThen
+            MCnlNotifierS.toastsById.set( HashMap.empty )
+          )(v0)
 
-        ah.optionalResult( v2Opt.map(Some.apply), fxs.mergeEffects, silent = true )
+          for (upListenFx <- _updateCnlListenersFx(v0, v2.toastsById))
+            fxs #::= upListenFx
+
+          Some( v2 )
+
+        case _ =>
+          None
       }
+
+      ah.optionalResult( v2Opt, fxs.mergeEffects, silent = true )
 
 
     // Скрыть перечисленные нотификации.
     case m: CloseNotify =>
-      value.fold( noChange ) { v0 =>
-        val toastIntIds = m.toastIds
-          .iterator
-          .flatMap( v0.toastUids.get )
-          .toSet
-          .toSeq
+      val v0 = value
 
-        if (toastIntIds.nonEmpty) {
-          val fx = Effect {
-            for (_ <- CNL.cancelF( toastIntIds: _* ) ) yield
-              RmCnlToasts( m.toastIds, toastIntIds )
-          }
-          effectOnly( fx )
-        } else {
-          noChange
+      val toastIntIds = m.toastIds
+        .iterator
+        .flatMap( v0.toastUids.get )
+        .toSet
+        .toSeq
+
+      if (toastIntIds.nonEmpty) {
+        val fx = Effect {
+          for (_ <- CNL.cancelF( toastIntIds: _* ) ) yield
+            RmCnlToasts( m.toastIds, toastIntIds )
         }
+        effectOnly( fx )
+      } else {
+        noChange
       }
 
 
     // Внутреннее стирание нотификаций из состояния.
     case m: RmCnlToasts =>
-      value.fold( noChange ) { v0 =>
-        val v2 = (
-          MCnlNotifierS.toastsById.modify(_ -- m.intIds) andThen
-          MCnlNotifierS.toastUids.modify(_ -- m.toastIds)
-        )(v0)
+      val v0 = value
+      val v2 = (
+        MCnlNotifierS.toastsById.modify(_ -- m.intIds) andThen
+        MCnlNotifierS.toastUids.modify(_ -- m.toastIds)
+      )(v0)
 
-        updatedSilent( Some(v2) )
-      }
+      updatedSilent( v2 )
 
 
     // Сигнал, что нотификации отправлены в очередь вывода на экран.
     case m: SetCnlToasts =>
-      value.fold(noChange) { v0 =>
-        // Залить обновлённые листенеры в состояние.
-        val v2 = (
-          // Обновить карту данных по нотификейшенам:
-          MCnlNotifierS.toastsById.modify { toastsById0 =>
-            val newToastsMap = m.toasts
-              .iterator
-              .map { cnlToastInfo =>
-                cnlToastInfo.intId -> cnlToastInfo.osToast
-              }
-              .to( HashMap )
+      val v0 = value
 
-            if (m.append)
-              toastsById0
-                .merged( newToastsMap )( Keep.right )
-            else
-              newToastsMap
-          } andThen
-          // Обновить карту int-id'шников:
-          MCnlNotifierS.toastUids.modify { toastsUids0 =>
-            val newToastsToIdsMap = m.toasts
-              .iterator
-              .map { cnlToastInfo =>
-                cnlToastInfo.osToast.uid -> cnlToastInfo.intId
-              }
-              .to( HashMap )
+      // Залить обновлённые листенеры в состояние.
+      val v2 = (
+        // Обновить карту данных по нотификейшенам:
+        MCnlNotifierS.toastsById.modify { toastsById0 =>
+          val newToastsMap = m.toasts
+            .iterator
+            .map { cnlToastInfo =>
+              cnlToastInfo.intId -> cnlToastInfo.osToast
+            }
+            .to( HashMap )
 
-            if (m.append)
-              toastsUids0
-                .merged( newToastsToIdsMap )( Keep.right )
-            else
-              newToastsToIdsMap
-          }
-        )(v0)
+          if (m.append)
+            toastsById0
+              .merged( newToastsMap )( Keep.right )
+          else
+            newToastsMap
+        } andThen
+        // Обновить карту int-id'шников:
+        MCnlNotifierS.toastUids.modify { toastsUids0 =>
+          val newToastsToIdsMap = m.toasts
+            .iterator
+            .map { cnlToastInfo =>
+              cnlToastInfo.osToast.uid -> cnlToastInfo.intId
+            }
+            .to( HashMap )
 
-        updatedSilent( Some(v2) )
-      }
+          if (m.append)
+            toastsUids0
+              .merged( newToastsToIdsMap )( Keep.right )
+          else
+            newToastsToIdsMap
+        }
+      )(v0)
+
+      updatedSilent( v2 )
 
 
     // Обновление списка listener'ов.
     case m: UpdateCnlListeners =>
-      value.fold(noChange) { v0 =>
-        val v2 = MCnlNotifierS.listeners.modify { listeners0 =>
-          listeners0
-            .removedAll( m.removeListeners )
-            .merged( m.addListeners )( Keep.right )
-        }(v0)
-        updatedSilent( Some(v2) )
-      }
+      val v0 = value
+      val v2 = MCnlNotifierS.listeners.modify { listeners0 =>
+        listeners0
+          .removedAll( m.removeListeners )
+          .merged( m.addListeners )( Keep.right )
+      }(v0)
+      updatedSilent( v2 )
 
 
     // Запрос текущего состояния разрешения на вывод уведомлений.
     case m: NotifyPermission =>
       println(m)
-      // Stateless-обработка запроса разрешения без участия состояния, т.к. слишком велосипед сложный получается.
 
-      // Расшаренное значение проверки прав доступа:
+      // Залить pending в состояние, если там ещё не pending.
+      val v0 = value
+      val v2Opt = if (v0.permission.isPending) {
+        None
+      } else {
+        Some( MCnlNotifierS.permission.modify(_.pending())(v0) )
+      }
+
+      // Расшаренное между эффектами значение проверки прав доступа:
       lazy val isAllowedOptFut = for {
         isAllowed <- if (m.isRequest) {
           // Явный запрос прав у юзера.
@@ -456,7 +455,6 @@ final class CordovaLocalNotificationAdp[M](
             // Нет смысла сохранять None в состояние.
             isAllowed <- isAllowedOpt
             // Notify-система должна быть активна.
-            v0 <- value
             if !(v0.permission contains[Boolean] isAllowed)
           } yield {
             CnlSavePermission( isAllowedOpt )
@@ -476,20 +474,23 @@ final class CordovaLocalNotificationAdp[M](
         fx = replySenderFx >> fx0
       }
 
-      effectOnly( fx )
+      ah.optionalResult( v2Opt, Some(fx) )
 
 
     // Сохранение значения пермишшена в состояние.
     case m: CnlSavePermission =>
-      println(m)
-      (for {
-        v0 <- value
-        if v0.permission !=* m.isAllowedOpt
-      } yield {
-        val v2 = (MCnlNotifierS.permission set m.isAllowedOpt)(v0)
-        updatedSilent( Some(v2) )
-      })
-        .getOrElse(noChange)
+      val v0 = value
+
+      if (m.isAllowedOpt.isEmpty && !v0.permission.isPending) {
+        noChange
+      } else {
+        val v2 = MCnlNotifierS.permission.modify { permPot0 =>
+          m.isAllowedOpt
+            .fold( permPot0.unPending )( permPot0.ready )
+        }(v0)
+
+        updated(v2)
+      }
 
   }
 
