@@ -234,4 +234,6 @@ object ErrorMsgs {
 
   def NATIVE_API_ERROR = "Native.api.error"
 
+  def NOTIFICATION_API_UNAVAILABLE = "Notification.api.unavailable"
+
 }

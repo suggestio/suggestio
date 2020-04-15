@@ -40,7 +40,7 @@ object MEsUuId {
     *         Left с кодом ошибки.
     */
   def fromStringEith(value: String): Either[String, MEsUuId] = {
-    if ( uuidB64Re.pattern.matcher(value).matches() ) {
+    if ( uuidB64Re60.pattern.matcher(value).matches() ) {
       Right( MEsUuId(value) )
     } else {
       Left( "e.invalid_id" )

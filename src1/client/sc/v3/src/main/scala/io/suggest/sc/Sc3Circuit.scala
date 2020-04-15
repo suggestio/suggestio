@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import cordova.Cordova
 import diode.{Effect, FastEq, ModelRO}
 import diode.data.Pot
 import diode.react.ReactConnector
@@ -60,6 +61,7 @@ import org.scalajs.dom
 import io.suggest.dev.MPlatformS
 import io.suggest.os.notify.NotifyStartStop
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
+import org.scalajs.dom.experimental.Notification
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -367,6 +369,7 @@ class Sc3Circuit(
         modelRW = mkLensZoomRW( osNotifyRW, MScOsNotifyS.html5 )
       )
     } else {
+      LOG.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (CordovaLocalNotificationAdp.circuitDebugInfoSafe(), Html5NotificationApiAdp.circuitDebugInfoSafe()) )
       null
     }
   }

@@ -19,6 +19,7 @@ import japgolly.univeq._
 import scala.collection.immutable.HashMap
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -26,6 +27,13 @@ import scala.scalajs.js
   * Created: 02.04.2020 11:43
   * Description: HTML5 Notification API adapter for Notify-actions.
   */
+object Html5NotificationApiAdp {
+
+  def circuitDebugInfoSafe() = (Try(Notification), Try(Notification.permission))
+
+}
+
+
 final class Html5NotificationApiAdp[M](
                                         dispatcher      : Dispatcher,
                                         modelRW         : ModelRW[M, MH5nAdpS],

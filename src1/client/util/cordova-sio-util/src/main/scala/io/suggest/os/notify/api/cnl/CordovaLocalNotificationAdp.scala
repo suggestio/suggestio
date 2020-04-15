@@ -25,8 +25,16 @@ import scala.util.Try
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 24.03.2020 10:18
-  * Description: Адаптер для управления нотификациями через cordova API.
+  * Description: Контроллер-адаптер для управления нотификациями через cordova API.
   */
+object CordovaLocalNotificationAdp {
+
+  import CordovaLocalNotificationlUtil.CNL
+
+  def circuitDebugInfoSafe() = Try( CNL.launchDetails )
+
+}
+
 final class CordovaLocalNotificationAdp[M](
                                             dispatcher    : Dispatcher,
                                             modelRW       : ModelRW[M, MCnlNotifierS],
