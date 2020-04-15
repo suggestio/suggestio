@@ -344,7 +344,9 @@ class GridRespHandler(
             appBadgeCounter = Option.when( unNotifiedAdsCount > 0 )(unNotifiedAdsCount),
             // TODO vibrate - выключить вибрацию? false или None - не помогают.
             vibrate = OptionUtil.SomeBool.someFalse,
+            // silent: на android скрывает уведомление вообще
             //silent = OptionUtil.SomeBool.someTrue,
+            // foreground: iOS не отображат уведомление на раскрытом приложении. https://github.com/katzer/cordova-plugin-local-notifications/issues/1711
             foreground = OptionUtil.SomeBool.someTrue,
             // TODO icon - вывести круглую иконку узла, в котором может быть находится пользователь? Взять присланную сервером или текущую какую-нибудь?
             // image - без картинки, т.к. это довольно узконаправленное решение.
