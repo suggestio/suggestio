@@ -26,11 +26,13 @@ final case class MOsToast(
                            data           : Option[js.Any]         = None, // cnl => Только пригодная к JSON-сериализации инфа.
                            vibrate        : Option[Boolean]        = None,
                            silent         : Option[Boolean]        = None,
+                           foreground     : Option[Boolean]        = None,
                            // action.onAction и onEvent[] явно разделены, т.к. в HTML5 listener'ы вешаются на конкретную цель.
                            actions        : Seq[MOsToastAction]    = Nil,
                            appBadgeCounter: Option[Int]            = None, // cnl => badge
                            // action handlers
                            onEvent        : Map[String, DAction]   = Map.empty,
+                           sticky         : Option[Boolean]        = None
                          )
 object MOsToast {
   @inline implicit def univEq: UnivEq[MOsToast] = UnivEq.force

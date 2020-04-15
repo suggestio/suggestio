@@ -18,7 +18,7 @@ import japgolly.univeq._
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.|
+import scala.scalajs.js.{UndefOr, |}
 import scala.util.Try
 
 /**
@@ -34,6 +34,7 @@ object CordovaLocalNotificationAdp {
   def circuitDebugInfoSafe() = Try( CNL.launchDetails )
 
 }
+
 
 final class CordovaLocalNotificationAdp[M](
                                             dispatcher    : Dispatcher,
@@ -110,7 +111,6 @@ final class CordovaLocalNotificationAdp[M](
       }
     }
   }
-
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -233,8 +233,10 @@ final class CordovaLocalNotificationAdp[M](
           override val data = osToast.data.orUndefined
           override val vibrate = osToast.vibrate.orUndefined
           override val silent = osToast.silent.orUndefined
+          override val foreground = osToast.foreground.orUndefined
           override val actions = _actionsUndef
           override val badge = osToast.appBadgeCounter.orUndefined
+          override val sticky = osToast.sticky.orUndefined
         }
 
         CnlToastInfo(_toastIntId, osToast, cnlToast)

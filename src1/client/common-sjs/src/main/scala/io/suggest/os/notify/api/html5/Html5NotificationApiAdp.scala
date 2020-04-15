@@ -19,6 +19,7 @@ import japgolly.univeq._
 import scala.collection.immutable.HashMap
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 import scala.util.Try
 
 /**
@@ -143,6 +144,7 @@ final class Html5NotificationApiAdp[M](
                       js.undefined
                   }
                   override val tag = osToast.uid
+                  override val sticky = osToast.sticky.orUndefined
                   override val onclick = __eventOf( OsNotifyEvents.CLICK )
                   override val onerror = __eventOf( OsNotifyEvents.ERROR )
                   // TODO onshow, onclose - deprecated API. onshow можно запустить из конструктора.

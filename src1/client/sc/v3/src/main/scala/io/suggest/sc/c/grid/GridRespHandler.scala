@@ -344,6 +344,8 @@ class GridRespHandler(
             appBadgeCounter = Option.when( unNotifiedAdsCount > 0 )(unNotifiedAdsCount),
             // TODO vibrate - выключить вибрацию? false или None - не помогают.
             vibrate = OptionUtil.SomeBool.someFalse,
+            //silent = OptionUtil.SomeBool.someTrue,
+            foreground = OptionUtil.SomeBool.someTrue,
             // TODO icon - вывести круглую иконку узла, в котором может быть находится пользователь? Взять присланную сервером или текущую какую-нибудь?
             // image - без картинки, т.к. это довольно узконаправленное решение.
             /*imageUrl = for {
