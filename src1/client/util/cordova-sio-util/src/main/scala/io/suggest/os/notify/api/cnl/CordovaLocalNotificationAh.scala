@@ -18,7 +18,7 @@ import japgolly.univeq._
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.|
 import scala.util.Try
 
 /**
@@ -27,7 +27,7 @@ import scala.util.Try
   * Created: 24.03.2020 10:18
   * Description: Контроллер-адаптер для управления нотификациями через cordova API.
   */
-object CordovaLocalNotificationAdp {
+object CordovaLocalNotificationAh {
 
   import CordovaLocalNotificationlUtil.CNL
 
@@ -36,10 +36,10 @@ object CordovaLocalNotificationAdp {
 }
 
 
-final class CordovaLocalNotificationAdp[M](
-                                            dispatcher    : Dispatcher,
-                                            modelRW       : ModelRW[M, MCnlNotifierS],
-                                          )
+final class CordovaLocalNotificationAh[M](
+                                           dispatcher    : Dispatcher,
+                                           modelRW       : ModelRW[M, MCnlNotifierS],
+                                         )
   extends ActionHandler(modelRW)
   with Log
 { ah =>
@@ -350,21 +350,25 @@ final class CordovaLocalNotificationAdp[M](
     case m: CloseNotify =>
       val v0 = value
 
-      val toastIntIds = m.toastIds
-        .iterator
-        .flatMap( v0.toastUids.get )
-        .toSet
-        .toSeq
-
-      if (toastIntIds.nonEmpty) {
+      (if (m.toastIds.isEmpty) {
         val fx = Effect {
-          for (_ <- CNL.cancelF( toastIntIds: _* ) ) yield
-            RmCnlToasts( m.toastIds, toastIntIds )
+          for (_ <- CNL.cancelAllF()) yield
+            RmCnlToasts( v0.toastUids.keys, v0.toastsById.keys )
         }
-        effectOnly( fx )
+        Some(fx)
       } else {
-        noChange
-      }
+        val toastsIntIds = m.toastIds
+          .iterator
+          .flatMap( v0.toastUids.get )
+          .toSet
+        Option.when( toastsIntIds.nonEmpty ) {
+          Effect {
+            for (_ <- CNL.cancelF( toastsIntIds.toSeq: _* ) ) yield
+              RmCnlToasts( m.toastIds, toastsIntIds )
+          }
+        }
+      })
+        .fold( noChange )( effectOnly )
 
 
     // Внутреннее стирание нотификаций из состояния.

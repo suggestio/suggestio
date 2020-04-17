@@ -1,7 +1,7 @@
 package io.suggest.sc.sw
 
 import com.github.gcl.swtoolbox.SwToolBox
-import io.suggest.common.event.DomEvents
+import io.suggest.event.DomEvents
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
 import org.scalajs.dom.experimental.serviceworkers.ServiceWorkerGlobalScope.self
 import org.scalajs.dom.experimental.serviceworkers.ExtendableEvent

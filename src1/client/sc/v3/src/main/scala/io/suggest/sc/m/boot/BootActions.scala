@@ -1,5 +1,6 @@
 package io.suggest.sc.m.boot
 
+import io.suggest.sc.c.in.BootAh
 import io.suggest.sc.m.ISc3Action
 
 import scala.util.Try
@@ -8,7 +9,7 @@ import scala.util.Try
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 31.01.19 12:45
-  * Description: Экшены для контроллера [[io.suggest.sc.c.boot.BootAh]].
+  * Description: Экшены для контроллера [[BootAh]].
   */
 sealed trait IBootAction extends ISc3Action
 

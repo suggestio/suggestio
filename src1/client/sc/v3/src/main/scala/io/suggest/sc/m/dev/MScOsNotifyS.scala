@@ -40,6 +40,11 @@ object MScOsNotifyS {
         .orElse( osn.html5.permission )
     }
 
+    def hasNotifications: Boolean = {
+      osn.cnl.toastsById.nonEmpty ||
+      osn.html5.notifications.nonEmpty
+    }
+
   }
 
 }

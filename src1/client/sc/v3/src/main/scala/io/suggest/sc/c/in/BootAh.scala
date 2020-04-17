@@ -1,4 +1,4 @@
-package io.suggest.sc.c.boot
+package io.suggest.sc.c.in
 
 import diode._
 import diode.data.Pot
@@ -9,9 +9,9 @@ import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.Sc3Circuit
 import io.suggest.sc.c.dia.WzFirstDiaAh
+import io.suggest.sc.m._
 import io.suggest.sc.m.boot._
 import io.suggest.sc.m.dia.InitFirstRunWz
-import io.suggest.sc.m._
 import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.m.search.MGeoTabData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -19,10 +19,10 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._
+import japgolly.univeq._
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Try}
-import japgolly.univeq._
 
 /**
   * Suggest.io

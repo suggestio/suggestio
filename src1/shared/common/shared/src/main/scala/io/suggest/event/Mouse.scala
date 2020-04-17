@@ -1,4 +1,4 @@
-package io.suggest.common.event
+package io.suggest.event
 
 /**
   * Suggest.io

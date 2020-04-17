@@ -8,6 +8,8 @@ import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
+import io.suggest.daemon.{DaemonizerInit, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonNotifyOpts}
+import io.suggest.daemon.cordova.CordovaBgModeDaemonAh
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
@@ -21,12 +23,11 @@ import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg._
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
-import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAdp
+import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAh
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
-import io.suggest.sc.c.boot.BootAh
 import io.suggest.sc.c.dia.{ScErrorDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
@@ -41,7 +42,7 @@ import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
-import io.suggest.sc.m.in.MScInternals
+import io.suggest.sc.m.in.{MScDaemon, MScInternals}
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
@@ -59,9 +60,9 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.dev.MPlatformS
-import io.suggest.os.notify.NotifyStartStop
+import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
-import org.scalajs.dom.experimental.Notification
+import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -231,6 +232,8 @@ class Sc3Circuit(
 
   private val osNotifyRW          = mkLensZoomRW(devRW, MScDev.osNotify)( MScOsNotifyS.MScOsNotifyFeq )
 
+  private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
+
 
   /** Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах. */
   val (respHandlers, respActionHandlers) = {
@@ -359,7 +362,7 @@ class Sc3Circuit(
   private val notifyAhOrNull: HandlerFunction = {
     if (CordovaConstants.isCordovaPlatform()) {
       // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
-      new CordovaLocalNotificationAdp(
+      new CordovaLocalNotificationAh(
         dispatcher  = this,
         modelRW     = mkLensZoomRW(osNotifyRW, MScOsNotifyS.cnl),
       )
@@ -369,11 +372,29 @@ class Sc3Circuit(
         modelRW = mkLensZoomRW( osNotifyRW, MScOsNotifyS.html5 )
       )
     } else {
-      LOG.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (CordovaLocalNotificationAdp.circuitDebugInfoSafe(), Html5NotificationApiAdp.circuitDebugInfoSafe()) )
+      LOG.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (CordovaLocalNotificationAh.circuitDebugInfoSafe(), Html5NotificationApiAdp.circuitDebugInfoSafe()) )
       null
     }
   }
   private def _hasNotifyAh: Boolean = notifyAhOrNull != null
+
+
+  /** Контроллер демона. */
+  private val daemonAh: HandlerFunction = {
+    if (CordovaConstants.isCordovaPlatform() && CordovaBgModeDaemonAh.canDaemonize()) {
+      new CordovaBgModeDaemonAh(
+        modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cordova ),
+        dispatcher  = this,
+      )
+    } else {
+      null
+    }
+  }
+  private def _hasDaemonAh: Boolean = daemonAh != null
+
+  private lazy val scDaemonAh = new ScDaemonAh(
+    modelRW = mkLensZoomRW( daemonRW, MScDaemon.sc ),
+  )
 
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
@@ -387,6 +408,11 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+
+    if (_hasDaemonAh) {
+      acc ::= scDaemonAh
+      acc ::= daemonAh
+    }
 
     // Контроллер для нативного приложения.
     acc ::= menuNativeAppAh
@@ -583,6 +609,7 @@ class Sc3Circuit(
       }
     }
 
+
     // Реагировать на события активности приложения выдачи.
     subscribe( mkLensZoomRO(platformRW, MPlatformS.isUsingNow) ) { isUsingNowProxy =>
       // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
@@ -591,7 +618,27 @@ class Sc3Circuit(
 
       // Глушить фоновый GPS-мониторинг:
       __dispatchGeoLocOnOff(isUsingNow)
+
+      // Если активация приложения, и есть отображаемые нотификации, то надо их затереть.
+      if (isUsingNow && osNotifyRW.value.hasNotifications) {
+        Future {
+          dispatch( CloseNotify(Nil) )
+        }
+      }
+
+      // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
+      if (platformRW.value.isCordova) {
+        // Если сокрытие и включён bluetooth-мониторинг, то перейти в background-режим.
+        if (
+          !isUsingNow &&
+          (beaconerRW.value.isEnabled contains[Boolean] true)
+        ) {
+          Cordova.plugins.backgroundMode.setEnabled( true )
+        }
+      }
+
     }
+
 
     // Подписаться на события изменения списка наблюдаемых маячков.
     // Не подписываться без необходимости? Но для этого надо подписываться на platform.isBleAvail, т.е. смысла в оптимизации нет.
@@ -621,6 +668,23 @@ class Sc3Circuit(
         //val glaFx = _gridBleReloadAction.toEffectPure
         //this.runEffect( glaFx, glaAction )
       }
+    }
+
+    // Инициализация демонизатора
+    if (_hasDaemonAh) Future {
+      val daemonizerInitA = DaemonizerInit(
+        initOpts = Some( MDaemonInitOpts(
+          events = MDaemonEvents(
+            activated = DaemonActivated,
+          ),
+          descr = MDaemonDescr(
+            needBle = true,
+          ),
+          notification = Some( MDaemonNotifyOpts(
+          ))
+        ))
+      )
+      dispatch( daemonizerInitA )
     }
 
   }

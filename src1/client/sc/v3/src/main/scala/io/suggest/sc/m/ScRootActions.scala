@@ -178,3 +178,9 @@ case class SetErrorState(scErr: MScErrorDia) extends IScErrorAction
 
 /** Управление отображением диалога настроек выдачи. */
 case class SettingsDiaOpen(opened: Boolean) extends IScErrorAction
+
+
+
+sealed trait IScDaemonAction extends IScRootAction
+
+case class DaemonActivated( isActive: Boolean ) extends IScDaemonAction

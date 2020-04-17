@@ -1,7 +1,7 @@
 package io.suggest.perm
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.event.DomEvents
+import io.suggest.event.DomEvents
 import org.scalajs.dom.experimental.permissions._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget

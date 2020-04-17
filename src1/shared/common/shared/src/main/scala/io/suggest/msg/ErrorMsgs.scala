@@ -236,4 +236,6 @@ object ErrorMsgs {
 
   def NOTIFICATION_API_UNAVAILABLE = "Notification.api.unavailable"
 
+  def DAEMON_BACKEND_FAILURE = "Daemon.backend.failure"
+
 }

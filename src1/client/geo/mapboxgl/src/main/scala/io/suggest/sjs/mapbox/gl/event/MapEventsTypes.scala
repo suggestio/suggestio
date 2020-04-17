@@ -1,6 +1,6 @@
 package io.suggest.sjs.mapbox.gl.event
 
-import io.suggest.common.event._
+import io.suggest.event._
 
 /**
   * Suggest.io

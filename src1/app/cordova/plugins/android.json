@@ -25,6 +25,9 @@
     },
     "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-background-mode": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

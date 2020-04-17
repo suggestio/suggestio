@@ -4,7 +4,7 @@ import io.suggest.ads.m.AdsScroll
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.Implicits._
-import io.suggest.common.event.DomEvents
+import io.suggest.event.DomEvents
 import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import org.scalajs.dom.UIEvent

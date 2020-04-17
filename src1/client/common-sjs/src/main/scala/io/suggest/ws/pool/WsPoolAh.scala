@@ -2,7 +2,7 @@ package io.suggest.ws.pool
 
 import diode.data.Pending
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.common.event.DomEvents
+import io.suggest.event.DomEvents
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log

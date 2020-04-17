@@ -38,7 +38,7 @@ object MInternalInfo {
   *
   * @param geoLockTimer Таймер ожидания геолокации.
   * @param currRoute Текущая роута.
-  * @param messages Инстанс с сообщениями.
+  * @param commonReactCtx Инстанс с сообщениями.
   */
 final case class MInternalInfo(
                                 geoLockTimer      : Option[Int]             = None,

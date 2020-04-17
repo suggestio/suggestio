@@ -6,7 +6,7 @@ import com.quilljs.quill.core.Emitter
 import com.quilljs.quill.modules.formats._
 import com.quilljs.quill.modules.toolbar.{QuillToolbar, QuillToolbarModule}
 import com.quilljs.quill.modules.{QuillCssConst, QuillModules, QuillModulesNames}
-import io.suggest.common.event.DomEvents
+import io.suggest.event.DomEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.img.MImgFmts

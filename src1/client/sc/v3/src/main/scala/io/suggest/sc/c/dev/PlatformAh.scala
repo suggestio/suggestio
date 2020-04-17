@@ -4,7 +4,7 @@ import cordova.Cordova
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
 import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.common.event.DomEvents
+import io.suggest.event.DomEvents
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
@@ -160,27 +160,29 @@ class PlatformAh[M](
     // Сигнал об изменении видимости системы.
     case m: PauseOrResume =>
       val v0 = value
-      if (v0.isUsingNow ==* m.isScVisible) {
+      val isUsingNow_LENS = MPlatformS.isUsingNow
+      if (isUsingNow_LENS.get(v0) ==* m.isScVisible) {
         noChange
       } else {
-        val v2 = MPlatformS.isUsingNow
-          .set(m.isScVisible)(v0)
+        val v2 = (isUsingNow_LENS set m.isScVisible)(v0)
         updated(v2)
       }
 
     // Сигнал о готовности платформы к работе.
     case SetPlatformReady =>
       val v0 = value
-      if (v0.isReady) {
+      val isReady_LENS = MPlatformS.isReady
+      if ( isReady_LENS.get(v0) ) {
         noChange
+
       } else {
         // Собираем модификатор значения v0 в несколько шагов. isReady надо выставлять всегда:
-        var lens = MPlatformS.isReady.set(true)
+        var modF = isReady_LENS set true
 
         // Проверить, не изменились ли ещё какие-то платформенные флаги?
         val bleAvail2 = PlatformAh.isBleAvailCheck()
         if (v0.hasBle !=* bleAvail2)
-          lens = lens andThen MPlatformS.hasBle.set( bleAvail2 )
+          modF = modF andThen MPlatformS.hasBle.set( bleAvail2 )
 
         // Определить платформу cordova, если она не была правильно определена на предыдущем шаге.
         Try( Cordova.platformId )
@@ -198,13 +200,12 @@ class PlatformAh[M](
                 osFamily <- osFamilyOpt
                 if !(v0.osFamily contains[MOsFamily] osFamily)
               } {
-                lens = lens andThen MPlatformS.osFamily.set( osFamilyOpt )
+                modF = modF andThen MPlatformS.osFamily.set( osFamilyOpt )
               }
             }
           )
 
-
-        val v2 = lens(v0)
+        val v2 = modF(v0)
         updated(v2)
       }
 

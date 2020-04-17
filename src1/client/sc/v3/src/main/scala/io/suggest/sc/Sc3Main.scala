@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import io.suggest.common.event.WndEvents
+import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
