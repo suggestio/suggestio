@@ -31,6 +31,7 @@ object ErrorMsgs {
   def BLE_BEACONS_API_UNAVAILABLE  = "Ble.beacons.api.Unavailable"
   def BLE_BEACONS_API_ENABLE_FAILED = "Ble.beacons.api.Enable.failed"
   def BLE_BEACONS_API_CHECK_ENABLED_FAILED = "Ble.beacons.api.Check.enabled.failed"
+  def BLE_BT_DISABLED = "Ble.Bt.disabled"
 
   def UNEXPECTED_FSM_RUNTIME_ERROR = "Unexpected.fsm.runtime.error"
 

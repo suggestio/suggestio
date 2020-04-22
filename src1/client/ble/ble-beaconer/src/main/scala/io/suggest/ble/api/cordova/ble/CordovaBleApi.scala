@@ -23,7 +23,6 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
 
   /** Вспомогательная функция для сборки методов, которые дёргают true/false-callback'и.
     *
-    * @param onErrorMsg При ошибках - логгировать это сообщения.
     * @param doIt Функция для вызова метода с двумя callback'ами.
     * @return Фьчерс с true/false.
     *         Ошибок метод не возвращает, а тоже false.

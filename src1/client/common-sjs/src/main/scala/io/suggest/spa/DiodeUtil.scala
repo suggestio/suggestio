@@ -175,6 +175,9 @@ object DiodeUtil {
           }(effect.ec)
       }
 
+      def runEffectAction[A <: DAction](action: A): Future[Unit] =
+        runEffect( action.toEffectPure, action )
+
     }
 
   }

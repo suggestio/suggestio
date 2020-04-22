@@ -7,9 +7,6 @@
     "files": {}
   },
   "installed_plugins": {
-    "cordova-plugin-ble-central": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -27,6 +24,9 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-background-mode": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

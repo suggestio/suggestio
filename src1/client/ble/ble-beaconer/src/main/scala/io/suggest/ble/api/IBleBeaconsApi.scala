@@ -8,6 +8,7 @@ import io.suggest.sjs.common.log.Log
 import japgolly.univeq.UnivEq
 
 import scala.concurrent.Future
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -43,18 +44,20 @@ object IBleBeaconsApi extends Log {
 
   /** Найти доступные API для маячков. */
   def detectApis(): Seq[IBleBeaconsApi] = {
-    val cordovaBleApi = new CordovaBleApi
-    try {
-      val apiAvail = cordovaBleApi.isApiAvailable
+    (for {
+      cordovaBleApi <- Try( new CordovaBleApi )
+      apiAvail <- {
+        val availTry = Try( cordovaBleApi.isApiAvailable )
+        for (ex <- availTry.failed)
+          LOG.log( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED + " " + cordovaBleApi, ex )
+        availTry
+      }
+    } yield {
       OptionUtil
         .maybe(apiAvail)( cordovaBleApi )
         .toList
-    } catch {
-      case ex: Throwable =>
-        LOG.log( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED + " " + cordovaBleApi, ex )
-        Nil
-    }
-
+    })
+      .getOrElse( Nil )
   }
 
   @inline implicit def univEq: UnivEq[IBleBeaconsApi] = UnivEq.force

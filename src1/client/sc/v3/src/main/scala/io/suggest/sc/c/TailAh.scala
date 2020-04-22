@@ -1,7 +1,7 @@
 package io.suggest.sc.c
 
 import diode._
-import io.suggest.ble.beaconer.m.BtOnOff
+import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs
@@ -309,8 +309,18 @@ class TailAh(
         }
 
         // Если bluetooth не запущен - запустить в добавок к геолокации:
-        if (v0.dev.platform.hasBle && !(v0.dev.beaconer.isEnabled contains[Boolean] true))
-          fxsAcc ::= BtOnOff(isEnabled = true, hard = false).toEffectPure
+        if (v0.dev.platform.hasBle && !(v0.dev.beaconer.isEnabled contains[Boolean] true)) {
+          fxsAcc ::= Effect.action {
+            BtOnOff(
+              isEnabled = true,
+              opts = MBeaconerOpts(
+                hardOff     = false,
+                askEnableBt = false,
+                oneShot     = false,
+              )
+            )
+          }
+        }
 
         // Если таймер геолокации не запущен, то запустить:
         if (v0.internals.info.geoLockTimer.isEmpty) {

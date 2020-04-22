@@ -14,7 +14,7 @@
         "cordova-ios": "^5.1.1",
         "cordova-plugin-background-mode": "git+https://github.com/katzer/cordova-plugin-background-mode.git",
         "cordova-plugin-badge": "^0.8.8",
-        "cordova-plugin-ble-central": "1.2.4",
+        "cordova-plugin-ble-central": "^1.2.5",
         "cordova-plugin-device": "^2.0.3",
         "cordova-plugin-geolocation": "^4.0.1",
         "cordova-plugin-local-notification": "git+https://github.com/Steffaan/cordova-plugin-local-notifications.git",
@@ -28,13 +28,13 @@
             "cordova-plugin-splashscreen": {},
             "cordova.plugins.diagnostic": {},
             "cordova-plugin-whitelist": {},
-            "cordova-plugin-ble-central": {
-                "BLUETOOTH_USAGE_DESCRIPTION": "Monitoring Bluetooth-Beacons"
-            },
             "cordova-plugin-local-notification": {
                 "ANDROID_SUPPORT_V4_VERSION": "26.+"
             },
-            "cordova-plugin-background-mode": {}
+            "cordova-plugin-background-mode": {},
+            "cordova-plugin-ble-central": {
+                "BLUETOOTH_USAGE_DESCRIPTION": " "
+            }
         },
         "platforms": [
             "ios",

@@ -5,7 +5,7 @@ import diode.{Effect, FastEq, ModelRO}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
-import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerS}
+import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerOpts, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.daemon.{DaemonizerInit, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonNotifyOpts}
@@ -171,12 +171,13 @@ class Sc3Circuit(
     dom.window.addEventListener4s("error") { e: dom.ErrorEvent =>
       val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
       LOG.error(msg = msg)
-      dispatch( SetErrorState(
+      val action = SetErrorState(
         MScErrorDia(
           messageCode = MsgCodes.`Malfunction`,
           hint        = Some( msg ),
         )
-      ))
+      )
+      this.runEffectAction( action )
     }
   }
 
@@ -393,7 +394,10 @@ class Sc3Circuit(
   private def _hasDaemonAh: Boolean = daemonAh != null
 
   private lazy val scDaemonAh = new ScDaemonAh(
-    modelRW = mkLensZoomRW( daemonRW, MScDaemon.sc ),
+    modelRW       = mkLensZoomRW( daemonRW, MScDaemon.sc ),
+    beaconerRO    = beaconerRW,
+    platfromRO    = platformRW,
+    dispatcher    = this,
   )
 
 
@@ -488,12 +492,18 @@ class Sc3Circuit(
   private def _dispatchBleBeaconerOnOff(): Unit = {
     try {
       val plat = platformRW.value
-      if (plat.hasBle && plat.isReady) {
+      if (plat.hasBle && plat.isReady) Future {
         //LOG.warn( "ok, dispatching ble on/off", msg = plat )
-        Future {
-          val msg = BtOnOff( isEnabled = plat.isUsingNow )
-          dispatch( msg )
-        }
+        val msg = BtOnOff(
+          isEnabled = plat.isUsingNow,
+          opts = MBeaconerOpts(
+            hardOff          = false,
+            // Не долбить мозг юзеру системным запросом включения bluetooth.
+            askEnableBt   = false,
+            oneShot       = false,
+          )
+        )
+        this.runEffectAction( msg )
       }
     } catch {
       case ex: Throwable =>
@@ -506,8 +516,10 @@ class Sc3Circuit(
     // Активировать сборку Bluetooth-маячков:
     _dispatchBleBeaconerOnOff()
     // Активировать поддержку нотификаций:
-    if (_hasNotifyAh)
-      Future( dispatch( NotifyStartStop(isStart = true) ) )
+    if (_hasNotifyAh) Future {
+      val msg = NotifyStartStop(isStart = true)
+      this.runEffectAction( msg )
+    }
   }
 
 
@@ -523,9 +535,8 @@ class Sc3Circuit(
       } else {
         Nil
       }
-      dispatch(
-        Boot( MBootServiceIds.RcvrsMap :: svcsTail )
-      )
+      val bootMsg = Boot( MBootServiceIds.RcvrsMap :: svcsTail )
+      this.runEffectAction( bootMsg )
     }
 
     // TODO Platform boot - унесено в BootAh.PlatformSvc
@@ -533,7 +544,7 @@ class Sc3Circuit(
     // Начинаем юзать платформу прямо в конструкторе circuit. Это может быть небезопасно, поэтому тут try-catch для всей этой логики.
     try {
       // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
-      if ( Try(isPlatformReadyRO.value).getOrElse(false) ) {
+      if ( Try(isPlatformReadyRO.value) getOrElse false ) {
         // Платформа уже готова. Запустить эффект активации BLE-маячков.
         //LOG.log( "isPlatformReadyNowTry" )
         _onPlatformReady()
@@ -546,7 +557,8 @@ class Sc3Circuit(
           if (!isPlatformReadyRO.value) {
             LOG.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
             // Без Future() т.к. это и так в контексте таймера.
-            dispatch( SetPlatformReady )
+            val msg = SetPlatformReady
+            this.runEffectAction( msg )
           }
         }
 
@@ -599,12 +611,13 @@ class Sc3Circuit(
             isHard   = false,
             scSwitch = OptionUtil.maybe(isRunGeoLocInx)(sctx)
           )
-          dispatch( msg )
+          this.runEffectAction( msg )
         }
         // При включении - запустить таймер геолокации, чтобы обновился index на новую геолокацию.
         if (isRunGeoLocInx) Future {
           // Передавать контекст, в котором явно указано, что это фоновая проверка смены локации, и всё должно быть тихо.
-          dispatch( GeoLocTimerStart(sctx) )
+          val msg = GeoLocTimerStart(sctx)
+          this.runEffectAction( msg )
         }
       }
     }
@@ -622,7 +635,8 @@ class Sc3Circuit(
       // Если активация приложения, и есть отображаемые нотификации, то надо их затереть.
       if (isUsingNow && osNotifyRW.value.hasNotifications) {
         Future {
-          dispatch( CloseNotify(Nil) )
+          val msg = CloseNotify(Nil)
+          this.runEffectAction( msg )
         }
       }
 
@@ -658,13 +672,14 @@ class Sc3Circuit(
           }
         ) {
           // Нужно забросить в состояние плитки инфу о необходимости обновится после заливки исходной плитки.
-          dispatch( GridAfterUpdate( Effect.action(_gridBleReloadAction) ) )
+          val msg = GridAfterUpdate( Effect.action(_gridBleReloadAction) )
+          this.runEffectAction( msg )
         }
 
       } else {
         // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
         val glaAction = _gridBleReloadAction
-        dispatch( glaAction )
+        this.runEffectAction( glaAction )
         //val glaFx = _gridBleReloadAction.toEffectPure
         //this.runEffect( glaFx, glaAction )
       }
@@ -675,7 +690,7 @@ class Sc3Circuit(
       val daemonizerInitA = DaemonizerInit(
         initOpts = Some( MDaemonInitOpts(
           events = MDaemonEvents(
-            activated = DaemonActivated,
+            activated = DaemonActivate,
           ),
           descr = MDaemonDescr(
             needBle = true,
@@ -684,7 +699,7 @@ class Sc3Circuit(
           ))
         ))
       )
-      dispatch( daemonizerInitA )
+      this.runEffectAction( daemonizerInitA )
     }
 
   }
@@ -709,7 +724,7 @@ class Sc3Circuit(
           exceptionOpt  = Some( ex ),
           retryAction   = Some(dAction),
         )
-        dispatch( SetErrorState(m) )
+        this.runEffectAction( SetErrorState(m) )
       case _ =>
         // should never happen
     }
@@ -726,7 +741,7 @@ class Sc3Circuit(
     val m = MScErrorDia(
       messageCode = msg,
     )
-    dispatch( SetErrorState(m) )
+    this.runEffectAction( SetErrorState(m) )
   }
 
   override def handleEffectProcessingError[A](action: A, error: Throwable): Unit = {

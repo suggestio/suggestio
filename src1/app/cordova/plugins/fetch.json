@@ -31,16 +31,6 @@
     "is_top_level": true,
     "variables": {}
   },
-  "cordova-plugin-ble-central": {
-    "source": {
-      "type": "registry",
-      "id": "cordova-plugin-ble-central"
-    },
-    "is_top_level": true,
-    "variables": {
-      "BLUETOOTH_USAGE_DESCRIPTION": "Monitoring Bluetooth-Beacons"
-    }
-  },
   "cordova-plugin-device": {
     "source": {
       "type": "registry",
@@ -71,6 +61,14 @@
     "source": {
       "type": "registry",
       "id": "https://github.com/katzer/cordova-plugin-background-mode"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-ble-central": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-ble-central"
     },
     "is_top_level": true,
     "variables": {}

@@ -1,12 +1,11 @@
 package io.suggest.ble.beaconer.m
 
-import diode.FastEq
+import diode.{Effect, FastEq}
 import diode.data.Pot
 import io.suggest.ble.MUidBeacon
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.html.HtmlConstants
-import io.suggest.primo.id.IId
 import io.suggest.sjs.common.model.MTsTimerId
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -29,20 +28,23 @@ object MBeaconerS {
   implicit object MBeaconerSFastEq extends FastEq[MBeaconerS] {
     override def eqv(a: MBeaconerS, b: MBeaconerS): Boolean = {
       (a.isEnabled ===* b.isEnabled) &&
+        (a.afterOnOff eq b.afterOnOff) &&
         (a.notifyAllTimer ===* b.notifyAllTimer) &&
         (a.beacons ===* b.beacons) &&
         (a.nearbyReport ===* b.nearbyReport) &&
         (a.gcIntervalId ===* b.gcIntervalId) &&
         (a.envFingerPrint ===* b.envFingerPrint) &&
         (a.bleBeaconsApi ===* b.bleBeaconsApi) &&
-        (a.hardOff ==* b.hardOff)
+        (a.opts ==* b.opts)
     }
   }
 
   def isEnabled = GenLens[MBeaconerS](_.isEnabled)
+  def afterOnOff = GenLens[MBeaconerS]( _.afterOnOff )
   def notifyAllTimer = GenLens[MBeaconerS](_.notifyAllTimer)
   def gcIntervalId = GenLens[MBeaconerS](_.gcIntervalId)
   val nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
+  def opts = GenLens[MBeaconerS]( _.opts )
 
 }
 
@@ -53,6 +55,7 @@ object MBeaconerS {
   *                  Pot.empty - сейчас BLE API недоступно на устройстве.
   *                  true - включено, true+pending - ВКЛючается
   *                  false - выключено, false+pending - ВЫКЛючается
+  * @param afterOnOff После включения/выключения надо исполнить указанный эффект.
   * @param beacons Текущая карта маячков по id.
   * @param envFingerPrint Хэш некоторых данных из карты маячков: чек-сумма текущего состояния.
   * @param bleBeaconsApi Текущее активное API.
@@ -63,18 +66,17 @@ object MBeaconerS {
   * @param gcIntervalId id таймера интервала сборки мусора.
   * @param nearbyReport Итоговый отчёт по текущим наблюдаемым маячкам.
   *                     Подписка на его изменения позволяет определять появление/исчезновение маячков.
-  * @param hardOff      Жесткое выключение системы. Флаг для защиты от автоматических включений-выключений,
-  *                     когда пользователь требует выключить bluetooth.
   */
 case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
+                       afterOnOff           : Option[Effect]             = None,
                        notifyAllTimer       : Option[MTsTimerId]         = None,
                        beacons              : Map[String, MBeaconData]   = Map.empty,
                        nearbyReport         : Seq[MUidBeacon]            = Nil,
                        gcIntervalId         : Option[Int]                = None,
                        envFingerPrint       : Option[Int]                = None,
                        bleBeaconsApi        : Pot[IBleBeaconsApi]        = Pot.empty,
-                       hardOff              : Boolean                    = false,
+                       opts                 : MBeaconerOpts              = MBeaconerOpts.default,
                      )
   extends EmptyProduct
 {
@@ -112,7 +114,7 @@ case class MBeaconerS(
       .append( gcIntervalId ).append( COMMA )
       .append( envFingerPrint ).append( COMMA )
       .append( bleBeaconsApi ).append( COMMA )
-      .append( hardOff )
+      .append( opts )
       .append( `)` )
       .toString()
   }

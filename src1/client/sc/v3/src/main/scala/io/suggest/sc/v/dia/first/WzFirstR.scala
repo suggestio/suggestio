@@ -129,7 +129,7 @@ class WzFirstR(
                         case MWzPhases.BlueToothPerm =>
                           Right( MsgCodes.`Bluetooth` )
                         case MWzPhases.NotificationPerm =>
-                          Right( MsgCodes.`Notifications` )
+                          Right( crCtx.messages(MsgCodes.`Notifications`) )
                         case MWzPhases.Finish =>
                           val msg = crCtx.messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
                           Left( msg )

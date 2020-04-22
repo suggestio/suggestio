@@ -20,11 +20,10 @@ sealed trait IBleBeaconAction extends DAction
 /** Управление работой системой мониторинга маячков.
   *
   * @param isEnabled Новое состояние (вкл/выкл)
-  * @param hard Если true + !isEnabled, то состояние фиксируется в off с очисткой состояния.
-  *             Включить назад можно будет только после hard+isEnabled
+  * @param opts Опции, сохраняемые в состоянии beaconer'а.
   */
 case class BtOnOff(isEnabled: Boolean,
-                   hard: Boolean = false) extends IBleBeaconAction
+                   opts: MBeaconerOpts = MBeaconerOpts.default) extends IBleBeaconAction
 
 /** Экшен Результат подписки на события API. */
 private[beaconer] case class HandleListenRes( listenTryRes: Try[IBleBeaconsApi] ) extends IBleBeaconAction

@@ -8,8 +8,11 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import cordova.plugins.backgroundMode.CordovaBgModeEvents
 import io.suggest.i18n.MsgCodes
+import io.suggest.primo.Keep
 import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
@@ -208,6 +211,25 @@ final class CordovaBgModeDaemonAh[M](
         effectOnly( fx )
       })
         .getOrElse( noChange )
+
+
+    // Подписаны/отписаны листенеры до bgMode-плагина.
+    case m: CbgmUpdateListeners =>
+      val v0 = value
+
+      var listeners2 = v0.listeners
+
+      if (m.remove.nonEmpty)
+        listeners2 --= m.remove
+      if (m.add.nonEmpty)
+        listeners2 = listeners2.merged( m.add )( Keep.right )
+
+      if (listeners2 ===* v0.listeners) {
+        noChange
+      } else {
+        val v2 = (MCbgmDaemonS.listeners set listeners2)(v0)
+        updatedSilent( v2 )
+      }
 
   }
 

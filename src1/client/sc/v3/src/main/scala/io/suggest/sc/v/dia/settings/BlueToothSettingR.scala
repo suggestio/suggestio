@@ -1,7 +1,7 @@
 package io.suggest.sc.v.dia.settings
 
 import diode.react.ModelProxy
-import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerS}
+import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerOpts, MBeaconerS}
 import io.suggest.i18n.MsgCodes
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -29,7 +29,11 @@ class BlueToothSettingR(
         onOffAction = { isEnabled =>
           BtOnOff(
             isEnabled = isEnabled,
-            hard      = true,
+            opts = MBeaconerOpts(
+              hardOff = true,
+              askEnableBt = true,
+              oneShot = false,
+            ),
           )
         },
       )

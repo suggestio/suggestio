@@ -1,6 +1,9 @@
 package io.suggest.sc.m.in
 
+import diode.data.Pot
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -14,9 +17,15 @@ object MScDaemonInfo {
 
   @inline implicit def univEq: UnivEq[MScDaemonInfo] = UnivEq.derive
 
+  def alarmId = GenLens[MScDaemonInfo]( _.alarmId )
+
 }
 
 
+/** Контейнер состояния демон-контроллера.
+  *
+  * @param alarmId id интервала-таймера с будильником,
+  */
 case class MScDaemonInfo(
-                          // TODO таймер сканирования BLE-эфира на предмет маячков.
+                          alarmId           : Pot[Int]          = Pot.empty,
                         )
