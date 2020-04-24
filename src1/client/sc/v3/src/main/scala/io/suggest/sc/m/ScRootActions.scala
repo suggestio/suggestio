@@ -183,16 +183,17 @@ case class SettingsDiaOpen(opened: Boolean) extends IScErrorAction
 
 sealed trait IScDaemonAction extends IScRootAction
 
-/** Активация или деактивация демона. */
-case class DaemonActivate(isActive: Boolean ) extends IScDaemonAction
+/** Уход приложения в фон, но без демон-процесса. */
+case class ScDaemonDozed(isActive: Boolean ) extends IScDaemonAction
 
-/** Запущен таймер пробуждения демона.
-  * @param timerId None - очистка id таймера.
-  *                Some() - выставление нового таймера в состояние.
-  */
-case class DaemonAlarmSet( timerId: Option[Int], timeStampMs: Long ) extends IScDaemonAction
+/** Активация или деактивация демон-процесса работы. */
+case class ScDaemonWorkProcess( isActive: Boolean ) extends IScDaemonAction
+
+/** Запущен/остановлен запасной таймер засыпания демона. */
+case class ScDaemonFallSleepTimerSet( timerId: Option[Int] ) extends IScDaemonAction
+
 /** Срабатывание таймера пробуждения демона. */
-case object DaemonAlarm extends IScDaemonAction
+case object DaemonSleepAlarm extends IScDaemonAction
 
 /** Активация или деактивация фонового поиска bluetooth-маячков. */
 case class DaemonBluetooth( activate: Boolean ) extends IScDaemonAction

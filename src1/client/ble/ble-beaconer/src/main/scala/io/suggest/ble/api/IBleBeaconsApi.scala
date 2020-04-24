@@ -1,7 +1,7 @@
 package io.suggest.ble.api
 
 import io.suggest.ble.api.cordova.ble.CordovaBleApi
-import io.suggest.ble.beaconer.m.BeaconDetected
+import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.common.empty.OptionUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log

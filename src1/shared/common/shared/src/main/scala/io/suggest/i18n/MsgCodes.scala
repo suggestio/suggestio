@@ -464,4 +464,9 @@ object MsgCodes {
 
   val `Title` = "Title"
 
+  val `Background.mode` = "Background.mode"
+  val `Background.monitoring.offers.nearby` = "Background.monitoring.offers.nearby"
+  val `Daemon.toast.title` = "Daemon.toast.title"
+  val `Daemon.toast.descr` = "Daemon.toast.descr"
+
 }

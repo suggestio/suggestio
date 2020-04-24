@@ -1124,3 +1124,8 @@ One.offer.nearby=Offer nearby you
 0._inDistance.1={0} ({1})
 Show.offers.0=Show offers {0}
 
+Background.mode=Background mode
+Background.monitoring.offers.nearby=Notify about offers nearby. You can control monitoring via application settings.
+Daemon.toast.title=Monitoring in background
+Daemon.toast.descr=Detection new offers nearby.
+

@@ -1,8 +1,9 @@
-package io.suggest.daemon.cordova
+package io.suggest.cordova.background.mode
 
-import cordova.plugins.backgroundMode.CbgmDefaults
+import cordova.plugins.background.mode.CbgmDefaults
 import io.suggest.daemon.MDaemonNotifyOpts
-import scalajs.js.JSConverters._
+
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -30,6 +31,9 @@ object CbgmUtil {
         override val resume = not.resumeAppOnClick.orUndefined
         override val hidden = not.lockScreen.orUndefined.map(!_)
         override val bigText = not.bigText.orUndefined
+
+        override val channelName = not.channelTitle.orUndefined
+        override val channelDescription = not.channelDescr.orUndefined
       }
     }
   }

@@ -26,7 +26,7 @@ case class HttpFailedException(
     } else {
       val urlStr = Option( url )
         .fold("") { url1 =>
-          StringUtil.strLimitLen(url1, 25)
+          StringUtil.strLimitLen(url1, 35)
         }
 
       val methodStr = Option(method) getOrElse ""

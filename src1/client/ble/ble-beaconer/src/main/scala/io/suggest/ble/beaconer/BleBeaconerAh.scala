@@ -1,20 +1,19 @@
-package io.suggest.ble.beaconer.c
+package io.suggest.ble.beaconer
 
 import diode._
 import diode.data.Pot
-import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.beaconer.m._
+import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.radio.RadioUtil
 import io.suggest.msg.ErrorMsgs
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.MTsTimerId
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2.DomQuick
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
@@ -151,10 +150,10 @@ object BleBeaconerAh extends Log {
 }
 
 
-/**  */
+/** Контроллер мониторинга маячков. */
 class BleBeaconerAh[M](
                         dispatcher  : Dispatcher,
-                        modelRW     : ModelRW[M, MBeaconerS]
+                        modelRW     : ModelRW[M, MBeaconerS],
                       )
   extends ActionHandler(modelRW)
   with Log
@@ -404,15 +403,15 @@ class BleBeaconerAh[M](
         val now = System.currentTimeMillis()
 
         // Собрать id маячков, подлежащий удалению.
-        val keys2delete = v0.beacons
-          .iterator
-          .filter { case (k, mbd) =>
+        val keys2delete = (for {
+          (k, mbd) <- v0.beacons.iterator
+          if {
             val isOk = now - mbd.lastSeenMs < ttl
             val isToDelete = !isOk
             //println(s"drop?$isToDelete $k, now=$now lastSeen=${mbd.lastSeenMs} diff=${now - mbd.lastSeenMs} max-ttl=$ttl isOk=$isOk")
             isToDelete
           }
-          .map(_._1)
+        } yield k)
           .toSet
 
         if (keys2delete.isEmpty) {

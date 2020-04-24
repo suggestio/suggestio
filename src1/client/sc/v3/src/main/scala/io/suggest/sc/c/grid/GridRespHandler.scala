@@ -1,51 +1,39 @@
 package io.suggest.sc.c.grid
 
 import com.github.fisshy.react.scroll.AnimateScroll
-import diode.{ActionResult, Effect, ModelRO}
 import diode.data.Pot
-import io.suggest.common.empty.OptionUtil
-import io.suggest.common.html.HtmlConstants._
-import io.suggest.dev.MOsFamilies
-import io.suggest.geo.DistanceUtil
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import diode.{ActionResult, Effect, ModelRO}
 import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
-import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.msg.ErrorMsgs
-import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.node.MNodeTypes
-import io.suggest.os.notify.{MOsToast, MOsToastText, ShowNotify}
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.dia.err.MScErrorDia
+import io.suggest.sc.m.grid._
 import io.suggest.sc.m.{MScRoot, SetErrorState}
-import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridNotifyS, MGridS, MScAdData}
 import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
+import io.suggest.sc.v.toast.ScNotifications
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.spa.DoNothing
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.text.StringUtil
+import io.suggest.spa.DoNothing
 import japgolly.univeq._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 04.03.2020 16:44
-  * Description:
+  * Description: Обработчик блока данных с карточками плитки.
   */
 
 /** Поддержка resp-handler'а для карточек плитки без фокусировки. */
-class GridRespHandler(
-                       isDoOsNotify: ModelRO[Boolean],
-                     )
+final class GridRespHandler(
+                             scNotifications    : ScNotifications,
+                             isDoOsNotify       : ModelRO[Boolean],
+                           )
   extends IRespWithActionHandler
   with Log
 {
-
-  /** Когда происходит рендер нотификации, надо укорачивать заголовок каждой карточки до указанной величины.
-    * Это базовая величина, с которой идёт рассчёт длины заголовка для каждой конкретной карточки в зависимости от обстоятельств рендера.
-    */
-  def NOTIFY_AD_TITLE_MAX_LEN = 40
 
   override def isMyReqReason(ctx: MRhCtx): Boolean = {
     ctx.m.reason.isInstanceOf[GridLoadAds]
@@ -235,137 +223,20 @@ class GridRespHandler(
     ) {
       // Нужны ОС-нотификейшены по возможным новым карточкам. Вычислить, какие новые карточки ещё не показывались в уведомлениях.
       val unNotifiedAdIds = newScAdsById -- g0.gNotify.seenAdIds
-      if (unNotifiedAdIds.nonEmpty) {
-        // Есть новые карточки, по которым можно уведомить юзера.
-        val showToastFx = Effect.action {
-          // Собрать карточки по которым не было уведомлений (хотя бы одна карточка тут будет):
-          val unNotifiedAds = (for {
-            scAd <- newScAds.iterator
-            adNodeId <- scAd.nodeId
-            if unNotifiedAdIds contains adNodeId
-          } yield {
-            scAd
-          })
-            .to( List )
+      // Собрать карточки по которым не было уведомлений (хотя бы одна карточка тут будет):
+      val unNotifiedAds = (for {
+        scAd      <- newScAds.iterator
+        adNodeId  <- scAd.nodeId
+        if unNotifiedAdIds contains adNodeId
+      } yield {
+        scAd
+      })
+        .to( LazyList )
 
-          val messages = ctx.value0.internals.info.commonReactCtx.messages
-
-          // Надо собрать title'ы карточек, добавив расстояния до маячков.
-          val adTitlesWithDistRendered = (for {
-            scAd <- unNotifiedAds.iterator
-            // Используем в работе только карточки с заголовком, присланным с сервера.
-            adTitle <- scAd.main.title.iterator
-          } yield {
-            val distancesCm = (for {
-              // Поискать id маячка, с помощью которого найдена карточка.
-              adMatchInfo <- scAd.main.info.matchInfos.iterator
-              if adMatchInfo.predicates.exists(_ eqOrHasParent MPredicates.Receiver)
-              adMatchNodeInfo <- adMatchInfo.nodeMatchings.iterator
-              if adMatchNodeInfo.ntype contains MNodeTypes.BleBeacon
-              bleBeaconNodeId <- adMatchNodeInfo.nodeId.iterator
-              // Есть id маячка. Найти в текущей инфе указанный маячок.
-              uidBeacon <- ctx.value0.dev.beaconer
-                .nearbyReportById
-                .get( bleBeaconNodeId )
-                .iterator
-            } yield {
-              uidBeacon.distanceCm
-            })
-              .to( LazyList )
-
-            Option.when( distancesCm.nonEmpty ) {
-              val distanceCm2 = if (distancesCm.lengthIs == 1) {
-                distancesCm.head
-              } else {
-                // Найти среднее арифметическое всех известных расстояний среди имеющихся (одна и та же карточка может быть размещена в нескольких маячках):
-                distancesCm.sum / distancesCm.length
-              }
-
-              // Переводим расстояние в метры, рендерим в строку:
-              val distanceMeters2 = distanceCm2.toDouble / 100
-              val distMsg = DistanceUtil.formatDistanceM( distanceMeters2 )
-
-              // Рендерим в строку всё это
-              val distanceStr = messages( distMsg )
-
-              // Укоротить заголовок с сервера. 3 - оцениваем как доп."расходы" символов на рендер: скобки, пробелы и т.д. для MsgCodes.`0._inDistance.1`
-              val adTitleLenMax = NOTIFY_AD_TITLE_MAX_LEN - distanceStr.length - 3
-              val adTitleEllipsied = StringUtil.strLimitLen( adTitle, adTitleLenMax )
-              messages( MsgCodes.`0._inDistance.1`, adTitleEllipsied, distanceStr )
-            }
-              .getOrElse {
-                StringUtil.strLimitLen( adTitle, NOTIFY_AD_TITLE_MAX_LEN )
-              }
-          })
-            .to( List )
-
-          val unNotifiedAdsCount = unNotifiedAds.length
-
-          val toast = MOsToast(
-            uid = getClass.getSimpleName + `.` + MNodeTypes.BleBeacon.value,
-            // Заголовок прост: вывести, что найдено сколько-то предложений рядом
-            title = {
-              // TODO Переехать на Mozilla Fluent, чтобы отрабатывать детали локализации на уровне каждого конкретного языка.
-              if (unNotifiedAdsCount ==* 1) {
-                messages( MsgCodes.`One.offer.nearby` )
-              } else {
-                messages( MsgCodes.`0.offers.nearby`, unNotifiedAdsCount )
-              }
-            },
-            text = MOsToastText(
-              text = Option
-                .when( adTitlesWithDistRendered.nonEmpty ) {
-                  adTitlesWithDistRendered
-                    .mkString("\n")
-                }
-                .getOrElse {
-                  messages(
-                    MsgCodes.`Show.offers.0`,
-                    ctx.value0.dev.beaconer.nearbyReport
-                      .iterator
-                      .map(_.distanceCm)
-                      .maxOption
-                      .fold("") { maxDistanceCm =>
-                        // Нет текстов - вывести что-то типа "Показать предложения в радиусе 50 метров".
-                        messages(
-                          MsgCodes.`in.radius.of.0`,
-                          messages( DistanceUtil.formatDistanceCM( maxDistanceCm ) ),
-                        )
-                      },
-                  )
-                }
-            ) :: Nil,
-            // Android: нужно задавать smallIcon, т.к. штатная иконка после обесцвечивания в пиктограмму плохо выглядит.
-            smallIconUrl = Option.when {
-              val p = ctx.value0.dev.platform
-              p.isCordova && (p.osFamily contains MOsFamilies.Android)
-            }( "res://ic_notification" ),
-            // TODO appBadgeCounter - почему-то не работает
-            appBadgeCounter = Option.when( unNotifiedAdsCount > 0 )(unNotifiedAdsCount),
-            // TODO vibrate - выключить вибрацию? false или None - не помогают.
-            vibrate = OptionUtil.SomeBool.someFalse,
-            // silent: на android скрывает уведомление вообще
-            //silent = OptionUtil.SomeBool.someTrue,
-            // foreground: iOS не отображат уведомление на раскрытом приложении. https://github.com/katzer/cordova-plugin-local-notifications/issues/1711
-            foreground = OptionUtil.SomeBool.someTrue,
-            // TODO icon - вывести круглую иконку узла, в котором может быть находится пользователь? Взять присланную сервером или текущую какую-нибудь?
-            // image - без картинки, т.к. это довольно узконаправленное решение.
-            /*imageUrl = for {
-                mainBlk <- scAd.main.doc.template.loc
-                            .findByType( MJdTagNames.STRIP )
-                bgImgEdgeId <- mainBlk.getLabel.props1.bgImg
-                bgImg <- scAd.main.edges.get( bgImgEdgeId.edgeUid )
-                bgImgUrl <- bgImg.jdEdge.url
-              } yield {
-                HttpClient.mkAbsUrl( bgImgUrl )
-              },*/
-          )
-
-          ShowNotify( toast :: Nil )
-        }
-
-        fxAcc ::= showToastFx
+      for {
+        notifyFx <- scNotifications.adsNearbyFound( unNotifiedAds )
       }
+        fxAcc ::= notifyFx
     }
 
     // Опциональный эффект скролла вверх.

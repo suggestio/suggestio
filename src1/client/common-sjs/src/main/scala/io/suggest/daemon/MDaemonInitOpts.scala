@@ -54,6 +54,8 @@ object MDaemonEvents {
   * @param lockScreen Отображать даже на экране блокировки? Дефолт подразумевает false.
   * @param resumeAppOnClick Открывать приложение при нажатию по уведомлению?
   * @param bigText ???
+  * @param channelTitle Заголовок-название уведомления.
+  * @param channelDescr Описание уведомления.
   */
 case class MDaemonNotifyOpts(
                               title             : Option[String]      = None,
@@ -63,6 +65,8 @@ case class MDaemonNotifyOpts(
                               lockScreen        : Option[Boolean]     = None,
                               resumeAppOnClick  : Option[Boolean]     = None,
                               bigText           : Option[Boolean]     = None,
+                              channelTitle      : Option[String]      = None,
+                              channelDescr      : Option[String]      = None,
                             )
 object MDaemonNotifyOpts {
   @inline implicit def univEq: UnivEq[MDaemonNotifyOpts] = UnivEq.derive

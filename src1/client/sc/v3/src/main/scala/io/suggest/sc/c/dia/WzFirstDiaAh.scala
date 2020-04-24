@@ -2,7 +2,7 @@ package io.suggest.sc.c.dia
 
 import diode._
 import diode.data.{Pending, Pot}
-import io.suggest.ble.beaconer.m.BtOnOff
+import io.suggest.ble.beaconer.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
@@ -525,16 +525,12 @@ class WzFirstDiaAh[M](
       },
       askPermF = {
         if (platform.isCordova) {
-          println("cordova sask perm")
           CordovaLocalNotificationlUtil.hasPermissionState
         } else { () =>
-          println("ask notify perm")
           Try {
-            println("perm api ask")
             Html5PermissionApi.getPermissionState( PermissionName.notifications )
           }
             .recover { case _ =>
-              println("html5 direct ask")
               Html5NotificationUtil.getPermissionState()
             }
             .getOrElse( Future.failed(new UnsupportedOperationException) )

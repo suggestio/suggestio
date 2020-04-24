@@ -2,7 +2,7 @@ package io.suggest.ble.api.cordova.ble
 
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.beaconer.m.BeaconDetected
+import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

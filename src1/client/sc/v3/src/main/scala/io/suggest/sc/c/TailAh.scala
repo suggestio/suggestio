@@ -1,7 +1,7 @@
 package io.suggest.sc.c
 
 import diode._
-import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerOpts}
+import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs

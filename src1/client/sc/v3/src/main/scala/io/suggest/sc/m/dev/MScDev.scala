@@ -1,7 +1,7 @@
 package io.suggest.sc.m.dev
 
 import diode.FastEq
-import io.suggest.ble.beaconer.m.MBeaconerS
+import io.suggest.ble.beaconer.MBeaconerS
 import io.suggest.dev.MPlatformS
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

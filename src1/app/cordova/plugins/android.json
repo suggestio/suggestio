@@ -7,6 +7,12 @@
     "files": {}
   },
   "installed_plugins": {
+    "cordova-plugin-background-mode": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-ble-central": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -23,18 +29,21 @@
     "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-background-mode": {
+    "cordova-custom-config": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-ble-central": {
+    "cordova-background-timer": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-add-swift-support": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {
-    "cordova-plugin-badge": {
+    "cordova-plugin-device": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-device": {
+    "cordova-plugin-badge": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   }

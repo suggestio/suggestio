@@ -1,6 +1,6 @@
 package cordova.plugins
 
-import cordova.plugins.backgroundMode.CordovaPluginBackgroundMode
+import cordova.plugins.background.mode.CordovaPluginBackgroundMode
 import cordova.plugins.device.CordovaPluginDevice
 import cordova.plugins.diagnostic.CordovaPluginDiagnostic
 import cordova.plugins.notification.CordovaPluginNotification

@@ -1,4 +1,4 @@
-package cordova.plugins.backgroundMode
+package cordova.plugins.background.mode
 
 import scala.scalajs.js
 
@@ -34,5 +34,25 @@ trait CbgmDefaults extends js.Object {
   /** In silent mode the plugin will not display a notification - which is not the default.
     * Be aware that Android recommends adding a notification otherwise the OS may pause the app. */
   val silent: js.UndefOr[Boolean] = js.undefined
+
+
+  // ------------------------------ TheBosZ/cordova-plugin-run-in-background -----------------------------------
+
+  /** Shown when the user views the app's notification settings. */
+  val channelName: js.UndefOr[String] = js.undefined
+  /** Shown when the user views the channel's settings. */
+  val channelDescription: js.UndefOr[String] = js.undefined
+  /** Add a "Close" action to the notification. */
+  val allowClose: js.UndefOr[Boolean] = js.undefined
+  /** An icon shown for the close action. ['power'] */
+  val closeIcon: js.UndefOr[String] = js.undefined
+  /** The text for the close action. ['Close'] */
+  val closeTitle: js.UndefOr[String] = js.undefined
+  /** Show the time since the notification was created. [true] */
+  val showWhen: js.UndefOr[Boolean] = js.undefined
+  /** Android only: one of 'private' (default), 'public' or 'secret'
+    * @see [[https://developer.android.com/reference/android/app/Notification.Builder.html#setVisibility(int))]]
+    */
+  val visibility: js.UndefOr[String] = js.undefined
 
 }

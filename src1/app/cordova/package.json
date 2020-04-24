@@ -11,8 +11,11 @@
     "license": "CBCA",
     "dependencies": {
         "cordova-android": "^8.1.0",
+        "cordova-background-timer": "git+https://github.com/paladinarcher/cordova-background-timer.git",
+        "cordova-custom-config": "^5.1.0",
         "cordova-ios": "^5.1.1",
-        "cordova-plugin-background-mode": "git+https://github.com/katzer/cordova-plugin-background-mode.git",
+        "cordova-plugin-add-swift-support": "git+https://github.com/akofman/cordova-plugin-add-swift-support.git",
+        "cordova-plugin-background-mode": "git+https://bitbucket.org/TheBosZ/cordova-plugin-run-in-background.git",
         "cordova-plugin-badge": "^0.8.8",
         "cordova-plugin-ble-central": "^1.2.5",
         "cordova-plugin-device": "^2.0.3",
@@ -31,10 +34,13 @@
             "cordova-plugin-local-notification": {
                 "ANDROID_SUPPORT_V4_VERSION": "26.+"
             },
-            "cordova-plugin-background-mode": {},
             "cordova-plugin-ble-central": {
                 "BLUETOOTH_USAGE_DESCRIPTION": " "
-            }
+            },
+            "cordova-plugin-background-mode": {},
+            "cordova-custom-config": {},
+            "cordova-background-timer": {},
+            "cordova-plugin-add-swift-support": {}
         },
         "platforms": [
             "ios",

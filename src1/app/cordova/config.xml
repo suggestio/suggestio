@@ -10,7 +10,6 @@
     <content src="index.html" />
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
-    <allow-navigation href="http://192.168.222.192:9000/*" />
     <allow-navigation href="http://192.168.42.189:9000/*" />
     <allow-navigation href="https://*.cdnvideo.ru/*" />
     <allow-navigation href="https://suggest.cdnvideo.ru/*" />
@@ -60,10 +59,11 @@
         <resource-file src="res/icon/android/mipmap-hdpi/ic_notification.png" target="app/src/main/res/mipmap-hdpi/ic_notification.png" />
         <resource-file src="res/icon/android/mipmap-xhdpi/ic_notification.png" target="app/src/main/res/mipmap-xhdpi/ic_notification.png" />
         <resource-file src="res/icon/android/mipmap-xxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxhdpi/ic_notification.png" />
-	<resource-file src="res/icon/android/mipmap-xxxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxxhdpi/ic_notification.png" />
+        <resource-file src="res/icon/android/mipmap-xxxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxxhdpi/ic_notification.png" />
         <config-file parent="/*" target="AndroidManifest.xml">
-            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-            <uses-permission android:name="android.permission.WAKE_LOCK" />
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.NETWORK_ACCESS" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         </config-file>
     </platform>
     <platform name="ios">
@@ -119,13 +119,23 @@
         <icon height="88" src="res/icon/ios/AppIcon44x44@2x.png" width="88" />
         <icon height="172" src="res/icon/ios/AppIcon86x86@2x.png" width="172" />
         <icon height="196" src="res/icon/ios/AppIcon98x98@2x.png" width="196" />
+        <config-file parent="UIBackgroundModes" target="*-Info.plist">
+            <array>
+                <string>bluetooth-central</string>
+            </array>
+        </config-file>
     </platform>
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
     <plugin name="cordova-plugin-geolocation" spec="~4.0.1" />
     <plugin name="cordova-plugin-splashscreen" spec="~5.0.2" />
     <plugin name="cordova.plugins.diagnostic" spec="~4.0.10" />
     <plugin name="cordova-plugin-whitelist" spec="1" />
-    <plugin name="cordova-plugin-ble-central" spec="~1.2.5">
-      <variable name="BLUETOOTH_USAGE_DESCRIPTION" value="Monitoring Bluetooth-Beacons" />
+    <plugin name="cordova-plugin-local-notification" spec="~0.9.3">
+        <variable name="ANDROID_SUPPORT_V4_VERSION" value="26.+" />
     </plugin>
+    <plugin name="cordova-plugin-ble-central" spec="~1.2.5" />
+    <plugin name="cordova-plugin-background-mode" spec="~0.7.3" />
+    <plugin name="cordova-custom-config" spec="~5.1.0" />
+    <plugin name="cordova-background-timer" spec="~0.0.5" />
+    <plugin name="cordova-plugin-add-swift-support" spec="~2.0.2" />
 </widget>

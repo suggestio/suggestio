@@ -296,6 +296,10 @@ class JsMessagesUtil @Inject() (
       MC.`in.radius.of.0.from.1` ::
       MC.`Show.offers.0` ::
       MC.`in.radius.of.0` ::
+      MC.`Background.mode` ::
+      MC.`Background.monitoring.offers.nearby` ::
+      MC.`Daemon.toast.title` ::
+      MC.`Daemon.toast.descr` ::
       Nil
   }
 

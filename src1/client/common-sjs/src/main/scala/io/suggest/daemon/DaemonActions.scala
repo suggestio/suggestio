@@ -21,3 +21,12 @@ case class DaemonizerInit( initOpts: Option[MDaemonInitOpts] ) extends IDaemonAc
 
 /** Команда к демонизации приложения. */
 case class Daemonize( isDaemon: Boolean ) extends IDaemonAction
+
+
+/** Команда к запуску/остановке sleep-таймера.
+  * @param options None - снять таймер.
+  *                Some() - выставить таймер с указаннмыи параметрами.
+  */
+case class DaemonSleepTimerSet( options: Option[MDaemonSleepTimer] ) extends IDaemonAction
+
+protected[daemon] case class DaemonSleepTimerUpdate( timerId: Option[Int] ) extends IDaemonAction

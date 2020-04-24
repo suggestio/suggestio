@@ -1,4 +1,4 @@
-package io.suggest.daemon.cordova
+package io.suggest.cordova.background.mode
 
 import io.suggest.spa.DAction
 

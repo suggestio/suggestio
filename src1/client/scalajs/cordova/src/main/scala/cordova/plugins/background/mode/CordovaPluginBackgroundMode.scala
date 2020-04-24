@@ -1,4 +1,4 @@
-package cordova.plugins.backgroundMode
+package cordova.plugins.background.mode
 
 import io.suggest.sjs.JsApiUtil
 

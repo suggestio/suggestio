@@ -1,18 +1,18 @@
-package io.suggest.daemon.cordova
+package io.suggest.cordova.background.mode
 
 import cordova.Cordova
-import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
+import cordova.plugins.background.mode.CordovaBgModeEvents
+import diode._
 import io.suggest.daemon.{Daemonize, DaemonizerInit}
+import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
+import io.suggest.primo.Keep
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import cordova.plugins.backgroundMode.CordovaBgModeEvents
-import io.suggest.i18n.MsgCodes
-import io.suggest.primo.Keep
-import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.ueq.UnivEqUtil._
+import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
@@ -24,7 +24,7 @@ import scala.util.Try
   * Created: 16.04.2020 14:54
   * Description: Контроллер демонизации для управления cordova-plugin-background-mode.
   */
-object CordovaBgModeDaemonAh extends Log {
+object CordovaBgModeAh extends Log {
 
   final def CBGM = Cordova.plugins.backgroundMode
 
@@ -43,14 +43,14 @@ object CordovaBgModeDaemonAh extends Log {
 }
 
 
-final class CordovaBgModeDaemonAh[M](
-                                      modelRW       : ModelRW[M, MCbgmDaemonS],
+final class CordovaBgModeAh[M](
+                                      modelRW       : ModelRW[M, MCBgModeDaemonS],
                                       dispatcher    : Dispatcher,
                                     )
   extends ActionHandler( modelRW )
 { ah =>
 
-  import CordovaBgModeDaemonAh.{CBGM, LOG}
+  import CordovaBgModeAh.{CBGM, LOG}
 
 
   /** Патчинг списка листенеров.
@@ -58,7 +58,7 @@ final class CordovaBgModeDaemonAh[M](
     * @param v0 Состояние контроллера.
     * @return Эффект, если требует что-либо изменить.
     */
-  private def _ensureListenersFx( v0: MCbgmDaemonS ): Option[Effect] = {
+  private def _ensureListenersFx( v0: MCBgModeDaemonS ): Option[Effect] = {
     val needListenersTypes = (for {
       initOpts <- v0.initOpts
     } yield {
@@ -144,7 +144,7 @@ final class CordovaBgModeDaemonAh[M](
         }
       }
 
-      val v2 = (MCbgmDaemonS.initOpts set m.initOpts)(v0)
+      val v2 = (MCBgModeDaemonS.initOpts set m.initOpts)(v0)
       for ( listenersFx <- _ensureListenersFx(v2) )
         fxAcc ::= listenersFx
 
@@ -221,13 +221,14 @@ final class CordovaBgModeDaemonAh[M](
 
       if (m.remove.nonEmpty)
         listeners2 --= m.remove
+
       if (m.add.nonEmpty)
         listeners2 = listeners2.merged( m.add )( Keep.right )
 
       if (listeners2 ===* v0.listeners) {
         noChange
       } else {
-        val v2 = (MCbgmDaemonS.listeners set listeners2)(v0)
+        val v2 = (MCBgModeDaemonS.listeners set listeners2)(v0)
         updatedSilent( v2 )
       }
 

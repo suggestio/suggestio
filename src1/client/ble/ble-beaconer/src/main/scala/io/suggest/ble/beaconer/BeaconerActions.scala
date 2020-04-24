@@ -1,7 +1,7 @@
-package io.suggest.ble.beaconer.m
+package io.suggest.ble.beaconer
 
-import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.IBeaconSignal
+import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.spa.DAction
 
 import scala.util.Try

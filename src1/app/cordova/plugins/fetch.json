@@ -57,18 +57,42 @@
       "ANDROID_SUPPORT_V4_VERSION": "26.+"
     }
   },
-  "cordova-plugin-background-mode": {
-    "source": {
-      "type": "registry",
-      "id": "https://github.com/katzer/cordova-plugin-background-mode"
-    },
-    "is_top_level": true,
-    "variables": {}
-  },
   "cordova-plugin-ble-central": {
     "source": {
       "type": "registry",
       "id": "cordova-plugin-ble-central"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-background-mode": {
+    "source": {
+      "type": "registry",
+      "id": "https://bitbucket.org/TheBosZ/cordova-plugin-run-in-background"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-custom-config": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-custom-config"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-background-timer": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/paladinarcher/cordova-background-timer"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-add-swift-support": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/akofman/cordova-plugin-add-swift-support"
     },
     "is_top_level": true,
     "variables": {}

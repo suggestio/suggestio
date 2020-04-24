@@ -1,15 +1,14 @@
 package io.suggest.sc
 
-import cordova.Cordova
 import diode.{Effect, FastEq, ModelRO}
 import diode.data.Pot
 import diode.react.ReactConnector
-import io.suggest.ble.beaconer.c.BleBeaconerAh
-import io.suggest.ble.beaconer.m.{BtOnOff, MBeaconerOpts, MBeaconerS}
+import io.suggest.ble.beaconer.{BleBeaconerAh, BtOnOff, MBeaconerOpts, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
-import io.suggest.daemon.{DaemonizerInit, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonNotifyOpts}
-import io.suggest.daemon.cordova.CordovaBgModeDaemonAh
+import io.suggest.cordova.background.mode.CordovaBgModeAh
+import io.suggest.cordova.background.timer.CordovaBgTimerAh
+import io.suggest.daemon.{DaemonizerInit, HtmlBgTimerAh, MDaemonDescr, MDaemonEvents, MDaemonInitOpts}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
@@ -63,6 +62,7 @@ import io.suggest.dev.MPlatformS
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
+import io.suggest.sc.v.toast.ScNotifications
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -99,7 +99,7 @@ class Sc3Circuit(
   import io.suggest.sc.m.dia.MScDialogs.MScDialogsFastEq
   import io.suggest.sc.m.dia.first.MWzFirstOuterS.MWzFirstOuterSFastEq
 
-  import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
+  import MBeaconerS.MBeaconerSFastEq
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
@@ -236,6 +236,11 @@ class Sc3Circuit(
   private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
 
 
+  // notifications
+  private val scNotifications = new ScNotifications(
+    rootRO = rootRW,
+  )
+
   /** Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах. */
   val (respHandlers, respActionHandlers) = {
     // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
@@ -247,7 +252,8 @@ class Sc3Circuit(
           (mroot.dev.osNotify.hasPermission contains true) //&&
           // TODO 2. Приложение скрыто, и требует привлечения внимания, и запрос был в фоне.
           //!mroot.dev.platform.isUsingNow
-        }
+        },
+        scNotifications = scNotifications,
       ),
       new GridFocusRespHandler,
       new IndexRah,
@@ -381,24 +387,44 @@ class Sc3Circuit(
 
 
   /** Контроллер демона. */
-  private val daemonAh: HandlerFunction = {
-    if (CordovaConstants.isCordovaPlatform() && CordovaBgModeDaemonAh.canDaemonize()) {
-      new CordovaBgModeDaemonAh(
-        modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cordova ),
+  private val daemonBgModeAh: HandlerFunction = {
+    if (CordovaConstants.isCordovaPlatform() && CordovaBgModeAh.canDaemonize()) {
+      new CordovaBgModeAh(
+        modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cBgMode ),
         dispatcher  = this,
       )
     } else {
       null
     }
   }
-  private def _hasDaemonAh: Boolean = daemonAh != null
+  private def _hasDaemonAh: Boolean = daemonBgModeAh != null
 
   private lazy val scDaemonAh = new ScDaemonAh(
-    modelRW       = mkLensZoomRW( daemonRW, MScDaemon.sc ),
+    modelRW       = daemonRW,
     beaconerRO    = beaconerRW,
     platfromRO    = platformRW,
     dispatcher    = this,
   )
+
+
+  /** Выборочный контроллер sleep-таймера демона. */
+  private val daemonSleepTimerAh: HandlerFunction = {
+    if (!_hasDaemonAh) {
+      null
+    } else if ( CordovaBgTimerAh.hasCordovaBgTimer() ) {
+      new CordovaBgTimerAh(
+        dispatcher = this,
+        modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cBgTimer ),
+      )
+    } else {
+      // TODO Не ясно, надо ли это активировать вообще? Может выкинуть (закомментить) этот контроллер? И его модель-состояние следом.
+      new HtmlBgTimerAh(
+        dispatcher = this,
+        modelRW    = mkLensZoomRW( daemonRW, MScDaemon.htmlBgTimer ),
+      )
+    }
+  }
+  private def _hasDaemonSleepTimer = daemonSleepTimerAh != null
 
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
@@ -415,8 +441,11 @@ class Sc3Circuit(
 
     if (_hasDaemonAh) {
       acc ::= scDaemonAh
-      acc ::= daemonAh
+      acc ::= daemonBgModeAh
     }
+
+    if (_hasDaemonSleepTimer)
+      acc ::= daemonSleepTimerAh
 
     // Контроллер для нативного приложения.
     acc ::= menuNativeAppAh
@@ -641,14 +670,12 @@ class Sc3Circuit(
       }
 
       // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
-      if (platformRW.value.isCordova) {
+      if (
+        _hasDaemonSleepTimer &&
+        (beaconerRW.value.isEnabled contains[Boolean] true)
+      ) {
         // Если сокрытие и включён bluetooth-мониторинг, то перейти в background-режим.
-        if (
-          !isUsingNow &&
-          (beaconerRW.value.isEnabled contains[Boolean] true)
-        ) {
-          Cordova.plugins.backgroundMode.setEnabled( true )
-        }
+        this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
       }
 
     }
@@ -680,8 +707,6 @@ class Sc3Circuit(
         // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
         val glaAction = _gridBleReloadAction
         this.runEffectAction( glaAction )
-        //val glaFx = _gridBleReloadAction.toEffectPure
-        //this.runEffect( glaFx, glaAction )
       }
     }
 
@@ -690,13 +715,12 @@ class Sc3Circuit(
       val daemonizerInitA = DaemonizerInit(
         initOpts = Some( MDaemonInitOpts(
           events = MDaemonEvents(
-            activated = DaemonActivate,
+            activated = ScDaemonWorkProcess,
           ),
           descr = MDaemonDescr(
             needBle = true,
           ),
-          notification = Some( MDaemonNotifyOpts(
-          ))
+          notification = Some( scNotifications.daemonNotifyOpts() ),
         ))
       )
       this.runEffectAction( daemonizerInitA )

@@ -1,7 +1,7 @@
 package io.suggest.sc.m.in
 
 import diode.FastEq
-import io.suggest.daemon.cordova.MCbgmDaemonS
+import io.suggest.cordova.background.mode.MCBgModeDaemonS
 import io.suggest.sc.m.boot.MScBoot
 import io.suggest.sc.sc3.MSc3Conf
 import io.suggest.ueq.UnivEqUtil._

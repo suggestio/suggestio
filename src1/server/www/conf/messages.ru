@@ -1132,3 +1132,8 @@ One.offer.nearby=Есть предложение рядом!
 0._inDistance.1={0} ({1})
 Show.offers.0=Показать предложения {0}
 
+Background.mode=Фоновый режим
+Background.monitoring.offers.nearby=Уведомление о новых предложениях рядом с вами. Вы можете настроить мониторинг в настройках приложения.
+Daemon.toast.title=Фоновый мониторинг
+Daemon.toast.descr=Обнаружение новых предложений поблизости.
+

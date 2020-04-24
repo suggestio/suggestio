@@ -1,15 +1,15 @@
-package io.suggest.ble.beaconer.m
+package io.suggest.ble.beaconer
 
-import diode.{Effect, FastEq}
 import diode.data.Pot
+import diode.{Effect, FastEq}
 import io.suggest.ble.MUidBeacon
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.html.HtmlConstants
 import io.suggest.sjs.common.model.MTsTimerId
-import japgolly.univeq._
-import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 import monocle.macros.GenLens
 
 /**
