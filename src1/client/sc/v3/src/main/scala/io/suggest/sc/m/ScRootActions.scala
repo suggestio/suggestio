@@ -193,7 +193,7 @@ case class ScDaemonWorkProcess( isActive: Boolean ) extends IScDaemonAction
 case class ScDaemonFallSleepTimerSet( timerId: Option[Int] ) extends IScDaemonAction
 
 /** Срабатывание таймера пробуждения демона. */
-case object DaemonSleepAlarm extends IScDaemonAction
+case class DaemonSleepAlarm(isActive: Boolean) extends IScDaemonAction
 
 /** Активация или деактивация фонового поиска bluetooth-маячков. */
 case class DaemonBluetooth( activate: Boolean ) extends IScDaemonAction

@@ -1,6 +1,7 @@
 package io.suggest.ble.api.cordova.ble
 
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
+import io.suggest.ble.BleConstants
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.msg.ErrorMsgs
@@ -75,8 +76,8 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
   override def listenBeacons(listener: Function1[BeaconDetected, _]): Future[_] = {
     Future {
       Ble.startScanWithOptions(
-        // Короткого UUID тут достаточно.
-        services      = js.Array( /*BleConstants.Beacon.EddyStone.SERVICE_UUID_16B_LC*/ ),
+        // Короткого UUID тут достаточно. 0xFEAA обязателен здесь для ФОНОВОГО сканирования на iOS и Android.
+        services      = js.Array( BleConstants.Beacon.EddyStone.SERVICE_UUID_16B_LC ),
         options = new StartScanOptions {
           override val reportDuplicates = true
         },

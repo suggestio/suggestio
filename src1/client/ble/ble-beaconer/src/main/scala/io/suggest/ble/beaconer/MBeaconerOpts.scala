@@ -18,7 +18,6 @@ object MBeaconerOpts {
   def hard = GenLens[MBeaconerOpts]( _.hardOff )
   def askEnableBt = GenLens[MBeaconerOpts]( _.askEnableBt )
   def oneShot = GenLens[MBeaconerOpts]( _.oneShot )
-  //def nearbyChanged = GenLens[MBeaconerOpts]( _.nearbyChanged )
 
 }
 
@@ -31,12 +30,9 @@ object MBeaconerOpts {
   *                    true - Если bluetooth выключен в ОС, будет открыт системный диалог.
   *                    false - Если bt выключен на уровне ОС, то beaconer будет деактивирован следом.
   * @param oneShot Одноразовое сканирование радиоэфира, и выключение после окончания сканирования.
-  * @param nearbyChanged Функция, возвращающая эффект реакции на изменение списка близлежащих маячков.
-  *                      $1 - None - ничего не изменилось. Some() - список действительно изменился.
   */
 case class MBeaconerOpts(
                           hardOff           : Boolean           = false,
                           askEnableBt       : Boolean           = true,
                           oneShot           : Boolean           = false,
-                          //nearbyChanged     : Option[Option[Seq[MUidBeacon]] => Effect] = None,
                         )

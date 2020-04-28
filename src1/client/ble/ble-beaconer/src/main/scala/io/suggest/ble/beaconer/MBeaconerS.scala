@@ -2,7 +2,6 @@ package io.suggest.ble.beaconer
 
 import diode.data.Pot
 import diode.{Effect, FastEq}
-import io.suggest.ble.MUidBeacon
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.html.HtmlConstants
@@ -72,7 +71,7 @@ case class MBeaconerS(
                        afterOnOff           : Option[Effect]             = None,
                        notifyAllTimer       : Option[MTsTimerId]         = None,
                        beacons              : Map[String, MBeaconData]   = Map.empty,
-                       nearbyReport         : Seq[MUidBeacon]            = Nil,
+                       nearbyReport         : BeaconsNearby_t                   = Nil,
                        gcIntervalId         : Option[Int]                = None,
                        envFingerPrint       : Option[Int]                = None,
                        bleBeaconsApi        : Pot[IBleBeaconsApi]        = Pot.empty,

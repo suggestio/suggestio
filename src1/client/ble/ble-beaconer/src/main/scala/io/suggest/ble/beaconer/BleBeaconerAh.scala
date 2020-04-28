@@ -152,8 +152,9 @@ object BleBeaconerAh extends Log {
 
 /** Контроллер мониторинга маячков. */
 class BleBeaconerAh[M](
-                        dispatcher  : Dispatcher,
-                        modelRW     : ModelRW[M, MBeaconerS],
+                        dispatcher        : Dispatcher,
+                        modelRW           : ModelRW[M, MBeaconerS],
+                        onNearbyChange    : Option[OnNearbyChangeF] = None,
                       )
   extends ActionHandler(modelRW)
   with Log
@@ -325,6 +326,7 @@ class BleBeaconerAh[M](
 
     // API сообщает, что получило сигнал от какого-то ble-маячка.
     case m: BeaconDetected =>
+      println(m)
       //println(m)
       val v0 = value
 
@@ -451,11 +453,8 @@ class BleBeaconerAh[M](
       val v0 = value
 
       def __maybeRmTimer() = {
-        if (v0.notifyAllTimer.nonEmpty) {
-          val v2 = MBeaconerS.notifyAllTimer.set( None )(v0)
-          updatedSilent(v2)
-        } else {
-          noChange
+        Option.when( v0.notifyAllTimer.nonEmpty ) {
+          MBeaconerS.notifyAllTimer.set( None )(v0)
         }
       }
 
@@ -463,32 +462,47 @@ class BleBeaconerAh[M](
         // Это ожидаемый таймер сработал. Пересчитать контрольную сумму маячков:
         val beaconsNearby = BleBeaconerAh.beaconsNearby( v0.beacons )
         val fpr2 = BleBeaconerAh.mkFingerPrint( beaconsNearby )
+
+        def __onChangeFxOpt(v2: MBeaconerS) =
+          onNearbyChange
+            .flatMap( _(v0.nearbyReport, v2.nearbyReport) )
+
         if (fpr2 !=* v0.envFingerPrint) {
           //println(s"fpr CHANGED: ${v0.envFingerPrint}=>$fpr2\n beaconsMap = ${v0.beacons}\n nearby = ${beaconsNearby.mkString(", ")}")
           // Изменился отпечаток маячков с момента последнего уведомления всех вокруг. Надо организовать обновлённый список маячков.
           val v2 = v0.copy(
             envFingerPrint = fpr2,
             notifyAllTimer = None,
-            nearbyReport   = beaconsNearby.map(_._2)
+            nearbyReport   = beaconsNearby.map(_._2),
           )
+          // Опциональный onChange-эффект
+          // silent, т.к. функция onChange вынесена в конструктор, и подписка на изменения не подразумевается.
+          ah.updatedSilentMaybeEffect( v2, __onChangeFxOpt(v2) )
           // Без silent, т.к. обычно есть подписка на fingerPrint или nearbyReport.
-          updated(v2)
+          //updated(v2)
 
         } else {
           // Нет смысла уведомлять кого-либо: ничего существенно не изменилось в маячков.
           //println("nothing changed " + v0.envFingerPrint + "==" + fpr2)
-          __maybeRmTimer()
+          val v2Opt = __maybeRmTimer()
+          // Если oneShot, то нужно уведомить через onChange, хотя ничего и не изменилось - функция сама порешит.
+          val fxOpt = OptionUtil.maybeOpt( v0.opts.oneShot )(
+            __onChangeFxOpt(v2Opt getOrElse v0)
+          )
+          this.optionalResult( v2Opt, fxOpt, silent = true )
         }
 
       } else {
         // Неожиданный таймер, игнор.
         LOG.log( ErrorMsgs.INACTUAL_NOTIFICATION, msg = m )
-        __maybeRmTimer()
+        val v2 = __maybeRmTimer()
+        v2.fold(noChange)(updatedSilent)
       }
 
 
     // Управление активностью BleBeaconer: вкл/выкл.
     case m: BtOnOff =>
+      println(m)
       val v0 = value
       def isCanBeEnabled = m.opts.hardOff || !v0.opts.hardOff
       // Включён или включается.

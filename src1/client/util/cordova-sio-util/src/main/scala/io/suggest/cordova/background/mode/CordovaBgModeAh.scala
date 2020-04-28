@@ -153,12 +153,11 @@ final class CordovaBgModeAh[M](
 
     // Команда к демонизации или раздемонизации приложения.
     case m: Daemonize =>
+      println(m)
+
       val fx = Effect.action {
-        if (m.isDaemon) {
-          CBGM.moveToBackground()
-        } else {
-          CBGM.moveToForeground()
-        }
+        CBGM.setEnabled( m.isDaemon )
+        println("daemon work := " + m.isDaemon)
 
         DoNothing
       }
@@ -168,6 +167,8 @@ final class CordovaBgModeAh[M](
 
     // Обработка события со стороны cordova-плагина.
     case m: CbgmEvent =>
+      println(m)
+
       val v0 = value
 
       (for {
@@ -185,6 +186,16 @@ final class CordovaBgModeAh[M](
                 DoNothing
               } >> fxAcc0
             }
+
+            /*
+            if (initOpts.descr.needBle) {
+              val fxAcc0 = fxAcc
+              fxAcc = Effect.action {
+                CBGM.disableBatteryOptimizations()
+                DoNothing
+              } >> fxAcc0
+            }
+            */
 
             Some( fxAcc )
 

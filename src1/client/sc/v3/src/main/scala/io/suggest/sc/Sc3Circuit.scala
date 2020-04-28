@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.mode.CordovaBgModeAh
 import io.suggest.cordova.background.timer.CordovaBgTimerAh
-import io.suggest.daemon.{DaemonizerInit, HtmlBgTimerAh, MDaemonDescr, MDaemonEvents, MDaemonInitOpts}
+import io.suggest.daemon.{DaemonizerInit, HtmlBgTimerAh, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
@@ -63,6 +63,7 @@ import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
 import io.suggest.sc.v.toast.ScNotifications
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -331,9 +332,61 @@ class Sc3Circuit(
     modelRW = platformRW
   )
 
+
   private val beaconerAh = new BleBeaconerAh(
     modelRW     = beaconerRW,
-    dispatcher  = this
+    dispatcher  = this,
+    onNearbyChange = Some { (nearby0, nearby2) =>
+      if (daemonRW.value.state contains MDaemonStates.Work) {
+        // Если что-то изменилось, то надо запустить обновление плитки.
+        def finishWorkProcFx: Effect =
+          Effect.action( ScDaemonWorkProcess(isActive = false) )
+
+        val fx = if (nearby0 ===* nearby2) {
+          // Ничего не изменилось: такое возможно при oneShot-режиме. Надо сразу деактивировать режим демонизации.
+          finishWorkProcFx
+        } else {
+          // Что-то изменилось в списке маячков. Надо запустить обновление плитки.
+          val shutOffAfterGrid = Effect.action {
+            GridAfterUpdate(
+              effect = finishWorkProcFx,
+            )
+          }
+          _gridBleReloadFx + shutOffAfterGrid
+        }
+        Some( fx )
+
+      } else {
+        // Логика зависит от режима, который сейчас: работа демон или обычный режим вне демона.
+        // Подписываемся на события изменения списка наблюдаемых маячков.
+        OptionUtil.maybeOpt( nearby0 ne nearby2 ) {
+          //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
+          val mroot = rootRW.value
+
+          if (mroot.index.resp.isPending) {
+            // Сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление закинуть в очередь.
+            Option.when(
+              !mroot.grid.afterUpdate.exists {
+                case gla: GridLoadAds =>
+                  gla.onlyMatching.exists { om =>
+                    om.ntype contains[MNodeType] MNodeTypes.BleBeacon
+                  }
+                case _ => false
+              }
+            ) {
+              // Нужно забросить в состояние плитки инфу о необходимости обновится после заливки исходной плитки.
+              Effect.action {
+                GridAfterUpdate( _gridBleReloadFx )
+              }
+            }
+
+          } else {
+            // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
+            Some( _gridBleReloadFx )
+          }
+        }
+      }
+    }
   )
 
   private val wzFirstDiaAh = new WzFirstDiaAh(
@@ -518,15 +571,16 @@ class Sc3Circuit(
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
     */
-  private def _dispatchBleBeaconerOnOff(): Unit = {
-    try {
-      val plat = platformRW.value
-      if (plat.hasBle && plat.isReady) Future {
-        //LOG.warn( "ok, dispatching ble on/off", msg = plat )
+  private def _dispatchBleBeaconerOnOff(): Boolean = {
+    val plat = platformRW.value
+    // TODO Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).
+    val nextState = plat.isUsingNow
+    (plat.hasBle && plat.isReady) && {
+      Future {
         val msg = BtOnOff(
-          isEnabled = plat.isUsingNow,
+          isEnabled = nextState,
           opts = MBeaconerOpts(
-            hardOff          = false,
+            hardOff       = false,
             // Не долбить мозг юзеру системным запросом включения bluetooth.
             askEnableBt   = false,
             oneShot       = false,
@@ -534,9 +588,7 @@ class Sc3Circuit(
         )
         this.runEffectAction( msg )
       }
-    } catch {
-      case ex: Throwable =>
-        LOG.error( ErrorMsgs.CORDOVA_BLE_REQUIRE_FAILED, ex )
+      nextState
     }
   }
 
@@ -656,7 +708,7 @@ class Sc3Circuit(
     subscribe( mkLensZoomRO(platformRW, MPlatformS.isUsingNow) ) { isUsingNowProxy =>
       // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
       val isUsingNow = isUsingNowProxy.value
-      _dispatchBleBeaconerOnOff()
+      val bleIsToEnable = _dispatchBleBeaconerOnOff()
 
       // Глушить фоновый GPS-мониторинг:
       __dispatchGeoLocOnOff(isUsingNow)
@@ -670,9 +722,16 @@ class Sc3Circuit(
       }
 
       // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
+      println( _hasDaemonSleepTimer, bleIsToEnable, beaconerRW.value.isEnabled )
       if (
-        _hasDaemonSleepTimer &&
-        (beaconerRW.value.isEnabled contains[Boolean] true)
+        _hasDaemonSleepTimer && (
+          isUsingNow match {
+            // включение: beaconer всегда выключен.
+            case true  => bleIsToEnable
+            // выключение
+            case false => (beaconerRW.value.isEnabled contains[Boolean] true)
+          }
+        )
       ) {
         // Если сокрытие и включён bluetooth-мониторинг, то перейти в background-режим.
         this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
@@ -680,35 +739,6 @@ class Sc3Circuit(
 
     }
 
-
-    // Подписаться на события изменения списка наблюдаемых маячков.
-    // Не подписываться без необходимости? Но для этого надо подписываться на platform.isBleAvail, т.е. смысла в оптимизации нет.
-    subscribe( mkLensZoomRO(beaconerRW, MBeaconerS.nearbyReport) ) { _ =>
-      //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
-      val mroot = rootRW.value
-
-      if (mroot.index.resp.isPending) {
-        // Сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление закинуть в очередь.
-        if (
-          !mroot.grid.afterUpdate.exists {
-            case gla: GridLoadAds =>
-              gla.onlyMatching.exists { om =>
-                om.ntype contains[MNodeType] MNodeTypes.BleBeacon
-              }
-            case _ => false
-          }
-        ) {
-          // Нужно забросить в состояние плитки инфу о необходимости обновится после заливки исходной плитки.
-          val msg = GridAfterUpdate( Effect.action(_gridBleReloadAction) )
-          this.runEffectAction( msg )
-        }
-
-      } else {
-        // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
-        val glaAction = _gridBleReloadAction
-        this.runEffectAction( glaAction )
-      }
-    }
 
     // Инициализация демонизатора
     if (_hasDaemonAh) Future {
@@ -738,6 +768,7 @@ class Sc3Circuit(
       ntype = Some( MNodeTypes.BleBeacon ),
     )),
   )
+  private def _gridBleReloadFx = Effect.action( _gridBleReloadAction )
 
 
   private def _errFrom(action: Any, ex: Throwable): Unit = {
