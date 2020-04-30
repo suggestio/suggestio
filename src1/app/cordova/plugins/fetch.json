@@ -63,7 +63,9 @@
       "id": "cordova-plugin-ble-central"
     },
     "is_top_level": true,
-    "variables": {}
+    "variables": {
+      "BLUETOOTH_USAGE_DESCRIPTION": " "
+    }
   },
   "cordova-plugin-background-mode": {
     "source": {
@@ -84,7 +86,7 @@
   "cordova-background-timer": {
     "source": {
       "type": "registry",
-      "id": "https://github.com/paladinarcher/cordova-background-timer"
+      "id": "git+https://github.com/paladinarcher/cordova-background-timer.git"
     },
     "is_top_level": true,
     "variables": {}

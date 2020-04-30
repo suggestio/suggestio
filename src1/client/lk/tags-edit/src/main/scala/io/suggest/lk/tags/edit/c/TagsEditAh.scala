@@ -10,7 +10,7 @@ import io.suggest.lk.tags.edit.m._
 import scala.concurrent.duration._
 import diode.Implicits.runAfterImpl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.tags.{ITagsApi, MTagsSearchQs}
 import play.api.libs.json.Json
 

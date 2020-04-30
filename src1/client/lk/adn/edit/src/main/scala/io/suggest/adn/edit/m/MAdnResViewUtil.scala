@@ -4,7 +4,7 @@ import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.c.IJdEdgeIdViewAdp
 import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq._
 
 /**

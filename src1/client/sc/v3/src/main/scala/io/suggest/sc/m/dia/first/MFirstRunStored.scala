@@ -3,7 +3,7 @@ package io.suggest.sc.m.dia.first
 import io.suggest.conf.ConfConst
 import io.suggest.kv.MKvStorage
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -54,7 +54,7 @@ object MFirstRunStored extends Log {
       MKvStorage.save( mkv )
     } catch {
       case ex: Throwable =>
-        LOG.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex, mkv )
+        logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex, mkv )
     }
   }
 
@@ -69,7 +69,7 @@ object MFirstRunStored extends Log {
       }
     } catch {
       case ex: Throwable =>
-        LOG.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex, _CONF_KEY )
+        logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex, _CONF_KEY )
         None
     }
   }
@@ -81,7 +81,7 @@ object MFirstRunStored extends Log {
       MKvStorage.delete( _CONF_KEY )
     } catch {
       case ex: Throwable =>
-        LOG.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex, _CONF_KEY )
+        logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex, _CONF_KEY )
     }
   }
 

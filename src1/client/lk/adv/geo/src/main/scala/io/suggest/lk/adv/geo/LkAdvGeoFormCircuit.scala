@@ -17,7 +17,7 @@ import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.dt.period.r.DtpAh
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh

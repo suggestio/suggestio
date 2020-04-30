@@ -19,7 +19,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.img.{ImgCommonUtil, ImgUtilRJs}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
@@ -421,7 +421,7 @@ class JdR(
         CSSGrid {
           GridBuilderUtilJs.mkCssGridArgs(
             gbRes = state.gridBuildRes.getOrElse {
-              LOG.error( ErrorMsgs.GRID_BUILD_RES_MISSING, msg = state.tagId.toString )
+              logger.error( ErrorMsgs.GRID_BUILD_RES_MISSING, msg = state.tagId.toString )
               throw new NoSuchElementException( ErrorMsgs.GRID_BUILD_RES_MISSING )
             },
             conf = state.jdArgs.conf,

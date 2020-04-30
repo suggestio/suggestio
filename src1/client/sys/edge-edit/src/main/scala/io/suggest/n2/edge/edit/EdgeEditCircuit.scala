@@ -17,7 +17,7 @@ import io.suggest.n2.media.MEdgeMedia
 import io.suggest.n2.media.storage.{MStorageInfo, MStorageInfoData, MStorages}
 import io.suggest.pick.ContentTypeCheck
 import io.suggest.routes.routes
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.spa.{CircuitUtil, DoNothingActionProcessor, OptFastEq, StateInp}
 import io.suggest.up.{IUploadApi, MFileUploadS, UploadApiHttp}
 import io.suggest.xplay.json.PlayJsonSjsUtil
@@ -159,7 +159,7 @@ class EdgeEditCircuit
                 )
               })
                 .getOrElse {
-                  LOG.warn("Invalid/missing upload.extra: " + v2.uploadExtra)
+                  logger.warn("Invalid/missing upload.extra: " + v2.uploadExtra)
                   // Не ясно, нужна ли эта ветвь.
                   (
                     rootEditUpdateF andThen
@@ -169,7 +169,7 @@ class EdgeEditCircuit
                       MEdge.media.modify { edgeMediaOpt0 =>
                         for (srvInfo <- edgeDataJs2.jdEdge.fileSrv) yield {
                           val storInfo = srvInfo.storage getOrElse {
-                            LOG.warn("SrvInfo.storage is empty")
+                            logger.warn("SrvInfo.storage is empty")
                             MStorageInfo( MStorages.SeaWeedFs, MStorageInfoData(meta = "") )
                           }
                           edgeMediaOpt0.fold {

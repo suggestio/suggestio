@@ -7,7 +7,7 @@ import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
@@ -59,7 +59,7 @@ class CurrentGeoPopupAh[M](
 
       } else {
         // Неактуальный ответ.
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.open )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.open )
         noChange
       }
 

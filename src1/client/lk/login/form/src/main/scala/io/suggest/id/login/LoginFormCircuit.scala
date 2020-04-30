@@ -18,7 +18,7 @@ import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi, SmsCodeFormAh}
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
 import io.suggest.spa.{DoNothingActionProcessor, OptFastEq}
 import japgolly.scalajs.react.extra.router.RouterCtl

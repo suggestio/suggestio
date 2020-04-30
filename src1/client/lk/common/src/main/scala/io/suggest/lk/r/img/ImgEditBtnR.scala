@@ -19,7 +19,7 @@ import io.suggest.lk.r.FilesDropZoneR
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
-import io.suggest.sjs.common.model.dom.DomListSeq
+import io.suggest.sjs.dom2.DomListSeq
 import io.suggest.spa.DAction
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.html_<^._

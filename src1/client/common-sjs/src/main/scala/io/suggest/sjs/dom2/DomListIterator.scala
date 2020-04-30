@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.model.dom
+package io.suggest.sjs.dom2
 
 import org.scalajs.dom.raw.DOMList
 

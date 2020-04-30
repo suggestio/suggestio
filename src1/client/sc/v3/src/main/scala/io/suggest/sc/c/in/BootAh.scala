@@ -15,7 +15,7 @@ import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.m.search.MGeoTabData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -317,7 +317,7 @@ class BootAh[M](
       v0.services
         .get( m.svcId )
         .fold {
-          LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+          logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
           noChange
         } { svcData0 =>
           val svcData2 = MBootServiceState.started.set(
@@ -371,7 +371,7 @@ class BootAh[M](
       val firstRO = circuit.firstRunDiaRW
       if (firstRO.value.view.isEmpty) {
         // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
-        LOG.warn( ErrorMsgs.INIT_FLOW_UNEXPECTED, msg = m )
+        logger.warn( ErrorMsgs.INIT_FLOW_UNEXPECTED, msg = m )
         _afterWzDone( Some(startedAtMs), started = true, runned = false )
 
       } else {

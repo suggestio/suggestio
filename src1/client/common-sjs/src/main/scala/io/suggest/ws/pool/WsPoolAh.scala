@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.event.DomEvents
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.ws.MWsMsg
@@ -48,7 +48,7 @@ class WsPoolAh[M](
       val v0 = value
       v0.conns.get( m.target ).fold {
         // Внезапно, не найден коннекшен.
-        LOG.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = m )
+        logger.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = m )
         noChange
 
       } { _ =>
@@ -110,7 +110,7 @@ class WsPoolAh[M](
       val key = m.target
       v0.conns.get( key ).fold {
         // Should never happen: было выполнено открытие закрытого/неизвестного коннекшена.
-        LOG.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = m )
+        logger.warn( ErrorMsgs.UNKNOWN_CONNECTION, msg = m )
         for (ws <- m.ws) {
           _safeCloseWs( ws )
         }
@@ -120,7 +120,7 @@ class WsPoolAh[M](
         val v0 = value
         m.ws.fold(
           {ex =>
-            LOG.error( ErrorMsgs.CONNECTION_ERROR, ex, m )
+            logger.error( ErrorMsgs.CONNECTION_ERROR, ex, m )
             val conn2 = existConn.withConn(
               existConn.conn.fail( ex )
             )
@@ -142,7 +142,7 @@ class WsPoolAh[M](
               // Подписываемся на события ошибок сокета.
               ws.addEventListener4s(DomEvents.ERROR) { e: ErrorEvent =>
                 // Undefined behaviour detected ... undefined is not an instance of j.l.String
-                LOG.error(ErrorMsgs.CONNECTION_ERROR, msg = Try((e.filename, e.lineno, e.colno, e.message)))
+                logger.error(ErrorMsgs.CONNECTION_ERROR, msg = Try((e.filename, e.lineno, e.colno, e.message)))
                 dispatcher(WsError(key, Try(e.message).getOrElse("") ))
               }
 
@@ -163,7 +163,7 @@ class WsPoolAh[M](
             } catch {
               case ex: Throwable =>
                 // Не удалось обработать WebSocket, что-то пошло не так...
-                LOG.error( ErrorMsgs.WEB_SOCKET_OPEN_FAILED, ex = ex, msg = ws.url )
+                logger.error( ErrorMsgs.WEB_SOCKET_OPEN_FAILED, ex = ex, msg = ws.url )
                 // В фоне запускаем callback обработки ошибки открытия сокета, если он задан.
                 //for (onOpenErrorF <- m.onOpenErrorF) {
                 //  Future {
@@ -184,7 +184,7 @@ class WsPoolAh[M](
       println( m, v0 )
       v0.conns.get(m.target).fold {
         // Нет искомого коннекшена в состоянии.
-        LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m.target )
+        logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m.target )
         noChange
 
       } { existConn =>
@@ -238,7 +238,7 @@ class WsPoolAh[M](
       ws.close()
     } catch {
       case ex: Throwable =>
-        LOG.warn( ErrorMsgs.CANNOT_CLOSE_SOMETHING, ex, msg = ws.url )
+        logger.warn( ErrorMsgs.CANNOT_CLOSE_SOMETHING, ex, msg = ws.url )
     }
   }
 

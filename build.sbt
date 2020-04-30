@@ -629,7 +629,7 @@ lazy val www = project
     }.value,
     // react-image-gallery
     npmAssets ++= NpmAssets.ofProject(reactImageGallerySjs) { nodeModules =>
-      (nodeModules / "react-image-gallery" / "build") * "*.css"
+      (nodeModules / "react-image-gallery" / "styles" / "css") * "*.css"
     }.value,
     // leaflet LocateControl
     npmAssets ++= NpmAssets.ofProject(leafletSjs) { nodeModules =>

@@ -7,7 +7,7 @@ import io.suggest.cal.m.MCalTypes
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.util.Success
@@ -89,7 +89,7 @@ class EditTfDailyAh[M](
 
       val mode0 = currNodeTfOpt.fold [ITfDailyMode] {
         // Should never happen: сервер забыл передать данные по тарифу.
-        LOG.warn( ErrorMsgs.TF_UNDEFINED, msg = currNode.info )
+        logger.warn( ErrorMsgs.TF_UNDEFINED, msg = currNode.info )
         InheritTf
       } { tf0 =>
         tf0.mode
@@ -128,7 +128,7 @@ class EditTfDailyAh[M](
       val v0 = value.get
       if (!v0.isValid) {
         // Should never happen: isValid вызывается в шаблоне.
-        LOG.log( ErrorMsgs.VALIDATION_FAILED, msg = v0 )
+        logger.log( ErrorMsgs.VALIDATION_FAILED, msg = v0 )
         noChange
 
       } else {
@@ -151,7 +151,7 @@ class EditTfDailyAh[M](
     // Сигнал завершения реквеста к серверу.
     case m: TfDailySavedResp =>
       value.fold {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
 
       } { v0 =>

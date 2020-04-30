@@ -1,6 +1,6 @@
 package com.github.souporserious.react.measure
 
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react._
 import org.scalajs.dom.html
 

@@ -9,7 +9,7 @@ import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import org.scalajs.dom
@@ -125,7 +125,7 @@ object PlatformAh extends Log {
         }
     }
     for (ex <- osFamilyTryOpt.failed)
-      LOG.warn( ErrorMsgs.PLATFORM_ID_FAILURE, ex )
+      logger.warn( ErrorMsgs.PLATFORM_ID_FAILURE, ex )
 
     MPlatformS(
       // Браузеры - всегда готовы. Cordova готова только по внутреннему сигналу готовности.
@@ -188,7 +188,7 @@ class PlatformAh[M](
         Try( Cordova.platformId )
           .fold[Unit](
             {ex =>
-              LOG.warn( ErrorMsgs.PLATFORM_ID_FAILURE, ex )
+              logger.warn( ErrorMsgs.PLATFORM_ID_FAILURE, ex )
             },
             {cordovaPlatformStr =>
               val osFamilyOpt = MOsFamilies

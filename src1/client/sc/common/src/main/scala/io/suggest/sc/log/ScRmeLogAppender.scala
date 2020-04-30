@@ -1,8 +1,8 @@
 package io.suggest.sc.log
 
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sjs.common.log.Severities
-import io.suggest.sjs.common.model.rme.RmeLogAppender
+import io.suggest.log.Severities
+import io.suggest.log.remote.RmeLogAppender
 
 /**
   * Suggest.io

@@ -14,7 +14,7 @@ import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._

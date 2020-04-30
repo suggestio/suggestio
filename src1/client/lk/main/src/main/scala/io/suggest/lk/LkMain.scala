@@ -10,7 +10,7 @@ import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sys.mdr.SysMdrInit
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
@@ -40,7 +40,7 @@ object LkMain extends Log {
         .init()
     } catch {
       case ex: Throwable =>
-        LOG.error( ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex )
+        logger.error( ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex )
     }
   }
 

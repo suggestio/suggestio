@@ -23,7 +23,7 @@ import io.suggest.jd.render.u.JdUtil
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -295,7 +295,7 @@ class GridAh[M](
       val v0 = value
 
       if (v0.core.ads.isPending && !m.ignorePending) {
-        LOG.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
+        logger.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange
 
       } else {
@@ -414,7 +414,7 @@ class GridAh[M](
       GridAh
         .findAd(m.nodeId, v0.core)
         .fold {
-          LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
 
         } { case (ad0, index) =>

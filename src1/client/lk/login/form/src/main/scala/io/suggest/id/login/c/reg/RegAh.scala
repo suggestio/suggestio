@@ -17,7 +17,7 @@ import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -90,7 +90,7 @@ class RegAh[M](
         case MRegSteps.S0Creds =>
           // Проверить, всё ли правильно на странице ввода реквизитов
           if (v0.s0Creds.submitReq.isPending) {
-            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.s0Creds.submitReq) )
+            logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.s0Creds.submitReq) )
             noChange
 
           } else if (v0.s2SmsCode.submitReq.isReady) {
@@ -127,7 +127,7 @@ class RegAh[M](
             updated(v2, fx)
 
           } else {
-            LOG.warn( ErrorMsgs.VALIDATION_FAILED, msg = (m, v0.s0Creds) )
+            logger.warn( ErrorMsgs.VALIDATION_FAILED, msg = (m, v0.s0Creds) )
             noChange
           }
 
@@ -162,7 +162,7 @@ class RegAh[M](
             updated(v2, fx)
 
           } else {
-            LOG.warn(ErrorMsgs.VALIDATION_FAILED, msg = (m, v0.s1Captcha))
+            logger.warn(ErrorMsgs.VALIDATION_FAILED, msg = (m, v0.s1Captcha))
             noChange
           }
 
@@ -195,7 +195,7 @@ class RegAh[M](
             updated(v2, fx)
 
           } else {
-            LOG.warn( ErrorMsgs.VALIDATION_FAILED, msg = (m, v0.s2SmsCode) )
+            logger.warn( ErrorMsgs.VALIDATION_FAILED, msg = (m, v0.s2SmsCode) )
             noChange
           }
 
@@ -204,7 +204,7 @@ class RegAh[M](
         case MRegSteps.S3CheckBoxes =>
           if (!v0.s3CheckBoxes.canSubmit) {
             // Реквест уже запущен. Вероятно, повторный сигнал сабмита по ошибке пришёл.
-            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (v0.step, v0.s3CheckBoxes) )
+            logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (v0.step, v0.s3CheckBoxes) )
             noChange
           } else {
             // Просто перейти на следующий шаг.
@@ -218,7 +218,7 @@ class RegAh[M](
           // Надо отправить на сервер подтверждение выбранных галочек.
           val pwNew = pwNewRO.value
           if (!pwNew.canSubmit || !v0.s4SetPassword.canSubmit) {
-            LOG.log( ErrorMsgs.VALIDATION_FAILED, msg = (v0.step, v0.s4SetPassword) )
+            logger.log( ErrorMsgs.VALIDATION_FAILED, msg = (v0.step, v0.s4SetPassword) )
             noChange
           } else {
             val tstampMs = System.currentTimeMillis()
@@ -249,7 +249,7 @@ class RegAh[M](
     case m: RegCredsSubmitResp =>
       val v0 = value
       if (!(v0.s0Creds.submitReq isPendingWithStartTime m.tstamp)) {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
       } else {
@@ -273,7 +273,7 @@ class RegAh[M](
       v0.step match {
         // Нельзя делать шаг назад с самого первого шага.
         case MRegSteps.S0Creds =>
-          LOG.log(ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.step))
+          logger.log(ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.step))
           noChange
         // Переход сразу на первый шаг, где вводятся реквизиты, т.к. возвращаться на выверенную капчу
         // или выверенный смс-код смысла нет, равно как и на форму уже принятых галочек (?).
@@ -317,7 +317,7 @@ class RegAh[M](
         updated(v2)
 
       } else {
-        LOG.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 
@@ -327,7 +327,7 @@ class RegAh[M](
       val v0 = value
 
       if (!(v0.s2SmsCode.submitReq isPendingWithStartTime m.tstamp)) {
-        LOG.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s2SmsCode.submitReq) )
+        logger.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s2SmsCode.submitReq) )
         noChange
 
       } else {
@@ -350,7 +350,7 @@ class RegAh[M](
       val v0 = value
 
       if (!(v0.s4SetPassword.submitReq isPendingWithStartTime m.tstamp)) {
-        LOG.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s4SetPassword.submitReq) )
+        logger.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s4SetPassword.submitReq) )
         noChange
 
       } else {

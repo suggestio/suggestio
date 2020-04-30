@@ -11,7 +11,7 @@ import io.suggest.primo.Keep
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sjs.dom2.NotificationOptions2
 import japgolly.univeq._
@@ -63,7 +63,7 @@ final class Html5NotificationApiAdp[M](
             info.h5Not.close()
           } catch {
             case ex: Throwable =>
-              LOG.warn( ErrorMsgs.INACTUAL_NOTIFICATION, ex, info.osToast )
+              logger.warn( ErrorMsgs.INACTUAL_NOTIFICATION, ex, info.osToast )
           }
         }
 
@@ -84,7 +84,7 @@ final class Html5NotificationApiAdp[M](
         )(v0)
 
         for (ex <- v2.permission.exceptionOption)
-          LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, msg = m )
+          logger.error( ErrorMsgs.NATIVE_API_ERROR, ex, msg = m )
 
         updated(v2)
 

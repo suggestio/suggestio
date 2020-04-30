@@ -4,7 +4,7 @@ import com.github.don.cordova.plugin.ble.central.BtDevice
 import io.suggest.ble.IBeaconSignal
 import io.suggest.msg.ErrorMsg_t
 import io.suggest.primo.{IApply1, TypeT}
-import io.suggest.sjs.common.log.ILog
+import io.suggest.log.Log
 
 import scala.scalajs.js.JSON
 
@@ -14,7 +14,7 @@ import scala.scalajs.js.JSON
   * Created: 13.10.16 11:20
   * Description: Абстрактный парсер cordova-ble-данных маячка.
   */
-trait BeaconParser extends TypeT with ILog {
+trait BeaconParser extends TypeT with Log {
 
   override type T <: IBeaconSignal
 
@@ -41,7 +41,7 @@ trait BeaconParser extends TypeT with ILog {
       parse()
     } catch {
       case ex: Throwable =>
-        LOG.error( parserFailMsg, ex, JSON.stringify(dev) )
+        logger.error( parserFailMsg, ex, JSON.stringify(dev) )
         None
     }
   }

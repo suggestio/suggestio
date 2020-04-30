@@ -5,7 +5,7 @@ import io.suggest.adn.edit.m._
 import io.suggest.lk.m.PurgeUnusedEdges
 import io.suggest.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
 import io.suggest.scalaz.StringValidationNel
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq._
 import monocle.Lens
 

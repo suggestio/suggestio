@@ -49,8 +49,6 @@ object ErrorConstants {
 
     def URL_FN = "url"
 
-    def STATE_FN = "state"
-
     def ERROR_CODE_FN = "ec"
 
     def SEVERITY_FN   = "se"

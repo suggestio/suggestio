@@ -14,7 +14,7 @@ import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react.vdom.VdomElement
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
@@ -52,11 +52,11 @@ object MapIcons extends Log {
 
     // Leaflet начал сыпать ошибками после ~1.3, если поле .iconUrl пустовато. Нужно отследить, откуда приходят ошибочные данные.
     if (iconFindRes.isEmpty)
-      LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = iconModel )
+      logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = iconModel )
 
     for (img <- iconFindRes) {
       if (img.srcOpt.isEmpty)
-        LOG.warn( ErrorMsgs.IMG_URL_EXPECTED, msg = (img, iconModel) )
+        logger.warn( ErrorMsgs.IMG_URL_EXPECTED, msg = (img, iconModel) )
 
       for (src <- img.srcOpt) {
         o.iconUrl = src

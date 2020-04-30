@@ -14,7 +14,7 @@ import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPe
 import io.suggest.sc.m.GeoLocOnOff
 import io.suggest.sc.m.dia.first._
 import io.suggest.sc.m.dia._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -111,7 +111,7 @@ class WzFirstDiaAh[M](
                         }
                       )
                       for (ex <- tryRes.failed)
-                        LOG.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, (permState, m) )
+                        logger.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, (permState, m) )
                       tryRes.isSuccess
                     }
                   } yield {
@@ -143,7 +143,7 @@ class WzFirstDiaAh[M](
 
             // yes во время InProgress. Недопустимо, ожидание можно только отменить.
             case other @ MWzFrames.InProgress =>
-              LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (other, m) )
+              logger.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (other, m) )
               noChange
           }
 
@@ -174,7 +174,7 @@ class WzFirstDiaAh[M](
       val first00 = value
       first00.view.fold {
         // warn, т.к. это признак нарушения в процессе инициализации.
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
         noChange
 
       } { view00 =>
@@ -239,7 +239,7 @@ class WzFirstDiaAh[M](
             // Ответ юзера наступил во время вопроса текущей фазы.
             // Возможно, если разрешение было реально запрошено ещё какой-то подсистемой выдачи (за пределами этого диалога), косяк.
             case ph @ MWzFrames.AskPerm =>
-              LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (ph, m) )
+              logger.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (ph, m) )
               if (isGrantedOpt contains true) {
                 _wzGoToNextPhase( v1 )
               } else {
@@ -274,7 +274,7 @@ class WzFirstDiaAh[M](
         } else {
           // Пока разрешения разруливались, фаза уже изменилась неизвестно куда. Не ясно, возможно ли такое на яву.
           // Пока просто молча пережёвываем.
-          LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, view00.phase) )
+          logger.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, view00.phase) )
           updatedSilent( v1 )
         }
       }
@@ -328,7 +328,7 @@ class WzFirstDiaAh[M](
         updated( v2 )
 
       } else {
-        LOG.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       }
 
@@ -415,7 +415,7 @@ class WzFirstDiaAh[M](
             // Ошибка проверки фазы.
             // Для dev: вывести info-окошко с ошибкой.
             // Для prod: пока только логгирование.
-            LOG.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
+            logger.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
 
             // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
             MWzFirstOuterS.view.set {
@@ -433,7 +433,7 @@ class WzFirstDiaAh[M](
         .orElse[MWzFirstOuterS] {
           OptionUtil.maybe( permPot.isPending || permPot.isEmpty ) {
             // pending|empty - тут быть не должно, т.к. код вызывается после всех проверок.
-            LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
+            logger.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
             v0
           }
         }
@@ -567,7 +567,7 @@ object WzFirstDiaAh extends Log {
     }
 
     for (ex <- tryR.failed)
-      LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex )
+      logger.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex )
 
     tryR getOrElse true
   }

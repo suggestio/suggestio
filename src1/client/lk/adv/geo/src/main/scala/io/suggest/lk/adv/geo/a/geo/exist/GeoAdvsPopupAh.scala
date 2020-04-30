@@ -7,7 +7,7 @@ import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 
 /**
   * Suggest.io
@@ -49,7 +49,7 @@ class GeoAdvsPopupAh[M](
         updated(v1)
 
       } else {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = h.open )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = h.open )
         // Какой-то неактуальный ответ сервера пришёл.
         noChange
       }

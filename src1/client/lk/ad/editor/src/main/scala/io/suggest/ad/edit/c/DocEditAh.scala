@@ -28,7 +28,7 @@ import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
 import io.suggest.common.BooleanUtil.Implicits._
@@ -271,7 +271,7 @@ class DocEditAh[M](
         noChange
 
       } else if (v0.jdDoc.jdArgs.selJdt.treeLocOpt.isEmpty) {
-        LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m.getClass.getName )
+        logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m.getClass.getName )
         noChange
 
       } else {
@@ -337,7 +337,7 @@ class DocEditAh[M](
                 B64toBlobDone(dataUrl, blob)
               }
               for (ex <- fut.failed)
-                LOG.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
+                logger.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
               fut
             }
           }
@@ -502,7 +502,7 @@ class DocEditAh[M](
           .map( nodePath -> _ )
           .orElse {
             // fallback на медленный поиск в дереве перебором тегов:
-            LOG.warn(ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (m, nodePath) )
+            logger.warn(ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (m, nodePath) )
             v0.jdDoc.jdArgs.data.doc.template
               .loc
               .findByLabel( m.jdTag )
@@ -589,7 +589,7 @@ class DocEditAh[M](
           val tpl2 = oldSelectedJdt
             .delete
             .fold {
-              LOG.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
+              logger.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
               v2.jdDoc.jdArgs.data.doc.template
             }(_.toTree)
 
@@ -683,7 +683,7 @@ class DocEditAh[M](
           val ctRaw = m.blob.`type`
           val r = MimeConst.readContentType(ctRaw, ContentTypeCheck.OnlyImages)
           if (r.isEmpty)
-            LOG.warn( ErrorMsgs.CONTENT_TYPE_UNEXPECTED, msg = (ctRaw, MImgFmts.values.iterator.flatMap(_.allMimes).mkString(", ") ) )
+            logger.warn( ErrorMsgs.CONTENT_TYPE_UNEXPECTED, msg = (ctRaw, MImgFmts.values.iterator.flatMap(_.allMimes).mkString(", ") ) )
           r
         }
         if imgContentTypeOpt.nonEmpty
@@ -1030,7 +1030,7 @@ class DocEditAh[M](
           MCoords2di.y.set(y2)( clXy0 )
         } else {
           // Странно: нет пройденных стрипов, хотя они должны бы быть
-          LOG.warn( msg = s"$clXy0 [$fromBlock => ${m.targetBlock})" )
+          logger.warn( msg = s"$clXy0 [$fromBlock => ${m.targetBlock})" )
           clXy0
         }
       }
@@ -1110,7 +1110,7 @@ class DocEditAh[M](
       } yield {
         // Пока просто логгируем ошибку
         if (gbRes.gbBlock.jdId !=* jdtWithId._1)
-          LOG.error( ErrorMsgs.JD_TREE_UNEXPECTED_ID, msg = (gbRes.gbBlock.jdId, jdtWithId._1) )
+          logger.error( ErrorMsgs.JD_TREE_UNEXPECTED_ID, msg = (gbRes.gbBlock.jdId, jdtWithId._1) )
 
         MJdtWithXy(
           jdt = jdIdTree,
@@ -1162,7 +1162,7 @@ class DocEditAh[M](
 
           // Неопределённая ситуация. Переносим блок или в начало или в конец документа.
           case other =>
-            LOG.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
+            logger.warn( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, other.mkString(HtmlConstants.PIPE)) )
             val gbRes0 = v0.jdDoc.gridBuild.coords.head
             if (m.docXy.y > gbRes0.topLeft.y) {
               // Положительная координата перетаскивания по вертикали: просто переносим таскаемый блок в конец документа.
@@ -1251,7 +1251,7 @@ class DocEditAh[M](
 
       if (edgeUids4mod.isEmpty) {
         // Если эджа для указанной гистограммы не найдено, то это палево какое-то.
-        LOG.warn( ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m )
+        logger.warn( ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m )
         noChange
 
       } else {
@@ -1337,7 +1337,7 @@ class DocEditAh[M](
         })
           .getOrElse {
             // Should never happen: не найдена гистограмма, указанная в событии.
-            LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+            logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
             noChange
           }
       }
@@ -1385,7 +1385,7 @@ class DocEditAh[M](
         _qdUpdateWidth(embedLoc, width = m.widthPx, heightPxOpt = m.heightPx)
       })
         .fold {
-          LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+          logger.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
           noChange
         } { qdSubTreeLoc2 =>
           val qdSubTree2 = qdSubTreeLoc2.toTree

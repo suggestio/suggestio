@@ -1,7 +1,7 @@
 package io.suggest.init.routed
 
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
 
@@ -19,7 +19,7 @@ trait InitRouter extends Log with SafeSyncVoid {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   protected def routeInitTarget(itg: MJsInitTarget): Unit = {
-    LOG.error( ErrorMsgs.INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED, msg = itg)
+    logger.error( ErrorMsgs.INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED, msg = itg)
   }
 
   /** Запуск системы инициализации. Этот метод должен вызываться из main(). */
@@ -33,7 +33,7 @@ trait InitRouter extends Log with SafeSyncVoid {
       .filter { !_.isEmpty }
 
     attrOpt.fold [Unit] {
-      LOG.log( ErrorMsgs.INIT_ROUTER_NO_TARGET_SPECIFIED )
+      logger.log( ErrorMsgs.INIT_ROUTER_NO_TARGET_SPECIFIED )
 
     } { attr =>
       val all = attr.split("\\s*;\\s*")
@@ -41,7 +41,7 @@ trait InitRouter extends Log with SafeSyncVoid {
         .flatMap { raw =>
           val res = MJsInitTargets.withValueOpt(raw)
           if (res.isEmpty)
-            LOG.warn( ErrorMsgs.NOT_IMPLEMENTED, msg = raw )
+            logger.warn( ErrorMsgs.NOT_IMPLEMENTED, msg = raw )
           res
         }
         .toSeq
@@ -50,7 +50,7 @@ trait InitRouter extends Log with SafeSyncVoid {
           routeInitTarget(itg)
         } catch {
           case ex: Throwable =>
-            LOG.error(ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, itg)
+            logger.error(ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, itg)
         }
       }
       // Аттрибут со спекой инициализации больше не нужен, можно удалить его.

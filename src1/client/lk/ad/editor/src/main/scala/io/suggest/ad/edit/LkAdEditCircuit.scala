@@ -4,7 +4,7 @@ import diode.{FastEq, ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs}
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
 import io.suggest.ad.edit.m.edit.{MDocS, MEditorsS, MJdDocEditS, MSlideBlocks}
@@ -236,7 +236,7 @@ class LkAdEditCircuit(
         })
           // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
           .getOrElse {
-            LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = s"$mdoc0 + $mColorAhOpt is empty" )
+            logger.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = s"$mdoc0 + $mColorAhOpt is empty" )
             mdoc0
           }
       }(OptFastEq.Wrapped)

@@ -7,7 +7,7 @@ import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.dev.{MGeoLocSwitchS, MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.dom2._
@@ -67,7 +67,7 @@ class GeoLocAh[M](
 
           } catch {
             case ex: Throwable =>
-              LOG.error(ErrorMsgs.GEO_WATCH_TYPE_UNSUPPORTED, ex)
+              logger.error(ErrorMsgs.GEO_WATCH_TYPE_UNSUPPORTED, ex)
               Nil
           }
         }
@@ -102,7 +102,7 @@ class GeoLocAh[M](
         } else {
 
           val mglw1 = mglw0.fold {
-            LOG.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
+            logger.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
             MGeoLocWatcher( watchId = None, lastPos = Ready(loc.location) )
           } {
             MGeoLocWatcher.lastPos.modify(_.ready(loc.location))
@@ -219,7 +219,7 @@ class GeoLocAh[M](
           case true =>
             GeoLocAh._geoLocApiOpt.fold {
               // should never happen(?)
-              LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
+              logger.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
               effectOnly(glPubErrFx)
 
             } { geoApi =>
@@ -278,7 +278,7 @@ class GeoLocAh[M](
       }
 
       resOpt.getOrElse {
-        LOG.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
+        logger.warn( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
         noChange
       }
 
@@ -292,7 +292,7 @@ class GeoLocAh[M](
         .get( m.glType )
         .fold {
           // Should never happen.
-          LOG.error( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
+          logger.error( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
           noChange
         } { watcher0 =>
           // Если onOff - pending, то сохранить ошибку:
@@ -311,7 +311,7 @@ class GeoLocAh[M](
           } else {
             // Т.к. геолокация качается из нескольких источников, то остальные ошибки отрабатываются отдельно.
             // TODO Возможно, это неправильно, и геолокация надо сразу вырубать при любой ошибке.
-            LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
+            logger.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
             // Сохранить ошибку в lastLoc
             val wa2 = MGeoLocWatcher.lastPos
               .modify(_.fail(m.error))(watcher0)

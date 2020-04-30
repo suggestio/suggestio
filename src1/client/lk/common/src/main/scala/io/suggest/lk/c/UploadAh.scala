@@ -21,7 +21,7 @@ import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlags}
 import io.suggest.pick.{ContentTypeCheck, MimeConst}
 import io.suggest.routes.PlayRoute
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DoNothing
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.{IUploadApi, MFileUploadS, UploadConstants}
@@ -162,7 +162,7 @@ final class UploadAh[V, M](
                         upXhrOld.abort()
                       } catch {
                         case ex: Throwable =>
-                          LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
+                          logger.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
                       }
                     }
                   }
@@ -233,14 +233,14 @@ final class UploadAh[V, M](
         eData <- {
           val edOpt = UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m)
           if (edOpt.isEmpty)
-            LOG.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
+            logger.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
           edOpt
         }
 
         fileJs0 <- {
           val fjs = eData.fileJs
           if (fjs.isEmpty)
-            LOG.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = (eData, m))
+            logger.warn(ErrorMsgs.SOURCE_FILE_NOT_FOUND, msg = (eData, m))
           fjs
         }
       } yield {
@@ -291,7 +291,7 @@ final class UploadAh[V, M](
           UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src)
             .fold {
               // Нет такого файла. Вероятно, пока считался хэш, юзер уже выбрал какой-то другой файл.
-              LOG.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
+              logger.log( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
               noChange
             } { edge0 =>
               val edgeUid = edge0.jdEdge.edgeDoc.id.get
@@ -373,7 +373,7 @@ final class UploadAh[V, M](
       val v0 = value
 
       UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
       } { edge0 =>
@@ -405,7 +405,7 @@ final class UploadAh[V, M](
               .map { firstUpUrl =>
                 edge0.fileJs.fold {
                   // Внезапно нет файла, который заказчиваются. Такое может быть только по воле юзера.
-                  LOG.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = edge0 )
+                  logger.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = edge0 )
                   noChange
 
                 } { fileJs =>
@@ -474,7 +474,7 @@ final class UploadAh[V, M](
               }
               // Некорректный ответ сервера или некорректный код разбора в этом контроллере.
               .getOrElse {
-                LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = resp )
+                logger.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = resp )
                 noChange
               }
           }
@@ -516,7 +516,7 @@ final class UploadAh[V, M](
 
       })
         .getOrElse {
-          LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+          logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
           noChange
         }
 
@@ -525,7 +525,7 @@ final class UploadAh[V, M](
     case m: UploadRes =>
       val v0 = value
       UploadAh._findEdgeByIdOrBlobUrl(v0.edges, m.src).fold {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
       } { edge0 =>
@@ -609,7 +609,7 @@ final class UploadAh[V, M](
                 }
               }
               .getOrElse {
-                LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = m)
+                logger.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = m)
                 noChange
               }
           }
@@ -628,7 +628,7 @@ final class UploadAh[V, M](
 
       } catch {
         case ex: Throwable =>
-          LOG.error( ErrorMsgs.JSON_PARSE_ERROR, ex, m )
+          logger.error( ErrorMsgs.JSON_PARSE_ERROR, ex, m )
           noChange
       }
 

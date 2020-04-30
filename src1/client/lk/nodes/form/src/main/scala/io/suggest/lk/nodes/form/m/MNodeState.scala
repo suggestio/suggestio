@@ -4,7 +4,7 @@ import diode.data.{Pot, Ready}
 import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.primo.id.IId
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.msg.ErrorMsgs
 import japgolly.univeq.UnivEq
@@ -50,7 +50,7 @@ object MNodeState
   override def withNodeChildren(node: MNodeState, children2: IterableOnce[MNodeState]): MNodeState = {
     // Хз, надо ли проверять Pot.empty. Скорее всего, этот метод никогда не вызывается для Empty Pot.
     if (node.children.isEmpty) {
-      LOG.warn( ErrorMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
+      logger.warn( ErrorMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
       node
     } else {
       node.withChildren(

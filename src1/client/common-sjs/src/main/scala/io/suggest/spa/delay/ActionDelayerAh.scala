@@ -2,7 +2,7 @@ package io.suggest.spa.delay
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
 
@@ -44,7 +44,7 @@ class ActionDelayerAh[M](stateRW: ModelRW[M, MDelayerS])
     case m: FireDelayedAction =>
       val v0 = value
       v0.delayed.get(m.actionId).fold {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       } { delayed =>
         val fx = delayed.info.action.toEffectPure

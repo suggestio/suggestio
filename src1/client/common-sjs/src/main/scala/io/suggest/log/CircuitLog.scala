@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.log
+package io.suggest.log
 
 import diode.Circuit
 import io.suggest.msg.ErrorMsg_t
@@ -15,12 +15,12 @@ trait CircuitLog[M <: AnyRef] extends Circuit[M] with Log {
   protected def CIRCUIT_ERROR_CODE: ErrorMsg_t
 
   override def handleFatal(action: Any, e: Throwable): Unit = {
-    LOG.error( CIRCUIT_ERROR_CODE, e, action )
+    logger.error( CIRCUIT_ERROR_CODE, e, action )
     super.handleFatal(action, e)
   }
 
   override def handleError(msg: String): Unit = {
-    LOG.warn( CIRCUIT_ERROR_CODE, msg = msg )
+    logger.warn( CIRCUIT_ERROR_CODE, msg = msg )
     super.handleError(msg)
   }
 

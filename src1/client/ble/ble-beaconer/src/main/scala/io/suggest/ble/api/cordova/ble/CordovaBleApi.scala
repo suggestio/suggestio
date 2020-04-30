@@ -5,7 +5,7 @@ import io.suggest.ble.BleConstants
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
@@ -103,22 +103,17 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     f( EddyStoneParser )
       // Среагировать на результат работы цепочки парсеров.
       .foreach {
-      //.fold [Unit] {
-        // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
-        //LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
-      //} {
         case Right(beacon) =>
           val e = BeaconDetected( beacon )
           listener(e)
         case _ =>
           // Left(_) - значит парсер отсеял устройство за ненадобностью. do nothing
-          //LOG.log( WarnMsgs.FILTERED_OUT_BLE_DEVICE, msg = devStr + " " + msg )
       }
   }
 
   /** Какая-то ошибка возникла при сканировании. */
   def _handleError(error: js.Any): Unit = {
-    LOG.error(ErrorMsgs.BLE_SCAN_ERROR, msg = error)
+    logger.error(ErrorMsgs.BLE_SCAN_ERROR, msg = error)
   }
 
 

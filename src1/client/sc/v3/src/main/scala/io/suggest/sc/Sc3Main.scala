@@ -10,7 +10,7 @@ import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.sjs.common.log.{Log, Logging}
+import io.suggest.log.{Log, Logging}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -41,7 +41,7 @@ object Sc3Main extends Log {
     def logFailure( errMsg: ErrorMsg_t, msg: Any = null ): Try[T] = {
       for (ex <- tryRes.failed)
         // Безопасно тут вызывать Log прямо во время инициализации, в т.ч. логгера?
-        LOG.error( errMsg + HtmlConstants.SPACE + ex + HtmlConstants.SPACE + msg )
+        logger.error( errMsg + HtmlConstants.SPACE + ex + HtmlConstants.SPACE + msg )
 
       tryRes
     }

@@ -10,7 +10,7 @@ import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
 import io.suggest.n2.edge.{EdgeUid_t, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
 import io.suggest.msg.ErrorMsgs
@@ -71,7 +71,7 @@ class QuillDeltaJsUtil extends Log {
               delta.insert( data, qdAttrsOpt2deltaAttrs(qdOp) )
             }
             if (resOpt.isEmpty)
-              LOG.warn( ErrorMsgs.INSERT_PAYLOAD_EXPECTED, msg = List(qdOp.edgeInfo, eOpt) )
+              logger.warn( ErrorMsgs.INSERT_PAYLOAD_EXPECTED, msg = List(qdOp.edgeInfo, eOpt) )
             delta
 
           case MQdOpTypes.Delete =>
@@ -366,7 +366,7 @@ class QuillDeltaJsUtil extends Log {
               } else if (deltaEmbed.video.nonEmpty) {
                 jdContPred.Frame
               } else {
-                LOG.error( ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED, msg = JSON.stringify(deltaEmbed) )
+                logger.error( ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED, msg = JSON.stringify(deltaEmbed) )
                 throw new IllegalArgumentException(ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED)
               }
 

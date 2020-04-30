@@ -2,7 +2,7 @@ package io.suggest.sys.mdr
 
 import diode.react.ReactConnector
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
 import io.suggest.sys.mdr.m.{MMdrNodeS, MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

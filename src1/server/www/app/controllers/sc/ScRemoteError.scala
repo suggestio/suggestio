@@ -51,20 +51,15 @@ trait ScRemoteError
           optional( text(minLength = URL_LEN_MIN, maxLength = URL_LEN_MAX) )
             .transform[Option[String]](emptyStrOptToNone, identity)
         },
-        STATE_FN -> {
-          optional(text(maxLength = STATE_LEN_MAX))
-            .transform[Option[String]](emptyStrOptToNone, identity)
-        }
       )
-      {(msg, urlOpt, state) =>
+      {(msg, urlOpt) =>
         MScRemoteDiag(
           message = msg,
           url     = urlOpt,
-          state   = state
         )
       }
       {merr =>
-        Some((merr.message, merr.url, merr.state))
+        Some((merr.message, merr.url))
       }
     )
   }
@@ -104,7 +99,6 @@ trait ScRemoteError
               override def diag: MDiag = {
                 MDiag(
                   message = Option(merr0.message),
-                  state   = merr0.state
                 )
               }
               override def statActions: List[MAction] = {

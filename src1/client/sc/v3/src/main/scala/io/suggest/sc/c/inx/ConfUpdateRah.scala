@@ -6,7 +6,7 @@ import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.sc3.{MSc3Conf, MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.u.Sc3ConfUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 

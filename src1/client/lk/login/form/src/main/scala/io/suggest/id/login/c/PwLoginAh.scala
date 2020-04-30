@@ -7,7 +7,7 @@ import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
@@ -104,7 +104,7 @@ class PwLoginAh[M](
     case m @ EpwDoLogin =>
       val v0 = value
       if (v0.loginReq.isPending) {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.loginReq) )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.loginReq) )
         noChange
 
       } else {
@@ -157,7 +157,7 @@ class PwLoginAh[M](
         ah.updatedMaybeEffect( v2, fxOpt )
 
       } else {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 

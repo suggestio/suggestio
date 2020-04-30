@@ -6,7 +6,7 @@ import io.suggest.adv.AdvConstants.CurrShapes
 import io.suggest.geo.{GeoConstants, MGeoPoint, MGeoPointJs}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
 import io.suggest.geo.json._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.{Events, LayerEvent}
 import io.suggest.sjs.leaflet.map.{LatLng, Layer}
@@ -73,7 +73,7 @@ object ExistAdvGeoShapesR extends Log {
           override val style: UndefOr[js.Function1[GjFeature, PathOptions]] = js.defined { gjFeature =>
             // Десериализовать пропертисы.
             if (gjFeature.properties.isEmpty)
-              LOG.warn( ErrorMsgs.GJ_PROPS_EMPTY_OR_MISS, msg = JSON.stringify(gjFeature) )
+              logger.warn( ErrorMsgs.GJ_PROPS_EMPTY_OR_MISS, msg = JSON.stringify(gjFeature) )
 
             new PathOptions {
               override val clickable: UndefOr[Boolean]  = true

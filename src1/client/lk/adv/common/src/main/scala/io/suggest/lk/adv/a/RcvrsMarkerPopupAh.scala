@@ -7,7 +7,7 @@ import io.suggest.lk.adv.m.IRcvrPopupProps
 import io.suggest.maps.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 
 /**
   * Suggest.io
@@ -58,7 +58,7 @@ class RcvrsMarkerPopupAh[M](
     // Среагировать как-то на ошибку выполнения запроса.
     case hre: HandleRcvrPopupError =>
       val v0 = value
-      LOG.error( ErrorMsgs.UNEXPECTED_RCVR_POPUP_SRV_RESP, hre.ex, v0.popupState )
+      logger.error( ErrorMsgs.UNEXPECTED_RCVR_POPUP_SRV_RESP, hre.ex, v0.popupState )
       val v2 = v0.withPopup(
         resp  = v0.popupResp.fail(hre.ex),
         state = None

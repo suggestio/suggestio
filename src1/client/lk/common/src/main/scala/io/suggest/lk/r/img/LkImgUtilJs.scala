@@ -9,7 +9,7 @@ import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.msg.ErrorMsgs
 import io.suggest.react.Props2ModelProxy
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
 import org.scalajs.dom.html
 
@@ -42,7 +42,7 @@ object LkImgUtilJs extends Log {
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
     } catch {
       case ex: Throwable =>
-        LOG.error( ErrorMsgs.IMG_EXPECTED, ex = ex, msg = (edgeUid, e.target.toString) )
+        logger.error( ErrorMsgs.IMG_EXPECTED, ex = ex, msg = (edgeUid, e.target.toString) )
         Callback.empty
     }
   }

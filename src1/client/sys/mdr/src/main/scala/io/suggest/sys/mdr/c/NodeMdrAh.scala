@@ -7,7 +7,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sys.mdr.{MMdrActionInfo, MMdrConf, MMdrNextResp, MMdrResolution, MNodeMdrInfo, MdrSearchArgs}
 import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sys.mdr.u.SysMdrUtil
 import japgolly.univeq._
@@ -185,7 +185,7 @@ class NodeMdrAh[M](
 
           } else {
             // Есть ещё какой-то запущенный запрос, который более актуален.
-            LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+            logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
             noChange
           }
         }
@@ -331,7 +331,7 @@ class NodeMdrAh[M](
 
       } else {
         // Левый ответ какой-то, уже другой запрос запущен.
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 
@@ -371,7 +371,7 @@ class NodeMdrAh[M](
         .fixNodePots
         .get( m.reason.nodeId )
         .fold {
-          LOG.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = m )
+          logger.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = m )
           noChange
         } { pot0 =>
           if (pot0 isPendingWithStartTime m.timeStampMs) {
@@ -385,7 +385,7 @@ class NodeMdrAh[M](
             updated(v2)
 
           } else {
-            LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+            logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
             noChange
           }
         }

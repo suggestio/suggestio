@@ -12,7 +12,7 @@ import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, NodeRowClick}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.geo.GeoLocUtilJs
@@ -522,7 +522,7 @@ class TailAh(
         _ <- Either.cond(
           test = isActualResp,
           left = {
-            LOG.log(ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (respHandler.getClass.getSimpleName, rhPotOpt.flatMap(_.pendingOpt).map(_.startTime), m.reqTimeStamp) )
+            logger.log(ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (respHandler.getClass.getSimpleName, rhPotOpt.flatMap(_.pendingOpt).map(_.startTime), m.reqTimeStamp) )
             noChange
           },
           right = None,
@@ -550,7 +550,7 @@ class TailAh(
             }
             .fold {
               // Resp-экшен не поддерживается системой. Такое возможно, только когда есть тип экшена, для которого забыли накодить RespActionHandler.
-              LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = ra )
+              logger.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = ra )
               acc0
             } { actRes =>
               acc0.copy(

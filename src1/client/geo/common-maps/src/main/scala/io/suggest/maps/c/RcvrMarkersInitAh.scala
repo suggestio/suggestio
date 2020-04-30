@@ -7,7 +7,7 @@ import io.suggest.maps.nodes.{MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 
 import scala.util.Success
 
@@ -56,7 +56,7 @@ class RcvrMarkersInitAh[M](
     case m: InstallRcvrMarkers =>
       val v2 = m.tryResp.fold(
         {ex =>
-          LOG.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
+          logger.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
           value.fail(ex)
         },
         value.ready

@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.log
+package io.suggest.log
 
 /**
   * Suggest.io

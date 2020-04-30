@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.dt
 
 import io.suggest.dt.MYmd
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import JsDateUtil.JsDateHelper
 import io.suggest.msg.ErrorMsgs
 
@@ -23,7 +23,7 @@ object MYmdJs extends Log {
     }
 
     if (res.isNaN) {
-      LOG.error( ErrorMsgs.JS_DATE_PARSE_FAILED, msg = raw )
+      logger.error( ErrorMsgs.JS_DATE_PARSE_FAILED, msg = raw )
       None
     } else {
 

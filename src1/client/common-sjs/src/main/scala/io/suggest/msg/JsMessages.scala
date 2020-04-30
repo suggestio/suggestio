@@ -1,7 +1,7 @@
 package io.suggest.msg
 
 import io.suggest.i18n.{I18nConst, MMessage}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.univeq.UnivEq
 
@@ -75,7 +75,7 @@ sealed trait Messages extends Log {
       // Если с messages проблемы, то ошибки будут сыпать десятками и сотнями. Поэтому рендерим только первую ошибку, остальные глушим.
       if (!_suppressErrors) {
         _suppressErrors = true
-        Try( LOG.error(ErrorMsgs.MESSAGES_FAILURE, ex, (message, args)) )
+        Try( logger.error(ErrorMsgs.MESSAGES_FAILURE, ex, (message, args)) )
       }
       message
     }

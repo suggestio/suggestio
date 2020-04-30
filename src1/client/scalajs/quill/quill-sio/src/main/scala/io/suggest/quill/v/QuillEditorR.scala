@@ -11,7 +11,7 @@ import io.suggest.quill.u.QuillInit
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
@@ -98,7 +98,7 @@ class QuillEditorR(
             )
           } catch {
             case ex: Throwable =>
-              LOG.error(ErrorMsgs.EXT_COMP_INIT_FAILED, ex, props)
+              logger.error(ErrorMsgs.EXT_COMP_INIT_FAILED, ex, props)
               EmptyVdom
           }
         )

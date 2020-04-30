@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.util
 
-import io.suggest.sjs.common.log.ILog
+import io.suggest.log.Log
 
 /**
  * Suggest.io
@@ -8,14 +8,14 @@ import io.suggest.sjs.common.log.ILog
  * Created: 27.04.15 11:37
  * Description: Утиль для подавления исключений при выховах.
  */
-trait SafeSyncVoid extends ILog {
+trait SafeSyncVoid extends Log {
 
   protected def _safeSyncVoid(f: () => Unit): Unit = {
     try {
       f()
     } catch {
       case ex: Throwable =>
-        LOG.error(msg = "safe(): Error suppressed", ex = ex)
+        logger.error(msg = "safe(): Error suppressed", ex = ex)
     }
   }
 

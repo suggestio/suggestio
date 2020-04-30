@@ -19,7 +19,7 @@ import io.suggest.sc.sc3._
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.c.search.SearchAh
@@ -206,7 +206,7 @@ class IndexRah
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
     val eMsg = ErrorMsgs.GET_NODE_INDEX_FAILED
-    LOG.error( eMsg, ex, msg = ctx.m )
+    logger.error( eMsg, ex, msg = ctx.m )
 
     var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
     if (ctx.value0.index.search.geo.mapInit.loader.nonEmpty)

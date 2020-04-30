@@ -1,7 +1,7 @@
 package io.suggest.geo.json
 
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
@@ -36,7 +36,7 @@ object GjGeometry extends Log {
 
       // Should never happen:
       case other =>
-        LOG.warn(
+        logger.warn(
           ErrorMsgs.GEO_JSON_GEOM_COORD_UNEXPECTED_ELEMENT,
           msg = JSON.stringify(coords) + " " + other
         )

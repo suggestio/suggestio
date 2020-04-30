@@ -18,7 +18,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.scalaz.ZTreeUtil._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._

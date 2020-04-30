@@ -9,5 +9,4 @@ package models.msc
 case class MScRemoteDiag(
   message : String,
   url     : Option[String],
-  state   : Option[String]
 )

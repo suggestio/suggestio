@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.m._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
 
@@ -56,7 +56,7 @@ class PriceAh[M](
           case Success(res) =>
             v0.resp.ready( res )
           case Failure(ex) =>
-            LOG.error( ErrorMsgs.XHR_UNEXPECTED_RESP, ex, sp )
+            logger.error( ErrorMsgs.XHR_UNEXPECTED_RESP, ex, sp )
             v0.resp.fail(ex)
         }
         val v1 = v0.copy(
@@ -65,7 +65,7 @@ class PriceAh[M](
         )
         updated( v1 )
       } else {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = sp )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = sp )
         noChange
       }
 
@@ -95,7 +95,7 @@ class PriceAh[M](
           noChange
 
         case Failure(ex) =>
-          LOG.error( ErrorMsgs.XHR_UNEXPECTED_RESP, ex )
+          logger.error( ErrorMsgs.XHR_UNEXPECTED_RESP, ex )
           // Разбокировать форму с помощью ошибки.
           val v0 = value
           val v1 = v0.withPriceResp(

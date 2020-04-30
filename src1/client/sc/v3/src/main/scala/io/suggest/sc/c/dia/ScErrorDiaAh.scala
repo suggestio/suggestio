@@ -5,7 +5,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{CheckRetryError, CloseError, MScRoot, RetryError, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 
@@ -26,7 +26,7 @@ object ScErrorDiaAh extends Log {
     } yield {
       Effect.action {
         for (ex <- Try( f() ).failed)
-          LOG.warn( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, f )
+          logger.warn( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, f )
         DoNothing
       }
     }

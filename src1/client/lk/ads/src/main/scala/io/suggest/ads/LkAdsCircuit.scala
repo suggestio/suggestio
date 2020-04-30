@@ -9,7 +9,7 @@ import io.suggest.jd.MJdConf
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.spa.{FastEqUtil, StateInp}
 import play.api.libs.json.Json
 import io.suggest.spa.CircuitUtil._

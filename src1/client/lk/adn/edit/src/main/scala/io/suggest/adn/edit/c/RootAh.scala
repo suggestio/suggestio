@@ -8,7 +8,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.node.meta.MMetaPub
 import io.suggest.primo.id._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 
 import scala.util.Success
 
@@ -37,7 +37,7 @@ class RootAh[M](
     case m @ Save =>
       val v0 = value
       if (v0.internals.saving.isPending) {
-        LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
+        logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
         noChange
       } else {
         val fx = Effect {

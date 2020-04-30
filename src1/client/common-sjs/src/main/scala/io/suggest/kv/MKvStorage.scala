@@ -1,11 +1,10 @@
 package io.suggest.kv
 
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq.UnivEq
-import monocle.macros.GenLens
 import org.scalajs.dom
-import play.api.libs.json.{JsString, Json, Reads, Writes}
+import play.api.libs.json.{Json, Reads, Writes}
 
 import scala.scalajs.js
 
@@ -27,7 +26,7 @@ object MKvStorage extends Log {
       !js.isUndefined( storage )
     } catch {
       case ex: Throwable =>
-        LOG.error(ErrorMsgs.KV_STORAGE_CHECK_FAILED, ex)
+        logger.error(ErrorMsgs.KV_STORAGE_CHECK_FAILED, ex)
         false
     }
   }

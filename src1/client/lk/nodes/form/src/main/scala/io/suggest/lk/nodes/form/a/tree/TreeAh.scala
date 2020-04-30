@@ -9,7 +9,7 @@ import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.text.StringUtil
 import monocle.Traversal
 import scalaz.std.option._
@@ -89,7 +89,7 @@ class TreeAh[M](
       MNodeState
         .findSubNode(rcvrKey, v0.nodes)
         .fold {
-          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
+          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
           noChange
 
         } { n =>
@@ -183,18 +183,18 @@ class TreeAh[M](
       val conf = confRO()
       conf.adIdOpt.fold {
         // adId не задан в конфиге формы. Should never happen.
-        LOG.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
+        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
         noChange
 
       } { adId =>
         val v0 = value
         MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
-          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {
@@ -238,7 +238,7 @@ class TreeAh[M](
           .flatMapSubNode(m.rcvrKey, nodes0) { mns0 =>
             val mns2 = m.tryResp.fold(
               {ex =>
-                LOG.error(ErrorMsgs.SRV_REQUEST_FAILED, ex, msg = m)
+                logger.error(ErrorMsgs.SRV_REQUEST_FAILED, ex, msg = m)
                 MNodeState.adv
                   .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
                   .composeLens( MNodeAdvState.newIsEnabledPot )
@@ -303,7 +303,7 @@ class TreeAh[M](
             ErrorMsgs.ACTION_WILL_BE_FORBIDDEN_BY_SERVER
           else
             ErrorMsgs.NODE_NOT_FOUND
-          LOG.warn( errCode, msg = m )
+          logger.warn( errCode, msg = m )
 
           // Без изменений, т.к. любые действия в данной ситуации бессмыслены.
           noChange
@@ -522,18 +522,18 @@ class TreeAh[M](
       val conf = confRO()
       conf.adIdOpt.fold {
         // adId не задан в конфиге формы. Should never happen.
-        LOG.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
+        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
         noChange
 
       } { adId =>
         val v0 = value
         MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
-          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {
@@ -611,18 +611,18 @@ class TreeAh[M](
       val conf = confRO()
       conf.adIdOpt.fold {
         // adId не задан в конфиге формы. Should never happen.
-        LOG.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
+        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
         noChange
 
       } { adId =>
         val v0 = value
         MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
-          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {

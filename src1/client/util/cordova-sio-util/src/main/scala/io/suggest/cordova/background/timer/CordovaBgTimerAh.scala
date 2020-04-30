@@ -4,7 +4,7 @@ import io.suggest.sjs.common.async.AsyncUtil._
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
 import io.suggest.daemon.DaemonSleepTimerSet
 import cordova.plugins.background.timer._
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DoNothing
 import org.scalajs.dom
 

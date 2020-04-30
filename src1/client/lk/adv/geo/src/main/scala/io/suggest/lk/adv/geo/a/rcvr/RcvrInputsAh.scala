@@ -6,7 +6,7 @@ import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{IRcvrPopupNode, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.m.SetRcvrStatus
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 
 /**
   * Suggest.io
@@ -29,7 +29,7 @@ class RcvrInputsAh[M](
     // Изменилось состояние галочки ресивера в rcvr-попапе.
     case e: SetRcvrStatus =>
       respPot().fold {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = e )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = e )
         noChange
       } { resp =>
         // Найти узел с текущим id среди всех узлов.

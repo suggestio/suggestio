@@ -4,7 +4,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.fetch.{FetchHttpResp, FetchRequestInit}
 import io.suggest.proto.http.model.{HttpReq, MHttpCaches}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil._
 import io.suggest.sjs.dom2.DomQuick
 import org.scalajs.dom.experimental.{Request, Response}
@@ -89,11 +89,11 @@ object HttpCaching extends Log {
               .flatMap(_.put(cachedReq, resp))
             // Логгирование, т.к. результат этой функции обычно дропается.
             for (ex <- fut.failed)
-              LOG.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
+              logger.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
             fut
           } catch {
             case ex: Throwable =>
-              LOG.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
+              logger.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
               Future.failed(ex)
           }
         }

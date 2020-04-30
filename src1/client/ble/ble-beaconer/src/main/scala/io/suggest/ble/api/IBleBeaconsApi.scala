@@ -4,7 +4,7 @@ import io.suggest.ble.api.cordova.ble.CordovaBleApi
 import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.common.empty.OptionUtil
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq.UnivEq
 
 import scala.concurrent.Future
@@ -49,7 +49,7 @@ object IBleBeaconsApi extends Log {
       apiAvail <- {
         val availTry = Try( cordovaBleApi.isApiAvailable )
         for (ex <- availTry.failed)
-          LOG.log( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED + " " + cordovaBleApi, ex )
+          logger.log( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED + " " + cordovaBleApi, ex )
         availTry
       }
     } yield {

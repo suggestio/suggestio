@@ -10,7 +10,7 @@ import io.suggest.os.notify.{CloseNotify, MOsToast, MOsToastActionEvent, NotifyP
 import io.suggest.primo.Keep
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -75,7 +75,7 @@ final class CordovaLocalNotificationAh[M](
           _ <- {
             val offTry = Try( CNL.un( eventType, fn ) )
             for (ex <- offTry.failed)
-              LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, (MsgCodes.`Off`, eventType) )
+              logger.error( ErrorMsgs.NATIVE_API_ERROR, ex, (MsgCodes.`Off`, eventType) )
             offTry.toOption
           }
         } yield {
@@ -99,7 +99,7 @@ final class CordovaLocalNotificationAh[M](
           _ <- {
             val onTry = Try( CNL.on( eventType, callback ) )
             for (ex <- onTry.failed)
-              LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, msg = (MsgCodes.`On`, eventType) )
+              logger.error( ErrorMsgs.NATIVE_API_ERROR, ex, msg = (MsgCodes.`On`, eventType) )
             onTry.toOption
           }
         } yield {
@@ -123,7 +123,7 @@ final class CordovaLocalNotificationAh[M](
       val v0 = value
 
       if (m.maxTries <= 0) {
-        LOG.warn( ErrorMsgs.ENDLESS_LOOP_MAYBE, msg = m )
+        logger.warn( ErrorMsgs.ENDLESS_LOOP_MAYBE, msg = m )
         noChange
 
       } else if ( m.isStart && CordovaLocalNotificationlUtil.isCnlApiAvailable()) {
@@ -138,7 +138,7 @@ final class CordovaLocalNotificationAh[M](
             if {
               val tryUn = Try( CNL.un( eventType, jsFun ) )
               for (ex <- tryUn.failed)
-                LOG.error( ErrorMsgs.NATIVE_API_ERROR, ex, (m, eventType) )
+                logger.error( ErrorMsgs.NATIVE_API_ERROR, ex, (m, eventType) )
               tryUn.isSuccess
             }
           } yield {

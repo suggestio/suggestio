@@ -8,7 +8,7 @@ import io.suggest.common.uuid.LowUuidUtil
 import io.suggest.js.JsTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.JsBinaryUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq._
 
 import scala.scalajs.js
@@ -124,7 +124,7 @@ case class EddyStoneParser(override val dev: BtDevice)
 
         } else {
           // Что тут?
-          LOG.warn( ErrorMsgs.JSON_PARSE_ERROR, msg = advDataRaw )
+          logger.warn( ErrorMsgs.JSON_PARSE_ERROR, msg = advDataRaw )
           Nil
         }
       }

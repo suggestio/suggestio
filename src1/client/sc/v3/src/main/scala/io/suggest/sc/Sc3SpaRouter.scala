@@ -5,7 +5,7 @@ import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{MScReactCtx, RouteTo}
 import io.suggest.sc.v.ScRootR
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.spa.MGen
 import io.suggest.text.{UrlUtil2, UrlUtilJs}
@@ -67,7 +67,7 @@ class Sc3SpaRouter(
                     (k2 -> v2) :: Nil
 
                   case other =>
-                    LOG.warn( ErrorMsgs.SC_URL_HASH_UNKNOWN_TOKEN, msg = other )
+                    logger.warn( ErrorMsgs.SC_URL_HASH_UNKNOWN_TOKEN, msg = other )
                     Nil
                 }
               }
@@ -172,7 +172,7 @@ class Sc3SpaRouter(
         .nextOption()
     } catch {
       case ex: Throwable =>
-        LOG.error( ErrorMsgs.CANONICAL_URL_FAILURE, ex )
+        logger.error( ErrorMsgs.CANONICAL_URL_FAILURE, ex )
         None
     }
 

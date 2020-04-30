@@ -14,7 +14,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.ContentTypeCheck
 import io.suggest.routes.routes
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.{IUploadApi, UploadApiHttp}

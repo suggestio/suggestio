@@ -7,7 +7,7 @@ import io.suggest.id.login.c.pwch.{PasswordInputAh, PwChangeAh, SetNewPwAh}
 import io.suggest.id.login.m.pwch.{MPwChangeRootS, MPwChangeS, MPwNew}
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
 
 /**

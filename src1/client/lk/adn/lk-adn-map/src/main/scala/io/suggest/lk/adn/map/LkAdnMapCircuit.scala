@@ -20,7 +20,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.spa.StateInp
 

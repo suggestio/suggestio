@@ -2,7 +2,7 @@ package io.suggest.lk.flash
 
 import io.suggest.flash.FlashConstants._
 import io.suggest.init.routed.InitRouter
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._

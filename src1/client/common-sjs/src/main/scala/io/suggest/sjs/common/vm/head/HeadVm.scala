@@ -1,8 +1,8 @@
 package io.suggest.sjs.common.vm.head
 
-import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.find.IApplyEl
+import io.suggest.sjs.dom2.DomListIterator
 import org.scalajs.dom.raw.HTMLHeadElement
 
 /**

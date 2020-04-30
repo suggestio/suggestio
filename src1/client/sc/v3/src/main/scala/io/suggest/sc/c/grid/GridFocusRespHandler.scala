@@ -10,7 +10,7 @@ import io.suggest.sc.m.{MScRoot, ResetUrlRoute, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridBlockClick, MGridS, MScAdData}
 import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.univeq._
 
 /**
@@ -39,7 +39,7 @@ class GridFocusRespHandler
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): ActionResult[MScRoot] = {
     val eMsg = ErrorMsgs.XHR_UNEXPECTED_RESP
-    LOG.error(eMsg, ex, msg = ctx.m)
+    logger.error(eMsg, ex, msg = ctx.m)
     val reason = ctx.m.reason.asInstanceOf[GridBlockClick]
 
     val errFx = Effect.action {
@@ -83,7 +83,7 @@ class GridFocusRespHandler
     GridAh
       .findAd(nodeId, g0.core)
       .fold [ActionResult[MScRoot]] {
-        LOG.warn(ErrorMsgs.FOC_LOOKUP_MISSING_AD, msg = focQs)
+        logger.warn(ErrorMsgs.FOC_LOOKUP_MISSING_AD, msg = focQs)
         ActionResult.NoChange
 
       } { case (ad0, index) =>

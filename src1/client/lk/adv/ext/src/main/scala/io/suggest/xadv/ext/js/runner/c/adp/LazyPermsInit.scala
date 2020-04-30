@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
 import io.suggest.sjs.common.async.AsyncUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.{IMExtTarget, MJsCtxT}
 import io.suggest.xadv.ext.js.runner.m.ex.LoginCancelledException
@@ -109,7 +109,7 @@ trait LazyPermsInit extends Log {
   lazy val hasPermsFut: Future[Seq[Perm_t]] = {
     val fut = earlyHasPermsFut
     fut.onComplete { res =>
-      LOG.log( msg = "perms = " + res)
+      logger.log( msg = "perms = " + res)
     }
     fut.recoverWith { case ex: NoSuchElementException =>
       loginStatusFut

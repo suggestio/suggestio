@@ -2,7 +2,7 @@ package io.suggest.maps.r
 
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
 
@@ -29,7 +29,7 @@ object ReactLeafletUtil extends Log {
       */
     def isDetectRetina(): Boolean = {
       WindowVm().devicePixelRatio.fold {
-        LOG.warn( ErrorMsgs.SCREEN_PX_RATIO_MISSING )
+        logger.warn( ErrorMsgs.SCREEN_PX_RATIO_MISSING )
         false
       } { pxRatio =>
         pxRatio >= 1.4

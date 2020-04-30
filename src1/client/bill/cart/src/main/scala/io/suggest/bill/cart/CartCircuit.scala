@@ -5,7 +5,7 @@ import io.suggest.bill.cart.c.{BillConfAh, ILkCartApi, LkCartApiXhrImpl, OrderIt
 import io.suggest.bill.cart.m.{LoadCurrentOrder, MCartRootS, MOrderItemsS}
 import io.suggest.bill.cart.u.CartUtil
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.spa.{CircuitUtil, StateInp}
 import play.api.libs.json.Json
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

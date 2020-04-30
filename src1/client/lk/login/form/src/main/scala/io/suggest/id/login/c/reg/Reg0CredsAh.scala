@@ -12,7 +12,7 @@ import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.lk.m.input.MTextFieldS
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DoNothing
 import io.suggest.text.Validators
 import japgolly.scalajs.react.extra.router.RouterCtl

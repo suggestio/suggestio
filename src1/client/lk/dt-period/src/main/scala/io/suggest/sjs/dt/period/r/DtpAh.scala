@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.dt.interval.{QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd}
 import io.suggest.sjs.common.dt.JsDateUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.dt.period.m.{DtpInputFns, SetDateStartEnd, SetQap}
 import io.suggest.dt.moment.MomentJsUtil.Implicits._
 import io.suggest.msg.ErrorMsgs
@@ -53,7 +53,7 @@ class DtpAh[M](
     case s: SetDateStartEnd =>
       val v0 = value
       v0.info.customRangeOpt.fold {
-        LOG.warn( ErrorMsgs.DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL )
+        logger.warn( ErrorMsgs.DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL )
         noChange
 
       } { oldRange =>

@@ -6,7 +6,7 @@ import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import org.scalajs.dom.raw.URL
 import japgolly.univeq._
@@ -53,13 +53,13 @@ class CaptchaAh[M](
     // Пришёл результат запроса капчи с сервера.
     case m: CaptchaInitRes =>
       value.fold {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
 
       } { v0 =>
         if (!(v0.contentReq isPendingWithStartTime m.timeStampMs)) {
           // Ответ пришёл, но не тот, который был запущен:
-          LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+          logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
           noChange
 
         } else {
@@ -85,7 +85,7 @@ class CaptchaAh[M](
     // Ввод значения капчи.
     case m: CaptchaTyped =>
       value.fold {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       } { v0 =>
         if (v0.typed.value ==* m.typed) {
@@ -108,7 +108,7 @@ class CaptchaAh[M](
     case m @ CaptchaInputBlur =>
       // Проверить, есть ли валидный текст на капче.
       value.fold {
-        LOG.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m)
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m)
         noChange
       } { v0 =>
         var inputChangesAccF = List.empty[MTextFieldS => MTextFieldS]

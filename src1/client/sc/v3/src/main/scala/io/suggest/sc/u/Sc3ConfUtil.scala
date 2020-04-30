@@ -5,7 +5,7 @@ import io.suggest.conf.ConfConst
 import io.suggest.kv.MKvStorage
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.sc3.MSc3Init
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.StateInp
 import play.api.libs.json.Json
 import japgolly.univeq._
@@ -54,7 +54,7 @@ object Sc3ConfUtil extends Log {
       }
     } catch {
       case ex: Throwable =>
-        LOG.error( ErrorMsgs.CONF_SAVE_FAILED, ex )
+        logger.error( ErrorMsgs.CONF_SAVE_FAILED, ex )
         false
     }
   }
@@ -90,7 +90,7 @@ object Sc3ConfUtil extends Log {
       }
       conf <- {
         if (confParsed.isError)
-          LOG.error( ErrorMsgs.JSON_PARSE_ERROR, msg = confParsed )
+          logger.error( ErrorMsgs.JSON_PARSE_ERROR, msg = confParsed )
         confParsed.asOpt
       }
     } yield {

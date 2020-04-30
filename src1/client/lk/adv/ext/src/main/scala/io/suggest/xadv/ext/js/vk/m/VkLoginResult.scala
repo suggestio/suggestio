@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.model.{FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.vk.c.low.JSON
 
@@ -64,7 +64,7 @@ object VkLoginResult extends FromJsonT with Log {
         )
       }
     if (res.isEmpty)
-      LOG.warn("Invalid/empty answer from VK.Auth: " + d)
+      logger.warn("Invalid/empty answer from VK.Auth: " + d)
     res
   }
   

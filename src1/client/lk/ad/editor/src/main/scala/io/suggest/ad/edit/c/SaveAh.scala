@@ -7,7 +7,7 @@ import io.suggest.ad.edit.m.save.MSaveS
 import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.lk.m.Save
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -36,7 +36,7 @@ class SaveAh[M](
       val v0 = modelRW.value
       if (v0.save.saveReq.isPending) {
         // Уже сейчас есть какой-то запущенный реквест сохранения.
-        LOG.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = v0.save.saveReq )
+        logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = v0.save.saveReq )
         noChange
 
       } else {
@@ -92,7 +92,7 @@ class SaveAh[M](
       } else {
         // Неожидаемый ответ, неизвестно что с ним делать.
         // Возможно, запрос был выкинут по таймауту или что-то ещё пошло не так. Игнорим.
-        LOG.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        logger.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
 

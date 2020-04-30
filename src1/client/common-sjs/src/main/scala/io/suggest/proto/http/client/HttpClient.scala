@@ -6,7 +6,6 @@ import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 import io.suggest.text.UrlUtil2
 import org.scalajs.dom
@@ -19,7 +18,7 @@ import scala.scalajs.js
   * Created: 20.05.15 11:14
   * Description: HTTP-клиент.
   */
-object HttpClient extends Log {
+object HttpClient {
 
   private def myProto: Option[String] = {
     for {

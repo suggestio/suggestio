@@ -51,7 +51,7 @@ import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.sc.v.search.SearchCss
-import io.suggest.sjs.common.log.CircuitLog
+import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
@@ -109,7 +109,7 @@ class Sc3Circuit(
     val scInit = Sc3ConfUtil.getFreshestInit()
       .getOrElse {
         val emsg = ErrorMsgs.GRID_CONFIGURATION_INVALID
-        LOG.error( emsg )
+        logger.error( emsg )
         throw new NoSuchElementException( emsg )
       }
 
@@ -171,7 +171,7 @@ class Sc3Circuit(
     import io.suggest.sjs.common.vm.evtg.EventTargetVm._
     dom.window.addEventListener4s("error") { e: dom.ErrorEvent =>
       val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
-      LOG.error(msg = msg)
+      logger.error(msg = msg)
       val action = SetErrorState(
         MScErrorDia(
           messageCode = MsgCodes.`Malfunction`,
@@ -419,8 +419,9 @@ class Sc3Circuit(
     modelRW = mkLensZoomRW( dialogsRW, MScDialogs.settings ),
   )
 
+
   private val notifyAhOrNull: HandlerFunction = {
-    if (CordovaConstants.isCordovaPlatform()) {
+    if (CordovaConstants.isCordovaPlatform() && CordovaLocalNotificationAh.circuitDebugInfoSafe().isSuccess) {
       // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
       new CordovaLocalNotificationAh(
         dispatcher  = this,
@@ -432,7 +433,9 @@ class Sc3Circuit(
         modelRW = mkLensZoomRW( osNotifyRW, MScOsNotifyS.html5 )
       )
     } else {
-      LOG.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (CordovaLocalNotificationAh.circuitDebugInfoSafe(), Html5NotificationApiAdp.circuitDebugInfoSafe()) )
+      // Тут было LOG.error(), но YandexBot постоянно сыпал этими ошибками на сервер. Поэтому тут просто логгирование для разраба.
+      if (scalajs.LinkingInfo.developmentMode)
+        logger.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (CordovaLocalNotificationAh.circuitDebugInfoSafe(), Html5NotificationApiAdp.circuitDebugInfoSafe()) )
       null
     }
   }
@@ -464,7 +467,7 @@ class Sc3Circuit(
   private val daemonSleepTimerAh: HandlerFunction = {
     if (!_hasDaemonAh) {
       null
-    } else if ( CordovaBgTimerAh.hasCordovaBgTimer() ) {
+    } else if ( CordovaConstants.isCordovaPlatform() && CordovaBgTimerAh.hasCordovaBgTimer() ) {
       new CordovaBgTimerAh(
         dispatcher = this,
         modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cBgTimer ),
@@ -636,7 +639,7 @@ class Sc3Circuit(
         // 2018-06-26: Добавить запасной таймер на случай если платформа так и не приготовится.
         val readyTimeoutId = DomQuick.setTimeout( 7000 ) { () =>
           if (!isPlatformReadyRO.value) {
-            LOG.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
+            logger.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
             // Без Future() т.к. это и так в контексте таймера.
             val msg = SetPlatformReady
             this.runEffectAction( msg )
@@ -660,7 +663,7 @@ class Sc3Circuit(
       }
     } catch { case ex: Throwable =>
       // Возникла ошибка от подготовки платформы прямо в конструкторе. Подавить, т.к. иначе всё встанет колом.
-      LOG.error( ErrorMsgs.CATCHED_CONSTRUCTOR_EXCEPTION, ex )
+      logger.error( ErrorMsgs.CATCHED_CONSTRUCTOR_EXCEPTION, ex )
     }
 
     // Управление активированностью фоновой геолокации:

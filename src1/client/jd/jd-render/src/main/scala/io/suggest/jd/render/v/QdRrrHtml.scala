@@ -11,7 +11,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import japgolly.scalajs.react.{Callback, ReactMouseEventFromHtml}
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -47,7 +47,7 @@ case class QdRrrHtml(
                       resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback] = None,
                     ) {
 
-  import QdRrrHtml.LOG
+  import QdRrrHtml.logger
 
 
   /** Аккамулятор сегментов рендера текущей строки.
@@ -115,7 +115,7 @@ case class QdRrrHtml(
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
           //throw new IllegalStateException("CR/LF error: " + qdTag)
-          LOG.warn( ErrorMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = rrrProps.subTree )
+          logger.warn( ErrorMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = rrrProps.subTree )
           // Надо принудительно закрыть кривую строку.
           _handleEol()
         }
@@ -166,7 +166,7 @@ case class QdRrrHtml(
         throw new UnsupportedOperationException( ErrorMsgs.NOT_IMPLEMENTED + HtmlConstants.SPACE + other )
     }
     if (counters2Opt.isEmpty)
-      LOG.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = jdtQdOp.qdOp.edgeInfo)
+      logger.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = jdtQdOp.qdOp.edgeInfo)
     counters2Opt
   }
 
@@ -261,7 +261,7 @@ case class QdRrrHtml(
     }
 
     if (resOpt.isEmpty)
-      LOG.warn(ErrorMsgs.IMG_EXPECTED, msg = e)
+      logger.warn(ErrorMsgs.IMG_EXPECTED, msg = e)
   }
 
 
@@ -315,7 +315,7 @@ case class QdRrrHtml(
     }
 
     if (resOpt.isEmpty)
-      LOG.warn(ErrorMsgs.VIDEO_EXPECTED, msg = e)
+      logger.warn(ErrorMsgs.VIDEO_EXPECTED, msg = e)
   }
 
 

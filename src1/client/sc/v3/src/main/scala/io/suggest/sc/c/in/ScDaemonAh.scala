@@ -10,7 +10,7 @@ import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts, MBeaconerS}
 import io.suggest.daemon.{DaemonSleepTimerSet, Daemonize, MDaemonSleepTimer, MDaemonStates}
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -89,6 +89,7 @@ class ScDaemonAh[M](
     // Если true, значит запущен демон, активен WAKE_LOCK система какое-то время держит CPU включённым.
     // Запустить сканирование.
     case m: ScDaemonWorkProcess =>
+      logger.warn()
       println( m )
 
       val v0 = value
@@ -153,7 +154,7 @@ class ScDaemonAh[M](
         ah.updatedSilentMaybeEffect( v2, fxOpt )
 
       } else {
-        LOG.warn( ErrorMsgs.INACTUAL_NOTIFICATION, msg = (m, v0.fallSleepTimer) )
+        logger.warn( ErrorMsgs.INACTUAL_NOTIFICATION, msg = (m, v0.fallSleepTimer) )
         val fxOpt = m.timerId
           .map( _clearFallSleepTimerSilentFx )
         ah.maybeEffectOnly( fxOpt )

@@ -8,7 +8,7 @@ import io.suggest.lk.adv.m.OpenNodeInfoClick
 import io.suggest.lk.m.ILkCommonPopupCloseAction
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
@@ -66,7 +66,7 @@ class NodeInfoPopupAh[M](
         updated( Some(v2) )
 
       } else {
-        LOG.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.rcvrKey )
+        logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m.rcvrKey )
         noChange
       }
 

@@ -14,7 +14,7 @@ import io.suggest.sc.m.{MScRoot, SetErrorState}
 import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._

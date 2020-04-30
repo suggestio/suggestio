@@ -19,7 +19,7 @@ import io.suggest.n2.media.storage.{MStorage, MStorages}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.routes.routes
-import io.suggest.sjs.common.model.dom.DomListSeq
+import io.suggest.sjs.dom2.DomListSeq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._

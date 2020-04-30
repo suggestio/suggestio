@@ -8,11 +8,12 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.Keep
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
@@ -50,7 +51,7 @@ final class CordovaBgModeAh[M](
   extends ActionHandler( modelRW )
 { ah =>
 
-  import CordovaBgModeAh.{CBGM, LOG}
+  import CordovaBgModeAh.{CBGM, logger}
 
 
   /** Патчинг списка листенеров.
@@ -90,7 +91,7 @@ final class CordovaBgModeAh[M](
           _ <- {
             val t = Try( CBGM.un(rmEventType, fun) )
             for (ex <- t.failed)
-              LOG.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, (MsgCodes.`Off`, rmEventType) )
+              logger.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, (MsgCodes.`Off`, rmEventType) )
             t.toOption
           }
         } yield {
@@ -106,7 +107,7 @@ final class CordovaBgModeAh[M](
           _ <- {
             val t = Try( CBGM.on(eventType, fun) )
             for (ex <- t.failed)
-              LOG.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, (MsgCodes.`On`, eventType) )
+              logger.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, (MsgCodes.`On`, eventType) )
             t.toOption
           }
         } yield {
@@ -156,9 +157,8 @@ final class CordovaBgModeAh[M](
       println(m)
 
       val fx = Effect.action {
+        println(s"daemon work := " + CBGM.isEnabled() + " => " + m.isDaemon)
         CBGM.setEnabled( m.isDaemon )
-        println("daemon work := " + m.isDaemon)
-
         DoNothing
       }
 
@@ -209,11 +209,11 @@ final class CordovaBgModeAh[M](
               case CordovaBgModeEvents.DISABLE =>
                 e.enabled.map(_(false))
               case CordovaBgModeEvents.FAILURE =>
-                LOG.error( ErrorMsgs.DAEMON_BACKEND_FAILURE )
+                logger.error( ErrorMsgs.DAEMON_BACKEND_FAILURE )
                 // TODO А какие подробности проблемы, где они переданы? Надо покопаться в исходниках.
                 e.failure
               case other =>
-                LOG.error( ErrorMsgs.DAEMON_BACKEND_FAILURE, msg = other )
+                logger.error( ErrorMsgs.DAEMON_BACKEND_FAILURE, msg = other )
                 None
             }
             actionOpt.map( _.toEffectPure )

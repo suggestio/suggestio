@@ -21,7 +21,7 @@ import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -200,7 +200,7 @@ class GeoTabAh[M](
         .get( m.nodeId )
         .fold {
           // Почему-то не найдено узла, по которому произошёл клик.
-          LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
         } { mnode =>
           val nodeId = mnode.nodeId.get
@@ -305,7 +305,7 @@ class GeoTabAh[M](
       val rcvrsCache0 = v0.data.rcvrsCache
       val rcvrsCache2 = m.tryResp.fold(
         {ex =>
-          LOG.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
+          logger.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
           rcvrsCache0.fail(ex)
         },
         {resp =>

@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
 import io.suggest.sjs.common.async.AsyncUtil
-import io.suggest.sjs.common.log.Log
+import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.xadv.ext.js.runner.c.IActionContext
@@ -84,7 +84,7 @@ trait AsyncInitAdp extends IAdapter with Log {
       val initFut = serviceScriptLoaded
         // Любое исключение завернуть в ApiInitException
         .recoverWith { case ex: Throwable =>
-          LOG.error(msg = "init failed", ex = ex)
+          logger.error(msg = "init failed", ex = ex)
           Future.failed( ApiInitException(ex) )
         }
       p.completeWith( initFut )
@@ -98,7 +98,7 @@ trait AsyncInitAdp extends IAdapter with Log {
     } catch {
       case ex: Throwable =>
         p.failure( DomUpdateException(ex) )
-        LOG.error(msg = "addScriptTag() failed: ", ex = ex)
+        logger.error(msg = "addScriptTag() failed: ", ex = ex)
     }
 
     // Среагировать на слишком долгую загрузку скрипта таймаутом.
@@ -106,7 +106,7 @@ trait AsyncInitAdp extends IAdapter with Log {
     DomQuick.setTimeout(t) { () =>
       if (!scriptLoadP.isCompleted) {
         p.failure( UrlLoadTimeoutException(SCRIPT_URL, t) )
-        LOG.error(msg = "timeout " + t + " ms occured during ensureReady() script inject")
+        logger.error(msg = "timeout " + t + " ms occured during ensureReady() script inject")
       }
     }
 
