@@ -1,7 +1,7 @@
 package io.suggest.sc.router
 
-import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.ScConstants.JsRouter._
+import io.suggest.routes.{JsRoutesConst, routes}
+import io.suggest.sc.ScConstants
 import org.scalajs.dom.Window
 
 import scala.language.implicitConversions
@@ -22,8 +22,8 @@ sealed trait WindowWithScRouterSafe extends js.Object {
    * Доступ к необязательному объекту-коду jsRoutes через window.
    * @return Роутер или undefined.
    */
-  @JSName(NAME)
-  def jsRoutes: UndefOr[ScJsRoutes.type] = js.native
+  @JSName( JsRoutesConst.GLOBAL_NAME )
+  def jsRoutes: UndefOr[routes.type] = js.native
 
   /**
    * Доступ к функции иниализации при асинхронной подгрузке js-роутера.
@@ -31,7 +31,7 @@ sealed trait WindowWithScRouterSafe extends js.Object {
    * Функция может быть перевыставлена несколько раз в случае активной долбежки роутера, это нормально.
    * @return function() или undefined.
    */
-  @JSName(ASYNC_INIT_FNAME)
+  @JSName( ScConstants.JsRouter.ASYNC_INIT_FNAME )
   var sioScJsRoutesAsyncInit: UndefOr[js.Function0[_]] = js.native
 
 }

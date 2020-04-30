@@ -54,7 +54,6 @@ class Sc @Inject() (
                      override val jdAdUtil           : JdAdUtil,
                      override val jsMessagesUtil     : JsMessagesUtil,
                      override val ctxUtil            : ContextUtil,
-                     override val bruteForceProtect  : BruteForceProtect,
                      override val advGeoRcvrsUtil    : AdvGeoRcvrsUtil,
                      override val scAdSearchUtil     : ScAdSearchUtil,
                      override val nodesUtil          : NodesUtil,
@@ -78,7 +77,6 @@ class Sc @Inject() (
   with ScIndexAdOpen
   with ScJsRouter
   with ScSearch
-  with ScRemoteError
   with ScUniApi
 {
 

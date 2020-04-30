@@ -3,14 +3,14 @@ package io.suggest.sc
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
+import io.suggest.log.remote.RmeLogAppender
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
-import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.log.{Log, Logging}
+import io.suggest.log.{Log, Logging, Severities}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -135,8 +135,10 @@ object Sc3Main extends Log {
       def __activateRmeLogger(): Unit = {
         // Активировать отправку логов на сервер, когда js-роутер будет готов.
         Try {
-          if ( !Logging.LOGGERS.exists(_.isInstanceOf[ScRmeLogAppender]) )
-            Logging.LOGGERS ::= new ScRmeLogAppender
+          if ( !Logging.LOGGERS.exists(_.isInstanceOf[RmeLogAppender]) )
+            Logging.LOGGERS ::= new RmeLogAppender(
+              minSeverity = Severities.Error
+            )
         }
           .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
       }

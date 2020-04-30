@@ -1,45 +1,41 @@
-package controllers.sc
+package controllers
 
-import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag, MStats}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
 import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.Inject
 import models.mctx.Context
 import models.msc.MScRemoteDiag
-import play.api.data.Forms._
-import play.api.data._
+import play.api.data.Form
+import play.api.data.Forms.{mapping, nonEmptyText, optional, text}
 import play.api.http.MimeTypes
-import util.FormUtil._
-import util.acl.{IBruteForceProtect, IMaybeAuth}
-import util.geo.IGeoIpUtilDi
-import util.stat.IStatUtil
+import util.FormUtil.{emptyStrOptToNone, strIdentityF, strTrimF}
+import util.acl.MaybeAuth
+import util.geo.GeoIpUtil
+import util.stat.StatUtil
+
+import scala.concurrent.ExecutionContext
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 14.10.14 18:54
- * Description: Сборка js-ошибок с клиентов и сохранение оных в модель.
- * Клиенты могут слать всякую хрень.
- */
-trait ScRemoteError
-  extends ScController
-  with MacroLogsImpl
-  with IBruteForceProtect
-  with IMaybeAuth
-  with IGeoIpUtilDi
-  with IStatUtil
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 30.04.2020 21:00
+  * Description: Контроллер сбора логов с клиентских устройств.
+  */
+final class RemoteLogs @Inject() (
+                                   statUtil                   : StatUtil,
+                                   maybeAuth                  : MaybeAuth,
+                                   geoIpUtil                  : GeoIpUtil,
+                                   sioControllerApi           : SioControllerApi,
+                                   implicit private val ec    : ExecutionContext,
+                                 )
+  extends MacroLogsImpl
 {
 
   import sioControllerApi._
-  import mCommonDi._
-
-  //private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(1)
-
-  private def SAVE_TO_MSTAT = false
-
-  private lazy val mstats = current.injector.instanceOf[MStats]
 
 
   /** Маппинг для вычитывания результата из тела POST. */
-  private val errorFormM: Form[MScRemoteDiag] = {
+  private def errorFormM: Form[MScRemoteDiag] = {
     import io.suggest.err.ErrorConstants.Remote._
     Form(
       mapping(
@@ -66,9 +62,9 @@ trait ScRemoteError
 
 
   /**
-   * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
-   * @return NoContent или NotAcceptable.
-   */
+    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
+    * @return NoContent или NotAcceptable.
+    */
   def handleScError = /*bruteForceProtect(_BFP_ARGS)*/ {
     maybeAuth(U.PersonNode).async { implicit request =>
       lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteClientAddress}]:"
@@ -130,5 +126,6 @@ trait ScRemoteError
       )
     }
   }
+
 
 }

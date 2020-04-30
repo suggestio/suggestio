@@ -1,13 +1,13 @@
 package io.suggest.log.remote
 
 import io.suggest.err.ErrorConstants
-import io.suggest.log.{ILogAppender, LogMsg, Severity}
+import io.suggest.log.{ILogAppender, LogMsg, Severities, Severity}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
-import io.suggest.routes.PlayRoute
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.text.StringUtil
 
@@ -20,15 +20,14 @@ import scala.scalajs.js.JSON
   * Created: 14.11.16 17:40
   * Description: Поддержка логгирования на сервер в формате RemoteError.
   */
-abstract class RmeLogAppender extends ILogAppender {
-
-  // TODO Нужна защита от StackOverflow, чтобы избежать вызова логгера во время инициализации object'ов.
-  //private var _isReady: Boolean = false
+class RmeLogAppender(
+                      minSeverity: Severity = Severities.Warn
+                    )
+  extends ILogAppender
+{
 
   /** Куда делать реквест. Функция, возвращающая route. */
-  def route: PlayRoute
-
-  def minSeverity: Severity //= Severities.Warn
+  def route = routes.controllers.RemoteLogs.handleScError()
 
   private def _logAppendInto(logMsgs: Seq[LogMsg], route: PlayRoute): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.

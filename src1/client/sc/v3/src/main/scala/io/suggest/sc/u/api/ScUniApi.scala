@@ -5,7 +5,7 @@ import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.proto.http.model._
-import io.suggest.routes.{PlayRoute, ScJsRoutes}
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.sc3.{MSc3Resp, MScCommonQs, MScQs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
@@ -34,7 +34,7 @@ object ScUniApi {
 
   /** Сборка ссылки для набора qs. */
   def scQs2Route(scQs: MScQs): PlayRoute = {
-    ScJsRoutes.controllers.Sc.pubApi(
+    routes.controllers.Sc.pubApi(
       PlayJsonSjsUtil.toNativeJsonObj(
         Json.toJsObject( scQs )
       )

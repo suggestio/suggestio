@@ -59,6 +59,8 @@ sealed trait Controllers extends js.Object {
   def Sc: ScCtlRoutes = js.native
   def ScApp: ScAppCtlRoutes = js.native
 
+  def RemoteLogs: RemoteLogsCtlRoutes = js.native
+
   /** Объект с роутами серверного контроллера LkAdvGeo. */
   def LkAdvGeo: LkAdvGeoCtlRoutes = js.native
 
@@ -185,9 +187,6 @@ sealed trait ScCtlRoutes extends js.Object {
   /** Роута для доступа к pubApi. */
   def pubApi(args: js.Dictionary[js.Any]): PlayRoute = js.native
 
-  /** Роута для автоматического сабмита ошибок на сервер. */
-  def handleScError(): PlayRoute = js.native
-
 }
 
 
@@ -200,6 +199,16 @@ sealed trait ScAppCtlRoutes extends js.Object {
 
   /** Роута до генератора манифестов установки приложения на Apple iOS. */
   def iosInstallManifest(args: js.Dictionary[js.Any]): PlayRoute = js.native
+
+}
+
+
+/** Роуты для контроллера RemoteLogs. */
+@js.native
+sealed trait RemoteLogsCtlRoutes extends js.Object {
+
+  /** Роута для сабмита ошибок на сервер от выдачи до мая 2020. */
+  def handleScError(): PlayRoute = js.native
 
 }
 

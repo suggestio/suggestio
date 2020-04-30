@@ -2,7 +2,7 @@ package io.suggest.sc.m.in
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.routes.ScJsRoutes
+import io.suggest.routes.routes
 import io.suggest.sc.m.RouteTo
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -27,8 +27,8 @@ object MJsRouterS {
     }
   }
 
-  val jsRouter = GenLens[MJsRouterS](_.jsRouter)
-  val delayedRouteTo = GenLens[MJsRouterS](_.delayedRouteTo)
+  def jsRouter = GenLens[MJsRouterS](_.jsRouter)
+  def delayedRouteTo = GenLens[MJsRouterS](_.delayedRouteTo)
 
 }
 
@@ -40,6 +40,6 @@ object MJsRouterS {
   *                       поэтому TailAh пришлось частично отложить экшен до готовности js-роутера.
   */
 case class MJsRouterS(
-                       jsRouter         : Pot[ScJsRoutes.type]    = Pot.empty,
+                       jsRouter         : Pot[routes.type]    = Pot.empty,
                        delayedRouteTo   : Option[RouteTo]         = None,
                      )

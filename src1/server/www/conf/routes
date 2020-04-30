@@ -28,8 +28,8 @@ GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
 
-## Дамп ошибок выдачи.
-POST /sc/error                          @controllers.Sc.handleScError
+## sc/error: Дамп ошибок выдачи в формате до мая 2020. Удалить
+POST /sc/error                          @controllers.RemoteLogs.handleScError
 
 ## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
 GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )

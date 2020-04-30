@@ -1,6 +1,7 @@
 package io.suggest.sc
 
 import io.suggest.common.html.HtmlConstants
+import io.suggest.routes.JsRoutesConst
 
 /**
  * Suggest.io
@@ -160,15 +161,8 @@ object ScConstants {
   /** Константы для jsRouter'а выдачи. */
   object JsRouter {
 
-    /**
-     * Имя js-роутера на странице. val потому что:
-     * - в sjs используется в аннотации.
-     * - в web21 будет постоянно использоваться с внедрением sjs-выдачи.
-     */
-    final val NAME = "sioScJsRoutes"
-
     /** window.NAME - название функции function(), которая будет вызвана  */
-    final val ASYNC_INIT_FNAME = NAME + "AsyncInit"
+    final val ASYNC_INIT_FNAME = JsRoutesConst.GLOBAL_NAME + "AsyncInit"
 
     /** id script-тега js-роутера. HTML5 разрешает script.id. */
     final def DOM_ID = "scJsRouterCont"

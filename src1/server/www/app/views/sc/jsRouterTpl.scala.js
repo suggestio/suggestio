@@ -5,10 +5,11 @@
 @import io.suggest.sc.ScConstants.JsRouter._
 @import ctx.request
 @import views.js.stuff.jsRevRouterTpl
+@import io.suggest.routes.JsRoutesConst
 
-@jsRevRouterTpl(NAME, cdn = true)(
+@jsRevRouterTpl( JsRoutesConst.GLOBAL_NAME, cdn = true )(
   routes.javascript.Sc.pubApi,
-  routes.javascript.Sc.handleScError,
+  routes.javascript.RemoteLogs.handleScError,
   routes.javascript.Static.advRcvrsMapJson,
 
   routes.javascript.Ident.loginFormPage,

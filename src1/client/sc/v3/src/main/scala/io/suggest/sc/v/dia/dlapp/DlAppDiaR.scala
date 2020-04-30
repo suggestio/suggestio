@@ -13,7 +13,7 @@ import io.suggest.msg.JsFormatUtil
 import io.suggest.n2.media.MFileMetaHash
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.routes.ScJsRoutes
+import io.suggest.routes.routes
 import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
 import io.suggest.sc.m.menu._
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
@@ -137,7 +137,7 @@ class DlAppDiaR(
                     MFileMetaHash.toHashesHex( fm.hashesHex )
                   },
               )
-              val manifestUrl = ScJsRoutes.controllers.ScApp
+              val manifestUrl = routes.controllers.ScApp
                 .iosInstallManifest(
                   PlayJsonSjsUtil.toNativeJsonObj(
                     Json.toJsObject( manifestQs ))

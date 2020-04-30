@@ -23,7 +23,7 @@ import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg._
 import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAh
-import io.suggest.routes.ScJsRoutes
+import io.suggest.routes.routes
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
@@ -483,7 +483,7 @@ class Sc3Circuit(
   private def _hasDaemonSleepTimer = daemonSleepTimerAh != null
 
 
-  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
+  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
 
   override protected val actionHandler: HandlerFunction = {
