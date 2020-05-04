@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import io.suggest.loc.LocationConstants._
+import LocationConst._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._

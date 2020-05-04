@@ -208,7 +208,7 @@ sealed trait ScAppCtlRoutes extends js.Object {
 sealed trait RemoteLogsCtlRoutes extends js.Object {
 
   /** Роута для сабмита ошибок на сервер от выдачи до мая 2020. */
-  def handleScError(): PlayRoute = js.native
+  def receive(): PlayRoute = js.native
 
 }
 

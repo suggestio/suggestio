@@ -1,4 +1,4 @@
-package io.suggest.loc.geo.ipgeobase
+package io.suggest.geo.ipgeobase
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._

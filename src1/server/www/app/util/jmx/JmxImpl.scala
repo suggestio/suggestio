@@ -6,7 +6,7 @@ import models.adv.MExtTargetsJmx
 import models.mcal.MCalendarJmx
 import java.lang.management.ManagementFactory
 
-import io.suggest.loc.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
+import io.suggest.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
 import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.inx.StatIndexUtilJmx
 import io.suggest.stat.m.MStatsJmx

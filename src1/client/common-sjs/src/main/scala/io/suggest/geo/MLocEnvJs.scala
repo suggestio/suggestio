@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.ble.MUidBeaconJs
-import io.suggest.loc.LocationConstants._
+import LocationConst._
 
 import scala.scalajs.js
 

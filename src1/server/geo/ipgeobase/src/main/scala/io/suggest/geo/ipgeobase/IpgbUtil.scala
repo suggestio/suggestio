@@ -1,4 +1,4 @@
-package io.suggest.loc.geo.ipgeobase
+package io.suggest.geo.ipgeobase
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
@@ -21,7 +21,6 @@ class IpgbUtil @Inject() (
                            mCities        : MCities,
                            mIpRanges      : MIpRanges,
                            implicit private val ec: ExecutionContext,
-
                          )
   extends IGeoFindIp
   with MacroLogsImpl

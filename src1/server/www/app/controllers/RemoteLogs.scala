@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.log.MLogReport
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
@@ -8,10 +9,12 @@ import models.msc.MScRemoteDiag
 import play.api.data.Form
 import play.api.data.Forms.{mapping, nonEmptyText, optional, text}
 import play.api.http.MimeTypes
+import play.api.mvc.BodyParser
 import util.FormUtil.{emptyStrOptToNone, strIdentityF, strTrimF}
 import util.acl.MaybeAuth
 import util.geo.GeoIpUtil
 import util.stat.StatUtil
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 import scala.concurrent.ExecutionContext
 
@@ -63,6 +66,7 @@ final class RemoteLogs @Inject() (
 
   /**
     * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
+    * TODO Не нужно с мая 2020, оставлено для старых версий выдачи на какое-то время.
     * @return NoContent или NotAcceptable.
     */
   def handleScError = /*bruteForceProtect(_BFP_ARGS)*/ {
@@ -88,7 +92,6 @@ final class RemoteLogs @Inject() (
           } yield {
             new statUtil.Stat2 {
               override def logMsg = Some("Sc-remote-error")
-
               override def uri: Option[String] = {
                 merr0.url.orElse( super.uri )
               }
@@ -99,7 +102,7 @@ final class RemoteLogs @Inject() (
               }
               override def statActions: List[MAction] = {
                 val maction = MAction(
-                  actions   = Seq( MActionTypes.ScIndexCovering ),
+                  actions   = MActionTypes.ScIndexCovering :: Nil,
                   nodeId    = Nil,
                   nodeName  = Nil
                 )
@@ -127,5 +130,81 @@ final class RemoteLogs @Inject() (
     }
   }
 
+
+  private def _logReceiverBP: BodyParser[MLogReport] = {
+    parse
+      .json[MLogReport]
+      .validate { logRep =>
+        MLogReport.validate( logRep ).fold(
+          {fails =>
+            Left( NotAcceptable( s"Validation failed:\n ${fails.iterator.mkString("\n ")}" ) )
+          },
+          Right.apply
+        )
+      }
+  }
+
+  /** POST получение логов в обновлённом JSON-формате.
+    *
+    * @return 204 No Content.
+    */
+  def receive = {
+    maybeAuth( U.PersonNode ).async( _logReceiverBP ) { implicit request =>
+      //lazy val logPrefix = s"receive(${System.currentTimeMillis()}) [${request.remoteClientAddress}]:"
+      val remoteAddrFixed = geoIpUtil.fixRemoteAddr( request.remoteClientAddress )
+
+      // Запустить геолокацию текущего юзера по IP.
+      val geoLocOptFut = geoIpUtil.findIpCached( remoteAddrFixed.remoteAddr )
+      // Запустить получение инфы о юзере. Без https тут всегда None.
+      val userSaOptFut = statUtil.userSaOptFutFromRequest()
+      val _ctx = implicitly[Context]
+
+      val diagMsg = request.body.msgs.mkString("\n")
+
+      val stat2Fut = for {
+        _geoLocOpt <- geoLocOptFut
+        _userSaOpt <- userSaOptFut
+      } yield {
+        new statUtil.Stat2 {
+          override def logMsg = Some("Sc-remote-error")
+          override def diag: MDiag = {
+            if (statUtil.SAVE_GARBAGE_TO_MSTAT) {
+              MDiag(
+                message = Some( diagMsg ),
+              )
+            } else {
+              MDiag.empty
+            }
+          }
+          override def statActions: List[MAction] = {
+            val maction = MAction(
+              actions   = MActionTypes.ScIndexCovering :: Nil,
+              nodeId    = Nil,
+              nodeName  = Nil
+            )
+            maction :: Nil
+          }
+          override def components = MComponents.Error :: super.components
+          override def userSaOpt = _userSaOpt
+          override def ctx = _ctx
+          override def geoIpLoc = _geoLocOpt
+        }
+      }
+
+      // Куда сохранять? В логи или просто на сервере в логи отрендерить?
+      for {
+        stat2 <- stat2Fut
+        _ <- statUtil.maybeSaveGarbageStat(
+          stat2,
+          logTail = diagMsg,
+        )
+      } yield {
+        NoContent
+          // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
+          // ошибку, что нет root тега в ответе /sc/error.
+          .as( MimeTypes.TEXT )
+      }
+    }
+  }
 
 }

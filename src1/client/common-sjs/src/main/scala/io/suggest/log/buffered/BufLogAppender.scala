@@ -1,7 +1,7 @@
 package io.suggest.log.buffered
 
 import diode.Circuit
-import io.suggest.log.{ILogAppender, LogMsg}
+import io.suggest.log.{ILogAppender, MLogMsg}
 import io.suggest.primo.Keep
 
 /**
@@ -25,7 +25,7 @@ class BufLogAppender(appended: ILogAppender )
     )
   }
 
-  override def logAppend(logMsgs: Seq[LogMsg]): Unit =
+  override def logAppend(logMsgs: Seq[MLogMsg]): Unit =
     dispatch( LogAppend(logMsgs) )
 
 }

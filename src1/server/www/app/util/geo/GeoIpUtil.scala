@@ -5,7 +5,7 @@ import java.net.InetAddress
 import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoLoc}
-import io.suggest.loc.geo.ipgeobase.IpgbUtil
+import io.suggest.geo.ipgeobase.IpgbUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, IReqHdr, MRemoteAddrInfo}

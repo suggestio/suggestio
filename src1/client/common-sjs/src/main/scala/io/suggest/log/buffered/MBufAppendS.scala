@@ -1,7 +1,7 @@
 package io.suggest.log.buffered
 
 import diode.data.Pot
-import io.suggest.log.LogMsg
+import io.suggest.log.MLogMsg
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
@@ -28,6 +28,6 @@ object MBufAppendS {
   * @param expTimerId id таймера сброса накопленных сообщений.
   */
 case class MBufAppendS(
-                        accRev          : List[Seq[LogMsg]]         = Nil,
+                        accRev          : List[Seq[MLogMsg]]         = Nil,
                         expTimerId      : Pot[Int]                  = Pot.empty,
                       )

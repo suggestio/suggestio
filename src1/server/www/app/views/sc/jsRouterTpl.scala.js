@@ -9,7 +9,7 @@
 
 @jsRevRouterTpl( JsRoutesConst.GLOBAL_NAME, cdn = true )(
   routes.javascript.Sc.pubApi,
-  routes.javascript.RemoteLogs.handleScError,
+  routes.javascript.RemoteLogs.receive,
   routes.javascript.Static.advRcvrsMapJson,
 
   routes.javascript.Ident.loginFormPage,

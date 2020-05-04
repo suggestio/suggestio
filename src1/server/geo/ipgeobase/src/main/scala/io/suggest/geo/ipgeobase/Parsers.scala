@@ -1,4 +1,4 @@
-package io.suggest.loc.geo.ipgeobase
+package io.suggest.geo.ipgeobase
 
 import io.suggest.geo.MGeoPoint
 

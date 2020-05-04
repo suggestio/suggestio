@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
-import io.suggest.loc.LocationConstants._
+import LocationConst._
 import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable
 

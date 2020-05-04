@@ -60,8 +60,6 @@ object ErrorConstants {
     def URL_LEN_MIN = 8
     def URL_LEN_MAX = 1024
 
-    def STATE_LEN_MAX = 4096
-
   }
 
 

@@ -1,7 +1,7 @@
 package util.geo
 
 import javax.inject.Inject
-import io.suggest.loc.geo.ipgeobase.IpgbImporter
+import io.suggest.geo.ipgeobase.IpgbImporter
 import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import util.cron.ICronTasksProvider

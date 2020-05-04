@@ -1,4 +1,4 @@
-package io.suggest.loc.geo.ipgeobase
+package io.suggest.geo.ipgeobase
 
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder

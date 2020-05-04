@@ -10,7 +10,7 @@ import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.log.{Log, Logging, Severities}
+import io.suggest.log.{Log, Logging, LogSeverities}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -137,7 +137,7 @@ object Sc3Main extends Log {
         Try {
           if ( !Logging.LOGGERS.exists(_.isInstanceOf[RmeLogAppender]) )
             Logging.LOGGERS ::= new RmeLogAppender(
-              minSeverity = Severities.Error
+              minSeverity = LogSeverities.Error
             )
         }
           .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )

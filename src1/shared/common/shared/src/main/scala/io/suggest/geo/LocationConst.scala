@@ -1,4 +1,4 @@
-package io.suggest.loc
+package io.suggest.geo
 
 /**
   * Suggest.io
@@ -6,7 +6,7 @@ package io.suggest.loc
   * Created: 01.09.16 13:50
   * Description: Константы для описания локации.
   */
-object LocationConstants {
+object LocationConst {
 
   /** Имя поля с геоданными локации. */
   def GEO_LOC_FN      = "e"

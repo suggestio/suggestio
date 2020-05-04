@@ -1,18 +1,17 @@
 package io.suggest.log.remote
 
 import io.suggest.err.ErrorConstants
-import io.suggest.log.{ILogAppender, LogMsg, Severities, Severity}
+import io.suggest.log.{ILogAppender, LogSeverities, LogSeverity, MLogMsg, MLogReport}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
-import io.suggest.routes.{PlayRoute, routes}
+import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.text.StringUtil
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
-import scala.scalajs.js.JSON
 
 /**
   * Suggest.io
@@ -21,36 +20,26 @@ import scala.scalajs.js.JSON
   * Description: Поддержка логгирования на сервер в формате RemoteError.
   */
 class RmeLogAppender(
-                      minSeverity: Severity = Severities.Warn
+                      minSeverity: LogSeverity = LogSeverities.Warn
                     )
   extends ILogAppender
 {
 
-  /** Куда делать реквест. Функция, возвращающая route. */
-  def route = routes.controllers.RemoteLogs.handleScError()
-
-  private def _logAppendInto(logMsgs: Seq[LogMsg], route: PlayRoute): Future[_] = {
+  private def _logAppendInto( logMsgs: Seq[MLogMsg] ): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.
     // TODO XXX Отправлять всю пачку
-    val logMsg = logMsgs.head
-
     val req = HttpReq.routed(
       // TODO Отработать отсутствие роуты через /sc/error
-      route = route,
+      route = routes.controllers.RemoteLogs.receive(),
       data = HttpReqData(
         headers = Map(
           HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
         ),
         body = {
-          val c = ErrorConstants.Remote
-          val report = MRmeReport(
-            severity = logMsg.severity,
-            // TODO Рендерить в report необходиые поля, а не собирать строковой message. Чтобы на сервере индексировалось всё.
-            msg     = StringUtil.strLimitLen( logMsg.onlyMainText, c.MSG_LEN_MAX ),
-            errCode = logMsg.code,
+          val logRep = MLogReport(
+            msgs = logMsgs.toList,
           )
-          val json = MRmeReport.toJson( report )
-          JSON.stringify(json)
+          Json.toJson( logRep ).toString()
         }
       )
     )
@@ -62,20 +51,22 @@ class RmeLogAppender(
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {
       val n = "\n"
-      println( ErrorMsgs.RME_LOGGER_REQ_FAIL + " " + logMsg + " " + ex + " " + ex.getStackTrace.mkString(n,n,n))
+      println( ErrorMsgs.RME_LOGGER_REQ_FAIL + "\n " + logMsgs.mkString("\n ") + "\n" + ex + " " + ex.getStackTrace.mkString(n,n,n) )
     }
 
     fut
   }
 
-  override def logAppend(logMsgs: Seq[LogMsg]): Unit = {
-    val logMsgs2 = logMsgs.filter( _.severity >= minSeverity )
-    try {
-      _logAppendInto( logMsgs2, route )
-    } catch {
-      case ex: Throwable =>
-        // Бывает, что роута недоступна (js-роутер ещё не готов). Надо молча подавлять такие ошибки.
-        println(ex.getMessage)
+  override def logAppend(logMsgs: Seq[MLogMsg]): Unit = {
+    val logMsgs2 = logMsgs.filter( _.severity.value >= minSeverity.value )
+    if (logMsgs2.nonEmpty) {
+      try {
+        _logAppendInto( logMsgs2 )
+      } catch {
+        case ex: Throwable =>
+          // Бывает, что роута недоступна (js-роутер ещё не готов). Надо молча подавлять такие ошибки.
+          println(getClass.getSimpleName, ex.getMessage)
+      }
     }
   }
 

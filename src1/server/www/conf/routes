@@ -30,6 +30,7 @@ GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m
 
 ## sc/error: Дамп ошибок выдачи в формате до мая 2020. Удалить
 POST /sc/error                          @controllers.RemoteLogs.handleScError
+POST /log/rcv                           @controllers.RemoteLogs.receive
 
 ## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
 GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )

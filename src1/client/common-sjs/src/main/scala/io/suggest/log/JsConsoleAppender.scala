@@ -13,15 +13,15 @@ import scala.scalajs.js
   */
 class JsConsoleAppender extends ILogAppender {
 
-  override def logAppend(logMsgs: Seq[LogMsg]): Unit = {
+  override def logAppend(logMsgs: Seq[MLogMsg]): Unit = {
     for (logMsg <- logMsgs) {
       // Подбираем правильную функцию для логгирования в консоль...
       val f: (js.Any, Seq[js.Any]) => Unit = {
         logMsg.severity match {
-          case Severities.Error => dom.console.error
-          case Severities.Warn  => dom.console.warn
-          case Severities.Info  => dom.console.info
-          case Severities.Log   => dom.console.log
+          case LogSeverities.Error => dom.console.error
+          case LogSeverities.Warn  => dom.console.warn
+          case LogSeverities.Info  => dom.console.info
+          case LogSeverities.Log   => dom.console.log
         }
       }
 

@@ -1,4 +1,4 @@
-package io.suggest.loc.geo.ipgeobase
+package io.suggest.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
 import io.suggest.es.MappingDsl

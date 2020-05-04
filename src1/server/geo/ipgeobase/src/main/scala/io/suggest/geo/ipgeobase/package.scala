@@ -1,4 +1,4 @@
-package io.suggest.loc.geo
+package io.suggest.geo
 
 /**
   * Suggest.io

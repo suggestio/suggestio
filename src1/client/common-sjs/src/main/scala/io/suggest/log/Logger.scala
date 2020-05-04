@@ -2,6 +2,7 @@ package io.suggest.log
 
 import scala.annotation.elidable
 import scala.annotation.elidable._
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -19,31 +20,28 @@ trait Log {
 
 object Log {
 
-  implicit final class LogClsApi[T]( private val cls: T ) extends AnyVal {
+  implicit final class LogClsApi[T]( private val logHolder: T ) extends AnyVal {
 
     @elidable( SEVERE )
-    def error = _logMsgBuilder( Severities.Error )
+    def error = _logMsgBuilder( LogSeverities.Error )
 
     @elidable( WARNING )
-    def warn = _logMsgBuilder( Severities.Warn )
+    def warn = _logMsgBuilder( LogSeverities.Warn )
 
     @elidable( INFO )
-    def info = _logMsgBuilder( Severities.Info )
+    def info = _logMsgBuilder( LogSeverities.Info )
 
     @elidable( FINE )
-    def log = _logMsgBuilder( Severities.Log )
+    def log = _logMsgBuilder( LogSeverities.Log )
 
-    private def _classSimpleName: String = {
-      val c = cls.getClass
-      try {
-        c.getSimpleName
-      } catch { case _: Throwable =>
-        c.getName
-      }
+
+    private def _logMsgBuilder = {
+      val c = logHolder.getClass
+      val _className = Try( c.getSimpleName )
+        .orElse( Try( c.getName ) )
+        .getOrElse( c.toString )
+      Logging.logMsgBuilder( _className, Logging.handleLogMsgSafe )
     }
-
-    private def _logMsgBuilder =
-      LogMsg.builder( _classSimpleName, Logging.handleLogMsgSafe )(_)
 
   }
 

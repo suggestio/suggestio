@@ -391,7 +391,7 @@ final class StatUtil @Inject()(
     * @param stat2 Данные статистики.
     * @return Фьючерс сохранения (или несохранения).
     */
-  def maybeSaveGarbageStat(stat2: Stat2): Future[_] = {
+  def maybeSaveGarbageStat(stat2: Stat2, logTail: => String = ""): Future[_] = {
     def msg = stat2.logMsg getOrElse "Remote info-report"
 
     if (SAVE_GARBAGE_TO_MSTAT) {
@@ -402,7 +402,7 @@ final class StatUtil @Inject()(
         LOGGER.trace(s"$msg saved to mstat[$merrId]." )
       }
     } else {
-      LOGGER.info(s"$msg not saving, logging:\n${mstats.toJsonPretty(stat2.mstat)}")
+      LOGGER.info(s"$msg not saving, logging:\n${mstats.toJsonPretty(stat2.mstat)}${if (logTail.nonEmpty) "\n" else ""}$logTail")
       Future.successful(())
     }
   }
