@@ -3,14 +3,16 @@ package io.suggest.sc
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
-import io.suggest.log.remote.RmeLogAppender
+import io.suggest.log.buffered.BufLogAppender
+import io.suggest.log.filter.SevereFilter
+import io.suggest.log.remote.RemoteLogAppender
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.log.{Log, Logging, LogSeverities}
+import io.suggest.log.{Log, LogSeverities, Logging}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -132,12 +134,17 @@ object Sc3Main extends Log {
     val modules = new Sc3Module
 
     Try {
+
+      println(false, false)
       def __activateRmeLogger(): Unit = {
         // Активировать отправку логов на сервер, когда js-роутер будет готов.
         Try {
-          if ( !Logging.LOGGERS.exists(_.isInstanceOf[RmeLogAppender]) )
-            Logging.LOGGERS ::= new RmeLogAppender(
-              minSeverity = LogSeverities.Error
+          if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
+            Logging.LOGGERS ::= new SevereFilter(
+              minSeverity = LogSeverities.Error,
+              underlying = new BufLogAppender(
+                underlying =  new RemoteLogAppender,
+              ),
             )
         }
           .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )

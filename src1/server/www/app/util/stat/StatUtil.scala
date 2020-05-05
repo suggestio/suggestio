@@ -253,8 +253,8 @@ final class StatUtil @Inject()(
 
     def uri = Option( ctx.request.uri )
 
-    def mcommon: MCommon = {
-      MCommon(
+    def mcommon: MCommonStat = {
+      MCommonStat(
         components      = MComponents.Sc :: components,
         ip              = Some( remoteAddr.remoteAddr ),
         clientUid       = clUidOpt,
@@ -271,9 +271,9 @@ final class StatUtil @Inject()(
 
     def vportQuanted: Option[MViewPort] = None
 
-    def mscreen: MScreen = {
+    def mscreen: MStatScreen = {
       val devScrOpt = devScreenOpt
-      MScreen(
+      MStatScreen(
         orientation   = for (devScr <- devScrOpt)
           yield MOrientations2d.forSize2d( devScr.wh ),
         vportPhys     = for (dso <- devScrOpt) yield {
@@ -309,8 +309,8 @@ final class StatUtil @Inject()(
     }
 
     /** Данные по геолокации отдельным полем. */
-    def mlocation: MLocation = {
-      MLocation(
+    def mlocation: MStatLocation = {
+      MStatLocation(
         geo = {
           val _geoOpt = locEnvOpt.flatMap(_.geoLocOpt)
           MGeoLocData(
@@ -402,7 +402,7 @@ final class StatUtil @Inject()(
         LOGGER.trace(s"$msg saved to mstat[$merrId]." )
       }
     } else {
-      LOGGER.info(s"$msg not saving, logging:\n${mstats.toJsonPretty(stat2.mstat)}${if (logTail.nonEmpty) "\n" else ""}$logTail")
+      LOGGER.info(s"$msg not saving, logging:\n${stat2.mstat.toString}${if (logTail.nonEmpty) "\n" else ""}$logTail")
       Future.successful(())
     }
   }

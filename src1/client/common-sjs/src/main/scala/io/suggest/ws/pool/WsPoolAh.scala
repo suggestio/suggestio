@@ -6,13 +6,13 @@ import io.suggest.event.DomEvents
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.sjs.common.view.CommonPage
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.ws.MWsMsg
 import io.suggest.ws.pool.m._
-import org.scalajs.dom
 import org.scalajs.dom.raw.WebSocket
-import org.scalajs.dom.{CloseEvent, ErrorEvent, Event, MessageEvent}
+import org.scalajs.dom.{CloseEvent, ErrorEvent, MessageEvent}
 import play.api.libs.json.Json
 
 import scala.util.{Success, Try}
@@ -35,7 +35,7 @@ class WsPoolAh[M](
 
   /** Подписаться на глобальные события. Вызывается из circuita только один раз. */
   def initGlobalEvents(): Unit = {
-    dom.window.addEventListener4s( DomEvents.BEFORE_UNLOAD ) { _: Event =>
+    CommonPage.onClose { () =>
       dispatcher( WsCloseAll )
     }
   }
@@ -181,7 +181,6 @@ class WsPoolAh[M](
     // Сигнал (авто)закрытия какого-то коннекшена:
     case m: WsCloseConn =>
       val v0 = value
-      println( m, v0 )
       v0.conns.get(m.target).fold {
         // Нет искомого коннекшена в состоянии.
         logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m.target )

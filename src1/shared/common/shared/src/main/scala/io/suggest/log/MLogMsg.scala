@@ -35,7 +35,7 @@ object MLogMsg {
           from      = classSimpleName,
           code      = Option(errorMsg),
           message   = Option(msg).map(_.toString),
-          exception = Option( MExceptionInfo.from(ex, stackTraceLen) ),
+          exception = Option(ex).map( MExceptionInfo.from(_, stackTraceLen) ),
           url       = url,
         )
         andThen( lm )

@@ -59,10 +59,36 @@ object MGeoLocData
 
 
 /** Класс модели геоинформации. */
-case class MGeoLocData(
+final case class MGeoLocData(
   coords    : Option[MGeoPoint] = None,
   accuracy  : Option[Int]       = None,
   town      : Option[String]    = None,
   country   : Option[String]    = None
 )
   extends EmptyProduct
+{
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(64)): StringBuilder = {
+    sb.append('(')
+    for (coo <- coords) {
+      coo.toHumanFriendlySb( sb )
+      sb.append(' ')
+    }
+    for (accu <- accuracy) {
+      sb.append(accu)
+        .append('m')
+        .append(' ')
+    }
+    for (t <- town) {
+      sb.append( t )
+        .append( ' ' )
+    }
+    for (c <- country)
+      sb.append(c)
+
+    sb.append(')')
+  }
+
+  override def toString = toStringSb().toString()
+
+}

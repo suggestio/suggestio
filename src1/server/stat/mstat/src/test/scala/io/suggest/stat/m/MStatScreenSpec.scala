@@ -7,19 +7,19 @@ import org.scalatest.flatspec.AnyFlatSpec
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 22.09.16 11:05
-  * Description: Тесты для модели [[MScreen]].
+  * Description: Тесты для модели [[MStatScreen]].
   */
-class MScreenSpec extends AnyFlatSpec with PlayJsonTestUtil {
+class MStatScreenSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
-  override type T = MScreen
+  override type T = MStatScreen
 
   "JSON" should "support empty model" in {
-    jsonTest( MScreen() )
+    jsonTest( MStatScreen() )
   }
 
   it should "support full-filled model" in {
     jsonTest {
-      MScreen(
+      MStatScreen(
         orientation = Some( MOrientations2d.Vertical ),
         vportPhys   = Some(MViewPort(
           widthPx   = 100,

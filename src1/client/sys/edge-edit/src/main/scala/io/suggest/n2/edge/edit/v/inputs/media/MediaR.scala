@@ -364,7 +364,6 @@ class MediaR(
             },
 
             pot.renderPending { p =>
-              println( s"PENDING: " + p )
               MuiCircularProgress(
                 new MuiCircularProgressProps {
                   override val variant = MuiProgressVariants.indeterminate

@@ -11,14 +11,14 @@ import play.api.libs.functional.syntax._
   * Created: 21.09.16 15:47
   * Description: Под-модель для представления статистики, связанной с географией.
   */
-object MLocation
+object MStatLocation
   extends IEsMappingProps
   with IEmpty
 {
 
-  override type T = MLocation
+  override type T = MStatLocation
 
-  override def empty = MLocation()
+  override def empty = MStatLocation()
 
   object Fields {
 
@@ -57,8 +57,21 @@ object MLocation
 
 
 /** Класс модели по локациям. */
-case class MLocation(
+final case class MStatLocation(
   geo             : MGeoLocData       = MGeoLocData.empty,
   geoIp           : MGeoLocData       = MGeoLocData.empty
 )
   extends EmptyProduct
+{
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(64)): StringBuilder = {
+    sb.append('{')
+    geo.toStringSb(sb)
+    sb.append(" ip=")
+    geoIp.toStringSb(sb)
+    sb.append('}')
+  }
+
+  override def toString = toStringSb().toString()
+
+}

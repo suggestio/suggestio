@@ -83,7 +83,7 @@ object MUa
   * @param uaType Типы UA. Изначально браузер или мобильное приложение.
   *               Если последнее, то например на базе кордовы.
   */
-case class MUa(
+final case class MUa(
   ua            : Option[String]    = None,
   browser       : Option[String]    = None,
   device        : Option[String]    = None,
@@ -92,3 +92,26 @@ case class MUa(
   uaType        : Seq[MUaType]      = Nil
 )
   extends EmptyProduct
+{
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(256)): StringBuilder = {
+    sb.append("{")
+    val s = ' '
+    for (_ua <- ua)
+      sb.append('`').append( _ua ).append('`').append(s)
+    for (bro <- browser)
+      sb.append(bro).append(s)
+    for (dev <- device)
+      sb.append(dev).append(s)
+    for(osF <- osFamily)
+      sb.append(osF).append(s)
+    for (osV <- osVsn)
+      sb.append(osV).append(s)
+    for (uaT <- uaType)
+      sb.append(uaT).append(s)
+    sb.append("}")
+  }
+
+  override def toString = toStringSb().toString()
+
+}

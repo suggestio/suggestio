@@ -23,18 +23,21 @@ object EventTargetVm {
 
   /** Standard-compilant вешалка событий. */
   private class StdFacade extends IFacade {
-    override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit =
-      eventTarget.addEventListener(eventType, listener.asInstanceOf[js.Function1[_, _]])
+    override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit = {
+      eventTarget.addEventListener( eventType, listener.asInstanceOf[js.Function1[_, _]] )
+    }
   }
 
   /** Вешалка событий на старые IE. */
   private class IeFacade extends IFacade {
     override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit = {
-      val ae = AttachEventStub(eventTarget)
+      val ae = AttachEventStub( eventTarget )
       ae.attachEvent("on" + eventType, listener)
     }
   }
 
+  def isIe(): Boolean =
+    FACADE.isInstanceOf[IeFacade]
 
   /** Проверка и её результат сохраняется тут. */
   private val FACADE: IFacade = {

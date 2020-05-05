@@ -12,12 +12,12 @@ import play.api.libs.functional.syntax._
   * Created: 21.09.16 12:27
   * Description: Суб-модель для описания данных экрана устройства.
   */
-object MScreen
+object MStatScreen
   extends IEsMappingProps
   with IEmpty
 {
 
-  override type T = MScreen
+  override type T = MStatScreen
 
   object Fields {
 
@@ -30,7 +30,7 @@ object MScreen
 
   import Fields._
 
-  implicit val FORMAT: OFormat[MScreen] = (
+  implicit val FORMAT: OFormat[MStatScreen] = (
     (__ \ ORIENTATION_FN).formatNullable[MOrientation2d] and
     (__ \ VPORT_PHYS_FN).formatNullable[MViewPort] and
     (__ \ VPORT_QUANTED_FN).formatNullable[MViewPort]
@@ -55,9 +55,36 @@ object MScreen
 }
 
 
-case class MScreen(
+final case class MStatScreen(
   orientation   : Option[MOrientation2d]  = None,
   vportPhys     : Option[MViewPort]       = None,
   vportQuanted  : Option[MViewPort]       = None
 )
   extends EmptyProduct
+{
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(32)): StringBuilder = {
+    sb.append('(')
+
+    for (orient <- orientation)
+      sb.append(orient)
+        .append(' ')
+
+    for (vpPhy <- vportPhys) {
+      sb.append("phy=")
+      vpPhy.toStringSb(sb)
+      if (vportQuanted.nonEmpty)
+        sb.append(' ')
+    }
+
+    for (vpQua <- vportQuanted) {
+      sb.append("vpQ=")
+      vpQua.toStringSb( sb )
+    }
+
+    sb.append(')')
+  }
+
+  override def toString = super.toString
+
+}

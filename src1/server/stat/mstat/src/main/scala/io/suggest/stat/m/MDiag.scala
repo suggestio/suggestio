@@ -68,8 +68,23 @@ object MDiag
   * @param state Некая техническая строка-описание состояния системы во время возникновения проблемы.
   *              Только для чтения программистами.
   */
-case class MDiag(
+final case class MDiag(
   message : Option[String] = None,
   state   : Option[String] = None
 )
   extends EmptyProduct
+{
+
+  def toStringSb(sb: StringBuilder = new StringBuilder()): StringBuilder = {
+    sb.append('{')
+    for (s <- state)
+      sb.append(s).append(' ')
+    for (msg <- message)
+      sb.append('\n')
+        .append(msg)
+        .append('\n')
+    sb.append('}')
+  }
+
+  override def toString = toStringSb().toString()
+}

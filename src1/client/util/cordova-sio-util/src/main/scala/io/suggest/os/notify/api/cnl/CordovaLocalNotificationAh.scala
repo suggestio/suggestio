@@ -192,7 +192,6 @@ final class CordovaLocalNotificationAh[M](
         val _textsUndef = JsOptionUtil.maybeDefined[String | js.Array[CnlMessage]]( osToast.text.nonEmpty ) {
           osToast.text match {
             case Seq( justText ) if justText.person.isEmpty =>
-              println( justText.text )
               justText.text
             case texts if texts.nonEmpty =>
               (for (osText <- texts.iterator) yield {
@@ -272,7 +271,6 @@ final class CordovaLocalNotificationAh[M](
 
     // Пришло какое-то событие из cordova-plugin:
     case m: HandleCnlEvent =>
-      println(s"CNL event: $m")
       val v0 = value
 
       val eventType = m.data.event
@@ -436,8 +434,6 @@ final class CordovaLocalNotificationAh[M](
 
     // Запрос текущего состояния разрешения на вывод уведомлений.
     case m: NotifyPermission =>
-      println(m)
-
       // Залить pending в состояние, если там ещё не pending.
       val v0 = value
       val v2Opt = if (v0.permission.isPending) {

@@ -1,6 +1,5 @@
 package io.suggest.log.remote
 
-import io.suggest.err.ErrorConstants
 import io.suggest.log.{ILogAppender, LogSeverities, LogSeverity, MLogMsg, MLogReport}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
@@ -19,17 +18,15 @@ import scala.concurrent.Future
   * Created: 14.11.16 17:40
   * Description: Поддержка логгирования на сервер в формате RemoteError.
   */
-class RmeLogAppender(
-                      minSeverity: LogSeverity = LogSeverities.Warn
-                    )
+final class RemoteLogAppender
   extends ILogAppender
 {
 
   private def _logAppendInto( logMsgs: Seq[MLogMsg] ): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.
-    // TODO XXX Отправлять всю пачку
     val req = HttpReq.routed(
-      // TODO Отработать отсутствие роуты через /sc/error
+      // Отсутствие роуты не отрабатываем, т.к. это совсем трэш-ситуация, которая должна быть отработана
+      // где-то на уровне тестов или где-то ещё.
       route = routes.controllers.RemoteLogs.receive(),
       data = HttpReqData(
         headers = Map(
@@ -58,15 +55,12 @@ class RmeLogAppender(
   }
 
   override def logAppend(logMsgs: Seq[MLogMsg]): Unit = {
-    val logMsgs2 = logMsgs.filter( _.severity.value >= minSeverity.value )
-    if (logMsgs2.nonEmpty) {
-      try {
-        _logAppendInto( logMsgs2 )
-      } catch {
-        case ex: Throwable =>
-          // Бывает, что роута недоступна (js-роутер ещё не готов). Надо молча подавлять такие ошибки.
-          println(getClass.getSimpleName, ex.getMessage)
-      }
+    try {
+      _logAppendInto( logMsgs )
+    } catch {
+      case ex: Throwable =>
+        // Бывает, что роута недоступна (js-роутер ещё не готов). Надо молча подавлять такие ошибки.
+        println(getClass.getSimpleName, ex.getMessage)
     }
   }
 

@@ -267,12 +267,20 @@ case class MGeoPoint(
     lat.toString + Qs.LAT_LON_DELIM_FN + lon.toString
 
 
-  /** (12.1234 65.5633) */
-  def toHumanFriendlyString: String = {
+
+  /** (12.1234 65.5633) - StringBuilder. */
+  def toHumanFriendlySb(sb: StringBuilder = new StringBuilder(16)): StringBuilder = {
     def _fmt(coord: GeoCoord_t) =
       "%1.2f".format(coord.toFloat)     // Напрямую format(BigDecimal) нельзя из-за странной ошибки.
-    `(` + _fmt(lat) + SPACE + _fmt(lon) + `)`
+    sb.append( '(' )
+      .append( _fmt(lat) )
+      .append( ' ' )
+      .append( _fmt(lon) )
+      .append( ')' )
   }
+  /** (12.1234 65.5633) */
+  def toHumanFriendlyString: String =
+    toHumanFriendlySb().toString()
 
 
   def withCoordScale(scale: Int): MGeoPoint = {

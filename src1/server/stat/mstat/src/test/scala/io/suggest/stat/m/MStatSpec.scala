@@ -16,7 +16,7 @@ class MStatSpec extends AnyFlatSpec with PlayJsonTestUtil {
   "JSON" should "support minimal model" in {
     jsonTest {
       MStat(
-        common  = MCommon(
+        common  = MCommonStat(
           components = Seq(MComponents.Sc)
         ),
         actions = Nil
@@ -27,7 +27,7 @@ class MStatSpec extends AnyFlatSpec with PlayJsonTestUtil {
   it should "support model fill all fields filled" in {
     jsonTest {
       MStat(
-        common = MCommon(
+        common = MCommonStat(
           components = MComponents.Sc :: Nil
         ),
         actions = Seq(
@@ -40,10 +40,10 @@ class MStatSpec extends AnyFlatSpec with PlayJsonTestUtil {
         ua = MUa(
           ua = Some("da user agenta / Mozilla 5.0 compatible")
         ),
-        screen = MScreen(
+        screen = MStatScreen(
           orientation = Some( MOrientations2d.Vertical )
         ),
-        location = MLocation(
+        location = MStatLocation(
           geo = MGeoLocData(
             town = Some("Berdyansk")
           )

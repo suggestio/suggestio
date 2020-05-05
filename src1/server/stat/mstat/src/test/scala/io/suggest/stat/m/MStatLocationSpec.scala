@@ -7,19 +7,19 @@ import org.scalatest.flatspec.AnyFlatSpec
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 22.09.16 11:08
-  * Description: Тесты для модели [[MLocation]].
+  * Description: Тесты для модели [[MStatLocation]].
   */
-class MLocationSpec extends AnyFlatSpec with PlayJsonTestUtil {
+class MStatLocationSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
-  override type T = MLocation
+  override type T = MStatLocation
 
   "JSON" should "support minimal model" in {
-    jsonTest( MLocation() )
+    jsonTest( MStatLocation() )
   }
 
   it should "support full-filled model" in {
     jsonTest {
-      MLocation(
+      MStatLocation(
         geo = MGeoLocData(
           coords = Some(MGeoPoint(lat = 11, lon = 22))
         ),

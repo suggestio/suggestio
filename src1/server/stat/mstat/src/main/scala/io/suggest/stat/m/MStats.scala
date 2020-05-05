@@ -7,6 +7,7 @@ import com.google.inject.assistedinject.Assisted
 import javax.inject.Inject
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.es.model._
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
@@ -60,16 +61,16 @@ object MStat {
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MStat] = (
-    (__ \ COMMON_FN).format[MCommon] and
+    (__ \ COMMON_FN).format[MCommonStat] and
       //.inmap[MCommon] ( EmptyUtil.opt2ImplMEmptyF(MCommon), EmptyUtil.implEmpty2OptF ) and
     (__ \ ACTIONS_FN).format[Seq[MAction]] and
     (__ \ TIMESTAMP_FN).format[OffsetDateTime] and
     (__ \ UA_FN).formatNullable[MUa]
       .inmap[MUa] ( EmptyUtil.opt2ImplMEmptyF(MUa), EmptyUtil.implEmpty2OptF ) and
-    (__ \ SCREEN_FN).formatNullable[MScreen]
-      .inmap[MScreen] ( EmptyUtil.opt2ImplMEmptyF(MScreen), EmptyUtil.implEmpty2OptF ) and
-    (__ \ LOCATION_FN).formatNullable[MLocation]
-      .inmap[MLocation] ( EmptyUtil.opt2ImplMEmptyF(MLocation), EmptyUtil.implEmpty2OptF ) and
+    (__ \ SCREEN_FN).formatNullable[MStatScreen]
+      .inmap[MStatScreen] ( EmptyUtil.opt2ImplMEmptyF(MStatScreen), EmptyUtil.implEmpty2OptF ) and
+    (__ \ LOCATION_FN).formatNullable[MStatLocation]
+      .inmap[MStatLocation] ( EmptyUtil.opt2ImplMEmptyF(MStatLocation), EmptyUtil.implEmpty2OptF ) and
     (__ \ DIAG_FN).formatNullable[MDiag]
       .inmap[MDiag] ( EmptyUtil.opt2ImplMEmptyF(MDiag), EmptyUtil.implEmpty2OptF )
   )(apply, unlift(unapply))
@@ -214,10 +215,10 @@ abstract class MStatsAbstract
         val F = MStat.Fields
 
         val objects1 = List[(String, IEsMappingProps)](
-          F.COMMON_FN   -> MCommon,
+          F.COMMON_FN   -> MCommonStat,
           F.UA_FN       -> MUa,
-          F.SCREEN_FN   -> MScreen,
-          F.LOCATION_FN -> MLocation,
+          F.SCREEN_FN   -> MStatScreen,
+          F.LOCATION_FN -> MStatLocation,
           F.DIAG_FN     -> MDiag,
         )
           .esSubModelsJsObjects( nested = false )
@@ -256,21 +257,63 @@ final case class MStatsTmp @Inject() (
 
 
 /** Инстанс одной статистики. */
-case class MStat(
-  common            : MCommon,
-  actions           : Seq[MAction],
-  timestamp         : OffsetDateTime  = OffsetDateTime.now(),
-  ua                : MUa             = MUa.empty,
-  screen            : MScreen         = MScreen.empty,
-  location          : MLocation       = MLocation.empty,
-  diag              : MDiag           = MDiag.empty
-)
+final case class MStat(
+                        common            : MCommonStat,
+                        actions           : Seq[MAction],
+                        timestamp         : OffsetDateTime  = OffsetDateTime.now(),
+                        ua                : MUa             = MUa.empty,
+                        screen            : MStatScreen     = MStatScreen.empty,
+                        location          : MStatLocation   = MStatLocation.empty,
+                        diag              : MDiag           = MDiag.empty
+                      )
   extends EsModelT
 {
 
   // write-only модель, на всякие вторичные мета-поля можно забить.
   override def versionOpt : Option[Long]    = None
   override def id         : Option[String]  = None
+
+  override def toString: String = {
+    val sb = new StringBuilder(512)
+
+    sb.append('<')
+    common.toStringSb(sb)
+    sb.append('\n')
+
+    val s = HtmlConstants.SPACE.head
+
+    if (actions.nonEmpty) {
+      sb.append('[')
+      for (a <- actions)
+        sb.append(a).append(s)
+      sb.append(']')
+    }
+
+    sb.append(timestamp)
+      .append(s)
+
+    if (ua.nonEmpty) {
+      ua.toStringSb(sb)
+      sb.append(s)
+    }
+
+    if (screen.nonEmpty) {
+      screen.toStringSb(sb)
+      sb.append(s)
+    }
+
+    if (location.nonEmpty) {
+      location.toStringSb(sb)
+      sb.append(s)
+    }
+
+    if (diag.nonEmpty) {
+      diag.toStringSb(sb)
+    }
+
+    sb.append('>')
+      .toString()
+  }
 
 }
 

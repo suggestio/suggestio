@@ -59,6 +59,7 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.dev.MPlatformS
+import io.suggest.event.DomEvents
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
@@ -169,7 +170,7 @@ class Sc3Circuit(
   // Сразу подписаться на глобальные ошибки:
   {
     import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-    dom.window.addEventListener4s("error") { e: dom.ErrorEvent =>
+    dom.window.addEventListener4s( DomEvents.ERROR ) { e: dom.ErrorEvent =>
       val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
       logger.error(msg = msg)
       val action = SetErrorState(
@@ -725,7 +726,6 @@ class Sc3Circuit(
       }
 
       // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
-      println( _hasDaemonSleepTimer, bleIsToEnable, beaconerRW.value.isEnabled )
       if (
         _hasDaemonSleepTimer && (
           isUsingNow match {

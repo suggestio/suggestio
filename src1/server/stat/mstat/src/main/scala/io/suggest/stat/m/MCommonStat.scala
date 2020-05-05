@@ -3,6 +3,7 @@ package io.suggest.stat.m
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.common.html.HtmlConstants.SPACE
 
 /**
   * Suggest.io
@@ -10,7 +11,7 @@ import play.api.libs.functional.syntax._
   * Created: 21.09.16 15:12
   * Description: Суб-модель всякой очень общей статистики.
   */
-object MCommon
+object MCommonStat
   extends IEsMappingProps
 {
 
@@ -30,7 +31,7 @@ object MCommon
 
   import Fields._
 
-  implicit val FORMAT: OFormat[MCommon] = (
+  implicit val FORMAT: OFormat[MCommonStat] = (
     (__ \ COMPONENT_FN).format[Seq[MComponent]] and
     (__ \ CLIENT_IP_FN).formatNullable[String] and
     (__ \ CLIENT_UID_FN).formatNullable[String] and
@@ -61,7 +62,7 @@ object MCommon
 
 
 /** Класс экземпляров моделей общей статистики. */
-case class MCommon(
+final case class MCommonStat(
   components      : Seq[MComponent],
   ip              : Option[String]        = None,
   clientUid       : Option[String]        = None,
@@ -69,4 +70,43 @@ case class MCommon(
   domain3p        : Option[String]        = None,
   isLocalClient   : Option[Boolean]       = None,
   gen             : Option[Long]          = None
-)
+) {
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(128)): StringBuilder = {
+    sb.append('{')
+    val s = SPACE.head
+
+    if (components.nonEmpty) {
+      sb.append( '[' )
+      for (c <- components)
+        sb.append( c )
+          .append( s )
+      sb.append(']')
+    }
+
+    for (ipAddr <- ip)
+      sb.append( ipAddr ).append( s )
+
+    for (clUid <- clientUid)
+      sb.append( clUid ).append( s )
+
+    for (_url <- uri)
+      sb.append( _url ).append( s )
+
+    for (domain <- domain3p)
+      sb.append( domain ).append( s )
+
+    for (isLoc <- isLocalClient)
+      sb.append("local?")
+        .append(isLoc)
+        .append( s )
+
+    for (g <- gen)
+      sb.append("gen=")
+        .append( g )
+
+    sb.append('}')
+  }
+
+  override def toString = toStringSb().toString
+}

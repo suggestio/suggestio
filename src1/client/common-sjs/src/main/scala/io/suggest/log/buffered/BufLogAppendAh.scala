@@ -18,12 +18,12 @@ import scala.util.Try
   * Description: Контроллер лог-буферизации.
   */
 class BufLogAppendAh[M](
-                         logAppenderUnd   : ILogAppender,
+                         underlying       : ILogAppender,
                          modelRW          : ModelRW[M, MBufAppendS],
                          dispatcher       : Dispatcher,
                        )
   extends ActionHandler( modelRW )
-{
+{ ah =>
 
   private def EXPIRE_INTERVAL = 7.seconds
 
@@ -32,6 +32,7 @@ class BufLogAppendAh[M](
 
     // Отправка в очередь лог-сообщений.
     case m: LogAppend =>
+      println( m )
       val v0 = value
 
       if (m.logMsgs.isEmpty) {
@@ -46,12 +47,13 @@ class BufLogAppendAh[M](
           modF = modF andThen MBufAppendS.expTimerId.modify( _.pending() )
 
         val v2 = modF( v0 )
-        updatedSilent(v2)
+        ah.updatedSilentMaybeEffect( v2, fxOpt )
       }
 
 
     // Запущен или сброшен таймер сброса логов.
     case m: ExpTimerUpdate =>
+      println( m )
       val v0 = value
 
       val timerPot2 = m.timerId.fold(
@@ -67,12 +69,13 @@ class BufLogAppendAh[M](
 
     // Срабатывание таймера сброса логов в бэкэнд.
     case ExpTimerAlarm =>
+      println( ExpTimerAlarm )
       val v0 = value
       val modF = MBufAppendS.expTimerId.set( Pot.empty )
 
       if (v0.accRev.exists(_.nonEmpty)) {
         val renderLogsFx = Effect.action {
-          logAppenderUnd.logAppend(
+          underlying.logAppend(
             logMsgs = v0.accRev
               .reverseIterator
               .flatten
@@ -94,6 +97,7 @@ class BufLogAppendAh[M](
 
   /** Эффект перевыставления таймера. */
   private def _resetAddExpireTimer(v0: MBufAppendS): Option[Effect] = {
+    println( "BufLogAppendTimer: " + v0.expTimerId )
     Option.when( !v0.expTimerId.isPending ) {
       Effect.action {
         val timerIdTry = Try {

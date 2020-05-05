@@ -59,8 +59,23 @@ object MViewPort
   * @param heightPx Высота в пикселях.
   * @param pxRatio Плотность пискелей.
   */
-case class MViewPort(
+final case class MViewPort(
   widthPx   : Int,
   heightPx  : Int,
   pxRatio   : Option[Float]
-)
+) {
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(32)): StringBuilder = {
+    sb.append(widthPx)
+      .append('x')
+      .append(heightPx)
+
+    for (pxR <- pxRatio)
+      sb.append('@').append( pxR )
+
+    sb
+  }
+
+  override def toString = super.toString
+
+}
