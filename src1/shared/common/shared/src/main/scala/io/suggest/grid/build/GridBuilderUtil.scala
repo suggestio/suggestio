@@ -13,7 +13,7 @@ import io.suggest.msg.ErrorMsgs
 import monocle.macros.GenLens
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 
 import scala.annotation.tailrec
 
@@ -385,7 +385,9 @@ object GridBuilderUtil {
             // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
             val nextLvl = MGbLevelState(
               ctx = currLvl.ctx.verticalSubGrid( currLvl.currLineCol ),
-              restItems = subItems.to( LazyList ),    // TODO Opt конвертация Stream=>LazyList
+              restItems = EphemeralStream
+                .toIterable(subItems)
+                .to( LazyList ),
             )
             // Выкидываем текущий пройденный элемент с текущего уровня.
             val currLvl2 = MGbLevelState.restItems.modify(_.tail)(currLvl)

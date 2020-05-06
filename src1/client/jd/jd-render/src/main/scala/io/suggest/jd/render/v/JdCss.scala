@@ -20,7 +20,7 @@ import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.DslMacros
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
-import scalaz.{Tree, TreeLoc}
+import scalaz.{EphemeralStream, Tree, TreeLoc}
 
 /**
   * Suggest.io
@@ -82,8 +82,10 @@ object JdCss {
 
   /** Извлечь прямые подтеги из TreeLoc. */
   private def _directChildrenOfType[From: IJdTagGetter](loc: TreeLoc[From], name: MJdTagName): LazyList[From] = {
-    loc.tree
-      .subForest
+    EphemeralStream.toIterable(
+      loc.tree
+        .subForest
+    )
       .iterator
       .map(_.rootLabel)
       .filter(_.name ==* name)

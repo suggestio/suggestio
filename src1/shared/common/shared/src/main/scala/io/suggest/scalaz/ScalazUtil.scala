@@ -51,11 +51,11 @@ object ScalazUtil {
     * None на входе всегда даёт success(None) на выходе.
     */
   def liftNelOpt[E, T](opt: Option[T])(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
-    _liftNelOpt(opt, Validation.success(opt))(f)
+    _liftNelOpt(opt, Validation.success[NonEmptyList[E], Option[T]](opt))(f)
   }
   /** Аналог liftNelOpt, но None приводит к ошибке. */
   def liftNelSome[E, T](opt: Option[T], errIfNone: => E)(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
-    _liftNelOpt(opt, Validation.failureNel( errIfNone ))(f)
+    _liftNelOpt(opt, Validation.failureNel[E, Option[T]]( errIfNone ))(f)
   }
 
   private def _liftNelOpt[E, T](opt: Option[T], empty: => ValidationNel[E, Option[T]])
@@ -69,7 +69,7 @@ object ScalazUtil {
 
   /** Валидация чего-то опционального, которое должно быть None. */
   def liftNelNone[E, T](opt: Option[T], nonEmptyError: => E): ValidationNel[E, Option[T]] = {
-    opt.fold [ValidationNel[E, Option[T]]] ( Validation.success(opt) ) { _ =>
+    opt.fold [ValidationNel[E, Option[T]]] ( Validation.success[NonEmptyList[E], Option[T]](opt) ) { _ =>
       Validation.failureNel(nonEmptyError)
     }
   }
@@ -82,7 +82,7 @@ object ScalazUtil {
     */
   def liftNelEmpty[E, T <: IIsEmpty](v: T, nonEmptyError: => E): ValidationNel[E, T] = {
     if (v.isEmpty) {
-      Validation.success( v )
+      Validation.success[NonEmptyList[E], T]( v )
     } else {
       Validation.failureNel(nonEmptyError)
     }
@@ -99,14 +99,14 @@ object ScalazUtil {
   }
   def optValidationOrNone[E, T](validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, Option[T]] = {
     validationOpt
-      .fold[ValidationNel[E, Option[T]]] (Validation.success(None)) ( _.map(Some.apply) )
+      .fold[ValidationNel[E, Option[T]]] (Validation.success[NonEmptyList[E], Option[T]](None)) ( _.map(Some.apply) )
   }
 
 
   def liftParseResult[E, T](pr: Parsers#ParseResult[T])(errorF: Parsers#NoSuccess => E): ValidationNel[E, T] = {
     pr match {
       case success: Parsers#Success[T] =>
-        Validation.success( success.result )
+        Validation.success[NonEmptyList[E], T]( success.result )
       case noSuccess: Parsers#NoSuccess =>
         Validation.failureNel( errorF(noSuccess) )
     }
@@ -164,7 +164,7 @@ object ScalazUtil {
           override def next(): T = {
             val xs = xsOpt.get
             val hd = xs.headOption.get
-            xsOpt = xs.tailOption
+            xsOpt = xs.tailMaybe.toOption
             hd
           }
 

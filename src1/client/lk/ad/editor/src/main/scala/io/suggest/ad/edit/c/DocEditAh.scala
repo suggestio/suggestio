@@ -43,7 +43,7 @@ import io.suggest.ueq.UnivEqUtil._
 import monocle.Traversal
 
 import scala.util.Random
-import scalaz.{Tree, TreeLoc}
+import scalaz.{EphemeralStream, Tree, TreeLoc}
 import scalaz.std.option._
 
 import scala.annotation.tailrec
@@ -204,8 +204,8 @@ class DocEditAh[M](
       forest = {
         Tree.Leaf(
           JdTag.edgeQdOp( edgeUid )
-        ) #::
-          Stream.empty
+        ) ##::
+          EphemeralStream[Tree[JdTag]]
       }
     )
 
@@ -548,11 +548,12 @@ class DocEditAh[M](
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case n @ MJdTagNames.STRIP =>
             val s2 = MStripEdS(
-              isLastStrip = {
-                v2.jdDoc.jdArgs.data.doc.template
-                  .deepOfType( n )
-                  .lengthIs <= 1
-              }
+              isLastStrip = EphemeralStream
+                .toIterable(
+                  v2.jdDoc.jdArgs.data.doc.template
+                    .deepOfType( n )
+                )
+                .sizeIs <= 1
             )
             v2 = MDocS.editors
               .composeLens(MEditorsS.stripEd)
@@ -850,7 +851,7 @@ class DocEditAh[M](
           .fold( v0.jdDoc.jdArgs.data.doc.template )( _.toTree )
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
-        if (tpl2.subForest.nonEmpty) {
+        if (!tpl2.subForest.isEmpty) {
           val jdArgs0 = v0.jdDoc.jdArgs
           val jdArgs2 = jdArgs0.copy(
             data        = (MJdDataJs.doc set jdDoc2)( jdArgs0.data ),
@@ -995,13 +996,15 @@ class DocEditAh[M](
       } else {
         // Перемещение между разными strip'ами. Надо пофиксить координату Y, иначе добавляемый элемент отрендерится где-то за экраном.
         val tplIndexed0 = JdUtil.mkTreeIndexed( jdDoc0 )
-        val blockAndQdBlsId = tplIndexed0
-          .subForest
-          .map( _.rootLabel )
+        val blockAndQdBlsId = EphemeralStream.toIterable(
+          tplIndexed0
+            .subForest
+            .map( _.rootLabel )
+        )
+          .to( LazyList )
 
-        val blockAndQdBls = blockAndQdBlsId
-          .view
-          .map(_._2)
+        val blockAndQdBls = blockAndQdBlsId.map(_._2)
+
         val fromStripIndex  = blockAndQdBls indexOf[JdTag] fromBlock
         val toStripIndex    = blockAndQdBls indexOf[JdTag] m.targetBlock
 
@@ -1095,7 +1098,7 @@ class DocEditAh[M](
       val paddingPx = v0.jdDoc.jdArgs.conf.blockPadding.value
 
       val tplIndexed0 = JdUtil.mkTreeIndexed( v0.jdDoc.jdArgs.data.doc )
-      val allBlocks = tplIndexed0.subForest
+      val allBlocks = EphemeralStream.toIterable( tplIndexed0.subForest )
 
       // Сброс может быть на блок (на верхнюю или нижнюю половины блока) или в промежутки между блоков.
       val droppedNear = (for {
@@ -1436,13 +1439,13 @@ class DocEditAh[M](
       val loc2OrNull: TreeLoc[JdTag] = if (!m.bounded) {
         // Если !m.bounded, то поменять тег местами с соседними тегами.
         // Если шаг влево и есть теги слева...
-        if (!isUp && loc0.lefts.nonEmpty) {
+        if (!isUp && !loc0.lefts.isEmpty) {
           // Меняем местами первый левый тег с текущим
           val leftLoc = loc0.left.get
           leftLoc
             .setTree( loc0.tree )
             .right.get.setTree( leftLoc.tree )
-        } else if (isUp && loc0.rights.nonEmpty) {
+        } else if (isUp && !loc0.rights.isEmpty) {
           val rightLoc = loc0.right.get
           rightLoc
             .setTree( loc0.tree )
@@ -1451,7 +1454,7 @@ class DocEditAh[M](
           null
         }
 
-      } else if (loc0.lefts.nonEmpty || loc0.rights.nonEmpty) {
+      } else if (!loc0.lefts.isEmpty || !loc0.rights.isEmpty) {
         // bounded: Можно и нужно двигать до края, значит надо удалить текущий элемент из treeLoc и добавить в начало/конец через parent.
         val parentLoc1 = loc0
           .delete.get
@@ -1706,8 +1709,10 @@ class DocEditAh[M](
         .iterator
         // Поискать цвет фона среди всех стрипов.
         .++ {
-          v0.jdDoc.jdArgs.data.doc.template
-            .deepOfType( MJdTagNames.STRIP )
+          EphemeralStream.toIterable(
+            v0.jdDoc.jdArgs.data.doc.template
+              .deepOfType( MJdTagNames.STRIP )
+          )
         }
         .flatMap( _.props1.bgColor )
         // Взять первый цвет

@@ -18,7 +18,7 @@ import io.suggest.primo.id._
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr, |}
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 
 /**
   * Suggest.io
@@ -414,12 +414,12 @@ class QuillDeltaJsUtil extends Log {
       }
       // .toList, потому что нам требуется неленивый Stream.
       // Если ставить ленивый .toStream сразу, то выяснится, что delta является pure-js инстансом, который ПОВТОРНО используется quill'ом.
-      .toList
+      .toIndexedSeq
 
     // Собрать и вернуть результаты исполнения.
     val tag = Tree.Node(
       root   = qdTag0.rootLabel,
-      forest = qdOps.toStream
+      forest = EphemeralStream( qdOps: _* ),
     )
 
     // Объеденить старую и обновлённые эдж-карты.

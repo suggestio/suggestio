@@ -14,7 +14,7 @@ import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import scalaz.{Show, Tree, TreeLoc}
+import scalaz.{EphemeralStream, Show, Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
 
 import scala.collection.MapView
@@ -79,7 +79,7 @@ object JdTag {
   def edgeQdTree(edgeUid: EdgeUid_t, coords: MCoords2di): Tree[JdTag] = {
     Tree.Node(
       JdTag.qd(coords),
-      forest = Stream(
+      forest = EphemeralStream(
         Tree.Leaf(
           JdTag.edgeQdOp( edgeUid )
         )
@@ -114,7 +114,8 @@ object JdTag {
     def qdOps: LazyList[MQdOp] = {
       tree
         .flatten
-        .tail
+        .tailOption
+        .fold[Iterable[From]]( Nil )( EphemeralStream.toIterable )
         .iterator
         .flatMap(_.qdProps)
         .to( LazyList )
@@ -133,25 +134,24 @@ object JdTag {
             .to(LazyList)
         )
         .map(_.edgeUid)
-      ) #::: tree
-        .subForest
+      ) #::: EphemeralStream.toIterable( tree.subForest )
         .iterator
         .flatMap(_.deepEdgesUids)
         .to(LazyList)
     }
 
 
-    def deepChildrenOfType(jdtName: MJdTagName): Stream[From] = {
+    def deepChildrenOfType(jdtName: MJdTagName): EphemeralStream[From] = {
       tree
         .deepChildren
         .filter( _.name ==* jdtName )
     }
 
-    def deepOfType(jdtName: MJdTagName): Stream[From] = {
+    def deepOfType(jdtName: MJdTagName): EphemeralStream[From] = {
       val chs = deepChildrenOfType(jdtName)
       val jdt = tree.rootLabel
       if (jdt.name ==* jdtName) {
-        jdt #:: chs
+        jdt ##:: chs
       } else {
         chs
       }
@@ -161,9 +161,9 @@ object JdTag {
     def getMainBlock: Option[(Tree[From], Int)] = {
       tree
         .subForest
-        .iterator
         .zipWithIndex
-        .find( _._1.rootLabel.props1.isMain.getOrElseFalse )
+        .filter( _._1.rootLabel.props1.isMain.getOrElseFalse )
+        .headOption
     }
 
     /** Вернуть главый блок, либо первый блок. */
@@ -190,10 +190,12 @@ object JdTag {
     }
 
     def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {
-      tree
-        .flatten
+      EphemeralStream.toIterable(
+        tree
+          .flatten
+          .flatMap { c => EphemeralStream(c.edgeUids: _*) }
+      )
         .iterator
-        .flatMap(_.edgeUids)
         .zipWithIdIter[EdgeUid_t]
         .to( Map )
     }

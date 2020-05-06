@@ -8,7 +8,7 @@ import util.adv.AdvFormUtil
 import io.suggest.scalaz.ScalazUtil
 import scalaz.std.iterable._
 import scalaz.syntax.apply._
-import scalaz.std.stream._
+import scalaz.std.list._
 
 /**
   * Suggest.io
@@ -52,7 +52,7 @@ class LkAdsFormUtil @Inject()(
   def oneAdAdvFormVld(adForm: MLkAdsOneAdAdvForm): ValidationNel[String, MLkAdsOneAdAdvForm] = {
     ScalazUtil.validateAll( adForm.decls ) { m =>
       advDeclKvVld(m)
-        .map(Stream(_))
+        .map(_ :: Nil)
     }
       .map(MLkAdsOneAdAdvForm(_))
   }

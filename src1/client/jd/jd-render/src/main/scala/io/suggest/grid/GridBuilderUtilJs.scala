@@ -6,7 +6,7 @@ import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGbSidePx, MGbSize, MGr
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 import japgolly.univeq._
 
 import scala.scalajs.js
@@ -152,12 +152,13 @@ object GridBuilderUtilJs {
   def buildGridFromJdArgs(jdArgs: MJdArgs): MGridBuildResult = {
     val gbArgs = MGridBuildArgs(
       // Тривиальная конвертация списка шаблонов блоков в плоский список одноуровневых MGbBlock.
-      itemsExtDatas = for {
-        (jdtTree, i) <- jdArgs.data.doc.template
-          .subForest
+      itemsExtDatas = (for {
+        (jdtTree, i) <- EphemeralStream.toIterable(
+          jdArgs.data.doc.template
+            .subForest
+            .zipWithIndex
+        )
           .iterator
-          .zipWithIndex
-          .to(LazyList)
         jdt = jdtTree.rootLabel
       } yield {
         Tree.Leaf {
@@ -170,7 +171,8 @@ object GridBuilderUtilJs {
             orderN  = Some(i),
           )
         }
-      },
+      })
+        .to( LazyList ),
       jdConf          = jdArgs.conf,
       offY            = 0,
       jdtWideSzMults  = jdArgs.jdRuntime.data.jdtWideSzMults,

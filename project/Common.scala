@@ -79,7 +79,7 @@ object Common {
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
-    val SCALAZ = "7.2.30"
+    val SCALAZ = "7.3.+"
 
     /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
@@ -218,7 +218,7 @@ object Common {
       * 2.x   - переезд на cats, это параллель для scalaz, на которую завязана целая кода.
       * @see [[http://julien-truffaut.github.io/Monocle/]]
       */
-    val MONOCLE = "1.6.+"
+    val MONOCLE = "1.7.+"
 
     /** @see [[https://mvnrepository.com/artifact/commons-codec/commons-codec]] */
     val APACHE_COMMONS_CODEC = "1.12"

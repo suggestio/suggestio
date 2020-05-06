@@ -9,7 +9,7 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.scalaz.ZTreeUtil._
 import monocle.macros.GenLens
-import scalaz.{Tree, TreeLoc}
+import scalaz.{EphemeralStream, Tree, TreeLoc}
 
 /**
   * Suggest.io
@@ -117,7 +117,9 @@ case class MJdArgs(
   lazy val templateHeightCssPx: Int = {
     (for {
       // Считаем блоки только на первом уровне.
-      jdTree <- data.doc.template.subForest
+      jdTree <- EphemeralStream
+        .toIterable( data.doc.template.subForest )
+        .iterator
       jdt = jdTree.rootLabel
       if jdt.name ==* MJdTagNames.STRIP
       h <- jdt.props1.heightPx

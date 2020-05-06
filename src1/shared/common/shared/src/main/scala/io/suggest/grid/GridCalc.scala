@@ -6,7 +6,7 @@ import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.jd.{MJdConf, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import japgolly.univeq._
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.HashMap
@@ -160,7 +160,7 @@ object GridCalc {
         if mayHaveWideSzMult(tplJdt)
         wh          <- tplJdt.props1.wh.iterator
         wideSzMult  <- GridCalc.wideSzMult( wh, jdConf.gridColumnsCount ).iterator
-        (jdId, _)   <- tpl.flatten
+        (jdId, _)   <- EphemeralStream.toIterable( tpl.flatten ).iterator
       } yield {
         jdId -> wideSzMult
       })

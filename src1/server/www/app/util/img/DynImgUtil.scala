@@ -32,6 +32,7 @@ import play.api.mvc.Call
 import util.cdn.CdnUtil
 import japgolly.univeq._
 import monocle.Traversal
+import scalaz.EphemeralStream
 import scalaz.std.option._
 
 import scala.jdk.CollectionConverters._
@@ -575,7 +576,7 @@ final class DynImgUtil @Inject() (
           case MNodeTypes.Ad =>
             for {
               doc <- mnode.extras.doc.iterator
-              jdTag <- doc.template.flatten
+              jdTag <- EphemeralStream.toIterable( doc.template.flatten ).iterator
               imgEdge <- jdTag.edgeUids
             } yield {
               imgEdge

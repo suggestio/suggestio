@@ -5,8 +5,7 @@ import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, OFormat, __}
-
-import scalaz.{Validation, ValidationNel}
+import scalaz.{NonEmptyList, Validation, ValidationNel}
 
 /**
   * Suggest.io
@@ -36,7 +35,7 @@ object ISetUnset {
 
 
   def validateSet[E, T](su: ISetUnset[T], errorIfUnset: => E,
-                        f: T => ValidationNel[E, T] = Validation.success): ValidationNel[E, ISetUnset[T]] = {
+                        f: T => ValidationNel[E, T] = Validation.success[NonEmptyList[E], T]): ValidationNel[E, ISetUnset[T]] = {
     ScalazUtil.liftNelSome(su.toOption, errorIfUnset)(f)
       .map(fromOption)
   }

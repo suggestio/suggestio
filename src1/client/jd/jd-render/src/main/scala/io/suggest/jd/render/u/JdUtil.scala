@@ -11,7 +11,7 @@ import io.suggest.primo.Keep
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 
 import scala.collection.immutable.HashMap
 
@@ -44,9 +44,8 @@ object JdUtil {
     val doc = adData.doc
 
     if (doc.template.rootLabel.name ==* MJdTagNames.DOCUMENT) {
-      doc.template
+      val eStream = doc.template
         .subForest
-        .iterator
         .zipWithIndex
         .map { case (blkJdt, i) =>
           doc.copy(
@@ -60,6 +59,9 @@ object JdUtil {
             }
           )
         }
+
+      EphemeralStream
+        .toIterable( eStream )
         .to( LazyList )
 
     } else {
@@ -85,17 +87,18 @@ object JdUtil {
                         prevOpt   : Option[MJdRuntime]    = None,
                        ): HashMap[MJdTagId, Pot[MQdBlSize]] = {
     // Какие теги нужны (на основе шаблонов)
-    val wantedQdBls = for {
-      tpl      <- tpls
-      qdBlsOrStrips <- tpl.rootLabel._2.name match {
-        case MJdTagNames.DOCUMENT   => tpl.subForest
+    val wantedQdBls = (for {
+      tpl           <- tpls.iterator
+      qdBlsOrStrips <- (tpl.rootLabel._2.name match {
+        case MJdTagNames.DOCUMENT   => EphemeralStream.toIterable( tpl.subForest )
         case MJdTagNames.QD_CONTENT => tpl :: Nil
         case _ => Nil
-      }
+      }).iterator
       jdtWithId = qdBlsOrStrips.rootLabel
       if jdtWithId._2.name ==* MJdTagNames.QD_CONTENT
     }
-      yield jdtWithId
+      yield jdtWithId)
+      .to( LazyList )
 
     if (wantedQdBls.isEmpty) {
       // Нет никаких данных по qd-blockless вообще.
@@ -178,8 +181,9 @@ object JdUtil {
         val tplsIndexed = args.jdDocs
           .map( mkTreeIndexed )
 
-        val jdtsIndexed = tplsIndexed
-          .flatMap(_.flatten)
+        val jdtsIndexed = tplsIndexed.flatMap { treeIdx =>
+          EphemeralStream.toIterable( treeIdx.flatten )
+        }
 
         val jdRtData = MJdRuntimeData(
           jdtWideSzMults  = GridCalc.wideSzMults(tplsIndexed, args.jdConf),

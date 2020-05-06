@@ -16,7 +16,6 @@ import io.suggest.scalaz.ScalazUtil
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import scalaz._
-import scalaz.std.stream._
 import scalaz.syntax.apply._
 
 /**
@@ -68,7 +67,7 @@ class JdDocValidator(
       */
     def recoverTolerant(onError: => T): ValidationNel[E, T] = {
       if (tolerant && vldNel.isFailure) {
-        Validation.success( onError )
+        Validation.success[NonEmptyList[E], T]( onError )
       } else {
         vldNel
       }
@@ -113,14 +112,14 @@ class JdDocValidator(
 
 
   /** Провалидировать список стрипов. */
-  private def validateDocTags(jdts: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateDocTags(jdts: EphemeralStream[Tree[JdTag]]): ValidationNel[String, EphemeralStream[Tree[JdTag]]] = {
     // На втором уровне могут быть только стрипы, хотя бы один должен там быть.
     def eStripsPfx(suf: String) = ErrorConstants.EMSG_CODE_PREFIX + STRIPS + `.` + suf
 
     Validation.liftNel(jdts.isEmpty)( identity, eStripsPfx( MISSING ))
       .andThen { _ =>
         val maxBlkCount = JdConst.MAX_STRIPS_COUNT
-        Validation.liftNel(jdts)( _.lengthIs > maxBlkCount, eStripsPfx( TOO_MANY ))
+        Validation.liftNel(jdts)( EphemeralStream.toIterable(_).sizeIs > maxBlkCount, eStripsPfx( TOO_MANY ))
           .recoverTolerant {
             jdts.take(maxBlkCount)
           }
@@ -136,15 +135,15 @@ class JdDocValidator(
     *         Возможно, в будущем будет какое-то удаление ненужного/некорректного стрипа,
     *         благодаря Stream это будет легко.
     */
-  private def validateDocChildTree(jdTree: Tree[JdTag]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateDocChildTree(jdTree: Tree[JdTag]): ValidationNel[String, EphemeralStream[Tree[JdTag]]] = {
     ScalazUtil.someValidationOrFail(BM) {
       val jdt = jdTree.rootLabel
       jdt.name match {
         case MJdTagNames.STRIP =>
           for (bm <- jdTree.rootLabel.props1.bm) yield {
             jdTree
-              .validateNode(validateStrip)(validateContents(_, bm))
-              .map { _ #:: Stream.empty }
+              .validateNode(validateStrip)( validateContents(_, bm) )
+              .map( _ ##:: EphemeralStream.emptyEphemeralStream[Tree[JdTag]] )
           }
         case MJdTagNames.QD_CONTENT =>
           Some( validateQdTree(jdTree, contSz = None) )
@@ -211,9 +210,9 @@ class JdDocValidator(
     *
     * @param contents Содержимое.
     */
-  private def validateContents(contents: Stream[Tree[JdTag]], bm: BlockMeta): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateContents(contents: EphemeralStream[Tree[JdTag]], bm: BlockMeta): ValidationNel[String, EphemeralStream[Tree[JdTag]]] = {
     val maxElemsCount = JdConst.MAX_ELEMENTS_PER_MIN_BLOCK * bm.h.relSz * bm.w.relSz
-    Validation.liftNel(contents)( _.lengthIs > maxElemsCount, TOO_MANY )
+    Validation.liftNel(contents)( EphemeralStream.toIterable(_).sizeIs > maxElemsCount, TOO_MANY )
       .recoverTolerant { contents.take(maxElemsCount) }
       .andThen {
         ScalazUtil.validateAll(_) { validateQdTree(_, Some(bm)) }
@@ -231,17 +230,17 @@ class JdDocValidator(
     * @param contSz Размер внешнего контейнера.
     * @return Список с максимум одним qd-тегом.
     */
-  private def validateQdTree(qdTree: Tree[JdTag], contSz: Option[ISize2di]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateQdTree(qdTree: Tree[JdTag], contSz: Option[ISize2di]): ValidationNel[String, EphemeralStream[Tree[JdTag]]] = {
     validateQdTag(qdTree.rootLabel, contSz)
-      .filter(_ => qdTree.subForest.nonEmpty)
+      .filter(_ => !qdTree.subForest.isEmpty)
       .fold {
-        Validation.success(Stream.empty): ValidationNel[String, Stream[Tree[JdTag]]]
+        Validation.success[NonEmptyList[String], EphemeralStream[Tree[JdTag]]]( EphemeralStream.emptyEphemeralStream )
       } { qdTagValidationRes =>
         (
           qdTagValidationRes |@|
           validateQdTagContents( qdTree.subForest )
         ) { (jdt, nodes) =>
-          Tree.Node(jdt, nodes) #:: Stream.empty
+          Tree.Node(jdt, nodes) ##:: EphemeralStream.emptyEphemeralStream[Tree[JdTag]]
         }
       }
   }
@@ -390,9 +389,9 @@ class JdDocValidator(
     * @param qdOps Список qd-op-тегов.
     * @return
     */
-  private def validateQdTagContents(qdOps: Stream[Tree[JdTag]]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateQdTagContents(qdOps: EphemeralStream[Tree[JdTag]]): ValidationNel[String, EphemeralStream[Tree[JdTag]]] = {
     val qdOpsMax = JdConst.MAX_QD_OPS_COUNT
-    Validation.liftNel(qdOps)(_.lengthIs > qdOpsMax, QD + `.` + OPS + `.` + TOO_MANY )
+    Validation.liftNel(qdOps)( EphemeralStream.toIterable(_).sizeIs > qdOpsMax, QD + `.` + OPS + `.` + TOO_MANY )
       .recoverTolerant { qdOps.take(qdOpsMax) }
       .andThen { ScalazUtil.validateAll(_)(validateQdOpTree) }
   }
@@ -403,11 +402,11 @@ class JdDocValidator(
     * @return Результат операции.
     *         Stream позволяет отсеивать какие-нибудь операции во время работы.
     */
-  private def validateQdOpTree(qdOpTree: Tree[JdTag]): ValidationNel[String, Stream[Tree[JdTag]]] = {
+  private def validateQdOpTree(qdOpTree: Tree[JdTag]): ValidationNel[String, EphemeralStream[Tree[JdTag]]] = {
     val errMsgF = ErrorConstants.emsgF( QD + `.` + OP )
     qdOpTree
       .validateLeaf( errMsgF("chs" + `.` + UNEXPECTED) )( validateQdOp )
-      .map(Stream(_))
+      .map( EphemeralStream(_) )
   }
 
 
@@ -483,9 +482,9 @@ class JdDocValidator(
   private def validateQdAttrsText(attrsTextOpt: Option[MQdAttrsText],
                                   edgeOpt: Option[MJdEdgeVldInfo]): ValidationNel[String, Option[MQdAttrsText]] = {
     //val errMsgF = ErrorConstants.emsgF("text")
-    edgeOpt.fold [ValidationNel[String, Option[MQdAttrsText]]] {
+    edgeOpt.fold {
       // Нет контента -- нет и аттрибутов его оформления.
-      Validation.success( None )
+      Validation.success[NonEmptyList[String], Option[MQdAttrsText]]( None )
     } { _ =>
       // Есть контент. Значит аттрибуты оформления применимы.
       ScalazUtil.liftNelOpt( attrsTextOpt.filter(_.nonEmpty) )( MQdAttrsText.validateForStore )
@@ -521,8 +520,8 @@ class JdDocValidator(
         (P.Frame :: P.Image :: Nil)
           .contains( edge.jdEdge.predicate )
       }
-      .fold [ValidationNel[String, Option[MQdAttrsEmbed]]] {
-        Validation.success( None )
+      .fold {
+        Validation.success[NonEmptyList[String], Option[MQdAttrsEmbed]]( None )
       } { _ =>
         ScalazUtil.liftNelOpt( attrsEmbedOpt.filter(_.nonEmpty) )( MQdAttrsEmbed.validateForStore )
           .recoverToNoneTolerant

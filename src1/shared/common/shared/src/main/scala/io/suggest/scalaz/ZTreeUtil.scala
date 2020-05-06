@@ -1,10 +1,8 @@
 package io.suggest.scalaz
 
 import io.suggest.common.empty.EmptyUtil
-
-import scalaz.{Tree, TreeLoc, Validation, ValidationNel}
+import scalaz.{EphemeralStream, Tree, TreeLoc, Validation, ValidationNel}
 import japgolly.univeq._
-
 import scalaz.syntax.apply._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -23,10 +21,14 @@ object ZTreeUtil {
     fmt = (
       (__ \ "r").format[A] and
       // По идее, implicitly[] дергает именно текущую implicit val fmt, а не ZTREE_FORMAT[].
-      (__ \ "c").lazyFormatNullable( implicitly[Format[Stream[Tree[A]]]] )
-        .inmap[Stream[Tree[A]]](
-          EmptyUtil.opt2ImplEmpty1F( Stream.empty ),
+      (__ \ "c").lazyFormatNullable( implicitly[Format[Seq[Tree[A]]]] )
+        .inmap[Seq[Tree[A]]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
           { chs => if (chs.isEmpty) None else Some(chs) }
+        )
+        .inmap[EphemeralStream[Tree[A]]](
+          EphemeralStream(_ : _*),
+          EphemeralStream.toIterable(_).toStream
         )
     )( Tree.Node.apply(_, _), unlift(Tree.Node.unapply[A]) )
     fmt
@@ -60,20 +62,24 @@ object ZTreeUtil {
     // Старое API из IDocTag-дерева. Желательно портировать такой код на использование Tree/TreeLoc API напрямую.
 
     /** Итератор всех дочерних элементов со всех под-уровней. */
-    def deepChildren: Stream[A] = {
-      tree.flatten.tail
+    def deepChildren: EphemeralStream[A] = {
+      tree
+        .flatten
+        .tailOption
+        .getOrElse( EphemeralStream.emptyEphemeralStream )
     }
 
-    def deepSubtrees: LazyList[Tree[A]] = {
-      tree #:: tree
+    def deepSubtrees: EphemeralStream[Tree[A]] = {
+      tree ##:: tree
         .subForest
-        .iterator
         .flatMap(_.deepSubtrees)
-        .to(LazyList)
     }
 
-    def contains(jdt: A): Boolean = {
-      tree.flatten.contains( jdt )
+    def contains(jdt: A)(implicit ueq: UnivEq[A]): Boolean = {
+      !tree
+        .flatten
+        .filter(jdt ==* _)
+        .isEmpty
     }
 
     def deepMap(f: A => A): Tree[A] = {
@@ -86,7 +92,7 @@ object ZTreeUtil {
 
     /** Валидация узла и его дочерних узлов. */
     def validateNode[E](rootV   : A => ValidationNel[E, A])
-                       (forestV : Stream[Tree[A]] => ValidationNel[E, Stream[Tree[A]]]): ValidationNel[E, Tree[A]] = {
+                       (forestV : EphemeralStream[Tree[A]] => ValidationNel[E, EphemeralStream[Tree[A]]]): ValidationNel[E, Tree[A]] = {
       (
         rootV(tree.rootLabel) |@|
         forestV(tree.subForest)
@@ -96,7 +102,7 @@ object ZTreeUtil {
     /** Валидация узла без подчинённых узлов. */
     def validateLeaf[E](notLeafErr: => E)(rootV: A => ValidationNel[E, A]): ValidationNel[E, Tree[A]] = {
       validateNode(rootV) { forest =>
-        Validation.liftNel(forest)(_.nonEmpty, notLeafErr)
+        Validation.liftNel(forest)(!_.isEmpty, notLeafErr)
       }
     }
 
@@ -129,11 +135,12 @@ object ZTreeUtil {
     def zipWithIndex(startIndex: Int): Tree[(A, Int)] = {
       Tree.Node(
         root    = tree.rootLabel -> startIndex,
-        forest  = for {
-          (chTree, i) <- tree.subForest.zipWithIndex
-        } yield {
-          chTree.zipWithIndex(i)
-        }
+        forest  = tree
+          .subForest
+          .zipWithIndex
+          .map { case (chTree, i) =>
+            chTree.zipWithIndex(i)
+          }
       )
     }
 

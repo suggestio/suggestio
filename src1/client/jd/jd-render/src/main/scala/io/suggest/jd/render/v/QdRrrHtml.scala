@@ -20,6 +20,7 @@ import scalacss.ScalaCssReact._
 
 import scala.annotation.tailrec
 import japgolly.univeq._
+import scalaz.EphemeralStream
 
 /**
   * Suggest.io
@@ -69,10 +70,12 @@ case class QdRrrHtml(
     */
   private var _restOps: LazyList[MQdOpCont] = {
     (for {
-      (jdtTree, i) <- rrrProps.subTree
-        .subForest
+      (jdtTree, i) <- EphemeralStream.toIterable(
+        rrrProps.subTree
+          .subForest
+          .zipWithIndex
+      )
         .iterator
-        .zipWithIndex
       jdt = jdtTree.rootLabel
       qdOp <- jdt.qdProps
     } yield {

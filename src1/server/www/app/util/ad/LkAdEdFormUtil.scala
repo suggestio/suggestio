@@ -22,7 +22,7 @@ import io.suggest.primo.id._
 import io.suggest.text.StringUtil
 
 import scala.concurrent.Future
-import scalaz.{Tree, Validation, ValidationNel}
+import scalaz.{EphemeralStream, NonEmptyList, Tree, Validation, ValidationNel}
 import scalaz.syntax.apply._
 import util.n2u.N2VldUtil
 import util.tpl.HtmlSanitizer
@@ -61,7 +61,7 @@ class LkAdEdFormUtil @Inject() (
 
     val tplTree = Tree.Node(
       root = JdTag.document,
-      forest = Stream(
+      forest = EphemeralStream(
         // Уровень стрипов. Рендерим три стрипа.
 
         // Strip#1 содержит намёк на то, что это верхний блок.
@@ -134,13 +134,13 @@ class LkAdEdFormUtil @Inject() (
       LOGGER.warn( s"earlyValidateEdges(${form.edges.size})[${System.currentTimeMillis()}]: Failed to validate edges: $edgesVlds\n edges = \n ${edges1.mkString("\n ")}" )
 
     (
-      (nodeIdVld *> Validation.success(form.doc)) |@|
+      (nodeIdVld *> Validation.success[NonEmptyList[String], MJdDoc](form.doc)) |@|
       edgesVlds |@|
       // Заголовок: trim + limitLen
       ScalazUtil.liftNelOpt( form.title ) { title0 =>
         val titleSanitized = HtmlSanitizer.stripAllPolicy.sanitize( title0 )
         val title2 = StringUtil.strLimitLen( titleSanitized.trim, 100 )
-        Validation.success( title2 )
+        Validation.success[NonEmptyList[String], String]( title2 )
       } // Убрать пустые строки:
         .map(_.filter(_.nonEmpty))
     )( MJdData.apply )
@@ -183,9 +183,12 @@ class LkAdEdFormUtil @Inject() (
   def mkTechName(tpl: Tree[JdTag], edgeTextsMap: Map[EdgeUid_t, String]): Option[String] = {
     val delim = " | "
     val techName = (for {
-      (qdTree, i) <- tpl
-        .deepSubtrees
-        .zipWithIndex
+      (qdTree, i) <- EphemeralStream.toIterable(
+        tpl
+          .deepSubtrees
+          .zipWithIndex
+      )
+        .iterator
 
       if qdTree.rootLabel.name ==* MJdTagNames.QD_CONTENT
 

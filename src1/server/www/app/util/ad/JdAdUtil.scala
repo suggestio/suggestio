@@ -640,7 +640,10 @@ class JdAdUtil @Inject()(
           val isWideThis = allowWide && _isJdtWide(jdTag)
           val wideSzMult = OptionUtil.maybeOpt(
             isWideThis ||
-            (allowWide && jdLoc.parents.exists { parent => _isJdtWide(parent._2) })
+            (allowWide && !jdLoc
+              .parents
+              .filter { parent => _isJdtWide(parent._2) }
+              .isEmpty)
           ) {
             jdTag.props1.wh.flatMap { wh =>
               GridCalc.wideSzMult( wh, jdConf.gridColumnsCount )

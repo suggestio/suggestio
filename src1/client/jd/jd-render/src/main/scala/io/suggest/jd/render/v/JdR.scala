@@ -26,7 +26,7 @@ import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 
 import scala.concurrent.Future
 
@@ -471,7 +471,7 @@ class JdR(
       */
     def renderChildrenWithId(proxy: ModelProxy[MJdRrrProps]): LazyList[(MJdTagId, Tree[JdTag], VdomNode)] = {
       val p = proxy.value
-      val chs = p.subTree.subForest
+      val chs = EphemeralStream.toIterable( p.subTree.subForest )
 
       if (chs.nonEmpty) {
         val parents2 = p.subTree.rootLabel :: p.parents

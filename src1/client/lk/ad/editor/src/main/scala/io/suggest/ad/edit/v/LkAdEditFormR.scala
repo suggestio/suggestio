@@ -39,7 +39,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
-import scalaz.TreeLoc
+import scalaz.{EphemeralStream, TreeLoc}
 
 
 /**
@@ -464,9 +464,10 @@ class LkAdEditFormR(
             import io.suggest.common.empty.OptionUtil.BoolOptOps
             useAsMainR.PropsVal(
               checked = selJdt.props1.isMain.getOrElseFalse,
-              mainDefined = mroot.doc.jdDoc.jdArgs.data.doc.template
+              mainDefined = !mroot.doc.jdDoc.jdArgs.data.doc.template
                 .subForest
-                .exists( _.rootLabel.props1.isMain.getOrElseFalse )
+                .filter( _.rootLabel.props1.isMain.getOrElseFalse )
+                .isEmpty
             )
           }
         }( OptFastEq.Wrapped(useAsMainR.UseAdMainPropsValFastEq) ),
@@ -647,7 +648,9 @@ class LkAdEditFormR(
                 if selJdt.name ==* MJdTagNames.QD_CONTENT
                 r <- {
                   // Найти цвет фона в текущем или в родительских тегах.
-                  (Iterator.single(selJdt) ++ selJdtTreeLoc.parents.iterator.map(_._2))
+                  EphemeralStream
+                    .toIterable( selJdt ##:: selJdtTreeLoc.parents.map(_._2) )
+                    .iterator
                     .flatMap(_.props1.bgColor)
                     .nextOption()
                 }
