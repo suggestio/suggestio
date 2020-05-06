@@ -85,6 +85,7 @@ object MLogMsg {
 
 }
 
+
 /** Класс с данными для логгирования. Он отправляется в каждый конкретный логгер.
   *
   * @param severity Важность.
@@ -129,7 +130,7 @@ final case class MLogMsg(
 
 
   override def toString: ErrorMsg_t = {
-    val sb = new StringBuilder(256)
+    val sb = new StringBuilder( 512 )
 
     sb.append( severity )
       .append( HtmlConstants.SPACE )
@@ -137,20 +138,24 @@ final case class MLogMsg(
       .append( HtmlConstants.SPACE )
 
     for (c <- code)
-      sb.append( c ).append( HtmlConstants.SPACE )
+      sb.append( c )
+        .append( HtmlConstants.SPACE )
 
     for (msg <- message)
-      sb.append(msg).append( HtmlConstants.SPACE )
+      sb.append( msg )
+        .append( HtmlConstants.SPACE )
 
     for (u <- url)
       sb.append( u )
+        .append( HtmlConstants.SPACE )
 
     for (ex <- exception) {
-      sb.append(HtmlConstants.NEWLINE_UNIX)
+      sb.append( HtmlConstants.NEWLINE_UNIX )
         .append( ex.className )
 
       for (exMsg <- ex.message)
-        sb.append( HtmlConstants.SPACE )
+        sb.append( HtmlConstants.COLON )
+          .append( HtmlConstants.SPACE )
           .append( exMsg )
 
       for (exStackTrace <- ex.stackTrace)

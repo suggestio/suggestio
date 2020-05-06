@@ -284,9 +284,13 @@ final case class MStat(
 
     if (actions.nonEmpty) {
       sb.append('[')
-      for (a <- actions)
-        sb.append(a).append(s)
+      for (a <- actions) {
+        a.toStringSb(sb)
+        sb.append('\n')
+          .append(' ')
+      }
       sb.append(']')
+        .append('\n')
     }
 
     sb.append(timestamp)

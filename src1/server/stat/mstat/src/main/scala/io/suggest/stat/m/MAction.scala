@@ -1,5 +1,6 @@
 package io.suggest.stat.m
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -93,4 +94,54 @@ case class MAction(
   nodeName  : Seq[String]       = Nil,
   count     : Seq[Int]          = Nil,
   textNi    : Seq[String]       = Nil
-)
+) {
+
+  def toStringSb(sb: StringBuilder = new StringBuilder(256)): StringBuilder = {
+    sb.append('{')
+
+    for (act <- actions)
+      sb.append( act )
+        .append( HtmlConstants.SPACE )
+
+    if (nodeId.nonEmpty) {
+      sb.append('[')
+      for (nId <- nodeId)
+        sb.append( nId )
+          .append(' ')
+      sb.append(']')
+        .append(' ')
+    }
+
+    if (nodeName.nonEmpty) {
+      sb.append('[')
+      for (nn <- nodeName)
+        sb.append( nn )
+          .append(' ')
+      sb.append(']')
+        .append(' ')
+    }
+
+    if (count.nonEmpty) {
+      sb.append('[')
+      for (cnt <- count)
+        sb.append(cnt)
+          .append(' ')
+      sb.append(']')
+        .append(' ')
+    }
+
+    if (textNi.nonEmpty) {
+      sb.append( '[' )
+      for (tNi <- textNi)
+        sb.append(tNi)
+          .append(" | ")
+      sb.append( ']' )
+        .append(' ')
+    }
+
+    sb.append('}')
+  }
+
+  override def toString = toStringSb().toString()
+
+}

@@ -16,7 +16,9 @@ class SevereFilter(
 {
 
   override def logAppend( logMsgs: Seq[MLogMsg] ): Unit = {
-    val logMsgs2 = logMsgs.filter( _.severity.value >= minSeverity.value )
+    val logMsgs2 = logMsgs
+      .filter( _.severity.value >= minSeverity.value )
+
     if (logMsgs2.nonEmpty)
       underlying.logAppend( logMsgs2 )
   }

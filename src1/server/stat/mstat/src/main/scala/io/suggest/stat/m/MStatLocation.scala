@@ -66,9 +66,11 @@ final case class MStatLocation(
 
   def toStringSb(sb: StringBuilder = new StringBuilder(64)): StringBuilder = {
     sb.append('{')
-    geo.toStringSb(sb)
+    if (geo.nonEmpty)
+      geo.toStringSb( sb )
     sb.append(" ip=")
-    geoIp.toStringSb(sb)
+    if (geoIp.nonEmpty)
+      geoIp.toStringSb( sb )
     sb.append('}')
   }
 

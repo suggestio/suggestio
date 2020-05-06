@@ -25,8 +25,6 @@ object LogSeverities extends IntEnum[LogSeverity] {
 
   override def values = findValues
 
-  def ALL_VALUE = -1
-
 }
 
 
