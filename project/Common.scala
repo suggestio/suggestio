@@ -269,7 +269,7 @@ object Common {
 
 
   /** Версия BouncyCastle. */
-  def bcVsn           = "1.64"
+  def bcVsn           = "1.65"
 
   /** Версия scalatest+play. */
   def scalaTestPlusPlayVsn = "5.0.0"

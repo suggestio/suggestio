@@ -26,9 +26,9 @@ case class CloseNotify( toastIds: Iterable[String] = Nil ) extends IOsNotifyActi
 /** Запросить чтение пермишшена.
   *
   * @param onComplete Сборка эффекта-реакции.
-  * @param isRequest true - это запрос, видимый пользователю.
+  * @param isVisible true - это запрос, видимый пользователю.
   *                  false - это скрытая проверка текущего значения пермишена.
   */
-case class NotifyPermission( isRequest: Boolean,
-                             onComplete: Option[Option[Boolean] => DAction] = None ) extends IOsNotifyAction
+case class NotificationPermAsk(isVisible: Boolean,
+                               onComplete: Option[Option[Boolean] => DAction] = None ) extends IOsNotifyAction
 

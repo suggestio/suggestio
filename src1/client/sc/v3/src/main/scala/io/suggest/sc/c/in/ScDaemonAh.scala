@@ -49,7 +49,7 @@ class ScDaemonAh[M](
 
     // Запуск периодического фонового мониторинга.
     case m: ScDaemonDozed =>
-      println(m)
+      logger.log( msg = m )
 
       val fx = Effect.action {
         DaemonSleepTimerSet(
@@ -75,7 +75,7 @@ class ScDaemonAh[M](
 
     // Срабатывание таймера запуска процесса демона.
     case m: DaemonSleepAlarm =>
-      println( m )
+      logger.log( msg = m )
       // TODO Проверить online-состояние через cordova MPlatformS, подписываясь на события online/offline.
       val fx = Daemonize( isDaemon = m.isActive ).toEffectPure
 
@@ -89,8 +89,7 @@ class ScDaemonAh[M](
     // Если true, значит запущен демон, активен WAKE_LOCK система какое-то время держит CPU включённым.
     // Запустить сканирование.
     case m: ScDaemonWorkProcess =>
-      logger.warn()
-      println( m )
+      logger.log( msg = m )
 
       val v0 = value
       val daemonState2 = MDaemonStates.fromIsActive(m.isActive)
@@ -137,7 +136,7 @@ class ScDaemonAh[M](
 
     // Сохранение выставленного таймера в состояние.
     case m: ScDaemonFallSleepTimerSet =>
-      println( m )
+      logger.log( msg = m )
       val v0 = value
 
       if (v0.fallSleepTimer.isPending) {

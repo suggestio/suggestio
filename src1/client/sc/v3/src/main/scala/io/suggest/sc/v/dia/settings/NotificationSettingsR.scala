@@ -2,7 +2,7 @@ package io.suggest.sc.v.dia.settings
 
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.os.notify.{NotifyPermission, NotifyStartStop}
+import io.suggest.os.notify.{NotificationPermAsk, NotifyStartStop}
 import io.suggest.sc.m.dev.MScOsNotifyS
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -29,7 +29,7 @@ class NotificationSettingsR(
         text = crCtxProv.message( MsgCodes.`Notifications` ),
         onOffAction = { isEnabled =>
           if (isEnabled)
-            NotifyPermission( isRequest = true )
+            NotificationPermAsk( isVisible = true )
           else
             NotifyStartStop( isStart = isEnabled )
         },

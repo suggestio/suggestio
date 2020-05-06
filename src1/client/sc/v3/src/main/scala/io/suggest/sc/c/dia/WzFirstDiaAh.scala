@@ -1,5 +1,6 @@
 package io.suggest.sc.c.dia
 
+import cordova.Cordova
 import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.ble.beaconer.BtOnOff
@@ -7,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
-import io.suggest.os.notify.NotifyPermission
+import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaLocalNotificationlUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
@@ -347,7 +348,7 @@ class WzFirstDiaAh[M](
           .toEffectPure
         Some(fx)
       case MWzPhases.NotificationPerm =>
-        val fx = NotifyPermission( isRequest = true ).toEffectPure
+        val fx = NotificationPermAsk( isVisible = true ).toEffectPure
         Some(fx)
       case _ =>
         None
@@ -503,10 +504,18 @@ class WzFirstDiaAh[M](
       phase     = MWzPhases.GeoLocPerm,
       supported = GeoLocUtilJs.envHasGeoLoc(),
       askPermF  = {
-        if (platform.isCordova)
-          CordovaDiagonsticPermissionUtil.getGeoLocPerm
-        else
-          () => Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+        val htmlAskPermF = () => Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+        if (platform.isCordova) {
+          () =>
+            CordovaDiagonsticPermissionUtil
+              .getGeoLocPerm()
+              .recoverWith { case ex: Throwable =>
+                // diag-плагин на разных платформах работает по-разному. На iOS, например, API может быть внезапно недоступным вообще.
+                logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
+                htmlAskPermF()
+              }
+        } else
+          htmlAskPermF
       }
     ) #::
     // Bluetooth

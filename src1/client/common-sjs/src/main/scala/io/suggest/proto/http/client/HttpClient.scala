@@ -58,7 +58,7 @@ object HttpClient {
   def mkAbsUrl(url: String): String = {
     UrlUtil2.mkAbsUrl(
       protoPrefix = HttpConst.Proto.HTTP,
-      secure = true,
+      secure = PREFER_ABS_URLS,
       relUrl = url,
     )
   }

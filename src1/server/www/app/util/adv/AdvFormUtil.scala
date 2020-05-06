@@ -150,9 +150,8 @@ class AdvFormUtil @Inject() (
     val now = LocalDate.now()
 
     // Проверка одной даты, т.е. даты начала или окончания.
-    def _validateOneDate(ymd: MYmd, name: String) ={
-      Validation.fromTryCatchNonFatal( ymd.to[LocalDate] )
-        .leftMap(_ => s"e.$name.date.invalid")
+    def _validateOneDate(ymd: MYmd, name: String) = {
+      \/.attempt( ymd.to[LocalDate] )( _ => s"e.$name.date.invalid")
         .toValidationNel
         .flatMap( validateYmdIsForAdvNow(_, now) )
     }

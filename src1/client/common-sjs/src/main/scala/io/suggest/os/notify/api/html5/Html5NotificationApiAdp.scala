@@ -3,7 +3,7 @@ package io.suggest.os.notify.api.html5
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
 import io.suggest.common.html.HtmlConstants._
-import io.suggest.os.notify.{CloseNotify, NotifyPermission, NotifyStartStop, OsNotifyEvents, ShowNotify}
+import io.suggest.os.notify.{CloseNotify, NotificationPermAsk, NotifyStartStop, OsNotifyEvents, ShowNotify}
 import org.scalajs.dom.experimental.Notification
 import io.suggest.msg.ErrorMsgs
 import io.suggest.perm.Html5PermissionApi
@@ -191,8 +191,8 @@ final class Html5NotificationApiAdp[M](
 
 
     // Запрос текущего состояния разрешения на вывод уведомлений.
-    case m: NotifyPermission =>
-      lazy val permResFut = if (m.isRequest) {
+    case m: NotificationPermAsk =>
+      lazy val permResFut = if (m.isVisible) {
         JsApiUtil
           .call1Fut( Notification.requestPermission )
           .map( Html5PermissionApi.parsePermissionValue )

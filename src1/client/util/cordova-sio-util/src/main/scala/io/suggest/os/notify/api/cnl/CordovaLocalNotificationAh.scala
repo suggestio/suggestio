@@ -6,7 +6,7 @@ import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
-import io.suggest.os.notify.{CloseNotify, MOsToast, MOsToastActionEvent, NotifyPermission, NotifyStartStop, ShowNotify}
+import io.suggest.os.notify.{CloseNotify, MOsToast, MOsToastActionEvent, NotificationPermAsk, NotifyStartStop, ShowNotify}
 import io.suggest.primo.Keep
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
@@ -128,7 +128,7 @@ final class CordovaLocalNotificationAh[M](
 
       } else if ( m.isStart && CordovaLocalNotificationlUtil.isCnlApiAvailable()) {
         // Сразу узнать текущее состояние разрешений доступа:
-        val fx = NotifyPermission(isRequest = false).toEffectPure
+        val fx = NotificationPermAsk(isVisible = false).toEffectPure
         effectOnly( fx )
 
       } else if (v0.listeners.nonEmpty) {
@@ -433,7 +433,7 @@ final class CordovaLocalNotificationAh[M](
 
 
     // Запрос текущего состояния разрешения на вывод уведомлений.
-    case m: NotifyPermission =>
+    case m: NotificationPermAsk =>
       // Залить pending в состояние, если там ещё не pending.
       val v0 = value
       val v2Opt = if (v0.permission.isPending) {
@@ -444,7 +444,7 @@ final class CordovaLocalNotificationAh[M](
 
       // Расшаренное между эффектами значение проверки прав доступа:
       lazy val isAllowedOptFut = for {
-        isAllowed <- if (m.isRequest) {
+        isAllowed <- if (m.isVisible) {
           // Явный запрос прав у юзера.
           CNL.requestPermissionF()
         } else {
@@ -454,7 +454,7 @@ final class CordovaLocalNotificationAh[M](
       } yield {
         // Обернуть результат в Option[].
         // Если скрытая has-проверка, то false означает, только отсутствие разрешение, но не означает запрета.
-        if (m.isRequest) OptionUtil.SomeBool( isAllowed )
+        if (m.isVisible) OptionUtil.SomeBool( isAllowed )
         else OptionUtil.SomeBool.orNone( isAllowed )
       }
 
