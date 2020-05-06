@@ -214,9 +214,11 @@ object Common {
     val SW_TOOLBOX = "3.6.0"
 
     /** Версия monocle.
+      * 1.7.x - scalaz 7.3, нужно рефакторить кучу Stream => EStream.
+      * 2.x   - переезд на cats, это параллель для scalaz, на которую завязана целая кода.
       * @see [[http://julien-truffaut.github.io/Monocle/]]
       */
-    val MONOCLE = "1.+"
+    val MONOCLE = "1.6.+"
 
     /** @see [[https://mvnrepository.com/artifact/commons-codec/commons-codec]] */
     val APACHE_COMMONS_CODEC = "1.12"
