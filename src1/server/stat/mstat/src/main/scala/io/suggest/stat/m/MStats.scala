@@ -276,21 +276,17 @@ final case class MStat(
   override def toString: String = {
     val sb = new StringBuilder(512)
 
-    sb.append('<')
     common.toStringSb(sb)
     sb.append('\n')
 
     val s = HtmlConstants.SPACE.head
 
     if (actions.nonEmpty) {
-      sb.append('[')
       for (a <- actions) {
         a.toStringSb(sb)
-        sb.append('\n')
-          .append(' ')
+        sb.append(" | ")
       }
-      sb.append(']')
-        .append('\n')
+      sb.append('\n')
     }
 
     sb.append(timestamp)
@@ -315,8 +311,7 @@ final case class MStat(
       diag.toStringSb(sb)
     }
 
-    sb.append('>')
-      .toString()
+    sb.toString()
   }
 
 }

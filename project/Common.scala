@@ -76,6 +76,7 @@ object Common {
 
     /** Версия scalaz.
       * Изначально добавлена в проект, чтобы наконец выкинуть вечно-кривую валидацию через wix/accord.
+      * 7.3+ - требуется для monocle 1.7+
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
@@ -89,7 +90,7 @@ object Common {
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
       */
-    val UNIVEQ = "1.2.0"
+    val UNIVEQ = "1.2.1"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]
@@ -214,7 +215,7 @@ object Common {
     val SW_TOOLBOX = "3.6.0"
 
     /** Версия monocle.
-      * 1.7.x - scalaz 7.3, нужно рефакторить кучу Stream => EStream.
+      * 1.7.x - scalaz 7.3 и выше.
       * 2.x   - переезд на cats, это параллель для scalaz, на которую завязана целая кода.
       * @see [[http://julien-truffaut.github.io/Monocle/]]
       */
@@ -232,6 +233,13 @@ object Common {
       * @see [[https://github.com/zpao/qrcode.react]]
       */
     val REACT_QRCODE = "1.0.0"
+
+    /** java.time.* API in scala
+      * @see [[https://github.com/cquiroz/scala-java-time]]
+      * @see [[https://mvnrepository.com/artifact/io.github.cquiroz/scala-java-time]]
+      */
+    val SCALA_JAVA_TIME = "2.0.0"
+
   }
 
 
@@ -278,7 +286,7 @@ object Common {
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  def sjsDomVsn         = "0.9.7"
+  def sjsDomVsn         = "1.0.0"
 
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.6"
@@ -323,17 +331,17 @@ object Common {
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]
     */
-  val boopickleVsn = "1.+"
+  val boopickleVsn = "1.3.1"
 
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]
     */
-  val enumeratumVsn = "1.5.+"
+  val enumeratumVsn = "1.6.+"
 
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]
     */
-  val minitestVsn  = "2.7.+"
+  val minitestVsn  = "2.8.+"
 
 
   object Repo {

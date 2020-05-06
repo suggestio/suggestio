@@ -1,6 +1,6 @@
 package io.suggest.sw
 
-import org.scalajs.dom.experimental.serviceworkers.{ServiceWorker, ServiceWorkerMessageEvent}
+import org.scalajs.dom.experimental.serviceworkers.{ServiceWorker, ServiceWorkerMessageEventInit}
 
 import scala.scalajs.js
 
@@ -14,7 +14,7 @@ object ServiceWorkerUtil {
 
   object Implicits {
 
-    implicit class SwMessageEventOpsExt( val event: ServiceWorkerMessageEvent ) extends AnyVal {
+    implicit class SwMessageEventOpsExt( val event: ServiceWorkerMessageEventInit ) extends AnyVal {
 
       /** Почему-то нет прямого общего API для вызова source.postMessage() . */
       def sourceSw: ServiceWorker =

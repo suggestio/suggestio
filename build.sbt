@@ -65,7 +65,7 @@ lazy val commonJS = common.js
     scalaVersion := Common.SCALA_VSN_JS,
     libraryDependencies ++= Seq(
       // java.time-поддержка на клиенте:
-      "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-RC3"
+      "io.github.cquiroz" %%% "scala-java-time" % Common.Vsn.SCALA_JAVA_TIME
     )
   )
 

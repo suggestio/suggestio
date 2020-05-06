@@ -38,7 +38,8 @@ webpackBundlingMode in fullOptJS := BundlingMode.Application
 // Use a different Webpack configuration file for production
 webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
 
-// TODO scalajs-1.0: leaflet-markercluster и locatecontrol мешают переезду на ES2015.
+// TODO scalajs-1.0: leaflet-markercluster и locatecontrol мешают переезду на ES2015 (true).
+// ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
 //scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(false)) }
 
 // Выключение оптимизации для дебага нетривиальных ошибок, видимых только на продакшене
@@ -55,8 +56,6 @@ scalaJSUseMainModuleInitializer := true
 
 useYarn := true
 
-// ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
-//scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
 
 // Ускорить node.js на продакшене.
 jsEnv := new NodeJSEnv(

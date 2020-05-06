@@ -9,7 +9,7 @@ import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scalaz.{Validation, ValidationNel}
+import scalaz.{NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.apply._
 
 /**
@@ -74,11 +74,11 @@ object MLogMsg {
         Validation.liftNel( eMsgCode )( !_.matches("[._a-zA-Z0-1-]{1,256}"), "code.invalid" )
       } |@|
       ScalazUtil.liftNelOpt( logMsg.message ) { logMessage =>
-        Validation success StringUtil.strLimitLen( logMessage, maxLen = 512 )
+        Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( logMessage, maxLen = 512 ) )
       } |@|
       ScalazUtil.liftNelOpt( logMsg.exception )( MExceptionInfo.validate ) |@|
       ScalazUtil.liftNelOpt( logMsg.url ) { url =>
-        Validation.success( StringUtil.strLimitLen( url, 256 ) )
+        Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( url, 256 ) )
       }
     )(apply)
   }
@@ -132,22 +132,26 @@ final case class MLogMsg(
   override def toString: ErrorMsg_t = {
     val sb = new StringBuilder( 512 )
 
-    sb.append( severity )
-      .append( HtmlConstants.SPACE )
+    val s = HtmlConstants.SPACE
+
+    sb.append('[').append( severity ).append(']')
+      .append( '\t' )
       .append( from )
-      .append( HtmlConstants.SPACE )
+      .append( HtmlConstants.COLON )
+      .append( s )
 
     for (c <- code)
       sb.append( c )
-        .append( HtmlConstants.SPACE )
+        .append( s )
 
     for (msg <- message)
-      sb.append( msg )
-        .append( HtmlConstants.SPACE )
+      sb.append("## ").append( msg )
+        .append( s )
 
     for (u <- url)
-      sb.append( u )
-        .append( HtmlConstants.SPACE )
+      sb.append("|(")
+        .append( u )
+        .append(")")
 
     for (ex <- exception) {
       sb.append( HtmlConstants.NEWLINE_UNIX )
@@ -155,7 +159,7 @@ final case class MLogMsg(
 
       for (exMsg <- ex.message)
         sb.append( HtmlConstants.COLON )
-          .append( HtmlConstants.SPACE )
+          .append( s )
           .append( exMsg )
 
       for (exStackTrace <- ex.stackTrace)

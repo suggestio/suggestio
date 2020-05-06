@@ -82,6 +82,7 @@ final case class MCommonStat(
         sb.append( c )
           .append( s )
       sb.append(']')
+        .append(s)
     }
 
     for (ipAddr <- ip)
@@ -90,16 +91,13 @@ final case class MCommonStat(
     for (clUid <- clientUid)
       sb.append( clUid ).append( s )
 
+    for (domain <- domain3p)
+      sb.append( domain ).append( s )
     for (_url <- uri)
       sb.append( _url ).append( s )
 
-    for (domain <- domain3p)
-      sb.append( domain ).append( s )
-
-    for (isLoc <- isLocalClient)
-      sb.append("local?")
-        .append(isLoc)
-        .append( s )
+    for (isLoc <- isLocalClient if isLoc)
+      sb.append("local ")
 
     for (g <- gen)
       sb.append("gen=")

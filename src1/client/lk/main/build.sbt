@@ -32,12 +32,6 @@ emitSourceMaps := true
 
 (emitSourceMaps in fullOptJS) := false
 
-
-//npmDependencies in Compile ++= Seq(
-//  "react"     -> Common.reactJsVsn,
-//  "react-dom" -> Common.reactJsVsn
-//)
-
 scalaJSUseMainModuleInitializer := true
 
 useYarn := true
@@ -48,6 +42,3 @@ jsEnv := new NodeJSEnv(
     .withArgs( List("--max_old_space_size=8192") )
 )
 
-
-// ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
-//scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }

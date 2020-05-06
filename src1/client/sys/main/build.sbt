@@ -7,8 +7,6 @@ version := "0.0.0"
 enablePlugins(ScalaJSBundlerPlugin)
 
 
-// Есть плавающая проблема с LibraryOnly и Leaflet.js (global.L):
-// https://github.com/scalacenter/scalajs-bundler/issues/178
 webpackBundlingMode := BundlingMode.LibraryOnly()
 //webpackBundlingMode in fullOptJS := BundlingMode.Application
 
