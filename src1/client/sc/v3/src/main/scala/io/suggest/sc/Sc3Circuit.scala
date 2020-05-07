@@ -53,8 +53,8 @@ import io.suggest.sc.u.api.IScAppApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2.DomQuick
-import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.sjs.dom2._
+import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, LoggingAllActionsProcessor, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
@@ -67,6 +67,7 @@ import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.ueq.UnivEqUtil._
 
 import scala.concurrent.{Future, Promise}
+import scala.scalajs.js
 import scala.util.Try
 
 /**
@@ -171,12 +172,21 @@ class Sc3Circuit(
   {
     import io.suggest.sjs.common.vm.evtg.EventTargetVm._
     dom.window.addEventListener4s( DomEvents.ERROR ) { e: dom.ErrorEvent =>
-      val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
-      logger.error(msg = msg)
+      def _s(f: => js.UndefOr[_]): String =
+        Try(f.fold("")(_.toString)) getOrElse ""
+
+      val msg = (_s(e.messageU), _s(e.filenameU), (_s(e.linenoU), _s(e.colnoU)) )
+      val errCode = MsgCodes.`Malfunction`
+
+      logger.error(
+        errCode,
+        msg = (msg, _s(e.error.map(_.name)), _s(e.error.flatMap(_.message)), _s(e.error.flatMap(_.stack)) ),
+      )
+
       val action = SetErrorState(
         MScErrorDia(
-          messageCode = MsgCodes.`Malfunction`,
-          hint        = Some( msg ),
+          messageCode = errCode,
+          hint        = Some( msg.toString ),
         )
       )
       this.runEffectAction( action )
@@ -421,44 +431,43 @@ class Sc3Circuit(
   )
 
 
-  private val notifyAhOrNull: HandlerFunction = {
+  private val notifyAh: Option[HandlerFunction] = {
     lazy val cordDbgInfo = CordovaLocalNotificationAh.circuitDebugInfoSafe()
     lazy val html5DbgInfo = Html5NotificationApiAdp.circuitDebugInfoSafe()
-    val r = if (CordovaConstants.isCordovaPlatform() && cordDbgInfo.isSuccess) {
+
+    val r: Option[HandlerFunction] = if (CordovaConstants.isCordovaPlatform() && cordDbgInfo.isSuccess) {
       // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
-      new CordovaLocalNotificationAh(
+      Some( new CordovaLocalNotificationAh(
         dispatcher  = this,
         modelRW     = mkLensZoomRW(osNotifyRW, MScOsNotifyS.cnl),
-      )
+      ))
     } else if (Html5NotificationUtil.isApiAvailable()) {
-      new Html5NotificationApiAdp(
+      Some( new Html5NotificationApiAdp(
         dispatcher = this,
         modelRW = mkLensZoomRW( osNotifyRW, MScOsNotifyS.html5 )
-      )
+      ))
     } else {
       // Тут было LOG.error(), но YandexBot постоянно сыпал этими ошибками на сервер. Поэтому тут просто логгирование для разраба.
       if (scalajs.LinkingInfo.developmentMode)
         logger.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (cordDbgInfo, html5DbgInfo) )
-      null
+      None
     }
-    logger.info("notifyAh = ", msg = (r, cordDbgInfo, html5DbgInfo) )
+    logger.info("notifyAh = ", msg = r /*cordDbgInfo, html5DbgInfo)*/ )
     r
   }
-  private def _hasNotifyAh: Boolean = notifyAhOrNull != null
 
 
   /** Контроллер демона. */
-  private val daemonBgModeAh: HandlerFunction = {
+  private val daemonBgModeAh: Option[HandlerFunction] = {
     if (CordovaConstants.isCordovaPlatform() && CordovaBgModeAh.canDaemonize()) {
-      new CordovaBgModeAh(
+      Some(new CordovaBgModeAh(
         modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cBgMode ),
         dispatcher  = this,
-      )
+      ))
     } else {
-      null
+      None
     }
   }
-  private def _hasDaemonAh: Boolean = daemonBgModeAh != null
 
   private lazy val scDaemonAh = new ScDaemonAh(
     modelRW       = daemonRW,
@@ -469,23 +478,22 @@ class Sc3Circuit(
 
 
   /** Выборочный контроллер sleep-таймера демона. */
-  private val daemonSleepTimerAh: HandlerFunction = {
-    if (!_hasDaemonAh) {
-      null
-    } else if ( CordovaConstants.isCordovaPlatform() && CordovaBgTimerAh.hasCordovaBgTimer() ) {
-      new CordovaBgTimerAh(
-        dispatcher = this,
-        modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cBgTimer ),
-      )
-    } else {
-      // TODO Не ясно, надо ли это активировать вообще? Может выкинуть (закомментить) этот контроллер? И его модель-состояние следом.
-      new HtmlBgTimerAh(
-        dispatcher = this,
-        modelRW    = mkLensZoomRW( daemonRW, MScDaemon.htmlBgTimer ),
-      )
+  private val daemonSleepTimerAh: Option[HandlerFunction] = {
+    Option.when( daemonBgModeAh.nonEmpty ) {
+      if ( CordovaConstants.isCordovaPlatform() && CordovaBgTimerAh.hasCordovaBgTimer() ) {
+        new CordovaBgTimerAh(
+          dispatcher = this,
+          modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cBgTimer ),
+        )
+      } else {
+        // TODO Не ясно, надо ли это активировать вообще? Может выкинуть (закомментить) этот контроллер? И его модель-состояние следом.
+        new HtmlBgTimerAh(
+          dispatcher = this,
+          modelRW    = mkLensZoomRW( daemonRW, MScDaemon.htmlBgTimer ),
+        )
+      }
     }
   }
-  private def _hasDaemonSleepTimer = daemonSleepTimerAh != null
 
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
@@ -500,13 +508,13 @@ class Sc3Circuit(
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
 
-    if (_hasDaemonAh) {
+    for (ah <- daemonBgModeAh) {
       acc ::= scDaemonAh
-      acc ::= daemonBgModeAh
+      acc ::= ah
     }
 
-    if (_hasDaemonSleepTimer)
-      acc ::= daemonSleepTimerAh
+    for (ah <- daemonSleepTimerAh)
+      acc ::= ah
 
     // Контроллер для нативного приложения.
     acc ::= menuNativeAppAh
@@ -534,8 +542,8 @@ class Sc3Circuit(
     acc ::= platformAh
 
     // Контроллер нотификаций.
-    if ( _hasNotifyAh )
-      acc ::= notifyAhOrNull
+    for (ah <- notifyAh)
+      acc ::= ah
 
     // События jd-шаблонов в плитке.
     acc ::= jdAh
@@ -574,7 +582,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( LoggingAllActionsProcessor[MScRoot] )
 
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
@@ -605,7 +613,7 @@ class Sc3Circuit(
     // Активировать сборку Bluetooth-маячков:
     _dispatchBleBeaconerOnOff()
     // Активировать поддержку нотификаций:
-    if (_hasNotifyAh) Future {
+    if (notifyAh.nonEmpty) Future {
       val msg = NotifyStartStop(isStart = true)
       this.runEffectAction( msg )
     }
@@ -731,7 +739,7 @@ class Sc3Circuit(
 
       // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
       if (
-        _hasDaemonSleepTimer && (
+        daemonSleepTimerAh.nonEmpty && (
           isUsingNow match {
             // включение: beaconer всегда выключен.
             case true  => bleIsToEnable
@@ -748,7 +756,7 @@ class Sc3Circuit(
 
 
     // Инициализация демонизатора
-    if (_hasDaemonAh) Future {
+    if (daemonBgModeAh.nonEmpty) Future {
       val daemonizerInitA = DaemonizerInit(
         initOpts = Some( MDaemonInitOpts(
           events = MDaemonEvents(

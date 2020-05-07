@@ -1,9 +1,12 @@
 package io.suggest.sjs
 
 import io.suggest.err.ToThrowable
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -11,30 +14,38 @@ import scala.scalajs.js
   * Created: 21.03.2020 0:00
   * Description: Утиль для облегчения взаимодействия с обычным js-api.
   */
-object JsApiUtil {
+object JsApiUtil extends Log {
+
+  /** Безопасный синхронный вызов дял асинхрона. */
+  private def apiCallSyncSafe[T](p: Promise[T])
+                                (f: => Unit): Future[T] = {
+    Try( f )
+      .failed
+      .foreach { ex =>
+        logger.error( ErrorMsgs.NATIVE_API_ERROR, ex, this )
+        p.failure(ex)
+      }
+    p.future
+  }
 
   def call0Fut(f: js.Function0[Unit] => Unit): Future[Unit] = {
     val p = Promise[Unit]()
-    f( () => p.success() )
-    p.future
+    apiCallSyncSafe(p)( f(() => p.success()) )
   }
 
   def call1Fut[T1](f: js.Function1[T1, Unit] => Unit): Future[T1] = {
     val p = Promise[T1]()
-    f( p.success )
-    p.future
+    apiCallSyncSafe(p)( f(p.success) )
   }
 
   def call0ErrFut[E: ToThrowable](f: (js.Function0[Unit], js.Function1[E, Unit]) => Unit): Future[Unit] = {
     val p = Promise[Unit]()
-    f( () => p.success(()), p.failure(_) )
-    p.future
+    apiCallSyncSafe(p)( f(() => p.success(()), p.failure(_)) )
   }
 
   def call1ErrFut[T, E: ToThrowable](f: (js.Function1[T, Unit], js.Function1[E, Unit]) => Unit): Future[T] = {
     val p = Promise[T]()
-    f( p.success, p.failure(_) )
-    p.future
+    apiCallSyncSafe(p)( f(p.success, p.failure(_)) )
   }
 
 }

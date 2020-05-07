@@ -1,5 +1,6 @@
 package io.suggest.sjs
 
+import org.scalajs.dom
 import org.scalajs.dom.raw
 
 import scala.scalajs.js
@@ -20,5 +21,11 @@ package object dom2 {
 
   /** Тип идентификатора watch'ера в Geolocation API. */
   type GeoLocWatchId_t = js.Any
+
+  @inline implicit def domErrorEventExt(domErrorEvent: dom.ErrorEvent): DomErrorEventExt =
+    domErrorEvent.asInstanceOf[DomErrorEventExt]
+
+  @inline implicit def jsErrorExt(jsError: js.Error): JsErrorExt =
+    jsError.asInstanceOf[JsErrorExt]
 
 }

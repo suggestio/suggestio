@@ -29,7 +29,7 @@ import scala.util.Try
   */
 object CordovaLocalNotificationAh {
 
-  import CordovaLocalNotificationlUtil.CNL
+  import CordovaNotificationlLocalUtil.CNL
 
   def circuitDebugInfoSafe() = Try( CNL.launchDetails )
 
@@ -44,7 +44,7 @@ final class CordovaLocalNotificationAh[M](
   with Log
 { ah =>
 
-  import CordovaLocalNotificationlUtil.CNL
+  import CordovaNotificationlLocalUtil.CNL
 
   /** Эффект обновления списка листенеров для нотификаций. */
   private def _updateCnlListenersFx(v0: MCnlNotifierS,
@@ -126,7 +126,7 @@ final class CordovaLocalNotificationAh[M](
         logger.warn( ErrorMsgs.ENDLESS_LOOP_MAYBE, msg = m )
         noChange
 
-      } else if ( m.isStart && CordovaLocalNotificationlUtil.isCnlApiAvailable()) {
+      } else if ( m.isStart && CordovaNotificationlLocalUtil.isCnlApiAvailable()) {
         // Сразу узнать текущее состояние разрешений доступа:
         val fx = NotificationPermAsk(isVisible = false).toEffectPure
         effectOnly( fx )

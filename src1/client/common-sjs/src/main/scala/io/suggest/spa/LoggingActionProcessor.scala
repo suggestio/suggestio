@@ -7,7 +7,6 @@ import io.suggest.log.Log
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 08.11.2019 12:53
-  * Description:
   */
 
 object LoggingAllActionsProcessor extends Log {

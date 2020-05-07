@@ -9,7 +9,7 @@ import io.suggest.dev.MPlatformS
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
-import io.suggest.os.notify.api.cnl.CordovaLocalNotificationlUtil
+import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
 import io.suggest.sc.m.GeoLocOnOff
@@ -528,13 +528,13 @@ class WzFirstDiaAh[M](
     PermissionSpec(
       phase = MWzPhases.NotificationPerm,
       supported = {
-        (platform.isCordova && CordovaLocalNotificationlUtil.isCnlApiAvailable()) ||
+        (platform.isCordova && CordovaNotificationlLocalUtil.isCnlApiAvailable()) ||
         // Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
         (platform.isBrowser && !js.isUndefined(dom.experimental.Notification) && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
       },
       askPermF = {
         if (platform.isCordova) {
-          CordovaLocalNotificationlUtil.hasPermissionState
+          CordovaNotificationlLocalUtil.hasPermissionState
         } else { () =>
           Try {
             Html5PermissionApi.getPermissionState( PermissionName.notifications )
