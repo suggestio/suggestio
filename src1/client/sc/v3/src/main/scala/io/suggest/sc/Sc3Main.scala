@@ -57,8 +57,21 @@ object Sc3Main extends Log {
       Leaflet.noConflict()
     }
 
+    // Активировать отправку логов на сервер, когда js-роутер будет готов.
+    Try {
+      //if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
+        Logging.LOGGERS ::= new SevereFilter(
+          minSeverity = LogSeverities.Log,
+          underlying = new BufLogAppender(
+            underlying =  new RemoteLogAppender,
+          ),
+        )
+    }
+      .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
+
     // Сразу поискать js-роутер на странице.
-    val jsRouterFut = SrvRouter.ensureJsRouter()
+    SrvRouter.ensureJsRouter()
+
     val doc  = DocumentVm()
     val docLoc = doc._underlying.location
 
@@ -132,19 +145,6 @@ object Sc3Main extends Log {
     }
 
     val modules = new Sc3Module
-
-    // Активировать отправку логов на сервер, когда js-роутер будет готов.
-    Try {
-      if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
-        Logging.LOGGERS ::= new SevereFilter(
-          minSeverity = LogSeverities.Log,
-          underlying = new BufLogAppender(
-            underlying =  new RemoteLogAppender,
-          ),
-        )
-    }
-      .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
-
 
     // Отрендерить компонент spa-роутера в целевой контейнер.
     Try {

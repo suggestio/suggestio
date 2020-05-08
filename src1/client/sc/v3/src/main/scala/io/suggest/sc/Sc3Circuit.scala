@@ -432,10 +432,8 @@ class Sc3Circuit(
 
 
   private val notifyAh: Option[HandlerFunction] = {
-    lazy val cordDbgInfo = CordovaLocalNotificationAh.circuitDebugInfoSafe()
-    lazy val html5DbgInfo = Html5NotificationApiAdp.circuitDebugInfoSafe()
-
-    val r: Option[HandlerFunction] = if (CordovaConstants.isCordovaPlatform()) {
+    if (CordovaConstants.isCordovaPlatform()) {
+      // Проверить готовность плагина нельзя: PlatformReady ещё не наступил.
       // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
       Some( new CordovaLocalNotificationAh(
         dispatcher  = this,
@@ -450,14 +448,12 @@ class Sc3Circuit(
       // Тут было LOG.error(), но YandexBot постоянно сыпал этими ошибками на сервер. Поэтому тут просто логгирование для разраба.
       None
     }
-    logger.info("notifyAh = ", msg = (r, cordDbgInfo, html5DbgInfo))
-    r
   }
 
 
   /** Контроллер демона. */
   private val daemonBgModeAh: Option[HandlerFunction] = {
-    if (CordovaConstants.isCordovaPlatform() && CordovaBgModeAh.canDaemonize()) {
+    if (CordovaConstants.isCordovaPlatform()) {
       Some(new CordovaBgModeAh(
         modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cBgMode ),
         dispatcher  = this,

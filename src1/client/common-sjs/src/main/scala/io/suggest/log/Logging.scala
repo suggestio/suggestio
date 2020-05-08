@@ -1,7 +1,8 @@
 package io.suggest.log
 
 import io.suggest.common.html.HtmlConstants
-import io.suggest.msg.{ErrorMsgs}
+import io.suggest.msg.ErrorMsgs
+import io.suggest.spa.DAction
 import org.scalajs.dom
 
 import scala.util.Try
@@ -67,3 +68,7 @@ trait ILogAppender {
   override def toString = getClass.getSimpleName
 
 }
+
+
+/** Экшены для сложных circuit-логгеров. */
+trait ILogAction extends DAction

@@ -1,7 +1,6 @@
 package io.suggest.log.buffered
 
-import io.suggest.log.MLogMsg
-import io.suggest.spa.DAction
+import io.suggest.log.{ILogAction, MLogMsg}
 
 import scala.util.Try
 
@@ -11,7 +10,7 @@ import scala.util.Try
   * Created: 30.04.2020 13:49
   * Description: Экшены буферизатора логов.
   */
-sealed trait IBufLogAppendAction extends DAction
+sealed trait IBufLogAppendAction extends ILogAction
 
 /** Закидывание лог-сообщений в буфер. */
 case class LogAppend( logMsgs: Seq[MLogMsg] ) extends IBufLogAppendAction
