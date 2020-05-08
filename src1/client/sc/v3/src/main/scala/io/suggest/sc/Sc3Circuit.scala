@@ -435,7 +435,7 @@ class Sc3Circuit(
     lazy val cordDbgInfo = CordovaLocalNotificationAh.circuitDebugInfoSafe()
     lazy val html5DbgInfo = Html5NotificationApiAdp.circuitDebugInfoSafe()
 
-    val r: Option[HandlerFunction] = if (CordovaConstants.isCordovaPlatform() && cordDbgInfo.isSuccess) {
+    val r: Option[HandlerFunction] = if (CordovaConstants.isCordovaPlatform()) {
       // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
       Some( new CordovaLocalNotificationAh(
         dispatcher  = this,
@@ -448,11 +448,9 @@ class Sc3Circuit(
       ))
     } else {
       // Тут было LOG.error(), но YandexBot постоянно сыпал этими ошибками на сервер. Поэтому тут просто логгирование для разраба.
-      if (scalajs.LinkingInfo.developmentMode)
-        logger.error( ErrorMsgs.NOTIFICATION_API_UNAVAILABLE, msg = (cordDbgInfo, html5DbgInfo) )
       None
     }
-    logger.info("notifyAh = ", msg = r /*cordDbgInfo, html5DbgInfo)*/ )
+    logger.info("notifyAh = ", msg = (r, cordDbgInfo, html5DbgInfo))
     r
   }
 

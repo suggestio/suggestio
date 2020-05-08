@@ -87,7 +87,8 @@ class CspUtil @Inject() (
           // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
           //objectSrc = Set( Csp.Sources.NONE )
           // service-worker: нужна задать собственный домен
-          workerSrc = Set( Csp.Sources.SELF ),
+          workerSrc = Set.empty + Csp.Sources.SELF,
+          fontSrc   = commonSources,
         ),
         reportOnly = CSP_REPORT_ONLY
       )
@@ -115,7 +116,7 @@ class CspUtil @Inject() (
   object CustomPolicies {
 
     /** CSP-заголовок сайта выдачи. Выдача нуждается в доступе к tile'ам карты. */
-    def PageWithMapboxGl = mkCustomPolicyHdr { p0 =>
+    def PageWithMapboxGl = mkCustomPolicyHdr {
       val mbHost = "https://*.mapbox.com"
       val blob = Csp.Sources.BLOB
 
@@ -125,7 +126,7 @@ class CspUtil @Inject() (
         CspPolicy.scriptSrc.modify(_ + blob + Csp.Sources.UNSAFE_EVAL) andThen
         // Хз, надо ли imgSrc, т.к. она векторная и через XHR свои тайлы получает.
         CspPolicy.imgSrc.modify( _ + mbHost + blob )
-      )(p0)
+      )
     }
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
@@ -137,7 +138,7 @@ class CspUtil @Inject() (
     )
 
     /** Редактор карточек активно работает с "blob:", а quill-editor - ещё и с "data:" . */
-    def AdEdit = mkCustomPolicyHdr { p0 =>
+    def AdEdit = mkCustomPolicyHdr {
       val data = Csp.Sources.DATA
       val addDataF = { s: Set[String] => s + data }
       (
@@ -146,11 +147,11 @@ class CspUtil @Inject() (
         CspPolicy.connectSrc.modify(addDataF) andThen
         // Добавление видео производит манипуляции в DOM с видео.
         CspPolicy.childSrc.modify(addDataF)
-      )(p0)
+      )
     }
 
-    def AdnEdit = mkCustomPolicyHdr { p0 =>
-      CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)(p0)
+    def AdnEdit = mkCustomPolicyHdr {
+      CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)
     }
 
   }

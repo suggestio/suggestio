@@ -133,32 +133,18 @@ object Sc3Main extends Log {
 
     val modules = new Sc3Module
 
+    // Активировать отправку логов на сервер, когда js-роутер будет готов.
     Try {
-
-      println(false, false)
-      def __activateRmeLogger(): Unit = {
-        // Активировать отправку логов на сервер, когда js-роутер будет готов.
-        Try {
-          if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
-            Logging.LOGGERS ::= new SevereFilter(
-              minSeverity = LogSeverities.Log,
-              underlying = new BufLogAppender(
-                underlying =  new RemoteLogAppender,
-              ),
-            )
-        }
-          .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
-      }
-
-      if (jsRouterFut.isCompleted) {
-        __activateRmeLogger()
-      } else {
-        jsRouterFut.andThen { case _ =>
-          __activateRmeLogger()
-        }
-      }
+      if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
+        Logging.LOGGERS ::= new SevereFilter(
+          minSeverity = LogSeverities.Log,
+          underlying = new BufLogAppender(
+            underlying =  new RemoteLogAppender,
+          ),
+        )
     }
-      .logFailure( ErrorMsgs.LOG_APPENDER_FAIL, jsRouterFut )
+      .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
+
 
     // Отрендерить компонент spa-роутера в целевой контейнер.
     Try {
