@@ -74,11 +74,10 @@ class CspUtil @Inject() (
           // Бывают XHR-коннекты через CDN, например GeoJSON для точек на карте выдачи.
           connectSrc  = {
             val wsProto = HttpConst.Proto.wsOrWss( contextUtil.HTTPS_ENABLED )
-            commonSources ++ Seq(
+            commonSources +
               // Разрешить веб-сокеты в same-origin.
-              s"$wsProto://${contextUtil.HOST_PORT}",
+              s"$wsProto://${contextUtil.HOST_PORT}" +
               s"$wsProto://$nodesWildcard"
-            )
           },
           reportUri = Some( contextUtil.SC_URL_PREFIX + routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
@@ -105,9 +104,7 @@ class CspUtil @Inject() (
   def mkCustomPolicyHdr(updatePolicyF: CspPolicy => CspPolicy): Option[(String, String)] = {
     CSP_DFLT_OPT
       .flatMap { csp0 =>
-        val csp1 = csp0.withPolicy(
-          updatePolicyF( csp0.policy )
-        )
+        val csp1 = CspHeader.policy.modify(updatePolicyF)(csp0)
         csp1.headerOpt
       }
   }
@@ -122,31 +119,38 @@ class CspUtil @Inject() (
       val mbHost = "https://*.mapbox.com"
       val blob = Csp.Sources.BLOB
 
-      p0.addDefaultSrc( blob )
-        .addConnectSrc( mbHost )
-        .addScriptSrc( blob, Csp.Sources.UNSAFE_EVAL )
+      (
+        CspPolicy.defaultSrc.modify(_ + blob) andThen
+        CspPolicy.connectSrc.modify(_ + mbHost) andThen
+        CspPolicy.scriptSrc.modify(_ + blob + Csp.Sources.UNSAFE_EVAL) andThen
         // Хз, надо ли imgSrc, т.к. она векторная и через XHR свои тайлы получает.
-        .addImgSrc( mbHost, blob )
+        CspPolicy.imgSrc.modify( _ + mbHost + blob )
+      )(p0)
     }
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
-    def PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )
+    def PageWithOsmLeaflet = mkCustomPolicyHdr( CspPolicy.allowOsmLeaflet )
 
     /** Страницы содержат Umap-карту на базе Leaflet. */
-    def Umap = mkCustomPolicyHdr( _.allowUmap )
+    def Umap = mkCustomPolicyHdr(
+      CspPolicy.allowUmap
+    )
 
     /** Редактор карточек активно работает с "blob:", а quill-editor - ещё и с "data:" . */
     def AdEdit = mkCustomPolicyHdr { p0 =>
-      val DATA = Csp.Sources.DATA
-      p0.addImgSrc( Csp.Sources.BLOB, DATA )
+      val data = Csp.Sources.DATA
+      val addDataF = { s: Set[String] => s + data }
+      (
+        CspPolicy.imgSrc.modify(addDataF andThen (_ + Csp.Sources.BLOB)) andThen
         // Хз зачем, но добавление картинок в quill без этого ругается в логи (хотя и работает).
-        .addConnectSrc( DATA )
+        CspPolicy.connectSrc.modify(addDataF) andThen
         // Добавление видео производит манипуляции в DOM с видео.
-        .addChildSrc( DATA )
+        CspPolicy.childSrc.modify(addDataF)
+      )(p0)
     }
 
     def AdnEdit = mkCustomPolicyHdr { p0 =>
-      p0.addImgSrc( Csp.Sources.BLOB )
+      CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)(p0)
     }
 
   }

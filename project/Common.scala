@@ -325,8 +325,9 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.8"
-  val diodeReactVsn = /*diodeVsn*/ "1.1.7" + "." + reactSjsVsn.replaceAllLiterally(".", "")
+  val diodeVsn = "1.1.7"
+  // 1.1.8 - требуется sjs-1.0, иначе какая ругань при clean-сборке.
+  val diodeReactVsn = diodeVsn + "." + reactSjsVsn.replaceAllLiterally(".", "")
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]

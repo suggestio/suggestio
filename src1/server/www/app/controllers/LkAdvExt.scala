@@ -7,7 +7,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtServices
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.n2.node.MNodes
-import io.suggest.sec.csp.Csp
+import io.suggest.sec.csp.{Csp, CspPolicy}
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
@@ -82,13 +82,15 @@ class LkAdvExt @Inject() (
       }
 
       val allSrcs = allSrcsIter.toList
+      val plusAllSrcsF = { s: Set[String] => s ++ allSrcs }
 
-      csp0
-        .addDefaultSrc( allSrcs: _* )
-        .addScriptSrc( Csp.Sources.UNSAFE_EVAL :: Csp.Sources.UNSAFE_INLINE :: allSrcs: _* )
-        .addImgSrc( allSrcs: _* )
-        .addConnectSrc( allSrcs: _* )
-        .addStyleSrc( allSrcs: _* )
+      (
+        CspPolicy.defaultSrc.modify( plusAllSrcsF ) andThen
+        CspPolicy.scriptSrc.modify(_ ++ (Csp.Sources.UNSAFE_EVAL :: Csp.Sources.UNSAFE_INLINE :: allSrcs)) andThen
+        CspPolicy.imgSrc.modify( plusAllSrcsF ) andThen
+        CspPolicy.connectSrc.modify( plusAllSrcsF ) andThen
+        CspPolicy.styleSrc.modify( plusAllSrcsF )
+      )(csp0)
     }
   }
 

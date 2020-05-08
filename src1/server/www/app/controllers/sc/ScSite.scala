@@ -30,6 +30,7 @@ import util.showcase.IScUtil
 import util.stat.IStatUtil
 import OptionUtil.BoolOptOps
 import io.suggest.es.model.EsModelDi
+import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc._
 
 import scala.concurrent.Future
@@ -266,12 +267,14 @@ trait ScSite
   }
 
 
-  private val cspV3 = cspUtil.mkCustomPolicyHdr { pol0 =>
-    pol0
-      .allowOsmLeaflet
-      .jsUnsafeInline
-      .styleUnsafeInline
-  }
+  private val cspV3 = cspUtil.mkCustomPolicyHdr(
+    CspPolicy.allowOsmLeaflet andThen
+    CspPolicy.jsUnsafeInline andThen
+    CspPolicy.styleUnsafeInline andThen
+    // data: для fonts. Почему-то валятся csp-отчёты о необходимости этого в выдаче.
+    CspPolicy.fontSrc.modify(_ + Csp.Sources.DATA)
+  )
+
 
 
   /** Реализация SiteLogic для v3-выдачи на базе react с client-side рендером. */

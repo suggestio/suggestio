@@ -194,15 +194,12 @@ class Static @Inject() (
       bruteForceProtect {
         maybeAuth().async( _cspJsonBp ) { implicit request =>
           // Залить ошибку в MStat.
-
           val requestBodyStr = request.body.toString()
-          LOGGER.info(s"$logPrefix From ip#${request.remoteClientAddress} Body:\n $requestBodyStr")
-
           request.body.validate( cspUtil.WRAP_REPORT_READS ).fold(
             // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
             {violations =>
               val msg = s"Invalid JSON: ${violations.mkString(", ")}"
-              LOGGER.warn(s"$logPrefix $msg")
+              LOGGER.warn(s"$logPrefix $msg\n---------\n${Json.prettyPrint(request.body)}")
               errorHandler.onClientError(request, BAD_REQUEST, msg)
             },
 
@@ -225,12 +222,17 @@ class Static @Inject() (
                   override def statActions = Nil
                   override def userSaOpt = _userSaOpt
 
-                  override def diag = MDiag(
-                    message = Some( requestBodyStr )
-                  )
+                  override def diag = {
+                    if (statUtil.SAVE_GARBAGE_TO_MSTAT)
+                      MDiag(
+                        message = Some( requestBodyStr )
+                      )
+                    else
+                      MDiag.empty
+                  }
                 }
 
-                r <- statUtil.maybeSaveGarbageStat( stat2 )
+                r <- statUtil.maybeSaveGarbageStat( stat2, logTail = Json.prettyPrint(request.body) )
 
               } yield {
                 LOGGER.trace(s"$logPrefix Saved csp-report -> $r")

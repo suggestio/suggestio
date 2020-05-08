@@ -24,7 +24,7 @@ import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.csp.Csp
+import io.suggest.sec.csp.{Csp, CspPolicy}
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.streams.JioStreamsUtil
@@ -135,8 +135,9 @@ class Ident @Inject() (
 
   /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */
   private def CSP_HDR_OPT: Option[(String, String)] = {
-    cspUtil
-      .mkCustomPolicyHdr( _.addImgSrc( Csp.Sources.BLOB ) )
+    cspUtil.mkCustomPolicyHdr(
+      CspPolicy.imgSrc.modify( _ + Csp.Sources.BLOB )
+    )
   }
 
   /** Страница с отдельной формой логина по имени-паролю.
