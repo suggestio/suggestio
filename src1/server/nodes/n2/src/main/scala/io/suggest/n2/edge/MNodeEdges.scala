@@ -241,7 +241,7 @@ final case class MNodeEdges(
     out
       .iterator
       .zipWithIndex
-      .find(_._2 == i)
+      .find(_._2 ==* i)
       .map(_first)
   }
 
@@ -251,7 +251,7 @@ final case class MNodeEdges(
       .iterator
       .zipWithIndex
       .flatMap { case (e, x) =>
-        if (x == i) {
+        if (x ==* i) {
           f(e)
         } else {
           e :: Nil

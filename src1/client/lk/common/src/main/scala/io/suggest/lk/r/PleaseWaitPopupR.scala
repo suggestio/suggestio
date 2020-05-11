@@ -48,7 +48,8 @@ object PleaseWaitPopupR {
     }
   }
 
-  val component = ScalaComponent.builder[Props]("PleaseWaitPopup")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

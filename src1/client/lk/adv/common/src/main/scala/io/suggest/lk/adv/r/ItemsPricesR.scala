@@ -208,7 +208,8 @@ object ItemsPricesR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ItemsPrices")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

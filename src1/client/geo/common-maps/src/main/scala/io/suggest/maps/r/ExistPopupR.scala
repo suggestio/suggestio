@@ -115,7 +115,8 @@ object ExistPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("GeoAdvExistPop")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

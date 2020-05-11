@@ -53,7 +53,8 @@ object LamPopupsR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("LamPops")
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName )
     .initialStateFromProps { mrootProxy =>
       State(
         popContPropsC = mrootProxy.connect { mroot =>

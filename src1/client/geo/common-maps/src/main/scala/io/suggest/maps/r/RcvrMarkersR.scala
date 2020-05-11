@@ -253,7 +253,8 @@ object RcvrMarkersR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("RcvrMarkers")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackendWithChildren[Backend]
     // Тут мега-трэш-код, т.к. есть проблемы с дженериком состояния и отсутствующим FastEq[S].

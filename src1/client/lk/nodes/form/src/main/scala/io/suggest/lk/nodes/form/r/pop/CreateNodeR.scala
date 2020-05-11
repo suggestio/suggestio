@@ -189,7 +189,8 @@ class CreateNodeR {
 
   }
 
-  val component = ScalaComponent.builder[Props]("CreateNodePop")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

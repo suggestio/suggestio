@@ -9,7 +9,8 @@ import japgolly.scalajs.react.ScalaComponent
 /** Компонент внешнего контейнера виджета. */
 object DtpCont {
 
-  val component = ScalaComponent.builder[Unit]("DtpCont")
+  val component = ScalaComponent
+    .builder[Unit]( getClass.getSimpleName )
     .stateless
     .render_C { children =>
       // Контейнер виджета

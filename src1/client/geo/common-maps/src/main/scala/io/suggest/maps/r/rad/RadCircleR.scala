@@ -13,6 +13,8 @@ import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.leaflet.event.MouseEvent
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -32,10 +34,10 @@ object RadCircleR {
   /** Поддержка FastEq для this.PropsVal. */
   implicit object RadCirclePropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.centerGeoPoint eq b.centerGeoPoint) &&
-        (a.radiusM == b.radiusM) &&
-        (a.centerDragging == b.centerDragging) &&
-        (a.radiusDragging == b.radiusDragging)
+      (a.centerGeoPoint ===* b.centerGeoPoint) &&
+        (a.radiusM ==* b.radiusM) &&
+        (a.centerDragging ==* b.centerDragging) &&
+        (a.radiusDragging ==* b.radiusDragging)
     }
   }
 
@@ -101,7 +103,8 @@ object RadCircleR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("RadCircle")
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

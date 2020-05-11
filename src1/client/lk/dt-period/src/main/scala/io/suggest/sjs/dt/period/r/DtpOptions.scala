@@ -172,7 +172,8 @@ object DtpOptions {
   }
 
 
-  val component = ScalaComponent.builder[Props]("DtpOptions")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { props =>
       State(
         qapConn             = props.connect(_.info.quickAdvPeriod),

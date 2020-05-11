@@ -3,12 +3,11 @@ package io.suggest.pick
 import io.suggest.bin.BinaryUtil
 import io.suggest.common.uuid.LowUuidUtil
 import org.scalajs.dom.{Blob, FileReader, UIEvent}
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.URIUtils
-import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArray, Uint8Array}
 
 /**
@@ -169,7 +168,7 @@ object JsBinaryUtil {
       if (nInIdx < nInLen) {
         nMod4 = nInIdx & 3
         nUint24 |= BinaryUtil.b64ToUint6(cleanBase64.charAt(nInIdx).toInt) << 18 - 6 * nMod4
-        if (nMod4 == 3 || nInLen - nInIdx == 1) {
+        if ((nMod4 ==* 3) || (nInLen - nInIdx ==* 1)) {
           @tailrec
           def _loop1(nMode3: Int = 0): Unit = {
             if (nMode3 < 3 && nOutIdx < nOutLen) {

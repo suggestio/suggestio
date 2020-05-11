@@ -52,7 +52,8 @@ class OneRowR {
     }
   }
 
-  val component = ScalaComponent.builder[Props]("OneRow")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { props =>
       val inputId = props.nameCode

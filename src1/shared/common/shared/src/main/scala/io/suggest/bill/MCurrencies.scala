@@ -2,7 +2,7 @@ package io.suggest.bill
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -44,7 +44,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def sioPaymentAmountMinUnits: Amount_t = 5
   }
 
-  def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
+  def withIso4217Option(code: Int) = values.find(_.iso4217 ==* code)
 
   override val values = findValues
 

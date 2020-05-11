@@ -4,6 +4,7 @@ import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.bill._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MsgCodes
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -21,7 +22,7 @@ object MPaySystems extends StringEnum[MPaySystem] {
     override def supportedCurrency(currency: MCurrency): Option[ICurrencyPayInfo] = {
       // Поддерживаются только рубли.
       val rub = MCurrencies.RUB
-      OptionUtil.maybe( currency == rub ) {
+      OptionUtil.maybe( currency ==* rub ) {
         val centsInRub = rub.centsInUnit
         MCurrencyPayInfo(
           currency              = rub,

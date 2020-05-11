@@ -37,7 +37,8 @@ object MapCursorR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("NodeMarker")
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
         mRadTOptC = p.connect { radOpts =>

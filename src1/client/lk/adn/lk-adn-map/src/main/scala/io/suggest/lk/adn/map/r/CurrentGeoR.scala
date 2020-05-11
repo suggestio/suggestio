@@ -45,7 +45,8 @@ object CurrentGeoR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("CurrentGeo")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mcgProxy =>
       State(
         geoJsonC = mcgProxy.connect(_.geoJson),

@@ -1,5 +1,7 @@
 package io.suggest.common.radio
 
+import japgolly.univeq._
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -32,7 +34,7 @@ object RadioUtil {
 
       // 2016.nov.25: Всплыла проблема с eddystone-маячками от MS.spb.ru:
       // Они сообщают неправильный txpower: -61 dBM в качестве rssi0 (забыли перекалибровать, т.к. ibeacon 1 метр -61 dbm).
-      val rssi0Fixed = if (distance0m == 0 && rssi0 < -60) {
+      val rssi0Fixed = if ((distance0m ==* 0) && (rssi0 < -60)) {
         -24
       } else {
         rssi0

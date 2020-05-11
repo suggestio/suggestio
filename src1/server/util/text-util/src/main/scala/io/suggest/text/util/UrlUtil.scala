@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import scala.collection.SortedSet
 import scala.collection.immutable.ArraySeq
 import scala.util.matching.Regex
+import japgolly.univeq._
 
 
 /**
@@ -142,7 +143,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     // and baseUrl doen not end with a '/'.
 
     try {
-      val url = if (!relativeUrl.startsWith("?") || baseUrl.getPath.length == 0 || baseUrl.getPath.endsWith("/") )
+      val url = if (!relativeUrl.startsWith("?") || (baseUrl.getPath.length ==* 0) || baseUrl.getPath.endsWith("/") )
         new URL(baseUrl, relativeUrl)
       else
         new URL(baseUrl.getProtocol, baseUrl.getHost, baseUrl.getPort, baseUrl.getPath + relativeUrl)
@@ -173,7 +174,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
 
     result.append(host)
     val port = url.getPort
-    if (port > 0 && port != url.getDefaultPort) {
+    if (port > 0 && (port !=* url.getDefaultPort)) {
       result.append(':').append(port)
     }
     result.toString()
@@ -197,7 +198,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     humanizeUrlHost(host, sb)
     humanizeUrlPort(url, sb)
     val file = url.getFile
-    if (file != null && !file.isEmpty && file != "/") {
+    if (file != null && !file.isEmpty && (file !=* "/")) {
       humanizeUrlFile(file, sb)
     }
     sb.toString()
@@ -226,7 +227,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
 
   private def humanizeUrlPort(url: URL, sb: StringBuilder): Unit = {
     val port = url.getPort
-    if (port > 0 && port != url.getDefaultPort) {
+    if (port > 0 && (port !=* url.getDefaultPort)) {
       sb.append(":").append(port)
     }
   }
@@ -273,7 +274,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
           '+'
         else if (cp >= 0x007F)
           encodeCodePoint(cp)
-        else if (cp < 0x0020 || reservedChars.indexOf(c) != -1)
+        else if (cp < 0x0020 || (reservedChars.indexOf(c) !=* -1))
           formatPc(cp)
         else
           c
@@ -366,7 +367,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     if (newPath.isEmpty)
       "/"
     else {
-      if (path.endsWith("/") && newPath.charAt(newPath.length -1) != '/')
+      if ((path endsWith "/") && (newPath.charAt(newPath.length -1) !=* '/'))
         newPath.append('/')
       newPath.toString()
     }
@@ -379,7 +380,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @return
    */
   def normalizeQuery(query: String) : String = {
-    if (query == null || query == "")
+    if ((query == null) || (query ==* ""))
       return ""
 
     // Разбить строку по &. Для каждого элемента выполнить функцию нормализацию, кот. генерит токены '&','asd','=','1'
@@ -387,7 +388,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     // Вместо sort+distinct используем SortedSet как более быструю замену usort.
     val resultSb = SortedSet( ArraySeq.unsafeWrapArray(query.split('&')) : _* )
       .foldLeft(new StringBuilder) { (sb, queryPart) =>
-        if (queryPart.length == 0 || QS_BAD_KEY_PATTERN.matcher(queryPart).find)
+        if ((queryPart.length ==* 0) || QS_BAD_KEY_PATTERN.matcher(queryPart).find)
           sb
         else {
           // Есть ли знак '=' в данном qs?
@@ -457,13 +458,13 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     }
 
     val proto = testUrl.getProtocol.toLowerCase
-    if (proto != "http" && proto != "https")
+    if ((proto !=* "http") && (proto !=* "https"))
       return result
 
     val hostname = normalizeHostname(testUrl.getHost)
 
     var port = testUrl.getPort
-    if (port == testUrl.getDefaultPort)
+    if (port ==* testUrl.getDefaultPort)
       port = -1
 
     val path = normalizePath(testUrl.getPath)
@@ -476,7 +477,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
       urlRest.append('?').append(query)
 
     testUrl.getRef match {
-      case ref:String if ref.length > 0 && ref.head == '!'  =>
+      case ref: String if ref.length > 0 && (ref.head ==* '!')  =>
         urlRest.append('#').append(ref)
 
       case _ =>

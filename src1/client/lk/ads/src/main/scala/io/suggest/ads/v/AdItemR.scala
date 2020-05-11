@@ -180,7 +180,8 @@ class AdItemR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("MLkAdItem")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )

@@ -28,7 +28,8 @@ object RadMapControlsR {
                             )
 
 
-  val component = ScalaComponent.builder[Props]("Rad")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     // Собрать начальное состояние.
     .initialStateFromProps { mradOptProxy =>
       State(

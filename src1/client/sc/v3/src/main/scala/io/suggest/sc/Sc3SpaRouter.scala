@@ -16,6 +16,7 @@ import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import japgolly.scalajs.react.React
+import japgolly.univeq._
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -59,7 +60,7 @@ class Sc3SpaRouter(
                 Nil
               } else {
                 kvStr.split('=') match {
-                  case arr if arr.length == 2 =>
+                  case arr if arr.length ==* 2 =>
                     val arr2 = arr.iterator
                       .map(URIUtils.decodeURIComponent)
                     val k2 = arr2.next()

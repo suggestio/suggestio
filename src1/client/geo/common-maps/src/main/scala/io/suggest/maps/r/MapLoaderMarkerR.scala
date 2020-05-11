@@ -16,7 +16,7 @@ import io.suggest.maps.u.{MapIcons, MapsUtil}
 object MapLoaderMarkerR {
 
   val component = ScalaComponent
-    .builder[ModelProxy[Option[MGeoPoint]]]("LoaderMarker")
+    .builder[ModelProxy[Option[MGeoPoint]]]( getClass.getSimpleName )
     .stateless
     .render_P { geoPointOptProxy =>
       geoPointOptProxy.value.whenDefinedEl { mgp =>

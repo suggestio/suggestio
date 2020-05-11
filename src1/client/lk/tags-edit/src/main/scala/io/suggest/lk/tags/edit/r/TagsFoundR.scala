@@ -118,7 +118,8 @@ object TagsFoundR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("TagsFound")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

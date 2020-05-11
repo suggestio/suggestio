@@ -54,7 +54,8 @@ object LamRcvrsR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("LamRcvrs")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
         nodesRespPotC = p.connect(_.nodesResp),

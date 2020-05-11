@@ -2,7 +2,7 @@ package io.suggest.jd.tags.qd
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -24,7 +24,7 @@ object MQdScripts extends StringEnum[MQdScript] {
   override val values = findValues
 
   def withQuillNameOpt(quillName: String): Option[MQdScript] = {
-    values.find(_.quillName == quillName)
+    values.find(_.quillName ==* quillName)
   }
 
 }

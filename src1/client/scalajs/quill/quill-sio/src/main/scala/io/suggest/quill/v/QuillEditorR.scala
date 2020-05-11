@@ -108,7 +108,8 @@ class QuillEditorR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("TextEd")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

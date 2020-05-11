@@ -17,6 +17,7 @@ import japgolly.scalajs.react.raw.React
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -33,6 +34,7 @@ class ContentLayersR(
                        isQdBl   : Boolean,
                      )
     extends UseValueEq
+  @inline implicit def univEq: UnivEq[PropsVal] = UnivEq.derive
 
 
   type Props_t = Option[PropsVal]

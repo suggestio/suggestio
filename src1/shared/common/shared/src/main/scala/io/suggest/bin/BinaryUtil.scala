@@ -1,6 +1,7 @@
 package io.suggest.bin
 
 import java.nio.ByteBuffer
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -24,7 +25,7 @@ object BinaryUtil {
     * @return Целое знаковое.
     */
   def littleEndianToInt8(x: Int): Int = {
-    if ( (x & 0x80) != 0 ) x - 256 else x
+    if ( (x & 0x80) !=* 0 ) x - 256 else x
   }
 
 
@@ -39,9 +40,9 @@ object BinaryUtil {
       nChr - 71
     } else if (nChr > 47 && nChr < 58) {
       nChr + 4
-    } else if (nChr == 43) {
+    } else if (nChr ==* 43) {
       62
-    } else if (nChr == 47) {
+    } else if (nChr ==* 47) {
       63
     } else {
       0

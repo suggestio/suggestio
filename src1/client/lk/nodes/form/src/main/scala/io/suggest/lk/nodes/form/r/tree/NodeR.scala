@@ -662,7 +662,8 @@ class NodeR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Node")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate )

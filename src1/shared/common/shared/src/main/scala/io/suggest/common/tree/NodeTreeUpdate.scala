@@ -1,6 +1,7 @@
 package io.suggest.common.tree
 
 import io.suggest.adv.rcvr.RcvrKey
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -51,7 +52,7 @@ trait NodeTreeUpdate extends NodesTreeApi {
     nodes
       .iterator
       .flatMap { node =>
-        if ( _nodeIdOf(node) == rcvrKey.head ) {
+        if ( _nodeIdOf(node) ==* rcvrKey.head ) {
           // Этот элемент подходит под ключ. Значит, надо погружаться в него.
           flatMapSubNode(rcvrKey.tail, node)(updateF)
         } else {

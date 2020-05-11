@@ -15,6 +15,7 @@ import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import play.api.Configuration
 import play.api.inject.Injector
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
@@ -103,7 +104,7 @@ final class IpgbImporter @Inject() (
           } finally {
             in.close()
           }
-          val result = magic == ARCHIVE_MAGIC_NUMBER
+          val result = (magic ==* ARCHIVE_MAGIC_NUMBER)
           LOGGER.trace(s"download(): Testing fetched file ${archiveFile.getAbsolutePath}: $result")
           result
         }
@@ -132,7 +133,7 @@ final class IpgbImporter @Inject() (
     val cmdArgs = Array[String]("unzip", "-d", dir.getAbsolutePath, archiveFile.getAbsolutePath)
     val p = Runtime.getRuntime.exec(cmdArgs)
     val result = p.waitFor()
-    if (result != 0) {
+    if (result !=* 0) {
       throw new RuntimeException("Failed to unpack archive: return code = " + result)
     }
     dir
@@ -303,7 +304,7 @@ final class IpgbImporter @Inject() (
             } else {
               LOGGER.warn(s"${logPrefix}Failed to parse line $counter file=${citiesFile.getAbsolutePath}:\n$cityLine\n$pr")
             }
-            if (counter % 500 == 0)
+            if ((counter % 500) ==* 0)
               LOGGER.trace(s"${logPrefix}Still importing... ($counter)")
             counter + 1
           }
@@ -355,7 +356,7 @@ final class IpgbImporter @Inject() (
             } else {
               LOGGER.warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
             }
-            if (counter % 20000 == 0)
+            if ((counter % 20000) ==* 0)
               LOGGER.trace(s"$logPrefix Still converting... ($counter)")
             counter + 1
           }

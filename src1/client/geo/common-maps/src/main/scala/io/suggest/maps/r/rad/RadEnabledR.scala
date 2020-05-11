@@ -72,7 +72,8 @@ object RadEnabledR {
 
   }
 
-  val component = ScalaComponent.builder[Props]("RadEnabled")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

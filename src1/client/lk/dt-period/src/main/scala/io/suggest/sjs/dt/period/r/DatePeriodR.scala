@@ -22,7 +22,8 @@ object DatePeriodR {
                     dateRangeConn     : ReactConnectProxy[MRangeYmd]
                   )
 
-  val component = ScalaComponent.builder[Props]("DatePeriod")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { props =>
       State(
         dateRangeConn = props.connect { r =>

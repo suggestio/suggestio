@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import enumeratum._
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -96,7 +96,7 @@ object MNodeGeoLevels extends Enum[MNodeGeoLevel] {
 
 
   def withIdOption(id: Int): Option[MNodeGeoLevel] = {
-    values.find(_.id == id)
+    values.find(_.id ==* id)
   }
 
 }

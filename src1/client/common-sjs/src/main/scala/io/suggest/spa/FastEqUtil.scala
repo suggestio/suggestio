@@ -53,9 +53,10 @@ object FastEqUtil {
   }
 
 
-  implicit def AnyValueEq[T] = {
+  implicit def AnyValueEq[T: UnivEq]: FastEq[T] = {
     new FastEq[T] {
-      override def eqv(a: T, b: T) = a == b
+      override def eqv(a: T, b: T) =
+        a ==* b
     }
   }
 

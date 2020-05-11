@@ -2,7 +2,7 @@ package io.suggest.text
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 
@@ -44,7 +44,7 @@ object MTextAligns extends StringEnum[MTextAlign] {
   /** Поиск по возможному quill-идентификатору (аттрибут align) */
   def withQuillNameOpt(quillName: Option[String]): Option[MTextAlign] = {
     values
-      .find { _.quillName == quillName }
+      .find { _.quillName ==* quillName }
   }
 
   def withQuillName(quillName: String): Option[MTextAlign] = {

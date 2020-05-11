@@ -54,7 +54,8 @@ object TagsExistsR {
 
   }
 
-  val component = ScalaComponent.builder[Props]("TagsExist")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

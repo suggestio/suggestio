@@ -71,7 +71,8 @@ object RadR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("Rad")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mradOptProxy =>
       State(
         mRadTC = mradOptProxy.connect(identity),

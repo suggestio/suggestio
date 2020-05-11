@@ -67,7 +67,8 @@ object Adv4FreeR {
 
   }
 
-  val component = ScalaComponent.builder[Props]("Adv4Free")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       // Коннекшен каждый раз генерит новый инстанс Option[Boolean], но это оптимизируется с помощью ValueEq O(1):
       // теперь паразитный рендер подавляется, несмотря на постоянную пересборку результата zoom-функции.

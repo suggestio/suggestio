@@ -8,6 +8,8 @@ import javax.inject.{Inject, Singleton}
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.ArrayUtils
 import play.api.inject.Injector
+import japgolly.univeq._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -48,7 +50,7 @@ final class CipherUtil @Inject() (
   ) {
 
     private def mixWithIvDflt(iv0: Array[Byte]): Array[Byte] = {
-      val longIv = if (iv0.length == 0)
+      val longIv = if (iv0.length ==* 0)
         IV_MATERIAL_DFLT
       else
         ArrayUtils.addAll(iv0, IV_MATERIAL_DFLT: _*)

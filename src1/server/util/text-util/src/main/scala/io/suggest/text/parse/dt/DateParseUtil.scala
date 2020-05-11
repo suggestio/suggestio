@@ -7,6 +7,7 @@ import java.util.Locale
 import io.suggest.common.coll.Lists
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
 
 import scala.collection.mutable
 import scala.util.matching.Regex
@@ -104,7 +105,7 @@ object DateParseUtil extends MacroLogsImpl {
     val (re, replace) = patternAndReplace
     re.findAllIn(text).foldLeft(acc0) { (_acc, _matched) =>
       re.replaceFirstIn(_matched, replace).split(' ') match {
-        case _dtokens if _dtokens.length == 3 =>
+        case _dtokens if (_dtokens.length ==* 3) =>
           try {
             // Сначала попытаться распарсить месяц. Это снизит вероятность экзепшена внутри try, т.е. ускорит работу.
             parseMonthF(_dtokens(1)) match {

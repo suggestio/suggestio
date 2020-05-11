@@ -8,6 +8,7 @@ import scala.collection.{AbstractIterable, AbstractIterator}
 import scala.collection.immutable.AbstractSeq
 import scalaz.{Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
+import japgolly.univeq._
 
 import scala.language.higherKinds
 import scala.util.parsing.combinator.Parsers
@@ -182,7 +183,7 @@ object ScalazUtil {
       def asSeq: Seq[T] = {
         new AbstractSeq[T] {
           override def apply(idx: Int): T = {
-            val elOpt = iterator.zipWithIndex.find(_._2 == idx)
+            val elOpt = iterator.zipWithIndex.find(_._2 ==* idx)
             elOpt.fold {
               throw new IndexOutOfBoundsException(s"No such index $idx for IList of size $length.")
             }(_._1)

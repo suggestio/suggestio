@@ -168,7 +168,8 @@ object AdvGeoFormR {
   }
 
 
-  protected val component = ScalaComponent.builder[Props]("AdvGeoForm")
+  protected val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       val mradOptZoomF = { r: MRoot => r.rad }
       val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )

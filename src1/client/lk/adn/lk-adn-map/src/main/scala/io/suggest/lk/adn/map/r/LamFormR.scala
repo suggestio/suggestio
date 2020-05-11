@@ -117,7 +117,8 @@ object LamFormR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("LamForm")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
       State(

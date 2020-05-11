@@ -41,7 +41,8 @@ class NodeMenuR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("NodeMenu")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

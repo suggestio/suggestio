@@ -37,7 +37,8 @@ object TagAddBtnR {
 
   }
 
-  val component = ScalaComponent.builder[Props]("TagAddBtn")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

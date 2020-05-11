@@ -93,7 +93,8 @@ object PriceR {
     }
   }
 
-  val component = ScalaComponent.builder[Props]("PriceWdgt")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
         pricePotConn = p.connect(_.resp)

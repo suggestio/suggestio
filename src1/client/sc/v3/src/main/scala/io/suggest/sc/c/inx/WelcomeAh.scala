@@ -5,6 +5,7 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick, WcTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -72,7 +73,7 @@ class WelcomeAh[M](
       _nextPhase
 
     case m: WcTimeOut =>
-      if (value.exists(_.timerTstamp == m.timestamp))
+      if (value.exists(_.timerTstamp ==* m.timestamp))
         _nextPhase
       else
         noChange

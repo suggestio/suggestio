@@ -2,6 +2,8 @@ package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
 import diode.data.Pot
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -16,10 +18,10 @@ object MCreateNodeS {
 
   implicit object MCreateNodeSFastEq extends FastEq[MCreateNodeS] {
     override def eqv(a: MCreateNodeS, b: MCreateNodeS): Boolean = {
-      (a.name eq b.name) &&
-        (a.nameValid == b.nameValid) &&
-        (a.id eq b.id) &&
-        (a.idValid == b.idValid) &&
+      (a.name ===* b.name) &&
+        (a.nameValid ==* b.nameValid) &&
+        (a.id ===* b.id) &&
+        (a.idValid ==* b.idValid) &&
         (a.saving eq b.saving)
     }
   }

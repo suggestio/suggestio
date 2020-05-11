@@ -113,7 +113,8 @@ object ExistAdvGeoShapesR extends Log {
 
   }
 
-  val component = ScalaComponent.builder[Props]("ExistAdvGeoShapes")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

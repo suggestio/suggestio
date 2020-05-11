@@ -20,7 +20,8 @@ object YmdR {
   }
 
 
-  val component = ScalaComponent.builder[MYmd]("Ymd")
+  val component = ScalaComponent
+    .builder[MYmd]( getClass.getSimpleName )
     .stateless
     .renderPC { (_, mYmd, pc) =>
       <.span(

@@ -49,7 +49,8 @@ object RadPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("RadPopup")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

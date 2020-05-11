@@ -24,7 +24,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 object DtpResult {
 
   /** Статическая визуальная обёртка для [[DtpResult]].component. */
-  val Outer = ScalaComponent.builder[Unit]("DtpResOut")
+  val Outer = ScalaComponent
+    .builder[Unit]( getClass.getSimpleName + "Outer" )
     .stateless
     .render_C { propsChildren =>
       <.div(
@@ -44,7 +45,8 @@ object DtpResult {
   type Props = ModelProxy[MRangeYmd]
 
   // Этот компонент надо использовать через proxy.connect().
-  val component = ScalaComponent.builder[Props]("DtpRes")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { p =>
       val v = p()

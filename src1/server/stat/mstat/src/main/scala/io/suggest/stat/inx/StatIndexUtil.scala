@@ -12,6 +12,7 @@ import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import org.threeten.extra.Interval
 import play.api.inject.Injector
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -96,7 +97,7 @@ final class StatIndexUtil @Inject() (
         val aliasesCount = aliasedNames.size
         if (aliasesCount <= 0) {
           None
-        } else if (aliasesCount == 1) {
+        } else if (aliasesCount ==* 1) {
           Some( aliasedNames.head )
         } else {
           aliasedNames.toSeq.sorted.lastOption
@@ -182,7 +183,7 @@ final class StatIndexUtil @Inject() (
         for (latestDtOpt <- mStatsTmp.findMaxTimestamp()) yield {
           latestDtOpt.fold [Option[String]] {
             // Пустой старый индекс. Тут два варианта.
-            if (statIndexNames.size == 1) {
+            if (statIndexNames.size ==* 1) {
               LOGGER.trace(s"$logPrefix The only index[$oldestInxName] and it is empty. Guessing it as latest fresh index and ignoring.")
               // Это единственный индекс. Значит это самый свежий индекс, просто в него ещё не записали статистики никакой.
               None

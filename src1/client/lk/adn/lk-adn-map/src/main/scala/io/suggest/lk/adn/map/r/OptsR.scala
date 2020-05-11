@@ -35,7 +35,8 @@ object OptsR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("Opts")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

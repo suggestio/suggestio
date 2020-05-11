@@ -16,7 +16,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class WcFgContR {
 
-  val component = ScalaComponent.builder[Unit]("WcFgCont")
+  val component = ScalaComponent
+    .builder[Unit]( getClass.getSimpleName )
     .stateless
     .render_C { children =>
       <.div(

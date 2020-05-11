@@ -74,7 +74,8 @@ class UploadStatusR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("UploadStatus")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )

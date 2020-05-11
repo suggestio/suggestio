@@ -30,7 +30,8 @@ object AdvGeoNodeInfoPopR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("AdvGeoNodeInfoPop")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

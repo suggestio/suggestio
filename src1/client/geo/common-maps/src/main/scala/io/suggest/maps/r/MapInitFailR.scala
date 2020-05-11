@@ -19,7 +19,8 @@ object MapInitFailR {
 
   type Props = ModelProxy[Pot[_]]
 
-  val component = ScalaComponent.builder[Props]("RcvrMarkersFail")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { props =>
       props().exceptionOption.whenDefinedEl { ex =>

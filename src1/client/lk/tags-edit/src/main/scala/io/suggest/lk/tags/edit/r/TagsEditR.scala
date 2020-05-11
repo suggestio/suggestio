@@ -62,7 +62,8 @@ object TagsEditR {
   } // class Backend
 
 
-  protected val component = ScalaComponent.builder[Props]("TagsEdit")
+  protected val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       // Инициализировать связи до модели для нужд суб-компонентов:
       State(

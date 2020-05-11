@@ -74,7 +74,8 @@ object RangeYmdR {
 
   }
 
-  val component = ScalaComponent.builder[Props]("RangeYmd")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

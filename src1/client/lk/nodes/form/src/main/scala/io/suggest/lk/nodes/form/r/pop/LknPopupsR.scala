@@ -64,7 +64,8 @@ class LknPopupsR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Pops")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
         popContPropsConn = {

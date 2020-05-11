@@ -8,6 +8,7 @@ import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistP
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -43,7 +44,7 @@ class GeoAdvsPopupAh[M](
     case h: HandleAdvGeoExistPopupResp =>
       val v0 = value
       // Почему-то сравнение через open eq open здесь не сработало, поэтому сравниваем по itemId.
-      if ( v0.state.exists(_.itemId == h.open.itemId) ) {
+      if ( v0.state.exists(_.itemId ==* h.open.itemId) ) {
         // Поступил ожидаемый ответ сервера. Залить его в состояние.
         val v1 = value.withContent( v0.content.ready(h.resp) )
         updated(v1)

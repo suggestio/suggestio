@@ -3,9 +3,10 @@ package io.suggest.text.util
 import java.nio.ByteBuffer
 
 import org.apache.commons.codec.binary.Base32
+import japgolly.univeq._
 
 import scala.annotation.tailrec
-import scala.util.Random
+
 
 /**
  * Suggest.io
@@ -70,13 +71,15 @@ object StringUtil {
   }
 
   /** Пройти массив с одного края, пока встречается указанный байт. */
+  @tailrec
   private def basenPaddingIndex(inx: Int, bytes:Array[Byte], padding:Byte, step:Int): Int = {
-    if (bytes(inx) == padding)
+    if (bytes(inx) ==* padding)
       basenPaddingIndex(inx + step, bytes, padding, step)
     else
       inx
   }
 
+  @tailrec
   private def bytea2lowerCase(bytea: Array[Byte], start: Int, length: Int): Unit = {
     if (length > 0) {
       val ch1 = Character.toLowerCase(bytea(start).toChar)

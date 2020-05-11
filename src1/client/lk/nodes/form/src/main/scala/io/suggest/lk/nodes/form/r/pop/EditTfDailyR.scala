@@ -181,7 +181,8 @@ class EditTfDailyR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("EditTfDaily")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

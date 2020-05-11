@@ -53,7 +53,8 @@ object RadiusMarkerR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("RadiusMarker")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

@@ -63,7 +63,8 @@ object PopupsContR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("PopCont")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackendWithChildren[Backend]
     .build

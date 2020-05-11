@@ -56,7 +56,8 @@ object AdvGeoPopupsR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("AdvGeoPopups")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
         popContPropsConn = propsProxy.connect { props =>

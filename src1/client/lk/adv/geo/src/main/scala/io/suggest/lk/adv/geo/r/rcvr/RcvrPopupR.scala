@@ -102,7 +102,8 @@ object RcvrPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("RcvrPop")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

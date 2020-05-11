@@ -40,7 +40,8 @@ class LkNodesFormR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("LkNodesForm")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
         treeC = p.connect { v =>
