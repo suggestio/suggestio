@@ -124,7 +124,7 @@
             <array>
                 <string>bluetooth-central</string>
             </array>
-        </config-file>
+	</config-file>
     </platform>
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
     <plugin name="cordova-plugin-geolocation" spec="~4.0.1" />

@@ -2,7 +2,10 @@ package io.suggest.log.buffered
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
-import io.suggest.log.ILogAppender
+import io.suggest.common.html.HtmlConstants
+import io.suggest.err.MExceptionInfo
+import io.suggest.log.{ILogAppender, LogSeverities, MLogMsg}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -56,15 +59,35 @@ class BufLogAppendAh[M](
       println( m )
       val v0 = value
 
-      val timerPot2 = m.timerId.fold(
-        v0.expTimerId.fail,
-        { timerIdOpt =>
-          timerIdOpt.fold( Pot.empty[Int] )( v0.expTimerId.ready )
+      m.timerId.fold(
+        {ex =>
+          // Не удалось выставить таймер. Ругнуться в логи и на сервер тоже отправить в составе текущей пачки.
+          println( (getClass.getSimpleName :: m :: ex :: Nil).mkString(HtmlConstants.SPACE) )
+
+          val v2 = (
+            MBufAppendS.expTimerId.modify(_.fail(ex)) andThen
+            MBufAppendS.accRev.modify { accs0 =>
+              val lm = MLogMsg(
+                severity = LogSeverities.Error,
+                from = ah.getClass.getSimpleName,
+                code = Some( ErrorMsgs.SET_TIMER_ERROR ),
+                message = Some( m.toString ),
+                exception = Some( MExceptionInfo.from(ex, 3) ),
+              )
+              (lm :: Nil) :: accs0
+            }
+          )(v0)
+
+          val sendNowFx = ExpTimerAlarm.toEffectPure
+          updatedSilent( v2, sendNowFx )
+        },
+        {timerIdOpt =>
+          val v2 = MBufAppendS.expTimerId.modify { timerId0 =>
+            timerIdOpt.fold( Pot.empty[Int] )( timerId0.ready )
+          }(v0)
+          updatedSilent(v2)
         }
       )
-
-      val v2 = MBufAppendS.expTimerId.set( timerPot2 )(v0)
-      updatedSilent(v2)
 
 
     // Срабатывание таймера сброса логов в бэкэнд.
@@ -97,13 +120,12 @@ class BufLogAppendAh[M](
 
   /** Эффект перевыставления таймера. */
   private def _resetAddExpireTimer(v0: MBufAppendS): Option[Effect] = {
-    println( "BufLogAppendTimer: " + v0.expTimerId )
     Option.when( !v0.expTimerId.isPending ) {
       Effect.action {
         val timerIdTry = Try {
           v0.expTimerId
             .foreach( DomQuick.clearTimeout )
-          val timerId = DomQuick.setTimeout( EXPIRE_INTERVAL.toMillis ) { () =>
+          val timerId = DomQuick.setTimeout( EXPIRE_INTERVAL.toMillis.toInt ) { () =>
             dispatcher( ExpTimerAlarm )
           }
           Some(timerId)

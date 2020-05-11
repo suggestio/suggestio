@@ -124,7 +124,7 @@ class WzFirstDiaAh[M](
                     .getOrElse( 2 )
 
                   DomQuick
-                    .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis )(
+                    .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis.toInt )(
                       WzPhasePermRes(view0.phase, Failure(new NoSuchElementException))
                     )
                     .fut
@@ -466,7 +466,7 @@ class WzFirstDiaAh[M](
         // Удаление из DOM с задержкой.
         val unRenderFx = Effect {
           DomQuick
-            .timeoutPromiseT( 1.seconds.toMillis ) {
+            .timeoutPromiseT( 1.seconds.toMillis.toInt ) {
               InitFirstRunWz(false)
             }
             .fut

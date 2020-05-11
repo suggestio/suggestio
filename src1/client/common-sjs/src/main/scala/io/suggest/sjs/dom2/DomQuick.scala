@@ -11,6 +11,8 @@ import scala.scalajs.js.Date
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 14.04.16 10:56
   * Description: Упрощенный доступ к некоторым функциям браузера.
+  *
+  * timeMs - только Int, т.к. есть риск ошибится с неявной Long/Double-конверсией, приводящей к проблемам в Safari.
   */
 object DomQuick {
 
@@ -20,12 +22,12 @@ object DomQuick {
     * @param timeMs Время в миллисекундах.
     * @return id-таймера на стороне юзер-агента.
     */
-  def setTimeout[U](timeMs: Double)(f: () => U): Int = {
+  def setTimeout[U](timeMs: Int)(f: () => U): Int = {
     dom.window.setTimeout(f, timeMs)
   }
 
-  def clearTimeout(timer: Int): Unit = {
-    dom.window.clearTimeout(timer)
+  def clearTimeout(timerId: Int): Unit = {
+    dom.window.clearTimeout(timerId)
   }
 
   /** Краткий враппер над requestAnimationFrame(). */
@@ -48,10 +50,10 @@ object DomQuick {
     * @param timeMs Через сколько миллисекунд исполнить возвращаемый Promise.
     * @return Контейнер с данными, касающиеся новоиспечённого Promise'а.
     */
-  def timeoutPromise(timeMs: Double): TimeoutPromise[None.type] = {
+  def timeoutPromise(timeMs: Int): TimeoutPromise[None.type] = {
     timeoutPromiseT(timeMs)(None)
   }
-  def timeoutPromiseT[T](timeMs: Double)(res: T): TimeoutPromise[T] = {
+  def timeoutPromiseT[T](timeMs: Int)(res: T): TimeoutPromise[T] = {
     val p = Promise[T]()
     val timerId = setTimeout(timeMs) { () =>
       p.success(res)
@@ -60,12 +62,12 @@ object DomQuick {
   }
 
 
-  def setInterval[U](timeMs: Double)(f: () => U): Int = {
+  def setInterval[U](timeMs: Int)(f: () => U): Int = {
     dom.window.setInterval(f, timeMs)
   }
 
-  def clearInterval(timer: Int): Unit = {
-    dom.window.clearInterval(timer)
+  def clearInterval(intervalId: Int): Unit = {
+    dom.window.clearInterval(intervalId)
   }
 
   /** Описать текущий сдвиг времени в минутах. */

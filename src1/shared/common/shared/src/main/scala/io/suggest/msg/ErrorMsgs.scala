@@ -240,5 +240,6 @@ object ErrorMsgs {
   def DAEMON_BACKEND_FAILURE = "Daemon.backend.failure"
 
   def DIAGNOSTICS_RETRIEVE_FAIL = "Diag.retrive.fail"
+  def SET_TIMER_ERROR = "Set.timer.error"
 
 }

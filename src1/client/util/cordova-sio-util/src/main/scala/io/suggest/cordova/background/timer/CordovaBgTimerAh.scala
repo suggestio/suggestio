@@ -54,7 +54,7 @@ class CordovaBgTimerAh[M](
             BT.onTimerEventF( dispatcher(onTimeA) )
             BT.startF(
               new CordovaBackgroundTimerSettings {
-                override val timerInterval      = opts.every.toMillis.toDouble
+                override val timerInterval      = opts.every.toMillis.toInt
                 override val startOnBoot        = opts.everyBoot
                 override val stopOnTerminate    = opts.stopOnExit
               }

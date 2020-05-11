@@ -45,7 +45,7 @@ class HtmlBgTimerAh[M](
           // TODO Отработать opts.everyBoot и opts.stopOnExit - возможно, это реализуется через таймер на стороне
           //      установленного ServiceWorker'а или что-то такое, и этот контроллер надо унести туда же.
           val onTimeA = opts.onTime
-          val timerId = DomQuick.setInterval( opts.every.toMillis.toDouble ) { () =>
+          val timerId = DomQuick.setInterval( opts.every.toMillis.toInt ) { () =>
             dispatcher( onTimeA )
           }
           DaemonSleepTimerUpdate( Some( timerId ) )

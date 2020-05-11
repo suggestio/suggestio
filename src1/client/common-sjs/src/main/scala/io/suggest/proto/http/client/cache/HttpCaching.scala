@@ -28,7 +28,7 @@ object HttpCaching extends Log {
   // TODO Надо чистить кэш после завершения *уже*успешных* запросов. Т.е. только в онлайне. И далее 1-2-3 раза сутки по таймеру до закрытия вкладки.
   Future {
     if (MHttpCaches.isAvailable)
-      DomQuick.setTimeout(15.seconds.toMillis) { () =>
+      DomQuick.setTimeout(15.seconds.toMillis.toInt) { () =>
         // Повторно проверяем кэш, т.к. он мог отвалится за это время, т.к. после запуска были запросы-ответы.
         if (MHttpCaches.isAvailable)
           MHttpCaches.gc()

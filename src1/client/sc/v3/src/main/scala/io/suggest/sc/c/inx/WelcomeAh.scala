@@ -23,7 +23,7 @@ object WelcomeAh {
     * @param tstamp Timestamp-маркер.
     * @return Возвращает фьючерс, исполняющийся через afterMs миллисекунд.
     */
-  def timeout(afterMs: Double, tstamp: Long): Future[WcTimeOut] = {
+  def timeout(afterMs: Int, tstamp: Long): Future[WcTimeOut] = {
     val tp = DomQuick.timeoutPromiseT( afterMs ) {
       WcTimeOut( tstamp )
     }
@@ -49,7 +49,8 @@ class WelcomeAh[M](
         // Сокрытие приветствия ещё не началось. Запустить таймер сокрытия приветствия.
         val fadeOutTstamp = System.currentTimeMillis()
         val tpF = { () =>
-          WelcomeAh.timeout(ScConstants.Welcome.FADEOUT_TRANSITION_MS * 0.5, fadeOutTstamp)
+          val ms0 = ScConstants.Welcome.FADEOUT_TRANSITION_MS
+          WelcomeAh.timeout( ms0 + ms0/2, fadeOutTstamp)
         }
 
         val v2 = Some(

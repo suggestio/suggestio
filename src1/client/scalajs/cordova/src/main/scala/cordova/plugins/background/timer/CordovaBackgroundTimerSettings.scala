@@ -12,7 +12,7 @@ import scala.scalajs.js
 trait CordovaBackgroundTimerSettings extends js.Object {
 
   /** interval between ticks of the timer in milliseconds. [60000] */
-  val timerInterval: js.UndefOr[Double] = js.undefined
+  val timerInterval: js.UndefOr[Int] = js.undefined
 
   /** To start timer after the device was restarted. [false] */
   val startOnBoot: js.UndefOr[Boolean] = js.undefined

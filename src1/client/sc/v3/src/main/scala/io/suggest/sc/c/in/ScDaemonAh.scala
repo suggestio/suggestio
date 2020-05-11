@@ -110,7 +110,7 @@ class ScDaemonAh[M](
 
         // На случай какой-либо задержки логики фонового сканирования, нужно гарантировать выключение демона через время.
         val fallSleepTimerFx = Effect.action {
-          val timerId = DomQuick.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis ) { () =>
+          val timerId = DomQuick.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis.toInt ) { () =>
             dispatcher( DaemonSleepAlarm( isActive = false ) )
           }
           ScDaemonFallSleepTimerSet( Some(timerId) )
