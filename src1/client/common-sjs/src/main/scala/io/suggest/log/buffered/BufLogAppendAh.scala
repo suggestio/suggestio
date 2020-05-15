@@ -35,7 +35,6 @@ class BufLogAppendAh[M](
 
     // Отправка в очередь лог-сообщений.
     case m: LogAppend =>
-      println( m )
       val v0 = value
 
       if (m.logMsgs.isEmpty) {
@@ -56,7 +55,6 @@ class BufLogAppendAh[M](
 
     // Запущен или сброшен таймер сброса логов.
     case m: ExpTimerUpdate =>
-      println( m )
       val v0 = value
 
       m.timerId.fold(
@@ -69,7 +67,7 @@ class BufLogAppendAh[M](
             MBufAppendS.accRev.modify { accs0 =>
               val lm = MLogMsg(
                 severity = LogSeverities.Error,
-                from = ah.getClass.getSimpleName,
+                from = Try( ah.getClass.getSimpleName ).toOption,
                 code = Some( ErrorMsgs.SET_TIMER_ERROR ),
                 message = Some( m.toString ),
                 exception = Some( MExceptionInfo.from(ex, 3) ),
@@ -92,7 +90,6 @@ class BufLogAppendAh[M](
 
     // Срабатывание таймера сброса логов в бэкэнд.
     case ExpTimerAlarm =>
-      println( ExpTimerAlarm )
       val v0 = value
       val modF = MBufAppendS.expTimerId.set( Pot.empty )
 

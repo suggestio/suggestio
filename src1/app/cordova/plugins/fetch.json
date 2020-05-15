@@ -98,5 +98,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-background-fetch": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-background-fetch@6.0.7"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

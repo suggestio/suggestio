@@ -1,12 +1,14 @@
 package io.suggest.dt
 
 import java.time.format.DateTimeFormatter
-import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
+import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.mbill2.m.item.MItem
 import play.api.libs.json._
 import scalaz.{Validation, ValidationNel}
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -39,7 +41,28 @@ object CommonDateTimeUtil {
 
   object Implicits {
 
-    // Используем представление в виде JsArray[Int] от большего к меньшему, и tzHH,MM в самом хвосте.
+    /** Поддержка JSON-сериализации для Instant. */
+    implicit def instantJson: Format[Instant] = {
+      Format[Instant](
+        Reads {
+          case JsNumber(value) =>
+            Try(
+              Instant.ofEpochMilli( value.toLong )
+            )
+              .fold(
+                {ex =>
+                  JsError( ex.getMessage )
+                },
+                JsSuccess(_),
+              )
+          case other =>
+            JsError( other.toString() )
+        },
+        Writes { inst =>
+          JsNumber( inst.toEpochMilli )
+        }
+      )
+    }
 
     /** Поддержка десериализации java.time.OffsetDateTime из sio-формата в виде json-массива. */
     implicit def offsetDateTimeReads: Reads[OffsetDateTime] = {

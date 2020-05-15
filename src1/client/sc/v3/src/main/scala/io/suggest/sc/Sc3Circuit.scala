@@ -6,6 +6,7 @@ import diode.react.ReactConnector
 import io.suggest.ble.beaconer.{BleBeaconerAh, BtOnOff, MBeaconerOpts, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
+import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.background.mode.CordovaBgModeAh
 import io.suggest.cordova.background.timer.CordovaBgTimerAh
 import io.suggest.daemon.{DaemonizerInit, HtmlBgTimerAh, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonStates}
@@ -455,7 +456,7 @@ class Sc3Circuit(
   private val daemonBgModeAh: Option[HandlerFunction] = {
     if (CordovaConstants.isCordovaPlatform()) {
       Some(new CordovaBgModeAh(
-        modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cBgMode ),
+        modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cdvBgMode ),
         dispatcher  = this,
       ))
     } else {
@@ -474,11 +475,15 @@ class Sc3Circuit(
   /** Выборочный контроллер sleep-таймера демона. */
   private val daemonSleepTimerAh: Option[HandlerFunction] = {
     Option.when( daemonBgModeAh.nonEmpty ) {
-      if ( CordovaConstants.isCordovaPlatform() && CordovaBgTimerAh.hasCordovaBgTimer() ) {
-        new CordovaBgTimerAh(
+      if ( CordovaConstants.isCordovaPlatform() /*&& CordovaBgTimerAh.hasCordovaBgTimer()*/ ) {
+        new CdvBgFetchAh(
           dispatcher = this,
-          modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cBgTimer ),
+          modelRW = mkLensZoomRW( daemonRW, MScDaemon.cdvBgFetch )
         )
+        //new CordovaBgTimerAh(
+        //  dispatcher = this,
+        //  modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cdvBgTimer ),
+        //)
       } else {
         // TODO Не ясно, надо ли это активировать вообще? Может выкинуть (закомментить) этот контроллер? И его модель-состояние следом.
         new HtmlBgTimerAh(

@@ -45,9 +45,9 @@ object CordovaBgModeAh extends Log {
 
 
 final class CordovaBgModeAh[M](
-                                      modelRW       : ModelRW[M, MCBgModeDaemonS],
-                                      dispatcher    : Dispatcher,
-                                    )
+                                modelRW       : ModelRW[M, MCBgModeDaemonS],
+                                dispatcher    : Dispatcher,
+                              )
   extends ActionHandler( modelRW )
 { ah =>
 
@@ -154,8 +154,6 @@ final class CordovaBgModeAh[M](
 
     // Команда к демонизации или раздемонизации приложения.
     case m: Daemonize =>
-      println(m)
-
       val fx = Effect.action {
         println(s"daemon work := " + CBGM.isEnabled() + " => " + m.isDaemon)
         CBGM.setEnabled( m.isDaemon )
@@ -167,8 +165,6 @@ final class CordovaBgModeAh[M](
 
     // Обработка события со стороны cordova-плагина.
     case m: CbgmEvent =>
-      println(m)
-
       val v0 = value
 
       (for {

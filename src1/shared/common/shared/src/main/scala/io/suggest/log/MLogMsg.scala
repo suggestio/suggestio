@@ -1,5 +1,8 @@
 package io.suggest.log
 
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, OffsetDateTime, ZoneId}
+
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.MExceptionInfo
 import io.suggest.msg.ErrorMsg_t
@@ -11,6 +14,9 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.{NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.apply._
+import io.suggest.dt.CommonDateTimeUtil.Implicits._
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -27,7 +33,7 @@ object MLogMsg {
     * Без кучи warning'ов компилятора можно было заинлайнить это в builder (без конструктора класса). */
   final case class builder( url: Option[String] = None, stackTraceLen: Int ) {
 
-    final class InnerBuilder[R]( classSimpleName: String, andThen: MLogMsg => R)(severity: LogSeverity) {
+    final class InnerBuilder[R]( classSimpleName: Option[String], andThen: MLogMsg => R)(severity: LogSeverity) {
       /** Из-за наличия default-аргументов, эта функция объявленна в классе, не в функции. */
       def apply(errorMsg: ErrorMsg_t = null,  ex: Throwable = null,  msg: Any = null ): R = {
         val lm = MLogMsg(
@@ -41,7 +47,7 @@ object MLogMsg {
         andThen( lm )
       }
     }
-    def apply[R](classSimpleName: String, andThen: MLogMsg => R) =
+    def apply[R](classSimpleName: Option[String], andThen: MLogMsg => R) =
       new InnerBuilder(classSimpleName, andThen)(_)
 
   }
@@ -50,11 +56,12 @@ object MLogMsg {
   /** Сериализация JSON. */
   implicit def logMsgJson: OFormat[MLogMsg] = (
     (__ \ "sev").format[LogSeverity] and
-    (__ \ "src").format[String] and
+    (__ \ "src").formatNullable[String] and
     (__ \ "code").formatNullable[ErrorMsg_t] and
     (__ \ "msg").formatNullable[String] and
     (__ \ "ex").formatNullable[MExceptionInfo] and
-    (__ \ "url").formatNullable[String]
+    (__ \ "url").formatNullable[String] and
+    (__ \ "dt").formatNullable[Instant]
   )(apply, unlift(unapply))
 
 
@@ -64,24 +71,37 @@ object MLogMsg {
   def message = GenLens[MLogMsg]( _.message )
   def exception = GenLens[MLogMsg]( _.exception )
   def url = GenLens[MLogMsg]( _.url )
+  def dateTime = GenLens[MLogMsg]( _.dateTime )
 
 
-  def validate(logMsg: MLogMsg): ValidationNel[String, MLogMsg] = {
-    (
-      (Validation.success( logMsg.severity ): ValidationNel[String, LogSeverity]) |@|
-      (Validation success StringUtil.strLimitLen( logMsg.from, 64) ) |@|
-      ScalazUtil.liftNelOpt( logMsg.code ) { eMsgCode =>
-        Validation.liftNel( eMsgCode )( !_.matches("[._a-zA-Z0-1-]{1,256}"), "code.invalid" )
-      } |@|
-      ScalazUtil.liftNelOpt( logMsg.message ) { logMessage =>
-        Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( logMessage, maxLen = 512 ) )
-      } |@|
-      ScalazUtil.liftNelOpt( logMsg.exception )( MExceptionInfo.validate ) |@|
-      ScalazUtil.liftNelOpt( logMsg.url ) { url =>
-        Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( url, 256 ) )
-      }
-    )(apply)
-  }
+  def validate(logMsg: MLogMsg): ValidationNel[String, MLogMsg] = (
+    Validation.success[NonEmptyList[String], LogSeverity]( logMsg.severity ) |@|
+    ScalazUtil.liftNelOpt( logMsg.from ) { from =>
+      Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( from, 64) )
+    } |@|
+    ScalazUtil.liftNelOpt( logMsg.code ) { eMsgCode =>
+      Validation.liftNel( eMsgCode )( !_.matches("[._a-zA-Z0-1-]{1,256}"), "code.invalid" )
+    } |@|
+    ScalazUtil.liftNelOpt( logMsg.message ) { logMessage =>
+      Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( logMessage, maxLen = 512 ) )
+    } |@|
+    ScalazUtil.liftNelOpt( logMsg.exception )( MExceptionInfo.validate ) |@|
+    ScalazUtil.liftNelOpt( logMsg.url ) { url =>
+      Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( url, 256 ) )
+    } |@|
+    ScalazUtil.liftNelOpt( logMsg.dateTime ) { dt0 =>
+      // Возможные сдвиги в датах нормируем на +- 1 год.
+      val now = Instant.now
+      Validation.liftNel(dt0)(
+        {dt =>
+          val daysPerYear = 365
+          dt.isBefore( now.minus(daysPerYear, ChronoUnit.DAYS) ) ||
+          dt.isAfter( now.plus(daysPerYear, ChronoUnit.DAYS) )
+        },
+        "dt.invalid"
+      )
+    }
+  )(apply)
 
 }
 
@@ -96,11 +116,12 @@ object MLogMsg {
   */
 final case class MLogMsg(
                           severity      : LogSeverity,
-                          from          : String,
+                          from          : Option[String]            = None,
                           code          : Option[ErrorMsg_t]        = None,
                           message       : Option[String]            = None,
                           exception     : Option[MExceptionInfo]    = None,
                           url           : Option[String]            = None,
+                          dateTime      : Option[Instant]           = Some( Instant.now() )
                         ) {
 
   /** Рендер в строку, но без severity, fsmState, code. */
@@ -122,7 +143,10 @@ final case class MLogMsg(
     for (msg <- message)
       tokensAcc = n :: msg :: tokensAcc
 
-    tokensAcc = from :: ":" :: d :: tokensAcc
+    tokensAcc = d :: tokensAcc
+
+    for (frm <- from)
+      tokensAcc = frm :: ":" :: tokensAcc
 
     // Отрендерить в логи итог работы...
     tokensAcc.mkString
@@ -136,9 +160,22 @@ final case class MLogMsg(
 
     sb.append('[').append( severity ).append(']')
       .append( '\t' )
-      .append( from )
-      .append( HtmlConstants.COLON )
-      .append( s )
+
+    for (frm <- from)
+      sb.append( frm )
+        .append( HtmlConstants.COLON )
+        .append( s )
+
+    for (dt <- dateTime)
+      sb.append( '[' )
+        .append(
+          // Небезопасно вызывать из js, если нет комплекта вкомпиленных таймзон.
+          // java.time.zone.ZoneRulesException: Unknown time-zone ID: Europe/Moscow
+          Try( OffsetDateTime.ofInstant( dt, ZoneId.systemDefault() ) )
+            .getOrElse( dt.getEpochSecond )
+            .toString
+        )
+        .append( ']' ).append( s )
 
     for (c <- code)
       sb.append( c )

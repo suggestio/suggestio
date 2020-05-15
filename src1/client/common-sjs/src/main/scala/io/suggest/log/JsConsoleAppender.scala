@@ -27,14 +27,12 @@ class JsConsoleAppender extends ILogAppender {
 
       var acc = List.empty[String]
 
-      val nl = HtmlConstants.NEWLINE_UNIX.toString
-
       acc ::= logMsg.onlyMainText
 
       for (code <- logMsg.code)
         acc ::= code
 
-      f( acc.mkString(nl), Nil )
+      f( acc.mkString(HtmlConstants.NEWLINE_UNIX.toString), Nil )
     }
   }
 

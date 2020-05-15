@@ -16,6 +16,9 @@ import scala.util.Try
 trait Log {
   @inline final def logger: Log = this
 }
+trait LoggerNamed {
+  def loggerName: Option[String]
+}
 
 
 object Log {
@@ -36,10 +39,16 @@ object Log {
 
 
     private def _logMsgBuilder = {
-      val c = logHolder.getClass
-      val _className = Try( c.getSimpleName )
-        .orElse( Try( c.getName ) )
-        .getOrElse( c.toString )
+      val _className = logHolder match {
+        case loggerNamed: LoggerNamed =>
+          loggerNamed.loggerName
+        case _ =>
+          val c = logHolder.getClass
+          Try( c.getSimpleName )
+            .orElse( Try( c.getName ) )
+            .orElse( Try( c.toString ) )
+            .toOption
+      }
       Logging.logMsgBuilder( _className, Logging.handleLogMsgSafe )
     }
 

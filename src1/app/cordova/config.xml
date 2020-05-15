@@ -10,7 +10,7 @@
     <content src="index.html" />
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
-    <allow-navigation href="http://192.168.42.189:9000/*" />
+    <allow-navigation href="http://192.168.42.192:9000/*" />
     <allow-navigation href="https://*.cdnvideo.ru/*" />
     <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="https://*.openstreetmap.org/*" />
@@ -124,7 +124,12 @@
             <array>
                 <string>bluetooth-central</string>
             </array>
-	</config-file>
+        </config-file>
+        <config-file parent="BGTaskSchedulerPermittedIdentifiers" target="*-Info.plist">
+          <array>
+              <string>io.suggest.bgtasks.v1</string>
+          </array>
+        </config-file>
     </platform>
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
     <plugin name="cordova-plugin-geolocation" spec="~4.0.1" />

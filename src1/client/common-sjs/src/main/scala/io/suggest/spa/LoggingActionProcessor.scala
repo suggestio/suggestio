@@ -1,7 +1,7 @@
 package io.suggest.spa
 
 import diode.{ActionProcessor, ActionResult, Dispatcher}
-import io.suggest.log.{ILogAction, Log}
+import io.suggest.log.{ILogAction, Log, LoggerNamed}
 
 /**
   * Suggest.io
@@ -9,7 +9,13 @@ import io.suggest.log.{ILogAction, Log}
   * Created: 08.11.2019 12:53
   */
 
-object LoggingAllActionsProcessor extends Log {
+object LoggingAllActionsProcessor
+  extends Log
+  with LoggerNamed
+{
+
+  override def loggerName = None
+
   def apply[M <: AnyRef]: ActionProcessor[M] = {
     new ActionProcessor[M] {
       override def process(dispatch: Dispatcher, action: Any, next: Any => ActionResult[M], currentModel: M): ActionResult[M] = {
@@ -19,4 +25,5 @@ object LoggingAllActionsProcessor extends Log {
       }
     }
   }
+
 }

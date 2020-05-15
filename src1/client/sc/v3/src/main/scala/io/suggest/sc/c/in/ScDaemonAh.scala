@@ -7,7 +7,7 @@ import io.suggest.sc.m.in.MScDaemon
 import diode.Implicits._
 import diode.data.Pot
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts, MBeaconerS}
-import io.suggest.daemon.{DaemonSleepTimerSet, Daemonize, MDaemonSleepTimer, MDaemonStates}
+import io.suggest.daemon.{DaemonSleepTimerFinish, DaemonSleepTimerSet, Daemonize, MDaemonSleepTimer, MDaemonStates}
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
@@ -76,14 +76,17 @@ class ScDaemonAh[M](
     // Срабатывание таймера запуска процесса демона.
     case m: DaemonSleepAlarm =>
       logger.log( msg = m )
+
       // TODO Проверить online-состояние через cordova MPlatformS, подписываясь на события online/offline.
-      val fx = Daemonize( isDaemon = m.isActive ).toEffectPure
+      var fx: Effect = Daemonize( isDaemon = m.isActive ).toEffectPure
+      if (!m.isActive)
+        fx >>= DaemonSleepTimerFinish.toEffectPure
 
       // Выставить pending в состояние демона.
       val v0 = value
       val v2 = MScDaemon.state.modify(_.pending())(v0)
 
-      updatedSilent(v2, fx)
+      updatedSilent( v2, fx )
 
 
     // Если true, значит запущен демон, активен WAKE_LOCK система какое-то время держит CPU включённым.

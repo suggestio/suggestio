@@ -2,8 +2,9 @@ package io.suggest.cordova.background.timer
 
 import io.suggest.sjs.common.async.AsyncUtil._
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
-import io.suggest.daemon.DaemonSleepTimerSet
-import cordova.plugins.background.timer._
+import io.suggest.daemon.{DaemonSleepTimerFinish, DaemonSleepTimerSet}
+import cordova._
+import cordova.plugins.background.timer.CordovaBackgroundTimerSettings
 import io.suggest.log.Log
 import io.suggest.spa.DoNothing
 import org.scalajs.dom
@@ -66,6 +67,11 @@ class CordovaBgTimerAh[M](
       }
 
       effectOnly(fx)
+
+
+    // Завершение работы - делать ничего не требуется.
+    case DaemonSleepTimerFinish =>
+      noChange
 
   }
 

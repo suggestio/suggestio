@@ -29,4 +29,9 @@ case class Daemonize( isDaemon: Boolean ) extends IDaemonAction
   */
 case class DaemonSleepTimerSet( options: Option[MDaemonSleepTimer] ) extends IDaemonAction
 
+
+/** Завершение работы таймера - обязательно для cordova-plugin-background-fetch. */
+case object DaemonSleepTimerFinish extends IDaemonAction
+
+
 protected[daemon] case class DaemonSleepTimerUpdate( timerId: Option[Int] ) extends IDaemonAction

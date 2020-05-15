@@ -37,6 +37,9 @@
     },
     "cordova-plugin-add-swift-support": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-background-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

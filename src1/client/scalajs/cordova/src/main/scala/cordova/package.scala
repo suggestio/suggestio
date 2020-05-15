@@ -1,29 +1,28 @@
-package cordova.plugins.background
-
+import cordova.plugins.background.fetch.CordovaBackgroundFetch
 import cordova.plugins.background.timer.CordovaBackgroundTimer
 import org.scalajs.dom.Window
 
-import scala.language.implicitConversions
 import scala.scalajs.js
+import scala.language.implicitConversions
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 23.04.2020 22:20
+  * Created: 13.05.2020 11:23
   */
-package object timer {
+package object cordova {
 
   /** Поддержка dom.window.BackgroundTimer. */
-  implicit def window_CdvBgTimer(window: Window): Window_CdvBgTimer =
-    window.asInstanceOf[Window_CdvBgTimer]
+  implicit def window_CdvExt(window: Window): DomWindow_CordovaExt =
+    window.asInstanceOf[DomWindow_CordovaExt]
 
 }
 
-
 /** API для window для поддержки BackgroundTimer. */
 @js.native
-sealed trait Window_CdvBgTimer extends js.Object {
+sealed trait DomWindow_CordovaExt extends js.Object {
 
   val BackgroundTimer: CordovaBackgroundTimer = js.native
 
+  val BackgroundFetch: CordovaBackgroundFetch
 }
