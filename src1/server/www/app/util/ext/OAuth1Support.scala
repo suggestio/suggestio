@@ -89,7 +89,7 @@ trait OAuth1Support
   def rdescr2tweetLeadingText(s: String): String = {
     val s1 = FormUtil.stripHtml(s)
       .replaceAll("(?U)\\s+", " ")
-      .replaceAllLiterally("...", HtmlConstants.ELLIPSIS)
+      .replace("...", HtmlConstants.ELLIPSIS)
       .trim
     TplDataFormatUtil.strLimitLenNoTrailingWordPart(s1, LEAD_TEXT_LEN, hard = true)
   }

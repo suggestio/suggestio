@@ -85,7 +85,7 @@ trait S2sMpUploadRender
 {
 
   /** Состояние аплоада. */
-  trait S2sMpUploadStateT extends super.S2sMpUploadStateT {
+  trait S2sMpUploadStateTErr extends super.S2sMpUploadStateT {
     
     /** Ссылка, которая была использована для аплоада. */
     // TODO Этот upUrl вообще мимо кассы и только для логгирования используется. Эта ссылка может быть не известна актору вообще.

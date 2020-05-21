@@ -15,12 +15,12 @@ object OAuthReqTokUtil {
   def TOKEN_FN   = "t"
   def SECRET_FN  = "s"
 
-  implicit def reads: Reads[RequestToken] = (
+  implicit def oartReads: Reads[RequestToken] = (
     (__ \ TOKEN_FN).read[String] and
     (__ \ SECRET_FN).read[String]
   )(RequestToken.apply _)
 
-  implicit def writes: Writes[RequestToken] = (
+  implicit def oartWrites: Writes[RequestToken] = (
     (__ \ TOKEN_FN).write[String] and
     (__ \ SECRET_FN).write[String]
   )(unlift(RequestToken.unapply))

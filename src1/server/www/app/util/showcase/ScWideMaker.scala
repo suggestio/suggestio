@@ -12,6 +12,7 @@ import models.im._
 import models.im.make.{MImgMakeArgs, MakeResult}
 import models.mproj.ICommonDi
 import util.img.{IImgMaker, ImgMakerUtil}
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -135,12 +136,12 @@ class ScWideMaker @Inject() (
    * @return Координата начала отрезка.
    *         Конец отрезка можно получить, сложив координату начала с length.
    */
-  def centerNearestLineSeg1D(centerCoord: Float, segLen: Float, axLen: Float): Float = {
+  def centerNearestLineSeg1D(centerCoord: Int, segLen: Int, axLen: Int): Int = {
     // Координата середины оси:
-    val axCenter = axLen / 2.0F
+    val axCenter = axLen / 2
     // Половинная длина желаемого отрезка:
-    val segSemiLen = segLen / 2.0F
-    val resRaw = if (centerCoord == axCenter) {
+    val segSemiLen = segLen / 2
+    val resRaw = if (centerCoord ==* axCenter) {
       // Желаемый центр находится на середине оси. Вычитаем полудлину отрезка от координаты центра.
       (centerCoord - segSemiLen).toInt
     } else {
@@ -164,12 +165,11 @@ class ScWideMaker @Inject() (
    */
   def translatedCropOffset(ocOffCoord: Int, ocSz: Int, targetSz: Int, oiSz: Int): Int = {
     // 2017-12-13: Раньше тут нормировались axLen и centerCoord по rszRatio. Уже не вспомнить, почему так было.
-    val newCoordFloat = centerNearestLineSeg1D(
+    centerNearestLineSeg1D(
       centerCoord = ocOffCoord + ocSz / 2,
-      segLen      = targetSz.toFloat,
+      segLen      = targetSz,
       axLen       = oiSz
     )
-    newCoordFloat.toInt
   }
 
 

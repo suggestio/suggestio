@@ -12,7 +12,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mup.MSwfsFidInfo
 import play.api.Configuration
-import play.api.mvc.{Call, RequestHeader}
+import play.api.mvc.Call
 import OptionUtil.BoolOptOps
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.media.MFileMeta
@@ -408,7 +408,7 @@ class CdnUtil @Inject() (
     */
   def reWriteHostToCdn(host: String): String = {
     REWRITE_FROM_TO.fold(host) { case (from, to) =>
-      host.replaceAllLiterally(from, to)
+      host.replace(from, to)
     }
   }
 

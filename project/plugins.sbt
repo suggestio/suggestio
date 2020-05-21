@@ -57,3 +57,6 @@ addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler-sjs06" % "0.17.0")
 
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
 
+// для for-yield-оптимизации (https://github.com/fosskers/scalaz-and-cats#i-chain-operations-with-for--yield-isnt-that-all-i-need)
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+

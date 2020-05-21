@@ -7,7 +7,7 @@ import io.suggest.n2.node.MNode
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import models.blk
 import models.im.make.MakeResult
-import util.blocks.BlocksConf
+import util.blocks.{BlockConf, BlocksConf}
 
 /**
  * Suggest.io
@@ -20,7 +20,7 @@ trait IRenderArgs {
 
   /** conf блока */
   // TODO Удалить следом за любым кодом поддержки старых карточек.
-  final def bc         : BlocksConf.T = BlocksConf.Block20
+  final def bc         : BlockConf = BlocksConf.Block20
 
   /** Рекламная карточка, которую надо отрендерить. */
   def mad             : MNode

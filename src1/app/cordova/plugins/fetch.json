@@ -83,22 +83,6 @@
     "is_top_level": true,
     "variables": {}
   },
-  "cordova-background-timer": {
-    "source": {
-      "type": "registry",
-      "id": "git+https://github.com/paladinarcher/cordova-background-timer.git"
-    },
-    "is_top_level": true,
-    "variables": {}
-  },
-  "cordova-plugin-add-swift-support": {
-    "source": {
-      "type": "registry",
-      "id": "https://github.com/akofman/cordova-plugin-add-swift-support"
-    },
-    "is_top_level": true,
-    "variables": {}
-  },
   "cordova-plugin-background-fetch": {
     "source": {
       "type": "registry",

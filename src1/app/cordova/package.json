@@ -11,10 +11,8 @@
     "license": "CBCA",
     "dependencies": {
         "cordova-android": "^8.1.0",
-        "cordova-background-timer": "git+https://github.com/paladinarcher/cordova-background-timer.git",
         "cordova-custom-config": "^5.1.0",
         "cordova-ios": "^5.1.1",
-        "cordova-plugin-add-swift-support": "git+https://github.com/akofman/cordova-plugin-add-swift-support.git",
         "cordova-plugin-background-fetch": "^6.0.7",
         "cordova-plugin-background-mode": "git+https://bitbucket.org/TheBosZ/cordova-plugin-run-in-background.git",
         "cordova-plugin-badge": "^0.8.8",
@@ -40,8 +38,6 @@
             },
             "cordova-plugin-background-mode": {},
             "cordova-custom-config": {},
-            "cordova-background-timer": {},
-            "cordova-plugin-add-swift-support": {},
             "cordova-plugin-background-fetch": {}
         },
         "platforms": [

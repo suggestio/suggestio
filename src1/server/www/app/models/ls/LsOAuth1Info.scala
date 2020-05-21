@@ -3,9 +3,7 @@ package models.ls
 // ЭТОТ import НУЖЕН!
 import java.time.OffsetDateTime
 
-import models.usr.OAuthReqTokUtil.{reads => oartReads, writes => oartWrites}
-// ЭТОТ import НУЖЕН!
-
+import models.usr.OAuthReqTokUtil._
 import play.api.libs.oauth.RequestToken
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -26,7 +24,7 @@ object LsOAuth1Info {
 
   /** Десериализация из JSON с валидацией типа. */
   implicit def reads: Reads[LsOAuth1Info] = (
-    LsDataTypes.readsKv and
+    LsDataType.readsKv and
     (__ \ ACCESS_TOKEN_FN).read[RequestToken] and
     (__ \ PERSON_ID_FN).read[String] and
     (__ \ TIMESTAMP_FN).read[OffsetDateTime] and
@@ -42,7 +40,7 @@ object LsOAuth1Info {
 
   /** Сериализация в JSON с записью типа. */
   implicit def writes: Writes[LsOAuth1Info] = (
-    LsDataTypes.writesKv and
+    LsDataType.writesKv and
     (__ \ ACCESS_TOKEN_FN).write[RequestToken] and
     (__ \ PERSON_ID_FN).write[String] and
     (__ \ TIMESTAMP_FN).write[OffsetDateTime] and

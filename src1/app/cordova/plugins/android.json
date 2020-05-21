@@ -7,6 +7,12 @@
     "files": {}
   },
   "installed_plugins": {
+    "cordova-custom-config": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-background-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-background-mode": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -27,18 +33,6 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-custom-config": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-background-timer": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-add-swift-support": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-background-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

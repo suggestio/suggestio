@@ -4,7 +4,6 @@ import javax.inject.Inject
 
 import io.suggest.ahc.util.HttpGetToFile
 import play.api.libs.ws.WSResponse
-import util.geo.osm.OsmElemTypes.OsmElemType
 
 import scala.concurrent.{ExecutionContext, Future}
 

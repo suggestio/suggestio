@@ -1,7 +1,6 @@
 package models.msys
 
-import util.geo.osm.OsmElemTypes.OsmElemType
-import util.geo.osm.OsmParsers
+import util.geo.osm.{OsmElemType, OsmParsers}
 
 /**
  * Suggest.io

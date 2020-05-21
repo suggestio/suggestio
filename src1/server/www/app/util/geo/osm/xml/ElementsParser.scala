@@ -232,12 +232,12 @@ trait ElementsParserT
        * @see [[http://wiki.openstreetmap.org/wiki/Relation:boundary#Relation_members]]
        */
       val role = Option( thisTagAttrs.getValue(ATTR_ROLE) )
-        .flatMap { RelMemberRoles.maybeWithName }
+        .flatMap { RelMemberRoles.withValueOpt }
         .getOrElse(RelMemberRoles.default)
 
       membersAcc ::= OsmRelMemberParsed(
         ref = thisTagAttrs.getValue(ATTR_REF).toLong,
-        typ = OsmElemTypes.withName( thisTagAttrs.getValue(ATTR_TYPE).toLowerCase ),
+        typ = OsmElemTypes.withValue( thisTagAttrs.getValue(ATTR_TYPE).toLowerCase ),
         role = role
       )
 

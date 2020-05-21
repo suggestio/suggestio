@@ -1,5 +1,6 @@
 package util.blocks
 
+import enumeratum.values.{IntEnum, IntEnumEntry}
 import models.blk
 import models.mctx.Context
 import play.twirl.api.{Html, Template2}
@@ -15,39 +16,22 @@ import views.html.blocks._
  * Надо удалить его полностью.
  */
 
-object BlocksConf
-  extends Enumeration
-{
-
-  /** Всё описание блока идёт через наследование Val и её интерфейса [[ValT]] при необходимости. */
-  protected abstract class Val(id: Int)
-    extends super.Val(id)
-    with CommonBlock2T
-
-  type T = Val
-
+object BlocksConf extends IntEnum[BlockConf] {
 
   // Начало значений
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
-  sealed trait CommonBlock2T extends ValT
-
-  /** Блок рекламной карточки с произвольным заполнением и без svg. */
-  sealed trait Block20t extends CommonBlock2T {
+  case object Block20 extends BlockConf( 20 ) {
     override def template = _block20Tpl
   }
-  val Block20 = new Val( 20 ) with Block20t {
-  }
 
+  override def values = findValues
 
 }
 
 
 
-/** Базовый интерфейс для реализаций класса Enumeration.Val. */
-trait ValT {
-
-  def id: Int
+sealed abstract class BlockConf( override val value: Int ) extends IntEnumEntry {
 
   /** Флаг того, что на блок не стоит навешивать скрипты, отрабатывающие клик по нему. */
   def hrefBlock = false

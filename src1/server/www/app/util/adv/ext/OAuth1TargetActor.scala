@@ -93,7 +93,7 @@ class OAuth1TargetActor @Inject() (
 
 
   /** Состояние рендера текущей карточки в картинку. */
-  class RenderAd2ImgState extends RenderAd2ImgStateT {
+  class RenderAd2ImgState extends RenderAd2ImgStateTE {
     /** Аргументы для генерации данных для ссылки рендера карточки. */
     val _ca = new MCustomArgs {
       override lazy val madRenderInfo = super.madRenderInfo
@@ -110,7 +110,7 @@ class OAuth1TargetActor @Inject() (
   }
 
 
-  class UploadRenderedMadState(imgFile: File) extends S2sMpUploadStateT {
+  class UploadRenderedMadState(imgFile: File) extends S2sMpUploadStateTErr {
     /** Ссылка, которая была использована для аплоада. */
     override def upUrl: String = args.target.target.url
 

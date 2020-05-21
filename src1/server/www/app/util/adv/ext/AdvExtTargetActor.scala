@@ -260,7 +260,7 @@ class AdvExtTargetActor @Inject()(
    *
    * @param uploadCtx Данные для s2s-загрузки.
    */
-  class S2sRenderAd2ImgState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateT {
+  class S2sRenderAd2ImgState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateTE {
     override def _mad = mad
     override def _adRenderArgs = _customArgs.adRenderArgs
     override def rendererError(ex: Throwable): Unit = {
@@ -278,7 +278,7 @@ class AdvExtTargetActor @Inject()(
 
   /** Состояние отсылки запроса сохранения картинки на удалённый сервер. */
   class S2sPutPictureState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgFile: File)
-    extends S2sMpUploadStateT {
+    extends S2sMpUploadStateTErr {
 
     override def upUrl = uploadCtx.url
 

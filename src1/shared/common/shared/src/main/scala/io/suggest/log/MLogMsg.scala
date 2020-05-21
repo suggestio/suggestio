@@ -80,7 +80,8 @@ object MLogMsg {
       Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( from, 64) )
     } |@|
     ScalazUtil.liftNelOpt( logMsg.code ) { eMsgCode =>
-      Validation.liftNel( eMsgCode )( !_.matches("[._a-zA-Z0-1-]{1,256}"), "code.invalid" )
+      // В регэксп внесены символы [*=], т.к. использование произвольных месседжей для логгирования требует "подсветить" сторку.
+      Validation.liftNel( eMsgCode )( !_.matches("[._a-zA-Z0-1*=-]{1,256}"), "code.invalid: " + eMsgCode )
     } |@|
     ScalazUtil.liftNelOpt( logMsg.message ) { logMessage =>
       Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( logMessage, maxLen = 512 ) )

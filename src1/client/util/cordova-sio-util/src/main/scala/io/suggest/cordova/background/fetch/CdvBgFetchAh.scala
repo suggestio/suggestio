@@ -57,8 +57,6 @@ class CdvBgFetchAh[M](
         } { opts =>
           // Запустить таймер.
           val fx = Effect {
-            val minFetchInvMinutes = Math.max( 1, opts.every.toMinutes.toInt )
-
             Future {
               CBF.configure(
                 callback = { taskId =>
@@ -71,7 +69,7 @@ class CdvBgFetchAh[M](
                   override val requiresBatteryNotLow = true
                   override val requiredNetworkType   = CBF.NETWORK_TYPE_ANY
                   override val periodic              = true
-                  override val minimumFetchInterval  = minFetchInvMinutes
+                  override val minimumFetchInterval  = Math.max( 1, opts.every.toMinutes.toInt )
                 }
               )
             }

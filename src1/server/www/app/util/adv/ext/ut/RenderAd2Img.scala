@@ -73,7 +73,7 @@ trait RenderAd2ImgRender
   with AdvExtTargetActorUtil
 {
 
-  trait RenderAd2ImgStateT extends super.RenderAd2ImgStateT {
+  trait RenderAd2ImgStateTE extends super.RenderAd2ImgStateT {
     override def rendererError(ex: Throwable): Unit = {
       val err = ErrorInfo(
         msg  = "error.sio.internal",

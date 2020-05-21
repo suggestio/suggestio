@@ -10,7 +10,7 @@
     <content src="index.html" />
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
-    <allow-navigation href="http://192.168.42.192:9000/*" />
+    <allow-navigation href="http://192.168.42.*:9000/*" />
     <allow-navigation href="https://*.cdnvideo.ru/*" />
     <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="https://*.openstreetmap.org/*" />
@@ -126,9 +126,9 @@
             </array>
         </config-file>
         <config-file parent="BGTaskSchedulerPermittedIdentifiers" target="*-Info.plist">
-          <array>
-              <string>io.suggest.bgtasks.v1</string>
-          </array>
+            <array>
+                <string>io.suggest.bgtasks.v1</string>
+            </array>
         </config-file>
     </platform>
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
@@ -142,6 +142,4 @@
     <plugin name="cordova-plugin-ble-central" spec="~1.2.5" />
     <plugin name="cordova-plugin-background-mode" spec="~0.7.3" />
     <plugin name="cordova-custom-config" spec="~5.1.0" />
-    <plugin name="cordova-background-timer" spec="~0.0.5" />
-    <plugin name="cordova-plugin-add-swift-support" spec="~2.0.2" />
 </widget>

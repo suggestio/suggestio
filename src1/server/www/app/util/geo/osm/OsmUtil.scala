@@ -2,7 +2,6 @@ package util.geo.osm
 
 import java.io.{File, FileInputStream, InputStream}
 
-import OsmElemTypes.OsmElemType
 import io.suggest.geo._
 import io.suggest.util.logs.MacroLogsImplLazy
 import org.xml.sax.SAXParseException
@@ -160,7 +159,7 @@ trait OsmParsersT extends JavaTokenParsers {
   def osmSitePrefixP = "(?i)https?".r ~> "://" ~> opt("(?i)www.".r) ~> "(?i)openstreetmap.org/".r
 
   def osmTypeP: Parser[OsmElemType] = {
-    ("(?i)way".r | "(?i)node".r | "(?i)relation".r) ^^ { OsmElemTypes.withName }
+    ("(?i)way".r | "(?i)node".r | "(?i)relation".r) ^^ { OsmElemTypes.withValue }
   }
 
   def objIdP: Parser[Long] = "\\d+".r ^^ { _.toLong }
@@ -236,65 +235,6 @@ case class OsmWay(id: Long, nodesOrdered: List[OsmNode]) extends OsmObject {
     }
   }
 }
-
-
-object RelMemberRoles extends Enumeration {
-  protected case class Val(name: String, isRelationBorder: Boolean) extends super.Val(name)
-
-  type RelMemberRole = Val
-
-  // Нужен upper case
-  val INNER: RelMemberRole         = Val("inner", true)
-  val OUTER: RelMemberRole         = Val("outer", true)
-  val ADMIN_CENTRE: RelMemberRole  = Val("admin_centre", false)
-  val LABEL: RelMemberRole         = Val("label", false)
-  val SUBAREA: RelMemberRole       = Val("subarea", false)
-
-  implicit def value2val(x: Value): RelMemberRole = x.asInstanceOf[RelMemberRole]
-
-  def default = OUTER
-
-  def maybeWithName(x: String): Option[RelMemberRole] = {
-    try {
-      val r = x match {
-        case ""         => default
-        case "enclave"  => INNER
-        case "exclave"  => OUTER
-        case other      => withName(other)
-      }
-      Some(r)
-    } catch {
-      case _: NoSuchElementException => None
-    }
-  }
-
-}
-
-
-object OsmElemTypes extends Enumeration {
-  protected abstract class Val(val name: String) extends super.Val(name) {
-    def xmlUrl(id: Long): String
-  }
-
-  type OsmElemType = Val
-  // Нужен upper case
-
-  val NODE: OsmElemType = new Val("node") {
-    override def xmlUrl(id: Long) = s"http://www.openstreetmap.org/api/0.6/node/$id"
-  }
-
-  val WAY: OsmElemType = new Val("way") {
-    override def xmlUrl(id: Long) = s"http://www.openstreetmap.org/api/0.6/way/$id/full"
-  }
-
-  val RELATION: OsmElemType = new Val("relation") {
-    override def xmlUrl(id: Long) = s"http://www.openstreetmap.org/api/0.6/relation/$id/full"
-  }
-
-  implicit def value2val(x: Value): OsmElemType = x.asInstanceOf[OsmElemType]
-}
-
-import RelMemberRoles.RelMemberRole
 
 
 case class OsmRelMemberParsed(ref: Long, typ: OsmElemType, role: RelMemberRole)
