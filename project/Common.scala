@@ -86,6 +86,7 @@ object Common {
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
     val SCALACSS = "0.6.0"
+    //val SCALACSS = "0.6.1"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -265,7 +266,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.8.1"
+  val playVsn         = "2.8.2"
 
 
   /** Версия BouncyCastle. */
@@ -307,6 +308,7 @@ object Common {
    */
   val reactSjsVsn        = "1.6.0" // И контроллировать суффикс diodeReactVsn ниже!
   //val reactSjsVsn        = "1.7.0" // И контроллировать суффикс diodeReactVsn ниже!
+  // TODO Поменять следом SCALACSS
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
