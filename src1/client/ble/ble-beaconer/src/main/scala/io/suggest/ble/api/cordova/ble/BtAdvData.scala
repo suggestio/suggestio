@@ -110,7 +110,6 @@ object BtAdvData {
     final val EBLE_SECCONRAND      = 0x23;//​​«​LE Secure Connections Random Value»	​Core Specification Supplement Part A, Section 1.6​
     final val EBLE_3DINFDATA       = 0x3D;//​​«3D Information Data»	​3D Synchronization Profile, v1.0 or later
     final val EBLE_MANUFACTURER_DATA         = 0xFF;//«Manufacturer Specific Data»	Bluetooth Core Specification:
-
   }
 
 

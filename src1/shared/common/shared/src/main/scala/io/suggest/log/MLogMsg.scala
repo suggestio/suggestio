@@ -135,7 +135,7 @@ final case class MLogMsg(
 
     for (ex <- exception) {
       for (st <- ex.stackTrace.reverseIterator)
-        tokensAcc = n :: st.mkString(n,n,n) :: tokensAcc
+        tokensAcc = n :: st :: tokensAcc
       for (msg <- ex.message)
         tokensAcc = d :: msg :: tokensAcc
       tokensAcc = d :: ex.getClass.getSimpleName :: tokensAcc
