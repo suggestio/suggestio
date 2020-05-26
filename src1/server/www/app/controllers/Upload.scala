@@ -37,7 +37,7 @@ import models.mup._
 import models.req.IReq
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
-import play.api.mvc.{AnyContent, BodyParser, DefaultActionBuilder, DefaultActionBuilderImpl, Result, Results}
+import play.api.mvc.{BodyParser, DefaultActionBuilder, Result, Results}
 import play.core.parsers.Multipart
 import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth, IsFileNotModified}
 import util.cdn.{CdnUtil, CorsUtil}
@@ -85,8 +85,8 @@ final class Upload @Inject()(
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val isFileNotModified = injector.instanceOf[IsFileNotModified]
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
-  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
   implicit private lazy val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
 
   import sioControllerApi._
@@ -293,11 +293,12 @@ final class Upload @Inject()(
 
   /** BodyParser для запросов, содержащих файлы для аплоада. */
   private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[MUploadBpRes] = {
-    // Если картинка, то заливать сразу в MLocalImg/ORIG.
+    // Сборка самого BodyParser'а.
     val fileHandler = uploadArgs.info.fileHandler
       .fold[TemporaryFileCreator]( SingletonTemporaryFileCreator ) {
         // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
         case MUploadFileHandlers.Image =>
+          // Если картинка, то заливать сразу в MLocalImg/ORIG.
           val imgFmt = MImgFmts
             .withMime( uploadArgs.fileProps.mime.get )
             .get
@@ -307,20 +308,19 @@ final class Upload @Inject()(
           LocalImgFileCreator( args )
       }
 
-    // Сборка самого BodyParser'а.
-    val bp0 = parse.multipartFormData(
-      Multipart.handleFilePartAsTemporaryFile( fileHandler ),
-      maxLength = uploadArgs.fileProps.sizeB.get + 10000L,
-    )
-
-    // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
-    for (mpfd <- bp0) yield {
+    for {
+      mpfd <- parse.multipartFormData(
+        Multipart.handleFilePartAsTemporaryFile( fileHandler ),
+        maxLength = uploadArgs.fileProps.sizeB.get + 10000L,
+      )
+    } yield {
+      // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
       MUploadBpRes(
         data = mpfd,
         localImgArgs = fileHandler match {
           case lifc: LocalImgFileCreator => Some( lifc.liArgs )
           case _ => None
-        }
+        },
       )
     }
   }
@@ -334,17 +334,19 @@ final class Upload @Inject()(
     * @return Ok + MUploadResp | NotAcceptable
     */
   def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = {
-    // Csrf выключен, потому что session cookie не пробрасывается на ноды.
-    lazy val logPrefix = s"doFileUpload()#${System.currentTimeMillis()}:"
+    // CSRF выключен, потому что session cookie не пробрасывается на ноды.
 
+    // !!! Этот метод часто вызывается дважды на один запрос, если файл длинный или канал медленный.
+    // !!! https://github.com/playframework/playframework/issues/8185
     val uploadNow = uploadUtil.rightNow()
-    if ( !uploadUtil.isTtlValid(uploadArgs.validTillS) ) {
-      // Если ttl истёк, то не надо получать body с клиента. canUploadFile проверяет body ПОСЛЕ заливки, которая может идти очень долго.
+    lazy val logPrefix = s"doFileUpload()#${uploadNow.toMillis}:"
+
+    if ( !uploadUtil.isTtlValid( uploadArgs.validTillS, now = uploadNow ) ) {
+      // TTL upload-ссылки истёк. Огорчить юзера.
       defaultActionBuilder.async( parse.ignore(null: MUploadBpRes) ) { implicit request =>
-        // TTL upload-ссылки истёк. Огорчить юзера.
         val msg = "URL TTL expired"
-        LOGGER.warn(s"$logPrefix $msg: ${uploadArgs.validTillS}; now was == $uploadNow")
-        httpErrorHandler.onClientError(request, play.api.http.Status.NOT_ACCEPTABLE, msg)
+        LOGGER.warn(s"$logPrefix $msg: ${uploadArgs.validTillS}; now was == ${uploadNow.toSeconds}")
+        httpErrorHandler.onClientError( request, play.api.http.Status.NOT_ACCEPTABLE, msg )
       }
 
     } else canUploadFile(uploadArgs, ctxIdOpt).async( _uploadFileBp(uploadArgs) ) { implicit request =>

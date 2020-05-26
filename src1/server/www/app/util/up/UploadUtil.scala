@@ -35,10 +35,13 @@ class UploadUtil @Inject()(
     */
   lazy val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
 
-  def LINK_TTL = 20.seconds
+  /** Из-за особенностей play-framework, приходится избыточные сроки жизни ссылок.
+    *  */
+  def LINK_TTL = 4.hours
 
   /** Текущее время в часах upload util. */
-  def rightNow() = System.currentTimeMillis().milliseconds
+  def rightNow(): FiniteDuration = fromMs( System.currentTimeMillis() )
+  def fromMs(ms: Long): FiniteDuration = ms.milliseconds
 
 
   /** Вычислить текущее значение для ttl.
