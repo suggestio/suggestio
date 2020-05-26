@@ -2,12 +2,18 @@
 
 set -ex
 
+MYDIR=$(dirname $0)
+
+## Т.к. кордова на клиенте может и не запускаться, и не работать, отработать её тут.
+$MYDIR/ios-prepare
+
 ## 1. rsync с обновлениями.
-rsync -e ssh -avz $(dirname $0) developer@mac:Desktop/IOS/cordova
+rsync -e ssh -avz $MYDIR developer@mac:Desktop/IOS/cordova
 
 ssh developer@mac << EOF
 set -ex
 cd ~/Desktop/IOS/cordova
 export PATH=/usr/local/bin:$PATH
-cordova run ios --device
+./ios-prepare
+#cordova run ios --device
 EOF

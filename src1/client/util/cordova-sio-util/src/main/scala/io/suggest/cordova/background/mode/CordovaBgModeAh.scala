@@ -3,7 +3,7 @@ package io.suggest.cordova.background.mode
 import cordova.Cordova
 import cordova.plugins.background.mode.CordovaBgModeEvents
 import diode._
-import io.suggest.daemon.{Daemonize, DaemonizerInit}
+import io.suggest.daemon.{DaemonBgModeSet, BgModeDaemonInit}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.Keep
@@ -124,7 +124,7 @@ final class CordovaBgModeAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Команда к инициализации плагина демона.
-    case m: DaemonizerInit =>
+    case m: BgModeDaemonInit =>
       val v0 = value
 
       var fxAcc = List.empty[Effect]
@@ -153,7 +153,7 @@ final class CordovaBgModeAh[M](
 
 
     // Команда к демонизации или раздемонизации приложения.
-    case m: Daemonize =>
+    case m: DaemonBgModeSet =>
       val fx = Effect.action {
         println(s"daemon work := " + CBGM.isEnabled() + " => " + m.isDaemon)
         CBGM.setEnabled( m.isDaemon )

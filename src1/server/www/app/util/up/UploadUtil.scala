@@ -35,8 +35,7 @@ class UploadUtil @Inject()(
     */
   lazy val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
 
-  /** 30 секунд - оказывается маловато на нестабильном wifi-канале. */
-  def LINK_TTL = 150.seconds
+  def LINK_TTL = 20.seconds
 
   /** Текущее время в часах upload util. */
   def rightNow() = System.currentTimeMillis().milliseconds

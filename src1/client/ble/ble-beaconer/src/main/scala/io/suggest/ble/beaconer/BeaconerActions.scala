@@ -46,4 +46,4 @@ private[beaconer] case object DoGc extends IBleBeaconAction
   *
   * @param tryEnabled Итоговое состояние, к которому пришла система.
   */
-private[beaconer] case class ReadyEnabled(tryEnabled: Try[Boolean] ) extends IBleBeaconAction
+private[beaconer] case class BtOnOffFinish(tryEnabled: Try[Boolean] ) extends IBleBeaconAction

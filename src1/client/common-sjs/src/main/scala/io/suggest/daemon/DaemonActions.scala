@@ -16,11 +16,11 @@ sealed trait IDaemonAction extends DAction
   * @param initOpts Some() - инициализация с указанными параметрами.
   *             None - деинициализация и сворачивание работы.
   */
-case class DaemonizerInit( initOpts: Option[MDaemonInitOpts] ) extends IDaemonAction
+case class BgModeDaemonInit(initOpts: Option[MDaemonInitOpts] ) extends IDaemonAction
 
 
 /** Команда к демонизации приложения. */
-case class Daemonize( isDaemon: Boolean ) extends IDaemonAction
+case class DaemonBgModeSet( isDaemon: Boolean ) extends IDaemonAction
 
 
 /** Команда к запуску/остановке sleep-таймера.

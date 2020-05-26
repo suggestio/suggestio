@@ -37,7 +37,7 @@ import models.mup._
 import models.req.IReq
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
-import play.api.mvc.{BodyParser, Result, Results}
+import play.api.mvc.{AnyContent, BodyParser, DefaultActionBuilder, DefaultActionBuilderImpl, Result, Results}
 import play.core.parsers.Multipart
 import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth, IsFileNotModified}
 import util.cdn.{CdnUtil, CorsUtil}
@@ -47,6 +47,7 @@ import monocle.Traversal
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
+import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -84,6 +85,8 @@ final class Upload @Inject()(
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val isFileNotModified = injector.instanceOf[IsFileNotModified]
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
   implicit private lazy val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
 
   import sioControllerApi._
@@ -291,20 +294,18 @@ final class Upload @Inject()(
   /** BodyParser для запросов, содержащих файлы для аплоада. */
   private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[MUploadBpRes] = {
     // Если картинка, то заливать сразу в MLocalImg/ORIG.
-    val localImgFileHandler = uploadArgs.info.fileHandler.map {
-      // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
-      case MUploadFileHandlers.Image =>
-        val imgFmt = MImgFmts
-          .withMime( uploadArgs.fileProps.mime.get )
-          .get
-        val dynImgId = MDynImgId.randomOrig( imgFmt )
-        val localImg = MLocalImg( dynImgId )
-        val args = MLocalImgFileCreatorArgs( localImg, imgFmt )
-        LocalImgFileCreator( args )
-    }
-
-    val fileHandler: TemporaryFileCreator = localImgFileHandler
-      .getOrElse( SingletonTemporaryFileCreator )
+    val fileHandler = uploadArgs.info.fileHandler
+      .fold[TemporaryFileCreator]( SingletonTemporaryFileCreator ) {
+        // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
+        case MUploadFileHandlers.Image =>
+          val imgFmt = MImgFmts
+            .withMime( uploadArgs.fileProps.mime.get )
+            .get
+          val dynImgId = MDynImgId.randomOrig( imgFmt )
+          val localImg = MLocalImg( dynImgId )
+          val args = MLocalImgFileCreatorArgs( localImg, imgFmt )
+          LocalImgFileCreator( args )
+      }
 
     // Сборка самого BodyParser'а.
     val bp0 = parse.multipartFormData(
@@ -334,11 +335,19 @@ final class Upload @Inject()(
     */
   def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = {
     // Csrf выключен, потому что session cookie не пробрасывается на ноды.
-    val bp = _uploadFileBp(uploadArgs)
+    lazy val logPrefix = s"doFileUpload()#${System.currentTimeMillis()}:"
 
-    canUploadFile(uploadArgs, ctxIdOpt).async(bp) { implicit request =>
-      lazy val logPrefix = s"doFileUpload()#${System.currentTimeMillis()}:"
+    val uploadNow = uploadUtil.rightNow()
+    if ( !uploadUtil.isTtlValid(uploadArgs.validTillS) ) {
+      // Если ttl истёк, то не надо получать body с клиента. canUploadFile проверяет body ПОСЛЕ заливки, которая может идти очень долго.
+      defaultActionBuilder.async( parse.ignore(null: MUploadBpRes) ) { implicit request =>
+        // TTL upload-ссылки истёк. Огорчить юзера.
+        val msg = "URL TTL expired"
+        LOGGER.warn(s"$logPrefix $msg: ${uploadArgs.validTillS}; now was == $uploadNow")
+        httpErrorHandler.onClientError(request, play.api.http.Status.NOT_ACCEPTABLE, msg)
+      }
 
+    } else canUploadFile(uploadArgs, ctxIdOpt).async( _uploadFileBp(uploadArgs) ) { implicit request =>
       LOGGER.trace(s"$logPrefix Starting w/args: $uploadArgs")
 
       lazy val errSb = new StringBuilder()

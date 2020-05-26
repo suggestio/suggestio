@@ -7,7 +7,7 @@ import io.suggest.sc.m.in.MScDaemon
 import diode.Implicits._
 import diode.data.Pot
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts, MBeaconerS}
-import io.suggest.daemon.{DaemonSleepTimerFinish, DaemonSleepTimerSet, Daemonize, MDaemonSleepTimer, MDaemonStates}
+import io.suggest.daemon.{DaemonSleepTimerFinish, DaemonSleepTimerSet, DaemonBgModeSet, MDaemonSleepTimer, MDaemonStates}
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
@@ -45,6 +45,9 @@ class ScDaemonAh[M](
   with Log
 { ah =>
 
+
+  def USE_BG_MODE = false
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запуск периодического фонового мониторинга.
@@ -78,7 +81,14 @@ class ScDaemonAh[M](
       logger.log( msg = m )
 
       // TODO Проверить online-состояние через cordova MPlatformS, подписываясь на события online/offline.
-      var fx: Effect = Daemonize( isDaemon = m.isActive ).toEffectPure
+      var fx: Effect = Effect.action {
+        if (USE_BG_MODE) {
+          DaemonBgModeSet( isDaemon = m.isActive )
+        } else {
+          ScDaemonWorkProcess( isActive = true )
+        }
+      }
+
       if (!m.isActive)
         fx >>= DaemonSleepTimerFinish.toEffectPure
 
@@ -95,7 +105,7 @@ class ScDaemonAh[M](
       logger.log( msg = m )
 
       val v0 = value
-      val daemonState2 = MDaemonStates.fromIsActive(m.isActive)
+      val daemonState2 = MDaemonStates.fromIsActive( m.isActive )
       val v2 = MScDaemon.state.modify( _.ready(daemonState2) )(v0)
 
       if (m.isActive) {

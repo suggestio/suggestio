@@ -580,7 +580,7 @@ class BleBeaconerAh[M](
               .transform { tryRes =>
                 for (ex <- tryRes.failed)
                   logger.error( ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE, ex, m )
-                val action = ReadyEnabled(
+                val action = BtOnOffFinish(
                   tryEnabled = tryRes.map(_ => false)
                 )
                 Success(action)
@@ -670,7 +670,7 @@ class BleBeaconerAh[M](
 
 
     // Сигнал окончания запуска или инициализации системы.
-    case m: ReadyEnabled =>
+    case m: BtOnOffFinish =>
       val v0 = value
 
       def __maybeNoChange =
