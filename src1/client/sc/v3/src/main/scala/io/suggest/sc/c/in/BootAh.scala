@@ -132,8 +132,7 @@ class BootAh[M](
 
       override def startFx: Effect = {
         Effect {
-          val mroot = circuit.rootRW.value
-          val plat = mroot.dev.platform
+          val plat = circuit.platformRW.value
 
           if (plat.isCordova) {
             // cordova - Нужно повесится на platform-ready.
@@ -152,6 +151,18 @@ class BootAh[M](
     /** Сбор данных геолокации для первого запуска. */
     class GeoLocDataAccSvc extends IBootService {
       override def serviceId = MBootServiceIds.GeoLocDataAcc
+
+      override def depends: List[MBootServiceId] = {
+        val deps0 = super.depends
+        val plat = circuit.platformRW.value
+        if (plat.isCordova && !plat.isReady) {
+          // Для неготовой cordova - надо дожидаться готовности:
+          MBootServiceIds.Platform :: deps0
+        } else {
+          deps0
+        }
+      }
+
       override def startFx = BootLocDataWz.toEffectPure
     }
 

@@ -8,7 +8,6 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.background.mode.CordovaBgModeAh
-import io.suggest.cordova.background.timer.CordovaBgTimerAh
 import io.suggest.daemon.{DaemonizerInit, HtmlBgTimerAh, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
@@ -611,10 +610,27 @@ class Sc3Circuit(
   private def _onPlatformReady(): Unit = {
     // Активировать сборку Bluetooth-маячков:
     _dispatchBleBeaconerOnOff()
+
     // Активировать поддержку нотификаций:
     if (notifyAh.nonEmpty) Future {
       val msg = NotifyStartStop(isStart = true)
       this.runEffectAction( msg )
+    }
+
+    // Инициализация демонизатора
+    if (daemonBgModeAh.nonEmpty) Future {
+      val daemonizerInitA = DaemonizerInit(
+        initOpts = Some( MDaemonInitOpts(
+          events = MDaemonEvents(
+            activated = ScDaemonWorkProcess,
+          ),
+          descr = MDaemonDescr(
+            needBle = true,
+          ),
+          notification = Some( scNotifications.daemonNotifyOpts() ),
+        ))
+      )
+      this.runEffectAction( daemonizerInitA )
     }
   }
 
@@ -659,7 +675,7 @@ class Sc3Circuit(
         }
 
         val sp = Promise[None.type]()
-        val cancelF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
+        val unSubscribePlatformReadyF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
           if (isReadyNowProxy.value) {
             DomQuick.clearTimeout( readyTimeoutId )
             // Запустить bluetooth-мониторинг.
@@ -671,7 +687,7 @@ class Sc3Circuit(
 
         // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
         sp.future
-          .andThen { case _ => cancelF() }
+          .andThen { case _ => unSubscribePlatformReadyF() }
       }
     } catch { case ex: Throwable =>
       // Возникла ошибка от подготовки платформы прямо в конструкторе. Подавить, т.к. иначе всё встанет колом.
@@ -751,23 +767,6 @@ class Sc3Circuit(
         this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
       }
 
-    }
-
-
-    // Инициализация демонизатора
-    if (daemonBgModeAh.nonEmpty) Future {
-      val daemonizerInitA = DaemonizerInit(
-        initOpts = Some( MDaemonInitOpts(
-          events = MDaemonEvents(
-            activated = ScDaemonWorkProcess,
-          ),
-          descr = MDaemonDescr(
-            needBle = true,
-          ),
-          notification = Some( scNotifications.daemonNotifyOpts() ),
-        ))
-      )
-      this.runEffectAction( daemonizerInitA )
     }
 
   }

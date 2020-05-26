@@ -137,7 +137,7 @@ object ScalazUtil {
   object Implicits {
 
     /** Доп.утиль для валидации. */
-    implicit class RichValidationOpt[E, T]( val vldOpt: Option[ValidationNel[E, Option[T]]] ) extends AnyVal {
+    implicit final class RichValidationOpt[E, T]( private val vldOpt: Option[ValidationNel[E, Option[T]]] ) extends AnyVal {
 
       /** Быстрый костылёк для валидации. */
       def getOrElseNone: ValidationNel[E, Option[T]] = {
@@ -150,7 +150,7 @@ object ScalazUtil {
 
 
     /** API поддержки приведения IList'ов к нормальным человеческим коллекциям. */
-    implicit class RichIList[T](ilist: IList[T]) { that =>
+    implicit class RichIList[T]( private val ilist: IList[T] ) { that =>
 
       /** Итератор для IList. */
       def iterator: Iterator[T] = {
@@ -197,7 +197,7 @@ object ScalazUtil {
 
 
     /** Поддержка std api для NonEmptyList. */
-    implicit class RichNel[T](nel: NonEmptyList[T]) extends RichIList(nel.list)
+    implicit final class RichNel[T](nel: NonEmptyList[T]) extends RichIList(nel.list)
 
   }
 
