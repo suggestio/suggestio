@@ -15,6 +15,7 @@ webpackBundlingMode := BundlingMode.LibraryOnly()
 
 //(emitSourceMaps in fullOptJS) := false
 
+scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
 
 scalaJSUseMainModuleInitializer := true
 

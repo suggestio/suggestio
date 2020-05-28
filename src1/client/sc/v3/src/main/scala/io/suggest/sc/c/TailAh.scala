@@ -16,6 +16,7 @@ import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.geo.GeoLocUtilJs
+import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
@@ -62,7 +63,7 @@ object TailAh {
       menuOpened    = v0.index.menu.opened,
       focusedAdId   = for {
         scAdData <- v0.grid.core.focusedAdOpt
-        focData  <- scAdData.focused.toOption
+        if scAdData.focused.nonEmpty
         adNodeId <- scAdData.nodeId
       } yield {
         adNodeId
@@ -576,6 +577,13 @@ class TailAh(
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
     case _: WcTimeOut =>
+      noChange
+
+
+    // Ошибка от компонента.
+    case m: ComponentCatch =>
+      logger.error( ErrorMsgs.CATCHED_CONSTRUCTOR_EXCEPTION, msg = m )
+      // TODO Отрендерить ошибку на экран.
       noChange
 
   }

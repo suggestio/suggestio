@@ -89,3 +89,11 @@ trait ILeaflet extends js.Object {
 @js.native
 @JSImport(LEAFLET_IMPORT, JSImport.Namespace)
 object Leaflet extends ILeaflet
+
+
+/** Бронирование window.L, чтобы не конфликтовало ничего нигде. */
+@js.native
+@JSGlobalScope
+object LeafletGlobal extends js.Object {
+  var L: js.UndefOr[ILeaflet] = js.native
+}

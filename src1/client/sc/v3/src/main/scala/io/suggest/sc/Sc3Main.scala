@@ -18,7 +18,7 @@ import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
-import io.suggest.sjs.leaflet.Leaflet
+import io.suggest.sjs.leaflet.{Leaflet, LeafletGlobal}
 import io.suggest.spa.StateInp
 import io.suggest.sw.SwOptions
 import org.scalajs.dom.experimental.serviceworkers._
@@ -57,9 +57,8 @@ object Sc3Main extends Log {
 
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
-    Try {
-      Leaflet.noConflict()
-    }
+    if (JsApiUtil.isDefinedSafe( LeafletGlobal.L ))
+      Try( Leaflet.noConflict() )
 
     // Активировать отправку логов на сервер, когда js-роутер будет готов.
     //Try {

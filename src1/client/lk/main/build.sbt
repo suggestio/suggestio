@@ -17,7 +17,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 // https://github.com/scalacenter/scalajs-bundler/issues/178
 webpackBundlingMode := BundlingMode.LibraryOnly()
 
-webpackBundlingMode in fullOptJS := BundlingMode.Application
+//webpackBundlingMode in fullOptJS := BundlingMode.Application
 
 // Use a different Webpack configuration file for production
 //[info] ERROR in lk-sjs-opt-library.js from UglifyJs
@@ -25,7 +25,7 @@ webpackBundlingMode in fullOptJS := BundlingMode.Application
 webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
 
 // TODO scalajs-1.0: leaflet-markercluster и locatecontrol мешают переезду на ES2015.
-scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(false)) }
+scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
 
 // TODO scalajs-1.0 Выставить в scalaJSLinkerConfig emitSourceMaps:
 //emitSourceMaps := true

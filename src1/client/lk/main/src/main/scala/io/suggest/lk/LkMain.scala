@@ -12,12 +12,13 @@ import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.JsApiUtil
-import io.suggest.sjs.leaflet.Leaflet
+import io.suggest.sjs.leaflet.{Leaflet, LeafletGlobal}
 import io.suggest.sys.mdr.SysMdrInit
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.AdvExtRunnerInitRouter
 
 import scala.scalajs.js
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -29,12 +30,8 @@ object LkMain extends Log {
 
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   def main(args: Array[String]): Unit = {
-    try {
-      if ( JsApiUtil.isDefinedSafe(Leaflet) )
-        Leaflet.noConflict()
-    } catch {
-      case _: Throwable =>
-    }
+    if ( JsApiUtil.isDefinedSafe(LeafletGlobal.L) )
+      Try( Leaflet.noConflict() )
 
     try {
       new LkInitRouter()

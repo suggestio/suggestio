@@ -1,7 +1,6 @@
 package io.suggest.css
 
 import diode.react.ModelProxy
-import io.suggest.log.Log
 import io.suggest.sc.styl.ScScalaCssDefaults._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -36,9 +35,6 @@ object CssR {
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
-    .componentDidCatch { $ =>
-      Callback.empty
-    }
     .build
 
   def apply(cssProxy: Props) = component( cssProxy )

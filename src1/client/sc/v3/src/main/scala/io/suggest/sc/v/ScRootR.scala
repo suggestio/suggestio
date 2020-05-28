@@ -9,6 +9,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
@@ -344,8 +345,12 @@ class ScRootR (
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = <.div(
-        // css, который рендерится только один раз:
-        mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
+
+        // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
+        mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
+          // css, который рендерится только один раз:
+          mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
+        )),
 
         s.isRenderScC { isRenderSomeProxy =>
           // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
