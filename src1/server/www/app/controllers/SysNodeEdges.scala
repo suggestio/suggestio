@@ -3,6 +3,7 @@ package controllers
 import io.suggest.ctx.CtxData
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
+import io.suggest.fio.MDsReadArgs
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.n2.edge.edit.{MEdgeEditFormInit, MNodeEdgeIdQs}
@@ -226,11 +227,11 @@ final class SysNodeEdges @Inject() (
       (for {
         dataSource <- iMediaStorages
           .client( edgeMedia.storage.storage )
-          .read( edgeMedia.storage.data, request.acceptCompressEncodings )
+          .read( MDsReadArgs(edgeMedia.storage.data, request.acceptCompressEncodings) )
       } yield {
         sioControllerApi.sendDataSource(
           dataSource  = dataSource,
-          contentType = edgeMedia.file.mime,
+          nodeContentType = edgeMedia.file.mime,
         )
           .withHeaders(
             Results

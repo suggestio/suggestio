@@ -1,6 +1,7 @@
 package io.suggest.log
 
 import io.suggest.common.html.HtmlConstants
+import io.suggest.text.StringUtil
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -29,8 +30,9 @@ class JsConsoleAppender extends ILogAppender {
 
       acc ::= logMsg.onlyMainText
 
-      for (code <- logMsg.code)
-        acc ::= code
+      for (logMsg <- logMsg.logMsg)
+        // TODO strLimitLen: наверное нужно многоточие в середине, чтобы концовка всё-таки была отрендерена.
+        acc ::= StringUtil.strLimitLen( logMsg.toString, maxLen = 1024 )
 
       f( acc.mkString(HtmlConstants.NEWLINE_UNIX.toString), Nil )
     }

@@ -68,7 +68,7 @@ class BufLogAppendAh[M](
               val lm = MLogMsg(
                 severity = LogSeverities.Error,
                 from = Try( ah.getClass.getSimpleName ).toOption,
-                code = Some( ErrorMsgs.SET_TIMER_ERROR ),
+                logMsg = Some( ErrorMsgs.SET_TIMER_ERROR ),
                 message = Some( m.toString ),
                 exception = Some( MExceptionInfo.from(ex, 3) ),
               )

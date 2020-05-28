@@ -3,11 +3,11 @@ package io.suggest.swfs.client
 import com.google.inject.ImplementedBy
 import io.suggest.di.IExecutionContext
 import io.suggest.swfs.client.play.SwfsClientWs
-import io.suggest.swfs.client.proto.assign.{IAssignResponse, IAssignRequest, AssignRequest}
-import io.suggest.swfs.client.proto.delete.{IDeleteResponse, IDeleteRequest}
-import io.suggest.swfs.client.proto.get.{IGetRequest, GetResponse}
-import io.suggest.swfs.client.proto.lookup.{ILookupError, ILookupResponse, ILookupRequest}
-import io.suggest.swfs.client.proto.put.{IPutResponse, IPutRequest}
+import io.suggest.swfs.client.proto.assign.{AssignRequest, AssignResponse}
+import io.suggest.swfs.client.proto.delete.{DeleteRequest, DeleteResponse}
+import io.suggest.swfs.client.proto.get.{GetRequest, GetResponse}
+import io.suggest.swfs.client.proto.lookup.{LookupError, LookupRequest, ILookupResponse}
+import io.suggest.swfs.client.proto.put.{PutRequest, PutResponse}
 
 import scala.concurrent.Future
 
@@ -26,7 +26,7 @@ trait ISwfsClient extends IExecutionContext {
    * @param args Параметры assign-запроса.
    * @return Фьючерс с результатом.
    */
-  def assign(args: IAssignRequest = AssignRequest()): Future[IAssignResponse]
+  def assign(args: AssignRequest = AssignRequest()): Future[AssignResponse]
 
 
   /**
@@ -35,7 +35,7 @@ trait ISwfsClient extends IExecutionContext {
    * @param args Параметры PUT-запроса.
    * @return Фьючерс с распарсенным ответом сервера.
    */
-  def put(args: IPutRequest): Future[IPutResponse]
+  def put(args: PutRequest): Future[PutResponse]
 
 
   /**
@@ -45,7 +45,7 @@ trait ISwfsClient extends IExecutionContext {
    * @return Фьючерс с результатом удаления:
    *         None -- файл, подлежащий удалению, не найден.
    */
-  def delete(args: IDeleteRequest): Future[Option[IDeleteResponse]]
+  def delete(args: DeleteRequest): Future[Option[DeleteResponse]]
 
 
   /**
@@ -56,7 +56,7 @@ trait ISwfsClient extends IExecutionContext {
    *         None -- файл не найден.
    *         Some() с содержимым ответа.
    */
-  def get(args: IGetRequest): Future[Option[GetResponse]]
+  def get(args: GetRequest): Future[Option[GetResponse]]
 
 
   /**
@@ -67,7 +67,7 @@ trait ISwfsClient extends IExecutionContext {
    *         Left() если ошибка какая-то.
    *         Right() с инфой по volume.
    */
-  def lookup(args: ILookupRequest): Future[Either[ILookupError, ILookupResponse]]
+  def lookup(args: LookupRequest): Future[Either[LookupError, ILookupResponse]]
 
   /**
    * Существует ли указанный файл в хранилище?
@@ -75,6 +75,6 @@ trait ISwfsClient extends IExecutionContext {
    * @param args Экземпляр IGetRequest.
    * @return Фьючерс с true/false внутри.
    */
-  def isExist(args: IGetRequest): Future[Boolean]
+  def isExist(args: GetRequest): Future[Boolean]
 
 }

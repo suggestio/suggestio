@@ -151,18 +151,19 @@ final class SioControllerApi @Inject()(
   /** Раздача dataSource'ов клиентам.
     *
     * @param dataSource Абстрактный источник данных.
-    * @param contentType MIME-тип данных, когда известен.
+    * @param nodeContentType Внешний MIME-тип данных, сохранённый в эдже (в узле).
+    *                        Может отсутствовать или отличаться от CT, который присылается хранилищем.
     * @return Result.
     */
   def sendDataSource(
-                      dataSource: IDataSource,
-                      contentType: Option[String] = None,
+                      dataSource        : IDataSource,
+                      nodeContentType   : Option[String] = None,
                     ): Result = {
     val resp = Ok.sendEntity(
       HttpEntity.Streamed(
         data          = dataSource.data,
         contentLength = Some( dataSource.sizeB ),
-        contentType   = Some( contentType getOrElse dataSource.contentType ),
+        contentType   = Some( nodeContentType getOrElse dataSource.contentType ),
       )
     )
 

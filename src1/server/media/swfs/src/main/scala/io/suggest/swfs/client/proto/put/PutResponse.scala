@@ -15,11 +15,7 @@ object PutResponse extends IFileResponseStatic {
 }
 
 
-/** Интерфейс результата модели. */
-trait IPutResponse extends IFileResponse
-
-
-case class PutResponse(
-  override val occupiedSize       : Long
-)
-  extends IPutResponse
+final case class PutResponse(
+                              override val occupiedSize       : Long,
+                            )
+  extends IFileResponse

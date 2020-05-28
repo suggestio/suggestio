@@ -659,35 +659,53 @@ lazy val www = project
   )
 
 
-/** Корневой проект. Он должен аггрегировать подпроекты. */
-lazy val sio2 = {
-  Project(id = "sio2", base = file("."))
-    .settings(Common.settingsOrg: _*)
-    .aggregate(
-      commonJS, commonJVM, logsMacro,
-      commonSjs, commonReactSjs,
-      reactMaterialUiSjs, reactQrCodeSjs,
-      leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
-      lkSjs, sysSjs,
-      scCommonSjs, sc3Sjs,
-      scSwSjs, swToolBoxSjs,
-      momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
-      cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
-      reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
-      reactGridLayoutSjs, reactStoneCutterSjs,
-      reactSidebar, reactScroll, reactMeasureSjs, reactDndSjs,
-      quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
-      lkAdEditorSjs, lkAdnEditSjs,
-      lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
-      streamsUtil, brotliUtil,
-      asmCryptoJsSjs, asmCryptoSioSjs,
-      sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
-      util, esUtil, textUtil, swfs, n2, securesocial,
-      ipgeobase, stat,
-      mgeo, commonWww, nodesWww,
-      mbill2, payWww, cartSjs,
-      secWwwUtil, secAvUtil, svgUtil,
-      www
-    )
-}
+/** JS-код на стороне клиента. */
+lazy val client = project
+  .in( file(DIR0 + "client") )
+  .settings(Common.settingsOrg: _*)
+  .aggregate(
+    commonJS,
+    commonSjs, commonReactSjs,
+    reactMaterialUiSjs, reactQrCodeSjs,
+    leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
+    lkSjs, sysSjs,
+    scCommonSjs, sc3Sjs,
+    scSwSjs, swToolBoxSjs,
+    momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
+    cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
+    reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
+    reactGridLayoutSjs, reactStoneCutterSjs,
+    reactSidebar, reactScroll, reactMeasureSjs, reactDndSjs,
+    quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
+    lkAdEditorSjs, lkAdnEditSjs,
+    lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
+    asmCryptoJsSjs, asmCryptoSioSjs,
+    sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
+    cartSjs
+  )
 
+
+/** JVM-код на стороне сервера. */
+lazy val server = project
+  .in( file(DIR0 + "server") )
+  .settings(Common.settingsOrg: _*)
+  .aggregate(
+    commonJVM, logsMacro,
+    streamsUtil, brotliUtil,
+    util, esUtil, textUtil, swfs, n2, securesocial,
+    ipgeobase, stat,
+    mgeo, commonWww, nodesWww,
+    mbill2, payWww,
+    secWwwUtil, secAvUtil, svgUtil,
+    www
+  )
+
+
+/** Корневой проект. Он должен аггрегировать подпроекты. */
+lazy val sio2 = project
+  .in( file(".") )
+  .settings(Common.settingsOrg: _*)
+  .aggregate(
+    client,
+    server
+  )

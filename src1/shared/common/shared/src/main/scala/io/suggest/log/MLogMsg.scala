@@ -39,7 +39,7 @@ object MLogMsg {
         val lm = MLogMsg(
           severity  = severity,
           from      = classSimpleName,
-          code      = Option(errorMsg),
+          logMsg      = Option(errorMsg),
           message   = Option(msg).map(_.toString),
           exception = Option(ex).map( MExceptionInfo.from(_, stackTraceLen) ),
           url       = url,
@@ -67,7 +67,7 @@ object MLogMsg {
 
   def severity = GenLens[MLogMsg]( _.severity )
   def from = GenLens[MLogMsg]( _.from )
-  def code = GenLens[MLogMsg]( _.code )
+  def code = GenLens[MLogMsg]( _.logMsg )
   def message = GenLens[MLogMsg]( _.message )
   def exception = GenLens[MLogMsg]( _.exception )
   def url = GenLens[MLogMsg]( _.url )
@@ -79,7 +79,7 @@ object MLogMsg {
     ScalazUtil.liftNelOpt( logMsg.from ) { from =>
       Validation.success[NonEmptyList[String], String]( StringUtil.strLimitLen( from, 64) )
     } |@|
-    ScalazUtil.liftNelOpt( logMsg.code ) { eMsgCode =>
+    ScalazUtil.liftNelOpt( logMsg.logMsg ) { eMsgCode =>
       // В регэксп внесены символы [*=], т.к. использование произвольных месседжей для логгирования требует "подсветить" сторку.
       Validation.liftNel( eMsgCode )( !_.matches("[._a-zA-Z0-1*=-]{1,256}"), "code.invalid: " + eMsgCode )
     } |@|
@@ -111,14 +111,14 @@ object MLogMsg {
   *
   * @param severity Важность.
   * @param from Откуда сообщение (класс).
-  * @param code Код ошибки по списку кодов.
+  * @param logMsg Код ошибки по списку кодов.
   * @param message Произвольное сообщение об ошибке.
   * @param exception Исключение, если есть.
   */
 final case class MLogMsg(
                           severity      : LogSeverity,
                           from          : Option[String]            = None,
-                          code          : Option[ErrorMsg_t]        = None,
+                          logMsg        : Option[ErrorMsg_t]        = None,
                           message       : Option[String]            = None,
                           exception     : Option[MExceptionInfo]    = None,
                           url           : Option[String]            = None,
@@ -142,7 +142,7 @@ final case class MLogMsg(
     }
 
     for (msg <- message)
-      tokensAcc = n :: msg :: tokensAcc
+      tokensAcc = n :: StringUtil.strLimitLen(msg, 512) :: tokensAcc
 
     tokensAcc = d :: tokensAcc
 
@@ -178,7 +178,7 @@ final case class MLogMsg(
         )
         .append( ']' ).append( s )
 
-    for (c <- code)
+    for (c <- logMsg)
       sb.append( c )
         .append( s )
 

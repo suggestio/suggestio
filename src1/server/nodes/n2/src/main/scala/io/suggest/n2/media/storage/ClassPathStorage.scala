@@ -6,7 +6,7 @@ import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import io.suggest.compress.MCompressAlgo
 import io.suggest.file.MimeUtilJvm
-import io.suggest.fio.{IDataSource, WriteRequest}
+import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.pick.MimeConst
 import io.suggest.routes.RoutesJvmConst
 import io.suggest.url.MHostInfo
@@ -35,6 +35,9 @@ class ClassPathStorage @Inject()(
   private lazy val env = injector.instanceOf[Environment]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
+  // TODO Желательно реализовать это, т.к. ассет-контроллер умеет обрабатывать range-реквесты.
+  override def canReadRanges = false
+
   /** Classpath не доступен для записи.
     * По-хорошему, нужно это как-то разруливать на уровне типов компилятора, чтобы было сразу всё ясно.
     */
@@ -44,18 +47,18 @@ class ClassPathStorage @Inject()(
   private def _fileOf(ptr: MStorageInfoData) =
     new File(RoutesJvmConst.ASSETS_PUBLIC_ROOT, ptr.meta)
 
-  def readSync(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo]): IDataSource = {
-    lazy val logPrefix = s"readSync(${ptr.meta}):"
+  def readSync(args: MDsReadArgs): IDataSource = {
+    lazy val logPrefix = s"readSync(${args.ptr.meta}):"
 
     // Нужно залесть в getResource*() или иные методы, и оттуда достать всё необходимое.
-    val file = _fileOf(ptr)
+    val file = _fileOf( args.ptr )
     val cpPath = file.getPath
 
     // Найти пожатый вариант согласно запрошенному acceptCompression.
     (for {
       compressAlgoOpt <- {
         // Если в acceptCompression пусто, то нет смысла проверять файловые расширения на сжатость
-        val isMayBeCompressed = acceptCompression.nonEmpty && {
+        val isMayBeCompressed = args.acceptCompression.nonEmpty && {
           // Клиент допускает какой-либо пожатый ответ. Проверить, может ли быть сжатым файл с таким именем?
           val fileName = file.getName
           val fileExtensionPos = fileName.lastIndexOf('.')
@@ -68,8 +71,9 @@ class ClassPathStorage @Inject()(
         }
         val last = Iterator.single( Option.empty[MCompressAlgo] )
         // Запрещать поиск сжатых версий файла (ресурса), если имя файла (ресурса) намекает, что формат файла всегда сжатый.
-        if (isMayBeCompressed && acceptCompression.nonEmpty) {
-          acceptCompression
+        if (isMayBeCompressed && args.acceptCompression.nonEmpty) {
+          args
+            .acceptCompression
             .iterator
             .map(Some.apply) ++ last
         } else {
@@ -130,15 +134,8 @@ class ClassPathStorage @Inject()(
       }
   }
 
-  /** Асинхронное поточное чтение хранимого файла.
-    *
-    * @param ptr Описание цели.
-    * @param acceptCompression Допускать возвращать ответ в сжатом формате.
-    * @return Поток данных блоба + сопутствующие метаданные.
-    */
-  override def read(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo]): Future[IDataSource] =
-    Future( readSync(ptr, acceptCompression) )
-
+  override def read(args: MDsReadArgs): Future[IDataSource] =
+    Future( readSync(args) )
 
   def isExistsSync(ptr: MStorageInfoData): Boolean = {
     val cpPath = _fileOf(ptr).getPath

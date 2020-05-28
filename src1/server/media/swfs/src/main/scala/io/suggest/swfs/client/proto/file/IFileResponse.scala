@@ -13,7 +13,7 @@ import play.api.libs.functional.syntax._
 object IFileResponseStatic {
 
   /** shared-заготовка для JSON format. */
-  val FORMAT_CBF = (__ \ "size").format[Long]
+  def FORMAT_CBF = (__ \ "size").format[Long]
 
 }
 
@@ -23,7 +23,7 @@ trait IFileResponseStatic extends TypeT {
   override type T <: IFileResponse
 
   /** Поддержка JSON. */
-  implicit val FORMAT: Format[T] = {
+  implicit def FORMAT: Format[T] = {
     IFileResponseStatic.FORMAT_CBF
       .inmap [T] (apply, _.occupiedSize)
   }

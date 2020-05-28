@@ -18,7 +18,7 @@ import play.api.libs.functional.syntax._
   */
 object MQdOp {
 
-  implicit val QD_OP_FORMAT: OFormat[MQdOp] = (
+  implicit def QD_OP_FORMAT: OFormat[MQdOp] = (
     (__ \ "y").format[MQdOpType] and
     (__ \ "g").formatNullable[MJdEdgeId] and
     (__ \ "i").formatNullable[Int] and
@@ -29,12 +29,12 @@ object MQdOp {
 
   @inline implicit def univEq: UnivEq[MQdOp] = UnivEq.derive
 
-  val opType      = GenLens[MQdOp](_.opType)
-  val edgeInfo    = GenLens[MQdOp](_.edgeInfo)
-  val index       = GenLens[MQdOp](_.index)
-  val attrsText   = GenLens[MQdOp](_.attrsText)
-  val attrsLine   = GenLens[MQdOp](_.attrsLine)
-  val attrsEmbed  = GenLens[MQdOp](_.attrsEmbed)
+  def opType      = GenLens[MQdOp](_.opType)
+  def edgeInfo    = GenLens[MQdOp](_.edgeInfo)
+  def index       = GenLens[MQdOp](_.index)
+  def attrsText   = GenLens[MQdOp](_.attrsText)
+  def attrsLine   = GenLens[MQdOp](_.attrsLine)
+  def attrsEmbed  = GenLens[MQdOp](_.attrsEmbed)
 
 }
 

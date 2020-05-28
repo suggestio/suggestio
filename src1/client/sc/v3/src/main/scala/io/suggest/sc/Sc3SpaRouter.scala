@@ -37,8 +37,7 @@ class Sc3SpaRouter(
 {
 
   /** Всё состояние роутера и связанные данные живут здесь: */
-  val state: MSpaRouterState = {
-    val dsl = new RouterConfigDsl[Sc3Pages]
+  val state: MSpaRouterState = RouterConfigDsl[Sc3Pages].use { dsl =>
     import dsl._
 
     val baseUrlSuffix = "#!"

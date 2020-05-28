@@ -2,13 +2,14 @@ package controllers
 
 import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.file.MimeUtilJvm
+import io.suggest.fio.MDsReadArgs
 import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import models.mproj.ICommonDi
-import util.acl.{BruteForceProtect, CanDynImg, IsIdTokenValid, MaybeAuth, IsFileNotModified}
+import util.acl.{BruteForceProtect, CanDynImg, IsFileNotModified, IsIdTokenValid, MaybeAuth}
 import util.captcha.CaptchaUtil
 import util.ident.IdTokenUtil
 import util.img.DynImgUtil
@@ -100,7 +101,8 @@ class Img @Inject() (
         val stor = request.edgeMedia.storage
         iMediaStorages
           .client( stor.storage )
-          .read( stor.data, request.acceptCompressEncodings )
+          // TODO Организовать поддержку accept-ranges.
+          .read( MDsReadArgs( stor.data, request.acceptCompressEncodings ) )
           .map { dataSource =>
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
             LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB.fold("?")(_.toString)}b")
@@ -108,7 +110,7 @@ class Img @Inject() (
             ctx304.with304Headers(
               sioCtlApi.sendDataSource(
                 dataSource  = dataSource,
-                contentType = request.edgeMedia.file.mime,
+                nodeContentType = request.edgeMedia.file.mime,
               )
             )
           }

@@ -7,7 +7,7 @@ import java.util.NoSuchElementException
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.EsModel
-import io.suggest.fio.{IDataSource, WriteRequest}
+import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.img
 import io.suggest.img.ImgSzDated
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
@@ -88,7 +88,7 @@ class MImgs3 @Inject() (
         .storage
       rr <- iMediaStorages
         .client( stor.storage )
-        .read( stor.data )
+        .read( MDsReadArgs(stor.data) )
     } yield {
       rr
     }

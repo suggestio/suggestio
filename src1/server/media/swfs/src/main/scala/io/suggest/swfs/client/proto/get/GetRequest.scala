@@ -9,17 +9,11 @@ import io.suggest.swfs.client.proto.file.IFileRequest
  * Created: 09.10.15 11:45
  * Description: Модель аргументов запроса на чтение файла из хранилища.
  */
-trait IGetRequest extends IFileRequest {
-
-  def acceptCompression: Iterable[MCompressAlgo]
-
-}
-
-case class GetRequest(
-                       override val volUrl              : String,
-                       override val fid                 : String,
-                       override val proto               : String                        = IFileRequest.PROTO_DFLT,
-                       override val acceptCompression   : Iterable[MCompressAlgo]       = Nil
-                     )
-  extends IGetRequest
+final case class GetRequest(
+                             override val volUrl              : String,
+                             override val fid                 : String,
+                             override val proto               : String                        = IFileRequest.PROTO_DFLT,
+                                          acceptCompression   : Iterable[MCompressAlgo]       = Nil
+                           )
+  extends IFileRequest
 

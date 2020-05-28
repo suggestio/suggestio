@@ -27,7 +27,7 @@ object LookupResponse {
   def empty = LookupResponse(-1, Nil)
 
   /** Поддержка JSON. */
-  implicit val FORMAT: Format[LookupResponse] = (
+  implicit def FORMAT: Format[LookupResponse] = (
     VolumeId.FORMAT_STR and
     (__ \ "locations").formatNullable[Seq[VolumeLocation]]
       .inmap[Seq[VolumeLocation]](
@@ -47,8 +47,8 @@ trait ILookupResponse extends IVolumeId {
 }
 
 
-case class LookupResponse(
-  override val volumeId : Int,
-  override val locations: Seq[VolumeLocation]
-)
+final case class LookupResponse(
+                                 override val volumeId : Int,
+                                 override val locations: Seq[VolumeLocation]
+                               )
   extends ILookupResponse

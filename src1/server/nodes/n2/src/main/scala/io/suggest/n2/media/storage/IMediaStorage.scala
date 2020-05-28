@@ -2,7 +2,7 @@ package io.suggest.n2.media.storage
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.compress.MCompressAlgo
-import io.suggest.fio.{IDataSource, WriteRequest}
+import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.n2.media.storage.swfs.SwfsStorage
 import io.suggest.url.MHostInfo
 import play.api.inject.Injector
@@ -51,13 +51,14 @@ final class IMediaStorages @Inject() (
 /** Интерфейс для статической v2-модели, которое без замудрёного ООП. */
 trait IMediaStorageStatic {
 
+  /** Может ли система читать range'ы, а не данные целиком. */
+  def canReadRanges: Boolean
+
   /** Асинхронное поточное чтение хранимого файла.
-    * @param ptr Описание цели.
-    * @param acceptCompression Допускать возвращать ответ в сжатом формате.
     *
     * @return Поток данных блоба + сопутствующие метаданные.
     */
-  def read(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo] = Nil): Future[IDataSource]
+  def read(args: MDsReadArgs): Future[IDataSource]
 
   /**
     * Запустить асинхронное стирание контента в backend-хранилище.

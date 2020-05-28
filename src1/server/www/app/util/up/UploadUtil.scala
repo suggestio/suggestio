@@ -36,7 +36,9 @@ class UploadUtil @Inject()(
   lazy val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
 
   /** Из-за особенностей play-framework, приходится избыточные сроки жизни ссылок.
-    *  */
+    * Проблема на длинном аплоаде (более 1.5 минут) экшен вызывается дважды,
+    * и TTL не должен истечь к окончанию аплоада.
+    */
   def LINK_TTL = 4.hours
 
   /** Текущее время в часах upload util. */

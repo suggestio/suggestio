@@ -242,4 +242,6 @@ object ErrorMsgs {
   def DIAGNOSTICS_RETRIEVE_FAIL = "Diag.retrieve.fail"
   def SET_TIMER_ERROR = "Set.timer.error"
 
+  def CSS_RENDER_ERROR = "Css.render.error"
+
 }

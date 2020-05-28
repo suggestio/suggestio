@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.play
 
-import io.suggest.swfs.client.proto.assign.{AssignResponse, IAssignRequest}
+import io.suggest.swfs.client.proto.assign.{AssignResponse, AssignRequest}
 import io.suggest.swfs.client.proto.master.OneMasterRequest
 import play.api.http.HttpVerbs
 import play.api.libs.ws.WSResponse
@@ -17,14 +17,14 @@ import scala.concurrent.duration._
 
 trait Assign extends ISwfsClientWs with OneMasterRequest { that =>
 
-  override def assign(args: IAssignRequest): Future[AssignResponse] = {
+  override def assign(args: AssignRequest): Future[AssignResponse] = {
 
     val startMs = System.currentTimeMillis()
     lazy val logPrefix = s"assign($startMs):"
     LOGGER.trace(s"$logPrefix Starting, args = $args")
 
     val req = new OneMasterRequestImpl {
-      override type Args_t  = IAssignRequest
+      override type Args_t  = AssignRequest
       override type Res_t   = AssignResponse
       override def _method  = HttpVerbs.POST
       override def _args    = args

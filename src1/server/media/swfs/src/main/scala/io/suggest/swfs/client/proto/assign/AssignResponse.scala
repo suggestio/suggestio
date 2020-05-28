@@ -13,7 +13,7 @@ import play.api.libs.functional.syntax._
  */
 object AssignResponse {
 
-  implicit val FORMAT: Format[AssignResponse] = (
+  implicit def FORMAT: Format[AssignResponse] = (
     (__ \ "count").format[Int] and
     (__ \ "fid").format[String] and
     VolumeLocation.URL_FORMAT and
@@ -23,26 +23,15 @@ object AssignResponse {
 }
 
 
-/** Интерфейс ответа. */
-trait IAssignResponse extends IVolumeLocation {
-
-  def count       : Int
-  def fid         : String
-
-  def fidParsed = Fid(fid)
-
-}
-
-
-case class AssignResponse(
-  override val count       : Int,
-  override val fid         : String,
-  override val url         : String,
-  override val publicUrl   : String
-)
-  extends IAssignResponse
+final case class AssignResponse(
+                                              count       : Int,
+                                              fid         : String,
+                                 override val url         : String,
+                                 override val publicUrl   : String
+                               )
+  extends IVolumeLocation
 {
 
-  override lazy val fidParsed = super.fidParsed
+  lazy val fidParsed = Fid(fid)
 
 }

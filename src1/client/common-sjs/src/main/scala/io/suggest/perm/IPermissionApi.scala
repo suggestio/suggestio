@@ -1,5 +1,11 @@
 package io.suggest.perm
 
+import org.scalajs.dom.experimental.permissions.Permissions
+
+import scala.concurrent.Future
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -38,10 +44,20 @@ trait IPermissionState {
 }
 
 object IPermissionState {
-  implicit class IpsOpsExt( val state: IPermissionState ) extends AnyVal {
+
+  implicit final class IpsOpsExt( private val state: IPermissionState ) extends AnyVal {
     def snapshot(isGranted: Boolean): IPermissionState =
       PermissionStateSnapshot( isGranted, state )
   }
+
+  /** Неопределённый результат работы. */
+  def unknown: IPermissionState = BoolOptPermissionState( None )
+
+  def maybeKnownF(apiAvailable: Boolean)(doApiCall: => Future[IPermissionState]): Future[IPermissionState] = {
+    if (apiAvailable) doApiCall
+    else Future.successful( unknown )
+  }
+
 }
 
 
@@ -78,4 +94,15 @@ final case class BoolOptPermissionState(
   override def hasOnChangeApi = false
   override def onChange(f: Function[IPermissionState, _]): Unit = ???
   override def onChangeReset(): Unit = ???
+}
+
+
+@js.native
+trait Html5PermissionApiStub extends js.Object {
+  @JSName("query")
+  def queryU: js.UndefOr[js.Function] = js.native
+}
+object Html5PermissionApiStub {
+  implicit def h5stub( domPermissions: Permissions ): Html5PermissionApiStub =
+    domPermissions.asInstanceOf[Html5PermissionApiStub]
 }

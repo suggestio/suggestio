@@ -19,7 +19,7 @@ import scala.concurrent.duration._
  */
 trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
 
-  override def lookup(args: ILookupRequest): Future[Either[LookupError, LookupResponse]] = {
+  override def lookup(args: LookupRequest): Future[Either[LookupError, LookupResponse]] = {
     // Готовим логгирование.
     val startMs = System.currentTimeMillis()
     lazy val logPrefix = s"lookup($startMs):"
@@ -27,7 +27,7 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
 
     // Собираем и запускаем запрос...
     val req = new OneMasterRequestImpl {
-      override type Args_t          = ILookupRequest
+      override type Args_t          = LookupRequest
       override type Res_t           = Either[LookupError, LookupResponse]
       override def _args            = args
       override def _method          = HttpVerbs.GET

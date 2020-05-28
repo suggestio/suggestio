@@ -13,7 +13,7 @@ import io.suggest.ctx.MCtxId
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
-import io.suggest.fio.WriteRequest
+import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, WriteRequest}
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
@@ -955,22 +955,44 @@ final class Upload @Inject()(
     * @param dlQs Данные для скачки.
     * @return
     */
-  def download(dlQs: MDownLoadQs) = bruteForceProtect {
+  def download(dlQs: MDownLoadQs) = _download(dlQs, returnBody = true)
+  def downloadHEAD(dlQs: MDownLoadQs) = _download(dlQs, returnBody = false)
+  private def _download(dlQs: MDownLoadQs, returnBody: Boolean) = bruteForceProtect {
     // BruteForceProtect: тут для подавления трафика от повторяющихся запросов.
+    // TODO Поддержка HTTP Range - https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
+    // TODO Поддержка метода HTTP HEAD помимо GET для возможности клиенту оценить файл без скачивания.
     canDownloadFile(dlQs)
       .andThen( isFileNotModified.Refiner )
       .async { ctx304 =>
         import ctx304.request
 
         val s = request.edgeMedia.storage
+
+        val readArgs = MDsReadArgs(
+          ptr               = s.data,
+          acceptCompression = request.acceptCompressEncodings,
+          returnBody        = returnBody,
+          // Извлечь range-заголовки:
+          range = for {
+            rangeHdr <- ctx304.request.headers.get( RANGE )
+            if rangeHdr startsWith "bytes="
+          } yield {
+            MDsRangeInfo(
+              range = rangeHdr,
+              rangeIf = ctx304.request.headers
+                .get( IF_RANGE )
+                .filter(_.nonEmpty),
+            )
+          },
+        )
+        val storClient = iMediaStorages.client( s.storage )
+
         for {
-          ds <- iMediaStorages
-            .client( s.storage )
-            .read( s.data, request.acceptCompressEncodings )
+          ds <- storClient.read( readArgs )
         } yield {
           LOGGER.trace(s"download($dlQs): Streaming download file node#${dlQs.nodeId} to ${dlQs.clientAddr}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
           ctx304.with304Headers(
-            sendDataSource(ds, contentType = request.edgeMedia.file.mime)
+            sendDataSource( ds, nodeContentType = request.edgeMedia.file.mime )
               .withHeaders(
                 Results.contentDispositionHeader(
                   inline = dlQs.dispInline,

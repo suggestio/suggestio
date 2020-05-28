@@ -12,18 +12,11 @@ object DeleteResponse extends IFileResponseStatic {
   override type T = DeleteResponse
 }
 
-/** Интерфейс delete-ответа. */
-trait IDeleteResponse extends IFileResponse {
-
-  def isExisted: Boolean
-
-}
-
 /** Экземпляр ответа удачного удаления файла. */
-case class DeleteResponse(
-  override val occupiedSize: Long
-)
-  extends IDeleteResponse
+final case class DeleteResponse(
+                                 override val occupiedSize: Long
+                               )
+  extends IFileResponse
 {
-  override def isExisted: Boolean = true
+  def isExisted: Boolean = true
 }

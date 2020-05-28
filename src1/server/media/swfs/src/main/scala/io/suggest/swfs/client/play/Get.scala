@@ -1,8 +1,9 @@
 package io.suggest.swfs.client.play
 
 import io.suggest.swfs.client.proto.file.FileOpUnknownResponseException
-import io.suggest.swfs.client.proto.get.{GetResponse, IGetRequest}
+import io.suggest.swfs.client.proto.get.{GetRequest, GetResponse}
 import play.api.http.HeaderNames
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -14,7 +15,7 @@ import scala.concurrent.Future
  */
 trait Get extends ISwfsClientWs {
 
-  override def get(args: IGetRequest): Future[Option[GetResponse]] = {
+  override def get(args: GetRequest): Future[Option[GetResponse]] = {
     val url = args.toUrl
 
     val startMs = System.currentTimeMillis()
@@ -24,33 +25,37 @@ trait Get extends ISwfsClientWs {
     var wsReqBuilder = wsClient.url( url )
 
     // Поддержка сжатых ответов.
-    lazy val acceptEncoding = args.acceptCompression.iterator.map(_.httpContentEncoding).mkString(", ")
+    lazy val acceptEncoding = args.acceptCompression
+      .iterator
+      .map(_.httpContentEncoding)
+      .mkString(", ")
+
     if (args.acceptCompression.nonEmpty) {
       wsReqBuilder = wsReqBuilder.addHttpHeaders(
         HeaderNames.ACCEPT_ENCODING -> acceptEncoding
       )
     }
 
-    val streamFut = wsReqBuilder.stream()
+    val respFut = wsReqBuilder.stream()
 
-    for (ex <- streamFut.failed) {
+    for (ex <- respFut.failed) {
       LOGGER.error(s"$logPrefix Req failed: GET $url\n $args", ex)
     }
 
     for {
-      sr <- streamFut
-      //(headers, enumerator)  <-  streamFut
+      resp <- respFut
     } yield {
-
-      val respStatus = sr.status
+      val respStatus = resp.status
 
       if ( SwfsClientWs.isStatus2xx(respStatus) ) {
-        val resp = GetResponse( sr.headers, sr.bodyAsSource )
-        LOGGER.trace(s"$logPrefix GET OK, status = $respStatus, compressed?${resp.compression}($acceptEncoding), took ${System.currentTimeMillis - startMs}ms")
-        Some( resp )
-      } else if (respStatus == 404) {
+        val getResp = GetResponse( resp.headers, resp.bodyAsSource )
+        LOGGER.trace(s"$logPrefix GET OK, status = $respStatus, compressed?${getResp.compression}($acceptEncoding), took ${System.currentTimeMillis - startMs}ms")
+        Some( getResp )
+
+      } else if (respStatus ==* 404) {
         LOGGER.debug(s"$logPrefix GET $url => 404, took ${System.currentTimeMillis - startMs}ms")
         None
+
       } else {
         LOGGER.warn(s"Unexpected response for GET $url => $respStatus")
         throw FileOpUnknownResponseException("GET", url, respStatus, None)

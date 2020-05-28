@@ -1,6 +1,7 @@
 package io.suggest.swfs.client.play
 
-import io.suggest.swfs.client.proto.get.IGetRequest
+
+import io.suggest.swfs.client.proto.get.GetRequest
 
 import scala.concurrent.Future
 
@@ -12,7 +13,7 @@ import scala.concurrent.Future
  */
 trait IsExist extends ISwfsClientWs {
 
-  override def isExist(args: IGetRequest): Future[Boolean] = {
+  override def isExist(args: GetRequest): Future[Boolean] = {
     val url = args.toUrl
 
     val startMs = System.currentTimeMillis()

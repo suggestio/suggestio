@@ -14,9 +14,14 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class VersionR {
 
+  // TODO builder.static-компонент почему-то не рендерится на iOS 13 Safari (в браузере).
+  // Какой-то race condition с инициализацией js-компонента MuiTypography:
+  // sjs-react выдаёт ошибку: Invalid JsComponent! ...
+
   val component = ScalaComponent
-    .builder
-    .static( getClass.getSimpleName ) {
+    .builder[Unit]( getClass.getSimpleName )
+    .stateless
+    .render_P { _ =>
       MuiTypoGraphy {
         val css = new MuiTypoGraphyClasses {
           override val root = ScCssStatic.Menu.version.htmlClass

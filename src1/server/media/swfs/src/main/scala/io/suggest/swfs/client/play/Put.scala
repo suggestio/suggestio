@@ -1,7 +1,7 @@
 package io.suggest.swfs.client.play
 
 import io.suggest.ahc.upload.{MpUploadArgs, MpUploadSupportDflt}
-import io.suggest.swfs.client.proto.put.{PutResponse, IPutRequest}
+import io.suggest.swfs.client.proto.put.{PutResponse, PutRequest}
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ trait Put extends ISwfsClientWs with MpUploadSupportDflt {
   override def mpFieldNameDflt = "file"
 
 
-  override def put(req: IPutRequest): Future[PutResponse] = {
+  override def put(req: PutRequest): Future[PutResponse] = {
     val uplArgs = uploadArgsSimple(
       file = req.file,
       ct   = req.contentType,

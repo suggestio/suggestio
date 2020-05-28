@@ -10,16 +10,14 @@ import io.suggest.swfs.fid.IVolumeId
  * Description: Параметры запроса dir volume lookup.
  */
 
-trait ILookupRequest extends IVolumeId with IToQs {
+final case class LookupRequest(
+                                override val volumeId: Int,
+                              )
+  extends IVolumeId with IToQs
+{
 
   override def toQs: String = {
     "?volumeId=" + volumeId
   }
 
 }
-
-
-case class LookupRequest(
-  override val volumeId: Int
-)
-  extends ILookupRequest

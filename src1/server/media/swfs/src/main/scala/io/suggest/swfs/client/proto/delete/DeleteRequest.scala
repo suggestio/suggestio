@@ -9,12 +9,9 @@ import io.suggest.swfs.client.proto.file.IFileRequest
  * Description: Реквест удаления файла из хранилища.
  */
 
-trait IDeleteRequest extends IFileRequest
-
-
-case class DeleteRequest(
-  override val volUrl       : String,
-  override val fid          : String,
-  override val proto        : String = IFileRequest.PROTO_DFLT
-)
-  extends IDeleteRequest
+final case class DeleteRequest(
+                                override val volUrl       : String,
+                                override val fid          : String,
+                                override val proto        : String = IFileRequest.PROTO_DFLT
+                              )
+  extends IFileRequest

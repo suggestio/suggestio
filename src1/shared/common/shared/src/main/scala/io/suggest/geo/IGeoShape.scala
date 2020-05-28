@@ -21,7 +21,7 @@ import play.api.libs.json._
 object IGeoShape {
 
   /** Общий boopickler для ИСПОЛЬЗУЕМЫХ реализаций [[IGeoShape]]. */
-  implicit val GEO_SHAPE_PICKLER: Pickler[IGeoShape] = {
+  implicit lazy val GEO_SHAPE_PICKLER: Pickler[IGeoShape] = {
     // Добавлены только необходимые элементы.
     implicit val circleGsP = CircleGs.CIRCLE_GS_PICKLER
     implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER

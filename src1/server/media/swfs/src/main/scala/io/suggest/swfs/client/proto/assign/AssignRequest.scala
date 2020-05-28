@@ -9,12 +9,13 @@ import io.suggest.swfs.client.proto.{IToQs, Replication}
  * Description: Модель параметров assign-запроса.
  */
 
-trait IAssignRequest extends IToQs {
+final case class AssignRequest(
+                                dataCenter    : Option[String]        = None,
+                                replication   : Option[Replication]   = None
+                              )
+  extends IToQs
+{
 
-  def dataCenter    : Option[String]
-  def replication   : Option[Replication]
-
-  /** Перегонка в query string. */
   override def toQs: String = {
     val sb = new StringBuilder
 
@@ -35,13 +36,4 @@ trait IAssignRequest extends IToQs {
     sb.toString()
   }
 
-}
-
-case class AssignRequest(
-  dataCenter    : Option[String]        = None,
-  replication   : Option[Replication]   = None
-)
-  extends IAssignRequest
-{
-  override lazy val toQs = super.toQs
 }

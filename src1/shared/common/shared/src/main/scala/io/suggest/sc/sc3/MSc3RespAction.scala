@@ -33,7 +33,6 @@ object MSc3RespAction {
   * без нарушения формата ответа.
   *
   * @param acType Тип экшена.
-  * @param index Тело index-ответа.
   * @param ads Тело ответа для плитки jd-карточек.
   * @param search Тело ответа с результатами поиска тегов/узлов/etc.
   * @param confUpdate Данные для обновления конфига.

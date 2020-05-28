@@ -12,10 +12,10 @@ import play.api.libs.functional.syntax._
  */
 object VolumeLocation {
 
-  val PUBLIC_URL_FORMAT = (__ \ "publicUrl").format[String]
-  val URL_FORMAT        = (__ \ "url").format[String]
+  def PUBLIC_URL_FORMAT = (__ \ "publicUrl").format[String]
+  def URL_FORMAT        = (__ \ "url").format[String]
 
-  implicit val FORMAT: Format[VolumeLocation] = (
+  implicit def FORMAT: Format[VolumeLocation] = (
     PUBLIC_URL_FORMAT and
     URL_FORMAT
   )(apply, unlift(unapply))
@@ -35,8 +35,8 @@ trait IVolumeLocation {
 }
 
 
-case class VolumeLocation(
-  override val publicUrl : String,
-  override val url       : String
-)
+final case class VolumeLocation(
+                                 override val publicUrl : String,
+                                 override val url       : String
+                               )
   extends IVolumeLocation

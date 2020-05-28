@@ -498,19 +498,22 @@ class WzFirstDiaAh[M](
   /** Сборка спецификация по фазам, которые требуют проверки прав доступа. */
   private def _permPhasesSpecs(platform: MPlatformS = platformRO.value): Seq[PermissionSpec] = {
     // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
+    lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
 
     // Геолокация
     PermissionSpec(
       phase     = MWzPhases.GeoLocPerm,
       supported = GeoLocUtilJs.envHasGeoLoc(),
       askPermF  = {
-        val htmlAskPermF = () => Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+        val htmlAskPermF = { () =>
+          IPermissionState.maybeKnownF(h5PermApiAvail)( Html5PermissionApi.getPermissionState( PermissionName.geolocation ) )
+        }
         if (platform.isCordova) {
           () =>
             CordovaDiagonsticPermissionUtil
               .getGeoLocPerm()
               .recoverWith { case ex: Throwable =>
-                // diag-плагин на разных платформах работает по-разному. На iOS, например, API может быть внезапно недоступным вообще.
+                // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
                 logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
                 htmlAskPermF()
               }
@@ -536,9 +539,13 @@ class WzFirstDiaAh[M](
         if (platform.isCordova) {
           CordovaNotificationlLocalUtil.hasPermissionState
         } else { () =>
-          Try {
-            Html5PermissionApi.getPermissionState( PermissionName.notifications )
-          }
+          (if (h5PermApiAvail) {
+            Try {
+              Html5PermissionApi.getPermissionState( PermissionName.notifications )
+            }
+          } else {
+            Failure( new UnsupportedOperationException )
+          })
             .recover { case _ =>
               Html5NotificationUtil.getPermissionState()
             }

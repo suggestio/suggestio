@@ -41,9 +41,13 @@ object Sc3Main extends Log {
 
     /** Короткий код для логгирования сообщений. */
     def logFailure( errMsg: ErrorMsg_t, msg: Any = null ): Try[T] = {
-      for (ex <- tryRes.failed)
+      for (ex <- tryRes.failed) {
         // Безопасно тут вызывать Log прямо во время инициализации, в т.ч. логгера?
         logger.error( errMsg + HtmlConstants.SPACE + ex + HtmlConstants.SPACE + msg )
+        // Вернуть экзепшен дальше в dev-режиме?
+        if (scalajs.LinkingInfo.developmentMode)
+          throw ex
+      }
 
       tryRes
     }
@@ -58,7 +62,7 @@ object Sc3Main extends Log {
     }
 
     // Активировать отправку логов на сервер, когда js-роутер будет готов.
-    Try {
+    //Try {
       //if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
         Logging.LOGGERS ::= new SevereFilter(
           minSeverity = LogSeverities.Log,
@@ -66,8 +70,8 @@ object Sc3Main extends Log {
             underlying =  new RemoteLogAppender,
           ),
         )
-    }
-      .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
+    //}
+    //  .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
 
     // Сразу поискать js-роутер на странице.
     SrvRouter.ensureJsRouter()
@@ -77,15 +81,15 @@ object Sc3Main extends Log {
 
     // 2018-02-27: После установки веб-приложения, есть проблема, что запуск приложения идёт по уже установленным
     // координатам из исходного URL. На новых девайсах это решабельно через webmanifest.start_url, а на яббле нужен доп.костыль:
-    Try {
+    //Try {
       if (
         WebAppUtil.isStandalone() &&
         Option(docLoc.hash).exists(_.nonEmpty)
       ) {
         docLoc.hash = ""
       }
-    }
-      .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN )
+    //}
+    //  .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN )
 
     // Запустить фоновую установку ServiceWorker'а:
     Try {
@@ -147,22 +151,22 @@ object Sc3Main extends Log {
     val modules = new Sc3Module
 
     // Отрендерить компонент spa-роутера в целевой контейнер.
-    Try {
+    //Try {
       modules.sc3SpaRouter
         .state
         .router()
-        .renderIntoDOM(rootDiv)
-    }
-      .logFailure( ErrorMsgs.SC_FSM_EVENT_FAILED )
+        .renderIntoDOM( rootDiv )
+    //}
+    //  .logFailure( ErrorMsgs.INIT_FLOW_UNEXPECTED )
 
 
-    Try {
+    //Try {
       body.className += ScCssStatic.Body.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
-    }
-      .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN, body )
+    //}
+    //  .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN, body )
 
     // Инициализировать LkPreLoader:
-    Try {
+    //Try {
       for {
         lkPreLoader <- LkPreLoader.find()
       } yield {
@@ -170,11 +174,11 @@ object Sc3Main extends Log {
         LkPreLoader.PRELOADER_IMG_URL
         lkPreLoader.remove()
       }
-    }
-      .logFailure( ErrorMsgs.IMG_EXPECTED, LkPreLoader )
+    //}
+    //  .logFailure( ErrorMsgs.IMG_EXPECTED, LkPreLoader )
 
     // Подписать circuit на глобальные события window:
-    Try {
+    //Try {
       for {
         evtName <- WndEvents.RESIZE :: WndEvents.ORIENTATION_CHANGE :: Nil
       } {
@@ -185,19 +189,19 @@ object Sc3Main extends Log {
         }
           .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, evtName )
       }
-    }
-      .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR )
+    //}
+    //  .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR )
 
     // Подписаться на обновление заголовка и обновлять заголовок.
     // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
-    Try {
+    //Try {
       modules.sc3SpaRouter.sc3Circuit.subscribe( modules.sc3SpaRouter.sc3Circuit.titleOptRO ) { titleOptRO =>
         val title0 = MsgCodes.`Suggest.io`
         val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
         dom.document.title = title1
       }
-    }
-      .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+    //}
+    //  .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
 
   }
 

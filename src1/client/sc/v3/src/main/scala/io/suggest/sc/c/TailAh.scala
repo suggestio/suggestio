@@ -150,11 +150,11 @@ class TailAh(
       val m = TailAh.getMainScreenSnapShot( v0 )
       //println("Reset Route => " + m)
       // Уведомить в фоне роутер, заодно разблокировав интерфейс.
-      val fx = Effect {
+      val fx = Effect.action {
         routerCtl
           .set( m )
-          .toFuture
-          .map(_ => DoNothing)
+          .runNow()
+        DoNothing
       }
       val currRouteLens = TailAh._currRoute
       val m0 = currRouteLens.get( v0 )

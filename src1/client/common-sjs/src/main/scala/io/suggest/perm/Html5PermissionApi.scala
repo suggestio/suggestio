@@ -2,15 +2,21 @@ package io.suggest.perm
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.event.DomEvents
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import org.scalajs.dom.experimental.permissions._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom
 import org.scalajs.dom.Event
+import OptionUtil.BoolOptOps
 
 import scala.concurrent.Future
+import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -19,7 +25,29 @@ import scala.concurrent.Future
   * Description: Доступ к Permissions API.
   * @see [[https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API]]
   */
-object Html5PermissionApi {
+object Html5PermissionApi extends Log {
+
+  /** Безопасная проверка наличия HTML5 Permissions API в текущем User-Agent. */
+  def isApiAvail(): Boolean = {
+    val tryResOpt = Try {
+      import Html5PermissionApiStub._
+      for {
+        wNav <- WindowVm().navigator
+        wnPerm <- wNav.permissions
+        if !js.isUndefined( wnPerm.queryU )
+      } yield {
+        true
+      }
+    }
+
+    for (ex <- tryResOpt.failed)
+      logger.error( ErrorMsgs.PERMISSION_API_FAILED, ex )
+
+    tryResOpt
+      .toOption
+      .flatten
+      .getOrElseFalse
+  }
 
   /** Доступ к данным разрешения.
     *
@@ -29,6 +57,7 @@ object Html5PermissionApi {
   def getPermissionState(permName: PermissionName ): Future[IPermissionState] = {
     try {
       dom.window.navigator
+        // TODO Проверять, доступен ли HTML5 Permissions API вообще. В iOS Safari - его нет.
         .permissions
         .query {
           new PermissionDescriptor {
@@ -45,7 +74,7 @@ object Html5PermissionApi {
 
 
   /** Дополнительное API для инстансов HTML5 PermissionState. */
-  implicit class PermissionStatusExt( val pState: PermissionState ) extends AnyVal {
+  implicit final class PermissionStatusExt( private val pState: PermissionState ) extends AnyVal {
 
     def isGranted: Boolean =
       pState ==* PermissionState.granted

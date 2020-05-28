@@ -1,16 +1,15 @@
 package io.suggest.n2.media.storage.swfs
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.compress.MCompressAlgo
-import io.suggest.fio.{IDataSource, WriteRequest}
+import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
 import io.suggest.swfs.client.proto.assign.AssignRequest
-import io.suggest.swfs.client.proto.delete.{DeleteRequest, IDeleteResponse}
+import io.suggest.swfs.client.proto.delete.{DeleteRequest, DeleteResponse}
 import io.suggest.swfs.client.proto.get.GetRequest
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
-import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
+import io.suggest.swfs.client.proto.put.{PutResponse, PutRequest}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
@@ -49,6 +48,9 @@ final class SwfsStorage @Inject()(
   }
 
   LOGGER.debug(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
+
+  /** SWFS имеет полную поддержку HTTP Range. */
+  override def canReadRanges = true
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
   override def assignNew(): Future[MAssignedStorage] = {
@@ -125,15 +127,20 @@ final class SwfsStorage @Inject()(
     volCache.getLocations( fid.volumeId )
   }
 
-  override def read(ptr: MStorageInfoData, acceptCompression: Iterable[MCompressAlgo]): Future[IDataSource] = {
+
+  /** Асинхронное поточное чтение хранимого файла.
+    *
+    * @return Поток данных блоба + сопутствующие метаданные.
+    */
+  override def read(args: MDsReadArgs): Future[IDataSource] = {
     for {
-      vlocs   <- _vlocsFut(ptr)
+      vlocs   <- _vlocsFut( args.ptr )
       getResp <- {
-        val fid = ptr.swfsFid.get
+        val fid = args.ptr.swfsFid.get
         val getReq = GetRequest(
           volUrl              = vlocs.head.url,
           fid                 = fid.toString,
-          acceptCompression   = acceptCompression
+          acceptCompression   = args.acceptCompression,
         )
         client.get(getReq)
       }
@@ -142,7 +149,7 @@ final class SwfsStorage @Inject()(
     }
   }
 
-  override def delete(ptr: MStorageInfoData): Future[Option[IDeleteResponse]] = {
+  override def delete(ptr: MStorageInfoData): Future[Option[DeleteResponse]] = {
     val fid = ptr.swfsFid.get
     lazy val logPrefix = s"delete($fid):"
     for {
@@ -161,7 +168,7 @@ final class SwfsStorage @Inject()(
     }
   }
 
-  override def write(ptr: MStorageInfoData, data: WriteRequest): Future[IPutResponse] = {
+  override def write(ptr: MStorageInfoData, data: WriteRequest): Future[PutResponse] = {
     for {
       vlocs     <- _vlocsFut(ptr)
       putResp   <- {

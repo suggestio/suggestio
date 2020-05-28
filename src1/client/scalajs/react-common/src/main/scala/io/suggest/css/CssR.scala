@@ -1,8 +1,9 @@
 package io.suggest.css
 
 import diode.react.ModelProxy
+import io.suggest.log.Log
 import io.suggest.sc.styl.ScScalaCssDefaults._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.internal.mutable.StyleSheet
@@ -19,8 +20,13 @@ object CssR {
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(props: Props): VdomElement = {
+      val p = props.value
+
       <.styleTag(
-        props.value.render[String]
+        // iOS 13 safari косячит с js на scala-2.13, неправильно отрабатывает sci.HashMap.
+        // Что-то из серии https://github.com/scala-js/scala-js/issues/2895
+        props.value
+          .render[String]
       )
     }
   }
@@ -30,6 +36,9 @@ object CssR {
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
+    .componentDidCatch { $ =>
+      Callback.empty
+    }
     .build
 
   def apply(cssProxy: Props) = component( cssProxy )

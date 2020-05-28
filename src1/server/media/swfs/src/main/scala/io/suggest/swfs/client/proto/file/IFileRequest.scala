@@ -1,5 +1,7 @@
 package io.suggest.swfs.client.proto.file
 
+import io.suggest.proto.http.HttpConst
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,7 +10,7 @@ package io.suggest.swfs.client.proto.file
  */
 object IFileRequest {
 
-  def PROTO_DFLT = "http"
+  def PROTO_DFLT = HttpConst.Proto.HTTP
 
 }
 

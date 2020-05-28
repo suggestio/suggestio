@@ -85,8 +85,8 @@ object Common {
     /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    val SCALACSS = "0.6.0"
-    //val SCALACSS = "0.6.1"
+    //val SCALACSS = "0.6.0"
+    val SCALACSS = "0.6.1"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -299,15 +299,15 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactJsVsn         = "16.8.6"
-  //val reactJsVsn         = "16.13.1"
+  //val reactJsVsn         = "16.8.6"
+  val reactJsVsn         = "16.13.1"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.6.0" // И контроллировать суффикс diodeReactVsn ниже!
-  //val reactSjsVsn        = "1.7.0" // И контроллировать суффикс diodeReactVsn ниже!
+  //val reactSjsVsn        = "1.6.0" // И контроллировать суффикс diodeReactVsn ниже!
+  val reactSjsVsn        = "1.7.0" // И контроллировать суффикс diodeReactVsn ниже!
   // TODO Поменять следом SCALACSS
 
   /** 
@@ -329,7 +329,8 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.7"
+  //val diodeVsn = "1.1.7"
+  val diodeVsn = "1.1.8-git20200528"
   // 1.1.8 - требуется sjs-1.0, иначе какая ругань при clean-сборке.
   val diodeReactVsn = diodeVsn + "." + reactSjsVsn.replaceAllLiterally(".", "")
 

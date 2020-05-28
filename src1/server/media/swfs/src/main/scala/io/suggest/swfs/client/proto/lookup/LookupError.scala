@@ -13,7 +13,7 @@ import play.api.libs.functional.syntax._
 object LookupError {
 
   /** Поддержка JSON. */
-  implicit val FORMAT: Format[LookupError] = (
+  implicit def FORMAT: Format[LookupError] = (
     VolumeId.FORMAT_STR and
     (__ \ "error").format[String]
   )(apply, unlift(unapply))
@@ -21,16 +21,11 @@ object LookupError {
 }
 
 
-trait ILookupError extends IVolumeId with ILookupResponse {
-  /** Сообщение об ошибке. */
-  def error: String
-
-  override final def locations: Seq[IVolumeLocation] = Nil
+final case class LookupError(
+                              override val volumeId : Int,
+                                           error    : String
+                            )
+  extends IVolumeId with ILookupResponse
+{
+  override def locations: Seq[IVolumeLocation] = Nil
 }
-
-
-case class LookupError(
-  override val volumeId : Int,
-  override val error    : String
-)
-  extends ILookupError
