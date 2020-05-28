@@ -11,6 +11,7 @@ import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
+import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sys.mdr.SysMdrInit
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
@@ -29,7 +30,7 @@ object LkMain extends Log {
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   def main(args: Array[String]): Unit = {
     try {
-      if (!js.isUndefined(Leaflet))
+      if ( JsApiUtil.isDefinedSafe(Leaflet) )
         Leaflet.noConflict()
     } catch {
       case _: Throwable =>

@@ -2,6 +2,7 @@ package io.suggest.proto.http.client.adp.xhr
 
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.model._
+import io.suggest.sjs.JsApiUtil
 import org.scalajs.dom
 import org.scalajs.dom.{Blob, XMLHttpRequest}
 
@@ -19,13 +20,8 @@ import japgolly.univeq._
 case object XhrAdp extends HttpClientAdp {
 
   /** Считаем, что этот древний механизм всегда доступен. */
-  override def isAvailable: Boolean = {
-    try {
-      !js.isUndefined( XMLHttpRequest )
-    } catch {
-      case _: Throwable => false
-    }
-  }
+  override def isAvailable: Boolean =
+    JsApiUtil.isDefinedSafe( XMLHttpRequest )
 
 
   /** Запустить http-запрос. */

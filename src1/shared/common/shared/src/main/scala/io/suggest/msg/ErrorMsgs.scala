@@ -129,8 +129,6 @@ object ErrorMsgs {
 
   def SYS_MDR_CIRCUIT_ERROR = "Sys.mdr.circuit.error"
 
-  def KV_STORAGE_CHECK_FAILED = "Kv.storage.check.failed"
-
   def KV_STORAGE_ACTION_FAILED = "Kv.storage.action.failed"
 
   def CONF_SAVE_FAILED = "Conf.save.failed"

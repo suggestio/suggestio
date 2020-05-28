@@ -3,15 +3,17 @@ package io.suggest.proto.http.client.adp.fetch
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.cache.HttpCaching
 import io.suggest.proto.http.model._
+import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.dom2.{AbortController, AbortSignal}
+import io.suggest.sjs.dom2.{AbortController, AbortControllerUtil, AbortSignal}
 import org.scalajs.dom.experimental._
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.annotation.JSGlobalScope
 
 /**
   * Suggest.io
@@ -24,18 +26,13 @@ case object FetchAdp extends HttpClientAdp {
   import HttpClientAdp._
 
   /** Доступно ли указанное API? */
-  override def isAvailable: Boolean = {
-    try {
-      Fetch.asInstanceOf[FetchApiStub].fetch.nonEmpty
-    } catch {
-      case _: Throwable => false
-    }
-  }
+  override def isAvailable: Boolean =
+    JsApiUtil.isDefinedSafe( FetchApiStub.fetch )
 
   /** Запустить http-запрос. */
   override def apply(httpReq: HttpReq): FetchHttpRespHolder = {
     // Abort-контроллер, поддержка которого может отсутствовать.
-    val abortCtlUnd = JsOptionUtil.maybeDefined( !js.isUndefined(AbortController) ) {
+    val abortCtlUnd = JsOptionUtil.maybeDefined( AbortControllerUtil.isAvailable() ) {
       new AbortController()
     }
     val abortSignalUnd = abortCtlUnd.map(_.signal)
@@ -120,7 +117,8 @@ object FetchRequestInit {
 
 /** Поддержка Feature Detection на наличи Fetch API. */
 @js.native
-trait FetchApiStub extends js.Object {
+@JSGlobalScope
+object FetchApiStub extends js.Object {
   val fetch: js.UndefOr[js.Function] = js.native
 }
 

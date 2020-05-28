@@ -3,12 +3,13 @@ package io.suggest.cordova.background.mode
 import cordova.Cordova
 import cordova.plugins.background.mode.CordovaBgModeEvents
 import diode._
-import io.suggest.daemon.{DaemonBgModeSet, BgModeDaemonInit}
+import io.suggest.daemon.{BgModeDaemonInit, DaemonBgModeSet}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.Keep
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.sjs.JsApiUtil
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.ueq.JsUnivEqUtil._
@@ -34,12 +35,8 @@ object CordovaBgModeAh extends Log {
     *
     * @return true, если есть поддержка демонизации.
     */
-  def canDaemonize(): Boolean = {
-    Try(
-      !js.isUndefined( CBGM )
-    )
-      .getOrElse( false )
-  }
+  def canDaemonize(): Boolean =
+    JsApiUtil.isDefinedSafe( CBGM )
 
 }
 

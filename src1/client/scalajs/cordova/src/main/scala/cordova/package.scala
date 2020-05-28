@@ -12,6 +12,11 @@ import scala.language.implicitConversions
   */
 package object cordova {
 
+  /** Название cordova в Global scope.
+    * final val обязательно, т.к. используется в аннотациях.
+    */
+  final val CORDOVA = "cordova"
+
   /** Поддержка dom.window.BackgroundTimer. */
   implicit def window_CdvExt(window: Window): DomWindow_CordovaExt =
     window.asInstanceOf[DomWindow_CordovaExt]

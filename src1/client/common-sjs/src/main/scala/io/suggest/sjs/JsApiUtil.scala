@@ -48,4 +48,18 @@ object JsApiUtil extends Log {
     apiCallSyncSafe(p)( f(p.success, p.failure(_)) )
   }
 
+
+  /** js.isUndefined() начиная с scalajs-1.0 ведёт себя небезопасно по отношению к native-классам и объектам,
+    * возвращая экзепшен вместо false.
+    * Тут безопасная обёртка над этим делом.
+    *
+    * @param und То, что тестируем на безопасность (функция).
+    * @return true, если указанная сущность имеет место быть.
+    *         false, если не удаётся подтвердить существенность указанного кода.
+    */
+  def isDefinedSafe( und: => js.Any ): Boolean = {
+    Try( !js.isUndefined(und) )
+      .getOrElse( false )
+  }
+
 }

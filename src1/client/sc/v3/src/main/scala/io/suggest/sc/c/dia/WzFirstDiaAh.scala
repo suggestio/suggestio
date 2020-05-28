@@ -533,7 +533,7 @@ class WzFirstDiaAh[M](
       supported = {
         (platform.isCordova && CordovaNotificationlLocalUtil.isCnlApiAvailable()) ||
         // Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
-        (platform.isBrowser && !js.isUndefined(dom.experimental.Notification) && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
+        (platform.isBrowser && Html5NotificationUtil.isApiAvailable() && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
       },
       askPermF = {
         if (platform.isCordova) {

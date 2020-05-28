@@ -1,5 +1,3 @@
-//dependencyOverrides += "jline" % "jline" % "2.14.4"
-
 // Comment to get more information during initialization
 //logLevel := Level.Warn
 
@@ -45,15 +43,15 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 //addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.1.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.32")
-//addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.0.1")
+//addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.32")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.1.0")
 
 //addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")
 
 // Плагины для интеграции scalajs + npm + webpack.
-//addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.17.0")
-addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler-sjs06" % "0.17.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.18.0")
+//addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler-sjs06" % "0.17.0")
 
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
 

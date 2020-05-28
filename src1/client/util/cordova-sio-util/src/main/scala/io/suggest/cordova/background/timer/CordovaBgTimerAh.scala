@@ -6,12 +6,11 @@ import io.suggest.daemon.{DaemonSleepTimerFinish, DaemonSleepTimerSet}
 import cordova._
 import cordova.plugins.background.timer.CordovaBackgroundTimerSettings
 import io.suggest.log.Log
+import io.suggest.sjs.JsApiUtil
 import io.suggest.spa.DoNothing
 import org.scalajs.dom
 
 import scala.concurrent.Future
-import scala.scalajs.js
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -21,12 +20,10 @@ import scala.util.Try
   */
 object CordovaBgTimerAh {
 
-  def hasCordovaBgTimer(): Boolean = {
-    Try {
-      !js.isUndefined( dom.window.BackgroundTimer )
-    }
-      .getOrElse( false )
-  }
+  private def CBGT = dom.window.BackgroundTimer
+
+  def hasCordovaBgTimer(): Boolean =
+    JsApiUtil.isDefinedSafe( CBGT )
 
 }
 
@@ -45,7 +42,7 @@ class CordovaBgTimerAh[M](
     case m: DaemonSleepTimerSet =>
       // Тут только эффект работы с плагином.
       val fx = Effect {
-        val BT = dom.window.BackgroundTimer
+        val BT = CordovaBgTimerAh.CBGT
         for {
           _ <- m.options.fold [Future[Unit]] {
             BT.stopF()

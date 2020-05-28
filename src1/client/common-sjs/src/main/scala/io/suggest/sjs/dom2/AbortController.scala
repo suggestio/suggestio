@@ -1,5 +1,7 @@
 package io.suggest.sjs.dom2
 
+import io.suggest.sjs.JsApiUtil
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 
@@ -21,6 +23,10 @@ class AbortController() extends js.Object {
 @js.native
 @JSGlobal
 object AbortController extends js.Object
+object AbortControllerUtil {
+  def isAvailable(): Boolean =
+    JsApiUtil.isDefinedSafe( AbortController )
+}
 
 
 @js.native

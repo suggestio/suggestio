@@ -1,8 +1,9 @@
 package io.suggest.cordova
 
-import cordova.Cordova
+import io.suggest.sjs.JsApiUtil
 
 import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -13,7 +14,12 @@ import scala.scalajs.js
 object CordovaConstants {
 
   /** Является ли данная платформа - Cordova? */
-  def isCordovaPlatform(): Boolean = !js.isUndefined( Cordova )
+  def isCordovaPlatform(): Boolean = {
+    JsApiUtil.isDefinedSafe(
+      js.Dynamic.global
+        .selectDynamic( cordova.CORDOVA )
+    )
+  }
 
 
   object Events {

@@ -1,12 +1,10 @@
 package io.suggest.kv
 
-import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
+import io.suggest.sjs.JsApiUtil
 import japgolly.univeq.UnivEq
 import org.scalajs.dom
 import play.api.libs.json.{Json, Reads, Writes}
-
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -21,15 +19,8 @@ object MKvStorage extends Log {
 
 
   /** Проверить доступность модели. */
-  def isAvailable: Boolean = {
-    try {
-      !js.isUndefined( storage )
-    } catch {
-      case ex: Throwable =>
-        logger.error(ErrorMsgs.KV_STORAGE_CHECK_FAILED, ex)
-        false
-    }
-  }
+  def isAvailable: Boolean =
+    JsApiUtil.isDefinedSafe( storage )
 
 
   /** Сохранение в базу.

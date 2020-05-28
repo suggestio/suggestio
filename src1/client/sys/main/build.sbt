@@ -11,9 +11,9 @@ webpackBundlingMode := BundlingMode.LibraryOnly()
 //webpackBundlingMode in fullOptJS := BundlingMode.Application
 
 // TODO scalajs-1.0 Выставить в scalaJSLinkerConfig emitSourceMaps:
-emitSourceMaps := true
+//emitSourceMaps := true
 
-(emitSourceMaps in fullOptJS) := false
+//(emitSourceMaps in fullOptJS) := false
 
 
 scalaJSUseMainModuleInitializer := true

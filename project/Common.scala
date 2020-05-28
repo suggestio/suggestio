@@ -39,7 +39,7 @@ object Common {
     val PLAY_SLICK   = "5.+"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.8.1"
+    val PLAY_JSON_VSN = "2.9.+"
 
     val PLAY_GEOJSON = "1.6.0"
 
@@ -260,9 +260,9 @@ object Common {
 
   /** Очень общие сеттинги для js-проектов. */
   val settingsOrgJS = settingsBase ++ Seq[Setting[_]](
-    scalaVersion := SCALA_VSN_JS,
+    scalaVersion := SCALA_VSN_JS
     // scala.js [0.6.18 .. 1.0) Включить @ScalaJSDefined по умолчанию.
-    scalacOptions += "-P:scalajs:sjsDefinedByDefault"
+    //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
 
   /** Версия play. */
@@ -282,7 +282,7 @@ object Common {
   /** Версия jquery-фасада для scalajs.
    * @see [[https://github.com/scala-js/scala-js-jquery]]
    */
-  def sjsJqueryVsn      = "0.9.5"
+  def sjsJqueryVsn      = "1.0.+"
 
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
@@ -337,7 +337,7 @@ object Common {
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]
     */
-  val boopickleVsn = "1.3.1"
+  val boopickleVsn = "1.3.2"
 
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]

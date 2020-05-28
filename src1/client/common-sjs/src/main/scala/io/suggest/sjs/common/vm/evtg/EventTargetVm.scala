@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.vm.evtg
 
+import io.suggest.sjs.JsApiUtil
 import org.scalajs.dom
 import org.scalajs.dom.{Event, EventTarget}
 
@@ -43,8 +44,8 @@ object EventTargetVm {
   private val FACADE: IFacade = {
     if (
       // ServiceWorker не имеет ни window, ни window.document в scope.
-      !js.isUndefined(dom.window) &&
-      !js.isUndefined(dom.document) &&
+      JsApiUtil.isDefinedSafe( dom.window ) &&
+      JsApiUtil.isDefinedSafe( dom.document ) &&
       SafeEventTargetStub( dom.document ).attachEvent.isDefined
     ) {
       new IeFacade

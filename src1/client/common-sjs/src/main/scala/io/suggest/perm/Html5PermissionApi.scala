@@ -13,9 +13,9 @@ import japgolly.univeq._
 import org.scalajs.dom
 import org.scalajs.dom.Event
 import OptionUtil.BoolOptOps
+import io.suggest.sjs.JsApiUtil
 
 import scala.concurrent.Future
-import scala.scalajs.js
 import scala.util.Try
 
 /**
@@ -34,7 +34,7 @@ object Html5PermissionApi extends Log {
       for {
         wNav <- WindowVm().navigator
         wnPerm <- wNav.permissions
-        if !js.isUndefined( wnPerm.queryU )
+        if JsApiUtil.isDefinedSafe( wnPerm.queryU )
       } yield {
         true
       }

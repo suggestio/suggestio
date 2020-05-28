@@ -13,6 +13,7 @@ import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.log.{Log, LogSeverities, Logging}
+import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -26,7 +27,6 @@ import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 
-import scala.scalajs.js
 import scala.util.Try
 
 /**
@@ -93,11 +93,11 @@ object Sc3Main extends Log {
 
     // Запустить фоновую установку ServiceWorker'а:
     Try {
+      def sw = dom.window.navigator.serviceWorker
       for {
         // Найти на странице input ссылки скрипта воркера.
         inputEl <- Option( doc._underlying.getElementById(ScConstants.Sw.URL_INPUT_ID) )
-        sw = dom.window.navigator.serviceWorker
-        if !js.isUndefined( sw )
+        if JsApiUtil.isDefinedSafe( sw )
         // Не переустанавливать уже установленный sw. TODO получать версию SW с сервера в хидерах ответов, и перерегистрировать.
         swInp = StateInp( inputEl.asInstanceOf[HTMLInputElement] )
         swUrl2 <- swInp.value

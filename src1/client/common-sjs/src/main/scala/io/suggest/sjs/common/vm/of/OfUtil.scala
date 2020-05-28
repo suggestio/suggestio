@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.vm.of
 
+import io.suggest.sjs.JsApiUtil
+
 import scala.scalajs.js
 
 /**
@@ -11,7 +13,7 @@ import scala.scalajs.js
 object OfUtil {
 
   def isInstance(v: js.Any): Boolean = {
-    v != null && !js.isUndefined(v)
+    v != null && JsApiUtil.isDefinedSafe( v )
   }
 
 }

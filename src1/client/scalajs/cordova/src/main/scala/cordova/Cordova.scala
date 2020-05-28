@@ -11,7 +11,7 @@ import scala.scalajs.js.annotation.JSGlobal
   * Created: 14.10.16 11:35
   * Description: API for cordova.js.
   */
-@JSGlobal("cordova")
+@JSGlobal(CORDOVA)
 @js.native
 object Cordova extends js.Object {
 

@@ -38,13 +38,11 @@ object JsDateUtil {
 
     override def now: Date = new Date()
 
-    override def plusDays(date: Date, days: Int): Date = {
-      date.plusDays(days)
-    }
+    override def plusDays(date: Date, days: Int): Date =
+      date plusDays days
 
-    override def plusMonths(date: Date, months: Int): Date = {
-      date.plusMonths(months)
-    }
+    override def plusMonths(date: Date, months: Int): Date =
+      date plusMonths months
 
     override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): Date = {
       new Date(
@@ -54,17 +52,14 @@ object JsDateUtil {
       )
     }
 
-    override def getDateMonthOfYear(date: Date): Int = {
-      date.getMonth()
-    }
+    override def getDateMonthOfYear(date: Date): Int =
+      date.getMonth().toInt
 
-    override def getYear(date: Date): Int = {
-      date.getFullYear()
-    }
+    override def getYear(date: Date): Int =
+      date.getFullYear().toInt
 
-    override def getDayOfMonth(date: Date): Int = {
-      date.getDate()
-    }
+    override def getDayOfMonth(date: Date): Int =
+      date.getDate().toInt
 
   }
 

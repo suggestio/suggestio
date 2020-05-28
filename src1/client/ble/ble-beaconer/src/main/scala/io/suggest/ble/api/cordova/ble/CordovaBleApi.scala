@@ -6,10 +6,12 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
+import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -44,9 +46,8 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
   }
 
 
-  override def isApiAvailable: Boolean = {
-    !js.isUndefined(Ble)
-  }
+  override def isApiAvailable: Boolean =
+    JsApiUtil.isDefinedSafe( Ble )
 
 
   /** Узнать, включён ли bluetooth в данный момент? */

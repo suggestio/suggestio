@@ -2,6 +2,7 @@ package io.suggest.os.notify.api.html5
 
 import diode.data.Pot
 import io.suggest.perm.{BoolOptPermissionState, Html5PermissionApi, IPermissionState}
+import io.suggest.sjs.JsApiUtil
 import org.scalajs.dom.experimental.Notification
 
 import scala.concurrent.Future
@@ -18,7 +19,7 @@ object Html5NotificationUtil {
 
   /** Тест доступности API. */
   def isApiAvailable(): Boolean =
-    Try( Notification.permission ).isSuccess
+    JsApiUtil.isDefinedSafe( Notification )
 
 
   def getPermissionState(): Future[IPermissionState] = {
