@@ -8,6 +8,7 @@ import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import play.api.Configuration
 import play.api.libs.ws.WSClient
 import io.suggest.conf.PlayConfigUtil._
+import japgolly.univeq._
 
 import scala.concurrent.ExecutionContext
 
@@ -21,9 +22,9 @@ import scala.concurrent.ExecutionContext
 
 object SwfsClientWs {
 
-  def isStatus2xx(status: Int): Boolean = {
-    status >= 200 && status <= 299
-  }
+  def isStatus2xx(status: Int): Boolean =
+    (status / 100) ==* 2
+
   /** Название conf-ключа со списком доступных мастер-серверов seaweedfs. */
   def MASTERS_CK = "swfs.masters"
 

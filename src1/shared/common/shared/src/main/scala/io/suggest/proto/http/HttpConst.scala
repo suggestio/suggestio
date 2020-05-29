@@ -22,6 +22,8 @@ object HttpConst {
     final def CONTENT_LENGHT        = Words.Content_ + "Lenght"
     final def CONNECTION            = "Connection"
     final def BOUNDARY              = "Boundary"
+    final def RANGE                 = "Range"
+    final def CONTENT_RANGE         = Words.Content_ + RANGE
   }
 
 

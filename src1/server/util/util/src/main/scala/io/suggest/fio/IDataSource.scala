@@ -26,6 +26,8 @@ trait IDataSource {
   /** Если в запросе допускалось использование сжатия, то на выходе ответ может быть сжат. */
   def compression: Option[MCompressAlgo]
 
+  def isPartial: Boolean = false
+
   /** Если ответ содержит запрошенные ranges, то тут значение HTTP Content-Range.
     * Для range-ответов надо возвращать клиенту 206 Partial Content и всё такое.
     */

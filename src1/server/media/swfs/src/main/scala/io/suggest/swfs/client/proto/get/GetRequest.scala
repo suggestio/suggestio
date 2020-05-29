@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.proto.get
 
-import io.suggest.compress.MCompressAlgo
+import io.suggest.fio.MDsReadParams
 import io.suggest.swfs.client.proto.file.IFileRequest
 
 /**
@@ -12,8 +12,8 @@ import io.suggest.swfs.client.proto.file.IFileRequest
 final case class GetRequest(
                              override val volUrl              : String,
                              override val fid                 : String,
+                             params                           : MDsReadParams                 = MDsReadParams.default,
                              override val proto               : String                        = IFileRequest.PROTO_DFLT,
-                                          acceptCompression   : Iterable[MCompressAlgo]       = Nil
                            )
   extends IFileRequest
 

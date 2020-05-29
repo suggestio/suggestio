@@ -1,22 +1,23 @@
 package util.acl
 
 import controllers.routes
+import io.suggest.common.fut.FutureUtil
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MPredicates
-import io.suggest.n2.media.MFileMetaHash
+import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash}
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
-import models.mup.MDownLoadQs
+import models.mup.{MDownLoadQs, MSwfsFidInfo}
 import play.api.http.{HttpErrorHandler, Status}
 import play.api.inject.Injector
-import play.api.mvc.{Action, ActionBuilder, AnyContent, DefaultActionBuilder, Request, RequestHeader, Result, Results}
+import play.api.mvc.{Action, ActionBuilder, ActionRefiner, AnyContent, DefaultActionBuilder, Request, RequestHeader, Result, Results}
 import util.cdn.CdnUtil
 import util.up.UploadUtil
 import japgolly.univeq._
-import models.req.{MFileReq, MSioUsers}
+import models.req.{MFileReq, MNodeEdgeOptReq, MSioUsers}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -139,23 +140,7 @@ class CanDownloadFile @Inject()(
       storageCheckE <- cdnUtil.checkStorageForThisNode( edgeMedia.storage )
 
       // Поискать инфу по распределённому хранилищу:
-      swfsInfoOpt = storageCheckE.fold(
-        {expectedVolumeLocations =>
-          LOGGER.warn(s"$logPrefix DL request NOT related to current node.\n Current node = ${uploadUtil.MY_NODE_PUBLIC_URL}\n Storage volumes = ${expectedVolumeLocations.mkString(" | ")}")
-          expectedVolumeLocations
-            // Самозащита от неверных редиректов (seaweedfs нередко удивляла в прошлом).
-            .find(_.publicUrl.nonEmpty)
-            .fold {
-              LOGGER.warn(s"$logPrefix No available volume locations for media ${edgeMedia.storage}\n file = ${edgeMedia.storage}")
-              _throwNotFound(request)
-            } { vol0 =>
-              LOGGER.debug(s"$logPrefix Redirecting from me ${uploadUtil.MY_NODE_PUBLIC_URL} => ${vol0.publicUrl}\n storage = ${edgeMedia.storage}\n file = ${edgeMedia.file}")
-              val rdr = Results.Redirect( vol0.publicUrl + request.uri, Status.SEE_OTHER )
-              throw HttpResultingException( Future.successful(rdr) )
-            }
-        },
-        identity,
-      )
+      storageInfoOpt <- _getStorageInfo( edgeMedia )(request)
 
       user = mSioUsers( dlQs.personId )
 
@@ -163,9 +148,9 @@ class CanDownloadFile @Inject()(
 
       // Запуск экшена на исполнение, т.к. все проверки пройдены.
       dlReq = MFileReq(
-        storageInfo       = swfsInfoOpt,
+        storageInfo   = storageInfoOpt,
         mnode         = mnode,
-        edge      = fileEdge,
+        edge          = fileEdge,
         edgeMedia     = edgeMedia,
         request       = mreq,
         // Юзера нет: это работа на хосте *.nodes.suggest.io, и кукисы сюда могут не передаваться.
@@ -179,6 +164,34 @@ class CanDownloadFile @Inject()(
       .recoverWith {
         case HttpResultingException(resFut) => resFut
       }
+  }
+
+
+  private def _getStorageInfo( edgeMedia: MEdgeMedia )(implicit rh: RequestHeader): Future[Option[MSwfsFidInfo]] = {
+    for {
+      // Проверить, соотносится ли запрос к файлу с текущим узлом?
+      storageCheckE <- cdnUtil.checkStorageForThisNode( edgeMedia.storage )
+    } yield {
+      def logPrefix = s"_getStorageInfo($edgeMedia):"
+      // Поискать инфу по распределённому хранилищу:
+      storageCheckE.fold(
+        {expectedVolumeLocations =>
+          LOGGER.warn(s"$logPrefix DL request NOT related to current node.\n Current node = ${uploadUtil.MY_NODE_PUBLIC_URL}\n Storage volumes = ${expectedVolumeLocations.mkString(" | ")}")
+          expectedVolumeLocations
+            // Самозащита от неверных редиректов (seaweedfs нередко удивляла в прошлом).
+            .find(_.publicUrl.nonEmpty)
+            .fold {
+              LOGGER.warn(s"$logPrefix No available volume locations for media ${edgeMedia.storage}\n file = ${edgeMedia.storage}")
+              _throwNotFound(rh)
+            } { vol0 =>
+              LOGGER.debug(s"$logPrefix Redirecting from me ${uploadUtil.MY_NODE_PUBLIC_URL} => ${vol0.publicUrl}\n storage = ${edgeMedia.storage}\n file = ${edgeMedia.file}")
+              val rdr = Results.Redirect( vol0.publicUrl + rh.uri, Status.SEE_OTHER )
+              throw HttpResultingException( Future.successful(rdr) )
+            }
+        },
+        identity,
+      )
+    }
   }
 
 
@@ -196,6 +209,48 @@ class CanDownloadFile @Inject()(
   def A[A](upTg: MDownLoadQs)(action: Action[A]): Action[A] = {
     defaultActionBuilder.async(action.parser) { request =>
       _apply(upTg, request)(action.apply)
+    }
+  }
+
+
+  /** Конверсия из MNodeEdgeOptReq при условии, что все разрешени уже проверены. */
+  class NodeEdgeOpt2MFileReq extends ActionRefiner[MNodeEdgeOptReq, MFileReq] {
+    override protected def executionContext = ec
+    override protected def refine[A](request: MNodeEdgeOptReq[A]): Future[Either[Result, MFileReq[A]]] = {
+      for {
+        req2Opt <- FutureUtil.optFut2futOptPlain(
+          for {
+            edge <- request.edgeOpt
+            edgeMedia <- edge.media
+          } yield {
+            for {
+              storageInfo <- _getStorageInfo(edgeMedia)(request)
+            } yield {
+              MFileReq(
+                edge        = edge,
+                edgeMedia   = edgeMedia,
+                storageInfo = storageInfo,
+                mnode       = request.mnode,
+                user        = request.user,
+                request     = request.request,
+              )
+            }
+          }
+        )
+
+        res <- req2Opt
+          .toRight {
+            LOGGER.warn("fromNodeEdgeOptReq(): Invalid input: missing edge/edgeMedia or else.")
+            httpErrorHandler.onClientError( request, Status.CONFLICT, "Missing edge/media." )
+          }
+          .fold(
+            _.map(Left.apply),
+            r => Future.successful( Right(r) )
+          )
+
+      } yield {
+        res
+      }
     }
   }
 

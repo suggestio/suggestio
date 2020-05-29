@@ -58,37 +58,6 @@ class IsFileNotModified @Inject()(
       .exists { dt => !modelTstampMs.isAfter(dt.toInstant) }
   }
 
-  def toEtag(digest: String): String =
-    s""""$digest""""
-
-
-
-  case class Ctx304[A]()( implicit val request: MFileReq[A] ) {
-
-    val fileEtagExpectedOpt = for {
-      dlHash <- request.edgeMedia.file.hashesHex.dlHash
-    } yield {
-      toEtag( dlHash.hexValue )
-    }
-
-    val fileLastModifiedZ = request.edge.info.dateNi
-      .getOrElse( request.derivativeOrOrig.meta.basic.dateEditedOrCreated )
-      .toZonedDateTime
-
-    def with304Headers( result: Result ): Result = {
-      result
-        .withHeaders(
-          fileEtagExpectedOpt.fold(CACHE_CONTROL_HDRS) { etag =>
-            (HeaderNames.ETAG -> etag) :: CACHE_CONTROL_HDRS
-          }: _*
-        )
-        .withDateHeaders(
-          HeaderNames.LAST_MODIFIED -> fileLastModifiedZ,
-        )
-    }
-
-  }
-
 
   def maybeNotModified[A](ctx304: Ctx304[A]): Option[Result] = {
     if (ctx304.fileEtagExpectedOpt.isEmpty)
@@ -107,7 +76,7 @@ class IsFileNotModified @Inject()(
         .find(_.trim ==* fileEtagExpected)
         .map { _ =>
           // В исходниках Assets-контроллера play, etag-успех возвращает 304 с этой пачкой хидеров:
-          ctx304.with304Headers( Results.NotModified )
+          with304Headers( ctx304, Results.NotModified )
         }
     })
       .getOrElse {
@@ -126,7 +95,7 @@ class IsFileNotModified @Inject()(
   /** ActionRefiner, который запрещает исполнения экшена, возвращая 304 при совпадении необходимых условий.
     * Этот refiner не выставляет и не может выставлять кэширующие header'ы ответа.
     */
-  object Refiner extends ActionRefiner[MFileReq, Ctx304] {
+  class Refiner extends ActionRefiner[MFileReq, Ctx304] {
 
     override protected def executionContext = ec
 
@@ -144,5 +113,33 @@ class IsFileNotModified @Inject()(
     }
 
   }
+
+
+  def with304Headers( ctx: Ctx304[_], result: Result ): Result = {
+    var hdrsAcc = CACHE_CONTROL_HDRS
+    for (etag <- ctx.fileEtagExpectedOpt)
+      hdrsAcc ::= (HeaderNames.ETAG -> etag)
+
+    result
+      .withHeaders( hdrsAcc: _* )
+      .withDateHeaders(
+        HeaderNames.LAST_MODIFIED -> ctx.fileLastModifiedZ,
+      )
+  }
+
+}
+
+
+case class Ctx304[A]()( implicit val request: MFileReq[A] ) {
+
+  val fileEtagExpectedOpt = for {
+    dlHash <- request.edgeMedia.file.hashesHex.dlHash
+  } yield {
+    s""""${dlHash.hexValue}""""
+  }
+
+  val fileLastModifiedZ = request.edge.info.dateNi
+    .getOrElse( request.derivativeOrOrig.meta.basic.dateEditedOrCreated )
+    .toZonedDateTime
 
 }

@@ -16,6 +16,8 @@ import play.api.http.HeaderNames
 case class GetResponse(
                         headers                   : Map[String, collection.Seq[String]],
                         override val data         : Source[ByteString, _],
+                        override val isPartial    : Boolean,
+                        override val httpContentRange: Option[String],
                       )
   extends IDataSource
 {

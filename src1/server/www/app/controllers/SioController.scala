@@ -153,28 +153,52 @@ final class SioControllerApi @Inject()(
     * @param dataSource Абстрактный источник данных.
     * @param nodeContentType Внешний MIME-тип данных, сохранённый в эдже (в узле).
     *                        Может отсутствовать или отличаться от CT, который присылается хранилищем.
+    * @param returnBody true - GET-ответ с телом
+    *                   false - HEAD-ответ без тела.
     * @return Result.
     */
   def sendDataSource(
                       dataSource        : IDataSource,
-                      nodeContentType   : Option[String] = None,
+                      nodeContentType   : Option[String]  = None,
+                      returnBody        : Boolean         = true,
                     ): Result = {
-    val resp = Ok.sendEntity(
-      HttpEntity.Streamed(
-        data          = dataSource.data,
-        contentLength = Some( dataSource.sizeB ),
-        contentType   = Some( nodeContentType getOrElse dataSource.contentType ),
-      )
-    )
+    val status = if (dataSource.isPartial) PartialContent else Ok
+    var hdrsAcc = List.empty[(String, String)]
 
-    dataSource
-      .compression
-      .fold( resp ) { compression =>
-        // Пробросить content-encoding, который вернул media-storage.
-        resp.withHeaders(
-          CONTENT_ENCODING -> compression.httpContentEncoding
+    val contentType = if (dataSource.isPartial && dataSource.httpContentRange.isEmpty) {
+      // Это multipart/byteranges. Тип ответа имеет приоритет, а заданный в node тип контента будет проигнорен (нужно перепарсивать ответ).
+      dataSource.contentType
+    } else {
+      // Обычный content-type, можно переопределять через node.
+      nodeContentType getOrElse dataSource.contentType
+    }
+
+    val resp = if (returnBody) {
+      status.sendEntity(
+        HttpEntity.Streamed(
+          data          = dataSource.data,
+          contentLength = Some( dataSource.sizeB ),
+          contentType   = Some( contentType ),
         )
-      }
+      )
+    } else {
+      // Добавить заголовки в акк
+      hdrsAcc ::= CONTENT_LENGTH -> dataSource.sizeB.toString
+      // Вернуть HEAD-ответ без тела:
+      status
+        .as( contentType )
+    }
+
+    // Пробросить content-encoding, который вернул media-storage.
+    for (comp <- dataSource.compression)
+      hdrsAcc ::= CONTENT_ENCODING -> comp.httpContentEncoding
+
+    // Пробросить byterange, если задано.
+    for (contentRange <- dataSource.httpContentRange)
+      hdrsAcc ::= CONTENT_RANGE -> contentRange
+
+    if (hdrsAcc.isEmpty) resp
+    else resp.withHeaders( hdrsAcc: _* )
   }
 
 }

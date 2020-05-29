@@ -18,18 +18,31 @@ object MDsReadArgs {
 
 /** Контейнер данных запроса чтения абстрактного data-source.
   *
-  * @param returnBody Возвращать данные ответа?
-  *                   Для ответов на HEAD-запросы тут должно быть false.
   * @param ptr Описание цели.
-  * @param acceptCompression Допускать возвращать ответ в сжатом формате.
-  * @param range HTTP Range
+  * @param params Конкретные параметры чтения файла из хранилища.
   */
 final case class MDsReadArgs(
-                              ptr                   : MStorageInfoData,
-                              acceptCompression     : Iterable[MCompressAlgo]       = Nil,
-                              returnBody            : Boolean                       = true,
-                              range                 : Option[MDsRangeInfo]          = None,
+                              ptr             : MStorageInfoData,
+                              params          : MDsReadParams         = MDsReadParams.default,
                             )
+
+
+/** Параметры передачи, отправляемые на самый нижний уровень.
+  *
+  * @param returnBody Возвращать данные ответа?
+  *                   Для ответов на HEAD-запросы тут должно быть false.
+  * @param acceptCompression Допускать возвращать ответ в сжатом формате.
+  * @param range HTTP Range.
+  */
+case class MDsReadParams(
+                          acceptCompression     : Iterable[MCompressAlgo]       = Nil,
+                          returnBody            : Boolean                       = true,
+                          range                 : Option[MDsRangeInfo]          = None,
+                        )
+object MDsReadParams {
+  def default = apply()
+  @inline implicit def univEq: UnivEq[MDsReadParams] = UnivEq.derive
+}
 
 
 object MDsRangeInfo {

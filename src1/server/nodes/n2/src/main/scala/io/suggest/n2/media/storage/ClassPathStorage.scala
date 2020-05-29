@@ -58,7 +58,7 @@ class ClassPathStorage @Inject()(
     (for {
       compressAlgoOpt <- {
         // Если в acceptCompression пусто, то нет смысла проверять файловые расширения на сжатость
-        val isMayBeCompressed = args.acceptCompression.nonEmpty && {
+        val isMayBeCompressed = args.params.acceptCompression.nonEmpty && {
           // Клиент допускает какой-либо пожатый ответ. Проверить, может ли быть сжатым файл с таким именем?
           val fileName = file.getName
           val fileExtensionPos = fileName.lastIndexOf('.')
@@ -71,8 +71,9 @@ class ClassPathStorage @Inject()(
         }
         val last = Iterator.single( Option.empty[MCompressAlgo] )
         // Запрещать поиск сжатых версий файла (ресурса), если имя файла (ресурса) намекает, что формат файла всегда сжатый.
-        if (isMayBeCompressed && args.acceptCompression.nonEmpty) {
+        if (isMayBeCompressed && args.params.acceptCompression.nonEmpty) {
           args
+            .params
             .acceptCompression
             .iterator
             .map(Some.apply) ++ last

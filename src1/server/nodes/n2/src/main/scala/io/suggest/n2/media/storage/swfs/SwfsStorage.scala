@@ -7,13 +7,15 @@ import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
 import io.suggest.swfs.client.proto.assign.AssignRequest
 import io.suggest.swfs.client.proto.delete.{DeleteRequest, DeleteResponse}
-import io.suggest.swfs.client.proto.get.GetRequest
+import io.suggest.swfs.client.proto.get.{GetRequest, GetResponse}
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
-import io.suggest.swfs.client.proto.put.{PutResponse, PutRequest}
+import io.suggest.swfs.client.proto.put.{PutRequest, PutResponse}
+import io.suggest.swfs.fid.Fid
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,34 +29,33 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 final class SwfsStorage @Inject()(
-                                   volCache                      : SwfsVolumeCache,
-                                   configuration                 : Configuration,
-                                   client                        : ISwfsClient,
-                                   implicit private val ec       : ExecutionContext,
+                                   injector                      : Injector,
                                  )
   extends MacroLogsImpl
   with IMediaStorageStatic
 {
 
-  /** Инстанс с дефолтовыми настройками репликации. */
-  val REPLICATION_DFLT: Option[Replication] = {
-    configuration.getOptional[String]("swfs.assign.replication")
+  private def configuration = injector.instanceOf[Configuration]
+  private val client = injector.instanceOf[ISwfsClient]
+  private val volCache = injector.instanceOf[SwfsVolumeCache]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
+
+  private lazy val (_REPLICATION_DFLT, _DATA_CENTER_DFLT) = {
+    /** Инстанс с дефолтовыми настройками репликации. */
+    val rep = configuration.getOptional[String]("swfs.assign.replication")
       .map { Replication.apply }
+    /** Дефолтовые настройки дата-центра в assign-request. */
+    val dcDflt = configuration.getOptional[String]("swfs.assign.dc")
+    LOGGER.debug(s"Assign settings: dc = $dcDflt, replication = $rep")
+    (rep, dcDflt)
   }
-
-  /** Дефолтовые настройки дата-центра в assign-request. */
-  val DATA_CENTER_DFLT: Option[String] = {
-    configuration.getOptional[String]("swfs.assign.dc")
-  }
-
-  LOGGER.debug(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
 
   /** SWFS имеет полную поддержку HTTP Range. */
   override def canReadRanges = true
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
   override def assignNew(): Future[MAssignedStorage] = {
-    val areq = AssignRequest(DATA_CENTER_DFLT, REPLICATION_DFLT)
+    val areq = AssignRequest(_DATA_CENTER_DFLT, _REPLICATION_DFLT)
     for {
       resp <- client.assign(areq)
     } yield {
@@ -122,10 +123,8 @@ final class SwfsStorage @Inject()(
 
 
   /** Короткий код для получения списка локаций volume, связанного с [[SwfsStorage]]. */
-  private def _vlocsFut(ptr: MStorageInfoData): Future[Seq[IVolumeLocation]] = {
-    val fid = ptr.swfsFid.get
+  private def _vlocsFut(fid: Fid): Future[Seq[IVolumeLocation]] =
     volCache.getLocations( fid.volumeId )
-  }
 
 
   /** Асинхронное поточное чтение хранимого файла.
@@ -133,27 +132,48 @@ final class SwfsStorage @Inject()(
     * @return Поток данных блоба + сопутствующие метаданные.
     */
   override def read(args: MDsReadArgs): Future[IDataSource] = {
-    for {
-      vlocs   <- _vlocsFut( args.ptr )
-      getResp <- {
-        val fid = args.ptr.swfsFid.get
+    val fid = args.ptr.swfsFid.get
+
+    lazy val logPrefix = s"read($fid)#${System.currentTimeMillis()}:"
+
+    def __tryVloc( vlocsRest: Seq[IVolumeLocation] ): Future[Option[GetResponse]] = {
+      vlocsRest.headOption.fold [Future[Option[GetResponse]]] {
+        Future.failed( new NoSuchElementException(s"$logPrefix No more volume locations") )
+
+      } { vlocHead =>
         val getReq = GetRequest(
-          volUrl              = vlocs.head.url,
+          volUrl              = vlocHead.url,
           fid                 = fid.toString,
-          acceptCompression   = args.acceptCompression,
+          params              = args.params,
         )
-        client.get(getReq)
+        client.get( getReq )
+          .filter( _.nonEmpty )
+          .recoverWith { case ex =>
+            val errMsg = s"$logPrefix Cannot read from volume ${vlocHead.url} (public ${vlocHead.publicUrl})"
+            if (ex.isInstanceOf[NoSuchElementException])
+              LOGGER.warn( errMsg )
+            else
+              LOGGER.warn( errMsg, ex )
+
+            __tryVloc( vlocsRest.tail )
+          }
       }
+    }
+
+    for {
+      vlocs       <- _vlocsFut( fid )
+      getRespOpt  <- __tryVloc( vlocs )
     } yield {
-      getResp.get
+      getRespOpt.get
     }
   }
+
 
   override def delete(ptr: MStorageInfoData): Future[Option[DeleteResponse]] = {
     val fid = ptr.swfsFid.get
     lazy val logPrefix = s"delete($fid):"
     for {
-      vlocs   <- _vlocsFut(ptr)
+      vlocs   <- _vlocsFut( fid )
       delResp <- {
         LOGGER.trace(s"$logPrefix vlocs = [${vlocs.mkString(", ")}]")
         val delReq = DeleteRequest(
@@ -169,10 +189,10 @@ final class SwfsStorage @Inject()(
   }
 
   override def write(ptr: MStorageInfoData, data: WriteRequest): Future[PutResponse] = {
+    val fid = ptr.swfsFid.get
     for {
-      vlocs     <- _vlocsFut(ptr)
+      vlocs     <- _vlocsFut( fid )
       putResp   <- {
-        val fid = ptr.swfsFid.get
         val putReq = PutRequest.fromRr(
           volUrl        = vlocs.head.url,
           fid           = fid.toString,
@@ -186,8 +206,8 @@ final class SwfsStorage @Inject()(
   }
 
   override def isExist(ptr: MStorageInfoData): Future[Boolean] = {
-    _vlocsFut(ptr).flatMap { vlocs =>
-      val fid = ptr.swfsFid.get
+    val fid = ptr.swfsFid.get
+    _vlocsFut( fid ).flatMap { vlocs =>
       val getReq = GetRequest(
         volUrl = vlocs.head.url,
         fid    = fid.toString

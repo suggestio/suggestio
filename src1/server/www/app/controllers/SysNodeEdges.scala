@@ -3,7 +3,6 @@ package controllers
 import io.suggest.ctx.CtxData
 import io.suggest.err.HttpResultingException
 import io.suggest.es.model.EsModel
-import io.suggest.fio.MDsReadArgs
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.n2.edge.edit.{MEdgeEditFormInit, MNodeEdgeIdQs}
@@ -12,7 +11,7 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
-import util.acl.IsSuNodeEdge
+import util.acl.{CanDownloadFile, IsFileNotModified, IsSuNodeEdge}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta}
 import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.pick.ContentTypeCheck
@@ -20,7 +19,6 @@ import io.suggest.up.UploadConstants
 import views.html.sys1.market.edge.EditEdge2Tpl
 import japgolly.univeq._
 import models.mup.MUploadInfoQs
-import play.api.mvc.Results
 import util.up.FileUtil
 
 import scala.concurrent.Future
@@ -46,7 +44,8 @@ final class SysNodeEdges @Inject() (
   private lazy val esModel = current.injector.instanceOf[EsModel]
   private lazy val fileUtil = current.injector.instanceOf[FileUtil]
   private lazy val uploadCtl = current.injector.instanceOf[Upload]
-  private lazy val iMediaStorages = current.injector.instanceOf[IMediaStorages]
+  private lazy val canDownloadFile = current.injector.instanceOf[CanDownloadFile]
+  private lazy val isFileNotModified = current.injector.instanceOf[IsFileNotModified]
 
 
   /** Страница с формой редактирования эджа.
@@ -219,30 +218,13 @@ final class SysNodeEdges @Inject() (
     * @return Файл.
     */
   def openFile(qs: MNodeEdgeIdQs) = {
-    isSuNodeEdge(qs).async { implicit request =>
-      val edgeMedia = request
-        .edgeOpt.get
-        .media.get
-
-      (for {
-        dataSource <- iMediaStorages
-          .client( edgeMedia.storage.storage )
-          .read( MDsReadArgs(edgeMedia.storage.data, request.acceptCompressEncodings) )
-      } yield {
-        sioControllerApi.sendDataSource(
-          dataSource  = dataSource,
-          nodeContentType = edgeMedia.file.mime,
-        )
-          .withHeaders(
-            Results
-              .contentDispositionHeader( inline = false, name = request.mnode.guessDisplayName )
-              .toSeq: _*
-          )
-      })
-        .recoverWith { case _: NoSuchElementException =>
-          errorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
-        }
-    }
+    isSuNodeEdge(qs)
+      .andThen( new canDownloadFile.NodeEdgeOpt2MFileReq )
+      .andThen( new isFileNotModified.Refiner )
+      .async( uploadCtl.downloadLogic(
+        dispInline = false,
+        returnBody = true,
+      )(_) )
   }
 
 }

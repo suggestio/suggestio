@@ -13,7 +13,7 @@ import io.suggest.ctx.MCtxId
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
-import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, WriteRequest}
+import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, MDsReadParams, WriteRequest}
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
@@ -39,7 +39,7 @@ import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, Tempor
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, DefaultActionBuilder, Result, Results}
 import play.core.parsers.Multipart
-import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, IgnoreAuth, IsFileNotModified}
+import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, Ctx304, IgnoreAuth, IsFileNotModified}
 import util.cdn.{CdnUtil, CorsUtil}
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
@@ -956,54 +956,72 @@ final class Upload @Inject()(
     * @return
     */
   def download(dlQs: MDownLoadQs) = _download(dlQs, returnBody = true)
-  def downloadHEAD(dlQs: MDownLoadQs) = _download(dlQs, returnBody = false)
-  private def _download(dlQs: MDownLoadQs, returnBody: Boolean) = bruteForceProtect {
-    // BruteForceProtect: тут для подавления трафика от повторяющихся запросов.
-    // TODO Поддержка HTTP Range - https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
-    // TODO Поддержка метода HTTP HEAD помимо GET для возможности клиенту оценить файл без скачивания.
-    canDownloadFile(dlQs)
-      .andThen( isFileNotModified.Refiner )
-      .async { ctx304 =>
-        import ctx304.request
+  def downloadHead(dlQs: MDownLoadQs) = _download(dlQs, returnBody = false)
+  private def _download(dlQs: MDownLoadQs, returnBody: Boolean) = {
+    bruteForceProtect {
+      // BruteForceProtect: тут для подавления трафика от повторяющихся запросов.
+      canDownloadFile(dlQs)
+        .andThen( new isFileNotModified.Refiner )
+        .async( downloadLogic(
+          dispInline = dlQs.dispInline,
+          returnBody = returnBody,
+        )(_) )
+    }
+  }
 
-        val s = request.edgeMedia.storage
+  def downloadLogic[A](dispInline: Boolean, returnBody: Boolean)(ctx304: Ctx304[A]): Future[Result] = {
+    import ctx304.request
 
-        val readArgs = MDsReadArgs(
-          ptr               = s.data,
-          acceptCompression = request.acceptCompressEncodings,
-          returnBody        = returnBody,
-          // Извлечь range-заголовки:
-          range = for {
-            rangeHdr <- ctx304.request.headers.get( RANGE )
-            if rangeHdr startsWith "bytes="
-          } yield {
-            MDsRangeInfo(
-              range = rangeHdr,
-              rangeIf = ctx304.request.headers
-                .get( IF_RANGE )
-                .filter(_.nonEmpty),
-            )
-          },
-        )
-        val storClient = iMediaStorages.client( s.storage )
+    val s = request.edgeMedia.storage
 
-        for {
-          ds <- storClient.read( readArgs )
+    val readArgs = MDsReadArgs(
+      ptr    = s.data,
+      params = MDsReadParams(
+        returnBody        = returnBody,
+        acceptCompression = request.acceptCompressEncodings,
+        // Извлечь range-заголовки:
+        range = for {
+          rangeHdr <- ctx304.request.headers.get( RANGE )
+          if rangeHdr startsWith "bytes="
         } yield {
-          LOGGER.trace(s"download($dlQs): Streaming download file node#${dlQs.nodeId} to ${dlQs.clientAddr}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
-          ctx304.with304Headers(
-            sendDataSource( ds, nodeContentType = request.edgeMedia.file.mime )
-              .withHeaders(
-                Results.contentDispositionHeader(
-                  inline = dlQs.dispInline,
-                  name = request.mnode.guessDisplayName,
-                )
-                  .toSeq: _*
-              )
+          MDsRangeInfo(
+            range = rangeHdr,
+            rangeIf = ctx304.request.headers
+              .get( IF_RANGE )
+              .filter(_.nonEmpty),
           )
-        }
+        },
+      ),
+    )
+    val storClient = iMediaStorages.client( s.storage )
+
+    (for {
+      ds <- storClient.read( readArgs )
+    } yield {
+      LOGGER.trace(s"downloadLogic()#${System.currentTimeMillis()}: Streaming download file node#${ctx304.request.mnode.idOrNull} to ${ctx304.request.remoteClientAddress}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
+
+      val hdrs = (ACCEPT_RANGES -> "bytes") #::
+        Results.contentDispositionHeader(
+          inline = dispInline,
+          name = request.mnode.guessDisplayName,
+        )
+          .to(LazyList)
+
+      // Добавить ETag, Cache-Control, и т.д.
+      isFileNotModified.with304Headers(
+        ctx304,
+        sendDataSource(
+          dataSource = ds,
+          nodeContentType = request.edgeMedia.file.mime,
+        )
+          .withHeaders( hdrs: _* )
+      )
+    })
+      .recoverWith { case _: NoSuchElementException =>
+        httpErrorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
       }
   }
+
 
 }
 

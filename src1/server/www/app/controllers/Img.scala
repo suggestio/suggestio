@@ -2,7 +2,7 @@ package controllers
 
 import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.file.MimeUtilJvm
-import io.suggest.fio.MDsReadArgs
+import io.suggest.fio.{MDsReadArgs, MDsReadParams}
 import io.suggest.n2.media.storage.IMediaStorages
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -57,7 +57,7 @@ class Img @Inject() (
     *         404, если нет картинки или она обслуживается не на этом хосте.
     */
   def dynImg(mimg: MImgT) = canDynImg(mimg)
-    .andThen( isFileNotModified.Refiner )
+    .andThen( new isFileNotModified.Refiner )
     .async { ctx304 =>
       import ctx304.request
 
@@ -102,12 +102,20 @@ class Img @Inject() (
         iMediaStorages
           .client( stor.storage )
           // TODO Организовать поддержку accept-ranges.
-          .read( MDsReadArgs( stor.data, request.acceptCompressEncodings ) )
+          .read(
+            MDsReadArgs(
+              ptr = stor.data,
+              params = MDsReadParams(
+                acceptCompression = request.acceptCompressEncodings,
+              )
+            )
+          )
           .map { dataSource =>
             // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
             LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB.fold("?")(_.toString)}b")
 
-            ctx304.with304Headers(
+            isFileNotModified.with304Headers(
+              ctx304,
               sioCtlApi.sendDataSource(
                 dataSource  = dataSource,
                 nodeContentType = request.edgeMedia.file.mime,
