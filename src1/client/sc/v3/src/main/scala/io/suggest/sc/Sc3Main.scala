@@ -199,10 +199,11 @@ object Sc3Main extends Log {
     // Подписаться на обновление заголовка и обновлять заголовок.
     // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
     Try {
-      modules.sc3SpaRouter.sc3Circuit.subscribe( modules.sc3SpaRouter.sc3Circuit.titleOptRO ) { titleOptRO =>
-        val title0 = MsgCodes.`Suggest.io`
-        val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
-        dom.document.title = title1
+      modules.sc3SpaRouter.sc3Circuit.subscribe( modules.sc3SpaRouter.sc3Circuit.titlePartsRO ) { titlePartsRO =>
+        dom.document.title = {
+          (titlePartsRO.value.iterator ++ Iterator.single( MsgCodes.`Suggest.io` ))
+            .mkString( " | " )
+        }
       }
     }
       .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )

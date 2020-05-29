@@ -199,7 +199,31 @@ class Sc3Circuit(
   private[sc] val internalsRW     = mkLensRootZoomRW(this, MScRoot.internals)( MScInternalsFastEq )
 
   private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
-  private[sc] val titleOptRO      = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
+  private[sc] val titlePartsRO    = rootRW.zoom [List[String]] { mroot =>
+    var acc = List.empty[String]
+
+    // Заголовок узла.
+    for {
+      inxResp <- mroot.index.resp
+      nodeName <- inxResp.name
+    } {
+      acc ::= nodeName
+    }
+
+    // Заголовок карточки.
+    for {
+      scAd <- mroot.grid.core.ads
+        .iterator
+        .flatten
+      foc <- scAd.focused
+      focAdTitle <- foc.title
+    } {
+      acc ::= focAdTitle
+    }
+
+    acc
+  }( FastEq.ValueEq )
+
   private val indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
 
   val scCssRO: ModelRO[ScCss]     = mkLensZoomRO( indexRW, MScIndex.scCss )( FastEq.AnyRefEq )
