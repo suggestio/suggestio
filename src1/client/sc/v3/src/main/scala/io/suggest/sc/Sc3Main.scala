@@ -2,7 +2,7 @@ package io.suggest.sc
 
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.log.buffered.BufLogAppender
 import io.suggest.log.filter.SevereFilter
 import io.suggest.log.remote.RemoteLogAppender
@@ -61,7 +61,7 @@ object Sc3Main extends Log {
       Try( Leaflet.noConflict() )
 
     // Активировать отправку логов на сервер, когда js-роутер будет готов.
-    //Try {
+    Try {
       //if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
         Logging.LOGGERS ::= new SevereFilter(
           minSeverity = LogSeverities.Log,
@@ -69,8 +69,8 @@ object Sc3Main extends Log {
             underlying =  new RemoteLogAppender,
           ),
         )
-    //}
-    //  .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
+    }
+      .logFailure( ErrorMsgs.LOG_APPENDER_FAIL )
 
     // Сразу поискать js-роутер на странице.
     SrvRouter.ensureJsRouter()
@@ -80,15 +80,15 @@ object Sc3Main extends Log {
 
     // 2018-02-27: После установки веб-приложения, есть проблема, что запуск приложения идёт по уже установленным
     // координатам из исходного URL. На новых девайсах это решабельно через webmanifest.start_url, а на яббле нужен доп.костыль:
-    //Try {
+    Try {
       if (
         WebAppUtil.isStandalone() &&
         Option(docLoc.hash).exists(_.nonEmpty)
       ) {
         docLoc.hash = ""
       }
-    //}
-    //  .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN )
+    }
+      .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN )
 
     // Запустить фоновую установку ServiceWorker'а:
     Try {
@@ -150,22 +150,27 @@ object Sc3Main extends Log {
     val modules = new Sc3Module
 
     // Отрендерить компонент spa-роутера в целевой контейнер.
-    //Try {
-      modules.sc3SpaRouter
-        .state
-        .router()
-        .renderIntoDOM( rootDiv )
-    //}
-    //  .logFailure( ErrorMsgs.INIT_FLOW_UNEXPECTED )
+    for {
+      ex <- Try {
+        modules.sc3SpaRouter
+          .state
+          .router()
+          .renderIntoDOM( rootDiv )
+      }
+        .failed
+    } {
+      logger.error( ErrorMsgs.INIT_FLOW_UNEXPECTED, ex )
+      dom.window.alert( MCommonReactCtx.default.messages( MsgCodes.`Unsupported.browser.or.fatal.failure` ) + "\n\n" + ex.toString )
+    }
 
 
-    //Try {
+    Try {
       body.className += ScCssStatic.Body.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
-    //}
-    //  .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN, body )
+    }
+      .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN, body )
 
     // Инициализировать LkPreLoader:
-    //Try {
+    Try {
       for {
         lkPreLoader <- LkPreLoader.find()
       } yield {
@@ -173,11 +178,11 @@ object Sc3Main extends Log {
         LkPreLoader.PRELOADER_IMG_URL
         lkPreLoader.remove()
       }
-    //}
-    //  .logFailure( ErrorMsgs.IMG_EXPECTED, LkPreLoader )
+    }
+      .logFailure( ErrorMsgs.IMG_EXPECTED, LkPreLoader )
 
     // Подписать circuit на глобальные события window:
-    //Try {
+    Try {
       for {
         evtName <- WndEvents.RESIZE :: WndEvents.ORIENTATION_CHANGE :: Nil
       } {
@@ -188,19 +193,19 @@ object Sc3Main extends Log {
         }
           .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, evtName )
       }
-    //}
-    //  .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR )
+    }
+      .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR )
 
     // Подписаться на обновление заголовка и обновлять заголовок.
     // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
-    //Try {
+    Try {
       modules.sc3SpaRouter.sc3Circuit.subscribe( modules.sc3SpaRouter.sc3Circuit.titleOptRO ) { titleOptRO =>
         val title0 = MsgCodes.`Suggest.io`
         val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
         dom.document.title = title1
       }
-    //}
-    //  .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+    }
+      .logFailure( ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT )
 
   }
 

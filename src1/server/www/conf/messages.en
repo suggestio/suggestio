@@ -1128,4 +1128,5 @@ Background.mode=Background mode
 Background.monitoring.offers.nearby=Notify about offers nearby. You can control monitoring via application settings.
 Daemon.toast.title=Monitoring in background
 Daemon.toast.descr=Detection new offers nearby.
+Unsupported.browser.or.fatal.failure=Unsupported browser or fatal failure occured.
 

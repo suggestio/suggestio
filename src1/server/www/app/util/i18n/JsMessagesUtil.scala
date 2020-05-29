@@ -300,6 +300,7 @@ class JsMessagesUtil @Inject() (
       MC.`Background.monitoring.offers.nearby` ::
       MC.`Daemon.toast.title` ::
       MC.`Daemon.toast.descr` ::
+      MC.`Unsupported.browser.or.fatal.failure` ::
       Nil
   }
 

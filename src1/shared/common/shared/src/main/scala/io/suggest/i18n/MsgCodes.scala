@@ -469,4 +469,6 @@ object MsgCodes {
   val `Daemon.toast.title` = "Daemon.toast.title"
   val `Daemon.toast.descr` = "Daemon.toast.descr"
 
+  val `Unsupported.browser.or.fatal.failure` = "Unsupported.browser.or.fatal.failure"
+
 }

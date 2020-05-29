@@ -1136,4 +1136,5 @@ Background.mode=Фоновый режим
 Background.monitoring.offers.nearby=Уведомление о новых предложениях рядом с вами. Вы можете настроить мониторинг в настройках приложения.
 Daemon.toast.title=Фоновый мониторинг
 Daemon.toast.descr=Обнаружение новых предложений поблизости.
+Unsupported.browser.or.fatal.failure=Неподдерживаемый браузер или фатальная ошибка системы.
 

@@ -54,7 +54,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2._
-import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, LoggingAllActionsProcessor, OptFastEq}
+import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
@@ -582,7 +582,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  addProcessor( LoggingAllActionsProcessor[MScRoot] )
+  //addProcessor( LoggingAllActionsProcessor[MScRoot] )
 
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
