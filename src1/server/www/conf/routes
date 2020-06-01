@@ -36,6 +36,7 @@ POST /log/rcv                           @controllers.RemoteLogs.receive
 GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
 
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
+HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)
 
 ## Обслуживание около-статических ответов.
 ## Cross-Origin resource sharing: preflight request:
@@ -157,8 +158,8 @@ GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: S
 GET  /syslang/:lang/:hash/messages.js   @controllers.LkLang.sysMessagesJs(lang: String, hash: Int)
 
 ## Генераторы капч
-GET  /captcha/get/:captchaId            @controllers.Img.getCaptchaImg(captchaId, cp: io.suggest.captcha.MCaptchaCookiePath)
-GET  /captcha/get                       @controllers.Img.getCaptcha(t: String)
+GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptchaImg(captchaId, cp: io.suggest.captcha.MCaptchaCookiePath)
+GET  /captcha/get                       @controllers.Captcha.getCaptcha(t: String)
 
 ## Upload controller
 ## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.

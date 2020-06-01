@@ -1,21 +1,14 @@
 package controllers
 
-import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.file.MimeUtilJvm
-import io.suggest.fio.{MDsReadArgs, MDsReadParams}
-import io.suggest.n2.media.storage.IMediaStorages
-import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
-import models.mproj.ICommonDi
-import util.acl.{BruteForceProtect, CanDynImg, IsFileNotModified, IsIdTokenValid, MaybeAuth}
-import util.captcha.CaptchaUtil
-import util.ident.IdTokenUtil
+import play.api.inject.Injector
+import util.acl.{CanDynImg, IsFileNotModified}
 import util.img.DynImgUtil
 
-import scala.concurrent.Future
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 /**
@@ -28,24 +21,24 @@ import scala.util.Try
 @Singleton
 class Img @Inject() (
                       isFileNotModified               : IsFileNotModified,
-                      captchaUtil                     : CaptchaUtil,
-                      cacheApiUtil                    : CacheApiUtil,
-                      mLocalImgs                      : MLocalImgs,
-                      dynImgUtil                      : DynImgUtil,
                       canDynImg                       : CanDynImg,
-                      iMediaStorages                  : IMediaStorages,
-                      maybeAuth                       : MaybeAuth,
-                      idTokenUtil                     : IdTokenUtil,
-                      isIdTokenValid                  : IsIdTokenValid,
+                      injector                        : Injector,
                       sioCtlApi                       : SioControllerApi,
-                      bruteForceProtect               : BruteForceProtect,
-                      mCommonDi                       : ICommonDi,
                     )
   extends MacroLogsImpl
 {
 
   import sioCtlApi._
-  import mCommonDi._
+
+  private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private def uploadCtl = injector.instanceOf[Upload]
+  private def errorHandler = injector.instanceOf[ErrorHandler]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+
+
+  def dynImg(mimg: MImgT) = _dynImg( mimg, returnBody = true )
+  def dynImgHead(mimg: MImgT) = _dynImg( mimg, returnBody = false )
 
 
   /** Экшен раздачи динамических картинок второго поколения.
@@ -56,7 +49,7 @@ class Img @Inject() (
     * @return 200 OK с картинкой.
     *         404, если нет картинки или она обслуживается не на этом хосте.
     */
-  def dynImg(mimg: MImgT) = canDynImg(mimg)
+  private def _dynImg(mimg: MImgT, returnBody: Boolean) = canDynImg(mimg)
     .andThen( new isFileNotModified.Refiner )
     .async { ctx304 =>
       import ctx304.request
@@ -72,10 +65,16 @@ class Img @Inject() (
           val imgFile = mLocalImgs.fileOf(localImg)
           LOGGER.trace(s"$logPrefix 200 OK, file size = ${imgFile.length} bytes")
 
-          Ok.sendFile(
-            content   = imgFile,
-            inline    = true,
-            fileName  = { _ => Some(mimg.dynImgId.fileName) }
+          val status0 = Ok
+          (
+            if (returnBody) {
+              // TODO Нужна поддержка HTTP Range request.
+              status0.sendFile(
+                content   = imgFile,
+                inline    = true,
+                fileName  = { _ => Some(mimg.dynImgId.fileName) }
+              )
+            } else status0
           )
             .as {
               Try( MimeUtilJvm.probeContentType(imgFile.toPath) )
@@ -96,32 +95,12 @@ class Img @Inject() (
         // В базе уже есть готовая к раздаче картинка. Организуем akka-stream: swfs -> here -> client.
         // Кэшировать это скорее всего небезопасно, да и выигрыша мало (с локалхоста на локалхост), поэтому без кэша.
 
-        // Пробрсывать в swfs "Accept-Encoding: gzip", если задан в запросе на клиенте.
+        // Пробрасывать в swfs "Accept-Encoding: gzip", если задан в запросе на клиенте.
         // Всякие SVG сжимаются на стороне swfs, их надо раздавать сжатыми.
-        val stor = request.edgeMedia.storage
-        iMediaStorages
-          .client( stor.storage )
-          // TODO Организовать поддержку accept-ranges.
-          .read(
-            MDsReadArgs(
-              ptr = stor.data,
-              params = MDsReadParams(
-                acceptCompression = request.acceptCompressEncodings,
-              )
-            )
-          )
-          .map { dataSource =>
-            // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
-            LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${request.edgeMedia.file.sizeB.fold("?")(_.toString)}b")
-
-            isFileNotModified.with304Headers(
-              ctx304,
-              sioCtlApi.sendDataSource(
-                dataSource  = dataSource,
-                nodeContentType = request.edgeMedia.file.mime,
-              )
-            )
-          }
+        uploadCtl.downloadLogic(
+          dispInline = true,
+          returnBody = returnBody,
+        )(ctx304)
       })
         .recoverWith { case ex: Throwable =>
           // TODO Пересобрать неисправную картинку, если не-оригинал?
@@ -142,97 +121,6 @@ class Img @Inject() (
           }
         }
     }
-
-
-  /**
-    * Вернуть картинку капчи.
-    * Такую картинку будет проще ввести на мобильном устройстве.
-    * Для защиты от hot-link'а и создания паразитной нагрузки/трафика - используется CSRF и кэш.
-    *
-    * @param captchaId id капчи.
-    * @return image/png
-    */
-  def getCaptchaImg(captchaId: String, mCookiePath: MCaptchaCookiePath) = csrf.Check {
-    maybeAuth().async { implicit request =>
-      lazy val logPrefix = s"getCaptchaImg($captchaId)#${System.currentTimeMillis()}:"
-      LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}/u#${request.user.personIdOpt.orNull}")
-      for {
-
-        // Рендер одной картинки создаёт некоторую нагрузку, поэтому для защиты от DoS-атаки через перегрузку сервера, используем кэш рендера:
-        (ctext, imgBytes) <- cacheApiUtil.getOrElseFut("captcha.img", expiration = 3.seconds) {
-          // Пусть будут только цифры. На телефоне удобнее цифры набирать, а остальным -- равные права.
-          val ctext1 = captchaUtil.createCaptchaDigits()
-          LOGGER.trace(s"$logPrefix ctext=$ctext1")
-          val imgBytes1 = captchaUtil.createCaptchaImg( ctext1 )
-          val res = (ctext1, imgBytes1)
-          Future.successful( res )
-        }
-
-      } yield {
-        // Путь до кукиса:
-        val cookiePath = mCookiePath match {
-          case MCaptchaCookiePaths.EpwReg =>
-            routes.Ident.epw2RegSubmit().url
-        }
-        Ok( imgBytes )
-          .as( captchaUtil.CAPTCHA_IMG_MIME )
-          .withHeaders(
-            EXPIRES       -> "0",
-            PRAGMA        -> "no-cache",
-            CACHE_CONTROL -> "no-store, no-cache, must-revalidate"
-          )
-          .withCookies(
-            captchaUtil.mkCookie(captchaId, ctext, cookiePath)
-          )
-      }
-    }
-  }
-
-
-  /** Старый getCaptchaImg уязвим для повторного использования cookie из-за stateless-сессий,
-    * а зашифрованный ответ на капчи - недостаточно хорошо защищён в долгосрочной перспективе.
-    * + Имеет велосипед с cookie и cookiePath.
-    *
-    * Поэтому решено, что надо сделать по уму:
-    * - PGP-сообщение вместо шифрования
-    * - Кастомный хидер вместо cookie, для передачи pgp-шифротекста. Явный сабмит шифра капчи на сервер.
-    * - Для одноразовости капч используется sql-табличка one_time_tokens, куда попадают уже использованные капчи.
-    * - Для id капч используется UUID, который и заносится в sql-таблице.
-    *
-    * @return Картинка + http-хидеры с id и ответом на капчу.
-    */
-  def getCaptcha(idTokenCiphered: String) = csrf.Check {
-    bruteForceProtect {
-      isIdTokenValid(idTokenCiphered)(isIdTokenValid.isFreshToken).async { implicit request =>
-        val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
-        LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}, personId#${request.user.personIdOpt.orNull}")
-
-        // Кэш для защиты от перегрузки слишкой активной генерацией капч: ограничить макс.кол-во параллельных капч.
-        val captchaFut = captchaUtil.mkCaptcha( request.idToken.ottId )
-
-        // Шифруем правильный ответ на капчу:
-        val captchaSecretPgpMinFut = captchaFut.flatMap { case (ctext, _) =>
-          val idToken2 = captchaUtil.storeCaptchaSecret( captchaText = ctext, request.idToken )
-          idTokenUtil.encrypt( idToken2 )
-        }
-
-        // Отправить http-ответ юзеру, запихнув pgp-шифр в заголовок ответа:
-        for {
-          (_, captchaImgBytes)     <- captchaFut
-          captchaSecretPgpMin      <- captchaSecretPgpMinFut
-        } yield {
-          Ok( captchaImgBytes )
-            .as( captchaUtil.CAPTCHA_IMG_MIME )
-            .withHeaders(
-              EXPIRES       -> "0",
-              PRAGMA        -> "no-cache",
-              CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
-              CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME -> captchaSecretPgpMin,
-            )
-        }
-      }
-    }
-  }
 
 }
 

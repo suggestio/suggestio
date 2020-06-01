@@ -36,7 +36,7 @@ class CaptchaApiHttp extends ICaptchaApi {
       // Запуск http-запрос за картинкой
       resp <- HttpClient.execute(
         HttpReq.routed(
-          route = routes.controllers.Img.getCaptcha(token),
+          route = routes.controllers.Captcha.getCaptcha( token ),
           data  = HttpReqData(
             headers = {
               val C = HttpConst.Headers

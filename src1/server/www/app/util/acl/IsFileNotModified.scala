@@ -45,7 +45,7 @@ class IsFileNotModified @Inject()(
 
 
   /** Immutable not-modified cache-control header. */
-  val CACHE_CONTROL_HDR =
+  def CACHE_CONTROL_HDR =
     HeaderNames.CACHE_CONTROL -> s"public, max-age=$CACHE_DYN_IMG_CLIENT_SECONDS, immutable"
 
   /** Часто-используемое значение: */

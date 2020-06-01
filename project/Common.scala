@@ -85,7 +85,6 @@ object Common {
     /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    //val SCALACSS = "0.6.0"
     val SCALACSS = "0.6.1"
 
     /** Улучшенное жестко-типизированное сравнение.

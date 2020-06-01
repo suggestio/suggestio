@@ -982,7 +982,7 @@ final class Upload @Inject()(
         // Извлечь range-заголовки:
         range = for {
           rangeHdr <- ctx304.request.headers.get( RANGE )
-          if rangeHdr startsWith "bytes="
+          if rangeHdr matches "bytes=([0-9]{1,10}+-[0-9]{1,10},?\\s*)+"
         } yield {
           MDsRangeInfo(
             range = rangeHdr,

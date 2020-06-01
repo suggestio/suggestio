@@ -41,7 +41,7 @@ sealed trait Controllers extends js.Object {
   def Static: StaticCtlRoutes = js.native
 
   /** Роуты для img-контроллера. */
-  def Img: ImgCtlRoutes = js.native
+  def Captcha: CaptchaCtlRoutes = js.native
 
   /** Роуты для assets-контроллера. */
   def Assets: AssetsCtlRoutes = js.native
@@ -108,7 +108,7 @@ sealed trait StaticCtlRoutes extends js.Object {
 
 /** Интерфейс роутера ImgController'а. */
 @js.native
-sealed trait ImgCtlRoutes extends js.Object {
+sealed trait CaptchaCtlRoutes extends js.Object {
 
   /** Запрос картинки-капчи. */
   def getCaptcha(token: String): PlayRoute = js.native
