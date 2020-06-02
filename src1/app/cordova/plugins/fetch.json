@@ -67,14 +67,6 @@
       "BLUETOOTH_USAGE_DESCRIPTION": " "
     }
   },
-  "cordova-plugin-background-mode": {
-    "source": {
-      "type": "registry",
-      "id": "https://bitbucket.org/TheBosZ/cordova-plugin-run-in-background"
-    },
-    "is_top_level": true,
-    "variables": {}
-  },
   "cordova-custom-config": {
     "source": {
       "type": "registry",
@@ -87,6 +79,14 @@
     "source": {
       "type": "registry",
       "id": "cordova-plugin-background-fetch@6.0.7"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-background-mode": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/wspresto/cordova-plugin-background-mode"
     },
     "is_top_level": true,
     "variables": {}

@@ -28,4 +28,9 @@ object MCBgModeDaemonS {
 final case class MCBgModeDaemonS(
                                   initOpts       : Option[MDaemonInitOpts]         = None,
                                   listeners      : HashMap[String, js.Function]    = HashMap.empty,
-                                )
+                                ) {
+
+  def isActive: Boolean =
+    initOpts.nonEmpty
+
+}

@@ -13,9 +13,6 @@
     "cordova-plugin-background-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-background-mode": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },

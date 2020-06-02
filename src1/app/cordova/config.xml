@@ -140,6 +140,5 @@
         <variable name="ANDROID_SUPPORT_V4_VERSION" value="26.+" />
     </plugin>
     <plugin name="cordova-plugin-ble-central" spec="~1.2.5" />
-    <plugin name="cordova-plugin-background-mode" spec="~0.7.3" />
     <plugin name="cordova-custom-config" spec="~5.1.0" />
 </widget>

@@ -7,8 +7,8 @@ import io.suggest.sc.m.in.MScDaemon
 import diode.Implicits._
 import diode.data.Pot
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts, MBeaconerS}
-import io.suggest.daemon.{DaemonSleepTimerFinish, DaemonSleepTimerSet, DaemonBgModeSet, MDaemonSleepTimer, MDaemonStates}
-import io.suggest.dev.MPlatformS
+import io.suggest.daemon.{DaemonBgModeSet, DaemonSleepTimerFinish, DaemonSleepTimerSet, MDaemonSleepTimer, MDaemonState, MDaemonStates}
+import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
@@ -46,13 +46,17 @@ class ScDaemonAh[M](
 { ah =>
 
 
-  def USE_BG_MODE = false
+  /** Использовать ли cordova-bgMode-плагин?
+    * На iOS плагин не работает, и уже не компилируется.
+    */
+  def USE_BG_MODE: Boolean =
+    platfromRO.value.osFamily contains[MOsFamily] MOsFamilies.Android
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запуск периодического фонового мониторинга.
     case m: ScDaemonDozed =>
-      logger.log( msg = m )
+      //logger.log( msg = m )
 
       val fx = Effect.action {
         DaemonSleepTimerSet(
@@ -78,35 +82,41 @@ class ScDaemonAh[M](
 
     // Срабатывание таймера запуска процесса демона.
     case m: DaemonSleepAlarm =>
-      logger.log( msg = m )
+      //logger.log( msg = m )
+      val v0 = value
 
-      // TODO Проверить online-состояние через cordova MPlatformS, подписываясь на события online/offline.
-      var fx: Effect = Effect.action {
-        if (USE_BG_MODE) {
-          DaemonBgModeSet( isDaemon = m.isActive )
-        } else {
-          ScDaemonWorkProcess( isActive = true )
+      var fxsAcc = List.empty[Effect]
+
+      val nextState = MDaemonStates.fromIsActive( m.isActive )
+      if (!(v0.state contains[MDaemonState] nextState)) {
+        fxsAcc ::= Effect.action {
+          ScDaemonWorkProcess( isActive = m.isActive )
         }
       }
 
+      if (USE_BG_MODE && (v0.cdvBgMode.isActive !=* m.isActive))
+        fxsAcc ::= DaemonBgModeSet( isDaemon = m.isActive ).toEffectPure
+
       if (!m.isActive)
-        fx >>= DaemonSleepTimerFinish.toEffectPure
+        fxsAcc ::= DaemonSleepTimerFinish.toEffectPure
 
       // Выставить pending в состояние демона.
-      val v0 = value
       val v2 = MScDaemon.state.modify(_.pending())(v0)
 
-      updatedSilent( v2, fx )
+      ah.updatedSilentMaybeEffect( v2, fxsAcc.mergeEffects )
 
 
     // Если true, значит запущен демон, активен WAKE_LOCK система какое-то время держит CPU включённым.
     // Запустить сканирование.
     case m: ScDaemonWorkProcess =>
-      logger.log( msg = m )
+      //logger.log( msg = m )
 
       val v0 = value
       val daemonState2 = MDaemonStates.fromIsActive( m.isActive )
-      val v2 = MScDaemon.state.modify( _.ready(daemonState2) )(v0)
+      val v2 = (
+        MScDaemon.state.modify( _.ready(daemonState2) ) andThen
+        MScDaemon.fallSleepTimer.modify( _.pending() )
+      )(v0)
 
       if (m.isActive) {
         // Провести короткое ble-сканирование. hardOff-флаг проверялся на стадии DaemonActivate, тут не проверяем.
@@ -124,7 +134,9 @@ class ScDaemonAh[M](
         // На случай какой-либо задержки логики фонового сканирования, нужно гарантировать выключение демона через время.
         val fallSleepTimerFx = Effect.action {
           val timerId = DomQuick.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis.toInt ) { () =>
-            dispatcher( DaemonSleepAlarm( isActive = false ) )
+            val a = if (USE_BG_MODE) DaemonSleepAlarm( isActive = false )
+                    else ScDaemonWorkProcess( isActive = false )
+            dispatcher( a )
           }
           ScDaemonFallSleepTimerSet( Some(timerId) )
         }
@@ -134,22 +146,25 @@ class ScDaemonAh[M](
 
       } else {
         // Завершение процесса демона. По идее, фоновое bt-сканирование завершилось само или завершится позже.
-        var fx: Effect = Effect.action( DaemonSleepAlarm(isActive = false) )
+        var fxsAcc = List.empty[Effect]
+
+        if (v0.state.isPending || (v0.state contains MDaemonStates.Work))
+          fxsAcc ::= DaemonSleepAlarm( isActive = false ).toEffectPure
 
         for (timerId <- v0.fallSleepTimer) {
-          fx = fx + Effect.action {
+          fxsAcc ::= Effect.action {
             DomQuick.clearTimeout( timerId )
             ScDaemonFallSleepTimerSet( None )
           }
         }
 
-        updatedSilent(v2, fx)
+        ah.updatedSilentMaybeEffect( v2, fxsAcc.mergeEffects )
       }
 
 
     // Сохранение выставленного таймера в состояние.
     case m: ScDaemonFallSleepTimerSet =>
-      logger.log( msg = m )
+      //logger.log( msg = m )
       val v0 = value
 
       if (v0.fallSleepTimer.isPending) {

@@ -19,9 +19,9 @@ import japgolly.univeq.UnivEq
   *                     Some() - Реквизиты для рендера уведомления.
   */
 case class MDaemonInitOpts(
-                            events        : MDaemonEvents,
-                            descr         : MDaemonDescr,
-                            notification  : Option[MDaemonNotifyOpts],
+                            descr           : MDaemonDescr,
+                            events          : MDaemonEvents                 = MDaemonEvents.empty,
+                            notification    : Option[MDaemonNotifyOpts]     = None,
                           )
 object MDaemonInitOpts {
   @inline implicit def univEq: UnivEq[MDaemonInitOpts] = UnivEq.derive
@@ -35,11 +35,12 @@ object MDaemonInitOpts {
   * @param failure Какая-либо ошибка системы демонизации.
   */
 case class MDaemonEvents(
-                          activated       : Boolean => DAction,
+                          activated       : Option[Boolean => DAction] = None,
                           enabled         : Option[Boolean => DAction] = None,
                           failure         : Option[DAction] = None,
                         )
 object MDaemonEvents {
+  def empty = apply()
   @inline implicit def univEq: UnivEq[MDaemonEvents] = UnivEq.force
 }
 

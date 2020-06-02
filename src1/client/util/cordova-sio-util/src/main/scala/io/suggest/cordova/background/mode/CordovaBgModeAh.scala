@@ -152,8 +152,10 @@ final class CordovaBgModeAh[M](
     // Команда к демонизации или раздемонизации приложения.
     case m: DaemonBgModeSet =>
       val fx = Effect.action {
-        println(s"daemon work := " + CBGM.isEnabled() + " => " + m.isDaemon)
-        CBGM.setEnabled( m.isDaemon )
+        val isEnabledNow = CBGM.isEnabled()
+        //println(s"daemon work := " + isEnabledNow + " => " + m.isDaemon)
+        if (isEnabledNow !=* m.isDaemon)
+          CBGM.setEnabled( m.isDaemon )
         DoNothing
       }
 
@@ -169,34 +171,24 @@ final class CordovaBgModeAh[M](
         e = initOpts.events
         fx: Effect <- m.eventType match {
           case CordovaBgModeEvents.ACTIVATE =>
-            var fxAcc: Effect = e.activated(true).toEffectPure
+            var fxsAcc = List.empty[Effect]
+            for (actF <- e.activated)
+              fxsAcc ::= actF( true ).toEffectPure
 
             // При активации демона, для доступа к GPS требуется выйти WebView-оптимизаций в ущерб оптимизациям.
             if (initOpts.descr.needGps) {
-              val fxAcc0 = fxAcc
-              fxAcc = Effect.action {
+              fxsAcc ::= Effect.action {
                 CBGM.disableWebViewOptimizations()
                 DoNothing
-              } >> fxAcc0
+              }
             }
 
-            /*
-            if (initOpts.descr.needBle) {
-              val fxAcc0 = fxAcc
-              fxAcc = Effect.action {
-                CBGM.disableBatteryOptimizations()
-                DoNothing
-              } >> fxAcc0
-            }
-            */
-
-            Some( fxAcc )
-
-          case CordovaBgModeEvents.DEACTIVATE =>
-            Some( e.activated(false).toEffectPure )
+            fxsAcc.mergeEffects
 
           case evtType =>
             val actionOpt: Option[DAction] = evtType match {
+              case CordovaBgModeEvents.DEACTIVATE =>
+                e.activated.map(_(false))
               case CordovaBgModeEvents.ENABLE =>
                 e.enabled.map(_(true))
               case CordovaBgModeEvents.DISABLE =>

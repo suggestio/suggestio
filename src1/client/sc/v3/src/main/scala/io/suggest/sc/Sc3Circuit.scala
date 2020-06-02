@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.background.mode.CordovaBgModeAh
-import io.suggest.daemon.{BgModeDaemonInit, HtmlBgTimerAh, MDaemonDescr, MDaemonEvents, MDaemonInitOpts, MDaemonStates}
+import io.suggest.daemon.{BgModeDaemonInit, HtmlBgTimerAh, MDaemonDescr, MDaemonInitOpts, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
@@ -373,11 +373,13 @@ class Sc3Circuit(
     dispatcher  = this,
     onNearbyChange = Some { (nearby0, nearby2) =>
       val daemonS = daemonRW.value
-      println("sc3.bt.isDaemonNow? = " + daemonS.state )
+      //println("sc3.bt.isDaemonNow? = " + daemonS.state )
+
       if (daemonS.state contains MDaemonStates.Work) {
         // Если что-то изменилось, то надо запустить обновление плитки.
-        def finishWorkProcFx: Effect =
+        def finishWorkProcFx: Effect = {
           Effect.action( ScDaemonWorkProcess(isActive = false) )
+        }
 
         val fx = if (nearby0 ===* nearby2) {
           // Ничего не изменилось: такое возможно при oneShot-режиме. Надо сразу деактивировать режим демонизации.
@@ -647,9 +649,9 @@ class Sc3Circuit(
     if ( daemonBgModeAh.nonEmpty && scDaemonAh.USE_BG_MODE ) Future {
       val daemonizerInitA = BgModeDaemonInit(
         initOpts = Some( MDaemonInitOpts(
-          events = MDaemonEvents(
-            activated = ScDaemonWorkProcess,
-          ),
+          //events = MDaemonEvents(
+          //  activated = ScDaemonWorkProcess,
+          //),
           descr = MDaemonDescr(
             needBle = true,
           ),

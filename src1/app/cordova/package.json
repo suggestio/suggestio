@@ -14,7 +14,7 @@
         "cordova-custom-config": "^5.1.0",
         "cordova-ios": "^5.1.1",
         "cordova-plugin-background-fetch": "^6.0.7",
-        "cordova-plugin-background-mode": "git+https://bitbucket.org/TheBosZ/cordova-plugin-run-in-background.git",
+        "cordova-plugin-background-mode": "git+https://github.com/wspresto/cordova-plugin-background-mode.git",
         "cordova-plugin-badge": "^0.8.8",
         "cordova-plugin-ble-central": "^1.2.5",
         "cordova-plugin-device": "^2.0.3",
@@ -36,13 +36,12 @@
             "cordova-plugin-ble-central": {
                 "BLUETOOTH_USAGE_DESCRIPTION": " "
             },
-            "cordova-plugin-background-mode": {},
             "cordova-custom-config": {},
             "cordova-plugin-background-fetch": {}
         },
         "platforms": [
-            "android",
-            "ios"
+            "ios",
+            "android"
         ]
     }
 }

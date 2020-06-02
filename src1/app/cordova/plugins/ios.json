@@ -13,9 +13,6 @@
     "cordova-plugin-background-fetch": {
       "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
     },
-    "cordova-plugin-background-mode": {
-      "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"
-    },
     "cordova-plugin-ble-central": {
       "BLUETOOTH_USAGE_DESCRIPTION": " ",
       "PACKAGE_NAME": "$(PRODUCT_BUNDLE_IDENTIFIER)"

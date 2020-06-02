@@ -158,8 +158,10 @@ class CdvBgFetchAh[M](
         val v2 = (MCBgFetchS.curTaskId set None)(v0)
         updatedSilent(v2, fx)
       })
-        .getOrElse( noChange )
-
+        .getOrElse {
+          println("nothing to do")
+          noChange
+        }
 
 
   }
