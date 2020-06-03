@@ -1,7 +1,8 @@
 package io.suggest.sc.ads
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import io.suggest.n2.edge.MEdgeFlagData
+import io.suggest.n2.edge.{MEdgeFlagData, MPredicates}
+import io.suggest.sc.ScConstants
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -54,5 +55,15 @@ case class MScAdInfo(
 {
 
   def canEdit = canEditOpt contains true
+
+  /** Это карточка 404? */
+  def isMad404: Boolean = {
+    matchInfos.exists { matchInfo =>
+      (matchInfo.predicates contains MPredicates.Receiver) &&
+      matchInfo.nodeMatchings.exists { nodeMatchInfo =>
+        nodeMatchInfo.nodeId.exists( ScConstants.Mad404.is404Node )
+      }
+    }
+  }
 
 }

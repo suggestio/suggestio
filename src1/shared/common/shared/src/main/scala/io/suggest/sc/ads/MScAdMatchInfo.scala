@@ -1,11 +1,10 @@
 package io.suggest.sc.ads
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.n2.edge.MPredicate
+import io.suggest.n2.edge.{MEdge, MPredicate}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.n2.edge.MEdge
 import io.suggest.n2.node.MNodeType
 
 /**

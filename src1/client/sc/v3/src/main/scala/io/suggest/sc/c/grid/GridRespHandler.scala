@@ -144,22 +144,28 @@ final class GridRespHandler(
         // В рамках текущей реализации, при пропатчивании выдачи, карточки заменяются (добавляются) только в начало.
         ads9 = onlyMatchingInfoOpt.fold( ads0 ++ newScAds ) { onlyMatchingInfo =>
           newScAds ++ ads0.filterNot { scAd =>
-            // Проверить данные карточки, чтобы решить, надо ли её удалять отсюда:
-            // - если карточка содержит критерии и подпадающие, и НЕподпадающие => смотрим по newScAdsById, удаляем если она там есть.
-            // - если карточка полностью подпадает под критерий отбора => удаляем
-            // - иначе - карточку оставляем в покое.
-            val scAdNodeMatches = scAd.main.info
-              .matchInfos
-              .flatMap(_.nodeMatchings)
+            scAd.main.info.isMad404 || {
+              // Проверить данные карточки, чтобы решить, надо ли её удалять отсюда:
+              // - если карточка содержит критерии и подпадающие, и НЕподпадающие => смотрим по newScAdsById, удаляем если она там есть.
+              // - если карточка полностью подпадает под критерий отбора => удаляем
+              // - иначе - карточку оставляем в покое.
+              val scAdNodeMatches = scAd.main.info
+                .matchInfos
+                .flatMap(_.nodeMatchings)
 
-            val __isMatches = GridAh._isMatches(onlyMatchingInfo, _)
+              val __isMatches = GridAh._isMatches( onlyMatchingInfo, _ )
 
-            // true значит - Карточка полностью удалябельна при обновлении (размещена только в ble-маячке)
-            scAdNodeMatches.forall(__isMatches) || {
-              scAdNodeMatches.exists(__isMatches) &&
-                // Карточка размещена и в маячке, и как-то ещё, поэтому удалять её можно только
-                // с целью дедубликации между старыми карточками и добавляемым набором выдачи.
-                scAd.nodeId.fold(false)( newScAdsById.contains )
+              // true значит - Карточка полностью удалябельна при обновлении (размещена только в ble-маячке)
+              val isDrop = scAdNodeMatches.nonEmpty && {
+                scAdNodeMatches.forall(__isMatches) || {
+                  scAdNodeMatches.exists(__isMatches) &&
+                    // Карточка размещена и в маячке, и как-то ещё, поэтому удалять её можно только
+                    // с целью дедубликации между старыми карточками и добавляемым набором выдачи.
+                    scAd.nodeId.fold(false)( newScAdsById.contains )
+                }
+              }
+              //println(s"RESP scAd#${scAd.id.orNull} nms[${scAdNodeMatches.size}]=$scAdNodeMatches drop?$isDrop")
+              isDrop
             }
           }
         }
@@ -217,8 +223,13 @@ final class GridRespHandler(
 
     // Если patch-запрос выдачи, пришли новые карточки и всё такое, то можно отрендерить системный нотификейшен.
     if (
+      // есть match-плитки.
       onlyMatchingInfoOpt.nonEmpty &&
-      newScAds.nonEmpty &&
+      // Есть хотя бы одна не-404 карточка?
+      newScAds.exists { scAdData =>
+        !scAdData.main.info.isMad404
+      } &&
+      // Системно разрешён рендер нотификации в текущем состоянии выдачи.
       isDoOsNotify.value
     ) {
       // Нужны ОС-нотификейшены по возможным новым карточкам. Вычислить, какие новые карточки ещё не показывались в уведомлениях.

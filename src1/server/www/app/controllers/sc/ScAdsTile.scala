@@ -236,7 +236,7 @@ trait ScAdsTile
       }
     }
 
-    lazy val nodeId404 = nodesUtil.noAdsFound404NodeId( ctx.messages.lang )
+    lazy val nodeId404 = nodesUtil.noAdsFound404RcvrId( ctx.messages.lang )
 
     /** Рекламные карточки, когда не найдено рекламных карточек. */
     def mads404Fut: Future[Seq[MNode]] = {
@@ -291,7 +291,16 @@ trait ScAdsTile
             LOGGER.trace(s"$logPrefix mads[${mads.length}] offset=$offset => 404")
             for (mads404 <- mads404Fut) yield {
               for (mad404 <- mads404) yield {
-                MAdInfo(mad404)
+                MAdInfo(
+                  mnode = mad404,
+                  // Сообщить на клиент, что это 404-карточка, чтобы клиент НЕ уведомлял юзера о какой-либо полезной инфе.
+                  matchInfos = MScAdMatchInfo(
+                    predicates = Set( MPredicates.Receiver ),
+                    nodeMatchings = MScNodeMatchInfo(
+                      nodeId = Some( nodeId404 ),
+                    ) :: Nil
+                  ) :: Nil,
+                )
               }
             }
           } else {

@@ -6,7 +6,7 @@ import io.suggest.sc.m.{DaemonSleepAlarm, ScDaemonDozed, ScDaemonFallSleepTimerS
 import io.suggest.sc.m.in.MScDaemon
 import diode.Implicits._
 import diode.data.Pot
-import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts, MBeaconerS}
+import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.daemon.{DaemonBgModeSet, DaemonSleepTimerFinish, DaemonSleepTimerSet, MDaemonSleepTimer, MDaemonState, MDaemonStates}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
@@ -37,7 +37,6 @@ object ScDaemonAh {
 /** Контроллер для экшенов демона. */
 class ScDaemonAh[M](
                      modelRW      : ModelRW[M, MScDaemon],
-                     beaconerRO   : ModelRO[MBeaconerS],
                      platfromRO   : ModelRO[MPlatformS],
                      dispatcher   : Dispatcher,
                    )

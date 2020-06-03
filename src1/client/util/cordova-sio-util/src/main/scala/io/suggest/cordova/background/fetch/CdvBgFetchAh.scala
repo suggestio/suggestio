@@ -159,7 +159,6 @@ class CdvBgFetchAh[M](
         updatedSilent(v2, fx)
       })
         .getOrElse {
-          println("nothing to do")
           noChange
         }
 

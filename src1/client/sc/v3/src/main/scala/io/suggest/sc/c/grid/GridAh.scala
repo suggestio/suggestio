@@ -327,40 +327,52 @@ class GridAh[M](
 
               lazy val ads2 = v0.core.ads.map { _.filterNot { scAdData =>
                 // true для тех карточек, которые надо удалить.
-                scAdData.main.info.matchInfos.forall {
-                  _.nodeMatchings
-                    .exists(_.ntype contains bleNtype)
+                val matchInfos = scAdData.main.info.matchInfos
+                val isDrop = matchInfos.nonEmpty && matchInfos.forall { matchInfo =>
+                  matchInfo
+                    .nodeMatchings
+                    .exists { nodeMatchInfo =>
+                      nodeMatchInfo.ntype contains[MNodeType] bleNtype
+                    }
                 }
+                //println(s"QS scAd#${scAdData.id.orNull} vs m[$matchInfos] => drop?$isDrop")
+                isDrop
               }}
 
               // ads2.exists(_.isEmpty): Даже если карточек вообще не осталось, то надо отрендерить 404-карточку. Запросить с сервера.
-              if (bcns0.nonEmpty || ads2.exists(_.isEmpty)) {
-                // Есть видимые маячки. И наверное надо cделать запрос на сервер.
-                // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
-                // TODO qs4ble: тут надо явно запретить возвращать 404-карточки
-                val qs4Ble= ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value )
-                Right( Some(qs4Ble) )
-              } else {
-                // Нет маячков в qs, но видимо ранее они были.
-                // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
-                val jdRuntime2 = GridAh.mkJdRuntime(ads2, v0.core)
-                val gbRes2 = MGridBuildResult.nextRender
-                  .composeLens( MGridRenderInfo.animate )
-                  .set( false )(
-                    GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
-                  )
-                val v2 = MGridS.core.modify(
-                  _.copy(
-                    jdRuntime = jdRuntime2,
-                    ads       = ads2,
-                    gridBuild = gbRes2,
-                  )
-                )(v0)
-                // Эффект скролла: нужно подправить плитку, чтобы не было рывка.
-                val fxOpt = GridAh.repairScrollPosFx( v0, v2 )
-                val res = ah.updatedMaybeEffect(v2, fxOpt)
-                Left( res )
-              }
+              Either.cond(
+                test = bcns0.nonEmpty || ads2.exists(_.isEmpty),
+
+                right = {
+                  // Есть видимые маячки. И наверное надо cделать запрос на сервер.
+                  // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
+                  // TODO qs4ble: тут надо явно запретить возвращать 404-карточки
+                  val qs4Ble = ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value )
+                  //println(s"QS only Beaconed ask, qs = $qs4Ble")
+                  Some(qs4Ble)
+                },
+
+                left = {
+                  // Нет маячков в qs, но видимо ранее они были.
+                  // Это значит, нужно просто удалить Bluetooth-only карточки (если они есть), без запросов на сервер.
+                  val jdRuntime2 = GridAh.mkJdRuntime(ads2, v0.core)
+                  val gbRes2 = MGridBuildResult.nextRender
+                    .composeLens( MGridRenderInfo.animate )
+                    .set( false )(
+                      GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
+                    )
+                  val v2 = MGridS.core.modify(
+                    _.copy(
+                      jdRuntime = jdRuntime2,
+                      ads       = ads2,
+                      gridBuild = gbRes2,
+                    )
+                  )(v0)
+                  // Эффект скролла: нужно подправить плитку, чтобы не было рывка.
+                  val fxOpt = GridAh.repairScrollPosFx( v0, v2 )
+                  ah.updatedMaybeEffect(v2, fxOpt)
+                }
+              )
 
             case other =>
               throw new UnsupportedOperationException( other.toString )

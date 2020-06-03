@@ -17,6 +17,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.sc.ScConstants
 import io.suggest.url.MHostInfo
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
@@ -410,19 +411,9 @@ final class NodesUtil @Inject() (
   }
 
 
-  /** Префикс id узла, содержащего 404-карточки. */
-  def NO_ADS_FOUND_404_NODE_ID_PREFIX = ".___404___."
   /** Сборка id узла, содержащего 404-карточки для указанного языка. */
-  def noAdsFound404NodeId(lang: Lang): String =
-    NO_ADS_FOUND_404_NODE_ID_PREFIX + lang.code
-
-  /** Проверить, является ли id данного узла служебным, относящимся к 404-узлу.
-    *
-    * @param nodeId id узла.
-    * @return true, если данный id узла относится к 404-узлу.
-    */
-  def is404Node(nodeId: String): Boolean =
-    nodeId startsWith NO_ADS_FOUND_404_NODE_ID_PREFIX
+  def noAdsFound404RcvrId(lang: Lang): String =
+    ScConstants.Mad404.NO_ADS_FOUND_404_RCVR_ID_PREFIX + lang.code
 
   /** Макс. кол-во карточек 404 за порцию плитки в выдаче. */
   def MAX_404_ADS_ONCE = 10
@@ -437,7 +428,7 @@ final class NodesUtil @Inject() (
 
     val langs = current.injector.instanceOf[Langs]
     val nodesFut = Future.traverse( langs.availables ) { lang =>
-      val nodeId = noAdsFound404NodeId( lang )
+      val nodeId = noAdsFound404RcvrId( lang )
       for {
         mnodeOpt <- mNodes.getByIdCache( nodeId )
         resNode <- FutureUtil.opt2future( mnodeOpt ) {

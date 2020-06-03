@@ -221,4 +221,20 @@ object ScConstants {
 
   }
 
+
+  object Mad404 {
+
+    /** Префикс id узла, содержащего 404-карточки. */
+    def NO_ADS_FOUND_404_RCVR_ID_PREFIX = ".___404___."
+
+    /** Проверить, является ли id данного узла служебным, относящимся к 404-узлу.
+      *
+      * @param nodeId id узла.
+      * @return true, если данный id узла относится к 404-узлу.
+      */
+    def is404Node(nodeId: String): Boolean =
+      nodeId startsWith NO_ADS_FOUND_404_RCVR_ID_PREFIX
+
+  }
+
 }

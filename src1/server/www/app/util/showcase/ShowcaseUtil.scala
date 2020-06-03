@@ -246,7 +246,7 @@ class ShowcaseUtil @Inject() (
 
         // Запрещать переход в самого себя:
         if !(qs.search.rcvrId containsStr producerId ) &&
-          !nodesUtil.is404Node( producerId )   // Запрещать переход на 404-узел и 404-карточку.
+          !ScConstants.Mad404.is404Node( producerId )   // Запрещать переход на 404-узел и 404-карточку.
 
         producer <- {
           val prodFut = mNodes.getByIdCache(producerId)

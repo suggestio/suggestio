@@ -11,6 +11,7 @@
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
     <allow-navigation href="http://192.168.42.17:9000/*" />
+    <allow-navigation href="http://outself:9000/*" />
     <allow-navigation href="https://*.cdnvideo.ru/*" />
     <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="https://*.openstreetmap.org/*" />

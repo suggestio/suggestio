@@ -501,7 +501,7 @@ class BleBeaconerAh[M](
 
     // Управление активностью BleBeaconer: вкл/выкл.
     case m: BtOnOff =>
-      println(m)
+      //println(m)
       val v0 = value
       def isCanBeEnabled = m.opts.hardOff || !v0.opts.hardOff
       // Включён или включается.

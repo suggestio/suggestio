@@ -493,7 +493,6 @@ class Sc3Circuit(
 
   private lazy val scDaemonAh = new ScDaemonAh(
     modelRW       = daemonRW,
-    beaconerRO    = beaconerRW,
     platfromRO    = platformRW,
     dispatcher    = this,
   )
