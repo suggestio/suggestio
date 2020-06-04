@@ -58,8 +58,9 @@ object MSc3Conf {
 
   def timestampSec() = System.currentTimeMillis() / 1000
 
-  val rcvrsMapUrl = GenLens[MSc3Conf](_.rcvrsMapUrl)
-  val clientUpdatedAt = GenLens[MSc3Conf](_.clientUpdatedAt)
+  def debug = GenLens[MSc3Conf]( _.debug )
+  def rcvrsMapUrl = GenLens[MSc3Conf](_.rcvrsMapUrl)
+  def clientUpdatedAt = GenLens[MSc3Conf](_.clientUpdatedAt)
 
 }
 

@@ -1,6 +1,5 @@
 package io.suggest.dev
 
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{MOrientations2d, MSize2di}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
@@ -53,31 +52,46 @@ object JsScreenUtil extends Log {
     */
   def getScreenUnsafeAreas(mscreen: MScreen): MTlbr = {
     try {
-      val ua = dom.window.navigator.userAgent
+      val uaOpt = WindowVm()
+        .navigator
+        .flatMap(_.userAgent)
+
       def orientation = MOrientations2d.forSize2d( mscreen.wh )
 
       // Const: Отступ сверху на 12px
       def TOP_12PX = MTlbr( topO = Some(12) )
 
-      if ( ua contains "iPhone" ) {
+      if ( uaOpt.exists(_ contains "iPhone") ) {
+        val screenWhs = mscreen.wh.width ::
+          mscreen.wh.height ::
+          Nil
+
         // Это айфон. Надо решить, сколько отсутупать.
-        val isIphone10Wh = {
-          val wh = mscreen.wh.width ::
-            mscreen.wh.height ::
-            Nil
-
-          (wh contains 812) &&
-            (wh contains 375) &&
-            (mscreen.pxRatio ==* MPxRatios.DPR3)
-        }
-
-        if (isIphone10Wh) {
+        if (
+          // iPhone 10
+          (screenWhs contains 812) &&
+          (screenWhs contains 375) &&
+          (mscreen.pxRatio ==* MPxRatios.DPR3)
+        ) {
           // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
           MTlbr(
-            topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( 28 ),
-            leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( 36 )
+            topO  = Option.when(orientation ==* MOrientations2d.Vertical)( 28 ),
+            leftO = Option.when(orientation ==* MOrientations2d.Horizontal)( 36 )
             // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
           )
+
+        } else if (
+          // iPhone 11
+          (screenWhs contains 896) &&
+          (screenWhs contains 414) &&
+          // Почему-то window.devicePixelRatio в симуляторе выдаёт 2, но в прошлой модели было 3.
+          (mscreen.pxRatio.value >= MPxRatios.XHDPI.value)
+        ) {
+          MTlbr(
+            topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
+            leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
+          )
+
         } else {
           // На остальных айфонах надо делать 12px сверху в вертикальной ориентации.
           if (orientation ==* MOrientations2d.Vertical)
@@ -86,7 +100,7 @@ object JsScreenUtil extends Log {
             MTlbr.empty
         }
 
-      } else if ( ua contains "iPad" ) {
+      } else if ( uaOpt.exists(_ contains "iPad") ) {
         // 12px сверху в любой ориентации
         TOP_12PX
 

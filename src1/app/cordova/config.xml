@@ -72,6 +72,7 @@
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
         <preference name="BackupWebStorage" value="none" />
+        <preference name="DisallowOverscroll" value="true" />
         <edit-config file="*-Info.plist" mode="merge" target="NSLocationWhenInUseUsageDescription">
             <string>location access to find things nearby</string>
         </edit-config>
@@ -132,6 +133,7 @@
             </array>
         </config-file>
     </platform>
+    <preference name="BackgroundColor" value="0xff2d3d4e"/>
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
     <plugin name="cordova-plugin-geolocation" spec="~4.0.1" />
     <plugin name="cordova-plugin-splashscreen" spec="~5.0.2" />

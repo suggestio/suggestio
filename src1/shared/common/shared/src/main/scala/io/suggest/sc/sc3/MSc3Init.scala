@@ -1,6 +1,7 @@
 package io.suggest.sc.sc3
 
 import io.suggest.maps.MMapProps
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -14,8 +15,8 @@ import play.api.libs.json._
 object MSc3Init {
 
   object Fields {
-    val MAP_PROPS_FN                = "m"
-    val SC_CONF_FN                  = "r"
+    def MAP_PROPS_FN                = "m"
+    def SC_CONF_FN                  = "r"
   }
 
   /** Поддержка play-json. */
@@ -26,6 +27,8 @@ object MSc3Init {
       (__ \ F.SC_CONF_FN).format[MSc3Conf]
     )(apply, unlift(unapply))
   }
+
+  def conf = GenLens[MSc3Init]( _.conf )
 
 }
 

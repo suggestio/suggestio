@@ -4,7 +4,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
 import io.suggest.kv.MKvStorage
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.sc3.MSc3Init
+import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.log.Log
 import io.suggest.spa.StateInp
 import play.api.libs.json.Json
@@ -106,12 +106,15 @@ object Sc3ConfUtil extends Log {
   def getFreshestInit(): Option[MSc3Init] = {
     // Конфиг может быть сохранён в постоянной хранилке, может быть ещё конфиг в DOM.
     // В любом случае надо отработать оба варианта.
+    lazy val domInitOpt = getInitFromDom()
+
     val inits = (
-      getSavedInit() ::
-      getInitFromDom() ::
-      Nil
+      getSavedInit() #::
+      domInitOpt #::
+      LazyList.empty
     )
       .flatten
+
     if (inits.isEmpty) {
       None
 
@@ -123,12 +126,33 @@ object Sc3ConfUtil extends Log {
       // Надо выбрать наиболее свежий из имеющихся. Для этого надо сравнить conf.created/updated-значения.
       // Избегаем прямого сравнивания server и client-таймштампов, однако учитываем, что порядок timestamp'ов одинаковый.
       // Приоритет имеет инстанс с бОльшей serverCreated-датой, а при равных created - брать бОльший updated.
-      val resultInit = inits.maxBy { init =>
+      var resultInit = inits.maxBy { init =>
         val c = init.conf
         // Защищаемся от возможных sjs opaque-type косяков через явный double:
         c.serverCreatedAt.toDouble * 31 + c.clientUpdatedAt.fold(0d)(_.toDouble)
       }
-      Some(resultInit)
+
+      // debug (и возможно ещё какие-то conf-поля) надо пробрасывать из dom-инстанса.
+      (for {
+        domInit <- domInitOpt.iterator
+        resultConf = resultInit.conf
+        domInitConf = domInit.conf
+        // Указанные поля conf надо скопипастить из index.html независимо от значений в сохранённом конфиге.
+        copyPasteLens <- MSc3Conf.debug :: Nil
+        currVal = copyPasteLens.get( resultConf )
+        domVal = copyPasteLens.get( domInitConf )
+        if domVal !=* currVal
+      } yield {
+        copyPasteLens.set( domVal )
+      })
+        .reduceOption( _ andThen _ )
+        .foreach { updF =>
+          val v2 = MSc3Init.conf
+            .modify(updF)( resultInit )
+          resultInit = v2
+        }
+
+      Some( resultInit )
     }
   }
 
