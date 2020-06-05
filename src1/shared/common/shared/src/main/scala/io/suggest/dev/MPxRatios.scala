@@ -54,7 +54,7 @@ case object MPxRatios extends ShortEnum[MPxRatio] {
   def default: MPxRatio = XHDPI
 
   // Запретить авто.использование 1.0 и 1.5. Удалить полностью пока нельзя из-за зависимостей в коде.
-  val valuesDetectable = XHDPI :: DPR3 :: Nil
+  def valuesDetectable = XHDPI :: DPR3 :: Nil
 
 
   /**
@@ -63,11 +63,12 @@ case object MPxRatios extends ShortEnum[MPxRatio] {
    * @return DevPixelRatio.
    */
   def forRatio(ratio: Float): MPxRatio = {
-    valuesDetectable
+    val vds = valuesDetectable
+    vds
       .find { v =>
         (v.pixelRatio >= ratio) || (v.pixelRatio * 1.1 > ratio)
       }
-      .getOrElse(valuesDetectable.last)
+      .getOrElse( vds.last )
   }
   def forRatio(ratio: Double): MPxRatio = {
     forRatio( ratio.toFloat )

@@ -27,10 +27,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 import io.suggest.sc.u.Sc3ConfUtil
-import org.scalajs.dom
 import org.scalajs.dom.experimental.permissions.PermissionName
-
-import scala.scalajs.js
 
 /**
   * Suggest.io

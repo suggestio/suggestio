@@ -23,7 +23,7 @@ import japgolly.scalajs.react.React
   * Description: DI-модуль линковки самого верхнего уровня sc3.
   * Все аргументы-зависимости объявлены и линкуются внутри тела модуля.
   */
-class Sc3Module {
+object Sc3Module {
 
   import io.suggest.jd.render.JdRenderModule._
   import io.suggest.ReactCommonModule._

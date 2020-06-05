@@ -56,8 +56,8 @@ object MScreen {
     pxRatio = MPxRatios.default
   )
 
-  val wh        = GenLens[MScreen](_.wh)
-  val pxRatio   = GenLens[MScreen](_.pxRatio)
+  def wh        = GenLens[MScreen](_.wh)
+  def pxRatio   = GenLens[MScreen](_.pxRatio)
 
 }
 

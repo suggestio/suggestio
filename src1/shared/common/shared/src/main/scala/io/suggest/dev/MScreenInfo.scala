@@ -28,8 +28,8 @@ object MScreenInfo {
 
   @inline implicit def univEq: UnivEq[MScreenInfo] = UnivEq.derive
 
-  val screen = GenLens[MScreenInfo](_.screen)
-  val unsafeOffsets = GenLens[MScreenInfo](_.unsafeOffsets)
+  def screen = GenLens[MScreenInfo](_.screen)
+  def unsafeOffsets = GenLens[MScreenInfo](_.unsafeOffsets)
 
 }
 

@@ -47,11 +47,6 @@ case class MTlbr(
 
   import MTlbr._offsetOr0
 
-  def withTopO(topO: Option[Int]) = copy(topO = topO)
-  def withLeftO(leftO: Option[Int]) = copy(leftO = leftO)
-  def withRightO(rightO: Option[Int]) = copy(rightO = rightO)
-  def withBottomO(bottomO: Option[Int]) = copy(bottomO = bottomO)
-
   // Быстрый доступ к фактическим значенияем сдвигов (без Option).
   def top = _offsetOr0(topO)
   def left = _offsetOr0(leftO)

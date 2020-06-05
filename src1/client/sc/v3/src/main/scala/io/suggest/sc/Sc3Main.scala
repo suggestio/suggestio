@@ -147,7 +147,7 @@ object Sc3Main extends Log {
         }
     }
 
-    val modules = new Sc3Module
+    val modules = Sc3Module
 
     // Отрендерить компонент spa-роутера в целевой контейнер.
     for {
@@ -188,7 +188,7 @@ object Sc3Main extends Log {
       } {
         Try {
           dom.window.addEventListener4s( evtName ) { _: Event =>
-            modules.sc3SpaRouter.sc3Circuit.dispatch( ScreenReset )
+            modules.sc3Circuit.dispatch( ScreenReset )
           }
         }
           .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, evtName )
@@ -199,7 +199,7 @@ object Sc3Main extends Log {
     // Подписаться на обновление заголовка и обновлять заголовок.
     // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
     Try {
-      modules.sc3SpaRouter.sc3Circuit.subscribe( modules.sc3SpaRouter.sc3Circuit.titlePartsRO ) { titlePartsRO =>
+      modules.sc3Circuit.subscribe( modules.sc3Circuit.titlePartsRO ) { titlePartsRO =>
         dom.document.title = {
           (titlePartsRO.value.iterator ++ Iterator.single( MsgCodes.`Suggest.io` ))
             .mkString( " | " )

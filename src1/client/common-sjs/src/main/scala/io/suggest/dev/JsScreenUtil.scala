@@ -6,7 +6,6 @@ import io.suggest.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vsz.ViewportSz
 import japgolly.univeq._
-import org.scalajs.dom
 
 /**
   * Suggest.io

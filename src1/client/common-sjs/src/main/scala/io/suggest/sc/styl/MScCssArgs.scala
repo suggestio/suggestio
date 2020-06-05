@@ -22,8 +22,8 @@ import io.suggest.ueq.UnivEqUtil._
 object MScCssArgs {
 
   /** Поддержка FastEq для инстансов [[MScCssArgs]]. */
-  implicit object MScCssArgsFastEq extends FastEq[IScCssArgs] {
-    override def eqv(a: IScCssArgs, b: IScCssArgs): Boolean = {
+  implicit object MScCssArgsFastEq extends FastEq[MScCssArgs] {
+    override def eqv(a: MScCssArgs, b: MScCssArgs): Boolean = {
       // Screen сравнивать референсно или по значению. TODO Актуально ли ещё полное сравнение? Может сравнивания в контроллере ScreenAh достаточно?
       // customColors -- референсно внутри Option, т.к. внешний Option пересобирается каждый раз.
       // Остальное -- чисто референсно.
@@ -37,23 +37,29 @@ object MScCssArgs {
   def from(indexResp: Pot[MSc3IndexResp], screenInfo: MScreenInfo): MScCssArgs = {
     val indexRespOpt = indexResp.toOption
     val wcOpt = indexRespOpt.flatMap(_.welcome)
-    def __wcWhOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
+
+    def __wcWhOpt(f: MWelcomeInfo => Option[IMediaInfo]) = {
+      wcOpt
+        .flatMap(f)
+        .flatMap(_.whPx)
+    }
 
     MScCssArgs(
       customColorsOpt = indexRespOpt.map(_.colors),
       screenInfo      = screenInfo,
       wcBgWh          = __wcWhOpt( _.bgImage ),
-      wcFgWh          = __wcWhOpt( _.fgImage )
+      wcFgWh          = __wcWhOpt( _.fgImage ),
     )
   }
+
+  @inline implicit def univEq: UnivEq[MScCssArgs] = UnivEq.derive
 
 }
 
 
-case class MScCssArgs(
-                       override val customColorsOpt   : Option[MColors],
-                       override val screenInfo        : MScreenInfo,
-                       override val wcBgWh            : Option[MSize2di],
-                       override val wcFgWh            : Option[MSize2di]
-                     )
-  extends IScCssArgs
+final case class MScCssArgs(
+                             customColorsOpt   : Option[MColors],
+                             screenInfo        : MScreenInfo,
+                             wcBgWh            : Option[MSize2di],
+                             wcFgWh            : Option[MSize2di],
+                           )
