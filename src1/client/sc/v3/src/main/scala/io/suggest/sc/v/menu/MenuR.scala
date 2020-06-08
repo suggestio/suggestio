@@ -3,7 +3,7 @@ package io.suggest.sc.v.menu
 import diode.react.ModelProxy
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.menu.MMenuS
-import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sc.v.ScCssStatic
 import io.suggest.sc.v.hdr.LeftR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

@@ -2,8 +2,8 @@ package io.suggest.css
 
 import enumeratum.values.ValueEnumEntry
 import io.suggest.common.html.HtmlConstants
-import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
+import io.suggest.css.ScalaCssDefaults._
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.ValueT.TypedAttrBase
 import scalacss.internal.mutable.StyleSheet
@@ -76,8 +76,8 @@ object ScalaCssUtil {
 /** Аддон для впихивания стилей для  */
 trait SafeAreaInsetStyles extends StyleSheet.Inline {
 
-  import dsl._
   import ScalaCssUtil.Implicits._
+  import dsl._
 
 
   object IosSafeAreaInset {

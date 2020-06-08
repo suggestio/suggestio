@@ -1,9 +1,9 @@
 package io.suggest
 
 import scalacss.defaults.Exports
-import scalacss.internal.{Compose, Renderer, StringRenderer}
 import scalacss.internal.mutable.Register.{ErrorHandler, MacroName, NameGen}
 import scalacss.internal.mutable.Settings
+import scalacss.internal.{Compose, Renderer, StringRenderer}
 
 /**
   * Suggest.io

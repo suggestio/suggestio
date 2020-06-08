@@ -8,7 +8,6 @@ import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.sc3.MSc3Init
-import io.suggest.sc.styl.MScCssArgs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens

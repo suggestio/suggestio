@@ -1,7 +1,7 @@
 package io.suggest.css
 
 import diode.react.ModelProxy
-import io.suggest.sc.styl.ScScalaCssDefaults._
+import io.suggest.css.ScalaCssDefaults._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._

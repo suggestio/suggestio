@@ -8,7 +8,7 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick}
-import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sc.v.ScCssStatic
 import io.suggest.sc.v.hdr.NodeNameR
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.ueq.UnivEqUtil._

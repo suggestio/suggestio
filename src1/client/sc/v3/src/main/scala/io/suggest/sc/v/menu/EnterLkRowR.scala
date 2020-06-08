@@ -5,12 +5,12 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.routes.{IJsRouter, PlayRoute}
-import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.v.ScCssStatic
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._

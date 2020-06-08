@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.{Css, CssR}
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search._
-import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sc.v.ScCssStatic
 import io.suggest.sc.v.hdr.RightR
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}

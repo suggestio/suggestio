@@ -16,7 +16,9 @@ libraryDependencies ++= Seq(
   // В будущем можно будет избавиться от них и удалить jquery из проекта.
   "be.doeraene"         %%% "scalajs-jquery"      % Common.sjsJqueryVsn,
   //"com.lihaoyi"         %%% "autowire"            % "0.2.6",
-  
+
+  "com.github.japgolly.scalacss" %%% "core"          % Common.Vsn.SCALACSS,
+
   // Диод нужен, т.к. он постепенно появится во всех js-частях системы.
   // Здесь common-утиль для diode.
   // В выдаче оно пока не задействовано, но это и не важно: будет пострипано.

@@ -1,7 +1,6 @@
 package io.suggest.css
 
 import io.suggest.common.html.HtmlConstants._
-import scalacss.internal.Literal
 
 /**
   * Suggest.io
@@ -540,7 +539,7 @@ object Css {
 
     object Origin {
 
-      def TOP_LEFT = Literal.top + SPACE + Literal.left
+      def TOP_LEFT = "top left"
 
     }
 

@@ -1,4 +1,4 @@
-package io.suggest.sc.styl
+package io.suggest.sc.v
 
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -7,7 +7,6 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.font.MFonts
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
-import japgolly.univeq._
 
 import scala.language.postfixOps
 

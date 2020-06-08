@@ -5,7 +5,7 @@ import diode.data.Pot
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MScSearch
-import io.suggest.sc.styl.ScCss
+import io.suggest.sc.v.ScCss
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

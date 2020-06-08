@@ -4,7 +4,6 @@ import diode.FastEq
 import diode.react.ModelProxy
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -12,6 +11,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.sc.v.ScCssStatic
 import scalacss.ScalaCssReact._
 
 /**

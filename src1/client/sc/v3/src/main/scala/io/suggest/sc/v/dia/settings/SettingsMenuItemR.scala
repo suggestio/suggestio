@@ -6,7 +6,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{MScReactCtx, MScRoot, SettingsDiaOpen}
-import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sc.v.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._

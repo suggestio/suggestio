@@ -2,7 +2,6 @@ package io.suggest.sc
 
 import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
 
-import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 /**

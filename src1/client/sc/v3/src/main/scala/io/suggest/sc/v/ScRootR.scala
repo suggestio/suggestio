@@ -16,7 +16,6 @@ import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MSearchPanelS
-import io.suggest.sc.styl.{ScCss, ScCssStatic}
 import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR

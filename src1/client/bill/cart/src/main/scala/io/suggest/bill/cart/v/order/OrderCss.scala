@@ -1,7 +1,6 @@
 package io.suggest.bill.cart.v.order
 
 import io.suggest.css.ScalaCssDefaults._
-import scalacss.internal.mutable.StyleSheet
 
 /**
   * Suggest.io

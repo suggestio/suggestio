@@ -4,10 +4,10 @@ import diode.FastEq
 import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.n2.node.MNodeTypes
-import io.suggest.sc.styl.ScScalaCssDefaults._
+import io.suggest.css.ScalaCssDefaults._
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
-import io.suggest.sc.styl.ScCss
+import io.suggest.sc.v.ScCss
 import japgolly.univeq.UnivEq
 import scalacss.internal.mutable.StyleSheet
 
@@ -21,7 +21,7 @@ import scalacss.internal.mutable.StyleSheet
   */
 object SearchCss {
 
-  val NODE_ROW_HEIGHT_PX = 27
+  def NODE_ROW_HEIGHT_PX = 27
 
   @inline implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
 

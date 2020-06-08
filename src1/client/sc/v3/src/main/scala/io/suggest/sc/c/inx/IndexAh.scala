@@ -16,7 +16,6 @@ import io.suggest.sc.m.grid.{GridBlockClick, GridLoadAds}
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3._
-import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
@@ -26,6 +25,7 @@ import io.suggest.sc.c.search.SearchAh
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.u.ScQsUtil
+import io.suggest.sc.v.ScCss
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
 import scalaz.NonEmptyList

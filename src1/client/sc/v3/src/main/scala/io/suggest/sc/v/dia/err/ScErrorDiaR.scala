@@ -10,7 +10,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.{CloseError, RetryError}
-import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sc.v.ScCssStatic
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._

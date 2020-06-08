@@ -1,4 +1,4 @@
-package io.suggest.sc.styl
+package io.suggest.sc.m
 
 import diode.FastEq
 import diode.data.Pot
@@ -8,8 +8,8 @@ import io.suggest.dev.MScreenInfo
 import io.suggest.media.IMediaInfo
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.spa.OptFastEq
-import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io

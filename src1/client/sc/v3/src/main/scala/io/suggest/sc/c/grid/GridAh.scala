@@ -15,7 +15,6 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.grid._
 import io.suggest.sc.sc3._
-import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.geom.d2.IWidth
@@ -24,6 +23,7 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.log.Log
+import io.suggest.sc.v.ScCss
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._

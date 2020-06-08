@@ -4,7 +4,7 @@ import com.materialui.{MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors,
 import io.suggest.css.Css
 import io.suggest.git.SioGitUtil
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.styl.ScCssStatic
+import io.suggest.sc.v.ScCssStatic
 import japgolly.scalajs.react.{React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 

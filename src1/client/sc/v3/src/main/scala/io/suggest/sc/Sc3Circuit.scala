@@ -47,7 +47,6 @@ import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.MSc3Conf
-import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.sc.v.search.SearchCss
@@ -63,6 +62,7 @@ import io.suggest.event.DomEvents
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
+import io.suggest.sc.v.ScCss
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.ueq.UnivEqUtil._
 

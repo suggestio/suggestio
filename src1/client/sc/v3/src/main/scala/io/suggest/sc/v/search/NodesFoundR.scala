@@ -10,7 +10,6 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo}
-import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,6 +18,7 @@ import japgolly.univeq._
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.sc.v.ScCssStatic
 
 import scala.scalajs.js
 
