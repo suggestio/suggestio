@@ -429,9 +429,10 @@ class Sc3Circuit(
   )
 
   private val wzFirstDiaAh = new WzFirstDiaAh(
-    platformRO  = platformRW,
-    modelRW     = firstRunDiaRW,
-    dispatcher  = this,
+    platformRO    = platformRW,
+    screenInfoRO  = screenInfoRO,
+    modelRW       = firstRunDiaRW,
+    dispatcher    = this,
   )
 
   private val bootAh = new BootAh(

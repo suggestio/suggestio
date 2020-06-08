@@ -27,6 +27,11 @@ case class InitFirstRunWz( showHide: Boolean ) extends IDiaAction
 case class YesNoWz( yesNo: Boolean ) extends IDiaAction
 
 
+/** Выставлено значение для subscribe-функции. */
+case class Wz1SetUnSubscribeF(unSubscribeF: () => Unit ) extends IDiaAction
+
+case object Wz1RebuildCss extends IDiaAction
+
 /** Экшен результата реального запроса пермишшена у юзера.
   *
   * @param phase Фаза, в рамках которой был получен ответ.

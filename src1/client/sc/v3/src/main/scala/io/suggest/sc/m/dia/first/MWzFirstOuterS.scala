@@ -29,8 +29,8 @@ object MWzFirstOuterS {
 
   @inline implicit def univEq: UnivEq[MWzFirstOuterS] = UnivEq.derive
 
-  val view    = GenLens[MWzFirstOuterS](_.view)
-  val perms   = GenLens[MWzFirstOuterS](_.perms)
+  def view    = GenLens[MWzFirstOuterS](_.view)
+  def perms   = GenLens[MWzFirstOuterS](_.perms)
 
 }
 
@@ -39,9 +39,14 @@ object MWzFirstOuterS {
   *
   * @param view Контейнер данных для view'а.
   * @param perms Список текущих вопросов по пермишшенам.
-  * @param was Уже был этот диалог ранее или нет?
   */
 case class MWzFirstOuterS(
                            view       : Option[MWzFirstS]                       = None,
                            perms      : Map[MWzPhase, Pot[IPermissionState]]    = Map.empty,
-                         )
+                         ) {
+
+  def isVisible = view.isDefined
+
+  lazy val cssOpt = view.map(_.css)
+
+}

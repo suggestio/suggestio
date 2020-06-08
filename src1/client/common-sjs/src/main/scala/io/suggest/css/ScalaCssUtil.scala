@@ -21,6 +21,9 @@ object ScalaCssUtil {
     vee.value
 
 
+  @inline def maybeS( is: Boolean )(f: => StyleS): StyleS =
+    if (is) f else StyleS.empty
+
   object Implicits {
 
     implicit class ScssOptionExt[T](val opt: Option[T]) extends AnyVal {

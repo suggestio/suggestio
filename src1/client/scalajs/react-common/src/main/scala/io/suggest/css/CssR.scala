@@ -15,28 +15,23 @@ import scalacss.internal.mutable.StyleSheet
   */
 object CssR {
 
-  type Props = ModelProxy[_ <: StyleSheet.Base]
-
-  class Backend($: BackendScope[Props, Unit]) {
-    def render(props: Props): VdomElement = {
-      val p = props.value
-
-      <.styleTag(
-        // iOS 13 safari косячит с js на scala-2.13, неправильно отрабатывает sci.HashMap.
-        // Что-то из серии https://github.com/scala-js/scala-js/issues/2895
-        props.value
-          .render[String]
-      )
-    }
-  }
-
+  type Props = StyleSheet.Base
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .stateless
-    .renderBackend[Backend]
+    .render_P { stylSheet =>
+      <.styleTag(
+        // iOS 13 safari на iphone5 косячит с js на scala-2.13, неправильно отрабатывает sci.HashMap.
+        // Что-то из серии https://github.com/scala-js/scala-js/issues/2895
+        stylSheet.render[String]
+      )
+    }
     .build
 
-  def apply(cssProxy: Props) = component( cssProxy )
+  val componentProxed = component.cmapCtorProps[ModelProxy[_ <: StyleSheet.Base]]( _.value )
+
+  def apply(cssProxy: ModelProxy[_ <: StyleSheet.Base]) =
+    componentProxed( cssProxy )
 
 }

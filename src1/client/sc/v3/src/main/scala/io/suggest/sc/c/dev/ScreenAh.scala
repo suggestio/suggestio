@@ -1,7 +1,6 @@
 package io.suggest.sc.c.dev
 
 import diode._
-import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
 import io.suggest.jd.render.m.GridRebuild
 import io.suggest.sc.m.dev.MScScreenS
@@ -75,11 +74,13 @@ class ScreenAh[M](
 
       // Если гео.карта видна юзера, то пнуть её после обновления вёрстки.
       val root = rootRO.value
+
       for {
         lInstance <- root.index.search.geo.data.lmap
         if root.index.search.panel.opened
       } {
-        fx >> SearchAh.mapResizeFx( lInstance )
+        // TODO Возможно, это не нужно: без "fx =" вроде всё и так работало.
+        fx >>= SearchAh.mapResizeFx( lInstance )
       }
 
       updated(v2, fx)
@@ -90,19 +91,11 @@ class ScreenAh[M](
       val v0 = value
       val uo0 = v0.info.unsafeOffsets
 
-      val incDecF: Option[Int] => Option[Int] = if (uo0.isEmpty) {
-        // Нет исходного сдвига. Скорее всего, сдвиги на этом устройстве не актуальны, но увеличиваем сразу все поля.
+      val incDecF: Option[Int] => Option[Int] = {
         offOpt0: Option[Int] =>
-          val off2 = offOpt0.getOrElse(0) + m.incDecBy
-          OptionUtil.maybe( off2 > 0 )(off2)
-      } else {
-        // Обновить только ненулевые значения. Это основной вектор отладки.
-        offOpt0: Option[Int] =>
-          for {
-            off0 <- offOpt0
-            off1 = off0 + m.incDecBy
-            if off1 > 0
-          } yield off1
+          val off0 = offOpt0 getOrElse 0
+          val off1 = off0 + m.incDecBy
+          Option.when( off1 > 0 )( off1 )
       }
 
       val uo2 = uo0.copy(

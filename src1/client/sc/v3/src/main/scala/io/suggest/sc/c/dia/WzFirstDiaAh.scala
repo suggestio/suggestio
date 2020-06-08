@@ -5,14 +5,14 @@ import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.ble.beaconer.BtOnOff
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dev.MPlatformS
+import io.suggest.dev.{MPlatformS, MScreenInfo}
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
-import io.suggest.sc.m.GeoLocOnOff
+import io.suggest.sc.m.{GeoLocOnOff, MScRoot}
 import io.suggest.sc.m.dia.first._
 import io.suggest.sc.m.dia._
 import io.suggest.log.Log
@@ -26,7 +26,10 @@ import japgolly.univeq._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
+import scalaz.std.option._
 import io.suggest.sc.u.Sc3ConfUtil
+import io.suggest.sc.v.dia.first.WzFirstCss
+import monocle.Traversal
 import org.scalajs.dom.experimental.permissions.PermissionName
 
 /**
@@ -43,12 +46,21 @@ import org.scalajs.dom.experimental.permissions.PermissionName
   */
 class WzFirstDiaAh[M](
                        platformRO       : ModelRO[MPlatformS],
+                       screenInfoRO     : ModelR[MScRoot, MScreenInfo],
                        modelRW          : ModelRW[M, MWzFirstOuterS],
-                       dispatcher       : Dispatcher,
+                       dispatcher       : Circuit[MScRoot],
                      )
   extends ActionHandler( modelRW )
   with Log
 { ah =>
+
+  private def _unSubscribeFx = Effect.action {
+    val unSubscribeF = dispatcher.subscribe( screenInfoRO ) { _ =>
+      dispatcher.dispatch( Wz1RebuildCss )
+    }
+    Wz1SetUnSubscribeF( unSubscribeF )
+  }
+
 
   /** Внутренняя модель для спецификации пермишшена.
     *
@@ -287,7 +299,7 @@ class WzFirstDiaAh[M](
         v0.view.isEmpty &&
         WzFirstDiaAh.isNeedWizardFlow()
       ) {
-        // Акк для эффектов:
+        // Запускаемся.
         var fxsAcc: List[Effect] = Nil
         var permPotsAcc = List.empty[(MWzPhase, Pot[IPermissionState])]
 
@@ -307,31 +319,82 @@ class WzFirstDiaAh[M](
           permPotsAcc ::= phaseSpec.phase -> Pending()
         }
 
+        fxsAcc ::= _unSubscribeFx
+
         // Инициализировать состояние first-диалога.
         val first2 = MWzFirstOuterS(
           view = Some(MWzFirstS(
             visible = false,
             phase = MWzPhases.Starting,
             frame = MWzFrames.InProgress,
+            css   = WzFirstCss( screenInfoRO.value.unsafeOffsets ),
+            unSubscribe = Pot.empty.pending(),
           )),
           perms = permPotsAcc.toMap,
         )
+
         ah.updatedMaybeEffect( first2, fxsAcc.mergeEffects )
 
       } else if (!m.showHide && v0.view.isDefined) {
+        // Закрываемся.
         val v2 = v0.copy(
           view  = None,
           perms = Map.empty,    // TODO По идее, perms уже не содержат полезных данных.
         )
-        updated( v2 )
+
+        val fxOpt = for {
+          v <- v0.view
+          if v.unSubscribe.nonEmpty
+        } yield {
+          _unSubscribeFx
+        }
+
+        ah.updatedMaybeEffect( v2, fxOpt )
 
       } else {
         logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       }
 
+
+    case m: Wz1SetUnSubscribeF =>
+      val v0 = value
+      v0.view.fold {
+        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+        val fx = Effect.action {
+          m.unSubscribeF()
+          DoNothing
+        }
+        effectOnly( fx )
+
+      } { _ =>
+        val v2 = _wz1_outer_inner_TRAV
+          .composeLens( MWzFirstS.unSubscribe )
+          .modify( _.ready(m.unSubscribeF) )(v0)
+        updatedSilent( v2 )
+      }
+
+
+    case Wz1RebuildCss =>
+      val v0 = value
+
+      (for {
+        view <- v0.view
+        args2 = screenInfoRO.value.unsafeOffsets
+        if view.css.unsafeOffsets !=* args2
+      } yield {
+        val v2 = _wz1_outer_inner_TRAV
+          .composeLens( MWzFirstS.css )
+          .set( WzFirstCss( args2 ) )(v0)
+        updatedSilent( v2 )
+      })
+        .getOrElse( noChange )
+
   }
 
+
+  private def _wz1_outer_inner_TRAV = MWzFirstOuterS.view
+    .composeTraversal( Traversal.fromTraverse[Option, MWzFirstS] )
 
   /** Сборка эффекта реального запросить доступа в зависимости от фазы. */
   private def _requestAccessFx(phase: MWzPhase): Option[Effect] = {

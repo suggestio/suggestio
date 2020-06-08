@@ -75,8 +75,9 @@ object JsScreenUtil extends Log {
           // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
           MTlbr(
             topO  = Option.when(orientation ==* MOrientations2d.Vertical)( 28 ),
-            leftO = Option.when(orientation ==* MOrientations2d.Horizontal)( 36 )
+            leftO = Option.when(orientation ==* MOrientations2d.Horizontal)( 36 ),
             // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
+            bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
           )
 
         } else if (
@@ -89,6 +90,7 @@ object JsScreenUtil extends Log {
           MTlbr(
             topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
             leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
+            bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
           )
 
         } else {

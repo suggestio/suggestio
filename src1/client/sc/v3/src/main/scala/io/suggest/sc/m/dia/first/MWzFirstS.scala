@@ -1,6 +1,8 @@
 package io.suggest.sc.m.dia.first
 
 import diode.FastEq
+import diode.data.Pot
+import io.suggest.sc.v.dia.first.WzFirstCss
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -17,15 +19,18 @@ object MWzFirstS {
     override def eqv(a: MWzFirstS, b: MWzFirstS): Boolean = {
       (a.visible ==* b.visible) &&
       (a.phase ===* b.phase) &&
-      (a.frame ===* b.frame)
+      (a.frame ===* b.frame) &&
+      (a.css ===* b.css)
     }
   }
 
-  @inline implicit def univEq: UnivEq[MWzFirstS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWzFirstS] = UnivEq.force
 
   def visible   = GenLens[MWzFirstS](_.visible)
   def phase     = GenLens[MWzFirstS](_.phase)
   def frame     = GenLens[MWzFirstS](_.frame)
+  def css       = GenLens[MWzFirstS](_.css)
+  def unSubscribe = GenLens[MWzFirstS](_.unSubscribe)
 
 }
 
@@ -37,9 +42,12 @@ object MWzFirstS {
   *                Нужно для поддержки анимации.
   * @param phase Текущая тема вопроса.
   * @param frame тип фрейма: вопрос или сообщение об отказе.
+  * @param css доп.вёрстка, которая касается только wz-first.
   */
 case class MWzFirstS(
                       visible     : Boolean,
                       phase       : MWzPhase,
                       frame       : MWzFrame,
+                      css         : WzFirstCss,
+                      unSubscribe : Pot[() => Unit],
                    )

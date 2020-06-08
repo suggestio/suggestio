@@ -56,7 +56,7 @@ class ScRootR (
                 val hdrProgressR        : HdrProgressR,
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
-                val wzFirstR            : WzFirstR,
+                wzFirstR                : WzFirstR,
                 dlAppMenuItemR          : DlAppMenuItemR,
                 dlAppDiaR               : DlAppDiaR,
                 settingsMenuItemR       : SettingsMenuItemR,
@@ -95,7 +95,6 @@ class ScRootR (
                                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                     goBackC                   : ReactConnectProxy[goBackR.Props_t],
-                                    wzFirstC                  : ReactConnectProxy[wzFirstR.Props_t],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
                                   )
 
@@ -335,15 +334,11 @@ class ScRootR (
         }
       }
 
-      // Нормальный полный рендер выдачи:
-      val fullRender = <.div(
-        // Динамический css всей выдачи:
-        scCssComp,
-        muiThemeProviderComp,
-      )
-
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = <.div(
+
+        // Рендер ScCss.
+        scCssComp,
 
         // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
         mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
@@ -351,16 +346,17 @@ class ScRootR (
           mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
         )),
 
+        // Рендер основного тела выдачи.
         s.isRenderScC { isRenderSomeProxy =>
           // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
-          ReactCommonUtil.maybeEl( isRenderSomeProxy.value.value )( fullRender )
+          ReactCommonUtil.maybeEl( isRenderSomeProxy.value.value )( muiThemeProviderComp )
         },
 
         // Всплывающая плашка для смены узла: TODO Запихнуть внутрь theme-provider?
         s.indexSwitchAskC { indexSwitchAskR.apply },
 
         // Диалог первого запуска.
-        s.wzFirstC { wzFirstR.apply },
+        wzFirstR.component( mrootProxy ),
 
         // Диалог скачивания приложения.
         dlAppDiaR.component( mrootProxy ),
@@ -517,15 +513,6 @@ class ScRootR (
             mroot.index.state.prevNodeOpt
           }
         }( OptFastEq.Plain ),
-
-        wzFirstC = propsProxy.connect { mroot =>
-          for (firstV <- mroot.dialogs.first.view) yield {
-            wzFirstR.PropsVal(
-              first      = firstV,
-              fullScreen = mroot.dev.screen.info.isDialogWndFullScreen
-            )
-          }
-        }( OptFastEq.Wrapped( wzFirstR.WzFirstRPropsValFastEq ) ),
 
         commonReactCtxC = propsProxy.connect( _.internals.info.commonReactCtx )( FastEq.AnyRefEq ),
 
