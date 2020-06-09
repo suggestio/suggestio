@@ -10,7 +10,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._

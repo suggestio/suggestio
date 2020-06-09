@@ -230,7 +230,7 @@ class Sc3SpaRouter(
     // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
     scReactCtxContF().provide( mkScReactCtx )(
       sc3Circuit.wrap( identity(_) ) {
-        scRootR().apply
+        scRootR().component.apply
       }
     )
   }

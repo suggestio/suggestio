@@ -21,7 +21,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
-import io.suggest.sc.v.ScCss
+import io.suggest.sc.v.styl.ScCss
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._

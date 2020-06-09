@@ -2,7 +2,7 @@ package io.suggest.sc.m
 
 import diode.FastEq
 import io.suggest.sc.sc3.Sc3Pages
-import io.suggest.sc.v.ScCss
+import io.suggest.sc.v.styl.ScCss
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
 

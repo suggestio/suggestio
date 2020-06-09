@@ -9,8 +9,8 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.m.search._
-import io.suggest.sc.v.{ScCss, ScCssStatic}
 import io.suggest.sc.v.hdr.RightR
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
 import scalacss.ScalaCssReact._

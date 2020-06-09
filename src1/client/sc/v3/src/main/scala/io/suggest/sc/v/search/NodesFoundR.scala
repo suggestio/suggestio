@@ -18,7 +18,7 @@ import japgolly.univeq._
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 
 import scala.scalajs.js
 

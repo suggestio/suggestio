@@ -43,7 +43,8 @@ class NodesSearchContR {
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackendWithChildren[Backend]
     .build

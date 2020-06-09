@@ -24,9 +24,10 @@ import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs
 import io.suggest.sc.c.search.SearchAh
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
+import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.u.ScQsUtil
-import io.suggest.sc.v.ScCss
 import io.suggest.sc.v.search.SearchCss
+import io.suggest.sc.v.styl.ScCss
 import japgolly.univeq._
 import scalaz.NonEmptyList
 
@@ -174,7 +175,7 @@ object IndexAh {
 
     // Нужно отребилдить ScCss, но только если что-то реально изменилось.
     val scCssArgs2 = MScCssArgs.from(i1.resp, mscreen)
-    if (scCssArgs2 != i1.scCss.args) {
+    if (scCssArgs2 !=* i1.scCss.args) {
       // Изменились аргументы. Пора отребилдить ScCss.
       i1 = MScIndex.scCss
         .set( ScCss( scCssArgs2 ) )(i1)

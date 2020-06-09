@@ -8,7 +8,7 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._

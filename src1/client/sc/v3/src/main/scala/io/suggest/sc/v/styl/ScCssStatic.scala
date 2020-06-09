@@ -1,4 +1,4 @@
-package io.suggest.sc.v
+package io.suggest.sc.v.styl
 
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css

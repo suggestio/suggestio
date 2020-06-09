@@ -1,14 +1,14 @@
 package io.suggest.sc.v
 
-import com.materialui.{Mui, MuiColor, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy}
+import com.materialui.{MuiThemeProvider, MuiThemeProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.color.{MColorData, MColorTypes, MColors}
+import io.suggest.color.MColors
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.r.CatchR
-import io.suggest.react.{ReactCommonUtil, StyleProps}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
@@ -21,7 +21,7 @@ import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.SearchR
-import io.suggest.spa.OptFastEq.Wrapped
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic, ScThemes}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
@@ -43,11 +43,10 @@ class ScRootR (
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
                 scSettingsDiaR          : ScSettingsDiaR,
+                scThemes                : ScThemes,
                 commonReactCtx          : React.Context[MCommonReactCtx],
                 scErrorDiaR             : ScErrorDiaR,
               ) {
-
-  import welcomeR.WelcomeRPropsValFastEq
 
   type Props = ModelProxy[MScRoot]
 
@@ -92,59 +91,14 @@ class ScRootR (
       val scCssComp = s.scCssArgsC { CssR.compProxied.apply }
 
       // Рендер провайдера тем MateriaUI, который заполняет react context.
-      val muiThemeProviderComp = {
-        val typographyProps = new MuiThemeTypoGraphy {
-          override val useNextVariants = true
-        }
-        s.colorsC { mcolorsProxy =>
-          val mcolors = mcolorsProxy.value
-          val bgHex = mcolors.bg.getOrElse( MColorData(MColorTypes.Bg.scDefaultHex) ).hexCode
-          val fgHex = mcolors.fg.getOrElse( MColorData(MColorTypes.Fg.scDefaultHex) ).hexCode
-          // Чтобы избежать Warning: Failed prop type: The following properties are not supported: `paletteRaw$1$f`. Please remove them.
-          // тут расписывается весь JSON построчно:
-          val primaryColor = new MuiColor {
-            override val main = bgHex
-            override val contrastText = fgHex
+      val muiThemeProviderComp = s.colorsC { mcolorsProxy =>
+        MuiThemeProvider(
+          new MuiThemeProviderProps {
+            override val theme = scThemes.muiDefault( mcolorsProxy.value )
           }
-          val secondaryColor = new MuiColor {
-            override val main = fgHex
-            override val contrastText = bgHex
-          }
-          val paletteText = new MuiPaletteText {
-            override val primary = fgHex
-            override val secondary = bgHex
-          }
-          val palletteBg = new MuiPaletteBackground {
-            override val paper = bgHex
-            override val default = bgHex
-          }
-          val btnsPalette = new MuiPaletteAction {
-            override val active = fgHex
-          }
-          val paletteRaw = new MuiPalette {
-            override val primary      = primaryColor
-            override val secondary    = secondaryColor
-            // TODO Нужно портировать getLuminance() и выбирать dark/light на основе формулы luma >= 0.5. https://github.com/mui-org/material-ui/blob/355317fb479dc234c6b1e374428578717b91bdc0/packages/material-ui/src/styles/colorManipulator.js#L151
-            override val `type`       = MuiPaletteTypes.dark
-            override val text         = paletteText
-            override val background   = palletteBg
-            override val action       = btnsPalette
-          }
-          val themeRaw = new MuiRawTheme {
-            override val palette = paletteRaw
-            override val typography = typographyProps
-            //override val shadows = js.Array("none")
-          }
-          val themeCreated = Mui.Styles.createMuiTheme( themeRaw )
-          //println( JSON.stringify(themeCreated) )
-          MuiThemeProvider(
-            new MuiThemeProviderProps {
-              override val theme = themeCreated
-            }
-          )(
-            menuSideBar
-          )
-        }
+        )(
+          menuSideBar
+        )
       }
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
@@ -210,7 +164,7 @@ class ScRootR (
               state    = wcState
             )
           }
-        },
+        }( OptFastEq.Wrapped(welcomeR.WelcomeRPropsValFastEq) ),
 
         isRenderScC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( !mroot.index.isFirstRun )
@@ -231,7 +185,5 @@ class ScRootR (
     }
     .renderBackend[Backend]
     .build
-
-  def apply(scRootProxy: Props) = component( scRootProxy )
 
 }

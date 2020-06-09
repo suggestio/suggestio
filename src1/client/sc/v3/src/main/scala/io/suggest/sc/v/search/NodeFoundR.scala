@@ -23,7 +23,7 @@ import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 
 import scala.scalajs.js
 

@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 
 /**
   * Suggest.io

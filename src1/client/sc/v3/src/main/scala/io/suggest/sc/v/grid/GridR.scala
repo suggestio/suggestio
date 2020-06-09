@@ -11,7 +11,7 @@ import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._

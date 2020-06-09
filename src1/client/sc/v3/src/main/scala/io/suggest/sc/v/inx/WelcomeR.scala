@@ -8,8 +8,8 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick}
-import io.suggest.sc.v.ScCssStatic
 import io.suggest.sc.v.hdr.NodeNameR
+import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement

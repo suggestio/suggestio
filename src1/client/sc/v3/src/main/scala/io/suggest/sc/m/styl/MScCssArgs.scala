@@ -1,4 +1,4 @@
-package io.suggest.sc.m
+package io.suggest.sc.m.styl
 
 import diode.FastEq
 import diode.data.Pot

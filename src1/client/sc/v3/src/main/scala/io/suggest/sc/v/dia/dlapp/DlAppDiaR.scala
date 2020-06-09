@@ -17,7 +17,7 @@ import io.suggest.routes.routes
 import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
 import io.suggest.sc.m.menu._
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

@@ -12,7 +12,7 @@ import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.router.SrvRouter
 import io.suggest.log.{Log, LogSeverities, Logging}
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm

@@ -23,7 +23,7 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.log.Log
-import io.suggest.sc.v.ScCss
+import io.suggest.sc.v.styl.ScCss
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._

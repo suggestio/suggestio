@@ -7,7 +7,7 @@ import io.suggest.n2.node.MNodeTypes
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
-import io.suggest.sc.v.ScCss
+import io.suggest.sc.v.styl.ScCss
 import japgolly.univeq.UnivEq
 import scalacss.internal.mutable.StyleSheet
 
@@ -21,7 +21,7 @@ import scalacss.internal.mutable.StyleSheet
   */
 object SearchCss {
 
-  def NODE_ROW_HEIGHT_PX = 27
+  def NODE_ROW_HEIGHT_PX = 60
 
   @inline implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
 
@@ -39,7 +39,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   import dsl._
 
 
-  private val TAB_BODY_HEIGHT_PX = {
+  private def TAB_BODY_HEIGHT_PX = {
     val si = args.screenInfo
     si.screen.wh.height - si.unsafeOffsets.top
   }
@@ -67,9 +67,14 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     if (args.req.isFailed)
       rowsCount += 2
 
-    rowsCount = Math.min(rowsCount, 6)
+    val MAX_ROWS_COUNT = 5
+    rowsCount = Math.min(rowsCount, MAX_ROWS_COUNT)
 
-    val listHeightPx = rowsCount * SearchCss.NODE_ROW_HEIGHT_PX
+    val rowHeightPx = SearchCss.NODE_ROW_HEIGHT_PX
+
+    var listHeightPx = rowsCount * rowHeightPx
+    if (rowsCount > MAX_ROWS_COUNT) listHeightPx += rowHeightPx/2
+
     listHeightPx.toInt
   }
 

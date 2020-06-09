@@ -9,10 +9,10 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.v.{ScCss, ScCssStatic}
 import io.suggest.sc.v.dia.dlapp.DlAppMenuItemR
 import io.suggest.sc.v.dia.settings.SettingsMenuItemR
 import io.suggest.sc.v.hdr.LeftR
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

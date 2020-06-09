@@ -1,4 +1,4 @@
-package io.suggest.sc.v
+package io.suggest.sc.v.styl
 
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
@@ -7,7 +7,7 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.i18n.MsgCodes
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
-import io.suggest.sc.m.MScCssArgs
+import io.suggest.sc.m.styl.MScCssArgs
 import japgolly.univeq.UnivEq
 
 import scala.language.postfixOps

@@ -6,8 +6,8 @@ import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitchAskS}
-import io.suggest.sc.v.ScCssStatic
 import io.suggest.sc.v.search.{NodesFoundR, SearchCss}
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 

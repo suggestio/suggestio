@@ -11,7 +11,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.sc3.Sc3Pages
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 import scalacss.ScalaCssReact._
 
 /**

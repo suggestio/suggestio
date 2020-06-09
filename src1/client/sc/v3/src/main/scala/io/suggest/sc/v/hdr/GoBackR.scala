@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import ReactCommonUtil.Implicits._
 import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiToolTip, MuiToolTipProps}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.sc.v.ScCssStatic
+import io.suggest.sc.v.styl.ScCssStatic
 
 import scala.scalajs.js
 

@@ -14,6 +14,7 @@ import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
+import io.suggest.sc.v.styl.ScThemes
 import japgolly.scalajs.react.React
 
 /**
@@ -116,6 +117,7 @@ object Sc3Module {
   lazy val notificationSettingsR = wire[NotificationSettingsR]
 
   // sc3
+  lazy val scThemes = wire[ScThemes]
   lazy val scRootR = wire[ScRootR]
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   lazy val scAppApiHttp = wire[ScAppApiHttp]

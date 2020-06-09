@@ -62,7 +62,8 @@ import io.suggest.event.DomEvents
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
-import io.suggest.sc.v.ScCss
+import io.suggest.sc.m.styl.MScCssArgs
+import io.suggest.sc.v.styl.ScCss
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.ueq.UnivEqUtil._
 
