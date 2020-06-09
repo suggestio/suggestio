@@ -1,7 +1,7 @@
 package io.suggest.sc.v
 
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
-import com.materialui.{Mui, MuiColor, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
+import com.materialui.{Mui, MuiColor, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{MColorData, MColorTypes, MColors}
@@ -14,12 +14,11 @@ import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MSearchPanelS
-import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
+import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
-import io.suggest.sc.v.dia.settings.{ScSettingsDiaR, SettingsMenuItemR}
+import io.suggest.sc.v.dia.settings.ScSettingsDiaR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
@@ -28,7 +27,7 @@ import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import scalacss.ScalaCssReact._
 
 /**
@@ -43,9 +42,6 @@ class ScRootR (
                 val sTextR              : STextR,
                 val headerR             : HeaderR,
                 menuR                   : MenuR,
-                val enterLkRowR         : EnterLkRowR,
-                val editAdR             : EditAdR,
-                val aboutSioR           : AboutSioR,
                 val welcomeR            : WelcomeR,
                 val nodesSearchContR    : NodesSearchContR,
                 val nodesFoundR         : NodesFoundR,
@@ -57,18 +53,13 @@ class ScRootR (
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
                 wzFirstR                : WzFirstR,
-                dlAppMenuItemR          : DlAppMenuItemR,
                 dlAppDiaR               : DlAppDiaR,
-                settingsMenuItemR       : SettingsMenuItemR,
                 scSettingsDiaR          : ScSettingsDiaR,
                 commonReactCtx          : React.Context[MCommonReactCtx],
                 scErrorDiaR             : ScErrorDiaR,
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
-  import enterLkRowR.EnterLkRowRPropsValFastEq
-  import editAdR.EditAdRPropsValFastEq
-  import aboutSioR.AboutSioRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
   import io.suggest.sc.m.search.MScSearchText.MScSearchTextFastEq
   import logoR.LogoPropsValFastEq
@@ -80,11 +71,7 @@ class ScRootR (
                                     scCssArgsC                : ReactConnectProxy[ScCss],
                                     hdrPropsC                 : ReactConnectProxy[headerR.Props_t],
                                     wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
-                                    enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
-                                    editAdC                   : ReactConnectProxy[Option[editAdR.PropsVal]],
-                                    aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
                                     searchSideBarC            : ReactConnectProxy[MSearchPanelS],
-                                    menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
                                     sTextC                    : ReactConnectProxy[sTextR.Props_t],
@@ -100,12 +87,9 @@ class ScRootR (
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onOpenSideBar(sideBar: MScSideBar, opened: Boolean): Callback =
-      dispatchOnProxyScopeCB( $, SideBarOpenClose(sideBar, opened) )
-    private def _mkSetOpenSideBarCbF(sideBar: MScSideBar) =
-      ReactCommonUtil.cbFun1ToJsCb( _onOpenSideBar(sideBar, _: Boolean) )
-    private val _onSetOpenSearchSidebarF = _mkSetOpenSideBarCbF( MScSideBars.Search )
-    private val _onSetOpenMenuSidebarF = _mkSetOpenSideBarCbF( MScSideBars.Menu )
+    private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
+      dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, opened) )
+    }
 
 
     def render(mrootProxy: Props, s: State): VdomElement = {
@@ -182,16 +166,12 @@ class ScRootR (
       }
 
       // Значение "initial" для css-свойст.
-      val css_initial = scalacss.internal.Literal.Typed.initial.value
-
-      // z-index-костыли для расположения нескольких панелей и остального контента.
-      // Жило оно одиноко в scCss, но пока унесено сюда после рефакторинга в DI/ScCss.
-      val sideBarZIndex = 11
+      val css_initial = ScCss.css_initial
 
       val searchSideBar = {
         val searchStyles = {
           val sidebarStyl = new StyleProps {
-            override val zIndex    = sideBarZIndex
+            override val zIndex    = ScCss.sideBarZIndex
             override val overflowY = css_initial
           }
           val contentStyl = new StyleProps {
@@ -223,56 +203,7 @@ class ScRootR (
         }
       }
 
-      // Сборка панели меню:
-      val menuSideBarBodyInner = MuiList()(
-        // Строка входа в личный кабинет
-        s.enterLkRowC { enterLkRowR.apply },
-
-        // Кнопка редактирования карточки.
-        s.editAdC { editAdR.apply },
-
-        // Рендер кнопки "О проекте"
-        s.aboutSioC { aboutSioR.apply },
-
-        // Пункт скачивания мобильного приложения.
-        dlAppMenuItemR( mrootProxy ),
-
-        // Пункт открытия диалога с настройками выдачи.
-        settingsMenuItemR.component( mrootProxy ),
-
-      )
-      val menuSideBarBody = mrootProxy.wrap(_.index.menu)( menuR(_)( menuSideBarBodyInner ) )( implicitly, MMenuS.MMenuSFastEq )
-
-      val menuSideBar = {
-        val menuSideBarStyles = {
-          val zIndexBase = sideBarZIndex * 2
-          val sidebarStyl = new StyleProps {
-            override val zIndex    = zIndexBase
-            override val overflowY = css_initial
-          }
-          val overlayStyl = new StyleProps {
-            override val zIndex = zIndexBase - 1
-          }
-          new SidebarStyles {
-            override val sidebar = sidebarStyl
-            override val overlay = overlayStyl
-          }
-        }
-        s.menuOpenedSomeC { menuOpenedSomeProxy =>
-          Sidebar(
-            new SidebarProps {
-              override val sidebar      = menuSideBarBody.rawNode
-              override val pullRight    = false
-              override val touch        = true
-              override val transitions  = true
-              override val open         = menuOpenedSomeProxy.value.value
-              override val onSetOpen    = _onSetOpenMenuSidebarF
-              override val shadow       = true
-              override val styles       = menuSideBarStyles
-            }
-          )( searchSideBar )
-        }
-      }
+      val menuSideBar = menuR.component( mrootProxy )( searchSideBar )
 
       // Рендер стилей перед снаружи и перед остальной выдачей.
       // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
@@ -402,50 +333,6 @@ class ScRootR (
             )
           }
         },
-
-        enterLkRowC = propsProxy.connect { props =>
-          for {
-            scJsRouter <- props.internals.jsRouter.jsRouter.toOption
-            if props.dev.platform.isBrowser
-          } yield {
-            enterLkRowR.PropsVal(
-              isLoggedIn      = props.internals.conf.isLoggedIn,
-              // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
-              isMyAdnNodeId   = props.index.state
-                .rcvrId
-                .filter { _ =>
-                  props.index.resp.exists(_.isMyNode contains true)
-                },
-              scJsRouter = scJsRouter
-            )
-          }
-        },
-
-        editAdC = propsProxy.connect { props =>
-          for {
-            scJsRouter      <- props.internals.jsRouter.jsRouter.toOption
-            focusedAdOuter  <- props.grid.core.focusedAdOpt
-            focusedData     <- focusedAdOuter.focused.toOption
-            if focusedData.info.canEdit
-            focusedAdId     <- focusedAdOuter.nodeId
-          } yield {
-            editAdR.PropsVal(
-              adId      = focusedAdId,
-              scRoutes  = scJsRouter
-            )
-          }
-        },
-
-        aboutSioC = propsProxy.connect { props =>
-          val propsVal = aboutSioR.PropsVal(
-            aboutNodeId = props.internals.conf.aboutSioNodeId
-          )
-          Some(propsVal)
-        },
-
-        menuOpenedSomeC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.index.menu.opened )
-        }( FastEq.AnyRefEq ),
 
         searchSideBarC = propsProxy.connect { props =>
           props.index.search.panel

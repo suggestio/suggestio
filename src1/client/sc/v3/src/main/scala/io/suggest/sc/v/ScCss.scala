@@ -64,6 +64,13 @@ object ScCss {
 
   @inline implicit def univEq: UnivEq[ScCss] = UnivEq.derive
 
+  // z-index-костыли для расположения нескольких панелей и остального контента.
+  // Жило оно одиноко в scCss, но пока унесено сюда после рефакторинга в DI/ScCss.
+  def sideBarZIndex = 11
+
+  // Значение "initial" для css-свойст.
+  def css_initial = scalacss.internal.Literal.Typed.initial.value
+
 }
 
 

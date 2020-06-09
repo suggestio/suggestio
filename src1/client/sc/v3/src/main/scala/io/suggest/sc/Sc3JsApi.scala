@@ -9,6 +9,8 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 05.06.2020 13:29
   * Description: Plain JS api for debugging from js-console.
+  *
+  * Используется длинное неповторимое глобальное имя, т.к. короткое "Sc" приводило к name clash после js-минификации.
   */
 @JSExportTopLevel("___Sio___Sc___")
 object Sc3JsApi {

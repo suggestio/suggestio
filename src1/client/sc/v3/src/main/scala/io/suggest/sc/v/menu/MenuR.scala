@@ -1,10 +1,19 @@
 package io.suggest.sc.v.menu
 
-import diode.react.ModelProxy
-import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.m.menu.MMenuS
-import io.suggest.sc.v.ScCssStatic
+import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
+import com.materialui.MuiList
+import diode.FastEq
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.{ReactCommonUtil, StyleProps}
+import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
+import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.v.{ScCss, ScCssStatic}
+import io.suggest.sc.v.dia.dlapp.DlAppMenuItemR
+import io.suggest.sc.v.dia.settings.SettingsMenuItemR
 import io.suggest.sc.v.hdr.LeftR
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
@@ -17,17 +26,58 @@ import io.suggest.ueq.UnivEqUtil._
   * Description: Главный компонент левой панели меню выдачи.
   */
 class MenuR(
-             leftR          : LeftR,
-             versionR       : VersionR,
-             scReactCtxP    : React.Context[MScReactCtx],
+             val enterLkRowR          : EnterLkRowR,
+             val editAdR              : EditAdR,
+             val aboutSioR            : AboutSioR,
+             dlAppMenuItemR           : DlAppMenuItemR,
+             settingsMenuItemR        : SettingsMenuItemR,
+             leftR                    : LeftR,
+             versionR                 : VersionR,
+             scReactCtxP              : React.Context[MScReactCtx],
            ) {
 
-  type Props = ModelProxy[MMenuS]
+  type Props = ModelProxy[MScRoot]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  case class State(
+                    enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
+                    editAdC                   : ReactConnectProxy[Option[editAdR.PropsVal]],
+                    aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
+                    menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
+                  )
 
-    def render(propsProxy: Props, children: PropsChildren): VdomElement = {
+
+
+  class Backend($: BackendScope[Props, State]) {
+
+    private val _onSetOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
+      dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Menu, opened) )
+    }
+
+    def render(propsProxy: Props, s: State, propsChildren: PropsChildren): VdomElement = {
+      // Сборка панели меню:
+      val menuRows = <.div(
+        ScCssStatic.Menu.Rows.rowsContainer,
+
+        MuiList()(
+          // Строка входа в личный кабинет
+          s.enterLkRowC { enterLkRowR.apply },
+
+          // Кнопка редактирования карточки.
+          s.editAdC { editAdR.apply },
+
+          // Рендер кнопки "О проекте"
+          s.aboutSioC { aboutSioR.apply },
+
+          // Пункт скачивания мобильного приложения.
+          dlAppMenuItemR( propsProxy ),
+
+          // Пункт открытия диалога с настройками выдачи.
+          settingsMenuItemR.component( propsProxy ),
+
+        ),
+      )
+
       val vsn = versionR.component(): VdomElement
 
       // Кнопка сокрытия панели влево
@@ -36,12 +86,7 @@ class MenuR(
       val panelCommon = ScCssStatic.Root.panelCommon: TagMod
       val panelBg = ScCssStatic.Root.panelBg: TagMod
 
-      val menuRows = <.div(
-        ScCssStatic.Menu.Rows.rowsContainer,
-        children,
-      )
-
-      scReactCtxP.consume { scReactCtx =>
+      val menuSideBarBody = scReactCtxP.consume { scReactCtx =>
         val menuCss = scReactCtx.scCss.Menu
 
         <.div(
@@ -67,6 +112,36 @@ class MenuR(
           vsn,
         )    // .panel
       }
+
+      val menuSideBarStyles = {
+        val zIndexBase = ScCss.sideBarZIndex * 2
+        val sidebarStyl = new StyleProps {
+          override val zIndex    = zIndexBase
+          override val overflowY = ScCss.css_initial
+        }
+        val overlayStyl = new StyleProps {
+          override val zIndex = zIndexBase - 1
+        }
+        new SidebarStyles {
+          override val sidebar = sidebarStyl
+          override val overlay = overlayStyl
+        }
+      }
+
+      s.menuOpenedSomeC { menuOpenedSomeProxy =>
+        Sidebar(
+          new SidebarProps {
+            override val sidebar      = menuSideBarBody.rawNode
+            override val pullRight    = false
+            override val touch        = true
+            override val transitions  = true
+            override val open         = menuOpenedSomeProxy.value.value
+            override val onSetOpen    = _onSetOpenMenuSidebarF
+            override val shadow       = true
+            override val styles       = menuSideBarStyles
+          }
+        )( propsChildren )
+      }
     }
 
   }
@@ -74,10 +149,56 @@ class MenuR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        enterLkRowC = propsProxy.connect { props =>
+          for {
+            scJsRouter <- props.internals.jsRouter.jsRouter.toOption
+            if props.dev.platform.isBrowser
+          } yield {
+            enterLkRowR.PropsVal(
+              isLoggedIn      = props.internals.conf.isLoggedIn,
+              // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
+              isMyAdnNodeId   = props.index.state
+                .rcvrId
+                .filter { _ =>
+                  props.index.resp.exists(_.isMyNode contains true)
+                },
+              scJsRouter = scJsRouter
+            )
+          }
+        }( OptFastEq.Wrapped(enterLkRowR.EnterLkRowRPropsValFastEq) ),
+
+        editAdC = propsProxy.connect { props =>
+          for {
+            scJsRouter      <- props.internals.jsRouter.jsRouter.toOption
+            focusedAdOuter  <- props.grid.core.focusedAdOpt
+            focusedData     <- focusedAdOuter.focused.toOption
+            if focusedData.info.canEdit
+            focusedAdId     <- focusedAdOuter.nodeId
+          } yield {
+            editAdR.PropsVal(
+              adId      = focusedAdId,
+              scRoutes  = scJsRouter
+            )
+          }
+        }( OptFastEq.Wrapped(editAdR.EditAdRPropsValFastEq) ),
+
+        aboutSioC = propsProxy.connect { props =>
+          val propsVal = aboutSioR.PropsVal(
+            aboutNodeId = props.internals.conf.aboutSioNodeId
+          )
+          Option(propsVal)
+        }( OptFastEq.Wrapped(aboutSioR.AboutSioRPropsValFastEq) ),
+
+        menuOpenedSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.index.menu.opened )
+        }( FastEq.AnyRefEq ),
+
+      )
+    }
     .renderBackendWithChildren[Backend]
     .build
-
-  def apply(menuProxy: Props)(children: VdomNode*) = component(menuProxy)(children: _*)
 
 }
