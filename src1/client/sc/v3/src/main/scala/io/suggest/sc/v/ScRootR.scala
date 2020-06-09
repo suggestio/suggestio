@@ -1,20 +1,17 @@
 package io.suggest.sc.v
 
-import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
-import com.materialui.{Mui, MuiColor, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
+import com.materialui.{Mui, MuiColor, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{MColorData, MColorTypes, MColors}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
@@ -23,7 +20,7 @@ import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
 import io.suggest.sc.v.menu._
-import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
+import io.suggest.sc.v.search.SearchR
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -39,13 +36,9 @@ import scalacss.ScalaCssReact._
 class ScRootR (
                 gridR                   : GridR,
                 searchR                 : SearchR,
-                val sTextR              : STextR,
                 headerR                 : HeaderR,
                 menuR                   : MenuR,
                 val welcomeR            : WelcomeR,
-                val nodesSearchContR    : NodesSearchContR,
-                val nodesFoundR         : NodesFoundR,
-                rightR                  : RightR,
                 val indexSwitchAskR     : IndexSwitchAskR,
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
@@ -54,18 +47,12 @@ class ScRootR (
                 scErrorDiaR             : ScErrorDiaR,
               ) {
 
-  import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
   import welcomeR.WelcomeRPropsValFastEq
-  import io.suggest.sc.m.search.MScSearchText.MScSearchTextFastEq
 
   type Props = ModelProxy[MScRoot]
 
 
   protected[this] case class State(
-                                    searchSideBarC            : ReactConnectProxy[MSearchPanelS],
-                                    sTextC                    : ReactConnectProxy[sTextR.Props_t],
-                                    nodesFoundC               : ReactConnectProxy[nodesFoundR.Props_t],
-                                    nodesSearchContC          : ReactConnectProxy[nodesSearchContR.Props_t],
                                     scCssArgsC                : ReactConnectProxy[ScCss],
                                     wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
@@ -75,11 +62,6 @@ class ScRootR (
                                   )
 
   class Backend($: BackendScope[Props, State]) {
-
-    private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
-      dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, opened) )
-    }
-
 
     def render(mrootProxy: Props, s: State): VdomElement = {
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
@@ -99,75 +81,10 @@ class ScRootR (
         mrootProxy.wrap(_.grid)(gridR.apply)( implicitly, MGridS.MGridSFastEq ),
       )
 
-      // Наполнение контейнера поиска узлов:
-      val nodeSearchInner = <.div(
-        // Поисковое текстовое поле:
-        MuiToolBar(
-          new MuiToolBarProps {
-            override val disableGutters = true
-          }
-        )(
-          // Элементы поиска:
-          s.sTextC { sTextR.apply },
+      // Правая панель поиска:
+      val searchSideBar = searchR.component( mrootProxy )( scBody )
 
-          // Кнопка сворачивания:
-          mrootProxy.wrap(_ => None)( rightR.apply )
-        ),
-
-        // Панель поиска: контент, зависимый от корневой модели:
-        s.nodesFoundC { nodesFoundR.apply },
-      )
-
-      // Нода с единым скроллингом, передаваемая в children для SearchR:
-      val searchBarChild = s.nodesSearchContC {
-        nodesSearchContR(_)(
-          nodeSearchInner
-        )
-      }
-
-      // Непосредственно, панель поиска:
-      val searchBarBody = mrootProxy.wrap(_.index.search) {
-        searchR(_)( searchBarChild )
-      }
-
-      // Значение "initial" для css-свойст.
-      val css_initial = ScCss.css_initial
-
-      val searchSideBar = {
-        val searchStyles = {
-          val sidebarStyl = new StyleProps {
-            override val zIndex    = ScCss.sideBarZIndex
-            override val overflowY = css_initial
-          }
-          val contentStyl = new StyleProps {
-            override val overflowY = css_initial
-          }
-          val overlayStyl = new StyleProps {
-            override val zIndex = -100
-          }
-          new SidebarStyles {
-            override val sidebar = sidebarStyl
-            override val content = contentStyl
-            override val overlay = overlayStyl
-          }
-        }
-        s.searchSideBarC { searchOpenedSomeProxy =>
-          // Используем react-sidebar вместо mui.SwipeableDrawer, т.к. последний конфиликтует с гео-картой на уровне touch-событий.
-          Sidebar(
-            new SidebarProps {
-              override val sidebar      = searchBarBody.rawNode
-              override val onSetOpen    = _onSetOpenSearchSidebarF
-              override val open         = searchOpenedSomeProxy.value.opened
-              override val transitions  = true
-              override val touch        = true
-              override val pullRight    = true
-              override val shadow       = true
-              override val styles       = searchStyles
-            }
-          )( scBody )
-        }
-      }
-
+      // Левая панель меню:
       val menuSideBar = menuR.component( mrootProxy )( searchSideBar )
 
       // Рендер стилей перед снаружи и перед остальной выдачей.
@@ -295,10 +212,6 @@ class ScRootR (
           }
         },
 
-        searchSideBarC = propsProxy.connect { props =>
-          props.index.search.panel
-        }( MSearchPanelS.MSearchPanelSFastEq ),
-
         isRenderScC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( !mroot.index.isFirstRun )
         }( FastEq.AnyRefEq ),
@@ -307,23 +220,6 @@ class ScRootR (
           mroot.index.resp
             .fold(ScCss.COLORS_DFLT)(_.colors)
         }( FastEqUtil.AnyRefFastEq ),
-
-        sTextC = propsProxy.connect(_.index.search.text)( MScSearchTextFastEq ),
-
-        nodesFoundC = propsProxy.connect { mroot =>
-          val geo = mroot.index.search.geo
-          NodesFoundR.PropsVal(
-            req                 = geo.found.req,
-            hasMore             = geo.found.hasMore,
-            selectedIds         = mroot.index.searchNodesSelectedIds,
-            withDistanceToNull  = geo.mapInit.state.center,
-            searchCss           = geo.css
-          )
-        }( NodesFoundR.NodesFoundRPropsValFastEq ),
-
-        nodesSearchContC = propsProxy.connect { mroot =>
-          mroot.index.search.geo.css
-        }( SearchCssFastEq ),
 
         indexSwitchAskC = propsProxy.connect { mroot =>
           mroot.index.state.switchAsk
