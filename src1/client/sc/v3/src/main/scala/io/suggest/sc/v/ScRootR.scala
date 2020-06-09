@@ -40,18 +40,13 @@ class ScRootR (
                 gridR                   : GridR,
                 searchR                 : SearchR,
                 val sTextR              : STextR,
-                val headerR             : HeaderR,
+                headerR                 : HeaderR,
                 menuR                   : MenuR,
                 val welcomeR            : WelcomeR,
                 val nodesSearchContR    : NodesSearchContR,
                 val nodesFoundR         : NodesFoundR,
                 rightR                  : RightR,
-                val logoR               : LogoR,
-                menuBtnR                : MenuBtnR,
-                searchBtnR              : SearchBtnR,
-                val hdrProgressR        : HdrProgressR,
                 val indexSwitchAskR     : IndexSwitchAskR,
-                val goBackR             : GoBackR,
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
                 scSettingsDiaR          : ScSettingsDiaR,
@@ -62,26 +57,20 @@ class ScRootR (
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
   import welcomeR.WelcomeRPropsValFastEq
   import io.suggest.sc.m.search.MScSearchText.MScSearchTextFastEq
-  import logoR.LogoPropsValFastEq
 
   type Props = ModelProxy[MScRoot]
 
 
   protected[this] case class State(
-                                    scCssArgsC                : ReactConnectProxy[ScCss],
-                                    hdrPropsC                 : ReactConnectProxy[headerR.Props_t],
-                                    wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     searchSideBarC            : ReactConnectProxy[MSearchPanelS],
-                                    isRenderScC               : ReactConnectProxy[Some[Boolean]],
-                                    colorsC                   : ReactConnectProxy[MColors],
                                     sTextC                    : ReactConnectProxy[sTextR.Props_t],
                                     nodesFoundC               : ReactConnectProxy[nodesFoundR.Props_t],
                                     nodesSearchContC          : ReactConnectProxy[nodesSearchContR.Props_t],
-                                    hdrLogoOptC               : ReactConnectProxy[Option[logoR.PropsVal]],
-                                    hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
-                                    hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
+                                    scCssArgsC                : ReactConnectProxy[ScCss],
+                                    wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
+                                    isRenderScC               : ReactConnectProxy[Some[Boolean]],
+                                    colorsC                   : ReactConnectProxy[MColors],
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
-                                    goBackC                   : ReactConnectProxy[goBackR.Props_t],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
                                   )
 
@@ -93,30 +82,6 @@ class ScRootR (
 
 
     def render(mrootProxy: Props, s: State): VdomElement = {
-      // Сборка компонента заголовка выдачи:
-      val hdr = {
-        val hdrLogo       = s.hdrLogoOptC { logoR.apply }
-        val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.apply }
-        val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.apply }
-        val hdrProgress   = s.hdrProgressC { hdrProgressR.apply }
-        val hdrGoBack     = s.goBackC { goBackR.apply }
-
-        // Компонент заголовка выдачи:
-        s.hdrPropsC { hdrProxy =>
-          headerR(hdrProxy)(
-            hdrGoBack,
-            hdrMenuBtn,
-
-            hdrLogo,
-
-            // -- Кнопки заголовка в зависимости от состояния выдачи --
-            // Кнопки при нахождении в обычной выдаче без посторонних вещей:
-            hdrSearchBtn,
-            hdrProgress,
-          )
-        }
-      }
-
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
       // Содержимое правой панели (панель поиска)
       // search (правый) sidebar.
@@ -128,7 +93,7 @@ class ScRootR (
         s.wcPropsOptC { welcomeR.apply },
 
         // заголовок выдачи:
-        hdr,
+        headerR.component( mrootProxy ),
 
         // Рендер плитки карточек узла:
         mrootProxy.wrap(_.grid)(gridR.apply)( implicitly, MGridS.MGridSFastEq ),
@@ -316,10 +281,6 @@ class ScRootR (
       State(
         scCssArgsC  = propsProxy.connect(_.index.scCss),
 
-        hdrPropsC = propsProxy.connect { props =>
-          Some( props.index.resp.nonEmpty )
-        }( OptFastEq.OptValueEq ),
-
         wcPropsOptC = propsProxy.connect { props =>
           for {
             resp    <- props.index.resp.toOption
@@ -364,42 +325,9 @@ class ScRootR (
           mroot.index.search.geo.css
         }( SearchCssFastEq ),
 
-        hdrLogoOptC = propsProxy.connect { mroot =>
-          for {
-            mnode <- mroot.index.resp.toOption
-          } yield {
-            logoR.PropsVal(
-              logoOpt     = mnode.logoOpt,
-              nodeNameOpt = mnode.name,
-              styled      = true,
-            )
-          }
-        }( OptFastEq.Wrapped(LogoPropsValFastEq) ),
-
-        hdrOnGridBtnColorOptC = propsProxy.connect { mroot =>
-          OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {
-            mroot.index.resp
-              .toOption
-              .flatMap( _.colors.fg )
-          }
-        }( OptFastEq.Plain ),
-
-        hdrProgressC = propsProxy.connect { mroot =>
-          val r =
-            mroot.index.resp.isPending ||
-            mroot.grid.core.adsHasPending
-          Some(r)
-        }( OptFastEq.OptValueEq ),
-
         indexSwitchAskC = propsProxy.connect { mroot =>
           mroot.index.state.switchAsk
         }( OptFastEq.Wrapped( MInxSwitchAskS.MInxSwitchAskSFastEq ) ) ,
-
-        goBackC = propsProxy.connect { mroot =>
-          OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {
-            mroot.index.state.prevNodeOpt
-          }
-        }( OptFastEq.Plain ),
 
         commonReactCtxC = propsProxy.connect( _.internals.info.commonReactCtx )( FastEq.AnyRefEq ),
 
