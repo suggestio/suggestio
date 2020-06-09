@@ -11,7 +11,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.dia.YesNoWz
 import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzPhases}
-import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -139,7 +138,7 @@ class WzFirstR(
                               val msg = crCtx.messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
                               Left( msg )
                           }
-                          ).fold(
+                        ).fold(
                           identity[String],
                           compName =>
                             crCtx.messages( MsgCodes.`You.can.enable.0.later.on.left.panel`, compName )

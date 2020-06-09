@@ -147,7 +147,7 @@ class LoginFormR(
       // Добавить внутренний контекст для CSS.
       s.loginFormCssC { loginFormCssProxy =>
         <.div(
-          CssR( loginFormCssProxy ),
+          CssR.compProxied( loginFormCssProxy ),
 
           loginFormCssCtx.provide( loginFormCssProxy.value )(
             allForm

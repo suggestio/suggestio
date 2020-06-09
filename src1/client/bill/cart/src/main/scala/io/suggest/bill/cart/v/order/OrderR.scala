@@ -57,13 +57,13 @@ class OrderR(
         s.orderOptC { orderInfoR.apply },
 
         // Статические стили плитки.
-        propsProxy.wrap(_ => cartCss)( CssR.apply ),
+        propsProxy.wrap(_ => cartCss)( CssR.compProxied.apply ),
 
         // Статические jd-стили:
-        propsProxy.wrap(_ => jdCssStatic)( CssR.apply ),
+        propsProxy.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
 
         // Рендер стилей отображаемых карточек.
-        s.jdCssC { CssR.apply },
+        s.jdCssC { CssR.compProxied.apply },
 
         // Панелька-тулбар
         s.toolBarPropsC { itemsToolBarR.apply },

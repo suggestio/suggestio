@@ -2,8 +2,7 @@ package io.suggest.css
 
 import diode.react.ModelProxy
 import io.suggest.css.ScalaCssDefaults._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.internal.mutable.StyleSheet
 
@@ -29,9 +28,6 @@ object CssR {
     }
     .build
 
-  val componentProxed = component.cmapCtorProps[ModelProxy[_ <: StyleSheet.Base]]( _.value )
-
-  def apply(cssProxy: ModelProxy[_ <: StyleSheet.Base]) =
-    componentProxed( cssProxy )
+  lazy val compProxied = component.cmapCtorProps[ModelProxy[_ <: StyleSheet.Base]]( _.value )
 
 }

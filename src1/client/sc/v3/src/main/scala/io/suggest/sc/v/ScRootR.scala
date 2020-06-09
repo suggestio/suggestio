@@ -276,7 +276,7 @@ class ScRootR (
 
       // Рендер стилей перед снаружи и перед остальной выдачей.
       // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
-      val scCssComp = s.scCssArgsC { CssR.apply }
+      val scCssComp = s.scCssArgsC { CssR.compProxied.apply }
 
       // Рендер провайдера тем MateriaUI, который заполняет react context.
       val muiThemeProviderComp = {
@@ -343,7 +343,7 @@ class ScRootR (
         // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
         mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
           // css, который рендерится только один раз:
-          mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
+          mrootProxy.wrap(_ => ScCssStatic)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
         )),
 
         // Рендер основного тела выдачи.

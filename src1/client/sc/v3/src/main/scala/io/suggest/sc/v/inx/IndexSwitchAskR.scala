@@ -18,12 +18,13 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-React-компонент всплывающего вопроса о переключении выдачи в новую локацию.
   */
 class IndexSwitchAskR(
-                       nodesFoundR          : NodesFoundR,
+                       nodesFoundR : NodesFoundR,
                        crCtxProv   : React.Context[MCommonReactCtx],
                      ) {
 
   type Props_t = Option[MInxSwitchAskS]
   type Props = ModelProxy[Props_t]
+
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -84,7 +85,7 @@ class IndexSwitchAskR(
             // Логотип узла:
             propsOpt.whenDefined { props =>
               <.div(
-                propsOptProxy.wrap(_ => props.searchCss)( CssR.apply )(implicitly, SearchCss.SearchCssFastEq),
+                propsOptProxy.wrap(_ => props.searchCss)( CssR.compProxied.apply )(implicitly, SearchCss.SearchCssFastEq),
                 propsOptProxy.wrap { _ =>
                   NodesFoundR.PropsVal(
                     req             = props.searchCss.args.req,

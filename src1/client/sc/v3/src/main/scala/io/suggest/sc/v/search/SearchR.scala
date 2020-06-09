@@ -64,7 +64,7 @@ class SearchR(
           SearchCSS.panel,
 
           // Рендер очень динамической search-only css'ки:
-          s.searchCssC { CssR.apply },
+          s.searchCssC { CssR.compProxied.apply },
 
           // Фон панели.
           <.div(

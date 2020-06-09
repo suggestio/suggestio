@@ -52,8 +52,8 @@ class GridR(
 
     def render(p: Props, s: State): VdomElement = {
       // Рендер jd-css:
-      val jdCssStatic1 = p.wrap(_ => jdCssStatic)( CssR.apply )
-      val jdCss1 = s.jdCssC { CssR.apply }
+      val jdCssStatic1 = p.wrap(_ => jdCssStatic)( CssR.compProxied.apply )
+      val jdCss1 = s.jdCssC { CssR.compProxied.apply }
 
       // Непосредственный рендер плитки - коннекшен в отдельный компонент, снаружи от рендера connect-зависимого контейнера плитки.
       val gridCore = s.gridCoreC { gridCoreR.apply }

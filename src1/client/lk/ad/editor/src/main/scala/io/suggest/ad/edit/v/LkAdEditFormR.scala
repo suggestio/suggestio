@@ -142,12 +142,12 @@ class LkAdEditFormR(
         ),
 
         // Отрендерить стили редактора:
-        p.wrap(_ => lkCss)(CssR.apply)(implicitly, FastEq.AnyRefEq),
-        p.wrap(_ => lkAdEditCss)(CssR.apply)(implicitly, FastEq.AnyRefEq),
+        p.wrap(_ => lkCss)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
+        p.wrap(_ => lkAdEditCss)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
 
         // Рендер jd-css
-        p.wrap(_ => jdCssStatic)(CssR.apply)(implicitly, FastEq.AnyRefEq),
-        s.jdCssArgsC { CssR.apply },
+        p.wrap(_ => jdCssStatic)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
+        s.jdCssArgsC { CssR.compProxied.apply },
 
         // Редактирование заголовка.
         <.div(

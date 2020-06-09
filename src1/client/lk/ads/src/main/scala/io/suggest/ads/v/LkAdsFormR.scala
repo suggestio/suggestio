@@ -48,8 +48,8 @@ class LkAdsFormR(
       <.div(
         ^.`class` := Css.Lk.Page.VIEWPORT,
 
-        p.wrap(_ => jdCssStatic)( CssR.apply ),
-        s.jdCssC { CssR.apply },
+        p.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
+        s.jdCssC { CssR.compProxied.apply },
 
         <.article(
           ^.`class` := Css.Lk.Page.PAGE_CNT,

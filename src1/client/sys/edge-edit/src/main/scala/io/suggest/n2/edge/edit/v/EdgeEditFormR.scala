@@ -45,7 +45,7 @@ class EdgeEditFormR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(p: Props): VdomElement = {
-      val css = p.wrap(_ => EdgeEditCss)( CssR.apply )
+      val css = p.wrap(_ => EdgeEditCss)( CssR.compProxied.apply )
 
       MuiPaper()(
         crCtxProv.provide( MCommonReactCtx.default )(

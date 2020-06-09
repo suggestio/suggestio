@@ -54,8 +54,8 @@ class SysMdrFormR(
       <.div(
 
         // Рендер jd css карточки:
-        p.wrap(_ => jdCssStatic)( CssR.apply ),
-        s.jdCssC { CssR.apply },
+        p.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
+        s.jdCssC { CssR.compProxied.apply },
 
         // Тулбар, без AppBar, т.к. он неуместен и делает неконтрастный фон.
         MuiToolBar()(
