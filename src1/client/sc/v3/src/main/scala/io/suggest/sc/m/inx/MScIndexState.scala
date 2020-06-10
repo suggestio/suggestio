@@ -21,16 +21,16 @@ object MScIndexState {
   implicit object MScIndexStateFastEq extends FastEq[MScIndexState] {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
       (a.generation ==* b.generation) &&
-      (a.switchAsk ===* b.switchAsk) &&
+      (a.switch ===* b.switch) &&
       (a.views ===* b.views)
     }
   }
 
   @inline implicit def univEq: UnivEq[MScIndexState] = UnivEq.derive
 
-  val generation = GenLens[MScIndexState](_.generation)
-  val switchAsk  = GenLens[MScIndexState](_.switchAsk)
-  val views      = GenLens[MScIndexState](_.views)
+  def generation = GenLens[MScIndexState](_.generation)
+  def switch     = GenLens[MScIndexState](_.switch)
+  def views      = GenLens[MScIndexState](_.views)
 
 }
 
@@ -38,11 +38,11 @@ object MScIndexState {
 /** Класс модели состояния индекса выдачи.
   *
   * @param generation Random seed выдачи.
-  * @param switchAsk Состояния на-экранного вопроса на тему переключения в новый узел.
+  * @param switch Состояния на-экранного вопроса на тему переключения в новый узел.
   */
 case class MScIndexState(
                           generation      : Long                      = System.currentTimeMillis(),
-                          switchAsk       : Option[MInxSwitchAskS]    = None,
+                          switch          : MInxSwitch                = MInxSwitch.empty,
                           views           : NonEmptyList[MIndexView]  = NonEmptyList( MIndexView.empty ),
                         ) {
 

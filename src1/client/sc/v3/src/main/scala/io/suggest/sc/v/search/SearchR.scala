@@ -6,11 +6,13 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.{Css, CssR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil, StyleProps}
+import ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.v.hdr.RightR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
+import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
 import scalacss.ScalaCssReact._
@@ -19,19 +21,18 @@ import scalacss.ScalaCssReact._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.07.17 14:24
-  * Description: Компонент поисковой панели (живёт справа).
+  * Description: Wrap-компонент поисковой панели (справа).
   */
 class SearchR(
-               val sTextR               : STextR,
-               val nodesSearchContR     : NodesSearchContR,
-               val nodesFoundR          : NodesFoundR,
+               sTextR                   : STextR,
+               nodesSearchContR         : NodesSearchContR,
+               nodesFoundR              : NodesFoundR,
+               nodesFoundRowR           : NodesFoundRowR,
                rightR                   : RightR,
                geoMapOuterR             : GeoMapOuterR,
                searchMapR               : SearchMapR,
                scReactCtxP              : React.Context[MScReactCtx],
              ) {
-
-  import searchMapR.SearchMapRPropsValFastEq
 
   type Props = ModelProxy[MScRoot]
 
@@ -39,9 +40,7 @@ class SearchR(
   protected[this] case class State(
                                     searchCssC                : ReactConnectProxy[SearchCss],
                                     searchSideBarC            : ReactConnectProxy[MSearchPanelS],
-                                    sTextC                    : ReactConnectProxy[sTextR.Props_t],
-                                    nodesFoundC               : ReactConnectProxy[nodesFoundR.Props_t],
-                                    nodesSearchContC          : ReactConnectProxy[nodesSearchContR.Props_t],
+                                    nodesFoundRowsC           : ReactConnectProxy[Seq[MNodesFoundRowProps]],
                                   )
 
 
@@ -61,23 +60,24 @@ class SearchR(
             override val disableGutters = true
           }
         )(
-          // Элементы поиска:
-          s.sTextC { sTextR.apply },
+          // Элементы строки поиска:
+          mrootProxy.wrap(_.index.search.text)( sTextR.component.apply )(implicitly, MScSearchText.MScSearchTextFastEq),
 
           // Кнопка сворачивания:
-          mrootProxy.wrap(_ => None)( rightR.apply )
+          mrootProxy.wrap(_ => None)( rightR.apply ),
         ),
 
         // Панель поиска: контент, зависимый от корневой модели:
-        s.nodesFoundC { nodesFoundR.apply },
+        {
+          val nodesList = s.nodesFoundRowsC( nodesFoundRowR.rows )
+          mrootProxy.wrap( _.index.search.geo.found )( nodesFoundR.component(_)( nodesList ) )
+        },
       )
 
       // Нода с единым скроллингом, передаваемая в children для SearchR:
-      val searchBarChild = s.nodesSearchContC {
-        nodesSearchContR(_)(
-          nodeSearchInner
-        )
-      }
+      val searchBarChild = mrootProxy.wrap( _.index.search.geo.css )( nodesSearchContR(_)( nodeSearchInner ) )
+
+      val searchCss = s.searchCssC { CssR.compProxied.apply }
 
       // Непосредственно, панель поиска:
       val searchBarBody = scReactCtxP.consume { scReactCtx =>
@@ -85,13 +85,7 @@ class SearchR(
         val SearchCSS = scCss.Search
 
         // Рендер вкладки карты:
-        val geoMap = mrootProxy.wrap { props =>
-          val g = props.index.search.geo
-          searchMapR.PropsVal(
-            mapInit   = g.mapInit,
-            searchCss = g.css
-          )
-        }( searchMapR.apply )
+        val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
 
         // Тело текущего таба.
         val tabContentInner = <.div(
@@ -108,7 +102,7 @@ class SearchR(
           SearchCSS.panel,
 
           // Рендер очень динамической search-only css'ки:
-          s.searchCssC { CssR.compProxied.apply },
+          searchCss,
 
           // Фон панели.
           <.div(
@@ -189,22 +183,9 @@ class SearchR(
           props.index.search.panel
         }( MSearchPanelS.MSearchPanelSFastEq ),
 
-        sTextC = propsProxy.connect(_.index.search.text)( MScSearchText.MScSearchTextFastEq ),
-
-        nodesSearchContC = propsProxy.connect { mroot =>
-          mroot.index.search.geo.css
-        }( SearchCss.SearchCssFastEq ),
-
-        nodesFoundC = propsProxy.connect { mroot =>
-          val geo = mroot.index.search.geo
-          NodesFoundR.PropsVal(
-            req                 = geo.found.req,
-            hasMore             = geo.found.hasMore,
-            selectedIds         = mroot.index.searchNodesSelectedIds,
-            withDistanceToNull  = geo.mapInit.state.center,
-            searchCss           = geo.css
-          )
-        }( NodesFoundR.NodesFoundRPropsValFastEq ),
+        nodesFoundRowsC = propsProxy.connect { mroot =>
+          mroot.index.searchGeoNodesFoundProps
+        }( FastEqUtil.CollFastEq(MNodesFoundRowProps.MNodesFoundRowPropsFeq) ),
 
       )
     }

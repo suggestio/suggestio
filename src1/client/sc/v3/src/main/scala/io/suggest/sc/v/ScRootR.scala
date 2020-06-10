@@ -39,7 +39,7 @@ class ScRootR (
                 headerR                 : HeaderR,
                 menuR                   : MenuR,
                 val welcomeR            : WelcomeR,
-                val indexSwitchAskR     : IndexSwitchAskR,
+                indexSwitchAskR         : IndexSwitchAskR,
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
                 scSettingsDiaR          : ScSettingsDiaR,
@@ -56,7 +56,6 @@ class ScRootR (
                                     wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
-                                    indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
                                   )
 
@@ -119,8 +118,8 @@ class ScRootR (
           ReactCommonUtil.maybeEl( isRenderSomeProxy.value.value )( muiThemeProviderComp )
         },
 
-        // Всплывающая плашка для смены узла: TODO Запихнуть внутрь theme-provider?
-        s.indexSwitchAskC { indexSwitchAskR.apply },
+        // Всплывающая плашка для смены узла:
+        mrootProxy.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq ),
 
         // Диалог первого запуска.
         wzFirstR.component( mrootProxy ),
@@ -174,10 +173,6 @@ class ScRootR (
           mroot.index.resp
             .fold(ScCss.COLORS_DFLT)(_.colors)
         }( FastEqUtil.AnyRefFastEq ),
-
-        indexSwitchAskC = propsProxy.connect { mroot =>
-          mroot.index.state.switchAsk
-        }( OptFastEq.Wrapped( MInxSwitchAskS.MInxSwitchAskSFastEq ) ) ,
 
         commonReactCtxC = propsProxy.connect( _.internals.info.commonReactCtx )( FastEq.AnyRefEq ),
 

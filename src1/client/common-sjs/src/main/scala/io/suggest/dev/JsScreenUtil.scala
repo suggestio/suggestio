@@ -67,7 +67,7 @@ object JsScreenUtil extends Log {
 
         // Это айфон. Надо решить, сколько отсутупать.
         if (
-          // iPhone 10
+          // iPhone 10 | iPhone 11 Pro
           (screenWhs contains 812) &&
           (screenWhs contains 375) &&
           (mscreen.pxRatio ==* MPxRatios.DPR3)
@@ -81,17 +81,26 @@ object JsScreenUtil extends Log {
           )
 
         } else if (
-          // iPhone 11
+          // iPhone 11 @2 / 11 Pro Max @3 (2019)
           (screenWhs contains 896) &&
-          (screenWhs contains 414) &&
-          // Почему-то window.devicePixelRatio в симуляторе выдаёт 2, но в прошлой модели было 3.
-          (mscreen.pxRatio.value >= MPxRatios.XHDPI.value)
+          (screenWhs contains 414)
         ) {
-          MTlbr(
-            topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
-            leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
-            bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
-          )
+          mscreen.pxRatio match {
+            case MPxRatios.DPR3 =>
+              // TODO Отладить значения
+              MTlbr(
+                topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
+                leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
+                bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
+              )
+            case _ =>
+              // TODO Отладить значения
+              MTlbr(
+                topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
+                leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
+                bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
+              )
+          }
 
         } else {
           // На остальных айфонах надо делать 12px сверху в вертикальной ориентации.

@@ -3,6 +3,7 @@ package io.suggest.sc.m.inx
 import diode.FastEq
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sc.m.HandleScApiResp
+import io.suggest.sc.m.search.{MNodesFoundRowProps, MNodesFoundS}
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
@@ -32,4 +33,28 @@ case class MInxSwitchAskS(
                            okAction     : HandleScApiResp,
                            nodesResp    : MGeoNodesResp,
                            searchCss    : SearchCss,
-                         )
+                         ) {
+
+  /** Маскировка под MNodesFoundS. */
+  lazy val nodesFoundS = MNodesFoundS(
+    req     = searchCss.args.req,
+    hasMore = false,
+  )
+
+
+  /** Кэширование данных для рендера рядов NodeFoundR. Обычно тут Nil. */
+  lazy val nodesFoundProps: Seq[MNodesFoundRowProps] = {
+    // Нельзя nodeId.get, т.к. могут быть узлы без id.
+    (for {
+      mnode <- nodesResp.nodes.iterator
+    } yield {
+      // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
+      MNodesFoundRowProps(
+        node                = mnode,
+        searchCss           = searchCss,
+      )
+    })
+      .to( List )
+  }
+
+}

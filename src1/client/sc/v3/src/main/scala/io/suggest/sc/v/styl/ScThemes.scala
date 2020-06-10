@@ -52,7 +52,8 @@ final class ScThemes {
     Mui.Styles.createMuiTheme( themeRaw )
   }
 
-  def typoGraphyProps: MuiThemeTypoGraphy = {
+
+  private def typoGraphyProps: MuiThemeTypoGraphy = {
     new MuiThemeTypoGraphy {
       override val useNextVariants = true
     }

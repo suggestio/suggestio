@@ -1,12 +1,12 @@
 package io.suggest.sc.v.search
 
-import diode.react.ModelProxy
+import diode.FastEq
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.m.search.NodesScroll
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
@@ -21,7 +21,11 @@ class NodesSearchContR {
   type Props = ModelProxy[Props_t]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  case class State(
+                    cssClassNameC      : ReactConnectProxy[String],
+                  )
+
+  class Backend($: BackendScope[Props, State]) {
 
     /** Скроллинг в списке найденных узлов. */
     private def _onScroll(e: ReactEventFromHtml): Callback = {
@@ -30,14 +34,18 @@ class NodesSearchContR {
       dispatchOnProxyScopeCB($, NodesScroll(scrollTop, scrollHeight) )
     }
 
-    def render(propsProxy: Props, children: PropsChildren): VdomElement = {
-      <.div(
-        // Общий скроллинг для всего содержимого:
-        propsProxy.value.NodesFound.container,
-        ^.onScroll ==> _onScroll,
+    def render(s: State, children: PropsChildren): VdomElement = {
+      val onScrollTm =
+        ^.onScroll ==> _onScroll
 
-        children
-      )
+      // Общий скроллинг для всего содержимого:
+      s.cssClassNameC { cssClassNameProxy =>
+        <.div(
+          ^.`class` := cssClassNameProxy.value,
+          onScrollTm,
+          children,
+        )
+      }
     }
 
   }
@@ -45,7 +53,11 @@ class NodesSearchContR {
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+        cssClassNameC = propsProxy.connect(_.NodesFound.container.htmlClass)( FastEq.ValueEq ),
+      )
+    }
     .renderBackendWithChildren[Backend]
     .build
 

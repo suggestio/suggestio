@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.menu.MMenuS
-import io.suggest.sc.m.search.MScSearch
+import io.suggest.sc.m.search.{MNodesFoundRowProps, MScSearch}
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -33,7 +33,7 @@ object MScIndex {
   @inline implicit def univEq: UnivEq[MScIndex] = UnivEq.derive
 
   val state   = GenLens[MScIndex](_.state)
-  val resp    = GenLens[MScIndex](_.resp)
+  def resp    = GenLens[MScIndex](_.resp)
   val welcome = GenLens[MScIndex](_.welcome)
   val search  = GenLens[MScIndex](_.search)
   val scCss   = GenLens[MScIndex](_.scCss)
@@ -53,7 +53,29 @@ case class MScIndex(
 
   /** Выбранные id узлов. */
   lazy val searchNodesSelectedIds: Set[String] = {
-    search.geo.data.selTagIds ++ state.rcvrId
+    val ids0 = search.geo.data.selTagIds
+    state.rcvrId.fold(ids0)(ids0 + _)
+  }
+
+  /** Кэширование данных для рендера рядов NodeFoundR. Обычно тут Nil. */
+  lazy val searchGeoNodesFoundProps: Seq[MNodesFoundRowProps] = {
+    // Нельзя nodeId.get, т.к. могут быть узлы без id.
+    val g = search.geo
+
+    (for {
+      req <- g.found.req.iterator
+      mnode <- req.resp.nodes
+    } yield {
+      val nodeId = mnode.props.idOrNameOrEmpty
+      // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
+      MNodesFoundRowProps(
+        node                = mnode,
+        searchCss           = g.css,
+        withDistanceToNull  = g.mapInit.state.center,
+        selected            = searchNodesSelectedIds contains nodeId,
+      )
+    })
+      .to( List )
   }
 
   def isAnyPanelOpened: Boolean = {

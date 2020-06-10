@@ -39,9 +39,9 @@ object MNodesFoundS {
 
   @inline implicit def univEq: UnivEq[MNodesFoundS] = UnivEq.derive
 
-  val req           = GenLens[MNodesFoundS](_.req)
-  val reqSearchArgs = GenLens[MNodesFoundS](_.reqSearchArgs)
-  val hasMore       = GenLens[MNodesFoundS](_.hasMore)
+  def req           = GenLens[MNodesFoundS](_.req)
+  def reqSearchArgs = GenLens[MNodesFoundS](_.reqSearchArgs)
+  def hasMore       = GenLens[MNodesFoundS](_.hasMore)
 
 }
 

@@ -59,4 +59,13 @@ object OptFastEq {
     }
   }
 
+
+  /** Для частичного сравнения можно использовать маппинг исходных элементов + FastEq для производного типа. */
+  def MapWrapped[T, M](mapF: T => M)(implicit feq: FastEq[M]): FastEq[Option[T]] = {
+    new OptFastEqHelper[T] {
+      override def _eqv(a: T, b: T): Boolean =
+        feq.eqv( mapF(a), mapF(b) )
+    }
+  }
+
 }

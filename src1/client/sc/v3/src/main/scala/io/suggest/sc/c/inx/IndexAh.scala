@@ -65,7 +65,7 @@ object IndexAh {
     var i1 = i0.copy(
       resp = i0.resp.ready(inx),
       state = i0.state.copy(
-        switchAsk = None,
+        switch = MInxSwitch.empty,
         // Если фокусировка, то разрешить шаг наверх:
         views = if ( m.reason.isInstanceOf[GridBlockClick] ) {
           //println("append: " + nextIndexView + " :: " + i0.state.views)
@@ -189,6 +189,10 @@ object IndexAh {
     ActionResult( Some(i1), fxOpt )
   }
 
+  def _inx_state_switch_ask_LENS = MScIndex.state
+    .composeLens( MScIndexState.switch )
+    .composeLens( MInxSwitch.ask )
+
 }
 
 
@@ -259,10 +263,9 @@ class IndexRah
       if (i1.search.geo.mapInit.loader.nonEmpty)
         i1 = MScIndex.search
           .modify(_.resetMapLoader)(i1)
-      if (i1.state.switchAsk.nonEmpty) {
-        i1 = MScIndex.state
-          .composeLens( MScIndexState.switchAsk )
-          .set( None )( i1 )
+      val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
+      if ( inx_state_switch_ask_LENS.exist(_.nonEmpty)(i1) ) {
+        i1 = inx_state_switch_ask_LENS.set( None )( i1 )
       }
 
       val v2 = MScRoot.index.set(i1)(v0)
@@ -295,8 +298,7 @@ class IndexRah
       )
 
       val v2 = MScRoot.index
-        .composeLens( MScIndex.state )
-        .composeLens( MScIndexState.switchAsk )
+        .composeLens( IndexAh._inx_state_switch_ask_LENS )
         .set( Some(switchAskState) )(v0)
 
       ActionResult.ModelUpdate(v2)
@@ -529,11 +531,10 @@ class IndexAh[M](
 
 
     // Клик по узлу в списке предлагаемых узлов:
-    case m: NodeRowClick if value.state.switchAsk.nonEmpty =>
+    case m: NodeRowClick if value.state.switch.ask.nonEmpty =>
       val v0 = value
       // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
-      val inx_state_switchAsk_LENS = MScIndex.state
-        .composeLens( MScIndexState.switchAsk )
+      val inx_state_switchAsk_LENS = IndexAh._inx_state_switch_ask_LENS
       val actResOpt = for {
         switchS <- inx_state_switchAsk_LENS.get(v0)
         inxPs2  <- switchS.nodesResp.nodes
@@ -621,27 +622,29 @@ class IndexAh[M](
     // Юзер не хочет уходить из текущего узла в новую определённую локацию.
     case CancelIndexSwitch =>
       val v0 = value
-      v0.state.switchAsk.fold(noChange) { switchS =>
-        val v1 = MScIndex.state
-          .composeLens( MScIndexState.switchAsk )
-          .set( None )( v0 )
 
-        if (v0.resp.isEmpty) {
-          // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
-          val fx = NodeRowClick(
-            nodeId = switchS.nodesResp.nodes
-              .head
-              .props
-              .idOrNameOrEmpty
-          )
-            .toEffectPure
-          effectOnly(fx)
+      val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
+      inx_state_switch_ask_LENS
+        .get(v0)
+        .fold(noChange) { switchS =>
+          val v1 = (inx_state_switch_ask_LENS set None)( v0 )
 
-        } else {
-          // Есть открытый узел. Просто скрыть диалог.
-          updated( v1 )
+          if (v0.resp.isEmpty) {
+            // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
+            val fx = NodeRowClick(
+              nodeId = switchS.nodesResp.nodes
+                .head
+                .props
+                .idOrNameOrEmpty
+            )
+              .toEffectPure
+            effectOnly(fx)
+
+          } else {
+            // Есть открытый узел. Просто скрыть диалог.
+            updated( v1 )
+          }
         }
-      }
 
   }
 

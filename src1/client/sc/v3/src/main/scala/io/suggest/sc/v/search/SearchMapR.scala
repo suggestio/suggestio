@@ -12,7 +12,7 @@ import io.suggest.maps.r.{LGeoMapR, MapLoaderMarkerR, RcvrMarkersR, ReactLeaflet
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.MMapInitState
+import io.suggest.sc.m.search.{MGeoTabS, MMapInitState}
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
@@ -41,17 +41,6 @@ class SearchMapR(
   import MMapS.MMapSFastEq4Map
 
 
-  case class PropsVal(
-                       searchCss    : SearchCss,
-                       mapInit      : MMapInitState
-                     )
-  implicit object SearchMapRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.searchCss ===* b.searchCss) &&
-      (a.mapInit ===* b.mapInit)
-    }
-  }
-
   protected[this] case class State(
                                     mmapC       : ReactConnectProxy[MMapS],
                                     rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]],
@@ -61,7 +50,7 @@ class SearchMapR(
                                   )
 
 
-  type Props_t = PropsVal
+  type Props_t = MGeoTabS
   type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, State]) {
@@ -116,7 +105,7 @@ class SearchMapR(
               // Нахождение этого кода здесь немного снижает производительность.
               val mapCSS = scReactCtx.scCss.Search.Tabs.MapTab
               val geoMapCssSome = Some(
-                (mapCSS.geomap :: props.searchCss.GeoMap.geomap :: Nil)
+                (mapCSS.geomap :: props.css.GeoMap.geomap :: Nil)
                   .toHtmlClass
               )
               mmapProxy.wrap { mmap =>
@@ -160,17 +149,22 @@ class SearchMapR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mapInitProxy =>
       State(
+
         mmapC       = mapInitProxy.connect(_.mapInit.state),
+
         rcvrsGeoC   = mapInitProxy.connect { props =>
           // Отображать найденные в поиске ресиверы вместо всех.
           props
             .mapInit.rcvrs
             .map(_.resp)
         },
+
         loaderOptC  = mapInitProxy.connect(_.mapInit.loader)( OptFastEq.Plain ),
+
         userLocOptC = mapInitProxy.connect { props =>
           props
             .mapInit
@@ -180,9 +174,11 @@ class SearchMapR(
               props.mapInit.state.locationFound.isEmpty
             }
         },
+
         isInitSomeC = mapInitProxy.connect { props =>
           OptionUtil.SomeBool( props.mapInit.ready )
-        }( FastEq.AnyRefEq )
+        }( FastEq.AnyRefEq ),
+
       )
     }
     .renderBackend[Backend]

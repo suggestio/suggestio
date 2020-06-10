@@ -1,14 +1,13 @@
 package io.suggest.sc.v.search
 
-import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoPoint}
-import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.geo.{DistanceUtil, ILPolygonGs}
 import io.suggest.maps.u.MapsUtil
 import scalacss.ScalaCssReact._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import ReactDiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.sc.m.search.NodeRowClick
+import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick}
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -33,35 +32,11 @@ import scala.scalajs.js
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
-class NodeFoundR(
-                  crCtxProv     : React.Context[MCommonReactCtx],
-                ) {
+class NodesFoundRowR(
+                      crCtxProv     : React.Context[MCommonReactCtx],
+                    ) {
 
-  /** Контейнер пропертисов компонента.
-    *
-    * @param node Данные по узлу, который рендерится.
-    * @param searchCss Инстанс класса SearchCss.
-    * @param withDistanceToNull Отображать расстояние до указанной точки.
-    * @param selected Является ли элемент списка выбранным (текущим)?
-    */
-  case class PropsVal(
-                       node               : MGeoNodePropsShapes,
-                       searchCss          : SearchCss,
-                       withDistanceToNull : MGeoPoint,
-                       selected           : Boolean,
-                     )
-
-  implicit object NodeFoundRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.node                 ===* b.node) &&
-      (a.searchCss            ===* b.searchCss) &&
-      (a.withDistanceToNull   ===* b.withDistanceToNull) &&
-      (a.selected              ==* b.selected)
-    }
-  }
-
-
-  type Props_t = PropsVal
+  type Props_t = MNodesFoundRowProps
   type Props = ModelProxy[Props_t]
 
 
@@ -220,5 +195,19 @@ class NodeFoundR(
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
+
+
+  def row(outerProxy: ModelProxy[_], rowProps: MNodesFoundRowProps) = {
+    val nodeId = rowProps.node.props.idOrNameOrEmpty
+    component.withKey(nodeId)( outerProxy.resetZoom(rowProps) )
+  }
+
+  def rows(rowsPropsProxy: ModelProxy[Seq[MNodesFoundRowProps]]): VdomElement = {
+    React.Fragment(
+      rowsPropsProxy.value.toVdomArray { rowProps =>
+        row( rowsPropsProxy, rowProps )
+      }
+    )
+  }
 
 }

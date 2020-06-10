@@ -1,7 +1,8 @@
 package io.suggest.sc.v.search
 
 import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputProps, MuiInputPropsMargins}
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -22,7 +23,7 @@ import scala.scalajs.js.|
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 21.07.17 12:50
-  * Description: React-компонент поиского поля.
+  * Description: wrap-компонент поиского поля.
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
 class STextR(
@@ -33,7 +34,12 @@ class STextR(
   type Props = ModelProxy[Props_t]
 
 
-  class Backend( $: BackendScope[Props, Unit] ) {
+  case class State(
+                    queryC                : ReactConnectProxy[String],
+                    queryEmptySomeC       : ReactConnectProxy[Some[Boolean]],
+                  )
+
+  class Backend( $: BackendScope[Props, State] ) {
 
     /** Происходит ввод текста в input. */
     private def _onInput(e: ReactEventFromInput): Callback = {
@@ -56,7 +62,7 @@ class STextR(
       // И вернуть итоговый callback:
       cb
     }
-    lazy val _onClearClickJsF = ReactCommonUtil.cbFun1ToJsCb( _onClearClick )
+    private lazy val _onClearClickJsF = ReactCommonUtil.cbFun1ToJsCb( _onClearClick )
 
 
     /** Инстанс нативного элемента, чтобы фокусом отсюда управлять. */
@@ -67,14 +73,14 @@ class STextR(
         _htmlInputRef = Some( el )
     }
 
-    def render(propsProxy: Props): VdomElement = {
-      val p = propsProxy.value
+    def render(s: State): VdomElement = {
 
       // Рендер текстового поля с input'ом.
       val TextBarCSS = ScCssStatic.Search.TextBar
       val formCtlCss = new MuiFormControlClasses {
         override val root = TextBarCSS.inputFormControl.htmlClass
       }
+      val clearIcon = Mui.SvgIcons.HighlightOffOutlined()()
 
       <.div(
         TextBarCSS.bar,
@@ -84,43 +90,51 @@ class STextR(
             override val classes = formCtlCss
           }
         )(
+          // Текстовое поле поисковой строки:
           crCtxProv.consume { crCtx =>
-            MuiInput {
-              //val inputCss = new MuiInputClasses {
-              //  override val root = TextBarCSS.inputRoot.htmlClass
-              //}
+            val startSearchTypingMsg = crCtx.messages( MsgCodes.`Search.start.typing` )
+            s.queryC { queryProxy =>
+              MuiInput {
+                val query = queryProxy.value
 
-              new MuiInputProps {
-                //override val classes = inputCss
-                override val `type` = HtmlConstants.Input.text
-                override val onChange = _onInputJsF
-                override val placeholder = crCtx.messages( MsgCodes.`Search.start.typing` )
-                override val value = js.defined( p.query )
-                override val margin = if (p.query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
-                // clear-кнопка:
-                //override val endAdornment = clearBtnUndef
-                override val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] =
-                  js.defined( _htmlInputRefHandlerJsF )
+                //val inputCss = new MuiInputClasses {
+                //  override val root = TextBarCSS.inputRoot.htmlClass
+                //}
+                new MuiInputProps {
+                  //override val classes = inputCss
+                  override val `type` = HtmlConstants.Input.text
+                  override val onChange = _onInputJsF
+                  override val placeholder = startSearchTypingMsg
+                  override val value = js.defined( query )
+                  override val margin = if (query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
+                  // clear-кнопка:
+                  //override val endAdornment = clearBtnUndef
+                  override val inputRef /*: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object]*/ =
+                    js.defined( _htmlInputRefHandlerJsF )
+                }
               }
             }
           },
 
-          // Кнопка быстрой очистки поля.
-          MuiIconButton {
-            val iconBtnCss = new MuiIconButtonClasses {
-              override val root = {
-                if (p.query.isEmpty) Css.Display.INVISIBLE
-                else Css.Display.VISIBLE
+          // Крестик быстрой очистки поля поиска:
+          s.queryEmptySomeC { queryEmptySomeProxy =>
+            // Кнопка быстрой очистки поля.
+            MuiIconButton {
+              val iconBtnCss = new MuiIconButtonClasses {
+                override val root = {
+                  if (queryEmptySomeProxy.value.value) Css.Display.INVISIBLE
+                  else Css.Display.VISIBLE
+                }
               }
-            }
-            new MuiIconButtonProps {
-              override val classes = iconBtnCss
-              override val onClick = _onClearClickJsF
-              override val disableRipple = true
-            }
-          }(
-            Mui.SvgIcons.HighlightOffOutlined()()
-          )
+              new MuiIconButtonProps {
+                override val classes = iconBtnCss
+                override val onClick = _onClearClickJsF
+                override val disableRipple = true
+              }
+            } (
+              clearIcon
+            )
+          },
 
         )
 
@@ -130,11 +144,20 @@ class STextR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
-    .stateless
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        queryC = propsProxy.connect( _.query ),
+
+        queryEmptySomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.query.isEmpty )
+        },
+
+      )
+    }
     .renderBackend[Backend]
     .build
-
-  def apply(scSearchTextOptProxy: Props) = component( scSearchTextOptProxy )
 
 }

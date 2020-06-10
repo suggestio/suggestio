@@ -55,7 +55,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
         .map { n =>
           n.props.ntype match {
             case MNodeTypes.Tag => 1
-            case _ => 4
+            case _ => 2
           }
         }
         .sum
@@ -67,13 +67,15 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     if (args.req.isFailed)
       rowsCount += 2
 
-    val MAX_ROWS_COUNT = 5
+    val MAX_ROWS_COUNT = 7
     rowsCount = Math.min(rowsCount, MAX_ROWS_COUNT)
 
     val rowHeightPx = SearchCss.NODE_ROW_HEIGHT_PX
 
     var listHeightPx = rowsCount * rowHeightPx
     if (rowsCount > MAX_ROWS_COUNT) listHeightPx += rowHeightPx/2
+
+    println("search rows height pxx: ", rowHeightPx, rowsCount, args.req.isFailed, args.req.isPending, args.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
 
     listHeightPx.toInt
   }
