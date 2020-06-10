@@ -57,6 +57,8 @@ case class MScIndex(
     state.rcvrId.fold(ids0)(ids0 + _)
   }
 
+  lazy val respOpt = resp.toOption
+
   /** Кэширование данных для рендера рядов NodeFoundR. Обычно тут Nil. */
   lazy val searchGeoNodesFoundProps: Seq[MNodesFoundRowProps] = {
     // Нельзя nodeId.get, т.к. могут быть узлы без id.

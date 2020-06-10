@@ -38,7 +38,7 @@ class ScRootR (
                 searchR                 : SearchR,
                 headerR                 : HeaderR,
                 menuR                   : MenuR,
-                val welcomeR            : WelcomeR,
+                welcomeR                : WelcomeR,
                 indexSwitchAskR         : IndexSwitchAskR,
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
@@ -53,7 +53,6 @@ class ScRootR (
 
   protected[this] case class State(
                                     scCssArgsC                : ReactConnectProxy[ScCss],
-                                    wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
@@ -65,29 +64,26 @@ class ScRootR (
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
       // Содержимое правой панели (панель поиска)
       // search (правый) sidebar.
-      val scBody = <.div(
-        // Ссылаемся на стиль.
-        ScCssStatic.Root.root,
-
-        // Экран приветствия узла:
-        s.wcPropsOptC { welcomeR.apply },
-
-        // заголовок выдачи:
-        headerR.component( mrootProxy ),
-
-        // Рендер плитки карточек узла:
-        mrootProxy.wrap(_.grid)(gridR.apply)( implicitly, MGridS.MGridSFastEq ),
-      )
-
-      // Правая панель поиска:
-      val searchSideBar = searchR.component( mrootProxy )( scBody )
-
       // Левая панель меню:
-      val menuSideBar = menuR.component( mrootProxy )( searchSideBar )
+      val menuSideBar = menuR.component( mrootProxy )(
+        // Правая панель поиска:
+        searchR.component( mrootProxy )(
+          // Основное тело выдачи:
+          <.div(
+            // Ссылаемся на стиль.
+            ScCssStatic.Root.root,
 
-      // Рендер стилей перед снаружи и перед остальной выдачей.
-      // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
-      val scCssComp = s.scCssArgsC { CssR.compProxied.apply }
+            // Экран приветствия узла:
+            mrootProxy.wrap(_.index)( welcomeR.component.apply ),
+
+            // заголовок выдачи:
+            headerR.component( mrootProxy ),
+
+            // Рендер плитки карточек узла:
+            mrootProxy.wrap(_.grid)(gridR.apply)( implicitly, MGridS.MGridSFastEq ),
+          )
+        )
+      )
 
       // Рендер провайдера тем MateriaUI, который заполняет react context.
       val muiThemeProviderComp = s.colorsC { mcolorsProxy =>
@@ -101,10 +97,11 @@ class ScRootR (
       }
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
-      val sc = <.div(
+      val sc = React.Fragment(
 
-        // Рендер ScCss.
-        scCssComp,
+        // Рендер стилей перед снаружи и перед остальной выдачей.
+        // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
+        s.scCssArgsC { CssR.compProxied.apply },
 
         // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
         mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
@@ -150,20 +147,6 @@ class ScRootR (
     .initialStateFromProps { propsProxy =>
       State(
         scCssArgsC  = propsProxy.connect(_.index.scCss),
-
-        wcPropsOptC = propsProxy.connect { props =>
-          for {
-            resp    <- props.index.resp.toOption
-            wcInfo  <- resp.welcome
-            wcState <- props.index.welcome
-          } yield {
-            welcomeR.PropsVal(
-              wcInfo   = wcInfo,
-              nodeName = resp.name,
-              state    = wcState
-            )
-          }
-        }( OptFastEq.Wrapped(welcomeR.WelcomeRPropsValFastEq) ),
 
         isRenderScC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( !mroot.index.isFirstRun )

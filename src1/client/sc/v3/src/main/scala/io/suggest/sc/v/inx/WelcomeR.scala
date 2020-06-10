@@ -1,13 +1,14 @@
 package io.suggest.sc.v.inx
 
-import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
+import io.suggest.media.IMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
-import io.suggest.sc.index.MWelcomeInfo
+import io.suggest.sc.index.MWcNameFgH
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.m.inx.{MWelcomeState, WcClick}
+import io.suggest.sc.m.inx.{MScIndex, WcClick}
 import io.suggest.sc.v.hdr.NodeNameR
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq.Plain
@@ -15,80 +16,69 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
+import OptionUtil.BoolOptOps
 import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.07.17 16:58
-  * Description: React-компонент экрана приветствия.
+  * Description: wrap-компонент экрана приветствия.
   */
 class WelcomeR(
                 nodeNameR       : NodeNameR,
                 scReactCtxP     : React.Context[MScReactCtx],
               ) {
 
-  /** Props-модель данного компонента. */
-  case class PropsVal(
-                       wcInfo     : MWelcomeInfo,
-                       nodeName   : Option[String],
-                       state      : MWelcomeState
-                     )
-
-  /** Поддержка FastEq прямо на объекте-компаньоне. */
-  implicit object WelcomeRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.wcInfo     ===* b.wcInfo) &&
-      (a.nodeName   ===* b.nodeName) &&
-      (a.state      ===* b.state)
-    }
-  }
-
-
-  type Props_t = Option[PropsVal]
+  type Props_t = MScIndex
   type Props = ModelProxy[Props_t]
 
 
-  class Backend( $: BackendScope[Props, Unit] ) {
+  /** @param visibileOptC None - не видим, Some(false) - fading out, Some(true) - видим нормально.
+    */
+  case class State(
+                    visibileOptC              : ReactConnectProxy[Option[Boolean]],
+                    bgImgOptC                 : ReactConnectProxy[Option[IMediaInfo]],
+                    fgImgOptC                 : ReactConnectProxy[Option[IMediaInfo]],
+                    nodeNameFgOptC            : ReactConnectProxy[MWcNameFgH],
+                  )
+
+
+  class Backend( $: BackendScope[Props, State] ) {
 
     private val _onClick: Callback =
       dispatchOnProxyScopeCB( $, WcClick )
 
 
-    def render(propsProxy: Props): VdomElement = {
-      propsProxy().whenDefinedEl { p =>
-        scReactCtxP.consume { scReactCtx =>
-          val AnimCss = ScConstants.Welcome.Anim
-          val fadingOutNow = p.state.isHiding
+    def render(propsProxy: Props, s: State): VdomElement = {
+      scReactCtxP.consume { scReactCtx =>
+        val AnimCss = ScConstants.Welcome.Anim
+        val scCss = scReactCtx.scCss
+        val CSS = scCss.Welcome
 
-          val scCss = scReactCtx.scCss
-          val CSS = scCss.Welcome
+        val tms = TagMod(
+          scCss.bgColor,
+          ScCssStatic.Welcome.welcome,
+          ^.`class` := AnimCss.WILL_FADEOUT_CSS_CLASS,
 
-          <.div(
-            scCss.bgColor,
-            ScCssStatic.Welcome.welcome,
+          ^.onClick --> _onClick,
 
-            ^.classSet1(
-              AnimCss.WILL_FADEOUT_CSS_CLASS,
-              AnimCss.TRANS_02_CSS_CLASS     -> fadingOutNow,
-              AnimCss.FADEOUT_CSS_CLASS      -> fadingOutNow
-            ),
-
-            ^.onClick --> _onClick,
-
-            // Рендер фонового изображения.
-            p.wcInfo.bgImage.whenDefined { bgImg =>
+          // Рендер фонового изображения.
+          s.bgImgOptC { bgImgOptProxy =>
+            bgImgOptProxy.value.whenDefinedEl { bgImg =>
               <.img(
                 // Подгонка фона wh под экран и центровка происходит в ScCss:
                 CSS.Bg.bgImg,
                 ^.src := bgImg.url
               )
-            },
+            }
+          },
 
-            // Рендер логотипа или картинки переднего плана.
-            p.wcInfo.fgImage.whenDefined { fgImg =>
+          // Рендер логотипа или картинки переднего плана.
+          s.fgImgOptC { fgImgOptProxy =>
+            fgImgOptProxy.value.whenDefinedEl { fgImg =>
               // Есть графический логотип, отрендерить его изображение:
-              TagMod(
+              <.span(
                 <.span(
                   CSS.Fg.helper
                 ),
@@ -99,30 +89,49 @@ class WelcomeR(
                   ^.src := fgImg.url
                 )
               )
-            },
+            }
+          },
 
-            // Текстовый логотип-подпись, если доступно название узла.
-            p.nodeName.whenDefined { nodeName =>
+          // Текстовый логотип-подпись, если доступно название узла.
+          s.nodeNameFgOptC { wcNameFgHProxy =>
+            val wcNameFgH = wcNameFgHProxy.value
+            wcNameFgH.nodeName.whenDefinedEl { nodeName =>
               <.div(
                 CSS.Fg.fgText,
+
                 // Выровнять по вертикали с учётом картинки переднего плана:
-                p.wcInfo
-                  .fgImage
-                  .flatMap(_.whPx)
-                  .whenDefined { whPx =>
-                    ^.marginTop := (whPx.height / 2).px
-                  },
+                wcNameFgH.wcFgHeightPx.whenDefined { fgHeightPx =>
+                  ^.marginTop := (fgHeightPx / 2).px
+                },
+
                 // Отобразить текстовый логотип, такой же как и в заголовке:
                 propsProxy.wrap { _ =>
                   val nnProps = nodeNameR.PropsVal(
                     nodeName = nodeName,
-                    styled   = true
+                    styled = true
                   )
                   Some(nnProps): nodeNameR.Props_t
-                }( nodeNameR.apply ),
+                }(nodeNameR.component.apply),
               )
             }
+          }
+        )
 
+        s.visibileOptC { visibleOptProxy =>
+          val visibleOpt = visibleOptProxy.value
+          val fadingOut = visibleOpt.getOrElseFalse
+
+          <.div(
+            ^.classSet1(
+              AnimCss.WILL_FADEOUT_CSS_CLASS,
+              AnimCss.TRANS_02_CSS_CLASS     -> fadingOut,
+              AnimCss.FADEOUT_CSS_CLASS      -> fadingOut,
+            ),
+
+            if (visibleOpt.isEmpty) ^.display.none
+            else ^.display.block,
+
+            tms,
           )
         }
       }
@@ -133,7 +142,35 @@ class WelcomeR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        visibileOptC = propsProxy.connect { props =>
+          props.welcome
+            .flatMap { wcS =>
+              OptionUtil.SomeBool( wcS.isHiding )
+            }
+        },
+
+        bgImgOptC = propsProxy.connect { props =>
+          props.respOpt
+            .flatMap(_.welcome)
+            .flatMap(_.bgImage)
+        },
+
+        fgImgOptC = propsProxy.connect { props =>
+          props.respOpt
+            .flatMap(_.welcome)
+            .flatMap(_.fgImage)
+        },
+
+        nodeNameFgOptC = propsProxy.connect { props =>
+          props.respOpt
+            .fold(MWcNameFgH.empty)(_.wcNameFgH)
+        },
+
+      )
+    }
     .renderBackend[Backend]
     .build
 

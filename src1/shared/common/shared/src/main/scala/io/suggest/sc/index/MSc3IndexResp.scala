@@ -85,5 +85,29 @@ case class MSc3IndexResp(
 
   def idOrNameOrEmpty = nodeId.orElse(name).getOrElse("")
 
+  /** Инфа на клиенте для рендера welcome-заголовка. */
+  lazy val wcNameFgH: MWcNameFgH = {
+    MWcNameFgH(
+      nodeName = name,
+      wcFgHeightPx = for {
+        wc <- welcome
+        if name.nonEmpty
+        wcFg <- wc.fgImage
+        wcFgWh <- wcFg.whPx
+      } yield {
+        wcFgWh.height
+      }
+    )
+  }
+
 }
+
+
+object MWcNameFgH {
+  lazy val empty = apply()
+}
+case class MWcNameFgH(
+                       nodeName       : Option[String] = None,
+                       wcFgHeightPx   : Option[Int] = None,
+                     )
 
