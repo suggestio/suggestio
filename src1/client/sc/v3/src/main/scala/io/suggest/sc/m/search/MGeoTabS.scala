@@ -26,8 +26,8 @@ object MGeoTabS {
   @inline implicit def univEq: UnivEq[MGeoTabS] = UnivEq.derive
 
   val mapInit = GenLens[MGeoTabS](_.mapInit)
-  val css     = GenLens[MGeoTabS](_.css)
-  val found   = GenLens[MGeoTabS](_.found)
+  def css     = GenLens[MGeoTabS](_.css)
+  def found   = GenLens[MGeoTabS](_.found)
   val data    = GenLens[MGeoTabS](_.data)
 
 

@@ -33,7 +33,7 @@ class HeaderR(
 
   case class State(
                     hdrPropsC                 : ReactConnectProxy[Some[Boolean]],
-                    hdrLogoOptC               : ReactConnectProxy[Option[logoR.PropsVal]],
+                    hdrLogoOptC               : ReactConnectProxy[logoR.Props_t],
                     hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
                     goBackC                   : ReactConnectProxy[goBackR.Props_t],

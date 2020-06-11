@@ -37,6 +37,9 @@
     <allow-navigation href="https://sii.im/*" />
     <allow-navigation href="https://relay.socketnetwork.io/*" />
     <allow-navigation href="https://fonts.googleapis.com/*" />
+    <preference name="StatusBarOverlaysWebView" value="true" />
+    <preference name="StatusBarStyle" value="lightcontent" />
+    <preference name="StatusBarBackgroundColor" value="#2d3d4e" />
     <platform name="android">
         <allow-intent href="market:*" />
         <splash density="land-hdpi" src="res/screen/android/screen-hdpi-landscape.png" />

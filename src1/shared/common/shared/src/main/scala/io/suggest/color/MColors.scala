@@ -5,6 +5,7 @@ import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.err.ErrorConstants
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.syntax.apply._
@@ -33,14 +34,10 @@ object MColors extends IEmpty {
 
   override type T = MColors
 
-  override val empty: MColors = {
-    new MColors() {
-      override def nonEmpty = false
-    }
-  }
+  override val empty = apply()
 
   /** Поддержка boopickle. */
-  implicit val mColorsPickler: Pickler[MColors] = {
+  implicit lazy val mColorsPickler: Pickler[MColors] = {
     implicit val mColorsDataP = MColorData.mColorDataPickler
     generatePickler[MColors]
   }
@@ -78,43 +75,35 @@ object MColors extends IEmpty {
     }
   }
 
-}
+  def bg = GenLens[MColors]( _.bg )
+  def fg = GenLens[MColors]( _.fg )
 
-
-// TODO Вероятно, надо заменить эту модель (или её поля) чем-то типа Map[MColorType, MColorData].
-
-case class MColors(
-  bg        : Option[MColorData]    = None,
-  fg        : Option[MColorData]    = None
-)
-  extends EmptyProduct
-{
-
-  /** Вернуть все перечисленные цвета. */
-  def allColorsIter: Iterator[MColorData] = {
-    (bg :: fg :: Nil)
-      .iterator
-      .flatten
-  }
-
-  def adnColors = bg :: fg :: Nil
-
-  def ofType(mct: MColorType): Option[MColorData] = {
+  def ofType( mct: MColorType ) = {
     mct match {
       case MColorTypes.Bg => bg
       case MColorTypes.Fg => fg
     }
   }
 
+}
 
-  def withColorOfType(mct: MColorType, mcdOpt: Option[MColorData]): MColors = {
-    mct match {
-      case MColorTypes.Bg => withBg(mcdOpt)
-      case MColorTypes.Fg => withFg(mcdOpt)
+
+// TODO Вероятно, надо заменить эту модель (или её поля) чем-то типа Map[MColorType, MColorData].
+
+final case class MColors(
+                          bg        : Option[MColorData]    = None,
+                          fg        : Option[MColorData]    = None
+                        )
+  extends EmptyProduct
+{
+
+  /** Вернуть все перечисленные цвета. */
+  def allColorsIter: Iterator[MColorData] = {
+    productIterator.collect {
+      case Some(mcd: MColorData) => mcd
     }
   }
 
-  def withBg(bg: Option[MColorData]) = copy(bg = bg)
-  def withFg(fg: Option[MColorData]) = copy(fg = fg)
+  def adnColors = bg :: fg :: Nil
 
 }

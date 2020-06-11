@@ -104,10 +104,10 @@ object MColorData
     )
   }
 
-  val code    = GenLens[MColorData](_.code)
-  val rgb     = GenLens[MColorData](_.rgb)
-  val freqPc  = GenLens[MColorData](_.freqPc)
-  val count   = GenLens[MColorData](_.count)
+  def code    = GenLens[MColorData](_.code)
+  def rgb     = GenLens[MColorData](_.rgb)
+  def freqPc  = GenLens[MColorData](_.freqPc)
+  def count   = GenLens[MColorData](_.count)
 
 }
 

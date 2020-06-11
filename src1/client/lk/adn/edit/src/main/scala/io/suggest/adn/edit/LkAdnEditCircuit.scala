@@ -5,7 +5,7 @@ import io.suggest.spa.{CircuitUtil, OptFastEq, StateInp}
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
 import io.suggest.adn.edit.c.{NodeEditAh, RootAh}
 import io.suggest.adn.edit.m._
-import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes}
+import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes, MColors}
 import io.suggest.lk.c.{ColorPickAh, UploadAh}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MUploadAh
@@ -116,22 +116,25 @@ class LkAdnEditCircuit
 
   /** Сборка инстансов контроллера ColorPickAh для разных picker'ов цвета фона и переднего плана. */
   private def _mkColorPickerAh(colorOfType: MColorType with IColorPickerMarker): ColorPickAh[MLkAdnEditRoot] = {
+    val colorLens = MLkAdnEditRoot.node
+      .composeLens( MAdnNodeS.meta )
+      .composeLens( MMetaPub.colors )
+      .composeLens( MColors.ofType( colorOfType ) )
+
     new ColorPickAh[MLkAdnEditRoot](
       myMarker = Some(colorOfType),
       modelRW  = zoomRW [Option[MColorPick]] { mroot =>
         // TODO Выкинуть этот Option, он не нужен.
         val mcp = MColorPick(
-          colorOpt    = mroot.node.meta.colors.ofType(colorOfType),
+          colorOpt    = colorLens.get(mroot),
           colorsState = mroot.internals.colorState
         )
         Some(mcp)
       } { (mroot0, mcpOpt2) =>
         mcpOpt2.fold(mroot0) { mcp2 =>
           (
-            MLkAdnEditRoot.node
-              .composeLens( MAdnNodeS.meta )
-              .composeLens( MMetaPub.colors )
-              .modify( _.withColorOfType(colorOfType, mcp2.colorOpt) ) andThen
+            colorLens
+              .set( mcp2.colorOpt ) andThen
             MLkAdnEditRoot.internals
               .composeLens( MAdnEditInternals.colorState )
               .set( mcp2.colorsState )

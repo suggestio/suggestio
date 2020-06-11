@@ -105,13 +105,12 @@ class WelcomeR(
                 },
 
                 // Отобразить текстовый логотип, такой же как и в заголовке:
-                propsProxy.wrap { _ =>
-                  val nnProps = nodeNameR.PropsVal(
+                nodeNameR.component(
+                  nodeNameR.PropsVal(
                     nodeName = nodeName,
                     styled = true
                   )
-                  Some(nnProps): nodeNameR.Props_t
-                }(nodeNameR.component.apply),
+                ),
               )
             }
           }

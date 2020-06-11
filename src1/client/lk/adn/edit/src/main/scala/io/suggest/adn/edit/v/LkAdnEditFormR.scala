@@ -5,7 +5,7 @@ import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adn.edit.m._
-import io.suggest.color.{IColorPickerMarker, MColorData, MColorType, MColorTypes}
+import io.suggest.color.{IColorPickerMarker, MColorData, MColorType, MColorTypes, MColors}
 import io.suggest.css.Css
 import japgolly.scalajs.react._
 import japgolly.univeq._
@@ -265,8 +265,9 @@ class LkAdnEditFormR(
         val colorTypeSome = Some(colorType)
         lazy val mcdDflt = MColorData( colorType.scDefaultHex )
         propsProxy.connect { props =>
-          val mcd = props.node.meta.colors
+          val mcd = MColors
             .ofType( colorType )
+            .get( props.node.meta.colors )
             .getOrElse( mcdDflt )
           val propsVal = colorBtnR.PropsVal(
             color     = mcd,
@@ -332,8 +333,9 @@ class LkAdnEditFormR(
             cps <- props.internals.colorState.picker
             marker0 <- cps.marker
             marker = marker0.asInstanceOf[MColorType]
-            mcd = props.node.meta.colors
+            mcd = MColors
               .ofType( marker )
+              .get( props.node.meta.colors )
               .getOrElse( MColorData(marker.scDefaultHex) )
           } yield {
             colorPickerR.PropsVal(

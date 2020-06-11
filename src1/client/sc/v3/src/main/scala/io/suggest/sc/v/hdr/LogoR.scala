@@ -57,14 +57,14 @@ class LogoR(
         // Нужно решить, что вообще надо рендерить: логотип, название узла или что-то иное?
         nodeInfo.logoOpt.fold[VdomElement] {
           // Графический логотип не доступен. Попробовать отрендерить текстовый логотип.
-          propsProxy.wrap { _ =>
-            for (nodeName <- nodeInfo.nodeNameOpt) yield {
+          nodeInfo.nodeNameOpt.whenDefinedEl { nodeName =>
+            nodeNameR.component(
               nodeNameR.PropsVal(
                 nodeName = nodeName,
                 styled   = nodeInfo.styled
               )
-            }
-          }( nodeNameR.apply )(implicitly, OptFastEq.Wrapped(nodeNameR.NodeNameRPropsValFastEq) )
+            )
+          }
 
         } { logoInfo =>
           // Рендерим картинку графического логотипа узла.

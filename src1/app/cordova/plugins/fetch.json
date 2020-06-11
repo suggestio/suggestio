@@ -83,10 +83,18 @@
     "is_top_level": true,
     "variables": {}
   },
+  "cordova-plugin-statusbar": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/apache/cordova-plugin-statusbar"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
   "cordova-plugin-background-mode": {
     "source": {
       "type": "registry",
-      "id": "https://github.com/wspresto/cordova-plugin-background-mode"
+      "id": "cordova-plugin-background-mode"
     },
     "is_top_level": true,
     "variables": {}

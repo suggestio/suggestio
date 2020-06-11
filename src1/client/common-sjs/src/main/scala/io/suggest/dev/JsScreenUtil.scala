@@ -42,6 +42,8 @@ object JsScreenUtil extends Log {
     }
   }
 
+  // Const: Отступ сверху на 12px
+  private def _TOP_12PX = MTlbr( topO = Some(12) )
 
   /** Задетектить небезопасные для контента области на экране.
     * iphone10 содержит вырез наверху экрана.
@@ -55,12 +57,15 @@ object JsScreenUtil extends Log {
         .navigator
         .flatMap(_.userAgent)
 
-      def orientation = MOrientations2d.forSize2d( mscreen.wh )
+      lazy val orientation = MOrientations2d.forSize2d( mscreen.wh )
 
-      // Const: Отступ сверху на 12px
-      def TOP_12PX = MTlbr( topO = Some(12) )
+      if (uaOpt.exists(_ contains "Android")) {
+        // ~25 csspx - размер статусбара, который всегда сверху при любом повороте экрана.
+        MTlbr(
+          topO = Some( 30 ),
+        )
 
-      if ( uaOpt.exists(_ contains "iPhone") ) {
+      } else if ( uaOpt.exists(_ contains "iPhone") ) {
         val screenWhs = mscreen.wh.width ::
           mscreen.wh.height ::
           Nil
@@ -85,34 +90,22 @@ object JsScreenUtil extends Log {
           (screenWhs contains 896) &&
           (screenWhs contains 414)
         ) {
-          mscreen.pxRatio match {
-            case MPxRatios.DPR3 =>
-              // TODO Отладить значения
-              MTlbr(
-                topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
-                leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
-                bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
-              )
-            case _ =>
-              // TODO Отладить значения
-              MTlbr(
-                topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
-                leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
-                bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
-              )
-          }
-
+          MTlbr(
+            topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
+            leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
+            bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
+          )
         } else {
           // На остальных айфонах надо делать 12px сверху в вертикальной ориентации.
           if (orientation ==* MOrientations2d.Vertical)
-            TOP_12PX
+            _TOP_12PX
           else
             MTlbr.empty
         }
 
       } else if ( uaOpt.exists(_ contains "iPad") ) {
         // 12px сверху в любой ориентации
-        TOP_12PX
+        _TOP_12PX
 
       } else {
         // Обычное устройство, всё ок.

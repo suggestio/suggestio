@@ -1,9 +1,10 @@
 package io.suggest.sc.c.inx
 
+import com.materialui.Mui
+import cordova.plugins.statusbar.CdvStatusBar
 import diode._
 import diode.data.{Pot, Ready}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dev.MScreenInfo
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.msg.ErrorMsgs
@@ -28,6 +29,7 @@ import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.styl.ScCss
+import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import scalaz.NonEmptyList
 
@@ -47,7 +49,7 @@ object IndexAh {
     * @param inx Новый индекс.
     * @return ActionResult.
     */
-  def indexUpdated(i0: MScIndex, inx: MSc3IndexResp, m: HandleScApiResp, mscreen: MScreenInfo): ActionResult[MScIndex] = {
+  def indexUpdated(i0: MScIndex, inx: MSc3IndexResp, m: HandleScApiResp, mroot: MScRoot): ActionResult[MScIndex] = {
     // Сайд-эффекты закидываются в этот аккамулятор:
     var fxsAcc = List.empty[Effect]
 
@@ -68,10 +70,8 @@ object IndexAh {
         switch = MInxSwitch.empty,
         // Если фокусировка, то разрешить шаг наверх:
         views = if ( m.reason.isInstanceOf[GridBlockClick] ) {
-          //println("append: " + nextIndexView + " :: " + i0.state.views)
           nextIndexView <:: i0.state.views
         } else {
-          //println("replace: " + nextIndexView + " " + ctx.m.reason)
           NonEmptyList( nextIndexView )
         }
       ),
@@ -174,7 +174,7 @@ object IndexAh {
       .set( mWcSFutOpt.map(_._2) )(i1)
 
     // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-    val scCssArgs2 = MScCssArgs.from(i1.resp, mscreen)
+    val scCssArgs2 = MScCssArgs.from( i1.resp, mroot.dev.screen.info )
     if (scCssArgs2 !=* i1.scCss.args) {
       // Изменились аргументы. Пора отребилдить ScCss.
       i1 = MScIndex.scCss
@@ -184,6 +184,21 @@ object IndexAh {
     // Объединить эффекты плитки и приветствия воедино:
     for (mwc <- mWcSFutOpt)
       fxsAcc ::= mwc._1
+
+
+    // В зависимости от нового цвета фона, нужно подчинить этому цвету системную статус-панель.
+    val plat = mroot.dev.platform
+    if (plat.isCordova && plat.isReady) {
+      val bgColorHex = i1.scCss.bgColorCss.value
+      fxsAcc ::= Effect.action {
+        CdvStatusBar.backgroundColorByHexString( bgColorHex )
+        if (Mui.Styles.getLuminance( bgColorHex ) > 0.5)
+          CdvStatusBar.styleDefault()
+        else
+          CdvStatusBar.styleLightContent()
+        DoNothing
+      }
+    }
 
     val fxOpt = fxsAcc.mergeEffects
     ActionResult( Some(i1), fxOpt )
@@ -270,17 +285,18 @@ class IndexRah
 
       val v2 = MScRoot.index.set(i1)(v0)
 
+      var fxAcc = List.empty[Effect]
+
       // Запустить эффект обновления плитки, если плитка не пришла автоматом.
-      val gridLoadFxOpt = OptionUtil.maybe(
+      if (
         !ctx.m.tryResp
           .toOption
           .exists(_.respActionTypes contains MScRespActionTypes.AdsTile)
       ) {
-        GridLoadAds(clean = true, ignorePending = true)
-          .toEffectPure
+        fxAcc ::= GridLoadAds(clean = true, ignorePending = true).toEffectPure
       }
 
-      ActionResult( Some(v2), gridLoadFxOpt )
+      ActionResult( Some(v2), fxAcc.mergeEffects )
 
     } else if (isMultiNodeResp || ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
       // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
@@ -309,7 +325,7 @@ class IndexRah
         i0        = v0.index,
         inx       = resp.nodes.head.props,
         m         = ctx.m,
-        mscreen   = v0.dev.screen.info
+        mroot     = v0,
       )
       ActionResult(
         for (inx2 <- actRes1.newModelOpt) yield {
@@ -343,7 +359,6 @@ class IndexAh[M](
     */
   private def _getIndex(silentUpdate: Boolean, v0: MScIndex,
                         reason: IScIndexRespReason, switchCtx: MScSwitchCtx): ActionResult[M] = {
-    //println(s"getIndex\n $silentUpdate\n $v0\n $reason\n $switchCtx")
     val ts = System.currentTimeMillis()
     val root = rootRO.value
 
@@ -544,7 +559,7 @@ class IndexAh[M](
           i0      = (inx_state_switchAsk_LENS set None)(v0),
           inx     = inxPs2.props,
           m       = switchS.okAction,
-          mscreen = rootRO.value.dev.screen.info,
+          mroot   = rootRO.value,
         )
       }
       ah.updatedFrom( actResOpt )

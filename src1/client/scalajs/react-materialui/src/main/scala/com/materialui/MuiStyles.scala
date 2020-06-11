@@ -15,8 +15,31 @@ trait MuiStyles extends js.Object {
   def createMuiTheme(options: MuiRawTheme): MuiTheme = js.native
 
   val MuiThemeProvider: js.Dynamic = js.native
-  //val colorManipulator: MuiStylesColorManipulator = js.native // TODO not exported.
+
+
+  // Далее, идёт API для colorManipulator.js:
+  // https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/colorManipulator.js
+
+  // Функции прямо тут, т.к. https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/index.js
+  // содержит строку "export * from './colorManipulator';"
+
+  /** relative brightness of any point in a color space.
+    *
+    * @param color
+    * @return [0..1];
+    *         0 = darkest black,
+    *         1 = lightest white
+    */
+  def getLuminance(color: String): Double = js.native
+
+  def fade(color: MuiColor, amount: Double): MuiColor                        = js.native
+  def lighten(color: MuiColor, amount: Double): MuiColor                     = js.native
+  def darken(color: MuiColor, amount: Double): MuiColor                      = js.native
+  def contrastRatio(background: MuiColor, foreground: MuiColor): Double      = js.native
+  def contrastRatioLevel(background: MuiColor, foreground: MuiColor): String = js.native
+
 }
+
 
 trait MuiPaletteCommon extends js.Object {
   val black: js.UndefOr[String]

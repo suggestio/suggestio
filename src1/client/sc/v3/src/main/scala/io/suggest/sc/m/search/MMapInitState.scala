@@ -38,10 +38,10 @@ object MMapInitState {
   @inline implicit def univEq: UnivEq[MMapInitState] = UnivEq.derive
 
   val state     = GenLens[MMapInitState](_.state)
-  val ready     = GenLens[MMapInitState](_.ready)
-  val rcvrs     = GenLens[MMapInitState](_.rcvrs)
-  val loader    = GenLens[MMapInitState](_.loader)
-  val userLoc   = GenLens[MMapInitState](_.userLoc)
+  def ready     = GenLens[MMapInitState](_.ready)
+  def rcvrs     = GenLens[MMapInitState](_.rcvrs)
+  def loader    = GenLens[MMapInitState](_.loader)
+  def userLoc   = GenLens[MMapInitState](_.userLoc)
 
 }
 

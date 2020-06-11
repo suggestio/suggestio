@@ -27,8 +27,8 @@ object MSearchCssProps {
 
   @inline implicit def univEq: UnivEq[MSearchCssProps] = UnivEq.derive
 
-  val req = GenLens[MSearchCssProps](_.req)
-  val screenInfo = GenLens[MSearchCssProps](_.screenInfo)
+  def req = GenLens[MSearchCssProps](_.req)
+  def screenInfo = GenLens[MSearchCssProps](_.screenInfo)
 
 }
 

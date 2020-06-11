@@ -75,7 +75,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     var listHeightPx = rowsCount * rowHeightPx
     if (rowsCount > MAX_ROWS_COUNT) listHeightPx += rowHeightPx/2
 
-    println("search rows height pxx: ", rowHeightPx, rowsCount, args.req.isFailed, args.req.isPending, args.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
+    //println("search rows height pxx: ", rowHeightPx, rowsCount, args.req.isFailed, args.req.isPending, args.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
 
     listHeightPx.toInt
   }

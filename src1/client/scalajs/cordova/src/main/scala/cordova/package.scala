@@ -1,5 +1,6 @@
 import cordova.plugins.background.fetch.CordovaBackgroundFetch
 import cordova.plugins.background.timer.CordovaBackgroundTimer
+import cordova.plugins.statusbar.CdvStatusBar
 import org.scalajs.dom.Window
 
 import scala.scalajs.js
@@ -29,5 +30,8 @@ sealed trait DomWindow_CordovaExt extends js.Object {
 
   val BackgroundTimer: CordovaBackgroundTimer = js.native
 
-  val BackgroundFetch: CordovaBackgroundFetch
+  val BackgroundFetch: CordovaBackgroundFetch = js.native
+
+  val StatusBar: CdvStatusBar.type = js.native
+
 }

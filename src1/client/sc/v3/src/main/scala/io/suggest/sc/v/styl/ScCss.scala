@@ -82,7 +82,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 
-  private val (_bgColorCss, _fgColorCss) = {
+  val (bgColorCss, fgColorCss) = {
     val colors = args.customColorsOpt getOrElse ScCss.COLORS_DFLT
     def _colorCss( colorOpt: Option[MColorData], dflt: => String ) =
       Color( colorOpt.fold(dflt)(_.hexCode) )
@@ -93,11 +93,11 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
   /** Стиль цвета фона для произвольного элемента выдачи. */
   val bgColor = style(
-    backgroundColor( _bgColorCss ),
+    backgroundColor( bgColorCss ),
   )
 
   val fgColor = style(
-    color( _fgColorCss )
+    color( fgColorCss )
   )
 
 
@@ -141,7 +141,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
         style(
           addClassName( _SM_WELCOME_AD + "_bg-img" ),
-          backgroundColor( _bgColorCss ),
+          backgroundColor( bgColorCss ),
           whMx
         )
       }
@@ -184,7 +184,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
       position.absolute,
       bottom(0.px),
       width(100.%%),
-      backgroundColor( _fgColorCss ),
+      backgroundColor( fgColorCss ),
       height(1.px),
     )
 
@@ -195,8 +195,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
           ScCssStatic.Header.HEADER,
           Css.Position.ABSOLUTE
         ),
-        backgroundColor( _bgColorCss ),
-        borderColor( _fgColorCss ),
+        backgroundColor( bgColorCss ),
+        borderColor( fgColorCss ),
         // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
         height( ScCss.HEADER_HEIGHT_PX.px ),
         // TODO На гориз.смартфоне криво, на декстопе - норм.
@@ -224,8 +224,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
         )
 
         val colored = style(
-          color( _fgColorCss ),
-          borderColor( _fgColorCss )
+          color( fgColorCss ),
+          borderColor( fgColorCss )
         )
 
         /** Точки по краям названия узла. */
@@ -239,7 +239,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
           /** Цвет точки. */
           val dotColor = style(
-            backgroundColor( _fgColorCss )
+            backgroundColor( fgColorCss )
           )
 
           val left = ScCssStatic._styleAddClass( Css.__ + MsgCodes.`left` )
@@ -359,7 +359,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
     val outer = style(
       addClassName( _SM_GRID_ADS ),
       _screenHeight,
-      backgroundColor( _bgColorCss ),
+      backgroundColor( bgColorCss ),
       paddingTop( args.screenInfo.unsafeOffsets.top.px ),
       // TODO Гориз. iphone10 - разъезжается.
       //paddingLeft( args.screenInfo.unsafeOffsets.left.px )

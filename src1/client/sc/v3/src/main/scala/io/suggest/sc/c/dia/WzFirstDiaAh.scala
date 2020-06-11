@@ -54,11 +54,20 @@ class WzFirstDiaAh[M](
   with Log
 { ah =>
 
-  private def _unSubscribeFx = Effect.action {
-    val unSubscribeF = dispatcher.subscribe( screenInfoRO ) { _ =>
-      dispatcher.dispatch( Wz1RebuildCss )
+  private def _subscribeCssRebuildFx: Effect = {
+    Effect.action {
+      val unSubscribeF = dispatcher.subscribe( screenInfoRO ) { _ =>
+        dispatcher.dispatch( Wz1RebuildCss )
+      }
+      Wz1SetUnSubscribeF( unSubscribeF )
     }
-    Wz1SetUnSubscribeF( unSubscribeF )
+  }
+
+  private def _unSubsCribeCssRebuildFx( unSubsCribeF: () => Unit): Effect = {
+    Effect.action {
+      unSubsCribeF()
+      DoNothing
+    }
   }
 
 
@@ -319,7 +328,7 @@ class WzFirstDiaAh[M](
           permPotsAcc ::= phaseSpec.phase -> Pending()
         }
 
-        fxsAcc ::= _unSubscribeFx
+        fxsAcc ::= _subscribeCssRebuildFx
 
         // Инициализировать состояние first-диалога.
         val first2 = MWzFirstOuterS(
@@ -342,11 +351,12 @@ class WzFirstDiaAh[M](
           perms = Map.empty,    // TODO По идее, perms уже не содержат полезных данных.
         )
 
+        // Отписаться от событий изменений экрана.
         val fxOpt = for {
           v <- v0.view
-          if v.unSubscribe.nonEmpty
+          unSubsCribeF <- v.unSubscribe.toOption
         } yield {
-          _unSubscribeFx
+          _unSubsCribeCssRebuildFx( unSubsCribeF )
         }
 
         ah.updatedMaybeEffect( v2, fxOpt )
@@ -361,10 +371,7 @@ class WzFirstDiaAh[M](
       val v0 = value
       v0.view.fold {
         logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
-        val fx = Effect.action {
-          m.unSubscribeF()
-          DoNothing
-        }
+        val fx = _unSubsCribeCssRebuildFx( m.unSubscribeF )
         effectOnly( fx )
 
       } { _ =>

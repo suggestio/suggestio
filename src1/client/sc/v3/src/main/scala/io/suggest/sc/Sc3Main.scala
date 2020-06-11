@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import com.materialui.Mui
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
