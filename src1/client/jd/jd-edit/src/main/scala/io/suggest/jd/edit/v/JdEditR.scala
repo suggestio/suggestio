@@ -491,8 +491,6 @@ class JdEditR(
       private val _dropF: js.Function3[MRrrEdit with MRrrEditCollectDrop, DropTargetMonitor, js.Any, js.UndefOr[MJsDropInfo]] = {
         (props, mon, _) =>
           if (!mon.didDrop()) {
-            val itype = mon.getItemType()
-
             // Это перетаскивание целого блока внутри редактора.
             // Нужно узнать сдвиг указателя относительно верхнего левого угла документа.
             val docEl = docRef.unsafeGet()

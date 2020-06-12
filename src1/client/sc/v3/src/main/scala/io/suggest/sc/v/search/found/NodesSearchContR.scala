@@ -1,12 +1,13 @@
-package io.suggest.sc.v.search
+package io.suggest.sc.v.search.found
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.NodesScroll
+import io.suggest.sc.v.search.{STextR, SearchCss}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -60,7 +61,5 @@ class NodesSearchContR {
     }
     .renderBackendWithChildren[Backend]
     .build
-
-  def apply(props: Props)(children: VdomNode*) = component(props)(children: _*)
 
 }

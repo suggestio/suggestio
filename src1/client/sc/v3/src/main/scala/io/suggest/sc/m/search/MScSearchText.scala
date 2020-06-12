@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -27,6 +28,22 @@ object MScSearchText {
 
   @inline implicit def univEq: UnivEq[MScSearchText] = UnivEq.derive
 
+  def query = GenLens[MScSearchText]( _.query )
+  def searchQuery = GenLens[MScSearchText]( _.searchQuery )
+  def searchTimerId = GenLens[MScSearchText]( _.searchTimerId )
+
+
+  implicit final class ScSearchTextOpsExt( private val st: MScSearchText ) extends AnyVal {
+
+    def withSearchQueryTimer(searchQuery: Pot[String], searchTimerId: Option[Int]) = {
+      st.copy(
+        searchQuery   = searchQuery,
+        searchTimerId = searchTimerId,
+      )
+    }
+
+  }
+
 }
 
 
@@ -40,11 +57,4 @@ case class MScSearchText(
                           query             : String                = "",
                           searchQuery       : Pot[String]           = Pot.empty,
                           searchTimerId     : Option[Int]           = None
-                        ) {
-
-  def withQuery(query: String)            = copy(query = query)
-  def withSearchQueryTimer(searchQuery: Pot[String], searchTimerId: Option[Int]) = {
-    copy(searchQuery = searchQuery, searchTimerId = searchTimerId)
-  }
-
-}
+                        )

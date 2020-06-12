@@ -254,9 +254,9 @@ object JdTag {
   }
 
 
-  val name = GenLens[JdTag](_.name)
-  val props1 = GenLens[JdTag](_.props1)
-  val qdProps = GenLens[JdTag](_.qdProps)
+  def name = GenLens[JdTag](_.name)
+  def props1 = GenLens[JdTag](_.props1)
+  def qdProps = GenLens[JdTag](_.qdProps)
 
 }
 

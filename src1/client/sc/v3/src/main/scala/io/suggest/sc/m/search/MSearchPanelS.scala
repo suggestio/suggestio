@@ -22,7 +22,7 @@ object MSearchPanelS {
 
   @inline implicit def univEq: UnivEq[MSearchPanelS] = UnivEq.derive
 
-  val opened = GenLens[MSearchPanelS](_.opened)
+  def opened = GenLens[MSearchPanelS](_.opened)
 
 }
 

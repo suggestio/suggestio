@@ -185,14 +185,13 @@ object IndexAh {
     for (mwc <- mWcSFutOpt)
       fxsAcc ::= mwc._1
 
-
     // В зависимости от нового цвета фона, нужно подчинить этому цвету системную статус-панель.
     val plat = mroot.dev.platform
     if (plat.isCordova && plat.isReady) {
       val bgColorHex = i1.scCss.bgColorCss.value
       fxsAcc ::= Effect.action {
         CdvStatusBar.backgroundColorByHexString( bgColorHex )
-        if (Mui.Styles.getLuminance( bgColorHex ) > 0.5)
+        if (Mui.Styles.getLuminance( bgColorHex ) >= 0.5)
           CdvStatusBar.styleDefault()
         else
           CdvStatusBar.styleLightContent()

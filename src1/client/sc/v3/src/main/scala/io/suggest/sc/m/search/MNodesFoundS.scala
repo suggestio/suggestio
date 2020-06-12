@@ -53,11 +53,13 @@ object MNodesFoundS {
   *                      Т.е. для req.pending; либо для req.ready/failed, если !pending.
   *                      Используется для проверки необходимости запуска нового запроса.
   * @param hasMore Есть ли ещё теги на сервере?
+  * @param visible Видимость списка результатов. Список может быть скрыт, содержа результаты.
   */
 case class MNodesFoundS(
                          req           : Pot[MSearchRespInfo[MGeoNodesResp]]     = Pot.empty,
                          reqSearchArgs : Option[MScQs]         = None,
                          hasMore       : Boolean               = true,
+                         visible       : Boolean               = false,
                        )
   extends NonEmpty
 {

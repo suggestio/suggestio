@@ -1,28 +1,29 @@
-package io.suggest.sc.v.search
+package io.suggest.sc.v.search.found
 
+import com.materialui.{Mui, MuiGrid, MuiGridClasses, MuiGridProps, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import diode.react.ModelProxy
-import io.suggest.geo.{DistanceUtil, ILPolygonGs}
-import io.suggest.maps.u.MapsUtil
-import scalacss.ScalaCssReact._
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import ReactDiodeUtil.Implicits._
-import io.suggest.ueq.UnivEqUtil._
-import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick}
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
-import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import io.suggest.common.empty.OptionUtil
-import ReactCommonUtil.Implicits._
-import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.proto.http.client.HttpClient
+import io.suggest.css.Css
+import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.geo.{DistanceUtil, ILPolygonGs}
+import io.suggest.i18n.MCommonReactCtx
+import io.suggest.maps.u.MapsUtil
 import io.suggest.n2.node.MNodeTypes
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.Implicits._
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick}
+import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.css.ScalaCssUtil.Implicits._
-import io.suggest.i18n.MCommonReactCtx
-import io.suggest.sc.v.styl.ScCssStatic
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
+import japgolly.univeq._
+import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
 
@@ -31,10 +32,13 @@ import scala.scalajs.js
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
+  *
+  * Без dependency injection, чтобы снизить кол-во React.Context().consume-компонентов: пусть всё будет в списке снаружи.
   */
-class NodesFoundRowR(
-                      crCtxProv     : React.Context[MCommonReactCtx],
-                    ) {
+final case class NfRowR(
+                         crCtx        : MCommonReactCtx,
+                         scReactCtx   : MScReactCtx,
+                       ) {
 
   type Props_t = MNodesFoundRowProps
   type Props = ModelProxy[Props_t]
@@ -111,7 +115,7 @@ class NodesFoundRowR(
         override val root = rowRootCss
       }
 
-      MuiListItem.component.withKey(nodeId)(
+      val listItem = MuiListItem.component.withKey(nodeId)(
         new MuiListItemProps {
           override val classes = listItemCss
           override val button = true
@@ -125,7 +129,7 @@ class NodesFoundRowR(
         ReactCommonUtil.maybeEl( isTag ) {
           MuiListItemIcon {
             val cls = new MuiListItemIconClasses {
-              override val root = NodesCSS.tagRowIconCont.htmlClass
+              override val root = Css.flat( NodesCSS.tagRowIconCont.htmlClass, scReactCtx.scCss.fgColor.htmlClass )
             }
             new MuiListItemIconProps {
               override val classes = cls
@@ -142,7 +146,9 @@ class NodesFoundRowR(
         // Название узла
         p.name.whenDefinedEl { nodeName =>
           // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
-          val rootCss = JsOptionUtil.maybeDefined(isTag)( NodesCSS.tagRowText.htmlClass )
+          val rootCss = JsOptionUtil.maybeDefined(isTag)(
+            Css.flat( NodesCSS.tagRowText.htmlClass, scReactCtx.scCss.fgColor.htmlClass )
+          )
 
           // Текст состоит из статической и динамической вёрстки.
           val primaryCss = (
@@ -159,10 +165,8 @@ class NodesFoundRowR(
 
           val text2ndOpt = distanceMOpt
             .map { distanceM =>
-              crCtxProv.consume { crCtx =>
-                val distanceFmt = crCtx.messages( DistanceUtil.formatDistanceM(distanceM) )
-                (HtmlConstants.`~` + distanceFmt): raw.React.Node
-              }.rawNode
+              val distanceFmt = crCtx.messages( DistanceUtil.formatDistanceM(distanceM) )
+              (HtmlConstants.`~` + distanceFmt): raw.React.Node
             }
           MuiListItemText(
             new MuiListItemTextProps {
@@ -184,6 +188,18 @@ class NodesFoundRowR(
         }
 
       )
+
+      MuiGrid {
+        val css = JsOptionUtil.maybeDefined( !isTag ) {
+          new MuiGridClasses {
+            override val root = ScCssStatic.Search.NodesFound.gridRowAdn.htmlClass
+          }
+        }
+        new MuiGridProps {
+          override val item = true
+          override val classes = css
+        }
+      }( listItem )
     }
 
   }

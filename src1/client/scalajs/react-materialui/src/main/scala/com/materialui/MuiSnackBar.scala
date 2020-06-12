@@ -22,7 +22,7 @@ trait MuiSnackBarProps
   with MuiPropsBaseClasses[MuiSnackBarClasses]
 {
   val action: js.UndefOr[raw.React.Node] = js.undefined
-  val anchorOrigin: js.UndefOr[MuiSnackBarAnchorOrigin] = js.undefined
+  val anchorOrigin: js.UndefOr[MuiAnchorOrigin] = js.undefined
   val autoHideDuration: js.UndefOr[Double] = js.undefined
   val ClickAwayListenerProps: js.UndefOr[js.Object] = js.undefined
   val ContentProps: js.UndefOr[js.Object] = js.undefined
@@ -39,22 +39,8 @@ trait MuiSnackBarProps
   val open: js.UndefOr[Boolean] = js.undefined
   val resumeHideDuration: js.UndefOr[Double] = js.undefined
   val TransitionComponent: js.UndefOr[String | js.Function | js.Object] = js.undefined
-  val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
+  val transitionDuration: js.UndefOr[MuiTransitionDuration.TransitionDurationString_t] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
-}
-
-
-/** JSON fop [[MuiSnackBarProps.anchorOrigin]]. */
-trait MuiSnackBarAnchorOrigin extends js.Object {
-  val vertical: js.UndefOr[String] = js.undefined
-  val horizontal: js.UndefOr[String] = js.undefined
-}
-object MuiSnackBarAnchorOrigin {
-  val left = "left"
-  val right = "right"
-  val center = "center"
-  val top = "top"
-  val bottom = "bottom"
 }
 
 
@@ -62,9 +48,12 @@ object MuiSnackBarAnchorOrigin {
 trait MuiTransitionDuration extends js.Object {
   val enter: js.UndefOr[Double] = js.undefined
   val exit: js.UndefOr[Double] = js.undefined
+  val appear: js.UndefOr[Double] = js.undefined
 }
 object MuiTransitionDuration {
-  def auto = "auto"
+  type TransitionDurationString_t <: js.Any
+  type TransitionDuration_t = TransitionDurationString_t | Double | MuiTransitionDuration
+  def auto = "auto".asInstanceOf[TransitionDurationString_t]
 }
 
 

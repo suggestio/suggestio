@@ -248,6 +248,11 @@ object ScCssStatic extends StyleSheet.Inline {
     /** Стили для списка найденных узлов (тегов и т.д.). */
     object NodesFound {
 
+      /** CSS grid item для ADN-узлов (не тегов). */
+      val gridRowAdn = style(
+        width( 100.%% )
+      )
+
       val nodesList = {
         val zeroPx = 0.px
         style(
@@ -316,6 +321,7 @@ object ScCssStatic extends StyleSheet.Inline {
         fontSize(16.px),
         verticalAlign.middle,
         marginRight.initial,
+        minWidth.initial,
       )
 
       /** Слишком большой шрифт у тегов, уменьшить. */

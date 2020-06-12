@@ -1,23 +1,21 @@
-package io.suggest.sc.v.search
+package io.suggest.sc.v.search.found
 
-import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListClasses, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListProps, MuiProgressVariants, MuiPropsBaseStatic, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps}
+import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiGrid, MuiGridClasses, MuiGridProps, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiProgressVariants, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps}
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search.{DoNodesSearch, MNodesFoundS, MSearchRespInfo}
-import io.suggest.ueq.UnivEqUtil._
+import io.suggest.sc.v.styl.ScCssStatic
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react._
-import japgolly.univeq._
-import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.ueq.JsUnivEqUtil._
-import io.suggest.css.ScalaCssUtil.Implicits._
-import io.suggest.sc.v.styl.ScCssStatic
 
 import scala.scalajs.js
 
@@ -27,9 +25,10 @@ import scala.scalajs.js
   * Created: 27.07.18 18:28
   * Description: wrap-компонент, отвечающий за рендер списка найденных узлов: тегов и гео-размещенных узлов.
   */
-class NodesFoundR(
-                      crCtxProv              : React.Context[MCommonReactCtx],
-                    ) {
+final class NfListR(
+                     crCtxProv              : React.Context[MCommonReactCtx],
+                     scReactCtxProv         : React.Context[MScReactCtx],
+                   ) {
 
   type Props_t = MNodesFoundS
   type Props = ModelProxy[Props_t]
@@ -69,11 +68,12 @@ class NodesFoundR(
           }
         },
 
-        MuiList {
-          val listClasses = new MuiListClasses {
+        MuiGrid {
+          val listClasses = new MuiGridClasses {
             override val root = (NodesCSS.listDiv :: NodesCSS.nodesList :: Nil).toHtmlClass
           }
-          new MuiListProps {
+          new MuiGridProps {
+            override val container = true
             override val classes = listClasses
           }
         } (
@@ -87,44 +87,45 @@ class NodesFoundR(
               req.render { nodesRi =>
                 if (nodesRi.resp.nodes.isEmpty) {
                   // Надо, чтобы юзер понимал, что запрос поиска отработан.
-                  MuiListItem()(
-                    MuiListItemText()(
-                      {
-                        val (msgCode, msgArgs) = nodesRi.textQuery.fold {
-                          MsgCodes.`No.tags.here` -> List.empty[js.Any]
-                        } { query =>
-                          MsgCodes.`No.tags.found.for.1.query` -> ((query: js.Any) :: Nil)
-                        }
-                        crCtxProv.message( msgCode, msgArgs: _* )
+                  MuiGrid(
+                    new MuiGridProps {
+                      override val item = true
+                    }
+                  )(
+                    MuiList()(
+                      scReactCtxProv.consume { scReactCtx =>
+                        MuiListItemText {
+                          val css = new MuiListItemTextClasses {
+                            override val root = scReactCtx.scCss.fgColor.htmlClass
+                          }
+                          new MuiListItemTextProps {
+                            override val classes = css
+                          }
+                        } (
+                          {
+                            val (msgCode, msgArgs) = nodesRi.textQuery.fold {
+                              MsgCodes.`No.tags.here` -> List.empty[js.Any]
+                            } { query =>
+                              MsgCodes.`No.tags.found.for.1.query` -> ((query: js.Any) :: Nil)
+                            }
+                            crCtxProv.message( msgCode, msgArgs: _* )
+                          }
+                        )
                       }
                     )
                   )
                 } else {
                   children
-                  /**
-                  nodesRi
-                    .resp
-                    .nodes
-                    .toVdomArray { mnode =>
-                      // Нельзя nodeId.get, т.к. могут быть узлы без id.
-                      val nodeId = mnode.props.idOrNameOrEmpty
-                      // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
-                      propsProxy.wrap { props2 =>
-                        nodeFoundR.PropsVal(
-                          node                = mnode,
-                          searchCss           = props2.searchCss,
-                          withDistanceToNull  = props2.withDistanceToNull,
-                          selected            = props2.selectedIds contains nodeId,
-                        )
-                      }( nodeFoundR.component.withKey(nodeId)(_) ): VdomNode
-                    }
-                  */
                 }
               },
 
               // Рендер крутилки ожидания.
               req.renderPending { _ =>
-                MuiListItem()(
+                MuiGrid(
+                  new MuiGridProps {
+                    override val item = true
+                  }
+                )(
                   MuiCircularProgress(
                     new MuiCircularProgressProps {
                       override val variant = MuiProgressVariants.indeterminate
@@ -136,11 +137,14 @@ class NodesFoundR(
 
               // Рендер ошибки.
               req.renderFailed { ex =>
-                val emptyProps = MuiPropsBaseStatic.empty[MuiListItemProps]
                 val errHint = Option(ex.getMessage)
                   .getOrElse(ex.getClass.getName)
 
-                VdomArray(
+                val gridItemProps = new MuiGridProps {
+                  override val item = true
+                }
+
+                React.Fragment(
 
                   // Рендер технических подробностей ошибки.
                   MuiToolTip.component.withKey("e")(
@@ -150,18 +154,20 @@ class NodesFoundR(
                       override val placement = MuiToolTipPlacements.Top
                     }
                   )(
-                    MuiListItem(emptyProps)(
-                      MuiListItemText()(
-                        crCtxProv.message( MsgCodes.`Something.gone.wrong` ),
-                      ),
-                      MuiListItemIcon()(
-                        Mui.SvgIcons.ErrorOutline()()
+                    MuiGrid( gridItemProps )(
+                      MuiListItem()(
+                        MuiListItemText()(
+                          crCtxProv.message( MsgCodes.`Something.gone.wrong` ),
+                        ),
+                        MuiListItemIcon()(
+                          Mui.SvgIcons.ErrorOutline()()
+                        )
                       )
                     )
                   ),
 
                   // Кнопка reload для повторной загрузки списка.
-                  MuiListItem.component.withKey("r")(emptyProps)(
+                  MuiGrid.component.withKey("r")( gridItemProps )(
                     MuiIconButton(
                       new MuiIconButtonProps {
                         override val onClick = _onRefreshBtnClickF

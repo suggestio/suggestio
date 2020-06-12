@@ -78,6 +78,7 @@ object GridBuilderUtil {
     // внутри блока неЕдиничной ширины всегда есть постоянный padding=20.
     val paddedCellWidthPx  = cellWidthPx + cellPaddingWidthPx
 
+    val gbBlock_orderN_LENS = MGbBlock.orderN
 
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
     var stepCounter = 0
@@ -129,7 +130,7 @@ object GridBuilderUtil {
           val gb2 = Tree.Leaf {
             val gb0 = reDoItm.gbBlock
             if (gb0.orderN contains reDoItm.orderN) gb0
-            else MGbBlock.orderN.set( Some(reDoItm.orderN) )( gb0 )
+            else ( gbBlock_orderN_LENS set Some(reDoItm.orderN) )( gb0 )
           }
 
           // Используем rootLvl для сборки под-контекста, т.к. reDoItm.topLeft задано в абсолютных (root) координатах.

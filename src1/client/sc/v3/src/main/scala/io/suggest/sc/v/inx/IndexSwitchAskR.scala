@@ -1,6 +1,6 @@
 package io.suggest.sc.v.inx
 
-import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
+import com.materialui.{Mui, MuiAnchorOrigin, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
@@ -8,9 +8,11 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import ReactDiodeUtil.Implicits._
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitch}
 import io.suggest.sc.m.search.{MNodesFoundRowProps, MNodesFoundS}
-import io.suggest.sc.v.search.{NodesFoundR, NodesFoundRowR, SearchCss}
+import io.suggest.sc.v.search.SearchCss
+import io.suggest.sc.v.search.found.{NfListR, NfRowR}
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, React, ReactEvent, ScalaComponent}
@@ -23,9 +25,9 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-компонент всплывающего вопроса о переключении выдачи в новую локацию.
   */
 class IndexSwitchAskR(
-                       nodesFoundR      : NodesFoundR,
-                       nodesFoundRowR   : NodesFoundRowR,
+                       nfListR          : NfListR,
                        crCtxProv        : React.Context[MCommonReactCtx],
+                       scReactCtxProv   : React.Context[MScReactCtx],
                      ) {
 
   type Props_t = MInxSwitch
@@ -48,62 +50,65 @@ class IndexSwitchAskR(
 
     def render(s: State): VdomElement = {
       // Чтобы диалог выплывал снизу, надо чтобы контейнер компонента был заранее (всегда) отрендеренным в DOM.
-      val scCss = ScCssStatic.Notifies
+      val notsCss = ScCssStatic.Notifies
 
       // Содержимое плашки - приглашение на смену узла.
       val snackBarContent = MuiSnackBarContent {
         val btnIconProps = new MuiSvgIconProps {
-          override val className = scCss.smallBtnSvgIcon.htmlClass
+          override val className = notsCss.smallBtnSvgIcon.htmlClass
         }
 
         // Содержимое левой части сообщения:
-        val _message: VdomNode = <.div(
-          ^.`class` := scCss.content.htmlClass,
-
-          crCtxProv.message( MsgCodes.`Location.changed` ),
-
-          // Кнопка сокрытия уведомления:
-          MuiButton.component {
-            val cssClasses = new MuiButtonClasses {
-              override val root = scCss.cancel.htmlClass
-            }
-            new MuiButtonProps {
-              override val onClick = _onCloseJsCbF
-              override val variant = MuiButtonVariants.text
-              override val size = MuiButtonSizes.small
-              override val color = MuiColorTypes.inherit
-              override val classes = cssClasses
-            }
-          } (
-            Mui.SvgIcons.CancelOutlined(btnIconProps)(),
-            crCtxProv.message( MsgCodes.`Cancel` ),
-          ),
-
-          <.br,
-
-          // Список найденных узлов:
+        val _message = crCtxProv.consume { crCtx =>
           <.div(
-            s.searchCssOptC {
-              _.value.whenDefinedEl { CssR.component.apply }
-            },
+            ^.`class` := notsCss.content.htmlClass,
 
-            {
-              // Список найденных узлов:
-              val nodesFoundRows = s.nodesFoundPropsC( nodesFoundRowR.rows )
-              s.nodesFoundSOptC { nodesFoundSOptProxy =>
-                nodesFoundSOptProxy.value.whenDefinedEl { nodesFoundS =>
-                  val p2 = nodesFoundSOptProxy.resetZoom( nodesFoundS )
-                  nodesFoundR.component( p2 )( nodesFoundRows )
-                }
+            crCtx.messages( MsgCodes.`Location.changed` ),
+
+            // Кнопка сокрытия уведомления:
+            MuiButton.component {
+              val cssClasses = new MuiButtonClasses {
+                override val root = notsCss.cancel.htmlClass
               }
-            },
-          ),
-        )
+              new MuiButtonProps {
+                override val onClick = _onCloseJsCbF
+                override val variant = MuiButtonVariants.text
+                override val size = MuiButtonSizes.small
+                override val color = MuiColorTypes.inherit
+                override val classes = cssClasses
+              }
+            } (
+              Mui.SvgIcons.CancelOutlined(btnIconProps)(),
+              crCtx.messages( MsgCodes.`Cancel` ),
+            ),
+
+            <.br,
+
+            // Список найденных узлов:
+            <.div(
+              s.searchCssOptC {
+                _.value.whenDefinedEl { CssR.component.apply }
+              },
+
+              scReactCtxProv.consume { scReactCtx =>
+                // Список найденных узлов:
+                val nfRowR = NfRowR( crCtx, scReactCtx )
+                val nodesFoundRows = s.nodesFoundPropsC( nfRowR.rows )
+                s.nodesFoundSOptC { nodesFoundSOptProxy =>
+                  nodesFoundSOptProxy.value.whenDefinedEl { nodesFoundS =>
+                    val p2 = nodesFoundSOptProxy.resetZoom( nodesFoundS )
+                    nfListR.component( p2 )( nodesFoundRows )
+                  }
+                }
+              },
+            ),
+          )
+        }
 
         val cssClasses = new MuiSnackBarContentClasses {
           // Чтобы кнопки выравнивались вертикально, а не горизонтально
-          override val action = scCss.snackActionCont.htmlClass
-          override val message = scCss.snackMsg.htmlClass
+          override val action = notsCss.snackActionCont.htmlClass
+          override val message = notsCss.snackMsg.htmlClass
         }
 
         // Объединяем всё:
@@ -115,9 +120,9 @@ class IndexSwitchAskR(
 
       s.isOpenedSomeC { isOpenedSomeProxy =>
         MuiSnackBar {
-          val _anchorOrigin = new MuiSnackBarAnchorOrigin {
-            override val vertical   = MuiSnackBarAnchorOrigin.bottom
-            override val horizontal = MuiSnackBarAnchorOrigin.center
+          val _anchorOrigin = new MuiAnchorOrigin {
+            override val vertical   = MuiAnchorOrigin.bottom
+            override val horizontal = MuiAnchorOrigin.center
           }
           new MuiSnackBarProps {
             override val open         = isOpenedSomeProxy.value.value

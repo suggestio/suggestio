@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBar, MuiAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -167,9 +167,9 @@ class ScErrorDiaR(
       }
 
       // Рендерить снизу посередине.
-      val _anchorOrigin = new MuiSnackBarAnchorOrigin {
-        override val vertical   = MuiSnackBarAnchorOrigin.bottom
-        override val horizontal = MuiSnackBarAnchorOrigin.center
+      val _anchorOrigin = new MuiAnchorOrigin {
+        override val vertical   = MuiAnchorOrigin.bottom
+        override val horizontal = MuiAnchorOrigin.center
       }
       s.isVisibleSomeC { isVisibleSomeProxy =>
         MuiSnackBar {

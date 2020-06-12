@@ -36,6 +36,7 @@ class STextAh[M](
       } else {
         v0.searchQuery.ready( v0.query )
       }
+
       // Обновить состояние.
       val v2 = v0.withSearchQueryTimer(
         searchQuery   = searchQueryPot2,
@@ -63,7 +64,10 @@ class STextAh[M](
     // Сигнал о вводе текста в поле текстового поиска.
     case m: SearchTextChanged =>
       val v0 = value
-      if (v0.query ==* m.newText && !v0.searchQuery.isPending) {
+      if (
+        (v0.query ==* m.newText) &&
+        !v0.searchQuery.isPending
+      ) {
         // Видимо, ничего не изменилось, либо был запущен какой-то таймер поиска на предыдущих итерациях.
         noChange
 
@@ -73,7 +77,7 @@ class STextAh[M](
           DomQuick.clearTimeout( oldTimerId )
 
         // Текст для поиска изменился.
-        val v1 = v0.withQuery( m.newText )
+        val v1 = (MScSearchText.query set m.newText)(v0)
 
         // Есть какой-то текст для запуска поиска. Запустить таймер.
         val tstamp = System.currentTimeMillis()
@@ -88,6 +92,7 @@ class STextAh[M](
             searchTimerId = Some(tp.timerId)
           )
           updated(v2, fx)
+
         } else {
           val v2 = v1.withSearchQueryTimer(
             searchQuery   = searchQueryPot2,

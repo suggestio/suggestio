@@ -49,7 +49,7 @@ object MGbBlock {
 
   @inline implicit def univEq: UnivEq[MGbBlock] = UnivEq.derive
 
-  val orderN = GenLens[MGbBlock](_.orderN)
+  def orderN = GenLens[MGbBlock](_.orderN)
 
 }
 

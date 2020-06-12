@@ -25,7 +25,7 @@ object MScSearch {
   @inline implicit def univEq: UnivEq[MScSearch] = UnivEq.derive
 
   val geo   = GenLens[MScSearch](_.geo)
-  val panel = GenLens[MScSearch](_.panel)
+  def panel = GenLens[MScSearch](_.panel)
   val text  = GenLens[MScSearch](_.text)
 
 
