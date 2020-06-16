@@ -4,37 +4,14 @@ import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
 /**
- * Suggest.io
- * User: UndefOr[Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: UndefOr[19.11.15 16:54
- * Description: UndefOr[L.map() options object.
- * @see [[http://leafletjs.com/reference.html#map-options]]
- *
- * scalajs-0.6.14+ required.
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 19.11.15 16:54
+  * Description: L.map() options object.
+  * JSON-модель опций сборки инстанса L-карты.
+  *
+  * @see [[http://leafletjs.com/reference.html#map-options]]
  */
-object MapOptions {
-
-  /** Доп.утиль вокруг инстансов [[MapOptions]]. */
-  implicit class MapOptionsExtOps[T <: MapOptions](val raw: T) extends AnyVal {
-
-    /** Поработать с MapOptions как будто бы со словарём. */
-    private def _mutateAsDict[U](f: js.Dictionary[js.Any] => U): T = {
-      val jsDict = raw.asInstanceOf[js.Dictionary[js.Any]]
-      f(jsDict)
-      raw
-    }
-
-    /** Убрать attribution ИЗНУТРИ текущего инстанса. */
-    def noAttribution: T = _mutateAsDict { jsDict =>
-      jsDict("attributionControl") = false
-    }
-
-  }
-
-}
-
-
-/** JSON-модель опций сборки новой карты. */
 trait MapOptions extends js.Object {
 
   val center                : UndefOr[LatLng]           = js.undefined

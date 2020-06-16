@@ -36,7 +36,6 @@ import io.suggest.sc.v.styl.ScCssStatic
 class SearchMapR {
 
   import MGeoMapPropsR.MGeoMapPropsRFastEq
-  import MMapS.MMapSFastEq4Map
 
 
   protected[this] case class State(
@@ -73,23 +72,33 @@ class SearchMapR {
     def render(propsProxy: Props, s: State): VdomElement = {
       val props = propsProxy.value
 
-      // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
-
-      // Рендерим основную гео-карту:
-      lazy val tileLayer = ReactLeafletUtil.Tiles.OsmDefault
-      // Плагин для геолокации текущего юзера.
-      lazy val locateControl = LocateControlR()
-      // Рендер шейпов и маркеров текущий узлов.
-      lazy val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
-      // Рендер опционального маркера-крутилки для ожидания загрузки.
-      lazy val loaderOpt = s.loaderOptC { MapLoaderMarkerR.component.apply }
-      // Рендер круга текущей геолокации юзера:
-      lazy val userLoc = s.userLocOptC { LocShapeR.component.apply }
-
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
         val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
+
+        // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
+        val mapChildren = List[VdomElement](
+          // Рендерим основную гео-карту:
+          ReactLeafletUtil.Tiles.OsmDefault,
+          // Плагин для геолокации текущего юзера.
+          LocateControlR(),
+          // Рендер шейпов и маркеров текущий узлов.
+          s.rcvrsGeoC { RcvrMarkersR.applyNoChildren },
+          // Рендер опционального маркера-крутилки для ожидания загрузки.
+          s.loaderOptC { MapLoaderMarkerR.component.apply },
+          // Рендер круга текущей геолокации юзера:
+          s.userLocOptC { LocShapeR.component.apply },
+        )
+
+        // Код сборки css был унесён за пределы тела коннекшена до внедрения scCss-через-контекст.
+        // Нахождение этого кода здесь немного снижает производительность.
+        val geoMapCssSome = Some(
+          (ScCssStatic.Search.Geo.geomap :: props.css.GeoMap.geomap :: Nil)
+            .toHtmlClass
+        )
+
+        val lgmCtx = LGeoMapR.LgmCtx.mk( $, attribution = false)
 
         <.div(
           ^.onTouchStart  ==> _stopPropagationF,
@@ -98,12 +107,6 @@ class SearchMapR {
           ^.onTouchCancel ==> _stopPropagationF,
 
           s.mmapC { mmapProxy =>
-            // Код сборки css был унесён за пределы тела коннекшена до внедрения scCss-через-контекст.
-            // Нахождение этого кода здесь немного снижает производительность.
-            val geoMapCssSome = Some(
-              (ScCssStatic.Search.Geo.geomap :: props.css.GeoMap.geomap :: Nil)
-                .toHtmlClass
-            )
             mmapProxy.wrap { mmap =>
               MGeoMapPropsR(
                 center        = mmap.center,
@@ -117,17 +120,9 @@ class SearchMapR {
                 onDragEnd     = _onMapDragEndOptF,
               )
             } { geoMapPropsProxy =>
-              LMapR(
-                LGeoMapR
-                  .lmMapSProxy2lMapProps( geoMapPropsProxy )
-                  .noAttribution
-              )(
-                tileLayer,
-                locateControl,
-                userLoc,
-                rcvrsGeo,
-                loaderOpt
-              )
+              LMapR.component(
+                LGeoMapR.lmMapSProxy2lMapProps( geoMapPropsProxy, lgmCtx )
+              )( mapChildren: _* )
             }
           }
         )

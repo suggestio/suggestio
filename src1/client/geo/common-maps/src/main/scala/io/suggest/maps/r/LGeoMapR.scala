@@ -3,11 +3,12 @@ package io.suggest.maps.r
 import diode.react.ModelProxy
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
-import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
+import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.LMap
-import japgolly.scalajs.react.Callback
+import japgolly.scalajs.react.BackendScope
 import react.leaflet.lmap.LMapPropsR
 
 import scala.scalajs.js
@@ -21,49 +22,52 @@ import scala.scalajs.js
   */
 object LGeoMapR {
 
+  /** Внешний контекст, чтобы инстансы кэшировать. */
+  case class LgmCtx(
+                     onLocationFoundF   : js.Function1[LocationEvent, Unit],
+                     onPopupCloseF      : js.Function1[PopupEvent, Unit],
+                     onZoomEndF         : js.Function1[Event, Unit],
+                     onMoveEndF         : js.Function1[Event, Unit],
+                     attribution        : js.UndefOr[Boolean],
+                   )
+  object LgmCtx {
+    def mk[P: Props2ModelProxy, S]($: BackendScope[P, S],
+                                   attribution: js.UndefOr[Boolean] = js.undefined) = LgmCtx(
+      onLocationFoundF = ReactCommonUtil.cbFun1ToJsCb { locEvent: LocationEvent =>
+        val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, HandleLocationFound(gp) )
+      },
+
+      onPopupCloseF = ReactCommonUtil.cbFun1ToJsCb { _: PopupEvent =>
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, HandleMapPopupClose )
+      },
+
+      onZoomEndF = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
+        val newZoom = event.target.asInstanceOf[LMap].getZoom()
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, MapZoomEnd(newZoom) )
+      },
+
+      onMoveEndF = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
+        val newZoom = event.target.asInstanceOf[LMap].getCenter()
+        ReactDiodeUtil.dispatchOnProxyScopeCB($, MapMoveEnd(newZoom) )
+      },
+
+      attribution = attribution,
+    )
+  }
+
+
   /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
     *
     * @param proxy Прокси [[io.suggest.maps.m.MGeoMapPropsR]].
+    * @param lgmCtx Постоянные инстансы, хранящиеся за пределами map-коннекшена.
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( proxy: ModelProxy[MGeoMapPropsR] ): LMapPropsR = {
+  def lmMapSProxy2lMapProps( proxy: ModelProxy[MGeoMapPropsR], lgmCtx: LgmCtx ): LMapPropsR = {
     val v = proxy()
-
-    // Реакция на location found.
-    lazy val _onLocationFoundF = {
-      def _onLocationFound(locEvent: LocationEvent): Callback = {
-        val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
-        proxy.dispatchCB( HandleLocationFound(gp) )
-      }
-      cbFun1ToJsCb( _onLocationFound )
+    val _onLocationFound2 = JsOptionUtil.maybeDefined( v.locationFound contains[Boolean] true ) {
+      lgmCtx.onLocationFoundF
     }
-
-    // Реакция на закрытие попапа
-    val _onPopupCloseF = {
-      def _onPopupClose(popEvent: PopupEvent): Callback = {
-        proxy.dispatchCB( HandleMapPopupClose )
-      }
-      cbFun1ToJsCb( _onPopupClose )
-    }
-
-    // Реакция на зуммирование карты.
-    val _onZoomEndF = {
-      def _onZoomEnd(event: Event): Callback = {
-        val newZoom = event.target.asInstanceOf[LMap].getZoom()
-        proxy.dispatchCB( MapZoomEnd(newZoom) )
-      }
-      cbFun1ToJsCb( _onZoomEnd )
-    }
-
-    // Реакция на перемещение карты.
-    val _onMoveEndF = {
-      def _onMoveEnd(event: Event): Callback = {
-        val newZoom = event.target.asInstanceOf[LMap].getCenter()
-        proxy.dispatchCB( MapMoveEnd(newZoom) )
-      }
-      cbFun1ToJsCb( _onMoveEnd )
-    }
-
     // Карта должна рендерится с такими параметрами:
     new LMapPropsR {
       override val center    = MapsUtil.geoPoint2LatLng( v.center )
@@ -71,24 +75,18 @@ object LGeoMapR {
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
       override val maxZoom   = js.defined( 18 )
       override val useFlyTo  = true
-      override val onLocationFound = {
-        if ( v.locationFound.contains(true) ) {
-          js.undefined
-        } else {
-          js.defined( _onLocationFoundF )
-        }
-      }
+      override val onLocationFound = _onLocationFound2
 
-      //override val trackResize  = JsOptionUtil.opt2undef( v.trackWndResize )
-      override val onPopupClose = js.defined( _onPopupCloseF )
-      override val onZoomEnd    = js.defined( _onZoomEndF )
-      override val onMoveEnd    = js.defined( _onMoveEndF )
+      override val onPopupClose = js.defined( lgmCtx.onPopupCloseF )
+      override val onZoomEnd    = js.defined( lgmCtx.onZoomEndF )
+      override val onMoveEnd    = js.defined( lgmCtx.onMoveEndF )
 
       // Пробрасываем extra-пропертисы:
       override val whenReady    = v.whenReady.toUndef
       override val className    = v.cssClass.toUndef
       override val onDragStart  = v.onDragStart.toUndef
       override val onDragEnd    = v.onDragEnd.toUndef
+      override val attributionControl = lgmCtx.attribution
     }
   }
 

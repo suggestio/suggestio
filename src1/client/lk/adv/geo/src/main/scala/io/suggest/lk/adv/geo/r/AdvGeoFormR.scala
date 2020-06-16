@@ -148,11 +148,10 @@ object AdvGeoFormR {
             // Рендер опционального попапа над ресивером.
             s.rcvrPopupC( RcvrPopupR.apply )
           )
+          val lgmCtx = LGeoMapR.LgmCtx.mk( $ )
           s.geoMapPropsC { mapProps =>
-            LMapR(
-              LGeoMapR.lmMapSProxy2lMapProps(
-                mapProps
-              )
+            LMapR.component(
+              LGeoMapR.lmMapSProxy2lMapProps( mapProps, lgmCtx )
             )( mapChildren: _* )
           }
         },

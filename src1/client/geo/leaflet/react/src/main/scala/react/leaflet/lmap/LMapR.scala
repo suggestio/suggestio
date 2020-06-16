@@ -2,7 +2,6 @@ package react.leaflet.lmap
 
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.{IWhenReadyArgs, LMap, LatLngBounds, MapOptions}
-import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.{Children, JsComponent}
 import react.leaflet.Context
 
@@ -22,8 +21,6 @@ object LMapR {
 
   val component = JsComponent[LMapPropsR, Children.Varargs, Null]( LMapJsR )
     .addFacade[LMapJsR]
-
-  def apply(props: LMapPropsR)(children: VdomNode*) = component(props)(children: _*)
 
 }
 

@@ -51,13 +51,45 @@ object LamFormR {
   class Backend($: BackendScope[Props, State]) {
 
     def render(p: Props, s: State): VdomElement = {
+
+      val mapChildren = List[VdomElement](
+
+        // Рендерим основную плитку карты.
+        ReactLeafletUtil.Tiles.OsmDefault,
+
+        // Плагин для геолокации текущего юзера.
+        LocateControlR(),
+
+        // Карта покрытия ресиверов (подгружается асихронно).
+        s.rcvrsC { rcvrsProxy =>
+
+          // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
+          val lg = List[VdomElement](
+            // Рендер текущих размещений.
+            s.currentPotC { CurrentGeoR.apply },
+            // Маркер местоположения узла.
+            s.radOptsC { MapCursorR.apply }
+          )
+
+          rcvrsProxy().nodesResp.toOption.fold[VdomElement] {
+            LayerGroupR()( lg: _* )
+          } { _ =>
+            LamRcvrsR(rcvrsProxy)( lg: _* )
+          }
+        },
+
+        // L-попап при клике по rad cursor.
+        s.radPopupPropsC { RadPopupR.apply },
+
+      )
+
+      val lgmCtx = LGeoMapR.LgmCtx.mk( $ )
+
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
         // Плашка с галочкой бесплатного размещения для суперюзеров.
-        p.wrap(_.adv4free) { a4fOptProx =>
-          Adv4FreeR(a4fOptProx)
-        },
+        p.wrap(_.adv4free)( Adv4FreeR.component.apply ),
 
         // Верхняя половина, левая колонка
         <.div(
@@ -71,38 +103,9 @@ object LamFormR {
 
         // Рендер географической карты:
         s.geoMapPropsC { mapPropsProxy =>
-          LMapR(
-            LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy )
-          )(
-
-            // Рендерим основную плитку карты.
-            ReactLeafletUtil.Tiles.OsmDefault,
-
-            // Плагин для геолокации текущего юзера.
-            LocateControlR(),
-
-            // Карта покрытия ресиверов (подгружается асихронно).
-            s.rcvrsC { rcvrsProxy =>
-
-              // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
-              val lg = List[VdomElement](
-                // Рендер текущих размещений.
-                s.currentPotC { CurrentGeoR.apply },
-                // Маркер местоположения узла.
-                s.radOptsC { MapCursorR.apply }
-              )
-
-              rcvrsProxy().nodesResp.toOption.fold[VdomElement] {
-                LayerGroupR()( lg: _* )
-              } { _ =>
-                LamRcvrsR(rcvrsProxy)( lg: _* )
-              }
-            },
-
-            // L-попап при клике по rad cursor.
-            s.radPopupPropsC { RadPopupR.apply }
-
-          )
+          LMapR.component(
+            LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy, lgmCtx )
+          )( mapChildren: _* )
         },
 
 
