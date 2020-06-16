@@ -86,10 +86,10 @@ object MFileMeta
   @inline implicit def univEq: UnivEq[MFileMeta] = UnivEq.derive
 
 
-  lazy val mime         = GenLens[MFileMeta](_.mime)
-  lazy val sizeB        = GenLens[MFileMeta](_.sizeB)
-  lazy val isOriginal   = GenLens[MFileMeta](_.isOriginal)
-  lazy val hashesHex    = GenLens[MFileMeta](_.hashesHex)
+  def mime         = GenLens[MFileMeta](_.mime)
+  def sizeB        = GenLens[MFileMeta](_.sizeB)
+  def isOriginal   = GenLens[MFileMeta](_.isOriginal)
+  def hashesHex    = GenLens[MFileMeta](_.hashesHex)
 
 
 

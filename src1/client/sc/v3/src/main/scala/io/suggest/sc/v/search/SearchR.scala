@@ -20,12 +20,12 @@ import scalacss.ScalaCssReact._
   * Created: 20.07.17 14:24
   * Description: Wrap-компонент поисковой панели (справа).
   */
-class SearchR(
-               nodesFoundR              : NodesFoundR,
-               geoMapOuterR             : GeoMapOuterR,
-               searchMapR               : SearchMapR,
-               scReactCtxP              : React.Context[MScReactCtx],
-             ) {
+final class SearchR(
+                     nodesFoundR              : NodesFoundR,
+                     geoMapOuterR             : GeoMapOuterR,
+                     searchMapR               : SearchMapR,
+                     scReactCtxP              : React.Context[MScReactCtx],
+                   ) {
 
   type Props = ModelProxy[MScRoot]
 
@@ -44,7 +44,7 @@ class SearchR(
 
     def render(mrootProxy: Props, s: State, children: PropsChildren): VdomElement = {
 
-      val searchBarChild = mrootProxy.wrap(_.index)( nodesFoundR.component.apply )
+      val nodesSearch = mrootProxy.wrap(_.index)( nodesFoundR.component.apply )
 
       val searchCss = s.searchCssC { CssR.compProxied.apply }
 
@@ -54,16 +54,16 @@ class SearchR(
         val SearchCSS = scCss.Search
 
         // Рендер вкладки карты:
-        val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
+        val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.component.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
 
         // Тело текущего таба.
         val tabContentInner = <.div(
           // Содержимое вкладки с картой.
           ^.`class` := Css.Display.DISPLAY_BLOCK,
           // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
-          searchBarChild,
+          nodesSearch,
           // Гео.карта:
-          geoMap
+          geoMap,
         )
 
         <.div(

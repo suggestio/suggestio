@@ -65,7 +65,7 @@ class GridR(
         val GridCss = ScCss.Grid
 
         <.div(
-          smFlex, GridCss.outer,
+          smFlex, GridCss.outer, ScCss.bgColor,
 
           <.div(
             smFlex, GridCss.wrapper,

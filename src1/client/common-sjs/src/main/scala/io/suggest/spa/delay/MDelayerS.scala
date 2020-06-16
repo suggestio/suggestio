@@ -3,6 +3,7 @@ package io.suggest.spa.delay
 import diode.FastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -23,6 +24,8 @@ object MDelayerS {
     }
   }
 
+  def delayed = GenLens[MDelayerS]( _.delayed )
+
 }
 
 
@@ -34,8 +37,4 @@ object MDelayerS {
 case class MDelayerS(
                       counter     : Int                        = 0,
                       delayed     : Map[Int, MDelayedAction]   = Map.empty
-                    ) {
-
-  def withDelayed( delayed: Map[Int, MDelayedAction] )    = copy(delayed = delayed)
-
-}
+                    )

@@ -35,7 +35,7 @@ object MLkAdsOneAdResp {
     UnivEq.derive
   }
 
-  val shownAtParent = GenLens[MLkAdsOneAdResp](_.shownAtParent)
+  def shownAtParent = GenLens[MLkAdsOneAdResp](_.shownAtParent)
 
 }
 

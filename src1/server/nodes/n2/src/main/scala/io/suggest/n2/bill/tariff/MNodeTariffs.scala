@@ -36,9 +36,7 @@ object MNodeTariffs
 
   import Fields._
 
-  override val empty: MNodeTariffs = {
-    apply()
-  }
+  override val empty = apply()
 
   implicit val FORMAT: Format[MNodeTariffs] = {
     (__ \ DAILY_FN).formatNullable[MTfDaily]
@@ -57,7 +55,7 @@ object MNodeTariffs
     )
   }
 
-  val daily = GenLens[MNodeTariffs](_.daily)
+  def daily = GenLens[MNodeTariffs](_.daily)
 
 }
 

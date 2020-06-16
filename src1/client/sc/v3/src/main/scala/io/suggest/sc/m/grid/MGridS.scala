@@ -24,7 +24,7 @@ object MGridS {
   @inline implicit def univEq: UnivEq[MGridS] = UnivEq.force
 
   val core = GenLens[MGridS](_.core)
-  val hasMoreAds = GenLens[MGridS](_.hasMoreAds)
+  def hasMoreAds = GenLens[MGridS](_.hasMoreAds)
   def afterUpdate = GenLens[MGridS](_.afterUpdate)
   def gNotify = GenLens[MGridS](_.gNotify)
 

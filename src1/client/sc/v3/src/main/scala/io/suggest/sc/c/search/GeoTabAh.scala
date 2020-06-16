@@ -7,7 +7,7 @@ import io.suggest.dev.MScreenInfo
 import io.suggest.grid.GridConst
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.maps.nodes.{MGeoNodesResp, MRcvrsMapUrlArgs}
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
@@ -37,22 +37,22 @@ import scala.util.Success
 object GeoTabAh {
 
   /** Макс. кол-во результатов в одном запросе к серверу. */
-  private[search] def REQ_LIMIT = 5
+  private[search] def REQ_LIMIT = 10
 
   /** Пересборка SearchCSS.
     *
     * @param screenInfo Данные по экрану.
     * @return Инстанс SearchCss.
     */
-  def _mkSearchCss(req              : Pot[MSearchRespInfo[MGeoNodesResp]],
+  def _mkSearchCss(nodesFound       : MNodesFoundS,
                    screenInfo       : MScreenInfo,
                    searchCssOrNull  : SearchCss
                   ): SearchCss = {
     val args2 = MSearchCssProps(
-      req        = req,
+      nodesFound = nodesFound,
       screenInfo = screenInfo,
     )
-    val isNeedRebuild = searchCssOrNull == null ||
+    val isNeedRebuild = (searchCssOrNull == null) ||
       MSearchCssProps.MSearchCssPropsFastEq.neqv(searchCssOrNull.args, args2)
 
     if (isNeedRebuild) {
@@ -176,7 +176,7 @@ class GeoTabAh[M](
         val v2 = v0.copy(
           found   = found2,
           mapInit = mapInit2,
-          css     = GeoTabAh._mkSearchCss(req2, screenInfoRO.value, v0.css)
+          css     = GeoTabAh._mkSearchCss(found2, screenInfoRO.value, v0.css)
         )
 
         updated(v2, runReqFx)
@@ -191,17 +191,39 @@ class GeoTabAh[M](
     case m: DoNodesSearch =>
       _doNodesSearch(m, value)
 
+
+    // Замер высоты списка результатов.
+    case m: NodesFoundListWh =>
+      val v0 = value
+
+      val heightPx2 = m.bounds.height
+
+      val rHeightPx0 = v0.found.rHeightPx
+      if ( !rHeightPx0.isPending || (rHeightPx0 contains[Int] heightPx2) ) {
+        noChange
+      } else {
+        val nodesFound2 = MNodesFoundS.rHeightPx
+          .set( rHeightPx0 ready heightPx2 )( v0.found )
+        val v2 = (
+          (MGeoTabS.found set nodesFound2) andThen
+          (MGeoTabS.css set GeoTabAh._mkSearchCss( nodesFound2, screenInfoRO.value, v0.css ))
+        )( v0 )
+        updated( v2 )
+      }
+
+
     // Клик по узлу в списке найденных гео-узлов.
     case m: NodeRowClick =>
       // Найти узел, который был окликнут.
       val v0 = value
       v0.found
-        .nodesFoundMap
+        .nodesMap
         .get( m.nodeId )
         .fold {
           // Почему-то не найдено узла, по которому произошёл клик.
           logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
+
         } { mnode =>
           val nodeId = mnode.nodeId.get
           // Есть окликнутый узел. Действовать исходя из типа узла.
@@ -209,14 +231,17 @@ class GeoTabAh[M](
             // Это тег. Обновить состояние выбранных тегов, искать в плитке.
             val isAlreadySelected = v0.data.selTagIds contains nodeId
 
-            // Снять либо выставить выделение для тега:
-            val selTagIds2: Set[String] =
-              if (isAlreadySelected) Set.empty // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
-              else Set(nodeId) // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
-
             val v2 = MGeoTabS.data
               .composeLens( MGeoTabData.selTagIds )
-              .set( selTagIds2 )(v0)
+              .set {
+                var set0 = Set.empty[String]
+
+                // Снять либо выставить выделение для тега:
+                if (!isAlreadySelected) // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
+                  set0 += nodeId  // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
+
+                set0
+              }(v0)
 
             val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
             val closeSearchFx = SideBarOpenClose(MScSideBars.Search, open = false).toEffectPure
@@ -239,6 +264,7 @@ class GeoTabAh[M](
           }
         }
 
+
     case m: NodesScroll =>
       val v0 = value
       // Надо подгружать ещё или нет?
@@ -257,6 +283,7 @@ class GeoTabAh[M](
       } else {
         noChange
       }
+
 
     // Запуск инициализации гео.карты.
     case InitSearchMap =>
@@ -317,15 +344,20 @@ class GeoTabAh[M](
           )
         }
       )
-      val v2 = v0.copy(
-        data = MGeoTabData.rcvrsCache.set(rcvrsCache2)(v0.data),
+
+      val v2 = (
+        MGeoTabS.data
+          .composeLens( MGeoTabData.rcvrsCache )
+          .set( rcvrsCache2 ) andThen
         // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
-        mapInit =
-          if (v0.mapInit.rcvrs.isEmpty)
+        MGeoTabS.mapInit.modify { mapInit0 =>
+          if (mapInit0.rcvrs.isEmpty)
             MMapInitState.rcvrs.set( rcvrsCache2 )(v0.mapInit)
           else
-            v0.mapInit
-      )
+            mapInit0
+        }
+      )(v0)
+
       updated( v2 )
 
   }

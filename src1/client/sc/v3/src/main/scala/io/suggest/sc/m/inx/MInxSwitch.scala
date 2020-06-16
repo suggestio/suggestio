@@ -35,6 +35,6 @@ case class MInxSwitch(
 
   lazy val searchCssOpt = ask.map(_.searchCss)
 
-  lazy val nodesFoundOpt = ask.map(_.nodesFoundS)
+  lazy val nodesFoundOpt = ask.map(_.searchCss.args.nodesFound)
 
 }

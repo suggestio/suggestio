@@ -219,7 +219,7 @@ class GeoLocAh[M](
           case true =>
             GeoLocAh._geoLocApiOpt.fold {
               // should never happen(?)
-              logger.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
+              logger.warn( ErrorMsgs.GEO_LOCATION_FAILED, msg = m )
               effectOnly(glPubErrFx)
 
             } { geoApi =>
@@ -311,7 +311,7 @@ class GeoLocAh[M](
           } else {
             // Т.к. геолокация качается из нескольких источников, то остальные ошибки отрабатываются отдельно.
             // TODO Возможно, это неправильно, и геолокация надо сразу вырубать при любой ошибке.
-            logger.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
+            //logger.warn( ErrorMsgs.GEO_LOCATION_FAILED, msg = m )
             // Сохранить ошибку в lastLoc
             val wa2 = MGeoLocWatcher.lastPos
               .modify(_.fail(m.error))(watcher0)

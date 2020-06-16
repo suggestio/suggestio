@@ -26,7 +26,7 @@ object MIdTokenConstaints extends IEmpty {
 
   @inline implicit def univEq: UnivEq[MIdTokenConstaints] = UnivEq.derive
 
-  val personIdsC = GenLens[MIdTokenConstaints]( _.personIdsC )
+  def personIdsC = GenLens[MIdTokenConstaints]( _.personIdsC )
 
 }
 

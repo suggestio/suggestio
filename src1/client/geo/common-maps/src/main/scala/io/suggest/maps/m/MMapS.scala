@@ -37,10 +37,10 @@ object MMapS {
     )
   }
 
-  val zoom          = GenLens[MMapS](_.zoom)
-  val centerInit    = GenLens[MMapS](_.centerInit)
-  val centerReal    = GenLens[MMapS](_.centerReal)
-  val locationFound = GenLens[MMapS](_.locationFound)
+  def zoom          = GenLens[MMapS](_.zoom)
+  def centerInit    = GenLens[MMapS](_.centerInit)
+  def centerReal    = GenLens[MMapS](_.centerReal)
+  def locationFound = GenLens[MMapS](_.locationFound)
 
 }
 

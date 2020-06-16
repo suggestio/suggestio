@@ -27,9 +27,9 @@ object MInternalInfo {
 
   @inline implicit def univEq: UnivEq[MInternalInfo] = UnivEq.derive
 
-  val geoLockTimer  = GenLens[MInternalInfo]( _.geoLockTimer )
-  val currRoute     = GenLens[MInternalInfo]( _.currRoute )
-  val messages      = GenLens[MInternalInfo]( _.commonReactCtx )
+  def geoLockTimer  = GenLens[MInternalInfo]( _.geoLockTimer )
+  def currRoute     = GenLens[MInternalInfo]( _.currRoute )
+  def messages      = GenLens[MInternalInfo]( _.commonReactCtx )
 
 }
 

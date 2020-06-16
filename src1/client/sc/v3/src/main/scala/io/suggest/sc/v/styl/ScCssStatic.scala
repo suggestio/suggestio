@@ -35,6 +35,10 @@ object ScCssStatic extends StyleSheet.Inline {
     }
   }
 
+  val thinText = style(
+    fontFamily.attr := MFonts.OpenSansLight.fileName,
+  )
+
   val smFlex = _styleAddClass( _SM_ + "flex" )
 
   object Body {
@@ -81,11 +85,37 @@ object ScCssStatic extends StyleSheet.Inline {
   /** Стили для заголовка. */
   object Header {
 
+    val header = style(
+      addClassNames(
+        ScCssStatic.Header.HEADER,
+        Css.Position.ABSOLUTE
+      ),
+      // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
+      height( ScCss.HEADER_HEIGHT_PX.px ),
+      // TODO На гориз.смартфоне криво, на декстопе - норм.
+      //left( args.screenInfo.unsafeOffsets.left.px ),
+      // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
+      minWidth( 200.px ),
+    )
+
+    val progress = style(
+      position.absolute,
+      bottom(0.px),
+      width(100.%%),
+      height(1.px),
+    )
+
     /** Корневое имя класса, от которого идёт остальное словообразование. */
     def HEADER = _SM_ + "producer-header"
 
     object Buttons {
 
+      // Новые кнопки (material-ui MuiIconButton).
+      val btn2 = style(
+        marginTop( -12.px ),
+      )
+
+      // Старые кнопки с plain-вёрсткой
       val btn = style(
         addClassNames(
           Css.Lk._SM_BUTTON,
@@ -245,6 +275,31 @@ object ScCssStatic extends StyleSheet.Inline {
 
     }
 
+
+    object Geo {
+
+      /** Контейнер прицела центра карты. */
+      val crosshair = style(
+        width( 0.px ),
+        position.relative,
+        left(48.5 %%),
+        zIndex(1000),
+        userSelect.none,
+      )
+
+      /** Стиль контейнера карты. Контейнер порождается js'кой гео-карты, а не нами. */
+      val geomap = {
+        val pc100 = 100.%%
+        style(
+          userSelect.none,
+          width( pc100 ),
+          height( pc100 ),
+        )
+      }
+
+    }
+
+
     /** Стили для списка найденных узлов (тегов и т.д.). */
     object NodesFound {
 
@@ -263,11 +318,12 @@ object ScCssStatic extends StyleSheet.Inline {
       }
 
       /** Горизонтальный прогресс-бар запроса. */
-      val linearProgress = {
-        val h = 5.px
+      val progress = {
         style(
-          marginTop( h ),
-          height( h )
+          height( 5.px ),
+          position.absolute,
+          bottom( 1.px ),
+          width( 100.%% ),
         )
       }
 
@@ -326,7 +382,7 @@ object ScCssStatic extends StyleSheet.Inline {
 
       /** Слишком большой шрифт у тегов, уменьшить. */
       val tagRowTextPrimary = style(
-        fontSize( 0.9.rem )
+        fontSize( 0.9.rem ),
       )
 
     }
@@ -360,10 +416,10 @@ object ScCssStatic extends StyleSheet.Inline {
 
       /** Стили строк меню. */
       val rowContent = style(
+        addClassName( thinText.htmlClass ),
         position.relative,
         minWidth( 260.px ),
         margin(0.px, auto),
-        fontFamily.attr := MFonts.OpenSansLight.fileName,
         fontSize( 14.px ),
         padding(12.px, 0.px),
         textTransform.uppercase
@@ -414,6 +470,7 @@ object ScCssStatic extends StyleSheet.Inline {
     Welcome.welcome,
     Search.NodesFound.listDiv,
     Search.TextBar.bar,
+    Search.Geo.crosshair,
     Menu.Rows.rowContent,
     Menu.version,
     AppDl.osFamily,

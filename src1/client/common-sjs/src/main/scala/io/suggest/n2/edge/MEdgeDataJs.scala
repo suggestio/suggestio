@@ -50,8 +50,8 @@ object MEdgeDataJs {
     }
   }
 
-  val jdEdge = GenLens[MEdgeDataJs](_.jdEdge)
-  val fileJs = GenLens[MEdgeDataJs](_.fileJs)
+  def jdEdge = GenLens[MEdgeDataJs](_.jdEdge)
+  def fileJs = GenLens[MEdgeDataJs](_.fileJs)
 
   implicit def edgeDataJs2edgeUidOpt(e: MEdgeDataJs): Option[EdgeUid_t] =
     implicitly[MJdEdge => Option[EdgeUid_t]]

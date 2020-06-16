@@ -30,10 +30,10 @@ object MJdShadow {
     case object TextShadow extends IColorPickerMarker
   }
 
-  val hOffset = GenLens[MJdShadow](_.hOffset)
-  val vOffset = GenLens[MJdShadow](_.vOffset)
-  val color   = GenLens[MJdShadow](_.color)
-  val blur    = GenLens[MJdShadow](_.blur)
+  def hOffset = GenLens[MJdShadow](_.hOffset)
+  def vOffset = GenLens[MJdShadow](_.vOffset)
+  def color   = GenLens[MJdShadow](_.color)
+  def blur    = GenLens[MJdShadow](_.blur)
 
 }
 

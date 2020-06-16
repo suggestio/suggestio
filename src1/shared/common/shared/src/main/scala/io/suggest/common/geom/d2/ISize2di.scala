@@ -101,7 +101,7 @@ object MSize2di extends IEsMappingProps {
   import boopickle.Default._
 
   /** Поддержка boopickle для инстансов [[MSize2di]]. */
-  implicit val size2diPickler: Pickler[MSize2di] = {
+  implicit lazy val size2diPickler: Pickler[MSize2di] = {
     generatePickler[MSize2di]
   }
 
@@ -138,8 +138,8 @@ object MSize2di extends IEsMappingProps {
   }
 
 
-  val width = GenLens[MSize2di](_.width)
-  val height = GenLens[MSize2di](_.height)
+  def width = GenLens[MSize2di](_.width)
+  def height = GenLens[MSize2di](_.height)
 
 
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {

@@ -12,7 +12,7 @@ import io.suggest.maps.r.{LGeoMapR, MapLoaderMarkerR, RcvrMarkersR, ReactLeaflet
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{MGeoTabS, MMapInitState}
+import io.suggest.sc.m.search.MGeoTabS
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
@@ -22,7 +22,7 @@ import react.leaflet.lmap.LMapR
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
-import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.v.styl.ScCssStatic
 
 /**
   * Suggest.io
@@ -33,9 +33,7 @@ import io.suggest.sc.m.MScReactCtx
   * Рендерится ЧЕРЕЗ wrap(), connect() будет тормозить сильно.
   * Содержит в себе компоненты для карты и всего остального.
   */
-class SearchMapR(
-                  scReactCtxP    : React.Context[MScReactCtx],
-                ) {
+class SearchMapR {
 
   import MGeoMapPropsR.MGeoMapPropsRFastEq
   import MMapS.MMapSFastEq4Map
@@ -100,39 +98,36 @@ class SearchMapR(
           ^.onTouchCancel ==> _stopPropagationF,
 
           s.mmapC { mmapProxy =>
-            scReactCtxP.consume { scReactCtx =>
-              // Код сборки css был унесён за пределы тела коннекшена до внедрения scCss-через-контекст.
-              // Нахождение этого кода здесь немного снижает производительность.
-              val mapCSS = scReactCtx.scCss.Search.Tabs.MapTab
-              val geoMapCssSome = Some(
-                (mapCSS.geomap :: props.css.GeoMap.geomap :: Nil)
-                  .toHtmlClass
+            // Код сборки css был унесён за пределы тела коннекшена до внедрения scCss-через-контекст.
+            // Нахождение этого кода здесь немного снижает производительность.
+            val geoMapCssSome = Some(
+              (ScCssStatic.Search.Geo.geomap :: props.css.GeoMap.geomap :: Nil)
+                .toHtmlClass
+            )
+            mmapProxy.wrap { mmap =>
+              MGeoMapPropsR(
+                center        = mmap.center,
+                zoom          = mmap.zoom,
+                locationFound = mmap.locationFound,
+                cssClass      = geoMapCssSome,
+                // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
+                //trackWndResize = someFalse,
+                whenReady     = _onMapReadyOptF,
+                //onDragStart   = _onMapDragStartOptF,
+                onDragEnd     = _onMapDragEndOptF,
               )
-              mmapProxy.wrap { mmap =>
-                MGeoMapPropsR(
-                  center        = mmap.center,
-                  zoom          = mmap.zoom,
-                  locationFound = mmap.locationFound,
-                  cssClass      = geoMapCssSome,
-                  // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
-                  //trackWndResize = someFalse,
-                  whenReady     = _onMapReadyOptF,
-                  //onDragStart   = _onMapDragStartOptF,
-                  onDragEnd     = _onMapDragEndOptF,
-                )
-              } { geoMapPropsProxy =>
-                LMapR(
-                  LGeoMapR
-                    .lmMapSProxy2lMapProps( geoMapPropsProxy )
-                    .noAttribution
-                )(
-                  tileLayer,
-                  locateControl,
-                  userLoc,
-                  rcvrsGeo,
-                  loaderOpt
-                )
-              }
+            } { geoMapPropsProxy =>
+              LMapR(
+                LGeoMapR
+                  .lmMapSProxy2lMapProps( geoMapPropsProxy )
+                  .noAttribution
+              )(
+                tileLayer,
+                locateControl,
+                userLoc,
+                rcvrsGeo,
+                loaderOpt
+              )
             }
           }
         )
@@ -183,7 +178,5 @@ class SearchMapR(
     }
     .renderBackend[Backend]
     .build
-
-  def apply(mapInitProxy: Props) = component(mapInitProxy)
 
 }

@@ -94,9 +94,9 @@ object MEdgeMedia
     )
   }
 
-  lazy val file        = GenLens[MEdgeMedia](_.file)
-  lazy val storage     = GenLens[MEdgeMedia](_.storage)
-  lazy val picture     = GenLens[MEdgeMedia](_.picture)
+  def file        = GenLens[MEdgeMedia](_.file)
+  def storage     = GenLens[MEdgeMedia](_.storage)
+  def picture     = GenLens[MEdgeMedia](_.picture)
 
   @inline implicit def univEq: UnivEq[MEdgeMedia] = UnivEq.derive
 

@@ -215,7 +215,8 @@ object MGeoPoint {
     override def getY(mgp: MGeoPoint): GeoCoord_t = mgp.lat
   }
 
-  val lon = GenLens[MGeoPoint](_.lon)
+  def lat = GenLens[MGeoPoint](_.lat)
+  def lon = GenLens[MGeoPoint](_.lon)
 
   def toEsStr(gp: MGeoPoint): String =
     gp.lat.toString + "," + gp.lon.toString

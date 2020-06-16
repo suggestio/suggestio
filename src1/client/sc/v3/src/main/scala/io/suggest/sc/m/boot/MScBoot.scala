@@ -27,9 +27,9 @@ object MScBoot {
 
   @inline implicit def univEq: UnivEq[MScBoot] = UnivEq.derive[MScBoot]
 
-  val services        = GenLens[MScBoot](_.services)
-  val targets         = GenLens[MScBoot](_.targets)
-  val wzFirstDone     = GenLens[MScBoot](_.wzFirstDone)
+  def services        = GenLens[MScBoot](_.services)
+  def targets         = GenLens[MScBoot](_.targets)
+  def wzFirstDone     = GenLens[MScBoot](_.wzFirstDone)
 
 }
 

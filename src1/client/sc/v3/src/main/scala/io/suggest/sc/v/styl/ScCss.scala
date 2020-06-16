@@ -97,7 +97,15 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   )
 
   val fgColor = style(
-    color( fgColorCss )
+    color( fgColorCss ),
+  )
+
+  val fgColorBg = style(
+    backgroundColor( fgColorCss ),
+  )
+
+  val fgColorBorder = style(
+    borderColor( fgColorCss ),
   )
 
 
@@ -141,7 +149,6 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
         style(
           addClassName( _SM_WELCOME_AD + "_bg-img" ),
-          backgroundColor( bgColorCss ),
           whMx
         )
       }
@@ -179,33 +186,10 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   /** Стили для заголовка. */
   object Header {
 
-    /** Стили для прогресс-бара. */
-    val progress = style(
-      position.absolute,
-      bottom(0.px),
-      width(100.%%),
-      backgroundColor( fgColorCss ),
-      height(1.px),
-    )
-
     /** Стили контейнера любого заголовка. */
-    val header = {
-      style(
-        addClassNames(
-          ScCssStatic.Header.HEADER,
-          Css.Position.ABSOLUTE
-        ),
-        backgroundColor( bgColorCss ),
-        borderColor( fgColorCss ),
-        // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
-        height( ScCss.HEADER_HEIGHT_PX.px ),
-        // TODO На гориз.смартфоне криво, на декстопе - норм.
-        //left( args.screenInfo.unsafeOffsets.left.px ),
-        // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
-        minWidth( 200.px ),
-        paddingTop( args.screenInfo.unsafeOffsets.top.px )
-      )
-    }
+    val header = style(
+      paddingTop( args.screenInfo.unsafeOffsets.top.px ),
+    )
 
 
     /** Доступ к стилям логотипа узла. */
@@ -223,11 +207,6 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
           addClassName( TXT_LOGO )
         )
 
-        val colored = style(
-          color( fgColorCss ),
-          borderColor( fgColorCss )
-        )
-
         /** Точки по краям названия узла. */
         object Dots {
           private val DOT = TXT_LOGO + "-dot"
@@ -235,11 +214,6 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
           /** Стиль для одной точки. */
           val dot = style(
             addClassName( DOT ),
-          )
-
-          /** Цвет точки. */
-          val dotColor = style(
-            backgroundColor( fgColorCss )
           )
 
           val left = ScCssStatic._styleAddClass( Css.__ + MsgCodes.`left` )
@@ -271,68 +245,48 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
       )
     }
 
-    /** CSS-класс заголовка внутри панели поиска. */
-    //val panelHeader = _styleAddClasses( _PANEL + "_header" )
 
+    /** Стили содержимого вкладки с гео-картой. */
+    object Geo {
 
-    /** Табы на поисковой панели. */
-    object Tabs {
-
-      /** Стили содержимого вкладки с гео-картой. */
-      object MapTab {
-
-        private val TAB_BODY_HEIGHT_PX = {
-          val si = args.screenInfo
-          si.screen.wh.height - si.unsafeOffsets.top
-        }
-
-        private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
-
-
-        /** Стиль внешнего контейнера. */
-        val outer = style(
-          ScCssStatic.smFlex,
-          TAB_BODY_HEIGHT
-        )
-
-        /** Стиль wrap-контейнера. */
-        val wrapper = style(
-          ScCssStatic.overflowScrollingMx,
-          ScCssStatic.smFlex,
-          TAB_BODY_HEIGHT
-        )
-
-        val inner = {
-          /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
-          val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll)
-            height( (TAB_BODY_HEIGHT_PX + 1).px )
-          else
-            TAB_BODY_HEIGHT
-          val OUTER = Css.Lk._SM_PREFIX_ + "categories"
-          style(
-            addClassName( OUTER + "_content" ),
-            TAB_BODY_CONTENT_HEIGHT
-          )
-        }
-
-        /** Стиль контейнера карты. Контейнер порождается js'кой гео-карты, а не нами. */
-        val geomap = {
-          val pc100 = 100.%%
-          style(
-            width( pc100 ),
-            height( pc100 )
-          )
-        }
-
-        /** Контейнер прицела центра карты. */
-        val crosshair = style(
-          position.relative,
-          top( -(TAB_BODY_HEIGHT_PX / 2 + 12).px ),
-          left(48.5 %%),
-          zIndex(1000)
-        )
-
+      private val TAB_BODY_HEIGHT_PX = {
+        val si = args.screenInfo
+        si.screen.wh.height - si.unsafeOffsets.top
       }
+
+      private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
+
+
+      /** Стиль внешнего контейнера. */
+      val outer = style(
+        ScCssStatic.smFlex,
+        TAB_BODY_HEIGHT
+      )
+
+      /** Стиль wrap-контейнера. */
+      val wrapper = style(
+        ScCssStatic.overflowScrollingMx,
+        ScCssStatic.smFlex,
+        TAB_BODY_HEIGHT
+      )
+
+      val inner = {
+        /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
+        val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll)
+          height( (TAB_BODY_HEIGHT_PX + 1).px )
+        else
+          TAB_BODY_HEIGHT
+        val OUTER = Css.Lk._SM_PREFIX_ + "categories"
+        style(
+          addClassName( OUTER + "_content" ),
+          TAB_BODY_CONTENT_HEIGHT
+        )
+      }
+
+      /** Контейнер прицела центра карты. */
+      val crosshair = style(
+        top( -(TAB_BODY_HEIGHT_PX / 2 + 12).px ),
+      )
 
     }
 
@@ -359,7 +313,6 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
     val outer = style(
       addClassName( _SM_GRID_ADS ),
       _screenHeight,
-      backgroundColor( bgColorCss ),
       paddingTop( args.screenInfo.unsafeOffsets.top.px ),
       // TODO Гориз. iphone10 - разъезжается.
       //paddingLeft( args.screenInfo.unsafeOffsets.left.px )
@@ -395,7 +348,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
       val paddingTopPx = uo.top + minPaddingTopPx
       style(
         paddingTop( paddingTopPx.px ),
-        paddingLeft( Math.max(5, uo.left).px ),
+        paddingLeft( Math.max(minPaddingTopPx, uo.left).px ),
         maxHeight( (args.screenInfo.screen.wh.height - paddingTopPx).px ),
         overflow.auto
       )
@@ -423,7 +376,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
     Header.Logo.Txt.Dots.dot,
 
-    Search.Tabs.MapTab.inner,
+    Search.Geo.inner,
 
     Grid.container,
     Menu.panel,

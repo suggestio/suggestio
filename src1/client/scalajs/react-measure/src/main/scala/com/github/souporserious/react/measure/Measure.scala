@@ -18,12 +18,12 @@ object Measure extends Log {
 
   def apply(measureProps: MeasureProps) = component(measureProps)
 
+  @js.native
+  @JSImport( NPM_PACKAGE_NAME, JSImport.Default )
+  object MeasureJs extends js.Object
+
 }
 
-
-@js.native
-@JSImport( NPM_PACKAGE_NAME, JSImport.Default )
-object MeasureJs extends js.Object
 
 @js.native
 trait MeasureChildrenArgs extends js.Object {
@@ -49,7 +49,7 @@ trait MeasureProps extends js.Object {
     *
     *   children = { args =>
     *     <.div(
-    *       ^.refGeneric := args.measureRef,
+    *       ^.genericRef := args.measureRef,
     *       ...
     *     )
     *   }

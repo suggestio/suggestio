@@ -30,7 +30,7 @@ object MReg2SmsCode {
   @inline implicit def univEq: UnivEq[MReg2SmsCode] = UnivEq.derive
 
   val smsCode   = GenLens[MReg2SmsCode](_.smsCode)
-  val submitReq = GenLens[MReg2SmsCode](_.submitReq)
+  def submitReq = GenLens[MReg2SmsCode](_.submitReq)
 
 }
 

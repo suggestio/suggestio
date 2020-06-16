@@ -70,8 +70,8 @@ object MNodeBilling
     )
   }
 
-  val contractId = GenLens[MNodeBilling](_.contractId)
-  val tariffs = GenLens[MNodeBilling](_.tariffs)
+  def contractId = GenLens[MNodeBilling](_.contractId)
+  def tariffs = GenLens[MNodeBilling](_.tariffs)
 
 }
 

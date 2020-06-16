@@ -1,5 +1,6 @@
 package io.suggest.sc.m.search
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.sc.m.{ISc3Action, IScApiRespReason, IScIndexRespReason}
 
 
@@ -46,3 +47,6 @@ case class MapReIndex( rcvrId: Option[String] ) extends ISc3Action with IScIndex
 
 /** Выполнить поиск узлов для гео-вкладки. */
 case class DoNodesSearch(clear: Boolean, ignorePending: Boolean) extends ISearchAction with IScApiRespReason
+
+/** Обработать измеренный размер списка результатов. */
+case class NodesFoundListWh( bounds: MSize2di ) extends ISearchAction

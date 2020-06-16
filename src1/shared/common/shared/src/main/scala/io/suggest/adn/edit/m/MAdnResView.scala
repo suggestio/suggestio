@@ -79,9 +79,9 @@ object MAdnResView extends IEmpty {
     )(apply _)
   }
 
-  val logo = GenLens[MAdnResView](_.logo)
-  val wcFg = GenLens[MAdnResView](_.wcFg)
-  val galImgs = GenLens[MAdnResView](_.galImgs)
+  def logo = GenLens[MAdnResView](_.logo)
+  def wcFg = GenLens[MAdnResView](_.wcFg)
+  def galImgs = GenLens[MAdnResView](_.galImgs)
 
 }
 

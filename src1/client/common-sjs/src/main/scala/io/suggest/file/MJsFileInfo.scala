@@ -37,12 +37,12 @@ object MJsFileInfo {
 
   @inline implicit def univEq: UnivEq[MJsFileInfo] = UnivEq.derive
 
-  val blob      = GenLens[MJsFileInfo](_.blob)
-  val fileMeta  = GenLens[MJsFileInfo](_.fileMeta)
-  val blobUrl   = GenLens[MJsFileInfo](_.blobUrl)
-  val fileName  = GenLens[MJsFileInfo](_.fileName)
-  val whPx      = GenLens[MJsFileInfo](_.whPx)
-  val upload    = GenLens[MJsFileInfo](_.upload)
+  def blob      = GenLens[MJsFileInfo](_.blob)
+  def fileMeta  = GenLens[MJsFileInfo](_.fileMeta)
+  def blobUrl   = GenLens[MJsFileInfo](_.blobUrl)
+  def fileName  = GenLens[MJsFileInfo](_.fileName)
+  def whPx      = GenLens[MJsFileInfo](_.whPx)
+  def upload    = GenLens[MJsFileInfo](_.upload)
 
 }
 

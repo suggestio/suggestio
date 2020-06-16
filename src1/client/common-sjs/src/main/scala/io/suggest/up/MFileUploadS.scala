@@ -30,9 +30,9 @@ object MFileUploadS {
 
   @inline implicit def univEq: UnivEq[MFileUploadS] = UnivEq.derive
 
-  val reqHolder = GenLens[MFileUploadS](_.reqHolder)
-  val prepareReq = GenLens[MFileUploadS](_.prepareReq)
-  //val uploadReq = GenLens[MFileUploadS](_.uploadReq)
+  def reqHolder = GenLens[MFileUploadS](_.reqHolder)
+  def prepareReq = GenLens[MFileUploadS](_.prepareReq)
+  def uploadReq = GenLens[MFileUploadS](_.uploadReq)
 
 
   implicit class FileUploadOpsExt( private val fUp: MFileUploadS ) extends AnyVal {

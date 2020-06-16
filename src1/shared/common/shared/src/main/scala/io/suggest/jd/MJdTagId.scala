@@ -49,8 +49,8 @@ object MJdTagId extends IEmpty {
   )(apply, unlift(unapply))
 
 
-  val selPathRev = GenLens[MJdTagId](_.selPathRev)
-  val blockExpand = GenLens[MJdTagId](_.blockExpand)
+  def selPathRev = GenLens[MJdTagId](_.selPathRev)
+  def blockExpand = GenLens[MJdTagId](_.blockExpand)
 
   /** Добавление под-уровня в [[MJdTagId]] происходит обычно через это действие: */
   def selPathRevNextLevel(subIndex: Int) =

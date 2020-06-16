@@ -25,8 +25,8 @@ object MRadS {
 
   @inline implicit def univEq: UnivEq[MRadS] = UnivEq.derive
 
-  val radiusMarkerCoords = GenLens[MRadS](_.radiusMarkerCoords)
-  val centerDragging = GenLens[MRadS](_.centerDragging)
-  val radiusDragging = GenLens[MRadS](_.radiusDragging)
+  def radiusMarkerCoords = GenLens[MRadS](_.radiusMarkerCoords)
+  def centerDragging = GenLens[MRadS](_.centerDragging)
+  def radiusDragging = GenLens[MRadS](_.radiusDragging)
 
 }

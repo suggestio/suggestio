@@ -71,8 +71,8 @@ object MPictureMeta
   @inline implicit def univEq: UnivEq[MPictureMeta] = UnivEq.derive
 
 
-  val whPx      = GenLens[MPictureMeta](_.whPx)
-  val histogram = GenLens[MPictureMeta](_.histogram)
+  def whPx      = GenLens[MPictureMeta](_.whPx)
+  def histogram = GenLens[MPictureMeta](_.histogram)
 
 }
 

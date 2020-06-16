@@ -20,7 +20,7 @@ object MGeoLoc {
 
   /** Поддержка JSON сериализации/десериализация.
     * В первую очередь для URL query_string в js-роутере. */
-  implicit val MGEO_LOC_FORMAT: OFormat[MGeoLoc] = (
+  implicit def MGEO_LOC_FORMAT: OFormat[MGeoLoc] = (
     (__ \ CENTER_FN).format[MGeoPoint] and
     (__ \ ACCURACY_M_FN).formatNullable[Double]
   )(apply, unlift(unapply))
@@ -50,8 +50,8 @@ object MGeoLoc {
     }
   }
 
-  val point = GenLens[MGeoLoc](_.point)
-  val accuracyOptM = GenLens[MGeoLoc](_.accuracyOptM)
+  def point = GenLens[MGeoLoc](_.point)
+  def accuracyOptM = GenLens[MGeoLoc](_.accuracyOptM)
 
 }
 

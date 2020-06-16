@@ -9,7 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 
 object MSmsSend {
 
-  val isTest = GenLens[MSmsSend](_.isTest)
+  def isTest = GenLens[MSmsSend](_.isTest)
 
 }
 

@@ -30,10 +30,10 @@ object MReg0Creds {
     }
   }
 
-  val email           = GenLens[MReg0Creds]( _.email )
-  val phone           = GenLens[MReg0Creds]( _.phone )
-  val pwRecoverMsg    = GenLens[MReg0Creds]( _.pwRecoverMsg )
-  val submitReq       = GenLens[MReg0Creds]( _.submitReq )
+  def email           = GenLens[MReg0Creds]( _.email )
+  def phone           = GenLens[MReg0Creds]( _.phone )
+  def pwRecoverMsg    = GenLens[MReg0Creds]( _.pwRecoverMsg )
+  def submitReq       = GenLens[MReg0Creds]( _.submitReq )
 
   @inline implicit def univEq: UnivEq[MReg0Creds] = UnivEq.derive
 

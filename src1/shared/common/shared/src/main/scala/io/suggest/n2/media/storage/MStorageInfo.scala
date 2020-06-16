@@ -57,8 +57,8 @@ object MStorageInfo extends IEsMappingProps {
 
   }
 
-  lazy val storage = GenLens[MStorageInfo](_.storage)
-  lazy val data = GenLens[MStorageInfo](_.data)
+  def storage = GenLens[MStorageInfo](_.storage)
+  def data = GenLens[MStorageInfo](_.data)
 
 }
 

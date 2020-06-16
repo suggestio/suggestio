@@ -134,6 +134,7 @@ object JdUtil {
     */
   def mkTreeIndexed(jdDoc: MJdDoc): Tree[(MJdTagId, JdTag)] = {
     val rootJdt = jdDoc.template.rootLabel
+    val jdTagId_blockExpand_LENS = MJdTagId.blockExpand
 
     jdDoc
       .template
@@ -148,7 +149,7 @@ object JdUtil {
         if (jdt.name ==* MJdTagNames.STRIP) {
           val expandMode2 = jdt.props1.expandMode
           if (expandMode2 !=* jdId.blockExpand)
-            updAcc ::= MJdTagId.blockExpand.set(expandMode2)
+            updAcc ::= (jdTagId_blockExpand_LENS set expandMode2)
         }
 
         // Выставить blockExpand, если требуется:

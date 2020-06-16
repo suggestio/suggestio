@@ -150,17 +150,18 @@ final case class NfRowR(
             Css.flat( NodesCSS.tagRowText.htmlClass, scReactCtx.scCss.fgColor.htmlClass )
           )
 
-          // Текст состоит из статической и динамической вёрстки.
-          val primaryCss = (
-            NodesCSS.tagRowTextPrimary ::
-            props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
-            Nil
-          ).toHtmlClass
-
           val theClasses = new MuiListItemTextClasses {
             override val root = rootCss
-            override val primary = primaryCss
-            override val secondary = props.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass
+            override val primary = (
+              ScCssStatic.thinText ::
+              NodesCSS.tagRowTextPrimary ::
+              props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
+              Nil
+            ).toHtmlClass
+            override val secondary = Css.flat(
+              props.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass,
+              ScCssStatic.thinText.htmlClass,
+            )
           }
 
           val text2ndOpt = distanceMOpt

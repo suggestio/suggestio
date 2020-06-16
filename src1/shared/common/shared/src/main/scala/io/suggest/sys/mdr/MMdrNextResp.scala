@@ -30,7 +30,7 @@ object MMdrNextResp {
     UnivEq.derive
   }
 
-  val nodeOpt = GenLens[MMdrNextResp](_.nodeOpt)
+  def nodeOpt = GenLens[MMdrNextResp](_.nodeOpt)
 
 }
 

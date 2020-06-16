@@ -39,8 +39,7 @@ class ScMapDelayAh[M](
       rcvrId      = rcvrId,
       listenMove  = listenMove
     )
-    val fut = tp.fut
-    val fx = Effect(fut)
+    val fx = Effect( tp.fut )
     updatedSilent( Some(v2), fx )
   }
 

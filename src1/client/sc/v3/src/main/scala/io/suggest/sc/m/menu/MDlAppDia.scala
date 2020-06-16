@@ -33,12 +33,12 @@ object MDlAppDia {
 
   @inline implicit def univEq: UnivEq[MDlAppDia] = UnivEq.derive
 
-  lazy val opened = GenLens[MDlAppDia](_.opened)
-  lazy val getReq = GenLens[MDlAppDia](_.getReq)
-  lazy val platform = GenLens[MDlAppDia](_.platform)
-  lazy val expanded = GenLens[MDlAppDia](_.expanded)
-  lazy val showTechInfo = GenLens[MDlAppDia](_.showTechInfo)
-  lazy val qrCodeExpanded = GenLens[MDlAppDia](_.qrCodeExpanded)
+  def opened = GenLens[MDlAppDia](_.opened)
+  def getReq = GenLens[MDlAppDia](_.getReq)
+  def platform = GenLens[MDlAppDia](_.platform)
+  def expanded = GenLens[MDlAppDia](_.expanded)
+  def showTechInfo = GenLens[MDlAppDia](_.showTechInfo)
+  def qrCodeExpanded = GenLens[MDlAppDia](_.qrCodeExpanded)
 
 }
 

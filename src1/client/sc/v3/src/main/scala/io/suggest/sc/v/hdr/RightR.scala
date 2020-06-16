@@ -1,9 +1,10 @@
 package io.suggest.sc.v.hdr
 
-import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
 import diode.react.ModelProxy
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 
@@ -27,8 +28,12 @@ class RightR {
 
     def render(propsProxy: Props): VdomElement = {
       MuiIconButton {
+        val classesCss = new MuiIconButtonClasses {
+          override val root = ScCssStatic.Header.Buttons.btn2.htmlClass
+        }
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF
+          override val classes = classesCss
         }
       }(
         Mui.SvgIcons.ArrowForwardIosOutlined()()

@@ -39,8 +39,8 @@ object MJdDoc {
 
   @inline implicit def univEq: UnivEq[MJdDoc] = UnivEq.derive
 
-  val template  = GenLens[MJdDoc](_.template)
-  val jdId      = GenLens[MJdDoc](_.tagId)
+  def template  = GenLens[MJdDoc](_.template)
+  def jdId      = GenLens[MJdDoc](_.tagId)
 
 }
 

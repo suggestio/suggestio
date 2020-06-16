@@ -78,8 +78,8 @@ object MFileMetaHash
 
   @inline implicit def univEq: UnivEq[MFileMetaHash] = UnivEq.derive
 
-  lazy val hexValue = GenLens[MFileMetaHash](_.hexValue)
-  lazy val flags = GenLens[MFileMetaHash](_.flags)
+  def hexValue = GenLens[MFileMetaHash](_.hexValue)
+  def flags = GenLens[MFileMetaHash](_.flags)
 
 
   implicit class FmHashesOpsExt( private val hashes: Iterable[MFileMetaHash] ) extends AnyVal {

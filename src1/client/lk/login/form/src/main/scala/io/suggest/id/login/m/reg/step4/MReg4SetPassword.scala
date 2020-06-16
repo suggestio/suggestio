@@ -25,7 +25,7 @@ object MReg4SetPassword {
     }
   }
 
-  val submitReq = GenLens[MReg4SetPassword](_.submitReq)
+  def submitReq = GenLens[MReg4SetPassword](_.submitReq)
 
   @inline implicit def univEq: UnivEq[MReg4SetPassword] = UnivEq.derive
 

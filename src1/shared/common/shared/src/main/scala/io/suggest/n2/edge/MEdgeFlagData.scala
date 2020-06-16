@@ -27,7 +27,7 @@ object MEdgeFlagData {
 
   @inline implicit def univEq: UnivEq[MEdgeFlagData] = UnivEq.derive
 
-  val flag = GenLens[MEdgeFlagData](_.flag)
+  def flag = GenLens[MEdgeFlagData](_.flag)
 
   // TODO ES-маппинг живёт в MEdgeInfo.edgeFlagDataMapping()
 }

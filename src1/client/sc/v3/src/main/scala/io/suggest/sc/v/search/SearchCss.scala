@@ -5,6 +5,7 @@ import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.font.MFonts
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
 import io.suggest.sc.v.styl.ScCss
@@ -45,39 +46,44 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   }
 
   private val NODES_LIST_HEIGHT_PX = {
-    // Надо оценить кол-во рядов для стилей.
-    // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).
-    var rowsCount = 0
-    for (nodes <- args.req) {
-      // Теги могут занимать и треть и пол-ряда. Поэтому ряды тегов надо считать по-особому:
-      val nodesDoubleCount = nodes.resp.nodes
-        .iterator
-        .map { n =>
-          n.props.ntype match {
-            case MNodeTypes.Tag => 1
-            case _ => 2
+    val MAX_ROWS_COUNT = 6
+    args.nodesFound.rHeightPx.fold {
+      // Надо оценить кол-во рядов для стилей по-старинке. TODO Удалить этот код?
+      // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).
+      var rowsCount = 0
+      for (nodes <- args.nodesFound.req) {
+        // Теги могут занимать и треть и пол-ряда. Поэтому ряды тегов надо считать по-особому:
+        val nodesDoubleCount = nodes.resp.nodes
+          .iterator
+          .map { n =>
+            n.props.ntype match {
+              case MNodeTypes.Tag => 1
+              case _ => 2
+            }
           }
-        }
-        .sum
-        .toInt
-      rowsCount += Math.max(1, nodesDoubleCount / 2)
+          .sum
+          .toInt
+        rowsCount += Math.max(1, nodesDoubleCount / 2)
+      }
+      if (args.nodesFound.req.isPending)
+        rowsCount += 1
+      if (args.nodesFound.req.isFailed)
+        rowsCount += 2
+
+      rowsCount = Math.min(rowsCount, MAX_ROWS_COUNT)
+
+      val rowHeightPx = SearchCss.NODE_ROW_HEIGHT_PX
+
+      var listHeightPx = rowsCount * rowHeightPx
+      if (rowsCount > MAX_ROWS_COUNT) listHeightPx += rowHeightPx/2
+
+      //println("search rows height pxx: ", rowHeightPx, rowsCount, args.req.isFailed, args.req.isPending, args.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
+
+      listHeightPx.toInt
+
+    } { rHeightPx =>
+      Math.min( rHeightPx, MAX_ROWS_COUNT * SearchCss.NODE_ROW_HEIGHT_PX )
     }
-    if (args.req.isPending)
-      rowsCount += 1
-    if (args.req.isFailed)
-      rowsCount += 2
-
-    val MAX_ROWS_COUNT = 7
-    rowsCount = Math.min(rowsCount, MAX_ROWS_COUNT)
-
-    val rowHeightPx = SearchCss.NODE_ROW_HEIGHT_PX
-
-    var listHeightPx = rowsCount * rowHeightPx
-    if (rowsCount > MAX_ROWS_COUNT) listHeightPx += rowHeightPx/2
-
-    //println("search rows height pxx: ", rowHeightPx, rowsCount, args.req.isFailed, args.req.isPending, args.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
-
-    listHeightPx.toInt
   }
 
   private val NODES_WITH_FIELD_HEIGHT_PX = NODES_LIST_HEIGHT_PX + ScCss.TABS_OFFSET_PX
@@ -94,7 +100,6 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     val crosshair = style(
       top( -(GEO_MAP_HEIGHT_PX / 2 + 12).px ),
-      width( 0.px )
     )
 
   }
@@ -111,11 +116,11 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     // После втыкания materialUI, возникла необходимость описывать стили не-инлайново через classes.
 
-    private val nodeIdsDomain = new Domain.OverSeq( args.nodesMap.keys.toIndexedSeq )
+    private val nodeIdsDomain = new Domain.OverSeq( args.nodesFound.nodesMap.keys.toIndexedSeq )
 
     /** Стиль фона ряда одного узла. */
     val rowItemBgF = styleF(nodeIdsDomain) { nodeId =>
-      val nodeProps = args.nodesMap(nodeId)
+      val nodeProps = args.nodesFound.nodesMap(nodeId)
       nodeProps.colors.bg.whenDefinedStyleS { mcd =>
         styleS(
           backgroundColor( Color(mcd.hexCode) )
@@ -136,7 +141,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     /** Стиль переднего плана одноу узла. */
     val rowTextPrimaryF = styleF(nodeIdsDomain) { nodeId =>
-      val nodeProps = args.nodesMap(nodeId)
+      val nodeProps = args.nodesFound.nodesMap(nodeId)
       nodeProps.colors.fg.whenDefinedStyleS { mcd =>
         styleS(
           // "0xDD" - 0.87 alpha
@@ -146,7 +151,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     }
 
     val rowTextSecondaryF = styleF(nodeIdsDomain) { nodeId =>
-      val nodeProps = args.nodesMap(nodeId)
+      val nodeProps = args.nodesFound.nodesMap(nodeId)
       nodeProps.colors.fg.whenDefinedStyleS { mcd =>
         styleS(
           // "0x89" - 0.54 alpha

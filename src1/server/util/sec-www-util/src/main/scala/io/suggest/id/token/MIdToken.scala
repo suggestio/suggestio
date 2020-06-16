@@ -33,9 +33,9 @@ object MIdToken {
   @inline implicit def univEq: UnivEq[MIdToken] = UnivEq.derive
 
 
-  val idMsgs    = GenLens[MIdToken]( _.idMsgs )
-  val payload   = GenLens[MIdToken]( _.payload )
-  val dates     = GenLens[MIdToken]( _.dates )
+  def idMsgs    = GenLens[MIdToken]( _.idMsgs )
+  def payload   = GenLens[MIdToken]( _.payload )
+  def dates     = GenLens[MIdToken]( _.dates )
 
 }
 

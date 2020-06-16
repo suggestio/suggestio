@@ -48,9 +48,9 @@ class ActionDelayerAh[M](stateRW: ModelRW[M, MDelayerS])
         noChange
       } { delayed =>
         val fx = delayed.info.action.toEffectPure
-        val v2 = v0.withDelayed(
-          v0.delayed - m.actionId
-        )
+        val v2 = MDelayerS.delayed
+          .modify( _ - m.actionId )(v0)
+
         updated(v2, fx)
       }
 

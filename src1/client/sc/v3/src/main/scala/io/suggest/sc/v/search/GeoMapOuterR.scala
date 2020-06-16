@@ -11,6 +11,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
 import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.v.styl.ScCssStatic
 
 /**
   * Suggest.io
@@ -40,7 +41,7 @@ class GeoMapOuterR(
 
     def render(searchCssProxy: Props, s: State, children: PropsChildren): VdomElement = {
       scReactCtxP.consume { scReactCtx =>
-        val mapTabCSS = scReactCtx.scCss.Search.Tabs.MapTab
+        val mapTabCSS = scReactCtx.scCss.Search.Geo
         val searchCss = searchCssProxy.value.searchCss
 
         <.div(
@@ -62,7 +63,7 @@ class GeoMapOuterR(
           s.showCrossHairSomeC { showCrossHairOrNone =>
             ReactCommonUtil.maybeEl( showCrossHairOrNone.value.getOrElseFalse ) {
               <.div(
-                mapTabCSS.crosshair,
+                ScCssStatic.Search.Geo.crosshair, mapTabCSS.crosshair,
                 searchCss.GeoMap.crosshair,
                 HtmlConstants.PLUS
               )

@@ -31,8 +31,8 @@ object MLknNode {
     (__ \ "u").formatNullable[Boolean]
   )(apply, unlift(unapply))
 
-  val advShowOpened = GenLens[MLknNode](_.advShowOpened)
-  val alwaysOutlined = GenLens[MLknNode](_.alwaysOutlined)
+  def advShowOpened = GenLens[MLknNode](_.advShowOpened)
+  def alwaysOutlined = GenLens[MLknNode](_.alwaysOutlined)
 
 }
 

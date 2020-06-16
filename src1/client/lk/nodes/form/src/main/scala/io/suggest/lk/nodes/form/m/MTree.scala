@@ -25,8 +25,8 @@ object MTree {
     UnivEq.derive
   }
 
-  val nodes = GenLens[MTree](_.nodes)
-  val showProps = GenLens[MTree](_.showProps)
+  def nodes = GenLens[MTree](_.nodes)
+  def showProps = GenLens[MTree](_.showProps)
 
 }
 

@@ -77,10 +77,10 @@ object MDynImgId {
   }
 
 
-  val rowKeyStr = GenLens[MDynImgId](_.origNodeId)
-  val dynFormat = GenLens[MDynImgId](_.dynFormat)
-  val dynImgOps = GenLens[MDynImgId](_.dynImgOps)
-  val compressAlgo = GenLens[MDynImgId](_.compressAlgo)
+  def rowKeyStr = GenLens[MDynImgId](_.origNodeId)
+  def dynFormat = GenLens[MDynImgId](_.dynFormat)
+  def dynImgOps = GenLens[MDynImgId](_.dynImgOps)
+  def compressAlgo = GenLens[MDynImgId](_.compressAlgo)
 
 
   implicit class DynImgIdOpsExt( private val dynImgId: MDynImgId) extends AnyVal {

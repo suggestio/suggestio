@@ -150,6 +150,7 @@ object GridBuilderUtilJs {
     * @return Результат сборки плитки.
     */
   def buildGridFromJdArgs(jdArgs: MJdArgs): MGridBuildResult = {
+    val jdTagId_selPathRev_LENS = MJdTagId.selPathRev
     val gbArgs = MGridBuildArgs(
       // Тривиальная конвертация списка шаблонов блоков в плоский список одноуровневых MGbBlock.
       itemsExtDatas = (for {
@@ -162,7 +163,7 @@ object GridBuilderUtilJs {
         jdt = jdtTree.rootLabel
       } yield {
         Tree.Leaf {
-          val jdId = MJdTagId.selPathRev
+          val jdId = jdTagId_selPathRev_LENS
             .modify(i :: _)(jdArgs.data.doc.tagId)
           MGbBlock(
             jdId    = jdId,

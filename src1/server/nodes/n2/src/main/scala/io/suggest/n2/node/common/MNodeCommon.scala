@@ -40,7 +40,7 @@ object MNodeCommon extends IEsMappingProps {
     )
   }
 
-  val isEnabled = GenLens[MNodeCommon](_.isEnabled)
+  def isEnabled = GenLens[MNodeCommon](_.isEnabled)
 
 }
 

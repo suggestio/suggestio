@@ -58,7 +58,7 @@ object MTfDaily
     )
   }
 
-  val comissionPc = GenLens[MTfDaily](_.comissionPc)
+  def comissionPc = GenLens[MTfDaily](_.comissionPc)
 
 }
 

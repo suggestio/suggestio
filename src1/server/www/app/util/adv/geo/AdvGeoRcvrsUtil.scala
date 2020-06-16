@@ -182,6 +182,7 @@ class AdvGeoRcvrsUtil @Inject()(
       CompressModes.Fg
     )
     val logoSzMult = 1.0f
+    val size2d_LENS = MSize2di.width
 
     // Пережевать все найденные узлы, собрать нужные данные в единый список.
     // Собрать логотипы узлов.
@@ -255,7 +256,7 @@ class AdvGeoRcvrsUtil @Inject()(
                 val szCss = logoMakeRes.szCss
                 val szFinal = if (logoMakeRes.isFake) {
                   // Фейковый рендер, значит на выходе оригинальный размер. Надо спроецировать этот размер на targetWh по высоте:
-                  MSize2di.width.set(
+                  size2d_LENS.set(
                     (szCss.width.toDouble / (szCss.height.toDouble / targetWh.height.toDouble)).toInt
                   )(targetWh)
                 } else {
@@ -273,7 +274,7 @@ class AdvGeoRcvrsUtil @Inject()(
             name    = hintOpt,
             // Цвета узла. Можно без цвета паттерна, т.к. он не нужен.
             colors  = mnode.meta.colors,
-            logoOpt    = iconInfoOpt
+            logoOpt = iconInfoOpt
           )
 
           // Собрать и вернуть контейнер с данными мапы узлов:

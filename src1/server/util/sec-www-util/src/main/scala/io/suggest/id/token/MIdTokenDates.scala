@@ -23,7 +23,7 @@ object MIdTokenDates {
 
   @inline implicit def univEq: UnivEq[MIdTokenDates] = UnivEq.derive
 
-  val modified = GenLens[MIdTokenDates]( _.modified )
+  def modified = GenLens[MIdTokenDates]( _.modified )
 
 }
 

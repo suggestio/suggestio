@@ -24,8 +24,8 @@ object MReg3CheckBoxes {
 
   @inline implicit def univEq: UnivEq[MReg3CheckBoxes] = UnivEq.derive
 
-  val tos         = GenLens[MReg3CheckBoxes]( _.tos )
-  val pdn         = GenLens[MReg3CheckBoxes]( _.pdn )
+  def tos         = GenLens[MReg3CheckBoxes]( _.tos )
+  def pdn         = GenLens[MReg3CheckBoxes]( _.pdn )
 
 }
 

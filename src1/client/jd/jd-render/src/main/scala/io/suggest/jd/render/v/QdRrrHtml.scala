@@ -69,6 +69,7 @@ case class QdRrrHtml(
     * В конце работы должен остаться Nil.
     */
   private var _restOps: LazyList[MQdOpCont] = {
+    val jdTagId_selPathRev_LENS = MJdTagId.selPathRev
     (for {
       (jdtTree, i) <- EphemeralStream.toIterable(
         rrrProps.subTree
@@ -82,7 +83,7 @@ case class QdRrrHtml(
       MQdOpCont(
         qdOp    = qdOp,
         jdTag   = jdt,
-        jdTagId = MJdTagId.selPathRev
+        jdTagId = jdTagId_selPathRev_LENS
           .modify(i :: _)(rrrProps.tagId),
       )
     })

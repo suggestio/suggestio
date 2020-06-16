@@ -22,9 +22,9 @@ case class Acc(
               )
 
 object Acc {
-  val mnode = GenLens[Acc](_.mnode)
-  val dbActions = GenLens[Acc](_.dbActions)
-  val interruptedTypes = GenLens[Acc](_.interruptedTypes)
+  def mnode = GenLens[Acc](_.mnode)
+  def dbActions = GenLens[Acc](_.dbActions)
+  def interruptedTypes = GenLens[Acc](_.interruptedTypes)
 }
 
 

@@ -28,9 +28,9 @@ object MRegCheckBoxS {
   @inline implicit def univEq: UnivEq[MRegCheckBoxS] = UnivEq.derive
 
 
-  val isChecked         = GenLens[MRegCheckBoxS](_.isChecked)
-  val content           = GenLens[MRegCheckBoxS](_.content)
-  val isContentShowing  = GenLens[MRegCheckBoxS](_.isContentShowing)
+  def isChecked         = GenLens[MRegCheckBoxS](_.isChecked)
+  def content           = GenLens[MRegCheckBoxS](_.content)
+  def isContentShowing  = GenLens[MRegCheckBoxS](_.isContentShowing)
 
 }
 

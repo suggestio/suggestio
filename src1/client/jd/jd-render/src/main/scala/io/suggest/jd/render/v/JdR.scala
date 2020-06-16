@@ -205,6 +205,7 @@ class JdR(
                 )
                   .rawElement
               }
+
               new MeasureProps {
                 override val client = true
                 override val bounds = true

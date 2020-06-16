@@ -20,15 +20,15 @@ object MAdEditFormInit {
     val BLOCK_PADDING   = "p"
   }
 
-  implicit val MAD_EDIT_FORM_INIT_FORMAT: OFormat[MAdEditFormInit] = (
+  implicit def MAD_EDIT_FORM_INIT_FORMAT: OFormat[MAdEditFormInit] = (
     (__ \ Fields.CONF_FN).format[MAdEditFormConf] and
     (__ \ Fields.AD_DATA_FN).format[MJdData] and
     (__ \ Fields.BLOCK_PADDING).format[BlockPadding]
   )(apply, unlift(unapply))
 
-  val conf = GenLens[MAdEditFormInit](_.conf)
-  val adData = GenLens[MAdEditFormInit](_.adData)
-  val blockPadding = GenLens[MAdEditFormInit](_.blockPadding)
+  def conf = GenLens[MAdEditFormInit](_.conf)
+  def adData = GenLens[MAdEditFormInit](_.adData)
+  def blockPadding = GenLens[MAdEditFormInit](_.blockPadding)
 
 }
 

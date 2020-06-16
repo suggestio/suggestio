@@ -35,10 +35,10 @@ object MGridCoreS {
   @inline implicit def univEq: UnivEq[MGridCoreS] = UnivEq.derive
 
 
-  val jdConf    = GenLens[MGridCoreS](_.jdConf)
+  def jdConf    = GenLens[MGridCoreS](_.jdConf)
   val jdRuntime = GenLens[MGridCoreS](_.jdRuntime)
-  val ads       = GenLens[MGridCoreS](_.ads)
-  val gridBuild = GenLens[MGridCoreS](_.gridBuild)
+  def ads       = GenLens[MGridCoreS](_.ads)
+  def gridBuild = GenLens[MGridCoreS](_.gridBuild)
 
 }
 

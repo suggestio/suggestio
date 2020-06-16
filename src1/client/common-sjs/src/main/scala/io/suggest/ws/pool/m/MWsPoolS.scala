@@ -24,7 +24,7 @@ object MWsPoolS {
 
   @inline implicit def univEq: UnivEq[MWsPoolS] = UnivEq.derive
 
-  val conns = GenLens[MWsPoolS](_.conns)
+  def conns = GenLens[MWsPoolS](_.conns)
 
 }
 

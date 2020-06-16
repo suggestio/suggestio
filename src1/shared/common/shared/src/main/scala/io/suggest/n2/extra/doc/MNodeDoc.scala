@@ -47,7 +47,7 @@ object MNodeDoc
     )
   }
 
-  val template = GenLens[MNodeDoc](_.template)
+  def template = GenLens[MNodeDoc](_.template)
 
 }
 

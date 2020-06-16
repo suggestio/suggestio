@@ -77,7 +77,7 @@ object MAdnExtra
 
   @inline implicit def univEq: UnivEq[MAdnExtra] = UnivEq.derive
 
-  val resView = GenLens[MAdnExtra](_.resView)
+  def resView = GenLens[MAdnExtra](_.resView)
 
 }
 

@@ -535,8 +535,8 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
   }
 
 
-  val dynImgId      = GenLens[MImg3](_.dynImgId)
-  val userFileName  = GenLens[MImg3](_.userFileName)
+  def dynImgId      = GenLens[MImg3](_.dynImgId)
+  def userFileName  = GenLens[MImg3](_.userFileName)
 
 }
 

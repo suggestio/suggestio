@@ -8,7 +8,7 @@ package io.suggest.msg
  */
 object ErrorMsgs {
 
-  def GEO_LOC_FAILED = "Geolocation.failed"
+  def GEO_LOCATION_FAILED = "Geolocation.failed"
 
   def GET_NODE_INDEX_FAILED = "Get.node.index.failed"
 

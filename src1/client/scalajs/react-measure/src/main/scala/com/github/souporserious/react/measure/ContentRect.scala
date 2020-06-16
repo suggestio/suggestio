@@ -6,7 +6,6 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 14.08.2019 17:21
-  * Description:
   */
 trait ContentRect extends js.Object {
 

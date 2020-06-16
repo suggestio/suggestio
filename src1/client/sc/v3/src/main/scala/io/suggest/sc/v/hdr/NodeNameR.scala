@@ -40,17 +40,23 @@ class NodeNameR(
     def render(props: Props): VdomElement = {
       // Отрендерить название текущего узла.
       scReactCtxP.consume { scReactCtx =>
-        val styles = scReactCtx.scCss.Header.Logo.Txt
+        val scCss = scReactCtx.scCss
+        val styles = scCss.Header.Logo.Txt
         val dotsStyles = styles.Dots
 
         val dot0 = <.span(
           dotsStyles.dot,
-          ReactCommonUtil.maybe(props.styled)(dotsStyles.dotColor),
+          ReactCommonUtil.maybe(props.styled)( scCss.fgColorBg ),
         )
 
         <.span(
           styles.logo,
-          ReactCommonUtil.maybe( props.styled )(styles.colored),
+          ReactCommonUtil.maybe( props.styled )(
+            TagMod(
+              scCss.fgColorBorder,
+              scCss.fgColor,
+            )
+          ),
           props.nodeName,
           dot0( dotsStyles.left ),
           dot0( dotsStyles.right ),

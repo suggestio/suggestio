@@ -44,16 +44,16 @@ object MJdtProps1 extends IEmpty {
 
   @inline implicit def univEq: UnivEq[MJdtProps1] = UnivEq.derive
 
-  val bgColor     = GenLens[MJdtProps1](_.bgColor)
-  val bgImg       = GenLens[MJdtProps1](_.bgImg)
-  val topLeft     = GenLens[MJdtProps1](_.topLeft)
-  val isMain      = GenLens[MJdtProps1](_.isMain)
-  val rotateDeg   = GenLens[MJdtProps1](_.rotateDeg)
-  val textShadow  = GenLens[MJdtProps1](_.textShadow)
-  val widthPx     = GenLens[MJdtProps1](_.widthPx)
-  val heightPx    = GenLens[MJdtProps1](_.heightPx)
-  val expandMode  = GenLens[MJdtProps1](_.expandMode)
-  val lineHeight  = GenLens[MJdtProps1](_.lineHeight)
+  def bgColor     = GenLens[MJdtProps1](_.bgColor)
+  def bgImg       = GenLens[MJdtProps1](_.bgImg)
+  def topLeft     = GenLens[MJdtProps1](_.topLeft)
+  def isMain      = GenLens[MJdtProps1](_.isMain)
+  def rotateDeg   = GenLens[MJdtProps1](_.rotateDeg)
+  def textShadow  = GenLens[MJdtProps1](_.textShadow)
+  def widthPx     = GenLens[MJdtProps1](_.widthPx)
+  def heightPx    = GenLens[MJdtProps1](_.heightPx)
+  def expandMode  = GenLens[MJdtProps1](_.expandMode)
+  def lineHeight  = GenLens[MJdtProps1](_.lineHeight)
 
 
   object LineHeight {

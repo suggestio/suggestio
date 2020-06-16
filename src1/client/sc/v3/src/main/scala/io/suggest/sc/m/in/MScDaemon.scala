@@ -21,10 +21,10 @@ object MScDaemon {
 
   @inline implicit def univEq: UnivEq[MScDaemon] = UnivEq.derive
 
-  lazy val cdvBgMode = GenLens[MScDaemon]( _.cdvBgMode )
-  lazy val cdvBgTimer = GenLens[MScDaemon]( _.cdvBgTimer )
-  lazy val cdvBgFetch = GenLens[MScDaemon]( _.cdvBgFetch )
-  lazy val htmlBgTimer = GenLens[MScDaemon]( _.htmlBgTimer )
+  def cdvBgMode = GenLens[MScDaemon]( _.cdvBgMode )
+  def cdvBgTimer = GenLens[MScDaemon]( _.cdvBgTimer )
+  def cdvBgFetch = GenLens[MScDaemon]( _.cdvBgFetch )
+  def htmlBgTimer = GenLens[MScDaemon]( _.htmlBgTimer )
   def fallSleepTimer = GenLens[MScDaemon]( _.fallSleepTimer )
   def state = GenLens[MScDaemon]( _.state )
 

@@ -5,6 +5,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -52,8 +53,12 @@ class HeaderR(
         val hdrGoBack     = s.goBackC { goBackR.apply }
 
         scReactCtxP.consume { scReactCtx =>
+          val scCss = scReactCtx.scCss
           <.div(
-            scReactCtx.scCss.Header.header,
+            scCss.bgColor,
+            scCss.fgColorBorder,
+            ScCssStatic.Header.header,
+            scCss.Header.header,
 
             // -- Кнопки заголовка в зависимости от состояния выдачи --
             // Кнопки при нахождении в обычной выдаче без посторонних вещей:

@@ -29,7 +29,7 @@ object MScInternals {
 
   @inline implicit def univEq: UnivEq[MScInternals] = UnivEq.force
 
-  val info          = GenLens[MScInternals](_.info)
+  def info          = GenLens[MScInternals](_.info)
   val conf          = GenLens[MScInternals](_.conf)
   val jsRouter      = GenLens[MScInternals](_.jsRouter)
   val boot          = GenLens[MScInternals](_.boot)

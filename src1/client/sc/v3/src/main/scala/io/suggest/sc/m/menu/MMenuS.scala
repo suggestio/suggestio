@@ -24,8 +24,8 @@ object MMenuS {
 
   @inline implicit def univEq: UnivEq[MMenuS] = UnivEq.derive
 
-  lazy val dlApp         = GenLens[MMenuS](_.dlApp)
-  lazy val opened        = GenLens[MMenuS](_.opened)
+  def dlApp         = GenLens[MMenuS](_.dlApp)
+  def opened        = GenLens[MMenuS](_.opened)
 
 }
 

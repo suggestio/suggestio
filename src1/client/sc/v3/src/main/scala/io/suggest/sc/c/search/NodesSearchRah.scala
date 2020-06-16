@@ -50,19 +50,21 @@ class NodesSearchRah(
       .get(ctx.value0)
       .fail(ex)
 
-    val v2 = GeoTabAh.scRoot_index_search_geo_LENS.modify(
-      MGeoTabS.found
-        .composeLens( MNodesFoundS.req )
-        .set(req2) andThen
+    val v2 = GeoTabAh.scRoot_index_search_geo_LENS.modify { geo0 =>
+      val nodesFound2 = (MNodesFoundS.req set req2)( geo0.found )
+
+      (
+        (MGeoTabS.found set nodesFound2 ) andThen
         // При ошибках надо обновлять css, иначе ширина может быть неверной.
         MGeoTabS.css.modify { css0 =>
           GeoTabAh._mkSearchCss(
-            req             = req2,
+            nodesFound      = nodesFound2,
             screenInfo      = screenInfoRO.value,
             searchCssOrNull = css0,
           )
         }
-    )(ctx.value0)
+      )(geo0)
+    }(ctx.value0)
 
     ActionResult.ModelUpdateEffect(v2, errorFx)
   }
@@ -128,7 +130,8 @@ class NodesSearchRah(
     // Заполнить/дополнить g0.found найденными элементами.
     val mnf2 = g0.found.copy(
       req     = req2,
-      hasMore = hasMore
+      hasMore = hasMore,
+      rHeightPx = g0.found.rHeightPx.pending(),
       // TODO Обновлять search-args? сервер модифицирует запрос, если запрос пришёл из IndexAh.
     )
 
@@ -136,7 +139,7 @@ class NodesSearchRah(
       mapInit = mapInit2,
       found = mnf2,
       css = GeoTabAh._mkSearchCss(
-        req             = req2,
+        nodesFound      = mnf2,
         screenInfo      = screenInfoRO.value,
         searchCssOrNull = g0.css
       )

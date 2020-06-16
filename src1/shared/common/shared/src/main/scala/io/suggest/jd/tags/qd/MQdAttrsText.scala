@@ -92,7 +92,7 @@ object MQdAttrsText {
     )(apply)
   }
 
-  val background = GenLens[MQdAttrsText](_.background)
+  def background = GenLens[MQdAttrsText](_.background)
 
 }
 

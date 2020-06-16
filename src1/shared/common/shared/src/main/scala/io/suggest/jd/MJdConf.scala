@@ -30,10 +30,10 @@ object MJdConf {
 
   @inline implicit def univEq: UnivEq[MJdConf] = UnivEq.force
 
-  val isEdit            = GenLens[MJdConf](_.isEdit)
-  val szMult            = GenLens[MJdConf](_.szMult)
-  val blockPadding      = GenLens[MJdConf](_.blockPadding)
-  val gridColumnsCount  = GenLens[MJdConf](_.gridColumnsCount)
+  def isEdit            = GenLens[MJdConf](_.isEdit)
+  def szMult            = GenLens[MJdConf](_.szMult)
+  def blockPadding      = GenLens[MJdConf](_.blockPadding)
+  def gridColumnsCount  = GenLens[MJdConf](_.gridColumnsCount)
 
   /** Для рендера всяких списков карточек и прочего, обычно используется минимальный рендер. */
   def simpleMinimal = apply(

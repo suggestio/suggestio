@@ -304,8 +304,13 @@ class IndexRah
         okAction  = ctx.m,
         nodesResp = resp,
         searchCss = {
+          val nodesFound2 = MNodesFoundS(
+            req = Ready( MSearchRespInfo(resp = MGeoNodesResp(resp.nodes)) ),
+            hasMore = false,
+            visible = true,
+          )
           val cssArgs = MSearchCssProps(
-            req         = Ready( MSearchRespInfo(resp = MGeoNodesResp(resp.nodes)) ),
+            nodesFound  = nodesFound2,
             screenInfo  = ctx.value0.dev.screen.info
           )
           SearchCss( cssArgs )

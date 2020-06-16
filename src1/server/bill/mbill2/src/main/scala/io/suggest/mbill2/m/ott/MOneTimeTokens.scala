@@ -37,7 +37,7 @@ class MOneTimeTokens @Inject() (
   import profile.api._
 
   override protected def _withId(el: MOneTimeToken, id: UUID): MOneTimeToken =
-    MOneTimeToken.id.set(id)(el)
+    (MOneTimeToken.id set id)(el)
 
   override type Id_t    = UUID
   override type Table_t = MOneTimeTokensTable
@@ -112,9 +112,9 @@ case class MOneTimeToken(
                         )
 object MOneTimeToken {
 
-  val id        = GenLens[MOneTimeToken](_.id)
-  val dateEnd   = GenLens[MOneTimeToken](_.dateEnd)
-  val info      = GenLens[MOneTimeToken](_.info)
+  def id        = GenLens[MOneTimeToken](_.id)
+  def dateEnd   = GenLens[MOneTimeToken](_.dateEnd)
+  def info      = GenLens[MOneTimeToken](_.info)
 
   @inline implicit def univEq: UnivEq[MOneTimeToken] = UnivEq.derive
 

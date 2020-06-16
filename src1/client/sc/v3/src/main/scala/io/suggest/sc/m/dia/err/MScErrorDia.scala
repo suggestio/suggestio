@@ -30,12 +30,12 @@ object MScErrorDia {
 
   @inline implicit def univEq: UnivEq[MScErrorDia] = UnivEq.derive
 
-  val messageCode       = GenLens[MScErrorDia](_.messageCode)
-  val potRO             = GenLens[MScErrorDia](_.potRO)
-  val potUnSubscribe    = GenLens[MScErrorDia](_.potUnSubscribe)
-  val exceptionOpt      = GenLens[MScErrorDia](_.exceptionOpt)
-  val hint              = GenLens[MScErrorDia](_.hint)
-  val retryAction       = GenLens[MScErrorDia](_.retryAction)
+  def messageCode       = GenLens[MScErrorDia](_.messageCode)
+  def potRO             = GenLens[MScErrorDia](_.potRO)
+  def potUnSubscribe    = GenLens[MScErrorDia](_.potUnSubscribe)
+  def exceptionOpt      = GenLens[MScErrorDia](_.exceptionOpt)
+  def hint              = GenLens[MScErrorDia](_.hint)
+  def retryAction       = GenLens[MScErrorDia](_.retryAction)
 
 
   implicit class ErrDiaExt(val sed: MScErrorDia) extends AnyVal {

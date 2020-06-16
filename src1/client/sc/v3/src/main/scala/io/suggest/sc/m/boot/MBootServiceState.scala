@@ -16,7 +16,7 @@ object MBootServiceState {
 
   @inline implicit def univEq: UnivEq[MBootServiceState] = UnivEq.derive
 
-  val started = GenLens[MBootServiceState](_.started)
+  def started = GenLens[MBootServiceState](_.started)
 
 }
 

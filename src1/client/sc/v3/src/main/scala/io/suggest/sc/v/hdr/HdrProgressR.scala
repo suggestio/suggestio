@@ -2,8 +2,10 @@ package io.suggest.sc.v.hdr
 
 import com.materialui.{MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps}
 import diode.react.ModelProxy
+import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -23,12 +25,14 @@ class HdrProgressR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(propsSomeProxy: Props): VdomElement = {
-      ReactCommonUtil.maybeEl( propsSomeProxy.value.value ) {
-        scReactCtxP.consume { scReactCtx =>
-          val hdrCss = scReactCtx.scCss.Header
+      scReactCtxP.consume { scReactCtx =>
+        ReactCommonUtil.maybeEl( propsSomeProxy.value.value ) {
           MuiLinearProgress {
             val cssClasses = new MuiLinearProgressClasses {
-              override val root = hdrCss.progress.htmlClass
+              override val root = Css.flat(
+                ScCssStatic.Header.progress.htmlClass,
+                scReactCtx.scCss.fgColorBg.htmlClass,
+              )
             }
             new MuiLinearProgressProps {
               override val classes = cssClasses

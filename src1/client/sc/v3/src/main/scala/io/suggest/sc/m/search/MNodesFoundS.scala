@@ -33,7 +33,9 @@ object MNodesFoundS {
     override def eqv(a: MNodesFoundS, b: MNodesFoundS): Boolean = {
       (a.req           ===* b.req) &&
       (a.reqSearchArgs ===* b.reqSearchArgs) &&
-      (a.hasMore        ==* b.hasMore)
+      (a.hasMore        ==* b.hasMore) &&
+      (a.visible        ==* b.visible) &&
+      (a.rHeightPx     ===* b.rHeightPx)
     }
   }
 
@@ -42,6 +44,8 @@ object MNodesFoundS {
   def req           = GenLens[MNodesFoundS](_.req)
   def reqSearchArgs = GenLens[MNodesFoundS](_.reqSearchArgs)
   def hasMore       = GenLens[MNodesFoundS](_.hasMore)
+  def visible       = GenLens[MNodesFoundS](_.visible)
+  def rHeightPx     = GenLens[MNodesFoundS](_.rHeightPx)
 
 }
 
@@ -53,13 +57,17 @@ object MNodesFoundS {
   *                      Т.е. для req.pending; либо для req.ready/failed, если !pending.
   *                      Используется для проверки необходимости запуска нового запроса.
   * @param hasMore Есть ли ещё теги на сервере?
-  * @param visible Видимость списка результатов. Список может быть скрыт, содержа результаты.
+  * @param visible Текущая видимость списка результатов.
+  *                Список может быть скрыт, но содержать какие-то результаты.
+  * @param rHeightPx Реальная высота списка по результатам рендера (замер через react-measure).
+  *                  Pot.pending - разрешает измерение.
   */
 case class MNodesFoundS(
-                         req           : Pot[MSearchRespInfo[MGeoNodesResp]]     = Pot.empty,
-                         reqSearchArgs : Option[MScQs]         = None,
-                         hasMore       : Boolean               = true,
-                         visible       : Boolean               = false,
+                         req                : Pot[MSearchRespInfo[MGeoNodesResp]]     = Pot.empty,
+                         reqSearchArgs      : Option[MScQs]         = None,
+                         hasMore            : Boolean               = true,
+                         visible            : Boolean               = false,
+                         rHeightPx          : Pot[Int]              = Pot.empty,
                        )
   extends NonEmpty
 {
@@ -88,7 +96,7 @@ case class MNodesFoundS(
 
   // TODO Унести как-то внутрь Pot[], чтобы не пересобирать на каждый чих.
   /** Кэш для id-карты найденных узлов. */
-  def nodesFoundMap: Map[String, MSc3IndexResp] = {
+  def nodesMap: Map[String, MSc3IndexResp] = {
     req.fold( Map.empty[String, MSc3IndexResp] )(_.resp.nodesMap)
   }
 

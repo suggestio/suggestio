@@ -32,7 +32,7 @@ object MReg1Captcha {
   @inline implicit def univEq: UnivEq[MReg1Captcha] = UnivEq.derive
 
   val captcha     = GenLens[MReg1Captcha](_.captcha)
-  val submitReq   = GenLens[MReg1Captcha](_.submitReq)
+  def submitReq   = GenLens[MReg1Captcha](_.submitReq)
 
 }
 

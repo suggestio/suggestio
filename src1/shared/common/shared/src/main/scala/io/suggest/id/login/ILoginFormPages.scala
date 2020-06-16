@@ -37,8 +37,8 @@ object ILoginFormPages {
       def RETURN_URL_FN = "r"
     }
 
-    val currTab = GenLens[Login](_.currTab)
-    val returnUrl = GenLens[Login](_.returnUrl)
+    def currTab = GenLens[Login](_.currTab)
+    def returnUrl = GenLens[Login](_.returnUrl)
 
   }
 

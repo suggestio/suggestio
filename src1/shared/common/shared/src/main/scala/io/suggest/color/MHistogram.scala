@@ -54,7 +54,7 @@ object MHistogram
     UnivEq.derive
   }
 
-  val colors = GenLens[MHistogram](_.colors)
+  def colors = GenLens[MHistogram](_.colors)
 
 
   implicit class MHistogramOpsExt( private val hist0: MHistogram ) extends AnyVal {

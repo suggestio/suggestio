@@ -48,7 +48,7 @@ object MNodeEdgeIdQs {
     )(apply, unlift(unapply))
   }
 
-  lazy val nodeVsn = GenLens[MNodeEdgeIdQs]( _.nodeVsn )
+  def nodeVsn = GenLens[MNodeEdgeIdQs]( _.nodeVsn )
 
 }
 

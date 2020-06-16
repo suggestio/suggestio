@@ -34,8 +34,8 @@ object MIdMsg {
 
   @inline implicit def univEq: UnivEq[MIdMsg] = UnivEq.derive
 
-  val validated     = GenLens[MIdMsg](_.validated)
-  val errorsCount   = GenLens[MIdMsg](_.errorsCount)
+  def validated     = GenLens[MIdMsg](_.validated)
+  def errorsCount   = GenLens[MIdMsg](_.errorsCount)
 
 }
 

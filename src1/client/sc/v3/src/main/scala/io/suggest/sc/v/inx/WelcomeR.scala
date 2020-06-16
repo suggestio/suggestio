@@ -68,7 +68,7 @@ class WelcomeR(
             bgImgOptProxy.value.whenDefinedEl { bgImg =>
               <.img(
                 // Подгонка фона wh под экран и центровка происходит в ScCss:
-                CSS.Bg.bgImg,
+                CSS.Bg.bgImg, scCss.bgColor,
                 ^.src := bgImg.url
               )
             }

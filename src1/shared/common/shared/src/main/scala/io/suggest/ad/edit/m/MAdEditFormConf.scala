@@ -21,7 +21,7 @@ object MAdEditFormConf {
     val TOUCH_DEV_FN   = "t"
   }
 
-  implicit val MAD_EDIT_FORM_CONF_FORMAT: OFormat[MAdEditFormConf] = (
+  implicit def MAD_EDIT_FORM_CONF_FORMAT: OFormat[MAdEditFormConf] = (
     (__ \ Fields.PRODUCER_ID_FN).format[String] and
     (__ \ Fields.AD_ID_FN).formatNullable[String] and
     (__ \ Fields.SRV_CTX_ID).format[String] and
@@ -30,8 +30,8 @@ object MAdEditFormConf {
 
   @inline implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
 
-  val ctxId     = GenLens[MAdEditFormConf](_.ctxId)
-  val touchDev  = GenLens[MAdEditFormConf](_.touchDev)
+  def ctxId     = GenLens[MAdEditFormConf](_.ctxId)
+  def touchDev  = GenLens[MAdEditFormConf](_.touchDev)
 
 }
 

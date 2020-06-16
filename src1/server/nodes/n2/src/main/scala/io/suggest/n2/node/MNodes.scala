@@ -334,13 +334,13 @@ object MNode {
   }
 
 
-  val common  = GenLens[MNode](_.common)
-  val meta    = GenLens[MNode](_.meta)
-  val extras  = GenLens[MNode](_.extras)
-  val edges   = GenLens[MNode](_.edges)
-  val billing = GenLens[MNode](_.billing)
-  val id      = GenLens[MNode](_.id)
-  val versionOpt = GenLens[MNode](_.versionOpt)
+  def common  = GenLens[MNode](_.common)
+  def meta    = GenLens[MNode](_.meta)
+  def extras  = GenLens[MNode](_.extras)
+  def edges   = GenLens[MNode](_.edges)
+  def billing = GenLens[MNode](_.billing)
+  def id      = GenLens[MNode](_.id)
+  def versionOpt = GenLens[MNode](_.versionOpt)
 
 
   def node_meta_basic_dateEdited_RESET = {
