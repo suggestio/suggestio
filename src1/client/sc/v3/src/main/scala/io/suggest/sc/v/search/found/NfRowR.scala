@@ -102,10 +102,13 @@ final case class NfRowR(
 
       val isTag = p.ntype ==* MNodeTypes.Tag
 
-      var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(nodeId) :: Nil
+      val scCss = scReactCtx.scCss
+
+      var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(nodeId) ::
+        Nil
       rowRootCssAcc ::= {
         if (isTag) NodesCSS.tagRow
-        else NodesCSS.adnNodeRow
+        else NodesCSS.nodeRow
       }
       val rowRootCss = rowRootCssAcc
         .map(_.htmlClass)
@@ -129,7 +132,10 @@ final case class NfRowR(
         ReactCommonUtil.maybeEl( isTag ) {
           MuiListItemIcon {
             val cls = new MuiListItemIconClasses {
-              override val root = Css.flat( NodesCSS.tagRowIconCont.htmlClass, scReactCtx.scCss.fgColor.htmlClass )
+              override val root = Css.flat(
+                NodesCSS.tagRowIconCont.htmlClass,
+                scCss.fgColor.htmlClass,
+              )
             }
             new MuiListItemIconProps {
               override val classes = cls
@@ -152,12 +158,14 @@ final case class NfRowR(
 
           val theClasses = new MuiListItemTextClasses {
             override val root = rootCss
+
             override val primary = (
               ScCssStatic.thinText ::
               NodesCSS.tagRowTextPrimary ::
               props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
               Nil
             ).toHtmlClass
+
             override val secondary = Css.flat(
               props.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass,
               ScCssStatic.thinText.htmlClass,

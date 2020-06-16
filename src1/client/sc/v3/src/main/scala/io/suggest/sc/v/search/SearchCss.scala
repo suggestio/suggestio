@@ -5,7 +5,6 @@ import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.font.MFonts
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
 import io.suggest.sc.v.styl.ScCss

@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputProps, MuiInputPropsMargins}
+import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -8,6 +8,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
 import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react.vdom.VdomElement
@@ -17,7 +18,6 @@ import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
-import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -28,6 +28,7 @@ import scala.scalajs.js.|
   */
 class STextR(
               crCtxProv     : React.Context[MCommonReactCtx],
+              scReactCtxP   : React.Context[MScReactCtx],
             ) {
 
   type Props_t = MScSearchText
@@ -93,24 +94,25 @@ class STextR(
           // Текстовое поле поисковой строки:
           crCtxProv.consume { crCtx =>
             val startSearchTypingMsg = crCtx.messages( MsgCodes.`Search.start.typing` )
-            s.queryC { queryProxy =>
-              MuiInput {
-                val query = queryProxy.value
 
-                //val inputCss = new MuiInputClasses {
-                //  override val root = TextBarCSS.inputRoot.htmlClass
-                //}
-                new MuiInputProps {
-                  //override val classes = inputCss
-                  override val `type` = HtmlConstants.Input.text
-                  override val onChange = _onInputJsF
-                  override val placeholder = startSearchTypingMsg
-                  override val value = js.defined( query )
-                  override val margin = if (query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
-                  // clear-кнопка:
-                  //override val endAdornment = clearBtnUndef
-                  override val inputRef /*: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object]*/ =
-                    js.defined( _htmlInputRefHandlerJsF )
+            scReactCtxP.consume { scReactCtx =>
+              s.queryC { queryProxy =>
+                MuiInput {
+                  val query = queryProxy.value
+                  val inputCss = new MuiInputClasses {
+                    override val underline = scReactCtx.scCss.Search.TextBar.underline.htmlClass
+                  }
+                  new MuiInputProps {
+                    override val classes = inputCss
+                    override val `type` = HtmlConstants.Input.text
+                    override val onChange = _onInputJsF
+                    override val placeholder = startSearchTypingMsg
+                    override val value = js.defined( query )
+                    override val margin = if (query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
+                    // clear-кнопка:
+                    //override val endAdornment = clearBtnUndef
+                    override val inputRef = js.defined( _htmlInputRefHandlerJsF )
+                  }
                 }
               }
             }

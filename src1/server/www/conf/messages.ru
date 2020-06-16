@@ -1003,7 +1003,7 @@ This.block.is.the.only.main=Текущий блок -- главный.
 This.block.is.not.main=Текущий блок не является главным.
 No.main.blocks.First.block.is.main=В карточке нет главных блоков. Верхний блок считается основным.
 No.tags.here=Нет тегов в текущей локации
-No.tags.found.for.1.query=Не найдено тегов "{0}"
+No.tags.found.for.1.query=Не найдено "{0}".
 
 Go.to.node.ads=К рекламным карточкам узла
 Personal.cabinet=Личный кабинет

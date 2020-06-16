@@ -260,9 +260,11 @@ object ScCssStatic extends StyleSheet.Inline {
     /** Поля текстового поиска и контейнер оной. */
     object TextBar {
 
+      val _SM_SEARCH_BAR = _SM_ + "search-bar"
+
       // TODO Статический стиль - унести в статику.
       val bar = style(
-        addClassName( _SM_ + "search-bar" ),
+        addClassName( _SM_SEARCH_BAR ),
         // Равняем полосу input'а с полосой заголовка.
         marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px ),
         display.inlineFlex,
@@ -303,6 +305,10 @@ object ScCssStatic extends StyleSheet.Inline {
     /** Стили для списка найденных узлов (тегов и т.д.). */
     object NodesFound {
 
+      val nothingFound = style(
+        addClassName( TextBar._SM_SEARCH_BAR ),
+      )
+
       /** CSS grid item для ADN-узлов (не тегов). */
       val gridRowAdn = style(
         width( 100.%% )
@@ -341,11 +347,11 @@ object ScCssStatic extends StyleSheet.Inline {
       )
 
       /** Выставить сдвиги по бокам. gutters ставят 24px, без них просто 0px. А надо нечто среднее. */
-      val adnNodeRow = {
+      val nodeRow = {
         val px16 = 16.px
         style(
           paddingLeft(px16).important,
-          paddingRight(px16).important
+          paddingRight(px16).important,
         )
       }
 

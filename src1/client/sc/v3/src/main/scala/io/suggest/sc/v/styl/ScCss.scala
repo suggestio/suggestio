@@ -104,8 +104,9 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
     backgroundColor( fgColorCss ),
   )
 
+  private val _fgColorCss = borderColor( fgColorCss )
   val fgColorBorder = style(
-    borderColor( fgColorCss ),
+    _fgColorCss,
   )
 
 
@@ -246,6 +247,27 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
     }
 
 
+    object TextBar {
+      val underline = style(
+        addClassName( fgColorBorder.htmlClass ),
+        &.before(
+          _fgColorCss,
+        ),
+      )
+    }
+
+
+    object NodesFound {
+
+      val nodeRow = style(
+        &.hover(
+          addClassName( fgColor.htmlClass ),
+        )
+      )
+
+    }
+
+
     /** Стили содержимого вкладки с гео-картой. */
     object Geo {
 
@@ -377,6 +399,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
     Header.Logo.Txt.Dots.dot,
 
     Search.Geo.inner,
+    Search.NodesFound.nodeRow,
+    Search.TextBar.underline,
 
     Grid.container,
     Menu.panel,

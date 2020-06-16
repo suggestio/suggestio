@@ -16,7 +16,7 @@ import io.suggest.sc.m.search.MGeoTabS
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
 import io.suggest.spa.OptFastEq

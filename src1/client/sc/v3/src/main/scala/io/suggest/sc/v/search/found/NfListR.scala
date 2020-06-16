@@ -6,6 +6,7 @@ import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.css.Css
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.maps.nodes.MGeoNodesResp
@@ -90,7 +91,10 @@ final class NfListR(
                     scReactCtxProv.consume { scReactCtx =>
                       MuiListItemText {
                         val css = new MuiListItemTextClasses {
-                          override val root = scReactCtx.scCss.fgColor.htmlClass
+                          override val root = Css.flat(
+                            scReactCtx.scCss.fgColor.htmlClass,
+                            ScCssStatic.Search.NodesFound.nothingFound.htmlClass,
+                          )
                         }
                         new MuiListItemTextProps {
                           override val classes = css
