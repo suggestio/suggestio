@@ -1,7 +1,7 @@
 package io.suggest.sc.v.search.found
 
 import com.github.souporserious.react.measure.{ContentRect, Measure, MeasureChildrenArgs, MeasureProps}
-import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiGrid, MuiGridClasses, MuiGridProps, MuiIconButton, MuiIconButtonProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiProgressVariants, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps}
+import com.materialui.{MuiGrid, MuiGridClasses, MuiGridProps, MuiList, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
@@ -11,12 +11,10 @@ import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.m.search.{DoNodesSearch, MNodesFoundS, MSearchRespInfo, NodesFoundListWh}
+import io.suggest.sc.m.search.{MNodesFoundS, MSearchRespInfo, NodesFoundListWh}
 import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 
@@ -45,18 +43,19 @@ final class NfListR(
   class Backend($: BackendScope[Props, State]) {
 
     private val __onResizeJsCbF = ReactCommonUtil.cbFun1ToJsCb { contentRect: ContentRect =>
-      val b = contentRect.bounds.get
-      val bounds2d = MSize2di(
-        width  = b.width.toInt,
-        height = b.height.toInt,
-      )
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodesFoundListWh(bounds2d) )
-    }
-
-
-    /** Реакция по кнопке сброса списка. */
-    private lazy val _onRefreshBtnClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      dispatchOnProxyScopeCB($, DoNodesSearch(clear = true, ignorePending = true) )
+      $.props >>= { propsProxy: Props =>
+        // Проверять $.props.rHeightPx.isPending?
+        if (propsProxy.value.rHeightPx.isPending) {
+          val b = contentRect.bounds.get
+          val bounds2d = MSize2di(
+            width  = b.width.toInt,
+            height = b.height.toInt,
+          )
+          ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodesFoundListWh(bounds2d) )
+        } else {
+          Callback.empty
+        }
+      }
     }
 
 
@@ -75,11 +74,8 @@ final class NfListR(
 
         // Рендер нормального списка найденных узлов.
         s.reqPotC { reqPotProxy =>
-          val req = reqPotProxy.value
-
           React.Fragment(
-
-            req.render { nodesRi =>
+            reqPotProxy.value.render { nodesRi =>
               if (nodesRi.resp.nodes.isEmpty) {
                 // Надо, чтобы юзер понимал, что запрос поиска отработан.
                 MuiGrid(
@@ -115,70 +111,9 @@ final class NfListR(
               } else {
                 children
               }
-            },
-
-            // Рендер крутилки ожидания.
-            req.renderPending { _ =>
-              MuiGrid(
-                new MuiGridProps {
-                  override val item = true
-                }
-              )(
-                MuiCircularProgress(
-                  new MuiCircularProgressProps {
-                    override val variant = MuiProgressVariants.indeterminate
-                    override val size = 50
-                  }
-                )
-              )
-            },
-
-            // Рендер ошибки.
-            req.renderFailed { ex =>
-              val errHint = Option(ex.getMessage)
-                .getOrElse(ex.getClass.getName)
-
-              val gridItemProps = new MuiGridProps {
-                override val item = true
-              }
-
-              React.Fragment(
-
-                // Рендер технических подробностей ошибки.
-                MuiToolTip.component.withKey("e")(
-                  // TODO Надо tooltip разнести над всем рядом, а не только над иконкой.
-                  new MuiToolTipProps {
-                    override val title = errHint
-                    override val placement = MuiToolTipPlacements.Top
-                  }
-                )(
-                  MuiGrid( gridItemProps )(
-                    MuiListItem()(
-                      MuiListItemText()(
-                        crCtxProv.message( MsgCodes.`Something.gone.wrong` ),
-                      ),
-                      MuiListItemIcon()(
-                        Mui.SvgIcons.ErrorOutline()()
-                      )
-                    )
-                  )
-                ),
-
-                // Кнопка reload для повторной загрузки списка.
-                MuiGrid.component.withKey("r")( gridItemProps )(
-                  MuiIconButton(
-                    new MuiIconButtonProps {
-                      override val onClick = _onRefreshBtnClickF
-                    }
-                  )(
-                    Mui.SvgIcons.Refresh()()
-                  )
-                ),
-
-              )
-            },
-
+            }
           )
+
         },
 
       )

@@ -45,7 +45,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   }
 
   private val NODES_LIST_HEIGHT_PX = {
-    val MAX_ROWS_COUNT = 6
+    val MAX_ROWS_COUNT = 7
     args.nodesFound.rHeightPx.fold {
       // Надо оценить кол-во рядов для стилей по-старинке. TODO Удалить этот код?
       // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).

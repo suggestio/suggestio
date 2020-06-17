@@ -1,7 +1,6 @@
 package io.suggest.sc.c.search
 
 import diode._
-import diode.data.{PendingBase, Pot}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
 import io.suggest.grid.GridConst
@@ -129,11 +128,8 @@ class GeoTabAh[M](
 
       } else {
         // Поисковый запрос действительно нужно организовать.
-        val req2 =
-          (if (m.clear) Pot.empty else v0.found.req)
-          .pending()
-
-        val req2p = req2.asInstanceOf[PendingBase]
+        val tstamp = System.currentTimeMillis()
+        val req2 = v0.found.req.pending( tstamp )
 
         val runReqFx = Effect {
           // Запустить запрос.
@@ -143,7 +139,7 @@ class GeoTabAh[M](
               val action = HandleScApiResp(
                 reason        = m,
                 tryResp       = tryResp,
-                reqTimeStamp  = Some( req2p.startTime ),
+                reqTimeStamp  = Some( tstamp ),
                 qs            = args2,
               )
               Success( action )
@@ -162,7 +158,7 @@ class GeoTabAh[M](
           v0.data.rcvrsCache
         } else {
           v0.mapInit.rcvrs
-            .pending( req2p.startTime )
+            .pending( tstamp )
         }
         // Обновить карту ресиверов в состоянии, если инстанс изменился:
         val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs) {

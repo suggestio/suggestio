@@ -1,12 +1,9 @@
 package io.suggest.sc.v.search.found
 
-import com.github.souporserious.react.measure.{ContentRect, Measure, MeasureChildrenArgs, MeasureProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.geom.d2.MSize2di
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{NodesFoundListWh, NodesScroll}
+import io.suggest.sc.m.search.NodesScroll
 import io.suggest.sc.v.search.{STextR, SearchCss}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
