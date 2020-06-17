@@ -50,3 +50,6 @@ case class DoNodesSearch(clear: Boolean, ignorePending: Boolean) extends ISearch
 
 /** Обработать измеренный размер списка результатов. */
 case class NodesFoundListWh( bounds: MSize2di ) extends ISearchAction
+
+/** Управление nodesFound.visible - попапом менюшки. */
+case class NodesFoundPopupOpen( open: Boolean ) extends ISearchAction

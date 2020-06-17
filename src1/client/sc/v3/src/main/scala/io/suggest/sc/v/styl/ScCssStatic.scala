@@ -257,6 +257,13 @@ object ScCssStatic extends StyleSheet.Inline {
 
   object Search {
 
+    def PANEL_WIDTH_PX = 320
+
+    /** CSS-класс div-контейнера правой панели. */
+    val panel = style(
+      width( PANEL_WIDTH_PX.px ),
+    )
+
     /** Поля текстового поиска и контейнер оной. */
     object TextBar {
 
@@ -319,7 +326,9 @@ object ScCssStatic extends StyleSheet.Inline {
         style(
           paddingTop( zeroPx ),
           paddingBottom( zeroPx ),
-          overflow.hidden
+          overflow.hidden,
+          // Закомменчено, было нужно для Mui popover, но и это надо будет спилить вместе с Popover'ом.
+          maxWidth( Search.PANEL_WIDTH_PX.px ),
         )
       }
 
@@ -474,6 +483,7 @@ object ScCssStatic extends StyleSheet.Inline {
     Grid.container,
     Notifies.snackActionCont,
     Welcome.welcome,
+    Search.panel,
     Search.NodesFound.listDiv,
     Search.TextBar.bar,
     Search.Geo.crosshair,

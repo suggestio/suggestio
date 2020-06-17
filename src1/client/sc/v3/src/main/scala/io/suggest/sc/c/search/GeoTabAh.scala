@@ -356,6 +356,21 @@ class GeoTabAh[M](
 
       updated( v2 )
 
+
+    // Управление попапом результатов поиска.
+    case m: NodesFoundPopupOpen =>
+      val v0 = value
+
+      val geo_found_visible_LENS = MGeoTabS.found
+        .composeLens( MNodesFoundS.visible )
+
+      if ( geo_found_visible_LENS.get(v0) ==* m.open ) {
+        noChange
+      } else {
+        val v2 = (geo_found_visible_LENS set m.open)(v0)
+        updated(v2)
+      }
+
   }
 
 }

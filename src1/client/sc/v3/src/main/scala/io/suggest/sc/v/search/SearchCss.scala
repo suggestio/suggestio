@@ -38,6 +38,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
   import dsl._
 
+  private val isPopover = args.screenInfo.screen.isHeightEnought
 
   private def TAB_BODY_HEIGHT_PX = {
     val si = args.screenInfo
@@ -85,9 +86,17 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     }
   }
 
-  private val NODES_WITH_FIELD_HEIGHT_PX = NODES_LIST_HEIGHT_PX + ScCss.TABS_OFFSET_PX
+  private val NODES_WITH_FIELD_HEIGHT_PX: Int = {
+    val nlh = NODES_LIST_HEIGHT_PX
+    if (isPopover) nlh
+    else nlh + ScCss.TABS_OFFSET_PX
+  }
 
-  private val GEO_MAP_HEIGHT_PX = TAB_BODY_HEIGHT_PX - NODES_LIST_HEIGHT_PX - ScCss.TABS_OFFSET_PX
+  private val GEO_MAP_HEIGHT_PX: Int = {
+    val tbh = TAB_BODY_HEIGHT_PX - ScCss.TABS_OFFSET_PX
+    if (isPopover) tbh
+    else tbh - NODES_LIST_HEIGHT_PX
+  }
 
 
   /** Стили для гео-карты гео-картой. */
@@ -109,7 +118,8 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     /** Контейнер поиска узлов и текстового поля для единого скроллинга. */
     val container = style(
-      overflow.auto,
+      overflowX.hidden,
+      overflowY.auto,
       height( NODES_WITH_FIELD_HEIGHT_PX.px ),
     )
 

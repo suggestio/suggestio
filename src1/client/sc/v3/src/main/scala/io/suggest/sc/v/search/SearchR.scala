@@ -44,14 +44,13 @@ final class SearchR(
 
     def render(mrootProxy: Props, s: State, children: PropsChildren): VdomElement = {
 
-      val nodesSearch = mrootProxy.wrap(_.index)( nodesFoundR.component.apply )
+      val nodesSearch = nodesFoundR.component( mrootProxy )
 
       val searchCss = s.searchCssC { CssR.compProxied.apply }
 
       // Непосредственно, панель поиска:
       val searchBarBody = scReactCtxP.consume { scReactCtx =>
         val scCss = scReactCtx.scCss
-        val SearchCSS = scCss.Search
 
         // Рендер вкладки карты:
         val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.component.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
@@ -68,7 +67,7 @@ final class SearchR(
 
         <.div(
           ScCssStatic.Root.panelCommon,
-          SearchCSS.panel,
+          ScCssStatic.Search.panel,
 
           // Рендер очень динамической search-only css'ки:
           searchCss,

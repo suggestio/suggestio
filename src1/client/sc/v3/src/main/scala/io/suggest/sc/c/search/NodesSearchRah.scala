@@ -133,6 +133,7 @@ class NodesSearchRah(
       hasMore = hasMore,
       // Pot.empty, чтобы сбросить searchCss, и гарантировано произошло переизмерение высоты в react-measure.
       rHeightPx = Pot.empty.pending(),
+      visible   = req2.nonEmpty,
       // TODO Обновлять search-args? сервер модифицирует запрос, если запрос пришёл из IndexAh.
     )
 

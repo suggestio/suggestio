@@ -231,13 +231,6 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   /** Панель поиска. */
   object Search {
 
-    def PANEL_WIDTH_PX = 320
-
-    /** CSS-класс div-контейнера правой панели. */
-    val panel = style(
-      width( PANEL_WIDTH_PX.px ),
-    )
-
     val content = {
       val paddingTopPx = args.screenInfo.unsafeOffsets.top
       style(

@@ -83,5 +83,9 @@ case class MScreen(
 
   override final def toString: String = toQsValue
 
+  def isHeightEnought: Boolean =
+    //wh.height >= 300  // TODO допилить попап, авто-теги и тд.
+    false
+
 }
 
