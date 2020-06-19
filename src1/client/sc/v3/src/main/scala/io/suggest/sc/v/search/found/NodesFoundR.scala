@@ -1,7 +1,6 @@
 package io.suggest.sc.v.search.found
 
-import com.materialui.MuiAnchorReferences.AnchorReference_t
-import com.materialui.{MuiAnchorOrigin, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiPopOver, MuiPopOverProps, MuiProgressVariants, MuiToolBar, MuiToolBarProps, MuiTopLeft}
+import com.materialui.{MuiAnchorOrigin, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiPopOver, MuiPopOverProps, MuiProgressVariants, MuiToolBar, MuiToolBarProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
@@ -9,7 +8,6 @@ import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.m.search.{MNodesFoundRowProps, MScSearchText, NodesFoundPopupOpen, NodesScroll}
-import io.suggest.sc.v.hdr.RightR
 import io.suggest.sc.v.search.STextR
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
@@ -19,7 +17,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -28,7 +25,6 @@ import scala.scalajs.js.UndefOr
   * Description: Компонент поиска узлов.
   */
 final class NodesFoundR(
-                         rightR                   : RightR,
                          sTextR                   : STextR,
                          nfListR                  : NfListR,
                          scReactCtxP              : React.Context[MScReactCtx],
@@ -71,9 +67,6 @@ final class NodesFoundR(
       )(
         // Элементы строки поиска:
         propsProxy.wrap(_.index.search.text)( sTextR.component.apply )(implicitly, MScSearchText.MScSearchTextFastEq),
-
-        // Кнопка сворачивания:
-        propsProxy.wrap(_ => None)( rightR.apply ),
 
         // Горизонтальный прогресс-бар. Не нужен, если список уже не пустой, т.к. скачки экрана вызывает.
         s.showProgressSomeC { showProgressSomeProxy =>

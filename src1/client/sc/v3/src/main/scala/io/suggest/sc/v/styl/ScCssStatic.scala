@@ -7,6 +7,8 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.font.MFonts
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
+import scalacss.internal.DslBase.ToStyle
+import japgolly.univeq._
 
 import scala.language.postfixOps
 
@@ -109,11 +111,6 @@ object ScCssStatic extends StyleSheet.Inline {
     def HEADER = _SM_ + "producer-header"
 
     object Buttons {
-
-      // Новые кнопки (material-ui MuiIconButton).
-      val btn2 = style(
-        marginTop( -12.px ),
-      )
 
       // Старые кнопки с plain-вёрсткой
       val btn = style(
@@ -270,16 +267,28 @@ object ScCssStatic extends StyleSheet.Inline {
       val _SM_SEARCH_BAR = _SM_ + "search-bar"
 
       // TODO Статический стиль - унести в статику.
-      val bar = style(
-        addClassName( _SM_SEARCH_BAR ),
-        // Равняем полосу input'а с полосой заголовка.
-        marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px ),
-        display.inlineFlex,
-      )
+      val bar = {
+        var acc = List[ToStyle](
+          padding( 2.px, 0.px, 15.px, 22.px ),
+          addClassName( _SM_SEARCH_BAR ),
+          display.inlineFlex,
+        )
+
+        val topOffPx = ScCss.SEARCH_TOP_OFFSET_PX
+        if (topOffPx !=* 0)
+          // Равняем полосу input'а с полосой заголовка.
+          acc ::= marginTop( topOffPx.px )
+
+        style( acc: _* )
+      }
 
       val inputFormControl = style(
         flexDirection.initial,
         width(100.%%)
+      )
+
+      val input = style(
+        height( 48.px ),
       )
 
     }

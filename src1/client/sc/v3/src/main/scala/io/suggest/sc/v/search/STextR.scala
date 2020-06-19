@@ -10,6 +10,7 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
+import io.suggest.sc.v.hdr.RightR
 import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -18,6 +19,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -27,6 +29,7 @@ import scala.scalajs.js
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
 class STextR(
+              rightR        : RightR,
               crCtxProv     : React.Context[MCommonReactCtx],
               scReactCtxP   : React.Context[MScReactCtx],
             ) {
@@ -74,7 +77,7 @@ class STextR(
         _htmlInputRef = Some( el )
     }
 
-    def render(s: State): VdomElement = {
+    def render(propsProxy: Props, s: State): VdomElement = {
 
       // Рендер текстового поля с input'ом.
       val TextBarCSS = ScCssStatic.Search.TextBar
@@ -101,6 +104,7 @@ class STextR(
                   val query = queryProxy.value
                   val inputCss = new MuiInputClasses {
                     override val underline = scReactCtx.scCss.Search.TextBar.underline.htmlClass
+                    override val root = TextBarCSS.input.htmlClass
                   }
                   new MuiInputProps {
                     override val classes = inputCss
@@ -138,6 +142,8 @@ class STextR(
             )
           },
 
+          // Кнопка сворачивания:
+          propsProxy.wrap(_ => None)( rightR.apply ),
         )
 
       )

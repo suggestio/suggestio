@@ -21,19 +21,14 @@ class RightR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def _onClosePanelBtnClick(e: ReactEvent): Callback =
+    private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Search, open = false))
-    private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClosePanelBtnClick )
+    }
 
-
-    def render(propsProxy: Props): VdomElement = {
+    val render: VdomElement = {
       MuiIconButton {
-        val classesCss = new MuiIconButtonClasses {
-          override val root = ScCssStatic.Header.Buttons.btn2.htmlClass
-        }
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF
-          override val classes = classesCss
         }
       }(
         Mui.SvgIcons.ArrowForwardIosOutlined()()
