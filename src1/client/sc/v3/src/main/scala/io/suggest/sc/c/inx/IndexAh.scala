@@ -127,6 +127,17 @@ object IndexAh {
         if (s0.text.query.nonEmpty)
           fxsAcc ::= SearchTextChanged("").toEffectPure
 
+        // Сбросить selTagIds, если изменились.
+        val qsTagIds = m.qs.search.tagNodeId
+          .map(_.id)
+          .toSet
+        if (s0.geo.data.selTagIds !=* qsTagIds) {
+          s0 = MScSearch.geo
+            .composeLens( MGeoTabS.data )
+            .composeLens( MGeoTabData.selTagIds )
+            .set( qsTagIds )(s0)
+        }
+
         s0
       }
     )
