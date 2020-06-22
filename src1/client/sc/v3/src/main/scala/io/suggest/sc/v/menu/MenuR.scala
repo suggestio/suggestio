@@ -19,6 +19,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.ueq.UnivEqUtil._
 
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -122,9 +125,13 @@ class MenuR(
         val overlayStyl = new StyleProps {
           override val zIndex = zIndexBase - 1
         }
+        val contentStyl = new StyleProps {
+          override val overflowY = ScCss.css_initial
+        }
         new SidebarStyles {
           override val sidebar = sidebarStyl
           override val overlay = overlayStyl
+          override val content = contentStyl
         }
       }
 

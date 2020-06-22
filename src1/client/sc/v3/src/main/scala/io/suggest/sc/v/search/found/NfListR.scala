@@ -10,13 +10,14 @@ import io.suggest.css.Css
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search.{MNodesFoundS, MSearchRespInfo, NodesFoundListWh}
 import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 
 import scala.scalajs.js
 
@@ -31,8 +32,19 @@ final class NfListR(
                      scReactCtxProv         : React.Context[MScReactCtx],
                    ) {
 
-  type Props_t = MNodesFoundS
-  type Props = ModelProxy[Props_t]
+  type Props = PropsVal
+
+
+  /** Пропертисы, содержащие ModelProxy[] внутри себя.
+    * Это wrap-компонент, поэтому пропертисы содержат статичные поля, обрабатываемые лишь единожды.
+    *
+    * @param nodesFoundProxy Динамическая часть пропертисов: доступ к модели реквеста списка узлов.
+    * @param onTouchStartF Опциональная реакция на touchstart, определяемая на верхнем уровне.
+    */
+  case class PropsVal(
+                       nodesFoundProxy  : ModelProxy[MNodesFoundS],
+                       onTouchStartF    : Option[ReactUIEventFromHtml => Callback]      = None,
+                     )
 
 
   case class State(
@@ -43,15 +55,15 @@ final class NfListR(
   class Backend($: BackendScope[Props, State]) {
 
     private val __onResizeJsCbF = ReactCommonUtil.cbFun1ToJsCb { contentRect: ContentRect =>
-      $.props >>= { propsProxy: Props =>
+      $.props >>= { props: PropsVal =>
         // Проверять $.props.rHeightPx.isPending?
-        if (propsProxy.value.rHeightPx.isPending) {
+        if (props.nodesFoundProxy.value.rHeightPx.isPending) {
           val b = contentRect.bounds.get
           val bounds2d = MSize2di(
             width  = b.width.toInt,
             height = b.height.toInt,
           )
-          ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodesFoundListWh(bounds2d) )
+          props.nodesFoundProxy.dispatchCB( NodesFoundListWh(bounds2d) )
         } else {
           Callback.empty
         }
@@ -59,16 +71,25 @@ final class NfListR(
     }
 
 
-    def render(s: State, children: PropsChildren): VdomElement = {
+    def render(p: Props, s: State, children: PropsChildren): VdomElement = {
       val NodesCSS = ScCssStatic.Search.NodesFound
 
       val content = MuiGrid {
         val listClasses = new MuiGridClasses {
           override val root = (NodesCSS.listDiv :: NodesCSS.nodesList :: Nil).toHtmlClass
         }
+
+        val onTouchMoveUndF: js.UndefOr[js.Function1[ReactTouchEventFromInput, Unit]] =
+          p.onTouchStartF
+            .map { f =>
+              ReactCommonUtil.cbFun1ToJsCb { e: ReactTouchEventFromInput => f(e) }
+            }
+            .toUndef
+
         new MuiGridProps {
           override val container = true
           override val classes = listClasses
+          override val onTouchMove = onTouchMoveUndF
         }
       } (
 
@@ -140,9 +161,9 @@ final class NfListR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
+    .initialStateFromProps { props =>
       State(
-        reqPotC = propsProxy.connect( _.req ),
+        reqPotC = props.nodesFoundProxy.connect( _.req ),
       )
     }
     .renderBackendWithChildren[Backend]

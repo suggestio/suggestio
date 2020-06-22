@@ -38,7 +38,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
   import dsl._
 
-  private val isPopover = args.screenInfo.screen.isHeightEnought
+  private def isScrollWithField = args.screenInfo.screen.isHeightEnought
 
   private def TAB_BODY_HEIGHT_PX = {
     val si = args.screenInfo
@@ -87,15 +87,20 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   }
 
   private val NODES_WITH_FIELD_HEIGHT_PX: Int = {
-    val nlh = NODES_LIST_HEIGHT_PX
-    if (isPopover) nlh
-    else nlh + ScCss.TABS_OFFSET_PX
+    var nlh = NODES_LIST_HEIGHT_PX
+    if (!isScrollWithField) nlh += ScCss.TABS_OFFSET_PX
+
+    var maxH = args.screenInfo.screen.wh.height
+    if (isScrollWithField) maxH -= ScCss.TABS_OFFSET_PX
+
+    Math.min( maxH, nlh )
   }
 
   private val GEO_MAP_HEIGHT_PX: Int = {
-    val tbh = TAB_BODY_HEIGHT_PX - ScCss.TABS_OFFSET_PX
-    if (isPopover) tbh
-    else tbh - NODES_LIST_HEIGHT_PX
+    Math.max(
+      0,
+      TAB_BODY_HEIGHT_PX - ScCss.TABS_OFFSET_PX - NODES_LIST_HEIGHT_PX
+    )
   }
 
 
@@ -103,11 +108,17 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   object GeoMap {
 
     val geomap = style(
-      height( GEO_MAP_HEIGHT_PX.px )
+      if (GEO_MAP_HEIGHT_PX > 0)
+        height( GEO_MAP_HEIGHT_PX.px )
+      else
+        display.none,
     )
 
     val crosshair = style(
-      top( -(GEO_MAP_HEIGHT_PX / 2 + 12).px ),
+      if (GEO_MAP_HEIGHT_PX > 0)
+        top( -(GEO_MAP_HEIGHT_PX / 2 + 12).px )
+      else
+        display.none,
     )
 
   }

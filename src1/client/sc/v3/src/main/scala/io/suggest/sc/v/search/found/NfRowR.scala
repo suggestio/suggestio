@@ -1,7 +1,7 @@
 package io.suggest.sc.v.search.found
 
 import com.materialui.{Mui, MuiGrid, MuiGridClasses, MuiGridProps, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -19,7 +19,6 @@ import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick}
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
 import japgolly.univeq._
@@ -35,14 +34,33 @@ import scala.scalajs.js
   *
   * Без dependency injection, чтобы снизить кол-во React.Context().consume-компонентов: пусть всё будет в списке снаружи.
   */
-final case class NfRowR(
-                         crCtx        : MCommonReactCtx,
-                         scReactCtx   : MScReactCtx,
-                       ) {
+final class NfRowR(
+                    scReactCtxP              : React.Context[MScReactCtx],
+                    crCtxP                   : React.Context[MCommonReactCtx],
+                  ) {
+
+  def apply( nodesFoundRowsC: ReactConnectProxy[Seq[MNodesFoundRowProps]] ): VdomElement = {
+    crCtxP.consume { crCtx =>
+      scReactCtxP.consume { scReactCtx =>
+        val nfRowR = NfRowR2( crCtx, scReactCtx )
+        nodesFoundRowsC( nfRowR.rows )
+      }
+    }
+  }
+
+}
+
+
+/** Чтобы не плодить кучу ctx.consume()-компонентов, тут класс-контейнер единственного инстанса
+  * компонента под готовые контексты.
+  */
+final case class NfRowR2(
+                          crCtx        : MCommonReactCtx,
+                          scReactCtx   : MScReactCtx,
+                        ) {
 
   type Props_t = MNodesFoundRowProps
   type Props = ModelProxy[Props_t]
-
 
   class Backend($: BackendScope[Props, Props_t]) {
 
@@ -161,10 +179,10 @@ final case class NfRowR(
 
             override val primary = (
               ScCssStatic.thinText ::
-              NodesCSS.tagRowTextPrimary ::
-              props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
-              Nil
-            ).toHtmlClass
+                NodesCSS.tagRowTextPrimary ::
+                props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
+                Nil
+              ).toHtmlClass
 
             override val secondary = Css.flat(
               props.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass,

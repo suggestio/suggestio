@@ -8,7 +8,6 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import ReactDiodeUtil.Implicits._
-import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitch}
 import io.suggest.sc.m.search.{MNodesFoundRowProps, MNodesFoundS}
 import io.suggest.sc.v.search.SearchCss
@@ -26,8 +25,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class IndexSwitchAskR(
                        nfListR          : NfListR,
+                       nfRowR           : NfRowR,
                        crCtxProv        : React.Context[MCommonReactCtx],
-                       scReactCtxProv   : React.Context[MScReactCtx],
                      ) {
 
   type Props_t = MInxSwitch
@@ -59,51 +58,52 @@ class IndexSwitchAskR(
         }
 
         // Содержимое левой части сообщения:
-        val _message = crCtxProv.consume { crCtx =>
+        val _message = <.div(
+          ^.`class` := notsCss.content.htmlClass,
+
+          crCtxProv.message( MsgCodes.`Location.changed` ),
+
+          // Кнопка сокрытия уведомления:
+          MuiButton.component {
+            val cssClasses = new MuiButtonClasses {
+              override val root = notsCss.cancel.htmlClass
+            }
+            new MuiButtonProps {
+              override val onClick = _onCloseJsCbF
+              override val variant = MuiButtonVariants.text
+              override val size = MuiButtonSizes.small
+              override val color = MuiColorTypes.inherit
+              override val classes = cssClasses
+            }
+          } (
+            Mui.SvgIcons.CancelOutlined(btnIconProps)(),
+            crCtxProv.message( MsgCodes.`Cancel` ),
+          ),
+
+          <.br,
+
+          // Список найденных узлов:
           <.div(
-            ^.`class` := notsCss.content.htmlClass,
-
-            crCtx.messages( MsgCodes.`Location.changed` ),
-
-            // Кнопка сокрытия уведомления:
-            MuiButton.component {
-              val cssClasses = new MuiButtonClasses {
-                override val root = notsCss.cancel.htmlClass
-              }
-              new MuiButtonProps {
-                override val onClick = _onCloseJsCbF
-                override val variant = MuiButtonVariants.text
-                override val size = MuiButtonSizes.small
-                override val color = MuiColorTypes.inherit
-                override val classes = cssClasses
-              }
-            } (
-              Mui.SvgIcons.CancelOutlined(btnIconProps)(),
-              crCtx.messages( MsgCodes.`Cancel` ),
-            ),
-
-            <.br,
+            s.searchCssOptC {
+              _.value.whenDefinedEl { CssR.component.apply }
+            },
 
             // Список найденных узлов:
-            <.div(
-              s.searchCssOptC {
-                _.value.whenDefinedEl { CssR.component.apply }
-              },
-
-              scReactCtxProv.consume { scReactCtx =>
-                // Список найденных узлов:
-                val nfRowR = NfRowR( crCtx, scReactCtx )
-                val nodesFoundRows = s.nodesFoundPropsC( nfRowR.rows )
-                s.nodesFoundSOptC { nodesFoundSOptProxy =>
-                  nodesFoundSOptProxy.value.whenDefinedEl { nodesFoundS =>
-                    val p2 = nodesFoundSOptProxy.resetZoom( nodesFoundS )
-                    nfListR.component( p2 )( nodesFoundRows )
-                  }
+            {
+              val nodesFoundRows = nfRowR( s.nodesFoundPropsC )
+              s.nodesFoundSOptC { nodesFoundSOptProxy =>
+                nodesFoundSOptProxy.value.whenDefinedEl { nodesFoundS =>
+                  nfListR.component(
+                    nfListR.PropsVal(
+                      nodesFoundProxy = nodesFoundSOptProxy.resetZoom( nodesFoundS ),
+                    )
+                  )( nodesFoundRows )
                 }
-              },
-            ),
-          )
-        }
+              }
+            },
+
+          ),
+        )
 
         val cssClasses = new MuiSnackBarContentClasses {
           // Чтобы кнопки выравнивались вертикально, а не горизонтально
