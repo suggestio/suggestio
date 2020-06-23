@@ -614,12 +614,27 @@ class IndexAh[M](
         // Ничего как бы и не изменилось.
         noChange
       } else {
-        // Выставить новое состояние и запустить GetIndex.
-        val v1 = MScIndex.search
+        val outer_LENS = MScIndex.search
           .composeLens( MScSearch.geo )
-          .composeLens( MGeoTabS.mapInit )
+
+        var geoTabModF = MGeoTabS.mapInit
           .composeLens( MMapInitState.loader )
-          .set( Some( v0.search.geo.mapInit.state.center ) )( v0 )
+          .set( Some(v0.search.geo.mapInit.state.center) )
+
+        // Обнулить id текущего тега.
+        val geoTab_data_selTagIds_LENS = MGeoTabS.data
+          .composeLens( MGeoTabData.selTagIds )
+        if (
+          outer_LENS
+            .composeLens( geoTab_data_selTagIds_LENS )
+            .get(v0)
+            .nonEmpty
+        ) {
+          geoTabModF = geoTabModF andThen (geoTab_data_selTagIds_LENS set Set.empty)
+        }
+
+        // Выставить новое состояние и запустить GetIndex.
+        val v1 = (outer_LENS modify geoTabModF)( v0 )
 
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
