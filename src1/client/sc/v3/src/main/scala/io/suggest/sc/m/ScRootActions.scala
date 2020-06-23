@@ -99,6 +99,8 @@ case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию. */
 case object ResetUrlRoute extends IScRootAction
 
+/** Экшен хардварной кнопки "Назад", которую надо отрабатывать по-особому. */
+case object HwBack extends IScRootAction
 
 /** Запуск таймера ожидания получения гео-координат. */
 case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends ISc3Action

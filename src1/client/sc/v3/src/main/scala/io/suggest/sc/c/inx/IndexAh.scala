@@ -1,6 +1,5 @@
 package io.suggest.sc.c.inx
 
-import com.materialui.Mui
 import cordova.plugins.statusbar.CdvStatusBar
 import diode._
 import diode.data.{Pot, Ready}
@@ -198,17 +197,8 @@ object IndexAh {
 
     // В зависимости от нового цвета фона, нужно подчинить этому цвету системную статус-панель.
     val plat = mroot.dev.platform
-    if (plat.isCordova && plat.isReady) {
-      val bgColorHex = i1.scCss.bgColorCss.value
-      fxsAcc ::= Effect.action {
-        CdvStatusBar.backgroundColorByHexString( bgColorHex )
-        if (Mui.Styles.getLuminance( bgColorHex ) >= 0.5)
-          CdvStatusBar.styleDefault()
-        else
-          CdvStatusBar.styleLightContent()
-        DoNothing
-      }
-    }
+    if (plat.isCordova && plat.isReady)
+      fxsAcc ::= osStatusBarColorFx( i1.scCss, usePanelColor = i1.isAnyPanelOpened )
 
     val fxOpt = fxsAcc.mergeEffects
     ActionResult( Some(i1), fxOpt )
@@ -217,6 +207,28 @@ object IndexAh {
   def _inx_state_switch_ask_LENS = MScIndex.state
     .composeLens( MScIndexState.switch )
     .composeLens( MInxSwitch.ask )
+
+  def _inx_search_panel_opened_LENS = MScIndex.search
+    .composeLens( MScSearch.panel )
+    .composeLens( MSearchPanelS.opened )
+
+  def _inx_menu_opened_LENS = MScIndex.menu
+    .composeLens( MMenuS.opened )
+
+
+  /** Сборка эффекта окрашивания системной панели статуса. */
+  def osStatusBarColorFx(scCss: ScCss, usePanelColor: Boolean): Effect = {
+    val bgColorHex =
+      if (usePanelColor) scCss.panelBgHex
+      else scCss.bgColorCss.value
+
+    Effect.action {
+      CdvStatusBar.backgroundColorByHexString( bgColorHex )
+      if (scCss.bgIsLight) CdvStatusBar.styleDefault()
+      else CdvStatusBar.styleLightContent()
+      DoNothing
+    }
+  }
 
 }
 
@@ -475,61 +487,65 @@ class IndexAh[M](
     // Экшен управления отображением боковых панелей выдачи.
     case m: SideBarOpenClose =>
       val v0 = value
+
+      def __osStatusBarColorFxOpt(isPanelOpen: Boolean): Option[Effect] = {
+        val mroot = rootRO.value
+        val p = mroot.dev.platform
+        Option.when( p.isCordova && p.isReady ) {
+          IndexAh.osStatusBarColorFx( v0.scCss, usePanelColor = isPanelOpen )
+        }
+      }
+
       m.bar match {
         case MScSideBars.Search =>
-          if (v0.search.panel.opened ==* m.open) {
+          if (m.open contains[Boolean] v0.search.panel.opened) {
             // Ничего делать не надо - ничего не изменилось.
             noChange
 
           } else {
             // Действительно изменилось состояние отображения панели:
-            var v2 = MScIndex.search
-              .composeLens( MScSearch.panel )
-              .composeLens( MSearchPanelS.opened )
-              .set( m.open )(v0)
+            val search_panel_open_LENS = IndexAh._inx_search_panel_opened_LENS
+            var v2 = m.open
+              .fold( search_panel_open_LENS.modify(!_) )( search_panel_open_LENS.set )(v0)
+
+            val isOpen2 = search_panel_open_LENS.get( v2 )
 
             // Не допускать открытости обеих панелей одновременно:
-            if (m.open && v2.menu.opened) {
-              v2 = MScIndex.menu
-                .composeLens( MMenuS.opened )
-                .set(false)(v2)
-            }
+            if (isOpen2 && v2.menu.opened)
+              v2 = (IndexAh._inx_menu_opened_LENS set false)(v2)
 
             // Аккаумулятор сайд-эффектов.
-            val routeFx = ResetUrlRoute.toEffectPure
+            var fxAcc: Effect = ResetUrlRoute.toEffectPure
 
             // Требуется ли запускать инициализацию карты или списка найденных узлов? Да, если открытие на НЕинициализированной панели.
-            val fxOpt = OptionUtil.maybeOpt(m.open) {
-              SearchAh.maybeInitSearchPanel(v2.search)
-            }
+            if (isOpen2)
+              for (fx <- SearchAh.maybeInitSearchPanel( v2.search ))
+                fxAcc += fx
 
-            // Объеденить эффекты:
-            val finalFx = (routeFx :: fxOpt.toList)
-              .mergeEffects
-              .get
+            for (fx <- __osStatusBarColorFxOpt(isOpen2))
+              fxAcc += fx
 
-            updated(v2, finalFx)
+            updated(v2, fxAcc)
           }
 
         case MScSideBars.Menu =>
-          val menu_opened_LENS = MScIndex.menu
-            .composeLens( MMenuS.opened )
-          if (menu_opened_LENS.get(v0) !=* m.open) {
-            var v2 = (menu_opened_LENS set m.open)(v0)
+          val menu_opened_LENS = IndexAh._inx_menu_opened_LENS
+          if ( m.open contains[Boolean] menu_opened_LENS.get(v0) ) {
+            noChange
+          } else {
+            var v2 = m.open.fold( menu_opened_LENS.modify(!_) )( menu_opened_LENS.set )(v0)
+            val isOpen2 = menu_opened_LENS.get( v2 )
             // Обновить URL.
-            val fx = ResetUrlRoute.toEffectPure
+            var fxAcc: Effect = ResetUrlRoute.toEffectPure
+
+            for (fx <- __osStatusBarColorFxOpt(isOpen2))
+              fxAcc += fx
 
             // Не допускать открытости обоих панелей одновременно.
-            if (m.open && v2.search.panel.opened) {
-              v2 = MScIndex.search
-                .composeLens( MScSearch.panel )
-                .composeLens( MSearchPanelS.opened )
-                .set(false)(v2)
-            }
+            if (isOpen2 && v2.search.panel.opened)
+              v2 = (IndexAh._inx_search_panel_opened_LENS set false)(v2)
 
-            updated( v2, fx )
-          } else {
-            noChange
+            updated( v2, fxAcc )
           }
       }
 

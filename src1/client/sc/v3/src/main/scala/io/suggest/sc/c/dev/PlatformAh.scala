@@ -10,6 +10,7 @@ import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
 import io.suggest.log.Log
+import io.suggest.sc.m.inx.{MScSideBar, MScSideBars, SideBarOpenClose}
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import org.scalajs.dom
@@ -70,7 +71,26 @@ object PlatformAh extends Log {
       __subscribeForCordovaVisibility( CordovaEvents.PAUSE, isScVisible = false )
       __subscribeForCordovaVisibility( CordovaEvents.RESUME, isScVisible = true )
 
-      // TODO Подписаться на события кнопки menu, которая не работает?
+
+      // Подписка на события кнопок menu, search
+      def __subscribeCdvSideBarBtn( eventType: String, bar: MScSideBar ): Unit = {
+        doc.addEventListener4s( eventType ) { _: Event =>
+          dispatcher.dispatch( SideBarOpenClose(bar, None) )
+        }
+      }
+      __subscribeCdvSideBarBtn( CordovaEvents.MENU_BUTTON, MScSideBars.Menu )
+      // TODO Search: + сразу фокус на поле ввода запроса?
+      __subscribeCdvSideBarBtn( CordovaEvents.SEARCH_BUTTON, MScSideBars.Search )
+
+      // Подписка на события back-button - отсутствует, поэтому работа идёт через Sc3SpaRouter.
+      // Так-то оно работает по умолчанию, но нужно отработать сворачивание приложения в фон, когда некуда уходить.
+      doc.addEventListener4s( CordovaEvents.BACK_BUTTON ) { _: Event =>
+        // Если в History API больше некуда идти, то надо сворачиваться.
+        val h = dom.window.history
+        val hLen0 = h.length
+        h.back()
+        println( s"${getClass.getSimpleName} BACK btn click $hLen0=>${h.length}" )
+      }
     }
 
     // Инициализация для обычного браузера:

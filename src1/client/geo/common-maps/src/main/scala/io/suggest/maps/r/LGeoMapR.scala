@@ -43,7 +43,7 @@ object LGeoMapR {
       },
 
       onZoomEndF = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
-        val newZoom = event.target.asInstanceOf[LMap].getZoom()
+        val newZoom = event.target.asInstanceOf[LMap].getZoom().toInt
         ReactDiodeUtil.dispatchOnProxyScopeCB( $, MapZoomEnd(newZoom) )
       },
 

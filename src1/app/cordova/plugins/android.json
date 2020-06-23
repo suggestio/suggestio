@@ -37,6 +37,9 @@
     },
     "cordova-plugin-background-mode": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-appminimize": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

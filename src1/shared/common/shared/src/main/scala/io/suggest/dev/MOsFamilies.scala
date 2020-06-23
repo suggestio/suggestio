@@ -61,4 +61,17 @@ object MOsFamily {
   implicit def osPlatformJson: Format[MOsFamily] =
     EnumeratumUtil.valueEnumEntryFormat( MOsFamilies )
 
+
+  implicit final class OsFamilyOpsExt( private val osf: MOsFamily ) extends AnyVal {
+
+    /** Поддерживается ли минификация приложения силами cordova? */
+    def isCdvAppMinimizable: Boolean = {
+      osf match {
+        case MOsFamilies.Android => true
+        case _ => false
+      }
+    }
+
+  }
+
 }

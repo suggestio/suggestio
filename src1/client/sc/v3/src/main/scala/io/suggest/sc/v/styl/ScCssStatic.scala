@@ -76,7 +76,7 @@ object ScCssStatic extends StyleSheet.Inline {
         width( pc100 ),
         height( pc100 ),
         // 90% - эффекта затемнения сливается с незатемённой областью. 80% - эффект уже виден.
-        filter := "brightness(80%)",
+        //filter := "brightness(80%)",
         zIndex(-1)
       )
     }

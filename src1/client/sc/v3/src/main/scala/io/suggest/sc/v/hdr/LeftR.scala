@@ -2,6 +2,7 @@ package io.suggest.sc.v.hdr
 
 import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import japgolly.scalajs.react._
@@ -21,7 +22,7 @@ class LeftR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private def _onClosePanelBtnClick(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Menu, open = false))
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Menu, open = OptionUtil.SomeBool.someFalse))
     private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClosePanelBtnClick )
 
 

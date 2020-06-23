@@ -50,12 +50,13 @@ class LMap extends LEventTarget {
 
   def getCenter(): LatLng = js.native
 
-  def getZoom(): Zoom_t   = js.native
+  // 2020-06-23 Внезапно, getZoom() вернула бесконечную дробь. Поэтому тут Double.
+  def getZoom(): Double   = js.native
   def getMinZoom(): Zoom_t = js.native
   def getMaxZoom(): Zoom_t = js.native
 
   def getBounds(): LatLngBounds = js.native
-  def getBoundsZoom(bound: LatLngBounds, inside: Boolean = js.native): Zoom_t = js.native
+  def getBoundsZoom(bound: LatLngBounds, inside: Boolean = js.native): Double = js.native
   def getSize(): Point = js.native
 
   def getPixelBounds(): Bounds = js.native

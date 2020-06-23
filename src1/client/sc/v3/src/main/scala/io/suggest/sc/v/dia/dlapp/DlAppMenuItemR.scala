@@ -40,7 +40,7 @@ class DlAppMenuItemR(
         // Открыть/закрыть диалог
         propsProxy.dispatchCB( DlAppOpen( !isOpenedNow ) ) >>
         // И скрыть менюшку, если открыта.
-        propsProxy.dispatchCB( SideBarOpenClose(MScSideBars.Menu, open = false) )
+        propsProxy.dispatchCB( SideBarOpenClose(MScSideBars.Menu, open = OptionUtil.SomeBool.someFalse) )
       }
     }
 

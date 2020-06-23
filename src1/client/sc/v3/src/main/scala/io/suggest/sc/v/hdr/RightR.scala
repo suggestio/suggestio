@@ -2,6 +2,7 @@ package io.suggest.sc.v.hdr
 
 import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.v.styl.ScCssStatic
@@ -22,7 +23,7 @@ class RightR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Search, open = false))
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Search, open = OptionUtil.SomeBool.someFalse))
     }
 
     val render: VdomElement = {

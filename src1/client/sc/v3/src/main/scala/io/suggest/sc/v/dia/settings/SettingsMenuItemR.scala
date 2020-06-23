@@ -2,6 +2,7 @@ package io.suggest.sc.v.dia.settings
 
 import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
@@ -33,7 +34,7 @@ class SettingsMenuItemR(
         // Открыть/закрыть диалог
         propsProxy.dispatchCB( SettingsDiaOpen( opened = !isOpenedNow ) ) >>
         // И скрыть менюшку, если открыта.
-        propsProxy.dispatchCB( SideBarOpenClose(MScSideBars.Menu, open = false) )
+        propsProxy.dispatchCB( SideBarOpenClose(MScSideBars.Menu, open = OptionUtil.SomeBool.someFalse) )
       }
     }
 

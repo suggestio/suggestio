@@ -1,5 +1,6 @@
 package io.suggest.sc.v.styl
 
+import com.materialui.Mui
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
@@ -95,6 +96,40 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   val bgColor = style(
     backgroundColor( bgColorCss ),
   )
+
+
+  /** bgIsLight - Является ли фон светлым?
+    * panelBg - стиль фона панелей.
+    * panelBgHex - hex-код цвета фона панелей.
+    */
+  val (bgIsLight, panelBg, panelBgHex) = {
+    // mubBgColor небезопасен, изменяется при darken/lighten() и др.функциях.
+    val muiBgColor = Mui.Styles.decomposeColor( bgColorCss.value )
+    val bgColorLuma = Mui.Styles.getLuminance( muiBgColor )
+
+    val lightDarkLimit = 0.5
+    val _bgIsLight = bgColorLuma > lightDarkLimit
+
+    val modCoeff = 0.13
+
+    // Засветлять или затемнять цвет? НЕ засветлять белый, и не затемнять чёрный.
+    val isDoLighten = _bgIsLight match {
+      case true  => bgColorLuma <= lightDarkLimit + modCoeff // 0.65
+      case false => bgColorLuma < modCoeff // 0.15
+    }
+
+    val panelBgColorCss =
+      if (isDoLighten) Mui.Styles.lighten( muiBgColor, modCoeff )
+      else Mui.Styles.darken( muiBgColor, modCoeff )
+
+    val panelBgStyl = style(
+      backgroundColor( Color(panelBgColorCss) ),
+    )
+    val panelBgColorHex = Mui.Styles.rgbToHex( panelBgColorCss )
+
+    (_bgIsLight, panelBgStyl, panelBgColorHex)
+  }
+
 
   val fgColor = style(
     color( fgColorCss ),

@@ -7,6 +7,9 @@ package io.suggest.sjs.leaflet
   */
 package object map {
 
+  /** Тип для значения зума.
+    * По логике тут целое. Но иногда внезапно, L.getZoom() может возвращать Double.
+    */
   type Zoom_t = Int
 
 }

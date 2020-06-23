@@ -240,7 +240,7 @@ class GeoTabAh[M](
               }(v0)
 
             val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
-            val closeSearchFx = SideBarOpenClose(MScSideBars.Search, open = false).toEffectPure
+            val closeSearchFx = SideBarOpenClose( MScSideBars.Search, open = OptionUtil.SomeBool.someFalse ).toEffectPure
 
             val fx = gridLoadFx >> closeSearchFx
             updated(v2, fx)

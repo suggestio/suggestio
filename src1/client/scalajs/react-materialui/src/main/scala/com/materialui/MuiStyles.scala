@@ -1,6 +1,7 @@
 package com.materialui
 
 import scala.scalajs.js
+import scala.scalajs.js.|
 
 trait MuiColor extends js.Object {
   val light: js.UndefOr[String] = js.undefined
@@ -30,13 +31,19 @@ trait MuiStyles extends js.Object {
     *         0 = darkest black,
     *         1 = lightest white
     */
-  def getLuminance(color: String): Double = js.native
+  def getLuminance(color: MuiColor): Double = js.native
 
-  def fade(color: MuiColor, amount: Double): MuiColor                        = js.native
-  def lighten(color: MuiColor, amount: Double): MuiColor                     = js.native
-  def darken(color: MuiColor, amount: Double): MuiColor                      = js.native
-  def contrastRatio(background: MuiColor, foreground: MuiColor): Double      = js.native
-  def contrastRatioLevel(background: MuiColor, foreground: MuiColor): String = js.native
+  def decomposeColor(color: String): MuiColor = js.native
+  def fade(color: String | MuiColor, amount: Double): String = js.native
+  def lighten(color: String | MuiColor, amount: Double): String = js.native
+  def emphasize(color: String | MuiColor, amount: Double = js.native): String = js.native
+  def darken(color: String | MuiColor, amount: Double): String = js.native
+  def contrastRatio(background: String | MuiColor, foreground: MuiColor): Double = js.native
+  def contrastRatioLevel(background: String | MuiColor, foreground: MuiColor): String = js.native
+  def recomposeColor(color: MuiColor): String = js.native
+
+  def rgbToHex(color: String | MuiColor): String = js.native
+  def hslToRgb(color: String | MuiColor): String = js.native
 
 }
 

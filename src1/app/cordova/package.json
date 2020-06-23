@@ -13,6 +13,7 @@
         "cordova-android": "^8.1.0",
         "cordova-custom-config": "^5.1.0",
         "cordova-ios": "^5.1.1",
+        "cordova-plugin-appminimize": "git+https://github.com/tomloprod/cordova-plugin-appminimize.git",
         "cordova-plugin-background-fetch": "^6.0.7",
         "cordova-plugin-background-mode": "^0.7.3",
         "cordova-plugin-badge": "^0.8.8",
@@ -40,7 +41,8 @@
             "cordova-custom-config": {},
             "cordova-plugin-background-fetch": {},
             "cordova-plugin-statusbar": {},
-            "cordova-plugin-background-mode": {}
+            "cordova-plugin-background-mode": {},
+            "cordova-plugin-appminimize": {}
         },
         "platforms": [
             "ios",

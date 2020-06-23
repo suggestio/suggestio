@@ -17,6 +17,7 @@ import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import japgolly.scalajs.react.React
 import japgolly.univeq._
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -238,7 +239,7 @@ class Sc3SpaRouter(
   /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */
   private def _renderScMainScreen(page: MainScreen) = {
     // Отправить распарсенные данные URL в circuit:
-    sc3Circuit.dispatch( RouteTo(page) )
+    sc3Circuit.runEffectAction( RouteTo(page) )
     // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
     _scRootWrapped
   }

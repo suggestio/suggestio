@@ -3,6 +3,7 @@ package io.suggest.sc.v.search
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.css.{Css, CssR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
@@ -39,7 +40,7 @@ final class SearchR(
   class Backend( $: BackendScope[Props, State] ) {
 
     private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, opened) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, OptionUtil.SomeBool(opened)) )
     }
 
     def render(mrootProxy: Props, s: State, children: PropsChildren): VdomElement = {
@@ -75,7 +76,7 @@ final class SearchR(
           // Фон панели.
           <.div(
             ScCssStatic.Root.panelBg,
-            scCss.bgColor
+            scCss.panelBg,
           ),
 
           // Наполнение панели.

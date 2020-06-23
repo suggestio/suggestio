@@ -34,8 +34,9 @@ case object ScCssReBuild extends IIndexAction
   *
   * @param bar Панель, которую надо открыть/закрыть.
   * @param open Открыть панель?
+  *             None означает инверсию состояния панели.
   */
-case class SideBarOpenClose(bar: MScSideBar, open: Boolean) extends IIndexAction
+case class SideBarOpenClose(bar: MScSideBar, open: Option[Boolean]) extends IIndexAction
 
 
 /** Отмена переключения индекса выдачи в новую локацию. */

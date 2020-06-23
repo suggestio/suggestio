@@ -1,6 +1,7 @@
 package io.suggest.sc.c.dev
 
 import diode._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{JsScreenUtil, MScreenInfo}
 import io.suggest.jd.render.m.GridRebuild
 import io.suggest.sc.m.dev.MScScreenS
@@ -115,7 +116,7 @@ class ScreenAh[M](
 
       // Если закрыта левая панель меню, то нужно её раскрыть (нужна как ориентир, иначе непонятно).
       if (!rootRO.value.index.menu.opened)
-        fx = SideBarOpenClose( MScSideBars.Menu, open = true ).toEffectPure >> fx
+        fx = SideBarOpenClose( MScSideBars.Menu, open = OptionUtil.SomeBool.someTrue ).toEffectPure >> fx
 
       updated(v2, fx)
 

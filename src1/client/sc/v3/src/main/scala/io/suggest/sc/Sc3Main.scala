@@ -65,7 +65,7 @@ object Sc3Main extends Log {
     Try {
       //if ( !Logging.LOGGERS.exists(_.isInstanceOf[RemoteLogAppender]) )
         Logging.LOGGERS ::= new SevereFilter(
-          minSeverity = LogSeverities.Log,
+          minSeverity = LogSeverities.Warn,
           underlying = new BufLogAppender(
             underlying =  new RemoteLogAppender,
           ),

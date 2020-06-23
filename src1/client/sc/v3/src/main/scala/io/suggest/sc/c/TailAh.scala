@@ -150,19 +150,20 @@ class TailAh(
       val v0 = value
       val m = TailAh.getMainScreenSnapShot( v0 )
       //println("Reset Route => " + m)
-      // Уведомить в фоне роутер, заодно разблокировав интерфейс.
-      val fx = Effect.action {
-        routerCtl
-          .set( m )
-          .runNow()
-        DoNothing
-      }
+
       val currRouteLens = TailAh._currRoute
       val m0 = currRouteLens.get( v0 )
       if ( m0 contains m ) {
-        // TODO Может вообще тут делать ничего не надо?
-        effectOnly(fx)
+        noChange
       } else {
+        // Уведомить в фоне роутер, заодно разблокировав интерфейс.
+        val fx = Effect.action {
+          //println("ResetUrlRoute: " + m)
+          routerCtl
+            .set( m )
+            .runNow()
+          DoNothing
+        }
         val v2 = currRouteLens.set( Some(m) )( v0 )
         updatedSilent(v2, fx)
       }
@@ -225,7 +226,7 @@ class TailAh(
 
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened)
-        fxsAcc ::= SideBarOpenClose(MScSideBars.Search, m.mainScreen.searchOpened).toEffectPure
+        fxsAcc ::= SideBarOpenClose( MScSideBars.Search, OptionUtil.SomeBool(m.mainScreen.searchOpened) ).toEffectPure
 
       // Проверка id нового узла.
       if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {
@@ -279,7 +280,7 @@ class TailAh(
 
       // Сверить панель меню открыта или закрыта
       if (m.mainScreen.menuOpened !=* currMainScreen.menuOpened)
-        fxsAcc ::= SideBarOpenClose(MScSideBars.Menu, m.mainScreen.menuOpened).toEffectPure
+        fxsAcc ::= SideBarOpenClose( MScSideBars.Menu, OptionUtil.SomeBool(m.mainScreen.menuOpened) ).toEffectPure
 
       // Сверить focused ad id:
       if (
@@ -384,6 +385,8 @@ class TailAh(
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
       }
+
+      //logger.log( "hasResults? ", msg = (v2Opt.nonEmpty, fxsAcc.length) )
 
       ah.optionalResult(v2Opt, fxsAcc.mergeEffects, silent = needUpdateUi)
 
