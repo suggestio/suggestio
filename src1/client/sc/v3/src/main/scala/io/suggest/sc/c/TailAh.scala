@@ -1,5 +1,6 @@
 package io.suggest.sc.c
 
+import cordova.plugins.appminimize.CdvAppMinimize
 import diode._
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
@@ -26,6 +27,7 @@ import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.scalajs.react.extra.router.RouterCtl
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -169,9 +171,40 @@ class TailAh(
       }
 
 
+    case HwBack =>
+      val v0 = value
+
+      // cordova (android): при нажатии back надо скрыть открытые панели или диалоги, иначе свернуть приложение в фон.
+      val plat = v0.dev.platform
+      if (
+        plat.isCordova &&
+        // TODO m.RouteTo.isBack - нажата кнопка Back?
+        TailAh._currRoute
+          .get(v0)
+          .exists { m => !m.isSomeThingOpened }
+      ) {
+        if (plat.isUsingNow && plat.isReady) {
+          val minimizeFx = Effect.action {
+            CdvAppMinimize.minimize()
+            DoNothing
+          }
+          effectOnly( minimizeFx )
+
+        } else {
+          noChange
+        }
+
+      } else {
+        val goBackFx = Effect.action {
+          dom.window.history.back()
+          DoNothing
+        }
+        effectOnly( goBackFx )
+      }
+
+
     // SPA-роутер заливает в состояние данные из URL.
     case m: RouteTo =>
-      // TODO Возможно, этот код управления должен жить прямо в роутере?
       val v0 = value
 
       // Аккамулятор функций, обновляющих список модов, которые будут наложены на v0.
@@ -241,16 +274,16 @@ class TailAh(
 
       // Смотрим координаты текущей точки.
       if (
-        // Если состояние гео-точки хоть немного изменилось:
-        !(
-          (m.mainScreen.locEnv.isEmpty && currMainScreen.locEnv.isEmpty) ||
+      // Если состояние гео-точки хоть немного изменилось:
+      !(
+        (m.mainScreen.locEnv.isEmpty && currMainScreen.locEnv.isEmpty) ||
           m.mainScreen.locEnv.exists { mgp2 =>
             currMainScreen.locEnv.exists { mgp0 =>
               mgp0 ~= mgp2
             }
           }
         )
-      ) {
+        ) {
         if (isFullyReady) {
           needUpdateUi = true
           for (nextGeoPoint <- m.mainScreen.locEnv) {
@@ -285,7 +318,7 @@ class TailAh(
       // Сверить focused ad id:
       if (
         m.mainScreen.focusedAdId !=* currMainScreen.focusedAdId &&
-        !isToReloadIndex
+          !isToReloadIndex
       ) {
         if (isFullyReady) {
           for {
@@ -301,8 +334,8 @@ class TailAh(
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
       if (m.mainScreen.needGeoLoc &&
-          v0.internals.boot.wzFirstDone.nonEmpty &&
-          v0.dialogs.first.view.isEmpty
+        v0.internals.boot.wzFirstDone.nonEmpty &&
+        v0.dialogs.first.view.isEmpty
       ) {
         // Если геолокация ещё не запущена, то запустить:
         if (GeoLocUtilJs.envHasGeoLoc() && !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) && !isGeoLocRunning) {

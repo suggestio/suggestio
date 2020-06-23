@@ -1,3 +1,4 @@
+import cordova.plugins.appminimize.CdvAppMinimize
 import cordova.plugins.background.fetch.CordovaBackgroundFetch
 import cordova.plugins.background.timer.CordovaBackgroundTimer
 import cordova.plugins.statusbar.CdvStatusBar
@@ -34,4 +35,12 @@ sealed trait DomWindow_CordovaExt extends js.Object {
 
   val StatusBar: CdvStatusBar.type = js.native
 
+  val plugins: DomWindow_CdvPlugins = js.native
+
+}
+
+
+@js.native
+sealed trait DomWindow_CdvPlugins extends js.Object {
+  val appMinimize: CdvAppMinimize.type = js.native
 }

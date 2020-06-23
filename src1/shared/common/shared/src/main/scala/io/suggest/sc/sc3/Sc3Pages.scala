@@ -45,6 +45,25 @@ object Sc3Pages {
       )(apply, unlift(unapply))
     }
 
+
+    implicit final class MainScreenOpsExt( private val mainScreen: MainScreen ) extends AnyVal {
+
+      /** Требуется ли гео-локация за неимением полезных данных? */
+      def needGeoLoc: Boolean = {
+        mainScreen.nodeId.isEmpty &&
+        mainScreen.locEnv.isEmpty
+      }
+
+      /** Что-либо визуальное раскрыто на экране, помимо выдачи (панели, окошки, итд)? */
+      def isSomeThingOpened: Boolean = {
+        mainScreen.searchOpened ||
+        mainScreen.menuOpened ||
+        mainScreen.firstRunOpen
+        // TODO Диалог настроек, диалог скачки приложения.
+      }
+
+    }
+
   }
 
   /** Роута для основного экрана с какими-то доп.аргументами. */
@@ -59,14 +78,6 @@ object Sc3Pages {
                          firstRunOpen   : Boolean             = false,
                        )
     extends Sc3Pages
-  {
-
-    /** Требуется ли гео-локация за неимением полезных данных? */
-    def needGeoLoc: Boolean = {
-      nodeId.isEmpty && locEnv.isEmpty
-    }
-
-  }
 
 }
 

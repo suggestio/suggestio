@@ -8,7 +8,7 @@ import io.suggest.event.DomEvents
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
+import io.suggest.sc.m.{HwBack, PauseOrResume, SetPlatformReady}
 import io.suggest.log.Log
 import io.suggest.sc.m.inx.{MScSideBar, MScSideBars, SideBarOpenClose}
 import japgolly.univeq._
@@ -86,10 +86,7 @@ object PlatformAh extends Log {
       // Так-то оно работает по умолчанию, но нужно отработать сворачивание приложения в фон, когда некуда уходить.
       doc.addEventListener4s( CordovaEvents.BACK_BUTTON ) { _: Event =>
         // Если в History API больше некуда идти, то надо сворачиваться.
-        val h = dom.window.history
-        val hLen0 = h.length
-        h.back()
-        println( s"${getClass.getSimpleName} BACK btn click $hLen0=>${h.length}" )
+        dispatcher.dispatch( HwBack )
       }
     }
 
