@@ -335,7 +335,7 @@ object ScCssStatic extends StyleSheet.Inline {
           paddingBottom( zeroPx ),
           overflow.hidden,
           // Закомменчено, было нужно для Mui popover, но и это надо будет спилить вместе с Popover'ом.
-          maxWidth( Search.PANEL_WIDTH_PX.px ),
+          //maxWidth( Search.PANEL_WIDTH_PX.px ),
         )
       }
 
@@ -424,12 +424,6 @@ object ScCssStatic extends StyleSheet.Inline {
       val rowLink = style(
         textDecoration := none
       )
-
-      /* Оставлено - вдруг понадобится.
-      val rowText = style(
-        height( 28.px )
-      )
-      */
 
       val rightIcon = style(
         position.absolute,

@@ -89,7 +89,8 @@ class DlAppMenuItemR(
   }
 
 
-  val component = ScalaComponent
+  // lazy - потому что в cordova этот пункт не нужен.
+  lazy val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsOptProxy =>
       State(
@@ -104,7 +105,5 @@ class DlAppMenuItemR(
     }
     .renderBackend[Backend]
     .build
-
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
 
 }

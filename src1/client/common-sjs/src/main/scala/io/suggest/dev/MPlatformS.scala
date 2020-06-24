@@ -31,6 +31,15 @@ object MPlatformS {
   def hasBle      = GenLens[MPlatformS](_.hasBle)
   def osFamily    = GenLens[MPlatformS](_.osFamily)
 
+
+  implicit final class PlatformOpsExt( private val plat: MPlatformS ) extends AnyVal {
+
+    def isBrowser: Boolean = !plat.isCordova
+
+    def isDlAppAvail: Boolean = isBrowser
+
+  }
+
 }
 
 
@@ -53,8 +62,4 @@ case class MPlatformS(
                        isCordova      : Boolean,
                        hasBle         : Boolean,
                        osFamily       : Option[MOsFamily],
-                     ) {
-
-  def isBrowser = !isCordova
-
-}
+                     )

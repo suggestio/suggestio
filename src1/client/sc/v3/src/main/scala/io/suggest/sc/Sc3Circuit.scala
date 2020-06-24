@@ -544,6 +544,7 @@ class Sc3Circuit(
       acc ::= ah
 
     // Контроллер для нативного приложения.
+    // TODO Не добавлять dlAppAh, когда не нужен (MPlatformS.isDlAppAvail()). Но доступ к MPlatformS отсюда невозможен из конструктора.
     acc ::= dlAppAh
 
     acc ::= scErrorDiaAh

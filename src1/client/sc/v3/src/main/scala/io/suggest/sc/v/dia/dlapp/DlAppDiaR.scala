@@ -448,7 +448,8 @@ class DlAppDiaR(
   }
 
 
-  val component = ScalaComponent
+  // lazy, т.к. внутри cordova-приложения оно скрыто.
+  lazy val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(

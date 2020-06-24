@@ -121,8 +121,10 @@ class ScRootR (
         // Диалог первого запуска.
         wzFirstR.component( mrootProxy ),
 
-        // Диалог скачивания приложения.
-        dlAppDiaR.component( mrootProxy ),
+        // Диалог скачивания приложения - отображается только в браузере.
+        ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {
+          dlAppDiaR.component( mrootProxy )
+        },
 
         // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
         mrootProxy.wrap(_.dialogs.error)( scErrorDiaR.apply )(implicitly, OptFastEq.Plain),

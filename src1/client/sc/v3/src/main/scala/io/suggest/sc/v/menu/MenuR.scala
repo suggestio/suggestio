@@ -70,7 +70,9 @@ class MenuR(
           s.aboutSioC { aboutSioR.apply },
 
           // Пункт скачивания мобильного приложения.
-          dlAppMenuItemR( propsProxy ),
+          ReactCommonUtil.maybeNode( propsProxy.value.dev.platform.isDlAppAvail ) {
+            dlAppMenuItemR.component( propsProxy )
+          },
 
           // Пункт открытия диалога с настройками выдачи.
           settingsMenuItemR.component( propsProxy ),
