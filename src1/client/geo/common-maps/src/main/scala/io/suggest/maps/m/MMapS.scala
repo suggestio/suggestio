@@ -59,10 +59,11 @@ case class MMapS(
                   zoom          : Int,
                   centerInit    : MGeoPoint,
                   centerReal    : Option[MGeoPoint]   = None,
-                  locationFound : Option[Boolean]     = None
+                  locationFound : Option[Boolean]     = None,
                 ) {
 
-  def withCenterInitReal(centerInit: MGeoPoint, centerReal: Option[MGeoPoint] = None) = copy(centerInit = centerInit, centerReal = centerReal)
+  def withCenterInitReal(centerInit: MGeoPoint, centerReal: Option[MGeoPoint] = None) =
+    copy(centerInit = centerInit, centerReal = centerReal)
 
   def center: MGeoPoint = {
     centerReal

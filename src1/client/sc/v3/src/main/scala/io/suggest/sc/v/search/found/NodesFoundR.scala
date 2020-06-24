@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search.found
 
-import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiProgressVariants, MuiToolBar, MuiToolBarProps}
+import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiProgressVariants, MuiToolBar, MuiToolBarClasses, MuiToolBarProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -21,6 +21,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -107,11 +108,15 @@ final class NodesFoundR(
       val TextBarCSS = ScCssStatic.Search.TextBar
 
       // Поисковое текстовое поле:
-      val searchToolBar: VdomElement = MuiToolBar(
+      val searchToolBar: VdomElement = MuiToolBar {
+        val mtbCss = new MuiToolBarClasses {
+          override val root = ScCssStatic.Search.TextBar.barHeight.htmlClass
+        }
         new MuiToolBarProps {
           override val disableGutters = true
+          override val classes = mtbCss
         }
-      )(
+      } (
 
         // Элементы строки поиска:
         <.div(
@@ -160,10 +165,11 @@ final class NodesFoundR(
                 // Кнопка быстрой очистки поля.
                 MuiIconButton {
                   val iconBtnCss = new MuiIconButtonClasses {
-                    override val root = {
+                    override val root = Css.flat(
                       if (queryEmptySomeProxy.value.value) Css.Display.INVISIBLE
-                      else Css.Display.VISIBLE
-                    }
+                      else Css.Display.VISIBLE,
+                      TextBarCSS.input.htmlClass,
+                    )
                   }
                   new MuiIconButtonProps {
                     override val classes = iconBtnCss
@@ -177,7 +183,7 @@ final class NodesFoundR(
             },
 
             // Кнопка сворачивания:
-            propsProxy.wrap(_ => None)( rightR.apply ),
+            propsProxy.wrap(_ => None)( rightR.component.apply ),
           ),
 
         ),

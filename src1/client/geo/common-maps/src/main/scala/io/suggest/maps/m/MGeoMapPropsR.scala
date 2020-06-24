@@ -25,14 +25,13 @@ object MGeoMapPropsR {
     override def eqv(a: MGeoMapPropsR, b: MGeoMapPropsR): Boolean = {
       val P = OptFastEq.Plain
       val V = OptFastEq.OptValueEq
-      (a.center          ===* b.center) &&
-        (a.zoom           ==* b.zoom) &&
-        V.eqv(a.locationFound, b.locationFound) &&
-        P.eqv(a.cssClass,     b.cssClass) &&
-        V.eqv(a.trackWndResize, b.trackWndResize) &&
-        P.eqv(a.whenReady,    b.whenReady) &&
-        P.eqv(a.onDragStart,  b.onDragStart) &&
-        P.eqv(a.onDragEnd,    b.onDragEnd)
+      (a.mapS ===* b.mapS) &&
+      (a.animated ==* b.animated) &&
+      P.eqv(a.cssClass,     b.cssClass) &&
+      V.eqv(a.trackWndResize, b.trackWndResize) &&
+      P.eqv(a.whenReady,    b.whenReady) &&
+      P.eqv(a.onDragStart,  b.onDragStart) &&
+      P.eqv(a.onDragEnd,    b.onDragEnd)
     }
   }
 
@@ -40,9 +39,8 @@ object MGeoMapPropsR {
 
 
 case class MGeoMapPropsR(
-                          center          : MGeoPoint,
-                          zoom            : Zoom_t,
-                          locationFound   : Option[Boolean],
+                          mapS            : MMapS,
+                          animated        : Boolean                                       = true,
                           cssClass        : Option[String]                                = None,
                           trackWndResize  : Option[Boolean]                               = None,
                           whenReady       : Option[js.Function1[IWhenReadyArgs, Unit]]    = None,

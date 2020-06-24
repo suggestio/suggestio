@@ -53,12 +53,14 @@ object ScCss {
     * Появился для выравнивания полосы input'а относительно полосы заголовка. */
   def SEARCH_TOP_OFFSET_PX = 0
 
+  def SEARCH_BAR_HEIGHT_PX = 65
+
   /**
     * Оффсет при наличии заголовка табов поиска.
     * Если нет заголовка табов, то можно делать бОльший offset.
     * if (tabsHdr.isEmpty) 115 else 165
     */
-  val TABS_OFFSET_PX = 65 + SEARCH_TOP_OFFSET_PX
+  val TABS_OFFSET_PX = SEARCH_BAR_HEIGHT_PX + SEARCH_TOP_OFFSET_PX
 
   /** Высота заголовка. */
   def HEADER_HEIGHT_PX = 50

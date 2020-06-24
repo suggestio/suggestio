@@ -182,12 +182,9 @@ object AdvGeoFormR {
         rcvrsGeoC        = propsProxy.connect(_.rcvr.rcvrsGeo),
         rcvrPopupC       = propsProxy.connect(_.rcvr),
         geoMapPropsC     = propsProxy.connect { p =>
-          val m = p.mmap
           MGeoMapPropsR(
-            center        = m.center,
-            zoom          = m.zoom,
-            locationFound = m.locationFound,
-            cssClass      = mapCssClass
+            mapS          = p.mmap,
+            cssClass      = mapCssClass,
           )
         },
         geoAdvExistGjC   = propsProxy.connect(_.geoAdv.geoJson),

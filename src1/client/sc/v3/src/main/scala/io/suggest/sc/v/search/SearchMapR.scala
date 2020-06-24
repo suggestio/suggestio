@@ -109,9 +109,9 @@ class SearchMapR {
           s.mmapC { mmapProxy =>
             mmapProxy.wrap { mmap =>
               MGeoMapPropsR(
-                center        = mmap.center,
-                zoom          = mmap.zoom,
-                locationFound = mmap.locationFound,
+                mapS          = mmap,
+                // Управление анимацией: при наличии каких-либо ресиверов, нужно вырубать анимацию, чтобы меньше дёргалась карта при поиске.
+                animated      = propsProxy.value.isRcvrsEqCached,
                 cssClass      = geoMapCssSome,
                 // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
                 //trackWndResize = someFalse,

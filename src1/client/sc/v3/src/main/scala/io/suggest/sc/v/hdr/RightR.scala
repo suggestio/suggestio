@@ -7,7 +7,7 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, ReactEvent, ScalaComponent}
 
 /**
   * Suggest.io
@@ -28,8 +28,12 @@ class RightR {
 
     val render: VdomElement = {
       MuiIconButton {
+        val icBtnCss = new MuiIconButtonClasses {
+          override val root = ScCssStatic.Search.TextBar.input.htmlClass
+        }
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF
+          override val classes = icBtnCss
         }
       }(
         Mui.SvgIcons.ArrowForwardIosOutlined()()
@@ -44,7 +48,5 @@ class RightR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(noneProxy: Props) = component( noneProxy )
 
 }

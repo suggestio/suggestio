@@ -264,11 +264,15 @@ object ScCssStatic extends StyleSheet.Inline {
 
       val _SM_SEARCH_BAR = _SM_ + "search-bar"
 
+      val barHeight = style(
+        height( ScCss.SEARCH_BAR_HEIGHT_PX.px )
+      )
+
       // TODO Статический стиль - унести в статику.
       val bar = {
         var acc = List[ToStyle](
-          padding( 2.px, 0.px, 15.px, 22.px ),
-          addClassName( _SM_SEARCH_BAR ),
+          padding( 2.px, 0.px, 0.px, 22.px ),
+          addClassName( barHeight.htmlClass ),
           display.inlineFlex,
         )
 

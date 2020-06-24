@@ -65,16 +65,16 @@ object LGeoMapR {
     */
   def lmMapSProxy2lMapProps( proxy: ModelProxy[MGeoMapPropsR], lgmCtx: LgmCtx ): LMapPropsR = {
     val v = proxy()
-    val _onLocationFound2 = JsOptionUtil.maybeDefined( v.locationFound contains[Boolean] true ) {
+    val _onLocationFound2 = JsOptionUtil.maybeDefined( v.mapS.locationFound contains[Boolean] true ) {
       lgmCtx.onLocationFoundF
     }
     // Карта должна рендерится с такими параметрами:
     new LMapPropsR {
-      override val center    = MapsUtil.geoPoint2LatLng( v.center )
-      override val zoom      = js.defined( v.zoom )
+      override val center    = MapsUtil.geoPoint2LatLng( v.mapS.center )
+      override val zoom      = js.defined( v.mapS.zoom )
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
       override val maxZoom   = js.defined( 18 )
-      override val useFlyTo  = true
+      override val useFlyTo  = v.animated
       override val onLocationFound = _onLocationFound2
 
       override val onPopupClose = js.defined( lgmCtx.onPopupCloseF )
