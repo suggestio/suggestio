@@ -5,11 +5,11 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.app.{MScAppGetQs, MScAppGetResp}
-import io.suggest.sc.m.{MScRoot, SetErrorState}
+import io.suggest.sc.m.{MScRoot, ResetUrlRoute, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScIndexState
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.m.menu.{DlInfoResp, ExpandDlApp, MDlAppDia, MkAppDlInfoReq, DlAppOpen, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
+import io.suggest.sc.m.menu.{DlAppOpen, DlInfoResp, ExpandDlApp, MDlAppDia, MkAppDlInfoReq, PlatformSetAppDl, QrCodeExpand, TechInfoDlAppShow}
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
@@ -41,13 +41,13 @@ class DlAppAh(
 
       } else {
         var updF = MDlAppDia.opened set m.opened
-        var fxOpt = Option.empty[Effect]
+        var finalFx = ResetUrlRoute.toEffectPure
 
         if (m.opened) {
           for (osFamily <- v0.platform if v0.getReq.isEmpty && !v0.getReq.isPending) {
             val (reqUpdF, fx) = _dlInfoReq( osFamily )
             updF = updF andThen reqUpdF
-            fxOpt = Some(fx)
+            finalFx += fx
           }
         } else {
           // Сокрытие диалога - сброс частей состояния, чтобы перезапросить ссылки с сервера.
@@ -55,7 +55,7 @@ class DlAppAh(
         }
 
         val v2 = updF(v0)
-        ah.updatedMaybeEffect(v2, fxOpt)
+        updated( v2, finalFx )
       }
 
 

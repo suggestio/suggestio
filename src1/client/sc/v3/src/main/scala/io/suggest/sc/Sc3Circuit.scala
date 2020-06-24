@@ -450,7 +450,7 @@ class Sc3Circuit(
     circuit = this,
   )
 
-  private val menuNativeAppAh = new DlAppAh(
+  private val dlAppAh = new DlAppAh(
     modelRW       = dlAppDiaRW,
     scAppApi      = scAppApi,
     indexStateRO  = inxStateRO,
@@ -544,7 +544,7 @@ class Sc3Circuit(
       acc ::= ah
 
     // Контроллер для нативного приложения.
-    acc ::= menuNativeAppAh
+    acc ::= dlAppAh
 
     acc ::= scErrorDiaAh
 

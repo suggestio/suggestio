@@ -3,7 +3,7 @@ package io.suggest.sjs.common.vm.doc
 import io.suggest.sjs.common.vm.{IVm, Vm}
 import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
-import org.scalajs.dom.{Document, Element}
+import org.scalajs.dom.{Document, Element, html}
 import org.scalajs.dom.raw.{HTMLBodyElement, HTMLDocument, HTMLElement, HTMLHeadElement}
 
 import scala.scalajs.js
@@ -49,10 +49,10 @@ case class DocumentVm(override val _underlying: HTMLDocument = dom.document) ext
   }
 
   /** Получить тег body, отрабатывая оптимальные и безопасные сценарии. */
-  def body = _safeGetTag("body")(_.body)
+  def body: html.Body = _safeGetTag("body")(_.body)
 
   /** Получить тег head, отрабатывая оптимальные и безопасные сценарии. */
-  def head = HeadVm( _safeGetTag("head")(_.head) )
+  def head: HeadVm = HeadVm( _safeGetTag("head")(_.head) )
 
   def scrollingElement: Element = {
     val ds = SafeDocumentApi( _underlying )
@@ -60,6 +60,6 @@ case class DocumentVm(override val _underlying: HTMLDocument = dom.document) ext
       .getOrElse( _underlying.documentElement )
   }
 
-  def documentElement = Vm( _underlying.documentElement )
+  def documentElement: Vm[Element] = Vm( _underlying.documentElement )
 
 }

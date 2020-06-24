@@ -21,6 +21,7 @@ import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
+import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
@@ -71,6 +72,8 @@ object TailAh {
         adNodeId
       },
       firstRunOpen = v0.dialogs.first.view.nonEmpty,
+      dlAppOpen    = v0.index.menu.dlApp.opened,
+      settingsOpen = v0.dialogs.settings.opened,
     )
   }
 
@@ -115,7 +118,7 @@ object TailAh {
 
   private def _inxSearchGeoMapInitLens = {
     MScIndex.search
-      .composeLens( MScSearch.geo)
+      .composeLens( MScSearch.geo )
       .composeLens( MGeoTabS.mapInit )
   }
 
@@ -171,6 +174,7 @@ class TailAh(
       }
 
 
+    // Сигнал нажатия хардварной кнопки back (приложение).
     case HwBack =>
       val v0 = value
 
@@ -317,8 +321,8 @@ class TailAh(
 
       // Сверить focused ad id:
       if (
-        m.mainScreen.focusedAdId !=* currMainScreen.focusedAdId &&
-          !isToReloadIndex
+        (m.mainScreen.focusedAdId !=* currMainScreen.focusedAdId) &&
+        !isToReloadIndex
       ) {
         if (isFullyReady) {
           for {
@@ -330,6 +334,12 @@ class TailAh(
           jsRouterAwaitRoute = true
         }
       }
+
+      if (m.mainScreen.dlAppOpen !=* currMainScreen.dlAppOpen)
+        fxsAcc ::= DlAppOpen( opened = m.mainScreen.dlAppOpen ).toEffectPure
+
+      if (m.mainScreen.settingsOpen !=* currMainScreen.settingsOpen)
+        fxsAcc ::= SettingsDiaOpen( opened = m.mainScreen.settingsOpen ).toEffectPure
 
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
@@ -456,8 +466,10 @@ class TailAh(
               )
             )
           }
-          val fxs = TailAh.getIndexFx( switchCtx )
-          DomQuick.clearTimeout(geoLockTimerId)
+          val fxs = TailAh.getIndexFx( switchCtx ) + Effect.action {
+            DomQuick.clearTimeout(geoLockTimerId)
+            DoNothing
+          }
           val (v22, fxs2) = TailAh._removeTimer(v00)
             .fold( (v00, fxs) ) { case (alterF, ctFx) =>
               alterF(v00) -> (fxs + ctFx)

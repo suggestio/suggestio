@@ -75,6 +75,8 @@ class Sc3SpaRouter(
             }
             .toMap
 
+          // TODO Тут дублируется MainScreen.FORMAT.
+
           def _boolOrFalseTok(key: String): Boolean = {
             tokens
               .get( key )
@@ -96,6 +98,8 @@ class Sc3SpaRouter(
             menuOpened = _boolOrFalseTok( K.GEO_SCR_OPENED_FN ),
             focusedAdId = tokens.get( K.FOCUSED_AD_ID_FN ),
             firstRunOpen = _boolOrFalseTok( K.FIRST_RUN_OPEN_FN ),
+            dlAppOpen = _boolOrFalseTok( K.DL_APP_OPEN_FN ),
+            settingsOpen = _boolOrFalseTok( K.SETTINGS_OPEN_FN ),
           )
         }
       } { mainScreen =>
@@ -104,6 +108,8 @@ class Sc3SpaRouter(
         // Портировано из sc v2 MScSd.toUrlHashAcc()
         // Сериализация роуты назад в строку.
         var acc: List[(String, String)] = Nil
+
+        // TODO Тут дублируется логика MainScreen.FORMAT + jsRouter._o2qs(). Может как-то унифицировать это дело?
 
         // Пока пишем generation, но наверное это лучше отключить, чтобы в режиме iOS webapp не было повторов.
         for (gen <- mainScreen.generation)
@@ -149,6 +155,12 @@ class Sc3SpaRouter(
         // Открыт диалог первого запуска?
         if (mainScreen.firstRunOpen)
           acc ::= K.FIRST_RUN_OPEN_FN -> mainScreen.firstRunOpen.toString
+
+        if (mainScreen.dlAppOpen)
+          acc ::= K.DL_APP_OPEN_FN -> mainScreen.dlAppOpen.toString
+
+        if (mainScreen.settingsOpen)
+          acc ::= K.SETTINGS_OPEN_FN -> mainScreen.settingsOpen.toString
 
         val queryString = UrlUtilJs.qsPairsToString(acc)
         Some( queryString )

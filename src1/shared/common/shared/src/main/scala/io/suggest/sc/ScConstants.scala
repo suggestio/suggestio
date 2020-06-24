@@ -205,6 +205,9 @@ object ScConstants {
     /** Название флага для диалога первого запуска. */
     val FIRST_RUN_OPEN_FN       = "r1"
 
+    val DL_APP_OPEN_FN          = "dl"
+    val SETTINGS_OPEN_FN        = "settings"
+
     // Панель поиска: гео-позишен, [гео]теги.
     final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN
 

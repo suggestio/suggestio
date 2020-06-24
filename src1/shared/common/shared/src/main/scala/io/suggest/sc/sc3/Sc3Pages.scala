@@ -41,7 +41,9 @@ object Sc3Pages {
         (__ \ LOC_ENV_FN).formatNullable[MGeoPoint] and
         (__ \ GEO_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ FOCUSED_AD_ID_FN).formatNullable[String] and
-        (__ \ FIRST_RUN_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse
+        (__ \ FIRST_RUN_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
+        (__ \ DL_APP_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
+        (__ \ SETTINGS_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse
       )(apply, unlift(unapply))
     }
 
@@ -58,8 +60,9 @@ object Sc3Pages {
       def isSomeThingOpened: Boolean = {
         mainScreen.searchOpened ||
         mainScreen.menuOpened ||
-        mainScreen.firstRunOpen
-        // TODO Диалог настроек, диалог скачки приложения.
+        mainScreen.firstRunOpen ||
+        mainScreen.dlAppOpen ||
+        mainScreen.settingsOpen
       }
 
     }
@@ -76,6 +79,8 @@ object Sc3Pages {
                          menuOpened     : Boolean             = false,
                          focusedAdId    : Option[String]      = None,
                          firstRunOpen   : Boolean             = false,
+                         dlAppOpen      : Boolean             = false,
+                         settingsOpen   : Boolean             = false,
                        )
     extends Sc3Pages
 

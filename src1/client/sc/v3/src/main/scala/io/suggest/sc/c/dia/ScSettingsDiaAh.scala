@@ -1,8 +1,9 @@
 package io.suggest.sc.c.dia
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.sc.m.SettingsDiaOpen
+import io.suggest.sc.m.{ResetUrlRoute, SettingsDiaOpen}
 import io.suggest.sc.m.dia.settings.MScSettingsDia
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
 /**
@@ -27,7 +28,8 @@ class ScSettingsDiaAh[M](
 
       } else {
         val v2 = (MScSettingsDia.opened set m.opened)(v0)
-        updated(v2)
+        val fx = ResetUrlRoute.toEffectPure
+        updated(v2, fx)
       }
 
   }
