@@ -242,4 +242,6 @@ object ErrorMsgs {
 
   def CSS_RENDER_ERROR = "Css.render.error"
 
+  def ONLINE_STATUS_CHECK_FAIL = "Online.status.check.fail"
+
 }

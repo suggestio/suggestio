@@ -28,4 +28,7 @@ package object dom2 {
   @inline implicit def jsErrorExt(jsError: js.Error): JsErrorExt =
     jsError.asInstanceOf[JsErrorExt]
 
+  @inline implicit def netInfoNavigatorExt( navigator: dom.Navigator ): Dom2WndNav_Connection =
+    navigator.asInstanceOf[Dom2WndNav_Connection]
+
 }

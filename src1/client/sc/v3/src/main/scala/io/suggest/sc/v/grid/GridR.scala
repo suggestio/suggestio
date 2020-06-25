@@ -142,6 +142,4 @@ class GridR(
     .renderBackend[Backend]
     .build
 
-  def apply(props: Props) = component(props)
-
 }

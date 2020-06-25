@@ -23,7 +23,8 @@ object MScDev {
       (a.platform ===* b.platform) &&
       (a.geoLoc   ===* b.geoLoc) &&
       (a.beaconer ===* b.beaconer) &&
-      (a.osNotify ===* b.osNotify)
+      (a.osNotify ===* b.osNotify) &&
+      (a.onLine   ===* b.onLine)
     }
   }
 
@@ -35,6 +36,7 @@ object MScDev {
   val geoLoc = GenLens[MScDev]( _.geoLoc )
   val beaconer = GenLens[MScDev]( _.beaconer )
   val osNotify = GenLens[MScDev]( _.osNotify )
+  val onLine = GenLens[MScDev]( _.onLine )
 
 }
 
@@ -44,6 +46,7 @@ object MScDev {
   * @param screen Состояние экрана устройства.
   * @param geoLoc Состояния геолокации.
   * @param osNotify Состояния внешних уведомлений.
+  * @param onLine Состояние соединения с инетом.
   */
 case class MScDev(
                    screen       : MScScreenS,
@@ -51,4 +54,5 @@ case class MScDev(
                    geoLoc       : MScGeoLoc        = MScGeoLoc.empty,
                    beaconer     : MBeaconerS       = MBeaconerS.empty,
                    osNotify     : MScOsNotifyS     = MScOsNotifyS.empty,
+                   onLine       : MOnLineS         = MOnLineS.empty,
                  )

@@ -45,8 +45,8 @@
             "cordova-plugin-appminimize": {}
         },
         "platforms": [
-            "ios",
-            "android"
+            "android",
+            "ios"
         ]
     }
 }

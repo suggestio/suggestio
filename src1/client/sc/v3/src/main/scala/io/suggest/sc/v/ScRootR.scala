@@ -11,16 +11,15 @@ import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
-import io.suggest.sc.m.inx._
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
-import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.dia.settings.ScSettingsDiaR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
-import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
+import io.suggest.sc.v.inx.WelcomeR
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.SearchR
+import io.suggest.sc.v.snack.ScSnacksR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic, ScThemes}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -39,13 +38,12 @@ class ScRootR (
                 headerR                 : HeaderR,
                 menuR                   : MenuR,
                 welcomeR                : WelcomeR,
-                indexSwitchAskR         : IndexSwitchAskR,
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
                 scSettingsDiaR          : ScSettingsDiaR,
+                scSnacksR               : ScSnacksR,
                 scThemes                : ScThemes,
                 commonReactCtx          : React.Context[MCommonReactCtx],
-                scErrorDiaR             : ScErrorDiaR,
               ) {
 
   type Props = ModelProxy[MScRoot]
@@ -68,33 +66,33 @@ class ScRootR (
       val menuSideBar = menuR.component( mrootProxy )(
         // Правая панель поиска:
         searchR.component( mrootProxy )(
-          // Основное тело выдачи:
-          <.div(
-            // Ссылаемся на стиль.
-            ScCssStatic.Root.root,
 
-            // Экран приветствия узла:
-            mrootProxy.wrap(_.index)( welcomeR.component.apply ),
+          // заголовок выдачи:
+          headerR.component( mrootProxy ),
 
-            // заголовок выдачи:
-            headerR.component( mrootProxy ),
+          {
+            // Основное тело выдачи:
+            val scContent = <.div(
+              // Ссылаемся на стиль.
+              ScCssStatic.Root.root,
 
-            // Рендер плитки карточек узла:
-            mrootProxy.wrap(_.grid)(gridR.apply)( implicitly, MGridS.MGridSFastEq ),
-          )
+              // Экран приветствия узла:
+              mrootProxy.wrap(_.index)( welcomeR.component.apply ),
+
+              // Рендер плитки карточек узла:
+              mrootProxy.wrap( _.grid )( gridR.component.apply )( implicitly, MGridS.MGridSFastEq ),
+            )
+
+            s.isRenderScC { isRenderSomeProxy =>
+              scContent(
+                // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
+                if (isRenderSomeProxy.value.value) ^.visibility.visible
+                else ^.visibility.hidden,
+              )
+            }
+          },
         )
       )
-
-      // Рендер провайдера тем MateriaUI, который заполняет react context.
-      val muiThemeProviderComp = s.colorsC { mcolorsProxy =>
-        MuiThemeProvider(
-          new MuiThemeProviderProps {
-            override val theme = scThemes.muiDefault( mcolorsProxy.value )
-          }
-        )(
-          menuSideBar
-        )
-      }
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = React.Fragment(
@@ -109,14 +107,16 @@ class ScRootR (
           mrootProxy.wrap(_ => ScCssStatic)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
         )),
 
-        // Рендер основного тела выдачи.
-        s.isRenderScC { isRenderSomeProxy =>
-          // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
-          ReactCommonUtil.maybeEl( isRenderSomeProxy.value.value )( muiThemeProviderComp )
+        // Рендер провайдера тем MateriaUI, который заполняет react context.
+        s.colorsC { mcolorsProxy =>
+          MuiThemeProvider(
+            new MuiThemeProviderProps {
+              override val theme = scThemes.muiDefault( mcolorsProxy.value )
+            }
+          )(
+            menuSideBar,
+          )
         },
-
-        // Всплывающая плашка для смены узла:
-        mrootProxy.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq ),
 
         // Диалог первого запуска.
         wzFirstR.component( mrootProxy ),
@@ -126,11 +126,11 @@ class ScRootR (
           dlAppDiaR.component( mrootProxy )
         },
 
-        // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
-        mrootProxy.wrap(_.dialogs.error)( scErrorDiaR.apply )(implicitly, OptFastEq.Plain),
-
         // Диалог настроек.
         scSettingsDiaR.component( mrootProxy ),
+
+        // snackbar
+        scSnacksR.component( mrootProxy ),
 
       )
 

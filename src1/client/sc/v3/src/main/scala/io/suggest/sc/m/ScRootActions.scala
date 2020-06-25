@@ -2,6 +2,7 @@ package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.routes
+import io.suggest.sc.m.dev.MOnLineInfo
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
@@ -186,7 +187,7 @@ case class SettingsDiaOpen(opened: Boolean) extends IScErrorAction
 sealed trait IScDaemonAction extends IScRootAction
 
 /** Уход приложения в фон, но без демон-процесса. */
-case class ScDaemonDozed(isActive: Boolean ) extends IScDaemonAction
+case class ScDaemonDozed( isActive: Boolean ) extends IScDaemonAction
 
 /** Активация или деактивация демон-процесса работы. */
 case class ScDaemonWorkProcess( isActive: Boolean ) extends IScDaemonAction
@@ -195,7 +196,17 @@ case class ScDaemonWorkProcess( isActive: Boolean ) extends IScDaemonAction
 case class ScDaemonFallSleepTimerSet( timerId: Option[Int] ) extends IScDaemonAction
 
 /** Срабатывание таймера пробуждения демона. */
-case class DaemonSleepAlarm(isActive: Boolean) extends IScDaemonAction
+case class ScDaemonSleepAlarm(isActive: Boolean) extends IScDaemonAction
 
-/** Активация или деактивация фонового поиска bluetooth-маячков. */
-case class DaemonBluetooth( activate: Boolean ) extends IScDaemonAction
+
+
+sealed trait IOnlineAction extends DAction
+
+/** (Пере)инициализация online-состояния. */
+case class OnlineInit(init: Boolean) extends IOnlineAction
+
+/** Инициализация или ручная проверка connectivity. */
+case object OnlineCheckConn extends IOnlineAction
+
+/** Результат [[OnlineCheckConn]]. */
+case class OnlineCheckConnRes(netInfo: MOnLineInfo ) extends IOnlineAction

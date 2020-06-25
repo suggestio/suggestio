@@ -39,4 +39,7 @@ object DomEvents
   def DOM_CONTENT_LOADED = "DOMContentLoaded"
   def READY_STATE_CHANGE = "readystatechange"
 
+  def ONLINE = "online"
+  def OFFLINE = "offline"
+
 }

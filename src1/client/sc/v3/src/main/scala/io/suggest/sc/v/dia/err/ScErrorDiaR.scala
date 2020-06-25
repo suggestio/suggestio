@@ -211,6 +211,4 @@ class ScErrorDiaR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component(propsOptProxy)
-
 }

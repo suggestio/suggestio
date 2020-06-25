@@ -15,6 +15,7 @@ import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
+import io.suggest.sc.v.snack.ScSnacksR
 import io.suggest.sc.v.styl.ScThemes
 import japgolly.scalajs.react.React
 
@@ -75,7 +76,6 @@ object Sc3Module {
 
   // index
   lazy val welcomeR = wire[WelcomeR]
-  lazy val indexSwitchAskR = wire[IndexSwitchAskR]
 
 
   // grid
@@ -103,8 +103,12 @@ object Sc3Module {
 
   // dia
   lazy val wzFirstR = wire[WzFirstR]
-  lazy val scErrorDiaR = wire[ScErrorDiaR]
   lazy val dlAppDiaR = wire[DlAppDiaR]
+
+  // snack
+  lazy val scErrorDiaR = wire[ScErrorDiaR]
+  lazy val indexSwitchAskR = wire[IndexSwitchAskR]
+  lazy val scSnacksR = wire[ScSnacksR]
 
   // dia.settings
   lazy val geoLocSettingR = wire[GeoLocSettingR]

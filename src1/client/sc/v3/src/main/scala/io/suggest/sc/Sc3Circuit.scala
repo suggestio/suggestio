@@ -25,7 +25,7 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.os.notify.api.cnl.CordovaLocalNotificationAh
 import io.suggest.routes.routes
 import io.suggest.sc.ads.MScNodeMatchInfo
-import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
+import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.dia.{ScErrorDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
@@ -245,6 +245,7 @@ class Sc3Circuit(
   private val devRW               = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
   private val scScreenRW          = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
   private val scGeoLocRW          = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
+  private val onLineRW            = mkLensZoomRW(devRW, MScDev.onLine)
 
   private val confRO              = mkLensZoomRO(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
   private val rcvrsMapUrlRO       = mkLensZoomRO(confRO, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
@@ -522,6 +523,12 @@ class Sc3Circuit(
     }
   }
 
+  /** Контроллер статуса интернет-подключения. */
+  private val onLineAh = new OnLineAh(
+    modelRW     = onLineRW,
+    dispatcher  = this,
+  )
+
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
@@ -568,6 +575,7 @@ class Sc3Circuit(
 
     // События уровня платформы.
     acc ::= platformAh
+    acc ::= onLineAh
 
     // Контроллер нотификаций.
     for (ah <- notifyAh)
@@ -799,6 +807,8 @@ class Sc3Circuit(
 
     }
 
+    // Запустить проверку статуса интернет-соединения
+    this.runEffectAction( OnlineInit(true) )
   }
 
 

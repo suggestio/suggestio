@@ -2,7 +2,7 @@ package io.suggest.sc.c.in
 
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
 import io.suggest.sjs.common.async.AsyncUtil._
-import io.suggest.sc.m.{DaemonSleepAlarm, ScDaemonDozed, ScDaemonFallSleepTimerSet, ScDaemonWorkProcess}
+import io.suggest.sc.m.{ScDaemonSleepAlarm, ScDaemonDozed, ScDaemonFallSleepTimerSet, ScDaemonWorkProcess}
 import io.suggest.sc.m.in.MScDaemon
 import diode.Implicits._
 import diode.data.Pot
@@ -62,7 +62,7 @@ class ScDaemonAh[M](
           options = Option.when( m.isActive ) {
             MDaemonSleepTimer(
               every       = ScDaemonAh.DAEMON_ALARM_EVERY,
-              onTime      = DaemonSleepAlarm( isActive = true ),
+              onTime      = ScDaemonSleepAlarm( isActive = true ),
               everyBoot   = true,
               stopOnExit  = true,
             )
@@ -80,7 +80,7 @@ class ScDaemonAh[M](
 
 
     // Срабатывание таймера запуска процесса демона.
-    case m: DaemonSleepAlarm =>
+    case m: ScDaemonSleepAlarm =>
       //logger.log( msg = m )
       val v0 = value
 
@@ -133,7 +133,7 @@ class ScDaemonAh[M](
         // На случай какой-либо задержки логики фонового сканирования, нужно гарантировать выключение демона через время.
         val fallSleepTimerFx = Effect.action {
           val timerId = DomQuick.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis.toInt ) { () =>
-            val a = if (USE_BG_MODE) DaemonSleepAlarm( isActive = false )
+            val a = if (USE_BG_MODE) ScDaemonSleepAlarm( isActive = false )
                     else ScDaemonWorkProcess( isActive = false )
             dispatcher( a )
           }
@@ -148,7 +148,7 @@ class ScDaemonAh[M](
         var fxsAcc = List.empty[Effect]
 
         if (v0.state.isPending || (v0.state contains MDaemonStates.Work))
-          fxsAcc ::= DaemonSleepAlarm( isActive = false ).toEffectPure
+          fxsAcc ::= ScDaemonSleepAlarm( isActive = false ).toEffectPure
 
         for (timerId <- v0.fallSleepTimer) {
           fxsAcc ::= Effect.action {
