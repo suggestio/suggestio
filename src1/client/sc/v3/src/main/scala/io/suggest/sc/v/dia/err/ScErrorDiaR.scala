@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBar, MuiAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiAnchorOrigin, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBar, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -10,6 +10,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.{CloseError, RetryError}
+import io.suggest.sc.v.snack.SnackComp
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
@@ -27,7 +28,9 @@ import scala.scalajs.js
   */
 class ScErrorDiaR(
                    crCtxProv     : React.Context[MCommonReactCtx],
-                 ) {
+                 )
+  extends SnackComp
+{
 
   type Props_t = MScErrorDia
   type Props = ModelProxy[Option[Props_t]]

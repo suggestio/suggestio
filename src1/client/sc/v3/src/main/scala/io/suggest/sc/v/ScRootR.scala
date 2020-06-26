@@ -97,15 +97,15 @@ class ScRootR (
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = React.Fragment(
 
-        // Рендер стилей перед снаружи и перед остальной выдачей.
-        // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
-        s.scCssArgsC { CssR.compProxied.apply },
-
         // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
         mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
           // css, который рендерится только один раз:
           mrootProxy.wrap(_ => ScCssStatic)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
         )),
+
+        // Рендер стилей перед снаружи и перед остальной выдачей.
+        // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
+        s.scCssArgsC { CssR.compProxied.apply },
 
         // Рендер провайдера тем MateriaUI, который заполняет react context.
         s.colorsC { mcolorsProxy =>

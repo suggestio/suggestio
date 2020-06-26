@@ -9,8 +9,11 @@ import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitch}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.inx.IndexSwitchAskR
 import io.suggest.spa.{DAction, OptFastEq}
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import enumeratum._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -27,8 +30,9 @@ final class ScSnacksR(
   type Props = ModelProxy[Props_t]
 
 
+  /** @param currSnackOrNullC Текущий маркер-класс для обозначения отображаемого snack'а, либо null. */
   case class State(
-                    isOpenedSomeC: ReactConnectProxy[Some[Boolean]],
+                    currSnackOrNullC      : ReactConnectProxy[SnackComp],
                   )
 
 
@@ -58,28 +62,33 @@ final class ScSnacksR(
 
 
     def render(p: Props, s: State): VdomElement = {
-      val children = List[VdomElement](
+      // MuiSnackBar отображает в отдельном слое ровно одну плашку.
 
-        // Всплывающая плашка для смены узла:
-        p.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq ),
+      // Всплывающая плашка для смены узла:
+      lazy val inxSwitch: VdomElement = p.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq )
 
-        // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
-        p.wrap(_.dialogs.error)( scErrorDiaR.component.apply )(implicitly, OptFastEq.Plain),
-
-      )
+      // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
+      lazy val scErr: VdomElement = p.wrap(_.dialogs.error)( scErrorDiaR.component.apply )(implicitly, OptFastEq.Plain)
 
       val _anchorOrigin = new MuiAnchorOrigin {
         override val vertical   = MuiAnchorOrigin.bottom
         override val horizontal = MuiAnchorOrigin.center
       }
-      s.isOpenedSomeC { isOpenedSomeProxy =>
+      s.currSnackOrNullC { currSnackOrNullProxy =>
+        val currSnackOrNull = currSnackOrNullProxy.value
+        val child = if (currSnackOrNull ===* indexSwitchAskR) {
+          inxSwitch
+        } else {
+          // TODO Надо хоть что-то рендерить?
+          scErr
+        }
         MuiSnackBar {
           new MuiSnackBarProps {
-            override val open         = isOpenedSomeProxy.value.value
+            override val open         = currSnackOrNull ne null
             override val anchorOrigin = _anchorOrigin
             override val onClose      = _onCloseJsCbF
           }
-        } ( children: _* )
+        } ( child )
       }
     }
 
@@ -91,11 +100,13 @@ final class ScSnacksR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        isOpenedSomeC = propsProxy.connect { p =>
-          val isOpen =
-            p.index.state.switch.ask.nonEmpty ||
-            p.dialogs.error.nonEmpty
-          OptionUtil.SomeBool( isOpen )
+        currSnackOrNullC = propsProxy.connect { p =>
+          if (p.index.state.switch.ask.nonEmpty)
+            indexSwitchAskR
+          else if (p.dialogs.error.nonEmpty)
+            scErrorDiaR
+          else
+            null
         },
 
       )
@@ -103,4 +114,12 @@ final class ScSnacksR(
     .renderBackend[Backend]
     .build
 
+}
+
+
+/** Marker-trait для классов, содержащий компонент snackbar-content.
+  * Это нужно, чтобы классы использовать в качестве идентификаторов, не плодя доп.сущностей. */
+trait SnackComp
+object SnackComp {
+  @inline implicit def univEq: UnivEq[SnackComp] = UnivEq.force
 }
