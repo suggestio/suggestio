@@ -185,7 +185,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
           _imgWhMixin( wh2, margin2 )
         }
 
-        style(
+        /** Явное имя класса, чтобы оно не дёргалось в зависимость от наличии/отсутствия wh */
+        style("wBgI")(
           addClassName( _SM_WELCOME_AD + "_bg-img" ),
           whMx
         )
@@ -199,7 +200,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
       /** Стили логотипа экрана приветствия. */
       val fgImg = {
-        // Подготнка логотипа приветствия под текущий экран: центровка.
+        // Подгонка логотипа приветствия под текущий экран: центровка.
         val whMx = args.wcFgWh.fold(StyleS.empty) { wh0 =>
           val wh2 = wh0 / 2
           val margin0 = wh2 / (-2)
@@ -207,7 +208,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
           _imgWhMixin( wh2, margin2 )
         }
 
-        style(
+        /** Явное имя класса, чтобы оно не дёргалось в зависимость от наличии/отсутствия wh */
+        style("wFgI")(
           addClassName( _SM_WELCOME_AD + "_fg-img" ),
           whMx
         )
