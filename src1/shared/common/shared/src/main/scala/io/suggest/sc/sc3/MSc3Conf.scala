@@ -27,6 +27,7 @@ object MSc3Conf {
     val DEBUG_FN                    = "d"
     val SERVER_GENERATED_AT_FN      = "g"
     val CLIENT_UPDATED_AT_FN        = "u"
+    val GEN_FN                      = "e"
   }
 
   /** Поддержка play-json.
@@ -43,7 +44,8 @@ object MSc3Conf {
         .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
       (__ \ F.RCVRS_MAP_URL_FN).format[MRcvrsMapUrlArgs] and
       (__ \ F.SERVER_GENERATED_AT_FN).format[Long] and
-      (__ \ F.CLIENT_UPDATED_AT_FN).formatNullable[Long]
+      (__ \ F.CLIENT_UPDATED_AT_FN).formatNullable[Long] and
+      (__ \ F.GEN_FN).formatNullable[Long]
     )(apply, unlift(unapply))
   }
 
@@ -61,6 +63,7 @@ object MSc3Conf {
   def debug = GenLens[MSc3Conf]( _.debug )
   def rcvrsMapUrl = GenLens[MSc3Conf](_.rcvrsMapUrl)
   def clientUpdatedAt = GenLens[MSc3Conf](_.clientUpdatedAt)
+  def gen = GenLens[MSc3Conf]( _.gen )
 
 }
 
@@ -80,4 +83,5 @@ case class MSc3Conf(
                      rcvrsMapUrl        : MRcvrsMapUrlArgs,
                      serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
                      clientUpdatedAt    : Option[Long]      = None,
+                     gen                : Option[Long]      = None,
                    )

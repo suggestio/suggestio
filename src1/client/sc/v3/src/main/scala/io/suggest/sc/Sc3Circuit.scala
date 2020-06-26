@@ -42,11 +42,11 @@ import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.{MScDaemon, MScInternals}
-import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
+import io.suggest.sc.m.inx.{MScIndex, MScIndexState, MScSwitchCtx}
 import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
-import io.suggest.sc.sc3.MSc3Conf
+import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.u.api.IScAppApi
 import io.suggest.sc.v.search.SearchCss
@@ -113,6 +113,7 @@ class Sc3Circuit(
       .getOrElse {
         val emsg = ErrorMsgs.GRID_CONFIGURATION_INVALID
         logger.error( emsg )
+        // TODO Отработать отсутствие конфига в html-странице.
         throw new NoSuchElementException( emsg )
       }
 
@@ -125,6 +126,22 @@ class Sc3Circuit(
     )
 
     val scIndexResp = Pot.empty[MSc3IndexResp]
+
+    // random seed изначально отсутствует в конфиге.
+    val (conf2, gen2) = scInit.conf.gen.fold {
+      val generation2 = System.currentTimeMillis()
+      val scInit2 = MSc3Init.conf.modify { conf0 =>
+        val conf1 = MSc3Conf.gen
+          .set( Some(generation2) )(conf0)
+        Sc3ConfUtil.prepareSave( conf1 )
+      }(scInit)
+
+      Sc3ConfUtil.saveInitIfPossible( scInit2 )
+
+      scInit2.conf -> generation2
+    } { gen =>
+      scInit.conf -> gen
+    }
 
     MScRoot(
       dev = MScDev(
@@ -148,6 +165,9 @@ class Sc3Circuit(
         scCss = ScCss(
           MScCssArgs.from(scIndexResp, screenInfo)
         ),
+        state = MScIndexState(
+          generation = gen2,
+        )
       ),
       grid = {
         val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen.wh)
@@ -164,7 +184,7 @@ class Sc3Circuit(
         )
       },
       internals = MScInternals(
-        conf = scInit.conf
+        conf = conf2,
       ),
     )
   }
@@ -375,7 +395,6 @@ class Sc3Circuit(
     dispatcher  = this,
     onNearbyChange = Some { (nearby0, nearby2) =>
       val daemonS = daemonRW.value
-      //println("sc3.bt.isDaemonNow? = " + daemonS.state )
 
       if (daemonS.state contains MDaemonStates.Work) {
         // Если что-то изменилось, то надо запустить обновление плитки.
@@ -525,8 +544,10 @@ class Sc3Circuit(
 
   /** Контроллер статуса интернет-подключения. */
   private val onLineAh = new OnLineAh(
-    modelRW     = onLineRW,
-    dispatcher  = this,
+    modelRW       = onLineRW,
+    dispatcher    = this,
+    retryActionRO = scErrorDiaRW.zoom( _.flatMap(_.retryAction) ),
+    platformRO    = platformRW,
   )
 
 
@@ -670,6 +691,8 @@ class Sc3Circuit(
       )
       this.runEffectAction( daemonizerInitA )
     }
+
+    this.runEffectAction( OnlineInit(true) )
   }
 
 
@@ -805,10 +828,11 @@ class Sc3Circuit(
         this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
       }
 
+      // В фоне не приходят события уведомления online/offline в cordova. TODO В браузере тоже надо пере-проверять?
+      if (isUsingNow)
+        this.runEffectAction( OnlineCheckConn )
     }
 
-    // Запустить проверку статуса интернет-соединения
-    this.runEffectAction( OnlineInit(true) )
   }
 
 

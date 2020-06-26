@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiAnchorOrigin, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBar, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -36,7 +36,6 @@ class ScErrorDiaR(
   type Props = ModelProxy[Option[Props_t]]
 
   case class State(
-                    isVisibleSomeC      : ReactConnectProxy[Some[Boolean]],
                     messageCodeOptC     : ReactConnectProxy[Option[String]],
                     hintOptC            : ReactConnectProxy[Option[String]],
                     retryPendingOptC    : ReactConnectProxy[Option[Boolean]],
@@ -45,15 +44,16 @@ class ScErrorDiaR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onRetryClick(e: ReactEvent): Callback =
+    val onClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, RetryError)
+    }
 
-    private def _onCloseClick(e: ReactEvent): Callback =
+    val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, CloseError)
+    }
 
 
     def render(s: State): VdomElement = {
-      val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb( _onCloseClick )
       val C = ScCssStatic.Notifies
 
       val _message = <.div(
@@ -137,7 +137,6 @@ class ScErrorDiaR(
       // Экшены snack-контента.
       val _retryBtn = {
         // Кнопка "Повторить", когда возможно.
-        val onClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onRetryClick )
         val retryIcon = Mui.SvgIcons.Cached()()
         val retryText = crCtxProv.message( MsgCodes.`Try.again` )
 
@@ -162,28 +161,11 @@ class ScErrorDiaR(
         )
       }
 
-      val snackContent = MuiSnackBarContent {
+      MuiSnackBarContent {
         new MuiSnackBarContentProps {
           override val action  = _message.rawNode
           override val message = _retryBtn.rawNode
         }
-      }
-
-      // Рендерить снизу посередине.
-      val _anchorOrigin = new MuiAnchorOrigin {
-        override val vertical   = MuiAnchorOrigin.bottom
-        override val horizontal = MuiAnchorOrigin.center
-      }
-      s.isVisibleSomeC { isVisibleSomeProxy =>
-        MuiSnackBar {
-          new MuiSnackBarProps {
-            override val open         = isVisibleSomeProxy.value.value
-            override val anchorOrigin = _anchorOrigin
-            override val onClose      = _onCloseCbF
-          }
-        } (
-          snackContent
-        )
       }
     }
 
@@ -194,10 +176,6 @@ class ScErrorDiaR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-
-        isVisibleSomeC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.nonEmpty )
-        }( FastEq.AnyRefEq ),
 
         messageCodeOptC = propsProxy.connect( _.map(_.messageCode) )( OptFastEq.Plain ),
 

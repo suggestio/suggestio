@@ -15,8 +15,6 @@ import scalaz.NonEmptyList
   */
 object MScIndexState {
 
-  def empty = apply()
-
   /** Поддержка FastEq для классов [[MScIndexState]]. */
   implicit object MScIndexStateFastEq extends FastEq[MScIndexState] {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
@@ -41,7 +39,7 @@ object MScIndexState {
   * @param switch Состояния на-экранного вопроса на тему переключения в новый узел.
   */
 case class MScIndexState(
-                          generation      : Long                      = System.currentTimeMillis(),
+                          generation      : Long,
                           switch          : MInxSwitch                = MInxSwitch.empty,
                           views           : NonEmptyList[MIndexView]  = NonEmptyList( MIndexView.empty ),
                         ) {

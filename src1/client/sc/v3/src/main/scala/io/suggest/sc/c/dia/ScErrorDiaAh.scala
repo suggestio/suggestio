@@ -2,7 +2,7 @@ package io.suggest.sc.c.dia
 
 import diode.{ActionHandler, ActionResult, Circuit, Effect, ModelRW}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{CheckRetryError, CloseError, MScRoot, RetryError, SetErrorState}
+import io.suggest.sc.m.{CheckRetryError, CloseError, MScRoot, OnlineCheckConn, RetryError, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
@@ -47,16 +47,23 @@ class ScErrorDiaAh(
     case m: SetErrorState =>
       val v0 = value
 
+      // Проверить связь с инетом
+      val checkOnlineFx = OnlineCheckConn.toEffectPure
+
       if (v0.fold(true)(_.potRO.exists(_.value.isPending))) {
         // Если перезапись, то надо отписаться от любой предыдущей подписки на событие:
-        val unSubFxOpt = v0.flatMap( ScErrorDiaAh._maybeUnSubscribeFx )
-        val v2 = Some(m.scErr)
+        var fx = checkOnlineFx
+
         // Надо подписаться на события изменения связанного pot'а, чтобы после error-диалог после retry мог сам скрыться с экрана.
-        ah.updatedMaybeEffect( v2, unSubFxOpt )
+        for (v <- v0; unSubsFx <- ScErrorDiaAh._maybeUnSubscribeFx(v))
+          fx += unSubsFx
+
+        val v2 = Some(m.scErr)
+        updated( v2, fx )
 
       } else {
         // Две+ статические ошибки не выводим, просто оставляем всё как есть.
-        noChange
+        effectOnly( checkOnlineFx )
       }
 
 
@@ -70,7 +77,7 @@ class ScErrorDiaAh(
         if !errDia0.potIsPending
         retryAction <- errDia0.retryAction
       } yield {
-        val retryFx = retryAction.toEffectPure
+        val retryFx = retryAction.toEffectPure + OnlineCheckConn.toEffectPure
 
         errDia0.potRO.fold {
           // Без pot для слежения - сразу скрыть диалог.
@@ -114,8 +121,11 @@ class ScErrorDiaAh(
     // Закрыть диалог ошибки.
     case CloseError =>
       value.fold(noChange) { errDia0 =>
-        val fxOpt = ScErrorDiaAh._maybeUnSubscribeFx( errDia0 )
-        ah.updatedMaybeEffect( None, fxOpt )
+        var fx = OnlineCheckConn.toEffectPure
+        for (subsFx <- ScErrorDiaAh._maybeUnSubscribeFx( errDia0 ))
+          fx += subsFx
+
+        updated( None, fx )
       }
 
   }

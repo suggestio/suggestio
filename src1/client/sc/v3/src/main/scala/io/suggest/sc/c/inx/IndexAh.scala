@@ -462,7 +462,7 @@ class IndexAh[M](
             )
             Success(r2)
           }
-      }
+      } + OnlineCheckConn.toEffectPure
 
       var valueModF = MScIndex.resp.modify(_.pending(ts))
 

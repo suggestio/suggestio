@@ -1,16 +1,17 @@
 package io.suggest.sc.c.dev
 
-import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
+import io.suggest.dev.MPlatformS
 import io.suggest.event.DomEvents
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{OnlineInit, OnlineCheckConn, OnlineCheckConnRes}
+import io.suggest.sc.m.{OnlineCheckConn, OnlineCheckConnRes, OnlineInit, RetryError}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.m.dev.{MOnLineInfo, MOnLineS}
 import io.suggest.sjs.dom2.NetworkInformation
 import org.scalajs.dom
 import org.scalajs.dom.Event
-import io.suggest.spa.DoNothing
+import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.scalajs.js
@@ -26,11 +27,13 @@ import scala.util.Try
   */
 class OnLineAh[M](
                    modelRW        : ModelRW[M, MOnLineS],
+                   retryActionRO  : ModelRO[Option[DAction]],
+                   platformRO     : ModelRO[MPlatformS],
                    dispatcher     : Dispatcher,
                  )
   extends ActionHandler(modelRW)
   with Log
-{
+{ ah =>
 
   private lazy val _listenerJsF: js.Function1[Event, Unit] = { _: dom.Event =>
     dispatcher.dispatch( OnlineCheckConn )
@@ -43,9 +46,15 @@ class OnLineAh[M](
   /** Эффект подписки или отписки на online/offline события. */
   private def _subscribeFx( subscribe: Boolean ): Effect = {
     Effect.action {
+      // cordova по докам требует слушать document, а в MDN - слушаем window.
+      val eventTarget =
+        if (platformRO.value.isCordova) dom.document
+        else dom.window
+
+      // useCapture = false, т.к. cordova network-information явно указывают значение этого параметра.
       val f: (String, _listenerJsF.type) => Unit = {
-        if (subscribe) dom.window.addEventListener[Event](_, _)
-        else dom.window.removeEventListener[Event](_, _)
+        if (subscribe) eventTarget.addEventListener[Event](_, _, false)
+        else eventTarget.removeEventListener[Event](_, _, false)
       }
 
       for (eventType <- _listenEvents)
@@ -121,7 +130,13 @@ class OnLineAh[M](
       } else {
         val v2 = MOnLineS.state
           .modify( _.ready(m.netInfo) )(v0)
-        updated(v2)
+
+        // Запустить зафейленные экшены, если есть.
+        val fxOpt = Option.when( v2.isOnline && retryActionRO.value.nonEmpty) {
+          RetryError.toEffectPure
+        }
+
+        ah.updatedMaybeEffect( v2, fxOpt )
       }
 
 

@@ -15,7 +15,7 @@ import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
-import io.suggest.sc.v.snack.ScSnacksR
+import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
 import io.suggest.sc.v.styl.ScThemes
 import japgolly.scalajs.react.React
 
@@ -109,6 +109,7 @@ object Sc3Module {
   lazy val scErrorDiaR = wire[ScErrorDiaR]
   lazy val indexSwitchAskR = wire[IndexSwitchAskR]
   lazy val scSnacksR = wire[ScSnacksR]
+  lazy val offlineSnackR = wire[OfflineSnackR]
 
   // dia.settings
   lazy val geoLocSettingR = wire[GeoLocSettingR]

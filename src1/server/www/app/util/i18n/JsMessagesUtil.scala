@@ -301,6 +301,7 @@ class JsMessagesUtil @Inject() (
       MC.`Daemon.toast.title` ::
       MC.`Daemon.toast.descr` ::
       MC.`Unsupported.browser.or.fatal.failure` ::
+      MC.`Not.connected` :: MC.`Retry` ::
       Nil
   }
 

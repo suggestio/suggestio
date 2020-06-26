@@ -9,6 +9,7 @@ import io.suggest.log.Log
 import io.suggest.spa.StateInp
 import play.api.libs.json.Json
 import japgolly.univeq._
+import monocle.PLens
 
 import scala.util.Try
 
@@ -26,6 +27,21 @@ object Sc3ConfUtil extends Log {
   /** Некоторые шаги поведения выдачи определяются режимом компиляции, но это можно переопределять здесь. */
   @inline def isDevMode: Boolean =
     !FORCE_PRODUCTION_MODE && scalajs.LinkingInfo.developmentMode
+
+
+  private def _prepareSave[T](t: T, lens: PLens[T, T, Option[Long], Option[Long]]): T = {
+    val ts2 = MSc3Conf.timestampSec()
+
+    if (lens.get(t) contains ts2) {
+      t
+    } else {
+      (lens set Some(ts2))(t)
+    }
+  }
+  def prepareSave( init: MSc3Init ): MSc3Init =
+    _prepareSave( init, MSc3Init.conf composeLens MSc3Conf.clientUpdatedAt )
+  def prepareSave( conf: MSc3Conf ): MSc3Conf =
+    _prepareSave( conf, MSc3Conf.clientUpdatedAt )
 
 
   /** Сохранить конфигурацию выдачи в постоянное хранилище.

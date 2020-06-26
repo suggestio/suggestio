@@ -2,7 +2,6 @@ package io.suggest.sc.v.snack
 
 import com.materialui.{MuiAnchorOrigin, MuiSnackBar, MuiSnackBarProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{CloseError, MScRoot}
 import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitch}
@@ -12,7 +11,6 @@ import io.suggest.spa.{DAction, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import enumeratum._
 import japgolly.univeq.UnivEq
 
 /**
@@ -24,6 +22,7 @@ import japgolly.univeq.UnivEq
 final class ScSnacksR(
                        indexSwitchAskR         : IndexSwitchAskR,
                        scErrorDiaR             : ScErrorDiaR,
+                       offlineSnackR           : OfflineSnackR,
                      ) {
 
   type Props_t = MScRoot
@@ -67,6 +66,8 @@ final class ScSnacksR(
       // Всплывающая плашка для смены узла:
       lazy val inxSwitch: VdomElement = p.wrap( _.index.state.switch )( indexSwitchAskR.component.apply )( implicitly, MInxSwitch.MInxSwitchFeq )
 
+      lazy val offline: VdomElement = p.wrap( _.dev.onLine )( offlineSnackR.component.apply )
+
       // Плашка ошибки выдачи. Используем AnyRefEq (OptFeq.Plain) для ускорения: ошибки редки в общем потоке.
       lazy val scErr: VdomElement = p.wrap(_.dialogs.error)( scErrorDiaR.component.apply )(implicitly, OptFastEq.Plain)
 
@@ -76,12 +77,15 @@ final class ScSnacksR(
       }
       s.currSnackOrNullC { currSnackOrNullProxy =>
         val currSnackOrNull = currSnackOrNullProxy.value
-        val child = if (currSnackOrNull ===* indexSwitchAskR) {
+        val child = if (currSnackOrNull ===* offlineSnackR) {
+          offline
+        } else if (currSnackOrNull ===* indexSwitchAskR) {
           inxSwitch
         } else {
-          // TODO Надо хоть что-то рендерить?
+          // TODO Надо хоть что-то рендерить? Может как-то обойтись без ненужного?
           scErr
         }
+
         MuiSnackBar {
           new MuiSnackBarProps {
             override val open         = currSnackOrNull ne null
@@ -101,9 +105,11 @@ final class ScSnacksR(
       State(
 
         currSnackOrNullC = propsProxy.connect { p =>
-          if (p.index.state.switch.ask.nonEmpty)
+          if (!p.dev.onLine.isOnline)
+            offlineSnackR
+          else if (p.index.state.switch.ask.nonEmpty)
             indexSwitchAskR
-          else if (p.dialogs.error.nonEmpty)
+          else  if (p.dialogs.error.nonEmpty)
             scErrorDiaR
           else
             null

@@ -1138,3 +1138,5 @@ Daemon.toast.title=Фоновый мониторинг
 Daemon.toast.descr=Обнаружение новых предложений поблизости.
 Unsupported.browser.or.fatal.failure=Неподдерживаемый браузер или фатальная ошибка системы.
 
+Not.connected=Нет соединения.
+Retry=Повторить

@@ -1,8 +1,7 @@
 package io.suggest.sc.v.inx
 
-import com.materialui.{Mui, MuiAnchorOrigin, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
+import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSvgIconProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -36,7 +35,6 @@ class IndexSwitchAskR(
   type Props = ModelProxy[Props_t]
 
   case class State(
-                    isOpenedSomeC             : ReactConnectProxy[Some[Boolean]],
                     nodesFoundPropsC          : ReactConnectProxy[Seq[MNodesFoundRowProps]],
                     searchCssOptC             : ReactConnectProxy[Option[SearchCss]],
                     nodesFoundSOptC           : ReactConnectProxy[Option[MNodesFoundS]],
@@ -55,7 +53,7 @@ class IndexSwitchAskR(
       val notsCss = ScCssStatic.Notifies
 
       // Содержимое плашки - приглашение на смену узла.
-      val snackBarContent = MuiSnackBarContent {
+      MuiSnackBarContent {
         val btnIconProps = new MuiSvgIconProps {
           override val className = notsCss.smallBtnSvgIcon.htmlClass
         }
@@ -120,21 +118,6 @@ class IndexSwitchAskR(
           override val classes = cssClasses
         }
       }
-
-      s.isOpenedSomeC { isOpenedSomeProxy =>
-        MuiSnackBar {
-          val _anchorOrigin = new MuiAnchorOrigin {
-            override val vertical   = MuiAnchorOrigin.bottom
-            override val horizontal = MuiAnchorOrigin.center
-          }
-          new MuiSnackBarProps {
-            override val open         = isOpenedSomeProxy.value.value
-            override val anchorOrigin = _anchorOrigin
-            override val onClose      = _onCloseJsCbF
-          }
-        } ( snackBarContent )
-      }
-
     }
 
   }
@@ -144,10 +127,6 @@ class IndexSwitchAskR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-
-        isOpenedSomeC = propsProxy.connect { propsOpt =>
-          OptionUtil.SomeBool( propsOpt.ask.nonEmpty )
-        },
 
         nodesFoundPropsC = propsProxy.connect( _.ask.fold[Seq[MNodesFoundRowProps]](Nil)(_.nodesFoundProps) ),
 

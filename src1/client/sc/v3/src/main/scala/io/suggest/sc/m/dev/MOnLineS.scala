@@ -27,6 +27,16 @@ object MOnLineS {
 
   def state = GenLens[MOnLineS]( _.state )
 
+
+  implicit final class MOnlineOpsExt( private val onLine: MOnLineS ) extends AnyVal {
+
+    def isOnline: Boolean = {
+      onLine.state.exists(_.hasLink) ||
+      onLine.state.isEmpty
+    }
+
+  }
+
 }
 
 

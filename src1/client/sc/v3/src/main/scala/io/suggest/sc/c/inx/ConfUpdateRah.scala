@@ -48,8 +48,7 @@ class ConfUpdateRah
 
     } else {
       // Конфиг изменился. Залить новый конфиг в состояние, запустить обновление и сохранение конфига, если необходимо.
-      conf2 = MSc3Conf.clientUpdatedAt
-        .set( Some(MSc3Conf.timestampSec()) )(conf2)
+      conf2 = Sc3ConfUtil.prepareSave( conf2 )
 
       // Заливка данных в состояние:
       val v2 = MScRoot.internals

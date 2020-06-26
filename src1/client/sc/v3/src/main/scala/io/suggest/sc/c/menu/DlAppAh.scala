@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.app.{MScAppGetQs, MScAppGetResp}
-import io.suggest.sc.m.{MScRoot, ResetUrlRoute, SetErrorState}
+import io.suggest.sc.m.{MScRoot, OnlineCheckConn, ResetUrlRoute, SetErrorState}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScIndexState
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -207,7 +207,7 @@ class DlAppAh(
           val r = DlInfoResp( timeStampMs, tryResp )
           Success(r)
         }
-    }
+    } + OnlineCheckConn.toEffectPure
 
     val updF = MDlAppDia.getReq.set {
       Pot.empty[MScAppGetResp].pending(timeStampMs)

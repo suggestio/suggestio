@@ -34,8 +34,8 @@ object MErrorPopupS {
     }
   }
 
-  val messages  = GenLens[MErrorPopupS](_.messages)
-  val exception = GenLens[MErrorPopupS](_.exception)
+  def messages  = GenLens[MErrorPopupS](_.messages)
+  def exception = GenLens[MErrorPopupS](_.exception)
 
 }
 

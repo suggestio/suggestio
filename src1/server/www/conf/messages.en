@@ -1130,3 +1130,6 @@ Daemon.toast.title=Monitoring in background
 Daemon.toast.descr=Detection new offers nearby.
 Unsupported.browser.or.fatal.failure=Unsupported browser or fatal failure occured.
 
+Not.connected=Not connected.
+Retry=Retry
+

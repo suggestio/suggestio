@@ -12,7 +12,7 @@ import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx.{MScIndex, MScSideBars, SideBarOpenClose}
-import io.suggest.sc.m.{HandleScApiResp, MScRoot}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot, OnlineCheckConn}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.MScQs
 import io.suggest.sc.u.ScQsUtil
@@ -144,7 +144,7 @@ class GeoTabAh[M](
               )
               Success( action )
             }
-        }
+        } + OnlineCheckConn.toEffectPure
 
         val found2 = v0.found.copy(
           req = req2,

@@ -471,4 +471,7 @@ object MsgCodes {
 
   val `Unsupported.browser.or.fatal.failure` = "Unsupported.browser.or.fatal.failure"
 
+  val `Not.connected` = "Not.connected"
+  val `Retry` = "Retry"
+
 }
