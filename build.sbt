@@ -604,6 +604,11 @@ lazy val reactQrCodeSjs = {
     .dependsOn( commonReactSjs )
 }
 
+lazy val resumableSjs = {
+  val name = "scalajs-resumablejs"
+  Project(id = name, base = file(DIR0 + "client/scalajs/resumablejs"))
+    .dependsOn(  )
+}
 
 /** веб-интерфейс suggest.io v2. */
 lazy val www = project
