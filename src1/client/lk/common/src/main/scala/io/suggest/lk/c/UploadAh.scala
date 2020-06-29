@@ -1,12 +1,16 @@
 package io.suggest.lk.c
 
+import java.util.regex.Pattern
+
 import com.github.dominictobias.react.image.crop.PercentCrop
+import com.resumablejs.{Resumable, ResumableChunk, ResumableOptions}
 import diode._
 import diode.data.Pot
 import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.qs.QsConstants
 import io.suggest.crypto.asm.HashWwTask
-import io.suggest.crypto.hash.HashesHex
+import io.suggest.crypto.hash.{HashesHex, MHashes}
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.form.MFormResourceKey
 import io.suggest.i18n.{MMessage, MsgCodes}
@@ -19,23 +23,28 @@ import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredica
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlags}
 import io.suggest.pick.{ContentTypeCheck, MimeConst}
-import io.suggest.routes.PlayRoute
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.spa.DoNothing
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.up.{IUploadApi, MFileUploadS, UploadConstants}
+import io.suggest.up.{IUploadApi, MFileUploadS, MUploadChunkQs, MUploadChunkSizes, UploadConstants}
 import io.suggest.ws.MWsMsgTypes
 import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.text.UrlUtilJs
+import io.suggest.url.MHostUrl
 import io.suggest.ww._
+import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.univeq._
 import monocle.Traversal
 import org.scalajs.dom.raw.URL
 import scalaz.std.option._
 
+import scala.collection.immutable.HashMap
 import scala.concurrent.Future
-import scala.util.Success
+import scala.scalajs.js
+import scala.util.{Success, Try}
 
 /**
   * Suggest.io
@@ -87,7 +96,7 @@ final class UploadAh[V, M](
             updated( v2, fx )
           }
 
-      } { firstFile =>
+      } { _ /*firstFile*/ =>
         // Выставлен новый файл. Надо записать его в состояние.
         val (v9, fxOpt9) = m.files
           .iterator
@@ -156,10 +165,10 @@ final class UploadAh[V, M](
 
                     // Прервать upload файла на сервер, есть возможно.
                     for {
-                      upXhrOld    <- fileJsOld.upload.reqHolder
+                      upReqHolderOld    <- fileJsOld.upload.reqHolder
                     } {
                       try {
-                        upXhrOld.abort()
+                        upReqHolderOld.abort()
                       } catch {
                         case ex: Throwable =>
                           logger.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
@@ -203,7 +212,7 @@ final class UploadAh[V, M](
 
                 // Запустить хеширование файла в фоне:
                 val hashFx = FileHashStart(edgeUid2, blobUrlNew).toEffectPure
-                val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
+                val edges2 = v0.edges + (edgeUid2 -> dataEdge2)
                 (dataEdge2, edges2, Some(hashFx + blobPurgeFx), edgeUid2)
               }
 
@@ -411,7 +420,23 @@ final class UploadAh[V, M](
                 } { fileJs =>
                   // Есть ссылка для заливки файла. Залить.
                   val uploadStartFx = Effect.action {
+                    // TODO Поддержка resumable.js
+                    /*UploadAh._tryResumableJs( firstUpUrl ).fold(
+                      {ex =>
+                        logger.warn( ErrorMsgs.CHUNKED_UPLOAD_PREPARE_FAIL, ex, firstUpUrl )
+                        uploadApi.doFileUpload(firstUpUrl, fileJs, ctxIdOptRO.value)
+                      },
+                      {resumable =>
+                        // TODO блобы используются из-за quill.
+                        resumable.addFile( fileJs.blob.asInstanceOf[dom.File] )
+                        // TODO Подписаться на uploadFinished/error - Future
+                        // TODO По окончанию - запустить doFileUpload() без fileJs.
+                        resumable.upload()
+                      }
+                    )*/
+
                     UploadReqStarted(
+                      // TODO Нужно respHolder сделать опциональным или по-сильнее абстрагировать, для поддержки resumable.js
                       respHolder  = uploadApi.doFileUpload(firstUpUrl, fileJs, ctxIdOptRO.value),
                       src         = m.src,
                       hostUrl     = firstUpUrl,
@@ -916,6 +941,127 @@ object UploadAh {
         Some( fileSrv2 )
       }( jdEdge0 )
     }
+  }
+
+
+  private def _url2qsKvs( url: String ): js.Dictionary[js.Any] = {
+    // для вызова роуты надо словари от hostInfo.relUrl и arr в нормальном формате.
+    val namespacedKeyPrefixRE = ("^.*" + Pattern.quote(QsConstants.KEY_PARTS_DELIM_STR)).r
+
+    js.Dictionary[js.Any](
+      // Взять только qs без "?" в начале:
+      UrlUtilJs.qsKvsParse(
+        url
+          .replaceFirst("^[^?]+?", "")
+          // токенизировать
+          .split('&')
+      )
+        .map { case (k, v) =>
+          val k2 = namespacedKeyPrefixRE.replaceFirstIn( k, "" )
+          val v2 = v: js.Any
+          k2 -> v2
+        }
+        .to(Seq): _*
+    )
+  }
+
+  /** Собрать инстанс Resumable для UploadAh. */
+  private def _tryResumableJs(uploadHostUrl: MHostUrl): Try[Resumable] = {
+    // Узнать, resumable.js в состоянии работать или нет?
+    Try {
+      lazy val upTgQs = _url2qsKvs( uploadHostUrl.relUrl )
+
+      val _uploadHttpMethod = routes.controllers.Upload
+        .chunk( js.Dictionary.empty, js.Dictionary.empty )
+        .method
+
+      val chunkHashAlgo = MHashes.Sha1
+      var chunkHashes = HashMap.empty[Int, String]
+      val F = MUploadChunkQs.Fields
+
+      def _targetChunkUrl(chunkQsKvs: js.Array[String], isTest: Boolean): String = {
+        val chunkQsKvs2 = UrlUtilJs
+          .qsKvsParse( chunkQsKvs.iterator )
+          .to( List )
+
+        val chunkQs = js.Dictionary[js.Any](
+          chunkQsKvs2
+            .map { case (k,v) =>
+              (k, v: js.Any)
+            }
+            .++ {
+              // Добавить хэш-сумму в qs.
+              chunkQsKvs2
+                .collectFirst {
+                  case (k, v) if k ==* F.CHUNK_NUMBER =>
+                    val chunkNumber = v.toInt
+                    chunkHashes.get( chunkNumber )
+                }
+                .flatten
+                .map { chunkHashValue =>
+                  val hhPlayJson = HashesHex.MHASHES_HEX_FORMAT_TRASPORT.writes(
+                    (Map.empty: HashesHex) + (chunkHashAlgo -> chunkHashValue)
+                  )
+                  F.HASHES_HEX -> PlayJsonSjsUtil.toNativeJsonObj( hhPlayJson )
+                }
+            }
+            // Объеденить в коллекцию.
+            .to(Seq): _*
+        )
+        val upCtl = routes.controllers.Upload
+        val mkRouteF = if (isTest) upCtl.hasChunk _
+                       else upCtl.chunk _
+        mkRouteF(upTgQs, chunkQs)
+          .absoluteURL( true )
+      }
+      val _targetUrlF: js.Function1[js.Array[String], String] = _targetChunkUrl(_: js.Array[String], isTest = false)
+      val _testTargetUrlF: js.Function1[js.Array[String], String] = _targetChunkUrl(_: js.Array[String], isTest = true)
+
+      def __preprocessChunk( chunk: ResumableChunk ): Unit = {
+          val chunkBlob = chunk.fileObj.file.slice( chunk.startByte, chunk.endByte )
+
+          // blocking: выполнить хэширование одной части: TODO Opt Нужна оптимизация WebWorkers.
+          HashWwTask( chunkHashAlgo, chunkBlob )
+            .run()
+            .andThen { case Success(chunkHashValue) =>
+              chunkHashes += (chunk.chunkNumber -> chunkHashValue)
+            }
+            .andThen { case _ =>
+              chunkBlob.close()
+            }
+            .andThen { case _ =>
+              chunk.preprocessFinished()
+            }
+      }
+
+      val _chunkSizeB = MUploadChunkSizes.default.value
+
+      new Resumable(
+        new ResumableOptions {
+          override val target = js.defined( _targetUrlF )
+          override val testTarget = js.defined( _testTargetUrlF )
+          override val chunkSize = _chunkSizeB
+          override val simultaneousUploads = 2
+
+          override val chunkNumberParameterName = F.CHUNK_NUMBER
+          override val totalChunksParameterName = F.TOTAL_CHUNKS
+          override val chunkSizeParameterName = F.CHUNK_SIZE
+          // TODO currentChunkSizeParameterName
+          override val totalSizeParameterName = F.TOTAL_SIZE
+          override val identifierParameterName = F.IDENTIFIER
+          override val fileNameParameterName = F.FILENAME
+          override val relativePathParameterName = F.RELATIVE_PATH
+
+          override val method = ResumableOptions.Methods.OCTET
+          override val testChunks = true
+          override val uploadMethod = _uploadHttpMethod
+
+          // preprocessChunk(): вычислять хэш-сумму слайс-блоба, закидывать в общую мапу, которая будет использована для сборки ссылки.
+          override val preprocess = js.defined( __preprocessChunk )
+        }
+      )
+    }
+      .filter(_.support)
   }
 
 }

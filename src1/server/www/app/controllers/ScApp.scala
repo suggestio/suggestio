@@ -177,7 +177,7 @@ final class ScApp @Inject()(
 
       val (fileEdge, fileEdgeMedia) = (for {
         fileEdge <- fileNode.edges
-          .withPredicateIter( MPredicates.File )
+          .withPredicateIter( MPredicates.Blob.File )
         edgeMedia <- fileEdge.media.iterator
       } yield {
         (fileEdge, edgeMedia)

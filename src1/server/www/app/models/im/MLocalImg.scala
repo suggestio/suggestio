@@ -16,7 +16,6 @@ import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import org.im4java.core.Info
 import util.img.ImgFileUtil
-import util.up.FileUtil
 
 import scala.concurrent.duration._
 import scala.concurrent.blocking
@@ -41,7 +40,6 @@ import scala.util.Try
 class MLocalImgs @Inject() (
                              imgFileUtil                 : ImgFileUtil,
                              asyncUtil                   : AsyncUtil,
-                             fileUtil                    : FileUtil,
                              override val mCommonDi      : ICommonDi
                            )
   extends MAnyImgsT[MLocalImg]

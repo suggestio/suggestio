@@ -172,8 +172,11 @@ lazy val commonSlickDriver = {
 lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/common"))
-    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
-               reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs)
+    .dependsOn(
+      commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
+      reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs,
+      resumableSjs
+    )
 }
 
 /** Форма логина sjs. */

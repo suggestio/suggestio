@@ -1,5 +1,6 @@
 package io.suggest.text
 
+import scala.scalajs.js
 import scala.scalajs.js.URIUtils
 
 /**
@@ -10,7 +11,7 @@ import scala.scalajs.js.URIUtils
   */
 object UrlUtilJs {
 
-  /** Сериализация списк ключ-значение в строку для URL.
+  /** Сериализация списка ключ-значение в строку для URL.
     *
     * @param acc Выхлоп toUrlHashAcc().
     * @return Строка, пригодная для записи в URL.
@@ -26,6 +27,23 @@ object UrlUtilJs {
           .mkString("=")
       }
       .mkString("&")
+  }
+
+
+  def qsKvsParse(kvs: IterableOnce[String]): Iterator[(String, String)] = {
+    kvs
+      .iterator
+      // распарсить ключи и значения, причесать их
+      .flatMap { kv =>
+        kv.split('=') match {
+          case Array(k, v) =>
+            // из ключа надо удалить namespace-префикс вместе с точкой.
+            val k2 = URIUtils.decodeURIComponent(k)
+            val v2 = URIUtils.decodeURIComponent( v )
+            Some(k2 -> v2)
+          case _ => None
+        }
+      }
   }
 
 }

@@ -263,10 +263,10 @@ class EdgeEditCircuit
   subscribe( editRW.zoom(_.upload.currentReq) ) { currUploadPotProxy =>
     val mroot = rootRW.value
     if (
-      (!(mroot.edge.predicate eqOrHasParent MPredicates.File)) &&
+      (!(mroot.edge.predicate eqOrHasParent MPredicates.Blob.File)) &&
       (currUploadPotProxy.value !=* Pot.empty)
     ) {
-      dispatch( PredicateSet( MPredicates.File ) )
+      dispatch( PredicateSet( MPredicates.Blob.File ) )
     }
   }
 

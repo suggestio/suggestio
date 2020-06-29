@@ -100,24 +100,24 @@ class CanDynImg @Inject() (
               }
 
             } { mmedia =>
-              LOGGER.trace(s"$logPrefix Found media#${mmedia.idOrNull} edgeMedia=${mmedia.edges.withPredicateIter(MPredicates.File).nextOption().orNull}")
+              LOGGER.trace(s"$logPrefix Found media#${mmedia.idOrNull} edgeMedia=${mmedia.edges.withPredicateIter(MPredicates.Blob.File).nextOption().orNull}")
               (mmedia, respMediaOpt)
             }
           }
 
           fileEdge = mmedia
             .edges
-            .withPredicateIter( MPredicates.File )
+            .withPredicateIter( MPredicates.Blob.File )
             .nextOption()
             .getOrElse {
-              LOGGER.warn(s"$logPrefix Missing edges with predicate ${MPredicates.File}. Possibly invalid/corrupted node#${mmedia.idOrNull}")
+              LOGGER.warn(s"$logPrefix Missing edges with predicate ${MPredicates.Blob.File}. Possibly invalid/corrupted node#${mmedia.idOrNull}")
               _imageNotFoundThrow
             }
 
           edgeMedia = fileEdge
             .media
             .getOrElse {
-              LOGGER.warn(s"$logPrefix Corrupted ${MPredicates.File} edge (missing edge.media):\n $fileEdge")
+              LOGGER.warn(s"$logPrefix Corrupted ${MPredicates.Blob.File} edge (missing edge.media):\n $fileEdge")
               _imageNotFoundThrow
             }
 

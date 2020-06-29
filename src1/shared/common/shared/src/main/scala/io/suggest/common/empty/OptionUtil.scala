@@ -27,6 +27,10 @@ object OptionUtil {
   def maybeTrue(isSome: Boolean): Option[Boolean] =
     maybeOpt(isSome)(SomeBool.someTrue)
 
+  /** Вернуть Some(false) или None */
+  def maybeFalse(isSome: Boolean): Option[Boolean] =
+    maybeOpt( !isSome )( SomeBool.someFalse )
+
 
   @inline
   def maybeOpt[T](isSome: Boolean)(optF: => Option[T]): Option[T] = {
@@ -56,13 +60,11 @@ object OptionUtil {
     /** Оптимизированный аналог boolOpt.getOrElse(false).
       * Позволяет обойтись без функции, хотя начиная со scala 2.12 это не очень актуально.
       */
-    def getOrElseFalse: Boolean = {
-      boolOpt.contains(true)
-    }
+    def getOrElseFalse: Boolean =
+      boolOpt contains true
 
-    def getOrElseTrue: Boolean = {
-      boolOpt.getOrElse(true)
-    }
+    def getOrElseTrue: Boolean =
+      boolOpt getOrElse true
 
   }
 
@@ -75,6 +77,10 @@ object OptionUtil {
     /** Приведение nullable-json-форматтера к boolean-форматтеру, для которого false==None */
     def formatBooleanOrFalse: OFormat[Boolean] = {
       boolOptFormat.inmap(_.getOrElseFalse, maybeTrue)
+    }
+
+    def formatBooleanOrTrue: OFormat[Boolean] = {
+      boolOptFormat.inmap(_.getOrElseTrue, maybeFalse)
     }
 
   }

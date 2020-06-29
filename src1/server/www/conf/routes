@@ -167,6 +167,8 @@ POST /upload/file                       @controllers.Upload.doFileUpload(u: mup.
 GET  /upload/_config                    @controllers.Upload.getConfig
 GET  /upload/download                   @controllers.Upload.download( d: mup.MDownLoadQs )
 HEAD /upload/download                   @controllers.Upload.downloadHead( d: mup.MDownLoadQs )
+GET  /upload/chunk                      @controllers.Upload.hasChunk( u: mup.MUploadTargetQs, q: io.suggest.up.MUploadChunkQs )
+PUT  /upload/chunk                      @controllers.Upload.chunk( u: mup.MUploadTargetQs, q: io.suggest.up.MUploadChunkQs )
 
 
 ## sys

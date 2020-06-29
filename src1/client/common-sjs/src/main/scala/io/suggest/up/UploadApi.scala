@@ -38,6 +38,8 @@ trait IUploadApi {
     */
   def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String]): HttpRespMapped[MUploadResp]
 
+  // chunk(), hasChunk() пока неявно реализуются внутри resumable.js.
+
 }
 
 

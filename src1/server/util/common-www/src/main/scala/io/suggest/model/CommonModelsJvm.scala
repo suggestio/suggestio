@@ -11,6 +11,7 @@ import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMe
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
+import io.suggest.up.{MUploadChunkQs, MUploadChunkSize, MUploadChunkSizes}
 import io.suggest.util.logs.MacroLogsDyn
 import io.suggest.xplay.qsb.{QsbSeq, QueryStringBindableImpl}
 
@@ -26,12 +27,15 @@ import japgolly.univeq._
 object CommonModelsJvm extends MacroLogsDyn {
 
   /** Биндинги для url query string. */
-  implicit def mScApiVsnQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[MScApiVsn] =
+  implicit def mScApiVsnQsb: QueryStringBindable[MScApiVsn] =
     EnumeratumJvmUtil.valueEnumQsb( MScApiVsns )
 
   /** QSB для инстансов [[MStorage]]. */
-  implicit def mStorageQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MStorage] =
+  implicit def mStorageQsb: QueryStringBindable[MStorage] =
     EnumeratumJvmUtil.valueEnumQsb( MStorages )
+
+  implicit def uploadChunkSizeQsb: QueryStringBindable[MUploadChunkSize] =
+    EnumeratumJvmUtil.valueEnumQsb( MUploadChunkSizes )
 
 
   /** Поддержка сырого биндинга из query-string. */
@@ -294,11 +298,11 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
   implicit def fileMetaHashQsb: QueryStringBindable[MFileMetaHash] = {
-    new QueryStringBindableImpl[MFileMetaHash] {
-      lazy val hashB = implicitly[QueryStringBindable[MHash]]
-      lazy val strB = implicitly[QueryStringBindable[String]]
-      lazy val fmHashFlagsB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHashFlag]]]
+    @inline def hashB = implicitly[QueryStringBindable[MHash]]
+    @inline def strB = implicitly[QueryStringBindable[String]]
+    @inline def fmHashFlagsB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHashFlag]]]
 
+    new QueryStringBindableImpl[MFileMetaHash] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MFileMetaHash]] = {
         val F = MFileMetaHash.Fields
         val k = key1F( key )
@@ -341,12 +345,12 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
   implicit def fileMetaQsb: QueryStringBindable[MFileMeta] = {
-    new QueryStringBindableImpl[MFileMeta] {
-      lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
-      lazy val longOptB = implicitly[QueryStringBindable[Option[Long]]]
-      lazy val boolB = implicitly[QueryStringBindable[Boolean]]
-      lazy val fmHashesB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHash]]]
+    @inline def strOptB = implicitly[QueryStringBindable[Option[String]]]
+    @inline def longOptB = implicitly[QueryStringBindable[Option[Long]]]
+    @inline def boolB = implicitly[QueryStringBindable[Boolean]]
+    @inline def fmHashesB = implicitly[QueryStringBindable[QsbSeq[MFileMetaHash]]]
 
+    new QueryStringBindableImpl[MFileMeta] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MFileMeta]] = {
         val F = MFileMeta.Fields
         val k = key1F( key )
@@ -390,8 +394,8 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
   implicit def scAppManifestQs: QueryStringBindable[MScAppManifestQs] = {
-    val strOptB = implicitly[QueryStringBindable[Option[String]]]
-    val hashesHexB = implicitly[QueryStringBindable[HashesHex]]
+    @inline def strOptB = implicitly[QueryStringBindable[Option[String]]]
+    @inline def hashesHexB = implicitly[QueryStringBindable[HashesHex]]
 
     new QueryStringBindableImpl[MScAppManifestQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAppManifestQs]] = {
@@ -413,8 +417,72 @@ object CommonModelsJvm extends MacroLogsDyn {
         }
       }
 
-      override def unbind(key: String, value: MScAppManifestQs): String = {
-        ???
+      override def unbind(key: String, value: MScAppManifestQs): String =
+        throw new UnsupportedOperationException( "scAppMainfestQs QSB.unbind() not implemented - useless" )
+    }
+  }
+
+
+  implicit def uploadChunkQs: QueryStringBindable[MUploadChunkQs] = {
+    @inline def intB = implicitly[QueryStringBindable[Int]]
+    @inline def intOptB = implicitly[QueryStringBindable[Option[Int]]]
+    @inline def chunkSizeB = implicitly[QueryStringBindable[MUploadChunkSize]]
+    @inline def longOptB = implicitly[QueryStringBindable[Option[Long]]]
+    lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
+    @inline def hashesHexB = implicitly[QueryStringBindable[HashesHex]]
+
+    new QueryStringBindableImpl[MUploadChunkQs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadChunkQs]] = {
+        val F = MUploadChunkQs.Fields
+        val k = key1F( key )
+        for {
+          chunkNumberE          <- intB.bind( k(F.CHUNK_NUMBER), params )
+          totalChunksE          <- intOptB.bind( k(F.TOTAL_CHUNKS), params )
+          chunkSizeGeneralE     <- chunkSizeB.bind( k(F.CHUNK_SIZE), params )
+          totalSizeE            <- longOptB.bind( k(F.TOTAL_SIZE), params )
+          identifierE           <- strOptB.bind( k(F.IDENTIFIER), params )
+          fileNameE             <- strOptB.bind( k(F.FILENAME), params )
+          relativePathE         <- strOptB.bind( k(F.RELATIVE_PATH), params )
+          hashesHexE            <- hashesHexB.bind( k(F.HASHES_HEX), params )
+        } yield {
+          for {
+            chunkNumber         <- chunkNumberE
+            totalChunks         <- totalChunksE
+            chunkSizeGeneral    <- chunkSizeGeneralE
+            totalSize           <- totalSizeE
+            identifier          <- identifierE
+            fileName            <- fileNameE
+            relativePath        <- relativePathE
+            hashesHex           <- hashesHexE
+          } yield {
+            MUploadChunkQs(
+              chunkNumber       = chunkNumber,
+              totalChunks       = totalChunks,
+              chunkSizeGeneral  = chunkSizeGeneral,
+              totalSize         = totalSize,
+              identifier        = identifier,
+              fileName          = fileName,
+              relativePath      = relativePath,
+              hashesHex         = hashesHex,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MUploadChunkQs): String = {
+        val F = MUploadChunkQs.Fields
+        val k = key1F( key )
+
+        _mergeUnbinded1(
+          intB.unbind( k(F.CHUNK_NUMBER), value.chunkNumber ),
+          intOptB.unbind( k(F.TOTAL_CHUNKS), value.totalChunks ),
+          chunkSizeB.unbind( k(F.CHUNK_SIZE), value.chunkSizeGeneral ),
+          longOptB.unbind( k(F.TOTAL_SIZE), value.totalSize ),
+          strOptB.unbind( k(F.IDENTIFIER), value.identifier ),
+          strOptB.unbind( k(F.FILENAME), value.fileName ),
+          strOptB.unbind( k(F.RELATIVE_PATH), value.relativePath ),
+          hashesHexB.unbind( k(F.HASHES_HEX), value.hashesHex ),
+        )
       }
     }
   }

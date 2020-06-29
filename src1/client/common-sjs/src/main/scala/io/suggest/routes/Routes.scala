@@ -81,6 +81,8 @@ sealed trait Controllers extends js.Object {
 
   def SysNodeEdges: SysNodeEdgesRoutes = js.native
 
+  def Upload: UploadCtlRoutes = js.native
+
 }
 
 
@@ -346,4 +348,11 @@ sealed trait SysNodeEdgesRoutes extends js.Object {
   def deleteEdge( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
   def prepareUploadFile( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
   def openFile( qs: js.Dictionary[js.Any] ): PlayRoute = js.native
+}
+
+
+@js.native
+sealed trait UploadCtlRoutes extends js.Object {
+  def chunk(signed: js.Dictionary[js.Any], chunkQs: js.Dictionary[js.Any]): PlayRoute = js.native
+  def hasChunk(signed: js.Dictionary[js.Any], chunkQs: js.Dictionary[js.Any]): PlayRoute = js.native
 }

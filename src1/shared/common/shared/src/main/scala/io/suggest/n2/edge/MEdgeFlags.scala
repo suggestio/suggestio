@@ -20,6 +20,12 @@ object MEdgeFlags extends StringEnum[MEdgeFlag] {
     */
   case object AlwaysOutlined extends MEdgeFlag("AO")
 
+  /** Текущий эдж находится в подвешенном состоянии: ещё пока готовится и не совсем готов.
+    * Например, происходит chunked upload.
+    */
+  case object InProgress extends MEdgeFlag("~")
+
+
   override val values = findValues
 
 }

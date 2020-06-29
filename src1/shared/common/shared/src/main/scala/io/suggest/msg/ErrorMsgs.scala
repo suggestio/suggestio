@@ -244,4 +244,6 @@ object ErrorMsgs {
 
   def ONLINE_STATUS_CHECK_FAIL = "Online.status.check.fail"
 
+  def CHUNKED_UPLOAD_PREPARE_FAIL = "Chunked.upload.prepare.fail"
+
 }

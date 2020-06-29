@@ -13,10 +13,14 @@ import scala.scalajs.js.|
 trait ResumableOptions extends js.Object {
 
   /** The target URL for the multipart POST request.
+    *
     * This can be a string or a function that allows you you to construct and return a value, based on supplied params.
+    *   function(params) => String. params = ["a=1", "b=asd%20asd", ...]
+    *
     * (Default: /)
     **/
-  val target: js.UndefOr[String | js.Function1[js.Object, String]] = js.undefined
+  val target: js.UndefOr[String | js.Function1[js.Array[String], String]] = js.undefined
+  val testTarget: js.UndefOr[String | js.Function1[js.Array[String], String]] = js.undefined
 
   /** The size in bytes of each uploaded chunk of data.
     * The last uploaded chunk will be at least this size and up to two the size, see Issue #51 for details and reasons.
@@ -130,7 +134,7 @@ trait ResumableOptions extends js.Object {
     * Function is passed the chunk as parameter, and should call the preprocessFinished method on the chunk when finished.
     * (Default: null)
     */
-  val preprocess: js.UndefOr[js.Function1[ResumableChunk, ResumableChunk]] = js.undefined
+  val preprocess: js.UndefOr[js.Function1[ResumableChunk, Unit]] = js.undefined
 
   /** Override the function that generates unique identifiers for each file. (Default: null) */
   val generateUniqueIdentifier: js.UndefOr[js.Function0[String]] = js.undefined
@@ -185,6 +189,8 @@ trait ResumableOptions extends js.Object {
     */
   val withCredentials: js.UndefOr[Boolean] = js.undefined
 
+  val setChunkTypeFromFile: js.UndefOr[Boolean] = js.undefined
+
 }
 
 
@@ -192,8 +198,8 @@ object ResumableOptions {
 
   type Method <: js.Any with String
   object Methods {
-    final def MULTIPART = "multipart"
-    final def OCTET     = "octet"
+    final def MULTIPART = "multipart".asInstanceOf[Method]
+    final def OCTET     = "octet".asInstanceOf[Method]
   }
 
 }

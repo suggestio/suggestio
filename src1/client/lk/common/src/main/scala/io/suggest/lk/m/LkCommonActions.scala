@@ -13,7 +13,6 @@ import io.suggest.proto.http.model.HttpRespMapped
 import io.suggest.spa.DAction
 import io.suggest.up.MUploadResp
 import io.suggest.url.MHostUrl
-import japgolly.scalajs.react.ReactCaughtError
 import org.scalajs.dom.File
 
 import scala.util.Try

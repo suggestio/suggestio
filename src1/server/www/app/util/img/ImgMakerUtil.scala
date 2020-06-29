@@ -38,7 +38,7 @@ final class ImgMakerUtil @Inject() (
         mediaNode <- mediaOpt
         if mediaNode.common.ntype ==* MNodeTypes.Media.Image
         fileEdge  <- mediaNode.edges
-          .withPredicateIter( MPredicates.File )
+          .withPredicateIter( MPredicates.Blob.File )
           .nextOption()
         edgeMedia <- fileEdge.media
         whPx      <- edgeMedia.picture.whPx

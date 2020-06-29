@@ -211,7 +211,7 @@ class MImgs3 @Inject() (
           edges = MNodeEdges(
             out = {
               val fileEdge = MEdge(
-                predicate = MPredicates.File,
+                predicate = MPredicates.Blob.File,
                 nodeIds = mimg.dynImgId
                   .maybeOriginal
                   .map(_.mediaId)
@@ -262,7 +262,7 @@ class MImgs3 @Inject() (
       mnode       <- mediaSavedFut
       res  <- {
         val edgeMedia = mnode.edges
-          .withPredicateIter( MPredicates.File )
+          .withPredicateIter( MPredicates.Blob.File )
           .next()
           .media
           .get
@@ -295,7 +295,7 @@ class MImgs3 @Inject() (
       .flatMap { mnode =>
         (for {
           fileEdge <- mnode.edges
-            .withPredicateIter( MPredicates.File )
+            .withPredicateIter( MPredicates.Blob.File )
             .nextOption()
           edgeMedia <- fileEdge.media
           s = edgeMedia.storage
@@ -329,7 +329,7 @@ class MImgs3 @Inject() (
 
   private def _fileEdge(mnode: MNode) = {
     mnode.edges
-      .withPredicateIter( MPredicates.File )
+      .withPredicateIter( MPredicates.Blob.File )
       .nextOption()
   }
 

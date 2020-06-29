@@ -211,8 +211,6 @@ class CdnUtil @Inject() (
   private def DIST_STORAGE: MStorage = MStorages.SeaWeedFs
 
 
-  // TODO DIST_IMG Реализовать поддержку распределения media-файлов по нодам.
-
   /** Подготовить местечко для сохранения нового файла, вернув данные сервера для заливки файла.
     *
     * @param upProps Обобщённые данные по заливаемому файлу.
@@ -228,6 +226,26 @@ class CdnUtil @Inject() (
         LOGGER.trace(s"assignDist[${System.currentTimeMillis()}]: Assigned ok:\n props = $upProps\n resp = $assignedStorage")
 
     assignFut
+  }
+
+
+  def toAssignedStorage( nodeId: String, storageInfo: MStorageInfo ): Future[Option[MAssignedStorage]] = {
+    for {
+      mediaHostsMap <- mediasHosts1( (nodeId -> storageInfo) :: Nil )
+      hostInfos = mediaHostsMap
+        .valuesIterator
+        .flatten
+        .to(LazyList)
+    } yield {
+      for {
+        mediaHost <- chooseMediaHost( nodeId, hostInfos )
+      } yield {
+        MAssignedStorage(
+          host    = mediaHost,
+          storage = storageInfo,
+        )
+      }
+    }
   }
 
 
@@ -283,12 +301,13 @@ class CdnUtil @Inject() (
       fileNode  <- fileNodes.iterator
       nodeId    <- fileNode.id.iterator
       fileEdge  <- fileNode.edges
-        .withPredicateIter( MPredicates.File )
+        .withPredicateIter( MPredicates.Blob.File )
       edgeMedia <- fileEdge.media.iterator
     } yield {
       (nodeId, edgeMedia.storage)
     })
       .to( LazyList )
+
     mediasHosts1( node2storage )
   }
 

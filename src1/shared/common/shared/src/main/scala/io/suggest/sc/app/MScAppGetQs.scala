@@ -35,7 +35,7 @@ object MScAppGetQs {
         val readsFiltered = fmt
           .filter { predOpt =>
             predOpt
-              .fold(true) { _ eqOrHasParent MPredicates.File }
+              .fold(true) { _ eqOrHasParent MPredicates.Blob.File }
           }
         OFormat(readsFiltered, fmt)
       }

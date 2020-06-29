@@ -3,6 +3,7 @@ package models.mup
 import io.suggest.n2.node.MNodeType
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -28,9 +29,9 @@ object MUploadInfoQs {
                              cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]],
                              nodeTypeOptB       : QueryStringBindable[Option[MNodeType]],
                             ): QueryStringBindable[MUploadInfoQs] = {
+    @inline def strOptB = implicitly[QueryStringBindable[Option[String]]]
+    lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
     new QueryStringBindableImpl[MUploadInfoQs] {
-      private lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
-      private lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadInfoQs]] = {
         val F = Fields
@@ -80,6 +81,9 @@ object MUploadInfoQs {
 
 
   @inline implicit def univEq: UnivEq[MUploadInfoQs] = UnivEq.derive
+
+
+  def existNodeId = GenLens[MUploadInfoQs]( _.existNodeId )
 
 }
 

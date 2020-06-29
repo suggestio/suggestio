@@ -110,7 +110,7 @@ class N2VldUtil @Inject()(
       (edgeUid, dynImgId) <- edge2imgId.iterator
       mmedia <- imgsMediasMap.get( dynImgId.mediaId )
       if mmedia.common.ntype ==* MNodeTypes.Media.Image
-      fileEdge  <- mmedia.edges.withPredicateIter( MPredicates.File ).nextOption()
+      fileEdge  <- mmedia.edges.withPredicateIter( MPredicates.Blob.File ).nextOption()
       mediaEdge <- fileEdge.media
       imgFormat <- mediaEdge.file.imgFormatOpt
     } yield {
@@ -149,7 +149,7 @@ class N2VldUtil @Inject()(
             mimg      <- imgsNeededMap.get( edgeUid )
             imgNode   <- mediasMap.get( mimg.dynImgId.mediaId )
             if imgNode.common.ntype ==* MNodeTypes.Media.Image
-            fileEdge  <- imgNode.edges.withPredicateIter( MPredicates.File ).nextOption()
+            fileEdge  <- imgNode.edges.withPredicateIter( MPredicates.Blob.File ).nextOption()
             mediaEdge <- fileEdge.media
           } yield {
             mediaEdge

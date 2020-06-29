@@ -138,7 +138,7 @@ class JdAdUtil @Inject()(
       nodeId          <- medge.nodeIds.iterator
       imgNode         <- mediaNodes.get(mimg.dynImgId.mediaId).iterator
       if imgNode.common.ntype ==* MNodeTypes.Media.Image
-      fileEdge        <- imgNode.edges.withPredicateIter( MPredicates.File )
+      fileEdge        <- imgNode.edges.withPredicateIter( MPredicates.Blob.File )
       edgeMedia       <- fileEdge.media.iterator
     } yield {
       // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
@@ -689,7 +689,7 @@ class JdAdUtil @Inject()(
                   mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.dynImgId.original.mediaId )
                   if mmediaOrig.common.ntype ==* MNodeTypes.Media.Image
                   fileEdge    <- mmediaOrig.edges
-                    .withPredicateIter( MPredicates.File )
+                    .withPredicateIter( MPredicates.Blob.File )
                     .nextOption()
                   edgeMedia   <- fileEdge.media
                   origWh      <- edgeMedia.picture.whPx

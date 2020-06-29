@@ -87,7 +87,7 @@ class CanDownloadFile @Inject()(
         _throwNotFound( request )
       }
 
-      fileEdges = mnode.edges.withPredicate( MPredicates.File )
+      fileEdges = mnode.edges.withPredicate( MPredicates.Blob.File )
 
       // Найти файловый эдж
       (fileEdge, edgeMedia) = (for {

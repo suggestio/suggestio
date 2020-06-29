@@ -382,7 +382,7 @@ final class DynImgUtil @Inject() (
         new MNodeSearch {
           override val outEdges: MEsNestedSearch[Criteria] = {
             val cr = Criteria(
-              predicates      = MPredicates.File :: Nil,
+              predicates      = MPredicates.Blob.File :: Nil,
               fileIsOriginal  = OptionUtil.SomeBool.someFalse,
               fileMimes       = MImgFmts.allMimesIter.toSeq,
             )
@@ -396,7 +396,7 @@ final class DynImgUtil @Inject() (
       }
       .runFoldAsync( 0 ) { (counter0, fileNode) =>
         val futs = (for {
-          fileEdge  <- fileNode.edges.withPredicateIter( MPredicates.File )
+          fileEdge  <- fileNode.edges.withPredicateIter( MPredicates.Blob.File )
           nodeId    <- fileNode.id
           edgeMedia <- fileEdge.media
         } yield {
@@ -484,7 +484,7 @@ final class DynImgUtil @Inject() (
             LOGGER.trace(s"$logPrefix Found ${fileNodes.size} medias-nodes:\n ${fileNodes.iterator.flatMap(_.id).mkString("\n ")}")
             (for {
               fileNode  <- fileNodes.iterator
-              e         <- fileNode.edges.withPredicateIter( MPredicates.File )
+              e         <- fileNode.edges.withPredicateIter( MPredicates.Blob.File )
               media     <- e.media.iterator
               whPx      <- media.picture.whPx.iterator
             } yield {
@@ -617,7 +617,7 @@ final class DynImgUtil @Inject() (
               jdMediaId   <- mediaId2edgeUid.get( jdId.edgeUid )
               mNode       <- mmediasMap.get( jdMediaId )
               fileEdge    <- mNode.edges
-                .withPredicateIter( MPredicates.File )
+                .withPredicateIter( MPredicates.Blob.File )
                 .nextOption()
               edgeMedia   <- fileEdge.media
             } yield {

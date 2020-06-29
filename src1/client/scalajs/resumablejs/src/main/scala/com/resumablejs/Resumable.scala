@@ -51,7 +51,8 @@ class Resumable( val opts: ResumableOptions ) extends js.Object {
   def isUploading(): Boolean = js.native
 
   /** Add a HTML5 File object to the list of files. **/
-  def addFile(file: dom.File, event: dom.Event): Unit = js.native
+  def addFile(file: dom.File, event: dom.Event = js.native): Unit = js.native
+  def addFiles(file: dom.FileList, event: dom.Event = js.native): Unit = js.native
 
   /** Cancel upload of a specific ResumableFile object on the list from the list. **/
   def removeFile(file: ResumableFile): Unit = js.native

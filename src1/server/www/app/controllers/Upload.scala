@@ -1,6 +1,6 @@
 package controllers
 
-import java.io.File
+import java.io.{File, FileInputStream, RandomAccessFile}
 import java.net.InetAddress
 import java.nio.file.Path
 import java.time.OffsetDateTime
@@ -8,6 +8,7 @@ import java.time.OffsetDateTime
 import javax.inject.Inject
 import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.fut.FutureUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
@@ -17,7 +18,7 @@ import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, MDsReadParams, WriteRequest}
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
-import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.{MEdge, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
 import io.suggest.n2.media._
 import io.suggest.n2.media.storage.IMediaStorages
@@ -29,7 +30,7 @@ import io.suggest.pick.MimeConst
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sec.av.{ClamAvScanRequest, ClamAvUtil}
-import io.suggest.up.{MUploadResp, UploadConstants}
+import io.suggest.up.{MUploadChunkQs, MUploadResp, UploadConstants}
 import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
@@ -39,7 +40,7 @@ import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, Tempor
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, DefaultActionBuilder, Result, Results}
 import play.core.parsers.Multipart
-import util.acl.{BruteForceProtect, CanDownloadFile, CanUploadFile, Ctx304, IgnoreAuth, IsFileNotModified}
+import util.acl.{BruteForceProtect, CanDownloadFile, CanUpload, Ctx304, IgnoreAuth, IsFileNotModified}
 import util.cdn.{CdnUtil, CorsUtil}
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
@@ -70,7 +71,7 @@ final class Upload @Inject()(
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val uploadUtil = injector.instanceOf[UploadUtil]
-  private lazy val canUploadFile = injector.instanceOf[CanUploadFile]
+  private lazy val canUpload = injector.instanceOf[CanUpload]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
   private lazy val iMediaStorages = injector.instanceOf[IMediaStorages]
@@ -156,131 +157,177 @@ final class Upload @Inject()(
             }
           )
 
-          (respStatus, respDataFut) = fileSearchRes
-            .headOption
-            .fold [(Status, Future[MUploadResp])] {
-              val assignRespFut = cdnUtil.assignDist( fileMeta )
-              LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
+          foundFileNodeOpt = fileSearchRes.headOption
+          fileEdgeOpt = foundFileNodeOpt
+            .iterator
+            .flatMap( _.edges.withPredicateIter( MPredicates.Blob.File ) )
+            .nextOption()
 
-              val upDataFut = for {
-                assignResp <- assignRespFut
+          (respStatus, respDataFut) = (for {
+            fileEdge <- fileEdgeOpt
+
+            // Если есть флаг InProgress, то надо возвращать uploadUrls, несмотря на присутствие узла.
+            if !fileEdge.info.flags
+              .exists( _.flag ==* MEdgeFlags.InProgress )
+
+            foundFileNode <- foundFileNodeOpt
+          } yield {
+            // Найден узел с уже закачанным файлом. Собрать необходимые данные и вернуть клиенту.
+            val fileEdge = foundFileNode
+              .edges
+              .withPredicateIter( MPredicates.Blob.File )
+              .next()
+
+            val edgeMedia = fileEdge.media.get
+
+            val existColors = edgeMedia
+              .picture
+              .histogram
+              .colorsOrNil
+
+            LOGGER.debug(s"$logPrefix Found existing file media#${foundFileNode.idOrNull} for hashes [${fileMeta.hashesHex.iterator.map(_.hexValue).mkString(", ")}] with ${existColors.size} colors.")
+
+            // Тут шаринг инстанса возможной картинки. Но надо быть осторожнее: если не картинка, то может быть экзепшен.
+            lazy val foundFileImg = MImg3.fromEdge( foundFileNode.id.get, fileEdge ).get
+
+            // Собираем гистограмму цветов.
+            val mediaColorsFut = if (
+              existColors.isEmpty &&
+                !edgeMedia.file.isOriginal &&
+                edgeMedia.picture.nonEmpty
+            ) {
+              // Для получения гистограммы цветов надо получить на руки оригинал картинки.
+              val origImg3 = foundFileImg.original
+              for {
+                origMediaOpt <- mNodes.getByIdCache( origImg3.dynImgId.mediaId )
               } yield {
-                LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
+                // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
+                if (origMediaOpt.isEmpty)
+                  LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFileNode.idOrNull} is here: $foundFileNode")
 
-                val upData = MUploadTargetQs(
-                  fileProps   = fileMeta,
-                  personId    = request.user.personIdOpt,
-                  validTillS  = uploadUtil.ttlFromNow(),
-                  storage     = assignResp,
-                  info        = upInfo,
-                )
+                // Поиск гистограммы цветов в узле оригинала:
+                (for {
+                  origMedia <- origMediaOpt.iterator
+                  e <- origMedia.edges.withPredicateIter( MPredicates.Blob.File )
+                  edgeMedia <- e.media
+                  histogram <- edgeMedia.picture.histogram
+                  if histogram.colors.nonEmpty
+                } yield {
+                  histogram
+                })
+                  .nextOption()
+                  .colorsOrNil
+              }
+            } else {
+              LOGGER.trace(s"$logPrefix Existing color histogram for media#${foundFileNode.idOrNull}: [${existColors.iterator.map(_.hexCode).mkString(", ")}]")
+              Future.successful( existColors )
+            }
 
-                // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
-                val hostnames =
-                  assignResp.host.namePublic ::
+            // Собрать ответ с помощью награбленных цветов.
+            val upRespFut = for (mediaColors <- mediaColorsFut) yield {
+              MUploadResp(
+                fileExist = Some(MSrvFileInfo(
+                  nodeId  = foundFileNode.id.get,
+                  // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
+                  url = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
+                    // TODO IMG_DIST: Вписать хост расположения картинки.
+                    // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
+                    Some( routes.Img.dynImg( foundFileImg ).url )
+                  } else {
+                    // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
+                    LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime getOrElse ""} don't know how to build URL")
+                    None
+                  },
+                  // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
+                  fileMeta = edgeMedia.file,
+                  pictureMeta = MPictureMeta(
+                    // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
+                    histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
+                      MHistogram(
+                        colors = mediaColors
+                          .sortBy { p =>
+                            p.freqPc.fold(0)(-_)
+                          }
+                          .toList
+                      )
+                    }
+                  ),
+                  storage = Option.when( upInfo.systemResp contains true )(edgeMedia.storage),
+                )),
+              )
+            }
+            (Accepted, upRespFut)
+
+          }).getOrElse {
+            val foundFileNodeIdOpt = foundFileNodeOpt.flatMap(_.id)
+
+            // Выставить в QS existNodeId, если найден подходящий узел неоконченной закачки.
+            val upDataFut = for {
+              resOpt <- FutureUtil.optFut2futOptPlain( for {
+                foundFileNodeId <- foundFileNodeIdOpt
+                if upInfo.existNodeId.isEmpty
+                fileEdge <- fileEdgeOpt
+                fileEdgeMedia <- fileEdge.media
+              } yield {
+                // Если найден file-узел, но с флагом InProgress, надо продолжить заливку в данный узел.
+                LOGGER.debug( s"$logPrefix Patching Upload qsInfo.existNodeId := $foundFileNodeId -- file-edge has InProgress flag, recovering upload." )
+                for {
+                  storAssigned <- cdnUtil.toAssignedStorage( foundFileNodeId, fileEdgeMedia.storage )
+                } yield {
+                  val upInfo22 = (MUploadInfoQs.existNodeId set foundFileNodeIdOpt)( upInfo )
+                  upInfo22 -> storAssigned
+                }
+              })
+
+              // Если найден подходящий узел неоконченного upload, то надо попытаться собрать данные по хранилищу для него.
+              (upInfo9, assignRespFut) = (for {
+                (upInfo22, storAssignedOpt) <- resOpt
+                storAssigned <- storAssignedOpt
+              } yield {
+                LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
+                upInfo22 -> Future.successful( storAssigned )
+              }) getOrElse {
+                for (existNodeId <- upInfo.existNodeId)
+                  LOGGER.warn( s"$logPrefix Found InProgress Upload file node#${foundFileNodeIdOpt.orNull}, but qsInfo.existNodeId=$existNodeId" )
+                val assignRespFut = cdnUtil.assignDist( fileMeta )
+                LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
+                upInfo -> assignRespFut
+              }
+              assignResp <- assignRespFut
+
+            } yield {
+              LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
+
+              val upData = MUploadTargetQs(
+                fileProps   = fileMeta,
+                personId    = request.user.personIdOpt,
+                validTillS  = uploadUtil.ttlFromNow(),
+                storage     = assignResp,
+                info        = upInfo9,
+              )
+
+              // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
+              val hostnames =
+                assignResp.host.namePublic ::
                   // TODO Вписать запасные хостнеймы для аплоада?
                   Nil
 
-                val relUrl = routes.Upload.doFileUpload(upData).url
-                MUploadResp(
-                  // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
-                  upUrls = for (host <- hostnames) yield {
-                    // TODO В будущем нужно возвращать только хост и аргументы, а клиент пусть сам через js-роутер ссылку собирает.
-                    // TODO Для этого нужно MUploadTargetQs сделать JSON-моделью с отдельным полем сигнатуры.
-                    MHostUrl(
-                      host = host,
-                      relUrl = relUrl
-                    )
-                  }
-                )
-              }
-              (Created, upDataFut)
-
-            } { foundFileNode =>
-              val fileEdge = foundFileNode
-                .edges
-                .withPredicateIter( MPredicates.File )
-                .next()
-              val edgeMedia = fileEdge.media.get
-
-              val existColors = edgeMedia
-                .picture
-                .histogram
-                .colorsOrNil
-
-              LOGGER.debug(s"$logPrefix Found existing file media#${foundFileNode.idOrNull} for hashes [${fileMeta.hashesHex.iterator.map(_.hexValue).mkString(", ")}] with ${existColors.size} colors.")
-
-              // Тут шаринг инстанса возможной картинки. Но надо быть осторожнее: если не картинка, то может быть экзепшен.
-              lazy val foundFileImg = MImg3.fromEdge( foundFileNode.id.get, fileEdge ).get
-
-              // Собираем гистограмму цветов.
-              val mediaColorsFut = if (
-                existColors.isEmpty &&
-                !edgeMedia.file.isOriginal &&
-                edgeMedia.picture.nonEmpty
-              ) {
-                // Для получения гистограммы цветов надо получить на руки оригинал картинки.
-                val origImg3 = foundFileImg.original
-                for {
-                  origMediaOpt <- mNodes.getByIdCache( origImg3.dynImgId.mediaId )
-                } yield {
-                  // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
-                  if (origMediaOpt.isEmpty)
-                    LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFileNode.idOrNull} is here: $foundFileNode")
-
-                  // Поиск гистограммы цветов в узле оригинала:
-                  (for {
-                    origMedia <- origMediaOpt.iterator
-                    e <- origMedia.edges.withPredicateIter( MPredicates.File )
-                    edgeMedia <- e.media
-                    histogram <- edgeMedia.picture.histogram
-                    if histogram.colors.nonEmpty
-                  } yield {
-                    histogram
-                  })
-                    .nextOption()
-                    .colorsOrNil
+              val relUrl = routes.Upload.doFileUpload(upData).url
+              MUploadResp(
+                // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
+                upUrls = for (host <- hostnames) yield {
+                  // TODO В будущем нужно возвращать только хост и аргументы, а клиент пусть сам через js-роутер ссылку собирает.
+                  // TODO Для этого нужно MUploadTargetQs сделать JSON-моделью с отдельным полем сигнатуры.
+                  MHostUrl(
+                    host = host,
+                    relUrl = relUrl
+                  )
                 }
-              } else {
-                LOGGER.trace(s"$logPrefix Existing color histogram for media#${foundFileNode.idOrNull}: [${existColors.iterator.map(_.hexCode).mkString(", ")}]")
-                Future.successful( existColors )
-              }
-
-              // Собрать ответ с помощью награбленных цветов.
-              val upRespFut = for (mediaColors <- mediaColorsFut) yield {
-                MUploadResp(
-                  fileExist = Some(MSrvFileInfo(
-                    nodeId  = foundFileNode.id.get,
-                    // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                    url = if (edgeMedia.file.imgFormatOpt.nonEmpty) {
-                      // TODO IMG_DIST: Вписать хост расположения картинки.
-                      // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
-                      Some( routes.Img.dynImg( foundFileImg ).url )
-                    } else {
-                      // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
-                      LOGGER.error(s"$logPrefix MIME ${edgeMedia.file.mime getOrElse ""} don't know how to build URL")
-                      None
-                    },
-                    // TODO foundFile.file.dateCreated - не раскрывать. Лучше удалить MFileMeta.dateCreated после переезда в MEdge.media
-                    fileMeta = edgeMedia.file,
-                    pictureMeta = MPictureMeta(
-                      // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
-                      histogram = OptionUtil.maybe( mediaColors.nonEmpty ) {
-                        MHistogram(
-                          colors = mediaColors
-                            .sortBy { p =>
-                              p.freqPc.fold(0)(-_)
-                            }
-                            .toList
-                        )
-                      }
-                    ),
-                    storage = Option.when( upInfo.systemResp contains true )(edgeMedia.storage),
-                  )),
-                )
-              }
-              (Accepted, upRespFut)
+              )
             }
+
+            (Created, upDataFut)
+          }
 
           respData <- respDataFut
         } yield {
@@ -349,7 +396,7 @@ final class Upload @Inject()(
         httpErrorHandler.onClientError( request, play.api.http.Status.NOT_ACCEPTABLE, msg )
       }
 
-    } else canUploadFile(uploadArgs, ctxIdOpt).async( _uploadFileBp(uploadArgs) ) { implicit request =>
+    } else canUpload.file(uploadArgs, ctxIdOpt).async( _uploadFileBp(uploadArgs) ) { implicit request =>
       LOGGER.trace(s"$logPrefix Starting w/args: $uploadArgs")
 
       lazy val errSb = new StringBuilder()
@@ -531,7 +578,7 @@ final class Upload @Inject()(
           )
 
           fileEdge = MEdge(
-            predicate = MPredicates.File,
+            predicate = MPredicates.Blob.File,
             media = Some( MEdgeMedia(
               file = fileMeta,
               picture = MPictureMeta(
@@ -597,7 +644,7 @@ final class Upload @Inject()(
                 MNode.node_meta_basic_dateEdited_RESET andThen
                 MNode.edges.modify { edges0 =>
                   val edgesSeq2 = MNodeEdges.edgesToMap1(
-                    edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.File ) ++ addEdges
+                    edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.Blob.File ) ++ addEdges
                   )
                   MNodeEdges.out.set( edgesSeq2 )(edges0)
                 }
@@ -645,7 +692,7 @@ final class Upload @Inject()(
                   files4deleteOpts <- Future.traverse(
                     // В старом узле, в норме, всегда 0 или 1 файловый эдж, поэтому оптимизировать ничего не требуется:
                     mnode0.edges
-                      .withPredicateIter( MPredicates.File )
+                      .withPredicateIter( MPredicates.Blob.File )
                       .to( List )
                   ) { oldFileEdge =>
                     fileUtil.isNeedDeleteFile( oldFileEdge, mnode1, reportDupEdge = true )
@@ -691,7 +738,7 @@ final class Upload @Inject()(
 
                   val mmedia2OptFut = mNodes.tryUpdate(mnode1)(
                     MNode.edges.modify { edges0 =>
-                      val pred = MPredicates.File
+                      val pred = MPredicates.Blob.File
                       val fileEdges1 = MNodeEdges.edgesToMap1(
                         edges0
                           .withPredicateIter( pred )
@@ -893,6 +940,116 @@ final class Upload @Inject()(
         }
       }
     }
+  }
+
+
+  /** Поддержка возобновляемого upload'а по частям.
+    * После всех chunks, надо обращаться в doFileUpload() без req body, с исходным signed qs и возможным ctxId.
+    *
+    * @param uploadArgs signed-метаданные, по большей части пустые, т.к. они должны быть сохранены
+    *                   в disabled File-узле (disabled - чтобы не участвовал в поиске по hashesHex).
+    *                   Но поле existNodeId обязательно, это id узла, в котором всё сохранено.
+    * @param chunkQs Динамические метаданные для одного chunk'а.
+    * @return 201 No Content - часть сохранена на отличненько.
+    */
+  def chunk(uploadArgs: MUploadTargetQs, chunkQs: MUploadChunkQs) = {
+    canUpload.chunk( uploadArgs, chunkQs )
+      .async {
+        // В RAM - маленький буфер, т.к. хранить 2 метра в памяти на запрос - жирновато, а какой-то средний буфер - тут смысла не имеет.
+        parse.raw(
+          maxLength       = chunkQs.chunkSizeGeneral.value * 2,
+          memoryThreshold = 102400,
+        )
+      } { implicit request =>
+        lazy val logPrefix = s"chunk(${uploadArgs.info.existNodeId.orNull} ${chunkQs.chunkNumber}/${chunkQs.chunkSizeGeneral}):"
+
+        // Сразу забрать временный файл с req.body на руки, чтобы точно удалить его по итогу работы.
+        val reqBodyFile = request.body.asFile
+        LOGGER.trace(s"$logPrefix Received ${request.body.size} bytes")
+
+        try {
+          // Запись идёт через RandomAccessFile по мотивам https://github.com/jbaysolutions/play-java-resumable/blob/master/app/controllers/HomeController.java#L34
+          // Заодно, это поможет плавно задействовать LocalImgFileCreator для картинок.
+          // Для системы файлов пока используем модель MLocalImg, чтобы не пере-изобретать велосипед.
+          val locImgOrig = MLocalImg(
+            MDynImgId(
+              origNodeId = request.mnode.id.get,
+              dynFormat = MImgFmts.default,
+            )
+          )
+
+          if ( !mLocalImgs.isExists(locImgOrig) )
+            mLocalImgs.prepareWriteFile( locImgOrig )
+          val locImgOrigFile = mLocalImgs.fileOf( locImgOrig )
+          LOGGER.trace(s"Move data chunk\n FROM = ${reqBodyFile}\n INTO = $locImgOrigFile")
+
+          val raf = new RandomAccessFile( locImgOrigFile, "rw" )
+          try {
+            // Промотка на нужную позицию. Даже если chunkNumber0=0, всё равно мотаем в ноль - для надёжности.
+            raf.seek( chunkQs.chunkNumber0 * chunkQs.chunkSizeGeneral.value )
+
+            val reqBodyIS = new FileInputStream( reqBodyFile )
+            val transferred = try {
+              // Перекачка данных из reqBodyFile в raf.
+              reqBodyIS
+                .getChannel
+                .transferTo( 0, reqBodyFile.length(), raf.getChannel )
+            } finally {
+              reqBodyIS.close()
+            }
+            LOGGER.trace(s"$logPrefix Transferred $transferred bytes.")
+          } finally {
+            raf.close()
+          }
+        } finally {
+          reqBodyFile.delete()
+        }
+
+        // Всё перекачано и почищено. Вернуть результат
+        Ok
+      }
+  }
+
+
+  /** Быстрая проверка chunk'а, вдруг он уже был закачен ранее. */
+  def hasChunk(uploadArgs: MUploadTargetQs, chunkQs: MUploadChunkQs) = {
+    canUpload.chunk( uploadArgs, chunkQs )
+      .async( parse.raw(maxLength = chunkQs.chunkSizeGeneral.value * 2) ) { implicit request =>
+        lazy val logPrefix = s"hasChunk(${uploadArgs.info.existNodeId.orNull} ${chunkQs.chunkNumber}/${chunkQs.chunkSizeGeneral}):"
+
+        // TODO Проверять chunkQs.hashesHex.nonEmpty
+        val isChunkMetaOk =
+          // Проверяем данные файла:
+          chunkQs.totalSize.exists { qsTotalSizeB =>
+            request.fileEdgeMedia.file.sizeB contains[Long] qsTotalSizeB
+          } &&
+          // Проверяем данные chunk'а
+          request.mnode.edges
+            // Ищем через UID-карту, чтобы кэшируемый узел на параллельных запросах ворочался быстрее.
+            .withUid( chunkQs.chunkNumber )
+            .out
+            .iterator
+            .filter( _.predicate ==* MPredicates.Blob.Slice )
+            .exists { chunkEdge =>
+              // TODO Сверять chunkSizeGeneral. Сверять размер chunk'а, и прочие парамеры из qs, включая хэш-сумму.
+              // chunkSize сохраняется в edge.media.
+              chunkEdge.media.exists { chunkEdgeMedia =>
+                val cf = chunkEdgeMedia.file
+                (cf.sizeB contains chunkQs.chunkSizeGeneral.value.toLong) &&
+                chunkQs.hashesHex.forall { case (qsHashType, qsHashValue) =>
+                  cf.hashesHex.exists { storedHash =>
+                    (qsHashType ==* storedHash.hType) &&
+                    (qsHashValue ==* storedHash.hexValue)
+                  }
+                }
+              }
+            }
+
+        LOGGER.trace(s"$logPrefix isOk?$isChunkMetaOk")
+        // Вернуть инфу по сверке:
+        if (isChunkMetaOk) Ok
+        else NotFound
+      }
   }
 
 

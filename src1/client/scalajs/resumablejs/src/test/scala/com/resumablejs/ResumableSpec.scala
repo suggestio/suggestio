@@ -11,14 +11,12 @@ import scala.scalajs.js
   */
 object ResumableSpec extends SimpleTestSuite {
 
-  test("intantiate: new Resumable(...)") {
+  test("Instantiate: new Resumable(...)") {
     val inst = new Resumable(
       new ResumableOptions {}
     )
     assert( !js.isUndefined(inst.support) )
     assert( inst.version > 0 )
-    assert( inst != null )
-    assert( !js.isUndefined(inst) )
   }
 
 }
