@@ -4,6 +4,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -16,25 +17,27 @@ import scala.scalajs.js.annotation.JSImport
 class Resumable( val opts: ResumableOptions ) extends js.Object {
 
   val support: Boolean = js.native
-  val files: js.Array[js.Any] = js.native
+  val supportDirectory: Boolean = js.native
+  val files: js.Array[ResumableFile] = js.native
   val defaults: ResumableOptions = js.native
 
   val events: js.Array[js.Any] = js.native
   val version: Double = js.native
 
   /** Assign a browse action to one or more DOM nodes. Pass in true to allow directories to be selected (Chrome only). **/
-  def assignBrowse(domNode: dom.html.Element, isDirectory: Boolean): Unit = js.native
-  def assignBrowse(domNodes: js.Array[dom.html.Element], isDirectory: Boolean): Unit = js.native
+  def assignBrowse(domNode: dom.html.Element | js.Array[dom.html.Element],
+                   isDirectory: Boolean,
+                   singleFile: Boolean = js.native,
+                   attributes: js.Dictionary[String] = js.native,
+                  ): Unit = js.native
 
   /** Assign one or more DOM nodes as a drop target. **/
-  def assignDrop(domNode: dom.html.Element): Unit = js.native
-  def assignDrop(domNodes: js.Array[dom.html.Element]): Unit = js.native
-  def unAssignDrop(domNode: dom.html.Element): Unit = js.native
-  def unAssignDrop(domNodes: js.Array[dom.html.Element]): Unit = js.native
+  def assignDrop(domNode: dom.html.Element | js.Array[dom.html.Element]): Unit = js.native
+  def unAssignDrop(domNode: dom.html.Element | js.Array[dom.html.Element]): Unit = js.native
 
   /** Start or resume uploading. **/
   def upload(): Unit = js.native
-  def uploadNextChunk(): Unit = js.native
+  def uploadNextChunk(): Boolean = js.native
 
   /** Pause uploading. **/
   def pause(): Unit = js.native
@@ -62,6 +65,16 @@ class Resumable( val opts: ResumableOptions ) extends js.Object {
 
   /** Returns the total size of the upload in bytes. **/
   def getSize(): Double = js.native
+
+  /** @return the total size uploaded of all files in bytes. */
+  def sizeUploaded(): Double = js.native
+
+  /** Returns remaining time to upload all files in seconds.
+    * Accuracy is based on average speed.
+    * If speed is zero, time remaining will be equal to positive infinity Number.POSITIVE_INFINITY
+    */
+  def timeRemaining(): Double = js.native
+
   def getOpt(o: String): js.Any = js.native
 
 
@@ -75,6 +88,10 @@ class Resumable( val opts: ResumableOptions ) extends js.Object {
 
   def on(event: String, cb: js.Function): Unit = js.native
 
+  def off(): Unit = js.native
+  def off(event: String): Unit = js.native
+  def off(event: String, cb: js.Function): Unit = js.native
+
 }
 
 object Resumable {
@@ -84,18 +101,22 @@ object Resumable {
     final def FILE_PROGRESS     = "fileProgress"
     final def FILE_ADDED        = "fileAdded"
     final def FILES_ADDED       = "filesAdded"
+    final def FILES_SUBMITTED   = "filesSubmitted"
+    final def FILE_REMOVED      = "fileRemoved"
     final def FILE_RETRY        = "fileRetry"
     final def FILE_ERROR        = "fileError"
     final def UPLOAD_START      = "uploadStart"
     final def COMPLETE          = "complete"
     final def PROGRESS          = "progress"
     final def ERROR             = "error"
+    /*
     final def PAUSE             = "pause"
     final def BEFORE_PAUSE      = "beforeCancel"
     final def CANCEL            = "cancel"
     final def CHUNKING_START    = "chunkingStart"
     final def CHUNKING_PROGRESS = "chunkingProgress"
     final def CHUNKING_COMPLETE = "chunkingComplete"
+    */
     final def CATCH_ALL         = "catchAll"
   }
 
@@ -103,24 +124,31 @@ object Resumable {
   implicit final class ResumableOpsExt( private val rsmbl: Resumable ) extends AnyVal {
 
     // Event helpers
-    // @see [[https://github.com/23/resumable.js/blob/master/resumable.d.ts#L234]]
+    // @see [[https://github.com/flowjs/flow.js#events]]
 
-    def onFileSuccess(cb: js.Function1[ResumableFile, Unit]) =
+    def onFileSuccess(cb: js.Function3[ResumableFile, /*message:*/String, ResumableChunk, Unit]) =
       rsmbl.on( Events.FILE_SUCCESS, cb )
 
-    def onFileProgress(cb: js.Function1[ResumableFile, Unit]) =
+    def onFileProgress(cb: js.Function2[ResumableFile, ResumableChunk, Unit]) =
       rsmbl.on( Events.FILE_PROGRESS, cb )
 
-    def onFileAdded(cb: js.Function2[ResumableFile, js.UndefOr[dom.DragEvent], Unit]) =
+    def onFileAdded(cb: js.Function2[ResumableFile, js.UndefOr[dom.UIEvent], Unit]) =
       rsmbl.on( Events.FILE_ADDED, cb )
 
-    def onFilesAdded(cb: js.Function1[js.Array[ResumableFile], Unit]) =
+    def onFilesAdded(cb: js.Function2[js.Array[ResumableFile], js.UndefOr[dom.UIEvent], Unit]) =
       rsmbl.on( Events.FILES_ADDED, cb )
 
-    def onFileRetry(cb: js.Function1[ResumableFile, Unit]) =
+    def onFilesSubmitted(cb: js.Function2[js.Array[ResumableFile], dom.UIEvent, Unit]): Unit =
+      rsmbl.on( Events.FILES_SUBMITTED, cb )
+
+    def onFileRemoved(cb: js.Function1[ResumableFile, Unit]): Unit =
+      rsmbl.on(Events.FILE_REMOVED, cb )
+
+    def onFileRetry(cb: js.Function2[ResumableFile, ResumableChunk, Unit]) =
       rsmbl.on( Events.FILE_RETRY, cb )
 
-    def onFileError(cb: js.Function2[ResumableFile, String, Unit]) =
+    /** An error occurred during upload of a specific file. */
+    def onFileError(cb: js.Function3[ResumableFile, String, ResumableChunk, Unit]) =
       rsmbl.on( Events.FILE_ERROR, cb )
 
     def onUploadStart(cb: js.Function0[Unit]) =
@@ -132,9 +160,11 @@ object Resumable {
     def onProgress(cb: js.Function0[Unit]) =
       rsmbl.on( Events.PROGRESS, cb )
 
-    def onError(cb: js.Function0[Unit]) =
+    def onError(cb: js.Function3[String, ResumableFile, ResumableChunk, Unit]) =
       rsmbl.on( Events.ERROR, cb )
 
+    // TODO resumable.js events, flow.js does not have these events. Delete, if not needed.
+    /*
     def onPause(cb: js.Function0[Unit]) =
       rsmbl.on( Events.PAUSE, cb )
 
@@ -152,6 +182,7 @@ object Resumable {
 
     def onChunkingComplete(cb: js.Function1[ResumableFile, Unit]) =
       rsmbl.on( Events.CHUNKING_COMPLETE, cb )
+    */
 
     def onCatchAll(cb: js.Function0[Unit]) =
       rsmbl.on( Events.CATCH_ALL, cb )

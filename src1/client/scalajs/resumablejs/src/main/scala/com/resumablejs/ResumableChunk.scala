@@ -18,23 +18,30 @@ trait ResumableChunk extends js.Object {
   val opts: js.Object
   def getOpt(o: String): js.Any
 
-  val resumableObj: Resumable
+  val flowObj: Resumable
   val fileObj: ResumableFile
   val fileObjSize: Double
   val fileObjType: String
   val offset: Int
+  val tested: Boolean
   val callback: js.Function
   val lastProgressCallback: js.Date
-  val tested: Boolean
   val retries: Int
   val pendingRetry: Boolean
   /** 0 = unprocessed, 1 = processing, 2 = finished */
   val preprocessState: Int
+  /** 0 = not read, 1 = reading, 2 = finished */
+  val readState: Int
   val markComplete: Boolean
 
   val loaded: Double    // xhr.onProgress
+  val total: Double
+  val chunkSize: Double
+  val filename: String  //or null
+
   val startByte: Double
   val endByte: Double
+  def computeEndByte(): Double
 
   val xhr: dom.XMLHttpRequest
   def test(): Unit
@@ -49,6 +56,10 @@ trait ResumableChunk extends js.Object {
   /** @return xhr.responseText | "" */
   def message(): String
   def progress(relative: Boolean): Double
+
+
+  // prototype:
+  def getParams(): ChunkQsParams
 
 }
 
@@ -75,4 +86,17 @@ object ResumableChunk {
 
   }
 
+}
+
+
+/** @see [[https://github.com/flowjs/flow.js/blob/master/src/flow.js#L1281]] */
+trait ChunkQsParams extends js.Object {
+  val flowChunkNumber: Int
+  val flowChunkSize: Int
+  val flowCurrentChunkSize: Double
+  val flowTotalSize: Double
+  val flowIdentifier: String
+  val flowFilename: String
+  val flowRelativePath: String
+  val flowTotalChunks: Int
 }

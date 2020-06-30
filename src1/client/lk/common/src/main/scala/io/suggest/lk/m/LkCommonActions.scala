@@ -9,9 +9,9 @@ import io.suggest.crypto.hash.MHash
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.proto.http.model.{HttpRespMapped, IHttpRespInfo, MTransferProgressInfo}
+import io.suggest.proto.http.model.IHttpResultHolder
 import io.suggest.spa.DAction
-import io.suggest.up.MUploadResp
+import io.suggest.up.{ITransferProgressInfo, MUploadResp}
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.File
 
@@ -114,14 +114,14 @@ case class PrepUploadResp(tryRes: Try[MUploadResp], src: FileHashStart) extends 
 /** Запущен (но ещё не исполнен) запрос фактической закачки файла на сервер.
   * Запрос делается в два шага, чтобы пробросить в состояние request-holder для возможности доступа к abort/progress-функциям.
   */
-case class UploadReqStarted(respHolder: IHttpRespInfo[MUploadResp], src: FileHashStart, hostUrl: MHostUrl) extends ILkCommonAction
+case class UploadReqStarted(respHolder: IHttpResultHolder[MUploadResp], src: FileHashStart, hostUrl: MHostUrl) extends ILkCommonAction
 
 /** Завершён запрос заливки файла на сервер. */
 case class UploadRes(tryRes: Try[MUploadResp], src: FileHashStart, hostUrl: MHostUrl) extends ILkCommonAction
 // TODO Объеденить оба case class'а?
 
 /** Прогресс заливки файла на сервер. */
-case class UploadProgress( info: MTransferProgressInfo, src: FileHashStart ) extends ILkCommonAction
+case class UploadProgress( info: ITransferProgressInfo, src: FileHashStart ) extends ILkCommonAction
 
 /** Экшен для запуска какой-то реакции на событие появления новой гистограммы в карте оных.
   * Испускается из PictureAh, и попадает в DocEditAh для выставления bgColor на jd-элементах,

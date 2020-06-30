@@ -3,6 +3,7 @@ package io.suggest.proto.http.client.adp.xhr
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.model._
 import io.suggest.sjs.JsApiUtil
+import io.suggest.up.ITransferProgressInfo
 import org.scalajs.dom
 import org.scalajs.dom.{Blob, XMLHttpRequest}
 
@@ -62,12 +63,10 @@ case object XhrAdp extends HttpClientAdp {
     // Подцепить событие onProgress на функцию, если задана.
     for (onProgressF <- httpReq.data.onProgress) {
       req.onprogress = { e: dom.ProgressEvent =>
-        // Скопипастить все данные в свой класс на случай mutable-инстансов событий, которые иногда встречаются в мире js.
-        val progressInfo = MTransferProgressInfo(
-          loadedBytes         = e.loaded,
-          totalBytes          = e.total,
-          lengthComputable    = e.lengthComputable,
-        )
+        val progressInfo = new ITransferProgressInfo {
+          def loadedBytes         = e.loaded
+          def totalBytes          = Option.when(e.lengthComputable)( e.total )
+        }
         onProgressF( progressInfo )
       }
     }
@@ -83,7 +82,7 @@ class XhrHttpRespHolder(
                          xhr                  : XMLHttpRequest,
                          override val resultFut : Future[XhrHttpResp]
                        )
-  extends HttpRespHolder
+  extends IHttpRespHolder
 {
 
   override def abortOrFail(): Unit =

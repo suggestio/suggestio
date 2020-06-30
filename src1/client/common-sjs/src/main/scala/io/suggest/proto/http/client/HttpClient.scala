@@ -4,7 +4,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
-import io.suggest.proto.http.model.{HttpReq, HttpRespHolder}
+import io.suggest.proto.http.model.{HttpReq, IHttpRespHolder}
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -108,7 +108,7 @@ object HttpClient {
       .get
   }
 
-  def execute(httpReq: HttpReq): HttpRespHolder = {
+  def execute(httpReq: HttpReq): IHttpRespHolder = {
     val adp = if (httpReq.data.onProgress.nonEmpty && XhrAdp.isAvailable) {
       XhrAdp
     } else {

@@ -1,5 +1,7 @@
 package io.suggest.model
 
+import java.net.URLEncoder
+
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
@@ -25,6 +27,17 @@ import japgolly.univeq._
   * Description: Контейнер jvm-only данных для разных пошаренных common-моделей.
   */
 object CommonModelsJvm extends MacroLogsDyn {
+
+  /** Тут костыль для символов типа '[' ']' в qs-ключах.
+    * Почему-то штатный String QSB экранирует эти символы, но только для String.
+    */
+  implicit object BindableString2 extends QueryStringBindable[String] {
+    def bind(key: String, params: Map[String, Seq[String]]) =
+      params.get(key).flatMap(_.headOption).map(Right(_))
+    def unbind(key: String, value: String) =
+      s"$key=${URLEncoder.encode(value, "utf-8")}"
+  }
+
 
   /** Биндинги для url query string. */
   implicit def mScApiVsnQsb: QueryStringBindable[MScApiVsn] =
@@ -244,7 +257,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   implicit def hashesHexQsb: QueryStringBindable[HashesHex] = {
    new QueryStringBindableImpl[HashesHex] {
 
-     private def strB = implicitly[QueryStringBindable[String]]
+     private def strB = BindableString2
 
      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, HashesHex]] = {
        val hashesHexOptEithSeq = for (mhash <- MHashes.values) yield {

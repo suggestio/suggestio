@@ -30,4 +30,7 @@ object QsConstants {
   /** Суффикс индекса в индексированном qs-ключе: четвертый символ в "x[1]". */
   def QS_KEY_INDEX_SUFFIX = ']'
 
+
+  def DO_NOT_TOUCH_PREFIX = "~~~~"
+
 }

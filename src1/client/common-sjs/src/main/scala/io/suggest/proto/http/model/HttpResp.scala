@@ -54,6 +54,17 @@ trait HttpResp {
 
 }
 
+trait DummyHttpResp extends HttpResp {
+  override def isFromInnerCache = false
+  override def getHeader(headerName: String) = None
+
+  private def _unsupported = throw new UnsupportedOperationException
+  override def bodyUsed = true
+  override def text() = _unsupported
+  override def arrayBuffer() = _unsupported
+  override def blob() = _unsupported
+}
+
 
 /** Извлекатель инстанса Future[HttpResp] из произвольных исходных данных. */
 sealed trait IHttpRespHelper[A] {

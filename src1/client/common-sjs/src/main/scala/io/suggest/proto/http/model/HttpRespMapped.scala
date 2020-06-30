@@ -15,17 +15,24 @@ object HttpRespMapped {
   @inline implicit def univEq[T: UnivEq]: UnivEq[HttpRespMapped[T]] = UnivEq.force
 }
 
-case class HttpRespMapped[T](
-                              override val httpRespHolder       : HttpRespHolder,
-                              override val resultFut            : Future[T],
-                            )
-  extends IHttpRespInfo[T]
-{
+trait IHttpRespMapped[T] extends IHttpResultHolder[T] {
+
+  def httpResultHolder: IHttpResultHolder[HttpResp]
+
+  override def abortOrFail(): Unit =
+    httpResultHolder.abortOrFail()
 
   override def mapResult[T2](f: Future[T] => Future[T2]): HttpRespMapped[T2] = {
-    copy(
-      resultFut = f(resultFut),
+    HttpRespMapped(
+      httpResultHolder = httpResultHolder,
+      resultFut = f( resultFut )
     )
   }
 
 }
+
+case class HttpRespMapped[T](
+                              httpResultHolder                  : IHttpResultHolder[HttpResp],
+                              override val resultFut            : Future[T],
+                            )
+  extends IHttpRespMapped[T]

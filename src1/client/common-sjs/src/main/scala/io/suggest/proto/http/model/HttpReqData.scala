@@ -3,6 +3,7 @@ package io.suggest.proto.http.model
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.cache.MHttpCacheInfo
+import io.suggest.up.ITransferProgressInfo
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.ext.Ajax
 
@@ -79,7 +80,7 @@ case class HttpReqData(
                         timeoutMs     : Option[Int]           = None,
                         respType      : HttpRespType          = HttpRespTypes.Default,
                         cache         : MHttpCacheInfo        = MHttpCacheInfo.default,
-                        onProgress    : Option[MTransferProgressInfo => Unit] = None,
+                        onProgress    : Option[ITransferProgressInfo => Unit] = None,
                       ) {
 
   def timeoutMsOr0 = timeoutMs getOrElse 0
@@ -91,26 +92,5 @@ case class HttpReqData(
     * @see [[https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials]]
     */
   def xhrWithCredentialsCrossSite: Boolean = false
-
-}
-
-
-/** Инфа по прогрессу передачи данных.
-  * Сделано по мотивам dom.ProgressEvent.
-  *
-  * @param loadedBytes Загружено байт
-  * @param totalBytes Общий объём трафика.
-  * @param lengthComputable totalBytes содержит что-то осмысленное?
-  */
-case class MTransferProgressInfo(
-                                  loadedBytes       : Double,
-                                  totalBytes        : Double,
-                                  lengthComputable  : Boolean,
-                                ) {
-  def loadedPercent = ((totalBytes / loadedBytes) * 100).toInt
-}
-object MTransferProgressInfo {
-
-  @inline implicit def univEq: UnivEq[MTransferProgressInfo] = UnivEq.derive
 
 }

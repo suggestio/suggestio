@@ -1048,7 +1048,7 @@ final class Upload @Inject()(
         LOGGER.trace(s"$logPrefix isOk?$isChunkMetaOk")
         // Вернуть инфу по сверке:
         if (isChunkMetaOk) Ok
-        else NotFound
+        else NoContent
       }
   }
 

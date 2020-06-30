@@ -1,10 +1,10 @@
 package io.suggest.sec
 
+import io.suggest.model.CommonModelsJvm
 import javax.crypto.Mac
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 import org.apache.commons.codec.binary.Hex
-import play.api.mvc.QueryStringBindable
 import play.core.parsers.FormUrlEncodedParser
 
 /**
@@ -26,10 +26,8 @@ import io.suggest.sec.QsbSigner._
  * QSB для подписывания параметров, передаваемых в qs в рамках указанного ключа.
  * @param secretKey Ключ подписи. Например "item". Лучше вместе с точкой в конце, если проверяются под-параметры.
  * @param signKeyName Имя qs-ключа с подписью.
- * @param strB QSB-биндер для строк.
  */
 class QsbSigner(secretKey: String, signKeyName: String)
-               (implicit strB: QueryStringBindable[String])
   extends QueryStringBindableImpl[Map[String, Seq[String]]]
   with MacroLogsImpl
 {
@@ -96,7 +94,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
    *         None - если подпись не найдена.
    */
   override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Map[String, Seq[String]]]] = {
-    for (maybeSignature <- strB.bind(signKeyName, params)) yield {
+    for (maybeSignature <- CommonModelsJvm.BindableString2.bind(signKeyName, params)) yield {
       maybeSignature.flatMap { signature =>
         val pfk = onlyParamsForKey(key, params).toSeq
         LOGGER.trace(s"bind($key): Params:\n All: ${params.mkString(" & ")};\n onlyForKey: ${pfk.mkString(" & ")}")
@@ -169,7 +167,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
     paramsSigned(key, value)
       .iterator
       .flatMap { case (k, vs) => vs.map(k -> _) }
-      .map { case (k, v) => strB.unbind(k, v) }
+      .map { case (k, v) => CommonModelsJvm.BindableString2.unbind(k, v) }
       .mkString("&")
   }
 

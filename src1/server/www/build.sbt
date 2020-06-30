@@ -120,7 +120,10 @@ resolvers ++= {
 
 
 // Импорты для play-роутера.
+// play-2.8.2: CommonModelsJvm идёт первым, чтобы implicit import BindableString2 распространялся на все кастомные qsb.
+// Штатный String QSB использует ненужный URLEncoder для qs-ключей, ломая ключи со скобками типа a[1].
 routesImport ++= Seq(
+  "io.suggest.model.CommonModelsJvm._",
   "io.suggest.routes.RoutesJvmConst._",
   "models._",
   "util.qsb._",
@@ -155,8 +158,7 @@ routesImport ++= Seq(
   "models.mext.MExtServicesJvm._",
   "io.suggest.id.login.LoginFormPagesJvm._",
   "io.suggest.tags.MTagsSearchQsJvm._",
-  "io.suggest.captcha.MCaptchaJvm._",
-  "io.suggest.model.CommonModelsJvm._"
+  "io.suggest.captcha.MCaptchaJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

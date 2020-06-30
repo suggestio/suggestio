@@ -240,11 +240,10 @@ object Common {
       */
     val SCALA_JAVA_TIME = "2.0.0"
 
-    /** library providing multiple simultaneous, stable and resumable uploads via the HTML5 File API.
-      * @see [[https://github.com/23/resumable.js]]
-      * @see [[https://www.npmjs.com/package/resumablejs]]
+    /** Flow.js library providing multiple simultaneous, stable and resumable uploads via the HTML5 File API.
+      * @see [[https://github.com/flowjs/flow.js/]]
       */
-    val RESUMABLE_JS = "1.1.0"
+    val FLOW_JS = "2.14.1"
 
   }
 

@@ -353,6 +353,6 @@ sealed trait SysNodeEdgesRoutes extends js.Object {
 
 @js.native
 sealed trait UploadCtlRoutes extends js.Object {
-  def chunk(signed: js.Dictionary[js.Any], chunkQs: js.Dictionary[js.Any]): PlayRoute = js.native
-  def hasChunk(signed: js.Dictionary[js.Any], chunkQs: js.Dictionary[js.Any]): PlayRoute = js.native
+  def chunk(signed: String, chunkQs: js.Dictionary[js.Any]): PlayRoute = js.native
+  def hasChunk(signed: String, chunkQs: js.Dictionary[js.Any]): PlayRoute = js.native
 }

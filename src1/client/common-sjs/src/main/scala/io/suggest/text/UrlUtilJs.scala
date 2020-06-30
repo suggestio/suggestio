@@ -1,6 +1,5 @@
 package io.suggest.text
 
-import scala.scalajs.js
 import scala.scalajs.js.URIUtils
 
 /**
@@ -38,7 +37,7 @@ object UrlUtilJs {
         kv.split('=') match {
           case Array(k, v) =>
             // из ключа надо удалить namespace-префикс вместе с точкой.
-            val k2 = URIUtils.decodeURIComponent(k)
+            val k2 = k
             val v2 = URIUtils.decodeURIComponent( v )
             Some(k2 -> v2)
           case _ => None

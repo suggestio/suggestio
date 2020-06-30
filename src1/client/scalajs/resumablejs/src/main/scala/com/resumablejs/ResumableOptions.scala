@@ -1,5 +1,7 @@
 package com.resumablejs
 
+import org.scalajs.dom.ext.Ajax
+
 import scala.scalajs.js
 import scala.scalajs.js.|
 
@@ -13,20 +15,21 @@ import scala.scalajs.js.|
 trait ResumableOptions extends js.Object {
 
   /** The target URL for the multipart POST request.
-    *
-    * This can be a string or a function that allows you you to construct and return a value, based on supplied params.
-    *   function(params) => String. params = ["a=1", "b=asd%20asd", ...]
-    *
+    * This can be a string or a function. If a function, it will be passed a FlowFile, a FlowChunk and isTest boolean (Default: /)
     * (Default: /)
-    **/
-  val target: js.UndefOr[String | js.Function1[js.Array[String], String]] = js.undefined
-  val testTarget: js.UndefOr[String | js.Function1[js.Array[String], String]] = js.undefined
+    */
+  val target: js.UndefOr[String | js.Function3[ResumableFile, ResumableChunk, /*isTest:*/Boolean, String]] = js.undefined
+
+  /** Enable single file upload. Once one file is uploaded, second file will overtake existing one, first one will be canceled.
+    * Default: false
+    */
+  val singleFile: js.UndefOr[Boolean] = js.undefined
 
   /** The size in bytes of each uploaded chunk of data.
     * The last uploaded chunk will be at least this size and up to two the size, see Issue #51 for details and reasons.
     * (Default: 1*1024*1024)
     */
-  val chunkSize: js.UndefOr[Int] = js.undefined
+  val chunkSize: js.UndefOr[Int | js.Function1[ResumableFile, Int]] = js.undefined
 
   /** Force all chunks to be less or equal than chunkSize.
     * Otherwise, the last chunk will be greater than or equal to chunkSize.
@@ -47,54 +50,54 @@ trait ResumableOptions extends js.Object {
   /** The name of the chunk index (base-1) in the current upload POST parameter to use for the file chunk.
     * (Default: resumableChunkNumber)
     */
-  val chunkNumberParameterName: js.UndefOr[String] = js.undefined
+  //val chunkNumberParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the total number of chunks POST parameter to use for the file chunk.
     * (Default: resumableTotalChunks)
     */
-  val totalChunksParameterName: js.UndefOr[String] = js.undefined
+  //val totalChunksParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the general chunk size POST parameter to use for the file chunk.
     * (Default: resumableChunkSize)
     */
-  val chunkSizeParameterName: js.UndefOr[String] = js.undefined
+  //val chunkSizeParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the total file size number POST parameter to use for the file chunk.
     * (Default: resumableTotalSize)
     */
-  val totalSizeParameterName: js.UndefOr[String] = js.undefined
+  //val totalSizeParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the unique identifier POST parameter to use for the file chunk.
     * (Default: resumableIdentifier)
     */
-  val identifierParameterName: js.UndefOr[String] = js.undefined
+  //val identifierParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the original file name POST parameter to use for the file chunk.
     * (Default: resumableFilename)
     */
-  val fileNameParameterName: js.UndefOr[String] = js.undefined
+  //val fileNameParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the file's relative path POST parameter to use for the file chunk.
     * (Default: resumableRelativePath)
     */
-  val relativePathParameterName: js.UndefOr[String] = js.undefined
+  //val relativePathParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the current chunk size POST parameter to use for the file chunk.
     * (Default: resumableCurrentChunkSize)
     */
-  val currentChunkSizeParameterName: js.UndefOr[String] = js.undefined
+  //val currentChunkSizeParameterName: js.UndefOr[String] = js.undefined
 
   /** The name of the file type POST parameter to use for the file chunk.
     * (Default: resumableType)
     */
-  val typeParameterName: js.UndefOr[String] = js.undefined
+  //val typeParameterName: js.UndefOr[String] = js.undefined
 
   /** Extra parameters to include in the multipart POST with data.
     * This can be an object or a function.
-    * If a function, it will be passed a ResumableFile and a ResumableChunk object.
+    * If a function, it will be passed a FlowFile, a FlowChunk object and a isTest boolean.
     * (Default: {})
     */
-  val query: js.UndefOr[js.Object | js.Function2[ResumableFile, ResumableChunk, js.Dictionary[js.Any]]] = js.undefined
+  val query: js.UndefOr[js.Object | js.Function3[ResumableFile, ResumableChunk, /*isTest:*/Boolean, js.Dictionary[js.Any]]] = js.undefined
 
   /** Method for chunk test request. (Default: 'GET') */
   val testMethod: js.UndefOr[String] = js.undefined
@@ -102,10 +105,16 @@ trait ResumableOptions extends js.Object {
   /** Method for chunk upload request. (Default: 'POST') */
   val uploadMethod: js.UndefOr[String] = js.undefined
 
+  /** Once a file is uploaded, allow reupload of the same file.
+    * By default, if a file is already uploaded, it will be skipped unless the file is removed from the existing Flow object.
+    * (Default: false)
+    */
+  val allowDuplicateUploads: js.UndefOr[Boolean] = js.undefined
+
   /** Extra prefix added before the name of each parameter included in the multipart POST or in the test GET.
     * (Default: "")
     */
-  val parameterNamespace: js.UndefOr[String] = js.undefined
+  //val parameterNamespace: js.UndefOr[String] = js.undefined
 
   /** Extra headers to include in the multipart POST with data.
     * This can be an object or a function that allows you to construct and return a value, based on supplied file.
@@ -129,6 +138,22 @@ trait ResumableOptions extends js.Object {
     * (Default: true)
     */
   val testChunks: js.UndefOr[Boolean] = js.undefined
+
+  /** Optional function to change Raw Data just before the XHR Request can be sent for each chunk.
+    * To the function, it will be passed the chunk and the data as a Parameter.
+    * Return the data which will be then sent to the XHR request without further modification.
+    * (Default: null).
+    */
+  val changeRawDataBeforeSend: js.UndefOr[js.Function1[Ajax.InputData, Ajax.InputData]] = js.undefined
+
+  /** Optional function to initialize the fileObject.
+    * To the function it will be passed a FlowFile and a FlowChunk arguments.
+    */
+  val initFileFn: js.UndefOr[js.Function2[ResumableFile, ResumableChunk, js.Object]] = js.undefined
+
+  /** Optional function wrapping reading operation from the original file.
+    * To the function it will be passed the FlowFile, the startByte and endByte, the fileType and the FlowChunk. */
+  val readFileFn: js.UndefOr[js.Function5[ResumableFile, Double, Double, String, ResumableChunk, js.Any]] = js.undefined
 
   /** Optional function to process each chunk before testing & sending.
     * Function is passed the chunk as parameter, and should call the preprocessFinished method on the chunk when finished.
@@ -181,7 +206,29 @@ trait ResumableOptions extends js.Object {
   /** The number of milliseconds to wait before retrying a chunk on a non-permanent error.
     * Valid values are any positive integer and undefined for immediate retry. (Default: undefined)
     */
-  val chunkRetryInterval: js.UndefOr[Int] = js.undefined
+  val chunkRetryInterval: js.UndefOr[Double] = js.undefined
+
+  /** The time interval in milliseconds between progress reports.
+    * Set it to 0 to handle each progress callback. */
+  val progressCallbacksInterval: js.UndefOr[Double] = js.undefined
+
+  /** Used for calculating average upload speed. Number from 1 to 0.
+    * Set to 1 and average upload speed wil be equal to current upload speed.
+    * For longer file uploads it is better set this number to 0.02, because time remaining estimation will be more accurate.
+    * This parameter must be adjusted together with progressCallbacksInterval parameter.
+    * (Default 0.1)
+    */
+  val speedSmoothingFactor: js.UndefOr[Double] = js.undefined
+
+  /** Response is success if response status is in this list.
+    * (Default: [200,201, 202])
+    */
+  val successStatuses: js.UndefOr[js.Array[Int]] = js.undefined
+
+  /** Response fails if response status is in this list.
+    * (Default: [404, 415, 500, 501])
+    */
+  val permanentErrors: js.UndefOr[js.Array[Int]] = js.undefined
 
   /** Standard CORS requests do not send or set any cookies by default.
     * In order to include cookies as part of the request, you need to set the withCredentials property to true.

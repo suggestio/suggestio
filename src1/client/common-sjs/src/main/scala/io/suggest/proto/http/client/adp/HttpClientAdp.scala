@@ -1,6 +1,6 @@
 package io.suggest.proto.http.client.adp
 
-import io.suggest.proto.http.model.{HttpFailedException, HttpRespHolder}
+import io.suggest.proto.http.model.{HttpFailedException, IHttpRespHolder}
 import io.suggest.proto.http.model.HttpReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -18,7 +18,7 @@ trait HttpClientAdp {
   def isAvailable: Boolean
 
   /** Запустить http-запрос. */
-  def apply(httpReq: HttpReq): HttpRespHolder
+  def apply(httpReq: HttpReq): IHttpRespHolder
 
 }
 

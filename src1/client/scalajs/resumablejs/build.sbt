@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile ++= Seq(
-  "resumablejs"   -> Common.Vsn.RESUMABLE_JS
+  "@flowjs/flow.js"   -> Common.Vsn.FLOW_JS
 )
 
 useYarn := true

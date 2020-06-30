@@ -83,6 +83,12 @@ var @(name) = {};
   @* Код сериализация JSON object-ов в qs-строку, портированный из _objQsbTpl. *@
   var _d = "@KEY_PARTS_DELIM_STR";
   var @JSRR_OBJ_TO_QS_F = function(k,v) {
+    @* Если пришла строка с префиксом ~~~~, то сразу просто возвращаем эту строку, игноря ключ. Это нужно для безопасного проброса signed qs. *@
+    var dntP = "@DO_NOT_TOUCH_PREFIX";
+    if (typeof v == "string" && v.startsWith(dntP)) {
+      return v.substring( dntP.length );
+    }
+
     @* Аккамулятор строки-результата. Лучше сделать списком или каким-то string builder-ом. *@
     var a = "";
 

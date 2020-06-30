@@ -47,11 +47,14 @@ class UploadStatusR {
           _renderReqErr( upState.prepareReq, MsgCodes.`Preparing` ),
           _renderReqErr( upState.uploadReq, MsgCodes.`Uploading.file` ),
 
-          upState.progress.whenDefined { progress =>
-            <.span(
-              `(`, progress.loadedPercent.pct, `)`
-            )
-          },
+          upState
+            .progress
+            .flatMap(_.progressPercent)
+            .whenDefined { progressPercent =>
+              <.span(
+                `(`, progressPercent.pct, `)`
+              )
+            },
 
         )
       }

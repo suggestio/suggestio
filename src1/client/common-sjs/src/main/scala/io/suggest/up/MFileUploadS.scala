@@ -2,7 +2,7 @@ package io.suggest.up
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.proto.http.model.{HttpRespHolder, MTransferProgressInfo}
+import io.suggest.proto.http.model.IHttpResultHolder
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -21,7 +21,7 @@ object MFileUploadS {
   /** Поддержка FastEq для инстансов [[MFileUploadS]]. */
   implicit object MFileUploadSFastEq extends FastEq[MFileUploadS] {
     override def eqv(a: MFileUploadS, b: MFileUploadS): Boolean = {
-      (a.reqHolder ===* b.reqHolder) &&
+      (a.resultHolder ===* b.resultHolder) &&
       (a.prepareReq ===* b.prepareReq) &&
       (a.uploadReq ===* b.uploadReq) &&
       (a.progress ===* b.progress)
@@ -30,7 +30,7 @@ object MFileUploadS {
 
   @inline implicit def univEq: UnivEq[MFileUploadS] = UnivEq.derive
 
-  def reqHolder = GenLens[MFileUploadS](_.reqHolder)
+  def reqHolder = GenLens[MFileUploadS](_.resultHolder)
   def prepareReq = GenLens[MFileUploadS](_.prepareReq)
   def uploadReq = GenLens[MFileUploadS](_.uploadReq)
   def progress = GenLens[MFileUploadS](_.progress)
@@ -56,17 +56,16 @@ object MFileUploadS {
 
 /** Класс модели состояния аплоада файла на сервер.
   *
-  * @param reqHolder XHR-инстанс происходящего сейчас реквеста (для возможности отмены).
-  *            С учётом FetctAPI, инстанса может и не быть.
+  * @param resultHolder HttpClient respHolder происходящего сейчас реквеста (для возможности отмены).
   * @param prepareReq Pot реквеста подготовки к аплода.
   * @param uploadReq Pot реквеста аплоада файла.
   * @param progress Сколько даннных уже отправлено на сервер.
   */
 case class MFileUploadS(
-                         reqHolder    : Option[HttpRespHolder]     = None,
+                         resultHolder : Option[IHttpResultHolder[MUploadResp]]     = None,
                          // Может быть, надо объеденить оба реквеста?
                          prepareReq   : Pot[MUploadResp]           = Pot.empty,
                          uploadReq    : Pot[MUploadResp]           = Pot.empty,
-                         progress     : Option[MTransferProgressInfo] = None
+                         progress     : Option[ITransferProgressInfo] = None
                        )
 

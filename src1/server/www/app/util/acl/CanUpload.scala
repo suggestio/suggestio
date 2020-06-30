@@ -168,7 +168,9 @@ class CanUpload @Inject()(
         mNodes.getByIdCache( existNodeId )
       }
       existNode = existNodeOpt getOrElse {
-        val res = httpErrorHandler.onClientError( request0, Status.NOT_FOUND, s"Node#${upTg.info.existNodeId.orNull} not found." )
+        val msg = s"Node#${upTg.info.existNodeId.orNull} not found."
+        LOGGER.warn( s"$logPrefix $msg")
+        val res = httpErrorHandler.onClientError( request0, Status.FORBIDDEN, msg )
         throw HttpResultingException( res )
       }
 
@@ -181,16 +183,20 @@ class CanUpload @Inject()(
             .exists(_.flag ==* MEdgeFlags.InProgress)
         }
         .getOrElse {
-          val res = httpErrorHandler.onClientError( request0, Status.FORBIDDEN, "Node not ready for upload" )
+          val msg = s"Node#${upTg.info.existNodeId.orNull} not ready for upload"
+          LOGGER.warn(s"$logPrefix $msg")
+          val res = httpErrorHandler.onClientError( request0, Status.FORBIDDEN, msg )
           throw HttpResultingException( res )
         }
 
       edgeMedia = fileEdge.media getOrElse {
+        LOGGER.warn(s"$logPrefix Node#${upTg.info.existNodeId.orNull} missing edgeMedia in fileEdge#$fileEdge")
         val res = httpErrorHandler.onClientError( request0, Status.FAILED_DEPENDENCY, "Missing upload information." )
         throw HttpResultingException( res )
       }
 
       totalSizeB = edgeMedia.file.sizeB getOrElse {
+        LOGGER.warn(s"$logPrefix Node#${upTg.info.existNodeId.orNull} edgeMedia.file.size missing.")
         val res = httpErrorHandler.onClientError( request0, Status.LENGTH_REQUIRED, "Missing upload information." )
         throw HttpResultingException( res )
       }
@@ -209,6 +215,7 @@ class CanUpload @Inject()(
           }
 
         if (!isNodeUploading) {
+          LOGGER.warn(s"$logPrefix Node#${upTg.info.existNodeId.orNull} hashesHex mismatch.")
           val res = httpErrorHandler.onClientError( request0, Status.FORBIDDEN, "Node not ready for upload." )
           throw HttpResultingException( res )
         }
@@ -217,6 +224,7 @@ class CanUpload @Inject()(
 
         // totalSize должен хранится в edgeMedia ноды, поэтому в qs - необязателен. Но должен совпадать с хранимым в ноде.
         if ( !upChunkQs.totalSize.fold(true)(_ ==* totalSizeB) ) {
+          LOGGER.warn(s"$logPrefix File totalSize qs=${upChunkQs.toString} != saved=$totalSizeB in node#${upTg.info.existNodeId.orNull}")
           val resFut = httpErrorHandler.onClientError( request0, Status.NOT_ACCEPTABLE, "Total size unexpected." )
           throw HttpResultingException( resFut )
         }
@@ -226,6 +234,7 @@ class CanUpload @Inject()(
 
         // begin byte chunk'а не выходит за пределы totalSizeB
         if (chunkStartAbsB >= totalSizeB) {
+          LOGGER.warn(s"$logPrefix Chunk#${upChunkQs.chunkNumber} start.abs=$chunkStartAbsB b >= totalSize=$totalSizeB -- out of file byte-range")
           val resFut = httpErrorHandler.onClientError( request0, Status.NOT_ACCEPTABLE, "StartByte out of total size." )
           throw HttpResultingException(resFut)
         }
@@ -245,7 +254,9 @@ class CanUpload @Inject()(
                   contentType ==* MimeConst.APPLICATION_OCTET_STREAM
                 }
             ) {
-              val resFut = httpErrorHandler.onClientError( request0, Status.UNSUPPORTED_MEDIA_TYPE, "Octet contentType expected." )
+              val msg = "Octet contentType expected."
+              LOGGER.warn(s"$logPrefix $msg")
+              val resFut = httpErrorHandler.onClientError( request0, Status.UNSUPPORTED_MEDIA_TYPE, msg )
               throw HttpResultingException( resFut )
             }
 
@@ -257,13 +268,17 @@ class CanUpload @Inject()(
               true
             })
               .getOrElse {
-                val res = httpErrorHandler.onClientError( request0, Status.REQUEST_ENTITY_TOO_LARGE, "EndByte out of totalSize." )
+                val msg = "EndByte out of totalSize."
+                LOGGER.warn(s"$logPrefix $msg")
+                val res = httpErrorHandler.onClientError( request0, Status.REQUEST_ENTITY_TOO_LARGE, msg )
                 throw HttpResultingException(res)
               }
 
-          case _ =>
+          case other =>
             // should never happen
-            val resFut = httpErrorHandler.onClientError( request0, Status.NOT_IMPLEMENTED, "Unexpected HTTP method." )
+            val msg = s"Unexpected HTTP method: $other"
+            LOGGER.warn(s"$logPrefix $msg")
+            val resFut = httpErrorHandler.onClientError( request0, Status.NOT_IMPLEMENTED, msg )
             throw HttpResultingException(resFut)
         })
       }

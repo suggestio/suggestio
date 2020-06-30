@@ -14,11 +14,11 @@ import scala.scalajs.js.JavaScriptException
   * Description: Модель асинхронного http-ответа, абстрагированная от нижележащего http-механизма.
   * Содержит фьючерс внутри.
   */
-trait HttpRespHolder extends IHttpRespInfo[HttpResp] {
+trait IHttpResultHolder[T] {
   // Поддержка маппинга ответа сервера здесь (внутри HttpRespHolder) смысла нет,
   // т.к. abort- и progress-методы после фактического окончания http-запроса теряют смысл.
 
-  override def httpRespHolder = this
+  def resultFut: Future[T]
 
   /** Прервать запрос.
     * @throws JavaScriptException Теоретически возможно. */
@@ -29,25 +29,20 @@ trait HttpRespHolder extends IHttpRespInfo[HttpResp] {
     try {
       abortOrFail()
     } catch { case ex: Throwable =>
-      HttpRespHolder.logger.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, ex, this )
+      IHttpResultHolder.logger.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, ex, this )
     }
   }
 
-  override def mapResult[T2](f: Future[HttpResp] => Future[T2]): HttpRespMapped[T2] = {
-    HttpRespMapped(
-      httpRespHolder = this,
-      resultFut      = f(resultFut),
-    )
-  }
+  def mapResult[T2](f: Future[T] => Future[T2]): HttpRespMapped[T2]
 
 }
 
 
-object HttpRespHolder extends Log {
+object IHttpResultHolder extends Log {
 
-  @inline implicit def univEq: UnivEq[HttpRespHolder] = UnivEq.force
+  @inline implicit def univEq[T]: UnivEq[IHttpResultHolder[T]] = UnivEq.force
 
-  implicit class HrhOpsExt( val httpRespHolder: HttpRespHolder ) extends AnyVal {
+  implicit final class PlainHttpRespHolderOpsExt( private val httpRespHolder: IHttpResultHolder[HttpResp] ) extends AnyVal {
 
     /** Вернуть обёртку результата запроса, но делать page reload, если истекла сессия. */
     def respAuthFut: Future[HttpResp] = {
@@ -61,10 +56,12 @@ object HttpRespHolder extends Log {
 }
 
 
-/** Общий интерфейс для [[HttpRespHolder]] и [[HttpRespMapped]]. */
-trait IHttpRespInfo[T] {
-  def httpRespHolder       : HttpRespHolder
-  def resultFut            : Future[T]
-
-  def mapResult[T2](f: Future[T] => Future[T2]): HttpRespMapped[T2]
+/** Быстрая реализация [[IHttpResultHolder]] для сырого HttpResp. */
+trait IHttpRespHolder extends IHttpResultHolder[HttpResp] {
+  override def mapResult[T2](f: Future[HttpResp] => Future[T2]): HttpRespMapped[T2] = {
+    HttpRespMapped[T2](
+      httpResultHolder = this,
+      resultFut      = f(resultFut),
+    )
+  }
 }

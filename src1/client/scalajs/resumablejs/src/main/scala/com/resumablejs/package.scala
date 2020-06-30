@@ -7,6 +7,6 @@ package com
   */
 package object resumablejs {
 
-  final val PACKAGE_NAME = "resumablejs"
+  final val PACKAGE_NAME = "@flowjs/flow.js"
 
 }

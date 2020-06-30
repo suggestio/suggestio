@@ -175,7 +175,7 @@ lazy val lkCommonSjs = {
     .dependsOn(
       commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
       reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs,
-      resumableSjs
+      resumableSjs,
     )
 }
 

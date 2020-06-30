@@ -129,7 +129,7 @@ object FetchApiStub extends js.Object {
 }
 
 
-/** Реализация [[HttpRespHolder]] над Fetch API.
+/** Реализация [[IHttpRespHolder]] над Fetch API.
  *
   * @param resultFut Фьючерс ответа.
   */
@@ -137,7 +137,7 @@ case class FetchHttpRespHolder(
                                 abortCtlUnd          : js.UndefOr[AbortController],
                                 override val resultFut : Future[FetchHttpResp]
                               )
-  extends HttpRespHolder
+  extends IHttpRespHolder
 {
 
   /** Прервать запрос. */

@@ -1,0 +1,174 @@
+package io.suggest.up
+
+import java.util.regex.Pattern
+
+import com.resumablejs.{Resumable, ResumableChunk, ResumableFile, ResumableOptions}
+import io.suggest.common.qs.QsConstants
+import io.suggest.crypto.asm.HashWwTask
+import io.suggest.crypto.hash.{HashesHex, MHashes}
+import io.suggest.file.MJsFileInfo
+import io.suggest.routes.routes
+import io.suggest.text.UrlUtilJs
+import io.suggest.url.MHostUrl
+import io.suggest.xplay.json.PlayJsonSjsUtil
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
+import play.api.libs.json.Json
+
+import scala.collection.immutable.HashMap
+import scala.concurrent.Promise
+import scala.scalajs.js
+import scala.util.{Success, Try}
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 30.06.2020 14:49
+  * Description: Утиль для взаимодействия с resumable.js.
+  */
+object FlowjsUtil {
+
+  private def _url2qsKvs( url: String ): js.Dictionary[js.Any] = {
+    // для вызова роуты надо словари от hostInfo.relUrl и arr в нормальном формате.
+    val qsKeyDelim = QsConstants.KEY_PARTS_DELIM_STR
+    val namespacedKeyPrefixRE = s"^[^$qsKeyDelim]+${Pattern.quote(qsKeyDelim)}".r
+
+    js.Dictionary[js.Any](
+      // Взять только qs без "?" в начале:
+      UrlUtilJs.qsKvsParse(
+        url
+          .replaceFirst("^[^?]+?", "")
+          // токенизировать
+          .split('&')
+      )
+        .map { case (k, v) =>
+          val k2 = namespacedKeyPrefixRE.replaceFirstIn( k, "" )
+          val v2 = v: js.Any
+          k2 -> v2
+        }
+        .to(Seq): _*
+    )
+  }
+
+
+  /** Собрать инстанс Resumable.js для UploadApi. */
+  def tryFlowJs(uploadHostUrl: MHostUrl): Try[Resumable] = {
+    // Узнать, resumable.js в состоянии работать или нет?
+    Try {
+      lazy val upTgQsStr = QsConstants.DO_NOT_TOUCH_PREFIX + (uploadHostUrl.relUrl.replaceFirst("^[^?]+\\?", ""))
+
+      val chunkHashAlgo = MHashes.Sha1
+      var chunkHashes = HashMap.empty[Int, String]
+
+      val _targetChunkUrlF: js.Function3[ResumableFile, ResumableChunk, Boolean, String] = {
+        (file, chunk, isTest) =>
+          // Надо получить на руки данные chunk'а
+          val chunkParams = chunk.getParams()
+          val chunkHashesHex = chunkHashes
+            .get( chunkParams.flowChunkNumber )
+            .fold[HashesHex]( Map.empty ) { chunkHashValue =>
+              Map.empty + (chunkHashAlgo -> chunkHashValue)
+            }
+
+          val chunkQs = MUploadChunkQs(
+            chunkNumber = chunkParams.flowChunkNumber,
+            totalChunks = Some( chunkParams.flowTotalChunks ),
+            //chunkSizeGeneral = MUploadChunkSizes.default,  // TODO chunkParams.chunkSize?
+            hashesHex   = chunkHashesHex,
+          )
+          val chunkQsDict = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(chunkQs) )
+
+          routes.controllers.Upload
+            .chunk(upTgQsStr, chunkQsDict)
+            .absoluteURL( true )
+      }
+
+      def __preprocessChunk( chunk: ResumableChunk ): Unit = {
+        println("Preprocess chunk: " + chunk)
+        val cn = chunk.chunkNumber
+        if (chunkHashes contains cn) {
+          Try( chunk.preprocessFinished() )
+        } else {
+          val chunkBlob = chunk.fileObj.file.slice( chunk.startByte, chunk.endByte )
+
+          // blocking: выполнить хэширование одной части: TODO Opt Нужна оптимизация WebWorkers.
+          HashWwTask( chunkHashAlgo, chunkBlob )
+            .run()
+            .andThen { case Success(chunkHashValue) =>
+              chunkHashes += (chunk.chunkNumber -> chunkHashValue)
+            }
+            //.andThen { case _ =>
+            //  chunkBlob.close()   // .close is not a function.
+            //}
+            .andThen { case r =>
+              println(s"preprocess chunk#${chunk.chunkNumber} finished: $r")
+              Try( chunk.preprocessFinished() )
+            }
+        }
+      }
+
+      val _chunkSizeB = MUploadChunkSizes.default.value
+
+      new Resumable(
+        new ResumableOptions {
+          override val target = js.defined( _targetChunkUrlF )
+          override val chunkSize = _chunkSizeB
+          override val simultaneousUploads = 2
+
+          //override val chunkNumberParameterName = F.CHUNK_NUMBER
+          //override val totalChunksParameterName = F.TOTAL_CHUNKS
+          //override val chunkSizeParameterName = F.CHUNK_SIZE
+          // TODO currentChunkSizeParameterName
+          //override val totalSizeParameterName = F.TOTAL_SIZE
+          //override val identifierParameterName = F.IDENTIFIER
+          //override val fileNameParameterName = F.FILENAME
+          //override val relativePathParameterName = F.RELATIVE_PATH
+
+          override val method = ResumableOptions.Methods.OCTET
+          override val testChunks = true
+
+          override val uploadMethod = routes.controllers.Upload
+            .chunk( "", js.Dictionary.empty )
+            .method
+
+          override val testMethod = routes.controllers.Upload
+            .hasChunk( "", js.Dictionary.empty )
+            .method
+
+          // preprocessChunk(): вычислять хэш-сумму слайс-блоба, закидывать в общую мапу, которая будет использована для сборки ссылки.
+          override val preprocess = js.defined( __preprocessChunk )
+        }
+      )
+    }
+      .filter(_.support)
+  }
+
+
+  /** Подписаться на события onProgress. */
+  def subscribeProgress(rsmbl: Resumable, file: MJsFileInfo, onProgressF: ITransferProgressInfo => Unit): Unit = {
+    rsmbl.onProgress { () =>
+      val transferProgressInfo = new ITransferProgressInfo {
+        override def totalBytes = Some( file.blob.size )
+        override def loadedBytes: Double = rsmbl.progress() * file.blob.size
+        override def progress = Some( rsmbl.progress() )
+      }
+      onProgressF( transferProgressInfo )
+    }
+  }
+
+
+  /** Подписка на события окончания заливки. */
+  def subscribeErrors(rsmbl: Resumable, p: Promise[Unit]): Unit = {
+    rsmbl.onError { (msg, file, chunk) =>
+      if (!rsmbl.isUploading())
+        p.tryFailure( new RuntimeException(msg + ": " + file.uniqueIdentifier + " #" + chunk.chunkNumber) )
+    }
+  }
+
+  def subscribeComplete(rsmbl: Resumable, p: Promise[Unit]): Unit = {
+    rsmbl.onComplete { () =>
+      p.trySuccess(())
+    }
+  }
+
+}

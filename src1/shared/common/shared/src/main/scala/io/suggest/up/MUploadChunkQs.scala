@@ -81,11 +81,11 @@ object MUploadChunkQs {
   */
 case class MUploadChunkQs(
                            chunkNumber        : Int,
-                           totalChunks        : Option[Int],
-                           chunkSizeGeneral   : MUploadChunkSize,
-                           totalSize          : Option[Long],
-                           identifier         : Option[String],
-                           fileName           : Option[String],
-                           relativePath       : Option[String],
+                           totalChunks        : Option[Int] = None,
+                           chunkSizeGeneral   : MUploadChunkSize = MUploadChunkSizes.default,
+                           totalSize          : Option[Long]   = None,
+                           identifier         : Option[String] = None,
+                           fileName           : Option[String] = None,
+                           relativePath       : Option[String] = None,
                            hashesHex          : HashesHex,
                          )
