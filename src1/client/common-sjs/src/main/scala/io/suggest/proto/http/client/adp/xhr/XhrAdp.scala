@@ -7,7 +7,6 @@ import org.scalajs.dom
 import org.scalajs.dom.{Blob, XMLHttpRequest}
 
 import scala.concurrent.{Future, Promise}
-import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import japgolly.univeq._
 
@@ -60,6 +59,19 @@ case object XhrAdp extends HttpClientAdp {
     else
       req.send(d.body)
 
+    // Подцепить событие onProgress на функцию, если задана.
+    for (onProgressF <- httpReq.data.onProgress) {
+      req.onprogress = { e: dom.ProgressEvent =>
+        // Скопипастить все данные в свой класс на случай mutable-инстансов событий, которые иногда встречаются в мире js.
+        val progressInfo = MTransferProgressInfo(
+          loadedBytes         = e.loaded,
+          totalBytes          = e.total,
+          lengthComputable    = e.lengthComputable,
+        )
+        onProgressF( progressInfo )
+      }
+    }
+
     new XhrHttpRespHolder( req, promise.future )
   }
 
@@ -69,7 +81,7 @@ case object XhrAdp extends HttpClientAdp {
 /** Поддержка нативного XMLHttpRequest. */
 class XhrHttpRespHolder(
                          xhr                  : XMLHttpRequest,
-                         override val httpResponseFut : Future[XhrHttpResp]
+                         override val resultFut : Future[XhrHttpResp]
                        )
   extends HttpRespHolder
 {

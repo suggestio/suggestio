@@ -71,6 +71,7 @@ object HttpReqData {
   * @param timeoutMs Таймаут. К данным реквеста не относится, но он тут, т.к. в XHR он задаётся до execute().
   * @param respType Тип возвращаемого ответа (для XHR).
   * @param cache Параметры кэширования.
+  * @param onProgress Дёргать функцию по мере прогресса. $1 - 0..100
   */
 case class HttpReqData(
                         headers       : Map[String, String]   = Map.empty,
@@ -78,6 +79,7 @@ case class HttpReqData(
                         timeoutMs     : Option[Int]           = None,
                         respType      : HttpRespType          = HttpRespTypes.Default,
                         cache         : MHttpCacheInfo        = MHttpCacheInfo.default,
+                        onProgress    : Option[MTransferProgressInfo => Unit] = None,
                       ) {
 
   def timeoutMsOr0 = timeoutMs getOrElse 0
@@ -89,5 +91,26 @@ case class HttpReqData(
     * @see [[https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials]]
     */
   def xhrWithCredentialsCrossSite: Boolean = false
+
+}
+
+
+/** Инфа по прогрессу передачи данных.
+  * Сделано по мотивам dom.ProgressEvent.
+  *
+  * @param loadedBytes Загружено байт
+  * @param totalBytes Общий объём трафика.
+  * @param lengthComputable totalBytes содержит что-то осмысленное?
+  */
+case class MTransferProgressInfo(
+                                  loadedBytes       : Double,
+                                  totalBytes        : Double,
+                                  lengthComputable  : Boolean,
+                                ) {
+  def loadedPercent = ((totalBytes / loadedBytes) * 100).toInt
+}
+object MTransferProgressInfo {
+
+  @inline implicit def univEq: UnivEq[MTransferProgressInfo] = UnivEq.derive
 
 }

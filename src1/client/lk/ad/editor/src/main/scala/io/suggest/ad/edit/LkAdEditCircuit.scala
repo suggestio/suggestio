@@ -390,6 +390,7 @@ class LkAdEditCircuit(
     ctxIdOptRO            = confRW.zoom { conf =>
       Some(conf.ctxId)
     },
+    dispatcher            = this,
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )

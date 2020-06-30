@@ -48,6 +48,12 @@ case object FetchAdp extends HttpClientAdp {
         .exception2httpEx(httpReq)
     }
 
+    // TODO Поддержка progress'а (для upload'а).
+    //   Для Fetch API требуются вкручивать костыли по-интереснее, что потребует изменения HttpClient API (upload progress надо будет заявлять при сборке реквеста):
+    //   - https://github.com/whatwg/fetch/issues/21#issuecomment-381425704 (отсылка к спекам, требуется Request поверх ReadableStream в браузере).
+    //   - https://github.com/whatwg/fetch/issues/607#issuecomment-564461907 (download-пример, НЕ для upload)
+    // Поэтому происходит откат XhrAdp при аплоаде с progress-функцией.
+
     new FetchHttpRespHolder( abortCtlUnd, respFut )
   }
 
@@ -125,11 +131,11 @@ object FetchApiStub extends js.Object {
 
 /** Реализация [[HttpRespHolder]] над Fetch API.
  *
-  * @param httpResponseFut Фьючерс ответа.
+  * @param resultFut Фьючерс ответа.
   */
 case class FetchHttpRespHolder(
                                 abortCtlUnd          : js.UndefOr[AbortController],
-                                override val httpResponseFut : Future[FetchHttpResp]
+                                override val resultFut : Future[FetchHttpResp]
                               )
   extends HttpRespHolder
 {

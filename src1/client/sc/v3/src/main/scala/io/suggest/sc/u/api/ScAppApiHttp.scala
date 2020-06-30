@@ -45,7 +45,7 @@ class ScAppApiHttp extends IScAppApi {
         ),
       )
     )
-      .httpResponseFut
+      .resultFut
       .successIf200
       .unJson[MScAppGetResp]
   }

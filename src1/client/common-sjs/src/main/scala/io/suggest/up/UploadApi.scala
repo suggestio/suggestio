@@ -36,7 +36,8 @@ trait IUploadApi {
     * @param file Данные по файлу.
     * @return Фьючерс с ответом сервера.
     */
-  def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String]): HttpRespMapped[MUploadResp]
+  def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String] = None,
+                   onProgress: Option[MTransferProgressInfo => Unit] = None): HttpRespMapped[MUploadResp]
 
   // chunk(), hasChunk() пока неявно реализуются внутри resumable.js.
 
@@ -69,7 +70,8 @@ class UploadApiHttp extends IUploadApi {
   }
 
 
-  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String]): HttpRespMapped[MUploadResp] = {
+  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String] = None,
+                            onProgress: Option[MTransferProgressInfo => Unit] = None): HttpRespMapped[MUploadResp] = {
     // Отправить как обычно, т.е. через multipart/form-data:
     val formData = new FormData()
     formData.append(
@@ -92,7 +94,8 @@ class UploadApiHttp extends IUploadApi {
         headers = Map(
           HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON
         ),
-        body    = formData
+        body    = formData,
+        onProgress = onProgress,
       )
     )
 

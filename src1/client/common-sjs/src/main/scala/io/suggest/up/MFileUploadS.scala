@@ -2,7 +2,7 @@ package io.suggest.up
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.proto.http.model.HttpRespHolder
+import io.suggest.proto.http.model.{HttpRespHolder, MTransferProgressInfo}
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -33,6 +33,7 @@ object MFileUploadS {
   def reqHolder = GenLens[MFileUploadS](_.reqHolder)
   def prepareReq = GenLens[MFileUploadS](_.prepareReq)
   def uploadReq = GenLens[MFileUploadS](_.uploadReq)
+  def progress = GenLens[MFileUploadS](_.progress)
 
 
   implicit class FileUploadOpsExt( private val fUp: MFileUploadS ) extends AnyVal {
@@ -59,13 +60,13 @@ object MFileUploadS {
   *            С учётом FetctAPI, инстанса может и не быть.
   * @param prepareReq Pot реквеста подготовки к аплода.
   * @param uploadReq Pot реквеста аплоада файла.
-  * @param progress Сколько процентов файла уже отправлено пройдено.
+  * @param progress Сколько даннных уже отправлено на сервер.
   */
 case class MFileUploadS(
                          reqHolder    : Option[HttpRespHolder]     = None,
                          // Может быть, надо объеденить оба реквеста?
                          prepareReq   : Pot[MUploadResp]           = Pot.empty,
                          uploadReq    : Pot[MUploadResp]           = Pot.empty,
-                         progress     : Option[Int]                = None
+                         progress     : Option[MTransferProgressInfo] = None
                        )
 

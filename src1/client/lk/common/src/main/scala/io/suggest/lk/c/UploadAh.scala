@@ -60,6 +60,7 @@ final class UploadAh[V, M](
                             contentTypeCheck    : ContentTypeCheck,
                             ctxIdOptRO          : ModelRO[Option[String]],
                             modelRW             : ModelRW[M, MUploadAh[V]],
+                            dispatcher          : Dispatcher,
                           )(implicit picViewContAdp: IJdEdgeIdViewAdp[V])
   extends ActionHandler(modelRW)
   with Log
@@ -68,6 +69,28 @@ final class UploadAh[V, M](
   private type ResPair_t = (MUploadAh[V], Effect)
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    case m: UploadProgress =>
+      val v0 = value
+      UploadAh
+        ._findEdgeByIdOrBlobUrl(v0.edges, m.src)
+        .fold( noChange ) { edgeDataJs0 =>
+          val progressOpt2 = Option.when( m.info.lengthComputable )(m.info)
+          val lens = MEdgeDataJs.fileJs
+            .composeTraversal( Traversal.fromTraverse[Option, MJsFileInfo] )
+            .composeLens( MJsFileInfo.upload )
+            .composeLens( MFileUploadS.progress )
+
+          if (lens.getAll(edgeDataJs0) contains progressOpt2) {
+            noChange
+          } else {
+            val edgeDataJs2 = (lens set progressOpt2)(edgeDataJs0)
+            val v2 = v0
+              .withEdges( v0.edges + (m.src.edgeUid -> edgeDataJs2) )
+            updated( v2 )
+          }
+        }
+
 
     // Выставлен файл в input'е заливки картинки.
     // 1. Отрендерить его на экране (т.е. сохранить в состоянии в виде блоба).
@@ -437,7 +460,14 @@ final class UploadAh[V, M](
 
                     UploadReqStarted(
                       // TODO Нужно respHolder сделать опциональным или по-сильнее абстрагировать, для поддержки resumable.js
-                      respHolder  = uploadApi.doFileUpload(firstUpUrl, fileJs, ctxIdOptRO.value),
+                      respHolder  = uploadApi.doFileUpload(
+                        upData      = firstUpUrl,
+                        file        = fileJs,
+                        ctxIdOpt    = ctxIdOptRO.value,
+                        onProgress  = Some { info =>
+                          dispatcher( UploadProgress(info, m.src) )
+                        },
+                      ),
                       src         = m.src,
                       hostUrl     = firstUpUrl,
                     )
@@ -525,8 +555,6 @@ final class UploadAh[V, M](
               Success( UploadRes(tryRes, m.src, m.hostUrl) )
             }
         }
-
-        // TODO Подписаться на события upload progress, чтобы мониторить ход заливки.
 
         // Сохранить httpReq.httpRespHolder в состояние для возможности взаимодействия с закачкой:
         val fileJsOpt2 = UploadAh._fileJsWithUpload(edge0.fileJs)(

@@ -4,6 +4,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
+import io.suggest.proto.http.model.{HttpReq, HttpRespHolder}
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -97,13 +98,23 @@ object HttpClient {
 
 
   /** Вернуть реальное API для отправки http-запросов. */
-  val execute: HttpClientAdp = {
+  val defaultExecutor: HttpClientAdp = {
+    // FetchAdp приоритетен и нужен для очень нужного Cache API (кэширования в моб.приложении и не только).
     ( FetchAdp #::
       XhrAdp #::
       LazyList.empty[HttpClientAdp]
     )
       .find(_.isAvailable)
       .get
+  }
+
+  def execute(httpReq: HttpReq): HttpRespHolder = {
+    val adp = if (httpReq.data.onProgress.nonEmpty && XhrAdp.isAvailable) {
+      XhrAdp
+    } else {
+      defaultExecutor
+    }
+    adp(httpReq)
   }
 
 }

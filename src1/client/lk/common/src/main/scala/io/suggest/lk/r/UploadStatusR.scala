@@ -43,15 +43,15 @@ class UploadStatusR {
             )
           },
 
-          upState.progress.whenDefined { progress =>
-            <.span(
-              `(`, progress.pct, `)`
-            )
-          },
-
           //upState.prepareReq
           _renderReqErr( upState.prepareReq, MsgCodes.`Preparing` ),
           _renderReqErr( upState.uploadReq, MsgCodes.`Uploading.file` ),
+
+          upState.progress.whenDefined { progress =>
+            <.span(
+              `(`, progress.loadedPercent.pct, `)`
+            )
+          },
 
         )
       }

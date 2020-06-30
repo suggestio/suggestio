@@ -16,10 +16,10 @@ object HttpRespMapped {
 }
 
 case class HttpRespMapped[T](
-                              httpRespHolder       : HttpRespHolder,
-                              resultFut            : Future[T],
+                              override val httpRespHolder       : HttpRespHolder,
+                              override val resultFut            : Future[T],
                             )
-  extends IMapResult[T]
+  extends IHttpRespInfo[T]
 {
 
   override def mapResult[T2](f: Future[T] => Future[T2]): HttpRespMapped[T2] = {
@@ -28,10 +28,4 @@ case class HttpRespMapped[T](
     )
   }
 
-}
-
-
-/** Общий интерфейс для отражения результата http-запроса в новое состояние. */
-trait IMapResult[T] {
-  def mapResult[T2](f: Future[T] => Future[T2]): HttpRespMapped[T2]
 }

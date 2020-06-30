@@ -160,6 +160,7 @@ class LkAdnEditCircuit
       modelRW   = mUploadAhRW,
       contentTypeCheck = ContentTypeCheck.OnlyImages,
       ctxIdOptRO = rootRW.zoom(_ => None),
+      dispatcher = this,
     )
   }
 

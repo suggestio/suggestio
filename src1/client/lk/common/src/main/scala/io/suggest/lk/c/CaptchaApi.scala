@@ -52,7 +52,7 @@ class CaptchaApiHttp extends ICaptchaApi {
           )
         )
       )
-        .httpResponseFut
+        .resultFut
         .successIf200
 
       blob <- resp.blob()

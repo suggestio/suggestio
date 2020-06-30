@@ -44,7 +44,7 @@ class EdgeEditApiHttp extends IEdgeEditApi {
         )
       )
     )
-      .httpResponseFut
+      .resultFut
       .successIf20X
       .map( _ => None )
   }
@@ -60,7 +60,7 @@ class EdgeEditApiHttp extends IEdgeEditApi {
         )
       )
     )
-      .httpResponseFut
+      .resultFut
       .successIf20X
       .map( _ => None )
   }

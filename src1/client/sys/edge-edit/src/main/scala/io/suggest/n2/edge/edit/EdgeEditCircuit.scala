@@ -224,6 +224,7 @@ class EdgeEditCircuit
     contentTypeCheck = ContentTypeCheck.AllowAll,
     ctxIdOptRO = ctxIdOptRO,
     modelRW = mUploadRW,
+    dispatcher = this,
   )
 
   private val fileExistAh = new FileExistAh(
