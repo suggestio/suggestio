@@ -32,6 +32,7 @@ object CommonModelsJvm extends MacroLogsDyn {
     * Почему-то штатный String QSB экранирует эти символы, но только для String.
     */
   implicit object BindableString2 extends QueryStringBindable[String] {
+    // TODO Этот объект-костыль можно просто удалить, когда в play пофиксят https://github.com/playframework/playframework/issues/10369
     def bind(key: String, params: Map[String, Seq[String]]) =
       params.get(key).flatMap(_.headOption).map(Right(_))
     def unbind(key: String, value: String) =

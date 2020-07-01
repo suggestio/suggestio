@@ -24,7 +24,7 @@
   <strong>
     Создать новый календарь
   </strong>
-  @form(routes.SysCalendar.newCalendarFromTemplateSubmit) {
+  @form( routes.SysCalendar.newCalendarFromTemplateSubmit() ) {
     @select(
       cf("tplId"),
       options = hcs.iterator.map(hk => hk.toString -> hk.toString).toSeq,

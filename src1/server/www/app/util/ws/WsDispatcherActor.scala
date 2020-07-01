@@ -35,7 +35,7 @@ class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl 
   def actorSelection = actorSystem.actorSelection(ACTOR_PATH)
 
   def startLink(arf: ActorRefFactory): ActorRef = {
-    arf.actorOf(Props[WsDispatcherActor], name=ACTOR_NAME)
+    arf.actorOf(Props[WsDispatcherActor](), name=ACTOR_NAME)
   }
 
   def getForWsId(wsId: String): Future[Option[ActorRef]] = {

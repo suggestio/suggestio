@@ -545,7 +545,7 @@ class LkAdvGeo @Inject() (
             .toMat( Sink.collection[(String, MRangeYmdOpt), Map[String, MRangeYmdOpt]] )(Keep.right)
         }( Keep.both )
         // И запустить этот велосипед на исполнение, сгенерив пачку фьючерсов:
-        .run
+        .run()
 
       // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
       for {

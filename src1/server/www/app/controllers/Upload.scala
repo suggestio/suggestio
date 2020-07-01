@@ -475,7 +475,7 @@ final class Upload @Inject()(
 
         // Прежде чем запускать тяжелые проверки, надо быстро сверить лимиты для текущего типа файла:
         if {
-          val r = upCtx.validateFileContentEarly
+          val r = upCtx.validateFileContentEarly()
           if (!r)
             __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.imgFmt.orNull}/${upCtx.imageWh.orNull}" )
           r
@@ -487,7 +487,7 @@ final class Upload @Inject()(
         // Лёгкие синхронные проверки завершены успешно. Переходим в асинхрон и в тяжелые проверки.
 
         // В фоне запустить JVM-only валидацию содержимого файла. Все файлы должны иметь корректный внутренний формат.
-        val isFileValidFut = upCtx.validateFileFut
+        val isFileValidFut = upCtx.validateFileFut()
 
         for {
           // Рассчитать хэш-суммы файла (digest).
@@ -861,7 +861,7 @@ final class Upload @Inject()(
               colorDetectFut <- colorDetectFutOpt
               cdArgs         <- uploadArgs.info.colorDetect
               ctxId          <- ctxIdOpt
-              hasTransparentColorFut <- upCtx.imageHasTransparentColors
+              hasTransparentColorFut <- upCtx.imageHasTransparentColors()
             } {
               LOGGER.trace(s"$logPrefix ColorDetect+WS: for uploaded image, ctxId#${ctxId.key}")
               val wsNotifyFut = for {

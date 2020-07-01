@@ -231,7 +231,7 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
 
     case SnSubscribeSync(subscriber, classifier) =>
       subscribeOne(subscriber, classifier)
-      sender ! true
+      sender() ! true
 
     // Кто-то хочет заменить одного подписчика другим атомарно.
     case SnReplaceSubscriber(subscriberOld, classifier, subscriberNew) =>
@@ -239,7 +239,7 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
 
     case SnReplaceSubscriberSync(subscriberOld, classifier, subscriberNew) =>
       replaceSubscriber(subscriberOld, classifier, subscriberNew)
-      sender ! true
+      sender() ! true
 
     // Кто-то отписывается от сообщений по классификатору.
     case SnUnsubscribe(subscriber, classifier) =>

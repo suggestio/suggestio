@@ -311,7 +311,7 @@ POST /id/login                     @controllers.Ident.epw2LoginSubmit(r: Option[
 ## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
 POST /id/reg/s0                         @controllers.Ident.regStep0Submit
 POST /id/reg/s1                         @controllers.Ident.epw2RegSubmit()
-POST /id/reg/s2                         @controllers.Ident.smsCodeCheck
+POST /id/reg/s2                         @controllers.Ident.smsCodeCheck()
 POST /id/reg/s3                         @controllers.Ident.regFinalSubmit
 GET  /id/pwch                           @controllers.Ident.pwChangeForm(onNode: Option[MEsUuId] ?= None)
 POST /id/pwch                           @controllers.Ident.pwChangeSubmit

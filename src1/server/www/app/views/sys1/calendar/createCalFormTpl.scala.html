@@ -6,7 +6,7 @@
 @calBase("Создать новый календарь") {
   @calFormTpl(
     cf		= cf,
-    submitCall	= routes.SysCalendar.createCalendarSubmit,
+    submitCall	= routes.SysCalendar.createCalendarSubmit(),
     btnText	= messages("Create")
   )
 }

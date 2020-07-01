@@ -143,11 +143,12 @@ class UploadApiHttp extends IUploadApi with Log {
 
         // Запустить аплоад.
         resumable.addFile( file.blob.asInstanceOf[dom.File] )
-        Future {
-          resumable.upload()
-          // Если подписаться на complete до запуска, то событие срабатывает слишком рано.
-          FlowjsUtil.subscribeComplete(resumable, p)
-        }
+
+        // resumable.js: Если подписаться на complete до запуска, то событие срабатывает слишком рано.
+        // TODO flow.js: Узнать, тоже страдает от этого?
+        FlowjsUtil.subscribeComplete(resumable, p)
+
+        resumable.upload()
 
         val resumableFut = p.future
 

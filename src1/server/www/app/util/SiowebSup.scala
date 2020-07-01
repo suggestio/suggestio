@@ -85,7 +85,7 @@ class SiowebSupActor @Inject() (
   def receive = {
     case GetChildRef(childName) =>
       val reply: GetChildRefReply_t = context.child(childName) // вручную проверяем тип из-за динамической типизации в akka.
-      sender ! reply
+      sender() ! reply
   }
 
 
