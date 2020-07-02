@@ -7,8 +7,9 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.txn.MTxns
+import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.daily.MTfDaily
-import io.suggest.n2.node.MNodes
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.mcal.MCalendars
@@ -283,13 +284,11 @@ class SysBilling @Inject() (
 
           // Запустить сохранение нового id контракта в узел.
           val nodeSaveFut = mcSaveFut.flatMap { mc =>
+            val lens = MNode.billing
+              .composeLens( MNodeBilling.contractId )
             mNodes.tryUpdate(request.mnode) { mnode =>
-              assert(mnode.billing.contractId.isEmpty)
-              mnode.copy(
-                billing = mnode.billing.copy(
-                  contractId = mc.id
-                )
-              )
+              assert( lens.get(mnode).isEmpty )
+              lens.set( mc.id )(mnode)
             }
           }
 
@@ -394,12 +393,11 @@ class SysBilling @Inject() (
       LOGGER.debug(s"$logPrefix Erasing #${request.mcontract.legalContractId}")
 
       val nodeSaveFut = deleteFut.flatMap { _ =>
-        mNodes.tryUpdate(request.mnode) { mnode =>
-          mnode.copy(
-            billing = mnode.billing.copy(
-              contractId = None
-            )
-          )
+        // TODO XXX дорефакторить tryUpdate + monocle. TODO Допроверять код на предмет null'ов, возвращаемых из tryUpdate.
+        mNodes.tryUpdate(request.mnode) {
+          MNode.billing
+            .composeLens( MNodeBilling.contractId )
+            .set( None )
         }
       }
 

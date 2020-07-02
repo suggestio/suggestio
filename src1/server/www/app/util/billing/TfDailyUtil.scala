@@ -289,14 +289,11 @@ class TfDailyUtil @Inject()(
     import scala.util.{Failure, Success}
 
     // Запускаем апдейт узла.
-    val fut = mNodes.tryUpdate(mnode0) { mnode =>
-      mnode.copy(
-        billing = mnode.billing.copy(
-          tariffs = mnode.billing.tariffs.copy(
-            daily = newTf
-          )
-        )
-      )
+    val fut = mNodes.tryUpdate(mnode0) {
+      MNode.billing
+        .composeLens( MNodeBilling.tariffs )
+        .composeLens( MNodeTariffs.daily )
+        .set( newTf )
     }
 
     // Логгируем в фоне результаты апдейта.

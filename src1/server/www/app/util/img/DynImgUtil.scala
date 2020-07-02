@@ -399,6 +399,7 @@ final class DynImgUtil @Inject() (
           fileEdge  <- fileNode.edges.withPredicateIter( MPredicates.Blob.File )
           nodeId    <- fileNode.id
           edgeMedia <- fileEdge.media
+          storage   <- edgeMedia.storage
         } yield {
           // Убедиться, что пришёл ожидавшийся элемент:
           if (edgeMedia.file.isOriginal) {
@@ -417,10 +418,10 @@ final class DynImgUtil @Inject() (
               _ <- {
                 LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#$nodeId of type ${edgeMedia.file.mime getOrElse ""} size=${edgeMedia.file.sizeB.fold("?")(_.toString)}b wh=${edgeMedia.picture.whPx.orNull} storage=${edgeMedia.storage}")
                 iMediaStorages
-                  .client( edgeMedia.storage.storage )
-                  .delete( edgeMedia.storage.data )
+                  .client( storage.storage )
+                  .delete( storage.data )
                   .recover { case _: NoSuchElementException if deleteEvenStorageMissing =>
-                    LOGGER.warn(s"$logPrefix Not found file ${edgeMedia.storage} in storage")
+                    LOGGER.warn(s"$logPrefix Not found file $storage in storage")
                     // TODO А что делать если вдруг шарда отвалилась?
                   }
               }

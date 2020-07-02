@@ -90,11 +90,12 @@ class CanDownloadFile @Inject()(
       fileEdges = mnode.edges.withPredicate( MPredicates.Blob.File )
 
       // Найти файловый эдж
-      (fileEdge, edgeMedia) = (for {
+      (fileEdge, edgeMedia, storage) = (for {
         fileEdge1  <- fileEdges.out.iterator
         edgeMedia1 <- fileEdge1.media.iterator
+        storage1   <- edgeMedia1.storage
       } yield {
-        (fileEdge1, edgeMedia1)
+        (fileEdge1, edgeMedia1, storage1)
       })
         .nextOption()
         .getOrElse {
@@ -116,7 +117,7 @@ class CanDownloadFile @Inject()(
           // Ссылка всё-таки валидна, но устарела изнутри. Поэтому залить в ссылку новые хэши, отредиректив.
           val nodeId = dlQs.nodeId.id
           LOGGER.debug(s"$logPrefix Media-node#${dlQs.nodeId} found, but one (or more) URL hashes mismatches:\n URL: ${dlQs.hashesHex.mkString(" | ")}\n expected: ${edgeMedia.file.hashesHex.mkString(" | ")}. Recovering URL...")
-          val mediaHostsMapFut = cdnUtil.mediasHosts1( (nodeId, edgeMedia.storage) :: Nil )
+          val mediaHostsMapFut = cdnUtil.mediasHosts1( (nodeId, storage) :: Nil )
           val dlQs2 = (MDownLoadQs.hashesHex set MFileMetaHash.toHashesHex( edgeMedia.file.hashesHex.dlHash ) )(dlQs)
           val dlUrlCall = routes.Upload.download( dlQs2 )
           val resFut = for {
@@ -137,7 +138,7 @@ class CanDownloadFile @Inject()(
       }
 
       // Проверить, соотносится ли запрос к файлу с текущим узлом?
-      storageCheckE <- cdnUtil.checkStorageForThisNode( edgeMedia.storage )
+      storageCheckE <- cdnUtil.checkStorageForThisNode( storage )
 
       // Поискать инфу по распределённому хранилищу:
       storageInfoOpt <- _getStorageInfo( edgeMedia )(request)
@@ -168,29 +169,31 @@ class CanDownloadFile @Inject()(
 
 
   private def _getStorageInfo( edgeMedia: MEdgeMedia )(implicit rh: RequestHeader): Future[Option[MSwfsFidInfo]] = {
-    for {
-      // Проверить, соотносится ли запрос к файлу с текущим узлом?
-      storageCheckE <- cdnUtil.checkStorageForThisNode( edgeMedia.storage )
-    } yield {
-      def logPrefix = s"_getStorageInfo($edgeMedia):"
-      // Поискать инфу по распределённому хранилищу:
-      storageCheckE.fold(
-        {expectedVolumeLocations =>
-          LOGGER.warn(s"$logPrefix DL request NOT related to current node.\n Current node = ${uploadUtil.MY_NODE_PUBLIC_URL}\n Storage volumes = ${expectedVolumeLocations.mkString(" | ")}")
-          expectedVolumeLocations
-            // Самозащита от неверных редиректов (seaweedfs нередко удивляла в прошлом).
-            .find(_.publicUrl.nonEmpty)
-            .fold {
-              LOGGER.warn(s"$logPrefix No available volume locations for media ${edgeMedia.storage}\n file = ${edgeMedia.storage}")
-              _throwNotFound(rh)
-            } { vol0 =>
-              LOGGER.debug(s"$logPrefix Redirecting from me ${uploadUtil.MY_NODE_PUBLIC_URL} => ${vol0.publicUrl}\n storage = ${edgeMedia.storage}\n file = ${edgeMedia.file}")
-              val rdr = Results.Redirect( vol0.publicUrl + rh.uri, Status.SEE_OTHER )
-              throw HttpResultingException( Future.successful(rdr) )
-            }
-        },
-        identity,
-      )
+    FutureUtil.optFut2futOpt( edgeMedia.storage ) { storage =>
+      for {
+        // Проверить, соотносится ли запрос к файлу с текущим узлом?
+        storageCheckE <- cdnUtil.checkStorageForThisNode( storage )
+      } yield {
+        def logPrefix = s"_getStorageInfo($edgeMedia):"
+        // Поискать инфу по распределённому хранилищу:
+        storageCheckE.fold(
+          {expectedVolumeLocations =>
+            LOGGER.warn(s"$logPrefix DL request NOT related to current node.\n Current node = ${uploadUtil.MY_NODE_PUBLIC_URL}\n Storage volumes = ${expectedVolumeLocations.mkString(" | ")}")
+            expectedVolumeLocations
+              // Самозащита от неверных редиректов (seaweedfs нередко удивляла в прошлом).
+              .find(_.publicUrl.nonEmpty)
+              .fold {
+                LOGGER.warn(s"$logPrefix No available volume locations for media ${edgeMedia.storage}\n file = ${edgeMedia.storage}")
+                _throwNotFound(rh)
+              } { vol0 =>
+                LOGGER.debug(s"$logPrefix Redirecting from me ${uploadUtil.MY_NODE_PUBLIC_URL} => ${vol0.publicUrl}\n storage = ${edgeMedia.storage}\n file = ${edgeMedia.file}")
+                val rdr = Results.Redirect( vol0.publicUrl + rh.uri, Status.SEE_OTHER )
+                throw HttpResultingException( Future.successful(rdr) )
+              }
+          },
+          identity,
+        )
+      }
     }
   }
 

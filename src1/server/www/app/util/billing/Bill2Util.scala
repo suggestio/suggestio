@@ -239,12 +239,10 @@ class Bill2Util @Inject() (
       mnode2 <- DBIO.from {
         LOGGER.trace(s"$logPrefix Init contract#${mc2.id.orNull}")
 
-        mNodes.tryUpdate(mnode) { mnode0 =>
-          mnode0.copy(
-            billing = mnode0.billing.copy(
-              contractId = mc2.id
-            )
-          )
+        mNodes.tryUpdate(mnode) {
+          MNode.billing
+            .composeLens( MNodeBilling.contractId )
+            .set( mc2.id )
         }
       }
     } yield {

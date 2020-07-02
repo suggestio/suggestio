@@ -74,7 +74,7 @@ object MEdgeMedia
   implicit def edgeMediaJson: OFormat[MEdgeMedia] = {
     val F = Fields
     (
-      (__ \ F.STORAGE_FN).format[MStorageInfo] and
+      (__ \ F.STORAGE_FN).formatNullable[MStorageInfo] and
       (__ \ F.FILE_META_FN).format[MFileMeta] and
       (__ \ F.PICTURE_META_FN).formatNullable[MPictureMeta]
         .inmap[MPictureMeta](
@@ -110,7 +110,7 @@ object MEdgeMedia
   * @param picture Метаданные картинки, если это картинка.
   */
 case class MEdgeMedia(
-                       storage          : MStorageInfo,
+                       storage          : Option[MStorageInfo] = None,
                        file             : MFileMeta,
                        picture          : MPictureMeta        = MPictureMeta.empty,
                      )

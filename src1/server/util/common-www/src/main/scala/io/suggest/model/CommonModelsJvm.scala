@@ -438,31 +438,32 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
   implicit def uploadChunkQs: QueryStringBindable[MUploadChunkQs] = {
-    @inline def intB = implicitly[QueryStringBindable[Int]]
-    @inline def intOptB = implicitly[QueryStringBindable[Option[Int]]]
-    @inline def chunkSizeB = implicitly[QueryStringBindable[MUploadChunkSize]]
-    @inline def longOptB = implicitly[QueryStringBindable[Option[Long]]]
+    val intOptB = implicitly[QueryStringBindable[Option[Int]]]
+    @inline def chunkSizeOptB = implicitly[QueryStringBindable[Option[MUploadChunkSize]]]
+    val longOptB = implicitly[QueryStringBindable[Option[Long]]]
     lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
     @inline def hashesHexB = implicitly[QueryStringBindable[HashesHex]]
 
     new QueryStringBindableImpl[MUploadChunkQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUploadChunkQs]] = {
         val F = MUploadChunkQs.Fields
-        val k = key1F( key )
         for {
-          chunkNumberE          <- intB.bind( k(F.CHUNK_NUMBER), params )
-          totalChunksE          <- intOptB.bind( k(F.TOTAL_CHUNKS), params )
-          chunkSizeGeneralE     <- chunkSizeB.bind( k(F.CHUNK_SIZE), params )
-          totalSizeE            <- longOptB.bind( k(F.TOTAL_SIZE), params )
-          identifierE           <- strOptB.bind( k(F.IDENTIFIER), params )
-          fileNameE             <- strOptB.bind( k(F.FILENAME), params )
-          relativePathE         <- strOptB.bind( k(F.RELATIVE_PATH), params )
+          chunkNumberE          <- intOptB.bind( F.CHUNK_NUMBER, params )
+          totalChunksE          <- intOptB.bind( F.TOTAL_CHUNKS, params )
+          chunkSizeGeneralE     <- chunkSizeOptB.bind( F.CHUNK_SIZE_GEN, params )
+          chunkSizeCurrentE     <- longOptB.bind( F.CHUNK_SIZE_CUR, params )
+          totalSizeE            <- longOptB.bind( F.TOTAL_SIZE, params )
+          identifierE           <- strOptB.bind( F.IDENTIFIER, params )
+          fileNameE             <- strOptB.bind( F.FILENAME, params )
+          relativePathE         <- strOptB.bind( F.RELATIVE_PATH, params )
+          k = key1F( key )
           hashesHexE            <- hashesHexB.bind( k(F.HASHES_HEX), params )
         } yield {
           for {
             chunkNumber         <- chunkNumberE
             totalChunks         <- totalChunksE
             chunkSizeGeneral    <- chunkSizeGeneralE
+            chunkSizeCurrent    <- chunkSizeCurrentE
             totalSize           <- totalSizeE
             identifier          <- identifierE
             fileName            <- fileNameE
@@ -470,9 +471,10 @@ object CommonModelsJvm extends MacroLogsDyn {
             hashesHex           <- hashesHexE
           } yield {
             MUploadChunkQs(
-              chunkNumber       = chunkNumber,
+              chunkNumberO      = chunkNumber,
               totalChunks       = totalChunks,
-              chunkSizeGeneral  = chunkSizeGeneral,
+              chunkSizeGeneralO = chunkSizeGeneral,
+              chunkSizeCurrent  = chunkSizeCurrent,
               totalSize         = totalSize,
               identifier        = identifier,
               fileName          = fileName,
@@ -488,14 +490,15 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F( key )
 
         _mergeUnbinded1(
-          intB.unbind( k(F.CHUNK_NUMBER), value.chunkNumber ),
-          intOptB.unbind( k(F.TOTAL_CHUNKS), value.totalChunks ),
-          chunkSizeB.unbind( k(F.CHUNK_SIZE), value.chunkSizeGeneral ),
-          longOptB.unbind( k(F.TOTAL_SIZE), value.totalSize ),
-          strOptB.unbind( k(F.IDENTIFIER), value.identifier ),
-          strOptB.unbind( k(F.FILENAME), value.fileName ),
-          strOptB.unbind( k(F.RELATIVE_PATH), value.relativePath ),
-          hashesHexB.unbind( k(F.HASHES_HEX), value.hashesHex ),
+          intOptB.unbind( F.CHUNK_NUMBER,               value.chunkNumberO ),
+          intOptB.unbind( F.TOTAL_CHUNKS,               value.totalChunks ),
+          chunkSizeOptB.unbind( F.CHUNK_SIZE_GEN,       value.chunkSizeGeneralO ),
+          longOptB.unbind( F.CHUNK_SIZE_CUR,            value.chunkSizeCurrent ),
+          longOptB.unbind( F.TOTAL_SIZE,                value.totalSize ),
+          strOptB.unbind( F.IDENTIFIER,                 value.identifier ),
+          strOptB.unbind( F.FILENAME,                   value.fileName ),
+          strOptB.unbind( F.RELATIVE_PATH,              value.relativePath ),
+          hashesHexB.unbind( key1(key, F.HASHES_HEX),   value.hashesHex ),
         )
       }
     }

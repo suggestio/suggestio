@@ -303,8 +303,9 @@ class CdnUtil @Inject() (
       fileEdge  <- fileNode.edges
         .withPredicateIter( MPredicates.Blob.File )
       edgeMedia <- fileEdge.media.iterator
+      storage   <- edgeMedia.storage
     } yield {
-      (nodeId, edgeMedia.storage)
+      (nodeId, storage)
     })
       .to( LazyList )
 

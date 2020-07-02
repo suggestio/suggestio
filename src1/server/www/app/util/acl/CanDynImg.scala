@@ -121,8 +121,13 @@ class CanDynImg @Inject() (
               _imageNotFoundThrow
             }
 
+          storage = edgeMedia.storage getOrElse {
+            LOGGER.warn(s"$logPrefix edgeMedia storage is undefined")
+            _imageNotFoundThrow
+          }
+
           result <- {
-            val storCheckFut = cdnUtil.checkStorageForThisNode( edgeMedia.storage )
+            val storCheckFut = cdnUtil.checkStorageForThisNode( storage )
 
             val user = aclUtil.userFromRequest( request )
             LOGGER.trace(s"$logPrefix Found img node#${nodeOrig.idOrNull}, user=${user.personIdOpt.orNull}")

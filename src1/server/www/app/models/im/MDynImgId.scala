@@ -106,27 +106,6 @@ object MDynImgId {
     def hasImgOps: Boolean = dynImgId.dynImgOps.nonEmpty
     def isOriginal = !hasImgOps
 
-    /**
-      * Билдер filename-строки
-      * @param sb Исходный StringBuilder.
-      * @return StringBuilder.
-      */
-    def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
-      sb.append( dynImgId.origNodeId )
-      if (hasImgOps) {
-        sb.append('~')
-        dynImgId.dynImgOpsStringSb(sb)
-      }
-      val dot = '.'
-      sb.append( dot )
-        .append( dynImgId.dynFormat.fileExt )
-      for (algo <- dynImgId.compressAlgo) {
-        sb.append(dot)
-          .append( algo.fileExtension )
-      }
-      sb
-    }
-
     def original: MDynImgId = {
       if (hasImgOps) dynImgId._originalHolder
       else dynImgId
@@ -169,17 +148,6 @@ object MDynImgId {
       OptionUtil.maybe(hasImgOps)( dynImgId.dynImgOpsString )
     }
 
-    // Быдлокод скопирован из MImgT.
-    def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
-      // TODO XXX dynFormat, compressAlgo
-      ImOp.unbindImOpsSb(
-        keyDotted     = "",
-        value         = dynImgId.dynImgOps,
-        withOrderInx  = false,
-        sb            = sb
-      )
-    }
-
   }
 
 }
@@ -205,7 +173,26 @@ final case class MDynImgId(
   // TODO Допилить и активировать ассерты правил применения формата изображения.
   // assert( dynFormat.nonEmpty )
 
-  lazy val fileName: String = this.fileNameSb().toString()
+  lazy val fileName: String = {
+    val sb: StringBuilder = new StringBuilder(80)
+
+    sb.append( origNodeId )
+    if (dynImgOps.nonEmpty) {
+      sb.append('~')
+        .append( dynImgOpsString )
+    }
+
+    val dot = '.'
+    sb.append( dot )
+      .append( dynFormat.fileExt )
+
+    for (algo <- compressAlgo) {
+      sb.append(dot)
+        .append( algo.fileExtension )
+    }
+
+    sb.toString()
+  }
 
   /** Хранилка инстанса оригинала.
     * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
@@ -216,9 +203,12 @@ final case class MDynImgId(
   lazy val mediaId = MDynImgId.mkMediaId(this)
 
   lazy val dynImgOpsString: String = {
-    this
-      .dynImgOpsStringSb()
-      .toString()
+    // TODO XXX dynFormat, compressAlgo
+    ImOp.unbindImOps(
+      keyDotted     = "",
+      value         = dynImgOps,
+      withOrderInx  = false,
+    )
   }
 
   lazy val fsFileName: String = {

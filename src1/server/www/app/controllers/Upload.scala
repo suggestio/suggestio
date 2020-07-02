@@ -1,8 +1,7 @@
 package controllers
 
-import java.io.{File, FileInputStream, RandomAccessFile}
+import java.io.{FileInputStream, RandomAccessFile}
 import java.net.InetAddress
-import java.nio.file.Path
 import java.time.OffsetDateTime
 
 import javax.inject.Inject
@@ -11,6 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
+import io.suggest.err.HttpResultingException
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
@@ -18,11 +18,11 @@ import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, MDsReadParams, WriteRequest}
 import io.suggest.i18n.MMessage
 import io.suggest.img.MImgFmts
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
-import io.suggest.n2.edge.{MEdge, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MEdgeFlag, MEdgeFlagData, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
 import io.suggest.n2.media._
-import io.suggest.n2.media.storage.IMediaStorages
-import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.n2.media.storage.{IMediaStorages, MStorageInfo}
+import io.suggest.n2.node.{MNode, MNodeType, MNodes}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.search.MNodeSearch
@@ -36,7 +36,7 @@ import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
 import models.mup._
 import models.req.IReq
-import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
+import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFileCreator}
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, DefaultActionBuilder, Result, Results}
 import play.core.parsers.Multipart
@@ -51,8 +51,8 @@ import io.suggest.ueq.UnivEqUtil._
 import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.util.{Failure, Success}
 import scalaz.ValidationNel
 import scalaz.std.option._
 
@@ -88,6 +88,7 @@ final class Upload @Inject()(
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  private lazy val localImgFileCreatorFactory = injector.instanceOf[LocalImgFileCreatorFactory]
   implicit private lazy val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
 
   import sioControllerApi._
@@ -252,7 +253,7 @@ final class Upload @Inject()(
                       )
                     }
                   ),
-                  storage = Option.when( upInfo.systemResp contains true )(edgeMedia.storage),
+                  storage = OptionUtil.maybeOpt( upInfo.systemResp contains true )(edgeMedia.storage),
                 )),
               )
             }
@@ -268,11 +269,12 @@ final class Upload @Inject()(
                 if upInfo.existNodeId.isEmpty
                 fileEdge <- fileEdgeOpt
                 fileEdgeMedia <- fileEdge.media
+                fileStorage <- fileEdgeMedia.storage
               } yield {
                 // Если найден file-узел, но с флагом InProgress, надо продолжить заливку в данный узел.
                 LOGGER.debug( s"$logPrefix Patching Upload qsInfo.existNodeId := $foundFileNodeId -- file-edge has InProgress flag, recovering upload." )
                 for {
-                  storAssigned <- cdnUtil.toAssignedStorage( foundFileNodeId, fileEdgeMedia.storage )
+                  storAssigned <- cdnUtil.toAssignedStorage( foundFileNodeId, fileStorage )
                 } yield {
                   val upInfo22 = (MUploadInfoQs.existNodeId set foundFileNodeIdOpt)( upInfo )
                   upInfo22 -> storAssigned
@@ -280,20 +282,42 @@ final class Upload @Inject()(
               })
 
               // Если найден подходящий узел неоконченного upload, то надо попытаться собрать данные по хранилищу для него.
-              (upInfo9, assignRespFut) = (for {
+              (upInfo9, assignResp) <- (for {
                 (upInfo22, storAssignedOpt) <- resOpt
                 storAssigned <- storAssignedOpt
               } yield {
-                LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
-                upInfo22 -> Future.successful( storAssigned )
+                LOGGER.trace(s"$logPrefix User will upload to already assigned storage: $storAssigned")
+                Future.successful( upInfo22 -> storAssigned )
               }) getOrElse {
+                // Нет даже недокачанного узла нет. Создать новый: чтобы chunked-заливка заработала, надо создать новый.
                 for (existNodeId <- upInfo.existNodeId)
                   LOGGER.warn( s"$logPrefix Found InProgress Upload file node#${foundFileNodeIdOpt.orNull}, but qsInfo.existNodeId=$existNodeId" )
-                val assignRespFut = cdnUtil.assignDist( fileMeta )
-                LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
-                upInfo -> assignRespFut
+
+                for {
+                  assignResp        <- cdnUtil.assignDist( fileMeta )
+                  // Взять будущий инстанс FileCreator'а, чтобы узнать возможный dynImgId (если у нас картинка).
+                  fileCreator       = _getFileCreator( upInfo.fileHandler, fileMeta )
+                  fileEdge          = _mkFileEdge(
+                    fileMeta    = fileMeta,
+                    storageInfo = assignResp.storage,
+                    edgeFlags   = MEdgeFlags.InProgress :: Nil,
+                  )
+                  createEdgeOpt     = _mkCreatedByEdge( request.user.personIdOpt )
+                  // Сохраняем новый файловый узел.
+                  mnode <- _createFileNode(
+                    fileCreator = fileCreator,
+                    nodeType    = upInfo.nodeType.get,
+                    techName    = None,
+                    edges       = fileEdge :: createEdgeOpt.toList,
+                    enabled     = false,
+                  )
+                } yield {
+                  LOGGER.debug(s"$logPrefix For $fileCreator created node#${mnode.id.orNull} w/o techName")
+                  // Вернуть ожидаемый ответ:
+                  val upInfoNoded = (MUploadInfoQs.existNodeId set mnode.id)( upInfo )
+                  upInfoNoded -> assignResp
+                }
               }
-              assignResp <- assignRespFut
 
             } yield {
               LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
@@ -302,6 +326,7 @@ final class Upload @Inject()(
                 fileProps   = fileMeta,
                 personId    = request.user.personIdOpt,
                 validTillS  = uploadUtil.ttlFromNow(),
+                // TODO Узел теперь создаётся всегда. Надо ли рендерить assign-данные целиком? Может host-url достаточно?
                 storage     = assignResp,
                 info        = upInfo9,
               )
@@ -338,36 +363,43 @@ final class Upload @Inject()(
   }
 
 
+  /** Получить инстанс fileCreator из qs-аргументов. */
+  private def _getFileCreator(fileHandlerOpt: Option[MUploadFileHandler],
+                              fileMeta: MFileMeta): TemporaryFileCreator = {
+    fileHandlerOpt.fold[TemporaryFileCreator] {
+      // Использовать дефолтовый file creator
+      SingletonTemporaryFileCreator
+    } {
+      // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
+      case MUploadFileHandlers.Image =>
+        // Если картинка, то заливать сразу в MLocalImg/ORIG.
+        val imgFmt = MImgFmts
+          .withMime( fileMeta.mime.get )
+          .get
+        val dynImgId = MDynImgId.randomOrig( imgFmt )
+        val localImg = MLocalImg( dynImgId )
+        val args = MLocalImgFileCreatorArgs( localImg, imgFmt )
+        localImgFileCreatorFactory.instance( args )
+    }
+  }
+
+
+
   /** BodyParser для запросов, содержащих файлы для аплоада. */
   private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[MUploadBpRes] = {
     // Сборка самого BodyParser'а.
-    val fileHandler = uploadArgs.info.fileHandler
-      .fold[TemporaryFileCreator]( SingletonTemporaryFileCreator ) {
-        // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
-        case MUploadFileHandlers.Image =>
-          // Если картинка, то заливать сразу в MLocalImg/ORIG.
-          val imgFmt = MImgFmts
-            .withMime( uploadArgs.fileProps.mime.get )
-            .get
-          val dynImgId = MDynImgId.randomOrig( imgFmt )
-          val localImg = MLocalImg( dynImgId )
-          val args = MLocalImgFileCreatorArgs( localImg, imgFmt )
-          LocalImgFileCreator( args )
-      }
+    val fileCreator = _getFileCreator( uploadArgs.info.fileHandler, uploadArgs.fileProps )
 
     for {
       mpfd <- parse.multipartFormData(
-        Multipart.handleFilePartAsTemporaryFile( fileHandler ),
+        Multipart.handleFilePartAsTemporaryFile( fileCreator ),
         maxLength = uploadArgs.fileProps.sizeB.get + 10000L,
       )
     } yield {
       // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
       MUploadBpRes(
         data = mpfd,
-        localImgArgs = fileHandler match {
-          case lifc: LocalImgFileCreator => Some( lifc.liArgs )
-          case _ => None
-        },
+        fileCreator = fileCreator,
       )
     }
   }
@@ -577,63 +609,33 @@ final class Upload @Inject()(
             hashesHex  = hashesHex2,
           )
 
-          fileEdge = MEdge(
-            predicate = MPredicates.Blob.File,
-            media = Some( MEdgeMedia(
-              file = fileMeta,
-              picture = MPictureMeta(
-                whPx = upCtx.imageWh,
-              ),
-              storage = storageInfo,
-            )),
-            info = MEdgeInfo(
-              // 2020-feb-14: Сохранять дату заливки файла в эдж, т.к. используется для Last-Modified, а другие даты узла ненадёжны.
-              dateNi = Some( OffsetDateTime.now() ),
-            )
+          fileEdge = _mkFileEdge(
+            fileMeta,
+            storageInfo,
+            pictureMeta = MPictureMeta(
+              whPx = upCtx.imageWh,
+            ),
           )
 
           // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
           mnode1Fut = {
             // Записываем id юзера, который первым загрузил этот файл.
-            val createdBy = request.user
-              .personIdOpt
-              .fold( List.empty[MEdge] ) { personId =>
-                MEdge(
-                  predicate = MPredicates.CreatedBy,
-                  nodeIds   = Set( personId ),
-                ) :: Nil
-              }
-
-            val addEdges = fileEdge :: createdBy
+            val createdByOpt = _mkCreatedByEdge(
+              request.user.personIdOpt,
+              uploadArgs.personId,
+            )
+            val addEdges = fileEdge :: createdByOpt.toList
 
             // Собрать/обновить и сохранить узел в БД.
-            val fut = request.existNodeOpt.fold {
+            val fut = request.existNodeOpt.fold [Future[MNode]] {
               // Создание нового узла под файл.
-              val mnode0 = MNode(
-                id = request.body.localImgArgs
-                  .map( _.mLocalImg.dynImgId.mediaId ),
-                common = MNodeCommon(
-                  ntype         = uploadArgs.info.nodeType.get,
-                  isDependent   = true,
-                ),
-                meta = MMeta(
-                  basic = MBasicMeta(
-                    techName    = Option( filePart.filename ),
-                  ),
-                ),
-                edges = MNodeEdges(
-                  out = MNodeEdges.edgesToMap1( addEdges ),
-                ),
+              _createFileNode(
+                fileCreator = request.body.fileCreator,
+                nodeType = uploadArgs.info.nodeType.get,
+                techName = Option( filePart.filename ),
+                edges = addEdges,
+                enabled = true,
               )
-              for {
-                mnodeId <- mNodes.save( mnode0 )
-              } yield {
-                LOGGER.debug(s"$logPrefix Created MNode#$mnodeId")
-                (
-                  (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
-                  (MNode.id set Some(mnodeId))
-                )(mnode0)
-              }
 
             } { mnode0 =>
               // Полулегальный патчинг эджей существующего файлового узла новым файлом.
@@ -644,7 +646,7 @@ final class Upload @Inject()(
                 MNode.node_meta_basic_dateEdited_RESET andThen
                 MNode.edges.modify { edges0 =>
                   val edgesSeq2 = MNodeEdges.edgesToMap1(
-                    edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.Blob.File ) ++ addEdges
+                    edges0.withoutPredicateIter( MPredicates.CreatedBy, MPredicates.Blob ) ++ addEdges
                   )
                   MNodeEdges.out.set( edgesSeq2 )(edges0)
                 }
@@ -683,8 +685,8 @@ final class Upload @Inject()(
           mnode1 <- mnode1Fut
 
           // Файл сохранён. Но если был патчинг уже существующего узла, то надо убрать старый файл из хранилища.
+          // Поискать старый файловый эдж для удаления.
           _ = {
-            // Поискать старый файловый эдж для удаления.
             request
               .existNodeOpt
               .fold [Future[_]] ( Future.successful(()) ) { mnode0 =>
@@ -953,7 +955,9 @@ final class Upload @Inject()(
     * @return 201 No Content - часть сохранена на отличненько.
     */
   def chunk(uploadArgs: MUploadTargetQs, chunkQs: MUploadChunkQs) = {
-    canUpload.chunk( uploadArgs, chunkQs )
+    // CSRF выключен, потому что session cookie не пробрасывается на ноды.
+    canUpload
+      .chunk( uploadArgs, chunkQs )
       .async {
         // В RAM - маленький буфер, т.к. хранить 2 метра в памяти на запрос - жирновато, а какой-то средний буфер - тут смысла не имеет.
         parse.raw(
@@ -965,85 +969,198 @@ final class Upload @Inject()(
 
         // Сразу забрать временный файл с req.body на руки, чтобы точно удалить его по итогу работы.
         val reqBodyFile = request.body.asFile
-        LOGGER.trace(s"$logPrefix Received ${request.body.size} bytes")
+        val reqBodyLen = request.body.size
+        LOGGER.trace(s"$logPrefix Received $reqBodyLen bytes")
 
-        try {
-          // Запись идёт через RandomAccessFile по мотивам https://github.com/jbaysolutions/play-java-resumable/blob/master/app/controllers/HomeController.java#L34
-          // Заодно, это поможет плавно задействовать LocalImgFileCreator для картинок.
-          // Для системы файлов пока используем модель MLocalImg, чтобы не пере-изобретать велосипед.
-          val locImgOrig = MLocalImg(
-            MDynImgId(
-              origNodeId = request.mnode.id.get,
-              dynFormat = MImgFmts.default,
-            )
+        import esModel.api._
+
+        (for {
+          // Посчитать и сравнить хэш-сумму части с реальной.
+          hashesHexSeq2 <- fileUtil.mkHashesHexAsync(
+            file    = reqBodyFile,
+            hashes  = UploadConstants.CleverUp.UPLOAD_CHUNK_HASH :: Nil,
+            flags   = MFileMetaHashFlags.ORIGINAL_FLAGS,
           )
 
-          if ( !mLocalImgs.isExists(locImgOrig) )
-            mLocalImgs.prepareWriteFile( locImgOrig )
-          val locImgOrigFile = mLocalImgs.fileOf( locImgOrig )
-          LOGGER.trace(s"Move data chunk\n FROM = ${reqBodyFile}\n INTO = $locImgOrigFile")
-
-          val raf = new RandomAccessFile( locImgOrigFile, "rw" )
-          try {
-            // Промотка на нужную позицию. Даже если chunkNumber0=0, всё равно мотаем в ноль - для надёжности.
-            raf.seek( chunkQs.chunkNumber0 * chunkQs.chunkSizeGeneral.value )
-
-            val reqBodyIS = new FileInputStream( reqBodyFile )
-            val transferred = try {
-              // Перекачка данных из reqBodyFile в raf.
-              reqBodyIS
-                .getChannel
-                .transferTo( 0, reqBodyFile.length(), raf.getChannel )
-            } finally {
-              reqBodyIS.close()
-            }
-            LOGGER.trace(s"$logPrefix Transferred $transferred bytes.")
-          } finally {
-            raf.close()
+          // Сверить контрольную сумму части с указанной в ссылке:
+          hashesHex2 = MFileMetaHash.toHashesHex( hashesHexSeq2 )
+          _ = (chunkQs.hashesHex ==* hashesHex2) || {
+            val msg = s"Calculated hashes differs from qs.hashes.\n qs.hashes = ${chunkQs.hashesHex.mkString(", ")}\n calculated = ${hashesHex2.mkString(", ")}"
+            LOGGER.warn(s"$logPrefix $msg")
+            val r = httpErrorHandler.onClientError( request, BAD_REQUEST, message = "" )
+            throw HttpResultingException( r )
           }
-        } finally {
-          reqBodyFile.delete()
-        }
 
-        // Всё перекачано и почищено. Вернуть результат
-        Ok
+          // Произвести запись в файл
+          _ <- Future {
+            try {
+              // Запись идёт через RandomAccessFile по мотивам https://github.com/jbaysolutions/play-java-resumable/blob/master/app/controllers/HomeController.java#L34
+              // Заодно, это поможет плавно задействовать LocalImgFileCreator для картинок.
+              // Для системы файлов пока используем модель MLocalImg, чтобы не пере-изобретать велосипед.
+              val locImgOrig = MLocalImg(
+                MDynImgId(
+                  origNodeId = request.mnode.id.get,
+                  dynFormat = MImgFmts.default,
+                )
+              )
+
+              if ( !mLocalImgs.isExists(locImgOrig) )
+                mLocalImgs.prepareWriteFile( locImgOrig )
+              val locImgOrigFile = mLocalImgs.fileOf( locImgOrig )
+              LOGGER.trace(s"Move data chunk\n FROM = ${reqBodyFile}\n INTO = $locImgOrigFile")
+
+              val raf = new RandomAccessFile( locImgOrigFile, "rw" )
+              try {
+                // Промотка на нужную позицию. Даже если chunkNumber0=0, всё равно мотаем в ноль - для надёжности.
+                raf.seek( chunkQs.chunkNumber0 * chunkQs.chunkSizeGeneral.value )
+
+                val reqBodyIS = new FileInputStream( reqBodyFile )
+                val transferred = try {
+                  // Перекачка данных из reqBodyFile в raf.
+                  blocking {
+                    reqBodyIS
+                      .getChannel
+                      .transferTo( 0, reqBodyLen, raf.getChannel )
+                  }
+                } finally {
+                  reqBodyIS.close()
+                }
+                LOGGER.trace(s"$logPrefix Transferred $transferred bytes.")
+              } finally {
+                raf.close()
+              }
+
+            } finally {
+              reqBodyFile.delete()
+            }
+          }
+
+          sliceEdge = MEdge(
+            predicate = MPredicates.Blob.Slice,
+            media = Some( MEdgeMedia(
+              file = MFileMeta(
+                sizeB = Some( reqBodyLen ),
+                hashesHex = hashesHexSeq2,
+              ),
+            )),
+            doc = MEdgeDoc(
+              id = Some( chunkQs.chunkNumber ),
+            ),
+          )
+
+          // Сохранить в узел инфу по принятому chunk'у.
+          mnodeOrNull2 <- mNodes.tryUpdate( request.mnode ) { mnode0 =>
+            var modsAcc = List.empty[MNode => MNode]
+
+            val sliceOpt0 = mnode0.edges.edgesByUid
+              .get( chunkQs.chunkNumber )
+              .filter( _.predicate ==* MPredicates.Blob.Slice )
+
+            if (!(sliceOpt0 contains sliceEdge)) {
+              modsAcc ::= MNode.edges
+                .composeLens(MNodeEdges.out)
+                .modify { out0 =>
+                  var iter = out0.iterator
+
+                  if (sliceOpt0.nonEmpty)
+                    iter = iter.filterNot( _.doc.id contains[EdgeUid_t] chunkQs.chunkNumber )
+
+                  MNodeEdges.edgesToMap1(
+                    iter ++ Iterator.single( sliceEdge )
+                  )
+                }
+            }
+
+            // Если techName не выставлено, а имя файла есть на руках, то сохранить имя файла.
+            if (mnode0.meta.basic.techName.isEmpty) {
+              for ( fileName <- chunkQs.fileName if fileName.nonEmpty )
+                modsAcc ::= MNode.meta
+                  .composeLens( MMeta.basic )
+                  .composeLens( MBasicMeta.techName )
+                  .set( chunkQs.fileName )
+            }
+
+            modsAcc
+              .reduceOption(_ andThen _)
+              .map( _(mnode0) )
+              // Теоретически возможна ситуация, когда ничего не изменилось: тогда можно вернуть null.
+              .orNull
+          }
+
+          mnode2: MNode = {
+            val mnode2Opt = Option( mnodeOrNull2 )
+
+            // Сразу отправляем в кэш свежеобновлённый узел, чтобы на параллельных запросах возможно как-то снизить нагрузку.
+            // Future или нет - тут не влияет, из-за особенностей реализации плагина caffeine-кэша.
+            mnode2Opt.foreach( mNodes.putToCache )
+
+            mnode2Opt getOrElse request.mnode
+          }
+
+        } yield {
+          LOGGER.debug(s"$logPrefix Chunk processed ok, node#${mnode2.id.orNull} v=${mnode2.versionOpt.getOrElse(-1L)} updated with edge#${chunkQs.chunkNumber} $sliceEdge")
+          Ok
+        })
+          .recoverWith {
+            case HttpResultingException(resFut) => resFut
+          }
       }
   }
 
 
   /** Быстрая проверка chunk'а, вдруг он уже был закачен ранее. */
   def hasChunk(uploadArgs: MUploadTargetQs, chunkQs: MUploadChunkQs) = {
-    canUpload.chunk( uploadArgs, chunkQs )
+    // CSRF выключен, потому что session cookie не пробрасывается на ноды.
+    canUpload
+      .chunk( uploadArgs, chunkQs )
       .async( parse.raw(maxLength = chunkQs.chunkSizeGeneral.value * 2) ) { implicit request =>
         lazy val logPrefix = s"hasChunk(${uploadArgs.info.existNodeId.orNull} ${chunkQs.chunkNumber}/${chunkQs.chunkSizeGeneral}):"
+        LOGGER.trace( s"$logPrefix searching for hashes: ${chunkQs.hashesHex.mkString("\n ")}" )
 
-        // TODO Проверять chunkQs.hashesHex.nonEmpty
         val isChunkMetaOk =
-          // Проверяем данные файла:
-          chunkQs.totalSize.exists { qsTotalSizeB =>
-            request.fileEdgeMedia.file.sizeB contains[Long] qsTotalSizeB
-          } &&
-          // Проверяем данные chunk'а
-          request.mnode.edges
-            // Ищем через UID-карту, чтобы кэшируемый узел на параллельных запросах ворочался быстрее.
-            .withUid( chunkQs.chunkNumber )
-            .out
-            .iterator
-            .filter( _.predicate ==* MPredicates.Blob.Slice )
-            .exists { chunkEdge =>
-              // TODO Сверять chunkSizeGeneral. Сверять размер chunk'а, и прочие парамеры из qs, включая хэш-сумму.
-              // chunkSize сохраняется в edge.media.
-              chunkEdge.media.exists { chunkEdgeMedia =>
-                val cf = chunkEdgeMedia.file
-                (cf.sizeB contains chunkQs.chunkSizeGeneral.value.toLong) &&
-                chunkQs.hashesHex.forall { case (qsHashType, qsHashValue) =>
-                  cf.hashesHex.exists { storedHash =>
-                    (qsHashType ==* storedHash.hType) &&
-                    (qsHashValue ==* storedHash.hexValue)
+          chunkQs.totalSize.fold {
+            LOGGER.trace(s"$logPrefix No totalSize in qs, expected=${request.fileEdgeMedia.file.sizeB.orNull}b, skipping.")
+            true
+          } { qsTotalSizeB =>
+            val edgeSize = request.fileEdgeMedia.file.sizeB
+            val r = edgeSize contains[Long] qsTotalSizeB
+            if (!r) LOGGER.warn(s"$logPrefix chunk size mismatch: qs[$qsTotalSizeB] != ${edgeSize.orNull}")
+            r
+          } && {
+            // Проверяем данные chunk'а
+            val chunkEdge = request.mnode.edges
+              // Ищем через UID-карту, чтобы кэшируемый узел на параллельных запросах ворочался быстрее.
+              .withUid( chunkQs.chunkNumber )
+              .out
+            if (chunkEdge.isEmpty) {
+              LOGGER.trace(s"$logPrefix Not found chunk#${chunkQs.chunkNumber}, knownChunks = [${request.mnode.edges.edgesByUid.keys.mkString(" ")}]")
+              false
+            } else {
+              chunkEdge
+                .iterator
+                .filter( _.predicate ==* MPredicates.Blob.Slice )
+                .exists { chunkEdge =>
+                  LOGGER.trace(s"$logPrefix Found chunk#${chunkQs.chunkNumber}: $chunkEdge")
+                  // Сверить chunkSizeGeneral. Сверять размер chunk'а, и прочие парамеры из qs, включая хэш-сумму.
+                  // chunkSize сохраняется в edge.media.
+                  chunkEdge.media.exists { chunkEdgeMedia =>
+                    val cf = chunkEdgeMedia.file
+                    // size-сравнивание: если оба None, то всё равно впереди сравнение хэшей.
+                    val isSizeValid = (cf.sizeB ==* chunkQs.chunkSizeCurrent)
+                    if (!isSizeValid) LOGGER.warn(s"$logPrefix Chunk size mismatch, qs[${chunkQs.chunkSizeGeneral.value}] != ${cf.sizeB}")
+                    isSizeValid &&
+                      chunkQs.hashesHex.forall { case (qsHashType, qsHashValue) =>
+                        val r = cf.hashesHex.exists { storedHash =>
+                          (qsHashType ==* storedHash.hType) &&
+                            (qsHashValue ==* storedHash.hexValue)
+                        }
+                        if (!r) LOGGER.warn(s"$logPrefix Mismatch slice#${chunkQs.chunkNumber} qs.hash.${qsHashType}[$qsHashValue] != [${cf.hashesHex.mkString(" | ")}]")
+                        r
+                      }
                   }
                 }
-              }
             }
+          }
 
         LOGGER.trace(s"$logPrefix isOk?$isChunkMetaOk")
         // Вернуть инфу по сверке:
@@ -1051,40 +1168,6 @@ final class Upload @Inject()(
         else NoContent
       }
   }
-
-
-  /** Реализация перехвата временных файлов сразу в MLocalImg-хранилище. */
-  protected case class LocalImgFileCreator( liArgs: MLocalImgFileCreatorArgs )
-    extends TemporaryFileCreator { creator =>
-
-    override def create(prefix: String, suffix: String): TemporaryFile = _create()
-
-    override def create(path: Path): TemporaryFile = _create()
-
-    private def _create(): TemporaryFile = {
-      mLocalImgs.prepareWriteFile( liArgs.mLocalImg )
-      LocalImgFile
-    }
-
-    override def delete(file: TemporaryFile): Try[Boolean] = {
-      Try {
-        mLocalImgs.deleteAllSyncFor( liArgs.mLocalImg.dynImgId.origNodeId )
-        true
-      }
-    }
-
-    /** Маскировка MLocalImg под TemporaryFile. */
-    case object LocalImgFile extends TemporaryFile {
-
-      private val _file = mLocalImgs.fileOf( liArgs.mLocalImg )
-
-      override def path: Path = _file.toPath
-      override def file: File = _file
-      override def temporaryFileCreator = creator
-    }
-
-  }
-
 
 
   /** Экшен, возвращающий upload-конфигурацию текущего узла.
@@ -1129,7 +1212,7 @@ final class Upload @Inject()(
   def downloadLogic[A](dispInline: Boolean, returnBody: Boolean)(ctx304: Ctx304[A]): Future[Result] = {
     import ctx304.request
 
-    val s = request.edgeMedia.storage
+    val s = request.edgeMedia.storage.get
 
     val readArgs = MDsReadArgs(
       ptr    = s.data,
@@ -1179,6 +1262,79 @@ final class Upload @Inject()(
       }
   }
 
+
+  /** Сборка file-эджа.
+    *
+    * @param fileMeta Метаданные файла.
+    * @param storageInfo Инфа по стораджу.
+    * @param pictureMeta Данные картинки, если есть.
+    * @return Эдж.
+    */
+  private def _mkFileEdge(fileMeta: MFileMeta, storageInfo: MStorageInfo,
+                          pictureMeta: MPictureMeta = MPictureMeta.empty, edgeFlags: Iterable[MEdgeFlag] = Nil): MEdge = {
+    MEdge(
+      predicate = MPredicates.Blob.File,
+      media = Some( MEdgeMedia(
+        file = fileMeta,
+        picture = pictureMeta,
+        storage = Some( storageInfo ),
+      )),
+      info = MEdgeInfo(
+        // 2020-feb-14: Сохранять дату заливки файла в эдж, т.к. используется для Last-Modified, а другие даты узла ненадёжны.
+        dateNi = Some( OffsetDateTime.now() ),
+        flags  = edgeFlags
+          .map(MEdgeFlagData.apply),
+      ),
+    )
+  }
+
+  /** Сборка CreateBy-эджа. */
+  private def _mkCreatedByEdge( personIds: Option[String]* ): Option[MEdge] = {
+    personIds
+      .iterator
+      .flatten
+      .map { personId =>
+        MEdge(
+          predicate = MPredicates.CreatedBy,
+          nodeIds   = Set( personId ),
+        )
+      }
+      .nextOption()
+  }
+
+
+  /** Собрать и сохранить новый файловый узел. */
+  private def _createFileNode(fileCreator: TemporaryFileCreator, nodeType: MNodeType, techName: Option[String],
+                              edges: Seq[MEdge], enabled: Boolean): Future[MNode] = {
+    import esModel.api._
+
+    val mnode0 = MNode(
+      id = fileCreator.customNodeIdOpt,
+      common = MNodeCommon(
+        ntype         = nodeType,
+        isDependent   = true,
+        isEnabled     = enabled,
+      ),
+      meta = MMeta(
+        basic = MBasicMeta(
+          techName    = techName,
+        ),
+      ),
+      edges = MNodeEdges(
+        out = MNodeEdges.edgesToMap1( edges ),
+      ),
+    )
+
+    for {
+      mnodeId <- mNodes.save( mnode0 )
+    } yield {
+      LOGGER.debug(s"_createFileNode(id#$mnodeId type#$nodeType): Created, techNode=''$techName''")
+      (
+        (MNode.versionOpt set Some(SioEsUtil.DOC_VSN_0) ) andThen
+        (MNode.id set Some(mnodeId))
+      )(mnode0)
+    }
+  }
 
 }
 

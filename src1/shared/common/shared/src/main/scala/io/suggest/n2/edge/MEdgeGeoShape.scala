@@ -6,6 +6,7 @@ import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -151,6 +152,12 @@ object MEdgeGeoShape
 
     fields2 ++ nglJson
   }
+
+  def id = GenLens[MEdgeGeoShape](_.id)
+  def glevel = GenLens[MEdgeGeoShape](_.glevel)
+  def shape = GenLens[MEdgeGeoShape](_.shape)
+  def fromUrl = GenLens[MEdgeGeoShape](_.fromUrl)
+  def dateEdited = GenLens[MEdgeGeoShape](_.dateEdited)
 
 }
 

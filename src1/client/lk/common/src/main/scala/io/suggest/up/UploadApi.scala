@@ -66,7 +66,10 @@ class UploadApiHttp extends IUploadApi with Log {
     val req = HttpReq.routed(
       route = route,
       data = HttpReqData(
-        headers = HttpReqData.headersJsonSendAccept,
+        headers = Map(
+          HttpConst.Headers.accept( MimeConst.APPLICATION_JSON, MimeConst.TEXT_PLAIN ),
+          HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON,
+        ),
         body = Json.toJson(fileMeta).toString()
       )
     )
@@ -79,8 +82,10 @@ class UploadApiHttp extends IUploadApi with Log {
   }
 
 
+  /** Тут раздвоение реализаций: chunked-заливка или обычная заливка. */
   override def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String] = None,
                             onProgress: Option[ITransferProgressInfo => Unit] = None): IHttpResultHolder[MUploadResp] = {
+
     // Фунция запуска основного реквеста. При наличии resumable.js, она запускается после окончания upload'а.
     def __doMainReq(formDataOpt: Option[Ajax.InputData]) = {
       HttpClient
@@ -96,7 +101,7 @@ class UploadApiHttp extends IUploadApi with Log {
             },
             data = HttpReqData(
               headers = Map(
-                HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON
+                HttpConst.Headers.accept( MimeConst.APPLICATION_JSON, MimeConst.TEXT_PLAIN ),
               ),
               body = formDataOpt.orNull,
               onProgress = formDataOpt.flatMap(_ => onProgress),

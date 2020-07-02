@@ -3,6 +3,8 @@ package controllers
 import _root_.util.jsa.init.ITargetsEmpty
 import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.ctx.CtxData
+import io.suggest.pick.MimeConst
+import io.suggest.proto.http.HttpConst
 import models.mctx.{Context, Context2Factory}
 import models.req.IReqHdr
 import play.api._
@@ -56,12 +58,30 @@ final class ErrorHandler @Inject() (
 
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
-    // Разрешить ответы на 5хх ошибки, которые зачем-то теперь запрещены в DefaultHttpErrorHandler.
-    statusCode match {
-      case BAD_REQUEST      => onBadRequest(request, message)
-      case FORBIDDEN        => onForbidden(request, message)
-      case NOT_FOUND        => onNotFound(request, message)
-      case _                => onOtherClientError(request, statusCode, message)
+    val isAcceptingHtml = request.headers
+      .get( HttpConst.Headers.ACCEPT )
+      .fold(false)( _ contains MimeConst.TEXT_HTML )
+
+    if (isAcceptingHtml) {
+      // Разрешить ответы на 5хх ошибки, которые зачем-то теперь запрещены в DefaultHttpErrorHandler.
+      statusCode match {
+        case BAD_REQUEST      => onBadRequest(request, message)
+        case FORBIDDEN        => onForbidden(request, message)
+        case NOT_FOUND        => onNotFound(request, message)
+        case _                => onOtherClientError(request, statusCode, message)
+      }
+
+    } else {
+      // TODO Отработать Accept: JSON
+      // Нет возможности возвращать HTML, отвечает plain text'ом
+      var respBody = s"HTTP $statusCode"
+
+      if (message.nonEmpty) {
+        respBody = s"$respBody: $message"
+      }
+
+      val res = Results.Status(statusCode)(respBody)
+      Future.successful(res)
     }
   }
 

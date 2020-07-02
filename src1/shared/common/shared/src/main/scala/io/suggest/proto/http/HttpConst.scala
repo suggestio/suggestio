@@ -17,6 +17,7 @@ object HttpConst {
 
   object Headers {
     final def ACCEPT                = "Accept"
+    def accept(mimeTypes: String*)  = ACCEPT -> mimeTypes.mkString(", ")
     final def LOCATION              = "Location"
     final def CONTENT_TYPE          = Words.Content_ + "Type"
     final def CONTENT_LENGHT        = Words.Content_ + "Lenght"

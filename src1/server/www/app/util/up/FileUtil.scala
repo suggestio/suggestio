@@ -105,15 +105,16 @@ class FileUtil @Inject()(
   def isNeedDeleteFile(edge4delete: MEdge,
                        mnode: MNode,
                        reportDupEdge: Boolean): Future[Option[MEdgeMedia]] = {
-    lazy val logPrefix = s"isNeedDeleteFile(${edge4delete.predicate} ${edge4delete.media.map(_.storage.data.meta).orNull}, node#${mnode.idOrNull}, dup?$reportDupEdge):"
+    lazy val logPrefix = s"isNeedDeleteFile(${edge4delete.predicate} ${edge4delete.media.flatMap(_.storage).fold("")(_.data.meta)}, node#${mnode.idOrNull}, dup?$reportDupEdge):"
 
     (for {
       edgeMediaDelete <- edge4delete.media
+      storageDelete <- edgeMediaDelete.storage
       // Если нельзя это удалять физически, то и шерстить смысла нет.
       if {
-        val r = edgeMediaDelete.storage.storage.canDelete
+        val r = storageDelete.storage.canDelete
         if (!r)
-          LOGGER.debug(s"$logPrefix Edge have file ${edgeMediaDelete.storage.data.meta}, but delete operation is not supported.")
+          LOGGER.debug(s"$logPrefix Edge have file ${storageDelete.data.meta}, but delete operation is not supported.")
         r
       }
     } yield {
@@ -123,7 +124,8 @@ class FileUtil @Inject()(
         nodeEdge          <- mnode.edges.out.iterator
         if nodeEdge !===* edge4delete
         nodeEdgeMedia     <- nodeEdge.media.iterator
-        if nodeEdgeMedia.storage isSameFile edgeMediaDelete.storage
+        nodeEdgeMediaStorage <- nodeEdgeMedia.storage.iterator
+        if nodeEdgeMediaStorage isSameFile storageDelete
       } yield {
         def msg = s"$logPrefix node#${mnode.idOrNull} contains file-node. Will NOT delete file."
 
@@ -149,8 +151,8 @@ class FileUtil @Inject()(
             new MNodeSearch {
               override val outEdges: MEsNestedSearch[Criteria] = {
                 val cr = Criteria(
-                  fileStorType      = Set( edgeMediaDelete.storage.storage ),
-                  fileStorMetaData  = Set( edgeMediaDelete.storage.data.meta ),
+                  fileStorType      = Set.empty + storageDelete.storage,
+                  fileStorMetaData  = Set.empty + storageDelete.data.meta,
                 )
                 MEsNestedSearch(
                   clauses = cr :: Nil,
@@ -191,11 +193,12 @@ class FileUtil @Inject()(
     * @return Фьючерс с каким-то неопределённым результатом удаления.
     */
   def deleteFile(media4delete: MEdgeMedia): Future[_] = {
-    LOGGER.info(s"_deleteFile(${media4delete.storage.data.meta}) Erasing file $media4delete from storage")
-    val stor = media4delete.storage
-    iMediaStorages
-      .client( stor.storage )
-      .delete( stor.data )
+    media4delete.storage.fold [Future[_]] ( Future.successful(()) ) { storage =>
+      LOGGER.info(s"_deleteFile(${storage.data.meta}) Erasing file $media4delete from storage")
+      iMediaStorages
+        .client( storage.storage )
+        .delete( storage.data )
+    }
   }
 
 }

@@ -2021,7 +2021,7 @@ final class EsModel @Inject()(
             .save(m2)
             .map { _ => data1 }
             .recoverWith {
-              case exVsn: VersionConflictEngineException =>
+              case ex if ex.getCause.isInstanceOf[VersionConflictEngineException] || ex.isInstanceOf[VersionConflictEngineException] =>
                 if (maxRetries > 0) {
                   val n1 = maxRetries - 1
                   LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
@@ -2032,9 +2032,12 @@ final class EsModel @Inject()(
                       tryUpdateM[X, D](companion, data2, n1)(updateF)
                     }
                 } else {
-                  val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
+                  val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", ex)
                   Future.failed(ex2)
                 }
+              case ex: Exception =>
+                LOGGER.error(s"Xynta occured: ${ex.getClass.getSimpleName}, ${ex.getCause.getClass.getSimpleName}")
+                throw ex
             }
         }
       }

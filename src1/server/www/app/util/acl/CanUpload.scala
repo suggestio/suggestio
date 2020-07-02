@@ -13,7 +13,7 @@ import io.suggest.up.MUploadChunkQs
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import models.mup.{MUploadChunkReq, MUploadReq, MUploadTargetQs}
-import models.req.MSioUsers
+import models.req.{MReq, MSioUsers}
 import play.api.http.{HttpErrorHandler, HttpVerbs, Status}
 import play.api.inject.Injector
 import play.api.mvc._
@@ -154,12 +154,22 @@ class CanUpload @Inject()(
   private def _chunk[A](upTg: MUploadTargetQs, upChunkQs: MUploadChunkQs, request0: Request[A])
                        (f: MUploadChunkReq[A] => Future[Result]): Future[Result] = {
     val nowTtl = uploadUtil.rightNow()
-    lazy val logPrefix = s"_chunk()#${nowTtl}:"
-    LOGGER.trace(s"$logPrefix\n upTg = $upTg\n upChunkQs = $upChunkQs")
+    lazy val logPrefix = s"_chunk()#${nowTtl.toMillis}:"
+
+    val user = mSioUsers( upTg.personId )
+    val mreq0 = MReq( request0, user )
+    LOGGER.trace(s"$logPrefix\n upTg = $upTg\n upChunkQs = $upChunkQs ip=${mreq0.remoteClientAddress}")
+
+    lazy val chunkQsVld = MUploadChunkQs.validate( upChunkQs )
 
     if (!uploadUtil.isTtlValid(upTg.validTillS, nowTtl)) {
       LOGGER.warn(s"$logPrefix Link ttl expired. URL=${upTg.validTillS} NOW=$nowTtl")
       httpErrorHandler.onClientError( request0, Status.EXPECTATION_FAILED, s"Request TTL expired." )
+
+    } else if (chunkQsVld.isFailure) {
+      val msg = s"Chunk qs validation failed: $chunkQsVld"
+      LOGGER.warn( s"$logPrefix $msg" )
+      httpErrorHandler.onClientError( request0, Status.BAD_REQUEST, msg )
 
     } else (for {
       // Для chunk-upload наличие узла обязательно: там хранится промежуточное состояние.
@@ -174,20 +184,24 @@ class CanUpload @Inject()(
         throw HttpResultingException( res )
       }
 
-      fileEdge = existNode.edges
-        .withoutPredicate( MPredicates.Blob.File )
-        .out
-        .find { fileEdge =>
-          // Идёт загрузка - выставлен InProgress-флаг.
-          fileEdge.info.flags
-            .exists(_.flag ==* MEdgeFlags.InProgress)
-        }
-        .getOrElse {
-          val msg = s"Node#${upTg.info.existNodeId.orNull} not ready for upload"
-          LOGGER.warn(s"$logPrefix $msg")
-          val res = httpErrorHandler.onClientError( request0, Status.FORBIDDEN, msg )
-          throw HttpResultingException( res )
-        }
+      fileEdge = {
+        val fileEdges = existNode.edges
+          .withPredicate( MPredicates.Blob.File )
+          .out
+
+        fileEdges
+          .find { fileEdge =>
+            // Идёт загрузка - выставлен InProgress-флаг.
+            fileEdge.info.flags
+              .exists(_.flag ==* MEdgeFlags.InProgress)
+          }
+          .getOrElse {
+            val msg = s"Node#${upTg.info.existNodeId.orNull} not ready for upload (missing InProgress file[${fileEdges.length}] edge)\n: ${fileEdges.mkString("\n ")}"
+            LOGGER.warn(s"$logPrefix $msg")
+            val res = httpErrorHandler.onClientError( request0, Status.FORBIDDEN, msg )
+            throw HttpResultingException( res )
+          }
+      }
 
       edgeMedia = fileEdge.media getOrElse {
         LOGGER.warn(s"$logPrefix Node#${upTg.info.existNodeId.orNull} missing edgeMedia in fileEdge#$fileEdge")
@@ -203,16 +217,15 @@ class CanUpload @Inject()(
 
       // Проверить, что в узел сейчас допускается частичная заливка одного chunk'а.
       // Это должен быть disabled-узел с Blob-эджем, содержащим полные данные закачки.
-      if {
+      _ = {
         // Для защиты от повторных параллельных (пере)загрузок в тот же узел, надо сверять
         // файл-хэши из signed-ссылки и сохранённые хэши в fileEdge.
-        val isNodeUploading =
-          upTg.fileProps.hashesHex.forall { urlFileHashHex =>
-            edgeMedia.file.hashesHex.exists { fileMetaHash =>
-              (urlFileHashHex.hType ==* fileMetaHash.hType) &&
-              (fileMetaHash.hexValue ==* urlFileHashHex.hexValue)
-            }
+        val isNodeUploading = upTg.fileProps.hashesHex.forall { urlFileHashHex =>
+          edgeMedia.file.hashesHex.exists { fileMetaHash =>
+            (urlFileHashHex.hType ==* fileMetaHash.hType) &&
+            (fileMetaHash.hexValue ==* urlFileHashHex.hexValue)
           }
+        }
 
         if (!isNodeUploading) {
           LOGGER.warn(s"$logPrefix Node#${upTg.info.existNodeId.orNull} hashesHex mismatch.")
@@ -228,63 +241,61 @@ class CanUpload @Inject()(
           val resFut = httpErrorHandler.onClientError( request0, Status.NOT_ACCEPTABLE, "Total size unexpected." )
           throw HttpResultingException( resFut )
         }
+      }
 
-        val chunkNumber0 = upChunkQs.chunkNumber0
-        val chunkStartAbsB = chunkNumber0 * upChunkQs.chunkSizeGeneral.value
+      chunkNumber0 = upChunkQs.chunkNumber0
+      chunkStartAbsB = chunkNumber0 * upChunkQs.chunkSizeGeneral.value
 
-        // begin byte chunk'а не выходит за пределы totalSizeB
-        if (chunkStartAbsB >= totalSizeB) {
-          LOGGER.warn(s"$logPrefix Chunk#${upChunkQs.chunkNumber} start.abs=$chunkStartAbsB b >= totalSize=$totalSizeB -- out of file byte-range")
-          val resFut = httpErrorHandler.onClientError( request0, Status.NOT_ACCEPTABLE, "StartByte out of total size." )
-          throw HttpResultingException(resFut)
-        }
+      // begin byte chunk'а не выходит за пределы totalSizeB
+      _ = if (chunkStartAbsB >= totalSizeB) {
+        LOGGER.warn(s"$logPrefix Chunk#${upChunkQs.chunkNumber} start.abs=$chunkStartAbsB b >= totalSize=$totalSizeB -- out of file byte-range")
+        val resFut = httpErrorHandler.onClientError( request0, Status.NOT_ACCEPTABLE, "StartByte out of total size." )
+        throw HttpResultingException(resFut)
+      }
 
-        // Проверить Content-Length в request-хидере, для POST/PUT-запросов.
-        (request0.method match {
-          case HttpVerbs.GET =>
-            // Тело проверять не требуется.
-            true
+      // Проверить Content-Length в request-хидере, для POST/PUT-запросов.
+      _ = request0.method match {
+        case HttpVerbs.GET =>
+          // Тело проверять не требуется.
+          true
 
-          case HttpVerbs.POST | HttpVerbs.PUT =>
-            // Тело POST/PUT
-            if (
-              !request0.headers
-                .get( HeaderNames.CONTENT_TYPE )
-                .exists { contentType =>
-                  contentType ==* MimeConst.APPLICATION_OCTET_STREAM
-                }
-            ) {
-              val msg = "Octet contentType expected."
-              LOGGER.warn(s"$logPrefix $msg")
-              val resFut = httpErrorHandler.onClientError( request0, Status.UNSUPPORTED_MEDIA_TYPE, msg )
-              throw HttpResultingException( resFut )
-            }
-
-            (for {
-              contentLenStr <- request0.headers.get( HeaderNames.CONTENT_LENGTH )
-              contentLen = contentLenStr.toLong
-              if chunkStartAbsB + contentLen <= totalSizeB
-            } yield {
-              true
-            })
-              .getOrElse {
-                val msg = "EndByte out of totalSize."
-                LOGGER.warn(s"$logPrefix $msg")
-                val res = httpErrorHandler.onClientError( request0, Status.REQUEST_ENTITY_TOO_LARGE, msg )
-                throw HttpResultingException(res)
+        case HttpVerbs.POST | HttpVerbs.PUT =>
+          // Тело POST/PUT
+          if (
+            request0.headers
+              .get( HeaderNames.CONTENT_TYPE )
+              .exists { contentType =>
+                (contentType ==* MimeConst.MULTIPART_FORM_DATA)
               }
-
-          case other =>
-            // should never happen
-            val msg = s"Unexpected HTTP method: $other"
+          ) {
+            val msg = "Octet contentType expected."
             LOGGER.warn(s"$logPrefix $msg")
-            val resFut = httpErrorHandler.onClientError( request0, Status.NOT_IMPLEMENTED, msg )
-            throw HttpResultingException(resFut)
-        })
+            val resFut = httpErrorHandler.onClientError( request0, Status.UNSUPPORTED_MEDIA_TYPE, msg )
+            throw HttpResultingException( resFut )
+          }
+
+          (for {
+            contentLenStr <- request0.headers.get( HeaderNames.CONTENT_LENGTH )
+            contentLen = contentLenStr.toLong
+            if chunkStartAbsB + contentLen <= totalSizeB
+          } yield {
+            true
+          }) getOrElse {
+            val msg = "EndByte out of totalSize."
+            LOGGER.warn(s"$logPrefix $msg")
+            val res = httpErrorHandler.onClientError( request0, Status.REQUEST_ENTITY_TOO_LARGE, msg )
+            throw HttpResultingException(res)
+          }
+
+        case other =>
+          // should never happen
+          val msg = s"Unexpected HTTP method: $other"
+          LOGGER.warn(s"$logPrefix $msg")
+          val resFut = httpErrorHandler.onClientError( request0, Status.NOT_IMPLEMENTED, msg )
+          throw HttpResultingException(resFut)
       }
 
       // Запустить chunk-запрос на исполнение.
-      user = mSioUsers( upTg.personId )
       actionRes <- f(
         MUploadChunkReq(
           mnode         = existNode,

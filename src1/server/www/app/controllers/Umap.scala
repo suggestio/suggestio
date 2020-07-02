@@ -328,16 +328,12 @@ class Umap @Inject() (
           )
 
           // Пытаемся сохранить новые геоданные в узел.
-          mNodes.tryUpdate( mnodesMap(adnId) ) { mnode0 =>
-            mnode0.copy(
-              edges = mnode0.edges.copy(
-                out = {
-                  val keepIter = mnode0.edges.withoutPredicateIter( MPredicates.NodeLocation )
-                  val newIter = Iterator.single( locEdge )
-                  MNodeEdges.edgesToMap1( keepIter ++ newIter )
-                }
-              )
-            )
+          mNodes.tryUpdate( mnodesMap(adnId) ) {
+            MNode.edges.modify { edges0 =>
+              val keepIter = edges0.withoutPredicateIter( MPredicates.NodeLocation )
+              val newIter = Iterator.single( locEdge )
+              (MNodeEdges.out set MNodeEdges.edgesToMap1( keepIter ++ newIter ))(edges0)
+            }
           }
         }
       }

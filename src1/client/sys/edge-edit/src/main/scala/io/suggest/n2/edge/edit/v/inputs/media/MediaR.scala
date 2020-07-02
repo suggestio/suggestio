@@ -481,11 +481,13 @@ class MediaR(
         },
         fileStorageTypeC = propsProxy.connect { props =>
           props.media
-            .fold( MStorages.values.head )( _.storage.storage )
+            .flatMap( _.storage )
+            .fold( MStorages.values.head )( _.storage )
         },
         fileStorageDataMetaC = propsProxy.connect { props =>
           props.media
-            .fold(emptyStr)( _.storage.data.meta )
+            .flatMap(_.storage)
+            .fold(emptyStr)( _.data.meta )
         },
         edgeIdQsOptC = propsProxy.connect { props =>
           props.edgeIdQs

@@ -16,6 +16,7 @@ import io.suggest.plist.ApplePlistUtil
 import io.suggest.pwa.manifest.{MPwaDisplayModes, MWebManifest}
 import io.suggest.sc.app.{MScAppDlInfo, MScAppGetQs, MScAppGetResp, MScAppManifestQs}
 import io.suggest.sc.pwa.MPwaManifestQs
+import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import javax.inject.Inject
@@ -196,7 +197,12 @@ final class ScApp @Inject()(
 
   /** Сборка ссылки на файл. */
   private def _mediaUrl(fileNodeId: String, fileEdgeMedia: MEdgeMedia): Future[Call] = {
-    val mediaHostsMapFut = cdnUtil.mediasHosts1( (fileNodeId, fileEdgeMedia.storage) :: Nil )
+    val mediaHostsMapFut = fileEdgeMedia
+      .storage
+      .fold [Future[Map[String, Seq[MHostInfo]]]] (Future successful Map.empty) { stor =>
+        cdnUtil.mediasHosts1( (fileNodeId, stor) :: Nil )
+      }
+
     val dlUrlQs = uploadUtil.mkDlQs(
       fileNodeId = fileNodeId,
       hashesHex  = MFileMetaHash.toHashesHex( fileEdgeMedia.file.hashesHex.dlHash ),

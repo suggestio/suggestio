@@ -7,6 +7,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 import org.im4java.core.IMOperation
+import play.api.mvc.QueryStringBindable
 import util.FormUtil
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -45,41 +46,32 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
   }
 
 
-  /** Дефолтовый StringBuilder для unbind-методов. */
-  def unbindSbDflt = new StringBuilder(64)
-
   /**
    * Для разных вариантов unbind'а используется этот метод
    * @param keyDotted Префикс ключа.
    * @param value Значения (im-операции).
    * @param withOrderInx Добавлять ли индексы операций? true если нужен будет вызов bind() над результатом.
-   * @param sb Используемый для работы StrinbBuilder. По умолчанию - создавать новый.
    * @return Строка im-операций.
    */
-  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean, sb: StringBuilder = unbindSbDflt): String = {
-    unbindImOpsSb(keyDotted, value, withOrderInx, sb)
-      .toString()
-  }
-  def unbindImOpsSb(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean, sb: StringBuilder = unbindSbDflt): StringBuilder = {
+  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean): String = {
+    import io.suggest.model.CommonModelsJvm.BindableString2
+    val strBinder = implicitly[QueryStringBindable[String]]
+
     value
       // Порядковый номер нужен для восстановления порядка вызовов при bind'е.
       .iterator
       .zipWithIndex
-      .foreach { case (imOp, i) =>
-        sb.append(keyDotted)
-          .append(imOp.opCode.value)
-        if (withOrderInx) {
-          sb.append('[').append(i).append(']')
-        }
-        sb
-          .append('=')
-          .append(imOp.qsValue)
-          .append('&')
+      .map { case (imOp, i) =>
+        // Собираем qs-ключ:
+        val qsKeySb = new StringBuilder(16, keyDotted)
+          .append( imOp.opCode.value )
+        if (withOrderInx)
+          qsKeySb.append('[').append(i).append(']')
+
+        val qsKey = qsKeySb.toString()
+        strBinder.unbind( qsKey, imOp.qsValue )
       }
-    // Убрать последний '&'
-    if (value.nonEmpty)
-      sb.setLength(sb.length - 1)
-    sb
+      .mkString("&")
   }
 
   /** Забиндить распарсенное по итератору. */

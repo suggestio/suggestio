@@ -167,20 +167,23 @@ class EdgeEditCircuit
                       MEdge.predicate
                         .set( edgeDataJs2.jdEdge.predicate ) andThen
                       MEdge.media.modify { edgeMediaOpt0 =>
-                        for (srvInfo <- edgeDataJs2.jdEdge.fileSrv) yield {
-                          val storInfo = srvInfo.storage getOrElse {
+                        for {
+                          srvInfo <- edgeDataJs2.jdEdge.fileSrv
+                        } yield {
+                          val storInfoOpt = srvInfo.storage orElse {
                             logger.warn("SrvInfo.storage is empty")
-                            MStorageInfo( MStorages.SeaWeedFs, MStorageInfoData(meta = "") )
+                            val s = MStorageInfo( MStorages.SeaWeedFs, MStorageInfoData(meta = "") )
+                            Some(s)
                           }
                           edgeMediaOpt0.fold {
                             MEdgeMedia(
-                              storage = storInfo,
+                              storage = storInfoOpt,
                               file    = srvInfo.fileMeta,
                               picture = srvInfo.pictureMeta,
                             )
                           } { edgeMedia0 =>
                             edgeMedia0.copy(
-                              storage = storInfo,
+                              storage = storInfoOpt,
                               file    = srvInfo.fileMeta,
                               picture = srvInfo.pictureMeta,
                             )

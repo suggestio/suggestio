@@ -61,12 +61,12 @@ class MImgs3 @Inject() (
       case Some(mm) =>
         _fileEdge( mm )
           .flatMap(_.media)
-          .fold( Future.successful(false) ) { media =>
-            val s = media.storage
+          .flatMap(_.storage)
+          .fold( Future.successful(false) ) { storage =>
             for {
               _ <- iMediaStorages
-                .client( s.storage )
-                .delete( s.data )
+                .client( storage.storage )
+                .delete( storage.data )
               _ <- mNodes.deleteById( mm.id.get )
             } yield {
               true
@@ -84,8 +84,8 @@ class MImgs3 @Inject() (
       mm <- _mediaFut( mediaOptFut(mimg) )
       stor = _fileEdge(mm)
         .flatMap(_.media)
+        .flatMap(_.storage)
         .get
-        .storage
       rr <- iMediaStorages
         .client( stor.storage )
         .read( MDsReadArgs(stor.data) )
@@ -226,7 +226,7 @@ class MImgs3 @Inject() (
                   picture = MPictureMeta(
                     whPx = whOpt
                   ),
-                  storage = stor.storage,
+                  storage = Some(stor.storage),
                 )),
                 info = MEdgeInfo(
                   // Эта дата используется для Last-Modified.
@@ -259,19 +259,21 @@ class MImgs3 @Inject() (
 
     // Выполнить заливку файла в постоянное надежное хранилище:
     val storWriteFut = for {
-      mnode       <- mediaSavedFut
-      res  <- {
-        val edgeMedia = mnode.edges
+      mnode   <- mediaSavedFut
+      res     <- (for {
+        edge      <- mnode.edges
           .withPredicateIter( MPredicates.Blob.File )
-          .next()
-          .media
-          .get
+          .nextOption()
+        edgeMedia <- edge.media
+        storage   <- edgeMedia.storage
+      } yield {
         val wargs = WriteRequest(
           contentType = edgeMedia.file.mime.get,
           file        = imgFile,
         )
-        storClient.write( edgeMedia.storage.data, wargs )
-      }
+        storClient.write( storage.data, wargs )
+      })
+        .get
     } yield {
       res
     }
@@ -298,7 +300,7 @@ class MImgs3 @Inject() (
             .withPredicateIter( MPredicates.Blob.File )
             .nextOption()
           edgeMedia <- fileEdge.media
-          s = edgeMedia.storage
+          s <- edgeMedia.storage
         } yield {
           iMediaStorages
             .client( s.storage )

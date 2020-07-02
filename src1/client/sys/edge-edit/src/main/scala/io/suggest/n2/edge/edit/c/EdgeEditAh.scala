@@ -463,6 +463,7 @@ object EdgeEditAh {
   private def root_edge_media_storage_LENS = {
     root_edge_media_LENS
       .composeLens( MEdgeMedia.storage )
+      .composeTraversal( Traversal.fromTraverse[Option, MStorageInfo] )
   }
 
   private def root_edit_nodeIds_LENS = {

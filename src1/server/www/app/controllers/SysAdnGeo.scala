@@ -7,7 +7,7 @@ import io.suggest.geo._
 import io.suggest.n2.edge._
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.madn.AdnShownTypes
 import models.mgeo.MGsPtr
 import models.mproj.ICommonDi
@@ -165,22 +165,18 @@ class SysAdnGeo @Inject() (
                     )
                   )
                 } { medge0 =>
-                  medge0.copy(
-                    info = medge0.info.copy(
-                      geoShapes = shapes1
-                    )
-                  )
+                  MEdge.info
+                    .composeLens( MEdgeInfo.geoShapes )
+                    .set( shapes1 )(medge0)
                 }
 
                 // Залить новый эдж в карту эджей узла
-                mnode0.copy(
-                  edges = mnode0.edges.copy(
-                    out = {
-                      val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(locEdge1)
-                      MNodeEdges.edgesToMap1(iter)
-                    }
-                  )
-                )
+                MNode.edges
+                  .composeLens( MNodeEdges.out )
+                  .set {
+                    val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(locEdge1)
+                    MNodeEdges.edgesToMap1(iter)
+                  }(mnode0)
               }
             }
 
@@ -348,8 +344,8 @@ class SysAdnGeo @Inject() (
               mgs2 <- adnGeo2Fut
 
               // Обновляем ноду...
-              _ <- mNodes.tryUpdate( request.mnode ) { mnode0 =>
-                _nodeUpdateGeoShape(mnode0, mgs2)
+              _ <- mNodes.tryUpdate( request.mnode ) {
+                _nodeUpdateGeoShape(mgs2)
               }
 
             } yield {
@@ -366,24 +362,22 @@ class SysAdnGeo @Inject() (
 
 
   /** Обновления ноды новым одного гео-шейпом. */
-  private def _nodeUpdateGeoShape(mnode0: MNode, gs: MEdgeGeoShape): MNode = {
-    mnode0.copy(
-      edges = {
-        val pf = { e: MEdgeGeoShape =>
-          e.id == gs.id
-        }
-        val p = MPredicates.NodeLocation
-        mnode0.edges.updateAll { e =>
-          e.predicate == p  &&  e.info.geoShapes.exists(pf)
-        } { e0 =>
-          Some(e0.copy(
-            info = e0.info.copy(
-              geoShapes = gs :: e0.info.geoShapes.filterNot(pf)
-            )
-          ))
-        }
+  private def _nodeUpdateGeoShape(gs: MEdgeGeoShape): MNode => MNode = {
+    MNode.edges.modify { edges0 =>
+      val pf = { e: MEdgeGeoShape =>
+        e.id == gs.id
       }
-    )
+      val p = MPredicates.NodeLocation
+      edges0.updateAll { e =>
+        e.predicate == p  &&  e.info.geoShapes.exists(pf)
+      } { e0 =>
+        Some(e0.copy(
+          info = e0.info.copy(
+            geoShapes = gs :: e0.info.geoShapes.filterNot(pf)
+          )
+        ))
+      }
+    }
   }
 
 
@@ -449,32 +443,28 @@ class SysAdnGeo @Inject() (
               .toSeq
               .headOption
               .fold [MEdge] {
-              MEdge(
-                predicate = p,
-                info = MEdgeInfo(
-                  geoShapes = List(circle0)
+                MEdge(
+                  predicate = p,
+                  info = MEdgeInfo(
+                    geoShapes = List(circle0)
+                  )
                 )
-              )
-            } { e0 =>
-              val shapes0 = e0.info.geoShapes
-              val circle1 = circle0.copy(
-                id = MEdgeGeoShape.nextShapeId(shapes0)
-              )
-              e0.copy(
-                info = e0.info.copy(
-                  geoShapes = circle1 :: shapes0
-                )
-              )
-            }
+              } { e0 =>
+                val lens = MEdge.info
+                  .composeLens( MEdgeInfo.geoShapes )
 
-            mnode0.copy(
-              edges = mnode0.edges.copy(
-                out = {
-                  val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(edge0)
-                  MNodeEdges.edgesToMap1(iter)
-                }
-              )
-            )
+                val shapes0 = lens.get(e0)
+                val circle1 = (MEdgeGeoShape.id set MEdgeGeoShape.nextShapeId(shapes0))(circle0)
+
+                lens.modify { circle1 :: _ }(e0)
+              }
+
+            MNode.edges
+              .composeLens( MNodeEdges.out )
+              .set {
+                val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(edge0)
+                MNodeEdges.edgesToMap1(iter)
+              }(mnode0)
           }
           for (_ <- saveFut) yield {
             Redirect( routes.SysAdnGeo.forNode(adnId) )
@@ -524,8 +514,8 @@ class SysAdnGeo @Inject() (
             )
 
             // Обновить шейпы узла
-            val updFut = mNodes.tryUpdate( request.mnode ) { mnode0 =>
-              _nodeUpdateGeoShape(mnode0, mgs2)
+            val updFut = mNodes.tryUpdate( request.mnode ) {
+              _nodeUpdateGeoShape(mgs2)
             }
 
             for (_ <- updFut) yield {

@@ -22,8 +22,16 @@ object UploadConstants {
       * И на клиенте, и на сервере.
       */
     final def UPLOAD_FILE_HASHES: Set[MHash] =
-      Set[MHash](MHashes.Sha1, MHashes.Sha256)
+      Set.empty[MHash] + MHashes.Sha1 + MHashes.Sha256
+
+    final def UPLOAD_CHUNK_HASH: MHash =
+      MHashes.Sha1
 
   }
+
+  def MIN_FILE_SIZE_BYTES = 64
+
+  /** Ограничение максимального размера закачки в байтах. */
+  def TOTAL_SIZE_LIMIT_BYTES = 50 * 1024*1024
 
 }

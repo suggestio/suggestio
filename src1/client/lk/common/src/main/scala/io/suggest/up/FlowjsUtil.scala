@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import com.resumablejs.{Resumable, ResumableChunk, ResumableFile, ResumableOptions}
 import io.suggest.common.qs.QsConstants
 import io.suggest.crypto.asm.HashWwTask
-import io.suggest.crypto.hash.{HashesHex, MHashes}
+import io.suggest.crypto.hash.HashesHex
 import io.suggest.file.MJsFileInfo
 import io.suggest.routes.routes
 import io.suggest.text.UrlUtilJs
@@ -57,24 +57,22 @@ object FlowjsUtil {
     Try {
       lazy val upTgQsStr = QsConstants.DO_NOT_TOUCH_PREFIX + (uploadHostUrl.relUrl.replaceFirst("^[^?]+\\?", ""))
 
-      val chunkHashAlgo = MHashes.Sha1
+      val chunkHashAlgo = UploadConstants.CleverUp.UPLOAD_CHUNK_HASH
       var chunkHashes = HashMap.empty[Int, String]
 
       val _targetChunkUrlF: js.Function3[ResumableFile, ResumableChunk, Boolean, String] = {
         (file, chunk, isTest) =>
           // Надо получить на руки данные chunk'а
-          val chunkParams = chunk.getParams()
+          val chunkNumber = chunk.chunkNumber
           val chunkHashesHex = chunkHashes
-            .get( chunkParams.flowChunkNumber )
+            .get( chunkNumber )
             .fold[HashesHex]( Map.empty ) { chunkHashValue =>
               Map.empty + (chunkHashAlgo -> chunkHashValue)
             }
 
           val chunkQs = MUploadChunkQs(
-            chunkNumber = chunkParams.flowChunkNumber,
-            totalChunks = Some( chunkParams.flowTotalChunks ),
-            //chunkSizeGeneral = MUploadChunkSizes.default,  // TODO chunkParams.chunkSize?
-            hashesHex   = chunkHashesHex,
+            hashesHex    = chunkHashesHex,
+            chunkNumberO = None,
           )
           val chunkQsDict = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(chunkQs) )
 
@@ -112,18 +110,9 @@ object FlowjsUtil {
       new Resumable(
         new ResumableOptions {
           override val target = js.defined( _targetChunkUrlF )
+          override val singleFile = true
           override val chunkSize = _chunkSizeB
           override val simultaneousUploads = 2
-
-          //override val chunkNumberParameterName = F.CHUNK_NUMBER
-          //override val totalChunksParameterName = F.TOTAL_CHUNKS
-          //override val chunkSizeParameterName = F.CHUNK_SIZE
-          // TODO currentChunkSizeParameterName
-          //override val totalSizeParameterName = F.TOTAL_SIZE
-          //override val identifierParameterName = F.IDENTIFIER
-          //override val fileNameParameterName = F.FILENAME
-          //override val relativePathParameterName = F.RELATIVE_PATH
-
           override val method = ResumableOptions.Methods.OCTET
           override val testChunks = true
 

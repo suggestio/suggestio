@@ -389,7 +389,8 @@ class GeoTagsUtil @Inject() (
                 }(mnode0)
               }
             }
-            .map( EmptyUtil.someF )
+            // Надо помнить, что tryUpdate() тут может вернуть null.
+            .map( Option.apply )
         }
 
       }

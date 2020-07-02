@@ -13,10 +13,17 @@ import util.up.ctx.IImgUploadCtxFactory
 class GuiceDiModule extends AbstractModule {
 
   override def configure(): Unit = {
+
     install(
       new FactoryModuleBuilder()
         .build( classOf[IImgUploadCtxFactory] )
     )
+
+    install(
+      new FactoryModuleBuilder()
+        .build( classOf[LocalImgFileCreatorFactory] )
+    )
+
   }
 
 }

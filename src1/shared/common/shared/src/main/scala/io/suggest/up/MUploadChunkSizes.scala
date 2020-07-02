@@ -16,9 +16,11 @@ object MUploadChunkSizes extends IntEnum[MUploadChunkSize] {
   // TODO Для сверх-медленных каналов следует потом организовать совсем малый chunk size.
   //case object S256k extends MUploadChunkSize( 256 * 1024 )
 
-  case object S_1mib extends MUploadChunkSize( 1048576 )
+//  case object S_1mib extends MUploadChunkSize( 1048576 )
+  case object S_1mib extends MUploadChunkSize( 512512 )
 
   def default: MUploadChunkSize = S_1mib
+  def max = values.last
 
   override def values = findValues
 

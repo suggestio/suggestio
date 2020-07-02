@@ -93,10 +93,7 @@ class LkNodes @Inject() (
         .getOrElseFalse
 
       val alwaysOutlined = edgeOpt.exists(
-        _.info
-          .flagsMap
-          .get( MEdgeFlags.AlwaysOutlined )
-          .nonEmpty
+        _.info.flagsMap contains MEdgeFlags.AlwaysOutlined
       )
 
       (isAdv, isShowOpened, alwaysOutlined)

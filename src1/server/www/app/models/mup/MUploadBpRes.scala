@@ -1,8 +1,7 @@
 package models.mup
 
 import io.suggest.img.MImgFmt
-import models.im.MLocalImg
-import play.api.libs.Files.TemporaryFile
+import play.api.libs.Files.{TemporaryFile, TemporaryFileCreator}
 import play.api.mvc.MultipartFormData
 
 /**
@@ -15,8 +14,10 @@ import play.api.mvc.MultipartFormData
 
 final case class MUploadBpRes(
                                data           : MultipartFormData[TemporaryFile],
-                               localImgArgs   : Option[MLocalImgFileCreatorArgs],
+                               fileCreator    : TemporaryFileCreator,
                              ) {
+
+  def localImgArgs = fileCreator.localImgArgsOpt
 
   /** Надо ли удалять залитый файл? */
   def isDeleteFileOnSuccess: Boolean = {
@@ -28,10 +29,3 @@ final case class MUploadBpRes(
     localImgArgs.map(_.mImgFmt)
 
 }
-
-
-/** Модель аргументов для LocalImg FileCreator. */
-final case class MLocalImgFileCreatorArgs(
-                                           mLocalImg    : MLocalImg,
-                                           mImgFmt      : MImgFmt,
-                                         )
