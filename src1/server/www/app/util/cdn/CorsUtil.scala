@@ -41,7 +41,7 @@ class CorsUtil @Inject() (
 
   def allowMethods = {
     configuration.getOptional[Seq[String]]("cors.allow.methods")
-      .fold("GET") { _.mkString(", ") }
+      .fold("*") { _.mkString(", ") }
   }
 
   def allowHeaders = {
@@ -93,22 +93,33 @@ class CorsUtil @Inject() (
     ADD_HEADERS_URL_RE.pattern.matcher(rh.uri).find
   }
 
-  def isSioOrigin()(implicit request: RequestHeader): Option[String] = {
-    for {
-      reqOrigin <- request.headers.get( ORIGIN )
-      sioUrlPrefix = contextUtil.URL_PREFIX
-      if {
-        val r = reqOrigin ==* sioUrlPrefix
-        if (!r) LOGGER.warn(s"isSioOrigin(): Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: $sioUrlPrefix")
-        r
-      }
-    } yield {
-      sioUrlPrefix
-    }
-  }
 
   def withCorsHeaders(resp: Result) =
     resp.withHeaders( SIMPLE_CORS_HEADERS: _* )
+
+
+  def withCorsIfNeeded(result: Result)(implicit rh: RequestHeader): Result = {
+    val reqOriginOpt = rh.headers.get( ORIGIN )
+    lazy val logPrefix = s"withCorsIfNeeded(${reqOriginOpt.getOrElse("")}):"
+
+    (for {
+      reqOrigin <- reqOriginOpt
+      sioUrlPrefix = contextUtil.URL_PREFIX
+      if {
+        val r = reqOrigin ==* sioUrlPrefix
+        if (!r) LOGGER.warn(s"$logPrefix Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: $sioUrlPrefix")
+        r
+      }
+    } yield {
+      // На продакшене - аплоад идёт на sX.nodes.suggest.io, а реквест из suggest.io - поэтому CORS тут участвует всегда.
+      LOGGER.trace(s"$logPrefix Adding CORS-headers")
+      withCorsHeaders( result )
+    }) getOrElse {
+      // В dev-режиме - отсутствие CORS - это норма. т.к. same-origin и для страницы, и для этого экшена.
+      LOGGER.trace( s"Not adding CORS headers, missing/invalid Origin: ${rh.headers.get(ORIGIN).orNull}" )
+      result
+    }
+  }
 
 }
 

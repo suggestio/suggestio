@@ -1029,14 +1029,7 @@ final class Upload @Inject()(
           val result = Ok( respJson )
 
           // Добавить CORS-заголовки ответа?
-          corsUtil.isSioOrigin().fold {
-            // В dev-режиме - отсутствие CORS - это норма. т.к. same-origin и для страницы, и для этого экшена.
-            LOGGER.debug( s"$logPrefix Not adding CORS headers, missing/invalid Origin: ${request.headers.get(ORIGIN).orNull}" )
-            result
-          } { _ =>
-            // На продакшене - аплоад идёт на sX.nodes.suggest.io, а реквест из suggest.io - поэтому CORS тут участвует всегда.
-            corsUtil.withCorsHeaders( result )
-          }
+          corsUtil.withCorsIfNeeded( result )
         }
       }
 
@@ -1240,6 +1233,7 @@ final class Upload @Inject()(
           Ok
         })
           .recoverHttpResEx
+          .map( corsUtil.withCorsIfNeeded )
       }
   }
 
@@ -1317,9 +1311,12 @@ final class Upload @Inject()(
           }
 
         LOGGER.trace(s"$logPrefix isOk?$isChunkLoadedOk")
+
         // Вернуть инфу по сверке:
-        if (isChunkLoadedOk) Ok
-        else NoContent
+        corsUtil.withCorsIfNeeded(
+          if (isChunkLoadedOk) Ok
+          else NoContent
+        )
       }
   }
 
