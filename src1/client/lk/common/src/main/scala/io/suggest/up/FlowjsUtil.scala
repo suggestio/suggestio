@@ -1,14 +1,13 @@
 package io.suggest.up
 
-import java.util.regex.Pattern
 
 import com.resumablejs.{Resumable, ResumableChunk, ResumableFile, ResumableOptions}
 import io.suggest.common.qs.QsConstants
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.HashesHex
 import io.suggest.file.MJsFileInfo
+import io.suggest.proto.http.HttpConst
 import io.suggest.routes.routes
-import io.suggest.text.UrlUtilJs
 import io.suggest.url.MHostUrl
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -27,29 +26,6 @@ import scala.util.{Success, Try}
   * Description: Утиль для взаимодействия с resumable.js.
   */
 object FlowjsUtil {
-
-  private def _url2qsKvs( url: String ): js.Dictionary[js.Any] = {
-    // для вызова роуты надо словари от hostInfo.relUrl и arr в нормальном формате.
-    val qsKeyDelim = QsConstants.KEY_PARTS_DELIM_STR
-    val namespacedKeyPrefixRE = s"^[^$qsKeyDelim]+${Pattern.quote(qsKeyDelim)}".r
-
-    js.Dictionary[js.Any](
-      // Взять только qs без "?" в начале:
-      UrlUtilJs.qsKvsParse(
-        url
-          .replaceFirst("^[^?]+?", "")
-          // токенизировать
-          .split('&')
-      )
-        .map { case (k, v) =>
-          val k2 = namespacedKeyPrefixRE.replaceFirstIn( k, "" )
-          val v2 = v: js.Any
-          k2 -> v2
-        }
-        .to(Seq): _*
-    )
-  }
-
 
   /** Собрать инстанс Resumable.js для UploadApi. */
   def tryFlowJs(uploadHostUrl: MHostUrl): Try[Resumable] = {
@@ -76,9 +52,10 @@ object FlowjsUtil {
           )
           val chunkQsDict = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(chunkQs) )
 
-          routes.controllers.Upload
-            .chunk(upTgQsStr, chunkQsDict)
-            .absoluteURL( true )
+          // Абсолютизация ссылки:
+          HttpConst.Proto.CURR_PROTO +
+            uploadHostUrl.host +
+            routes.controllers.Upload.chunk(upTgQsStr, chunkQsDict).url
       }
 
       def __preprocessChunk( chunk: ResumableChunk ): Unit = {
