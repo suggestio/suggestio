@@ -109,8 +109,26 @@ object MEdgeMedia
   * @param storage Хранилище файла.
   * @param picture Метаданные картинки, если это картинка.
   */
-case class MEdgeMedia(
-                       storage          : Option[MStorageInfo] = None,
-                       file             : MFileMeta,
-                       picture          : MPictureMeta        = MPictureMeta.empty,
-                     )
+final case class MEdgeMedia(
+                             storage          : Option[MStorageInfo] = None,
+                             file             : MFileMeta,
+                             picture          : MPictureMeta        = MPictureMeta.empty,
+                           ) {
+
+  override def toString: String = {
+    val sb = new StringBuilder(256, "Media")
+      .append('(')
+
+    for (s <- storage)
+      sb.append(s).append(',')
+
+    sb.append( file )
+
+    if (picture.nonEmpty)
+      sb.append(',').append(picture)
+
+    sb.append(')')
+      .toString()
+  }
+
+}

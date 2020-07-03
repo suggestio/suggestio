@@ -82,8 +82,31 @@ object MPictureMeta
   * @param whPx Пиксельный двумерный размер картинки.
   * @param histogram Основные цвета.
   */
-case class MPictureMeta(
-                         whPx       : Option[MSize2di]      = None,
-                         histogram  : Option[MHistogram]    = None,
-                       )
+final case class MPictureMeta(
+                               whPx       : Option[MSize2di]      = None,
+                               histogram  : Option[MHistogram]    = None,
+                             )
   extends EmptyProduct
+{
+
+  override def toString: String = {
+    if (isEmpty) {
+      ""
+    } else {
+      val sb = new StringBuilder(64, productPrefix)
+        .append('(')
+
+      for (wh <- whPx)
+        sb.append("wh=").append(wh)
+
+      for (hist <- histogram)
+        sb.append(' ')
+          .append("hist=")
+          .append(hist)
+
+      sb.append(')')
+        .toString()
+    }
+  }
+
+}

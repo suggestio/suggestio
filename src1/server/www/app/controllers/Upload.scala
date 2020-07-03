@@ -170,6 +170,7 @@ final class Upload @Inject()(
             fileEdge <- fileEdgeOpt
             foundFileNode <- foundFileNodeOpt
             inProgressFlag = MEdgeFlags.InProgress
+
             // Если есть флаг InProgress, то надо возвращать uploadUrls, несмотря на присутствие узла.
             if {
               val isInProgress = fileEdge.info.flags
@@ -178,6 +179,7 @@ final class Upload @Inject()(
                 LOGGER.debug(s"$logPrefix File node#${foundFileNode.idOrNull} have $inProgressFlag in edge. isEnabled=${foundFileNode.common.isEnabled}\n FileEdge=$fileEdge")
               !isInProgress
             }
+
           } yield {
             // Найден узел с уже закачанным файлом. Собрать необходимые данные и вернуть клиенту.
             val fileEdge = foundFileNode
@@ -597,23 +599,34 @@ final class Upload @Inject()(
 
           // Сверить рассчётные хэш-суммы с заявленными при загрузке.
           if {
-            hashesHexMap.nonEmpty &&
-            uploadArgs.fileProps
-              .hashesHex
-              .forall { fmHashQs =>
-                hashesHexMap
-                  .get( fmHashQs.hType )
-                  .exists { mfhash =>
-                    val r = mfhash.hexValue ==* fmHashQs.hexValue
-                    if (!r) {
-                      LOGGER.error(s"$logPrefix $mfhash != ${fmHashQs.hType} ${fmHashQs.hexValue} file=${upCtxArgs.file} ${upCtxArgs.fileLength}b user=${request.user.personIdOpt.orNull}")
-                      errSb.synchronized {
-                        __appendErr( s"File hash ${fmHashQs.hType.fullStdName} '${mfhash.hexValue}' doesn't match to declared '${fmHashQs.hexValue}'." )
+            val isHashesMatching =
+              hashesHexMap.nonEmpty &&
+              uploadArgs
+                .fileProps
+                .hashesHex
+                .forall { fmHashQs =>
+                  hashesHexMap
+                    .get( fmHashQs.hType )
+                    .exists { mfhash =>
+                      val r = mfhash.hexValue ==* fmHashQs.hexValue
+                      if (!r) {
+                        LOGGER.error(s"$logPrefix $mfhash != ${fmHashQs.hType} ${fmHashQs.hexValue} file=${upCtxArgs.file} ${upCtxArgs.fileLength}b user=${request.user.personIdOpt.orNull}")
+                        errSb.synchronized {
+                          __appendErr( s"File hash ${fmHashQs.hType.fullStdName} '${mfhash.hexValue}' doesn't match to declared '${fmHashQs.hexValue}'." )
+                        }
                       }
+                      r
                     }
-                    r
-                  }
-              }
+                }
+
+            // Залоггировать, иначе в trace-логах совсем ничего не печатается на тему логов.
+            if (isHashesMatching)
+              LOGGER.trace(s"$logPrefix ${hashesHexMap.size}/${uploadArgs.fileProps.hashesHex.size} hashes validated OK\n ${_renderHashesHex( hashesHexMap.valuesIterator )}")
+            else {
+              LOGGER.warn(s"$logPrefix File hashes does not match.\n Declared in qs = ${_renderHashesHex( uploadArgs.fileProps.hashesHex )}\n Calculated = ${_renderHashesHex( hashesHexMap.valuesIterator )}")
+            }
+
+            isHashesMatching
           }
 
           // Убедиться, что формат файла валиден.
@@ -753,6 +766,7 @@ final class Upload @Inject()(
 
           // Ожидаем окончания сохранения узла.
           mnode1 <- mnode1Fut
+          _ = Future( mNodes.putToCache( mnode1 ) )
 
           // Файл сохранён. Но если был патчинг уже существующего узла, то надо убрать старый файл из хранилища.
           // Поискать старый файловый эдж для удаления.
@@ -797,8 +811,6 @@ final class Upload @Inject()(
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
-            mNodes.putToCache( mnode1 )
-
             for (colorDetectFut <- colorDetectFutOpt) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
                 if (colorHist.colors.nonEmpty) {
@@ -1433,6 +1445,13 @@ final class Upload @Inject()(
         (MNode.id set Some(mnodeId))
       )(mnode0)
     }
+  }
+
+  private def _renderHashesHex(iter: IterableOnce[MFileMetaHash]): String = {
+    iter
+      .iterator
+      .map(fmh => fmh.hType -> fmh.hexValue)
+      .mkString(", ")
   }
 
 }

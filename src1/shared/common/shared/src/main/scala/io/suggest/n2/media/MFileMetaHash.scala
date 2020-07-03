@@ -111,4 +111,19 @@ final case class MFileMetaHash(
 
   override def id = hType
 
+  override def toString: String = {
+    val sb = new StringBuilder(64, hType.toString)
+      .append('=')
+      .append(hexValue)
+
+    if (flags.nonEmpty) {
+      sb.append("[")
+      for (f <- flags)
+        sb.append("#").append(f)
+      sb.append(']')
+    }
+
+    sb.toString()
+  }
+
 }

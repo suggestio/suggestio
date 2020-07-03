@@ -197,7 +197,7 @@ case class MEdge(
                 ) {
 
   override def toString: String = {
-    val sb = new StringBuilder(64)
+    val sb = new StringBuilder(256)
       .append("E(")
     sb.append(predicate.value)
       .append(':')
@@ -219,7 +219,7 @@ case class MEdge(
         .append("},")
     }
     for (m <- media) {
-      sb.append("media=")
+      sb.append(',')
         .append(m)
     }
     sb.append(')')

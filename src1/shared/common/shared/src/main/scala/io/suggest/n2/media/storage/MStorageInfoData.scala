@@ -71,4 +71,20 @@ final case class MStorageInfoData(
   lazy val swfsFid: Option[Fid] =
     Fid.parse( meta )
 
+  override def toString: String = {
+    val sb = new StringBuilder(32, meta)
+
+    if (hosts.nonEmpty) {
+      sb.append('[')
+      hosts.foreach { host =>
+        sb.append(host)
+          .append(",")
+      }
+      sb.setLength(sb.length() - 1)
+      sb.append(']')
+    }
+
+    sb.toString()
+  }
+
 }

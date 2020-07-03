@@ -64,6 +64,9 @@ class FileUtil @Inject()(
   }
 
   def mkHashesHexAsync(file: File, hashes: Iterable[MHash], flags: Set[MFileMetaHashFlag]): Future[Seq[MFileMetaHash]] = {
+    val startedAtMs: Long =
+      if (LOGGER.underlying.isTraceEnabled()) System.currentTimeMillis() else 0L
+
     for {
       kvs <- Future.traverse(hashes) { mhash =>
         Future {
@@ -75,6 +78,7 @@ class FileUtil @Inject()(
         }
       }
     } yield {
+      LOGGER.trace(s"mkHashesHexAsync(${file.getName}, [${hashes.mkString(" ")}]): Ok,took ${System.currentTimeMillis() - startedAtMs} ms.\n Result: => ${kvs.iterator.map(k => k.hType -> k.hexValue).mkString(", ")}")
       kvs.toSeq
     }
   }

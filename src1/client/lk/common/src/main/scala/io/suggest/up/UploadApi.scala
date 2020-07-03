@@ -54,7 +54,7 @@ trait IUploadApi {
 class UploadApiHttp extends IUploadApi with Log {
 
   /** Разрешать ли chunked upload? */
-  final def ALLOW_CHUNKED = false
+  final def ALLOW_CHUNKED = true
 
   /** Код тела подготовки к аплоаду и декодинга результата по HTTP.
     *

@@ -70,7 +70,12 @@ object MStorageInfo extends IEsMappingProps {
   * @param data "Координаты" объекта в конкретном сторадже.
   *             Данные передаются в клиент конкретного хранилища, и понятны этому хранилищу.
   */
-case class MStorageInfo(
-                         storage   : MStorage,
-                         data      : MStorageInfoData,
-                       )
+final case class MStorageInfo(
+                               storage   : MStorage,
+                               data      : MStorageInfoData,
+                             ) {
+
+  override def toString: String =
+    s"$storage/$data"
+
+}

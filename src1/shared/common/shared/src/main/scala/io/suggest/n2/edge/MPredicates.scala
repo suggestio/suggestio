@@ -202,14 +202,17 @@ object MPredicates extends StringEnum[MPredicate] {
       *
       * Если e.info.flags содержит InProgress, то значит файл ещё пока не готов.
       */
-    case object File extends MPredicate("j")
+    case object File extends MPredicate("j") with _Child
 
     /** Описание куска данных (часть файла).
       * Слайс - блоб, являющаяся куском бОльшего блоба (chunk).
       * Chunk-эдж без порядкового номера содержит общую инфу по всей chunked-заливке, и разрешает chunk-заливку в узел.
       * Chunk-эдж может содержать инфу по storage-узлу, номеру chunk'а, byte offset (start, end), хэш-сумму конкретной части.
       */
-    case object Slice extends MPredicate("bs")
+    case object Slice extends MPredicate("bs") with _Child
+
+    override def children: LazyList[MPredicate] =
+      File #:: Slice #:: super.children
 
   }
 

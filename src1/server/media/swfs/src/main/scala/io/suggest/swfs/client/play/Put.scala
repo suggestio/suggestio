@@ -42,20 +42,27 @@ trait Put extends ISwfsClientWs with MpUploadSupportDflt {
     val putFut = mpUpload(uplArgs)
 
     lazy val logPrefix = s"put($startMs):"
-    LOGGER.trace(s"$logPrefix Started PUT file for $req, file size = ${req.file.length()} bytes.")
+    lazy val fileLen = req.file.length()
+    LOGGER.trace(s"$logPrefix Started PUT file for $req, file size = $fileLen bytes.")
 
     // Залоггировать ошибки
-    putFut.failed.foreach { ex =>
+    for (ex <- putFut.failed)
       LOGGER.error(s"$logPrefix Failed to PUT: $req", ex)
-    }
 
     // Десериализовать успешный ответ.
     for {
       wsResp <- putFut
     } yield {
-      LOGGER.trace(s"$logPrefix Success, took ${System.currentTimeMillis() - startMs} ms\n ${wsResp.body}")
-      wsResp.json
-        .as[PutResponse]
+      def tookMs = System.currentTimeMillis() - startMs
+
+      if (wsResp.status ==* HttpConst.Status.NOT_MODIFIED) {
+        LOGGER.warn(s"$logPrefix 304 Not modified. You've re-uploaded same file again ($fileLen bytes) into [${req.fid}] in $tookMs ms.\n file = ${req.file}")
+        PutResponse( fileLen )
+      } else {
+        LOGGER.trace(s"$logPrefix Success, took $tookMs ms\n ${wsResp.body}")
+        wsResp.json
+          .as[PutResponse]
+      }
     }
   }
 

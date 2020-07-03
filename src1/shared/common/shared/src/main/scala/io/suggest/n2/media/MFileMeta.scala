@@ -135,14 +135,33 @@ object MFileMeta
   * @param isOriginal Оригинал ли? false для деривативов.
   * @param hashesHex Карта хэш-сумм файла.
   */
-case class MFileMeta(
-                      mime          : Option[String]      = None,
-                      sizeB         : Option[Long]        = None,
-                      isOriginal    : Boolean             = true,
-                      hashesHex     : Seq[MFileMetaHash]  = Nil,
-                    ) {
+final case class MFileMeta(
+                            mime          : Option[String]      = None,
+                            sizeB         : Option[Long]        = None,
+                            isOriginal    : Boolean             = true,
+                            hashesHex     : Seq[MFileMetaHash]  = Nil,
+                          ) {
 
   /** Если картинка, то вернуть её формат по модели MImgFmts. */
   lazy val imgFormatOpt = mime.flatMap( MImgFormats.withMime )
+
+  override def toString: String = {
+    val sb = new StringBuilder(64, productPrefix)
+      .append('(')
+    for (m <- mime)
+      sb.append(m).append(',')
+    for (sz <- sizeB)
+      sb.append(sz).append("b,")
+    if (!isOriginal)
+      sb.append("!orig,")
+    if (hashesHex.nonEmpty) {
+      sb.append('[')
+      for (fmh <- hashesHex)
+        sb.append(fmh).append(' ')
+      sb.append(']')
+    }
+    sb.append(')')
+      .toString()
+  }
 
 }
