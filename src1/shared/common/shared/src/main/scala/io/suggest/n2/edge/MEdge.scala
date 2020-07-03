@@ -218,6 +218,10 @@ case class MEdge(
         .append(doc.toString)
         .append("},")
     }
+    for (m <- media) {
+      sb.append("media=")
+        .append(m)
+    }
     sb.append(')')
       .toString()
   }

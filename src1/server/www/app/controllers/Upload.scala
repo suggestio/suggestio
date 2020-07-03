@@ -37,9 +37,8 @@ import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
 import models.mup._
 import models.req.IReq
-import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFileCreator}
 import play.api.libs.json.Json
-import play.api.mvc.{BodyParser, DefaultActionBuilder, Result, Results}
+import play.api.mvc.{BodyParser, DefaultActionBuilder, MultipartFormData, Result, Results}
 import play.core.parsers.Multipart
 import util.acl.{BruteForceProtect, CanDownloadFile, CanUpload, Ctx304, IgnoreAuth, IsFileNotModified}
 import util.cdn.{CdnUtil, CorsUtil}
@@ -51,6 +50,8 @@ import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
 import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
+import play.api.libs.Files.TemporaryFile
+import play.api.mvc.MultipartFormData.FilePart
 
 import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success}
@@ -167,12 +168,16 @@ final class Upload @Inject()(
 
           (respStatus, respDataFut) = (for {
             fileEdge <- fileEdgeOpt
-
-            // Если есть флаг InProgress, то надо возвращать uploadUrls, несмотря на присутствие узла.
-            if !fileEdge.info.flags
-              .exists( _.flag ==* MEdgeFlags.InProgress )
-
             foundFileNode <- foundFileNodeOpt
+            inProgressFlag = MEdgeFlags.InProgress
+            // Если есть флаг InProgress, то надо возвращать uploadUrls, несмотря на присутствие узла.
+            if {
+              val isInProgress = fileEdge.info.flags
+                .exists( _.flag ==* inProgressFlag )
+              if (isInProgress)
+                LOGGER.debug(s"$logPrefix File node#${foundFileNode.idOrNull} have $inProgressFlag in edge. isEnabled=${foundFileNode.common.isEnabled}\n FileEdge=$fileEdge")
+              !isInProgress
+            }
           } yield {
             // Найден узел с уже закачанным файлом. Собрать необходимые данные и вернуть клиенту.
             val fileEdge = foundFileNode
@@ -269,11 +274,13 @@ final class Upload @Inject()(
                 foundFileNodeId <- foundFileNodeIdOpt
                 if upInfo.existNodeId.isEmpty
                 fileEdge <- fileEdgeOpt
+                inProgressFlag = MEdgeFlags.InProgress
+                if fileEdge.info.flags.exists(_.flag ==* inProgressFlag)
                 fileEdgeMedia <- fileEdge.media
                 fileStorage <- fileEdgeMedia.storage
               } yield {
                 // Если найден file-узел, но с флагом InProgress, надо продолжить заливку в данный узел.
-                LOGGER.debug( s"$logPrefix Patching Upload qsInfo.existNodeId := $foundFileNodeId -- file-edge has InProgress flag, recovering upload." )
+                LOGGER.debug( s"$logPrefix Patching Upload qsInfo.existNodeId := $foundFileNodeId -- file-edge has $inProgressFlag flag, recovering upload." )
                 for {
                   storAssigned <- cdnUtil.toAssignedStorage( foundFileNodeId, fileStorage )
                 } yield {
@@ -363,6 +370,7 @@ final class Upload @Inject()(
     )
   }
 
+
   /** Сборка инстанса для сохранения/доступа в модель LocalImg. */
   private def _localImgFileCreator(imgFormatOpt: Option[MImgFormat]): LocalImgFileCreator = {
     val dynImgId = MDynImgId(
@@ -377,22 +385,22 @@ final class Upload @Inject()(
 
   /** Получить инстанс fileCreator из qs-аргументов. */
   private def _getFileCreator(fileHandlerOpt: Option[MUploadFileHandler],
-                              fileMeta: MFileMeta): TemporaryFileCreator = {
-    fileHandlerOpt.fold[TemporaryFileCreator] {
-      // Использовать дефолтовый file creator
-      SingletonTemporaryFileCreator
-    } {
-      // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
-      case MUploadFileHandlers.Image =>
-        // Если картинка, то заливать сразу в MLocalImg/ORIG.
-        val imgFmtOpt = fileMeta.mime
-          .flatMap( MImgFormats.withMime )
+                              fileMeta: MFileMeta): LocalImgFileCreator = {
+    // Используем всегда модель MLocalImg, т.к. штатный SingletonTemporaryFileCreator сохраняет tmp-файлы в /tmp
+    // или куда попало, что не редко означает сохранение в tmpfs (в RAM), что небезопасно.
 
+    // Если картинка, то заливать сразу в MLocalImg/ORIG.
+    val imgFmtOpt = fileMeta.mime
+      .flatMap( MImgFormats.withMime )
+
+    fileHandlerOpt.foreach {
+      case MUploadFileHandlers.Image =>
+        // Если указано, что ожидается картинка, то убедится в картиночности заявленного файла.
         if (imgFmtOpt.isEmpty)
           throw new NoSuchElementException(s"Non-image or unsupported MIME type: ${fileMeta.mime}")
-
-        _localImgFileCreator( imgFmtOpt )
     }
+
+    _localImgFileCreator( imgFmtOpt )
   }
 
 
@@ -413,8 +421,6 @@ final class Upload @Inject()(
           MUploadBpRes(
             data = mpfd,
             fileCreator = fileCreator,
-            // MLocalImg оставляем на диске, чтобы imagemagic мог с ним работать. Остальные файлы - удалять по завершению.
-            isDeleteFileOnComplete = fileCreator.localImgArgsOpt.isEmpty,
           )
         }
       } else {
@@ -422,13 +428,38 @@ final class Upload @Inject()(
         val imgFmtOpt = uploadArgs.fileProps.mime
           .flatMap( MImgFormats.withMime )
 
-        val lifc = _localImgFileCreator( imgFmtOpt )
-        if (mLocalImgs isExists lifc.liArgs.mLocalImg)
-          parse.error(
-            httpErrorHandler.onClientError(rh, BAD_REQUEST, s"File not uploaded: ${uploadArgs.info.existNodeId getOrElse ""}") )
-        else
+        val localImg = MLocalImg( MDynImgId(uploadArgs.info.existNodeId.get, imgFmtOpt) )
+        val locImgFile = mLocalImgs.fileOf( localImg )
 
-          ???
+        if ( !locImgFile.exists() ) {
+          LOGGER.warn(s"bp.!body: Not found local file: $locImgFile\n args = $uploadArgs")
+          val respFut = httpErrorHandler.onClientError(rh, BAD_REQUEST, s"File not uploaded: ${uploadArgs.info.existNodeId getOrElse ""}")
+          parse.error( respFut )
+
+        } else {
+          LOGGER.trace(s"Found pre-uploaded file: $locImgFile")
+          val lifc = localImgFileCreatorFactory.instance( MLocalImgFileCreatorArgs( localImg ) )
+          parse.ignore(
+            MUploadBpRes(
+              data = MultipartFormData(
+                files = FilePart[TemporaryFile](
+                  key = UploadConstants.MPART_FILE_FN,
+                  // TODO Для chunk оно сохраняется в узле, доступ к которому из bodyParser'а не доступен.
+                  filename = "",
+                  contentType = uploadArgs.fileProps.mime,
+                  ref = LocalImgFile(
+                    file    = locImgFile,
+                    creator = lifc,
+                  ),
+                  fileSize = locImgFile.length(),
+                ) :: Nil,
+                dataParts = Map.empty,
+                badParts  = Nil,
+              ),
+              fileCreator = lifc,
+            )
+          )
+        }
       }
     }
   }
@@ -475,7 +506,7 @@ final class Upload @Inject()(
           val fpOpt = request.body.data.file( partName )
           LOGGER.trace(s"$logPrefix File part '$partName' lookup: found?${fpOpt.nonEmpty}: ${fpOpt.orNull}")
           if (fpOpt.isEmpty)
-            __appendErr(s"Missing file part with name '$partName'.")
+            __appendErr(s"Missing file part with name '$partName'")
           fpOpt
         }
 
@@ -514,7 +545,7 @@ final class Upload @Inject()(
           if (
             (detectedMimeType ==* declaredMime) ||
             // игнорить octet-stream, т.к. это означает, что MIME неизвестен на клиенте.
-            declaredMime ==* MimeConst.APPLICATION_OCTET_STREAM
+            (declaredMime ==* MimeConst.APPLICATION_OCTET_STREAM)
           ) {
             detectedMimeType
           } else {
@@ -538,7 +569,7 @@ final class Upload @Inject()(
         if {
           val r = upCtx.validateFileContentEarly()
           if (!r)
-            __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.localImgArgs.flatMap( _.mLocalImg.dynImgId.imgFormat ).orNull}/${upCtx.imageWh.orNull}" )
+            __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.fileCreator.liArgs.mLocalImg.dynImgId.imgFormat.orNull}/${upCtx.imageWh.orNull}" )
           r
         }
 
@@ -611,7 +642,8 @@ final class Upload @Inject()(
             r
           }
 
-          fileNameOpt = Option( filePart.filename )
+          // Имя файла. Может быть задано в узле, а в body - отсутствовать (""), если chunked upload.
+          fileNameOpt = Option( filePart.filename ).filter(_.nonEmpty)
 
           // Собираем MediaStorage ptr и клиент:
           storageInfo = uploadArgs.storage.storage
@@ -661,7 +693,7 @@ final class Upload @Inject()(
               _createFileNode(
                 fileCreator = request.body.fileCreator,
                 nodeType = uploadArgs.info.nodeType.get,
-                techName = Option( filePart.filename ),
+                techName = fileNameOpt,
                 edges = addEdges,
                 enabled = true,
               )
@@ -671,7 +703,7 @@ final class Upload @Inject()(
               // Удаление старого файла будет после сохранения узла.
               LOGGER.trace(s"$logPrefix Will update existing node#${mnode0.idOrNull} with edges: ${addEdges.mkString(", ")}")
 
-              mNodes.tryUpdate( mnode0 )(
+              var modF = (
                 MNode.node_meta_basic_dateEdited_RESET andThen
                 MNode.edges.modify { edges0 =>
                   val edgesSeq2 = MNodeEdges.edgesToMap1(
@@ -680,6 +712,15 @@ final class Upload @Inject()(
                   MNodeEdges.out.set( edgesSeq2 )(edges0)
                 }
               )
+
+              if (!mnode0.common.isEnabled) {
+                LOGGER.trace(s"$logPrefix Reset node#${mnode0.idOrNull} isEnabled => true")
+                modF = modF andThen MNode.common
+                  .composeLens( MNodeCommon.isEnabled )
+                  .set(true)
+              }
+
+              mNodes.tryUpdate( mnode0 )(modF)
                 // Версия потом иногда отправляется в system-extra, поэтому инкрементим её:
                 .map( MNode.versionOpt.modify(_.map(_ + 1)) )
             }
@@ -702,11 +743,11 @@ final class Upload @Inject()(
           // Сразу в фоне запускаем анализ цветов картинки, если он был запрошен.
           // Очень маловероятно, что сохранение сломается и будет ошибка, поэтому и параллелимся со спокойной душой.
           colorDetectFutOpt = for {
-            localImgArgs    <- request.body.localImgArgs
             cdArgs          <- uploadArgs.info.colorDetect
           } yield {
-            mainColorDetector.cached( localImgArgs.mLocalImg ) {
-              mainColorDetector.detectPaletteFor( localImgArgs.mLocalImg, maxColors = cdArgs.paletteSize)
+            val localImg = request.body.fileCreator.liArgs.mLocalImg
+            mainColorDetector.cached( localImg ) {
+              mainColorDetector.detectPaletteFor( localImg, maxColors = cdArgs.paletteSize)
             }
           }
 
@@ -812,9 +853,14 @@ final class Upload @Inject()(
             // При ошибке заливки файла, надо удалять созданный узел и запись в MMedia:
             for {
               ex <- saveFileToShardFut.failed
+
               delNodeResFut = {
-                LOGGER.error(s"$logPrefix Failed to send file into storage#$storageInfo . Deleting MNode#$mnodeId ...", ex)
-                mNodes.deleteById( mnodeId )
+                val needDeleteNode = uploadArgs.info.existNodeId.isEmpty
+                LOGGER.error(s"$logPrefix Failed to send file into storage#$storageInfo . Delete node#$mnodeId?${needDeleteNode}", ex)
+                if (needDeleteNode)
+                  mNodes.deleteById( mnodeId )
+                else
+                  Future.successful( false )
               }
 
               // Запустить в фоне чистку хранилища, на случай если там что-то всё-таки осело, несмотря на ошибку.
@@ -826,7 +872,8 @@ final class Upload @Inject()(
 
               delNodeRes <- delNodeResFut
             } {
-              LOGGER.warn(s"$logPrefix Emergency deleted MNode#$mnodeId => $delNodeRes")
+              if (delNodeRes)
+                LOGGER.warn(s"$logPrefix Emergency deleted MNode#$mnodeId => $delNodeRes")
             }
 
             saveFileToShardFut
@@ -959,7 +1006,11 @@ final class Upload @Inject()(
       } { resFut =>
         // Если файл не подхвачен файловой моделью (типа MLocalImg или другой), то его надо удалить:
         resFut.onComplete { tryRes =>
-          if ((tryRes.isSuccess && request.body.isDeleteFileOnComplete) || tryRes.isFailure)
+          // MLocalImg оставляем на диске, чтобы imagemagic мог с ним работать. Остальные файлы - удалять по завершению.
+          if ( tryRes.fold[Boolean](
+            _ => true,
+            _ => !uploadArgs.info.fileHandler.isKeepUploadedFile
+          ))
             __deleteUploadedFiles()
         }
 
@@ -1143,7 +1194,24 @@ final class Upload @Inject()(
         lazy val logPrefix = s"hasChunk(${uploadArgs.info.existNodeId.orNull} ${chunkQs.chunkNumber}/${chunkQs.chunkSizeGeneral}):"
         LOGGER.trace( s"$logPrefix searching for hashes: ${chunkQs.hashesHex.mkString("\n ")}" )
 
-        val isChunkMetaOk =
+        val localImg = MLocalImg( MDynImgId(request.mnode.id.get) )
+        val localImgFile = mLocalImgs.fileOf( localImg )
+        lazy val localImgFileLen = localImgFile.length()
+
+        val isChunkLoadedOk =
+          {
+            // Убедится, что файл существует и не пустой.
+            val r = localImgFile.exists() && (localImgFileLen > 0)
+            if (!r) LOGGER.debug(s"$logPrefix Chunk-related file not found or empty: $localImgFile len=$localImgFileLen")
+            r
+          } && {
+            // Сравниваем просто наличие endByte
+            // TODO Убедится, что в файле есть данные именно этого chunk'а? Можно пересчитать хэш, но это лишняя нагрузка...
+            val endByte = chunkQs.chunkSizeGeneral.value * chunkQs.chunkNumber0 + chunkQs.chunkSizeCurrent.get
+            val r = endByte <= localImgFileLen
+            if (!r) LOGGER.debug(s"$logPrefix EndByte#$endByte, but FileLen=$localImgFileLen")
+            r
+          } &&
           chunkQs.totalSize.fold {
             LOGGER.trace(s"$logPrefix No totalSize in qs, expected=${request.fileEdgeMedia.file.sizeB.orNull}b, skipping.")
             true
@@ -1152,6 +1220,7 @@ final class Upload @Inject()(
             val r = edgeSize contains[Long] qsTotalSizeB
             if (!r) LOGGER.warn(s"$logPrefix chunk size mismatch: qs[$qsTotalSizeB] != ${edgeSize.orNull}")
             r
+
           } && {
             // Проверяем данные chunk'а
             val chunkEdge = request.mnode.edges
@@ -1188,9 +1257,9 @@ final class Upload @Inject()(
             }
           }
 
-        LOGGER.trace(s"$logPrefix isOk?$isChunkMetaOk")
+        LOGGER.trace(s"$logPrefix isOk?$isChunkLoadedOk")
         // Вернуть инфу по сверке:
-        if (isChunkMetaOk) Ok
+        if (isChunkLoadedOk) Ok
         else NoContent
       }
   }
@@ -1238,6 +1307,8 @@ final class Upload @Inject()(
   def downloadLogic[A](dispInline: Boolean, returnBody: Boolean)(ctx304: Ctx304[A]): Future[Result] = {
     import ctx304.request
 
+    lazy val logPrefix = s"downloadLogic(i?$dispInline,b?$returnBody):"
+
     val s = request.edgeMedia.storage.get
 
     val readArgs = MDsReadArgs(
@@ -1260,6 +1331,7 @@ final class Upload @Inject()(
       ),
     )
     val storClient = iMediaStorages.client( s.storage )
+    LOGGER.trace(s"$logPrefix node#${ctx304.request.mnode.idOrNull} storClient=${storClient.getClass.getSimpleName}\n edgeMedia: ${ctx304.request.edgeMedia}\n storArgs => $readArgs")
 
     (for {
       ds <- storClient.read( readArgs )
@@ -1283,7 +1355,8 @@ final class Upload @Inject()(
           .withHeaders( hdrs: _* )
       )
     })
-      .recoverWith { case _: NoSuchElementException =>
+      .recoverWith { case ex: NoSuchElementException =>
+        LOGGER.debug(s"$logPrefix File[${s.data}] not found via #${storClient.getClass.getSimpleName}", ex)
         httpErrorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
       }
   }
@@ -1330,12 +1403,12 @@ final class Upload @Inject()(
 
 
   /** Собрать и сохранить новый файловый узел. */
-  private def _createFileNode(fileCreator: TemporaryFileCreator, nodeType: MNodeType, techName: Option[String],
+  private def _createFileNode(fileCreator: LocalImgFileCreator, nodeType: MNodeType, techName: Option[String],
                               edges: Seq[MEdge], enabled: Boolean): Future[MNode] = {
     import esModel.api._
 
     val mnode0 = MNode(
-      id = fileCreator.customNodeIdOpt,
+      id = Some( fileCreator.liArgs.mLocalImg.dynImgId.mediaId ),
       common = MNodeCommon(
         ntype         = nodeType,
         isDependent   = true,

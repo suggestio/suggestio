@@ -23,13 +23,13 @@ final case class LocalImgFileCreator @Inject() (
   extends TemporaryFileCreator
 { creator =>
 
-  override def create(prefix: String, suffix: String): TemporaryFile =
+  override def create(prefix: String, suffix: String): LocalImgFile =
     _create()
 
-  override def create(path: Path): TemporaryFile =
+  override def create(path: Path): LocalImgFile =
     _create()
 
-  private def _create(): TemporaryFile = {
+  private def _create(): LocalImgFile = {
     mLocalImgs.prepareWriteFile( liArgs.mLocalImg )
     LocalImgFile( mLocalImgs.fileOf( liArgs.mLocalImg ), creator )
   }
@@ -51,9 +51,8 @@ final case class MLocalImgFileCreatorArgs(
 
 
 /** Маскировка MLocalImg под TemporaryFile. */
-final case class LocalImgFile(val _file: File, creator: LocalImgFileCreator) extends TemporaryFile {
-  override def path: Path = _file.toPath
-  override def file: File = _file
+final case class LocalImgFile(override val file: File, creator: LocalImgFileCreator) extends TemporaryFile {
+  override def path = file.toPath
   override def temporaryFileCreator = creator
 }
 

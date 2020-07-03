@@ -77,8 +77,9 @@ class CanDownloadFile @Inject()(
 
       // Проверить, активен ли узел.
       _ = mnode.common.isEnabled || {
-        LOGGER.warn(s"$logPrefix Node#${dlQs.nodeId} is disabled.")
-        _throwNotFound( request )
+        val msg = s"Node#${dlQs.nodeId} is disabled."
+        LOGGER.warn(s"$logPrefix $msg")
+        throw HttpResultingException( httpErrorHandler.onClientError(request, Status.FORBIDDEN, msg) )
       }
 
       // Это media-узел?

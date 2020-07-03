@@ -38,9 +38,9 @@ class CharSeqView(
                  )
   extends CharSequence {
 
-  ErrorConstants.assertArg( beginIndex >= 0 )
-  ErrorConstants.assertArg( endIndex > beginIndex )
-  ErrorConstants.assertArg( source.length() >= endIndex )
+  ErrorConstants.assertArg( beginIndex >= 0, beginIndex.toString )
+  ErrorConstants.assertArg( endIndex > beginIndex, (endIndex, beginIndex).toString() )
+  ErrorConstants.assertArg( source.length() >= endIndex, (source.length(), endIndex).toString() )
 
   /** O(1) длина char-последовательсти. */
   override def length: Int = {

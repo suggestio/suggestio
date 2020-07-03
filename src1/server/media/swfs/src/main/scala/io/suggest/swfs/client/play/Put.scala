@@ -1,8 +1,10 @@
 package io.suggest.swfs.client.play
 
 import io.suggest.ahc.upload.{MpUploadArgs, MpUploadSupportDflt}
-import io.suggest.swfs.client.proto.put.{PutResponse, PutRequest}
+import io.suggest.proto.http.HttpConst
+import io.suggest.swfs.client.proto.put.{PutRequest, PutResponse}
 import play.api.libs.ws.WSResponse
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -21,7 +23,9 @@ trait Put extends ISwfsClientWs with MpUploadSupportDflt {
   }
 
   override def isRespOk(args: MpUploadArgs, resp: WSResponse): Boolean = {
-    SwfsClientWs.isStatus2xx( resp.status )
+    SwfsClientWs.isStatus2xx( resp.status ) ||
+    // Если файл перезалит, но не изменился, то weed возвращает 304:
+    (resp.status ==* HttpConst.Status.NOT_MODIFIED)
   }
 
   override def mpFieldNameDflt = "file"

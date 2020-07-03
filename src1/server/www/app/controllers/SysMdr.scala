@@ -155,7 +155,7 @@ class SysMdr @Inject() (
         .fold [Future[Set[String]]] {
           // Нет ресивера - значит sio-модератор/суперюзер листает всё в системе, что отправлено на модерацию.
           // В норме этот assert не нужен, т.к. проверки должны быть выполнены в ACL. Просто самоконтроль по мере развития и усложнения кода экшена.
-          ErrorConstants.assertArg( request.user.isSuper )
+          ErrorConstants.assertArg( request.user.isSuper, s"SuperUser expected, but user#${request.user.personIdOpt.orNull} found" )
           Future.successful( Set.empty )
         } { rcvrNode =>
           // Нельзя выполнять экшен на эфемерных узлах, т.к. отсутствие узла и его id

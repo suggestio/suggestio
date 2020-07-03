@@ -105,7 +105,7 @@ object IJdEdgeIdViewAdp {
         .pathToNode(nodePath)
         .get
       val jdt = jdtLoc.getLabel
-      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids) )
+      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids), s"edgeUID#${resKey.edgeUid}? ![${jdt.edgeUids.mkString(",")}]" )
 
       jdtLoc
         .setLabel {

@@ -4,7 +4,8 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
 import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
@@ -38,7 +39,7 @@ class N2VldUtil @Inject()(
     * @return Мапа: id эджа -> nodeId картинки.
     */
   def collectNeededImgIds(edges: IterableOnce[MJdEdge]): Map[EdgeUid_t, MDynImgId] = {
-    val needImgsIter = for {
+    (for {
       e         <- edges.iterator
       if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv   <- e.fileSrv
@@ -46,8 +47,7 @@ class N2VldUtil @Inject()(
     } yield {
       // Без img-формата, т.к. для оригинала он игнорируется, и будет перезаписан в imgsNeededMap()
       edgeUid -> MDynImgId( fileSrv.nodeId )
-    }
-    needImgsIter
+    })
       .toMap
   }
 
@@ -64,7 +64,7 @@ class N2VldUtil @Inject()(
       .toSet
 
     // Поискать узлы, упомянутые в этих эджах.
-    mNodes.multiGetMapCache( edgeNodeIds )
+    _findEdgeNodes( edgeNodeIds )
   }
 
 
@@ -81,19 +81,39 @@ class N2VldUtil @Inject()(
   }
 
 
-  /** Чтение media-инстансов из БД.
+  private def _findEdgeNodes(nodeIds: Set[String], ofNodeTypes: Seq[MNodeType] = Nil): Future[Map[String, MNode]] = {
+    def logPrefix = s"_findEdgeNodes(${nodeIds.size}, [${ofNodeTypes.mkString(" ")}]):"
+
+    for {
+      allowedIds <- mNodes.dynSearchIds(
+        new MNodeSearch {
+          override def nodeTypes = ofNodeTypes
+          // Собрать id запрашиваемых media-оригиналов:
+          override val withIds = nodeIds.toSeq
+          // Интересуют только enabled-узлы:
+          override val isEnabled = Some(true)
+        }
+      )
+      resMap <- {
+        LOGGER.trace(s"$logPrefix Imgs requested, ${allowedIds.size} nodes allowed.")
+        mNodes.multiGetMapCache( allowedIds.toSet )
+      }
+    } yield {
+      resMap
+    }
+  }
+
+  /** Чтение img.media-инстансов из БД.
     *
-    * @param edgeImgIdsMap выхлоп collectNeededImgIds().values
+    * @param edgeImgIds выхлоп collectNeededImgIds().values
     * @return Фьючерс с картой media MNodes.
     */
-  private def imgsMedias(edgeImgIdsMap: IterableOnce[MDynImgId]): Future[Map[String, MNode]] = {
-    mNodes.multiGetMapCache(
-      // Собрать id запрашиваемых media-оригиналов.
-      edgeImgIdsMap
-        .iterator
-        .map(_.mediaId)
-        .toSet
-    )
+  private def imgsMedias(edgeImgIds: IterableOnce[MDynImgId]): Future[Map[String, MNode]] = {
+    val nodeIdsRequested = edgeImgIds
+      .iterator
+      .map(_.mediaId)
+      .toSet
+    _findEdgeNodes( nodeIdsRequested, MNodeTypes.Media.Image :: Nil )
   }
 
 

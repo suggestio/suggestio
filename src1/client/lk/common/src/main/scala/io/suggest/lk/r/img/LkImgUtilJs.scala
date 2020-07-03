@@ -37,8 +37,8 @@ object LkImgUtilJs extends Log {
         height = img.naturalHeight
       )
       val minWh = 0
-      ErrorConstants.assertArg( sz.width > minWh )
-      ErrorConstants.assertArg( sz.height > minWh )
+      ErrorConstants.assertArg( sz.width > minWh, "w" )
+      ErrorConstants.assertArg( sz.height > minWh, "h" )
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
     } catch {
       case ex: Throwable =>

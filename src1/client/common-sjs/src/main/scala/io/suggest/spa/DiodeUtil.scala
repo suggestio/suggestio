@@ -23,7 +23,7 @@ object DiodeUtil {
     var v = retValue
 
     {() =>
-      ErrorConstants.assertArg( v != null )
+      ErrorConstants.assertArg( v != null, "retValue is null" )
       val ret = v
       v = null.asInstanceOf[T]
       ret

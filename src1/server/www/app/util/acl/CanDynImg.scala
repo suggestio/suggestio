@@ -69,7 +69,7 @@ class CanDynImg @Inject() (
             .filter { mnode =>
               {
                 val r1 = mnode.common.isEnabled
-                if (!r1) LOGGER.debug(s"$logPrefix 404. Img node is disabled.")
+                if (!r1) LOGGER.warn(s"$logPrefix 404. Img node is disabled.")
                 r1
               } && {
                 val r2 = mnode.common.ntype ==* MNodeTypes.Media.Image

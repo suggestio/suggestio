@@ -3,7 +3,8 @@ package models.mup
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
 import japgolly.univeq.UnivEq
-import play.api.mvc.QueryStringBindable
+import play.api.libs.Files.TemporaryFile
+import play.api.mvc.{MultipartFormData, QueryStringBindable}
 
 /**
   * Suggest.io
@@ -32,7 +33,37 @@ object MUploadFileHandler {
     EnumeratumJvmUtil.valueEnumQsb( MUploadFileHandlers )
   }
 
+
   /** Поддержка UnivEq. */
   @inline implicit def univEq: UnivEq[MUploadFileHandler] = UnivEq.derive
 
+
+  /** Доп.API для [[MUploadFileHandler]]. */
+  implicit final class UfhOpsExt( private val ufh: MUploadFileHandler ) extends AnyVal {
+
+    /** Надо ли оставлять на диске в [[models.im.MLocalImg]] файлы, загруженные с указанным обработчиком. */
+    def isKeepUploadedFile: Boolean = {
+      ufh match {
+        case MUploadFileHandlers.Image => true
+        case _ => false
+      }
+    }
+
+  }
+
+
+  implicit final class UfhOptOpsExt( private val ufhOpt: Option[MUploadFileHandler] ) extends AnyVal {
+
+    def isKeepUploadedFile: Boolean =
+      ufhOpt.fold(false)( _.isKeepUploadedFile )
+
+  }
+
 }
+
+
+/** Контейнер результата работы BodyParser'а при аплоаде. */
+final case class MUploadBpRes(
+                               data                     : MultipartFormData[TemporaryFile],
+                               fileCreator              : LocalImgFileCreator,
+                             )
