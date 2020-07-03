@@ -4,7 +4,6 @@ import java.nio.file.Files
 import javax.inject.Inject
 
 import io.suggest.async.AsyncUtil
-import io.suggest.img.MImgFmts
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.{MDynImgId, MImgs3, MLocalImg, MLocalImgs}
 import models.mcron.MCronTask
@@ -80,7 +79,7 @@ class LocalImgsDeleteNotExistingInPermanent @Inject()(
         .filter { f  =>  f.isDirectory && f.lastModified() < oldNow }
         .foreach { currDir =>
           val rowKeyStr = currDir.getName
-          val dynImgId = MDynImgId(rowKeyStr, MImgFmts.default, Nil)
+          val dynImgId = MDynImgId( rowKeyStr )
           val mimg = MLocalImg(dynImgId).toWrappedImg
           mImgs3
             .existsInPermanent(mimg)

@@ -4,7 +4,6 @@ import java.io.File
 import java.nio.file.Path
 
 import com.google.inject.assistedinject.Assisted
-import io.suggest.img.MImgFmt
 import javax.inject.Inject
 import models.im.{MLocalImg, MLocalImgs}
 import play.api.libs.Files.{TemporaryFile, TemporaryFileCreator}
@@ -48,7 +47,6 @@ final case class LocalImgFileCreator @Inject() (
 /** Модель аргументов для LocalImg FileCreator. */
 final case class MLocalImgFileCreatorArgs(
                                            mLocalImg    : MLocalImg,
-                                           mImgFmt      : MImgFmt,
                                          )
 
 

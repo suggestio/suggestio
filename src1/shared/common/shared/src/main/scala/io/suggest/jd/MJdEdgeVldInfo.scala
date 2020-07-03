@@ -1,7 +1,7 @@
 package io.suggest.jd
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 
 /**
   * Suggest.io
@@ -21,6 +21,6 @@ case class MJdEdgeVldInfo(
 case class MEdgePicInfo(
                          isImg     : Boolean,
                          imgWh     : Option[ISize2di],
-                         dynFmt    : Option[MImgFmt],
+                         dynFmt    : Option[MImgFormat],
                        )
 

@@ -2,7 +2,6 @@ package util.n2u
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
-import io.suggest.img.MImgFmts
 import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -39,15 +38,14 @@ class N2VldUtil @Inject()(
     * @return Мапа: id эджа -> nodeId картинки.
     */
   def collectNeededImgIds(edges: IterableOnce[MJdEdge]): Map[EdgeUid_t, MDynImgId] = {
-    // Формат дефолтовый, потому что для оригинала он игнорируется, и будет перезаписан в imgsNeededMap()
-    val imgFmtDflt = MImgFmts.default
     val needImgsIter = for {
       e         <- edges.iterator
       if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv   <- e.fileSrv
       edgeUid   <- e.edgeDoc.id
     } yield {
-      edgeUid -> MDynImgId(fileSrv.nodeId, dynFormat = imgFmtDflt)
+      // Без img-формата, т.к. для оригинала он игнорируется, и будет перезаписан в imgsNeededMap()
+      edgeUid -> MDynImgId( fileSrv.nodeId )
     }
     needImgsIter
       .toMap
@@ -112,9 +110,10 @@ class N2VldUtil @Inject()(
       if mmedia.common.ntype ==* MNodeTypes.Media.Image
       fileEdge  <- mmedia.edges.withPredicateIter( MPredicates.Blob.File ).nextOption()
       mediaEdge <- fileEdge.media
-      imgFormat <- mediaEdge.file.imgFormatOpt
+      imgFormat2 = mediaEdge.file.imgFormatOpt
+      if imgFormat2.nonEmpty
     } yield {
-      val dynImgId2 = (MDynImgId.dynFormat set imgFormat)( dynImgId )
+      val dynImgId2 = (MDynImgId.imgFormat set imgFormat2)( dynImgId )
       val mimg = MImg3( dynImgId2 )
       edgeUid -> mimg
     })

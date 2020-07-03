@@ -10,13 +10,14 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
-import io.suggest.err.HttpResultingException, HttpResultingException._
+import io.suggest.err.HttpResultingException
+import HttpResultingException._
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
 import io.suggest.fio.{MDsRangeInfo, MDsReadArgs, MDsReadParams, WriteRequest}
 import io.suggest.i18n.MMessage
-import io.suggest.img.MImgFmts
+import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.n2.edge.edit.{MEdgeWithId, MNodeEdgeIdQs}
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MEdgeFlag, MEdgeFlagData, MEdgeFlags, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.{Criteria, MHashCriteria}
@@ -362,6 +363,17 @@ final class Upload @Inject()(
     )
   }
 
+  /** Сборка инстанса для сохранения/доступа в модель LocalImg. */
+  private def _localImgFileCreator(imgFormatOpt: Option[MImgFormat]): LocalImgFileCreator = {
+    val dynImgId = MDynImgId(
+      origNodeId = MDynImgId.randomId(),
+      imgFormat  = imgFormatOpt,
+    )
+    val localImg = MLocalImg( dynImgId )
+    val args = MLocalImgFileCreatorArgs( localImg )
+    localImgFileCreatorFactory.instance( args )
+  }
+
 
   /** Получить инстанс fileCreator из qs-аргументов. */
   private def _getFileCreator(fileHandlerOpt: Option[MUploadFileHandler],
@@ -373,34 +385,51 @@ final class Upload @Inject()(
       // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
       case MUploadFileHandlers.Image =>
         // Если картинка, то заливать сразу в MLocalImg/ORIG.
-        val imgFmt = MImgFmts
-          .withMime( fileMeta.mime.get )
-          .get
-        val dynImgId = MDynImgId.randomOrig( imgFmt )
-        val localImg = MLocalImg( dynImgId )
-        val args = MLocalImgFileCreatorArgs( localImg, imgFmt )
-        localImgFileCreatorFactory.instance( args )
+        val imgFmtOpt = fileMeta.mime
+          .flatMap( MImgFormats.withMime )
+
+        if (imgFmtOpt.isEmpty)
+          throw new NoSuchElementException(s"Non-image or unsupported MIME type: ${fileMeta.mime}")
+
+        _localImgFileCreator( imgFmtOpt )
     }
   }
-
 
 
   /** BodyParser для запросов, содержащих файлы для аплоада. */
   private def _uploadFileBp(uploadArgs: MUploadTargetQs): BodyParser[MUploadBpRes] = {
     // Сборка самого BodyParser'а.
-    val fileCreator = _getFileCreator( uploadArgs.info.fileHandler, uploadArgs.fileProps )
+    parse.using { rh =>
+      if (rh.hasBody) {
+        val fileCreator = _getFileCreator( uploadArgs.info.fileHandler, uploadArgs.fileProps )
+        // Есть тело запроса - принимаем файл.
+        for {
+          mpfd <- parse.multipartFormData(
+            Multipart.handleFilePartAsTemporaryFile( fileCreator ),
+            maxLength = uploadArgs.fileProps.sizeB.get + 10000L,
+          )
+        } yield {
+          // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
+          MUploadBpRes(
+            data = mpfd,
+            fileCreator = fileCreator,
+            // MLocalImg оставляем на диске, чтобы imagemagic мог с ним работать. Остальные файлы - удалять по завершению.
+            isDeleteFileOnComplete = fileCreator.localImgArgsOpt.isEmpty,
+          )
+        }
+      } else {
+        // Нет тела - нет дела. Ищем принятый chunk'ед файл через MLocalImg.
+        val imgFmtOpt = uploadArgs.fileProps.mime
+          .flatMap( MImgFormats.withMime )
 
-    for {
-      mpfd <- parse.multipartFormData(
-        Multipart.handleFilePartAsTemporaryFile( fileCreator ),
-        maxLength = uploadArgs.fileProps.sizeB.get + 10000L,
-      )
-    } yield {
-      // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
-      MUploadBpRes(
-        data = mpfd,
-        fileCreator = fileCreator,
-      )
+        val lifc = _localImgFileCreator( imgFmtOpt )
+        if (mLocalImgs isExists lifc.liArgs.mLocalImg)
+          parse.error(
+            httpErrorHandler.onClientError(rh, BAD_REQUEST, s"File not uploaded: ${uploadArgs.info.existNodeId getOrElse ""}") )
+        else
+
+          ???
+      }
     }
   }
 
@@ -509,7 +538,7 @@ final class Upload @Inject()(
         if {
           val r = upCtx.validateFileContentEarly()
           if (!r)
-            __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.imgFmt.orNull}/${upCtx.imageWh.orNull}" )
+            __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.localImgArgs.flatMap( _.mLocalImg.dynImgId.imgFormat ).orNull}/${upCtx.imageWh.orNull}" )
           r
         }
 
@@ -930,7 +959,7 @@ final class Upload @Inject()(
       } { resFut =>
         // Если файл не подхвачен файловой моделью (типа MLocalImg или другой), то его надо удалить:
         resFut.onComplete { tryRes =>
-          if ((tryRes.isSuccess && request.body.isDeleteFileOnSuccess) || tryRes.isFailure)
+          if ((tryRes.isSuccess && request.body.isDeleteFileOnComplete) || tryRes.isFailure)
             __deleteUploadedFiles()
         }
 
@@ -1000,7 +1029,6 @@ final class Upload @Inject()(
               val locImgOrig = MLocalImg(
                 MDynImgId(
                   origNodeId = request.mnode.id.get,
-                  dynFormat = MImgFmts.default,
                 )
               )
 
@@ -1150,7 +1178,7 @@ final class Upload @Inject()(
                       chunkQs.hashesHex.forall { case (qsHashType, qsHashValue) =>
                         val r = cf.hashesHex.exists { storedHash =>
                           (qsHashType ==* storedHash.hType) &&
-                            (qsHashValue ==* storedHash.hexValue)
+                          (qsHashValue ==* storedHash.hexValue)
                         }
                         if (!r) LOGGER.warn(s"$logPrefix Mismatch slice#${chunkQs.chunkNumber} qs.hash.${qsHashType}[$qsHashValue] != [${cf.hashesHex.mkString(" | ")}]")
                         r

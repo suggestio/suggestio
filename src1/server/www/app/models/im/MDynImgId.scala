@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.compress.MCompressAlgo
 import io.suggest.img.crop.MCrop
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 import io.suggest.jd.MJdEdgeId
 import io.suggest.n2.edge.MEdge
 import io.suggest.util.UuidUtil
@@ -16,16 +16,18 @@ import monocle.macros.GenLens
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 09.02.18 16:26
-  * Description: Модель идентификатора dyn-картинки.
-  * Является контейнером, вынесенный за пределы MImg* моделей, чтобы унифицировать передачу пачек данных конструкторов.
+  * Description: Модель уникального имени/пути/идентификатора файла (не обязательно локального), в частности картинки.
+  * Подразумевается, что файл может быть производным от некоего исходника, поэтому в идентификаторе
+  * закладываются поля для формата, IM-трансформаций и т.д.
+  * Также используется, как id узлов.
+  *
+  * До 2020.07.02 - это модель идентификатора картинки.
   */
 object MDynImgId {
 
-  /** Рандомный id для нового оригинала картинки. */
-  def randomOrig(dynFormat: MImgFmt) = MDynImgId(
-    origNodeId = UuidUtil.uuidToBase64( UUID.randomUUID() ),
-    dynFormat = dynFormat
-  )
+  /** Рандомный id для нового оригинала файла. */
+  def randomId(): String =
+    UuidUtil.uuidToBase64( UUID.randomUUID() )
 
   /**
     * Сборка id'шников для экземпляров модели, хранящих динамические изображения.
@@ -45,8 +47,8 @@ object MDynImgId {
       acc = "?" :: q :: acc
 
     // Эктеншен формата картинки, если не-оригинал.
-    if (dynImgId.hasImgOps)
-      acc = HtmlConstants.`.` :: dynImgId.dynFormat.fileExt :: acc
+    for (imgFormat <- dynImgId.imgFormat if dynImgId.hasImgOps)
+      acc = HtmlConstants.`.` :: imgFormat.fileExt :: acc
 
     // Финальная сборка полного id.
     if (acc.isEmpty)
@@ -66,8 +68,8 @@ object MDynImgId {
   def fromJdEdge(jdId: MJdEdgeId, medge: MEdge): MDynImgId = {
     apply(
       origNodeId = medge.nodeIds.head,
-      dynFormat = jdId.outImgFormat.get,
-      dynImgOps = {
+      imgFormat = jdId.outImgFormat,
+      imgOps = {
         var acc = List.empty[ImOp]
         for (mcrop <- jdId.crop)
           acc ::= AbsCropOp( mcrop )
@@ -78,8 +80,8 @@ object MDynImgId {
 
 
   def rowKeyStr = GenLens[MDynImgId](_.origNodeId)
-  def dynFormat = GenLens[MDynImgId](_.dynFormat)
-  def dynImgOps = GenLens[MDynImgId](_.dynImgOps)
+  def imgFormat = GenLens[MDynImgId](_.imgFormat)
+  def dynImgOps = GenLens[MDynImgId](_.imgOps)
   def compressAlgo = GenLens[MDynImgId](_.compressAlgo)
 
 
@@ -88,7 +90,7 @@ object MDynImgId {
     /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
     def cropOpt: Option[MCrop] = {
       val iter = dynImgId
-        .dynImgOps
+        .imgOps
         .iterator
         .flatMap {
           case AbsCropOp(crop) => crop :: Nil
@@ -99,11 +101,11 @@ object MDynImgId {
 
     def isCropped: Boolean = {
       dynImgId
-        .dynImgOps
+        .imgOps
         .exists { _.isInstanceOf[ImCropOpT] }
     }
 
-    def hasImgOps: Boolean = dynImgId.dynImgOps.nonEmpty
+    def hasImgOps: Boolean = dynImgId.imgOps.nonEmpty
     def isOriginal = !hasImgOps
 
     def original: MDynImgId = {
@@ -134,8 +136,8 @@ object MDynImgId {
         dynImgId
       } else {
         val ops2 =
-          if (dynImgId.dynImgOps.isEmpty) addDynImgOps
-          else dynImgId.dynImgOps ++ addDynImgOps
+          if (dynImgId.imgOps.isEmpty) addDynImgOps
+          else dynImgId.imgOps ++ addDynImgOps
         (MDynImgId.dynImgOps set ops2)(dynImgId)
       }
     }
@@ -156,16 +158,17 @@ object MDynImgId {
 /** Контейнер данных для идентификации картинки.
   *
   * @param origNodeId id узла-картинки оригинала. Обычный id узла без dynOps-суффиксов.
-  * @param dynFormat Динамический формат картинки.
-  * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
+  * @param imgFormat Динамический формат картинки.
+  * @param imgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
   *                  необходимою картинку.
   * @param compressAlgo Опциональный финальный алгоритм сжатия.
   *                     Нужен для сборки SVG, пожатых через brotli или иным алгоритмом.
   */
 final case class MDynImgId(
                             origNodeId    : String,
-                            dynFormat     : MImgFmt,
-                            dynImgOps     : Seq[ImOp]             = Nil,
+                            // 2020-07-03 Модель теперь используется не только для картинок. dynFormat опционален.
+                            imgFormat     : Option[MImgFormat]    = None,
+                            imgOps        : Seq[ImOp]             = Nil,
                             compressAlgo  : Option[MCompressAlgo] = None
                             // TODO svgo=()?
                           ) {
@@ -177,17 +180,19 @@ final case class MDynImgId(
     val sb: StringBuilder = new StringBuilder(80)
 
     sb.append( origNodeId )
-    if (dynImgOps.nonEmpty) {
+    if (imgOps.nonEmpty) {
       sb.append('~')
         .append( dynImgOpsString )
     }
 
-    val dot = '.'
-    sb.append( dot )
-      .append( dynFormat.fileExt )
+    for (imgFmt <- imgFormat) {
+      sb.append( '.' )
+        .append( imgFmt.fileExt )
+    }
+
 
     for (algo <- compressAlgo) {
-      sb.append(dot)
+      sb.append( '.' )
         .append( algo.fileExtension )
     }
 
@@ -206,7 +211,7 @@ final case class MDynImgId(
     // TODO XXX dynFormat, compressAlgo
     ImOp.unbindImOps(
       keyDotted     = "",
-      value         = dynImgOps,
+      value         = imgOps,
       withOrderInx  = false,
     )
   }
@@ -214,7 +219,12 @@ final case class MDynImgId(
   lazy val fsFileName: String = {
     if (this.hasImgOps) {
       // TODO Тут надо формат дописать?
-      dynImgOpsString + "." + dynFormat.fileExt
+      var r = dynImgOpsString
+
+      for (imgFmt <- imgFormat)
+        r = r + "." + imgFmt.fileExt
+
+      r
     } else {
       "__ORIG__"
     }

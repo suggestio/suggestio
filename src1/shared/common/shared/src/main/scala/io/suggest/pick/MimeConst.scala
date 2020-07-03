@@ -1,6 +1,6 @@
 package io.suggest.pick
 
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import scalaz.{Validation, ValidationNel}
 
 /**
@@ -111,7 +111,7 @@ object ContentTypeCheck {
   object OnlyImages extends ContentTypeCheck {
     override def default = None
     override def apply(contentType: String): Boolean = {
-      MImgFmts
+      MImgFormats
         .withMime( contentType )
         .nonEmpty
     }

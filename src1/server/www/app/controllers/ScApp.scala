@@ -7,7 +7,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
 import io.suggest.ico.MLinkRelIcon
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.n2.edge.{MEdge, MPredicates}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
 import io.suggest.n2.node.{MNode, MNodes}
@@ -409,7 +409,7 @@ final class ScApp @Inject()(
           // TODO Когда будет 57х57 картинка, снести этот велосипед
           val displayImageAssetOpt = (for {
             ico <- favIcons.allIcons
-            if (ico.imgFmt ==* MImgFmts.PNG) &&
+            if (ico.imgFmt ==* MImgFormats.PNG) &&
               (ico.icon.sizes.exists { sz => sz.width < 200 })
           } yield {
             MIosItemAsset(

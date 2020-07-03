@@ -8,7 +8,7 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.tags.{JdTag, MJdShadow, MJdTagNames, MJdtProps1}
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 import io.suggest.jd.tags.qd._
 import io.suggest.math.MathConst
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
@@ -460,7 +460,7 @@ class JdDocValidator(
       Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id" + `.` + INVALID)) |@|
       // Перенести данные формата из эджа.
       // TODO Это наверное не правильно - управлять форматом на уровне валидации. Надо унести это куда?
-      ScalazUtil.liftNelOpt[String, MImgFmt](
+      ScalazUtil.liftNelOpt[String, MImgFormat](
         edgeOpt
           .flatMap(_.img)
           .flatMap(_.dynFmt)

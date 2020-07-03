@@ -33,7 +33,7 @@ class FitImgMaker @Inject()(
     // В MakeResult вторичная сторона будет рассчитана согласно пропорции.
 
     val origImgId = args.img.dynImgId.original
-    val outFmt = origImgId.dynFormat
+    val outFmt = origImgId.imgFormat.get
 
     // Для SVG ничего делать не надо.
     if (outFmt.isVector) {

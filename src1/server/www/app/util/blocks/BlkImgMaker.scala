@@ -50,7 +50,8 @@ class BlkImgMaker @Inject() (
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     val origImgId = args.img.dynImgId.original
-    val outFmt = origImgId.dynFormat
+    val outFmt = origImgId.imgFormat.get
+
     if (outFmt.isVector) {
       // Это SVG, а convert на выходе выдаёт растр. Надо кропать прямо на клиенте, а не здесь.
       imgMakerUtil.returnImg(origImgId)
@@ -83,7 +84,7 @@ class BlkImgMaker @Inject() (
         szCss       = MSize2di(args.targetSz),
         szReal      = szReal,
         // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-        dynCallArgs = args.img.withDynOps(args.img.dynImgId.dynImgOps ++ imOpsAcc),
+        dynCallArgs = args.img.withDynOps(args.img.dynImgId.imgOps ++ imOpsAcc),
         isWide      = false
       )
       Future.successful(mr)

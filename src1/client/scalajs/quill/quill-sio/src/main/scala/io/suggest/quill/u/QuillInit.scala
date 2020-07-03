@@ -9,7 +9,7 @@ import com.quilljs.quill.modules.{QuillCssConst, QuillModules, QuillModulesNames
 import io.suggest.event.DomEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import org.scalajs.dom
 import org.scalajs.dom.{Event, UIEvent}
 import org.scalajs.dom.raw.{FileReader, HTMLInputElement}
@@ -196,7 +196,7 @@ class QuillInit {
                 .createElement( HtmlConstants.Input.input )
                 .asInstanceOf[HTMLInputElement]
               fileInput.setAttribute("type", "file")
-              fileInput.setAttribute("accept", MImgFmts.allMimesIter.mkString(", "))
+              fileInput.setAttribute("accept", MImgFormats.allMimesIter.mkString(", "))
               fileInput.classList.add( QuillCssConst.QL_IMAGE )
 
               fileInput.addEventListener( DomEvents.CHANGE, {(_: Event) =>

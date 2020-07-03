@@ -4,7 +4,7 @@
    Это нужно для отображения страницы или картинки с рендером результата. *@
 
 @import helper._
-@import io.suggest.img.MImgFmts
+@import io.suggest.img.MImgFormats
 @import ctx._
 
 @form( CSRF(routes.SysMarket.oneAdFormSubmit(args.madId, args.rvar)) ) {
@@ -24,12 +24,12 @@
   @if(args.rvar.isToImage) {
     @select(
       args.qf("imgFmt"),
-      options = MImgFmts.values.map(v => v.name -> v.name),
+      options = MImgFormats.values.map(v => v.name -> v.name),
       Symbol("_label") -> "Формат картинки",
       Symbol("title")  -> "Если рендер в картинку, то формат. Если нет, то значение игнорируется."
     )
   } else {
-    <input type="hidden" name="imgFmt" value="@MImgFmts.values.head.name" />
+    <input type="hidden" name="imgFmt" value="@MImgFormats.values.head.name" />
   }
 
   @inputText(

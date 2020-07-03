@@ -1,6 +1,6 @@
 @(args: msys.IShowAdTplArgs)(implicit ctx: Context)
 
-@import io.suggest.img.MImgFmts.JPEG
+@import io.suggest.img.MImgFormats
 @import ctx.messages
 @import msc.OneAdRenderVariants._
 
@@ -52,7 +52,7 @@
     Отрендерить карточку в
     <ul>
       @defining( 1.0F ) { szMult =>
-      @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, JPEG) ) { qsArgs =>
+      @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, MImgFormats.JPEG) ) { qsArgs =>
         <li>
            - <a href="@routes.Sc.onlyOneAd(qsArgs)">HTML x@szMult</a>
            или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.

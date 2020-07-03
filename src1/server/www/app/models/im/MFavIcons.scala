@@ -3,7 +3,7 @@ package models.im
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.ico.{MIconInfo, MLinkRelIcon}
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 
 /**
   * Suggest.io
@@ -22,7 +22,7 @@ object MFavIcons {
     val rels = HtmlConstants.Links.Rels
 
     val appleTouchIconRels = rels.APPLE_TOUCH_ICON :: Nil
-    val png = MImgFmts.PNG
+    val png = MImgFormats.PNG
     val pngMime = png.mime
     val pngFileExt = png.fileExt
 
@@ -60,7 +60,7 @@ object MFavIcons {
 
     // Иконка SVG.
     lazy val svgIcon = {
-      val svg = MImgFmts.SVG
+      val svg = MImgFormats.SVG
       val svgMime = svg.mime
       MLinkRelIcon(
         icon = MIconInfo(

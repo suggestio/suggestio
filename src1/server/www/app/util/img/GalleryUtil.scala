@@ -43,7 +43,7 @@ class GalleryUtil @Inject() (
       height = szMulted( NodeEditConstants.Gallery.HEIGHT_PX, devPixelRatio.pixelRatio)
     )
 
-    val outFmt = mimg.dynImgId.dynFormat
+    val outFmt = mimg.dynImgId.imgFormat.get
 
     var imOps: List[ImOp] =
       ImGravities.Center ::

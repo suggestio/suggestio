@@ -11,7 +11,7 @@ import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.{BulkProcessorListener, EsModel, MEsNestedSearch}
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.jd.tags.{JdTag, MJdtProps1}
@@ -158,12 +158,13 @@ final class DynImgUtil @Inject() (
       localImg = localImgOpt.get
       // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
       newLocalImg = args.toLocalInstance
+      outFormat = newLocalImg.dynImgId.imgFormat.get
       // Запустить конвертацию исходной картинки
       _ <- convert(
         in     = mLocalImgs.fileOf(localImg),
         out    = mLocalImgs.fileOf(newLocalImg),
-        outFmt = newLocalImg.dynImgId.dynFormat,
-        imOps  = args.dynImgId.dynImgOps
+        outFmt = outFormat,
+        imOps  = args.dynImgId.imgOps
       )
     } yield {
       // Вернуть финальную картинку, т.к. с оригиналом и так всё ясно.
@@ -276,7 +277,7 @@ final class DynImgUtil @Inject() (
    * @param out Файл для конечного изображения.
    * @param imOps Список инструкций, описывающий трансформацию исходной картинки.
    */
-  def convert(in: File, out: File, outFmt: MImgFmt, imOps: Seq[ImOp]): Future[_] = {
+  def convert(in: File, out: File, outFmt: MImgFormat, imOps: Seq[ImOp]): Future[_] = {
     val op = new IMOperation
 
     op.addImage {
@@ -344,7 +345,7 @@ final class DynImgUtil @Inject() (
     val flags = if (fillArea) Seq(ImResizeFlags.FillArea) else Nil
     val op = AbsResizeOp(MSize2di(256, 256), flags)
     val imgThumb = img.withDynOps(
-      img.dynImgId.dynImgOps ++ Seq(op)
+      img.dynImgId.imgOps ++ Seq(op)
     )
     imgCall(imgThumb)
   }
@@ -384,7 +385,7 @@ final class DynImgUtil @Inject() (
             val cr = Criteria(
               predicates      = MPredicates.Blob.File :: Nil,
               fileIsOriginal  = OptionUtil.SomeBool.someFalse,
-              fileMimes       = MImgFmts.allMimesIter.toSeq,
+              fileMimes       = MImgFormats.allMimesIter.toSeq,
             )
             MEsNestedSearch(
               clauses = cr :: Nil,
@@ -453,7 +454,7 @@ final class DynImgUtil @Inject() (
   def getImgWh(dynImgId: MDynImgId): Future[Option[ISize2di]] = {
     lazy val logPrefix = s"getImgWh(${dynImgId.fileName})#${System.currentTimeMillis()}:"
 
-    ImOp.getWhFromOps( dynImgId.dynImgOps ) match {
+    ImOp.getWhFromOps( dynImgId.imgOps ) match {
       case Some(whOpt @ Some(wh)) =>
         // Размер картинки уже очевиден из кропа или ресайза картинки-дериватива.
         LOGGER.trace(s"$logPrefix Extracted WH from dynOps: $wh")
@@ -546,7 +547,6 @@ final class DynImgUtil @Inject() (
     val bp = mNodes.bulkProcessor(
       listener = BulkProcessorListener( logPrefix ),
     )
-    val origImgFmt = MImgFmts.default
 
     val countProcessed = new AtomicInteger(0)
 
@@ -601,7 +601,7 @@ final class DynImgUtil @Inject() (
           if medge.predicate ==* MPredicates.JdContent.Image
           imgNodeId <- medge.nodeIds
         } yield {
-          val mediaId = MDynImgId(imgNodeId, origImgFmt).mediaId
+          val mediaId = MDynImgId(imgNodeId).mediaId
           jdEdgeId.edgeUid -> mediaId
         })
           .toMap

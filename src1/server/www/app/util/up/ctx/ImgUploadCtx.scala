@@ -6,7 +6,7 @@ import com.google.inject.assistedinject.Assisted
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.geom.d2.MSize2diJvm.Implicits._
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.svg.SvgUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
@@ -46,7 +46,7 @@ class ImgUploadCtx @Inject()(
 
   private lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
-  private lazy val imgFmtOpt = upCtxArgs.detectedMimeTypeOpt.flatMap( MImgFmts.withMime )
+  private lazy val imgFmtOpt = upCtxArgs.detectedMimeTypeOpt.flatMap( MImgFormats.withMime )
 
 
   private lazy val svgDocOpt: Option[Document] = {
@@ -70,9 +70,9 @@ class ImgUploadCtx @Inject()(
       mimeType  <- upCtxArgs.detectedMimeTypeOpt
     } yield {
       val res = imgFmt match {
-        case MImgFmts.PNG | MImgFmts.JPEG | MImgFmts.GIF =>
+        case MImgFormats.PNG | MImgFormats.JPEG | MImgFormats.GIF =>
           imgFileUtil.getImageWh( mimeType, upCtxArgs.file )
-        case MImgFmts.SVG =>
+        case MImgFormats.SVG =>
           SvgUtil
             .getDocWh(svgDocOpt.get)
             .getOrElse {
@@ -119,7 +119,7 @@ class ImgUploadCtx @Inject()(
       mime    <- upCtxArgs.detectedMimeTypeOpt
       imgFmt  <- imgFmtOpt
     } yield {
-      if (imgFmt !=* MImgFmts.SVG) {
+      if (imgFmt !=* MImgFormats.SVG) {
         Future {
           imgFileUtil.readImage(mime, upCtxArgs.file)
         }
@@ -133,7 +133,7 @@ class ImgUploadCtx @Inject()(
   /** Проверка загруженного файла. Здесь вызываются проверки в зависимости от фактического типа файла. */
   override def validateFileFut(): Future[Boolean] = {
     imgFmtOpt.map {
-      case MImgFmts.PNG | MImgFmts.JPEG | MImgFmts.GIF =>
+      case MImgFormats.PNG | MImgFormats.JPEG | MImgFormats.GIF =>
         bufferedImageFutOpt
           .map(_.nonEmpty)
           .recover { case ex: Throwable =>
@@ -146,7 +146,7 @@ class ImgUploadCtx @Inject()(
             false
           }
 
-      case MImgFmts.SVG =>
+      case MImgFormats.SVG =>
         Future.successful( svgGvtOpt.nonEmpty )
     }
       .get
@@ -156,10 +156,10 @@ class ImgUploadCtx @Inject()(
   override def imageHasTransparentColors(): Option[Future[Boolean]] = {
     imgFmtOpt.map {
       // JPEG не прозрачен
-      case MImgFmts.JPEG =>
+      case MImgFormats.JPEG =>
         Future.successful(false)
       // PNG/GIF - попытаться проверить варианты.
-      case MImgFmts.PNG | MImgFmts.GIF =>
+      case MImgFormats.PNG | MImgFormats.GIF =>
         bufferedImageFutOpt
           .map { bufOpt =>
             // TODO Тут чисто вероятность. Надо перебирать пиксели, чтобы знать точно. А это долго. Или делать это на клиенте.
@@ -170,7 +170,7 @@ class ImgUploadCtx @Inject()(
             false
           }
       // у SVG почти всегда прозрачный фон, считаем его таким по дефолту.
-      case MImgFmts.SVG =>
+      case MImgFormats.SVG =>
         Future.successful(true)
     }
   }

@@ -6,7 +6,7 @@ import io.suggest.adv.ext.model.im.VkImgSizes
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
@@ -62,7 +62,7 @@ class VkontakteHelper @Inject()(
 
   override def maybeMpUpload = Some(this)
 
-  override def imgFmtDflt = MImgFmts.JPEG
+  override def imgFmtDflt = MImgFormats.JPEG
 
   override def isForHost(host: String): Boolean = {
     "(?i)(www\\.)?vk(ontakte)?\\.(com|ru|me)$".r

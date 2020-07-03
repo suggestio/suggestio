@@ -3,7 +3,7 @@ package util.ext.tw
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.ext.svc.MExtServices
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.Mad2ImgUrlCalcOuter
@@ -106,7 +106,7 @@ class TwitterHelper @Inject() (
   override def maybeMpUpload = Some(this)
 
   /** Дефолтовый формат изображения, если не переопределен в конфиге. */
-  override def imgFmtDflt = MImgFmts.PNG
+  override def imgFmtDflt = MImgFormats.PNG
 
   /** В твиттер надо всегда постить горизонтальные карточки. */
   override def isAdvExtWide(mad: MNode) = true

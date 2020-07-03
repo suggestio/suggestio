@@ -1,7 +1,7 @@
 package models.adr
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 import io.suggest.img.crop.MCrop
 
 /**
@@ -53,7 +53,7 @@ trait IWhHtmlArgsDflt extends IWkHtmlArgsT {
 case class MWkHtmlArgs(
                         override val src         : String,
                         override val scrSz       : ISize2di,
-                        override val outFmt      : MImgFmt,
+                        override val outFmt      : MImgFormat,
                         override val quality     : Option[Int],
                         override val zoomOpt     : Option[Float]     = MWkHtmlArgs.ZOOM_OPT_DFLT,
                         override val plugins     : Boolean           = MWkHtmlArgs.WITH_PLUGINS_DFLT,

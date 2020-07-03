@@ -3,7 +3,7 @@ package io.suggest.jd
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.ScalazUtil
@@ -33,7 +33,7 @@ object MJdEdgeId {
         val r2 = f0.orElse( oldJdEdgeIdReads )
         Format(r2, f0)
       } and
-      (__ \ "f").formatNullable[MImgFmt] and
+      (__ \ "f").formatNullable[MImgFormat] and
       (__ \ "c").formatNullable[MCrop]
     )(apply, unlift(unapply))
 
@@ -110,7 +110,7 @@ object MJdEdgeId {
   */
 final case class MJdEdgeId(
                             edgeUid       : EdgeUid_t,
-                            outImgFormat  : Option[MImgFmt]   = None,
+                            outImgFormat  : Option[MImgFormat]   = None,
                             crop          : Option[MCrop]     = None,
                           )
   extends IId[EdgeUid_t]

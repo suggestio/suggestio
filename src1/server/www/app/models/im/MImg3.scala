@@ -9,7 +9,7 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.EsModel
 import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.img
-import io.suggest.img.ImgSzDated
+import io.suggest.img.{ImgSzDated, MImgFormat}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.n2.media._
@@ -187,7 +187,7 @@ class MImgs3 @Inject() (
     lazy val storClient = iMediaStorages.client( mimg.storage )
 
     // Вернуть экземпляр MNode.
-    val mediaSavedFut: Future[MNode] = media0Fut.recoverWith { case ex: NoSuchElementException =>
+    val mediaSavedFut: Future[MNode] = media0Fut.recoverWith { case _: NoSuchElementException =>
       // Перезаписывать нечего, т.к. узел ещё не существует.
       val whOptFut = mLocalImgs.getImageWH(loc)
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
@@ -485,9 +485,9 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
     override def fileName2miP: Parser[T] = {
       // TODO Использовать парсер, делающий сразу MDynImgId
-      (uuidStrP ~ dotDynFormatOrJpegP ~ imOpsP) ^^ {
-        case nodeId ~ dynFormat ~ dynImgOps =>
-          MImg3(MDynImgId(nodeId, dynFormat, dynImgOps))
+      (uuidStrP ~ dotImgFormatOptP ~ imOpsP) ^^ {
+        case nodeId ~ imgFormatOpt ~ imgOps =>
+          MImg3(MDynImgId(nodeId, imgFormatOpt, imgOps))
       }
     }
 
@@ -508,7 +508,7 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
   def fromEdge(nodeId: String, e: MEdge): Option[MImg3] = {
     for {
       edgeMedia <- e.media
-      dynFmt    <- edgeMedia.file.imgFormatOpt
+      imgFormat2 <- edgeMedia.file.imgFormatOpt
       parseResult = parse( nodeId )
       mimg0 <- parseResult
         .map( Some.apply )
@@ -518,10 +518,10 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
         }
     } yield {
       // Костыль для выставления формата в картинку. Надо разобраться в актуальности этого действия:
-      if (mimg0.dynImgId.dynFormat !=* dynFmt) {
+      if (!(mimg0.dynImgId.imgFormat contains[MImgFormat] imgFormat2)) {
         MImg3.dynImgId
-          .composeLens( MDynImgId.dynFormat )
-          .set( dynFmt )(mimg0)
+          .composeLens( MDynImgId.imgFormat )
+          .set( edgeMedia.file.imgFormatOpt )(mimg0)
       } else {
         mimg0
       }

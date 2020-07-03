@@ -1,7 +1,7 @@
 package models.im
 
 import io.suggest.dev.{MPxRatio, MPxRatios}
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.{MImgFormat, MImgFormats}
 import japgolly.univeq._
 
 /**
@@ -74,14 +74,14 @@ case class ImCompression(
     *
     * @return Список операций.
     */
-  def toOps(outputFormat: MImgFmt): List[ImOp] = {
+  def toOps(outputFormat: MImgFormat): List[ImOp] = {
     var acc = List.empty[ImOp]
 
     // Добавляем, соблюдая порядок полей (для удобства при отладке):
     for (b <- blur)
       acc ::= b
 
-    val isJpeg = outputFormat ==* MImgFmts.JPEG
+    val isJpeg = outputFormat ==* MImgFormats.JPEG
 
     for (chrSs <- chromaSubSampling if isJpeg)
       acc ::= chrSs

@@ -67,7 +67,7 @@ class LogoUtil @Inject() (
     // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
     // Исходя из pxRatio нужно посчитать высоту логотипа
     val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
-    val outFmt = logoImg.dynImgId.dynFormat
+    val outFmt = logoImg.dynImgId.imgFormat.get
 
     // Вернуть скомпленную картинку.
     val logoImg2 = logoImg.withDynOps(

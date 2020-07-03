@@ -1,7 +1,7 @@
 package models.adr
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 
 /**
  * Suggest.io
@@ -25,7 +25,7 @@ trait IAdRenderArgs {
   def quality : Option[Int]
 
   /** Формат сохраняемой картинки. */
-  def outFmt  : MImgFmt
+  def outFmt  : MImgFormat
 
 }
 
@@ -46,7 +46,7 @@ trait IAdRenderArgsWrapper extends IAdRenderArgs {
 case class MAdRenderArgs(
                           src         : String,
                           scrSz       : ISize2di,
-                          outFmt      : MImgFmt,
+                          outFmt      : MImgFormat,
                           quality     : Option[Int]
 )
   extends IAdRenderArgs
@@ -57,7 +57,7 @@ case class MAdRenderArgs(
 trait IAdRendererCompanion {
 
   /** Дефолтовое значение quality, если не задано. */
-  def qualityDflt(scrSz: ISize2di, fmt: MImgFmt): Option[Int] = None
+  def qualityDflt(scrSz: ISize2di, fmt: MImgFormat): Option[Int] = None
 
 }
 

@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.es.model.EsModelDi
-import io.suggest.img.{MImgFmtJvm, MImgFmts}
+import io.suggest.img.{MImgFmtJvm, MImgFormats}
 import io.suggest.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
@@ -87,7 +87,7 @@ trait SysAdRender
         adId    = madId,
         szMult  = 1.0F,
         vsnOpt  = request.mad.versionOpt,
-        imgFmt  = MImgFmts.JPEG,
+        imgFmt  = MImgFormats.JPEG,
         wideOpt = for (bm <- request.mad.ad.blockMeta) yield {
           OneAdWideQsArgs(
             width = bm.width * 2

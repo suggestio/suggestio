@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
 import io.suggest.xplay.qsb.QueryStringBindableImpl
@@ -39,7 +39,7 @@ object OneAdQsArgs extends SecretKeyInit {
                              // compat: Формат в qs опционален, т.к. его не было вообще до 13 марта 2015, а ссылки на картинки уже были в фейсбуке (в тестовых акк-ах).
                              // Потом когда-нибудь наверное можно будет убрать option, окончательно закрепив обязательность формата.
                              // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
-                             imgFmtB  : QueryStringBindable[Option[MImgFmt]]
+                             imgFmtB  : QueryStringBindable[Option[MImgFormat]]
                             ) : QueryStringBindable[OneAdQsArgs] = {
     new QueryStringBindableImpl[OneAdQsArgs] {
 
@@ -63,7 +63,7 @@ object OneAdQsArgs extends SecretKeyInit {
             imgFmtOpt   <- maybeImgFmtOpt
             wideOpt     <- maybeWideOpt
           } yield {
-            val imgFmt = imgFmtOpt getOrElse MImgFmts.default
+            val imgFmt = imgFmtOpt getOrElse MImgFormats.default
             OneAdQsArgs(
               adId    = adId,
               szMult  = szMult,
@@ -108,7 +108,7 @@ case class OneAdQsArgs(
                         adId    : String,
                         szMult  : SzMult_t,
                         vsnOpt  : Option[Long],
-                        imgFmt  : MImgFmt,
+                        imgFmt  : MImgFormat,
                         wideOpt : Option[OneAdWideQsArgs] = None
                       )
 

@@ -9,7 +9,6 @@ import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.grid.GridCalc
-import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MNodeEdges, MPredicates}
@@ -284,14 +283,9 @@ class JdAdUtil @Inject()(
     } yield {
       val dynImgId = MDynImgId(
         origNodeId = imgNodeId,
-        // TODO По идее, тут достаточно MImgFmts.defaults, но почему-то всё тогда сглючивает.
-        dynFormat = medge.doc.id
+        imgFormat = medge.doc.id
           .flatMap(uids2jdEdgeId.get)
           .flatMap(_.outImgFormat)
-          .getOrElse {
-            LOGGER.warn(s"collectImgEdges(): Not found edge ${medge.doc.id} in edgesMap:\n ${uids2jdEdgeId.mkString(", ")}")
-            MImgFmts.default
-          }
       )
       val origImg = MImg3(dynImgId)
       medge -> origImg
@@ -572,28 +566,29 @@ class JdAdUtil @Inject()(
       override def finalTpl: Tree[JdTag] = {
         val tpl0 = super.finalTpl
         // Удалить все crop'ы из растровых картинок, у которых задан кроп. Все растровые картинки должны бы быть уже подогнаны под карточку.
+
         val _jdt_p1_bgImg_LENS = JdTag.props1
           .composeLens( MJdtProps1.bgImg )
+
         val _jdt_p1_bgImg_crop_LENS = _jdt_p1_bgImg_LENS
           .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
           .composeLens( MJdEdgeId.crop )
 
         for (jdTag <- tpl0) yield {
-          val jdTagOpt2 = for {
+          (for {
             // Интересуют только теги с фоновой картинкой
             bgImg <- _jdt_p1_bgImg_LENS.get(jdTag)
             if bgImg.crop.nonEmpty
             // Для которых известен эдж
             edgeAndImg <- imgsEdgesMap.get( bgImg.edgeUid )
             // И там растровая картинка задана:
-            if edgeAndImg._2.dynImgId.dynFormat.isRaster
+            if !edgeAndImg._2.dynImgId.imgFormat.exists( _.isVector )
           } yield {
             // Пересобрать тег без crop'а в bgImg:
-            _jdt_p1_bgImg_crop_LENS
-              .set( None )( jdTag )
-          }
-          // Если ничего не пересобрано, значит текущий тег не требуется обновлять. Вернуть исходный jd-тег:
-          jdTagOpt2.getOrElse( jdTag )
+            (_jdt_p1_bgImg_crop_LENS set None)( jdTag )
+          })
+            // Если ничего не пересобрано, значит текущий тег не требуется обновлять. Вернуть исходный jd-тег:
+            .getOrElse( jdTag )
         }
       }
 
@@ -773,9 +768,9 @@ class JdAdUtil @Inject()(
                 .fold(eit.mimg) { bgImgJdId =>
                   MImg3.dynImgId.modify { dynId =>
                     dynId.copy(
-                      dynFormat = bgImgJdId.outImgFormat
-                        .getOrElse( dynId.dynFormat ),
-                      dynImgOps = bgImgJdId.crop
+                      imgFormat = bgImgJdId.outImgFormat
+                        .orElse( dynId.imgFormat ),
+                      imgOps = bgImgJdId.crop
                         .map(AbsCropOp.apply)
                         .toList
                     )

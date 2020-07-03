@@ -33,7 +33,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
 import io.suggest.common.BooleanUtil.Implicits._
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.n2.media.MFileMeta
 import io.suggest.scalaz.NodePath_t
 import japgolly.univeq._
@@ -684,7 +684,7 @@ class DocEditAh[M](
           val ctRaw = m.blob.`type`
           val r = MimeConst.readContentType(ctRaw, ContentTypeCheck.OnlyImages)
           if (r.isEmpty)
-            logger.warn( ErrorMsgs.CONTENT_TYPE_UNEXPECTED, msg = (ctRaw, MImgFmts.values.iterator.flatMap(_.allMimes).mkString(", ") ) )
+            logger.warn( ErrorMsgs.CONTENT_TYPE_UNEXPECTED, msg = (ctRaw, MImgFormats.values.iterator.flatMap(_.allMimes).mkString(", ") ) )
           r
         }
         if imgContentTypeOpt.nonEmpty

@@ -199,7 +199,7 @@ class ScWideMaker @Inject() (
     val wideWh = MSize2di(height = tgtHeightReal, width = cropWidth)
 
     val origImgId = args.img.dynImgId.original
-    val outFmt = origImgId.dynFormat
+    val outFmt = origImgId.imgFormat.get
 
     if (outFmt.isVector) {
       // Это SVG, вернуть всё как есть

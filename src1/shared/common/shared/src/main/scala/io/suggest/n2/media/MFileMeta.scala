@@ -3,7 +3,7 @@ package io.suggest.n2.media
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.{HashesHex, MHash}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.model.PrefixedFn
 import japgolly.univeq._
 import io.suggest.math.MathConst
@@ -143,6 +143,6 @@ case class MFileMeta(
                     ) {
 
   /** Если картинка, то вернуть её формат по модели MImgFmts. */
-  lazy val imgFormatOpt = mime.flatMap( MImgFmts.withMime )
+  lazy val imgFormatOpt = mime.flatMap( MImgFormats.withMime )
 
 }

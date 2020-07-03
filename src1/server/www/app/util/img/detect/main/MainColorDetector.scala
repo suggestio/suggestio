@@ -182,9 +182,9 @@ class MainColorDetector @Inject() (
       localImg2Fut = localImg2Fut.recoverWith {
         case _: NoSuchElementException =>
           val resFut = for (v <- localOrigImgFut) yield {
-            PrepareImgResult(v, bgImg4s.dynImgId.dynImgOps)
+            PrepareImgResult(v, bgImg4s.dynImgId.imgOps)
           }
-          LOGGER.trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgId.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgId.dynImgOps}")
+          LOGGER.trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgId.imgOps.size} IM ops to original: ${bgImg4s.dynImgId.imgOps}")
           resFut
       }
     }

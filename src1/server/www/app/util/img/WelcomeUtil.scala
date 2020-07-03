@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.dev.MScreen
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
@@ -120,12 +120,12 @@ class WelcomeUtil @Inject() (
         LOGGER.debug(s"$logPrefix No screen sz info for $screenOpt. Returning original img.")
         MImgWithWhInfo(oiik, origMeta)
       } { case (bss, screen) =>
-        val outFmt = MImgFmts.JPEG
+        val outFmt = MImgFormats.JPEG
         val imOps = bgImConvertArgs(outFmt, bss, screen)
         val dynArgs = oiik2.withDynImgId(
           oiik2.dynImgId.copy(
-            dynFormat = outFmt,
-            dynImgOps = imOps
+            imgFormat = Some( outFmt ),
+            imgOps    = imOps,
           )
         )
         MImgWithWhInfo(dynArgs, bss)
@@ -136,7 +136,7 @@ class WelcomeUtil @Inject() (
     * @param scrSz Размер конечной картинки.
     * @return Список ImOp в прямом порядке.
     */
-  private def bgImConvertArgs(outFmt: MImgFmt, scrSz: BasicScreenSize, screen: MScreen): Seq[ImOp] = {
+  private def bgImConvertArgs(outFmt: MImgFormat, scrSz: BasicScreenSize, screen: MScreen): Seq[ImOp] = {
     val gravity = ImGravities.Center
     val bgc = ImCompression.forPxRatio( CompressModes.Bg, screen.pxRatio )
 

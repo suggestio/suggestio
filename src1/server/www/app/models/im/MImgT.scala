@@ -1,7 +1,7 @@
 package models.im
 
 import io.suggest.compress.MCompressAlgo
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 import io.suggest.n2.media.storage.MStorage
 import io.suggest.primo.TypeT
 import io.suggest.sec.QsbSigner
@@ -78,7 +78,7 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
   /** routes-биндер для query-string. */
   implicit def mImgTQsb(implicit
                         strB              : QueryStringBindable[String],
-                        imgFmtB           : QueryStringBindable[MImgFmt],
+                        imgFormatOptB     : QueryStringBindable[Option[MImgFormat]],
                         imOpsOptB         : QueryStringBindable[Option[Seq[ImOp]]],
                         compressAlgoOptB  : QueryStringBindable[Option[MCompressAlgo]]
                        ): QueryStringBindable[MImgT] = {
@@ -96,22 +96,22 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
           params2             <- getQsbSigner(key)
             .signedOrNone(keyDotted, params)
           nodeIdE             <- rowKeyB.bind(k(IMG_ID_FN), params2)
-          dynFormatE          <- imgFmtB.bind(k(DYN_FORMAT_FN), params2)
+          imgFormatOptE       <- imgFormatOptB.bind(k(DYN_FORMAT_FN), params2)
           imOpsOptE           <- imOpsOptB.bind(keyDotted, params2)
           compressAlgoOptE    <- compressAlgoOptB.bind(k(COMPRESS_ALGO_FN), params2)
         } yield {
           for {
             imgId             <- nodeIdE
-            dynFormat         <- dynFormatE
+            imgFormatOpt      <- imgFormatOptE
             imOpsOpt          <- imOpsOptE
             compressAlgoOpt   <- compressAlgoOptE
           } yield {
             val imOps = imOpsOpt getOrElse Nil
             val dynImgId = MDynImgId(
-              origNodeId     = imgId,
-              dynFormat     = dynFormat,
-              dynImgOps     = imOps,
-              compressAlgo  = compressAlgoOpt
+              origNodeId    = imgId,
+              imgFormat     = imgFormatOpt,
+              imgOps        = imOps,
+              compressAlgo  = compressAlgoOpt,
             )
             MImg3( dynImgId )
           }
@@ -120,12 +120,14 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
 
       override def unbind(key: String, value: MImgT): String = {
         val k = key1F(key)
+
         val unsignedRes = _mergeUnbinded1(
-          rowKeyB.unbind  (k(IMG_ID_FN),      value.dynImgId.origNodeId),
-          imgFmtB.unbind  (k(DYN_FORMAT_FN),  value.dynImgId.dynFormat),
-          imOpsOptB.unbind(s"$key.",          if (value.dynImgId.hasImgOps) Some(value.dynImgId.dynImgOps) else None),
-          compressAlgoOptB.unbind(k(COMPRESS_ALGO_FN), value.dynImgId.compressAlgo)
+          rowKeyB.unbind            ( k(IMG_ID_FN),         value.dynImgId.origNodeId),
+          imgFormatOptB.unbind      ( k(DYN_FORMAT_FN),     value.dynImgId.imgFormat),
+          imOpsOptB.unbind          ( s"$key$KEY_DELIM",    Option.when(value.dynImgId.hasImgOps)(value.dynImgId.imgOps) ),
+          compressAlgoOptB.unbind   (k(COMPRESS_ALGO_FN),   value.dynImgId.compressAlgo),
         )
+
         getQsbSigner(key)
           .mkSigned(key, unsignedRes)
       }

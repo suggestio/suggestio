@@ -4,7 +4,7 @@ import io.suggest.adv.ext.model.im.FbImgSizes
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.ext.svc.MExtServices
-import io.suggest.img.MImgFmts
+import io.suggest.img.MImgFormats
 import io.suggest.n2.node.MNode
 import models.blk.SzMult_t
 import models.mproj.ICommonDi
@@ -47,7 +47,7 @@ class FacebookHelper @Inject() (
   override def isAdvExtWide(mad: MNode) = true
 
   // akamaihd пересжимает jpeg в jpeg, png в png. Если ШГ, то надо слать увеличенный jpeg.
-  override def imgFmtDflt = MImgFmts.PNG
+  override def imgFmtDflt = MImgFormats.PNG
 
   /** Дефолтовое значение szMult, если в конфиге не задано. */
   override def szMultDflt: SzMult_t = 1.0F

@@ -12,11 +12,11 @@ import play.api.mvc.QueryStringBindable
   */
 object MImgFmtJvm {
 
-  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MImgFmt] = {
-    EnumeratumJvmUtil.valueEnumQsb( MImgFmts )
+  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MImgFormat] = {
+    EnumeratumJvmUtil.valueEnumQsb( MImgFormats )
   }
 
-  def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( MImgFmts )
+  def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( MImgFormats )
   def mapping = FormMappingUtil.optMapping2required( mappingOpt )
 
 }

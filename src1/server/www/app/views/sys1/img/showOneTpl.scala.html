@@ -46,7 +46,7 @@
 
     @if(img.dynImgId.hasImgOps) {
       @_ptableRowTpl("img ops") {
-        @for(op <- img.dynImgId.dynImgOps.iterator) {
+        @for(op <- img.dynImgId.imgOps.iterator) {
           <strong title="@op.opCode">@messages("im.op." + op.opCode.value)</strong>:
           @op.unwrappedValue  @op.i18nValueCode.map(messages(_))  (@op.qsValue)
           <br/>

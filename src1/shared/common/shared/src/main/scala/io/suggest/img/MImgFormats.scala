@@ -14,23 +14,23 @@ import japgolly.univeq._
   * Изначально были выходными форматами, но стали просто форматами.
   */
 
-case object MImgFmts extends StringEnum[MImgFmt] {
+case object MImgFormats extends StringEnum[MImgFormat] {
 
   private final val bInKb = 1024
 
-  case object JPEG extends MImgFmt("j") {
+  case object JPEG extends MImgFormat("j") {
     override def name = "jpeg"
     override def uploadMaxFileSizeKb = 30 * bInKb
     override def uploadSideSizeMaxPx = 6000
   }
 
-  case object PNG extends MImgFmt("p") {
+  case object PNG extends MImgFormat("p") {
     override def name = "png"
     override def uploadMaxFileSizeKb = 4 * bInKb
     override def uploadSideSizeMaxPx = 2000
   }
 
-  case object GIF extends MImgFmt("g") {
+  case object GIF extends MImgFormat("g") {
     override def name = "gif"
     override def imCoalesceFrames = true
     /** @see [[http://www.imagemagick.org/Usage/anim_opt/#optimize]] General Purpose GIF Optimizer of ImageMagick */
@@ -43,7 +43,7 @@ case object MImgFmts extends StringEnum[MImgFmt] {
   /** SVG бывает SVGZ (пожатый GZIP), и просто голым текстом (SVG).
     * Тут как бы неявно унифицируются эти два варианта.
     */
-  case object SVG extends MImgFmt("s") {
+  case object SVG extends MImgFormat("s") {
     override def name = "svg"
     def mimePrefix = super.mime
     override final def mime = mimePrefix + "+xml"
@@ -70,7 +70,7 @@ case object MImgFmts extends StringEnum[MImgFmt] {
       .flatMap(_.allMimes)
   }
 
-  private val _mimeValues: Map[String, MImgFmt] = {
+  private val _mimeValues: Map[String, MImgFormat] = {
     val iter = for {
       imgFmt <- values.iterator
       mime   <- imgFmt.allMimes
@@ -86,19 +86,19 @@ case object MImgFmts extends StringEnum[MImgFmt] {
    * @param mime Строка mime-типа.
    * @return OutImgFmt. Если не-image тип, то будет IllegalArgumentException.
    */
-  def withMime(mime: String): Option[MImgFmt] = {
+  def withMime(mime: String): Option[MImgFormat] = {
     // Не приводим mime к нижнему регистру. В проекте везде mime регистр должен быть нижним.
     _mimeValues.get(mime)
   }
 
   /** Поиск по файловому расширению (без точки, маленькими буквами). */
-  def withFileExt(fileExt: String): Option[MImgFmt] = {
+  def withFileExt(fileExt: String): Option[MImgFormat] = {
     // Типов немного, поэтому находим простым перебором.
     values.find(_.fileExt ==* fileExt)
   }
 
 
-  final def default: MImgFmt = JPEG
+  final def default: MImgFormat = JPEG
 
 
   private def _nameLenghts = values.iterator.map(_.name.length)
@@ -117,7 +117,7 @@ case object MImgFmts extends StringEnum[MImgFmt] {
   * @param value Сериализуемый идентификатор.
   *              Обычно строка в один символ, чтобы минимизировать объёмы JSON.
   */
-sealed abstract class MImgFmt(override val value: String) extends StringEnumEntry {
+sealed abstract class MImgFormat(override val value: String) extends StringEnumEntry {
 
   /** Название, фигурирующее почти везде. Только lower case. */
   def name: String
@@ -165,17 +165,17 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
 }
 
 
-object MImgFmt {
+object MImgFormat {
 
-  @inline implicit def univEq: UnivEq[MImgFmt] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MImgFormat] = UnivEq.derive
 
   /** Поддержка play-json. */
-  implicit def OUT_IMG_FMT_FORMAT: Format[MImgFmt] = {
-    EnumeratumUtil.valueEnumEntryFormat( MImgFmts )
+  implicit def OUT_IMG_FMT_FORMAT: Format[MImgFormat] = {
+    EnumeratumUtil.valueEnumEntryFormat( MImgFormats )
   }
 
 
-  implicit final class MImgFmtOpsExt( val imgFmt: MImgFmt ) extends AnyVal {
+  implicit final class MImgFmtOpsExt( val imgFmt: MImgFormat ) extends AnyVal {
 
     /** Файловое расширение (без точки). Обычно эквивалентно name. */
     def fileExt: String =
@@ -194,7 +194,7 @@ object MImgFmt {
 
     /** Является ли формат векторным? */
     def isVector: Boolean =
-      imgFmt ==* MImgFmts.SVG
+      imgFmt ==* MImgFormats.SVG
 
   }
 

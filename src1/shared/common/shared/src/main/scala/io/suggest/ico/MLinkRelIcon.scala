@@ -1,6 +1,6 @@
 package io.suggest.ico
 
-import io.suggest.img.MImgFmt
+import io.suggest.img.MImgFormat
 
 /**
   * Suggest.io
@@ -16,5 +16,5 @@ case class MLinkRelIcon(
                          icon      : MIconInfo,
                          rels      : Seq[String],
                          ieOnly    : Boolean      = false,
-                         imgFmt    : MImgFmt,
+                         imgFmt    : MImgFormat,
                        )

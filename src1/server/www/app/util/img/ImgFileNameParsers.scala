@@ -2,10 +2,10 @@ package util.img
 
 import java.util.UUID
 
-import io.suggest.img.{ImgCropParsers, MImgFmt, MImgFmts}
+import io.suggest.img.{ImgCropParsers, MImgFormat, MImgFormats}
 import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
-import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
+import io.suggest.util.logs.MacroLogsDyn
 import models.im.{AbsCropOp, ImOp}
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -62,21 +62,22 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers with Macro
   }
 
   /** Парсер формата картинки. */
-  def dynFormatP: Parser[MImgFmt] = {
-    s"[a-z]{${MImgFmts.NAME_LEN_MIN},${MImgFmts.NAME_LEN_MAX}}".r
+  def imgFormatP: Parser[MImgFormat] = {
+    s"[a-z]{${MImgFormats.NAME_LEN_MIN},${MImgFormats.NAME_LEN_MAX}}".r
       .map { fileExt =>
-        MImgFmts.withFileExt(fileExt)
+        MImgFormats.withFileExt(fileExt)
       }
       .filter(_.isDefined)
       .map(_.get)
   }
 
   /** Парсер формата картинки с точкой в начале: .jpeg */
-  def dotDynFormatP = "." ~> dynFormatP
+  def dotImgFormatP = "." ~> imgFormatP
+  def dotImgFormatOptP = opt( dotImgFormatP )
   /** Опциональный парсер формата. */
-  def dotDynFormatOrJpegP = opt(dotDynFormatP) ^^ { _.getOrElse {
+  def dotImgFormatOrJpegP = opt(dotImgFormatP) ^^ { _.getOrElse {
     LOGGER.warn("dotDynFormatOrJpegP(): no fmt, using JPEG...")
-    MImgFmts.JPEG
+    MImgFormats.JPEG
   }}
 
   /** Парсер полного filename'а. */

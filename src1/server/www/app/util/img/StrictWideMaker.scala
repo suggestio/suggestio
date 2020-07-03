@@ -42,7 +42,7 @@ class StrictWideMaker @Inject() (
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     val origImgId = args.img.dynImgId.original
-    val outFmt = origImgId.dynFormat
+    val outFmt = origImgId.imgFormat.get
 
     if (outFmt.isVector) {
       // Это SVG.

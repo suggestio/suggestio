@@ -112,8 +112,10 @@ class MLocalImgs @Inject() (
     Future {
       val file = fileOf(mimg)
       if ( blocking(file.exists()) ) {
-        val fmtAndPath = mimg.dynImgId.dynFormat.imFormat + ":" + file.getAbsolutePath
-        blocking( new Info(fmtAndPath, true) )
+        var absPath = file.getAbsolutePath
+        for (fmt <- mimg.dynImgId.imgFormat)
+          absPath = fmt.imFormat + ":" + absPath
+        blocking( new Info(absPath, true) )
 
       } else
         throw new NoSuchElementException("identify(): File is missing: " + file)
@@ -215,7 +217,10 @@ class MLocalImgs @Inject() (
 
 
   def generateFileName(mimg: MLocalImg): String = {
-    mimg.dynImgId.origNodeId + "." + mimg.dynImgId.dynFormat.fileExt
+    var fn = mimg.dynImgId.origNodeId
+    mimg.dynImgId.imgFormat.fold(fn) { imgFmt =>
+      fn + "." + imgFmt.fileExt
+    }
   }
 
   def isExists(mimg: MLocalImg): Boolean = {
