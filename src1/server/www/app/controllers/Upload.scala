@@ -131,7 +131,7 @@ final class Upload @Inject()(
       // Успешно провалидированы данные файла для загрузки.
       {fileMeta =>
         import esModel.api._
-        LOGGER.trace(s"$logPrefix Body validated, user#${request.user.personIdOpt.orNull}:\n ${request.body} => $fileMeta")
+        LOGGER.trace(s"$logPrefix Body validated, user#${request.user.personIdOpt.orNull}:\n $fileMeta")
 
         for {
           // Поискать файл с такими параметрами в MMedia:
@@ -160,7 +160,10 @@ final class Upload @Inject()(
             }
           )
 
-          foundFileNodeOpt = fileSearchRes.headOption
+          foundFileNodeOpt = {
+            LOGGER.trace(s"$logPrefix Found ${fileSearchRes.length} node by source hashes: ${fileSearchRes.iterator.flatMap(_.id).mkString(", ")}")
+            fileSearchRes.headOption
+          }
           fileEdgeOpt = foundFileNodeOpt
             .iterator
             .flatMap( _.edges.withPredicateIter( MPredicates.Blob.File ) )
@@ -274,6 +277,7 @@ final class Upload @Inject()(
             val upDataFut = for {
               resOpt <- FutureUtil.optFut2futOptPlain( for {
                 foundFileNodeId <- foundFileNodeIdOpt
+                // existNodeId не выставлен, т.к. он будет перезаписан ниже.
                 if upInfo.existNodeId.isEmpty
                 fileEdge <- fileEdgeOpt
                 inProgressFlag = MEdgeFlags.InProgress
@@ -312,15 +316,56 @@ final class Upload @Inject()(
                     storageInfo = assignResp.storage,
                     edgeFlags   = MEdgeFlags.InProgress :: Nil,
                   )
-                  createEdgeOpt     = _mkCreatedByEdge( request.user.personIdOpt )
                   // Сохраняем новый файловый узел.
-                  mnode <- _createFileNode(
-                    fileCreator = fileCreator,
-                    nodeType    = upInfo.nodeType.get,
-                    techName    = None,
-                    edges       = fileEdge :: createEdgeOpt.toList,
-                    enabled     = false,
-                  )
+                  mnode <- upInfo.existNodeId.fold {
+                    _createFileNode(
+                      fileCreator = fileCreator,
+                      nodeType    = upInfo.nodeType.get,
+                      techName    = None,
+                      edges       = fileEdge :: _mkCreatedByEdge( request.user.personIdOpt ).toList,
+                      enabled     = false,
+                    )
+                  } { existNodeId =>
+                    for {
+                      existNodeOpt0 <- mNodes.getByIdCache( existNodeId )
+                      existNode0 = existNodeOpt0.get
+
+                      // Нужно удалить старый file-эдж вместе с данными в хранилище.
+                      _ <- Future.sequence(for {
+                        fileEdge0 <- existNode0.edges.withPredicateIter( MPredicates.Blob.File )
+                        edgeMedia <- fileEdge0.media
+                        stor <- edgeMedia.storage
+                        storClient = {
+                          LOGGER.debug(s"$logPrefix Will erase $stor from node#$existNodeId before uploading new file.")
+                          iMediaStorages.client( stor.storage )
+                        }
+                      } yield {
+                        storClient
+                          .delete( stor.data )
+                          .andThen {
+                            case Success(r)  => LOGGER.info(s"$logPrefix Erased $stor from node#$existNodeId => r")
+                            case Failure(ex) => LOGGER.warn(s"$logPrefix Failed to erase $stor from node#$existNodeId", ex)
+                          }
+                      })
+
+                      // Теперь, обновить текущий узел, удалив старый file-эдж и добавив новый:
+                      existNode2 <- mNodes.tryUpdate( existNode0 )(
+                        MNode.node_meta_basic_dateEdited_RESET andThen
+                        MNode.edges.modify { edges0 =>
+                          val edgesSeq2 = MNodeEdges.edgesToMap1(
+                            edges0.withoutPredicateIter( MPredicates.Blob ) ++ (fileEdge :: Nil)
+                          )
+                          MNodeEdges.out.set( edgesSeq2 )(edges0)
+                        } andThen
+                        MNode.common
+                          .composeLens( MNodeCommon.isEnabled )
+                          .set( false )
+                      )
+                    } yield {
+                      LOGGER.info(s"$logPrefix Updated node#$existNodeId v=${existNode2.versionOpt.orNull} for chunked uploading")
+                      existNode2
+                    }
+                  }
                 } yield {
                   LOGGER.debug(s"$logPrefix For $fileCreator created node#${mnode.id.orNull} w/o techName")
                   // Вернуть ожидаемый ответ:
@@ -702,10 +747,12 @@ final class Upload @Inject()(
 
             // Собрать/обновить и сохранить узел в БД.
             val fut = request.existNodeOpt.fold [Future[MNode]] {
+              val ntype = uploadArgs.info.nodeType.get
+              LOGGER.trace(s"$logPrefix qs.existNodeId empty => Creating new node of type#$ntype for $storageInfo")
               // Создание нового узла под файл.
               _createFileNode(
                 fileCreator = request.body.fileCreator,
-                nodeType = uploadArgs.info.nodeType.get,
+                nodeType = ntype,
                 techName = fileNameOpt,
                 edges = addEdges,
                 enabled = true,
