@@ -10,7 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
@@ -1101,9 +1101,7 @@ final class Upload @Inject()(
           LOGGER.debug(s"$logPrefix Chunk processed ok, node#${mnode2.id.orNull} v=${mnode2.versionOpt.getOrElse(-1L)} updated with edge#${chunkQs.chunkNumber} $sliceEdge")
           Ok
         })
-          .recoverWith {
-            case HttpResultingException(resFut) => resFut
-          }
+          .recoverHttpResEx
       }
   }
 

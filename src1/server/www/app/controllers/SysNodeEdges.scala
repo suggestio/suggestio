@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.ctx.CtxData
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.n2.edge.{MEdge, MNodeEdges}
@@ -129,9 +129,7 @@ final class SysNodeEdges @Inject() (
         LOGGER.trace(s"$logPrefix Edge saved ok.")
         Ok
       })
-        .recoverWith {
-          case HttpResultingException(httpResFut) => httpResFut
-        }
+        .recoverHttpResEx
     }
   }
 

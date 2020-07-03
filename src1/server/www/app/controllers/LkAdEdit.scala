@@ -6,7 +6,7 @@ import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.tags.JdTag
@@ -345,10 +345,7 @@ final class LkAdEdit @Inject() (
 
           Ok( Json.toJson(formReInit2) )
         })
-          .recoverWith {
-            case hresEx: HttpResultingException =>
-              hresEx.httpResFut
-          }
+          .recoverHttpResEx
       }
     }
   }

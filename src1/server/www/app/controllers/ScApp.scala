@@ -2,7 +2,7 @@ package controllers
 
 import io.suggest.app.ios.{MIosItem, MIosItemAsset, MIosItemMeta, MIosManifest}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
@@ -347,10 +347,7 @@ final class ScApp @Inject()(
         }
 
       } yield res)
-        .recoverWith {
-          case HttpResultingException(resFut) =>
-            resFut
-        }
+        .recoverHttpResEx
     }
   }
 
@@ -484,9 +481,7 @@ final class ScApp @Inject()(
           .as( XML )
           .cacheControl( 3600 )
       })
-        .recoverWith {
-          case HttpResultingException(respFut) => respFut
-        }
+        .recoverHttpResEx
     }
   }
 

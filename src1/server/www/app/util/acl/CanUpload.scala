@@ -3,7 +3,7 @@ package util.acl
 import io.suggest.common.fut.FutureUtil
 import javax.inject.Inject
 import io.suggest.ctx.{MCtxId, MCtxIds}
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.{MEdgeFlags, MPredicates}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -309,9 +309,7 @@ class CanUpload @Inject()(
     } yield {
       actionRes
     })
-      .recoverWith {
-        case HttpResultingException(resFut) => resFut
-      }
+      .recoverHttpResEx
   }
 
   /** Сборка ActionBuilder'а, проверяющего возможность для аплоада файла. */

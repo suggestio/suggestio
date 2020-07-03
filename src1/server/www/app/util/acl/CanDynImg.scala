@@ -9,7 +9,7 @@ import models.req.MFileReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MPredicates
 import io.suggest.proto.http.HttpConst
@@ -165,9 +165,7 @@ class CanDynImg @Inject() (
 
         } yield result)
           // И финальный перехват всех прерываний логики работы action-builder'а:
-          .recoverWith {
-            case HttpResultingException(resFut) => resFut
-          }
+          .recoverHttpResEx
       }
 
     }

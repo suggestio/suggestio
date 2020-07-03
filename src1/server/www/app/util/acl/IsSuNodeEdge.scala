@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.routes
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.flash.FlashConstants
 import io.suggest.n2.edge.MEdge
@@ -106,10 +106,7 @@ class IsSuNodeEdge @Inject() (
           } yield {
             res
           })
-            .recoverWith {
-              case HttpResultingException(resFut) =>
-                resFut
-            }
+            .recoverHttpResEx
 
         } else {
           val req1 = MReq(request, user)

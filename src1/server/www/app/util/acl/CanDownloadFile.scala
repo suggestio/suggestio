@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
-import io.suggest.err.HttpResultingException
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.media.{MEdgeMedia, MFileMetaHash}
@@ -162,9 +162,7 @@ class CanDownloadFile @Inject()(
     } yield {
       res
     })
-      .recoverWith {
-        case HttpResultingException(resFut) => resFut
-      }
+      .recoverHttpResEx
   }
 
 

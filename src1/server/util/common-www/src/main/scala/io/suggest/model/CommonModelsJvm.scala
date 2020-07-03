@@ -487,7 +487,6 @@ object CommonModelsJvm extends MacroLogsDyn {
 
       override def unbind(key: String, value: MUploadChunkQs): String = {
         val F = MUploadChunkQs.Fields
-        val k = key1F( key )
 
         _mergeUnbinded1(
           intOptB.unbind( F.CHUNK_NUMBER,               value.chunkNumberO ),
