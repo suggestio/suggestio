@@ -10,6 +10,7 @@ import models.mctx.ContextUtil
 import scala.concurrent.ExecutionContext
 import play.api.http.HeaderNames._
 import japgolly.univeq._
+import play.api.http.HttpVerbs
 
 /**
  * Suggest.io
@@ -55,12 +56,17 @@ class CorsUtil @Inject() (
 
   def allowCreds = configuration.getOptional[Boolean]("cors.allow.credentials")
 
-  lazy val PREFLIGHT_CORS_HEADERS: List[(String, String)] = {
+  val GET_CORS_HEADERS: List[(String, String)] = {
     var acc: List[(String, String)] = Nil
     val ao = allowOrigins
-    if (!ao.isEmpty) {
+    if (!ao.isEmpty)
       acc ::= ACCESS_CONTROL_ALLOW_ORIGIN -> ao
+    acc
+  }
 
+  lazy val PREFLIGHT_CORS_HEADERS: List[(String, String)] = {
+    var acc: List[(String, String)] = GET_CORS_HEADERS
+    if (acc.nonEmpty) {
       val am = allowMethods
       if (am.nonEmpty)
         acc ::= ACCESS_CONTROL_ALLOW_METHODS -> am
@@ -74,28 +80,25 @@ class CorsUtil @Inject() (
     acc
   }
 
-  val SIMPLE_CORS_HEADERS: Seq[(String, String)] = {
-    var acc: List[(String, String)] = Nil
-    val ao = allowOrigins
-    if (!ao.isEmpty) {
-      acc ::= ACCESS_CONTROL_ALLOW_ORIGIN -> ao
-    }
-    acc
-  }
-
   /** На какие запросы всегда навешивать CORS-allow хидеры? */
   private val ADD_HEADERS_URL_RE = "^/(v?assets/|~)".r
 
 
   /** Проверка хидеров на необходимость добавления CORS в ответ. */
   def isAppendAllowHdrsForRequest(rh: RequestHeader): Boolean = {
-    SIMPLE_CORS_HEADERS.nonEmpty &&
+    GET_CORS_HEADERS.nonEmpty &&
     ADD_HEADERS_URL_RE.pattern.matcher(rh.uri).find
   }
 
 
-  def withCorsHeaders(resp: Result) =
-    resp.withHeaders( SIMPLE_CORS_HEADERS: _* )
+  def withCorsHeaders(resp: Result)(implicit rh: RequestHeader) = {
+    // Для GET-запросов достаточно коротких хидеров. Остальное требует указать allow-method и всё остальное.
+    val corsHeaders = rh.method match {
+      case HttpVerbs.GET  => GET_CORS_HEADERS
+      case _              => PREFLIGHT_CORS_HEADERS
+    }
+    resp.withHeaders( corsHeaders: _* )
+  }
 
 
   def withCorsIfNeeded(result: Result)(implicit rh: RequestHeader): Result = {
@@ -138,7 +141,7 @@ class CorsFilter @Inject() (
 {
 
   override def apply(next: EssentialAction): EssentialAction = {
-    EssentialAction { rh =>
+    EssentialAction { implicit rh =>
       val respFut0 = next(rh)
       // Надо ли добавлять CORS-заголовки?
       if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {

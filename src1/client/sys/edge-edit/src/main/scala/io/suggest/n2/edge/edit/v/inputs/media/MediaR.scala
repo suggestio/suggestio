@@ -16,6 +16,7 @@ import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.edge.edit.m.{FileHashEdit, FileHashFlagSet, FileIsOriginalSet, FileMimeSet, FileSizeSet, FileStorageMetaDataSet, FileStorageTypeSet}
 import io.suggest.n2.edge.edit.v.EdgeEditCss
 import io.suggest.n2.media.storage.{MStorage, MStorages}
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.routes.routes
@@ -23,7 +24,7 @@ import io.suggest.sjs.dom2.DomListSeq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.up.MFileUploadS
+import io.suggest.up.{MFileUploadS, MUploadResp}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 
@@ -58,7 +59,8 @@ class MediaR(
 
 
   case class State(
-                    uploadReqPotC           : ReactConnectProxy[Pot[_]],
+                    uploadReqPotC           : ReactConnectProxy[Pot[MUploadResp]],
+                    uploadProgressC         : ReactConnectProxy[Option[Int]],
                     edgeMediaDefinedSomeC   : ReactConnectProxy[Some[Boolean]],
                     fileMimeOptC            : ReactConnectProxy[Option[String]],
                     fileSizeOptC            : ReactConnectProxy[Option[Long]],
@@ -343,6 +345,17 @@ class MediaR(
         override val root = _inputCss
       }
 
+      lazy val _progress = s.uploadProgressC { uploadProgressProxy =>
+        val progressOpt = uploadProgressProxy.value
+
+        // TODO CircularProgressWithLabel вместо CircularProgress
+        MuiCircularProgress(
+          new MuiCircularProgressProps {
+            override val variant = progressOpt.fold( MuiProgressVariants.indeterminate )( _ => MuiProgressVariants.static )
+            override val value = progressOpt.toUndef
+          }
+        )
+      }
       // Или заливка файла. Или информация по загруженному файлу.
       lazy val _fileUpload = s.uploadReqPotC { uploadReqPotProxy =>
         val pot = uploadReqPotProxy.value
@@ -363,12 +376,8 @@ class MediaR(
               )
             },
 
-            pot.renderPending { p =>
-              MuiCircularProgress(
-                new MuiCircularProgressProps {
-                  override val variant = MuiProgressVariants.indeterminate
-                }
-              )
+            pot.renderPending { _ =>
+              _progress
             },
           ),
 
@@ -459,6 +468,11 @@ class MediaR(
       val emptyStr = ""
       State(
         uploadReqPotC = propsProxy.connect( _.uploadReq.currentReq ),
+        uploadProgressC = propsProxy.connect { props =>
+          props.uploadReq.progress
+            .flatMap(_.progressPercent)
+            .filter { p => (p > 0) && (p < 100) }
+        },
         edgeMediaDefinedSomeC = propsProxy.connect { m =>
           OptionUtil.SomeBool( m.media.nonEmpty )
         },

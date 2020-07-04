@@ -59,7 +59,6 @@ object FlowjsUtil {
       }
 
       def __preprocessChunk( chunk: ResumableChunk ): Unit = {
-        println("Preprocess chunk: " + chunk)
         val cn = chunk.chunkNumber
         if (chunkHashes contains cn) {
           Try( chunk.preprocessFinished() )
@@ -76,7 +75,6 @@ object FlowjsUtil {
             //  chunkBlob.close()   // .close is not a function.
             //}
             .andThen { case r =>
-              println(s"preprocess chunk#${chunk.chunkNumber} finished: $r")
               Try( chunk.preprocessFinished() )
             }
         }

@@ -21,7 +21,8 @@ trait MuiCircularProgressProps extends js.Object {
   val color: js.UndefOr[String] = js.undefined
   val size: js.UndefOr[Double | String] = js.undefined
   val thickness: js.UndefOr[Double] = js.undefined
-  val value: js.UndefOr[Double] = js.undefined
+  /** between 0 and 100. */
+  val value: js.UndefOr[Int] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
 

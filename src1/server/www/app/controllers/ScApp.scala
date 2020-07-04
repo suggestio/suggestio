@@ -85,11 +85,12 @@ final class ScApp @Inject()(
         icons     = MFavIcons.Icons().allIcons.map(_.icon),
       )
 
-      Ok( Json.toJson( manifest ) )
-        .as( MimeConst.WEB_APP_MANIFEST )
-        // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
-        .cacheControl(86400)
-        .withHeaders( corsUtil.SIMPLE_CORS_HEADERS: _* )
+      corsUtil.withCorsIfNeeded(
+        Ok( Json.toJson( manifest ) )
+          .as( MimeConst.WEB_APP_MANIFEST )
+          // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
+          .cacheControl(86400)
+      )
     }
   }
 
