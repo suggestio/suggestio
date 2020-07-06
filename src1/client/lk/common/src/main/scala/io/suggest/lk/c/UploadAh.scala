@@ -135,7 +135,7 @@ final class UploadAh[V, M](
           } { case (contentType, fileNew) =>
             val fileSize2 = fileNew.size
             // Попробовать найти в состоянии файл с такими же характеристиками.
-            val (dataEdge9, edges9, fxOpt, edgeUid9) = (for {
+            val (_ /*dataEdge9*/, edges9, fxOpt, edgeUid9) = (for {
               e <- v0.edges.valuesIterator
               fileJs <- e.fileJs
               if (fileJs.blob.size ==* fileSize2) &&
@@ -180,14 +180,9 @@ final class UploadAh[V, M](
                     // Прервать upload файла на сервер, есть возможно.
                     for {
                       upReqHolderOld    <- fileJsOld.upload.resultHolder
-                    } {
-                      try {
-                        upReqHolderOld.abort()
-                      } catch {
-                        case ex: Throwable =>
-                          logger.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
-                      }
+                      ex                <- upReqHolderOld.abort().failed
                     }
+                      logger.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
                   }
 
                   DoNothing

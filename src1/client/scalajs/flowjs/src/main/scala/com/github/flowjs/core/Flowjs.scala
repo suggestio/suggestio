@@ -1,4 +1,4 @@
-package com.resumablejs
+package com.github.flowjs.core
 
 import org.scalajs.dom
 
@@ -14,12 +14,12 @@ import scala.scalajs.js.|
   */
 @js.native
 @JSImport(PACKAGE_NAME, JSImport.Namespace)
-class Resumable( val opts: ResumableOptions ) extends js.Object {
+class Flowjs(val opts: FlowjsOptions ) extends js.Object {
 
   val support: Boolean = js.native
   val supportDirectory: Boolean = js.native
-  val files: js.Array[ResumableFile] = js.native
-  val defaults: ResumableOptions = js.native
+  val files: js.Array[FlowjsFile] = js.native
+  val defaults: FlowjsOptions = js.native
 
   val events: js.Array[js.Any] = js.native
   val version: Double = js.native
@@ -58,10 +58,10 @@ class Resumable( val opts: ResumableOptions ) extends js.Object {
   def addFiles(file: dom.FileList, event: dom.Event = js.native): Unit = js.native
 
   /** Cancel upload of a specific ResumableFile object on the list from the list. **/
-  def removeFile(file: ResumableFile): Unit = js.native
+  def removeFile(file: FlowjsFile): Unit = js.native
 
   /** Look up a ResumableFile object by its unique identifier. **/
-  def getFromUniqueIdentifier(uniqueIdentifier: String): ResumableFile = js.native
+  def getFromUniqueIdentifier(uniqueIdentifier: String): FlowjsFile = js.native
 
   /** Returns the total size of the upload in bytes. **/
   def getSize(): Double = js.native
@@ -94,7 +94,7 @@ class Resumable( val opts: ResumableOptions ) extends js.Object {
 
 }
 
-object Resumable {
+object Flowjs {
 
   object Events {
     final def FILE_SUCCESS      = "fileSuccess"
@@ -109,46 +109,38 @@ object Resumable {
     final def COMPLETE          = "complete"
     final def PROGRESS          = "progress"
     final def ERROR             = "error"
-    /*
-    final def PAUSE             = "pause"
-    final def BEFORE_PAUSE      = "beforeCancel"
-    final def CANCEL            = "cancel"
-    final def CHUNKING_START    = "chunkingStart"
-    final def CHUNKING_PROGRESS = "chunkingProgress"
-    final def CHUNKING_COMPLETE = "chunkingComplete"
-    */
     final def CATCH_ALL         = "catchAll"
   }
 
 
-  implicit final class ResumableOpsExt( private val rsmbl: Resumable ) extends AnyVal {
+  implicit final class FlowjsOpsExt( private val rsmbl: Flowjs ) extends AnyVal {
 
     // Event helpers
     // @see [[https://github.com/flowjs/flow.js#events]]
 
-    def onFileSuccess(cb: js.Function3[ResumableFile, /*message:*/String, ResumableChunk, Unit]) =
+    def onFileSuccess(cb: js.Function3[FlowjsFile, /*message:*/String, FlowjsChunk, Unit]) =
       rsmbl.on( Events.FILE_SUCCESS, cb )
 
-    def onFileProgress(cb: js.Function2[ResumableFile, ResumableChunk, Unit]) =
+    def onFileProgress(cb: js.Function2[FlowjsFile, FlowjsChunk, Unit]) =
       rsmbl.on( Events.FILE_PROGRESS, cb )
 
-    def onFileAdded(cb: js.Function2[ResumableFile, js.UndefOr[dom.UIEvent], Unit]) =
+    def onFileAdded(cb: js.Function2[FlowjsFile, js.UndefOr[dom.UIEvent], Unit]) =
       rsmbl.on( Events.FILE_ADDED, cb )
 
-    def onFilesAdded(cb: js.Function2[js.Array[ResumableFile], js.UndefOr[dom.UIEvent], Unit]) =
+    def onFilesAdded(cb: js.Function2[js.Array[FlowjsFile], js.UndefOr[dom.UIEvent], Unit]) =
       rsmbl.on( Events.FILES_ADDED, cb )
 
-    def onFilesSubmitted(cb: js.Function2[js.Array[ResumableFile], dom.UIEvent, Unit]): Unit =
+    def onFilesSubmitted(cb: js.Function2[js.Array[FlowjsFile], dom.UIEvent, Unit]): Unit =
       rsmbl.on( Events.FILES_SUBMITTED, cb )
 
-    def onFileRemoved(cb: js.Function1[ResumableFile, Unit]): Unit =
+    def onFileRemoved(cb: js.Function1[FlowjsFile, Unit]): Unit =
       rsmbl.on(Events.FILE_REMOVED, cb )
 
-    def onFileRetry(cb: js.Function2[ResumableFile, ResumableChunk, Unit]) =
+    def onFileRetry(cb: js.Function2[FlowjsFile, FlowjsChunk, Unit]) =
       rsmbl.on( Events.FILE_RETRY, cb )
 
     /** An error occurred during upload of a specific file. */
-    def onFileError(cb: js.Function3[ResumableFile, String, ResumableChunk, Unit]) =
+    def onFileError(cb: js.Function3[FlowjsFile, String, FlowjsChunk, Unit]) =
       rsmbl.on( Events.FILE_ERROR, cb )
 
     def onUploadStart(cb: js.Function0[Unit]) =
@@ -160,29 +152,8 @@ object Resumable {
     def onProgress(cb: js.Function0[Unit]) =
       rsmbl.on( Events.PROGRESS, cb )
 
-    def onError(cb: js.Function3[String, ResumableFile, ResumableChunk, Unit]) =
+    def onError(cb: js.Function3[String, FlowjsFile, FlowjsChunk, Unit]) =
       rsmbl.on( Events.ERROR, cb )
-
-    // TODO resumable.js events, flow.js does not have these events. Delete, if not needed.
-    /*
-    def onPause(cb: js.Function0[Unit]) =
-      rsmbl.on( Events.PAUSE, cb )
-
-    def onBeforeCancel(cb: js.Function0[Unit]) =
-      rsmbl.on( Events.BEFORE_PAUSE, cb )
-
-    def onCancel(cb: js.Function0[Unit]) =
-      rsmbl.on( Events.CANCEL, cb )
-
-    def onChunkingStart(cb: js.Function1[ResumableFile, Unit]) =
-      rsmbl.on( Events.CHUNKING_START, cb )
-
-    def onChunkingProgress(cb: js.Function2[ResumableFile, Double, Unit]) =
-      rsmbl.on( Events.CHUNKING_PROGRESS, cb )
-
-    def onChunkingComplete(cb: js.Function1[ResumableFile, Unit]) =
-      rsmbl.on( Events.CHUNKING_COMPLETE, cb )
-    */
 
     def onCatchAll(cb: js.Function0[Unit]) =
       rsmbl.on( Events.CATCH_ALL, cb )

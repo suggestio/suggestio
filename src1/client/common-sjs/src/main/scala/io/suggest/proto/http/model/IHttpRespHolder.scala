@@ -1,11 +1,10 @@
 package io.suggest.proto.http.model
 
-import io.suggest.log.Log
-import io.suggest.msg.ErrorMsgs
 import japgolly.univeq.UnivEq
 
 import scala.concurrent.Future
 import scala.scalajs.js.JavaScriptException
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -25,11 +24,9 @@ trait IHttpResultHolder[T] {
   def abortOrFail(): Unit
 
   /** Прервать запрос, подавить возможные исключения. */
-  def abort(): Unit = {
-    try {
+  def abort(): Try[Unit] = {
+    Try {
       abortOrFail()
-    } catch { case ex: Throwable =>
-      IHttpResultHolder.logger.warn( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, ex, this )
     }
   }
 
@@ -38,7 +35,7 @@ trait IHttpResultHolder[T] {
 }
 
 
-object IHttpResultHolder extends Log {
+object IHttpResultHolder {
 
   @inline implicit def univEq[T]: UnivEq[IHttpResultHolder[T]] = UnivEq.force
 

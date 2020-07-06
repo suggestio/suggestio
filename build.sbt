@@ -175,7 +175,7 @@ lazy val lkCommonSjs = {
     .dependsOn(
       commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
       reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs,
-      resumableSjs,
+      flowjsSjs,
     )
 }
 
@@ -607,11 +607,14 @@ lazy val reactQrCodeSjs = {
     .dependsOn( commonReactSjs )
 }
 
-lazy val resumableSjs = {
-  val name = "scalajs-resumablejs"
-  Project(id = name, base = file(DIR0 + "client/scalajs/resumablejs"))
-    .dependsOn(  )
+/** Sjs-фасад для Flow.js.
+  * @see [[https://github.com/flowjs/flow.js/]]
+  */
+lazy val flowjsSjs = {
+  val name = "scalajs-flowjs"
+  Project(id = name, base = file(DIR0 + "client/scalajs/flowjs"))
 }
+
 
 /** веб-интерфейс suggest.io v2. */
 lazy val www = project
@@ -687,7 +690,8 @@ lazy val client = project
     lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
     asmCryptoJsSjs, asmCryptoSioSjs,
     sysMdrSjs, loginFormSjs, sysEdgeEditSjs,
-    cartSjs
+    cartSjs,
+    flowjsSjs,
   )
 
 

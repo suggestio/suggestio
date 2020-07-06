@@ -45,7 +45,7 @@ trait IUploadApi {
   def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String] = None,
                    onProgress: Option[ITransferProgressInfo => Unit] = None): IHttpResultHolder[MUploadResp]
 
-  // chunk(), hasChunk() пока неявно реализуются внутри resumable.js.
+  // chunk(), hasChunk() пока неявно реализуются внутри flow.js.
 
 }
 
@@ -86,7 +86,7 @@ class UploadApiHttp extends IUploadApi with Log {
   override def doFileUpload(upData: MHostUrl, file: MJsFileInfo, ctxIdOpt: Option[String] = None,
                             onProgress: Option[ITransferProgressInfo => Unit] = None): IHttpResultHolder[MUploadResp] = {
 
-    // Фунция запуска основного реквеста. При наличии resumable.js, она запускается после окончания upload'а.
+    // Фунция запуска основного реквеста. При наличии flow.js, она запускается после окончания upload'а.
     def __doMainReq(formDataOpt: Option[Ajax.InputData]) = {
       HttpClient
         .execute(
@@ -116,12 +116,12 @@ class UploadApiHttp extends IUploadApi with Log {
     }
 
     // Отправить как обычно, т.е. через multipart/form-data:
-    val resumableOpt = if (ALLOW_CHUNKED) FlowjsUtil.tryFlowJs( upData ) else Failure(new NoSuchElementException)
+    val flowjsOpt = if (ALLOW_CHUNKED) FlowjsUtil.tryFlowJs( upData ) else Failure(new NoSuchElementException)
 
-    // Если resumable-объект собран, то надо переслать файл через resumable, а doFileUpload() дёрнуть без тела.
-    resumableOpt.fold [IHttpResultHolder[MUploadResp]] (
+    // Если flowjs-инстанс собран, то надо переслать файл через flowjs, а doFileUpload() дёрнуть без тела.
+    flowjsOpt.fold [IHttpResultHolder[MUploadResp]] (
       {ex =>
-        // Не удалось инициализировать resumable.js, закачиваем по-старинке. Собрать обычное тело upload-запроса:
+        // Не удалось инициализировать flow.js, закачиваем по-старинке. Собрать обычное тело upload-запроса:
         if (ALLOW_CHUNKED)
           logger.error( ErrorMsgs.CHUNKED_UPLOAD_PREPARE_FAIL, ex, upData )
 
@@ -136,26 +136,24 @@ class UploadApiHttp extends IUploadApi with Log {
         __doMainReq( Some(formData) )
       },
 
-      {resumable =>
+      {flowjs =>
         // TODO Тут нет отработки reloadIfUnauthorized() при заливке. Возможно, проверять сессию перед началом заливки?
         // Подписка на onProgress
         for (f <- onProgress)
-          FlowjsUtil.subscribeProgress(resumable, file, f)
+          FlowjsUtil.subscribeProgress(flowjs, file, f)
 
         // Подписка на onComplete
-        val p = Promise[Unit]()
-        FlowjsUtil.subscribeErrors(resumable, p)
+        val flowjsUploadP = Promise[Unit]()
+        FlowjsUtil.subscribeErrors(flowjs, flowjsUploadP)
 
         // Запустить аплоад.
-        resumable.addFile( file.blob.asInstanceOf[dom.File] )
+        flowjs.addFile( file.blob.asInstanceOf[dom.File] )
 
-        // resumable.js: Если подписаться на complete до запуска, то событие срабатывает слишком рано.
-        // TODO flow.js: Узнать, тоже страдает от этого?
-        FlowjsUtil.subscribeComplete(resumable, p)
+        FlowjsUtil.subscribeComplete(flowjs, flowjsUploadP)
 
-        resumable.upload()
+        flowjs.upload()
 
-        val resumableFut = p.future
+        val flowjsUploadFut = flowjsUploadP.future
 
         // Уродливый класс с реализацией последовательной сцепки всех реквестов:
         new IHttpRespMapped[MUploadResp] {
@@ -164,8 +162,8 @@ class UploadApiHttp extends IUploadApi with Log {
 
           var _httpResultHolder: IHttpResultHolder[HttpResp] = new IHttpRespHolder {
             override def abortOrFail(): Unit =
-              resumable.cancel()
-            override lazy val resultFut = resumableFut.map { _ =>
+              flowjs.cancel()
+            override lazy val resultFut = flowjsUploadFut.map { _ =>
               // По идее, этот код никогда не вызывается.
               new DummyHttpResp {
                 override def status = HttpConst.Status.OK
@@ -177,7 +175,7 @@ class UploadApiHttp extends IUploadApi with Log {
           override def httpResultHolder = _httpResultHolder
 
           override val resultFut: Future[MUploadResp] = {
-            resumableFut.flatMap { _ =>
+            flowjsUploadFut.flatMap { _ =>
               val r2 = mainReqHolder
               _httpResultHolder = r2.httpResultHolder
               r2.resultFut

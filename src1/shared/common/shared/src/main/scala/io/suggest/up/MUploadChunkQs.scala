@@ -15,7 +15,7 @@ import scalaz.syntax.apply._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 28.06.2020 7:01
-  * Description: Модель qs-аргументов для resumable.js-закачки или иной chunked-закачки на сервер.
+  * Description: Модель qs-аргументов для flow.js-закачки или иной chunked-закачки на сервер.
   *
   * Неявно-пустая модель, несмотря на наличие вроде бы обязательных полей.
   *
@@ -119,12 +119,12 @@ object MUploadChunkQs {
 }
 
 
-/** Контейнер qs-аргументов от resumable.js.
+/** Контейнер qs-аргументов от flow.js.
   * Многие параметры необязательные, т.к. приходят ещё на первой фазе.
-  * В будущем можно будет переписать resumable.js на scala.js.
+  * В будущем можно будет переписать flow.js на scala.js.
   *
   * @param chunkNumberO Порядковый номер chunk'а.
-  *                     Первый chunk = это 1, НЕ 0 (особенность resumable.js).
+  *                     Первый chunk = это 1, НЕ 0 (особенность flow.js).
   *                     None тут нужно для совместимости с flow.js, который сам рендерит queryString,
   *                       а нам её нужно только немного дополнить недостающими полями.
   * @param totalChunks Общее кол-во chunk'ов.

@@ -1,7 +1,6 @@
 package io.suggest.up
 
-
-import com.resumablejs.{Resumable, ResumableChunk, ResumableFile, ResumableOptions}
+import com.github.flowjs.core.{Flowjs, FlowjsChunk, FlowjsFile, FlowjsOptions}
 import io.suggest.common.qs.QsConstants
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.HashesHex
@@ -23,20 +22,20 @@ import scala.util.{Success, Try}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.06.2020 14:49
-  * Description: Утиль для взаимодействия с resumable.js.
+  * Description: Утиль для взаимодействия с flow.js.
   */
 object FlowjsUtil {
 
   /** Собрать инстанс Resumable.js для UploadApi. */
-  def tryFlowJs(uploadHostUrl: MHostUrl): Try[Resumable] = {
-    // Узнать, resumable.js в состоянии работать или нет?
+  def tryFlowJs(uploadHostUrl: MHostUrl): Try[Flowjs] = {
+    // Узнать, flow.js в состоянии работать или нет?
     Try {
       lazy val upTgQsStr = QsConstants.DO_NOT_TOUCH_PREFIX + (uploadHostUrl.relUrl.replaceFirst("^[^?]+\\?", ""))
 
       val chunkHashAlgo = UploadConstants.CleverUp.UPLOAD_CHUNK_HASH
       var chunkHashes = HashMap.empty[Int, String]
 
-      val _targetChunkUrlF: js.Function3[ResumableFile, ResumableChunk, Boolean, String] = {
+      val _targetChunkUrlF: js.Function3[FlowjsFile, FlowjsChunk, Boolean, String] = {
         (file, chunk, isTest) =>
           // Надо получить на руки данные chunk'а
           val chunkNumber = chunk.chunkNumber
@@ -58,7 +57,7 @@ object FlowjsUtil {
             routes.controllers.Upload.chunk(upTgQsStr, chunkQsDict).url
       }
 
-      def __preprocessChunk( chunk: ResumableChunk ): Unit = {
+      def __preprocessChunk( chunk: FlowjsChunk ): Unit = {
         val cn = chunk.chunkNumber
         if (chunkHashes contains cn) {
           Try( chunk.preprocessFinished() )
@@ -82,13 +81,13 @@ object FlowjsUtil {
 
       val _chunkSizeB = MUploadChunkSizes.default.value
 
-      new Resumable(
-        new ResumableOptions {
+      new Flowjs(
+        new FlowjsOptions {
           override val target = js.defined( _targetChunkUrlF )
           override val singleFile = true
           override val chunkSize = _chunkSizeB
           override val simultaneousUploads = 2
-          override val method = ResumableOptions.Methods.OCTET
+          override val method = FlowjsOptions.Methods.OCTET
           override val testChunks = true
 
           override val uploadMethod = routes.controllers.Upload
@@ -109,7 +108,7 @@ object FlowjsUtil {
 
 
   /** Подписаться на события onProgress. */
-  def subscribeProgress(rsmbl: Resumable, file: MJsFileInfo, onProgressF: ITransferProgressInfo => Unit): Unit = {
+  def subscribeProgress(rsmbl: Flowjs, file: MJsFileInfo, onProgressF: ITransferProgressInfo => Unit): Unit = {
     rsmbl.onProgress { () =>
       val transferProgressInfo = new ITransferProgressInfo {
         override def totalBytes = Some( file.blob.size )
@@ -122,14 +121,14 @@ object FlowjsUtil {
 
 
   /** Подписка на события окончания заливки. */
-  def subscribeErrors(rsmbl: Resumable, p: Promise[Unit]): Unit = {
+  def subscribeErrors(rsmbl: Flowjs, p: Promise[Unit]): Unit = {
     rsmbl.onError { (msg, file, chunk) =>
       if (!rsmbl.isUploading())
         p.tryFailure( new RuntimeException(msg + ": " + file.uniqueIdentifier + " #" + chunk.chunkNumber) )
     }
   }
 
-  def subscribeComplete(rsmbl: Resumable, p: Promise[Unit]): Unit = {
+  def subscribeComplete(rsmbl: Flowjs, p: Promise[Unit]): Unit = {
     rsmbl.onComplete { () =>
       p.trySuccess(())
     }

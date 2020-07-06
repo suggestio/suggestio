@@ -1,4 +1,4 @@
-package com.resumablejs
+package com.github.flowjs.core
 
 import org.scalajs.dom
 
@@ -8,18 +8,16 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.06.2020 13:37
-  * Description: API for ResumableChunk.
-  * @see [[https://github.com/23/resumable.js/blob/master/resumable.d.ts#L369]]
-  * @see [[https://github.com/23/resumable.js/blob/master/resumable.js#L660]]
+  * Description: Flow.js chunk API.
   */
 @js.native
-trait ResumableChunk extends js.Object {
+trait FlowjsChunk extends js.Object {
 
   val opts: js.Object
   def getOpt(o: String): js.Any
 
-  val flowObj: Resumable
-  val fileObj: ResumableFile
+  val flowObj: Flowjs
+  val fileObj: FlowjsFile
   val fileObjSize: Double
   val fileObjType: String
   val offset: Int
@@ -59,11 +57,11 @@ trait ResumableChunk extends js.Object {
 
 
   // prototype:
-  def getParams(): ChunkQsParams
+  def getParams(): FlowjsChunkParams
 
 }
 
-object ResumableChunk {
+object FlowjsChunk {
 
   object PreprocessState {
     final def UNPROCESSED = 0
@@ -79,10 +77,10 @@ object ResumableChunk {
   }
 
 
-  implicit final class ResumableChunkOpsExt( private val resumChunk: ResumableChunk ) extends AnyVal {
+  implicit final class FlowjsChunkOpsExt(private val flowjsChunk: FlowjsChunk ) extends AnyVal {
 
     def chunkNumber: Int =
-      resumChunk.offset.toInt + 1
+      flowjsChunk.offset.toInt + 1
 
   }
 
@@ -90,7 +88,7 @@ object ResumableChunk {
 
 
 /** @see [[https://github.com/flowjs/flow.js/blob/master/src/flow.js#L1281]] */
-trait ChunkQsParams extends js.Object {
+trait FlowjsChunkParams extends js.Object {
   val flowChunkNumber: Int
   val flowChunkSize: Int
   val flowCurrentChunkSize: Double

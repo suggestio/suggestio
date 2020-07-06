@@ -1,4 +1,4 @@
-package com.resumablejs
+package com.github.flowjs.core
 
 import org.scalajs.dom
 
@@ -9,12 +9,11 @@ import scala.scalajs.js
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.06.2020 13:32
   * Description: ResumableFile API.
-  * @see [[https://github.com/23/resumable.js/blob/master/resumable.d.ts#L308]]
   */
 @js.native
-trait ResumableFile extends js.Object {
+trait FlowjsFile extends js.Object {
 
-  val flowObj: Resumable = js.native
+  val flowObj: Flowjs = js.native
   val file: dom.File = js.native
   val name: String = js.native
   val relativePath: String = js.native
@@ -23,7 +22,7 @@ trait ResumableFile extends js.Object {
   /** Average upload speed, bytes per second. */
   val averageSpeed: Double = js.native
   val currentSpeed: Double = js.native
-  val chunks: js.Array[ResumableChunk] = js.native
+  val chunks: js.Array[FlowjsChunk] = js.native
   val paused: Boolean = js.native
   val error: Boolean = js.native
 

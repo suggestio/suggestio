@@ -1,4 +1,4 @@
-package com.resumablejs
+package com.github.flowjs.core
 
 import minitest._
 
@@ -9,11 +9,11 @@ import scala.scalajs.js
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.06.2020 15:30
   */
-object ResumableSpec extends SimpleTestSuite {
+object FlowjsSpec extends SimpleTestSuite {
 
-  test("Instantiate: new Resumable(...)") {
-    val inst = new Resumable(
-      new ResumableOptions {}
+  test(s"Instantiate: new ${classOf[Flowjs].getClass.getSimpleName}(...)") {
+    val inst = new Flowjs(
+      new FlowjsOptions {}
     )
     assert( !js.isUndefined(inst.support) )
     assert( inst.version > 0 )

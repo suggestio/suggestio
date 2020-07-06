@@ -2,7 +2,7 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-name := "scalajs-resumablejs"
+name := "scalajs-flowjs"
 
 version := "0.0.0"
 
