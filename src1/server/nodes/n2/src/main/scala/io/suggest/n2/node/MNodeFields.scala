@@ -86,6 +86,9 @@ object MNodeFields {
     val EO_NODE_IDS_FN = _fullFn( Out.O_NODE_ID_FN )
     def EO_ORDER_FN = _fullFn( Out.O_ORDER_FN )
     def EO_INFO_FLAG_FN = _fullFn( Out.O_INFO_FLAG_FN )
+    def EO_INFO_FLAGS_FN = _fullFn( Out.O_INFO_FLAGS_FN )
+    def EO_INFO_FLAGS_FLAG_FN = _fullFn( Out.O_INFO_FLAGS_FLAG_FN )
+    def EO_INFO_DATE_FN = _fullFn( Out.O_INFO_DATE_FN )
 
     // Теги
     def EO_INFO_TAGS_FN = _fullFn( Out.O_INFO_TAGS_FN )

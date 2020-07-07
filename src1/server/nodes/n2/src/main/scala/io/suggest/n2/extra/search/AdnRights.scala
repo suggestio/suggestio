@@ -32,11 +32,10 @@ trait AdnRights extends DynSearchArgs {
 
       val mustOrNot = IMust.mustOrNot(adnRightsMustOrNot)
       // Собираем terms query, объединяя через AND (must).
-      val allTermsQ = IMust.maybeWrapToBool {
-        for (r <- _withAdnRights) yield {
-          MWrapClause(mustOrNot, QueryBuilders.termQuery(fn, r.value))
-        }
-      }
+      val allTermsQ = (for (r <- _withAdnRights) yield {
+        MWrapClause(mustOrNot, QueryBuilders.termQuery(fn, r.value))
+      })
+        .toBoolQuery
 
       // Накатить собранную termsQuery на исходную query.
       qbOpt0

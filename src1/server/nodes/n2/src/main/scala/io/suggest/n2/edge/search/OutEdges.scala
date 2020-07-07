@@ -8,7 +8,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders, RangeQueryBuilder}
 
 /**
  * Suggest.io
@@ -55,7 +55,7 @@ object OutEdges extends MacroLogsImpl {
             MWrapClause(tcr.must, tq)
           }
 
-          val tq = IMust.maybeWrapToBool(tQueries)
+          val tq = tQueries.toBoolQuery
           if (withQname && tq.isInstanceOf[BoolQueryBuilder])
             tq.queryName(s"oe.tags[${oe.tags.length}]")
 
@@ -67,78 +67,82 @@ object OutEdges extends MacroLogsImpl {
         // Отрабатываем гео-шейпы, там тоже очень желательны query вместо filter.
         // Явно работать с Option API, чтобы избежать скрытых логических ошибок при смене Option на Seq.
         if (oe.gsIntersect.isDefined) {
-          val gsi = oe.gsIntersect.get
-
-          /** Добавить в query фильтр по флагу */
-          def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
-            gsi.gjsonCompat.fold(qb0) { gjsCompat =>
-              val fn = EF.EO_INFO_GS_GJSON_COMPAT_FN
-              val gjsFr = QueryBuilders.termQuery(fn, gjsCompat)
-              if (withQname)
-                gjsFr.queryName(s"GeoJSON compat q: $fn=$gjsCompat")
-              val q = QueryBuilders.boolQuery()
-                .must(qb0)
-                .filter(gjsFr)
-              if (withQname)
-                q.queryName("bool with GeoJSON compat filter")
-              q
-            }
-          }
-
-          // Есть какие-то критерии поиска. Сразу пытаемся искать по шейпам...
-          val nq: QueryBuilder = if (gsi.shapes.nonEmpty) {
-            val levels1: Iterable[MNodeGeoLevel] = if (gsi.levels.isEmpty)
-              MNodeGeoLevels.values
-            else
-              gsi.levels
-            val queriesIter = for {
-              shape   <- gsi.shapes.iterator
-              glevel  <- levels1.iterator
-            } yield {
-              val shapeFn = EF.EO_INFO_GS_SHAPE_FN( glevel )
-              val qb0 = shape.toEsQuery(shapeFn)
-              if (withQname)
-                qb0.queryName(s"shape q: gnl=$glevel fn=$shapeFn shape=${shape.getClass.getSimpleName}")
-              _withGjsCompatFilter(qb0)
-            }
-            // Объединяем сгенеренные queries в одну.
-            val queries = queriesIter.toList
-            if (queries.tail.isEmpty) {
-              queries.head
-            } else {
-              val bq = QueryBuilders.boolQuery()
-              for (q <- queries) {
-                bq.should(q)
-              }
-              bq.minimumShouldMatch( 1 )
-              if (withQname)
-                bq.queryName(s"bool: ${queries.length} shapes")
-              bq
-            }
-
-          } else if (gsi.levels.nonEmpty) {
-            // Нет шейпов, это значит есть уровни.
-            val fn = EF.EO_INFO_GS_GLEVEL_FN
-            val levelNames = gsi.levels.map(_.esfn)
-            val qb0 = QueryBuilders.termsQuery(fn, levelNames: _*)
-            if (withQname)
-              qb0.queryName(s"terms: ${fn} = ${levelNames.length}lvls: [${levelNames.mkString(", ")}]")
-            _withGjsCompatFilter(qb0)
-
-          } else {
-            // Нужно искать по флагу совместимости с GeoJSON.
-            val gjsCompat = gsi.gjsonCompat.get
-            val q = QueryBuilders.termQuery(EF.EO_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
-            if (withQname)
-              q.queryName(s"gjs compat: $gjsCompat")
-            q
-          }
-
           // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
           val fn = EF.EO_INFO_GS_FN
-          val gqNf = QueryBuilders.nestedQuery(fn, nq, ScoreMode.Max)
+          val gqNf = {
+            val gsi = oe.gsIntersect.get
+
+            /** Добавить в query фильтр по флагу */
+            def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
+              gsi.gjsonCompat.fold(qb0) { gjsCompat =>
+                val fn = EF.EO_INFO_GS_GJSON_COMPAT_FN
+                val gjsFr = QueryBuilders.termQuery(fn, gjsCompat)
+                if (withQname)
+                  gjsFr.queryName(s"GeoJSON compat q: $fn=$gjsCompat")
+                val q = QueryBuilders.boolQuery()
+                  .must(qb0)
+                  .filter(gjsFr)
+                if (withQname)
+                  q.queryName("bool with GeoJSON compat filter")
+                q
+              }
+            }
+
+            // Есть какие-то критерии поиска. Сразу пытаемся искать по шейпам...
+            val nq: QueryBuilder = if (gsi.shapes.nonEmpty) {
+              val levels1: Iterable[MNodeGeoLevel] = if (gsi.levels.isEmpty)
+                MNodeGeoLevels.values
+              else
+                gsi.levels
+              val queriesIter = for {
+                shape   <- gsi.shapes.iterator
+                glevel  <- levels1.iterator
+              } yield {
+                val shapeFn = EF.EO_INFO_GS_SHAPE_FN( glevel )
+                val qb0 = shape.toEsQuery(shapeFn)
+                if (withQname)
+                  qb0.queryName(s"shape q: gnl=$glevel fn=$shapeFn shape=${shape.getClass.getSimpleName}")
+                _withGjsCompatFilter(qb0)
+              }
+              // Объединяем сгенеренные queries в одну.
+              val queries = queriesIter.toList
+              if (queries.tail.isEmpty) {
+                queries.head
+              } else {
+                val bq = QueryBuilders.boolQuery()
+                for (q <- queries) {
+                  bq.should(q)
+                }
+                bq.minimumShouldMatch( 1 )
+                if (withQname)
+                  bq.queryName(s"bool: ${queries.length} shapes")
+                bq
+              }
+
+            } else if (gsi.levels.nonEmpty) {
+              // Нет шейпов, это значит есть уровни.
+              val fn = EF.EO_INFO_GS_GLEVEL_FN
+              val levelNames = gsi.levels.map(_.esfn)
+              val qb0 = QueryBuilders.termsQuery(fn, levelNames: _*)
+              if (withQname)
+                qb0.queryName(s"terms: ${fn} = ${levelNames.length}lvls: [${levelNames.mkString(", ")}]")
+              _withGjsCompatFilter(qb0)
+
+            } else {
+              // Нужно искать по флагу совместимости с GeoJSON.
+              val gjsCompat = gsi.gjsonCompat.get
+              val q = QueryBuilders.termQuery(EF.EO_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+              if (withQname)
+                q.queryName(s"gjs compat: $gjsCompat")
+              q
+            }
+
+            QueryBuilders.nestedQuery( fn, nq, ScoreMode.Max )
+          }
+
           if (withQname)
             gqNf.queryName(s"nested: e.info.geoShape fn=${fn}")
+
           _qOpt = _qOpt.map { qb0 =>
             QueryBuilders.boolQuery()
               .must(qb0)
@@ -165,7 +169,7 @@ object OutEdges extends MacroLogsImpl {
             if (withQname)
               nodeIdsBq.queryName(s"e.nodeIds[${oe.nodeIds.length}] filter")
             nodeIdsBq
-          } else  {
+          } else {
             // OR-матчинг всех nodeIds
             val orNodesQb = QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
             if (withQname)
@@ -182,6 +186,52 @@ object OutEdges extends MacroLogsImpl {
             qbb
           }.orElse {
             Some( nodeIdsQb )
+          }
+        }
+
+
+        // Фильтрация по интервалу даты-времени.
+        if (oe.date.nonEmpty) {
+          val fn = MNodeFields.Edges.EO_INFO_DATE_FN
+
+          val dateClauses = for {
+            esRange <- oe.date
+            if esRange.rangeClauses.nonEmpty
+          } yield {
+            val rangeQuery = esRange.rangeClauses
+              .foldLeft( QueryBuilders.rangeQuery(fn) ) {
+                (rq, rClause) =>
+                  val f: Any => RangeQueryBuilder = rClause.op match {
+                    case EsRangeOps.`<=` => rq.lte
+                    case EsRangeOps.`<`  => rq.lt
+                    case EsRangeOps.`>=` => rq.gte
+                    case EsRangeOps.`>`  => rq.gt
+                  }
+                  f(rClause.value)
+              }
+
+            for (b <- esRange.boost)
+              rangeQuery.boost( b )
+            for (dtFmt <- esRange.dateFormat)
+              rangeQuery.format(dtFmt)
+            for (tz <- esRange.timeZone)
+              rangeQuery.timeZone( tz.toString )
+
+            MWrapClause(
+              must          = esRange.must,
+              queryBuilder  = rangeQuery,
+            )
+          }
+
+          if (dateClauses.nonEmpty) {
+            val qb = dateClauses.toBoolQuery
+            _qOpt = _qOpt.map { qb0 =>
+              QueryBuilders.boolQuery()
+                .must( qb0 )
+                .must( qb )
+            }.orElse {
+              Some(qb)
+            }
           }
         }
 
@@ -319,7 +369,7 @@ object OutEdges extends MacroLogsImpl {
 
           if (crQbs.nonEmpty) {
             // Объеденить все qb как must.
-            val allCrsQb = IMust.maybeWrapToBool( crQbs )
+            val allCrsQb = crQbs.toBoolQuery
 
             if (withQname)
               allCrsQb.queryName( s"fileHashes[${oe.fileHashesHex.size}]" )
@@ -349,7 +399,7 @@ object OutEdges extends MacroLogsImpl {
             )
           }
 
-          val mimesQb = IMust.maybeWrapToBool( nodeIdsWraps )
+          val mimesQb = nodeIdsWraps.toBoolQuery
 
           _qOpt = _qOpt.map { qb0 =>
             QueryBuilders.boolQuery()
@@ -371,7 +421,7 @@ object OutEdges extends MacroLogsImpl {
               queryBuilder  = QueryBuilders.termQuery( fn, byteSize )
             )
           }
-          val qb2 = IMust.maybeWrapToBool( bsClauses )
+          val qb2 = bsClauses.toBoolQuery
 
           _qOpt = _qOpt
             .map { qb0 =>
@@ -415,6 +465,8 @@ object OutEdges extends MacroLogsImpl {
             }
         }
 
+
+        // Поиск по метаданным файлового хранилища.
         if (oe.fileStorMetaData.nonEmpty) {
           val qbStorMeta = QueryBuilders.termsQuery( EF.EO_MEDIA_S_DATA_META_FN, oe.fileStorMetaData.toSeq: _* )
           _qOpt = _qOpt
@@ -426,6 +478,38 @@ object OutEdges extends MacroLogsImpl {
             .orElse {
               Some( qbStorMeta )
             }
+        }
+
+
+        // Поиск/фильтрация по флагам.
+        if (oe.flags.nonEmpty) {
+          val flagsQbs = (for {
+            flagCr <- oe.flags.iterator
+            if flagCr.flag.nonEmpty
+          } yield {
+            val flagCrQb = QueryBuilders.termsQuery(
+              EF.EO_INFO_FLAGS_FLAG_FN,
+              flagCr.flag
+                .iterator
+                .map(_.value)
+                .toSeq: _*,
+            )
+
+            MWrapClause(
+              must = IMust.SHOULD,
+              queryBuilder = flagCrQb,
+            )
+          })
+            .toList
+
+          if (flagsQbs.nonEmpty) {
+            _qOpt = _qOpt.map { qb0 =>
+              (MWrapClause(IMust.MUST, qb0) :: flagsQbs)
+                .toBoolQuery
+            }.orElse {
+              Some( flagsQbs.toBoolQuery )
+            }
+          }
         }
 
 
@@ -451,7 +535,7 @@ object OutEdges extends MacroLogsImpl {
       .toSeq
 
     // Объеденить запросы в единый запрос.
-    IMust.maybeWrapToBool(clauses)
+    clauses.toBoolQuery
   }
 
 }

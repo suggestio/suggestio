@@ -27,6 +27,15 @@ object MHostInfo {
 
   @inline implicit def univEq: UnivEq[MHostInfo] = UnivEq.derive
 
+
+  implicit final class HostInfoOpsExt( private val hostInfo: MHostInfo ) extends AnyVal {
+
+    /** Все хостнеймы, содержащиеся в инстанса MHostInfo.. */
+    def allHostNames: Set[String] =
+      Set.empty + hostInfo.nameInt + hostInfo.namePublic
+
+  }
+
 }
 
 

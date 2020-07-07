@@ -76,6 +76,10 @@ object MEdge
       import MEdgeInfo.{Fields => F}
 
       def FLAG_FN       = _fullFn( F.FLAG_FN )
+      def FLAGS_FN      = _fullFn( F.FLAGS_FN )
+      def FLAGS_FLAG_FN = _fullFn( F.Flags.FLAG_FN )
+
+      def DATE_FN       = _fullFn( F.DATE_FN )
 
       // Теги
       def TAGS_FN       = _fullFn( F.TAGS_FN )

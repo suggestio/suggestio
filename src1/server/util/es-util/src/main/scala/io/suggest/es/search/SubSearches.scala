@@ -46,8 +46,7 @@ trait SubSearches extends DynSearchArgs {
         }
         .toSeq
 
-      val q1 = IMust.maybeWrapToBool( subQueries )
-
+      val q1 = subQueries.toBoolQuery
       Some(q1)
     }
   }

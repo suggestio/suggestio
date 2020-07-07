@@ -40,6 +40,7 @@ object MEdgeInfo
   /** Модель названий полей модели [[MEdgeInfo]]. */
   object Fields {
 
+    val DATE_FN           = "dt"
     val DATE_NI_FN        = "dtni"
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
@@ -87,36 +88,36 @@ object MEdgeInfo
   }
 
 
-  import Fields._
-
   /** Поддержка JSON. */
   implicit val mEdgeInfoFormat: Format[MEdgeInfo] = {
+    val F = Fields
     (
-      (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
-      (__ \ COMMENT_NI_FN).formatNullable[String] and
-      (__ \ FLAG_FN).formatNullable[Boolean] and
-      (__ \ FLAGS_FN).formatNullable[Iterable[MEdgeFlagData]]
+      (__ \ F.DATE_FN).formatNullable[OffsetDateTime] and
+      (__ \ F.DATE_NI_FN).formatNullable[OffsetDateTime] and
+      (__ \ F.COMMENT_NI_FN).formatNullable[String] and
+      (__ \ F.FLAG_FN).formatNullable[Boolean] and
+      (__ \ F.FLAGS_FN).formatNullable[Iterable[MEdgeFlagData]]
         .inmap[Iterable[MEdgeFlagData]](
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { flags => if (flags.isEmpty) None else Some(flags) }
         ) and
-      (__ \ TAGS_FN).formatNullable[Set[String]]
+      (__ \ F.TAGS_FN).formatNullable[Set[String]]
         .inmap [Set[String]] (
           EmptyUtil.opt2ImplEmptyF( Set.empty ),
           { tags => if (tags.nonEmpty) Some(tags) else None }
         ) and
-      (__ \ GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
+      (__ \ F.GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
         .inmap [List[MEdgeGeoShape]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { geos => if (geos.nonEmpty) Some(geos) else None }
         ) and
-      (__ \ GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
+      (__ \ F.GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
         .inmap [Seq[MGeoPoint]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { gps => if (gps.nonEmpty) Some(gps) else None }
         ) and
-      (__ \ EXT_SERVICE_FN).formatNullable[MExtService] and
-      (__ \ OS_FAMILY_FN).formatNullable[MOsFamily]
+      (__ \ F.EXT_SERVICE_FN).formatNullable[MExtService] and
+      (__ \ F.OS_FAMILY_FN).formatNullable[MOsFamily]
     )(apply, unlift(unapply))
   }
 
@@ -125,13 +126,16 @@ object MEdgeInfo
     import dsl._
     val F = Fields
     Json.obj(
+      F.DATE_FN -> FDate(
+        index           = someTrue,
+        docValues       = someTrue,
+        ignoreMalformed = someFalse,
+      ),
       F.DATE_NI_FN -> FDate.notIndexedJs,
       F.COMMENT_NI_FN -> FText.notIndexedJs,
       F.FLAG_FN -> FBoolean.indexedJs,
       F.FLAGS_FN -> FObject.nested(
-        properties = Json.obj(
-          MEdgeFlagData.Fields.FLAG_FN -> FKeyWord.indexedJs,
-        ),
+        properties = MEdgeFlagData.esMappingProps,
       ),
       // Теги
       F.TAGS_FN -> FText(
@@ -163,6 +167,7 @@ object MEdgeInfo
   }
 
 
+  def date = GenLens[MEdgeInfo](_.date)
   def dateNi = GenLens[MEdgeInfo](_.dateNi)
   def textNi = GenLens[MEdgeInfo](_.textNi)
   def flag = GenLens[MEdgeInfo](_.flag)
@@ -181,6 +186,7 @@ object MEdgeInfo
 
 /** Класс экземпляров модели MEdgeInfo.
   *
+  * @param date Индексируемая дата, пригодная для сортировки.
   * @param dateNi Неиднексируемая дата.
   * @param textNi Неиндексируемый текст при эдже.
   *                  Используется для хэша пароля в Password-эджах с 2019-02-28.
@@ -196,6 +202,7 @@ object MEdgeInfo
   * @param osFamily Привязка эджа к семейству операционных систем.
   */
 final case class MEdgeInfo(
+                            date         : Option[OffsetDateTime]  = None,
                             dateNi       : Option[OffsetDateTime]  = None,
                             textNi       : Option[String]          = None,
                             // TODO flag надо убрать, чтобы использовалось множество флагов flags.

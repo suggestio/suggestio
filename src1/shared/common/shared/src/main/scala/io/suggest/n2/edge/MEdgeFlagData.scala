@@ -1,5 +1,6 @@
 package io.suggest.n2.edge
 
+import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -13,7 +14,9 @@ import play.api.libs.functional.syntax._
   * Description: Контейнер "флага" с возможными доп.данными.
   * По сути - описывается эдж внутри эджа.
   */
-object MEdgeFlagData {
+object MEdgeFlagData
+  extends IEsMappingProps
+{
 
   object Fields {
     def FLAG_FN = "f"
@@ -29,7 +32,15 @@ object MEdgeFlagData {
 
   def flag = GenLens[MEdgeFlagData](_.flag)
 
-  // TODO ES-маппинг живёт в MEdgeInfo.edgeFlagDataMapping()
+  override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
+    import dsl._
+    val F = Fields
+
+    Json.obj(
+      F.FLAG_FN -> FKeyWord.indexedJs,
+    )
+  }
+
 }
 
 

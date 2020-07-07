@@ -306,17 +306,17 @@ object TplDataFormatUtil {
 /** Различные field constructor'ы. */
 object FC {
 
-  implicit val tdFc = FieldConstructor(tdFcTpl.f)
+  implicit def tdFc = FieldConstructor(tdFcTpl.f)
 
-  implicit val divFc = FieldConstructor(divFcTpl.f)
+  implicit def divFc = FieldConstructor(divFcTpl.f)
 
-  implicit val checkboxFc = FieldConstructor(checkboxFcTpl.f)
+  implicit def checkboxFc = FieldConstructor(checkboxFcTpl.f)
 
-  implicit val radialFc = FieldConstructor(radialFcTpl.f)
+  implicit def radialFc = FieldConstructor(radialFcTpl.f)
 
-  implicit val tdRadialFc = FieldConstructor(tdRadialFcTpl.f)
+  implicit def tdRadialFc = FieldConstructor(tdRadialFcTpl.f)
 
-  implicit val authFc = FieldConstructor(authFcTpl.f)
+  implicit def authFc = FieldConstructor(authFcTpl.f)
 
   implicit def langSelectFc = FieldConstructor(langSelectFcTpl.f)
 

@@ -315,6 +315,7 @@ final class Upload @Inject()(
                     fileMeta    = fileMeta,
                     storageInfo = assignResp.storage,
                     edgeFlags   = MEdgeFlags.InProgress :: Nil,
+                    nodeIds     = assignResp.host.allHostNames,
                   )
                   // Сохраняем новый файловый узел.
                   mnode <- upInfo.existNodeId.fold {
@@ -355,7 +356,7 @@ final class Upload @Inject()(
                           val edgesSeq2 = MNodeEdges.edgesToMap1(
                             edges0.withoutPredicateIter( MPredicates.Blob ) ++ (fileEdge :: Nil)
                           )
-                          MNodeEdges.out.set( edgesSeq2 )(edges0)
+                          (MNodeEdges.out set edgesSeq2)(edges0)
                         } andThen
                         MNode.common
                           .composeLens( MNodeCommon.isEnabled )
@@ -734,6 +735,7 @@ final class Upload @Inject()(
             pictureMeta = MPictureMeta(
               whPx = upCtx.imageWh,
             ),
+            nodeIds = Set.empty + uploadUtil.MY_NODE_PUBLIC_URL,
           )
 
           // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
@@ -953,7 +955,7 @@ final class Upload @Inject()(
           }
 
           // Вернуть 200 Ok с данными по файлу
-          val isSystemResp = uploadArgs.info.systemResp contains true
+          val isSystemResp = uploadArgs.info.systemResp contains[Boolean] true
           val resp = MUploadResp(
             fileExist = Some( MSrvFileInfo(
               nodeId = mnodeId,
@@ -1392,7 +1394,7 @@ final class Upload @Inject()(
     (for {
       ds <- storClient.read( readArgs )
     } yield {
-      LOGGER.trace(s"downloadLogic()#${System.currentTimeMillis()}: Streaming download file node#${ctx304.request.mnode.idOrNull} to ${ctx304.request.remoteClientAddress}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage}")
+      LOGGER.trace(s"downloadLogic()#${System.currentTimeMillis()}: Streaming download file node#${ctx304.request.mnode.idOrNull} to ${ctx304.request.remoteClientAddress}\n file = ${request.edgeMedia.file}\n storage = ${request.edgeMedia.storage.orNull}")
 
       val hdrs = (ACCEPT_RANGES -> "bytes") #::
         Results.contentDispositionHeader(
@@ -1412,7 +1414,7 @@ final class Upload @Inject()(
       )
     })
       .recoverWith { case ex: NoSuchElementException =>
-        LOGGER.debug(s"$logPrefix File[${s.data}] not found via #${storClient.getClass.getSimpleName}", ex)
+        LOGGER.debug(s"$logPrefix File #${storClient.getClass.getSimpleName}[${s.data}] not found", ex)
         httpErrorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
       }
   }
@@ -1425,10 +1427,12 @@ final class Upload @Inject()(
     * @param pictureMeta Данные картинки, если есть.
     * @return Эдж.
     */
-  private def _mkFileEdge(fileMeta: MFileMeta, storageInfo: MStorageInfo,
+  private def _mkFileEdge(fileMeta: MFileMeta, storageInfo: MStorageInfo, nodeIds: Set[String] = Set.empty,
                           pictureMeta: MPictureMeta = MPictureMeta.empty, edgeFlags: Iterable[MEdgeFlag] = Nil): MEdge = {
     MEdge(
       predicate = MPredicates.Blob.File,
+      nodeIds = nodeIds,
+      // nodeIds содержит publicURL целевого узла.
       media = Some( MEdgeMedia(
         file = fileMeta,
         picture = pictureMeta,
@@ -1436,7 +1440,7 @@ final class Upload @Inject()(
       )),
       info = MEdgeInfo(
         // 2020-feb-14: Сохранять дату заливки файла в эдж, т.к. используется для Last-Modified, а другие даты узла ненадёжны.
-        dateNi = Some( OffsetDateTime.now() ),
+        date   = Some( OffsetDateTime.now() ),
         flags  = edgeFlags
           .map(MEdgeFlagData.apply),
       ),
@@ -1451,7 +1455,7 @@ final class Upload @Inject()(
       .map { personId =>
         MEdge(
           predicate = MPredicates.CreatedBy,
-          nodeIds   = Set( personId ),
+          nodeIds   = Set.empty + personId,
         )
       }
       .nextOption()

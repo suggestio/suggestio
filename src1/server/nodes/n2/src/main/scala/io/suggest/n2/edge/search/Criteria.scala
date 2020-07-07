@@ -7,6 +7,7 @@ import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.media.storage.MStorage
+import org.elasticsearch.index.query.RangeQueryBuilder
 
 /**
   * Suggest.io
@@ -19,7 +20,11 @@ import io.suggest.n2.media.storage.MStorage
   * @param nodeIds id искомых узлов.
   * @param predicates искомые предикаты.
   * @param must
-  * @param flag Состояние дополнительного флага в контейнера info.
+  * @param flag Состояние дополнительного флага в контейнера info. (v1)
+  * @param flags Флаги: критерии флагов.
+  *              Несколько критериев объединяются через ИЛИ.
+  * @param date Поиск по индексируемой дате-времени.
+  *             Несколько интервалов - объединяются через ИЛИ.
   * @param tags Критерии для поиска по тегам.
   * @param gsIntersect Данные для поиска по гео-шейпам.
   * @param nodeIdsMatchAll Каким образом трактовать nodeIds, если их >= 2?
@@ -32,15 +37,17 @@ import io.suggest.n2.media.storage.MStorage
   * @param fileSizeB Поиск по размеру (размерам) хранимых файлов.
   */
 final case class Criteria(
-                           nodeIds           : Seq[String]          = Nil,
-                           predicates        : Seq[MPredicate]      = Nil,
-                           must              : Must_t               = IMust.SHOULD,
+                           nodeIds           : Seq[String]              = Nil,
+                           predicates        : Seq[MPredicate]          = Nil,
+                           must              : Must_t                   = IMust.SHOULD,
                            // info
-                           flag              : Option[Boolean]      = None,
-                           tags              : Seq[TagCriteria]     = Nil,
-                           gsIntersect       : Option[IGsCriteria]  = None,
-                           nodeIdsMatchAll   : Boolean              = false,
-                           geoDistanceSort   : Option[MGeoPoint]    = None,
+                           flag              : Option[Boolean]          = None,
+                           flags             : Seq[EdgeFlagCriteria]    = Nil,
+                           date              : Seq[EsRange]             = Nil,
+                           tags              : Seq[TagCriteria]         = Nil,
+                           gsIntersect       : Option[IGsCriteria]      = None,
+                           nodeIdsMatchAll   : Boolean                  = false,
+                           geoDistanceSort   : Option[MGeoPoint]        = None,
                            extService        : Option[Seq[MExtService]] = None,
                            osFamilies        : Option[Seq[MOsFamily]]   = None,
                            // media
@@ -55,17 +62,11 @@ final case class Criteria(
   with IMust
 {
 
-  def isContainsSort: Boolean = {
+  def isContainsSort: Boolean =
     geoDistanceSort.nonEmpty
-  }
-
-  /** Тест на наличие предиката или его дочерних предикатов в списке предикатов. */
-  def containsPredicate(pred: MPredicate): Boolean = {
-    predicates.exists(_.eqOrHasParent(pred))
-  }
 
   override def toString: String = {
-    val sb = new StringBuilder(32, productPrefix)
+    val sb = new StringBuilder(128, productPrefix)
     sb.append('(')
 
     sb.append(

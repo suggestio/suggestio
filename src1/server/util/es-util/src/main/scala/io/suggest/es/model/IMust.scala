@@ -1,7 +1,6 @@
 package io.suggest.es.model
 
 import io.suggest.common.empty.OptionUtil
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
   * Suggest.io
@@ -33,42 +32,6 @@ object IMust {
     if (flag) MUST else SHOULD
   }
 
-  /**
-    * Сборка списка скомпиленных запросов в один запрос.
-    * Обычно происходит заворачивание в bool query.
-    *
-    * @param clauses Входящий список критериев и готовых QueryBuilder'ов.
-    * @return Итоговый QueryBuilder.
-    */
-  def maybeWrapToBool(clauses: Iterable[MWrapClause]): QueryBuilder = {
-    if ((clauses.sizeIs > 1) || clauses.exists(_.must contains false)) {
-      // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
-      var shouldClauses = 0
-      val nq = QueryBuilders.boolQuery()
-
-      for (c <- clauses) {
-        // Клиент может настраивать запрос с помощью must/should/mustNot.
-        val qb = c.queryBuilder
-        c.must.fold [Unit] {
-          nq.should( qb )
-          shouldClauses += 1
-        } {
-          case true =>
-            nq.must( qb )
-          case _ =>
-            nq.mustNot( qb )
-        }
-      }
-      // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
-      nq.minimumShouldMatch(
-        Math.min(1, shouldClauses)
-      )
-
-    } else {
-      clauses.head.queryBuilder
-    }
-  }
-
   def toString(must: Must_t): String = {
     must.fold ("should") {
       case true   => "must"
@@ -78,13 +41,6 @@ object IMust {
 
 }
 
-
-/** Один search query builder в связке с [[IMust]]. */
-case class MWrapClause(
-  override val must         : Must_t,
-  queryBuilder              : QueryBuilder
-)
-  extends IMust
 
 
 /** Интерфейс к must-полям, которые описывают выбор между should, must и mustNot. */

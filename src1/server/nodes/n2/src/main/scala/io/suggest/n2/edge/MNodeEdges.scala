@@ -52,6 +52,10 @@ object MNodeEdges
 
       // Info
       def O_INFO_FLAG_FN  = _fullFn( Info.FLAG_FN )
+      def O_INFO_FLAGS_FN = _fullFn( Info.FLAGS_FN )
+      def O_INFO_FLAGS_FLAG_FN = _fullFn( Info.FLAGS_FLAG_FN)
+
+      def O_INFO_DATE_FN  = _fullFn( Info.DATE_FN )
 
       // Теги
       def O_INFO_TAGS_FN        = _fullFn( Info.TAGS_FN )

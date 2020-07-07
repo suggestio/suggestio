@@ -1,19 +1,20 @@
 package util.cron
 
-import akka.actor.{Cancellable, Scheduler}
+import akka.actor.{ActorSystem, Cancellable}
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.mcron.MCronTask
-import models.mproj.ICommonDi
-import play.api.inject.ApplicationLifecycle
+import play.api.inject.{ApplicationLifecycle, Injector}
 import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
 import util.img.cron.{LocalImgsDeleteEmptyDirs, LocalImgsDeleteNotExistingInPermanent}
 import util.stat.StatCronTasks
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq._
+import play.api.Configuration
+import util.up.CleanStaleUploads
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
@@ -33,16 +34,17 @@ import scala.util.{Failure, Success}
 // TODO Вынести cron в отдельный пакет, на крайняк в util или ещё куда-нибудь. Чтобы список модулей на вход получал через reference.conf.
 
 case class Crontab @Inject() (
-                               mCommonDi                     : ICommonDi,
+                               injector     : Injector,
                              )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{ec, configuration, actorSystem, current}
-
-  def CRON_TASKS_ENABLED = configuration
-    .getOptional[Boolean]("cron.enabled")
-    .getOrElseTrue
+  def CRON_TASKS_ENABLED: Boolean = {
+    injector
+      .instanceOf[Configuration]
+      .getOptional[Boolean]("cron.enabled")
+      .getOrElseTrue
+  }
 
   def TASK_CLASSES: LazyList[ClassTag[_ <: ICronTasksProvider]] = {
     implicitly[ClassTag[BillingCronTasks]] #::
@@ -50,6 +52,7 @@ case class Crontab @Inject() (
     implicitly[ClassTag[StatCronTasks]] #::
     implicitly[ClassTag[LocalImgsDeleteEmptyDirs]] #::
     implicitly[ClassTag[LocalImgsDeleteNotExistingInPermanent]] #::
+    implicitly[ClassTag[CleanStaleUploads]] #::
     LazyList.empty
   }
 
@@ -58,12 +61,14 @@ case class Crontab @Inject() (
 
   // akka-2.5+: Чтобы избегать экзепшенов прямо в конструкторе, запуск таймеров скидываем в отдельный тред.
   if (CRON_TASKS_ENABLED) {
+    implicit val ec = injector.instanceOf[ExecutionContext]
+
     Future {
       startTimers()
     }.andThen {
       case Success(startedTimers) =>
         // Убрать таймеры по завершению:
-        current.injector
+        injector
           .instanceOf[ApplicationLifecycle]
           .addStopHook { () =>
             Future {
@@ -90,31 +95,17 @@ case class Crontab @Inject() (
 
   // API ---------------------------------------
 
-  def sched: Scheduler = {
-    try {
-      actorSystem.scheduler
-    } catch {
-      // There is no started application
-      case e: RuntimeException =>
-        LOGGER.warn(s"${e.getClass.getSimpleName}: play-akka failed. Wait and retry... :: ${e.getMessage}", e)
-        Thread.sleep(250)
-        sched
-    }
-  }
-
-
-  def startTimers(): List[Cancellable] = {
-    val _sched = sched
+  def startTimers()(implicit ec: ExecutionContext): List[Cancellable] = {
+    lazy val sched = injector.instanceOf[ActorSystem].scheduler
 
     (for {
       cronTaskProvCt <- TASK_CLASSES
-      clazz = current.injector
-        .instanceOf( cronTaskProvCt )
+      clazz = injector.instanceOf( cronTaskProvCt )
       if clazz.isEnabled
       task  <- clazz.cronTasks()
     } yield {
       LOGGER.trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")
-      _sched.scheduleWithFixedDelay(task.startDelay, task.every) {
+      sched.scheduleWithFixedDelay(task.startDelay, task.every) {
         // Замкнуть Runnable на Crontab, чтобы по сигналу заново искался и инжектировался инстанс необходимого класса, таски пролистывались?
         _mkRunnable(
           clazzName = clazz.getClass.getName,
@@ -152,8 +143,7 @@ case class Crontab @Inject() (
     (for {
       clazzCt <- TASK_CLASSES.iterator
       if clazzCt.runtimeClass.getName ==* clazzName
-      clazz = current.injector
-        .instanceOf( clazzCt )
+      clazz = injector.instanceOf( clazzCt )
       task <- clazz.cronTasks()
       if task.displayName ==* taskDisplayName
     } yield

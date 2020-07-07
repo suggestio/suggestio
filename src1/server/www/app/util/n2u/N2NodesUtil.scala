@@ -44,7 +44,7 @@ class N2NodesUtil {
   def receiverIds(crs: IterableOnce[Criteria]): Iterator[String] = {
     crs
       .iterator
-      .filter { _.containsPredicate(MPredicates.Receiver) }
+      .filter { _.predicates.exists(_ eqOrHasParent MPredicates.Receiver) }
       .flatMap( _.nodeIds )
   }
 
