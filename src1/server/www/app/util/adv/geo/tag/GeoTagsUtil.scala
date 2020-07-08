@@ -161,7 +161,7 @@ class GeoTagsUtil @Inject() (
               MEdge(
                 predicate = _PRED,
                 info = MEdgeInfo(
-                  tags = Set(tagFace)
+                  tags = Set.empty + tagFace,
                 )
               )
             )

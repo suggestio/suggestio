@@ -2,7 +2,7 @@ package controllers
 
 import java.time.OffsetDateTime
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
 import io.suggest.adn.MAdnRights
@@ -355,7 +355,7 @@ final class LkNodes @Inject() (
                   // Эдж до юзера-создателя узла.
                   val eCreator = MEdge(
                     predicate = MPredicates.CreatedBy,
-                    nodeIds   = Set( request.user.personIdOpt.get )
+                    nodeIds   = Set.empty + request.user.personIdOpt.get,
                   )
 
                   val parentNodeIds = Set[String](parentNodeId)
@@ -377,7 +377,7 @@ final class LkNodes @Inject() (
               // Это узел-ресивер, поэтому заполняем профиль ADN-узла:
               extras = MNodeExtras(
                 adn = Some(MAdnExtra(
-                  rights      = Set( MAdnRights.RECEIVER ),
+                  rights      = Set.empty + MAdnRights.RECEIVER,
                   isUser      = !request.user.isSuper,
                 ))
               ),
@@ -603,7 +603,7 @@ final class LkNodes @Inject() (
     canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
       // Выполнить обновление текущей карточки согласно значению флага isEnabled.
       val nodeId = request.mnode.id.get
-      val nodeIds = Set(nodeId)
+      val nodeIds = Set.empty + nodeId
       val adId = request.mad.id.get
 
       // Поискать аналогичные бесплатные размещения в биллинге, заглушив их.
@@ -762,7 +762,7 @@ final class LkNodes @Inject() (
           LOGGER.trace(s"$logPrefix Will update mad#$adIdU with showOpened=$isEnabled on $nodeId")
           val edge2 = (
             MEdge.nodeIds
-              .set( Set(nodeId) ) andThen
+              .set( Set.empty + nodeId ) andThen
             MEdge.info
               .composeLens( MEdgeInfo.flag )
               .set( OptionUtil.maybeTrue(isEnabled) )
@@ -838,7 +838,7 @@ final class LkNodes @Inject() (
 
           val edge2 = (
             MEdge.nodeIds
-              .set( Set(nodeId) ) andThen
+              .set( Set.empty + nodeId ) andThen
               MEdge.info.modify { info0 =>
                 val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
                 val flags2 =

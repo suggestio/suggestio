@@ -1703,8 +1703,8 @@ object MuiSvgIcons {
   object MapsTransferWithinAStation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/zoom-out-map", JSImport.Default)
   object MapsZoomOutMap extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/apps", JSImport.Default)
-  object NavigationApps extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Apps", JSImport.Default)
+  object Apps extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowBack", JSImport.Default)
   object ArrowBack extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowBackIos", JSImport.Default)

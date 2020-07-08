@@ -276,7 +276,7 @@ final class Ident @Inject() (
         LOGGER.warn(s"_sendSmsRes2IdMsgs($phoneNumber): Looks like, sms to $smsRuPhoneNumber was NOT sent.")
       MIdMsg(
         rcptType  = MPredicates.Ident.Phone,
-        rcpt      = Set( phoneNumber, smsRuPhoneNumber ),
+        rcpt      = Set.empty + phoneNumber + smsRuPhoneNumber,
         sentAt    = now,
         msgId     = sentStatus.smsId,
         checkCode = smsCode,
@@ -817,7 +817,7 @@ final class Ident @Inject() (
             )
             val emailEdge = MEdge(
               predicate = MPredicates.Ident.Email,
-              nodeIds = Set( regCreds.email ),
+              nodeIds = Set.empty + regCreds.email,
               info = MEdgeInfo(
                 flag = Some(false),
               )
@@ -851,7 +851,7 @@ final class Ident @Inject() (
                     // Номер телефона.
                     MEdge(
                       predicate = MPredicates.Ident.Phone,
-                      nodeIds   = Set( regCreds.phone ),
+                      nodeIds   = Set.empty + regCreds.phone,
                       info = MEdgeInfo(
                         flag = OptionUtil.SomeBool.someTrue,
                       )
@@ -939,7 +939,7 @@ final class Ident @Inject() (
                   rcptType  = personIdRcptType,
                   checkCode = "",
                   validated = Some(now),
-                  rcpt      = Set( personId ),
+                  rcpt      = Set.empty + personId,
                 ) :: idMsgs0
               } andThen
               MIdToken.dates
@@ -1294,7 +1294,7 @@ final class Ident @Inject() (
                     LOGGER.trace(s"$logPrefix Will add new email[${qs.email}] edge to node#${qs.nodeId.orNull}")
                     val ee = MEdge(
                       predicate = MPredicates.Ident.Email,
-                      nodeIds = Set( qs.email ),
+                      nodeIds = Set.empty + qs.email,
                       info = MEdgeInfo(
                         flag = OptionUtil.SomeBool.someTrue,
                       )
@@ -1408,7 +1408,7 @@ final class Ident @Inject() (
                   out = {
                     val extIdentEdge = MEdge(
                       predicate = MPredicates.Ident.Id,
-                      nodeIds   = Set( profile.userId ),
+                      nodeIds   = Set.empty + profile.userId,
                       info      = MEdgeInfo(
                         extService = Some( extService )
                       )

@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiLink, MuiLinkProps}
 import diode.{ActionType, FastEq}
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
@@ -20,7 +21,12 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.n2.edge.MEdgeFlags.AlwaysOutlined
+import io.suggest.n2.node.MNodeTypes
+import io.suggest.routes.routes
+import io.suggest.sc.ScConstants
+import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.xplay.json.PlayJsonSjsUtil
+import play.api.libs.json.Json
 
 /**
   * Suggest.io
@@ -375,8 +381,59 @@ class NodeR(
                     Messages( MsgCodes.`Identifier` )
                   ),
                   _kvTdValue(
-                    node.info.id
-                  )
+                    node.info.id,
+
+                    HtmlConstants.SPACE,
+
+                    // Кнопка перехода в ЛК узла
+                    ReactCommonUtil.maybeNode( node.info.ntype ==* MNodeTypes.AdnNode ) {
+                      MuiLink(
+                        new MuiLinkProps {
+                          val href = routes.controllers.LkAds.adsPage( node.info.id ).url
+                        }
+                      )(
+                        MuiButton(
+                          new MuiButtonProps {
+                            override val variant = MuiButtonVariants.outlined
+                            override val startIcon = Mui.SvgIcons.ArrowForward()().rawNode
+                            override val color = MuiColorTypes.primary
+                          }
+                        )(
+                          Messages( MsgCodes.`Go.into` ),
+                        )
+                      )
+                    },
+
+                    HtmlConstants.SPACE,
+
+                    // Кнопка перехода в выдачу узла:
+                    MuiLink(
+                      new MuiLinkProps {
+                        val target = "_blank"
+                        val href = ScConstants.ScJsState.fixJsRouterUrl(
+                          routes.controllers.Sc.geoSite(
+                            PlayJsonSjsUtil.toNativeJsonObj(
+                              Json.toJsObject(
+                                Sc3Pages.MainScreen(
+                                  nodeId = Some( node.info.id ),
+                                )
+                              )
+                            )
+                          ).url
+                        )
+                      }
+                    )(
+                      MuiButton(
+                        new MuiButtonProps {
+                          override val variant = MuiButtonVariants.outlined
+                          override val startIcon = Mui.SvgIcons.Apps()().rawNode
+                          override val color = MuiColorTypes.primary
+                        }
+                      )(
+                        Messages( MsgCodes.`Showcase` ),
+                      )
+                    ),
+                  ),
                 ),
 
                 // Галочка управления активностью узла, если определено.

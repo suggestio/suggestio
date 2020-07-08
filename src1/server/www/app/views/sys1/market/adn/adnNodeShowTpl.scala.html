@@ -103,7 +103,7 @@
         <p class="color-light-strong">Нет владельцев узла.</p>
       } else {
         @for(personId <- personIdsIter) {
-          @_personLinkTpl(personId, args.personNames)
+          @_personLinkTpl(mnode, personId, args.personNames)
         }
       }
     }

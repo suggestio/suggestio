@@ -262,7 +262,7 @@ final class LkAdEdit @Inject() (
                   // Собираем эдж до текущего узла-продьюсера:
                   edgesAcc ::= MEdge(
                     predicate = MPredicates.OwnedBy,
-                    nodeIds   = Set( request.producer.id.get )
+                    nodeIds   = Set.empty + request.producer.id.get,
                   )
 
                   // Собираем эдж до текущего узла юзера-создателя:

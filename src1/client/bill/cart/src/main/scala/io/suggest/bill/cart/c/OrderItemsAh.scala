@@ -48,7 +48,7 @@ class OrderItemsAh[M](
         }
 
       } { itemId =>
-        val itemIdSet = Set(itemId)
+        val itemIdSet = Set.empty + itemId
         // Управление одним элементом
         if (m.checked) {
           v0.itemsSelected ++ itemIdSet

@@ -31,14 +31,13 @@ class SecretModelsInit @Inject() (
 
   /** Список моделей для инициализации. */
   def MODELS: Seq[SecretKeyInit] = {
-    Seq[SecretKeyInit](
-      MExtAdvQs,
-      ActorPathQs,
-      OneAdQsArgs,
-      MImgT,
-      MUploadTargetQs,
-      MEmailRecoverQs,
-    )
+    MExtAdvQs ::
+    ActorPathQs ::
+    OneAdQsArgs ::
+    MImgT ::
+    MUploadTargetQs ::
+    MEmailRecoverQs ::
+    Nil
   }
 
   // Запустить иницализацию моделей, требующих секретного ключа.

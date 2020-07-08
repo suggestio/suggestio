@@ -157,8 +157,6 @@ sealed trait MarketLkAdnCtlRoutes extends js.Object {
 
   def lkList(): PlayRoute = js.native
 
-  def showNodeAds(nodeId: String): PlayRoute = js.native
-
 }
 
 

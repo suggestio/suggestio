@@ -221,7 +221,7 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
       val futOrNsee = for {
         // Собрать все id дочерних узлов текущего юзера.
         childIds <- s.nodesUtil.collectChildIds(
-          parentNodeIds = Set(personId),
+          parentNodeIds = Set.empty + personId,
           maxLevels     = s.mdrUtil.maxLevelsDeepFor(isPerson = true)
         )
         if childIds.nonEmpty

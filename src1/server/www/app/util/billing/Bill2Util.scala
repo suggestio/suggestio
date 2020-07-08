@@ -867,7 +867,7 @@ final class Bill2Util @Inject() (
       // Гуляем по графу в поисках узла-получателя денег. Это узел с контрактом или узел-юзер.
       (mrCandidateNodes, nodesInfoMap) <- mNodes.walkCache(
         acc0 = List.empty[MNode] -> Map(nodeId -> Set.empty[Int]),
-        ids  = Set(nodeId)
+        ids  = Set.empty + nodeId,
       ) {
         case (acc0 @ (nodesAcc0, nodeIdsAcc0), mnode) =>
           if (

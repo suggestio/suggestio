@@ -8,6 +8,7 @@ import io.suggest.geo.MLocEnv
 import io.suggest.sc.ads.{MAdsSearchReq, MLookupMode, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.xplay.qsb.QueryStringBindableImpl
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 
 /**
@@ -166,14 +167,17 @@ object MScQsJvm {
         for {
           adTitlesE           <- boolB.bind( k(F.AD_TITLES_FN), params )
           focAfterJumpOptE    <- boolOptB.bind( k(F.FOC_AFTER_JUMP_FN), params )
+          allow404OptE        <- boolOptB.bind( k(F.ALLOW_404), params )
         } yield {
           for {
             adTitles          <- adTitlesE
             focAfterJumpOpt   <- focAfterJumpOptE
+            allow404Opt       <- allow404OptE
           } yield {
             MScGridArgs(
               adTitles        = adTitles,
               focAfterJump    = focAfterJumpOpt,
+              allow404        = allow404Opt.getOrElseTrue,
             )
           }
         }
@@ -185,6 +189,7 @@ object MScQsJvm {
         _mergeUnbinded1(
           boolB.unbind( k(F.AD_TITLES_FN), value.adTitles ),
           boolOptB.unbind( k(F.FOC_AFTER_JUMP_FN), value.focAfterJump ),
+          boolOptB.unbind( k(F.ALLOW_404), if (value.allow404) None else Some(value.allow404) ),
         )
       }
     }

@@ -132,7 +132,7 @@ final class SysNodeDomains @Inject()(
         {mdx2 =>
           import esModel.api._
 
-          val dkeysFilteredOut = Set(dkey, mdx2.dkey)
+          val dkeysFilteredOut = Set.empty + dkey + mdx2.dkey
           val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
             _updateNodeDomains(mnode) {
               mnode.extras.domains

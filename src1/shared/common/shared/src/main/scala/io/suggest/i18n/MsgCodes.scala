@@ -474,4 +474,6 @@ object MsgCodes {
   val `Not.connected` = "Not.connected"
   val `Retry` = "Retry"
 
+  val `Showcase` = "Showcase"
+
 }

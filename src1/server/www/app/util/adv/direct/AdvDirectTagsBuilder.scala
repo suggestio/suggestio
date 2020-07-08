@@ -79,7 +79,7 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
                 predicate = pred,
                 nodeIds   = edgeNodeIds,
                 info = MEdgeInfo(
-                  tags = Set(tagFace)
+                  tags = Set.empty + tagFace,
                 )
               )
             }

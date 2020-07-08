@@ -154,7 +154,7 @@ class ExtRscUtil @Inject()(
           val createdByEdgeOpt = for (personId <- personIdOpt) yield {
             MEdge(
               predicate = MPredicates.CreatedBy,
-              nodeIds = Set(personId)
+              nodeIds = Set.empty + personId,
             )
           }
           createdByEdgeOpt.toList

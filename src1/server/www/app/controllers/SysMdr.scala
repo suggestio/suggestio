@@ -162,7 +162,7 @@ class SysMdr @Inject() (
         } { rcvrNode =>
           // Нельзя выполнять экшен на эфемерных узлах, т.к. отсутствие узла и его id
           val rcvrId = rcvrNode.id.get
-          val rcvrIdSet = Set(rcvrId)
+          val rcvrIdSet = Set.empty + rcvrId
 
           // Сколько уровней children искать? Если пляшем от текущего юзера, то можно искать на один уровень глубже.
           val maxLevelsDeep = mdrUtil.maxLevelsDeepFor( request.user.personIdOpt contains rcvrId )
@@ -470,7 +470,7 @@ class SysMdr @Inject() (
           .fold(request.user.personIdOpt.get -> true)(_ -> false)
         val rcvrsLevelsDeep = mdrUtil.maxLevelsDeepFor(isPerson)
         for {
-          rcvrIds <- nodesUtil.collectChildIds( Set(parentRcvrId), rcvrsLevelsDeep )
+          rcvrIds <- nodesUtil.collectChildIds( Set.empty + parentRcvrId, rcvrsLevelsDeep )
         } yield {
           Some( rcvrIds )
         }

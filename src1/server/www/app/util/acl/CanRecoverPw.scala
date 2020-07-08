@@ -104,7 +104,7 @@ class CanRecoverPw @Inject() (
                     out = MNodeEdges.edgesToMap(
                       MEdge(
                         predicate = MPredicates.Ident.Email,
-                        nodeIds   = Set( qs.email )
+                        nodeIds   = Set.empty + qs.email,
                       )
                     )
                   ),

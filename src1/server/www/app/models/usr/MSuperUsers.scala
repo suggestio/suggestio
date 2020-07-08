@@ -149,7 +149,7 @@ class MSuperUsers @Inject()(
               out = {
                 val emailIdentEdge = MEdge(
                   predicate = MPredicates.Ident.Email,
-                  nodeIds   = Set(email),
+                  nodeIds   = Set.empty + email,
                   info = MEdgeInfo(
                     flag = Some(true)
                   )

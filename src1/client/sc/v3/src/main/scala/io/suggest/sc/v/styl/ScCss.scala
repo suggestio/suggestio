@@ -88,7 +88,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   val (bgColorCss, fgColorCss) = {
     val colors = args.customColorsOpt getOrElse ScCss.COLORS_DFLT
     def _colorCss( colorOpt: Option[MColorData], dflt: => String ) =
-      Color( colorOpt.fold(dflt)(_.hexCode) )
+      Color( (colorOpt getOrElse MColorData(dflt)).hexCode )
+
     val bg = _colorCss( colors.bg, ScConstants.Defaults.BG_COLOR )
     val fg = _colorCss( colors.fg, ScConstants.Defaults.FG_COLOR )
     (bg, fg)

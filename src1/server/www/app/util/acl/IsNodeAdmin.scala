@@ -108,7 +108,7 @@ class IsNodeAdmin @Inject()(
 
     } { personId =>
       lazy val adnTreeNTypes = MNodeTypes.adnTreeMemberTypes
-      val userIdSet = Set(personId)
+      val userIdSet = Set.empty + personId
 
       def _isNodeAdminAnyOfOrUpTo(currNodeId: String, counter: Int, accRev: List[MNode]): Future[Option[List[MNode]]] = {
         lazy val logPrefix2 = s"$logPrefix[$counter #$currNodeId]:"

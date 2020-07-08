@@ -6,7 +6,6 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.proto.http.HttpConst
 import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
-import play.api.Configuration
 import play.api.mvc.Result
 import util.cdn.CdnUtil
 import play.api.libs.json._
@@ -83,8 +82,7 @@ class CspUtil @Inject() (
           childSrc = IFRAMES_SRCS,
           // default-src не распространяется на form-action:
           formAction = commonSources,
-          // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
-          //objectSrc = Set( Csp.Sources.NONE )
+          //objectSrc - флэш умер, всё. Запрет.
           // service-worker: нужна задать собственный домен
           workerSrc = Set.empty + Csp.Sources.SELF,
           fontSrc   = commonSources,

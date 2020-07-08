@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import akka.stream.scaladsl.Sink
 import javax.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.adn.MAdnRights
+import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
@@ -111,16 +111,16 @@ final class NodesUtil @Inject() (
       ),
       extras = MNodeExtras(
         adn =  Some(MAdnExtra(
-          rights          = Set(MAdnRights.PRODUCER, MAdnRights.RECEIVER),
+          rights          = Set.empty[MAdnRight] + MAdnRights.PRODUCER + MAdnRights.RECEIVER,
           isUser          = true,
-          shownTypeIdOpt  = Some(AdnShownTypes.SHOP.value),
+          shownTypeIdOpt  = Some( AdnShownTypes.SHOP.value ),
           testNode        = false,
         ))
       ),
       edges = MNodeEdges(
         out = {
           personIdOpt.fold[Seq[MEdge]] (Nil) { personId =>
-            val personIdSet = Set(personId)
+            val personIdSet = Set.empty + personId
             val ownedByEdge = MEdge(
               predicate = MPredicates.OwnedBy,
               nodeIds   = personIdSet,
@@ -249,7 +249,7 @@ final class NodesUtil @Inject() (
               out = {
                 val pp = MPredicates.OwnedBy
                 val rp = MPredicates.Receiver.Self
-                val nodeIdSet = Set(adnId)
+                val nodeIdSet = Set.empty + adnId
                 val prodE = MEdge(
                   predicate = pp,
                   nodeIds   = nodeIdSet
@@ -443,7 +443,7 @@ final class NodesUtil @Inject() (
             ),
             extras = MNodeExtras(
               adn = Some(MAdnExtra(
-                rights   = Set( MAdnRights.PRODUCER, MAdnRights.RECEIVER ),
+                rights   = Set.empty[MAdnRight] + MAdnRights.PRODUCER + MAdnRights.RECEIVER,
                 isUser   = false,
                 testNode = true,
               ))

@@ -3,6 +3,7 @@ package io.suggest.n2.edge
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.primo.id.OptId
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -97,4 +98,26 @@ final case class MEdgeDoc(
                          )
   extends EmptyProduct
   with OptId[EdgeUid_t]
+{
+
+  override def toString: String = {
+    if (isEmpty) {
+      ""
+    } else {
+      val sb = new StringBuilder(36, "D")
+
+      for (edgeUid <- id)
+        sb.append('#').append(edgeUid)
+
+      for (txt <- text) {
+        sb.append('(')
+          .append( StringUtil.strLimitLen(txt, 32) )
+          .append(')')
+      }
+
+      sb.toString()
+    }
+  }
+
+}
 

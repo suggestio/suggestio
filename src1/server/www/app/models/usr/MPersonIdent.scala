@@ -80,8 +80,8 @@ class MPersonIdentModel @Inject()(
                   MPredicates.Ident.Email ::
                   MPredicates.Ident.Phone ::
                   Nil,
-                nodeIds     = Set(
-                  Validators.normalizeEmail(emailOrPhone),
+                nodeIds     = (Set.empty +
+                  Validators.normalizeEmail(emailOrPhone) +
                   Validators.normalizePhoneNumber(emailOrPhone)
                 ).toSeq,
                 flag        = OptionUtil.SomeBool.someTrue,

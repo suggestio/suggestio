@@ -82,7 +82,8 @@ object AdnShownTypes extends StringEnum[AdnShownType] {
 
 
   /** Все типы районов. */
-  def districts = Set(TOWN_DISTRICT, CITY_DISTRICT)
+  def districts: Set[AdnShownType] =
+    Set.empty[AdnShownType] + TOWN_DISTRICT + CITY_DISTRICT
 
   /** Часто используется при сборке списков узлов. */
   def districtNames = districts.iterator.map(_.value).toSeq

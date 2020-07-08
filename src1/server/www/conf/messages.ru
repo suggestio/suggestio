@@ -135,6 +135,7 @@ Write=Написать
 WRITE=НАПИСАТЬ
 
 Offer=Оферта
+Showcase=Выдача
 
 slaves.of.m=АРЕНДАТОРЫ
 slaves.of.R=РЕСТОРАНЫ

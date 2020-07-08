@@ -271,7 +271,7 @@ final class MarketLkAdn @Inject() (
                       out = {
                         val emailIdent = MEdge(
                           predicate = MPredicates.Ident.Email,
-                          nodeIds   = Set(qs.email),
+                          nodeIds   = Set.empty + qs.email,
                           info = MEdgeInfo(
                             flag = Some(true)
                           )
@@ -311,7 +311,7 @@ final class MarketLkAdn @Inject() (
                 if (!nodeOwnedByPersonId) {
                   val ownEdge = MEdge(
                     predicate = MPredicates.OwnedBy,
-                    nodeIds   = Set(personId)
+                    nodeIds   = Set.empty + personId,
                   )
                   mNodes.tryUpdate(request.mnode) {
                     MNode.edges
