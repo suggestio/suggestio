@@ -16,13 +16,13 @@
       @for(mdx <- mnode.extras.domains) {
         @_ptableRowTpl( mdx.dkey ) {
           @messages(mdx.mode.i18nCode)
-          <a href="@routes.SysMarket.editNodeDomain(mnodeId, mdx.dkey)">&#x270e;</a>
+          <a href="@routes.SysNodeDomains.editNodeDomain(mnodeId, mdx.dkey)">&#x270e;</a>
         }
       }
     }
 
   }
 
-  <a href="@routes.SysMarket.createNodeDomain(mnodeId)">@messages("Add")...</a>
+  <a href="@routes.SysNodeDomains.createNodeDomain(mnodeId)">@messages("Add")...</a>
 
 }

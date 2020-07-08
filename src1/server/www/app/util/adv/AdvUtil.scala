@@ -17,14 +17,14 @@ import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mcal.MCalsCtx
 import models.mctx.Context
 import models.mdt.IDateStartEnd
-import models.mproj.ICommonDi
+import play.api.inject.Injector
 import scalaz.Tree
 import util.TplDataFormatUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -32,21 +32,21 @@ import scala.concurrent.Future
   * Created: 19.01.17 21:57
   * Description: Какая-то очень общая утиль для размещения.
   */
-class AdvUtil @Inject() (
-                          esModel                 : EsModel,
-                          mNodes                  : MNodes,
-                          tfDailyUtil             : TfDailyUtil,
-                          calendarUtil            : CalendarUtil,
-                          mCommonDi               : ICommonDi
-                        )
+final class AdvUtil @Inject() (
+                                injector: Injector,
+                              )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
+  private lazy val calendarUtil = injector.instanceOf[CalendarUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
-  private val WEEKEND_DAYS: Set[Int] = {
+  private lazy val WEEKEND_DAYS: Set[Int] = {
     (DayOfWeek.SATURDAY :: DayOfWeek.SUNDAY :: Nil)
       .iterator
       .map(_.getValue)
@@ -247,6 +247,7 @@ class AdvUtil @Inject() (
     rcvrBillCtx(rcvrIds, ivl, bmc = maybeAdModulesCount(mad))
   }
   def rcvrBillCtx(rcvrIds: Iterable[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
+    import esModel.api._
 
     // Собираем все упомянутые узлы.
     val rcvrsFut = mNodes.multiGetCache( rcvrIds )

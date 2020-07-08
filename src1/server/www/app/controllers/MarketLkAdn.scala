@@ -41,39 +41,38 @@ import scala.concurrent.Future
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-@Singleton
-class MarketLkAdn @Inject() (
-                              esModel                             : EsModel,
-                              nodesUtil                           : NodesUtil,
-                              scUtil                              : ShowcaseUtil,
-                              mNodes                              : MNodes,
-                              logoUtil                            : LogoUtil,
-                              mItems                              : MItems,
-                              galleryUtil                         : GalleryUtil,
-                              isAuth                              : IsAuth,
-                              isNodeAdmin                         : IsNodeAdmin,
-                              isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
-                              canUseNodeInvite                    : CanUseNodeInvite,
-                              dynImgUtil                          : DynImgUtil,
-                              scryptUtil                          : ScryptUtil,
-                              sioControllerApi                    : SioControllerApi,
-                              mCommonDi                           : ICommonDi,
-                              csrf                                : Csrf,
-                            )
+final class MarketLkAdn @Inject() (
+                                    sioControllerApi                    : SioControllerApi,
+                                    mCommonDi                           : ICommonDi,
+                                  )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val scUtil = injector.instanceOf[ShowcaseUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val logoUtil = injector.instanceOf[LogoUtil]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val galleryUtil = injector.instanceOf[GalleryUtil]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val isAdnNodeAdminOptOrAuth = injector.instanceOf[IsAdnNodeAdminOptOrAuth]
+  private lazy val canUseNodeInvite = injector.instanceOf[CanUseNodeInvite]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val scryptUtil = injector.instanceOf[ScryptUtil]
+  private lazy val csrf = injector.instanceOf[Csrf]
+
   import sioControllerApi._
-  import LOGGER._
   import mCommonDi.{slick, ec}
-  import slick.profile.api._
-  import mItems.MItemsTable._
-  import esModel.api._
 
 
   /** Список личных кабинетов юзера. */
   def lkList(fromNodeId: Option[String]) = csrf.AddToken {
     isAdnNodeAdminOptOrAuth(fromNodeId, U.Lk).async { implicit request =>
+      import esModel.api._
       val personId = request.user.personIdOpt.get
 
       val mnodesFut = mNodes.dynSearch(
@@ -124,8 +123,11 @@ class MarketLkAdn @Inject() (
         }
       )
 
+      import slick.profile.api._
+
       // Собрать данные по размещениям узла на карте (lk-adn-map):
       val adnMapAdvsFut = slick.db.run {
+        import mItems.MItemsTable._
         mItems.query
           .withNodeId( nodeId )
           .withTypes( MItemTypes.adnMapTypes )
@@ -233,20 +235,21 @@ class MarketLkAdn @Inject() (
       lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit(${qs.nodeId.orNull} ${qs.email}): "
       formBinded.fold(
         {formWithErrors =>
-          debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
+          LOGGER.debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
           NotAcceptable(invite.inviteAcceptFormTpl(request.mnode, qs, formWithErrors, withOfferText = false))
 
         },
         {case (_, passwordOpt) =>
           val isAuth = request.user.isAuth
           if (passwordOpt.isEmpty && !isAuth) {
-            debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
+            LOGGER.debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
             val form1 = formBinded
               .withError("password.pw1", "error.required")
               .withError("password.pw2", "error.required")
             NotAcceptable(invite.inviteAcceptFormTpl(request.mnode, qs, form1, withOfferText = false))
 
           } else {
+            import esModel.api._
             for {
               personIdOpt <- {
                 if (!isAuth) {
@@ -356,7 +359,7 @@ class MarketLkAdn @Inject() (
     isAuth().async { implicit request =>
       createNodeFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug("createNodeSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+          LOGGER.debug("createNodeSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
           NotAcceptable(createTpl(formWithErrors))
         },
         {nodeName =>

@@ -12,7 +12,7 @@
   <p>
     Можно также рендерить в
     @rvars.iterator.filter(_ != args.rvar).map { rvar1 =>
-      <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, rvar1)">@messages(rvar1.nameI18n)</a>,
+      <a href="@routes.SysAd.showOneAdForm(args.mad.id.get, rvar1)">@messages(rvar1.nameI18n)</a>,
     }.
   </p>
 

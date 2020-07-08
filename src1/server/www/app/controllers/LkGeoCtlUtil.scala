@@ -31,29 +31,33 @@ import scala.concurrent.Future
   * Description: Контроллерная утиль
   */
 @Singleton
-protected class LkGeoCtlUtil @Inject() (
-                                         streamsUtil             : StreamsUtil,
-                                         bill2Util               : Bill2Util,
-                                         mItems                  : MItems,
-                                         canAccessItem           : CanAccessItem,
-                                         advGeoFormUtil          : AdvGeoFormUtil,
-                                         advGeoBillUtil          : AdvGeoBillUtil,
-                                         sioControllerApi        : SioControllerApi,
-                                         mCommonDi               : MCommonDi,
-                                       )
+protected final class LkGeoCtlUtil @Inject() (
+                                               sioControllerApi        : SioControllerApi,
+                                               mCommonDi               : MCommonDi,
+                                             )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
   import mCommonDi._
-  import streamsUtil.Implicits._
-  import slick.profile.api._
+  import mCommonDi.current.injector
+
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val canAccessItem = injector.instanceOf[CanAccessItem]
+  private lazy val advGeoFormUtil = injector.instanceOf[AdvGeoFormUtil]
+  private lazy val advGeoBillUtil = injector.instanceOf[AdvGeoBillUtil]
+
+  import sioControllerApi._
 
 
   /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */
   private def RCVR_ITEMS_PER_POPUP_LIMIT = 50
 
   private def CACHE_10 = CACHE_CONTROL -> "private, max-age=10"
+
+  import streamsUtil.Implicits._
+  import slick.profile.api._
 
 
   /** Тело экшена форматирования инфы о гео-шейпах.

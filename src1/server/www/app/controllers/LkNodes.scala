@@ -54,24 +54,26 @@ import scala.concurrent.Future
   * Контроллер также должен препятствовать нежелательной деятельности пользователя:
   * - массового создания маячков с целью занять чужие id'шники.
   */
-@Singleton
-class LkNodes @Inject() (
-                          esModel                   : EsModel,
-                          bill2Util                 : Bill2Util,
-                          isNodeAdmin               : IsNodeAdmin,
-                          lkNodesUtil               : LkNodesUtil,
-                          canFreelyAdvAdOnNode      : CanFreelyAdvAdOnNode,
-                          canAdvAd                  : CanAdvAd,
-                          tfDailyUtil               : TfDailyUtil,
-                          nodesUtil                 : NodesUtil,
-                          mNodes                    : MNodes,
-                          canChangeNodeAvailability : CanChangeNodeAvailability,
-                          bruteForceProtect         : BruteForceProtect,
-                          sioControllerApi          : SioControllerApi,
-                          mCommonDi                 : ICommonDi
-                        )
+final class LkNodes @Inject() (
+                                sioControllerApi          : SioControllerApi,
+                                mCommonDi                 : ICommonDi
+                              )
   extends MacroLogsImpl
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val lkNodesUtil = injector.instanceOf[LkNodesUtil]
+  private lazy val canFreelyAdvAdOnNode = injector.instanceOf[CanFreelyAdvAdOnNode]
+  private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
+  private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val canChangeNodeAvailability = injector.instanceOf[CanChangeNodeAvailability]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
 
   import sioControllerApi._
   import mCommonDi._
@@ -827,7 +829,7 @@ class LkNodes @Inject() (
         errorHandler.onClientError(request, NOT_FOUND, s"!pred: $pred for $nodeId")
 
       } { edge0 =>
-        if (edge0.info.flagsMap.get(MEdgeFlags.AlwaysOutlined).nonEmpty ==* isEnabled) {
+        if (edge0.info.flagsMap.contains(MEdgeFlags.AlwaysOutlined) ==* isEnabled) {
           LOGGER.debug(s"$logPrefix Nothing to do.")
           NoContent
 

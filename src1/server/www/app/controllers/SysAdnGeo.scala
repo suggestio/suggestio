@@ -31,20 +31,22 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
-class SysAdnGeo @Inject() (
-                            esModel                           : EsModel,
-                            mNodes                            : MNodes,
-                            isSuNode                          : IsSuNode,
-                            sioControllerApi                  : SioControllerApi,
-                            mCommonDi                         : ICommonDi,
-                            implicit private val osmClient    : OsmClient,
-                          )
+final class SysAdnGeo @Inject() (
+                                  sioControllerApi                  : SioControllerApi,
+                                  mCommonDi                         : ICommonDi,
+                                )
   extends MacroLogsImplLazy
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val isSuNode = injector.instanceOf[IsSuNode]
+  private lazy val osmClient = injector.instanceOf[OsmClient]
+
   import sioControllerApi._
   import mCommonDi._
-  import esModel.api._
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
 
@@ -130,6 +132,8 @@ class SysAdnGeo @Inject() (
 
             // Попытаться сохранить новый шейп в документ узла N2.
             _  <- {
+              import esModel.api._
+
               // Есть объект osm. Нужно залить его в шейпы узла.
               val p = MPredicates.NodeLocation
               mNodes.tryUpdate(request.mnode) { mnode0 =>
@@ -213,6 +217,8 @@ class SysAdnGeo @Inject() (
   /** Сабмит запроса на удаление элемента. */
   def deleteSubmit(g: MGsPtr) = csrf.Check {
     isSuNode(g.nodeId).async { implicit request =>
+      import esModel.api._
+
       // Запустить обновление узла.
       val updFut = mNodes.tryUpdate(request.mnode) { mnode0 =>
         val p = MPredicates.NodeLocation
@@ -338,9 +344,11 @@ class SysAdnGeo @Inject() (
                 Future.successful(r)
             }
 
+            import esModel.api._
+
             // Сохранить и сгенерить результат
             val resFut = for {
-            // Дождаться готовности эджа.
+              // Дождаться готовности эджа.
               mgs2 <- adnGeo2Fut
 
               // Обновляем ноду...
@@ -435,6 +443,8 @@ class SysAdnGeo @Inject() (
           NotAcceptable(createCircleTpl(formWithErrors, request.mnode))
         },
         {circle0 =>
+          import esModel.api._
+
           val saveFut = mNodes.tryUpdate(request.mnode) { mnode0 =>
             val p = MPredicates.NodeLocation
             // Собрать новый эдж на базе возможно существующего.
@@ -506,6 +516,8 @@ class SysAdnGeo @Inject() (
           },
 
           {geoStub =>
+            import esModel.api._
+
             // Собрать обновленный шейп...
             val mgs2 = mgs.copy(
               glevel      = geoStub.glevel,

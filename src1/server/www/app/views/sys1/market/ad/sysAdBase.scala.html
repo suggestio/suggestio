@@ -12,7 +12,7 @@
   /
   @defining( nodeOpt.flatMap(_.id).orElse( madOpt.flatMap(ctx.api.n2NodesUtil.madProducerId) ) ) { adnIdOpt =>
     @for( adnId <- adnIdOpt ) {
-      <a href="@routes.SysMarket.showAdnNodeAds( MScQs(search = MAdsSearchReq(prodId = Some(adnId))) )">
+      <a href="@routes.SysAd.showAdnNodeAds( MScQs(search = MAdsSearchReq(prodId = Some(adnId))) )">
     }
     Карточки
     @if(adnIdOpt) {
@@ -20,7 +20,7 @@
     }
   }
   @madOpt.flatMap(_.id).map { madId =>
-    / <a href="@routes.SysMarket.showAd(madId)">@madId</a>
+    / <a href="@routes.SysAd.showAd(madId)">@madId</a>
   }
   @hPathAfter.getOrElse {
     / @title

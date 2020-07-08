@@ -1,8 +1,8 @@
 package controllers
 
 import io.suggest.n2.edge.MPredicates
-import javax.inject.{Inject, Singleton}
-import io.suggest.n2.node.{MNode, MNodes}
+import javax.inject.Inject
+import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
 import models.mproj.ICommonDi
@@ -26,25 +26,29 @@ import scala.concurrent.Future
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class LkHelp @Inject()(
-                        mNodes                          : MNodes,
-                        mailer                          : IMailerWrapper,
-                        identUtil                       : IdentUtil,
-                        supportUtil                     : SupportUtil,
-                        bruteForceProtect               : BruteForceProtect,
-                        maybeAuth                       : MaybeAuth,
-                        isAuth                          : IsAuth,
-                        isNodeAdmin                     : IsNodeAdmin,
+
                         sioControllerApi                : SioControllerApi,
                         mCommonDi                       : ICommonDi,
                       )
   extends MacroLogsImplLazy
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val mailer = injector.instanceOf[IMailerWrapper]
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
+  private lazy val supportUtil = injector.instanceOf[SupportUtil]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+
   import sioControllerApi._
   import mCommonDi._
 
   // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.
+
 
   /** Маппинг для формы обращения в саппорт. */
   private def supportFormM = {

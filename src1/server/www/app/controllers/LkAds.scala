@@ -17,7 +17,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
@@ -34,25 +34,24 @@ import views.html.lk.ads._
   * Description: Менеджер карточек в личном кабинете.
   * React-замена MarketLkAdn.showNodeAds() и связанным экшенам.
   */
-@Singleton
-class LkAds @Inject() (
-                        esModel                 : EsModel,
-                        isNodeAdmin             : IsNodeAdmin,
-                        jdAdUtil                : JdAdUtil,
-                        mNodes                  : MNodes,
-                        streamsUtil             : StreamsUtil,
-                        mItems                  : MItems,
-                        sioControllerApi        : SioControllerApi,
-                        mCommonDi               : ICommonDi,
-                      )
+final class LkAds @Inject() (
+                              sioControllerApi        : SioControllerApi,
+                              mCommonDi               : ICommonDi,
+                            )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
   import mCommonDi._
-  import streamsUtil.Implicits._
-  import slick.profile.api._
-  import esModel.api._
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val mItems = injector.instanceOf[MItems]
+
+  import sioControllerApi._
 
 
   /** Рендер странице с react-формой управления карточками.
@@ -100,6 +99,8 @@ class LkAds @Inject() (
     * @return chunked JSON.
     */
   def getAds(nodeKey: RcvrKey, offset1: Int, newAdIdOpt: Option[String]) = isNodeAdmin(nodeKey).async { implicit request =>
+    import esModel.api._
+
     // TODO Добавить поддержку агрумента mode
     lazy val logPrefix = s"getAds(${nodeKey.mkString("/")}+$offset1${newAdIdOpt.fold("")("," + _)})#${System.currentTimeMillis()}:"
 
@@ -109,25 +110,25 @@ class LkAds @Inject() (
     // Макс кол-во карточек за один запрос.
     val maxAdsPerTime = LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST
 
-    val adsSearch0 = new MNodeSearch {
-      override val nodeTypes = MNodeTypes.Ad :: Nil
-      override val outEdges: MEsNestedSearch[Criteria] = {
-        // Поиск по узлу-владельцу
-        val crOwn = Criteria(
-          predicates  = MPredicates.OwnedBy :: Nil,
-          nodeIds     = parentNodeId :: Nil
-        )
-        MEsNestedSearch(
-          clauses = crOwn :: Nil,
-        )
-      }
-      override def limit     = maxAdsPerTime
-      override val withDateCreatedSort = Some(SortOrder.DESC)
-      override def offset    = offset1
-    }
-
     // Быстро узнать id карточек, которые надо отобразить на экране:
-    val madIdsFut = mNodes.dynSearchIds( adsSearch0 )
+    val madIdsFut = mNodes.dynSearchIds(
+      new MNodeSearch {
+        override val nodeTypes = MNodeTypes.Ad :: Nil
+        override val outEdges: MEsNestedSearch[Criteria] = {
+          // Поиск по узлу-владельцу
+          val crOwn = Criteria(
+            predicates  = MPredicates.OwnedBy :: Nil,
+            nodeIds     = parentNodeId :: Nil
+          )
+          MEsNestedSearch(
+            clauses = crOwn :: Nil,
+          )
+        }
+        override def limit     = maxAdsPerTime
+        override val withDateCreatedSort = Some(SortOrder.DESC)
+        override def offset    = offset1
+      }
+    )
 
     // Возможна ситуация, что есть доп.карточка, которая не видна в поиске. Такое возможно,
     // если создать карточку в редакторе, сохранить её и сразу отредиректить юзера в список карточек.
@@ -156,6 +157,10 @@ class LkAds @Inject() (
         None
       }
     }
+
+
+    import slick.profile.api._
+    import streamsUtil.Implicits._
 
     // Поиск данных по размещениям в базе биллинга:
     val madId2advStatusesMapFut = madIdsFut.flatMap { madIds =>

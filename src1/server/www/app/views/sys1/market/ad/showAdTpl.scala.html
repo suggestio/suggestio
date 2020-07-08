@@ -43,7 +43,7 @@
       } else {
         нигде не отображается
       }.
-      <a href="@routes.SysMarket.analyzeAdRcvrs(args.mad.id.get)">Проанализировать...</a>
+      <a href="@routes.SysAd.analyzeAdRcvrs(args.mad.id.get)">Проанализировать...</a>
     </p>
 
   <br/>
@@ -55,11 +55,11 @@
       @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, MImgFormats.JPEG) ) { qsArgs =>
         <li>
            - <a href="@routes.Sc.onlyOneAd(qsArgs)">HTML x@szMult</a>
-           или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.
+           или <a href="@routes.SysAd.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.
         </li>
         <li>
           - <a href="@routes.Sc.onlyOneAdAsImage(qsArgs)">PNG x@szMult</a>
-          или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToImage)">кастомно</a>.
+          или <a href="@routes.SysAd.showOneAdForm(args.mad.id.get, ToImage)">кастомно</a>.
         </li>
       }
       }

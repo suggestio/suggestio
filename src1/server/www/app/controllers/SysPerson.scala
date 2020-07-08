@@ -26,18 +26,20 @@ import scala.concurrent.Future
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
-                            esModel                   : EsModel,
-                            mNodes                    : MNodes,
-                            mSuperUsers               : MSuperUsers,
-                            isSu                      : IsSu,
-                            isSuPerson                : IsSuPerson,
                             sioControllerApi          : SioControllerApi,
                             mCommonDi                 : ICommonDi,
                           ) {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val isSuPerson = injector.instanceOf[IsSuPerson]
+
   import sioControllerApi._
   import mCommonDi._
-  import esModel.api._
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
   private def dummyEa = MEmailRecoverQs(
@@ -46,6 +48,8 @@ class SysPerson @Inject() (
 
   def index = csrf.AddToken {
     isSu().async { implicit request =>
+      import esModel.api._
+
       val personsCntFut: Future[Long] = {
         val psearch = new MNodeSearch {
           override val nodeTypes  = MNodeTypes.Person :: Nil
@@ -93,21 +97,24 @@ class SysPerson @Inject() (
   /** Отрендерить страницу с листингом внешних идентов. */
   def allIdents(theOffset: Int) = csrf.AddToken {
     isSu().async { implicit request =>
+      import esModel.api._
+
       val theLimit = 5
-      val msearch = new MNodeSearch {
-        override def limit = theLimit
-        override def offset = theOffset
-        override val outEdges: MEsNestedSearch[Criteria] = {
-          val cr = Criteria(
-            predicates = MPredicates.Ident :: Nil
-          )
-          MEsNestedSearch(
-            clauses = cr :: Nil,
-          )
-        }
-      }
       for {
-        nodesFound <- mNodes.dynSearch( msearch )
+        nodesFound <- mNodes.dynSearch(
+          new MNodeSearch {
+            override def limit = theLimit
+            override def offset = theOffset
+            override val outEdges: MEsNestedSearch[Criteria] = {
+              val cr = Criteria(
+                predicates = MPredicates.Ident :: Nil
+              )
+              MEsNestedSearch(
+                clauses = cr :: Nil,
+              )
+            }
+          }
+        )
       } yield {
         val nodesIdented = for {
           mnode <- nodesFound.iterator
@@ -134,20 +141,23 @@ class SysPerson @Inject() (
    */
   def showPerson(personId: String) = csrf.AddToken {
     isSuPerson(personId).async { implicit request =>
+      import esModel.api._
+
       // Сразу запускаем поиск узлов: он самый тяжелый тут.
-      val msearch = new MNodeSearch {
-        override val outEdges: MEsNestedSearch[Criteria] = {
-          val cr = Criteria(
-            nodeIds    = personId :: Nil,
-            predicates = MPredicates.OwnedBy :: Nil,
-          )
-          MEsNestedSearch(
-            clauses = cr :: Nil,
-          )
+      val nodesFut = mNodes.dynSearch(
+        new MNodeSearch {
+          override val outEdges: MEsNestedSearch[Criteria] = {
+            val cr = Criteria(
+              nodeIds    = personId :: Nil,
+              predicates = MPredicates.OwnedBy :: Nil,
+            )
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
+          }
+          override val withNameSort = Some(SortOrder.ASC)
         }
-        override val withNameSort = Some(SortOrder.ASC)
-      }
-      val nodesFut = mNodes.dynSearch( msearch )
+      )
 
       // Отображаемое на текущей странице имя юзера
       val personName = request.mperson.guessDisplayNameOrIdOrQuestions

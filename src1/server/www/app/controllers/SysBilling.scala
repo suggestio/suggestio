@@ -36,30 +36,32 @@ import scala.concurrent.Future
  * Description: Контроллер sys-биллинга второго поколения.
  * Второй биллинг имеет тарифы внутри узлов и контракты-ордеры-item'ы в РСУБД.
  */
-class SysBilling @Inject() (
-                             esModel                    : EsModel,
-                             tfDailyUtil                : TfDailyUtil,
-                             mNodes                     : MNodes,
-                             mCalendars                 : MCalendars,
-                             mContracts                 : MContracts,
-                             mBalances                  : MBalances,
-                             mTxns                      : MTxns,
-                             contractUtil               : ContractUtil,
-                             isSu                       : IsSu,
-                             isSuNode                   : IsSuNode,
-                             isSuNodeContract           : IsSuNodeContract,
-                             isSuNodeNoContract         : IsSuNodeNoContract,
-                             bill2Conf                  : Bill2Conf,
-                             bill2Util                  : Bill2Util,
-                             sioControllerApi           : SioControllerApi,
-                             mCommonDi                  : ICommonDi,
-                           )
+final class SysBilling @Inject() (
+                                   sioControllerApi           : SioControllerApi,
+                                   mCommonDi                  : ICommonDi,
+                                 )
   extends MacroLogsImplLazy
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mCalendars = injector.instanceOf[MCalendars]
+  private lazy val mContracts = injector.instanceOf[MContracts]
+  private lazy val mBalances = injector.instanceOf[MBalances]
+  private lazy val mTxns = injector.instanceOf[MTxns]
+  private lazy val contractUtil = injector.instanceOf[ContractUtil]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val isSuNode = injector.instanceOf[IsSuNode]
+  private lazy val isSuNodeContract = injector.instanceOf[IsSuNodeContract]
+  private lazy val isSuNodeNoContract = injector.instanceOf[IsSuNodeNoContract]
+  private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+
   import sioControllerApi._
   import mCommonDi._
-  import esModel.api._
 
   /**
    * Отображение страницы биллинга для узла.
@@ -171,6 +173,8 @@ class SysBilling @Inject() (
 
   private def _editNodeTfDaily(formFut: Future[Form[MTfDaily]], rs: Status)
                               (implicit request: INodeReq[_]): Future[Result] = {
+    import esModel.api._
+
     // Собираем доступные календари.
     val mcalsFut = mCalendars.getAll()
 
@@ -278,6 +282,8 @@ class SysBilling @Inject() (
           respFut
         },
         {mc =>
+          import esModel.api._
+
           LOGGER.trace(s"Creating new contract for node $nodeId...")
           val mcAct = mContracts.insertOne(mc)
           val mcSaveFut = slick.db.run(mcAct)
@@ -391,6 +397,7 @@ class SysBilling @Inject() (
       lazy val logPrefix = s"deleteContractSubmit($nodeId):"
 
       LOGGER.debug(s"$logPrefix Erasing #${request.mcontract.legalContractId}")
+      import esModel.api._
 
       val nodeSaveFut = deleteFut.flatMap { _ =>
         // TODO XXX дорефакторить tryUpdate + monocle. TODO Допроверять код на предмет null'ов, возвращаемых из tryUpdate.

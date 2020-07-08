@@ -51,35 +51,34 @@ import scala.concurrent.Future
   * Created: 18.11.15 14:51
   * Description: Контроллер размещения в гео-тегах.
   */
-@Singleton
-class LkAdvGeo @Inject() (
-                           advGeoFormUtil                  : AdvGeoFormUtil,
-                           advGeoBillUtil                  : AdvGeoBillUtil,
-                           advFormUtil                     : AdvFormUtil,
-                           bill2Conf                       : Bill2Conf,
-                           bill2Util                       : Bill2Util,
-                           advGeoLocUtil                   : AdvGeoLocUtil,
-                           advRcvrsUtil                    : AdvRcvrsUtil,
-                           advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
-                           streamsUtil                     : StreamsUtil,
-                           reqUtil                         : ReqUtil,
-                           cspUtil                         : CspUtil,
-                           lkGeoCtlUtil                    : LkGeoCtlUtil,
-                           canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
-                           canAdvAd                        : CanAdvAd,
-                           isAuth                          : IsAuth,
-                           tagSearchUtil                   : LkTagsSearchUtil,
-                           sioControllerApi                : SioControllerApi,
-                           mCommonDi                       : ICommonDi,
-                         )
+final class LkAdvGeo @Inject() (
+                                 sioControllerApi                : SioControllerApi,
+                                 mCommonDi                       : ICommonDi,
+                               )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
   import mCommonDi._
-  import streamsUtil.Implicits._
-  import slick.profile.api._
-  import cspUtil.Implicits._
+  import mCommonDi.current.injector
+
+  private lazy val advGeoFormUtil = injector.instanceOf[AdvGeoFormUtil]
+  private lazy val advGeoBillUtil = injector.instanceOf[AdvGeoBillUtil]
+  private lazy val advFormUtil = injector.instanceOf[AdvFormUtil]
+  private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val advGeoLocUtil = injector.instanceOf[AdvGeoLocUtil]
+  private lazy val advRcvrsUtil = injector.instanceOf[AdvRcvrsUtil]
+  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val lkGeoCtlUtil = injector.instanceOf[LkGeoCtlUtil]
+  private lazy val canThinkAboutAdvOnMapAdnNode = injector.instanceOf[CanThinkAboutAdvOnMapAdnNode]
+  private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val tagSearchUtil = injector.instanceOf[LkTagsSearchUtil]
+
+  import sioControllerApi._
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -212,6 +211,9 @@ class LkAdvGeo @Inject() (
         // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
         PickleUtil.pickleConv[MFormInit, ConvCodecs.Base64, String](mFormInit)
       }
+
+
+      import cspUtil.Implicits._
 
       // Собираем итоговый ответ на запрос: аргументы рендера, рендер html, рендер http-ответа.
       for {
@@ -478,6 +480,10 @@ class LkAdvGeo @Inject() (
           // Очень кривая сортировка, но для наших нужд и такой пока достаточно. TODO Сортировать по messages-названиям
           .sortBy( _._1.value )
       }
+
+
+      import slick.profile.api._
+      import streamsUtil.Implicits._
 
       val currItemsPublisherFut = for {
         allNodeIds <- allNodesIdsFut

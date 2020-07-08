@@ -3,13 +3,15 @@ package controllers
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
-import javax.inject.{Inject, Singleton}
-import controllers.ident._
+import javax.inject.Inject
+import io.suggest.auth.{AuthenticationException, AuthenticationResult}
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.err.MCheckException
 import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
+import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
@@ -21,12 +23,12 @@ import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
 import io.suggest.n2.node.common.MNodeCommon
-import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
-import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
+import io.suggest.session.{CustomTtl, LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.streams.JioStreamsUtil
 import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
@@ -50,6 +52,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.sec.CspUtil
 import util.sms.SmsSendUtil
+import util.xplay.LangUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -60,44 +63,46 @@ import scala.util.Success
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 25.04.13 11:47
  * Description: Контроллер обычного логина в систему.
- * Обычно логинятся через email+password.
- * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
+ * Обычно логинятся через email/телефон и пароль.
+ * Но есть и поддержка логина через внешнего провайдера.
  */
-
-@Singleton
-class Ident @Inject() (
-                        override val esModel              : EsModel,
-                        override val mPersonIdentModel    : MPersonIdentModel,
-                        override val mNodes               : MNodes,
-                        mailer                            : IMailerWrapper,
-                        override val identUtil            : IdentUtil,
-                        override val nodesUtil            : NodesUtil,
-                        captchaUtil                       : CaptchaUtil,
-                        canConfirmEmailPwReg              : CanConfirmEmailPwReg,
-                        bruteForceProtect                 : BruteForceProtect,
-                        scryptUtil                        : ScryptUtil,
-                        override val maybeAuth            : MaybeAuth,
-                        override val canConfirmIdpReg     : CanConfirmIdpReg,
-                        pgpUtil                           : PgpUtil,
-                        cspUtil                           : CspUtil,
-                        smsSendUtil                       : SmsSendUtil,
-                        mOneTimeTokens                    : MOneTimeTokens,
-                        idTokenUtil                       : IdTokenUtil,
-                        isAdnNodeAdminOptOrAuth           : IsAdnNodeAdminOptOrAuth,
-                        isAnon                            : IsAnon,
-                        isAuth                            : IsAuth,
-                        override val ignoreAuth           : IgnoreAuth,
-                        override val sioControllerApi     : SioControllerApi,
-                        override val mCommonDi            : ICommonDi
+final class Ident @Inject() (
+                        sioControllerApi     : SioControllerApi,
+                        mCommonDi            : ICommonDi
                       )
   extends MacroLogsImpl
-  with ExternalLogin
 {
+  import mCommonDi.current.injector
 
-  import mCommonDi._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mPersonIdentModel = injector.instanceOf[MPersonIdentModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mailer = injector.instanceOf[IMailerWrapper]
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val captchaUtil = injector.instanceOf[CaptchaUtil]
+  private lazy val canConfirmEmailPwReg = injector.instanceOf[CanConfirmEmailPwReg]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val scryptUtil = injector.instanceOf[ScryptUtil]
+  private lazy val canConfirmIdpReg = injector.instanceOf[CanConfirmIdpReg]
+  private lazy val langUtil = injector.instanceOf[LangUtil]
+  private lazy val pgpUtil = injector.instanceOf[PgpUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val smsSendUtil = injector.instanceOf[SmsSendUtil]
+  private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
+  private lazy val idTokenUtil = injector.instanceOf[IdTokenUtil]
+  private lazy val isAdnNodeAdminOptOrAuth = injector.instanceOf[IsAdnNodeAdminOptOrAuth]
+  private lazy val isAnon = injector.instanceOf[IsAnon]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
+  private lazy val canLoginVia = injector.instanceOf[CanLoginVia]
+
+  import mCommonDi.{ec, csrf, slick, htmlCompressUtil}
   import sioControllerApi._
   import slick.profile.api._
-  import cspUtil.Implicits._
+  import esModel.api._
+  import mPersonIdentModel.api._
+
 
   /** Длина смс-кодов (кол-во цифр). */
   def SMS_CODE_LEN = 5
@@ -129,9 +134,6 @@ class Ident @Inject() (
   // -----------------------------------------------------------------------------------
   // - Login v2 ------------------------------------------------------------------------
   // -----------------------------------------------------------------------------------
-  import esModel.api._
-  import mPersonIdentModel.api._
-
 
   /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */
   private def CSP_HDR_OPT: Option[(String, String)] = {
@@ -146,6 +148,8 @@ class Ident @Inject() (
     */
   def loginFormPage(lfp: ILoginFormPages) = csrf.AddToken {
     isAnon().async { implicit request =>
+      import cspUtil.Implicits._
+
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
       )
@@ -216,7 +220,7 @@ class Ident @Inject() (
                 )
 
                 // Выставить язык, сохраненный ранее в MPerson
-                val langOpt = getLangFrom( Some(mperson) )
+                val langOpt = langUtil.getLangFrom( Some(mperson) )
                 for (rdrPath <- rdrPathFut) yield {
                   LOGGER.trace(s"$logPrefix rdrPath=>$rdrPath r=${r.orNull} lang=${langOpt.orNull}")
                   var rdr2 = Ok(rdrPath)
@@ -506,7 +510,6 @@ class Ident @Inject() (
       }
   }
 
-
   /** На основе указателя ottId, получить из БД и распарсить idToken (выставив forUpdate).
     *
     * @param ottId id токена.
@@ -516,6 +519,7 @@ class Ident @Inject() (
     */
   private def _idTokenPtrCaptchaOk(ottId: UUID, now: Instant)(implicit req: IReqHdr): DBIOAction[(MOneTimeToken, MIdToken), NoStream, Effect.Read] = {
     lazy val logPrefix = s"_idTokenPtrCaptchaOk()#${now.toEpochMilli}:"
+
     for {
       // Достать токен по id из базы биллиннга:
       mottOpt0 <- mOneTimeTokens.getById( ottId ).forUpdate
@@ -1323,6 +1327,215 @@ class Ident @Inject() (
           .flashing( FLASH.SUCCESS -> MsgCodes.`Changes.saved` )
       }
     }
+  }
+
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // ExternalLogin - логин через внешнего провайдера.
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+    * GET-запрос идентификации через внешнего провайдера.
+    * @param r Обратный редирект.
+    * @return Redirect.
+    */
+  def idViaProvider(extService: MExtService, r: Option[String]) = handleAuth1(extService, r)
+
+  /**
+    * POST-запрос идентификации через внешнего провайдера.
+    * @param r Редирект обратно.
+    * @return Redirect.
+    */
+  def idViaProviderByPost(extService: MExtService, r: Option[String]) = handleAuth1(extService, r)
+
+  // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
+  // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
+  protected def handleAuth1(extService: MExtService, redirectTo: Option[String]) = canLoginVia(extService).async { implicit request =>
+    lazy val logPrefix = s"handleAuth1($extService):"
+    request.apiAdp.authenticateFromRequest().flatMap {
+
+      case _: AuthenticationResult.AccessDenied =>
+        Redirect( routes.Ident.loginFormPage() )
+          .flashing(FLASH.ERROR -> "login.accessDenied")
+
+      case failed: AuthenticationResult.Failed =>
+        LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
+        throw AuthenticationException()
+
+      case flow: AuthenticationResult.NavigationFlow => Future.successful {
+        val r0 = flow.result
+        redirectTo.fold( r0 ) { url =>
+          r0.addingToSession(MSessionKeys.ExtLoginData.value -> url)
+        }
+      }
+
+      case authenticated: AuthenticationResult.Authenticated =>
+        import esModel.api._
+        import mPersonIdentModel.api._
+
+        // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
+        val profile = authenticated.profile
+
+        for {
+          // Поиск уже известного юзера:
+          knownUserOpt <- mNodes.getByUserIdProv( extService, profile.userId )
+
+          // Обработка результата поиска существующего юзера.
+          mperson2 <- {
+            knownUserOpt.fold {
+              // Юзер отсутствует. Создать нового юзера:
+              // TODO Для сохранения перс.данных показать вопрос.
+              val mperson0 = MNode(
+                common = MNodeCommon(
+                  ntype       = MNodeTypes.Person,
+                  isDependent = false
+                ),
+                meta = MMeta(
+                  basic = MBasicMeta(
+                    nameOpt   = profile.fullName,
+                    techName  = Some(profile.providerId + ":" + profile.userId),
+                    langs     = request.messages.lang.code :: Nil
+                  ),
+                  person  = MPersonMeta(
+                    nameFirst   = profile.firstName,
+                    nameLast    = profile.lastName,
+                    extAvaUrls  = profile.avatarUrl.toList,
+                    emails      = profile.emails.toList
+                  )
+                  // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
+                ),
+                edges = MNodeEdges(
+                  out = {
+                    val extIdentEdge = MEdge(
+                      predicate = MPredicates.Ident.Id,
+                      nodeIds   = Set( profile.userId ),
+                      info      = MEdgeInfo(
+                        extService = Some( extService )
+                      )
+                    )
+                    var identEdgesAcc: List[MEdge] = extIdentEdge :: Nil
+
+                    def _maybeAddTrustedIdents(pred: MPredicate, keys: Iterable[String]) = {
+                      if (keys.nonEmpty) {
+                        identEdgesAcc ::= MEdge(
+                          predicate = pred,
+                          nodeIds   = keys.toSet,
+                          info = MEdgeInfo(
+                            flag = Some(true)
+                          )
+                        )
+                      }
+                    }
+
+                    _maybeAddTrustedIdents( MPredicates.Ident.Email, profile.emails )
+                    _maybeAddTrustedIdents( MPredicates.Ident.Phone, profile.phones )
+
+                    MNodeEdges.edgesToMap1( identEdgesAcc )
+                  }
+                )
+              )
+              for {
+                personId <- mNodes.save(mperson0)
+              } yield {
+                LOGGER.debug(s"$logPrefix Registered new user#${personId} via service#${extService}:\n $profile")
+                MNode.id.set( Some(personId) )(mperson0)
+              }
+
+            } { knownPerson0 =>
+              // Юзер с таким id уже найден.
+              // TODO Дополнить ident'ы какой-либо новой инфой, подчистив старую (новая почта, новый номер телефона)?
+              // Например, если изменился телефон/email, то старый ident за-false-ить или удалить, новый - добавить, если есть.
+              Future.successful( knownPerson0 )
+            }
+          }
+
+          personId = mperson2.id.get
+
+          // TODO Нужно редиректить юзера на подтверждение сохранения перс.данных, и только после этого сохранять.
+          rdrFut: Future[Result] = if ( knownUserOpt.isDefined ) {
+            Redirect(routes.Ident.idpConfirm())
+          } else {
+            val rdrUrlFut = _urlFromSession(request.session, personId)
+            for (url <- rdrUrlFut) yield
+              Redirect(url)
+          }
+
+          // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
+          session1 = {
+            val addToSession0 = (MSessionKeys.PersonId.value -> personId) :: Nil
+            (for {
+              oa2Info   <- authenticated.profile.oAuth2Info
+              expiresIn <- oa2Info.expiresIn
+              if expiresIn <= request.apiAdp.MAX_SESSION_TTL_SECONDS
+            } yield {
+              CustomTtl(expiresIn.toLong)
+                .addToSessionAcc(addToSession0)
+            })
+              .getOrElse( addToSession0 )
+              .foldLeft( request.apiAdp.clearSession(request.session))(_ + _)
+          }
+
+          // Выставить в сессию юзера и локаль:
+          rdr <- rdrFut
+          rdr2 = rdr.withSession(session1)
+          langOpt = langUtil.getLangFrom( Some(mperson2) )
+        } yield {
+          langUtil.setLangCookie( rdr2, langOpt )
+        }
+
+    }.recover {
+      case e =>
+        LOGGER.error("Unable to log user in. An exception was thrown", e)
+        Redirect( routes.Ident.loginFormPage() )
+          .flashing(FLASH.ERROR -> "login.errorLoggingIn")
+    }
+  }
+
+
+  /**
+    * Извлечь из сессии исходную ссылку для редиректа.
+    * Если ссылки нет, то отправить в ident-контроллер.
+    * @param ses Сессия.
+    * @param personId id залогиненного юзера.
+    * @return Ссылка в виде строки.
+    */
+  private def _urlFromSession(ses: play.api.mvc.Session, personId: String): Future[String] = {
+    FutureUtil.opt2future( ses.get(MSessionKeys.ExtLoginData.value) ) {
+      identUtil.redirectCallUserSomewhere(personId)
+        .map(_.url)
+    }
+  }
+
+
+  /**
+    * Юзер, залогинившийся через провайдера, хочет создать ноду.
+    * @return Страницу с колонкой подтверждения реги.
+    */
+  def idpConfirm = {
+    canConfirmIdpReg().async { implicit request =>
+      // Развернуть узел для юзера, отобразить страницу успехоты.
+      implicit val ctx = implicitly[Context]
+      // TODO Здесь нужно создать шаг галочек: перс.данные, соглашение. Можно пропихнуть id-токен в lk-login-форму, чтобы только галочки отобразились.
+      for {
+        mnode <- nodesUtil.createUserNode(
+          name     = ctx.messages( MsgCodes.`My.node` ),
+          personId = request.user.personIdOpt.get
+        )
+      } yield {
+        // Отредиректить на созданный узел юзера.
+        Redirect( routes.LkAdnEdit.editNodePage( mnode.id.get ) )
+          .flashing( FLASH.SUCCESS -> MsgCodes.`New.shop.created.fill.info` )
+      }
+    }
+  }
+
+
+  /** Поддержка push-уведомления со стороны внешнего сервиса. */
+  def extServicePushPost(extService: MExtService) = _extServicePushGet(extService)
+  def extServicePushGet(extService: MExtService) = _extServicePushGet(extService)
+  private def _extServicePushGet(extService: MExtService) = ignoreAuth() { implicit request =>
+    LOGGER.error(s"extServicePush(${extService}): Not implemented.\n HTTP ${request.method} ${request.host} ${request.uri}\n ${request.body}")
+    NotImplemented("Not implemented yet, sorry!")
   }
 
 }

@@ -181,8 +181,6 @@ GET  /sys/market/adns                   @controllers.SysMarket.adnNodesList(w: m
 GET  /sys/market/create/adn             @controllers.SysMarket.createAdnNode()
 POST /sys/market/create/adn             @controllers.SysMarket.createAdnNodeSubmit()
 POST /sys/market/adn/:adnId/delete      @controllers.SysMarket.deleteAdnNodeSubmit(adnId)
-GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: io.suggest.sc.sc3.MScQs)
-POST /sys/market/mad/rm/rcvr/:adId      @controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
 GET  /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
@@ -195,20 +193,25 @@ GET  /sys/market/mad/email/:adId        @controllers.SysMarket.showShopEmailAdDi
 POST /sys/market/login/to/:nodeId       @controllers.SysMarket.loginIntoNode(nodeId: MEsUuId)
 
 # sys.ad
-GET  /sys/mad/:adId/show                @controllers.SysMarket.showAd(adId)
-GET  /sys/mad/:adId/rcvrs/analyze       @controllers.SysMarket.analyzeAdRcvrs(adId)
-POST /sys/mad/:adId/rcvrs/reset         @controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
-POST /sys/mad/:adId/rcvrs/clean         @controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)
+POST /sys/market/mad/rm/rcvr/:adId      @controllers.SysAd.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
+GET  /sys/market/ads                    @controllers.SysAd.showAdnNodeAds(a: io.suggest.sc.sc3.MScQs)
+GET  /sys/mad/:adId/show                @controllers.SysAd.showAd(adId)
+GET  /sys/mad/:adId/rcvrs/analyze       @controllers.SysAd.analyzeAdRcvrs(adId)
+POST /sys/mad/:adId/rcvrs/reset         @controllers.SysAd.resetReceivers(adId, r: Option[String] ?= None)
+POST /sys/mad/:adId/rcvrs/clean         @controllers.SysAd.cleanReceivers(adId, r: Option[String] ?= None)
 # sys.ad.render - диагностический рендер одиночных карточек в html и картинки.
-GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
-POST /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
+GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysAd.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
+POST /sys/mad/:adId/one/render/:rvar    @controllers.SysAd.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
+## sys.adn.install
+GET  /sys/adn/inst/mads/:adnId          @controllers.SysAd.installDfltMads(adnId)
+POST /sys/adn/inst/mads/:adnId          @controllers.SysAd.installDfltMadsSubmit(adnId)
 
-## SmDomains - управлением доменами узла.
-GET  /sys/node/domain/add/:nodeId       @controllers.SysMarket.createNodeDomain(nodeId)
-POST /sys/node/domain/add/:nodeId       @controllers.SysMarket.createNodeDomainFormSubmit(nodeId)
-GET  /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomain(nodeId, dkey)
-POST /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomainFormSubmit(nodeId, dkey)
-POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysMarket.deleteNodeDomainFormSubmit(nodeId, dkey)
+## SysNodeDomains - управлением доменами узла.
+GET  /sys/node/domain/add/:nodeId       @controllers.SysNodeDomains.createNodeDomain(nodeId)
+POST /sys/node/domain/add/:nodeId       @controllers.SysNodeDomains.createNodeDomainFormSubmit(nodeId)
+GET  /sys/node/domain/edit/:nodeId/dkey @controllers.SysNodeDomains.editNodeDomain(nodeId, dkey)
+POST /sys/node/domain/edit/:nodeId/dkey @controllers.SysNodeDomains.editNodeDomainFormSubmit(nodeId, dkey)
+POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysNodeDomains.deleteNodeDomainFormSubmit(nodeId, dkey)
 
 ## SysNodeEdges: работа с эджами узлов
 GET  /sys/node/edge2                    @controllers.SysNodeEdges.editEdge(e: io.suggest.n2.edge.edit.MNodeEdgeIdQs)
@@ -265,10 +268,6 @@ POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: 
 ## sys.img.make
 GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImgT)
 POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImgT)
-
-## sys.adn.install
-GET  /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMads(adnId)
-POST /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMadsSubmit(adnId)
 
 ## sys/person
 GET  /sys/person                         @controllers.SysPerson.index

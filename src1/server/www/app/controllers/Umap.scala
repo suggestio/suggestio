@@ -33,29 +33,30 @@ import scala.concurrent.Future
  * Created: 15.09.14 12:09
  * Description: Контроллер для umap-backend'ов.
  */
-class Umap @Inject() (
-                       esModel                         : EsModel,
-                       umapUtil                        : UmapUtil,
-                       mNodes                          : MNodes,
-                       isSu                            : IsSu,
-                       isSuNode                        : IsSuNode,
-                       cspUtil                         : CspUtil,
-                       sioControllerApi                : SioControllerApi,
-                       mCommonDi                       : ICommonDi,
-                     )
+final class Umap @Inject() (
+                             sioControllerApi                : SioControllerApi,
+                             mCommonDi                       : ICommonDi,
+                           )
   extends MacroLogsImplLazy
 {
-  // Редко-нужный контроллер, поэтому без @Singleton и с лёгким конструктором.
+
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val umapUtil = injector.instanceOf[UmapUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val isSuNode = injector.instanceOf[IsSuNode]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
 
   import sioControllerApi._
   import mCommonDi._
-  import esModel.api._
-  import cspUtil.Implicits._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   def GLOBAL_MAP_EDIT_ALLOWED = true
 
   private def _withUmapCsp(result: Result): Result = {
+    import cspUtil.Implicits._
     result
       .withCspHeader( cspUtil.CustomPolicies.Umap )
   }
@@ -119,25 +120,28 @@ class Umap @Inject() (
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: MNodeGeoLevel) = isSu().async { implicit request =>
-    val msearch = new MNodeSearch {
-      override val outEdges: MEsNestedSearch[Criteria] = {
-        // Ищем только с node-location'ами на текущем уровне.
-        val cr = Criteria(
-          predicates  = MPredicates.NodeLocation :: Nil,
-          gsIntersect = Some(GsCriteria(
-            levels      = ngl :: Nil,
-            gjsonCompat = Some(true)
-          ))
-        )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
-      }
+    import esModel.api._
 
-      override def limit                = 600
-    }
     for {
-      mnodes <- mNodes.dynSearch(msearch)
+      mnodes <- mNodes.dynSearch(
+        new MNodeSearch {
+          override val outEdges: MEsNestedSearch[Criteria] = {
+            // Ищем только с node-location'ами на текущем уровне.
+            val cr = Criteria(
+              predicates  = MPredicates.NodeLocation :: Nil,
+              gsIntersect = Some(GsCriteria(
+                levels      = ngl :: Nil,
+                gjsonCompat = Some(true)
+              ))
+            )
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
+          }
+
+          override def limit                = 600
+        }
+      )
     } yield {
       _getDataLayerGeoJson(None, ngl, mnodes)
     }
@@ -274,6 +278,8 @@ class Umap @Inject() (
       val nodeFeatures = layerData
         .features
         .groupBy(getAdnIdF)
+
+      import esModel.api._
 
       // Собираем карту узлов.
       val mnodesMapFut = mNodes.multiGetMapCache( nodeFeatures.keySet )

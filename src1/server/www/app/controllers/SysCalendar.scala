@@ -8,7 +8,7 @@ import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import io.suggest.cal.m.MCalTypes
 import io.suggest.es.model.EsModel
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mcal.{MCalTypesJvm, MCalendar, MCalendars}
 import models.mproj.ICommonDi
 import models.req.ICalendarReq
@@ -31,18 +31,20 @@ import scala.concurrent.Future
  *
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
-class SysCalendar @Inject() (
-                              esModel                     : EsModel,
-                              mCalendars                  : MCalendars,
-                              isSuCalendar                : IsSuCalendar,
-                              isSu                        : IsSu,
-                              mCalTypesJvm                : MCalTypesJvm,
-                              calendarAccessAny           : CalendarAccessAny,
-                              sioControllerApi            : SioControllerApi,
-                              mCommonDi                   : ICommonDi,
-                            )
+final class SysCalendar @Inject() (
+                                    sioControllerApi            : SioControllerApi,
+                                    mCommonDi                   : ICommonDi,
+                                  )
   extends MacroLogsImplLazy
 {
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mCalendars = injector.instanceOf[MCalendars]
+  private lazy val isSuCalendar = injector.instanceOf[IsSuCalendar]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val mCalTypesJvm = injector.instanceOf[MCalTypesJvm]
+  private lazy val calendarAccessAny = injector.instanceOf[CalendarAccessAny]
 
   import sioControllerApi._
   import mCommonDi._

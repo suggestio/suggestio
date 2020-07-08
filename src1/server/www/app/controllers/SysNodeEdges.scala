@@ -37,7 +37,7 @@ final class SysNodeEdges @Inject() (
 {
 
   import sioControllerApi._
-  import mCommonDi.{csrf, ec, current, errorHandler}
+  import mCommonDi.{csrf, ec, current}
 
   private lazy val mNodes = current.injector.instanceOf[MNodes]
   private lazy val esModel = current.injector.instanceOf[EsModel]

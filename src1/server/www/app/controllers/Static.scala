@@ -1,21 +1,20 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.NotUsed
 import akka.stream.{FlowShape, Graph}
 import akka.stream.scaladsl.{Compression, Flow, Keep, Sink, Source}
 import akka.util.ByteString
-import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import io.suggest.brotli.BrotliUtil
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
-import io.suggest.ctx.{MCtxId, MCtxIds}
+import io.suggest.ctx.MCtxId
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.stat.m.{MComponents, MDiag}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
-import io.suggest.util.CompressUtilJvm
+import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.{JsValue, Json}
@@ -28,10 +27,11 @@ import util.sec.CspUtil
 import util.seo.SiteMapUtil
 import util.stat.StatUtil
 import util.ws.{MWsChannelActorArgs, WsChannelActors}
-import util.xplay.SecHeadersFilterUtil
 import views.html.static._
 import japgolly.univeq._
-import play.api.http.{HttpEntity, HttpProtocol}
+import play.api.http.{HeaderNames, HttpEntity, HttpProtocol}
+import play.twirl.api.Xml
+import views.txt.static.robotsTxtTpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -44,42 +44,43 @@ import scala.concurrent.duration._
   * Description: Изначально это был контроллер для всякой статики.
   * Но постепенно стал контроллером для разных очень общих вещей.
   */
-@Singleton
-class Static @Inject() (
-                         esModel                         : EsModel,
-                         override val ignoreAuth         : IgnoreAuth,
-                         override val corsUtil           : CorsUtil,
-                         override val siteMapUtil        : SiteMapUtil,
-                         isAuth                          : IsAuth,
-                         bruteForceProtect               : BruteForceProtect,
-                         advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
-                         statUtil                        : StatUtil,
-                         streamsUtil                     : StreamsUtil,
-                         aclUtil                         : AclUtil,
-                         cspUtil                         : CspUtil,
-                         isSuOrDevelOr404                : IsSuOrDevelOr404,
-                         mNodes                          : MNodes,
-                         maybeAuth                       : MaybeAuth,
-                         canOpenWsChannel                : CanOpenWsChannel,
-                         wsChannelActors                 : WsChannelActors,
-                         assets                          : Assets,
-                         override val sioControllerApi   : SioControllerApi,
-                         mCommonDi                       : ICommonDi
-                       )
-  extends RobotsTxt
-  with SiteMapsXml
-  with CorsPreflight
+final class Static @Inject() (
+                               sioControllerApi                : SioControllerApi,
+                               mCommonDi                       : ICommonDi
+                             )
+  extends MacroLogsImpl
 {
 
   import sioControllerApi._
   import mCommonDi._
-  import streamsUtil.Implicits._
-  import esModel.api._
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
+  private lazy val corsUtil = injector.instanceOf[CorsUtil]
+  private lazy val siteMapUtil = injector.instanceOf[SiteMapUtil]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
+  private lazy val statUtil = injector.instanceOf[StatUtil]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val isSuOrDevelOr404 = injector.instanceOf[IsSuOrDevelOr404]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val canOpenWsChannel = injector.instanceOf[CanOpenWsChannel]
+  private lazy val wsChannelActors = injector.instanceOf[WsChannelActors]
+  private lazy val assets = injector.instanceOf[Assets]
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
 
   /** Полностью игнорить CSP-отчёты? [false] */
-  private val _IGNORE_CSP_REPORTS = configuration.getOptional[Boolean]( _IGNORE_CSP_REPORS_CONF_KEY ).getOrElseFalse
+  private lazy val _IGNORE_CSP_REPORTS = {
+    configuration
+      .getOptional[Boolean]( _IGNORE_CSP_REPORS_CONF_KEY )
+      .getOrElseFalse
+  }
 
   /**
    * Страница с политикой приватности.
@@ -283,7 +284,9 @@ class Static @Inject() (
       promiseOrCached.fold(
         // В кэше нет данных, то надо запустить рассчёты:
         {cachedPromise =>
+          import esModel.api._
           import mNodes.Implicits._
+          import streamsUtil.Implicits._
 
           // Организуем реактивную обработку нод с генерацией несжатых byte chunks:
           val NODES_PER_CHUNK = 30
@@ -530,6 +533,83 @@ class Static @Inject() (
         errorHandler.onClientError(rh, FORBIDDEN, s"Forbidden: $ctxIdStr")
           .map(Left.apply)
     }
+  }
+
+
+  /**
+    * Реакция на options-запрос, хидеры выставит CORS-фильтр, подключенный в Global.
+    * @param path Путь, к которому запрошены опшыны.
+    * @return
+    */
+  def corsPreflight(path: String) = Action.async { implicit request =>
+    val isEnabled = corsUtil.CORS_PREFLIGHT_ALLOWED
+
+    if (isEnabled && request.headers.get( HeaderNames.ACCESS_CONTROL_REQUEST_METHOD ).nonEmpty) {
+      // Кэшировать ответ на клиенте для ускорения работы системы. TODO Увеличить значение на неск.порядков:
+      val cache = CACHE_CONTROL -> "public, max-age=300"
+      val headers2 = cache :: corsUtil.PREFLIGHT_CORS_HEADERS
+      Ok.withHeaders( headers2 : _* )
+
+    } else {
+      val body = if (isEnabled) "Missing nessesary CORS headers" else "CORS is disabled"
+      errorHandler.onClientError(request, NOT_FOUND, body)
+    }
+  }
+
+
+
+  /** Время кеширования /sitemap.xml ответа на клиенте. */
+  private def SITEMAP_XML_CACHE_TTL_SECONDS = if (isDev) 1 else 120
+
+
+  /**
+    * Раздача сайт-мапы.
+    * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
+    */
+  def siteMapXml = ignoreAuth() { implicit request =>
+    import views.xml.static.sitemap._
+
+    // Собираем асинхронный неупорядоченный источник sitemap-ссылок:
+    val urls = siteMapUtil
+      .sitemapUrlsSrc()
+      // Рендерим каждую ссылку в текст
+      .map( _urlTpl.apply )
+      .recover { case ex: Throwable =>
+        LOGGER.error("siteMapXml: Unable to render url", ex)
+        Xml(s"<!-- Stream error occured: ${ex.getClass.getName} -->")
+      }
+
+    // Рендерим ответ: сначала заголовок sitemaps.xml:
+    val respBody2: Source[Xml, _] = {
+      Source
+        .single( beforeUrlsTpl() )
+        // Затем тело, содержащее ссылки...
+        .concat( urls )
+        // Футер sitemaps.xml:
+        .concat {
+          Source.single( afterUrlsTpl() )
+        }
+    }
+
+    // Возвращаем chunked-ответ с XML.
+    Ok.chunked(respBody2)
+      .withHeaders(
+        CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
+      )
+  }
+
+
+  /** Время кеширования /robots.txt ответа на клиенте. */
+  private def ROBOTS_TXT_CACHE_TTL_SECONDS: Int =
+    if (isDev) 5 else 120
+
+  /** Раздача содержимого robots.txt. */
+  def robotsTxt = ignoreAuth() { implicit request =>
+    Ok( robotsTxtTpl() )
+      .withHeaders(
+        //CONTENT_TYPE  -> "text/plain; charset=utf-8",
+        CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
+      )
   }
 
 }

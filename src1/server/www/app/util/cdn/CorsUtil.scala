@@ -22,10 +22,10 @@ import play.api.http.HttpVerbs
  * @see [[http://ru.wikipedia.org/wiki/Cross-origin_resource_sharing]]
  */
 @Singleton
-class CorsUtil @Inject() (
-                           configuration: Configuration,
-                           contextUtil: ContextUtil
-                         )
+final class CorsUtil @Inject() (
+                                 configuration: Configuration,
+                                 contextUtil: ContextUtil
+                               )
   extends MacroLogsImplLazy
 {
 
@@ -35,7 +35,7 @@ class CorsUtil @Inject() (
   /** Включен ли доступ к preflight-запросам? */
   val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getOptional[Boolean]("cors.preflight.allowed").getOrElseTrue
 
-  val allowOrigins: String = {
+  def allowOrigins: String = {
     // Макс один домен. Чтобы не трахаться с доменами, обычно достаточно "*".
     configuration.getOptional[String]("cors.allow.origin").getOrElse("*")
   }
@@ -127,16 +127,11 @@ class CorsUtil @Inject() (
 }
 
 
-trait ICorsUtilDi {
-  def corsUtil: CorsUtil
-}
-
-
 /** Фильтр. Должен без проблем инициализироваться, когда application not started. */
-class CorsFilter @Inject() (
-  corsUtil                  : CorsUtil,
-  implicit val ec           : ExecutionContext,
-)
+final class CorsFilter @Inject() (
+                                   corsUtil                  : CorsUtil,
+                                   implicit val ec           : ExecutionContext,
+                                 )
   extends EssentialFilter
 {
 

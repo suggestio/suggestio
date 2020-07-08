@@ -3,7 +3,7 @@ package models.mproj
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
 import com.google.inject.ImplementedBy
-import controllers.{ErrorHandler, IErrorHandler}
+import controllers.ErrorHandler
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.CacheApiUtil
 import models.mctx.Context2Factory
@@ -28,8 +28,7 @@ import scala.concurrent.ExecutionContext
  */
 @ImplementedBy( classOf[MCommonDi] )
 trait ICommonDi
-  extends IErrorHandler
-  with IEsModelDiVal
+  extends IEsModelDiVal
   with ICacheApi
   with ISlickDbConfig
 {
@@ -43,7 +42,7 @@ trait ICommonDi
   // выставляем implicit, т.к. до-DI'шные websocket'ы требуют implicit application in scope.
   // TODO После перевода вёб-сокетов на akka streams, удалить implicit у current.
   override implicit val current       : Application
-  override val errorHandler           : ErrorHandler
+  val errorHandler                    : ErrorHandler
   override implicit val ec            : ExecutionContext
   override val cache                  : AsyncCacheApi
   override val cacheApiUtil           : CacheApiUtil

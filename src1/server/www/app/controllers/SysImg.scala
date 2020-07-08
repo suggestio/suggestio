@@ -2,16 +2,25 @@ package controllers
 
 import java.net.{MalformedURLException, URL}
 
+import io.suggest.ad.blk.BlockMeta
+import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
+import io.suggest.dev.{MScreenJvm, MSzMults}
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
+import models.im.make.{MImgMakeArgs, MImgMaker, MImgMakers, SysForm_t}
 import models.mproj.ICommonDi
-import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
+import models.im.{CompressMode, MAnyImgs, MImg3, MImgT, MImgs3}
+import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
+import play.api.mvc.Result
 import util.acl.IsSu
 import util.FormUtil
 import util.img.DynImgUtil
 import views.html.sys1.img._
+import views.html.sys1.img.make.makeFormTpl
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -21,21 +30,23 @@ import views.html.sys1.img._
  * Изначально была потребность быстро получать оригиналы картинок и получать прочую информацию по хранимым
  * изображениям.
  */
-class SysImg @Inject() (
-                         mImgs3                          : MImgs3,
-                         override val sysImgMakeUtil     : SysImgMakeUtil,
-                         mImgs                           : MAnyImgs,
-                         override val isSu               : IsSu,
-                         override val dynImgUtil         : DynImgUtil,
-                         override val sioControllerApi   : SioControllerApi,
-                         override val mCommonDi          : ICommonDi
-                       )
+final class SysImg @Inject() (
+                               sioControllerApi   : SioControllerApi,
+                               mCommonDi          : ICommonDi
+                             )
   extends MacroLogsImplLazy
-  with SysImgMake
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val mImgs3 = injector.instanceOf[MImgs3]
+  private lazy val mImgs = injector.instanceOf[MAnyImgs]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
 
   import sioControllerApi._
   import mCommonDi._
+
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */
   def imgFormM: Form[MImgT] = Form(
@@ -141,5 +152,87 @@ class SysImg @Inject() (
       }
     }
   }
+
+
+
+  /**
+    * Рендер страницы с формой задания произвольных параметров вызова maker'а для указанного изображения.
+    * @param img Обрабатываемая картинка.
+    * @return 200 ok со страницей с формой описания img make-задачи.
+    */
+  def makeForm(img: MImgT) = csrf.AddToken {
+    isSu().async { implicit request =>
+      implicit val ctx = implicitly[Context]
+      // Забиндить дефолтовые данные в форму
+      val form = makeFormM(img).fill((
+        MImgMakers.StrictWide,
+        MImgMakeArgs(
+          img = img,
+          targetSz = MSize2di(BlockMeta.DEFAULT),
+          szMult = MSzMults.`1.0`.toFloat,
+          devScreenOpt = ctx.deviceScreenOpt
+        )
+      ))
+      // Запустить рендер страницы с формой
+      _makeFormRender(img, form, Ok)(ctx)
+    }
+  }
+
+  /** Рендер страницы с формой параметров make. */
+  private def _makeFormRender(img: MImgT, form: SysForm_t, rs: Status)
+                             (implicit ctx: Context): Future[Result] = {
+    val makers = MImgMakers.values
+    val html = makeFormTpl(img, form, makers)(ctx)
+    rs(html)
+  }
+
+  /**
+    * Сабмит формы make, созданной с помощью makeForm().
+    * @param img Обрабатываемая картинка.
+    * @return Получившаяся картинка.
+    */
+  def makeFormSubmit(img: MImgT) = csrf.Check {
+    isSu().async { implicit request =>
+      makeFormM(img).bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"makeFormSubmit(${img.dynImgId.origNodeId}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          _makeFormRender(img, formWithErrors, NotAcceptable)
+        },
+        {case (maker, makeArgs) =>
+          val imaker = current.injector.instanceOf(maker.makerClass)
+          for (makeRes <- imaker.icompile(makeArgs)) yield {
+            val call = dynImgUtil.imgCall( makeRes.dynCallArgs )
+            Redirect( call )
+          }
+        }
+      )
+    }
+  }
+
+
+  import play.api.data.Forms._
+
+  /** Маппинг для [[models.im.make.MImgMakeArgs]] под нужды этого контроллера. */
+  def makeArgsM(img: MImgT): Mapping[MImgMakeArgs] = {
+    mapping(
+      "blockMeta" -> MSize2diJvm.formMapping,
+      "szMult"    -> FormUtil.szMultM,
+      "devScreen" -> optional(MScreenJvm.mappingFat),
+      "compress"  -> CompressMode.mappingOpt
+    )
+    { MImgMakeArgs(img, _, _, _, _) }
+    {ima =>
+      Some((ima.targetSz, ima.szMult, ima.devScreenOpt, ima.compressMode))
+    }
+  }
+
+  /** Маппинг формы, с которой работают в шаблоны и контроллеры. */
+  def makeFormM(img: MImgT): SysForm_t = {
+    Form(tuple(
+      "maker" -> MImgMaker.mapping,
+      "args"  -> makeArgsM(img)
+    ))
+  }
+
 
 }

@@ -7,7 +7,7 @@
 @import io.suggest.img.MImgFormats
 @import ctx._
 
-@form( CSRF(routes.SysMarket.oneAdFormSubmit(args.madId, args.rvar)) ) {
+@form( CSRF(routes.SysAd.oneAdFormSubmit(args.madId, args.rvar)) ) {
 
   @inputText(
     args.qf("szMult"),

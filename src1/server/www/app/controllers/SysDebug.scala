@@ -16,11 +16,11 @@ import views.html.sys1.debug._
  * Created: 18.06.15 16:16
  * Description: Sys-контроллер для отладки.
  */
-class SysDebug @Inject() (
-                           isSu                          : IsSu,
-                           sioControllerApi              : SioControllerApi,
-                           mCommonDi                     : ICommonDi,
-                         )
+final class SysDebug @Inject() (
+                                 isSu                          : IsSu,
+                                 sioControllerApi              : SioControllerApi,
+                                 mCommonDi                     : ICommonDi,
+                               )
   extends MacroLogsImplLazy
 {
 

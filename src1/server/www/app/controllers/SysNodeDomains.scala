@@ -1,20 +1,23 @@
-package controllers.sysctl.domain
+package controllers
 
-import controllers.{ISioControllerApi, routes}
-import io.suggest.es.model.EsModelDi
+import io.suggest.es.model.EsModel
 import io.suggest.n2.extra.domain.MDomainExtra
-import io.suggest.n2.node.{IMNodes, MNode}
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.sec.util.Csrf
+import io.suggest.util.logs.MacroLogsImplLazy
+import javax.inject.Inject
 import models.msys.{MSysNodeDomainCreateFormTplArgs, MSysNodeDomainEditFormTplArgs}
 import models.req.INodeReq
 import play.api.data.Form
+import play.api.http.HttpErrorHandler
+import play.api.inject.Injector
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.acl.IIsSuNodeDi
-import util.sys.ISysMarketUtilDi
+import util.acl.IsSuNode
+import util.sys.SysMarketUtil
 import views.html.sys1.domains._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -22,18 +25,23 @@ import scala.concurrent.Future
   * Created: 09.09.16 16:00
   * Description: Аддон для [[controllers.SysMarket]] для экшенов управления списком связанных доменов узла.
   */
-trait SmDomains
-  extends ISioControllerApi
-  with IMacroLogs
-  with IIsSuNodeDi
-  with ISysMarketUtilDi
-  with IMNodes
-  with EsModelDi
+final class SysNodeDomains @Inject()(
+                                      injector                   : Injector,
+                                      sioControllerApi           : SioControllerApi,
+                                    )
+  extends MacroLogsImplLazy
 {
 
+  implicit private val csrf = injector.instanceOf[Csrf]
+  implicit private val isSuNode = injector.instanceOf[IsSuNode]
+
+  implicit private lazy val esModel = injector.instanceOf[EsModel]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val mNodes = injector.instanceOf[MNodes]
+  implicit private lazy val sysMarketUtil = injector.instanceOf[SysMarketUtil]
+
   import sioControllerApi._
-  import mCommonDi.{csrf, ec, errorHandler}
-  import esModel.api._
 
 
   /** Запрос страницы добавления домена к узлу. */
@@ -65,6 +73,7 @@ trait SmDomains
           NotAcceptable( _createNodeDomainBody(formWithErrors) )
         },
         {mdx =>
+          import esModel.api._
           val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
             _updateNodeDomains(mnode) {
               mnode.extras.domains
@@ -121,6 +130,8 @@ trait SmDomains
           _editNodeDomainBody(dkey, NotAcceptable)(_ => formWithErrors)
         },
         {mdx2 =>
+          import esModel.api._
+
           val dkeysFilteredOut = Set(dkey, mdx2.dkey)
           val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
             _updateNodeDomains(mnode) {
@@ -143,6 +154,8 @@ trait SmDomains
   /** Реакция на сабмит формы-кнопки удаления домена из узла. */
   def deleteNodeDomainFormSubmit(nodeId: String, dkey: String) = csrf.Check {
     isSuNode(nodeId).async { implicit request =>
+      import esModel.api._
+
       val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
         _updateNodeDomains(mnode) {
           mnode.extras.domains

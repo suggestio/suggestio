@@ -11,6 +11,7 @@
 @import sys1.stuff.pager._
 @import sys1.stuff.hpath._
 @import io.suggest.mbill2.m.item.MItemJvm.Implicits._
+@import sys1.market.adn.adnBase
 
 @hPathAfter1 = {
   / Реклама
@@ -50,7 +51,7 @@
       @for( rcvrs <- args.rcvrsMap.get(madId) ) {
         <br/>
         @rcvrs.map { rcvr =>
-          @form( CSRF(routes.SysMarket.removeAdRcvr(adId = madId, rcvrId = rcvr.id, r = ctx.r)) ) {
+          @form( CSRF(routes.SysAd.removeAdRcvr(adId = madId, rcvrId = rcvr.id, r = ctx.r)) ) {
             <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">
               Убрать из выдачи<br/>
               на узле<br/>
@@ -81,8 +82,8 @@
           за @formatPrice(adv.price)
         </p>
       }
-      <a href="@routes.SysMarket.analyzeAdRcvrs(madId)">Карта ресиверов...</a>
-      <a href="@routes.SysMarket.showAd(madId)">sys-страница карточки</a>
+      <a href="@routes.SysAd.analyzeAdRcvrs(madId)">Карта ресиверов...</a>
+      <a href="@routes.SysAd.showAd(madId)">sys-страница карточки</a>
       <br/><br/>
     }
     }
@@ -97,7 +98,7 @@
     limit   = args.msearch.limit,
     offset  = args.msearch.offset,
     urlF    = { offset1 =>
-      routes.SysMarket.showAdnNodeAds(
+      routes.SysAd.showAdnNodeAds(
         args.qs.withSearch(
           args.qs.search
             .withOffset( Some(offset1) )

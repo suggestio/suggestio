@@ -12,11 +12,11 @@
   @defining(args.mnode.id.get) { mnodeId =>
 
     @* Кнопка для удаления текущего домена. *@
-    @_deleteSmthFormBtnTpl( routes.SysMarket.deleteNodeDomainFormSubmit( mnodeId, dkey = args.mdx.dkey ) )
+    @_deleteSmthFormBtnTpl( routes.SysNodeDomains.deleteNodeDomainFormSubmit( mnodeId, dkey = args.mdx.dkey ) )
 
     @_nodeDomainFormTpl(
       args        = args,
-      submitCall  = routes.SysMarket.editNodeDomainFormSubmit(mnodeId, dkey = args.mdx.dkey),
+      submitCall  = routes.SysNodeDomains.editNodeDomainFormSubmit(mnodeId, dkey = args.mdx.dkey),
       btnText     = "Save"
     )
 

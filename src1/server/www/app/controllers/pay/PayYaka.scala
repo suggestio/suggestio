@@ -1,6 +1,5 @@
 package controllers.pay
 
-import javax.inject.Singleton
 import javax.inject.Inject
 import controllers.SioControllerApi
 import io.suggest.bill.MCurrencies
@@ -8,10 +7,7 @@ import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
-import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.MItems
-import io.suggest.mbill2.m.order.MOrders
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.stat.m.{MAction, MActionTypes}
@@ -57,35 +53,32 @@ import scala.concurrent.Future
   * @see Прямая ссылка: [[https://github.com/yandex-money/yandex-money-joinup/blob/master/demo/010%20%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%B8%D1%81%D0%BD%D1%8B%D1%85%20%D1%81%D0%B0%D0%B9%D1%82%D0%BE%D0%B2.md#%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8]]
   *      Короткая ссылка: [[https://goo.gl/Zfwt15]]
   */
-@Singleton
-class PayYaka @Inject() (
-                          esModel                  : EsModel,
-                          mNodes                   : MNodes,
-                          maybeAuth                : MaybeAuth,
-                          canPayOrder              : CanPayOrder,
-                          canViewOrder             : CanViewOrder,
-                          statUtil                 : StatUtil,
-                          mItems                   : MItems,
-                          yakaUtil                 : YakaUtil,
-                          mBalances                : MBalances,
-                          isSuOrNotProduction      : IsSuOrNotProduction,
-                          mOrders                  : MOrders,
-                          bill2Util                : Bill2Util,
-                          secHeadersFilterUtil     : SecHeadersFilterUtil,
-                          mailerWrapper            : IMailerWrapper,
-                          nodesUtil                : NodesUtil,
-                          mSuperUsers              : MSuperUsers,
-                          mdrUtil                  : MdrUtil,
-                          identUtil                : IdentUtil,
-                          sioControllerApi         : SioControllerApi,
-                          mCommonDi                : ICommonDi
-                        )
+final class PayYaka @Inject() (
+                                sioControllerApi         : SioControllerApi,
+                                mCommonDi                : ICommonDi
+                              )
   extends MacroLogsImpl
 {
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val canPayOrder = injector.instanceOf[CanPayOrder]
+  private lazy val canViewOrder = injector.instanceOf[CanViewOrder]
+  private lazy val statUtil = injector.instanceOf[StatUtil]
+  private lazy val yakaUtil = injector.instanceOf[YakaUtil]
+  private lazy val isSuOrNotProduction = injector.instanceOf[IsSuOrNotProduction]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val secHeadersFilterUtil = injector.instanceOf[SecHeadersFilterUtil]
+  private lazy val mailerWrapper = injector.instanceOf[IMailerWrapper]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  private lazy val mdrUtil = injector.instanceOf[MdrUtil]
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
 
   import sioControllerApi._
   import mCommonDi.{ec, slick, csrf, errorHandler}
-  import esModel.api._
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
@@ -305,6 +298,8 @@ class PayYaka @Inject() (
             yReq.action == yakaAction &&
             expMd5.equalsIgnoreCase( yReq.md5 )
           ) {
+            import esModel.api._
+
             // Если демо-режим, то разрешить только для суперюзеров:
             _assertDemoSu(profile, yReq)
 
@@ -447,6 +442,8 @@ class PayYaka @Inject() (
             yReq.shopId == profile.shopId &&
             yReq.action == yakaAction
           ) {
+            import esModel.api._
+
             // Если демо-режим, то разрешить только для суперюзеров:
             _assertDemoSu(profile, yReq)
 

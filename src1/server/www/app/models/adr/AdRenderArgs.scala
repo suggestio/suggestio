@@ -50,14 +50,3 @@ case class MAdRenderArgs(
                           quality     : Option[Int]
 )
   extends IAdRenderArgs
-
-
-
-/** Интерфейс компаньона-генератора параметров. Полезен для доступа к абстрактному рендереру. */
-trait IAdRendererCompanion {
-
-  /** Дефолтовое значение quality, если не задано. */
-  def qualityDflt(scrSz: ISize2di, fmt: MImgFormat): Option[Int] = None
-
-}
-

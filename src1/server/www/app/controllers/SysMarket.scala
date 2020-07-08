@@ -1,21 +1,14 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
-import controllers.sysctl._
-import controllers.sysctl.domain.SmDomains
+import javax.inject.Inject
 import io.suggest.adn.MAdnRights
-import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
 import io.suggest.i18n.MsgCodes
-import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.meta.MMeta
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.sc.ads.MAdsSearchReq
-import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -26,20 +19,15 @@ import models.usr.MEmailRecoverQs
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
 import play.api.i18n.Messages
-import play.api.mvc.{AnyContent, Call, Result}
+import play.api.mvc.{AnyContent, Result}
 import util.acl._
 import util.adn.NodesUtil
-import util.adv.AdvUtil
-import util.adv.direct.AdvRcvrsUtil
-import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import util.n2u.N2NodesUtil
-import util.showcase.ScAdSearchUtil
 import util.sys.SysMarketUtil
 import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 import views.html.lk.shop.ad.emailAdDisabledByMartTpl
 import views.html.sys1.market._
-import views.html.sys1.market.ad._
 import views.html.sys1.market.adn._
 
 import scala.concurrent.Future
@@ -53,37 +41,28 @@ import util.ident.IdentUtil
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-@Singleton
-class SysMarket @Inject() (
-                            override val esModel            : EsModel,
-                            override val nodesUtil          : NodesUtil,
-                            lkAdUtil                        : LkAdUtil,
-                            advRcvrsUtil                    : AdvRcvrsUtil,
-                            override val sysMarketUtil      : SysMarketUtil,
-                            mailer                          : IMailerWrapper,
-                            override val n2NodesUtil        : N2NodesUtil,
-                            override val sysAdRenderUtil    : SysAdRenderUtil,
-                            mItems                          : MItems,
-                            override val advUtil            : AdvUtil,
-                            override val isSuNode           : IsSuNode,
-                            override val isSuMad            : IsSuMad,
-                            isSu                            : IsSu,
-                            isSuOr404                       : IsSuOr404,
-                            scAdSearchUtil                  : ScAdSearchUtil,
-                            identUtil                       : IdentUtil,
-                            override val mNodes             : MNodes,
-                            override val sioControllerApi   : SioControllerApi,
-                            mCommonDi                       : ICommonDi,
-                          )
+final class SysMarket @Inject() (
+                                  sioControllerApi                : SioControllerApi,
+                                  mCommonDi                       : ICommonDi,
+                                )
   extends MacroLogsImpl
-  with SysNodeInstall
-  with SysAdRender
-  with SmDomains
 {
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val sysMarketUtil = injector.instanceOf[SysMarketUtil]
+  private lazy val mailer = injector.instanceOf[IMailerWrapper]
+  private lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  private lazy val isSuNode = injector.instanceOf[IsSuNode]
+  private lazy val isSuMad = injector.instanceOf[IsSuMad]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val isSuOr404 = injector.instanceOf[IsSuOr404]
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
 
   import sioControllerApi._
-  import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil, slick}
-  import sysMarketUtil._
+  import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil}
   import esModel.api._
 
 
@@ -352,14 +331,14 @@ class SysMarket @Inject() (
     isSu().async { implicit request =>
       // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
       // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
-      val dfltFormM = adnNodeFormM.fill(
+      val dfltFormM = sysMarketUtil.adnNodeFormM.fill(
         nodesUtil.userNodeInstance(
           nameOpt     = None,
           personIdOpt = request.user.personIdOpt
         )
       )
 
-      val ncpForm = nodeCreateParamsFormM.fill( NodeCreateParams() )
+      val ncpForm = sysMarketUtil.nodeCreateParamsFormM.fill( NodeCreateParams() )
 
       createAdnNodeRender(dfltFormM, ncpForm, Ok)
     }
@@ -376,8 +355,8 @@ class SysMarket @Inject() (
   def createAdnNodeSubmit() = csrf.Check {
     isSu().async { implicit request =>
       def logPrefix = s"createAdnNodeSubmit():"
-      val ncpForm = nodeCreateParamsFormM.bindFromRequest()
-      val nodeForm = adnNodeFormM.bindFromRequest()
+      val ncpForm = sysMarketUtil.nodeCreateParamsFormM.bindFromRequest()
+      val nodeForm = sysMarketUtil.adnNodeFormM.bindFromRequest()
 
       def __onError(formWithErrors: Form[_], formName: String): Future[Result] = {
         val renderFut = createAdnNodeRender(nodeForm, ncpForm, NotAcceptable)
@@ -497,7 +476,7 @@ class SysMarket @Inject() (
   def editAdnNode(adnId: String) = csrf.AddToken {
     isSuNode(adnId).async { implicit request =>
       import request.mnode
-      val formFilled = adnNodeFormM.fill(mnode)
+      val formFilled = sysMarketUtil.adnNodeFormM.fill(mnode)
       editAdnNodeBody(adnId, formFilled, Ok)
     }
   }
@@ -512,7 +491,7 @@ class SysMarket @Inject() (
   def editAdnNodeSubmit(adnId: String) = csrf.Check {
     isSuNode(adnId).async { implicit request =>
       import request.mnode
-      val formBinded = adnNodeFormM.bindFromRequest()
+      val formBinded = sysMarketUtil.adnNodeFormM.bindFromRequest()
       formBinded.fold(
         {formWithErrors =>
           LOGGER.debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
@@ -520,7 +499,7 @@ class SysMarket @Inject() (
         },
         {adnNode2 =>
           for {
-            _ <- mNodes.tryUpdate(mnode) { updateAdnNode(_, adnNode2) }
+            _ <- mNodes.tryUpdate(mnode) { sysMarketUtil.updateAdnNode(_, adnNode2) }
           } yield {
             Redirect(routes.SysMarket.showAdnNode(adnId))
               .flashing(FLASH.SUCCESS -> "Changes.saved")
@@ -536,12 +515,12 @@ class SysMarket @Inject() (
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
   def nodeOwnerInviteForm(adnId: String) = csrf.AddToken {
     isSuNode(adnId).async { implicit request =>
-      _nodeOwnerInviteFormSubmit(nodeOwnerInviteFormM, Ok)
+      _nodeOwnerInviteFormSubmit( sysMarketUtil.nodeOwnerInviteFormM, Ok)
     }
   }
 
   private def _nodeOwnerInviteFormSubmit(form: Form[String], rs: Status)(implicit request: MNodeReq[_]): Future[Result] = {
-    val html = nodeOwnerInvitesTpl(request.mnode, nodeOwnerInviteFormM)
+    val html = nodeOwnerInvitesTpl(request.mnode, sysMarketUtil.nodeOwnerInviteFormM)
     rs(html)
   }
 
@@ -549,7 +528,7 @@ class SysMarket @Inject() (
   def nodeOwnerInviteFormSubmit(adnId: String) = csrf.Check {
     isSuNode(adnId).async { implicit request =>
       import request.mnode
-      nodeOwnerInviteFormM.bindFromRequest().fold(
+      sysMarketUtil.nodeOwnerInviteFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
           _nodeOwnerInviteFormSubmit(formWithErrors, NotAcceptable)
@@ -609,181 +588,6 @@ class SysMarket @Inject() (
   }
 
 
-  /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(a: MScQs) = csrf.AddToken {
-    isSu().async { implicit request =>
-
-      // Ищем все рекламные карточки, подходящие под запрос.
-      // TODO Нужна устойчивая сортировка.
-      val msearch = scAdSearchUtil.qsArgs2nodeSearch(a)
-      val madsFut = mNodes.dynSearch( msearch )
-
-      val brArgsFut = madsFut.flatMap { mads =>
-        Future.traverse(mads) { mad =>
-          lkAdUtil.tiledAdBrArgs(mad)
-        }
-      }
-
-      def __nodeIdsF(x: Option[MEsUuId]): Seq[String] = {
-        x.iterator.map(_.id).toSeq
-      }
-      val producerIds = __nodeIdsF( a.search.prodId )
-      val rcvrIds     = __nodeIdsF( a.search.rcvrId )
-
-      // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
-      val adnNodeIdOpt = {
-        producerIds
-          .headOption
-          .orElse {
-            rcvrIds.headOption
-          }
-      }
-
-      val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodes.getByIdCache )
-
-      // Собираем карту размещений рекламных карточек.
-      val ad2advMapFut: Future[Map[String, Seq[MItem]]] = {
-        for {
-          mads <- madsFut
-          advs <- {
-            import slick.profile.api._
-            lazy val adIds = mads.flatMap(_.id)
-            val q0 = {
-              val statuses = MItemStatuses.advBusyIds.toSeq
-              mItems.query
-                .filter { i =>
-                  (i.nodeId inSet adIds) && (i.statusStr inSet statuses)
-                }
-            }
-            val items: Future[Seq[MItem]] = if (rcvrIds.nonEmpty) {
-              // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
-              slick.db.run {
-                q0.filter(_.rcvrIdOpt inSet rcvrIds).result
-              }
-
-            } else if (producerIds.nonEmpty) {
-              // Ищем размещения карточек для продьюсера.
-              slick.db.run {
-                q0.result
-              }
-
-            } else {
-              Future.successful(Nil)
-            }
-            items
-          }
-        } yield {
-          advs.groupBy(_.nodeId)
-        }
-      }
-
-      // Собираем ресиверов рекламных карточек.
-      val rcvrsFut: Future[Map[String, Seq[MNode]]] = if (rcvrIds.nonEmpty) {
-        // Используем только переданные ресиверы.
-        Future
-          .traverse(rcvrIds) { mNodes.getByIdCache }
-          .flatMap { rcvrOpts =>
-            val rcvrs = rcvrOpts.flatten
-            madsFut map { mads =>
-              mads.flatMap(_.id)
-                .map { adId => adId -> rcvrs }
-                .toMap
-            }
-          }
-
-      } else {
-        // Собираем всех ресиверов со всех рекламных карточек. Делаем это через биллинг, т.к. в mad только текущие ресиверы.
-        for {
-          ad2advsMap  <- ad2advMapFut
-          allRcvrs    <- {
-            val allRcvrIdsSet = ad2advsMap
-              .valuesIterator
-              .flatten
-              .flatMap(_.rcvrIdOpt)
-              .toSet
-            mNodes.multiGetCache(allRcvrIdsSet)
-          }
-
-        } yield {
-          // Список ресиверов конвертим в карту ресиверов.
-          val rcvrsMap = allRcvrs
-            .iterator
-            .map { rcvr =>
-              rcvr.id.get -> rcvr
-            }
-            .toMap
-          // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
-          ad2advsMap
-            .view
-            .mapValues { advs =>
-              advs.flatMap { adv =>
-                adv.rcvrIdOpt
-                  .flatMap(rcvrsMap.get)
-              }
-            }
-            .toMap
-        }
-      }
-
-      // Планируем рендер страницы-результата, когда все данные будут собраны.
-      for {
-        brArgss       <- brArgsFut
-        adnNodeOpt    <- adnNodeOptFut
-        rcvrs         <- rcvrsFut
-        ad2advMap     <- ad2advMapFut
-      } yield {
-        val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap, msearch)
-        Ok( showAdnNodeAdsTpl(rargs) )
-      }
-    }
-  }
-
-
-  /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
-  def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = csrf.Check {
-    isSuMad(adId).async { implicit request =>
-      // Запускаем спиливание ресивера для указанной рекламной карточки.
-      val madSavedFut = advRcvrsUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
-
-      lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
-      // Радуемся в лог.
-      rcvrIdOpt.fold {
-        LOGGER.warn(logPrefix + "Starting removing ALL rcvrs...")
-      } { _ =>
-        LOGGER.info(logPrefix + "Starting removing for single rcvr...")
-      }
-
-      // Начинаем асинхронно генерить ответ клиенту.
-      val rdrToFut: Future[Result] = RdrBackOrFut(r) {
-        val call = rcvrIdOpt.fold[Call] {
-          n2NodesUtil.madProducerId(request.mad)
-            .fold( routes.SysMarket.index() ) { prodId =>
-              routes.SysMarket.showAdnNode(prodId)
-            }
-        } { rcvrId =>
-          val adSearch = MScQs(
-            search = MAdsSearchReq(
-              rcvrId = Some( rcvrId )
-            ),
-            common = MScCommonQs.empty
-          )
-          routes.SysMarket.showAdnNodeAds(adSearch)
-        }
-        Future.successful( call )
-      }
-
-      // Дождаться завершения всех операций.
-      for {
-        rdr  <- rdrToFut
-        _    <- madSavedFut
-      } yield {
-        // Вернуть редирект с результатом работы.
-        rdr.flashing( FLASH.SUCCESS -> "Карточка убрана из выдачи." )
-      }
-    }
-  }
-
-
   /** Отобразить email-уведомление об отключении указанной рекламы. */
   def showShopEmailAdDisableMsg(adId: String) = isSuMad(adId).async { implicit request =>
     import request.mad
@@ -820,138 +624,6 @@ class SysMarket @Inject() (
       nodeId = Some("123123asdasd_-123")
     )
     Ok( emailNodeOwnerInviteTpl(request.mnode, qs) )
-  }
-
-
-  /**
-   * Выдать sys-страницу относительно указанной карточки.
-   *
-   * @param adId id рекламной карточки.
-   */
-  def showAd(adId: String) = csrf.AddToken {
-    isSuMad(adId).async { implicit request =>
-      import request.mad
-
-      // Определить узла-продьюсера
-      val producerIdOpt = n2NodesUtil.madProducerId( mad )
-      val producerOptFut = mNodes.maybeGetByIdCached( producerIdOpt )
-
-      // Собрать инфу по картинкам.
-      // TODO Тут код наверное уже не актуален. Просто подправлен тут для совместимости.
-      val imgs = List.empty[MImgEdge]
-      /*
-        mad.edges
-          .withPredicateIter( MPredicates.JdContent.Image )
-          .map { e =>
-            MImgEdge(e, MImg3(e))
-          }
-          .toSeq
-      */
-
-      // Считаем кол-во ресиверов.
-      val rcvrsCount = n2NodesUtil.receiverIds(mad)
-        .toSet
-        .size
-
-      // Вернуть результат, когда всё будет готово.
-      for {
-        producerOpt <- producerOptFut
-      } yield {
-        val rargs = MShowAdTplArgs(mad, producerOpt, imgs, producerIdOpt, rcvrsCount)
-        Ok( showAdTpl(rargs) )
-      }
-    }
-  }
-
-
-  /** Вывести результат анализа ресиверов рекламной карточки. */
-  def analyzeAdRcvrs(adId: String) = csrf.AddToken {
-    isSuMad(adId).async { implicit request =>
-      import request.mad
-      val producerId = n2NodesUtil.madProducerId(mad).get
-      val producerOptFut = mNodes.getByIdCache(producerId)
-
-      val newRcvrsMapFut = for {
-        producerOpt <- producerOptFut
-        acc2 <- advRcvrsUtil.calculateReceiversFor(mad, producerOpt)
-      } yield {
-        // Нужна только карта ресиверов. Дроп всей остальной инфы...
-        acc2.mnode.edges.out
-      }
-
-      val rcvrsMap = n2NodesUtil.receiversMap(mad)
-
-      // Достаём из кэша узлы.
-      val nodesMapFut: Future[Map[String, MNode]] = {
-        def _nodeIds(rcvrs: Seq[MEdge]): Set[String] = {
-          if (rcvrs.nonEmpty) {
-            rcvrs.iterator
-              .map(_.nodeIds)
-              .reduceLeft(_ ++ _)
-          } else {
-            Set.empty
-          }
-        }
-        val adnIds1 = _nodeIds(rcvrsMap)
-        for {
-          adns1       <- mNodes.multiGetCache(adnIds1)
-          newRcvrsMap <- newRcvrsMapFut
-          newAdns     <- {
-            val newRcvrIds = _nodeIds(newRcvrsMap)
-            mNodes.multiGetCache(newRcvrIds -- adnIds1)
-          }
-        } yield {
-          (adns1 :: newAdns :: Nil)
-            .iterator
-            .flatten
-            .zipWithIdIter[String]
-            .to( Map )
-        }
-      }
-
-      // Узнать, совпадает ли рассчетная карта ресиверов с текущей.
-      val rcvrsMapOkFut = for (newRcvrsMap <- newRcvrsMapFut) yield {
-        advRcvrsUtil.isRcvrsMapEquals(newRcvrsMap, rcvrsMap)
-      }
-
-      for {
-        newRcvrsMap <- newRcvrsMapFut
-        producerOpt <- producerOptFut
-        nodesMap    <- nodesMapFut
-        rcvrsMapOk  <- rcvrsMapOkFut
-      } yield {
-        val rargs = MShowAdRcvrsTplArgs( mad, newRcvrsMap, nodesMap, producerOpt, rcvrsMap, rcvrsMapOk )
-        Ok( showAdRcvrsTpl(rargs) )
-      }
-    }
-  }
-
-
-  /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
-  def resetReceivers(adId: String, r: Option[String]) = csrf.Check {
-    isSuMad(adId).async { implicit request =>
-      for {
-        _ <- advRcvrsUtil.resetReceiversFor(request.mad)
-      } yield {
-        // Когда всё будет сделано, отредиректить юзера назад на страницу ресиверов.
-        RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
-          .flashing(FLASH.SUCCESS -> s"Произведён сброс ресиверов узла-карточки.")
-      }
-    }
-  }
-
-
-  /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
-    * Это действие можно откатить через resetReceivers. */
-  def cleanReceivers(adId: String, r: Option[String]) = csrf.Check {
-    isSuMad(adId).async { implicit request =>
-      for {
-        _ <- advRcvrsUtil.cleanReceiverFor(request.mad)
-      } yield {
-        RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
-          .flashing(FLASH.SUCCESS -> "Из узла вычищены все ребра ресиверов. Биллинг не затрагивался.")
-      }
-    }
   }
 
 

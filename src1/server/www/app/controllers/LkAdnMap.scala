@@ -1,7 +1,7 @@
 package controllers
 
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.adn.mapf.{MLamConf, MLamForm, MLamFormInit}
 import io.suggest.adv.geo.OnGeoCapturing
 import io.suggest.es.model.MEsUuId
@@ -26,11 +26,9 @@ import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.billing.Bill2Util
-import util.mdr.MdrUtil
 import util.sec.CspUtil
 import views.html.lk.adn.mapf._
 import io.suggest.scalaz.ScalazUtil.Implicits._
-import util.cdn.CdnUtil
 
 import scala.concurrent.Future
 
@@ -41,30 +39,29 @@ import scala.concurrent.Future
   * Description: Контроллер личного кабинета для связывания узла с точкой/местом на карте.
   * На карте в точках размещаются узлы ADN, и это делается за денежки.
   */
-@Singleton
-class LkAdnMap @Inject() (
-                           advFormUtil                   : AdvFormUtil,
-                           lkAdnMapFormUtil              : LkAdnMapFormUtil,
-                           lkAdnMapBillUtil              : LkAdnMapBillUtil,
-                           bill2Util                     : Bill2Util,
-                           advGeoLocUtil                 : AdvGeoLocUtil,
-                           mdrUtil                       : MdrUtil,
-                           advGeoRcvrsUtil               : AdvGeoRcvrsUtil,
-                           reqUtil                       : ReqUtil,
-                           lkGeoCtlUtil                  : LkGeoCtlUtil,
-                           cspUtil                       : CspUtil,
-                           isNodeAdmin                   : IsNodeAdmin,
-                           cdnUtil                       : CdnUtil,
-                           sioControllerApi              : SioControllerApi,
-                           mCommonDi                     : ICommonDi,
-                         )
+final class LkAdnMap @Inject() (
+                                 sioControllerApi              : SioControllerApi,
+                                 mCommonDi                     : ICommonDi,
+                               )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
-  import LOGGER._
   import mCommonDi._
-  import cspUtil.Implicits._
+  import mCommonDi.current.injector
+
+  private lazy val advFormUtil = injector.instanceOf[AdvFormUtil]
+  private lazy val lkAdnMapFormUtil = injector.instanceOf[LkAdnMapFormUtil]
+  private lazy val lkAdnMapBillUtil = injector.instanceOf[LkAdnMapBillUtil]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val advGeoLocUtil = injector.instanceOf[AdvGeoLocUtil]
+  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val lkGeoCtlUtil = injector.instanceOf[LkGeoCtlUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+
+  import sioControllerApi._
+
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */
   private def formPostBP = reqUtil.picklingBodyParser[MLamForm]
@@ -146,6 +143,8 @@ class LkAdnMap @Inject() (
         PickleUtil.pickleConv[MLamFormInit, ConvCodecs.Base64, String](init)
       }
 
+      import cspUtil.Implicits._
+
       // Собрать наконец HTTP-ответ
       for {
         ctx             <- ctxFut
@@ -178,7 +177,7 @@ class LkAdnMap @Inject() (
         // Забиндить не удалось, вернуть страницу с формой назад.
         {violations =>
           val violsStr = violations.iterator.mkString(", ")
-          debug(s"$logPrefix: Unable to bind form:\n $violsStr")
+          LOGGER.debug(s"$logPrefix: Unable to bind form:\n $violsStr")
           errorHandler.onClientError(request, NOT_ACCEPTABLE, violsStr)
         },
 

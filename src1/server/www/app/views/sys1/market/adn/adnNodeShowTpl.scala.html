@@ -141,12 +141,12 @@
   @lkBlock("Управление") {
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds( MScQs(search = MAdsSearchReq(prodId = Some(mnode.id.get))) ),
+      href = routes.SysAd.showAdnNodeAds( MScQs(search = MAdsSearchReq(prodId = Some(mnode.id.get))) ),
       paddingPx = 28
     ) { Собственные<br/>рекламные<br/>карточки }
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds( MScQs(search = MAdsSearchReq(rcvrId = Some(mnode.id.get))) ),
+      href = routes.SysAd.showAdnNodeAds( MScQs(search = MAdsSearchReq(rcvrId = Some(mnode.id.get))) ),
       paddingPx  = 28
     ) { Рекламные<br/>карточки<br/>в выдаче }
 
@@ -156,7 +156,7 @@
     ) { Инвайты на<br/>управление<br/>узлом }
 
     @btn(
-      href = routes.SysMarket.installDfltMads(mnode.id.get),
+      href = routes.SysAd.installDfltMads(mnode.id.get),
       paddingPx = 28
     ) { Установка<br/>дефолтовых<br/>карточек }
 

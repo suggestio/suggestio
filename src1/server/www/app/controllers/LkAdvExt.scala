@@ -39,10 +39,10 @@ import scala.concurrent.Future
  * Description: Этот контроллер руководит взаимодейтсвием пользователя с системой размещения карточек в соц.сетях и
  * иных сервисах, занимающихся PR-деятельстью.
  */
-class LkAdvExt @Inject() (
-                           sioControllerApi                : SioControllerApi,
-                           mCommonDi                       : ICommonDi
-                         )
+final class LkAdvExt @Inject() (
+                                 sioControllerApi                : SioControllerApi,
+                                 mCommonDi                       : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 

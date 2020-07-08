@@ -36,30 +36,32 @@ import scala.util.Success
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 19.06.14 10:45
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
+ * Отвечает за модерацию и в личном кабинете, а не только в /sys/ .
  */
 @Singleton
 class SysMdr @Inject() (
-                         esModel                  : EsModel,
-                         jdAdUtil                 : JdAdUtil,
-                         mNodes                   : MNodes,
-                         reqUtil                  : ReqUtil,
-                         isSuNode                 : IsSuNode,
-                         isSu                     : IsSu,
-                         mdrUtil                  : MdrUtil,
-                         isNodeAdmin              : IsNodeAdmin,
-                         canMdrResolute           : CanMdrResolute,
-                         nodesUtil                : NodesUtil,
-                         isAuth                   : IsAuth,
                          sioControllerApi         : SioControllerApi,
                          mCommonDi                : ICommonDi,
                        )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val isSuNode = injector.instanceOf[IsSuNode]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val mdrUtil = injector.instanceOf[MdrUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val canMdrResolute = injector.instanceOf[CanMdrResolute]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+
   import sioControllerApi._
   import mCommonDi._
-  import slick.profile.api._
-  import esModel.api._
 
 
   /** react-форма для осуществления модерации в /sys/.
@@ -183,6 +185,8 @@ class SysMdr @Inject() (
 
       var errNodeIdsAcc = List.empty[String]
 
+      import esModel.api._
+
       /** Цикл поиска id узла, который требуется промодерировать.
         * Появился для отработки ситуации, когда база нарушена, и узел из nodeid уже удалён. */
       def _findBillNode4MdrOrNseeFut(args0: MdrSearchArgs = args): Future[MNode] = {
@@ -267,6 +271,8 @@ class SysMdr @Inject() (
           }
         }
       }
+
+      import slick.profile.api._
 
       // Надо оценить итоговую длину очереди на модерацию.
       val mdrQueueReportFut = for {

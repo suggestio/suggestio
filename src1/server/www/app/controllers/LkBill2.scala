@@ -54,39 +54,42 @@ import scala.concurrent.Future
   * Description: Контроллер биллинга второго поколения в личном кабинете.
   * Прошлый контроллер назывался MarketLkBilling.
   */
-@Singleton
-class LkBill2 @Inject() (
-                          esModel                     : EsModel,
-                          mNodes                      : MNodes,
-                          tfDailyUtil                 : TfDailyUtil,
-                          mCalendars                  : MCalendars,
-                          galleryUtil                 : GalleryUtil,
-                          advUtil                     : AdvUtil,
-                          reqUtil                     : ReqUtil,
-                          isAuth                      : IsAuth,
-                          nodesUtil                   : NodesUtil,
-                          canViewOrder                : CanViewOrder,
-                          canAccessItem               : CanAccessItem,
-                          canViewNodeAdvInfo          : CanViewNodeAdvInfo,
-                          isNodeAdmin                 : IsNodeAdmin,
-                          advGeoRcvrsUtil             : AdvGeoRcvrsUtil,
-                          jdAdUtil                    : JdAdUtil,
-                          mItems                      : MItems,
-                          mdrUtil                     : MdrUtil,
-                          bill2Util                   : Bill2Util,
-                          mOrders                     : MOrders,
-                          sioControllerApi            : SioControllerApi,
-                          mCommonDi                   : ICommonDi,
-                        )
+final class LkBill2 @Inject() (
+                                sioControllerApi            : SioControllerApi,
+                                mCommonDi                   : ICommonDi,
+                              )
   extends MacroLogsImpl
 {
 
-  import sioControllerApi._
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
+  private lazy val mCalendars = injector.instanceOf[MCalendars]
+  private lazy val galleryUtil = injector.instanceOf[GalleryUtil]
+  private lazy val advUtil = injector.instanceOf[AdvUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val canViewOrder = injector.instanceOf[CanViewOrder]
+  private lazy val canAccessItem = injector.instanceOf[CanAccessItem]
+  private lazy val canViewNodeAdvInfo = injector.instanceOf[CanViewNodeAdvInfo]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
+  private lazy val jdAdUtil = injector.instanceOf[JdAdUtil]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val mdrUtil = injector.instanceOf[MdrUtil]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+
   import mCommonDi._
-  import esModel.api._
+  import sioControllerApi._
+
 
   private def _dailyTfArgsFut(mnode: MNode, madOpt: Option[MNode] = None): Future[Option[MTfDailyTplArgs]] = {
     if (mnode.extras.adn.exists(_.isReceiver)) {
+      import esModel.api._
       for {
         // Получить данные по тарифу.
         tfDaily   <- tfDailyUtil.nodeTf( mnode )
@@ -561,6 +564,8 @@ class LkBill2 @Inject() (
           }
         }
     }
+
+    import esModel.api._
 
     // Сборка всех искомых узлов (ресиверы, карточки) идёт одним multi-get:
     val allNodesMapFut = for {
