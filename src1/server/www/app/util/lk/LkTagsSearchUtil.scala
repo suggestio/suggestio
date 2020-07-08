@@ -19,12 +19,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 29.03.16 16:15
   * Description: Утиль для взаимодействия с тегами, живующими внутри эджей.
   */
-@Singleton
-class LkTagsSearchUtil @Inject() (
-                                   esModel                    : EsModel,
-                                   mNodes                     : MNodes,
-                                   implicit private val ec    : ExecutionContext,
-                                 ) {
+final class LkTagsSearchUtil @Inject() (
+                                         esModel                    : EsModel,
+                                         mNodes                     : MNodes,
+                                         implicit private val ec    : ExecutionContext,
+                                       ) {
 
   import esModel.api._
 
@@ -95,9 +94,4 @@ class LkTagsSearchUtil @Inject() (
       .flatMap(tagsSearchHint)
   }
 
-}
-
-
-trait ITagSearchUtilDi {
-  def tagSearchUtil: LkTagsSearchUtil
 }

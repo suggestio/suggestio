@@ -1,7 +1,7 @@
 package util.xplay
 
 import io.suggest.sec.m.{SecretKeyInit, SecretKeyInitializer}
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.adv.MExtAdvQs
 import models.adv.ext.act.ActorPathQs
 import models.blk.OneAdQsArgs
@@ -24,7 +24,6 @@ import scala.concurrent.Future
   * Сингтон, т.к. дока требует всем быть Singleton'ами.
   * https://www.playframework.com/documentation/2.6.x/ScalaDependencyInjection#Stopping/cleaning-up
   */
-@Singleton
 class SecretModelsInit @Inject() (
                                    secretKeyInitializer: SecretKeyInitializer,
                                    applicationLifecycle: ApplicationLifecycle,

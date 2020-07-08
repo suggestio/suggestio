@@ -41,7 +41,6 @@ class Sc @Inject() (
                      override val statCookiesUtil    : StatCookiesUtil,
                      override val mNodes             : MNodes,
                      override val scUtil             : ShowcaseUtil,
-                     override val adRenderUtil       : AdRenderUtil,
                      override val cdnUtil            : CdnUtil,
                      override val n2NodesUtil        : N2NodesUtil,
                      override val cspUtil            : CspUtil,
@@ -79,6 +78,9 @@ class Sc @Inject() (
   with ScSearch
   with ScUniApi
 {
+
+  import mCommonDi.current.injector
+  override lazy val adRenderUtil = injector.instanceOf[AdRenderUtil]
 
   /** Экшен для доступа к ServiceWorker-скрипту выдачи. */
   def swJs(path: String, asset: Assets.Asset) = assets.versioned(path, asset)

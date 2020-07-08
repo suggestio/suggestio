@@ -2,16 +2,15 @@ package util.adn.mapf
 
 import java.time.{LocalDate, OffsetDateTime}
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.CircleGs
-import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.util.effect.WT
@@ -22,7 +21,7 @@ import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import util.adv.AdvUtil
-import util.billing.{Bill2Conf, BillDebugUtil, TfDailyUtil}
+import util.billing.{Bill2Conf, BillDebugUtil}
 import scala.concurrent.Future
 
 /**
@@ -31,21 +30,21 @@ import scala.concurrent.Future
   * Created: 11.11.16 22:12
   * Description: Биллинг размещения узлов просто на карте.
   */
-@Singleton
-class LkAdnMapBillUtil @Inject() (
-                                   bill2Conf                  : Bill2Conf,
-                                   billDebugUtil              : BillDebugUtil,
-                                   mItems                     : MItems,
-                                   mDebugs                    : MDebugs,
-                                   advUtil                    : AdvUtil,
-                                   tfDailyUtil                : TfDailyUtil,
-                                   protected val mCommonDi    : ICommonDi
-                                 )
+final class LkAdnMapBillUtil @Inject() (
+                                         // addToOrder(): DBIOAction[] - тип требует val'а здесь.
+                                         protected val mCommonDi                  : ICommonDi
+                                       )
   extends MacroLogsImpl
 {
+  import mCommonDi.current.injector
 
-  import mCommonDi._
+  private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
+  private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
+  private lazy val advUtil = injector.instanceOf[AdvUtil]
+
+  import mCommonDi.slick
   import slick.profile.api._
+
 
   /** id узла-источника тарифа для рассчёта всего остального. */
   def TF_NODE_ID: String = bill2Conf.CBCA_NODE_ID

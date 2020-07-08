@@ -2,16 +2,15 @@ package util.img
 
 import java.awt.image.BufferedImage
 import java.io.File
+
 import javax.imageio.{ImageIO, ImageReader}
 import javax.imageio.stream.FileImageInputStream
 import javax.inject.Inject
-
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import org.im4java.core.Info
-import util.up.FileUtil
-import scala.concurrent.blocking
 
+import scala.concurrent.blocking
 import scala.jdk.CollectionConverters._
 
 /**
@@ -20,11 +19,7 @@ import scala.jdk.CollectionConverters._
  * Created: 29.09.15 11:16
  * Description: Утиль для работы с файлами изображений.
  */
-class ImgFileUtil @Inject()(
-                             fileUtil: FileUtil
-                           )
-  extends MacroLogsImpl
-{
+final class ImgFileUtil extends MacroLogsImplLazy {
 
   def orUnknown(mimeOpt: Option[String]): String = {
     mimeOpt getOrElse "image/unknown"

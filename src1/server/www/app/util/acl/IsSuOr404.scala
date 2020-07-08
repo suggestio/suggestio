@@ -14,7 +14,6 @@ import scala.concurrent.Future
  * Created: 15.10.15 15:56
  * Description: Трейты-аддоны для контроллеров для IsSuperuser or 404.
  */
-@Singleton
 class IsSuOr404Ctl @Inject() (
                                val isSu   : IsSu,
                                mCommonDi  : ICommonDi

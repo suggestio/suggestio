@@ -40,18 +40,21 @@ import scala.concurrent.duration._
  */
 @Singleton
 class MImgs3 @Inject() (
-                         esModel                   : EsModel,
-                         iMediaStorages            : IMediaStorages,
-                         mNodes                    : MNodes,
-                         fileUtil                  : FileUtil,
-                         streamsUtil               : StreamsUtil,
-                         cacheApiUtil              : CacheApiUtil,
-                         mLocalImgs                : MLocalImgs,
                          override val mCommonDi    : ICommonDi,
                        )
   extends MAnyImgsT[MImgT]
   with MacroLogsImplLazy
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val iMediaStorages = injector.instanceOf[IMediaStorages]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val fileUtil = injector.instanceOf[FileUtil]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val cacheApiUtil = injector.instanceOf[CacheApiUtil]
+  private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
 
   import mCommonDi._
   import esModel.api._

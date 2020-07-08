@@ -2,7 +2,7 @@ package util.adv
 
 import java.time.LocalDate
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import scalaz._
 import scalaz.syntax.apply._
 import io.suggest.adv.AdvConstants
@@ -17,7 +17,8 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import models.mctx.Context
 import models.req.{IReq, IReqHdr}
 import play.api.data.Forms._
-import play.api.data.{Form, _}
+import play.api.data._
+import play.api.inject.Injector
 import util.TplDataFormatUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,10 +29,11 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 03.12.15 20:39
  * Description: Общая утиль для маппингов разных форм размещения рекламной карточки.
  */
-@Singleton
-class AdvFormUtil @Inject() (
-                              implicit private val ec: ExecutionContext
-                            ) {
+final class AdvFormUtil @Inject() (
+                                    injector: Injector,
+                                  ) {
+
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {

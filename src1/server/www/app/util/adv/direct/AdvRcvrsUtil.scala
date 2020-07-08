@@ -3,7 +3,7 @@ package util.adv.direct
 import java.time.OffsetDateTime
 
 import io.suggest.adn.MAdnRights
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -31,23 +31,22 @@ import scala.concurrent.{ExecutionContext, Future}
 
 // TODO Всё круто, но этот код потерял актуальность с момента его написания, т.к. всё изменилось. Надо заново отладить всё тут.
 
-@Singleton
 class AdvRcvrsUtil @Inject()(
-                              esModel                 : EsModel,
-                              mItems                  : MItems,
-                              mNodes                  : MNodes,
-                              advBuilderFactory       : AdvBuilderFactory,
-                              n2NodesUtil             : N2NodesUtil,
-                              advBuilderUtil          : AdvBuilderUtil,
                               mCommonDi               : ICommonDi
                             )
   extends MacroLogsImpl
 {
 
-  import LOGGER._
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
+  private lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  private lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+
   import mCommonDi._
-  import slick.profile.api._
-  import esModel.api._
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
@@ -84,6 +83,7 @@ class AdvRcvrsUtil @Inject()(
       .clearNode(full = true)  // С чистого листа, т.к. у нас полный пересчёт
 
     // TODO Opt Тут без stream(), т.к. я пока не осилил. А надо бы...
+    import slick.profile.api._
     val adItemsFut = slick.db.run {
       val itypes = b0.supportedItemTypesStrSet
       mItems.query
@@ -142,6 +142,7 @@ class AdvRcvrsUtil @Inject()(
     * @return Boolean, который обычно не имеет смысла.
     */
   def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
+    import esModel.api._
     for {
       mnodeOpt <- mNodes.getByIdCache(adId)
       mnode = mnodeOpt.get
@@ -175,6 +176,7 @@ class AdvRcvrsUtil @Inject()(
     val b0 = advBuilderFactory.builder( Future.successful(acc0), now )
 
     // Собрать db-эшен для получения списка затрагиваемых размещений:
+    import slick.profile.api._
     val onlineItemsAction = mItems.query
       .filter { i =>
         (i.nodeId === adId) &&
@@ -250,6 +252,7 @@ class AdvRcvrsUtil @Inject()(
     val search = new MNodeSearch {
       override def nodeTypes = MNodeTypes.Ad :: Nil
     }
+    import esModel.api._
     mNodes.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
       // Запустить пересчет ресиверов с сохранением.
       val tub2Fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
@@ -283,6 +286,7 @@ class AdvRcvrsUtil @Inject()(
     * @return Новый экземпляр карточки.
     */
   def cleanReceiverFor(mad0: MNode): Future[MNode] = {
+    import esModel.api._
     mNodes.tryUpdate(mad0)(
       MNode.edges.modify { edges0 =>
         MNodeEdges.out.set(
@@ -341,6 +345,7 @@ class AdvRcvrsUtil @Inject()(
 
   /** Поиск под-ресиверов у указанного ресивера. */
   def findSubRcvrsOf(parentIds: String*): Future[Seq[MNode]] = {
+    import esModel.api._
     val search = subRcvrsSearch(parentIds = parentIds)
     mNodes.dynSearch(search)
   }

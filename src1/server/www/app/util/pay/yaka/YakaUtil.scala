@@ -3,7 +3,7 @@ package util.pay.yaka
 import models.mpay.yaka._
 import play.api.data._
 import Forms._
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.pay.{IMPaySystem, MPaySystems}
@@ -22,7 +22,6 @@ import play.api.inject.Injector
   * Created: 09.02.17 16:26
   * Description: Разная утиль для взаимодействия с яндекс-кассой, чтобы не перегружать контроллер лишним кодом.
   */
-@Singleton
 class YakaUtil @Inject() (
                            injector: Injector
                          )
@@ -70,7 +69,7 @@ class YakaUtil @Inject() (
 
 
   /** Доступные для работы конфигурации яндекс-кассы. */
-  val PROFILES: Map[MTestProdMode, IYakaProfile] = {
+  lazy val PROFILES: Map[MTestProdMode, IYakaProfile] = {
     val iter = for {
       confSeq <- injector.instanceOf[Configuration]
         .getOptional[Seq[Configuration]](CONF_PREFIX + "profiles")

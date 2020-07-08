@@ -1,7 +1,7 @@
 package util.adr
 
 import java.io.File
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.Inject
 
 import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
@@ -13,7 +13,6 @@ import models.mproj.ICommonDi
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
 import util.adv.AdvUtil
-import util.img.IImgMaker
 import util.xplay.PlayUtil
 
 import scala.concurrent.Future
@@ -24,16 +23,16 @@ import scala.concurrent.Future
  * Created: 11.03.15 16:52
  * Description: Содержимое этого модуля выросло внутри WkHtmlUtil.
  */
-@Singleton
-class AdRenderUtil @Inject() (
-                               @Named("blk") blkImgMaker : IImgMaker,
-                               playUtil                  : PlayUtil,
-                               advUtil                   : AdvUtil,
-                               mCommonDi                 : ICommonDi
-                             ) {
+final class AdRenderUtil @Inject() (
+                                     mCommonDi                 : ICommonDi
+                                   ) {
 
   import mCommonDi._
-  import current.injector
+  import mCommonDi.current.injector
+
+  private lazy val playUtil = injector.instanceOf[PlayUtil]
+  private lazy val advUtil = injector.instanceOf[AdvUtil]
+
 
   private def _wkHtmlFactory = (
     injector.instanceOf[WkHtmlRrrDiFactory],
@@ -45,7 +44,7 @@ class AdRenderUtil @Inject() (
   )
 
   /** Используемый по умолчанию рендерер. Влияет на дефолтовый рендеринг карточки. */
-  val (_RRR_FACTORY, _RRR_UTIL) = {
+  lazy val (_RRR_FACTORY, _RRR_UTIL) = {
     val ck = "ad.render.renderer.dflt"
     configuration.getOptional[String](ck)
       .fold [(IAdRrrDiFactory, IAdRrrUtil)] (_wkHtmlFactory) { raw =>

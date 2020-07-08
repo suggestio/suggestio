@@ -2,7 +2,7 @@ package util.billing
 
 import java.time.{LocalDate, OffsetDateTime}
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.bin.ConvCodecs
 import io.suggest.di.ISlickDbConfig
@@ -20,6 +20,7 @@ import io.suggest.util.{CompressUtilJvm, JmxBase}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.db.slick.DatabaseConfigProvider
+import play.api.inject.Injector
 
 import scala.concurrent.ExecutionContext
 
@@ -30,19 +31,21 @@ import scala.concurrent.ExecutionContext
   * Description: Утиль для взаимодействия с отладкой биллинга.
   * Исходный Bill2Util сильно растолстел, поэтому debug-утиль будет размножаться тут.
   */
-@Singleton
-class BillDebugUtil @Inject() (
-                                mDebugs          : MDebugs,
-                                mItems           : MItems,
-                                bill2Util        : Bill2Util,
-                                mOrders          : MOrders,
-                                mBalances        : MBalances,
-                                mTxns            : MTxns,
-                                compressUtilJvm  : CompressUtilJvm,
-                                val mCommonDi    : ICommonDi
-                              )
+final class BillDebugUtil @Inject() (
+                                      protected val mCommonDi    : ICommonDi,
+                                    )
   extends MacroLogsImpl
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val mDebugs = injector.instanceOf[MDebugs]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+  private lazy val mBalances = injector.instanceOf[MBalances]
+  private lazy val mTxns = injector.instanceOf[MTxns]
+  private lazy val compressUtilJvm = injector.instanceOf[CompressUtilJvm]
 
   import mCommonDi.ec
   import mCommonDi.slick.profile.api._
@@ -360,9 +363,7 @@ trait BillDebugUtilJmxMBean {
 }
 
 class BillDebugUtilJmx @Inject() (
-                                   billDebugUtil                      : BillDebugUtil,
-                                   override val _slickConfigProvider  : DatabaseConfigProvider,
-                                   implicit private val ec            : ExecutionContext,
+                                   injector: Injector,
                                  )
   extends JmxBase
   with BillDebugUtilJmxMBean
@@ -370,6 +371,10 @@ class BillDebugUtilJmx @Inject() (
   with MacroLogsImpl
 {
   import io.suggest.util.JmxBase._
+
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private def billDebugUtil = injector.instanceOf[BillDebugUtil]
+  override lazy val _slickConfigProvider = injector.instanceOf[DatabaseConfigProvider]
 
   override def _jmxType = Types.BILL
 

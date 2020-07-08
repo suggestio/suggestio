@@ -21,11 +21,10 @@ import play.api.libs.json._
 @Singleton
 class CspUtil @Inject() (
                           cdnUtil        : CdnUtil,
-                          configuration  : Configuration,
                           contextUtil    : ContextUtil
                         ) {
 
-  private val IFRAMES_SRCS: Set[String] = {
+  private def IFRAMES_SRCS: Set[String] = {
     // По идее, proto нужен только на dev, где всё по http. На prod будет https автоматом, т.к. там он везде.
     Set[String](
       Csp.Sources.BLOB,
@@ -176,10 +175,4 @@ class CspUtil @Inject() (
 
   }
 
-}
-
-
-/** Интерфейс поля с DI-инстансом [[CspUtil]]. */
-trait ICspUtilDi {
-  val cspUtil: CspUtil
 }

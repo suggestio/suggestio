@@ -23,7 +23,6 @@ import scala.concurrent.Future
   * Created: 31.03.16 21:35
   * Description: Утиль для AdvBuilder'а.
   */
-@Singleton
 class AdvBuilderUtil @Inject() (
                                  mItems           : MItems,
                                  geoTagsUtil      : GeoTagsUtil,

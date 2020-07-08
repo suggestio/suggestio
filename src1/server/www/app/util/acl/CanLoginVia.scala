@@ -22,7 +22,6 @@ import scala.concurrent.Future
   * Created: 22.02.19 21:18
   * Description: ACL поддержки внешнего логина.
   */
-@Singleton
 class CanLoginVia @Inject()(
                              aclUtil        : AclUtil,
                              reqUtil        : ReqUtil,

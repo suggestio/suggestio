@@ -18,7 +18,6 @@ import play.api.mvc._
   *
   * СЕССИЯ ИГНОРИРУЕТСЯ, потому что кукис может быть не передан на ту ноду, до которой открыт канал.
   */
-@Singleton
 class CanOpenWsChannel @Inject()(
                                   mSioUsers                  : MSioUsers,
                                   mCtxIds                    : MCtxIds

@@ -229,7 +229,7 @@ final class MNodes @Inject() (
 
 
 /** Класс-реализация модели узла графа N2. */
-case class MNode(
+final case class MNode(
   common                      : MNodeCommon,
   meta                        : MMeta           = MMeta(),
   extras                      : MNodeExtras     = MNodeExtras.empty,

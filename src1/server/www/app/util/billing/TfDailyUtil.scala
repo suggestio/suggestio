@@ -30,6 +30,7 @@ import scalaz._
 import scalaz.syntax.apply._
 import scalaz.std.option._
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -485,14 +486,16 @@ trait TfDailyUtilJmxMBean {
 }
 
 final class TfDailyUtilJmx @Inject()(
-                                      tfDailyUtil               : TfDailyUtil,
-                                      implicit private val ec   : ExecutionContext,
+                                      injector: Injector,
                                     )
   extends JmxBase
   with TfDailyUtilJmxMBean
   with MacroLogsDyn
 {
   import JmxBase._
+
+  private def tfDailyUtil = injector.instanceOf[TfDailyUtil]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   override def _jmxType = Types.BILL
 

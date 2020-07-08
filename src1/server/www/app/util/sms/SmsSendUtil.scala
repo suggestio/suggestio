@@ -1,7 +1,7 @@
 package util.sms
 
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.Configuration
 import play.api.inject.Injector
@@ -19,13 +19,14 @@ import japgolly.univeq._
   * Created: 31.05.19 15:08
   * Description: Фасад для отправки смс.
   */
-@Singleton
-class SmsSendUtil @Inject()(
-                             injector                   : Injector,
-                             implicit private val ec    : ExecutionContext,
-                           )
+final class SmsSendUtil @Inject()(
+                                   injector                   : Injector,
+                                 )
   extends MacroLogsImpl
 {
+
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Список классов смс-клиентов для разных сервисов. */
   lazy val SMS_CLIENT_CLASSES = {

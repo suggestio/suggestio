@@ -17,7 +17,6 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-@Singleton
 class MaybeAuthMaybeNode @Inject() (
                                      mNodes: MNodes,
                                      esModel: EsModel,

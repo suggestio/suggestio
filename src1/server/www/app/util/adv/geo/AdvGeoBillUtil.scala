@@ -4,7 +4,6 @@ import java.time.{LocalDate, OffsetDateTime}
 
 import javax.inject.Inject
 import io.suggest.adv.geo.MFormS
-import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
@@ -37,22 +36,24 @@ import scala.concurrent.Future
   *
   * Через год сюда приехал биллинг ресиверов в попапах.
   */
-class AdvGeoBillUtil @Inject() (
-                                 esModel                             : EsModel,
-                                 bill2Conf                           : Bill2Conf,
-                                 billDebugUtil                       : BillDebugUtil,
-                                 advUtil                             : AdvUtil,
-                                 nodesUtil                           : NodesUtil,
-                                 mNodes                              : MNodes,
-                                 protected val mItems                : MItems,
-                                 protected val mCommonDi             : ICommonDi
-                               )
+final class AdvGeoBillUtil @Inject() (
+                                       protected val mCommonDi             : ICommonDi
+                                     )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
+  private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
+  private lazy val advUtil = injector.instanceOf[AdvUtil]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  protected lazy val mItems = injector.instanceOf[MItems]
+
   import mCommonDi._
   import slick.profile.api._
-  import esModel.api._
 
 
   /**
@@ -91,6 +92,7 @@ class AdvGeoBillUtil @Inject() (
       Future.successful( freeAbc )
 
     } else {
+      import esModel.api._
 
       for {
         freeNodeIds <- freeAdvNodeIds(
@@ -493,21 +495,6 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
-
-  /** Листенер промежуточных шагов и данных в Calc. */
-  private trait ICalcExecListener {
-    /** Listener предупреждается, что сейчас будет n item'ов с одинаковой базовой стоимостью. */
-    def willCalcDaysAdvPriceForNItems(itemsCount: Int): Unit = {}
-    def handleGeoOms(radiusMOpt: Option[Int], allDaysPriceBase: MPrice, omsMult: Double, geoMult: Double, geoPrice: MPrice): Unit = {}
-    def handleGeoTags(radiusMOpt: Option[Int], allDaysPriceBase: MPrice, geoMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}
-
-    def handleRcvrOms(rcvrKey: RcvrKey, rcvrId: String, allDaysPriceBase: MPrice, omsMult: Double, totalPrice: MPrice): Unit = {}
-    def handleRcvrTags(rcvrId: String, priceMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}
-
-    def handleAllDone(): Unit = {}
-  }
-
-
   /** Базовый множитель цены для размещения на главном экране (ресивера, карты). */
   private def ON_MAIN_SCREEN_MULT = 3.0
 
@@ -519,6 +506,8 @@ class AdvGeoBillUtil @Inject() (
       Future.successful( Set.empty[String] )
 
     } { personId =>
+      import esModel.api._
+
       for {
         ownedNodeIdsSeq <- mNodes.dynSearchIds {
           nodesUtil.personNodesSearch(personId)

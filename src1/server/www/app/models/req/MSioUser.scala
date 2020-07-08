@@ -17,6 +17,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
 import play.api.db.slick.DatabaseConfigProvider
+import play.api.inject.Injector
 import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.mdr.MdrUtil
@@ -113,23 +114,24 @@ class MSioUserEmpty extends ISioUser {
 sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
 
   // DI-инжектируемые контейнер со статическими моделями.
-  protected val msuStatics: MsuStatic
-  import msuStatics._
-  import slick.profile.api._
-  import esModel.api._
+  protected def msuStatics: MsuStatic
 
 
   override def isAuth = personIdOpt.isDefined
 
   override def isSuper: Boolean = {
     personIdOpt.exists { personId =>
-      mSuperUsers.isSuperuserId(personId)
+      msuStatics.mSuperUsers.isSuperuserId(personId)
     }
   }
 
   override def personNodeOptFut: Future[Option[MNode]] = {
     FutureUtil.optFut2futOpt( personIdOpt ) { personId =>
-      val optFut0 = mNodes
+      val s = msuStatics
+      import s.esModel.api._
+      implicit val ec = s.ec
+
+      val optFut0 = s.mNodes
         .getByIdCache(personId)
         .withNodeType(MNodeTypes.Person)
       for (resOpt <- optFut0 if resOpt.isEmpty) {
@@ -141,32 +143,42 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   }
 
   override def personNodeFut: Future[MNode] = {
+    val s = msuStatics
+    implicit val ec = s.ec
     personNodeOptFut
       .map(_.get)
   }
 
   override def contractIdOptFut: Future[Option[Gid_t]] = {
+    val s = msuStatics
+    implicit val ec = s.ec
     for (mnodeOpt <- personNodeOptFut) yield
       mnodeOpt.flatMap(_.billing.contractId)
   }
 
   override def mContractOptFut: Future[Option[MContract]] = {
+    val s = msuStatics
+    implicit val ec = s.ec
+
     contractIdOptFut.flatMap { contractIdOpt =>
       FutureUtil.optFut2futOpt( contractIdOpt ) { contractId =>
-        val action = mContracts.getById(contractId)
-        slick.db.run(action)
+        val action = s.mContracts.getById(contractId)
+        s.slick.db.run(action)
       }
     }
   }
 
   override def balancesFut: Future[Seq[MBalance]] = {
+    val s = msuStatics
+    implicit val ec = s.ec
+
     // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
     // Если баланса не найдено, то надо его сочинить в уме. Реальный баланс будет создан во время фактической оплаты.
     for {
       contractIdOpt <- contractIdOptFut
       balances <- contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
-        val action = mBalances.findByContractId(contractId)
-        slick.db.run(action)
+        val action = s.mBalances.findByContractId(contractId)
+        s.slick.db.run(action)
       }
     } yield {
       if (balances.nonEmpty) {
@@ -183,6 +195,10 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
     val _balancesFut = balancesFut
     val _mdrCountOptFut = lkMdrCountOptFut
     val _cartItemsCountOptFut = cartItemsCountOptFut
+
+    val s = msuStatics
+    implicit val ec = s.ec
+
     for {
       balances            <- _balancesFut
       mdrCountOpt         <- _mdrCountOptFut
@@ -197,18 +213,22 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   }
 
   override def lkMdrCountOptFut: Future[Option[Int]] = {
+    val s = msuStatics
+    implicit val ec = s.ec
+
     // Нужно собрать всех ресиверов, которыми владеет текущий юзер.
     FutureUtil.optFut2futOpt( personIdOpt ) { personId =>
       val futOrNsee = for {
         // Собрать все id дочерних узлов текущего юзера.
-        childIds <- nodesUtil.collectChildIds(
+        childIds <- s.nodesUtil.collectChildIds(
           parentNodeIds = Set(personId),
-          maxLevels     = mdrUtil.maxLevelsDeepFor(isPerson = true)
+          maxLevels     = s.mdrUtil.maxLevelsDeepFor(isPerson = true)
         )
         if childIds.nonEmpty
         // Запустить подсчёт кол-ва узлов по биллингу:
-        paidNodesSql = mdrUtil.findPaidNodeIds4MdrQ( rcvrIds = childIds )
-        paidMdrNodesCount <- slick.db.run {
+        paidNodesSql = s.mdrUtil.findPaidNodeIds4MdrQ( rcvrIds = childIds )
+        paidMdrNodesCount <- s.slick.db.run {
+          import s.slick.profile.api._
           paidNodesSql.size.result
         }
       } yield {
@@ -220,18 +240,21 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   }
 
   override def cartItemsCountOptFut: Future[Option[Int]] = {
+    val s = msuStatics
+    implicit val ec = s.ec
+
     val futOrEx = for {
       // Узнать id контракта юзера.
       contractIdOpt <- contractIdOptFut
       contractId = contractIdOpt.get
 
       // Поиск id ордера-корзины
-      itemsCount <- slick.db.run {
+      itemsCount <- s.slick.db.run {
         for {
-          cartOrderIdOpt  <- bill2Util.getCartOrderId( contractId )
-          cartOrderId      = cartOrderIdOpt.get
+          cartOrderIdOpt  <- s.bill2Util.getCartOrderId( contractId )
+          cartOrderId = cartOrderIdOpt.get
           // Посчитать item'ы в ордере:
-          itemsCount      <- mItems.countByOrderId(cartOrderId)
+          itemsCount      <- s.mItems.countByOrderId(cartOrderId)
         } yield {
           itemsCount
         }
@@ -253,43 +276,46 @@ trait MSioUserLazyFactory {
     * factory-метод для сборки инстансов [[MSioUserLazy]].
     *
     * @param personIdOpt id текущего юзера, если есть.
-    * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
     */
   def apply(personIdOpt: Option[String]): MSioUserLazy
 }
 
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
-@Singleton
-class MsuStatic @Inject()(
-                           val mSuperUsers               : MSuperUsers,
-                           val mContracts                : MContracts,
-                           val mBalances                 : MBalances,
-                           // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
-                           val mNodes                    : MNodes,
-                           val mdrUtil                   : MdrUtil,
-                           val nodesUtil                 : NodesUtil,
-                           val bill2Util                 : Bill2Util,
-                           val mItems                    : MItems,
-                           val esModel                   : EsModel,
-                           override val _slickConfigProvider : DatabaseConfigProvider,
-                           implicit val ec               : ExecutionContext,
-)
+final class MsuStatic @Inject()(
+                                 injector: Injector,
+                               )
   extends ISlickDbConfig
+{
+  lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  lazy val mContracts = injector.instanceOf[MContracts]
+  lazy val mBalances = injector.instanceOf[MBalances]
+  // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
+  lazy val mNodes = injector.instanceOf[MNodes]
+  lazy val mdrUtil = injector.instanceOf[MdrUtil]
+  lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  lazy val bill2Util = injector.instanceOf[Bill2Util]
+  lazy val mItems = injector.instanceOf[MItems]
+  lazy val esModel = injector.instanceOf[EsModel]
+  override lazy val _slickConfigProvider = injector.instanceOf[DatabaseConfigProvider]
+  implicit lazy val ec = injector.instanceOf[ExecutionContext]
+}
 
 
 /**
   * Реализация модели [[ISioUser]], где все future-поля реализованы как lazy val.
   *
   * @param personIdOpt id текущего юзера.
-  * @param jsiTgs Список целей js-инициализации.
-  * @param msuStatics Статические модели, необходимые для успешной работы ленивых полей инстанса.
   */
-case class MSioUserLazy @Inject() (
-                                    @Assisted override val personIdOpt  : Option[String],
-                                    override val msuStatics             : MsuStatic
-)
+final case class MSioUserLazy @Inject() (
+                                          @Assisted override val personIdOpt  : Option[String],
+                                          injector: Injector,
+                                        )
   extends ISioUserT
 {
+
+  /** Зависимости, необходимые для успешной работы ленивых полей инстанса. */
+  override lazy val msuStatics = injector.instanceOf[MsuStatic]
+
   // Заворачиваем поля в lazy val для возможности кеширования значений.
   override lazy val personNodeOptFut  = super.personNodeOptFut
   override lazy val contractIdOptFut  = super.contractIdOptFut

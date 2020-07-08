@@ -25,7 +25,7 @@ import util.acl._
 import util.adv.geo.{IAdvGeoLocUtilDi, IAdvGeoRcvrsUtilDi}
 import util.ext.IExtServicesUtilDi
 import util.i18n.JsMessagesUtil
-import util.sec.ICspUtilDi
+import util.sec.CspUtil
 import util.showcase.IScUtil
 import util.stat.IStatUtil
 import OptionUtil.BoolOptOps
@@ -54,19 +54,20 @@ trait ScSite
   with IExtServicesUtilDi
   with IMNodes
   with IContextUtilDi
-  with ICspUtilDi
   with IMaybeAuth
   with IAdvGeoLocUtilDi
   with IAdvGeoRcvrsUtilDi
   with EsModelDi
 {
+  
+  val jsMessagesUtil: JsMessagesUtil
+  val cspUtil: CspUtil
 
   import sioControllerApi._
   import mCommonDi._
   import esModel.api._
   import cspUtil.Implicits._
 
-  val jsMessagesUtil: JsMessagesUtil
 
   /** Изначальное значение флага отладки js-выдачи управляется флагом в конфиге. */
   private lazy val SC_JS_DEBUG = configuration.getOptional[Boolean]("sc.js.debug").getOrElseFalse

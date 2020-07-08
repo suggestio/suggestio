@@ -22,7 +22,6 @@ import scala.concurrent.Future
  */
 
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
-@Singleton
 class CanEditAd @Inject() (
                             esModel                 : EsModel,
                             mNodes                  : MNodes,

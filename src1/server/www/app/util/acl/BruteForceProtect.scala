@@ -1,14 +1,15 @@
 package util.acl
 
 import akka.actor.ActorSystem
-import javax.inject.{Inject, Singleton}
-import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.Inject
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.req.{BfpArgs, IReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
 import io.suggest.text.StringUtil
 import play.api.cache.AsyncCacheApi
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
@@ -25,23 +26,19 @@ import play.api.mvc.Result
  *  Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
  *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
  */
-@Singleton
 final class BruteForceProtect @Inject() (
+                                          injector                : Injector,
                                           aclUtil                 : AclUtil,
                                           cacheApi                : AsyncCacheApi,
-                                          actorSystem             : ActorSystem,
-                                          defaultActionBuilder    : DefaultActionBuilder,
-                                          reqUtil                 : ReqUtil,
-                                          httpErrorHandler        : HttpErrorHandler,
                                           implicit private val ec : ExecutionContext,
                                         )
-  extends MacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
-  //import mCommonDi._
-
-  /** Дефолтовые настройки противодействия брут-форсам. */
-  val ARGS_DFLT = BfpArgs()
+  private lazy val actorSystem = injector.instanceOf[ActorSystem]
+  private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
 
 
   private def _apply[A](args: BfpArgs, request0: Request[A])(f: IReq[A] => Future[Result]): Future[Result] = {
@@ -99,7 +96,7 @@ final class BruteForceProtect @Inject() (
 
 
   /** Собрать экшен под указанные параметры. */
-  def apply[A](args: BfpArgs = ARGS_DFLT)(action: Action[A]): Action[A] = {
+  def apply[A](args: BfpArgs = BfpArgs.default)(action: Action[A]): Action[A] = {
     defaultActionBuilder.async(action.parser) { request0 =>
       _apply(args, request0)( action.apply )
     }
@@ -112,7 +109,7 @@ final class BruteForceProtect @Inject() (
 
 
   /** Собрать action builder под указанные параметры. */
-  def b(args: BfpArgs = ARGS_DFLT): ActionBuilder[IReq, AnyContent] = {
+  def b(args: BfpArgs = BfpArgs.default): ActionBuilder[IReq, AnyContent] = {
     new reqUtil.SioActionBuilderImpl[IReq] {
       override def invokeBlock[A](request: Request[A], block: (IReq[A]) => Future[Result]): Future[Result] = {
         _apply(args, request)(block)

@@ -22,12 +22,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 18.04.18 15:40
   * Description: Утиль для валидации данных форм, содержащих edge-линковку.
   */
-@Singleton
-class N2VldUtil @Inject()(
-                           esModel                    : EsModel,
-                           mNodes                     : MNodes,
-                           implicit private val ec    : ExecutionContext
-                         )
+final class N2VldUtil @Inject()(
+                                 esModel                    : EsModel,
+                                 mNodes                     : MNodes,
+                                 implicit private val ec    : ExecutionContext
+                               )
   extends MacroLogsImpl
 {
 

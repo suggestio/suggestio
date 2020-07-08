@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, RcvrsMap_t}
 import io.suggest.adv.rcvr.RcvrKey
@@ -24,7 +24,6 @@ import scalaz.syntax.validation._
  * Created: 19.11.15 21:45
  * Description: Утиль для формы размещения карточки в геотегах.
  */
-@Singleton
 class AdvGeoFormUtil @Inject() (
                                  advFormUtil: AdvFormUtil
                                )

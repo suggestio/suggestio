@@ -17,7 +17,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: ACL проверки возможности бесплатного управления прямым размещением карточки на каком-то либо узле.
   * Поддерживается задание id целевого узела задаётся по rcvrKey.
   */
-@Singleton
 class CanFreelyAdvAdOnNode @Inject() (
                                        aclUtil                  : AclUtil,
                                        canAdvAd                 : CanAdvAd,

@@ -16,14 +16,12 @@ import io.suggest.streams.StreamsUtil
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mctx.Context
 import models.mdr.{MMdrNotifyCtx, MMdrNotifyMeta}
 import models.mproj.ICommonDi
 import models.req.ISioUser
 import models.usr.MSuperUsers
-import util.acl.IsNodeAdmin
-import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.mail.IMailerWrapper
 import views.html.sys1.mdr._mdrNeededEmailTpl
@@ -41,26 +39,24 @@ import scala.util.Failure
   * Created: 06.02.17 17:00
   * Description: Утиль для модерации.
   */
-@Singleton
-class MdrUtil @Inject() (
-                          esModel           : EsModel,
-                          mailerWrapper     : IMailerWrapper,
-                          val mItems        : MItems,
-                          mNodes            : MNodes,
-                          bill2Util         : Bill2Util,
-                          streamsUtil       : StreamsUtil,
-                          nodesUtil         : NodesUtil,
-                          mSuperUsers       : MSuperUsers,
-                          isNodeAdmin       : IsNodeAdmin,
-                          val mCommonDi     : ICommonDi,
-                        )
+final class MdrUtil @Inject() (
+                                protected val mCommonDi     : ICommonDi,
+                              )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mailerWrapper = injector.instanceOf[IMailerWrapper]
+  protected val mItems = injector.instanceOf[MItems]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+
   import mCommonDi.{configuration, current, ec, mat, slick, messagesApi, langs}
   import slick.profile.api._
-  import streamsUtil.Implicits._
-  import esModel.api._
 
 
   /** Кол-во уровней погружения в поисках под-узлов в зависимости от для ситуации.
@@ -160,6 +156,7 @@ class MdrUtil @Inject() (
 
     val userMdrNotifyFut = if (mdrCtx.rcvrIds.nonEmpty) {
       lazy val logPrefix = s"sendMdrNotify(rcvrIds[${mdrCtx.rcvrIds.size}])#${System.currentTimeMillis()}:"
+      import esModel.api._
 
       // Организовать асинхронную работу в фоне на тему сбора данных по ресиверам и email'ам тех, каких юзеров надо уведомить.
       for {
@@ -501,6 +498,7 @@ class MdrUtil @Inject() (
     // Этот метод не занимается проверкой прав доступа, но из-за isSuper всё же косвенно предотвращает нецелевое использование.
 
     var mnode2Fut: Future[MNode] = if ((infoApplyAll && mdrUser.isSuper) || nfo.directSelfAll || nfo.directSelfId.nonEmpty) {
+      import esModel.api._
       LOGGER.trace(s"$logPrefix Will process mdr-edges for free mdr, applyAll?$infoApplyAll")
 
       // Тут два варианта: полный аппрув выставлением mdr-эджа, или отказ в размещении на узле/узлах.
@@ -704,6 +702,8 @@ class MdrUtil @Inject() (
     // Узел отсутствует, но должны быть какие-то item'ы для модерации.
     lazy val logPrefix = s"fixNode($nodeId)#${System.currentTimeMillis()}:"
     LOGGER.info(s"$logPrefix Starting, reason = ${reasonOpt.orNull}")
+
+    import streamsUtil.Implicits._
 
     slick.db.stream {
       mItems.query

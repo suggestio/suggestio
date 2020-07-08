@@ -1,7 +1,7 @@
 package controllers
 
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import akka.stream.scaladsl.{Keep, Sink}
 import au.id.jazzy.play.geojson.{GeoJson, LngLatCrs}
 import io.suggest.adv.geo._
@@ -30,7 +30,6 @@ import scala.concurrent.Future
   * Created: 18.05.17 14:20
   * Description: Контроллерная утиль
   */
-@Singleton
 protected final class LkGeoCtlUtil @Inject() (
                                                sioControllerApi        : SioControllerApi,
                                                mCommonDi               : MCommonDi,

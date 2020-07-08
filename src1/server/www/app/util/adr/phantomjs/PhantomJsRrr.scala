@@ -1,7 +1,7 @@
 package util.adr.phantomjs
 
 import java.io.{File, FileWriter}
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import com.google.inject.assistedinject.Assisted
 import io.suggest.async.AsyncUtil
@@ -19,7 +19,6 @@ import views.txt.js.phantom.renderOneAdJs
   * Description: Реализация ad-рендерера на базе Phantom.js.
   * ЕМНИП, Фантом начал использоваться из-за проблем со сглаживанием webfonts в wkhtmltoimage на сервере.
   */
-@Singleton
 class PhantomJsRrrUtil extends IAdRrrUtil {
 
   /** Дефолтовое значение quality, если не задано. */

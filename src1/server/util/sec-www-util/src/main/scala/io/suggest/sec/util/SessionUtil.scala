@@ -1,6 +1,5 @@
 package io.suggest.sec.util
 
-import javax.inject.Singleton
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc.{RequestHeader, Session}
@@ -12,8 +11,7 @@ import play.api.mvc.{RequestHeader, Session}
   * Description: Утиль для работы с данными сессии.
   * Унифицирует самые типовые операции с данными из сессии.
   */
-@Singleton
-class SessionUtil extends MacroLogsImpl {
+final class SessionUtil extends MacroLogsImpl {
 
   /**
    * Очень часто сюда передаётся реквест, а не сессия. Это укорачивает код.

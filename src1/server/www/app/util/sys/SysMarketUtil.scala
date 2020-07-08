@@ -312,9 +312,3 @@ class SysMarketUtil extends MacroLogsDyn {
   }
 
 }
-
-
-/** Интерфейс для DI-поля с инстансом [[SysMarketUtil]]. */
-trait ISysMarketUtilDi {
-  def sysMarketUtil: SysMarketUtil
-}

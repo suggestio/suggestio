@@ -43,20 +43,23 @@ import scala.util.{Failure, Success}
   * Created: 22.11.16 15:01
   * Description: Утиль для форм размещения с гео-картам.
   */
-class AdvGeoRcvrsUtil @Inject()(
-                                 esModel     : EsModel,
-                                 mNodes      : MNodes,
-                                 logoUtil    : LogoUtil,
-                                 welcomeUtil : WelcomeUtil,
-                                 advRcvrsUtil: AdvRcvrsUtil,
-                                 nodesUtil   : NodesUtil,
-                                 cdnUtil     : CdnUtil,
-                                 dynImgUtil  : DynImgUtil,
-                                 fitImgMaker : FitImgMaker,
-                                 mCommonDi   : ICommonDi
-                               )
+final class AdvGeoRcvrsUtil @Inject()(
+                                       mCommonDi   : ICommonDi
+                                     )
   extends MacroLogsImpl
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val logoUtil = injector.instanceOf[LogoUtil]
+  private lazy val welcomeUtil = injector.instanceOf[WelcomeUtil]
+  private lazy val advRcvrsUtil = injector.instanceOf[AdvRcvrsUtil]
+  private lazy val nodesUtil = injector.instanceOf[NodesUtil]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  private lazy val fitImgMaker = injector.instanceOf[FitImgMaker]
 
   import mCommonDi._
   import esModel.api._

@@ -23,7 +23,6 @@ import scala.util.{Failure, Success}
   * Created: 17.03.16 10:15
   * Description: Аддон для контроллеров с поддержкой проверки прав доступа на изменение item'а.
   */
-@Singleton
 class CanAccessItem @Inject() (
                                 aclUtil                 : AclUtil,
                                 mItems                  : MItems,

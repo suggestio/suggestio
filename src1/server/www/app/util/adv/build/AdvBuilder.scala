@@ -4,21 +4,21 @@ import java.time.OffsetDateTime
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.ImplementedBy
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.n2.edge.MPredicate
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
-import models.mproj.{ICommonDi, IMCommonDi}
+import models.mproj.ICommonDi
 import util.adn.mapf.GeoLocBuilder
 import util.adv.direct.{AdvDirectBuilder, AdvDirectTagsBuilder}
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
 import util.billing.Bill2Util
-import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
+import util.n2u.N2NodesUtil
 import io.suggest.mbill2.m.item.MItemJvm.Implicits._
 import japgolly.univeq._
 
@@ -223,22 +223,22 @@ trait IAdvBuilder
 
 
 /** Контейнер для DI-аргументов вынесен за пределы билдера для ускорения и упрощения ряда вещей. */
-@Singleton
-class AdvBuilderDi @Inject() (
-  val bill2Util                   : Bill2Util,
-  override val n2NodesUtil        : N2NodesUtil,
-  override val mItems             : MItems,
-  override val advBuilderUtil     : AdvBuilderUtil,
-  override val mCommonDi          : ICommonDi
-)
-  extends IN2NodesUtilDi
-  with IMCommonDi
-  with IMItems
-  with IAdvBuilderUtilDi
+final class AdvBuilderDi @Inject() (
+                                     val mCommonDi          : ICommonDi
+                                   ) {
+
+  import mCommonDi.current.injector
+
+  lazy val bill2Util = injector.instanceOf[Bill2Util]
+  lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  lazy val mItems = injector.instanceOf[MItems]
+  lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+
+}
 
 
 /** Финальная реализация [[IAdvBuilder]]. */
-case class AdvBuilder @Inject() (
+final case class AdvBuilder @Inject() (
   @Assisted override val accFut   : Future[Acc],
   @Assisted override val now      : OffsetDateTime,
   override val di                 : AdvBuilderDi

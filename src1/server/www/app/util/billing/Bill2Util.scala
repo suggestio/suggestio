@@ -4,7 +4,7 @@ import java.time.{Duration, OffsetDateTime}
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.stream.scaladsl.{Keep, Sink}
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.bill._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
@@ -34,6 +34,7 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JmxBase
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,23 +51,25 @@ import scala.concurrent.{ExecutionContext, Future}
   * операций подцепляются всё новые и новые не-Draft item'ы. Никакого смысла такая корзина не несёт,
   * и обычно скрыта от глаз. Использованные item'ы такого ордера стирать без проблем.
   */
-@Singleton
-class Bill2Util @Inject() (
-                            esModel                         : EsModel,
-                            bill2Conf                       : Bill2Conf,
-                            mOrders                         : MOrders,
-                            val mContracts                  : MContracts,
-                            mItems                          : MItems,
-                            mBalances                       : MBalances,
-                            mTxns                           : MTxns,
-                            val mNodes                      : MNodes,
-                            mDebugs                         : MDebugs,
-                            streamsUtil                     : StreamsUtil,
-                            tfDailyUtil                     : TfDailyUtil,
-                            val mCommonDi                   : ICommonDi
-                          )
+final class Bill2Util @Inject() (
+                                  protected val mCommonDi                   : ICommonDi
+                                )
   extends MacroLogsImpl
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  lazy val bill2Conf = injector.instanceOf[Bill2Conf]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+  protected lazy val mContracts = injector.instanceOf[MContracts]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val mBalances = injector.instanceOf[MBalances]
+  private lazy val mTxns = injector.instanceOf[MTxns]
+  protected lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mDebugs = injector.instanceOf[MDebugs]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  private lazy val tfDailyUtil = injector.instanceOf[TfDailyUtil]
 
   import Bill2Util._
   import mCommonDi._
@@ -76,7 +79,7 @@ class Bill2Util @Inject() (
 
 
   /** Через сколько времени считать ордер повисшим и разворачивать его назад в ордер-корзину? */
-  private val RELEASE_HOLD_ORDERS_AFTER_HOURS: Int = {
+  private lazy val RELEASE_HOLD_ORDERS_AFTER_HOURS: Int = {
     configuration.getOptional[Int]("billing.orders.release.hold.after.hours")
       .getOrElse(24)
   }
@@ -2053,8 +2056,7 @@ trait Bill2UtilJmxMBean {
 }
 
 class Bill2UtilJmx @Inject()(
-                              bill2Util                           : Bill2Util,
-                              implicit private val ec             : ExecutionContext,
+                              injector: Injector,
                             )
   extends JmxBase
   with Bill2UtilJmxMBean
@@ -2062,6 +2064,9 @@ class Bill2UtilJmx @Inject()(
 {
 
   import io.suggest.util.JmxBase._
+
+  private def bill2Util = injector.instanceOf[Bill2Util]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
 
   override def _jmxType = Types.BILL
 

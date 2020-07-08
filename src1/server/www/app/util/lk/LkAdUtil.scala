@@ -7,8 +7,6 @@ import javax.inject.Inject
 import models.blk
 import models.blk.SzMult_t
 import models.im.make.MakeResult
-import play.api.inject.Injector
-import util.adv.AdvUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,11 +16,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 20.04.15 14:01
  * Description: Утиль для работы с рекламными карточками в личном кабинете.
  */
-class LkAdUtil @Inject() (
-                           injector                     : Injector,
-                           advUtil                      : AdvUtil,
-                           override implicit val ec     : ExecutionContext
-                         )
+final class LkAdUtil @Inject() (
+                                 override implicit val ec     : ExecutionContext
+                               )
   extends IExecutionContext
 {
 

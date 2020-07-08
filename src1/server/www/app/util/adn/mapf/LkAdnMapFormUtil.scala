@@ -1,14 +1,13 @@
 package util.adn.mapf
 
-import javax.inject.{Inject, Singleton}
-
+import javax.inject.Inject
 import io.suggest.adn.mapf.{AdnMapFormConstants, MLamForm}
 import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.{CircleGs, MGeoPoint}
 import io.suggest.maps.MMapProps
 import io.suggest.scalaz.ValidateFormUtilT
+import play.api.inject.Injector
 import util.adv.AdvFormUtil
-
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 
@@ -21,12 +20,14 @@ import scalaz.syntax.apply._
   *
   * Будем всячески избегать ситуации в проекте, когда точек узла может быть больше одной.
   */
-@Singleton
-class LkAdnMapFormUtil @Inject() (
-                                   advFormUtil: AdvFormUtil
-                                 )
+final class LkAdnMapFormUtil @Inject() (
+                                         injector: Injector,
+                                       )
   extends ValidateFormUtilT[MLamForm]
 {
+
+  private lazy val advFormUtil = injector.instanceOf[AdvFormUtil]
+
 
   def mapProps0(gp0: MGeoPoint): MMapProps = {
     MMapProps(

@@ -20,7 +20,6 @@ import scala.concurrent.Future
  */
 
 /** Аддон для контроллеров для проверки права размещать рекламную карточку. */
-@Singleton
 class CanAdvAd @Inject()(
                           esModel                 : EsModel,
                           mNodes                  : MNodes,

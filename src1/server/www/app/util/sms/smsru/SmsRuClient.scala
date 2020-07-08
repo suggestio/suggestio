@@ -2,7 +2,7 @@ package util.sms.smsru
 
 import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.sms.smsRu.{MSmsRuResult, MSmsRuSendQs}
 import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.{ConfigLoader, Configuration}
@@ -21,15 +21,14 @@ import japgolly.univeq._
   * Created: 30.05.19 18:00
   * Description: Реализация клиента отправки сообщений для sms.ru.
   */
-@Singleton
 final class SmsRuClient @Inject() (
                                     injector                  : Injector,
-                                    wsClient                  : WSClient,
-                                    implicit private val ec   : ExecutionContext,
                                   )
   extends ISmsSendClient
   with MacroLogsImpl
 {
+
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private def CONF_PREFIX = "sms.smsru"
 

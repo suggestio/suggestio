@@ -18,7 +18,6 @@ import scala.concurrent.Future
  * Description:
  * Абстрактная логика обработки запроса суперюзера на какое-либо действие с рекламной карточкой.
  */
-@Singleton
 class IsSuMad @Inject()(
                          esModel    : EsModel,
                          mNodes     : MNodes,

@@ -20,7 +20,6 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
  *
  * 2015.dec.23: Изначально назывался IsSuperuserAdnNode и обслуживал только MAdnNode.
  */
-@Singleton
 class IsSuNode @Inject() (
                            esModel    : EsModel,
                            mNodes     : MNodes,

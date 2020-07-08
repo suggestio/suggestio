@@ -18,6 +18,7 @@ import models.usr.MSuperUsers
 import play.api.{Application, Configuration, Environment}
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
+import play.api.inject.Injector
 import play.api.mvc.Call
 import util.adv.AdvUtil
 import util.cdn.CdnUtil
@@ -180,8 +181,6 @@ trait Context {
     * Например, к утили какой-нить или DI-моделям и прочей утвари. */
   val api: ContextApi
 
-  import api.ctxUtil
-
   def withData(data1: CtxData): Context
 
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
@@ -232,9 +231,9 @@ trait Context {
     i.atZone( timeZone ).toOffsetDateTime
   }
 
-  lazy val isMobile : Boolean = uaMatches(ctxUtil.mobileUaPattern)
-  lazy val isIpad: Boolean = uaMatches(ctxUtil.isIpadRe)
-  lazy val isIphone: Boolean = uaMatches(ctxUtil.isIphoneRe)
+  lazy val isMobile : Boolean = uaMatches(api.ctxUtil.mobileUaPattern)
+  lazy val isIpad: Boolean = uaMatches(api.ctxUtil.isIpadRe)
+  lazy val isIphone: Boolean = uaMatches(api.ctxUtil.isIphoneRe)
 
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
@@ -285,7 +284,7 @@ trait Context {
     (for {
       (k, v) <- request.queryString.iterator
       // TODO Искать по ключу, а не перебирать все ключи?
-      if ctxUtil.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
+      if api.ctxUtil.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
       bindedE <- MScreenJvm.devScreenQsb.bind(k, new Map.Map1(k, v))
       mscreen <- bindedE.toOption
     } yield mscreen)
@@ -318,21 +317,23 @@ trait Context {
 
 /** Шаблонам бывает нужно залезть в util'ь, модели или ещё куда-нить.
   * DI препятствует этому, поэтому необходимо обеспечивать доступ с помощью класса-костыля. */
-@Singleton
-class ContextApi @Inject() (
-                             override val ctxUtil    : ContextUtil,
-                             val cdn                 : CdnUtil,
-                             val dynImgUtil          : DynImgUtil,
-                             val n2NodesUtil         : N2NodesUtil,
-                             val mSuperUsers         : MSuperUsers,
-                             val jsMessagesUtil      : JsMessagesUtil,
-                             val mCtxIds             : MCtxIds,
-                             val advUtil             : AdvUtil,
-                             val supportUtil         : SupportUtil,
-                             override implicit val current: Application
-                           )
+final class ContextApi @Inject() (
+                                   injector: Injector,
+                                 )
   extends ICurrentAppHelpers
   with IContextUtilDi
+{
+  override lazy val ctxUtil = injector.instanceOf[ContextUtil]
+  lazy val cdn = injector.instanceOf[CdnUtil]
+  lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
+  lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
+  lazy val mCtxIds = injector.instanceOf[MCtxIds]
+  lazy val advUtil = injector.instanceOf[AdvUtil]
+  lazy val supportUtil = injector.instanceOf[SupportUtil]
+  override implicit lazy val current = injector.instanceOf[Application]
+}
 
 
 /** Guice factory для сборки контекстов с использованием DI.
@@ -349,7 +350,7 @@ trait Context2Factory {
 // Непосредственные реализации контекстов. Расширять их API в обход trait Context не имеет смысла.
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
-case class Context2 @Inject() (
+final case class Context2 @Inject() (
   override val api                          : ContextApi,
   @Assisted override val data               : CtxData,
   @Assisted implicit override val request   : IReqHdr,

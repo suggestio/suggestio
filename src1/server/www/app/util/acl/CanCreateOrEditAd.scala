@@ -20,8 +20,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * Т.е. если есть указанный id карточки, то будет проверка доступа на редактирование карточки.
   * Иначе, будет проверка доступа к узлу-продьюсеру.
   */
-
-@Singleton
 class CanCreateOrEditAd @Inject() (
                                     canEditAd   : CanEditAd,
                                     isNodeAdmin : IsNodeAdmin,

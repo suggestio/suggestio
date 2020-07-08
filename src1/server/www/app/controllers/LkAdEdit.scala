@@ -6,7 +6,8 @@ import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.err.HttpResultingException, HttpResultingException._
+import io.suggest.err.HttpResultingException
+import HttpResultingException._
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.tags.JdTag
@@ -23,7 +24,7 @@ import io.suggest.primo.id._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
-import models.req.IReq
+import models.req.{BfpArgs, IReq}
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
@@ -72,8 +73,7 @@ final class LkAdEdit @Inject() (
   import mCommonDi.{ec, csrf, errorHandler}
 
 
-  private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT
-    .withTryCountDivisor(2)
+  private lazy val _BFP_ARGS = (BfpArgs.tryCountDivisor set 2)( BfpArgs.default )
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {

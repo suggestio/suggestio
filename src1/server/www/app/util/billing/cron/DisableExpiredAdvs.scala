@@ -25,17 +25,20 @@ import scala.concurrent.Future
   * которая должна уйти из выдачи по истечению срока размещения.
   */
 
-class DisableExpiredAdvs @Inject() (
-                                     override val esModel            : EsModel,
-                                     advBuilderUtil                  : AdvBuilderUtil,
-                                     override val mNodes             : MNodes,
-                                     override val mCommonDi          : ICommonDi,
-                                     override val advBuilderFactory  : AdvBuilderFactory,
-                                     override val streamsUtil        : StreamsUtil,
-                                     override val mItems             : MItems
-                                   )
+final class DisableExpiredAdvs @Inject() (
+                                           override val mCommonDi          : ICommonDi,
+                                         )
   extends AdvsUpdate
 {
+
+  import mCommonDi.current.injector
+
+  override lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+  override lazy val mNodes = injector.instanceOf[MNodes]
+  override lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
+  override lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+  override lazy val mItems = injector.instanceOf[MItems]
 
   import LOGGER._
   import mCommonDi._
@@ -44,7 +47,7 @@ class DisableExpiredAdvs @Inject() (
 
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {
     (i.statusStr === MItemStatuses.Online.value) &&
-      (i.dateEndOpt <= now)
+    (i.dateEndOpt <= now)
   }
 
 

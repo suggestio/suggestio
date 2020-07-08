@@ -28,20 +28,22 @@ import scala.concurrent.Future
   * Description: Утиль для форм георазмещения для нужд геолокации.
   */
 @Singleton
-class AdvGeoLocUtil @Inject() (
-                                esModel           : EsModel,
-                                geoIpUtil         : GeoIpUtil,
-                                mOrders           : MOrders,
-                                mItems            : MItems,
-                                mNodes            : MNodes,
-                                mCommonDi         : ICommonDi
-                              )
+final class AdvGeoLocUtil @Inject() (
+                                      mCommonDi         : ICommonDi
+                                    )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val geoIpUtil = injector.instanceOf[GeoIpUtil]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+
   import mCommonDi._
   import slick.profile.api._
-  import esModel.api._
 
 
   /**
@@ -126,6 +128,8 @@ class AdvGeoLocUtil @Inject() (
 
   /** Если вдруг не найдено размещений у текущей карточки, то поискать локации других карточек этого же продьюсера. */
   def getGeoPointFromProducer(producerIds: Seq[String], excludeAdIds: Seq[String]): Future[Option[MGeoPoint]] = {
+    import esModel.api._
+
     // Найти id всех карточек этого продьюсера
     val prodAdsSearch = new MNodeSearch {
       override val nodeTypes = MNodeTypes.Ad :: Nil

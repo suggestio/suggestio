@@ -18,19 +18,21 @@ import util.adv.geo.tag.GeoTagsUtil
   *
   * Используется reinstall-методика, т.е. карточка сбрасывается и эджи компилятся и сохраняются заново.
   */
-
-class ActivateOfflineAdvs @Inject() (
-                                      override val esModel            : EsModel,
-                                      override val advBuilderUtil     : AdvBuilderUtil,
-                                      override val geoTagsUtil        : GeoTagsUtil,
-                                      override val mNodes             : MNodes,
-                                      override val mItems             : MItems,
-                                      override val advBuilderFactory  : AdvBuilderFactory,
-                                      override val streamsUtil        : StreamsUtil,
-                                      override val mCommonDi          : ICommonDi
-                                    )
+final class ActivateOfflineAdvs @Inject() (
+                                            override val mCommonDi          : ICommonDi
+                                          )
   extends ActivateAdvs
 {
+
+  import mCommonDi.current.injector
+  override lazy val esModel = injector.instanceOf[EsModel]
+  override lazy val advBuilderUtil = injector.instanceOf[AdvBuilderUtil]
+  override lazy val geoTagsUtil = injector.instanceOf[GeoTagsUtil]
+  override lazy val mNodes = injector.instanceOf[MNodes]
+  override lazy val mItems = injector.instanceOf[MItems]
+  override lazy val advBuilderFactory = injector.instanceOf[AdvBuilderFactory]
+  override lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+
 
   import mCommonDi._
   import slick.profile.api._

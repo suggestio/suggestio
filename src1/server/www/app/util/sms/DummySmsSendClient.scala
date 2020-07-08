@@ -17,11 +17,11 @@ import scala.concurrent.duration._
   * Description: Заглушка вместо клиента отправки смс-сообщений.
   * Имитирует успешную отправку.
   */
-class DummySmsSendClient @Inject()(
-                                    configuration             : Configuration,
-                                    actorSystem               : ActorSystem,
-                                    implicit private val ec   : ExecutionContext,
-                                  )
+final class DummySmsSendClient @Inject()(
+                                          configuration             : Configuration,
+                                          actorSystem               : ActorSystem,
+                                          implicit private val ec   : ExecutionContext,
+                                        )
   extends ISmsSendClient
   with MacroLogsImpl
 {

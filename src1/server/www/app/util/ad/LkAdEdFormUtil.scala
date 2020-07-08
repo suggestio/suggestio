@@ -33,11 +33,10 @@ import util.tpl.HtmlSanitizer
  * Created: 23.04.14 10:15
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
-@Singleton
-class LkAdEdFormUtil @Inject() (
-                                 n2VldUtil    : N2VldUtil,
-                                 env          : Environment,
-                               )
+final class LkAdEdFormUtil @Inject() (
+                                       n2VldUtil    : N2VldUtil,
+                                       env          : Environment,
+                                     )
   extends MacroLogsImpl
 {
 

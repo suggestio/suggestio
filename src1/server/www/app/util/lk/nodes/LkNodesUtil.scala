@@ -1,13 +1,11 @@
 package util.lk.nodes
 
 import io.suggest.es.model.MEsNestedSearch
-import javax.inject.Singleton
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.search.sort.SortOrder
 import util.FormUtil
 import scalaz._
@@ -18,11 +16,7 @@ import scalaz._
   * Created: 08.02.17 13:25
   * Description: Утиль для LkNodes -- системы управления узлами в личном кабинете.
   */
-@Singleton
-class LkNodesUtil
-  extends MacroLogsImpl
-{
-
+final class LkNodesUtil {
 
   def SUB_NODES_LIMIT = 40
 

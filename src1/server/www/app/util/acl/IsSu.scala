@@ -16,7 +16,6 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
 
-@Singleton
 final class IsSu @Inject() (
                              aclUtil                : AclUtil,
                              protected val reqUtil  : ReqUtil,
