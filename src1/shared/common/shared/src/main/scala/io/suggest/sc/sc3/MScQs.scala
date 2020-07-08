@@ -51,7 +51,19 @@ object MScQs {
 
 
   implicit final class MScQsExt(private val scQs: MScQs) extends AnyVal {
+
     def withSearch = MScQs.search.set(_: MAdsSearchReq)(scQs)
+
+
+    /** Есть ли какие-то полезные данные для поиска карточек?
+      * Если false, значит поисковый запрос на базе данных из этого инстанса вернёт вообще все карточки. */
+    def hasAnySearchCriterias: Boolean = {
+      scQs.common.locEnv.nonEmpty ||
+      scQs.search.rcvrId.nonEmpty ||
+      scQs.search.prodId.nonEmpty ||
+      scQs.search.tagNodeId.nonEmpty
+    }
+
   }
 
 }
@@ -73,15 +85,4 @@ case class MScQs(
                   foc       : Option[MScFocusArgs]   = None,
                   grid      : Option[MScGridArgs]    = None,
                   nodes     : Option[MScNodesArgs]   = None,
-                ) {
-
-  /** Есть ли какие-то полезные данные для поиска карточек?
-    * Если false, значит поисковый запрос на базе данных из этого инстанса вернёт вообще все карточки. */
-  def hasAnySearchCriterias: Boolean = {
-    common.locEnv.nonEmpty ||
-      search.rcvrId.nonEmpty ||
-      search.prodId.nonEmpty ||
-      search.tagNodeId.nonEmpty
-  }
-
-}
+                )

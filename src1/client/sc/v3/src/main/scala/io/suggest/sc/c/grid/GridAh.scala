@@ -339,15 +339,18 @@ class GridAh[M](
                 isDrop
               }}
 
-              // ads2.exists(_.isEmpty): Даже если карточек вообще не осталось, то надо отрендерить 404-карточку. Запросить с сервера.
+              // если карточек вообще не осталось, то надо отрендерить 404-карточку.
+              val isReturn404 = ads2.exists(_.isEmpty)
+
+              // ads2.exists(_.isEmpty): Если после зачистки BLE-карточек, не осталось карточек, то запросить 404-карточку с сервера.
               Either.cond(
-                test = bcns0.nonEmpty || ads2.exists(_.isEmpty),
+                test = bcns0.nonEmpty || isReturn404,
 
                 right = {
                   // Есть видимые маячки. И наверное надо cделать запрос на сервер.
                   // TODO А может просто перетасовать карточки, если порядок маячков просто немного изменился? Или это BleBeaconer уже отрабатывает?
-                  // TODO qs4ble: тут надо явно запретить возвращать 404-карточки
-                  val qs4Ble = ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value )
+                  // allow404 обычно false, т.к. обычно есть карточки помимо маячковых.
+                  val qs4Ble = ScQsUtil.gridAdsOnlyBleBeaconed( scRootRO.value, allow404 = isReturn404 )
                   //println(s"QS only Beaconed ask, qs = $qs4Ble")
                   Some(qs4Ble)
                 },

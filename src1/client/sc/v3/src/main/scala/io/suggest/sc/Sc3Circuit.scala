@@ -419,7 +419,7 @@ class Sc3Circuit(
       } else {
         // Логика зависит от режима, который сейчас: работа демон или обычный режим вне демона.
         // Подписываемся на события изменения списка наблюдаемых маячков.
-        OptionUtil.maybeOpt( nearby0 ne nearby2 ) {
+        OptionUtil.maybeOpt( nearby0 !===* nearby2 ) {
           //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
           val mroot = rootRW.value
 

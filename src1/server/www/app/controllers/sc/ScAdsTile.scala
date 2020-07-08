@@ -286,7 +286,8 @@ trait ScAdsTile
         mads    <- madsFut
         offset  <- offsetFut
         mads2   <- {
-          if (mads.isEmpty  &&  offset <= 0) {
+          // Если на первом ads-запросе не найдено карточек, и это НЕ скан маячков, то вернуть 404-карточки (когда они разрешаются клиентом).
+          if (mads.isEmpty && _qs.grid.allow404 && offset <= 0) {
             // TODO Передавать на клиент, что нет больше карточек, чтобы не было дальнейшего запроса подгрузки ещё карточек.
             LOGGER.trace(s"$logPrefix mads[${mads.length}] offset=$offset => 404")
             for (mads404 <- mads404Fut) yield {
@@ -295,7 +296,7 @@ trait ScAdsTile
                   mnode = mad404,
                   // Сообщить на клиент, что это 404-карточка, чтобы клиент НЕ уведомлял юзера о какой-либо полезной инфе.
                   matchInfos = MScAdMatchInfo(
-                    predicates = Set( MPredicates.Receiver ),
+                    predicates = Set.empty + MPredicates.Receiver,
                     nodeMatchings = MScNodeMatchInfo(
                       nodeId = Some( nodeId404 ),
                     ) :: Nil

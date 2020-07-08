@@ -119,8 +119,13 @@ object ScQsUtil {
   }
 
 
-  /** qs для запроса карточек только по текущим наблюдаемым ble-маячкам. */
-  def gridAdsOnlyBleBeaconed(mroot: MScRoot): MScQs = {
+  /** qs для запроса карточек только по текущим наблюдаемым ble-маячкам.
+    *
+    * @param mroot Состояние корневой модели.
+    * @param allow404 Разрешить серверу возвращать 404-карточки?
+    * @return Инстанс MScQs для Sc API.
+    */
+  def gridAdsOnlyBleBeaconed(mroot: MScRoot, allow404: Boolean): MScQs = {
     MScQs(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
@@ -135,7 +140,8 @@ object ScQsUtil {
       grid = Some( MScGridArgs(
         focAfterJump = OptionUtil.SomeBool.someFalse,
         // Надо возвращать названия карточек с сервера, чтобы их можно было отрендерить текстом в системной нотификации.
-        adTitles = true
+        adTitles = true,
+        allow404 = allow404,
       )),
     )
   }
