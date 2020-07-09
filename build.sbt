@@ -593,13 +593,6 @@ lazy val textUtil = {
     .dependsOn(util, logsMacro)
 }    // TODO Возможно, зависимость от util не потребуется после окончания рефакторинга. Проверить.
 
-/** Платежная поддержка для веб-интерфейса. */
-lazy val payWww = {
-  val id = "pay-www"
-  Project(id = id, base = file(DIR0 + "server/bill/" + id))
-    .dependsOn(commonWww, mbill2)
-}
-
 /** Клиент-сайд генератор QR-кодов. */
 lazy val reactQrCodeSjs = {
   val id = "scalajs-react-qrcode"
@@ -623,7 +616,7 @@ lazy val www = project
   .dependsOn(
     securesocial, secAvUtil,
     esUtil, mgeo, n2, mbill2,
-    nodesWww, payWww,
+    nodesWww,
     streamsUtil, brotliUtil,
     textUtil,
     svgUtil, ipgeobase, stat
@@ -705,7 +698,7 @@ lazy val server = project
     util, esUtil, textUtil, swfs, n2, securesocial,
     ipgeobase, stat,
     mgeo, commonWww, nodesWww,
-    mbill2, payWww,
+    mbill2,
     secWwwUtil, secAvUtil, svgUtil,
     www
   )
