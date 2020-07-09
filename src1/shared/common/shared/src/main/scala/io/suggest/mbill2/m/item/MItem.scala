@@ -10,6 +10,7 @@ import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.primo.id.OptId
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -50,10 +51,13 @@ object MItem {
     UnivEq.derive
   }
 
+
+  def price = GenLens[MItem]( _.price )
+
 }
 
 
-case class MItem(
+final case class MItem(
                   orderId                 : Gid_t,
                   iType                   : MItemType,
                   status                  : MItemStatus,
@@ -80,7 +84,5 @@ case class MItem(
       dateStatus  = OffsetDateTime.now()
     )
   }
-
-  def withPrice(price: MPrice) = copy(price = price)
 
 }

@@ -1,8 +1,8 @@
 package io.suggest.geo.ipgeobase
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.es.model._
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.settings.Settings
 import play.api.{Configuration, Environment, Mode}
 import play.api.inject.Injector
@@ -22,14 +22,11 @@ object MIndexes {
 }
 
 
-@Singleton
 final class MIndexes @Inject() (
                                  injector   : Injector,
                                )
-  extends MacroLogsImpl
+  extends MacroLogsDyn
 {
-
-  import LOGGER._
 
 
   /**
@@ -49,7 +46,7 @@ final class MIndexes @Inject() (
         } else {
           0   // Нет дела до реплик на тестовой или dev-базе.
         }
-        debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
+        LOGGER.debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
         r
       }
   }

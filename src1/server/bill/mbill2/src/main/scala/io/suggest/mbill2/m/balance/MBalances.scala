@@ -9,6 +9,7 @@ import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, Find
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
+import play.api.inject.Injector
 import slick.lifted._
 import slick.sql.SqlAction
 
@@ -22,11 +23,10 @@ import scala.concurrent.ExecutionContext
  */
 
 @Singleton
-class MBalances @Inject() (
-  override protected val profile      : SioPgSlickProfileT,
-  override protected val mContracts   : MContracts,
-  implicit private val ec             : ExecutionContext
-)
+final class MBalances @Inject() (
+                                  injector: Injector,
+                                  override protected val profile: SioPgSlickProfileT,
+                                )
   extends GidSlick
   with PriceSlick
   with AmountSlick
@@ -39,12 +39,15 @@ class MBalances @Inject() (
   with FindByContractId
 {
 
+  override protected val mContracts = injector.instanceOf[MContracts]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
+
   import profile.api._
 
   override type Table_t = MBalancesTable
   override type El_t    = MBalance
 
-  override val TABLE_NAME = "balance"
+  override def TABLE_NAME = "balance"
 
   override def CONTRACT_ID_INX = PgaNamesMaker.inx(TABLE_NAME, CONTRACT_ID_FN)
   def CCC_UNIQUE_IDX = PgaNamesMaker.uniq(TABLE_NAME, CONTRACT_ID_FN, CURRENCY_CODE_FN)
@@ -80,7 +83,7 @@ class MBalances @Inject() (
     el.copy(id = Some(id))
   }
 
-  override val query = TableQuery[MBalancesTable]
+  override lazy val query = TableQuery[MBalancesTable]
 
   /** Атомарный инкремент баланса и декремент blocked по id ряда.
     *

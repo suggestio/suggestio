@@ -2,10 +2,11 @@ package io.suggest.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
 import io.suggest.es.MappingDsl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.es.model._
 import io.suggest.geo.MGeoPoint
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.inject.Injector
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -88,10 +89,7 @@ abstract class MCitiesAbstract
   * Основная статическая модель для непосредственного взаимодействия с ней через обычное ES-модельное API.
   * Она всегда взаимодейтсвует с алиасом какого-либо индекса.
   */
-@Singleton
-class MCities
-  extends MCitiesAbstract
-{
+final class MCities extends MCitiesAbstract {
 
   /** Используем алиас для последнего свежего индекса. */
   override def ES_INDEX_NAME = MIndexes.INDEX_ALIAS_NAME
@@ -121,7 +119,7 @@ trait MCitiesTmpFactory {
   * @param region Название региона.
   * @param center Координаты центра города.
   */
-case class MCity(
+final case class MCity(
   cityId    : CityId_t,
   cityName  : String,
   region    : Option[String],
@@ -144,15 +142,14 @@ trait MCitiesJmxMBean extends EsModelJMXMBeanI {
 
 }
 
-@Singleton
-class MCitiesModel @Inject()(
-                              esModel: EsModel
-                            ) {
+final class MCitiesModel @Inject()(
+                                    injector: Injector,
+                                  ) {
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
 
   object api {
-    implicit class MCitiesAbstractOpsExt( model: MCitiesAbstract ) {
+    implicit final class MCitiesAbstractOpsExt( model: MCitiesAbstract ) {
 
       /**
         * Реалтаймовый поиск по полю cityId.
@@ -162,6 +159,8 @@ class MCitiesModel @Inject()(
         * @return Фьючерс с опциональным инстансом [[MCity]].
         */
       def getByCityId(cityId: CityId_t): Future[Option[MCity]] = {
+        import esModel.api._
+
         val esId = MCity.cityId2esId(cityId)
         model.getById(esId)
       }
@@ -171,23 +170,28 @@ class MCitiesModel @Inject()(
 
 }
 
+
 /** Реализация интерфейса jmx mbean'а [[MCitiesJmxMBean]]. */
 final class MCitiesJmx @Inject() (
-                                   mCitiesModel              : MCitiesModel,
-                                   override val companion    : MCities,
+                                   injector                  : Injector,
                                    override val esModelJmxDi : EsModelJmxDi,
                                  )
   extends EsModelJMXBaseImpl
   with MCitiesJmxMBean
 {
 
-  import esModelJmxDi.ec
-  import mCitiesModel.api._
-  import io.suggest.util.JmxBase._
+  private def mCitiesModel = injector.instanceOf[MCitiesModel]
+  override def companion = injector.instanceOf[MCities]
 
   override type X = MCity
 
   override def getByCityId(cityId: CityId_t): String = {
+    import esModelJmxDi.ec
+    import io.suggest.util.JmxBase._
+
+    val m = mCitiesModel
+    import m.api._
+
     val strFut = for {
       mCityOpt <- companion.getByCityId(cityId)
     } yield {

@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.item
 
 import java.time.OffsetDateTime
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.m.sql.ITableName
 import io.suggest.mbill2.m.common.{InsertManyReturning, InsertOneReturning}
 import io.suggest.mbill2.m.dt._
@@ -19,6 +19,7 @@ import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import play.api.inject.Injector
 
 /**
  * Suggest.io
@@ -28,11 +29,10 @@ import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
  */
 
 /** DI-контейнер для slick-модели абстрактных item'ов. */
-@Singleton
-class MItems @Inject() (
-                         override protected val profile  : SioPgSlickProfileT,
-                         override val mOrders            : MOrders
-                       )
+final class MItems @Inject() (
+                               injector: Injector,
+                               override protected val profile  : SioPgSlickProfileT,
+                             )
   extends GidSlick
   with PriceSlick
   with CurrencyCodeSlick
@@ -59,13 +59,15 @@ class MItems @Inject() (
   with TagNodeIdOptSlick
 {
 
+  override lazy val mOrders = injector.instanceOf[MOrders]
+
   import profile.api._
 
   /** Алиас типа для абстрактной query. */
   type Query0 = Query[MItems#MItemsTable, MItem, Seq]
 
 
-  override val TABLE_NAME = "item"
+  override def TABLE_NAME = "item"
 
   override type Table_t = MItemsTable
   override type El_t    = MItem
@@ -174,7 +176,7 @@ class MItems @Inject() (
   }
 
 
-  override val query = TableQuery[MItemsTable]
+  override lazy val query = TableQuery[MItemsTable]
 
   import MItemsTable._
 

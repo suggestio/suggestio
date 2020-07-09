@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.txn
 
 import java.time.OffsetDateTime
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.mbill2.m.balance.{BalanceIdFkSlick, BalanceIdInxSlick, FindByBalanceId, MBalances}
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.gid.{GetById, GidSlick, Gid_t}
@@ -11,6 +11,7 @@ import io.suggest.mbill2.m.order.{MOrders, OrderIdOptFkSlick, OrderIdOptInxSlick
 import io.suggest.mbill2.m.price.AmountSlick
 import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
+import play.api.inject.Injector
 import slick.lifted.ProvenShape
 
 /**
@@ -19,14 +20,10 @@ import slick.lifted.ProvenShape
  * Created: 02.12.15 17:08
  * Description: slick-модель транзакций на счетах.
  */
-
-@Singleton
-class MTxns @Inject() (
-                        override protected val profile    : SioPgSlickProfileT,
-                        override val mBalances            : MBalances,
-                        override val mOrders              : MOrders,
-                        override val mItems               : MItems
-                      )
+final class MTxns @Inject() (
+                              injector: Injector,
+                              override protected val profile    : SioPgSlickProfileT,
+                            )
   extends GidSlick
   with AmountSlick
   with BalanceIdFkSlick with BalanceIdInxSlick
@@ -37,13 +34,18 @@ class MTxns @Inject() (
   with ItemIdOptSlick with ItemIdOptFkSlick with ItemIdOptInxSlick
 {
 
+  override lazy val mBalances = injector.instanceOf[MBalances]
+  override lazy val mOrders = injector.instanceOf[MOrders]
+  override lazy val mItems = injector.instanceOf[MItems]
+
+
   import profile.api._
 
 
   override type Table_t = MTxnsTable
   override type El_t    = MTxn
 
-  override val TABLE_NAME = "txn"
+  override def TABLE_NAME = "txn"
 
   def DATE_PAID_FN        = "date_paid"
   def DATE_PROCESSED_FN   = "date_processed"
@@ -84,7 +86,7 @@ class MTxns @Inject() (
     el.copy(id = Some(id))
   }
 
-  override val query = TableQuery[MTxnsTable]
+  override lazy val query = TableQuery[MTxnsTable]
 
   /** Обычно идёт постраничный просмотр списка транзакций, и новые сверху.
     * Тут метод для сборки подходящего для этого запроса.

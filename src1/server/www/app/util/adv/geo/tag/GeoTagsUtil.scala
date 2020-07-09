@@ -37,20 +37,23 @@ import scala.util.{Failure, Success}
   * Сброс хлама в теги необходим для поиска тегов.
   */
 class GeoTagsUtil @Inject() (
-                              esModel       : EsModel,
-                              mNodes        : MNodes,
-                              mItems        : MItems,
-                              streamsUtil   : StreamsUtil,
                               mCommonDi     : ICommonDi
                             )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
+
   import mCommonDi._
   import slick.profile.api._
-  import streamsUtil.Implicits._
   import mNodes.Implicits.elSourcingHelper
   import esModel.api._
+
 
   /** Предикат эджей, используемых в рамках этого модуля. */
   private def _PRED = MPredicates.TaggedBy.Self
@@ -262,6 +265,8 @@ class GeoTagsUtil @Inject() (
     * @return Фьючерс с результатом ребилда тега-узла.
     */
   def rebuildTag(mnode: MNode): Future[Option[MNode]] = {
+    import streamsUtil.Implicits._
+
     val mnodeId = mnode.id.get
 
     val startTs = System.currentTimeMillis()

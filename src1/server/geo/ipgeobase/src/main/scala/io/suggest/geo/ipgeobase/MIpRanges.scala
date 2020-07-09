@@ -4,8 +4,9 @@ import com.google.inject.assistedinject.Assisted
 import io.suggest.es.MappingDsl
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import org.elasticsearch.index.query.QueryBuilders
+import play.api.inject.Injector
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -30,7 +31,7 @@ object MIpRange {
   import Fields._
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MIpRange] = (
+  implicit def FORMAT: OFormat[MIpRange] = (
     (__ \ COUNTRY_CODE_FN).format[String] and
     (__ \ IP_RANGE_FN).format[Seq[String]] and
     (__ \ CITY_ID_FN).formatNullable[CityId_t]
@@ -39,13 +40,15 @@ object MIpRange {
 }
 
 @Singleton
-class MIpRangesModel @Inject()(esModel      : EsModel)
-                              (implicit ec  : ExecutionContext)
-  extends MacroLogsImpl
+final class MIpRangesModel @Inject()(
+                                      injector: Injector
+                                    )
+  extends MacroLogsImplLazy
 {
 
-  import esModel.api._
-  import MIpRange.Fields._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   object api {
 
@@ -53,7 +56,9 @@ class MIpRangesModel @Inject()(esModel      : EsModel)
 
       /** Поиск элементов модели по ip-адресу. */
       def findForIp(ip: String): Future[Seq[MIpRange]] = {
-        val fn = IP_RANGE_FN
+        import esModel.api._
+
+        val fn = MIpRange.Fields.IP_RANGE_FN
         val q = QueryBuilders.boolQuery()
           .must {
             QueryBuilders.rangeQuery(fn)
@@ -127,7 +132,6 @@ abstract class MIpRangesAbstract
 
 
 /** Дефолтовая статическая часть модели для всех повседневных нужд. */
-@Singleton
 final class MIpRanges extends MIpRangesAbstract {
   override def ES_INDEX_NAME = MIndexes.INDEX_ALIAS_NAME
 }
@@ -175,21 +179,25 @@ trait MIpRangesJmxMBean extends EsModelJMXMBeanI {
 }
 /** Реализация jmx mbean [[MIpRangesJmxMBean]]. */
 final class MIpRangesJmx @Inject() (
-                                     mIpRangesModel              : MIpRangesModel,
-                                     override val companion      : MIpRanges,
-                                     override val esModelJmxDi   : EsModelJmxDi,
+                                     injector: Injector,
+                                     override val esModelJmxDi: EsModelJmxDi,
                                    )
   extends EsModelJMXBaseImpl
   with MIpRangesJmxMBean
 {
 
-  import esModelJmxDi.ec
-  import mIpRangesModel.api._
-  import io.suggest.util.JmxBase._
+  private def mIpRangesModel = injector.instanceOf[MIpRangesModel]
+  override def companion = injector.instanceOf[MIpRanges]
 
   override type X = MIpRange
 
   override def findForIp(ip: String): String = {
+    import esModelJmxDi.ec
+    import io.suggest.util.JmxBase._
+
+    val m = mIpRangesModel
+    import m.api._
+
     val strFut = for (ranges <- companion.findForIp(ip)) yield {
       ranges.mkString("[\n", ",\n", "\n]")
     }

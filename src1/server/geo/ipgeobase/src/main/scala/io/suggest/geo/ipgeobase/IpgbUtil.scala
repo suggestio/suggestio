@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoPoint}
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -15,19 +16,18 @@ import scala.concurrent.{ExecutionContext, Future}
   * Появилась в ходе выноса ipgb-логики на уровень этого модуля из устаревшей GeoMode.
   */
 @Singleton
-class IpgbUtil @Inject() (
-                           esModel        : EsModel,
-                           mIpRangesModel : MIpRangesModel,
-                           mCities        : MCities,
-                           mIpRanges      : MIpRanges,
-                           implicit private val ec: ExecutionContext,
-                         )
+final class IpgbUtil @Inject() (
+                                 injector: Injector,
+                               )
   extends IGeoFindIp
   with MacroLogsImpl
 {
 
-  import esModel.api._
-  import mIpRangesModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mIpRangesModel = injector.instanceOf[MIpRangesModel]
+  private lazy val mCities = injector.instanceOf[MCities]
+  private lazy val mIpRanges = injector.instanceOf[MIpRanges]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   override type FindIpRes_t = MGeoFindIpResult
@@ -39,6 +39,9 @@ class IpgbUtil @Inject() (
     * @return Фьючерс с опциональным результатом.
     */
   override def findIp(ip: String): Future[Option[MGeoFindIpResult]] = {
+    import esModel.api._
+    import mIpRangesModel.api._
+
     for {
       // Найти диапазоны ip-адресов
       ipRanges  <- mIpRanges.findForIp(ip)
@@ -74,23 +77,24 @@ class IpgbUtil @Inject() (
 
 
 /** Реализация модели результата работы [[IpgbUtil]].findId(). */
-case class MGeoFindIpResult(city: MCity, range: MIpRange) extends IGeoFindIpResult {
+final case class MGeoFindIpResult(
+                                   city: MCity,
+                                   range: MIpRange
+                                 )
+  extends IGeoFindIpResult
+{
 
-  override def center: MGeoPoint = {
+  override def center: MGeoPoint =
     city.center
-  }
 
-  override def cityName: Option[String] = {
+  override def cityName: Option[String] =
     Some( city.cityName )
-  }
 
-  override def countryIso2: Option[String] = {
+  override def countryIso2: Option[String] =
     Some( range.countryIso2 )
-  }
 
-  override def accuracyMetersOpt: Option[Int] = {
+  override def accuracyMetersOpt: Option[Int] =
     // TODO Нужно ли что-нибудь тут задать? 50км например?
     Some( 20000 )
-  }
 
 }

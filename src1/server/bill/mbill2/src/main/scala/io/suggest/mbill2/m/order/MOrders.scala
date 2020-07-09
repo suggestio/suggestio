@@ -10,6 +10,7 @@ import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateStatusSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
+import play.api.inject.Injector
 import slick.lifted.ProvenShape
 
 /**
@@ -20,10 +21,10 @@ import slick.lifted.ProvenShape
  */
 
 @Singleton
-class MOrders @Inject() (
-                          override protected val profile      : SioPgSlickProfileT,
-                          override protected val mContracts   : MContracts
-                        )
+final class MOrders @Inject() (
+                                injector: Injector,
+                                override protected val profile      : SioPgSlickProfileT,
+                              )
   extends GidSlick
   with DateCreatedSlick
   with ContractIdSlickFk with ContractIdSlickIdx
@@ -38,11 +39,12 @@ class MOrders @Inject() (
 
   import profile.api._
 
+  override protected lazy val mContracts = injector.instanceOf[MContracts]
 
   override type Table_t = MOrdersTable
   override type El_t    = MOrder
 
-  override val TABLE_NAME   = "order"
+  override def TABLE_NAME   = "order"
 
   override def CONTRACT_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, CONTRACT_ID_FN)
 
@@ -71,7 +73,7 @@ class MOrders @Inject() (
   }
 
   /** Экземпляр статической части модели, пригодный для запуска и проведения запросов. */
-  val query = TableQuery[MOrdersTable]
+  override lazy val query = TableQuery[MOrdersTable]
 
   /** Апдейт значения экземпляра модели новым id. */
   override protected def _withId(el: MOrder, id: Gid_t): MOrder = {

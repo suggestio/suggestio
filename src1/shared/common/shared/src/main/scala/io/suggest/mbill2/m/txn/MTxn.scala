@@ -43,7 +43,7 @@ object MTxn {
 }
 
 
-case class MTxn(
+final case class MTxn(
                  balanceId         : Gid_t,
                  amount            : Amount_t,
                  txType            : MTxnType,

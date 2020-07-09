@@ -10,6 +10,7 @@ import io.suggest.mbill2.m.gid.{DeleteById, GetById, GidSlick, Gid_t}
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import slick.lifted.ProvenShape
 import play.api.Configuration
+import play.api.inject.Injector
 
 import scala.util.Random
 
@@ -42,10 +43,10 @@ object MContract extends ITableName {
 
 /** slick-модель таблицы контрактов. */
 @Singleton
-class MContracts @Inject()(
-                            override protected val profile    : SioPgSlickProfileT,
-                            configuration                     : Configuration
-)
+final class MContracts @Inject()(
+                                  injector: Injector,
+                                  override protected val profile    : SioPgSlickProfileT,
+                                )
   extends GidSlick
   with DateCreatedSlick
   with GetById
@@ -58,6 +59,8 @@ class MContracts @Inject()(
 
   override type Table_t = MContractsTable
   override type El_t = MContract
+
+  private def configuration = injector.instanceOf[Configuration]
 
   /** Дефолтовый суффикс контракта, может быть использован при создании инстанса MContract. */
   lazy val SUFFIX_DFLT = configuration.getOptional[String]("bill.contract.suffix.dflt").getOrElse("CEO")
@@ -82,7 +85,7 @@ class MContracts @Inject()(
   }
 
   /** Доступ к запросам модели. */
-  override val query = TableQuery[MContractsTable]
+  override lazy val query = TableQuery[MContractsTable]
 
   override protected def _withId(el: MContract, id: Gid_t): MContract = {
     el.copy(id = Some(id))
@@ -106,7 +109,7 @@ class MContracts @Inject()(
  * @param crand Случайное число для выявления опечаток в номере договора.
  * @param id Основной id договора.
  */
-case class MContract(
+final case class MContract(
   id            : Option[Gid_t]   = None,
   crand         : Int             = MContract.crand(),
   dateCreated   : OffsetDateTime  = OffsetDateTime.now(),

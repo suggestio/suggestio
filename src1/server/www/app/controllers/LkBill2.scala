@@ -667,11 +667,7 @@ final class LkBill2 @Inject() (
     val mitems2Fut = for {
       mitems <- mitemsFut
     } yield {
-      for (mitem <- mitems) yield {
-        mitem.withPrice(
-          TplDataFormatUtil.setFormatPrice(mitem.price)(ctx)
-        )
-      }
+      mitems.map( MItem.price.modify( TplDataFormatUtil.setFormatPrice(_)(ctx) ) )
     }
 
     // Отбираем adn-узлы, которые заявлены в item.nodeId, рендерим в props+logo, объединяем с отрендеренными ресиверами

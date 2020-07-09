@@ -73,7 +73,7 @@ libraryDependencies ++= {
   //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,
 
   // Поддержка JsMessages для client-side локализации сообщений
-  "org.julienrf" %% "play-jsmessages" % "4.0.0",
+  "org.julienrf" %% "play-jsmessages" % "5.0.0",
   // Parsers
   "org.apache.tika" % "tika-core" % tikaVsn,
   "org.apache.tika" % "tika-parsers" % tikaVsn
