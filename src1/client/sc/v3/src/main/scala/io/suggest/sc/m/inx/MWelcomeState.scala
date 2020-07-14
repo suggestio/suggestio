@@ -15,7 +15,7 @@ object MWelcomeState {
   implicit object MWelcomeStateFastEq extends FastEq[MWelcomeState] {
     override def eqv(a: MWelcomeState, b: MWelcomeState): Boolean = {
       (a.isHiding ==* b.isHiding) &&
-        (a.timerTstamp ==* b.timerTstamp)
+      (a.timerTstamp ==* b.timerTstamp)
     }
   }
 
@@ -33,5 +33,5 @@ object MWelcomeState {
   */
 case class MWelcomeState(
                           isHiding         : Boolean,
-                          timerTstamp      : Long
+                          timerTstamp      : Long,
                         )

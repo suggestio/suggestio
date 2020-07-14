@@ -9,6 +9,7 @@ import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
 import io.suggest.sc.v.styl.ScCss
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -30,6 +31,8 @@ object SearchCss {
       MSearchCssPropsFastEq.eqv(a.args, b.args)
     }
   }
+
+  def args = GenLens[SearchCss]( _.args )
 
 }
 

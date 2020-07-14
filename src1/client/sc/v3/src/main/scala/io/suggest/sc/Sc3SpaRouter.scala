@@ -77,29 +77,31 @@ class Sc3SpaRouter(
 
           // TODO Тут дублируется MainScreen.FORMAT.
 
-          def _boolOrFalseTok(key: String): Boolean = {
+          def _boolOptTok(key: String): Option[Boolean] = {
             tokens
               .get( key )
               .flatMap { boolStr =>
                 Try(boolStr.toBoolean).toOption
               }
-              .getOrElseFalse
           }
+          def _boolOrFalseTok(key: String): Boolean =
+            _boolOptTok(key).getOrElseFalse
 
           val K = ScConstants.ScJsState
           MainScreen(
             nodeId = tokens.get( K.NODE_ID_FN ),
-            searchOpened = _boolOrFalseTok( K.CAT_SCR_OPENED_FN ),
+            searchOpened = _boolOrFalseTok( K.SEARCH_OPENED_FN ),
             generation = tokens.get( K.GENERATION_FN )
               .flatMap( MGen.parse ),
             tagNodeId = tokens.get( K.TAG_NODE_ID_FN ),
             locEnv = tokens.get( K.LOC_ENV_FN )
               .flatMap( MGeoPoint.fromString ),
-            menuOpened = _boolOrFalseTok( K.GEO_SCR_OPENED_FN ),
+            menuOpened = _boolOrFalseTok( K.MENU_OPENED_FN ),
             focusedAdId = tokens.get( K.FOCUSED_AD_ID_FN ),
             firstRunOpen = _boolOrFalseTok( K.FIRST_RUN_OPEN_FN ),
             dlAppOpen = _boolOrFalseTok( K.DL_APP_OPEN_FN ),
             settingsOpen = _boolOrFalseTok( K.SETTINGS_OPEN_FN ),
+            showWelcome = _boolOptTok( K.SHOW_WELCOME_FN ).getOrElseTrue,
           )
         }
       } { mainScreen =>
@@ -146,11 +148,11 @@ class Sc3SpaRouter(
 
         // Отрабатываем состояние правой панели.
         if (mainScreen.searchOpened)
-          acc ::= K.CAT_SCR_OPENED_FN -> mainScreen.searchOpened.toString
+          acc ::= K.SEARCH_OPENED_FN -> mainScreen.searchOpened.toString
 
         // Отработать открытое меню.
         if (mainScreen.menuOpened)
-          acc ::= K.GEO_SCR_OPENED_FN -> mainScreen.menuOpened.toString
+          acc ::= K.MENU_OPENED_FN -> mainScreen.menuOpened.toString
 
         // Открыт диалог первого запуска?
         if (mainScreen.firstRunOpen)
@@ -161,6 +163,9 @@ class Sc3SpaRouter(
 
         if (mainScreen.settingsOpen)
           acc ::= K.SETTINGS_OPEN_FN -> mainScreen.settingsOpen.toString
+
+        if (!mainScreen.showWelcome)
+          acc ::= K.SHOW_WELCOME_FN -> mainScreen.showWelcome.toString
 
         val queryString = UrlUtilJs.qsPairsToString(acc)
         Some( queryString )

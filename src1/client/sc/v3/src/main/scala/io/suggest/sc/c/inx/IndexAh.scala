@@ -123,8 +123,9 @@ object IndexAh {
           s0 = s0.resetMapLoader
 
         // Сбросить текст поиска, чтобы теги отобразились на экране.
-        if (s0.text.query.nonEmpty)
-          fxsAcc ::= SearchTextChanged("").toEffectPure
+        // TODO Выключено, т.к. неудобно перебирать найденные узлы: надо постоянно их список заново искать-скроллить.
+        //if (s0.text.query.nonEmpty)
+        //  fxsAcc ::= SearchTextChanged("").toEffectPure
 
         // Сбросить selTagIds, если изменились.
         val qsTagIds = m.qs.search.tagNodeId
@@ -147,7 +148,9 @@ object IndexAh {
       fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
 
     // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
-    fxsAcc ::= ResetUrlRoute.toEffectPure
+    fxsAcc ::= ResetUrlRoute().toEffectPure >>
+      // Затем, надо добавить новое состояние индекса в "недавние":
+      SaveRecentIndex().toEffectPure
 
     // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
     if ( !(respActionTypes contains MScRespActionTypes.AdsTile) ) {
@@ -296,14 +299,15 @@ class IndexRah
         i1 = MScIndex.resp
           .modify(_.ready(i1.resp.get))(i1)
       }
+
       // Убрать крутилку-preloader с гео-карты:
       if (i1.search.geo.mapInit.loader.nonEmpty)
         i1 = MScIndex.search
           .modify(_.resetMapLoader)(i1)
+
       val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
-      if ( inx_state_switch_ask_LENS.exist(_.nonEmpty)(i1) ) {
+      if ( inx_state_switch_ask_LENS.get(i1).nonEmpty )
         i1 = inx_state_switch_ask_LENS.set( None )( i1 )
-      }
 
       val v2 = MScRoot.index.set(i1)(v0)
 
@@ -515,7 +519,7 @@ class IndexAh[M](
               v2 = (IndexAh._inx_menu_opened_LENS set false)(v2)
 
             // Аккаумулятор сайд-эффектов.
-            var fxAcc: Effect = ResetUrlRoute.toEffectPure
+            var fxAcc: Effect = ResetUrlRoute().toEffectPure
 
             // Требуется ли запускать инициализацию карты или списка найденных узлов? Да, если открытие на НЕинициализированной панели.
             if (isOpen2)
@@ -536,7 +540,7 @@ class IndexAh[M](
             var v2 = m.open.fold( menu_opened_LENS.modify(!_) )( menu_opened_LENS.set )(v0)
             val isOpen2 = menu_opened_LENS.get( v2 )
             // Обновить URL.
-            var fxAcc: Effect = ResetUrlRoute.toEffectPure
+            var fxAcc: Effect = ResetUrlRoute().toEffectPure
 
             for (fx <- __osStatusBarColorFxOpt(isOpen2))
               fxAcc += fx
@@ -577,10 +581,11 @@ class IndexAh[M](
 
 
     // Клик по узлу в списке предлагаемых узлов:
-    case m: NodeRowClick if value.state.switch.ask.nonEmpty =>
+    case m: IndexSwitchNodeClick =>
       val v0 = value
       // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
       val inx_state_switchAsk_LENS = IndexAh._inx_state_switch_ask_LENS
+
       val actResOpt = for {
         switchS <- inx_state_switchAsk_LENS.get(v0)
         inxPs2  <- switchS.nodesResp.nodes
@@ -593,6 +598,7 @@ class IndexAh[M](
           mroot   = rootRO.value,
         )
       }
+
       ah.updatedFrom( actResOpt )
 
 

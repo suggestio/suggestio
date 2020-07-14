@@ -14,13 +14,15 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick}
+import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.spa.DAction
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
@@ -39,13 +41,21 @@ final class NfRowR(
                     crCtxP                   : React.Context[MCommonReactCtx],
                   ) {
 
-  def apply( nodesFoundRowsC: ReactConnectProxy[Seq[MNodesFoundRowProps]] ): VdomElement = {
-    crCtxP.consume { crCtx =>
-      scReactCtxP.consume { scReactCtx =>
-        val nfRowR = NfRowR2( crCtx, scReactCtx )
-        nodesFoundRowsC( nfRowR.rows )
+  def apply( nodesFoundRowsC: ReactConnectProxy[Seq[MNodesFoundRowProps]] ) =
+    _using( nfRowR => nodesFoundRowsC( nfRowR.rows ) )
+
+  def apply( nodesFoundProxy: ModelProxy[Seq[MNodesFoundRowProps]] ) =
+    _using( nfRowR => nfRowR.rows(nodesFoundProxy) )
+
+
+  private def _using(f: NfRowR2 => VdomElement) = {
+    (onClickF: MSc3IndexResp => DAction) =>
+      crCtxP.consume { crCtx =>
+        scReactCtxP.consume { scReactCtx =>
+          val nfRowR = NfRowR2( crCtx, scReactCtx, onClickF )
+          f(nfRowR)
+        }
       }
-    }
   }
 
 }
@@ -57,6 +67,7 @@ final class NfRowR(
 final case class NfRowR2(
                           crCtx        : MCommonReactCtx,
                           scReactCtx   : MScReactCtx,
+                          onClickF     : MSc3IndexResp => DAction,
                         ) {
 
   type Props_t = MNodesFoundRowProps
@@ -66,10 +77,9 @@ final case class NfRowR2(
 
     /** Реакция на клик по одному элементу (ряд-узел). */
     private def _onNodeRowClick(e: ReactEvent): Callback = {
-      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
-        NodeRowClick(
-          nodeId = propsProxy.value.node.props.idOrNameOrEmpty
-        )
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
+        propsProxy: Props =>
+          onClickF( propsProxy.value.node.props )
       }
     }
     private val _onNodeRowClickJsF = ReactCommonUtil.cbFun1ToJsCb( _onNodeRowClick )

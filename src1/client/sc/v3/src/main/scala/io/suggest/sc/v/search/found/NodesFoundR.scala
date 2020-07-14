@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search.found
 
-import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiProgressVariants, MuiToolBar, MuiToolBarClasses, MuiToolBarProps}
+import com.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiProgressVariants, MuiToolBar, MuiToolBarClasses, MuiToolBarProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -9,7 +9,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.m.search.{MNodesFoundRowProps, NodesFoundPopupOpen, NodesScroll, SearchTextChanged}
+import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick, NodesFoundListWh, NodesScroll, SearchTextChanged}
 import io.suggest.sc.v.hdr.RightR
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
@@ -19,9 +19,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
+import ReactCommonUtil.Implicits._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -30,6 +30,7 @@ import scala.scalajs.js.UndefOr
   * Description: Компонент поиска узлов.
   */
 final class NodesFoundR(
+                         measureR                 : MeasureR,
                          rightR                   : RightR,
                          nfRowR                   : NfRowR,
                          nfListR                  : NfListR,
@@ -47,6 +48,8 @@ final class NodesFoundR(
                     popOverOpenedSomeC            : ReactConnectProxy[Some[Boolean]],
                     queryC                        : ReactConnectProxy[String],
                     queryEmptySomeC               : ReactConnectProxy[Some[Boolean]],
+                    respQueryC                    : ReactConnectProxy[Option[String]],
+                    hasNodesFoundC                : ReactConnectProxy[Option[Boolean]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -207,18 +210,63 @@ final class NodesFoundR(
         },
       )
 
-      val nodesRows = nfRowR( s.nodesFoundRowsC )
-      val nodesList: VdomElement = propsProxy.wrap( _.index.search.geo.found ) { foundProxy =>
-        val props = nfListR.PropsVal(
-          nodesFoundProxy   = foundProxy,
+      // Не найдено узлов.
+      lazy val noNodesFound = MuiList()(
+        scReactCtxP.consume { scReactCtx =>
+          MuiListItemText {
+            val css = new MuiListItemTextClasses {
+              override val root = Css.flat(
+                scReactCtx.scCss.fgColor.htmlClass,
+                ScCssStatic.Search.NodesFound.nothingFound.htmlClass,
+              )
+            }
+            new MuiListItemTextProps {
+              override val classes = css
+            }
+          } (
+            s.respQueryC { respQueryOptProxy =>
+              val (msgCode, msgArgs) = respQueryOptProxy.value.fold {
+                MsgCodes.`No.tags.here` -> List.empty[js.Any]
+              } { query =>
+                MsgCodes.`No.tags.found.for.1.query` -> ((query: js.Any) :: Nil)
+              }
+              crCtxP.message( msgCode, msgArgs: _* )
+            },
+          )
+        }
+      ): VdomElement
+      // Список найденных узлов.
+      lazy val nodesFoundList = nfListR.component(
+        nfListR.PropsVal(
           onTouchStartF     = Some( _onNfListTouchMove ),
         )
-        nfListR.component(props)( nodesRows )
-      }
+      )(
+        nfRowR( s.nodesFoundRowsC ) { inxResp =>
+          NodeRowClick( inxResp.idOrNameOrEmpty )
+        },
+      ): VdomElement
+
+      // Измерить список найденных узлов:
+      val nodesList = measureR.component(
+        measureR.PropsVal(
+          mkActionF = NodesFoundListWh,
+          isMeasuringNowPx = propsProxy.zoom { m =>
+            OptionUtil.SomeBool( m.index.search.geo.found.rHeightPx.isPending )
+          },
+        )
+      )(
+        s.hasNodesFoundC { hasNodesFoundProxy =>
+          hasNodesFoundProxy.value.whenDefinedEl {
+            case true  => nodesFoundList
+            case false => noNodesFound
+          }
+        },
+      ): VdomElement
+
       lazy val searchTbWithList = <.div(
         searchToolBar,
         nodesList,
-      )
+      ): VdomElement
 
       val forScroll = s.usePopOverSomeC { usePopOverSomeProxy =>
         val usePopOver = usePopOverSomeProxy.value.value
@@ -288,11 +336,21 @@ final class NodesFoundR(
           OptionUtil.SomeBool( visible )
         },
 
-
         queryC = propsProxy.connect( _.index.search.text.query ),
 
         queryEmptySomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.index.search.text.query.isEmpty )
+        },
+
+        respQueryC = propsProxy.connect { props =>
+          props.index.search.geo.found.reqOpt
+            .flatMap(_.textQuery)
+        },
+
+        hasNodesFoundC = propsProxy.connect { props =>
+          props.index.search.geo.found.reqOpt.flatMap { m =>
+            OptionUtil.SomeBool( m.resp.nodes.nonEmpty )
+          }
         },
 
       )

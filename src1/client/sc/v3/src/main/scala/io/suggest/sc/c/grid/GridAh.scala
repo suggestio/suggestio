@@ -205,7 +205,7 @@ object GridAh {
       .iterator
       .flatten
       .zipWithIndex
-      .find { _._1.nodeId contains nodeId }
+      .find( _._1.nodeId contains[String] nodeId )
   }
 
 
@@ -479,7 +479,7 @@ class GridAh[M](
               }(v0)
               // В фоне - запустить скроллинг к началу карточки.
               val scrollFx      = GridAh.scrollToAdFx( ad1, gridBuild2 )
-              val resetRouteFx  = ResetUrlRoute.toEffectPure
+              val resetRouteFx  = ResetUrlRoute().toEffectPure
               val fxs           = scrollFx + resetRouteFx
               updated(v2, fxs)
             }

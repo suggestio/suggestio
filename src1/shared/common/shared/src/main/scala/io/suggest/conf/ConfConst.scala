@@ -18,4 +18,6 @@ object ConfConst {
 
   def IS_TOUCH_DEV = "device.touch.is"
 
+  def SC_INDEXES_RECENT = "sc.indexes.recent"
+
 }

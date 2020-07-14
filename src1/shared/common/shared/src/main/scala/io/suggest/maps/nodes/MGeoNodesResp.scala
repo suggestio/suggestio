@@ -59,7 +59,7 @@ case class MGeoNodesResp(
   */
 case class MGeoNodePropsShapes(
                                 props    : MSc3IndexResp,
-                                shapes   : Seq[IGeoShape]
+                                shapes   : Seq[IGeoShape] = Nil,
                               )
   extends OptStrId
 {

@@ -40,9 +40,9 @@ object MScInternals {
 /** Класс-контейнер модели внутренних состояний.
   */
 case class MScInternals(
-                         info           : MInternalInfo       = MInternalInfo.empty,
+                         info           : MInternalInfo,
                          conf           : MSc3Conf,
                          jsRouter       : MJsRouterS          = MJsRouterS.empty,
                          boot           : MScBoot             = MScBoot.default,
-                         daemon         : MScDaemon          = MScDaemon.empty,
+                         daemon         : MScDaemon           = MScDaemon.empty,
                        )

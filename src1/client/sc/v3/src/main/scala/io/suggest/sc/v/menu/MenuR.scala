@@ -17,7 +17,6 @@ import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -33,11 +32,11 @@ class MenuR(
              settingsMenuItemR        : SettingsMenuItemR,
              leftR                    : LeftR,
              versionR                 : VersionR,
+             indexesRecentR           : IndexesRecentR,
              scReactCtxP              : React.Context[MScReactCtx],
            ) {
 
   type Props = ModelProxy[MScRoot]
-
 
   case class State(
                     enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
@@ -45,7 +44,6 @@ class MenuR(
                     aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
                     menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
                   )
-
 
 
   class Backend($: BackendScope[Props, State]) {
@@ -76,6 +74,9 @@ class MenuR(
 
           // Пункт открытия диалога с настройками выдачи.
           settingsMenuItemR.component( propsProxy ),
+
+          // Список недавних узлов.
+          indexesRecentR.component( propsProxy ),
 
         ),
       )

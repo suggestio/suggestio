@@ -2,9 +2,11 @@ package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.routes
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.dev.MOnLineInfo
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
+import io.suggest.sc.m.inx.save.MIndexesRecent
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
@@ -98,7 +100,17 @@ case object GlCheckAfterResume extends IScRootAction
 case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
 
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию. */
-case object ResetUrlRoute extends IScRootAction
+case class ResetUrlRoute(route: Option[MainScreen] = None) extends IScRootAction
+
+/** Восстановление текущего состояния ранее-посещённых индексов. */
+case class LoadIndexRecents(clean: Boolean) extends IScRootAction
+
+/** Сохранить в базу инфу по индексу. */
+case class SaveRecentIndex(inxRecent2: Option[MIndexesRecent] = None) extends IScRootAction
+
+/** Выбор узла в списке недавних узлов. */
+case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScRootAction
+
 
 /** Экшен хардварной кнопки "Назад", которую надо отрабатывать по-особому. */
 case object HwBack extends IScRootAction

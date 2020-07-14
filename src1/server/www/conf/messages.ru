@@ -1141,3 +1141,4 @@ Unsupported.browser.or.fatal.failure=Неподдерживаемый брауз
 
 Not.connected=Нет соединения.
 Retry=Повторить
+Recents=Недавние

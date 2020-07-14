@@ -418,7 +418,7 @@ class BootAh[M](
         .value
         .info.currRoute
         .filter { _ => allowRouteTo }
-        .fold[IScRootAction](ResetUrlRoute)(RouteTo.apply)
+        .fold[IScRootAction](ResetUrlRoute())(RouteTo.apply)
     }
   }
 

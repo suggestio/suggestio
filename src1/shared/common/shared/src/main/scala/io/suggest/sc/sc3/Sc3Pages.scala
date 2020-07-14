@@ -4,6 +4,8 @@ import io.suggest.geo.MGeoPoint
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -35,20 +37,34 @@ object Sc3Pages {
       import MGeoPoint.JsonFormatters.{PIPE_DELIM_STRING_READS, PIPE_DELIM_STRING_WRITES}
       (
         (__ \ NODE_ID_FN).formatNullable[String] and
-        (__ \ CAT_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
+        (__ \ SEARCH_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ GENERATION_FN).formatNullable[Long] and
         (__ \ TAG_NODE_ID_FN).formatNullable[String] and
         (__ \ LOC_ENV_FN).formatNullable[MGeoPoint] and
-        (__ \ GEO_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
+        (__ \ MENU_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ FOCUSED_AD_ID_FN).formatNullable[String] and
         (__ \ FIRST_RUN_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ DL_APP_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
-        (__ \ SETTINGS_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse
+        (__ \ SETTINGS_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
+        (__ \ SHOW_WELCOME_FN).formatNullable[Boolean].formatBooleanOrTrue
       )(apply, unlift(unapply))
     }
 
 
+    def nodeId = GenLens[MainScreen]( _.nodeId )
+    def locEnv = GenLens[MainScreen]( _.locEnv )
+    def searchOpened = GenLens[MainScreen]( _.searchOpened )
+    def menuOpened = GenLens[MainScreen]( _.menuOpened )
+    def showWelcome = GenLens[MainScreen]( _.showWelcome )
+
+
     implicit final class MainScreenOpsExt( private val mainScreen: MainScreen ) extends AnyVal {
+
+      def isSamePlaceAs(ms2: MainScreen): Boolean = {
+        (mainScreen.nodeId ==* ms2.nodeId) &&
+        ((mainScreen.locEnv.isEmpty && ms2.locEnv.isEmpty) ||
+         (mainScreen.locEnv.exists(gp1 => ms2.locEnv.exists(_ ~= gp1))))
+      }
 
       /** Требуется ли гео-локация за неимением полезных данных? */
       def needGeoLoc: Boolean = {
@@ -63,6 +79,17 @@ object Sc3Pages {
         mainScreen.firstRunOpen ||
         mainScreen.dlAppOpen ||
         mainScreen.settingsOpen
+      }
+
+      /** Переключение в другое состояние с минимальными изменениями конфигурации интерфейса. */
+      def silentSwitchingInto( mainScreen2: MainScreen ): MainScreen = {
+        mainScreen2.copy(
+          searchOpened = mainScreen.searchOpened,
+          menuOpened = mainScreen.menuOpened,
+          firstRunOpen = mainScreen.firstRunOpen,
+          showWelcome = false,
+          dlAppOpen =  mainScreen.dlAppOpen,
+        )
       }
 
     }
@@ -81,6 +108,7 @@ object Sc3Pages {
                          firstRunOpen   : Boolean             = false,
                          dlAppOpen      : Boolean             = false,
                          settingsOpen   : Boolean             = false,
+                         showWelcome    : Boolean             = true,
                        )
     extends Sc3Pages
 

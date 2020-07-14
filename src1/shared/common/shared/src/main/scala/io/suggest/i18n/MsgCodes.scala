@@ -475,5 +475,6 @@ object MsgCodes {
   val `Retry` = "Retry"
 
   val `Showcase` = "Showcase"
+  val `Recents` = "Recents"
 
 }

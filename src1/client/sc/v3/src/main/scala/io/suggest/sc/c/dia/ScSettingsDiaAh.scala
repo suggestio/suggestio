@@ -28,7 +28,7 @@ class ScSettingsDiaAh[M](
 
       } else {
         val v2 = (MScSettingsDia.opened set m.opened)(v0)
-        val fx = ResetUrlRoute.toEffectPure
+        val fx = ResetUrlRoute().toEffectPure
         updated(v2, fx)
       }
 

@@ -191,22 +191,25 @@ object ScConstants {
     // какой-то неизвестной науке паталогии копипастинга идентификаторов из окошка джаббер-клиента в файл showcase2.coffee.
 
     // Обозначены через val, потому что эти константы используют очень активно или не используют вообще.
-    val NODE_ID_FN               = "m.id"
+    val NODE_ID_FN              = "m.id"
     val GENERATION_FN           = "a.gen"
 
-    val CAT_SCR_OPENED_FN       = "s.open"
+    val SEARCH_OPENED_FN        = "s.open"
 
     val FOCUSED_AD_ID_FN        = "f.cur.id"
     val FADS_OFFSET_FN          = "f.off"
     val PRODUCER_ADN_ID_FN      = "f.pr.id"
 
-    val GEO_SCR_OPENED_FN       = "n.open"
+    val MENU_OPENED_FN          = "n.open"
 
     /** Название флага для диалога первого запуска. */
     val FIRST_RUN_OPEN_FN       = "r1"
 
     val DL_APP_OPEN_FN          = "dl"
     val SETTINGS_OPEN_FN        = "settings"
+
+    /** Отображать ли приветствие узла? */
+    def SHOW_WELCOME_FN         = ReqArgs.WITH_WELCOME_FN
 
     // Панель поиска: гео-позишен, [гео]теги.
     final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN

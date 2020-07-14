@@ -181,7 +181,7 @@ object MGeoPoint {
   }
 
 
-  implicit class MGeoPointOps(val that: MGeoPoint) extends AnyVal {
+  implicit final class MGeoPointOps(private val that: MGeoPoint) extends AnyVal {
 
     /** Примерно равная точка -- это находящаяся ну очень близко. */
     def ~=(other: MGeoPoint): Boolean = {
@@ -256,7 +256,7 @@ object MGeoPoint {
 
 
 /** Дефолтовая, пошаренная между клиентом и сервером. */
-case class MGeoPoint(
+final case class MGeoPoint(
                       // TODO Надо обменять порядок аргументов на (lon,lat).
                       //      Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT, в Sc3Router
                       lat: GeoCoord_t,

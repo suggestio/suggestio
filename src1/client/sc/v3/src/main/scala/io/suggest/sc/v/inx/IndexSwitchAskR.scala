@@ -7,14 +7,14 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import ReactDiodeUtil.Implicits._
-import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitch}
-import io.suggest.sc.m.search.{MNodesFoundRowProps, MNodesFoundS}
+import io.suggest.sc.m.inx.{CancelIndexSwitch, IndexSwitchNodeClick, MInxSwitch}
+import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.search.found.{NfListR, NfRowR}
 import io.suggest.sc.v.snack.SnackComp
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
-import japgolly.scalajs.react.{BackendScope, React, ReactEvent, ScalaComponent}
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -37,7 +37,6 @@ class IndexSwitchAskR(
   case class State(
                     nodesFoundPropsC          : ReactConnectProxy[Seq[MNodesFoundRowProps]],
                     searchCssOptC             : ReactConnectProxy[Option[SearchCss]],
-                    nodesFoundSOptC           : ReactConnectProxy[Option[MNodesFoundS]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -90,18 +89,13 @@ class IndexSwitchAskR(
             },
 
             // Список найденных узлов:
-            {
-              val nodesFoundRows = nfRowR( s.nodesFoundPropsC )
-              s.nodesFoundSOptC { nodesFoundSOptProxy =>
-                nodesFoundSOptProxy.value.whenDefinedEl { nodesFoundS =>
-                  nfListR.component(
-                    nfListR.PropsVal(
-                      nodesFoundProxy = nodesFoundSOptProxy.resetZoom( nodesFoundS ),
-                    )
-                  )( nodesFoundRows )
-                }
-              }
-            },
+            nfListR.component(
+              nfListR.PropsVal()
+            )(
+              nfRowR( s.nodesFoundPropsC ) { inxResp =>
+                IndexSwitchNodeClick( inxResp.idOrNameOrEmpty )
+              },
+            ),
 
           ),
         )
@@ -131,8 +125,6 @@ class IndexSwitchAskR(
         nodesFoundPropsC = propsProxy.connect( _.ask.fold[Seq[MNodesFoundRowProps]](Nil)(_.nodesFoundProps) ),
 
         searchCssOptC = propsProxy.connect(_.searchCssOpt)( OptFastEq.Wrapped(SearchCss.SearchCssFastEq) ),
-
-        nodesFoundSOptC = propsProxy.connect( _.nodesFoundOpt )( OptFastEq.Wrapped(MNodesFoundS.MNodesFoundSFastEq) ),
 
       )
     }

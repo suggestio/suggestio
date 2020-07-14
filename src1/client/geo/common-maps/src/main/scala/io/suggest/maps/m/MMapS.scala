@@ -37,10 +37,38 @@ object MMapS {
     )
   }
 
+
   def zoom          = GenLens[MMapS](_.zoom)
   def centerInit    = GenLens[MMapS](_.centerInit)
   def centerReal    = GenLens[MMapS](_.centerReal)
   def locationFound = GenLens[MMapS](_.locationFound)
+
+
+  implicit final class MMapSOpsExt( private val mmapS: MMapS ) extends AnyVal {
+
+    def center: MGeoPoint =
+      mmapS.centerReal getOrElse mmapS.centerInit
+
+    def withCenterInitReal(centerInit: MGeoPoint, centerReal: Option[MGeoPoint] = None) =
+      mmapS.copy(centerInit = centerInit, centerReal = centerReal)
+
+
+    /** Кросс-платформенные данные карты, для экспорта на сервер. */
+    def toMapProps: MMapProps = {
+      MMapProps(
+        center = mmapS.center,
+        zoom   = mmapS.zoom,
+      )
+    }
+
+
+    def isCenterRealNearInit: Boolean = {
+      mmapS.centerReal.fold(true) { centerRealMgp =>
+        mmapS.centerInit ~= centerRealMgp
+      }
+    }
+
+  }
 
 }
 
@@ -55,34 +83,9 @@ object MMapS {
   *                   Запись напрямую в MMapProps приводит к плохому поведению leaflet,
   *                   поэтому фактический центр сохраняется отдельно от центра инициализации.
   */
-case class MMapS(
-                  zoom          : Int,
-                  centerInit    : MGeoPoint,
-                  centerReal    : Option[MGeoPoint]   = None,
-                  locationFound : Option[Boolean]     = None,
-                ) {
-
-  def withCenterInitReal(centerInit: MGeoPoint, centerReal: Option[MGeoPoint] = None) =
-    copy(centerInit = centerInit, centerReal = centerReal)
-
-  def center: MGeoPoint = {
-    centerReal
-      .getOrElse(centerInit)
-  }
-
-  /** Кросс-платформенные данные карты, для экспорта на сервер. */
-  def toMapProps: MMapProps = {
-    MMapProps(
-      center = center,
-      zoom   = zoom
-    )
-  }
-
-
-  def isCenterRealNearInit: Boolean = {
-    centerReal.fold(true) { centerRealMgp =>
-      centerInit ~= centerRealMgp
-    }
-  }
-
-}
+final case class MMapS(
+                        zoom          : Int,
+                        centerInit    : MGeoPoint,
+                        centerReal    : Option[MGeoPoint]   = None,
+                        locationFound : Option[Boolean]     = None,
+                      )

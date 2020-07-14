@@ -41,7 +41,7 @@ import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
-import io.suggest.sc.m.in.{MScDaemon, MScInternals}
+import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals}
 import io.suggest.sc.m.inx.{MScIndex, MScIndexState, MScSwitchCtx}
 import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
@@ -62,6 +62,7 @@ import io.suggest.event.DomEvents
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
+import io.suggest.sc.m.inx.save.{MIndexesRecent, MIndexesRecentOuter}
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sc.v.toast.ScNotifications
@@ -143,6 +144,10 @@ class Sc3Circuit(
       scInit.conf -> gen
     }
 
+    val searchCssEmpty = SearchCss( MSearchCssProps(
+      screenInfo = screenInfo
+    ))
+
     MScRoot(
       dev = MScDev(
         screen = MScScreenS(
@@ -157,10 +162,8 @@ class Sc3Circuit(
             mapInit = MMapInitState(
               state = MMapS(scInit.mapProps)
             ),
-            css = SearchCss( MSearchCssProps(
-              screenInfo = screenInfo
-            ))
-          )
+            css = searchCssEmpty,
+          ),
         ),
         scCss = ScCss(
           MScCssArgs.from(scIndexResp, screenInfo)
@@ -185,6 +188,12 @@ class Sc3Circuit(
       },
       internals = MScInternals(
         conf = conf2,
+        info = MInternalInfo(
+          indexesRecents = MIndexesRecentOuter(
+            searchCss = searchCssEmpty,
+            saved = Pot.empty[MIndexesRecent],
+          ),
+        ),
       ),
     )
   }
@@ -833,6 +842,9 @@ class Sc3Circuit(
         this.runEffectAction( OnlineCheckConn )
     }
 
+    Future {
+      this.runEffectAction( LoadIndexRecents(clean = true) )
+    }
   }
 
 

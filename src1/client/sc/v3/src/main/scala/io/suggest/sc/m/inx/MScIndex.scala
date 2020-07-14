@@ -39,6 +39,18 @@ object MScIndex {
   val scCss   = GenLens[MScIndex](_.scCss)
   val menu    = GenLens[MScIndex](_.menu)
 
+
+  implicit final class MScIndexOpsExt( private val scIndex: MScIndex ) extends AnyVal {
+
+    def isAnyPanelOpened: Boolean =
+      scIndex.search.panel.opened || scIndex.menu.opened
+
+    /** Первый запуск? */
+    def isFirstRun: Boolean =
+      scIndex.resp.isEmpty
+
+  }
+
 }
 
 
@@ -79,13 +91,5 @@ case class MScIndex(
     })
       .to( List )
   }
-
-  def isAnyPanelOpened: Boolean = {
-    search.panel.opened || menu.opened
-  }
-
-  /** Первый запуск? */
-  def isFirstRun: Boolean =
-    resp.isEmpty
 
 }

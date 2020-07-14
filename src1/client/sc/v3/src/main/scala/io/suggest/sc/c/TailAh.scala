@@ -2,6 +2,7 @@ package io.suggest.sc.c
 
 import cordova.plugins.appminimize.CdvAppMinimize
 import diode._
+import diode.Implicits._
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -10,25 +11,31 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, NodeRowClick}
+import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MNodesFoundS, MScSearch, MSearchCssProps, MSearchRespInfo, NodeRowClick}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.geo.GeoLocUtilJs
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
+import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecent, MIndexesRecentOuter}
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.DoNothing
+import io.suggest.spa.{DAction, DoNothing}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
+import scala.concurrent.duration._
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -122,7 +129,6 @@ object TailAh {
       .composeLens( MGeoTabS.mapInit )
   }
 
-  /* Было: (geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false) */
   private def getIndexFx( switchCtx: MScSwitchCtx ): Effect = {
     GetIndex( switchCtx )
       .toEffectPure
@@ -132,6 +138,31 @@ object TailAh {
     MScRoot.internals
       .composeLens( MScInternals.info )
       .composeLens( MInternalInfo.currRoute )
+  }
+
+
+  private def root_internals_info_inxRecentsPrev_LENS = {
+    MScRoot.internals
+      .composeLens( MScInternals.info )
+      .composeLens( MInternalInfo.inxRecents )
+  }
+
+  private def recents2searchCssModF(inxRecents: MIndexesRecent) = {
+    MIndexesRecentOuter.searchCss
+      .composeLens( SearchCss.args )
+      .composeLens( MSearchCssProps.nodesFound )
+      .composeLens( MNodesFoundS.req )
+      .modify( _.ready(
+        MSearchRespInfo(
+          resp = MGeoNodesResp(
+            nodes = for (inxInfo <- inxRecents.recents) yield {
+              MGeoNodePropsShapes(
+                props = inxInfo.indexResp,
+              )
+            }
+          ),
+        )
+      ))
   }
 
 }
@@ -151,27 +182,176 @@ class TailAh(
   override protected def handle: PartialFunction[Any, ActionResult[MScRoot]] = {
 
     // Заставить роутер собрать новую ссылку.
-    case ResetUrlRoute =>
+    case m: ResetUrlRoute =>
       val v0 = value
-      val m = TailAh.getMainScreenSnapShot( v0 )
+      val nextRoute = m.route getOrElse TailAh.getMainScreenSnapShot( v0 )
       //println("Reset Route => " + m)
 
       val currRouteLens = TailAh._currRoute
-      val m0 = currRouteLens.get( v0 )
-      if ( m0 contains m ) {
+      val currRoute = currRouteLens.get( v0 )
+      if ( currRoute contains[MainScreen] nextRoute ) {
         noChange
       } else {
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
         val fx = Effect.action {
           //println("ResetUrlRoute: " + m)
           routerCtl
-            .set( m )
+            .set( nextRoute )
             .runNow()
           DoNothing
         }
-        val v2 = currRouteLens.set( Some(m) )( v0 )
+        val v2 = (currRouteLens set Some(nextRoute))( v0 )
         updatedSilent(v2, fx)
       }
+
+
+    // Запуск чтения сохранённых недавно-посещённых узлов.
+    case m: LoadIndexRecents =>
+      val v0 = value
+
+      val outerLens = TailAh.root_internals_info_inxRecentsPrev_LENS
+
+      if (m.clean) {
+        // Завернуть в эффект?
+        val readTryRes = Try( MIndexesRecent.get() )
+          .map( _ getOrElse MIndexesRecent.empty )
+
+        var infoModF = MIndexesRecentOuter.saved.modify(
+          _.withTry(
+            Try( MIndexesRecent.get() )
+              .map( _ getOrElse MIndexesRecent.empty )
+          )
+        )
+
+        for (recent2 <- readTryRes)
+          infoModF = infoModF andThen TailAh.recents2searchCssModF( recent2 )
+
+        val v2 = outerLens.modify( infoModF )(v0)
+        updated(v2)
+
+      } else {
+        // Просто пересборка инстанса, чтобы освежить какие-то lazy-val'ы.
+        val v2 = outerLens.modify( identity )(v0)
+        updated(v2)
+      }
+
+
+    // Сохранить инфу по индексу.
+    case m: SaveRecentIndex =>
+      val v0 = value
+
+      m.inxRecent2.fold {
+        // Эффект, если есть роута и что-то изменилось.
+        val fxOpt = for {
+          currRoute       <- v0.internals.info.currRoute
+          currIndexResp   <- v0.index.respOpt
+        } yield {
+          Effect.action {
+            // Получить на руки текущее сохранённое состояние:
+            val recentOpt0 = v0.internals.info.indexesRecents.saved.toOption orElse {
+              val tryRes = Try {
+                MIndexesRecent.get()
+              }
+              for (ex <- tryRes.failed)
+                logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex )
+              tryRes
+                .toOption
+                .flatten
+            }
+
+            def inxInfo2 = MIndexInfo(
+              state         = currRoute,
+              indexResp     = currIndexResp,
+            )
+
+            // Сохранить/обновить сохранённое состояние.
+            val recentOpt2 = recentOpt0.fold [Option[MIndexesRecent]] {
+              val ir = MIndexesRecent( inxInfo2 :: Nil )
+              Some(ir)
+            } { recents0 =>
+              val isDuplicate = recents0.recents.exists { m =>
+                m.state isSamePlaceAs currRoute
+              }
+
+              Option.when(!isDuplicate) {
+                val maxItems = MIndexesRecent.MAX_RECENT_ITEMS
+                MIndexesRecent.recents.modify { r0 =>
+                  val r1 =
+                    if (r0.lengthIs > maxItems)  r0.take( maxItems - 1 )
+                    else  r0
+
+                  inxInfo2 :: r1
+                } (recents0)
+              }
+            }
+
+            recentOpt2.fold[DAction] {
+              DoNothing
+            } { recents2 =>
+              // Записать в постоянное хранилище
+              for {
+                ex <- Try( MIndexesRecent.save( recents2 ) ).failed
+              }
+                logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex )
+
+              SaveRecentIndex( recentOpt2 )
+            }
+          }
+        }
+
+        fxOpt.fold (noChange) { fx =>
+          val v2 = TailAh.root_internals_info_inxRecentsPrev_LENS
+            .composeLens( MIndexesRecentOuter.saved )
+            .modify( _.pending() )( v0 )
+          updatedSilent(v2, fx)
+        }
+
+      } { inxRecent2 =>
+        val v2 = TailAh.root_internals_info_inxRecentsPrev_LENS.modify(
+          MIndexesRecentOuter.saved
+            .modify( _.ready(inxRecent2) ) andThen
+          TailAh.recents2searchCssModF( inxRecent2 )
+        )(v0)
+        // не silent, т.к. подразумевается рендер некоторых частей списка в левой менюшке.
+        updated( v2 )
+      }
+
+
+    // Сигнал выбора узла в списке ранее просмотренных.
+    case m: IndexRecentNodeClick =>
+      val v0 = value
+
+      val lens = TailAh.root_internals_info_inxRecentsPrev_LENS
+        .composeLens( MIndexesRecentOuter.saved )
+
+      // Переход в ранее-посещённую локацию: найти в recent-списке предшествующее состояние выдачи.
+      lens.get( v0 )
+        .iterator
+        .flatMap(_.recents)
+        .find(_.indexResp ===* m.inxRecent)
+        .fold {
+          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          noChange
+
+        } { inxRecent =>
+          // Клик по узлу - восстановить состояние выдачи.
+          val routeFx = Effect.action {
+            // Патчим текущую роуту данными из новой роуты.
+            val nextRoute = TailAh._currRoute
+              .get(v0)
+              .fold( inxRecent.state )( _ silentSwitchingInto inxRecent.state )
+
+            ResetUrlRoute( Some(nextRoute) )
+          }
+
+          // Надо сбросить lazy val внутри MIndexesRecentOuter(), когда изменится состояние текущего узла:
+          // TODO Нужно без .after(), а как-то более интеллектуально сбрасывать состояние.
+          //val resetInternalsFx = LoadIndexRecents(clean = false)
+          //  .toEffectPure
+          //  .after( 1.second )
+
+          effectOnly( routeFx /*>> resetInternalsFx*/ )
+        }
 
 
     // Сигнал нажатия хардварной кнопки back (приложение).
@@ -278,18 +458,19 @@ class TailAh(
 
       // Смотрим координаты текущей точки.
       if (
-      // Если состояние гео-точки хоть немного изменилось:
-      !(
-        (m.mainScreen.locEnv.isEmpty && currMainScreen.locEnv.isEmpty) ||
+        // Если состояние гео-точки хоть немного изменилось:
+        !(
+          (m.mainScreen.locEnv.isEmpty && currMainScreen.locEnv.isEmpty) ||
           m.mainScreen.locEnv.exists { mgp2 =>
             currMainScreen.locEnv.exists { mgp0 =>
               mgp0 ~= mgp2
             }
           }
         )
-        ) {
+      ) {
         if (isFullyReady) {
           needUpdateUi = true
+          isToReloadIndex = true
           for (nextGeoPoint <- m.mainScreen.locEnv) {
             modsAcc ::= MScRoot.index
               .composeLens( TailAh._inxSearchGeoMapInitLens )
@@ -418,12 +599,12 @@ class TailAh(
           indexQsArgs = MScIndexArgs(
             geoIntoRcvr = false,
             retUserLoc  = v0.index.search.geo.mapInit.userLoc.isEmpty,
-            withWelcome = true,
+            withWelcome = m.mainScreen.showWelcome,
             nodeId      = m.mainScreen.nodeId,
           ),
           focusedAdId = m.mainScreen.focusedAdId,
         )
-        fxsAcc ::= TailAh.getIndexFx( switchCtx )
+        fxsAcc ::= TailAh.getIndexFx( switchCtx ) >> LoadIndexRecents(clean = false).toEffectPure
       } else if (isGridNeedsReload)  {
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure

@@ -49,8 +49,8 @@ object ScJsState extends MacroLogsImpl {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
           maybeAdnId            <- strOptB.bind (NODE_ID_FN,             params)
-          maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN,     params)
-          maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN,     params)
+          maybeCatScreenOpened  <- boolOptB.bind(SEARCH_OPENED_FN,     params)
+          maybeGeoScreenOpened  <- boolOptB.bind(MENU_OPENED_FN,     params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN,         params)
           maybeFadsOpened       <- strOptB.bind (FOCUSED_AD_ID_FN, params)
           maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
@@ -60,7 +60,7 @@ object ScJsState extends MacroLogsImpl {
           val r = ScJsState(
             adnId               = strNonEmpty( QsbUtil.eitherOpt2option(maybeAdnId) ),
             searchScrOpenedOpt  = noFalse( QsbUtil.eitherOpt2option(maybeCatScreenOpened) ),
-            navScrOpenedOpt     = noFalse( QsbUtil.eitherOpt2option(maybeGeoScreenOpened) ),
+            menuOpenedOpt     = noFalse( QsbUtil.eitherOpt2option(maybeGeoScreenOpened) ),
             generationOpt       = QsbUtil.eitherOpt2option(maybeGeneration)
               .orElse(generationDflt),
             fadOpenedIdOpt      = strNonEmpty( QsbUtil.eitherOpt2option(maybeFadsOpened) ),
@@ -74,9 +74,9 @@ object ScJsState extends MacroLogsImpl {
 
       override def unbind(key: String, value: ScJsState): String = {
         _mergeUnbinded1(
-          strOptB.unbind  (NODE_ID_FN,             value.adnId),
-          boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
-          boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
+          strOptB.unbind  (NODE_ID_FN,            value.adnId),
+          boolOptB.unbind (SEARCH_OPENED_FN,      value.searchScrOpenedOpt),
+          boolOptB.unbind (MENU_OPENED_FN,        value.menuOpenedOpt),
           longOptB.unbind (GENERATION_FN,         value.generationOpt),
           strOptB.unbind  (FOCUSED_AD_ID_FN,      value.fadOpenedIdOpt),
           intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
@@ -99,9 +99,9 @@ object ScJsState extends MacroLogsImpl {
 /**
  * Класс, отражающий состояние js-выдачи на клиенте.
  * @param adnId id текущего узла.
- * @param searchScrOpenedOpt Инфа об открытости поисковой панели.
- * @param navScrOpenedOpt Инфа об раскрытости навигационной панели.
- * @param generationOpt "Поколение".
+ * @param searchScrOpenedOpt Инфа об открытости поисковой панели (справа).
+ * @param menuOpenedOpt Инфа об раскрытости левой панели (меню).
+ * @param generationOpt "Поколение" - random seed.
  * @param fadOpenedIdOpt id текущей открытой карточки.
  * @param fadsOffsetOpt текущий сдвиг в просматриваемых карточках.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
@@ -111,7 +111,7 @@ object ScJsState extends MacroLogsImpl {
 case class ScJsState(
                       adnId               : Option[String]   = None,
                       searchScrOpenedOpt  : Option[Boolean]  = None,
-                      navScrOpenedOpt     : Option[Boolean]  = None,
+                      menuOpenedOpt       : Option[Boolean]  = None,
                       generationOpt       : Option[Long]     = ScJsState.generationDflt,
                       fadOpenedIdOpt      : Option[String]   = None,
                       fadsOffsetOpt       : Option[Int]      = None,
@@ -145,7 +145,7 @@ case class ScJsState(
   }
 
   def isSearchScrOpened : Boolean = orFalse( searchScrOpenedOpt )
-  def isNavScrOpened    : Boolean = orFalse( navScrOpenedOpt )
+  def isNavScrOpened    : Boolean = orFalse( menuOpenedOpt )
   def isAnyPanelOpened  : Boolean = isSearchScrOpened || isNavScrOpened
   def isFadsOpened      : Boolean = fadOpenedIdOpt.isDefined
   def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
@@ -160,7 +160,7 @@ case class ScJsState(
    * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
    */
   def toggleNavScreen = copy(
-    navScrOpenedOpt = bool2boolOpt( !isNavScrOpened )
+    menuOpenedOpt = bool2boolOpt( !isNavScrOpened )
   )
 
   def toggleSearchScreen = copy(
@@ -171,7 +171,7 @@ case class ScJsState(
   /** Очень каноническое состояние выдачи без каких-либо уточнений. */
   def canonical: ScJsState = copy(
     searchScrOpenedOpt  = None,
-    navScrOpenedOpt     = None,
+    menuOpenedOpt     = None,
     generationOpt       = None,
     fadsOffsetOpt       = None,
     fadsProdIdOpt       = None

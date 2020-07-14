@@ -72,6 +72,8 @@ case class MNodesFoundS(
   extends NonEmpty
 {
 
+  lazy val reqOpt = req.toOption
+
   override def isEmpty: Boolean =
     MNodesFoundS.empty ===* this
 
@@ -94,10 +96,8 @@ case class MNodesFoundS(
       .toString()
   }
 
-  // TODO Унести как-то внутрь Pot[], чтобы не пересобирать на каждый чих.
-  /** Кэш для id-карты найденных узлов. */
-  def nodesMap: Map[String, MSc3IndexResp] = {
+  /** Быстрый доступ к кэшу для id-карты найденных узлов. */
+  def nodesMap: Map[String, MSc3IndexResp] =
     req.fold( Map.empty[String, MSc3IndexResp] )(_.resp.nodesMap)
-  }
 
 }

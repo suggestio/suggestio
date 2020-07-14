@@ -130,7 +130,7 @@ class GridFocusRespHandler
         )(g0)
         // Надо проскроллить выдачу на начало открытой карточки:
         val scrollFx = GridAh.scrollToAdFx( ad1, gridBuild2 )
-        val resetRouteFx = ResetUrlRoute.toEffectPure
+        val resetRouteFx = ResetUrlRoute().toEffectPure
 
         val v2 = MScRoot.grid.set(g2)( ctx.value0 )
         val fxOpt = Some(scrollFx + resetRouteFx)

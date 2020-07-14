@@ -14,6 +14,13 @@ import scala.language.higherKinds
   */
 object FastEqUtil {
 
+  /** Сборка инстанса FastEq на основе функции. */
+  def apply[A](isEqv: (A, A) => Boolean): FastEq[A] = {
+    new FastEq[A] {
+      override def eqv(a: A, b: A) = isEqv(a, b)
+    }
+  }
+
   /** Условно быстрое последовательное сравнивание двух Map'ов по ключам и значениям. */
   def KvCollFastEq[K, V, M[_] <: Iterable[_]](implicit feqK: FastEq[K], feqV: FastEq[V]): FastEq[M[(K, V)]] = {
     val collFastEq = new FastEq[(K, V)] {

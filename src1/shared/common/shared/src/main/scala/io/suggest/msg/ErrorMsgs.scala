@@ -246,4 +246,7 @@ object ErrorMsgs {
 
   def CHUNKED_UPLOAD_PREPARE_FAIL = "Chunked.upload.prepare.fail"
 
+
+  def JS_COMPONENT_CHILDREN_UNEXPECTED = "Js.component.children.unexpected"
+
 }

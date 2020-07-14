@@ -21,7 +21,7 @@ import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.SearchR
 import io.suggest.sc.v.snack.ScSnacksR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic, ScThemes}
-import io.suggest.spa.{FastEqUtil, OptFastEq}
+import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import scalacss.ScalaCssReact._
