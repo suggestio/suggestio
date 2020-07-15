@@ -2,7 +2,6 @@ package io.suggest.sc.v.menu
 
 import com.materialui.{MuiDivider, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -13,13 +12,14 @@ import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.found.{NfListR, NfRowR}
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.m.in.MInternalInfo
+import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
@@ -41,16 +41,15 @@ class IndexesRecentR(
 
 
   case class State(
-                    isVisibleSomeC          : ReactConnectProxy[Some[Boolean]],
                     searchCssC              : ReactConnectProxy[SearchCss],
-                    intInfoC                : ReactConnectProxy[MInternalInfo],
+                    inxRecentsC             : ReactConnectProxy[MIndexesRecentOuter],
                   )
 
 
   class Backend($: BackendScope[Props, State]) {
 
     def render(p: Props, s: State): VdomElement = {
-      val content = React.Fragment(
+      React.Fragment(
         MuiListItem()(
           MuiDivider()
         ),
@@ -89,26 +88,28 @@ class IndexesRecentR(
           nfListR.PropsVal()
         )(
           // Отрендерить список рядов:
-          s.intInfoC { intInfoProxy =>
-            val intInfo = intInfoProxy.value
-            ReactCommonUtil.maybeEl( intInfo.inxRecentsClean.nonEmpty ) {
+          s.inxRecentsC { intInfoProxy =>
+            val inxRecents = intInfoProxy.value
+            ReactCommonUtil.maybeEl( inxRecents.saved.exists(_.recents.nonEmpty) ) {
               val mroot = p.value
+              val currInxState = mroot.index.state
+
               val rowsData = for {
                 // toSeq - чтобы скастовать List к Seq, которая требуется на выходе.
-                inxInfo <- intInfo.inxRecentsClean
+                inxInfo <- inxRecents.recentIndexes
               } yield {
                 MNodesFoundRowProps(
                   node = MGeoNodePropsShapes(
                     props = inxInfo.indexResp,
                   ),
-                  searchCss = intInfo.indexesRecents.searchCss,
+                  searchCss = inxRecents.searchCss,
                   // Чтобы не перерендеривать на каждый чих, пока без расстояний.
                   //withDistanceToNull = distanceToOrNull,
                   selected = {
                     inxInfo.indexResp.nodeId.exists {
-                      mroot.index.state.rcvrId.contains[String]
+                      currInxState.rcvrId.contains[String]
                     } || inxInfo.indexResp.geoPoint.exists { mgp0 =>
-                      mroot.index.state.inxGeoPoint.exists(_ ~= mgp0)
+                      currInxState.inxGeoPoint.exists(_ ~= mgp0)
                     }
                   },
                 )
@@ -119,12 +120,6 @@ class IndexesRecentR(
           },
         ),
       )
-
-      // Обернуть список в результат:
-      s.isVisibleSomeC { isVisibleSomeProxy =>
-        val isVisible = isVisibleSomeProxy.value.value
-        ReactCommonUtil.maybeEl( isVisible )( content )
-      }
     }
 
   }
@@ -135,18 +130,15 @@ class IndexesRecentR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        isVisibleSomeC = propsProxy.connect { mroot =>
-          OptionUtil.SomeBool( mroot.internals.info.inxRecentsClean.nonEmpty )
-        },
-
         searchCssC = propsProxy.connect { mroot =>
           mroot.internals.info.indexesRecents.searchCss
         },
 
-        intInfoC = propsProxy.connect( _.internals.info )(
-          FastEqUtil[MInternalInfo] { (a, b) =>
-            // Сравниваем lazyVal'ы, т.к. референсно они повторяют поля case class'а
-            (a.inxRecentsClean ===* b.inxRecentsClean)
+        inxRecentsC = propsProxy.connect {
+          _.internals.info.indexesRecents
+        } (
+          FastEqUtil { (a, b) =>
+            a.saved ===* b.saved
           }
         ),
 

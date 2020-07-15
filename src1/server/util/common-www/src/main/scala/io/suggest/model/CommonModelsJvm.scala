@@ -5,12 +5,14 @@ import java.net.URLEncoder
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
+import io.suggest.common.empty.OptionUtil, OptionUtil.BoolOptOps
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
+import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
 import io.suggest.up.{MUploadChunkQs, MUploadChunkSize, MUploadChunkSizes}
@@ -500,6 +502,50 @@ object CommonModelsJvm extends MacroLogsDyn {
           hashesHexB.unbind( key1(key, F.HASHES_HEX),   value.hashesHex ),
         )
       }
+    }
+  }
+
+
+
+  /** routes-Биндер для параметров showcase'а. */
+  implicit def mScIndexArgsQsb: QueryStringBindable[MScIndexArgs] = {
+    new QueryStringBindableImpl[MScIndexArgs] {
+      import io.suggest.sc.ScConstants.ReqArgs.{GEO_INTO_RCVR_FN, NODE_ID_FN, RET_GEO_LOC_FN}
+
+      def boolB = implicitly[QueryStringBindable[Boolean]]
+      lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
+      def strOptB = implicitly[QueryStringBindable[Option[String]]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
+        val f = key1F(key)
+        for {
+          adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),          params)
+          geoIntoRcvrE        <- boolOptB.bind(f(GEO_INTO_RCVR_FN),   params)
+          retUserLocOptE      <- boolOptB.bind(f(RET_GEO_LOC_FN),     params)
+        } yield {
+          for {
+            _adnIdOpt         <- adnIdOptE
+            _geoIntoRcvr      <- geoIntoRcvrE
+            _retUserLocOpt    <- retUserLocOptE
+          } yield {
+            MScIndexArgs(
+              nodeId          = _adnIdOpt,
+              geoIntoRcvr     = _geoIntoRcvr.getOrElseTrue,
+              retUserLoc      = _retUserLocOpt.getOrElseFalse
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MScIndexArgs): String = {
+        val f = key1F(key)
+        _mergeUnbinded1(
+          boolB.unbind  (f(GEO_INTO_RCVR_FN),     value.geoIntoRcvr),
+          strOptB.unbind(f(NODE_ID_FN),           value.nodeId),
+          boolOptB.unbind(f(RET_GEO_LOC_FN),      OptionUtil.maybeTrue(value.retUserLoc) )
+        )
+      }
+
     }
   }
 

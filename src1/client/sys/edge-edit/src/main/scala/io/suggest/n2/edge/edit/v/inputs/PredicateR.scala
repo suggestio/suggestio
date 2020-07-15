@@ -39,7 +39,7 @@ class PredicateR(
       crCtxProv.consume { crCtx =>
         val _label = crCtx.messages( MsgCodes.`Predicate` )
 
-        // TODO Отрендерить список предикатов:
+        // Отрендерить дерево предикатов:
         val _children = for {
           pred <- MPredicates.values
         } yield {

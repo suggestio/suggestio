@@ -22,7 +22,6 @@ object MScIndexArgs {
   /** Поддержка JSON-сериализации */
   implicit def mscIndexArgsFormat: OFormat[MScIndexArgs] = (
     (__ \ NODE_ID_FN).formatNullable[String] and
-    (__ \ WITH_WELCOME_FN).format[Boolean] and
     (__ \ GEO_INTO_RCVR_FN).format[Boolean] and
     (__ \ RET_GEO_LOC_FN).formatNullable[Boolean].formatBooleanOrFalse
   )( apply, unlift(unapply) )
@@ -35,7 +34,6 @@ object MScIndexArgs {
 /** Класс модели аргументов запросов sc index с сервера.
   *
   * @param nodeId id узла-ресивера, если есть.
-  * @param withWelcome Планируется ли рендерить splash-screen приветствия?
   * @param geoIntoRcvr Допускать ли вход в ресивер по гео-координатам?
   *                    true на стадии геолокации с поиском узла
   *                    При гулянии по карте - false
@@ -46,7 +44,6 @@ object MScIndexArgs {
   */
 case class MScIndexArgs(
                          nodeId       : Option[String]  = None,
-                         withWelcome  : Boolean         = true,
                          geoIntoRcvr  : Boolean         = true,
                          retUserLoc   : Boolean         = false,
                        )

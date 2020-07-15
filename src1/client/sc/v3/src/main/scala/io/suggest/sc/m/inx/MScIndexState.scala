@@ -30,6 +30,17 @@ object MScIndexState {
   def switch     = GenLens[MScIndexState](_.switch)
   def views      = GenLens[MScIndexState](_.views)
 
+
+  implicit final class InxStateOpsExt( private val inxState: MScIndexState ) extends AnyVal {
+
+    def rcvrId: Option[String] =
+      inxState.views.head.rcvrId
+
+    def inxGeoPoint: Option[MGeoPoint] =
+      inxState.views.head.inxGeoPoint
+
+  }
+
 }
 
 
@@ -44,8 +55,6 @@ case class MScIndexState(
                           views           : NonEmptyList[MIndexView]  = NonEmptyList( MIndexView.empty ),
                         ) {
 
-  def rcvrId: Option[String] = views.head.rcvrId
-  def inxGeoPoint: Option[MGeoPoint] = views.head.inxGeoPoint
   lazy val prevNodeOpt = views.tail.headOption
 
 }

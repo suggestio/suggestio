@@ -19,6 +19,17 @@ object MIndexesRecentOuter {
 
   @inline implicit def univEq: UnivEq[MIndexesRecentOuter] = UnivEq.derive
 
+
+  implicit final class IndexesRecentOuterOpsExt( private val inxRecentOuter: MIndexesRecentOuter ) extends AnyVal {
+
+    /** Ускоренное чтение значения saved.recents. */
+    def recentIndexes: List[MIndexInfo] = {
+      inxRecentOuter.saved
+        .fold [List[MIndexInfo]] ( Nil )( _.recents )
+    }
+
+  }
+
 }
 
 

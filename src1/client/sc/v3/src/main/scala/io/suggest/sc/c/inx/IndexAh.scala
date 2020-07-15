@@ -161,7 +161,13 @@ object IndexAh {
     // Инициализация приветствия. Подготовить состояние welcome.
     val mWcSFutOpt = for {
       resp <- i1.resp.toOption
-      if !i1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
+      if {
+        // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять:
+        !i1.resp.isFailed &&
+        // Если index switch ctx не запрещает рендер welcome карточки:
+        m.switchCtxOpt.fold(true)(_.showWelcome)
+      }
+
       wcInfo2 <- resp.welcome
       // Не надо отображать текущее приветствие повторно:
       if !i0.resp.exists(_.welcome contains wcInfo2)
@@ -193,7 +199,6 @@ object IndexAh {
       i1 = MScIndex.scCss
         .set( ScCss( scCssArgs2 ) )(i1)
     }
-
     // Объединить эффекты плитки и приветствия воедино:
     for (mwc <- mWcSFutOpt)
       fxsAcc ::= mwc._1
@@ -270,9 +275,8 @@ class IndexRah
     ActionResult.ModelUpdateEffect( v2, errFx )
   }
 
-  override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
+  override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean =
     raType ==* MScRespActionTypes.Index
-  }
 
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
@@ -288,7 +292,8 @@ class IndexRah
       !isMultiNodeResp &&
       resp.nodes.exists { node =>
         v0.index.resp.exists { rn =>
-          MSc3IndexResp.isLookingSame(rn, node.props)
+          (rn isSamePlace node.props) &&
+          (rn isLookingSame node.props)
         }
       }
     ) {
@@ -562,7 +567,6 @@ class IndexAh[M](
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
             nodeId      = prevNodeView.rcvrId,
-            withWelcome = prevNodeView.rcvrId.nonEmpty,
           ),
           forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
             MGeoLoc(point = mgp)
@@ -660,7 +664,6 @@ class IndexAh[M](
 
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
-            withWelcome   = m.rcvrId.nonEmpty,
             geoIntoRcvr   = m.rcvrId.nonEmpty,
             retUserLoc    = false,
             nodeId        = m.rcvrId,

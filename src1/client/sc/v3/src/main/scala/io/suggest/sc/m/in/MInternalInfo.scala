@@ -59,7 +59,7 @@ final case class MInternalInfo(
       forDisplay = indexesRecent.recents
         .headOption
         .fold( indexesRecent.recents ) { firstInx =>
-          if (currRoute contains[MainScreen] firstInx.state) {
+          if (currRoute.exists( _ isSamePlaceAs firstInx.state )) {
             indexesRecent.recents.tail
           } else {
             indexesRecent.recents

@@ -33,8 +33,8 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.{DAction, DoNothing}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.util.Try
 
 /**
@@ -270,17 +270,20 @@ class TailAh(
               Some(ir)
             } { recents0 =>
               val isDuplicate = recents0.recents.exists { m =>
-                m.state isSamePlaceAs currRoute
+                (m.state isSamePlaceAs currRoute)
               }
 
               Option.when(!isDuplicate) {
                 val maxItems = MIndexesRecent.MAX_RECENT_ITEMS
                 MIndexesRecent.recents.modify { r0 =>
-                  val r1 =
-                    if (r0.lengthIs > maxItems)  r0.take( maxItems - 1 )
-                    else  r0
-
-                  inxInfo2 :: r1
+                  // Удалять из списка старые значения, которые isLookingSame.
+                  val r1 = r0.filterNot(_.indexResp isLookingSame inxInfo2.indexResp)
+                  // Укоротить список по максимальной длине.
+                  val r2 =
+                    if (r1.lengthIs > maxItems)  r1.take( maxItems - 1 )
+                    else  r1
+                  // И наконец добавить новый элемент.
+                  inxInfo2 :: r2
                 } (recents0)
               }
             }
@@ -337,9 +340,13 @@ class TailAh(
           // Клик по узлу - восстановить состояние выдачи.
           val routeFx = Effect.action {
             // Патчим текущую роуту данными из новой роуты.
-            val nextRoute = TailAh._currRoute
+            var nextRoute = TailAh._currRoute
               .get(v0)
               .fold( inxRecent.state )( _ silentSwitchingInto inxRecent.state )
+
+            // Если мобильный экран, то надо сразу скрыть раскрытую панель меню:
+            if (nextRoute.menuOpened && v0.dev.screen.info.isDialogWndFullScreen)
+              nextRoute = (Sc3Pages.MainScreen.menuOpened set false)(nextRoute)
 
             ResetUrlRoute( Some(nextRoute) )
           }
@@ -552,7 +559,6 @@ class TailAh(
         if (v0.internals.info.geoLockTimer.isEmpty) {
           val switchCtx = MScSwitchCtx(
             indexQsArgs = MScIndexArgs(
-              withWelcome = true,
               geoIntoRcvr = true,
               retUserLoc  = false,
             )
@@ -596,10 +602,10 @@ class TailAh(
         //println( "reload index" )
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
+          showWelcome = m.mainScreen.showWelcome,
           indexQsArgs = MScIndexArgs(
             geoIntoRcvr = false,
             retUserLoc  = v0.index.search.geo.mapInit.userLoc.isEmpty,
-            withWelcome = m.mainScreen.showWelcome,
             nodeId      = m.mainScreen.nodeId,
           ),
           focusedAdId = m.mainScreen.focusedAdId,
@@ -643,7 +649,6 @@ class TailAh(
               indexQsArgs = MScIndexArgs(
                 geoIntoRcvr = true,
                 retUserLoc  = !isSuccess,
-                withWelcome = true,
               )
             )
           }

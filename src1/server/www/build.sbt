@@ -151,7 +151,6 @@ routesImport ++= Seq(
   "models.msc.MPwaManifestQsJvm._",
   "io.suggest.es.model.MEsUuIdJvm._",
   "io.suggest.dev.MScreenJvm._",
-  "io.suggest.sc.index.MScIndexArgsJvm._",
   "io.suggest.sc.sc3.MScQsJvm._",
   "io.suggest.xplay.qsb.QsbSeq",
   "io.suggest.sys.mdr.MdrSearchArgsJvm._",

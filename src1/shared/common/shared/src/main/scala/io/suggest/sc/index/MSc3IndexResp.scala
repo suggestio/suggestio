@@ -6,6 +6,7 @@ import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
 import io.suggest.n2.node.MNodeType
 import io.suggest.primo.id.OptStrId
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -34,16 +35,29 @@ object MSc3IndexResp {
 
   @inline implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
 
-  /** Индексы выглядят одинаково?
-    * Это чтобы фильтровать случаи, когда приходит дубликат индекса.
-    * Такое бывает на эфемерных узлах или всяких районах.
-    */
-  def isLookingSame(a: MSc3IndexResp, b: MSc3IndexResp): Boolean = {
-    (a.nodeId ==* b.nodeId) &&
-    (a.geoPoint ==* b.geoPoint) &&
-    (a.name ==* b.name) &&
-    (a.colors ==* b.colors) &&
-    (a.logoOpt ==* b.logoOpt)
+
+  implicit final class Sc3InxRespOpsExt(private val a: MSc3IndexResp) extends AnyVal {
+
+    /** Одно и тоже место? */
+    def isSamePlace(b: MSc3IndexResp): Boolean = {
+      (a ===* b) || {
+        (a.nodeId ==* b.nodeId) &&
+        (a.geoPoint ==* b.geoPoint)
+      }
+    }
+
+    /** Индексы выглядят одинаково?
+      * Это чтобы фильтровать случаи, когда приходит дубликат индекса.
+      * Такое бывает на эфемерных узлах или всяких районах.
+      */
+    def isLookingSame(b: MSc3IndexResp): Boolean = {
+      (a ===* b) || {
+        (a.name ==* b.name) &&
+        (a.colors ==* b.colors) &&
+        (a.logoOpt ==* b.logoOpt)
+      }
+    }
+
   }
 
 }

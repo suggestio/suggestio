@@ -67,7 +67,7 @@ object MNodeTypes extends StringEnum[MNodeType] {
   }
 
 
-  override val values = TreeEnumEntry.deepFindValue( findValues )
+  override def values = findValues
 
   def adnTreeMemberTypes: List[MNodeType] = AdnNode :: Ad :: BleBeacon :: Nil
 
@@ -83,9 +83,8 @@ sealed abstract class MNodeType(override val value: String)
 object MNodeType {
 
   /** Поддержка play-json. */
-  implicit val MNODE_TYPE_FORMAT: Format[MNodeType] = {
+  implicit val MNODE_TYPE_FORMAT: Format[MNodeType] =
     EnumeratumUtil.valueEnumEntryFormat( MNodeTypes )
-  }
 
   @inline implicit def univEq: UnivEq[MNodeType] = UnivEq.derive
 

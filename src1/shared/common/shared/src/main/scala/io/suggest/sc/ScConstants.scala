@@ -47,9 +47,6 @@ object ScConstants {
     /** Имя поля с данными экрана клиентского устройства. */
     final def SCREEN_FN         = "s"
 
-    /** Имя поля с флагом о том, требуется ли рендерить welome-screen для index-выдачи? */
-    final def WITH_WELCOME_FN   = "wc"
-
     /** Имя поля с версией API выдачи. */
     final def VSN_FN            = "v"
 
@@ -209,7 +206,7 @@ object ScConstants {
     val SETTINGS_OPEN_FN        = "settings"
 
     /** Отображать ли приветствие узла? */
-    def SHOW_WELCOME_FN         = ReqArgs.WITH_WELCOME_FN
+    def SHOW_WELCOME_FN         = "wc"
 
     // Панель поиска: гео-позишен, [гео]теги.
     final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN

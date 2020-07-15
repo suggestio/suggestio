@@ -373,13 +373,8 @@ trait ScIndex
 
 
       /** Получение карточки приветствия. */
-      val welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
-        if (_scIndexArgs.withWelcome) {
-          welcomeUtil.getWelcomeRenderArgs(mnode, ctx.deviceScreenOpt)(ctx)
-        } else {
-          Future.successful(None)
-        }
-      }
+      val welcomeOptFut: Future[Option[MWelcomeRenderArgs]] =
+        welcomeUtil.getWelcomeRenderArgs(mnode, ctx.deviceScreenOpt)(ctx)
 
       /** Определение заголовка выдачи. */
       def title: String = {

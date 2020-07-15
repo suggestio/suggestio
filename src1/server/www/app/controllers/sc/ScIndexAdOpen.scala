@@ -38,7 +38,6 @@ trait ScIndexAdOpen
         common = focQs.common,
         index = Some(
           MScIndexArgs(
-            withWelcome = true
           )
         )
       )

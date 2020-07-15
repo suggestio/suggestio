@@ -25,11 +25,13 @@ object MScSwitchCtx {
   * @param demandLocTest Это процесс проверки смены локации после ре-активации существующей выдачи?
   * @param indexQsArgs Аргументы для запроса индекса.
   * @param forceGeoLoc Форсировать указанную геолокацию для запроса индекса.
+  * @param showWelcome Поправка на отображение приветствия.
   */
 case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
                          focusedAdId      : Option[String]    = None,
                          demandLocTest    : Boolean           = false,
                          forceGeoLoc      : Option[MGeoLoc]   = None,
+                         showWelcome      : Boolean           = true,
                        )
 

@@ -218,7 +218,7 @@ object MPredicates extends StringEnum[MPredicate] {
 
 
   /** Используется только в конструкторе, в тестах, в редкой sys edgeForm. */
-  override def values = TreeEnumEntry.deepFindValue( findValues )
+  override def values = findValues
 
 }
 

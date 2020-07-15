@@ -21,7 +21,7 @@ import scalacss.ScalaCssReact._
   */
 class DlAppMenuItemR(
                       scReactCtxP        : React.Context[MScReactCtx],
-                      crCtxProv          : React.Context[MCommonReactCtx],
+                      crCtxP             : React.Context[MCommonReactCtx],
                     ) {
 
   type Props_t = MScRoot
@@ -52,7 +52,7 @@ class DlAppMenuItemR(
       val headlineChs = List[VdomElement](
         <.span(
           R.rowContent,
-          crCtxProv.message( MsgCodes.`Application` ),
+          crCtxP.message( MsgCodes.`Application` ),
         ),
         // Иконка закачки.
         Mui.SvgIcons.GetApp(
