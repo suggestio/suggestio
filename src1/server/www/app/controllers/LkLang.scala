@@ -30,11 +30,11 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
-class LkLang @Inject() (
-                         sioControllerApi                : SioControllerApi,
-                         injector                        : Injector,
-                         implicit private val ec         : ExecutionContext,
-                       )
+final class LkLang @Inject() (
+                               sioControllerApi                : SioControllerApi,
+                               injector                        : Injector,
+                               implicit private val ec         : ExecutionContext,
+                             )
   extends MacroLogsImplLazy
 {
 

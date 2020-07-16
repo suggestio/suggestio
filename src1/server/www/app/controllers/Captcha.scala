@@ -19,11 +19,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 01.06.2020 17:24
   * Description: Контроллер для капчи.
   */
-class Captcha @Inject()(
-                         injector       : Injector,
-                         csrf           : Csrf,
-                         sioCtlApi      : SioControllerApi,
-                       )
+final class Captcha @Inject()(
+                               injector       : Injector,
+                               csrf           : Csrf,
+                               sioCtlApi      : SioControllerApi,
+                             )
   extends MacroLogsImpl
 {
 

@@ -25,11 +25,10 @@ import scala.concurrent.Future
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
-class LkHelp @Inject()(
-
-                        sioControllerApi                : SioControllerApi,
-                        mCommonDi                       : ICommonDi,
-                      )
+final class LkHelp @Inject()(
+                              sioControllerApi                : SioControllerApi,
+                              mCommonDi                       : ICommonDi,
+                            )
   extends MacroLogsImplLazy
 {
 

@@ -4,7 +4,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.color.MColors
 import io.suggest.common.empty.OptionUtil
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
 import io.suggest.es.model.{EsModel, MEsUuId}
@@ -38,11 +38,10 @@ import scala.util.Success
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
  * Отвечает за модерацию и в личном кабинете, а не только в /sys/ .
  */
-@Singleton
-class SysMdr @Inject() (
-                         sioControllerApi         : SioControllerApi,
-                         mCommonDi                : ICommonDi,
-                       )
+final class SysMdr @Inject() (
+                               sioControllerApi         : SioControllerApi,
+                               mCommonDi                : ICommonDi,
+                             )
   extends MacroLogsImpl
 {
 

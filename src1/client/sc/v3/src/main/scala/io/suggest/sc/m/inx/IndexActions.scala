@@ -40,7 +40,7 @@ case class SideBarOpenClose(bar: MScSideBar, open: Option[Boolean]) extends IInd
 
 
 /** Отмена переключения индекса выдачи в новую локацию. */
-case object CancelIndexSwitch extends IIndexAction
+case object IndexSwitcherClose extends IIndexAction
 
 /** Клик по элементу списка в InxSwitch. */
 case class IndexSwitchNodeClick( nodeId: String ) extends IIndexAction

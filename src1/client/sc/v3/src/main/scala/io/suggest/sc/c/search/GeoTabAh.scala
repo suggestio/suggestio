@@ -162,8 +162,7 @@ class GeoTabAh[M](
         }
         // Обновить карту ресиверов в состоянии, если инстанс изменился:
         val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs) {
-          MMapInitState.rcvrs
-            .set( rcvrs2 )(v0.mapInit)
+          (MMapInitState.rcvrs set rcvrs2)(v0.mapInit)
         } else {
           v0.mapInit
         }

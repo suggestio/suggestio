@@ -33,7 +33,7 @@ import util.stat.{StatCookiesUtil, StatUtil}
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
 @Singleton
-class Sc @Inject() (
+final class Sc @Inject() (
                      override val logoUtil           : LogoUtil,
                      override val welcomeUtil        : WelcomeUtil,
                      override val bleUtil            : BleUtil,

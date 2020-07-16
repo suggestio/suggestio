@@ -19,12 +19,12 @@ import scala.util.Try
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 @Singleton
-class Img @Inject() (
-                      isFileNotModified               : IsFileNotModified,
-                      canDynImg                       : CanDynImg,
-                      injector                        : Injector,
-                      sioCtlApi                       : SioControllerApi,
-                    )
+final class Img @Inject() (
+                            isFileNotModified               : IsFileNotModified,
+                            canDynImg                       : CanDynImg,
+                            injector                        : Injector,
+                            sioCtlApi                       : SioControllerApi,
+                          )
   extends MacroLogsImpl
 {
 

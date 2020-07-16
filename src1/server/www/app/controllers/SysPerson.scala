@@ -25,10 +25,10 @@ import scala.concurrent.Future
  * Description: sys-контроллер для доступа к юзерам.
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
-class SysPerson @Inject() (
-                            sioControllerApi          : SioControllerApi,
-                            mCommonDi                 : ICommonDi,
-                          ) {
+final class SysPerson @Inject() (
+                                  sioControllerApi          : SioControllerApi,
+                                  mCommonDi                 : ICommonDi,
+                                ) {
 
   import mCommonDi.current.injector
 

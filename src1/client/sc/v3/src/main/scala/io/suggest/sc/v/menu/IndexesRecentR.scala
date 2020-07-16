@@ -93,9 +93,9 @@ class IndexesRecentR(
             ReactCommonUtil.maybeEl( inxRecents.saved.exists(_.recents.nonEmpty) ) {
               val mroot = p.value
               val currInxState = mroot.index.state
+              val distanceToOrNull = currInxState.inxGeoPoint.orNull
 
               val rowsData = for {
-                // toSeq - чтобы скастовать List к Seq, которая требуется на выходе.
                 inxInfo <- inxRecents.recentIndexes
               } yield {
                 MNodesFoundRowProps(
@@ -104,7 +104,7 @@ class IndexesRecentR(
                   ),
                   searchCss = inxRecents.searchCss,
                   // Чтобы не перерендеривать на каждый чих, пока без расстояний.
-                  //withDistanceToNull = distanceToOrNull,
+                  withDistanceToNull = distanceToOrNull,
                   selected = {
                     inxInfo.indexResp.nodeId.exists {
                       currInxState.rcvrId.contains[String]

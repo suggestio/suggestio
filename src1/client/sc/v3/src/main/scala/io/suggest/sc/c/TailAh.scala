@@ -2,7 +2,6 @@ package io.suggest.sc.c
 
 import cordova.plugins.appminimize.CdvAppMinimize
 import diode._
-import diode.Implicits._
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -34,7 +33,6 @@ import io.suggest.spa.{DAction, DoNothing}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
 
-import scala.concurrent.duration._
 import scala.util.Try
 
 /**
@@ -109,7 +107,6 @@ object TailAh {
     *         Но таймер - уже запущен к этому моменту.
     */
   def mkGeoLocTimer(switchCtx: MScSwitchCtx, currTimerIdOpt: Option[Int]): (MScInternals => MScInternals, Effect) = {
-    //println("geo loc timer!")
     val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut(switchCtx) )
     val modifier = MScInternals.info
       .composeLens(MInternalInfo.geoLockTimer)
@@ -185,7 +182,6 @@ class TailAh(
     case m: ResetUrlRoute =>
       val v0 = value
       val nextRoute = m.route getOrElse TailAh.getMainScreenSnapShot( v0 )
-      //println("Reset Route => " + m)
 
       val currRouteLens = TailAh._currRoute
       val currRoute = currRouteLens.get( v0 )
@@ -194,7 +190,6 @@ class TailAh(
       } else {
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
         val fx = Effect.action {
-          //println("ResetUrlRoute: " + m)
           routerCtl
             .set( nextRoute )
             .runNow()
@@ -333,7 +328,7 @@ class TailAh(
         .flatMap(_.recents)
         .find(_.indexResp ===* m.inxRecent)
         .fold {
-          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
 
         } { inxRecent =>
@@ -351,13 +346,7 @@ class TailAh(
             ResetUrlRoute( Some(nextRoute) )
           }
 
-          // Надо сбросить lazy val внутри MIndexesRecentOuter(), когда изменится состояние текущего узла:
-          // TODO Нужно без .after(), а как-то более интеллектуально сбрасывать состояние.
-          //val resetInternalsFx = LoadIndexRecents(clean = false)
-          //  .toEffectPure
-          //  .after( 1.second )
-
-          effectOnly( routeFx /*>> resetInternalsFx*/ )
+          effectOnly( routeFx )
         }
 
 
@@ -404,8 +393,6 @@ class TailAh(
       // Возможно js-роутер ещё не готов, и нужно отложить полную обработку состояния:
       val isFullyReady = v0.internals.jsRouter.jsRouter.isReady &&
         (v0.internals.boot.wzFirstDone.getOrElseTrue /*isEmpty || contains[Boolean] true*/)
-
-      //println( isFullyReady, getClass.getSimpleName, m )
 
       // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
       var jsRouterAwaitRoute = false
@@ -599,7 +586,6 @@ class TailAh(
 
       // Принять решение о перезагрузке выдачи, если необходимо.
       if (isToReloadIndex && !isGeoLocRunning) {
-        //println( "reload index" )
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
           showWelcome = m.mainScreen.showWelcome,

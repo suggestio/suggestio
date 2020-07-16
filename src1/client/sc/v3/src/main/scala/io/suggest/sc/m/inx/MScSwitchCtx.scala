@@ -16,6 +16,14 @@ object MScSwitchCtx {
 
   @inline implicit def univEq: UnivEq[MScSwitchCtx] = UnivEq.derive
 
+
+  implicit final class SwitchOptExt(private val opt: Option[MScSwitchCtx]) extends AnyVal {
+
+    def showWelcome: Boolean =
+      opt.fold(true)(_.showWelcome)
+
+  }
+
 }
 
 

@@ -14,10 +14,10 @@ import scala.concurrent.ExecutionContext
  * Description: Утиль для управления асинхроном. В частности, тут собственные thread-pool'ы для нужды проекта.
  */
 @Singleton
-class AsyncUtil @Inject() (
-  actorSystem : ActorSystem,
-  defaultEc   : ExecutionContext
-)
+final class AsyncUtil @Inject() (
+                                  actorSystem : ActorSystem,
+                                  defaultEc   : ExecutionContext
+                                )
   extends MacroLogsImplLazy
 {
 

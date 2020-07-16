@@ -112,7 +112,10 @@ object IndexAh {
         s0 = s0.maybeResetNodesFound
 
         // Если заход в узел с карты, то надо скрыть search-панель.
-        if (s0.panel.opened && inx.welcome.nonEmpty) {
+        if (s0.panel.opened && {
+          m.switchCtxOpt.showWelcome &&
+          inx.welcome.nonEmpty
+        }) {
           s0 = MScSearch.panel
             .composeLens( MSearchPanelS.opened )
             .set( false )(s0)
@@ -165,7 +168,7 @@ object IndexAh {
         // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять:
         !i1.resp.isFailed &&
         // Если index switch ctx не запрещает рендер welcome карточки:
-        m.switchCtxOpt.fold(true)(_.showWelcome)
+        m.switchCtxOpt.showWelcome
       }
 
       wcInfo2 <- resp.welcome
@@ -312,7 +315,7 @@ class IndexRah
 
       val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
       if ( inx_state_switch_ask_LENS.get(i1).nonEmpty )
-        i1 = inx_state_switch_ask_LENS.set( None )( i1 )
+        i1 = (inx_state_switch_ask_LENS set None)( i1 )
 
       val v2 = MScRoot.index.set(i1)(v0)
 
@@ -475,7 +478,7 @@ class IndexAh[M](
 
       var valueModF = MScIndex.resp.modify(_.pending(ts))
 
-      var nodesFoundModF = MNodesFoundS.reqSearchArgs.set( Some(args) )
+      var nodesFoundModF = MNodesFoundS.reqSearchArgs set Some(args)
       // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
       if (isSearchNodes)
         nodesFoundModF = nodesFoundModF andThen MNodesFoundS.req.modify( _.pending(ts) )
@@ -483,7 +486,7 @@ class IndexAh[M](
       valueModF = valueModF andThen MScIndex.search
         .composeLens( MScSearch.geo )
         .composeLens( MGeoTabS.found )
-        .modify(nodesFoundModF)
+        .modify( nodesFoundModF )
 
       val v2 = valueModF(v0)
       ah.updateMaybeSilentFx(silentUpdate)(v2, fx)
@@ -566,11 +569,12 @@ class IndexAh[M](
         // Контекст переключения.
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
-            nodeId      = prevNodeView.rcvrId,
+            nodeId = prevNodeView.rcvrId,
           ),
           forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
             MGeoLoc(point = mgp)
-          }
+          },
+          showWelcome = prevNodeView.rcvrId.nonEmpty,
         )
 
         // Запустить загрузку индекса - надо гео-точку подхватить.
@@ -667,7 +671,8 @@ class IndexAh[M](
             geoIntoRcvr   = m.rcvrId.nonEmpty,
             retUserLoc    = false,
             nodeId        = m.rcvrId,
-          )
+          ),
+          showWelcome = m.rcvrId.nonEmpty,
         )
 
         _getIndex(
@@ -690,7 +695,7 @@ class IndexAh[M](
 
 
     // Юзер не хочет уходить из текущего узла в новую определённую локацию.
-    case CancelIndexSwitch =>
+    case IndexSwitcherClose =>
       val v0 = value
 
       val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
