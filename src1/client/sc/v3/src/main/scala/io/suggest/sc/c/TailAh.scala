@@ -19,7 +19,7 @@ import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.react.r.ComponentCatch
-import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecent, MIndexesRecentOuter}
@@ -254,9 +254,19 @@ class TailAh(
                 .flatten
             }
 
-            def inxInfo2 = MIndexInfo(
+            // Сборка сохраняемого инстанса MIndexInfo.
+            val inxInfo2 = MIndexInfo(
               state         = currRoute,
-              indexResp     = currIndexResp,
+              indexResp     = {
+                if (currIndexResp.geoPoint.nonEmpty) {
+                  currIndexResp
+                } else {
+                  // Если нет гео-точки узла, то передрать его с гео-карты.
+                  (
+                    MSc3IndexResp.geoPoint set Some(v0.index.search.geo.mapInit.state.center)
+                  )(currIndexResp)
+                }
+              },
             )
 
             // Сохранить/обновить сохранённое состояние.

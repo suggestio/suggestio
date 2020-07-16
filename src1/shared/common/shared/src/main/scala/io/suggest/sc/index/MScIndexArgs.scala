@@ -21,9 +21,10 @@ object MScIndexArgs {
 
   /** Поддержка JSON-сериализации */
   implicit def mscIndexArgsFormat: OFormat[MScIndexArgs] = (
+    // Всегда нужен хотя бы один ОБЯЗАТЕЛЬНЫЙ (не опциональный) формат. Иначе ScIndex будет неправильно начнётся.
     (__ \ NODE_ID_FN).formatNullable[String] and
     (__ \ GEO_INTO_RCVR_FN).format[Boolean] and
-    (__ \ RET_GEO_LOC_FN).formatNullable[Boolean].formatBooleanOrFalse
+    (__ \ RET_GEO_LOC_FN).format[Boolean]
   )( apply, unlift(unapply) )
 
   @inline implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive

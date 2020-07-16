@@ -512,15 +512,18 @@ object CommonModelsJvm extends MacroLogsDyn {
     new QueryStringBindableImpl[MScIndexArgs] {
       import io.suggest.sc.ScConstants.ReqArgs.{GEO_INTO_RCVR_FN, NODE_ID_FN, RET_GEO_LOC_FN}
 
-      def boolB = implicitly[QueryStringBindable[Boolean]]
-      lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
       def strOptB = implicitly[QueryStringBindable[Option[String]]]
+      def boolB = implicitly[QueryStringBindable[Boolean]]
+      def boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
         val f = key1F(key)
         for {
+          // !!! Всегда нужно хотя бы одно ОБЯЗАТЕЛЬНЫЙ (не опциональный) биндинг.
+          // Иначе, сервер будет ошибочно считать, что всегда требуется присылать индекс.
           adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),          params)
-          geoIntoRcvrE        <- boolOptB.bind(f(GEO_INTO_RCVR_FN),   params)
+          geoIntoRcvrE        <- boolB.bind(f(GEO_INTO_RCVR_FN),      params)
+          // TODO 2020-07-16: Надо через несколько дней/недель заменить boolOpt на bool, убрав соотв.костыли.
           retUserLocOptE      <- boolOptB.bind(f(RET_GEO_LOC_FN),     params)
         } yield {
           for {
@@ -530,7 +533,7 @@ object CommonModelsJvm extends MacroLogsDyn {
           } yield {
             MScIndexArgs(
               nodeId          = _adnIdOpt,
-              geoIntoRcvr     = _geoIntoRcvr.getOrElseTrue,
+              geoIntoRcvr     = _geoIntoRcvr,
               retUserLoc      = _retUserLocOpt.getOrElseFalse
             )
           }
@@ -540,8 +543,8 @@ object CommonModelsJvm extends MacroLogsDyn {
       override def unbind(key: String, value: MScIndexArgs): String = {
         val f = key1F(key)
         _mergeUnbinded1(
-          boolB.unbind  (f(GEO_INTO_RCVR_FN),     value.geoIntoRcvr),
           strOptB.unbind(f(NODE_ID_FN),           value.nodeId),
+          boolB.unbind  (f(GEO_INTO_RCVR_FN),     value.geoIntoRcvr),
           boolOptB.unbind(f(RET_GEO_LOC_FN),      OptionUtil.maybeTrue(value.retUserLoc) )
         )
       }

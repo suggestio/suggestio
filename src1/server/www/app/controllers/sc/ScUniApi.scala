@@ -57,14 +57,14 @@ trait ScUniApi
       * Да, если фокусировка активна, перескок разрешён, и проверка перескока вернула узел.
       */
     lazy val focJumpToIndexNodeOptFut: Future[Option[MNode]] = {
-      val mnodeOptFutOpt = for {
+      (for {
         focQs <- qs.foc
         if focQs.focIndexAllowed
       } yield {
         // Запустить нормальную проверку на перескок в индекс.
         scUtil.isFocGoToProducerIndexFut( qs )
-      }
-      mnodeOptFutOpt.getOrNoneFut
+      })
+        .getOrNoneFut
     }
 
 

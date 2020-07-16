@@ -8,6 +8,7 @@ import io.suggest.n2.node.MNodeType
 import io.suggest.primo.id.OptStrId
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -59,6 +60,9 @@ object MSc3IndexResp {
     }
 
   }
+
+
+  def geoPoint = GenLens[MSc3IndexResp]( _.geoPoint )
 
 }
 

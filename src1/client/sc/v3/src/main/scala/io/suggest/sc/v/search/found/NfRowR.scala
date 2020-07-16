@@ -95,28 +95,40 @@ final case class NfRowR2(
 
         locLl = MapsUtil.geoPoint2LatLng( distanceToPoint )
 
-        distancesIter = for {
-          // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
-          nodeShape <- props.node.shapes.iterator
-        } yield {
-          // Поиск точки центра узла.
-          val shapeCenterGp = nodeShape.centerPoint
-            .map { MapsUtil.geoPoint2LatLng }
-            .orElse {
-              nodeShape match {
-                case poly: ILPolygonGs =>
-                  val positions = MapsUtil.lPolygon2leafletCoords( poly )
-                  val c = MapsUtil.polyLatLngs2center( positions )
-                  Some(c)
-                case _ =>
-                  None
-              }
-            }
-            .getOrElse {
-              // Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще, но TODO сервер пока не шлёт точку, только шейпы.
-              MapsUtil.geoPoint2LatLng( nodeShape.firstPoint )
-            }
-          locLl distanceTo shapeCenterGp
+        distancesIter = {
+          (
+            // Поискать geoPoint среди основных данных узла.
+            props.node.props.geoPoint
+              .iterator
+              .map( MapsUtil.geoPoint2LatLng ) #::
+            // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
+            (for {
+              nodeShape <- props.node.shapes.iterator
+            } yield {
+              // Поиск точки центра узла.
+              nodeShape.centerPoint
+                .map { MapsUtil.geoPoint2LatLng }
+                .orElse {
+                  nodeShape match {
+                    case poly: ILPolygonGs =>
+                      val positions = MapsUtil.lPolygon2leafletCoords( poly )
+                      val c = MapsUtil.polyLatLngs2center( positions )
+                      Some(c)
+                    case _ =>
+                      None
+                  }
+                }
+                .getOrElse {
+                  // Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще, но TODO сервер пока не шлёт точку, только шейпы.
+                  MapsUtil.geoPoint2LatLng( nodeShape.firstPoint )
+                }
+            }) #::
+            // Всё, иных вариантов-источников гео-точки нет.
+            LazyList.empty
+          )
+            .iterator
+            .flatten
+            .map { locLl.distanceTo }
         }
 
         distance <- OptionUtil.maybe(distancesIter.nonEmpty)( distancesIter.min )
