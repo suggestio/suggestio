@@ -440,7 +440,7 @@ object ScCssStatic extends StyleSheet.Inline {
         position.relative,
         minWidth( 260.px ),
         margin(0.px, auto),
-        fontSize( 14.px ),
+        fontSize( 0.8.rem ),
         padding(12.px, 0.px),
         textTransform.uppercase
       )
