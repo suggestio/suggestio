@@ -317,10 +317,13 @@ trait ScIndex
         val beaconsNodesFut = l10_detectUsingNearBeacons
         val coordsNodesFut  = for (coordNodes <- l50_detectUsingCoords) yield {
           // Надо выкинуть !isRcvr, если ЕСТЬ isRcvr.
-          if ( coordNodes.exists(m => !m.isRcvr) && coordNodes.exists(_.isRcvr) )
-            coordNodes.filter(_.isRcvr)
-          else
+          if ( coordNodes.exists(m => !m.isRcvr) && coordNodes.exists(_.isRcvr) ) {
+            val r = coordNodes.filter(_.isRcvr)
+            LOGGER.trace(s"$logPrefix Dropping non-rcvr nodes: \n was ${coordNodes.length} nodes = ${coordNodes.iterator.map(_.currNodeIdOpt.getOrElse("?")).mkString(", ")}\n become ${r.length} nodes = ${r.iterator.map(_.currNodeIdOpt.getOrElse("?")).mkString(", ")}")
+            r
+          } else {
             coordNodes
+          }
         }
 
         // Запуск параллельной сборки узлов по маячкам, по gps и просто по заглушке.

@@ -39,11 +39,9 @@ case object ScCssReBuild extends IIndexAction
 case class SideBarOpenClose(bar: MScSideBar, open: Option[Boolean]) extends IIndexAction
 
 
-/** Отмена переключения индекса выдачи в новую локацию. */
-case object IndexSwitcherClose extends IIndexAction
-
-/** Клик по элементу списка в InxSwitch. */
-case class IndexSwitchNodeClick( nodeId: String ) extends IIndexAction
+/** Клик по элементу списка в InxSwitch.
+  * @param nodeId None значит кнопку закрытия или автоматический выбор первого узла. */
+case class IndexSwitchNodeClick( nodeId: Option[String] = None ) extends IIndexAction
 
 /** Команда перехода на предыдущий узел. */
 case object GoToPrevIndexView extends IIndexAction with IScIndexRespReason

@@ -4,7 +4,6 @@ import io.suggest.sc.ScConstants.ReqArgs._
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 
 /**
   * Suggest.io

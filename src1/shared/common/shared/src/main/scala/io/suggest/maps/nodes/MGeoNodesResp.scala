@@ -40,11 +40,11 @@ case class MGeoNodesResp(
   def hasManyNodes = nodes.lengthCompare(1) > 0
 
   /** Карта узлов. */
-  lazy val nodesMap: Map[String, MSc3IndexResp] = {
+  lazy val nodesMap: Map[String, MGeoNodePropsShapes] = {
     nodes
       .iterator
       .map { m =>
-        m.props.idOrNameOrEmpty -> m.props
+        m.props.idOrNameOrEmpty -> m
       }
       .toMap
   }

@@ -216,10 +216,11 @@ class GeoTabAh[M](
         .get( m.nodeId )
         .fold {
           // Почему-то не найдено узла, по которому произошёл клик.
-          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = (m, v0.found.nodesMap.keysIterator.mkString("[", ", ", "]")) )
           noChange
 
-        } { mnode =>
+        } { nodePropsShapes =>
+          val mnode = nodePropsShapes.props
           val nodeId = mnode.nodeId.get
           // Есть окликнутый узел. Действовать исходя из типа узла.
           if (mnode.ntype ==* MNodeTypes.Tag) {

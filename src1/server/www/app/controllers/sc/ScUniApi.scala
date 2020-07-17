@@ -211,6 +211,14 @@ trait ScUniApi
       val fut = for {
         isWithGrid  <- isWithGridFut
         if isWithGrid
+        indexRaOpt  <- indexRaOptFut
+        // Если пачка узлов возвращается, то нет смысла возвращать плитку - становится не ясно, к какому из узлов оно относится.
+        // И тогда на клиент возвращаются карточки, размещённые просто на карте.
+        if {
+          val hasManyIndexes = indexRaOpt.exists(_.search.exists(_.nodes.lengthIs > 1))
+          LOGGER.trace(s"$logPrefix hasManyIndexes?$hasManyIndexes, indexRa = ${indexRaOpt.orNull}")
+          !hasManyIndexes
+        }
         qs2         <- qsAfterIndexFut
         logic       = TileAdsLogic(qs2)(_request)
         respAction  <- _logic2stateRespActionFut( logic )

@@ -472,6 +472,7 @@ class TailAh(
           }
         )
       ) {
+        logger.warn(s"geo-loc, isFullyReady?$isFullyReady")
         if (isFullyReady) {
           needUpdateUi = true
           isToReloadIndex = true
@@ -611,8 +612,6 @@ class TailAh(
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
       }
-
-      //logger.log( "hasResults? ", msg = (v2Opt.nonEmpty, fxsAcc.length) )
 
       ah.optionalResult(v2Opt, fxsAcc.mergeEffects, silent = needUpdateUi)
 

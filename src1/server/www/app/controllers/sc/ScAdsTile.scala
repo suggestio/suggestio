@@ -462,7 +462,7 @@ trait ScAdsTile
             forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls,
             selPathRev    = selPathRev,
             // Рендерить заголовки карточек в ответе только когда запрошено с клиента. А запрашивается это обычно для нотификаций.
-            nodeTitle     = OptionUtil.maybeOpt( _qs.grid.exists(_.adTitles) )(
+            nodeTitle     = OptionUtil.maybeOpt( _qs.grid.exists(_.withTitle) )(
               adInfo.mnode.meta.basic.nameOpt
             ),
           )(ctx)

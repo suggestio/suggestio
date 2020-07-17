@@ -591,23 +591,52 @@ class IndexAh[M](
     // Клик по узлу в списке предлагаемых узлов:
     case m: IndexSwitchNodeClick =>
       val v0 = value
-      // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
-      val inx_state_switchAsk_LENS = IndexAh._inx_state_switch_ask_LENS
 
-      val actResOpt = for {
-        switchS <- inx_state_switchAsk_LENS.get(v0)
-        inxPs2  <- switchS.nodesResp.nodes
-          .find(_.props.idOrNameOrEmpty ==* m.nodeId)
-      } yield {
-        IndexAh.indexUpdated(
-          i0      = (inx_state_switchAsk_LENS set None)(v0),
-          inx     = inxPs2.props,
-          m       = switchS.okAction,
-          mroot   = rootRO.value,
-        )
-      }
+      val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
+      inx_state_switch_ask_LENS
+        .get(v0)
+        .fold(noChange) { switchS0 =>
+          val cleanStateF = inx_state_switch_ask_LENS set None
 
-      ah.updatedFrom( actResOpt )
+          m .nodeId
+            .fold [Option[MSc3IndexResp]] {
+              // Кнопка сокрытия диалога.
+              OptionUtil.maybeOpt( v0.isFirstRun ) {
+                switchS0.nodesResp.nodes
+                  .headOption
+                  .map(_.props)
+                  .orElse {
+                    // Если нет узлов, нет открытого узла, то поискать в сохранённых recent-узлах?
+                    rootRO.value.internals.info.indexesRecents.saved
+                      .iterator
+                      .flatMap(_.recents)
+                      .nextOption()
+                      .map(_.indexResp)
+                  }
+              }
+            } { nodeId =>
+              // Выбран конкретный узел в списке.
+              switchS0.nodesResp
+                .nodesMap
+                .get( nodeId )
+                .map(_.props)
+            }
+            .fold [ActionResult[M]] {
+              // Не надо переключаться ни в какой узел. Просто сокрыть диалог.
+              // Возможно, юзер не хочет уходить из текущего узла в новую определённую локацию.
+              val v2 = cleanStateF( v0 )
+              updated(v2)
+            } { nodeFound =>
+              // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
+              val actRes = IndexAh.indexUpdated(
+                i0      = cleanStateF( v0 ),
+                inx     = nodeFound,
+                m       = switchS0.okAction,
+                mroot   = rootRO.value,
+              )
+              ah.updatedFrom( Some(actRes) )
+            }
+        }
 
 
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
@@ -692,34 +721,6 @@ class IndexAh[M](
         reason        = m,
         switchCtx     = m.switchCtx,
       )
-
-
-    // Юзер не хочет уходить из текущего узла в новую определённую локацию.
-    case IndexSwitcherClose =>
-      val v0 = value
-
-      val inx_state_switch_ask_LENS = IndexAh._inx_state_switch_ask_LENS
-      inx_state_switch_ask_LENS
-        .get(v0)
-        .fold(noChange) { switchS =>
-          val v1 = (inx_state_switch_ask_LENS set None)( v0 )
-
-          if (v0.resp.isEmpty) {
-            // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
-            val fx = NodeRowClick(
-              nodeId = switchS.nodesResp.nodes
-                .head
-                .props
-                .idOrNameOrEmpty
-            )
-              .toEffectPure
-            effectOnly(fx)
-
-          } else {
-            // Есть открытый узел. Просто скрыть диалог.
-            updated( v1 )
-          }
-        }
 
   }
 

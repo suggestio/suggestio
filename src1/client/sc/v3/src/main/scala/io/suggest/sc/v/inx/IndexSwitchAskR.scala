@@ -7,7 +7,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import ReactDiodeUtil.Implicits._
-import io.suggest.sc.m.inx.{IndexSwitcherClose, IndexSwitchNodeClick, MInxSwitch}
+import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.search.found.{NfListR, NfRowR}
@@ -43,7 +43,7 @@ class IndexSwitchAskR(
 
     /** Закрытие плашки без аппрува. */
     private lazy val _onCloseJsCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, IndexSwitcherClose )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, IndexSwitchNodeClick() )
     }
 
 
@@ -93,7 +93,7 @@ class IndexSwitchAskR(
               nfListR.PropsVal()
             )(
               nfRowR( s.nodesFoundPropsC ) { inxResp =>
-                IndexSwitchNodeClick( inxResp.idOrNameOrEmpty )
+                IndexSwitchNodeClick( Some(inxResp.idOrNameOrEmpty) )
               },
             ),
 

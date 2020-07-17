@@ -4,7 +4,7 @@ import com.materialui.{MuiAnchorOrigin, MuiSnackBar, MuiSnackBarProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{CloseError, MScRoot}
-import io.suggest.sc.m.inx.{IndexSwitcherClose, MInxSwitch}
+import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
 import io.suggest.sc.v.inx.IndexSwitchAskR
 import io.suggest.spa.{DAction, OptFastEq}
@@ -45,7 +45,7 @@ final class ScSnacksR(
 
         var actions = List.empty[DAction]
         if (p.index.state.switch.ask.nonEmpty)
-          actions ::= IndexSwitcherClose
+          actions ::= IndexSwitchNodeClick()
         if (p.dialogs.error.nonEmpty)
           actions ::= CloseError
 

@@ -147,7 +147,7 @@ object StringUtil {
   }
 
 
-
+  /** Быстрая проверка регэкспом, подходит ли строка под критерии Base64 URL safe. */
   def isBase64UrlSafe(s: String): Boolean =
     s matches "^[-a-zA-Z0-9_]+$"
 

@@ -350,8 +350,11 @@ class BootAh[M](
           if (v1.targets.nonEmpty) {
             _processStartState( v1, v1.targets.toList )
           } else {
-            val fx = _reRouteFx( allowRouteTo = true )
-            updatedSilent(v1, fx)
+            // Зачем-то тут вызывался reRouteFx. Вероятно, по ошибке появился в ходе исправления другой ошибки.
+            // Он вызывал дублирующийся вызов GetIndex в выдаче и дальнейший повторный пробный вызов GetIndex с геолокацией,
+            // (приводивший к трём запросам index вместо одного при старте с включённой геолокацией).
+            //val fx = _reRouteFx( allowRouteTo = true )
+            updatedSilent(v1)
           }
         }
 

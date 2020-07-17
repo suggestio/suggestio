@@ -648,7 +648,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
@@ -769,7 +769,7 @@ class Sc3Circuit(
       // Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
       val mroot = rootRW()
       val mgl = mroot.dev.geoLoc
-      val isEnabled = mgl.switch.onOff contains true
+      val isEnabled = mgl.switch.onOff contains[Boolean] true
       // Надо попытаться всё-равно включить геолокацию в DEV-mode, т.к. браузеры не дают геолокацию без ssl в локалке.
       val isToEnable = (
         enable && !isEnabled &&

@@ -76,13 +76,12 @@ final case class NfRowR2(
   class Backend($: BackendScope[Props, Props_t]) {
 
     /** Реакция на клик по одному элементу (ряд-узел). */
-    private def _onNodeRowClick(e: ReactEvent): Callback = {
+    private val _onNodeRowClickJsF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
         propsProxy: Props =>
           onClickF( propsProxy.value.node.props )
       }
     }
-    private val _onNodeRowClickJsF = ReactCommonUtil.cbFun1ToJsCb( _onNodeRowClick )
 
     /** Рендер вёрстки компонента. */
     def render(propsProxy: Props): VdomElement = {

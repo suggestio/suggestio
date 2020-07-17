@@ -140,7 +140,7 @@ object ScQsUtil {
       grid = Some( MScGridArgs(
         focAfterJump = OptionUtil.SomeBool.someFalse,
         // Надо возвращать названия карточек с сервера, чтобы их можно было отрендерить текстом в системной нотификации.
-        adTitles = true,
+        withTitle = true,
         allow404 = allow404,
       )),
     )

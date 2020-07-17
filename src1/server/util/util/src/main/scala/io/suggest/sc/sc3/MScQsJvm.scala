@@ -165,8 +165,8 @@ object MScQsJvm {
         val k = key1F(key)
         val F = MScGridArgs.Fields
         for {
-          adTitlesE           <- boolB.bind( k(F.AD_TITLES_FN), params )
-          focAfterJumpOptE    <- boolOptB.bind( k(F.FOC_AFTER_JUMP_FN), params )
+          adTitlesE           <- boolB.bind( k(F.WITH_TITLE), params )
+          focAfterJumpOptE    <- boolOptB.bind( k(F.FOC_AFTER_JUMP), params )
           allow404OptE        <- boolOptB.bind( k(F.ALLOW_404), params )
         } yield {
           for {
@@ -175,7 +175,7 @@ object MScQsJvm {
             allow404Opt       <- allow404OptE
           } yield {
             MScGridArgs(
-              adTitles        = adTitles,
+              withTitle        = adTitles,
               focAfterJump    = focAfterJumpOpt,
               allow404        = allow404Opt.getOrElseTrue,
             )
@@ -187,8 +187,8 @@ object MScQsJvm {
         val k = key1F(key)
         val F = MScGridArgs.Fields
         _mergeUnbinded1(
-          boolB.unbind( k(F.AD_TITLES_FN), value.adTitles ),
-          boolOptB.unbind( k(F.FOC_AFTER_JUMP_FN), value.focAfterJump ),
+          boolB.unbind( k(F.WITH_TITLE), value.withTitle ),
+          boolOptB.unbind( k(F.FOC_AFTER_JUMP), value.focAfterJump ),
           boolOptB.unbind( k(F.ALLOW_404), if (value.allow404) None else Some(value.allow404) ),
         )
       }

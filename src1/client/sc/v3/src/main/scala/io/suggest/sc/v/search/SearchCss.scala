@@ -28,9 +28,8 @@ object SearchCss {
   @inline implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
 
   implicit object SearchCssFastEq extends FastEq[SearchCss] {
-    override def eqv(a: SearchCss, b: SearchCss): Boolean = {
+    override def eqv(a: SearchCss, b: SearchCss): Boolean =
       MSearchCssPropsFastEq.eqv(a.args, b.args)
-    }
   }
 
   def args = GenLens[SearchCss]( _.args )
@@ -152,7 +151,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     /** Стиль фона ряда одного узла. */
     val rowItemBgF = styleF(nodeIdsDomain) (
       { nodeId =>
-        val nodeProps = args.nodesFound.nodesMap(nodeId)
+        val nodeProps = args.nodesFound.nodesMap(nodeId).props
         nodeProps.colors.bg.whenDefinedStyleS { mcd =>
           styleS(
             backgroundColor( Color(mcd.hexCode) )
@@ -176,7 +175,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     /** Стиль переднего плана одноу узла. */
     val rowTextPrimaryF = styleF(nodeIdsDomain) (
       { nodeId =>
-        val nodeProps = args.nodesFound.nodesMap(nodeId)
+        val nodeProps = args.nodesFound.nodesMap(nodeId).props
         nodeProps.colors.fg.whenDefinedStyleS { mcd =>
           styleS(
             // "0xDD" - 0.87 alpha
@@ -189,7 +188,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     val rowTextSecondaryF = styleF(nodeIdsDomain)(
       {nodeId =>
-        val nodeProps = args.nodesFound.nodesMap(nodeId)
+        val nodeProps = args.nodesFound.nodesMap(nodeId).props
         nodeProps.colors.fg.whenDefinedStyleS { mcd =>
           styleS(
             // "0x89" - 0.54 alpha

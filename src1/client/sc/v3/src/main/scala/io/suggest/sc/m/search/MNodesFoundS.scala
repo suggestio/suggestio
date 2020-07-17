@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
 import io.suggest.common.html.HtmlConstants
-import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.sc3.MScQs
 import io.suggest.ueq.JsUnivEqUtil._
@@ -97,7 +97,7 @@ case class MNodesFoundS(
   }
 
   /** Быстрый доступ к кэшу для id-карты найденных узлов. */
-  def nodesMap: Map[String, MSc3IndexResp] =
-    req.fold( Map.empty[String, MSc3IndexResp] )(_.resp.nodesMap)
+  def nodesMap: Map[String, MGeoNodePropsShapes] =
+    req.fold( Map.empty[String, MGeoNodePropsShapes] )(_.resp.nodesMap)
 
 }
