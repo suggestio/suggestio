@@ -146,4 +146,9 @@ object StringUtil {
     _mkRandomId(len)(randomIdLatLcChar)
   }
 
+
+
+  def isBase64UrlSafe(s: String): Boolean =
+    s matches "^[-a-zA-Z0-9_]+$"
+
 }

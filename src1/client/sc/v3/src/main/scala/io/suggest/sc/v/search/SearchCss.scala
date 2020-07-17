@@ -8,6 +8,7 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
 import io.suggest.sc.v.styl.ScCss
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import scalacss.internal.mutable.StyleSheet
@@ -33,6 +34,13 @@ object SearchCss {
   }
 
   def args = GenLens[SearchCss]( _.args )
+
+  private val _nameSuffixGen = { (idOrName: String, i: Int) =>
+    if (StringUtil.isBase64UrlSafe(idOrName))
+      idOrName
+    else
+      (idOrName.hashCode * i).toString
+  }
 
 }
 
@@ -142,14 +150,17 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     private val nodeIdsDomain = new Domain.OverSeq( args.nodesFound.nodesMap.keys.toIndexedSeq )
 
     /** Стиль фона ряда одного узла. */
-    val rowItemBgF = styleF(nodeIdsDomain) { nodeId =>
-      val nodeProps = args.nodesFound.nodesMap(nodeId)
-      nodeProps.colors.bg.whenDefinedStyleS { mcd =>
-        styleS(
-          backgroundColor( Color(mcd.hexCode) )
-        )
-      }
-    }
+    val rowItemBgF = styleF(nodeIdsDomain) (
+      { nodeId =>
+        val nodeProps = args.nodesFound.nodesMap(nodeId)
+        nodeProps.colors.bg.whenDefinedStyleS { mcd =>
+          styleS(
+            backgroundColor( Color(mcd.hexCode) )
+          )
+        }
+      },
+      SearchCss._nameSuffixGen,
+    )
 
     private def _colorTransparent(mcd: MColorData, transparent: Double) = {
       val rgb = mcd.getRgb
@@ -163,25 +174,31 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     }
 
     /** Стиль переднего плана одноу узла. */
-    val rowTextPrimaryF = styleF(nodeIdsDomain) { nodeId =>
-      val nodeProps = args.nodesFound.nodesMap(nodeId)
-      nodeProps.colors.fg.whenDefinedStyleS { mcd =>
-        styleS(
-          // "0xDD" - 0.87 alpha
-          _colorTransparent( mcd, 0.87 )
-        )
-      }
-    }
+    val rowTextPrimaryF = styleF(nodeIdsDomain) (
+      { nodeId =>
+        val nodeProps = args.nodesFound.nodesMap(nodeId)
+        nodeProps.colors.fg.whenDefinedStyleS { mcd =>
+          styleS(
+            // "0xDD" - 0.87 alpha
+            _colorTransparent( mcd, 0.87 )
+          )
+        }
+      },
+      SearchCss._nameSuffixGen,
+    )
 
-    val rowTextSecondaryF = styleF(nodeIdsDomain) { nodeId =>
-      val nodeProps = args.nodesFound.nodesMap(nodeId)
-      nodeProps.colors.fg.whenDefinedStyleS { mcd =>
-        styleS(
-          // "0x89" - 0.54 alpha
-          _colorTransparent( mcd, 0.54 )
-        )
-      }
-    }
+    val rowTextSecondaryF = styleF(nodeIdsDomain)(
+      {nodeId =>
+        val nodeProps = args.nodesFound.nodesMap(nodeId)
+        nodeProps.colors.fg.whenDefinedStyleS { mcd =>
+          styleS(
+            // "0x89" - 0.54 alpha
+            _colorTransparent( mcd, 0.54 )
+          )
+        }
+      },
+      SearchCss._nameSuffixGen,
+    )
 
   }
 
