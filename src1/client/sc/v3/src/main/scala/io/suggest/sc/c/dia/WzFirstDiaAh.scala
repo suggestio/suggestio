@@ -12,7 +12,7 @@ import io.suggest.os.notify.NotificationPermAsk
 import io.suggest.os.notify.api.cnl.CordovaNotificationlLocalUtil
 import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
-import io.suggest.sc.m.{GeoLocOnOff, MScRoot}
+import io.suggest.sc.m.{GeoLocOnOff, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.dia.first._
 import io.suggest.sc.m.dia._
 import io.suggest.log.Log
@@ -173,8 +173,12 @@ class WzFirstDiaAh[M](
               _wzGoToNextPhase( first0 )
             // Осознанный отказ в размещении - перейти в Info-фрейм текущей фазы
             case MWzFrames.AskPerm =>
-              val v2 = _setFrame(MWzFrames.Info)
-              updated(v2)
+              if (WzFirstDiaAh.CRY_ABOUT_REFUSE_LATER) {
+                val v2 = _setFrame(MWzFrames.Info)
+                updated(v2)
+              } else {
+                _wzGoToNextPhase( first0 )
+              }
             // false во время InProgress - отмена ожидания. Надо назад перебросить, на Ask-шаг.
             case MWzFrames.InProgress =>
               val v2 = _setFrame( MWzFrames.AskPerm )
@@ -310,6 +314,10 @@ class WzFirstDiaAh[M](
       ) {
         // Запускаемся.
         var fxsAcc: List[Effect] = Nil
+
+        // Надо бы выставить в URL отметку, что теперь открыт диалог:
+        fxsAcc ::= ResetUrlRoute(force = true).toEffectPure
+
         var permPotsAcc = List.empty[(MWzPhase, Pot[IPermissionState])]
 
         // Пройтись по списку фаз, активировав проверки прав:
@@ -632,6 +640,9 @@ object WzFirstDiaAh extends Log {
   // developmentMode - Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
   /** Запрашивать доступ на нотификацию в браузере. */
   final def NOTIFICATION_IN_BROWSER = scalajs.LinkingInfo.developmentMode
+
+  /** Если юзер вместо разрешения нажал "позже", то надо ли отображать info-окошко или перейти сразу на следующий шаг. */
+  final def CRY_ABOUT_REFUSE_LATER = false
 
   /** Быстро выдать ответ: надо ли передавать управление запуском в контроллер визарда?
     * Тут только поверхностные проверки без углубления.

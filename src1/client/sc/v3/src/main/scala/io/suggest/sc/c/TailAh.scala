@@ -184,8 +184,7 @@ class TailAh(
       val nextRoute = m.route getOrElse TailAh.getMainScreenSnapShot( v0 )
 
       val currRouteLens = TailAh._currRoute
-      val currRoute = currRouteLens.get( v0 )
-      if ( currRoute contains[MainScreen] nextRoute ) {
+      if (!m.force && (currRouteLens.get( v0 ) contains[MainScreen] nextRoute)) {
         noChange
       } else {
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
@@ -472,7 +471,6 @@ class TailAh(
           }
         )
       ) {
-        logger.warn(s"geo-loc, isFullyReady?$isFullyReady")
         if (isFullyReady) {
           needUpdateUi = true
           isToReloadIndex = true

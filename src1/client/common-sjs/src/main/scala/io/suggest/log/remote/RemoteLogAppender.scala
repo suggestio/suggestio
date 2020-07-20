@@ -46,8 +46,8 @@ final class RemoteLogAppender
 
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {
-      val n = "\n"
-      println( ErrorMsgs.RME_LOGGER_REQ_FAIL + "\n " + logMsgs.mkString("\n ") + "\n" + ex + " " + ex.getStackTrace.mkString(n,n,n) )
+      //val n = "\n"
+      println( ErrorMsgs.RME_LOGGER_REQ_FAIL + "\n " + logMsgs.mkString("\n ") + "\n" + ex /*+ " " + ex.getStackTrace.mkString(n,n,n)*/ )
     }
   }
 

@@ -394,7 +394,8 @@ class BootAh[M](
           val p = Promise[None.type]()
           // Состояние wizard'а инициализировано, значит wizard запущен, дождаться завершения мастера.
           val wizardWatcherUnSubscribeF = circuit.subscribe(firstRO) { diaFirstProxy =>
-            if (diaFirstProxy.value.view.isEmpty)
+            val r = diaFirstProxy.value.view
+            if (r.isEmpty)
               p.trySuccess(None)
           }
           p.future
@@ -421,7 +422,7 @@ class BootAh[M](
         .value
         .info.currRoute
         .filter { _ => allowRouteTo }
-        .fold[IScRootAction](ResetUrlRoute())(RouteTo.apply)
+        .fold[IScRootAction](ResetUrlRoute(force = true))(RouteTo.apply)
     }
   }
 
