@@ -599,42 +599,47 @@ class IndexAh[M](
           val cleanStateF = inx_state_switch_ask_LENS set None
 
           m .nodeId
-            .fold [Option[MSc3IndexResp]] {
-              // Кнопка сокрытия диалога.
-              OptionUtil.maybeOpt( v0.isFirstRun ) {
-                switchS0.nodesResp.nodes
-                  .headOption
-                  .map(_.props)
-                  .orElse {
-                    // Если нет узлов, нет открытого узла, то поискать в сохранённых recent-узлах?
-                    rootRO.value.internals.info.indexesRecents.saved
-                      .iterator
-                      .flatMap(_.recents)
-                      .nextOption()
-                      .map(_.indexResp)
-                  }
+            .fold [Option[Either[ActionResult[M], MSc3IndexResp]]] {
+              // Кнопка сокрытия диалога или иное сокрытие диалога (через клик по фоновому div'у).
+              OptionUtil.maybe( v0.isFirstRun ) {
+                // Начало запуска выдачи и отмена диалога. Надо как-то оказаться "на улице" - в геолокации, вне узлов.
+                // Для этого надо повторить index-запрос, но с geoIntoRcvr=false.
+                val fx = GetIndex(MScSwitchCtx(
+                  indexQsArgs = MScIndexArgs(
+                    geoIntoRcvr = false,
+                    retUserLoc  = true,
+                  ),
+                )).toEffectPure
+                val v2 = cleanStateF(v0)
+
+                Left( updated(v2, fx) )
               }
             } { nodeId =>
               // Выбран конкретный узел в списке.
               switchS0.nodesResp
                 .nodesMap
                 .get( nodeId )
-                .map(_.props)
+                .map(m => Right(m.props))
             }
             .fold [ActionResult[M]] {
               // Не надо переключаться ни в какой узел. Просто сокрыть диалог.
               // Возможно, юзер не хочет уходить из текущего узла в новую определённую локацию.
               val v2 = cleanStateF( v0 )
               updated(v2)
-            } { nodeFound =>
-              // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
-              val actRes = IndexAh.indexUpdated(
-                i0      = cleanStateF( v0 ),
-                inx     = nodeFound,
-                m       = switchS0.okAction,
-                mroot   = rootRO.value,
+            } { resOrNodeFound =>
+              resOrNodeFound.fold(
+                identity,
+                {nodeFound =>
+                  // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
+                  val actRes = IndexAh.indexUpdated(
+                    i0      = cleanStateF( v0 ),
+                    inx     = nodeFound,
+                    m       = switchS0.okAction,
+                    mroot   = rootRO.value,
+                  )
+                  ah.updatedFrom( Some(actRes) )
+                }
               )
-              ah.updatedFrom( Some(actRes) )
             }
         }
 

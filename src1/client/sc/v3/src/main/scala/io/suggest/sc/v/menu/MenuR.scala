@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu
 
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
-import com.materialui.MuiList
+import com.materialui.{MuiDivider, MuiList, MuiListItem}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -58,6 +58,14 @@ class MenuR(
         ScCssStatic.Menu.Rows.rowsContainer,
 
         MuiList()(
+
+          // Список недавних узлов.
+          indexesRecentR.component( propsProxy ),
+
+          MuiListItem()(
+            MuiDivider()
+          ),
+
           // Строка входа в личный кабинет
           s.enterLkRowC { enterLkRowR.apply },
 
@@ -74,9 +82,6 @@ class MenuR(
 
           // Пункт открытия диалога с настройками выдачи.
           settingsMenuItemR.component( propsProxy ),
-
-          // Список недавних узлов.
-          indexesRecentR.component( propsProxy ),
 
         ),
       )

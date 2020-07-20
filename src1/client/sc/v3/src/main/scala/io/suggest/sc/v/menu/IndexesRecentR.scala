@@ -1,6 +1,6 @@
 package io.suggest.sc.v.menu
 
-import com.materialui.{MuiDivider, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
+import com.materialui.{MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.CssR
@@ -50,10 +50,6 @@ class IndexesRecentR(
 
     def render(p: Props, s: State): VdomElement = {
       React.Fragment(
-        MuiListItem()(
-          MuiDivider()
-        ),
-
         MuiListItem {
           val css = new MuiListItemClasses {
             override val root = ScCssStatic.Menu.Rows.rowLink.htmlClass

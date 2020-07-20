@@ -248,8 +248,9 @@ trait ScIndex
                   if (haveNonRcvrNode) {
                     LOGGER.trace(s"$logPrefix Dropped non-rcvr node - ${nodeInfo.mnode.guessDisplayNameOrIdOrEmpty}")
                     acc0
-                  } else
+                  } else {
                     (true, nodeInfo :: nodeInfoAcc0)
+                  }
                 } else {
                   (haveNonRcvrNode, nodeInfo :: nodeInfoAcc0)
                 }
