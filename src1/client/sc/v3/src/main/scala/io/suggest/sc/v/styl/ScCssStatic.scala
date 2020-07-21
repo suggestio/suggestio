@@ -85,9 +85,13 @@ object ScCssStatic extends StyleSheet.Inline {
   /** Стили для заголовка. */
   object Header {
 
+    val border = style(
+      borderBottom( 1.px, solid ),
+    )
+
     val header = style(
       addClassNames(
-        ScCssStatic.Header.HEADER,
+        //ScCssStatic.Header.HEADER,
         Css.Position.ABSOLUTE
       ),
       // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
@@ -96,6 +100,11 @@ object ScCssStatic extends StyleSheet.Inline {
       //left( args.screenInfo.unsafeOffsets.left.px ),
       // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
       minWidth( 200.px ),
+      width( 100.%% ),
+      zIndex( 10 ),
+      textAlign.center,
+      // Этот transform скопирован из showcase.styl. Не ясно, нужен ли он.
+      transform := "translate3d(0, 0, 0)",
     )
 
     val progress = style(

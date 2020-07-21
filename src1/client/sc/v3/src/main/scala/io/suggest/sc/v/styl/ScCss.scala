@@ -10,6 +10,7 @@ import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m.styl.MScCssArgs
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 import scala.language.postfixOps
 
@@ -73,6 +74,8 @@ object ScCss {
 
   // Значение "initial" для css-свойст.
   def css_initial = scalacss.internal.Literal.Typed.initial.value
+
+  def args = GenLens[ScCss]( _.args )
 
 }
 
@@ -227,11 +230,16 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   /** Стили для заголовка. */
   object Header {
 
+    /** Подкрашивать заголовок? Не надо, когда нет цветов узла.
+      * Само подкрашивание идёт на уровне шаблона HeaderR, т.к. динамические имена классов требуют лишних телодвижений.
+      */
+    def isColored: Boolean =
+      args.customColorsOpt.nonEmpty
+
     /** Стили контейнера любого заголовка. */
     val header = style(
-      paddingTop( args.screenInfo.unsafeOffsets.top.px ),
+      paddingTop( args.screenInfo.unsafeOffsets.top.px )
     )
-
 
     /** Доступ к стилям логотипа узла. */
     object Logo {

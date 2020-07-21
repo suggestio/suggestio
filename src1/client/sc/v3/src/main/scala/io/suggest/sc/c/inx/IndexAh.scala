@@ -727,6 +727,20 @@ class IndexAh[M](
         switchCtx     = m.switchCtx,
       )
 
+
+    // Отладка: обнуление текущего индекса.
+    case UnIndex =>
+      val v0 = value
+      val resp2 = Pot.empty[MSc3IndexResp]
+      val v2 = (
+        (MScIndex.resp set resp2) andThen
+        (MScIndex.scCss
+          .composeLens(ScCss.args)
+          .set( MScCssArgs.from(resp2, rootRO.value.dev.screen.info) )
+        )
+      )(v0)
+      updated(v2)
+
   }
 
 }

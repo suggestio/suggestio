@@ -4,6 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactCommonUtil
+import io.suggest.sc.ScConstants
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
@@ -33,7 +34,7 @@ class HeaderR(
 
 
   case class State(
-                    hdrPropsC                 : ReactConnectProxy[Some[Boolean]],
+                    isColoredSomeC            : ReactConnectProxy[Some[Boolean]],
                     hdrLogoOptC               : ReactConnectProxy[logoR.Props_t],
                     hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
@@ -45,41 +46,41 @@ class HeaderR(
   protected class Backend($: BackendScope[Props, State]) {
 
     def render(s: State): VdomElement = {
-      lazy val hdrData = {
-        val hdrLogo       = s.hdrLogoOptC { logoR.apply }
-        val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.apply }
-        val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.apply }
-        val hdrProgress   = s.hdrProgressC { hdrProgressR.apply }
-        val hdrGoBack     = s.goBackC { goBackR.apply }
+      val hdrLogo       = s.hdrLogoOptC { logoR.apply }
+      val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.apply }
+      val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.apply }
+      val hdrProgress   = s.hdrProgressC { hdrProgressR.apply }
+      val hdrGoBack     = s.goBackC { goBackR.apply }
 
-        scReactCtxP.consume { scReactCtx =>
-          val scCss = scReactCtx.scCss
-          <.div(
-            scCss.bgColor,
-            scCss.fgColorBorder,
-            ScCssStatic.Header.header,
-            scCss.Header.header,
+      scReactCtxP.consume { scReactCtx =>
+        val scCss = scReactCtx.scCss
+        val tm0 = <.div(
+          ScCssStatic.Header.header,
+          scCss.Header.header,
+          // -- Кнопки заголовка в зависимости от состояния выдачи --
+          // Кнопки при нахождении в обычной выдаче без посторонних вещей:
 
-            // -- Кнопки заголовка в зависимости от состояния выдачи --
-            // Кнопки при нахождении в обычной выдаче без посторонних вещей:
+          // Слева:
+          hdrGoBack,
+          hdrMenuBtn,
 
-            // Слева:
-            hdrGoBack,
-            hdrMenuBtn,
+          // По центру:
+          hdrLogo,
 
-            // По центру:
-            hdrLogo,
-
-            // Справа:
-            hdrSearchBtn,
-            hdrProgress,
+          // Справа:
+          hdrSearchBtn,
+          hdrProgress,
+        )
+        s.isColoredSomeC { isColoredSomeProxy =>
+          tm0(
+            ReactCommonUtil.maybe( isColoredSomeProxy.value.value ) {
+              TagMod(
+                scCss.fgColorBorder,
+                scCss.bgColor,
+                ScCssStatic.Header.border,
+              )
+            },
           )
-        }
-      }
-
-      s.hdrPropsC { isShownSomeProxy =>
-        ReactCommonUtil.maybeEl( isShownSomeProxy.value.value ) {
-          hdrData
         }
       }
     }
@@ -91,10 +92,10 @@ class HeaderR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-
-        hdrPropsC = propsProxy.connect { props =>
-          Some( props.index.resp.nonEmpty )
-        }( OptFastEq.OptValueEq ),
+        isColoredSomeC = propsProxy.connect { props =>
+          val ic = props.index.scCss.Header.isColored
+          OptionUtil.SomeBool( ic )
+        },
 
         hdrLogoOptC = propsProxy.connect { mroot =>
           for {
@@ -109,10 +110,11 @@ class HeaderR(
         }( OptFastEq.Wrapped(logoR.LogoPropsValFastEq) ),
 
         hdrOnGridBtnColorOptC = propsProxy.connect { mroot =>
-          OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {
+          OptionUtil.maybe( !mroot.index.isAnyPanelOpened ) {
             mroot.index.resp
               .toOption
               .flatMap( _.colors.fg )
+              .getOrElse( MColorData(ScConstants.Defaults.FG_COLOR) )
           }
         }( OptFastEq.Plain ),
 

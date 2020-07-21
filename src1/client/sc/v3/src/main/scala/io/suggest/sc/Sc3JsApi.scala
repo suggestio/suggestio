@@ -1,6 +1,9 @@
 package io.suggest.sc
 
+import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
+import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, UnIndex}
+import io.suggest.spa.DAction
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
@@ -15,8 +18,26 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 @JSExportTopLevel("___Sio___Sc___")
 object Sc3JsApi {
 
+  private def _d( action: DAction ) =
+    Sc3Module.sc3Circuit.dispatch( action )
+
   @JSExport
   def unsafeOffsetAdd(incDecBy: Int): Unit =
-    Sc3Module.sc3Circuit.dispatch( UpdateUnsafeScreenOffsetBy(incDecBy) )
+    _d( UpdateUnsafeScreenOffsetBy(incDecBy) )
+
+  @JSExport
+  def unIndex(): Unit =
+    _d( UnIndex )
+
+  @JSExport
+  def reIndex(): Unit = {
+    val a = GetIndex(MScSwitchCtx(
+      indexQsArgs = MScIndexArgs(
+        geoIntoRcvr = true,
+      ),
+      showWelcome = false,
+    ))
+    _d( a )
+  }
 
 }

@@ -16,6 +16,8 @@ sealed trait IIndexAction extends ISc3Action
 case class GetIndex( switchCtx: MScSwitchCtx )
   extends IIndexAction with IScIndexRespReason
 
+/** Сброс индекса. */
+case object UnIndex extends IIndexAction
 
 /** Нажатие на экран приветствия. */
 case object WcClick extends IIndexAction
