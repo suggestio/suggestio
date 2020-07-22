@@ -128,12 +128,24 @@ object MNodeExtras
     )
   }
 
-  val adn       = GenLens[MNodeExtras](_.adn)
-  val beacon    = GenLens[MNodeExtras](_.beacon)
-  val domains   = GenLens[MNodeExtras](_.domains)
-  val doc       = GenLens[MNodeExtras](_.doc)
-  val extVideo  = GenLens[MNodeExtras](_.extVideo)
-  val resource  = GenLens[MNodeExtras](_.resource)
+  def adn       = GenLens[MNodeExtras](_.adn)
+  def beacon    = GenLens[MNodeExtras](_.beacon)
+  def domains   = GenLens[MNodeExtras](_.domains)
+  def doc       = GenLens[MNodeExtras](_.doc)
+  def extVideo  = GenLens[MNodeExtras](_.extVideo)
+  def resource  = GenLens[MNodeExtras](_.resource)
+
+
+  implicit final class NodeExtrasOpsExt( private val nodeExt: MNodeExtras ) extends AnyVal {
+
+    def isRcvr = nodeExt.adn.exists(_.isReceiver)
+
+    def adnLogo = nodeExt.adn.flatMap(_.resView.logo)
+    def adnWcFg = nodeExt.adn.flatMap(_.resView.wcFg)
+    def adnGalImgs = nodeExt.adn.toList.flatMap(_.resView.galImgs)
+    def adnEdgeUidsIter = nodeExt.adn.iterator.flatMap(_.resView.edgeUids)
+
+  }
 
 }
 
@@ -156,16 +168,3 @@ final case class MNodeExtras(
                               resource  : Option[MRscExtra]         = None,
                             )
   extends EmptyProduct
-{
-
-  def withDoc(doc: Option[MNodeDoc]) = copy(doc = doc)
-  def withAdn(adn: Option[MAdnExtra]) = copy(adn = adn)
-
-  def isRcvr = adn.exists(_.isReceiver)
-
-  def adnLogo = adn.flatMap(_.resView.logo)
-  def adnWcFg = adn.flatMap(_.resView.wcFg)
-  def adnGalImgs = adn.toList.flatMap(_.resView.galImgs)
-  def adnEdgeUidsIter = adn.iterator.flatMap(_.resView.edgeUids)
-
-}

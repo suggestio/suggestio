@@ -261,16 +261,68 @@ class IndexRah
     val eMsg = ErrorMsgs.GET_NODE_INDEX_FAILED
     logger.error( eMsg, ex, msg = ctx.m )
 
+
+    val search_geo_LENS = MScIndex.search
+      .composeLens( MScSearch.geo )
+    val ctx_v0_index_LENS = MRhCtx.value0
+      .composeLens( MScRoot.index )
+
     var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
-    if (ctx.value0.index.search.geo.mapInit.loader.nonEmpty)
-      actionsAccF = actionsAccF andThen MScIndex.search.modify(_.resetMapLoader)
+
+    // Если закешированные scQs содержат что-либо, то надо их обнулить. Иначе повторная ошибка будет прожёвана как уже пройденный успех.
+    val search_geo_found_reqSearchArgs_LENS = search_geo_LENS
+      .composeLens( MGeoTabS.found )
+      .composeLens( MNodesFoundS.reqSearchArgs )
+    if (
+      ctx_v0_index_LENS.composeLens(search_geo_found_reqSearchArgs_LENS).get(ctx).nonEmpty
+    ) {
+      actionsAccF = actionsAccF andThen search_geo_found_reqSearchArgs_LENS.set( None )
+    }
+
+    // Надо перевести карту в текущее состояние, которое было до ошибки.
+    val searchGeoMapInit_LENS = search_geo_LENS
+      .composeLens( MGeoTabS.mapInit )
+    val mapInit_LENS = ctx_v0_index_LENS
+      .composeLens( searchGeoMapInit_LENS )
+    val mapInit0 = mapInit_LENS.get(ctx)
+
+    var mapInitModsF = List.empty[MMapInitState => MMapInitState]
+
+    // Сбросить mapLoader на исходную
+    if (mapInit0.loader.nonEmpty)
+      mapInitModsF ::= (MMapInitState.loader set None)
+
+    // Если загрузка нового индекса связана с перемещением карты, то надо отскочить карту назад в текущую позицию.
+    // MapReIndex включает в себя OpenMapRcvr из-за особенностей реализации.
+    val reason = ctx.m.reason
+    if ( reason.isInstanceOf[MapReIndex] ) {
+      // найти предыдущую гео-точку в состоянии системы. Она может быть в текущем indexResp или в последнем index state view.
+      val i0 = ctx.value0.index
+
+      for {
+        prevGeoPoint <- i0
+          .respOpt
+          .flatMap(_.geoPoint)
+          .orElse {
+            i0.state.inxGeoPoint
+          }
+        // Точка действительно изменялась?
+        if prevGeoPoint !=* mapInit0.state.center
+      } {
+        mapInitModsF ::= MMapInitState.state.modify(_.withCenterInitReal(prevGeoPoint))
+      }
+    }
+
+    // Раскрыть аккамулятор mapInit-изменений
+    if (mapInitModsF.nonEmpty)
+      actionsAccF = actionsAccF andThen searchGeoMapInit_LENS.modify(mapInitModsF.reduce(_ andThen _))
 
     val v2 = (MScRoot.index modify actionsAccF)(ctx.value0)
     val errFx = Effect.action {
       val m = MScErrorDia(
         messageCode = eMsg,
         potRO       = Some( ctx.modelRW.zoom(_.index.resp) ),
-        retryAction = Some( ctx.m.reason ),
+        retryAction = Some( reason ),
       )
       SetErrorState(m)
     }

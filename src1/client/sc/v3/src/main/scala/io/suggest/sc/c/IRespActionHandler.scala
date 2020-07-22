@@ -73,5 +73,5 @@ case class MRhCtx(
                    modelRW    : ModelRW[MScRoot, MScRoot],
                  )
 object MRhCtx {
-  val value0 = GenLens[MRhCtx](_.value0)
+  def value0 = GenLens[MRhCtx](_.value0)
 }

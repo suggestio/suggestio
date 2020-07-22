@@ -33,11 +33,13 @@ object MScIndexState {
 
   implicit final class InxStateOpsExt( private val inxState: MScIndexState ) extends AnyVal {
 
+    def viewCurrent = inxState.views.head
+
     def rcvrId: Option[String] =
-      inxState.views.head.rcvrId
+      viewCurrent.rcvrId
 
     def inxGeoPoint: Option[MGeoPoint] =
-      inxState.views.head.inxGeoPoint
+      viewCurrent.inxGeoPoint
 
   }
 

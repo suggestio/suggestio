@@ -50,7 +50,7 @@ class MapCommonAh[M](
         noChange
       } else {
         // Обновляем через updateSilent, т.к. не нужны никакие side-эффекты.
-        val v2 = MMapS.centerReal.set( Some(mgp) )(v0)
+        val v2 = (MMapS.centerReal set Some(mgp))(v0)
         updatedSilent( v2 )
       }
 
@@ -60,7 +60,7 @@ class MapCommonAh[M](
       if (ze.newZoom ==* v0.zoom) {
         noChange
       } else {
-        val v2 = MMapS.zoom.set(ze.newZoom)(v0)
+        val v2 = (MMapS.zoom set ze.newZoom)(v0)
         updatedSilent( v2 )
       }
 

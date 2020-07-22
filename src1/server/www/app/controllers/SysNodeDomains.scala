@@ -1,6 +1,7 @@
 package controllers
 
 import io.suggest.es.model.EsModel
+import io.suggest.n2.extra.MNodeExtras
 import io.suggest.n2.extra.domain.MDomainExtra
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.sec.util.Csrf
@@ -74,9 +75,9 @@ final class SysNodeDomains @Inject()(
         },
         {mdx =>
           import esModel.api._
-          val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
-            _updateNodeDomains(mnode) {
-              mnode.extras.domains
+          val saveFut = mNodes.tryUpdate(request.mnode) {
+            _nodeDomains_LENS.modify { domains0 =>
+              domains0
                 .iterator
                 .filter { _.dkey != mdx.dkey }
                 .++( Iterator.single(mdx) )
@@ -133,9 +134,9 @@ final class SysNodeDomains @Inject()(
           import esModel.api._
 
           val dkeysFilteredOut = Set.empty + dkey + mdx2.dkey
-          val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
-            _updateNodeDomains(mnode) {
-              mnode.extras.domains
+          val mnode2Fut = mNodes.tryUpdate(request.mnode) {
+            _nodeDomains_LENS.modify { domains0 =>
+              domains0
                 .iterator
                 .filter { mdx => !dkeysFilteredOut.contains(mdx.dkey) }
                 .++( Iterator.single(mdx2) )
@@ -156,9 +157,9 @@ final class SysNodeDomains @Inject()(
     isSuNode(nodeId).async { implicit request =>
       import esModel.api._
 
-      val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
-        _updateNodeDomains(mnode) {
-          mnode.extras.domains
+      val mnode2Fut = mNodes.tryUpdate(request.mnode) {
+        _nodeDomains_LENS.modify { domains0 =>
+          domains0
             .iterator
             .filter { _.dkey != dkey }
             .toSeq
@@ -173,13 +174,9 @@ final class SysNodeDomains @Inject()(
 
 
   /** Вызов двух copy() при обновлении узла вынесен сюда для облегчения скомпиленного байт-кода. */
-  private def _updateNodeDomains(mnode: MNode)(domains2: Seq[MDomainExtra]): MNode = {
-    mnode.copy(
-      extras = mnode.extras.copy(
-        domains = domains2
-      )
-    )
-  }
+  private def _nodeDomains_LENS =
+    MNode.extras
+      .composeLens( MNodeExtras.domains )
 
   /** Дедубликация кода типичного положительного ответа во всех POST-экшенах этого трейта. */
   private def _rdrSuccess(nodeId: String, msg: String): Result = {
