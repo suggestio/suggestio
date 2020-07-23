@@ -1277,6 +1277,11 @@ final class EsModel @Inject()(
         cache.set(ck, result, model.EXPIRE)
       }
 
+      def deleteFromCache(id: String): Future[_] = {
+        val ck = model.cacheKey(id)
+        cache.remove( ck )
+      }
+
       def cacheThese(results: T1*): Unit =
         cacheThese1(results)
 

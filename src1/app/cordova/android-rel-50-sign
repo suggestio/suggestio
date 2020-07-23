@@ -1,0 +1,33 @@
+#!/bin/bash
+
+OUTDIR="platforms/android/app/build/outputs/apk/release"
+OUTFILE="$OUTDIR/app-release-unsigned.apk"
+
+FINAL_FILE="$OUTDIR/app-release.apk"
+
+if [[ ! -f "$OUTFILE" ]]; then
+    echo "Missing release APK $OUTFILE\n Build release first." >&2
+    exit 1
+fi
+
+KEYSTORE_FILE="$HOME/.BUILD_INFO/io.suggest.appsuggest.android.keystore"
+if [[ ! -f "$KEYSTORE_FILE" ]]; then
+    echo "Missing keystore at $KEYSTORE_FILE"
+    exit 1
+fi
+
+set -e
+
+KEYSTORE_ALIAS="io.suggest.appsuggest"
+jarsigner \
+    -verbose \
+    -sigalg "SHA256withRSA" \
+    -digestalg "SHA-256" \
+    -keystore "$KEYSTORE_FILE" \
+    "$OUTFILE" "$KEYSTORE_ALIAS"
+
+ZIPALIGN="$HOME/.BUILD_INFO/android.sdk.build.tools/zipalign"
+rm -f "$FINAL_FILE"
+$ZIPALIGN -v 4 "$OUTFILE" "$FINAL_FILE"
+
+echo "OK: $FINAL_FILE"

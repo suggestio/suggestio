@@ -645,5 +645,19 @@ final class SysMarket @Inject() (
     }
   }
 
+
+  /** Убрать указанный узел из кэша, вернув редирект. */
+  def unCacheNode( nodeIdU: MEsUuId, r: Option[String] ) = csrf.Check {
+    val nodeId = nodeIdU.id
+    isSuNode(nodeId).async { implicit request =>
+      for {
+        _ <- mNodes.deleteFromCache( nodeId )
+      } yield {
+        r.fold( Redirect(routes.SysMarket.showAdnNode(nodeId)) )(Redirect(_: String, SEE_OTHER))
+          .flashing( FLASH.SUCCESS -> s"Кэш сброшен для узла: $nodeId" )
+      }
+    }
+  }
+
 }
 

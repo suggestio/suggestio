@@ -28,4 +28,5 @@ object MHttpCacheInfo {
 case class MHttpCacheInfo(
                            policy           : MHttpCachingPolicy      = MHttpCachingPolicies.NetworkOnly,
                            rewriteUrl       : Option[String]          = None,
+                           // TODO Надо предусмотреть возможность догоняющего network-ответа, когда кэш уже ответ вернул (и основной resp Future завершен).
                          )

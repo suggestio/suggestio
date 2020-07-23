@@ -10,7 +10,7 @@
     "author": "Konstantin Nikiforov",
     "license": "CBCA",
     "dependencies": {
-        "cordova-android": "^8.1.0",
+        "cordova-android": "file:../../../../../../../../home/user/projects/repo/cordova-android",
         "cordova-custom-config": "^5.1.0",
         "cordova-ios": "^5.1.1",
         "cordova-plugin-appminimize": "git+https://github.com/tomloprod/cordova-plugin-appminimize.git",
@@ -34,7 +34,7 @@
             "cordova.plugins.diagnostic": {},
             "cordova-plugin-whitelist": {},
             "cordova-plugin-local-notification": {
-                "ANDROID_SUPPORT_V4_VERSION": "26.+"
+                "ANDROID_SUPPORT_V4_VERSION": "29.+"
             },
             "cordova-plugin-ble-central": {
                 "BLUETOOTH_USAGE_DESCRIPTION": " "

@@ -179,6 +179,11 @@
         call    = CSRF( routes.SysMarket.loginIntoNode( mnode.id.get ) ),
         btnText = Some("Залогиниться от имени узла")
       )
+
+      @stuff._deleteSmthFormBtnTpl(
+        call    = CSRF( routes.SysMarket.unCacheNode( mnode.id.get ) ),
+        btnText = Some( "Сбросить кэш узла" )
+      )
     </p>
 
   }
