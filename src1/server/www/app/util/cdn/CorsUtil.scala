@@ -109,7 +109,10 @@ final class CorsUtil @Inject() (
       reqOrigin <- reqOriginOpt
       sioUrlPrefix = contextUtil.URL_PREFIX
       if {
-        val r = reqOrigin ==* sioUrlPrefix
+        val r =
+          (reqOrigin ==* sioUrlPrefix) ||   // Стандартное поведение браузеров - слать proto+host внутри Origin.
+          (reqOrigin ==* "null") ||         // iOS 13.2.2 WKWebView шлёт очень необычное значение заголовка Origin.
+          (reqOrigin startsWith "file://")  // Нельзя исключать внезапных чудес с изменением iOS null-значения в будущем.
         if (!r) LOGGER.warn(s"$logPrefix Invalid/unexpected CORS Origin\n Origin: $reqOrigin\n Expected prefix: $sioUrlPrefix")
         r
       }
