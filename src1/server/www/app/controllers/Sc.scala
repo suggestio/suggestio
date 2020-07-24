@@ -14,7 +14,7 @@ import util.adr.AdRenderUtil
 import util.adv.AdvUtil
 import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.ble.BleUtil
-import util.cdn.CdnUtil
+import util.cdn.{CdnUtil, CorsUtil}
 import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
 import util.i18n.JsMessagesUtil
@@ -62,6 +62,7 @@ final class Sc @Inject() (
                      override val scTagsUtil         : ScSearchUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,
+                     override val corsUtil           : CorsUtil,
                      override val esModel            : EsModel,
                      assets                          : Assets,
                      override val sioControllerApi   : SioControllerApi,

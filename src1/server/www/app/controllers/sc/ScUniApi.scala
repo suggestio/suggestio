@@ -15,6 +15,7 @@ import play.api.libs.json.Json
 import util.showcase.IScUtil
 import FutureUtil.Implicits._
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
+import util.cdn.CorsUtil
 
 import scala.concurrent.Future
 
@@ -41,6 +42,7 @@ trait ScUniApi
   import sioControllerApi._
   import mCommonDi.ec
 
+  def corsUtil: CorsUtil
 
   /** Логика Sc UApi.
     * Тело метода-экшена переусложнилось до полной невозможности им пользоваться и
@@ -341,8 +343,10 @@ trait ScUniApi
       for {
         scResp <- logic.scRespFut
       } yield {
-        Ok( Json.toJson(scResp) )
-          .cacheControl( 20 )
+        corsUtil.withCorsIfNeeded(
+          Ok( Json.toJson(scResp) )
+            .cacheControl( 20 )
+        )
       }
 
     } else {

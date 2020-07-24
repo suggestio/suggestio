@@ -15,6 +15,7 @@ import util.acl.MaybeAuth
 import util.geo.GeoIpUtil
 import util.stat.StatUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import util.cdn.CorsUtil
 
 import scala.concurrent.ExecutionContext
 
@@ -28,6 +29,7 @@ final class RemoteLogs @Inject() (
                                    statUtil                   : StatUtil,
                                    maybeAuth                  : MaybeAuth,
                                    geoIpUtil                  : GeoIpUtil,
+                                   corsUtil                   : CorsUtil,
                                    sioControllerApi           : SioControllerApi,
                                    implicit private val ec    : ExecutionContext,
                                  )
@@ -161,11 +163,11 @@ final class RemoteLogs @Inject() (
 
       val diagMsg = request.body.msgs.mkString("\n")
 
-      val stat2Fut = for {
+      // Куда сохранять? В логи или просто на сервере в логи отрендерить?
+      for {
         _geoLocOpt <- geoLocOptFut
         _userSaOpt <- userSaOptFut
-      } yield {
-        new statUtil.Stat2 {
+        stat2 = new statUtil.Stat2 {
           override def logMsg = Some("Sc-remote-error")
           override def diag: MDiag = {
             if (statUtil.SAVE_GARBAGE_TO_MSTAT) {
@@ -189,20 +191,17 @@ final class RemoteLogs @Inject() (
           override def ctx = _ctx
           override def geoIpLoc = _geoLocOpt
         }
-      }
-
-      // Куда сохранять? В логи или просто на сервере в логи отрендерить?
-      for {
-        stat2 <- stat2Fut
         _ <- statUtil.maybeSaveGarbageStat(
           stat2,
           logTail = diagMsg,
         )
       } yield {
-        NoContent
-          // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
-          // ошибку, что нет root тега в ответе /sc/error.
-          .as( MimeTypes.TEXT )
+        corsUtil.withCorsIfNeeded(
+          NoContent
+            // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
+            // ошибку, что нет root тега в ответе /sc/error.
+            .as( MimeTypes.TEXT )
+        )
       }
     }
   }
