@@ -20,6 +20,9 @@ import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 import ReactCommonUtil.Implicits._
+import com.github.souporserious.react.measure.ContentRect
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.jd.render.v.MeasureR
 
 import scala.scalajs.js
 
@@ -50,6 +53,7 @@ final class NodesFoundR(
                     queryEmptySomeC               : ReactConnectProxy[Some[Boolean]],
                     respQueryC                    : ReactConnectProxy[Option[String]],
                     hasNodesFoundC                : ReactConnectProxy[Option[Boolean]],
+                    nodeListIsMeasuringSomeC      : ReactConnectProxy[Some[Boolean]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -95,6 +99,16 @@ final class NodesFoundR(
       } else {
         Callback( tg.focus() )
       }
+    }
+
+    /** Callback для измерения высоты. */
+    private val _onNodeListMeasuredCbF = { contentRect: ContentRect =>
+      val b = contentRect.bounds.get
+      val bounds2d = MSize2di(
+        width  = b.width.toInt,
+        height = b.height.toInt,
+      )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodesFoundListWh( bounds2d ) )
     }
 
 
@@ -143,7 +157,7 @@ final class NodesFoundR(
                     val query = queryProxy.value
                     val inputCss = new MuiInputClasses {
                       override val underline = scReactCtx.scCss.Search.TextBar.underline.htmlClass
-                      override val root = TextBarCSS.input.htmlClass
+                      override val root = TextBarCSS.inputsH.htmlClass
                     }
                     new MuiInputProps {
                       override val classes = inputCss
@@ -171,7 +185,8 @@ final class NodesFoundR(
                     override val root = Css.flat(
                       if (queryEmptySomeProxy.value.value) Css.Display.INVISIBLE
                       else Css.Display.VISIBLE,
-                      TextBarCSS.input.htmlClass,
+                      TextBarCSS.inputsH.htmlClass,
+                      TextBarCSS.input100w.htmlClass,
                     )
                   }
                   new MuiIconButtonProps {
@@ -247,31 +262,39 @@ final class NodesFoundR(
       ): VdomElement
 
       // Измерить список найденных узлов:
-      val nodesList = measureR.component(
-        measureR.PropsVal(
-          mkActionF = NodesFoundListWh,
-          isMeasuringNowPx = propsProxy.zoom { m =>
-            OptionUtil.SomeBool( m.index.search.geo.found.rHeightPx.isPending )
-          },
-        )
-      )(
+      val nodeListContent = <.div(
         s.hasNodesFoundC { hasNodesFoundProxy =>
           hasNodesFoundProxy.value.whenDefinedEl {
             case true  => nodesFoundList
             case false => noNodesFound
           }
-        },
-      ): VdomElement
+        }
+      )
+      // Для измерения реальной высоты списка используется react-measure-обёртка.
+      val nodesListMeasuring = {
+
+        s.nodeListIsMeasuringSomeC { isMeasuringSomeProxy =>
+          measureR.component(
+            measureR.PropsVal(
+              onMeasured  = _onNodeListMeasuredCbF,
+              isToMeasure = () => isMeasuringSomeProxy.value.value,
+              mBounds     = true,
+              mClient     = false,
+              childrenTag = nodeListContent,
+            )
+          )
+        }
+      }
 
       lazy val searchTbWithList = <.div(
         searchToolBar,
-        nodesList,
+        nodesListMeasuring,
       ): VdomElement
 
       val forScroll = s.usePopOverSomeC { usePopOverSomeProxy =>
         val usePopOver = usePopOverSomeProxy.value.value
         if (usePopOver) {
-          nodesList
+          nodesListMeasuring
         } else {
           searchTbWithList
         }
@@ -351,6 +374,10 @@ final class NodesFoundR(
           props.index.search.geo.found.reqOpt.flatMap { m =>
             OptionUtil.SomeBool( m.resp.nodes.nonEmpty )
           }
+        },
+
+        nodeListIsMeasuringSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.index.search.geo.found.rHeightPx.isPending )
         },
 
       )

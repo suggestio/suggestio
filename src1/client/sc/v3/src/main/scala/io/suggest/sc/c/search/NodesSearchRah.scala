@@ -131,8 +131,8 @@ class NodesSearchRah(
     val mnf2 = g0.found.copy(
       req     = req2,
       hasMore = hasMore,
-      // Pot.empty, чтобы сбросить searchCss, и гарантировано произошло переизмерение высоты в react-measure.
-      rHeightPx = Pot.empty.pending(),
+      // Чтобы произошло переизмерение высоты в react-measure.
+      rHeightPx = g0.found.rHeightPx.pending(),
       visible   = req2.nonEmpty,
       // TODO Обновлять search-args? сервер модифицирует запрос, если запрос пришёл из IndexAh.
     )

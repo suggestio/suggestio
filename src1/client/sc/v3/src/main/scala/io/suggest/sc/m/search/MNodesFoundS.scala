@@ -5,7 +5,6 @@ import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
 import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
-import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.sc3.MScQs
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._

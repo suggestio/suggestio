@@ -110,7 +110,7 @@ object ScCssStatic extends StyleSheet.Inline {
     val progress = style(
       position.absolute,
       bottom(0.px),
-      width(100.%%),
+      width( 100.%% ),
       height(1.px),
     )
 
@@ -283,6 +283,7 @@ object ScCssStatic extends StyleSheet.Inline {
           padding( 2.px, 0.px, 0.px, 22.px ),
           addClassName( barHeight.htmlClass ),
           display.inlineFlex,
+          width( 100.%% ),
         )
 
         val topOffPx = ScCss.SEARCH_TOP_OFFSET_PX
@@ -298,8 +299,12 @@ object ScCssStatic extends StyleSheet.Inline {
         width(100.%%)
       )
 
-      val input = style(
+      val inputsH = style(
         height( 48.px ),
+      )
+
+      val input100w = style(
+        flexGrow( 100 )
       )
 
     }

@@ -14,7 +14,7 @@ import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
-import io.suggest.sc.v.search.found.{MeasureR, NfListR, NfRowR, NodesFoundR}
+import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
 import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
 import io.suggest.sc.v.styl.ScThemes
 import japgolly.scalajs.react.React
@@ -89,7 +89,6 @@ object Sc3Module {
   lazy val nfListR = wire[NfListR]
   lazy val nfRowR = wire[NfRowR]
   lazy val nodesFoundR = wire[NodesFoundR]
-  lazy val measureR = wire[MeasureR]
   lazy val geoMapOuterR = wire[GeoMapOuterR]
 
 

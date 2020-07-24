@@ -29,7 +29,7 @@ class RightR {
     val render: VdomElement = {
       MuiIconButton {
         val icBtnCss = new MuiIconButtonClasses {
-          override val root = ScCssStatic.Search.TextBar.input.htmlClass
+          override val root = ScCssStatic.Search.TextBar.inputsH.htmlClass
         }
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF

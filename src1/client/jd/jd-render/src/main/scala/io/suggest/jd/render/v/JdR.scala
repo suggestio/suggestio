@@ -7,6 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.css.Css
 import io.suggest.grid.GridBuilderUtilJs
+import io.suggest.sjs.common.async.AsyncUtil._
 import io.suggest.jd.{MJdEdgeId, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
@@ -15,7 +16,6 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.img.{ImgCommonUtil, ImgUtilRJs}
@@ -39,6 +39,7 @@ import scala.concurrent.Future
 
 class JdR(
            jdCssStatic        : JdCssStatic,
+           //measureR           : MeasureR,
          )
   extends Log
 { jdR =>
@@ -153,8 +154,8 @@ class JdR(
         } else {
           // Для наружной обёртки react-dnd требуется только нативный тег:
           val jdCss = state.jdArgs.jdRuntime.jdCss
-          val innerTm: TagMod = jdCss.qdBlOuter
 
+          val tag1 = tag0( jdCss.qdBlOuter )
           // Флаг для костыля принудительного ручного re-measure в mkChildrenF().
           // Отнесена по-дальше от самой функции, т.к. есть подозрение, что эта внешняя переменная склонна к
           // самозабвению из-за каких-то косяков в sjs-компиляторе.
@@ -199,8 +200,7 @@ class JdR(
                 }
 
                 // ref должен быть прямо в теге как можно ближе к контенту, чтобы правильно измерить размер react-measure.
-                tag0(
-                  innerTm,
+                tag1(
                   ^.genericRef := chArgs.measureRef,
                 )
                   .rawElement
@@ -212,7 +212,26 @@ class JdR(
                 override val children = __mkChildrenF
                 override val onResize = __onResizeF
               }
-            }
+            },
+            // TODO Почему-то не работает MeasureR здесь: сигналы в JdAh приходят, но рендер некорректен, и видимого результата не происходит. Надо исправить, чтобы MeasureR работал.
+            /*
+            measureR.component {
+              measureR.PropsVal(
+                onMeasured = blocklessQdContentBoundsMeasuredJdCb(
+                  for {
+                    qdBl      <- state.qdBlOpt
+                    qdBlPend  <- qdBl.pendingOpt
+                  } yield {
+                    qdBlPend.startTime
+                  }
+                ),
+                isToMeasure = () => state.qdBlOpt.exists(_.isPending),
+                mBounds = true,
+                mClient = true,
+                childrenTag = tag1,
+              )
+            },
+            */
           )
         }
       }

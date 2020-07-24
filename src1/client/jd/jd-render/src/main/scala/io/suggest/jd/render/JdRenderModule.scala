@@ -15,4 +15,6 @@ object JdRenderModule {
 
   lazy val jdCssStatic = wire[JdCssStatic]
 
+  lazy val measureR = wire[MeasureR]
+
 }

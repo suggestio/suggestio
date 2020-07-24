@@ -141,7 +141,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     val container = style(
       overflowX.hidden,
       overflowY.auto,
-      height( NODES_WITH_FIELD_HEIGHT_PX.px ),
+      //height( NODES_WITH_FIELD_HEIGHT_PX.px ),
     )
 
     // После втыкания materialUI, возникла необходимость описывать стили не-инлайново через classes.

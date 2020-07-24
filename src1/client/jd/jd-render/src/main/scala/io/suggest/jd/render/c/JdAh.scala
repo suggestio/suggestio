@@ -63,6 +63,7 @@ class JdAh[M](
         val hasMoreBlQdsAwaiting = qdBlMap2
           .valuesIterator
           .exists(_.isEmpty)
+        println("hasMoreAvait = " + hasMoreBlQdsAwaiting)
 
         if (hasMoreBlQdsAwaiting) {
           // Есть ещё ожидаемые данные. Просто тихо обновить состояние:
