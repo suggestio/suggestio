@@ -16,6 +16,7 @@ import play.api.libs.json.Json
 import scala.collection.immutable.HashMap
 import scala.concurrent.Promise
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.util.{Success, Try}
 
 /**
@@ -86,7 +87,7 @@ object FlowjsUtil {
           override val target = js.defined( _targetChunkUrlF )
           override val singleFile = true
           override val chunkSize = _chunkSizeB
-          override val simultaneousUploads = 2
+          override val simultaneousUploads = 1
           override val method = FlowjsOptions.Methods.OCTET
           override val testChunks = true
 
@@ -100,6 +101,7 @@ object FlowjsUtil {
 
           // preprocessChunk(): вычислять хэш-сумму слайс-блоба, закидывать в общую мапу, которая будет использована для сборки ссылки.
           override val preprocess = js.defined( __preprocessChunk )
+
         }
       )
     }
