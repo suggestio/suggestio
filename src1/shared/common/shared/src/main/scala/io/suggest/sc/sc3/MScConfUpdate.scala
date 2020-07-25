@@ -17,7 +17,7 @@ object MScConfUpdate {
   /** Поддержка play-json. */
   implicit def scConfUpdateFormat: OFormat[MScConfUpdate] = {
     val F = MSc3Conf.Fields
-    (__ \ F.RCVRS_MAP_URL_FN).formatNullable[MRcvrsMapUrlArgs]
+    (__ \ F.RCVRS_MAP_URL).formatNullable[MRcvrsMapUrlArgs]
       .inmap[MScConfUpdate](apply, _.rcvrsMap)
   }
 

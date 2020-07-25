@@ -20,14 +20,14 @@ import io.suggest.ueq.UnivEqUtil._
 object MSc3Conf {
 
   object Fields {
-    val LOGGED_IN_FN                = "l"
-    val ABOUT_SIO_NODE_ID_FN        = "a"
-    val RCVRS_MAP_URL_FN            = "r"
-    val API_VSN_FN                  = "v"
-    val DEBUG_FN                    = "d"
-    val SERVER_GENERATED_AT_FN      = "g"
-    val CLIENT_UPDATED_AT_FN        = "u"
-    val GEN_FN                      = "e"
+    val LOGGED_IN                   = "l"
+    val ABOUT_SIO_NODE_ID           = "a"
+    val RCVRS_MAP_URL               = "r"
+    val API_VSN                     = "v"
+    val DEBUG_FLAG                  = "d"
+    val SERVER_GENERATED_AT         = "g"
+    val CLIENT_UPDATED_AT           = "u"
+    val GEN                         = "e"
   }
 
   /** Поддержка play-json.
@@ -36,16 +36,16 @@ object MSc3Conf {
   implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = {
     val F = Fields
     (
-      (__ \ F.LOGGED_IN_FN).format[Boolean] and
-      (__ \ F.ABOUT_SIO_NODE_ID_FN).format[String] and
-      (__ \ F.API_VSN_FN).format[MScApiVsn] and
-      (__ \ F.DEBUG_FN).formatNullable[Boolean]
+      (__ \ F.LOGGED_IN).format[Boolean] and
+      (__ \ F.ABOUT_SIO_NODE_ID).format[String] and
+      (__ \ F.API_VSN).format[MScApiVsn] and
+      (__ \ F.DEBUG_FLAG).formatNullable[Boolean]
         // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
         .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
-      (__ \ F.RCVRS_MAP_URL_FN).format[MRcvrsMapUrlArgs] and
-      (__ \ F.SERVER_GENERATED_AT_FN).format[Long] and
-      (__ \ F.CLIENT_UPDATED_AT_FN).formatNullable[Long] and
-      (__ \ F.GEN_FN).formatNullable[Long]
+      (__ \ F.RCVRS_MAP_URL).format[MRcvrsMapUrlArgs] and
+      (__ \ F.SERVER_GENERATED_AT).format[Long] and
+      (__ \ F.CLIENT_UPDATED_AT).formatNullable[Long] and
+      (__ \ F.GEN).formatNullable[Long]
     )(apply, unlift(unapply))
   }
 
@@ -73,15 +73,16 @@ object MSc3Conf {
   * @param rcvrsMapUrl Данные для выкачивания карты ресиверов.
   * @param serverCreatedAt Timestamp генерации сервером данных этого конфига.
   * @param clientUpdatedAt Timestamp сохранение данных на клиенте.
+  * @param debug Значение debug-флага в конфиге.
   */
-case class MSc3Conf(
-                     isLoggedIn         : Boolean,
-                     // TODO aboutSioNodeId унести в Messages(), чтобы при смене языка этот id тоже менялся.
-                     aboutSioNodeId     : String,
-                     apiVsn             : MScApiVsn,
-                     debug              : Boolean,
-                     rcvrsMapUrl        : MRcvrsMapUrlArgs,
-                     serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
-                     clientUpdatedAt    : Option[Long]      = None,
-                     gen                : Option[Long]      = None,
-                   )
+final case class MSc3Conf(
+                           isLoggedIn         : Boolean,
+                           // TODO aboutSioNodeId унести в Messages(), чтобы при смене языка этот id тоже менялся.
+                           aboutSioNodeId     : String,
+                           apiVsn             : MScApiVsn,
+                           debug              : Boolean,
+                           rcvrsMapUrl        : MRcvrsMapUrlArgs,
+                           serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
+                           clientUpdatedAt    : Option[Long]      = None,
+                           gen                : Option[Long]      = None,
+                         )

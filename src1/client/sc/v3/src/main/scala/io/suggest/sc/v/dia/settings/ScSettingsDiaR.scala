@@ -66,8 +66,10 @@ class ScSettingsDiaR(
             // Переключалка уведомлений.
             p.wrap(_.dev.osNotify)( notificationSettingsR.component.apply ),
 
-            // debug: unsafe offsets
-            unsafeOffsetSettingR( p ),
+            // debug-функции не должны тормозить работу выдачи, если нет флага при запуске.
+            ReactCommonUtil.maybeEl( p.value.internals.isScDebugEnabled() ) {
+              p.wrap(_.dev.screen.info)( unsafeOffsetSettingR.component.apply )
+            },
 
           ),
         ),

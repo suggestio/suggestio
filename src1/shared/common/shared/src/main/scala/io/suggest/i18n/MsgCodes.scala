@@ -477,4 +477,7 @@ object MsgCodes {
   val `Showcase` = "Showcase"
   val `Recents` = "Recents"
 
+  val `Screen` = "Screen"
+  val `Unsafe.offset` = "Unsafe.offset"
+
 }

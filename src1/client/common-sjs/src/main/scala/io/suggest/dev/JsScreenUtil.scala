@@ -59,6 +59,8 @@ object JsScreenUtil extends Log {
 
       lazy val orientation = MOrientations2d.forSize2d( mscreen.wh )
 
+      lazy val screenWhs = Set.empty[Int] + mscreen.wh.width + mscreen.wh.height
+
       if (uaOpt.exists(_ contains "Android")) {
         // ~25 csspx - размер статусбара, который всегда сверху при любом повороте экрана.
         MTlbr(
@@ -66,10 +68,6 @@ object JsScreenUtil extends Log {
         )
 
       } else if ( uaOpt.exists(_ contains "iPhone") ) {
-        val screenWhs = mscreen.wh.width ::
-          mscreen.wh.height ::
-          Nil
-
         // Это айфон. Надо решить, сколько отсутупать.
         if (
           // iPhone 10 | iPhone 11 Pro
@@ -103,8 +101,20 @@ object JsScreenUtil extends Log {
             MTlbr.empty
         }
 
-      } else if ( uaOpt.exists(_ contains "iPad") ) {
-        // 12px сверху в любой ориентации
+      } else if (
+        uaOpt.exists { ua =>
+          // iPad обычно упоминает о себе в User-Agent:
+          (ua contains "iPad") || (
+            // iPad Pro 12.9' 3rd gen НЕ пишет, что он IPad, а просто некий Mobile/15E148 (или иные цифры).
+            (ua contains "Macintosh;") &&
+            (ua contains "Mobile/") &&
+            (screenWhs contains 1024) &&
+            (screenWhs contains 1366) &&
+            (mscreen.pxRatio ==* MPxRatios.XHDPI)
+          )
+        }
+      ) {
+        // Это iPad: 12px сверху в любой ориентации
         _TOP_12PX
 
       } else {

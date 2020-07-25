@@ -58,11 +58,19 @@ case class MTlbr(
 
   /** Отрендерить в строку вида +3+++ (или +3+4+5+6). */
   override def toString: String = {
-    val delim = HtmlConstants.PLUS
+    import HtmlConstants._
+
     productIterator
       .flatMap {
         case v: Option[_] =>
-          delim :: v.asInstanceOf[Option[Int]].toList
+          val offset = _offsetOr0( v.asInstanceOf[Option[Int]] )
+          val signStr =
+            if (offset >= 0) PLUS
+            else MINUS
+
+          SPACE :: signStr :: offset :: Nil
+
+        // should never happen
         case _ => Nil
       }
       .mkString

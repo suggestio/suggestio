@@ -1,6 +1,7 @@
 package io.suggest.sc.m.in
 
 import diode.FastEq
+import io.suggest.sc.ScConstants
 import io.suggest.sc.m.boot.MScBoot
 import io.suggest.sc.sc3.MSc3Conf
 import io.suggest.ueq.UnivEqUtil._
@@ -33,6 +34,20 @@ object MScInternals {
   val jsRouter      = GenLens[MScInternals](_.jsRouter)
   val boot          = GenLens[MScInternals](_.boot)
   val daemon        = GenLens[MScInternals](_.daemon)
+
+
+  implicit final class ScInternalsOpsExt( private val scInts: MScInternals ) extends AnyVal {
+
+    /** debug-режим выдачи, с учётом особенностей окружения?
+      * Значение флага, сохранённого в конфиге, может быть условиями текущего окружения.
+      */
+    def isScDebugEnabled(): Boolean = {
+      ScConstants.FORCE_DEBUG ||
+      scalajs.LinkingInfo.developmentMode ||
+      scInts.conf.debug
+    }
+
+  }
 
 }
 

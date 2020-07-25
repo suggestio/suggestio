@@ -11,6 +11,10 @@ import io.suggest.routes.JsRoutesConst
  */
 object ScConstants {
 
+  /** Принудительный debug выдачи на клиенте, выставляемый compile-time. */
+  @inline final def FORCE_DEBUG = false
+
+
   def CUSTOM_ATTR_PREFIX = HtmlConstants.ATTR_PREFIX
 
   /** Название аттрибута с длиной. */

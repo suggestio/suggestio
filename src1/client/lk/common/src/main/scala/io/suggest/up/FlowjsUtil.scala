@@ -86,6 +86,7 @@ object FlowjsUtil {
         new FlowjsOptions {
           override val target = js.defined( _targetChunkUrlF )
           override val singleFile = true
+          // TODO Для тормозных коннекшенов надо понижать chunksize и simUploads=1. Для быстрых - метровый chunk'и и 2-3 параллельных запроса.
           override val chunkSize = _chunkSizeB
           override val simultaneousUploads = 1
           override val method = FlowjsOptions.Methods.OCTET

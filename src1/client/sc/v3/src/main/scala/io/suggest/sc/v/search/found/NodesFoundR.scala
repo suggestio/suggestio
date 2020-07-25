@@ -271,19 +271,16 @@ final class NodesFoundR(
         }
       )
       // Для измерения реальной высоты списка используется react-measure-обёртка.
-      val nodesListMeasuring = {
-
-        s.nodeListIsMeasuringSomeC { isMeasuringSomeProxy =>
-          measureR.component(
-            measureR.PropsVal(
-              onMeasured  = _onNodeListMeasuredCbF,
-              isToMeasure = () => isMeasuringSomeProxy.value.value,
-              mBounds     = true,
-              mClient     = false,
-              childrenTag = nodeListContent,
-            )
+      val nodesListMeasuring = s.nodeListIsMeasuringSomeC { isMeasuringSomeProxy =>
+        measureR.component(
+          measureR.PropsVal(
+            onMeasured  = _onNodeListMeasuredCbF,
+            isToMeasure = () => isMeasuringSomeProxy.value.value,
+            mBounds     = true,
+            mClient     = false,
+            childrenTag = nodeListContent,
           )
-        }
+        )
       }
 
       lazy val searchTbWithList = <.div(
