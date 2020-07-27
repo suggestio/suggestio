@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiIconButton, MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
@@ -12,9 +12,6 @@ import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
-
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io

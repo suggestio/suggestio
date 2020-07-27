@@ -38,7 +38,7 @@ object MAeRoot {
   val layout  = GenLens[MAeRoot](_.layout)
   val popups  = GenLens[MAeRoot](_.popups)
   val wsPool  = GenLens[MAeRoot](_.wsPool)
-  val save    = GenLens[MAeRoot](_.save)
+  def save    = GenLens[MAeRoot](_.save)
 
 }
 

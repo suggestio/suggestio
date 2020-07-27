@@ -32,7 +32,7 @@ object MJdRrrProps {
 
   @inline implicit def univEq: UnivEq[MJdRrrProps] = UnivEq.derive
 
-  val gridBuildResult = GenLens[MJdRrrProps](_.gridBuildRes)
+  def gridBuildResult = GenLens[MJdRrrProps](_.gridBuildRes)
 
 }
 

@@ -22,7 +22,7 @@ object MMdrFormS {
 
   @inline implicit def univEq: UnivEq[MMdrFormS] = UnivEq.derive
 
-  val forceAllRcvrs = GenLens[MMdrFormS](_.forceAllRcrvs)
+  def forceAllRcvrs = GenLens[MMdrFormS](_.forceAllRcrvs)
 
 }
 

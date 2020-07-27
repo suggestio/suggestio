@@ -27,8 +27,8 @@ object MOrderItemsS {
 
   @inline implicit def univEq: UnivEq[MOrderItemsS] = UnivEq.derive
 
-  val orderContents = GenLens[MOrderItemsS](_.orderContents)
-  val itemsSelected = GenLens[MOrderItemsS](_.itemsSelected)
+  def orderContents = GenLens[MOrderItemsS](_.orderContents)
+  def itemsSelected = GenLens[MOrderItemsS](_.itemsSelected)
 
 }
 

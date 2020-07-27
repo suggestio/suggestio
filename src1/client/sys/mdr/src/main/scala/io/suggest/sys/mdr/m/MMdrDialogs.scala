@@ -23,7 +23,7 @@ object MMdrDialogs {
 
   @inline implicit def univEq: UnivEq[MMdrDialogs] = UnivEq.derive
 
-  val refuse = GenLens[MMdrDialogs](_.refuse)
+  def refuse = GenLens[MMdrDialogs](_.refuse)
 
 }
 

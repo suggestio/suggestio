@@ -33,11 +33,11 @@ object MJdRenderArgs {
 
   @inline implicit def univEq: UnivEq[MJdRenderArgs] = UnivEq.derive
 
-  val selPath = GenLens[MJdRenderArgs](_.selPath)
-  val selJdtBgImgMod = GenLens[MJdRenderArgs](_.selJdtBgImgMod)
-  val hideNonMainStrips = GenLens[MJdRenderArgs](_.hideNonMainStrips)
-  val groupOutLined = GenLens[MJdRenderArgs](_.groupOutLined)
-  val dnd = GenLens[MJdRenderArgs](_.dnd)
+  def selPath = GenLens[MJdRenderArgs](_.selPath)
+  def selJdtBgImgMod = GenLens[MJdRenderArgs](_.selJdtBgImgMod)
+  def hideNonMainStrips = GenLens[MJdRenderArgs](_.hideNonMainStrips)
+  def groupOutLined = GenLens[MJdRenderArgs](_.groupOutLined)
+  def dnd = GenLens[MJdRenderArgs](_.dnd)
 
 }
 

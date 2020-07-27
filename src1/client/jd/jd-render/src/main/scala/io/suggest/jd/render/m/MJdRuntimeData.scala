@@ -22,7 +22,7 @@ object MJdRuntimeData {
 
   // Без FastEq, т.к. данные модели мега-волатильные на любой чих.
 
-  val qdBlockLess = GenLens[MJdRuntimeData](_.qdBlockLess)
+  def qdBlockLess = GenLens[MJdRuntimeData](_.qdBlockLess)
 
   @inline implicit def univEq: UnivEq[MJdRuntimeData] = UnivEq.derive
 

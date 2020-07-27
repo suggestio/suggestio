@@ -30,9 +30,9 @@ object MMdrNodeS {
   @inline implicit def univEq: UnivEq[MMdrNodeS] = UnivEq.derive
 
 
-  val info = GenLens[MMdrNodeS](_.info)
-  val mdrPots = GenLens[MMdrNodeS](_.mdrPots)
-  val fixNodePots = GenLens[MMdrNodeS](_.fixNodePots)
+  def info = GenLens[MMdrNodeS](_.info)
+  def mdrPots = GenLens[MMdrNodeS](_.mdrPots)
+  def fixNodePots = GenLens[MMdrNodeS](_.fixNodePots)
 
 }
 

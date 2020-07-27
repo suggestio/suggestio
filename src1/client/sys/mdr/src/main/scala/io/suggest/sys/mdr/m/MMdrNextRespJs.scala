@@ -14,7 +14,7 @@ import monocle.macros.GenLens
   */
 object MMdrNextRespJs {
   @inline implicit def univEq: UnivEq[MMdrNextRespJs] = UnivEq.derive
-  val resp = GenLens[MMdrNextRespJs](_.resp)
+  def resp = GenLens[MMdrNextRespJs](_.resp)
 }
 case class MMdrNextRespJs(
                            resp: MMdrNextResp,

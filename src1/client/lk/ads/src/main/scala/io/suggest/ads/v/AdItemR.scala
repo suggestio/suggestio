@@ -88,9 +88,8 @@ class AdItemR(
           <.div(
             // Рендер карточки:
             propsProxy.wrap { props =>
-              val jdData = props.ad.jdDataJs
               MJdArgs(
-                data      = jdData,
+                data      = props.ad.jdDataJs,
                 jdRuntime = props.jdRuntime,
                 conf      = props.jdConf,
               )

@@ -18,8 +18,8 @@ object MJdRuntime {
 
   @inline implicit def univEq: UnivEq[MJdRuntime] = UnivEq.derive
 
-  val jdCss   = GenLens[MJdRuntime](_.jdCss)
-  val data    = GenLens[MJdRuntime](_.data)
+  def jdCss   = GenLens[MJdRuntime](_.jdCss)
+  def data    = GenLens[MJdRuntime](_.data)
 
 }
 

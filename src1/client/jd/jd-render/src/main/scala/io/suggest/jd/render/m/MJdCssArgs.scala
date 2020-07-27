@@ -28,7 +28,7 @@ object MJdCssArgs {
 
   @inline implicit def univEq: UnivEq[MJdCssArgs] = UnivEq.derive
 
-  val data = GenLens[MJdCssArgs](_.data)
+  def data = GenLens[MJdCssArgs](_.data)
 
 }
 

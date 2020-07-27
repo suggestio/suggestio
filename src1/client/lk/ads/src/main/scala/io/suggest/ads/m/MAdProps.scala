@@ -27,7 +27,7 @@ object MAdProps {
 
   @inline implicit def univEq: UnivEq[MAdProps] = UnivEq.derive
 
-  val shownAtParentReq = GenLens[MAdProps](_.shownAtParentReq)
+  def shownAtParentReq = GenLens[MAdProps](_.shownAtParentReq)
 
 }
 

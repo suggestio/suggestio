@@ -23,7 +23,6 @@ class ScSettingsDiaR(
                       blueToothUnAvailInfoR   : BlueToothUnAvailInfoR,
                       unsafeOffsetSettingR    : UnsafeOffsetSettingR,
                       notificationSettingsR   : NotificationSettingsR,
-                      scReactCtxP             : React.Context[MScReactCtx],
                       crCtxProv               : React.Context[MCommonReactCtx],
                     ) {
 

@@ -25,8 +25,8 @@ object MMdrRefuseDialogS {
 
   @inline implicit def univEq: UnivEq[MMdrRefuseDialogS] = UnivEq.derive
 
-  val reason = GenLens[MMdrRefuseDialogS](_.reason)
-  val actionInfo = GenLens[MMdrRefuseDialogS](_.actionInfo)
+  def reason = GenLens[MMdrRefuseDialogS](_.reason)
+  def actionInfo = GenLens[MMdrRefuseDialogS](_.actionInfo)
 
 }
 

@@ -16,7 +16,6 @@ import play.api.libs.json.Json
 import scala.collection.immutable.HashMap
 import scala.concurrent.Promise
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import scala.util.{Success, Try}
 
 /**
@@ -82,6 +81,10 @@ object FlowjsUtil {
 
       val _chunkSizeB = MUploadChunkSizes.default.value
 
+      // Для определения HTTP-методов используются сборка Call'ов с пустыми аргументами.
+      val emptyStr = ""
+      val emptyDict = js.Dictionary.empty[js.Any]
+
       new Flowjs(
         new FlowjsOptions {
           override val target = js.defined( _targetChunkUrlF )
@@ -93,11 +96,11 @@ object FlowjsUtil {
           override val testChunks = true
 
           override val uploadMethod = routes.controllers.Upload
-            .chunk( "", js.Dictionary.empty )
+            .chunk( emptyStr, emptyDict )
             .method
 
           override val testMethod = routes.controllers.Upload
-            .hasChunk( "", js.Dictionary.empty )
+            .hasChunk( emptyStr, emptyDict )
             .method
 
           // preprocessChunk(): вычислять хэш-сумму слайс-блоба, закидывать в общую мапу, которая будет использована для сборки ссылки.

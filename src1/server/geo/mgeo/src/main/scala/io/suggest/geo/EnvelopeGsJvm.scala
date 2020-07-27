@@ -58,11 +58,12 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
     * Не тестировано, но по идее должно работать. */
   override def toPlayGeoJsonGeom(gs: Shape_t): Polygon[LngLat] = {
     import GeoPoint.toLngLat
-    val outer = List(
-      toLngLat( gs.topLeft ),
-      toLngLat( gs.topLeft.copy(lon = gs.bottomRight.lon) ),
-      toLngLat( gs.bottomRight ),
-      toLngLat( gs.bottomRight.copy(lat = gs.topLeft.lat) )
+    val outer = (
+      toLngLat( gs.topLeft ) ::
+      toLngLat( (MGeoPoint.lon set gs.bottomRight.lon)(gs.topLeft) ) ::
+      toLngLat( gs.bottomRight ) ::
+      toLngLat( (MGeoPoint.lat set gs.topLeft.lat)(gs.bottomRight) ) ::
+      Nil
     )
     Polygon [LngLat] (
       outer :: Nil

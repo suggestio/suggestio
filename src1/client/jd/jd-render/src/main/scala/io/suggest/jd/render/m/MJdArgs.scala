@@ -36,8 +36,8 @@ object MJdArgs {
 
   val data        = GenLens[MJdArgs](_.data)
   val jdRuntime   = GenLens[MJdArgs](_.jdRuntime)
-  val conf        = GenLens[MJdArgs](_.conf)
-  val renderArgs  = GenLens[MJdArgs](_.renderArgs)
+  def conf        = GenLens[MJdArgs](_.conf)
+  def renderArgs  = GenLens[MJdArgs](_.renderArgs)
 
 }
 
