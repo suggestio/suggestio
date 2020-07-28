@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{Mui, MuiColorTypes, MuiListItem, MuiListItemProps, MuiListItemText, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiColorTypes, MuiListItem, MuiListItemProps, MuiListItemText, MuiSwitch, MuiSwitchClasses, MuiSwitchProps, MuiTheme, MuiToolTip, MuiToolTipProps}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import diode.react.ReactPot._
@@ -9,6 +9,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.sc.v.styl.ScStyledComponents
 import io.suggest.spa.DAction
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
@@ -22,7 +23,8 @@ import scala.scalajs.js
   * Description: Строка настройки с одним переключателем.
   */
 class OnOffSettingR(
-                     crCtxProv      : React.Context[MCommonReactCtx],
+                     crCtxP                 : React.Context[MCommonReactCtx],
+                     scStyledComponents     : ScStyledComponents,
                    ) {
 
   type Props_t = Pot[Boolean]
@@ -48,7 +50,7 @@ class OnOffSettingR(
       }
 
       def render(s: State): VdomElement = {
-        lazy val errorMsg = crCtxProv.message( MsgCodes.`Error` )
+        lazy val errorMsg = crCtxP.message( MsgCodes.`Error` )
 
         MuiListItem {
           new MuiListItemProps {
@@ -85,7 +87,7 @@ class OnOffSettingR(
                     )
                   },
 
-                  MuiSwitch {
+                  scStyledComponents.muiSwitch {
                     val _isChecked = pot getOrElse false
                     new MuiSwitchProps {
                       override val checked = js.defined( _isChecked )

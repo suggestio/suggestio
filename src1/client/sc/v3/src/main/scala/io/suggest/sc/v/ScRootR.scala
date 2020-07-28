@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import com.materialui.{MuiThemeProvider, MuiThemeProviderProps}
+import com.materialui.{MuiTheme, MuiThemeProvider, MuiThemeProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColors
@@ -43,7 +43,8 @@ class ScRootR (
                 scSettingsDiaR          : ScSettingsDiaR,
                 scSnacksR               : ScSnacksR,
                 scThemes                : ScThemes,
-                commonReactCtx          : React.Context[MCommonReactCtx],
+                crCtxP                  : React.Context[MCommonReactCtx],
+                muiThemeCtxP            : React.Context[MuiTheme],
               ) {
 
   type Props = ModelProxy[MScRoot]
@@ -109,12 +110,20 @@ class ScRootR (
 
         // Рендер провайдера тем MateriaUI, который заполняет react context.
         s.colorsC { mcolorsProxy =>
-          MuiThemeProvider(
-            new MuiThemeProviderProps {
-              override val theme = scThemes.muiDefault( mcolorsProxy.value )
-            }
-          )(
-            menuSideBar,
+          val _theme = scThemes.muiDefault( mcolorsProxy.value )
+          println( "theme:" + _theme )
+          // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
+          muiThemeCtxP.provide( _theme )(
+            MuiThemeProvider(
+              new MuiThemeProviderProps {
+                override val theme = _theme
+              }
+            )(
+              menuSideBar,
+            ),
+
+            // Диалог настроек - требует scala-тему.
+            scSettingsDiaR.component( mrootProxy ),
           )
         },
 
@@ -126,9 +135,6 @@ class ScRootR (
           dlAppDiaR.component( mrootProxy )
         },
 
-        // Диалог настроек.
-        scSettingsDiaR.component( mrootProxy ),
-
         // snackbar
         scSnacksR.component( mrootProxy ),
 
@@ -136,7 +142,7 @@ class ScRootR (
 
       // Зарегистрировать commonReact-контекст, чтобы подцепить динамический messages:
       s.commonReactCtxC { commonReactCtxProxy =>
-        commonReactCtx.provide( commonReactCtxProxy.value )( sc )
+        crCtxP.provide( commonReactCtxProxy.value )( sc )
       }
 
     }

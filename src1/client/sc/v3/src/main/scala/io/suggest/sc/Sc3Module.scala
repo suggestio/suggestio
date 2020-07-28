@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import com.materialui.MuiTheme
 import com.softwaremill.macwire._
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.boot.MSpaRouterState
@@ -16,7 +17,7 @@ import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
 import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
-import io.suggest.sc.v.styl.ScThemes
+import io.suggest.sc.v.styl.{ScStyledComponents, ScThemes}
 import japgolly.scalajs.react.React
 
 /**
@@ -61,6 +62,11 @@ object Sc3Module {
   lazy val scReactCtx: React.Context[MScReactCtx] =
     React.createContext( sc3SpaRouter.mkScReactCtx )
 
+  /** Контекст, передающий mui theme. */
+  lazy val muiThemeCtx: React.Context[MuiTheme] =
+    React.createContext[MuiTheme]( null )
+
+  val _getPlatform = sc3SpaRouter.sc3Circuit.platformRW.apply _
 
   // header
   lazy val headerR = wire[HeaderR]
@@ -124,6 +130,7 @@ object Sc3Module {
 
   // sc3
   lazy val scThemes = wire[ScThemes]
+  lazy val scStyledComponents = wire[ScStyledComponents]
   lazy val scRootR = wire[ScRootR]
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   lazy val scAppApiHttp = wire[ScAppApiHttp]

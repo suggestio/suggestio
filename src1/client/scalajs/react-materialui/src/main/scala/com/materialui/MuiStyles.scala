@@ -1,6 +1,7 @@
 package com.materialui
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.|
 
 trait MuiColor extends js.Object {
@@ -17,6 +18,17 @@ trait MuiStyles extends js.Object {
 
   val MuiThemeProvider: js.Dynamic = js.native
 
+  /**
+    * Link a style sheet with a component.
+    * It does not modify the component passed to it;
+    * instead, it returns a new component, with a `classes` property.
+    * @param styles Стили в виде js-объекта.
+    * @return Функция, принимающая компонент и собирающая обёртку с выставленными стилями внутри.
+    */
+  def withStyles(styles: js.Object): js.Function1[js.Any, js.Any] = js.native
+
+  @JSName("withStyles")
+  def withStylesF(stylesCreator: js.Function1[MuiTheme, js.Object]): js.Function1[js.Any, js.Any] = js.native
 
   // Далее, идёт API для colorManipulator.js:
   // https://github.com/mui-org/material-ui/blob/master/packages/material-ui/src/styles/colorManipulator.js

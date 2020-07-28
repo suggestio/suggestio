@@ -10,7 +10,9 @@ import scala.scalajs.js.annotation.JSName
 
 object MuiSwitch {
 
-  val component = JsComponent[MuiSwitchProps, Children.None, Null](Mui.Switch)
+  def mkComponent = JsComponent[MuiSwitchProps, Children.None, Null](_: js.Any)
+
+  lazy val component = mkComponent( Mui.Switch )
 
   def apply(props: MuiSwitchProps = MuiPropsBaseStatic.empty) =
     component(props)

@@ -493,6 +493,7 @@ lazy val sc3Sjs = {
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
       mapsSjs, jdRenderSjs, reactSidebar, reactScroll, reactQrCodeSjs,
+      muiTreasurySjs,
     )
 }
 
@@ -507,6 +508,12 @@ lazy val scSwSjs = {
 lazy val reactMaterialUiSjs = {
   Project(id = "scalajs-react-materialui", base = file(DIR0 + "client/scalajs/react-materialui"))
     .dependsOn( commonReactSjs )
+}
+
+/** Поддержка mui-treasure для нужд. */
+lazy val muiTreasurySjs = {
+  Project(id = "scalajs-mui-treasury", base = file(DIR0 + "client/scalajs/mui-treasury"))
+    .dependsOn( reactMaterialUiSjs )
 }
 
 /** Форма организации заливки какого-либо файла на сервер. */
@@ -668,7 +675,7 @@ lazy val client = project
   .aggregate(
     commonJS,
     commonSjs, commonReactSjs,
-    reactMaterialUiSjs, reactQrCodeSjs,
+    reactMaterialUiSjs, reactQrCodeSjs, muiTreasurySjs,
     leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
     lkSjs, sysSjs,
     scCommonSjs, sc3Sjs,
