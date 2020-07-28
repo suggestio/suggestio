@@ -67,17 +67,27 @@ RUN cd $BUILD_HOME && \
 ## package-query и остальные тянут за собой systemd. Надо его удалить вручную:
 RUN pacman -Rdd --noconfirm systemd
 
-## Установить tini и systemctl из AUR для сборки правильных контейнеров и прочее счастье:
-RUN sudo -u $BUILD_USER $PACWRAP -Sy --noconfirm --needed tini docker-systemctl-replacement-git python
 
-RUN : \
-  ## Тестируем tini:
-  tini --version && \
-  ## чтобы другие docker-файлы могли вызывать установку из AUR, не думая о нижележащей реализации (3 - для python3-версии):
+## Нужно установить systemd-скрипт на освободившееся место systemd.
+RUN cd $BUILD_HOME && \
+  for package in 'docker-systemctl-replacement-git'; do \
+   PKG_TAR_GZ="thepkgsnapshot.tar.gz" && \
+   printf "\n***\n*** Manually building [$package] from AUR...\n***\n\n" >&2 && \
+   curl https://aur.archlinux.org/cgit/aur.git/snapshot/$package.tar.gz -o $PKG_TAR_GZ && \
+   sudo -u $BUILD_USER tar -xf $PKG_TAR_GZ && \
+   cd $BUILD_HOME/$package && \
+   ## Подредактировать PKGBUILD: добавить симлинк на systemctl, добавить provides=systemd, исправить python/python3
+   ## TODO python2 ошибочно требовался для docker-systemctl-replacement-git на момент 2020-07-27, из-за ошибки в PKGBUILD. Удалить потом, когда исправят или окостылить PKGBUILD.
+   sed -re 's@(arch=)@provides=("systemd" "systemctl")\n\1@' -e "s@systemctl.py@systemctl3.py@g" -i PKGBUILD && \
+   ## TODO makepkg -i устанавливает systemd. Надо пробросить --assume-installed systemd в pacman.
+   ## Через env PACMAN= как-то не помогает оно...
+   sudo -u $BUILD_USER makepkg --noconfirm -sifrc && \
+   cd $BUILD_HOME && \
+   rm -rf $package $PKG_TAR_GZ; \
+  done && \
   ln -s `which systemctl3.py` /bin/systemctl && \
-  ## Тестируем скрипт-замену systemctl:
   systemctl --version
-
+ 
 ## Скрипт финализации контейнеров закинуть в контейнер:
 COPY sio-finalize-container.sh /bin/sio-finalize-container.sh
 

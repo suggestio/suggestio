@@ -114,5 +114,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-localization-strings": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-localization-strings@3.2.1"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

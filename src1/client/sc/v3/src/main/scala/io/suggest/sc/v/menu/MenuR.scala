@@ -113,6 +113,10 @@ class MenuR(
 
             hideBtn,
 
+            <.small(
+              "Re: [1-8653000030714]".rawNode,
+            ),
+
             // Менюшка
             menuRows,
           ),

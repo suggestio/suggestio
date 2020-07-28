@@ -1,8 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.suggest.appsuggest" version="1.0.4" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="io.suggest.appsuggest"
+        version="1.0.4"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Suggest.io</name>
     <description>
-	Suggest.io client with Bluetooth beacons support.
+	  Suggest.io client with Bluetooth beacons support.
     </description>
     <author email="konstantin.nikiforov@cbca.ru" href="https://www.suggest.io">
       Konstantin Nikiforov
@@ -10,10 +14,9 @@
     <content src="index.html" />
     <access origin="https://suggest.io/" />
     <allow-navigation href="https://*.suggest.io/*" />
+    <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="http://192.168.42.17:9000/*" />
     <allow-navigation href="http://outself:9000/*" />
-    <allow-navigation href="https://*.cdnvideo.ru/*" />
-    <allow-navigation href="https://suggest.cdnvideo.ru/*" />
     <allow-navigation href="https://*.openstreetmap.org/*" />
     <allow-navigation href="https://*.tile.openstreetmap.org/*" />
     <allow-navigation href="data:*" />
@@ -43,7 +46,7 @@
     <preference name="AutoHideSplashScreen" value="true" />
     <preference name="SplashScreenDelay" value="2000" />
     <platform name="android">
-	<preference name="android-targetSdkVersion" value="29" />
+        <preference name="android-targetSdkVersion" value="29" />
         <allow-intent href="market:*" />
         <splash density="land-hdpi" src="res/screen/android/screen-hdpi-landscape.png" />
         <splash density="port-hdpi" src="res/screen/android/screen-hdpi-portrait.png" />
@@ -79,12 +82,6 @@
         <allow-intent href="itms-apps:*" />
         <preference name="BackupWebStorage" value="none" />
         <preference name="DisallowOverscroll" value="true" />
-        <edit-config file="*-Info.plist" mode="merge" target="NSLocationWhenInUseUsageDescription">
-	    <string>Finding offers nearby user.</string>
-	</edit-config>
-        <edit-config file="*-Info.plist" mode="merge" target="NSBluetoothAlwaysUsageDescription">
-            <string>Finding offers in Bluetooth beacons via passive scanning.</string>
-        </edit-config>
         <splash src="res/screen/ios/Default@2x~ipad~anyany.png" />
         <splash src="res/screen/ios/Default@2x~ipad~comany.png" />
         <splash src="res/screen/ios/Default@2x~iphone~anyany.png" />

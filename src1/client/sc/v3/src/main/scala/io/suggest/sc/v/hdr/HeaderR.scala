@@ -1,5 +1,6 @@
 package io.suggest.sc.v.hdr
 
+import com.materialui.{MuiToolTip, MuiToolTipProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
@@ -46,11 +47,11 @@ class HeaderR(
   protected class Backend($: BackendScope[Props, State]) {
 
     def render(s: State): VdomElement = {
-      val hdrLogo       = s.hdrLogoOptC { logoR.apply }
-      val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.apply }
-      val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.apply }
-      val hdrProgress   = s.hdrProgressC { hdrProgressR.apply }
-      val hdrGoBack     = s.goBackC { goBackR.apply }
+      val hdrLogo       = s.hdrLogoOptC { logoR.component.apply }
+      val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.component.apply }
+      val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.component.apply }
+      val hdrProgress   = s.hdrProgressC { hdrProgressR.component.apply }
+      val hdrGoBack     = s.goBackC { goBackR.component.apply }
 
       scReactCtxP.consume { scReactCtx =>
         val scCss = scReactCtx.scCss

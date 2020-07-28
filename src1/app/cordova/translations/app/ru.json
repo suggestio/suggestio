@@ -1,0 +1,6 @@
+{
+  "config_ios": {
+    "NSBluetoothAlwaysUsageDescription": "Включение Bluetooth позволит обнаруживать предложения, размещённые в Bluetooth-маячках рядом с вами.",
+    "NSLocationWhenInUseUsageDescription": "Доступ к геолокации необходим для обнаружения предложений рядом с вами и для корректной работы карты."
+  }
+}
