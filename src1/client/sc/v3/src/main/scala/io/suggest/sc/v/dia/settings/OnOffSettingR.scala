@@ -1,11 +1,10 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{Mui, MuiColorTypes, MuiListItem, MuiListItemProps, MuiListItemText, MuiSwitch, MuiSwitchClasses, MuiSwitchProps, MuiTheme, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiColorTypes, MuiListItem, MuiListItemProps, MuiListItemText, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants
-import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
@@ -31,7 +30,7 @@ class OnOffSettingR(
   type Props = ModelProxy[Props_t]
 
   case class State(
-                    isEnabledPotC: ReactConnectProxy[Pot[Boolean]],
+                    isEnabledPotC   : ReactConnectProxy[Pot[Boolean]],
                   )
 
 
@@ -59,49 +58,43 @@ class OnOffSettingR(
           }
         } (
           MuiListItemText()(
-
             text,
+          ),
 
-            <.span(
-              ^.`class` := Css.Floatt.RIGHT,
+          s.isEnabledPotC { isEnabledPotProxy =>
+            val pot = isEnabledPotProxy.value
 
-              s.isEnabledPotC { isEnabledPotProxy =>
-                val pot = isEnabledPotProxy.value
+            React.Fragment(
+              // Рендер инфы о ошибке:
+              pot.renderFailed { ex =>
+                val msg = <.span(
+                  errorMsg,
+                  HtmlConstants.COLON,
+                  HtmlConstants.SPACE,
+                  ex.getMessage,
+                )
 
-                React.Fragment(
-                  // Рендер инфы о ошибке:
-                  pot.renderFailed { ex =>
-                    val msg = <.span(
-                      errorMsg,
-                      HtmlConstants.COLON,
-                      HtmlConstants.SPACE,
-                      ex.getMessage,
-                    )
-
-                    MuiToolTip {
-                      new MuiToolTipProps {
-                        override val title: raw.React.Node = msg.rawNode
-                      }
-                    } (
-                      Mui.SvgIcons.Warning()(),
-                    )
-                  },
-
-                  scStyledComponents.muiSwitch {
-                    val _isChecked = pot getOrElse false
-                    new MuiSwitchProps {
-                      override val checked = js.defined( _isChecked )
-                      override val disabled = pot.isPending
-                      override val onChange = _onSwitchClickCbF
-                      // Есть какая-то проблема со switch: он внезапно может менять дизайн, становясь частично белым на белом фоне диалога.
-                      override val color = MuiColorTypes.secondary
-                    }
-                  },
+                MuiToolTip {
+                  new MuiToolTipProps {
+                    override val title: raw.React.Node = msg.rawNode
+                  }
+                } (
+                  Mui.SvgIcons.Warning()(),
                 )
               },
 
-            ),
-          ),
+              scStyledComponents.muiSwitch {
+                val _isChecked = pot getOrElse false
+                new MuiSwitchProps {
+                  override val checked = js.defined( _isChecked )
+                  override val disabled = pot.isPending
+                  // Есть какая-то проблема со switch: он внезапно может менять дизайн, становясь частично белым на белом фоне диалога.
+                  override val color = MuiColorTypes.secondary
+                }
+              },
+            )
+          },
+
         )
       }
 

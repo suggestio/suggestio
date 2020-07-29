@@ -1,12 +1,12 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiList}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiList}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{MScReactCtx, MScRoot, SettingsDiaOpen}
+import io.suggest.sc.m.{MScRoot, SettingsDiaOpen}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -33,6 +33,7 @@ class ScSettingsDiaR(
   case class State(
                     openedSomeC       : ReactConnectProxy[Some[Boolean]],
                     btMissOnOsC       : ReactConnectProxy[Option[MOsFamily]],
+                    debugSomeC        : ReactConnectProxy[Some[Boolean]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -46,7 +47,7 @@ class ScSettingsDiaR(
 
         // Заголовок диалога.
         MuiDialogTitle()(
-          crCtxProv.message( MsgCodes.`Settings` )
+          crCtxProv.message( MsgCodes.`Settings` ),
         ),
 
         // Сами настройки.
@@ -66,8 +67,10 @@ class ScSettingsDiaR(
             p.wrap(_.dev.osNotify)( notificationSettingsR.component.apply ),
 
             // debug-функции не должны тормозить работу выдачи, если нет флага при запуске.
-            ReactCommonUtil.maybeEl( p.value.internals.isScDebugEnabled() ) {
-              p.wrap(_.dev.screen.info)( unsafeOffsetSettingR.component.apply )
+            s.debugSomeC { isDebugEnabled =>
+              ReactCommonUtil.maybeEl( isDebugEnabled.value.value ) {
+                p.wrap(_.dev.screen.info)( unsafeOffsetSettingR.component.apply )
+              }
             },
 
           ),
@@ -80,6 +83,7 @@ class ScSettingsDiaR(
           MuiButton(
             new MuiButtonProps {
               override val onClick = _onCloseDialog
+              override val variant = MuiButtonVariants.outlined
             }
           )(
             crCtxProv.message( MsgCodes.`Close` ),
@@ -94,7 +98,7 @@ class ScSettingsDiaR(
           new MuiDialogProps {
             override val open = openedSomeProxy.value.value
             override val onClose = _onCloseDialog
-            override val maxWidth = MuiDialogMaxWidths.sm
+            override val maxWidth = MuiDialogMaxWidths.xs
             override val fullWidth = true
           }
         )( diaChildren: _* )
@@ -117,6 +121,10 @@ class ScSettingsDiaR(
         btMissOnOsC = propsProxy.connect { mroot =>
           val p = mroot.dev.platform
           OptionUtil.maybeOpt( p.hasBle )( p.osFamily )
+        },
+
+        debugSomeC = propsProxy.connect { mroot =>
+          OptionUtil.SomeBool( mroot.internals.isScDebugEnabled() )
         },
 
       )

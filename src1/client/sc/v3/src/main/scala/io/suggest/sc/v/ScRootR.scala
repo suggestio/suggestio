@@ -9,7 +9,8 @@ import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sc.m.MScRoot
+import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
@@ -30,9 +31,12 @@ import scalacss.ScalaCssReact._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 07.07.17 14:06
-  * Description: Корневой react-компонент для выдачи третьего поколения.
+  * Description: Корневой wrap-компонент react-выдачи.
   */
 class ScRootR (
+                // Передаётся напрямую:
+                routerState             : MSpaRouterState,
+                // ниже - только DI
                 gridR                   : GridR,
                 searchR                 : SearchR,
                 headerR                 : HeaderR,
@@ -45,6 +49,7 @@ class ScRootR (
                 scThemes                : ScThemes,
                 crCtxP                  : React.Context[MCommonReactCtx],
                 muiThemeCtxP            : React.Context[MuiTheme],
+                scReactCtxP             : React.Context[MScReactCtx],
               ) {
 
   type Props = ModelProxy[MScRoot]
@@ -101,7 +106,7 @@ class ScRootR (
         // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
         mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
           // css, который рендерится только один раз:
-          mrootProxy.wrap(_ => ScCssStatic)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
+          CssR.component( ScCssStatic ),
         )),
 
         // Рендер стилей перед снаружи и перед остальной выдачей.
@@ -111,7 +116,6 @@ class ScRootR (
         // Рендер провайдера тем MateriaUI, который заполняет react context.
         s.colorsC { mcolorsProxy =>
           val _theme = scThemes.muiDefault( mcolorsProxy.value )
-          println( "theme:" + _theme )
           // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
           muiThemeCtxP.provide( _theme )(
             MuiThemeProvider(
@@ -141,9 +145,16 @@ class ScRootR (
       )
 
       // Зарегистрировать commonReact-контекст, чтобы подцепить динамический messages:
-      s.commonReactCtxC { commonReactCtxProxy =>
-        crCtxP.provide( commonReactCtxProxy.value )( sc )
-      }
+      scReactCtxP.provide(
+        MScReactCtx(
+          getScCss  = () => mrootProxy.value.index.scCss,
+          routerCtl = routerState.routerCtl,
+        )
+      )(
+        s.commonReactCtxC { commonReactCtxProxy =>
+          crCtxP.provide( commonReactCtxProxy.value )( sc )
+        }
+      )
 
     }
 

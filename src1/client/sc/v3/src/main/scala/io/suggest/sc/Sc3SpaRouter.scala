@@ -3,7 +3,7 @@ package io.suggest.sc
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{MScReactCtx, RouteTo}
+import io.suggest.sc.m.RouteTo
 import io.suggest.sc.v.ScRootR
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -15,7 +15,6 @@ import OptionUtil.BoolOptOps
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
-import japgolly.scalajs.react.React
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -30,9 +29,8 @@ import scala.util.Try
   * В отличии от scalajs-spa-tutorial, этот роутер живёт за пределами [[Sc3Main]], чтобы не разводить кашу в коде.
   */
 class Sc3SpaRouter(
-                    scReactCtxContF   : () => React.Context[MScReactCtx],
                     sc3CircuitF       : MSpaRouterState => Sc3Circuit,
-                    scRootR           : () => ScRootR,
+                    mkScRootR         : MSpaRouterState => ScRootR,
                   )
   extends Log
 {
@@ -237,20 +235,10 @@ class Sc3SpaRouter(
   // Готовые инстансы вызываются только из функций роутера, поэтому их безопасно дёргать отсюда.
   val sc3Circuit = sc3CircuitF( state )
 
-  /** Сборка контекста. val по возможности, но может быть и def. */
-  val mkScReactCtx = MScReactCtx( sc3Circuit.scCssRO.apply, state.routerCtl )
-
-  /** Отрендеренный компонент ScRootR с инициализированным глобальным react-контекстом выдачи.
-    * Лениво! чтобы запретить доступ к инстансам sc-контекста и ScRootR до завершения конструктора [[Sc3SpaRouter]],
-    * иначе будет зацикливание, т.к. шаблоны (react-компоненты) и роутер взаимно нуждаются в инстансах друг друга.
-    */
   private lazy val _scRootWrapped = {
     // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
-    scReactCtxContF().provide( mkScReactCtx )(
-      sc3Circuit.wrap( identity(_) ) {
-        scRootR().component.apply
-      }
-    )
+    val scRootR = mkScRootR( state )
+    sc3Circuit.wrap( identity(_) )( scRootR.component.apply )
   }
 
   /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */

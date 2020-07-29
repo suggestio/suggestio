@@ -1,6 +1,6 @@
 {
   "config_ios": {
     "NSBluetoothAlwaysUsageDescription": "Bluetooth access allows auto-detection offers placed inside Bluetooth-beacons nearby.",
-    "NSLocationWhenInUseUsageDescription": "Location access needed for finding offers nearby and map activity."
+    "NSLocationWhenInUseUsageDescription": "Location access needed for finding offers nearby and for map activity."
   }
 }

@@ -36,9 +36,8 @@ object Sc3Module {
 
   lazy val sc3SpaRouter: Sc3SpaRouter = {
     new Sc3SpaRouter(
-      scReactCtxContF = () => scReactCtx,
       sc3CircuitF     = _sc3CircuitF,
-      scRootR         = () => scRootR,
+      mkScRootR       = scRootR,
     )
   }
 
@@ -56,11 +55,11 @@ object Sc3Module {
   // Для явной разводки доступа к инстансам,
   // используются 0-arg функции, которые скрывают за собой lazy-инстансы.
   // Костыль для инжекции ленивого доступа к инстансу ScRootR.
-  def _sc3CircuitF(routerState: MSpaRouterState) = wire[Sc3Circuit]
+  private def _sc3CircuitF(routerState: MSpaRouterState) = wire[Sc3Circuit]
 
   /** Сборка контейнера контекста, который будет распихан по sc-шаблонам. */
   lazy val scReactCtx: React.Context[MScReactCtx] =
-    React.createContext( sc3SpaRouter.mkScReactCtx )
+    React.createContext[MScReactCtx]( null )
 
   /** Контекст, передающий mui theme. */
   lazy val muiThemeCtx: React.Context[MuiTheme] =
@@ -131,7 +130,7 @@ object Sc3Module {
   // sc3
   lazy val scThemes = wire[ScThemes]
   lazy val scStyledComponents = wire[ScStyledComponents]
-  lazy val scRootR = wire[ScRootR]
+  def scRootR = { routerState: MSpaRouterState => wire[ScRootR] }
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   lazy val scAppApiHttp = wire[ScAppApiHttp]
 

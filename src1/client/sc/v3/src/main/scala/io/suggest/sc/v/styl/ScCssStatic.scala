@@ -4,6 +4,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.Css.Lk.{_SM_PREFIX_ => _SM_}
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.dev.MPlatformS
 import io.suggest.font.MFonts
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
@@ -493,22 +494,43 @@ object ScCssStatic extends StyleSheet.Inline {
   }
 
 
+  /** Компоненты. */
+  object Settings {
+
+    val kvLine = style(
+      alignItems.center,
+      display.flex,
+    )
+
+    val kvLineKey = style(
+      flexGrow( 100 ),
+    )
+
+  }
+
+
   initInnerObjects(
     Body.smBody,
     Root.root,
+
     Header.Buttons.search,
     Header.Buttons.Align.leftAligned,
     Header.Logo.Img.hdr,
+
     Grid.container,
     Notifies.snackActionCont,
     Welcome.welcome,
+
     Search.panel,
     Search.NodesFound.listDiv,
     Search.TextBar.bar,
     Search.Geo.crosshair,
+
     Menu.Rows.rowContent,
     Menu.version,
+
     AppDl.osFamily,
   )
 
 }
+

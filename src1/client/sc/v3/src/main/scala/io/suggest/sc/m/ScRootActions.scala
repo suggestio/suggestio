@@ -225,3 +225,8 @@ case object OnlineCheckConn extends IOnlineAction
 
 /** Результат [[OnlineCheckConn]]. */
 case class OnlineCheckConnRes(netInfo: MOnLineInfo ) extends IOnlineAction
+
+
+sealed trait IScConfAction extends IScRootAction
+/** Замена текущего значения debug-флага. */
+case class SetDebug(isDebug: Boolean) extends IScConfAction

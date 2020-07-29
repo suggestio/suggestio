@@ -38,6 +38,10 @@ object MPlatformS {
 
     def isDlAppAvail: Boolean = isBrowser
 
+    /** Использовать ли специальные стили/компоненты под Apple iOS? */
+    def isUseIosStyles: Boolean =
+      plat.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS
+
   }
 
 }

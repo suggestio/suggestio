@@ -1,7 +1,7 @@
 package io.suggest.sc
 
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
+import io.suggest.sc.m.{SetDebug, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, UnIndex}
 import io.suggest.spa.DAction
 
@@ -39,5 +39,9 @@ object Sc3JsApi {
     ))
     _d( a )
   }
+
+  @JSExport
+  def debug(isDebug: Boolean): Unit =
+    _d( SetDebug( isDebug ) )
 
 }

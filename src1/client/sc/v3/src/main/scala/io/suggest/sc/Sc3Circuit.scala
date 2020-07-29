@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import diode.{Effect, FastEq, ModelRO}
+import diode.{Effect, FastEq}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.{BleBeaconerAh, BtOnOff, MBeaconerOpts, MBeaconerS}
@@ -29,7 +29,7 @@ import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.dia.{ScErrorDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
-import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
+import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.menu.DlAppAh
 import io.suggest.sc.c.search._
@@ -256,8 +256,6 @@ class Sc3Circuit(
 
   private val indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
 
-  val scCssRO: ModelRO[ScCss]     = mkLensZoomRO( indexRW, MScIndex.scCss )( FastEq.AnyRefEq )
-
   private val searchRW            = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
   private val geoTabRW            = mkLensZoomRW(searchRW, MScSearch.geo)( MGeoTabSFastEq )
 
@@ -276,8 +274,8 @@ class Sc3Circuit(
   private val scGeoLocRW          = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
   private val onLineRW            = mkLensZoomRW(devRW, MScDev.onLine)
 
-  private val confRO              = mkLensZoomRO(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
-  private val rcvrsMapUrlRO       = mkLensZoomRO(confRO, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
+  private val confRW              = mkLensZoomRW(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
+  private val rcvrsMapUrlRO       = mkLensZoomRO(confRW, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
 
   private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformS.MPlatformSFastEq )
 
@@ -559,6 +557,9 @@ class Sc3Circuit(
     platformRO    = platformRW,
   )
 
+  private val scConfAh = new ScConfAh(
+    modelRW = confRW,
+  )
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
@@ -571,6 +572,7 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+    acc ::= scConfAh
 
     for (ah <- daemonBgModeAh) {
       acc ::= scDaemonAh

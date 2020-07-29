@@ -105,11 +105,14 @@ object JsScreenUtil extends Log {
         uaOpt.exists { ua =>
           // iPad обычно упоминает о себе в User-Agent:
           (ua contains "iPad") || (
-            // iPad Pro 12.9' 3rd gen НЕ пишет, что он IPad, а просто некий Mobile/15E148 (или иные цифры).
             (ua contains "Macintosh;") &&
             (ua contains "Mobile/") &&
-            (screenWhs contains 1024) &&
-            (screenWhs contains 1366) &&
+            (
+              // iPad Pro 12.9' 3rd gen НЕ пишет, что он IPad, а просто некий Mobile/15E148 (или иные цифры).
+              ((screenWhs contains 1024) && (screenWhs contains 1366)) ||
+              // Аналогично с iPad 7th generation:
+              ((screenWhs contains 810) && (screenWhs contains 1080))
+            ) ||
             (mscreen.pxRatio ==* MPxRatios.XHDPI)
           )
         }

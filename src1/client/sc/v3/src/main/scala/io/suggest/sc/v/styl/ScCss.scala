@@ -5,6 +5,7 @@ import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.dev.MPlatformS
 import io.suggest.i18n.MsgCodes
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
@@ -87,6 +88,8 @@ object ScCss {
 final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
+
+  def _styleAddClass(cssClass: String) = style( addClassName(cssClass) )
 
   val (bgColorCss, fgColorCss) = {
     val colors = args.customColorsOpt getOrElse ScCss.COLORS_DFLT
@@ -219,9 +222,9 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
         )
       }
 
-      val fgText = ScCssStatic._styleAddClass( _SM_WELCOME_AD + "_fg-text" )
+      val fgText = _styleAddClass( _SM_WELCOME_AD + "_fg-text" )
 
-      val helper = ScCssStatic._styleAddClass( _SM_WELCOME_AD + "_helper" )
+      val helper = _styleAddClass( _SM_WELCOME_AD + "_helper" )
     }
 
   }
@@ -265,8 +268,8 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
             addClassName( DOT ),
           )
 
-          val left = ScCssStatic._styleAddClass( Css.__ + MsgCodes.`left` )
-          val right = ScCssStatic._styleAddClass( Css.__ + MsgCodes.`right` )
+          val left = _styleAddClass( Css.__ + MsgCodes.`left` )
+          val right = _styleAddClass( Css.__ + MsgCodes.`right` )
         }
 
       }

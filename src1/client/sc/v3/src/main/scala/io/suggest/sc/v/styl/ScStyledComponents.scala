@@ -1,8 +1,9 @@
 package io.suggest.sc.v.styl
 
 import com.materialui.{Mui, MuiSwitch}
+import com.mui.treasury.styles.switch
 import japgolly.univeq._
-import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
+import io.suggest.dev.MPlatformS
 
 /**
   * Suggest.io
@@ -18,11 +19,9 @@ class ScStyledComponents(
     * Если Apple, то надо использовать маковский дизайн.
     */
   lazy val muiSwitch = {
-    if (mPlatform().osFamily contains[MOsFamily] MOsFamilies.Apple_iOS) {
+    if (mPlatform().isUseIosStyles) {
       MuiSwitch.mkComponent {
-        Mui.Styles.withStylesF {
-          com.mui.treasury.styles.switch.Ios.iosSwitchStyles
-        }( Mui.Switch )
+        Mui.Styles.withStylesF( switch.Ios.iosSwitchStyles )( Mui.Switch )
       }
     } else {
       MuiSwitch.component

@@ -54,8 +54,9 @@ case class MScreenInfo(
   }
 
 
-  /** Следует ли разворачивать диалоги на весь экран? */
+  /** Следует ли разворачивать диалоги на весь экран?
+    * Есть iPad'ы с узкой стороной экрана ~760-780px, т.е. 800 тут брать нельзя. */
   def isDialogWndFullScreen: Boolean =
-    screen.wh.width < 800
+    screen.wh.width < 700
 
 }
