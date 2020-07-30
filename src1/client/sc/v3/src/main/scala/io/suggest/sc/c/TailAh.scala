@@ -349,7 +349,7 @@ class TailAh(
               .fold( inxRecent.state )( _ silentSwitchingInto inxRecent.state )
 
             // Если мобильный экран, то надо сразу скрыть раскрытую панель меню:
-            if (nextRoute.menuOpened && v0.dev.screen.info.isDialogWndFullScreen)
+            if (nextRoute.menuOpened && v0.grid.core.jdConf.gridColumnsCount <= 3)
               nextRoute = (Sc3Pages.MainScreen.menuOpened set false)(nextRoute)
 
             ResetUrlRoute( Some(nextRoute) )
