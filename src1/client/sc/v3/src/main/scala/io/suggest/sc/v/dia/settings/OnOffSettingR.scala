@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import io.suggest.sc.v.styl.ScStyledComponents
+import io.suggest.sc.v.styl.ScComponents
 import io.suggest.spa.DAction
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
@@ -23,7 +23,7 @@ import scala.scalajs.js
   */
 class OnOffSettingR(
                      crCtxP                 : React.Context[MCommonReactCtx],
-                     scStyledComponents     : ScStyledComponents,
+                     scComponents           : ScComponents,
                    ) {
 
   type Props_t = Pot[Boolean]
@@ -83,7 +83,7 @@ class OnOffSettingR(
                 )
               },
 
-              scStyledComponents.muiSwitch {
+              scComponents.muiSwitch {
                 val _isChecked = pot getOrElse false
                 new MuiSwitchProps {
                   override val checked = js.defined( _isChecked )

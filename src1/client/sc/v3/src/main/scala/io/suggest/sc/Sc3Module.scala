@@ -17,7 +17,7 @@ import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
 import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
-import io.suggest.sc.v.styl.{ScStyledComponents, ScThemes}
+import io.suggest.sc.v.styl.{ScComponents, ScThemes}
 import japgolly.scalajs.react.React
 
 /**
@@ -129,7 +129,7 @@ object Sc3Module {
 
   // sc3
   lazy val scThemes = wire[ScThemes]
-  lazy val scStyledComponents = wire[ScStyledComponents]
+  lazy val scComponents = wire[ScComponents]
   def scRootR = { routerState: MSpaRouterState => wire[ScRootR] }
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   lazy val scAppApiHttp = wire[ScAppApiHttp]

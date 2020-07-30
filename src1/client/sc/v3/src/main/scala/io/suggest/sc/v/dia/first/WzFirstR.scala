@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.first
 
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogContent, MuiDialogContentText, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiLinearProgress, MuiSvgIconProps}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogClasses, MuiDialogContent, MuiDialogContentText, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.UseValueEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
@@ -8,15 +8,17 @@ import io.suggest.css.{Css, CssR}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.MScRoot
+import io.suggest.sc.m.{MScReactCtx, MScRoot}
 import io.suggest.sc.m.dia.YesNoWz
 import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzPhases}
+import io.suggest.sc.v.styl.ScComponents
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.UndefOr
+
 
 /**
   * Suggest.io
@@ -25,7 +27,9 @@ import scala.scalajs.js.{UndefOr, |}
   * Description: wrap-компонент для первого запуска система.
   */
 class WzFirstR(
-                crCtxProv     : React.Context[MCommonReactCtx],
+                scComponents          : ScComponents,
+                crCtxP                : React.Context[MCommonReactCtx],
+                scReactCtxP           : React.Context[MScReactCtx],
               ) {
 
   type Props_t = MScRoot
@@ -61,7 +65,7 @@ class WzFirstR(
 
 
     def render(s: State): VdomElement = {
-      lazy val diaBody = crCtxProv.consume { crCtx =>
+      lazy val diaBody = crCtxP.consume { crCtx =>
         React.Fragment(
           s.cssOptC( _.value.whenDefinedEl( CssR.component.apply ) ),
 
@@ -81,20 +85,15 @@ class WzFirstR(
                       Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
                   }
 
-                  MuiDialogTitle {
-                    val titleCss = new MuiDialogTitleClasses {
-                      override val root = props.css.header.htmlClass
-                    }
-                    new MuiDialogTitleProps {
-                      override val classes = titleCss
-                    }
-                  } (
+                  scComponents.diaTitle(props.css.header.htmlClass :: Nil)(
                     title,
-                    icon(
-                      new MuiSvgIconProps {
-                        override val className = Css.Floatt.RIGHT
-                      }
-                    )(),
+                    scReactCtxP.consume { scReactCtx =>
+                      icon(
+                        new MuiSvgIconProps {
+                          override val className = scReactCtx.scCssSemiStatic.Dialogs.titleIcon.htmlClass
+                        }
+                      )()
+                    },
                   )
                 },
 
@@ -103,13 +102,19 @@ class WzFirstR(
 
                   // Крутилка ожидания:
                   ReactCommonUtil.maybeNode( props.frame ==* MWzFrames.InProgress ) {
-                    MuiLinearProgress()
+                    React.Fragment(
+                      MuiLinearProgress(
+                        new MuiLinearProgressProps {
+                          override val variant = MuiProgressVariants.indeterminate
+                          override val color = MuiColorTypes.secondary
+                        }
+                      ),
+                      <.br
+                    )
                   },
 
-                  MuiDialogContentText()(
-
-                    // Сборка текста вопроса:
-                    props.frame match {
+                  {
+                    val msg: VdomNode = props.frame match {
                       case MWzFrames.AskPerm =>
                         val msgCodeOpt: Option[String] = props.phase match {
                           case MWzPhases.GeoLocPerm =>
@@ -140,18 +145,31 @@ class WzFirstR(
                               val msg = crCtx.messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
                               Left( msg )
                           }
-                        ).fold(
-                          identity[String],
-                          compName =>
-                            crCtx.messages( MsgCodes.`You.can.enable.0.later.on.left.panel`, compName )
-                        )
+                          ).fold(
+                            identity[String],
+                            compName =>
+                              crCtx.messages( MsgCodes.`You.can.enable.0.later.on.left.panel`, compName )
+                          )
 
                       // Прогресс-ожидание. Собрать крутилку.
                       case MWzFrames.InProgress =>
                         crCtx.messages( MsgCodes.`Please.wait` )
                     }
-
-                  ),
+                    // Сборка текста вопроса:
+                    MuiDialogContentText()(
+                      scReactCtxP.consume { scReactCtx =>
+                        MuiTypoGraphy {
+                          val mtgCss = new MuiTypoGraphyClasses {
+                            override val root = scReactCtx.scCssSemiStatic.Dialogs.text.htmlClass
+                          }
+                          new MuiTypoGraphyProps {
+                            override val variant = MuiTypoGraphyVariants.subtitle1
+                            override val classes = mtgCss
+                          }
+                        } ( msg )
+                      },
+                    )
+                  },
                 ),
 
                 // Кнопки управления диалогом:
@@ -166,6 +184,7 @@ class WzFirstR(
                           override val color   = MuiColorTypes.default
                           override val variant = MuiButtonVariants.text
                           override val onClick = _laterClickCbF
+                          override val size    = MuiButtonSizes.large
                         }
                       } (
                         crCtx.messages( MsgCodes.`Later` )
@@ -174,8 +193,9 @@ class WzFirstR(
                       val allowBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
                           override val color   = MuiColorTypes.default
-                          override val variant = MuiButtonVariants.outlined
+                          override val variant = MuiButtonVariants.text
                           override val onClick = _allowClickCbF
+                          override val size    = MuiButtonSizes.large
                         }
                       } (
                         crCtx.messages( MsgCodes.`Allow.0`, HtmlConstants.SPACE ),
@@ -188,8 +208,9 @@ class WzFirstR(
                       val okBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
                           override val color   = MuiColorTypes.primary
-                          override val variant = MuiButtonVariants.contained
+                          override val variant = MuiButtonVariants.text
                           override val onClick = _laterClickCbF
+                          override val size    = MuiButtonSizes.large
                         }
                       } (
                         crCtx.messages(
@@ -203,9 +224,10 @@ class WzFirstR(
                     case MWzFrames.InProgress =>
                       val cancelBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
-                          override val color   = MuiColorTypes.secondary
+                          override val color   = MuiColorTypes.primary
                           override val variant = MuiButtonVariants.text
                           override val onClick = _laterClickCbF
+                          override val size    = MuiButtonSizes.large
                         }
                       } (
                         crCtx.messages( MsgCodes.`Cancel` )
@@ -214,14 +236,11 @@ class WzFirstR(
 
                   }
 
-                  val diaActionsCss = new MuiDialogActionsClasses {
-                    override val root = props.css.footer.htmlClass
+                  scReactCtxP.consume { scReactCtx =>
+                    MuiDialogActions {
+                      scComponents.diaActionsProps( props.css.footer.htmlClass :: Nil )(scReactCtx)
+                    } ( btns: _* )
                   }
-                  val diaActionsProps = new MuiDialogActionsProps {
-                    override val classes = diaActionsCss
-                  }
-
-                  MuiDialogActions( diaActionsProps )( btns: _* )
                 }
               )
             }
@@ -229,20 +248,26 @@ class WzFirstR(
         )
       }
 
-      s.diaPropsC { diaPropsProxy =>
-        val diaProps = diaPropsProxy.value
-        // Общие пропертисы для любых собранных диалогов:
-        MuiDialog {
-          new MuiDialogProps {
-            override val open = diaProps.visible
-            override val fullScreen = diaProps.fullScreen
-            override val onClose = _laterClickCbF
-            override val fullWidth = true
-            override val maxWidth = MuiDialogMaxWidths.sm
-          }
-        } (
-          diaBody
-        )
+      scReactCtxP.consume { scReactCtx =>
+        val diaCss = new MuiDialogClasses {
+          override val paper = scReactCtx.scCssSemiStatic.Dialogs.paper.htmlClass
+        }
+        s.diaPropsC { diaPropsProxy =>
+          val diaProps = diaPropsProxy.value
+          // Общие пропертисы для любых собранных диалогов:
+          MuiDialog {
+            new MuiDialogProps {
+              override val open = diaProps.visible
+              override val fullScreen = diaProps.fullScreen
+              override val onClose = _laterClickCbF
+              override val fullWidth = true
+              override val maxWidth = MuiDialogMaxWidths.xs
+              override val classes = diaCss
+            }
+          } (
+            diaBody
+          )
+        }
       }
     }
 

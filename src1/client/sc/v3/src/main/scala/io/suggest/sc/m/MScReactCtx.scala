@@ -2,7 +2,7 @@ package io.suggest.sc.m
 
 import diode.FastEq
 import io.suggest.sc.sc3.Sc3Pages
-import io.suggest.sc.v.styl.ScCss
+import io.suggest.sc.v.styl.{ScCss, ScCssSemiStatic}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
 
@@ -39,7 +39,7 @@ object MScReactCtx {
 case class MScReactCtx(
                         getScCss          : () => ScCss,
                         routerCtl         : RouterCtl[Sc3Pages],
-                        // TODO Messages - или в другой контекст.
+                        scCssSemiStatic   : ScCssSemiStatic,
                       ) {
 
   def scCss: ScCss = getScCss()

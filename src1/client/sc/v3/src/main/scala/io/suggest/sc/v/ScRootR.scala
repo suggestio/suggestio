@@ -21,7 +21,7 @@ import io.suggest.sc.v.inx.WelcomeR
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.SearchR
 import io.suggest.sc.v.snack.ScSnacksR
-import io.suggest.sc.v.styl.{ScCss, ScCssStatic, ScThemes}
+import io.suggest.sc.v.styl.{ScCss, ScCssSemiStatic, ScCssStatic, ScThemes}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
@@ -65,6 +65,8 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     def render(mrootProxy: Props, s: State): VdomElement = {
+      val scCssSemiStatic = new ScCssSemiStatic( mrootProxy.value.dev.platform )
+
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
       // Содержимое правой панели (панель поиска)
       // search (правый) sidebar.
@@ -106,12 +108,16 @@ class ScRootR (
         // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
         mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
           // css, который рендерится только один раз:
-          CssR.component( ScCssStatic ),
+          React.Fragment(
+            CssR.component( ScCssStatic ),
+            CssR.component( scCssSemiStatic ),
+            // Рендер стилей перед снаружи и перед остальной выдачей.
+            // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
+            s.scCssArgsC { CssR.compProxied.apply },
+          )
+
         )),
 
-        // Рендер стилей перед снаружи и перед остальной выдачей.
-        // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
-        s.scCssArgsC { CssR.compProxied.apply },
 
         // Рендер провайдера тем MateriaUI, который заполняет react context.
         s.colorsC { mcolorsProxy =>
@@ -149,6 +155,7 @@ class ScRootR (
         MScReactCtx(
           getScCss  = () => mrootProxy.value.index.scCss,
           routerCtl = routerState.routerCtl,
+          scCssSemiStatic = scCssSemiStatic,
         )
       )(
         s.commonReactCtxC { commonReactCtxProxy =>

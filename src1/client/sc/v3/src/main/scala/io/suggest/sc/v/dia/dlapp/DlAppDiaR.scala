@@ -1,7 +1,7 @@
 package io.suggest.sc.v.dia.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiExpansionPanelSummaryClasses, MuiExpansionPanelSummaryProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentClasses, MuiDialogContentProps, MuiDialogMaxWidths, MuiDialogProps, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiExpansionPanelSummaryClasses, MuiExpansionPanelSummaryProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -19,14 +19,15 @@ import io.suggest.routes.routes
 import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
 import io.suggest.sc.m.menu._
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScComponents, ScCssStatic}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import play.api.libs.json.Json
+import scalacss.ScalaCssReact._
 
 import scala.scalajs.LinkingInfo.developmentMode
-import scala.scalajs.js.{URIUtils, UndefOr}
+import scala.scalajs.js.URIUtils
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -37,7 +38,8 @@ import scala.scalajs.js.annotation.JSName
   */
 class DlAppDiaR(
                  osFamiliesR        : OsFamiliesR,
-                 crCtxProv          : React.Context[MCommonReactCtx],
+                 scComponents       : ScComponents,
+                 crCtxP             : React.Context[MCommonReactCtx],
                  scReactCtxP        : React.Context[MScReactCtx],
                ) {
 
@@ -87,7 +89,7 @@ class DlAppDiaR(
     def render(s: State): VdomElement = {
       // Отрендерить список платформ в дефолтовом порядке:
       val chooseMsgCode = MsgCodes.`Choose...`
-      val chooseText = crCtxProv.message( chooseMsgCode )
+      val chooseText = crCtxP.message( chooseMsgCode )
       val platformsRows: Seq[VdomNode] = MuiMenuItem.component.withKey( chooseMsgCode )(
         new MuiMenuItemProps {
           override val value = chooseMsgCode
@@ -107,7 +109,7 @@ class DlAppDiaR(
       }
 
       // Содержимое диалога
-      val diaContent = crCtxProv.consume { crCtx =>
+      val diaContent = crCtxP.consume { crCtx =>
         lazy val bytesMsg = crCtx.messages( MsgCodes.`B._Bytes` )
         lazy val fileMsg = crCtx.messages( MsgCodes.`File` )
         lazy val sizeMsg = crCtx.messages( MsgCodes.`Size` ): VdomNode
@@ -178,9 +180,9 @@ class DlAppDiaR(
 
         React.Fragment(
 
-          MuiDialogTitle()(
+          scComponents.diaTitle( Nil )(
             crCtx.messages( MsgCodes.`Download.application` ),
-            // TODO Кнопка сокрытия.
+            // TODO Кнопка сокрытия?
           ),
 
           s.dlAppDiaC { dlAppDiaProxy =>
@@ -189,22 +191,25 @@ class DlAppDiaR(
               .fold( chooseMsgCode )(_.value)
 
             MuiDialogContent()(
-              MuiTextField(
-                new MuiTextFieldProps {
-                  override val select   = true
-                  override val value    = osFamilyStr
-                  override val onChange = _onOsFamilyChange
-                  override val classes  = _osFamilySelectCss
-                  override val disabled = dlAppDia.getReq.isPending
-                }
-              )(
-                platformsRows: _*
+              <.div(
+                ScCssStatic.flexCenter,
+                ScCssStatic.justifyCenter,
+                MuiTextField(
+                  new MuiTextFieldProps {
+                    override val select   = true
+                    override val value    = osFamilyStr
+                    override val onChange = _onOsFamilyChange
+                    override val classes  = _osFamilySelectCss
+                    override val disabled = dlAppDia.getReq.isPending
+                  }
+                )(
+                  platformsRows: _*
+                ),
               ),
 
               <.br,
 
               // Отрендерить кнопки-ссылки для скачивания, данные для ссылок приходят запросом с сервера.
-
               dlAppDia.getReq.render { resp =>
                 if (resp.dlInfos.isEmpty) {
                   MuiTypoGraphy(
@@ -433,30 +438,42 @@ class DlAppDiaR(
           },
 
 
-          MuiDialogActions()(
-            MuiButton(
-              new MuiButtonProps {
-                override val onClick = _onCloseBtnClick
-              }
-            )(
-              crCtx.messages( MsgCodes.`Close` ),
+          scReactCtxP.consume { scReactCtx =>
+            MuiDialogActions {
+              scComponents.diaActionsProps()(scReactCtx)
+            } (
+              MuiButton(
+                new MuiButtonProps {
+                  override val onClick = _onCloseBtnClick
+                  override val variant = MuiButtonVariants.text
+                  override val size    = MuiButtonSizes.large
+                }
+              )(
+                crCtx.messages( MsgCodes.`Close` ),
+              )
             )
-          ),
+          },
 
         )
       }
 
 
-      // Открытость диалога.
-      s.diaOpenedSomeC { diaOpenedSomeProxy =>
-        MuiDialog(
-          new MuiDialogProps {
-            override val open       = diaOpenedSomeProxy.value.value
-            override val onClose    = _onCloseBtnClick
-            override val maxWidth   = MuiDialogMaxWidths.xs
-            override val fullWidth  = true
-          }
-        )( diaContent )
+      scReactCtxP.consume { scReactCtx =>
+        val muiDiaCss = new MuiDialogClasses {
+          override val paper = scReactCtx.scCssSemiStatic.Dialogs.paper.htmlClass
+        }
+        // Открытость диалога.
+        s.diaOpenedSomeC { diaOpenedSomeProxy =>
+          MuiDialog(
+            new MuiDialogProps {
+              override val open       = diaOpenedSomeProxy.value.value
+              override val onClose    = _onCloseBtnClick
+              override val maxWidth   = MuiDialogMaxWidths.xs
+              override val fullWidth  = true
+              override val classes    = muiDiaCss
+            }
+          )( diaContent )
+        }
       }
     }
 
