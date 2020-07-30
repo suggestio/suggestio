@@ -20,8 +20,6 @@ sealed trait CordovaPlugins extends js.Object {
 
   val notification: CordovaPluginNotification = js.native
 
-  val device: CordovaPluginDevice = js.native
-
   val backgroundMode: CordovaPluginBackgroundMode = js.native
 
 }

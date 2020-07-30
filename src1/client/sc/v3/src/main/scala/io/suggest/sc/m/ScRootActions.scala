@@ -41,10 +41,10 @@ case class JsRouterStatus( payload: Try[routes.type] ) extends IScRootAction
 
 
 /** События экрана. */
-case object ScreenReset extends IScRootAction
+case object ScreenResetPrepare extends IScRootAction
 
 /** Сработал таймер непосредственного запуска действий при ресайзе. */
-case object ScreenRszTimer extends IScRootAction
+case object ScreenResetNow extends IScRootAction
 
 
 /** Управление подсистемой геолокации в режиме вкл/выкл.

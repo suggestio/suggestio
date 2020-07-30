@@ -1,6 +1,7 @@
 package cordova.plugins.device
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -10,7 +11,8 @@ import scala.scalajs.js
   * @see [[https://github.com/apache/cordova-plugin-device#properties]]
   */
 @js.native
-trait CordovaPluginDevice extends js.Object {
+@JSGlobal("device")
+object CordovaPluginDevice extends js.Object {
 
   val cordova: String = js.native
   val model: String = js.native
@@ -20,5 +22,15 @@ trait CordovaPluginDevice extends js.Object {
   val manufacturer: String = js.native
   val isVirtual: String = js.native
   val serial: String = js.native
+
+}
+
+
+object CordovaPluginDeviceUtil {
+
+  object Platform {
+    final def Android = "Android"
+    final def iOS = "iOS"
+  }
 
 }

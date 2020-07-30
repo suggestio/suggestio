@@ -1,11 +1,10 @@
 package io.suggest.dev
 
-import io.suggest.common.geom.d2.{MOrientations2d, MSize2di}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vsz.ViewportSz
-import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -39,98 +38,6 @@ object JsScreenUtil extends Log {
         ),
         pxRatio = pxRatio
       )
-    }
-  }
-
-  // Const: Отступ сверху на 12px
-  private def _TOP_12PX = MTlbr( topO = Some(12) )
-
-  /** Задетектить небезопасные для контента области на экране.
-    * iphone10 содержит вырез наверху экрана.
-    *
-    * @param mscreen Результат getScreen().
-    * @return Данные боковин экрана.
-    */
-  def getScreenUnsafeAreas(mscreen: MScreen): MTlbr = {
-    try {
-      val uaOpt = WindowVm()
-        .navigator
-        .flatMap(_.userAgent)
-
-      lazy val orientation = MOrientations2d.forSize2d( mscreen.wh )
-
-      lazy val screenWhs = Set.empty[Int] + mscreen.wh.width + mscreen.wh.height
-
-      if (uaOpt.exists(_ contains "Android")) {
-        // ~25 csspx - размер статусбара, который всегда сверху при любом повороте экрана.
-        MTlbr(
-          topO = Some( 30 ),
-        )
-
-      } else if ( uaOpt.exists(_ contains "iPhone") ) {
-        // Это айфон. Надо решить, сколько отсутупать.
-        if (
-          // iPhone 10 | iPhone 11 Pro
-          (screenWhs contains 812) &&
-          (screenWhs contains 375) &&
-          (mscreen.pxRatio ==* MPxRatios.DPR3)
-        ) {
-          // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
-          MTlbr(
-            topO  = Option.when(orientation ==* MOrientations2d.Vertical)( 28 ),
-            leftO = Option.when(orientation ==* MOrientations2d.Horizontal)( 36 ),
-            // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
-            bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
-          )
-
-        } else if (
-          // iPhone 11 @2 / 11 Pro Max @3 (2019)
-          (screenWhs contains 896) &&
-          (screenWhs contains 414)
-        ) {
-          MTlbr(
-            topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
-            leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 36 ),
-            bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
-          )
-        } else {
-          // На остальных айфонах надо делать 12px сверху в вертикальной ориентации.
-          if (orientation ==* MOrientations2d.Vertical) {
-            println("iphone v")
-            _TOP_12PX
-          } else
-            MTlbr.empty
-        }
-
-      } else if (
-        uaOpt.exists { ua =>
-          // iPad обычно упоминает о себе в User-Agent:
-          (ua contains "iPad") || (
-            (ua contains "Macintosh;") &&
-            (ua contains "Mobile/") &&
-            (
-              // iPad Pro 12.9' 3rd gen НЕ пишет, что он IPad, а просто некий Mobile/15E148 (или иные цифры).
-              ((screenWhs contains 1024) && (screenWhs contains 1366)) ||
-              // Аналогично с iPad 7th generation:
-              ((screenWhs contains 810) && (screenWhs contains 1080))
-            ) &&
-            (mscreen.pxRatio ==* MPxRatios.XHDPI)
-          )
-        }
-      ) {
-        // Это iPad: 12px сверху в любой ориентации
-        println("ipad")
-        _TOP_12PX
-
-      } else {
-        // Обычное устройство, всё ок.
-        MTlbr.empty
-      }
-
-    } catch {
-      case ex: Throwable =>
-        logger.error( ErrorMsgs.SCREEN_SAFE_AREA_DETECT_ERROR, ex, msg = mscreen )
-        MTlbr.empty
     }
   }
 

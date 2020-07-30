@@ -2,7 +2,7 @@ package io.suggest.sc.c.dev
 
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dev.{JsScreenUtil, MScreenInfo}
+import io.suggest.dev.{HwScreenUtil, JsScreenUtil, MScreenInfo}
 import io.suggest.jd.render.m.GridRebuild
 import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.inx.{MScSideBars, ScCssReBuild, SideBarOpenClose}
@@ -31,14 +31,14 @@ class ScreenAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал изменения размеров/ориентации экрана.
-    case ScreenReset =>
+    case ScreenResetPrepare =>
       val v0 = value
       // TODO Проверять, изменился ли экран.
       v0.rszTimer.fold {
         val tp = DomQuick.timeoutPromise(RSZ_TIMER_MS)
         val fx = Effect {
           for (_ <- tp.fut) yield {
-            ScreenRszTimer
+            ScreenResetNow
           }
         }
         val v2 = MScScreenS.rszTimer.set( Some(tp.timerId) )(v0)
@@ -51,14 +51,14 @@ class ScreenAh[M](
 
 
     // Сигнал срабатывания таймера отложенной реакции на изменение размеров экрана.
-    case ScreenRszTimer =>
+    case ScreenResetNow =>
       // TODO Opt Проверять, изменился ли экран по факту? Может быть изменился и вернулся назад за время таймера?
 
       // Уведомить контроллер плитки, что пора пересчитать плитку.
       val gridReConfFx = GridRebuild(force = false).toEffectPure
       // Забыть о сработавшем таймере.
       val screen2 = JsScreenUtil.getScreen()
-      val uo2 = JsScreenUtil.getScreenUnsafeAreas(screen2)
+      val uo2 = HwScreenUtil.getScreenUnsafeAreas( screen2 )
 
       val v0 = value
 

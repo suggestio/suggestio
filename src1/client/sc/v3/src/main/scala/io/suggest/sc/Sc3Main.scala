@@ -10,7 +10,7 @@ import io.suggest.log.remote.RemoteLogAppender
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
-import io.suggest.sc.m.ScreenReset
+import io.suggest.sc.m.ScreenResetPrepare
 import io.suggest.sc.router.SrvRouter
 import io.suggest.log.{Log, LogSeverities, Logging}
 import io.suggest.sc.v.styl.ScCssStatic
@@ -189,7 +189,7 @@ object Sc3Main extends Log {
       } {
         Try {
           dom.window.addEventListener4s( evtName ) { _: Event =>
-            modules.sc3Circuit.dispatch( ScreenReset )
+            modules.sc3Circuit.dispatch( ScreenResetPrepare )
           }
         }
           .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, evtName )

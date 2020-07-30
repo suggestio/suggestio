@@ -11,7 +11,7 @@ import io.suggest.cordova.background.mode.CordovaBgModeAh
 import io.suggest.daemon.{BgModeDaemonInit, HtmlBgTimerAh, MDaemonDescr, MDaemonInitOpts, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
-import io.suggest.dev.{JsScreenUtil, MScreenInfo}
+import io.suggest.dev.{HwScreenUtil, JsScreenUtil, MPlatformS, MScreenInfo}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
@@ -57,7 +57,6 @@ import io.suggest.spa.{DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
-import io.suggest.dev.MPlatformS
 import io.suggest.event.DomEvents
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
@@ -123,7 +122,7 @@ class Sc3Circuit(
 
     val screenInfo = MScreenInfo(
       screen        = mscreen,
-      unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen)
+      //unsafeOffsets = HwScreenUtil.etScreenUnsafeAreas( mscreen ),
     )
 
     val scIndexResp = Pot.empty[MSc3IndexResp]
@@ -678,6 +677,10 @@ class Sc3Circuit(
   private def _onPlatformReady(): Unit = {
     // Активировать сборку Bluetooth-маячков:
     _dispatchBleBeaconerOnOff()
+
+    // Принудительно пересчитать экран. В cordova данные экрана определяются через cordova-plugin-device.
+    if (platformRW.value.isCordova)
+      this.runEffectAction( ScreenResetNow )
 
     // Активировать поддержку нотификаций:
     if (notifyAh.nonEmpty) Future {
