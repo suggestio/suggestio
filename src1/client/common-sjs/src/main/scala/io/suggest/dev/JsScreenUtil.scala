@@ -95,9 +95,10 @@ object JsScreenUtil extends Log {
           )
         } else {
           // На остальных айфонах надо делать 12px сверху в вертикальной ориентации.
-          if (orientation ==* MOrientations2d.Vertical)
+          if (orientation ==* MOrientations2d.Vertical) {
+            println("iphone v")
             _TOP_12PX
-          else
+          } else
             MTlbr.empty
         }
 
@@ -112,12 +113,13 @@ object JsScreenUtil extends Log {
               ((screenWhs contains 1024) && (screenWhs contains 1366)) ||
               // Аналогично с iPad 7th generation:
               ((screenWhs contains 810) && (screenWhs contains 1080))
-            ) ||
+            ) &&
             (mscreen.pxRatio ==* MPxRatios.XHDPI)
           )
         }
       ) {
         // Это iPad: 12px сверху в любой ориентации
+        println("ipad")
         _TOP_12PX
 
       } else {

@@ -4,7 +4,6 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.Css.Lk.{_SM_PREFIX_ => _SM_}
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.dev.MPlatformS
 import io.suggest.font.MFonts
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.sc.ScConstants
@@ -441,7 +440,7 @@ object ScCssStatic extends StyleSheet.Inline {
       )
 
       val rowLink = style(
-        textDecoration := none
+        textDecoration := none,
       )
 
       val rightIcon = style(
@@ -457,7 +456,8 @@ object ScCssStatic extends StyleSheet.Inline {
         margin(0.px, auto),
         fontSize( 0.8.rem ),
         padding(12.px, 0.px),
-        textTransform.uppercase
+        textTransform.uppercase,
+        paddingLeft( 16.px ),
       )
 
     }
