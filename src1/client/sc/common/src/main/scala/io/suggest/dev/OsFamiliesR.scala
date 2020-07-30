@@ -1,7 +1,10 @@
 package io.suggest.dev
 
-import com.materialui.{Mui, MuiMenuItem, MuiMenuItemProps}
+import com.materialui.{Mui, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps}
+import io.suggest.common.html.HtmlConstants
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -11,7 +14,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 class OsFamiliesR {
 
   /** Рендер списка ОСей. */
-  def osFamiliesMenuItems: List[VdomElement] = {
+  def osFamiliesMenuItems(itemCss: js.UndefOr[MuiMenuItemClasses] = js.undefined,
+                          textCss: js.UndefOr[String] = js.undefined): List[VdomElement] = {
     MOsFamilies
       .values
       .iterator
@@ -20,6 +24,7 @@ class OsFamiliesR {
           .withKey(osPlatform.value)(
             new MuiMenuItemProps {
               override val value = osPlatform.value
+              override val classes = itemCss
             }
           )(
             // Иконка
@@ -28,7 +33,13 @@ class OsFamiliesR {
               case MOsFamilies.Apple_iOS => Mui.SvgIcons.Apple()()
               case _ => EmptyVdom   // TODO отступ? пустая иконка или ...?
             },
-            osPlatform.value,
+
+            HtmlConstants.SPACE,
+            <.span(
+              textCss.whenDefined( ^.`class` := _ ),
+              osPlatform.value,
+            )
+
           ): VdomElement
       }
       .toList

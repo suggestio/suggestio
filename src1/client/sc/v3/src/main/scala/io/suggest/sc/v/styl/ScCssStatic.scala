@@ -494,13 +494,14 @@ object ScCssStatic extends StyleSheet.Inline {
   }
 
 
+  val flexCenter = style(
+    alignItems.center,
+    display.flex,
+  )
+
+
   /** Компоненты. */
   object Settings {
-
-    val kvLine = style(
-      alignItems.center,
-      display.flex,
-    )
 
     val kvLineKey = style(
       flexGrow( 100 ),

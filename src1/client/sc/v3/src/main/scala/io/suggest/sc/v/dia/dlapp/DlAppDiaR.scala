@@ -1,11 +1,13 @@
 package io.suggest.sc.v.dia.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiExpansionPanelSummaryClasses, MuiExpansionPanelSummaryProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.HashesHex
+import io.suggest.css.Css
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -24,7 +26,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import play.api.libs.json.Json
 
 import scala.scalajs.LinkingInfo.developmentMode
-import scala.scalajs.js.URIUtils
+import scala.scalajs.js.{URIUtils, UndefOr}
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -93,7 +95,12 @@ class DlAppDiaR(
         }
       )(
         chooseText
-      ) :: osFamiliesR.osFamiliesMenuItems
+      ) :: osFamiliesR.osFamiliesMenuItems(
+        itemCss = new MuiMenuItemClasses {
+          override val root = ScCssStatic.flexCenter.htmlClass
+        },
+        textCss = ScCssStatic.thinText.htmlClass,
+      )
 
       val _osFamilySelectCss = new MuiFormControlClasses {
         override val root = ScCssStatic.AppDl.osFamily.htmlClass
@@ -209,6 +216,12 @@ class DlAppDiaR(
                   )
 
                 } else {
+                  val summaryCss = new MuiExpansionPanelSummaryClasses {
+                    override val content = Css.flat( ScCssStatic.thinText.htmlClass, ScCssStatic.flexCenter.htmlClass )
+                  }
+                  val summaryProps = new MuiExpansionPanelSummaryProps {
+                    override val classes = summaryCss
+                  }
                   <.div(
                     (for {
                       (dlInfo, index) <- resp
@@ -233,15 +246,17 @@ class DlAppDiaR(
                         }
                       )(
 
-                        // Заголовок панели.
-                        MuiExpansionPanelSummary()(
+                        // Что откуда качать:
+                        MuiExpansionPanelSummary( summaryProps )(
                           // Левая иконка:
                           if (dlInfo.extSvc.isEmpty) {
                             getAppIcon
                           } else {
                             extSvcIconOpt getOrElse EmptyVdom
                           },
-                          // Что откуда качать:
+                          HtmlConstants.NBSP_STR,
+                          HtmlConstants.NBSP_STR,
+                          // Заголовок панели.
                           dlInfo.extSvc.fold[VdomNode](
                             dlFileMsg,
                           )( _.nameI18N ),

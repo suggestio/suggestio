@@ -49,7 +49,7 @@ class OsFamilyR(
           crCtxProv.message( MsgCodes.`empty` ),
           `)`,
         )
-      } :: osFamiliesR.osFamiliesMenuItems
+      } :: osFamiliesR.osFamiliesMenuItems()
 
       val _label = crCtxProv.message( MsgCodes.`Operating.system.family` ): VdomNode
 

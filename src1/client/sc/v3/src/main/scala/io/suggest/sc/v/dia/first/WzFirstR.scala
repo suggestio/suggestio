@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.first
 
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiLinearProgress, MuiSvgIconProps}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogContent, MuiDialogContentText, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiLinearProgress, MuiSvgIconProps}
 import diode.UseValueEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
@@ -15,6 +15,8 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
+
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -161,7 +163,7 @@ class WzFirstR(
                       // Кнопка "Позже"
                       val laterBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
-                          override val color   = MuiColorTypes.secondary
+                          override val color   = MuiColorTypes.default
                           override val variant = MuiButtonVariants.text
                           override val onClick = _laterClickCbF
                         }
@@ -171,8 +173,8 @@ class WzFirstR(
                       // Кнопка "Разрешить"
                       val allowBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
-                          override val color   = MuiColorTypes.primary
-                          override val variant = MuiButtonVariants.contained
+                          override val color   = MuiColorTypes.default
+                          override val variant = MuiButtonVariants.outlined
                           override val onClick = _allowClickCbF
                         }
                       } (
@@ -235,6 +237,8 @@ class WzFirstR(
             override val open = diaProps.visible
             override val fullScreen = diaProps.fullScreen
             override val onClose = _laterClickCbF
+            override val fullWidth = true
+            override val maxWidth = MuiDialogMaxWidths.sm
           }
         } (
           diaBody
