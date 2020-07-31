@@ -56,7 +56,6 @@ import scala.annotation.tailrec
   */
 class DocEditAh[M](
                     modelRW           : ModelRW[M, MDocS],
-                    lkAdEditCss       : LkAdEditCss,
                     quillDeltaJsUtil  : QuillDeltaJsUtil
                   )
   extends ActionHandler( modelRW )
@@ -551,7 +550,7 @@ class DocEditAh[M](
               isLastStrip = EphemeralStream
                 .toIterable(
                   v2.jdDoc.jdArgs.data.doc.template
-                    .deepOfType( n )
+                    .subForest
                 )
                 .sizeIs <= 1
             )
