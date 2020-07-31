@@ -24,6 +24,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.adv.{MExtTarget, MExtTargets}
 import models.im.MImgT
 import models.madn.{AdnShownTypes, NodeDfltColors}
+import models.mctx.Context
 import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
@@ -412,6 +413,8 @@ final class NodesUtil @Inject() (
 
 
   /** Сборка id узла, содержащего 404-карточки для указанного языка. */
+  def noAdsFound404RcvrId(implicit ctx: Context): String =
+    noAdsFound404RcvrId( ctx.messages.lang )
   def noAdsFound404RcvrId(lang: Lang): String =
     ScConstants.Mad404.NO_ADS_FOUND_404_RCVR_ID_PREFIX + lang.code
 

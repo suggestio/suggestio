@@ -236,7 +236,7 @@ trait ScAdsTile
       }
     }
 
-    lazy val nodeId404 = nodesUtil.noAdsFound404RcvrId( ctx.messages.lang )
+    lazy val nodeId404 = nodesUtil.noAdsFound404RcvrId( ctx )
 
     /** Рекламные карточки, когда не найдено рекламных карточек. */
     def mads404Fut: Future[Seq[MNode]] = {

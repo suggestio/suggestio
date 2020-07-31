@@ -278,10 +278,7 @@ trait ScIndex
 
     /** Найти в пуле или придумать какой-то рандомный узел, желательно без id даже. */
     def l95_ephemeralNodesFromPool: Future[Seq[MIndexNodeInfo]] = {
-      // Нужно выбирать эфемерный узел с учётом языка реквеста. Используем i18n как конфиг.
-      val ephNodeId = Option( ctx.messages("conf.sc.node.ephemeral.id") )
-        .filter(_.nonEmpty)
-        .get
+      val ephNodeId = nodesUtil.noAdsFound404RcvrId( ctx )
       val _mnodeOptFut = mNodes.getByIdCache( ephNodeId )
       LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
 
@@ -297,6 +294,7 @@ trait ScIndex
         ) :: Nil
       }
     }
+    
 
     /** Придумывание текущего узла из головы. */
     def l99_ephemeralNode: MIndexNodeInfo = {

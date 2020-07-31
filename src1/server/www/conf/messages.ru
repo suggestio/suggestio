@@ -911,7 +911,6 @@ Adv.in.place=Размещение в месте
 
 Domain.mode.sc=Отображение выдачи в домене
 
-conf.sc.node.ephemeral.id=AU1MCCmy2A6B8K1LbX6u
 e.required.tags.or.main.screen=Требуется активировать размещение на главном экране или указать хотя бы один геотег.
 
 Current.ad=Текущая карточка
