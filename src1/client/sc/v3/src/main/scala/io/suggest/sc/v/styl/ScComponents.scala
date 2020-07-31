@@ -1,6 +1,6 @@
 package io.suggest.sc.v.styl
 
-import com.materialui.{Mui, MuiDialogActions, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import com.mui.treasury.styles.switch
 import io.suggest.css.Css
 import japgolly.univeq._
@@ -72,6 +72,12 @@ class ScComponents(
   }
 
 
+  /** Пропертисы для MuiDialogActions(), чтобы на iOS было выравнивание элементов по ширине.
+    *
+    * @param classes Опциональный список css-классов.
+    * @param scReactCtx Контекст.
+    * @return JSON-пропертисы.
+    */
   def diaActionsProps(classes: List[String] = Nil)(scReactCtx: MScReactCtx): MuiDialogActionsProps = {
     val diaActionsCss = new MuiDialogActionsClasses {
       override val root = Css.flat1(

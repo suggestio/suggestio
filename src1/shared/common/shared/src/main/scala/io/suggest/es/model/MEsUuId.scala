@@ -18,15 +18,18 @@ object MEsUuId {
 
   def charsAllowedRe = "[._a-zA-Z0-9-]"
 
+  private final def MIN_STR_ID_LEN = 11
+
   /** Регэксп для проверки валидности id.
     * min=11 т.к. 404-node содержит id вида {{{ .___404___.ru }}}
     */
-  val uuidB64Re = (charsAllowedRe + "{11,25}").r
+  val uuidB64Re = s"$charsAllowedRe{$MIN_STR_ID_LEN,25}".r
+
 
   /** Регэксп для парсинга uuid, закодированного в base64, допускающего необычно-большую длину.
     * Удлиненние id может быть у маячков.
     */
-  val uuidB64Re60 = (MEsUuId.charsAllowedRe + "{19,60}").r
+  val uuidB64Re60 = s"$charsAllowedRe{$MIN_STR_ID_LEN,60}".r
 
   /** Проверить id по допустимым символам. У uuid и any id алфавиты одинаковые, только длина разная. */
   def isEsIdValid(id: String): Boolean = {
