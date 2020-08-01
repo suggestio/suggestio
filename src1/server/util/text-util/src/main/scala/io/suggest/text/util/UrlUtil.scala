@@ -316,13 +316,11 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     var result = host
       .trim
       .toLowerCase
-    if (result endsWith ".") {
+    if (result endsWith ".")
       result = result.substring(0, result.length - 1)
-    }
     if (result startsWith ".")
       result = result.tail
-    //
-    idnaToAsciiSafe( host )
+    idnaToAsciiSafe( result )
   }
 
 

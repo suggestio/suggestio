@@ -172,6 +172,7 @@ trait ScIndex
       }
     }
 
+
     /** поискать покрывающий ТЦ/город/район. */
     def l50_detectUsingCoords: Future[Seq[MIndexNodeInfo]] = {
       // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
@@ -294,7 +295,7 @@ trait ScIndex
         ) :: Nil
       }
     }
-    
+
 
     /** Придумывание текущего узла из головы. */
     def l99_ephemeralNode: MIndexNodeInfo = {

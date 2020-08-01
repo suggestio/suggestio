@@ -2,7 +2,9 @@
 
 @* Страница с формой редактирования домена для узла. *@
 
+@import helper._
 @import views.html.stuff._
+@import ctx.request
 
 @base(
   title     = "Редактирование домена узла",
@@ -12,7 +14,7 @@
   @defining(args.mnode.id.get) { mnodeId =>
 
     @* Кнопка для удаления текущего домена. *@
-    @_deleteSmthFormBtnTpl( routes.SysNodeDomains.deleteNodeDomainFormSubmit( mnodeId, dkey = args.mdx.dkey ) )
+    @_deleteSmthFormBtnTpl( CSRF(routes.SysNodeDomains.deleteNodeDomainFormSubmit( mnodeId, dkey = args.mdx.dkey )) )
 
     @_nodeDomainFormTpl(
       args        = args,

@@ -1,3 +1,6 @@
+# syntax = docker/dockerfile:experimental
+
+## TODO 2020-07-31 Не получается запустить fakeroot, когда сборка через buildkit.
 ## Базовый образ для сборке всех остальных обычных контейнеров.
 
 FROM archlinux/base
@@ -12,8 +15,7 @@ RUN : \
   ## Для ускорения работы pacman'а, выставить только быстрые зеркала:
   && echo 'Server = http://mirror.yandex.ru/archlinux/$repo/os/$arch' > /etc/pacman.d/mirrorlist
 
-ENV PACMAN="pacman --assume-installed=systemd"
-
+ENV PACMAN="pacman --assume-installed=systemd";
 
 ## Скачать индексы репозиториев для установки пакетов на последующих шагах.
 ## Нельзя объявлять base-devel, т.к. это потянет за собой systemd
@@ -56,7 +58,7 @@ RUN cd $BUILD_HOME && \
    cd $BUILD_HOME/$package && \
    ## TODO makepkg -i устанавливает systemd. Надо пробросить --assume-installed systemd в pacman.
    ## Через env PACMAN= как-то не помогает оно...
-   sudo -u $BUILD_USER makepkg --noconfirm -sifrc && \
+   sleep 1 && sudo -u $BUILD_USER makepkg --noconfirm -sifrc && \
    cd $BUILD_HOME && \
    rm -rf $package $PKG_TAR_GZ; \
   done && \

@@ -5,7 +5,6 @@ import diode.data.Pot
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.{MDocS, MEditorsS, MJdDocEditS, MQdEditS, MSlideBlocks, MStripEdS, SlideBlockKeys}
-import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
