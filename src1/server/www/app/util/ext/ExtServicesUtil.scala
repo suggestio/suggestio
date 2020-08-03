@@ -61,7 +61,11 @@ class ExtServicesUtil @Inject() (
       case MExtServices.GooglePlay =>
         s"${extSvc.mainPageUrl}store/apps/details?id=$appId"
       case MExtServices.AppleITunes =>
-        s"${extSvc.mainPageUrl}${ctx.messages.lang.country}/app/${appId}"
+        val lang = ctx.messages.lang
+        val countryCode = Option( lang.country )
+          .filter(_.nonEmpty)
+          .getOrElse( lang.code.replaceFirst("-[a-zA-Z]+$", "") )
+        s"${extSvc.mainPageUrl}${countryCode}/app/suggest/${appId}"
       case _ =>
         throw new UnsupportedOperationException(s"$extSvc does not support apps distibution.")
     }

@@ -1,5 +1,13 @@
 # This file defines all application routes (Higher priority routes first)
 
+## Перехват коротких ссылок (EddyStone-URL длина макс. 17 минус схема-домен-тильда = 4 => 39 млн.комбинаций)
+GET  /~$code<[.a-zA-Z0-9~_&$#@?=;:/,+$&-]{1,4}>        @controllers.ShortUrls.handleUrl(code: String)
+
+## Home page
+GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+
+GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
+HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)
 
 ## Если path начинается с /~, то jsRevRouterTpl НЕ будет приписывать CSRF-токен к роуте.
 ## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
@@ -8,16 +16,27 @@ GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt(-bundle)?\.js)
 ## Map static resources from the /public folder to the /assets URL path
 GET  /vassets/*file                     @controllers.Assets.versioned(path = ASSETS_PUBLIC_ROOT, file: Asset)
 
-
-## Home page
-GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
-
 ## "... most browsers of all types will request /favicon.ico by default" https://stackoverflow.com/a/1445016
 ## TODO Заменить на moved temporary + versioned-роута, чтобы усилить кэширование?
 GET  /favicon.ico                       @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file = "images/favicon/512.ico")
 
 ## sc3+ Объединённое API:
 GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
+
+## sc/error: Дамп ошибок выдачи в формате до мая 2020. Удалить
+POST /sc/error                          @controllers.RemoteLogs.handleScError
+POST /log/rcv                           @controllers.RemoteLogs.receive
+
+## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
+GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
+
+
+## Обслуживание около-статических ответов.
+## Cross-Origin resource sharing: preflight request:
+OPTIONS /*path                          @controllers.Static.corsPreflight(path)
+GET  /robots.txt                        @controllers.Static.robotsTxt
+GET  /sitemap.xml                       @controllers.Static.siteMapXml
+GET  /ws/ch/:c                          @controllers.Static.wsChannel( c: io.suggest.ctx.MCtxId )
 
 ## Рендер ровно одной карточки.
 GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
@@ -27,23 +46,6 @@ GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
 GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
-
-## sc/error: Дамп ошибок выдачи в формате до мая 2020. Удалить
-POST /sc/error                          @controllers.RemoteLogs.handleScError
-POST /log/rcv                           @controllers.RemoteLogs.receive
-
-## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
-GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path = ASSETS_PUBLIC_ROOT, file: Asset )
-
-GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
-HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)
-
-## Обслуживание около-статических ответов.
-## Cross-Origin resource sharing: preflight request:
-OPTIONS /*path                          @controllers.Static.corsPreflight(path)
-GET  /robots.txt                        @controllers.Static.robotsTxt
-GET  /sitemap.xml                       @controllers.Static.siteMapXml
-GET  /ws/ch/:c                          @controllers.Static.wsChannel( c: io.suggest.ctx.MCtxId )
 
 ## Входы в личные кабинеты
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
@@ -336,4 +338,3 @@ POST /_/csp/report                      @controllers.Static.handleCspReport
 ## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
 GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path = ASSETS_PUBLIC_ROOT, file: Asset)
 GET  /assets/*file                      @controllers.Assets.at(path = ASSETS_PUBLIC_ROOT, file)
-

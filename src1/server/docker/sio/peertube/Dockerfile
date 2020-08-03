@@ -1,4 +1,4 @@
-FROM docker-registry.suggest.io:5000/sio/sio2/redis
+FROM docker-registry.suggest.io:5000/sio/sio2/os-base-nodejs
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG peertube_home="/var/lib/peertube"
@@ -10,9 +10,6 @@ ARG gid=$uid
 
 RUN groupadd -g ${gid} ${group} && \
     useradd --system -d "${peertube_home}" --no-create-home -u ${uid} -g ${gid} -s /bin/nologin ${user}
-
-RUN pacman -S --noconfirm --needed nodejs-lts-erbium
-
 
 ## Сразу установить yarn, чтобы сразу его переконфигурировать:
 RUN pacman -S --asdeps yarn
