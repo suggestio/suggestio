@@ -92,6 +92,15 @@ object Sc3Pages {
         )
       }
 
+      /** Очень каноническое состояние выдачи без каких-либо уточнений. */
+      def canonical: MainScreen = {
+        mainScreen.copy(
+          searchOpened      = false,
+          menuOpened        = false,
+          generation        = None,
+        )
+      }
+
     }
 
   }

@@ -31,8 +31,8 @@
     <allow-navigation href="https://*.vk.com/*" />
     <allow-navigation href="https://*.userapi.com/*" />
     <allow-navigation href="https://*.vkuservideo.net/*" />
-    <!--
     <allow-navigation href="http://192.168.42.17:9000/*" />
+    <!--
     <allow-navigation href="http://outself:9000/*" />
     <allow-navigation href="https://deanhume.github.io/*" />
     <allow-navigation href="https://storage.googleapis.com/*" />

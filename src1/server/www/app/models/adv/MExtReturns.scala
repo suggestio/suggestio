@@ -1,11 +1,11 @@
 package models.adv
 
 import controllers.routes
-import models.msc.ScJsState
 import play.api.data.Mapping
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.playx.FormMappingUtil
+import io.suggest.sc.sc3.Sc3Pages
 
 /**
  * Suggest.io
@@ -100,10 +100,11 @@ sealed trait ReturnToScBuilder {
   }
 
   /**
-   * Сгенерить экземпляр [[ScJsState]] на основе накопленных данных.
-   * @return Экземпляр js-состояния.
+   * Сгенерить экземпляр [[MainScreen]] на основе накопленных данных.
+    *
+    * @return Экземпляр js-состояния.
    */
-  def toJsState: ScJsState = ScJsState.veryEmpty
+  def toJsState: Sc3Pages.MainScreen = Sc3Pages.MainScreen.empty
 
   def toCall = routes.Sc.geoSite(toJsState)
 
@@ -127,9 +128,9 @@ sealed trait RetToNode extends ReturnToScBuilder {
     super.setAdnId(adnId)
   }
 
-  override def toJsState: ScJsState = {
+  override def toJsState: Sc3Pages.MainScreen = {
     super.toJsState.copy(
-      adnId = adnIdOpt
+      nodeId = adnIdOpt
     )
   }
 }
@@ -150,10 +151,10 @@ sealed trait RetToFocusedAd extends ReturnToScBuilder {
     super.setFocusedProducerId(adnId)
   }
 
-  override def toJsState: ScJsState = {
+  override def toJsState: Sc3Pages.MainScreen = {
     super.toJsState.copy(
-      fadsProdIdOpt = focProdIdOpt,
-      fadOpenedIdOpt = focAdIdOpt
+      nodeId = focProdIdOpt,
+      focusedAdId = focAdIdOpt
     )
   }
 }

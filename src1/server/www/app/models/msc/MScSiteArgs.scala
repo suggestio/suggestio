@@ -2,6 +2,7 @@ package models.msc
 
 import io.suggest.n2.node.MNode
 import io.suggest.sc.MScApiVsn
+import io.suggest.sc.sc3.Sc3Pages
 import play.twirl.api.Html
 
 /**
@@ -21,7 +22,7 @@ final case class MScSiteArgs(
                               scriptHtml    : Html,
                               /** Версия API выдачи. */
                               apiVsn        : MScApiVsn,
-                              override val jsStateOpt: Option[ScJsState] = None,
+                              override val jsStateOpt: Option[Sc3Pages.MainScreen] = None,
                               override val syncRender: Boolean,
                             )
   extends SyncRenderInfoDflt

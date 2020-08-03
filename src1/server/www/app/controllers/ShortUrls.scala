@@ -5,10 +5,10 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.mctx.ContextUtil
-import models.msc.ScJsState
 import play.api.Mode
 import play.api.mvc.{RequestHeader, Result}
 import util.acl.MaybeAuth
@@ -46,8 +46,8 @@ final class ShortUrls @Inject() (
   private def _scUrlRdrResp(beaconId: Option[String] = None)
                            (implicit request: RequestHeader): Future[Result] = {
     val call = routes.Sc.geoSite(
-      ScJsState(
-        generationOpt = None,
+      Sc3Pages.MainScreen(
+        generation = None,
         // TODO надо id узла-маячка пробросить в выдачу.
       )
     )

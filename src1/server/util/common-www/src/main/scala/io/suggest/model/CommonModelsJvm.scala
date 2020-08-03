@@ -5,7 +5,8 @@ import java.net.URLEncoder
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MStorages}
 import _root_.play.api.mvc.QueryStringBindable
-import io.suggest.common.empty.OptionUtil, OptionUtil.BoolOptOps
+import io.suggest.common.empty.OptionUtil
+import OptionUtil.BoolOptOps
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
@@ -13,6 +14,7 @@ import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.swfs.fid.Fid
 import io.suggest.up.{MUploadChunkQs, MUploadChunkSize, MUploadChunkSizes}
@@ -549,6 +551,94 @@ object CommonModelsJvm extends MacroLogsDyn {
         )
       }
 
+    }
+  }
+
+
+  /** QS-биндинги дял Sc3 MainScreen. */
+  implicit def sc3MainScreenQsb: QueryStringBindable[Sc3Pages.MainScreen] = {
+    new QueryStringBindableImpl[Sc3Pages.MainScreen] {
+      import io.suggest.sc.ScConstants.ScJsState._
+      import io.suggest.geo.GeoPoint
+
+      private lazy val strOptB = implicitly[QueryStringBindable[Option[String]]]
+
+      private lazy val boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
+
+      private lazy val boolOrFalseB =
+        boolOptB.transform[Boolean](
+          _.getOrElseFalse,
+          OptionUtil.SomeBool.orNone
+        )
+
+      private def boolOrTrueB: QueryStringBindable[Boolean] =
+        boolOptB.transform[Boolean](
+          _.getOrElseTrue,
+          OptionUtil.SomeBool.orSome
+        )
+
+      private def longOptB = implicitly[QueryStringBindable[Option[Long]]]
+      private def geoPointOptB = GeoPoint.pipeDelimitedQsbOpt( strOptB )
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Sc3Pages.MainScreen]] = {
+        for {
+          nodeIdOptE          <- strOptB.bind( NODE_ID_FN, params )
+          searchOpenedE       <- boolOrFalseB.bind( SEARCH_OPENED_FN, params )
+          menuOpenedE         <- boolOrFalseB.bind( MENU_OPENED_FN, params )
+          generationOptE      <- longOptB.bind( GENERATION_FN, params )
+          tagNodeIdOptE       <- strOptB.bind( TAG_NODE_ID_FN, params )
+          geoPointOptE        <- geoPointOptB.bind( LOC_ENV_FN, params )
+          focusedAdIdOptE     <- strOptB.bind( FOCUSED_AD_ID_FN, params )
+          firstRunOpenE       <- boolOrFalseB.bind( FIRST_RUN_OPEN_FN, params )
+          dlAppOpenE          <- boolOrFalseB.bind( DL_APP_OPEN_FN, params )
+          settingsOpenE       <- boolOrFalseB.bind( SETTINGS_OPEN_FN, params )
+          showWelcomeE        <- boolOrTrueB.bind( SHOW_WELCOME_FN, params )
+        } yield {
+          for {
+            nodeIdOpt         <- nodeIdOptE
+            searchOpened      <- searchOpenedE
+            menuOpened        <- menuOpenedE
+            generationOpt     <- generationOptE
+            tagNodeIdOpt      <- tagNodeIdOptE
+            geoPointOpt       <- geoPointOptE
+            focusedAdIdOpt    <- focusedAdIdOptE
+            firstRunOpen      <- firstRunOpenE
+            dlAppOpen         <- dlAppOpenE
+            settingsOpen      <- settingsOpenE
+            showWelcome       <- showWelcomeE
+          } yield {
+            Sc3Pages.MainScreen(
+              nodeId          = nodeIdOpt,
+              searchOpened    = searchOpened,
+              menuOpened      = menuOpened,
+              generation      = generationOpt,
+              tagNodeId       = tagNodeIdOpt,
+              locEnv          = geoPointOpt,
+              focusedAdId     = focusedAdIdOpt,
+              firstRunOpen    = firstRunOpen,
+              dlAppOpen       = dlAppOpen,
+              settingsOpen    = settingsOpen,
+              showWelcome     = showWelcome,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: Sc3Pages.MainScreen): String = {
+        _mergeUnbinded1(
+          strOptB.unbind( NODE_ID_FN, value.nodeId ),
+          boolOrFalseB.unbind( SEARCH_OPENED_FN, value.searchOpened ),
+          boolOrFalseB.unbind( MENU_OPENED_FN, value.menuOpened ),
+          longOptB.unbind( GENERATION_FN, value.generation ),
+          strOptB.unbind( TAG_NODE_ID_FN, value.tagNodeId ),
+          geoPointOptB.unbind( LOC_ENV_FN, value.locEnv ),
+          strOptB.unbind( FOCUSED_AD_ID_FN, value.focusedAdId ),
+          boolOrFalseB.unbind( FIRST_RUN_OPEN_FN, value.firstRunOpen ),
+          boolOrFalseB.unbind( DL_APP_OPEN_FN, value.dlAppOpen ),
+          boolOrFalseB.unbind( SETTINGS_OPEN_FN, value.settingsOpen ),
+          boolOrTrueB.unbind( SHOW_WELCOME_FN, value.showWelcome ),
+        )
+      }
     }
   }
 

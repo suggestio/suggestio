@@ -202,7 +202,6 @@ object ScConstants {
     val SEARCH_OPENED_FN        = "s.open"
 
     val FOCUSED_AD_ID_FN        = "f.cur.id"
-    val PRODUCER_ADN_ID_FN      = "f.pr.id"
 
     val MENU_OPENED_FN          = "n.open"
 

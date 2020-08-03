@@ -13,7 +13,7 @@
 @import helper._
 @import io.suggest.popup.PopupConstants
 @import io.suggest.i18n.MsgCodes
-@import models.msc.ScJsState
+@import io.suggest.sc.sc3.Sc3Pages
 
 <!DOCTYPE html>
 <html>
@@ -43,7 +43,7 @@
 
     <div class="header_cnt">
 
-      <a href="@routes.Sc.geoSite( nodeIdOpt.fold( ScJsState.veryEmpty )(nodeId => ScJsState(adnId = nodeIdOpt)) )">
+      <a href="@routes.Sc.geoSite( nodeIdOpt.fold( Sc3Pages.MainScreen.empty )(nodeId => Sc3Pages.MainScreen(nodeId = nodeIdOpt)) )">
         @nodeOpt.fold {
           <img class="header_logo-text" src='@cdn.asset("images/market/index/logo_retina.png")' width="101" height="26"/>
         } { mnode =>

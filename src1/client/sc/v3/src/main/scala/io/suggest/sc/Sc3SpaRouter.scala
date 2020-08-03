@@ -1,5 +1,7 @@
 package io.suggest.sc
 
+import java.net.URI
+
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
@@ -8,7 +10,7 @@ import io.suggest.sc.v.ScRootR
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.spa.MGen
-import io.suggest.text.{UrlUtil2, UrlUtilJs}
+import io.suggest.text.UrlUtilJs
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
@@ -38,8 +40,6 @@ class Sc3SpaRouter(
   /** Всё состояние роутера и связанные данные живут здесь: */
   val state: MSpaRouterState = RouterConfigDsl[Sc3Pages].use { dsl =>
     import dsl._
-
-    val baseUrlSuffix = "#!"
 
     /** Конфиг роутера второго поколения.
       * Он больше похож на sc2-роутер, который вручную токенайзит и парсит qs-части.
@@ -176,10 +176,11 @@ class Sc3SpaRouter(
         link        <- DocumentVm().head.links
         if link.isCanonical
         href        <- link.href
-        urlHash     <- UrlUtil2.getUrlHash(href)
+        hrefUrl = new URI( href )
+        urlHash     <- Option( hrefUrl.getRawQuery )
         if urlHash.nonEmpty
         // TODO Надо нормальный парсер, не капризный к порядку или &
-        urlHash2 = urlHash.replace(baseUrlSuffix, "") + "&"
+        urlHash2 = urlHash + "&"
         parsedOpt   <- mainScreenOptRoute.route.parse( Path(urlHash2) )
         parsed      <- parsedOpt
       } yield {
@@ -216,9 +217,7 @@ class Sc3SpaRouter(
       }
 
     val (r, rCtl) = Router.componentAndCtl[Sc3Pages](
-      // TODO Когда v3 выдача станет дефолтом, лучше будет использовать fromWindowOrigin() НАВЕРНОЕ.
-      //BaseUrl.fromWindowOrigin / "#!",
-      baseUrl = BaseUrl.until_# + baseUrlSuffix,
+      baseUrl = BaseUrl.fromWindowOrigin_/,
       cfg     = routerCfg
     )
 
@@ -235,14 +234,14 @@ class Sc3SpaRouter(
   // Готовые инстансы вызываются только из функций роутера, поэтому их безопасно дёргать отсюда.
   val sc3Circuit = sc3CircuitF( state )
 
-  private lazy val _scRootWrapped = {
+  private lazy val _scRootWrapped: VdomElement = {
     // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
     val scRootR = mkScRootR( state )
     sc3Circuit.wrap( identity(_) )( scRootR.component.apply )
   }
 
   /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */
-  private def _renderScMainScreen(page: MainScreen) = {
+  private def _renderScMainScreen(page: MainScreen): VdomElement = {
     // Отправить распарсенные данные URL в circuit:
     sc3Circuit.runEffectAction( RouteTo(page) )
     // Вернуть исходный компонент. circuit сама перестроит её при необходимости:

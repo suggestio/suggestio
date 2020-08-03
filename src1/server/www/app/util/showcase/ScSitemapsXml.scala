@@ -10,13 +10,12 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl}
 import models.mctx.ContextUtil
-import models.msc.ScJsState
 import play.api.inject.Injector
-import play.api.mvc.QueryStringBindable
 import util.seo.SiteMapXmlCtl
 
 
@@ -83,7 +82,6 @@ class ScSitemapsXml @Inject() (
 
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
-    val qsb = ScJsState.qsbStandalone
 
     import mNodes.Implicits._
     import streamsUtil.Implicits._
@@ -93,7 +91,7 @@ class ScSitemapsXml @Inject() (
       .source[MNode]( adSearch.toEsQuery )
       .mapConcat { mad =>
         try {
-          mad2sxu(mad, today, qsb)
+          mad2sxu(mad, today)
         } catch {
           // Подавить возможные ошибки рендера ссылок для текущего узла:
           case ex: Throwable =>
@@ -116,7 +114,7 @@ class ScSitemapsXml @Inject() (
    * @return Экземпляры SiteMapUrl.
    *         Если карточка на годится для индексации, то пустой список.
    */
-  protected def mad2sxu(mad: MNode, today: LocalDate, qsb: QueryStringBindable[ScJsState]): List[SiteMapUrl] = {
+  protected def mad2sxu(mad: MNode, today: LocalDate): List[SiteMapUrl] = {
 
     val rcvrIdOpt = mad.edges
       .withPredicateIter(MPredicates.Receiver, MPredicates.OwnedBy)
@@ -137,14 +135,14 @@ class ScSitemapsXml @Inject() (
     // TODO Учитывать геотеги? direct-теги?
 
     // Собрать данные для sitemap-ссылки на карточку.
-    val jsState = ScJsState(
-      adnId           = rcvrIdOpt,
-      fadOpenedIdOpt  = mad.id,
-      generationOpt   = None, // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
-      geoPoint        = gpOpt
+    val jsState = Sc3Pages.MainScreen(
+      nodeId       = rcvrIdOpt,
+      focusedAdId  = mad.id,
+      generation   = None, // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
+      locEnv       = gpOpt
     )
 
-    val url = routes.Sc.geoSite().url + "#!?" + implicitly[QueryStringBindable[ScJsState]].unbind("", jsState)
+    val url = routes.Sc.geoSite(jsState).url
     val lastDt = mad.meta.basic.dateEditedOrCreated
     val lastDate = lastDt.toLocalDate
 

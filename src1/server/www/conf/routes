@@ -4,7 +4,7 @@
 GET  /~$code<[.a-zA-Z0-9~_&$#@?=;:/,+$&-]{1,4}>        @controllers.ShortUrls.handleUrl(code: String)
 
 ## Home page
-GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+GET  /                                  @controllers.Sc.geoSite(a: io.suggest.sc.sc3.Sc3Pages.MainScreen ?= io.suggest.sc.sc3.Sc3Pages.MainScreen.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)

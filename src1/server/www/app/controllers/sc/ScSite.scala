@@ -1,6 +1,5 @@
 package controllers.sc
 
-import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
@@ -11,7 +10,7 @@ import io.suggest.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.n2.node.{IMNodes, MNode}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
+import io.suggest.sc.sc3.{MSc3Conf, MSc3Init, Sc3Pages}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.IMacroLogs
@@ -32,6 +31,7 @@ import OptionUtil.BoolOptOps
 import io.suggest.es.model.EsModelDi
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -172,12 +172,14 @@ trait ScSite
     /** Кастомное опциональное состояние выдачи, которое должно быть отрендерено прямо в шаблоне и
       * прочитано оттуда выдачей. Изначальное появилось для передачи adnId (id текущего узла-ресивера),
       * но сразу было переимплеменчено в более универсальный инструмент. */
-    def customScStateOptFut: Future[Option[ScJsState]] = {
+    def customScStateOptFut: Future[Option[Sc3Pages.MainScreen]] = {
       for {
         nodeOpt <- nodeOptFutVal
       } yield {
         for (mnode <- nodeOpt) yield {
-          ScJsState(adnId = mnode.id)
+          Sc3Pages.MainScreen(
+            nodeId = mnode.id,
+          )
         }
       }
     }
@@ -387,19 +389,13 @@ trait ScSite
 
   // Экшены реализации поддержки sc-сайта.
 
-  /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
-  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = maybeAuth(U.PersonNode).async { implicit request =>
-    if (maybeJsState.nonEmpty) {
-      // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
-      // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
-      LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteClientAddress}]")
-      val call = routes.Sc.geoSite(x = siteArgs).url + "#!?" + implicitly[QueryStringBindable[ScJsState]].unbind("", maybeJsState)
-      Redirect(call)
-
-    } else {
+  /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов.
+    * mainScreen разбирается на клиенте самой выдачей. */
+  def geoSite(mainScreen: Sc3Pages.MainScreen, siteArgs: SiteQsArgs) = {
+    // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
+    maybeAuth(U.PersonNode).async { implicit request =>
       // Выбор движка выдачи:
-      if (siteArgs.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
+      if (siteArgs.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
         // Логика sc3
         val logic = new SiteScriptLogicV3 {
           override implicit def _request = request

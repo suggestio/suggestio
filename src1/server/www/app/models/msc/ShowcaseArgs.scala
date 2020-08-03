@@ -1,5 +1,7 @@
 package models.msc
 
+import io.suggest.sc.sc3.Sc3Pages
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -10,5 +12,5 @@ package models.msc
 
 trait SyncRenderInfoDflt {
   def syncRender: Boolean = jsStateOpt.isDefined
-  def jsStateOpt: Option[ScJsState] = None
+  def jsStateOpt: Option[Sc3Pages.MainScreen] = None
 }
