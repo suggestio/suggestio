@@ -1,5 +1,6 @@
 package io.suggest.sc.sc3
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.geo.MGeoPoint
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -46,7 +47,12 @@ object Sc3Pages {
         (__ \ FIRST_RUN_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ DL_APP_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ SETTINGS_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse and
-        (__ \ SHOW_WELCOME_FN).formatNullable[Boolean].formatBooleanOrTrue
+        (__ \ SHOW_WELCOME_FN).formatNullable[Boolean].formatBooleanOrTrue and
+        (__ \ VIRT_BEACONS_FN).formatNullable[Set[String]]
+          .inmap[Set[String]](
+            EmptyUtil.opt2ImplEmptyF(Set.empty),
+            s => Option.when(s.nonEmpty)(s)
+          )
       )(apply, unlift(unapply))
     }
 
@@ -84,11 +90,12 @@ object Sc3Pages {
       /** Переключение в другое состояние с минимальными изменениями конфигурации интерфейса. */
       def silentSwitchingInto( mainScreen2: MainScreen ): MainScreen = {
         mainScreen2.copy(
-          searchOpened = mainScreen.searchOpened,
-          menuOpened = mainScreen.menuOpened,
-          firstRunOpen = mainScreen.firstRunOpen,
-          showWelcome = false,
-          dlAppOpen =  mainScreen.dlAppOpen,
+          searchOpened  = mainScreen.searchOpened,
+          menuOpened    = mainScreen.menuOpened,
+          firstRunOpen  = mainScreen.firstRunOpen,
+          showWelcome   = false,
+          dlAppOpen     = mainScreen.dlAppOpen,
+          virtBeacons     = Set.empty,
         )
       }
 
@@ -98,6 +105,7 @@ object Sc3Pages {
           searchOpened      = false,
           menuOpened        = false,
           generation        = None,
+          virtBeacons         = Set.empty,
         )
       }
 
@@ -118,8 +126,8 @@ object Sc3Pages {
                          dlAppOpen      : Boolean             = false,
                          settingsOpen   : Boolean             = false,
                          showWelcome    : Boolean             = true,
+                         virtBeacons    : Set[String]         = Set.empty,
                        )
     extends Sc3Pages
 
 }
-

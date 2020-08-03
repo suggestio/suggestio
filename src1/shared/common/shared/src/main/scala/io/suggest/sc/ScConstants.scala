@@ -214,6 +214,9 @@ object ScConstants {
     /** Отображать ли приветствие узла? */
     def SHOW_WELCOME_FN         = "wc"
 
+    /** Название поля виртуального маячка. */
+    def VIRT_BEACONS_FN         = "bcn"
+
     // Панель поиска: гео-позишен, [гео]теги.
     final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN
 

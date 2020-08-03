@@ -525,6 +525,10 @@ class TailAh(
       if (m.mainScreen.settingsOpen !=* currMainScreen.settingsOpen)
         fxsAcc ::= SettingsDiaOpen( opened = m.mainScreen.settingsOpen ).toEffectPure
 
+      // Если в состоянии заданы виртуальные маячки, то нужно перезагрузить плитку.
+      if (m.mainScreen.virtBeacons !=* currMainScreen.virtBeacons)
+        isGridNeedsReload = true
+
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
       if (m.mainScreen.needGeoLoc &&
@@ -532,7 +536,11 @@ class TailAh(
         v0.dialogs.first.view.isEmpty
       ) {
         // Если геолокация ещё не запущена, то запустить:
-        if (GeoLocUtilJs.envHasGeoLoc() && !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) && !isGeoLocRunning) {
+        if (
+          GeoLocUtilJs.envHasGeoLoc() &&
+          !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) &&
+          !isGeoLocRunning
+        ) {
           fxsAcc ::= GeoLocOnOff(enabled = true, isHard = false).toEffectPure
           isGeoLocRunning = true
         }
@@ -591,7 +599,9 @@ class TailAh(
       }
 
       // Обновлённое состояние, которое может быть и не обновлялось:
-      val v2Opt = modsAcc.reduceOption(_ andThen _).map(_(v0))
+      val v2Opt = modsAcc
+        .reduceOption(_ andThen _)
+        .map(_(v0))
 
       // Принять решение о перезагрузке выдачи, если необходимо.
       if (isToReloadIndex && !isGeoLocRunning) {
@@ -606,6 +616,7 @@ class TailAh(
           focusedAdId = m.mainScreen.focusedAdId,
         )
         fxsAcc ::= TailAh.getIndexFx( switchCtx ) >> LoadIndexRecents(clean = false).toEffectPure
+
       } else if (isGridNeedsReload)  {
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure

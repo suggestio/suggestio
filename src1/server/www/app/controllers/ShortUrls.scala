@@ -47,8 +47,13 @@ final class ShortUrls @Inject() (
                            (implicit request: RequestHeader): Future[Result] = {
     val call = routes.Sc.geoSite(
       Sc3Pages.MainScreen(
-        generation = None,
-        // TODO надо id узла-маячка пробросить в выдачу.
+        generation  = None,
+        virtBeacons = {
+          var acc = Set.empty[String]
+          for (bId <- beaconId)
+            acc += bId
+          acc
+        },
       )
     )
     val toAbsUrl = contextUtil.SC_HOST_PORT + call.url

@@ -580,6 +580,12 @@ object CommonModelsJvm extends MacroLogsDyn {
       private def longOptB = implicitly[QueryStringBindable[Option[Long]]]
       private def geoPointOptB = GeoPoint.pipeDelimitedQsbOpt( strOptB )
 
+      private def stringsB = implicitly[QueryStringBindable[QsbSeq[String]]]
+        .transform[Set[String]](
+          _.items.toSet,
+          m => QsbSeq( m.toSeq )
+        )
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Sc3Pages.MainScreen]] = {
         for {
           nodeIdOptE          <- strOptB.bind( NODE_ID_FN, params )
@@ -593,6 +599,7 @@ object CommonModelsJvm extends MacroLogsDyn {
           dlAppOpenE          <- boolOrFalseB.bind( DL_APP_OPEN_FN, params )
           settingsOpenE       <- boolOrFalseB.bind( SETTINGS_OPEN_FN, params )
           showWelcomeE        <- boolOrTrueB.bind( SHOW_WELCOME_FN, params )
+          virtBeaconsE        <- stringsB.bind( VIRT_BEACONS_FN, params )
         } yield {
           for {
             nodeIdOpt         <- nodeIdOptE
@@ -606,6 +613,7 @@ object CommonModelsJvm extends MacroLogsDyn {
             dlAppOpen         <- dlAppOpenE
             settingsOpen      <- settingsOpenE
             showWelcome       <- showWelcomeE
+            virtBeacons       <- virtBeaconsE
           } yield {
             Sc3Pages.MainScreen(
               nodeId          = nodeIdOpt,
@@ -619,6 +627,7 @@ object CommonModelsJvm extends MacroLogsDyn {
               dlAppOpen       = dlAppOpen,
               settingsOpen    = settingsOpen,
               showWelcome     = showWelcome,
+              virtBeacons     = virtBeacons,
             )
           }
         }
@@ -637,6 +646,7 @@ object CommonModelsJvm extends MacroLogsDyn {
           boolOrFalseB.unbind( DL_APP_OPEN_FN, value.dlAppOpen ),
           boolOrFalseB.unbind( SETTINGS_OPEN_FN, value.settingsOpen ),
           boolOrTrueB.unbind( SHOW_WELCOME_FN, value.showWelcome ),
+          stringsB.unbind( VIRT_BEACONS_FN, value.virtBeacons ),
         )
       }
     }

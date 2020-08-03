@@ -1,6 +1,7 @@
 package io.suggest.sc.m
 
 import diode.FastEq
+import io.suggest.ble.MUidBeacon
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.m.dev.MScDev
 import io.suggest.sc.m.dia.MScDialogs
@@ -77,7 +78,15 @@ case class MScRoot(
   }
 
   def locEnvBleBeacons = {
-    dev.beaconer.nearbyReport
+    val nr0 = dev.beaconer.nearbyReport
+    internals.info.currRoute
+      .filter(_.virtBeacons.nonEmpty)
+      .fold( nr0 ) { mainScreen =>
+        mainScreen
+          .virtBeacons
+          .iterator
+          .map(MUidBeacon(_, 0)) ++: nr0
+      }
   }
   def locEnvMap: MLocEnv = {
     MLocEnv(
