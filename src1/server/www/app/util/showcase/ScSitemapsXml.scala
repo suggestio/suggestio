@@ -144,7 +144,7 @@ class ScSitemapsXml @Inject() (
       geoPoint        = gpOpt
     )
 
-    val url = routes.Sc.geoSite().url + "#!?" + jsState.toQs(qsb)
+    val url = routes.Sc.geoSite().url + "#!?" + implicitly[QueryStringBindable[ScJsState]].unbind("", jsState)
     val lastDt = mad.meta.basic.dateEditedOrCreated
     val lastDate = lastDt.toLocalDate
 

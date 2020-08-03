@@ -766,6 +766,7 @@ edge.predicate.qe=Электронная почта
 edge.predicate.qp=Номер телефона
 edge.predicate.qi=Идентификатор
 edge.predicate.qw=Пароль
+edge.predicate.u=Короткая ссылка
 
 Your.name=Ваше имя
 First.name=Имя

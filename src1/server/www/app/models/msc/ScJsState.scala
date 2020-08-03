@@ -6,11 +6,8 @@ import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil
-
-import scala.util.Random
 
 /**
  * Suggest.io
@@ -22,11 +19,6 @@ import scala.util.Random
 object ScJsState extends MacroLogsImpl {
 
   import io.suggest.sc.ScConstants.ScJsState._
-
-  def generationDflt: Option[Long] = {
-    val l = new Random().nextLong()
-    Some(l)
-  }
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
@@ -41,7 +33,6 @@ object ScJsState extends MacroLogsImpl {
                             strOptB      : QueryStringBindable[Option[String]],
                             boolOptB     : QueryStringBindable[Option[Boolean]],
                             longOptB     : QueryStringBindable[Option[Long]],
-                            intOptB      : QueryStringBindable[Option[Int]],
                             nglsMapB     : QueryStringBindable[Option[NglsStateMap_t]]
                            ): QueryStringBindable[ScJsState] = {
     val geoPointOptB = pipeDelimitedQsbOpt
@@ -53,7 +44,6 @@ object ScJsState extends MacroLogsImpl {
           maybeGeoScreenOpened  <- boolOptB.bind(MENU_OPENED_FN,     params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN,         params)
           maybeFadsOpened       <- strOptB.bind (FOCUSED_AD_ID_FN, params)
-          maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
           geoPointOptEith       <- geoPointOptB.bind(LOC_ENV_FN,        params)
         } yield {
@@ -61,10 +51,8 @@ object ScJsState extends MacroLogsImpl {
             adnId               = strNonEmpty( QsbUtil.eitherOpt2option(maybeAdnId) ),
             searchScrOpenedOpt  = noFalse( QsbUtil.eitherOpt2option(maybeCatScreenOpened) ),
             menuOpenedOpt     = noFalse( QsbUtil.eitherOpt2option(maybeGeoScreenOpened) ),
-            generationOpt       = QsbUtil.eitherOpt2option(maybeGeneration)
-              .orElse(generationDflt),
+            generationOpt       = QsbUtil.eitherOpt2option(maybeGeneration),
             fadOpenedIdOpt      = strNonEmpty( QsbUtil.eitherOpt2option(maybeFadsOpened) ),
-            fadsOffsetOpt       = QsbUtil.eitherOpt2option(maybeFadsOffset),
             fadsProdIdOpt       = strNonEmpty( QsbUtil.eitherOpt2option(maybeProducerAdnId) ),
             geoPoint            = QsbUtil.eitherOpt2option( geoPointOptEith )
           )
@@ -79,16 +67,12 @@ object ScJsState extends MacroLogsImpl {
           boolOptB.unbind (MENU_OPENED_FN,        value.menuOpenedOpt),
           longOptB.unbind (GENERATION_FN,         value.generationOpt),
           strOptB.unbind  (FOCUSED_AD_ID_FN,      value.fadOpenedIdOpt),
-          intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
           strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
           geoPointOptB.unbind(LOC_ENV_FN,         value.geoPoint)
         )
       }
     } // new QSB {}
   }   // def qsb()
-
-  /** Выдать пустой инстанс. Всегда немного разный, чтобы был эффект тасования. */
-  def empty = ScJsState()
 
   /** Очень часто-используемый вообще пустой инстанс. */
   val veryEmpty = ScJsState(generationOpt = None)
@@ -103,7 +87,6 @@ object ScJsState extends MacroLogsImpl {
  * @param menuOpenedOpt Инфа об раскрытости левой панели (меню).
  * @param generationOpt "Поколение" - random seed.
  * @param fadOpenedIdOpt id текущей открытой карточки.
- * @param fadsOffsetOpt текущий сдвиг в просматриваемых карточках.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
  * @param geoPoint Данные по текущему месту юзера на карте, если есть.
  */
@@ -112,9 +95,8 @@ case class ScJsState(
                       adnId               : Option[String]   = None,
                       searchScrOpenedOpt  : Option[Boolean]  = None,
                       menuOpenedOpt       : Option[Boolean]  = None,
-                      generationOpt       : Option[Long]     = ScJsState.generationDflt,
+                      generationOpt       : Option[Long]     = None,
                       fadOpenedIdOpt      : Option[String]   = None,
-                      fadsOffsetOpt       : Option[Int]      = None,
                       fadsProdIdOpt       : Option[String]   = None,
                       geoPoint            : Option[MGeoPoint] = None
 )
@@ -132,48 +114,11 @@ case class ScJsState(
     }
   }
 
-  protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
-    boolOpt.isDefined && boolOpt.get
-  }
-
-  protected def orZero(intOpt: Option[Int]): Int = {
-    if (intOpt.isDefined)  intOpt.get  else  0
-  }
-
-  protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
-    if (bool) Some(bool) else None
-  }
-
-  def isSearchScrOpened : Boolean = orFalse( searchScrOpenedOpt )
-  def isNavScrOpened    : Boolean = orFalse( menuOpenedOpt )
-  def isAnyPanelOpened  : Boolean = isSearchScrOpened || isNavScrOpened
-  def isFadsOpened      : Boolean = fadOpenedIdOpt.isDefined
-  def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
-
-
-  def fadsOffset        : Int     = orZero( fadsOffsetOpt )
-
-  def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
-
-  /**
-   * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.
-   * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
-   */
-  def toggleNavScreen = copy(
-    menuOpenedOpt = bool2boolOpt( !isNavScrOpened )
-  )
-
-  def toggleSearchScreen = copy(
-    searchScrOpenedOpt = bool2boolOpt( !isSearchScrOpened )
-  )
-
-
   /** Очень каноническое состояние выдачи без каких-либо уточнений. */
   def canonical: ScJsState = copy(
     searchScrOpenedOpt  = None,
     menuOpenedOpt     = None,
     generationOpt       = None,
-    fadsOffsetOpt       = None,
     fadsProdIdOpt       = None
   )
 
@@ -183,18 +128,3 @@ case class ScJsState(
   }
 
 }
-
-
-/** Некоторые асинхронные шаблоны выдачи при синхронном рендере требуют для себя js-состояние. */
-abstract class JsStateRenderWrapper {
-
-  /**
-    * Запустить синхронный рендер шаблона используя указанное js-состояние выдачи.
-    * @param jsStateOpt None - происходит асинхронный рендер. Some() - идёт синхронный рендер с указанным состоянием.
-    * @return Отрендеренный HTML.
-    */
-  def apply(jsStateOpt: Option[ScJsState] = None): Html
-
-}
-
-

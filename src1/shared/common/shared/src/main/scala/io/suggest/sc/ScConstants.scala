@@ -202,7 +202,6 @@ object ScConstants {
     val SEARCH_OPENED_FN        = "s.open"
 
     val FOCUSED_AD_ID_FN        = "f.cur.id"
-    val FADS_OFFSET_FN          = "f.off"
     val PRODUCER_ADN_ID_FN      = "f.pr.id"
 
     val MENU_OPENED_FN          = "n.open"
@@ -221,7 +220,6 @@ object ScConstants {
 
     def TAG_INFO_FN             = "t"
     val TAG_NODE_ID_FN          = TAG_INFO_FN + ".i"
-    val TAG_FACE_FN             = TAG_INFO_FN + ".f"
 
     /** Историческая проблема: названия qs-параметров оторваны от структуры qs-модели состояния.
       * js-роутер o2qs() неправильно сериализует названия qs-полей.

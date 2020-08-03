@@ -758,6 +758,7 @@ edge.predicate.qe=E-mail
 edge.predicate.qp=Phone number
 edge.predicate.qi=Identifier
 edge.predicate.qw=Password
+edge.predicate.u=Short link
 
 Your.name=Your name
 First.name=First name

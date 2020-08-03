@@ -217,6 +217,10 @@ object MPredicates extends StringEnum[MPredicate] {
   }
 
 
+  /** id для сборки Short URL. */
+  case object ShortUrl extends MPredicate("u")
+
+
   /** Используется только в конструкторе, в тестах, в редкой sys edgeForm. */
   override def values = findValues
 
