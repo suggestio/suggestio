@@ -100,6 +100,10 @@ class Sc3SpaRouter(
             dlAppOpen = _boolOrFalseTok( K.DL_APP_OPEN_FN ),
             settingsOpen = _boolOrFalseTok( K.SETTINGS_OPEN_FN ),
             showWelcome = _boolOptTok( K.SHOW_WELCOME_FN ).getOrElseTrue,
+            virtBeacons = tokens.view
+              .filterKeys(_ startsWith K.VIRT_BEACONS_FN)
+              .valuesIterator
+              .toSet,
           )
         }
       } { mainScreen =>
@@ -164,6 +168,11 @@ class Sc3SpaRouter(
 
         if (!mainScreen.showWelcome)
           acc ::= K.SHOW_WELCOME_FN -> mainScreen.showWelcome.toString
+
+        for {
+          (bcnId, i) <- mainScreen.virtBeacons.iterator.zipWithIndex
+        }
+          acc ::= s"${K.VIRT_BEACONS_FN}[$i]" -> bcnId
 
         val queryString = UrlUtilJs.qsPairsToString(acc)
         Some( queryString )

@@ -1,7 +1,7 @@
 # This file defines all application routes (Higher priority routes first)
 
 ## Перехват коротких ссылок (EddyStone-URL длина макс. 17 минус схема-домен-тильда = 4 => 39 млн.комбинаций)
-GET  /!$code<[.a-zA-Z0-9~_&$#@?=;:/,+$&-]{1,4}>        @controllers.ShortUrls.handleUrl(code: String)
+GET  /~$code<[.a-zA-Z0-9~_&$#@?=;:/,+$&-]{1,4}>        @controllers.ShortUrls.handleUrl(code: String)
 
 ## Home page
 GET  /                                  @controllers.Sc.geoSite(a: io.suggest.sc.sc3.Sc3Pages.MainScreen ?= io.suggest.sc.sc3.Sc3Pages.MainScreen.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)

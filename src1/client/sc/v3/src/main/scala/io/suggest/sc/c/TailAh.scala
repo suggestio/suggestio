@@ -181,12 +181,21 @@ class TailAh(
     // Заставить роутер собрать новую ссылку.
     case m: ResetUrlRoute =>
       val v0 = value
-      val nextRoute = m.route getOrElse TailAh.getMainScreenSnapShot( v0 )
+      var nextRoute = m.route getOrElse TailAh.getMainScreenSnapShot( v0 )
 
       val currRouteLens = TailAh._currRoute
-      if (!m.force && (currRouteLens.get( v0 ) contains[MainScreen] nextRoute)) {
+      val currRouteOpt = currRouteLens.get( v0 )
+      if (!m.force && (currRouteOpt contains[MainScreen] nextRoute)) {
         noChange
       } else {
+        // Скопировать URL-поле virtBeacons, если в рамках одного местоположения:
+        for {
+          currRoute <- currRouteOpt
+          if currRoute.virtBeacons.nonEmpty &&
+            (currRoute isSamePlaceAs nextRoute)
+        }
+          nextRoute = (Sc3Pages.MainScreen.virtBeacons set currRoute.virtBeacons)(nextRoute)
+
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
         val fx = Effect.action {
           routerCtl

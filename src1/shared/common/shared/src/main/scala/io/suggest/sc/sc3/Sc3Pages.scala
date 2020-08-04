@@ -62,6 +62,7 @@ object Sc3Pages {
     def searchOpened = GenLens[MainScreen]( _.searchOpened )
     def menuOpened = GenLens[MainScreen]( _.menuOpened )
     def showWelcome = GenLens[MainScreen]( _.showWelcome )
+    def virtBeacons = GenLens[MainScreen]( _.virtBeacons )
 
 
     implicit final class MainScreenOpsExt( private val mainScreen: MainScreen ) extends AnyVal {

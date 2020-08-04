@@ -1,6 +1,5 @@
 package io.suggest.sc.m.inx
 
-import diode.FastEq
 import io.suggest.geo.MGeoPoint
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -15,14 +14,6 @@ import io.suggest.ueq.UnivEqUtil._
 object MIndexView {
 
   def empty = apply()
-
-  implicit object MIndexViewFastEq extends FastEq[MIndexView] {
-    override def eqv(a: MIndexView, b: MIndexView): Boolean = {
-      (a.rcvrId ===* b.rcvrId) &&
-      (a.inxGeoPoint ===* b.inxGeoPoint) &&
-      (a.name ===* b.name)
-    }
-  }
 
   @inline implicit def univEq: UnivEq[MIndexView] = UnivEq.derive
 
