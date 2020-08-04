@@ -34,7 +34,6 @@ import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ueq.UnivEqUtil._
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.usr._
 import play.api.data.validation.{Constraints, Valid}
 import util.acl._
@@ -67,11 +66,13 @@ import scala.util.Success
  * Но есть и поддержка логина через внешнего провайдера.
  */
 final class Ident @Inject() (
-                        sioControllerApi     : SioControllerApi,
-                        mCommonDi            : ICommonDi
-                      )
+                              sioControllerApi     : SioControllerApi,
+                            )
   extends MacroLogsImpl
 {
+
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, slick, htmlCompressUtil}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -97,11 +98,9 @@ final class Ident @Inject() (
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
   private lazy val canLoginVia = injector.instanceOf[CanLoginVia]
 
-  import mCommonDi.{ec, csrf, slick, htmlCompressUtil}
-  import sioControllerApi._
-  import slick.profile.api._
   import esModel.api._
   import mPersonIdentModel.api._
+  import slick.profile.api._
 
 
   /** Длина смс-кодов (кол-во цифр). */

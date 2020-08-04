@@ -66,7 +66,6 @@ final class SysAd @Inject()(
   private lazy val isSuNode = injector.instanceOf[IsSuNode]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
 
-
   import sioControllerApi._
 
 

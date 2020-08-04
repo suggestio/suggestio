@@ -19,7 +19,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import javax.inject.Inject
 import models.mctx.Context
-import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
@@ -36,11 +35,11 @@ import views.html.lk.ads._
   */
 final class LkAds @Inject() (
                               sioControllerApi        : SioControllerApi,
-                              mCommonDi               : ICommonDi,
                             )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import mCommonDi.current.injector
 
@@ -50,8 +49,6 @@ final class LkAds @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
   private lazy val mItems = injector.instanceOf[MItems]
-
-  import sioControllerApi._
 
 
   /** Рендер странице с react-формой управления карточками.

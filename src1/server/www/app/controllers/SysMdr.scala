@@ -15,7 +15,6 @@ import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr._
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl._
 import views.html.sys1.mdr._
@@ -40,11 +39,12 @@ import scala.util.Success
  */
 final class SysMdr @Inject() (
                                sioControllerApi         : SioControllerApi,
-                               mCommonDi                : ICommonDi,
                              )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
+  import mCommonDi._
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -58,9 +58,6 @@ final class SysMdr @Inject() (
   private lazy val canMdrResolute = injector.instanceOf[CanMdrResolute]
   private lazy val nodesUtil = injector.instanceOf[NodesUtil]
   private lazy val isAuth = injector.instanceOf[IsAuth]
-
-  import sioControllerApi._
-  import mCommonDi._
 
 
   /** react-форма для осуществления модерации в /sys/.

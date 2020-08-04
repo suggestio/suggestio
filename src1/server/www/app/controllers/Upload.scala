@@ -10,8 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
-import io.suggest.err.HttpResultingException
-import HttpResultingException._
+import io.suggest.err.HttpResultingException, HttpResultingException._
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.file.MSrvFileInfo
@@ -48,12 +47,11 @@ import monocle.Traversal
 import util.img.detect.main.MainColorDetector
 import util.ws.WsDispatcherActors
 import io.suggest.ueq.UnivEqUtil._
-import play.api.http.HttpErrorHandler
 import play.api.inject.Injector
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.MultipartFormData.FilePart
 
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.concurrent.{Future, blocking}
 import scala.util.{Failure, Success}
 import scalaz.ValidationNel
 import scalaz.std.option._
@@ -70,6 +68,9 @@ final class Upload @Inject()(
                             )
   extends MacroLogsImpl
 {
+
+  import sioControllerApi._
+  import mCommonDi.{ec, errorHandler}
 
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val uploadUtil = injector.instanceOf[UploadUtil]
@@ -88,12 +89,8 @@ final class Upload @Inject()(
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val isFileNotModified = injector.instanceOf[IsFileNotModified]
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
-  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
   private lazy val defaultActionBuilder = injector.instanceOf[DefaultActionBuilder]
   private lazy val localImgFileCreatorFactory = injector.instanceOf[LocalImgFileCreatorFactory]
-  implicit private lazy val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
-
-  import sioControllerApi._
 
 
   // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет
@@ -481,7 +478,7 @@ final class Upload @Inject()(
 
         if ( !locImgFile.exists() ) {
           LOGGER.warn(s"bp.!body: Not found local file: $locImgFile\n args = $uploadArgs")
-          val respFut = httpErrorHandler.onClientError(rh, BAD_REQUEST, s"File not uploaded: ${uploadArgs.info.existNodeId getOrElse ""}")
+          val respFut = errorHandler.onClientError(rh, BAD_REQUEST, s"File not uploaded: ${uploadArgs.info.existNodeId getOrElse ""}")
           parse.error( respFut )
 
         } else {
@@ -533,7 +530,7 @@ final class Upload @Inject()(
       defaultActionBuilder.async( parse.ignore(null: MUploadBpRes) ) { implicit request =>
         val msg = "URL TTL expired"
         LOGGER.warn(s"$logPrefix $msg: ${uploadArgs.validTillS}; now was == ${uploadNow.toSeconds}")
-        httpErrorHandler.onClientError( request, play.api.http.Status.NOT_ACCEPTABLE, msg )
+        errorHandler.onClientError( request, play.api.http.Status.NOT_ACCEPTABLE, msg )
       }
 
     } else canUpload.file(uploadArgs, ctxIdOpt).async( _uploadFileBp(uploadArgs) ) { implicit request =>
@@ -1121,7 +1118,7 @@ final class Upload @Inject()(
           _ = (chunkQs.hashesHex ==* hashesHex2) || {
             val msg = s"Calculated hashes differs from qs.hashes.\n qs.hashes = ${chunkQs.hashesHex.mkString(", ")}\n calculated = ${hashesHex2.mkString(", ")}"
             LOGGER.warn(s"$logPrefix $msg")
-            val r = httpErrorHandler.onClientError( request, BAD_REQUEST, message = "" )
+            val r = errorHandler.onClientError( request, BAD_REQUEST, message = "" )
             throw HttpResultingException( r )
           }
 
@@ -1415,7 +1412,7 @@ final class Upload @Inject()(
     })
       .recoverWith { case ex: NoSuchElementException =>
         LOGGER.debug(s"$logPrefix File #${storClient.getClass.getSimpleName}[${s.data}] not found", ex)
-        httpErrorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
+        errorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
       }
   }
 

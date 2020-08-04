@@ -14,7 +14,6 @@ import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MExtTargetSearchArgs, MForAdTplArgs}
 import models.mctx.Context
 import models.mext.MExtServicesJvm
-import models.mproj.ICommonDi
 import models.req.{IAdProdReq, MReqNoBody}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
@@ -41,7 +40,6 @@ import scala.concurrent.Future
  */
 final class LkAdvExt @Inject() (
                                  sioControllerApi                : SioControllerApi,
-                                 mCommonDi                       : ICommonDi
                                )
   extends MacroLogsImpl
 {

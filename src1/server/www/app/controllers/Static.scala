@@ -16,7 +16,6 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.mproj.ICommonDi
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{BodyParser, Result, WebSocket}
@@ -46,7 +45,6 @@ import scala.concurrent.duration._
   */
 final class Static @Inject() (
                                sioControllerApi                : SioControllerApi,
-                               mCommonDi                       : ICommonDi
                              )
   extends MacroLogsImpl
 {

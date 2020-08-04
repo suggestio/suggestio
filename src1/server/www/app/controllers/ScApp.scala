@@ -21,7 +21,6 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import javax.inject.Inject
 import models.im.MFavIcons
-import models.mproj.ICommonDi
 import models.req.INodeOptReq
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
@@ -43,11 +42,11 @@ import scala.util.Try
   */
 final class ScApp @Inject()(
                              sioControllerApi   : SioControllerApi,
-                             mCommonDi          : ICommonDi,
                            )
   extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
   import mCommonDi.current.injector
 
   private lazy val maybeAuthMaybeNode = injector.instanceOf[MaybeAuthMaybeNode]
@@ -63,7 +62,6 @@ final class ScApp @Inject()(
   private lazy val uploadUtil = injector.instanceOf[UploadUtil]
   private lazy val applePlistUtil = injector.instanceOf[ApplePlistUtil]
 
-  import sioControllerApi._
 
 
   /** Экшен раздачи json-манифеста с описаловом вёб-приложения.

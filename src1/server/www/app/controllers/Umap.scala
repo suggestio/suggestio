@@ -15,7 +15,6 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.madn.AdnShownTypes
 import models.maps.umap._
-import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}
 import play.api.http.HttpVerbs
 import play.api.i18n.Messages
@@ -35,11 +34,12 @@ import scala.concurrent.Future
  */
 final class Umap @Inject() (
                              sioControllerApi                : SioControllerApi,
-                             mCommonDi                       : ICommonDi,
                            )
   extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, errorHandler}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -49,8 +49,6 @@ final class Umap @Inject() (
   private lazy val isSuNode = injector.instanceOf[IsSuNode]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
 
-  import sioControllerApi._
-  import mCommonDi._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   def GLOBAL_MAP_EDIT_ALLOWED = true

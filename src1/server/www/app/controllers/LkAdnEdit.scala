@@ -13,7 +13,6 @@ import io.suggest.pick.ContentTypeCheck
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
 import models.mctx.Context
-import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl.{BruteForceProtect, IsNodeAdmin}
 import util.ad.JdAdUtil
@@ -41,10 +40,12 @@ import scala.concurrent.Future
   */
 final class LkAdnEdit @Inject() (
                                   sioControllerApi          : SioControllerApi,
-                                  mCommonDi                 : ICommonDi,
                                 )
   extends MacroLogsImpl
 {
+
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, errorHandler}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -56,10 +57,6 @@ final class LkAdnEdit @Inject() (
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val upload = injector.instanceOf[Upload]
   private lazy val cdnUtil = injector.instanceOf[CdnUtil]
-
-
-  import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
 
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */

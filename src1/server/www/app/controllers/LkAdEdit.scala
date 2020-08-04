@@ -22,7 +22,6 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.primo.id._
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
 import models.req.{BfpArgs, IReq}
 import play.api.libs.json.Json
@@ -46,11 +45,12 @@ import scala.concurrent.Future
   */
 final class LkAdEdit @Inject() (
                                  sioControllerApi                       : SioControllerApi,
-                                 mCommonDi                              : ICommonDi,
                                )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, errorHandler}
   import mCommonDi.current.injector
 
   // Ленивое DI для не-Singleton-режима работы.
@@ -67,10 +67,6 @@ final class LkAdEdit @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val extRscUtil = injector.instanceOf[ExtRscUtil]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
-
-
-  import sioControllerApi._
-  import mCommonDi.{ec, csrf, errorHandler}
 
 
   private lazy val _BFP_ARGS = (BfpArgs.tryCountDivisor set 2)( BfpArgs.default )

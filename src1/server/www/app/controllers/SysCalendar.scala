@@ -10,7 +10,6 @@ import io.suggest.cal.m.MCalTypes
 import io.suggest.es.model.EsModel
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mcal.{MCalTypesJvm, MCalendar, MCalendars}
-import models.mproj.ICommonDi
 import models.req.ICalendarReq
 import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
@@ -33,10 +32,12 @@ import scala.concurrent.Future
  */
 final class SysCalendar @Inject() (
                                     sioControllerApi            : SioControllerApi,
-                                    mCommonDi                   : ICommonDi,
                                   )
   extends MacroLogsImplLazy
 {
+
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, errorHandler}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -46,9 +47,8 @@ final class SysCalendar @Inject() (
   private lazy val mCalTypesJvm = injector.instanceOf[MCalTypesJvm]
   private lazy val calendarAccessAny = injector.instanceOf[CalendarAccessAny]
 
-  import sioControllerApi._
-  import mCommonDi._
   import esModel.api._
+
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(

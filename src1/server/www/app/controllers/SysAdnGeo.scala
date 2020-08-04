@@ -10,7 +10,6 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.madn.AdnShownTypes
 import models.mgeo.MGsPtr
-import models.mproj.ICommonDi
 import models.msys._
 import models.req.INodeReq
 import play.api.data.Forms._
@@ -33,11 +32,12 @@ import scala.concurrent.Future
  */
 final class SysAdnGeo @Inject() (
                                   sioControllerApi                  : SioControllerApi,
-                                  mCommonDi                         : ICommonDi,
                                 )
   extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -45,8 +45,6 @@ final class SysAdnGeo @Inject() (
   private lazy val isSuNode = injector.instanceOf[IsSuNode]
   private lazy val osmClient = injector.instanceOf[OsmClient]
 
-  import sioControllerApi._
-  import mCommonDi._
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
 

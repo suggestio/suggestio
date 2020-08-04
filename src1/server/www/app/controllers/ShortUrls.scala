@@ -47,7 +47,6 @@ final class ShortUrls @Inject() (
                            (implicit request: RequestHeader): Future[Result] = {
     val call = routes.Sc.geoSite(
       Sc3Pages.MainScreen(
-        generation  = None,
         virtBeacons = {
           var acc = Set.empty[String]
           for (bId <- beaconId)
@@ -56,7 +55,7 @@ final class ShortUrls @Inject() (
         },
       )
     )
-    val toAbsUrl = contextUtil.SC_HOST_PORT + call.url
+    val toAbsUrl = contextUtil.SC_URL_PREFIX + call.url
     Future.successful( Redirect(toAbsUrl, SEE_OTHER) )
   }
 
@@ -70,9 +69,9 @@ final class ShortUrls @Inject() (
     // Изначально, id содержал короткий алиас для URL внутри EddyStone-маячка.
     lazy val logPrefix = s"handleUrl($urlCode):"
 
-    // TODO Поискать маячки с urlCode в качестве id в ShortUrl-эдже.
     for {
 
+      // Поискать маячки с urlCode в качестве id в ShortUrl-эдже.
       mnodeOpt <- mNodes.dynSearchOne(
         new MNodeSearch {
           override def isEnabled = Some( true )

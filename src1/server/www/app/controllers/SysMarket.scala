@@ -12,7 +12,6 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.msys._
 import models.req.{INodeReq, IReq, IReqHdr, MNodeReq}
 import models.usr.MEmailRecoverQs
@@ -43,10 +42,12 @@ import util.ident.IdentUtil
  */
 final class SysMarket @Inject() (
                                   sioControllerApi                : SioControllerApi,
-                                  mCommonDi                       : ICommonDi,
                                 )
   extends MacroLogsImpl
 {
+
+  import sioControllerApi._
+  import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -61,8 +62,6 @@ final class SysMarket @Inject() (
   private lazy val identUtil = injector.instanceOf[IdentUtil]
   private lazy val mNodes = injector.instanceOf[MNodes]
 
-  import sioControllerApi._
-  import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil}
   import esModel.api._
 
 

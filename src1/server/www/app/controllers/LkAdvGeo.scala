@@ -2,7 +2,7 @@ package controllers
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
 import io.suggest.bill.MGetPriceResp
@@ -25,7 +25,6 @@ import io.suggest.pick.PickleSrvUtil._
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import play.api.mvc.Result
 import util.acl._
@@ -53,11 +52,11 @@ import scala.concurrent.Future
   */
 final class LkAdvGeo @Inject() (
                                  sioControllerApi                : SioControllerApi,
-                                 mCommonDi                       : ICommonDi,
                                )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import mCommonDi.current.injector
 
@@ -77,8 +76,6 @@ final class LkAdvGeo @Inject() (
   private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val tagSearchUtil = injector.instanceOf[LkTagsSearchUtil]
-
-  import sioControllerApi._
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */

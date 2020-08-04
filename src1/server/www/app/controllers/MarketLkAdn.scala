@@ -14,10 +14,9 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.{Csrf, ScryptUtil}
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mctx.Context
 import models.mlk.MNodeShowArgs
-import models.mproj.ICommonDi
 import models.req.IReq
 import models.usr._
 import play.api.data.Form
@@ -43,11 +42,11 @@ import scala.concurrent.Future
  */
 final class MarketLkAdn @Inject() (
                                     sioControllerApi                    : SioControllerApi,
-                                    mCommonDi                           : ICommonDi,
                                   )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -65,7 +64,6 @@ final class MarketLkAdn @Inject() (
   private lazy val scryptUtil = injector.instanceOf[ScryptUtil]
   private lazy val csrf = injector.instanceOf[Csrf]
 
-  import sioControllerApi._
   import mCommonDi.{slick, ec}
 
 

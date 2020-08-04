@@ -15,7 +15,6 @@ import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.mctx.Context
-import models.mproj.MCommonDi
 import models.req.IReq
 import play.api.mvc.Result
 import util.acl.CanAccessItem
@@ -32,12 +31,12 @@ import scala.concurrent.Future
   */
 protected final class LkGeoCtlUtil @Inject() (
                                                sioControllerApi        : SioControllerApi,
-                                               mCommonDi               : MCommonDi,
                                              )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  import sioControllerApi._
+  import mCommonDi.{ec, slick, mat}
   import mCommonDi.current.injector
 
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
@@ -46,8 +45,6 @@ protected final class LkGeoCtlUtil @Inject() (
   private lazy val canAccessItem = injector.instanceOf[CanAccessItem]
   private lazy val advGeoFormUtil = injector.instanceOf[AdvGeoFormUtil]
   private lazy val advGeoBillUtil = injector.instanceOf[AdvGeoBillUtil]
-
-  import sioControllerApi._
 
 
   /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */

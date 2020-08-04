@@ -19,7 +19,6 @@ import io.suggest.dt.MAdvPeriod
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.req.ReqUtil
-import models.mproj.ICommonDi
 import models.req.INodeReq
 import util.acl.IsNodeAdmin
 import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
@@ -41,11 +40,11 @@ import scala.concurrent.Future
   */
 final class LkAdnMap @Inject() (
                                  sioControllerApi              : SioControllerApi,
-                                 mCommonDi                     : ICommonDi,
                                )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import mCommonDi.current.injector
 
@@ -59,8 +58,6 @@ final class LkAdnMap @Inject() (
   private lazy val lkGeoCtlUtil = injector.instanceOf[LkGeoCtlUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
-
-  import sioControllerApi._
 
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */

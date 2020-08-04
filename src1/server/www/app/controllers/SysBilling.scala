@@ -13,7 +13,6 @@ import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.mcal.MCalendars
-import models.mproj.ICommonDi
 import models.msys.bill._
 import models.req.{INodeContractReq, INodeReq}
 import play.api.data.Form
@@ -38,11 +37,12 @@ import scala.concurrent.Future
  */
 final class SysBilling @Inject() (
                                    sioControllerApi           : SioControllerApi,
-                                   mCommonDi                  : ICommonDi,
                                  )
   extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
+  import mCommonDi._
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -60,8 +60,6 @@ final class SysBilling @Inject() (
   private lazy val bill2Conf = injector.instanceOf[Bill2Conf]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
 
-  import sioControllerApi._
-  import mCommonDi._
 
   /**
    * Отображение страницы биллинга для узла.

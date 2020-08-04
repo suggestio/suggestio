@@ -16,7 +16,6 @@ import models.mbill.MEmailOrderPaidTplArgs
 import models.mctx.Context
 import models.mdr.MMdrNotifyMeta
 import models.mpay.yaka._
-import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.MSuperUsers
 import play.api.i18n.Messages
@@ -55,10 +54,12 @@ import scala.concurrent.Future
   */
 final class PayYaka @Inject() (
                                 sioControllerApi         : SioControllerApi,
-                                mCommonDi                : ICommonDi
                               )
   extends MacroLogsImpl
 {
+
+  import sioControllerApi._
+  import mCommonDi.{ec, slick, csrf, errorHandler}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -76,9 +77,6 @@ final class PayYaka @Inject() (
   private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val identUtil = injector.instanceOf[IdentUtil]
-
-  import sioControllerApi._
-  import mCommonDi.{ec, slick, csrf, errorHandler}
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.

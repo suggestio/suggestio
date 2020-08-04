@@ -7,7 +7,6 @@ import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import models.mctx.Context
-import models.mproj.ICommonDi
 import models.usr._
 import org.elasticsearch.search.sort.SortOrder
 import util.acl.{IsSu, IsSuPerson}
@@ -27,9 +26,10 @@ import scala.concurrent.Future
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 final class SysPerson @Inject() (
                                   sioControllerApi          : SioControllerApi,
-                                  mCommonDi                 : ICommonDi,
                                 ) {
 
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf}
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -38,8 +38,6 @@ final class SysPerson @Inject() (
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val isSuPerson = injector.instanceOf[IsSuPerson]
 
-  import sioControllerApi._
-  import mCommonDi._
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
   private def dummyEa = MEmailRecoverQs(

@@ -22,7 +22,6 @@ import io.suggest.primo.id._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
-import models.mproj.ICommonDi
 import models.req.IReq
 import util.acl._
 import util.adn.NodesUtil
@@ -56,11 +55,11 @@ import scala.concurrent.Future
   */
 final class LkNodes @Inject() (
                                 sioControllerApi          : SioControllerApi,
-                                mCommonDi                 : ICommonDi
                               )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -75,7 +74,6 @@ final class LkNodes @Inject() (
   private lazy val canChangeNodeAvailability = injector.instanceOf[CanChangeNodeAvailability]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
 
-  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

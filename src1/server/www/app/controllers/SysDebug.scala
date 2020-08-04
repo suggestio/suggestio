@@ -2,7 +2,6 @@ package controllers
 
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
-import models.mproj.ICommonDi
 import play.api.Environment
 import play.api.mvc.Result
 import util.acl.IsSu
@@ -19,13 +18,12 @@ import views.html.sys1.debug._
 final class SysDebug @Inject() (
                                  isSu                          : IsSu,
                                  sioControllerApi              : SioControllerApi,
-                                 mCommonDi                     : ICommonDi,
                                )
   extends MacroLogsImplLazy
 {
 
   import sioControllerApi._
-  import mCommonDi._
+  import mCommonDi.{ec, current, csrf}
 
   private lazy val advRcvrsUtil = current.injector.instanceOf[AdvRcvrsUtil]
   private lazy val dynImgUtil = current.injector.instanceOf[DynImgUtil]

@@ -5,7 +5,6 @@ import javax.inject.Inject
 import io.suggest.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
-import models.mproj.ICommonDi
 import models.req.{INodeReq, IReq, IReqHdr}
 import play.api.data.Forms._
 import play.api.data._
@@ -27,11 +26,11 @@ import scala.concurrent.Future
  */
 final class LkHelp @Inject()(
                               sioControllerApi                : SioControllerApi,
-                              mCommonDi                       : ICommonDi,
                             )
   extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
   import mCommonDi.current.injector
 
   private lazy val mailer = injector.instanceOf[IMailerWrapper]
@@ -42,7 +41,6 @@ final class LkHelp @Inject()(
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
 
-  import sioControllerApi._
   import mCommonDi._
 
   // TODO Объеденить node и не-node вызовы в единые экшены.

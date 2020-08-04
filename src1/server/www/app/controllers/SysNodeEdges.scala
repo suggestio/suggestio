@@ -9,7 +9,6 @@ import io.suggest.n2.edge.edit.{MEdgeEditFormInit, MNodeEdgeIdQs}
 import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
-import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl.{CanDownloadFile, IsFileNotModified, IsSuNodeEdge}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta}
@@ -31,7 +30,6 @@ import scala.concurrent.Future
 final class SysNodeEdges @Inject() (
                                      isSuNodeEdge          : IsSuNodeEdge,
                                      sioControllerApi      : SioControllerApi,
-                                     mCommonDi             : ICommonDi,
                                    )
   extends MacroLogsImplLazy
 {

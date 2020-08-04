@@ -29,7 +29,6 @@ import models.mbill._
 import models.mcal.MCalendars
 import models.mctx.Context
 import models.mdr.MMdrNotifyMeta
-import models.mproj.ICommonDi
 import models.req._
 import play.api.libs.json.Json
 import play.api.mvc.{ActionBuilder, AnyContent}
@@ -56,11 +55,12 @@ import scala.concurrent.Future
   */
 final class LkBill2 @Inject() (
                                 sioControllerApi            : SioControllerApi,
-                                mCommonDi                   : ICommonDi,
                               )
   extends MacroLogsImpl
 {
 
+  import sioControllerApi._
+  import mCommonDi._
   import mCommonDi.current.injector
 
   private lazy val esModel = injector.instanceOf[EsModel]
@@ -82,9 +82,6 @@ final class LkBill2 @Inject() (
   private lazy val mdrUtil = injector.instanceOf[MdrUtil]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val mOrders = injector.instanceOf[MOrders]
-
-  import mCommonDi._
-  import sioControllerApi._
 
 
   private def _dailyTfArgsFut(mnode: MNode, madOpt: Option[MNode] = None): Future[Option[MTfDailyTplArgs]] = {

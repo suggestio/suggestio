@@ -8,7 +8,6 @@ import io.suggest.dev.{MScreenJvm, MSzMults}
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.im.make.{MImgMakeArgs, MImgMaker, MImgMakers, SysForm_t}
-import models.mproj.ICommonDi
 import models.im.{CompressMode, MAnyImgs, MImg3, MImgT, MImgs3}
 import models.mctx.Context
 import play.api.data.Forms._
@@ -32,20 +31,18 @@ import scala.concurrent.Future
  */
 final class SysImg @Inject() (
                                sioControllerApi   : SioControllerApi,
-                               mCommonDi          : ICommonDi
                              )
   extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, current}
   import mCommonDi.current.injector
 
   private lazy val mImgs3 = injector.instanceOf[MImgs3]
   private lazy val mImgs = injector.instanceOf[MAnyImgs]
   private lazy val isSu = injector.instanceOf[IsSu]
   private lazy val dynImgUtil = injector.instanceOf[DynImgUtil]
-
-  import sioControllerApi._
-  import mCommonDi._
 
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */
