@@ -47,7 +47,7 @@ trait LoginFormInit extends InitRouter {
 
     // Показать диалог через посыл соотв.экшена.
     Future {
-      modules.loginFormSpaRouter.circuit.dispatch( LoginShowHide(true) )
+      modules.loginFormCircuit.dispatch( LoginShowHide(true) )
     }
   }
 

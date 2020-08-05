@@ -2,8 +2,6 @@ package io.suggest.sc.m
 
 import diode.FastEq
 import io.suggest.sc.v.styl.{ScCss, ScCssSemiStatic}
-import io.suggest.spa.SioPages
-import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
 
 /**
@@ -34,11 +32,9 @@ object MScReactCtx {
   *
   * @see [[https://reactjs.org/docs/context.html]]
   * @param getScCss ScCss.
-  * @param routerCtl Контроллер роутера, пробрасываемый вниз по цепочке.
   */
 case class MScReactCtx(
                         getScCss          : () => ScCss,
-                        routerCtl         : RouterCtl[SioPages],
                         scCssSemiStatic   : ScCssSemiStatic,
                       ) {
 

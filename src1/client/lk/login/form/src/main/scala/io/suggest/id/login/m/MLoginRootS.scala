@@ -33,7 +33,7 @@ object MLoginRootS {
   val ext           = GenLens[MLoginRootS]( _.ext )
   val overall       = GenLens[MLoginRootS]( _.overall )
   val reg           = GenLens[MLoginRootS]( _.reg )
-  val pwCh          = GenLens[MLoginRootS]( _.pwCh )
+  def pwCh          = GenLens[MLoginRootS]( _.pwCh )
 
 }
 

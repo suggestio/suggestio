@@ -303,16 +303,13 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  //val reactJsVsn         = "16.8.6"
   val reactJsVsn         = "16.13.1"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  //val reactSjsVsn        = "1.6.0" // И контроллировать суффикс diodeReactVsn ниже!
-  val reactSjsVsn        = "1.7.0" // И контроллировать суффикс diodeReactVsn ниже!
-  // TODO Поменять следом SCALACSS
+  val reactSjsVsn        = "1.7.4" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -333,15 +330,13 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  //val diodeVsn = "1.1.7"
-  val diodeVsn = "1.1.8-git20200528"
-  // 1.1.8 - требуется sjs-1.0, иначе какая ругань при clean-сборке.
-  val diodeReactVsn = diodeVsn + "." + reactSjsVsn.replaceAllLiterally(".", "")
+  val diodeVsn = "1.1.12"
+  val diodeReactVsn = diodeVsn //+ "." + reactSjsVsn.replaceAllLiterally(".", "")
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]
     */
-  val boopickleVsn = "1.3.2"
+  val boopickleVsn = "1.3.+"
 
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]

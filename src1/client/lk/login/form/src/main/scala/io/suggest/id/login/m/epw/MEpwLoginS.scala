@@ -28,11 +28,11 @@ object MEpwLoginS {
 
   @inline implicit def univEq: UnivEq[MEpwLoginS] = UnivEq.derive
 
-  val name              = GenLens[MEpwLoginS](_.name)
-  val password          = GenLens[MEpwLoginS](_.password)
-  val isForeignPc       = GenLens[MEpwLoginS](_.isForeignPc)
-  val loginReq          = GenLens[MEpwLoginS](_.loginReq)
-  val loginBtnEnabled   = GenLens[MEpwLoginS](_.loginBtnEnabled)
+  def name              = GenLens[MEpwLoginS](_.name)
+  def password          = GenLens[MEpwLoginS](_.password)
+  def isForeignPc       = GenLens[MEpwLoginS](_.isForeignPc)
+  def loginReq          = GenLens[MEpwLoginS](_.loginReq)
+  def loginBtnEnabled   = GenLens[MEpwLoginS](_.loginBtnEnabled)
 
 }
 

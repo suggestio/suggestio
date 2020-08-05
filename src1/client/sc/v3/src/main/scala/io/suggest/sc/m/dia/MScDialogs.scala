@@ -23,7 +23,8 @@ object MScDialogs {
     override def eqv(a: MScDialogs, b: MScDialogs): Boolean = {
       (a.first ===* b.first) &&
       (a.error ===* b.error) &&
-      (a.settings ===* b.settings)
+      (a.settings ===* b.settings) &&
+      (a.login ===* b.login)
     }
   }
 
@@ -32,6 +33,7 @@ object MScDialogs {
   val first = GenLens[MScDialogs](_.first)
   val error = GenLens[MScDialogs](_.error)
   val settings = GenLens[MScDialogs](_.settings)
+  def login = GenLens[MScDialogs]( _.login )
 
 }
 
@@ -41,9 +43,11 @@ object MScDialogs {
   * @param first Диалог первого запуска, когда открыт.
   * @param error Состояние диалога возникшей ошибки.
   * @param settings Диалог настроек.
+  * @param login Состояние логин-формы.
   */
 case class MScDialogs(
                        first      : MWzFirstOuterS          = MWzFirstOuterS.empty,
                        error      : Option[MScErrorDia]     = None,
                        settings   : MScSettingsDia          = MScSettingsDia.empty,
+                       login      : MScLoginS               = MScLoginS.empty,
                      )

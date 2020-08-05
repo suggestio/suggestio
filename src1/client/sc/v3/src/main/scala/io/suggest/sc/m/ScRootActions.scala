@@ -102,7 +102,7 @@ case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScRootAction
   * @param route Переход на указанную роуту.
   * @param force Не проверять роуту на предмет дубликата, пробрасывать в sjsreact-router даже повторную роуту.
   */
-case class ResetUrlRoute(route: Option[SioPages.Sc3] = None, force: Boolean = false) extends IScRootAction
+case class ResetUrlRoute(mods: Option[SioPages.Sc3 => SioPages.Sc3] = None, force: Boolean = false) extends IScRootAction
 
 /** Восстановление текущего состояния ранее-посещённых индексов. */
 case class LoadIndexRecents(clean: Boolean) extends IScRootAction
@@ -213,7 +213,6 @@ case class ScDaemonFallSleepTimerSet( timerId: Option[Int] ) extends IScDaemonAc
 case class ScDaemonSleepAlarm(isActive: Boolean) extends IScDaemonAction
 
 
-
 sealed trait IOnlineAction extends DAction
 
 /** (Пере)инициализация online-состояния. */
@@ -223,9 +222,16 @@ case class OnlineInit(init: Boolean) extends IOnlineAction
 case object OnlineCheckConn extends IOnlineAction
 
 /** Результат [[OnlineCheckConn]]. */
-case class OnlineCheckConnRes(netInfo: MOnLineInfo ) extends IOnlineAction
+case class OnlineCheckConnRes( netInfo: MOnLineInfo ) extends IOnlineAction
 
 
 sealed trait IScConfAction extends IScRootAction
 /** Замена текущего значения debug-флага. */
 case class SetDebug(isDebug: Boolean) extends IScConfAction
+
+
+sealed trait IScLoginAction extends IScRootAction
+
+case class ScLoginFormShowHide( visible: Boolean ) extends IScLoginAction
+/** Изменение внешнего (spa-router) состояния модуля login-формы. */
+case class ScLoginFormChange(loginPageOpt: Option[SioPages.Login] ) extends IScLoginAction

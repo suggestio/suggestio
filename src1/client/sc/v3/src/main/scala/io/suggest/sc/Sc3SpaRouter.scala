@@ -5,8 +5,6 @@ import java.net.URI
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.RouteTo
-import io.suggest.sc.v.ScRootR
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.spa.{MGen, SioPages}
@@ -14,8 +12,8 @@ import io.suggest.text.UrlUtilJs
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
+import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.sc.m.boot.MSpaRouterState
-import io.suggest.spa.SioPages.Sc3
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -30,14 +28,13 @@ import scala.util.Try
   * В отличии от scalajs-spa-tutorial, этот роутер живёт за пределами [[Sc3Main]], чтобы не разводить кашу в коде.
   */
 class Sc3SpaRouter(
-                    sc3CircuitF       : MSpaRouterState => Sc3Circuit,
-                    mkScRootR         : MSpaRouterState => ScRootR,
+                    renderSc3F        : (SioPages.Sc3) => VdomElement,
                   )
   extends Log
 {
 
   /** Всё состояние роутера и связанные данные живут здесь: */
-  val state: MSpaRouterState = RouterConfigDsl[SioPages].use { dsl =>
+  val state: MSpaRouterState = RouterConfigDsl[SioPages.Sc3].use { dsl =>
     import dsl._
 
     /** Конфиг роутера второго поколения.
@@ -103,6 +100,13 @@ class Sc3SpaRouter(
               .filterKeys(_ startsWith K.VIRT_BEACONS_FN)
               .valuesIterator
               .toSet,
+            login = for {
+              currTabIdRaw <- tokens.get( K.LOGIN_FN )
+              currTabId <- Try( currTabIdRaw.toInt ).toOption
+              currTab   <- MLoginTabs.withValueOpt( currTabId )
+            } yield {
+              SioPages.Login( currTab )
+            },
           )
         }
       } { mainScreen =>
@@ -173,6 +177,9 @@ class Sc3SpaRouter(
         }
           acc ::= s"${K.VIRT_BEACONS_FN}[$i]" -> bcnId
 
+        for (login <- mainScreen.login)
+          acc ::= K.LOGIN_FN -> login.currTab.value.toString
+
         val queryString = UrlUtilJs.qsPairsToString(acc)
         Some( queryString )
       }
@@ -217,14 +224,14 @@ class Sc3SpaRouter(
       }
 
     // Кэшируем компонент ScRootR вне функций роутера, т.к. за ним следит только Sc3Circuit, а не роутер.
-    val mainScreenRule = dynamicRouteCT[Sc3](mainScreenDfltRoute) ~> dynRender( _renderScMainScreen )
+    val mainScreenRule = dynamicRouteCT[SioPages.Sc3](mainScreenDfltRoute) ~> dynRender( renderSc3F )
 
     val routerCfg = mainScreenRule
       .notFound {
         redirectToPage( SioPages.Sc3.empty )( Redirect.Replace )
       }
 
-    val (r, rCtl) = Router.componentAndCtl[SioPages](
+    val (r, rCtl) = Router.componentAndCtl[SioPages.Sc3](
       baseUrl = BaseUrl.fromWindowOrigin_/,
       cfg     = routerCfg
     )
@@ -235,27 +242,5 @@ class Sc3SpaRouter(
       canonicalRoute  = canonicalRoute
     )
   }
-
-
-  // ----- MAIN SCREEN ------
-
-  // Готовые инстансы вызываются только из функций роутера, поэтому их безопасно дёргать отсюда.
-  val sc3Circuit = sc3CircuitF( state )
-
-  private lazy val _scRootWrapped: VdomElement = {
-    // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
-    val scRootR = mkScRootR( state )
-    sc3Circuit.wrap( identity(_) )( scRootR.component.apply )
-  }
-
-  /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */
-  private def _renderScMainScreen(page: Sc3): VdomElement = {
-    // Отправить распарсенные данные URL в circuit:
-    sc3Circuit.runEffectAction( RouteTo(page) )
-    // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
-    _scRootWrapped
-  }
-
-  // ----- END MAIN SCREEN ------
 
 }

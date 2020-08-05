@@ -12,6 +12,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.SioPages
+import japgolly.scalajs.react.extra.router.RouterCtl
 import scalacss.ScalaCssReact._
 
 /**
@@ -22,7 +23,8 @@ import scalacss.ScalaCssReact._
   */
 class AboutSioR(
                  scReactCtxP            : React.Context[MScReactCtx],
-                 crCtxProv     : React.Context[MCommonReactCtx],
+                 crCtxProv              : React.Context[MCommonReactCtx],
+                 routerCtlProv          : React.Context[RouterCtl[SioPages.Sc3]],
                ) {
 
   type Props_t = Option[PropsVal]
@@ -40,34 +42,36 @@ class AboutSioR(
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(propsValProxy: Props): VdomElement = {
-      scReactCtxP.consume { scReactCtx =>
-        val R = ScCssStatic.Menu.Rows
-        lazy val _listItem = MuiListItem(
-          new MuiListItemProps {
-            override val disableGutters = true
-            override val button = true
-          }
-        )(
-          MuiListItemText()(
+      import ScCssStatic.Menu.{Rows => R}
+
+      lazy val _listItem = MuiListItem(
+        new MuiListItemProps {
+          override val disableGutters = true
+          override val button = true
+        }
+      )(
+        MuiListItemText()(
+          scReactCtxP.consume { scReactCtx =>
             <.span(
               R.rowContent,
               scReactCtx.scCss.fgColor,
               crCtxProv.message( MsgCodes.`Suggest.io.Project` ),
             )
-          )
+          }
+        )
+      )
+
+      crCtxProv.consume { crCtx =>
+        lazy val linkChildren = List[TagMod](
+          R.rowLink,
+          ^.title := crCtx.messages( MsgCodes.`Suggest.io._transcription` ),
+          _listItem,
         )
 
-        crCtxProv.consume { crCtx =>
-          lazy val linkChildren = List[TagMod](
-            R.rowLink,
-            ^.title := crCtx.messages( MsgCodes.`Suggest.io._transcription` ),
-            _listItem,
-          )
-
-          propsValProxy.value.whenDefinedEl { props =>
-            // Это типа ссылка <a>, но уже с выставленным href + go-событие.
-            scReactCtx
-              .routerCtl
+        propsValProxy.value.whenDefinedEl { props =>
+          // Это типа ссылка <a>, но уже с выставленным href + go-событие.
+          routerCtlProv.consume { routerCtl =>
+            routerCtl
               .link( SioPages.Sc3(
                 nodeId = Some( props.aboutNodeId )
               ))(

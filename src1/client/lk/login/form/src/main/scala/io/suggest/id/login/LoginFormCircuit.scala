@@ -7,7 +7,7 @@ import io.suggest.id.login.c.reg.{Reg0CredsAh, Reg3CheckBoxesAh, RegAh}
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.id.login.m.pwch.MPwNew
-import io.suggest.id.login.m.{MLoginFormOverallS, MLoginRootS}
+import io.suggest.id.login.m.{LoginShowHide, MLoginFormOverallS, MLoginRootS}
 import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
@@ -32,9 +32,9 @@ import japgolly.univeq._
   * Created: 14.03.19 15:14
   * Description: Цепочка для формы логина.
   */
-class LoginFormCircuit(
-                        routerCtl: RouterCtl[SioPages]
-                      )
+final class LoginFormCircuit(
+                              routerCtl           : RouterCtl[SioPages.Login],
+                            )
   extends CircuitLog[MLoginRootS]
   with ReactConnector[MLoginRootS]
 {
@@ -127,4 +127,21 @@ class LoginFormCircuit(
 
   addProcessor( DoNothingActionProcessor[MLoginRootS] )
 
+
+  // Public API
+
+  def onRoute(route: SioPages.Login): Unit =
+    dispatch( route )
+
+  def showHideForm(isVisible: Boolean): Unit =
+    dispatch( LoginShowHide(isVisible) )
+
+  def isVisible(): Boolean =
+    overallRW.value.isVisible
+
+}
+
+
+object LoginFormCircuit {
+  @inline implicit def univEq: UnivEq[LoginFormCircuit] = UnivEq.force
 }

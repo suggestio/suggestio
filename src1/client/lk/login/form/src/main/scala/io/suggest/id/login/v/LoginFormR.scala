@@ -12,10 +12,9 @@ import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
-import io.suggest.id.login.v.pwch.PwChangeR
 import io.suggest.id.login.v.reg.RegR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -31,7 +30,6 @@ class LoginFormR(
                   epwFormR              : EpwFormR,
                   extFormR              : ExtFormR,
                   regR                  : RegR,
-                  pwChangeR             : PwChangeR,
                   crCtxProv             : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
@@ -64,16 +62,15 @@ class LoginFormR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onTabChanged(event: ReactEventFromHtml, newValue: js.Any): Callback = {
+    private val _onTabChangedCbF = ReactCommonUtil.cbFun2ToJsCb { (event: ReactEventFromHtml, newValue: js.Any) =>
       val newTab = MLoginTabs.withValue( newValue.asInstanceOf[Int] )
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SwitсhLoginTab(newTab) )
     }
-    private val _onTabChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onTabChanged )
 
 
-    private def _onLoginClose(event: ReactEvent): Callback =
+    private val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb { event: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, LoginShowHide(false))
-    private val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb( _onLoginClose )
+    }
 
 
     def render(p: Props, s: State): VdomElement = {

@@ -5,11 +5,11 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.routes.{IJsRouter, PlayRoute}
-import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.m.MScReactCtx
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.m.{MScReactCtx, ScLoginFormShowHide}
 import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -47,6 +47,11 @@ class EnterLkRowR(
 
   class Backend($: BackendScope[Props, Unit]) {
 
+    private def _onLoginClick(e: ReactEvent): Callback = {
+      ReactCommonUtil.preventDefaultCB(e) >>
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScLoginFormShowHide(true) )
+    }
+
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { props =>
         val R = ScCssStatic.Menu.Rows
@@ -77,6 +82,15 @@ class EnterLkRowR(
         <.a(
           R.rowLink,
           ^.href := hrefRoute.url,
+
+          // При обычном клике надо открывать форму логина прямо поверх выдачи.
+          // Это нужно для возможности логина внутри мобильного приложения.
+          // TODO Встроенная форма логина пока отключена, т.к. требуется разрулить CSRF и её сокрытие.
+          if (true || props.isLoggedIn) {
+            TagMod.empty
+          } else {
+            ^.onClick ==> _onLoginClick
+          },
 
           // Ссылка на вход или на личный кабинет
           MuiListItem(

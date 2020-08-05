@@ -10,10 +10,10 @@ import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
+import io.suggest.sc.v.dia.login.ScLoginR
 import io.suggest.sc.v.dia.settings.ScSettingsDiaR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
@@ -34,8 +34,6 @@ import scalacss.ScalaCssReact._
   * Description: Корневой wrap-компонент react-выдачи.
   */
 class ScRootR (
-                // Передаётся напрямую:
-                routerState             : MSpaRouterState,
                 // ниже - только DI
                 gridR                   : GridR,
                 searchR                 : SearchR,
@@ -44,6 +42,7 @@ class ScRootR (
                 welcomeR                : WelcomeR,
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
+                scLoginR                : ScLoginR,
                 scSettingsDiaR          : ScSettingsDiaR,
                 scSnacksR               : ScSnacksR,
                 scThemes                : ScThemes,
@@ -134,6 +133,10 @@ class ScRootR (
 
             // Диалог настроек - требует scala-тему.
             scSettingsDiaR.component( mrootProxy ),
+
+            // Диалог логина.
+            mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply ),
+
           )
         },
 
@@ -154,7 +157,6 @@ class ScRootR (
       scReactCtxP.provide(
         MScReactCtx(
           getScCss  = () => mrootProxy.value.index.scCss,
-          routerCtl = routerState.routerCtl,
           scCssSemiStatic = scCssSemiStatic,
         )
       )(

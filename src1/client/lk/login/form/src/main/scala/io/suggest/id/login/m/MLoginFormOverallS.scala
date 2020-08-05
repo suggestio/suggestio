@@ -28,10 +28,10 @@ object MLoginFormOverallS {
 
   @inline implicit def univEq: UnivEq[MLoginFormOverallS] = UnivEq.derive
 
-  val loginTab    = GenLens[MLoginFormOverallS](_.loginTab)
-  val isVisible   = GenLens[MLoginFormOverallS](_.isVisible)
-  val formCss     = GenLens[MLoginFormOverallS](_.formCss)
-  val returnUrl   = GenLens[MLoginFormOverallS](_.returnUrl)
+  def loginTab    = GenLens[MLoginFormOverallS](_.loginTab)
+  def isVisible   = GenLens[MLoginFormOverallS](_.isVisible)
+  def formCss     = GenLens[MLoginFormOverallS](_.formCss)
+  def returnUrl   = GenLens[MLoginFormOverallS](_.returnUrl)
   val pwNew       = GenLens[MLoginFormOverallS](_.pwNew)
 
 }

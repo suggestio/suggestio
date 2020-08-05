@@ -51,7 +51,9 @@ object SioPages {
           .inmap[Set[String]](
             EmptyUtil.opt2ImplEmptyF(Set.empty),
             s => Option.when(s.nonEmpty)(s)
-          )
+          ) and
+        (__ \ Login.Fields.CURR_TAB_FN).formatNullable[MLoginTab]
+          .inmap[Option[Login]]( _.map(Login(_)), _.map(_.currTab) )
       )(apply, unlift(unapply))
     }
 
@@ -62,6 +64,7 @@ object SioPages {
     def menuOpened = GenLens[Sc3]( _.menuOpened )
     def showWelcome = GenLens[Sc3]( _.showWelcome )
     def virtBeacons = GenLens[Sc3]( _.virtBeacons )
+    def login = GenLens[Sc3]( _.login )
 
 
     implicit final class MainScreenOpsExt( private val mainScreen: Sc3 ) extends AnyVal {
@@ -127,6 +130,7 @@ object SioPages {
                   settingsOpen   : Boolean             = false,
                   showWelcome    : Boolean             = true,
                   virtBeacons    : Set[String]         = Set.empty,
+                  login          : Option[SioPages.Login]   = None,
                 )
     extends SioPages
 

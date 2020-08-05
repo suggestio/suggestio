@@ -32,7 +32,7 @@ class EpwFormR(
                 loginProgressR              : LoginProgressR,
                 crCtxProv                   : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
-                routerCtlRctx               : React.Context[RouterCtl[SioPages]],
+                routerCtlRctx               : React.Context[RouterCtl[SioPages.Login]],
               ) {
 
   type Props_t = MEpwLoginS

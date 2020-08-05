@@ -34,7 +34,7 @@ object MRegS {
 
   @inline implicit def univEq: UnivEq[MRegS] = UnivEq.derive
 
-  val step            = GenLens[MRegS](_.step)
+  def step            = GenLens[MRegS](_.step)
   val s0Creds         = GenLens[MRegS](_.s0Creds)
   val s1Captcha       = GenLens[MRegS](_.s1Captcha)
   val s2SmsCode       = GenLens[MRegS](_.s2SmsCode)

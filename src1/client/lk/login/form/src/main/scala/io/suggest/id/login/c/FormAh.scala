@@ -15,7 +15,7 @@ import japgolly.univeq._
   */
 class FormAh[M](
                  modelRW      : ModelRW[M, MLoginFormOverallS],
-                 routerCtl    : RouterCtl[SioPages],
+                 routerCtl    : RouterCtl[SioPages.Login],
                )
   extends ActionHandler(modelRW)
 {
@@ -45,7 +45,7 @@ class FormAh[M](
       if (v0.isVisible ==* m.isShow) {
         noChange
       } else {
-        val v2 = MLoginFormOverallS.isVisible.set(m.isShow)(v0)
+        val v2 = (MLoginFormOverallS.isVisible set m.isShow)(v0)
         updated(v2)
       }
 

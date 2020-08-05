@@ -165,7 +165,7 @@ object TailAh {
 
 /** Непосредственный контроллер "последних" сообщений. */
 class TailAh(
-              routerCtl                : RouterCtl[SioPages],
+              routerCtl                : RouterCtl[SioPages.Sc3],
               modelRW                  : ModelRW[MScRoot, MScRoot],
               scRespHandlers           : Seq[IRespHandler],
               scRespActionHandlers     : Seq[IRespActionHandler],
@@ -179,10 +179,12 @@ class TailAh(
     // Заставить роутер собрать новую ссылку.
     case m: ResetUrlRoute =>
       val v0 = value
-      var nextRoute = m.route getOrElse TailAh.getMainScreenSnapShot( v0 )
+      val currRoute = TailAh.getMainScreenSnapShot( v0 )
+      var nextRoute = m.mods.fold(currRoute)( _(currRoute) )
 
       val currRouteLens = TailAh._currRoute
       val currRouteOpt = currRouteLens.get( v0 )
+
       if (!m.force && (currRouteOpt contains[SioPages.Sc3] nextRoute)) {
         noChange
       } else {
@@ -359,7 +361,7 @@ class TailAh(
             if (nextRoute.menuOpened && v0.grid.core.jdConf.gridColumnsCount <= 3)
               nextRoute = (SioPages.Sc3.menuOpened set false)(nextRoute)
 
-            ResetUrlRoute( Some(nextRoute) )
+            ResetUrlRoute( Some(_ => nextRoute) )
           }
 
           effectOnly( routeFx )
@@ -602,8 +604,12 @@ class TailAh(
       // Диалог first-run открыт?
       if (currMainScreen.firstRunOpen !=* m.mainScreen.firstRunOpen) {
         // Запустить экшен управления диалогом.
-        fxsAcc ::= InitFirstRunWz( currMainScreen.firstRunOpen ).toEffectPure
+        fxsAcc ::= InitFirstRunWz( m.mainScreen.firstRunOpen ).toEffectPure
       }
+
+      // Диалог логина открыт?
+      if (currMainScreen.login !=* m.mainScreen.login)
+        fxsAcc ::= ScLoginFormChange( m.mainScreen.login ).toEffectPure
 
       // Обновлённое состояние, которое может быть и не обновлялось:
       val v2Opt = modsAcc
@@ -624,7 +630,7 @@ class TailAh(
         )
         fxsAcc ::= TailAh.getIndexFx( switchCtx ) >> LoadIndexRecents(clean = false).toEffectPure
 
-      } else if (isGridNeedsReload)  {
+      } else if (isGridNeedsReload) {
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
       }

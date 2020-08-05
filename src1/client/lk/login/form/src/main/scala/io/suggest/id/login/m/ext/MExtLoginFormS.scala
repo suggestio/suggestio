@@ -23,7 +23,7 @@ object MExtLoginFormS {
 
   @inline implicit def univEq: UnivEq[MExtLoginFormS] = UnivEq.derive
 
-  val loginUrlReq = GenLens[MExtLoginFormS](_.loginUrlReq)
+  def loginUrlReq = GenLens[MExtLoginFormS](_.loginUrlReq)
 
 }
 

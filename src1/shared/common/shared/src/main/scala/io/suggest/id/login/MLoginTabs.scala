@@ -1,8 +1,10 @@
 package io.suggest.id.login
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.i18n.MsgCodes
 import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -45,5 +47,8 @@ sealed abstract class MLoginTab(override val value: Int) extends IntEnumEntry {
 object MLoginTab {
 
   @inline implicit def univEq: UnivEq[MLoginTab] = UnivEq.derive
+
+  implicit def loginTabJson: Format[MLoginTab] =
+    EnumeratumUtil.valueEnumEntryFormat( MLoginTabs )
 
 }

@@ -27,7 +27,7 @@ import monocle.PLens
   */
 class Reg0CredsAh[M](
                       modelRW        : ModelRW[M, MRegS],
-                      routerCtl      : RouterCtl[SioPages],
+                      routerCtl      : RouterCtl[SioPages.Login],
                     )
   extends ActionHandler( modelRW )
   with Log

@@ -6,10 +6,12 @@ import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
 import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, Reg4SetPasswordR, RegR}
 import io.suggest.id.login.v.stuff.{CheckBoxR, ErrorSnackR, LoginProgressR, TextFieldR}
-import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
+import io.suggest.id.login.v.{LoginFormCss, LoginFormR}
 import io.suggest.spa.SioPages
 import japgolly.scalajs.react.React
+import japgolly.scalajs.react.React.Context
 import japgolly.scalajs.react.extra.router.RouterCtl
+import japgolly.scalajs.react.vdom.VdomElement
 
 /**
   * Suggest.io
@@ -17,13 +19,15 @@ import japgolly.scalajs.react.extra.router.RouterCtl
   * Created: 14.03.19 15:32
   * Description: DI для формы логина.
   */
-class LoginFormModule {
+trait LoginFormModuleBase {
 
   import io.suggest.ReactCommonModule._
   import io.suggest.lk.LkCommonModule._
 
-  def loginFormRF =
-    () => wire[LoginFormR]
+  def loginFormCssCtx: React.Context[LoginFormCss]
+
+
+  lazy val loginFormR = wire[LoginFormR]
 
   lazy val errorSnackR = wire[ErrorSnackR]
   lazy val epwFormR = wire[EpwFormR]
@@ -43,17 +47,48 @@ class LoginFormModule {
   lazy val pwNewR = wire[PwNewR]
   lazy val pwChangeR = wire[PwChangeR]
 
-  def loginFormCircuitF =
-    (routerCtl: RouterCtl[SioPages]) => wire[LoginFormCircuit]
+  def loginRouterCtl: RouterCtl[SioPages.Login]
 
-  lazy val loginFormSpaRouter = wire[LoginFormSpaRouter]
+  def loginFormCircuit: LoginFormCircuit = wire[LoginFormCircuit]
 
-  lazy val loginFormCssCtx: React.Context[LoginFormCss] =
-    React.createContext( loginFormSpaRouter.circuit.overallRW.value.formCss )
-  lazy val routerCtlRctx: React.Context[RouterCtl[SioPages]] =
-    React.createContext( loginFormSpaRouter.routerCtl )
-
+  lazy val routerCtlCtx: React.Context[RouterCtl[SioPages.Login]] =
+    React.createContext( loginRouterCtl )
 
   lazy val pwChangeCircuit = wire[PwChangeCircuit]
+
+}
+object LoginFormModuleBase {
+
+  def circuit2loginCssRCtx(lfCircuitOpt: Option[LoginFormCircuit]) =
+    React.createContext(
+      lfCircuitOpt
+        .map(_.overallRW.value.formCss)
+        .orNull
+    )
+
+}
+
+
+/** Отдельная форма со своим роутером и своими контекстами. */
+final class LoginFormModule extends LoginFormModuleBase {
+
+  lazy val loginFormSpaRouter: LoginFormSpaRouter = {
+    new LoginFormSpaRouter(
+      renderLoginFormF = {
+        lazy val rendered: VdomElement =
+          loginFormCircuit.wrap( identity(_) )( loginFormR.component.apply )
+        loginFormPage =>
+          loginFormCircuit.dispatch( loginFormPage )
+          rendered
+      },
+    )
+  }
+
+  override def loginRouterCtl = loginFormSpaRouter.routerCtl
+
+  override lazy val loginFormCircuit = super.loginFormCircuit
+
+  override lazy val loginFormCssCtx: Context[LoginFormCss] =
+    LoginFormModuleBase.circuit2loginCssRCtx( Some(loginFormCircuit) )
 
 }

@@ -1,13 +1,9 @@
-package io.suggest.id.login.v
+package io.suggest.id.login
 
-import io.suggest.ReactCommonModule
-import io.suggest.i18n.MCommonReactCtx
-import io.suggest.id.login.{LoginFormCircuit, MLoginTabs}
-import io.suggest.id.login.m.MLoginRootS
 import io.suggest.spa.SioPages
-import japgolly.univeq._
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -21,17 +17,16 @@ import scala.util.Try
   * (из /sys полезно например - там всё по паролю), и просто так лучше.
   */
 class LoginFormSpaRouter(
-                          loginFormR    : () => LoginFormR,
-                          circuitF      : RouterCtl[SioPages] => LoginFormCircuit,
+                          renderLoginFormF: (SioPages.Login) => VdomElement,
                         ) {
 
   /** Сборка инстансов SPA-роутера и контроллер роутера. */
-  val routerAndCtl: (Router[SioPages], RouterCtl[SioPages]) = {
+  val routerAndCtl: (Router[SioPages.Login], RouterCtl[SioPages.Login]) = {
     val qMark = "?"
 
-    val routerCfg = RouterConfigDsl[SioPages].buildConfig { dsl =>
-      import dsl._
+    val routerCfg = RouterConfigDsl[SioPages.Login].buildConfig { dsl =>
       import SioPages.Login.Fields._
+      import dsl._
 
       val loginFormRoute = (qMark ~ string(".+"))
         .pmap { qsStr =>
@@ -83,7 +78,7 @@ class LoginFormSpaRouter(
           SioPages.Login.default
         }
 
-      val loginFormRule = dynamicRouteCT( loginFormRoute ) ~> dynRender( _renderNormalLogin )
+      val loginFormRule = dynamicRouteCT( loginFormRoute ) ~> dynRender( renderLoginFormF )
 
       loginFormRule
         .notFound { _ =>
@@ -91,7 +86,7 @@ class LoginFormSpaRouter(
         }
     }
 
-    Router.componentAndCtl[SioPages](
+    Router.componentAndCtl[SioPages.Login](
       baseUrl = BaseUrl.until( stopAt = qMark ),
       cfg     = routerCfg
     )
@@ -101,24 +96,4 @@ class LoginFormSpaRouter(
   def router = routerAndCtl._1
   def routerCtl = routerAndCtl._2
 
-  val circuit = circuitF( routerCtl )
-
-  /** Лениво! Иначе будет зацикливание. */
-  private lazy val normalLoginRender = {
-    ReactCommonModule.commonReactCtx.provide( MCommonReactCtx.default )(
-      circuit.wrap(identity(_))(
-        loginFormR().apply
-      )(implicitly, MLoginRootS.MLoginRootSFastEq)
-    )
-  }
-
-  private def _renderNormalLogin(nl: SioPages.Login): VdomElement = {
-    // Уведомить о смене вкладки.
-    circuit.dispatch( nl )
-
-    // Отрендерить тело основного диалога логина:
-    normalLoginRender
-  }
-
 }
-

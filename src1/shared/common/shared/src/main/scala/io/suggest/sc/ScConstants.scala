@@ -217,6 +217,8 @@ object ScConstants {
     /** Название поля виртуального маячка. */
     def VIRT_BEACONS_FN         = "bcn"
 
+    def LOGIN_FN                = "login"
+
     // Панель поиска: гео-позишен, [гео]теги.
     final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN
 

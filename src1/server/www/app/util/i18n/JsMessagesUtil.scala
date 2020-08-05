@@ -305,7 +305,7 @@ class JsMessagesUtil @Inject() (
       MC.`Unsupported.browser.or.fatal.failure` ::
       MC.`Not.connected` :: MC.`Retry` ::
       MC.`Recents` ::
-      Nil
+      LOGIN_FORM_MSGS
   }
 
 
@@ -456,7 +456,7 @@ class JsMessagesUtil @Inject() (
   }
 
 
-  private def LOGIN_FORM_MSGS: IterableOnce[String] = {
+  private def LOGIN_FORM_MSGS: List[String] = {
     MC.`Login.page.title` ::
     MC.`Login` ::
     MC.`Username` ::
