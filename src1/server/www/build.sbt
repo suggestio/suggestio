@@ -155,7 +155,6 @@ routesImport ++= Seq(
   "io.suggest.xplay.qsb.QsbSeq",
   "io.suggest.sys.mdr.MdrSearchArgsJvm._",
   "models.mext.MExtServicesJvm._",
-  "io.suggest.id.login.LoginFormPagesJvm._",
   "io.suggest.tags.MTagsSearchQsJvm._",
   "io.suggest.captcha.MCaptchaJvm._"
 )

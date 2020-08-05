@@ -33,7 +33,7 @@
 
   @for(jsState <- args.jsStateOpt) {
     <link rel="canonical"
-          href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@routes.Sc.geoSite(jsState)" />
+          href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@controllers.sc.routes.ScSite.geoSite(jsState)" />
   }
   @if(!args.syncRender) {
     @* Раскомментить, когда будет рабочий SyncSite для новой выдачи.

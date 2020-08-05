@@ -5,7 +5,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.id.login.{ILoginFormPages, MLoginTabs}
+import io.suggest.id.login.MLoginTabs
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.m.reg.step0.MReg0Creds
@@ -13,7 +13,7 @@ import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.log.Log
-import io.suggest.spa.DoNothing
+import io.suggest.spa.{DoNothing, SioPages}
 import io.suggest.text.Validators
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
@@ -27,7 +27,7 @@ import monocle.PLens
   */
 class Reg0CredsAh[M](
                       modelRW        : ModelRW[M, MRegS],
-                      routerCtl      : RouterCtl[ILoginFormPages],
+                      routerCtl      : RouterCtl[SioPages],
                     )
   extends ActionHandler( modelRW )
   with Log
@@ -121,7 +121,9 @@ class Reg0CredsAh[M](
 
         val fxOpt = OptionUtil.maybe( m.enable ) {
           Effect.action {
-            routerCtl.set( ILoginFormPages.Login( MLoginTabs.Reg ) ).runNow()
+            routerCtl
+              .set( SioPages.Login( MLoginTabs.Reg ) )
+              .runNow()
             DoNothing
           }
         }

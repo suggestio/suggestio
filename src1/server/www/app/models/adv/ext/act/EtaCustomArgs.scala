@@ -1,6 +1,5 @@
 package models.adv.ext.act
 
-import controllers.routes
 import io.suggest.common.geom.d2.INamedSize2di
 import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.adv.js.ctx.MPictureCtx
@@ -43,7 +42,7 @@ trait EtaCustomArgsBase
     /** JSON-контекст инфы по картинке текущей карточки. */
     def jsPicCtx: MPictureCtx = {
       val mri = madRenderInfo
-      val url = ctxUtil.SC_URL_PREFIX + routes.Sc.onlyOneAdAsImage(adRenderArgs).url
+      val url = ctxUtil.SC_URL_PREFIX + controllers.sc.routes.ScOnlyOneAd.onlyOneAdAsImage(adRenderArgs).url
       MPictureCtx(
         size   = Some(mri.stdSz.value),
         sioUrl = Some(url)

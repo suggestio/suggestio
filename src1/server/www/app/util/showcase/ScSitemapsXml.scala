@@ -10,7 +10,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl}
@@ -135,14 +135,14 @@ class ScSitemapsXml @Inject() (
     // TODO Учитывать геотеги? direct-теги?
 
     // Собрать данные для sitemap-ссылки на карточку.
-    val jsState = Sc3Pages.MainScreen(
+    val jsState = SioPages.Sc3(
       nodeId       = rcvrIdOpt,
       focusedAdId  = mad.id,
       generation   = None, // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
       locEnv       = gpOpt
     )
 
-    val url = routes.Sc.geoSite(jsState).url
+    val url = controllers.sc.routes.ScSite.geoSite(jsState).url
     val lastDt = mad.meta.basic.dateEditedOrCreated
     val lastDate = lastDt.toLocalDate
 

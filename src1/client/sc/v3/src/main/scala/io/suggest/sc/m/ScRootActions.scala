@@ -8,8 +8,7 @@ import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.m.inx.save.MIndexesRecent
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
-import io.suggest.sc.sc3.Sc3Pages.MainScreen
-import io.suggest.spa.DAction
+import io.suggest.spa.{DAction, SioPages}
 import japgolly.univeq.UnivEq
 
 import scala.util.Try
@@ -97,13 +96,13 @@ case class GlSuppressTimeout(generation: Long) extends IScRootAction
 case object GlCheckAfterResume extends IScRootAction
 
 /** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
-case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
+case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScRootAction
 
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию.
   * @param route Переход на указанную роуту.
   * @param force Не проверять роуту на предмет дубликата, пробрасывать в sjsreact-router даже повторную роуту.
   */
-case class ResetUrlRoute(route: Option[MainScreen] = None, force: Boolean = false) extends IScRootAction
+case class ResetUrlRoute(route: Option[SioPages.Sc3] = None, force: Boolean = false) extends IScRootAction
 
 /** Восстановление текущего состояния ранее-посещённых индексов. */
 case class LoadIndexRecents(clean: Boolean) extends IScRootAction

@@ -1,11 +1,12 @@
 package controllers.sc
 
-import controllers.routes
-import io.suggest.util.logs.IMacroLogs
+import controllers.SioControllerApi
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.Context
-import util.acl.IIgnoreAuth
-import views.js.sc.jsRouterTpl
+import util.acl.IgnoreAuth
+import views.js.sc.ScJsRouterTpl
 import japgolly.univeq._
+import javax.inject.{Inject, Singleton}
 
 import scala.concurrent.duration._
 
@@ -15,27 +16,27 @@ import scala.concurrent.duration._
  * Created: 19.05.15 17:22
  * Description: Раздача js-router'а выдачи всем страждущим.
  */
-object ScJsRouter {
+@Singleton
+final class ScJsRouter @Inject() (
+                                   ignoreAuth           : IgnoreAuth,
+                                   sioControllerApi     : SioControllerApi,
+                                 )
+  extends MacroLogsImplLazy
+{
+
+  import sioControllerApi._
+  import mCommonDi.current.injector
+
+  private lazy val scJsRouterTpl = injector.instanceOf[ScJsRouterTpl]
+
 
   def jsRouterCacheHash(implicit ctx: Context): Int = {
     // Рендер зависит только от констант и прочего DI-инстансов в контексте: request.host, .api и т.д.
-    jsRouterCacheHash( jsRouterTpl().body )
+    jsRouterCacheHash( scJsRouterTpl().body )
   }
   def jsRouterCacheHash(jsRouterTplBody: String): Int = {
     jsRouterTplBody.hashCode
   }
-
-}
-
-
-trait ScJsRouter
-  extends ScController
-  with IIgnoreAuth
-  with IMacroLogs
-{
-
-  import sioControllerApi._
-  import mCommonDi._
 
 
   /** Экшен реакции на запрос js-роутера.
@@ -46,16 +47,16 @@ trait ScJsRouter
     *         Редирект, если роутер кэшируется по другому адресу.
     */
   def scJsRouterCache(cachedHashCode: Int) = ignoreAuth() { implicit request =>
-    val renderedHtml = jsRouterTpl()
+    val renderedHtml = scJsRouterTpl()
     val renderedHtmlString = renderedHtml.body
 
-    val realHashCode = ScJsRouter.jsRouterCacheHash( renderedHtmlString )
+    val realHashCode = jsRouterCacheHash( renderedHtmlString )
 
     lazy val logPrefix = s"scJsRouter($cachedHashCode):"
 
     if (cachedHashCode != realHashCode) {
       LOGGER.trace(s"$logPrefix Obsoleted hashCode $cachedHashCode, but current hash = $realHashCode. Redirecting")
-      Redirect( routes.Sc.scJsRouterCache(realHashCode) )
+      Redirect( controllers.sc.routes.ScJsRouter.scJsRouterCache(realHashCode) )
 
     } else {
       val realHashCodeString = realHashCode.toString

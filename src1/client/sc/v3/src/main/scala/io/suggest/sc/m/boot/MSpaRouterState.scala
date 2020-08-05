@@ -1,6 +1,6 @@
 package io.suggest.sc.m.boot
 
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 import japgolly.scalajs.react.extra.router.{Router, RouterCtl}
 
 /**
@@ -10,7 +10,7 @@ import japgolly.scalajs.react.extra.router.{Router, RouterCtl}
   * Description: Модель данных состояния SPA-роутера.
   */
 case class MSpaRouterState(
-                            router           : Router[Sc3Pages],
-                            routerCtl        : RouterCtl[Sc3Pages],
-                            canonicalRoute   : Option[Sc3Pages.MainScreen],
+                            router           : Router[SioPages],
+                            routerCtl        : RouterCtl[SioPages],
+                            canonicalRoute   : Option[SioPages.Sc3],
                           )

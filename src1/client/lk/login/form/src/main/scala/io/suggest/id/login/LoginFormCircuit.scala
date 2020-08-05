@@ -20,7 +20,7 @@ import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
-import io.suggest.spa.{DoNothingActionProcessor, OptFastEq}
+import io.suggest.spa.{DoNothingActionProcessor, OptFastEq, SioPages}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -33,7 +33,7 @@ import japgolly.univeq._
   * Description: Цепочка для формы логина.
   */
 class LoginFormCircuit(
-                        routerCtl: RouterCtl[ILoginFormPages]
+                        routerCtl: RouterCtl[SioPages]
                       )
   extends CircuitLog[MLoginRootS]
   with ReactConnector[MLoginRootS]

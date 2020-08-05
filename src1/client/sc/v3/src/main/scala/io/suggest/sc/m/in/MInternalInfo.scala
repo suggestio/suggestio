@@ -4,7 +4,7 @@ import diode.FastEq
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecentOuter}
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.sc.sc3.Sc3Pages.MainScreen
+import io.suggest.spa.SioPages.Sc3
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
@@ -45,7 +45,7 @@ object MInternalInfo {
   */
 final case class MInternalInfo(
                                 geoLockTimer      : Option[Int]             = None,
-                                currRoute         : Option[MainScreen]      = None,
+                                currRoute         : Option[Sc3]      = None,
                                 commonReactCtx    : MCommonReactCtx         = MCommonReactCtx.default,
                                 indexesRecents    : MIndexesRecentOuter,
                               ) {

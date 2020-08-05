@@ -5,7 +5,7 @@ import io.suggest.auth.AuthenticationResult
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.playx.ExternalCall
 import io.suggest.util.logs.MacroLogsDyn
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mctx.ContextUtil
 import models.mext.MExtServicesJvm
 import models.req.MLoginViaReq
@@ -15,13 +15,13 @@ import play.api.libs.ws.{WSClient, WSRequest}
 import play.api.mvc._
 import securesocial.core._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
-import util.ident.{IExtLoginAdp, IdentUtil}
+import util.ident.IExtLoginAdp
 import securesocial.controllers.{ProviderControllerHelper => SsHelper}
 import japgolly.univeq._
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
@@ -30,12 +30,9 @@ import scala.reflect.ClassTag
   * Created: 22.02.19 16:35
   * Description: Утиль для логина .
   */
-@Singleton
-class SecureSocialLoginUtil @Inject()(
-                                       identUtil                       : IdentUtil,
-                                       injector                        : Injector,
-                                       implicit private val ec         : ExecutionContext,
-                                     )
+final class SecureSocialLoginUtil @Inject()(
+                                             injector                        : Injector,
+                                           )
   extends MacroLogsDyn
 {
 

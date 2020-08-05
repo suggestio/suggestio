@@ -54,11 +54,11 @@
       @defining( 1.0F ) { szMult =>
       @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, MImgFormats.JPEG) ) { qsArgs =>
         <li>
-           - <a href="@routes.Sc.onlyOneAd(qsArgs)">HTML x@szMult</a>
+           - <a href="@controllers.sc.routes.ScOnlyOneAd.onlyOneAd(qsArgs)">HTML x@szMult</a>
            или <a href="@routes.SysAd.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.
         </li>
         <li>
-          - <a href="@routes.Sc.onlyOneAdAsImage(qsArgs)">PNG x@szMult</a>
+          - <a href="@controllers.sc.routes.ScOnlyOneAd.onlyOneAdAsImage(qsArgs)">PNG x@szMult</a>
           или <a href="@routes.SysAd.showOneAdForm(args.mad.id.get, ToImage)">кастомно</a>.
         </li>
       }

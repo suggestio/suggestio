@@ -1,3 +1,4 @@
+@this(jsRoutesUtil: util.tpl.JsRoutesUtil)
 @()(implicit ctx: Context)
 
 @* Страница с react-формой логина. *@
@@ -16,15 +17,7 @@
   @* JS-роутер. *@
   @jsTpl2HtmlTpl( withScriptTag = true )(
     jsRevRouterTpl( csrfAll = true, cdn = true )(
-      routes.javascript.Ident.epw2LoginSubmit,
-      routes.javascript.Ident.idViaProvider,
-      routes.javascript.Ident.loginFormPage,
-      routes.javascript.Ident.regStep0Submit,
-      routes.javascript.Ident.epw2RegSubmit,
-      routes.javascript.Ident.smsCodeCheck,
-      routes.javascript.Ident.regFinalSubmit,
-      routes.javascript.Captcha.getCaptcha,
-      routes.javascript.Static.privacyPolicy,
+      jsRoutesUtil.loginRoutes: _*
     )
   )
 

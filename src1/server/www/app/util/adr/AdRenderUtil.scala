@@ -3,7 +3,6 @@ package util.adr
 import java.io.File
 import javax.inject.Inject
 
-import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.n2.node.MNode
 import models.adr.MAdRenderArgs
@@ -65,7 +64,7 @@ final class AdRenderUtil @Inject() (
    * @return Строка с абсолютной ссылкой на локалхост.
    */
   def adImgLocalUrl(adArgs: OneAdQsArgs): String = {
-    "http://localhost:" + playUtil.httpPort + routes.Sc.onlyOneAd(adArgs).url
+    "http://localhost:" + playUtil.httpPort + controllers.sc.routes.ScOnlyOneAd.onlyOneAd(adArgs).url
   }
 
 

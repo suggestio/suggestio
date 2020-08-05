@@ -9,13 +9,14 @@ import io.suggest.common.empty.OptionUtil
 import OptionUtil.BoolOptOps
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
+import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
+import io.suggest.spa.SioPages
 import io.suggest.swfs.fid.Fid
 import io.suggest.up.{MUploadChunkQs, MUploadChunkSize, MUploadChunkSizes}
 import io.suggest.util.logs.MacroLogsDyn
@@ -556,8 +557,8 @@ object CommonModelsJvm extends MacroLogsDyn {
 
 
   /** QS-биндинги дял Sc3 MainScreen. */
-  implicit def sc3MainScreenQsb: QueryStringBindable[Sc3Pages.MainScreen] = {
-    new QueryStringBindableImpl[Sc3Pages.MainScreen] {
+  implicit def sc3MainScreenQsb: QueryStringBindable[SioPages.Sc3] = {
+    new QueryStringBindableImpl[SioPages.Sc3] {
       import io.suggest.sc.ScConstants.ScJsState._
       import io.suggest.geo.GeoPoint
 
@@ -586,7 +587,7 @@ object CommonModelsJvm extends MacroLogsDyn {
           m => QsbSeq( m.toSeq )
         )
 
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Sc3Pages.MainScreen]] = {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SioPages.Sc3]] = {
         for {
           nodeIdOptE          <- strOptB.bind( NODE_ID_FN, params )
           searchOpenedE       <- boolOrFalseB.bind( SEARCH_OPENED_FN, params )
@@ -615,7 +616,7 @@ object CommonModelsJvm extends MacroLogsDyn {
             showWelcome       <- showWelcomeE
             virtBeacons       <- virtBeaconsE
           } yield {
-            Sc3Pages.MainScreen(
+            SioPages.Sc3(
               nodeId          = nodeIdOpt,
               searchOpened    = searchOpened,
               menuOpened      = menuOpened,
@@ -633,7 +634,7 @@ object CommonModelsJvm extends MacroLogsDyn {
         }
       }
 
-      override def unbind(key: String, value: Sc3Pages.MainScreen): String = {
+      override def unbind(key: String, value: SioPages.Sc3): String = {
         _mergeUnbinded1(
           strOptB.unbind( NODE_ID_FN, value.nodeId ),
           boolOrFalseB.unbind( SEARCH_OPENED_FN, value.searchOpened ),
@@ -649,6 +650,50 @@ object CommonModelsJvm extends MacroLogsDyn {
           stringsB.unbind( VIRT_BEACONS_FN, value.virtBeacons ),
         )
       }
+    }
+  }
+
+
+  /** qs-биндинг таба Login-страницы. */
+  implicit def loginTabQsb: QueryStringBindable[MLoginTab] =
+    EnumeratumJvmUtil.valueEnumQsb( MLoginTabs )
+
+
+  /** qs-биндинг для Login-страницы. */
+  implicit def loginPageQsb(implicit
+                            loginTabB       : QueryStringBindable[MLoginTab],
+                            stringOptB      : QueryStringBindable[Option[String]],
+                           ): QueryStringBindable[SioPages.Login] = {
+    new QueryStringBindableImpl[SioPages.Login] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SioPages.Login]] = {
+        val k = key1F(key)
+        val F = SioPages.Login.Fields
+        for {
+          loginTabE         <- loginTabB.bind ( k(F.CURR_TAB_FN),   params )
+          returnUrlOptB     <- stringOptB.bind( k(F.RETURN_URL_FN), params )
+        } yield {
+          for {
+            loginTab        <- loginTabE
+            returnUrlOpt    <- returnUrlOptB
+          } yield {
+            SioPages.Login(
+              currTab       = loginTab,
+              returnUrl     = returnUrlOpt,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: SioPages.Login): String = {
+        val k = key1F(key)
+        val F = SioPages.Login.Fields
+        _mergeUnbinded1(
+          loginTabB.unbind ( k(F.CURR_TAB_FN),   value.currTab   ),
+          stringOptB.unbind( k(F.RETURN_URL_FN), value.returnUrl ),
+        )
+      }
+
     }
   }
 

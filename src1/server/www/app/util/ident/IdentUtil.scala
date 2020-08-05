@@ -1,18 +1,18 @@
 package util.ident
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import controllers.routes
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
-import models.mproj.ICommonDi
 import models.usr.MSuperUsers
 import play.api.mvc._
 import japgolly.univeq._
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -20,37 +20,38 @@ import scala.concurrent.Future
  * Created: 27.01.15 15:45
  * Description: Утиль для ident-контроллера и других вещей, связанных с идентификацией пользователей.
  */
-@Singleton
-class IdentUtil @Inject() (
-                            esModel               : EsModel,
-                            mNodes                : MNodes,
-                            mSuperUsers           : MSuperUsers,
-                            mCommonDi             : ICommonDi,
-                          ) {
+final class IdentUtil @Inject() (
+                                  injector              : Injector,
+                                ) {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mSuperUsers = injector.instanceOf[MSuperUsers]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
-
-    // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
-    val msearch = new MNodeSearch {
-      override val outEdges: MEsNestedSearch[Criteria] = {
-        val cr = Criteria(
-          nodeIds     = personId :: Nil,
-          predicates  = MPredicates.OwnedBy :: Nil
-        )
-        MEsNestedSearch(
-          clauses = cr :: Nil,
-        )
-      }
-      override val nodeTypes = MNodeTypes.AdnNode :: Nil
-      override def limit = 2
-    }
+    import esModel.api._
 
     for {
-      mnodeIds <- mNodes.dynSearchIds(msearch)
+
+      mnodeIds <- mNodes.dynSearchIds(
+        new MNodeSearch {
+          override val outEdges: MEsNestedSearch[Criteria] = {
+            val cr = Criteria(
+              nodeIds     = personId :: Nil,
+              predicates  = MPredicates.OwnedBy :: Nil
+            )
+            MEsNestedSearch(
+              clauses = cr :: Nil,
+            )
+          }
+          override val nodeTypes = MNodeTypes.AdnNode :: Nil
+          // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
+          override def limit = 2
+        }
+      )
 
     } yield {
 
@@ -87,6 +88,8 @@ class IdentUtil @Inject() (
 
       // У юзера нет узлов
       case None =>
+        import esModel.api._
+
         // TODO Отправить на форму регистрации, если логин через внешнего id прова.
         for {
           n <- mNodes.dynExists {
@@ -122,10 +125,4 @@ class IdentUtil @Inject() (
       .map { Results.Redirect }
   }
 
-  // TODO Нужен метод "инсталляции" нового юзера.
-}
-
-
-trait IIdentUtil {
-  def identUtil: IdentUtil
 }

@@ -5,7 +5,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
 import models.mctx.ContextUtil
@@ -45,8 +45,8 @@ final class ShortUrls @Inject() (
   /** Рендер ответа с редиректом в выдачу. */
   private def _scUrlRdrResp(beaconId: Option[String] = None)
                            (implicit request: RequestHeader): Future[Result] = {
-    val call = routes.Sc.geoSite(
-      Sc3Pages.MainScreen(
+    val call = sc.routes.ScSite.geoSite(
+      SioPages.Sc3(
         virtBeacons = {
           var acc = Set.empty[String]
           for (bId <- beaconId)

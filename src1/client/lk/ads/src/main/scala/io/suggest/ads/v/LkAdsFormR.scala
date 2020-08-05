@@ -13,7 +13,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.routes.routes
 import io.suggest.sc.ScConstants
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -128,10 +128,10 @@ class LkAdsFormR(
 
             // Ссылка на выдачу, может меняться при смене текущего узла формы.
             s.parentNodeIdC { parentIdProxy =>
-              val routeArgs = Sc3Pages.MainScreen(
+              val routeArgs = SioPages.Sc3(
                 nodeId = Some( parentIdProxy.value )
               )
-              val route = routes.controllers.Sc.geoSite(
+              val route = routes.controllers.sc.ScSite.geoSite(
                 PlayJsonSjsUtil.toNativeJsonObj(
                   Json.toJsObject(routeArgs)
                 )

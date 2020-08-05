@@ -1,6 +1,6 @@
 package models.msc
 
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 
 /**
  * Suggest.io
@@ -12,5 +12,5 @@ import io.suggest.sc.sc3.Sc3Pages
 
 trait SyncRenderInfoDflt {
   def syncRender: Boolean = jsStateOpt.isDefined
-  def jsStateOpt: Option[Sc3Pages.MainScreen] = None
+  def jsStateOpt: Option[SioPages.Sc3] = None
 }

@@ -1,8 +1,8 @@
 package io.suggest.sc.m
 
 import diode.FastEq
-import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.v.styl.{ScCss, ScCssSemiStatic}
+import io.suggest.spa.SioPages
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
 
@@ -38,7 +38,7 @@ object MScReactCtx {
   */
 case class MScReactCtx(
                         getScCss          : () => ScCss,
-                        routerCtl         : RouterCtl[Sc3Pages],
+                        routerCtl         : RouterCtl[SioPages],
                         scCssSemiStatic   : ScCssSemiStatic,
                       ) {
 

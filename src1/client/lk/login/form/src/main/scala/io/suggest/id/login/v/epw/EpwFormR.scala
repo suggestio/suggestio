@@ -7,12 +7,13 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
-import io.suggest.id.login.{ILoginFormPages, MLoginTabs}
+import io.suggest.id.login.MLoginTabs
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{CheckBoxR, LoginProgressR, TextFieldR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.spa.SioPages
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
@@ -31,7 +32,7 @@ class EpwFormR(
                 loginProgressR              : LoginProgressR,
                 crCtxProv                   : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
-                routerCtlRctx               : React.Context[RouterCtl[ILoginFormPages]],
+                routerCtlRctx               : React.Context[RouterCtl[SioPages]],
               ) {
 
   type Props_t = MEpwLoginS
@@ -136,7 +137,7 @@ class EpwFormR(
                 MuiLink {
                   new MuiLinkProps {
                     override val color = MuiColorTypes.textPrimary
-                    val href = routerCtl.urlFor( ILoginFormPages.Login( MLoginTabs.EpwLogin ) ).value
+                    val href = routerCtl.urlFor( SioPages.Login( MLoginTabs.EpwLogin ) ).value
                     override val onClick = _onPwRecoverLinkClickCbF
                     override val classes = css
                   }

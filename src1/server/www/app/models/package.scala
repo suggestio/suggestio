@@ -9,7 +9,7 @@
 package object models {
 
   /** Вызов на главную страницу. */
-  def MAIN_PAGE_CALL        = controllers.routes.Sc.geoSite()
+  def MAIN_PAGE_CALL        = controllers.sc.routes.ScSite.geoSite()
 
 
   type MNode                = io.suggest.n2.node.MNode

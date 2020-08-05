@@ -1,7 +1,7 @@
 package io.suggest.sc.m.inx.save
 
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.sc3.Sc3Pages.MainScreen
+import io.suggest.spa.SioPages
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -24,7 +24,7 @@ object MIndexInfo {
     val F = Fields
     (
       (__ \ F.INDEX_RESP).format[MSc3IndexResp] and
-      (__ \ F.SC_STATE).format[MainScreen]
+      (__ \ F.SC_STATE).format[SioPages.Sc3]
     )(apply, unlift(unapply))
   }
 
@@ -42,5 +42,5 @@ object MIndexInfo {
   */
 case class MIndexInfo(
                        indexResp      : MSc3IndexResp,
-                       state          : MainScreen,
+                       state          : SioPages.Sc3,
                      )

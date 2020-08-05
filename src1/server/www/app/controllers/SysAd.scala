@@ -145,11 +145,12 @@ final class SysAd @Inject()(
     * @return Инстанс Call.
     */
   private def _oneAdRenderCall(rvar: OneAdRenderVariant, qsArgs: OneAdQsArgs): Call = {
+    import controllers.sc.routes.ScOnlyOneAd
     rvar match {
       case OneAdRenderVariants.ToHtml =>
-        routes.Sc.onlyOneAd( qsArgs )
+        ScOnlyOneAd.onlyOneAd( qsArgs )
       case OneAdRenderVariants.ToImage =>
-        routes.Sc.onlyOneAdAsImage( qsArgs )
+        ScOnlyOneAd.onlyOneAdAsImage( qsArgs )
     }
   }
 

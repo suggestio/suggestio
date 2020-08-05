@@ -4,7 +4,7 @@
 GET  /~$code<[.a-zA-Z0-9~_&$#@?=;:/,+$&-]{1,4}>        @controllers.ShortUrls.handleUrl(code: String)
 
 ## Home page
-GET  /                                  @controllers.Sc.geoSite(a: io.suggest.sc.sc3.Sc3Pages.MainScreen ?= io.suggest.sc.sc3.Sc3Pages.MainScreen.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+GET  /                                  @controllers.sc.ScSite.geoSite(a: io.suggest.spa.SioPages.Sc3 ?= io.suggest.spa.SioPages.Sc3.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 HEAD /img/dyn                           @controllers.Img.dynImgHead(i: im.MImgT)
@@ -39,10 +39,10 @@ GET  /sitemap.xml                       @controllers.Static.siteMapXml
 GET  /ws/ch/:c                          @controllers.Static.wsChannel( c: io.suggest.ctx.MCtxId )
 
 ## Рендер ровно одной карточки.
-GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
-GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
+GET  /sc/one/html                       @controllers.sc.ScOnlyOneAd.onlyOneAd(o: blk.OneAdQsArgs)
+GET  /sc/one/img                        @controllers.sc.ScOnlyOneAd.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
-GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
+GET  /sc/routes/:c/router.js            @controllers.sc.ScJsRouter.scJsRouterCache(c: Int)
 GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
@@ -308,8 +308,8 @@ POST /sys/debug/cpRes                    @controllers.SysDebug.getClassPathResou
 
 ## ident v2: react-форма логина.
 ## Password change v2
-GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
-POST /id/login                     @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
+GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.spa.SioPages.Login ?= io.suggest.spa.SioPages.Login.default)
+POST /id/login                          @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
 ## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
 POST /id/reg/s0                         @controllers.Ident.regStep0Submit
 POST /id/reg/s1                         @controllers.Ident.epw2RegSubmit()

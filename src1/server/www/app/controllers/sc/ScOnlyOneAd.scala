@@ -1,11 +1,13 @@
 package controllers.sc
 
+import controllers.SioControllerApi
 import io.suggest.common.css.OnlyOneAdTopLeft
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.util.logs.MacroLogsImplLazy
+import javax.inject.Inject
 import models.blk.{OneAdQsArgs, RenderArgs, szMulted}
 import util.acl.GetAnyAd
-import util.adr.IAdRenderUtilDi
-import util.adv.IAdvUtilDi
+import util.adr.AdRenderUtil
+import util.adv.AdvUtil
 import views.html.blocks.common.standaloneTpl
 import views.html.sc._adTpl
 
@@ -15,18 +17,21 @@ import views.html.sc._adTpl
  * Created: 25.12.14 16:48
  * Description: Аддон для контроллера, который занимается раздаванием ровно одной карточки.
  */
-trait ScOnlyOneAd
-  extends ScController
-  with IMacroLogs
-  with IAdRenderUtilDi
-  with IAdvUtilDi
+final class ScOnlyOneAd @Inject() (
+                                    sioControllerApi: SioControllerApi,
+                                  )
+  extends MacroLogsImplLazy
 {
 
-  protected val getAnyAd: GetAnyAd
-
-
   import sioControllerApi._
-  import mCommonDi._
+  import mCommonDi.ec
+  import sioControllerApi.mCommonDi.current.injector
+
+
+  private lazy val getAnyAd = injector.instanceOf[GetAnyAd]
+  private lazy val adRenderUtil = injector.instanceOf[AdRenderUtil]
+  private lazy val advUtil = injector.instanceOf[AdvUtil]
+
 
   /**
    * Отрендерить одну указанную карточку как веб-страницу.

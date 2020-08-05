@@ -5,7 +5,7 @@ import play.api.data.Mapping
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.playx.FormMappingUtil
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 
 /**
  * Suggest.io
@@ -104,9 +104,9 @@ sealed trait ReturnToScBuilder {
     *
     * @return Экземпляр js-состояния.
    */
-  def toJsState: Sc3Pages.MainScreen = Sc3Pages.MainScreen.empty
+  def toJsState: SioPages.Sc3 = SioPages.Sc3.empty
 
-  def toCall = routes.Sc.geoSite(toJsState)
+  def toCall = controllers.sc.routes.ScSite.geoSite(toJsState)
 
   /**
    * Сгенерить относительную ссылку на выдачу для накопленных данных.
@@ -128,7 +128,7 @@ sealed trait RetToNode extends ReturnToScBuilder {
     super.setAdnId(adnId)
   }
 
-  override def toJsState: Sc3Pages.MainScreen = {
+  override def toJsState: SioPages.Sc3 = {
     super.toJsState.copy(
       nodeId = adnIdOpt
     )
@@ -151,7 +151,7 @@ sealed trait RetToFocusedAd extends ReturnToScBuilder {
     super.setFocusedProducerId(adnId)
   }
 
-  override def toJsState: Sc3Pages.MainScreen = {
+  override def toJsState: SioPages.Sc3 = {
     super.toJsState.copy(
       nodeId = focProdIdOpt,
       focusedAdId = focAdIdOpt

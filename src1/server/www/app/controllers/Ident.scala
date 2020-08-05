@@ -14,7 +14,7 @@ import io.suggest.es.model.{EsModel, MEsNestedSearch, MEsUuId}
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
-import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
+import io.suggest.id.login.MEpwLoginReq
 import io.suggest.id.pwch.MPwChangeForm
 import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0, MRegTokenResp}
 import io.suggest.id.token.{MIdMsg, MIdToken, MIdTokenConstaints, MIdTokenDates, MIdTokenTypes}
@@ -29,6 +29,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{CustomTtl, LongTtl, MSessionKeys, ShortTtl, Ttl}
+import io.suggest.spa.SioPages
 import io.suggest.streams.JioStreamsUtil
 import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
@@ -97,6 +98,7 @@ final class Ident @Inject() (
   private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val ignoreAuth = injector.instanceOf[IgnoreAuth]
   private lazy val canLoginVia = injector.instanceOf[CanLoginVia]
+  private lazy val lkLoginTpl = injector.instanceOf[LkLoginTpl]
 
   import esModel.api._
   import mPersonIdentModel.api._
@@ -145,14 +147,14 @@ final class Ident @Inject() (
     * @param lfp Парсится на стороне сервера.
     * @return Страница с логином.
     */
-  def loginFormPage(lfp: ILoginFormPages) = csrf.AddToken {
+  def loginFormPage(lfp: SioPages.Login) = csrf.AddToken {
     isAnon().async { implicit request =>
       import cspUtil.Implicits._
 
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
       )
-      Ok( LkLoginTpl() )
+      Ok( lkLoginTpl() )
         .withCspHeader( CSP_HDR_OPT )
     }
   }

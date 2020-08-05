@@ -4,7 +4,7 @@ import controllers.ErrorHandler
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mext.MExtServicesJvm
 import models.req.MLoginViaReq
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
@@ -25,12 +25,12 @@ import scala.concurrent.Future
 class CanLoginVia @Inject()(
                              aclUtil        : AclUtil,
                              reqUtil        : ReqUtil,
-                             errorHandler   : ErrorHandler,
                              injector       : Injector,
                            )
   extends MacroLogsImpl
 {
 
+  private lazy val errorHandler = injector.instanceOf[ErrorHandler]
   private lazy val ssLoginUtil = injector.instanceOf[SecureSocialLoginUtil]
   private lazy val esiaLoginUtil = injector.instanceOf[EsiaLoginUtil]
 

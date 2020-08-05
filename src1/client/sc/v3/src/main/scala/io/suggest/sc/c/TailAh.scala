@@ -11,7 +11,6 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MNodesFoundS, MScSearch, MSearchCssProps, MSearchRespInfo, NodeRowClick}
-import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
@@ -24,12 +23,11 @@ import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecent, MIndexesRecentOuter}
 import io.suggest.sc.m.menu.DlAppOpen
-import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.{DAction, DoNothing}
+import io.suggest.spa.{DAction, DoNothing, SioPages}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
 
@@ -48,7 +46,7 @@ object TailAh {
     * @param v0 Инстанс состояния MScRoot.
     * @return Данные в MainScreen.
     */
-  def getMainScreenSnapShot(v0: MScRoot): MainScreen = {
+  def getMainScreenSnapShot(v0: MScRoot): SioPages.Sc3 = {
     val inxState = v0.index.state
     val searchOpened = v0.index.search.panel.opened
     val currRcvrId = inxState.rcvrId
@@ -56,7 +54,7 @@ object TailAh {
     // TODO Поддержка нескольких тегов в URL.
     val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
 
-    MainScreen(
+    SioPages.Sc3(
       nodeId        = currRcvrId,
       // Не рендерить координаты в URL, если находишься в контексте узла, закрыта панель поиска и нет выбранного тега.
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
@@ -167,7 +165,7 @@ object TailAh {
 
 /** Непосредственный контроллер "последних" сообщений. */
 class TailAh(
-              routerCtl                : RouterCtl[Sc3Pages],
+              routerCtl                : RouterCtl[SioPages],
               modelRW                  : ModelRW[MScRoot, MScRoot],
               scRespHandlers           : Seq[IRespHandler],
               scRespActionHandlers     : Seq[IRespActionHandler],
@@ -185,7 +183,7 @@ class TailAh(
 
       val currRouteLens = TailAh._currRoute
       val currRouteOpt = currRouteLens.get( v0 )
-      if (!m.force && (currRouteOpt contains[MainScreen] nextRoute)) {
+      if (!m.force && (currRouteOpt contains[SioPages.Sc3] nextRoute)) {
         noChange
       } else {
         // Скопировать URL-поле virtBeacons, если в рамках одного местоположения:
@@ -194,7 +192,7 @@ class TailAh(
           if currRoute.virtBeacons.nonEmpty &&
             (currRoute isSamePlaceAs nextRoute)
         }
-          nextRoute = (Sc3Pages.MainScreen.virtBeacons set currRoute.virtBeacons)(nextRoute)
+          nextRoute = (SioPages.Sc3.virtBeacons set currRoute.virtBeacons)(nextRoute)
 
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
         val fx = Effect.action {
@@ -359,7 +357,7 @@ class TailAh(
 
             // Если мобильный экран, то надо сразу скрыть раскрытую панель меню:
             if (nextRoute.menuOpened && v0.grid.core.jdConf.gridColumnsCount <= 3)
-              nextRoute = (Sc3Pages.MainScreen.menuOpened set false)(nextRoute)
+              nextRoute = (SioPages.Sc3.menuOpened set false)(nextRoute)
 
             ResetUrlRoute( Some(nextRoute) )
           }
@@ -431,7 +429,7 @@ class TailAh(
 
       // Сохранить присланную роуту в состояние, если роута изменилась:
       val currRouteLens = TailAh._currRoute
-      if ( !(currRouteLens.get(v0) contains[MainScreen] m.mainScreen) )
+      if ( !(currRouteLens.get(v0) contains[SioPages.Sc3] m.mainScreen) )
         modsAcc ::= currRouteLens.set( Some(m.mainScreen) )
 
       // Проверка поля generation

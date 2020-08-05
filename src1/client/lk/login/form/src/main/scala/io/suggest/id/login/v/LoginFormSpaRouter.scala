@@ -2,8 +2,9 @@ package io.suggest.id.login.v
 
 import io.suggest.ReactCommonModule
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.id.login.{ILoginFormPages, LoginFormCircuit, MLoginTabs}
+import io.suggest.id.login.{LoginFormCircuit, MLoginTabs}
 import io.suggest.id.login.m.MLoginRootS
+import io.suggest.spa.SioPages
 import japgolly.univeq._
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -21,21 +22,21 @@ import scala.util.Try
   */
 class LoginFormSpaRouter(
                           loginFormR    : () => LoginFormR,
-                          circuitF      : RouterCtl[ILoginFormPages] => LoginFormCircuit,
+                          circuitF      : RouterCtl[SioPages] => LoginFormCircuit,
                         ) {
 
   /** Сборка инстансов SPA-роутера и контроллер роутера. */
-  val routerAndCtl: (Router[ILoginFormPages], RouterCtl[ILoginFormPages]) = {
+  val routerAndCtl: (Router[SioPages], RouterCtl[SioPages]) = {
     val qMark = "?"
 
-    val routerCfg = RouterConfigDsl[ILoginFormPages].buildConfig { dsl =>
+    val routerCfg = RouterConfigDsl[SioPages].buildConfig { dsl =>
       import dsl._
-      import ILoginFormPages.Login.Fields._
+      import SioPages.Login.Fields._
 
       val loginFormRoute = (qMark ~ string(".+"))
         .pmap { qsStr =>
           val eqSign = '='
-          var updatesAcc = List.empty[ILoginFormPages.Login => ILoginFormPages.Login]
+          var updatesAcc = List.empty[SioPages.Login => SioPages.Login]
           for {
             qsKv <- qsStr.split('&')
             if qsKv.nonEmpty
@@ -58,17 +59,17 @@ class LoginFormSpaRouter(
                 tabId <- Try(v.toInt).toOption
                 tab   <- MLoginTabs.withValueOpt( tabId )
               } {
-                updatesAcc ::= ILoginFormPages.Login.currTab.set( tab )
+                updatesAcc ::= (SioPages.Login.currTab set tab)
               }
             } else if (k2 ==* RETURN_URL_FN) {
-              updatesAcc ::= ILoginFormPages.Login.returnUrl.set( Some(v) )
+              updatesAcc ::= (SioPages.Login.returnUrl set Some(v))
             }
           }
 
           for {
             updateF <- updatesAcc.reduceOption(_ andThen _)
           } yield {
-            updateF( ILoginFormPages.Login.default )
+            updateF( SioPages.Login.default )
           }
         } { nl =>
           val eqSign = "="
@@ -79,18 +80,18 @@ class LoginFormSpaRouter(
         }
         .option
         .withDefault {
-          ILoginFormPages.Login.default
+          SioPages.Login.default
         }
 
       val loginFormRule = dynamicRouteCT( loginFormRoute ) ~> dynRender( _renderNormalLogin )
 
       loginFormRule
         .notFound { _ =>
-          redirectToPage( ILoginFormPages.Login.default )( Redirect.Replace )
+          redirectToPage( SioPages.Login.default )( Redirect.Replace )
         }
     }
 
-    Router.componentAndCtl[ILoginFormPages](
+    Router.componentAndCtl[SioPages](
       baseUrl = BaseUrl.until( stopAt = qMark ),
       cfg     = routerCfg
     )
@@ -111,7 +112,7 @@ class LoginFormSpaRouter(
     )
   }
 
-  private def _renderNormalLogin(nl: ILoginFormPages.Login): VdomElement = {
+  private def _renderNormalLogin(nl: SioPages.Login): VdomElement = {
     // Уведомить о смене вкладки.
     circuit.dispatch( nl )
 

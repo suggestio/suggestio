@@ -182,7 +182,7 @@ lazy val lkCommonSjs = {
 /** Форма логина sjs. */
 lazy val loginFormSjs = {
   Project(id = "login-form-sjs", base = file(DIR0 + "client/lk/login/form") )
-    .dependsOn( commonSjs, lkCommonSjs, commonReactSjs, reactMaterialUiSjs )
+    .dependsOn( lkCommonSjs )
 }
 
 /** Компоненты для покупательской корзины suggest.io. */

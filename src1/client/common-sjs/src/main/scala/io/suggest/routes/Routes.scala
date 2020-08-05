@@ -57,6 +57,7 @@ sealed trait Controllers extends js.Object {
 
   /** Доступ к роутам выдачи. */
   def Sc: ScCtlRoutes = js.native
+  def sc: ScSubControllers = js.native
   def ScApp: ScAppCtlRoutes = js.native
 
   def RemoteLogs: RemoteLogsCtlRoutes = js.native
@@ -181,11 +182,20 @@ sealed trait LkAdEditCtlRoutes extends js.Object {
 @js.native
 sealed trait ScCtlRoutes extends js.Object {
 
-  /** Ссылка на корень. */
-  def geoSite(scJsState: js.Dictionary[js.Any] = js.native, siteQsArgs: js.Dictionary[js.Any] = js.native): PlayRoute = js.native
-
   /** Роута для доступа к pubApi. */
   def pubApi(args: js.Dictionary[js.Any]): PlayRoute = js.native
+
+}
+
+@js.native
+sealed trait ScSubControllers extends js.Object {
+  def ScSite: ScSiteCtlRoutes = js.native
+}
+@js.native
+sealed trait ScSiteCtlRoutes extends js.Object {
+
+  /** Ссылка на корень. */
+  def geoSite(scJsState: js.Dictionary[js.Any] = js.native, siteQsArgs: js.Dictionary[js.Any] = js.native): PlayRoute = js.native
 
 }
 

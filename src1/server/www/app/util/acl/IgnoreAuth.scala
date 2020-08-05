@@ -37,8 +37,3 @@ final class IgnoreAuth @Inject() (
   def apply() = Impl
 
 }
-
-
-trait IIgnoreAuth {
-  val ignoreAuth: IgnoreAuth
-}

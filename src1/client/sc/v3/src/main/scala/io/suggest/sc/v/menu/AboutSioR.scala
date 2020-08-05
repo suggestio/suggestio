@@ -10,8 +10,8 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.spa.SioPages
 import scalacss.ScalaCssReact._
 
 /**
@@ -68,7 +68,7 @@ class AboutSioR(
             // Это типа ссылка <a>, но уже с выставленным href + go-событие.
             scReactCtx
               .routerCtl
-              .link( Sc3Pages.MainScreen(
+              .link( SioPages.Sc3(
                 nodeId = Some( props.aboutNodeId )
               ))(
                 linkChildren: _*

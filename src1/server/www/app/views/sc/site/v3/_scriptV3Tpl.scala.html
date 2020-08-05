@@ -17,7 +17,7 @@
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
 <script id="@ScConstants.JsRouter.DOM_ID" type="text/javascript" async
-        src="@cdn.forCall( routes.Sc.scJsRouterCache(args.cacheHashCode) )">
+        src="@cdn.forCall( controllers.sc.routes.ScJsRouter.scJsRouterCache(args.cacheHashCode) )">
 </script>
 
 @* Рендер jsMessages прямо тут. *@

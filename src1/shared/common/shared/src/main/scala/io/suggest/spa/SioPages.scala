@@ -1,12 +1,12 @@
-package io.suggest.sc.sc3
+package io.suggest.spa
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.geo.MGeoPoint
-import japgolly.univeq.UnivEq
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import japgolly.univeq._
+import io.suggest.id.login.{MLoginTab, MLoginTabs}
+import japgolly.univeq.{UnivEq, _}
 import monocle.macros.GenLens
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -16,26 +16,25 @@ import monocle.macros.GenLens
   */
 
 /** Интерфейс-маркер для всех допустимых роут. */
-sealed trait Sc3Pages
+sealed trait SioPages
 
 
 /** Реализации допустимых роут. */
-object Sc3Pages {
+object SioPages {
 
-  @inline implicit def univEq: UnivEq[Sc3Pages] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[SioPages] = UnivEq.derive
 
 
-  object MainScreen {
+  object Sc3 {
 
     def empty = apply()
 
-    @inline implicit def univEq: UnivEq[MainScreen] = UnivEq.derive
+    @inline implicit def univEq: UnivEq[Sc3] = UnivEq.derive
 
     /** Поддержка play-json для qs-модели нужна для эксплуатации _o2qs() в jsRouter'е. */
-    implicit def MAIN_SCREEN_FORMAT: OFormat[MainScreen] = {
-      import io.suggest.sc.ScConstants.ScJsState._
+    implicit def scJson: OFormat[Sc3] = {
       import io.suggest.common.empty.OptionUtil._
-      import MGeoPoint.JsonFormatters.{PIPE_DELIM_STRING_READS, PIPE_DELIM_STRING_WRITES}
+      import io.suggest.sc.ScConstants.ScJsState._
       (
         (__ \ NODE_ID_FN).formatNullable[String] and
         (__ \ SEARCH_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
@@ -57,17 +56,17 @@ object Sc3Pages {
     }
 
 
-    def nodeId = GenLens[MainScreen]( _.nodeId )
-    def locEnv = GenLens[MainScreen]( _.locEnv )
-    def searchOpened = GenLens[MainScreen]( _.searchOpened )
-    def menuOpened = GenLens[MainScreen]( _.menuOpened )
-    def showWelcome = GenLens[MainScreen]( _.showWelcome )
-    def virtBeacons = GenLens[MainScreen]( _.virtBeacons )
+    def nodeId = GenLens[Sc3]( _.nodeId )
+    def locEnv = GenLens[Sc3]( _.locEnv )
+    def searchOpened = GenLens[Sc3]( _.searchOpened )
+    def menuOpened = GenLens[Sc3]( _.menuOpened )
+    def showWelcome = GenLens[Sc3]( _.showWelcome )
+    def virtBeacons = GenLens[Sc3]( _.virtBeacons )
 
 
-    implicit final class MainScreenOpsExt( private val mainScreen: MainScreen ) extends AnyVal {
+    implicit final class MainScreenOpsExt( private val mainScreen: Sc3 ) extends AnyVal {
 
-      def isSamePlaceAs(ms2: MainScreen): Boolean = {
+      def isSamePlaceAs(ms2: Sc3): Boolean = {
         (mainScreen.nodeId ==* ms2.nodeId) &&
         ((mainScreen.locEnv.isEmpty && ms2.locEnv.isEmpty) ||
          (mainScreen.locEnv.exists(gp1 => ms2.locEnv.exists(_ ~= gp1))))
@@ -89,24 +88,24 @@ object Sc3Pages {
       }
 
       /** Переключение в другое состояние с минимальными изменениями конфигурации интерфейса. */
-      def silentSwitchingInto( mainScreen2: MainScreen ): MainScreen = {
+      def silentSwitchingInto( mainScreen2: Sc3 ): Sc3 = {
         mainScreen2.copy(
           searchOpened  = mainScreen.searchOpened,
           menuOpened    = mainScreen.menuOpened,
           firstRunOpen  = mainScreen.firstRunOpen,
           showWelcome   = false,
           dlAppOpen     = mainScreen.dlAppOpen,
-          virtBeacons     = Set.empty,
+          virtBeacons   = Set.empty,
         )
       }
 
       /** Очень каноническое состояние выдачи без каких-либо уточнений. */
-      def canonical: MainScreen = {
+      def canonical: Sc3 = {
         mainScreen.copy(
           searchOpened      = false,
           menuOpened        = false,
           generation        = None,
-          virtBeacons         = Set.empty,
+          virtBeacons       = Set.empty,
         )
       }
 
@@ -115,20 +114,49 @@ object Sc3Pages {
   }
 
   /** Роута для основного экрана с какими-то доп.аргументами. */
-  case class MainScreen(
-                         nodeId         : Option[String]      = None,
-                         searchOpened   : Boolean             = false,
-                         generation     : Option[Long]        = None,
-                         tagNodeId      : Option[String]      = None,
-                         locEnv         : Option[MGeoPoint]   = None,
-                         menuOpened     : Boolean             = false,
-                         focusedAdId    : Option[String]      = None,
-                         firstRunOpen   : Boolean             = false,
-                         dlAppOpen      : Boolean             = false,
-                         settingsOpen   : Boolean             = false,
-                         showWelcome    : Boolean             = true,
-                         virtBeacons    : Set[String]         = Set.empty,
-                       )
-    extends Sc3Pages
+  case class Sc3(
+                  nodeId         : Option[String]      = None,
+                  searchOpened   : Boolean             = false,
+                  generation     : Option[Long]        = None,
+                  tagNodeId      : Option[String]      = None,
+                  locEnv         : Option[MGeoPoint]   = None,
+                  menuOpened     : Boolean             = false,
+                  focusedAdId    : Option[String]      = None,
+                  firstRunOpen   : Boolean             = false,
+                  dlAppOpen      : Boolean             = false,
+                  settingsOpen   : Boolean             = false,
+                  showWelcome    : Boolean             = true,
+                  virtBeacons    : Set[String]         = Set.empty,
+                )
+    extends SioPages
+
+
+
+
+  /** Класс-контейнер данных URL текущей формы.
+    *
+    * @param currTab Текущий открытый таб.
+    * @param returnUrl Значение "?r=..." в ссылке.
+    */
+  final case class Login(
+                          currTab       : MLoginTab       = MLoginTabs.default,
+                          returnUrl     : Option[String]  = None,
+                        )
+    extends SioPages
+    with DAction
+
+  object Login {
+
+    def default = apply()
+
+    object Fields {
+      def CURR_TAB_FN   = "t"
+      def RETURN_URL_FN = "r"
+    }
+
+    def currTab = GenLens[Login](_.currTab)
+    def returnUrl = GenLens[Login](_.returnUrl)
+
+  }
 
 }

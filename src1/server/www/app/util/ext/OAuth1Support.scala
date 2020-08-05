@@ -186,7 +186,7 @@ trait OAuth1Support
     }
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
     val tweetUrl = if (WITH_URL) {
-      val call = controllers.routes.Sc.geoSite(jsSt, siteArgs)
+      val call = controllers.sc.routes.ScSite.geoSite(jsSt, siteArgs)
       ctxUtil.toScAbsUrl( call )
     } else {
       ""

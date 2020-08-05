@@ -9,8 +9,9 @@ import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.id.IdentConst
-import io.suggest.id.login.{ILoginFormPages, MLoginTab, MLoginTabs}
+import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.req.ReqUtil
+import io.suggest.spa.SioPages
 import play.api.http.{HeaderNames, MimeTypes}
 
 /**
@@ -39,7 +40,7 @@ final class IsAuth @Inject() (
   def onUnauth(request: RequestHeader, loginTab: MLoginTab): Future[Result] = {
     val rOpt = Some(request.uri)
     val rdrCall = routes.Ident.loginFormPage(
-      ILoginFormPages.Login(
+      SioPages.Login(
         currTab   = loginTab,
         returnUrl = rOpt
       )

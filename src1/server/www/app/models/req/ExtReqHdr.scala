@@ -4,7 +4,7 @@ import java.net.InetAddress
 
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.proto.http.HttpConst
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.http.HeaderNames
 import play.api.mvc.{QueryStringBindable, RequestHeader}
@@ -121,7 +121,7 @@ trait ExtReqHdr extends RequestHeader {
   }
 
   /** Переданное js-состояние скрипта выдачи, закинутое в ajax escaped_fragment. */
-  lazy val ajaxJsScState: Option[Sc3Pages.MainScreen] = {
+  lazy val ajaxJsScState: Option[SioPages.Sc3] = {
     ajaxEscapedFragment
       .flatMap { raw =>
         try {
@@ -135,7 +135,7 @@ trait ExtReqHdr extends RequestHeader {
       }
       .flatMap { aefMap =>
         import io.suggest.model.CommonModelsJvm._
-        implicitly[QueryStringBindable[Sc3Pages.MainScreen]]
+        implicitly[QueryStringBindable[SioPages.Sc3]]
           .bind("", aefMap)
       }
       .flatMap {

@@ -7,6 +7,7 @@ import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
 import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, Reg4SetPasswordR, RegR}
 import io.suggest.id.login.v.stuff.{CheckBoxR, ErrorSnackR, LoginProgressR, TextFieldR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
+import io.suggest.spa.SioPages
 import japgolly.scalajs.react.React
 import japgolly.scalajs.react.extra.router.RouterCtl
 
@@ -43,13 +44,13 @@ class LoginFormModule {
   lazy val pwChangeR = wire[PwChangeR]
 
   def loginFormCircuitF =
-    (routerCtl: RouterCtl[ILoginFormPages]) => wire[LoginFormCircuit]
+    (routerCtl: RouterCtl[SioPages]) => wire[LoginFormCircuit]
 
   lazy val loginFormSpaRouter = wire[LoginFormSpaRouter]
 
   lazy val loginFormCssCtx: React.Context[LoginFormCss] =
     React.createContext( loginFormSpaRouter.circuit.overallRW.value.formCss )
-  lazy val routerCtlRctx: React.Context[RouterCtl[ILoginFormPages]] =
+  lazy val routerCtlRctx: React.Context[RouterCtl[SioPages]] =
     React.createContext( loginFormSpaRouter.routerCtl )
 
 

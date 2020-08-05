@@ -78,7 +78,7 @@ final class ScApp @Inject()(
         name      = sio,
         // TODO Полное и короткое названия должны различаться.
         shortName = Some( sio ),
-        startUrl  = routes.Sc.geoSite().url,
+        startUrl  = sc.routes.ScSite.geoSite().url,
         display   = Some( MPwaDisplayModes.Standalone ),
         icons     = MFavIcons.Icons().allIcons.map(_.icon),
       )

@@ -24,7 +24,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.routes.routes
 import io.suggest.sc.ScConstants
-import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.spa.SioPages
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 
@@ -411,10 +411,10 @@ class NodeR(
                       new MuiLinkProps {
                         val target = "_blank"
                         val href = ScConstants.ScJsState.fixJsRouterUrl(
-                          routes.controllers.Sc.geoSite(
+                          routes.controllers.sc.ScSite.geoSite(
                             PlayJsonSjsUtil.toNativeJsonObj(
                               Json.toJsObject(
-                                Sc3Pages.MainScreen(
+                                SioPages.Sc3(
                                   nodeId = Some( node.info.id ),
                                 )
                               )

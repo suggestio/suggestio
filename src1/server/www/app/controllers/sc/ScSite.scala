@@ -7,28 +7,30 @@ import io.suggest.i18n.{I18nConst, MsgCodes}
 import io.suggest.maps.MMapProps
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.extra.domain.{DomainCriteria, MDomainModes}
-import io.suggest.n2.node.{IMNodes, MNode}
+import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.sc3.{MSc3Conf, MSc3Init, Sc3Pages}
+import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
+import io.suggest.spa.SioPages
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.text.util.UrlUtil
-import io.suggest.util.logs.IMacroLogs
-import models.mctx.IContextUtilDi
+import io.suggest.util.logs.MacroLogsImpl
+import models.mctx.ContextUtil
 import models.msc._
 import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
-import util.adv.geo.{IAdvGeoLocUtilDi, IAdvGeoRcvrsUtilDi}
-import util.ext.IExtServicesUtilDi
+import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
+import util.ext.ExtServicesUtil
 import util.i18n.JsMessagesUtil
 import util.sec.CspUtil
-import util.showcase.IScUtil
-import util.stat.IStatUtil
+import util.stat.StatUtil
 import OptionUtil.BoolOptOps
-import io.suggest.es.model.EsModelDi
+import com.google.inject.Inject
+import controllers.SioControllerApi
+import io.suggest.es.model.EsModel
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc._
 import japgolly.univeq._
@@ -46,25 +48,29 @@ import scala.util.{Failure, Success}
  */
 
 /** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
-trait ScSite
-  extends ScController
-  with IMacroLogs
-  with IStatUtil
-  with IScUtil
-  with IExtServicesUtilDi
-  with IMNodes
-  with IContextUtilDi
-  with IMaybeAuth
-  with IAdvGeoLocUtilDi
-  with IAdvGeoRcvrsUtilDi
-  with EsModelDi
+final class ScSite @Inject() (
+                               sioControllerApi       : SioControllerApi,
+                             )
+  extends MacroLogsImpl
 {
-  
-  val jsMessagesUtil: JsMessagesUtil
-  val cspUtil: CspUtil
 
   import sioControllerApi._
-  import mCommonDi._
+  import mCommonDi.current.injector
+
+  protected val scCtlApi = injector.instanceOf[ScCtlApi]
+  private lazy val statUtil = injector.instanceOf[StatUtil]
+  private lazy val extServicesUtil = injector.instanceOf[ExtServicesUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val contextUtil = injector.instanceOf[ContextUtil]
+  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val advGeoLocUtil = injector.instanceOf[AdvGeoLocUtil]
+  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val jsMessagesUtil = injector.instanceOf[JsMessagesUtil]
+  private lazy val cspUtil = injector.instanceOf[CspUtil]
+  private lazy val scJsRouter = injector.instanceOf[ScJsRouter]
+
+  import mCommonDi.{ec, configuration, cacheApiUtil, errorHandler}
   import esModel.api._
   import cspUtil.Implicits._
 
@@ -74,7 +80,7 @@ trait ScSite
 
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
-  protected abstract class SiteLogic extends LogicCommonT {
+  protected abstract class SiteLogic extends scCtlApi.LogicCommonT {
 
     /** Сюда передаются исходные параметры запроса сайта (qs). */
     def _siteQsArgs: SiteQsArgs
@@ -87,7 +93,7 @@ trait ScSite
       val myHost = ctx.request.host
         .replaceFirst(":.+$", "")
 
-      OptionUtil.maybeFut( !ctxUtil.isMyHostSio(myHost) ) {
+      OptionUtil.maybeFut( !contextUtil.isMyHostSio(myHost) ) {
         // Логгируем этот этап работы.
         lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
 
@@ -172,12 +178,12 @@ trait ScSite
     /** Кастомное опциональное состояние выдачи, которое должно быть отрендерено прямо в шаблоне и
       * прочитано оттуда выдачей. Изначальное появилось для передачи adnId (id текущего узла-ресивера),
       * но сразу было переимплеменчено в более универсальный инструмент. */
-    def customScStateOptFut: Future[Option[Sc3Pages.MainScreen]] = {
+    def customScStateOptFut: Future[Option[SioPages.Sc3]] = {
       for {
         nodeOpt <- nodeOptFutVal
       } yield {
         for (mnode <- nodeOpt) yield {
-          Sc3Pages.MainScreen(
+          SioPages.Sc3(
             nodeId = mnode.id,
           )
         }
@@ -324,7 +330,7 @@ trait ScSite
     def scriptCacheHashCodeFut: Future[Int] = {
       cacheApiUtil.getOrElseFut(_request.host + ":scv3ScriptCacheHashCode", 10.seconds) {
         Future {
-          ScJsRouter.jsRouterCacheHash( ctx )
+          scJsRouter.jsRouterCacheHash( ctx )
         }
       }
     }
@@ -391,7 +397,7 @@ trait ScSite
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов.
     * mainScreen разбирается на клиенте самой выдачей. */
-  def geoSite(mainScreen: Sc3Pages.MainScreen, siteArgs: SiteQsArgs) = {
+  def geoSite(mainScreen: SioPages.Sc3, siteArgs: SiteQsArgs) = {
     // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
     maybeAuth(U.PersonNode).async { implicit request =>
       // Выбор движка выдачи:

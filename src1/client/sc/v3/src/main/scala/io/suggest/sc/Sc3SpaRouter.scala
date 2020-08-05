@@ -9,14 +9,13 @@ import io.suggest.sc.m.RouteTo
 import io.suggest.sc.v.ScRootR
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.spa.MGen
+import io.suggest.spa.{MGen, SioPages}
 import io.suggest.text.UrlUtilJs
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
 import io.suggest.sc.m.boot.MSpaRouterState
-import io.suggest.sc.sc3.Sc3Pages
-import io.suggest.sc.sc3.Sc3Pages.MainScreen
+import io.suggest.spa.SioPages.Sc3
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -38,7 +37,7 @@ class Sc3SpaRouter(
 {
 
   /** Всё состояние роутера и связанные данные живут здесь: */
-  val state: MSpaRouterState = RouterConfigDsl[Sc3Pages].use { dsl =>
+  val state: MSpaRouterState = RouterConfigDsl[SioPages].use { dsl =>
     import dsl._
 
     /** Конфиг роутера второго поколения.
@@ -86,7 +85,7 @@ class Sc3SpaRouter(
             _boolOptTok(key).getOrElseFalse
 
           val K = ScConstants.ScJsState
-          MainScreen(
+          SioPages.Sc3(
             nodeId = tokens.get( K.NODE_ID_FN ),
             searchOpened = _boolOrFalseTok( K.SEARCH_OPENED_FN ),
             generation = tokens.get( K.GENERATION_FN )
@@ -214,18 +213,18 @@ class Sc3SpaRouter(
           isAlreadyUsedCanonical = true
           canonicalRoute
         }
-          .getOrElse( MainScreen.empty )
+          .getOrElse( SioPages.Sc3.empty )
       }
 
     // Кэшируем компонент ScRootR вне функций роутера, т.к. за ним следит только Sc3Circuit, а не роутер.
-    val mainScreenRule = dynamicRouteCT[MainScreen](mainScreenDfltRoute) ~> dynRender( _renderScMainScreen )
+    val mainScreenRule = dynamicRouteCT[Sc3](mainScreenDfltRoute) ~> dynRender( _renderScMainScreen )
 
     val routerCfg = mainScreenRule
       .notFound {
-        redirectToPage(MainScreen.empty)( Redirect.Replace )
+        redirectToPage( SioPages.Sc3.empty )( Redirect.Replace )
       }
 
-    val (r, rCtl) = Router.componentAndCtl[Sc3Pages](
+    val (r, rCtl) = Router.componentAndCtl[SioPages](
       baseUrl = BaseUrl.fromWindowOrigin_/,
       cfg     = routerCfg
     )
@@ -250,7 +249,7 @@ class Sc3SpaRouter(
   }
 
   /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */
-  private def _renderScMainScreen(page: MainScreen): VdomElement = {
+  private def _renderScMainScreen(page: Sc3): VdomElement = {
     // Отправить распарсенные данные URL в circuit:
     sc3Circuit.runEffectAction( RouteTo(page) )
     // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
