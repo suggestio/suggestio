@@ -94,6 +94,4 @@ class ExtFormR(
     .renderBackend[Backend]
     .build
 
-  def apply(extFormProxy: Props) = component( extFormProxy )
-
 }

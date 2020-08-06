@@ -7,6 +7,7 @@ import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.{IGeoFindIpResult, MLocEnv}
 import io.suggest.n2.node.MNode
+import io.suggest.proto.http.HttpConst
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil
@@ -189,7 +190,8 @@ final class StatUtil @Inject()(
           if (xRqWith.endsWith(".appsuggest") || xRqWith.endsWith(".Sio2m")) {
             CordovaApp :: acc0
           } else {
-            LOGGER.debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+            if (xRqWith !=* HttpConst.Headers.X_REQUESTED_WITH_VALUE)
+              LOGGER.debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
             acc0
           }
         }
@@ -408,7 +410,6 @@ final class StatUtil @Inject()(
   }
 
 
-  // TODO X-Requested-With:io.suggest.Sio2m
   /** Отправить v2-статистику на сохранение в БД. */
   def saveStat(stat2: Stat2): Future[_] = {
     playStatSaver.BACKEND

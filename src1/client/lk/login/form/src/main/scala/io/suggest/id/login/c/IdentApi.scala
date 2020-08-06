@@ -13,6 +13,9 @@ import io.suggest.proto.http.model.{HttpReq, HttpReqData}
 import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil.Implicits._
+import io.suggest.id.login.m.LoginFormDiConf
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import play.api.libs.json.{Json, Writes}
 import japgolly.univeq._
 
@@ -74,32 +77,53 @@ trait IIdentApi {
 }
 
 
-class IdentApiHttp extends IIdentApi {
+class IdentApiHttp(
+                    lfDiConf: LoginFormDiConf,
+                  )
+  extends IIdentApi
+  with Log
+{
+
+  @inline implicit def httpClientConfig = Some( lfDiConf.httpClientConfig() )
 
   private def _timeoutMsSome = Some( 10.seconds.toMillis.toInt )
 
   override def epw2LoginSubmit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String] = {
+    val textCt = MimeConst.TEXT_PLAIN
+    val route = routes.controllers.Ident.epw2LoginSubmit( r.toUndef )
+
     for {
       resp <- HttpClient.execute(
         HttpReq.routed(
-          route = routes.controllers.Ident.epw2LoginSubmit( r.toUndef ),
+          route = route,
           data  = HttpReqData(
             headers = {
               val H = HttpConst.Headers
               Map(
                 H.CONTENT_TYPE -> MimeConst.APPLICATION_JSON,
-                H.ACCEPT       -> MimeConst.TEXT_PLAIN,
+                H.ACCEPT       -> textCt,
               )
             },
             body = Json
               .toJson( loginReq )
               .toString(),
             timeoutMs = _timeoutMsSome,
+            config = httpClientConfig,
           )
         )
       )
         .resultFut
         .successIf200
+
+      // Сервер может ошибочно прислать что-то неожиданное вместо редиректа. Сверяем Content-Type ответа:
+      if {
+        val respCt = resp.getHeader( HttpConst.Headers.CONTENT_TYPE )
+        val isTextResp = respCt.exists(_ startsWith textCt)
+        if (!isTextResp)
+          logger.error( ErrorMsgs.XHR_UNEXPECTED_RESP, msg = (respCt.orNull, textCt, resp.status, route.method, route.url) )
+        isTextResp
+      }
+
       rdrUrl <- resp.text()
     } yield {
       rdrUrl
@@ -123,7 +147,8 @@ class IdentApiHttp extends IIdentApi {
           body = Json
             .toJson( data )
             .toString(),
-          timeoutMs = _timeoutMsSome
+          timeoutMs = _timeoutMsSome,
+          config = httpClientConfig,
         )
       )
     )
@@ -154,6 +179,7 @@ class IdentApiHttp extends IIdentApi {
           .toJson( form )
           .toString(),
         timeoutMs = _timeoutMsSome,
+        config = httpClientConfig,
       )
     )
     HttpClient

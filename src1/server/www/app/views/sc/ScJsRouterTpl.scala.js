@@ -15,6 +15,7 @@
     routes.javascript.Sc.pubApi #::
     routes.javascript.RemoteLogs.receive #::
     routes.javascript.Static.advRcvrsMapJson #::
+    routes.javascript.Static.csrfToken #::
 
     routes.javascript.Ident.loginFormPage #::
     routes.javascript.Ident.rdrUserSomewhere #::

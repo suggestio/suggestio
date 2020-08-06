@@ -543,8 +543,8 @@ trait ScIndex
             welcome       = welcomeOpt,
             geoPoint      = nodeGeoPointOpt,
             isMyNode      = Some(isMyNode),
-            //isRcvr        = Some(isRcvr),
-            userGeoLoc    = reqGeoLocOpt
+            userGeoLoc    = reqGeoLocOpt,
+            isLoggedIn    = Some( _request.user.isAuth ),
           )
           Some(inxRa)
         }

@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.id.login.v.LoginFormCss
+import io.suggest.spa.SioPages
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
@@ -48,5 +49,11 @@ case class MLoginFormOverallS(
 
   /** Для React-duode connection требуется AnyRef. */
   lazy val isVisibleSome = Some( isVisible )
+
+  def currentPage: SioPages.Login =
+    SioPages.Login(
+      currTab   = loginTab,
+      returnUrl = returnUrl,
+    )
 
 }

@@ -37,6 +37,7 @@ OPTIONS /*path                          @controllers.Static.corsPreflight(path)
 GET  /robots.txt                        @controllers.Static.robotsTxt
 GET  /sitemap.xml                       @controllers.Static.siteMapXml
 GET  /ws/ch/:c                          @controllers.Static.wsChannel( c: io.suggest.ctx.MCtxId )
+GET  /api/csrf                          @controllers.Static.csrfToken
 
 ## Рендер ровно одной карточки.
 GET  /sc/one/html                       @controllers.sc.ScOnlyOneAd.onlyOneAd(o: blk.OneAdQsArgs)

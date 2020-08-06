@@ -52,7 +52,7 @@ case object XhrAdp extends HttpClientAdp {
       req.timeout = d.timeoutMsOr0
     req.withCredentials = d.xhrWithCredentialsCrossSite
 
-    for (kv <- d.headers)
+    for (kv <- d.allHeaders)
       req.setRequestHeader(kv._1, kv._2)
 
     if (d.body == null)

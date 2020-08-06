@@ -780,6 +780,39 @@ class IndexAh[M](
       )
 
 
+    // Перезагрузка текущего индекса.
+    case m: ReGetIndex =>
+      val v0 = value
+
+      val switchCtx = MScSwitchCtx(
+        indexQsArgs = MScIndexArgs(
+          nodeId = v0.state.rcvrId,
+          geoIntoRcvr = false,
+          retUserLoc = false,
+        ),
+        focusedAdId = None,
+        showWelcome = false,
+      )
+
+      val v1 = m.setLoggedIn
+        .filter { loggedIn2 =>
+          v0.resp.nonEmpty &&
+          !v0.resp.exists(_.isLoggedIn contains loggedIn2)
+        }
+        .fold(v0) { loggedIn2 =>
+          MScIndex.resp.modify { respPot0 =>
+            respPot0.map { MSc3IndexResp.isLoggedIn set m.setLoggedIn }
+          }(v0)
+        }
+
+      _getIndex(
+        silentUpdate  = true,
+        v0            = v1,
+        reason        = GetIndex( switchCtx ),
+        switchCtx     = switchCtx,
+      )
+
+
     // Отладка: обнуление текущего индекса.
     case UnIndex =>
       val v0 = value

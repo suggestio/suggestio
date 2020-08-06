@@ -272,7 +272,4 @@ class RegR(
     .renderBackend[Backend]
     .build
 
-
-  def apply( propsProxy: Props ) = component( propsProxy )
-
 }

@@ -1,7 +1,9 @@
 package io.suggest.sc.m.in
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.i18n.MCommonReactCtx
+import io.suggest.proto.http.model.MCsrfToken
 import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecentOuter}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.spa.SioPages.Sc3
@@ -32,6 +34,7 @@ object MInternalInfo {
   val currRoute     = GenLens[MInternalInfo]( _.currRoute )
   def messages      = GenLens[MInternalInfo]( _.commonReactCtx )
   def inxRecents    = GenLens[MInternalInfo]( _.indexesRecents )
+  val csrfToken     = GenLens[MInternalInfo]( _.csrfToken )
 
 }
 
@@ -42,12 +45,14 @@ object MInternalInfo {
   * @param currRoute Текущая роута.
   * @param commonReactCtx Инстанс с сообщениями.
   * @param indexesRecents Предпоследнее состояние списка недавних посещённых узлов.
+  * @param csrfToken Токен CSRF от сервера.
   */
 final case class MInternalInfo(
                                 geoLockTimer      : Option[Int]             = None,
-                                currRoute         : Option[Sc3]      = None,
+                                currRoute         : Option[Sc3]             = None,
                                 commonReactCtx    : MCommonReactCtx         = MCommonReactCtx.default,
                                 indexesRecents    : MIndexesRecentOuter,
+                                csrfToken         : Pot[MCsrfToken]         = Pot.empty,
                               ) {
 
   lazy val inxRecentsClean: List[MIndexInfo] = {

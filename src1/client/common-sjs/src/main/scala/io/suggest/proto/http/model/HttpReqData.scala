@@ -30,22 +30,22 @@ object HttpReqData {
   )
 
   /** Хидеры запроса без тела, ожидается json в ответе. */
-  def headersJsonAccept = Map(
+  def headersJsonAccept = Map.empty[String, String] + (
     HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON
   )
 
   def headersBinarySendAccept =
     headersSendAccept( MimeConst.APPLICATION_OCTET_STREAM )
-  def headersBinarySend = Map(
+  def headersBinarySend = Map.empty[String, String] + (
     HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM
   )
-  def headersBinaryAccept = Map(
-    HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_OCTET_STREAM
-  )
+  def headersBinaryAccept = Map.empty[String, String] +
+    (HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_OCTET_STREAM)
 
-  def headersJsonSend = Map(
-    HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
-  )
+
+  def headersJsonSend = Map.empty[String, String] +
+    (HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON)
+
 
   /** Хидеры, обозначающие что отсылается json и ожидается json в ответ. */
   def headersJsonSendAccept: Map[String, String] =
@@ -54,10 +54,20 @@ object HttpReqData {
     headersSendAccept(mime, mime)
   def headersSendAccept(sendMime: String, acceptMime: String): Map[String, String] = {
     val H = HttpConst.Headers
-    Map(
-      H.CONTENT_TYPE -> sendMime,
-      H.ACCEPT       -> acceptMime,
-    )
+    Map.empty[String, String] +
+      (H.CONTENT_TYPE -> sendMime) +
+      (H.ACCEPT       -> acceptMime)
+  }
+
+  /** Дефолтовые служебные хидеры. */
+  def baseHeadersDflt: Map[String, String] =
+    Map.empty + (HttpConst.Headers.X_REQUESTED_WITH -> HttpConst.Headers.X_REQUESTED_WITH_VALUE)
+
+
+  implicit final class HttpReqDataOpsExt( private val hrd: HttpReqData ) extends AnyVal {
+
+    def allHeaders = hrd.baseHeaders ++ hrd.headers
+
   }
 
 }
@@ -81,6 +91,8 @@ case class HttpReqData(
                         respType      : HttpRespType          = HttpRespTypes.Default,
                         cache         : MHttpCacheInfo        = MHttpCacheInfo.default,
                         onProgress    : Option[ITransferProgressInfo => Unit] = None,
+                        config        : Option[HttpClientConfig] = None,
+                        baseHeaders   : Map[String, String]   = HttpReqData.baseHeadersDflt,
                       ) {
 
   def timeoutMsOr0 = timeoutMs getOrElse 0

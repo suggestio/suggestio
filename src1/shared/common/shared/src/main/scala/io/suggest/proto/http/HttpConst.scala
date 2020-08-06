@@ -25,6 +25,8 @@ object HttpConst {
     final def BOUNDARY              = "Boundary"
     final def RANGE                 = "Range"
     final def CONTENT_RANGE         = Words.Content_ + RANGE
+    final def X_REQUESTED_WITH      = "X-Requested-With"
+    final def X_REQUESTED_WITH_VALUE = "XHR"
   }
 
 

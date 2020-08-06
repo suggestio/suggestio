@@ -4,6 +4,7 @@ import diode.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.id.login.LoginFormCircuit
+import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.sc.m.{ResetUrlRoute, ScLoginFormChange, ScLoginFormShowHide}
 import io.suggest.sc.m.dia.MScLoginS
 import io.suggest.spa.{DoNothing, SioPages}
@@ -26,8 +27,8 @@ class ScLoginDiaAh[M](
   private def _sc3PageModFx(nextLogin: Option[SioPages.Login]) = {
     Effect.action {
       ResetUrlRoute(
-        mods = Some {
-          SioPages.Sc3.login set nextLogin
+        mods = Some { r =>
+          (SioPages.Sc3.login set nextLogin)(r())
         },
       )
     }
@@ -40,11 +41,12 @@ class ScLoginDiaAh[M](
 
       if (m.visible && v0.circuit.isEmpty) {
         val fx = _sc3PageModFx( Some(SioPages.Login()) )
-        effectOnly(fx)
+        val ensureCsrfFx = CsrfTokenEnsure().toEffectPure
+        effectOnly( fx + ensureCsrfFx )
 
       } else if (!m.visible && v0.circuit.nonEmpty) {
         val fx = _sc3PageModFx( None )
-        effectOnly(fx)
+        effectOnly( fx )
 
       } else {
         noChange
@@ -52,14 +54,17 @@ class ScLoginDiaAh[M](
 
 
     case m: ScLoginFormChange =>
-      println(m)
       val v0 = value
+
+      println(m)
       m.loginPageOpt.fold {
         v0.circuit.fold {
           noChange
+
         } { loginFormCircuit =>
           // Скрыть логин-форму. И потом удалить из состояния. В два шага, чтобы анимацию организовать.
           if (loginFormCircuit.isVisible()) {
+            println("set hiding")
             // Запуск анимированного сокрытия.
             val startHideFx = Effect.action {
               loginFormCircuit.showHideForm( false )
@@ -69,6 +74,7 @@ class ScLoginDiaAh[M](
             effectOnly( startHideFx >> reDoFx )
 
           } else {
+            println("set None")
             val v2 = (MScLoginS.circuit set None)(v0)
             updated(v2)
           }

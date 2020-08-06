@@ -366,7 +366,6 @@ final class ScSite @Inject() (
             zoom   = MMapProps.ZOOM_DEFAULT
           ),
           conf = MSc3Conf(
-            isLoggedIn        = _request.user.isAuth,
             aboutSioNodeId    = aboutSioNodeId,
             apiVsn            = _siteQsArgs.apiVsn,
             debug             = SC_JS_DEBUG,

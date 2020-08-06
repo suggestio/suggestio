@@ -1,6 +1,8 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
+import io.suggest.id.login.c.IdentApiHttp
+import io.suggest.id.login.m.LoginFormDiConf
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
@@ -8,7 +10,7 @@ import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3Ch
 import io.suggest.id.login.v.stuff.{CheckBoxR, ErrorSnackR, LoginProgressR, TextFieldR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR}
 import io.suggest.spa.SioPages
-import japgolly.scalajs.react.React
+import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.React.Context
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
@@ -25,7 +27,6 @@ trait LoginFormModuleBase {
   import io.suggest.lk.LkCommonModule._
 
   def loginFormCssCtx: React.Context[LoginFormCss]
-
 
   lazy val loginFormR = wire[LoginFormR]
 
@@ -56,6 +57,10 @@ trait LoginFormModuleBase {
 
   lazy val pwChangeCircuit = wire[PwChangeCircuit]
 
+  lazy val identApi = wire[IdentApiHttp]
+
+  def diConfig: LoginFormDiConf
+
 }
 object LoginFormModuleBase {
 
@@ -71,6 +76,8 @@ object LoginFormModuleBase {
 
 /** Отдельная форма со своим роутером и своими контекстами. */
 final class LoginFormModule extends LoginFormModuleBase {
+
+  override def diConfig = LoginFormDiConf.Isolated
 
   lazy val loginFormSpaRouter: LoginFormSpaRouter = {
     new LoginFormSpaRouter(

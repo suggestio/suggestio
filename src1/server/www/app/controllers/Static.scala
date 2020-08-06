@@ -13,6 +13,7 @@ import io.suggest.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.stat.m.{MComponents, MDiag}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.proto.http.model.MCsrfToken
 import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -29,6 +30,7 @@ import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import views.html.static._
 import japgolly.univeq._
 import play.api.http.{HeaderNames, HttpEntity, HttpProtocol}
+import play.filters.csrf.CSRF
 import play.twirl.api.Xml
 import views.txt.static.robotsTxtTpl
 
@@ -70,6 +72,7 @@ final class Static @Inject() (
   private lazy val canOpenWsChannel = injector.instanceOf[CanOpenWsChannel]
   private lazy val wsChannelActors = injector.instanceOf[WsChannelActors]
   private lazy val assets = injector.instanceOf[Assets]
+
 
   private def _IGNORE_CSP_REPORS_CONF_KEY = "csp.reports.ignore"
 
@@ -608,6 +611,19 @@ final class Static @Inject() (
         //CONTENT_TYPE  -> "text/plain; charset=utf-8",
         CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
       )
+  }
+
+
+  /** Свободная раздача CSRF-токена для нужд некоторых js-форм. */
+  def csrfToken = csrf.AddToken {
+    Action { implicit request =>
+      val playTok = CSRF.getToken.get
+      val sioTok = MCsrfToken(
+        qsKey = playTok.name,
+        value = playTok.value,
+      )
+      Ok( Json.toJson( sioTok ) )
+    }
   }
 
 }

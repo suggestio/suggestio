@@ -58,7 +58,8 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
-import io.suggest.id.login.{LoginFormCircuit, LoginFormModuleBase}
+import io.suggest.id.login.LoginFormCircuit
+import io.suggest.lk.c.{CsrfTokenAh, CsrfTokenApi}
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
@@ -229,6 +230,7 @@ class Sc3Circuit(
 
   private[sc] val internalsRW     = mkLensRootZoomRW(this, MScRoot.internals)( MScInternalsFastEq )
   private[sc] val internalsInfoRW = mkLensZoomRW( internalsRW, MScInternals.info )
+  private[sc] val csrfTokenRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.csrfToken )
   private[sc] val currRouteRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.currRoute )
 
   private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
@@ -571,6 +573,11 @@ class Sc3Circuit(
     getLoginFormCircuit = getLoginFormCircuit,
   )
 
+  private val csrfTokenAh = new CsrfTokenAh(
+    modelRW       = csrfTokenRW,
+    csrfTokenApi  = new CsrfTokenApi,
+  )
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
 
@@ -581,6 +588,7 @@ class Sc3Circuit(
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
     acc ::= scConfAh
+    acc ::= csrfTokenAh
     acc ::= scLoginDiaAh
 
     for (ah <- daemonBgModeAh) {

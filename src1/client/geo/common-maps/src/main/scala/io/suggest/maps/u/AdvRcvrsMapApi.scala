@@ -35,6 +35,7 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvr
 
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
     val __mkRoute = jsRoutes.controllers.Static.advRcvrsMapJson _
+
     val req = HttpReq.routed(
       route = __mkRoute( args.hashSum ),
       data  = HttpReqData(
@@ -43,12 +44,15 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvr
           // Здесь кэш - контр-аварийный. Т.е. запрос в сеть может уйти, но браузер должен ещё и сам корректно отработать вопрос кэширования.
           // TODO Нужно какое-то железобетонное кэширование, чтобы закэшированная текущая ссылка опрашивалась, потом network, потом аварийный вариант с прошлым кэшем.
           policy     = MHttpCachingPolicies.NetworkFirst,
-          rewriteUrl = Some( HttpClient.route2url(__mkRoute(js.undefined)) )
-        )
+          rewriteUrl = Some( HttpClient.route2url(__mkRoute(js.undefined)) ),
+        ),
+        // Запретить X-Requested-With, т.к. тут CORS через CDN.
+        baseHeaders = Map.empty,
       )
     )
 
-    HttpClient.execute(req)
+    HttpClient
+      .execute(req)
       .respAuthFut
       .successIf200
       .unJson[List[MGeoNodePropsShapes]]

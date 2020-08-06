@@ -71,8 +71,10 @@ object HttpFetchUtil {
         b.asInstanceOf[BodyInit]
       }
     }
-    val headersUnd: js.UndefOr[HeadersInit] = {
-      val hs = httpReq.data.headers
+
+    val reqHeaders: js.UndefOr[HeadersInit] = {
+      val hs = httpReq.data.allHeaders
+
       JsOptionUtil.maybeDefined( hs.nonEmpty ) {
         hs.iterator
           .map { case (k, v) =>
@@ -81,6 +83,7 @@ object HttpFetchUtil {
           .toJSArray: HeadersInit
       }
     }
+
     val httpMethod = httpReq
       .method
       .toUpperCase()
@@ -88,7 +91,7 @@ object HttpFetchUtil {
 
     new FetchRequestInit {
       override val method       = httpMethod
-      override val headers      = headersUnd
+      override val headers      = reqHeaders
       override val body         = bodyUnd
       // TODO Передавать в реквесте? cors - дефолт.
       override val mode         = RequestMode.cors

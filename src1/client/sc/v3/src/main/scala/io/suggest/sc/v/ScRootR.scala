@@ -131,9 +131,6 @@ class ScRootR (
               menuSideBar,
             ),
 
-            // Диалог настроек - требует scala-тему.
-            scSettingsDiaR.component( mrootProxy ),
-
             // Диалог логина.
             mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply ),
 
@@ -142,6 +139,9 @@ class ScRootR (
 
         // Диалог первого запуска.
         wzFirstR.component( mrootProxy ),
+
+        // Диалог настроек - требует scala-тему.
+        scSettingsDiaR.component( mrootProxy ),
 
         // Диалог скачивания приложения - отображается только в браузере.
         ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {

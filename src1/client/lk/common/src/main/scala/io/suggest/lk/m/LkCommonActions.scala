@@ -9,7 +9,7 @@ import io.suggest.crypto.hash.MHash
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.proto.http.model.IHttpResultHolder
+import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken}
 import io.suggest.spa.DAction
 import io.suggest.up.{ITransferProgressInfo, MUploadResp}
 import io.suggest.url.MHostUrl
@@ -164,3 +164,9 @@ case class TouchDevSet(isTouchDev: Boolean) extends ILkCommonAction
 
 /** Уведомить систему о ширине и длине загруженной картинки. */
 case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction
+
+
+sealed trait ICsrfTokenAction extends ILkCommonAction
+/** Сброс токена CSRF. */
+case class CsrfTokenEnsure(force: Boolean = false) extends ICsrfTokenAction
+case class CsrfTokenResp(tstampMs: Long, tryResp: Try[MCsrfToken]) extends ICsrfTokenAction

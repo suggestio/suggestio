@@ -2,11 +2,17 @@ package io.suggest.sc
 
 import com.materialui.MuiTheme
 import com.softwaremill.macwire._
+import diode.Effect
+import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.id.login.{LoginFormCircuit, LoginFormModuleBase}
-import io.suggest.sc.m.{MScReactCtx, RouteTo}
+import io.suggest.id.login.LoginFormModuleBase
+import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConf}
+import io.suggest.proto.http.model.HttpClientConfig
+import io.suggest.sc.m.{MScReactCtx, RouteTo, ScLoginFormShowHide}
 import io.suggest.sc.m.boot.MSpaRouterState
+import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.u.api.ScAppApiHttp
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
 import io.suggest.sc.v.dia.err.ScErrorDiaR
@@ -21,8 +27,8 @@ import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
 import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
 import io.suggest.sc.v.styl.{ScComponents, ScThemes}
-import io.suggest.spa.SioPages
-import japgolly.scalajs.react.React
+import io.suggest.spa.{DoNothing, SioPages}
+import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.React.Context
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
@@ -156,8 +162,37 @@ object Sc3Module { outer =>
   // login
   lazy val loginFormModule = new LoginFormModuleBase {
 
+    override def diConfig: LoginFormDiConf = new LoginFormDiConf {
+
+      override def onClose(): Option[Callback] = {
+        val cb = Callback {
+          sc3Circuit.dispatch( ScLoginFormShowHide(visible = false) )
+        }
+        Some(cb)
+      }
+
+      override def httpClientConfig() = {
+        HttpClientConfig(
+          csrfToken = sc3Circuit.csrfTokenRW.value.toOption,
+        )
+      }
+
+      override def onRedirect(onAction: ILoginFormAction, rdrUrl: String): Effect = {
+        Effect.action {
+          // В текущей форме: тихо перезагрузить текущий Index с сервера без welcome, выставив в состояние залогиненность.
+          sc3Circuit.dispatch( ReGetIndex(
+            setLoggedIn = OptionUtil.SomeBool.someTrue
+          ))
+          // в LoginForm делать ничего не надо:
+          DoNothing
+        }
+      }
+
+    }
+
+
     private def route0: SioPages.Sc3 =
-      outer.sc3Circuit.currRouteRW.value getOrElse SioPages.Sc3.empty
+      sc3Circuit.currRouteRW.value getOrElse SioPages.Sc3.empty
 
     override lazy val loginRouterCtl = routerCtl contramap { login: SioPages.Login =>
       // пропихнуть в роутер обновлённую страницу логина.

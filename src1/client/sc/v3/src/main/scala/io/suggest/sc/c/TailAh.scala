@@ -77,6 +77,12 @@ object TailAh {
       firstRunOpen = v0.dialogs.first.view.nonEmpty,
       dlAppOpen    = v0.index.menu.dlApp.opened,
       settingsOpen = v0.dialogs.settings.opened,
+      login = for {
+        loginCircuit <- v0.dialogs.login.circuit
+      } yield {
+        loginCircuit.currentPage()
+      },
+
     )
   }
 
@@ -179,31 +185,32 @@ class TailAh(
     // Заставить роутер собрать новую ссылку.
     case m: ResetUrlRoute =>
       val v0 = value
-      val currRoute = TailAh.getMainScreenSnapShot( v0 )
-      var nextRoute = m.mods.fold(currRoute)( _(currRoute) )
+      lazy val nextRoute0 = TailAh.getMainScreenSnapShot( v0 )
+      var nextRoute2 = m.mods.fold(nextRoute0)( _(() => nextRoute0) )
 
       val currRouteLens = TailAh._currRoute
       val currRouteOpt = currRouteLens.get( v0 )
 
-      if (!m.force && (currRouteOpt contains[SioPages.Sc3] nextRoute)) {
+      if (!m.force && (currRouteOpt contains[SioPages.Sc3] nextRoute2)) {
         noChange
       } else {
         // Скопировать URL-поле virtBeacons, если в рамках одного местоположения:
         for {
           currRoute <- currRouteOpt
           if currRoute.virtBeacons.nonEmpty &&
-            (currRoute isSamePlaceAs nextRoute)
+            (currRoute isSamePlaceAs nextRoute2)
         }
-          nextRoute = (SioPages.Sc3.virtBeacons set currRoute.virtBeacons)(nextRoute)
+          nextRoute2 = (SioPages.Sc3.virtBeacons set currRoute.virtBeacons)(nextRoute2)
 
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
         val fx = Effect.action {
           routerCtl
-            .set( nextRoute )
+            .set( nextRoute2 )
             .runNow()
           DoNothing
         }
-        val v2 = (currRouteLens set Some(nextRoute))( v0 )
+
+        val v2 = (currRouteLens set Some(nextRoute2))( v0 )
         updatedSilent(v2, fx)
       }
 
@@ -361,7 +368,7 @@ class TailAh(
             if (nextRoute.menuOpened && v0.grid.core.jdConf.gridColumnsCount <= 3)
               nextRoute = (SioPages.Sc3.menuOpened set false)(nextRoute)
 
-            ResetUrlRoute( Some(_ => nextRoute) )
+            ResetUrlRoute( mods = Some(_ => nextRoute) )
           }
 
           effectOnly( routeFx )
@@ -602,10 +609,9 @@ class TailAh(
       }
 
       // Диалог first-run открыт?
-      if (currMainScreen.firstRunOpen !=* m.mainScreen.firstRunOpen) {
+      if (currMainScreen.firstRunOpen !=* m.mainScreen.firstRunOpen)
         // Запустить экшен управления диалогом.
         fxsAcc ::= InitFirstRunWz( m.mainScreen.firstRunOpen ).toEffectPure
-      }
 
       // Диалог логина открыт?
       if (currMainScreen.login !=* m.mainScreen.login)

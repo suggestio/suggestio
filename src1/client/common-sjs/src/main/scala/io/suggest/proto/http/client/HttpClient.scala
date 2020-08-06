@@ -1,5 +1,6 @@
 package io.suggest.proto.http.client
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
@@ -108,15 +109,40 @@ object HttpClient {
       .get
   }
 
+
+  /** Запуск HTTP-запроса на исполнение.
+    *
+    * @param httpReq Описание HTTP-реквеста и сопутствующих данных.
+    * @return resp holder.
+    */
   def execute(httpReq: HttpReq): IHttpRespHolder = {
     val adp = if (httpReq.data.onProgress.nonEmpty && XhrAdp.isAvailable) {
       XhrAdp
     } else {
       defaultExecutor
     }
-    adp(httpReq)
+
+    // Если в конфиге задан CSRF-токен, то добавить его в ссылку.
+    val httpReq2 = (for {
+      hcConfig <- httpReq.data.config
+      csrfToken <- hcConfig.csrfToken
+    } yield {
+      (HttpReq.url.modify { url0 =>
+        val amp = "&"
+        val qMark = HtmlConstants.QUESTION_MARK
+        val equal = "="
+        if (s"[$amp$qMark]${csrfToken.qsKey}$equal".r.pattern.matcher(url0).find()) {
+          // Гипотетически возможна ситуация, что в ссылке есть какой-то другой CSRF Token. Надо её отрабатывать?
+          url0
+        } else {
+          val delim = if (url0 contains qMark) amp else qMark
+          s"$url0$delim${js.URIUtils.encodeURIComponent(csrfToken.qsKey)}$equal${js.URIUtils.encodeURIComponent(csrfToken.value)}"
+        }
+      })( httpReq )
+    })
+      .getOrElse( httpReq )
+
+    adp( httpReq2 )
   }
 
 }
-
-

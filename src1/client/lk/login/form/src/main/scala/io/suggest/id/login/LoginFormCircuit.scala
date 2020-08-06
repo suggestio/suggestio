@@ -34,6 +34,7 @@ import japgolly.univeq._
   */
 final class LoginFormCircuit(
                               routerCtl           : RouterCtl[SioPages.Login],
+                              identApi            : IIdentApi,
                             )
   extends CircuitLog[MLoginRootS]
   with ReactConnector[MLoginRootS]
@@ -41,9 +42,7 @@ final class LoginFormCircuit(
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LOGIN_FORM_ERROR
 
-  override protected def initialModel: MLoginRootS = {
-    MLoginRootS()
-  }
+  override protected def initialModel = MLoginRootS()
 
 
   private[login] val extRW          = mkLensRootZoomRW(this, MLoginRootS.ext)( MExtLoginFormS.MExtLoginFormSFastEq )
@@ -65,7 +64,6 @@ final class LoginFormCircuit(
   private[login] val reg4SetPasswordRW  = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
 
 
-  val loginApi: IIdentApi = new IdentApiHttp
   val captchaApi: ICaptchaApi = new CaptchaApiHttp
 
   private val formAh = new FormAh(
@@ -80,7 +78,7 @@ final class LoginFormCircuit(
 
   private val pwLoginAh = new PwLoginAh(
     modelRW     = epwRW,
-    loginApi    = loginApi,
+    loginApi    = identApi,
     returnUrlRO = returnUrlRO,
   )
 
@@ -93,7 +91,7 @@ final class LoginFormCircuit(
 
   private val regAh = new RegAh(
     modelRW  = regRW,
-    loginApi = loginApi,
+    loginApi = identApi,
     pwNewRO  = pwNewRW,
   )
 
@@ -138,6 +136,9 @@ final class LoginFormCircuit(
 
   def isVisible(): Boolean =
     overallRW.value.isVisible
+
+  def currentPage(): SioPages.Login =
+    overallRW.value.currentPage
 
 }
 

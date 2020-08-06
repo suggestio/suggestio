@@ -5,6 +5,7 @@ import com.materialui.{MuiDivider, MuiList, MuiListItem}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.proto.http.HttpConst
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
@@ -16,6 +17,7 @@ import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 import scalacss.ScalaCssReact._
 
 /**
@@ -167,17 +169,22 @@ class MenuR(
         enterLkRowC = propsProxy.connect { props =>
           for {
             scJsRouter <- props.internals.jsRouter.jsRouter.toOption
-            if props.dev.platform.isBrowser
+            plat = props.dev.platform
           } yield {
             enterLkRowR.PropsVal(
-              isLoggedIn      = props.internals.conf.isLoggedIn,
+              isLoggedIn      = props.index.respOpt.flatMap(_.isLoggedIn) contains true,
               // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
               isMyAdnNodeId   = props.index.state
                 .rcvrId
                 .filter { _ =>
                   props.index.resp.exists(_.isMyNode contains true)
                 },
-              scJsRouter = scJsRouter
+              scJsRouter = scJsRouter,
+              canInternalLogin = {
+                plat.isCordova ||
+                (dom.window.location.protocol startsWith HttpConst.Proto.HTTPS) ||
+                scalajs.LinkingInfo.developmentMode
+              }
             )
           }
         }( OptFastEq.Wrapped(enterLkRowR.EnterLkRowRPropsValFastEq) ),

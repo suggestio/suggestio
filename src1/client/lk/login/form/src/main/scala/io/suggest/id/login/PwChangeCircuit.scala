@@ -2,12 +2,14 @@ package io.suggest.id.login
 
 import diode.FastEq
 import diode.react.ReactConnector
-import io.suggest.id.login.c.IdentApiHttp
+import io.suggest.id.login.c.{IIdentApi, IdentApiHttp}
 import io.suggest.id.login.c.pwch.{PasswordInputAh, PwChangeAh, SetNewPwAh}
+import io.suggest.id.login.m.LoginFormDiConf
 import io.suggest.id.login.m.pwch.{MPwChangeRootS, MPwChangeS, MPwNew}
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.log.CircuitLog
+import io.suggest.proto.http.model.HttpClientConfig
 import io.suggest.spa.CircuitUtil._
 
 /**
@@ -16,7 +18,9 @@ import io.suggest.spa.CircuitUtil._
   * Created: 09.07.19 16:19
   * Description: Цепь для формы смены пароля.
   */
-class PwChangeCircuit
+class PwChangeCircuit(
+                       identApi: IIdentApi,
+                     )
   extends CircuitLog[MPwChangeRootS]
   with ReactConnector[MPwChangeRootS]
 {
@@ -34,8 +38,6 @@ class PwChangeCircuit
   private val pwNewRW = mkLensZoomRW( formRW, MPwChangeS.pwNew )( MPwNew.MPwNewFastEq )
   private val oldPwRW = mkLensZoomRW( formRW, MPwChangeS.pwOld )( MTextFieldS.MEpwTextFieldSFastEq )
 
-  private val api = new IdentApiHttp
-
   private val setNewPwAh = new SetNewPwAh(
     modelRW = pwNewRW,
   )
@@ -45,7 +47,7 @@ class PwChangeCircuit
   )
 
   private val pwChangeAh = new PwChangeAh(
-    api = api,
+    identApi     = identApi,
     modelRW = formRW,
   )
 

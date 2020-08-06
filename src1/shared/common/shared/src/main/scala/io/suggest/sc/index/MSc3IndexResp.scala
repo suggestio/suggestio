@@ -31,7 +31,8 @@ object MSc3IndexResp {
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
     (__ \ "m").formatNullable[Boolean] and
-    (__ \ "o").formatNullable[MGeoLoc]
+    (__ \ "o").formatNullable[MGeoLoc] and
+    (__ \ "u").formatNullable[Boolean]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
@@ -55,7 +56,8 @@ object MSc3IndexResp {
       (a ===* b) || {
         (a.name ==* b.name) &&
         (a.colors ==* b.colors) &&
-        (a.logoOpt ==* b.logoOpt)
+        (a.logoOpt ==* b.logoOpt) &&
+        (a.isLoggedIn ==* b.isLoggedIn)
       }
     }
 
@@ -63,6 +65,7 @@ object MSc3IndexResp {
 
 
   def geoPoint = GenLens[MSc3IndexResp]( _.geoPoint )
+  def isLoggedIn = GenLens[MSc3IndexResp]( _.isLoggedIn )
 
 }
 
@@ -79,6 +82,9 @@ object MSc3IndexResp {
   * @param isMyNode Есть ли у текущего юзера права доступа на этот узел?
   *                 None - если не проверялось (не требуется в текущем запросе).
   * @param userGeoLoc Геолокация юзера, исходя из реквеста и если запрошена в реквесте.
+  * @param isLoggedIn Залогинен ли юзер.
+  *                   Раньше оно было в Sc3Conf на уровне ScSite, но этот уровень живёт в приложении своей жизнью.
+  *                   None означает, что сервер не раскрывает текущий статус залогиненности юзера.
   */
 case class MSc3IndexResp(
                          nodeId     : Option[String],
@@ -90,6 +96,7 @@ case class MSc3IndexResp(
                          geoPoint   : Option[MGeoPoint]     = None,
                          isMyNode   : Option[Boolean]       = None,
                          userGeoLoc : Option[MGeoLoc]       = None,
+                         isLoggedIn : Option[Boolean]       = None,
                        )
   extends OptStrId
 {

@@ -1,13 +1,14 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import models.req.MReq
+import play.api.http.HeaderNames
+import play.api.inject.Injector
 import play.api.mvc._
 import util.ident.IdentUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -18,8 +19,11 @@ import scala.concurrent.Future
 final class IsAnon @Inject()(
                               aclUtil                : AclUtil,
                               reqUtil                : ReqUtil,
-                              identUtil              : IdentUtil
+                              injector               : Injector,
                             ) {
+
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private class ImplC extends reqUtil.SioActionBuilderImpl[MReq] {
 
@@ -31,7 +35,19 @@ final class IsAnon @Inject()(
         block(req1)
       } { personId =>
         // Юзер залогинен уже как бэ. Этот билдер для него не подходит.
-        identUtil.redirectUserSomewhere(personId)
+        request.headers
+          .get( HeaderNames.X_REQUESTED_WITH )
+          .fold {
+            identUtil.redirectUserSomewhere(personId)
+          } { _ =>
+            // Это Ajax-реквест. Нельзя слать HTTP-редирект. Необходимо вернуть ссылку для редиректа.
+            for {
+              rdrCall <- identUtil.redirectCallUserSomewhere(personId)
+            } yield {
+              // TODO Проверить Accept:, может быть реализовать какие-либо варианты.
+              Results.Ok( rdrCall.absoluteURL()(request) )
+            }
+          }
       }
     }
 

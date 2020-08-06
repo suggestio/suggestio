@@ -2,7 +2,7 @@ package io.suggest.sc.v.menu
 
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.routes.{IJsRouter, PlayRoute}
 import japgolly.scalajs.react._
@@ -32,6 +32,7 @@ class EnterLkRowR(
 
   case class PropsVal(
                        isLoggedIn     : Boolean,
+                       canInternalLogin: Boolean,
                        isMyAdnNodeId  : Option[String],
                        scJsRouter     : IJsRouter
                      )
@@ -39,6 +40,7 @@ class EnterLkRowR(
   implicit object EnterLkRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.isLoggedIn ==* b.isLoggedIn) &&
+      (a.canInternalLogin ==* b.canInternalLogin) &&
       (a.isMyAdnNodeId ===* b.isMyAdnNodeId) &&
       (a.scJsRouter eq b.scJsRouter)
     }
@@ -85,11 +87,10 @@ class EnterLkRowR(
 
           // При обычном клике надо открывать форму логина прямо поверх выдачи.
           // Это нужно для возможности логина внутри мобильного приложения.
-          // TODO Встроенная форма логина пока отключена, т.к. требуется разрулить CSRF и её сокрытие.
-          if (true || props.isLoggedIn) {
-            TagMod.empty
-          } else {
+          if (!props.isLoggedIn && props.canInternalLogin) {
             ^.onClick ==> _onLoginClick
+          } else {
+            TagMod.empty
           },
 
           // Ссылка на вход или на личный кабинет

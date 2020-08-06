@@ -20,7 +20,6 @@ import io.suggest.ueq.UnivEqUtil._
 object MSc3Conf {
 
   object Fields {
-    val LOGGED_IN                   = "l"
     val ABOUT_SIO_NODE_ID           = "a"
     val RCVRS_MAP_URL               = "r"
     val API_VSN                     = "v"
@@ -36,7 +35,6 @@ object MSc3Conf {
   implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = {
     val F = Fields
     (
-      (__ \ F.LOGGED_IN).format[Boolean] and
       (__ \ F.ABOUT_SIO_NODE_ID).format[String] and
       (__ \ F.API_VSN).format[MScApiVsn] and
       (__ \ F.DEBUG_FLAG).formatNullable[Boolean]
@@ -76,7 +74,6 @@ object MSc3Conf {
   * @param debug Значение debug-флага в конфиге.
   */
 final case class MSc3Conf(
-                           isLoggedIn         : Boolean,
                            // TODO aboutSioNodeId унести в Messages(), чтобы при смене языка этот id тоже менялся.
                            aboutSioNodeId     : String,
                            apiVsn             : MScApiVsn,

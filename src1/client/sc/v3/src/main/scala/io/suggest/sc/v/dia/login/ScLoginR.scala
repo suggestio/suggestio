@@ -30,7 +30,6 @@ final class ScLoginR(
     def render(p: Props, s: State): VdomElement = {
       s.isVisibleSomeC { isVisibleSomeProxy =>
         val isVisible = isVisibleSomeProxy.value.value
-        println("login visible := " + isVisible)
         ReactCommonUtil.maybeEl( isVisible ) {
           p.value.circuit.whenDefinedEl { loginFormCircuit =>
             loginFormCircuit.wrap( identity(_) )( loginFormR.component.apply )

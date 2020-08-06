@@ -21,7 +21,7 @@ import scala.util.Success
   * Description: Общий контроллер формы смены пароля.
   */
 class PwChangeAh[M](
-                     api        : IIdentApi,
+                     identApi   : IIdentApi,
                      modelRW    : ModelRW[M, MPwChangeS],
                    )
   extends ActionHandler( modelRW )
@@ -49,7 +49,7 @@ class PwChangeAh[M](
             pwOld = v0.pwOld.value,
             pwNew = v0.pwNew.passwordValue,
           )
-          api
+          identApi
             .pwChangeSubmit( data )
             .transform { tryRes =>
               Success( PwChangeSubmitRes(tstamp, tryRes) )

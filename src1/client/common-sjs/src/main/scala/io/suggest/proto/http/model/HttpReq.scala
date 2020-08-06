@@ -3,6 +3,7 @@ package io.suggest.proto.http.model
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.routes.HttpRouteExtractor
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -29,6 +30,11 @@ object HttpReq {
       data      = data,
     )
   }
+
+
+  def method = GenLens[HttpReq]( _.method )
+  def url = GenLens[HttpReq]( _.url )
+  def data = GenLens[HttpReq]( _.data )
 
 }
 

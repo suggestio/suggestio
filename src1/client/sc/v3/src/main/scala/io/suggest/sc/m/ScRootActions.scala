@@ -99,10 +99,15 @@ case object GlCheckAfterResume extends IScRootAction
 case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScRootAction
 
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию.
-  * @param route Переход на указанную роуту.
+  * @param mods Функция обновления роуты.
+  *             Исходное значение роуты передаётся как функция, потому что оно лениво и не всегда нужно.
   * @param force Не проверять роуту на предмет дубликата, пробрасывать в sjsreact-router даже повторную роуту.
   */
-case class ResetUrlRoute(mods: Option[SioPages.Sc3 => SioPages.Sc3] = None, force: Boolean = false) extends IScRootAction
+case class ResetUrlRoute(
+                          mods: Option[(() => SioPages.Sc3) => SioPages.Sc3] = None,
+                          force: Boolean = false
+                        )
+  extends IScRootAction
 
 /** Восстановление текущего состояния ранее-посещённых индексов. */
 case class LoadIndexRecents(clean: Boolean) extends IScRootAction

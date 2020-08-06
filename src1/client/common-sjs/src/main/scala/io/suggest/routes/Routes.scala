@@ -106,6 +106,8 @@ sealed trait StaticCtlRoutes extends js.Object {
 
   def privacyPolicy(): PlayRoute = js.native
 
+  def csrfToken(): PlayRoute = js.native
+
 }
 
 

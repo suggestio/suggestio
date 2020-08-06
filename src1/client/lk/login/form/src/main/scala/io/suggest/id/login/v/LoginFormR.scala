@@ -14,7 +14,8 @@ import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.reg.RegR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import japgolly.scalajs.react.{BackendScope, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
+import io.suggest.sjs.common.empty.JsOptionUtil
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -32,6 +33,7 @@ class LoginFormR(
                   regR                  : RegR,
                   crCtxProv             : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
+                  lfDiConf              : LoginFormDiConf,
                 ) {
 
   type Props_t = MLoginRootS
@@ -62,26 +64,26 @@ class LoginFormR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val _onTabChangedCbF = ReactCommonUtil.cbFun2ToJsCb { (event: ReactEventFromHtml, newValue: js.Any) =>
+    private val _onTabChangedCbF = ReactCommonUtil.cbFun2ToJsCb { (_: ReactEventFromHtml, newValue: js.Any) =>
       val newTab = MLoginTabs.withValue( newValue.asInstanceOf[Int] )
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SwitсhLoginTab(newTab) )
     }
 
 
-    private val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb { event: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, LoginShowHide(false))
+    private val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      Callback.lazily( lfDiConf.onClose() getOrElse Callback.empty )
     }
 
 
     def render(p: Props, s: State): VdomElement = {
       // Форма логина через внешние сервисы.
-      lazy val extLogin = p.wrap(_.ext)( extFormR.apply )( implicitly, MExtLoginFormS.MExtLoginFormSFastEq )
+      lazy val extLogin = p.wrap(_.ext)( extFormR.component.apply )( implicitly, MExtLoginFormS.MExtLoginFormSFastEq )
 
       // Содержимое вкладки входа по логину и паролю:
-      lazy val pwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+      lazy val pwLogin = p.wrap(_.epw)( epwFormR.component.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Вкладка регистрации по email и паролю.
-      lazy val reg = regR(p)
+      lazy val reg = regR.component(p)
 
 
       // Содержимое табов:
@@ -123,6 +125,7 @@ class LoginFormR(
       )
 
       // Весь диалог формы логина:
+      val notCloseable = lfDiConf.onClose().isEmpty
       val allForm = s.visibleSomeC { visibleSomeProxy =>
         MuiDialog(
           new MuiDialogProps {
@@ -130,10 +133,10 @@ class LoginFormR(
               MuiDialogMaxWidths.xs
             }
             override val open = visibleSomeProxy.value.value
-            override val onClose = _onLoginCloseCbF
-            // TODO disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
-            override val disableBackdropClick = true
-            override val disableEscapeKeyDown = true
+            override val onClose = JsOptionUtil.maybeDefined(!notCloseable)( _onLoginCloseCbF )
+            // disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
+            override val disableBackdropClick = notCloseable
+            override val disableEscapeKeyDown = notCloseable
           }
         )(
           dialogTitle,
