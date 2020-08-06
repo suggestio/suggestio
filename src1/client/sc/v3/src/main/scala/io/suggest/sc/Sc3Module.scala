@@ -171,11 +171,9 @@ object Sc3Module { outer =>
         Some(cb)
       }
 
-      override def httpClientConfig() = {
-        HttpClientConfig(
-          csrfToken = sc3Circuit.csrfTokenRW.value.toOption,
-        )
-      }
+      override def httpClientConfig() = HttpClientConfig(
+        csrfToken = sc3Circuit.csrfTokenRW.value.toOption,
+      )
 
       override def onRedirect(onAction: ILoginFormAction, rdrUrl: String): Effect = {
         Effect.action {

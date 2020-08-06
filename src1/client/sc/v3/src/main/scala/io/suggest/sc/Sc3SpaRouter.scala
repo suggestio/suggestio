@@ -12,7 +12,7 @@ import io.suggest.text.UrlUtilJs
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
-import io.suggest.id.login.{MLoginTab, MLoginTabs}
+import io.suggest.id.login.MLoginTabs
 import io.suggest.sc.m.boot.MSpaRouterState
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -192,10 +192,9 @@ class Sc3SpaRouter(
         if link.isCanonical
         href        <- link.href
         hrefUrl = new URI( href )
-        urlHash     <- Option( hrefUrl.getRawQuery )
-        if urlHash.nonEmpty
-        // TODO Надо нормальный парсер, не капризный к порядку или &
-        urlHash2 = urlHash + "&"
+        urlQuery     <- Option( hrefUrl.getRawQuery )
+        if urlQuery.nonEmpty
+        urlHash2 = "?" + urlQuery + "&"
         parsedOpt   <- mainScreenOptRoute.route.parse( Path(urlHash2) )
         parsed      <- parsedOpt
       } yield {
