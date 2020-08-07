@@ -4,8 +4,7 @@ import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiD
 import com.mui.treasury.styles.switch
 import io.suggest.css.Css
 import japgolly.univeq._
-import io.suggest.dev.MPlatformS
-import io.suggest.sc.m.MScReactCtx
+import io.suggest.lk.r.plat.PlatformCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -13,18 +12,17 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 28.07.2020 18:52
-  * Description: Набор компонентов для
+  * Description: Набор компонентов для платформо-зависимых вещей.
   */
-class ScComponents(
-                    mPlatform       : () => MPlatformS,
-                    scReactCtxP     : React.Context[MScReactCtx],
-                  ) {
+class PlatformComponents(
+                          getPlatformCss       : () => PlatformCssStatic,
+                        ) {
 
   /** Компонент для MuiSwitch.
     * Если Apple, то надо использовать маковский дизайн.
     */
   lazy val muiSwitch = {
-    if (mPlatform().isUseIosStyles) {
+    if (getPlatformCss().isRenderIos) {
       MuiSwitch.mkComponent {
         Mui.Styles.withStylesF( switch.Ios.iosSwitchStyles )( Mui.Switch )
       }
@@ -37,51 +35,49 @@ class ScComponents(
   /** Компонент заголовка диалогового окна под iOS и остальные платформы.
     * Заголовки окон на iOS выделены жирным и выравниваются по центру.
     */
-  lazy val diaTitle = {
-    ScalaComponent
-      .builder[List[String]]( "ScDiaTitle" )
-      .stateless
-      .render_PC { (diaTitleClasses, children) =>
-        scReactCtxP.consume { scReactCtx =>
-          MuiDialogTitle {
-            val diaTitleCss = new MuiDialogTitleClasses {
-              override val root = Css.flat1(
-                scReactCtx.scCssSemiStatic.Dialogs.title.htmlClass :: diaTitleClasses
-              )
-            }
-            new MuiDialogTitleProps {
-              override val classes = diaTitleCss
-              override val disableTypography = true
-            }
-          } (
-            MuiTypoGraphy {
-              val mtgCss = new MuiTypoGraphyClasses {
-                override val root = scReactCtx.scCssSemiStatic.Dialogs.title.htmlClass
-              }
-              new MuiTypoGraphyProps {
-                override val variant = MuiTypoGraphyVariants.h6
-                override val classes = mtgCss
-              }
-            } (
-              children
-            )
+  lazy val diaTitle = ScalaComponent
+    .builder[List[String]]( "ScDiaTitle" )
+    .stateless
+    .render_PC { (diaTitleClasses, children) =>
+      val platCss = getPlatformCss()
+
+      MuiDialogTitle {
+        val diaTitleCss = new MuiDialogTitleClasses {
+          override val root = Css.flat1(
+            platCss.Dialogs.title.htmlClass :: diaTitleClasses
           )
         }
-      }
-      .build
-  }
+        new MuiDialogTitleProps {
+          override val classes = diaTitleCss
+          override val disableTypography = true
+        }
+      } (
+        MuiTypoGraphy {
+          val mtgCss = new MuiTypoGraphyClasses {
+            override val root = platCss.Dialogs.title.htmlClass
+          }
+          new MuiTypoGraphyProps {
+            override val variant = MuiTypoGraphyVariants.h6
+            override val classes = mtgCss
+          }
+        } (
+          children
+        )
+      )
+    }
+    .build
 
 
   /** Пропертисы для MuiDialogActions(), чтобы на iOS было выравнивание элементов по ширине.
     *
     * @param classes Опциональный список css-классов.
-    * @param scReactCtx Контекст.
+    * @param platformCss Стили.
     * @return JSON-пропертисы.
     */
-  def diaActionsProps(classes: List[String] = Nil)(scReactCtx: MScReactCtx): MuiDialogActionsProps = {
+  def diaActionsProps(classes: List[String] = Nil)(platformCss: PlatformCssStatic): MuiDialogActionsProps = {
     val diaActionsCss = new MuiDialogActionsClasses {
       override val root = Css.flat1(
-        scReactCtx.scCssSemiStatic.Dialogs.actions.htmlClass :: classes
+        platformCss.Dialogs.actions.htmlClass :: classes
       )
     }
     new MuiDialogActionsProps {

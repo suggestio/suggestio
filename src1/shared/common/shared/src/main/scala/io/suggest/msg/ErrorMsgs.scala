@@ -18,6 +18,7 @@ object ErrorMsgs {
 
   def JSON_PARSE_ERROR = "Json.parse.error"
 
+  def URL_PARSE_ERROR = "Url.parse.error"
 
   def GEO_WATCH_TYPE_UNSUPPORTED = "Geo.watch.type.unsupported"
 

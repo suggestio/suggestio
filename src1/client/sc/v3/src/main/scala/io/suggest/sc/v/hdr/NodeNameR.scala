@@ -3,7 +3,7 @@ package io.suggest.sc.v.hdr
 import diode.FastEq
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.m.MScReactCtx
+import io.suggest.sc.v.styl.ScCss
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
@@ -18,7 +18,7 @@ import io.suggest.ueq.UnivEqUtil._
   * Description: Вывод названия узла в рамочке.
   */
 class NodeNameR(
-                 scReactCtxP     : React.Context[MScReactCtx],
+                 scCssP     : React.Context[ScCss],
                ) {
 
   case class PropsVal(
@@ -39,8 +39,7 @@ class NodeNameR(
 
     def render(props: Props): VdomElement = {
       // Отрендерить название текущего узла.
-      scReactCtxP.consume { scReactCtx =>
-        val scCss = scReactCtx.scCss
+      scCssP.consume { scCss =>
         val styles = scCss.Header.Logo.Txt
         val dotsStyles = styles.Dots
 

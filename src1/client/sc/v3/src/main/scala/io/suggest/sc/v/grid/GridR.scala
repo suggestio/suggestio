@@ -9,9 +9,8 @@ import io.suggest.css.CssR
 import io.suggest.grid.{GridConst, GridScrollUtil}
 import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -26,7 +25,7 @@ import scalacss.ScalaCssReact._
 class GridR(
              jdCssStatic                : JdCssStatic,
              val gridCoreR              : GridCoreR,
-             scReactCtxP                : React.Context[MScReactCtx],
+             scCssP                     : React.Context[ScCss],
            ) {
 
 
@@ -60,12 +59,11 @@ class GridR(
 
       val smFlex = ScCssStatic.smFlex: TagMod
 
-      scReactCtxP.consume { scReactCtx =>
-        val ScCss = scReactCtx.scCss
-        val GridCss = ScCss.Grid
+      scCssP.consume { scCss =>
+        val GridCss = scCss.Grid
 
         <.div(
-          smFlex, GridCss.outer, ScCss.bgColor,
+          smFlex, GridCss.outer, scCss.bgColor,
 
           <.div(
             smFlex, GridCss.wrapper,
@@ -101,7 +99,7 @@ class GridR(
                 ReactCommonUtil.maybeEl( adsPotPendingSomeProxy.value.value ) {
                   MuiCircularProgress {
                     val cssClasses = new MuiCircularProgressClasses {
-                      override val root = ScCss.Grid.loader.htmlClass
+                      override val root = scCss.Grid.loader.htmlClass
                     }
                     new MuiCircularProgressProps {
                       override val color   = MuiColorTypes.secondary

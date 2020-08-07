@@ -60,6 +60,7 @@ import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
 import io.suggest.lk.c.{CsrfTokenAh, CsrfTokenApi}
+import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
@@ -153,9 +154,12 @@ class Sc3Circuit(
     MScRoot(
       dev = MScDev(
         screen = MScScreenS(
-          info = screenInfo
+          info = screenInfo,
         ),
-        platform = mplatform
+        platform = mplatform,
+        platformCss   = PlatformCssStatic(
+          isRenderIos = mplatform.isUseIosStyles,
+        ),
       ),
       index = MScIndex(
         resp = scIndexResp,
@@ -260,6 +264,7 @@ class Sc3Circuit(
   }( FastEq.ValueEq )
 
   private val indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
+  private[sc] def scCssRO         = mkLensZoomRO(indexRW, MScIndex.scCss)
 
   private val searchRW            = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
   private val geoTabRW            = mkLensZoomRW(searchRW, MScSearch.geo)( MGeoTabSFastEq )
@@ -274,7 +279,7 @@ class Sc3Circuit(
   private val gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
   private val jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
-  private val devRW               = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
+  private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
   private val scScreenRW          = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
   private val scGeoLocRW          = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
   private val onLineRW            = mkLensZoomRW(devRW, MScDev.onLine)
@@ -283,6 +288,7 @@ class Sc3Circuit(
   private val rcvrsMapUrlRO       = mkLensZoomRO(confRW, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
 
   private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformS.MPlatformSFastEq )
+  private[sc] def platformCssRO   = mkLensZoomRO(devRW, MScDev.platformCss)
 
   private val beaconerRW          = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
 

@@ -9,8 +9,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{MScReactCtx, ScLoginFormShowHide}
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.m.ScLoginFormShowHide
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._
@@ -22,7 +22,7 @@ import scalacss.ScalaCssReact._
   * Description: Компонент строки меню с ссылкой для логина в s.io.
   */
 class EnterLkRowR(
-                   scReactCtxP   : React.Context[MScReactCtx],
+                   scCssP        : React.Context[ScCss],
                    crCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
@@ -83,6 +83,8 @@ class EnterLkRowR(
         // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
         <.a(
           R.rowLink,
+
+          // TODO Если юзер залогинен в приложении, то скрыть эту кнопку, либо рендерить кнопку "Выход"?
           ^.href := hrefRoute.url,
 
           // При обычном клике надо открывать форму логина прямо поверх выдачи.
@@ -101,10 +103,10 @@ class EnterLkRowR(
             }
           )(
             MuiListItemText()(
-              scReactCtxP.consume { scReactCtx =>
+              scCssP.consume { scCss =>
                 <.span(
                   R.rowContent,
-                  scReactCtx.scCss.fgColor,
+                  scCss.fgColor,
                   crCtxProv.message( msgCode ),
                 )
               }

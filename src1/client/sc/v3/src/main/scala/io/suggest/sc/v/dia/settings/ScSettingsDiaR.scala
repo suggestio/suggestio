@@ -1,13 +1,14 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiList}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiList}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{MScReactCtx, MScRoot, SettingsDiaOpen}
-import io.suggest.sc.v.styl.ScComponents
+import io.suggest.sc.m.{MScRoot, SettingsDiaOpen}
+import io.suggest.sc.v.styl.PlatformComponents
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -24,9 +25,9 @@ class ScSettingsDiaR(
                       blueToothUnAvailInfoR   : BlueToothUnAvailInfoR,
                       unsafeOffsetSettingR    : UnsafeOffsetSettingR,
                       notificationSettingsR   : NotificationSettingsR,
-                      scComponents            : ScComponents,
+                      platformComponents      : PlatformComponents,
                       crCtxProv               : React.Context[MCommonReactCtx],
-                      scReactCtxP             : React.Context[MScReactCtx],
+                      platformCssP            : React.Context[PlatformCssStatic],
                     ) {
 
   type Props_t = MScRoot
@@ -49,11 +50,9 @@ class ScSettingsDiaR(
       val diaChildren = List[VdomElement](
 
         // Заголовок диалога.
-        scReactCtxP.consume { scReactCtx =>
-          scComponents.diaTitle(Nil)(
-            crCtxProv.message( MsgCodes.`Settings` ),
-          )
-        },
+        platformComponents.diaTitle(Nil)(
+          crCtxProv.message( MsgCodes.`Settings` ),
+        ),
 
         // Сами настройки.
         MuiDialogContent()(
@@ -82,9 +81,9 @@ class ScSettingsDiaR(
         ),
 
         // Кнопки внизу диалога.
-        scReactCtxP.consume { scReactCtx =>
+        platformCssP.consume { platformCss =>
           MuiDialogActions {
-            scComponents.diaActionsProps()(scReactCtx)
+            platformComponents.diaActionsProps()(platformCss)
           } (
             // Кнопка закрытия диалога
             MuiButton(
@@ -101,9 +100,9 @@ class ScSettingsDiaR(
 
       )
 
-      scReactCtxP.consume { scReactCtx =>
+      platformCssP.consume { platformCss =>
         val diaStyle = new MuiDialogClasses {
-          override val paper = scReactCtx.scCssSemiStatic.Dialogs.paper.htmlClass
+          override val paper = platformCss.Dialogs.paper.htmlClass
         }
         s.openedSomeC { openedSomeProxy =>
           MuiDialog(

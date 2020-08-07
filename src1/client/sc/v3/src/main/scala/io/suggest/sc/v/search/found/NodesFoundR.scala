@@ -8,10 +8,10 @@ import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.search.{MNodesFoundRowProps, NodeRowClick, NodesFoundListWh, NodesScroll, SearchTextChanged}
 import io.suggest.sc.v.hdr.RightR
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
@@ -37,7 +37,7 @@ final class NodesFoundR(
                          rightR                   : RightR,
                          nfRowR                   : NfRowR,
                          nfListR                  : NfListR,
-                         scReactCtxP              : React.Context[MScReactCtx],
+                         scCssP                   : React.Context[ScCss],
                          crCtxP                   : React.Context[MCommonReactCtx],
                        ) {
 
@@ -151,12 +151,12 @@ final class NodesFoundR(
             crCtxP.consume { crCtx =>
               val startSearchTypingMsg = crCtx.messages( MsgCodes.`Search.start.typing` )
 
-              scReactCtxP.consume { scReactCtx =>
+              scCssP.consume { scCss =>
                 s.queryC { queryProxy =>
                   MuiInput {
                     val query = queryProxy.value
                     val inputCss = new MuiInputClasses {
-                      override val underline = scReactCtx.scCss.Search.TextBar.underline.htmlClass
+                      override val underline = scCss.Search.TextBar.underline.htmlClass
                       override val root = TextBarCSS.inputsH.htmlClass
                     }
                     new MuiInputProps {
@@ -227,11 +227,11 @@ final class NodesFoundR(
 
       // Не найдено узлов.
       lazy val noNodesFound = MuiList()(
-        scReactCtxP.consume { scReactCtx =>
+        scCssP.consume { scCss =>
           MuiListItemText {
             val css = new MuiListItemTextClasses {
               override val root = Css.flat(
-                scReactCtx.scCss.fgColor.htmlClass,
+                scCss.fgColor.htmlClass,
                 ScCssStatic.Search.NodesFound.nothingFound.htmlClass,
               )
             }

@@ -7,10 +7,9 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MWcNameFgH
-import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.inx.{MScIndex, WcClick}
 import io.suggest.sc.v.hdr.NodeNameR
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -27,7 +26,7 @@ import scalacss.ScalaCssReact._
   */
 class WelcomeR(
                 nodeNameR       : NodeNameR,
-                scReactCtxP     : React.Context[MScReactCtx],
+                scCssP          : React.Context[ScCss],
               ) {
 
   type Props_t = MScIndex
@@ -51,9 +50,8 @@ class WelcomeR(
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
-      scReactCtxP.consume { scReactCtx =>
+      scCssP.consume { scCss =>
         val AnimCss = ScConstants.Welcome.Anim
-        val scCss = scReactCtx.scCss
         val CSS = scCss.Welcome
 
         val tms = TagMod(

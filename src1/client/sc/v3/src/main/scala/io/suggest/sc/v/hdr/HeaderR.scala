@@ -1,13 +1,12 @@
 package io.suggest.sc.v.hdr
 
-import com.materialui.{MuiToolTip, MuiToolTipProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.ScConstants
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.m.MScRoot
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -27,7 +26,7 @@ class HeaderR(
                val goBackR              : GoBackR,
                menuBtnR                 : MenuBtnR,
                searchBtnR               : SearchBtnR,
-               scReactCtxP              : React.Context[MScReactCtx],
+               scCssP                   : React.Context[ScCss],
              ) {
 
   type Props_t = MScRoot
@@ -53,8 +52,7 @@ class HeaderR(
       val hdrProgress   = s.hdrProgressC { hdrProgressR.component.apply }
       val hdrGoBack     = s.goBackC { goBackR.component.apply }
 
-      scReactCtxP.consume { scReactCtx =>
-        val scCss = scReactCtx.scCss
+      scCssP.consume { scCss =>
         val tm0 = <.div(
           ScCssStatic.Header.header,
           scCss.Header.header,

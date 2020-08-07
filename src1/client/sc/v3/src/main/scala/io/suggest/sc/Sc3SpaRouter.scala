@@ -195,8 +195,14 @@ class Sc3SpaRouter(
         urlQuery     <- Option( hrefUrl.getRawQuery )
         if urlQuery.nonEmpty
         urlHash2 = "?" + urlQuery + "&"
-        parsedOpt   <- mainScreenOptRoute.route.parse( Path(urlHash2) )
-        parsed      <- parsedOpt
+        parsed <- {
+          val r = mainScreenOptRoute.route
+            .parse( Path(urlHash2) )
+            .flatten
+          if (r.isEmpty)
+            logger.error( ErrorMsgs.URL_PARSE_ERROR, msg = urlHash2 )
+          r
+        }
       } yield {
         parsed
       })

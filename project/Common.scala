@@ -41,7 +41,7 @@ object Common {
     /** Версия play-json. Он выведен из под основного проекта. */
     val PLAY_JSON_VSN = "2.9.+"
 
-    val PLAY_GEOJSON = "1.6.0"
+    val PLAY_GEOJSON = "1.6.+"
 
 
     /** Версия elasticsearch. */
@@ -90,7 +90,7 @@ object Common {
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
       */
-    val UNIVEQ = "1.2.1"
+    val UNIVEQ = "1.+"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]

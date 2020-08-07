@@ -9,7 +9,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.dia.dlapp.DlAppMenuItemR
 import io.suggest.sc.v.dia.settings.SettingsMenuItemR
 import io.suggest.sc.v.hdr.LeftR
@@ -35,7 +35,7 @@ class MenuR(
              leftR                    : LeftR,
              versionR                 : VersionR,
              indexesRecentR           : IndexesRecentR,
-             scReactCtxP              : React.Context[MScReactCtx],
+             scCssP                   : React.Context[ScCss],
            ) {
 
   type Props = ModelProxy[MScRoot]
@@ -96,8 +96,8 @@ class MenuR(
       val panelCommon = ScCssStatic.Root.panelCommon: TagMod
       val panelBg = ScCssStatic.Root.panelBg: TagMod
 
-      val menuSideBarBody = scReactCtxP.consume { scReactCtx =>
-        val menuCss = scReactCtx.scCss.Menu
+      val menuSideBarBody = scCssP.consume { scCss =>
+        val menuCss = scCss.Menu
 
         <.div(
           panelCommon,
@@ -106,7 +106,7 @@ class MenuR(
           // Фон панели.
           <.div(
             panelBg,
-            scReactCtx.scCss.panelBg,
+            scCss.panelBg,
           ),
 
           // Контейнер для непосредственного контента панели.

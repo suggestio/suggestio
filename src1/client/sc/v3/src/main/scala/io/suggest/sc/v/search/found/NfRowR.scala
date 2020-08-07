@@ -15,9 +15,8 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search.MNodesFoundRowProps
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.spa.DAction
@@ -37,7 +36,7 @@ import scala.scalajs.js
   * Без dependency injection, чтобы снизить кол-во React.Context().consume-компонентов: пусть всё будет в списке снаружи.
   */
 final class NfRowR(
-                    scReactCtxP              : React.Context[MScReactCtx],
+                    scCssP                   : React.Context[ScCss],
                     crCtxP                   : React.Context[MCommonReactCtx],
                   ) {
 
@@ -51,8 +50,8 @@ final class NfRowR(
   private def _using(f: NfRowR2 => VdomElement) = {
     (onClickF: MSc3IndexResp => DAction) =>
       crCtxP.consume { crCtx =>
-        scReactCtxP.consume { scReactCtx =>
-          val nfRowR = NfRowR2( crCtx, scReactCtx, onClickF )
+        scCssP.consume { scCss =>
+          val nfRowR = NfRowR2( crCtx, scCss, onClickF )
           f(nfRowR)
         }
       }
@@ -66,7 +65,7 @@ final class NfRowR(
   */
 final case class NfRowR2(
                           crCtx        : MCommonReactCtx,
-                          scReactCtx   : MScReactCtx,
+                          scCss        : ScCss,
                           onClickF     : MSc3IndexResp => DAction,
                         ) {
 
@@ -141,8 +140,6 @@ final case class NfRowR2(
 
       val isTag = p.ntype ==* MNodeTypes.Tag
 
-      val scCss = scReactCtx.scCss
-
       var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(nodeId) ::
         Nil
       rowRootCssAcc ::= {
@@ -192,7 +189,7 @@ final case class NfRowR2(
         p.name.whenDefinedEl { nodeName =>
           // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
           val rootCss = JsOptionUtil.maybeDefined(isTag)(
-            Css.flat( NodesCSS.tagRowText.htmlClass, scReactCtx.scCss.fgColor.htmlClass )
+            Css.flat( NodesCSS.tagRowText.htmlClass, scCss.fgColor.htmlClass )
           )
 
           val theClasses = new MuiListItemTextClasses {

@@ -6,12 +6,13 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.dia.YesNoWz
 import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzPhases}
-import io.suggest.sc.v.styl.ScComponents
+import io.suggest.sc.v.styl.PlatformComponents
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -25,9 +26,9 @@ import japgolly.scalajs.react._
   * Description: wrap-компонент для первого запуска система.
   */
 class WzFirstR(
-                scComponents          : ScComponents,
+                scComponents          : PlatformComponents,
                 crCtxP                : React.Context[MCommonReactCtx],
-                scReactCtxP           : React.Context[MScReactCtx],
+                platformCssP          : React.Context[PlatformCssStatic],
               ) {
 
   type Props_t = MScRoot
@@ -85,10 +86,10 @@ class WzFirstR(
 
                   scComponents.diaTitle(props.css.header.htmlClass :: Nil)(
                     title,
-                    scReactCtxP.consume { scReactCtx =>
+                    platformCssP.consume { platformCss =>
                       icon(
                         new MuiSvgIconProps {
-                          override val className = scReactCtx.scCssSemiStatic.Dialogs.titleIcon.htmlClass
+                          override val className = platformCss.Dialogs.titleIcon.htmlClass
                         }
                       )()
                     },
@@ -155,10 +156,10 @@ class WzFirstR(
                     }
                     // Сборка текста вопроса:
                     MuiDialogContentText()(
-                      scReactCtxP.consume { scReactCtx =>
+                      platformCssP.consume { platformCss =>
                         MuiTypoGraphy {
                           val mtgCss = new MuiTypoGraphyClasses {
-                            override val root = scReactCtx.scCssSemiStatic.Dialogs.text.htmlClass
+                            override val root = platformCss.Dialogs.text.htmlClass
                           }
                           new MuiTypoGraphyProps {
                             override val variant = MuiTypoGraphyVariants.subtitle1
@@ -234,9 +235,9 @@ class WzFirstR(
 
                   }
 
-                  scReactCtxP.consume { scReactCtx =>
+                  platformCssP.consume { platformCss =>
                     MuiDialogActions {
-                      scComponents.diaActionsProps( props.css.footer.htmlClass :: Nil )(scReactCtx)
+                      scComponents.diaActionsProps( props.css.footer.htmlClass :: Nil )(platformCss)
                     } ( btns: _* )
                   }
                 }
@@ -246,9 +247,9 @@ class WzFirstR(
         )
       }
 
-      scReactCtxP.consume { scReactCtx =>
+      platformCssP.consume { platformCss =>
         val diaCss = new MuiDialogClasses {
-          override val paper = scReactCtx.scCssSemiStatic.Dialogs.paper.htmlClass
+          override val paper = platformCss.Dialogs.paper.htmlClass
         }
         s.diaPropsC { diaPropsProxy =>
           val diaProps = diaPropsProxy.value

@@ -1,26 +1,39 @@
-package io.suggest.sc.v.styl
+package io.suggest.lk.r.plat
 
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.dev.MPlatformS
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.07.2020 17:48
-  * Description: Полу-статические стили, зависящие от платформы.
+  * Description: Статические стили, зависящие от платформы.
+  * Платформа не меняется, поэтому стили статические.
+  * Многие вещи заточены на неизменяемость инстанса PlatformCssStatic.
   */
-final class ScCssSemiStatic( plat: MPlatformS ) extends StyleSheet.Inline {
+object PlatformCssStatic {
+
+  @inline implicit def univEq: UnivEq[PlatformCssStatic] = UnivEq.derive
+
+  def isRenderIos = GenLens[PlatformCssStatic]( _.isRenderIos )
+
+}
+
+
+final case class PlatformCssStatic(
+                                    isRenderIos: Boolean,
+                                  )
+  extends StyleSheet.Inline
+{
 
   import dsl._
-
-  private def _renderIos: Boolean =
-    plat.isUseIosStyles
 
   /** Компоненты. */
   object Dialogs {
 
     val title = {
-      if (_renderIos)
+      if (isRenderIos)
         style(
           fontWeight.bolder.important,
           justifyContent.center,
@@ -32,7 +45,7 @@ final class ScCssSemiStatic( plat: MPlatformS ) extends StyleSheet.Inline {
 
 
     val titleIcon = {
-      if (_renderIos) {
+      if (isRenderIos) {
         style(
           position.absolute,
           top( 0.8.em ),
@@ -47,7 +60,7 @@ final class ScCssSemiStatic( plat: MPlatformS ) extends StyleSheet.Inline {
 
 
     val paper = {
-      if (_renderIos) {
+      if (isRenderIos) {
         style(
           borderRadius( 20.px ),
           opacity.attr := 90.%%.value,
@@ -59,7 +72,7 @@ final class ScCssSemiStatic( plat: MPlatformS ) extends StyleSheet.Inline {
 
 
     val text = {
-      if (_renderIos) {
+      if (isRenderIos) {
         style(
           lineHeight( 1.2 ).important,
           textAlign.center,
@@ -71,7 +84,7 @@ final class ScCssSemiStatic( plat: MPlatformS ) extends StyleSheet.Inline {
 
 
     val actions = {
-      if (_renderIos) {
+      if (isRenderIos) {
         style(
           justifyContent.spaceEvenly,
         )

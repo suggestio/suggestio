@@ -1,7 +1,7 @@
 package io.suggest.sc.v.dia.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentClasses, MuiDialogContentProps, MuiDialogMaxWidths, MuiDialogProps, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiExpansionPanelSummaryClasses, MuiExpansionPanelSummaryProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiExpansionPanelSummaryClasses, MuiExpansionPanelSummaryProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -11,6 +11,7 @@ import io.suggest.css.Css
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.msg.JsFormatUtil
 import io.suggest.n2.media.MFileMetaHash
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -18,8 +19,8 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.routes.routes
 import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
 import io.suggest.sc.m.menu._
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
-import io.suggest.sc.v.styl.{ScComponents, ScCssStatic}
+import io.suggest.sc.m.MScRoot
+import io.suggest.sc.v.styl.{PlatformComponents, ScCssStatic}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -38,9 +39,9 @@ import scala.scalajs.js.annotation.JSName
   */
 class DlAppDiaR(
                  osFamiliesR        : OsFamiliesR,
-                 scComponents       : ScComponents,
+                 scComponents       : PlatformComponents,
                  crCtxP             : React.Context[MCommonReactCtx],
-                 scReactCtxP        : React.Context[MScReactCtx],
+                 platformCssP       : React.Context[PlatformCssStatic],
                ) {
 
   type Props_t = MScRoot
@@ -438,9 +439,9 @@ class DlAppDiaR(
           },
 
 
-          scReactCtxP.consume { scReactCtx =>
+          platformCssP.consume { platformCss =>
             MuiDialogActions {
-              scComponents.diaActionsProps()(scReactCtx)
+              scComponents.diaActionsProps()(platformCss)
             } (
               MuiButton(
                 new MuiButtonProps {
@@ -458,9 +459,9 @@ class DlAppDiaR(
       }
 
 
-      scReactCtxP.consume { scReactCtx =>
+      platformCssP.consume { platformCss =>
         val muiDiaCss = new MuiDialogClasses {
-          override val paper = scReactCtx.scCssSemiStatic.Dialogs.paper.htmlClass
+          override val paper = platformCss.Dialogs.paper.htmlClass
         }
         // Открытость диалога.
         s.diaOpenedSomeC { diaOpenedSomeProxy =>

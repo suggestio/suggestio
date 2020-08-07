@@ -6,8 +6,8 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.m.{MScReactCtx, MScRoot, SettingsDiaOpen}
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.m.{MScRoot, SettingsDiaOpen}
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
@@ -19,7 +19,7 @@ import scalacss.ScalaCssReact._
   * Description: wrap-компонент пункта меню, содержащего данные для скачивания мобильного приложения.
   */
 class SettingsMenuItemR(
-                         scReactCtxP        : React.Context[MScReactCtx],
+                         scCssP             : React.Context[ScCss],
                          crCtxProv          : React.Context[MCommonReactCtx],
                        ) {
 
@@ -67,10 +67,10 @@ class SettingsMenuItemR(
           override val classes        = css
         }
       } (
-        scReactCtxP.consume { scReactCtx =>
+        scCssP.consume { scCss =>
           MuiListItemText {
             val css = new MuiListItemTextClasses {
-              override val root = scReactCtx.scCss.fgColor.htmlClass
+              override val root = scCss.fgColor.htmlClass
             }
             new MuiListItemTextProps {
               override val classes = css

@@ -9,8 +9,7 @@ import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.SioPages
 import japgolly.scalajs.react.extra.router.RouterCtl
 import scalacss.ScalaCssReact._
@@ -22,7 +21,7 @@ import scalacss.ScalaCssReact._
   * Description: Пункт "О проекте" в левом меню выдачи.
   */
 class AboutSioR(
-                 scReactCtxP            : React.Context[MScReactCtx],
+                 scCssP                 : React.Context[ScCss],
                  crCtxProv              : React.Context[MCommonReactCtx],
                  routerCtlProv          : React.Context[RouterCtl[SioPages.Sc3]],
                ) {
@@ -51,10 +50,10 @@ class AboutSioR(
         }
       )(
         MuiListItemText()(
-          scReactCtxP.consume { scReactCtx =>
+          scCssP.consume { scCss =>
             <.span(
               R.rowContent,
-              scReactCtx.scCss.fgColor,
+              scCss.fgColor,
               crCtxProv.message( MsgCodes.`Suggest.io.Project` ),
             )
           }

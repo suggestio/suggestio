@@ -3,6 +3,7 @@ package io.suggest.sc.m.dev
 import diode.FastEq
 import io.suggest.ble.beaconer.MBeaconerS
 import io.suggest.dev.MPlatformS
+import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -37,6 +38,7 @@ object MScDev {
   val beaconer = GenLens[MScDev]( _.beaconer )
   val osNotify = GenLens[MScDev]( _.osNotify )
   val onLine = GenLens[MScDev]( _.onLine )
+  def platformCss = GenLens[MScDev]( _.platformCss )
 
 }
 
@@ -55,4 +57,5 @@ case class MScDev(
                    beaconer     : MBeaconerS       = MBeaconerS.empty,
                    osNotify     : MScOsNotifyS     = MScOsNotifyS.empty,
                    onLine       : MOnLineS         = MOnLineS.empty,
+                   platformCss  : PlatformCssStatic,
                  )

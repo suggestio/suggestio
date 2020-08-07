@@ -7,14 +7,14 @@ import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sc.m.{IndexRecentNodeClick, MScReactCtx, MScRoot}
+import io.suggest.sc.m.{IndexRecentNodeClick, MScRoot}
 import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.found.{NfListR, NfRowR}
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.v.search.SearchCss
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -33,7 +33,7 @@ class IndexesRecentR(
                       nfListR                  : NfListR,
                       nfRowR                   : NfRowR,
                       crCtxP                   : React.Context[MCommonReactCtx],
-                      scReactCtxP              : React.Context[MScReactCtx],
+                      scCssP                   : React.Context[ScCss],
                     ) {
 
   type Props_t = MScRoot
@@ -65,10 +65,10 @@ class IndexesRecentR(
               crCtxP.message( MsgCodes.`Recents` ),
               HtmlConstants.COLON,
             )
-            scReactCtxP.consume { scReactCtx =>
+            scCssP.consume { scCss =>
               MuiListItemText {
                 val textCss = new MuiListItemTextClasses {
-                  override val root = scReactCtx.scCss.fgColor.htmlClass
+                  override val root = scCss.fgColor.htmlClass
                 }
                 new MuiListItemTextProps {
                   override val classes = textCss

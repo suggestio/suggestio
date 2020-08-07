@@ -10,8 +10,7 @@ import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponen
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
-import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 
 /**
   * Suggest.io
@@ -23,7 +22,7 @@ import io.suggest.sc.v.styl.ScCssStatic
   * Если имена стилей не меняются, то можно юзать через wrap(). Иначе - connect()
   */
 class GeoMapOuterR(
-                    scReactCtxP    : React.Context[MScReactCtx],
+                    scCssP    : React.Context[ScCss],
                   ) {
 
   case class PropsVal(
@@ -40,8 +39,8 @@ class GeoMapOuterR(
   class Backend($: BackendScope[Props, State]) {
 
     def render(searchCssProxy: Props, s: State, children: PropsChildren): VdomElement = {
-      scReactCtxP.consume { scReactCtx =>
-        val mapTabCSS = scReactCtx.scCss.Search.Geo
+      scCssP.consume { scCss =>
+        val mapTabCSS = scCss.Search.Geo
         val searchCss = searchCssProxy.value.searchCss
 
         <.div(

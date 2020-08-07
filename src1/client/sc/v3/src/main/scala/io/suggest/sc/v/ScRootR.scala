@@ -9,7 +9,7 @@ import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
@@ -21,7 +21,7 @@ import io.suggest.sc.v.inx.WelcomeR
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.SearchR
 import io.suggest.sc.v.snack.ScSnacksR
-import io.suggest.sc.v.styl.{ScCss, ScCssSemiStatic, ScCssStatic, ScThemes}
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic, ScThemes}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
@@ -48,14 +48,14 @@ class ScRootR (
                 scThemes                : ScThemes,
                 crCtxP                  : React.Context[MCommonReactCtx],
                 muiThemeCtxP            : React.Context[MuiTheme],
-                scReactCtxP             : React.Context[MScReactCtx],
+                scCssP                  : React.Context[ScCss],
               ) {
 
   type Props = ModelProxy[MScRoot]
 
 
   protected[this] case class State(
-                                    scCssArgsC                : ReactConnectProxy[ScCss],
+                                    scCssC                : ReactConnectProxy[ScCss],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
@@ -64,8 +64,6 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     def render(mrootProxy: Props, s: State): VdomElement = {
-      val scCssSemiStatic = new ScCssSemiStatic( mrootProxy.value.dev.platform )
-
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
       // Содержимое правой панели (панель поиска)
       // search (правый) sidebar.
@@ -109,10 +107,10 @@ class ScRootR (
           // css, который рендерится только один раз:
           React.Fragment(
             CssR.component( ScCssStatic ),
-            CssR.component( scCssSemiStatic ),
+            CssR.component( mrootProxy.value.dev.platformCss ),
             // Рендер стилей перед снаружи и перед остальной выдачей.
             // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
-            s.scCssArgsC { CssR.compProxied.apply },
+            s.scCssC { CssR.compProxied.apply },
           )
 
         )),
@@ -153,17 +151,14 @@ class ScRootR (
 
       )
 
-      // Зарегистрировать commonReact-контекст, чтобы подцепить динамический messages:
-      scReactCtxP.provide(
-        MScReactCtx(
-          getScCss  = () => mrootProxy.value.index.scCss,
-          scCssSemiStatic = scCssSemiStatic,
+      val scWithCrCtx = s.commonReactCtxC { commonReactCtxProxy =>
+        crCtxP.provide( commonReactCtxProxy.value )( sc )
+      }
+      s.scCssC { scCssProxy =>
+        scCssP.provide( scCssProxy.value )(
+          scWithCrCtx,
         )
-      )(
-        s.commonReactCtxC { commonReactCtxProxy =>
-          crCtxP.provide( commonReactCtxProxy.value )( sc )
-        }
-      )
+      }
 
     }
 
@@ -174,7 +169,7 @@ class ScRootR (
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        scCssArgsC  = propsProxy.connect(_.index.scCss),
+        scCssC = propsProxy.connect(_.index.scCss),
 
         isRenderScC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( !mroot.index.isFirstRun )

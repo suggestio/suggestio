@@ -4,8 +4,7 @@ import com.materialui.{MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasse
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -16,7 +15,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Прогресс-бар в заголовке для индикации подгрузки данных с сервера.
   */
 class HdrProgressR(
-                    scReactCtxP     : React.Context[MScReactCtx],
+                    scCssP     : React.Context[ScCss],
                   ) {
 
   type Props_t = Some[Boolean]
@@ -25,13 +24,13 @@ class HdrProgressR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(propsSomeProxy: Props): VdomElement = {
-      scReactCtxP.consume { scReactCtx =>
+      scCssP.consume { scCss =>
         ReactCommonUtil.maybeEl( propsSomeProxy.value.value ) {
           MuiLinearProgress {
             val cssClasses = new MuiLinearProgressClasses {
               override val root = Css.flat(
                 ScCssStatic.Header.progress.htmlClass,
-                scReactCtx.scCss.fgColorBg.htmlClass,
+                scCss.fgColorBg.htmlClass,
               )
             }
             new MuiLinearProgressProps {

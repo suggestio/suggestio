@@ -7,8 +7,9 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConf}
+import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.proto.http.model.HttpClientConfig
-import io.suggest.sc.m.{MScReactCtx, RouteTo, ScLoginFormShowHide}
+import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide}
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.u.api.ScAppApiHttp
@@ -26,7 +27,7 @@ import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
 import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
-import io.suggest.sc.v.styl.{ScComponents, ScThemes}
+import io.suggest.sc.v.styl.{PlatformComponents, ScCss, ScThemes}
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.React.Context
@@ -78,18 +79,18 @@ object Sc3Module { outer =>
   // Костыль для инжекции ленивого доступа к инстансу ScRootR.
   def _sc3CircuitF = (routerState: MSpaRouterState) => wire[Sc3Circuit]
 
-  /** Сборка контейнера контекста, который будет распихан по sc-шаблонам. */
-  lazy val scReactCtx: React.Context[MScReactCtx] =
-    React.createContext[MScReactCtx]( null )
 
-  /** Контекст, передающий mui theme. */
-  lazy val muiThemeCtx: React.Context[MuiTheme] =
-    React.createContext[MuiTheme]( null )
+  // React contexts
+  lazy val muiThemeCtx = React.createContext[MuiTheme]( null )
+  lazy val sc3RouterCtlCtx = React.createContext[RouterCtl[SioPages.Sc3]]( sc3SpaRouter.state.routerCtl )
+  lazy val platfromCssCtx = React.createContext[PlatformCssStatic]( sc3Circuit.platformCssRO.value )
+  lazy val scCssCtx = React.createContext[ScCss]( sc3Circuit.scCssRO.value )
 
-  def sc3RouterCtlCtx: React.Context[RouterCtl[SioPages.Sc3]] =
-    React.createContext( sc3SpaRouter.state.routerCtl )
 
-  val _getPlatform = sc3Circuit.platformRW.apply _
+  // Допы для lk-common
+  lazy val _getPlatformCss = sc3Circuit.platformCssRO.apply _
+  lazy val platformComponents = wire[PlatformComponents]
+
 
   // header
   lazy val headerR = wire[HeaderR]
@@ -153,7 +154,6 @@ object Sc3Module { outer =>
 
   // sc3
   lazy val scThemes = wire[ScThemes]
-  lazy val scComponents = wire[ScComponents]
   lazy val scRootR = wire[ScRootR]
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   lazy val scAppApiHttp = wire[ScAppApiHttp]

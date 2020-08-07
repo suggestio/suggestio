@@ -8,7 +8,7 @@ import io.suggest.css.{Css, CssR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.search._
-import io.suggest.sc.m.{MScReactCtx, MScRoot}
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.search.found.NodesFoundR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -25,7 +25,7 @@ final class SearchR(
                      nodesFoundR              : NodesFoundR,
                      geoMapOuterR             : GeoMapOuterR,
                      searchMapR               : SearchMapR,
-                     scReactCtxP              : React.Context[MScReactCtx],
+                     scCssP                   : React.Context[ScCss],
                    ) {
 
   type Props = ModelProxy[MScRoot]
@@ -50,9 +50,7 @@ final class SearchR(
       val searchCss = s.searchCssC { CssR.compProxied.apply }
 
       // Непосредственно, панель поиска:
-      val searchBarBody = scReactCtxP.consume { scReactCtx =>
-        val scCss = scReactCtx.scCss
-
+      val searchBarBody = scCssP.consume { scCss =>
         // Рендер вкладки карты:
         val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.component.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
 
