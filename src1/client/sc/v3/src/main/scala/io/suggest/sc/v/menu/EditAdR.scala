@@ -1,15 +1,16 @@
 package io.suggest.sc.v.menu
 
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
-import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.routes.IJsRouter
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import scalacss.ScalaCssReact._
 
@@ -22,51 +23,52 @@ import scalacss.ScalaCssReact._
 class EditAdR(
                scCssP        : React.Context[ScCss],
                crCtxProv     : React.Context[MCommonReactCtx],
+               jsRouterOptP  : React.Context[Option[IJsRouter]],
              ) {
 
-  type Props_t = Option[PropsVal]
+  type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
 
-  case class PropsVal(
-                       adId         : String,
-                       scRoutes     : IJsRouter
-                     )
-
-  implicit object EditAdRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.adId ===* b.adId) &&
-      (a.scRoutes eq b.scRoutes)
-    }
-  }
+  case class State(
+                    adIdOptC : ReactConnectProxy[Option[String]],
+                  )
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, State]) {
 
-    def render(propsValProxy: Props): VdomElement = {
-      propsValProxy.value.whenDefinedEl { props =>
-        val R = ScCssStatic.Menu.Rows
-        <.a(
-          R.rowLink,
-          ^.href := props.scRoutes.controllers.LkAdEdit.editAd( props.adId ).url,
+    def render(s: State): VdomElement = {
+      import ScCssStatic.Menu.{Rows => R}
 
-          // Ссылка на вход или на личный кабинет
-          MuiListItem(
-            new MuiListItemProps {
-              override val disableGutters = true
-              override val button = true
+      lazy val content = MuiListItem(
+          new MuiListItemProps {
+            override val disableGutters = true
+            override val button = true
+          }
+        )(
+          MuiListItemText()(
+            scCssP.consume { scCss =>
+              <.span(
+                R.rowContent,
+                scCss.fgColor,
+                crCtxProv.message( MsgCodes.`Edit` ),
+              )
             }
-          )(
-            MuiListItemText()(
-              scCssP.consume { scCss =>
-                <.span(
-                  R.rowContent,
-                  scCss.fgColor,
-                  crCtxProv.message( MsgCodes.`Edit` ),
-                )
-              }
-            )
           )
         )
+
+      // Ссылка на вход или на личный кабинет
+      jsRouterOptP.consume { jsRouterOpt =>
+        jsRouterOpt.whenDefinedEl { jsRouter =>
+          s.adIdOptC { adIdOptProxy =>
+            adIdOptProxy.value.whenDefinedEl { adId =>
+              <.a(
+                R.rowLink,
+                ^.href := HttpClient.mkAbsUrlIfPreferred( jsRouter.controllers.LkAdEdit.editAd( adId ).url ),
+                content,
+              )
+            }
+          }
+        }
       }
     }
 
@@ -75,7 +77,24 @@ class EditAdR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        adIdOptC = propsProxy.connect { props =>
+          // Без for-yield, чтобы гарантировать референсную целостность черзе отсутствие .map().
+          // sbt-плагин с этим тоже должен бы справляться, но нужны гарантии.
+          props.grid.core
+            .focusedAdOpt
+            .flatMap { focusedAdOuter =>
+              focusedAdOuter.focused
+                .toOption
+                .filter(_.info.canEdit)
+                .flatMap( _ => focusedAdOuter.nodeId )
+            }
+        },
+
+      )
+    }
     .renderBackend[Backend]
     .build
 

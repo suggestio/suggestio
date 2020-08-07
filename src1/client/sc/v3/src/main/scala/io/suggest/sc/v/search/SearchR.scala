@@ -89,7 +89,7 @@ final class SearchR(
                 showCrossHair = true
               )
             } { cssProxy =>
-              geoMapOuterR(cssProxy)(
+              geoMapOuterR.component(cssProxy)(
                 tabContentInner
               )
             }

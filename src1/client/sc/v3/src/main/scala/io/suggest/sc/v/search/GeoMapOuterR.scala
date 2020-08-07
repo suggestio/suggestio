@@ -87,6 +87,4 @@ class GeoMapOuterR(
     .renderBackendWithChildren[Backend]
     .build
 
-  def apply(searchCss: Props)(children: VdomNode*) = component(searchCss)(children: _*)
-
 }

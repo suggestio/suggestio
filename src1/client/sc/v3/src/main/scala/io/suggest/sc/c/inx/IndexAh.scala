@@ -262,29 +262,39 @@ class IndexRah
     logger.error( eMsg, ex, msg = ctx.m )
 
 
-    val search_geo_LENS = MScIndex.search
+    val inx_search_geo_LENS = MScIndex.search
       .composeLens( MScSearch.geo )
     val ctx_v0_index_LENS = MRhCtx.value0
       .composeLens( MScRoot.index )
 
     var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
 
+
     // Если закешированные scQs содержат что-либо, то надо их обнулить. Иначе повторная ошибка будет прожёвана как уже пройденный успех.
-    val search_geo_found_reqSearchArgs_LENS = search_geo_LENS
+    val inx_search_geo_found_LENS = inx_search_geo_LENS
       .composeLens( MGeoTabS.found )
-      .composeLens( MNodesFoundS.reqSearchArgs )
-    if (
-      ctx_v0_index_LENS.composeLens(search_geo_found_reqSearchArgs_LENS).get(ctx).nonEmpty
-    ) {
-      actionsAccF = actionsAccF andThen search_geo_found_reqSearchArgs_LENS.set( None )
-    }
+    val nodesFound0 = ctx_v0_index_LENS
+      .composeLens( inx_search_geo_found_LENS )
+      .get( ctx )
+    var nodesFoundMods = List.empty[MNodesFoundS => MNodesFoundS]
+
+    if (nodesFound0.reqSearchArgs.nonEmpty)
+      nodesFoundMods ::= MNodesFoundS.reqSearchArgs set None
+
+    // Если на панели поиска pending, то его тоже сбросить. Такое бывает, когда происходило перемещение карты.
+    if (nodesFound0.req.isPending)
+      nodesFoundMods ::= MNodesFoundS.req.modify( _.fail(ex) )
+
+    if (nodesFoundMods.nonEmpty)
+      actionsAccF = actionsAccF andThen inx_search_geo_found_LENS.modify( nodesFoundMods.reduce(_ andThen _) )
+
 
     // Надо перевести карту в текущее состояние, которое было до ошибки.
-    val searchGeoMapInit_LENS = search_geo_LENS
+    val searchGeoMapInit_LENS = inx_search_geo_LENS
       .composeLens( MGeoTabS.mapInit )
-    val mapInit_LENS = ctx_v0_index_LENS
+    val mapInit0 = ctx_v0_index_LENS
       .composeLens( searchGeoMapInit_LENS )
-    val mapInit0 = mapInit_LENS.get(ctx)
+      .get(ctx)
 
     var mapInitModsF = List.empty[MMapInitState => MMapInitState]
 

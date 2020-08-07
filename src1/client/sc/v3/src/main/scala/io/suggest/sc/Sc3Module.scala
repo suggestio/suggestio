@@ -9,6 +9,7 @@ import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConf}
 import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.proto.http.model.HttpClientConfig
+import io.suggest.routes.IJsRouter
 import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide}
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.inx.ReGetIndex
@@ -85,6 +86,7 @@ object Sc3Module { outer =>
   lazy val sc3RouterCtlCtx = React.createContext[RouterCtl[SioPages.Sc3]]( sc3SpaRouter.state.routerCtl )
   lazy val platfromCssCtx = React.createContext[PlatformCssStatic]( sc3Circuit.platformCssRO.value )
   lazy val scCssCtx = React.createContext[ScCss]( sc3Circuit.scCssRO.value )
+  lazy val jsRouterOptCtx = React.createContext[Option[IJsRouter]]( sc3Circuit.jsRouterRW.value.jsRouterOpt )
 
 
   // Допы для lk-common

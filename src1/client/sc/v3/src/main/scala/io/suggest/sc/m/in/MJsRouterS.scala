@@ -42,4 +42,8 @@ object MJsRouterS {
 case class MJsRouterS(
                        jsRouter         : Pot[routes.type]    = Pot.empty,
                        delayedRouteTo   : Option[RouteTo]         = None,
-                     )
+                     ) {
+
+  lazy val jsRouterOpt = jsRouter.toOption
+
+}

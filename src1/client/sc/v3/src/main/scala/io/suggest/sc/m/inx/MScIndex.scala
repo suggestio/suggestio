@@ -49,6 +49,9 @@ object MScIndex {
     def isFirstRun: Boolean =
       scIndex.resp.isEmpty
 
+    def isLoggedIn: Boolean =
+      scIndex.resp.exists(_.isLoggedIn contains true)
+
   }
 
 }

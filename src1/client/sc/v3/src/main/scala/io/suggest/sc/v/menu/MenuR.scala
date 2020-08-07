@@ -5,7 +5,6 @@ import com.materialui.{MuiDivider, MuiList, MuiListItem}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.proto.http.HttpConst
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
@@ -14,10 +13,8 @@ import io.suggest.sc.v.dia.dlapp.DlAppMenuItemR
 import io.suggest.sc.v.dia.settings.SettingsMenuItemR
 import io.suggest.sc.v.hdr.LeftR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
-import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom
 import scalacss.ScalaCssReact._
 
 /**
@@ -41,9 +38,6 @@ class MenuR(
   type Props = ModelProxy[MScRoot]
 
   case class State(
-                    enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
-                    editAdC                   : ReactConnectProxy[Option[editAdR.PropsVal]],
-                    aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
                     menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
                   )
 
@@ -69,13 +63,13 @@ class MenuR(
           ),
 
           // Строка входа в личный кабинет
-          s.enterLkRowC { enterLkRowR.apply },
+          enterLkRowR.component( propsProxy ),
 
           // Кнопка редактирования карточки.
-          s.editAdC { editAdR.apply },
+          editAdR.component( propsProxy ),
 
           // Рендер кнопки "О проекте"
-          s.aboutSioC { aboutSioR.apply },
+          propsProxy.wrap( _.internals.conf.aboutSioNodeId )( aboutSioR.component.apply ),
 
           // Пункт скачивания мобильного приложения.
           ReactCommonUtil.maybeNode( propsProxy.value.dev.platform.isDlAppAvail ) {
@@ -165,51 +159,6 @@ class MenuR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-
-        enterLkRowC = propsProxy.connect { props =>
-          for {
-            scJsRouter <- props.internals.jsRouter.jsRouter.toOption
-            plat = props.dev.platform
-          } yield {
-            enterLkRowR.PropsVal(
-              isLoggedIn      = props.index.respOpt.flatMap(_.isLoggedIn) contains true,
-              // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
-              isMyAdnNodeId   = props.index.state
-                .rcvrId
-                .filter { _ =>
-                  props.index.resp.exists(_.isMyNode contains true)
-                },
-              scJsRouter = scJsRouter,
-              canInternalLogin = {
-                plat.isCordova ||
-                (dom.window.location.protocol startsWith HttpConst.Proto.HTTPS) ||
-                scalajs.LinkingInfo.developmentMode
-              }
-            )
-          }
-        }( OptFastEq.Wrapped(enterLkRowR.EnterLkRowRPropsValFastEq) ),
-
-        editAdC = propsProxy.connect { props =>
-          for {
-            scJsRouter      <- props.internals.jsRouter.jsRouter.toOption
-            focusedAdOuter  <- props.grid.core.focusedAdOpt
-            focusedData     <- focusedAdOuter.focused.toOption
-            if focusedData.info.canEdit
-            focusedAdId     <- focusedAdOuter.nodeId
-          } yield {
-            editAdR.PropsVal(
-              adId      = focusedAdId,
-              scRoutes  = scJsRouter
-            )
-          }
-        }( OptFastEq.Wrapped(editAdR.EditAdRPropsValFastEq) ),
-
-        aboutSioC = propsProxy.connect { props =>
-          val propsVal = aboutSioR.PropsVal(
-            aboutNodeId = props.internals.conf.aboutSioNodeId
-          )
-          Option(propsVal)
-        }( OptFastEq.Wrapped(aboutSioR.AboutSioRPropsValFastEq) ),
 
         menuOpenedSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.index.menu.opened )

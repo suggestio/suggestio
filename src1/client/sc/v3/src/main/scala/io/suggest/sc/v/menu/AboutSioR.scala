@@ -1,14 +1,11 @@
 package io.suggest.sc.v.menu
 
-import diode.FastEq
 import diode.react.ModelProxy
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.spa.SioPages
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -26,21 +23,12 @@ class AboutSioR(
                  routerCtlProv          : React.Context[RouterCtl[SioPages.Sc3]],
                ) {
 
-  type Props_t = Option[PropsVal]
+  type Props_t = String
   type Props = ModelProxy[Props_t]
-
-  case class PropsVal(
-                       aboutNodeId  : String,
-                     )
-  implicit object AboutSioRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.aboutNodeId ===* b.aboutNodeId
-    }
-  }
 
 
   class Backend($: BackendScope[Props, Unit]) {
-    def render(propsValProxy: Props): VdomElement = {
+    def render(nodeIdProxy: Props): VdomElement = {
       import ScCssStatic.Menu.{Rows => R}
 
       lazy val _listItem = MuiListItem(
@@ -67,27 +55,25 @@ class AboutSioR(
           _listItem,
         )
 
-        propsValProxy.value.whenDefinedEl { props =>
-          // Это типа ссылка <a>, но уже с выставленным href + go-событие.
-          routerCtlProv.consume { routerCtl =>
-            routerCtl
-              .link( SioPages.Sc3(
-                nodeId = Some( props.aboutNodeId )
-              ))(
-                linkChildren: _*
-              )
-          }
+        // TODO aboutNodeId надо унести из конфига в messages. Тогда, при переключении языков, будет меняться узел. Или придумать стабильные id по разным языкам, без messages.
+        // Это типа ссылка <a>, но уже с выставленным href + go-событие.
+        routerCtlProv.consume { routerCtl =>
+          routerCtl
+            .link( SioPages.Sc3(
+              nodeId = Some( nodeIdProxy.value )
+            ))(
+              linkChildren: _*
+            )
         }
       }
     }
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsValProxy: Props) = component( propsValProxy )
 
 }

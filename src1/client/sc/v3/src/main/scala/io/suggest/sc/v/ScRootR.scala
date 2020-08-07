@@ -9,6 +9,7 @@ import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
+import io.suggest.routes.IJsRouter
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
@@ -49,16 +50,19 @@ class ScRootR (
                 crCtxP                  : React.Context[MCommonReactCtx],
                 muiThemeCtxP            : React.Context[MuiTheme],
                 scCssP                  : React.Context[ScCss],
+                jsRouterOptP            : React.Context[Option[IJsRouter]],
               ) {
 
   type Props = ModelProxy[MScRoot]
 
 
   protected[this] case class State(
-                                    scCssC                : ReactConnectProxy[ScCss],
+                                    scCssC                    : ReactConnectProxy[ScCss],
                                     isRenderScC               : ReactConnectProxy[Some[Boolean]],
                                     colorsC                   : ReactConnectProxy[MColors],
                                     commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
+                                  // TODO Может есть более эффективный метод проброса? Роутер инициализируется при запуске системы, и больше не меняется.
+                                    jsRouterOptC              : ReactConnectProxy[Option[IJsRouter]],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -151,15 +155,16 @@ class ScRootR (
 
       )
 
+      // Организовать глобальные контексты:
       val scWithCrCtx = s.commonReactCtxC { commonReactCtxProxy =>
         crCtxP.provide( commonReactCtxProxy.value )( sc )
       }
-      s.scCssC { scCssProxy =>
-        scCssP.provide( scCssProxy.value )(
-          scWithCrCtx,
-        )
+      val scWithJsRouterCtx = s.jsRouterOptC { jsRouterOptProxy =>
+        jsRouterOptP.provide( jsRouterOptProxy.value )(scWithCrCtx)
       }
-
+      s.scCssC { scCssProxy =>
+        scCssP.provide( scCssProxy.value )( scWithJsRouterCtx )
+      }
     }
 
   }
@@ -169,6 +174,7 @@ class ScRootR (
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
+
         scCssC = propsProxy.connect(_.index.scCss),
 
         isRenderScC = propsProxy.connect { mroot =>
@@ -181,6 +187,8 @@ class ScRootR (
         }( FastEqUtil.AnyRefFastEq ),
 
         commonReactCtxC = propsProxy.connect( _.internals.info.commonReactCtx )( FastEq.AnyRefEq ),
+
+        jsRouterOptC = propsProxy.connect( _.internals.jsRouter.jsRouterOpt ),
 
       )
     }
