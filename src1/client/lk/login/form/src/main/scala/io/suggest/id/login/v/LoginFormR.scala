@@ -1,6 +1,6 @@
 package io.suggest.id.login.v
 
-import com.materialui.{MuiDialog, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
+import com.materialui.{MuiDialog, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiTab, MuiTabProps, MuiTabs, MuiTabsClasses, MuiTabsProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -19,6 +19,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactE
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -104,19 +105,25 @@ class LoginFormR(
       // Заголовок диалога
       val dialogTitle = MuiDialogTitle()(
         // Список табов:
-        s.currTabC { currTabProxy =>
-          MuiTabs(
-            new MuiTabsProps {
-              override val value = js.defined( currTabProxy.value.value )
-              @JSName("onChange")
-              override val onTabChanged = _onTabChangedCbF
-            }
-          )(
-            //extTabBtn,
-            loginTabBtn,
-            regTabBtn,
-          )
-        },
+        loginFormCssCtx.consume { loginFormCss =>
+          s.currTabC { currTabProxy =>
+            MuiTabs {
+              val tabsCss = new MuiTabsClasses {
+                override val flexContainer = loginFormCss.tabsCont.htmlClass
+              }
+              new MuiTabsProps {
+                override val value = js.defined( currTabProxy.value.value )
+                @JSName("onChange")
+                override val onTabChanged = _onTabChangedCbF
+                override val classes = tabsCss
+              }
+            } (
+              //extTabBtn,
+              loginTabBtn,
+              regTabBtn,
+            )
+          }
+        }
       )
 
       // Наполнение диалога.
@@ -126,22 +133,28 @@ class LoginFormR(
 
       // Весь диалог формы логина:
       val notCloseable = lfDiConf.onClose().isEmpty
-      val allForm = s.visibleSomeC { visibleSomeProxy =>
-        MuiDialog(
-          new MuiDialogProps {
-            override val maxWidth = js.defined {
-              MuiDialogMaxWidths.xs
+      val allForm = loginFormCssCtx.consume { loginFormCss =>
+        s.visibleSomeC { visibleSomeProxy =>
+          MuiDialog {
+            val diaCss = new MuiDialogClasses {
+              override val paper = loginFormCss.diaWindow.htmlClass
             }
-            override val open = visibleSomeProxy.value.value
-            override val onClose = JsOptionUtil.maybeDefined(!notCloseable)( _onLoginCloseCbF )
-            // disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
-            override val disableBackdropClick = notCloseable
-            override val disableEscapeKeyDown = notCloseable
-          }
-        )(
-          dialogTitle,
-          dialogContent
-        )
+            new MuiDialogProps {
+              override val maxWidth = js.defined {
+                MuiDialogMaxWidths.xs
+              }
+              override val open = visibleSomeProxy.value.value
+              override val onClose = JsOptionUtil.maybeDefined(!notCloseable)( _onLoginCloseCbF )
+              // disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
+              override val disableBackdropClick = notCloseable
+              override val disableEscapeKeyDown = notCloseable
+              override val classes = diaCss
+            }
+          } (
+            dialogTitle,
+            dialogContent
+          )
+        }
       }
 
       // Добавить внутренний контекст для CSS.

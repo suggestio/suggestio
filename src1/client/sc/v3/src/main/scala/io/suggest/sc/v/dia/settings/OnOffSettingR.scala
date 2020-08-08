@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import io.suggest.sc.v.styl.PlatformComponents
+import io.suggest.lk.r.plat.PlatformComponents
 import io.suggest.spa.DAction
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._

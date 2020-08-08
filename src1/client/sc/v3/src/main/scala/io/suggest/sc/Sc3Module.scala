@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConf}
-import io.suggest.lk.r.plat.PlatformCssStatic
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.proto.http.model.HttpClientConfig
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide}
@@ -28,7 +28,7 @@ import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
 import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
-import io.suggest.sc.v.styl.{PlatformComponents, ScCss, ScThemes}
+import io.suggest.sc.v.styl.{ScCss, ScThemes}
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.React.Context

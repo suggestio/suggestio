@@ -6,13 +6,12 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.r.plat.PlatformCssStatic
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.dia.YesNoWz
 import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzPhases}
-import io.suggest.sc.v.styl.PlatformComponents
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._

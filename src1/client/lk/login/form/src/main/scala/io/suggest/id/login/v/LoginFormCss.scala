@@ -63,4 +63,23 @@ case class LoginFormCss() extends StyleSheet.Inline {
     zIndex( 130 ).important,
   )
 
+
+  /** Контейнер заголовков табов. */
+  val tabsCont = style(
+    justifyContent.spaceAround,
+  )
+
+  /** Доп.утиль под полями ввода имени-пароля. */
+  val epwUtil = style(
+    display.flex,
+    justifyContent.spaceBetween,
+    alignItems.center,
+  )
+
+
+  /** Стили для окошка формы логина. */
+  val diaWindow = style(
+    minHeight( 360.px )
+  )
+
 }

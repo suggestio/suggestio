@@ -5,10 +5,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.r.plat.PlatformCssStatic
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{MScRoot, SettingsDiaOpen}
-import io.suggest.sc.v.styl.PlatformComponents
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

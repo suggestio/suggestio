@@ -56,7 +56,6 @@ class ScLoginDiaAh[M](
     case m: ScLoginFormChange =>
       val v0 = value
 
-      println(m)
       m.loginPageOpt.fold {
         v0.circuit.fold {
           noChange
@@ -64,7 +63,6 @@ class ScLoginDiaAh[M](
         } { loginFormCircuit =>
           // Скрыть логин-форму. И потом удалить из состояния. В два шага, чтобы анимацию организовать.
           if (loginFormCircuit.isVisible()) {
-            println("set hiding")
             // Запуск анимированного сокрытия.
             val startHideFx = Effect.action {
               loginFormCircuit.showHideForm( false )
@@ -74,7 +72,6 @@ class ScLoginDiaAh[M](
             effectOnly( startHideFx >> reDoFx )
 
           } else {
-            println("set None")
             val v2 = (MScLoginS.circuit set None)(v0)
             updated(v2)
           }

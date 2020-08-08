@@ -11,7 +11,7 @@ import io.suggest.css.Css
 import io.suggest.dev.{MOsFamilies, MOsFamily, OsFamiliesR}
 import io.suggest.ext.svc.MExtServices
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.r.plat.PlatformCssStatic
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.msg.JsFormatUtil
 import io.suggest.n2.media.MFileMetaHash
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -20,7 +20,7 @@ import io.suggest.routes.routes
 import io.suggest.sc.app.{MScAppDlInfo, MScAppManifestQs}
 import io.suggest.sc.m.menu._
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.v.styl.{PlatformComponents, ScCssStatic}
+import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

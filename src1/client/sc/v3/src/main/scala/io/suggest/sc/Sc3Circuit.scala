@@ -83,7 +83,7 @@ import scala.util.Try
 class Sc3Circuit(
                   // Явные аргументы:
                   routerState               : MSpaRouterState,
-                  getLoginFormCircuit          : () => LoginFormCircuit,
+                  getLoginFormCircuit       : () => LoginFormCircuit,
                   // Автоматические DI-аргументы:
                   sc3Api                    : ISc3Api,
                   scAppApi                  : IScAppApi,

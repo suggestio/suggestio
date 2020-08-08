@@ -1,10 +1,8 @@
-package io.suggest.sc.v.styl
+package io.suggest.lk.r.plat
 
 import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import com.mui.treasury.styles.switch
 import io.suggest.css.Css
-import japgolly.univeq._
-import io.suggest.lk.r.plat.PlatformCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -12,7 +10,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 28.07.2020 18:52
-  * Description: Набор компонентов для платформо-зависимых вещей.
+  * Description: Набор react-компонентов и утили, реализующих платформо-зависимый дизайн.
   */
 class PlatformComponents(
                           getPlatformCss       : () => PlatformCssStatic,

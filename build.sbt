@@ -175,7 +175,7 @@ lazy val lkCommonSjs = {
     .dependsOn(
       commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
       reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs,
-      flowjsSjs,
+      flowjsSjs, muiTreasurySjs,
     )
 }
 
@@ -493,7 +493,7 @@ lazy val sc3Sjs = {
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
       mapsSjs, jdRenderSjs, reactSidebar, reactScroll, reactQrCodeSjs,
-      muiTreasurySjs, loginFormSjs,
+      loginFormSjs,
     )
 }
 

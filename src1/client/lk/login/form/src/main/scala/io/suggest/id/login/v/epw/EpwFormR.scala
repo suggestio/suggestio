@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.epw
 
-import com.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiLink, MuiLinkClasses, MuiLinkProps}
+import com.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiLink, MuiLinkClasses, MuiLinkProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -14,11 +14,13 @@ import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{CheckBoxR, LoginProgressR, TextFieldR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.SioPages
+import scalacss.ScalaCssReact._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -55,11 +57,10 @@ class EpwFormR(
         ReactDiodeUtil.dispatchOnProxyScopeCB($, EpwDoLogin)
     }
 
-    private def _onPwRecoverLinkClick(e: ReactEvent): Callback = {
+    private val _onPwRecoverLinkClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactCommonUtil.preventDefaultCB(e) >>
         ReactDiodeUtil.dispatchOnProxyScopeCB($, PwReset(true) )
     }
-    private val _onPwRecoverLinkClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onPwRecoverLinkClick )
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
@@ -111,40 +112,47 @@ class EpwFormR(
               }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq )
             },
 
-            // Галочка "Чужой компьютер".
-            MuiFormControlLabel {
-              val labelText = crCtxProv.message( MsgCodes.`Not.my.pc` )
-
-              val cbx = propsProxy.wrap { p =>
-                checkBoxR.PropsVal(
-                  checked   = p.isForeignPc,
-                  onChange  = EpwSetForeignPc,
-                  disabled  = p.loginReq.isPending,
-                )
-              }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
-              new MuiFormControlLabelProps {
-                override val control = cbx.rawElement
-                override val label   = labelText.rawNode
-              }
-            },
-
-            // Ссылка "Забыл пароль":
             loginFormCssCtx.consume { loginFormCssCtx =>
-              val css = new MuiLinkClasses {
-                override val root = loginFormCssCtx.forgotPassword.htmlClass
-              }
-              routerCtlRctx.consume { routerCtl =>
-                MuiLink {
-                  new MuiLinkProps {
-                    override val color = MuiColorTypes.textPrimary
-                    val href = routerCtl.urlFor( SioPages.Login( MLoginTabs.EpwLogin ) ).value
-                    override val onClick = _onPwRecoverLinkClickCbF
-                    override val classes = css
+              <.div(
+                loginFormCssCtx.epwUtil,
+
+                // Галочка "Чужой компьютер".
+                MuiFormControlLabel {
+                  val labelText = crCtxProv.message( MsgCodes.`Not.my.pc` )
+
+                  val cbx = propsProxy.wrap { p =>
+                    checkBoxR.PropsVal(
+                      checked   = p.isForeignPc,
+                      onChange  = EpwSetForeignPc,
+                      disabled  = p.loginReq.isPending,
+                    )
+                  }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
+                  new MuiFormControlLabelProps {
+                    override val control = cbx.rawElement
+                    override val label   = labelText.rawNode
                   }
-                } (
-                  crCtxProv.message( MsgCodes.`Forgot.password` )
-                )
-              }
+                },
+
+                // Ссылка "Забыл пароль":
+                {
+                  val css = new MuiLinkClasses {
+                    override val root = loginFormCssCtx.forgotPassword.htmlClass
+                  }
+                  routerCtlRctx.consume { routerCtl =>
+                    MuiLink {
+                      new MuiLinkProps {
+                        override val color = MuiColorTypes.textPrimary
+                        val href = routerCtl.urlFor( SioPages.Login( MLoginTabs.EpwLogin ) ).value
+                        override val onClick = _onPwRecoverLinkClickCbF
+                        override val classes = css
+                        override val variant = MuiTypoGraphyVariants.body1
+                      }
+                    } (
+                      crCtxProv.message( MsgCodes.`Forgot.password` ),
+                    )
+                  }
+                },
+              )
             },
 
             // Линейка ожидания:
