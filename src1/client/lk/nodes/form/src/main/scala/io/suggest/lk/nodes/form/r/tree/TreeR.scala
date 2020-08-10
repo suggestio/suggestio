@@ -1,9 +1,7 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -16,22 +14,10 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Каждый узел дерева описывается компонентом [[NodeR]].
   */
 class TreeR(
-             val nodeR: NodeR
+             nodeR: NodeR
            ) {
 
-  type Props = ModelProxy[PropsVal]
-
-
-  implicit object TreeRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.conf eq b.conf) &&
-        (a.mtree eq b.mtree)
-    }
-  }
-  case class PropsVal(
-                       conf         : MLknConf,
-                       mtree        : MTree
-                     )
+  type Props = ModelProxy[MLkNodesRoot]
 
 
   /** Ядро react-компонента дерева узлов. */
@@ -47,14 +33,14 @@ class TreeR(
         ^.`class` := Css.flat(Css.Table.TABLE, Css.Table.Width.XL),
 
         // Рендерить узлы.
-        v.mtree.nodes.toVdomArray { node =>
+        v.tree.nodes.toVdomArray { node =>
           val tnp = nodeR.PropsVal(
             conf          = v.conf,
-            mtree         = v.mtree,
+            mtree         = v.tree,
             node          = node,
             parentRcvrKey = parentRcvrKey,
             level         = parentLevel,
-            proxy         = p
+            proxy         = p,
           )
           nodeR.component.withKey(node.info.id)( tnp )
         }
@@ -70,7 +56,5 @@ class TreeR(
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(mtreeP: Props) = component(mtreeP)
 
 }

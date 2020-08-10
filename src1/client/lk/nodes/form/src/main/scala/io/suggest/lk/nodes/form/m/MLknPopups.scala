@@ -3,6 +3,8 @@ package io.suggest.lk.nodes.form.m
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.lk.m.MDeleteConfirmPopupS
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +24,12 @@ object MLknPopups {
     }
   }
 
+  val createNodeS = GenLens[MLknPopups](_.createNodeS)
+  val deleteNodeS = GenLens[MLknPopups](_.deleteNodeS)
+  val editTfDailyS = GenLens[MLknPopups](_.editTfDailyS)
+
+  @inline implicit def univEq: UnivEq[MLknPopups] = UnivEq.derive
+
 }
 
 
@@ -37,10 +45,3 @@ case class MLknPopups(
                        editTfDailyS  : Option[MEditTfDailyS]            = None
                      )
   extends EmptyProduct
-{
-
-  def withCreateNodeState(cns2: Option[MCreateNodeS]) = copy(createNodeS = cns2)
-  def withDeleteNodeState(dns2: Option[MDeleteConfirmPopupS]) = copy(deleteNodeS = dns2)
-  def withEditTfDailyState(tds: Option[MEditTfDailyS]) = copy(editTfDailyS = tds)
-
-}

@@ -3,6 +3,9 @@ package io.suggest.lk.nodes.form.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.bill.tf.daily.{ITfDailyMode, MTfDailyInfo}
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -21,6 +24,12 @@ object MEditTfDailyS {
     }
   }
 
+  def mode = GenLens[MEditTfDailyS](_.mode)
+  def request = GenLens[MEditTfDailyS](_.request)
+  def inputAmount = GenLens[MEditTfDailyS](_.inputAmount)
+
+  @inline implicit def univEq: UnivEq[MEditTfDailyS] = UnivEq.derive
+
 }
 
 
@@ -37,9 +46,6 @@ case class MEditTfDailyS(
                           inputAmount       : Option[MInputAmount]  = None,
                           request           : Pot[_]                = Pot.empty
                         ) {
-
-  def withMode(mode2: ITfDailyMode) = copy(mode = mode2)
-  def withRequest(req2: Pot[_]) = copy(request = req2)
 
   def withModeInputAmount(mode2: ITfDailyMode, inpAmount: Option[MInputAmount]) = {
     copy(
@@ -61,3 +67,6 @@ case class MInputAmount(
                          value    : String,
                          isValid  : Boolean
                        )
+object MInputAmount {
+  @inline implicit def univEq: UnivEq[MInputAmount] = UnivEq.derive
+}

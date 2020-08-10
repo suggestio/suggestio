@@ -4,6 +4,7 @@ import boopickle.Default._
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -44,6 +45,8 @@ object MTfDailyInfo {
     (__ \ "u").format[MCurrency]
   )(apply, unlift(unapply))
 
+  def clauses = GenLens[MTfDailyInfo](_.clauses)
+
 }
 
 
@@ -60,8 +63,4 @@ case class MTfDailyInfo(
                          clauses      : Map[MCalType, MPrice],
                          comissionPct : Int,
                          currency     : MCurrency
-                       ) {
-
-  def withClauses(clauses2: Map[MCalType, MPrice]) = copy(clauses = clauses2)
-
-}
+                       )

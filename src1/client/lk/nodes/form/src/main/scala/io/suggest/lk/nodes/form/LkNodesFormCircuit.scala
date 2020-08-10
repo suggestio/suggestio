@@ -6,7 +6,7 @@ import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh}
 import io.suggest.lk.nodes.form.a.tree.TreeAh
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
+import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeEnabledUpdateState, MNodeState, MTree}
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
@@ -16,8 +16,9 @@ import io.suggest.lk.nodes.form.m.MTree.MTreeFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import io.suggest.lk.m.MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
 import io.suggest.msg.ErrorMsgs
-import io.suggest.spa.StateInp
+import io.suggest.spa.{CircuitUtil, StateInp}
 import play.api.libs.json.Json
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -45,8 +46,8 @@ class LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[ML
             for (node0 <- mFormInit.nodes0) yield {
               val mns0 = MNodeState(node0)
               // Если нет дочерних элементов, но это узел текущий, то это значит, что они просто не существуют, а не незапрошены.
-              if (mns0.children.isEmpty  &&  node0.info.id == mFormInit.conf.onNodeId) {
-                mns0.withChildren( Ready(Nil) )
+              if (mns0.children.isEmpty  &&  node0.info.id ==* mFormInit.conf.onNodeId) {
+                (MNodeState.children set Ready(Nil))(mns0)
               } else {
                 mns0
               }
@@ -70,10 +71,10 @@ class LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[ML
   override protected val actionHandler: HandlerFunction = {
     val API = new LkNodesApiHttpImpl
 
-    val confR = zoom(_.conf)
-    val treeRW = zoomRW(_.tree) { _.withTree(_) }
-    val popupsRW = zoomRW(_.popups) { _.withPopups(_) }
-    val currNodeR = treeRW.zoom(_.showProps)
+    val confR = CircuitUtil.mkLensRootZoomRO(this, MLkNodesRoot.conf)
+    val treeRW = CircuitUtil.mkLensRootZoomRW(this, MLkNodesRoot.tree)
+    val popupsRW = CircuitUtil.mkLensRootZoomRW(this, MLkNodesRoot.popups)
+    val currNodeR = CircuitUtil.mkLensZoomRO( treeRW, MTree.showProps )
 
     // Реагировать на события из дерева узлов.
     val treeAh = new TreeAh(
@@ -85,21 +86,21 @@ class LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[ML
     // Реактор на события, связанные с окошком создания узла.
     val createNodeAh = new CreateNodeAh(
       api         = API,
-      modelRW     = popupsRW.zoomRW(_.createNodeS) { _.withCreateNodeState(_) },
+      modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.createNodeS ),
       currNodeRO  = currNodeR
     )
 
     // Реактор на события, связанные с окошком удаления узла.
     val deleteNodeAh = new DeleteNodeAh(
       api         = API,
-      modelRW     = popupsRW.zoomRW(_.deleteNodeS) { _.withDeleteNodeState(_) },
+      modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.deleteNodeS ),
       currNodeRO  = currNodeR
     )
 
     // Реактор на события редактирования тарифа узла.
     val editTfDailyAh = new EditTfDailyAh(
       api     = API,
-      modelRW = popupsRW.zoomRW(_.editTfDailyS) { _.withEditTfDailyState(_) },
+      modelRW = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.editTfDailyS ),
       treeRO  = treeRW
     )
 

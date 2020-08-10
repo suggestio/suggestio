@@ -39,7 +39,7 @@ class TreeAh[M](
 
   implicit private object EditStateUpdater extends OptStateUpdater[MEditNodeState] {
     override def getStateOpt(mns0: MNodeState) = mns0.editing
-    override def updateState(mns0: MNodeState, data: Option[MEditNodeState]) = mns0.withEditing( data )
+    override def updateState(mns0: MNodeState, data: Option[MEditNodeState]) = (MNodeState.editing set data)(mns0)
   }
 
 
@@ -59,7 +59,7 @@ class TreeAh[M](
       }
       .toList
 
-    val v2 = v0.withNodes( nodes2 )
+    val v2 = (MTree.nodes set nodes2)(v0)
     updated(v2)
   }
 
@@ -102,7 +102,7 @@ class TreeAh[M](
               val v2 = v0.copy(
                 nodes = MNodeState
                   .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                    val mns1 = mns0.withChildren( Pot.empty )
+                    val mns1 = (MNodeState.children set Pot.empty)(mns0)
                     mns1 :: Nil
                   }
                   .toList,
@@ -129,16 +129,14 @@ class TreeAh[M](
             }
 
             // Произвести обновление модели.
-            val v2 = v0.withNodes(
+            val v2 = MTree.nodes.modify { nodes0 =>
               MNodeState
-                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                  val mns1 = mns0.withChildren(
-                    mns0.children.pending()
-                  )
+                .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
+                  val mns1 = MNodeState.children.modify(_.pending())(mns0)
                   mns1 :: Nil
                 }
                 .toList
-            )
+            }(v0)
 
             updated(v2, fx)
           }
@@ -154,9 +152,7 @@ class TreeAh[M](
             val mns2 = snr.subNodesRespTry.fold(
               // Ошибка запроса. Сохранить её в состояние.
               {ex =>
-                mns0.withChildren(
-                  mns0.children.fail(ex)
-                )
+                MNodeState.children.modify( _.fail(ex) )(mns0)
               },
               // Положительный ответ сервера, обновить данные по текущему узлу.
               {resp =>
@@ -213,18 +209,18 @@ class TreeAh[M](
             }
 
             // Обновить состояние формы.
-            val v2 = value.withNodes(
+            val v2 = MTree.nodes.modify { nodes0 =>
               MNodeState
-                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                  val mns2 = mns0.withAdv(
+                .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
+                  val mns2 = MNodeState.adv.set(
                     Some( MNodeAdvState(
                       newIsEnabledPot = Pot.empty[Boolean].ready(m.isEnabled).pending()
                     ))
-                  )
+                  )(mns0)
                   mns2 :: Nil
                 }
                 .toList
-            )
+            }(v0)
 
             updated(v2, fx)
           }
@@ -388,9 +384,9 @@ class TreeAh[M](
     // Сигнал клика по кнопке редактирования узла.
     case m: NodeEditClick =>
       val v0 = value
-      val v2 = v0.withNodes(
+      val v2 = MTree.nodes.modify { nodes0 =>
         MNodeState
-          .flatMapSubNode( m.rcvrKey, v0.nodes ) { mns0 =>
+          .flatMapSubNode( m.rcvrKey, nodes0 ) { mns0 =>
             val mns2 = MNodeState.editing.set( Some(
               MEditNodeState(
                 name = mns0.info.name,
@@ -400,7 +396,7 @@ class TreeAh[M](
             mns2 :: Nil
           }
           .toList
-      )
+      }(v0)
       updated(v2)
 
 
@@ -436,16 +432,16 @@ class TreeAh[M](
         }
 
         // Обновление состояния формы.
-        val editState2 = editState0.withSavingPending()
+        val editStateSome2 = Some( editState0.withSavingPending() )
 
-        val v2 = v0.withNodes(
+        val v2 = MTree.nodes.modify { nodes0 =>
           MNodeState
-            .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-              val mns2 = MNodeState.editing.set( Some(editState2) )(mns0)
+            .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
+              val mns2 = (MNodeState.editing set editStateSome2)(mns0)
               mns2 :: Nil
             }
             .toList
-        )
+        }(v0)
         updated(v2, fx)
 
       } else {
@@ -456,27 +452,28 @@ class TreeAh[M](
     // Сигнал завершения запроса сохранения с сервера.
     case m: NodeEditSaveResp =>
       val v0 = value
-      val v2 = v0.withNodes(
+      val v2 = MTree.nodes.modify { nodes0 =>
         MNodeState
-          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-            val mns2 = m.tryResp.fold[MNodeState](
+          .flatMapSubNode(m.rcvrKey, nodes0) { mns0 =>
+            val mnsModF = m.tryResp.fold[MNodeState => MNodeState](
               {ex =>
                 MNodeState.editing
                   .composeTraversal( Traversal.fromTraverse[Option, MEditNodeState] )
                   .composeLens( MEditNodeState.saving )
-                  .modify(_.fail(ex))(mns0)
+                  .modify(_.fail(ex))
               },
               {info2 =>
                 (
                   MNodeState.editing.set( None ) andThen
                   MNodeState.info.set( info2 )
-                )(mns0)
+                )
               }
             )
+            val mns2 = mnsModF( mns0 )
             mns2 :: Nil
           }
           .toList
-      )
+      }(v0)
       updated(v2)
 
 

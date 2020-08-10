@@ -4,6 +4,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
+import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.color.MColors
 import io.suggest.common.fut.FutureUtil
@@ -24,7 +25,7 @@ import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.xplay.qsb.QsbSeq
 import japgolly.univeq._
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mbill._
 import models.mcal.MCalendars
 import models.mctx.Context
@@ -216,15 +217,15 @@ final class LkBill2 @Inject() (
       for {
         tfInfo <- tfInfoFut
       } yield {
-        val tdDaily4ad = tfInfo.withClauses(
-          tfInfo.clauses
-            .view
+        val tdDaily4ad = MTfDailyInfo.clauses.modify {
+          _.view
             .mapValues { p0 =>
               val p2 = p0 * bmc
               TplDataFormatUtil.setFormatPrice( p2 )(ctx)
             }
             .toMap
-        )
+        }(tfInfo)
+
         val r = MNodeAdvInfo4Ad(
           blockModulesCount = bmc,
           tfDaily           = tdDaily4ad

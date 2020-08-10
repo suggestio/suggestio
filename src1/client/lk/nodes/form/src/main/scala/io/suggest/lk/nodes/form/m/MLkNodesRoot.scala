@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
 import io.suggest.lk.nodes.MLknConf
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -19,6 +20,10 @@ object MLkNodesRoot {
     }
   }
 
+  val conf = GenLens[MLkNodesRoot](_.conf)
+  val tree = GenLens[MLkNodesRoot](_.tree)
+  val popups = GenLens[MLkNodesRoot](_.popups)
+
 }
 
 
@@ -33,9 +38,3 @@ case class MLkNodesRoot(
                          tree       : MTree,
                          popups     : MLknPopups            = MLknPopups.empty
                        )
-{
-
-  def withTree(tree2: MTree) = copy(tree = tree2)
-  def withPopups(popups2: MLknPopups) = copy(popups = popups2)
-
-}

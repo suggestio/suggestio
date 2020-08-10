@@ -23,7 +23,7 @@ object MDeleteConfirmPopupS {
 
   @inline implicit def univEq: UnivEq[MDeleteConfirmPopupS] = UnivEq.force
 
-  val request = GenLens[MDeleteConfirmPopupS](_.request)
+  def request = GenLens[MDeleteConfirmPopupS](_.request)
 
 }
 

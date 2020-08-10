@@ -26,7 +26,7 @@ object MTree {
   }
 
   def nodes = GenLens[MTree](_.nodes)
-  def showProps = GenLens[MTree](_.showProps)
+  val showProps = GenLens[MTree](_.showProps)
 
 }
 
@@ -40,8 +40,3 @@ case class MTree(
                   nodes       : Seq[MNodeState],
                   showProps   : Option[RcvrKey] = None
                 )
-{
-
-  def withNodes(nodes2: Seq[MNodeState]) = copy(nodes = nodes2)
-
-}

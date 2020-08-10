@@ -687,7 +687,7 @@ class NodeR(
         // Рекурсивно отрендерить дочерние элементы:
         node.children.render { children =>
           <.div(
-             ReactCommonUtil.maybeNode(children.nonEmpty) {
+            ReactCommonUtil.maybeNode(children.nonEmpty) {
               val childLevel = level + 1
               children.toVdomArray { subNode =>
                 val p1 = p.copy(

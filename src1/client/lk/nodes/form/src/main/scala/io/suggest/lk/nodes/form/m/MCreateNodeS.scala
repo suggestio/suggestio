@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -22,9 +23,11 @@ object MCreateNodeS {
         (a.nameValid ==* b.nameValid) &&
         (a.id ===* b.id) &&
         (a.idValid ==* b.idValid) &&
-        (a.saving eq b.saving)
+        (a.saving ===* b.saving)
     }
   }
+
+  @inline implicit def univEq: UnivEq[MCreateNodeS] = UnivEq.derive
 
 }
 

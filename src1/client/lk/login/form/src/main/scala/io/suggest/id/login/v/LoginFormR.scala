@@ -69,7 +69,6 @@ class LoginFormR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SwitсhLoginTab(newTab) )
     }
 
-
     private val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       Callback.lazily( lfDiConf.onClose() getOrElse Callback.empty )
     }

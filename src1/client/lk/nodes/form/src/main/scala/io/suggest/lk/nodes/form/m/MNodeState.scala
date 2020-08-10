@@ -53,9 +53,7 @@ object MNodeState
       logger.warn( ErrorMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
       node
     } else {
-      node.withChildren(
-        Ready( children2.toSeq )
-      )
+      (MNodeState.children set Ready( children2.toSeq ) )(node)
     }
   }
 
@@ -64,12 +62,12 @@ object MNodeState
     UnivEq.derive
   }
 
-  val info        = GenLens[MNodeState](_.info)
-  val children    = GenLens[MNodeState](_.children)
-  val isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
-  val editing     = GenLens[MNodeState](_.editing)
-  val tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
-  val adv         = GenLens[MNodeState](_.adv)
+  def info        = GenLens[MNodeState](_.info)
+  def children    = GenLens[MNodeState](_.children)
+  def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
+  def editing     = GenLens[MNodeState](_.editing)
+  def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
+  def adv         = GenLens[MNodeState](_.adv)
 
 }
 
@@ -92,13 +90,6 @@ case class MNodeState(
 {
 
   override def id = info.id
-
-  def withInfo(info2: MLknNode) = copy(info = info2)
-  def withChildren(children2: Pot[Seq[MNodeState]]) = copy(children = children2)
-  def withNodeEnabledUpd(neu: Option[MNodeEnabledUpdateState]) = copy(isEnabledUpd = neu)
-  def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
-  def withAdv(adv2: Option[MNodeAdvState] = None) = copy(adv = adv2)
-  def withTfInfoWide(tiw: Boolean) = copy(tfInfoWide = tiw)
 
   /** Является ли текущее состояние узла нормальным и обычным?
     *

@@ -18,8 +18,4 @@ object MNodeEnabledUpdateState {
 case class MNodeEnabledUpdateState(
                                     newIsEnabled      : Boolean,
                                     request           : Pot[_]
-                                  ) {
-
-  def withRequest(req: Pot[_]) = copy(request = req)
-
-}
+                                  )

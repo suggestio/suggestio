@@ -15,9 +15,9 @@ object MNodeAdvState {
 
   @inline implicit def univEq: UnivEq[MNodeAdvState] = UnivEq.force
 
-  val newIsEnabledPot = GenLens[MNodeAdvState](_.newIsEnabledPot)
-  val isShowOpenedPot = GenLens[MNodeAdvState](_.isShowOpenedPot)
-  val alwaysOutlined  = GenLens[MNodeAdvState](_.alwaysOutlinedPot)
+  def newIsEnabledPot = GenLens[MNodeAdvState](_.newIsEnabledPot)
+  def isShowOpenedPot = GenLens[MNodeAdvState](_.isShowOpenedPot)
+  def alwaysOutlined  = GenLens[MNodeAdvState](_.alwaysOutlinedPot)
 
 }
 

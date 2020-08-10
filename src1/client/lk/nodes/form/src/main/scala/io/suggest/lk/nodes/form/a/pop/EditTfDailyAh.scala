@@ -142,7 +142,7 @@ class EditTfDailyAh[M](
         }
 
         // Обновление состояния:
-        val v2 = v0.withRequest(v0.request.pending())
+        val v2 = MEditTfDailyS.request.modify(_.pending())(v0)
 
         updated(Some(v2), fx)
       }
@@ -157,7 +157,7 @@ class EditTfDailyAh[M](
       } { v0 =>
         m.tryResp.fold(
           {ex =>
-            val v2 = v0.withRequest( v0.request.fail(ex) )
+            val v2 = MEditTfDailyS.request.modify( _.fail(ex) )(v0)
             updated( Some(v2) )
           },
           { _ =>
