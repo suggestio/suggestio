@@ -44,9 +44,6 @@ case class MHostUrl(
                      relUrl  : String
                    ) {
 
-  override def toString = host + relUrl
-
-  def withHost(host: String)          = copy(host = host)
-  def withRelUrl(relUrl: String)      = copy(relUrl = relUrl)
+  override def toString = host + "/" + relUrl
 
 }

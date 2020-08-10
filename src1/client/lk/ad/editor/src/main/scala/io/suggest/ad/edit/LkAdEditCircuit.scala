@@ -504,4 +504,7 @@ class LkAdEditCircuit(
   }
 
   addProcessor( DoNothingActionProcessor[MAeRoot] )
+
+  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MAeRoot] )
+
 }

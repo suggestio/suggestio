@@ -4,14 +4,13 @@ import io.suggest.file.MJsFileInfo
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.media.MFileMeta
-import io.suggest.pick.MimeConst
+import io.suggest.pick.{BlobJsUtil, MimeConst}
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.routes.PlayRoute
 import io.suggest.url.MHostUrl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import org.scalajs.dom
 import org.scalajs.dom.FormData
 import org.scalajs.dom.ext.Ajax
 import play.api.libs.json.Json
@@ -105,6 +104,8 @@ class UploadApiHttp extends IUploadApi with Log {
               ),
               body = formDataOpt.orNull,
               onProgress = formDataOpt.flatMap(_ => onProgress),
+              // Убрать X-Requested-With, т.к. CORS по дефолту запрещает этот заголовок.
+              baseHeaders = Map.empty,
             )
           )
         )
@@ -116,75 +117,80 @@ class UploadApiHttp extends IUploadApi with Log {
     }
 
     // Отправить как обычно, т.е. через multipart/form-data:
-    val flowjsOpt = if (ALLOW_CHUNKED) FlowjsUtil.tryFlowJs( upData ) else Failure(new NoSuchElementException)
+    {
+      if (ALLOW_CHUNKED && file.blob.size > UploadConstants.FLOWJS_DONT_USE_BELOW_BYTELEN)
+        FlowjsUtil.tryFlowJs( upData )
+      else
+        Failure(new NoSuchElementException)
+    }
+      // Если flowjs-инстанс собран, то надо переслать файл через flowjs, а doFileUpload() дёрнуть без тела.
+      .fold [IHttpResultHolder[MUploadResp]] (
+        {ex =>
+          // Не удалось инициализировать flow.js, закачиваем по-старинке. Собрать обычное тело upload-запроса:
+          if (ALLOW_CHUNKED)
+            logger.error( ErrorMsgs.CHUNKED_UPLOAD_PREPARE_FAIL, ex, upData )
 
-    // Если flowjs-инстанс собран, то надо переслать файл через flowjs, а doFileUpload() дёрнуть без тела.
-    flowjsOpt.fold [IHttpResultHolder[MUploadResp]] (
-      {ex =>
-        // Не удалось инициализировать flow.js, закачиваем по-старинке. Собрать обычное тело upload-запроса:
-        if (ALLOW_CHUNKED)
-          logger.error( ErrorMsgs.CHUNKED_UPLOAD_PREPARE_FAIL, ex, upData )
+          val formData = new FormData()
+          formData.append(
+            name      = UploadConstants.MPART_FILE_FN,
+            value     = file.blob,
+            // TODO orNull: Может быть надо undefined вместо null?
+            blobName  = file.fileName.orNull
+          )
 
-        val formData = new FormData()
-        formData.append(
-          name      = UploadConstants.MPART_FILE_FN,
-          value     = file.blob,
-          // TODO orNull: Может быть надо undefined вместо null?
-          blobName  = file.fileName.orNull
-        )
+          __doMainReq( Some(formData) )
+        },
 
-        __doMainReq( Some(formData) )
-      },
+        {flowjs =>
+          // TODO Тут нет отработки reloadIfUnauthorized() при заливке. Возможно, проверять сессию перед началом заливки?
+          // Подписка на onProgress
+          for (f <- onProgress)
+            FlowjsUtil.subscribeProgress(flowjs, file, f)
 
-      {flowjs =>
-        // TODO Тут нет отработки reloadIfUnauthorized() при заливке. Возможно, проверять сессию перед началом заливки?
-        // Подписка на onProgress
-        for (f <- onProgress)
-          FlowjsUtil.subscribeProgress(flowjs, file, f)
+          // Подписка на onComplete
+          val flowjsUploadP = Promise[Unit]()
+          FlowjsUtil.subscribeErrors(flowjs, flowjsUploadP)
 
-        // Подписка на onComplete
-        val flowjsUploadP = Promise[Unit]()
-        FlowjsUtil.subscribeErrors(flowjs, flowjsUploadP)
+          // Запустить аплоад.
+          // TODO Нужно заполнить blob полями name и lastModifiedTime.
+          flowjs.addFile( BlobJsUtil.ensureBlobAsFile( file.blob ) )
 
-        // Запустить аплоад.
-        flowjs.addFile( file.blob.asInstanceOf[dom.File] )
+          FlowjsUtil.subscribeComplete(flowjs, flowjsUploadP)
 
-        FlowjsUtil.subscribeComplete(flowjs, flowjsUploadP)
+          flowjs.upload()
 
-        flowjs.upload()
+          val flowjsUploadFut = flowjsUploadP.future
 
-        val flowjsUploadFut = flowjsUploadP.future
+          // Уродливый класс с реализацией последовательной сцепки всех реквестов:
+          new IHttpRespMapped[MUploadResp] {
+            // Максимально отложить запуск финального реквеста:
+            lazy val mainReqHolder = __doMainReq( None )
 
-        // Уродливый класс с реализацией последовательной сцепки всех реквестов:
-        new IHttpRespMapped[MUploadResp] {
-          // Максимально отложить запуск финального реквеста:
-          lazy val mainReqHolder = __doMainReq( None )
+            var _httpResultHolder: IHttpResultHolder[HttpResp] = new IHttpRespHolder {
+              override def abortOrFail(): Unit =
+                flowjs.cancel()
+              override lazy val resultFut = flowjsUploadFut.map { _ =>
+                // По идее, этот код никогда не вызывается.
+                new DummyHttpResp {
+                  override def status = HttpConst.Status.OK
+                  override def statusText = "OK"
+                }
+              }
+            }
 
-          var _httpResultHolder: IHttpResultHolder[HttpResp] = new IHttpRespHolder {
-            override def abortOrFail(): Unit =
-              flowjs.cancel()
-            override lazy val resultFut = flowjsUploadFut.map { _ =>
-              // По идее, этот код никогда не вызывается.
-              new DummyHttpResp {
-                override def status = HttpConst.Status.OK
-                override def statusText = "OK"
+            override def httpResultHolder = _httpResultHolder
+
+            override val resultFut: Future[MUploadResp] = {
+              flowjsUploadFut.flatMap { _ =>
+                val r2 = mainReqHolder
+                _httpResultHolder = r2.httpResultHolder
+                r2.resultFut
               }
             }
           }
 
-          override def httpResultHolder = _httpResultHolder
-
-          override val resultFut: Future[MUploadResp] = {
-            flowjsUploadFut.flatMap { _ =>
-              val r2 = mainReqHolder
-              _httpResultHolder = r2.httpResultHolder
-              r2.resultFut
-            }
-          }
         }
-
-      }
-    )
+      )
   }
 
 

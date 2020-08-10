@@ -97,6 +97,7 @@ object ErrorMsgs {
   def EMBEDDABLE_MEDIA_INFO_EXPECTED = "Embeddable.media.info.expected"
 
   def BASE64_TO_BLOB_FAILED = "Base64.to.blob.failed"
+  def BLOB_EXPECTED = "Blob.expected"
 
   def FILE_CLEANUP_FAIL = "File.cleanup.fail"
 

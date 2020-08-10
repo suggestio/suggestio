@@ -19,7 +19,6 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactE
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -152,7 +151,7 @@ class LoginFormR(
             }
           } (
             dialogTitle,
-            dialogContent
+            dialogContent,
           )
         }
       }
@@ -185,7 +184,5 @@ class LoginFormR(
     }
     .renderBackend[Backend]
     .build
-
-  def apply(propsProxy: Props) = component( propsProxy )
 
 }

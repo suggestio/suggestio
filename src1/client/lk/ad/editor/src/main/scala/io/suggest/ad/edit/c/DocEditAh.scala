@@ -22,9 +22,9 @@ import io.suggest.lk.m.color.MColorsState
 import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
 import io.suggest.n2.edge.{EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages}
-import io.suggest.pick.{Base64JsUtil, ContentTypeCheck, MimeConst}
+import io.suggest.pick.{BlobJsUtil, ContentTypeCheck, MimeConst}
 import io.suggest.primo.SetVal
-import io.suggest.quill.m.TextChanged
+import io.suggest.quill.m.{EmbedFile, TextChanged}
 import io.suggest.quill.u.QuillDeltaJsUtil
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.log.Log
@@ -34,11 +34,14 @@ import io.suggest.common.BooleanUtil.Implicits._
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.MImgFormats
 import io.suggest.n2.media.MFileMeta
+import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.NodePath_t
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import monocle.Traversal
 
 import scala.util.Random
@@ -46,6 +49,7 @@ import scalaz.{EphemeralStream, Tree, TreeLoc}
 import scalaz.std.option._
 
 import scala.annotation.tailrec
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -301,6 +305,7 @@ class DocEditAh[M](
 
         // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
         val dataPrefix = HtmlConstants.Proto.DATA_
+        //val blobPrefix = HtmlConstants.Proto.BLOB_
 
         // 30. Найти новые эджи картинок, которые надо загружать на сервер.
         val dataEdgesForUpload = (
@@ -313,10 +318,16 @@ class DocEditAh[M](
             // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
             // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
             dataUrl <- jde.url
-            if (dataUrl startsWith dataPrefix) &&
-              // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
-              // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
-              !(edgesData0 contains edgeUid)
+            if {
+              (
+                //(dataUrl startsWith blobPrefix) ||    // Quill.Formats.Image режет ссылки, не являющиеся http | https | data:base64
+                (dataUrl startsWith dataPrefix)
+              ) && {
+                // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
+                // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
+                !(edgesData0 contains edgeUid)
+              }
+            }
           } yield {
             (dataUrl, edgeData)
           }
@@ -326,17 +337,28 @@ class DocEditAh[M](
         // Собрать эффект запуска аплоада на сервер для всех найденных картинок.
         val toB64FxOpt = dataEdgesForUpload
           .iterator
-          .map [Effect] { case (dataUrl, _) =>
+          .map [Effect] { case (dataUrl, _ /*dataEdgeJs*/) =>
             // Это новая картинка. Организовать перегонку в blob.
             Effect {
-              val fut = for {
-                blob <- Base64JsUtil.b64Url2Blob(dataUrl)
+              val blobReadyFut = (for {
+                qdEdit0 <- v0.editors.qdEdit
+                domFile <- qdEdit0.newFiles.get( dataUrl )
               } yield {
-                B64toBlobDone(dataUrl, blob)
-              }
-              for (ex <- fut.failed)
+                val r = B64toBlobDone(dataUrl, domFile)
+                Future.successful( r )
+              })
+                .getOrElse {
+                  logger.warn( ErrorMsgs.BLOB_EXPECTED, msg = StringUtil.strLimitLen(dataUrl, 16) )
+                  for {
+                    blob <- BlobJsUtil.b64Url2Blob( dataUrl )
+                  } yield {
+                    B64toBlobDone(dataUrl, blob)
+                  }
+                }
+
+              for (ex <- blobReadyFut.failed)
                 logger.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
-              fut
+              blobReadyFut
             }
           }
           .mergeEffects
@@ -383,7 +405,7 @@ class DocEditAh[M](
             .composeLens(MEditorsS.qdEdit)
             .modify { qdEditOpt0 =>
               for (qdEdit <- qdEditOpt0) yield {
-                if (dataEdgesForUpload.isEmpty) {
+                val qdEdit1 = if (dataEdgesForUpload.isEmpty) {
                   // Перерендер не требуется, тихо сохранить текущую дельту в состояние.
                   (MQdEditS.realDelta set Some(m.fullDelta))(qdEdit)
                 } else {
@@ -391,6 +413,17 @@ class DocEditAh[M](
                   qdEdit.withInitRealDelta(
                     initDelta = quillDeltaJsUtil.qdTag2delta(qdSubTree3, edgesData3)
                   )
+                }
+
+                // Используем пошаговое вычитание из исходной карты, т.к. тут обычно Map1 или EmptyMap.
+                val newFiles2 = dataEdgesForUpload
+                  .iterator
+                  .map(_._1)
+                  .foldLeft( qdEdit.newFiles )( _ - _ )
+                if (newFiles2 !===* qdEdit1.newFiles) {
+                  (MQdEditS.newFiles set newFiles2 )(qdEdit1)
+                } else {
+                  qdEdit1
                 }
               }
             }
@@ -469,6 +502,24 @@ class DocEditAh[M](
         _updateQdContentProps(jdt2, v0)
       })
        .getOrElse( noChange )
+
+
+    // В quill в текст вставлен новый файл, но пока не обработан в TextChanged. Сохранить в состоянии.
+    case m: EmbedFile =>
+      val v0 = value
+
+      (for {
+        qdEdit0 <- v0.editors.qdEdit
+        if !(qdEdit0.newFiles contains m.b64Url)
+      } yield {
+        val v2 = MDocS.editors
+          .composeLens( MEditorsS.qdEdit )
+          .composeTraversal( Traversal.fromTraverse[Option, MQdEditS] )
+          .composeLens( MQdEditS.newFiles )
+          .modify(_ + (m.b64Url -> m.file))(v0)
+        updatedSilent(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Клик по элементу карточки.
@@ -689,7 +740,11 @@ class DocEditAh[M](
 
       } yield {
         // Найден исходный эдж. Залить в него инфу по блобу, выкинув оттуда dataURL:
-        val blobUrl = URL.createObjectURL( m.blob )
+        val blobUrl = if (m.b64Url startsWith HttpConst.Proto.BLOB_)
+          m.b64Url
+        else
+          URL.createObjectURL( m.blob )
+
         val blobUrlOpt = Option( blobUrl )
 
         // Нельзя забыть Base64 dataURL, потому что quill их не понимает, заменяя их на "//:0".

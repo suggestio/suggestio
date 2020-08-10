@@ -2,6 +2,7 @@ package io.suggest.quill.m
 
 import com.quilljs.delta.Delta
 import io.suggest.spa.DAction
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -21,3 +22,10 @@ sealed trait IQuillAction extends DAction
   */
 case class TextChanged(diff: Delta, fullDelta: Delta) extends IQuillAction
 
+
+/** Закинуть оригинал файла в состояние, чтобы потом обработать.
+  *
+  * @param b64Url URL, который будет использован в тексте.
+  * @param file Блоб файла.
+  */
+case class EmbedFile(b64Url: String, file: dom.File) extends IQuillAction

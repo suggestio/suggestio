@@ -17,7 +17,7 @@ import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.m.{MRadS, RcvrMarkersInit}
 import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
+import io.suggest.pick.BlobJsUtil.SjsBase64JsDecoder
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.CircuitLog

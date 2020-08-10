@@ -5,13 +5,14 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
-import io.suggest.proto.http.model.{HttpReq, IHttpRespHolder}
+import io.suggest.proto.http.model.{HttpReq, HttpReqData, HttpRespTypes, IHttpRespHolder}
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.text.UrlUtil2
 import org.scalajs.dom
 
+import scala.concurrent.Future
 import scala.scalajs.js
 
 /**
@@ -99,7 +100,7 @@ object HttpClient {
 
 
   /** Вернуть реальное API для отправки http-запросов. */
-  val defaultExecutor: HttpClientAdp = {
+  val executor: HttpClientAdp = {
     // FetchAdp приоритетен и нужен для очень нужного Cache API (кэширования в моб.приложении и не только).
     ( FetchAdp #::
       XhrAdp #::
@@ -119,7 +120,7 @@ object HttpClient {
     val adp = if (httpReq.data.onProgress.nonEmpty && XhrAdp.isAvailable) {
       XhrAdp
     } else {
-      defaultExecutor
+      executor
     }
 
     // Если в конфиге задан CSRF-токен, то добавить его в ссылку.
@@ -143,6 +144,29 @@ object HttpClient {
       .getOrElse( httpReq )
 
     adp( httpReq2 )
+  }
+
+
+
+  /** Метод быстрой выкачки указанной ссылки.
+    * Применяется для конвертации из base64-URL или Blob-URL в dom.Blob.
+    *
+    * @param url base64: или blob: URL, хотя можно любой.
+    * @return Фьючерс с блобом.
+    *         Future.failed при ошибке, в том числе если Fetch API не поддерживается.
+    */
+  def getBlob(url: String): Future[dom.Blob] = {
+    execute(
+      new HttpReq(
+        method  = HttpConst.Methods.GET,
+        url     = url,
+        data    = HttpReqData(
+          respType = HttpRespTypes.Blob,
+        ),
+      )
+    )
+      .resultFut
+      .flatMap(_.blob())
   }
 
 }

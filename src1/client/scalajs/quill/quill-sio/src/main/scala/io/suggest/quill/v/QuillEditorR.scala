@@ -6,17 +6,18 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.msg.ErrorMsgs
-import io.suggest.quill.m.TextChanged
+import io.suggest.quill.m.{TextChanged, EmbedFile}
 import io.suggest.quill.u.QuillInit
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.log.Log
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.QuillUnivEqUtil._
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -64,10 +65,19 @@ class QuillEditorR(
 
   class Backend($: BackendScope[Props, Unit]) {
 
+    private def _onQuillFileB64Url(b64Url: String, file: dom.File): Unit = {
+      // Отправить в состоянию инфу и блоб файла
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EmbedFile(
+        b64Url = b64Url,
+        file = file,
+      ))
+        .runNow()
+    }
+
     /** Callback реагирования на изменение текста в редакторе. */
     private def onTextChanged(html: String, changeset: Delta, source: Source_t,
                               editorProxy: QuillUnpriveledged): Callback = {
-      dispatchOnProxyScopeCB($, TextChanged(
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, TextChanged(
         diff      = changeset,
         fullDelta = editorProxy.getContents()
       ))
@@ -75,7 +85,9 @@ class QuillEditorR(
 
     private val _onTextChangedF = ReactCommonUtil.cbFun4ToJsCb( onTextChanged )
 
-    private val _quillModulesConf = quillInit.adEditorModules
+    private val _quillModulesConf = quillInit.adEditorModules(
+      onFileEmbed = Some( _onQuillFileB64Url(_, _) ),
+    )
 
     def render(propsProxy: Props): VdomElement = {
       val propsOpt = propsProxy.value

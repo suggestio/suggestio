@@ -3,6 +3,7 @@ package io.suggest.proto.http.client.adp
 import io.suggest.proto.http.model.{HttpFailedException, IHttpRespHolder}
 import io.suggest.proto.http.model.HttpReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import org.scalajs.dom
 
 import scala.concurrent.Future
 

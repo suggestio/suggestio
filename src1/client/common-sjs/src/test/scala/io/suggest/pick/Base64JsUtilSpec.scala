@@ -11,7 +11,7 @@ import scala.scalajs.js.typedarray.Uint8Array
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 26.09.17 16:16
-  * Description: Тесты для [[Base64JsUtil]].
+  * Description: Тесты для [[BlobJsUtil]].
   */
 object Base64JsUtilSpec extends SimpleTestSuite {
 
@@ -51,7 +51,7 @@ object Base64JsUtilSpec extends SimpleTestSuite {
 
 
   testAsync(s"b64Url2BlobPlainConv() against $sz-bytes Blob") {
-    val blob = Base64JsUtil.b64Url2BlobPlainConv( b64Url )
+    val blob = BlobJsUtil.b64Url2BlobPlainConv( b64Url )
     _matchBlob( blob )
   }
 
@@ -72,7 +72,7 @@ object Base64JsUtilSpec extends SimpleTestSuite {
   */
 
   testAsync(s"b64Url2Blob($sz bytes PNG)") {
-    Base64JsUtil.b64Url2Blob( b64Url )
+    BlobJsUtil.b64Url2Blob( b64Url )
       .flatMap( _matchBlob )
   }
 

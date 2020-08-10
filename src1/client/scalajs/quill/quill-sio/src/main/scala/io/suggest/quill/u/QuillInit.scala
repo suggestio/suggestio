@@ -10,6 +10,7 @@ import io.suggest.event.DomEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.img.MImgFormats
+import io.suggest.sjs.dom2.DomListIterator
 import org.scalajs.dom
 import org.scalajs.dom.{Event, UIEvent}
 import org.scalajs.dom.raw.{FileReader, HTMLInputElement}
@@ -69,12 +70,19 @@ class QuillInit {
 
   /** Рендер JSON-а со списком модулей для текстового редактора в рекламной карточке.
     *
+    * @param useBlobUrls Использовать блоб-ссылки вместо обыденного base64 для кодирования файлов.
+    *                    Это намного быстрее, хоть и лишает чистоты и самобытности полученный quill-delta-выхлоп.
+    * @param onFileEmbed Функция опережающей реакции на вставку файла в текст.
     * @see [[https://zenoamaro.github.io/react-quill/scripts.js]] Example js from
     *      [[https://zenoamaro.github.io/react-quill/ react-quill demo]].
     *
     * @return JSON.
     */
-  def adEditorModules: js.Object = {
+  def adEditorModules(
+                       // TODO useBlobUrls=true - Нужно, чтобы Quill.Formats.Image поддерживал blob-протоколы/префиксы/валидацию.
+                       useBlobUrls: Boolean = false,
+                       onFileEmbed: Option[(String, dom.File) => Unit] = None,
+                     ): js.Object = {
     // А безопасно ли тут шарить mutable instance для []?
     val noValue = js.Array[js.Any]()
     val F = QuillModulesNames.Formats
@@ -200,26 +208,47 @@ class QuillInit {
               fileInput.classList.add( QuillCssConst.QL_IMAGE )
 
               fileInput.addEventListener( DomEvents.CHANGE, {(_: Event) =>
-                if (fileInput.files != null && fileInput.files(0) != null) {
-                  val reader = new FileReader()
-                  reader.onload = { e: UIEvent =>
-                    val range = quillToolbar.quill.getSelection(true)
-                    quillToolbar.quill.updateContents(
-                      new Delta()
-                        .retain( range.index )
-                        .delete( range.length )
-                        .insert {
-                          val obj = js.Object.apply().asInstanceOf[DeltaEmbed]
-                          obj.image = reader.result.asInstanceOf[String]
-                          obj
-                        },
-                      Emitter.sources.USER
-                    )
-                    quillToolbar.quill.setSelection(range.index + 1, Emitter.sources.SILENT)
-                    fileInput.value = ""
+                if (fileInput.files != null) {
+                  val fList = DomListIterator( fileInput.files )
+                  for {
+                    fileMaybe <- fList.nextOption()
+                    file <- Option(fileMaybe)
+                  } {
+                    def __haveFileUrl(fileUrl: String): Unit = {
+                      // Уведомить редактор о полученном файле и сгенеренной ссылке на него.
+                      for (f <- onFileEmbed)
+                        f(fileUrl, file)
+
+                      val range = quillToolbar.quill.getSelection(true)
+                      quillToolbar.quill.updateContents(
+                        new Delta()
+                          .retain( range.index )
+                          .delete( range.length )
+                          .insert {
+                            val obj = js.Object.apply().asInstanceOf[DeltaEmbed]
+                            obj.image = fileUrl
+                            obj
+                          },
+                        Emitter.sources.USER
+                      )
+                      quillToolbar.quill.setSelection(range.index + 1, Emitter.sources.SILENT)
+                      fileInput.value = ""
+                    }
+                    // TODO отправить связку из blob+file наверх, чтобы за ней присмотрел редактор.
+                    if (useBlobUrls) {
+                      // Используем blob URL, это мгновенно, но требует внимания со стороны редактора.
+                      val blobUrl = dom.URL.createObjectURL( file )
+                      __haveFileUrl( blobUrl )
+                    } else {
+                      // Стандартный метод quill 1.x - сконвертить файл в base64 и заинлайнить в ссылку quill delta.
+                      val reader = new FileReader()
+                      reader.onload = { e: UIEvent =>
+                        val b64Url = reader.result.asInstanceOf[String]
+                        __haveFileUrl( b64Url )
+                      }
+                      reader.readAsDataURL( file )
+                    }
                   }
-                  // TODO По факту, base64 не нужен - надо вставлять ссылку на блоб. Потому что иначе DocEditAh потом назад конвертит это.
-                  reader.readAsDataURL( fileInput.files(0) )
                 }
               })
               quillToolbar.container.appendChild( fileInput )

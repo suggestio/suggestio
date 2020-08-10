@@ -13,6 +13,10 @@ object UploadConstants {
   /** Поле файла,  */
   def MPART_FILE_FN               = "uf"
 
+  /** Байтовая длина файла, ниже которой НЕ используется flow.js.
+    * Для очень малых файлов быстрее использовать прямую заливку, а не flow.js.
+    */
+  final def FLOWJS_DONT_USE_BELOW_BYTELEN = 32768
 
   /** Константы умной заливки файлов второго поколения. */
   object CleverUp {

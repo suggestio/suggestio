@@ -113,6 +113,9 @@ object HttpConst {
 
     def wsOrWss(secure: Boolean): String = if (secure) WSS else WS
 
+    def BLOB = "blob"
+    def BLOB_ = BLOB + COLON
+
   }
 
 }

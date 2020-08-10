@@ -4,19 +4,17 @@ import java.nio.ByteBuffer
 
 import io.suggest.bin.{ConvCodecs, IDataConv}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.proto.http.HttpConst
-import io.suggest.proto.http.model.HttpRespTypes
-import io.suggest.text.CharSeqUtil
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.text.{CharSeqUtil, StringUtil}
 import japgolly.univeq._
-import org.scalajs.dom.Blob
-import org.scalajs.dom.experimental.Fetch
-import org.scalajs.dom.ext.Ajax
+import org.scalajs.dom
 import org.scalajs.dom.raw.BlobPropertyBag
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.TypedArrayBuffer
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom2
 
 /**
   * Suggest.io
@@ -24,7 +22,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   * Created: 27.12.16 10:32
   * Description: Утиль для поддержки base64.
   */
-object Base64JsUtil {
+object BlobJsUtil {
 
   /** scala.js-only base64-декодер в рамках интерфейса конвертеров данных. */
   implicit case object SjsBase64JsDecoder extends IDataConv[String, ConvCodecs.Base64, ByteBuffer] {
@@ -47,67 +45,12 @@ object Base64JsUtil {
     *
     * @see [[https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript]]
     */
-  def b64Url2Blob(b64Url: String): Future[Blob] = {
-    b64Url2BlobUsingFetch( b64Url )
-      // В хроме не пашет. В нестарых FF есть fetch(). XHR-костыль тут для *возможного* ускорения MSIE, старых FF, Opera, и прочей второсортчины.
-      .recoverWith { case _ =>
-        b64Url2BlobUsingXHR( b64Url )
-      }
-      // Самый надежный вариант, и одновременно тормозной и блокирующий.
+  def b64Url2Blob(b64Url: String): Future[dom.Blob] = {
+    HttpClient
+      .getBlob( b64Url )
       .recover { case _ =>
         b64Url2BlobPlainConv( b64Url )
       }
-  }
-
-
-  /** Попытаться сконвертить base64-URL в Blob с помощью Fetch API.
-    *
-    * @param b64Url base64 URL.
-    * @return Фьючерс с блобом.
-    *         Future.failed при ошибке, в том числе если Fetch API не поддерживается.
-    */
-  def b64Url2BlobUsingFetch(b64Url: String): Future[Blob] = {
-    try {
-      // TODO Использовать Xhr.scala. А внутри Xhr реализовать поддержку Fetch API.
-      Fetch
-        .fetch(b64Url)
-        .toFuture
-        .flatMap(_.blob().toFuture)
-    } catch {
-      case ex: Throwable =>
-        // Fetch API может не поддерживаться браузером. Это нормально.
-        Future.failed(ex)
-    }
-  }
-
-
-  /** Пытаемся сконвертить base64-URL в Blob с помощью XHR.
-    * Это работает в Firefox, но синхронно TODO падает в Chrome в момент вызова xhr.send().
-    *
-    * @param b64Url Строка Base64 URL.
-    * @return Фьючерс с блобом.
-    *         Future.failed при ошибке, в том числе синхронной ошибке XHR API.
-    */
-  def b64Url2BlobUsingXHR(b64Url: String): Future[Blob] = {
-    try {
-      for {
-        xhr <- Ajax(
-          method  = HttpConst.Methods.GET,
-          url     = b64Url,
-          data    = null,
-          timeout = 0,
-          headers = Map.empty,
-          withCredentials = false,
-          responseType = HttpRespTypes.Blob.xhrResponseType
-        )
-      } yield {
-        assert( xhr.status ==* HttpConst.Status.OK )
-        xhr.response.asInstanceOf[Blob]
-      }
-    } catch {
-      case ex: Throwable =>
-        Future.failed(ex)
-    }
   }
 
 
@@ -118,7 +61,7 @@ object Base64JsUtil {
     * @return Blob
     *         Экзепшен, если исходник не является корректным base64-URL.
     */
-  def b64Url2BlobPlainConv(b64Url: String): Blob = {
+  def b64Url2BlobPlainConv(b64Url: String): dom.Blob = {
     // Распарсить начало base64-URL строки. Оно имеет вид: 'data:image/jpg;base64,/9j/4AA...'
     // Проверяем data:
     val dataPrefix = HtmlConstants.Proto.DATA_
@@ -142,10 +85,32 @@ object Base64JsUtil {
     // Экстрактим payload. Благодаря CharSequence view, здесь O(1) вместо прожорливого substring().
     val payloadChseq = CharSeqUtil.view(b64Url, b64SuffixStart + b64SuffixExpected.length + 1)
     val uarr = JsBinaryUtil.cleanBase64DecToArr(payloadChseq)
-    new Blob(
+    new dom.Blob(
       js.Array( uarr ),
       BlobPropertyBag( ct )
     )
   }
+
+
+  /** Заполнить blob дополнительными полями, чтобы оно выглядело как файл.
+    *
+    * @param blob Исходный блоб.
+    * @param fileName Название файла или рандомное.
+    * @return
+    */
+  def ensureBlobAsFile(blob: dom.Blob, fileName: => String = StringUtil.randomId()): dom.File = {
+    val blobFile2 = blob.asInstanceOf[dom2.Dom2FileVars]
+
+    // TODO Заиплементить основную реализацию через File Constructor (но он не везде ранее был доступен).
+    // Грязный патчинг по принципу https://stackoverflow.com/a/29390393
+    if (blobFile2.name.isEmpty)
+      blobFile2.name = fileName
+
+    if (blobFile2.lastModifiedDate.isEmpty)
+      blobFile2.lastModifiedDate = js.Date.now()
+
+    blobFile2.asInstanceOf[dom.File]
+  }
+
 
 }

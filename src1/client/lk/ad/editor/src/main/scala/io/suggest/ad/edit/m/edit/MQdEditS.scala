@@ -4,8 +4,10 @@ import com.quilljs.delta.Delta
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.QuillUnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -27,6 +29,7 @@ object MQdEditS {
 
   def initDelta = GenLens[MQdEditS](_.initDelta)
   def realDelta = GenLens[MQdEditS](_.realDelta)
+  def newFiles = GenLens[MQdEditS](_.newFiles)
 
 
   implicit class QdEditExt( val qdEditS: MQdEditS ) extends AnyVal {
@@ -47,8 +50,10 @@ object MQdEditS {
   *                  Используется как fallback, чтобы в момент незапланированного пере-рендера
   *                  quill-редактора, всё-таки был доступ к корректной дельте.
   *                  None означает, что текущая актуальная дельта лежит в initDelta.
+  * @param newFiles Карта-очередь из файлов, которые проброшены из Quill-редактора в обход дельты.
   */
 case class MQdEditS(
-                     initDelta                  : Delta,
-                     realDelta                  : Option[Delta]     = None,
+                     initDelta        : Delta,
+                     realDelta        : Option[Delta]             = None,
+                     newFiles         : Map[String, dom.File]     = Map.empty,
                    )
