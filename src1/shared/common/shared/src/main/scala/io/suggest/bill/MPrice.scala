@@ -1,6 +1,7 @@
 package io.suggest.bill
 
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.Monoid
@@ -143,6 +144,11 @@ object MPrice {
     (realAmount * currency.centsInUnit).toLong
   }
 
+
+  def amount = GenLens[MPrice]( _.amount )
+  def currency = GenLens[MPrice]( _.currency )
+  def amountStrOpt = GenLens[MPrice]( _.amountStrOpt )
+
 }
 
 
@@ -165,11 +171,9 @@ final case class MPrice(
     MPrice.amountToReal( amount, currency )
 
   def withAmount(value2: Amount_t) = copy(amount = value2, amountStrOpt = None)
-  def withAmountStrOpt(amountStrOpt2: Option[String]) = copy(amountStrOpt = amountStrOpt2)
 
-  override def toString: String = {
+  override def toString: String =
     MPrice.amountStr(this) + currency.currencyCode
-  }
 
   /** Домножить amount на какой-то коэффициент. */
   def multiplifiedBy(mult: Double) = withAmount( (amount * mult).toLong )

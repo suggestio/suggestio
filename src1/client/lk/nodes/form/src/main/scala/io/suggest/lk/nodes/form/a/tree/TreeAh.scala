@@ -4,7 +4,7 @@ import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.common.html.HtmlConstants
-import io.suggest.lk.nodes.{MLknConf, MLknNode, MLknNodeReq}
+import io.suggest.lk.nodes.{MLknAdv, MLknConf, MLknNode, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
@@ -575,8 +575,10 @@ class TreeAh[M](
               (
                 MNodeState.adv.set(None) andThen
                 MNodeState.info
-                  .composeLens( MLknNode.advShowOpened )
-                  .set( Some(m.reason.isChecked) )
+                  .composeLens( MLknNode.adv )
+                  .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
+                  .composeLens( MLknAdv.advShowOpened )
+                  .set( m.reason.isChecked )
               )( nodeState )
             }
           )
@@ -669,8 +671,10 @@ class TreeAh[M](
               (
                 MNodeState.adv.set(None) andThen
                 MNodeState.info
-                  .composeLens( MLknNode.alwaysOutlined )
-                  .set( Some(m.reason.isChecked) )
+                  .composeLens( MLknNode.adv )
+                  .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
+                  .composeLens( MLknAdv.alwaysOutlined )
+                  .set( m.reason.isChecked )
               )( nodeState )
             }
           )

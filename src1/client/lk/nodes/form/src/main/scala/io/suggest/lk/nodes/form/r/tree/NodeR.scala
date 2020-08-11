@@ -219,7 +219,7 @@ class NodeR(
                     },
                     ^.checked   := p.node.adv
                       .map(_.newIsEnabled)
-                      .orElse( p.node.info.hasAdv )
+                      .orElse( p.node.info.adv.map(_.hasAdv) )
                       .getOrElseFalse
                   ),
                   <.span,
@@ -631,7 +631,7 @@ class NodeR(
                   _kvTdValue {
                     val isShowOpened = p.node.adv
                       .map(_.isShowOpened)
-                      .orElse( p.node.info.advShowOpened )
+                      .orElse( p.node.info.adv.map(_.advShowOpened) )
                       .getOrElseFalse
                     // Чек-бокс для управления isEnabled-флагом узла.
                     <.label(
@@ -655,7 +655,7 @@ class NodeR(
                   _kvTdValue {
                     val isAlwaysOutlined = p.node.adv
                       .map(_.alwaysOutlined)
-                      .orElse( p.node.info.alwaysOutlined )
+                      .orElse( p.node.info.adv.map(_.alwaysOutlined) )
                       .getOrElseFalse
                     // Чек-бокс для управления isEnabled-флагом узла.
                     <.label(

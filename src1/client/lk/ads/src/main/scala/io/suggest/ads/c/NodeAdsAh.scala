@@ -104,7 +104,7 @@ class NodeAdsAh[M](
                   {mLknNode2 =>
                     adProps0.copy(
                       adResp = MLkAdsOneAdResp.shownAtParent
-                        .set( mLknNode2.hasAdv getOrElse m.reason.isShown )( adProps0.adResp ),
+                        .set( mLknNode2.adv.fold( m.reason.isShown )(_.hasAdv) )( adProps0.adResp ),
                       shownAtParentReq = Pot.empty
                     )
                   }

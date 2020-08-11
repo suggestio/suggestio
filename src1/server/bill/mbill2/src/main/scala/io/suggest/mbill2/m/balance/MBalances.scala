@@ -107,7 +107,7 @@ final class MBalances @Inject() (
       for ( (amount2, blocked2) <- resOpt ) yield {
         balance0.copy(
           blocked = blocked2,
-          price   = balance0.price.withAmount( amount2 )
+          price   = (MPrice.amount set amount2)(balance0.price),
         )
       }
     }
@@ -134,11 +134,12 @@ final class MBalances @Inject() (
     *         None, если в таблице нет указанного баланса.
     */
   def incrAmountBy(balance0: MBalance, delta: Amount_t): DBIOAction[Option[MBalance], NoStream, Effect.Write] = {
-    for (resOpt <- incrAmountBy(balance0.id.get, delta)) yield {
-      for (amount2 <- resOpt) yield {
-        balance0.withPrice(
-          balance0.price.withAmount( amount2 )
-        )
+    for {
+      resOpt <- incrAmountBy(balance0.id.get, delta)
+    } yield {
+      for (res <- resOpt) yield {
+        MBalance.price
+          .modify( _.withAmount(res) )(balance0)
       }
     }
   }

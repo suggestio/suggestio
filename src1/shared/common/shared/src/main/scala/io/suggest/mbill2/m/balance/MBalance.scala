@@ -4,6 +4,7 @@ import io.suggest.bill.{Amount_t, IMCurrency, MPrice}
 import io.suggest.mbill2.m.gid._
 import io.suggest.primo.id.OptId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -29,6 +30,9 @@ object MBalance {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
+
+  def price = GenLens[MBalance](_.price)
+  def blocked = GenLens[MBalance](_.blocked)
 
 }
 

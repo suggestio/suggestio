@@ -25,14 +25,12 @@ object MLknNode {
     (__ \ "t").format[MNodeType] and
     (__ \ "e").format[Boolean] and
     (__ \ "a").formatNullable[Boolean] and
-    (__ \ "d").formatNullable[Boolean] and
-    (__ \ "o").formatNullable[Boolean] and
-    (__ \ "f").formatNullable[MTfDailyInfo] and
-    (__ \ "u").formatNullable[Boolean]
+    (__ \ "d").formatNullable[MLknAdv] and
+    (__ \ "f").formatNullable[MTfDailyInfo]
   )(apply, unlift(unapply))
 
-  def advShowOpened = GenLens[MLknNode](_.advShowOpened)
-  def alwaysOutlined = GenLens[MLknNode](_.alwaysOutlined)
+
+  def adv = GenLens[MLknNode](_.adv)
 
 }
 
@@ -60,13 +58,8 @@ case class MLknNode(
                      canChangeAvailability  : Option[Boolean],
 
                      /** Имеется ли размещение текущей рекламной карточки на указанном узле? */
-                     hasAdv                 : Option[Boolean],
-                     /** Рендерить размещённую карточку открытой? */
-                     advShowOpened          : Option[Boolean],
-
+                     adv                    : Option[MLknAdv]           = None,
                      /** Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос. */
                      tf                     : Option[MTfDailyInfo],
-                     /** Постоянная обводка? */
-                     alwaysOutlined         : Option[Boolean],
                    )
   extends IId[String]

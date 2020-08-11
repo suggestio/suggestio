@@ -8,7 +8,7 @@ import FutureUtil.HellImplicits._
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.{ITfDailyMode, MTfDailyInfo}
-import io.suggest.common.empty.{EmptyUtil, OptionUtil}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.lk.nodes._
@@ -79,25 +79,22 @@ final class LkNodes @Inject() (
   import esModel.api._
 
 
-  // TODO Этот говнокод надо заменить на нормальную common-модель с JSON и всеми делами.
-  private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[(Boolean, Boolean, Boolean)] = {
+  private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[MLknAdv] = {
     for (mad <- madOpt) yield {
       val rcvrEdges = mad.edges
         .withNodePred(nodeId, MPredicates.Receiver)
         .to( LazyList )
-      val isAdv = rcvrEdges.nonEmpty
-
       val edgeOpt = rcvrEdges.headOption
 
-      val isShowOpened = edgeOpt
-        .flatMap(_.info.flag)
-        .getOrElseFalse
-
-      val alwaysOutlined = edgeOpt.exists(
-        _.info.flagsMap contains MEdgeFlags.AlwaysOutlined
+      MLknAdv(
+        hasAdv = rcvrEdges.nonEmpty,
+        advShowOpened = edgeOpt
+          .flatMap(_.info.flag)
+          .getOrElseFalse,
+        alwaysOutlined = edgeOpt.exists(
+          _.info.flagsMap contains MEdgeFlags.AlwaysOutlined
+        ),
       )
-
-      (isAdv, isShowOpened, alwaysOutlined)
     }
   }
 
@@ -138,34 +135,28 @@ final class LkNodes @Inject() (
                    canChangeAvailability: Option[Boolean] = None,
                    tf: Option[MTfDailyInfo] = None): MLknNode = {
       val nodeId = mnode.id.get
-      val hasAdvOpt = _hasAdv(nodeId, madOpt)
       MLknNode(
         id                    = nodeId,
         name                  = mnode.guessDisplayNameOrIdOrQuestions,
         ntype                 = mnode.common.ntype,
         isEnabled             = mnode.common.isEnabled,
         canChangeAvailability = canChangeAvailability,
-        hasAdv                = hasAdvOpt.map(_._1),
+        adv                   = _hasAdv(nodeId, madOpt),
         tf                    = tf,
-        advShowOpened         = hasAdvOpt.map(_._2),
-        alwaysOutlined        = hasAdvOpt.map(_._3),
       )
     }
 
     // Рендер найденных узлов в данные для модели формы.
     for {
       subNodes                <- subNodesFut
+      // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
+      children = subNodes.map( _mkLknNode(_) )
       canChangeAvailability   <- canChangeAvailabilityFut
       tfDailyInfoOpt          <- tfDailyInfoOptFut
     } yield {
       MLknNodeResp(
-        // Надо ли какую-то инфу по текущему узлу возвращать?
-        info = _mkLknNode( mnode, Some( canChangeAvailability ), tfDailyInfoOpt ),
-
-        children = for (mnode <- subNodes) yield {
-          // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
-          _mkLknNode( mnode )
-        },
+        info      = _mkLknNode( mnode, Some( canChangeAvailability ), tfDailyInfoOpt ),
+        children  = children,
       )
     }
   }
@@ -208,17 +199,14 @@ final class LkNodes @Inject() (
             mnode <- mnodes.iterator
             mnodeId <- mnode.id
           } yield {
-            val hasAdvOpt = _hasAdv(mnodeId, madOpt)
             val mLknNode = MLknNode(
               id                        = mnodeId,
               name                      = mnode.guessDisplayNameOrIdOrQuestions,
               ntype                     = mnode.common.ntype,
               isEnabled                 = mnode.common.isEnabled,
               canChangeAvailability     = someTrue,
-              hasAdv                    = hasAdvOpt.map(_._1),
+              adv                       = _hasAdv(mnodeId, madOpt),
               tf                        = None, // Не факт, что это важно.
-              advShowOpened             = hasAdvOpt.map(_._2),
-              alwaysOutlined            = hasAdvOpt.map(_._3),
             )
             MLknNodeResp(mLknNode, Nil)
           })
@@ -414,10 +402,7 @@ final class LkNodes @Inject() (
                 isEnabled = isEnabled,
                 // Текущий юзер создал юзер, значит он может его и удалить.
                 canChangeAvailability = OptionUtil.SomeBool.someTrue,
-                hasAdv    = None,
                 tf        = Some(tfDailyInfo),
-                advShowOpened = None,
-                alwaysOutlined = None,
               )
               Ok( Json.toJson(mResp) )
             }
@@ -472,10 +457,7 @@ final class LkNodes @Inject() (
             ntype                   = request.mnode.common.ntype,
             isEnabled               = isEnabled,
             canChangeAvailability   = OptionUtil.SomeBool.someTrue,
-            hasAdv                  = None,
             tf                      = Some(tfDailyInfo),
-            advShowOpened           = None,
-            alwaysOutlined          = None,
           )
           Ok( Json.toJson(mLknNode) )
         }
@@ -559,10 +541,7 @@ final class LkNodes @Inject() (
                 ntype                   = mnode.common.ntype,
                 isEnabled               = mnode.common.isEnabled,
                 canChangeAvailability   = OptionUtil.SomeBool.someTrue,
-                hasAdv                  = None,
                 tf                      = Some(tfDailyInfo),
-                advShowOpened           = None,
-                alwaysOutlined          = None,
               )
               Ok( Json.toJson(m) )
             }
@@ -649,8 +628,6 @@ final class LkNodes @Inject() (
         mnode2            <- updateNodeFut
       } yield {
         LOGGER.trace(s"setAdv(ad#$adId, node#$nodeId): adv => $isEnabled, suppressed $itemsSuppressed in billing")
-        val hasAdvOpt = _hasAdv(nodeId, Some(mnode2))
-
         // Собрать ответ.
         val mLknNode = MLknNode(
           id        = nodeId,
@@ -658,10 +635,9 @@ final class LkNodes @Inject() (
           ntype     = request.mnode.common.ntype,
           isEnabled = request.mnode.common.isEnabled,
           canChangeAvailability = OptionUtil.SomeBool.someTrue,
-          hasAdv    = OptionUtil.SomeBool( isEnabled ),
+          adv       = _hasAdv(nodeId, Some(mnode2)),
+          //hasAdv    = OptionUtil.SomeBool( isEnabled ),
           tf        = None, // На странице размещения это не важно
-          advShowOpened = hasAdvOpt.map(_._2),
-          alwaysOutlined = hasAdvOpt.map(_._3),
         )
 
         // Отправить сериализованные данные по узлу.
@@ -724,10 +700,7 @@ final class LkNodes @Inject() (
               ntype     = mnode2.common.ntype,
               isEnabled = mnode2.common.isEnabled,
               canChangeAvailability = OptionUtil.SomeBool.someTrue,
-              hasAdv    = None,
-              advShowOpened = None,
               tf        = Some(tfInfo),
-              alwaysOutlined = None,
             )
 
             // Собрать HTTP-ответ клиенту
