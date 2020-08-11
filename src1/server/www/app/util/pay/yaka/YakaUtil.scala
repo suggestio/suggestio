@@ -244,7 +244,7 @@ class YakaUtil @Inject() (
     * @param price Рассчётная стоимость заказа.
     * @return Рассчётная строка.
     */
-  def getMd5(profile: IYakaProfile, yReq: IYakaReqSigned, price: IPrice): String = {
+  def getMd5(profile: IYakaProfile, yReq: IYakaReqSigned, price: MPrice): String = {
     profile.md5Password.fold[String] {
       throw new IllegalStateException(s"Yandex.kassa has no md5-password configured/enabled. mode=${profile.mode} scid=${profile.scId}")
     } { md5Password =>

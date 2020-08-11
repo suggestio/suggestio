@@ -48,7 +48,7 @@ class LaePopupsR(
         s.cropPopPropsOptC { cropPopupR.apply },
 
         // Попап подтверждения удаления рекламной карточки.
-        s.deleteConfirmOptC { DeleteConfirmPopupR.apply }
+        s.deleteConfirmOptC { DeleteConfirmPopupR.component.apply }
       )
       s.popupsContPropsC { popupContProps =>
         PopupsContR(popupContProps)( popupContBody: _* )

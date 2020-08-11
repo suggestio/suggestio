@@ -49,7 +49,7 @@ trait LkNodesInitRouter extends InitRouter {
     formR.renderIntoDOM(formTarget )
 
     // Рендер компонента попапов.
-    val popsContR = circuit.wrap(_.popups)( modules.lknPopupsR.apply )
+    val popsContR = circuit.wrap(_.popups)( modules.lknPopupsR.component.apply )
     val popsContTarget = PopupsContR.initDocBody()
     popsContR.renderIntoDOM(popsContTarget)
   }

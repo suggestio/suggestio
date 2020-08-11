@@ -14,8 +14,9 @@ import io.suggest.lk.nodes.form.r.tree.{NodeR, TreeR}
   */
 class LkNodesModule {
 
-  lazy val lkNodesFormCircuit = wire[LkNodesFormCircuit]
+  import io.suggest.ReactCommonModule._
 
+  lazy val lkNodesFormCircuit = wire[LkNodesFormCircuit]
 
   lazy val lkNodesFormR = wire[LkNodesFormR]
 

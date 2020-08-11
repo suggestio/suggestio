@@ -8,14 +8,12 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MPrice
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
-import io.suggest.lk.nodes.MLknConf
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
-import io.suggest.msg.{JsFormatUtil, Messages}
+import io.suggest.msg.JsFormatUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -37,9 +35,9 @@ import play.api.libs.json.Json
   */
 class NodeR(
              nodeMenuR    : NodeMenuR,
-             nodeMenuBtnR : NodeMenuBtnR
-           )
-  extends Log { self =>
+             nodeMenuBtnR : NodeMenuBtnR,
+             crCtxP       : React.Context[MCommonReactCtx],
+           ) {
 
   type Props = PropsVal
 
@@ -48,26 +46,21 @@ class NodeR(
     * @param node Корневой узел этого под-дерева.
     * @param parentRcvrKey Ключ родительского узла [Nil].
     * @param level Уровень [0].
-    * @param conf конфигурация.
     * @param proxy Proxy любой модели, нужен для диспатчинга в коллбэках.
     *              Живёт отдельно от данных из-за рекурсивной природы этого компонента.
     */
   case class PropsVal(
-                       conf          : MLknConf,
                        // TODO mtree Всегда меняется. Нужно его выкинуть из node-состояния ИЛИ заменить на isShowProps:Boolean. С помощью scalaz.Tree и рефакторинга рендера. Иначе дерево формы рендерится целиком на каждый чих.
-                       mtree         : MTree,
                        node          : MNodeState,
                        parentRcvrKey : RcvrKey,
                        level         : Int,
-                       proxy         : ModelProxy[_]
+                       proxy         : ModelProxy[MLkNodesRoot],
                      )
   implicit object NodeRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      MTree.MTreeFastEq.eqv(a.mtree, b.mtree) &&
-        (a.conf ===* b.conf) &&
-        (a.node ===* b.node) &&
-        (a.parentRcvrKey ===* b.parentRcvrKey) &&
-        (a.level ==* b.level)
+      (a.node ===* b.node) &&
+      (a.parentRcvrKey ===* b.parentRcvrKey) &&
+      (a.level ==* b.level)
     }
   }
 
@@ -75,71 +68,55 @@ class NodeR(
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback клика по заголовку узла. */
-    private def onNodeClick(rcvrKey: RcvrKey): Callback = {
+    private def onNodeClick(rcvrKey: RcvrKey): Callback =
       _dispatchCB( NodeNameClick(rcvrKey) )
-    }
 
     /** Callback клика по кнопке добавления под-узла для текущего узла. */
-    private def onCreateNodeClick: Callback = {
+    private def onCreateNodeClick: Callback =
       _dispatchCB( CreateNodeClick )
-    }
 
     /** Реакция на изменение значения флага активности узла. */
-    private def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      _dispatchCB(
-        NodeIsEnabledChanged(rcvrKey, isEnabled = e.target.checked)
-      )
-    }
+    private def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback =
+      _dispatchCB( NodeIsEnabledChanged(rcvrKey, isEnabled = e.target.checked) )
 
     /** Callback для кнопки редактирования узла. */
-    private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
+    private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback =
       e.stopPropagationCB >> _dispatchCB( NodeEditClick(rcvrKey) )
-    }
 
-    private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      _dispatchCB(
-        NodeEditNameChange(rcvrKey, name = e.target.value)
-      )
-    }
+    private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback =
+      _dispatchCB( NodeEditNameChange(rcvrKey, name = e.target.value) )
 
     /** Callback нажатия по кнопке сохранения отредактированного узла. */
-    private def onNodeEditOkClick(rcvrKey: RcvrKey): Callback = {
+    private def onNodeEditOkClick(rcvrKey: RcvrKey): Callback =
       _dispatchCB( NodeEditOkClick(rcvrKey) )
-    }
 
     /** Callback нажатия по кнопке отмены редактирования узла. */
-    private def onNodeEditCancelClick(rcvrKey: RcvrKey): Callback = {
+    private def onNodeEditCancelClick(rcvrKey: RcvrKey): Callback =
       _dispatchCB( NodeEditCancelClick(rcvrKey) )
-    }
 
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
     private def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      e.stopPropagationCB >> _dispatchCB(
-        AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked)
-      )
+      e.stopPropagationCB >>
+        _dispatchCB( AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked) )
     }
 
     /** Callback запуска редактирования тарифа текущего узла. */
-    private def onTfChangeClick: Callback = {
+    private val onTfChangeClick: Callback =
       _dispatchCB( TfDailyEditClick )
-    }
 
-    private def onTfShowDetailsClick(rcvrKey: RcvrKey): Callback = {
+    private def onTfShowDetailsClick(rcvrKey: RcvrKey): Callback =
       _dispatchCB( TfDailyShowDetails(rcvrKey) )
-    }
 
     /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
     private def onShowOpenedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      e.stopPropagationCB >> _dispatchCB(
-        AdvShowOpenedChange(rcvrKey, e.target.checked)
-      )
+      e.stopPropagationCB >>
+        _dispatchCB( AdvShowOpenedChange(rcvrKey, e.target.checked) )
     }
 
     /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
     private def onAlwaysOutlinedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      e.stopPropagationCB >> _dispatchCB(
-        AlwaysOutlinedSet(rcvrKey, e.target.checked)
-      )
+      e.stopPropagationCB >>
+        _dispatchCB( AlwaysOutlinedSet(rcvrKey, e.target.checked) )
     }
 
 
@@ -148,10 +125,6 @@ class NodeR(
         p.proxy.dispatchCB( action )
       }
     }
-
-
-    private def _msg_Cancel     = Messages( MsgCodes.`Cancel` )
-    private def _msg_PleaseWait = Messages( MsgCodes.`Please.wait` )
 
 
     private def _smallWaitLoader  = LkPreLoaderR.AnimSmall
@@ -180,21 +153,20 @@ class NodeR(
       * @return React-элемент.
       */
     def render(p: Props): VdomElement = {
-      import p._
-
-      val rcvrKeyRev = node.info.id :: parentRcvrKey
+      val rcvrKeyRev = p.node.info.id :: p.parentRcvrKey
       val rcvrKey = rcvrKeyRev.reverse
 
-      val isShowProps = p.mtree.showProps.contains(rcvrKey)
-      val isShowNodeEditProps = isShowProps && p.conf.adIdOpt.isEmpty
-      val isShowAdvProps = isShowProps && p.conf.adIdOpt.isDefined
+      val mroot = p.proxy.value
+      val isShowProps = mroot.tree.showProps contains rcvrKey
+      val isShowNodeEditProps = isShowProps && mroot.conf.adIdOpt.isEmpty
+      val isShowAdvProps = isShowProps && mroot.conf.adIdOpt.isDefined
 
       // Контейнер узла узла + дочерних узлов.
       <.div(
-        ^.key := node.info.id,
+        ^.key := p.node.info.id,
 
         // Сдвиг слева согласно уровню, чтобы выглядело как дерево.
-        ^.marginLeft := (level * 20).px,
+        ^.marginLeft := (p.level * 20).px,
 
         // Разделитель-промежуток от предыдущего элемента сверху.
         _delim,
@@ -209,45 +181,45 @@ class NodeR(
               Css.Lk.Nodes.Name.NAME
             ),
             // CSS-классы режима узла: normal | disabled | editing
-            Css.Lk.Nodes.Name.NORMAL   -> node.info.isEnabled,
-            Css.Lk.Nodes.Name.DISABLED -> !node.info.isEnabled,
-            Css.Lk.Nodes.Name.SHOWING  -> node.editing.isEmpty,
-            Css.Lk.Nodes.Name.EDITING  -> node.editing.nonEmpty,
+            Css.Lk.Nodes.Name.NORMAL   -> p.node.info.isEnabled,
+            Css.Lk.Nodes.Name.DISABLED -> !p.node.info.isEnabled,
+            Css.Lk.Nodes.Name.SHOWING  -> p.node.editing.isEmpty,
+            Css.Lk.Nodes.Name.EDITING  -> p.node.editing.nonEmpty,
 
             // Закруглять углы только когда узел не раскрыт.
-            Css.Table.Td.Radial.FIRST -> !isShowProps
+            Css.Table.Td.Radial.FIRST -> !isShowProps,
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
-          ReactCommonUtil.maybe(node.isNormal) {
+          ReactCommonUtil.maybe(p.node.isNormal) {
             ^.onClick --> onNodeClick(rcvrKey)
           },
 
-          node.editing.fold[VdomElement] {
+          p.node.editing.fold[VdomElement] {
             // Рендер названия узла. В зависимости от режима формы, могут быть варианты того, где он будет находиться.
             val nameSpan = <.span(
               ^.`class` := Css.Lk.Nodes.Name.TITLE,
-              node.info.name
+              p.node.info.name,
             )
 
             // контейнер названия текущего узла
             <.div(
               ^.`class` := Css.flat(Css.Font.Sz.L, Css.Lk.Nodes.Name.CONTENT),
 
-              p.conf.adIdOpt.fold [VdomElement] (nameSpan) { _ =>
+              mroot.conf.adIdOpt.fold [VdomElement] (nameSpan) { _ =>
                 // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
                 <.label(
                   ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
                   ^.onClick  ==> { e: ReactEventFromInput => e.stopPropagationCB },
                   <.input(
                     ^.`type` := HtmlConstants.Input.checkbox,
-                    if (node.advIsPending) {
+                    if (p.node.advIsPending) {
                       ^.disabled := true
                     } else {
                       ^.onChange ==> onAdvOnNodeChanged(rcvrKey)
                     },
-                    ^.checked   := node.adv
+                    ^.checked   := p.node.adv
                       .map(_.newIsEnabled)
-                      .orElse(node.info.hasAdv)
+                      .orElse( p.node.info.hasAdv )
                       .getOrElseFalse
                   ),
                   <.span,
@@ -257,19 +229,21 @@ class NodeR(
               },
 
               // Рендерить кнопку редактирования имени, если ситуация позволяет.
-              ReactCommonUtil.maybeEl( isShowNodeEditProps && node.isNormal ) {
+              ReactCommonUtil.maybeEl( isShowNodeEditProps && p.node.isNormal ) {
                 <.span(
                   HtmlConstants.NBSP_STR,
                   HtmlConstants.NBSP_STR,
-                  <.span(
-                    ^.`class` := Css.Lk.Nodes.Name.EDIT_BTN,
-                    ^.onClick ==> onNodeEditClick(rcvrKey),
-                    ^.title   := Messages( MsgCodes.`Change` )
-                  )
+                  crCtxP.consume { crCtx =>
+                    <.span(
+                      ^.`class` := Css.Lk.Nodes.Name.EDIT_BTN,
+                      ^.onClick ==> onNodeEditClick(rcvrKey),
+                      ^.title   := crCtx.messages( MsgCodes.`Change` ),
+                    )
+                  }
                 )
               },
 
-              node.adv.whenDefined { advState =>
+              p.node.adv.whenDefined { advState =>
                 <.span(
                   HtmlConstants.NBSP_STR,
 
@@ -282,17 +256,17 @@ class NodeR(
                   advState.newIsEnabledPot.renderFailed { ex =>
                     <.span(
                       ^.title := ex.toString,
-                      Messages( MsgCodes.`Error` )
+                      crCtxP.message( MsgCodes.`Error` )
                     )
                   }
                 )
               },
 
               HtmlConstants.NBSP_STR
-                .unless( node.advIsPending ),
+                .unless( p.node.advIsPending ),
 
               // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
-              node.children.renderPending { _ =>
+              p.node.children.renderPending { _ =>
                 <.span(
                   HtmlConstants.NBSP_STR,
                   _smallWaitLoader
@@ -300,14 +274,14 @@ class NodeR(
               },
 
               // Кнопка удаления узла.
-              ReactCommonUtil.maybeEl( isShowNodeEditProps && node.info.canChangeAvailability.contains(true) ) {
+              ReactCommonUtil.maybeEl( isShowNodeEditProps && (p.node.info.canChangeAvailability contains true) ) {
                 <.div(
                   ^.`class` := Css.Lk.Nodes.Menu.MENU,
                   ^.onClick ==> ReactCommonUtil.stopPropagationCB,
-                  nodeMenuBtnR( p.proxy ),
-                  nodeMenuR( p.proxy )
+                  nodeMenuBtnR.component( p.proxy ),
+                  nodeMenuR.component( p.proxy ),
                 )
-              }
+              },
 
             )
 
@@ -317,17 +291,25 @@ class NodeR(
               <.div(
                 ^.`class` := Css.flat( Css.Lk.Nodes.Inputs.INPUT70, Css.Input.INPUT ),
 
-                <.input(
-                  ^.placeholder := node.info.name,
-                  ^.title := Messages( MsgCodes.`Type.new.name.for.beacon.0`, node.info.name) + HtmlConstants.SPACE + Messages( MsgCodes.`For.example.0`, Messages( MsgCodes.`Beacon.name.example` )),
-                  ^.value := ed.name,
-                  // Блокировать поле, пока происходит сохранение на сервер.
-                  if (ed.saving.isPending) {
-                    ^.disabled := true
-                  } else {
-                    ^.onChange ==> onNodeEditNameChange(rcvrKey)
-                  }
-                )
+                crCtxP.consume { crCtx =>
+                  <.input(
+                    ^.placeholder := p.node.info.name,
+                    ^.title := (
+                      crCtx.messages(MsgCodes.`Type.new.name.for.beacon.0`, p.node.info.name) +
+                      HtmlConstants.SPACE +
+                      crCtx.messages( MsgCodes.`For.example.0`,
+                        crCtx.messages( MsgCodes.`Beacon.name.example` )
+                      )
+                    ),
+                    ^.value := ed.name,
+                    // Блокировать поле, пока происходит сохранение на сервер.
+                    if (ed.saving.isPending) {
+                      ^.disabled := true
+                    } else {
+                      ^.onChange ==> onNodeEditNameChange(rcvrKey)
+                    }
+                  )
+                }
               ),
 
               // Происходит редактирование узла. Отобразить кнопки сохранения.
@@ -336,11 +318,13 @@ class NodeR(
 
                 if (ed.saving.isPending) {
                   // Идёт сохранение на сервер прямо сейчас. Отрендерить сообщение о необходимости подождать.
-                  <.div(
-                    ^.title := Messages( MsgCodes.`Server.request.in.progress.wait` ),
-                    _msg_PleaseWait,
-                    _smallWaitLoader
-                  )
+                  crCtxP.consume { crCtx =>
+                    <.div(
+                      ^.title := crCtx.messages( MsgCodes.`Server.request.in.progress.wait` ),
+                      crCtx.messages( MsgCodes.`Please.wait` ),
+                      _smallWaitLoader
+                    )
+                  }
 
                 } else {
                   <.div(
@@ -348,14 +332,14 @@ class NodeR(
                     <.a(
                       ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MAJOR, Css.Size.M),
                       ^.onClick --> onNodeEditOkClick(rcvrKey),
-                      Messages( MsgCodes.`Save` )
+                      crCtxP.message( MsgCodes.`Save` )
                     ),
                     HtmlConstants.SPACE,
                     // Кнопка отмены редактирования.
                     <.a(
                       ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
                       ^.onClick --> onNodeEditCancelClick(rcvrKey),
-                      _msg_Cancel
+                      crCtxP.message( MsgCodes.`Cancel` ),
                     )
                   )
                 }
@@ -378,18 +362,18 @@ class NodeR(
                 // id узла.
                 <.tr(
                   _kvTdKey(
-                    Messages( MsgCodes.`Identifier` )
+                    crCtxP.message( MsgCodes.`Identifier` ),
                   ),
                   _kvTdValue(
-                    node.info.id,
+                    p.node.info.id,
 
                     HtmlConstants.SPACE,
 
                     // Кнопка перехода в ЛК узла
-                    ReactCommonUtil.maybeNode( node.info.ntype ==* MNodeTypes.AdnNode ) {
+                    ReactCommonUtil.maybeNode( p.node.info.ntype ==* MNodeTypes.AdnNode ) {
                       MuiLink(
                         new MuiLinkProps {
-                          val href = routes.controllers.LkAds.adsPage( node.info.id ).url
+                          val href = routes.controllers.LkAds.adsPage( p.node.info.id ).url
                         }
                       )(
                         MuiButton(
@@ -399,7 +383,7 @@ class NodeR(
                             override val color = MuiColorTypes.primary
                           }
                         )(
-                          Messages( MsgCodes.`Go.into` ),
+                          crCtxP.message( MsgCodes.`Go.into` ),
                         )
                       )
                     },
@@ -415,7 +399,7 @@ class NodeR(
                             PlayJsonSjsUtil.toNativeJsonObj(
                               Json.toJsObject(
                                 SioPages.Sc3(
-                                  nodeId = Some( node.info.id ),
+                                  nodeId = Some( p.node.info.id ),
                                 )
                               )
                             )
@@ -430,18 +414,20 @@ class NodeR(
                           override val color = MuiColorTypes.primary
                         }
                       )(
-                        Messages( MsgCodes.`Showcase` ),
+                        crCtxP.message( MsgCodes.`Showcase` ),
                       )
                     ),
                   ),
                 ),
 
                 // Галочка управления активностью узла, если определено.
-                node.info.canChangeAvailability.whenDefined { cca =>
-                  val isEnabledValue = node.isEnabledUpd.fold(node.info.isEnabled)(_.newIsEnabled)
+                p.node.info.canChangeAvailability.whenDefined { cca =>
+                  val isEnabledValue = p.node
+                    .isEnabledUpd
+                    .fold( p.node.info.isEnabled )(_.newIsEnabled)
                   <.tr(
                     _kvTdKey(
-                      Messages( MsgCodes.`Is.enabled` )
+                      crCtxP.message( MsgCodes.`Is.enabled` ),
                     ),
 
                     _kvTdValue(
@@ -453,18 +439,18 @@ class NodeR(
                           // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
                           ^.checked := isEnabledValue,
                           // Можно управлять галочкой, если разрешено и если не происходит какого-то запроса с обновлением сейчас.
-                          if (cca && node.isEnabledUpd.isEmpty) {
+                          if (cca && p.node.isEnabledUpd.isEmpty) {
                             ^.onChange ==> onNodeEnabledChange(rcvrKey)
                           } else {
                             ^.disabled := true
                           }
                         ),
                         <.span(),
-                        Messages( MsgCodes.yesNo(isEnabledValue) )
+                        crCtxP.message( MsgCodes.yesNo(isEnabledValue) ),
                       ),
 
                       // Рендер данные по реквестов обновления флага isEnabled.
-                      node.isEnabledUpd.whenDefined { upd =>
+                      p.node.isEnabledUpd.whenDefined { upd =>
                         <.span(
                           HtmlConstants.NBSP_STR
                             .when( upd.request.isPending || upd.request.isFailed ),
@@ -477,7 +463,7 @@ class NodeR(
                             <.span(
                               ^.`class` := Css.Colors.RED,
                               ^.title := ex.toString,
-                              Messages( MsgCodes.`Error` )
+                              crCtxP.message( MsgCodes.`Error` ),
                             )
                           }
                         )
@@ -488,26 +474,26 @@ class NodeR(
                 }, // for
 
                 // Рендер строки данных по тарифу размещения.
-                node.info.tf.whenDefined { tfInfo =>
-                  val perDay = Messages( MsgCodes.`_per_.day` )
+                p.node.info.tf.whenDefined { tfInfo =>
+                  val perDay = crCtxP.message( MsgCodes.`_per_.day` )
 
                   val changeBtn = <.a(
                     ^.`class`  := Css.Lk.LINK,
                     ^.onClick --> onTfChangeClick,
-                    Messages( MsgCodes.`Change` ),
-                    HtmlConstants.ELLIPSIS
+                    crCtxP.message( MsgCodes.`Change` ),
+                    HtmlConstants.ELLIPSIS,
                   )
 
                   <.tr(
                     _kvTdKey(
-                      Messages( MsgCodes.`Adv.tariff` )
+                      crCtxP.message( MsgCodes.`Adv.tariff` ),
                     ),
 
                     _kvTdValue(
-                      Messages( tfInfo.mode.msgCode ),
+                      crCtxP.message( tfInfo.mode.msgCode ),
 
                       // Есть два отображения для тарифа: компактное одной строчкой и развёрнутое
-                      if (node.tfInfoWide) {
+                      if (p.node.tfInfoWide) {
                         // Рендер развёрнутого отображения.
                         <.span(
                           HtmlConstants.COMMA,
@@ -522,7 +508,7 @@ class NodeR(
                                 <.tr(
                                   ^.key := mCalType.value,
                                   _kvTdKey(
-                                    Messages( mCalType.i18nCode )
+                                    crCtxP.message( mCalType.i18nCode ),
                                   ),
                                   _kvTdValue(
                                     JsFormatUtil.formatPrice(mPrice),
@@ -534,57 +520,64 @@ class NodeR(
                           ),
 
                           <.br,
-                          Messages( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct )
+                          crCtxP.message( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct ),
                         )
                       } else {
                         // Рендер компактной инфы по тарифу.
-                        <.span(
-                          HtmlConstants.COLON,
-                          HtmlConstants.SPACE,
-                          tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
-                            <.span(
-                              ^.key := mCalType.value,
-                              (HtmlConstants.SPACE + HtmlConstants.SLASH + HtmlConstants.SPACE)
-                                .unless( mCalType == tfInfo.clauses.head._1 ),
-                              ^.title := Messages( mCalType.i18nCode ),
-                              MPrice.amountStr(mPrice)
-                            )
-                          },
+                        crCtxP.consume { crCtx =>
                           <.span(
-                            ^.title := Messages( tfInfo.currency.currencyNameI18n ),
-                            Messages(tfInfo.currency.i18nPriceCode, "")
-                          ),
-                          perDay,
-                          // Кнопка показа подробностей по тарифу.
-                          <.a(
-                            ^.`class`  := Css.Lk.LINK,
-                            ^.title    := Messages( MsgCodes.`Show.details` ),
-                            ^.onClick --> onTfShowDetailsClick(rcvrKey),
-                            HtmlConstants.ELLIPSIS
-                          ),
-                          HtmlConstants.COMMA,
-                          HtmlConstants.SPACE,
+                            HtmlConstants.COLON,
+                            HtmlConstants.SPACE,
+                            tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
+                              <.span(
+                                ^.key := mCalType.value,
+                                ReactCommonUtil.maybe( mCalType !=* tfInfo.clauses.head._1 ) {
+                                  TagMod(
+                                    HtmlConstants.SPACE,
+                                    HtmlConstants.SLASH,
+                                    HtmlConstants.SPACE,
+                                  )
+                                },
+                                ^.title := crCtx.messages( mCalType.i18nCode ),
+                                MPrice.amountStr(mPrice)
+                              )
+                            },
+                            <.span(
+                              ^.title := crCtx.messages( tfInfo.currency.currencyNameI18n ),
+                              crCtx.messages(tfInfo.currency.i18nPriceCode, "")
+                            ),
+                            perDay,
+                            // Кнопка показа подробностей по тарифу.
+                            <.a(
+                              ^.`class`  := Css.Lk.LINK,
+                              ^.title    := crCtx.messages( MsgCodes.`Show.details` ),
+                              ^.onClick --> onTfShowDetailsClick(rcvrKey),
+                              HtmlConstants.ELLIPSIS
+                            ),
+                            HtmlConstants.COMMA,
+                            HtmlConstants.SPACE,
 
-                          changeBtn
-                        )
-                      }
-                    )
+                            changeBtn,
+                          )
+                        }
+                      },
+                    ),
                   )
                 },
 
                 // Отрендерить обобщённую информацию по под-узлам и поддержку добавления узла.
-                node.children.render { children =>
+                p.node.children.render { children =>
 
                   <.tr(
                     _kvTdKey(
-                      Messages( MsgCodes.`Subnodes` )
+                      crCtxP.message( MsgCodes.`Subnodes` ),
                     ),
 
                     _kvTdValue(
                       ReactCommonUtil.maybeNode(children.nonEmpty) {
                         <.span(
                           // Вывести общее кол-во под-узлов.
-                          Messages( MsgCodes.`N.nodes`, children.size),
+                          crCtxP.message( MsgCodes.`N.nodes`, children.size),
 
                           // Вывести кол-во выключенных под-узлов, если такие есть.
                           {
@@ -595,7 +588,7 @@ class NodeR(
                               <.span(
                                 HtmlConstants.COMMA,
                                 HtmlConstants.NBSP_STR,
-                                Messages( MsgCodes.`N.disabled`, countDisabled )
+                                crCtxP.message( MsgCodes.`N.disabled`, countDisabled ),
                               )
                             }
                           },
@@ -610,7 +603,8 @@ class NodeR(
                       <.a(
                         ^.`class`  := Css.Lk.LINK,
                         ^.onClick --> onCreateNodeClick,
-                        Messages( MsgCodes.`Create` ), HtmlConstants.ELLIPSIS
+                        crCtxP.message( MsgCodes.`Create` ),
+                        HtmlConstants.ELLIPSIS,
                       )
                     )
                   )
@@ -632,12 +626,12 @@ class NodeR(
                 // Галочка отображения постоянного раскрытия карточки.
                 <.tr(
                   _kvTdKey(
-                    Messages( MsgCodes.`Show.ad.opened` )
+                    crCtxP.message( MsgCodes.`Show.ad.opened` ),
                   ),
                   _kvTdValue {
-                    val isShowOpened = node.adv
+                    val isShowOpened = p.node.adv
                       .map(_.isShowOpened)
-                      .orElse(node.info.advShowOpened)
+                      .orElse( p.node.info.advShowOpened )
                       .getOrElseFalse
                     // Чек-бокс для управления isEnabled-флагом узла.
                     <.label(
@@ -649,19 +643,19 @@ class NodeR(
                         ^.onChange ==> onShowOpenedClick(rcvrKey)
                       ),
                       <.span(),
-                      Messages( MsgCodes.yesNo( isShowOpened ) )
+                      crCtxP.message( MsgCodes.yesNo( isShowOpened ) )
                     )
                   }
                 ),
 
                 <.tr(
                   _kvTdKey(
-                    Messages( MsgCodes.`Always.outlined` )
+                    crCtxP.message( MsgCodes.`Always.outlined` ),
                   ),
                   _kvTdValue {
-                    val isAlwaysOutlined = node.adv
+                    val isAlwaysOutlined = p.node.adv
                       .map(_.alwaysOutlined)
-                      .orElse(node.info.alwaysOutlined)
+                      .orElse( p.node.info.alwaysOutlined )
                       .getOrElseFalse
                     // Чек-бокс для управления isEnabled-флагом узла.
                     <.label(
@@ -673,7 +667,7 @@ class NodeR(
                         ^.onChange ==> onAlwaysOutlinedClick(rcvrKey)
                       ),
                       <.span(),
-                      Messages( MsgCodes.yesNo( isAlwaysOutlined ) )
+                      crCtxP.message( MsgCodes.yesNo( isAlwaysOutlined ) ),
                     )
                   },
                 ),
@@ -685,15 +679,15 @@ class NodeR(
         },
 
         // Рекурсивно отрендерить дочерние элементы:
-        node.children.render { children =>
+        p.node.children.render { children =>
           <.div(
             ReactCommonUtil.maybeNode(children.nonEmpty) {
-              val childLevel = level + 1
+              val childLevel = p.level + 1
               children.toVdomArray { subNode =>
                 val p1 = p.copy(
                   node          = subNode,
                   parentRcvrKey = rcvrKeyRev,
-                  level         = childLevel
+                  level         = childLevel,
                 )
                 component.withKey(subNode.info.id)( p1 )
               }
@@ -702,11 +696,11 @@ class NodeR(
         },
 
         // При ошибке запроса отрендерить тут что-то про ошибку.
-        node.children.renderFailed { ex =>
+        p.node.children.renderFailed { ex =>
           <.span(
             ^.title   := ex.toString,
             ^.`class` := Css.Colors.RED,
-            Messages( MsgCodes.`Error` )
+            crCtxP.message( MsgCodes.`Error` ),
           )
         },
 
@@ -725,7 +719,5 @@ class NodeR(
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate )
     .build
-
-  def apply(p: Props) = component(p)
 
 }

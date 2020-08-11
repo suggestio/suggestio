@@ -7,7 +7,7 @@ import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.bill.tf.daily.ITfDailyMode
+import io.suggest.bill.tf.daily.{ITfDailyMode, MTfDailyInfo}
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
@@ -36,6 +36,7 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import japgolly.univeq._
+import util.TplDataFormatUtil
 
 import scala.concurrent.Future
 
@@ -114,11 +115,41 @@ final class LkNodes @Inject() (
     // Можно ли менять доступность узла?
     val canChangeAvailabilityFut = canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
 
-    val tfDailyInfoOptFut = madOpt.fold {
-      tfDailyUtil.getTfInfo(mnode)(ctx)
-        .map( EmptyUtil.someF )
+    val tfDailyInfoOptFut = madOpt.fold [Future[Option[MTfDailyInfo]]] {
+      for {
+        tfDaily0 <- tfDailyUtil.getTfInfo(mnode)(ctx)
+      } yield {
+        val tfDaily2 = MTfDailyInfo.clauses.modify { clauses0 =>
+          clauses0
+            .view
+            .mapValues {
+              TplDataFormatUtil.setFormatPrice(_)(ctx)
+            }
+            .toMap
+        }(tfDaily0)
+        Some( tfDaily2 )
+      }
     } { _ =>
       Future.successful(None)
+    }
+
+    // Общий код сборки инфы по одному узлу.
+    def _mkLknNode(mnode: MNode,
+                   canChangeAvailability: Option[Boolean] = None,
+                   tf: Option[MTfDailyInfo] = None): MLknNode = {
+      val nodeId = mnode.id.get
+      val hasAdvOpt = _hasAdv(nodeId, madOpt)
+      MLknNode(
+        id                    = nodeId,
+        name                  = mnode.guessDisplayNameOrIdOrQuestions,
+        ntype                 = mnode.common.ntype,
+        isEnabled             = mnode.common.isEnabled,
+        canChangeAvailability = canChangeAvailability,
+        hasAdv                = hasAdvOpt.map(_._1),
+        tf                    = tf,
+        advShowOpened         = hasAdvOpt.map(_._2),
+        alwaysOutlined        = hasAdvOpt.map(_._3),
+      )
     }
 
     // Рендер найденных узлов в данные для модели формы.
@@ -127,37 +158,14 @@ final class LkNodes @Inject() (
       canChangeAvailability   <- canChangeAvailabilityFut
       tfDailyInfoOpt          <- tfDailyInfoOptFut
     } yield {
-      val hasAdvOpt = _hasAdv(nodeId, madOpt)
       MLknNodeResp(
         // Надо ли какую-то инфу по текущему узлу возвращать?
-        info = MLknNode(
-          id                    = nodeId,
-          name                  = mnode.guessDisplayNameOrIdOrQuestions,
-          ntype                 = mnode.common.ntype,
-          isEnabled             = mnode.common.isEnabled,
-          canChangeAvailability = Some( canChangeAvailability ),
-          hasAdv                = hasAdvOpt.map(_._1),
-          tf                    = tfDailyInfoOpt,
-          advShowOpened         = hasAdvOpt.map(_._2),
-          alwaysOutlined        = hasAdvOpt.map(_._3)
-        ),
+        info = _mkLknNode( mnode, Some( canChangeAvailability ), tfDailyInfoOpt ),
 
         children = for (mnode <- subNodes) yield {
-          val chNodeId = mnode.id.get
-          val hasAdvOpt = _hasAdv(chNodeId, madOpt)
-          MLknNode(
-            id                = chNodeId,
-            name              = mnode.guessDisplayNameOrIdOrQuestions,
-            ntype             = mnode.common.ntype,
-            isEnabled         = mnode.common.isEnabled,
-            // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
-            canChangeAvailability = None,
-            hasAdv            = hasAdvOpt.map(_._1),
-            tf                = None,
-            advShowOpened     = hasAdvOpt.map(_._2),
-            alwaysOutlined    = hasAdvOpt.map(_._3)
-          )
-        }
+          // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
+          _mkLknNode( mnode )
+        },
       )
     }
   }

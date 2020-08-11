@@ -1,6 +1,6 @@
 package models.mpay.yaka
 
-import io.suggest.bill.IPrice
+import io.suggest.bill.MPrice
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 
@@ -14,8 +14,8 @@ import io.suggest.mbill2.m.gid.Gid_t
   */
 case class MYakaFormData(
                           profile         : IYakaProfile,
-                          orderPrice      : IPrice,
-                          minPayPrice     : Option[IPrice],
+                          orderPrice      : MPrice,
+                          minPayPrice     : Option[MPrice],
                           customerNumber  : String,
                           onNodeId        : MEsUuId,
                           orderNumber     : Option[Gid_t],
@@ -23,7 +23,7 @@ case class MYakaFormData(
                         )
 {
 
-  def payPrice: IPrice = {
+  def payPrice: MPrice = {
     minPayPrice.getOrElse( orderPrice )
   }
 

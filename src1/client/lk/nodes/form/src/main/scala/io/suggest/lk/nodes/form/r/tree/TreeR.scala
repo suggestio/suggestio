@@ -35,8 +35,6 @@ class TreeR(
         // Рендерить узлы.
         v.tree.nodes.toVdomArray { node =>
           val tnp = nodeR.PropsVal(
-            conf          = v.conf,
-            mtree         = v.tree,
             node          = node,
             parentRcvrKey = parentRcvrKey,
             level         = parentLevel,

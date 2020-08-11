@@ -5,7 +5,7 @@ import diode.react.ReactPot.potWithReact
 import io.suggest.bill.MCurrencies
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.lk.r.popup.PopupR
@@ -13,7 +13,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 
 /**
@@ -22,7 +21,9 @@ import io.suggest.react.ReactCommonUtil
   * Created: 21.03.17 21:57
   * Description: Компонент попапа редактирования тарифа.
   */
-class EditTfDailyR {
+class EditTfDailyR(
+                    crCtxP: React.Context[MCommonReactCtx],
+                  ) {
 
   type Props = ModelProxy[Option[MEditTfDailyS]]
 
@@ -30,26 +31,22 @@ class EditTfDailyR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def onInheritedModeClick: Callback = {
+    private val onInheritedModeClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailyInheritedMode )
-    }
 
-    private def onManualModeClick: Callback = {
+    private val onManualModeClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailyManualMode )
-    }
 
     private def onManualAmountChange(e: ReactEventFromInput): Callback = {
       val v = e.target.value
       dispatchOnProxyScopeCB( $, TfDailyManualAmountChanged(v) )
     }
 
-    private def onSaveClick: Callback = {
+    private val onSaveClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailySaveClick )
-    }
 
-    private def onCancelClick: Callback = {
+    private val onCancelClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailyCancelClick )
-    }
 
 
     def render(propsProxy: Props): VdomElement = {
@@ -70,7 +67,7 @@ class EditTfDailyR {
           PopupR( popupPropsProxy )(
             <.h2(
               ^.`class` := Css.Lk.MINOR_TITLE,
-              Messages( MsgCodes.`Adv.tariff` )
+              crCtxP.message( MsgCodes.`Adv.tariff` ),
             ),
 
             // Форма с radio-кнопками и полем ввода ручного ценника.
@@ -88,7 +85,7 @@ class EditTfDailyR {
                     ^.onChange --> onInheritedModeClick
                   ),
                   <.span,
-                  Messages( MsgCodes.`Inherited` )
+                  crCtxP.message( MsgCodes.`Inherited` ),
                 )
               ),
               <.br,
@@ -104,7 +101,7 @@ class EditTfDailyR {
                     ^.onChange --> onManualModeClick
                   ),
                   <.span,
-                  Messages( MsgCodes.`Set.manually` )
+                  crCtxP.message( MsgCodes.`Set.manually` ),
                 ),
 
                 editS.mode.manualOpt.whenDefinedEl { _ =>
@@ -113,7 +110,7 @@ class EditTfDailyR {
                   <.div(
                     <.label(
                       ^.`class` := Css.Input.INPUT,
-                      Messages( MsgCodes.`Cost` ),
+                      crCtxP.message( MsgCodes.`Cost` ),
                       HtmlConstants.SPACE,
 
                       editS.inputAmount.whenDefinedEl { mia =>
@@ -126,10 +123,10 @@ class EditTfDailyR {
                       },
 
                       mcurrency.symbol,
-                      Messages( MsgCodes.`_per_.day` )
+                      crCtxP.message( MsgCodes.`_per_.day` ),
                     )
                   )
-                }
+                },
 
               )
             ),
@@ -147,29 +144,29 @@ class EditTfDailyR {
                 ReactCommonUtil.maybe( saveBtnActive ) {
                   ^.onClick --> onSaveClick
                 },
-                Messages( MsgCodes.`Save` )
+                crCtxP.message( MsgCodes.`Save` ),
               ),
 
               <.a(
                 ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M, Css.Buttons.LIST ),
                 ^.onClick --> onCancelClick,
-                Messages( MsgCodes.`Cancel` )
+                crCtxP.message( MsgCodes.`Cancel` ),
               ),
 
               editS.request.renderPending { _ =>
                 LkPreLoaderR.AnimMedium
-              }
+              },
             ),
 
             editS.request.renderFailed { ex =>
               <.div(
                 <.span(
                   ^.`class` := Css.Colors.RED,
-                  Messages( MsgCodes.`Error` ),
+                  crCtxP.message( MsgCodes.`Error` ),
                   HtmlConstants.SPACE,
-                  ex.toString
+                  ex.toString,
                 ),
-                <.br
+                <.br,
               )
             }
           )
@@ -186,7 +183,5 @@ class EditTfDailyR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(mEditTfDailyOptProxy: Props) = component(mEditTfDailyOptProxy)
 
 }

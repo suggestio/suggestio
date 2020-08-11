@@ -95,16 +95,6 @@ object MPrice {
     apply(amount, currency)
   }
 
-  /** Приведение IPrice к MPrice. */
-  def apply(iprice: IPrice): MPrice = {
-    iprice match {
-      case mprice: MPrice =>
-        mprice
-      case _ =>
-        MPrice(iprice.amount, iprice.currency)
-    }
-  }
-
   def unapply2(m: MPrice) = {
     for ( (amount, curr, _) <- unapply(m) )
     yield (amount, curr)
@@ -156,23 +146,6 @@ object MPrice {
 }
 
 
-/** Интерфейс для поля amount Double. */
-trait IAmount {
-  def amount: Amount_t
-}
-
-/** Интерфейс к базовым полям моделей, котрорые описывают или включают в себя описание цены/стоимости.
-  * Для этого требуется только пара полей: amount и currency.
-  */
-trait IPrice
-  extends IAmount
-  with IMCurrency
-{
-  def realAmount: Double =
-    MPrice.amountToReal( amount, currency )
-}
-
-
 /**
   * Инстанс данных по цене.
   * @param amount Числовое значение цены.
@@ -180,13 +153,16 @@ trait IPrice
   * @param amountStrOpt Отформатированное для рендера значение value, если требуется.
   *                    Это поле -- долговременный костыль для scala-js, который наверное будет удалён в будущем.
   */
-case class MPrice(
-                   amount         : Amount_t,
-                   currency       : MCurrency,
-                   amountStrOpt   : Option[String] = None
-                 )
-  extends IPrice
+final case class MPrice(
+                         amount                       : Amount_t,
+                         override val currency        : MCurrency,
+                         amountStrOpt                 : Option[String] = None
+                       )
+  extends IMCurrency
 {
+
+  def realAmount: Double =
+    MPrice.amountToReal( amount, currency )
 
   def withAmount(value2: Amount_t) = copy(amount = value2, amountStrOpt = None)
   def withAmountStrOpt(amountStrOpt2: Option[String]) = copy(amountStrOpt = amountStrOpt2)

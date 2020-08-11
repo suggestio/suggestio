@@ -1528,7 +1528,7 @@ final class Bill2Util @Inject() (
     * @return DB-экшен.
     */
   def checkPayableOrder(orderId: Gid_t, validContractId: Gid_t, paySys: MPaySystem,
-                        claimedOrderPrices: Map[MCurrency, IPrice]): DBIOAction[MOrder, NoStream, RWT] = {
+                        claimedOrderPrices: Map[MCurrency, MPrice]): DBIOAction[MOrder, NoStream, RWT] = {
     lazy val logPrefix = s"checkHoldOrder(o=$orderId,c=$validContractId):"
 
     val a = for {

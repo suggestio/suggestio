@@ -11,7 +11,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.text.StringUtil
-import monocle.Traversal
+import monocle.{Lens, Traversal}
 import scalaz.std.option._
 
 import scala.util.Success
@@ -31,29 +31,18 @@ class TreeAh[M](
   with Log
 {
 
-  /** Интерфейс typeclass'ов точечного обновления состояния. */
-  private sealed trait OptStateUpdater[T] {
-    def getStateOpt(mns0: MNodeState): Option[T]
-    def updateState(mns0: MNodeState, data: Option[T]): MNodeState
-  }
-
-  implicit private object EditStateUpdater extends OptStateUpdater[MEditNodeState] {
-    override def getStateOpt(mns0: MNodeState) = mns0.editing
-    override def updateState(mns0: MNodeState, data: Option[MEditNodeState]) = (MNodeState.editing set data)(mns0)
-  }
-
-
-  private def _updateOptState[T](m: LkNodesTreeAction)(f: Option[T] => Option[T])(implicit osu: OptStateUpdater[T]) = {
+  private def _updateOptState[T](m: LkNodesTreeAction, lens: Lens[MNodeState, Option[T]])
+                                (f: Option[T] => Option[T]): ActionResult[M] = {
     val v0 = value
     val nodes2 = MNodeState
       .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-        val s0 = osu.getStateOpt(mns0)
+        val s0 = lens.get( mns0 )
         val s2 = f(s0)
         val mns2 = if (s0 eq s2) {
           // Ничего не изменилось. Просто вернуть исходный элемент.
           mns0
         } else {
-          osu.updateState( mns0, s2 )
+          (lens set s2)(mns0)
         }
         mns2 :: Nil
       }
@@ -61,21 +50,6 @@ class TreeAh[M](
 
     val v2 = (MTree.nodes set nodes2)(v0)
     updated(v2)
-  }
-
-  private def _updateNameIn[T <: IEditNodeState[T]](m: LkNodesTreeNameAction)(implicit osu: OptStateUpdater[T]) = {
-    _updateOptState[T](m) { addStateOpt0 =>
-      val name2 = StringUtil.strLimitLen(
-        str     = m.name,
-        maxLen  = NodeEditConstants.Name.LEN_MAX,
-        ellipsis = ""
-      )
-      val nameValid2 = name2.length >= NodeEditConstants.Name.LEN_MIN
-
-      addStateOpt0.map(
-        _.withName(name2, nameValid2)
-      )
-    }
   }
 
 
@@ -146,7 +120,7 @@ class TreeAh[M](
     // Ответ сервера на тему под-узлов.
     case snr: HandleSubNodesOf =>
       val v0 = value
-      val v2 = value.copy(
+      val v2 = v0.copy(
         nodes = MNodeState
           .flatMapSubNode(snr.rcvrKey, v0.nodes) { mns0 =>
             val mns2 = snr.subNodesRespTry.fold(
@@ -402,11 +376,22 @@ class TreeAh[M](
 
     // Сигнал ввода нового имени узла.
     case m: NodeEditNameChange =>
-      _updateNameIn[MEditNodeState](m)
+      _updateOptState[MEditNodeState](m, MNodeState.editing) { addStateOpt0 =>
+        val name2 = StringUtil.strLimitLen(
+          str     = m.name,
+          maxLen  = NodeEditConstants.Name.LEN_MAX,
+          ellipsis = ""
+        )
+        val nameValid2 = name2.length >= NodeEditConstants.Name.LEN_MIN
+
+        addStateOpt0.map(
+          _.withName(name2, nameValid2)
+        )
+      }
 
     // Сигнал отмены редактирования узла.
     case m: NodeEditCancelClick =>
-      _updateOptState[MEditNodeState](m) { _ => None }
+      _updateOptState[MEditNodeState](m, MNodeState.editing) { _ => None }
 
     // Сигнал подтверждения редактирования узла.
     case m: NodeEditOkClick =>
@@ -608,7 +593,7 @@ class TreeAh[M](
       val conf = confRO()
       conf.adIdOpt.fold {
         // adId не задан в конфиге формы. Should never happen.
-        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
+        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = (m, conf) )
         noChange
 
       } { adId =>
@@ -686,7 +671,7 @@ class TreeAh[M](
                 MNodeState.info
                   .composeLens( MLknNode.alwaysOutlined )
                   .set( Some(m.reason.isChecked) )
-                )( nodeState )
+              )( nodeState )
             }
           )
           nodeState2 :: Nil

@@ -1,8 +1,10 @@
 package io.suggest.lk.nodes.form.r.menu
 
+import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m.NodeMenuBtnClick
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -14,19 +16,33 @@ class NodeMenuBtnR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def onNodeMenuBtnClick(e: ReactEvent): Callback = {
+    private def _onNodeMenuBtnClick(e: ReactEvent): Callback = {
       e.stopPropagationCB >> dispatchOnProxyScopeCB( $, NodeMenuBtnClick )
     }
+    private lazy val _onNodeMenuBtnClickF = ReactCommonUtil.cbFun1ToJsCb( _onNodeMenuBtnClick )
 
     def render: VdomElement = {
       <.span(
         ^.`class`  := Css.Lk.Nodes.Menu.BTN,
-        ^.onClick ==> onNodeMenuBtnClick,
-        // TODO Добавить поддержку mouse enter, чтобы по менюшке кликать не приходилось.
-        //^.onClick ==> onNodeDeleteClick,
-        //^.title    := (Messages( MsgCodes.`Delete` ) + HtmlConstants.ELLIPSIS)
+        MuiIconButton {
+          val css = new MuiIconButtonClasses {
+            override val root = Css.Lk.Nodes.Menu.BTN
+          }
+          new MuiIconButtonProps {
+            override val color = MuiColorTypes.primary
+            override val onClick = _onNodeMenuBtnClickF
+            override val classes = css
+          }
+        } (
+          Mui.SvgIcons.Menu()(),
+        ),
+      )
+      /*
+      <.span(
+        ^.onClick ==> _onNodeMenuBtnClick,
         ". . ."
       )
+      */
     }
 
   }
@@ -36,7 +52,5 @@ class NodeMenuBtnR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(mproxy: Props) = component(mproxy)
 
 }

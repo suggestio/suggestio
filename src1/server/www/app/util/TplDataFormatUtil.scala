@@ -16,6 +16,7 @@ import models.mctx.Context
 import play.twirl.api.{Html, HtmlFormat}
 import views.html.fc._
 import views.html.helper.FieldConstructor
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 
@@ -36,7 +37,7 @@ object TplDataFormatUtil {
     priceStr.replace('\u0020', NBSP)
   }
 
-  def formatPrice(price: IPrice)(implicit ctx: Context): String = {
+  def formatPrice(price: MPrice)(implicit ctx: Context): String = {
     val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
       .asInstanceOf[DecimalFormat]
     currFmt.setCurrency(price.currency.toJavaCurrency)
@@ -89,11 +90,13 @@ object TplDataFormatUtil {
     * @param ctx Контекст рендера.
     * @return Строка вида "10 034"
     */
-  def formatPriceAmount(mprice: IPrice)(implicit ctx: Context): String = {
-    val realAmount = mprice.realAmount
-    formatPriceRealAmount(realAmount, mprice.currency)
+  def formatPriceAmount(mprice: MPrice)(implicit ctx: Context): String =
+    formatPriceAmount(mprice.amount, mprice.currency)
+  def formatPriceAmount(amount: Amount_t, currency: MCurrency)(implicit ctx: Context): String = {
+    val realAmount = MPrice.amountToReal( amount, currency )
+    formatPriceRealAmount( amount, realAmount, currency )
   }
-  def formatPriceRealAmount(realAmount: Double, currency: MCurrency)(implicit ctx: Context): String = {
+  private def formatPriceRealAmount(amount: Amount_t, realAmount: Double, currency: MCurrency)(implicit ctx: Context): String = {
     val formatPriceDigitsDF = {
       val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
         .asInstanceOf[DecimalFormat]
@@ -107,7 +110,8 @@ object TplDataFormatUtil {
       currFmt.setGroupingUsed( realAmount >= NUMBER_GROUPING_THRESHOLD )
       // Рендерить 99.31, 100.5, 5421 без копеек.
       currFmt.setMaximumFractionDigits(
-        if (realAmount < 1000) 2
+        if ((amount % currency.centsInUnit) ==* 0L) 0
+        else if (realAmount < 1000) 2
         else if (realAmount < 10000) 1
         else 0
       )
@@ -136,7 +140,7 @@ object TplDataFormatUtil {
     currFmt.setGroupingUsed(false)
     currFmt
   }
-  def formatPriceAmountPlain(mprice: IPrice): String = {
+  def formatPriceAmountPlain(mprice: MPrice): String = {
     priceAmountPlainFmt(mprice.currency)
       .format(mprice.realAmount)
   }
@@ -147,7 +151,7 @@ object TplDataFormatUtil {
     // TODO Надо бы дедублицировать это с частями formatPrice()
     val lang = ctx.messages.lang
     currency.currencyCode match {
-      case "RUB" if lang.language == "ru" =>
+      case "RUB" if lang.language ==* "ru" =>
         "р."    // Заменяем "руб." на "р."
       case other =>
         currency.toJavaCurrency.getSymbol(lang.toLocale)
@@ -222,7 +226,7 @@ object TplDataFormatUtil {
       val i1 = tryI(len)
       if (i1 < 0) {
         str
-      } else if (i1 == 0) {
+      } else if (i1 ==* 0) {
         ""
       } else {
         str.substring(0, i1) + ELLIPSIS

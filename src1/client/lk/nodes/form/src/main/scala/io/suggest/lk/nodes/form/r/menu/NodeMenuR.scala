@@ -3,9 +3,8 @@ package io.suggest.lk.nodes.form.r.menu
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m.NodeDeleteClick
-import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -16,13 +15,19 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 29.03.17 12:49
   * Description: Компонент опциональной менюшки текущего узла.
   */
-class NodeMenuR {
+class NodeMenuR(
+                 crCtxP: React.Context[MCommonReactCtx],
+               ) {
+
+  lazy val _deleteMsg = crCtxP.consume { crCtx =>
+    crCtx.messages( MsgCodes.`Delete` ) + HtmlConstants.ELLIPSIS
+  }
 
   type Props = ModelProxy[_]
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def _onDeleteClick: Callback = {
+    private val _onDeleteClick: Callback = {
       dispatchOnProxyScopeCB( $, NodeDeleteClick )
     }
 
@@ -33,7 +38,7 @@ class NodeMenuR {
         <.div(
           ^.`class` := Css.Lk.Nodes.Menu.ITEM,
           ^.onClick --> _onDeleteClick,
-          Messages( MsgCodes.`Delete` ) + HtmlConstants.ELLIPSIS
+          _deleteMsg,
         )
       )
     }
@@ -46,7 +51,5 @@ class NodeMenuR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(nodeMenuOptProxy: Props) = component(nodeMenuOptProxy)
 
 }

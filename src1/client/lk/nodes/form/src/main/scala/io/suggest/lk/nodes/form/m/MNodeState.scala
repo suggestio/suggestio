@@ -4,9 +4,6 @@ import diode.data.{Pot, Ready}
 import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.primo.id.IId
-import io.suggest.log.Log
-import io.suggest.common.html.HtmlConstants.SPACE
-import io.suggest.msg.ErrorMsgs
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 
@@ -19,9 +16,8 @@ import monocle.macros.GenLens
 
 object MNodeState
   extends NodesTreeApiIId
-    with NodesTreeWalk
-    with NodeTreeUpdate
-    with Log
+  with NodesTreeWalk
+  with NodeTreeUpdate
 {
 
   override type T = MNodeState
@@ -47,15 +43,8 @@ object MNodeState
     )
   }
 
-  override def withNodeChildren(node: MNodeState, children2: IterableOnce[MNodeState]): MNodeState = {
-    // Хз, надо ли проверять Pot.empty. Скорее всего, этот метод никогда не вызывается для Empty Pot.
-    if (node.children.isEmpty) {
-      logger.warn( ErrorMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
-      node
-    } else {
-      (MNodeState.children set Ready( children2.toSeq ) )(node)
-    }
-  }
+  override def withNodeChildren(node: MNodeState, children2: IterableOnce[MNodeState]): MNodeState =
+    (MNodeState.children set Ready( children2.toSeq ) )(node)
 
   @inline implicit def univEq: UnivEq[MNodeState] = {
     import io.suggest.ueq.JsUnivEqUtil._
