@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
-import io.suggest.adv.rcvr.{IRcvrKey, RcvrKey}
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
+import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -17,7 +17,9 @@ sealed trait LkNodesAction extends DAction
 /** Экшен, связанный с деревом узлов. Он всега содержит поле rcvrKey. */
 sealed trait LkNodesTreeAction
   extends LkNodesAction
-  with IRcvrKey
+{
+  def rcvrKey: NodePath_t
+}
 
 sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
   val name: String
@@ -26,15 +28,16 @@ sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
 case class NodeNameClick(
-                          override val rcvrKey: RcvrKey
+                          override val rcvrKey: NodePath_t,
                         )
   extends LkNodesTreeAction
 
 
 /** Модель результата запроса к серверу по поводу под-узлов для указанного узла. */
 case class HandleSubNodesOf(
-                             override val rcvrKey   : RcvrKey,
-                             subNodesRespTry        : Try[MLknNodeResp]
+                             override val rcvrKey   : NodePath_t,
+                             subNodesRespTry        : Try[MLknNodeResp],
+                             tstampMs               : Long,
                            )
   extends LkNodesTreeAction
 
@@ -74,7 +77,7 @@ case object CreateNodeCancelClick
 
 /** Сигнал о клике по галочке узла. */
 case class NodeIsEnabledChanged(
-                                 override val rcvrKey : RcvrKey,
+                                 override val rcvrKey : NodePath_t,
                                  isEnabled            : Boolean
                                )
   extends LkNodesTreeAction
@@ -82,7 +85,7 @@ case class NodeIsEnabledChanged(
 
 /** Сигнал ответа сервера на апдейт флага isEnabled. */
 case class NodeIsEnabledUpdateResp(
-                                    override val rcvrKey : RcvrKey,
+                                    override val rcvrKey : NodePath_t,
                                     resp                 : Try[MLknNode]
                                   )
   extends LkNodesTreeAction
@@ -103,7 +106,7 @@ case object NodeMenuBtnClick
 
 /** Результат запроса к серверу по поводу удаления узла. */
 case class NodeDeleteResp(
-                           override val rcvrKey: RcvrKey,
+                           override val rcvrKey: NodePath_t,
                            resp: Try[Boolean]
                          )
   extends LkNodesTreeAction
@@ -112,41 +115,41 @@ case class NodeDeleteResp(
 // Редактирование узла (переименование).
 
 /** Клик по кнопке редактирования узла в дереве узлов. */
-case class NodeEditClick( override val rcvrKey: RcvrKey )
+case class NodeEditClick( override val rcvrKey: NodePath_t )
   extends LkNodesTreeAction
 
 /** Редактирование названия узла: Юзер вводит название узла (маячка). */
 case class NodeEditNameChange(
-                               override val rcvrKey: RcvrKey,
+                               override val rcvrKey: NodePath_t,
                                name: String
                              )
   extends LkNodesTreeNameAction
 
 /** Клик по кнопке отмены редактирования узла. */
-case class NodeEditCancelClick(override val rcvrKey: RcvrKey)
+case class NodeEditCancelClick(override val rcvrKey: NodePath_t)
   extends LkNodesTreeAction
 
 /** Клик по кнопке подтверждения редактирования узла. */
-case class NodeEditOkClick(override val rcvrKey: RcvrKey)
+case class NodeEditOkClick(override val rcvrKey: NodePath_t)
   extends LkNodesTreeAction
 
 /** Ответ сервера по итогам запроса. */
-case class NodeEditSaveResp(override val rcvrKey: RcvrKey, tryResp: Try[MLknNode])
+case class NodeEditSaveResp(override val rcvrKey: NodePath_t, tryResp: Try[MLknNode])
   extends LkNodesTreeAction
 
 
 // Управление размещением текущей карточки на указанном узле.
 
 /** Изменилось состояние галочки, управляющей размещением текущей карточки на узле. */
-case class AdvOnNodeChanged(override val rcvrKey: RcvrKey, isEnabled: Boolean)
+case class AdvOnNodeChanged(override val rcvrKey: NodePath_t, isEnabled: Boolean)
   extends LkNodesTreeAction
 /** Ответ сервера на тему управления размещением карточки на узле. */
-case class AdvOnNodeResp(override val rcvrKey: RcvrKey, tryResp: Try[MLknNode])
+case class AdvOnNodeResp(override val rcvrKey: NodePath_t, tryResp: Try[MLknNode])
   extends LkNodesTreeAction
 
 
 // Управление тарифом узла.
-case class TfDailyShowDetails(override val rcvrKey: RcvrKey)
+case class TfDailyShowDetails(override val rcvrKey: NodePath_t)
   extends LkNodesTreeAction
 
 /** Клик по ссылке редактирования тарифа текущего узла. */
@@ -178,7 +181,7 @@ case object TfDailyManualMode
 
 
 /** Изменилось значение галочки раскрытости карточки по дефолту. */
-case class AdvShowOpenedChange(rcvrKey: RcvrKey, isChecked: Boolean)
+case class AdvShowOpenedChange(rcvrKey: NodePath_t, isChecked: Boolean)
   extends LkNodesTreeAction
 
 /** Ответ сервера на запрос изменения отображения рекламной карточки. */
@@ -188,7 +191,7 @@ case class AdvShowOpenedChangeResp(reason: AdvShowOpenedChange, tryResp: Try[_])
 }
 
 /** Изменение галочки постоянной обводки. */
-case class AlwaysOutlinedSet(rcvrKey: RcvrKey, isChecked: Boolean)
+case class AlwaysOutlinedSet(rcvrKey: NodePath_t, isChecked: Boolean)
   extends LkNodesTreeAction
 case class AlwaysOutlinedResp(reason: AlwaysOutlinedSet, tryResp: Try[_])
   extends LkNodesTreeAction {

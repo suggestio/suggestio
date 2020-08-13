@@ -1,12 +1,10 @@
 package io.suggest.lk.nodes.form.r
 
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.MLkNodesRoot
 import io.suggest.lk.nodes.form.r.tree.TreeR
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -21,19 +19,14 @@ class LkNodesFormR(
 
   type Props = ModelProxy[MLkNodesRoot]
 
-  /** Состояние содержит коннекшены до под-моделей. */
-  case class State(
-                    treeC: ReactConnectProxy[MLkNodesRoot],
-                  )
-
 
   /** Вся суть react-компонента формы обитает здесь. */
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(p: Props): VdomElement = {
       <.div(
         // Рендер текущего дерева узлов
-        s.treeC( treeR.component.apply )
+        treeR.component( p ),
       )
     }
 
@@ -42,16 +35,7 @@ class LkNodesFormR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { p =>
-      State(
-        treeC = p.connect( identity(_) )(
-          FastEqUtil[MLkNodesRoot] { (a, b) =>
-            (a.tree ===* b.tree) &&
-            (a.conf ===* b.conf)
-          }
-        )
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

@@ -1,10 +1,9 @@
 package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiLink, MuiLinkProps}
-import diode.{ActionType, FastEq}
+import diode.FastEq
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
-import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MPrice
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -13,7 +12,7 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.JsFormatUtil
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -22,6 +21,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.routes.routes
 import io.suggest.sc.ScConstants
+import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.SioPages
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
@@ -44,85 +44,118 @@ class NodeR(
   /** Модель props текущего компонента.
     *
     * @param node Корневой узел этого под-дерева.
-    * @param parentRcvrKey Ключ родительского узла [Nil].
-    * @param level Уровень [0].
+    * @param nodePathRev Обратный ключ узла в общем дереве.
+    *                    Используем обратную адресацию для состояния, т.к. это снижает расход памяти при простое:
+    *                    родительские tail'ы шарятся между дочерними элементами.
     * @param proxy Proxy любой модели, нужен для диспатчинга в коллбэках.
     *              Живёт отдельно от данных из-за рекурсивной природы этого компонента.
     */
   case class PropsVal(
-                       // TODO mtree Всегда меняется. Нужно его выкинуть из node-состояния ИЛИ заменить на isShowProps:Boolean. С помощью scalaz.Tree и рефакторинга рендера. Иначе дерево формы рендерится целиком на каждый чих.
                        node          : MNodeState,
-                       parentRcvrKey : RcvrKey,
-                       level         : Int,
-                       proxy         : ModelProxy[MLkNodesRoot],
-                     )
+                       nodePathRev   : NodePath_t,
+                       opened        : Option[NodePath_t],
+                       confAdId      : Option[String],
+                       chCount       : Int,
+                       chCountEnabled: Int,
+                       proxy         : ModelProxy[_],
+                     ) {
+    def nodePath = nodePathRev.reverse.tail
+  }
   implicit object NodeRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.node ===* b.node) &&
-      (a.parentRcvrKey ===* b.parentRcvrKey) &&
-      (a.level ==* b.level)
+      (a.nodePathRev ==* b.nodePathRev) &&
+      (a.opened ===* b.opened) &&
+      (a.confAdId ===* b.confAdId) &&
+      (a.chCount ==* b.chCount) &&
+      (a.chCountEnabled ==* b.chCountEnabled)
     }
+  }
+  implicit object PropsVal2ModelProxy extends Props2ModelProxy[PropsVal] {
+    override def apply(v1: PropsVal) = v1.proxy
   }
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback клика по заголовку узла. */
-    private def onNodeClick(rcvrKey: RcvrKey): Callback =
-      _dispatchCB( NodeNameClick(rcvrKey) )
+    private lazy val onNodeClick: Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        NodeNameClick( props.nodePath )
+      }
+    }
 
     /** Callback клика по кнопке добавления под-узла для текущего узла. */
-    private def onCreateNodeClick: Callback =
-      _dispatchCB( CreateNodeClick )
+    private lazy val onCreateNodeClick: Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, CreateNodeClick )
 
     /** Реакция на изменение значения флага активности узла. */
-    private def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback =
-      _dispatchCB( NodeIsEnabledChanged(rcvrKey, isEnabled = e.target.checked) )
+    private def onNodeEnabledChange(e: ReactEventFromInput): Callback = {
+      val isChecked = e.target.checked
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        NodeIsEnabledChanged(props.nodePath, isEnabled = isChecked)
+      }
+    }
 
     /** Callback для кнопки редактирования узла. */
-    private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback =
-      e.stopPropagationCB >> _dispatchCB( NodeEditClick(rcvrKey) )
+    private def onNodeEditClick(e: ReactEventFromInput): Callback = {
+      e.stopPropagationCB >> ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        NodeEditClick( props.nodePath )
+      }
+    }
 
-    private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback =
-      _dispatchCB( NodeEditNameChange(rcvrKey, name = e.target.value) )
+    private def onNodeEditNameChange(e: ReactEventFromInput): Callback = {
+      val name = e.target.value
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        NodeEditNameChange( props.nodePath, name = name )
+      }
+    }
 
     /** Callback нажатия по кнопке сохранения отредактированного узла. */
-    private def onNodeEditOkClick(rcvrKey: RcvrKey): Callback =
-      _dispatchCB( NodeEditOkClick(rcvrKey) )
+    private lazy val onNodeEditOkClick: Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        NodeEditOkClick( props.nodePath )
+      }
+    }
 
     /** Callback нажатия по кнопке отмены редактирования узла. */
-    private def onNodeEditCancelClick(rcvrKey: RcvrKey): Callback =
-      _dispatchCB( NodeEditCancelClick(rcvrKey) )
+    private lazy val onNodeEditCancelClick: Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        NodeEditCancelClick( props.nodePath )
+      }
+    }
 
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
-    private def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      e.stopPropagationCB >>
-        _dispatchCB( AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked) )
+    private def onAdvOnNodeChanged(e: ReactEventFromInput): Callback = {
+      val isChecked = e.target.checked
+      e.stopPropagationCB >> ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        AdvOnNodeChanged( props.nodePath, isEnabled = isChecked )
+      }
     }
 
     /** Callback запуска редактирования тарифа текущего узла. */
-    private val onTfChangeClick: Callback =
-      _dispatchCB( TfDailyEditClick )
+    private lazy val onTfChangeClick: Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, TfDailyEditClick )
 
-    private def onTfShowDetailsClick(rcvrKey: RcvrKey): Callback =
-      _dispatchCB( TfDailyShowDetails(rcvrKey) )
-
-    /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
-    private def onShowOpenedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      e.stopPropagationCB >>
-        _dispatchCB( AdvShowOpenedChange(rcvrKey, e.target.checked) )
+    private lazy val onTfShowDetailsClick: Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf( $ ) { props: Props =>
+        TfDailyShowDetails( props.nodePath )
+      }
     }
 
     /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
-    private def onAlwaysOutlinedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
-      e.stopPropagationCB >>
-        _dispatchCB( AlwaysOutlinedSet(rcvrKey, e.target.checked) )
+    private def onShowOpenedClick(e: ReactEventFromInput): Callback = {
+      val isChecked = e.target.checked
+      e.stopPropagationCB >> ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        AdvShowOpenedChange( props.nodePath, isChecked )
+      }
     }
 
-
-    private def _dispatchCB[A](action: A)(implicit evidence: ActionType[A]): Callback = {
-      $.props >>= { p =>
-        p.proxy.dispatchCB( action )
+    /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
+    private def onAlwaysOutlinedClick(e: ReactEventFromInput): Callback = {
+      val isChecked = e.target.checked
+      e.stopPropagationCB >> ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        AlwaysOutlinedSet( props.nodePath, isChecked )
       }
     }
 
@@ -153,20 +186,16 @@ class NodeR(
       * @return React-элемент.
       */
     def render(p: Props): VdomElement = {
-      val rcvrKeyRev = p.node.info.id :: p.parentRcvrKey
-      val rcvrKey = rcvrKeyRev.reverse
-
-      val mroot = p.proxy.value
-      val isShowProps = mroot.tree.showProps contains rcvrKey
-      val isShowNodeEditProps = isShowProps && mroot.conf.adIdOpt.isEmpty
-      val isShowAdvProps = isShowProps && mroot.conf.adIdOpt.isDefined
+      val isShowProps = p.opened contains p.nodePath
+      val isShowNodeEditProps = isShowProps && p.confAdId.isEmpty
+      val isShowAdvProps = isShowProps && p.confAdId.isDefined
 
       // Контейнер узла узла + дочерних узлов.
       <.div(
         ^.key := p.node.info.id,
 
         // Сдвиг слева согласно уровню, чтобы выглядело как дерево.
-        ^.marginLeft := (p.level * 20).px,
+        ^.marginLeft := (p.nodePathRev.length * 20).px,
 
         // Разделитель-промежуток от предыдущего элемента сверху.
         _delim,
@@ -191,7 +220,7 @@ class NodeR(
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
           ReactCommonUtil.maybe(p.node.isNormal) {
-            ^.onClick --> onNodeClick(rcvrKey)
+            ^.onClick --> onNodeClick
           },
 
           p.node.editing.fold[VdomElement] {
@@ -205,7 +234,7 @@ class NodeR(
             <.div(
               ^.`class` := Css.flat(Css.Font.Sz.L, Css.Lk.Nodes.Name.CONTENT),
 
-              mroot.conf.adIdOpt.fold [VdomElement] (nameSpan) { _ =>
+              p.confAdId.fold [VdomElement] (nameSpan) { _ =>
                 // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
                 <.label(
                   ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
@@ -215,7 +244,7 @@ class NodeR(
                     if (p.node.advIsPending) {
                       ^.disabled := true
                     } else {
-                      ^.onChange ==> onAdvOnNodeChanged(rcvrKey)
+                      ^.onChange ==> onAdvOnNodeChanged
                     },
                     ^.checked   := p.node.adv
                       .map(_.newIsEnabled)
@@ -236,7 +265,7 @@ class NodeR(
                   crCtxP.consume { crCtx =>
                     <.span(
                       ^.`class` := Css.Lk.Nodes.Name.EDIT_BTN,
-                      ^.onClick ==> onNodeEditClick(rcvrKey),
+                      ^.onClick ==> onNodeEditClick,
                       ^.title   := crCtx.messages( MsgCodes.`Change` ),
                     )
                   }
@@ -266,7 +295,7 @@ class NodeR(
                 .unless( p.node.advIsPending ),
 
               // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
-              p.node.children.renderPending { _ =>
+              p.node.infoPot.renderPending { _ =>
                 <.span(
                   HtmlConstants.NBSP_STR,
                   _smallWaitLoader
@@ -306,7 +335,7 @@ class NodeR(
                     if (ed.saving.isPending) {
                       ^.disabled := true
                     } else {
-                      ^.onChange ==> onNodeEditNameChange(rcvrKey)
+                      ^.onChange ==> onNodeEditNameChange
                     }
                   )
                 }
@@ -331,14 +360,14 @@ class NodeR(
                     // Кнопка сохранения изменений.
                     <.a(
                       ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MAJOR, Css.Size.M),
-                      ^.onClick --> onNodeEditOkClick(rcvrKey),
+                      ^.onClick --> onNodeEditOkClick,
                       crCtxP.message( MsgCodes.`Save` )
                     ),
                     HtmlConstants.SPACE,
                     // Кнопка отмены редактирования.
                     <.a(
                       ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
-                      ^.onClick --> onNodeEditCancelClick(rcvrKey),
+                      ^.onClick --> onNodeEditCancelClick,
                       crCtxP.message( MsgCodes.`Cancel` ),
                     )
                   )
@@ -440,7 +469,7 @@ class NodeR(
                           ^.checked := isEnabledValue,
                           // Можно управлять галочкой, если разрешено и если не происходит какого-то запроса с обновлением сейчас.
                           if (cca && p.node.isEnabledUpd.isEmpty) {
-                            ^.onChange ==> onNodeEnabledChange(rcvrKey)
+                            ^.onChange ==> onNodeEnabledChange
                           } else {
                             ^.disabled := true
                           }
@@ -468,8 +497,7 @@ class NodeR(
                           }
                         )
                       }
-                    )
-
+                    ),
                   )
                 }, // for
 
@@ -551,7 +579,7 @@ class NodeR(
                             <.a(
                               ^.`class`  := Css.Lk.LINK,
                               ^.title    := crCtx.messages( MsgCodes.`Show.details` ),
-                              ^.onClick --> onTfShowDetailsClick(rcvrKey),
+                              ^.onClick --> onTfShowDetailsClick,
                               HtmlConstants.ELLIPSIS
                             ),
                             HtmlConstants.COMMA,
@@ -565,25 +593,22 @@ class NodeR(
                   )
                 },
 
-                // Отрендерить обобщённую информацию по под-узлам и поддержку добавления узла.
-                p.node.children.render { children =>
-
+                // Отрендерить обобщённую информацию по под-узлам и поддержку добавления узла?
+                ReactCommonUtil.maybe( p.node.info.isDetailed ) {
                   <.tr(
                     _kvTdKey(
                       crCtxP.message( MsgCodes.`Subnodes` ),
                     ),
 
                     _kvTdValue(
-                      ReactCommonUtil.maybeNode(children.nonEmpty) {
+                      ReactCommonUtil.maybeNode( p.chCount > 0 ) {
                         <.span(
                           // Вывести общее кол-во под-узлов.
-                          crCtxP.message( MsgCodes.`N.nodes`, children.size),
+                          crCtxP.message( MsgCodes.`N.nodes`, p.chCount),
 
                           // Вывести кол-во выключенных под-узлов, если такие есть.
                           {
-                            val countDisabled = children.count { n =>
-                              !n.info.isEnabled
-                            }
+                            val countDisabled = p.chCount - p.chCountEnabled
                             ReactCommonUtil.maybeEl(countDisabled > 0) {
                               <.span(
                                 HtmlConstants.COMMA,
@@ -608,7 +633,7 @@ class NodeR(
                       )
                     )
                   )
-                }
+                },
 
               )   // TBODY
             )     // TABLE
@@ -640,7 +665,7 @@ class NodeR(
                         ^.`type` := HtmlConstants.Input.checkbox,
                         // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
                         ^.checked := isShowOpened,
-                        ^.onChange ==> onShowOpenedClick(rcvrKey)
+                        ^.onChange ==> onShowOpenedClick,
                       ),
                       <.span(),
                       crCtxP.message( MsgCodes.yesNo( isShowOpened ) )
@@ -664,7 +689,7 @@ class NodeR(
                         ^.`type` := HtmlConstants.Input.checkbox,
                         // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
                         ^.checked := isAlwaysOutlined,
-                        ^.onChange ==> onAlwaysOutlinedClick(rcvrKey)
+                        ^.onChange ==> onAlwaysOutlinedClick,
                       ),
                       <.span(),
                       crCtxP.message( MsgCodes.yesNo( isAlwaysOutlined ) ),
@@ -678,25 +703,8 @@ class NodeR(
 
         },
 
-        // Рекурсивно отрендерить дочерние элементы:
-        p.node.children.render { children =>
-          <.div(
-            ReactCommonUtil.maybeNode(children.nonEmpty) {
-              val childLevel = p.level + 1
-              children.toVdomArray { subNode =>
-                val p1 = p.copy(
-                  node          = subNode,
-                  parentRcvrKey = rcvrKeyRev,
-                  level         = childLevel,
-                )
-                component.withKey(subNode.info.id)( p1 )
-              }
-            }
-          )
-        },
-
         // При ошибке запроса отрендерить тут что-то про ошибку.
-        p.node.children.renderFailed { ex =>
+        p.node.infoPot.renderFailed { ex =>
           <.span(
             ^.title   := ex.toString,
             ^.`class` := Css.Colors.RED,
@@ -705,7 +713,7 @@ class NodeR(
         },
 
         // Если текущий узел раскрыт полностью, то нужен ещё один разделитель снизу, чтобы явно отделить контент текущего узла.
-        _delim.when( isShowNodeEditProps )
+        _delim.when( isShowNodeEditProps ),
 
       )
     }

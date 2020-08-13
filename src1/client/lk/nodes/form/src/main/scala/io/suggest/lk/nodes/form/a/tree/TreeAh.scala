@@ -3,16 +3,21 @@ package io.suggest.lk.nodes.form.a.tree
 import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.common.html.HtmlConstants
 import io.suggest.lk.nodes.{MLknAdv, MLknConf, MLknNode, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.log.Log
+import io.suggest.scalaz.NodePath_t
+import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.text.StringUtil
-import monocle.{Lens, Traversal}
+import monocle.Traversal
 import scalaz.std.option._
+import japgolly.univeq._
+import scalaz.Tree
 
 import scala.util.Success
 
@@ -31,25 +36,26 @@ class TreeAh[M](
   with Log
 {
 
-  private def _updateOptState[T](m: LkNodesTreeAction, lens: Lens[MNodeState, Option[T]])
-                                (f: Option[T] => Option[T]): ActionResult[M] = {
+  private def _maybeUpdateNode[T](nodePath: NodePath_t, m: AnyRef = null)
+                                (f: MNodeState => Option[MNodeState]): ActionResult[M] = {
     val v0 = value
-    val nodes2 = MNodeState
-      .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-        val s0 = lens.get( mns0 )
-        val s2 = f(s0)
-        val mns2 = if (s0 eq s2) {
-          // Ничего не изменилось. Просто вернуть исходный элемент.
-          mns0
-        } else {
-          (lens set s2)(mns0)
+    v0.nodes
+      .loc
+      .pathToNode( nodePath )
+      .fold {
+        logger.warn( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (nodePath, m) )
+        noChange
+      } { loc0 =>
+        val n0 = loc0.getLabel
+        // noChange, если вернули None, т.е. когда ничего менять не надо.
+        f(n0).fold(noChange) { n2 =>
+          val t2 = loc0
+            .setLabel( n2 )
+            .toTree
+          val v2 = (MTree.nodes set t2)(v0)
+          updated(v2)
         }
-        mns2 :: Nil
       }
-      .toList
-
-    val v2 = (MTree.nodes set nodes2)(v0)
-    updated(v2)
   }
 
 
@@ -60,350 +66,434 @@ class TreeAh[M](
       val rcvrKey = nnc.rcvrKey
 
       val v0 = value
-      MNodeState
-        .findSubNode(rcvrKey, v0.nodes)
-        .fold {
-          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
-          noChange
+      val locOpt0 = v0.nodes
+        .loc
+        .pathToNode( rcvrKey )
+      if (locOpt0.isEmpty)
+        logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
 
-        } { n =>
-          if (n.children.nonEmpty) {
-            // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
-            // Узнать, является ли текущий элемент сфокусированным?
-            if (v0.showProps.contains(rcvrKey)) {
-              // Это был клик по заголовку текущего узла. Свернуть текущий узел.
-              // Есть под-элементы. Свернуть подсписок, забыв их всех.
-              val v2 = v0.copy(
-                nodes = MNodeState
-                  .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                    val mns1 = (MNodeState.children set Pot.empty)(mns0)
-                    mns1 :: Nil
-                  }
-                  .toList,
-                showProps = None
-              )
-              updated(v2)
-
-            } else {
-              // Окликнутый узел не является сфокусированным, но для него уже загружены children. Выставить текущий узел как сфокусированный.
-              val v2 = (MTree.showProps set Some(rcvrKey))(v0)
-              updated(v2)
-            }
-
-          } else {
-            // children.isEmpty: Для текущего узла не загружено children. Запустить в фоне загрузку, выставить её в состояние.
-            val nodeId = nnc.rcvrKey.last
-
-            // Собрать эффект запроса к серверу за подробностями по узлу.
-            val fx = Effect {
-              // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
-              api.nodeInfo(nodeId).transform { tryRes =>
-                Success( HandleSubNodesOf(rcvrKey, tryRes) )
-              }
-            }
-
-            // Произвести обновление модели.
-            val v2 = MTree.nodes.modify { nodes0 =>
-              MNodeState
-                .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
-                  val mns1 = MNodeState.children.modify(_.pending())(mns0)
-                  mns1 :: Nil
+      (for {
+        loc0 <- locOpt0
+        mns0 = loc0.getLabel
+      } yield {
+        if (mns0.info.isDetailed) {
+          // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
+          // Узнать, является ли текущий элемент сфокусированным?
+          val v2 = if (v0.opened contains[NodePath_t] rcvrKey) {
+            // Это был клик по заголовку текущего узла. Свернуть текущий узел.
+            // Есть под-элементы. Свернуть подсписок, забыв их всех.
+            v0.copy(
+              nodes = loc0
+                .modifyTree { t0 =>
+                  Tree.Leaf( t0.rootLabel )
                 }
-                .toList
-            }(v0)
-
-            updated(v2, fx)
+                .toTree,
+              opened = None,
+            )
+          } else {
+            // Окликнутый узел не является сфокусированным, но для него уже загружены children. Выставить текущий узел как сфокусированный.
+            (MTree.opened set Some(rcvrKey))(v0)
           }
+          updated(v2)
+
+        } else {
+          // !isDetailed: Для текущего узла не загружено children. Запустить в фоне загрузку, выставить её в состояние.
+          val nodeId = mns0.info.id
+          val tstampMs = System.currentTimeMillis()
+
+          // Собрать эффект запроса к серверу за подробностями по узлу.
+          val fx = Effect {
+            // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
+            api.nodeInfo(nodeId).transform { tryRes =>
+              Success( HandleSubNodesOf(rcvrKey, tryRes, tstampMs) )
+            }
+          }
+
+          val v2 = MTree.nodes.set {
+            loc0
+              .modifyLabel( MNodeState.infoPot.modify( _.pending(tstampMs) ) )
+              .toTree
+          }(v0)
+
+          updated(v2, fx)
         }
+      })
+        .getOrElse( noChange )
 
 
     // Ответ сервера на тему под-узлов.
     case snr: HandleSubNodesOf =>
       val v0 = value
-      val v2 = v0.copy(
-        nodes = MNodeState
-          .flatMapSubNode(snr.rcvrKey, v0.nodes) { mns0 =>
-            val mns2 = snr.subNodesRespTry.fold(
-              // Ошибка запроса. Сохранить её в состояние.
-              {ex =>
-                MNodeState.children.modify( _.fail(ex) )(mns0)
-              },
-              // Положительный ответ сервера, обновить данные по текущему узлу.
-              {resp =>
-                mns0.copy(
-                  info      = resp.info,
-                  children  = mns0.children.ready {
-                    for (node <- resp.children) yield {
-                      MNodeState(node)
-                    }
-                  }
-                )
-              }
+
+      val loc0Opt = v0.nodes
+        .loc
+        .pathToNode( snr.rcvrKey )
+      if (loc0Opt.isEmpty)
+        logger.error( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = snr )
+
+      (for {
+        loc0 <- loc0Opt
+        mns0 = loc0.getLabel
+        if {
+          val r = mns0.infoPot isPendingWithStartTime snr.tstampMs
+          if (!r) logger.log( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (snr, mns0.infoPot.state) )
+          r
+        }
+      } yield {
+        val loc2 = snr.subNodesRespTry.fold(
+          // Ошибка запроса. Сохранить её в состояние.
+          {ex =>
+            loc0.modifyLabel(
+              MNodeState.infoPot.modify( _.fail(ex) )
             )
-            mns2 :: Nil
+          },
+
+          // Положительный ответ сервера, обновить данные по текущему узлу, замёржив поддерево в текущий loc.
+          {resp =>
+            // Самоконтроль: получено поддерево для правильного узла:
+            require( resp.subTree.rootLabel.id ==* mns0.info.id )
+
+            val tree2 = for (lkNode <- resp.subTree) yield {
+              MNodeState(
+                infoPot = Pot.empty.ready( lkNode ),
+              )
+            }
+            val subTree2 = Tree.Node(
+              // Текущий узел - просто патчим, сохраняя рантаймовые под-состояния нетронутыми.
+              root   = (MNodeState.infoPot set tree2.rootLabel.infoPot)(mns0),
+              // Под-узлы - берём, что сервер прислал:
+              forest = tree2.subForest,
+            )
+
+            // собрать поддерево MNodeState на основе текущего состояния и полученного с сервера поддерева.
+            loc0.setTree( subTree2 )
           }
-          .toList,
-        showProps = Some(snr.rcvrKey)
-      )
-      updated(v2)
+        )
+
+        val v2 = v0.copy(
+          nodes  = loc2.toTree,
+          opened = Some( snr.rcvrKey ),
+        )
+        updated(v2)
+      })
+        .getOrElse(noChange)
 
 
     // Юзер ткнул галочку размещения карточки на узле. Отправить запрос апдейта на сервер, обновив состояние узла.
     case m: AdvOnNodeChanged =>
       val conf = confRO()
-      conf.adIdOpt.fold {
+
+      if (conf.adIdOpt.isEmpty)
         // adId не задан в конфиге формы. Should never happen.
-        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
-        noChange
+        logger.error( ErrorMsgs.AD_ID_IS_EMPTY, msg = (m, conf) )
 
-      } { adId =>
-        val v0 = value
-        MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
-          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
-          noChange
-        } { mns0 =>
-          if (mns0.adv.nonEmpty) {
-            // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
-            noChange
-
-          } else {
-            // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
-            val rcvrKey = m.rcvrKey
-
-            // Организовать реквест на сервер.
-            val fx = Effect {
-              api.setAdv(
-                adId      = adId,
-                isEnabled = m.isEnabled,
-                onNode    = rcvrKey
-              ).transform { tryResp =>
-                Success( AdvOnNodeResp(rcvrKey, tryResp) )
-              }
-            }
-
-            // Обновить состояние формы.
-            val v2 = MTree.nodes.modify { nodes0 =>
-              MNodeState
-                .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
-                  val mns2 = MNodeState.adv.set(
-                    Some( MNodeAdvState(
-                      newIsEnabledPot = Pot.empty[Boolean].ready(m.isEnabled).pending()
-                    ))
-                  )(mns0)
-                  mns2 :: Nil
-                }
-                .toList
-            }(v0)
-
-            updated(v2, fx)
+      (for {
+        adId <- conf.adIdOpt
+        v0 = value
+        locOpt0 = v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        loc0 <- {
+          if (locOpt0.isEmpty)
+            logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          locOpt0
+        }
+        mns0 = loc0.getLabel
+        if {
+          val r = mns0.adv.isEmpty
+          if (!r) logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+          r
+        }
+      } yield {
+        // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
+        val fx = Effect {
+          // реквест на сервер:
+          api.setAdv(
+            adId      = adId,
+            isEnabled = m.isEnabled,
+            onNode    = loc0.rcvrKey,
+          ).transform { tryResp =>
+            Success( AdvOnNodeResp(m.rcvrKey, tryResp) )
           }
         }
-      }
+
+        val tree2 = loc0
+          .modifyLabel( MNodeState.adv.set(
+            Some( MNodeAdvState(
+              newIsEnabledPot = Pot.empty[Boolean]
+                .ready(m.isEnabled)
+                .pending()
+            ))
+          ))
+          .toTree
+
+        val v2 = (MTree.nodes set tree2)(v0)
+        updated(v2, fx)
+      })
+        .getOrElse( noChange )
+
 
     // Сигнал завершения реквеста изменения состояния размещения карточки на узле.
     case m: AdvOnNodeResp =>
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, nodes0) { mns0 =>
-            val mns2 = m.tryResp.fold(
-              {ex =>
-                logger.error(ErrorMsgs.SRV_REQUEST_FAILED, ex, msg = m)
-                MNodeState.adv
-                  .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
-                  .composeLens( MNodeAdvState.newIsEnabledPot )
-                  .modify(_.fail(ex))( mns0 )
-              },
-              {info2 =>
-                (
-                  MNodeState.info.set( info2 ) andThen
+      val v0 = value
+      val locOpt0 = v0.nodes
+        .loc
+        .pathToNode( m.rcvrKey )
+
+      if (locOpt0.isEmpty)
+        logger.warn( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = m )
+
+      (for {
+        loc0 <- locOpt0
+      } yield {
+        val v2 = MTree.nodes.set(
+          loc0
+            .modifyLabel(
+              m.tryResp.fold(
+                {ex =>
+                  logger.error(ErrorMsgs.SRV_REQUEST_FAILED, ex, msg = m)
+                  MNodeState.adv
+                    .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
+                    .composeLens( MNodeAdvState.newIsEnabledPot )
+                    .modify( _.fail(ex) )
+                },
+                {info2 =>
+                  MNodeState.infoPot.modify( _.ready(info2) ) andThen
                   MNodeState.adv.set( None )
-                )( mns0 )
-              }
+                }
+              )
             )
-            mns2 :: Nil
-          }
-          .toList
-      }(value)
-      updated(v2)
+            .toTree
+        )(v0)
+
+        updated(v2)
+      })
+        .getOrElse(noChange)
 
 
     // Положительный ответ сервера по поводу добавления нового узла.
     case m: CreateNodeResp =>
-      m.tryResp.fold(
-        // Ошибки с сервера отрабатываются в CreateNodeAh.
-        {_ =>
-          noChange
-        },
-        // Положительный ответ сервера: обновить дерево узлов.
-        {resp =>
-          // Залить обновления в дерево, удалить addState для текущего rcvrKey
-          val v0 = value
-          val v2 = MTree.nodes.modify { nodes0 =>
-            MNodeState
-              .flatMapSubNode(v0.showProps.get, nodes0) { mns0 =>
-                val mns2 = MNodeState.children.set(
-                  for {
-                    children0 <- mns0.children
-                  } yield {
-                    val ch0 = MNodeState(
-                      info = resp
-                    )
-                    children0 ++ (ch0 :: Nil)
-                  }
-                )(mns0)
-                mns2 :: Nil
-              }
-              .toList
-          }(v0)
-          updated(v2)
-        }
-      )
+      val v0 = value
+      (for {
+        loc0 <- v0.openedLoc
+        // Ошибки с сервера отрабатываются в CreateNodeAh:
+        resp <- m.tryResp.toOption
+        newChild = Tree.Leaf(
+          MNodeState(
+            infoPot = Pot.empty.ready( resp ),
+          )
+        )
+      } yield {
+        // Залить обновления в дерево, а CreateNodeAh удалит addState для текущего rcvrKey.
+        val v2 = MTree.nodes.set {
+          loc0
+            .insertDownLast( newChild )
+            .toTree
+        }(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал о клике юзером по галочке управления флагом isEnabled у какого-то узла.
     case m: NodeIsEnabledChanged =>
       val v0 = value
-      val nodeOpt = MNodeState.findSubNode(m.rcvrKey, v0.nodes)
-      nodeOpt
-        .filter( _.info.canChangeAvailability.contains(true) )
-        .fold {
-          // Пришёл сигнал управления галочкой, но у юзера нет прав влиять на эту галочку.
-          val errCode = if (nodeOpt.isDefined)
-            ErrorMsgs.ACTION_WILL_BE_FORBIDDEN_BY_SERVER
-          else
-            ErrorMsgs.NODE_NOT_FOUND
-          logger.warn( errCode, msg = m )
+      val locOpt0 = v0.nodes
+        .loc
+        .pathToNode( m.rcvrKey )
+      if (locOpt0.isEmpty)
+        logger.warn( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = m )
 
-          // Без изменений, т.к. любые действия в данной ситуации бессмыслены.
-          noChange
-
-        } { _ =>
-          // Выставить новое значение галочки в состояние узла, организовать реквест на сервер с апдейтом.
-          val v2 = MTree.nodes.modify { nodes0 =>
-            MNodeState
-              .flatMapSubNode( m.rcvrKey, nodes0 ) { n0 =>
-                val n2 = MNodeState.isEnableUpd.set(
-                  Some( MNodeEnabledUpdateState(
-                    newIsEnabled  = m.isEnabled,
-                    request       = Pending()
-                  ) )
-                )(n0)
-                n2 :: Nil
-              }
-              .toList
-          }(v0)
-
-          // Эффект апдейта на сервере:
-          val fx = Effect {
-            val rcvrKey = m.rcvrKey
-            api
-              .setNodeEnabled(rcvrKey.last, m.isEnabled)
-              .transform { tryRes =>
-                val r = NodeIsEnabledUpdateResp(rcvrKey, tryRes)
-                Success(r)
-              }
-          }
-
-          // Вернуть итог наверх...
-          updated(v2, fx)
+      (for {
+        loc0 <- locOpt0
+        mns0 = loc0.getLabel
+        if {
+          val r = mns0.infoPot.exists(_.canChangeAvailability contains[Boolean] true)
+          // TODO Нужно рендерить что-то на экран юзеру. Сейчас тут возвращается noChange, т.е. просто сбросом галочки.
+          if (!r)
+            // Пришёл сигнал управления галочкой, но у юзера нет прав влиять на эту галочку.
+            logger.warn( ErrorMsgs.ACTION_WILL_BE_FORBIDDEN_BY_SERVER, msg = m )
+          r
         }
+      } yield {
+        // Выставить новое значение галочки в состояние узла, организовать реквест на сервер с апдейтом.
+        val fx = Effect {
+          val rcvrKey = m.rcvrKey
+          api
+            .setNodeEnabled( mns0.info.id, m.isEnabled )
+            .transform { tryRes =>
+              val r = NodeIsEnabledUpdateResp(rcvrKey, tryRes)
+              Success(r)
+            }
+        }
+
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel {
+              MNodeState.isEnableUpd.set(
+                Some( MNodeEnabledUpdateState(
+                  newIsEnabled  = m.isEnabled,
+                  request       = Pending()
+                ) )
+              )
+            }
+            .toTree
+        }(v0)
+
+        updated(v2, fx)
+      })
+        .getOrElse( noChange )
 
 
     // Ответ сервер по поводу флага isEnabled для какого-то узла.
     case m: NodeIsEnabledUpdateResp =>
       val v0 = value
-      val nodes2 = MNodeState
-        .flatMapSubNode(m.rcvrKey, v0.nodes) { nodeState =>
-          val nodeState2 = m.resp.fold [MNodeState] (
-            // При ошибке запроса: сохранить ошибку в состояние
-            {ex =>
-              MNodeState.isEnableUpd
-                .composeTraversal( Traversal.fromTraverse[Option, MNodeEnabledUpdateState] )
-                .modify { nodeEnabledState =>
-                  nodeEnabledState.copy(
-                    newIsEnabled  = nodeState.info.isEnabled,
-                    request       = nodeEnabledState.request.fail(ex)
-                  )
-                }(nodeState)
-            },
 
-            // Если всё ок, то обновить состояние текущего узла.
-            {newNodeInfo =>
-              nodeState.copy(
-                info            = newNodeInfo,
-                isEnabledUpd  = None
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        mns0 = loc0.getLabel
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel(
+              m.resp.fold(
+                // При ошибке запроса: сохранить ошибку в состояние
+                {ex =>
+                  MNodeState.isEnableUpd
+                    .composeTraversal( Traversal.fromTraverse[Option, MNodeEnabledUpdateState] )
+                    .modify { nodeEnabledState =>
+                      nodeEnabledState.copy(
+                        newIsEnabled  = mns0.info.isEnabled,
+                        request       = nodeEnabledState.request.fail(ex)
+                      )
+                    }
+                },
+
+                // Если всё ок, то обновить состояние текущего узла.
+                {newNodeInfo =>
+                  MNodeState.infoPot.modify(_.ready( newNodeInfo )) andThen
+                  MNodeState.isEnableUpd.set( None )
+                }
               )
-            }
-          )
-          nodeState2 :: Nil
-        }
-        .toList
+            )
+            .toTree
+        }(v0)
 
-      val v2 = MTree.nodes.set(nodes2)(v0)
-      updated(v2)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал о завершении запроса к серверу по поводу удаления узла.
     case m: NodeDeleteResp =>
       val v0 = value
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, nodes0)( MNodeState.deleteF )
-          .toList
-      }(v0)
-      updated(v2)
+
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+      } yield {
+        val loc2 = m.resp.fold(
+          {ex =>
+            loc0
+              .modifyLabel(
+                MNodeState.infoPot.modify(_.fail(ex))
+              )
+          },
+          {_ =>
+            // isDeleted=false может ознаачть, что узел уже был удалён ранее, параллельным запросом. Считаем, что всегда true.
+            loc0
+              .delete
+              // В корне пирамиды находится юзер. Удалить сам себя он наверное не может...
+              .getOrElse {
+                // Но если смог, то надо перезагружать страницу:
+                DomQuick.reloadPage()
+                throw new IllegalStateException()
+              }
+          }
+        )
+
+        val v2 = (MTree.nodes set loc2.toTree)(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал клика по кнопке редактирования узла.
     case m: NodeEditClick =>
       val v0 = value
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState
-          .flatMapSubNode( m.rcvrKey, nodes0 ) { mns0 =>
-            val mns2 = MNodeState.editing.set( Some(
-              MEditNodeState(
-                name = mns0.info.name,
-                nameValid = true
-              )
-            ))(mns0)
-            mns2 :: Nil
-          }
-          .toList
-      }(v0)
-      updated(v2)
+
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        mns0 = loc0.getLabel
+        if mns0.editing.isEmpty
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel(
+              MNodeState.editing.set( Some(
+                MEditNodeState(
+                  name = mns0.info.name,
+                  nameValid = true
+                )
+              ))
+            )
+            .toTree
+        }(v0)
+
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал ввода нового имени узла.
     case m: NodeEditNameChange =>
-      _updateOptState[MEditNodeState](m, MNodeState.editing) { addStateOpt0 =>
-        val name2 = StringUtil.strLimitLen(
-          str     = m.name,
-          maxLen  = NodeEditConstants.Name.LEN_MAX,
-          ellipsis = ""
-        )
-        val nameValid2 = name2.length >= NodeEditConstants.Name.LEN_MIN
-
-        addStateOpt0.map(
-          _.withName(name2, nameValid2)
-        )
+      _maybeUpdateNode( m.rcvrKey, m ) { mns0 =>
+        for {
+          addState0 <- mns0.editing
+          name2 = StringUtil.strLimitLen(
+            str     = m.name,
+            maxLen  = NodeEditConstants.Name.LEN_MAX,
+            ellipsis = ""
+          )
+          nameValid2 = name2.length >= NodeEditConstants.Name.LEN_MIN
+          if (name2 !=* addState0.name) || (nameValid2 !=* addState0.nameValid)
+        } yield {
+          val addState2 = addState0.withName( name2, nameValid2 )
+          (MNodeState.editing set Some(addState2))(mns0)
+        }
       }
+
 
     // Сигнал отмены редактирования узла.
     case m: NodeEditCancelClick =>
-      _updateOptState[MEditNodeState](m, MNodeState.editing) { _ => None }
+      _maybeUpdateNode( m.rcvrKey, m) { mns0 =>
+        val lens = MNodeState.editing
+        Option.when( lens.get(mns0).nonEmpty )(
+          (lens set None)(mns0)
+        )
+      }
+
 
     // Сигнал подтверждения редактирования узла.
     case m: NodeEditOkClick =>
       val v0 = value
-      val rcvrKey = m.rcvrKey
-      val n0 = MNodeState.findSubNode(rcvrKey, v0.nodes).get
-      val editState0 = n0.editing.get
 
-      if (editState0.isValid) {
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        mns0 = loc0.getLabel
+        editState0 <- mns0.editing
+        if editState0.isValid
+        nodeId = mns0.info.id
+      } yield {
         // Эффект обновления данных узла на сервере.
         val fx = Effect {
-          val nodeId = rcvrKey.last
           val req = MLknNodeReq(
             name  = editState0.name.trim,
             id    = None
@@ -411,279 +501,299 @@ class TreeAh[M](
           api
             .editNode(nodeId, req)
             .transform { tryResp =>
-              val r = NodeEditSaveResp(rcvrKey, tryResp)
+              val r = NodeEditSaveResp(m.rcvrKey, tryResp)
               Success(r)
             }
         }
 
-        // Обновление состояния формы.
-        val editStateSome2 = Some( editState0.withSavingPending() )
-
-        val v2 = MTree.nodes.modify { nodes0 =>
-          MNodeState
-            .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
-              val mns2 = (MNodeState.editing set editStateSome2)(mns0)
-              mns2 :: Nil
-            }
-            .toList
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel(
+              MNodeState.editing
+                .set( Some(editState0.withSavingPending()) )
+            )
+            .toTree
         }(v0)
-        updated(v2, fx)
 
-      } else {
-        noChange
-      }
+        updated(v2, fx)
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал завершения запроса сохранения с сервера.
     case m: NodeEditSaveResp =>
       val v0 = value
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, nodes0) { mns0 =>
-            val mnsModF = m.tryResp.fold[MNodeState => MNodeState](
-              {ex =>
-                MNodeState.editing
-                  .composeTraversal( Traversal.fromTraverse[Option, MEditNodeState] )
-                  .composeLens( MEditNodeState.saving )
-                  .modify(_.fail(ex))
-              },
-              {info2 =>
-                (
+
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel(
+              m.tryResp.fold[MNodeState => MNodeState](
+                {ex =>
+                  MNodeState.editing
+                    .composeTraversal( Traversal.fromTraverse[Option, MEditNodeState] )
+                    .composeLens( MEditNodeState.saving )
+                    .modify(_.fail(ex))
+                },
+                {info2 =>
                   MNodeState.editing.set( None ) andThen
-                  MNodeState.info.set( info2 )
-                )
-              }
+                  MNodeState.infoPot.modify( _.ready(info2) )
+                }
+              )
             )
-            val mns2 = mnsModF( mns0 )
-            mns2 :: Nil
-          }
-          .toList
-      }(v0)
-      updated(v2)
+            .toTree
+        }(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Юзер почитать развернуть подробности по тарифу.
     case m: TfDailyShowDetails =>
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, nodes0) { mns0 =>
-            val mns2 = (MNodeState.tfInfoWide set true)(mns0)
-            mns2 :: Nil
-          }
-          .toList
-      }(value)
-      updated( v2 )
+      val v0 = value
+
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        mns0 = loc0.getLabel
+        lens = MNodeState.tfInfoWide
+        if !lens.get(mns0)
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel(lens set true)
+            .toTree
+        }(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал о завершении запроса к серверу на тему редактирования тарифа размещения.
     case m: TfDailySavedResp =>
       val v0 = value
-      val rcvrKey = v0.showProps.get
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState
-          .flatMapSubNode( rcvrKey, nodes0 ) { mns0 =>
-            val mns2 = m.tryResp.fold(
-              {_ =>
-                // Ошибка должна быть отработана EditTfDailyAh.
-                mns0
-              },
-              {node2 =>
-                MNodeState.info.set(node2)(mns0)
-              }
-            )
-            mns2 :: Nil
-          }
-          .toList
-      }(v0)
 
-      updated(v2)
+      (for {
+        loc0 <- v0.openedLoc
+        // Ошибка должна быть отработана EditTfDailyAh:
+        nodeInfo2 <- m.tryResp.toOption
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel( MNodeState.infoPot.modify(_.ready(nodeInfo2)) )
+            .toTree
+        }(v0)
+
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Реакция на изменение галочки showOpened напротив узла.
     case m: AdvShowOpenedChange =>
       val conf = confRO()
-      conf.adIdOpt.fold {
-        // adId не задан в конфиге формы. Should never happen.
-        logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
-        noChange
 
-      } { adId =>
-        val v0 = value
-        MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
-          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
-          noChange
-        } { mns0 =>
-          if (mns0.adv.nonEmpty) {
-            // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
+      // adId не задан в конфиге ad-режима формы. Should never happen.
+      if (conf.adIdOpt.isEmpty)
+        logger.error( ErrorMsgs.AD_ID_IS_EMPTY, msg = (m, conf) )
+
+      (for {
+        adId <- conf.adIdOpt
+        v0 = value
+        locOpt0 = v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        loc0 <- {
+          if (locOpt0.isEmpty)
+            logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          locOpt0
+        }
+        mns0 = loc0.getLabel
+        if {
+          val r = mns0.adv.isEmpty
+          // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
+          if (!r)
             logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
-            noChange
-
-          } else {
-            // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
-            val rcvrKey = m.rcvrKey
-
-            // Организовать реквест на сервер.
-            val fx = Effect {
-              api.setAdvShowOpened(
-                adId          = adId,
-                isShowOpened  = m.isChecked,
-                onNode        = rcvrKey
-              ).transform { tryResp =>
-                Success( AdvShowOpenedChangeResp(m, tryResp) )
-              }
-            }
-
-            // Обновить состояние формы.
-            val v2 = MTree.nodes.modify { nodes0 =>
-              MNodeState
-                .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
-                  val mns2 = MNodeState.adv.set(
-                    Some( MNodeAdvState(
-                      isShowOpenedPot = Pot
-                        .empty[Boolean]
-                        .ready(m.isChecked)
-                        .pending()
-                    ))
-                  )(mns0)
-                  mns2 :: Nil
-                }
-                .toList
-            }(v0)
-
-            updated(v2, fx)
+          r
+        }
+      } yield {
+        // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
+        // Организовать реквест на сервер.
+        val fx = Effect {
+          api.setAdvShowOpened(
+            adId          = adId,
+            isShowOpened  = m.isChecked,
+            onNode        = loc0.rcvrKey,
+          ).transform { tryResp =>
+            Success( AdvShowOpenedChangeResp(m, tryResp) )
           }
         }
-      }
+
+        // Обновить состояние формы.
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel {
+              MNodeState.adv.set(
+                Some( MNodeAdvState(
+                  isShowOpenedPot = Pot
+                    .empty[Boolean]
+                    .ready(m.isChecked)
+                    .pending()
+                ))
+              )
+            }
+            .toTree
+        }(v0)
+
+        updated(v2, fx)
+      })
+        .getOrElse(noChange)
 
 
     // Ответ сервера по запросу обновления галочки раскрытого
     case m: AdvShowOpenedChangeResp =>
       val v0 = value
 
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState.flatMapSubNode(m.rcvrKey, nodes0) { nodeState =>
-          val nodeState2 = m.tryResp.fold [MNodeState] (
-            // При ошибке запроса: сохранить ошибку в состояние
-            {ex =>
-              MNodeState.adv
-                .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
-                .composeLens( MNodeAdvState.isShowOpenedPot )
-                .set( Pot.empty[Boolean].fail(ex) )(nodeState)
-            },
-            // Если всё ок, то обновить состояние текущего узла.
-            {_ =>
-              (
-                MNodeState.adv.set(None) andThen
-                MNodeState.info
-                  .composeLens( MLknNode.adv )
-                  .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
-                  .composeLens( MLknAdv.advShowOpened )
-                  .set( m.reason.isChecked )
-              )( nodeState )
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel {
+              m.tryResp.fold (
+                // При ошибке запроса: сохранить ошибку в состояние
+                {ex =>
+                  MNodeState.adv
+                    .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
+                    .composeLens( MNodeAdvState.isShowOpenedPot )
+                    .set( Pot.empty[Boolean].fail(ex) )
+                },
+                // Если всё ок, то обновить состояние текущего узла.
+                {_ =>
+                  MNodeState.adv.set(None) andThen
+                  MNodeState.infoPot.modify { _.map {
+                    MLknNode.adv
+                      .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
+                      .composeLens( MLknAdv.advShowOpened )
+                      .set( m.reason.isChecked )
+                  }}
+                }
+              )
             }
-          )
-          nodeState2 :: Nil
-        }
-        .toList
-      }(v0)
+            .toTree
+        }(v0)
 
-      updated(v2)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
 
     // Реакция на изменение галочки showOpened напротив узла.
     case m: AlwaysOutlinedSet =>
       val conf = confRO()
-      conf.adIdOpt.fold {
-        // adId не задан в конфиге формы. Should never happen.
+      // adId не задан в конфиге формы. Should never happen.
+      if (conf.adIdOpt.isEmpty)
         logger.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = (m, conf) )
-        noChange
 
-      } { adId =>
-        val v0 = value
-        MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
-          logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
-          noChange
-        } { mns0 =>
-          if (mns0.adv.nonEmpty) {
-            // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
+      (for {
+        adId <- conf.adIdOpt
+        v0 = value
+        locOpt0 = v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+        loc0 <- {
+          if (locOpt0.isEmpty)
+            logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          locOpt0
+        }
+        mns0 = loc0.getLabel
+        // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
+        if {
+          val r = mns0.adv.isEmpty
+          if (!r)
             logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
-            noChange
-
-          } else {
-            // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
-            val rcvrKey = m.rcvrKey
-
-            // Организовать реквест на сервер.
-            val fx = Effect {
-              api.setAlwaysOutlined(
-                adId          = adId,
-                isAlwaysOutlined = m.isChecked,
-                onNode        = rcvrKey
-              ).transform { tryResp =>
-                Success( AlwaysOutlinedResp(m, tryResp) )
-              }
-            }
-
-            // Обновить состояние формы.
-            val v2 = MTree.nodes.modify { nodes0 =>
-              MNodeState
-                .flatMapSubNode(rcvrKey, nodes0) { mns0 =>
-                  val pot2 = Pot
-                    .empty[Boolean]
-                    .ready(m.isChecked)
-                    .pending()
-                  val mns2 = MNodeState.adv.set(
-                    Some(
-                      mns0.adv.fold {
-                        MNodeAdvState(alwaysOutlinedPot = pot2)
-                      } {
-                        MNodeAdvState.alwaysOutlined.set(pot2)
-                      }
-                    )
-                  )(mns0)
-                  mns2 :: Nil
-                }
-                .toList
-            }(v0)
-
-            updated(v2, fx)
+          r
+        }
+      } yield {
+        // Организовать реквест на сервер.
+        val fx = Effect {
+          api.setAlwaysOutlined(
+            adId              = adId,
+            isAlwaysOutlined  = m.isChecked,
+            onNode            = loc0.rcvrKey,
+          ).transform { tryResp =>
+            Success( AlwaysOutlinedResp(m, tryResp) )
           }
         }
-      }
+
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel {
+              val pot2 = Pot
+                .empty[Boolean]
+                .ready(m.isChecked)
+                .pending()
+              MNodeState.adv.modify { advOpt0 =>
+                val adv1 = advOpt0.fold {
+                  MNodeAdvState(alwaysOutlinedPot = pot2)
+                } {
+                  MNodeAdvState.alwaysOutlined set pot2
+                }
+                Some( adv1 )
+              }
+            }
+            .toTree
+        }(v0)
+
+        updated(v2, fx)
+      })
+        .getOrElse( noChange )
 
 
     // Ответ сервера по запросу обновления галочки раскрытого
     case m: AlwaysOutlinedResp =>
       val v0 = value
 
-      val v2 = MTree.nodes.modify { nodes0 =>
-        MNodeState.flatMapSubNode(m.rcvrKey, nodes0) { nodeState =>
-          val nodeState2 = m.tryResp.fold [MNodeState] (
-            // При ошибке запроса: сохранить ошибку в состояние
-            {ex =>
-              MNodeState.adv
-                .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
-                .composeLens( MNodeAdvState.alwaysOutlined )
-                .set( Pot.empty[Boolean].fail(ex) )(nodeState)
-            },
-            // Если всё ок, то обновить состояние текущего узла.
-            {_ =>
-              (
-                MNodeState.adv.set(None) andThen
-                MNodeState.info
-                  .composeLens( MLknNode.adv )
-                  .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
-                  .composeLens( MLknAdv.alwaysOutlined )
-                  .set( m.reason.isChecked )
-              )( nodeState )
+      (for {
+        loc0 <- v0.nodes
+          .loc
+          .pathToNode( m.rcvrKey )
+      } yield {
+        val v2 = MTree.nodes.set {
+          loc0
+            .modifyLabel {
+              m.tryResp.fold(
+                // При ошибке запроса: сохранить ошибку в состояние
+                {ex =>
+                  MNodeState.adv
+                    .composeTraversal( Traversal.fromTraverse[Option, MNodeAdvState] )
+                    .composeLens( MNodeAdvState.alwaysOutlined )
+                    .set( Pot.empty[Boolean].fail(ex) )
+                },
+                // Если всё ок, то обновить состояние текущего узла.
+                {_ =>
+                  MNodeState.adv.set(None) andThen
+                    MNodeState.infoPot.modify( _.map(
+                      MLknNode.adv
+                        .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
+                        .composeLens( MLknAdv.alwaysOutlined )
+                        .set( m.reason.isChecked )
+                    ))
+                }
+              )
             }
-          )
-          nodeState2 :: Nil
-        }
-          .toList
-      }(v0)
-
-      updated(v2)
+            .toTree
+        }(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
   }
 

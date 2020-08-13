@@ -116,8 +116,8 @@ object ZTreeUtil {
       * @param f Функция создания нового элемента и нового аккамулятора для возможных нижележащих уровней.
       * @return Ленивое дерево с прежней структурой.
       */
-    def deepMapFold[Acc, T](accParent: Acc)(f: (Acc, A) => (Acc, T) ): Tree[T] = {
-      val (accChild, el2) = f(accParent, tree.rootLabel)
+    def deepMapFold[Acc, T](accParent: Acc)(f: (Acc, Tree[A]) => (Acc, T) ): Tree[T] = {
+      val (accChild, el2) = f(accParent, tree)
       Tree.Node(
         root   = el2,
         forest = tree
@@ -159,8 +159,12 @@ object ZTreeUtil {
       .fold[Option[TreeLoc[A]]] {
         Some( loc )
       } { hd =>
-        loc
-          .getChild(hd + 1)   // +1, потому что Tree считает с 1, а не с 0.
+        val chOpt = loc.getChild(hd + 1)
+        if (chOpt.isEmpty)
+          println(s"child #$hd missing, hasChildren?${loc.hasChildren} - ${loc.tree.subForest.length} available")
+        chOpt
+        //loc
+        //  .getChild(hd + 1)   // +1, потому что Tree считает с 1, а не с 0.
           .flatMap { chLoc =>
             _pathToNodeLoc(chLoc, restPath.tail)
           }

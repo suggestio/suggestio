@@ -19,19 +19,21 @@ object LkPreLoaderR {
   private def pleaseWait = Messages( MsgCodes.`Please.wait` )
 
 
-  val TextC = ScalaComponent.builder[Unit]("TextPreLoader")
+  val TextC = ScalaComponent
+    .builder[Unit]("TextPreLoader")
     .stateless
     .render { _ =>
       <.span(
         pleaseWait,
-        HtmlConstants.ELLIPSIS
+        HtmlConstants.ELLIPSIS,
       )
     }
     .build
   def Text = TextC()
 
 
-  val Anim = ScalaComponent.builder[Int]("PreLoader")
+  val Anim = ScalaComponent
+    .builder[Int]("PreLoader")
     .stateless
     .render_P { widthPx =>
       <.span(
@@ -43,7 +45,7 @@ object LkPreLoaderR {
             <.img(
               ^.src   := url,
               ^.title := pleaseWait,
-              ^.width := widthPx.px
+              ^.width := widthPx.px,
             )
           }
       )
@@ -51,8 +53,8 @@ object LkPreLoaderR {
     .build
 
 
-  def AnimSmall  = Anim(15)
+  def AnimSmall: VdomElement = Anim(15)
 
-  def AnimMedium = Anim(22)
+  def AnimMedium: VdomElement = Anim(22)
 
 }

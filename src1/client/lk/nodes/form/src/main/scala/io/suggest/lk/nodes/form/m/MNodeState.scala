@@ -1,11 +1,12 @@
 package io.suggest.lk.nodes.form.m
 
-import diode.data.{Pot, Ready}
-import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
-import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
-import io.suggest.primo.id.IId
-import japgolly.univeq.UnivEq
+import diode.data.Pot
+import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.lk.nodes.MLknNode
+import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
+import scalaz.TreeLoc
 
 /**
   * Suggest.io
@@ -14,71 +15,50 @@ import monocle.macros.GenLens
   * Description: Модель рантаймового состояния одного узла в списке узлов дерева.
   */
 
-object MNodeState
-  extends NodesTreeApiIId
-  with NodesTreeWalk
-  with NodeTreeUpdate
-{
+object MNodeState {
 
-  override type T = MNodeState
+  @inline implicit def univEq: UnivEq[MNodeState] = UnivEq.derive
 
-  override protected def _subNodesOf(node: MNodeState): IterableOnce[MNodeState] = {
-    node.children.getOrElse(Nil)
-  }
-
-  def apply(resp: MLknNodeResp): MNodeState = {
-    MNodeState(
-      info = resp.info,
-      children = {
-        if (resp.children.isEmpty) {
-          // А если дочерних узлов не существует, то children надо пропатчить через .withChildren() самостоятельно.
-          Pot.empty
-        } else {
-          val chs = for (ch <- resp.children) yield {
-            MNodeState(ch)
-          }
-          Ready(chs)
-        }
-      }
-    )
-  }
-
-  override def withNodeChildren(node: MNodeState, children2: IterableOnce[MNodeState]): MNodeState =
-    (MNodeState.children set Ready( children2.toSeq ) )(node)
-
-  @inline implicit def univEq: UnivEq[MNodeState] = {
-    import io.suggest.ueq.JsUnivEqUtil._
-    UnivEq.derive
-  }
-
-  def info        = GenLens[MNodeState](_.info)
-  def children    = GenLens[MNodeState](_.children)
+  def infoPot     = GenLens[MNodeState](_.infoPot)
   def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
   def editing     = GenLens[MNodeState](_.editing)
   def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
   def adv         = GenLens[MNodeState](_.adv)
+
+
+  implicit class MnsLocExt(private val loc: TreeLoc[MNodeState]) extends AnyVal {
+
+    /** Сборка цепочки id узлов от корня до указанного узла. */
+    def rcvrKey: RcvrKey = {
+      loc
+        .path
+        .map(_.info.id)
+        .reverse
+        .toList
+    }
+
+  }
 
 }
 
 
 /** Класс модели рантаймового состояния одного узла в списке узлов.
   *
-  * @param info Данные по узлу, присланные сервером.
-  * @param children Состояния дочерних элементов в натуральном порядке.
-  *                 Элементы запрашиваются с сервера по мере необходимости.
+  * @param infoPot Данные по узлу, присланные сервером.
+  *                Pot нужен, т.к. существует недетализованное содержимое узла, когда нет части данных.
+  *                По идее, Pot.empty тут не бывает.
   */
 case class MNodeState(
-                       info               : MLknNode,
-                       children           : Pot[Seq[MNodeState]]              = Pot.empty,
+                       infoPot            : Pot[MLknNode],
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        editing            : Option[MEditNodeState]            = None,
                        tfInfoWide         : Boolean                           = false,
-                       adv                : Option[MNodeAdvState]             = None
-                     )
-  extends IId[String]
-{
+                       adv                : Option[MNodeAdvState]             = None,
+                     ) {
 
-  override def id = info.id
+  require( info.nonEmpty )
+
+  def info = infoPot.get
 
   /** Является ли текущее состояние узла нормальным и обычным?
     *
@@ -90,4 +70,3 @@ case class MNodeState(
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
 
 }
-

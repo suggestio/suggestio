@@ -21,7 +21,6 @@ import scala.util.Success
 class CreateNodeAh[M](
                        api          : ILkNodesApi,
                        modelRW      : ModelRW[M, Option[MCreateNodeS]],
-                       //confRO     : ModelRO[MLknConf],
                        currNodeRO   : ModelRO[Option[RcvrKey]]
                      )
   extends ActionHandler(modelRW)

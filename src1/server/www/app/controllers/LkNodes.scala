@@ -18,7 +18,6 @@ import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.primo.id._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
@@ -36,6 +35,7 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import japgolly.univeq._
+import scalaz.{EphemeralStream, Tree}
 import util.TplDataFormatUtil
 
 import scala.concurrent.Future
@@ -98,8 +98,26 @@ final class LkNodes @Inject() (
     }
   }
 
-  private def _subNodesRespFor(mnode: MNode, madOpt: Option[MNode])
-                              (implicit ctx: Context): Future[MLknNodeResp] = {
+
+  // Общий код сборки инфы по одному узлу.
+  private def _mkLknNode(mnode: MNode, madOpt: Option[MNode], isDetailed: Boolean,
+                         canChangeAvailability: Option[Boolean] = None,
+                         tf: Option[MTfDailyInfo] = None): MLknNode = {
+    val nodeId = mnode.id.get
+    MLknNode(
+      id                    = nodeId,
+      name                  = mnode.guessDisplayNameOrIdOrQuestions,
+      ntype                 = mnode.common.ntype,
+      isEnabled             = mnode.common.isEnabled,
+      canChangeAvailability = canChangeAvailability,
+      adv                   = _hasAdv(nodeId, madOpt),
+      tf                    = tf,
+      isDetailed            = isDetailed,
+    )
+  }
+
+  private def _detailsAndSubNodesFor(mnode: MNode, madOpt: Option[MNode])
+                                    (implicit ctx: Context): Future[Tree[MLknNode]] = {
     import ctx.request
 
     val nodeId = mnode.id.get
@@ -130,33 +148,22 @@ final class LkNodes @Inject() (
       Future.successful(None)
     }
 
-    // Общий код сборки инфы по одному узлу.
-    def _mkLknNode(mnode: MNode,
-                   canChangeAvailability: Option[Boolean] = None,
-                   tf: Option[MTfDailyInfo] = None): MLknNode = {
-      val nodeId = mnode.id.get
-      MLknNode(
-        id                    = nodeId,
-        name                  = mnode.guessDisplayNameOrIdOrQuestions,
-        ntype                 = mnode.common.ntype,
-        isEnabled             = mnode.common.isEnabled,
-        canChangeAvailability = canChangeAvailability,
-        adv                   = _hasAdv(nodeId, madOpt),
-        tf                    = tf,
-      )
-    }
-
     // Рендер найденных узлов в данные для модели формы.
     for {
       subNodes                <- subNodesFut
-      // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
-      children = subNodes.map( _mkLknNode(_) )
       canChangeAvailability   <- canChangeAvailabilityFut
       tfDailyInfoOpt          <- tfDailyInfoOptFut
     } yield {
-      MLknNodeResp(
-        info      = _mkLknNode( mnode, Some( canChangeAvailability ), tfDailyInfoOpt ),
-        children  = children,
+      Tree.Node[MLknNode](
+        root = _mkLknNode( mnode, madOpt, isDetailed = true, Some( canChangeAvailability ), tfDailyInfoOpt ),
+        // TODO .fromLazyList(), когда scalaz дорастёт до обновления.
+        forest = subNodes
+          .toEphemeralStream
+          .map { chNode =>
+            // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
+            val lkn = _mkLknNode(chNode, madOpt, isDetailed = false)
+            Tree.Leaf( lkn )
+          },
       )
     }
   }
@@ -185,7 +192,7 @@ final class LkNodes @Inject() (
 
     // Поискать другие пользовательские узлы верхнего уровня. TODO А что будет, если текущий узел не является прямо-подчинённым текущему юзеру? Каша из узлов?
     val otherPersonNodesFut = request.user.personIdOpt
-      .fold[Future[List[MLknNodeResp]]] (Nil) { personId =>
+      .fold[Future[List[Tree[MLknNode]]]] (Future.successful(Nil)) { personId =>
         val msearch = nodesUtil.personNodesSearch(
           personId    = personId,
           withoutIds1 = onNode.id.toList
@@ -206,9 +213,11 @@ final class LkNodes @Inject() (
               isEnabled                 = mnode.common.isEnabled,
               canChangeAvailability     = someTrue,
               adv                       = _hasAdv(mnodeId, madOpt),
-              tf                        = None, // Не факт, что это важно.
+              tf                        = None, // tf для других узлов не особо важен, т.к. будет запрошен при открытии.
+              isDetailed                = false,
             )
-            MLknNodeResp(mLknNode, Nil)
+
+            Tree.Leaf( mLknNode )
           })
             .toList
         }
@@ -222,10 +231,27 @@ final class LkNodes @Inject() (
       getContext2
     }
 
+    val personNodeFut = for {
+      personNodeOpt <- request.user.personNodeOptFut
+    } yield {
+      val personNode = personNodeOpt getOrElse {
+        LOGGER.warn(s"_lknFormPrep(): Person node#${request.user.personIdOpt.orNull} missing/invalid. Make ephemeral...")
+        MNode(
+          id = request.user.personIdOpt,
+          common = MNodeCommon(
+            ntype = MNodeTypes.Person,
+            isDependent = false,
+          ),
+        )
+      }
+      _mkLknNode( personNode, madOpt, isDetailed = true )
+    }
+
     val formStateFut = for {
       // Запустить поиск под-узлов для текущего узла.
       ctx               <- ctxFut
-      subNodesResp      <- _subNodesRespFor(onNode, madOpt = madOpt)(ctx)
+      subNodesResp      <- _detailsAndSubNodesFor(onNode, madOpt = madOpt)(ctx)
+      personNode        <- personNodeFut
       otherPersonNodes  <- otherPersonNodesFut
     } yield {
       val minit = MLknFormInit(
@@ -233,7 +259,13 @@ final class LkNodes @Inject() (
           onNodeId = nodeId,
           adIdOpt  = madOpt.flatMap(_.id)
         ),
-        nodes0   = subNodesResp :: otherPersonNodes
+        // Собрать дефолтовый ответ сервера для текущего узла, чтобы не было лишнего запроса к серверу после инициализации.
+        resp0 = MLknNodeResp(
+          subTree = Tree.Node(
+            root   = personNode,
+            forest = EphemeralStream.fromList[Tree[MLknNode]]( subNodesResp :: otherPersonNodes ),
+          )
+        ),
       )
       Json.toJson( minit ).toString()
     }
@@ -257,7 +289,7 @@ final class LkNodes @Inject() (
     */
   def nodesOf(nodeIdU: MEsUuId) = csrf.AddToken {
     val nodeId = nodeIdU: String
-    isNodeAdmin(nodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(nodeId, U.Lk, U.PersonNode).async { implicit request =>
       for {
         res               <- _lknFormPrep(request.mnode)
       } yield {
@@ -279,9 +311,10 @@ final class LkNodes @Inject() (
   def nodeInfo(nodeId: String) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
       for {
-        resp <- _subNodesRespFor(request.mnode, madOpt = None)    // TODO Сделать madOpt универсальным
+        detailsAndSubnodes <- _detailsAndSubNodesFor(request.mnode, madOpt = None)
       } yield {
-        LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${resp.children.toIdIter[String].mkString(", ")}")
+        LOGGER.trace(s"nodeInfo($nodeId): Found ${detailsAndSubnodes.subForest.length} sub-nodes: ${EphemeralStream.toIterable( detailsAndSubnodes.subForest.map(_.rootLabel.id) ).mkString(", ")}")
+        val resp = MLknNodeResp( detailsAndSubnodes )
         Ok( Json.toJson(resp) )
       }
     }
@@ -403,6 +436,7 @@ final class LkNodes @Inject() (
                 // Текущий юзер создал юзер, значит он может его и удалить.
                 canChangeAvailability = OptionUtil.SomeBool.someTrue,
                 tf        = Some(tfDailyInfo),
+                isDetailed = true,
               )
               Ok( Json.toJson(mResp) )
             }
@@ -458,6 +492,7 @@ final class LkNodes @Inject() (
             isEnabled               = isEnabled,
             canChangeAvailability   = OptionUtil.SomeBool.someTrue,
             tf                      = Some(tfDailyInfo),
+            isDetailed              = true,
           )
           Ok( Json.toJson(mLknNode) )
         }
@@ -542,6 +577,7 @@ final class LkNodes @Inject() (
                 isEnabled               = mnode.common.isEnabled,
                 canChangeAvailability   = OptionUtil.SomeBool.someTrue,
                 tf                      = Some(tfDailyInfo),
+                isDetailed              = true,
               )
               Ok( Json.toJson(m) )
             }
@@ -560,7 +596,7 @@ final class LkNodes @Inject() (
     */
   def nodesForAd(adIdU: MEsUuId) = csrf.AddToken {
     val adId = adIdU: String
-    canAdvAd(adId).async { implicit request =>
+    canAdvAd(adId, U.PersonNode).async { implicit request =>
       // Сборка дерева узлов. Интересует узел-продьюсер.
       for {
         res <- _lknFormPrep(request.producer, madOpt = Some(request.mad))
@@ -636,8 +672,8 @@ final class LkNodes @Inject() (
           isEnabled = request.mnode.common.isEnabled,
           canChangeAvailability = OptionUtil.SomeBool.someTrue,
           adv       = _hasAdv(nodeId, Some(mnode2)),
-          //hasAdv    = OptionUtil.SomeBool( isEnabled ),
           tf        = None, // На странице размещения это не важно
+          isDetailed = true,
         )
 
         // Отправить сериализованные данные по узлу.
@@ -701,6 +737,7 @@ final class LkNodes @Inject() (
               isEnabled = mnode2.common.isEnabled,
               canChangeAvailability = OptionUtil.SomeBool.someTrue,
               tf        = Some(tfInfo),
+              isDetailed = true,
             )
 
             // Собрать HTTP-ответ клиенту

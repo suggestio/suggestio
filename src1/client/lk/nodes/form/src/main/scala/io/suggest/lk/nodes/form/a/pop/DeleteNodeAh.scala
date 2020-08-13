@@ -5,6 +5,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
+import io.suggest.scalaz.NodePath_t
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.util.Success
@@ -18,8 +19,9 @@ import scala.util.Success
 class DeleteNodeAh[M](
                        api        : ILkNodesApi,
                        modelRW    : ModelRW[M, Option[MDeleteConfirmPopupS]],
-                       currNodeRO : ModelRO[Option[RcvrKey]]
-                  )
+                       currNodeRO : ModelRO[Option[RcvrKey]],
+                       openedPathRO: ModelRO[Option[NodePath_t]],
+                     )
   extends ActionHandler(modelRW)
 {
 
@@ -39,11 +41,12 @@ class DeleteNodeAh[M](
       // Запустить удаление узла на сервере.
       val fx = Effect {
         val rcvrKey = currNodeRO().get
+        val nodePath = openedPathRO().get
         val nodeId = rcvrKey.last
         api
           .deleteNode( nodeId )
           .transform { tryRes =>
-            val r = NodeDeleteResp(rcvrKey, tryRes)
+            val r = NodeDeleteResp(nodePath, tryRes)
             Success(r)
           }
       }

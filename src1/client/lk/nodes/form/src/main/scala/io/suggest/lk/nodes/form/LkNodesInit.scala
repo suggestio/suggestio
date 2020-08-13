@@ -6,7 +6,7 @@ import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.lk.nodes.form.m.MLkNodesRoot.MLknRootFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import org.scalajs.dom.raw.HTMLDivElement
-import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import com.softwaremill.macwire._
 import io.suggest.init.routed.InitRouter

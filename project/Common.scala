@@ -80,7 +80,7 @@ object Common {
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
-    val SCALAZ = "7.3.+"
+    val SCALAZ = "7.3.2"
 
     /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]

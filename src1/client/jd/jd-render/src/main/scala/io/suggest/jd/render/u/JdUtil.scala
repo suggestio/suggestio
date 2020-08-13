@@ -139,7 +139,8 @@ object JdUtil {
     jdDoc
       .template
       .zipWithIndex
-      .deepMapFold( jdDoc.tagId ) { case (jdId, (jdt, i)) =>
+      .deepMapFold( jdDoc.tagId ) { case (jdId, jdSubTree) =>
+        val (jdt, i) = jdSubTree.rootLabel
         // Для каждого не-верхнего элемента требуется увеличить selPath:
         var updAcc = List.empty[MJdTagId => MJdTagId]
 

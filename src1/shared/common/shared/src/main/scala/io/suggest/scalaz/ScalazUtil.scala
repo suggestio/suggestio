@@ -6,7 +6,7 @@ import io.suggest.err.ErrorConstants
 
 import scala.collection.{AbstractIterable, AbstractIterator}
 import scala.collection.immutable.AbstractSeq
-import scalaz.{Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
+import scalaz.{EphemeralStream, Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
 import japgolly.univeq._
 
@@ -198,6 +198,42 @@ object ScalazUtil {
 
     /** Поддержка std api для NonEmptyList. */
     implicit final class RichNel[T](nel: NonEmptyList[T]) extends RichIList(nel.list)
+
+
+    implicit final class EphStreamExt[A]( private val eph: EphemeralStream[A] ) extends AnyVal {
+      def toIterable = EphemeralStream.toIterable( eph )
+      def iterator = toIterable.iterator
+    }
+
+    /** Доп.API к статическому EphemeralStream. */
+    implicit final class EphStreamStaticExt( private val ephSt: EphemeralStream.type ) extends AnyVal {
+
+      /** Представление LazyList в EphemeralStream.
+        *
+        * scalaz-7.3.2: В scalaz master уже есть этот статический метод, но в релизе нет.
+        * Удалить этот метод, когда будет нормальная поддержка в обычном EphemeralStream.
+        *
+        * @see [[https://github.com/scalaz/scalaz/blob/master/core/src/main/scala/scalaz/EphemeralStream.scala#L341]]
+        */
+      def fromLazyList[A](s: LazyList[A]): EphemeralStream[A] = {
+        s match {
+          case LazyList()   => ephSt.emptyEphemeralStream
+          case h #:: t      => ephSt.cons(h, fromLazyList(t))
+        }
+      }
+
+      def fromList[A](s: List[A]): EphemeralStream[A] = {
+        s match {
+          case Nil          => ephSt.emptyEphemeralStream
+          case h :: t       => ephSt.cons(h, fromList(t))
+        }
+      }
+
+    }
+    implicit final class LazyListExt[T]( private val ll: LazyList[T] ) extends AnyVal {
+      def toEphemeralStream: EphemeralStream[T] =
+        EphemeralStream.fromLazyList( ll )
+    }
 
   }
 

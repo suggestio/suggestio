@@ -26,7 +26,8 @@ object MLknNode {
     (__ \ "e").format[Boolean] and
     (__ \ "a").formatNullable[Boolean] and
     (__ \ "d").formatNullable[MLknAdv] and
-    (__ \ "f").formatNullable[MTfDailyInfo]
+    (__ \ "f").formatNullable[MTfDailyInfo] and
+    (__ \ "l").format[Boolean]
   )(apply, unlift(unapply))
 
 
@@ -61,5 +62,6 @@ case class MLknNode(
                      adv                    : Option[MLknAdv]           = None,
                      /** Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос. */
                      tf                     : Option[MTfDailyInfo],
+                     isDetailed             : Boolean,
                    )
   extends IId[String]

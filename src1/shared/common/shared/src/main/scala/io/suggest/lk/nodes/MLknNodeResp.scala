@@ -1,8 +1,11 @@
 package io.suggest.lk.nodes
 
-import japgolly.univeq.UnivEq
+import io.suggest.scalaz.ZTreeUtil.{ZTREE_FORMAT, zTreeUnivEq}
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -16,25 +19,20 @@ import play.api.libs.functional.syntax._
 
 object MLknNodeResp {
 
-  @inline implicit def univEq: UnivEq[MLknNodeResp] = {
-    import io.suggest.ueq.UnivEqUtil._
-    UnivEq.derive
-  }
+  @inline implicit def univEq: UnivEq[MLknNodeResp] = UnivEq.derive
 
   /** Поддержка play-json. */
-  implicit def mLknNodeRespFormat: OFormat[MLknNodeResp] = (
-    (__ \ "i").format[MLknNode] and
-    (__ \ "c").format[Seq[MLknNode]]
-  )(apply, unlift(unapply))
+  implicit def mLknNodeRespFormat: OFormat[MLknNodeResp] = {
+    (__ \ "i").format[Tree[MLknNode]]
+      .inmap[MLknNodeResp]( apply, _.subTree )
+  }
 
 }
 
 /**
   * Класс модели ответа на запрос под-списка узлов.
-  * @param info Инфа по узлу, если требуется.
-  * @param children Дочерние узлы.
+  * @param subTree Инфа по узлу и его под-узлам.
   */
 case class MLknNodeResp(
-                         info       : MLknNode,
-                         children   : Seq[MLknNode]
+                         subTree    : Tree[MLknNode],
                        )

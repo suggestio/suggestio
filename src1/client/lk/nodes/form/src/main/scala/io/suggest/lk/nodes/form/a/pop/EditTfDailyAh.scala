@@ -84,24 +84,30 @@ class EditTfDailyAh[M](
     // Сигнал запуска редактирования посуточного тарифа. Инициализировать состояние редактора тарифа.
     case TfDailyEditClick =>
       val tree = treeRO()
-      val currNode = MNodeState.findSubNode(tree.showProps.get, tree.nodes).get
-      val currNodeTfOpt = currNode.info.tf
 
-      val mode0 = currNodeTfOpt.fold [ITfDailyMode] {
-        // Should never happen: сервер забыл передать данные по тарифу.
-        logger.warn( ErrorMsgs.TF_UNDEFINED, msg = currNode.info )
-        InheritTf
-      } { tf0 =>
-        tf0.mode
-      }
-      val (mia, _) = _nodeTfOpt2mia(currNodeTfOpt)
+      (for {
+        loc0 <- tree.openedLoc
+        currNode = loc0.getLabel
+      } yield {
+        val currNodeTfOpt = currNode.info.tf
 
-      val v2 = MEditTfDailyS(
-        mode       = mode0,
-        nodeTfOpt  = currNodeTfOpt,
-        inputAmount = Some( mia )
-      )
-      updated( Some(v2) )
+        val mode0 = currNodeTfOpt.fold [ITfDailyMode] {
+          // Should never happen: сервер забыл передать данные по тарифу.
+          logger.warn( ErrorMsgs.TF_UNDEFINED, msg = currNode.info )
+          InheritTf
+        } { tf0 =>
+          tf0.mode
+        }
+        val (mia, _) = _nodeTfOpt2mia(currNodeTfOpt)
+
+        val v2 = MEditTfDailyS(
+          mode       = mode0,
+          nodeTfOpt  = currNodeTfOpt,
+          inputAmount = Some( mia )
+        )
+        updated( Some(v2) )
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал о том, что юзер выбрал режим наследования тарифа.
@@ -126,26 +132,31 @@ class EditTfDailyAh[M](
 
     case TfDailySaveClick =>
       val v0 = value.get
-      if (!v0.isValid) {
-        // Should never happen: isValid вызывается в шаблоне.
-        logger.log( ErrorMsgs.VALIDATION_FAILED, msg = v0 )
-        noChange
-
-      } else {
-        val rcvrKey = treeRO().showProps.get
-
+      (for {
+        v0 <- value
+        if {
+          val r = v0.isValid
+          // Should never happen: isValid вызывается в шаблоне.
+          if (!r) logger.log( ErrorMsgs.VALIDATION_FAILED, msg = v0 )
+          r
+        }
+        rcvrKey <- treeRO().openedRcvrKey
+      } yield {
         // Запрос на сервер:
         val fx = Effect {
-          api.setTfDaily(rcvrKey, v0.mode).transform { tryRes =>
-            Success(TfDailySavedResp(tryRes))
-          }
+          api
+            .setTfDaily( rcvrKey, v0.mode )
+            .transform { tryRes =>
+              Success(TfDailySavedResp(tryRes))
+            }
         }
 
         // Обновление состояния:
         val v2 = MEditTfDailyS.request.modify(_.pending())(v0)
 
         updated(Some(v2), fx)
-      }
+      })
+        .getOrElse( noChange )
 
 
     // Сигнал завершения реквеста к серверу.

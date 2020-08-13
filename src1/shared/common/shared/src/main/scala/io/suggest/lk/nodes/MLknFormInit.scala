@@ -19,7 +19,7 @@ object MLknFormInit {
 
   implicit def mLknFormInitFormat: OFormat[MLknFormInit] = (
     (__ \ "c").format[MLknConf] and
-    (__ \ "n").format[Seq[MLknNodeResp]]
+    (__ \ "n").format[MLknNodeResp]
   )(apply, unlift(unapply))
 
 }
@@ -27,9 +27,9 @@ object MLknFormInit {
 
 /** Класс модели с данными для начальной конфигурацией формы.
   *
-  * @param nodes0 Начальный список под-узлов, чтобы его не дёргать с сервера.
+  * @param resp0 Начальный список под-узлов, чтобы его не дёргать с сервера.
   */
 case class MLknFormInit(
                          conf       : MLknConf,
-                         nodes0     : Seq[MLknNodeResp]
+                         resp0      : MLknNodeResp,
                        )
