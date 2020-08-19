@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.first
 
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentText, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentText, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSvgIconClasses, MuiSvgIconProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.UseValueEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
@@ -16,7 +16,6 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
-
 
 /**
   * Suggest.io
@@ -86,11 +85,14 @@ class WzFirstR(
                   scComponents.diaTitle(props.css.header.htmlClass :: Nil)(
                     title,
                     platformCssP.consume { platformCss =>
-                      icon(
-                        new MuiSvgIconProps {
-                          override val className = platformCss.Dialogs.titleIcon.htmlClass
+                      icon {
+                        val css = new MuiSvgIconClasses {
+                          override val root = platformCss.Dialogs.titleIcon.htmlClass
                         }
-                      )()
+                        new MuiSvgIconProps {
+                          override val classes = css
+                        }
+                      }()
                     },
                   )
                 },

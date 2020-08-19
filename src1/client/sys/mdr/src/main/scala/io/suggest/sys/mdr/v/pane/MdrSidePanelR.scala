@@ -105,7 +105,7 @@ class MdrSidePanelR(
                     mdrRowR.PropsVal(
                       actionInfo  = ai,
                       mtgVariant  = MuiTypoGraphyVariants.h5,
-                      approveIcon = Mui.SvgIcons.DoneOutline,
+                      approveIcon = Mui.SvgIcons.DoneOutlined,
                       dismissIcon = Mui.SvgIcons.Warning,
                       mdrPot      = __mdrPot(ai),
                     )
@@ -153,7 +153,7 @@ class MdrSidePanelR(
                             actionInfo  = ai,
                             mtgVariant  = MuiTypoGraphyVariants.body2,
                             approveIcon = Mui.SvgIcons.Done,
-                            dismissIcon = Mui.SvgIcons.ErrorOutline,
+                            dismissIcon = Mui.SvgIcons.ErrorOutlined,
                             mdrPot      = __mdrPot(ai),
                             itemIdOpt   = mitem.id,
                           )
@@ -247,7 +247,7 @@ class MdrSidePanelR(
                       actionInfo  = ai,
                       mtgVariant  = MuiTypoGraphyVariants.h5,
                       approveIcon = Mui.SvgIcons.DoneAll,
-                      dismissIcon = Mui.SvgIcons.ErrorOutline,
+                      dismissIcon = Mui.SvgIcons.ErrorOutlined,
                       mdrPot      = __mdrPot(ai),
                     )
                   } { mdrRowPropsProxy =>

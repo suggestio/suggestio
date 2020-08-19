@@ -27,7 +27,7 @@ case object MImgFormats extends StringEnum[MImgFormat] {
   case object PNG extends MImgFormat("p") {
     override def name = "png"
     override def uploadMaxFileSizeKb = 4 * bInKb
-    override def uploadSideSizeMaxPx = 2000
+    override def uploadSideSizeMaxPx = 3000
   }
 
   case object GIF extends MImgFormat("g") {

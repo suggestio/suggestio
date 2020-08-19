@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search.found
 
-import com.materialui.{Mui, MuiGrid, MuiGridClasses, MuiGridProps, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
+import com.materialui.{Mui, MuiGrid, MuiGridClasses, MuiGridProps, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconClasses, MuiSvgIconProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -26,6 +26,7 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -178,8 +179,11 @@ final case class NfRowR2(
             }
           }(
             Mui.SvgIcons.LocalOffer {
+              val css = new MuiSvgIconClasses {
+                override val root = NodesCSS.tagRowIcon.htmlClass
+              }
               new MuiSvgIconProps {
-                override val className = NodesCSS.tagRowIcon.htmlClass
+                override val classes = css
               }
             }()
           )

@@ -124,6 +124,9 @@ object Mui {
   @js.native @JSImport("@material-ui/core/ExpansionPanelDetails", JSImport.Default) object ExpansionPanelDetails extends js.Any
   @js.native @JSImport("@material-ui/core/ExpansionPanelSummary", JSImport.Default) object ExpansionPanelSummary extends js.Any
 
+  @js.native @JSImport("@material-ui/lab/TreeView", JSImport.Default) object TreeView extends js.Any
+  @js.native @JSImport("@material-ui/lab/TreeItem", JSImport.Default) object TreeItem extends js.Any
+
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   val SvgIcons = MuiSvgIcons
 

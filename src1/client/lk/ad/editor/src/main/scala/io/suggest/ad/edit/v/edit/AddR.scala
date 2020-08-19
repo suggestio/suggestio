@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.v.edit
 
-import com.materialui.{MuiFab, MuiFabProps, MuiFabVariants, MuiSvgIconProps, MuiSvgIcons}
+import com.materialui.{MuiFab, MuiFabProps, MuiFabVariants, MuiSvgIconClasses, MuiSvgIconProps, MuiSvgIcons}
 import diode.react.ModelProxy
 import scalacss.ScalaCssReact._
 import io.suggest.ad.edit.m.{AddBlockClick, AddBlockLessContentClick, AddContentClick}
@@ -44,9 +44,12 @@ class AddR(
       ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent => onAddBlockLessContentClick }
 
 
-    def render(p: Props): VdomElement = {
+    def render: VdomElement = {
+      val svgCss = new MuiSvgIconClasses {
+        override val root = lkAdEditCss.Layout.fabIcon.htmlClass
+      }
       val svgProps = new MuiSvgIconProps {
-        override val className = lkAdEditCss.Layout.fabIcon.htmlClass
+        override val classes = svgCss
       }
       val br = <.br
 

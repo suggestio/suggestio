@@ -19,14 +19,14 @@ import japgolly.univeq._
   * Created: 11.10.18 18:28
   * Description: Базовый класс для какой-то не-href кнопки на панели кнопок.
   */
-class MdrTbStepBtnR {
+final class MdrTbStepBtnR {
 
-  final case class PropsVal(
-                             titleMsgCode   : String,
-                             icon           : MuiSvgIcon,
-                             isDisabled     : Boolean,
-                             offsetDelta    : Int,
-                           )
+  case class PropsVal(
+                       titleMsgCode   : String,
+                       icon           : MuiSvgIcon,
+                       isDisabled     : Boolean,
+                       offsetDelta    : Int,
+                     )
   object PropsVal {
     def ToBeginning(isDisabled: Boolean, offsedDelta: Int): PropsVal =
       PropsVal(MsgCodes.`To.beginning`, Mui.SvgIcons.FastRewind, isDisabled, offsedDelta)

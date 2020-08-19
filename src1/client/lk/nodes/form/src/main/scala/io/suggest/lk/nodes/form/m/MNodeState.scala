@@ -2,7 +2,8 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.lk.nodes.MLknNode
+import io.suggest.lk.nodes.{MLknAdv, MLknNode}
+import io.suggest.spa.DiodeUtil
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
@@ -68,5 +69,20 @@ case class MNodeState(
   def isNormal = editing.isEmpty && !advIsPending
 
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
+
+  private def _boolPot(from: MNodeAdvState => Pot[Boolean], fallBack: MLknAdv => Boolean): Pot[Boolean] = {
+    adv
+      .map(from)
+      .orElse(
+        for (adv <- info.adv) yield
+          DiodeUtil.Bool( fallBack(adv) )
+      )
+      .getOrElse( Pot.empty[Boolean] )
+  }
+
+  // TODO Надо унифицировать этот однотипный зоопарк сущностей в коллекцию или ассоц.массив.
+  def advHasAdvPot = _boolPot(_.newIsEnabledPot, _.hasAdv)
+  def advAlwaysOpenedPot = _boolPot(_.isShowOpenedPot, _.advShowOpened)
+  def advAlwaysOutlinedPot = _boolPot(_.alwaysOutlinedPot, _.alwaysOutlined)
 
 }

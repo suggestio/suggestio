@@ -1,6 +1,6 @@
 package io.suggest.sc.v.inx
 
-import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSvgIconProps}
+import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSvgIconClasses, MuiSvgIconProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -53,8 +53,11 @@ class IndexSwitchAskR(
 
       // Содержимое плашки - приглашение на смену узла.
       MuiSnackBarContent {
+        val btnIconCss = new MuiSvgIconClasses {
+          override val root = notsCss.smallBtnSvgIcon.htmlClass
+        }
         val btnIconProps = new MuiSvgIconProps {
-          override val className = notsCss.smallBtnSvgIcon.htmlClass
+          override val classes = btnIconCss
         }
 
         // Содержимое левой части сообщения:

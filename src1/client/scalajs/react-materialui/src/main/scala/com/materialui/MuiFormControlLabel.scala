@@ -28,7 +28,7 @@ trait MuiFormControlLabelProps
   with MuiPropsBaseClasses[MuiFormControlLabelClasses]
   with MuiPropsBaseComponent
 {
-  val control: js.UndefOr[React.Element] = js.undefined
+  val control: React.Element
   val disabled: js.UndefOr[Boolean] = js.undefined
   val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] = js.undefined
   val label: js.UndefOr[React.Node] = js.undefined

@@ -1,6 +1,8 @@
 package io.suggest.lk.nodes.form.r.tree
 
+import com.materialui.{Mui, MuiTreeView, MuiTreeViewProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m._
 import io.suggest.scalaz.NodePath_t
@@ -10,6 +12,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -34,38 +37,63 @@ class TreeR(
 
     /** Рендер текущего компонента. */
     def render(p: Props, s: State): VdomElement = {
+
+      /** Функция рекурсивного рендер всего дерева узлов. */
+      def _renderTreeNodeIndexed(
+                                  subTree                 : Tree[(MNodeState, Int)],
+                                  parentNodePathRev       : NodePath_t                    = Nil,
+                                ): VdomElement = {
+        val (mns, i) = subTree.rootLabel
+        val nodePathRev: NodePath_t = i :: parentNodePathRev
+        val chs = subTree.subForest
+        val chsRendered = chs
+          .map { chTree =>
+            _renderTreeNodeIndexed(
+              subTree = chTree,
+              parentNodePathRev = nodePathRev,
+            )
+          }
+          .iterator
+          .toVdomArray
+
+        p.wrap { mroot =>
+          nodeR.PropsVal(
+            node = MNodeStateRender(
+              state = mns,
+              rawNodePathRev = nodePathRev,
+              chCountEnabled = chs
+                .iterator
+                .count { chTree =>
+                  chTree.rootLabel._1.info.isEnabled
+                },
+              chCount = chs.length,
+            ),
+            confAdId      = mroot.conf.adIdOpt,
+            opened        = mroot.tree.opened,
+            deleteOpt     = mroot.popups.deleteNodeS,
+          )
+        } (
+          nodeR.component
+            .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
+        )
+      }
+
       <.div(
         ^.`class` := Css.flat(Css.Table.TABLE, Css.Table.Width.XL),
 
         // Рендерить узлы.
         s.root4nodeC { mrootProxy =>
           val mroot = mrootProxy.value
-          <.div(
-            mroot.tree.nodes
-              .zipWithIndex
-              .deepMapFold[NodePath_t, VdomElement]( Nil ) { case (parentNodePathRev, subTree) =>
-                val (mns, i) = subTree.rootLabel
-                val currNodePathRev: NodePath_t = i :: parentNodePathRev
-                val comp = nodeR.component.withKey( currNodePathRev.mkString(".") )(
-                  nodeR.PropsVal(
-                    node          = mns,
-                    nodePathRev   = currNodePathRev,
-                    confAdId      = mroot.conf.adIdOpt,
-                    opened        = mroot.tree.opened,
-                    chCount       = subTree.subForest.length,
-                    chCountEnabled = subTree.subForest
-                      .iterator
-                      .count { chTree =>
-                        chTree.rootLabel._1.info.isEnabled
-                      },
-                    proxy         = p,
-                  )
-                )
-                currNodePathRev -> comp
-              }
-              .flatten
-              .iterator
-              .toVdomArray,
+
+          MuiTreeView(
+            new MuiTreeViewProps {
+              override val defaultCollapseIcon = Mui.SvgIcons.ExpandMore()().rawNode
+              override val defaultExpandIcon = Mui.SvgIcons.ChevronRight()().rawNode
+            }
+          )(
+            _renderTreeNodeIndexed(
+              subTree = mroot.tree.nodes.zipWithIndex,
+            )
           )
         },
 

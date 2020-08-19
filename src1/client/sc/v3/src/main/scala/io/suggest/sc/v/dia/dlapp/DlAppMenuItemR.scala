@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.dlapp
 
-import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
+import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconClasses, MuiSvgIconProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -12,6 +12,8 @@ import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -55,11 +57,14 @@ class DlAppMenuItemR(
           crCtxP.message( MsgCodes.`Application` ),
         ),
         // Иконка закачки.
-        Mui.SvgIcons.GetApp(
-          new MuiSvgIconProps {
-            override val className = R.rightIcon.htmlClass
+        Mui.SvgIcons.GetApp {
+          val css = new MuiSvgIconClasses {
+            override val root = R.rightIcon.htmlClass
           }
-        )(),
+          new MuiSvgIconProps {
+            override val classes = css
+          }
+        }(),
       )
 
       MuiListItem {

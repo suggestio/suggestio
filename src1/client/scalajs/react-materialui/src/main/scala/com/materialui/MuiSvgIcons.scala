@@ -7,31 +7,6 @@ import japgolly.scalajs.react.{Children, JsComponent, ReactMouseEventFromHtml}
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
-object MuiSvgIcon {
-  implicit class SvgIconApply(icon: MuiSvgIcon) {
-    def apply(svgProps: MuiSvgIconProps = new MuiSvgIconProps {})(children: VdomNode*): UnmountedWithRawType[MuiSvgIconProps, Null, RawMounted[MuiSvgIconProps,Null]] = {
-      val Component = JsComponent[MuiSvgIconProps, Children.Varargs, Null](icon)
-      Component(svgProps)(children: _*)
-    }
-  }
-}
-
-trait MuiSvgIconProps extends js.Object {
-  val key: js.UndefOr[String] = js.undefined
-  val ref: js.UndefOr[String] = js.undefined
-  val color: js.UndefOr[MuiColor] = js.undefined
-  val hoverColor: js.UndefOr[MuiColor] = js.undefined
-  val onMouseEnter: js.UndefOr[ReactMouseEventFromHtml => Unit] = js.undefined
-  val onMouseLeave: js.UndefOr[ReactMouseEventFromHtml => Unit] = js.undefined
-  val style: js.UndefOr[js.Any] = js.undefined
-  val viewBox: js.UndefOr[String] = js.undefined
-  val className: js.UndefOr[String] = js.undefined
-  val htmlColor: js.UndefOr[String] = js.undefined
-}
-
-@js.native
-trait MuiSvgIcon extends js.Any
-
 object MuiSvgIcons {
   // TODO Fix all paths
   @js.native @JSImport("@material-ui/icons/action/accessibility", JSImport.Default)
@@ -94,6 +69,8 @@ object MuiSvgIcons {
   object ActionBugReport extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Build", JSImport.Default)
   object Build extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BuildOutlined", JSImport.Default)
+  object BuildOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Cached", JSImport.Default)
   object Cached extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/camera-enhance", JSImport.Default)
@@ -120,10 +97,12 @@ object MuiSvgIcons {
   object ActionCopyright extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/credit-card", JSImport.Default)
   object ActionCreditCard extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/dashboard", JSImport.Default)
-  object ActionDashboard extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/date-range", JSImport.Default)
-  object ActionDateRange extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Dashboard", JSImport.Default)
+  object Dashboard extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/DashboardOutlined", JSImport.Default)
+  object DashboardOutlined extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/DateRange", JSImport.Default)
+  object DateRange extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/DeleteForever", JSImport.Default)
   object DeleteForever extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Delete", JSImport.Default)
@@ -136,8 +115,8 @@ object MuiSvgIcons {
   object DoneAll extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Done", JSImport.Default)
   object Done extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/DoneOutline", JSImport.Default)
-  object DoneOutline extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/DoneOutlined", JSImport.Default)
+  object DoneOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/donut-large", JSImport.Default)
   object ActionDonutLarge extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/donut-small", JSImport.Default)
@@ -200,8 +179,14 @@ object MuiSvgIcons {
   object HighlightOffOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/history", JSImport.Default)
   object ActionHistory extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/home", JSImport.Default)
-  object ActionHome extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Home", JSImport.Default)
+  object Home extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/HomeOutlined", JSImport.Default)
+  object HomeOutlined extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/HomeWork", JSImport.Default)
+  object HomeWork extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/HomeWorkOutlined", JSImport.Default)
+  object HomeWorkOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/hourglass-empty", JSImport.Default)
   object ActionHourglassEmpty extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/hourglass-full", JSImport.Default)
@@ -212,8 +197,8 @@ object MuiSvgIcons {
   object ActionHttps extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/important-devices", JSImport.Default)
   object ActionImportantDevices extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/InfoOutline", JSImport.Default)    // TODO missing?
-  object InfoOutline extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/InfoOutlined", JSImport.Default)    // TODO missing?
+  object InfoOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Info", JSImport.Default)
   object Info extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/input", JSImport.Default)
@@ -472,8 +457,8 @@ object MuiSvgIcons {
   object ActionZoomOut extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/AddAlert", JSImport.Default)
   object AddAlert extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/ErrorOutline", JSImport.Default)
-  object ErrorOutline extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ErrorOutlined", JSImport.Default)
+  object ErrorOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Error", JSImport.Default)
   object Error extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Warning", JSImport.Default)
@@ -1081,8 +1066,10 @@ object MuiSvgIcons {
   object EditorInsertChart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/insert-comment", JSImport.Default)
   object EditorInsertComment extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/insert-drive-file", JSImport.Default)
-  object EditorInsertDriveFile extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/InsertDriveFile", JSImport.Default)
+  object InsertDriveFile extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/InsertDriveFileOutlined", JSImport.Default)
+  object InsertDriveFileOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/insert-emoticon", JSImport.Default)
   object EditorInsertEmoticon extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/insert-invitation", JSImport.Default)
@@ -1433,8 +1420,10 @@ object MuiSvgIcons {
   object Healing extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/image-aspect-ratio", JSImport.Default)
   object ImageImageAspectRatio extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/image/image", JSImport.Default)
-  object ImageImage extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Image", JSImport.Default)
+  object Image extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ImageOutlined", JSImport.Default)
+  object ImageOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/iso", JSImport.Default)
   object ImageIso extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/landscape", JSImport.Default)
@@ -1641,6 +1630,8 @@ object MuiSvgIcons {
   object MapsLocalMovies extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/LocalOffer", JSImport.Default)
   object LocalOffer extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocalOfferOutlined", JSImport.Default)
+  object LocalOfferOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/local-parking", JSImport.Default)
   object MapsLocalParking extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/local-pharmacy", JSImport.Default)
@@ -1795,8 +1786,8 @@ object MuiSvgIcons {
   @js.native @JSImport("@material-ui/icons/notification/airline-seat-recline-normal",
                        JSImport.Default)
   object NotificationAirlineSeatReclineNormal extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/notification/bluetooth-audio", JSImport.Default)
-  object NotificationBluetoothAudio extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BluetoothAudio", JSImport.Default)
+  object BluetoothAudio extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/notification/confirmation-number", JSImport.Default)
   object NotificationConfirmationNumber extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/notification/disc-full", JSImport.Default)
@@ -1948,20 +1939,20 @@ object MuiSvgIcons {
   object NotificationsPaused extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Notifications", JSImport.Default)
   object Notifications extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/pages", JSImport.Default)
-  object SocialPages extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/party-mode", JSImport.Default)
-  object SocialPartyMode extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/people-outline", JSImport.Default)
-  object SocialPeopleOutline extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/people", JSImport.Default)
-  object SocialPeople extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/person-add", JSImport.Default)
-  object SocialPersonAdd extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/person-outline", JSImport.Default)
-  object SocialPersonOutline extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/person", JSImport.Default)
-  object SocialPerson extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Pages", JSImport.Default)
+  object Pages extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/PartyMode", JSImport.Default)
+  object PartyMode extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/social/PeopleOutlined", JSImport.Default)
+  object PeopleOutlined extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/People", JSImport.Default)
+  object People extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/PersonAdd", JSImport.Default)
+  object PersonAdd extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/PersonOutlined", JSImport.Default)
+  object PersonOutlined extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Person", JSImport.Default)
+  object Person extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/plus-one", JSImport.Default)
   object SocialPlusOne extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/poll", JSImport.Default)
@@ -1980,8 +1971,10 @@ object MuiSvgIcons {
   object SocialSentimentVeryDissatisfied extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/sentiment-very-satisfied", JSImport.Default)
   object SocialSentimentVerySatisfied extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/share", JSImport.Default)
-  object SocialShare extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Share", JSImport.Default)
+  object Share extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ShareOutlined", JSImport.Default)
+  object ShareOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Whatshot", JSImport.Default)
   object Whatshot extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/toggle/check-box-outline-blank", JSImport.Default)

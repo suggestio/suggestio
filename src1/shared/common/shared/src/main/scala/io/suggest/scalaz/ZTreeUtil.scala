@@ -1,6 +1,7 @@
 package io.suggest.scalaz
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.msg.ErrorMsgs
 import scalaz.{EphemeralStream, Tree, TreeLoc, Validation, ValidationNel}
 import japgolly.univeq._
 import scalaz.syntax.apply._
@@ -161,10 +162,8 @@ object ZTreeUtil {
       } { hd =>
         val chOpt = loc.getChild(hd + 1)
         if (chOpt.isEmpty)
-          println(s"child #$hd missing, hasChildren?${loc.hasChildren} - ${loc.tree.subForest.length} available")
+          println( ErrorMsgs.JD_TREE_UNEXPECTED_CHILDREN, loc.tree.subForest.length )
         chOpt
-        //loc
-        //  .getChild(hd + 1)   // +1, потому что Tree считает с 1, а не с 0.
           .flatMap { chLoc =>
             _pathToNodeLoc(chLoc, restPath.tail)
           }

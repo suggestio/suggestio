@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.bill.tf.daily.{ITfDailyMode, MTfDailyInfo}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 
 /**
@@ -18,9 +19,10 @@ object MEditTfDailyS {
   /** Поддержка FastEq. */
   implicit object MTfDailyEditSFastEq extends FastEq[MEditTfDailyS] {
     override def eqv(a: MEditTfDailyS, b: MEditTfDailyS): Boolean = {
-      (a.mode eq b.mode) &&
-        (a.nodeTfOpt eq b.nodeTfOpt) &&
-        (a.request eq b.request)
+      (a.mode ===* b.mode) &&
+      (a.nodeTfOpt ===* b.nodeTfOpt) &&
+      (a.inputAmount ===* b.inputAmount) &&
+      (a.request ===* b.request)
     }
   }
 

@@ -14,6 +14,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io

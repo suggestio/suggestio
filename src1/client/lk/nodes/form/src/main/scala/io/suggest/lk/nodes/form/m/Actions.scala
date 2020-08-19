@@ -77,10 +77,9 @@ case object CreateNodeCancelClick
 
 /** Сигнал о клике по галочке узла. */
 case class NodeIsEnabledChanged(
-                                 override val rcvrKey : NodePath_t,
-                                 isEnabled            : Boolean
+                                 isEnabled            : Boolean,
                                )
-  extends LkNodesTreeAction
+  extends LkNodesAction
 
 
 /** Сигнал ответа сервера на апдейт флага isEnabled. */
@@ -115,8 +114,7 @@ case class NodeDeleteResp(
 // Редактирование узла (переименование).
 
 /** Клик по кнопке редактирования узла в дереве узлов. */
-case class NodeEditClick( override val rcvrKey: NodePath_t )
-  extends LkNodesTreeAction
+case object NodeEditClick extends LkNodesAction
 
 /** Редактирование названия узла: Юзер вводит название узла (маячка). */
 case class NodeEditNameChange(
@@ -126,12 +124,10 @@ case class NodeEditNameChange(
   extends LkNodesTreeNameAction
 
 /** Клик по кнопке отмены редактирования узла. */
-case class NodeEditCancelClick(override val rcvrKey: NodePath_t)
-  extends LkNodesTreeAction
+case object NodeEditCancelClick extends LkNodesAction
 
 /** Клик по кнопке подтверждения редактирования узла. */
-case class NodeEditOkClick(override val rcvrKey: NodePath_t)
-  extends LkNodesTreeAction
+case object NodeEditOkClick extends LkNodesAction
 
 /** Ответ сервера по итогам запроса. */
 case class NodeEditSaveResp(override val rcvrKey: NodePath_t, tryResp: Try[MLknNode])
@@ -149,8 +145,7 @@ case class AdvOnNodeResp(override val rcvrKey: NodePath_t, tryResp: Try[MLknNode
 
 
 // Управление тарифом узла.
-case class TfDailyShowDetails(override val rcvrKey: NodePath_t)
-  extends LkNodesTreeAction
+case object TfDailyShowDetails extends LkNodesAction
 
 /** Клик по ссылке редактирования тарифа текущего узла. */
 case object TfDailyEditClick
@@ -181,19 +176,21 @@ case object TfDailyManualMode
 
 
 /** Изменилось значение галочки раскрытости карточки по дефолту. */
-case class AdvShowOpenedChange(rcvrKey: NodePath_t, isChecked: Boolean)
-  extends LkNodesTreeAction
+case class AdvShowOpenedChange( isChecked: Boolean ) extends LkNodesAction
 
 /** Ответ сервера на запрос изменения отображения рекламной карточки. */
-case class AdvShowOpenedChangeResp(reason: AdvShowOpenedChange, tryResp: Try[_])
-  extends LkNodesTreeAction {
-  override def rcvrKey = reason.rcvrKey
-}
+case class AdvShowOpenedChangeResp(
+                                    override val rcvrKey: NodePath_t,
+                                    reason: AdvShowOpenedChange,
+                                    tryResp: Try[_],
+                                  )
+  extends LkNodesTreeAction
 
 /** Изменение галочки постоянной обводки. */
-case class AlwaysOutlinedSet(rcvrKey: NodePath_t, isChecked: Boolean)
+case class AlwaysOutlinedSet( isChecked: Boolean ) extends LkNodesAction
+case class AlwaysOutlinedResp(
+                               override val rcvrKey: NodePath_t,
+                               reason: AlwaysOutlinedSet,
+                               tryResp: Try[_],
+                             )
   extends LkNodesTreeAction
-case class AlwaysOutlinedResp(reason: AlwaysOutlinedSet, tryResp: Try[_])
-  extends LkNodesTreeAction {
-  override def rcvrKey = reason.rcvrKey
-}

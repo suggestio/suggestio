@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiSvgIconClasses, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -75,12 +75,15 @@ class ScErrorDiaR(
               override val classes  = cssClasses
             }
           } (
-            Mui.SvgIcons.CancelOutlined(
+            Mui.SvgIcons.CancelOutlined {
               // TODO Надо это? Скопипасчено из IndexSwitchAskR:
-              new MuiSvgIconProps {
-                override val className = C.smallBtnSvgIcon.htmlClass
+              val css = new MuiSvgIconClasses {
+                override val root = C.smallBtnSvgIcon.htmlClass
               }
-            )(),
+              new MuiSvgIconProps {
+                override val classes = css
+              }
+            }(),
           )
         ),
 

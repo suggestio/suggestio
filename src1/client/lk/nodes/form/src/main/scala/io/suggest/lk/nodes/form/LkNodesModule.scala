@@ -2,9 +2,9 @@ package io.suggest.lk.nodes.form
 
 import com.softwaremill.macwire._
 import io.suggest.lk.nodes.form.r.LkNodesFormR
-import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
-import io.suggest.lk.nodes.form.r.pop.{CreateNodeR, EditTfDailyR, LknPopupsR}
-import io.suggest.lk.nodes.form.r.tree.{NodeR, TreeR}
+import io.suggest.lk.nodes.form.r.pop._
+import io.suggest.lk.nodes.form.r.tree._
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 
 /**
   * Suggest.io
@@ -12,26 +12,49 @@ import io.suggest.lk.nodes.form.r.tree.{NodeR, TreeR}
   * Created: 30.03.18 11:48
   * Description: compile-time DI линковка react LkNodes-формы.
   */
-class LkNodesModule {
+trait LkNodesModuleBase {
 
   import io.suggest.ReactCommonModule._
 
   lazy val lkNodesFormCircuit = wire[LkNodesFormCircuit]
 
+  // views
   lazy val lkNodesFormR = wire[LkNodesFormR]
 
-  lazy val lknPopupsR = wire[LknPopupsR]
-
+  // tree
   lazy val treeR = wire[TreeR]
-
   lazy val nodeR = wire[NodeR]
+  lazy val nodeEnabledR = wire[NodeEnabledR]
+  lazy val nameEditButtonR = wire[NameEditButtonR]
+  lazy val nodeScLinkR = wire[NodeScLinkR]
+  lazy val boolPotCheckBox = wire[NodeHeaderR]
+  lazy val deleteBtnR = wire[DeleteBtnR]
+  lazy val tariffEditR = wire[TariffEditR]
+  lazy val subNodesR = wire[SubNodesR]
+  lazy val nodeAdvRowR = wire[NodeAdvRowR]
 
-  lazy val editTfDailyR = wire[EditTfDailyR]
-
+  // pop
   lazy val createNodeR = wire[CreateNodeR]
+  lazy val editTfDailyR = wire[EditTfDailyR]
+  lazy val lknPopupsR = wire[LknPopupsR]
+  lazy val nameEditDiaR = wire[NameEditDiaR]
 
-  lazy val nodeMenuR = wire[NodeMenuR]
+  def getPlatformCss: () => PlatformCssStatic
+  def platformComponents: PlatformComponents
 
-  lazy val nodeMenuBtnR = wire[NodeMenuBtnR]
+}
+
+
+/** Дефолтовая линковка для изолированной формы LkNodes на отдельной страницы внутри ЛК. */
+final class LkNodesModule extends LkNodesModuleBase {
+
+  /** Не особо запариваемся с тонкостями оформления. */
+  lazy val platformCssStatic = PlatformCssStatic(
+    isRenderIos = false,
+  )
+
+  override def getPlatformCss = () => platformCssStatic
+
+  override lazy val platformComponents = wire[PlatformComponents]
 
 }

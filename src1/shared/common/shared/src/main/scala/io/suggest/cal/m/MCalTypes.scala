@@ -16,7 +16,7 @@ object MCalTypes extends StringEnum[MCalType] {
 
   /** Будни. */
   case object WeekDay extends MCalType("d") {
-    override def i18nCode     = "Week.days"
+    override def i18nCode = "Week.days"
     override def dayStart = Some(1)
     override def dayEnd   = Some(5)
   }
@@ -49,7 +49,7 @@ object MCalTypes extends StringEnum[MCalType] {
 
   def default = All
 
-  override lazy val values = findValues
+  override def values = findValues
 
 }
 

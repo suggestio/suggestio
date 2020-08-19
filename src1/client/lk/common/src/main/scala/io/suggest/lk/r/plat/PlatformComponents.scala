@@ -72,7 +72,7 @@ class PlatformComponents(
     * @param platformCss Стили.
     * @return JSON-пропертисы.
     */
-  def diaActionsProps(classes: List[String] = Nil)(platformCss: PlatformCssStatic): MuiDialogActionsProps = {
+  def diaActionsProps(classes: List[String] = Nil)(platformCss: PlatformCssStatic = getPlatformCss()): MuiDialogActionsProps = {
     val diaActionsCss = new MuiDialogActionsClasses {
       override val root = Css.flat1(
         platformCss.Dialogs.actions.htmlClass :: classes

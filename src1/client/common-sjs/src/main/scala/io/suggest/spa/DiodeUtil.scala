@@ -183,4 +183,12 @@ object DiodeUtil {
   }
 
 
+  /** По аналогии с OptionUtil.SomeBool для поддержания референсной неизменности используем статические Pot'ы для bool-значений. */
+  object Bool {
+    lazy val truePot = Pot.empty[Boolean].ready( true )
+    lazy val falsePot = Pot.empty[Boolean].ready( false )
+    def apply(is: Boolean): Pot[Boolean] =
+      if (is) truePot else falsePot
+  }
+
 }
