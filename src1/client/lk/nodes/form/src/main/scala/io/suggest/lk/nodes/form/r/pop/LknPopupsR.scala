@@ -18,7 +18,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: React-компонент всех попапов этой формы. Рендерится параллельно с корневым компонентом формы.
   */
 class LknPopupsR(
-                  val createNodeR   : CreateNodeR,
+                  createNodeR       : CreateNodeR,
                   val editTfDailyR  : EditTfDailyR,
                   nameEditDiaR      : NameEditDiaR,
                 ) {
@@ -34,7 +34,6 @@ class LknPopupsR(
 
   case class State(
                     popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
-                    createNodeOptConn   : ReactConnectProxy[Option[MCreateNodeS]],
                     deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteConfirmPopupS]],
                     editTfDailyOptConn  : ReactConnectProxy[Option[MEditTfDailyS]]
                   )
@@ -44,8 +43,6 @@ class LknPopupsR(
     def render(propsProxy: Props, state: State): VdomElement = {
 
       val popups = List[VdomNode](
-        // Рендер попапа создания нового узла:
-        state.createNodeOptConn { createNodeR.component.apply },
 
         // Рендер попапа удаления существующего узла:
         state.deleteNodeOptConn { DeleteConfirmPopupR.component.apply },
@@ -77,6 +74,9 @@ class LknPopupsR(
           }
         }( nameEditDiaR.component.apply )( implicitly, OptFastEq.Wrapped(nameEditDiaR.nameEditPvFeq) ),
 
+        // Рендер попапа создания нового узла:
+        propsProxy.wrap(_.popups.createNodeS)( createNodeR.component.apply ),
+
       )
     }
 
@@ -93,12 +93,11 @@ class LknPopupsR(
           val contCss = Css.Lk.Nodes.LKN
           p.connect { v =>
             PopupsContR.PropsVal(
-              visible   = v.deleteNodeS.nonEmpty || v.editTfDailyS.nonEmpty || v.createNodeS.nonEmpty,
+              visible   = v.deleteNodeS.nonEmpty || v.editTfDailyS.nonEmpty,
               css       = contCss
             )
           }
         },
-        createNodeOptConn  = p.connect(_.createNodeS),
         deleteNodeOptConn  = p.connect(_.deleteNodeS),
         editTfDailyOptConn = p.connect(_.editTfDailyS)
       )

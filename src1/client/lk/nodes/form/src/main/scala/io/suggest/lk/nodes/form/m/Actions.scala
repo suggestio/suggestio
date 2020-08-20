@@ -70,7 +70,7 @@ case class CreateNodeResp(tryResp: Try[MLknNode] )
 
 
 /** Добавление под-узла: юзер нажал "отмена". */
-case object CreateNodeCancelClick
+case object CreateNodeCloseClick
   extends LkNodesAction
 
 

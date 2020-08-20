@@ -99,10 +99,10 @@ class TreeR(
             // expanded: Надо всю цепочку expanded-узлов перечислять, а не только конечный узел:
             val _expandedTreeNodeIds = (for {
               opened  <- mroot.tree.opened.iterator
-              // _selectedTreeNodeId: Повторно используем nodeId для сборки списка id раскрытых элементов дерева, а хвосты - рендерим в string:
-              nthTail <- _selectedTreeNodeId.iterator ++ opened.tails.map( LknFormUtilR.nodePath2treeId )
+              // .reverse: нужно хвост укорачивать с хвоста, а не с головы, поэтому реверсим исходник, затем реверсим обратно результаты:
+              nthTail <- opened.reverse.tails
             } yield {
-              nthTail
+              LknFormUtilR.nodePath2treeId( nthTail.reverse )
             })
               .toJSArray
 

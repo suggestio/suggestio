@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form.m
 
+import io.suggest.i18n.MsgCodes
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.HttpFailedException
 import japgolly.univeq._
@@ -32,7 +33,7 @@ object LknException {
   }
 
   def unknown(ex: Throwable) = LknException(
-    msgCode  = "Error",
+    msgCode  = MsgCodes.`Error`,
     getCause = ex,
     titleOpt = Option(ex).map(_.toString)
   )

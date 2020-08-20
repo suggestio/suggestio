@@ -1,19 +1,25 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import diode.react.ModelProxy
-import diode.react.ReactPot.potWithReact
-import io.suggest.common.html.HtmlConstants
+import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiProgressVariants, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import diode.FastEq
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ble.BleConstants.Beacon.EddyStone
-import io.suggest.css.Css
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.form.m._
-import io.suggest.lk.r.LkPreLoaderR
-import io.suggest.lk.r.popup.PopupR
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil
+import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.spa.OptFastEq
+import monocle.Lens
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -22,181 +28,234 @@ import io.suggest.react.ReactCommonUtil
   * Description: Компонент попапа с формой создания узла.
   */
 class CreateNodeR(
-                   crCtxP: React.Context[MCommonReactCtx],
+                   platformCssStatic      : () => PlatformCssStatic,
+                   platformComponents     : PlatformComponents,
+                   crCtxP                 : React.Context[MCommonReactCtx],
                  ) {
 
   type Props = ModelProxy[Option[MCreateNodeS]]
 
-  class Backend($: BackendScope[Props, Unit]) {
+  case class State(
+                    openedSomeC                 : ReactConnectProxy[Some[Boolean]],
+                    nameOptC                    : ReactConnectProxy[Option[MTextFieldS]],
+                    idOptC                      : ReactConnectProxy[Option[MTextFieldS]],
+                    saveBtnDisabledSomeC        : ReactConnectProxy[Some[Boolean]],
+                    isPendingSomeC              : ReactConnectProxy[Some[Boolean]],
+                    exceptionOptC               : ReactConnectProxy[Option[Throwable]],
+                  )
+
+  private def __mkTextField(
+                             labelI18n: String,
+                             placeHolderI18n: String,
+                             conn: ReactConnectProxy[Option[MTextFieldS]],
+                             onChanged: js.Function1[ReactEventFromInput, Unit],
+                             helpText: js.UndefOr[raw.React.Node] = js.undefined,
+                           ): VdomElement = {
+    MuiListItem()(
+      conn { mtfOptProxy =>
+        val mtfOpt = mtfOptProxy.value
+        val _value = mtfOpt.fold("")(_.value)
+        val _isValid = mtfOpt.exists(_.isValid)
+        MuiTextField(
+          new MuiTextFieldProps {
+            override val fullWidth = true
+            override val label = labelI18n
+            override val value = _value
+            override val error = !_isValid
+            override val placeholder = placeHolderI18n
+            override val onChange = onChanged
+            override val helperText = helpText
+            override val required = true
+          }
+        )()
+      }
+    )
+  }
+
+  class Backend($: BackendScope[Props, State]) {
 
     /** Callback для ввода названия добавляемого под-узла. */
-    private def onNameChange(e: ReactEventFromInput): Callback = {
+    private val _onNameChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val name = e.target.value
-      dispatchOnProxyScopeCB(
-        $, CreateNodeNameChange(name = name)
-      )
+      dispatchOnProxyScopeCB( $, CreateNodeNameChange(name = name) )
     }
 
     /** Callback редактирования id создаваемого узла. */
-    private def onIdChange(e: ReactEventFromInput): Callback = {
+    private val _onIdChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val id = e.target.value
-      dispatchOnProxyScopeCB(
-        $, CreateNodeIdChange(id = id)
-      )
+      dispatchOnProxyScopeCB( $, CreateNodeIdChange(id = id) )
     }
 
-    /** Callback нажатия на кнопку "сохранить" при добавлении нового узла. */
-    private val onSaveClick: Callback = {
+    /** Реакция на кнопку "Сохранить". */
+    private val onSaveClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       dispatchOnProxyScopeCB( $, CreateNodeSaveClick )
     }
 
-    private val onCancelClick: Callback = {
-      dispatchOnProxyScopeCB( $, CreateNodeCancelClick )
+    /** Реакция на отмену или сокрытие диалога. */
+    private val onCloseClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      dispatchOnProxyScopeCB( $, CreateNodeCloseClick )
     }
 
 
-    def render(propsProxy: Props): VdomElement = {
-      propsProxy().whenDefinedEl { addState =>
+    def render(s: State): VdomElement = {
+      crCtxP.consume { crCtx =>
+        val platCss = platformCssStatic()
 
-        val isSaving = addState.saving.isPending
+        val diaChs = List[VdomElement](
+          // Заголовок окна:
+          platformComponents.diaTitle( Nil )(
+            crCtx.messages( MsgCodes.`New.node` ),
+          ),
 
-        val disabledAttr = {
-          ^.disabled := true
-        }.when( isSaving )
+          // Содержимое диалога:
+          MuiDialogContent()(
+            MuiList()(
+              // Название узла (маячка).
+              __mkTextField(
+                crCtx.messages( MsgCodes.`Name` ),
+                crCtx.messages( MsgCodes.`Beacon.name.example` ),
+                s.nameOptC,
+                _onNameChanged,
+              ),
 
-        propsProxy.wrap { _ =>
-          PopupR.PropsVal(
-            closeable = Some(onCancelClick)
-          )
-        } { popPropsProxy =>
-          PopupR( popPropsProxy ) {
+              // id узла/маячка.
+              __mkTextField(
+                crCtx.messages( MsgCodes.`Identifier` ),
+                EddyStone.EXAMPLE_UID,
+                s.idOptC,
+                _onIdChanged,
+                helpText = "EddyStone-UID",
+              ),
 
-            // Сейчас открыта форма добавление под-узла для текущего узла.
-            crCtxP.consume { crCtx =>
-              <.div(
+              // pending progress bar
+              s.isPendingSomeC { isPendingSomeProxy =>
+                val isPending = isPendingSomeProxy.value.value
+                <.span(
+                  if (isPending) ^.visibility.visible else ^.visibility.hidden,
+                  MuiLinearProgress(
+                    new MuiLinearProgressProps {
+                      override val variant = if (isPending) MuiProgressVariants.indeterminate else MuiProgressVariants.determinate
+                      override val value = JsOptionUtil.maybeDefined( !isPending )(0)
+                    }
+                  )
+                )
+              },
 
-                ReactCommonUtil.maybe(isSaving) {
-                  ^.title := crCtx.messages( MsgCodes.`Server.request.in.progress.wait` )
-                },
+              s.exceptionOptC { exceptionOptProxy =>
+                exceptionOptProxy.value.whenDefinedEl { ex =>
+                  MuiListItem()(
+                    MuiListItemText()(
+                      MuiTypoGraphy(
+                        new MuiTypoGraphyProps {
+                          override val color = MuiColorTypes.error
+                        }
+                      )(
+                        ex match {
+                          case ex: LknException =>
+                            <.span(
+                              crCtx.messages( ex.msgCode ),
+                              ex.titleOpt.whenDefined( crCtx.messages(_) ),
 
-                <.h2(
-                  ^.`class` := Css.Lk.MINOR_TITLE,
-                  crCtx.messages( MsgCodes.`New.node` ),
-                ),
-
-
-                <.div(
-                  ^.`class` := Css.Text.CENTERED,
-
-                  // Поле ввода названия маячка.
-                  <.div(
-                    ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT90 ),
-
-                    <.label(
-                      crCtx.messages( MsgCodes.`Name` ), ":",
-                      <.input(
-                        ^.`type`      := HtmlConstants.Input.text,
-                        ^.value       := addState.name,
-                        ^.onChange   ==> onNameChange,
-                        ^.placeholder := crCtx.messages( MsgCodes.`Beacon.name.example` ),
-                        disabledAttr,
-                      )
-                    )
-                  ),
-
-                  <.br,
-
-                  // Поля для ввода id маячка.
-                  <.div(
-                    ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT90 ),
-                    <.label(
-                      crCtx.messages( MsgCodes.`Identifier` ),
-                      " (EddyStone-UID)",
-                      <.input(
-                        ^.`type`      := HtmlConstants.Input.text,
-                        ^.value       := addState.id.getOrElse(""),
-                        ^.onChange   ==> onIdChange,
-                        ^.placeholder := EddyStone.EXAMPLE_UID,
-
-                        ReactCommonUtil.maybe(!isSaving) {
-                          ^.title := crCtx.messages( MsgCodes.`Example.id.0`, EddyStone.EXAMPLE_UID )
-                        },
-
-                        disabledAttr,
+                              HtmlConstants.SPACE, HtmlConstants.`(`,
+                              ex.getCause.getClass.getSimpleName,
+                              HtmlConstants.`)`,
+                            )
+                          case other => other.getMessage
+                        }
                       )
                     )
                   )
-                ),
+                }
+              },
+            ),
 
+          ),
 
-                // Кнопки сохранения/отмены.
-                <.div(
-                  ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
-
-                  // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
-                  ReactCommonUtil.maybeEl( addState.saving.isEmpty && !isSaving ) {
-                    val isSaveBtnEnabled = addState.isValid
-                    <.span(
-                      <.a(
-                        ^.classSet1(
-                          Css.flat(Css.Buttons.BTN, Css.Size.M),
-                          Css.Buttons.MAJOR     -> isSaveBtnEnabled,
-                          Css.Buttons.DISABLED  -> !isSaveBtnEnabled
-                        ),
-
-                        ReactCommonUtil.maybe( isSaveBtnEnabled ) {
-                          ^.onClick --> onSaveClick
-                        },
-
-                        crCtx.messages( MsgCodes.`Save` ),
-                      ),
-                      HtmlConstants.SPACE,
-
-                      // Кнопка отмены.
-                      <.a(
-                        ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.NEGATIVE, Css.Buttons.LIST),
-                        ^.onClick --> onCancelClick,
-                        crCtx.messages( MsgCodes.`Cancel` ),
-                      )
-                    )
-                  },
-
-                  // Крутилка ожидания сохранения.
-                  ReactCommonUtil.maybeEl(isSaving)( LkPreLoaderR.AnimMedium ),
-
-                  // Вывести инфу, что что-то пошло не так при ошибке сохранения.
-                  addState.saving.renderFailed {
-                    // Исключение в норме заворачивается в ILknException на уровне TreeAh.
-                    case ex: ILknException =>
-                      <.span(
-                        ^.`class` := Css.Colors.RED,
-                        ex.titleOpt.whenDefined { title =>
-                          ^.title := title
-                        },
-                        crCtx.messages( ex.msgCode ),
-                      )
-                    // should never happen
-                    case ex =>
-                      <.span(
-                        crCtx.messages( MsgCodes.`Error` ), ": ",
-                        ex.toString(),
-                      )
-                  }
-
-                )
-
+          // Кнопки внизу окна:
+          MuiDialogActions(
+            platformComponents.diaActionsProps()(platCss)
+          )(
+            // Кнопка "Сохранить"
+            s.saveBtnDisabledSomeC { saveBtnDisabledSomeProxy =>
+              MuiButton(
+                new MuiButtonProps {
+                  override val onClick = onSaveClickCbF
+                  override val disabled = saveBtnDisabledSomeProxy.value.value
+                }
+              )(
+                crCtx.messages( MsgCodes.`Save` ),
               )
+            },
+
+            // Кнопка "Закрыть"
+            MuiButton(
+              new MuiButtonProps {
+                override val onClick = onCloseClickCbF
+              }
+            )(
+              crCtx.messages( MsgCodes.`Close` ),
+            ),
+          ),
+
+        )
+
+        // Наконец, рендер окна самого диалога:
+        val diaCss = new MuiDialogClasses {
+          override val paper = platCss.Dialogs.paper.htmlClass
+        }
+        s.openedSomeC { openedSomeProxy =>
+          MuiDialog(
+            new MuiDialogProps {
+              override val open = openedSomeProxy.value.value
+              override val onClose = onCloseClickCbF
+              override val maxWidth = MuiDialogMaxWidths.sm
+              override val fullWidth = true
+              override val classes = diaCss
             }
-          }
+          )( diaChs: _* )
         }
       }
     }
 
   }
 
+
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      // Сборка коннекшенов до полей:
+      val mtfFeq = OptFastEq.Wrapped(FastEq.AnyRefEq)
+      def __mkMtfConn(lens: Lens[MCreateNodeS, MTextFieldS]) =
+        propsProxy.connect(_.map(lens.get))( mtfFeq )
+
+      // Сборка состояния:
+      State(
+
+        openedSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.isDefined )
+        },
+
+        nameOptC = __mkMtfConn( MCreateNodeS.name ),
+
+        idOptC = __mkMtfConn( MCreateNodeS.id ),
+
+        saveBtnDisabledSomeC = propsProxy.connect { propsOpt =>
+          val saveDisabled = propsOpt.fold(true) { props =>
+            !props.isValid ||
+            props.saving.isPending
+          }
+          OptionUtil.SomeBool( saveDisabled )
+        },
+
+        isPendingSomeC = propsProxy.connect { propsOpt =>
+          val isPending = propsOpt.exists(_.saving.isPending)
+          OptionUtil.SomeBool( isPending )
+        },
+
+        exceptionOptC = propsProxy.connect( _.flatMap(_.saving.exceptionOption) )( OptFastEq.Wrapped(FastEq.AnyRefEq) ),
+
+      )
+    }
     .renderBackend[Backend]
     .build
 

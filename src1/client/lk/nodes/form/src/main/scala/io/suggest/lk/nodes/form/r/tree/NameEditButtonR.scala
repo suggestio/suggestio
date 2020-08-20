@@ -32,7 +32,6 @@ final class NameEditButtonR(
 
     def render(propsProxy: Props): VdomElement = {
       val p = propsProxy.value
-      println(getClass.getSimpleName, p)
 
       MuiToolTip(
         new MuiToolTipProps {

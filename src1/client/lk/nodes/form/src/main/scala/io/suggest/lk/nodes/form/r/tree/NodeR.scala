@@ -87,8 +87,9 @@ class NodeR(
           )
         }( nodeHeaderR.component.apply )
 
+        val _nodeId = LknFormUtilR.nodePath2treeId( nodePath )
         new MuiTreeItemProps {
-          override val nodeId = LknFormUtilR.nodePath2treeId( nodePath )
+          override val nodeId = _nodeId
           override val label = _label.rawNode
           override val onLabelClick = _onNodeLabelClickCbF
         }

@@ -131,7 +131,6 @@ class EditTfDailyAh[M](
       updated( None )
 
     case TfDailySaveClick =>
-      val v0 = value.get
       (for {
         v0 <- value
         if {

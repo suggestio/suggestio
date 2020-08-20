@@ -24,8 +24,8 @@ object MTextFieldS {
 
   def empty = apply()
 
-  val value     = GenLens[MTextFieldS]( _.value )
-  val isValid   = GenLens[MTextFieldS]( _.isValid )
+  def value     = GenLens[MTextFieldS]( _.value )
+  def isValid   = GenLens[MTextFieldS]( _.isValid )
 
 }
 

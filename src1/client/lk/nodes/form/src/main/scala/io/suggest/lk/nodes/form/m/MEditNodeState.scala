@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import monocle.macros.GenLens
 
 /**
@@ -34,6 +34,7 @@ trait IEditNodeState[T <: IEditNodeState[T]] {
 
 }
 
+
 object MEditNodeState {
   @inline implicit def univEq: UnivEq[MEditNodeState] = UnivEq.force
 
@@ -50,19 +51,11 @@ object MEditNodeState {
 
 
 case class MEditNodeState(
-                           override val name      : String,
-                           override val nameValid : Boolean,
-                           override val saving    : Pot[_]          = Pot.empty
-                         )
-  extends IEditNodeState[MEditNodeState]
-{
+                           name      : String,
+                           nameValid : Boolean,
+                           saving    : Pot[_]          = Pot.empty
+                         ) {
 
   lazy val exceptionOption = saving.exceptionOption
-
-
-  override def withName(name2: String) = copy(name = name2)
-  override def withName(name2: String, nameValid2: Boolean) = copy(name = name2, nameValid = nameValid2)
-  override def withNameValid(nameValid2: Boolean) = copy(nameValid = nameValid2)
-  override def withSaving(saving2: Pot[_]) = copy(saving = saving2)
 
 }

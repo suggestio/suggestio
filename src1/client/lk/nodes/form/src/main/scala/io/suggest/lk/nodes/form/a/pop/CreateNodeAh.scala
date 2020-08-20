@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.a.pop
 
 import diode._
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
@@ -29,6 +30,35 @@ class CreateNodeAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    // Сигнал о вводе имени узла в форме добавления узла.
+    case m: CreateNodeNameChange =>
+      val name2 = LknFormUtilR.normalizeNodeName( m.name )
+      val nameValid2 = LknFormUtilR.isNameValid( name2 )
+
+      val v2 = for (cs0 <- value) yield {
+        MCreateNodeS.name.modify(_.copy(
+          value = name2,
+          isValid = nameValid2,
+        ))(cs0)
+      }
+      updated(v2)
+
+
+    // Сигнал о вводе id узла в форме добавления узла.
+    case m: CreateNodeIdChange =>
+      // Сопоставить с паттерном маячка.
+      val id2 = LknFormUtilR.normalizeBeaconId( m.id )
+      val isIdValid = LknFormUtilR.isBeaconIdValid( id2 )
+
+      val v2 = for (cs0 <- value) yield {
+        MCreateNodeS.id.modify(_.copy(
+          value = id2,
+          isValid = isIdValid,
+        ))(cs0)
+      }
+      updated(v2)
+
+
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case CreateNodeClick =>
       val v0 = value
@@ -41,50 +71,28 @@ class CreateNodeAh[M](
       }
 
 
-    // Сигнал о вводе имени узла в форме добавления узла.
-    case m: CreateNodeNameChange =>
-      val name2 = LknFormUtilR.normalizeNodeName( m.name )
-      val nameValid2 = LknFormUtilR.isNameValid( name2 )
-
-      val v2 = for (cs <- value) yield {
-        cs.withName(name2, nameValid2)
-      }
-      updated(v2)
-
-
-    // Сигнал о вводе id узла в форме добавления узла.
-    case m: CreateNodeIdChange =>
-      // Сопоставить с паттерном маячка.
-      val id2 = LknFormUtilR.normalizeBeaconId( m.id )
-      val isIdValid = LknFormUtilR.isBeaconIdValid( id2 )
-
-      val v2 = for (cs <- value) yield {
-        cs.withId( Some(id2), isIdValid )
-      }
-      updated(v2)
-
-
-    // Сигнал о нажатии на кнопку "отмена" в форме добавления узла.
-    case CreateNodeCancelClick =>
+    // Сигнал о нажатии на кнопку "Закрыть" в форме добавления узла.
+    case CreateNodeCloseClick =>
       updated( None )
 
 
     // Сигнал клика по кнопке запуска создания нового узла.
     case CreateNodeSaveClick =>
-      val v0 = value
-      v0.filter( _.isValid  ).fold {
-        // Игнорить нажатие, пусть юзер введёт все данные.
-        noChange
-
-      } { cs =>
+      (for {
+        cs <- value
+        if cs.isValid && !cs.saving.isPending
+      } yield {
         val parentNodeRcvrKey = currNodeRO().get
         val parentNodeId = parentNodeRcvrKey.last
 
         // Огранизовать запрос на сервер.
         val fx = Effect {
           val req = MLknNodeReq(
-            name = cs.name.trim,
-            id   = cs.id
+            name = cs.name.value.trim,
+            id = {
+              val id = cs.id.value
+              Option.when( id.nonEmpty )(id)
+            }
           )
           api
             .createSubNodeSubmit(parentNodeId, req)
@@ -97,9 +105,10 @@ class CreateNodeAh[M](
         }
 
         // Выставить в addState флаг текущего запроса.
-        val cs2 = cs.withSavingPending()
+        val cs2 = MCreateNodeS.saving.modify(_.pending())(cs)
         updated(Some(cs2), fx)
-      }
+      })
+        .getOrElse( noChange )
 
 
     // Положительный ответ сервера по поводу добавления нового узла.
@@ -108,8 +117,11 @@ class CreateNodeAh[M](
         // Ошибка. Вернуть addState назад.
         {ex =>
           val v2 = for (cs <- value) yield {
-            cs.withSaving(
-              cs.saving.fail( LknException(ex) )
+            val invalidateF = MTextFieldS.isValid.set(false)
+            cs.copy(
+              name = invalidateF(cs.name),
+              id   = invalidateF(cs.id),
+              saving = cs.saving.fail(LknException(ex)),
             )
           }
           updated(v2)

@@ -1,8 +1,9 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import diode.react.ReactPot.potWithReact
 import io.suggest.bill.MCurrencies
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -22,14 +23,17 @@ import io.suggest.react.ReactCommonUtil
   * Description: Компонент попапа редактирования тарифа.
   */
 class EditTfDailyR(
-                    crCtxP: React.Context[MCommonReactCtx],
+                    crCtxP                : React.Context[MCommonReactCtx],
                   ) {
 
   type Props = ModelProxy[Option[MEditTfDailyS]]
 
 
+  case class State(
+                    diaOpenedSomeC: ReactConnectProxy[Some[Boolean]],
+                  )
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, State]) {
 
     private val onInheritedModeClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailyInheritedMode )
@@ -45,16 +49,17 @@ class EditTfDailyR(
     private val onSaveClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailySaveClick )
 
-    private val onCancelClick: Callback =
+    private val onCloseClick: Callback =
       dispatchOnProxyScopeCB( $, TfDailyCancelClick )
 
 
-    def render(propsProxy: Props): VdomElement = {
+    def render(propsProxy: Props, s: State): VdomElement = {
+
       propsProxy().whenDefinedEl { editS =>
 
         propsProxy.wrap { _ =>
           PopupR.PropsVal(
-            closeable = Some(onCancelClick)
+            closeable = Some(onCloseClick)
           )
         } { popupPropsProxy =>
 
@@ -149,7 +154,7 @@ class EditTfDailyR(
 
               <.a(
                 ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M, Css.Buttons.LIST ),
-                ^.onClick --> onCancelClick,
+                ^.onClick --> onCloseClick,
                 crCtxP.message( MsgCodes.`Cancel` ),
               ),
 
@@ -180,7 +185,15 @@ class EditTfDailyR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        diaOpenedSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.nonEmpty )
+        },
+
+      )
+    }
     .renderBackend[Backend]
     .build
 

@@ -10,7 +10,7 @@ object MuiDialog {
 
   val component = JsComponent[MuiDialogProps, Children.Varargs, Null](Mui.Dialog)
 
-  final def apply(props: MuiDialogProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+  final def apply(props: MuiDialogProps)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
