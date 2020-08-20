@@ -41,7 +41,7 @@ class DeleteBtnR(
       )(
         MuiIconButton(
           new MuiIconButtonProps {
-            override val color = MuiColorTypes.error
+            override val color = MuiColorTypes.secondary
             override val onClick = _onDeleteClickCbF
             override val disabled = p.nonEmpty
           }

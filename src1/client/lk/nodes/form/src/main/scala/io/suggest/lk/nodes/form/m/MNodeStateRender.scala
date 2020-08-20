@@ -37,7 +37,7 @@ case class MNodeStateRender(
   /** Путь до узла в правильном порядке.
     * Используем def для экономии ресурсов: nodePathRev шарит свои хвосты между с другими элементами,
     * а прямой nodePath нужен только на момент срабатывания какого-то экшена. */
-  def nodePath = rawNodePathRev.reverse.tail
+  def nodePath: NodePath_t = rawNodePathRev.reverse.tail
 
 }
 

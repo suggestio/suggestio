@@ -1,9 +1,10 @@
 package io.suggest.lk.nodes.form.r
 
 import diode.react.ModelProxy
+import io.suggest.css.CssR
 import io.suggest.lk.nodes.form.m.MLkNodesRoot
 import io.suggest.lk.nodes.form.r.tree.TreeR
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -13,7 +14,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: React-компонент формы управления узлами.
   */
 class LkNodesFormR(
-                    treeR: TreeR
+                    treeR               : TreeR,
+                    lkNodesFormCssP     : React.Context[LkNodesFormCss],
                   ) {
 
 
@@ -25,7 +27,11 @@ class LkNodesFormR(
 
     def render(p: Props): VdomElement = {
       <.div(
-        // Рендер текущего дерева узлов
+        // css-стили формы:
+        lkNodesFormCssP
+          .consume(CssR.component.apply),
+
+        // Рендер текущего дерева узлов:
         treeR.component( p ),
       )
     }

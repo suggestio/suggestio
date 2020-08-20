@@ -120,6 +120,9 @@ object MNodeType {
       _isBleBeacon
     }
 
+    /** Для этого типа узлов можно рендерить юзеру ссылку на личный кабинет? */
+    def showGoToLkLink: Boolean =
+      _isAdnNode
 
     private def _isAdnNode =
       ntype ==* MNodeTypes.AdnNode

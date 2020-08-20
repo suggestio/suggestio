@@ -63,7 +63,7 @@ final class TariffEditR(
           crCtxP.consume { crCtx =>
             val perDay = crCtx.messages( MsgCodes.`_per_.day` )
 
-            val prefixDiv = <.div(
+            val prefixDiv = <.span(
               crCtxP.message( tfInfo.mode.msgCode ),
               HtmlConstants.COLON,
             )

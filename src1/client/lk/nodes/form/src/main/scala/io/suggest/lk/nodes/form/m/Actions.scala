@@ -18,7 +18,7 @@ sealed trait LkNodesAction extends DAction
 sealed trait LkNodesTreeAction
   extends LkNodesAction
 {
-  def rcvrKey: NodePath_t
+  def nodePath: NodePath_t
 }
 
 sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
@@ -28,14 +28,14 @@ sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
 case class NodeNameClick(
-                          override val rcvrKey: NodePath_t,
+                          override val nodePath: NodePath_t,
                         )
   extends LkNodesTreeAction
 
 
 /** Модель результата запроса к серверу по поводу под-узлов для указанного узла. */
 case class HandleSubNodesOf(
-                             override val rcvrKey   : NodePath_t,
+                             override val nodePath  : NodePath_t,
                              subNodesRespTry        : Try[MLknNodeResp],
                              tstampMs               : Long,
                            )
@@ -84,7 +84,7 @@ case class NodeIsEnabledChanged(
 
 /** Сигнал ответа сервера на апдейт флага isEnabled. */
 case class NodeIsEnabledUpdateResp(
-                                    override val rcvrKey : NodePath_t,
+                                    override val nodePath: NodePath_t,
                                     resp                 : Try[MLknNode]
                                   )
   extends LkNodesTreeAction
@@ -105,7 +105,7 @@ case object NodeMenuBtnClick
 
 /** Результат запроса к серверу по поводу удаления узла. */
 case class NodeDeleteResp(
-                           override val rcvrKey: NodePath_t,
+                           override val nodePath: NodePath_t,
                            resp: Try[Boolean]
                          )
   extends LkNodesTreeAction
@@ -117,11 +117,7 @@ case class NodeDeleteResp(
 case object NodeEditClick extends LkNodesAction
 
 /** Редактирование названия узла: Юзер вводит название узла (маячка). */
-case class NodeEditNameChange(
-                               override val rcvrKey: NodePath_t,
-                               name: String
-                             )
-  extends LkNodesTreeNameAction
+case class NodeEditNameChange( name: String ) extends LkNodesAction
 
 /** Клик по кнопке отмены редактирования узла. */
 case object NodeEditCancelClick extends LkNodesAction
@@ -130,17 +126,16 @@ case object NodeEditCancelClick extends LkNodesAction
 case object NodeEditOkClick extends LkNodesAction
 
 /** Ответ сервера по итогам запроса. */
-case class NodeEditSaveResp(override val rcvrKey: NodePath_t, tryResp: Try[MLknNode])
-  extends LkNodesTreeAction
+case class NodeEditSaveResp( nodeId: String, tryResp: Try[MLknNode] ) extends LkNodesAction
 
 
 // Управление размещением текущей карточки на указанном узле.
 
 /** Изменилось состояние галочки, управляющей размещением текущей карточки на узле. */
-case class AdvOnNodeChanged(override val rcvrKey: NodePath_t, isEnabled: Boolean)
+case class AdvOnNodeChanged(override val nodePath: NodePath_t, isEnabled: Boolean)
   extends LkNodesTreeAction
 /** Ответ сервера на тему управления размещением карточки на узле. */
-case class AdvOnNodeResp(override val rcvrKey: NodePath_t, tryResp: Try[MLknNode])
+case class AdvOnNodeResp(override val nodePath: NodePath_t, tryResp: Try[MLknNode])
   extends LkNodesTreeAction
 
 
@@ -180,7 +175,7 @@ case class AdvShowOpenedChange( isChecked: Boolean ) extends LkNodesAction
 
 /** Ответ сервера на запрос изменения отображения рекламной карточки. */
 case class AdvShowOpenedChangeResp(
-                                    override val rcvrKey: NodePath_t,
+                                    override val nodePath: NodePath_t,
                                     reason: AdvShowOpenedChange,
                                     tryResp: Try[_],
                                   )
@@ -189,7 +184,7 @@ case class AdvShowOpenedChangeResp(
 /** Изменение галочки постоянной обводки. */
 case class AlwaysOutlinedSet( isChecked: Boolean ) extends LkNodesAction
 case class AlwaysOutlinedResp(
-                               override val rcvrKey: NodePath_t,
+                               override val nodePath: NodePath_t,
                                reason: AlwaysOutlinedSet,
                                tryResp: Try[_],
                              )

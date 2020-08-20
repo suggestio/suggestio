@@ -5,6 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m._
+import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -13,6 +14,10 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import scalaz.Tree
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+
+import scala.scalajs.js
+import js.JSConverters._
 
 /**
   * Suggest.io
@@ -71,6 +76,7 @@ class TreeR(
             confAdId      = mroot.conf.adIdOpt,
             opened        = mroot.tree.opened,
             deleteOpt     = mroot.popups.deleteNodeS,
+            editing       = mroot.popups.editName.nonEmpty,
           )
         } (
           nodeR.component
@@ -82,19 +88,40 @@ class TreeR(
         ^.`class` := Css.flat(Css.Table.TABLE, Css.Table.Width.XL),
 
         // Рендерить узлы.
-        s.root4nodeC { mrootProxy =>
-          val mroot = mrootProxy.value
+        {
 
-          MuiTreeView(
-            new MuiTreeViewProps {
-              override val defaultCollapseIcon = Mui.SvgIcons.ExpandMore()().rawNode
-              override val defaultExpandIcon = Mui.SvgIcons.ChevronRight()().rawNode
-            }
-          )(
-            _renderTreeNodeIndexed(
-              subTree = mroot.tree.nodes.zipWithIndex,
+          s.root4nodeC { mrootProxy =>
+            val mroot = mrootProxy.value
+
+            // выделить визуально надо только текущий открытый узел, если есть.
+            val _selectedTreeNodeId = mroot.tree.opened
+              .map( LknFormUtilR.nodePath2treeId )
+
+            // expanded: Надо всю цепочку expanded-узлов перечислять, а не только конечный узел:
+            val _expandedTreeNodeIds = (for {
+              opened  <- mroot.tree.opened.iterator
+              // _selectedTreeNodeId: Повторно используем nodeId для сборки списка id раскрытых элементов дерева, а хвосты - рендерим в string:
+              nthTail <- _selectedTreeNodeId.iterator ++ opened.tails.map( LknFormUtilR.nodePath2treeId )
+            } yield {
+              nthTail
+            })
+              .toJSArray
+
+            MuiTreeView(
+              new MuiTreeViewProps {
+                override val defaultCollapseIcon = Mui.SvgIcons.ExpandMore()().rawNode
+                override val defaultExpandIcon = Mui.SvgIcons.ChevronRight()().rawNode
+                // js.defined: Тут нельзя undefined, т.к. это приведёт к смене ошибочному controlled => uncontrolled и сворачиванию дерева.
+                // Явно фиксируем controlled-режим, чтобы не допускать логических ошибок на фоне желанию задействовать undefined:
+                override val expanded = js.defined( _expandedTreeNodeIds )
+                override val selected = js.defined( _selectedTreeNodeId.toJSArray )
+              }
+            )(
+              _renderTreeNodeIndexed(
+                subTree = mroot.tree.nodes.zipWithIndex,
+              )
             )
-          )
+          }
         },
 
       )

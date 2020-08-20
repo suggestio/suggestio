@@ -44,12 +44,12 @@ trait LkNodesInitRouter extends InitRouter {
     val circuit = modules.lkNodesFormCircuit
 
     // Рендер формы.
-    val formR = circuit.wrap(m => m)( modules.lkNodesFormR.component.apply )
+    val formR = circuit.wrap(identity(_))( modules.lkNodesFormR.component.apply )
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( LkNodesConst.FORM_CONT_ID )
     formR.renderIntoDOM(formTarget )
 
     // Рендер компонента попапов.
-    val popsContR = circuit.wrap(_.popups)( modules.lknPopupsR.component.apply )
+    val popsContR = circuit.wrap(identity(_))( modules.lknPopupsR.component.apply )
     val popsContTarget = PopupsContR.initDocBody()
     popsContR.renderIntoDOM(popsContTarget)
   }

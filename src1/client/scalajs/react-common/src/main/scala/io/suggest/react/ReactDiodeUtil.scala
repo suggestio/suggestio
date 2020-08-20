@@ -62,13 +62,10 @@ object ReactDiodeUtil {
     * @return Пропатченный компонент, который обновляется (и обновляет S) только если P.value отличается от S.
     */
   def p2sShouldComponentUpdate[P <: AnyRef, C <: Children, S <: AnyRef: FastEq, B, US <: UpdateSnapshot](p2s: P => S): ScalaComponent.Config[P, C, S, B, US, US] = {
-    _.componentWillReceiveProps { $ =>
-      val nextPropsVal = p2s( $.nextProps )
-      val currPropsVal = $.state
-      if ( implicitly[FastEq[S]].eqv(currPropsVal, nextPropsVal) ) {
-        Callback.empty
-      } else {
-        $.setState(nextPropsVal)
+    _.getDerivedStateFromPropsOption { (nextProps, currState) =>
+      val nextState = p2s( nextProps )
+      Option.when( implicitly[FastEq[S]].neqv(currState, nextState) ) {
+        nextState
       }
     }.shouldComponentUpdatePure { $ =>
       $.currentState ne $.nextState

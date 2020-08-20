@@ -22,7 +22,6 @@ object MNodeState {
 
   def infoPot     = GenLens[MNodeState](_.infoPot)
   def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
-  def editing     = GenLens[MNodeState](_.editing)
   def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
   def adv         = GenLens[MNodeState](_.adv)
 
@@ -52,7 +51,6 @@ object MNodeState {
 case class MNodeState(
                        infoPot            : Pot[MLknNode],
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
-                       editing            : Option[MEditNodeState]            = None,
                        tfInfoWide         : Boolean                           = false,
                        adv                : Option[MNodeAdvState]             = None,
                      ) {
@@ -66,7 +64,7 @@ case class MNodeState(
     * @return true, значит можно отрабатывать клики по заголовку в нормальном режиме.
     *         false -- происходит какое-то действо, например переименование узла.
     */
-  def isNormal = editing.isEmpty && !advIsPending
+  def isNormal = !advIsPending
 
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
 

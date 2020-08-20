@@ -1,20 +1,22 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.nodes.form.m.{MEditNodeState, NodeEditCancelClick, NodeEditOkClick}
+import io.suggest.lk.nodes.form.m.{MEditNodeState, NodeEditCancelClick, NodeEditNameChange, NodeEditOkClick}
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.08.2020 8:43
-  * Description: Компонент диалога редактирования названия узла.
+  * Description: wrap-компонент диалога редактирования названия узла.
   */
 class NameEditDiaR(
                     platformCssStatic     : () => PlatformCssStatic,
@@ -22,25 +24,40 @@ class NameEditDiaR(
                     crCtxP                : React.Context[MCommonReactCtx],
                   ) {
 
-  type Props_t = Option[MEditNodeState]
+  case class PropsVal(
+                       nameOrig     : String,
+                       state        : MEditNodeState,
+                     )
+  implicit lazy val nameEditPvFeq = FastEqUtil[PropsVal] { (a, b) =>
+    (a.nameOrig ===* b.nameOrig) &&
+    (a.state ===* b.state)
+  }
+
+  type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
 
   case class State(
                     isVisibleSomeC            : ReactConnectProxy[Some[Boolean]],
                     propsOptC                 : ReactConnectProxy[Option[MEditNodeState]],
                     okBtnEnabledSomeC         : ReactConnectProxy[Some[Boolean]],
+                    nameOrigC                 : ReactConnectProxy[Option[String]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
 
     /** Callback нажатия по кнопке сохранения отредактированного узла. */
-    private lazy val onNodeEditOkClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+    private lazy val _onOkClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodeEditOkClick )
     }
 
     /** Callback нажатия по кнопке отмены редактирования узла. */
-    private lazy val onNodeEditCancelClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+    private lazy val _onCancelClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodeEditCancelClick )
+    }
+
+    private lazy val _onInputChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      val name2 = e.target.value
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, NodeEditNameChange( name2 ) )
     }
 
 
@@ -58,6 +75,8 @@ class NameEditDiaR(
             new MuiDialogProps {
               override val open = isOpened
               override val classes = diaCss
+              override val onClose = _onCancelClick
+              override val maxWidth = MuiDialogMaxWidths.lg
             }
           )(
 
@@ -65,7 +84,12 @@ class NameEditDiaR(
             MuiDialogContent()(
               {
                 val _inputLabel = crCtx.messages( MsgCodes.`Name` ): VdomNode
-                val _inputHelperText = crCtx.messages( MsgCodes.`Type.new.name.for.beacon.0` ): VdomNode
+                val _inputHelperText = s.nameOrigC { nameOrigOptProxy =>
+                  val nameOrig = nameOrigOptProxy.value getOrElse ""
+                  React.Fragment(
+                    crCtx.messages( MsgCodes.`Type.new.name.for.beacon.0`, nameOrig )
+                  )
+                }
 
                 s.propsOptC { propsOptProxy =>
                   val propsOpt = propsOptProxy.value
@@ -78,8 +102,9 @@ class NameEditDiaR(
                       override val label          = _inputLabel.rawNode
                       override val autoFocus      = true
                       override val fullWidth      = true
-                      override val required       = _name.isEmpty
+                      override val required       = true
                       override val helperText     = _inputHelperText.rawNode
+                      override val onChange       = _onInputChanged
                     }
                   )()
                 }
@@ -96,7 +121,7 @@ class NameEditDiaR(
                 MuiButton(
                   new MuiButtonProps {
                     override val disabled = !okBtnEnabledSomeProxy.value.value
-                    override val onClick = onNodeEditOkClick
+                    override val onClick = _onOkClick
                     override val variant = MuiButtonVariants.text
                   }
                 )(
@@ -107,7 +132,7 @@ class NameEditDiaR(
               // Кнопка отмены.
               MuiButton(
                 new MuiButtonProps {
-                  override val onClick = onNodeEditCancelClick
+                  override val onClick = _onCancelClick
                   override val variant = MuiButtonVariants.text
                 }
               )(
@@ -132,11 +157,17 @@ class NameEditDiaR(
           OptionUtil.SomeBool( props.nonEmpty )
         },
 
-        propsOptC = propsProxy.connect(identity),
+        propsOptC = propsProxy.connect(_.map(_.state))( OptFastEq.Plain ),
 
         okBtnEnabledSomeC = propsProxy.connect { m =>
-          OptionUtil.SomeBool( m.nameValid && !m.isPending )
+          val isEnabled = m.exists { pv =>
+            val s = pv.state
+            s.nameValid && !s.saving.isPending
+          }
+          OptionUtil.SomeBool( isEnabled )
         },
+
+        nameOrigC = propsProxy.connect( _.map(_.nameOrig) )( OptFastEq.Plain ),
 
       )
     }

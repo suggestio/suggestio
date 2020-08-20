@@ -20,10 +20,11 @@ object StringUtil {
    * @param s Исходная строка.
    * @return Строка, где whitespace-символы слева удалены.
    */
-  def trimLeft(s: String): String = {
-    s.replace("^\\s", "")
-  }
+  def trimLeft(s: String): String =
+    s.replaceFirst("^\\s+", "")
 
+  def trimRight(s: String): String =
+    s.replaceFirst("\\s+$", "")
 
   /** Лимитирование длины строки слева. Если строка длинее указанного порога,
     * то она будет урезана и в конце появится многоточие. */

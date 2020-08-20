@@ -2,7 +2,6 @@ package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiListItemTextProps, MuiToolTip, MuiToolTipProps, MuiTreeItem, MuiTreeItemProps}
 import diode.react.ModelProxy
-import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -10,13 +9,14 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.n2.node.MNodeTypes
 import ReactCommonUtil.Implicits._
 import diode.data.Pot
 import io.suggest.routes.routes
 import io.suggest.scalaz.NodePath_t
 import ReactDiodeUtil.Implicits._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.m.MDeleteConfirmPopupS
+import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.spa.FastEqUtil
 
 /**
@@ -47,13 +47,15 @@ class NodeR(
                        opened             : Option[NodePath_t],
                        confAdId           : Option[String],
                        deleteOpt          : Option[MDeleteConfirmPopupS],
+                       editing            : Boolean,
                      )
 
   implicit def NodeRPropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
     (a.node ===* b.node) &&
     (a.opened ===* b.opened) &&
     (a.confAdId ===* b.confAdId) &&
-    (a.deleteOpt ===* b.deleteOpt)
+    (a.deleteOpt ===* b.deleteOpt) &&
+    (a.editing ==* b.editing)
   }
 
 
@@ -79,7 +81,7 @@ class NodeR(
       */
     def render(propsProxy: Props, p: Props_t, treeChildren: PropsChildren): VdomElement = {
       val nodePath = p.node.nodePath
-      val isShowProps = p.opened contains nodePath
+      val isShowProps = p.opened contains[NodePath_t] nodePath
       val isShowNodeEditProps = isShowProps && p.confAdId.isEmpty
 
       // Контейнер узла узла + дочерних узлов.
@@ -88,12 +90,16 @@ class NodeR(
         val _label = {
           // ADN-режим? Рендерить кнопку редактирования названия:
           val nameEditBtn = ReactCommonUtil.maybeNode( isShowNodeEditProps ) {
-            propsProxy.wrap(_.node.state.editing)( nameEditButtonR.component.apply )
+            propsProxy.wrap { m =>
+              OptionUtil.SomeBool(m.editing)
+            }( nameEditButtonR.component.apply )
           }
-          propsProxy.wrap( _.node )( nodeHeaderR.component(_)(nameEditBtn) )
+          // Кнопка перехода в выдачу узла:
+          val scLink = nodeScLinkR.component( p.node.state.info.id )
+          propsProxy.wrap( _.node )( nodeHeaderR.component(_)(nameEditBtn, scLink) )
         }
         new MuiTreeItemProps {
-          override val nodeId = nodePath.mkString( HtmlConstants.`.` )
+          override val nodeId = LknFormUtilR.nodePath2treeId( nodePath )
           override val label = _label.rawNode
           override val onLabelClick = _onNodeClickCbF
         }
@@ -116,7 +122,7 @@ class NodeR(
                   )(),
 
                   // Кнопка "Перейти..." в ЛК узла:
-                  ReactCommonUtil.maybeNode( p.node.state.info.ntype ==* MNodeTypes.AdnNode ) {
+                  ReactCommonUtil.maybeNode( p.node.state.info.ntype.showGoToLkLink ) {
                     MuiToolTip(
                       new MuiToolTipProps {
                         override val title = crCtxP.message( MsgCodes.`Go.into` ).rawNode
@@ -137,9 +143,6 @@ class NodeR(
                       )
                     )
                   },
-
-                  // Кнопка перехода в выдачу узла:
-                  nodeScLinkR.component( p.node.state.info.id ),
 
                   // Кнопка удаления узла.
                   ReactCommonUtil.maybeEl(

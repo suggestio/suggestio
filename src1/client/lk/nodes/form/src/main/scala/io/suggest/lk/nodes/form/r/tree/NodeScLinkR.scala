@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiLink, MuiLinkProps}
+import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiLink, MuiLinkProps, MuiToolTip, MuiToolTipProps}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.routes.routes
@@ -24,34 +24,40 @@ final class NodeScLinkR(
   type Props = String
 
   class Backend($: BackendScope[Props, Unit]) {
+
     def render(nodeId: String): VdomElement = {
-      MuiLink(
-        new MuiLinkProps {
-          val target = "_blank"
-          val href = ScConstants.ScJsState.fixJsRouterUrl(
-            routes.controllers.sc.ScSite.geoSite(
-              PlayJsonSjsUtil.toNativeJsonObj(
-                Json.toJsObject(
-                  SioPages.Sc3(
-                    nodeId = Some( nodeId ),
-                  )
-                )
-              )
-            ).url
-          )
+      MuiToolTip(
+        new MuiToolTipProps {
+          override val title = crCtxP.message( MsgCodes.`Showcase` ).rawNode
         }
       )(
-        MuiButton(
-          new MuiButtonProps {
-            override val variant = MuiButtonVariants.outlined
-            override val startIcon = Mui.SvgIcons.Apps()().rawNode
-            override val color = MuiColorTypes.primary
+        MuiLink(
+          new MuiLinkProps {
+            val target = "_blank"
+            val href = ScConstants.ScJsState.fixJsRouterUrl(
+              routes.controllers.sc.ScSite.geoSite(
+                PlayJsonSjsUtil.toNativeJsonObj(
+                  Json.toJsObject(
+                    SioPages.Sc3(
+                      nodeId = Some( nodeId ),
+                    )
+                  )
+                )
+              ).url
+            )
           }
         )(
-          crCtxP.message( MsgCodes.`Showcase` ),
+          MuiIconButton(
+            new MuiIconButtonProps {
+              override val color = MuiColorTypes.primary
+            }
+          )(
+            Mui.SvgIcons.Apps()(),
+          )
         )
       )
     }
+
   }
 
   val component = ScalaComponent

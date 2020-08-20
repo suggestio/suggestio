@@ -1,10 +1,11 @@
 package io.suggest.lk.nodes.form
 
 import com.softwaremill.macwire._
-import io.suggest.lk.nodes.form.r.LkNodesFormR
+import io.suggest.lk.nodes.form.r.{LkNodesFormCss, LkNodesFormR}
 import io.suggest.lk.nodes.form.r.pop._
 import io.suggest.lk.nodes.form.r.tree._
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
+import japgolly.scalajs.react.React
 
 /**
   * Suggest.io
@@ -20,6 +21,10 @@ trait LkNodesModuleBase {
 
   // views
   lazy val lkNodesFormR = wire[LkNodesFormR]
+
+  // css
+  lazy val lkNodesFormCssP: React.Context[LkNodesFormCss] =
+    React.Context( wire[LkNodesFormCss] )
 
   // tree
   lazy val treeR = wire[TreeR]

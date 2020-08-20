@@ -3,9 +3,10 @@ package io.suggest.lk.nodes.form.r.pop
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
 import io.suggest.lk.m.MDeleteConfirmPopupS
-import io.suggest.lk.nodes.form.m.{MCreateNodeS, MEditTfDailyS, MLknPopups}
+import io.suggest.lk.nodes.form.m.{MCreateNodeS, MEditTfDailyS, MLkNodesRoot}
 import io.suggest.lk.r.DeleteConfirmPopupR
 import io.suggest.lk.r.popup.PopupsContR
+import io.suggest.spa.OptFastEq
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -18,7 +19,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class LknPopupsR(
                   val createNodeR   : CreateNodeR,
-                  val editTfDailyR  : EditTfDailyR
+                  val editTfDailyR  : EditTfDailyR,
+                  nameEditDiaR      : NameEditDiaR,
                 ) {
 
   import MCreateNodeS.MCreateNodeSFastEq
@@ -27,7 +29,7 @@ class LknPopupsR(
   import PopupsContR.PopContPropsValFastEq
 
 
-  type Props = ModelProxy[MLknPopups]
+  type Props = ModelProxy[MLkNodesRoot]
 
 
   case class State(
@@ -49,15 +51,33 @@ class LknPopupsR(
         state.deleteNodeOptConn { DeleteConfirmPopupR.component.apply },
 
         // Рендер попапа редактирования тарифа текущего узла.
-        state.editTfDailyOptConn { editTfDailyR.component.apply }
+        state.editTfDailyOptConn { editTfDailyR.component.apply },
+
       )
 
-      state.popContPropsConn { popContPropsProxy =>
-        // Рендер контейнера попапов:
-        PopupsContR( popContPropsProxy )(
-          popups: _*
-        )
-      }
+      React.Fragment(
+
+        state.popContPropsConn { popContPropsProxy =>
+          // Рендер контейнера попапов:
+          PopupsContR( popContPropsProxy )(
+            popups: _*
+          )
+        },
+
+        // Попап редактирования названия узла.
+        propsProxy.wrap { mroot =>
+          for {
+            edit0 <- mroot.popups.editName
+            loc0 <- mroot.tree.openedLoc
+          } yield {
+            nameEditDiaR.PropsVal(
+              nameOrig = loc0.getLabel.info.name,
+              state    = edit0
+            )
+          }
+        }( nameEditDiaR.component.apply )( implicitly, OptFastEq.Wrapped(nameEditDiaR.nameEditPvFeq) ),
+
+      )
     }
 
   }
@@ -65,14 +85,15 @@ class LknPopupsR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { p =>
+    .initialStateFromProps { mrootProxy =>
+      val p = mrootProxy.zoom(_.popups)
       State(
         popContPropsConn = {
           // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.
           val contCss = Css.Lk.Nodes.LKN
           p.connect { v =>
             PopupsContR.PropsVal(
-              visible   = v.nonEmpty,
+              visible   = v.deleteNodeS.nonEmpty || v.editTfDailyS.nonEmpty || v.createNodeS.nonEmpty,
               css       = contCss
             )
           }

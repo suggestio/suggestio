@@ -2,6 +2,8 @@ package io.suggest.lk.nodes.form.u
 
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.ble.BeaconUtil
+import io.suggest.common.html.HtmlConstants
+import io.suggest.scalaz.NodePath_t
 import io.suggest.text.StringUtil
 
 /**
@@ -36,5 +38,9 @@ object LknFormUtilR {
   def isBeaconIdValid(id: String): Boolean = {
     id.matches( BeaconUtil.EddyStone.EDDY_STONE_NODE_ID_RE_LC )
   }
+
+
+  def nodePath2treeId(nodePath: NodePath_t): String =
+    nodePath.mkString( "", HtmlConstants.`.`, "#" )
 
 }

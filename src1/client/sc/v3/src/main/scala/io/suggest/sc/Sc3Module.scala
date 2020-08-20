@@ -31,7 +31,6 @@ import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
 import io.suggest.sc.v.styl.{ScCss, ScThemes}
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
-import japgolly.scalajs.react.React.Context
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
 
@@ -199,10 +198,10 @@ object Sc3Module { outer =>
       (SioPages.Sc3.login set Option(login))(route0)
     }
 
-    override lazy val routerCtlCtx: Context[RouterCtl[SioPages.Login]] =
+    override lazy val routerCtlCtx: React.Context[RouterCtl[SioPages.Login]] =
       React.Context( loginRouterCtl )
 
-    override lazy val loginFormCssCtx: Context[LoginFormCss] =
+    override lazy val loginFormCssCtx: React.Context[LoginFormCss] =
       LoginFormModuleBase.circuit2loginCssRCtx( outer.sc3Circuit.scLoginRW.value.circuit )
 
   }
