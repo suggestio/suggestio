@@ -4,23 +4,17 @@ import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, Mu
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.routes.routes
-import io.suggest.sc.ScConstants
-import io.suggest.spa.{FastEqUtil, SioPages}
-import io.suggest.xplay.json.PlayJsonSjsUtil
+import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import play.api.libs.json.Json
-
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 18.08.2020 20:10
-  * Description: Компонент ссылки на выдачу узла.
+  * Created: 20.08.2020 14:47
+  * Description: Компонент ссылки на ЛК узла.
   */
-final class NodeScLinkR(
+final class GoToLkLinkR(
                          crCtxP               : React.Context[MCommonReactCtx],
                        ) {
 
@@ -32,27 +26,16 @@ final class NodeScLinkR(
       e.stopPropagationCB
     }
 
-    def render(nodeId: String): VdomElement = {
+    def render(nodeId: Props): VdomElement = {
       MuiToolTip(
         new MuiToolTipProps {
-          override val title = crCtxP.message( MsgCodes.`Showcase` ).rawNode
+          override val title = crCtxP.message( MsgCodes.`Go.into` ).rawNode
         }
       )(
         MuiLink(
           new MuiLinkProps {
-            val target = "_blank"
+            val href = routes.controllers.LkAds.adsPage( nodeId ).url
             override val onClick = _onLinkClick
-            val href = ScConstants.ScJsState.fixJsRouterUrl(
-              routes.controllers.sc.ScSite.geoSite(
-                PlayJsonSjsUtil.toNativeJsonObj(
-                  Json.toJsObject(
-                    SioPages.Sc3(
-                      nodeId = Some( nodeId ),
-                    )
-                  )
-                )
-              ).url
-            )
           }
         )(
           MuiIconButton(
@@ -60,13 +43,14 @@ final class NodeScLinkR(
               override val color = MuiColorTypes.primary
             }
           )(
-            Mui.SvgIcons.Apps()(),
+            Mui.SvgIcons.ArrowForward()(),
           )
         )
       )
     }
 
   }
+
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )

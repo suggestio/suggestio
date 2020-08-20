@@ -5,6 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeStateRender}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
@@ -12,6 +13,8 @@ import io.suggest.n2.node.MNodeTypes
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.spa.FastEqUtil
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -21,11 +24,27 @@ import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
   * Используется для быстрого неточного управления размещением карточки на узле.
   */
 final class NodeHeaderR(
+                         nodeScLinkR          : NodeScLinkR,
+                         goToLkLinkR          : GoToLkLinkR,
+                         deleteBtnR           : DeleteBtnR,
+                         nameEditButtonR      : NameEditButtonR,
                          lkNodesFormCssP      : React.Context[LkNodesFormCss],
                          crCtxP               : React.Context[MCommonReactCtx],
                        ) {
 
-  type Props_t = MNodeStateRender
+  case class PropsVal(
+                       render         : MNodeStateRender,
+                       isShowProps    : Boolean,
+                       locked         : Boolean,
+                     )
+  implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
+    (a.isShowProps ==* b.isShowProps) &&
+    (a.locked ==* b.locked) &&
+    MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render )
+  }
+
+
+  type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
 
@@ -35,14 +54,15 @@ final class NodeHeaderR(
     private lazy val _onAdvOnNodeChangedCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val isChecked = e.target.checked
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-        AdvOnNodeChanged( props.value.nodePath, isEnabled = isChecked )
+        AdvOnNodeChanged( props.value.render.nodePath, isEnabled = isChecked )
       }
     }
 
-    def render(s: Props_t, children: PropsChildren): VdomElement = {
-      val advPot = s.state.advHasAdvPot
+    def render(p: Props, s: Props_t): VdomElement = {
+      val st = s.render.state
+      val advPot = st.advHasAdvPot
       val isAdvPending = advPot.isPending
-      val ntype = s.state.info.ntype
+      val ntype = st.info.ntype
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
       MuiList()(
@@ -66,13 +86,39 @@ final class NodeHeaderR(
           // Название узла:
           MuiListItemText(
             new MuiListItemTextProps {
-              override val primary = s.state.info.name
+              override val primary = st.info.name
               override val secondary = crCtxP.message( ntype.singular ).rawNode
             }
           )(),
 
-          // Доп.children:
-          children,
+          ReactCommonUtil.maybeNode( s.isShowProps ) {
+            React.Fragment(
+
+              // ADN-режим? Рендерить кнопку редактирования названия:
+              p.wrap { m =>
+                OptionUtil.SomeBool( m.locked )
+              }( nameEditButtonR.component.apply ),
+
+              // Кнопка удаления узла.
+              ReactCommonUtil.maybeEl(
+                s.isShowProps &&
+                (st.info.canChangeAvailability contains[Boolean] true)
+              ) {
+                p.wrap { m =>
+                  OptionUtil.SomeBool( m.locked )
+                }( deleteBtnR.component.apply )
+              },
+
+              // Кнопка перехода в выдачу узла:
+              nodeScLinkR.component( st.info.id ),
+
+              // Кнопка "Перейти..." в ЛК узла:
+              ReactCommonUtil.maybeNode( st.info.ntype.showGoToLkLink ) {
+                goToLkLinkR.component( st.info.id )
+              },
+
+            )
+          },
 
           // Ошибка запроса:
           advPot.exceptionOption.whenDefinedNode { ex =>
@@ -110,7 +156,7 @@ final class NodeHeaderR(
           },
 
           // Линия прогресса.
-          ReactCommonUtil.maybeNode( isAdvPending || s.state.infoPot.isPending ) {
+          ReactCommonUtil.maybeNode( isAdvPending || st.infoPot.isPending ) {
             lkNodesFormCssP.consume { lknCss =>
               val progressCss = new MuiLinearProgressClasses {
                 override val root = lknCss.Node.linearProgress.htmlClass
@@ -149,8 +195,8 @@ final class NodeHeaderR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-    .renderBackendWithChildren[Backend]
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MNodeStateRender.NodeStateRenderFeq ) )
+    .renderBackend[Backend]
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( nodeHeaderPvFeq ) )
     .build
 
 }

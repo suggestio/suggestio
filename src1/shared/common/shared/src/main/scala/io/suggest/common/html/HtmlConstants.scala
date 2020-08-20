@@ -118,4 +118,9 @@ object HtmlConstants {
   }
 
 
+  object Aria {
+    final def ARIA_ = "aria-"
+    final def LABELLED_BY = ARIA_ + "labelledby"
+  }
+
 }

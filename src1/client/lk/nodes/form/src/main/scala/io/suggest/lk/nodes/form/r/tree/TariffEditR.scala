@@ -54,22 +54,85 @@ final class TariffEditR(
 
     def render(s: Props_t): VdomElement = {
       s.tfDailyOpt.whenDefinedEl { tfInfo =>
-        MuiListItem(
-          new MuiListItemProps {
-            override val button     = !s.showExpanded
-            override val onClick    = JsOptionUtil.maybeDefined( s.showExpanded )( _onRowClickCbF )
-          }
-        )(
-          crCtxP.consume { crCtx =>
-            val perDay = crCtx.messages( MsgCodes.`_per_.day` )
+        crCtxP.consume { crCtx =>
+          val perDay = crCtx.messages( MsgCodes.`_per_.day` )
 
-            val prefixDiv = <.span(
-              crCtxP.message( tfInfo.mode.msgCode ),
-              HtmlConstants.COLON,
-            )
+          React.Fragment(
+            MuiListItem(
+              new MuiListItemProps {
+                override val button     = !s.showExpanded
+                override val onClick    = JsOptionUtil.maybeDefined( !s.showExpanded )( _onRowClickCbF )
+              }
+            )(
+              // Текстовые данные.
+              MuiListItemText {
+                val prefixDiv = <.span(
+                  crCtxP.message( tfInfo.mode.msgCode ),
+                  HtmlConstants.COLON,
+                )
 
-            val _secondaryContent = if (s.showExpanded) {
-              prefixDiv(
+                val _secondaryContent = if (s.showExpanded) {
+                  // Раскрытый списочек.
+                  prefixDiv(
+                    <.br,
+                    crCtxP.message( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct ),
+                  )
+                } else {
+                  // Свёрнутый тариф, одной строкой
+                  prefixDiv(
+                    HtmlConstants.SPACE,
+                    tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
+                      <.span(
+                        ^.key := mCalType.value,
+                        ReactCommonUtil.maybe( mCalType !=* tfInfo.clauses.head._1 ) {
+                          TagMod(
+                            HtmlConstants.SPACE,
+                            HtmlConstants.SLASH,
+                            HtmlConstants.SPACE,
+                          )
+                        },
+                        ^.title := crCtx.messages( mCalType.i18nCode ),
+                        MPrice.amountStr(mPrice)
+                      )
+                    },
+                    <.span(
+                      ^.title := crCtx.messages( tfInfo.currency.currencyNameI18n ),
+                      crCtx.messages(tfInfo.currency.i18nPriceCode, "")
+                    ),
+                    perDay,
+                    <.br,
+                    // Подсказка показа подробностей по тарифу:
+                    crCtx.messages( MsgCodes.`Show.details` ),
+                    HtmlConstants.ELLIPSIS,
+                  )
+                }
+
+                new MuiListItemTextProps {
+                  override val primary = crCtxP.message( MsgCodes.`Adv.tariff` ).rawNode
+                  override val secondary = _secondaryContent.rawElement
+                }
+              }(),
+
+              // Кнопка редактирования тарифа:
+              MuiListItemSecondaryAction()(
+                MuiToolTip(
+                  new MuiToolTipProps {
+                    override val title = crCtx.messages( MsgCodes.`Change` ).rawNode
+                  }
+                )(
+                  MuiIconButton(
+                    new MuiIconButtonProps {
+                      override val onClick = _onRowEditClickCbF
+                    }
+                  )(
+                    Mui.SvgIcons.Edit()(),
+                  )
+                )
+              ),
+            ),
+
+            ReactCommonUtil.maybeNode( s.showExpanded ) {
+              MuiListItem()(
                 MuiTable()(
                   MuiTableBody()(
                     // Сортировка по MCalType, чтобы будни всегда шли перед выходными.
@@ -94,67 +157,10 @@ final class TariffEditR(
                       },
                   )
                 ),
-                crCtxP.message( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct ),
               )
-            } else {
-              // Свёрнутый тариф, одной строкой
-              prefixDiv(
-                HtmlConstants.SPACE,
-                tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
-                  <.span(
-                    ^.key := mCalType.value,
-                    ReactCommonUtil.maybe( mCalType !=* tfInfo.clauses.head._1 ) {
-                      TagMod(
-                        HtmlConstants.SPACE,
-                        HtmlConstants.SLASH,
-                        HtmlConstants.SPACE,
-                      )
-                    },
-                    ^.title := crCtx.messages( mCalType.i18nCode ),
-                    MPrice.amountStr(mPrice)
-                  )
-                },
-                <.span(
-                  ^.title := crCtx.messages( tfInfo.currency.currencyNameI18n ),
-                  crCtx.messages(tfInfo.currency.i18nPriceCode, "")
-                ),
-                perDay,
-                <.br,
-                // Подсказка показа подробностей по тарифу:
-                crCtx.messages( MsgCodes.`Show.details` ),
-                HtmlConstants.ELLIPSIS,
-              )
-            }
-
-            // Раскрытый списочек.
-            React.Fragment(
-              // Текстовые данные.
-              MuiListItemText {
-                new MuiListItemTextProps {
-                  override val primary = crCtxP.message( MsgCodes.`Adv.tariff` ).rawNode
-                  override val secondary = _secondaryContent.rawElement
-                }
-              }(),
-
-              // Кнопка редактирования тарифа:
-              MuiListItemSecondaryAction()(
-                MuiToolTip(
-                  new MuiToolTipProps {
-                    override val title = crCtx.messages( MsgCodes.`Change` ).rawNode
-                  }
-                )(
-                  MuiIconButton(
-                    new MuiIconButtonProps {
-                      override val onClick = _onRowEditClickCbF
-                    }
-                  )(
-                    Mui.SvgIcons.Edit()(),
-                  )
-                )
-              ),
-            )
-          },
-        )
+            },
+          )
+        }
       }
     }
 

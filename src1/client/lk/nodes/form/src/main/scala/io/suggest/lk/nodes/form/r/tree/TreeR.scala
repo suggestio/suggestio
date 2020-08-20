@@ -75,8 +75,7 @@ class TreeR(
             ),
             confAdId      = mroot.conf.adIdOpt,
             opened        = mroot.tree.opened,
-            deleteOpt     = mroot.popups.deleteNodeS,
-            editing       = mroot.popups.editName.nonEmpty,
+            locked        = mroot.popups.nonEmpty,
           )
         } (
           nodeR.component

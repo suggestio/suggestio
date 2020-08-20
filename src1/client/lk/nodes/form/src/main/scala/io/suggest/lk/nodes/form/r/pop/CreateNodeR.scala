@@ -13,7 +13,6 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 
 /**
@@ -32,15 +31,17 @@ class CreateNodeR(
 
     /** Callback для ввода названия добавляемого под-узла. */
     private def onNameChange(e: ReactEventFromInput): Callback = {
+      val name = e.target.value
       dispatchOnProxyScopeCB(
-        $, CreateNodeNameChange(name = e.target.value)
+        $, CreateNodeNameChange(name = name)
       )
     }
 
     /** Callback редактирования id создаваемого узла. */
     private def onIdChange(e: ReactEventFromInput): Callback = {
+      val id = e.target.value
       dispatchOnProxyScopeCB(
-        $, CreateNodeIdChange(id = e.target.value)
+        $, CreateNodeIdChange(id = id)
       )
     }
 

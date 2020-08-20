@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiLink, MuiLinkProps, MuiList, MuiListItem, MuiListItemText, MuiListItemTextProps, MuiToolTip, MuiToolTipProps, MuiTreeItem, MuiTreeItemProps}
+import com.materialui.{MuiList, MuiListItem, MuiListItemText, MuiListItemTextProps, MuiTreeItem, MuiTreeItemProps}
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
@@ -11,11 +11,8 @@ import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import ReactCommonUtil.Implicits._
 import diode.data.Pot
-import io.suggest.routes.routes
 import io.suggest.scalaz.NodePath_t
 import ReactDiodeUtil.Implicits._
-import io.suggest.common.empty.OptionUtil
-import io.suggest.lk.m.MDeleteConfirmPopupS
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.spa.FastEqUtil
 
@@ -28,10 +25,7 @@ import io.suggest.spa.FastEqUtil
   */
 class NodeR(
              nodeEnabledR         : NodeEnabledR,
-             nameEditButtonR      : NameEditButtonR,
-             nodeScLinkR          : NodeScLinkR,
              nodeHeaderR          : NodeHeaderR,
-             deleteBtnR           : DeleteBtnR,
              tariffEditR          : TariffEditR,
              subNodesR            : SubNodesR,
              nodeAdvRowR          : NodeAdvRowR,
@@ -40,22 +34,21 @@ class NodeR(
 
   /** Модель props текущего компонента.
     *
+    * @param locked Блокировать все лишние кнопки? Например, какой-то диалог открыт.
     * @param node Голова этого под-дерева.
     */
   case class PropsVal(
                        node               : MNodeStateRender,
                        opened             : Option[NodePath_t],
                        confAdId           : Option[String],
-                       deleteOpt          : Option[MDeleteConfirmPopupS],
-                       editing            : Boolean,
+                       locked             : Boolean,
                      )
 
   implicit def NodeRPropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
     (a.node ===* b.node) &&
     (a.opened ===* b.opened) &&
     (a.confAdId ===* b.confAdId) &&
-    (a.deleteOpt ===* b.deleteOpt) &&
-    (a.editing ==* b.editing)
+    (a.locked ==* b.locked)
   }
 
 
@@ -66,12 +59,11 @@ class NodeR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     /** Клик по заголовку узла (сворачивание-разворачивание). */
-    private lazy val _onNodeClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+    private lazy val _onNodeLabelClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { p: Props =>
         NodeNameClick( p.value.node.nodePath )
       }
     }
-
 
     /**
       * Рекурсивный рендер под-дерева узлов.
@@ -87,21 +79,18 @@ class NodeR(
       // Контейнер узла узла + дочерних узлов.
       MuiTreeItem {
         // Заголовок и переключалка ля управления размещением текущей карточки в данном узле:
-        val _label = {
-          // ADN-режим? Рендерить кнопку редактирования названия:
-          val nameEditBtn = ReactCommonUtil.maybeNode( isShowNodeEditProps ) {
-            propsProxy.wrap { m =>
-              OptionUtil.SomeBool(m.editing)
-            }( nameEditButtonR.component.apply )
-          }
-          // Кнопка перехода в выдачу узла:
-          val scLink = nodeScLinkR.component( p.node.state.info.id )
-          propsProxy.wrap( _.node )( nodeHeaderR.component(_)(nameEditBtn, scLink) )
-        }
+        val _label = propsProxy.wrap { p =>
+          nodeHeaderR.PropsVal(
+            render      = p.node,
+            isShowProps = isShowNodeEditProps,
+            locked      = p.locked,
+          )
+        }( nodeHeaderR.component.apply )
+
         new MuiTreeItemProps {
           override val nodeId = LknFormUtilR.nodePath2treeId( nodePath )
           override val label = _label.rawNode
-          override val onLabelClick = _onNodeClickCbF
+          override val onLabelClick = _onNodeLabelClickCbF
         }
       } (
         ReactCommonUtil.maybeEl( isShowProps ) {
@@ -121,36 +110,6 @@ class NodeR(
                     }
                   )(),
 
-                  // Кнопка "Перейти..." в ЛК узла:
-                  ReactCommonUtil.maybeNode( p.node.state.info.ntype.showGoToLkLink ) {
-                    MuiToolTip(
-                      new MuiToolTipProps {
-                        override val title = crCtxP.message( MsgCodes.`Go.into` ).rawNode
-                      }
-                    )(
-                      MuiLink(
-                        new MuiLinkProps {
-                          val href = routes.controllers.LkAds.adsPage( p.node.state.info.id ).url
-                        }
-                      )(
-                        MuiIconButton(
-                          new MuiIconButtonProps {
-                            override val color = MuiColorTypes.primary
-                          }
-                        )(
-                          Mui.SvgIcons.ArrowForward()(),
-                        )
-                      )
-                    )
-                  },
-
-                  // Кнопка удаления узла.
-                  ReactCommonUtil.maybeEl(
-                    isShowNodeEditProps &&
-                    (p.node.state.info.canChangeAvailability contains[Boolean] true)
-                  ) {
-                    propsProxy.wrap( _.deleteOpt )( deleteBtnR.component.apply )
-                  },
                 ),
 
                 // Ряд с переключателем isEnabled узла:
@@ -207,7 +166,7 @@ class NodeR(
                 }( nodeAdvRowR.component.apply ),
 
               )
-            }
+            },
 
           )
         },

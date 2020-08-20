@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{MuiCircularProgress, MuiCircularProgressProps, MuiColorTypes, MuiListItem, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiProgressVariants, MuiSwitchProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{MuiCircularProgress, MuiCircularProgressProps, MuiColorTypes, MuiListItem, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiProgressVariants, MuiSwitchProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -51,9 +51,7 @@ final class NodeEnabledR(
     /** Реакция на изменение значения флага активности узла. */
     private val _onNodeEnabledClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val isChecked = e.target.checked
-      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-        NodeIsEnabledChanged( isEnabled = isChecked )
-      }
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, NodeIsEnabledChanged( isEnabled = isChecked ) )
     }
 
     def render(s: Props_t): VdomElement = {
@@ -63,44 +61,36 @@ final class NodeEnabledR(
         .exists(_.request.isPending)
 
       s.canChangeAvailability.whenDefinedEl { canChangeAvail =>
-        MuiListItem(
-          new MuiListItemProps {
-            override val onChange = JsOptionUtil.maybeDefined( canChangeAvail )( _onNodeEnabledClickCbF )
-            override val disabled = isDisabled
-            override val button   = canChangeAvail
-          }
-        )(
+        MuiListItem()(
 
-          MuiListItemText(
+          MuiListItemText {
+            val _secondaryText = React.Fragment(
+              // Текстом написать, включёно или нет.
+              crCtxP.message( MsgCodes.yesNo(isChecked) ),
+              // Отрендерить ошибку запроса.
+              s.isEnabledUpd
+                .flatMap(_.request.exceptionOption)
+                .whenDefinedNode { ex =>
+                  React.Fragment(
+                    <.br,
+                    MuiTypoGraphy(
+                      new MuiTypoGraphyProps {
+                        override val color = MuiColorTypes.error
+                      }
+                    )(
+                      crCtxP.message( MsgCodes.`Error` ),
+                      HtmlConstants.COLON, HtmlConstants.SPACE,
+                      ex.toString,
+                    ),
+                  )
+                },
+            )
             new MuiListItemTextProps {
-
               override val primary =
                 crCtxP.message( MsgCodes.`Is.enabled` ).rawNode
-
-              override val secondary = React.Fragment(
-                // Текстом написать, включёно или нет.
-                crCtxP.message( MsgCodes.yesNo(isChecked) ),
-                // Отрендерить ошибку запроса.
-                s.isEnabledUpd
-                  .flatMap(_.request.exceptionOption)
-                  .whenDefinedNode { ex =>
-                    React.Fragment(
-                      <.br,
-                      MuiTypoGraphy(
-                        new MuiTypoGraphyProps {
-                          override val color = MuiColorTypes.error
-                        }
-                      )(
-                        crCtxP.message( MsgCodes.`Error` ),
-                        HtmlConstants.COLON, HtmlConstants.SPACE,
-                        ex.toString,
-                      ),
-                    )
-                  },
-              ).rawNode
-
+              override val secondary = _secondaryText.rawNode
             }
-          )(),
+          }(),
 
           // Отрендерить крутилку текущего запроса:
           ReactCommonUtil.maybeNode( isDisabled ) {
@@ -116,6 +106,7 @@ final class NodeEnabledR(
               new MuiSwitchProps {
                 override val checked = isChecked
                 override val disabled = isDisabled
+                override val onChange = JsOptionUtil.maybeDefined( canChangeAvail )( _onNodeEnabledClickCbF )
               }
             },
           ),
