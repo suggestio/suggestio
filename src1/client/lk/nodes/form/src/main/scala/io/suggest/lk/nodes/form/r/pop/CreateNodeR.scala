@@ -176,15 +176,18 @@ class CreateNodeR(
             platformComponents.diaActionsProps()(platCss)
           )(
             // Кнопка "Сохранить"
-            s.saveBtnDisabledSomeC { saveBtnDisabledSomeProxy =>
-              MuiButton(
-                new MuiButtonProps {
-                  override val onClick = onSaveClickCbF
-                  override val disabled = saveBtnDisabledSomeProxy.value.value
-                }
-              )(
-                crCtx.messages( MsgCodes.`Save` ),
-              )
+            {
+              val saveMsg = crCtx.messages( MsgCodes.`Save` )
+              s.saveBtnDisabledSomeC { saveBtnDisabledSomeProxy =>
+                MuiButton(
+                  new MuiButtonProps {
+                    override val onClick = onSaveClickCbF
+                    override val disabled = saveBtnDisabledSomeProxy.value.value
+                  }
+                )(
+                  saveMsg,
+                )
+              }
             },
 
             // Кнопка "Закрыть"

@@ -1,7 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomNode
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName

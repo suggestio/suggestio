@@ -44,6 +44,12 @@ object ITfDailyMode {
     OFormat(reads, owrites)
   }
 
+
+  object ModeId {
+    final def Inherit = MsgCodes.`Inherited`
+    final def Manual = MsgCodes.`Set.manually`
+  }
+
 }
 
 
@@ -63,6 +69,8 @@ sealed trait ITfDailyMode {
   /** Инстанс ManualTf, если актуально. */
   def manualOpt: Option[ManualTf]
 
+  def modeId: String
+
   def withAmount(amount: Amount_t) = ManualTf(amount = amount)
 
 }
@@ -75,6 +83,7 @@ case object InheritTf extends ITfDailyMode {
   override def isManual = false
   override def isInherited = true
   override def msgCode = MsgCodes.`Inherited`
+  override def modeId = ITfDailyMode.ModeId.Inherit
 }
 
 
@@ -87,6 +96,7 @@ final case class ManualTf( amount: Amount_t )
 {
 
   override def msgCode = MsgCodes.`Set.manually`
+  override def modeId = ITfDailyMode.ModeId.Manual
   override def amountOpt = Some(amount)
   override def manualOpt = Some(this)
   override def isManual = true

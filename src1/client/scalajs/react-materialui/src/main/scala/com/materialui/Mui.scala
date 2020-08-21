@@ -74,14 +74,8 @@ object Mui {
 
   @js.native @JSImport("@material-ui/core/Paper", JSImport.Default) object Paper     extends js.Any
   @js.native @JSImport("@material-ui/core/Popover", JSImport.Default) object Popover extends js.Any
-  @js.native @JSImport("@material-ui/core/RadioButton", JSImport.Default) object RadioButton
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/RadioButton/RadioButtonGroup", JSImport.Default) object RadioButtonGroup
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/RaisedButton", JSImport.Default) object RaisedButton
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/RefreshIndicator", JSImport.Default) object RefreshIndicator
-      extends js.Any
+  @js.native @JSImport("@material-ui/core/Radio", JSImport.Default) object Radio extends js.Any
+  @js.native @JSImport("@material-ui/core/RadioGroup", JSImport.Default) object RadioGroup extends js.Any
   @js.native @JSImport("@material-ui/core/Select", JSImport.Default) object Select extends js.Any
   @js.native @JSImport("@material-ui/core/Slider", JSImport.Default) object Slider       extends js.Any
   @js.native @JSImport("@material-ui/core/Subheader", JSImport.Default) object Subheader extends js.Any

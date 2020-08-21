@@ -2,7 +2,6 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
-import scala.scalajs.js
 
 /**
   * Suggest.io

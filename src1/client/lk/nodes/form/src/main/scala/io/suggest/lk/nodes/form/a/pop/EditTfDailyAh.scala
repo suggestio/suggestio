@@ -4,11 +4,13 @@ import diode._
 import io.suggest.bill.{Amount_t, MPrice}
 import io.suggest.bill.tf.daily.{ITfDailyMode, InheritTf, MTfDailyInfo, ManualTf}
 import io.suggest.cal.m.MCalTypes
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -28,7 +30,7 @@ class EditTfDailyAh[M](
 {
 
   /** Подготовить данные для рендера на основе тарифа. */
-  private def _nodeTfOpt2mia(nodeTfOpt: Option[MTfDailyInfo]): (MInputAmount, MPrice) = {
+  private def _nodeTfOpt2mia(nodeTfOpt: Option[MTfDailyInfo]): (MTextFieldS, MPrice) = {
     val priceOpt = nodeTfOpt
       .flatMap { tf =>
         tf.clauses
@@ -36,12 +38,12 @@ class EditTfDailyAh[M](
           .orElse( tf.clauses.values.headOption )
       }
     val priceAmount = priceOpt
-      .fold[Amount_t](1) { _.amount }
+      .fold[Amount_t]( 1 )( _.amount )
     val mprice = priceOpt.getOrElse {
       MPrice(priceAmount, nodeTfOpt.get.currency )
     }
     val amountStr = MPrice.amountStr( mprice )
-    val mia = MInputAmount(
+    val mia = MTextFieldS(
       value   = amountStr,
       isValid = true
     )
@@ -71,7 +73,7 @@ class EditTfDailyAh[M](
             v0.mode -> false
         }
         val inputAmount2 = Some(
-          MInputAmount(
+          MTextFieldS(
             value   = m.amount,
             isValid = isValid
           )
@@ -110,20 +112,30 @@ class EditTfDailyAh[M](
         .getOrElse( noChange )
 
 
-    // Сигнал о том, что юзер выбрал режим наследования тарифа.
-    case TfDailyInheritedMode =>
-      val v2 = for (s <- value) yield {
-        s.withModeInputAmount( InheritTf, None )
-      }
-      updated( v2 )
-
-    // Сигнал, что юзер выбрал ручной режим управления тарифом.
-    case TfDailyManualMode =>
-      val v2 = for (s <- value) yield {
-        val (mia, mprice) = _nodeTfOpt2mia( s.nodeTfOpt )
-        s.withModeInputAmount( ManualTf(mprice.amount), Some(mia) )
-      }
-      updated( v2 )
+    case m: TfDailyModeChanged =>
+      (for {
+        v0 <- value
+        currModeId = v0.mode.modeId
+        if currModeId !=* m.modeId
+        modF <- Option {
+          if (m.modeId ==* ITfDailyMode.ModeId.Inherit) {
+            // юзер выбрал режим наследования тарифа
+            MEditTfDailyS.mode.set( InheritTf )
+          } else if (m.modeId ==* ITfDailyMode.ModeId.Manual) {
+            // выбран ручной режим управления тарифом.
+            val (mia, mprice) = _nodeTfOpt2mia( v0.nodeTfOpt )
+            MEditTfDailyS.mode.set( ManualTf( mprice.amount ) ) andThen
+              MEditTfDailyS.inputAmount.set( Some(mia) )
+          } else {
+            logger.error( ErrorMsgs.TF_UNDEFINED, msg = m )
+            null
+          }
+        }
+      } yield {
+        val v2 = modF(v0)
+        updated( Some(v2) )
+      })
+        .getOrElse(noChange)
 
 
     // Сигнал отмены редактирования тарифа.

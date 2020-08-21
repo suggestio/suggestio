@@ -161,14 +161,7 @@ case object TfDailyCancelClick
 case class TfDailyManualAmountChanged(amount: String)
   extends LkNodesAction
 
-/** Выбран режим унаследованного тарифа. */
-case object TfDailyInheritedMode
-  extends LkNodesAction
-
-/** Выбран режим ручной тарификации. */
-case object TfDailyManualMode
-  extends LkNodesAction
-
+case class TfDailyModeChanged( modeId: String ) extends LkNodesAction
 
 /** Изменилось значение галочки раскрытости карточки по дефолту. */
 case class AdvShowOpenedChange( isChecked: Boolean ) extends LkNodesAction

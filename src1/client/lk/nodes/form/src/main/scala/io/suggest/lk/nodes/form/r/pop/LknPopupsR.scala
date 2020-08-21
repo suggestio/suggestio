@@ -19,7 +19,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class LknPopupsR(
                   createNodeR       : CreateNodeR,
-                  val editTfDailyR  : EditTfDailyR,
+                  editTfDailyR      : EditTfDailyR,
                   nameEditDiaR      : NameEditDiaR,
                 ) {
 
@@ -35,7 +35,6 @@ class LknPopupsR(
   case class State(
                     popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
                     deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteConfirmPopupS]],
-                    editTfDailyOptConn  : ReactConnectProxy[Option[MEditTfDailyS]]
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -46,9 +45,6 @@ class LknPopupsR(
 
         // Рендер попапа удаления существующего узла:
         state.deleteNodeOptConn { DeleteConfirmPopupR.component.apply },
-
-        // Рендер попапа редактирования тарифа текущего узла.
-        state.editTfDailyOptConn { editTfDailyR.component.apply },
 
       )
 
@@ -77,6 +73,9 @@ class LknPopupsR(
         // Рендер попапа создания нового узла:
         propsProxy.wrap(_.popups.createNodeS)( createNodeR.component.apply ),
 
+        // Рендер попапа редактирования тарифа текущего узла.
+        propsProxy.wrap( _.popups.editTfDailyS )( editTfDailyR.component.apply ),
+
       )
     }
 
@@ -93,13 +92,12 @@ class LknPopupsR(
           val contCss = Css.Lk.Nodes.LKN
           p.connect { v =>
             PopupsContR.PropsVal(
-              visible   = v.deleteNodeS.nonEmpty || v.editTfDailyS.nonEmpty,
+              visible   = v.deleteNodeS.nonEmpty,
               css       = contCss
             )
           }
         },
         deleteNodeOptConn  = p.connect(_.deleteNodeS),
-        editTfDailyOptConn = p.connect(_.editTfDailyS)
       )
     }
     .renderBackend[Backend]
