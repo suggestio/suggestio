@@ -11,7 +11,8 @@ import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.LaePopupsR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.edit.JdEditModule
-import io.suggest.lk.r.SlideBlockR
+import io.suggest.lk.PlatformComponentsModuleDflt
+import io.suggest.lk.r.{DeleteConfirmPopupR, SlideBlockR}
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -20,11 +21,15 @@ import io.suggest.quill.QuillSioModule
   * Created: 25.08.17 18:56
   * Description: Compile-time DI для редактора карточек.
   */
-class LkAdEditModule {
+class LkAdEditModule
+  extends PlatformComponentsModuleDflt
+{
+
+  import io.suggest.ReactCommonModule._
+  import io.suggest.jd.render.JdRenderModule._
 
   final type M = MAeRoot
 
-  import io.suggest.jd.render.JdRenderModule._
   val jdEditModule = wire[JdEditModule]
   val quillSioModule = wire[QuillSioModule]
 
@@ -76,6 +81,8 @@ class LkAdEditModule {
 
   lazy val contentLayerR = wire[ContentLayersR]
   lazy val contentLayerBtnR = wire[ContentLayerBtnR]
+
+  lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]
 
 
   // circuit deps

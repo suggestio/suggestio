@@ -5,6 +5,7 @@ import io.suggest.lk.r._
 import io.suggest.lk.r.captcha.CaptchaFormR
 import io.suggest.lk.r.color._
 import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR}
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.lk.r.sms.SmsCodeFormR
 
 /**
@@ -52,5 +53,25 @@ object LkCommonModule {
   lazy val filesDropZoneR = wire[FilesDropZoneR]
 
   lazy val touchSwitchR = wire[TouchSwitchR]
+
+}
+
+
+trait IPlatformComponentsModule {
+
+  def getPlatformCss: () => PlatformCssStatic
+  def platformComponents: PlatformComponents
+
+}
+trait PlatformComponentsModuleDflt extends IPlatformComponentsModule {
+
+  /** Не особо запариваемся с тонкостями оформления. */
+  lazy val platformCssStatic = PlatformCssStatic(
+    isRenderIos = false,
+  )
+
+  override def getPlatformCss = () => platformCssStatic
+
+  override lazy val platformComponents = wire[PlatformComponents]
 
 }

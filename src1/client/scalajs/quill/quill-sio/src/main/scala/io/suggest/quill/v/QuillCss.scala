@@ -6,9 +6,7 @@ import io.suggest.css.Css
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.css.ScalaCssDefaults._
 import japgolly.scalajs.react.vdom.html_<^.<
-
 import scalacss.internal.DslBase.ToStyle
-import scalacss.internal.mutable.StyleSheet
 
 /**
   * Suggest.io

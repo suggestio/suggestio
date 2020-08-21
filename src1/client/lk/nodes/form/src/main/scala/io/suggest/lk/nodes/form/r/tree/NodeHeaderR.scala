@@ -35,6 +35,7 @@ final class NodeHeaderR(
   case class PropsVal(
                        render         : MNodeStateRender,
                        isShowProps    : Boolean,
+                       isAdv          : Boolean,
                        locked         : Boolean,
                      )
   implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
@@ -49,6 +50,10 @@ final class NodeHeaderR(
 
 
   class Backend($: BackendScope[Props, Props_t]) {
+
+    private lazy val _onAdvOnNodeClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+      e.stopPropagationCB
+    }
 
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
     private lazy val _onAdvOnNodeChangedCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
@@ -91,7 +96,7 @@ final class NodeHeaderR(
             }
           )(),
 
-          ReactCommonUtil.maybeNode( s.isShowProps ) {
+          ReactCommonUtil.maybeNode( s.isShowProps && !s.isAdv ) {
             React.Fragment(
 
               // ADN-режим? Рендерить кнопку редактирования названия:
@@ -101,7 +106,6 @@ final class NodeHeaderR(
 
               // Кнопка удаления узла.
               ReactCommonUtil.maybeEl(
-                s.isShowProps &&
                 (st.info.canChangeAvailability contains[Boolean] true)
               ) {
                 p.wrap { m =>
@@ -171,19 +175,19 @@ final class NodeHeaderR(
           },
 
           // Если размещение рекламной карточки, то отрендерить свитчер.
-          advPot
-            .toOption
-            .whenDefinedNode { isChecked =>
-              MuiListItemSecondaryAction()(
-                MuiSwitch(
-                  new MuiSwitchProps {
-                    override val checked        = isChecked
-                    override val disabled       = isAdvPending
-                    override val onChange       = _onAdvOnNodeChangedCbF
-                  }
-                ),
-              )
-            },
+          ReactCommonUtil.maybeNode( s.isAdv ) {
+            val isChecked = advPot getOrElse false
+            MuiListItemSecondaryAction()(
+              MuiSwitch(
+                new MuiSwitchProps {
+                  override val checked        = isChecked
+                  override val disabled       = isAdvPending
+                  override val onChange       = _onAdvOnNodeChangedCbF
+                  override val onClick        = _onAdvOnNodeClickCbF
+                }
+              ),
+            )
+          },
 
         )
       )

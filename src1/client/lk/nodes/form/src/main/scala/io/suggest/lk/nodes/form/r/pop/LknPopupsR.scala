@@ -1,11 +1,8 @@
 package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.css.Css
-import io.suggest.lk.m.MDeleteConfirmPopupS
-import io.suggest.lk.nodes.form.m.{MCreateNodeS, MEditTfDailyS, MLkNodesRoot}
+import io.suggest.lk.nodes.form.m.MLkNodesRoot
 import io.suggest.lk.r.DeleteConfirmPopupR
-import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
@@ -21,41 +18,17 @@ class LknPopupsR(
                   createNodeR       : CreateNodeR,
                   editTfDailyR      : EditTfDailyR,
                   nameEditDiaR      : NameEditDiaR,
+                  deleteConfirmPopupR: DeleteConfirmPopupR,
                 ) {
-
-  import MCreateNodeS.MCreateNodeSFastEq
-  import MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
-  import MEditTfDailyS.MTfDailyEditSFastEq
-  import PopupsContR.PopContPropsValFastEq
-
 
   type Props = ModelProxy[MLkNodesRoot]
 
 
-  case class State(
-                    popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
-                    deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteConfirmPopupS]],
-                  )
+  class Backend($: BackendScope[Props, Unit]) {
 
-  class Backend($: BackendScope[Props, State]) {
-
-    def render(propsProxy: Props, state: State): VdomElement = {
-
-      val popups = List[VdomNode](
-
-        // Рендер попапа удаления существующего узла:
-        state.deleteNodeOptConn { DeleteConfirmPopupR.component.apply },
-
-      )
-
+    def render(propsProxy: Props): VdomElement = {
+      val popupsProxy = propsProxy.zoom(_.popups)
       React.Fragment(
-
-        state.popContPropsConn { popContPropsProxy =>
-          // Рендер контейнера попапов:
-          PopupsContR( popContPropsProxy )(
-            popups: _*
-          )
-        },
 
         // Попап редактирования названия узла.
         propsProxy.wrap { mroot =>
@@ -71,10 +44,13 @@ class LknPopupsR(
         }( nameEditDiaR.component.apply )( implicitly, OptFastEq.Wrapped(nameEditDiaR.nameEditPvFeq) ),
 
         // Рендер попапа создания нового узла:
-        propsProxy.wrap(_.popups.createNodeS)( createNodeR.component.apply ),
+        popupsProxy.wrap( _.createNodeS )( createNodeR.component.apply ),
 
         // Рендер попапа редактирования тарифа текущего узла.
-        propsProxy.wrap( _.popups.editTfDailyS )( editTfDailyR.component.apply ),
+        popupsProxy.wrap( _.editTfDailyS )( editTfDailyR.component.apply ),
+
+        // Рендер попапа удаления существующего узла:
+        popupsProxy.wrap( _.deleteNodeS )( deleteConfirmPopupR.component.apply ),
 
       )
     }
@@ -84,22 +60,7 @@ class LknPopupsR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { mrootProxy =>
-      val p = mrootProxy.zoom(_.popups)
-      State(
-        popContPropsConn = {
-          // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.
-          val contCss = Css.Lk.Nodes.LKN
-          p.connect { v =>
-            PopupsContR.PropsVal(
-              visible   = v.deleteNodeS.nonEmpty,
-              css       = contCss
-            )
-          }
-        },
-        deleteNodeOptConn  = p.connect(_.deleteNodeS),
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

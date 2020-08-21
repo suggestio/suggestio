@@ -16,7 +16,7 @@ case class LkNodesFormCss() extends StyleSheet.Inline {
   object Node {
 
     val linearProgress = style(
-      flexGrow( 5 ),
+      flexGrow( 3 ),
     )
 
   }
@@ -24,6 +24,19 @@ case class LkNodesFormCss() extends StyleSheet.Inline {
 
   initInnerObjects(
     Node.linearProgress,
+  )
+
+}
+
+
+case object LkNodesFormCssStd extends StyleSheet.Standalone {
+
+  import dsl._
+
+  // Сбросить состояние listStyle, которые зачем-то выставлено в common.css в точку для всех списов по дефолту.
+  // Если поправить common.styl, то этот костыль можно удалить.
+  "ul li" - (
+    (listStyle := none),
   )
 
 }

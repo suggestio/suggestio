@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiInput, MuiInputAdornment, MuiInputAdornmentPositions, MuiInputAdornmentProps, MuiInputLabel, MuiInputLabelProps, MuiInputProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiRadio, MuiRadioGroup, MuiRadioGroupProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiInput, MuiInputAdornment, MuiInputAdornmentPositions, MuiInputAdornmentProps, MuiInputLabel, MuiInputLabelProps, MuiInputProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiRadio, MuiRadioGroup, MuiRadioGroupProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.{MCurrencies, MCurrency}
@@ -65,7 +65,7 @@ class EditTfDailyR(
     }
 
 
-    def render(propsProxy: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       val platCss = platformCssStatic()
 
       // id для связки label+input ниже
@@ -219,6 +219,7 @@ class EditTfDailyR(
                 new MuiButtonProps {
                   override val onClick = _onSaveClickCbF
                   override val disabled = isDisabled
+                  override val size = MuiButtonSizes.large
                 }
               )( saveMsg )
             }
@@ -228,6 +229,7 @@ class EditTfDailyR(
           MuiButton(
             new MuiButtonProps {
               override val onClick = _onCloseClickCbF
+              override val size = MuiButtonSizes.large
             }
           )(
             crCtxP.message( MsgCodes.`Close` ),

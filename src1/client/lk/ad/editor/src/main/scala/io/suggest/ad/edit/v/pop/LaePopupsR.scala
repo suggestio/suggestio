@@ -20,6 +20,7 @@ import io.suggest.spa.OptFastEq.Wrapped
   * Description: Lk Ad Edit Popups -- все попапы формы живут здесь.
   */
 class LaePopupsR(
+                  deleteConfirmPopupR: DeleteConfirmPopupR,
                   lkAdEditCss     : LkAdEditCss,
                   val cropPopupR  : CropPopupR
                 ) {
@@ -47,12 +48,15 @@ class LaePopupsR(
         // Попап кропа картинки:
         s.cropPopPropsOptC { cropPopupR.apply },
 
-        // Попап подтверждения удаления рекламной карточки.
-        s.deleteConfirmOptC { DeleteConfirmPopupR.component.apply }
       )
-      s.popupsContPropsC { popupContProps =>
-        PopupsContR(popupContProps)( popupContBody: _* )
-      }
+      React.Fragment(
+        // Попап подтверждения удаления рекламной карточки.
+        s.deleteConfirmOptC { deleteConfirmPopupR.component.apply },
+
+        s.popupsContPropsC { popupContProps =>
+          PopupsContR(popupContProps)( popupContBody: _* )
+        },
+      )
     }
   }
 
@@ -61,8 +65,10 @@ class LaePopupsR(
     .initialStateFromProps { rootProxy =>
       State(
         popupsContPropsC = rootProxy.connect { mroot =>
+          val p = mroot.popups
+
           PopupsContR.PropsVal(
-            visible = mroot.popups.nonEmpty
+            visible = p.error.nonEmpty || p.pictureCrop.nonEmpty
           )
         },
 

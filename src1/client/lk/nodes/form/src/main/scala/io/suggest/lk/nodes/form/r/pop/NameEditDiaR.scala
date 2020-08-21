@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -123,6 +123,7 @@ class NameEditDiaR(
                     override val disabled = !okBtnEnabledSomeProxy.value.value
                     override val onClick = _onOkClick
                     override val variant = MuiButtonVariants.text
+                    override val size = MuiButtonSizes.large
                   }
                 )(
                   crCtx.messages( MsgCodes.`Save` ),
@@ -134,6 +135,7 @@ class NameEditDiaR(
                 new MuiButtonProps {
                   override val onClick = _onCancelClick
                   override val variant = MuiButtonVariants.text
+                  override val size = MuiButtonSizes.large
                 }
               )(
                 crCtx.messages( MsgCodes.`Cancel` ),

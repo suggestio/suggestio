@@ -51,7 +51,6 @@ final class NodeAdvRowR(
       MuiListItem(
         new MuiListItemProps {
           override val button = true
-          override val onChange = _onChangeCbF
         }
       )(
         // Заголовочек:
@@ -64,6 +63,7 @@ final class NodeAdvRowR(
             new MuiSwitchProps {
               override val checked  = s.flag contains true
               override val disabled = s.flag.isPending
+              override val onChange = _onChangeCbF
             }
           )
         ),

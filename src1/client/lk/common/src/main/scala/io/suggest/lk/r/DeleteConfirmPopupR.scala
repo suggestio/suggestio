@@ -1,17 +1,21 @@
 package io.suggest.lk.r
 
-import diode.react.ModelProxy
-import diode.react.ReactPot.potWithReact
-import io.suggest.common.html.HtmlConstants
-import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps}
+import diode.FastEq
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
-import io.suggest.lk.r.popup.PopupR
-import io.suggest.msg.Messages
+import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -19,99 +23,118 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 20.03.17 18:01
   * Description: Компонент формы удаления узла, рендерится в попапе.
   */
-object DeleteConfirmPopupR {
+class DeleteConfirmPopupR(
+                           platformCss          : () => PlatformCssStatic,
+                           platformComponents   : PlatformComponents,
+                           crCtxP               : React.Context[MCommonReactCtx],
+                         ) {
 
   type Props = ModelProxy[Option[MDeleteConfirmPopupS]]
 
 
+  case class State(
+                    diaOpenedSomeC        : ReactConnectProxy[Some[Boolean]],
+                    isPendingSomeC        : ReactConnectProxy[Some[Boolean]],
+                    exceptionOptC         : ReactConnectProxy[Option[Throwable]],
+                  )
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, State]) {
 
     /** Callback клика по кнопке ПОДТВЕРЖДЕНИЯ удаления узла. */
-    private def onOkClick: Callback = {
+    private val onOkClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       dispatchOnProxyScopeCB($, DeleteConfirmPopupOk)
     }
 
     /** Callback нажатия кнопки ОТМЕНЫ удаления узла. */
-    private def onCancelClick: Callback = {
+    private val onCancelClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       dispatchOnProxyScopeCB($, DeleteConfirmPopupCancel)
     }
 
 
-    def render(propsProxy: Props): VdomElement = {
-      propsProxy().whenDefinedEl { props =>
+    def render(s: State): VdomElement = {
+      val platCss = platformCss()
+      val diaCss = new MuiDialogClasses {
+        override val paper = platCss.Dialogs.paper.htmlClass
+      }
 
-        propsProxy.wrap { _ =>
-          PopupR.PropsVal(
-            closeable = Some(onCancelClick)
-          )
-        } { popPropsProxy =>
-          PopupR(popPropsProxy) {
-            val delPot = props.request
-            // Происходит удаление узла или подготовка к этому.
-            <.div(
-              // Рендерить форму, когда Pot пуст.
-              delPot.renderEmpty {
-                <.div(
+      val diaChs = List[VdomElement](
+        // Заголовок.
+        platformComponents.diaTitle( Nil )(
+          crCtxP.message( MsgCodes.`Are.you.sure` )
+        ),
 
-                  // Рендер вопроса "Вы уверены?".
-                  <.h2(
-                    ^.`class` := Css.Lk.MINOR_TITLE,
-                    Messages(MsgCodes.`Are.you.sure`)
-                  ),
+        // Прогресс-бар
+        MuiDialogContent()(
+          s.isPendingSomeC { isPendingSomeProxy =>
+            val isPending = isPendingSomeProxy.value.value
+            <.span(
+              if (isPending) ^.visibility.visible
+              else ^.visibility.hidden,
 
-                  <.div(
-                    ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
-
-                    // Кнопка подтверждения удаления, красная.
-                    <.a(
-                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
-                      ^.onClick --> onOkClick,
-                      Messages(MsgCodes.`Yes.delete.it`)
-                    ),
-
-                    HtmlConstants.NBSP_STR,
-
-                    // Кнопка отмены удаления:
-                    <.a(
-                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M, Css.Buttons.LIST),
-                      ^.onClick --> onCancelClick,
-                      Messages(MsgCodes.`Cancel`)
-                    )
-                  )
-
-                )
-              },
-
-              // Когда идёт запрос к серверу, рендерить ожидание
-              delPot.renderPending { _ =>
-                <.div(
-                  LkPreLoaderR.AnimMedium,
-                  Messages(MsgCodes.`Please.wait`)
-                )
-              },
-
-              // Ошибку удаления можно выводить на экран.
-              delPot.renderFailed { ex =>
-                <.div(
-                  <.span(
-                    ^.`class` := Css.Colors.RED,
-                    ^.title := ex.toString,
-                    Messages(MsgCodes.`Error`)
-                  ),
-
-                  // Кнопка закрытия ошибочной формы.
-                  <.a(
-                    ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M),
-                    ^.onClick --> onCancelClick,
-                    Messages(MsgCodes.`Close`)
-                  )
-                )
-              }
-
+              MuiLinearProgress(
+                new MuiLinearProgressProps {
+                  override val variant = if (isPending) MuiProgressVariants.indeterminate else MuiProgressVariants.determinate
+                  override val value = JsOptionUtil.maybeDefined( !isPending )(0)
+                }
+              ),
             )
+          },
+
+          s.exceptionOptC { exceptionOpt =>
+            exceptionOpt.value.whenDefinedEl { ex =>
+              MuiTypoGraphy(
+                new MuiTypoGraphyProps {
+                  override val color = MuiTypoGraphyColors.error
+                }
+              )(
+                ex.getMessage,
+              )
+            }
+          },
+
+        ),
+
+        // Кнопки
+        MuiDialogActions {
+          platformComponents.diaActionsProps()( platCss )
+        }(
+          // Кнопка подтверждения
+          {
+            val yesMsg = crCtxP.message( MsgCodes.`Yes.delete.it` )
+            s.isPendingSomeC { isPendingSomeProxy =>
+              val isPending = isPendingSomeProxy.value.value
+              MuiButton(
+                new MuiButtonProps {
+                  override val onClick  = onOkClick
+                  override val disabled = isPending
+                  override val size = MuiButtonSizes.large
+                }
+              )( yesMsg )
+            }
+          },
+
+          // Кнопка отмены.
+          MuiButton(
+            new MuiButtonProps {
+              override val onClick = onCancelClick
+              override val size = MuiButtonSizes.large
+            }
+          )(
+            crCtxP.message( MsgCodes.`Cancel` )
+          ),
+        ),
+      )
+
+      s.diaOpenedSomeC { diaOpenedSomeProxy =>
+        MuiDialog {
+          new MuiDialogProps {
+            override val open = diaOpenedSomeProxy.value.value
+            override val classes = diaCss
+            override val onClose = onCancelClick
+            override val maxWidth = MuiDialogMaxWidths.sm
+            override val fullWidth = true
           }
-        }(implicitly, PopupR.PopupPropsValFastEq)
+        }( diaChs: _* )
       }
     }
 
@@ -120,7 +143,24 @@ object DeleteConfirmPopupR {
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        diaOpenedSomeC = propsProxy.connect { propsOpt =>
+          OptionUtil.SomeBool( propsOpt.isDefined )
+        },
+
+        isPendingSomeC = propsProxy.connect { propsOpt =>
+          val isPending = propsOpt.exists(_.request.isPending)
+          OptionUtil.SomeBool( isPending )
+        },
+
+        exceptionOptC = propsProxy.connect { propsOpt =>
+          propsOpt.flatMap(_.request.exceptionOption)
+        }( OptFastEq.Wrapped(FastEq.AnyRefEq) ),
+
+      )
+    }
     .renderBackend[Backend]
     .build
 

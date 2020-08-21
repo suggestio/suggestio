@@ -9,10 +9,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-import ReactCommonUtil.Implicits._
 import diode.data.Pot
 import io.suggest.scalaz.NodePath_t
-import ReactDiodeUtil.Implicits._
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.spa.FastEqUtil
 
@@ -74,7 +72,6 @@ class NodeR(
     def render(propsProxy: Props, p: Props_t, treeChildren: PropsChildren): VdomElement = {
       val nodePath = p.node.nodePath
       val isShowProps = p.opened contains[NodePath_t] nodePath
-      val isShowNodeEditProps = isShowProps && p.confAdId.isEmpty
 
       // Контейнер узла узла + дочерних узлов.
       MuiTreeItem {
@@ -82,8 +79,9 @@ class NodeR(
         val _label = propsProxy.wrap { p =>
           nodeHeaderR.PropsVal(
             render      = p.node,
-            isShowProps = isShowNodeEditProps,
+            isShowProps = isShowProps,
             locked      = p.locked,
+            isAdv       = p.confAdId.nonEmpty,
           )
         }( nodeHeaderR.component.apply )
 

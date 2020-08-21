@@ -1,10 +1,11 @@
 package io.suggest.lk.nodes.form
 
 import com.softwaremill.macwire._
+import io.suggest.lk.{IPlatformComponentsModule, PlatformComponentsModuleDflt}
 import io.suggest.lk.nodes.form.r.{LkNodesFormCss, LkNodesFormR}
 import io.suggest.lk.nodes.form.r.pop._
 import io.suggest.lk.nodes.form.r.tree._
-import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
+import io.suggest.lk.r.DeleteConfirmPopupR
 import japgolly.scalajs.react.React
 
 /**
@@ -13,7 +14,7 @@ import japgolly.scalajs.react.React
   * Created: 30.03.18 11:48
   * Description: compile-time DI линковка react LkNodes-формы.
   */
-trait LkNodesModuleBase {
+trait LkNodesModuleBase extends IPlatformComponentsModule {
 
   import io.suggest.ReactCommonModule._
 
@@ -40,27 +41,16 @@ trait LkNodesModuleBase {
   lazy val nodeAdvRowR = wire[NodeAdvRowR]
 
   // pop
+  lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]
   lazy val createNodeR = wire[CreateNodeR]
   lazy val editTfDailyR = wire[EditTfDailyR]
   lazy val lknPopupsR = wire[LknPopupsR]
   lazy val nameEditDiaR = wire[NameEditDiaR]
 
-  def getPlatformCss: () => PlatformCssStatic
-  def platformComponents: PlatformComponents
-
 }
 
 
 /** Дефолтовая линковка для изолированной формы LkNodes на отдельной страницы внутри ЛК. */
-final class LkNodesModule extends LkNodesModuleBase {
-
-  /** Не особо запариваемся с тонкостями оформления. */
-  lazy val platformCssStatic = PlatformCssStatic(
-    isRenderIos = false,
-  )
-
-  override def getPlatformCss = () => platformCssStatic
-
-  override lazy val platformComponents = wire[PlatformComponents]
-
-}
+final class LkNodesModule
+  extends LkNodesModuleBase
+  with PlatformComponentsModuleDflt

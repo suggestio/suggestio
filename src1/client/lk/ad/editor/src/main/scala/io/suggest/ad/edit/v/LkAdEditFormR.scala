@@ -137,9 +137,7 @@ class LkAdEditFormR(
         ^.onClick --> _onBodyClick,
 
         // Отрендерить доп.стили для quill-редактора.
-        <.styleTag(
-          quillCssFactory.render[String]
-        ),
+        CssR.component( quillCssFactory ),
 
         // Отрендерить стили редактора:
         p.wrap(_ => lkCss)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
