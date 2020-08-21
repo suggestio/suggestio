@@ -263,6 +263,8 @@ sealed trait LkNodesCtlRoutes extends js.Object {
   /** Роута списка под-узлов для указанного узла. */
   def nodeInfo(nodeId: String): PlayRoute = js.native
 
+  def nodeInfoForAd(nodeId: String, onNodeRcvrKey: String): PlayRoute = js.native
+
   /** Роута сабмита формы добавления нового узла. */
   def createSubNodeSubmit(parentId: String): PlayRoute = js.native
 

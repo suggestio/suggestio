@@ -124,6 +124,9 @@ object MNodeType {
     def showGoToLkLink: Boolean =
       _isAdnNode
 
+    def showScLink: Boolean =
+      _isAdnNode || _isBleBeacon
+
     private def _isAdnNode =
       ntype ==* MNodeTypes.AdnNode
 

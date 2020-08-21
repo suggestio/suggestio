@@ -102,11 +102,16 @@ class TreeAh[M](
           // Собрать эффект запроса к серверу за подробностями по узлу.
           val fx = Effect {
             // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
-            api
-              .nodeInfo(nodeId)
-              .transform { tryRes =>
-                Success( HandleSubNodesOf(m.nodePath, tryRes, tstampMs) )
-              }
+            val fut = confRO.value.adIdOpt.fold {
+              api.nodeInfo( nodeId )
+            } { adId =>
+              val rcvrKey = loc0.rcvrKey
+              api.nodeInfoForAd( adId, rcvrKey )
+            }
+
+            fut.transform { tryRes =>
+              Success( HandleSubNodesOf(m.nodePath, tryRes, tstampMs) )
+            }
           }
 
           val v2 = MTree.nodes.set {
@@ -229,7 +234,13 @@ class TreeAh[M](
           ))
           .toTree
 
-        val v2 = (MTree.nodes set tree2)(v0)
+        var modF = (MTree.nodes set tree2)
+
+        // Если false=>true, то нужно сфокусироваться на данном узле: чтобы галочки потом раскрылись.
+        if (m.isEnabled && !(v0.opened contains m.nodePath))
+          modF = modF andThen (MTree.opened set Some(m.nodePath))
+
+        val v2 = modF(v0)
         updated(v2, fx)
       })
         .getOrElse( noChange )
@@ -536,14 +547,11 @@ class TreeAh[M](
         val v2 = MTree.nodes.set {
           loc0
             .modifyLabel {
-              MNodeState.adv.set(
-                Some( MNodeAdvState(
-                  isShowOpenedPot = Pot
-                    .empty[Boolean]
-                    .ready(m.isChecked)
-                    .pending()
-                ))
-              )
+              MNodeState.adv.modify { advOpt0 =>
+                val adv0 = advOpt0 getOrElse MNodeAdvState.from( mns0.info.adv )
+                val adv2 = MNodeAdvState.isShowOpenedPot.modify( _.ready(m.isChecked).pending() )(adv0)
+                Some(adv2)
+              }
             }
             .toTree
         }(v0)
@@ -635,17 +643,10 @@ class TreeAh[M](
         val v2 = MTree.nodes.set {
           loc0
             .modifyLabel {
-              val pot2 = Pot
-                .empty[Boolean]
-                .ready(m.isChecked)
-                .pending()
               MNodeState.adv.modify { advOpt0 =>
-                val adv1 = advOpt0.fold {
-                  MNodeAdvState(alwaysOutlinedPot = pot2)
-                } {
-                  MNodeAdvState.alwaysOutlined set pot2
-                }
-                Some( adv1 )
+                val adv0 = advOpt0 getOrElse MNodeAdvState.from( mns0.info.adv )
+                val adv2 = MNodeAdvState.alwaysOutlined.modify( _.ready(m.isChecked).pending() )(adv0)
+                Some(adv2)
               }
             }
             .toTree

@@ -33,10 +33,9 @@ case object LkNodesFormCssStd extends StyleSheet.Standalone {
 
   import dsl._
 
-  // Сбросить состояние listStyle, которые зачем-то выставлено в common.css в точку для всех списов по дефолту.
-  // Если поправить common.styl, то этот костыль можно удалить.
-  "ul li" - (
-    (listStyle := none),
+  // Чтобы switch и progress-bar не пересекались, увеличиваем правый отступ для контейнера в MuiListItem:
+  ".MuiListItem-secondaryAction" - (
+     paddingRight( 72.px )
   )
 
 }

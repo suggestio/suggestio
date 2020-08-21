@@ -104,28 +104,34 @@ class NameEditAh[M](
         if isNameValid(name2)
         currNode <- currNodeRO.value
       } yield {
-        // Эффект обновления данных узла на сервере.
-        val fx = Effect {
-          val req = MLknNodeReq(
-            name  = name2,
-            id    = None
-          )
-          val nodeId = currNode.info.id
-          api
-            .editNode( nodeId, req )
-            .transform { tryResp =>
-              val r = NodeEditSaveResp( nodeId, tryResp )
-              Success(r)
-            }
-        }
+        // Если имя не изменилось, но нажата "сохранить" - нужно скрыть диалог.
+        if (name2 ==* currNode.info.name) {
+          updated( None )
 
-        val edit2 = edit0.copy(
-          name = name2,
-          nameValid = true,
-          saving = edit0.saving.pending(),
-        )
-        val v2 = Some(edit2)
-        updated(v2, fx)
+        } else {
+          // Эффект реального обновления названия узла на сервере.
+          val fx = Effect {
+            val req = MLknNodeReq(
+              name  = name2,
+              id    = None
+            )
+            val nodeId = currNode.info.id
+            api
+              .editNode( nodeId, req )
+              .transform { tryResp =>
+                val r = NodeEditSaveResp( nodeId, tryResp )
+                Success(r)
+              }
+          }
+
+          val edit2 = edit0.copy(
+            name = name2,
+            nameValid = true,
+            saving = edit0.saving.pending(),
+          )
+          val v2 = Some(edit2)
+          updated(v2, fx)
+        }
       })
         .getOrElse( noChange )
 

@@ -4,7 +4,6 @@ import java.time.OffsetDateTime
 
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import FutureUtil.HellImplicits._
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.{ITfDailyMode, MTfDailyInfo}
@@ -186,7 +185,8 @@ final class LkNodes @Inject() (
     * @param request Исходный HTTP-реквест.
     * @return Подготовленные данные по форме и контексту.
     */
-  private def _lknFormPrep(onNode: MNode, madOpt: Option[MNode] = None)(implicit request: IReq[_]): Future[_MLknFormPrep] = {
+  private def _lknFormPrep(onNode: MNode, madOpt: Option[MNode] = None)
+                          (implicit request: IReq[_]): Future[_MLknFormPrep] = {
     // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
     val nodeId = onNode.id.get
 
@@ -303,6 +303,17 @@ final class LkNodes @Inject() (
   }
 
 
+  private def _nodeInfoBase(mnode: MNode, madOpt: Option[MNode] = None)
+                           (implicit ctx: Context): Future[Result] = {
+    for {
+      detailsAndSubnodes <- _detailsAndSubNodesFor(mnode, madOpt)
+    } yield {
+      LOGGER.trace(s"_nodeInfoBase(${mnode.id.orNull},${madOpt.flatMap(_.id).orNull}): Found ${detailsAndSubnodes.subForest.length} sub-nodes: ${EphemeralStream.toIterable( detailsAndSubnodes.subForest.map(_.rootLabel.id) ).mkString(", ")}")
+      val resp = MLknNodeResp( detailsAndSubnodes )
+      Ok( Json.toJson(resp) )
+    }
+  }
+
   /** Получение инфы по узлам, относящимся к указанному узлу.
     *
     * @param nodeId id узла.
@@ -310,16 +321,16 @@ final class LkNodes @Inject() (
     */
   def nodeInfo(nodeId: String) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
-      for {
-        detailsAndSubnodes <- _detailsAndSubNodesFor(request.mnode, madOpt = None)
-      } yield {
-        LOGGER.trace(s"nodeInfo($nodeId): Found ${detailsAndSubnodes.subForest.length} sub-nodes: ${EphemeralStream.toIterable( detailsAndSubnodes.subForest.map(_.rootLabel.id) ).mkString(", ")}")
-        val resp = MLknNodeResp( detailsAndSubnodes )
-        Ok( Json.toJson(resp) )
-      }
+      _nodeInfoBase( request.mnode )
     }
   }
 
+  /** Получения поддерева инфы по узлам в контексте размещения карточки. */
+  def nodeInfoForAd(adId: String, rcvrKey: RcvrKey) = csrf.Check {
+    canFreelyAdvAdOnNode(adId, rcvrKey).async { implicit request =>
+      _nodeInfoBase( request.mnode, Some(request.mad) )
+    }
+  }
 
   /** BodyParser для тела запроса по созданию/редактированию узла. */
   private def _mLknNodeReqBP = parse.json[MLknNodeReq]

@@ -105,7 +105,7 @@ final class NodeHeaderR(
               }( nameEditButtonR.component.apply ),
 
               // Кнопка удаления узла.
-              ReactCommonUtil.maybeEl(
+              ReactCommonUtil.maybeNode(
                 (st.info.canChangeAvailability contains[Boolean] true)
               ) {
                 p.wrap { m =>
@@ -114,10 +114,12 @@ final class NodeHeaderR(
               },
 
               // Кнопка перехода в выдачу узла:
-              nodeScLinkR.component( st.info.id ),
+              ReactCommonUtil.maybeNode( ntype.showScLink )(
+                nodeScLinkR.component( st.info.id )
+              ),
 
               // Кнопка "Перейти..." в ЛК узла:
-              ReactCommonUtil.maybeNode( st.info.ntype.showGoToLkLink ) {
+              ReactCommonUtil.maybeNode( ntype.showGoToLkLink ) {
                 goToLkLinkR.component( st.info.id )
               },
 
@@ -175,7 +177,7 @@ final class NodeHeaderR(
           },
 
           // Если размещение рекламной карточки, то отрендерить свитчер.
-          ReactCommonUtil.maybeNode( s.isAdv ) {
+          ReactCommonUtil.maybeNode( s.isAdv && ntype.showScLink ) {
             val isChecked = advPot getOrElse false
             MuiListItemSecondaryAction()(
               MuiSwitch(

@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
+import io.suggest.lk.nodes.MLknAdv
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -18,6 +19,19 @@ object MNodeAdvState {
   def newIsEnabledPot = GenLens[MNodeAdvState](_.newIsEnabledPot)
   def isShowOpenedPot = GenLens[MNodeAdvState](_.isShowOpenedPot)
   def alwaysOutlined  = GenLens[MNodeAdvState](_.alwaysOutlinedPot)
+
+  def empty = apply()
+
+  def from(lknAdv: MLknAdv): MNodeAdvState = {
+    MNodeAdvState(
+      newIsEnabledPot = Pot.empty.ready( lknAdv.hasAdv ),
+      isShowOpenedPot = Pot.empty.ready( lknAdv.advShowOpened ),
+      alwaysOutlinedPot = Pot.empty.ready( lknAdv.alwaysOutlined ),
+    )
+  }
+  def from(lknAdvOpt: Option[MLknAdv]): MNodeAdvState = {
+    lknAdvOpt.fold(empty)(from)
+  }
 
 }
 

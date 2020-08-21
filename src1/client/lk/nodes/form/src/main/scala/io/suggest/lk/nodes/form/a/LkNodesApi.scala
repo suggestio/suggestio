@@ -6,7 +6,7 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.lk.nodes.{MLknNode, MLknNodeReq, MLknNodeResp}
 import io.suggest.proto.http.HttpConst
-import io.suggest.routes.routes
+import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json
 import japgolly.univeq._
@@ -27,6 +27,14 @@ trait ILkNodesApi {
     * @return Фьючерс с десериализованным ответом сервера.
     */
   def nodeInfo(nodeId: String): Future[MLknNodeResp]
+
+  /** Подровности по узлу в контексте рекламной карточки.
+    *
+    * @param adId id карточки.
+    * @param onNode Путь до узла.
+    * @return Фьючерс с поддеревом.
+    */
+  def nodeInfoForAd(adId: String, onNode: RcvrKey): Future[MLknNodeResp]
 
   /** Создать новый узел на стороне сервера.
     *
@@ -103,9 +111,9 @@ trait ILkNodesApi {
 /** Реализация [[ILkNodesApi]] для взаимодействия с серверным контроллером LkNodes через обычные HTTP-запросы. */
 class LkNodesApiHttpImpl extends ILkNodesApi {
 
-  override def nodeInfo(nodeId: String): Future[MLknNodeResp] = {
+  private def _nodeInfoReq(route: PlayRoute): Future[MLknNodeResp] = {
     val req = HttpReq.routed(
-      route = routes.controllers.LkNodes.nodeInfo(nodeId),
+      route = route,
       data  = HttpReqData.justAcceptJson
     )
     HttpClient.execute( req )
@@ -113,6 +121,12 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       .successIf200
       .unJson[MLknNodeResp]
   }
+
+  override def nodeInfo(nodeId: String): Future[MLknNodeResp] =
+    _nodeInfoReq( routes.controllers.LkNodes.nodeInfo(nodeId) )
+
+  override def nodeInfoForAd(nodeId: String, onNode: RcvrKey): Future[MLknNodeResp] =
+    _nodeInfoReq( routes.controllers.LkNodes.nodeInfoForAd( nodeId, RcvrKey.rcvrKey2urlPath(onNode) ) )
 
 
   override def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode] = {

@@ -78,12 +78,12 @@ final class MdrUtil @Inject() (
     val res = configuration.getOptional[Seq[String]](confKey)
       .filter(_.nonEmpty)
       .getOrElse {
-        LOGGER.info(s"$confKey is undefined. Using all superusers as moderators.")
+        LOGGER.trace(s"$confKey is undefined. Using all superusers as moderators.")
         current.injector
           .instanceOf[MSuperUsers]
           .SU_EMAILS
       }
-    LOGGER.info(s"Moderators are: ${res.mkString(", ")}")
+    LOGGER.trace(s"Moderators are: ${res.mkString(", ")}")
     res
   }
 

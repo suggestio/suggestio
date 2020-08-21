@@ -93,58 +93,58 @@ class NodeR(
         }
       } (
         ReactCommonUtil.maybeEl( isShowProps ) {
-          MuiList()(
 
-            // ADN-режим: управление обычными узлами.
-            if (p.confAdId.isEmpty) {
-              // нет рекламной карточки - редактирование узлов:
-              React.Fragment(
+          // ADN-режим: управление обычными узлами.
+          if (p.confAdId.isEmpty) {
+            // нет рекламной карточки - редактирование узлов:
+            MuiList()(
 
-                MuiListItem()(
-                  // Строка с идентификатором узла:
-                  MuiListItemText(
-                    new MuiListItemTextProps {
-                      override val primary = crCtxP.message( MsgCodes.`Identifier` ).rawNode
-                      override val secondary = p.node.state.info.id
-                    }
-                  )(),
+              MuiListItem()(
+                // Строка с идентификатором узла:
+                MuiListItemText(
+                  new MuiListItemTextProps {
+                    override val primary = crCtxP.message( MsgCodes.`Identifier` ).rawNode
+                    override val secondary = p.node.state.info.id
+                  }
+                )(),
 
-                ),
+              ),
 
-                // Ряд с переключателем isEnabled узла:
-                propsProxy.wrap { p =>
-                  val pns = p.node.state
-                  nodeEnabledR.PropsVal(
-                    isEnabledUpd  = pns.isEnabledUpd,
-                    isEnabled     = pns.info.isEnabled,
-                    request       = pns.isEnabledUpd
-                      .fold[Pot[_]]( Pot.empty )(_.request),
-                    canChangeAvailability = pns.info.canChangeAvailability,
-                  )
-                }( nodeEnabledR.component.apply ),
+              // Ряд с переключателем isEnabled узла:
+              propsProxy.wrap { p =>
+                val pns = p.node.state
+                nodeEnabledR.PropsVal(
+                  isEnabledUpd  = pns.isEnabledUpd,
+                  isEnabled     = pns.info.isEnabled,
+                  request       = pns.isEnabledUpd
+                    .fold[Pot[_]]( Pot.empty )(_.request),
+                  canChangeAvailability = pns.info.canChangeAvailability,
+                )
+              }( nodeEnabledR.component.apply ),
 
-                // Ряд описания тарифа с кнопкой редактирования оного.
-                propsProxy.wrap { p =>
-                  val pns = p.node.state
-                  tariffEditR.PropsVal(
-                    tfDailyOpt    = pns.info.tf,
-                    showExpanded  = pns.tfInfoWide,
-                  )
-                }( tariffEditR.component.apply ),
+              // Ряд описания тарифа с кнопкой редактирования оного.
+              propsProxy.wrap { p =>
+                val pns = p.node.state
+                tariffEditR.PropsVal(
+                  tfDailyOpt    = pns.info.tf,
+                  showExpanded  = pns.tfInfoWide,
+                )
+              }( tariffEditR.component.apply ),
 
-                // Ряд с кратким описанием подузлов и кнопкой создания оных.
-                propsProxy.wrap { p =>
-                  subNodesR.PropsVal(
-                    chCount = treeChildren.count,
-                    chCountEnabled = p.node.chCountEnabled,
-                  )
-                }( subNodesR.component.apply ),
+              // Ряд с кратким описанием подузлов и кнопкой создания оных.
+              propsProxy.wrap { p =>
+                subNodesR.PropsVal(
+                  chCount = treeChildren.count,
+                  chCountEnabled = p.node.chCountEnabled,
+                )
+              }( subNodesR.component.apply ),
 
-              )
+            )
 
-            } else {
-              // id рекламной карточки: редактирование размещения карточки в узле. Надо отрендерить галочки настроек размещения.
-              React.Fragment(
+          } else {
+            // id рекламной карточки: редактирование размещения карточки в узле. Надо отрендерить галочки настроек размещения.
+            ReactCommonUtil.maybeEl( p.node.state.advHasAdvPot contains true ) {
+              MuiList()(
 
                 // Галочка "Показывать всегда раскрытой"
                 propsProxy.wrap { p =>
@@ -165,9 +165,9 @@ class NodeR(
                 }( nodeAdvRowR.component.apply ),
 
               )
-            },
+            }
+          }
 
-          )
         },
 
         // Под-узлы.

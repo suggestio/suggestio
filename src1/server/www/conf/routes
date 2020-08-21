@@ -90,6 +90,7 @@ POST /lk/mad/delete2/:adId              @controllers.LkAdEdit.deleteSubmit(adId:
 ## ЛК: Управление под-узлами.
 GET  /lk/subnodes/of/:nodeId                        @controllers.LkNodes.nodesOf(nodeId: MEsUuId)
 GET  /lk/subnodes/info/:nodeId                      @controllers.LkNodes.nodeInfo(nodeId: String)
+GET  /lk/subnodes/infoad/:adId/*onNode              @controllers.LkNodes.nodeInfoForAd(adId: String, onNode: RcvrKey)
 POST /lk/subnodes/create/:parentId                  @controllers.LkNodes.createSubNodeSubmit(parentId: String)
 POST /lk/subnodes/enable/:nodeId/:enabled           @controllers.LkNodes.setNodeEnabled(nodeId: String, enabled: Boolean)
 POST /lk/subnodes/delete/:nodeId                    @controllers.LkNodes.deleteNode(nodeId: String)

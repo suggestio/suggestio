@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -37,7 +37,7 @@ class CanAdvAd @Inject()(
 
 
   /** Является ли указанный узел рекламодателем? */
-  def isAdvertiserNode(mnode: MNode): Boolean = {
+  private def nodeCanProduceAdvs(mnode: MNode): Boolean = {
     mnode.common.isEnabled  &&  mnode.extras.adn.exists(_.isProducer)
   }
 
@@ -70,7 +70,7 @@ class CanAdvAd @Inject()(
     if (req.user.isSuper) {
       for (prodOpt <- prodOptFut) yield {
         val resOpt = prodOpt
-          .filter { isAdvertiserNode }
+          .filter { nodeCanProduceAdvs }
           .map { req2 }
         if (resOpt.isEmpty)
           LOGGER.debug(s"maybeAllowed(${req.user.personIdOpt}, ${mad.id.get}): superuser, but ad producer node $prodIdOpt is not allowed to advertise.")
@@ -88,7 +88,7 @@ class CanAdvAd @Inject()(
           val resOpt = prodOpt
             .filter { mnode =>
               val isOwnedByMe = isNodeAdmin.isNodeAdminCheckStrict(mnode, req.user)
-              isOwnedByMe  &&  isAdvertiserNode(mnode)
+              isOwnedByMe  &&  nodeCanProduceAdvs(mnode)
             }
             .map { req2 }
           if (resOpt.isEmpty)

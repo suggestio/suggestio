@@ -28,7 +28,7 @@ class LkNodesFormR(
     def render(p: Props): VdomElement = {
       <.div(
         // Костыли общих стилей.
-        //CssR.component( LkNodesFormCssStd ),
+        CssR.component( LkNodesFormCssStd ),
 
         // css-стили формы:
         lkNodesFormCssP
