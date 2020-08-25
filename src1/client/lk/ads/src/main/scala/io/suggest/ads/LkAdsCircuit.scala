@@ -1,13 +1,13 @@
 package io.suggest.ads
 
 import diode.react.ReactConnector
-import io.suggest.ads.a.LkAdsApiHttp
+import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.c.NodeAdsAh
 import io.suggest.ads.m.{GetMoreAds, MAdsS, MLkAdsRoot}
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
+import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.log.CircuitLog
 import io.suggest.spa.{FastEqUtil, StateInp}
@@ -20,7 +20,10 @@ import io.suggest.spa.CircuitUtil._
   * Created: 23.03.18 21:18
   * Description: Circuit react-формы управления карточками.
   */
-class LkAdsCircuit
+class LkAdsCircuit(
+                    lkAdsApi        : ILkAdsApi,
+                    lkNodesApi      : ILkNodesApi,
+                  )
   extends CircuitLog[MLkAdsRoot]
   with ReactConnector[MLkAdsRoot]
 {
@@ -54,11 +57,6 @@ class LkAdsCircuit
   val currNodeRW = mkLensRootZoomRW(this, MLkAdsRoot.ads)(MAdsS.MAdsSFastEq)
   val confRO = mkLensRootZoomRO(this, MLkAdsRoot.conf)( FastEqUtil.AnyRefFastEq )
 
-
-  // Контроллеры
-  val lkAdsApi = new LkAdsApiHttp()
-
-  val lkNodesApi = new LkNodesApiHttpImpl
 
   val nodeAdsAh = new NodeAdsAh(
     api           = lkAdsApi,

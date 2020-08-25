@@ -40,10 +40,4 @@ case class MNodeAdvState(
                           newIsEnabledPot   : Pot[Boolean]  = Pot.empty,
                           isShowOpenedPot   : Pot[Boolean]  = Pot.empty,
                           alwaysOutlinedPot : Pot[Boolean]  = Pot.empty,
-                        ) {
-
-  def newIsEnabled = newIsEnabledPot.getOrElseFalse
-  def isShowOpened = isShowOpenedPot.getOrElseFalse
-  def alwaysOutlined = alwaysOutlinedPot.getOrElseFalse
-
-}
+                        )

@@ -88,18 +88,17 @@ POST /lk/mad/up/img                     @controllers.LkAdEdit.prepareImgUpload(m
 POST /lk/mad/delete2/:adId              @controllers.LkAdEdit.deleteSubmit(adId: MEsUuId)
 
 ## ЛК: Управление под-узлами.
-GET  /lk/subnodes/of/:nodeId                        @controllers.LkNodes.nodesOf(nodeId: MEsUuId)
-GET  /lk/subnodes/info/:nodeId                      @controllers.LkNodes.nodeInfo(nodeId: String)
-GET  /lk/subnodes/infoad/:adId/*onNode              @controllers.LkNodes.nodeInfoForAd(adId: String, onNode: RcvrKey)
-POST /lk/subnodes/create/:parentId                  @controllers.LkNodes.createSubNodeSubmit(parentId: String)
-POST /lk/subnodes/enable/:nodeId/:enabled           @controllers.LkNodes.setNodeEnabled(nodeId: String, enabled: Boolean)
-POST /lk/subnodes/delete/:nodeId                    @controllers.LkNodes.deleteNode(nodeId: String)
-POST /lk/subnodes/edit/:nodeId                      @controllers.LkNodes.editNode(nodeId: String)
-POST /lk/subnodes/madv/:adId/:isEnabled/*onNode     @controllers.LkNodes.setAdv(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
-GET  /lk/subnodes/mad/:adId                         @controllers.LkNodes.nodesForAd(adId: MEsUuId)
-POST /lk/subnodes/tfd/*onNode                       @controllers.LkNodes.setTfDaily(onNode: RcvrKey)
-POST /lk/subnodes/aso/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdvShowOpened(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
-POST /lk/subnodes/out/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAlwaysOutlined(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
+GET  /lk/nodes/near/:nodeId                      @controllers.LkNodes.nodesOf(nodeId: MEsUuId)
+GET  /lk/nodes/tree                              @controllers.LkNodes.subTree(node: Option[RcvrKey] ?= None, mad: Option[MEsUuId] ?= None)
+POST /lk/nodes/create/:parentId                  @controllers.LkNodes.createSubNodeSubmit(parentId: String)
+POST /lk/nodes/enable/:nodeId/:enabled           @controllers.LkNodes.setNodeEnabled(nodeId: String, enabled: Boolean)
+POST /lk/nodes/delete/:nodeId                    @controllers.LkNodes.deleteNode(nodeId: String)
+POST /lk/nodes/edit/:nodeId                      @controllers.LkNodes.editNode(nodeId: String)
+POST /lk/nodes/madv/:adId/:isEnabled/*onNode     @controllers.LkNodes.setAdv(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
+GET  /lk/nodes/mad/:adId                         @controllers.LkNodes.nodesForAd(adId: MEsUuId)
+POST /lk/nodes/tfd/*onNode                       @controllers.LkNodes.setTfDaily(onNode: RcvrKey)
+POST /lk/nodes/aso/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdvShowOpened(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
+POST /lk/nodes/out/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAlwaysOutlined(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 
 
 ## Редактор ADN-узла: v2 react

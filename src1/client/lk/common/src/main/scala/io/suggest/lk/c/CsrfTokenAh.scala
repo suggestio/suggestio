@@ -26,7 +26,7 @@ class CsrfTokenAh[M](
                     )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -34,7 +34,8 @@ class CsrfTokenAh[M](
       val v0 = value
 
       if (!m.force && (v0.isPending || v0.isReady)) {
-        noChange
+        m.onComplete
+          .fold(noChange)( effectOnly )
 
       } else {
         val tstamp = System.currentTimeMillis()
@@ -42,7 +43,7 @@ class CsrfTokenAh[M](
           csrfTokenApi
             .csrfToken()
             .transform { tryResp =>
-              Success( CsrfTokenResp( tstamp, tryResp ) )
+              Success( CsrfTokenResp( tstamp, tryResp, m ) )
             }
         }
         val v2 = v0.pending( tstamp )
@@ -55,11 +56,12 @@ class CsrfTokenAh[M](
 
       if (!(v0 isPendingWithStartTime m.tstampMs)) {
         logger.warn( ErrorMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0) )
-        noChange
+        m.reason.onComplete
+          .fold(noChange)( effectOnly )
 
       } else {
         val v2 = v0 withTry m.tryResp
-        updated(v2)
+        ah.updatedMaybeEffect( v2, m.reason.onComplete )
       }
 
   }

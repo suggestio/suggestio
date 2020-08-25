@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.r
 import diode.react.ModelProxy
 import io.suggest.css.CssR
 import io.suggest.lk.nodes.form.m.MLkNodesRoot
+import io.suggest.lk.nodes.form.r.pop.LknPopupsR
 import io.suggest.lk.nodes.form.r.tree.TreeR
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -15,6 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class LkNodesFormR(
                     treeR               : TreeR,
+                    lknPopupsR          : LknPopupsR,
                     lkNodesFormCssP     : React.Context[LkNodesFormCss],
                   ) {
 
@@ -36,6 +38,10 @@ class LkNodesFormR(
 
         // Рендер текущего дерева узлов:
         treeR.component( p ),
+
+        // Попапы.
+        lknPopupsR.component( p ),
+
       )
     }
 

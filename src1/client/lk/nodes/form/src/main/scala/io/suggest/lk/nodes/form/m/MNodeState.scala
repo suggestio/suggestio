@@ -7,7 +7,7 @@ import io.suggest.spa.DiodeUtil
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
-import scalaz.TreeLoc
+import scalaz.{Tree, TreeLoc}
 
 /**
   * Suggest.io
@@ -24,6 +24,16 @@ object MNodeState {
   def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
   def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
   def adv         = GenLens[MNodeState](_.adv)
+
+
+  /** Обработать под-дерево узлов, присланное сервером. */
+  def processTree(serverTree: Tree[MLknNode]): Tree[MNodeState] = {
+    for (lkNode <- serverTree) yield {
+      MNodeState(
+        infoPot = Pot.empty.ready( lkNode ),
+      )
+    }
+  }
 
 
   implicit class MnsLocExt(private val loc: TreeLoc[MNodeState]) extends AnyVal {
@@ -58,13 +68,6 @@ case class MNodeState(
   require( info.nonEmpty )
 
   def info = infoPot.get
-
-  /** Является ли текущее состояние узла нормальным и обычным?
-    *
-    * @return true, значит можно отрабатывать клики по заголовку в нормальном режиме.
-    *         false -- происходит какое-то действо, например переименование узла.
-    */
-  def isNormal = !advIsPending
 
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
 

@@ -50,13 +50,6 @@ case class MEditTfDailyS(
                           request           : Pot[_]                = Pot.empty
                         ) {
 
-  def withModeInputAmount(mode2: ITfDailyMode, inpAmount: Option[MTextFieldS]) = {
-    copy(
-      mode          = mode2,
-      inputAmount   = inpAmount
-    )
-  }
-
   /** Является ли текущее состояние тарифа пригодным для сохранения на сервере? */
   def isValid: Boolean = {
     mode.isValid &&

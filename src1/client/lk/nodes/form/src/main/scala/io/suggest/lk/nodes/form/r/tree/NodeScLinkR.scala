@@ -2,17 +2,17 @@ package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiLink, MuiLinkProps, MuiToolTip, MuiToolTipProps}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.nodes.form.m.NodesDiConf
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.routes.routes
 import io.suggest.sc.ScConstants
+import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.{FastEqUtil, SioPages}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import play.api.libs.json.Json
-
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -22,6 +22,7 @@ import scala.scalajs.js.UndefOr
   */
 final class NodeScLinkR(
                          crCtxP               : React.Context[MCommonReactCtx],
+                         diConfig             : NodesDiConf,
                        ) {
 
   type Props = String
@@ -29,7 +30,26 @@ final class NodeScLinkR(
   class Backend($: BackendScope[Props, Unit]) {
 
     private lazy val _onLinkClick = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
-      e.stopPropagationCB
+      var cb = e.stopPropagationCB
+
+      // Если есть связь с выдачей, то отправить в роутер выдачи новое состояние:
+      for (scRouterCtl <- diConfig.scRouterCtlOpt) {
+        cb = cb >> e.preventDefaultCB >> {
+          $.props >>= { nodeId: Props =>
+            scRouterCtl.set(
+              SioPages.Sc3(
+                nodeId = Some( nodeId ),
+              )
+            )
+          }
+        }
+      }
+
+      // Если форма поддерживает закрытие/сокрытие, то сделать это:
+      for (closeFormCb <- diConfig.closeForm)
+        cb = cb >> closeFormCb
+
+      cb
     }
 
     def render(nodeId: String): VdomElement = {
@@ -40,18 +60,20 @@ final class NodeScLinkR(
       )(
         MuiLink(
           new MuiLinkProps {
-            val target = "_blank"
+            val target = JsOptionUtil.maybeDefined( diConfig.scRouterCtlOpt.isEmpty )( "_blank" )
             override val onClick = _onLinkClick
-            val href = ScConstants.ScJsState.fixJsRouterUrl(
-              routes.controllers.sc.ScSite.geoSite(
-                PlayJsonSjsUtil.toNativeJsonObj(
-                  Json.toJsObject(
-                    SioPages.Sc3(
-                      nodeId = Some( nodeId ),
+            val href = HttpClient.mkAbsUrlIfPreferred(
+              ScConstants.ScJsState.fixJsRouterUrl(
+                routes.controllers.sc.ScSite.geoSite(
+                  PlayJsonSjsUtil.toNativeJsonObj(
+                    Json.toJsObject(
+                      SioPages.Sc3(
+                        nodeId = Some( nodeId ),
+                      )
                     )
                   )
-                )
-              ).url
+                ).url
+              )
             )
           }
         )(

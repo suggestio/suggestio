@@ -41,6 +41,6 @@ object LknFormUtilR {
 
 
   def nodePath2treeId(nodePath: NodePath_t): String =
-    nodePath.mkString( "", HtmlConstants.`.`, "#" )
+    nodePath.mkString( "", HtmlConstants.`.`, HtmlConstants.DIEZ )
 
 }

@@ -1,6 +1,8 @@
 package io.suggest.lk.nodes.form
 
 import com.softwaremill.macwire._
+import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
+import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.{IPlatformComponentsModule, PlatformComponentsModuleDflt}
 import io.suggest.lk.nodes.form.r.{LkNodesFormCss, LkNodesFormR}
 import io.suggest.lk.nodes.form.r.pop._
@@ -14,10 +16,15 @@ import japgolly.scalajs.react.React
   * Created: 30.03.18 11:48
   * Description: compile-time DI линковка react LkNodes-формы.
   */
-trait LkNodesModuleBase extends IPlatformComponentsModule {
+trait LkNodesModuleBase
+  extends IPlatformComponentsModule
+{
 
   import io.suggest.ReactCommonModule._
 
+  def diConfig: NodesDiConf
+
+  lazy val lkNodesApi = wire[LkNodesApiHttpImpl]
   lazy val lkNodesFormCircuit = wire[LkNodesFormCircuit]
 
   // views
@@ -39,6 +46,7 @@ trait LkNodesModuleBase extends IPlatformComponentsModule {
   lazy val tariffEditR = wire[TariffEditR]
   lazy val subNodesR = wire[SubNodesR]
   lazy val nodeAdvRowR = wire[NodeAdvRowR]
+  lazy val nodeToolBarR = wire[NodeToolBarR]
 
   // pop
   lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]
@@ -54,3 +62,8 @@ trait LkNodesModuleBase extends IPlatformComponentsModule {
 final class LkNodesModule
   extends LkNodesModuleBase
   with PlatformComponentsModuleDflt
+{
+
+  override def diConfig = NodesDiConf.LkConf
+
+}

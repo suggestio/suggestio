@@ -24,13 +24,14 @@ import scalacss.ScalaCssReact._
   * Description: Главный компонент левой панели меню выдачи.
   */
 class MenuR(
-             val enterLkRowR          : EnterLkRowR,
-             val editAdR              : EditAdR,
-             val aboutSioR            : AboutSioR,
+             enterLkRowR              : EnterLkRowR,
+             editAdR                  : EditAdR,
+             aboutSioR                : AboutSioR,
              dlAppMenuItemR           : DlAppMenuItemR,
              settingsMenuItemR        : SettingsMenuItemR,
              leftR                    : LeftR,
              versionR                 : VersionR,
+             scNodesBtnR              : ScNodesBtnR,
              indexesRecentR           : IndexesRecentR,
              scCssP                   : React.Context[ScCss],
            ) {
@@ -78,6 +79,9 @@ class MenuR(
 
           // Пункт открытия диалога с настройками выдачи.
           settingsMenuItemR.component( propsProxy ),
+
+          // Досуп к диалогу управления узлами.
+          scNodesBtnR.component( propsProxy ),
 
         ),
       )

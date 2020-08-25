@@ -15,6 +15,7 @@ import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.v.dia.dlapp.DlAppDiaR
 import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.dia.login.ScLoginR
+import io.suggest.sc.v.dia.nodes.ScNodesR
 import io.suggest.sc.v.dia.settings.ScSettingsDiaR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
@@ -44,6 +45,7 @@ class ScRootR (
                 wzFirstR                : WzFirstR,
                 dlAppDiaR               : DlAppDiaR,
                 scLoginR                : ScLoginR,
+                scNodesR                : ScNodesR,
                 scSettingsDiaR          : ScSettingsDiaR,
                 scSnacksR               : ScSnacksR,
                 scThemes                : ScThemes,
@@ -138,6 +140,9 @@ class ScRootR (
 
           )
         },
+
+        // Диалог управления узлами. Без темы, иначе дизайн сыплется.
+        mrootProxy.wrap( _.dialogs.nodes )( scNodesR.component.apply ),
 
         // Диалог первого запуска.
         wzFirstR.component( mrootProxy ),

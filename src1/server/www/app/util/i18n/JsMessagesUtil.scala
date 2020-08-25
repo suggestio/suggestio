@@ -153,7 +153,13 @@ class JsMessagesUtil @Inject() (
       MC.`Showcase` ::
       Nil
 
-    Iterator(l1, CAL_TYPES)
+    (
+      l1 #::
+      CAL_TYPES #::
+      NODE_TYPES_I18N #::
+      ADV_PRICING #::
+      LazyList.empty
+    )
       .flatten
   }
 
@@ -239,7 +245,7 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для react-выдачи. */
   private def SC: IterableOnce[String] = {
-      MC.`Map` ::
+    val SC_ONLY_MSGS = MC.`Map` ::
       MC.`Tags` ::
       MC.`No.tags.here` ::
       MC.`No.tags.found.for.1.query` ::
@@ -305,7 +311,16 @@ class JsMessagesUtil @Inject() (
       MC.`Unsupported.browser.or.fatal.failure` ::
       MC.`Not.connected` :: MC.`Retry` ::
       MC.`Recents` ::
-      LOGIN_FORM_MSGS
+      MC.`Nodes.management` ::
+      Nil
+
+    (
+      SC_ONLY_MSGS #::
+      LOGIN_FORM_MSGS #::
+      LK_NODES_MSGS #::
+      LazyList.empty
+    )
+      .flatten
   }
 
 

@@ -493,7 +493,7 @@ lazy val sc3Sjs = {
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
       mapsSjs, jdRenderSjs, reactSidebar, reactScroll, reactQrCodeSjs,
-      loginFormSjs,
+      loginFormSjs, lkNodesFormSjs,
     )
 }
 

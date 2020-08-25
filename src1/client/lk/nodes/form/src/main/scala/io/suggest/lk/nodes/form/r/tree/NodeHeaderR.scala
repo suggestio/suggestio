@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeStateRender}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
@@ -24,23 +23,15 @@ import japgolly.univeq._
   * Используется для быстрого неточного управления размещением карточки на узле.
   */
 final class NodeHeaderR(
-                         nodeScLinkR          : NodeScLinkR,
-                         goToLkLinkR          : GoToLkLinkR,
-                         deleteBtnR           : DeleteBtnR,
-                         nameEditButtonR      : NameEditButtonR,
                          lkNodesFormCssP      : React.Context[LkNodesFormCss],
                          crCtxP               : React.Context[MCommonReactCtx],
                        ) {
 
   case class PropsVal(
                        render         : MNodeStateRender,
-                       isShowProps    : Boolean,
                        isAdv          : Boolean,
-                       locked         : Boolean,
                      )
   implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
-    (a.isShowProps ==* b.isShowProps) &&
-    (a.locked ==* b.locked) &&
     MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render )
   }
 
@@ -95,36 +86,6 @@ final class NodeHeaderR(
               override val secondary = crCtxP.message( ntype.singular ).rawNode
             }
           )(),
-
-          ReactCommonUtil.maybeNode( s.isShowProps && !s.isAdv ) {
-            React.Fragment(
-
-              // ADN-режим? Рендерить кнопку редактирования названия:
-              p.wrap { m =>
-                OptionUtil.SomeBool( m.locked )
-              }( nameEditButtonR.component.apply ),
-
-              // Кнопка удаления узла.
-              ReactCommonUtil.maybeNode(
-                (st.info.canChangeAvailability contains[Boolean] true)
-              ) {
-                p.wrap { m =>
-                  OptionUtil.SomeBool( m.locked )
-                }( deleteBtnR.component.apply )
-              },
-
-              // Кнопка перехода в выдачу узла:
-              ReactCommonUtil.maybeNode( ntype.showScLink )(
-                nodeScLinkR.component( st.info.id )
-              ),
-
-              // Кнопка "Перейти..." в ЛК узла:
-              ReactCommonUtil.maybeNode( ntype.showGoToLkLink ) {
-                goToLkLinkR.component( st.info.id )
-              },
-
-            )
-          },
 
           // Ошибка запроса:
           advPot.exceptionOption.whenDefinedNode { ex =>

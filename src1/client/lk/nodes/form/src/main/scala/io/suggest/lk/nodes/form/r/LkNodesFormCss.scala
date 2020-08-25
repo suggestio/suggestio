@@ -19,6 +19,10 @@ case class LkNodesFormCss() extends StyleSheet.Inline {
       flexGrow( 3 ),
     )
 
+    val toolBar = style(
+      justifyContent.spaceAround
+    )
+
   }
 
 

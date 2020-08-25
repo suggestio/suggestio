@@ -1,7 +1,11 @@
 package io.suggest.ads
 
 import com.softwaremill.macwire._
-import io.suggest.ads.v.{LkAdsFormR, AdItemR}
+import io.suggest.ads.a.LkAdsApiHttp
+import io.suggest.ads.v.{AdItemR, LkAdsFormR}
+import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
+import io.suggest.lk.nodes.form.m.NodesDiConf
+import io.suggest.proto.http.model.IMHttpClientConfig
 
 /**
   * Suggest.io
@@ -9,13 +13,18 @@ import io.suggest.ads.v.{LkAdsFormR, AdItemR}
   * Created: 23.03.18 21:18
   * Description: DI-модуль.
   */
-class LkAdsModule {
+class LkAdsModule extends IMHttpClientConfig {
 
   import io.suggest.jd.render.JdRenderModule._
 
   lazy val lkAdsFormR = wire[LkAdsFormR]
 
   lazy val adItemR = wire[AdItemR]
+
+  lazy val lkAdsApi = wire[LkAdsApiHttp]
+
+  def nodesDiConf = NodesDiConf.LkConf
+  lazy val lkNodesApi = wire[LkNodesApiHttpImpl]
 
   lazy val lkAdsCircuit = wire[LkAdsCircuit]
 

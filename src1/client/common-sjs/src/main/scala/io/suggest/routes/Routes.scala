@@ -260,10 +260,12 @@ sealed trait LkAdvGeoCtlRoutes extends js.Object {
 @js.native
 sealed trait LkNodesCtlRoutes extends js.Object {
 
-  /** Роута списка под-узлов для указанного узла. */
-  def nodeInfo(nodeId: String): PlayRoute = js.native
-
-  def nodeInfoForAd(nodeId: String, onNodeRcvrKey: String): PlayRoute = js.native
+  /** Роута списка под-узлов для указанного узла.
+    * @param onNodeRk RcvrKey узла.
+    * @param adId id рекламной карточки.
+    * @return Роута.
+    */
+  def subTree(onNodeRk: js.UndefOr[js.Array[String]] = js.undefined, adId: js.UndefOr[String] = js.undefined): PlayRoute = js.native
 
   /** Роута сабмита формы добавления нового узла. */
   def createSubNodeSubmit(parentId: String): PlayRoute = js.native

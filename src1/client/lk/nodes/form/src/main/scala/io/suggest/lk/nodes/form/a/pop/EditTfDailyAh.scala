@@ -78,7 +78,10 @@ class EditTfDailyAh[M](
             isValid = isValid
           )
         )
-        v0.withModeInputAmount( mode2, inputAmount2 )
+        v0.copy(
+          mode          = mode2,
+          inputAmount   = inputAmount2,
+        )
       }
       updated( v2Opt )
 

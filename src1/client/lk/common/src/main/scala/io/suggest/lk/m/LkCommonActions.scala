@@ -1,7 +1,7 @@
 package io.suggest.lk.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
-import diode.FastEq
+import diode.{Effect, FastEq}
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
@@ -168,5 +168,5 @@ case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction
 
 sealed trait ICsrfTokenAction extends ILkCommonAction
 /** Сброс токена CSRF. */
-case class CsrfTokenEnsure(force: Boolean = false) extends ICsrfTokenAction
-case class CsrfTokenResp(tstampMs: Long, tryResp: Try[MCsrfToken]) extends ICsrfTokenAction
+case class CsrfTokenEnsure(force: Boolean = false, onComplete: Option[Effect] = None) extends ICsrfTokenAction
+case class CsrfTokenResp(tstampMs: Long, tryResp: Try[MCsrfToken], reason: CsrfTokenEnsure) extends ICsrfTokenAction

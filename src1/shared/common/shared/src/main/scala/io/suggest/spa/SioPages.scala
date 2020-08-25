@@ -67,7 +67,7 @@ object SioPages {
     def login = GenLens[Sc3]( _.login )
 
 
-    implicit final class MainScreenOpsExt( private val mainScreen: Sc3 ) extends AnyVal {
+    implicit final class Sc3PageExt( private val mainScreen: Sc3 ) extends AnyVal {
 
       def isSamePlaceAs(ms2: Sc3): Boolean = {
         (mainScreen.nodeId ==* ms2.nodeId) &&

@@ -10,32 +10,8 @@ import monocle.macros.GenLens
   * Created: 13.03.17 15:01
   * Description: Модель состояния редактирования узла.
   */
-
-trait IEditNodeState[T <: IEditNodeState[T]] {
-
-  /** Название узла, задаётся юзером. */
-  def name      : String
-  /** Флаг текущей валидности названия. */
-  def nameValid : Boolean
-  /** Сейчас происходит сохранение узла? */
-  def saving    : Pot[_]
-
-
-  def withName(name2: String): T
-  def withName(name2: String, nameValid: Boolean): T
-  def withNameValid(nameValid2: Boolean): T
-  def withSaving(saving2: Pot[_]): T
-  def withSavingPending(): T = {
-    withSaving( saving.pending() )
-  }
-
-  /** Флаг общей итоговой валидности. */
-  def isValid: Boolean = nameValid
-
-}
-
-
 object MEditNodeState {
+
   @inline implicit def univEq: UnivEq[MEditNodeState] = UnivEq.force
 
   val saving = GenLens[MEditNodeState](_.saving)

@@ -20,7 +20,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
-import models.req.IReq
+import models.req.{IReq, IReqHdr}
 import util.acl._
 import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
@@ -32,7 +32,7 @@ import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import play.api.libs.json.Json
-import play.api.mvc.Result
+import play.api.mvc.{Action, AnyContent, Result}
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 import util.TplDataFormatUtil
@@ -62,6 +62,7 @@ final class LkNodes @Inject() (
   import sioControllerApi._
   import mCommonDi.current.injector
 
+  private lazy val isAuth = injector.instanceOf[IsAuth]
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
@@ -73,6 +74,9 @@ final class LkNodes @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val canChangeNodeAvailability = injector.instanceOf[CanChangeNodeAvailability]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+
+  private lazy val nodesTpl = injector.instanceOf[NodesTpl]
+  private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]
 
   import mCommonDi._
   import esModel.api._
@@ -115,8 +119,8 @@ final class LkNodes @Inject() (
     )
   }
 
-  private def _detailsAndSubNodesFor(mnode: MNode, madOpt: Option[MNode])
-                                    (implicit ctx: Context): Future[Tree[MLknNode]] = {
+  private def _subNodesFor(mnode: MNode, madOpt: Option[MNode])
+                          (implicit ctx: Context): Future[Tree[MLknNode]] = {
     import ctx.request
 
     val nodeId = mnode.id.get
@@ -168,34 +172,22 @@ final class LkNodes @Inject() (
   }
 
 
-  /** Внутренняя модель данных по форме и контексту.
+  /** Поиск прямо-подчинённых для текущего юзера.
     *
-    * @param formState Строка с данными формы для инициализации на клиенте.
-    * @param ctx Обычный контекст.
+    * @param withoutIds Кроме указанных id.
+    * @param madOpt В контексте указанной рекламной карточки.
+    * @param request Текущий реквест.
+    * @return Фьючерс с поддеревом узлов текущего пользователя.
     */
-  private case class _MLknFormPrep(
-                                    formState         : String,
-                                    implicit val ctx  : Context
-                                  )
-
-  /** Дедубликация кода экшена HTML-рендера формы на узле и для карточки.
-    *
-    * @param onNode Текущий узел ADN или продьюсер карточки.
-    * @param madOpt Рекламная карточки, если известна.
-    * @param request Исходный HTTP-реквест.
-    * @return Подготовленные данные по форме и контексту.
-    */
-  private def _lknFormPrep(onNode: MNode, madOpt: Option[MNode] = None)
-                          (implicit request: IReq[_]): Future[_MLknFormPrep] = {
-    // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
-    val nodeId = onNode.id.get
-
-    // Поискать другие пользовательские узлы верхнего уровня. TODO А что будет, если текущий узел не является прямо-подчинённым текущему юзеру? Каша из узлов?
-    val otherPersonNodesFut = request.user.personIdOpt
-      .fold[Future[List[Tree[MLknNode]]]] (Future.successful(Nil)) { personId =>
+  private def _personNodes(withoutIds: Seq[String] = Nil, madOpt: Option[MNode] = None)
+                          (implicit request: IReqHdr): Future[Tree[MLknNode]] = {
+    // Поискать под-узлы текущего пользователя:
+    val personSubNodesFut = request.user
+      .personIdOpt
+      .fold [Future[List[Tree[MLknNode]]]] (Future.successful(Nil)) { personId =>
         val msearch = nodesUtil.personNodesSearch(
           personId    = personId,
-          withoutIds1 = onNode.id.toList
+          withoutIds1 = withoutIds,
         )
         for {
           mnodes <- mNodes.dynSearch( msearch )
@@ -223,14 +215,7 @@ final class LkNodes @Inject() (
         }
       }
 
-    // Пока подготовить контекст рендера шаблона
-    val ctxFut = for {
-      lkCtxData <- request.user.lkCtxDataFut
-    } yield {
-      implicit val lkCtxData2 = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkNodesForm )(lkCtxData)
-      getContext2
-    }
-
+    // Отрендерить инфу по узлу текущего пользователя:
     val personNodeFut = for {
       personNodeOpt <- request.user.personNodeOptFut
     } yield {
@@ -247,35 +232,85 @@ final class LkNodes @Inject() (
       _mkLknNode( personNode, madOpt, isDetailed = true )
     }
 
-    val formStateFut = for {
-      // Запустить поиск под-узлов для текущего узла.
-      ctx               <- ctxFut
-      subNodesResp      <- _detailsAndSubNodesFor(onNode, madOpt = madOpt)(ctx)
-      personNode        <- personNodeFut
-      otherPersonNodes  <- otherPersonNodesFut
+    for {
+      personSubNodes <- personSubNodesFut
+      personNode     <- personNodeFut
     } yield {
-      val minit = MLknFormInit(
-        conf = MLknConf(
-          onNodeId = nodeId,
-          adIdOpt  = madOpt.flatMap(_.id)
-        ),
-        // Собрать дефолтовый ответ сервера для текущего узла, чтобы не было лишнего запроса к серверу после инициализации.
-        resp0 = MLknNodeResp(
-          subTree = Tree.Node(
-            root   = personNode,
-            forest = EphemeralStream.fromList[Tree[MLknNode]]( subNodesResp :: otherPersonNodes ),
-          )
-        ),
+      Tree.Node(
+        root   = personNode,
+        forest = EphemeralStream.fromList[Tree[MLknNode]]( personSubNodes ),
       )
-      Json.toJson( minit ).toString()
+    }
+  }
+
+
+  /** Внутренняя модель данных по форме и контексту.
+    *
+    * @param formState Строка с данными формы для инициализации на клиенте.
+    * @param ctx Обычный контекст.
+    */
+  private case class _MLknFormPrep(
+                                    formState         : String,
+                                    implicit val ctx  : Context
+                                  )
+
+  /** Дедубликация кода экшена HTML-рендера формы на узле и для карточки.
+    * Задача: Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать для рендера в html-шаблоне.
+    *
+    * @param onNode Текущий узел ADN или продьюсер карточки.
+    * @param madOpt Рекламная карточки, если известна.
+    * @param request Исходный HTTP-реквест.
+    * @return Подготовленные данные по форме и контексту.
+    */
+  private def _lknFormPrep(onNode: MNode, madOpt: Option[MNode] = None)
+                          (implicit request: IReq[_]): Future[_MLknFormPrep] = {
+    // Поискать пользовательские узлы верхнего уровня, кроме текущего. TODO А что будет, если текущий узел не является прямо-подчинённым текущему юзеру? Каша из узлов?
+    val personTreeFut = _personNodes(
+      withoutIds    = onNode.id.toList,
+      madOpt        = madOpt,
+    )
+
+    val ctx0 = implicitly[Context]
+
+    // Собрать и сериализовать начальное состояние системы.
+    val lknNodeRespFut = for {
+      // Запустить поиск под-узлов для текущего узла.
+      subNodesResp      <- _subNodesFor(onNode, madOpt = madOpt)(ctx0)
+      personTree        <- personTreeFut
+    } yield {
+      MLknNodeResp(
+        subTree = Tree.Node(
+          root   = personTree.rootLabel,
+          forest = subNodesResp ##:: personTree.subForest,
+        )
+      )
+    }
+
+    // Пока подготовить контекст рендера шаблона
+    val lkCtxFut = for {
+      lkCtxData <- request.user.lkCtxDataFut
+    } yield {
+      implicit val lkCtxData2 = CtxData.jsInitTargetsAppendOne( MJsInitTargets.LkNodesForm )(lkCtxData)
+      ctx0.withData( lkCtxData2 )
     }
 
     // Отрендерить и вернуть HTML-шаблон со страницей для формы.
     for {
-      formState   <- formStateFut
-      ctx         <- ctxFut
+      lknNodeResp     <- lknNodeRespFut
+      lkCtx           <- lkCtxFut
     } yield {
-      _MLknFormPrep(formState, ctx)
+      val minit = MLknFormInit(
+        conf  = MLknConf(
+          onNodeId = onNode.id,
+          adIdOpt  = madOpt.flatMap(_.id)
+        ),
+        // Собрать дефолтовый ответ сервера для текущего узла, чтобы не было лишнего запроса к серверу после инициализации.
+        resp0 = lknNodeResp,
+      )
+      val formState = Json
+        .toJson( minit )
+        .toString()
+      _MLknFormPrep( formState, lkCtx )
     }
   }
 
@@ -297,40 +332,71 @@ final class LkNodes @Inject() (
           formState = res.formState,
           mnode     = request.mnode
         )
-        Ok( NodesTpl(args)(res.ctx) )
+        Ok( nodesTpl(args)(res.ctx) )
       }
     }
   }
 
 
-  private def _nodeInfoBase(mnode: MNode, madOpt: Option[MNode] = None)
-                           (implicit ctx: Context): Future[Result] = {
-    for {
-      detailsAndSubnodes <- _detailsAndSubNodesFor(mnode, madOpt)
-    } yield {
-      LOGGER.trace(s"_nodeInfoBase(${mnode.id.orNull},${madOpt.flatMap(_.id).orNull}): Found ${detailsAndSubnodes.subForest.length} sub-nodes: ${EphemeralStream.toIterable( detailsAndSubnodes.subForest.map(_.rootLabel.id) ).mkString(", ")}")
-      val resp = MLknNodeResp( detailsAndSubnodes )
-      Ok( Json.toJson(resp) )
+  /** Конвертация фьючерса с поддеревом в JSON-ответ клиенту. */
+  private def _treeToJsonResp( subTreeFut: Future[Tree[MLknNode]] ): Future[Result] = {
+    for (subTree <- subTreeFut) yield {
+      val resp = MLknNodeResp( subTree )
+      val respJson = Json.toJson( resp )
+      Ok( respJson )
     }
   }
 
-  /** Получение инфы по узлам, относящимся к указанному узлу.
+  /** Универсальный экшен чтения кусков дерева узлов.
+    * Экшен поддерживает чтение корня дерева или сегментов его ветвей.
+    * Экшен поддерживает работу как в контексте карточки, так и без оной.
     *
-    * @param nodeId id узла.
-    * @return 200 OK с бинарем ответа.
+    * @param onNodeRk RcvrKey узла в дереве.
+    *                 None - корень дерева юзера.
+    * @param adIdOpt id рекламной карточки, если форма работает в режиме размещения.
+    * @return Экшен, возвращающий ответ с запрашиваемым поддеревом.
     */
-  def nodeInfo(nodeId: String) = csrf.Check {
-    isNodeAdmin(nodeId).async { implicit request =>
-      _nodeInfoBase( request.mnode )
+  def subTree(onNodeRk: Option[RcvrKey], adIdOpt: Option[MEsUuId]): Action[AnyContent] = csrf.Check {
+    // TODO onNode: надо ли доп.фильтрацию для пустого path? Или play сам справляется?
+    val onNodeRkOpt = onNodeRk
+      .map(_.filter(_.nonEmpty))
+      .filter(_.nonEmpty)
+
+    // В зависимости от параметров, надо выбирать разные ACL-проверки.
+    adIdOpt.fold {
+      // Нет карточки - управление узлами.
+      onNodeRkOpt.fold {
+        // Форма не знает ничего о дереве - вернуть начальное дерево.
+        isAuth().async { implicit request =>
+          _treeToJsonResp( _personNodes() )
+        }
+
+      } { onNodeRk =>
+        // Чтение поддерева указанного узла. personNodes не нужны.
+        isNodeAdmin( onNodeRk ).async { implicit request =>
+          val subNodesFut = _subNodesFor( mnode = request.mnode, madOpt = None )
+          _treeToJsonResp( subNodesFut )
+        }
+      }
+
+    } { adId =>
+      onNodeRkOpt.fold {
+        // Инициализация формы размещения карточки: форма запрашивает начальное дерево.
+        canAdvAd( adId.id, U.PersonNode ).async { implicit request =>
+          val personNodes = _personNodes( madOpt = Some(request.mad) )
+          _treeToJsonResp( personNodes )
+        }
+
+      } { onNodeRk =>
+        // Запрос поддерева в рамках уже инициалированной формы размещения карточки в узлах.
+        canFreelyAdvAdOnNode(adId, onNodeRk).async { implicit request =>
+          val subNodesFut = _subNodesFor( request.mnode, madOpt = Some(request.mad) )
+          _treeToJsonResp( subNodesFut )
+        }
+      }
     }
   }
 
-  /** Получения поддерева инфы по узлам в контексте размещения карточки. */
-  def nodeInfoForAd(adId: String, rcvrKey: RcvrKey) = csrf.Check {
-    canFreelyAdvAdOnNode(adId, rcvrKey).async { implicit request =>
-      _nodeInfoBase( request.mnode, Some(request.mad) )
-    }
-  }
 
   /** BodyParser для тела запроса по созданию/редактированию узла. */
   private def _mLknNodeReqBP = parse.json[MLknNodeReq]
@@ -617,7 +683,7 @@ final class LkNodes @Inject() (
           mad       = request.mad,
           producer  = request.producer
         )
-        val html = AdNodesTpl(rArgs)(res.ctx)
+        val html = adNodesTpl(rArgs)(res.ctx)
         Ok(html)
       }
     }

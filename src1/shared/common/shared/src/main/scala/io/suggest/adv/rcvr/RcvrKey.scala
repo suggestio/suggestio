@@ -1,5 +1,7 @@
 package io.suggest.adv.rcvr
 
+import java.util.regex.Pattern
+
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.common.html.HtmlConstants
 import io.suggest.es.model.MEsUuId
@@ -18,11 +20,21 @@ import scalaz.std.string._
   */
 object RcvrKey {
 
-  def rcvrKey2urlPath(rcvrKey: RcvrKey): String = {
-    rcvrKey.mkString( HtmlConstants.SLASH )
+  def PATH_DELIM = HtmlConstants.SLASH
+
+  def isPath(str: String): Boolean =
+    str contains PATH_DELIM
+
+  def rcvrKey2urlPath(rcvrKey: RcvrKey): String =
+    rcvrKey.mkString( PATH_DELIM )
+
+  def urlPath2RcvrKey(path: String): RcvrKey = {
+    path
+      .split( Pattern.quote( PATH_DELIM ) )
+      .toList
   }
 
-  def from(rcvrKeySeq: Seq[String]) =
+  def from(rcvrKeySeq: Seq[String]): RcvrKey =
     rcvrKeySeq.toList
 
   // Затычка для scalaz, чтобы можно было провалидировать коллекцию из RcvrKey.

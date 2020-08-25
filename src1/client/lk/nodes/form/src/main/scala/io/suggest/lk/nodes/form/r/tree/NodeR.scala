@@ -24,6 +24,7 @@ import io.suggest.spa.FastEqUtil
 class NodeR(
              nodeEnabledR         : NodeEnabledR,
              nodeHeaderR          : NodeHeaderR,
+             nodeToolBarR         : NodeToolBarR,
              tariffEditR          : TariffEditR,
              subNodesR            : SubNodesR,
              nodeAdvRowR          : NodeAdvRowR,
@@ -59,7 +60,7 @@ class NodeR(
     /** Клик по заголовку узла (сворачивание-разворачивание). */
     private lazy val _onNodeLabelClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { p: Props =>
-        NodeNameClick( p.value.node.nodePath )
+        NodeClick( p.value.node.nodePath )
       }
     }
 
@@ -79,8 +80,6 @@ class NodeR(
         val _label = propsProxy.wrap { p =>
           nodeHeaderR.PropsVal(
             render      = p.node,
-            isShowProps = isShowProps,
-            locked      = p.locked,
             isAdv       = p.confAdId.nonEmpty,
           )
         }( nodeHeaderR.component.apply )
@@ -98,6 +97,9 @@ class NodeR(
           if (p.confAdId.isEmpty) {
             // нет рекламной карточки - редактирование узлов:
             MuiList()(
+
+              // Тулбар для раскрытого узла:
+              propsProxy.wrap(_.node.state.info)( nodeToolBarR.component.apply ),
 
               MuiListItem()(
                 // Строка с идентификатором узла:

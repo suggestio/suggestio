@@ -235,8 +235,16 @@ sealed trait IScConfAction extends IScRootAction
 case class SetDebug(isDebug: Boolean) extends IScConfAction
 
 
+/** Экшены для sc-login. */
 sealed trait IScLoginAction extends IScRootAction
 
 case class ScLoginFormShowHide( visible: Boolean ) extends IScLoginAction
 /** Изменение внешнего (spa-router) состояния модуля login-формы. */
 case class ScLoginFormChange(loginPageOpt: Option[SioPages.Login] ) extends IScLoginAction
+
+
+/** Экшены для sc-nodes. */
+sealed trait IScNodesAction extends IScRootAction
+
+/** Переключение состояния формы отображения. */
+case class ScNodesShowHide( visible: Boolean ) extends IScNodesAction

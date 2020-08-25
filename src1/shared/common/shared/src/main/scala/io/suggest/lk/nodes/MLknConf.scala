@@ -23,14 +23,19 @@ object MLknConf {
   @inline implicit def univEq: UnivEq[MLknConf] = UnivEq.derive
 
   implicit def mLknConfFormat: OFormat[MLknConf] = (
-    (__ \ "n").format[String] and
+    (__ \ "n").formatNullable[String] and
     (__ \ "a").formatNullable[String]
   )(apply, unlift(unapply))
 
 }
 
 
+/** Конфиг формы.
+  *
+  * @param onNodeId Исходный id узла, на котором изначально открывается выдача.
+  * @param adIdOpt id узла с карточкой, для ad-режима дерева узлов.
+  */
 case class MLknConf(
-                     onNodeId : String,
-                     adIdOpt  : Option[String]
+                     onNodeId : Option[String],
+                     adIdOpt  : Option[String],
                    )

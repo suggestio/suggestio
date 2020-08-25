@@ -1,3 +1,4 @@
+@this(jsRoutesUtil: util.tpl.JsRoutesUtil)
 @(formState: String)(implicit ctx: Context)
 
 @* Код вёрстки формы управления узлами, общий для всех режимов (подузлы, карточка на узлах, итд). *@
@@ -21,17 +22,6 @@
 @* JS-роутер для команд из формы... *@
 @jsTpl2HtmlTpl( withScriptTag = true )(
   jsRevRouterTpl( csrfAll = true )(
-    routes.javascript.LkNodes.nodeInfo,
-    routes.javascript.LkNodes.nodeInfoForAd,
-    routes.javascript.LkNodes.createSubNodeSubmit,
-    routes.javascript.LkNodes.setNodeEnabled,
-    routes.javascript.LkNodes.deleteNode,
-    routes.javascript.LkNodes.editNode,
-    routes.javascript.LkNodes.setAdv,
-    routes.javascript.LkNodes.setTfDaily,
-    routes.javascript.LkNodes.setAdvShowOpened,
-    routes.javascript.LkNodes.setAlwaysOutlined,
-    routes.javascript.LkAds.adsPage,
-    controllers.sc.routes.javascript.ScSite.geoSite,
+    jsRoutesUtil.lkNodesFormRoutes(): _*
   )
 )

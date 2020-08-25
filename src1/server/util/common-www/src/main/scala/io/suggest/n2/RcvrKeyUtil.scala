@@ -27,7 +27,7 @@ object RcvrKeyUtil {
           if (value.isEmpty) {
             Left("error.required")
           } else {
-            val nodeIdsArr = value.split( HtmlConstants.SLASH.head )
+            val nodeIdsArr = value.split( RcvrKey.PATH_DELIM.head )
             if (nodeIdsArr.length < 1) {
               Left( "error.empty" )
             } else if (nodeIdsArr.length <= RCVR_KEY_MAXLEN) {
@@ -39,7 +39,7 @@ object RcvrKeyUtil {
         }
 
         override def unbind(key: String, value: RcvrKey): String = {
-          value.mkString( HtmlConstants.SLASH )
+          value.mkString( RcvrKey.PATH_DELIM )
         }
 
       }
@@ -57,7 +57,17 @@ object RcvrKeyUtil {
             for {
               qsbSeq <- qsbSeqE
             } yield {
-              RcvrKey.from( qsbSeq.items )
+              qsbSeq.items
+                .headOption
+                .filter { nodeId =>
+                  (qsbSeq.items.lengthIs == 1) &&
+                  RcvrKey.isPath( nodeId )
+                }
+                .fold {
+                  RcvrKey.from( qsbSeq.items )
+                } {
+                  RcvrKey.urlPath2RcvrKey
+                }
             }
           }
         }

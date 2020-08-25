@@ -17,7 +17,6 @@
     routes.javascript.Static.advRcvrsMapJson #::
     routes.javascript.Static.csrfToken #::
 
-    routes.javascript.Ident.loginFormPage #::
     routes.javascript.Ident.rdrUserSomewhere #::
     routes.javascript.LkAds.adsPage #::
     routes.javascript.LkAdEdit.editAd #::
@@ -25,7 +24,8 @@
     routes.javascript.ScApp.appDownloadInfo #::
     routes.javascript.ScApp.iosInstallManifest #::
 
-    jsRoutesUtil.loginRoutes
+    jsRoutesUtil.loginRoutes() #:::
+    jsRoutesUtil.lkNodesFormRoutes()
   ): _*
 )
 

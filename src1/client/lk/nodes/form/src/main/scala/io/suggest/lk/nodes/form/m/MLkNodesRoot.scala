@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.m
 import diode.FastEq
 import io.suggest.lk.nodes.MLknConf
 import monocle.macros.GenLens
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -14,9 +15,9 @@ object MLkNodesRoot {
 
   implicit object MLknRootFastEq extends FastEq[MLkNodesRoot] {
     override def eqv(a: MLkNodesRoot, b: MLkNodesRoot): Boolean = {
-      (a.tree eq b.tree) &&
-        (a.popups eq b.popups)
-        //&& (a.conf eq b.conf)  // Закомменчено, ибо конфиг не изменяется во время работы.
+      (a.tree ===* b.tree) &&
+      (a.popups ===* b.popups)
+      //&& (a.conf eq b.conf)  // Закомменчено, ибо конфиг не изменяется во время работы.
     }
   }
 
@@ -35,6 +36,6 @@ object MLkNodesRoot {
   */
 case class MLkNodesRoot(
                          conf       : MLknConf,
-                         tree       : MTree,
+                         tree       : MTree                 = MTree.empty,
                          popups     : MLknPopups            = MLknPopups.empty
                        )

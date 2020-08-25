@@ -27,7 +27,7 @@ import io.suggest.routes.routes
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.c.dev.{GeoLocAh, OnLineAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
-import io.suggest.sc.c.dia.{ScErrorDiaAh, ScLoginDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
+import io.suggest.sc.c.dia.{ScErrorDiaAh, ScLoginDiaAh, ScNodesDiaAh, ScSettingsDiaAh, WzFirstDiaAh}
 import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeAh}
 import io.suggest.sc.c.jsrr.JsRouterInitAh
@@ -60,6 +60,7 @@ import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
 import io.suggest.lk.c.{CsrfTokenAh, CsrfTokenApi}
+import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
@@ -84,6 +85,7 @@ class Sc3Circuit(
                   // Явные аргументы:
                   routerState               : MSpaRouterState,
                   getLoginFormCircuit       : () => LoginFormCircuit,
+                  getNodesFormCircuit       : () => LkNodesFormCircuit,
                   // Автоматические DI-аргументы:
                   sc3Api                    : ISc3Api,
                   scAppApi                  : IScAppApi,
@@ -295,6 +297,7 @@ class Sc3Circuit(
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
   private[sc] val scLoginRW       = mkLensZoomRW(dialogsRW, MScDialogs.login)
+  private val scNodesRW           = mkLensZoomRW(dialogsRW, MScDialogs.nodes)
 
   private val bootRW              = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
   private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
@@ -303,7 +306,7 @@ class Sc3Circuit(
   private val menuRW              = mkLensZoomRW( indexRW, MScIndex.menu )( MMenuS.MMenuSFastEq )
   private val dlAppDiaRW          = mkLensZoomRW( menuRW, MMenuS.dlApp )( MDlAppDia.MDlAppDiaFeq )
 
-  private val inxStateRO          = mkLensZoomRO( indexRW, MScIndex.state )
+  private[sc] val inxStateRO      = mkLensZoomRO( indexRW, MScIndex.state )
 
   private val screenInfoRO        = mkLensZoomRO(scScreenRW, MScScreenS.info)( MScreenInfoFastEq )
   private val screenRO            = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
@@ -579,6 +582,12 @@ class Sc3Circuit(
     getLoginFormCircuit = getLoginFormCircuit,
   )
 
+  private val scNodesDiaAh = new ScNodesDiaAh(
+    modelRW = scNodesRW,
+    getNodesCircuit = getNodesFormCircuit,
+    csrfRO = csrfTokenRW,
+  )
+
   private val csrfTokenAh = new CsrfTokenAh(
     modelRW       = csrfTokenRW,
     csrfTokenApi  = new CsrfTokenApi,
@@ -593,9 +602,10 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+    acc ::= scNodesDiaAh
+    acc ::= scLoginDiaAh
     acc ::= scConfAh
     acc ::= csrfTokenAh
-    acc ::= scLoginDiaAh
 
     for (ah <- daemonBgModeAh) {
       acc ::= scDaemonAh

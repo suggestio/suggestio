@@ -7,28 +7,32 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConf}
+import io.suggest.lk.nodes.form.LkNodesModuleBase
+import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
-import io.suggest.proto.http.model.HttpClientConfig
+import io.suggest.proto.http.model.{HttpClientConfig, IMHttpClientConfig}
 import io.suggest.routes.IJsRouter
-import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide}
+import io.suggest.sc.c.dia.ScNodesDiaAh
+import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.u.api.ScAppApiHttp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.v._
-import io.suggest.sc.v.dia.dlapp.{DlAppDiaR, DlAppMenuItemR}
-import io.suggest.sc.v.dia.err.ScErrorDiaR
-import io.suggest.sc.v.dia.first.WzFirstR
-import io.suggest.sc.v.dia.settings.{BlueToothSettingR, BlueToothUnAvailInfoR, GeoLocSettingR, NotificationSettingsR, OnOffSettingR, ScSettingsDiaR, SettingsMenuItemR, UnsafeOffsetSettingR}
+import io.suggest.sc.v.dia.dlapp._
+import io.suggest.sc.v.dia.err._
+import io.suggest.sc.v.dia.first._
+import io.suggest.sc.v.dia.settings._
 import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
 import io.suggest.sc.v.dia.login.ScLoginR
+import io.suggest.sc.v.dia.nodes.ScNodesR
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
-import io.suggest.sc.v.search.found.{NfListR, NfRowR, NodesFoundR}
-import io.suggest.sc.v.snack.{OfflineSnackR, ScSnacksR}
-import io.suggest.sc.v.styl.{ScCss, ScThemes}
+import io.suggest.sc.v.search.found._
+import io.suggest.sc.v.snack._
+import io.suggest.sc.v.styl._
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -131,6 +135,7 @@ object Sc3Module { outer =>
   lazy val editAdR = wire[EditAdR]
   lazy val dlAppMenuItemR = wire[DlAppMenuItemR]
   lazy val indexesRecentR = wire[IndexesRecentR]
+  lazy val scNodesBtnR = wire[ScNodesBtnR]
 
 
   // dia
@@ -160,10 +165,18 @@ object Sc3Module { outer =>
   lazy val scAppApiHttp = wire[ScAppApiHttp]
 
 
-  // login
-  lazy val loginFormModule = new LoginFormModuleBase {
+  trait ScHttpConfigImpl extends IMHttpClientConfig {
+    override def httpClientConfig = () => {
+      HttpClientConfig(
+        csrfToken = sc3Circuit.csrfTokenRW.value.toOption,
+      )
+    }
+  }
 
-    override def diConfig: LoginFormDiConf = new LoginFormDiConf {
+  // login
+  object ScLoginFormModule extends LoginFormModuleBase {
+
+    override val diConfig: LoginFormDiConf = new LoginFormDiConf with ScHttpConfigImpl {
 
       override def onClose(): Option[Callback] = {
         val cb = Callback {
@@ -171,10 +184,6 @@ object Sc3Module { outer =>
         }
         Some(cb)
       }
-
-      override def httpClientConfig() = HttpClientConfig(
-        csrfToken = sc3Circuit.csrfTokenRW.value.toOption,
-      )
 
       override def onRedirect(onAction: ILoginFormAction, rdrUrl: String): Effect = {
         Effect.action {
@@ -188,7 +197,6 @@ object Sc3Module { outer =>
       }
 
     }
-
 
     private def route0: SioPages.Sc3 =
       sc3Circuit.currRouteRW.value getOrElse SioPages.Sc3.empty
@@ -205,11 +213,31 @@ object Sc3Module { outer =>
       LoginFormModuleBase.circuit2loginCssRCtx( outer.sc3Circuit.scLoginRW.value.circuit )
 
   }
-  def getLoginFormCircuit = () => loginFormModule.loginFormCircuit
+  def getLoginFormCircuit = () => ScLoginFormModule.loginFormCircuit
 
   lazy val scLoginR = {
-    import loginFormModule.loginFormR
+    import ScLoginFormModule.loginFormR
     wire[ScLoginR]
+  }
+
+
+  /** Поддержка lk-nodes. */
+  object ScNodesFormModule extends LkNodesModuleBase {
+    override def getPlatformCss = outer._getPlatformCss
+    override def platformComponents = outer.platformComponents
+    override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfigImpl {
+      override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit
+      override def scRouterCtlOpt = Some( outer.sc3SpaRouter.state.routerCtl )
+      override def closeForm = Some( Callback( outer.sc3Circuit.dispatch( ScNodesShowHide(false) ) ) )
+      /** Ссылки в ЛК необходимо показывать только в браузере, но не в Cordova,
+        * т.к. переброс из приложения в браузер не готов, и мобильная вёрстка ЛК тоже отсутствует. */
+      override def showLkLinks = outer.sc3Circuit.platformRW.value.isBrowser
+    }
+  }
+  def getNodesFormCircuit = () => ScNodesFormModule.lkNodesFormCircuit
+  lazy val scNodesR = {
+    import ScNodesFormModule.lkNodesFormR
+    wire[ScNodesR]
   }
 
 }

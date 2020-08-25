@@ -1,8 +1,10 @@
 package io.suggest.lk.nodes.form.m
 
+import diode.data.Pot
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
+import scalaz.Tree
 
 import scala.util.Try
 
@@ -27,10 +29,15 @@ sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
 
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
-case class NodeNameClick(
-                          override val nodePath: NodePath_t,
-                        )
+case class NodeClick(
+                      override val nodePath: NodePath_t,
+                    )
   extends LkNodesTreeAction
+
+
+/** Экшен инициализации дерева с сервера.
+  * Вынесен из NodeClick(nodePath=Nil) конфликтует с корнем дерева, а в коде они всё-равно живут отдельно. */
+case class TreeInit( treePot: Pot[MLknNodeResp] = Pot.empty ) extends LkNodesAction
 
 
 /** Модель результата запроса к серверу по поводу под-узлов для указанного узла. */

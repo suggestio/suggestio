@@ -20,3 +20,8 @@ object HttpClientConfig {
 case class HttpClientConfig(
                              csrfToken      : Option[MCsrfToken]        = None,
                            )
+
+trait IMHttpClientConfig {
+  // Доп.костыли для csrf не требуются. CSRF уже вставлен в js-роутер.
+  def httpClientConfig: () => HttpClientConfig = () => HttpClientConfig.empty
+}

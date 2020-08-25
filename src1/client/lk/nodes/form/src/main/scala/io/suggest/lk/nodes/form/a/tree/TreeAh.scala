@@ -14,6 +14,8 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.dom2.DomQuick
 import monocle.Traversal
 import scalaz.std.option._
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import scalaz.{Tree, TreeLoc}
 
@@ -23,60 +25,32 @@ import scala.util.Success
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 08.02.17 21:50
-  * Description: Diode action-handler
+  * Description: Контроллер управления деревом узлов.
   */
 class TreeAh[M](
                  api          : ILkNodesApi,
                  modelRW      : ModelRW[M, MTree],
-                 confRO       : ModelRO[MLknConf]
+                 confRO       : ModelRO[MLknConf],
                )
   extends ActionHandler(modelRW)
   with Log
 {
 
-  private def _maybeUpdateNode[T](m: Any = null, nodePathOpt: Option[NodePath_t] = None)
-                                 (f: MNodeState => Option[MNodeState]): ActionResult[M] = {
-    val v0 = value
-    (for {
-      loc0 <- {
-        val locOpt0 = nodePathOpt.fold(v0.openedLoc) {
-          v0.nodes
-            .loc
-            .pathToNode
-        }
-        if (locOpt0.isEmpty)
-          logger.warn( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (nodePathOpt.orElse(v0.opened).orNull, m) )
-        locOpt0
-      }
-      // noChange, если вернули None, т.е. когда ничего менять не надо.
-      n2 <- f( loc0.getLabel )
-    } yield {
-      val t2 = loc0
-        .setLabel( n2 )
-        .toTree
-      val v2 = (MTree.nodes set t2)(v0)
-      updated(v2)
-    })
-      .getOrElse( noChange )
-  }
-
-
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал о необходимости показать какой-то узел подробнее.
-    case m: NodeNameClick =>
+    case m: NodeClick =>
       val v0 = value
-      val locOpt0 = v0.nodes
-        .loc
-        .pathToNode( m.nodePath )
+
+      // Загрузка ветви инициализированного дерева. Найти начало ветви в текущем дереве:
+      val locOpt0 = v0.pathToLoc( m.nodePath )
       if (locOpt0.isEmpty)
         logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
 
       (for {
         loc0 <- locOpt0
-        mns0 = loc0.getLabel
       } yield {
-        if (mns0.info.isDetailed) {
+        if (loc0.getLabel.info.isDetailed) {
           // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
           // Узнать, является ли текущий элемент сфокусированным?
           val v2 = MTree.opened.modify { opened0 =>
@@ -96,25 +70,21 @@ class TreeAh[M](
 
         } else {
           // !isDetailed: Для текущего узла не загружено children. Запустить в фоне загрузку, выставить её в состояние.
-          val nodeId = mns0.info.id
           val tstampMs = System.currentTimeMillis()
 
           // Собрать эффект запроса к серверу за подробностями по узлу.
           val fx = Effect {
-            // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
-            val fut = confRO.value.adIdOpt.fold {
-              api.nodeInfo( nodeId )
-            } { adId =>
-              val rcvrKey = loc0.rcvrKey
-              api.nodeInfoForAd( adId, rcvrKey )
-            }
-
-            fut.transform { tryRes =>
-              Success( HandleSubNodesOf(m.nodePath, tryRes, tstampMs) )
-            }
+            api
+              .subTree(
+                onNodeRk = Some(loc0.rcvrKey),
+                adId = confRO.value.adIdOpt
+              )
+              .transform { tryRes =>
+                Success( HandleSubNodesOf(m.nodePath, tryRes, tstampMs) )
+              }
           }
 
-          val v2 = MTree.nodes.set {
+          val v2 = MTree.setNodes {
             loc0
               .modifyLabel( MNodeState.infoPot.modify( _.pending(tstampMs) ) )
               .toTree
@@ -130,9 +100,9 @@ class TreeAh[M](
     case snr: HandleSubNodesOf =>
       val v0 = value
 
-      val loc0Opt = v0.nodes
-        .loc
-        .pathToNode( snr.nodePath )
+      // Не пустой nodePath. Найти и обновить под-ветвь:
+      val loc0Opt = v0.pathToLoc( snr.nodePath )
+
       if (loc0Opt.isEmpty)
         logger.error( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = snr )
 
@@ -158,11 +128,7 @@ class TreeAh[M](
             // Самоконтроль: получено поддерево для правильного узла:
             require( resp.subTree.rootLabel.id ==* mns0.info.id )
 
-            val tree2 = for (lkNode <- resp.subTree) yield {
-              MNodeState(
-                infoPot = Pot.empty.ready( lkNode ),
-              )
-            }
+            val tree2 = MNodeState.processTree( resp.subTree )
             val subTree2 = Tree.Node(
               // Текущий узел - просто патчим, сохраняя рантаймовые под-состояния нетронутыми.
               root   = (MNodeState.infoPot set tree2.rootLabel.infoPot)(mns0),
@@ -176,7 +142,7 @@ class TreeAh[M](
         )
 
         val v2 = v0.copy(
-          nodes  = loc2.toTree,
+          nodes  = v0.nodes ready loc2.toTree,
           opened = Some( snr.nodePath ),
         )
         updated(v2)
@@ -195,9 +161,7 @@ class TreeAh[M](
       (for {
         adId <- conf.adIdOpt
         v0 = value
-        locOpt0 = v0.nodes
-          .loc
-          .pathToNode( m.nodePath )
+        locOpt0 = v0.pathToLoc( m.nodePath )
         loc0 <- {
           if (locOpt0.isEmpty)
             logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
@@ -234,7 +198,7 @@ class TreeAh[M](
           ))
           .toTree
 
-        var modF = (MTree.nodes set tree2)
+        var modF = (MTree setNodes tree2)
 
         // Если false=>true, то нужно сфокусироваться на данном узле: чтобы галочки потом раскрылись.
         if (m.isEnabled && !(v0.opened contains m.nodePath))
@@ -249,9 +213,7 @@ class TreeAh[M](
     // Сигнал завершения реквеста изменения состояния размещения карточки на узле.
     case m: AdvOnNodeResp =>
       val v0 = value
-      val locOpt0 = v0.nodes
-        .loc
-        .pathToNode( m.nodePath )
+      val locOpt0 = v0.pathToLoc( m.nodePath )
 
       if (locOpt0.isEmpty)
         logger.warn( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = m )
@@ -259,7 +221,7 @@ class TreeAh[M](
       (for {
         loc0 <- locOpt0
       } yield {
-        val v2 = MTree.nodes.set(
+        val v2 = MTree.setNodes(
           loc0
             .modifyLabel(
               m.tryResp.fold(
@@ -298,7 +260,7 @@ class TreeAh[M](
         )
       } yield {
         // Залить обновления в дерево, а CreateNodeAh удалит addState для текущего rcvrKey.
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .insertDownLast( newChild )
             .toTree
@@ -338,7 +300,7 @@ class TreeAh[M](
             }
         }
 
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel {
               MNodeState.isEnableUpd.set(
@@ -361,12 +323,10 @@ class TreeAh[M](
       val v0 = value
 
       (for {
-        loc0 <- v0.nodes
-          .loc
-          .pathToNode( m.nodePath )
+        loc0 <- v0.pathToLoc( m.nodePath )
         mns0 = loc0.getLabel
       } yield {
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel(
               m.resp.fold(
@@ -402,9 +362,7 @@ class TreeAh[M](
       val v0 = value
 
       (for {
-        loc0 <- v0.nodes
-          .loc
-          .pathToNode( m.nodePath )
+        loc0 <- v0.pathToLoc( m.nodePath )
       } yield {
         val loc2 = m.resp.fold(
           {ex =>
@@ -426,7 +384,7 @@ class TreeAh[M](
           }
         )
 
-        val v2 = (MTree.nodes set loc2.toTree)(v0)
+        val v2 = (MTree setNodes loc2.toTree)(v0)
         updated(v2)
       })
         .getOrElse( noChange )
@@ -445,12 +403,14 @@ class TreeAh[M](
             .filter(findF)
             .orElse {
               logger.log( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (m, v0.opened) )
-              v0.nodes.loc.find(findF)
+              v0.nodes
+                .toOption
+                .flatMap(_.loc.find(findF))
             }
         }
         nodeInfo2 <- m.tryResp.toOption
       } yield {
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel(
               MNodeState.infoPot.modify( _.ready(nodeInfo2) )
@@ -472,7 +432,7 @@ class TreeAh[M](
         lens = MNodeState.tfInfoWide
         if !lens.get(mns0)
       } yield {
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel(lens set true)
             .toTree
@@ -491,7 +451,7 @@ class TreeAh[M](
         // Ошибка должна быть отработана EditTfDailyAh:
         nodeInfo2 <- m.tryResp.toOption
       } yield {
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel( MNodeState.infoPot.modify(_.ready(nodeInfo2)) )
             .toTree
@@ -544,7 +504,7 @@ class TreeAh[M](
         }
 
         // Обновить состояние формы.
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel {
               MNodeState.adv.modify { advOpt0 =>
@@ -566,11 +526,9 @@ class TreeAh[M](
       val v0 = value
 
       (for {
-        loc0 <- v0.nodes
-          .loc
-          .pathToNode( m.nodePath )
+        loc0 <- v0.pathToLoc( m.nodePath )
       } yield {
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel {
               m.tryResp.fold (
@@ -640,7 +598,7 @@ class TreeAh[M](
             }
         }
 
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel {
               MNodeState.adv.modify { advOpt0 =>
@@ -662,11 +620,9 @@ class TreeAh[M](
       val v0 = value
 
       (for {
-        loc0 <- v0.nodes
-          .loc
-          .pathToNode( m.nodePath )
+        loc0 <- v0.pathToLoc( m.nodePath )
       } yield {
-        val v2 = MTree.nodes.set {
+        val v2 = MTree.setNodes {
           loc0
             .modifyLabel {
               m.tryResp.fold(
@@ -694,6 +650,72 @@ class TreeAh[M](
         updated(v2)
       })
         .getOrElse( noChange )
+
+
+    // Сигнал запуска или завершения инициализации дерева.
+    case m: TreeInit =>
+      val v0 = value
+
+      if (m.treePot ===* Pot.empty) {
+        // Запрашивается инициализация дерева. Начать:
+        // Начальная инициализация дерева от корня.
+        val fx = Effect {
+          api
+            .subTree(
+              adId = confRO.value.adIdOpt
+            )
+            .transform { tryRes =>
+              val treePot2 = m.treePot.withTry(tryRes)
+              Success( TreeInit( treePot2 ) )
+            }
+        }
+        val v2 = MTree.nodes.modify( _.pending() )(v0)
+        updated(v2, fx)
+
+      } else {
+        // Ответ сервера на инициализацию
+        val v2 = m.treePot.toTry.fold [MTree] (
+          {ex =>
+            MTree.nodes.modify( _.fail(ex) )(v0)
+          },
+          {resp =>
+            // Залить начальное дерево:
+            val subTree2 = MNodeState.processTree(resp.subTree)
+            var v1 = MTree.setNodes( subTree2 )(v0)
+
+            // opened: надо по возможности выставить в текущее значение (если оно актуально),
+            // либо в conf.nodeId, либо в корневой узел, если он есть.
+            v1.openedLoc
+              // TODO Если loc пустой, попытаться максимально приблизится к нему.
+              //      Понадобится при перезагрузке дерева, когда глубокие под-узлы могут быть недоступны.
+              .fold {
+                // Текущий путь не актуален после сброса дерева: возможно, conf.nodeId содержит искомый узел.
+                (for {
+                  confNodeId <- confRO.value.onNodeId
+                  loc0 <- subTree2
+                    .loc
+                    .find(_.getLabel.info.id ==* confNodeId)
+                } yield {
+                  MTree.opened set Some(loc0.toNodePath)
+                })
+                  .orElse {
+                    // Выбрать корневой узел.
+                    val modF = MTree.opened set Some(subTree2.loc.toNodePath)
+                    Some(modF)
+                  }
+                  .orElse {
+                    // Обнулить opened, если выставлен.
+                    Option.when( v1.opened.nonEmpty ) {
+                      (MTree.opened set None)
+                    }
+                  }
+                  // Вернуть MTree
+                  .fold(v1)( _(v1) )
+              }(_ => v1)   // Оставить текущее значение opened, если opened-локация работает.
+          }
+        )
+        updated(v2)
+      }
 
   }
 
