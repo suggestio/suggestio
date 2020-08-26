@@ -54,38 +54,41 @@ final class NodeHeaderR(
       }
     }
 
-    def render(p: Props, s: Props_t): VdomElement = {
+    def render(s: Props_t): VdomElement = {
       val st = s.render.state
       val advPot = st.advHasAdvPot
-      val isAdvPending = advPot.isPending
-      val ntype = st.info.ntype
+      val infoOpt = st.infoPot.toOption
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
       MuiList()(
         MuiListItem()(
 
           // Иконка-значок типа узла:
-          MuiListItemIcon()(
-            (ntype match {
-              case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
-              case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
-              case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
-              case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
-              case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
-              case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
-              case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
-              case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
-              case _                                        => Mui.SvgIcons.BuildOutlined
-            })()(),
-          ),
+          infoOpt.whenDefinedNode { info =>
+            React.Fragment(
+              MuiListItemIcon()(
+                (info.ntype match {
+                  case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
+                  case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
+                  case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
+                  case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
+                  case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
+                  case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
+                  case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
+                  case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
+                  case _                                        => Mui.SvgIcons.BuildOutlined
+                })()(),
+              ),
 
-          // Название узла:
-          MuiListItemText(
-            new MuiListItemTextProps {
-              override val primary = st.info.name
-              override val secondary = crCtxP.message( ntype.singular ).rawNode
-            }
-          )(),
+              // Название узла:
+              MuiListItemText(
+                new MuiListItemTextProps {
+                  override val primary = info.name
+                  override val secondary = crCtxP.message( info.ntype.singular ).rawNode
+                }
+              )(),
+            )
+          },
 
           // Ошибка запроса:
           advPot.exceptionOption.whenDefinedNode { ex =>
@@ -123,7 +126,7 @@ final class NodeHeaderR(
           },
 
           // Линия прогресса.
-          ReactCommonUtil.maybeNode( isAdvPending || st.infoPot.isPending ) {
+          ReactCommonUtil.maybeNode( advPot.isPending || st.infoPot.isPending ) {
             lkNodesFormCssP.consume { lknCss =>
               val progressCss = new MuiLinearProgressClasses {
                 override val root = lknCss.Node.linearProgress.htmlClass
@@ -138,13 +141,13 @@ final class NodeHeaderR(
           },
 
           // Если размещение рекламной карточки, то отрендерить свитчер.
-          ReactCommonUtil.maybeNode( s.isAdv && ntype.showScLink ) {
+          ReactCommonUtil.maybeNode( s.isAdv && infoOpt.exists(_.ntype.showScLink) ) {
             val isChecked = advPot getOrElse false
             MuiListItemSecondaryAction()(
               MuiSwitch(
                 new MuiSwitchProps {
                   override val checked        = isChecked
-                  override val disabled       = isAdvPending
+                  override val disabled       = advPot.isPending
                   override val onChange       = _onAdvOnNodeChangedCbF
                   override val onClick        = _onAdvOnNodeClickCbF
                 }

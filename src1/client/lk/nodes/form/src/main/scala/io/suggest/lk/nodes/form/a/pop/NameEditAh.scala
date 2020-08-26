@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.a.pop
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.adn.edit.NodeEditConstants
+import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -54,19 +55,22 @@ class NameEditAh[M](
 
     case NodeEditClick =>
       val v0 = value
-      if (v0.nonEmpty) {
-        // Повторный клик по кнопке редактирования.
-        noChange
 
-      } else {
+      (for {
+        // Первый for -- это эмуляция if, чтобы не плодить ненужное ветвление в коде:
+        _ <- OptionUtil.SomeBool.orNone( v0.isEmpty )
+        currNode <- currNodeRO.value
+        info <- currNode.infoPot.toOption
+      } yield {
         // Раскрыть диалог:
-        val name = currNodeRO.value.get.info.name
         val v2 = Some( MEditNodeState(
-          name        = name,
-          nameValid   = isNameValid( name ),
+          name        = info.name,
+          nameValid   = isNameValid( info.name ),
         ))
         updated( v2 )
-      }
+      })
+        // Повторный клик по кнопке редактирования или какой-то негодный элемент дерева:
+        .getOrElse( noChange )
 
 
     case m: NodeEditNameChange =>
@@ -103,9 +107,10 @@ class NameEditAh[M](
         name2 = normalizeName( edit0.name )
         if isNameValid(name2)
         currNode <- currNodeRO.value
+        info <- currNode.infoPot.toOption
       } yield {
         // Если имя не изменилось, но нажата "сохранить" - нужно скрыть диалог.
-        if (name2 ==* currNode.info.name) {
+        if (name2 ==* info.name) {
           updated( None )
 
         } else {
@@ -115,7 +120,7 @@ class NameEditAh[M](
               name  = name2,
               id    = None
             )
-            val nodeId = currNode.info.id
+            val nodeId = info.id
             api
               .editNode( nodeId, req )
               .transform { tryResp =>
@@ -138,9 +143,13 @@ class NameEditAh[M](
 
     // Сигнал завершения запроса сохранения с сервера.
     case m: NodeEditSaveResp =>
-      val currNodeIdOpt = currNodeRO
-        .value
-        .map(_.info.id)
+      // Для возможности проброса nodeId в getOrElse-ветвь, используется отдельный for-yield.
+      val currNodeIdOpt = for {
+        currNode <- currNodeRO.value
+        currNodeInfo <- currNode.infoPot.toOption
+      } yield {
+        currNodeInfo.id
+      }
 
       (for {
         currNodeId <- currNodeIdOpt

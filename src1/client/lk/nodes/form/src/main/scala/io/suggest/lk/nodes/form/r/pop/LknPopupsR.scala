@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.MLkNodesRoot
 import io.suggest.lk.r.DeleteConfirmPopupR
 import io.suggest.spa.OptFastEq
@@ -35,9 +35,10 @@ class LknPopupsR(
           for {
             edit0 <- mroot.popups.editName
             loc0 <- mroot.tree.openedLoc
+            info <- loc0.getLabel.infoPot.toOption
           } yield {
             nameEditDiaR.PropsVal(
-              nameOrig = loc0.getLabel.info.name,
+              nameOrig = info.name,
               state    = edit0
             )
           }

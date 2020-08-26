@@ -55,7 +55,7 @@ class TreeR(
       /** Функция рекурсивного рендер всего дерева узлов. */
       def _renderTreeNodeIndexed(
                                   subTree                 : Tree[(MNodeState, Int)],
-                                  parentNodePathRev       : NodePath_t                    = Nil,
+                                  parentNodePathRev       : NodePath_t,
                                 ): VdomElement = {
         val (mns, i) = subTree.rootLabel
         val nodePathRev: NodePath_t = i :: parentNodePathRev
@@ -78,7 +78,9 @@ class TreeR(
               chCountEnabled = chs
                 .iterator
                 .count { chTree =>
-                  chTree.rootLabel._1.info.isEnabled
+                  chTree.rootLabel._1
+                    .infoPot
+                    .exists(_.isEnabled)
                 },
               chCount = chs.length,
             ),
@@ -139,6 +141,7 @@ class TreeR(
               )(
                 _renderTreeNodeIndexed(
                   subTree = nodesTree.zipWithIndex,
+                  parentNodePathRev = Nil,
                 )
               )
             },

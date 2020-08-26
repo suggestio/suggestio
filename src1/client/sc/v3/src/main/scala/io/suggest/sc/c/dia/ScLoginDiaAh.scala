@@ -24,7 +24,7 @@ class ScLoginDiaAh[M](
   extends ActionHandler(modelRW)
 {
 
-  private def _sc3PageModFx(nextLogin: Option[SioPages.Login]) = {
+  private def _sc3PageModFx(nextLogin: Option[SioPages.Login]): Effect = {
     Effect.action {
       ResetUrlRoute(
         mods = Some { r =>

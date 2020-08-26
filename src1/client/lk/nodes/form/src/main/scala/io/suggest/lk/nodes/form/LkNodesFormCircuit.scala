@@ -126,7 +126,9 @@ object LkNodesFormCircuit {
           opened = tree
             .loc
             .find { m =>
-              mFormInit.conf.onNodeId contains[String] m.getLabel.info.id
+              m.getLabel.infoPot.exists { info =>
+                mFormInit.conf.onNodeId contains[String] info.id
+              }
             }
             .map(_.toNodePath),
         )

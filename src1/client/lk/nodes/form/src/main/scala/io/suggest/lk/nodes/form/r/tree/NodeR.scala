@@ -5,6 +5,8 @@ import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import ReactCommonUtil.Implicits._
+import ReactDiodeUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -95,43 +97,56 @@ class NodeR(
 
           // ADN-режим: управление обычными узлами.
           if (p.confAdId.isEmpty) {
+            val pns = p.node.state
+            val infoOpt = pns.infoPot.toOption
             // нет рекламной карточки - редактирование узлов:
             MuiList()(
 
               // Тулбар для раскрытого узла:
-              propsProxy.wrap(_.node.state.info)( nodeToolBarR.component.apply ),
+              infoOpt.whenDefinedNode { info =>
+                nodeToolBarR.component(
+                  propsProxy.resetZoom( info )
+                )
+              },
 
-              MuiListItem()(
-                // Строка с идентификатором узла:
-                MuiListItemText(
-                  new MuiListItemTextProps {
-                    override val primary = crCtxP.message( MsgCodes.`Identifier` ).rawNode
-                    override val secondary = p.node.state.info.id
-                  }
-                )(),
-
-              ),
+              // Строка с идентификатором узла.
+              infoOpt
+                .filter(_.id.nonEmpty)
+                .whenDefinedNode { info =>
+                  MuiListItem()(
+                    // Строка с идентификатором узла:
+                    MuiListItemText(
+                      new MuiListItemTextProps {
+                        override val primary = crCtxP.message( MsgCodes.`Identifier` ).rawNode
+                        override val secondary = info.id
+                      }
+                    )(),
+                  )
+                },
 
               // Ряд с переключателем isEnabled узла:
-              propsProxy.wrap { p =>
-                val pns = p.node.state
-                nodeEnabledR.PropsVal(
+              nodeEnabledR.component {
+                val enProps = nodeEnabledR.PropsVal(
                   isEnabledUpd  = pns.isEnabledUpd,
-                  isEnabled     = pns.info.isEnabled,
+                  isEnabled     = pns.infoPot
+                    .exists(_.isEnabled),
                   request       = pns.isEnabledUpd
                     .fold[Pot[_]]( Pot.empty )(_.request),
-                  canChangeAvailability = pns.info.canChangeAvailability,
+                  canChangeAvailability = pns.infoPot
+                    .toOption
+                    .flatMap(_.canChangeAvailability),
                 )
-              }( nodeEnabledR.component.apply ),
+                propsProxy.resetZoom( enProps )
+              },
 
               // Ряд описания тарифа с кнопкой редактирования оного.
-              propsProxy.wrap { p =>
-                val pns = p.node.state
-                tariffEditR.PropsVal(
-                  tfDailyOpt    = pns.info.tf,
+              tariffEditR.component {
+                val tfProps = tariffEditR.PropsVal(
+                  tfDailyOpt    = infoOpt.flatMap(_.tf),
                   showExpanded  = pns.tfInfoWide,
                 )
-              }( tariffEditR.component.apply ),
+                propsProxy.resetZoom( tfProps )
+              },
 
               // Ряд с кратким описанием подузлов и кнопкой создания оных.
               propsProxy.wrap { p =>

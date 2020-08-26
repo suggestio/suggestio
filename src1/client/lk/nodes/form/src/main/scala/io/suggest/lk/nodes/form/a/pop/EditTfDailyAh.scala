@@ -93,12 +93,13 @@ class EditTfDailyAh[M](
       (for {
         loc0 <- tree.openedLoc
         currNode = loc0.getLabel
+        info <- currNode.infoPot.toOption
       } yield {
-        val currNodeTfOpt = currNode.info.tf
+        val currNodeTfOpt = info.tf
 
         val mode0 = currNodeTfOpt.fold [ITfDailyMode] {
           // Should never happen: сервер забыл передать данные по тарифу.
-          logger.warn( ErrorMsgs.TF_UNDEFINED, msg = currNode.info )
+          logger.warn( ErrorMsgs.TF_UNDEFINED, msg = info )
           InheritTf
         } { tf0 =>
           tf0.mode

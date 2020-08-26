@@ -49,8 +49,9 @@ class TreeAh[M](
 
       (for {
         loc0 <- locOpt0
+        info <- loc0.getLabel.infoPot.toOption
       } yield {
-        if (loc0.getLabel.info.isDetailed) {
+        if (info.isDetailed) {
           // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
           // Узнать, является ли текущий элемент сфокусированным?
           val v2 = MTree.opened.modify { opened0 =>
@@ -126,7 +127,7 @@ class TreeAh[M](
           // Положительный ответ сервера, обновить данные по текущему узлу, замёржив поддерево в текущий loc.
           {resp =>
             // Самоконтроль: получено поддерево для правильного узла:
-            require( resp.subTree.rootLabel.id ==* mns0.info.id )
+            require( mns0.infoPot.exists(_.id ==* resp.subTree.rootLabel.id) )
 
             val tree2 = MNodeState.processTree( resp.subTree )
             val subTree2 = Tree.Node(
@@ -289,11 +290,12 @@ class TreeAh[M](
           r
         }
         opened <- v0.opened
+        info <- mns0.infoPot.toOption
       } yield {
         // Выставить новое значение галочки в состояние узла, организовать реквест на сервер с апдейтом.
         val fx = Effect {
           api
-            .setNodeEnabled( mns0.info.id, m.isEnabled )
+            .setNodeEnabled( info.id, m.isEnabled )
             .transform { tryRes =>
               val r = NodeIsEnabledUpdateResp(opened, tryRes)
               Success(r)
@@ -325,6 +327,7 @@ class TreeAh[M](
       (for {
         loc0 <- v0.pathToLoc( m.nodePath )
         mns0 = loc0.getLabel
+        info <- mns0.infoPot.toOption
       } yield {
         val v2 = MTree.setNodes {
           loc0
@@ -336,7 +339,7 @@ class TreeAh[M](
                     .composeTraversal( Traversal.fromTraverse[Option, MNodeEnabledUpdateState] )
                     .modify { nodeEnabledState =>
                       nodeEnabledState.copy(
-                        newIsEnabled  = mns0.info.isEnabled,
+                        newIsEnabled  = info.isEnabled,
                         request       = nodeEnabledState.request.fail(ex)
                       )
                     }
@@ -393,21 +396,21 @@ class TreeAh[M](
     // Сигнал завершения запроса сохранения с сервера.
     case m: NodeEditSaveResp =>
       val v0 = value
+      // Нужно найти узел, который обновился. Теоретически возможно, что это не текущий узел, хоть и маловероятно.
+      def findF(treeLoc: TreeLoc[MNodeState]): Boolean =
+        treeLoc.getLabel
+          .infoPot
+          .exists(_.id ==* m.nodeId)
 
       (for {
-        loc0 <- {
-          // Нужно найти узел, который обновился. Теоретически возможно, что это не текущий узел, хоть и маловероятно.
-          def findF(treeLoc: TreeLoc[MNodeState]): Boolean =
-            treeLoc.getLabel.info.id ==* m.nodeId
-          v0.openedLoc
-            .filter(findF)
-            .orElse {
-              logger.log( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (m, v0.opened) )
-              v0.nodes
-                .toOption
-                .flatMap(_.loc.find(findF))
-            }
-        }
+        loc0 <- v0.openedLoc
+          .filter(findF)
+          .orElse {
+            logger.log( ErrorMsgs.NODE_PATH_MISSING_INVALID, msg = (m, v0.opened) )
+            v0.nodes
+              .toOption
+              .flatMap(_.loc.find(findF))
+          }
         nodeInfo2 <- m.tryResp.toOption
       } yield {
         val v2 = MTree.setNodes {
@@ -488,6 +491,7 @@ class TreeAh[M](
           r
         }
         openedPath <- v0.opened
+        info <- mns0.infoPot.toOption
       } yield {
         // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
         // Организовать реквест на сервер.
@@ -508,7 +512,7 @@ class TreeAh[M](
           loc0
             .modifyLabel {
               MNodeState.adv.modify { advOpt0 =>
-                val adv0 = advOpt0 getOrElse MNodeAdvState.from( mns0.info.adv )
+                val adv0 = advOpt0 getOrElse MNodeAdvState.from( info.adv )
                 val adv2 = MNodeAdvState.isShowOpenedPot.modify( _.ready(m.isChecked).pending() )(adv0)
                 Some(adv2)
               }
@@ -584,6 +588,7 @@ class TreeAh[M](
           r
         }
         opened <- v0.opened
+        info <- mns0.infoPot.toOption
       } yield {
         // Организовать реквест на сервер.
         val fx = Effect {
@@ -602,7 +607,7 @@ class TreeAh[M](
           loc0
             .modifyLabel {
               MNodeState.adv.modify { advOpt0 =>
-                val adv0 = advOpt0 getOrElse MNodeAdvState.from( mns0.info.adv )
+                val adv0 = advOpt0 getOrElse MNodeAdvState.from( info.adv )
                 val adv2 = MNodeAdvState.alwaysOutlined.modify( _.ready(m.isChecked).pending() )(adv0)
                 Some(adv2)
               }
@@ -694,7 +699,12 @@ class TreeAh[M](
                   confNodeId <- confRO.value.onNodeId
                   loc0 <- subTree2
                     .loc
-                    .find(_.getLabel.info.id ==* confNodeId)
+                    .find { loc =>
+                      loc
+                        .getLabel
+                        .infoPot
+                        .exists(_.id ==* confNodeId)
+                    }
                 } yield {
                   MTree.opened set Some(loc0.toNodePath)
                 })

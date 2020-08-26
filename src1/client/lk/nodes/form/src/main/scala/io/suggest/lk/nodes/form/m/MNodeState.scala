@@ -4,8 +4,9 @@ import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.nodes.{MLknAdv, MLknNode}
 import io.suggest.spa.DiodeUtil
-import japgolly.univeq._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq._
 import monocle.macros.GenLens
 import scalaz.{Tree, TreeLoc}
 
@@ -40,11 +41,14 @@ object MNodeState {
 
     /** Сборка цепочки id узлов от корня до указанного узла. */
     def rcvrKey: RcvrKey = {
-      loc
-        .path
-        .map(_.info.id)
-        .reverse
+      (for {
+        mns <- loc.path.iterator
+        info <- mns.infoPot.toOption
+      } yield {
+        info.id
+      })
         .toList
+        .reverse
     }
 
   }
@@ -65,18 +69,18 @@ case class MNodeState(
                        adv                : Option[MNodeAdvState]             = None,
                      ) {
 
-  require( info.nonEmpty )
-
-  def info = infoPot.get
-
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
 
   private def _boolPot(from: MNodeAdvState => Pot[Boolean], fallBack: MLknAdv => Boolean): Pot[Boolean] = {
     adv
       .map(from)
       .orElse(
-        for (adv <- info.adv) yield
+        for {
+          info <- infoPot.toOption
+          adv <- info.adv
+        } yield {
           DiodeUtil.Bool( fallBack(adv) )
+        }
       )
       .getOrElse( Pot.empty[Boolean] )
   }
