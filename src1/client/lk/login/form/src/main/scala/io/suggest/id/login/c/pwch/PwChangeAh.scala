@@ -3,7 +3,7 @@ package io.suggest.id.login.c.pwch
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.err.MCheckException
 import io.suggest.id.login.c.IIdentApi
-import io.suggest.id.login.m.{PwChangeSubmitRes, RegNextClick}
+import io.suggest.id.login.m.{PwChangeSubmitRes, PwVisibilityChange, RegNextClick}
 import io.suggest.id.login.m.pwch.{MPwChangeS, MPwNew}
 import io.suggest.id.pwch.MPwChangeForm
 import io.suggest.lk.m.input.MTextFieldS
@@ -11,6 +11,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -99,6 +100,24 @@ class PwChangeAh[M](
 
         // Отредиректить юзера куда-нибудь? Или просто сделать "пароль изменён".
         updated( v2 )
+      }
+
+
+    case m: PwVisibilityChange =>
+      val v0 = value
+
+      val lens = if (m.isPwNew) {
+        MPwChangeS.pwNew
+          .composeLens( MPwNew.pwVisible )
+      } else {
+        MPwChangeS.pwOldVisible
+      }
+
+      if (lens.get(v0) ==* m.visible) {
+        noChange
+      } else {
+        val v2 = lens.set( m.visible )(v0)
+        updated(v2)
       }
 
   }

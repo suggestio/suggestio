@@ -292,7 +292,8 @@ class Sc3Circuit(
   private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformS.MPlatformSFastEq )
   private[sc] def platformCssRO   = mkLensZoomRO(devRW, MScDev.platformCss)
 
-  private val beaconerRW          = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
+  private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
+  private[sc] val beaconsNearbyRO = mkLensZoomRO( beaconerRW, MBeaconerS.nearbyReport )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
@@ -312,6 +313,7 @@ class Sc3Circuit(
   private val screenRO            = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
 
   private val osNotifyRW          = mkLensZoomRW(devRW, MScDev.osNotify)( MScOsNotifyS.MScOsNotifyFeq )
+  val loggedInRO                  = indexRW.zoom(_.isLoggedIn)
 
   private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
 
@@ -442,10 +444,13 @@ class Sc3Circuit(
         // Логика зависит от режима, который сейчас: работа демон или обычный режим вне демона.
         // Подписываемся на события изменения списка наблюдаемых маячков.
         OptionUtil.maybeOpt( nearby0 !===* nearby2 ) {
+          // Если nodes-форма открыта, то надо отрендерить в ней инфу по маячкам.
+          val nodesFormUpdateFxOpt = scNodesDiaAh.onBeaconsUpdatedFx( nearby2 )
+
           //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
           val mroot = rootRW.value
 
-          if (mroot.index.resp.isPending) {
+          val gridUpdFxOpt = if (mroot.index.resp.isPending) {
             // Сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление закинуть в очередь.
             Option.when(
               !mroot.grid.afterUpdate.exists {
@@ -466,6 +471,12 @@ class Sc3Circuit(
             // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
             Some( _gridBleReloadFx )
           }
+
+          // Объединить эффекты.
+          (nodesFormUpdateFxOpt :: gridUpdFxOpt :: Nil)
+            .iterator
+            .flatten
+            .mergeEffects
         }
       }
     }
@@ -583,9 +594,11 @@ class Sc3Circuit(
   )
 
   private val scNodesDiaAh = new ScNodesDiaAh(
-    modelRW = scNodesRW,
-    getNodesCircuit = getNodesFormCircuit,
-    csrfRO = csrfTokenRW,
+    modelRW           = scNodesRW,
+    getNodesCircuit   = getNodesFormCircuit,
+    csrfRO            = csrfTokenRW,
+    beaconsNearbyRO   = beaconsNearbyRO,
+    isLoggedInRO      = loggedInRO,
   )
 
   private val csrfTokenAh = new CsrfTokenAh(

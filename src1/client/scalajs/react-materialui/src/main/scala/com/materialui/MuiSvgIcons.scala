@@ -441,10 +441,10 @@ object MuiSvgIcons {
   object ActionViewStream extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/view-week", JSImport.Default)
   object ActionViewWeek extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/visibility-off", JSImport.Default)
-  object ActionVisibilityOff extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/visibility", JSImport.Default)
-  object ActionVisibility extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/VisibilityOff", JSImport.Default)
+  object VisibilityOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Visibility", JSImport.Default)
+  object Visibility extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/watch-later", JSImport.Default)
   object ActionWatchLater extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/work", JSImport.Default)

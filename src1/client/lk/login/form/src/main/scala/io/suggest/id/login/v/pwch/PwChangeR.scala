@@ -11,7 +11,7 @@ import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.pwch.MPwChangeRootS
-import io.suggest.id.login.m.{PasswordBlur, RegNextClick, SetPassword}
+import io.suggest.id.login.m.{PasswordBlur, PwVisibilityChange, RegNextClick, SetPassword}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{ErrorSnackR, LoginProgressR, TextFieldR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -81,17 +81,19 @@ class PwChangeR (
               val onBlurSome = Some( PasswordBlur )
               val mkActionSome = Some( SetPassword.apply _ )
               val placeHolder = ""
+              val pwVisChangeSomeF = Some( PwVisibilityChange(_: Boolean, isPwNew = false) )
               p.wrap { mroot =>
                 textFieldR.PropsVal(
                   state       = mroot.form.pwOld,
                   hasError    = false,
                   mkAction    = mkActionSome,
-                  isPassword  = true,
+                  isPassword  = !mroot.form.pwOldVisible,
                   inputName   = IdentConst.Login.PASSWORD_FN,
                   label       = MsgCodes.`Type.current.password`,
                   placeHolder = placeHolder,
                   onBlur      = onBlurSome,
                   disabled    = mroot.form.submitReq.isPending,
+                  visibilityChange = pwVisChangeSomeF,
                 )
               }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
             },

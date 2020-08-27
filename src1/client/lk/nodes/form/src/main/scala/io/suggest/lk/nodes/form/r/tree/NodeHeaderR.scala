@@ -2,10 +2,11 @@ package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiProgressVariants, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.react.ModelProxy
-import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeStateRender}
+import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeStateRender, MTreeRoles}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
+import io.suggest.geo.DistanceUtil
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.n2.node.MNodeTypes
@@ -152,6 +153,34 @@ final class NodeHeaderR(
                   override val onClick        = _onAdvOnNodeClickCbF
                 }
               ),
+            )
+          },
+
+          // Ble-beacon
+          st.bcnSignal.whenDefinedNode { bcnSignal =>
+            React.Fragment(
+              MuiListItemIcon()(
+                Mui.SvgIcons.BluetoothAudio()(),
+              ),
+              crCtxP.consume { crCtx =>
+                React.Fragment(
+                  MuiListItemText(
+                    new MuiListItemTextProps {
+                      override val primary = bcnSignal.uid.rawNode
+                      override val secondary = crCtx.messages( MNodeTypes.BleBeacon.singular )
+                    }
+                  )(),
+                  MuiListItemSecondaryAction()(
+                    crCtx.messages( DistanceUtil.formatDistanceCM( bcnSignal.distanceCm ) ),
+                  ),
+                )
+              },
+            )
+          },
+
+          ReactCommonUtil.maybeNode( st.role ==* MTreeRoles.BeaconsDetected ) {
+            MuiListItemText()(
+              crCtxP.message( MNodeTypes.BleBeacon.plural ),
             )
           },
 

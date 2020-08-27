@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.ReactConnector
 import io.suggest.id.login.c.{IIdentApi, IdentApiHttp}
 import io.suggest.id.login.c.pwch.{PasswordInputAh, PwChangeAh, SetNewPwAh}
-import io.suggest.id.login.m.LoginFormDiConf
+import io.suggest.id.login.m.LoginFormDiConfig
 import io.suggest.id.login.m.pwch.{MPwChangeRootS, MPwChangeS, MPwNew}
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}

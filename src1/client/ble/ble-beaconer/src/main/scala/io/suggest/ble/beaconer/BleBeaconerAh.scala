@@ -3,7 +3,7 @@ package io.suggest.ble.beaconer
 import diode._
 import diode.data.Pot
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.{BeaconUtil, MUidBeacon}
+import io.suggest.ble.{BeaconUtil, BeaconsNearby_t, MUidBeacon}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.radio.RadioUtil
@@ -154,7 +154,7 @@ object BleBeaconerAh extends Log {
 class BleBeaconerAh[M](
                         dispatcher        : Dispatcher,
                         modelRW           : ModelRW[M, MBeaconerS],
-                        onNearbyChange    : Option[OnNearbyChangeF] = None,
+                        onNearbyChange    : Option[(BeaconsNearby_t, BeaconsNearby_t) => Option[Effect]] = None,
                       )
   extends ActionHandler(modelRW)
   with Log

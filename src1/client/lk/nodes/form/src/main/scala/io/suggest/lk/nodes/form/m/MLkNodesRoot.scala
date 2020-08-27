@@ -36,6 +36,6 @@ object MLkNodesRoot {
   */
 case class MLkNodesRoot(
                          conf       : MLknConf,
-                         tree       : MTree                 = MTree.empty,
+                         tree       : MTree,
                          popups     : MLknPopups            = MLknPopups.empty
                        )

@@ -136,6 +136,8 @@ object ScalazUtil {
 
   object Implicits {
 
+    @inline implicit def ephemeralStreamUe[T: UnivEq]: UnivEq[EphemeralStream[T]] = UnivEq.force
+
     /** Доп.утиль для валидации. */
     implicit final class RichValidationOpt[E, T]( private val vldOpt: Option[ValidationNel[E, Option[T]]] ) extends AnyVal {
 
@@ -233,6 +235,11 @@ object ScalazUtil {
     implicit final class LazyListExt[T]( private val ll: LazyList[T] ) extends AnyVal {
       def toEphemeralStream: EphemeralStream[T] =
         EphemeralStream.fromLazyList( ll )
+    }
+
+    implicit final class StdListExt[T]( private val l: List[T]) extends AnyVal {
+      def toEphemeralStream: EphemeralStream[T] =
+        EphemeralStream.fromList(l)
     }
 
   }

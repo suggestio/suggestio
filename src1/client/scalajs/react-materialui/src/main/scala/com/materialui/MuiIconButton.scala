@@ -18,7 +18,8 @@ object MuiIconButton {
 
 /** JSON для [[MuiIconButton]] props. */
 trait MuiIconButtonPropsBase extends MuiButtonBaseCommonProps {
-  val color: js.UndefOr[String] = js.undefined
+  val color, edge, size: js.UndefOr[String] = js.undefined
+  val disableFocusRipple: js.UndefOr[Boolean] = js.undefined
 }
 trait MuiIconButtonProps
   extends MuiIconButtonPropsBase
@@ -35,11 +36,7 @@ trait MuiIconButtonClasses extends MuiClassesBase {
 }
 
 
-@js.native
-trait MuiIconButtonM extends js.Object {
-  def hideTooltip(): Unit = js.native
-
-  def setKeyboardFocus(): Unit = js.native
-
-  def showTooltip(): Unit = js.native
+object MuiIconButtonEdges {
+  final def start = "start"
+  final def end = "end"
 }

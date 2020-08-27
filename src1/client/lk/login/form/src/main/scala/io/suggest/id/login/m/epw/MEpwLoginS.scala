@@ -33,6 +33,7 @@ object MEpwLoginS {
   def isForeignPc       = GenLens[MEpwLoginS](_.isForeignPc)
   def loginReq          = GenLens[MEpwLoginS](_.loginReq)
   def loginBtnEnabled   = GenLens[MEpwLoginS](_.loginBtnEnabled)
+  def passwordVisible   = GenLens[MEpwLoginS](_.passwordVisible)
 
 }
 
@@ -50,4 +51,5 @@ case class MEpwLoginS(
                        isForeignPc          : Boolean               = false,
                        loginReq             : Pot[String]           = Pot.empty,
                        loginBtnEnabled      : Boolean               = false,
+                       passwordVisible      : Boolean               = false,
                      )

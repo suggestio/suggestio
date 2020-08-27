@@ -17,11 +17,12 @@ import io.suggest.lk.nodes.form.m.MTree.MTreeFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import io.suggest.lk.m.MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
 import io.suggest.msg.ErrorMsgs
-import io.suggest.spa.{CircuitUtil, DoNothing, StateInp}
+import io.suggest.spa.{CircuitUtil, DoNothing, DoNothingActionProcessor, StateInp}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.spa.DiodeUtil.Implicits._
 import play.api.libs.json.Json
 import japgolly.univeq._
+import scalaz.{EphemeralStream, Tree}
 
 import scala.concurrent.Future
 
@@ -102,7 +103,8 @@ case class LkNodesFormCircuit(
     foldHandlers(treeAh, popupsHandler)
   }
 
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MLkNodesRoot] )
+  addProcessor( DoNothingActionProcessor[MLkNodesRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MLkNodesRoot] )
 
 }
 
@@ -117,7 +119,15 @@ object LkNodesFormCircuit {
     val base64   = stateInp.value.get
     val mFormInit = Json.parse(base64).as[MLknFormInit]
 
-    val tree = MNodeState.processTree( mFormInit.resp0.subTree )
+    val tree = Tree.Node(
+      // Запиливаем корень, чтобы было наподобии выдачи. TODO Надо ли это в LK-форме?
+      root = MNodeState.mkRoot,
+      forest = EphemeralStream.cons(
+        MNodeState.processNormalTree( mFormInit.resp0.subTree ),
+        EphemeralStream.emptyEphemeralStream
+      ),
+    )
+
     val mroot = MLkNodesRoot(
       conf = mFormInit.conf,
       tree = {

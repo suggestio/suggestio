@@ -7,7 +7,7 @@ import io.suggest.id.login.c.reg.{Reg0CredsAh, Reg3CheckBoxesAh, RegAh}
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.id.login.m.pwch.MPwNew
-import io.suggest.id.login.m.{LoginShowHide, MLoginFormOverallS, MLoginRootS}
+import io.suggest.id.login.m.{LoginFormDiConfig, LoginShowHide, MLoginFormOverallS, MLoginRootS}
 import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
@@ -35,6 +35,7 @@ import japgolly.univeq._
 final class LoginFormCircuit(
                               routerCtl           : RouterCtl[SioPages.Login],
                               identApi            : IIdentApi,
+                              diConfig            : LoginFormDiConfig,
                             )
   extends CircuitLog[MLoginRootS]
   with ReactConnector[MLoginRootS]
@@ -45,6 +46,7 @@ final class LoginFormCircuit(
   override protected def initialModel = MLoginRootS()
 
 
+  private val rootRW = zoomRW(identity)((_, v2) => v2)
   private[login] val extRW          = mkLensRootZoomRW(this, MLoginRootS.ext)( MExtLoginFormS.MExtLoginFormSFastEq )
   private[login] val epwRW          = mkLensRootZoomRW(this, MLoginRootS.epw)( MEpwLoginS.MEpwLoginSFastEq )
   private[login] val overallRW      = mkLensRootZoomRW(this, MLoginRootS.overall)( MLoginFormOverallS.MLoginFormOverallSFastEq )
@@ -74,12 +76,14 @@ final class LoginFormCircuit(
   private val extAh = new ExtAh(
     modelRW     = extRW,
     returnUrlRO = returnUrlRO,
+    diConfig    = diConfig,
   )
 
   private val pwLoginAh = new PwLoginAh(
     modelRW     = epwRW,
     loginApi    = identApi,
     returnUrlRO = returnUrlRO,
+    diConfig    = diConfig,
   )
 
   private val captchaAh = new CaptchaAh(
@@ -93,6 +97,7 @@ final class LoginFormCircuit(
     modelRW  = regRW,
     loginApi = identApi,
     pwNewRO  = pwNewRW,
+    diConfig = diConfig,
   )
 
   private val reg0CredsAh = new Reg0CredsAh(
@@ -112,6 +117,10 @@ final class LoginFormCircuit(
     modelRW = smsCodeFormRW
   )
 
+  private val loginRootAh = new LoginRootAh(
+    modelRW = rootRW,
+  )
+
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       formAh,
@@ -120,6 +129,7 @@ final class LoginFormCircuit(
       extAh,
       captchaAh,
       smsCodeFormAh,
+      loginRootAh,
     )
   }
 

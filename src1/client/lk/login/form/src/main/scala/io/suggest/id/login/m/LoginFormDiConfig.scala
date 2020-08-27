@@ -13,24 +13,25 @@ import io.suggest.spa.DoNothing
   * Created: 06.08.2020 17:23
   * Description: Интерфейс для формы логина.
   */
-trait LoginFormDiConf extends IMHttpClientConfig {
+trait LoginFormDiConfig extends IMHttpClientConfig {
 
   def onClose(): Option[Callback]
 
-  def onRedirect(onAction: ILoginFormAction, rdrUrl: String): Effect
+  def onRedirect(onAction: ILoginFormAction, external: Boolean, rdrUrl: => String): Effect
 
 }
 
 
-object LoginFormDiConf {
+object LoginFormDiConfig {
 
-  object Isolated extends LoginFormDiConf {
+  object Isolated extends LoginFormDiConfig {
 
     /** Закрытие формы на собственной странице невозможно. */
     override def onClose() = None
 
+
     /** Сервер прислал редирект - выполнить этот самый редирект. */
-    override def onRedirect(onAction: ILoginFormAction, rdrUrl: String): Effect = {
+    override def onRedirect(onAction: ILoginFormAction, external: Boolean, rdrUrl: => String): Effect = {
       Effect.action {
         DomQuick.goToLocation( rdrUrl )
         DoNothing

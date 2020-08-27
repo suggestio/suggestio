@@ -1,10 +1,10 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
+import io.suggest.ble.BeaconsNearby_t
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
-import scalaz.Tree
 
 import scala.util.Try
 
@@ -189,3 +189,7 @@ case class AlwaysOutlinedResp(
                                tryResp: Try[_],
                              )
   extends LkNodesTreeAction
+
+
+/** Обнаружены маячки. */
+case class BeaconsDetected( beacons: BeaconsNearby_t ) extends LkNodesAction

@@ -3,11 +3,13 @@ package io.suggest.id.login.c
 import diode.data.Pot
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode._
-import io.suggest.id.login.m.{ExtLoginVia, ExtLoginViaTimeout}
+import diode.Implicits._
+import io.suggest.id.login.m.{ExtLoginVia, ExtLoginViaTimeout, LoginFormDiConfig}
 import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.routes.routes
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import scala.concurrent.duration._
 
 /**
   * Suggest.io
@@ -18,6 +20,7 @@ import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 class ExtAh[M](
                 modelRW       : ModelRW[M, MExtLoginFormS],
                 returnUrlRO   : ModelRO[Option[String]],
+                diConfig      : LoginFormDiConfig,
               )
   extends ActionHandler( modelRW )
 {
@@ -31,12 +34,13 @@ class ExtAh[M](
         noChange
       } else {
         val tstamp = System.currentTimeMillis()
-        val fx = Effect {
-          val route = routes.controllers.Ident.idViaProvider( m.service.value, returnUrlRO.value.toUndef )
-          DomQuick.goToLocation( route.url )
-          for (_ <- DomQuick.timeoutPromise( 3000 ).fut) yield
-            ExtLoginViaTimeout(tstamp)
-        }
+        val fx = diConfig.onRedirect( m,
+          external = true,
+          rdrUrl = routes.controllers.Ident.idViaProvider( m.service.value, returnUrlRO.value.toUndef ).url
+        ) >> Effect
+          .action ( ExtLoginViaTimeout(tstamp) )
+          .after(3000.milliseconds)
+
         val v2 = MExtLoginFormS.loginUrlReq.modify(_.pending(tstamp))(v0)
         updated( v2, fx )
       }

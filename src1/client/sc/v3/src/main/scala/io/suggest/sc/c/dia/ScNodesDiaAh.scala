@@ -2,11 +2,12 @@ package io.suggest.sc.c.dia
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Circuit, Effect, ModelRO, ModelRW}
+import io.suggest.ble.BeaconsNearby_t
 import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MTree, TreeInit}
+import io.suggest.lk.nodes.form.m.{BeaconsDetected, MLkNodesRoot, MTree, TreeInit}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.model.MCsrfToken
@@ -24,18 +25,38 @@ import io.suggest.spa.DoNothing
 class ScNodesDiaAh[M](
                        getNodesCircuit    : () => LkNodesFormCircuit,
                        modelRW            : ModelRW[M, MScNodes],
+                       beaconsNearbyRO    : ModelRO[BeaconsNearby_t],
                        csrfRO             : ModelRO[Pot[MCsrfToken]],
+                       isLoggedInRO       : ModelRO[Boolean],
                      )
   extends ActionHandler( modelRW )
   with Log
 {
 
+  /** Эффект инициализации nodes circuit. */
   private def _nodesCircuitInitFx(nodesCircuit: Circuit[_]): Effect = {
     Effect.action {
-      nodesCircuit.dispatch( TreeInit() )
+      if (isLoggedInRO.value)
+        nodesCircuit.dispatch( TreeInit() )
+
+      val beaconsNearby = beaconsNearbyRO.value
+      if (beaconsNearby.nonEmpty)
+        nodesCircuit.dispatch( BeaconsDetected(beaconsNearby) )
+
       DoNothing
     }
   }
+
+  /** Опциональный эффект обновления маячков в nodes circuit. */
+  def onBeaconsUpdatedFx(beacons: BeaconsNearby_t): Option[Effect] = {
+    for (circuit <- modelRW.value.circuit) yield {
+      Effect.action {
+        circuit.dispatch( BeaconsDetected(beacons) )
+        DoNothing
+      }
+    }
+  }
+
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -80,7 +101,8 @@ class ScNodesDiaAh[M](
 
 object ScNodesDiaAh {
 
-  def scNodesCircuitInit() = {
+  def scNodesCircuitInit(userIsLoggedIn: Boolean): ActionResult[MLkNodesRoot] = {
+    val nodes0 = MTree.emptyNodesTreePot
     // Минимальное начальное состояние:
     val lknRoot = MLkNodesRoot(
       conf = MLknConf(
@@ -88,8 +110,8 @@ object ScNodesDiaAh {
         adIdOpt  = None,
       ),
       tree = MTree(
-        // Сразу ставим pending, чтобы была крутилка, несмотря на отсутствие начальных эффектов.
-        nodes = Pot.empty.pending(),
+        // Для loggedIn-юзера сразу ставим pending, чтобы была крутилка - потом будет подгрузка узлов.
+        nodes = if (userIsLoggedIn) nodes0.pending() else nodes0,
       ),
     )
     ActionResult( Some(lknRoot), None )

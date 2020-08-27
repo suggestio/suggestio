@@ -10,11 +10,11 @@ import japgolly.univeq._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.07.19 15:25
-  * Description: Общий контроллер состояния формы логина.
+  * Description:
   */
 class PasswordInputAh[M](
-                     modelRW: ModelRW[M, MTextFieldS],
-                   )
+                          modelRW: ModelRW[M, MTextFieldS],
+                        )
   extends ActionHandler( modelRW )
 {
 

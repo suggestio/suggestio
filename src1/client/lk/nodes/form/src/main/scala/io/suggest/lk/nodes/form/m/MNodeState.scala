@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.ble.MUidBeacon
 import io.suggest.lk.nodes.{MLknAdv, MLknNode}
 import io.suggest.spa.DiodeUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -25,16 +26,28 @@ object MNodeState {
   def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
   def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
   def adv         = GenLens[MNodeState](_.adv)
+  def bcnSignal   = GenLens[MNodeState](_.bcnSignal)
 
 
-  /** Обработать под-дерево узлов, присланное сервером. */
-  def processTree(serverTree: Tree[MLknNode]): Tree[MNodeState] = {
-    for (lkNode <- serverTree) yield {
+  /** Обработать под-дерево нормальных N2-узлов, присланное сервером
+    * (или наподобии того, что сервер должен бы прислать).
+    * @param tree Дерево или поддерево.
+    */
+  def processNormalTree(tree: Tree[MLknNode]): Tree[MNodeState] = {
+    for (lkNode <- tree) yield {
       MNodeState(
         infoPot = Pot.empty.ready( lkNode ),
+        role    = MTreeRoles.Normal,
       )
     }
   }
+
+
+  /** Собрать корневой элемент. */
+  def mkRoot = MNodeState(
+    infoPot = Pot.empty,
+    role    = MTreeRoles.Root,
+  )
 
 
   implicit class MnsLocExt(private val loc: TreeLoc[MNodeState]) extends AnyVal {
@@ -63,15 +76,20 @@ object MNodeState {
   *                По идее, Pot.empty тут не бывает.
   */
 case class MNodeState(
-                       infoPot            : Pot[MLknNode],
+                       infoPot            : Pot[MLknNode]                     = Pot.empty,
+                       role               : MTreeRole,
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        tfInfoWide         : Boolean                           = false,
                        adv                : Option[MNodeAdvState]             = None,
+                       bcnSignal          : Option[MUidBeacon]                = None,
                      ) {
 
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
 
-  private def _boolPot(from: MNodeAdvState => Pot[Boolean], fallBack: MLknAdv => Boolean): Pot[Boolean] = {
+  private def _boolPot(
+                        from: MNodeAdvState => Pot[Boolean],
+                        fallBack: MLknAdv => Boolean,
+                      ): Pot[Boolean] = {
     adv
       .map(from)
       .orElse(

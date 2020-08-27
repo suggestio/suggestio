@@ -15,6 +15,9 @@ import diode.data.Pot
 import io.suggest.scalaz.NodePath_t
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.spa.FastEqUtil
+import scalaz.{EphemeralStream, Tree}
+import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 
 /**
   * Suggest.io
@@ -35,21 +38,21 @@ class NodeR(
 
   /** Модель props текущего компонента.
     *
-    * @param locked Блокировать все лишние кнопки? Например, какой-то диалог открыт.
     * @param node Голова этого под-дерева.
+    * @param chs Нединамический указатель на список под-узлов, пробрасываемый в SubNodesR().
     */
   case class PropsVal(
                        node               : MNodeStateRender,
                        opened             : Option[NodePath_t],
-                       confAdId           : Option[String],
-                       locked             : Boolean,
+                       advMode            : Boolean,
+                       chs                : EphemeralStream[Tree[MNodeState]],
                      )
 
-  implicit def NodeRPropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
+  implicit val NodeRPropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
     (a.node ===* b.node) &&
     (a.opened ===* b.opened) &&
-    (a.confAdId ===* b.confAdId) &&
-    (a.locked ==* b.locked)
+    (a.advMode ==* b.advMode) &&
+    (a.chs ===* b.chs)
   }
 
 
@@ -74,7 +77,6 @@ class NodeR(
       */
     def render(propsProxy: Props, p: Props_t, treeChildren: PropsChildren): VdomElement = {
       val nodePath = p.node.nodePath
-      val isShowProps = p.opened contains[NodePath_t] nodePath
 
       // Контейнер узла узла + дочерних узлов.
       MuiTreeItem {
@@ -82,7 +84,7 @@ class NodeR(
         val _label = propsProxy.wrap { p =>
           nodeHeaderR.PropsVal(
             render      = p.node,
-            isAdv       = p.confAdId.nonEmpty,
+            isAdv       = p.advMode,
           )
         }( nodeHeaderR.component.apply )
 
@@ -93,13 +95,16 @@ class NodeR(
           override val onLabelClick = _onNodeLabelClickCbF
         }
       } (
-        ReactCommonUtil.maybeEl( isShowProps ) {
+        ReactCommonUtil.maybeEl(
+          p.node.state.role.canRenderDetails &&
+          (p.opened contains[NodePath_t] nodePath)
+        ) {
 
-          // ADN-режим: управление обычными узлами.
-          if (p.confAdId.isEmpty) {
+          if (!p.advMode) {
+            // ADN-режим: обычное управление ADN-узлами.
             val pns = p.node.state
             val infoOpt = pns.infoPot.toOption
-            // нет рекламной карточки - редактирование узлов:
+
             MuiList()(
 
               // Тулбар для раскрытого узла:
@@ -148,19 +153,16 @@ class NodeR(
                 propsProxy.resetZoom( tfProps )
               },
 
-              // Ряд с кратким описанием подузлов и кнопкой создания оных.
-              propsProxy.wrap { p =>
-                subNodesR.PropsVal(
-                  chCount = treeChildren.count,
-                  chCountEnabled = p.node.chCountEnabled,
-                )
-              }( subNodesR.component.apply ),
+              // Ряд с кратким описанием под-узлов и кнопкой создания оных:
+              subNodesR.component(
+                propsProxy.resetZoom( p.chs )
+              ),
 
             )
 
           } else {
             // id рекламной карточки: редактирование размещения карточки в узле. Надо отрендерить галочки настроек размещения.
-            ReactCommonUtil.maybeEl( p.node.state.advHasAdvPot contains true ) {
+            ReactCommonUtil.maybeEl( p.node.state.advHasAdvPot contains[Boolean] true ) {
               MuiList()(
 
                 // Галочка "Показывать всегда раскрытой"

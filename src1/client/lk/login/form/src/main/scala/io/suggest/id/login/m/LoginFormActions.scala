@@ -116,7 +116,8 @@ case object NewPasswordBlur extends ILoginFormAction
 /** Включение-выключение режима сброса пароля. */
 case class PwReset(enable: Boolean) extends ILoginFormAction
 
-
 /** Результат запроса смены пароля. */
 case class PwChangeSubmitRes(timestampMs: Long, tryRes: Try[None.type]) extends ILoginFormAction
 
+/** Переключение visibility пароля. */
+case class PwVisibilityChange( visible: Boolean, isPwNew: Boolean ) extends ILoginFormAction

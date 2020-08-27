@@ -9,6 +9,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import ReactDiodeUtil.Implicits._
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -51,47 +52,63 @@ class TreeR(
 
     /** Рендер текущего компонента. */
     def render(p: Props, s: State): VdomElement = {
+      // isAdvMode: статический, т.к. режим работы формы обычно не меняется после инициализации.
+      val isAdvMode = p.value.conf.adIdOpt.nonEmpty
 
-      /** Функция рекурсивного рендер всего дерева узлов. */
+      /** Функция рекурсивного рендер всего дерева узлов.
+        *
+        * @param subTreeOrig Оригинальное поддерево из circuit-состояния с поддержкой целостности указателей.
+        * @param subTreeIndexed Только что проиндексированное дерево.
+        * @param parentNodePathRev Собранный наколенке reverse-путь до родительского элемента.
+        * @return Отрендеренный VdomNode.
+        */
       def _renderTreeNodeIndexed(
-                                  subTree                 : Tree[(MNodeState, Int)],
+                                  subTreeOrig             : Tree[MNodeState],
+                                  subTreeIndexed          : Tree[(MNodeState, Int)],
                                   parentNodePathRev       : NodePath_t,
-                                ): VdomElement = {
-        val (mns, i) = subTree.rootLabel
+                                ): VdomNode = {
+        val (mns, i) = subTreeIndexed.rootLabel
         val nodePathRev: NodePath_t = i :: parentNodePathRev
-        val chs = subTree.subForest
-        val chsRendered = chs
-          .map { chTree =>
+        val origSubForest = subTreeOrig.subForest
+        val chsRendered = subTreeIndexed.subForest
+          // Проходим оба subForest одновременно, чтобы иметь на руках сразу индексированное дерево, и неизменный указатель на оригинал.
+          .zip( origSubForest )
+          .map { case (chTreeIndexed, chTreeOrig) =>
             _renderTreeNodeIndexed(
-              subTree = chTree,
-              parentNodePathRev = nodePathRev,
+              subTreeIndexed      = chTreeIndexed,
+              parentNodePathRev   = nodePathRev,
+              subTreeOrig         = chTreeOrig,
             )
           }
           .iterator
           .toVdomArray
 
-        p.wrap { mroot =>
-          nodeR.PropsVal(
-            node = MNodeStateRender(
+        mns.role match {
+
+          // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
+          case MTreeRoles.Root =>
+            chsRendered
+
+          // Обычный узел - рендерим через NodeR()
+          case _ =>
+            // Рендер treeItem'а:
+            val mnsr = MNodeStateRender(
               state = mns,
               rawNodePathRev = nodePathRev,
-              chCountEnabled = chs
-                .iterator
-                .count { chTree =>
-                  chTree.rootLabel._1
-                    .infoPot
-                    .exists(_.isEnabled)
-                },
-              chCount = chs.length,
-            ),
-            confAdId      = mroot.conf.adIdOpt,
-            opened        = mroot.tree.opened,
-            locked        = mroot.popups.nonEmpty,
-          )
-        } (
-          nodeR.component
-            .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
-        )
+            )
+            p.wrap { mroot =>
+              nodeR.PropsVal(
+                node          = mnsr,
+                advMode       = isAdvMode,
+                opened        = mroot.tree.opened,
+                chs           = origSubForest,
+              )
+            } (
+              nodeR.component
+                .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
+            )
+
+        }
       }
 
       <.div(
@@ -140,8 +157,9 @@ class TreeR(
                 }
               )(
                 _renderTreeNodeIndexed(
-                  subTree = nodesTree.zipWithIndex,
+                  subTreeIndexed = nodesTree.zipWithIndex,
                   parentNodePathRev = Nil,
+                  subTreeOrig    = nodesTree,
                 )
               )
             },

@@ -9,7 +9,7 @@ import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.id.login.m.reg.step4.MReg4SetPassword
-import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegCredsSubmitResp, RegFinalSubmitResp, RegNextClick, RegSmsCheckResp}
+import io.suggest.id.login.m.{LoginFormDiConfig, RegBackClick, RegCaptchaSubmitResp, RegCredsSubmitResp, RegFinalSubmitResp, RegNextClick, RegSmsCheckResp}
 import io.suggest.id.login.m.reg.{MRegS, MRegSteps}
 import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0}
 import io.suggest.lk.m.CaptchaInit
@@ -21,8 +21,6 @@ import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.dom2.DomQuick
-import io.suggest.spa.DoNothing
 import monocle.Traversal
 import scalaz.std.option._
 
@@ -38,6 +36,7 @@ class RegAh[M](
                 modelRW         : ModelRW[M, MRegS],
                 pwNewRO         : ModelRO[MPwNew],
                 loginApi        : IIdentApi,
+                diConfig        : LoginFormDiConfig,
               )
   extends ActionHandler( modelRW )
   with Log
@@ -361,10 +360,7 @@ class RegAh[M](
 
         // Запустить эффект редиректа по принятой ссылке при положительном ответе сервера:
         val fxOpt = for (okResp <- m.tryResp.toOption) yield {
-          Effect.action {
-            DomQuick.goToLocation( okResp.token )
-            DoNothing
-          }
+          diConfig.onRedirect( m, external = false, okResp.token )
         }
 
         ah.updatedMaybeEffect(v2, fxOpt)

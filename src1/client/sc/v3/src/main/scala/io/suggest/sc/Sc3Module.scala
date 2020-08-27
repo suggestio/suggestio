@@ -4,9 +4,10 @@ import com.materialui.MuiTheme
 import com.softwaremill.macwire._
 import diode.Effect
 import io.suggest.common.empty.OptionUtil
+import io.suggest.cordova.CordovaConstants
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
-import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConf}
+import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
 import io.suggest.lk.nodes.form.LkNodesModuleBase
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
@@ -33,6 +34,7 @@ import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found._
 import io.suggest.sc.v.snack._
 import io.suggest.sc.v.styl._
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -176,7 +178,7 @@ object Sc3Module { outer =>
   // login
   object ScLoginFormModule extends LoginFormModuleBase {
 
-    override val diConfig: LoginFormDiConf = new LoginFormDiConf with ScHttpConfigImpl {
+    override val diConfig: LoginFormDiConfig = new LoginFormDiConfig with ScHttpConfigImpl {
 
       override def onClose(): Option[Callback] = {
         val cb = Callback {
@@ -185,12 +187,20 @@ object Sc3Module { outer =>
         Some(cb)
       }
 
-      override def onRedirect(onAction: ILoginFormAction, rdrUrl: String): Effect = {
+      override def onRedirect(onAction: ILoginFormAction, external: Boolean, rdrUrl: => String): Effect = {
+        // TODO external=true: Нужно фрейм открывать поверх выдачи. Возможно, задействовать cordova-plugin-inappbrowser .
         Effect.action {
-          // В текущей форме: тихо перезагрузить текущий Index с сервера без welcome, выставив в состояние залогиненность.
-          sc3Circuit.dispatch( ReGetIndex(
-            setLoggedIn = OptionUtil.SomeBool.someTrue
-          ))
+          if (CordovaConstants.isCordovaPlatform()) {
+            // В текущей форме cordova: тихо перезагрузить текущий Index с сервера без welcome, выставив в состояние залогиненность.
+            val act = ReGetIndex(
+              setLoggedIn = OptionUtil.SomeBool.someTrue
+            )
+            sc3Circuit.dispatch( act )
+          } else {
+            // Обычный редирект - в браузере.
+            DomQuick.goToLocation( rdrUrl )
+          }
+
           // в LoginForm делать ничего не надо:
           DoNothing
         }
@@ -226,7 +236,9 @@ object Sc3Module { outer =>
     override def getPlatformCss = outer._getPlatformCss
     override def platformComponents = outer.platformComponents
     override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfigImpl {
-      override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit
+      override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit(
+        userIsLoggedIn = sc3Circuit.loggedInRO.value,
+      )
       override def scRouterCtlOpt = Some( outer.sc3SpaRouter.state.routerCtl )
       override def closeForm = Some( Callback( outer.sc3Circuit.dispatch( ScNodesShowHide(false) ) ) )
       /** Ссылки в ЛК необходимо показывать только в браузере, но не в Cordova,

@@ -14,12 +14,12 @@ import japgolly.univeq._
   */
 object MNodeStateRender {
 
-  implicit lazy val NodeStateRenderFeq = FastEqUtil[MNodeStateRender] { (a, b) =>
+  implicit def NodeStateRenderFeq = FastEqUtil[MNodeStateRender] { (a, b) =>
+    // node state хранится в состоянии и редко изменяется.
     (a.state ===* b.state) &&
-    // Остальные куски пересобираются на каждый чих:
-    (a.rawNodePathRev ==* b.rawNodePathRev) &&
-    (a.chCount ==* b.chCount) &&
-    (a.chCountEnabled ==* b.chCount)
+    // Путь пере-собирается при каждом render(), поэтому требуется полное сравнивание.
+    // Сверка пути нужна только для генерации tree nodeId внутри NodeR().render().TreeItem(props.nodeId)
+    (a.rawNodePathRev ==* b.rawNodePathRev)
   }
 
   @inline implicit def univEq: UnivEq[MNodeStateRender] = UnivEq.derive
@@ -30,8 +30,6 @@ object MNodeStateRender {
 case class MNodeStateRender(
                              state                : MNodeState,
                              rawNodePathRev       : NodePath_t,
-                             chCount              : Int,
-                             chCountEnabled       : Int,
                            ) {
 
   /** Путь до узла в правильном порядке.

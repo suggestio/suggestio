@@ -6,7 +6,7 @@ import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.pwch.MPwNew
-import io.suggest.id.login.m.{NewPasswordBlur, SetPasswordEdit}
+import io.suggest.id.login.m.{NewPasswordBlur, PwVisibilityChange, SetPasswordEdit}
 import io.suggest.id.login.v.stuff.TextFieldR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -50,6 +50,7 @@ class PwNewR (
 
     def render(propsProxy: Props): VdomElement = {
       val setPasswordBlurSome = Some( NewPasswordBlur )
+      val pwVisChangeSomeF = Some( PwVisibilityChange(_: Boolean, isPwNew = true) )
 
       MuiFormGroup(
         new MuiFormGroupProps {
@@ -63,7 +64,7 @@ class PwNewR (
             state       = p.pwNew.password1,
             hasError    = p.pwNew.isPasswordsErrorShown,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = false) ),
-            isPassword  = true,
+            isPassword  = !p.pwNew.pwVisible,
             inputName   = IdentConst.Login.PASSWORD_FN,    // По идее, вообще необязательно. По идее - "password"
             label       =
               if (p.isNew) MsgCodes.`Type.new.password`
@@ -71,6 +72,7 @@ class PwNewR (
             placeHolder = "",
             onBlur      = setPasswordBlurSome,
             disabled    = p.reqPending,
+            visibilityChange = pwVisChangeSomeF,
           )
         }( textFieldR.component.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
 
@@ -80,7 +82,7 @@ class PwNewR (
             state       = p.pwNew.password2,
             hasError    = p.pwNew.isPasswordsErrorShown,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = true) ),
-            isPassword  = true,
+            isPassword  = !p.pwNew.pwVisible,
             inputName   = "",
             label       =
               if (p.isNew) MsgCodes.`Confirm.new.password`
@@ -88,6 +90,7 @@ class PwNewR (
             placeHolder = "",
             onBlur      = setPasswordBlurSome,
             disabled    = p.reqPending,
+            visibilityChange = pwVisChangeSomeF,
           )
         }( textFieldR.component.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
 

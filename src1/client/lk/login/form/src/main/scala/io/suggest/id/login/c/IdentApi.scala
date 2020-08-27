@@ -13,7 +13,7 @@ import io.suggest.proto.http.model.{HttpReq, HttpReqData}
 import io.suggest.routes.{PlayRoute, routes}
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil.Implicits._
-import io.suggest.id.login.m.LoginFormDiConf
+import io.suggest.id.login.m.LoginFormDiConfig
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import play.api.libs.json.{Json, Writes}
@@ -78,7 +78,7 @@ trait IIdentApi {
 
 
 class IdentApiHttp(
-                    lfDiConf: LoginFormDiConf,
+                    lfDiConf: LoginFormDiConfig,
                   )
   extends IIdentApi
   with Log

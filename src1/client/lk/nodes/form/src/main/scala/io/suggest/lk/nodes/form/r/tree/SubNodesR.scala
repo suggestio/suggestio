@@ -1,16 +1,17 @@
 package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiToolTip, MuiToolTipProps}
-import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.nodes.form.m.CreateNodeClick
+import io.suggest.lk.nodes.form.m.{CreateNodeClick, MNodeState}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import scalaz.{EphemeralStream, Tree}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 /**
   * Suggest.io
@@ -22,16 +23,7 @@ final class SubNodesR(
                        crCtxP               : React.Context[MCommonReactCtx],
                      ) {
 
-  case class PropsVal(
-                       chCount            : Int,
-                       chCountEnabled     : Int,
-                     )
-    extends UseValueEq  // Не влияет, и feq внизу задан явно.
-
-  @inline implicit def pvUnivEq: UnivEq[PropsVal] = UnivEq.derive
-
-
-  type Props_t = PropsVal
+  type Props_t = EphemeralStream[Tree[MNodeState]]
   type Props = ModelProxy[Props_t]
 
 
@@ -47,19 +39,26 @@ final class SubNodesR(
 
           // Текст
           MuiListItemText {
-            val subNodesInfo = ReactCommonUtil.maybeNode( s.chCount > 0 ) {
+            val chCount = s.length
+            val subNodesInfo = ReactCommonUtil.maybeNode( chCount > 0 ) {
               <.span(
                 // Вывести общее кол-во под-узлов.
-                crCtxP.message( MsgCodes.`N.nodes`, s.chCount),
+                crCtxP.message( MsgCodes.`N.nodes`, chCount),
 
                 // Вывести кол-во выключенных под-узлов, если такие есть.
                 {
-                  val countDisabled = s.chCount - s.chCountEnabled
-                  ReactCommonUtil.maybeEl(countDisabled > 0) {
+                  val chCountDisabled = s
+                    .iterator
+                    .count { chTree =>
+                      chTree.rootLabel
+                        .infoPot
+                        .exists { info => !info.isEnabled }
+                    }
+                  ReactCommonUtil.maybeEl(chCountDisabled > 0) {
                     <.span(
                       HtmlConstants.COMMA,
                       HtmlConstants.NBSP_STR,
-                      crCtxP.message( MsgCodes.`N.disabled`, countDisabled ),
+                      crCtxP.message( MsgCodes.`N.disabled`, chCountDisabled ),
                     )
                   }
                 },
@@ -105,7 +104,7 @@ final class SubNodesR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( FastEqUtil.AnyValueEq ) )
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( FastEqUtil.AnyRefFastEq ) )
     .build
 
 }

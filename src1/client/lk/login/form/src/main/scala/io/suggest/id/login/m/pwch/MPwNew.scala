@@ -21,13 +21,15 @@ object MPwNew {
     override def eqv(a: MPwNew, b: MPwNew): Boolean = {
       (a.password1 ===* b.password1) &&
       (a.password2 ===* b.password2) &&
-      (a.showPwMisMatch ==* b.showPwMisMatch)
+      (a.showPwMisMatch ==* b.showPwMisMatch) &&
+      (a.pwVisible ==* b.pwVisible)
     }
   }
 
-  val password1 = GenLens[MPwNew](_.password1)
-  val password2 = GenLens[MPwNew](_.password2)
-  val showPwMisMatch = GenLens[MPwNew](_.showPwMisMatch)
+  def password1 = GenLens[MPwNew](_.password1)
+  def password2 = GenLens[MPwNew](_.password2)
+  def showPwMisMatch = GenLens[MPwNew](_.showPwMisMatch)
+  def pwVisible = GenLens[MPwNew](_.pwVisible)
 
   @inline implicit def univEq: UnivEq[MPwNew] = UnivEq.derive
 
@@ -41,6 +43,7 @@ case class MPwNew(
                    password1            : MTextFieldS             = MTextFieldS.empty,
                    password2            : MTextFieldS             = MTextFieldS.empty,
                    showPwMisMatch       : Boolean                 = false,
+                   pwVisible            : Boolean                 = false,
                  ) {
 
   def isPasswordsMatch: Boolean =

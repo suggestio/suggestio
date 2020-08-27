@@ -8,9 +8,7 @@ import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.DoNothing
 import japgolly.univeq._
 
 import scala.util.Success
@@ -44,6 +42,7 @@ class PwLoginAh[M](
                     loginApi        : IIdentApi,
                     modelRW         : ModelRW[M, MEpwLoginS],
                     returnUrlRO     : ModelRO[Option[String]],
+                    diConfig        : LoginFormDiConfig,
                   )
   extends ActionHandler( modelRW )
   with Log
@@ -142,10 +141,8 @@ class PwLoginAh[M](
         // Пришёл ожидаемый ответ. Разобрать:
         val loginReq2 = v0.loginReq.withTry( m.tryRes )
         // Если пришла ссылка и ок, то надо эффект редиректа организовать.
-        val fxOpt = for (rdrUrl <- loginReq2.toOption) yield Effect.action {
-          DomQuick.goToLocation( rdrUrl )
-          DoNothing
-        }
+        val fxOpt = for (rdrUrl <- loginReq2.toOption)
+                    yield diConfig.onRedirect(m, external = false, rdrUrl)
 
         var changesAcc = MEpwLoginS.loginReq.set( loginReq2 )
 

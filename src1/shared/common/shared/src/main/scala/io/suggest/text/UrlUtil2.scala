@@ -34,8 +34,9 @@ object UrlUtil2 {
     }
   }
 
+  final def URL_HASH_PREFIX_NOQS = "#!"
   /** Префикс URL Hash. */
-  def URL_HASH_PREFIX = "#!?"
+  final def URL_HASH_PREFIX = URL_HASH_PREFIX_NOQS + "?"
 
   def getUrlHash(url: String): Option[String] = {
     val inx = url.indexOf(URL_HASH_PREFIX)

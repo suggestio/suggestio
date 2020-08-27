@@ -18,8 +18,6 @@ import io.suggest.ueq.JsUnivEqUtil._
   */
 object MTree {
 
-  def empty = apply()
-
   implicit object MTreeFastEq extends FastEq[MTree] {
     override def eqv(a: MTree, b: MTree): Boolean = {
       (a.nodes ===* b.nodes) &&
@@ -35,7 +33,15 @@ object MTree {
   def nodes = GenLens[MTree](_.nodes)
   val opened = GenLens[MTree](_.opened)
 
+  /** Короткий код выставления дерева в состояние. */
   def setNodes(tree2: Tree[MNodeState]) = nodes.modify(_.ready(tree2))
+
+  /** Пустое дерево с корнем для инициализации поля MTree().nodes */
+  def emptyNodesTreePot =
+    Pot.empty.ready(
+      Tree.Leaf(
+        MNodeState.mkRoot ) )
+
 
   implicit final class TreeExt( private val mtree: MTree ) extends AnyVal {
 
@@ -60,7 +66,7 @@ object MTree {
   * @param opened rcvr-key для узла дерева, у которого сейчас отображаются полный список properties'ов.
   */
 case class MTree(
-                  nodes       : Pot[Tree[MNodeState]] = Pot.empty,
+                  nodes       : Pot[Tree[MNodeState]],
                   opened      : Option[NodePath_t]    = None
                 ) {
 

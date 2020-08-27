@@ -33,7 +33,7 @@ class LoginFormR(
                   regR                  : RegR,
                   crCtxProv             : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
-                  lfDiConf              : LoginFormDiConf,
+                  lfDiConf              : LoginFormDiConfig,
                 ) {
 
   type Props_t = MLoginRootS

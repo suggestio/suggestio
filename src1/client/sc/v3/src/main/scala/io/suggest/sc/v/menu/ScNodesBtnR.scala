@@ -2,7 +2,6 @@ package io.suggest.sc.v.menu
 
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{MScRoot, ScNodesShowHide}
@@ -18,15 +17,15 @@ import scalacss.ScalaCssReact._
   * Description: Пункт меню для доступа к форме управления узлами.
   */
 class ScNodesBtnR(
-              scCssP        : React.Context[ScCss],
-              crCtxProv     : React.Context[MCommonReactCtx],
-            ) {
+                   scCssP        : React.Context[ScCss],
+                   crCtxProv     : React.Context[MCommonReactCtx],
+                 ) {
 
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
 
   case class State(
-                    isVisibleSomeC            : ReactConnectProxy[Some[Boolean]],
+                    //isVisibleSomeC            : ReactConnectProxy[Some[Boolean]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -36,11 +35,11 @@ class ScNodesBtnR(
     }
 
     def render(s: State): VdomElement = {
-      s.isVisibleSomeC { isVisibleSomeProxy =>
+      //s.isVisibleSomeC { isVisibleSomeProxy =>
         import ScCssStatic.Menu.{Rows => R}
 
-        val isVisible = isVisibleSomeProxy.value.value
-        ReactCommonUtil.maybeEl( isVisible ) {
+        //val isVisible = isVisibleSomeProxy.value.value
+        //ReactCommonUtil.maybeEl( isVisible ) {
           MuiListItem(
             new MuiListItemProps {
               override val disableGutters = true
@@ -60,8 +59,8 @@ class ScNodesBtnR(
               // TODO Вывести счётких текущих видимых маячков.
             )
           )
-        }
-      }
+        //}
+      //}
     }
 
   }
@@ -72,9 +71,10 @@ class ScNodesBtnR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        isVisibleSomeC = propsProxy.connect { mroot =>
-          OptionUtil.SomeBool( mroot.index.isLoggedIn )
-        },
+        //isVisibleSomeC = propsProxy.connect { mroot =>
+          //OptionUtil.SomeBool( mroot.index.isLoggedIn )
+          //OptionUtil.SomeBool.someTrue
+        //},
 
       )
     }

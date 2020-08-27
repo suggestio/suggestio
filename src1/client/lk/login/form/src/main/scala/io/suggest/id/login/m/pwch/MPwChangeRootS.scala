@@ -26,7 +26,7 @@ object MPwChangeRootS {
   @inline implicit def univEq: UnivEq[MPwChangeRootS] = UnivEq.derive
 
   val form    = GenLens[MPwChangeRootS](_.form)
-  val formCss = GenLens[MPwChangeRootS](_.formCss)
+  def formCss = GenLens[MPwChangeRootS](_.formCss)
 
 }
 

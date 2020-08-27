@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.epw
 
-import com.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiLink, MuiLinkClasses, MuiLinkProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiLink, MuiLinkClasses, MuiLinkProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -20,7 +20,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -98,16 +97,18 @@ class EpwFormR(
             // Поле ввода пароля:
             {
               val mkActionSome = Some( SetPassword.apply _ )
+              val pwVisChangeSomeF = Some( PwVisibilityChange(_: Boolean, isPwNew = false) )
               propsProxy.wrap { props =>
                 textFieldR.PropsVal(
                   state       = props.password,
                   hasError    = props.loginReq.isFailed,
                   mkAction    = mkActionSome,
-                  isPassword  = true,
+                  isPassword  = !props.passwordVisible,
                   inputName   = IdentConst.Login.PASSWORD_FN,
                   label       = MsgCodes.`Password`,
                   disabled    = props.loginReq.isPending,
                   placeHolder = "",
+                  visibilityChange = pwVisChangeSomeF,
                 )
               }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq )
             },

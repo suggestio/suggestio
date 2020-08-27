@@ -17,7 +17,8 @@ import scalaz.std.option._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
-import scalaz.{Tree, TreeLoc}
+import scalaz.{EphemeralStream, Tree, TreeLoc}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 import scala.util.Success
 
@@ -38,6 +39,53 @@ class TreeAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    // Выставить в дерево обнаруженные поблизости маячки. Экшен исходит из выдачи.
+    case m: BeaconsDetected =>
+      val v0 = value
+
+      // В начало дерева надо добавить/обновить группу видимых маячков:
+      (for {
+        tree0 <- v0.nodesOpt
+      } yield {
+        val loc0 = tree0.loc
+
+        // Сборка поддерева beacons:
+        val beaconsSubTree = Tree.Node(
+          root = MNodeState(
+            role = MTreeRoles.BeaconsDetected,
+          ),
+          forest = m.beacons
+            .iterator
+            .map { bcn =>
+              Tree.Leaf(
+                MNodeState(
+                  role = MTreeRoles.BeaconSignal,
+                  bcnSignal = Some(bcn),
+                )
+              )
+            }
+            .to( List )
+            .toEphemeralStream
+        )
+
+        // Обновление дерева:
+        val beaconUpdatedLoc = loc0
+          .findChild( _.rootLabel.role ==* MTreeRoles.BeaconsDetected )
+          .fold {
+            // Пока нет подсписка с маячками. Добавить в начало:
+            loc0.insertDownFirst( beaconsSubTree )
+          } { loc1 =>
+            // Заменить текущий элемент обновлённым поддеревом.
+            loc1.setTree( beaconsSubTree )
+          }
+
+        // Сохранить обновлённое дерево в состояние:
+        val v2 = (MTree setNodes beaconUpdatedLoc.toTree)(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
+
+
     // Сигнал о необходимости показать какой-то узел подробнее.
     case m: NodeClick =>
       val v0 = value
@@ -49,9 +97,10 @@ class TreeAh[M](
 
       (for {
         loc0 <- locOpt0
-        info <- loc0.getLabel.infoPot.toOption
       } yield {
-        if (info.isDetailed) {
+        val mns0 = loc0.getLabel
+        val isNormal = mns0.role ==* MTreeRoles.Normal
+        if ( !isNormal || mns0.infoPot.exists(_.isDetailed) ) {
           // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
           // Узнать, является ли текущий элемент сфокусированным?
           val v2 = MTree.opened.modify { opened0 =>
@@ -69,7 +118,7 @@ class TreeAh[M](
           }(v0)
           updated(v2)
 
-        } else {
+        } else if (isNormal) {
           // !isDetailed: Для текущего узла не загружено children. Запустить в фоне загрузку, выставить её в состояние.
           val tstampMs = System.currentTimeMillis()
 
@@ -92,6 +141,9 @@ class TreeAh[M](
           }(v0)
 
           updated(v2, fx)
+
+        } else {
+          noChange
         }
       })
         .getOrElse( noChange )
@@ -129,7 +181,7 @@ class TreeAh[M](
             // Самоконтроль: получено поддерево для правильного узла:
             require( mns0.infoPot.exists(_.id ==* resp.subTree.rootLabel.id) )
 
-            val tree2 = MNodeState.processTree( resp.subTree )
+            val tree2 = MNodeState.processNormalTree( resp.subTree )
             val subTree2 = Tree.Node(
               // Текущий узел - просто патчим, сохраняя рантаймовые под-состояния нетронутыми.
               root   = (MNodeState.infoPot set tree2.rootLabel.infoPot)(mns0),
@@ -254,11 +306,7 @@ class TreeAh[M](
         loc0 <- v0.openedLoc
         // Ошибки с сервера отрабатываются в CreateNodeAh:
         resp <- m.tryResp.toOption
-        newChild = Tree.Leaf(
-          MNodeState(
-            infoPot = Pot.empty.ready( resp ),
-          )
-        )
+        newChild = MNodeState.processNormalTree( Tree.Leaf(resp) )
       } yield {
         // Залить обновления в дерево, а CreateNodeAh удалит addState для текущего rcvrKey.
         val v2 = MTree.setNodes {
@@ -685,7 +733,13 @@ class TreeAh[M](
           },
           {resp =>
             // Залить начальное дерево:
-            val subTree2 = MNodeState.processTree(resp.subTree)
+            val subTree2 = Tree.Node(
+              root   = MNodeState.mkRoot,
+              forest = EphemeralStream.cons(
+                MNodeState.processNormalTree(resp.subTree),
+                EphemeralStream.emptyEphemeralStream
+              )
+            )
             var v1 = MTree.setNodes( subTree2 )(v0)
 
             // opened: надо по возможности выставить в текущее значение (если оно актуально),

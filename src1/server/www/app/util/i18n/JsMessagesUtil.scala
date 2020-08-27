@@ -151,6 +151,7 @@ class JsMessagesUtil @Inject() (
       MC.`Always.outlined` ::
       MC.`Go.into` ::
       MC.`Showcase` ::
+      MNodeTypes.BleBeacon.plural ::
       Nil
 
     (

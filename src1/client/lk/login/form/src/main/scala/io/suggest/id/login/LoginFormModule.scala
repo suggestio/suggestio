@@ -2,7 +2,7 @@ package io.suggest.id.login
 
 import com.softwaremill.macwire._
 import io.suggest.id.login.c.IdentApiHttp
-import io.suggest.id.login.m.LoginFormDiConf
+import io.suggest.id.login.m.LoginFormDiConfig
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
@@ -58,7 +58,7 @@ trait LoginFormModuleBase {
 
   lazy val identApi = wire[IdentApiHttp]
 
-  def diConfig: LoginFormDiConf
+  def diConfig: LoginFormDiConfig
 
 }
 object LoginFormModuleBase {
@@ -76,7 +76,7 @@ object LoginFormModuleBase {
 /** Отдельная форма со своим роутером и своими контекстами. */
 final class LoginFormModule extends LoginFormModuleBase {
 
-  override def diConfig = LoginFormDiConf.Isolated
+  override def diConfig = LoginFormDiConfig.Isolated
 
   lazy val loginFormSpaRouter: LoginFormSpaRouter = {
     new LoginFormSpaRouter(

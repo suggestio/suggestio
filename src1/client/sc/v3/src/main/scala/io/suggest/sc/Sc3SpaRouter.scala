@@ -8,14 +8,14 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.spa.{MGen, SioPages}
-import io.suggest.text.UrlUtilJs
+import io.suggest.text.{UrlUtil2, UrlUtilJs}
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
+import io.suggest.cordova.CordovaConstants
 import io.suggest.id.login.MLoginTabs
 import io.suggest.sc.m.boot.MSpaRouterState
 import japgolly.univeq._
-import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -37,10 +37,13 @@ class Sc3SpaRouter(
   val state: MSpaRouterState = RouterConfigDsl[SioPages.Sc3].use { dsl =>
     import dsl._
 
-    /** Конфиг роутера второго поколения.
-      * Он больше похож на sc2-роутер, который вручную токенайзит и парсит qs-части.
-      */
+    // в cordova не будет работать адресация без # и без исходного длинного path.
+    val helper = if (CordovaConstants.isCordovaPlatform())
+      new ScRouterUrlHelper.UrlHash
+    else
+      new ScRouterUrlHelper.PlainUrl
 
+    // Конфиг роутера. TODO Надо qs перегонять в JSON и переводить в состояние. И обратно, без рукопашных парсеров/токенайзеров.
     val mainScreenOptRoute = ("?" ~ string(".+"))
       .option
       .pmap { qsOpt =>
@@ -191,10 +194,7 @@ class Sc3SpaRouter(
         link        <- DocumentVm().head.links
         if link.isCanonical
         href        <- link.href
-        hrefUrl = new URI( href )
-        urlQuery     <- Option( hrefUrl.getRawQuery )
-        if urlQuery.nonEmpty
-        urlHash2 = "?" + urlQuery + "&"
+        urlHash2    <- helper.getUrlHash( href )
         parsed <- {
           val r = mainScreenOptRoute.route
             .parse( Path(urlHash2) )
@@ -237,7 +237,7 @@ class Sc3SpaRouter(
       }
 
     val (r, rCtl) = Router.componentAndCtl[SioPages.Sc3](
-      baseUrl = BaseUrl.fromWindowOrigin_/,
+      baseUrl = helper.baseUrl,
       cfg     = routerCfg
     )
 
@@ -246,6 +246,43 @@ class Sc3SpaRouter(
       routerCtl       = rCtl,
       canonicalRoute  = canonicalRoute
     )
+  }
+
+}
+
+
+trait ScRouterUrlHelper {
+  def baseUrl: BaseUrl
+  def getUrlHash(url: String): Option[String]
+}
+
+object ScRouterUrlHelper {
+
+  /** В кордове URL начинается с file, поэтому любые переменные части должны быть после #. */
+  class UrlHash extends ScRouterUrlHelper {
+    override def baseUrl = BaseUrl.until_# + UrlUtil2.URL_HASH_PREFIX_NOQS
+    override def getUrlHash(url: String): Option[String] = {
+      for {
+        urlHash <- UrlUtil2.getUrlHash(url)
+        if urlHash.nonEmpty
+      } yield {
+        urlHash.replace(UrlUtil2.URL_HASH_PREFIX_NOQS, "") + "&"
+      }
+    }
+  }
+
+  /** URL-адресация без #, когда напрямую редактируется серверная ссылка. */
+  class PlainUrl extends ScRouterUrlHelper {
+    override def baseUrl = BaseUrl.fromWindowOrigin_/
+    override def getUrlHash(url: String): Option[String] = {
+      val hrefUrl = new URI( url )
+      for {
+        urlQuery     <- Option( hrefUrl.getRawQuery )
+        if urlQuery.nonEmpty
+      } yield {
+        "?" + urlQuery + "&"
+      }
+    }
   }
 
 }
