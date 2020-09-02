@@ -19,6 +19,7 @@
         "cordova-plugin-badge": "^0.8.8",
         "cordova-plugin-ble-central": "^1.2.5",
         "cordova-plugin-device": "^2.0.3",
+        "cordova-plugin-fetch": "git+https://github.com/8bhsolutions/cordova-plugin-fetch.git",
         "cordova-plugin-geolocation": "^4.0.1",
         "cordova-plugin-local-notification": "git+https://github.com/Steffaan/cordova-plugin-local-notifications.git",
         "cordova-plugin-localization-strings": "3.2.1",
@@ -48,7 +49,8 @@
             "cordova-plugin-network-information": {},
             "cordova-plugin-localization-strings": {
                 "TRANSLATION_PATH": "translations/app/"
-            }
+            },
+            "cordova-plugin-fetch": {}
         },
         "platforms": [
             "android",

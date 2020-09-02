@@ -58,7 +58,7 @@ trait IHttpRespHolder extends IHttpResultHolder[HttpResp] {
   override def mapResult[T2](f: Future[HttpResp] => Future[T2]): HttpRespMapped[T2] = {
     HttpRespMapped[T2](
       httpResultHolder = this,
-      resultFut      = f(resultFut),
+      resultFut        = f(resultFut),
     )
   }
 }

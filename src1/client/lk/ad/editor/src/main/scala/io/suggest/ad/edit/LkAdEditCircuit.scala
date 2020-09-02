@@ -146,7 +146,7 @@ class LkAdEditCircuit(
 
   private val uploadApi = new UploadApiHttp
 
-  private val adEditApi = new LkAdEditApiHttp( confRW, uploadApi )
+  private val adEditApi = new LkAdEditApiHttp( confRW )
 
   private val ctxIdRO = mkLensZoomRO(confRW, MAdEditFormConf.ctxId)
   private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)

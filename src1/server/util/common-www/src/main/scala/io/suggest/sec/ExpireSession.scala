@@ -33,9 +33,9 @@ import scala.language.higherKinds
 
 /** Утиль для v2 API обработки сессий в состоянии. */
 @Singleton
-class ExpireSessionUtil @Inject() (
-                                    implicit private val ec    : ExecutionContext
-                                  )
+final class ExpireSessionUtil @Inject() (
+                                          implicit private val ec    : ExecutionContext
+                                        )
   extends MacroLogsImpl
 {
 
@@ -172,11 +172,11 @@ class ExpireSessionUtil @Inject() (
   * Если так и не будет использоваться, то можно будет его удалить.
   */
 @Singleton
-class ExpireSessionAction @Inject() (
-                                      defaultActionBuilder       : DefaultActionBuilder,
-                                      expireSessionUtil          : ExpireSessionUtil,
-                                      implicit private val ec    : ExecutionContext,
-                                    ) {
+final class ExpireSessionAction @Inject() (
+                                            defaultActionBuilder       : DefaultActionBuilder,
+                                            expireSessionUtil          : ExpireSessionUtil,
+                                            implicit private val ec    : ExecutionContext,
+                                          ) {
 
   def apply[A](action: Action[A]): Action[A] = {
     defaultActionBuilder.async( action.parser ) { request0 =>
@@ -190,10 +190,10 @@ class ExpireSessionAction @Inject() (
 
 
 /** Глобальный фильтр для запросов и ответов на тему работы с TTL sio-сессияй. */
-class ExpireSessionFilter @Inject() (
-                                      expireSessionUtil          : ExpireSessionUtil,
-                                      implicit private val ec    : ExecutionContext
-                                    )
+final class ExpireSessionFilter @Inject() (
+                                            expireSessionUtil          : ExpireSessionUtil,
+                                            implicit private val ec    : ExecutionContext
+                                          )
   extends EssentialFilter
 {
 

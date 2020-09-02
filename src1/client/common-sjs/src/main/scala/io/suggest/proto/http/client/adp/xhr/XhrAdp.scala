@@ -1,6 +1,9 @@
 package io.suggest.proto.http.client.adp.xhr
 
-import io.suggest.proto.http.client.adp.HttpClientAdp
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
+import io.suggest.proto.http.client.adp.fetch.FetchUtil
+import io.suggest.proto.http.client.adp.{HttpAdpInstance, HttpClientAdp}
 import io.suggest.proto.http.model._
 import io.suggest.sjs.JsApiUtil
 import io.suggest.up.ITransferProgressInfo
@@ -10,6 +13,9 @@ import org.scalajs.dom.{Blob, XMLHttpRequest}
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.typedarray.ArrayBuffer
 import japgolly.univeq._
+import org.scalajs.dom.experimental.{BodyInit, Headers, RequestInit, Response, ResponseInit}
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -23,46 +29,59 @@ case object XhrAdp extends HttpClientAdp {
   override def isAvailable: Boolean =
     JsApiUtil.isDefinedSafe( XMLHttpRequest )
 
+  override def factory = XhrAdpInstance
 
-  /** Запустить http-запрос. */
-  override def apply(httpReq: HttpReq): XhrHttpRespHolder = {
-    val req = new dom.XMLHttpRequest()
+}
+
+
+/** Инстанс для запроса через XHR-адаптер. */
+case class XhrAdpInstance( override val httpReq: HttpReqAdp ) extends HttpAdpInstance {
+
+  val xhr = new dom.XMLHttpRequest()
+
+  override lazy val toRequestInit: RequestInit = {
+    FetchUtil
+      .toRequestInit( httpReq, abortSignal = None )
+      .toDomRequestInit
+  }
+
+  override def doRequest(requestUrl: String): Future[HttpResp] = {
     val promise = Promise[XhrHttpResp]()
-    val httpRes = XhrHttpResp(req)
+    val httpRes = XhrHttpResp(xhr)
 
-    req.onreadystatechange = { (_: dom.Event) =>
-      if (req.readyState ==* XMLHttpRequest.DONE) {
+    xhr.onreadystatechange = { (_: dom.Event) =>
+      if (xhr.readyState ==* XMLHttpRequest.DONE) {
         // Если запрос невозможен (связи нет, например), то будет DONE и status=0
-        if (req.status > 0)
+        if (xhr.status > 0)
           promise.success(httpRes)
         else promise.failure(
           HttpFailedException(
-            url     = httpReq.url,
-            method  = httpReq.method,
+            url     = httpReq.origReq.url,
+            method  = httpReq.origReq.method,
             resp    = Some(httpRes)
           )
         )
       }
     }
 
-    req.open(httpReq.method, httpReq.url)
-    val d = httpReq.data
-    req.responseType = d.respType.xhrResponseType
+    xhr.open( httpReq.origReq.method, httpReq.reqUrl )
+    val d = httpReq.origReq.data
+    xhr.responseType = d.respType.xhrResponseType
     if (d.timeoutMsOr0 > 0)
-      req.timeout = d.timeoutMsOr0
-    req.withCredentials = d.xhrWithCredentialsCrossSite
+      xhr.timeout = d.timeoutMsOr0
+    xhr.withCredentials = d.credentials contains true
 
-    for (kv <- d.allHeaders)
-      req.setRequestHeader(kv._1, kv._2)
+    for (kv <- httpReq.allReqHeaders)
+      xhr.setRequestHeader(kv._1, kv._2)
 
     if (d.body == null)
-      req.send()
+      xhr.send()
     else
-      req.send(d.body)
+      xhr.send(d.body)
 
     // Подцепить событие onProgress на функцию, если задана.
-    for (onProgressF <- httpReq.data.onProgress) {
-      req.onprogress = { e: dom.ProgressEvent =>
+    for (onProgressF <- httpReq.origReq.data.onProgress) {
+      xhr.onprogress = { e: dom.ProgressEvent =>
         val progressInfo = new ITransferProgressInfo {
           def loadedBytes         = e.loaded
           def totalBytes          = Option.when(e.lengthComputable)( e.total )
@@ -71,17 +90,20 @@ case object XhrAdp extends HttpClientAdp {
       }
     }
 
-    new XhrHttpRespHolder( req, promise.future )
+    promise.future
   }
+
+  override def toRespHolder(respFut: Future[HttpResp]) =
+    XhrHttpRespHolder(xhr, respFut)
 
 }
 
 
 /** Поддержка нативного XMLHttpRequest. */
-class XhrHttpRespHolder(
-                         xhr                  : XMLHttpRequest,
-                         override val resultFut : Future[XhrHttpResp]
-                       )
+case class XhrHttpRespHolder(
+                              xhr                     : XMLHttpRequest,
+                              override val resultFut  : Future[HttpResp],
+                            )
   extends IHttpRespHolder
 {
 
@@ -92,12 +114,13 @@ class XhrHttpRespHolder(
 
 
 /** Реализация [[HttpResp]] для XHR-результата. */
-case class XhrHttpResp( xhr: XMLHttpRequest ) extends HttpResp {
+case class XhrHttpResp( xhr: XMLHttpRequest ) extends HttpResp with Log { outer =>
   override def isFromInnerCache = false
   override def status = xhr.status
   override def statusText = xhr.statusText
-  override def getHeader(headerName: String): Option[String] = {
+  override def getHeader(headerName: String): Seq[String] = {
     Option( xhr.getResponseHeader( headerName ) )
+      .toList
   }
   // Тело можно читать много раз, поэтому тут всегда false.
   override def bodyUsed = false
@@ -107,5 +130,37 @@ case class XhrHttpResp( xhr: XMLHttpRequest ) extends HttpResp {
     Future.successful( xhr.response.asInstanceOf[ArrayBuffer] )
   override def blob() =
     Future.successful( xhr.response.asInstanceOf[Blob] )
+
+  override def headers: Iterator[(String, String)] = {
+    xhr
+      .getAllResponseHeaders()
+      .trim
+      .split( "[\r\n]+" )
+      .iterator
+      .map { line =>
+        val Array(k, v) = line.split(": ")
+        (k, v)
+      }
+  }
+
+  /** Конверсия XHR-ответа в стандартный DOM Fetch Response. */
+  override def toDomResponse(): Option[Response] = {
+    val respHdrs = new Headers()
+    for (kv @ (k,v) <- headers)
+      for (ex <- Try(respHdrs.append(k, v)).failed)
+        logger.warn( ErrorMsgs.HTTP_HEADER_PROBLEM, ex, kv )
+
+    val domResp = new Response(
+      content = xhr.response.asInstanceOf[BodyInit],
+      init = new ResponseInit {
+        override var status     = outer.status
+        override var statusText = outer.statusText
+        override var headers    = respHdrs
+      }
+    )
+
+    Some(domResp)
+  }
+
 }
 

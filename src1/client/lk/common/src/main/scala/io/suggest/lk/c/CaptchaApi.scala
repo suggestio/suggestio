@@ -60,7 +60,7 @@ class CaptchaApiHttp extends ICaptchaApi {
     } yield {
       MCaptchaData(
         imgData = blob,
-        secret  = resp.getHeader( CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME ).get
+        secret  = resp.getHeader( CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME ).head
       )
     }
   }

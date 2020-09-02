@@ -5,7 +5,8 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
-import io.suggest.proto.http.model.{HttpReq, HttpReqData, HttpRespTypes, IHttpRespHolder}
+import io.suggest.proto.http.client.cache.HttpCaching
+import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpReqData, HttpResp, HttpRespTypes, IHttpResultHolder, MHttpCookie}
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -116,36 +117,90 @@ object HttpClient {
     * @param httpReq Описание HTTP-реквеста и сопутствующих данных.
     * @return resp holder.
     */
-  def execute(httpReq: HttpReq): IHttpRespHolder = {
+  def execute(httpReq: HttpReq): IHttpResultHolder[HttpResp] = {
+    // Выбрать адаптер и запустить обработку.
     val adp = if (httpReq.data.onProgress.nonEmpty && XhrAdp.isAvailable) {
       XhrAdp
+    } else if (httpReq.data.config.fetchApi.nonEmpty) {
+      // Явно задана fetch-функция в данных реквеста -- отправляем запрос через Fetch-адаптер:
+      FetchAdp
     } else {
       executor
     }
 
-    // Если в конфиге задан CSRF-токен, то добавить его в ссылку.
-    val httpReq2 = (for {
-      hcConfig <- httpReq.data.config
-      csrfToken <- hcConfig.csrfToken
+    // Если в конфиге задан CSRF-токен, то добавить его в ссылку:
+    val urlOpt2 = for {
+      csrfToken <- httpReq.data.config.csrfToken
     } yield {
-      (HttpReq.url.modify { url0 =>
-        val amp = "&"
-        val qMark = HtmlConstants.QUESTION_MARK
-        val equal = "="
-        if (s"[$amp$qMark]${csrfToken.qsKey}$equal".r.pattern.matcher(url0).find()) {
-          // Гипотетически возможна ситуация, что в ссылке есть какой-то другой CSRF Token. Надо её отрабатывать?
-          url0
-        } else {
-          val delim = if (url0 contains qMark) amp else qMark
-          s"$url0$delim${js.URIUtils.encodeURIComponent(csrfToken.qsKey)}$equal${js.URIUtils.encodeURIComponent(csrfToken.value)}"
+      val amp = "&"
+      val qMark = HtmlConstants.QUESTION_MARK
+      val equal = "="
+      val url0 = httpReq.url
+      if (s"[$amp$qMark]${csrfToken.qsKey}$equal".r.pattern.matcher(url0).find()) {
+        // Гипотетически возможна ситуация, что в ссылке есть какой-то другой CSRF Token. Надо её отрабатывать?
+        url0
+      } else {
+        val delim = if (url0 contains qMark) amp else qMark
+        s"$url0$delim${js.URIUtils.encodeURIComponent(csrfToken.qsKey)}$equal${js.URIUtils.encodeURIComponent(csrfToken.value)}"
+      }
+    }
+
+    // Собрать все заголовки запроса воедино:
+    val allHeaders = {
+      var hdrs0 = httpReq.data.headers
+
+      // Залить baseHeaders в заголовки запроса, но с приоритетом исходных заголовков:
+      if (httpReq.data.config.baseHeaders.nonEmpty)
+        hdrs0 = httpReq.data.config.baseHeaders ++ hdrs0
+
+      // Если sessionToken доступен, то закинуть его в заголовки:
+      for {
+        sessionCookieGetF   <- httpReq.data.config.sessionCookieGet
+        sessionCookie       <- sessionCookieGetF()
+        // TODO Фильтровать кукис по домену и валидности.
+      } {
+        val cookieValue = sessionCookie.cookieHeaderValue
+        hdrs0 += (HttpConst.Headers.COOKIE -> cookieValue)
+      }
+
+      hdrs0
+    }
+
+    // Собрать данные будущего запроса:
+    val adpInst = adp.factory(
+      HttpReqAdp(
+        origReq       = httpReq,
+        reqUrlOpt     = urlOpt2,
+        allReqHeaders = allHeaders,
+      )
+    )
+
+    // Запустить HTTP-запрос с учётом настроек кэширования:
+    val respHolder = HttpCaching.processCaching( adpInst )
+
+    // Если задан sessionTokenSet, то распарсить...
+    httpReq.data.config
+      .sessionCookieSet
+      .fold [IHttpResultHolder[HttpResp]] (respHolder) { sessionTokenSetF =>
+        respHolder.mapResult { httpRespFut =>
+          for (httpResp <- httpRespFut) yield {
+            val setCookies = httpResp.getHeader( HttpConst.Headers.SET_COOKIE )
+            for {
+              oneCookieV <- setCookies.iterator
+              // Довольно убогое решение: фильтровать только длинный кукис. TODO Лучше префикс проверять: s=
+              if oneCookieV.length > 42
+              oneCookie = MHttpCookie( oneCookieV )
+            } {
+              // TODO XXX нужна поддержка cookie discard, когда присылаемый сервером Expires/Max-Age невалиден или value пуст.
+              val optValue = Some( oneCookie )
+              sessionTokenSetF( optValue )
+            }
+            // вернуть исходный resp:
+            httpResp
+          }
         }
-      })( httpReq )
-    })
-      .getOrElse( httpReq )
-
-    adp( httpReq2 )
+      }
   }
-
 
 
   /** Метод быстрой выкачки указанной ссылки.

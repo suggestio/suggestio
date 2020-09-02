@@ -1,6 +1,7 @@
 package io.suggest.lk.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
+import diode.data.Pot
 import diode.{Effect, FastEq}
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.geom.coord.MCoords2di
@@ -9,7 +10,7 @@ import io.suggest.crypto.hash.MHash
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken}
+import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken, MHttpCookie}
 import io.suggest.spa.DAction
 import io.suggest.up.{ITransferProgressInfo, MUploadResp}
 import io.suggest.url.MHostUrl
@@ -170,3 +171,13 @@ sealed trait ICsrfTokenAction extends ILkCommonAction
 /** Сброс токена CSRF. */
 case class CsrfTokenEnsure(force: Boolean = false, onComplete: Option[Effect] = None) extends ICsrfTokenAction
 case class CsrfTokenResp(tstampMs: Long, tryResp: Try[MCsrfToken], reason: CsrfTokenEnsure) extends ICsrfTokenAction
+
+
+
+sealed trait ILoginSessionAction extends ILkCommonAction
+/** Команда к выставлению или удаление токена сессии. */
+case class LoginSessionSet( token: Option[MHttpCookie] ) extends ILoginSessionAction
+/** Результат сохранения токена. */
+case class LoginSessionSaved( res: Pot[MHttpCookie] ) extends ILoginSessionAction
+/** Восстановление состояния токена в память. */
+case object LoginSessionRestore extends ILoginSessionAction

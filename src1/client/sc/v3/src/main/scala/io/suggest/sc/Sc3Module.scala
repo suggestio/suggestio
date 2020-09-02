@@ -2,22 +2,27 @@ package io.suggest.sc
 
 import com.materialui.MuiTheme
 import com.softwaremill.macwire._
+import cordova.plugins.fetch.CdvPluginFetch
 import diode.Effect
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
+import io.suggest.cordova.fetch.CdvFetchHttpResp
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
+import io.suggest.lk.c.CsrfTokenApi
+import io.suggest.lk.m.LoginSessionSet
 import io.suggest.lk.nodes.form.LkNodesModuleBase
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
-import io.suggest.proto.http.model.{HttpClientConfig, IMHttpClientConfig}
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IMHttpClientConfig}
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.c.dia.ScNodesDiaAh
 import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.inx.ReGetIndex
-import io.suggest.sc.u.api.ScAppApiHttp
+import io.suggest.sc.u.api.{ScAppApiHttp, ScUniApiHttpImpl}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.dlapp._
@@ -39,6 +44,9 @@ import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
+import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -163,17 +171,67 @@ object Sc3Module { outer =>
   // sc3
   lazy val scThemes = wire[ScThemes]
   lazy val scRootR = wire[ScRootR]
-  lazy val sc3Api = wire[Sc3ApiXhrImpl]
+  lazy val sc3UniApi = {
+    import ScHttpConfigImpl._
+    wire[ScUniApiHttpImpl]
+  }
+  lazy val csrfTokenApi = {
+    import ScHttpConfigImpl._
+    wire[CsrfTokenApi]
+  }
   lazy val scAppApiHttp = wire[ScAppApiHttp]
 
-
-  trait ScHttpConfigImpl extends IMHttpClientConfig {
-    override def httpClientConfig = () => {
+  object ScHttpConfigImpl {
+    /** Сборка HTTP-конфига для всей выдачи, без CSRF. */
+    def mkRootHttpClientConfigF = { () =>
+      val isCordova = sc3Circuit.platformRW.value.isCordova
       HttpClientConfig(
-        csrfToken = sc3Circuit.csrfTokenRW.value.toOption,
+        baseHeaders = HttpReqData.mkBaseHeaders(
+          xrwValue = {
+            val xrw = HttpConst.Headers.XRequestedWith
+            var hdrValue = xrw.XRW_VALUE
+            if (isCordova)
+              hdrValue += xrw.XRW_APP_SUFFIX
+            hdrValue
+          },
+        ),
+        // Поддержка чтения/записи данных сессии без кукисов:
+        sessionCookieGet = Option.when(isCordova) { () =>
+          sc3Circuit.loginSessionRW.value.cookie.toOption
+        },
+        sessionCookieSet = Option.when(isCordova) { tokenOpt2 =>
+          sc3Circuit.dispatch( LoginSessionSet( tokenOpt2 ) )
+        },
+        // Замена стандартной недоделанной fetch на нативный http-client.
+        // Это ломает возможность отладки запросов через Chrome WebDev.tools, но даёт предсказуемую работу http-клиента,
+        // и главное: поддержку кукисов и произвольных заголовков запроса/ответа, ради чего и есть весь сыр-бор.
+        fetchApi = OptionUtil.maybeOpt(isCordova)(
+          // Try: какие-то трудности на фоне JSGlobalScope при недоступности cordova-API в браузере.
+          Try( CdvPluginFetch.cordovaFetchUnd.toOption )
+            .toOption
+            .flatten
+            .map { cdvFetchF =>
+              // Оборачиваем функцию, чтобы выдавала стандартный Response() с поддержкой clone() и прочего.
+              {(reqInfo: RequestInfo, reqInit: RequestInit) =>
+                cdvFetchF(reqInfo, reqInit)
+                  .toFuture
+                  .map( CdvFetchHttpResp )
+              }
+            }
+        ),
       )
     }
   }
+
+  /** HTTP-конфигурация для самостоятельных под-форм выдачи. */
+  sealed trait ScHttpConfigImpl extends IMHttpClientConfig {
+    override def httpClientConfig = () => {
+      ( // Выставить CSRF-токен для всех под-форм, т.к. там почти все запросы требуют CSRF-токена:
+        (HttpClientConfig.csrfToken set sc3Circuit.csrfTokenRW.value.toOption)
+      )(ScHttpConfigImpl.mkRootHttpClientConfigF())
+    }
+  }
+
 
   // login
   object ScLoginFormModule extends LoginFormModuleBase {

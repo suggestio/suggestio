@@ -122,5 +122,13 @@
     },
     "is_top_level": true,
     "variables": {}
+  },
+  "cordova-plugin-fetch": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/8bhsolutions/cordova-plugin-fetch"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

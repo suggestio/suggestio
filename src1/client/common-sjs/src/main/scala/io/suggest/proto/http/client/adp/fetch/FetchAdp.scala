@@ -1,19 +1,14 @@
 package io.suggest.proto.http.client.adp.fetch
 
-import io.suggest.proto.http.client.adp.HttpClientAdp
-import io.suggest.proto.http.client.cache.HttpCaching
+import io.suggest.proto.http.client.adp.{HttpAdpInstance, HttpClientAdp}
 import io.suggest.proto.http.model._
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.dom2.{AbortController, AbortControllerUtil, AbortSignal}
+import io.suggest.sjs.dom2._
 import org.scalajs.dom.experimental._
 
 import scala.concurrent.Future
-import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.annotation.JSGlobalScope
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -23,112 +18,55 @@ import scala.scalajs.js.annotation.JSGlobalScope
   */
 case object FetchAdp extends HttpClientAdp {
 
-  import HttpClientAdp._
-
   /** Доступно ли указанное API? */
   override def isAvailable: Boolean =
     JsApiUtil.isDefinedSafe( FetchApiStub.fetch )
 
-  /** Запустить http-запрос. */
-  override def apply(httpReq: HttpReq): FetchHttpRespHolder = {
-    // Abort-контроллер, поддержка которого может отсутствовать.
-    val abortCtlUnd = JsOptionUtil.maybeDefined( AbortControllerUtil.isAvailable() ) {
-      new AbortController()
-    }
-    val abortSignalUnd = abortCtlUnd.map(_.signal)
-    val reqInit = HttpFetchUtil.toRequestInit( httpReq, abortSignalUnd )
+  /** Сборка инстанса подготовки к работе под указанный реквест. */
+  override def factory = FetchAdpInstance
 
-    // Ответ сервера - через собственный кэш:
-    val respFut = HttpCaching.processCaching(httpReq, reqInit) { request =>
-      Fetch
-        .fetch( request )
-        .toFuture
-        .map { FetchHttpResp(_, isFromInnerCache = false) }
-        // Любой экзепшен отобразить в текущий формат.
-        .exception2httpEx(httpReq)
-    }
-
-    // TODO Поддержка progress'а (для upload'а).
-    //   Для Fetch API требуются вкручивать костыли по-интереснее, что потребует изменения HttpClient API (upload progress надо будет заявлять при сборке реквеста):
-    //   - https://github.com/whatwg/fetch/issues/21#issuecomment-381425704 (отсылка к спекам, требуется Request поверх ReadableStream в браузере).
-    //   - https://github.com/whatwg/fetch/issues/607#issuecomment-564461907 (download-пример, НЕ для upload)
-    // Поэтому происходит откат XhrAdp при аплоаде с progress-функцией.
-
-    new FetchHttpRespHolder( abortCtlUnd, respFut )
-  }
-
-}
-
-
-/** Статическая утиль для Fetch API. */
-object HttpFetchUtil {
-
-  /** Сборка HttpReq в нативный RequestInit для fetch() или Request(). */
-  def toRequestInit(httpReq: HttpReq, abortSignalUnd: js.UndefOr[AbortSignal] = js.undefined): FetchRequestInit = {
-    val bodyUnd: js.UndefOr[BodyInit] = {
-      val b = httpReq.data.body
-      JsOptionUtil.maybeDefined( b != null ) {
-        b.asInstanceOf[BodyInit]
-      }
-    }
-
-    val reqHeaders: js.UndefOr[HeadersInit] = {
-      val hs = httpReq.data.allHeaders
-
-      JsOptionUtil.maybeDefined( hs.nonEmpty ) {
-        hs.iterator
-          .map { case (k, v) =>
-            js.Array(k, v)
+  /** Обёртка для стандартной fetch-фунции */
+  def _nativeFetchF = {
+    FetchApiStub
+      .fetch
+      .toOption
+      .map { nativeFetchF =>
+        nativeFetchF(_: RequestInfo, _: RequestInit)
+          .toFuture
+          .map { httpResp =>
+            FetchHttpResp(httpResp, isFromInnerCache = false)
           }
-          .toJSArray: HeadersInit
       }
-    }
-
-    val httpMethod = httpReq
-      .method
-      .toUpperCase()
-      .asInstanceOf[HttpMethod]
-
-    new FetchRequestInit {
-      override val method       = httpMethod
-      override val headers      = reqHeaders
-      override val body         = bodyUnd
-      // TODO Передавать в реквесте? cors - дефолт.
-      override val mode         = RequestMode.cors
-      override val credentials  = RequestCredentials.`same-origin`
-      val signal                = abortSignalUnd
-    }
   }
 
 }
 
 
-/** Замена RequestInit из-за неудобных var внутри. */
-trait FetchRequestInit extends js.Object {
-  val method            : js.UndefOr[HttpMethod]          = js.undefined
-  val headers           : js.UndefOr[HeadersInit]         = js.undefined
-  val body              : js.UndefOr[BodyInit]            = js.undefined
-  val referrer          : js.UndefOr[String]              = js.undefined
-  val referrerPolicy    : js.UndefOr[ReferrerPolicy]      = js.undefined
-  val mode              : js.UndefOr[RequestMode]         = js.undefined
-  val credentials       : js.UndefOr[RequestCredentials]  = js.undefined
-  val requestCache      : js.UndefOr[RequestCache]        = js.undefined
-  val requestRedirect   : js.UndefOr[RequestRedirect]     = js.undefined
-  val integrity         : js.UndefOr[String]              = js.undefined
-  val window            : js.UndefOr[Null]                = js.undefined
-}
-object FetchRequestInit {
-  implicit class FriOpsExt(val fri: FetchRequestInit) extends AnyVal {
-    def toRequestInit: RequestInit = fri.asInstanceOf[RequestInit]
+/** Контекст обработки для одного реквеста через fetch API. */
+case class FetchAdpInstance( override val httpReq: HttpReqAdp ) extends HttpAdpInstance {
+
+  import HttpClientAdp._
+
+  val abortCtl = Try( new AbortController() )
+    .toOption
+
+  def abortSignal = abortCtl.map(_.signal)
+
+  override lazy val toRequestInit: RequestInit =
+    FetchUtil.toRequestInit( httpReq, abortSignal ).toDomRequestInit
+
+  override def doRequest(requestUrl: String): Future[HttpResp] = {
+    httpReq.origReq.data.config.fetchApi
+      .orElse( FetchAdp._nativeFetchF )
+      // .get.apply() - тут принудительно раскрывается Option.
+      .get( requestUrl, toRequestInit )
+      // Любой экзепшен отобразить в текущий формат.
+      .exception2httpEx( httpReq.origReq )
   }
-}
 
+  override def toRespHolder(respFut: Future[HttpResp]): IHttpRespHolder =
+    FetchHttpRespHolder( abortCtl, respFut )
 
-/** Поддержка Feature Detection на наличи Fetch API. */
-@js.native
-@JSGlobalScope
-object FetchApiStub extends js.Object {
-  val fetch: js.UndefOr[js.Function] = js.native
 }
 
 
@@ -137,8 +75,8 @@ object FetchApiStub extends js.Object {
   * @param resultFut Фьючерс ответа.
   */
 case class FetchHttpRespHolder(
-                                abortCtlUnd          : js.UndefOr[AbortController],
-                                override val resultFut : Future[FetchHttpResp]
+                                abortCtlUnd             : Option[AbortController],
+                                override val resultFut  : Future[HttpResp],
                               )
   extends IHttpRespHolder
 {
@@ -161,13 +99,76 @@ case class FetchHttpResp(
 {
   override def status = resp.status
   override def statusText = resp.statusText
-  override def getHeader(headerName: String): Option[String] = {
+  override def getHeader(headerName: String): Seq[String] = {
     resp.headers
-      .get( headerName )
-      .toOptionNullable
+      .getAllUnd
+      .fold [Seq[String]] {
+        // Фунция getAll() недоступна в данном браузере.
+        Option(
+          resp.headers
+            .get( headerName )
+            .orNull
+        )
+          .toList
+      } { _ =>
+        resp.headers
+          .getAll(headerName)
+          .toSeq
+      }
   }
+
+  // Тут forEach O(n) с пожиранием ресурсов из-за непонятков с API cordova-fetch.
+  private lazy val _headersForEached: List[(String, String)] = {
+    Try {
+      var acc = List.empty[(String, String)]
+
+      // Если cordova-plugin-fetch, то для прохода списка годится только forEach().
+      // Из-за зоопарка реализаций, get()/getAll() и не всегда доступного iterator'а, тут используем forEach:
+      resp
+        .headers
+        .forEach { (value, name) =>
+          val kv = name -> value
+          acc ::= kv
+        }
+
+      acc
+    }
+      .getOrElse( Nil )
+  }
+
+  override def headers: IterableOnce[(String, String)] = {
+    Try {
+      for {
+        // .iterator: будет exception в cordova-fetch, т.к. там нет итератора.
+        hdrArr <- resp.headers.iterator
+        k = hdrArr.shift()
+        v <- hdrArr.iterator
+      } yield {
+        k -> v
+      }
+    }
+      // Попытаться залезть в приватное поле headers.map:
+      .orElse {
+        Try {
+          resp.headers
+            ._cdvFetchHeadersMap
+            .get
+            .iterator
+            .flatMap { case (k, vs) =>
+              vs.iterator
+                .map(v => k -> v)
+            }
+        }
+      }
+      // Попытаться извлечь заголовке через forEach().
+      .getOrElse( _headersForEached )
+  }
+
   override def bodyUsed = resp.bodyUsed
   override def text() = resp.text().toFuture
   override def arrayBuffer() = resp.arrayBuffer().toFuture
   override def blob() = resp.blob().toFuture
+
+  override def toDomResponse() = Some(resp)
+
 }

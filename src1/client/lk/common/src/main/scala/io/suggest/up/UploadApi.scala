@@ -105,7 +105,12 @@ class UploadApiHttp extends IUploadApi with Log {
               body = formDataOpt.orNull,
               onProgress = formDataOpt.flatMap(_ => onProgress),
               // Убрать X-Requested-With, т.к. CORS по дефолту запрещает этот заголовок.
-              baseHeaders = Map.empty,
+              config = HttpClientConfig(
+                baseHeaders = Map.empty,
+              ),
+              // Все данные для data-сервера передаются в UPLOAD-ссылке или напрямую внутри кластера.
+              // Подразумевается, что data-сервер всегда на отдельном домене/поддомене, где куки недоступны даже в браузере.
+              credentials = Some(false),
             )
           )
         )

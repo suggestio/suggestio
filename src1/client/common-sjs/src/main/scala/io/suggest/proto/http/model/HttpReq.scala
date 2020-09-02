@@ -51,3 +51,4 @@ case class HttpReq(
                     url        : String,
                     data       : HttpReqData = HttpReqData.empty,
                   )
+

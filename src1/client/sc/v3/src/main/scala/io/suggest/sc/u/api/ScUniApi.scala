@@ -95,7 +95,11 @@ trait IScUniApi {
 
 
 /** Реализация поддержки Sc UniApi поверх HTTP. */
-trait ScUniApiHttpImpl extends IScUniApi {
+final class ScUniApiHttpImpl(
+                              httpClientConfig: () => HttpClientConfig,
+                            )
+  extends IScUniApi
+{
 
   override def pubApi(scQs: MScQs): Future[MSc3Resp] = {
     // Сборка реквеста. В API выдачи все реквесты считают кэшируемыми.
@@ -113,8 +117,12 @@ trait ScUniApiHttpImpl extends IScUniApi {
             } yield {
               val route = ScUniApi.scQs2Route(scQs4Caching)
               HttpClient.route2url(route)
-            }
-          )
+            },
+          ),
+          // Тут необычность: кэш и куки живут одновременно.
+          // index-запросы проверяют залогиненность юзера, и ответ сервера зависит от залогиненности, что нарушает кэширование.
+          // Остальные запросы склонны обновлять сессию юзера, что также нарушает кэширование.
+          config = httpClientConfig(),
         )
       )
     )

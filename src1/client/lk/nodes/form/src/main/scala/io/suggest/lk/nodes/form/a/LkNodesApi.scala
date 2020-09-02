@@ -111,8 +111,6 @@ final class LkNodesApiHttpImpl(
   extends ILkNodesApi
 {
 
-  private def _hcConf = Some( diConfig.httpClientConfig() )
-
   override def subTree(onNodeRk: Option[RcvrKey] = None, adId: Option[String]): Future[MLknNodeResp] = {
     HttpClient.execute(
       HttpReq.routed(
@@ -124,7 +122,7 @@ final class LkNodesApiHttpImpl(
         ),
         data = HttpReqData(
           headers = HttpReqData.headersJsonAccept,
-          config  = _hcConf,
+          config  = diConfig.httpClientConfig(),
         ),
       )
     )
@@ -140,7 +138,7 @@ final class LkNodesApiHttpImpl(
       data = HttpReqData(
         body    = Json.toJson(data).toString(),
         headers = HttpReqData.headersJsonSendAccept,
-        config  = _hcConf,
+        config  = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute( req )
@@ -155,7 +153,7 @@ final class LkNodesApiHttpImpl(
       route = routes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled),
       data  = HttpReqData(
         headers = HttpReqData.headersJsonAccept,
-        config = _hcConf,
+        config = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute( req )
@@ -170,7 +168,7 @@ final class LkNodesApiHttpImpl(
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.deleteNode(nodeId),
       data = HttpReqData(
-        config = _hcConf,
+        config = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute( req )
@@ -188,7 +186,7 @@ final class LkNodesApiHttpImpl(
       data = HttpReqData(
         body    = Json.toJson(data).toString(),
         headers = HttpReqData.headersJsonSendAccept,
-        config  = _hcConf,
+        config  = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute(req)
@@ -207,7 +205,7 @@ final class LkNodesApiHttpImpl(
       ),
       data = HttpReqData(
         headers = HttpReqData.headersJsonAccept,
-        config  = _hcConf,
+        config  = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute(req)
@@ -225,7 +223,7 @@ final class LkNodesApiHttpImpl(
       data = HttpReqData(
         body    = Json.toJson(mode).toString(),
         headers = HttpReqData.headersJsonSendAccept,
-        config  = _hcConf,
+        config  = diConfig.httpClientConfig(),
       )
     )
     HttpClient.execute(req)
@@ -239,7 +237,7 @@ final class LkNodesApiHttpImpl(
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode)),
       data = HttpReqData(
-        config = _hcConf,
+        config = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute( req )
@@ -252,7 +250,7 @@ final class LkNodesApiHttpImpl(
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.setAlwaysOutlined(adId, isAlwaysOutlined, RcvrKey.rcvrKey2urlPath(onNode)),
       data = HttpReqData(
-        config = _hcConf,
+        config = diConfig.httpClientConfig(),
       ),
     )
     HttpClient.execute( req )

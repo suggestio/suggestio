@@ -84,8 +84,6 @@ class IdentApiHttp(
   with Log
 {
 
-  @inline implicit def httpClientConfig = Some( lfDiConf.httpClientConfig() )
-
   private def _timeoutMsSome = Some( 10.seconds.toMillis.toInt )
 
   override def epw2LoginSubmit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String] = {
@@ -108,7 +106,7 @@ class IdentApiHttp(
               .toJson( loginReq )
               .toString(),
             timeoutMs = _timeoutMsSome,
-            config = httpClientConfig,
+            config = lfDiConf.httpClientConfig(),
           )
         )
       )
@@ -117,7 +115,9 @@ class IdentApiHttp(
 
       // Сервер может ошибочно прислать что-то неожиданное вместо редиректа. Сверяем Content-Type ответа:
       if {
-        val respCt = resp.getHeader( HttpConst.Headers.CONTENT_TYPE )
+        val respCt = resp
+          .getHeader( HttpConst.Headers.CONTENT_TYPE )
+          .headOption
         val isTextResp = respCt.exists(_ startsWith textCt)
         if (!isTextResp)
           logger.error( ErrorMsgs.XHR_UNEXPECTED_RESP, msg = (respCt.orNull, textCt, resp.status, route.method, route.url) )
@@ -148,7 +148,7 @@ class IdentApiHttp(
             .toJson( data )
             .toString(),
           timeoutMs = _timeoutMsSome,
-          config = httpClientConfig,
+          config = lfDiConf.httpClientConfig(),
         )
       )
     )
@@ -179,7 +179,7 @@ class IdentApiHttp(
           .toJson( form )
           .toString(),
         timeoutMs = _timeoutMsSome,
-        config = httpClientConfig,
+        config = lfDiConf.httpClientConfig(),
       )
     )
     HttpClient

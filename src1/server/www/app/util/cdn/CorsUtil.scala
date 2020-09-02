@@ -46,7 +46,6 @@ final class CorsUtil @Inject() (
   }
 
   def allowHeaders = {
-    // Эти хидеры нужны для boopickle-общения через CDN. Т.е. бинарь подразумевает эти необычные хидеры:
     val hdrs0 = Set.empty + CONTENT_TYPE + ACCEPT
     val v = configuration.getOptional[Seq[String]]("cors.allow.headers")
       .fold( hdrs0 ) { hdrs0 ++ _ }

@@ -47,7 +47,11 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvr
           rewriteUrl = Some( HttpClient.route2url(__mkRoute(js.undefined)) ),
         ),
         // Запретить X-Requested-With, т.к. тут CORS через CDN.
-        baseHeaders = Map.empty,
+        config = HttpClientConfig(
+          baseHeaders = Map.empty,
+        ),
+        // Кукисы не нужны, т.к. запрос обычно идёт через CDN и кэшируется. Кэширование стареющих кукисов может вызывать некоторые сложности.
+        credentials = Some(false),
       )
     )
 

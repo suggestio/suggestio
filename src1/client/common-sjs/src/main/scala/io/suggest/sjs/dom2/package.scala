@@ -1,6 +1,7 @@
 package io.suggest.sjs
 
 import org.scalajs.dom
+import org.scalajs.dom.experimental.Headers
 import org.scalajs.dom.raw
 
 import scala.scalajs.js
@@ -30,5 +31,8 @@ package object dom2 {
 
   @inline implicit def netInfoNavigatorExt( navigator: dom.Navigator ): Dom2WndNav_Connection =
     navigator.asInstanceOf[Dom2WndNav_Connection]
+
+  @inline implicit def fetchHeadersExt(headers: Headers ): FetchHeaders =
+    headers.asInstanceOf[FetchHeaders]
 
 }

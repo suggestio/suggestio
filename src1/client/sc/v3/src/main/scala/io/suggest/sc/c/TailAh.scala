@@ -613,9 +613,12 @@ class TailAh(
         // Запустить экшен управления диалогом.
         fxsAcc ::= InitFirstRunWz( m.mainScreen.firstRunOpen ).toEffectPure
 
-      // Диалог логина открыт?
-      if (currMainScreen.login !=* m.mainScreen.login)
-        fxsAcc ::= ScLoginFormChange( m.mainScreen.login ).toEffectPure
+      // Диалог логина открыт? Открыть, если требуется.
+      // Надо посмотреть, залогинен ли юзер сейчас или нет, и в контексте этого разбирать новое значение.
+      val login2 = m.mainScreen.login
+        .filter(_ => !v0.index.isLoggedIn)
+      if (currMainScreen.login !=* login2)
+        fxsAcc ::= ScLoginFormChange( login2 ).toEffectPure
 
       // Обновлённое состояние, которое может быть и не обновлялось:
       val v2Opt = modsAcc

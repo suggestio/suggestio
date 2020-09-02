@@ -64,7 +64,7 @@ object LongTtl extends Ttl {
   val SESSION_VALUE = "l"
 
   override val ttlSeconds: Long = {
-    7.days.toSeconds
+    30.days.toSeconds
   }
 
   override def sessionValue: Option[String] = Some(SESSION_VALUE)

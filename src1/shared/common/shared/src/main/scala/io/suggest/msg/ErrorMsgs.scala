@@ -251,4 +251,6 @@ object ErrorMsgs {
 
   def JS_COMPONENT_CHILDREN_UNEXPECTED = "Js.component.children.unexpected"
 
+  def HTTP_HEADER_PROBLEM = "Http.header.problem"
+
 }

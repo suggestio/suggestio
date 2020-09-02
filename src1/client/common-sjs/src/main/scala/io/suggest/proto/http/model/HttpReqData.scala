@@ -59,14 +59,26 @@ object HttpReqData {
       (H.ACCEPT       -> acceptMime)
   }
 
-  /** Дефолтовые служебные хидеры. */
-  def baseHeadersDflt: Map[String, String] =
-    Map.empty + (HttpConst.Headers.X_REQUESTED_WITH -> HttpConst.Headers.X_REQUESTED_WITH_VALUE)
+  /** Дефолтовые служебные хидеры.
+    *
+    * @param xrwValue Значение для X-Request-With.
+    * @return Карта хидеров.
+    */
+  def mkBaseHeaders(xrwValue: String = HttpConst.Headers.XRequestedWith.XRW_VALUE): Map[String, String] =
+    Map.empty + (HttpConst.Headers.XRequestedWith.XRW_NAME -> xrwValue)
 
 
-  implicit final class HttpReqDataOpsExt( private val hrd: HttpReqData ) extends AnyVal {
+  implicit final class HttpReqDataOpsExt( private val reqData: HttpReqData ) extends AnyVal {
 
-    def allHeaders = hrd.baseHeaders ++ hrd.headers
+    /** Собрать все заголовки в одну кучу. */
+    def allHeaders: Map[String, String] = {
+      if (reqData.config.baseHeaders.isEmpty)
+        reqData.headers
+      else
+        reqData.config.baseHeaders ++ reqData.headers
+
+      // config.cookies плюсовать здесь нельзя, т.к. Cookie входит в список prohibited headers.
+    }
 
   }
 
@@ -82,7 +94,11 @@ object HttpReqData {
   * @param timeoutMs Таймаут. К данным реквеста не относится, но он тут, т.к. в XHR он задаётся до execute().
   * @param respType Тип возвращаемого ответа (для XHR).
   * @param cache Параметры кэширования.
-  * @param onProgress Дёргать функцию по мере прогресса. $1 - 0..100
+  * @param onProgress  Дёргать функцию по мере прогресса. $1 - 0..100
+  * @param credentials Отправлять ли кукисы и прочее при Cross-site запросах?
+  *                    None - по умолчанию (same-origin).
+  *                    [[https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials]]
+  * @param config Проброс конфига из разных уровней, где определяются различные константы работы.
   */
 case class HttpReqData(
                         headers       : Map[String, String]   = Map.empty,
@@ -91,18 +107,10 @@ case class HttpReqData(
                         respType      : HttpRespType          = HttpRespTypes.Default,
                         cache         : MHttpCacheInfo        = MHttpCacheInfo.default,
                         onProgress    : Option[ITransferProgressInfo => Unit] = None,
-                        config        : Option[HttpClientConfig] = None,
-                        baseHeaders   : Map[String, String]   = HttpReqData.baseHeadersDflt,
+                        config        : HttpClientConfig      = HttpClientConfig.empty,
+                        credentials   : Option[Boolean]       = None,
                       ) {
 
   def timeoutMsOr0 = timeoutMs getOrElse 0
-
-  /** Whether or not cross-site Access-Control requests should be made using credentials such as cookies,
-    * authorization headers or TLS client certificates.
-    * Also used to indicate when cookies are to be ignored in the response.
-    *
-    * @see [[https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials]]
-    */
-  def xhrWithCredentialsCrossSite: Boolean = false
 
 }

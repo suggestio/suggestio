@@ -187,11 +187,12 @@ final class StatUtil @Inject()(
         .get( HeaderNames.X_REQUESTED_WITH )
         .fold [List[MUaType]] (Browser :: Nil) { xRqWith =>
           val acc0 = App :: Nil
-          if (xRqWith.endsWith(".appsuggest") || xRqWith.endsWith(".Sio2m")) {
+          if (xRqWith endsWith HttpConst.Headers.XRequestedWith.XRW_APP_SUFFIX) {
             CordovaApp :: acc0
           } else {
-            if (xRqWith !=* HttpConst.Headers.X_REQUESTED_WITH_VALUE)
-              LOGGER.debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+            if (!(xRqWith startsWith HttpConst.Headers.XRequestedWith.XRW_VALUE))
+              LOGGER.debug(s"uaTypes(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+
             acc0
           }
         }

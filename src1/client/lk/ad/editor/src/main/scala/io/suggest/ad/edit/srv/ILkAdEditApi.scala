@@ -6,7 +6,6 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.jd.MJdData
 import io.suggest.proto.http.model._
 import io.suggest.routes.{PlayRoute, routes}
-import io.suggest.up.IUploadApi
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -39,7 +38,6 @@ trait ILkAdEditApi {
 /** Реализация [[ILkAdEditApi]] поверх HTTP/XHR. */
 class LkAdEditApiHttp(
                        confRO    : ModelRO[MAdEditFormConf],
-                       uploadApi : IUploadApi
                      )
   extends ILkAdEditApi
 {

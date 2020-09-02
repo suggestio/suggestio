@@ -7,7 +7,7 @@ import io.suggest.lk.m.{CsrfTokenEnsure, CsrfTokenResp}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{HttpReq, HttpReqData, MCsrfToken}
+import io.suggest.proto.http.model.{HttpClientConfig, HttpReq, HttpReqData, MCsrfToken}
 import io.suggest.routes.routes
 import io.suggest.spa.DiodeUtil.Implicits._
 
@@ -72,7 +72,11 @@ class CsrfTokenAh[M](
 trait ICsrfTokenApi {
   def csrfToken(): Future[MCsrfToken]
 }
-class CsrfTokenApi extends ICsrfTokenApi {
+final class CsrfTokenApi(
+                          httpClientConfig: () => HttpClientConfig,
+                        )
+  extends ICsrfTokenApi
+{
 
   override def csrfToken(): Future[MCsrfToken] = {
     HttpClient.execute(
@@ -80,6 +84,7 @@ class CsrfTokenApi extends ICsrfTokenApi {
         route = routes.controllers.Static.csrfToken(),
         data  = HttpReqData(
           headers = HttpReqData.headersJsonAccept,
+          config  = httpClientConfig(),
         ),
       )
     )

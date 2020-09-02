@@ -8,6 +8,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import org.scalajs.dom.Blob
+import org.scalajs.dom.experimental.Response
 import play.api.libs.json.{Json, Reads}
 
 import scala.concurrent.Future
@@ -34,9 +35,10 @@ trait HttpResp {
   /** Ответ из кэша? */
   def isFromInnerCache: Boolean
 
-  /** Доступ к заголовкам ответа. */
-  def getHeader(headerName: String): Option[String]
+  /** Быстрый доступ к заголовкам ответа без сборки scala-карты. */
+  def getHeader(headerName: String): Seq[String]
 
+  def headers: IterableOnce[(String, String)]
 
   // Следует рассматривать как одноразовые методы:
 
@@ -52,17 +54,26 @@ trait HttpResp {
   /** Извлечь тело ответа в виде блоба. */
   def blob(): Future[Blob]
 
+  override final def toString = s"<${getClass.getSimpleName}: $status $statusText || ${headers.iterator.mkString(", ")}>"
+
+  /** Вернуть Response в формате DOM Fetch.
+    * Это нужно для взаимодействия с системным кэшем запросов. */
+  def toDomResponse(): Option[Response]
+
 }
 
 trait DummyHttpResp extends HttpResp {
   override def isFromInnerCache = false
-  override def getHeader(headerName: String) = None
+  override def getHeader(headerName: String) = Nil
+  override def headers = Nil
 
   private def _unsupported = throw new UnsupportedOperationException
   override def bodyUsed = true
   override def text() = _unsupported
   override def arrayBuffer() = _unsupported
   override def blob() = _unsupported
+  // Поддержка системного кэширования точно не нужна для инстансов-заглушек.
+  override def toDomResponse() = None
 }
 
 

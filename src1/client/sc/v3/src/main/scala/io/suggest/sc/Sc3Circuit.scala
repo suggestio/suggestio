@@ -48,7 +48,7 @@ import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.sc.u.Sc3ConfUtil
-import io.suggest.sc.u.api.IScAppApi
+import io.suggest.sc.u.api.{IScAppApi, IScUniApi}
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -59,7 +59,8 @@ import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
-import io.suggest.lk.c.{CsrfTokenAh, CsrfTokenApi}
+import io.suggest.lk.c.{CsrfTokenAh, CsrfTokenApi, ICsrfTokenApi, LoginSessionAh}
+import io.suggest.lk.m.LoginSessionRestore
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
@@ -87,8 +88,9 @@ class Sc3Circuit(
                   getLoginFormCircuit       : () => LoginFormCircuit,
                   getNodesFormCircuit       : () => LkNodesFormCircuit,
                   // Автоматические DI-аргументы:
-                  sc3Api                    : ISc3Api,
+                  sc3UniApi                 : IScUniApi,
                   scAppApi                  : IScAppApi,
+                  csrfTokenApi              : ICsrfTokenApi,
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -316,6 +318,7 @@ class Sc3Circuit(
   val loggedInRO                  = indexRW.zoom(_.isLoggedIn)
 
   private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
+  private[sc] lazy val loginSessionRW = mkLensZoomRW( internalsRW, MScInternals.login )
 
 
   // notifications
@@ -365,7 +368,7 @@ class Sc3Circuit(
 
   private val geoTabAh = new GeoTabAh(
     modelRW         = geoTabRW,
-    api             = sc3Api,
+    api             = sc3UniApi,
     scRootRO        = rootRW,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
@@ -373,7 +376,7 @@ class Sc3Circuit(
   )
 
   private val indexAh = new IndexAh(
-    api     = sc3Api,
+    api     = sc3UniApi,
     modelRW = indexRW,
     rootRO  = rootRW,
   )
@@ -389,7 +392,7 @@ class Sc3Circuit(
   }
 
   private val gridAh = new GridAh(
-    api           = sc3Api,
+    api           = sc3UniApi,
     scRootRO      = rootRW,
     screenRO      = screenRO,
     modelRW       = gridRW
@@ -603,7 +606,7 @@ class Sc3Circuit(
 
   private val csrfTokenAh = new CsrfTokenAh(
     modelRW       = csrfTokenRW,
-    csrfTokenApi  = new CsrfTokenApi,
+    csrfTokenApi  = csrfTokenApi,
   )
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
@@ -618,6 +621,13 @@ class Sc3Circuit(
     acc ::= scNodesDiaAh
     acc ::= scLoginDiaAh
     acc ::= scConfAh
+
+    if (CordovaConstants.isCordovaPlatform()) {
+      acc ::= new LoginSessionAh(
+        modelRW = loginSessionRW,
+      )
+    }
+
     acc ::= csrfTokenAh
 
     for (ah <- daemonBgModeAh) {
@@ -760,6 +770,12 @@ class Sc3Circuit(
   // Отработать инициализацию js-роутера в самом начале конструктора.
   // По факту, инициализация уже наверное запущена в main(), но тут ещё и подписка на события...
   {
+    // Сразу восстановить данные логина из БД:
+    Future {
+      if (platformRW.value.isCordova)
+        this.runEffectAction( LoginSessionRestore )
+    }
+
     // Немедленный запуск инициализации/загрузки
     Try {
       val needGeoLoc = routerState.canonicalRoute

@@ -104,7 +104,7 @@ case class LkNodesFormCircuit(
   }
 
   addProcessor( DoNothingActionProcessor[MLkNodesRoot] )
-  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MLkNodesRoot] )
+  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MLkNodesRoot] )
 
 }
 

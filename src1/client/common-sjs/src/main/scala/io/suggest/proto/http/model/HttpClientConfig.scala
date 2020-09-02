@@ -1,6 +1,10 @@
 package io.suggest.proto.http.model
 
 import japgolly.univeq._
+import monocle.macros.GenLens
+import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -12,13 +16,27 @@ object HttpClientConfig {
 
   def empty = apply()
 
-  @inline implicit def univEq: UnivEq[HttpClientConfig] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[HttpClientConfig] = UnivEq.force
+
+  def csrfToken = GenLens[HttpClientConfig]( _.csrfToken )
 
 }
 
 
+/** Контейнер доп.конфигурации, падающей откуда-то с верхних уровней.
+  *
+  * @param csrfToken Данные CSRF для сборки ссылки.
+  * @param baseHeaders Доп.заголовки http.
+  * @param fetchApi Переопределение fetch()-функции, вместо стандартной.
+  *                 cordova-plugin-fetch содержит более эффективную альтернативу webkit/blink-реализации fetch(),
+  *                 которая режет заголовки ответа, местами недореализована.
+  */
 case class HttpClientConfig(
-                             csrfToken      : Option[MCsrfToken]        = None,
+                             csrfToken          : Option[MCsrfToken]            = None,
+                             baseHeaders        : Map[String, String]           = HttpReqData.mkBaseHeaders(),
+                             sessionCookieGet   : Option[() => Option[MHttpCookie]]  = None,
+                             sessionCookieSet   : Option[Option[MHttpCookie] => Unit] = None,
+                             fetchApi           : Option[(RequestInfo, RequestInit) => Future[HttpResp]] = None,
                            )
 
 trait IMHttpClientConfig {

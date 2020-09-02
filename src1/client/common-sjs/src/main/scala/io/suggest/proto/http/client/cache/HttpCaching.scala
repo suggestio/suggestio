@@ -2,15 +2,17 @@ package io.suggest.proto.http.client.cache
 
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.HttpConst
-import io.suggest.proto.http.client.adp.fetch.{FetchHttpResp, FetchRequestInit}
-import io.suggest.proto.http.model.{HttpReq, MHttpCaches}
+import io.suggest.proto.http.client.adp.fetch.FetchHttpResp
+import io.suggest.proto.http.model.{HttpResp, IHttpRespHolder, MHttpCaches}
 import io.suggest.log.Log
+import io.suggest.proto.http.client.adp.HttpAdpInstance
 import io.suggest.sjs.common.async.AsyncUtil._
 import io.suggest.sjs.dom2.DomQuick
-import org.scalajs.dom.experimental.{Request, Response}
+import org.scalajs.dom.experimental.Request
 
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -27,10 +29,10 @@ object HttpCaching extends Log {
   // Отложенный - на случай отсутствия данных на старте.
   // TODO Надо чистить кэш после завершения *уже*успешных* запросов. Т.е. только в онлайне. И далее 1-2-3 раза сутки по таймеру до закрытия вкладки.
   Future {
-    if (MHttpCaches.isAvailable)
+    if ( MHttpCaches.isAvailable() )
       DomQuick.setTimeout(15.seconds.toMillis.toInt) { () =>
         // Повторно проверяем кэш, т.к. он мог отвалится за это время, т.к. после запуска были запросы-ответы.
-        if (MHttpCaches.isAvailable)
+        if ( MHttpCaches.isAvailable() )
           MHttpCaches.gc()
       }
   }
@@ -38,30 +40,26 @@ object HttpCaching extends Log {
 
   /** Высокоуровневое API для организации кэширования на стороне JS.
     *
-    * @param httpReq Исходный http-реквест.
-    * @param requestInit Скомпиленные данные будущего реквеста.
-    * @param mkRequest Функция запуска реквеста на исполнение. Обычно просто вызов fetch().
-    *                  Запускаемый реквест передаётся первым аргументом.
-    * @return
+    * @param httpAdpInst Инстанс от http-адаптера.
+    * @return RespHolder.
     */
-  def processCaching(httpReq: HttpReq, requestInit: FetchRequestInit)
-                    (mkRequest: (Request) => Future[FetchHttpResp]): Future[FetchHttpResp] = {
-
+  def processCaching(httpAdpInst: HttpAdpInstance): IHttpRespHolder = {
     // Запуск исходного реквеста.
-    lazy val __networkRespFut: Future[FetchHttpResp] = {
-      val request = new Request( httpReq.url, requestInit.toRequestInit )
-      mkRequest(request)
+    lazy val __networkRespFut: Future[HttpResp] =
+      httpAdpInst.doRequest( httpAdpInst.httpReq.reqUrl )
+
+    lazy val cachedReq: Request = {
+      val cachedUrl = httpAdpInst.httpReq.origReq.data.cache.rewriteUrl
+        .getOrElse( httpAdpInst.httpReq.origReq.url )
+      // Ключ в браузерном кэше - это готовый реквест:
+      new Request( cachedUrl, httpAdpInst.toRequestInit )
     }
 
-    lazy val cachedReq = {
-      val cachedUrl = httpReq.data.cache.rewriteUrl getOrElse httpReq.url
-      // Ключ - это реквест.
-      new Request( cachedUrl, requestInit.toRequestInit )
-    }
+    lazy val isCacheAvailable = MHttpCaches.isAvailable()
 
     // Запуск поиска в кэше.
     lazy val __cachedRespOptFut: Future[Option[FetchHttpResp]] = {
-      if (MHttpCaches.isAvailable) {
+      if ( isCacheAvailable ) {
         for {
           respOpt <- MHttpCaches.findMatching( cachedReq )
         } yield {
@@ -74,36 +72,38 @@ object HttpCaching extends Log {
       }
     }
 
-    // Сохранить в кэш. Может вернуть экзепшен, когда статус ответа слишком неожиданный.
-    def __saveToCacheFut(resp: Response): Future[_] = {
-      if ( MHttpCaches.isAvailable ) {
-        val S = HttpConst.Status
-        if (resp.status < S.OK  ||  resp.status >= S.MULTIPLE_CHOICES) {
-          // Нельзя кэшировать ошибочные ответы, редиректы и прочее.
-          Future.failed( new NoSuchElementException(resp.status.toString) )
-        } else {
-          try {
-            val cacheKey = MHttpCaches.cacheKey()
-            val fut = MHttpCaches
-              .open(cacheKey)
-              .flatMap(_.put(cachedReq, resp))
-            // Логгирование, т.к. результат этой функции обычно дропается.
-            for (ex <- fut.failed)
-              logger.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
-            fut
-          } catch {
-            case ex: Throwable =>
-              logger.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
-              Future.failed(ex)
-          }
+    /** Сохранить в кэш. Может вернуть экзепшен, когда статус ответа слишком неожиданный
+      *
+      * @param netResp Полученный от сервера ответ.
+      * @return Опциональный фьючерс.
+      */
+    def __saveToCacheFut(netResp: HttpResp): Option[Future[Unit]] =
+      for {
+        respDirty <- netResp.toDomResponse()
+        statuses = HttpConst.Status
+        if isCacheAvailable &&
+           // Нельзя кэшировать ошибочные ответы, редиректы и прочее.
+           respDirty.status >= statuses.OK &&
+           respDirty.status < statuses.MULTIPLE_CHOICES
+        resp = respDirty.clone()
+        cacheKey = MHttpCaches.cacheKey()
+        openCacheFut <- {
+          val tryOpenCacheFut = Try( MHttpCaches.open(cacheKey) )
+          for (ex <- tryOpenCacheFut.failed)
+            logger.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
+          tryOpenCacheFut.toOption
         }
-      } else {
-        Future.failed( new NoSuchElementException )
+      } yield {
+        val saveCacheFut = openCacheFut
+          .flatMap(_.put(cachedReq, resp))
+        // Логгирование, т.к. результат этой функции обычно дропается.
+        for (ex <- saveCacheFut.failed)
+          logger.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
+        saveCacheFut
       }
-    }
 
     // Разобраться, надо ли кэшировать что-либо.
-    httpReq.data.cache.policy match {
+    val respFut = httpAdpInst.httpReq.origReq.data.cache.policy match {
 
       case MHttpCachingPolicies.NetworkOnly =>
         __networkRespFut
@@ -111,49 +111,38 @@ object HttpCaching extends Log {
 
       case MHttpCachingPolicies.NetworkFirst =>
         val netRespFut = __networkRespFut
-        if (MHttpCaches.isAvailable) {
-          netRespFut
-            .map { netResp =>
-              val resp4cache = netResp.resp.clone()
-              Future {
-                __saveToCacheFut(resp4cache)
-              }
-              netResp
+        if ( isCacheAvailable ) {
+          // Вернуть ответ из кэша, если ошибка:
+          val resFut = netRespFut.recoverWith { case ex: Throwable =>
+            __cachedRespOptFut.flatMap {
+              case Some(resp) => Future.successful(resp)
+              case None       => Future.failed(ex)
             }
-            .recoverWith { case ex: Throwable =>
-              __cachedRespOptFut.flatMap {
-                case Some(resp) => Future.successful(resp)
-                case None       => Future.failed(ex)
-              }
-            }
+          }
+
+          // В фоне запустить запись респонса в кэш:
+          netRespFut foreach __saveToCacheFut
+
+          resFut
         } else {
           netRespFut
         }
 
 
       case MHttpCachingPolicies.Fastest =>
-        if (MHttpCaches.isAvailable) {
+        if ( isCacheAvailable ) {
+          val netResFut = __networkRespFut
           val cachedResOptFut = __cachedRespOptFut
-
-          val p = Promise[FetchHttpResp]()
-
-          val netResFut = for (netRes <- __networkRespFut) yield {
-            // Клонировать запрос для сохранения в кэш:
-            val respForCaching = if (p.isCompleted) netRes.resp
-                                 else netRes.resp.clone()
-            // Отправить ответ в кэш:
-            Future {
-              __saveToCacheFut( respForCaching )
-            }
-            netRes
-          }
+          val p = Promise[HttpResp]()
 
           for (cachedResOpt <- cachedResOptFut) {
-            if (!p.isCompleted)
-              for (cachedRes <- cachedResOpt)
-                p.success( cachedRes )
+            for (cachedRes <- cachedResOpt)
+              p.trySuccess( cachedRes )
           }
-          p.completeWith( netResFut )
+          p.tryCompleteWith( netResFut )
+
+          // Закэшировать ответ сервера:
+          __networkRespFut foreach __saveToCacheFut
 
           p.future
 
@@ -163,17 +152,13 @@ object HttpCaching extends Log {
 
 
       case MHttpCachingPolicies.CacheFirst =>
-        if (MHttpCaches.isAvailable) {
+        if ( isCacheAvailable ) {
           __cachedRespOptFut
             .map(_.get)
             .recoverWith { case _: Throwable =>
-              for (netResp <- __networkRespFut) yield {
-                val resp2 = netResp.resp.clone()
-                Future {
-                  __saveToCacheFut( resp2 )
-                }
-                netResp
-              }
+              val netRespFut = __networkRespFut
+              netRespFut foreach __saveToCacheFut
+              netRespFut
             }
 
         } else {
@@ -186,6 +171,8 @@ object HttpCaching extends Log {
           .map(_.get)
 
     }
+
+    httpAdpInst.toRespHolder( respFut )
   }
 
 }
