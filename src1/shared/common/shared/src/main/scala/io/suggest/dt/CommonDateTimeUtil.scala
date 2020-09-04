@@ -74,22 +74,6 @@ object CommonDateTimeUtil {
           } catch { case ex: Throwable =>
             JsError("dtFmt? " + ex)
           }
-
-        // TODO Для совместимости с ES и для простоты надо заюзать epoch-millis, но scala.js имеет проблемы с Long. Использовать Int без миллисекунд?
-        /*
-        case JsNumber(epochSecondsUtcBd) =>
-          val zoneOffset = ZoneOffset.UTC
-          try {
-            val offsetDt = LocalDateTime
-              .ofEpochSecond( epochSecondsUtcBd.toLong, 0, zoneOffset )
-              .atOffset( zoneOffset )
-            JsSuccess( offsetDt )
-          } catch {
-            case ex: Throwable =>
-              JsError("epochS? " + ex)
-          }
-        */
-
         case other =>
           JsError( "[]? " + other )
       }
@@ -100,18 +84,6 @@ object CommonDateTimeUtil {
       Writes[OffsetDateTime] { o =>
         val fmt = o.format( DateTimeFormatter.ISO_OFFSET_DATE_TIME )
         JsString(fmt)
-        // Формат передачи даты, когда были сомнения в JSR-310 на scala.js
-        /*Json.arr(
-          OFFSET_DATE_TIME_FORMAT_VSN_1,
-          o.getYear,
-          o.getMonthValue,
-          o.getDayOfMonth,
-          o.getHour,
-          o.getMinute,
-          o.getSecond,
-          o.getNano,
-          o.getOffset.getTotalSeconds
-        )*/
       }
     }
 
@@ -146,6 +118,29 @@ object CommonDateTimeUtil {
       }
 
     }
+
+  }
+
+
+  object Regexp {
+
+    // One of "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", or "Sun" (case-sensitive).
+    def dow3S = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
+
+    // 2 digit day number, e.g. "04" or "23".
+    def dayOfMonthS = "[0-9]{1,2}"
+
+    def monthNameS = "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+
+    def year4S = "[0-9]{4}"
+
+    def hour24S = "[012][0-9]"
+    def minuteS = "[0-5][0-9]"
+    def secondS = minuteS
+
+    def gmt = "GMT"
+
+    def rfc1123Dt = s"$dow3S,\\s+$dayOfMonthS\\s+$monthNameS\\s+$year4S\\s+$hour24S:$minuteS:$secondS\\s+GMT".r
 
   }
 

@@ -10,7 +10,8 @@ import io.suggest.crypto.hash.MHash
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken, MHttpCookie}
+import io.suggest.proto.http.cookie.{MHttpCookie, MHttpCookieParsed}
+import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken}
 import io.suggest.spa.DAction
 import io.suggest.up.{ITransferProgressInfo, MUploadResp}
 import io.suggest.url.MHostUrl
@@ -176,8 +177,8 @@ case class CsrfTokenResp(tstampMs: Long, tryResp: Try[MCsrfToken], reason: CsrfT
 
 sealed trait ILoginSessionAction extends ILkCommonAction
 /** Команда к выставлению или удаление токена сессии. */
-case class LoginSessionSet( token: Option[MHttpCookie] ) extends ILoginSessionAction
+case class LoginSessionSet( cookie: MHttpCookieParsed ) extends ILoginSessionAction
 /** Результат сохранения токена. */
-case class LoginSessionSaved( res: Pot[MHttpCookie] ) extends ILoginSessionAction
+case class LoginSessionSaved( cookiePot: Pot[MHttpCookieParsed] ) extends ILoginSessionAction
 /** Восстановление состояния токена в память. */
 case object LoginSessionRestore extends ILoginSessionAction

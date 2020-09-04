@@ -1,5 +1,6 @@
 package io.suggest.proto.http.model
 
+import io.suggest.proto.http.cookie.MHttpCookieParsed
 import japgolly.univeq._
 import monocle.macros.GenLens
 import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
@@ -34,8 +35,9 @@ object HttpClientConfig {
 case class HttpClientConfig(
                              csrfToken          : Option[MCsrfToken]            = None,
                              baseHeaders        : Map[String, String]           = HttpReqData.mkBaseHeaders(),
-                             sessionCookieGet   : Option[() => Option[MHttpCookie]]  = None,
-                             sessionCookieSet   : Option[Option[MHttpCookie] => Unit] = None,
+                             sessionCookieGet   : Option[() => Option[MHttpCookieParsed]] = None,
+                             sessionCookieSet   : Option[MHttpCookieParsed => Unit] = None,
+                             cookieDomainDflt   : Option[() => String]          = None,
                              fetchApi           : Option[(RequestInfo, RequestInit) => Future[HttpResp]] = None,
                            )
 

@@ -18,8 +18,9 @@ trait FetchHeaders extends js.Object {
   val getAllUnd: js.UndefOr[js.Function1[String, js.Array[String]]] = js.native
   def getAll(name: String): js.Array[String] = js.native
 
-  /** Прямой доступ к private-полю внутри Headers() в API cdv-p-fetch. */
+  /** Прямой доступ к private-полю внутри Headers() в API cordova-plugin-fetch.
+    * Поле `map` в рамках fetch-спеки является аргументом конструктора Headers, и может быть (в теории) доступно. */
   @JSName("map")
-  val _cdvFetchHeadersMap: js.UndefOr[js.Dictionary[js.Array[String]]] = js.native
+  val _map: js.UndefOr[js.Dictionary[js.Array[String]]] = js.native
 
 }

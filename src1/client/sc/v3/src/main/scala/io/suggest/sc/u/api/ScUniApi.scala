@@ -1,5 +1,7 @@
 package io.suggest.sc.u.api
 
+import java.net.URI
+
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
 import io.suggest.proto.http.client.HttpClient
@@ -15,6 +17,8 @@ import monocle.Traversal
 
 import scala.concurrent.Future
 import scalaz.std.option._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -39,6 +43,14 @@ object ScUniApi {
         Json.toJsObject( scQs )
       )
     )
+  }
+
+  /** Вернуть домен для выдачи исходя из роутера. */
+  def scDomain(): String = {
+    val scSiteUrl = HttpClient.mkAbsUrl(
+      routes.controllers.Sc.pubApi( js.Dictionary.empty ).absoluteURL()
+    )
+    new URI( scSiteUrl ).getHost
   }
 
   /** Отрезать или укоротить элементы qs для сохранения в кэше.

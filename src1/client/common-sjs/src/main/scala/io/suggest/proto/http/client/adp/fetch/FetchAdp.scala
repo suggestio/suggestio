@@ -107,6 +107,8 @@ case class FetchHttpResp(
         Option(
           resp.headers
             .get( headerName )
+            // TODO Согласно спеке https://fetch.spec.whatwg.org/#concept-header-list-get, одноимённые хидеры разделяются ", " и передаются в одной строке get().
+            //      Безопасно ли это split'ить в случае Cookie или иных заголовков, содержащих дату в формате "Mon, 12 December 2020 ..."? Надо реализовать какой-то умный парсер заголовков, который умеет корректно дробить заголовки.
             .orNull
         )
           .toList
@@ -139,19 +141,21 @@ case class FetchHttpResp(
   override def headers: IterableOnce[(String, String)] = {
     Try {
       for {
-        // .iterator: будет exception в cordova-fetch, т.к. там нет итератора.
+        // .iterator: будет exception если в Headers нет js-итератора (в cordova-fetch, в иных гипотетических кривых реализациях).
         hdrArr <- resp.headers.iterator
-        k = hdrArr.shift()
-        v <- hdrArr.iterator
+        hdrArrIter = hdrArr.iterator
+        k <- hdrArrIter.nextOption().iterator
+        v <- hdrArrIter
       } yield {
         k -> v
       }
     }
-      // Попытаться залезть в приватное поле headers.map:
+      // Попытаться залезть в приватное поле headers.map, которое упоминается полем конструктора Headers(map)
+      // в стандарте, и доступно извне для cordova-plugin-fetch:
       .orElse {
         Try {
           resp.headers
-            ._cdvFetchHeadersMap
+            ._map
             .get
             .iterator
             .flatMap { case (k, vs) =>
@@ -160,7 +164,7 @@ case class FetchHttpResp(
             }
         }
       }
-      // Попытаться извлечь заголовке через forEach().
+      // Попытаться извлечь заголовке через forEach(). Это O(n)-операция, является крайним и неэффективным вариантом.
       .getOrElse( _headersForEached )
   }
 

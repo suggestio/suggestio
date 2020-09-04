@@ -46,6 +46,7 @@ case class XhrAdpInstance( override val httpReq: HttpReqAdp ) extends HttpAdpIns
   }
 
   override def doRequest(requestUrl: String): Future[HttpResp] = {
+    println("**   " + requestUrl)
     val promise = Promise[XhrHttpResp]()
     val httpRes = XhrHttpResp(xhr)
 
@@ -64,7 +65,7 @@ case class XhrAdpInstance( override val httpReq: HttpReqAdp ) extends HttpAdpIns
       }
     }
 
-    xhr.open( httpReq.origReq.method, httpReq.reqUrl )
+    xhr.open( httpReq.origReq.method, requestUrl )
     val d = httpReq.origReq.data
     xhr.responseType = d.respType.xhrResponseType
     if (d.timeoutMsOr0 > 0)

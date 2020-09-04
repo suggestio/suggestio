@@ -1,16 +1,22 @@
 package io.suggest.proto.http.client
 
+import java.net.URI
+
 import io.suggest.common.html.HtmlConstants
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
 import io.suggest.proto.http.client.cache.HttpCaching
-import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpReqData, HttpResp, HttpRespTypes, IHttpResultHolder, MHttpCookie}
+import io.suggest.proto.http.cookie.HttpCookieUtil
+import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpReqData, HttpResp, HttpRespTypes, IHttpResultHolder}
 import io.suggest.routes.HttpRouteExtractor
+import io.suggest.sec.SessionConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
-import io.suggest.text.UrlUtil2
+import io.suggest.text.{StringUtil, UrlUtil2}
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -22,7 +28,7 @@ import scala.scalajs.js
   * Created: 20.05.15 11:14
   * Description: HTTP-клиент.
   */
-object HttpClient {
+object HttpClient extends Log {
 
   private def myProto: Option[String] = {
     for {
@@ -145,6 +151,8 @@ object HttpClient {
       }
     }
 
+    lazy val reqUri = new URI( httpReq.url )
+
     // Собрать все заголовки запроса воедино:
     val allHeaders = {
       var hdrs0 = httpReq.data.headers
@@ -157,9 +165,21 @@ object HttpClient {
       for {
         sessionCookieGetF   <- httpReq.data.config.sessionCookieGet
         sessionCookie       <- sessionCookieGetF()
-        // TODO Фильтровать кукис по домену и валидности.
+        // Отфильтровать кукис по домену, чтобы ошибочно не отправить сессию куда-то не по адресу.
+        // Поддомены - игнорируем: домен должен точно совпадать.
+        if {
+          val cookieDomainOpt = sessionCookie.domain
+            .orElse {
+              // Определить исходный домен из ссылки в js-роутере
+              httpReq.data.config.cookieDomainDflt.map(_())
+            }
+          var reqDomain = reqUri.getHost
+          val r = cookieDomainOpt.exists( reqDomain.equalsIgnoreCase )
+          if (!r) logger.warn( ErrorMsgs.COOKIE_DOMAIN_UNEXPECTED, msg = (reqDomain, cookieDomainOpt, httpReq.method, httpReq.url) )
+          r
+        }
       } {
-        val cookieValue = sessionCookie.cookieHeaderValue
+        val cookieValue = sessionCookie.toString
         hdrs0 += (HttpConst.Headers.COOKIE -> cookieValue)
       }
 
@@ -185,16 +205,45 @@ object HttpClient {
         respHolder.mapResult { httpRespFut =>
           for (httpResp <- httpRespFut) yield {
             val setCookies = httpResp.getHeader( HttpConst.Headers.SET_COOKIE )
-            for {
+            (for {
               oneCookieV <- setCookies.iterator
-              // Довольно убогое решение: фильтровать только длинный кукис. TODO Лучше префикс проверять: s=
-              if oneCookieV.length > 42
-              oneCookie = MHttpCookie( oneCookieV )
-            } {
-              // TODO XXX нужна поддержка cookie discard, когда присылаемый сервером Expires/Max-Age невалиден или value пуст.
-              val optValue = Some( oneCookie )
-              sessionTokenSetF( optValue )
-            }
+              cookiesParsed <- {
+                val eith = HttpCookieUtil.parseCookies( oneCookieV )
+
+                for (err <- eith.left)
+                  logger.error( ErrorMsgs.COOKIE_NOT_PARSED, msg = (err, if (scalajs.LinkingInfo.developmentMode) oneCookieV else StringUtil.strLimitLen(oneCookieV, 30)) )
+                eith
+                  .toOption
+                  .iterator
+              }
+              // Может быть несколько кукисов в одной строке. Fetch/cdv-fetch так и возвращают значения одноимённых хидеров одной строкой.
+              cookieParsed <- cookiesParsed
+              // Финальные проверки присланного распарсенного кукиса:
+              if {
+                // Фильтрация по имени кукиса. Если в будущем тут будет более одного кукиса, то надо nextOption() заменить ниже.
+                (cookieParsed.name ==* SessionConst.SESSION_COOKIE_NAME) &&
+                // Фильтрануть по домену, что присланный домен соответствовал хосту из ссылки:
+                cookieParsed.domain.fold(true) { cookieDomain =>
+                  val reqDomain = reqUri.getHost
+                  val r = reqDomain equalsIgnoreCase cookieDomain
+                  if (!r) logger.error( ErrorMsgs.COOKIE_DOMAIN_UNEXPECTED, msg = (cookieParsed.name, cookieDomain, reqDomain) )
+                  r
+                }
+              }
+            } yield {
+              cookieParsed
+            })
+              // Не более одного сессионного кукиса:
+              .nextOption()
+              .foreach { cookieParsed =>
+                // Надо разобраться, это discard-кукиш или обновление сессии.
+                // TODO MHttpCookie надо собирать не здесь или собирать на базе cookieParsed.
+
+                //val oneCookie = MHttpCookie( oneCookieV )
+                // TODO XXX нужна поддержка cookie discard, когда присылаемый сервером Expires/Max-Age невалиден или value пуст.
+                //val optValue = Some( oneCookie )
+                sessionTokenSetF( cookieParsed )
+              }
             // вернуть исходный resp:
             httpResp
           }

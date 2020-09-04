@@ -1,7 +1,7 @@
 package io.suggest.lk.m
 
 import diode.data.Pot
-import io.suggest.proto.http.model.MHttpCookie
+import io.suggest.proto.http.cookie.{MHttpCookie, MHttpCookieParsed}
 import japgolly.univeq._
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
@@ -29,5 +29,5 @@ object MLoginSessionS {
   *              pending/fail-состояния связаны (в первую очередь) с сохранением токена в какое-то хранилище на девайсе.
   */
 final case class MLoginSessionS(
-                                 cookie           : Pot[MHttpCookie]          = Pot.empty,
+                                 cookie           : Pot[MHttpCookieParsed]          = Pot.empty,
                                )

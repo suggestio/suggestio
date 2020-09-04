@@ -14,13 +14,8 @@ object DateTimeUtil {
 
   // Обработка rfc-дат для реквестов и запросов.
 
-  /** Форматирование RFC даты, пригодную для отправки/получения внутри http-заголовка. */
-  def rfcDtFmt: DateTimeFormatter = {
-    DateTimeFormatter.RFC_1123_DATE_TIME
-  }
-
   /** Простое челове-читабельное форматирование значения LocalDate. */
-  val simpleLocalDateFmt: DateTimeFormatter = {
+  def simpleLocalDateFmt: DateTimeFormatter = {
     DateTimeFormatter
       .ofPattern( "dd MMM yyyy" )
       .withLocale(Locale.getDefault)
@@ -29,7 +24,7 @@ object DateTimeUtil {
   def parseRfcDate(date: String): Option[OffsetDateTime] = {
     try {
       // Тут GMT резалось из-за каких-то проблем с joda-time. Сейчас всё упрощено, и должно бы работать.
-      val d = OffsetDateTime.parse(date, rfcDtFmt)
+      val d = OffsetDateTime.parse(date, DateTimeFormatter.RFC_1123_DATE_TIME)
       Some(d)
 
     } catch {

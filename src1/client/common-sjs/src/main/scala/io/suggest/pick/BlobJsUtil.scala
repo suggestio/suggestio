@@ -4,6 +4,8 @@ import java.nio.ByteBuffer
 
 import io.suggest.bin.{ConvCodecs, IDataConv}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.text.{CharSeqUtil, StringUtil}
 import japgolly.univeq._
@@ -16,13 +18,15 @@ import scala.scalajs.js.typedarray.TypedArrayBuffer
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 27.12.16 10:32
   * Description: Утиль для поддержки base64.
   */
-object BlobJsUtil {
+object BlobJsUtil extends Log {
 
   /** scala.js-only base64-декодер в рамках интерфейса конвертеров данных. */
   implicit case object SjsBase64JsDecoder extends IDataConv[String, ConvCodecs.Base64, ByteBuffer] {
@@ -46,9 +50,15 @@ object BlobJsUtil {
     * @see [[https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript]]
     */
   def b64Url2Blob(b64Url: String): Future[dom.Blob] = {
-    HttpClient
-      .getBlob( b64Url )
-      .recover { case _ =>
+    Try {
+      HttpClient.getBlob( b64Url )
+    }
+      .recover { case ex =>
+        logger.warn( ErrorMsgs.BASE64_TO_BLOB_FAILED, ex, b64Url )
+        Future.failed(ex)
+      }
+      .get
+      .recover { case ex =>
         b64Url2BlobPlainConv( b64Url )
       }
   }

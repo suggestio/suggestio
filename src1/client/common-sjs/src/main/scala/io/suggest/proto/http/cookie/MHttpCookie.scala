@@ -1,11 +1,11 @@
-package io.suggest.proto.http.model
+package io.suggest.proto.http.cookie
 
 import java.time.Instant
 
-import japgolly.univeq._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
+import japgolly.univeq._
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io

@@ -253,4 +253,8 @@ object ErrorMsgs {
 
   def HTTP_HEADER_PROBLEM = "Http.header.problem"
 
+  def COOKIE_NOT_PARSED = "Cookie.not.parsed"
+  def EXPIRED_TOKEN = "Expired.token"
+  def COOKIE_DOMAIN_UNEXPECTED = "Cookie.domain.unexpected"
+
 }

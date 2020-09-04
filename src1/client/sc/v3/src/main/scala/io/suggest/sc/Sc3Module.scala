@@ -22,7 +22,7 @@ import io.suggest.sc.c.dia.ScNodesDiaAh
 import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.boot.MSpaRouterState
 import io.suggest.sc.m.inx.ReGetIndex
-import io.suggest.sc.u.api.{ScAppApiHttp, ScUniApiHttpImpl}
+import io.suggest.sc.u.api.{ScAppApiHttp, ScUniApi, ScUniApiHttpImpl}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.dlapp._
@@ -199,10 +199,12 @@ object Sc3Module { outer =>
         sessionCookieGet = Option.when(isCordova) { () =>
           sc3Circuit.loginSessionRW.value.cookie.toOption
         },
-        sessionCookieSet = Option.when(isCordova) { tokenOpt2 =>
-          sc3Circuit.dispatch( LoginSessionSet( tokenOpt2 ) )
+        sessionCookieSet = Option.when(isCordova) { sessionCookie =>
+          sc3Circuit.dispatch( LoginSessionSet( sessionCookie ) )
         },
-        // Замена стандартной недоделанной fetch на нативный http-client.
+        // Дефолтовый домен кукисов сессии, т.к. сервер обычно не шлёт домена (чтобы не цеплялось под-доменов).
+        cookieDomainDflt = Some( ScUniApi.scDomain ),
+        // Замена стандартной, ограниченной в хидерах, fetch на нативный http-client.
         // Это ломает возможность отладки запросов через Chrome WebDev.tools, но даёт предсказуемую работу http-клиента,
         // и главное: поддержку кукисов и произвольных заголовков запроса/ответа, ради чего и есть весь сыр-бор.
         fetchApi = OptionUtil.maybeOpt(isCordova)(
