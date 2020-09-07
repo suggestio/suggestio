@@ -34,11 +34,11 @@ trait ILkNodesApi {
 
   /** Создать новый узел на стороне сервера.
     *
-    * @param parentId id родительского узла.
+    * @param parentRk id родительского узла.
     * @param data Данные по создаваемому узлу.
     * @return Фьючерс с ответом по созданному узлу.
     */
-  def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode]
+  def createSubNodeSubmit(parentRk: RcvrKey, data: MLknNodeReq): Future[MLknNode]
 
 
   /** Вызов обновления флага isEnabled для указанного узла.
@@ -132,9 +132,11 @@ final class LkNodesApiHttpImpl(
   }
 
 
-  override def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode] = {
+  override def createSubNodeSubmit(parentRk: RcvrKey, data: MLknNodeReq): Future[MLknNode] = {
     val req = HttpReq.routed(
-      route = routes.controllers.LkNodes.createSubNodeSubmit(parentId),
+      route = routes.controllers.LkNodes.createSubNodeSubmit(
+        parentRk = RcvrKey.rcvrKey2urlPath( parentRk ),
+      ),
       data = HttpReqData(
         body    = Json.toJson(data).toString(),
         headers = HttpReqData.headersJsonSendAccept,

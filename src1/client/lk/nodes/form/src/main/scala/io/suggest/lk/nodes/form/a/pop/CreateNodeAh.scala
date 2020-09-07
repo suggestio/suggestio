@@ -95,7 +95,7 @@ class CreateNodeAh[M](
             }
           )
           api
-            .createSubNodeSubmit(parentNodeId, req)
+            .createSubNodeSubmit(parentNodeRcvrKey, req)
             .transform { tryResp =>
               val action = CreateNodeResp(
                 tryResp = tryResp

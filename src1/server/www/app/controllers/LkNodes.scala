@@ -74,6 +74,7 @@ final class LkNodes @Inject() (
   private lazy val mNodes = injector.instanceOf[MNodes]
   private lazy val canChangeNodeAvailability = injector.instanceOf[CanChangeNodeAvailability]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
+  private lazy val canCreateSubNode = injector.instanceOf[CanCreateSubNode]
 
   private lazy val nodesTpl = injector.instanceOf[NodesTpl]
   private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]
@@ -405,15 +406,15 @@ final class LkNodes @Inject() (
   /** Создать новый узел (маячок) с указанными параметрами.
     * POST-запрос с данными добавля
     *
-    * @param parentNodeId id родительского узла.
+    * @param parentRk id родительского узла.
     * @return 200 OK + данные созданного узла.
     *         409 Conflict - id узла уже занят кем-то.
     */
-  def createSubNodeSubmit(parentNodeId: String) = csrf.Check {
+  def createSubNodeSubmit(parentRk: RcvrKey) = csrf.Check {
     bruteForceProtect {
-      isNodeAdmin(parentNodeId).async(_mLknNodeReqBP) { implicit request =>
+      canCreateSubNode(parentRk).async(_mLknNodeReqBP) { implicit request =>
 
-        lazy val logPrefix = s"addSubNodeSubmit($parentNodeId)[${System.currentTimeMillis()}]:"
+        lazy val logPrefix = s"addSubNodeSubmit($parentRk)[${System.currentTimeMillis()}]:"
 
         lkNodesUtil.validateNodeReq( request.body, isEdit = false ).fold(
           {violations =>
@@ -459,10 +460,10 @@ final class LkNodes @Inject() (
                   // Эдж до юзера-создателя узла.
                   val eCreator = MEdge(
                     predicate = MPredicates.CreatedBy,
-                    nodeIds   = Set.empty + request.user.personIdOpt.get,
+                    nodeIds   = Set.empty[String] + request.user.personIdOpt.get,
                   )
 
-                  val parentNodeIds = Set[String](parentNodeId)
+                  val parentNodeIds = Set.empty[String] + parentRk.last
                   // Эдж до родительского узла.
                   val eParent = MEdge(
                     predicate = MPredicates.OwnedBy,

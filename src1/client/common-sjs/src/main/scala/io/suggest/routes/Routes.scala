@@ -265,10 +265,11 @@ sealed trait LkNodesCtlRoutes extends js.Object {
     * @param adId id рекламной карточки.
     * @return Роута.
     */
-  def subTree(onNodeRk: js.UndefOr[js.Array[String]] = js.undefined, adId: js.UndefOr[String] = js.undefined): PlayRoute = js.native
+  def subTree(onNodeRk: js.UndefOr[js.Array[String]] = js.undefined,
+              adId: js.UndefOr[String] = js.undefined): PlayRoute = js.native
 
   /** Роута сабмита формы добавления нового узла. */
-  def createSubNodeSubmit(parentId: String): PlayRoute = js.native
+  def createSubNodeSubmit(parentRk: String): PlayRoute = js.native
 
   /** Роута сабмита нового значения флага isEnabled. */
   def setNodeEnabled(nodeId: String, isEnabled: Boolean): PlayRoute = js.native
