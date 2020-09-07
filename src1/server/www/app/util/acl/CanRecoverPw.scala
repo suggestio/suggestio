@@ -9,16 +9,15 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req._
 import models.usr._
 import play.api.mvc._
-import util.ident.IdentUtil
 import japgolly.univeq._
 import play.api.http.HttpVerbs
+import play.api.inject.Injector
 
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -31,19 +30,17 @@ import scala.concurrent.Future
  * Всё сделано в виде аддона для контроллера, т.к. DI-зависимость так проще всего разрулить.
  */
 
-class CanRecoverPw @Inject() (
-                               esModel                : EsModel,
-                               mNodes                 : MNodes,
-                               aclUtil                : AclUtil,
-                               identUtil              : IdentUtil,
-                               reqUtil                : ReqUtil,
-                               mCommonDi              : ICommonDi
-                             )
+final class CanRecoverPw @Inject() (
+                                     injector: Injector,
+                                   )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Собрать ACL ActionBuilder проверки доступа на восстановление пароля.
@@ -70,6 +67,8 @@ class CanRecoverPw @Inject() (
         val qsAgeSec = nowSec - qs.nowSec
 
         if (qsAgeSec > 0L && qsAgeSec <= 6.hours.toSeconds && qs.nodeId.isEmpty) {
+          import esModel.api._
+
           val searchPersonsFut = mNodes.dynSearch {
             new MNodeSearch {
               override val nodeTypes = MNodeTypes.Person :: Nil

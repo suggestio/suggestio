@@ -14,10 +14,10 @@ import scala.concurrent.Future
  * Description: ActionBuilder для определения залогиненности юзера.
  */
 @Singleton
-class MaybeAuth @Inject() (
-                            reqUtil: ReqUtil,
-                            aclUtil: AclUtil
-                          ) {
+final class MaybeAuth @Inject() (
+                                  reqUtil: ReqUtil,
+                                  aclUtil: AclUtil
+                                ) {
 
   /** Собрать MaybeAuth action-builder. */
   def apply(userInits1: MUserInit*): ActionBuilder[MReq, AnyContent] = {

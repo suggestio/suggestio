@@ -133,6 +133,15 @@ object MNodeType {
     private def _isBleBeacon =
       ntype ==* MNodeTypes.BleBeacon
 
+    private def _isPerson =
+      ntype ==* MNodeTypes.Person
+
+
+    /** Юзер (через форму lk-nodes) может создавать дочерние узлы только для родительских узлов
+      * разрешённых типов. */
+    def userCanCreateSubNodes: Boolean =
+      _isAdnNode || _isPerson
+
   }
 
 }

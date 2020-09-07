@@ -18,17 +18,18 @@ import scala.concurrent.Future
  * Description: Гибрид IsSuperuser и чтения произвольного юзера из хранилища по id.
  */
 
-class IsSuPerson @Inject()(
-                            esModel   : EsModel,
-                            mNodes    : MNodes,
-                            aclUtil   : AclUtil,
-                            isSu      : IsSu,
-                            reqUtil   : ReqUtil,
-                            mCommonDi : ICommonDi
-                          ) {
+final class IsSuPerson @Inject()(
+                                  aclUtil   : AclUtil,
+                                  reqUtil   : ReqUtil,
+                                  mCommonDi : ICommonDi
+                                ) {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.{ec, errorHandler}
+  import mCommonDi.current.injector
+
+  private val esModel = injector.instanceOf[EsModel]
+  private val mNodes = injector.instanceOf[MNodes]
+  private val isSu = injector.instanceOf[IsSu]
 
   /** @param personId id юзера. */
   def apply(personId: String): ActionBuilder[MPersonReq, AnyContent] = {
@@ -44,6 +45,7 @@ class IsSuPerson @Inject()(
             if (user.personIdOpt contains personId) {
               user.personNodeOptFut
             } else {
+              import esModel.api._
               mNodes
                 .getByIdCache(personId)
                 .withNodeType(MNodeTypes.Person)

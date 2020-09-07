@@ -17,15 +17,15 @@ import scala.concurrent.Future
  * Created: 14.10.15 17:32
  * Description: ActionBuild для запроса действия над любой карточкой без проверки прав.
  */
-class GetAnyAd @Inject() (
-                           esModel    : EsModel,
-                           mNodes     : MNodes,
-                           aclUtil    : AclUtil,
-                           reqUtil    : ReqUtil,
-                           mCommonDi  : ICommonDi
-                         ) {
+final class GetAnyAd @Inject() (
+                                 esModel    : EsModel,
+                                 mNodes     : MNodes,
+                                 aclUtil    : AclUtil,
+                                 reqUtil    : ReqUtil,
+                                 mCommonDi  : ICommonDi
+                               ) {
 
-  import mCommonDi._
+  import mCommonDi.{ec, errorHandler}
   import esModel.api._
 
 

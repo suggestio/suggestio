@@ -23,9 +23,9 @@ import scala.concurrent.duration._
   * Description: Накрутка для файло-раздавалок, чтобы организовать корректную поддержку HTTP 304 NotModified.
   */
 @Singleton
-class IsFileNotModified @Inject()(
-                                   injector: Injector,
-                                 )
+final class IsFileNotModified @Inject()(
+                                         injector: Injector,
+                                       )
   extends MacroLogsImplLazy
 {
 
@@ -34,7 +34,7 @@ class IsFileNotModified @Inject()(
 
 
   /** Сколько времени можно кешировать на клиенте результат dynImg() ? */
-  private lazy val CACHE_DYN_IMG_CLIENT_SECONDS = {
+  private def CACHE_DYN_IMG_CLIENT_SECONDS = {
     val cacheDuration = if (environment.mode == Mode.Prod) {
       365.days
     } else {
@@ -49,7 +49,7 @@ class IsFileNotModified @Inject()(
     HeaderNames.CACHE_CONTROL -> s"public, max-age=$CACHE_DYN_IMG_CLIENT_SECONDS, immutable"
 
   /** Часто-используемое значение: */
-  private val CACHE_CONTROL_HDRS = CACHE_CONTROL_HDR :: Nil
+  private def CACHE_CONTROL_HDRS = CACHE_CONTROL_HDR :: Nil
 
 
   def isNotModifiedSinceCached(modelTstampMs: Instant, ifModifiedSince: String): Boolean = {

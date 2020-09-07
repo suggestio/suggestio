@@ -203,7 +203,7 @@ object Sc3Module { outer =>
           sc3Circuit.dispatch( LoginSessionSet( sessionCookie ) )
         },
         // Дефолтовый домен кукисов сессии, т.к. сервер обычно не шлёт домена (чтобы не цеплялось под-доменов).
-        cookieDomainDflt = Some( ScUniApi.scDomain ),
+        cookieDomainDflt = Option.when(isCordova)( ScUniApi.scDomain ),
         // Замена стандартной, ограниченной в хидерах, fetch на нативный http-client.
         // Это ломает возможность отладки запросов через Chrome WebDev.tools, но даёт предсказуемую работу http-клиента,
         // и главное: поддержку кукисов и произвольных заголовков запроса/ответа, ради чего и есть весь сыр-бор.

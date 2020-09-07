@@ -2,12 +2,13 @@ package util.acl
 
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.MNodes
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import models.req.{MNodeOptReq, MUserInit, MUserInits}
 import play.api.mvc._
 import japgolly.univeq._
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -17,16 +18,18 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-class MaybeAuthMaybeNode @Inject() (
-                                     mNodes: MNodes,
-                                     esModel: EsModel,
-                                     reqUtil: ReqUtil,
-                                     aclUtil: AclUtil,
-                                     httpErrorHandler: HttpErrorHandler,
-                                     implicit private val ec: ExecutionContext,
-                                   ) {
+final class MaybeAuthMaybeNode @Inject() (
+                                           esModel    : EsModel,
+                                           injector   : Injector,
+                                           reqUtil    : ReqUtil,
+                                           aclUtil    : AclUtil,
+                                         ) {
 
   import esModel.api._
+
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /** Собрать MaybeAuth MaybeNode action-builder. */
   def apply(nodeIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MNodeOptReq, AnyContent] = {

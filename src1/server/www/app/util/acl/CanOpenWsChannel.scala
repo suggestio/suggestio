@@ -1,7 +1,5 @@
 package util.acl
 
-import javax.inject.Singleton
-
 import com.google.inject.Inject
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -18,10 +16,10 @@ import play.api.mvc._
   *
   * СЕССИЯ ИГНОРИРУЕТСЯ, потому что кукис может быть не передан на ту ноду, до которой открыт канал.
   */
-class CanOpenWsChannel @Inject()(
-                                  mSioUsers                  : MSioUsers,
-                                  mCtxIds                    : MCtxIds
-                                )
+final class CanOpenWsChannel @Inject()(
+                                        mSioUsers                  : MSioUsers,
+                                        mCtxIds                    : MCtxIds
+                                      )
   extends MacroLogsImplLazy
 {
 

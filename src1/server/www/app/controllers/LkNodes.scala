@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import io.suggest.adn.MAdnRights
+import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.{ITfDailyMode, MTfDailyInfo}
 import io.suggest.common.empty.OptionUtil
@@ -481,7 +481,7 @@ final class LkNodes @Inject() (
               // Это узел-ресивер, поэтому заполняем профиль ADN-узла:
               extras = MNodeExtras(
                 adn = Some(MAdnExtra(
-                  rights      = Set.empty + MAdnRights.RECEIVER,
+                  rights      = Set.empty[MAdnRight] + MAdnRights.RECEIVER,
                   isUser      = !request.user.isSuper,
                 ))
               ),

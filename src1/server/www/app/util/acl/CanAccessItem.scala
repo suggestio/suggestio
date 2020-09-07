@@ -1,6 +1,6 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -12,6 +12,7 @@ import models.req.{MItemReq, MOrderIdsReq, MUserInit, MUserInits}
 import play.api.mvc._
 import japgolly.univeq._
 import play.api.http.Status
+import play.api.inject.Injector
 import slick.dbio.DBIOAction
 
 import scala.concurrent.Future
@@ -23,18 +24,19 @@ import scala.util.{Failure, Success}
   * Created: 17.03.16 10:15
   * Description: Аддон для контроллеров с поддержкой проверки прав доступа на изменение item'а.
   */
-class CanAccessItem @Inject() (
-                                aclUtil                 : AclUtil,
-                                mItems                  : MItems,
-                                mOrders                 : MOrders,
-                                isAuth                  : IsAuth,
-                                reqUtil                 : ReqUtil,
-                                mCommonDi               : ICommonDi
-                              )
+final class CanAccessItem @Inject() (
+                                      injector                : Injector,
+                                    )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
+
 
   /** Если много ids за раз, то тут лимит по кол-ву. */
   private def MAX_ITEM_IDS_PER_REQUEST = 50
@@ -62,11 +64,11 @@ class CanAccessItem @Inject() (
         val maxItemIdsLen = MAX_ITEM_IDS_PER_REQUEST
         if (itemIds.isEmpty) {
           LOGGER.warn(s"$logPrefix No items defined in request url")
-          errorHandler.onClientError( request, Status.BAD_REQUEST, "Ids expected")
+          mCommonDi.errorHandler.onClientError( request, Status.BAD_REQUEST, "Ids expected")
 
         } else if (itemIdsLen > maxItemIdsLen) {
           LOGGER.warn(s"$logPrefix Too many item ids: $itemIdsLen, allowed max = $maxItemIdsLen")
-          errorHandler.onClientError( request, Status.BAD_REQUEST, s"Too many ids: $itemIdsLen/$maxItemIdsLen" )
+          mCommonDi.errorHandler.onClientError( request, Status.BAD_REQUEST, s"Too many ids: $itemIdsLen/$maxItemIdsLen" )
 
         } else if (user.isAnon) {
           // Анонимус по определению не может иметь доступа к биллингу.
@@ -74,12 +76,14 @@ class CanAccessItem @Inject() (
           isAuth.onUnauth(request)
 
         } else {
+          import mCommonDi.{ec, slick}
+
           val itemIdsSet = itemIds.toSet
           val itemIdsCount = itemIdsSet.size
           if (itemIdsCount !=* itemIdsLen) {
             // В списке есть повторяющиеся элементы. В этом нет смысла, и дальнейшие проверки невозможны.
             LOGGER.warn(s"$logPrefix Duplicate ids in itemIds, distict[$itemIdsCount, but $itemIdsLen expected] = [${itemIdsSet.mkString(", ")}]")
-            errorHandler.onClientError( request, Status.BAD_REQUEST, "duplicate ids" )
+            mCommonDi.errorHandler.onClientError( request, Status.BAD_REQUEST, "duplicate ids" )
 
           } else {
             // Запустить различные параллельные проверки. item'ов может быть много, поэтому все проверки - на стороне СУБД, без выкачивания item'ов сюда.
@@ -168,7 +172,6 @@ class CanAccessItem @Inject() (
         }
       }
 
-
       // Нужно пройти по цепочке: itemId -> orderId -> contractId. И сопоставить contractId с контрактом текущего юзера.
       override def invokeBlock[A](request: Request[A], block: (MItemReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
@@ -179,6 +182,8 @@ class CanAccessItem @Inject() (
           isAuth.onUnauth(request)
 
         } else {
+          import mCommonDi.{ec, slick}
+
           // Получить на руки запрашиваемый MItem. Его нужно передать в action внутри реквеста.
           val mitemOptFut = slick.db.run {
             mItems.getById(itemId)

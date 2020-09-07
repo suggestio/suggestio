@@ -13,9 +13,9 @@ import play.api.mvc.{Request, RequestHeader}
   * Description: Утиль для ACL.
   */
 @Singleton
-class AclUtil @Inject() (
-                          injector: Injector,
-                        ) {
+final class AclUtil @Inject() (
+                                injector: Injector,
+                              ) {
 
   private lazy val mSioUsers = injector.instanceOf[MSioUsers]
   private lazy val sessionUtil = injector.instanceOf[SessionUtil]

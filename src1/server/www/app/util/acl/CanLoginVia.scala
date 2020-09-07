@@ -22,11 +22,11 @@ import scala.concurrent.Future
   * Created: 22.02.19 21:18
   * Description: ACL поддержки внешнего логина.
   */
-class CanLoginVia @Inject()(
-                             aclUtil        : AclUtil,
-                             reqUtil        : ReqUtil,
-                             injector       : Injector,
-                           )
+final class CanLoginVia @Inject()(
+                                   aclUtil        : AclUtil,
+                                   reqUtil        : ReqUtil,
+                                   injector       : Injector,
+                                 )
   extends MacroLogsImpl
 {
 

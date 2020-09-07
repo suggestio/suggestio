@@ -8,6 +8,7 @@ import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{MNodeOrderReq, MUserInit, MUserInits}
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -19,18 +20,18 @@ import scala.concurrent.Future
   * Description: Проверка прав биллинга: может ли юзер оплачивать заказ?
   * Да, если заказ в состоянии "корзины" и содержит item'ы.
   */
-class CanPayOrder @Inject() (
-                              aclUtil         : AclUtil,
-                              mOrders         : MOrders,
-                              isAuth          : IsAuth,
-                              isNodeAdmin     : IsNodeAdmin,
-                              reqUtil         : ReqUtil,
-                              mCommonDi       : ICommonDi
-                            )
+final class CanPayOrder @Inject() (
+                                    injector: Injector,
+                                  )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
 
 
   def apply(orderId         : Gid_t,
@@ -51,6 +52,7 @@ class CanPayOrder @Inject() (
 
         // Незалогиненных юзеров можно сразу посылать.
         user.personIdOpt.fold( forbid ) { personId =>
+          import mCommonDi.{slick, ec}
 
           // Получить id контракта юзера.
           val usrContractIdOptFut = user.contractIdOptFut

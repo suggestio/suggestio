@@ -26,6 +26,7 @@ final class SubNodesR(
   type Props_t = EphemeralStream[Tree[MNodeState]]
   type Props = ModelProxy[Props_t]
 
+  private lazy val _createMsg = crCtxP.message( MsgCodes.`Create` )
 
   class Backend($: BackendScope[Props, Props_t]) {
 
@@ -34,16 +35,16 @@ final class SubNodesR(
     }
 
     def render(s: Props_t): VdomElement = {
-      crCtxP.consume { crCtx =>
-        MuiListItem()(
+      MuiListItem()(
 
+        crCtxP.consume { crCtx =>
           // Текст
           MuiListItemText {
             val chCount = s.length
             val subNodesInfo = ReactCommonUtil.maybeNode( chCount > 0 ) {
               <.span(
                 // Вывести общее кол-во под-узлов.
-                crCtxP.message( MsgCodes.`N.nodes`, chCount),
+                crCtx.messages( MsgCodes.`N.nodes`, chCount),
 
                 // Вывести кол-во выключенных под-узлов, если такие есть.
                 {
@@ -58,7 +59,7 @@ final class SubNodesR(
                     <.span(
                       HtmlConstants.COMMA,
                       HtmlConstants.NBSP_STR,
-                      crCtxP.message( MsgCodes.`N.disabled`, chCountDisabled ),
+                      crCtx.messages( MsgCodes.`N.disabled`, chCountDisabled ),
                     )
                   }
                 },
@@ -72,29 +73,29 @@ final class SubNodesR(
               override val primary = crCtx.messages( MsgCodes.`Subnodes` )
               override val secondary = subNodesInfo.rawNode
             }
-          }(),
+          }()
+        },
 
-          MuiListItemSecondaryAction()(
-            MuiToolTip(
-              new MuiToolTipProps {
-                override val title = React.Fragment(
-                  crCtx.messages( MsgCodes.`Create` ),
-                  HtmlConstants.ELLIPSIS,
-                ).rawNode
+        MuiListItemSecondaryAction()(
+          MuiToolTip(
+            new MuiToolTipProps {
+              override val title = React.Fragment(
+                _createMsg,
+                HtmlConstants.ELLIPSIS,
+              ).rawNode
+            }
+          )(
+            MuiIconButton(
+              new MuiIconButtonProps {
+                override val onClick = _onCreateNodeClickCbF
               }
             )(
-              MuiIconButton(
-                new MuiIconButtonProps {
-                  override val onClick = _onCreateNodeClickCbF
-                }
-              )(
-                Mui.SvgIcons.Add()(),
-              ),
+              Mui.SvgIcons.Add()(),
             ),
           ),
+        ),
 
-        )
-      }
+      )
     }
 
   }

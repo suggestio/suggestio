@@ -20,21 +20,21 @@ import scala.concurrent.Future
  * Created: 25.12.15 11:59
  * Description: Доступ к узлу и его контракту для суперюзера.
  */
-class IsSuNodeContract @Inject() (
-                                   esModel      : EsModel,
-                                   mNodes       : MNodes,
-                                   aclUtil      : AclUtil,
-                                   mContracts   : MContracts,
-                                   isSu         : IsSu,
-                                   reqUtil      : ReqUtil,
-                                   mCommonDi    : ICommonDi
-                                 )
+final class IsSuNodeContract @Inject() (
+                                         aclUtil      : AclUtil,
+                                         reqUtil      : ReqUtil,
+                                         mCommonDi    : ICommonDi
+                                       )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.current.injector
+  import mCommonDi.{ec, errorHandler, slick}
 
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val mContracts = injector.instanceOf[MContracts]
+  private lazy val isSu = injector.instanceOf[IsSu]
 
   /** Доступ к узлу с контрактом.
     * @param nodeId id запрашиваемого узла.
@@ -48,6 +48,8 @@ class IsSuNodeContract @Inject() (
         def reqErr = MReq(request, user)
 
         if (user.isSuper) {
+          import esModel.api._
+
           val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case Some(mnode) =>
@@ -82,8 +84,4 @@ class IsSuNodeContract @Inject() (
     }
   }
 
-}
-
-trait IIsSuNodeContract {
-  val isSuNodeContract: IsSuNodeContract
 }

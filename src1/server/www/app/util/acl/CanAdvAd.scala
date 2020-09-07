@@ -5,12 +5,12 @@ import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req._
+import play.api.inject.Injector
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -20,25 +20,27 @@ import scala.concurrent.Future
  */
 
 /** Аддон для контроллеров для проверки права размещать рекламную карточку. */
-class CanAdvAd @Inject()(
-                          esModel                 : EsModel,
-                          mNodes                  : MNodes,
-                          aclUtil                 : AclUtil,
-                          isNodeAdmin             : IsNodeAdmin,
-                          n2NodeUtil              : N2NodesUtil,
-                          reqUtil                 : ReqUtil,
-                          mCommonDi               : ICommonDi
-                        )
+final class CanAdvAd @Inject()(
+                                injector                : Injector,
+                              )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val n2NodeUtil = injector.instanceOf[N2NodesUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
   import esModel.api._
 
 
   /** Является ли указанный узел рекламодателем? */
   private def nodeCanProduceAdvs(mnode: MNode): Boolean = {
-    mnode.common.isEnabled  &&  mnode.extras.adn.exists(_.isProducer)
+    mnode.common.isEnabled &&
+    mnode.extras.adn.exists(_.isProducer)
   }
 
   def maybeAllowed[A](adId: String, req: IReq[A]): Future[Option[MAdProdReq[A]]] = {

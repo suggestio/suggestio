@@ -9,6 +9,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -19,22 +20,23 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: ACL проверки возможности получения юзером данных по какому-либо узлу по его id.
   * Можно
   */
-class CanViewNodeAdvInfo @Inject() (
-                                     esModel                    : EsModel,
-                                     mNodes                     : MNodes,
-                                     aclUtil                    : AclUtil,
-                                     canAdvAd                   : CanAdvAd,
-                                     isAuth                     : IsAuth,
-                                     isNodeAdmin                : IsNodeAdmin,
-                                     dab                        : DefaultActionBuilder,
-                                     reqUtil                    : ReqUtil,
-                                     httpErrorHandler           : HttpErrorHandler,
-                                     implicit private val ec    : ExecutionContext,
-                                   )
+final class CanViewNodeAdvInfo @Inject() (
+                                           injector: Injector,
+                                         )
   extends MacroLogsImpl
 { outer =>
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val dab = injector.instanceOf[DefaultActionBuilder]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Вся ACL-логика живёт здесь.
     *
@@ -56,6 +58,8 @@ class CanViewNodeAdvInfo @Inject() (
       isAuth.onUnauth(request)
 
     } { personId =>
+      import esModel.api._
+
       // Юзер залогинен. В фоне запускаем чтение запрошенного узла...
       val mnodeOptFut = mNodes.getByIdCache(nodeId)
 

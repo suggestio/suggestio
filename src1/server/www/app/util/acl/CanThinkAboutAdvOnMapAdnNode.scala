@@ -5,12 +5,12 @@ import javax.inject.Inject
 import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MAdProdRcvrReq, MReq}
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.adv.geo.AdvGeoRcvrsUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -18,22 +18,21 @@ import scala.concurrent.Future
   * Created: 24.11.16 15:31
   * Description: ACL для проверок возможности размещения
   */
-class CanThinkAboutAdvOnMapAdnNode @Inject() (
-                                               esModel                : EsModel,
-                                               aclUtil                : AclUtil,
-                                               mNodes                 : MNodes,
-                                               canAdvAd               : CanAdvAd,
-                                               advGeoRcvrsUtil        : AdvGeoRcvrsUtil,
-                                               isNodeAdmin            : IsNodeAdmin,
-                                               isAuth                 : IsAuth,
-                                               reqUtil                : ReqUtil,
-                                               mCommonDi              : ICommonDi
-                                             )
+final class CanThinkAboutAdvOnMapAdnNode @Inject() (
+                                                     injector               : Injector,
+                                                   )
   extends MacroLogsImpl
-{
+{ that =>
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
+  private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Собрать ACL ActionBuilder.
@@ -50,6 +49,8 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
         val user = aclUtil.userFromRequest(request)
 
         user.personIdOpt.fold( isAuth.onUnauth(request) ) { _ =>
+          import esModel.api._
+
           // Юзер залогинен. Сразу же собираем все параллельные задачи...
           val madOptFut   = mNodes
             .getByIdCache(adId)
@@ -65,7 +66,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
           // Подготовить синхронные данные:
           val reqBlank = MReq(request, user)
-          lazy val logPrefix = s"${getClass.getSimpleName}[${reqBlank.remoteClientAddress}]#${user.personIdOpt.orNull}:"
+          lazy val logPrefix = s"${that.getClass.getSimpleName}[${reqBlank.remoteClientAddress}]#${user.personIdOpt.orNull}:"
 
           // Когда придёт ответ от БД по запрошенной карточке...
           madOptFut.flatMap {

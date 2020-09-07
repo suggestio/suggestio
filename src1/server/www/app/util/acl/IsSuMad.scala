@@ -1,15 +1,15 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.n2.node.{MNodeTypes, MNodes}
-import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
 import play.api.mvc._
 import io.suggest.es.model.EsModel
 import io.suggest.req.ReqUtil
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -18,18 +18,19 @@ import scala.concurrent.Future
  * Description:
  * Абстрактная логика обработки запроса суперюзера на какое-либо действие с рекламной карточкой.
  */
-class IsSuMad @Inject()(
-                         esModel    : EsModel,
-                         mNodes     : MNodes,
-                         aclUtil    : AclUtil,
-                         isSu       : IsSu,
-                         reqUtil    : ReqUtil,
-                         mCommonDi  : ICommonDi
-                       ) {
+final class IsSuMad @Inject()(
+                               injector   : Injector,
+                               esModel    : EsModel,
+                               mNodes     : MNodes,
+                               aclUtil    : AclUtil,
+                               reqUtil    : ReqUtil,
+                             ) {
 
-  import mCommonDi._
   import esModel.api._
 
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /**
     * @param adId id запрашиваемой рекламной карточки.
@@ -38,13 +39,14 @@ class IsSuMad @Inject()(
     new reqUtil.SioActionBuilderImpl[MAdReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
-        val madOptFut = mNodes
-          .getByIdCache(adId)
-          .withNodeType(MNodeTypes.Ad)
 
         val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
+          val madOptFut = mNodes
+            .getByIdCache(adId)
+            .withNodeType(MNodeTypes.Ad)
+
           madOptFut.flatMap {
             case Some(mad) =>
               val req1 = MAdReq(mad, request, user)
@@ -65,8 +67,4 @@ class IsSuMad @Inject()(
     }
   }
 
-}
-
-trait IIsSuMad {
-  val isSuMad: IsSuMad
 }

@@ -123,9 +123,3 @@ final class BruteForceProtect @Inject() (
   }
 
 }
-
-
-/** Интерфейс к полю с DI-инстансом защиты от брут-форса. */
-trait IBruteForceProtect {
-  val bruteForceProtect: BruteForceProtect
-}

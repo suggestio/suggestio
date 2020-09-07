@@ -7,6 +7,7 @@ import models.req.{MCalendarReq, MReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -17,17 +18,17 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Поддержка контроля доступа к календарям для суперюзеров.
  * Долгое время это счастье жило прямо в контроллере.
  */
-class IsSuCalendar @Inject()(
-                              esModel                 : EsModel,
-                              aclUtil                 : AclUtil,
-                              mCalendars              : MCalendars,
-                              isSu                    : IsSu,
-                              reqUtil                 : ReqUtil,
-                              httpErrorHandler        : HttpErrorHandler,
-                              implicit private val ec : ExecutionContext,
-                            ) {
+final class IsSuCalendar @Inject()(
+                                    injector: Injector,
+                                  ) {
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val mCalendars = injector.instanceOf[MCalendars]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   /**
     * @param calId id календаря, вокруг которого идёт работа.
@@ -39,6 +40,8 @@ class IsSuCalendar @Inject()(
         val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
+          import esModel.api._
+
           mCalendars.getById(calId).flatMap {
             case Some(mcal) =>
               val req1 = MCalendarReq(mcal, request, user)

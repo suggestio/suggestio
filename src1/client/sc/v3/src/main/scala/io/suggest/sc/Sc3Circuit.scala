@@ -59,7 +59,7 @@ import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
-import io.suggest.lk.c.{CsrfTokenAh, CsrfTokenApi, ICsrfTokenApi, LoginSessionAh}
+import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi, LoginSessionAh}
 import io.suggest.lk.m.LoginSessionRestore
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic

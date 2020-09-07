@@ -2,7 +2,7 @@ package util.acl
 
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.MNodes
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -20,20 +20,20 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
  *
  * 2015.dec.23: Изначально назывался IsSuperuserAdnNode и обслуживал только MAdnNode.
  */
-class IsSuNode @Inject() (
-                           esModel    : EsModel,
-                           mNodes     : MNodes,
-                           aclUtil    : AclUtil,
-                           isSu       : IsSu,
-                           reqUtil    : ReqUtil,
-                           mCommonDi  : ICommonDi
-                         )
+final class IsSuNode @Inject() (
+                                 aclUtil    : AclUtil,
+                                 reqUtil    : ReqUtil,
+                                 mCommonDi  : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.current.injector
+  import mCommonDi.{ec, errorHandler}
 
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val isSu = injector.instanceOf[IsSu]
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
     * @param nodeId id запрашиваемого узла.
@@ -47,6 +47,8 @@ class IsSuNode @Inject() (
         def req1 = MReq(request, user)
 
         if (user.isSuper) {
+          import esModel.api._
+
           val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case Some(mnode) =>
@@ -74,6 +76,8 @@ class IsSuNode @Inject() (
         val req1 = aclUtil.reqFromRequest(request)
 
         if (req1.user.isSuper) {
+          import esModel.api._
+
           val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case None =>
@@ -90,8 +94,4 @@ class IsSuNode @Inject() (
     }
   }
 
-}
-
-trait IIsSuNodeDi {
-  val isSuNode: IsSuNode
 }

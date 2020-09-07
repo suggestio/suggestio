@@ -3,16 +3,17 @@ package util.acl
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
-import models.mproj.ICommonDi
 import models.req.{IReq, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc._
 import util.adv.ext.AdvExtFormUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.req.ReqUtil
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import japgolly.univeq._
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -25,20 +26,20 @@ import scala.concurrent.Future
 
 
 /** Аддон для контроллера для добавления поддержки */
-class CanSubmitExtTargetForNode @Inject() (
-                                            esModel                 : EsModel,
-                                            aclUtil                 : AclUtil,
-                                            advExtFormUtil          : AdvExtFormUtil,
-                                            mExtTargets             : MExtTargets,
-                                            isNodeAdmin             : IsNodeAdmin,
-                                            reqUtil                 : ReqUtil,
-                                            mCommonDi               : ICommonDi
-                                          )
+final class CanSubmitExtTargetForNode @Inject() (
+                                                  injector                : Injector,
+                                                )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val advExtFormUtil = injector.instanceOf[AdvExtFormUtil]
+  private lazy val mExtTargets = injector.instanceOf[MExtTargets]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** ActionBuilder проверки доступа на запись (create, edit) для target'а,
@@ -57,8 +58,10 @@ class CanSubmitExtTargetForNode @Inject() (
         val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
 
         // Запускаем сразу в фоне поиск уже сохранённой цели.
-        val tgIdOpt = formBinded.apply("id").value
+        val tgIdOpt = formBinded("id").value
         val tgOptFut = FutureUtil.optFut2futOpt(tgIdOpt) { tgId =>
+          import esModel.api._
+
           mExtTargets.getById(tgId)
         }
 
@@ -81,7 +84,7 @@ class CanSubmitExtTargetForNode @Inject() (
 
               // Есть такая цель в хранилищах.
               case someTg @ Some(tg) =>
-                if (tg.adnId == nodeId) {
+                if (tg.adnId ==* nodeId) {
                   // Эта цель принадлежит узлу, которым владеет текущий юзер.
                   allOk(someTg)
                 } else {
@@ -99,7 +102,7 @@ class CanSubmitExtTargetForNode @Inject() (
 
       def breakInAttempted(request: IReq[_], tg: MExtTarget): Future[Result] = {
         LOGGER.warn(s"FORBIDDEN: User[${request.user.personIdOpt}] @${request.remoteClientAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
-        errorHandler.onClientError( request, Status.FORBIDDEN, s"Target ${tg.id.get} doesn't belongs to node[$nodeId]." )
+        httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"Target ${tg.id.get} doesn't belongs to node[$nodeId]." )
       }
 
     }

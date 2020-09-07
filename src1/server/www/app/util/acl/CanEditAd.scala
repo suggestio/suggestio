@@ -1,6 +1,6 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -9,10 +9,10 @@ import models.req._
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 import io.suggest.req.ReqUtil
-import models.mproj.ICommonDi
-import play.api.http.Status
+import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -22,26 +22,25 @@ import scala.concurrent.Future
  */
 
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
-class CanEditAd @Inject() (
-                            esModel                 : EsModel,
-                            mNodes                  : MNodes,
-                            aclUtil                 : AclUtil,
-                            isNodeAdmin             : IsNodeAdmin,
-                            n2NodesUtil             : N2NodesUtil,
-                            isAuth                  : IsAuth,
-                            reqUtil                 : ReqUtil,
-                            mCommonDi               : ICommonDi
-                          )
+final class CanEditAd @Inject() (
+                                  injector                : Injector,
+                                )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Кое какая утиль для action builder'ов, редактирующих карточку. */
   trait AdEditBase {
-
     /** id рекламной карточки, которую клиент хочет поредактировать. */
     def adId: String
 
@@ -59,6 +58,8 @@ class CanEditAd @Inject() (
 
   def isUserCanEditAd(user: ISioUser, adId: String): Future[Option[MAdProd]] = {
     FutureUtil.optFut2futOpt(user.personIdOpt) { _ =>
+      import esModel.api._
+
       val madOptFut = mNodes
         .getByIdCache(adId)
         .withNodeType(MNodeTypes.Ad)
@@ -75,6 +76,8 @@ class CanEditAd @Inject() (
   }
   def isUserCanEditAd(user: ISioUser, mad: MNode): Future[Option[MAdProd]] = {
     FutureUtil.optFut2futOpt(user.personIdOpt) { _ =>
+      import esModel.api._
+
       val prodIdOpt = n2NodesUtil.madProducerId(mad)
       val prodNodeOptFut = mNodes.maybeGetByIdCached(prodIdOpt)
       lazy val logPrefix = s"isUserCanEditAd2(${user.personIdOpt.orNull}, ${mad.id.orNull}):"
@@ -103,9 +106,6 @@ class CanEditAd @Inject() (
     new reqUtil.SioActionBuilderImpl[MAdProdReq] with AdEditBase {
 
       override def adId = adId1
-
-      def prodNotFound( mreq: IReqHdr, nodeIdOpt: Option[String]): Future[Result] =
-        errorHandler.onClientError(mreq, Status.NOT_FOUND, s"Ad producer not found: ${nodeIdOpt.orNull}")
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

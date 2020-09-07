@@ -6,12 +6,12 @@ import io.suggest.n2.node.{MNodeTypes, MNodes}
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{MAdProdReq, MReq}
+import play.api.inject.Injector
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -21,21 +21,21 @@ import scala.concurrent.Future
  * на редактирование в рамках узла ad show levels.
  */
 
-class CanUpdateSls @Inject() (
-                               esModel                : EsModel,
-                               mNodes                 : MNodes,
-                               aclUtil                : AclUtil,
-                               isNodeAdmin            : IsNodeAdmin,
-                               canEditAd              : CanEditAd,
-                               n2NodesUtil            : N2NodesUtil,
-                               reqUtil                : ReqUtil,
-                               mCommonDi              : ICommonDi
-                             )
+final class CanUpdateSls @Inject() (
+                                     injector               : Injector,
+                                   )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val canEditAd = injector.instanceOf[CanEditAd]
+  private lazy val n2NodesUtil = injector.instanceOf[N2NodesUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   def apply(adId1: String): ActionBuilder[MAdProdReq, AnyContent] = {
     new reqUtil.SioActionBuilderImpl[MAdProdReq] with canEditAd.AdEditBase {
@@ -43,6 +43,8 @@ class CanUpdateSls @Inject() (
       override final def adId = adId1
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
+        import esModel.api._
+
         val madOptFut = mNodes
           .getByIdCache(adId)
           .withNodeType(MNodeTypes.Ad)

@@ -29,9 +29,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 04.10.17 11:34
   * Description: ACL-проверка на предмет возможности текущему юзеру производить заливку файла в suggest.io.
   */
-class CanUpload @Inject()(
-                           injector                   : Injector,
-                         )
+final class CanUpload @Inject()(
+                                 injector                   : Injector,
+                               )
   extends MacroLogsImplLazy
 {
 

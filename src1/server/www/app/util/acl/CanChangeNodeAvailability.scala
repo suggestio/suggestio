@@ -3,7 +3,6 @@ package util.acl
 import javax.inject.Inject
 import io.suggest.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
@@ -12,6 +11,7 @@ import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MNodeReq}
 import play.api.http.Status
+import play.api.inject.Injector
 import play.api.mvc._
 import util.billing.Bill2Util
 
@@ -27,20 +27,21 @@ import scala.concurrent.Future
   * Да, если он суперюзер, либо если тип узла, биллинг и наличие админства над узлом позволяют это сделать.
   */
 
-class CanChangeNodeAvailability @Inject() (
-                                            esModel           : EsModel,
-                                            mNodes            : MNodes,
-                                            aclUtil           : AclUtil,
-                                            isNodeAdmin       : IsNodeAdmin,
-                                            bill2Util         : Bill2Util,
-                                            reqUtil           : ReqUtil,
-                                            mCommonDi         : ICommonDi
-                                          )
+final class CanChangeNodeAvailability @Inject() (
+                                                  injector          : Injector,
+                                                  mCommonDi         : ICommonDi
+                                                )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val bill2Util = injector.instanceOf[Bill2Util]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+
+  import mCommonDi.{slick, ec}
 
 
   /** Может ли админ узла влиять на availability указанного узла? */
@@ -50,7 +51,7 @@ class CanChangeNodeAvailability @Inject() (
   /** Может ли админ узла влиять на availability указанного узла? */
   def adminCanChangeAvailabilityOf(nodeAdminUser: ISioUser, mnode: MNode): Future[Boolean] = {
     if (nodeAdminUser.isSuper) {
-      true
+      Future.successful( true )
     } else {
       nodeCanChangeAvailability(mnode)
     }
@@ -67,6 +68,7 @@ class CanChangeNodeAvailability @Inject() (
           .withPredicateIter( MPredicates.ModeratedBy )
           .exists( _.info.flag contains false )
     ) {
+      import esModel.api._
       val nodeId = mnode.id.get
 
       // Поискать размещений на узел в биллинге...
@@ -98,7 +100,7 @@ class CanChangeNodeAvailability @Inject() (
 
     } else {
       LOGGER.trace(s"nodeCanChangeAvailability(${mnode.idOrNull}): Node has type ${mnode.common.ntype} or false-moderated, so availability changing is prohibited.")
-      false
+      Future.successful( false )
     }
   }
 
@@ -111,7 +113,7 @@ class CanChangeNodeAvailability @Inject() (
 
         def logPrefix = s"node$nodeId<-u#$user:"
         def forbidden: Future[Result] =
-          errorHandler.onClientError(request, Status.FORBIDDEN, s"Not enought rights for node$nodeId.")
+          mCommonDi.errorHandler.onClientError(request, Status.FORBIDDEN, s"Not enought rights for node$nodeId.")
 
         mnodeOptFut.flatMap {
           // Уже есть админский доступ к узлу. Проверить, есть ли у юзеров возможность влиять на availability этого узла?

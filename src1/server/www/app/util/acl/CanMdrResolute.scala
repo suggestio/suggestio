@@ -24,13 +24,13 @@ import scala.concurrent.Future
   * Created: 17.10.18 14:37
   * Description: ACL для проверки команды модерации от обычного или необычного юзера.
   */
-class CanMdrResolute @Inject()(
-                                esModel                 : EsModel,
-                                mNodes                  : MNodes,
-                                aclUtil                 : AclUtil,
-                                reqUtil                 : ReqUtil,
-                                mCommonDi               : ICommonDi,
-                              )
+final class CanMdrResolute @Inject()(
+                                      esModel                 : EsModel,
+                                      mNodes                  : MNodes,
+                                      aclUtil                 : AclUtil,
+                                      reqUtil                 : ReqUtil,
+                                      mCommonDi               : ICommonDi,
+                                    )
   extends MacroLogsImpl
 {
 

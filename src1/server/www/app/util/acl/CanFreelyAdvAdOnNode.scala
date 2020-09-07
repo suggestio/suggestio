@@ -1,12 +1,13 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{MAdProdNodesChainReq, MUserInit, MUserInits}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -17,16 +18,19 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: ACL проверки возможности бесплатного управления прямым размещением карточки на каком-то либо узле.
   * Поддерживается задание id целевого узела задаётся по rcvrKey.
   */
-class CanFreelyAdvAdOnNode @Inject() (
-                                       aclUtil                  : AclUtil,
-                                       canAdvAd                 : CanAdvAd,
-                                       isNodeAdmin              : IsNodeAdmin,
-                                       reqUtil                  : ReqUtil,
-                                       httpErrorHandler         : HttpErrorHandler,
-                                       implicit private val ec  : ExecutionContext,
-                                     )
+final class CanFreelyAdvAdOnNode @Inject() (
+                                             injector                 : Injector,
+                                           )
   extends MacroLogsImpl
 {
+
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val canAdvAd = injector.instanceOf[CanAdvAd]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Выполнение проверки полного доступа к карточке и к цепочки узлов.
     *

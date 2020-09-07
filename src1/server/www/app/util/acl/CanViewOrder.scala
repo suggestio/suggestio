@@ -12,6 +12,7 @@ import models.mproj.ICommonDi
 import models.req.{MNodeOptOrderReq, MUserInit, MUserInits}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.Future
 
@@ -23,18 +24,17 @@ import scala.concurrent.Future
   * Да, если относится к текущему юзеру и есть права на узел.
   */
 final class CanViewOrder @Inject() (
-                                     aclUtil         : AclUtil,
-                                     mOrders         : MOrders,
-                                     isAuth          : IsAuth,
-                                     isNodeAdmin     : IsNodeAdmin,
-                                     reqUtil         : ReqUtil,
-                                     mCommonDi       : ICommonDi
+                                     injector        : Injector,
                                    )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val mOrders = injector.instanceOf[MOrders]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
 
   /** Собрать ACL ActionBuilder проверки прав.
     *
@@ -58,6 +58,7 @@ final class CanViewOrder @Inject() (
 
         // Незалогиненных юзеров можно сразу посылать.
         user.personIdOpt.fold( forbid ) { personId =>
+          import mCommonDi.{ec, slick}
 
           // Получить id контракта юзера.
           val usrContractIdOptFut = user.contractIdOptFut

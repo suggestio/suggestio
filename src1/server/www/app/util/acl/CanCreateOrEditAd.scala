@@ -1,6 +1,6 @@
 package util.acl
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.req._
 import play.api.mvc._
@@ -8,6 +8,7 @@ import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import japgolly.univeq._
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,15 +21,17 @@ import scala.concurrent.{ExecutionContext, Future}
   * Т.е. если есть указанный id карточки, то будет проверка доступа на редактирование карточки.
   * Иначе, будет проверка доступа к узлу-продьюсеру.
   */
-class CanCreateOrEditAd @Inject() (
-                                    canEditAd   : CanEditAd,
-                                    isNodeAdmin : IsNodeAdmin,
-                                    reqUtil     : ReqUtil,
-                                    httpErrorHandler        : HttpErrorHandler,
-                                    implicit private val ec : ExecutionContext,
-                                  )
+final class CanCreateOrEditAd @Inject() (
+                                          injector    : Injector,
+                                        )
   extends MacroLogsImpl
 {
+
+  private lazy val canEditAd = injector.instanceOf[CanEditAd]
+  private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   def apply(adIdOpt: Option[String], producerIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MAdOptProdReq, AnyContent] = {
     lazy val logPrefix = s"(${adIdOpt.orElse(producerIdOpt).orNull})#${System.currentTimeMillis()}:"

@@ -14,6 +14,7 @@ import play.api.mvc._
 import japgolly.univeq._
 import models.mctx.Context
 import play.api.http.Status
+import play.api.inject.Injector
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -24,19 +25,18 @@ import scala.concurrent.duration._
  * Created: 28.01.15 19:34
  * Description: ActionBuilder для доступа к экшенам активации email.
  */
-class CanConfirmEmailPwReg @Inject()(
-                                      aclUtil                 : AclUtil,
-                                      mNodes                  : MNodes,
-                                      reqUtil                 : ReqUtil,
-                                      mOneTimeTokens          : MOneTimeTokens,
-                                      esModel                 : EsModel,
-                                      mCommonDi               : ICommonDi,
-                                    )
+final class CanConfirmEmailPwReg @Inject()(
+                                            injector                : Injector,
+                                          )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{ec, slick, errorHandler}
-  import esModel.api._
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mCommonDi = injector.instanceOf[ICommonDi]
 
 
   /** Максимальное время жизни. */
@@ -44,10 +44,12 @@ class CanConfirmEmailPwReg @Inject()(
 
 
   def activationImpossible(implicit ctx: Context): Future[Result] = {
+    import mCommonDi.errorHandler
+
     errorHandler.onClientError(
       request     = ctx.request,
       statusCode  = Status.CONFLICT,
-      message     = ctx.messages( MsgCodes.`Activation.impossible` )
+      message     = ctx.messages( MsgCodes.`Activation.impossible` ),
     )
   }
 
@@ -67,13 +69,16 @@ class CanConfirmEmailPwReg @Inject()(
 
         val nowDiff = MEmailRecoverQs.getNowSec() - qs.nowSec
 
-        implicit lazy val ctx = errorHandler.getContext2(req1)
+        implicit lazy val ctx = mCommonDi.errorHandler.getContext2(req1)
 
         if (nowDiff <= 0L || nowDiff > MAX_AGE.toSeconds || qs.nodeId.isEmpty) {
           LOGGER.debug(s"$logPrefix [SEC] Too old. nowDiff=$nowDiff sec, user#${req1.user.personIdOpt.orNull} remote=${req1.remoteClientAddress}")
           activationImpossible( ctx )
 
         } else {
+          import mCommonDi.{ec, slick}
+          import esModel.api._
+
           val personNodeId = qs.nodeId.get
 
           // Нужно поискать ott если уже использовано:

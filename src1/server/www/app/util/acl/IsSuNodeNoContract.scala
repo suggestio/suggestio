@@ -18,19 +18,21 @@ import scala.concurrent.Future
  * Created: 25.12.15 12:15
  * Description: Доступ суперюзера к узлу, обязательно БЕЗ контракта.
  */
-class IsSuNodeNoContract @Inject() (
-                                     esModel    : EsModel,
-                                     mNodes     : MNodes,
-                                     aclUtil    : AclUtil,
-                                     isSu       : IsSu,
-                                     reqUtil    : ReqUtil,
-                                     mCommonDi  : ICommonDi
-                                   )
+final class IsSuNodeNoContract @Inject() (
+                                           aclUtil    : AclUtil,
+                                           reqUtil    : ReqUtil,
+                                           mCommonDi  : ICommonDi
+                                         )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.{ec, errorHandler}
+  import mCommonDi.current.injector
+
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val isSu = injector.instanceOf[IsSu]
 
   /**
     * @param nodeId id запрашиваемого узла.
@@ -44,8 +46,9 @@ class IsSuNodeNoContract @Inject() (
         def reqErr = MReq(request, user)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodes.getByIdCache(nodeId)
-          mnodeOptFut.flatMap {
+          import esModel.api._
+
+          mNodes.getByIdCache(nodeId).flatMap {
             case Some(mnode) =>
               if (mnode.billing.contractId.isEmpty) {
                 val req1 = MNodeReq(mnode, request, user)

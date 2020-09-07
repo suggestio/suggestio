@@ -17,16 +17,16 @@ import scala.concurrent.Future
  * Created: 18.12.15 17:48
  * Description: Доступ к календарю вообще без проверки ACL.
  */
-class CalendarAccessAny @Inject() (
-                                    esModel               : EsModel,
-                                    aclUtil               : AclUtil,
-                                    mCalendars            : MCalendars,
-                                    reqUtil               : ReqUtil,
-                                    mCommonDi             : ICommonDi
-                                  )
+final class CalendarAccessAny @Inject() (
+                                          esModel               : EsModel,
+                                          aclUtil               : AclUtil,
+                                          mCalendars            : MCalendars,
+                                          reqUtil               : ReqUtil,
+                                          mCommonDi             : ICommonDi
+                                        )
 {
 
-  import mCommonDi._
+  import mCommonDi.{ec, errorHandler}
   import esModel.api._
 
 

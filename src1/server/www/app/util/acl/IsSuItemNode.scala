@@ -20,20 +20,21 @@ import scala.concurrent.Future
   * Created: 01.03.16 11:15
   * Description: Аддон для контроллеров для поддержки получения MItem вместе со связанной mad.
   */
-class IsSuItemNode @Inject()(
-                              esModel                : EsModel,
-                              mNodes                 : MNodes,
-                              aclUtil                : AclUtil,
-                              isSu                   : IsSu,
-                              mItems                 : MItems,
-                              reqUtil                : ReqUtil,
-                              mCommonDi              : ICommonDi
-                            )
+final class IsSuItemNode @Inject()(
+                                    mCommonDi              : ICommonDi
+                                  )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.current.injector
+  import mCommonDi.{ec, errorHandler, slick}
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
 
 
   /**
@@ -49,10 +50,11 @@ class IsSuItemNode @Inject()(
         lazy val logPrefix = s"item#$itemId:"
 
         if (user.isSuper) {
-          val mitemOptFut = slick.db.run {
+          import esModel.api._
+
+          slick.db.run {
             mItems.getById(itemId)
-          }
-          mitemOptFut.flatMap {
+          }.flatMap {
             case Some(mitem) =>
               val mnodeOptFut = mNodes.getByIdCache(mitem.nodeId)
               mnodeOptFut.flatMap {

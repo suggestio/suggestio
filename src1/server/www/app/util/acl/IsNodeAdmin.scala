@@ -25,21 +25,21 @@ import play.api.mvc.Result
 
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 @Singleton
-class IsNodeAdmin @Inject()(
-                             esModel          : EsModel,
-                             mNodes           : MNodes,
-                             aclUtil          : AclUtil,
-                             isAuth           : IsAuth,
-                             reqUtil          : ReqUtil,
-                             dab              : DefaultActionBuilder,
-                             mCommonDi        : ICommonDi
-                           )
+final class IsNodeAdmin @Inject()(
+                                   mCommonDi        : ICommonDi
+                                 )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.current.injector
+  import mCommonDi.{ec, errorHandler}
 
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val dab = injector.instanceOf[DefaultActionBuilder]
 
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
   def onUnauthNode(req: IReqHdr): Future[Result] = {
@@ -84,6 +84,8 @@ class IsNodeAdmin @Inject()(
   }
 
   def isAdnNodeAdmin(adnId: String, user: ISioUser): Future[Option[MNode]] = {
+    import esModel.api._
+
     val fut = mNodes.getByIdCache(adnId)
     checkNodeCredsOpt(fut, adnId, user)
   }
@@ -118,6 +120,8 @@ class IsNodeAdmin @Inject()(
           LOGGER.warn(s"$logPrefix2 Too many levels deep for checking, limit=$maxLevels reached, giving up.")
           Future.successful(None)
         } else {
+          import esModel.api._
+
           for {
             // Получить на руки узел, который проверяется:
             mnodeOpt <- mNodes.getByIdCache(currNodeId)
@@ -195,6 +199,7 @@ class IsNodeAdmin @Inject()(
     *         Some + список узлов, где порядок строго соответствует nodeKey.
     */
   def isNodeChainAdmin(nodeKey: RcvrKey, user: ISioUser): Future[Option[List[MNode]]] = {
+    import esModel.api._
 
     lazy val logPrefix = s"isNodeChainAdmin($nodeKey, $user):"
 

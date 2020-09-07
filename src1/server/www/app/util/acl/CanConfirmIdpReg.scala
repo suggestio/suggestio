@@ -9,12 +9,12 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
 import io.suggest.req.ReqUtil
-import models.mproj.ICommonDi
 import models.req.MReq
+import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdentUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -23,20 +23,19 @@ import scala.concurrent.Future
  * Description: Юзер, залогинившийся через внешнего провайдера идентификакции, требует
  * подтверждения регистрации (создания первой ноды).
  */
-class CanConfirmIdpReg @Inject() (
-                                   esModel                  : EsModel,
-                                   aclUtil                  : AclUtil,
-                                   identUtil                : IdentUtil,
-                                   mNodes                   : MNodes,
-                                   isAuth                   : IsAuth,
-                                   reqUtil                  : ReqUtil,
-                                   mCommonDi                : ICommonDi,
-                                 )
+final class CanConfirmIdpReg @Inject() (
+                                         injector                 : Injector,
+                                       )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val identUtil = injector.instanceOf[IdentUtil]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val isAuth = injector.instanceOf[IsAuth]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
@@ -55,6 +54,8 @@ class CanConfirmIdpReg @Inject() (
           true
 
         } else {
+          import esModel.api._
+
           // Запустить подсчет имеющихся у юзера магазинов
           val msearch = new MNodeSearch {
             override val outEdges = {
@@ -122,7 +123,7 @@ class CanConfirmIdpReg @Inject() (
   }
 
 
-  final def apply(): ActionBuilder[MReq, AnyContent] =
+  def apply(): ActionBuilder[MReq, AnyContent] =
     new ImplC
 
 }

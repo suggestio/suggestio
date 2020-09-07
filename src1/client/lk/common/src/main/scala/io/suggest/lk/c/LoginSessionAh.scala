@@ -104,7 +104,11 @@ class LoginSessionAh[M](
             .get[MHttpCookie]( KV_STORAGE_TOKEN_KEY )
             .fold( Pot.empty[MHttpCookieParsed] ) { mkvs =>
               val setCookieRaw = mkvs.value.setCookieHeaderValue
-              def setCookieRaw32 = if (scalajs.LinkingInfo.developmentMode) setCookieRaw else StringUtil.strLimitLen(setCookieRaw, 32)
+
+              def setCookieRaw32 =
+                if (scalajs.LinkingInfo.developmentMode) setCookieRaw
+                else StringUtil.strLimitLen(setCookieRaw, 32)
+
               HttpCookieUtil
                 .parseCookies( setCookieRaw )
                 // Убедится, что не пустая строка на выходе пропарсилась:

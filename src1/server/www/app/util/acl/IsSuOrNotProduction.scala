@@ -9,24 +9,25 @@ import models.req.MReq
 import play.api.mvc._
 
 import scala.concurrent.Future
-import scala.language.higherKinds
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 06.03.17 12:07
-  * Description: Поддержка фильтровки по
+  * Description: Поддержка фильтровки по режиму работы системы: !production.
   */
-class IsSuOrNotProduction @Inject() (
-                                      aclUtil   : AclUtil,
-                                      isSu      : IsSu,
-                                      dab       : DefaultActionBuilder,
-                                      reqUtil   : ReqUtil,
-                                      mCommonDi : ICommonDi
-                                    )
+final class IsSuOrNotProduction @Inject() (
+                                            aclUtil   : AclUtil,
+                                            reqUtil   : ReqUtil,
+                                            mCommonDi : ICommonDi
+                                          )
   extends MacroLogsImpl
 {
 
+  import mCommonDi.current.injector
+
+  private lazy val isSu = injector.instanceOf[IsSu]
+  private lazy val dab = injector.instanceOf[DefaultActionBuilder]
 
   private def _apply[A](request: Request[A])(f: MReq[A] => Future[Result]): Future[Result] = {
     val user = aclUtil.userFromRequest(request)

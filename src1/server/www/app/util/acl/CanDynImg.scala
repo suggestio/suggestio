@@ -9,11 +9,13 @@ import models.req.MFileReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.err.HttpResultingException, HttpResultingException._
+import io.suggest.err.HttpResultingException
+import HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.n2.edge.MPredicates
 import io.suggest.proto.http.HttpConst
 import play.api.http.{HttpErrorHandler, Status}
+import play.api.inject.Injector
 import util.cdn.CdnUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,19 +28,20 @@ import scala.concurrent.{ExecutionContext, Future}
   * Этот код проверяет dist (например, ссылки на s2 не должны приходить на s3).
   */
 @Singleton
-class CanDynImg @Inject() (
-                            esModel                 : EsModel,
-                            mNodes                  : MNodes,
-                            aclUtil                 : AclUtil,
-                            reqUtil                 : ReqUtil,
-                            cdnUtil                 : CdnUtil,
-                            errorHandler            : HttpErrorHandler,
-                            implicit private val ec : ExecutionContext
-                          )
+final class CanDynImg @Inject() (
+                                  injector                : Injector,
+                                )
   extends MacroLogsImpl
 { outer =>
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val cdnUtil = injector.instanceOf[CdnUtil]
+  private lazy val errorHandler = injector.instanceOf[HttpErrorHandler]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+
 
   /** Проверка доступа к динамической картинке.
     *
@@ -49,6 +52,7 @@ class CanDynImg @Inject() (
     new reqUtil.SioActionBuilderImpl[MFileReq] {
 
       override def invokeBlock[A](request: Request[A], block: MFileReq[A] => Future[Result]): Future[Result] = {
+        import esModel.api._
 
         /** Ответ клиенту, когда картинка не найдена или недоступна. */
         def _imageNotFoundThrow = throw HttpResultingException(

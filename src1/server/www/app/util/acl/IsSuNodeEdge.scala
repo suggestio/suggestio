@@ -23,19 +23,20 @@ import scala.concurrent.Future
   * Created: 17.10.16 16:26
   * Description: ACL-аддон для sys-контроллеров для экшенов управления эджами.
   */
-class IsSuNodeEdge @Inject() (
-                               esModel    : EsModel,
-                               mNodes     : MNodes,
-                               aclUtil    : AclUtil,
-                               isSu       : IsSu,
-                               reqUtil    : ReqUtil,
-                               mCommonDi  : ICommonDi
-                             )
+final class IsSuNodeEdge @Inject() (
+                                     reqUtil    : ReqUtil,
+                                     mCommonDi  : ICommonDi
+                                   )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import esModel.api._
+  import mCommonDi.{ec, errorHandler}
+  import mCommonDi.current.injector
+
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val isSu = injector.instanceOf[IsSu]
 
 
   /** Комбинация IsSuperuser + IsAdnAdmin + доступ к эджу по индексу.
@@ -52,6 +53,8 @@ class IsSuNodeEdge @Inject() (
         val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
+          import esModel.api._
+
           def req1 = MReq(request, user)
 
           (for {

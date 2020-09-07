@@ -5,6 +5,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MReq}
+import play.api.inject.Injector
 
 import scala.concurrent.Future
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
@@ -17,12 +18,14 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
  */
 
 final class IsSu @Inject() (
+                             injector               : Injector,
                              aclUtil                : AclUtil,
                              protected val reqUtil  : ReqUtil,
-                             isAuth                 : IsAuth
                            )
   extends MacroLogsImpl
 {
+
+  private lazy val isAuth = injector.instanceOf[IsAuth]
 
   def logBlockedAccess(req: IReqHdr): Unit = {
     import req._
@@ -65,9 +68,4 @@ final class IsSu @Inject() (
   @inline
   def apply() = Impl
 
-}
-
-/** Интерфейс для DI-поля с инстансом [[IsSu]]. */
-trait IIsSu {
-  val isSu: IsSu
 }

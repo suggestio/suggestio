@@ -212,12 +212,13 @@ object HttpClient extends Log {
 
                 for (err <- eith.left)
                   logger.error( ErrorMsgs.COOKIE_NOT_PARSED, msg = (err, if (scalajs.LinkingInfo.developmentMode) oneCookieV else StringUtil.strLimitLen(oneCookieV, 30)) )
+
                 eith
                   .toOption
                   .iterator
               }
               // Может быть несколько кукисов в одной строке. Fetch/cdv-fetch так и возвращают значения одноимённых хидеров одной строкой.
-              cookieParsed <- cookiesParsed
+              cookieParsed <- cookiesParsed.iterator
               // Финальные проверки присланного распарсенного кукиса:
               if {
                 // Фильтрация по имени кукиса. Если в будущем тут будет более одного кукиса, то надо nextOption() заменить ниже.
@@ -235,15 +236,8 @@ object HttpClient extends Log {
             })
               // Не более одного сессионного кукиса:
               .nextOption()
-              .foreach { cookieParsed =>
-                // Надо разобраться, это discard-кукиш или обновление сессии.
-                // TODO MHttpCookie надо собирать не здесь или собирать на базе cookieParsed.
+              .foreach( sessionTokenSetF )
 
-                //val oneCookie = MHttpCookie( oneCookieV )
-                // TODO XXX нужна поддержка cookie discard, когда присылаемый сервером Expires/Max-Age невалиден или value пуст.
-                //val optValue = Some( oneCookie )
-                sessionTokenSetF( cookieParsed )
-              }
             // вернуть исходный resp:
             httpResp
           }

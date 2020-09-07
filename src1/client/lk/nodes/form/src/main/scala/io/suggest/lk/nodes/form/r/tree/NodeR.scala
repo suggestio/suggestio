@@ -154,9 +154,13 @@ class NodeR(
               },
 
               // Ряд с кратким описанием под-узлов и кнопкой создания оных:
-              subNodesR.component(
-                propsProxy.resetZoom( p.chs )
-              ),
+              ReactCommonUtil.maybeNode(
+                p.node.state.infoPot
+                  .exists( _.ntype.userCanCreateSubNodes )
+              ) {
+                val z2 = propsProxy.resetZoom( p.chs )
+                subNodesR.component( z2 )
+              },
 
             )
 

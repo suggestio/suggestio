@@ -6,7 +6,7 @@ import io.suggest.mbill2.m.item.MItems
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, MItemReq, MReq}
+import models.req.{MItemReq, MReq}
 import play.api.http.Status
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
@@ -18,17 +18,19 @@ import scala.concurrent.Future
   * Created: 26.02.16 16:17
   * Description: ACL-аддон для isSuperuser + mItems.getById()
   */
-class IsSuItem @Inject() (
-                           aclUtil     : AclUtil,
-                           mItems      : MItems,
-                           isSu        : IsSu,
-                           reqUtil     : ReqUtil,
-                           mCommonDi   : ICommonDi
-                         )
+final class IsSuItem @Inject() (
+                                 aclUtil     : AclUtil,
+                                 reqUtil     : ReqUtil,
+                                 mCommonDi   : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  import mCommonDi.{ec, slick, errorHandler}
+  import mCommonDi.current.injector
+
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val isSu = injector.instanceOf[IsSu]
 
   /**
     * @param itemId Ключ item'а в таблице MItems.

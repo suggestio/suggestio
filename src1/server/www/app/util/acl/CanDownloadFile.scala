@@ -28,9 +28,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Можно ли скачать файл?
   * Это вызывается на хосте *.nodes.suggest.io, поэтому сессия может быть недоступна.
   */
-class CanDownloadFile @Inject()(
-                                 injector: Injector,
-                               )
+final class CanDownloadFile @Inject()(
+                                       injector: Injector,
+                                     )
   extends MacroLogsImplLazy
 {
 

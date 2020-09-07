@@ -3,7 +3,7 @@ package util.acl
 import io.suggest.mbill2.m.ott.MOneTimeTokens
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MIdTokenReq}
 import play.api.http.{HttpErrorHandler, Status}
@@ -19,19 +19,21 @@ import scala.util.{Failure, Success}
   * Created: 25.06.19 11:49
   * Description: ACL с поддержкой поверхностной проверкой id-токена.
   */
-@Singleton
-class IsIdTokenValid @Inject()(
-                                idTokenUtil               : IdTokenUtil,
-                                aclUtil                   : AclUtil,
-                                reqUtil                   : ReqUtil,
-                                httpErrorHandler          : HttpErrorHandler,
-                                mOneTimeTokens            : MOneTimeTokens,
-                                mCommonDi                 : ICommonDi,
-                              )
+final class IsIdTokenValid @Inject()(
+                                      mCommonDi: ICommonDi,
+                                    )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{ec, slick}
+  import mCommonDi.current.injector
+  import mCommonDi.{slick, ec}
+
+  private lazy val idTokenUtil = injector.instanceOf[IdTokenUtil]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val mOneTimeTokens = injector.instanceOf[MOneTimeTokens]
+
 
   private def _invalidToken(req: IReqHdr): Future[Result] = {
     httpErrorHandler.onClientError(req, Status.BAD_REQUEST, "error.invalid")
@@ -77,6 +79,7 @@ class IsIdTokenValid @Inject()(
           .transformWith {
             case Success(idToken) =>
               if ( idTokenUtil.isConstaintsMeetRequest( idToken )(req0) ) {
+
                 LOGGER.trace(s"$logPrefix idToken from ip#${req0.remoteClientAddress}:\n $idToken")
                 (for {
                   mottOpt <- slick.db.run {

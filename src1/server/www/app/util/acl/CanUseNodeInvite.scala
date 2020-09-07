@@ -14,6 +14,7 @@ import models.req.{IReq, MNodeInviteReq}
 import models.usr.MEmailRecoverQs
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import japgolly.univeq._
+import play.api.inject.Injector
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,25 +26,22 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: ActionBuilder'ы для доступа к инвайтам на управление узлом через email.
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
-class CanUseNodeInvite @Inject()(
-                                  esModel                      : EsModel,
-                                  mNodes                       : MNodes,
-                                  aclUtil                      : AclUtil,
-                                  isAuth                       : IsAuth,
-                                  reqUtil                      : ReqUtil,
-                                  implicit private val ec      : ExecutionContext,
-                                  implicit private val mat     : Materializer,
-                                )
+final class CanUseNodeInvite @Inject()(
+                                        injector                     : Injector,
+                                      )
   extends MacroLogsImpl
 {
 
-  import esModel.api._
+  private lazy val esModel = injector.instanceOf[EsModel]
+  private lazy val mNodes = injector.instanceOf[MNodes]
+  private lazy val aclUtil = injector.instanceOf[AclUtil]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
+  implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = injector.instanceOf[Materializer]
 
 
   /** Сборка ActionBuider'ов, проверяющих запросы активации инвайта на узел.
     *
-    * @param nodeId id узла, на который клиент пытается получить привелегии.
-    * @param eaId id в модели EmailActivation.
     * @param notFoundF Что делать при проблемах?
     *                  $1 - reason
     *                  $2 - sio-реквест.
@@ -66,6 +64,8 @@ class CanUseNodeInvite @Inject()(
           notFoundF("", baseReq)
 
         } else {
+          import esModel.api._
+
           // Надо поискать запрошенный узел:
           val resFut = for {
             // Для снижения риска параллельных регистраций, делаем предварительный рефреш индекса.
