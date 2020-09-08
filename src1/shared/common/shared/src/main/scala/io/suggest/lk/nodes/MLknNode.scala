@@ -21,13 +21,13 @@ object MLknNode {
 
   implicit def mLknNodeFormat: OFormat[MLknNode] = (
     (__ \ "i").format[String] and
-    (__ \ "n").format[String] and
-    (__ \ "t").format[MNodeType] and
-    (__ \ "e").format[Boolean] and
+    (__ \ "t").formatNullable[MNodeType] and
+    (__ \ "n").formatNullable[String] and
+    (__ \ "e").formatNullable[Boolean] and
     (__ \ "a").formatNullable[Boolean] and
     (__ \ "d").formatNullable[MLknAdv] and
     (__ \ "f").formatNullable[MTfDailyInfo] and
-    (__ \ "l").format[Boolean]
+    (__ \ "l").formatNullable[Boolean]
   )(apply, unlift(unapply))
 
 
@@ -36,28 +36,37 @@ object MLknNode {
 }
 
 
-/**
-  * Класс модели данных по узлу.
-  * По идее, это единственая реализация [[MLknNode]].
+/** Контейнер модели данных по узлу для формы-дерева LkNodes.
+  *
+  * @param id Уникальный id узла.
+  * @param ntype Тип узла по модели MNodeTypes.
+  *              None - сервер не возвращает, т.к. не имеет смысла для запроса или данному клиенту не положено знать.
+  * @param name Отображаемое название узла.
+  *             None - означает, что или оно отсутствует.
+  *             None - или (скорее всего) для данного юзера/запроса оно не возвращается.
+  * @param isEnabled Является ли узел активным сейчас?
+  *                  None - сервер не проверял и не возвращает это значение.
+  * @param isAdmin Может ли текущий юзер управлять значением флага isEnabled или удалять узел?
+  *                admin-привелегии в lk-nodes-форме зависят также от типа узла.
+  *                None значит, что сервер не интересовался этим вопросом.
+  * @param adv Имеется ли размещение текущей рекламной карточки на указанном узле?
+  * @param tf Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос.
+  * @param isDetailed Это детализованный ответ сервера или краткий?
+  *                   Чтобы различать отстуствие тарифа/размещения и т.д. и просто невозврат этих полей сервером.
   */
-case class MLknNode(
-                     /** Уникальный id узла. */
-                     override val id        : String,
-                     /** Отображаемое название узла. */
-                     name                   : String,
-                     /** Тип узла по модели MNodeTypes. */
-                     ntype                  : MNodeType,
-                     /** Является ли узел активным сейчас? */
-                     isEnabled              : Boolean,
-                     /** Может ли юзер управлять значением флага isEnabled или удалять узел?
-                       * None значит, что сервер не интересовался этим вопросом.
-                       */
-                     canChangeAvailability  : Option[Boolean],
-
-                     /** Имеется ли размещение текущей рекламной карточки на указанном узле? */
-                     adv                    : Option[MLknAdv]           = None,
-                     /** Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос. */
-                     tf                     : Option[MTfDailyInfo],
-                     isDetailed             : Boolean,
-                   )
+final case class MLknNode(
+                           override val id        : String,
+                           ntype                  : Option[MNodeType],
+                           name                   : Option[String]            = None,
+                           isEnabled              : Option[Boolean]           = None,
+                           isAdmin                : Option[Boolean]           = None,
+                           adv                    : Option[MLknAdv]           = None,
+                           tf                     : Option[MTfDailyInfo]      = None,
+                           isDetailed             : Option[Boolean]           = None,
+                         )
   extends IId[String]
+{
+
+  def nameOrEmpty = name getOrElse ""
+
+}

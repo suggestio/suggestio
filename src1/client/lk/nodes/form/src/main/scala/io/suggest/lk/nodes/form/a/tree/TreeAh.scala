@@ -81,6 +81,10 @@ class TreeAh[M](
 
         // Сохранить обновлённое дерево в состояние:
         val v2 = (MTree setNodes beaconUpdatedLoc.toTree)(v0)
+
+        // TODO Если исчез opened-маячок, то обновить opened на валидное значение.
+        // TODO Что делать, если одновременно исчезли все маячки? Удалять группу маячков из списка? Или просто сворачивать её?
+
         updated(v2)
       })
         .getOrElse( noChange )
@@ -100,7 +104,7 @@ class TreeAh[M](
       } yield {
         val mns0 = loc0.getLabel
         val isNormal = mns0.role ==* MTreeRoles.Normal
-        if ( !isNormal || mns0.infoPot.exists(_.isDetailed) ) {
+        if ( !isNormal || mns0.infoPot.exists(_.isDetailed getOrElse true) ) {
           // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
           // Узнать, является ли текущий элемент сфокусированным?
           val v2 = MTree.opened.modify { opened0 =>
@@ -330,7 +334,7 @@ class TreeAh[M](
         loc0 <- locOpt0
         mns0 = loc0.getLabel
         if {
-          val r = mns0.infoPot.exists(_.canChangeAvailability contains[Boolean] true)
+          val r = mns0.infoPot.exists(_.isAdmin contains[Boolean] true)
           // TODO Нужно рендерить что-то на экран юзеру. Сейчас тут возвращается noChange, т.е. просто сбросом галочки.
           if (!r)
             // Пришёл сигнал управления галочкой, но у юзера нет прав влиять на эту галочку.
@@ -387,7 +391,7 @@ class TreeAh[M](
                     .composeTraversal( Traversal.fromTraverse[Option, MNodeEnabledUpdateState] )
                     .modify { nodeEnabledState =>
                       nodeEnabledState.copy(
-                        newIsEnabled  = info.isEnabled,
+                        newIsEnabled  = info.isEnabled contains[Boolean] true,
                         request       = nodeEnabledState.request.fail(ex)
                       )
                     }

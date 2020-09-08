@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiProgressVariants, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.react.ModelProxy
-import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeStateRender, MTreeRoles}
+import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeState, MNodeStateRender, MTreeRoles}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
@@ -14,7 +14,12 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.spa.FastEqUtil
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.univeq._
+import scalaz.{EphemeralStream, Tree}
+import scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -31,9 +36,12 @@ final class NodeHeaderR(
   case class PropsVal(
                        render         : MNodeStateRender,
                        isAdv          : Boolean,
+                       chs            : EphemeralStream[Tree[MNodeState]],
                      )
   implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
-    MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render )
+    MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render ) &&
+    (a.isAdv ==* b.isAdv) &&
+    (a.chs ===* b.chs)
   }
 
 
@@ -67,27 +75,36 @@ final class NodeHeaderR(
           // Иконка-значок типа узла:
           infoOpt.whenDefinedNode { info =>
             React.Fragment(
-              MuiListItemIcon()(
-                (info.ntype match {
-                  case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
-                  case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
-                  case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
-                  case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
-                  case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
-                  case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
-                  case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
-                  case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
-                  case _                                        => Mui.SvgIcons.BuildOutlined
-                })()(),
-              ),
+
+              // Иконка типа узла слева:
+              info.ntype.whenDefinedNode { ntype =>
+                MuiListItemIcon()(
+                  (ntype match {
+                    case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
+                    case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
+                    case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
+                    case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
+                    case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
+                    case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
+                    case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
+                    case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
+                    case _                                        => Mui.SvgIcons.BuildOutlined
+                  })()(),
+                )
+              },
 
               // Название узла:
-              MuiListItemText(
+              MuiListItemText {
+                val _text2ndary = info.ntype
+                  .map { ntype =>
+                    crCtxP.message( ntype.singular ).rawNode
+                  }
+                  .orUndefined
                 new MuiListItemTextProps {
-                  override val primary = info.name
-                  override val secondary = crCtxP.message( info.ntype.singular ).rawNode
+                  override val primary = info.nameOrEmpty
+                  override val secondary = _text2ndary
                 }
-              )(),
+              }(),
             )
           },
 
@@ -142,7 +159,12 @@ final class NodeHeaderR(
           },
 
           // Если размещение рекламной карточки, то отрендерить свитчер.
-          ReactCommonUtil.maybeNode( s.isAdv && infoOpt.exists(_.ntype.showScLink) ) {
+          ReactCommonUtil.maybeNode(
+            s.isAdv &&
+            infoOpt
+              .flatMap(_.ntype)
+              .exists(_.showScLink)
+          ) {
             val isChecked = advPot getOrElse false
             MuiListItemSecondaryAction()(
               MuiSwitch(
@@ -178,9 +200,15 @@ final class NodeHeaderR(
             )
           },
 
+          // Заголовок виртуальной группы маячков.
           ReactCommonUtil.maybeNode( st.role ==* MTreeRoles.BeaconsDetected ) {
-            MuiListItemText()(
-              crCtxP.message( MNodeTypes.BleBeacon.plural ),
+            React.Fragment(
+              MuiListItemText()(
+                crCtxP.message( MNodeTypes.BleBeacon.plural ),
+              ),
+              MuiListItemSecondaryAction()(
+                s.chs.length,
+              ),
             )
           },
 

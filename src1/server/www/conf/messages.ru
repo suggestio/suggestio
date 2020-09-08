@@ -107,6 +107,7 @@ Rotation=Вращение
 Clear=Очистить
 Reload=Перезагрузить
 Geolocation=Геолокация
+Distance=Расстояние
 
 requisites=Платёжные реквизиты для вывода средств
 

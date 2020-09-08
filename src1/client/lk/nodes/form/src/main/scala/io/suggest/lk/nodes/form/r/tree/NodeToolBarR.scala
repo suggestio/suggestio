@@ -43,18 +43,21 @@ class NodeToolBarR(
 
         // Кнопка удаления узла:
         ReactCommonUtil.maybeNode(
-          (s.canChangeAvailability contains[Boolean] true)
+          (s.isAdmin contains[Boolean] true)
         ) {
           deleteBtnR.component( someFalseProps )
         },
 
         // Кнопка перехода в выдачу узла:
-        ReactCommonUtil.maybeNode( s.ntype.showScLink )(
+        ReactCommonUtil.maybeNode( s.ntype.exists(_.showScLink) )(
           nodeScLinkR.component( s.id )
         ),
 
         // Кнопка "Перейти..." в ЛК узла:
-        ReactCommonUtil.maybeNode( diConfig.showLkLinks && s.ntype.showGoToLkLink ) {
+        ReactCommonUtil.maybeNode(
+          diConfig.showLkLinks &&
+          s.ntype.exists(_.showGoToLkLink)
+        ) {
           goToLkLinkR.component( s.id )
         },
 

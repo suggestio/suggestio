@@ -152,6 +152,7 @@ class JsMessagesUtil @Inject() (
       MC.`Go.into` ::
       MC.`Showcase` ::
       MNodeTypes.BleBeacon.plural ::
+      MC.`Distance` ::
       Nil
 
     (

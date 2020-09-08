@@ -32,8 +32,8 @@ import js.JSConverters._
   * Каждый узел дерева описывается компонентом [[NodeR]].
   */
 class TreeR(
-             nodeR      : NodeR,
-             crCtxP     : React.Context[MCommonReactCtx],
+             nodeR                : NodeR,
+             crCtxP               : React.Context[MCommonReactCtx],
            ) {
 
   type Props = ModelProxy[MLkNodesRoot]
@@ -70,6 +70,7 @@ class TreeR(
         val (mns, i) = subTreeIndexed.rootLabel
         val nodePathRev: NodePath_t = i :: parentNodePathRev
         val origSubForest = subTreeOrig.subForest
+
         val chsRendered = subTreeIndexed.subForest
           // Проходим оба subForest одновременно, чтобы иметь на руках сразу индексированное дерево, и неизменный указатель на оригинал.
           .zip( origSubForest )
@@ -83,6 +84,7 @@ class TreeR(
           .iterator
           .toVdomArray
 
+        // Рендер всякого разного
         mns.role match {
 
           // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
@@ -96,6 +98,7 @@ class TreeR(
               state = mns,
               rawNodePathRev = nodePathRev,
             )
+
             p.wrap { mroot =>
               nodeR.PropsVal(
                 node          = mnsr,

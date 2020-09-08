@@ -53,7 +53,9 @@ final class SubNodesR(
                     .count { chTree =>
                       chTree.rootLabel
                         .infoPot
-                        .exists { info => !info.isEnabled }
+                        .exists { info =>
+                          info.isEnabled contains[Boolean] false
+                        }
                     }
                   ReactCommonUtil.maybeEl(chCountDisabled > 0) {
                     <.span(

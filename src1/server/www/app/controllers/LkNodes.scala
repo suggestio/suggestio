@@ -105,18 +105,17 @@ final class LkNodes @Inject() (
 
   // Общий код сборки инфы по одному узлу.
   private def _mkLknNode(mnode: MNode, madOpt: Option[MNode], isDetailed: Boolean,
-                         canChangeAvailability: Option[Boolean] = None,
-                         tf: Option[MTfDailyInfo] = None): MLknNode = {
+                         isAdmin: Option[Boolean] = None, tf: Option[MTfDailyInfo] = None): MLknNode = {
     val nodeId = mnode.id.get
     MLknNode(
       id                    = nodeId,
-      name                  = mnode.guessDisplayNameOrIdOrQuestions,
-      ntype                 = mnode.common.ntype,
-      isEnabled             = mnode.common.isEnabled,
-      canChangeAvailability = canChangeAvailability,
+      name                  = mnode.guessDisplayNameOrId,
+      ntype                 = Some( mnode.common.ntype ),
+      isEnabled             = OptionUtil.SomeBool( mnode.common.isEnabled ),
+      isAdmin               = isAdmin,
       adv                   = _hasAdv(nodeId, madOpt),
       tf                    = tf,
-      isDetailed            = isDetailed,
+      isDetailed            = OptionUtil.SomeBool( isDetailed ),
     )
   }
 
@@ -132,7 +131,7 @@ final class LkNodes @Inject() (
     }
 
     // Можно ли менять доступность узла?
-    val canChangeAvailabilityFut = canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
+    val isAdminFut = canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
 
     val tfDailyInfoOptFut = madOpt.fold [Future[Option[MTfDailyInfo]]] {
       for {
@@ -155,11 +154,11 @@ final class LkNodes @Inject() (
     // Рендер найденных узлов в данные для модели формы.
     for {
       subNodes                <- subNodesFut
-      canChangeAvailability   <- canChangeAvailabilityFut
+      isAdmin                 <- isAdminFut
       tfDailyInfoOpt          <- tfDailyInfoOptFut
     } yield {
       Tree.Node[MLknNode](
-        root = _mkLknNode( mnode, madOpt, isDetailed = true, Some( canChangeAvailability ), tfDailyInfoOpt ),
+        root = _mkLknNode( mnode, madOpt, isDetailed = true, OptionUtil.SomeBool(isAdmin), tfDailyInfoOpt ),
         // TODO .fromLazyList(), когда scalaz дорастёт до обновления.
         forest = subNodes
           .toEphemeralStream
@@ -201,13 +200,13 @@ final class LkNodes @Inject() (
           } yield {
             val mLknNode = MLknNode(
               id                        = mnodeId,
-              name                      = mnode.guessDisplayNameOrIdOrQuestions,
-              ntype                     = mnode.common.ntype,
-              isEnabled                 = mnode.common.isEnabled,
-              canChangeAvailability     = someTrue,
+              name                      = mnode.guessDisplayNameOrId,
+              ntype                     = Some( mnode.common.ntype ),
+              isEnabled                 = OptionUtil.SomeBool( mnode.common.isEnabled ),
+              isAdmin                   = someTrue,
               adv                       = _hasAdv(mnodeId, madOpt),
               tf                        = None, // tf для других узлов не особо важен, т.к. будет запрошен при открытии.
-              isDetailed                = false,
+              isDetailed                = OptionUtil.SomeBool.someFalse,
             )
 
             Tree.Leaf( mLknNode )
@@ -505,16 +504,17 @@ final class LkNodes @Inject() (
               newNodeId     <- newNodeIdFut
               tfDailyInfo   <- tfDailyInfoFut
             } yield {
+              val someTrue = OptionUtil.SomeBool.someTrue
               // Собираем ответ, сериализуем, возвращаем...
               val mResp = MLknNode(
                 id        = newNodeId,
-                name      = addNodeInfo.name,
-                ntype     = ntype,
-                isEnabled = isEnabled,
+                name      = Option.when(addNodeInfo.name.nonEmpty)(addNodeInfo.name),
+                ntype     = Some( ntype ),
+                isEnabled = OptionUtil.SomeBool( isEnabled ),
                 // Текущий юзер создал юзер, значит он может его и удалить.
-                canChangeAvailability = OptionUtil.SomeBool.someTrue,
+                isAdmin = someTrue,
                 tf        = Some(tfDailyInfo),
-                isDetailed = true,
+                isDetailed = someTrue,
               )
               Ok( Json.toJson(mResp) )
             }
@@ -563,14 +563,15 @@ final class LkNodes @Inject() (
           tfDailyInfo   <- tfDailyInfoFut
         } yield {
           LOGGER.debug(s"setNodeEnabled($nodeId): enabled => $isEnabled")
+          val someTrue = OptionUtil.SomeBool.someTrue
           val mLknNode = MLknNode(
             id                      = nodeId,
-            name                    = request.mnode.guessDisplayNameOrIdOrQuestions,
-            ntype                   = request.mnode.common.ntype,
-            isEnabled               = isEnabled,
-            canChangeAvailability   = OptionUtil.SomeBool.someTrue,
+            name                    = request.mnode.guessDisplayNameOrId,
+            ntype                   = Some( request.mnode.common.ntype ),
+            isEnabled               = OptionUtil.SomeBool( isEnabled ),
+            isAdmin                 = someTrue,
             tf                      = Some(tfDailyInfo),
-            isDetailed              = true,
+            isDetailed              = someTrue,
           )
           Ok( Json.toJson(mLknNode) )
         }
@@ -648,14 +649,15 @@ final class LkNodes @Inject() (
               tfDailyInfo   <- tfDailyInfoFut
             } yield {
               LOGGER.debug(s"$logPrefix Ok, nodeVsn => ${mnode.versionOpt.orNull}")
+              val someTrue = OptionUtil.SomeBool.someTrue
               val m = MLknNode(
                 id                      = nodeId,
-                name                    = mnode.guessDisplayNameOrIdOrQuestions,
-                ntype                   = mnode.common.ntype,
-                isEnabled               = mnode.common.isEnabled,
-                canChangeAvailability   = OptionUtil.SomeBool.someTrue,
+                name                    = mnode.guessDisplayNameOrId,
+                ntype                   = Some( mnode.common.ntype ),
+                isEnabled               = OptionUtil.SomeBool( mnode.common.isEnabled ),
+                isAdmin                 = someTrue,
                 tf                      = Some(tfDailyInfo),
-                isDetailed              = true,
+                isDetailed              = someTrue,
               )
               Ok( Json.toJson(m) )
             }
@@ -743,15 +745,16 @@ final class LkNodes @Inject() (
       } yield {
         LOGGER.trace(s"setAdv(ad#$adId, node#$nodeId): adv => $isEnabled, suppressed $itemsSuppressed in billing")
         // Собрать ответ.
+        val someTrue = OptionUtil.SomeBool.someTrue
         val mLknNode = MLknNode(
           id        = nodeId,
-          name      = request.mnode.guessDisplayNameOrIdOrQuestions,
-          ntype     = request.mnode.common.ntype,
-          isEnabled = request.mnode.common.isEnabled,
-          canChangeAvailability = OptionUtil.SomeBool.someTrue,
+          name      = request.mnode.guessDisplayNameOrId,
+          ntype     = Some( request.mnode.common.ntype ),
+          isEnabled = OptionUtil.SomeBool( request.mnode.common.isEnabled ),
+          isAdmin   = someTrue,
           adv       = _hasAdv(nodeId, Some(mnode2)),
           tf        = None, // На странице размещения это не важно
-          isDetailed = true,
+          isDetailed = someTrue,
         )
 
         // Отправить сериализованные данные по узлу.
@@ -808,14 +811,15 @@ final class LkNodes @Inject() (
             LOGGER.debug(s"$logPrefix Node#${rcvrKey.last} tfDaily set to $tfDailyOpt")
 
             // Собрать ответ.
+            val someTrue = OptionUtil.SomeBool.someTrue
             val mLknNode = MLknNode(
               id        = mnode2.id.get,
-              name      = mnode2.guessDisplayNameOrIdOrQuestions,
-              ntype     = mnode2.common.ntype,
-              isEnabled = mnode2.common.isEnabled,
-              canChangeAvailability = OptionUtil.SomeBool.someTrue,
+              name      = mnode2.guessDisplayNameOrId,
+              ntype     = Some( mnode2.common.ntype ),
+              isEnabled = OptionUtil.SomeBool( mnode2.common.isEnabled ),
+              isAdmin   = someTrue,
               tf        = Some(tfInfo),
-              isDetailed = true,
+              isDetailed = someTrue,
             )
 
             // Собрать HTTP-ответ клиенту

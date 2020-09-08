@@ -33,6 +33,7 @@ class NodeR(
              tariffEditR          : TariffEditR,
              subNodesR            : SubNodesR,
              nodeAdvRowR          : NodeAdvRowR,
+             distanceR            : DistanceR,
              crCtxP               : React.Context[MCommonReactCtx],
            ) {
 
@@ -81,26 +82,38 @@ class NodeR(
       // Контейнер узла узла + дочерних узлов.
       MuiTreeItem {
         // Заголовок и переключалка ля управления размещением текущей карточки в данном узле:
-        val _label = propsProxy.wrap { p =>
+        val _nodeHeader = propsProxy.wrap { p =>
           nodeHeaderR.PropsVal(
             render      = p.node,
             isAdv       = p.advMode,
+            chs         = p.chs,
           )
         }( nodeHeaderR.component.apply )
 
         val _nodeId = LknFormUtilR.nodePath2treeId( nodePath )
         new MuiTreeItemProps {
           override val nodeId = _nodeId
-          override val label = _label.rawNode
+          override val label = _nodeHeader.rawNode
           override val onLabelClick = _onNodeLabelClickCbF
         }
       } (
-        ReactCommonUtil.maybeEl(
+        ReactCommonUtil.maybeNode(
           p.node.state.role.canRenderDetails &&
           (p.opened contains[NodePath_t] nodePath)
         ) {
 
-          if (!p.advMode) {
+          if (p.node.state.role ==* MTreeRoles.BeaconSignal) {
+            // Сигнал от маячка: надо отрендерить инфу по выбранному маячку:
+            p.node.state.bcnSignal.whenDefinedNode { bcnSignal =>
+              MuiList()(
+
+                // Расстояние до маячка:
+                distanceR.component( propsProxy.resetZoom(bcnSignal) )
+
+              )
+            }
+
+          } else if (!p.advMode) {
             // ADN-режим: обычное управление ADN-узлами.
             val pns = p.node.state
             val infoOpt = pns.infoPot.toOption
@@ -134,12 +147,12 @@ class NodeR(
                 val enProps = nodeEnabledR.PropsVal(
                   isEnabledUpd  = pns.isEnabledUpd,
                   isEnabled     = pns.infoPot
-                    .exists(_.isEnabled),
+                    .exists(_.isEnabled contains[Boolean] true),
                   request       = pns.isEnabledUpd
                     .fold[Pot[_]]( Pot.empty )(_.request),
                   canChangeAvailability = pns.infoPot
                     .toOption
-                    .flatMap(_.canChangeAvailability),
+                    .flatMap(_.isAdmin),
                 )
                 propsProxy.resetZoom( enProps )
               },
@@ -156,7 +169,7 @@ class NodeR(
               // Ряд с кратким описанием под-узлов и кнопкой создания оных:
               ReactCommonUtil.maybeNode(
                 p.node.state.infoPot
-                  .exists( _.ntype.userCanCreateSubNodes )
+                  .exists( _.ntype.exists(_.userCanCreateSubNodes) )
               ) {
                 val z2 = propsProxy.resetZoom( p.chs )
                 subNodesR.component( z2 )
@@ -190,7 +203,6 @@ class NodeR(
               )
             }
           }
-
         },
 
         // Под-узлы.

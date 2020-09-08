@@ -480,4 +480,6 @@ object MsgCodes {
   val `Screen` = "Screen"
   val `Unsafe.offset` = "Unsafe.offset"
 
+  val `Distance` = "Distance"
+
 }

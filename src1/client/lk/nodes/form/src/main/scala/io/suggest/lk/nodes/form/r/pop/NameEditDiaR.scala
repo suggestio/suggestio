@@ -25,7 +25,7 @@ class NameEditDiaR(
                   ) {
 
   case class PropsVal(
-                       nameOrig     : String,
+                       nameOrig     : Option[String],
                        state        : MEditNodeState,
                      )
   implicit lazy val nameEditPvFeq = FastEqUtil[PropsVal] { (a, b) =>
@@ -169,7 +169,7 @@ class NameEditDiaR(
           OptionUtil.SomeBool( isEnabled )
         },
 
-        nameOrigC = propsProxy.connect( _.map(_.nameOrig) )( OptFastEq.Plain ),
+        nameOrigC = propsProxy.connect( _.flatMap(_.nameOrig) )( OptFastEq.Plain ),
 
       )
     }

@@ -107,6 +107,7 @@ Rotation=Rotation
 Clear=Clear
 Reload=Reload
 Geolocation=Geolocation
+Distance=Distance
 
 requisites=Payment details for withdrawal
 

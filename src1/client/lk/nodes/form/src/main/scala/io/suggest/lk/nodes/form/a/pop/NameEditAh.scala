@@ -64,8 +64,8 @@ class NameEditAh[M](
       } yield {
         // Раскрыть диалог:
         val v2 = Some( MEditNodeState(
-          name        = info.name,
-          nameValid   = isNameValid( info.name ),
+          name        = info.nameOrEmpty,
+          nameValid   = info.name.fold(true)(isNameValid)  ,
         ))
         updated( v2 )
       })
@@ -110,7 +110,8 @@ class NameEditAh[M](
         info <- currNode.infoPot.toOption
       } yield {
         // Если имя не изменилось, но нажата "сохранить" - нужно скрыть диалог.
-        if (name2 ==* info.name) {
+        val infoName = info.nameOrEmpty
+        if (name2 ==* infoName) {
           updated( None )
 
         } else {
