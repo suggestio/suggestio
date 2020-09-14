@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModelDi, MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.jd.tags.JdTag
-import io.suggest.n2.edge.MPredicates
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
@@ -98,9 +98,9 @@ trait ScAdsTile
         MEsInnerHitsInfo(
           fields = (
             MNodeFields.Edges.EO_PREDICATE_FN ::
-              MNodeFields.Edges.EO_NODE_IDS_FN ::
-              Nil
-            ),
+            MNodeFields.Edges.EO_NODE_IDS_FN ::
+            Nil
+          ),
         )
       }
     )
@@ -296,7 +296,7 @@ trait ScAdsTile
                   mnode = mad404,
                   // Сообщить на клиент, что это 404-карточка, чтобы клиент НЕ уведомлял юзера о какой-либо полезной инфе.
                   matchInfos = MScAdMatchInfo(
-                    predicates = Set.empty + MPredicates.Receiver,
+                    predicates = Set.empty[MPredicate] + MPredicates.Receiver,
                     nodeMatchings = MScNodeMatchInfo(
                       nodeId = Some( nodeId404 ),
                     ) :: Nil

@@ -1137,3 +1137,8 @@ Unsupported.browser.or.fatal.failure=Unsupported browser or fatal failure occure
 Not.connected=Not connected.
 Retry=Retry
 Recents=Recent
+
+_to.Register._thing=Register
+Add.beacon.to.account=Add this beacon into account.
+To.control.beacons.need.login=To gain control over beacons, click here for log-in.
+

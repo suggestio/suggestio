@@ -10,12 +10,14 @@ import OptionUtil.BoolOptOps
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
+import io.suggest.lk.nodes.MLknBeaconsScanReq
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
 import io.suggest.sc.app.{MScAppGetQs, MScAppManifestQs}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.spa.SioPages
 import io.suggest.swfs.fid.Fid
 import io.suggest.up.{MUploadChunkQs, MUploadChunkSize, MUploadChunkSizes}
@@ -692,6 +694,48 @@ object CommonModelsJvm extends MacroLogsDyn {
           loginTabB.unbind ( k(F.CURR_TAB_FN),   value.currTab   ),
           stringOptB.unbind( k(F.RETURN_URL_FN), value.returnUrl ),
         )
+      }
+
+    }
+  }
+
+
+  /** QSB для [[MLknBeaconsScanReq]]. */
+  implicit def lknBeaconsAskReq(implicit
+                                stringSeqB: QueryStringBindable[QsbSeq[String]],
+                               ): QueryStringBindable[MLknBeaconsScanReq] = {
+    new QueryStringBindableImpl[MLknBeaconsScanReq] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLknBeaconsScanReq]] = {
+        val F = MLknBeaconsScanReq.Fields
+        val k = key1F( key )
+        for {
+          beaconIdsSeqE <- stringSeqB.bind( k(F.BEACON_UIDS), params )
+        } yield {
+          for {
+            beaconIdsSeq <- beaconIdsSeqE
+            resp <- MLknBeaconsScanReq
+              .validate(
+                MLknBeaconsScanReq(
+                  beaconUids = beaconIdsSeq.items.toSet,
+                )
+              )
+              .toEither
+              .left.map { errorsNel =>
+                errorsNel
+                  .iterator
+                  .mkString( "\n" )
+              }
+          } yield {
+            resp
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MLknBeaconsScanReq): String = {
+        val F = MLknBeaconsScanReq.Fields
+        val k = key1F(key)
+        stringSeqB.unbind( k(F.BEACON_UIDS), QsbSeq(value.beaconUids.toSeq) )
       }
 
     }

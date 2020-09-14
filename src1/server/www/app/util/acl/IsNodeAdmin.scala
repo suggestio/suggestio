@@ -119,6 +119,7 @@ final class IsNodeAdmin @Inject()(
           // Гулять уже больше некуда.
           LOGGER.warn(s"$logPrefix2 Too many levels deep for checking, limit=$maxLevels reached, giving up.")
           Future.successful(None)
+
         } else {
           import esModel.api._
 

@@ -67,7 +67,7 @@ object MTree {
   */
 case class MTree(
                   nodes       : Pot[Tree[MNodeState]],
-                  opened      : Option[NodePath_t]    = None
+                  opened      : Option[NodePath_t]      = None,
                 ) {
 
   lazy val nodesOpt = nodes.toOption

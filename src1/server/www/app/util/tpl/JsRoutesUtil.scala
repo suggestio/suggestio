@@ -38,6 +38,7 @@ final class JsRoutesUtil {
     routes.javascript.LkNodes.setTfDaily #::
     routes.javascript.LkNodes.setAdvShowOpened #::
     routes.javascript.LkNodes.setAlwaysOutlined #::
+    routes.javascript.LkNodes.beaconsScan #::
     routes.javascript.LkAds.adsPage #::
     controllers.sc.routes.javascript.ScSite.geoSite #::
     LazyList.empty

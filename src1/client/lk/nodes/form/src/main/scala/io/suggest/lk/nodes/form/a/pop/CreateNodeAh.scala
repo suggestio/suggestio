@@ -3,7 +3,7 @@ package io.suggest.lk.nodes.form.a.pop
 import diode._
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.m.input.MTextFieldS
-import io.suggest.lk.nodes.MLknNodeReq
+import io.suggest.lk.nodes.{LkNodesConst, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.u.LknFormUtilR
@@ -32,8 +32,8 @@ class CreateNodeAh[M](
 
     // Сигнал о вводе имени узла в форме добавления узла.
     case m: CreateNodeNameChange =>
-      val name2 = LknFormUtilR.normalizeNodeName( m.name )
-      val nameValid2 = LknFormUtilR.isNameValid( name2 )
+      val name2 = LkNodesConst.normalizeNodeName( m.name )
+      val nameValid2 = LkNodesConst.isNameValid( name2 )
 
       val v2 = for (cs0 <- value) yield {
         MCreateNodeS.name.modify(_.copy(
@@ -47,8 +47,8 @@ class CreateNodeAh[M](
     // Сигнал о вводе id узла в форме добавления узла.
     case m: CreateNodeIdChange =>
       // Сопоставить с паттерном маячка.
-      val id2 = LknFormUtilR.normalizeBeaconId( m.id )
-      val isIdValid = LknFormUtilR.isBeaconIdValid( id2 )
+      val id2 = LkNodesConst.normalizeBeaconId( m.id )
+      val isIdValid = LkNodesConst.isBeaconIdValid( id2 )
 
       val v2 = for (cs0 <- value) yield {
         MCreateNodeS.id.modify(_.copy(
@@ -60,10 +60,31 @@ class CreateNodeAh[M](
 
 
     // Сигнал о клике юзера по кнопке добавления под-узла.
-    case CreateNodeClick =>
+    case m: CreateNodeClick =>
       val v0 = value
       v0.fold {
-        updated( Some( MCreateNodeS() ) )
+        lazy val mtfEmpty = MTextFieldS.empty
+
+        val v2 = MCreateNodeS(
+          // Выставить дефолтовое имя, если передано:
+          name = m.nameDflt.fold(mtfEmpty) { name =>
+            MTextFieldS(
+              value = name,
+              isValid = true,
+              isEnabled = true,
+            )
+          },
+          // Зафиксировать id, если указан:
+          id = m.id.fold(mtfEmpty) { fixedId =>
+            MTextFieldS(
+              value   = fixedId,
+              isValid = true,
+              isEnabled = false,
+            )
+          },
+        )
+        updated( Some(v2) )
+
       } { existing =>
         // should never happen
         logger.log( ErrorMsgs.EVENT_ALREADY_LISTENED_BY, msg = existing )
@@ -83,7 +104,6 @@ class CreateNodeAh[M](
         if cs.isValid && !cs.saving.isPending
       } yield {
         val parentNodeRcvrKey = currNodeRO().get
-        val parentNodeId = parentNodeRcvrKey.last
 
         // Огранизовать запрос на сервер.
         val fx = Effect {

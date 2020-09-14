@@ -34,45 +34,48 @@ class NodeToolBarR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     def render(p: Props, s: Props_t): VdomElement = {
-      val someFalseProps = p.resetZoom( OptionUtil.SomeBool.someFalse )
+      // Накапливаем кнопки тулбара (в обратном порядке):
+      var chsAcc = List.empty[VdomNode]
 
-      val chs = List[VdomNode](
+      // TODO Для маячков, которые можно добавлять в свои узлы, нужна кнопка добавления:
 
-        // Кнопка редактирования названия узла:
-        nameEditButtonR.component( someFalseProps ),
+      // Кнопка "Перейти..." в ЛК узла:
+      if (
+        diConfig.showLkLinks() &&
+        s.ntype.exists(_.showGoToLkLink)
+      ) {
+        chsAcc ::= goToLkLinkR.component.withKey(4)( s.id )
+      }
+
+      // Кнопка перехода в выдачу узла:
+      if (s.ntype.exists(_.showScLink)) {
+        chsAcc ::= nodeScLinkR.component.withKey(3)( s.id )
+      }
+
+      if (s.isAdmin contains true) {
+        val someFalseProps = p.resetZoom( OptionUtil.SomeBool.someFalse )
 
         // Кнопка удаления узла:
-        ReactCommonUtil.maybeNode(
-          (s.isAdmin contains[Boolean] true)
-        ) {
-          deleteBtnR.component( someFalseProps )
-        },
+        chsAcc ::= deleteBtnR.component.withKey(2)( someFalseProps )
 
-        // Кнопка перехода в выдачу узла:
-        ReactCommonUtil.maybeNode( s.ntype.exists(_.showScLink) )(
-          nodeScLinkR.component( s.id )
-        ),
-
-        // Кнопка "Перейти..." в ЛК узла:
-        ReactCommonUtil.maybeNode(
-          diConfig.showLkLinks &&
-          s.ntype.exists(_.showGoToLkLink)
-        ) {
-          goToLkLinkR.component( s.id )
-        },
-
-      )
-
-      lkNodesFormCssP.consume { lkNodesFormCss =>
-        MuiListItem {
-          val css = new MuiListItemClasses {
-            override val root = lkNodesFormCss.Node.toolBar.htmlClass
-          }
-          new MuiListItemProps {
-            override val classes = css
-          }
-        } ( chs: _* )
+        // Кнопка редактирования названия узла, доступна для узлов, на которые есть административные права:
+        chsAcc ::= nameEditButtonR.component.withKey(1)( someFalseProps )
       }
+
+      // Если есть хотя бы одна кнопка, то рендерим ряд-тулбар:
+      ReactCommonUtil.maybeEl( chsAcc.nonEmpty ) {
+        lkNodesFormCssP.consume { lkNodesFormCss =>
+          MuiListItem {
+            val css = new MuiListItemClasses {
+              override val root = lkNodesFormCss.Node.toolBar.htmlClass
+            }
+            new MuiListItemProps {
+              override val classes = css
+            }
+          } ( chsAcc: _* )
+        }
+      }
+
     }
 
   }

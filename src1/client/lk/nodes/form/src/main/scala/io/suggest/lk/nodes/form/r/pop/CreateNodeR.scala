@@ -56,6 +56,8 @@ class CreateNodeR(
         val mtfOpt = mtfOptProxy.value
         val _value = mtfOpt.fold("")(_.value)
         val _isValid = mtfOpt.exists(_.isValid)
+        // mtfOpt.isEmpty => состояние не инициализировано => поле без состояния неактивно (disabled=true).
+        val _isEnabled = mtfOpt.exists(_.isEnabled)
         MuiTextField(
           new MuiTextFieldProps {
             override val fullWidth = true
@@ -66,6 +68,7 @@ class CreateNodeR(
             override val onChange = onChanged
             override val helperText = helpText
             override val required = true
+            override val disabled = !_isEnabled
           }
         )()
       }

@@ -34,7 +34,7 @@ class LknPopupsR(
         propsProxy.wrap { mroot =>
           for {
             edit0 <- mroot.popups.editName
-            loc0 <- mroot.tree.openedLoc
+            loc0 <- mroot.tree.tree.openedLoc
             info <- loc0.getLabel.infoPot.toOption
           } yield {
             nameEditDiaR.PropsVal(

@@ -7,7 +7,7 @@ import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
-import io.suggest.lk.nodes.form.m.{BeaconsDetected, MLkNodesRoot, MTree, TreeInit}
+import io.suggest.lk.nodes.form.m.{BeaconsDetected, MLkNodesRoot, MTree, MTreeOuter, TreeInit}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.model.MCsrfToken
@@ -103,17 +103,21 @@ object ScNodesDiaAh {
 
   def scNodesCircuitInit(userIsLoggedIn: Boolean): ActionResult[MLkNodesRoot] = {
     val nodes0 = MTree.emptyNodesTreePot
+
     // Минимальное начальное состояние:
     val lknRoot = MLkNodesRoot(
       conf = MLknConf(
         onNodeId = sc3Circuit.inxStateRO.value.rcvrId,
         adIdOpt  = None,
       ),
-      tree = MTree(
-        // Для loggedIn-юзера сразу ставим pending, чтобы была крутилка - потом будет подгрузка узлов.
-        nodes = if (userIsLoggedIn) nodes0.pending() else nodes0,
+      tree = MTreeOuter(
+        tree = MTree(
+          // Для loggedIn-юзера сразу ставим pending, чтобы была крутилка - потом будет подгрузка узлов.
+          nodes = if (userIsLoggedIn) nodes0.pending() else nodes0,
+        ),
       ),
     )
+
     ActionResult( Some(lknRoot), None )
   }
 

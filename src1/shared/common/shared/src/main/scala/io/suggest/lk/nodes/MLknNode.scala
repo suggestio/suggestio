@@ -27,7 +27,8 @@ object MLknNode {
     (__ \ "a").formatNullable[Boolean] and
     (__ \ "d").formatNullable[MLknAdv] and
     (__ \ "f").formatNullable[MTfDailyInfo] and
-    (__ \ "l").formatNullable[Boolean]
+    (__ \ "l").formatNullable[Boolean] and
+    (__ \ "p").formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -53,6 +54,7 @@ object MLknNode {
   * @param tf Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос.
   * @param isDetailed Это детализованный ответ сервера или краткий?
   *                   Чтобы различать отстуствие тарифа/размещения и т.д. и просто невозврат этих полей сервером.
+  * @param parentName Опциональное описание.
   */
 final case class MLknNode(
                            override val id        : String,
@@ -63,6 +65,7 @@ final case class MLknNode(
                            adv                    : Option[MLknAdv]           = None,
                            tf                     : Option[MTfDailyInfo]      = None,
                            isDetailed             : Option[Boolean]           = None,
+                           parentName             : Option[String]            = None,
                          )
   extends IId[String]
 {

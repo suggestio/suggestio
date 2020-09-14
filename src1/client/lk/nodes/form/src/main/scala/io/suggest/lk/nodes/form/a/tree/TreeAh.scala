@@ -39,57 +39,6 @@ class TreeAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Выставить в дерево обнаруженные поблизости маячки. Экшен исходит из выдачи.
-    case m: BeaconsDetected =>
-      val v0 = value
-
-      // В начало дерева надо добавить/обновить группу видимых маячков:
-      (for {
-        tree0 <- v0.nodesOpt
-      } yield {
-        val loc0 = tree0.loc
-
-        // Сборка поддерева beacons:
-        val beaconsSubTree = Tree.Node(
-          root = MNodeState(
-            role = MTreeRoles.BeaconsDetected,
-          ),
-          forest = m.beacons
-            .iterator
-            .map { bcn =>
-              Tree.Leaf(
-                MNodeState(
-                  role = MTreeRoles.BeaconSignal,
-                  bcnSignal = Some(bcn),
-                )
-              )
-            }
-            .to( List )
-            .toEphemeralStream
-        )
-
-        // Обновление дерева:
-        val beaconUpdatedLoc = loc0
-          .findChild( _.rootLabel.role ==* MTreeRoles.BeaconsDetected )
-          .fold {
-            // Пока нет подсписка с маячками. Добавить в начало:
-            loc0.insertDownFirst( beaconsSubTree )
-          } { loc1 =>
-            // Заменить текущий элемент обновлённым поддеревом.
-            loc1.setTree( beaconsSubTree )
-          }
-
-        // Сохранить обновлённое дерево в состояние:
-        val v2 = (MTree setNodes beaconUpdatedLoc.toTree)(v0)
-
-        // TODO Если исчез opened-маячок, то обновить opened на валидное значение.
-        // TODO Что делать, если одновременно исчезли все маячки? Удалять группу маячков из списка? Или просто сворачивать её?
-
-        updated(v2)
-      })
-        .getOrElse( noChange )
-
-
     // Сигнал о необходимости показать какой-то узел подробнее.
     case m: NodeClick =>
       val v0 = value
@@ -739,10 +688,30 @@ class TreeAh[M](
             // Залить начальное дерево:
             val subTree2 = Tree.Node(
               root   = MNodeState.mkRoot,
-              forest = EphemeralStream.cons(
-                MNodeState.processNormalTree(resp.subTree),
-                EphemeralStream.emptyEphemeralStream
-              )
+              forest = {
+                val appendedTree = EphemeralStream.cons(
+                  MNodeState.processNormalTree( resp.subTree ),
+                  EphemeralStream.emptyEphemeralStream
+                )
+
+                // Предыдущее дерево: берём из текущего (как бы пустого) состояния, т.к. там могут быть результаты BeaconsDetected:
+                v0.nodes
+                  .toOption
+                  .map { nodesTree0 =>
+                    // Удалить из старого дерева узлы текущего юзера, если они там были
+                    def findF(mnsTree: Tree[MNodeState]): Boolean =
+                      (mnsTree.rootLabel.role ==* MTreeRoles.Normal)
+
+                    val subForest0 = nodesTree0.subForest
+
+                    if (subForest0.iterator exists findF)
+                      subForest0.filter( !findF(_) )
+                    else
+                      subForest0
+                  }
+                  .filterNot( _.isEmpty )
+                  .fold( appendedTree )( _ ++ appendedTree )
+              }
             )
             var v1 = MTree.setNodes( subTree2 )(v0)
 

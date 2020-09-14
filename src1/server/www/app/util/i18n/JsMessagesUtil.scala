@@ -153,6 +153,8 @@ class JsMessagesUtil @Inject() (
       MC.`Showcase` ::
       MNodeTypes.BleBeacon.plural ::
       MC.`Distance` ::
+      MC.`_to.Register._thing` ::
+      MC.`Add.beacon.to.account` ::
       Nil
 
     (
@@ -314,6 +316,7 @@ class JsMessagesUtil @Inject() (
       MC.`Not.connected` :: MC.`Retry` ::
       MC.`Recents` ::
       MC.`Nodes.management` ::
+      MC.`To.control.beacons.need.login` ::
       Nil
 
     (

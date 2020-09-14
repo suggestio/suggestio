@@ -48,6 +48,8 @@ trait LkNodesModuleBase
   lazy val nodeAdvRowR = wire[NodeAdvRowR]
   lazy val nodeToolBarR = wire[NodeToolBarR]
   lazy val distanceR = wire[DistanceR]
+  lazy val beaconInfoR = wire[BeaconInfoR]
+  lazy val treeStuffR = wire[TreeStuffR]
 
   // pop
   lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]

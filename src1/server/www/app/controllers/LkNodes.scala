@@ -28,9 +28,11 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.CtxData
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.MNodeTariffs
+import io.suggest.n2.node.search.MNodeSearch
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.streams.StreamsUtil
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import japgolly.univeq._
@@ -75,6 +77,8 @@ final class LkNodes @Inject() (
   private lazy val canChangeNodeAvailability = injector.instanceOf[CanChangeNodeAvailability]
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val canCreateSubNode = injector.instanceOf[CanCreateSubNode]
+  private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
 
   private lazy val nodesTpl = injector.instanceOf[NodesTpl]
   private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]
@@ -881,10 +885,10 @@ final class LkNodes @Inject() (
             MNode.edges.modify { edges0 =>
               MNodeEdges.out.set(
                 MNodeEdges.edgesToMap1(
-                  List[IterableOnce[MEdge]](
-                    edges0
-                      .withoutNodePred(nodeId, pred),
-                    es2
+                  (
+                    edges0.withoutNodePred(nodeId, pred) ::
+                    es2 ::
+                    Nil
                   )
                     .iterator
                     .flatten
@@ -961,10 +965,10 @@ final class LkNodes @Inject() (
             MNode.edges.modify { edges0 =>
               MNodeEdges.out.set(
                 MNodeEdges.edgesToMap1(
-                  List[IterableOnce[MEdge]](
-                    edges0
-                      .withoutNodePred(nodeId, pred),
-                    es2
+                  (
+                    edges0.withoutNodePred(nodeId, pred) ::
+                    es2 ::
+                    Nil
                   )
                     .iterator
                     .flatten
@@ -980,6 +984,168 @@ final class LkNodes @Inject() (
             LOGGER.trace(s"$logPrefix Done.")
             Ok
           }
+        }
+      }
+    }
+  }
+
+
+  /** Пакетный запрос инфы по маячкам.
+    * Здесь без конкретики: возвращается только базовая инфа по каждому маячку из списка:
+    * существует или нет, кому принадлежит и т.д.
+    *
+    * @return JSON-ответ по запрошенным маячкам.
+    */
+  def beaconsScan(req: MLknBeaconsScanReq) = csrf.Check {
+    bruteForceProtect {
+      maybeAuth().async { implicit request =>
+        val bcnsReqCount = req.beaconUids.size
+        val startedAtMs = System.currentTimeMillis()
+        lazy val logPrefix = s"beaconsInfo($bcnsReqCount bcns)#$startedAtMs:"
+        LOGGER.trace(s"$logPrefix User#${request.user.personIdOpt.orNull} [${request.remoteClientAddress}] requesting info about $bcnsReqCount beacons: ${req.beaconUids.mkString(" ")}")
+
+        for {
+          // Поискать в базе инфу по маячкам.
+          // dynSearchIds: Нагрузку стараемся максимально размазать по кэшу узлов, т.к. в случае залогиненного юзера,
+          // чтение цепочек узлов для проверки прав доступа идёт через этот же кэш.
+          bcnIdsCleared <- mNodes.dynSearchIds(
+            new MNodeSearch {
+              override val withIds = req.beaconUids.toSeq
+              override val nodeTypes = MNodeTypes.BleBeacon :: Nil
+              override val limit = bcnsReqCount
+              // isDisabled: по флагу пока не фильтруем, т.к. иначе клиент подумает, что маячок свободен для регистрации.
+            }
+          )
+          bcnIdsClearedSet = bcnIdsCleared.toSet
+
+          // Для дальней работы требуется получить на руки узлы-маячки, но через кэш.
+          bcnNodesFut = mNodes.multiGetCache( bcnIdsClearedSet )
+
+          // Если юзер залогинен, то надо запустить проверки от узла до текущего юзера.
+          hasAdminRightsForIdsFut = {
+            LOGGER.trace(s"$logPrefix Cleared beaconIds[${req.beaconUids.size}] => [${bcnIdsClearedSet.size}/${bcnIdsCleared.total}]: ${bcnIdsCleared.mkString(" ")}")
+
+            request.user.personIdOpt.fold {
+              Future.successful( Map.empty[String, Boolean] )
+            } { _ =>
+              Future.traverse( bcnIdsClearedSet.toIterable ) { bcnId =>
+                isNodeAdmin.isNodeAdminUpFrom(
+                  nodeId = bcnId,
+                  user   = request.user,
+                ).map { nodePathOpt =>
+                  bcnId -> nodePathOpt.nonEmpty
+                }
+              }
+                .map { bcnsInfos =>
+                  val bcnHaveAdminMap = bcnsInfos.toMap
+                  LOGGER.trace(s"$logPrefix isAdmin: Tested beacon-nodes[${bcnHaveAdminMap.size}] against user#${request.user.personIdOpt.orNull}.\n Have admin ${bcnHaveAdminMap.valuesIterator.count(identity)} nodes: ${bcnHaveAdminMap.iterator.filter(_._2).map(_._1).mkString(" ")}")
+                  bcnHaveAdminMap
+                }
+            }
+          }
+
+          bcnNodes <- bcnNodesFut
+
+          // Для вывода инфы по маячкам, надо получить на руки все родительские узлы для найденных маячков.
+          // Определить id родительских элементов:
+          childToParentIds = bcnNodes
+            .iterator
+            .map { mnode =>
+              val parentNodeIds = mnode.edges
+                .withPredicateIter( MPredicates.OwnedBy )
+                .flatMap(_.nodeIds)
+                .toSet
+              mnode.id.get -> parentNodeIds
+            }
+            .toMap
+
+          // Получить из базы родительские узлы маячков:
+          parentIds = childToParentIds
+            .valuesIterator
+            .flatten
+            .toSet
+          parentNodes <- mNodes.multiGetMapCache( parentIds )
+
+          // Собрать карту названий родительских узлов для подписей у дочерних узлов:
+          beaconIdDescrs = {
+            LOGGER.trace(s"$logPrefix Found ${parentNodes.size}/${parentIds.size} owner-nodes: ${parentNodes.keysIterator.mkString(" ")}")
+            (for {
+              bcnNode <- bcnNodes.iterator
+              bcnNodeId <- bcnNode.id
+              bcnParentIds <- childToParentIds.get( bcnNodeId )
+
+              // По идее owner только один. Но мы форсируем тут это - брать только первое доступное имя родительского узла.
+              bcnParentName2 <- (for {
+                parentId <- bcnParentIds.iterator
+                parentNode <- parentNodes.get( parentId )
+                parentName <- parentNode.guessDisplayNameOrId
+              } yield {
+                parentName
+              })
+                .nextOption()
+                .orElse {
+                  LOGGER.trace(s"$logPrefix Not found parent/owner node for known beacon#${bcnNodeId}, parents[${bcnParentIds.size}] = ${bcnParentIds.mkString(" ")}")
+                  bcnParentIds.headOption
+                }
+            } yield {
+              bcnNodeId -> bcnParentName2
+            })
+              .toMap
+          }
+
+          // Дождаться инфы по правам доступа:
+          hasAdminRightsForIds <- hasAdminRightsForIdsFut
+
+        } yield {
+
+          LOGGER.trace {
+            val hasAdminNodes = hasAdminRightsForIds
+              .view
+              .filter(_._2)
+              .keySet
+              .toSeq
+            s"$logPrefix User#${request.user.personIdOpt.orNull} is admin for [${hasAdminNodes.length}/${hasAdminRightsForIds.size}] nodes: ${hasAdminNodes.mkString(" ")}"
+          }
+
+          val resp = MLknNodeResp(
+            subTree = Tree.Node(
+              // Корневой узел-заглушка:
+              root = MLknNode("", ntype = None),
+              // Рендер ответа внутри subforest.
+              forest = (for {
+                bcnNode <- bcnNodes.iterator
+                bcnId <- bcnNode.id
+              } yield {
+                Tree.Leaf(
+                  MLknNode(
+                    id          = bcnId,
+                    ntype       = Some( MNodeTypes.BleBeacon ),
+                    name        = bcnNode.guessDisplayName,
+                    // isEnabled возвращаем: Пусть все знают, что какой-то маячок выключен в системе, чтобы у люди могли быстрее отлаживать проблемы.
+                    isEnabled   = OptionUtil.SomeBool( bcnNode.common.isEnabled ),
+                    // Права есть или нет - возвращаем, для isAnon тут будет всегда None.
+                    isAdmin     = hasAdminRightsForIds.get( bcnId ),
+                    // Недетализованный ответ: тариф и прочее не вычислялись.
+                    isDetailed  = OptionUtil.SomeBool.someFalse,
+                    // tf: тариф не возвращаем: юзер откроет узел и посмотрит.
+                    // adv: тут пока только ADN-режим, без карточки.
+                    parentName  = beaconIdDescrs.get( bcnId ),
+                  )
+                )
+              })
+                .to( LazyList )
+                .toEphemeralStream,
+            ),
+          )
+
+          val r = Ok( Json.toJson(resp) )
+            // Выставляем кэш на клиенте, но не слишком долгий.
+            .cacheControl( 3600 )
+
+          // Для оценки скорости работы, логгируем полное время обработки запроса.
+          LOGGER.trace(s"$logPrefix Took ${System.currentTimeMillis() - startedAtMs} ms with ${resp.subTree.subForest.length} results, loggedIn?${request.user.personIdOpt.orNull}")
+
+          r
         }
       }
     }

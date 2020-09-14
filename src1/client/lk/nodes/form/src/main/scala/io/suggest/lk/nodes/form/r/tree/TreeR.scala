@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiIconButton, MuiIconButtonProps, MuiPaper, MuiProgressVariants, MuiTreeView, MuiTreeViewProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiPaper, MuiProgressVariants, MuiTreeView, MuiTreeViewProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react._
 import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants.`.`
@@ -10,6 +10,7 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.Implicits._
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -103,8 +104,9 @@ class TreeR(
               nodeR.PropsVal(
                 node          = mnsr,
                 advMode       = isAdvMode,
-                opened        = mroot.tree.opened,
+                opened        = mroot.tree.tree.opened,
                 chs           = origSubForest,
+                bcnCache      = mroot.tree.beacons.cacheMap,
               )
             } (
               nodeR.component
@@ -121,27 +123,18 @@ class TreeR(
         s.root4nodeC { mrootProxy =>
           val mroot = mrootProxy.value
 
-          val nodesPot = mroot.tree.nodes
+          val nodesPot = mroot.tree.tree.nodes
           React.Fragment(
-
-            // Крутилка, когда дерево ещё пока загружается...
-            nodesPot.renderPending { _ =>
-              MuiCircularProgress(
-                new MuiCircularProgressProps {
-                  override val variant = MuiProgressVariants.indeterminate
-                }
-              )
-            },
 
             // Дерево загружено в память, рендерим:
             nodesPot.render { nodesTree =>
               // выделить визуально надо только текущий открытый узел, если есть.
-              val _selectedTreeNodeId = mroot.tree.opened
+              val _selectedTreeNodeId = mroot.tree.tree.opened
                 .map( LknFormUtilR.nodePath2treeId )
 
               // expanded: Надо всю цепочку expanded-узлов перечислять, а не только конечный узел:
               val _expandedTreeNodeIds = (for {
-                opened  <- mroot.tree.opened.iterator
+                opened  <- mroot.tree.tree.opened.iterator
                 // .reverse: нужно хвост укорачивать с хвоста, а не с головы, поэтому реверсим исходник, затем реверсим обратно результаты:
                 nthTail <- opened.reverse.tails
               } yield {
@@ -167,6 +160,15 @@ class TreeR(
               )
             },
 
+            // Крутилка, когда дерево ещё пока загружается...
+            nodesPot.renderPending { _ =>
+              MuiLinearProgress(
+                new MuiLinearProgressProps {
+                  override val variant = MuiProgressVariants.indeterminate
+                }
+              )
+            },
+
             // Рендер произошедшей ошибки.
             nodesPot.renderFailed { ex =>
               MuiPaper()(
@@ -178,19 +180,24 @@ class TreeR(
                 )(
                   crCtxP.message( MsgCodes.`Error` ),
                 ),
-                <.br,
 
-                MuiTypoGraphy(
-                  new MuiTypoGraphyProps {
-                    override val variant = MuiTypoGraphyVariants.subtitle1
-                    override val color = MuiTypoGraphyColors.error
-                  }
-                )(
-                  ex.getMessage,
-                ),
-
-                <.br,
-                <.br,
+                // Вывод сообщения об ошибке, если есть:
+                Option( ex.getMessage )
+                  .filter(_.nonEmpty)
+                  .whenDefinedEl { errorMessage =>
+                    React.Fragment(
+                      <.br,
+                      MuiTypoGraphy(
+                        new MuiTypoGraphyProps {
+                          override val variant = MuiTypoGraphyVariants.subtitle1
+                          override val color = MuiTypoGraphyColors.error
+                        }
+                      )(
+                        errorMessage,
+                      ),
+                      <.br,
+                    )
+                  },
 
                 MuiIconButton(
                   new MuiIconButtonProps {
@@ -217,8 +224,8 @@ class TreeR(
     .initialStateFromProps { propsProxy =>
       State(
         root4nodeC = propsProxy.connect(identity(_))( FastEqUtil[MLkNodesRoot] { (a, b) =>
-          (a.tree.nodes ===* b.tree.nodes) &&
-          (a.tree.opened ===* b.tree.opened) &&
+          (a.tree.tree.nodes ===* b.tree.tree.nodes) &&
+          (a.tree.tree.opened ===* b.tree.tree.opened) &&
           (a.conf.adIdOpt ===* b.conf.adIdOpt)
         }),
       )

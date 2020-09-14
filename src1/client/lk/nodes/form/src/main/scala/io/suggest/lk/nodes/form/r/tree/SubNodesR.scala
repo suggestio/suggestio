@@ -31,7 +31,7 @@ final class SubNodesR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     private lazy val _onCreateNodeClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, CreateNodeClick )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, CreateNodeClick() )
     }
 
     def render(s: Props_t): VdomElement = {

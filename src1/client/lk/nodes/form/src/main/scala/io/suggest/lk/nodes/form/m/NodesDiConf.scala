@@ -6,6 +6,7 @@ import io.suggest.proto.http.model.IMHttpClientConfig
 import io.suggest.spa.SioPages
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.router.RouterCtl
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -25,7 +26,16 @@ trait NodesDiConf extends IMHttpClientConfig {
   def closeForm: Option[Callback]
 
   /** Рендерить ли ссылки на личный кабинет? */
-  def showLkLinks: Boolean
+  def showLkLinks(): Boolean
+
+  /** Проверка залогиненности юзера. В выдаче (в т.ч. приложении) юзер может быть без логина. */
+  def isUserLoggedIn(): Boolean
+
+  /** Вёрстка для рендара сообщения о необходимости залогиниться. */
+  def needLogInVdom(): VdomNode
+
+  /** Надо ли инициализировать части, связанные с beacons-сканнером? */
+  def withBleBeacons: Boolean
 
 }
 
@@ -37,7 +47,10 @@ object NodesDiConf {
     override def circuitInit() = LkNodesFormCircuit.initIsolated()
     override def scRouterCtlOpt = None
     override def closeForm = None
-    override def showLkLinks = true
+    override def showLkLinks() = true
+    override def isUserLoggedIn() = true
+    override def needLogInVdom() = EmptyVdom
+    override def withBleBeacons = false
   }
 
 }

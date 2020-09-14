@@ -290,6 +290,8 @@ sealed trait LkNodesCtlRoutes extends js.Object {
 
   def setAlwaysOutlined(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
 
+  def beaconsScan(scanReq: js.Dictionary[js.Any]): PlayRoute = js.native
+
 }
 
 

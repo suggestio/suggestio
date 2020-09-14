@@ -16,7 +16,8 @@ object MTextFieldS {
   implicit object MEpwTextFieldSFastEq extends FastEq[MTextFieldS] {
     override def eqv(a: MTextFieldS, b: MTextFieldS): Boolean = {
       (a.value ===* b.value) &&
-      (a.isValid ==* b.isValid)
+      (a.isValid ==* b.isValid) &&
+      (a.isEnabled ==* b.isEnabled)
     }
   }
 
@@ -26,6 +27,7 @@ object MTextFieldS {
 
   def value     = GenLens[MTextFieldS]( _.value )
   def isValid   = GenLens[MTextFieldS]( _.isValid )
+  def isEnabled = GenLens[MTextFieldS]( _.isEnabled )
 
 }
 
@@ -34,10 +36,12 @@ object MTextFieldS {
   *
   * @param value Текущее значение.
   * @param isValid Есть ли ошибка?
+  * @param isEnabled Доступно для редактирования текстовое поле?
   */
 case class MTextFieldS(
                         value        : String         = "",
                         isValid      : Boolean        = true,
+                        isEnabled    : Boolean        = true,
                       ) {
 
   def isValidNonEmpty: Boolean =

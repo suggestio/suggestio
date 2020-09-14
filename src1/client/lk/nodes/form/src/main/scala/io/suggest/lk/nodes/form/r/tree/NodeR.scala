@@ -33,7 +33,7 @@ class NodeR(
              tariffEditR          : TariffEditR,
              subNodesR            : SubNodesR,
              nodeAdvRowR          : NodeAdvRowR,
-             distanceR            : DistanceR,
+             beaconInfoR          : BeaconInfoR,
              crCtxP               : React.Context[MCommonReactCtx],
            ) {
 
@@ -47,13 +47,15 @@ class NodeR(
                        opened             : Option[NodePath_t],
                        advMode            : Boolean,
                        chs                : EphemeralStream[Tree[MNodeState]],
+                       bcnCache           : Map[String, MBeaconCachedEntry],
                      )
 
   implicit val NodeRPropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
     (a.node ===* b.node) &&
     (a.opened ===* b.opened) &&
     (a.advMode ==* b.advMode) &&
-    (a.chs ===* b.chs)
+    (a.chs ===* b.chs) &&
+    (a.bcnCache ===* b.bcnCache)
   }
 
 
@@ -98,114 +100,141 @@ class NodeR(
         }
       } (
         ReactCommonUtil.maybeNode(
+          // Если тип n2-узла допускает рендер деталей:
           p.node.state.role.canRenderDetails &&
-          (p.opened contains[NodePath_t] nodePath)
+          // И текущий tree-узел является открытым:
+          (p.opened contains[NodePath_t] nodePath) &&
+          // и есть режим формы у узла допускают рендер деталей:
+          p.advMode match {
+            // Управления узлами: детали текущего узла рендерятся всегда.
+            case false  => true
+            // Размещение карточки в узлах: Все галочки сокрыты, если главная галочка размещения выключена
+            case true   => p.node.state.advHasAdvPot contains[Boolean] true
+          }
         ) {
+          val pns = p.node.state
 
-          if (p.node.state.role ==* MTreeRoles.BeaconSignal) {
-            // Сигнал от маячка: надо отрендерить инфу по выбранному маячку:
-            p.node.state.bcnSignal.whenDefinedNode { bcnSignal =>
-              MuiList()(
-
-                // Расстояние до маячка:
-                distanceR.component( propsProxy.resetZoom(bcnSignal) )
-
-              )
+          // ADN-режим: обычное управление ADN-узлами.
+          val infoPot = pns.infoPot
+            .orElse {
+              // Найти в кэше маячков ответ сервера:
+              Pot.fromOption(for {
+                bcnSignal     <- pns.bcnSignal
+                resp          <- p.bcnCache.respForUid( bcnSignal.uid )
+              } yield {
+                // TODO Возможно, надо пробрасывать pending/failed из bcnCache.scanReq?
+                resp
+              })
             }
+          val infoOpt = infoPot.toOption
 
-          } else if (!p.advMode) {
-            // ADN-режим: обычное управление ADN-узлами.
-            val pns = p.node.state
-            val infoOpt = pns.infoPot.toOption
+          MuiList()(
 
-            MuiList()(
-
-              // Тулбар для раскрытого узла:
-              infoOpt.whenDefinedNode { info =>
-                nodeToolBarR.component(
-                  propsProxy.resetZoom( info )
+            // Инфа по BLE-маячку, если это маячок.
+            {
+              val bcnInfoPropsProxy = propsProxy.resetZoom {
+                beaconInfoR.PropsVal(
+                  nodeState = pns,
+                  isAdvMode = p.advMode,
+                  bcnCache  = p.bcnCache,
+                  infoOpt   = infoOpt,
                 )
-              },
+              }
+              beaconInfoR.component( bcnInfoPropsProxy )
+            },
 
-              // Строка с идентификатором узла.
-              infoOpt
-                .filter(_.id.nonEmpty)
-                .whenDefinedNode { info =>
-                  MuiListItem()(
-                    // Строка с идентификатором узла:
-                    MuiListItemText(
-                      new MuiListItemTextProps {
-                        override val primary = crCtxP.message( MsgCodes.`Identifier` ).rawNode
-                        override val secondary = info.id
-                      }
-                    )(),
-                  )
+            if (!p.advMode) {
+              React.Fragment(
+
+                // Тулбар для раскрытого узла:
+                infoOpt.whenDefinedNode { info =>
+                  val infoProps = propsProxy.resetZoom( info )
+                  nodeToolBarR.component( infoProps )
                 },
 
-              // Ряд с переключателем isEnabled узла:
-              nodeEnabledR.component {
-                val enProps = nodeEnabledR.PropsVal(
-                  isEnabledUpd  = pns.isEnabledUpd,
-                  isEnabled     = pns.infoPot
-                    .exists(_.isEnabled contains[Boolean] true),
-                  request       = pns.isEnabledUpd
-                    .fold[Pot[_]]( Pot.empty )(_.request),
-                  canChangeAvailability = pns.infoPot
-                    .toOption
-                    .flatMap(_.isAdmin),
-                )
-                propsProxy.resetZoom( enProps )
-              },
+                // Строка с идентификатором узла.
+                infoOpt
+                  .map(_.id)
+                  .filter(_.nonEmpty)
+                  .whenDefinedNode { infoId =>
+                    MuiListItem()(
+                      // Строка с идентификатором узла:
+                      MuiListItemText(
+                        new MuiListItemTextProps {
+                          override val primary = crCtxP.message( MsgCodes.`Identifier` ).rawNode
+                          override val secondary = infoId
+                        }
+                      )(),
+                    )
+                  },
 
-              // Ряд описания тарифа с кнопкой редактирования оного.
-              tariffEditR.component {
-                val tfProps = tariffEditR.PropsVal(
-                  tfDailyOpt    = infoOpt.flatMap(_.tf),
-                  showExpanded  = pns.tfInfoWide,
-                )
-                propsProxy.resetZoom( tfProps )
-              },
+                // Ряд с переключателем isEnabled узла:
+                nodeEnabledR.component {
+                  val enProps = nodeEnabledR.PropsVal(
+                    isEnabledUpd  = pns.isEnabledUpd,
+                    isEnabled     = infoPot
+                      .exists(_.isEnabled contains[Boolean] true),
+                    request       = pns.isEnabledUpd
+                      .fold[Pot[_]]( Pot.empty )(_.request),
+                    canChangeAvailability = infoPot
+                      .toOption
+                      .flatMap(_.isAdmin),
+                  )
+                  propsProxy.resetZoom( enProps )
+                },
 
-              // Ряд с кратким описанием под-узлов и кнопкой создания оных:
-              ReactCommonUtil.maybeNode(
-                p.node.state.infoPot
-                  .exists( _.ntype.exists(_.userCanCreateSubNodes) )
-              ) {
-                val z2 = propsProxy.resetZoom( p.chs )
-                subNodesR.component( z2 )
-              },
+                // Ряд описания тарифа с кнопкой редактирования оного.
+                tariffEditR.component {
+                  val tfProps = tariffEditR.PropsVal(
+                    tfDailyOpt    = infoOpt.flatMap(_.tf),
+                    showExpanded  = pns.tfInfoWide,
+                  )
+                  propsProxy.resetZoom( tfProps )
+                },
 
-            )
+                // Ряд с кратким описанием под-узлов и кнопкой создания оных:
+                ReactCommonUtil.maybeNode(
+                  infoPot
+                    .exists( _.ntype.exists(_.userCanCreateSubNodes) )
+                ) {
+                  val z2 = propsProxy.resetZoom( p.chs )
+                  subNodesR.component( z2 )
+                },
+              )
 
-          } else {
-            // id рекламной карточки: редактирование размещения карточки в узле. Надо отрендерить галочки настроек размещения.
-            ReactCommonUtil.maybeEl( p.node.state.advHasAdvPot contains[Boolean] true ) {
-              MuiList()(
+            } else {
+              // Размещение рекламной карточки: Надо отрендерить галочки настроек размещения.
+              React.Fragment(
 
                 // Галочка "Показывать всегда раскрытой"
-                propsProxy.wrap { p =>
-                  nodeAdvRowR.PropsVal(
-                    flag      = p.node.state.advAlwaysOpenedPot,
-                    msgCode   = MsgCodes.`Show.ad.opened`,
-                    onChange  = AdvShowOpenedChange,
+                nodeAdvRowR.component(
+                  propsProxy.resetZoom(
+                    nodeAdvRowR.PropsVal(
+                      flag      = pns.advAlwaysOpenedPot,
+                      msgCode   = MsgCodes.`Show.ad.opened`,
+                      onChange  = AdvShowOpenedChange,
+                    )
                   )
-                }( nodeAdvRowR.component.apply ),
+                ),
 
                 // Галочка "Всегда в обводке"
-                propsProxy.wrap { p =>
-                  nodeAdvRowR.PropsVal(
-                    flag      = p.node.state.advAlwaysOutlinedPot,
-                    msgCode   = MsgCodes.`Always.outlined`,
-                    onChange  = AlwaysOutlinedSet,
+                nodeAdvRowR.component(
+                  propsProxy.resetZoom(
+                    nodeAdvRowR.PropsVal(
+                      flag      = pns.advAlwaysOutlinedPot,
+                      msgCode   = MsgCodes.`Always.outlined`,
+                      onChange  = AlwaysOutlinedSet,
+                    )
                   )
-                }( nodeAdvRowR.component.apply ),
+                ),
 
               )
-            }
-          }
+            },
+
+          )
         },
 
-        // Под-узлы.
+        // Под-узлы: рендерить всегда и везде - этим управляет TreeR.
         treeChildren,
       )
     }

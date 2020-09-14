@@ -33,7 +33,7 @@ import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
 import io.suggest.sc.v.dia.login.ScLoginR
-import io.suggest.sc.v.dia.nodes.ScNodesR
+import io.suggest.sc.v.dia.nodes.{ScNodesNeedLoginR, ScNodesR}
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found._
@@ -303,7 +303,10 @@ object Sc3Module { outer =>
       override def closeForm = Some( Callback( outer.sc3Circuit.dispatch( ScNodesShowHide(false) ) ) )
       /** Ссылки в ЛК необходимо показывать только в браузере, но не в Cordova,
         * т.к. переброс из приложения в браузер не готов, и мобильная вёрстка ЛК тоже отсутствует. */
-      override def showLkLinks = outer.sc3Circuit.platformRW.value.isBrowser
+      override def showLkLinks() = outer.sc3Circuit.platformRW.value.isBrowser
+      override def isUserLoggedIn() = outer.sc3Circuit.indexRW.value.isLoggedIn
+      override def needLogInVdom() = outer.sc3Circuit.wrap( identity(_) )( scNodesNeedLoginR.component.apply )
+      override def withBleBeacons = true
     }
   }
   def getNodesFormCircuit = () => ScNodesFormModule.lkNodesFormCircuit
@@ -311,5 +314,6 @@ object Sc3Module { outer =>
     import ScNodesFormModule.lkNodesFormR
     wire[ScNodesR]
   }
+  lazy val scNodesNeedLoginR = wire[ScNodesNeedLoginR]
 
 }

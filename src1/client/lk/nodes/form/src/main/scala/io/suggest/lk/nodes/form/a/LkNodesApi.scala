@@ -5,12 +5,14 @@ import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
-import io.suggest.lk.nodes.{MLknNode, MLknNodeReq, MLknNodeResp}
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp}
 import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies, MHttpCachingPolicy}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.univeq._
 
 import scalajs.js.JSConverters._
@@ -100,6 +102,13 @@ trait ILkNodesApi {
     * @return Фьючерс с обновлёнными данными узла.
     */
   def setTfDaily(onNode: RcvrKey, mode: ITfDailyMode): Future[MLknNode]
+
+  /** Сканирование узлов.
+    *
+    * @param req Данные по id маячков.
+    * @return Фьючерс с ответом, где root-узел следует отбросить.
+    */
+  def beaconsScan(req: MLknBeaconsScanReq): Future[MLknNodeResp]
 
 }
 
@@ -258,6 +267,31 @@ final class LkNodesApiHttpImpl(
     HttpClient.execute( req )
       .respAuthFut
       .successIfStatus( S.OK, S.NO_CONTENT )
+  }
+
+  override def beaconsScan(scanReq: MLknBeaconsScanReq): Future[MLknNodeResp] = {
+    HttpClient
+      .execute(
+        HttpReq.routed(
+          route = routes.controllers.LkNodes.beaconsScan(
+            PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject( scanReq ) )
+          ),
+          data = HttpReqData(
+            headers = HttpReqData.headersJsonAccept,
+            config  = diConfig.httpClientConfig(),
+            // Короткий таймаут, т.к. данные скана могут слишком сильно устареть в ожидании ответа.
+            timeoutMs = Some( 5000 ),
+            cache = MHttpCacheInfo(
+              // Кэш для дедубликации одинаковых запросов.
+              // Network-запрос следует делать всегда, т.к. изменение на сервере должно рано или поздно появляться и на экране устройства.
+              policy = MHttpCachingPolicies.Fastest,
+            ),
+          ),
+        )
+      )
+      .respAuthFut
+      .successIf200
+      .unJson[MLknNodeResp]
   }
 
 }

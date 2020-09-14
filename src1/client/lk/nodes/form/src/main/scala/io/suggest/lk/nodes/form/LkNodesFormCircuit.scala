@@ -6,8 +6,8 @@ import diode.react.ReactConnector
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh, NameEditAh}
-import io.suggest.lk.nodes.form.a.tree.TreeAh
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeState, MTree, NodesDiConf}
+import io.suggest.lk.nodes.form.a.tree.{BeaconsAh, TreeAh}
+import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeState, MTree, MTreeOuter, NodesDiConf}
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
@@ -58,17 +58,12 @@ case class LkNodesFormCircuit(
 
   override protected val actionHandler: HandlerFunction = {
     val confR = CircuitUtil.mkLensRootZoomRO(this, MLkNodesRoot.conf)
-    val treeRW = CircuitUtil.mkLensRootZoomRW(this, MLkNodesRoot.tree)
+    val treeOuterRW = CircuitUtil.mkLensRootZoomRW( this, MLkNodesRoot.tree )
     val popupsRW = CircuitUtil.mkLensRootZoomRW(this, MLkNodesRoot.popups)
+
+    val treeRW = CircuitUtil.mkLensZoomRW(treeOuterRW, MTreeOuter.tree)
     val currNodeRO = treeRW.zoom(_.openedRcvrKey)( FastEq.ValueEq )
     val openedPathRO = CircuitUtil.mkLensZoomRO( treeRW, MTree.opened )
-
-    // Реагировать на события из дерева узлов.
-    val treeAh = new TreeAh(
-      api     = lkNodesApi,
-      modelRW = treeRW,
-      confRO  = confR
-    )
 
     // Реактор на события, связанные с окошком создания узла.
     val createNodeAh = new CreateNodeAh(
@@ -99,8 +94,26 @@ case class LkNodesFormCircuit(
     )
 
     val popupsHandler = composeHandlers( createNodeAh, deleteNodeAh, editTfDailyAh, nameEditAh )
+
+    // Реагировать на события из дерева узлов.
+    val treeAh = new TreeAh(
+      api     = lkNodesApi,
+      modelRW = treeRW,
+      confRO  = confR
+    )
+
+    var topLevelHandlers = List[HandlerFunction]( treeAh, popupsHandler )
+
+    // Активировать поддержку контроллера маячков:
+    if (diConfig.withBleBeacons) {
+      topLevelHandlers ::= new BeaconsAh(
+        modelRW     = treeOuterRW,
+        lkNodesApi  = lkNodesApi,
+      )
+    }
+
     // Разные Ah шарят между собой некоторые события, поэтому они все соединены параллельно.
-    foldHandlers(treeAh, popupsHandler)
+    foldHandlers(topLevelHandlers: _*)
   }
 
   addProcessor( DoNothingActionProcessor[MLkNodesRoot] )
@@ -130,8 +143,8 @@ object LkNodesFormCircuit {
 
     val mroot = MLkNodesRoot(
       conf = mFormInit.conf,
-      tree = {
-        MTree(
+      tree = MTreeOuter(
+        tree = MTree(
           nodes = Pot.empty.ready( tree ),
           opened = tree
             .loc
@@ -142,7 +155,7 @@ object LkNodesFormCircuit {
             }
             .map(_.toNodePath),
         )
-      }
+      )
     )
 
     // Потом удалить input, который больше не нужен.

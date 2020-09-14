@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiProgressVariants, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeState, MNodeStateRender, MTreeRoles}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -8,7 +8,6 @@ import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.DistanceUtil
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.n2.node.MNodeTypes
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,6 +18,8 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
+
+import scala.scalajs.js.UndefOr
 import scalajs.js.JSConverters._
 
 /**
@@ -29,7 +30,7 @@ import scalajs.js.JSConverters._
   * Используется для быстрого неточного управления размещением карточки на узле.
   */
 final class NodeHeaderR(
-                         lkNodesFormCssP      : React.Context[LkNodesFormCss],
+                         treeStuffR           : TreeStuffR,
                          crCtxP               : React.Context[MCommonReactCtx],
                        ) {
 
@@ -73,40 +74,71 @@ final class NodeHeaderR(
         MuiListItem()(
 
           // Иконка-значок типа узла:
-          infoOpt.whenDefinedNode { info =>
-            React.Fragment(
+          infoOpt
+            .flatMap(_.ntype)
+            .orElse {
+              st.role match {
+                case MTreeRoles.BeaconSignal | MTreeRoles.BeaconsDetected =>
+                  Some( MNodeTypes.BleBeacon )
+                case _ => None
+              }
+            }
+            .whenDefinedNode { ntype =>
+              MuiListItemIcon()(
+                (ntype match {
+                  case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
+                  case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
+                  case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
+                  case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
+                  case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
+                  case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
+                  case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
+                  case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
+                  case _                                        => Mui.SvgIcons.BuildOutlined
+                })()(),
+              )
+            },
 
-              // Иконка типа узла слева:
-              info.ntype.whenDefinedNode { ntype =>
-                MuiListItemIcon()(
-                  (ntype match {
-                    case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
-                    case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
-                    case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
-                    case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
-                    case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
-                    case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
-                    case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
-                    case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
-                    case _                                        => Mui.SvgIcons.BuildOutlined
-                  })()(),
-                )
-              },
+          // Название узла:
+          MuiListItemText {
+            val _textPrimary = infoOpt
+              .flatMap(_.name)
+              .orElse {
+                st.bcnSignal
+                  .map(_.uid)
+              }
+              .orUndefined
 
-              // Название узла:
-              MuiListItemText {
-                val _text2ndary = info.ntype
-                  .map { ntype =>
-                    crCtxP.message( ntype.singular ).rawNode
+            val _textSecondary = infoOpt
+              .flatMap(_.ntype)
+              .map { ntype =>
+                crCtxP.message( ntype.singular ).rawNode
+              }
+              .orUndefined
+
+            new MuiListItemTextProps {
+              override val primary = _textPrimary
+              override val secondary = _textSecondary
+            }
+          }(),
+
+          // Если не-adv режим, то отрендерить в заголовке расстояние до маячка.
+          st.bcnSignal
+            .filter(_ => !s.isAdv)
+            .whenDefinedNode { bcnSignal =>
+              MuiListItemSecondaryAction()(
+                MuiTypoGraphy(
+                  new MuiTypoGraphyProps {
+                    override val variant = MuiTypoGraphyVariants.caption
+                    override val color = MuiTypoGraphyColors.textSecondary
                   }
-                  .orUndefined
-                new MuiListItemTextProps {
-                  override val primary = info.nameOrEmpty
-                  override val secondary = _text2ndary
-                }
-              }(),
-            )
-          },
+                )(
+                  crCtxP.consume { crCtx =>
+                    crCtx.messages( DistanceUtil.formatDistanceCM( bcnSignal.distanceCm ) )
+                  },
+                ),
+              )
+            },
 
           // Ошибка запроса:
           advPot.exceptionOption.whenDefinedNode { ex =>
@@ -145,17 +177,7 @@ final class NodeHeaderR(
 
           // Линия прогресса.
           ReactCommonUtil.maybeNode( advPot.isPending || st.infoPot.isPending ) {
-            lkNodesFormCssP.consume { lknCss =>
-              val progressCss = new MuiLinearProgressClasses {
-                override val root = lknCss.Node.linearProgress.htmlClass
-              }
-              MuiLinearProgress(
-                new MuiLinearProgressProps {
-                  override val variant = MuiProgressVariants.indeterminate
-                  override val classes = progressCss
-                }
-              )
-            }
+            treeStuffR.LineProgress()
           },
 
           // Если размещение рекламной карточки, то отрендерить свитчер.
@@ -175,28 +197,6 @@ final class NodeHeaderR(
                   override val onClick        = _onAdvOnNodeClickCbF
                 }
               ),
-            )
-          },
-
-          // Ble-beacon
-          st.bcnSignal.whenDefinedNode { bcnSignal =>
-            React.Fragment(
-              MuiListItemIcon()(
-                Mui.SvgIcons.BluetoothAudio()(),
-              ),
-              crCtxP.consume { crCtx =>
-                React.Fragment(
-                  MuiListItemText(
-                    new MuiListItemTextProps {
-                      override val primary = bcnSignal.uid.rawNode
-                      override val secondary = crCtx.messages( MNodeTypes.BleBeacon.singular )
-                    }
-                  )(),
-                  MuiListItemSecondaryAction()(
-                    crCtx.messages( DistanceUtil.formatDistanceCM( bcnSignal.distanceCm ) ),
-                  ),
-                )
-              },
             )
           },
 

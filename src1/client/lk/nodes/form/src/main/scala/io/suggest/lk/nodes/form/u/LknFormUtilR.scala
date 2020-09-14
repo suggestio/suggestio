@@ -1,10 +1,7 @@
 package io.suggest.lk.nodes.form.u
 
-import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.ble.BeaconUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.scalaz.NodePath_t
-import io.suggest.text.StringUtil
 
 /**
   * Suggest.io
@@ -13,32 +10,6 @@ import io.suggest.text.StringUtil
   * Description: Утиль для react-формы узлов.
   */
 object LknFormUtilR {
-
-  def normalizeNodeName(name: String): String = {
-    StringUtil.strLimitLen(
-      str     = name,
-      maxLen  = NodeEditConstants.Name.LEN_MAX,
-      ellipsis = ""
-    )
-  }
-
-  def isNameValid(name: String): Boolean = {
-    name.length >= NodeEditConstants.Name.LEN_MIN
-  }
-
-
-  def normalizeBeaconId(id: String): String = {
-    StringUtil.strLimitLen(
-      str       = id.toLowerCase,
-      maxLen    = BeaconUtil.EddyStone.NODE_ID_LEN,
-      ellipsis  = ""
-    )
-  }
-
-  def isBeaconIdValid(id: String): Boolean = {
-    id.matches( BeaconUtil.EddyStone.EDDY_STONE_NODE_ID_RE_LC )
-  }
-
 
   def nodePath2treeId(nodePath: NodePath_t): String =
     nodePath.mkString( "", HtmlConstants.`.`, HtmlConstants.DIEZ )

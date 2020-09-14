@@ -99,6 +99,7 @@ GET  /lk/nodes/mad/:adId                         @controllers.LkNodes.nodesForAd
 POST /lk/nodes/tfd/*onNode                       @controllers.LkNodes.setTfDaily(onNode: RcvrKey)
 POST /lk/nodes/aso/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdvShowOpened(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 POST /lk/nodes/out/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAlwaysOutlined(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
+GET  /lk/beacons/scan                            @controllers.LkNodes.beaconsScan( b: io.suggest.lk.nodes.MLknBeaconsScanReq )
 
 
 ## Редактор ADN-узла: v2 react

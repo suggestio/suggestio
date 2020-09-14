@@ -22,11 +22,18 @@
     "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "cordova-plugin-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-local-notification": {
       "ANDROID_SUPPORT_V4_VERSION": "26.+",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-localization-strings": {
+      "TRANSLATION_PATH": "translations/app/",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-network-information": {
@@ -42,13 +49,6 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-localization-strings": {
-      "TRANSLATION_PATH": "translations/app/",
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

@@ -210,7 +210,7 @@ class ScAdSearchUtil @Inject() (
       Future.successful( MBleSearchCtx.empty )
 
     } else {
-      val uidsQs = bcnsQs
+      val _uidsQs = bcnsQs
         .iterator
         .map(_.uid)
         .toSet
@@ -218,60 +218,68 @@ class ScAdSearchUtil @Inject() (
       // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
       val bcnUidsClearedFut = mNodes.dynSearchIds(
         new MNodeSearch {
-          override val withIds    = uidsQs.toSeq
-          override val limit      = uidsQs.size
+          override val withIds    = _uidsQs.toSeq
+          override val limit      = _uidsQs.size
           override val nodeTypes  = MNodeTypes.BleBeacon :: Nil
           override val isEnabled  = Some(true)
         }
       )
 
       lazy val logPrefix = s"_bleBeacons2search(${bcnsQs.size}bcns)[${System.currentTimeMillis()}]:"
-      LOGGER.trace(s"$logPrefix Beacons = ${bcnsQs.mkString(", ")}.\n Dirty bcn uids set: ${uidsQs.mkString(", ")}")
+      LOGGER.trace(s"$logPrefix Beacons = ${bcnsQs.mkString(", ")}.\n Dirty bcn uids set: ${_uidsQs.mkString(", ")}")
 
       for {
         bcnsUidsClear <- bcnUidsClearedFut
       } yield {
-        val uidsClear = bcnsUidsClear.toSet
-        LOGGER.trace(s"$logPrefix Cleared beacons set: ${uidsClear.mkString(", ")}")
+        new MBleSearchCtx {
+          override def uidsQs = _uidsQs
 
-        // Учитывать только маячки до этого расстояния. Остальные не учитывать
-        val maxDistance = BeaconUtil.DIST_CM_FAR
+          override val uidsClear: Set[String] = {
+            val _uidsClear = bcnsUidsClear.toSet
+            LOGGER.trace(s"$logPrefix Cleared beacons set: ${_uidsClear.mkString(", ")}")
+            _uidsClear
+          }
 
-        // Фильтруем заявленные в qs id маячков по выверенному списку реально существующих маячков.
-        // Ленивость bcnsQs2 не важна, т.к. коллекция сразу будет перемолота целиком в scoredByDistanceBeaconSearch()
-        val bcnsQs2 = bcnsQs.filter { bcnQs =>
-          val isExistBcn = uidsClear.contains( bcnQs.uid )
-          if (!isExistBcn)
-            LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.uid}''' is unknown. Dropped.")
-          isExistBcn && bcnQs.distanceCm <= maxDistance
+          override lazy val bcnsQs2: Seq[MUidBeacon] = {
+            // Учитывать только маячки до этого расстояния. Остальные не учитывать
+            val maxDistance = BeaconUtil.DIST_CM_FAR
+
+            // Фильтруем заявленные в qs id маячков по выверенному списку реально существующих маячков.
+            // Ленивость bcnsQs2 не важна, т.к. коллекция сразу будет перемолота целиком в scoredByDistanceBeaconSearch()
+            bcnsQs.filter { bcnQs =>
+              val isExistBcn = uidsClear contains bcnQs.uid
+              if (!isExistBcn)
+                LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.uid}''' is unknown. Dropped.")
+              isExistBcn && bcnQs.distanceCm <= maxDistance
+            }
+          }
+
+          override lazy val subSearches: List[MSubSearch] = {
+            // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
+            val _bcnsQs2 = bcnsQs2
+
+            if (_bcnsQs2.isEmpty) {
+              LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
+              Nil
+            } else {
+              val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
+                maxBoost    = 20000000F,
+                // TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
+                predicates  = MPredicates.Receiver :: Nil,
+                bcns        = _bcnsQs2,
+                innerHits   = innerHits,
+              )
+
+              val sub = MSubSearch(
+                search = adsInBcnsSearchOpt.get,
+                must = IMust.SHOULD
+              )
+
+              sub :: Nil
+            }
+          }
+
         }
-        // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
-        val subSearches = if (bcnsQs2.isEmpty) {
-          LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
-          Nil
-        } else {
-          val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
-            maxBoost    = 20000000F,
-            // TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
-            predicates  = MPredicates.Receiver :: Nil,
-            bcns        = bcnsQs2,
-            innerHits   = innerHits,
-          )
-
-          val sub = MSubSearch(
-            search = adsInBcnsSearchOpt.get,
-            must = IMust.SHOULD
-          )
-
-          sub :: Nil
-        }
-
-        MBleSearchCtx(
-          uidsQs        = uidsQs,
-          uidsClear     = uidsClear,
-          bcnsQs2       = bcnsQs2,
-          subSearches   = subSearches,
-        )
       }
     }
   }
@@ -281,20 +289,20 @@ class ScAdSearchUtil @Inject() (
 
 /** Модель результата метода ScAdSearchUtil.bleBeaconsSearch().
   * Содержит в себе разные промежуточные значения обсчёта обстановки, которые могут быть нужны где-то выше по stacktrace.
-  *
-  * @param uidsQs id запрошенных в qs маячков.
-  * @param uidsClear id найденных в БД маячков.
-  * @param bcnsQs2 Отчищенные от мусора qs-данные по мячкам.
-  * @param subSearches Данные для поиска по маячкам в elasticsearch.
+  * Трейт, т.к. содержит в себе ленивые поля.
   */
-protected final case class MBleSearchCtx(
-                                          uidsQs      : Set[String] = Set.empty,
-                                          uidsClear   : Set[String] = Set.empty,
-                                          bcnsQs2     : Seq[MUidBeacon] = Nil,
-                                          subSearches : List[MSubSearch] = Nil,
-                                        )
+protected trait MBleSearchCtx {
+  /** id запрошенных в qs маячков. */
+  def uidsQs      : Set[String] = Set.empty
+  /** id найденных в БД маячков. */
+  def uidsClear   : Set[String] = Set.empty
+  /** Отчищенные от мусора qs-данные по мячкам. */
+  def bcnsQs2     : Seq[MUidBeacon] = Nil
+  /** Данные для поиска по маячкам в elasticsearch. */
+  def subSearches : List[MSubSearch] = Nil
+}
 object MBleSearchCtx {
-  def empty = apply()
+  def empty = new MBleSearchCtx {}
 }
 
 
