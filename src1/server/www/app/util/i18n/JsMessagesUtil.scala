@@ -155,6 +155,8 @@ class JsMessagesUtil @Inject() (
       MC.`Distance` ::
       MC.`_to.Register._thing` ::
       MC.`Add.beacon.to.account` ::
+      MC.`Parent.node` ::
+      MC.`Nothing.found` ::
       Nil
 
     (

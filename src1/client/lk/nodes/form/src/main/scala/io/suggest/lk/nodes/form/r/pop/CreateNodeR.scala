@@ -1,7 +1,8 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiProgressVariants, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ble.BleConstants.Beacon.EddyStone
 import io.suggest.common.empty.OptionUtil
@@ -9,17 +10,27 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.form.m._
+import io.suggest.lk.nodes.form.r.tree.NodeHeaderR
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactDiodeUtil.Implicits._
+import io.suggest.scalaz.NodePath_t
+import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.{FastEqUtil, OptFastEq}
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq._
 import monocle.Lens
+import scalaz.Tree
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -30,10 +41,19 @@ import scala.scalajs.js
 class CreateNodeR(
                    platformCssStatic      : () => PlatformCssStatic,
                    platformComponents     : PlatformComponents,
+                   nodeHeaderR            : NodeHeaderR,
                    crCtxP                 : React.Context[MCommonReactCtx],
                  ) {
 
-  type Props = ModelProxy[Option[MCreateNodeS]]
+  case class PropsVal(
+                       create: Option[MCreateNodeS],
+                       tree  : Pot[Tree[MNodeState]],
+                     ) {
+    def createParentPath = create.flatMap(_.parentPath)
+  }
+
+  type Props_t = PropsVal
+  type Props = ModelProxy[Props_t]
 
   case class State(
                     openedSomeC                 : ReactConnectProxy[Some[Boolean]],
@@ -42,6 +62,7 @@ class CreateNodeR(
                     saveBtnDisabledSomeC        : ReactConnectProxy[Some[Boolean]],
                     isPendingSomeC              : ReactConnectProxy[Some[Boolean]],
                     exceptionOptC               : ReactConnectProxy[Option[Throwable]],
+                    propsTreeParentPathC        : ReactConnectProxy[Props_t],
                   )
 
   private def __mkTextField(
@@ -75,6 +96,8 @@ class CreateNodeR(
     )
   }
 
+  private def _PARENT_PATH_DELIM = '.'
+
   class Backend($: BackendScope[Props, State]) {
 
     /** Callback для ввода названия добавляемого под-узла. */
@@ -89,6 +112,16 @@ class CreateNodeR(
       dispatchOnProxyScopeCB( $, CreateNodeIdChange(id = id) )
     }
 
+    /** Callback выставления родителя. */
+    private val onParentChangeCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      val nodePath = e.target.value
+        .split( _PARENT_PATH_DELIM )
+        .iterator
+        .map(_.toInt)
+        .toList: NodePath_t
+      dispatchOnProxyScopeCB( $, CreateNodeParentChange( nodePath ) )
+    }
+
     /** Реакция на кнопку "Сохранить". */
     private val onSaveClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       dispatchOnProxyScopeCB( $, CreateNodeSaveClick )
@@ -100,7 +133,7 @@ class CreateNodeR(
     }
 
 
-    def render(s: State): VdomElement = {
+    def render(propsProxy: Props, s: State): VdomElement = {
       crCtxP.consume { crCtx =>
         val platCss = platformCssStatic()
 
@@ -113,6 +146,7 @@ class CreateNodeR(
           // Содержимое диалога:
           MuiDialogContent()(
             MuiList()(
+
               // Название узла (маячка).
               __mkTextField(
                 crCtx.messages( MsgCodes.`Name` ),
@@ -128,6 +162,97 @@ class CreateNodeR(
                 s.idOptC,
                 _onIdChanged,
                 helpText = "EddyStone-UID",
+              ),
+
+              // Выбор родительского узла:
+              MuiListItem()(
+                // Варианты родительских узлов:
+                s.propsTreeParentPathC { propsProxy =>
+                  val emptyValue = ""
+                  val pathDelimStr = _PARENT_PATH_DELIM.toString
+
+                  val props = propsProxy.value
+                  val selectOptions = props.tree
+                    .toOption
+                    .flatMap { tree =>
+                      // Подобрать подходящие узлы:
+                      val nodesToRender = tree
+                        .zipWithIndex
+                        // Заменить индексы на pathRev, чтобы у каждого узла был рядом его путь в дереве (обратный путь).
+                        .deepMapFold( List.empty: NodePath_t ) { (acc, tree0) =>
+                          val (mns, i) = tree0.rootLabel
+                          val pathRev = (i :: acc)
+                          pathRev -> (mns, pathRev)
+                        }
+                        .flatten
+                        .filter { case (mns, _) =>
+                          (mns.role ==* MTreeRoles.Normal) &&
+                            mns.infoPot.exists { info =>
+                              (info.isAdmin contains[Boolean] true) &&
+                                info.ntype.exists(_.userCanCreateSubNodes)
+                            }
+                        }
+                      // Вернуть None, если нет ни одного подходящего узла, чтобы передать рендер в getOrElse-ветвь.
+                      Option.when( !nodesToRender.isEmpty ) {
+                        nodesToRender
+                          .iterator
+                          .map[VdomNode] { case (mns, nodePathRev) =>
+                            val nodePathStr = nodePathRev
+                              .reverse
+                              .tail
+                              .mkString( pathDelimStr )
+                            MuiMenuItem.component.withKey( nodePathStr )(
+                              new MuiMenuItemProps {
+                                override val value = nodePathStr
+                              }
+                            )(
+                              nodeHeaderR.component(
+                                propsProxy.resetZoom(
+                                  nodeHeaderR.PropsVal(
+                                    render = MNodeStateRender( mns, nodePathRev ),
+                                    isAdv = false,
+                                    asList = false,
+                                  )
+                                )
+                              )
+                            )
+                          }
+                          .toList
+                      }
+                    }
+                    .getOrElse {
+                      // Нет узлов, ничего не найдено.
+                      val emptyEl = MuiMenuItem(
+                        new MuiMenuItemProps {
+                          override val value = emptyValue
+                        }
+                      )(
+                        <.em(
+                          crCtx.messages( MsgCodes.`Nothing.found` )
+                        )
+                      ): VdomElement
+                      emptyEl :: Nil
+                    }
+
+                  // Селект родительского узла:
+                  val _parentNodeMsg = crCtx.messages( MsgCodes.`Parent.node` ).rawNode
+                  val parentPathOpt = props.createParentPath
+                  val _nodePathValueStr = parentPathOpt
+                    .fold( emptyValue )( _.mkString( pathDelimStr ) )
+                  MuiTextField(
+                    new MuiTextFieldProps {
+                      //override val `type` = HtmlConstants.Input.select
+                      override val label = _parentNodeMsg
+                      override val select = true
+                      override val fullWidth = true
+                      override val onChange = onParentChangeCbF
+                      override val error = parentPathOpt.isEmpty
+                      override val value = _nodePathValueStr
+                    }
+                  )(
+                    selectOptions: _*
+                  )
+                }
               ),
 
               // pending progress bar
@@ -157,6 +282,7 @@ class CreateNodeR(
                           case ex: LknException =>
                             <.span(
                               crCtx.messages( ex.msgCode ),
+                              HtmlConstants.SPACE,
                               ex.titleOpt.whenDefined( crCtx.messages(_) ),
 
                               HtmlConstants.SPACE, HtmlConstants.`(`,
@@ -232,13 +358,13 @@ class CreateNodeR(
       // Сборка коннекшенов до полей:
       val mtfFeq = OptFastEq.Wrapped(FastEq.AnyRefEq)
       def __mkMtfConn(lens: Lens[MCreateNodeS, MTextFieldS]) =
-        propsProxy.connect(_.map(lens.get))( mtfFeq )
+        propsProxy.connect(_.create.map(lens.get))( mtfFeq )
 
       // Сборка состояния:
       State(
 
         openedSomeC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.isDefined )
+          OptionUtil.SomeBool( props.create.isDefined )
         },
 
         nameOptC = __mkMtfConn( MCreateNodeS.name ),
@@ -246,7 +372,7 @@ class CreateNodeR(
         idOptC = __mkMtfConn( MCreateNodeS.id ),
 
         saveBtnDisabledSomeC = propsProxy.connect { propsOpt =>
-          val saveDisabled = propsOpt.fold(true) { props =>
+          val saveDisabled = propsOpt.create.fold(true) { props =>
             !props.isValid ||
             props.saving.isPending
           }
@@ -254,12 +380,16 @@ class CreateNodeR(
         },
 
         isPendingSomeC = propsProxy.connect { propsOpt =>
-          val isPending = propsOpt.exists(_.saving.isPending)
+          val isPending = propsOpt.create.exists(_.saving.isPending)
           OptionUtil.SomeBool( isPending )
         },
 
-        exceptionOptC = propsProxy.connect( _.flatMap(_.saving.exceptionOption) )( OptFastEq.Wrapped(FastEq.AnyRefEq) ),
+        exceptionOptC = propsProxy.connect( _.create.flatMap(_.saving.exceptionOption) )( OptFastEq.Wrapped(FastEq.AnyRefEq) ),
 
+        propsTreeParentPathC = propsProxy.connect(identity)( FastEqUtil[Props_t] { (a, b) =>
+          (a.createParentPath ===* b.createParentPath) &&
+          (a.tree ===* b.tree)
+        }),
       )
     }
     .renderBackend[Backend]

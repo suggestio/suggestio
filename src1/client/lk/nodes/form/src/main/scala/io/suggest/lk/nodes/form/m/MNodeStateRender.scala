@@ -24,18 +24,26 @@ object MNodeStateRender {
 
   @inline implicit def univEq: UnivEq[MNodeStateRender] = UnivEq.derive
 
+  /** Собрать путь до узла в дереве в правильном порядке.
+    * Используем def для экономии ресурсов: nodePathRev шарит свои хвосты между с другими элементами,
+    * а прямой nodePath нужен только на момент срабатывания какого-то экшена.
+    */
+  def unRawNodePathRev( rawNodePathRev: NodePath_t ): NodePath_t =
+    rawNodePathRev.reverse.tail
+
+
+  implicit class MnsrOpsExt( private val mnsr: MNodeStateRender ) extends AnyVal {
+
+    def nodePath: NodePath_t =
+      unRawNodePathRev( mnsr.rawNodePathRev )
+
+  }
+
 }
 
 
 case class MNodeStateRender(
                              state                : MNodeState,
                              rawNodePathRev       : NodePath_t,
-                           ) {
-
-  /** Путь до узла в правильном порядке.
-    * Используем def для экономии ресурсов: nodePathRev шарит свои хвосты между с другими элементами,
-    * а прямой nodePath нужен только на момент срабатывания какого-то экшена. */
-  def nodePath: NodePath_t = rawNodePathRev.reverse.tail
-
-}
+                           )
 

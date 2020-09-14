@@ -4,6 +4,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.err.HttpResultingException
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.Inject
 import models.req.MNodesChainReq
 import play.api.inject.Injector
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
@@ -16,9 +17,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 07.09.2020 12:08
   * Description: Проверка юзера на предмет возможности создания под-узла.
   */
-final class CanCreateSubNode(
-                              injector: Injector,
-                            )
+final class CanCreateSubNode @Inject() (
+                                         injector: Injector,
+                                       )
   extends MacroLogsImpl
 {
 
@@ -41,7 +42,7 @@ final class CanCreateSubNode(
         val user = aclUtil.userFromRequest( request )
         lazy val logPrefix = s"(${parentRk.mkString("/")}): User#${user.personIdOpt.orNull} "
 
-        for {
+        (for {
           // Проверить admin-права на цепочку узлов:
           nodesChainOpt <- isNodeAdmin.isNodeChainAdmin( parentRk, user )
           nodesChain = nodesChainOpt getOrElse {
@@ -64,10 +65,16 @@ final class CanCreateSubNode(
           }
 
           // Рендер результата:
-          res <- block(mreq)
+          res <- {
+            LOGGER.trace(s"$logPrefix OK, access granted.")
+            block(mreq)
+          }
         } yield {
           res
-        }
+        })
+          .recoverWith {
+            case m: HttpResultingException => m.httpResFut
+          }
       }
 
     }

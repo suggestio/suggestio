@@ -45,7 +45,12 @@ class LknPopupsR(
         }( nameEditDiaR.component.apply )( implicitly, OptFastEq.Wrapped(nameEditDiaR.nameEditPvFeq) ),
 
         // Рендер попапа создания нового узла:
-        popupsProxy.wrap( _.createNodeS )( createNodeR.component.apply ),
+        propsProxy.wrap { mroot =>
+          createNodeR.PropsVal(
+            create = mroot.popups.createNodeS,
+            tree   = mroot.tree.tree.nodes,
+          )
+        }( createNodeR.component.apply ),
 
         // Рендер попапа редактирования тарифа текущего узла.
         popupsProxy.wrap( _.editTfDailyS )( editTfDailyR.component.apply ),

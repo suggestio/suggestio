@@ -484,5 +484,6 @@ object MsgCodes {
   val `_to.Register._thing` = "_to.Register._thing"
   val `Add.beacon.to.account` = "Add.beacon.to.account"
   val `To.control.beacons.need.login` = "To.control.beacons.need.login"
+  val `Parent.node` = "Parent.node"
 
 }

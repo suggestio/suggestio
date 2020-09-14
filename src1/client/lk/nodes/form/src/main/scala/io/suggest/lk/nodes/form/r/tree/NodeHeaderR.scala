@@ -19,7 +19,6 @@ import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
-import scala.scalajs.js.UndefOr
 import scalajs.js.JSConverters._
 
 /**
@@ -37,12 +36,14 @@ final class NodeHeaderR(
   case class PropsVal(
                        render         : MNodeStateRender,
                        isAdv          : Boolean,
-                       chs            : EphemeralStream[Tree[MNodeState]],
+                       asList         : Boolean,
+                       chs            : EphemeralStream[Tree[MNodeState]] = null,
                      )
   implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
     MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render ) &&
     (a.isAdv ==* b.isAdv) &&
-    (a.chs ===* b.chs)
+    (a.chs ===* b.chs) &&
+    (a.asList ==* b.asList)
   }
 
 
@@ -70,150 +71,157 @@ final class NodeHeaderR(
       val infoOpt = st.infoPot.toOption
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
-      MuiList()(
-        MuiListItem()(
+      val listItemRendered = MuiListItem()(
 
-          // Иконка-значок типа узла:
-          infoOpt
-            .flatMap(_.ntype)
-            .orElse {
-              st.role match {
-                case MTreeRoles.BeaconSignal | MTreeRoles.BeaconsDetected =>
-                  Some( MNodeTypes.BleBeacon )
-                case _ => None
-              }
+        // Иконка-значок типа узла:
+        infoOpt
+          .flatMap(_.ntype)
+          .orElse {
+            st.role match {
+              case MTreeRoles.BeaconSignal | MTreeRoles.BeaconsDetected =>
+                Some( MNodeTypes.BleBeacon )
+              case _ => None
             }
-            .whenDefinedNode { ntype =>
-              MuiListItemIcon()(
-                (ntype match {
-                  case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
-                  case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
-                  case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
-                  case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
-                  case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
-                  case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
-                  case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
-                  case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
-                  case _                                        => Mui.SvgIcons.BuildOutlined
-                })()(),
-              )
-            },
-
-          // Название узла:
-          MuiListItemText {
-            val _textPrimary = infoOpt
-              .flatMap(_.name)
-              .orElse {
-                st.bcnSignal
-                  .map(_.uid)
-              }
-              .orUndefined
-
-            val _textSecondary = infoOpt
-              .flatMap(_.ntype)
-              .map { ntype =>
-                crCtxP.message( ntype.singular ).rawNode
-              }
-              .orUndefined
-
-            new MuiListItemTextProps {
-              override val primary = _textPrimary
-              override val secondary = _textSecondary
-            }
-          }(),
-
-          // Если не-adv режим, то отрендерить в заголовке расстояние до маячка.
-          st.bcnSignal
-            .filter(_ => !s.isAdv)
-            .whenDefinedNode { bcnSignal =>
-              MuiListItemSecondaryAction()(
-                MuiTypoGraphy(
-                  new MuiTypoGraphyProps {
-                    override val variant = MuiTypoGraphyVariants.caption
-                    override val color = MuiTypoGraphyColors.textSecondary
-                  }
-                )(
-                  crCtxP.consume { crCtx =>
-                    crCtx.messages( DistanceUtil.formatDistanceCM( bcnSignal.distanceCm ) )
-                  },
-                ),
-              )
-            },
-
-          // Ошибка запроса:
-          advPot.exceptionOption.whenDefinedNode { ex =>
-            MuiToolTip {
-              val ttContent = <.span(
-                ex.getMessage,
-                HtmlConstants.SPACE,
-                ex.getClass.getSimpleName,
-                // Рендерить stacktrace в development mode.
-                ReactCommonUtil.maybe( scalajs.LinkingInfo.developmentMode ) {
-                  <.div(
-                    <.br,
-                    ex.getStackTrace
-                      .zipWithIndex
-                      .toVdomArray { case (stackEl, i) =>
-                        <.span(
-                          ^.key := i,
-                          stackEl.toString,
-                          <.br
-                        )
-                      },
-                  )
-                },
-              )
-              new MuiToolTipProps {
-                override val title = ttContent.rawElement
-              }
-            } (
-              Mui.SvgIcons.Error(
-                new MuiSvgIconProps {
-                  override val color = MuiColorTypes.error
-                }
-              )(),
+          }
+          .whenDefinedNode { ntype =>
+            MuiListItemIcon()(
+              (ntype match {
+                case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
+                case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
+                case MNodeTypes.Person                        => Mui.SvgIcons.PersonOutlined
+                case MNodeTypes.Ad                            => Mui.SvgIcons.DashboardOutlined
+                case MNodeTypes.Tag                           => Mui.SvgIcons.LocalOfferOutlined
+                case er if er ==>> MNodeTypes.ExternalRsc     => Mui.SvgIcons.ShareOutlined
+                case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
+                case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
+                case _                                        => Mui.SvgIcons.BuildOutlined
+              })()(),
             )
           },
 
-          // Линия прогресса.
-          ReactCommonUtil.maybeNode( advPot.isPending || st.infoPot.isPending ) {
-            treeStuffR.LineProgress()
+        // Название узла:
+        MuiListItemText {
+          val _textPrimary = infoOpt
+            .flatMap(_.name)
+            .orElse {
+              st.bcnSignal
+                .map(_.uid)
+            }
+            .orUndefined
+
+          val _textSecondary = infoOpt
+            .flatMap(_.ntype)
+            .map { ntype =>
+              crCtxP.message( ntype.singular ).rawNode
+            }
+            .orUndefined
+
+          new MuiListItemTextProps {
+            override val primary = _textPrimary
+            override val secondary = _textSecondary
+          }
+        }(),
+
+        // Если не-adv режим, то отрендерить в заголовке расстояние до маячка.
+        st.bcnSignal
+          .filter(_ => !s.isAdv)
+          .whenDefinedNode { bcnSignal =>
+            MuiListItemSecondaryAction()(
+              MuiTypoGraphy(
+                new MuiTypoGraphyProps {
+                  override val variant = MuiTypoGraphyVariants.caption
+                  override val color = MuiTypoGraphyColors.textSecondary
+                }
+              )(
+                crCtxP.consume { crCtx =>
+                  crCtx.messages( DistanceUtil.formatDistanceCM( bcnSignal.distanceCm ) )
+                },
+              ),
+            )
           },
 
-          // Если размещение рекламной карточки, то отрендерить свитчер.
-          ReactCommonUtil.maybeNode(
-            s.isAdv &&
+        // Ошибка запроса:
+        advPot.exceptionOption.whenDefinedNode { ex =>
+          MuiToolTip {
+            val ttContent = <.span(
+              ex.getMessage,
+              HtmlConstants.SPACE,
+              ex.getClass.getSimpleName,
+              // Рендерить stacktrace в development mode.
+              ReactCommonUtil.maybe( scalajs.LinkingInfo.developmentMode ) {
+                <.div(
+                  <.br,
+                  ex.getStackTrace
+                    .zipWithIndex
+                    .toVdomArray { case (stackEl, i) =>
+                      <.span(
+                        ^.key := i,
+                        stackEl.toString,
+                        <.br
+                      )
+                    },
+                )
+              },
+            )
+            new MuiToolTipProps {
+              override val title = ttContent.rawElement
+            }
+          } (
+            Mui.SvgIcons.Error(
+              new MuiSvgIconProps {
+                override val color = MuiColorTypes.error
+              }
+            )(),
+          )
+        },
+
+        // Линия прогресса.
+        ReactCommonUtil.maybeNode( advPot.isPending || st.infoPot.isPending ) {
+          treeStuffR.LineProgress()
+        },
+
+        // Если размещение рекламной карточки, то отрендерить свитчер.
+        ReactCommonUtil.maybeNode(
+          s.isAdv &&
             infoOpt
               .flatMap(_.ntype)
               .exists(_.showScLink)
-          ) {
-            val isChecked = advPot getOrElse false
-            MuiListItemSecondaryAction()(
-              MuiSwitch(
-                new MuiSwitchProps {
-                  override val checked        = isChecked
-                  override val disabled       = advPot.isPending
-                  override val onChange       = _onAdvOnNodeChangedCbF
-                  override val onClick        = _onAdvOnNodeClickCbF
-                }
-              ),
-            )
-          },
+        ) {
+          val isChecked = advPot getOrElse false
+          MuiListItemSecondaryAction()(
+            MuiSwitch(
+              new MuiSwitchProps {
+                override val checked        = isChecked
+                override val disabled       = advPot.isPending
+                override val onChange       = _onAdvOnNodeChangedCbF
+                override val onClick        = _onAdvOnNodeClickCbF
+              }
+            ),
+          )
+        },
 
-          // Заголовок виртуальной группы маячков.
-          ReactCommonUtil.maybeNode( st.role ==* MTreeRoles.BeaconsDetected ) {
-            React.Fragment(
-              MuiListItemText()(
-                crCtxP.message( MNodeTypes.BleBeacon.plural ),
-              ),
+        // Заголовок виртуальной группы маячков.
+        ReactCommonUtil.maybeNode( st.role ==* MTreeRoles.BeaconsDetected ) {
+          React.Fragment(
+            MuiListItemText()(
+              crCtxP.message( MNodeTypes.BleBeacon.plural ),
+            ),
+            ReactCommonUtil.maybeNode( s.chs != null )(
               MuiListItemSecondaryAction()(
                 s.chs.length,
               ),
-            )
-          },
+            ),
+          )
+        },
 
+      ): VdomElement
+
+      if (s.asList)
+        MuiList()(
+          listItemRendered
         )
-      )
+      else
+        listItemRendered
     }
 
   }

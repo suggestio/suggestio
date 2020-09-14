@@ -1149,4 +1149,4 @@ Recents=Недавние
 _to.Register._thing=Зарегистрировать
 Add.beacon.to.account=Присоединить этот маячок к учётной записи.
 To.control.beacons.need.login=Войдите в систему для доступа к функциями управления маячками.
-
+Parent.node=Родительский узел

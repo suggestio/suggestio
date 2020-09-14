@@ -50,12 +50,15 @@ case class HandleSubNodesOf(
 
 
 /** Юзер кликнул по кнопке добавления подузла.
+  *
+  * @param parentPath Путь до родительского узла в текущем дереве узлов.
   * @param id Фиксированный идентификатор создаваемого узла.
   * @param nameDflt Дефолтовое название маячка.
   */
 case class CreateNodeClick(
+                            parentPath: Option[NodePath_t] = None,
                             id: Option[String] = None,
-                            nameDflt: Option[String] = None
+                            nameDflt: Option[String] = None,
                           )
   extends LkNodesAction
 
@@ -68,6 +71,10 @@ case class CreateNodeNameChange( name: String )
 
 /** Добавление под-узла: Юзер вводит id узла (маячка). */
 case class CreateNodeIdChange( id: String )
+  extends LkNodesAction
+
+/** Смена узла-родителя в селекте. */
+case class CreateNodeParentChange( nodePath: NodePath_t )
   extends LkNodesAction
 
 

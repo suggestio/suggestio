@@ -7,7 +7,7 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp}
 import io.suggest.proto.http.HttpConst
-import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies, MHttpCachingPolicy}
+import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json

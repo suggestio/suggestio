@@ -109,7 +109,6 @@ object ZTreeUtil {
 
 
     /** Проход сверху вниз по всем ветвям с отображением значений.
-      * Сложность - O(N).
       * Нужен для сложного маппинга всего дерева с сохранением структуры,
       * например для впихивания id'шников узлов прямо в элементы дерева.
       * Порядок прохождения - сверху вглубь. На нижних уровнях аккамулятор терминируется.
@@ -118,7 +117,7 @@ object ZTreeUtil {
       * @return Ленивое дерево с прежней структурой.
       */
     def deepMapFold[Acc, T](accParent: Acc)(f: (Acc, Tree[A]) => (Acc, T) ): Tree[T] = {
-      val (accChild, el2) = f(accParent, tree)
+      lazy val (accChild, el2) = f(accParent, tree)
       Tree.Node(
         root   = el2,
         forest = tree

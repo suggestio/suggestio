@@ -4,14 +4,17 @@ import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiL
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.nodes.form.m.{CreateNodeClick, MNodeState}
+import io.suggest.lk.nodes.form.m.{CreateNodeClick, MNodeState, MNodeStateRender}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.FastEqUtil
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
-import io.suggest.scalaz.ScalazUtil.Implicits._
 
 /**
   * Suggest.io
@@ -23,7 +26,16 @@ final class SubNodesR(
                        crCtxP               : React.Context[MCommonReactCtx],
                      ) {
 
-  type Props_t = EphemeralStream[Tree[MNodeState]]
+  case class PropsVal(
+                       rawNodePathRev: NodePath_t,
+                       subNodes: EphemeralStream[Tree[MNodeState]],
+                     )
+  implicit val pvFeq = FastEqUtil[PropsVal] { (a, b) =>
+    (a.rawNodePathRev ===* b.rawNodePathRev) &&
+    (b.subNodes ===* b.subNodes)
+  }
+
+  type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
   private lazy val _createMsg = crCtxP.message( MsgCodes.`Create` )
@@ -31,7 +43,11 @@ final class SubNodesR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     private lazy val _onCreateNodeClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, CreateNodeClick() )
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { p: Props =>
+        CreateNodeClick(
+          parentPath = Some( MNodeStateRender.unRawNodePathRev( p.value.rawNodePathRev ) ),
+        )
+      }
     }
 
     def render(s: Props_t): VdomElement = {
@@ -40,7 +56,7 @@ final class SubNodesR(
         crCtxP.consume { crCtx =>
           // Текст
           MuiListItemText {
-            val chCount = s.length
+            val chCount = s.subNodes.length
             val subNodesInfo = ReactCommonUtil.maybeNode( chCount > 0 ) {
               <.span(
                 // Вывести общее кол-во под-узлов.
@@ -49,6 +65,7 @@ final class SubNodesR(
                 // Вывести кол-во выключенных под-узлов, если такие есть.
                 {
                   val chCountDisabled = s
+                    .subNodes
                     .iterator
                     .count { chTree =>
                       chTree.rootLabel

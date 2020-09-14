@@ -6,10 +6,13 @@ import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.{LkNodesConst, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
-import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
+import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import scalaz.Tree
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -22,7 +25,8 @@ import scala.util.Success
 class CreateNodeAh[M](
                        api          : ILkNodesApi,
                        modelRW      : ModelRW[M, Option[MCreateNodeS]],
-                       currNodeRO   : ModelRO[Option[RcvrKey]]
+                       currNodeRO   : ModelRO[Option[RcvrKey]],
+                       treeRO       : ModelRO[Tree[MNodeState]],
                      )
   extends ActionHandler(modelRW)
   with Log
@@ -59,6 +63,17 @@ class CreateNodeAh[M](
       updated(v2)
 
 
+    // Выбор родительского узла из списка.
+    case m: CreateNodeParentChange =>
+      (for {
+        v0 <- value
+      } yield {
+        val v2 = (MCreateNodeS.parentPath set Some(m.nodePath))(v0)
+        updated( Some(v2) )
+      })
+        .getOrElse( noChange )
+
+
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case m: CreateNodeClick =>
       val v0 = value
@@ -82,6 +97,32 @@ class CreateNodeAh[M](
               isEnabled = false,
             )
           },
+          // Путь до родительского узла:
+          parentPath = m.parentPath.filter { parentPath =>
+            parentPath.nonEmpty && {
+              // Переданный путь должен содержать только реальные узлы допустимого типа и роли:
+              treeRO
+                .value
+                .loc
+                .pathToNode( parentPath )
+                .exists { mnsLoc =>
+                  mnsLoc.getLabel.infoPot
+                    .exists { info =>
+                      info.ntype.exists(_.userCanCreateSubNodes) &&
+                      (info.isAdmin contains[Boolean] true)
+                    } &&
+                    // Цепочка узлов до указанного узла должна содержать нормальные узлы, не виртуальные категории.
+                    mnsLoc
+                      .path
+                      .iterator
+                      .forall { mns =>
+                        (mns.role ==* MTreeRoles.Normal) ||
+                        (mns.role ==* MTreeRoles.Root)
+                      }
+                }
+            }
+            // Отфильтровываем возможные виртуальные узлы и пути до них, т.к. на выходе нужен только реальный RcvrKey.
+          },
         )
         updated( Some(v2) )
 
@@ -102,9 +143,13 @@ class CreateNodeAh[M](
       (for {
         cs <- value
         if cs.isValid && !cs.saving.isPending
+        parentPath <- cs.parentPath
+        parentNodeLoc <- treeRO.value
+          .loc
+          .pathToNode( parentPath )
+        parentRk = parentNodeLoc.rcvrKey
+        if parentRk.nonEmpty
       } yield {
-        val parentNodeRcvrKey = currNodeRO().get
-
         // Огранизовать запрос на сервер.
         val fx = Effect {
           val req = MLknNodeReq(
@@ -115,7 +160,7 @@ class CreateNodeAh[M](
             }
           )
           api
-            .createSubNodeSubmit(parentNodeRcvrKey, req)
+            .createSubNodeSubmit( parentRk, req )
             .transform { tryResp =>
               val action = CreateNodeResp(
                 tryResp = tryResp
@@ -136,11 +181,12 @@ class CreateNodeAh[M](
       m.tryResp.fold(
         // Ошибка. Вернуть addState назад.
         {ex =>
+          logger.warn( ErrorMsgs.SRV_REQUEST_FAILED, ex, m )
           val v2 = for (cs <- value) yield {
             val invalidateF = MTextFieldS.isValid.set(false)
             cs.copy(
               name = invalidateF(cs.name),
-              id   = invalidateF(cs.id),
+              id   = if (cs.id.isEnabled) invalidateF(cs.id) else cs.id,
               saving = cs.saving.fail(LknException(ex)),
             )
           }

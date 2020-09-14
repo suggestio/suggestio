@@ -78,7 +78,6 @@ final class LkNodes @Inject() (
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val canCreateSubNode = injector.instanceOf[CanCreateSubNode]
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
-  private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
 
   private lazy val nodesTpl = injector.instanceOf[NodesTpl]
   private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]

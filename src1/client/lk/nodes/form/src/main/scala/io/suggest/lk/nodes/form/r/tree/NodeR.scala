@@ -89,6 +89,7 @@ class NodeR(
             render      = p.node,
             isAdv       = p.advMode,
             chs         = p.chs,
+            asList      = true,
           )
         }( nodeHeaderR.component.apply )
 
@@ -129,19 +130,6 @@ class NodeR(
           val infoOpt = infoPot.toOption
 
           MuiList()(
-
-            // Инфа по BLE-маячку, если это маячок.
-            {
-              val bcnInfoPropsProxy = propsProxy.resetZoom {
-                beaconInfoR.PropsVal(
-                  nodeState = pns,
-                  isAdvMode = p.advMode,
-                  bcnCache  = p.bcnCache,
-                  infoOpt   = infoOpt,
-                )
-              }
-              beaconInfoR.component( bcnInfoPropsProxy )
-            },
 
             if (!p.advMode) {
               React.Fragment(
@@ -197,7 +185,12 @@ class NodeR(
                   infoPot
                     .exists( _.ntype.exists(_.userCanCreateSubNodes) )
                 ) {
-                  val z2 = propsProxy.resetZoom( p.chs )
+                  val z2 = propsProxy.resetZoom(
+                    subNodesR.PropsVal(
+                      subNodes = p.chs,
+                      rawNodePathRev = nodePath,
+                    )
+                  )
                   subNodesR.component( z2 )
                 },
               )
@@ -229,6 +222,19 @@ class NodeR(
                 ),
 
               )
+            },
+
+            // Доп.инфа по BLE-маячку, если это маячок.
+            {
+              val bcnInfoPropsProxy = propsProxy.resetZoom {
+                beaconInfoR.PropsVal(
+                  nodeState = pns,
+                  isAdvMode = p.advMode,
+                  bcnCache  = p.bcnCache,
+                  infoOpt   = infoOpt,
+                )
+              }
+              beaconInfoR.component( bcnInfoPropsProxy )
             },
 
           )
