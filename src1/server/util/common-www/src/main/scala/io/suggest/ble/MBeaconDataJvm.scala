@@ -32,7 +32,7 @@ object MBeaconDataJvm {
             distanceCm    <- distanceCmE
           } yield {
             MUidBeacon(
-              uid         = uuidStr,
+              id         = uuidStr,
               distanceCm  = distanceCm
             )
           }
@@ -42,7 +42,7 @@ object MBeaconDataJvm {
       override def unbind(key: String, value: MUidBeacon): String = {
         val k = key1F(key)
         _mergeUnbinded1(
-          strB.unbind (k(UID_FN),          value.uid),
+          strB.unbind (k(UID_FN),          value.id),
           intB.unbind (k(DISTANCE_CM_FN),  value.distanceCm)
         )
       }

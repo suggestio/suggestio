@@ -27,6 +27,14 @@ sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
   val name: String
 }
 
+sealed trait INodeUpdatedResp extends LkNodesAction {
+  /** id узла, если есть. */
+  def nodeIdOpt: Option[String]
+  /** @return None - узел удалён.
+    *         Some() - узел обновлён на указанное состояние.
+    */
+  def nodeUpdated: Try[Option[MLknNode]]
+}
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
 case class NodeClick(
@@ -86,6 +94,11 @@ case object CreateNodeSaveClick
 /** Среагировать на ответ сервера по поводу успешного добавления нового узла. */
 case class CreateNodeResp(tryResp: Try[MLknNode] )
   extends LkNodesAction
+  with INodeUpdatedResp
+{
+  override lazy val nodeUpdated = tryResp.map(Some.apply)
+  override def nodeIdOpt = tryResp.toOption.map(_.id)
+}
 
 
 /** Добавление под-узла: юзер нажал "отмена". */
@@ -104,9 +117,15 @@ case class NodeIsEnabledChanged(
 /** Сигнал ответа сервера на апдейт флага isEnabled. */
 case class NodeIsEnabledUpdateResp(
                                     override val nodePath: NodePath_t,
+                                    nodeId               : String,
                                     resp                 : Try[MLknNode]
                                   )
   extends LkNodesTreeAction
+  with INodeUpdatedResp
+{
+  override def nodeIdOpt = Some( nodeId )
+  override def nodeUpdated = resp.map(Some.apply)
+}
 
 
 // Удалятельство узлов.
@@ -125,9 +144,15 @@ case object NodeMenuBtnClick
 /** Результат запроса к серверу по поводу удаления узла. */
 case class NodeDeleteResp(
                            override val nodePath: NodePath_t,
+                           nodeId: String,
                            resp: Try[Boolean]
                          )
   extends LkNodesTreeAction
+  with INodeUpdatedResp
+{
+  override def nodeIdOpt = Some(nodeId)
+  override def nodeUpdated = resp.map(_ => None)
+}
 
 
 // Редактирование узла (переименование).
@@ -145,7 +170,16 @@ case object NodeEditCancelClick extends LkNodesAction
 case object NodeEditOkClick extends LkNodesAction
 
 /** Ответ сервера по итогам запроса. */
-case class NodeEditSaveResp( nodeId: String, tryResp: Try[MLknNode] ) extends LkNodesAction
+case class NodeEditSaveResp(
+                             nodeId: String,
+                             tryResp: Try[MLknNode]
+                           )
+  extends LkNodesAction
+  with INodeUpdatedResp
+{
+  override def nodeIdOpt = Some(nodeId)
+  override def nodeUpdated = tryResp.map(Some.apply)
+}
 
 
 // Управление размещением текущей карточки на указанном узле.
@@ -154,7 +188,10 @@ case class NodeEditSaveResp( nodeId: String, tryResp: Try[MLknNode] ) extends Lk
 case class AdvOnNodeChanged(override val nodePath: NodePath_t, isEnabled: Boolean)
   extends LkNodesTreeAction
 /** Ответ сервера на тему управления размещением карточки на узле. */
-case class AdvOnNodeResp(override val nodePath: NodePath_t, tryResp: Try[MLknNode])
+case class AdvOnNodeResp(
+                          override val nodePath: NodePath_t,
+                          tryResp: Try[MLknNode]
+                        )
   extends LkNodesTreeAction
 
 
@@ -171,6 +208,12 @@ case object TfDailySaveClick
 /** Сигнал ответа сервера по поводу обновления тарифа. */
 case class TfDailySavedResp(tryResp: Try[MLknNode])
   extends LkNodesAction
+  with INodeUpdatedResp
+{
+  override def nodeIdOpt = tryResp.toOption.map(_.id)
+  override def nodeUpdated = tryResp.map(Some.apply)
+}
+
 
 /** Отмена редактирования тарифа текущего узла. */
 case object TfDailyCancelClick

@@ -6,6 +6,7 @@ import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModelDi, MEsInnerHitsInfo, MEsNestedSearch, MEsUuId}
 import io.suggest.es.search.MRandomSortData
+import io.suggest.geo.MLocEnv
 import io.suggest.jd.tags.JdTag
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.search.Criteria
@@ -14,7 +15,7 @@ import io.suggest.n2.node.{IMNodes, MNode, MNodeFields, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp, MScAdInfo, MScAdMatchInfo, MScNodeMatchInfo}
-import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.sc.sc3.{MSc3RespAction, MScCommonQs, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
@@ -67,6 +68,11 @@ trait ScAdsTile
 
     def _qs: MScQs
 
+    private val scQs_common_locEnv_beacons_LENS =
+      MScQs.common
+        .composeLens( MScCommonQs.locEnv )
+        .composeLens( MLocEnv.bleBeacons )
+
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
     lazy val tileArgs = scUtil.getTileArgs(_qs.common.screen)
@@ -90,10 +96,9 @@ trait ScAdsTile
 
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
-
     /** Данные для поиска bluetooth-маячков. */
     lazy val bleSearchCtxFut = scAdSearchUtil.bleBeaconsSearch(
-      scQs = _qs,
+      bcnsQs = scQs_common_locEnv_beacons_LENS.get( _qs ),
       innerHits = Some {
         MEsInnerHitsInfo(
           fields = (
@@ -105,11 +110,24 @@ trait ScAdsTile
       }
     )
 
+    // Часть операций по проверке и чистке qs требуют асинхронных шагов. Делаем:
+    lazy val _qsClearedFut = for {
+      bleBeaconCtx <- bleSearchCtxFut
+    } yield {
+      val bcns0 = scQs_common_locEnv_beacons_LENS.get( _qs )
+      if (bcns0 !=* bleBeaconCtx.bcnsQs2) {
+        scQs_common_locEnv_beacons_LENS.set(bleBeaconCtx.bcnsQs2)( _qs )
+      } else {
+        _qs
+      }
+    }
+
     lazy val adSearch2Fut = for {
       bleSearchCtx <- bleSearchCtxFut
+      clearedQs    <- _qsClearedFut
     } yield {
       scAdSearchUtil.qsArgs2nodeSearch(
-        args                  = _qs,
+        args                  = clearedQs,
         bleSearchCtx          = bleSearchCtx,
       )
     }
@@ -119,22 +137,25 @@ trait ScAdsTile
     /** Найти все итоговые карточки. */
     lazy val madsFut: Future[Seq[MAdInfo]] = {
       if (_qs.hasAnySearchCriterias) {
-        val _adSearchFut = adSearch2Fut
-        val _bleSearchCtxFut = bleSearchCtxFut
+        (for {
+          qsCleared <- _qsClearedFut
+          if qsCleared.hasAnySearchCriterias
 
-        // Подготовить id для adn-узлов и id узлов-тегов.
-        val adnNodeIds = (_qs.search.rcvrId :: _qs.search.prodId :: Nil)
-          .iterator
-          .flatten
-          .map(_.id)
-          .toSet
+          _adSearchFut = adSearch2Fut
+          _bleSearchCtxFut = bleSearchCtxFut
 
-        val tagNodeIds = _qs.search.tagNodeId
-          .iterator
-          .map(_.id)
-          .toSet
+          // Подготовить id для adn-узлов и id узлов-тегов.
+          adnNodeIds = (qsCleared.search.rcvrId :: qsCleared.search.prodId :: Nil)
+            .iterator
+            .flatten
+            .map(_.id)
+            .toSet
 
-        for {
+          tagNodeIds = qsCleared.search.tagNodeId
+            .iterator
+            .map(_.id)
+            .toSet
+
           adSearch <- _adSearchFut
 
           // Чтобы получить доступ к inner-hits-значениям, надо работать с исходным ES-ответом (SearchHit):
@@ -227,7 +248,13 @@ trait ScAdsTile
 
           LOGGER.trace(s"$logPrefix Found ${res.length} ads")
           res
-        }
+        })
+          .recover { case _: NoSuchElementException =>
+            // Не осталось критериев для поиска карточек после очистки. Такое бывает, когда по результатам bluetooth-скана
+            // появились маячки, незарегистрированные в suggest.io.
+            LOGGER.trace(s"$logPrefix No search crs after async QS clearance. Was uncleared: ${_request.uri}")
+            Nil
+          }
 
       } else {
         // Нет поисковых критериев -- сразу же ничего не ищем.

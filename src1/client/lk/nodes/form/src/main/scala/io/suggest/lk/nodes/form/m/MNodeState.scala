@@ -56,9 +56,11 @@ object MNodeState {
     def rcvrKey: RcvrKey = {
       (for {
         mns <- loc.path.iterator
-        info <- mns.infoPot.toOption
+        id <- mns.infoPot.toOption
+          .orElse( mns.bcnSignal )
+          .map(_.id)
       } yield {
-        info.id
+        id
       })
         .toList
         .reverse

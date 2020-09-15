@@ -1,14 +1,5 @@
 package io.suggest.proto.http.model
 
-import io.suggest.sjs.common.empty.JsOptionUtil
-import org.scalajs.dom.experimental.{AbortController, BodyInit, HeadersInit, HttpMethod, RequestCredentials, RequestMode}
-import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.dom2.FetchRequestInit
-
-import scala.scalajs.js
-import js.JSConverters._
-import scala.util.Try
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

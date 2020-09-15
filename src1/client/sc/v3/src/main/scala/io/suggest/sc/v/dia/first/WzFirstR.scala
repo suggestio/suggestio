@@ -280,7 +280,7 @@ class WzFirstR(
       State(
         diaPropsC = propsProxy.connect { props =>
           MWz1Props(
-            fullScreen  = props.dev.screen.info.isDialogWndFullScreen,
+            fullScreen  = props.dev.screen.info.isDialogWndFullScreen(),
             visible     = props.dialogs.first.isVisible,
           )
         },

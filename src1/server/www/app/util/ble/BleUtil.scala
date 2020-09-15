@@ -34,7 +34,7 @@ class BleUtil {
         .map { bcn =>
           val dCm = Math.max(1, bcn.distanceCm)
           val weightFactor = 1.0F / dCm
-          bcn.uid -> weightFactor
+          bcn.id -> weightFactor
         }
         .groupBy(_._1)
         .view

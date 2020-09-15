@@ -304,7 +304,7 @@ final class StatUtil @Inject()(
       } else {
         val mact = MAction(
           actions = MActionTypes.BleBeaconNear :: Nil,
-          nodeId  = bcns.map(_.uid),
+          nodeId  = bcns.map(_.id),
           count   = bcns.map(_.distanceCm)
         )
         mact :: Nil

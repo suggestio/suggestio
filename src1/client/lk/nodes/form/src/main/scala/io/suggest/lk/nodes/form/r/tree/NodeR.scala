@@ -121,7 +121,7 @@ class NodeR(
               // Найти в кэше маячков ответ сервера:
               Pot.fromOption(for {
                 bcnSignal     <- pns.bcnSignal
-                resp          <- p.bcnCache.respForUid( bcnSignal.uid )
+                resp          <- p.bcnCache.respForUid( bcnSignal.id )
               } yield {
                 // TODO Возможно, надо пробрасывать pending/failed из bcnCache.scanReq?
                 resp

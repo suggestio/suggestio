@@ -586,7 +586,7 @@ final class LkNodes @Inject() (
   /** Команда к удалению какого-то узла.
     *
     * @param nodeId id узла.
-    * @return 204 No content | 404 Not found
+    * @return 200 OK - узел удалён.
     */
   def deleteNode(nodeId: String) = csrf.Check {
     // Защита от брутфорса, хз зачем. Может пригодиться...
@@ -597,11 +597,7 @@ final class LkNodes @Inject() (
           isDeleted <- isDeletedFut
         } yield {
           LOGGER.info(s"deleteNode($nodeId): Delete node by user#${request.user.personIdOpt.orNull} request: isDeleted?$isDeleted")
-          if (isDeleted) {
-            NoContent
-          } else {
-            NotFound
-          }
+          Ok( isDeleted.toString )
         }
       }
     }

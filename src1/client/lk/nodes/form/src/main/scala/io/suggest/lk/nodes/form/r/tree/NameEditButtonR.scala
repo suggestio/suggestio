@@ -25,8 +25,6 @@ final class NameEditButtonR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     private lazy val _onEditClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
-      // preventDefault, чтобы заголовок назад не сворачивался при нажатии кнопки редактирования.
-      e.stopPropagationCB >>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, NodeEditClick)
     }
 

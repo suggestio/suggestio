@@ -9,7 +9,6 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.log.Log
-import io.suggest.scalaz.NodePath_t
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.dom2.DomQuick
 import monocle.Traversal
@@ -57,11 +56,14 @@ class TreeAh[M](
           // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
           // Узнать, является ли текущий элемент сфокусированным?
           val v2 = MTree.opened.modify { opened0 =>
-            // Окликнутый узел не является сфокусированным, но для него уже загружены children. Выставить текущий узел как сфокусированный.
-            val isCurrentNodeClicked = opened0 contains[NodePath_t] m.nodePath
-            if (isCurrentNodeClicked) {
+            // Сворачивать можно текущий элемент, но свернуть можно и родительский элемент, и фокус должен перейти
+            // к пути, который родительский по отношению к сворачиваемому.
+            val isCollapse = opened0.exists { openedNodePath =>
+              openedNodePath.tails contains m.nodePath
+            }
+            if (isCollapse) {
               // Клик по заголовку текущего узла. Свернуть текущий узел, но оставив родительский элемент раскрытым.
-              Option.when(m.nodePath.nonEmpty) {
+              Option.when( m.nodePath.nonEmpty ) {
                 // Убрать последний элемент из пути до текущего узла:
                 m.nodePath.slice(0, m.nodePath.length - 1)
               }
@@ -298,7 +300,7 @@ class TreeAh[M](
           api
             .setNodeEnabled( info.id, m.isEnabled )
             .transform { tryRes =>
-              val r = NodeIsEnabledUpdateResp(opened, tryRes)
+              val r = NodeIsEnabledUpdateResp(opened, info.id, tryRes)
               Success(r)
             }
         }

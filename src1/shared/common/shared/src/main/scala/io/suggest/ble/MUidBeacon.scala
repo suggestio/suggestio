@@ -28,19 +28,16 @@ object MUidBeacon {
 /**
   * Класс для инстансов модели с инфой о наблюдаемом в эфире BLE-маячке.
   *
-  * @param uid Уникальный идентификатор наблюдаемого маячка:
-  *            iBeacon:   "$uuid:$major:$minor"
-  *            EddyStone: "$gid$bid"
+  * @param id Уникальный идентификатор наблюдаемого маячка:
+  *           iBeacon:   "$uuid:$major:$minor"
+  *           EddyStone: "$gid$bid"
   * @param distanceCm Расстояние в сантиметрах, если известно.
   */
 final case class MUidBeacon(
-                             uid          : String,
-                             distanceCm   : Int
+                             override val id      : String,
+                             distanceCm           : Int,
                            )
   extends IId[String]
 {
-
-  override def id = uid
-  override def toString = "B(" + uid + "," + distanceCm + "cm)"
-
+  override def toString = "B(" + id + "," + distanceCm + "cm)"
 }

@@ -62,6 +62,7 @@ case class LkNodesFormCircuit(
     val popupsRW = CircuitUtil.mkLensRootZoomRW(this, MLkNodesRoot.popups)
 
     val treeRW = CircuitUtil.mkLensZoomRW(treeOuterRW, MTreeOuter.tree)
+    val beaconsRO = CircuitUtil.mkLensZoomRO( treeOuterRW, MTreeOuter.beacons )
     val currNodeRO = treeRW.zoom(_.openedRcvrKey)( FastEq.ValueEq )
     val openedPathRO = CircuitUtil.mkLensZoomRO( treeRW, MTree.opened )
 
@@ -92,6 +93,7 @@ case class LkNodesFormCircuit(
       api = lkNodesApi,
       modelRW = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.editName ),
       currNodeRO = treeRW.zoom(_.openedLoc.map(_.getLabel)),
+      beaconsRO = beaconsRO,
     )
 
     val popupsHandler = composeHandlers( createNodeAh, deleteNodeAh, editTfDailyAh, nameEditAh )
@@ -103,18 +105,18 @@ case class LkNodesFormCircuit(
       confRO  = confR
     )
 
-    var topLevelHandlers = List[HandlerFunction]( treeAh, popupsHandler )
+    var sharingHandlers = List[HandlerFunction]( treeAh, popupsHandler )
 
     // Активировать поддержку контроллера маячков:
     if (diConfig.withBleBeacons) {
-      topLevelHandlers ::= new BeaconsAh(
+      sharingHandlers ::= new BeaconsAh(
         modelRW     = treeOuterRW,
         lkNodesApi  = lkNodesApi,
       )
     }
 
     // Разные Ah шарят между собой некоторые события, поэтому они все соединены параллельно.
-    foldHandlers(topLevelHandlers: _*)
+    foldHandlers( sharingHandlers: _* )
   }
 
   addProcessor( DoNothingActionProcessor[MLkNodesRoot] )

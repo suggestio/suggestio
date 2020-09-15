@@ -121,6 +121,7 @@ final class CanChangeNodeAvailability @Inject() (
             adminCanChangeAvailabilityOf(user, mnode).flatMap {
               // Всё ок, пропускаем экшен на исполнение.
               case true =>
+                LOGGER.trace(s"$logPrefix OK, access granted to user#${user.personIdOpt.orNull}")
                 val req1 = MNodeReq(mnode, request, user)
                 block(req1)
 

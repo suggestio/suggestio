@@ -175,7 +175,6 @@ final class LkNodesApiHttpImpl(
 
 
   override def deleteNode(nodeId: String): Future[Boolean] = {
-    import HttpConst.Status._
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.deleteNode(nodeId),
       data = HttpReqData(
@@ -184,9 +183,12 @@ final class LkNodesApiHttpImpl(
     )
     HttpClient.execute( req )
       .respAuthFut
-      .successIfStatus( NO_CONTENT, NOT_FOUND )
-      .map { resp =>
-        resp.status ==* NO_CONTENT
+      .successIf200
+      .flatMap { resp =>
+        // Раньше были разные варианты (NoContent/NotFound), но cordova-okhttp-плагин слишком кривой для столь очевидных вещей.
+        resp
+          .text()
+          .map(_.toBoolean)
       }
   }
 

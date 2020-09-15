@@ -46,7 +46,7 @@ class DeleteNodeAh[M](
         api
           .deleteNode( nodeId )
           .transform { tryRes =>
-            val r = NodeDeleteResp(nodePath, tryRes)
+            val r = NodeDeleteResp(nodePath, nodeId, tryRes)
             Success(r)
           }
       }

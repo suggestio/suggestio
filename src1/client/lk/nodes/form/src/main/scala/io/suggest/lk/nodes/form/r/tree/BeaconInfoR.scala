@@ -100,7 +100,7 @@ class BeaconInfoR(
                 MuiListItem {
                   val _onClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
                     val nameDflt = crCtx.messages( MsgCodes.`Beacon.name.example` )
-                    _addBtnClick( bcnSignal.uid, Some(nameDflt) )
+                    _addBtnClick( bcnSignal.id, Some(nameDflt) )
                   }
                   new MuiListItemProps {
                     override val button = true

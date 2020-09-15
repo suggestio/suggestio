@@ -31,6 +31,9 @@ object HttpClientConfig {
   * @param fetchApi Переопределение fetch()-функции, вместо стандартной.
   *                 cordova-plugin-fetch содержит более эффективную альтернативу webkit/blink-реализации fetch(),
   *                 которая режет заголовки ответа, местами недореализована.
+  * @param forcePostBodyNonEmpty Для POST-запросов fetch через okhttp без тела может вылетать ошибка вида:
+  *                              "method POST must have request body".
+  *                              Выставление этого флага заставляет передавать пустое тело запроса.
   */
 case class HttpClientConfig(
                              csrfToken          : Option[MCsrfToken]            = None,
@@ -39,6 +42,7 @@ case class HttpClientConfig(
                              sessionCookieSet   : Option[MHttpCookieParsed => Unit] = None,
                              cookieDomainDflt   : Option[() => String]          = None,
                              fetchApi           : Option[(RequestInfo, RequestInit) => Future[HttpResp]] = None,
+                             forcePostBodyNonEmpty: Boolean = false,
                            )
 
 trait IMHttpClientConfig {

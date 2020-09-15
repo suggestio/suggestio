@@ -23,7 +23,7 @@ case class CdvFetchHttpResp(cdvFetchResp: Response)
 {
 
   // cdv-fetch может возращать undefined вместо статуса. Это баг в плагине, TODO подменяем ошибочное значение:
-  override def status = cdvFetchResp.status getOrElse HttpConst.Status.NOT_ACCEPTABLE
+  override def status = cdvFetchResp.status getOrElse HttpConst.Status.LOCKED
   override def statusText = cdvFetchResp.statusText getOrElse MsgCodes.`Error`
 
   override def isFromInnerCache = false

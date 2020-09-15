@@ -185,6 +185,25 @@ object Sc3Module { outer =>
     /** Сборка HTTP-конфига для всей выдачи, без CSRF. */
     def mkRootHttpClientConfigF = { () =>
       val isCordova = sc3Circuit.platformRW.value.isCordova
+
+      // Замена стандартной, ограниченной в хидерах, fetch на нативный http-client.
+      // Это ломает возможность отладки запросов через Chrome WebDev.tools, но даёт предсказуемую работу http-клиента,
+      // и главное: поддержку кукисов и произвольных заголовков запроса/ответа, ради чего и есть весь сыр-бор.
+      val fetchApi = OptionUtil.maybeOpt(isCordova)(
+        // Try: какие-то трудности на фоне JSGlobalScope при недоступности cordova-API в браузере.
+        Try( CdvPluginFetch.cordovaFetchUnd.toOption )
+          .toOption
+          .flatten
+          .map { cdvFetchF =>
+            // Оборачиваем функцию, чтобы выдавала стандартный Response() с поддержкой clone() и прочего.
+          {(reqInfo: RequestInfo, reqInit: RequestInit) =>
+            cdvFetchF(reqInfo, reqInit)
+              .toFuture
+              .map( CdvFetchHttpResp )
+          }
+          }
+      )
+
       HttpClientConfig(
         baseHeaders = HttpReqData.mkBaseHeaders(
           xrwValue = {
@@ -204,23 +223,9 @@ object Sc3Module { outer =>
         },
         // Дефолтовый домен кукисов сессии, т.к. сервер обычно не шлёт домена (чтобы не цеплялось под-доменов).
         cookieDomainDflt = Option.when(isCordova)( ScUniApi.scDomain ),
-        // Замена стандартной, ограниченной в хидерах, fetch на нативный http-client.
-        // Это ломает возможность отладки запросов через Chrome WebDev.tools, но даёт предсказуемую работу http-клиента,
-        // и главное: поддержку кукисов и произвольных заголовков запроса/ответа, ради чего и есть весь сыр-бор.
-        fetchApi = OptionUtil.maybeOpt(isCordova)(
-          // Try: какие-то трудности на фоне JSGlobalScope при недоступности cordova-API в браузере.
-          Try( CdvPluginFetch.cordovaFetchUnd.toOption )
-            .toOption
-            .flatten
-            .map { cdvFetchF =>
-              // Оборачиваем функцию, чтобы выдавала стандартный Response() с поддержкой clone() и прочего.
-              {(reqInfo: RequestInfo, reqInit: RequestInit) =>
-                cdvFetchF(reqInfo, reqInit)
-                  .toFuture
-                  .map( CdvFetchHttpResp )
-              }
-            }
-        ),
+        fetchApi = fetchApi,
+        // okhttp выдаёт ошибку перед запросами: method POST must have request body. Для подавление косяка, выставляем флаг принудительного body:
+        forcePostBodyNonEmpty = fetchApi.nonEmpty,
       )
     }
   }

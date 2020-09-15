@@ -142,7 +142,7 @@ class ScRootR (
         },
 
         // Диалог управления узлами. Без темы, иначе дизайн сыплется.
-        mrootProxy.wrap( _.dialogs.nodes )( scNodesR.component.apply ),
+        scNodesR.component( mrootProxy ),
 
         // Диалог первого запуска.
         wzFirstR.component( mrootProxy ),

@@ -56,7 +56,7 @@ class BeaconsAh[M](
               // Порыться в кэше на предмет серверной инфы по маячку:
               infoPot = Pot.fromOption {
                 v0.beacons.cacheMap
-                  .get( bcn.uid )
+                  .get( bcn.id )
                   .flatMap( _.nodeScanResp )
               },
             )
@@ -100,7 +100,7 @@ class BeaconsAh[M](
           if bcn.infoPot.isEmpty
           bcnSignal <- bcn.bcnSignal
         } yield {
-          bcnSignal.uid
+          bcnSignal.id
         })
           .toSet
 
@@ -191,6 +191,24 @@ class BeaconsAh[M](
           updated(v2)
         }
       )
+
+
+    // Обновить кэш после любого редактирования узла-маячка, имеющегося в кэш-карте.
+    case m: INodeUpdatedResp =>
+      (for {
+        nodeId <- m.nodeIdOpt
+        nodeUpdatedOpt <- m.nodeUpdated.toOption
+        v0 = value
+        cachedEntry0 <- v0.beacons.cacheMap.get( nodeId )
+      } yield {
+        // Заменить beacon в карте кэша на полученный ответ сервера.
+        val cachedEntry2 = (MBeaconCachedEntry.nodeScanResp set nodeUpdatedOpt)( cachedEntry0 )
+        val v2 = MTreeOuter.beacons
+          .composeLens( MBeaconScan.cacheMap )
+          .modify(_ + (nodeId -> cachedEntry2))(v0)
+        updated(v2)
+      })
+        .getOrElse( noChange )
 
   }
 

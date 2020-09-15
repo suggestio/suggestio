@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.lk.nodes.form.m.{MEditNodeState, MNodeState, NodeEditCancelClick, NodeEditClick, NodeEditNameChange, NodeEditOkClick, NodeEditSaveResp}
+import io.suggest.lk.nodes.form.m.{MBeaconScan, MEditNodeState, MNodeState, NodeEditCancelClick, NodeEditClick, NodeEditNameChange, NodeEditOkClick, NodeEditSaveResp}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.text.StringUtil
@@ -25,6 +25,7 @@ class NameEditAh[M](
                      api              : ILkNodesApi,
                      modelRW          : ModelRW[M, Option[MEditNodeState]],
                      currNodeRO       : ModelRO[Option[MNodeState]],
+                     beaconsRO        : ModelRO[MBeaconScan],
                    )
   extends ActionHandler( modelRW )
   with Log
@@ -60,7 +61,17 @@ class NameEditAh[M](
         // Первый for -- это эмуляция if, чтобы не плодить ненужное ветвление в коде:
         _ <- OptionUtil.SomeBool.orNone( v0.isEmpty )
         currNode <- currNodeRO.value
-        info <- currNode.infoPot.toOption
+        infoOpt = currNode.infoPot
+          .toOption
+          .orElse {
+            currNode.bcnSignal.flatMap {bcnSignal =>
+              beaconsRO
+                .value
+                .cacheMap
+                .respForUid( bcnSignal.id )
+            }
+          }
+        info <- infoOpt
       } yield {
         // Раскрыть диалог:
         val v2 = Some( MEditNodeState(

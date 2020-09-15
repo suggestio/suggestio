@@ -19,6 +19,7 @@ import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
+import scala.scalajs.js.UndefOr
 import scalajs.js.JSConverters._
 
 /**
@@ -105,7 +106,7 @@ final class NodeHeaderR(
             .flatMap(_.name)
             .orElse {
               st.bcnSignal
-                .map(_.uid)
+                .map(_.id)
             }
             .orUndefined
 
@@ -208,7 +209,14 @@ final class NodeHeaderR(
             ),
             ReactCommonUtil.maybeNode( s.chs != null )(
               MuiListItemSecondaryAction()(
-                s.chs.length,
+                MuiTypoGraphy(
+                  new MuiTypoGraphyProps {
+                    override val variant = MuiTypoGraphyVariants.caption
+                    override val color = MuiTypoGraphyColors.textSecondary
+                  }
+                )(
+                  s.chs.length,
+                )
               ),
             ),
           )

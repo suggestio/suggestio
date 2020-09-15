@@ -204,15 +204,14 @@ class ScAdSearchUtil @Inject() (
     * Причём, чем ближе маячок -- тем выше результат.
     * @param innerHits Возвращать ли данные inner_hits?
     */
-  def bleBeaconsSearch(scQs: MScQs, innerHits: Option[MEsInnerHitsInfo]): Future[MBleSearchCtx] = {
-    val bcnsQs = scQs.common.locEnv.bleBeacons
+  def bleBeaconsSearch(bcnsQs: Seq[MUidBeacon], innerHits: Option[MEsInnerHitsInfo]): Future[MBleSearchCtx] = {
     if (bcnsQs.isEmpty) {
       Future.successful( MBleSearchCtx.empty )
 
     } else {
       val _uidsQs = bcnsQs
         .iterator
-        .map(_.uid)
+        .map(_.id)
         .toSet
 
       // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
@@ -247,9 +246,9 @@ class ScAdSearchUtil @Inject() (
             // Фильтруем заявленные в qs id маячков по выверенному списку реально существующих маячков.
             // Ленивость bcnsQs2 не важна, т.к. коллекция сразу будет перемолота целиком в scoredByDistanceBeaconSearch()
             bcnsQs.filter { bcnQs =>
-              val isExistBcn = uidsClear contains bcnQs.uid
+              val isExistBcn = uidsClear contains bcnQs.id
               if (!isExistBcn)
-                LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.uid}''' is unknown. Dropped.")
+                LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.id}''' is unknown. Dropped.")
               isExistBcn && bcnQs.distanceCm <= maxDistance
             }
           }

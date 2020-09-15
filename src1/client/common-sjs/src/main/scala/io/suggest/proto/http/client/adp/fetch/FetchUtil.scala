@@ -1,9 +1,12 @@
 package io.suggest.proto.http.client.adp.fetch
 
+import io.suggest.pick.MimeConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.HttpReqAdp
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.dom2.FetchRequestInit
-import org.scalajs.dom.experimental.{AbortSignal, BodyInit, Headers, HeadersInit, HttpMethod, RequestCredentials, RequestMode}
+import japgolly.univeq._
+import org.scalajs.dom.experimental.{AbortSignal, BodyInit, Headers, HttpMethod, RequestCredentials, RequestMode}
 
 import scala.scalajs.js
 import js.JSConverters._
@@ -18,7 +21,7 @@ object FetchUtil {
 
   /** Сборка HttpReq в нативный RequestInit для fetch() или Request(). */
   def toRequestInit(req: HttpReqAdp, abortSignal: Option[AbortSignal]): FetchRequestInit = {
-    val bodyUnd: js.UndefOr[BodyInit] = {
+    var bodyUnd: js.UndefOr[BodyInit] = {
       val b = req.origReq.data.body
       JsOptionUtil.maybeDefined( b != null ) {
         b.asInstanceOf[BodyInit]
@@ -30,10 +33,28 @@ object FetchUtil {
     for ((k,v) <- req.allReqHeaders)
       reqHeaders.append( k, v )
 
-    val httpMethod = req.origReq
+    val httpMethodStr = req.origReq
       .method
       .toUpperCase()
-      .asInstanceOf[HttpMethod]
+
+    if (
+      req.origReq.data.config.forcePostBodyNonEmpty &&
+      bodyUnd.isEmpty &&
+      (httpMethodStr ==* HttpConst.Methods.POST)
+    ) {
+      bodyUnd = "": BodyInit
+
+      // Выставить Content-Type, если отсутствует в заголовках:
+      val ct = HttpConst.Headers.CONTENT_TYPE
+      if (
+        reqHeaders
+          .get( ct )
+          .toOption
+          .flatMap( Option.apply )
+          .fold(true)(_.isEmpty)
+      )
+        reqHeaders.append( ct, MimeConst.TEXT_PLAIN )
+    }
 
     val _credentials = req.origReq.data.credentials
       .fold( RequestCredentials.`same-origin` ) {
@@ -42,7 +63,7 @@ object FetchUtil {
       }
 
     new FetchRequestInit {
-      override val method       = httpMethod
+      override val method       = httpMethodStr.asInstanceOf[HttpMethod]
       override val headers      = reqHeaders
       override val body         = bodyUnd
       // TODO Передавать в реквесте? cors - дефолт.
