@@ -1,7 +1,7 @@
 package io.suggest.sc.m.in
 
 import diode.FastEq
-import io.suggest.lk.m.MLoginSessionS
+import io.suggest.id.login.m.session.MLoginSessionS
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m.boot.MScBoot
 import io.suggest.sc.sc3.MSc3Conf

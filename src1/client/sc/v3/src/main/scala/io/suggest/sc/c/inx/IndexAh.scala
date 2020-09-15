@@ -792,6 +792,7 @@ class IndexAh[M](
 
     // Перезагрузка текущего индекса.
     case m: ReGetIndex =>
+      println(m)
       val v0 = value
 
       val switchCtx = MScSwitchCtx(

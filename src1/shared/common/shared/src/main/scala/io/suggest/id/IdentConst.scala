@@ -30,4 +30,10 @@ object IdentConst {
 
   }
 
+
+  /** Данные по кукису, если его требуется отрабатывать вручную на клиенте (например - в cordova-приложении). */
+  object CookieToken {
+    def KV_STORAGE_TOKEN_KEY = "sc.login.session.cookie"
+  }
+
 }

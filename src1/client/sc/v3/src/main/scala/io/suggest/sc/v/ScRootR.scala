@@ -7,6 +7,7 @@ import io.suggest.color.MColors
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
+import io.suggest.id.login.v.session.LogOutDiaR
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.routes.IJsRouter
@@ -49,6 +50,7 @@ class ScRootR (
                 scSettingsDiaR          : ScSettingsDiaR,
                 scSnacksR               : ScSnacksR,
                 scThemes                : ScThemes,
+                logOutDiaR              : LogOutDiaR,
                 crCtxP                  : React.Context[MCommonReactCtx],
                 muiThemeCtxP            : React.Context[MuiTheme],
                 scCssP                  : React.Context[ScCss],
@@ -157,6 +159,9 @@ class ScRootR (
 
         // snackbar
         scSnacksR.component( mrootProxy ),
+
+        // Диалог logout:
+        mrootProxy.wrap(_.internals.login.logout)( logOutDiaR.component.apply ),
 
       )
 

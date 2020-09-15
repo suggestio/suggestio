@@ -74,6 +74,12 @@ trait IIdentApi {
     */
   def pwChangeSubmit(form: MPwChangeForm): Future[None.type]
 
+  /** Запуск logout-запроса к серверу.
+    *
+    * @return Фьючерс для ожидания ответа сервера.
+    */
+  def logout(): Future[None.type]
+
 }
 
 
@@ -198,6 +204,22 @@ class IdentApiHttp(
             .toHttpFailedException( httpReq )
         }
       }
+  }
+
+
+  override def logout(): Future[None.type] = {
+    HttpClient
+      .execute(
+        HttpReq.routed(
+          route = routes.controllers.Ident.logout(),
+          data = HttpReqData(
+            timeoutMs = _timeoutMsSome,
+            config = lfDiConf.httpClientConfig(),
+          ),
+        )
+      )
+      .resultFut
+      .map(_ => None)
   }
 
 }

@@ -33,6 +33,7 @@ class MenuR(
              versionR                 : VersionR,
              scNodesBtnR              : ScNodesBtnR,
              indexesRecentR           : IndexesRecentR,
+             logOutR                  : LogOutR,
              scCssP                   : React.Context[ScCss],
            ) {
 
@@ -80,8 +81,11 @@ class MenuR(
           // Пункт открытия диалога с настройками выдачи.
           settingsMenuItemR.component( propsProxy ),
 
-          // Досуп к диалогу управления узлами.
+          // Доступ к диалогу управления узлами.
           scNodesBtnR.component( propsProxy ),
+
+          // Кнопка разлогинивания.
+          logOutR.component( propsProxy ),
 
         ),
       )

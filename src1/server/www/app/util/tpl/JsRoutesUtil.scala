@@ -21,6 +21,7 @@ final class JsRoutesUtil {
     routes.javascript.Ident.epw2RegSubmit #::
     routes.javascript.Ident.smsCodeCheck #::
     routes.javascript.Ident.regFinalSubmit #::
+    routes.javascript.Ident.logout #::
     routes.javascript.Captcha.getCaptcha #::
     routes.javascript.Static.privacyPolicy #::
     LazyList.empty

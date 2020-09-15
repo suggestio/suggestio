@@ -152,6 +152,8 @@ sealed trait IdentCtlRoutes extends js.Object {
 
   def pwChangeSubmit(): PlayRoute = js.native
 
+  def logout(): PlayRoute = js.native
+
 }
 
 

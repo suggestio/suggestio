@@ -1,5 +1,6 @@
 package io.suggest.id.login.m
 
+import diode.data.Pot
 import io.suggest.ext.svc.MExtService
 import io.suggest.id.login.MLoginTab
 import io.suggest.id.reg.MRegTokenResp
@@ -121,3 +122,20 @@ case class PwChangeSubmitRes(timestampMs: Long, tryRes: Try[None.type]) extends 
 
 /** Переключение visibility пароля. */
 case class PwVisibilityChange( visible: Boolean, isPwNew: Boolean ) extends ILoginFormAction
+
+
+
+/** Экшены для нужд logout-компонентов. */
+sealed trait ILogoutAction extends DAction
+
+/** Один шаг процедуры logout.
+  * @param pot Empty - раскрыть диалог.
+  *            Ready/Failed - результат запроса с сервера.
+  */
+case class LogoutStep( pot: Pot[None.type] = Pot.empty ) extends ILogoutAction
+
+/** Нажатие кнопок внутри диалога логаута.
+  * @param isLogout true - выход
+  *                 false - отмена, скрыть диалог.
+  */
+case class LogoutConfirm( isLogout: Boolean ) extends ILogoutAction

@@ -486,4 +486,7 @@ object MsgCodes {
   val `To.control.beacons.need.login` = "To.control.beacons.need.login"
   val `Parent.node` = "Parent.node"
 
+  val `Logout.account` = "Logout.account"
+  val `Are.you.sure.to.logout.account` = "Are.you.sure.to.logout.account"
+
 }

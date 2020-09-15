@@ -1150,3 +1150,7 @@ _to.Register._thing=Зарегистрировать
 Add.beacon.to.account=Присоединить этот маячок к учётной записи.
 To.control.beacons.need.login=Войдите в систему для доступа к функциями управления маячками.
 Parent.node=Родительский узел
+
+Logout.account=Выйти из учётной записи
+Are.you.sure.to.logout.account=Вы уверены, что хотите выйти из учётной записи?
+

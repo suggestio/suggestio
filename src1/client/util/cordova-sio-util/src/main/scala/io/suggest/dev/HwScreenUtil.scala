@@ -62,7 +62,7 @@ object HwScreenUtil {
             ) {
               // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
               MTlbr(
-                topO  = Option.when(orientation ==* MOrientations2d.Vertical)( 28 ),
+                topO  = Option.when(orientation ==* MOrientations2d.Vertical)( 32 ),
                 leftO = Option.when(orientation ==* MOrientations2d.Horizontal)( 36 ),
                 // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
                 bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
@@ -74,7 +74,7 @@ object HwScreenUtil {
               (screenWhs contains 414)
             ) {
               MTlbr(
-                topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 28 ),
+                topO  = Option.when( orientation ==* MOrientations2d.Vertical )( 32 ),
                 leftO = Option.when( orientation ==* MOrientations2d.Horizontal )( 32 ),
                 bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
               )

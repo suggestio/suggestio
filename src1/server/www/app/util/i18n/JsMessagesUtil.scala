@@ -509,6 +509,8 @@ class JsMessagesUtil @Inject() (
     MC.`Password.change` ::
     MC.`New.password.saved` ::
     MC.`Inacceptable.password.format` ::
+    MC.`Logout.account` ::
+    MC.`Are.you.sure.to.logout.account` ::
     Nil
   }
 

@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import diode.{Effect, FastEq}
+import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.{BleBeaconerAh, BtOnOff, MBeaconerOpts, MBeaconerS}
@@ -59,7 +59,10 @@ import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
-import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi, LoginSessionAh}
+import io.suggest.id.login.c.IIdentApi
+import io.suggest.id.login.c.session.{LogOutAh, LoginSessionAh}
+import io.suggest.id.login.m.session.{MLogOutDia, MLoginSessionS}
+import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi}
 import io.suggest.lk.m.LoginSessionRestore
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic
@@ -91,6 +94,7 @@ class Sc3Circuit(
                   sc3UniApi                 : IScUniApi,
                   scAppApi                  : IScAppApi,
                   csrfTokenApi              : ICsrfTokenApi,
+                  mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -318,7 +322,8 @@ class Sc3Circuit(
   val loggedInRO                  = indexRW.zoom(_.isLoggedIn)
 
   private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
-  private[sc] lazy val loginSessionRW = mkLensZoomRW( internalsRW, MScInternals.login )
+  private[sc] val loginSessionRW  = mkLensZoomRW( internalsRW, MScInternals.login )
+  private[sc] val logOutRW        = mkLensZoomRW( loginSessionRW, MLoginSessionS.logout )
 
 
   // notifications
@@ -609,6 +614,8 @@ class Sc3Circuit(
     csrfTokenApi  = csrfTokenApi,
   )
 
+  private val logOutAh = mkLogOutAh( logOutRW )
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
 
@@ -618,6 +625,7 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+    acc ::= logOutAh
     acc ::= scNodesDiaAh
     acc ::= scLoginDiaAh
     acc ::= scConfAh

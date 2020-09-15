@@ -116,11 +116,19 @@ final class Ident @Inject() (
   def logout = csrf.Check {
     // TODO Добавить поддержку помечания истёкших сессий через ottID внутри сессии.
     Action { implicit request =>
-      Redirect(models.MAIN_PAGE_CALL)
-        .removingFromSession(
-          MSessionKeys.PersonId.value,
-          MSessionKeys.Timestamp.value
-        )
+      val toPage = models.MAIN_PAGE_CALL
+
+      // Если выставлен X-Requested-With, то редирект возвращать не надо:
+      val resp = if (request.headers.get(X_REQUESTED_WITH).isEmpty) {
+        Redirect( toPage )
+      } else {
+        Ok( toPage.toString )
+      }
+
+      resp.removingFromSession(
+        MSessionKeys.PersonId.value,
+        MSessionKeys.Timestamp.value
+      )
     }
   }
 

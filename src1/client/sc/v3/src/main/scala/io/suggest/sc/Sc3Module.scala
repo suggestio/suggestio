@@ -3,13 +3,15 @@ package io.suggest.sc
 import com.materialui.MuiTheme
 import com.softwaremill.macwire._
 import cordova.plugins.fetch.CdvPluginFetch
-import diode.Effect
+import diode.{Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.fetch.CdvFetchHttpResp
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
+import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
+import io.suggest.lk.IPlatformComponentsModule
 import io.suggest.lk.c.CsrfTokenApi
 import io.suggest.lk.m.LoginSessionSet
 import io.suggest.lk.nodes.form.LkNodesModuleBase
@@ -19,8 +21,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IMHttpClientConfig}
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.c.dia.ScNodesDiaAh
-import io.suggest.sc.m.{RouteTo, ScLoginFormShowHide, ScNodesShowHide}
-import io.suggest.sc.m.boot.MSpaRouterState
+import io.suggest.sc.m.{MScRoot, RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.u.api.{ScAppApiHttp, ScUniApi, ScUniApiHttpImpl}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -76,22 +77,12 @@ object Sc3Module { outer =>
   import sc3SpaRouter.{state => sc3SpaRouterState}
   import sc3SpaRouter.state.routerCtl
 
-  lazy val sc3Circuit: Sc3Circuit = wire[Sc3Circuit]
-
-
-  // Костыли для js-роутера.
-  // Без костылей вероятна проблема курицы и яйца в виде циклической зависимости инстансов:
-  // - Шаблонам нужен routerCtl (react-контекст) для рендера ссылок и прочего.
-  // - Роутеру (уже во время роутинга) нужны инстансы шаблонов для рендера интерфейса.
-  //
-  // Однако, цикл неявный: все инстансы нужны НЕодновременно:
-  // - инстанс роутера, который дёргает шаблоны только при необходимости.
-  // - Аналогично с шаблонами: дёргают роутер только после монтирования в VDOM.
-  //
-  // Для явной разводки доступа к инстансам,
-  // используются 0-arg функции, которые скрывают за собой lazy-инстансы.
-  // Костыль для инжекции ленивого доступа к инстансу ScRootR.
-  def _sc3CircuitF = (routerState: MSpaRouterState) => wire[Sc3Circuit]
+  lazy val sc3Circuit: Sc3Circuit = {
+    val mkLogOutAh = { modelRW: ModelRW[MScRoot, Option[MLogOutDia]] =>
+      ScLoginFormModule.mkLogOutAh[MScRoot]( modelRW )
+    }
+    wire[Sc3Circuit]
+  }
 
 
   // React contexts
@@ -146,6 +137,7 @@ object Sc3Module { outer =>
   lazy val dlAppMenuItemR = wire[DlAppMenuItemR]
   lazy val indexesRecentR = wire[IndexesRecentR]
   lazy val scNodesBtnR = wire[ScNodesBtnR]
+  lazy val logOutR = wire[LogOutR]
 
 
   // dia
@@ -170,7 +162,10 @@ object Sc3Module { outer =>
 
   // sc3
   lazy val scThemes = wire[ScThemes]
-  lazy val scRootR = wire[ScRootR]
+  lazy val scRootR = {
+    import ScLoginFormModule.logOutDiaR
+    wire[ScRootR]
+  }
   lazy val sc3UniApi = {
     import ScHttpConfigImpl._
     wire[ScUniApiHttpImpl]
@@ -240,8 +235,16 @@ object Sc3Module { outer =>
   }
 
 
+  sealed trait ScPlatformComponents extends IPlatformComponentsModule {
+    override def getPlatformCss = outer._getPlatformCss
+    override def platformComponents = outer.platformComponents
+  }
+
   // login
-  object ScLoginFormModule extends LoginFormModuleBase {
+  object ScLoginFormModule
+    extends LoginFormModuleBase
+    with ScPlatformComponents
+  {
 
     override val diConfig: LoginFormDiConfig = new LoginFormDiConfig with ScHttpConfigImpl {
 
@@ -297,9 +300,10 @@ object Sc3Module { outer =>
 
 
   /** Поддержка lk-nodes. */
-  object ScNodesFormModule extends LkNodesModuleBase {
-    override def getPlatformCss = outer._getPlatformCss
-    override def platformComponents = outer.platformComponents
+  object ScNodesFormModule
+    extends LkNodesModuleBase
+    with ScPlatformComponents
+  {
     override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfigImpl {
       override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit(
         userIsLoggedIn = sc3Circuit.loggedInRO.value,

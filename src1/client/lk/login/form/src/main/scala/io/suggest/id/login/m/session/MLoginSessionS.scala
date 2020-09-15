@@ -1,7 +1,7 @@
-package io.suggest.lk.m
+package io.suggest.id.login.m.session
 
 import diode.data.Pot
-import io.suggest.proto.http.cookie.{MHttpCookie, MHttpCookieParsed}
+import io.suggest.proto.http.cookie.MHttpCookieParsed
 import japgolly.univeq._
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
@@ -19,6 +19,7 @@ object MLoginSessionS {
   @inline implicit def univEq: UnivEq[MLoginSessionS] = UnivEq.derive
 
   def token = GenLens[MLoginSessionS]( _.cookie )
+  def logout = GenLens[MLoginSessionS]( _.logout )
 
 }
 
@@ -27,7 +28,9 @@ object MLoginSessionS {
   *
   * @param cookie Токен, пришедший с сервера.
   *              pending/fail-состояния связаны (в первую очередь) с сохранением токена в какое-то хранилище на девайсе.
+  * @param logout Состояние диалога выхода из системы.
   */
 final case class MLoginSessionS(
                                  cookie           : Pot[MHttpCookieParsed]          = Pot.empty,
+                                 logout           : Option[MLogOutDia]              = None,
                                )

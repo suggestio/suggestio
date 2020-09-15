@@ -1,14 +1,19 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
+import diode.ModelRW
 import io.suggest.id.login.c.IdentApiHttp
+import io.suggest.id.login.c.session.LogOutAh
 import io.suggest.id.login.m.LoginFormDiConfig
+import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
 import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, Reg4SetPasswordR, RegR}
+import io.suggest.id.login.v.session.LogOutDiaR
 import io.suggest.id.login.v.stuff.{CheckBoxR, ErrorSnackR, LoginProgressR, TextFieldR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR}
+import io.suggest.lk.{IPlatformComponentsModule, PlatformComponentsModuleDflt}
 import io.suggest.spa.SioPages
 import japgolly.scalajs.react.React
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -20,7 +25,9 @@ import japgolly.scalajs.react.vdom.VdomElement
   * Created: 14.03.19 15:32
   * Description: DI для формы логина.
   */
-trait LoginFormModuleBase {
+trait LoginFormModuleBase
+  extends IPlatformComponentsModule
+{
 
   import io.suggest.ReactCommonModule._
   import io.suggest.lk.LkCommonModule._
@@ -58,7 +65,13 @@ trait LoginFormModuleBase {
 
   lazy val identApi = wire[IdentApiHttp]
 
+  lazy val logOutDiaR = wire[LogOutDiaR]
+
   def diConfig: LoginFormDiConfig
+
+  def mkLogOutAh[M] = { modelRW: ModelRW[M, Option[MLogOutDia]] =>
+    wire[LogOutAh[M]]
+  }
 
 }
 object LoginFormModuleBase {
@@ -74,7 +87,10 @@ object LoginFormModuleBase {
 
 
 /** Отдельная форма со своим роутером и своими контекстами. */
-final class LoginFormModule extends LoginFormModuleBase {
+final class LoginFormModule
+  extends LoginFormModuleBase
+  with PlatformComponentsModuleDflt
+{
 
   override def diConfig = LoginFormDiConfig.Isolated
 

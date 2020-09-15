@@ -1,9 +1,11 @@
-package io.suggest.lk.c
+package io.suggest.id.login.c.session
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.id.IdentConst.CookieToken.KV_STORAGE_TOKEN_KEY
+import io.suggest.id.login.m.session.MLoginSessionS
 import io.suggest.kv.MKvStorage
-import io.suggest.lk.m.{LoginSessionRestore, LoginSessionSaved, LoginSessionSet, MLoginSessionS}
+import io.suggest.lk.m.{LoginSessionRestore, LoginSessionSaved, LoginSessionSet}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.cookie.{HttpCookieUtil, MHttpCookie, MHttpCookieParsed}
@@ -12,9 +14,9 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.text.StringUtil
 import japgolly.univeq._
+import scalaz.syntax.id._
 
 import scala.util.Try
-import scalaz.syntax.id._
 
 /**
   * Suggest.io
@@ -28,8 +30,6 @@ class LoginSessionAh[M](
   extends ActionHandler(modelRW)
   with Log
 { ah =>
-
-  private def KV_STORAGE_TOKEN_KEY = "sc.login.session.cookie"
 
   private def _storageAvail[T](token0: Pot[T])(ifAvailable: => Pot[T]): Pot[T] = {
     Try {

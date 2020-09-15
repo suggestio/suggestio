@@ -1142,3 +1142,7 @@ _to.Register._thing=Register
 Add.beacon.to.account=Add this beacon into account.
 To.control.beacons.need.login=To gain control over beacons, click here for log-in.
 Parent.node=Parent node
+
+Logout.account=Logout account
+Are.you.sure.to.logout.account=Are you sure to logout?
+
