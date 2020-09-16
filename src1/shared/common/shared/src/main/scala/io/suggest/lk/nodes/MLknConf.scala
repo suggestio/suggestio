@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes
 
-import boopickle.Default._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -15,17 +15,16 @@ import play.api.libs.functional.syntax._
 
 object MLknConf {
 
-  /** Поддержка бинарной сериализации. */
-  implicit val mLknConfPickler: Pickler[MLknConf] = {
-    generatePickler[MLknConf]
-  }
-
   @inline implicit def univEq: UnivEq[MLknConf] = UnivEq.derive
 
   implicit def mLknConfFormat: OFormat[MLknConf] = (
     (__ \ "n").formatNullable[String] and
     (__ \ "a").formatNullable[String]
   )(apply, unlift(unapply))
+
+
+  def onNodeId = GenLens[MLknConf]( _.onNodeId )
+  def adIdOpt = GenLens[MLknConf]( _.adIdOpt )
 
 }
 

@@ -4,7 +4,7 @@ import diode.{ActionResult, Effect, FastEq}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.lk.nodes.MLknFormInit
-import io.suggest.lk.nodes.form.a.ILkNodesApi
+import io.suggest.lk.nodes.form.a.{ILkNodesApi, LknFormAh}
 import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh, NameEditAh}
 import io.suggest.lk.nodes.form.a.tree.{BeaconsAh, TreeAh}
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeState, MTree, MTreeOuter, NodesDiConf}
@@ -116,7 +116,14 @@ case class LkNodesFormCircuit(
     }
 
     // Разные Ah шарят между собой некоторые события, поэтому они все соединены параллельно.
-    foldHandlers( sharingHandlers: _* )
+    val allHandlers = foldHandlers( sharingHandlers: _* )
+
+    // Корневой handler для глобальных действий формы:
+    val rootAh = new LknFormAh(
+      modelRW = zoomRW(identity){ (_, v2) => v2 },
+    )
+    composeHandlers( allHandlers, rootAh )
+
   }
 
   addProcessor( DoNothingActionProcessor[MLkNodesRoot] )

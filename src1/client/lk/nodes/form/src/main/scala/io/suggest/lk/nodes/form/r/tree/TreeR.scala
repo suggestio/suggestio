@@ -53,9 +53,6 @@ class TreeR(
 
     /** Рендер текущего компонента. */
     def render(p: Props, s: State): VdomElement = {
-      // isAdvMode: статический, т.к. режим работы формы обычно не меняется после инициализации.
-      val isAdvMode = p.value.conf.adIdOpt.nonEmpty
-
       /** Функция рекурсивного рендер всего дерева узлов.
         *
         * @param subTreeOrig Оригинальное поддерево из circuit-состояния с поддержкой целостности указателей.
@@ -67,6 +64,7 @@ class TreeR(
                                   subTreeOrig             : Tree[MNodeState],
                                   subTreeIndexed          : Tree[(MNodeState, Int)],
                                   parentNodePathRev       : NodePath_t,
+                                  isAdvMode               : Boolean,
                                 ): VdomNode = {
         val (mns, i) = subTreeIndexed.rootLabel
         val nodePathRev: NodePath_t = i :: parentNodePathRev
@@ -80,6 +78,7 @@ class TreeR(
               subTreeIndexed      = chTreeIndexed,
               parentNodePathRev   = nodePathRev,
               subTreeOrig         = chTreeOrig,
+              isAdvMode           = isAdvMode,
             )
           }
           .iterator
@@ -122,8 +121,9 @@ class TreeR(
         // Рендерить узлы.
         s.root4nodeC { mrootProxy =>
           val mroot = mrootProxy.value
-
+          val isAdvMode = mroot.conf.adIdOpt.nonEmpty
           val nodesPot = mroot.tree.tree.nodes
+
           React.Fragment(
 
             // Дерево загружено в память, рендерим:
@@ -156,6 +156,7 @@ class TreeR(
                   subTreeIndexed = nodesTree.zipWithIndex,
                   parentNodePathRev = Nil,
                   subTreeOrig    = nodesTree,
+                  isAdvMode      = isAdvMode,
                 )
               )
             },

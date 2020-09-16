@@ -7,14 +7,16 @@ import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
-import io.suggest.lk.nodes.form.m.{BeaconsDetected, MLkNodesRoot, MTree, MTreeOuter, TreeInit}
+import io.suggest.lk.nodes.form.m.{BeaconsDetected, MLkNodesMode, MLkNodesModes, MLkNodesRoot, MTree, MTreeOuter, SetAd, TreeInit}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.model.MCsrfToken
 import io.suggest.sc.Sc3Module.sc3Circuit
-import io.suggest.sc.m.ScNodesShowHide
+import io.suggest.sc.m.{ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.m.dia.MScNodes
+import io.suggest.sc.m.grid.MScAdData
 import io.suggest.spa.DoNothing
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -28,6 +30,7 @@ class ScNodesDiaAh[M](
                        beaconsNearbyRO    : ModelRO[BeaconsNearby_t],
                        csrfRO             : ModelRO[Pot[MCsrfToken]],
                        isLoggedInRO       : ModelRO[Boolean],
+                       focusedAdRO        : ModelRO[Option[MScAdData]],
                      )
   extends ActionHandler( modelRW )
   with Log
@@ -76,7 +79,15 @@ class ScNodesDiaAh[M](
             _nodesCircuitInitFx( circuit )
           }
 
-          val v2 = (MScNodes.circuit set Some(circuit))(v0)
+          val focusedAdId = focusedAdRO.value.flatMap(_.id)
+          val v2 = v0.copy(
+            circuit = Some(circuit),
+            // Сбрасывать adv-состояние, если текущая focused-карточка отсутствует:
+            mode = focusedAdId
+              .fold[MLkNodesMode]( MLkNodesModes.NodesManage )( _ => v0.mode ),
+            // Дампим id текущекй сфокусированной карточки, чтобы застраховать юзера от фоновых изменений в плитке, приводящих к расфокусировке:
+            focusedAdId = focusedAdId,
+          )
           updated( v2, fx )
 
         } { nodesCircuit =>
@@ -86,13 +97,40 @@ class ScNodesDiaAh[M](
         }
 
       } else if (!m.visible && v0.circuit.nonEmpty) {
-        val v2 = (MScNodes.circuit set None)(v0)
+        val v2 = v0.copy(
+          circuit = None,
+          focusedAdId = None,
+        )
         updated( v2 )
 
       } else {
         logger.info( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.circuit) )
         noChange
       }
+
+
+    // Изменение режима формы.
+    case m: ScNodesModeChanged =>
+      val v0 = value
+
+      (for {
+        nodesCircuit <- v0.circuit
+        if v0.mode !=* m.mode
+      } yield {
+        val v2 = (MScNodes.mode set m.mode)(v0)
+        val fx = Effect.action {
+          val adIdOpt2 = m.mode match {
+            case MLkNodesModes.NodesManage =>
+              None
+            case MLkNodesModes.AdvInNodes =>
+              v0.focusedAdId
+          }
+          nodesCircuit.dispatch( SetAd(adIdOpt2) )
+          DoNothing
+        }
+        updated(v2, fx)
+      })
+        .getOrElse(noChange)
 
   }
 

@@ -1,6 +1,7 @@
 package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
+import io.suggest.lk.nodes.form.m.MLkNodesMode
 import io.suggest.routes.routes
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.dev.MOnLineInfo
@@ -248,3 +249,6 @@ sealed trait IScNodesAction extends IScRootAction
 
 /** Переключение состояния формы отображения. */
 case class ScNodesShowHide( visible: Boolean ) extends IScNodesAction
+
+/** Смена режима работы nodes-формы. */
+case class ScNodesModeChanged( mode: MLkNodesMode ) extends IScNodesAction

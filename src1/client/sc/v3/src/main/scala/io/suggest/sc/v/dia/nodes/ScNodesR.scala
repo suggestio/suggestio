@@ -1,15 +1,16 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiMenuItem, MuiMenuItemProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
+import io.suggest.lk.nodes.form.m.{MLkNodesMode, MLkNodesModes}
 import io.suggest.lk.nodes.form.r.LkNodesFormR
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.m.{MScRoot, ScNodesShowHide}
+import io.suggest.sc.m.{MScRoot, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react._
@@ -35,12 +36,19 @@ class ScNodesR(
   case class State(
                     circuitOptC                   : ReactConnectProxy[Option[LkNodesFormCircuit]],
                     isDiaFullScreenSomeC          : ReactConnectProxy[Some[Boolean]],
+                    haveFocusedAdAdminSomeC       : ReactConnectProxy[Some[Boolean]],
+                    nodesModeC                    : ReactConnectProxy[MLkNodesMode],
                   )
 
   class Backend($: BackendScope[Props, State]) {
 
     private lazy val _onCloseClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesShowHide(visible = false) )
+    }
+
+    private lazy val _onModeChange = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      val nextMode = MLkNodesModes.withValue( e.target.value )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesModeChanged(nextMode) )
     }
 
     def render(s: State): VdomElement = {
@@ -53,7 +61,52 @@ class ScNodesR(
 
           // Заголовок
           platformComponents.diaTitle(Nil)(
-            crCtxP.message( MsgCodes.`Nodes.management` ),
+            {
+              val nodesManagementMsg = crCtxP.message( MsgCodes.`Nodes.management` )
+              s.haveFocusedAdAdminSomeC { haveFocusedAdAdminSomeProxy =>
+                val haveFocusedAdmin = haveFocusedAdAdminSomeProxy.value.value
+                if (!haveFocusedAdmin) {
+                  // Нет сфокусированной карточки: просто рендерить обычный заголовок.
+                  nodesManagementMsg
+
+                } else {
+                  // Рендерим селект, где можно выбрать или управление узлами, или карточку.
+                  // Пункт селекта обычного режима работы (управление узлами)
+                  val nodesManageItem = MuiMenuItem(
+                    new MuiMenuItemProps {
+                      override val value = MLkNodesModes.NodesManage.value
+                    }
+                  )(
+                    nodesManagementMsg,
+                  )
+
+                  // Пункт селекта для управления размещением карточки в узлах:
+                  val advInNodesItem = MuiMenuItem(
+                    new MuiMenuItemProps {
+                      override val value = MLkNodesModes.AdvInNodes.value
+                    }
+                  )(
+                    crCtxP.message( MsgCodes.`Current.ad.adv.management` ),
+                    // TODO Отрендерить тут миниатюру главного блока текущей карточки.
+                  )
+
+                  // Непосредственно селект.
+                  s.nodesModeC { nodesModeProxy =>
+                    MuiTextField(
+                      new MuiTextFieldProps {
+                        override val select = true
+                        override val label = crCtxP.message( MsgCodes.`Mode` ).rawNode
+                        override val value = nodesModeProxy.value.value
+                        override val onChange = _onModeChange
+                      }
+                    )(
+                      nodesManageItem,
+                      advInNodesItem,
+                    )
+                  }
+                }
+              }
+            },
           ),
 
           // Содержимое диалога.
@@ -116,6 +169,13 @@ class ScNodesR(
         isDiaFullScreenSomeC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( mroot.dev.screen.info.isDialogWndFullScreen(450) )
         },
+
+        haveFocusedAdAdminSomeC = propsProxy.connect { mroot =>
+          val focAdIdOpt = mroot.dialogs.nodes.focusedAdId
+          OptionUtil.SomeBool( focAdIdOpt.nonEmpty )
+        },
+
+        nodesModeC = propsProxy.connect( _.dialogs.nodes.mode ),
 
       )
     }

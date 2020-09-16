@@ -69,6 +69,17 @@ case class MGridCoreS(
       }
   }
 
+  /** Текущая открытая карточка, пригодная для операций над ней: размещение в маячке, например. */
+  def myFocusedAdOpt: Option[MScAdData] = {
+    focusedAdOpt.filter { scAd =>
+      scAd.focused.exists { foc =>
+        (foc.info.canEditOpt contains[Boolean] true) &&
+        // Запрещаем 404-карточки считать за "свои".
+        !foc.info.isMad404
+      }
+    }
+  }
+
   /** Происходит ли сейчас загрузка какой-либо карточки? */
   lazy val _adsHasPending: Boolean =
     ads.iterator.flatten.exists(_.focused.isPending)

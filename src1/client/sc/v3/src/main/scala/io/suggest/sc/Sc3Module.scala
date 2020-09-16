@@ -191,11 +191,11 @@ object Sc3Module { outer =>
           .flatten
           .map { cdvFetchF =>
             // Оборачиваем функцию, чтобы выдавала стандартный Response() с поддержкой clone() и прочего.
-          {(reqInfo: RequestInfo, reqInit: RequestInit) =>
-            cdvFetchF(reqInfo, reqInit)
-              .toFuture
-              .map( CdvFetchHttpResp )
-          }
+            {(reqInfo: RequestInfo, reqInit: RequestInit) =>
+              cdvFetchF(reqInfo, reqInit)
+                .toFuture
+                .map( CdvFetchHttpResp )
+            }
           }
       )
 

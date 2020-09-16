@@ -157,6 +157,7 @@ class JsMessagesUtil @Inject() (
       MC.`Add.beacon.to.account` ::
       MC.`Parent.node` ::
       MC.`Nothing.found` ::
+      MC.`Show.ad.opened` ::
       Nil
 
     (
@@ -319,6 +320,8 @@ class JsMessagesUtil @Inject() (
       MC.`Recents` ::
       MC.`Nodes.management` ::
       MC.`To.control.beacons.need.login` ::
+      MC.`Mode` ::
+      MC.`Current.ad.adv.management` ::
       Nil
 
     (
@@ -386,7 +389,6 @@ class JsMessagesUtil @Inject() (
       MC.`Create.ad` ::
       MC.`Show._ad` ::
       MC.`ad.Manage` ::
-      MC.`Show.ad.opened` ::
       Nil
   }
 

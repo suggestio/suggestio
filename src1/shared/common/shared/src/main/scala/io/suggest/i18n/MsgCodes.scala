@@ -489,4 +489,7 @@ object MsgCodes {
   val `Logout.account` = "Logout.account"
   val `Are.you.sure.to.logout.account` = "Are.you.sure.to.logout.account"
 
+  val `Mode` = "Mode"
+  val `Current.ad.adv.management` = "Current.ad.adv.management"
+
 }

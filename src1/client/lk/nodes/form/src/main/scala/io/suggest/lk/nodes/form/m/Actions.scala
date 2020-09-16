@@ -252,3 +252,7 @@ sealed trait ILknBeaconsAction extends LkNodesAction
 case class BeaconsDetected( beacons: BeaconsNearby_t ) extends ILknBeaconsAction
 /** Ответ сервера с инфой по маячкам. */
 case class BeaconsScanResp( reqArgs: MLknBeaconsScanReq, tryResp: Try[MLknNodeResp] ) extends ILknBeaconsAction
+
+
+/** Переключение формы между управлением узлами и размещением рекламной карточки на лету. */
+case class SetAd( adId: Option[String] ) extends LkNodesAction

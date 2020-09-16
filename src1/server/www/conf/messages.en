@@ -1146,3 +1146,6 @@ Parent.node=Parent node
 Logout.account=Logout account
 Are.you.sure.to.logout.account=Are you sure to logout?
 
+Mode=Mode
+Current.ad.adv.management=Manage advertising of current card
+

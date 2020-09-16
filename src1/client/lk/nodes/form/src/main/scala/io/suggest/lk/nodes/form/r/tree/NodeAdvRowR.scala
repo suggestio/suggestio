@@ -7,7 +7,6 @@ import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.nodes.form.m.LkNodesAction
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
@@ -42,11 +41,18 @@ final class NodeAdvRowR(
 
   class Backend($: BackendScope[Props, Props_t]) {
 
-    private lazy val _onRowClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private val _onRowClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
         val p = props.value
         val wasChecked = p.flag contains true
         props.value.onChange( !wasChecked )
+      }
+    }
+
+    private val _onSwitchChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
+      val newChecked = e.target.checked
+      ReactDiodeUtil.dispatchOnProxyScopeCBf( $ ) { props: Props =>
+        props.value.onChange( newChecked )
       }
     }
 
@@ -81,6 +87,7 @@ final class NodeAdvRowR(
             new MuiSwitchProps {
               override val checked  = s.flag contains true
               override val disabled = s.flag.isPending
+              override val onChange = _onSwitchChanged
             }
           )
         ),
