@@ -32,7 +32,6 @@ import io.suggest.n2.node.search.MNodeSearch
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
-import io.suggest.streams.StreamsUtil
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Result}
 import japgolly.univeq._
@@ -992,7 +991,8 @@ final class LkNodes @Inject() (
     * @return JSON-ответ по запрошенным маячкам.
     */
   def beaconsScan(req: MLknBeaconsScanReq) = csrf.Check {
-    bruteForceProtect {
+    // TODO Активировать BFP, подобрав параметры. Дефолтовые слишком агрессивные для часто-вызываемого скана.
+    //bruteForceProtect {
       maybeAuth().async { implicit request =>
         val bcnsReqCount = req.beaconUids.size
         val startedAtMs = System.currentTimeMillis()
@@ -1143,7 +1143,7 @@ final class LkNodes @Inject() (
           r
         }
       }
-    }
+    //}
   }
 
 }
