@@ -3,7 +3,7 @@ package io.suggest.ble.beaconer
 import diode._
 import diode.data.Pot
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.{BeaconUtil, BeaconsNearby_t, MUidBeacon}
+import io.suggest.ble.{BeaconDetected, BeaconUtil, BeaconsNearby_t, MUidBeacon}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.radio.RadioUtil
@@ -13,6 +13,7 @@ import io.suggest.log.Log
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.stat.RunningAverage
 import japgolly.univeq._
 
 import scala.concurrent.{Future, Promise}
@@ -60,15 +61,18 @@ object BleBeaconerAh extends Log {
     * @param beacons Текущий список маячков.
     * @return Список близких маячков в неопределённом порядке.
     */
+  // TODO Упразднить beacons nearby? реакция через callback в конструкторе BleBeaconerAh, состояние полностью immutable,
+  //      и фильтрации или сортировки тут нет, это скорее тяжелый map view
   def beaconsNearby(beacons: Iterable[(String, MBeaconData)]) : Seq[(String, MUidBeacon)] = {
     beacons
       .iterator
       .flatMap { case (k, v) =>
         val res = for {
-          accuracyCm    <- v.accuracies.average
-          uid           <- v.beacon.beaconUid
+          uid           <- v.detect.signal.beaconUid
+          accuracyCmD   <- v.accuracies/*.stripExtemes()*/.average
+          accuracyCm = accuracyCmD.toInt
         } yield {
-          (k, MUidBeacon(uid, accuracyCm))
+          (k, MUidBeacon(uid, Some(accuracyCm) ))
         }
         if (res.isEmpty)
           logger.warn( ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
@@ -92,10 +96,13 @@ object BleBeaconerAh extends Log {
     */
   def mkFingerPrint( beacons: Seq[(String, MUidBeacon)] ): Option[Int] = {
     OptionUtil.maybe( beacons.nonEmpty ) {
-      beacons
-        .map { case (bcnUid, rep) =>
-          bcnUid -> BeaconUtil.quantedDistance(rep.distanceCm)
-        }
+      (for {
+        (bcnUid, rep) <- beacons.iterator
+        distanceCm <- rep.distanceCm
+      } yield {
+        bcnUid -> BeaconUtil.quantedDistance( distanceCm )
+      })
+        .toSeq
         // Сортируем по нормализованному кванту расстояния и по id маячка, чтобы раздавить флуктуации от рядом находящихся маячков.
         .sortBy { case (bcnUid, distQ) =>
           "%04d".format(distQ) + "." + bcnUid
@@ -154,6 +161,7 @@ object BleBeaconerAh extends Log {
 class BleBeaconerAh[M](
                         dispatcher        : Dispatcher,
                         modelRW           : ModelRW[M, MBeaconerS],
+                        bcnsIsSilentRO    : ModelRO[Boolean],
                         onNearbyChange    : Option[(BeaconsNearby_t, BeaconsNearby_t) => Option[Effect]] = None,
                       )
   extends ActionHandler(modelRW)
@@ -338,31 +346,17 @@ class BleBeaconerAh[M](
         // Есть состояние beaconer'а, как и ожидалось. Надо залить данные с маячка в состояние.
         //LOG.log( "hBS", msg = m )
 
-        m.beacon.beaconUid
+        m.signal.beaconUid
           .filter(_.nonEmpty)
           // Интересуют только маячки с идентификаторами.
           .fold {
             logger.warn(ErrorMsgs.BLE_BEACON_EMPTY_UID, msg = m)
             noChange
           } { bUid =>
-            val distanceOptM = RadioUtil.calculateAccuracy(m.beacon)
-
-            val beaconSd1 = v0.beacons
-              .get(bUid)
-              .fold[MBeaconData] {
-                MBeaconData(
-                  beacon     = m.beacon,
-                  lastSeenMs = m.seen
-                )
-              } { currBeaconSd =>
-                currBeaconSd.copy(
-                  beacon     = m.beacon,
-                  lastSeenMs = m.seen
-                )
-              }
+            val distanceOptM = RadioUtil.calculateAccuracy(m.signal)
 
             val distanceM: Double = distanceOptM getOrElse {
-              logger.warn(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.beacon)
+              logger.warn(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.signal)
               99
             }
             // Нам проще работать с целочисленной дистанцией в сантиметрах
@@ -370,9 +364,16 @@ class BleBeaconerAh[M](
 
             //LOG.log( msg = (bUid :: distanceCm :: Nil).mkString(" ") )
 
-            beaconSd1.accuracies.pushValue(distanceCm)
+            val beaconDataOpt0 = v0.beacons.get( bUid )
+            val accuracies2 = beaconDataOpt0
+              .fold( RunningAverage[Int](6, knownLen = Some(0)) )( _.accuracies )
+              .push( distanceCm )
 
-            val beacons2 = v0.beacons + ((bUid, beaconSd1))
+            val beaconData1 = beaconDataOpt0
+              .fold( MBeaconData.apply _ )( _.copy )
+              .apply( m, accuracies2 )
+
+            val beacons2 = v0.beacons + ((bUid, beaconData1))
 
             // Если сейчас нет таймера уведомления системы, то надо запустить его.
             val (notifyAllTimerOpt2, notifyFxOpt) = BleBeaconerAh.ensureNotifyAllDirtyTimer( v0.notifyAllTimer, beacons2, v0.envFingerPrint )
@@ -385,7 +386,7 @@ class BleBeaconerAh[M](
               beacons         = beacons2,
               gcIntervalId    = gcIvl2
             )
-            ah.updatedSilentMaybeEffect(v2, notifyFxOpt)
+            ah.optionalResult( Some(v2), notifyFxOpt, silent = bcnsIsSilentRO.value )
           }
       }
 
@@ -407,7 +408,7 @@ class BleBeaconerAh[M](
         val keys2delete = (for {
           (k, mbd) <- v0.beacons.iterator
           if {
-            val isOk = now - mbd.lastSeenMs < ttl
+            val isOk = now - mbd.detect.seenAtMs < ttl
             val isToDelete = !isOk
             //println(s"drop?$isToDelete $k, now=$now lastSeen=${mbd.lastSeenMs} diff=${now - mbd.lastSeenMs} max-ttl=$ttl isOk=$isOk")
             isToDelete

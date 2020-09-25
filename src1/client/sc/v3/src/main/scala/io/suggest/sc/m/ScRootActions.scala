@@ -1,5 +1,6 @@
 package io.suggest.sc.m
 
+import diode.data.Pot
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.lk.nodes.form.m.MLkNodesMode
 import io.suggest.routes.routes
@@ -252,3 +253,6 @@ case class ScNodesShowHide( visible: Boolean ) extends IScNodesAction
 
 /** Смена режима работы nodes-формы. */
 case class ScNodesModeChanged( mode: MLkNodesMode ) extends IScNodesAction
+
+/** Экшен управление подпиской sc-nodes на события BLE beaconer. */
+case class ScNodesBcnrSubscribeStatus(unSubsCribeF: Pot[() => Unit] = Pot.empty ) extends IScNodesAction

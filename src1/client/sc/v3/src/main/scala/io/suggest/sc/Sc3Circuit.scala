@@ -53,13 +53,12 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2._
-import io.suggest.spa.{CircuitUtil, DAction, DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.spa.{DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
-import io.suggest.id.login.c.IIdentApi
 import io.suggest.id.login.c.session.{LogOutAh, LoginSessionAh}
 import io.suggest.id.login.m.session.{MLogOutDia, MLoginSessionS}
 import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi}
@@ -284,7 +283,7 @@ class Sc3Circuit(
   private val mapDelayRW          = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
   private val gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
-  private val gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
+  private[sc] val gridCoreRW      = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
   private val jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
@@ -300,6 +299,7 @@ class Sc3Circuit(
 
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
   private[sc] val beaconsNearbyRO = mkLensZoomRO( beaconerRW, MBeaconerS.nearbyReport )
+  private[sc] lazy val beaconsRO  = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
@@ -421,12 +421,25 @@ class Sc3Circuit(
     modelRW = platformRW
   )
 
+  private[sc] val focusedAd = gridCoreRW.zoom(_.myFocusedAdOpt)
 
   private val beaconerAh = new BleBeaconerAh(
     modelRW     = beaconerRW,
     dispatcher  = this,
+    bcnsIsSilentRO = scNodesRW.zoom(_.circuit.isEmpty),
     onNearbyChange = Some { (nearby0, nearby2) =>
       val daemonS = daemonRW.value
+
+      // Отправить эффект изменения в списке маячков, чтобы
+      if (scNodesRW.value.circuit.nonEmpty) {
+        this.runEffect(
+          Effect.action {
+            scNodesDiaAh.handleBeaconsDetected()
+            DoNothing
+          },
+          DoNothing
+        )
+      }
 
       if (daemonS.state contains MDaemonStates.Work) {
         // Если что-то изменилось, то надо запустить обновление плитки.
@@ -452,9 +465,6 @@ class Sc3Circuit(
         // Логика зависит от режима, который сейчас: работа демон или обычный режим вне демона.
         // Подписываемся на события изменения списка наблюдаемых маячков.
         OptionUtil.maybeOpt( nearby0 !===* nearby2 ) {
-          // Если nodes-форма открыта, то надо отрендерить в ней инфу по маячкам.
-          val nodesFormUpdateFxOpt = scNodesDiaAh.onBeaconsUpdatedFx( nearby2 )
-
           //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
           val mroot = rootRW.value
 
@@ -480,14 +490,10 @@ class Sc3Circuit(
             Some( _gridBleReloadFx )
           }
 
-          // Объединить эффекты.
-          (nodesFormUpdateFxOpt :: gridUpdFxOpt :: Nil)
-            .iterator
-            .flatten
-            .mergeEffects
+          gridUpdFxOpt
         }
       }
-    }
+    },
   )
 
   private val wzFirstDiaAh = new WzFirstDiaAh(
@@ -604,10 +610,7 @@ class Sc3Circuit(
   private val scNodesDiaAh = new ScNodesDiaAh(
     modelRW           = scNodesRW,
     getNodesCircuit   = getNodesFormCircuit,
-    csrfRO            = csrfTokenRW,
-    beaconsNearbyRO   = beaconsNearbyRO,
-    isLoggedInRO      = loggedInRO,
-    focusedAdRO       = gridCoreRW.zoom(_.myFocusedAdOpt),
+    sc3Circuit        = this,
   )
 
   private val csrfTokenAh = new CsrfTokenAh(

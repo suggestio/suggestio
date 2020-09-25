@@ -1,9 +1,8 @@
 package io.suggest.ble.api.cordova.ble
 
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
-import io.suggest.ble.BleConstants
+import io.suggest.ble.{BeaconDetected, BleConstants}
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.beaconer.BeaconDetected
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.JsApiUtil
@@ -11,7 +10,6 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.util.Try
 
 /**
   * Suggest.io

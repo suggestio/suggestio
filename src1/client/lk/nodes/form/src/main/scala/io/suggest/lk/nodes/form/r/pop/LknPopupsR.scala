@@ -3,7 +3,6 @@ package io.suggest.lk.nodes.form.r.pop
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.MLkNodesRoot
 import io.suggest.lk.r.DeleteConfirmPopupR
-import io.suggest.spa.OptFastEq
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -31,18 +30,7 @@ class LknPopupsR(
       React.Fragment(
 
         // Попап редактирования названия узла.
-        propsProxy.wrap { mroot =>
-          for {
-            edit0 <- mroot.popups.editName
-            loc0 <- mroot.tree.tree.openedLoc
-            info <- loc0.getLabel.infoPot.toOption
-          } yield {
-            nameEditDiaR.PropsVal(
-              nameOrig = info.name,
-              state    = edit0
-            )
-          }
-        }( nameEditDiaR.component.apply )( implicitly, OptFastEq.Wrapped(nameEditDiaR.nameEditPvFeq) ),
+        nameEditDiaR.component( propsProxy ),
 
         // Рендер попапа создания нового узла:
         propsProxy.wrap { mroot =>

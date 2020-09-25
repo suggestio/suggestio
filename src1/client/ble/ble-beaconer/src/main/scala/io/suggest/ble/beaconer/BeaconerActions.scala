@@ -1,6 +1,5 @@
 package io.suggest.ble.beaconer
 
-import io.suggest.ble.IBeaconSignal
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.spa.DAction
 
@@ -30,13 +29,6 @@ private[beaconer] case class HandleListenRes( listenTryRes: Try[IBleBeaconsApi] 
 
 /** Сработал таймер ожидания для возможного уведомления всех страждущих. */
 private[beaconer] case class MaybeNotifyAll(timestamp: Long) extends IBleBeaconAction
-
-/** Сигнал об обнаружении одного ble-маячка. */
-private[ble] case class BeaconDetected(
-                                        beacon  : IBeaconSignal,
-                                        seen    : Long = System.currentTimeMillis()
-                                      )
-  extends IBleBeaconAction
 
 
 /** Экшен запуска сборки неактуальных маячков в состоянии. */

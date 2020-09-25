@@ -54,6 +54,8 @@ object HtmlConstants {
   val UNDERSCORE              = "_"
   val ASTERISK                = "*"
 
+  final def TILDA             = "~"
+
   val LESSER                  = "<"
   val GREATER                 = ">"
 
@@ -69,6 +71,7 @@ object HtmlConstants {
   val NBSP                    = '\u00A0'
   val NBSP_STR                = NBSP.toString
 
+  final def INFINITY          = "∞"
 
   object Input {
     val input = "input"

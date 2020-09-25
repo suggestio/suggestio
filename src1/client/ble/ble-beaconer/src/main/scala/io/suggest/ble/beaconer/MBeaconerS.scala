@@ -42,6 +42,7 @@ object MBeaconerS {
   def isEnabled = GenLens[MBeaconerS](_.isEnabled)
   def afterOnOff = GenLens[MBeaconerS]( _.afterOnOff )
   def notifyAllTimer = GenLens[MBeaconerS](_.notifyAllTimer)
+  lazy val beacons = GenLens[MBeaconerS](_.beacons)
   def gcIntervalId = GenLens[MBeaconerS](_.gcIntervalId)
   val nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
   def opts = GenLens[MBeaconerS]( _.opts )

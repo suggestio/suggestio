@@ -7,6 +7,8 @@ import io.suggest.n2.media.storage.{MStorage, MStorageInfo, MStorageInfoData, MS
 import _root_.play.api.mvc.QueryStringBindable
 import io.suggest.common.empty.OptionUtil
 import OptionUtil.BoolOptOps
+import io.suggest.ble.BleConstants.Beacon.Qs.{DISTANCE_CM_FN, UID_FN}
+import io.suggest.ble.MUidBeacon
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
@@ -738,6 +740,43 @@ object CommonModelsJvm extends MacroLogsDyn {
         stringSeqB.unbind( k(F.BEACON_UIDS), QsbSeq(value.beaconUids.toSeq) )
       }
 
+    }
+  }
+
+
+  /** Поддержка биндинга инстансов модели в play router. */
+  implicit def mBeaconDataQsb(implicit
+                              strB         : QueryStringBindable[String],
+                              intOptB      : QueryStringBindable[Option[Int]],
+                             ): QueryStringBindable[MUidBeacon] = {
+
+    new QueryStringBindableImpl[MUidBeacon] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUidBeacon]] = {
+        val k = key1F(key)
+        for {
+          // TODO проверять по uuid | uuid_major_minor
+          uuidStrE        <- strB.bind     (k(UID_FN),          params)
+          distanceCmE     <- intOptB.bind  (k(DISTANCE_CM_FN),  params)
+        } yield {
+          for {
+            uuidStr       <- uuidStrE
+            distanceCm    <- distanceCmE
+          } yield {
+            MUidBeacon(
+              id          = uuidStr,
+              distanceCm  = distanceCm,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MUidBeacon): String = {
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strB.unbind    (k(UID_FN),          value.id),
+          intOptB.unbind (k(DISTANCE_CM_FN),  value.distanceCm),
+        )
+      }
     }
   }
 

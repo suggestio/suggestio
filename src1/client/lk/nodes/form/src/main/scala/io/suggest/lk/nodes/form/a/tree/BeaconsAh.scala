@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.a.tree
 
 import diode._
 import diode.data.Pot
+import io.suggest.ble.BeaconDetected
 import io.suggest.lk.nodes.MLknBeaconsScanReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
@@ -45,46 +46,101 @@ class BeaconsAh[M](
       // В начало дерева надо добавить/обновить группу видимых маячков:
       val loc0 = tree0.loc
 
-      // Сборка маячков без lazy/z.Need, т.к. анализ собранного списка будет ниже.
-      val beaconsForest = m.beacons
-        .iterator
-        .map { bcn =>
-          Tree.Leaf(
-            MNodeState(
-              role = MTreeRoles.BeaconSignal,
-              bcnSignal = Some(bcn),
-              // Порыться в кэше на предмет серверной инфы по маячку:
-              infoPot = Pot.fromOption {
-                v0.beacons.cacheMap
-                  .get( bcn.id )
-                  .flatMap( _.nodeScanResp )
-              },
-            )
-          )
-        }
-        .to( List )
-
-      // Сборка поддерева beacons:
-      val beaconsSubTree = Tree.Node(
-        root = MNodeState(
-          role = MTreeRoles.BeaconsDetected,
-        ),
-        forest = beaconsForest.toEphemeralStream,
-      )
-
-      // Обновление дерева:
-      val beaconUpdatedLoc = loc0
+      // Найти текущую группу маячков в дереве:
+      val bcnsGroupLocOpt0 = loc0
         .findChild( _.rootLabel.role ==* MTreeRoles.BeaconsDetected )
-        .fold {
-          // Пока нет подсписка с маячками. Добавить в начало:
-          loc0.insertDownFirst( beaconsSubTree )
-        } { loc1 =>
-          // Заменить текущий элемент обновлённым поддеревом.
-          loc1.setTree( beaconsSubTree )
+
+      // Дополнить группу маячков свеже-полученными данными:
+      val (bcnsGroupLoc1, haveBcnIds) = bcnsGroupLocOpt0.fold {
+        // Пока нет подсписка с маячками. Добавить в начало общего дерева:
+        val bcnsSubTreeEmpty = Tree.Leaf(
+          root = MNodeState(
+            role = MTreeRoles.BeaconsDetected,
+          ),
+        )
+        val loc1 = loc0.insertDownFirst( bcnsSubTreeEmpty )
+        loc1 -> Set.empty[String]
+
+      } { bcnsGroupLoc0 =>
+        // Нужно пройти текущую группу, обновив инфу в уже отрендеренных маячках.
+        lazy val bcnSignalNow = BeaconDetected.seenNowMs()
+        val subForest2 = bcnsGroupLoc0
+          .tree
+          .subForest
+          // Форсируем без lazy, чтобы выкинуть из памяти старые инстасы MBeaconSignal.
+          .iterator
+          .map { bcnTree0 =>
+            val mns0 = bcnTree0.rootLabel
+            val nodeIdOpt = mns0.nodeId
+            (for {
+              nodeId <- nodeIdOpt
+              bcnSignalOpt2 = m.beacons.get( nodeId )
+              bcnSignal2 <- bcnSignalOpt2 orElse mns0.beacon.map(_.data)
+            } yield {
+              val bcnState2 = MNodeBeaconState(
+                data      = bcnSignal2,
+                isVisible = bcnSignalOpt2.nonEmpty || bcnSignal2.detect.isStillVisibleNow( bcnSignalNow ),
+              )
+              val bcnSubForest = bcnTree0.subForest
+              val bcnLabel2 = ( MNodeState.beacon set Some(bcnState2) )( bcnTree0.rootLabel )
+              Tree.Node( bcnLabel2, bcnSubForest ) -> nodeIdOpt
+            })
+              .getOrElse( bcnTree0 -> None )
+          }
+          .toList
+
+        val rootLbl = bcnsGroupLoc0.getLabel
+        val loc1 = bcnsGroupLoc0.setTree {
+          Tree.Node( rootLbl, subForest2.map(_._1).toEphemeralStream )
         }
+
+        // Собираем id уже пройденных маячков:
+        val existingBcnIds = subForest2
+          .iterator
+          .flatMap(_._2)
+          .toSet
+
+        loc1 -> existingBcnIds
+      }
+
+      // Нужно определить новые маячки, добавив их в хвост subForest.
+      val appendBcns =
+        if (haveBcnIds.isEmpty) m.beacons
+        else m.beacons.filterKeys( !haveBcnIds.contains(_) )
+
+
+      val bcnsGroupLoc2 = if (appendBcns.isEmpty) {
+        // Не требуется добавлять новых маячков в список:
+        bcnsGroupLoc1
+
+      } else {
+        // Добавляем неизвестные ранее маячки в список:
+        val tree1 = Tree.Node(
+          root = bcnsGroupLoc1.getLabel,
+          forest = bcnsGroupLoc1.tree.subForest ++ appendBcns
+            .valuesIterator
+            .map { bcnSignal =>
+              Tree.Leaf {
+                MNodeState(
+                  role = MTreeRoles.BeaconSignal,
+                  beacon = Some( MNodeBeaconState(bcnSignal) ),
+                  // Порыться в кэше на предмет серверной инфы по маячку:
+                  infoPot = Pot.fromOption {
+                    bcnSignal.detect.signal.beaconUid
+                      .flatMap( v0.beacons.cacheMap.get )
+                      .flatMap( _.nodeScanResp )
+                  },
+                )
+              }
+            }
+            .to( LazyList )
+            .toEphemeralStream,
+        )
+        bcnsGroupLoc1.setTree( tree1 )
+      }
 
       var modStateF = MTreeOuter.tree.modify {
-        MTree.setNodes( beaconUpdatedLoc.toTree )
+        MTree.setNodes( bcnsGroupLoc2.toTree )
       }
 
       // TODO Если исчез opened-маячок, то обновить opened на валидное значение.
@@ -95,12 +151,13 @@ class BeaconsAh[M](
       if (!v0.beacons.scanReq.isPending) {
         // Если есть маячки для запроса с сервера, то запросить инфу по ним.
         val unknownBcnIds = (for {
-          bcnTree <- beaconsForest.iterator
-          bcn = bcnTree.rootLabel
-          if bcn.infoPot.isEmpty
-          bcnSignal <- bcn.bcnSignal
+          bcnTree <- bcnsGroupLoc2.tree.subForest.iterator
+          mns = bcnTree.rootLabel
+          if mns.infoPot.isEmpty
+          beaconState <- mns.beacon
+          beaconUid <- beaconState.data.detect.signal.beaconUid
         } yield {
-          bcnSignal.id
+          beaconUid
         })
           .toSet
 

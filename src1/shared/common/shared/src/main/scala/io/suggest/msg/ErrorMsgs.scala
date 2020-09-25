@@ -257,4 +257,5 @@ object ErrorMsgs {
   def EXPIRED_TOKEN = "Expired.token"
   def COOKIE_DOMAIN_UNEXPECTED = "Cookie.domain.unexpected"
 
+  def UNEXPECTED_NON_EMPTY_VALUE = "Unexpected.non.empty.value"
 }

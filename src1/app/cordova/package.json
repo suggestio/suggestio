@@ -53,8 +53,8 @@
             "cordova-plugin-fetch": {}
         },
         "platforms": [
-            "android",
-            "ios"
+            "ios",
+            "android"
         ]
     }
 }

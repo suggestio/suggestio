@@ -11,10 +11,9 @@ import io.suggest.n2.node.{MNodeTypes, MNodes}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import util.ble.BleUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -30,12 +29,11 @@ class ScAdSearchUtil @Inject() (
                                  esModel   : EsModel,
                                  mNodes    : MNodes,
                                  bleUtil   : BleUtil,
-                                 mCommonDi : ICommonDi
+                                 implicit private val ec: ExecutionContext,
                                )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.ec
   import esModel.api._
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
@@ -249,7 +247,8 @@ class ScAdSearchUtil @Inject() (
               val isExistBcn = uidsClear contains bcnQs.id
               if (!isExistBcn)
                 LOGGER.trace(s"$logPrefix Beacon uid'''${bcnQs.id}''' is unknown. Dropped.")
-              isExistBcn && bcnQs.distanceCm <= maxDistance
+              // fold(true), т.к. virtBeacon имеет отсутсвующее расстояние.
+              isExistBcn && bcnQs.distanceCm.fold(true)(_ <= maxDistance)
             }
           }
 

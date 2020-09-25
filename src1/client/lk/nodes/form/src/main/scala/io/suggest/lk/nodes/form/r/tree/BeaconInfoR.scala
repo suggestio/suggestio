@@ -22,7 +22,7 @@ import japgolly.univeq._
   * Если это не маячок - ничего рендерить не требуется.
   */
 class BeaconInfoR(
-                   distanceR            : DistanceR,
+                   distanceCmR          : DistanceRowR,
                    nodesDiConf          : NodesDiConf,
                    treeStuffR           : TreeStuffR,
                    crCtxP               : React.Context[MCommonReactCtx],
@@ -50,7 +50,7 @@ class BeaconInfoR(
   class Backend( $: BackendScope[Props, Props_t] ) {
 
     /** Клик по кнопке добавления маячка в свои узлы. */
-    private def _addBtnClick(beaconUid: String, nameDflt: Option[String] = None) = {
+    private def _addBtnClick(beaconUid: String, nameDflt: Option[String] = None): Callback = {
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, CreateNodeClick(
         id = Some( beaconUid ),
         nameDflt = nameDflt,
@@ -60,11 +60,11 @@ class BeaconInfoR(
 
     def render(propsProxy: Props, s: Props_t): VdomElement = {
       // Сигнал от маячка: надо отрендерить инфу по выбранному маячку:
-      s.nodeState.bcnSignal.whenDefinedEl { bcnSignal =>
+      s.nodeState.beacon.whenDefinedEl { bcnState =>
         React.Fragment(
 
           // Расстояние до маячка:
-          distanceR.component( propsProxy.resetZoom(bcnSignal) ),
+          distanceCmR.component( propsProxy.resetZoom( bcnState ) ),
 
           // Инфа по маячку от сервера.
           if (s.nodeState.infoPot.isPending) {
@@ -88,39 +88,39 @@ class BeaconInfoR(
               },
             )
 
-          } else s.nodeState.bcnSignal
-            .filter { bcnSignal =>
-              s.infoOpt
-                // TODO Вернуть exists(), когда будут запросы на сервер за данными по видимым маячкам.
-                .fold(true)/*.exists*/( _.ntype.isEmpty )
+          } else (for {
+            bcnUid <- bcnState.data.detect.signal.beaconUid
+            if s.infoOpt
+              // TODO Вернуть exists(), когда будут запросы на сервер за данными по видимым маячкам.
+              .fold(true)/*.exists*/( _.ntype.isEmpty )
+          } yield {
+            // Кнопка "Добавить узел", если infoPot намекает, что данный маячок свободен для привязки.
+            crCtxP.consume { crCtx =>
+              MuiListItem {
+                val _onClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+                  val nameDflt = crCtx.messages( MsgCodes.`Beacon.name.example` )
+                  _addBtnClick( bcnUid, Some(nameDflt) )
+                }
+                new MuiListItemProps {
+                  override val button = true
+                  override val onClick = _onClickF
+                }
+              } (
+                MuiListItemIcon()(
+                  Mui.SvgIcons.Add()(),
+                ),
+                MuiListItemText(
+                  new MuiListItemTextProps {
+                    override val primary = crCtx.messages( MsgCodes.`_to.Register._thing` )
+                    override val secondary = crCtx.messages( MsgCodes.`Add.beacon.to.account` )
+                  }
+                )(),
+              )
             }
-            .whenDefinedNode { bcnSignal =>
-              // Кнопка "Добавить узел", если infoPot намекает, что данный маячок свободен для привязки.
-              crCtxP.consume { crCtx =>
-                MuiListItem {
-                  val _onClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-                    val nameDflt = crCtx.messages( MsgCodes.`Beacon.name.example` )
-                    _addBtnClick( bcnSignal.id, Some(nameDflt) )
-                  }
-                  new MuiListItemProps {
-                    override val button = true
-                    override val onClick = _onClickF
-                  }
-                } (
-                  MuiListItemIcon()(
-                    Mui.SvgIcons.Add()(),
-                  ),
-                  MuiListItemText(
-                    new MuiListItemTextProps {
-                      override val primary = crCtx.messages( MsgCodes.`_to.Register._thing` )
-                      override val secondary = crCtx.messages( MsgCodes.`Add.beacon.to.account` )
-                    }
-                  )(),
-                )
-              }
-            },
+          })
+            .whenDefinedEl,
 
-          // Вывод инфы по зареганному узлу - это в NodeR-компонентах.
+          // Вывод остальной инфы по зареганному узлу - это в NodeR-компонентах.
         )
       }
     }

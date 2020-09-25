@@ -2,7 +2,6 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.ble.MUidBeacon
 import io.suggest.lk.nodes.{MLknAdv, MLknNode}
 import io.suggest.spa.DiodeUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -26,7 +25,7 @@ object MNodeState {
   def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
   def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
   def adv         = GenLens[MNodeState](_.adv)
-  def bcnSignal   = GenLens[MNodeState](_.bcnSignal)
+  def beacon      = GenLens[MNodeState](_.beacon)
 
 
   /** Обработать под-дерево нормальных N2-узлов, присланное сервером
@@ -56,9 +55,7 @@ object MNodeState {
     def rcvrKey: RcvrKey = {
       (for {
         mns <- loc.path.iterator
-        id <- mns.infoPot.toOption
-          .orElse( mns.bcnSignal )
-          .map(_.id)
+        id  <- mns.nodeId
       } yield {
         id
       })
@@ -76,6 +73,7 @@ object MNodeState {
   * @param infoPot Данные по узлу, присланные сервером.
   *                Pot нужен, т.к. существует недетализованное содержимое узла, когда нет части данных.
   *                По идее, Pot.empty тут не бывает.
+  * @param beacon Данные по сигналу от маячка поблизости.
   */
 case class MNodeState(
                        infoPot            : Pot[MLknNode]                     = Pot.empty,
@@ -83,7 +81,7 @@ case class MNodeState(
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        tfInfoWide         : Boolean                           = false,
                        adv                : Option[MNodeAdvState]             = None,
-                       bcnSignal          : Option[MUidBeacon]                = None,
+                       beacon             : Option[MNodeBeaconState]          = None,
                      ) {
 
   def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
@@ -109,5 +107,15 @@ case class MNodeState(
   def advHasAdvPot = _boolPot(_.newIsEnabledPot, _.hasAdv)
   def advAlwaysOpenedPot = _boolPot(_.isShowOpenedPot, _.advShowOpened)
   def advAlwaysOutlinedPot = _boolPot(_.alwaysOutlinedPot, _.alwaysOutlined)
+
+  def beaconUidOpt = beacon
+    .flatMap(_.data.detect.signal.beaconUid)
+
+  def nodeId: Option[String] = {
+    infoPot
+      .toOption
+      .map(_.id)
+      .orElse( beaconUidOpt )
+  }
 
 }

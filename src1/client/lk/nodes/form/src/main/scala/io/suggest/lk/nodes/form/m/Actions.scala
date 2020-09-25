@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
-import io.suggest.ble.BeaconsNearby_t
+import io.suggest.ble.beaconer.MBeaconData
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeResp}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
@@ -248,8 +248,10 @@ case class AlwaysOutlinedResp(
 
 /** Экшены Beacons-контроллера. */
 sealed trait ILknBeaconsAction extends LkNodesAction
+
 /** Обнаружены маячки. */
-case class BeaconsDetected( beacons: BeaconsNearby_t ) extends ILknBeaconsAction
+case class BeaconsDetected( beacons: Map[String, MBeaconData] ) extends ILknBeaconsAction
+
 /** Ответ сервера с инфой по маячкам. */
 case class BeaconsScanResp( reqArgs: MLknBeaconsScanReq, tryResp: Try[MLknNodeResp] ) extends ILknBeaconsAction
 

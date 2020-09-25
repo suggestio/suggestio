@@ -3,7 +3,7 @@
 @* Шаблон списка заказов. *@
 
 @import ctx.messages
-@import util.TplDataFormatUtil._
+@import util.TplDataFormatUtil
 @import datetime._prettyDate
 @import sys1.stuff.pager._
 
@@ -60,15 +60,15 @@
           }
           @__td(false) {
             <span title="@_prettyDate(ord.dateStatus).toString.trim">
-              <span class="ft-M dark-gray">@numericDate(ord.dateStatus)</span>
+              <span class="ft-M dark-gray">@TplDataFormatUtil.numericDate(ord.dateStatus)</span>
               <br/>
-              @numericTime(ord.dateStatus)
+              @TplDataFormatUtil.numericTime(ord.dateStatus)
             </span>
           }
           @__td(false, "__radial-last") {
             @for(orderId <- ord.id; prices <- args.prices.get(orderId)) {
               @for(price <- prices) {
-                @formatPrice(price)
+                @TplDataFormatUtil.formatPrice(price)
               }
             }
           }

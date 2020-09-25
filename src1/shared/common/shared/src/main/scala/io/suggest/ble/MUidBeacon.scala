@@ -17,7 +17,7 @@ object MUidBeacon {
   /** Поддержка JSON. В первую очередь -- для нужд JS-роутера, который всё это сплющивает в URL qs. */
   implicit def MUID_BEACON_FORMAT: OFormat[MUidBeacon] = (
     (__ \ UID_FN).format[String] and
-    (__ \ DISTANCE_CM_FN).format[Int]
+    (__ \ DISTANCE_CM_FN).formatNullable[Int]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MUidBeacon] = UnivEq.derive
@@ -35,9 +35,9 @@ object MUidBeacon {
   */
 final case class MUidBeacon(
                              override val id      : String,
-                             distanceCm           : Int,
+                             distanceCm           : Option[Int]       = None,
                            )
   extends IId[String]
 {
-  override def toString = "B(" + id + "," + distanceCm + "cm)"
+  override def toString = "B(" + id + "," + distanceCm.fold("")(_ + "cm") + ")"
 }

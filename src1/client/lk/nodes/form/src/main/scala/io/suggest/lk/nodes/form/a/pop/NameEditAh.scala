@@ -64,11 +64,12 @@ class NameEditAh[M](
         infoOpt = currNode.infoPot
           .toOption
           .orElse {
-            currNode.bcnSignal.flatMap {bcnSignal =>
-              beaconsRO
-                .value
-                .cacheMap
-                .respForUid( bcnSignal.id )
+            for {
+              beaconS   <- currNode.beacon
+              beaconUid <- beaconS.data.detect.signal.beaconUid
+              resp      <- beaconsRO.value.cacheMap.respForUid( beaconUid )
+            } yield {
+              resp
             }
           }
         info <- infoOpt
@@ -76,7 +77,7 @@ class NameEditAh[M](
         // Раскрыть диалог:
         val v2 = Some( MEditNodeState(
           name        = info.nameOrEmpty,
-          nameValid   = info.name.fold(true)(isNameValid)  ,
+          nameValid   = info.name.fold(true)(isNameValid),
         ))
         updated( v2 )
       })

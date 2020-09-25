@@ -137,7 +137,6 @@ routesImport ++= Seq(
   "io.suggest.geo.GeoPoint.Implicits._",
   "io.suggest.mbill2.m.item.typ.MItemTypesJvm._",
 
-  "io.suggest.ble.MBeaconDataJvm._",
   "io.suggest.geo.MGeoLocJvm._",
   "io.suggest.geo.MLocEnvJvm._",
 

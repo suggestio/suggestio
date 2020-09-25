@@ -6,7 +6,7 @@ import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import scalaz.NonEmptyList
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.{ListMap, Queue}
 import scala.util.Try
 
 /**
@@ -67,6 +67,7 @@ object UnivEqUtil {
 
   @inline implicit def mapUe[K: UnivEq, V: UnivEq]: UnivEq[Map[K, V]] = UnivEq.force
   @inline implicit def immListMapUe[K: UnivEq, V: UnivEq]: UnivEq[ListMap[K, V]] = UnivEq.force
+  @inline implicit def queueUe[V: UnivEq] : UnivEq[Queue[V]]        = UnivEq.force
 
   // java.time
   @inline implicit def offsetDateTimeUe   : UnivEq[OffsetDateTime]  = UnivEq.force

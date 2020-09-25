@@ -30,16 +30,19 @@ class BleUtil {
                                    innerHits: Option[MEsInnerHitsInfo] = None): Option[MNodeSearch] = {
     Option.when( bcns.nonEmpty ) {
       // Строим карту маячков, где ключ -- Uid маячка
-      val bcnsMap = bcns
-        .map { bcn =>
-          val dCm = Math.max(1, bcn.distanceCm)
-          val weightFactor = 1.0F / dCm
-          bcn.id -> weightFactor
-        }
+      val bcnsMap = (for {
+        bcn <- bcns.iterator
+        distanceCm <- bcn.distanceCm
+      } yield {
+        val dCm = Math.max(1, distanceCm)
+        val weightFactor = 1.0F / dCm
+        bcn.id -> weightFactor
+      })
+        .to( Iterable )
         .groupBy(_._1)
         .view
-        .mapValues { vals =>
-          vals
+        .mapValues { values =>
+          values
             .iterator
             .map(_._2)
             .min

@@ -59,8 +59,9 @@ final class ScNotifications(
               .nearbyReportById
               .get( bleBeaconNodeId )
               .iterator
+            distanceCm <- uidBeacon.distanceCm
           } yield {
-            uidBeacon.distanceCm
+            distanceCm
           })
             .to( LazyList )
 
@@ -114,7 +115,7 @@ final class ScNotifications(
                   MsgCodes.`Show.offers.0`,
                   mroot.dev.beaconer.nearbyReport
                     .iterator
-                    .map(_.distanceCm)
+                    .flatMap(_.distanceCm)
                     .maxOption
                     .fold("") { maxDistanceCm =>
                       // Нет текстов - вывести что-то типа "Показать предложения в радиусе 50 метров".

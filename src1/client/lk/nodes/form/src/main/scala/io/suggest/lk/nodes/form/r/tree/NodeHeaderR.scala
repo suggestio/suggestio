@@ -9,6 +9,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.DistanceUtil
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.node.MNodeTypes
+import io.suggest.react.ReactDiodeUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
@@ -19,7 +20,6 @@ import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
-import scala.scalajs.js.UndefOr
 import scalajs.js.JSConverters._
 
 /**
@@ -30,6 +30,7 @@ import scalajs.js.JSConverters._
   * Используется для быстрого неточного управления размещением карточки на узле.
   */
 final class NodeHeaderR(
+                         distanceValueR       : DistanceValueR,
                          treeStuffR           : TreeStuffR,
                          crCtxP               : React.Context[MCommonReactCtx],
                        ) {
@@ -66,7 +67,7 @@ final class NodeHeaderR(
       }
     }
 
-    def render(s: Props_t): VdomElement = {
+    def render(propsProxy: Props, s: Props_t): VdomElement = {
       val st = s.render.state
       val advPot = st.advHasAdvPot
       val infoOpt = st.infoPot.toOption
@@ -103,11 +104,8 @@ final class NodeHeaderR(
         // Название узла:
         MuiListItemText {
           val _textPrimary = infoOpt
-            .flatMap(_.name)
-            .orElse {
-              st.bcnSignal
-                .map(_.id)
-            }
+            .flatMap( _.name )
+            .orElse( st.beaconUidOpt )
             .orUndefined
 
           val _textSecondary = infoOpt
@@ -124,22 +122,22 @@ final class NodeHeaderR(
         }(),
 
         // Если не-adv режим, то отрендерить в заголовке расстояние до маячка.
-        st.bcnSignal
-          .filter(_ => !s.isAdv)
-          .whenDefinedNode { bcnSignal =>
-            MuiListItemSecondaryAction()(
-              MuiTypoGraphy(
-                new MuiTypoGraphyProps {
-                  override val variant = MuiTypoGraphyVariants.caption
-                  override val color = MuiTypoGraphyColors.textSecondary
-                }
-              )(
-                crCtxP.consume { crCtx =>
-                  crCtx.messages( DistanceUtil.formatDistanceCM( bcnSignal.distanceCm ) )
-                },
-              ),
-            )
-          },
+        (for {
+          beacon <- st.beacon
+          if !s.isAdv
+        } yield {
+          MuiListItemSecondaryAction()(
+            MuiTypoGraphy(
+              new MuiTypoGraphyProps {
+                override val variant = MuiTypoGraphyVariants.caption
+                override val color = MuiTypoGraphyColors.textSecondary
+              }
+            )(
+              distanceValueR.component( propsProxy.resetZoom(beacon) ),
+            ),
+          )
+        })
+          .whenDefinedNode,
 
         // Ошибка запроса:
         advPot.exceptionOption.whenDefinedNode { ex =>

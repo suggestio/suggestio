@@ -4,7 +4,7 @@ import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVaria
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.nodes.form.m.{MEditNodeState, NodeEditCancelClick, NodeEditNameChange, NodeEditOkClick}
+import io.suggest.lk.nodes.form.m.{MEditNodeState, MLkNodesRoot, NodeEditCancelClick, NodeEditNameChange, NodeEditOkClick}
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
@@ -24,16 +24,7 @@ class NameEditDiaR(
                     crCtxP                : React.Context[MCommonReactCtx],
                   ) {
 
-  case class PropsVal(
-                       nameOrig     : Option[String],
-                       state        : MEditNodeState,
-                     )
-  implicit lazy val nameEditPvFeq = FastEqUtil[PropsVal] { (a, b) =>
-    (a.nameOrig ===* b.nameOrig) &&
-    (a.state ===* b.state)
-  }
-
-  type Props_t = Option[PropsVal]
+  type Props_t = MLkNodesRoot
   type Props = ModelProxy[Props_t]
 
   case class State(
@@ -153,23 +144,39 @@ class NameEditDiaR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
+      val diaProxy = propsProxy.zoom(_.popups.editName)
       State(
 
-        isVisibleSomeC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.nonEmpty )
+        isVisibleSomeC = diaProxy.connect { propsOpt =>
+          OptionUtil.SomeBool( propsOpt.nonEmpty )
         },
 
-        propsOptC = propsProxy.connect(_.map(_.state))( OptFastEq.Plain ),
+        propsOptC = diaProxy.connect( identity )( OptFastEq.Plain ),
 
-        okBtnEnabledSomeC = propsProxy.connect { m =>
-          val isEnabled = m.exists { pv =>
-            val s = pv.state
+        okBtnEnabledSomeC = diaProxy.connect { m =>
+          val isEnabled = m.exists { s =>
             s.nameValid && !s.saving.isPending
           }
           OptionUtil.SomeBool( isEnabled )
         },
 
-        nameOrigC = propsProxy.connect( _.flatMap(_.nameOrig) )( OptFastEq.Plain ),
+        nameOrigC = propsProxy.connect { mroot =>
+          for {
+            loc0 <- mroot.tree.tree.openedLoc
+            info <- loc0.getLabel.infoPot
+              .toOption
+              .orElse {
+                for {
+                  bcnState <- loc0.getLabel.beacon
+                  beaconUid <- bcnState.data.detect.signal.beaconUid
+                  cachedResp <- mroot.tree.beacons.cacheMap.respForUid( beaconUid )
+                } yield cachedResp
+              }
+            infoName <- info.name
+          } yield {
+            infoName
+          }
+        }( OptFastEq.Plain ),
 
       )
     }
