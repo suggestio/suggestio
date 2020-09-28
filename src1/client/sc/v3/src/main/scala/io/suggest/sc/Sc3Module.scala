@@ -44,7 +44,7 @@ import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
 
 import scala.util.Try
@@ -314,7 +314,8 @@ object Sc3Module { outer =>
         * т.к. переброс из приложения в браузер не готов, и мобильная вёрстка ЛК тоже отсутствует. */
       override def showLkLinks() = outer.sc3Circuit.platformRW.value.isBrowser
       override def isUserLoggedIn() = outer.sc3Circuit.indexRW.value.isLoggedIn
-      override def needLogInVdom() = outer.sc3Circuit.wrap( identity(_) )( scNodesNeedLoginR.component.apply )
+      override def needLogInVdom(chs: VdomNode*) =
+        outer.sc3Circuit.wrap( identity(_) )( scNodesNeedLoginR.component(_)(chs: _*) )
       override def withBleBeacons = true
     }
   }

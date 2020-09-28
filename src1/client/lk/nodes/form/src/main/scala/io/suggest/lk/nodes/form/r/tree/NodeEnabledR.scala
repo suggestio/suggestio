@@ -120,6 +120,8 @@ final class NodeEnabledR(
               new MuiSwitchProps {
                 override val checked = isChecked
                 override val disabled = isDisabled
+                // switch не пробрасывает событие переключения наверх - нужен отдельных listener.
+                override val onClick = JsOptionUtil.maybeDefined( canChangeAvail )( _onNodeEnabledClickCbF )
               }
             },
           ),

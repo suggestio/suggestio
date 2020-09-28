@@ -32,7 +32,7 @@ trait NodesDiConf extends IMHttpClientConfig {
   def isUserLoggedIn(): Boolean
 
   /** Вёрстка для рендара сообщения о необходимости залогиниться. */
-  def needLogInVdom(): VdomNode
+  def needLogInVdom(chs: VdomNode*): VdomNode
 
   /** Надо ли инициализировать части, связанные с beacons-сканнером? */
   def withBleBeacons: Boolean
@@ -49,7 +49,7 @@ object NodesDiConf {
     override def closeForm = None
     override def showLkLinks() = true
     override def isUserLoggedIn() = true
-    override def needLogInVdom() = EmptyVdom
+    override def needLogInVdom(chs: VdomNode*) = EmptyVdom
     override def withBleBeacons = false
   }
 

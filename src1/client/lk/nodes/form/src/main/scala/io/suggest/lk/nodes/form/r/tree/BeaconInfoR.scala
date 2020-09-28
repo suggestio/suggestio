@@ -8,6 +8,7 @@ import io.suggest.lk.nodes.form.m.{CreateNodeClick, MBeaconCachedEntry, MNodeSta
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -95,6 +96,7 @@ class BeaconInfoR(
               .fold(true)/*.exists*/( _.ntype.isEmpty )
           } yield {
             // Кнопка "Добавить узел", если infoPot намекает, что данный маячок свободен для привязки.
+            val isLoggedIn = nodesDiConf.isUserLoggedIn()
             crCtxP.consume { crCtx =>
               MuiListItem {
                 val _onClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
@@ -103,18 +105,27 @@ class BeaconInfoR(
                 }
                 new MuiListItemProps {
                   override val button = true
-                  override val onClick = _onClickF
+                  override val onClick = JsOptionUtil.maybeDefined(isLoggedIn)(_onClickF)
                 }
               } (
                 MuiListItemIcon()(
                   Mui.SvgIcons.Add()(),
                 ),
-                MuiListItemText(
-                  new MuiListItemTextProps {
-                    override val primary = crCtx.messages( MsgCodes.`_to.Register._thing` )
-                    override val secondary = crCtx.messages( MsgCodes.`Add.beacon.to.account` )
+                {
+                  val toRegisterMsg = crCtx.messages( MsgCodes.`_to.Register._thing` )
+                  if (isLoggedIn) {
+                    // Зареганный юзер - открыть диалог.
+                    MuiListItemText(
+                      new MuiListItemTextProps {
+                        override val primary = toRegisterMsg
+                        override val secondary = crCtx.messages( MsgCodes.`Add.beacon.to.account` )
+                      }
+                    )()
+                  } else {
+                    // Юзер не залогинен - необходимо отрендерить соответсвующий текст и форму логина при клике:
+                    nodesDiConf.needLogInVdom( toRegisterMsg )
                   }
-                )(),
+                },
               )
             }
           })

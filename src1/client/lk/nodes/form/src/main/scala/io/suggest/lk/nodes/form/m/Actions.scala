@@ -226,7 +226,11 @@ case class TfDailyManualAmountChanged(amount: String)
 case class TfDailyModeChanged( modeId: String ) extends LkNodesAction
 
 /** Изменилось значение галочки раскрытости карточки по дефолту. */
-case class AdvShowOpenedChange( isChecked: Boolean ) extends LkNodesAction
+case class AdvShowOpenedChange(
+                                override val nodePath: NodePath_t,
+                                isChecked: Boolean
+                              )
+  extends LkNodesTreeAction
 
 /** Ответ сервера на запрос изменения отображения рекламной карточки. */
 case class AdvShowOpenedChangeResp(
@@ -237,7 +241,12 @@ case class AdvShowOpenedChangeResp(
   extends LkNodesTreeAction
 
 /** Изменение галочки постоянной обводки. */
-case class AlwaysOutlinedSet( isChecked: Boolean ) extends LkNodesAction
+case class AlwaysOutlinedSet(
+                              override val nodePath: NodePath_t,
+                              isChecked: Boolean,
+                            )
+  extends LkNodesTreeAction
+
 case class AlwaysOutlinedResp(
                                override val nodePath: NodePath_t,
                                reason: AlwaysOutlinedSet,

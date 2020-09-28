@@ -201,6 +201,8 @@ final case class MNodeEdges(
   extends EmptyProduct
 {
 
+  import MNodeEdges.LOGGER
+
   /** Поиск по предикату - частая операция. Тут - карта для оптимизации данного действа.
     * Следует помнить, что эта карта трудно-обратима назад в эджи без шаманства: она содержит в себе дублирующиеся значения, т.к. предикаты имеют наследственность. */
   lazy val edgesByPred: MapView[MPredicate, Seq[MEdge]] = {
@@ -298,7 +300,7 @@ final case class MNodeEdges(
 
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
     if (preds.isEmpty) {
-      MNodeEdges.LOGGER.warn(s"withoutPredicateIter() called with zero args from\n${Thread.currentThread().getStackTrace.iterator.take(3).mkString("\n")}")
+      LOGGER.warn(s"withoutPredicateIter() called with zero args from\n${Thread.currentThread().getStackTrace.iterator.take(3).mkString("\n")}")
       out.iterator
     } else {
       //out
@@ -331,11 +333,16 @@ final case class MNodeEdges(
   }
 
   def withNodeId(nodeIds: String*): Iterator[MEdge] = {
-    out
-      .iterator
-      .filter { medge =>
-        medge.nodeIds.exists(nodeIds.contains)
-      }
+    if (nodeIds.isEmpty) {
+      LOGGER.warn( "withNodeId(): No ids provided, but expected. Return Nil" )
+      Iterator.empty
+    } else {
+      out
+        .iterator
+        .filter { medge =>
+          nodeIds.exists( medge.nodeIds.contains )
+        }
+    }
   }
 
   def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
@@ -358,7 +365,7 @@ final case class MNodeEdges(
   def withUid1(edgeUids: Iterable[EdgeUid_t]): MNodeEdges = {
     if (edgeUids.isEmpty) {
       // Если пришёл пустой список, то вероятно, что что-то не так: в лучшем случае неоптимально, в худшем - логическая ошибка.
-      MNodeEdges.LOGGER.warn(
+      LOGGER.warn(
         "withUid1([]): Edge UIDs are empty from:\n " +
           Thread
             .currentThread()

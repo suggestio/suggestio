@@ -80,6 +80,7 @@ class NodeR(
       */
     def render(propsProxy: Props, p: Props_t, treeChildren: PropsChildren): VdomElement = {
       val nodePath = p.node.nodePath
+      val pns = p.node.state
 
       // Контейнер узла узла + дочерних узлов.
       MuiTreeItem {
@@ -102,19 +103,17 @@ class NodeR(
       } (
         ReactCommonUtil.maybeNode(
           // Если тип n2-узла допускает рендер деталей:
-          p.node.state.role.canRenderDetails &&
+          pns.role.canRenderDetails &&
           // И текущий tree-узел является открытым:
           (p.opened contains[NodePath_t] nodePath) &&
-          // и есть режим формы у узла допускают рендер деталей:
-          p.advMode match {
+          // и есть режим формы у узла допускают рендер деталей. (СКОБКИ) ОБЯЗАТЕЛЬНЫ, иначе компилятор скомпилит феерическое нечто.
+          (p.advMode match {
             // Управления узлами: детали текущего узла рендерятся всегда.
             case false  => true
             // Размещение карточки в узлах: Все галочки сокрыты, если главная галочка размещения выключена
-            case true   => p.node.state.advHasAdvPot contains[Boolean] true
-          }
+            case true   => pns.advHasAdvPot contains[Boolean] true
+          })
         ) {
-          val pns = p.node.state
-
           // ADN-режим: обычное управление ADN-узлами.
           val infoPot = pns.infoPot
             .orElse {
@@ -189,7 +188,7 @@ class NodeR(
                   val z2 = propsProxy.resetZoom(
                     subNodesR.PropsVal(
                       subNodes = p.chs,
-                      rawNodePathRev = nodePath,
+                      rawNodePathRev = p.node.rawNodePathRev,
                     )
                   )
                   subNodesR.component( z2 )
@@ -206,7 +205,7 @@ class NodeR(
                     nodeAdvRowR.PropsVal(
                       flag      = pns.advAlwaysOpenedPot,
                       msgCode   = MsgCodes.`Show.ad.opened`,
-                      onChange  = AdvShowOpenedChange,
+                      onChange  = AdvShowOpenedChange(p.node.nodePath, _),
                     )
                   )
                 ),
@@ -217,7 +216,7 @@ class NodeR(
                     nodeAdvRowR.PropsVal(
                       flag      = pns.advAlwaysOutlinedPot,
                       msgCode   = MsgCodes.`Always.outlined`,
-                      onChange  = AlwaysOutlinedSet,
+                      onChange  = AlwaysOutlinedSet(p.node.nodePath, _),
                     )
                   )
                 ),

@@ -720,7 +720,7 @@ final class LkNodes @Inject() (
         MNode.edges.modify { edges0 =>
           // Удалить эдж текущего размещения. Даже если isEnabled=true, всё равно надо отфильтровать старый эдж, чтобы перезаписать его.
           val edgesIter1 = edges0
-            .withoutNodePred( nodeId, MPredicates.Receiver )
+            .withoutNodePred( nodeId, MPredicates.Receiver)
           val edgesIter2 = if (isEnabled) {
             // Найти/добавить эдж до указанного узла.
             val medge = MEdge(

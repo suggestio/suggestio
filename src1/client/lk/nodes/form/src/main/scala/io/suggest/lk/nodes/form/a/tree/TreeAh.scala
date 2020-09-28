@@ -479,7 +479,7 @@ class TreeAh[M](
       (for {
         adId <- conf.adIdOpt
         v0 = value
-        locOpt0 = v0.openedLoc
+        locOpt0 = v0.pathToLoc( m.nodePath )
         loc0 <- {
           if (locOpt0.isEmpty)
             logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
@@ -576,7 +576,7 @@ class TreeAh[M](
       (for {
         adId <- conf.adIdOpt
         v0 = value
-        locOpt0 = v0.openedLoc
+        locOpt0 = v0.pathToLoc( m.nodePath )
         loc0 <- {
           if (locOpt0.isEmpty)
             logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )

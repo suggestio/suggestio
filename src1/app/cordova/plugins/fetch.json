@@ -125,8 +125,8 @@
   },
   "cordova-plugin-fetch": {
     "source": {
-      "type": "registry",
-      "id": "https://github.com/8bhsolutions/cordova-plugin-fetch"
+      "type": "local",
+      "path": "/var/user/projects/sio/sio2/src1/app/cordova/node_modules/cordova-plugin-fetch"
     },
     "is_top_level": true,
     "variables": {}

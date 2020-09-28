@@ -30,14 +30,14 @@ class ScNodesNeedLoginR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScLoginFormShowHide(true) )
     }
 
-    def render = {
+    def render(children: PropsChildren) = {
       crCtxP.consume { crCtx =>
         MuiListItemText(
           new MuiListItemTextProps {
             override val secondary = crCtx.messages( MsgCodes.`To.control.beacons.need.login` )
             override val onClick = _onLoginRowClick
           }
-        )()
+        )( children )
       }
     }
 
@@ -46,9 +46,7 @@ class ScNodesNeedLoginR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .stateless
-    .renderBackend[Backend]
-    // Рендер статичен, поэтому перерисовка не требуется:
-    .shouldComponentUpdateConst(false)
+    .renderBackendWithChildren[Backend]
     .build
 
 }

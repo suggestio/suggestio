@@ -26,7 +26,7 @@ final case class Filters @Inject() (
   dumpXffHdrs             : DumpXffHeaders,
   secHeaders              : SecHeadersFilter,
   cors                    : CorsFilter,
-  cdvFetchHttpCrunchFilter: CdvFetchHttpCrunchFilter,
+  //cdvFetchHttpCrunchFilter: CdvFetchHttpCrunchFilter,
 )
   extends HttpFilters
 {

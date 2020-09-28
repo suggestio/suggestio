@@ -23,9 +23,6 @@
       "BLUETOOTH_USAGE_DESCRIPTION": " ",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-fetch": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -49,6 +46,9 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

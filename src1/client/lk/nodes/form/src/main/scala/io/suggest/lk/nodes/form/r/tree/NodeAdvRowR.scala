@@ -30,7 +30,7 @@ final class NodeAdvRowR(
                        msgCode        : String,
                        onChange       : Boolean => LkNodesAction,
                      )
-  implicit def pvFeq = FastEqUtil[PropsVal] { (a, b) =>
+  implicit val pvFeq = FastEqUtil[PropsVal] { (a, b) =>
     (a.flag ===* b.flag) &&
     (a.msgCode ===* b.msgCode)
   }
@@ -41,7 +41,7 @@ final class NodeAdvRowR(
 
   class Backend($: BackendScope[Props, Props_t]) {
 
-    private val _onRowClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private val _onRowClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
         val p = props.value
         val wasChecked = p.flag contains true

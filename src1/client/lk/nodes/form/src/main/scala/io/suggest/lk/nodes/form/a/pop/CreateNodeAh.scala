@@ -1,7 +1,6 @@
 package io.suggest.lk.nodes.form.a.pop
 
 import diode._
-import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.{LkNodesConst, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
@@ -25,7 +24,6 @@ import scala.util.Success
 class CreateNodeAh[M](
                        api          : ILkNodesApi,
                        modelRW      : ModelRW[M, Option[MCreateNodeS]],
-                       currNodeRO   : ModelRO[Option[RcvrKey]],
                        treeRO       : ModelRO[Tree[MNodeState]],
                      )
   extends ActionHandler(modelRW)

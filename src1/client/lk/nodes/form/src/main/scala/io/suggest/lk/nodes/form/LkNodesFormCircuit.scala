@@ -70,7 +70,6 @@ case class LkNodesFormCircuit(
     val createNodeAh = new CreateNodeAh(
       api         = lkNodesApi,
       modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.createNodeS ),
-      currNodeRO  = currNodeRO,
       treeRO      = treeRW.zoom(_.nodes.get),
     )
 
