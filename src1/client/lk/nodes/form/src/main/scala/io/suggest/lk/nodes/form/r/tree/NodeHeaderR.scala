@@ -2,17 +2,16 @@ package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
-import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeState, MNodeStateRender, MTreeRoles}
+import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MBeaconCachedEntry, MNodeState, MNodeStateRender, MTreeRoles}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
-import io.suggest.geo.DistanceUtil
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -40,12 +39,14 @@ final class NodeHeaderR(
                        isAdv          : Boolean,
                        asList         : Boolean,
                        chs            : EphemeralStream[Tree[MNodeState]] = null,
+                       beaconCache    : Map[String, MBeaconCachedEntry] = Map.empty,
                      )
   implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
     MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render ) &&
     (a.isAdv ==* b.isAdv) &&
     (a.chs ===* b.chs) &&
-    (a.asList ==* b.asList)
+    (a.asList ==* b.asList) &&
+    (a.beaconCache ===* b.beaconCache)
   }
 
 
@@ -70,7 +71,7 @@ final class NodeHeaderR(
     def render(propsProxy: Props, s: Props_t): VdomElement = {
       val st = s.render.state
       val advPot = st.advHasAdvPot
-      val infoOpt = st.infoPot.toOption
+      val infoOpt = st.infoOrCached( s.beaconCache )
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
       val listItemRendered = MuiListItem()(
@@ -186,7 +187,14 @@ final class NodeHeaderR(
               .flatMap(_.ntype)
               .exists(_.showScLink)
         ) {
-          val isChecked = advPot getOrElse false
+          val isChecked = advPot
+            .toOption
+            .orElse {
+              st.bcnInfoFromCache( s.beaconCache )
+                .flatMap(_.adv)
+                .map(_.hasAdv)
+            }
+            .getOrElseFalse
           MuiListItemSecondaryAction()(
             MuiSwitch(
               new MuiSwitchProps {

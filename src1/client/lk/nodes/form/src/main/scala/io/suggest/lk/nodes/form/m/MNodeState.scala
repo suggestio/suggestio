@@ -118,4 +118,22 @@ case class MNodeState(
       .orElse( beaconUidOpt )
   }
 
+
+  def infoOrCached(bcnCache: => Map[String, MBeaconCachedEntry]): Option[MLknNode] = {
+    infoPot
+      .toOption
+      .orElse( bcnInfoFromCache(bcnCache) )
+  }
+
+  def bcnInfoFromCache(bcnCache: => Map[String, MBeaconCachedEntry]): Option[MLknNode] = {
+    for {
+      bcnSignal     <- beacon
+      bcnUid        <- bcnSignal.data.detect.signal.beaconUid
+      resp          <- bcnCache.respForUid( bcnUid )
+    } yield {
+      // TODO Возможно, надо пробрасывать pending/failed из bcnCache.scanReq?
+      resp
+    }
+  }
+
 }

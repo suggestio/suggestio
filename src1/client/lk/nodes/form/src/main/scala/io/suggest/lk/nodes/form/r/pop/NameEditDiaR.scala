@@ -163,15 +163,7 @@ class NameEditDiaR(
         nameOrigC = propsProxy.connect { mroot =>
           for {
             loc0 <- mroot.tree.tree.openedLoc
-            info <- loc0.getLabel.infoPot
-              .toOption
-              .orElse {
-                for {
-                  bcnState <- loc0.getLabel.beacon
-                  beaconUid <- bcnState.data.detect.signal.beaconUid
-                  cachedResp <- mroot.tree.beacons.cacheMap.respForUid( beaconUid )
-                } yield cachedResp
-              }
+            info <- loc0.getLabel.infoOrCached( mroot.tree.beacons.cacheMap )
             infoName <- info.name
           } yield {
             infoName

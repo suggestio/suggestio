@@ -236,7 +236,7 @@ case class AdvShowOpenedChange(
 case class AdvShowOpenedChangeResp(
                                     override val nodePath: NodePath_t,
                                     reason: AdvShowOpenedChange,
-                                    tryResp: Try[_],
+                                    tryResp: Try[MLknNode],
                                   )
   extends LkNodesTreeAction
 
@@ -250,7 +250,7 @@ case class AlwaysOutlinedSet(
 case class AlwaysOutlinedResp(
                                override val nodePath: NodePath_t,
                                reason: AlwaysOutlinedSet,
-                               tryResp: Try[_],
+                               tryResp: Try[MLknNode],
                              )
   extends LkNodesTreeAction
 

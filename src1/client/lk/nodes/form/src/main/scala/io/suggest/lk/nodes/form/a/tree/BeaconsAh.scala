@@ -3,7 +3,7 @@ package io.suggest.lk.nodes.form.a.tree
 import diode._
 import diode.data.Pot
 import io.suggest.ble.BeaconDetected
-import io.suggest.lk.nodes.MLknBeaconsScanReq
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknConf}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.primo.Keep
@@ -24,6 +24,7 @@ import scala.util.Success
   */
 class BeaconsAh[M](
                     modelRW     : ModelRW[M, MTreeOuter],
+                    confRO      : ModelRO[MLknConf],
                     lkNodesApi  : ILkNodesApi,
                   )
   extends ActionHandler(modelRW)
@@ -166,6 +167,7 @@ class BeaconsAh[M](
           val scanReqFx = Effect {
             val reqArgs = MLknBeaconsScanReq(
               beaconUids = unknownBcnIds,
+              adId       = confRO.value.adIdOpt,
             )
             lkNodesApi
               .beaconsScan( reqArgs )

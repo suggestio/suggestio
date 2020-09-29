@@ -20,7 +20,7 @@ import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
-import models.req.{IReq, IReqHdr}
+import models.req.{IReq, IReqHdr, MAdOptProdReq, MAdProdReq, MReq}
 import util.acl._
 import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
@@ -29,6 +29,7 @@ import io.suggest.ctx.CtxData
 import io.suggest.n2.bill.MNodeBilling
 import io.suggest.n2.bill.tariff.MNodeTariffs
 import io.suggest.n2.node.search.MNodeSearch
+import io.suggest.req.ReqUtil
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -77,6 +78,7 @@ final class LkNodes @Inject() (
   private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val canCreateSubNode = injector.instanceOf[CanCreateSubNode]
   private lazy val maybeAuth = injector.instanceOf[MaybeAuth]
+  private lazy val reqUtil = injector.instanceOf[ReqUtil]
 
   private lazy val nodesTpl = injector.instanceOf[NodesTpl]
   private lazy val adNodesTpl = injector.instanceOf[AdNodesTpl]
@@ -834,6 +836,7 @@ final class LkNodes @Inject() (
     * @param adIdU id карточки.
     * @param isEnabled Состояние галочки.
     * @param rcvrKey Узел-ресивера.
+    * @return 200 OK + Json[MLknNode].
     */
   def setAdvShowOpened(adIdU: MEsUuId, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
     canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
@@ -873,30 +876,41 @@ final class LkNodes @Inject() (
           }
           val es2 = edge2 :: eTail
 
-          // Запустить обновление карточки на стороне ES: перезаписать эдж:
-          val updateNodeFut = mNodes.tryUpdate( request.mad ) {
-            // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
-            MNode.edges.modify { edges0 =>
-              MNodeEdges.out.set(
-                MNodeEdges.edgesToMap1(
-                  (
-                    edges0.withoutNodePred(nodeId, pred) ::
-                    es2 ::
-                    Nil
-                  )
-                    .iterator
-                    .flatten
-                )
-              )(edges0)
-            }
-          }
-
           // Дождаться завершения апдейта.
           for {
-            _ <- updateNodeFut
+            // Запустить обновление карточки на стороне ES: перезаписать эдж:
+            mnode2 <- mNodes.tryUpdate( request.mad ) {
+              // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
+              MNode.edges.modify { edges0 =>
+                MNodeEdges.out.set(
+                  MNodeEdges.edgesToMap1(
+                    (
+                      edges0.withoutNodePred(nodeId, pred) ::
+                        es2 ::
+                        Nil
+                      )
+                      .iterator
+                      .flatten
+                  )
+                )(edges0)
+              }
+            }
           } yield {
             LOGGER.trace(s"$logPrefix Done.")
-            Ok
+
+            // Собрать MLknNode в ответ:
+            val someTrue = Some(true)
+            val mLknNode = MLknNode(
+              id        = request.mnode.id.get,
+              name      = request.mnode.guessDisplayNameOrId,
+              ntype     = Some( request.mnode.common.ntype ),
+              isEnabled = OptionUtil.SomeBool( request.mnode.common.isEnabled ),
+              isAdmin   = someTrue,
+              isDetailed = someTrue,
+              adv       = _hasAdv(nodeId, Some(mnode2)),
+            )
+
+            Ok( Json.toJson(mLknNode) )
           }
         }
       }
@@ -953,30 +967,41 @@ final class LkNodes @Inject() (
           }
           val es2 = edge2 :: eTail
 
-          // Запустить обновление карточки на стороне ES: перезаписать эдж:
-          val updateNodeFut = mNodes.tryUpdate( request.mad ) {
-            // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
-            MNode.edges.modify { edges0 =>
-              MNodeEdges.out.set(
-                MNodeEdges.edgesToMap1(
-                  (
-                    edges0.withoutNodePred(nodeId, pred) ::
-                    es2 ::
-                    Nil
-                  )
-                    .iterator
-                    .flatten
-                )
-              )(edges0)
-            }
-          }
-
           // Дождаться завершения апдейта.
           for {
-            _ <- updateNodeFut
+            // Запустить обновление карточки на стороне ES: перезаписать эдж:
+            mnode2 <- mNodes.tryUpdate( request.mad ) {
+              // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
+              MNode.edges.modify { edges0 =>
+                MNodeEdges.out.set(
+                  MNodeEdges.edgesToMap1(
+                    (
+                      edges0.withoutNodePred(nodeId, pred) ::
+                        es2 ::
+                        Nil
+                      )
+                      .iterator
+                      .flatten
+                  )
+                )(edges0)
+              }
+            }
           } yield {
             LOGGER.trace(s"$logPrefix Done.")
-            Ok
+
+            // Собрать MLknNode в ответ:
+            val someTrue = Some(true)
+            val mLknNode = MLknNode(
+              id        = request.mnode.id.get,
+              name      = request.mnode.guessDisplayNameOrId,
+              ntype     = Some( request.mnode.common.ntype ),
+              isEnabled = OptionUtil.SomeBool( request.mnode.common.isEnabled ),
+              isAdmin   = someTrue,
+              isDetailed = someTrue,
+              adv       = _hasAdv(nodeId, Some(mnode2)),
+            )
+
+            Ok( Json.toJson(mLknNode) )
           }
         }
       }
@@ -990,14 +1015,39 @@ final class LkNodes @Inject() (
     *
     * @return JSON-ответ по запрошенным маячкам.
     */
-  def beaconsScan(req: MLknBeaconsScanReq) = csrf.Check {
+  def beaconsScan(qs: MLknBeaconsScanReq) = csrf.Check {
+    val acl = qs.adId
+      // Приведение к MAdOptProdReq. Ненужное здесь поле producer тут может быть null.
+      .fold(
+        maybeAuth()
+          .andThen( new reqUtil.ActionTransformerImpl[MReq, MAdOptProdReq] {
+            override protected def transform[A](request: MReq[A]): Future[MAdOptProdReq[A]] = {
+              val req2 = MAdOptProdReq(
+                madOpt    = None,
+                producer  = null,
+                request   = request.request,
+                user      = request.user,
+              )
+              Future.successful( req2 )
+            }
+          })
+      ) {
+        canAdvAd(_)
+          .andThen( new reqUtil.ActionTransformerImpl[MAdProdReq, MAdOptProdReq] {
+            override protected def transform[A](request: MAdProdReq[A]): Future[MAdOptProdReq[A]] = {
+              val req2 = MAdOptProdReq( request )
+              Future.successful( req2 )
+            }
+          })
+      }
+
     // TODO Активировать BFP, подобрав параметры. Дефолтовые слишком агрессивные для часто-вызываемого скана.
     //bruteForceProtect {
-      maybeAuth().async { implicit request =>
-        val bcnsReqCount = req.beaconUids.size
+      acl.async { implicit request =>
+        val bcnsReqCount = qs.beaconUids.size
         val startedAtMs = System.currentTimeMillis()
-        lazy val logPrefix = s"beaconsInfo($bcnsReqCount bcns)#$startedAtMs:"
-        LOGGER.trace(s"$logPrefix User#${request.user.personIdOpt.orNull} [${request.remoteClientAddress}] requesting info about $bcnsReqCount beacons: ${req.beaconUids.mkString(" ")}")
+        lazy val logPrefix = s"beaconsScan($bcnsReqCount bcns${qs.adId.fold("")(", ad#" + _)})#$startedAtMs:"
+        LOGGER.trace(s"$logPrefix User#${request.user.personIdOpt.orNull} [${request.remoteClientAddress}] requesting info about $bcnsReqCount beacons: ${qs.beaconUids.mkString(" ")}")
 
         for {
           // Поискать в базе инфу по маячкам.
@@ -1005,7 +1055,7 @@ final class LkNodes @Inject() (
           // чтение цепочек узлов для проверки прав доступа идёт через этот же кэш.
           bcnIdsCleared <- mNodes.dynSearchIds(
             new MNodeSearch {
-              override val withIds = req.beaconUids.toSeq
+              override val withIds = qs.beaconUids.toSeq
               override val nodeTypes = MNodeTypes.BleBeacon :: Nil
               override val limit = bcnsReqCount
               // isDisabled: по флагу пока не фильтруем, т.к. иначе клиент подумает, что маячок свободен для регистрации.
@@ -1018,7 +1068,7 @@ final class LkNodes @Inject() (
 
           // Если юзер залогинен, то надо запустить проверки от узла до текущего юзера.
           hasAdminRightsForIdsFut = {
-            LOGGER.trace(s"$logPrefix Cleared beaconIds[${req.beaconUids.size}] => [${bcnIdsClearedSet.size}/${bcnIdsCleared.total}]: ${bcnIdsCleared.mkString(" ")}")
+            LOGGER.trace(s"$logPrefix Cleared beaconIds[${qs.beaconUids.size}] => [${bcnIdsClearedSet.size}/${bcnIdsCleared.total}]: ${bcnIdsCleared.mkString(" ")}")
 
             request.user.personIdOpt.fold {
               Future.successful( Map.empty[String, Boolean] )
@@ -1125,6 +1175,7 @@ final class LkNodes @Inject() (
                     // tf: тариф не возвращаем: юзер откроет узел и посмотрит.
                     // adv: тут пока только ADN-режим, без карточки.
                     parentName  = beaconIdDescrs.get( bcnId ),
+                    adv         = _hasAdv( bcnId, request.madOpt ),
                   )
                 )
               })

@@ -101,7 +101,8 @@ case class LkNodesFormCircuit(
     val treeAh = new TreeAh(
       api     = lkNodesApi,
       modelRW = treeRW,
-      confRO  = confR
+      confRO  = confR,
+      beaconsRO = beaconsRO,
     )
 
     var sharingHandlers = List[HandlerFunction]( treeAh, popupsHandler )
@@ -111,6 +112,7 @@ case class LkNodesFormCircuit(
       sharingHandlers ::= new BeaconsAh(
         modelRW     = treeOuterRW,
         lkNodesApi  = lkNodesApi,
+        confRO      = confR,
       )
     }
 

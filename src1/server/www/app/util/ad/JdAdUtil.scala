@@ -3,7 +3,6 @@ package util.ad
 import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
 import io.suggest.common.empty.OptionUtil
-import OptionUtil.Implicits._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel

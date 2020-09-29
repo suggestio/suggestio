@@ -705,6 +705,7 @@ object CommonModelsJvm extends MacroLogsDyn {
   /** QSB для [[MLknBeaconsScanReq]]. */
   implicit def lknBeaconsAskReq(implicit
                                 stringSeqB: QueryStringBindable[QsbSeq[String]],
+                                stringOptB: QueryStringBindable[Option[String]],
                                ): QueryStringBindable[MLknBeaconsScanReq] = {
     new QueryStringBindableImpl[MLknBeaconsScanReq] {
 
@@ -713,13 +714,16 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F( key )
         for {
           beaconIdsSeqE <- stringSeqB.bind( k(F.BEACON_UIDS), params )
+          adIdOptE <- stringOptB.bind( k(F.AD_ID), params )
         } yield {
           for {
             beaconIdsSeq <- beaconIdsSeqE
+            adIdOpt <- adIdOptE
             resp <- MLknBeaconsScanReq
               .validate(
                 MLknBeaconsScanReq(
-                  beaconUids = beaconIdsSeq.items.toSet,
+                  beaconUids  = beaconIdsSeq.items.toSet,
+                  adId        = adIdOpt,
                 )
               )
               .toEither
@@ -728,16 +732,17 @@ object CommonModelsJvm extends MacroLogsDyn {
                   .iterator
                   .mkString( "\n" )
               }
-          } yield {
-            resp
-          }
+          } yield resp
         }
       }
 
       override def unbind(key: String, value: MLknBeaconsScanReq): String = {
         val F = MLknBeaconsScanReq.Fields
         val k = key1F(key)
-        stringSeqB.unbind( k(F.BEACON_UIDS), QsbSeq(value.beaconUids.toSeq) )
+        _mergeUnbinded1(
+          stringSeqB.unbind( k(F.BEACON_UIDS),  QsbSeq(value.beaconUids.toSeq) ),
+          stringOptB.unbind( k(F.AD_ID),        value.adId ),
+        )
       }
 
     }

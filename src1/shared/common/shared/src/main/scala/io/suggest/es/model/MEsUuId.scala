@@ -1,5 +1,6 @@
 package io.suggest.es.model
 
+import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -99,6 +100,6 @@ object MEsUuId {
   * Инстанс модели.
   * @param id Строковой id.
   */
-case class MEsUuId(id: String) {
+final case class MEsUuId(id: String) extends IId[String] {
   override def toString = id
 }

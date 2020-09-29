@@ -61,17 +61,7 @@ class NameEditAh[M](
         // Первый for -- это эмуляция if, чтобы не плодить ненужное ветвление в коде:
         _ <- OptionUtil.SomeBool.orNone( v0.isEmpty )
         currNode <- currNodeRO.value
-        infoOpt = currNode.infoPot
-          .toOption
-          .orElse {
-            for {
-              beaconS   <- currNode.beacon
-              beaconUid <- beaconS.data.detect.signal.beaconUid
-              resp      <- beaconsRO.value.cacheMap.respForUid( beaconUid )
-            } yield {
-              resp
-            }
-          }
+        infoOpt = currNode.infoOrCached( beaconsRO.value.cacheMap )
         info <- infoOpt
       } yield {
         // Раскрыть диалог:

@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.a.tree
 
 import diode._
 import diode.data.{Pending, Pot}
-import io.suggest.lk.nodes.{MLknAdv, MLknConf, MLknNode}
+import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.msg.ErrorMsgs
@@ -31,6 +31,7 @@ class TreeAh[M](
                  api          : ILkNodesApi,
                  modelRW      : ModelRW[M, MTree],
                  confRO       : ModelRO[MLknConf],
+                 beaconsRO    : ModelRO[MBeaconScan],
                )
   extends ActionHandler(modelRW)
   with Log
@@ -293,7 +294,7 @@ class TreeAh[M](
           r
         }
         opened <- v0.opened
-        info <- mns0.infoPot.toOption
+        info <- mns0.infoOrCached( beaconsRO.value.cacheMap )
       } yield {
         // Выставить новое значение галочки в состояние узла, организовать реквест на сервер с апдейтом.
         val fx = Effect {
@@ -330,7 +331,7 @@ class TreeAh[M](
       (for {
         loc0 <- v0.pathToLoc( m.nodePath )
         mns0 = loc0.getLabel
-        info <- mns0.infoPot.toOption
+        info <- mns0.infoOrCached( beaconsRO.value.cacheMap )
       } yield {
         val v2 = MTree.setNodes {
           loc0
@@ -399,11 +400,13 @@ class TreeAh[M](
     // Сигнал завершения запроса сохранения с сервера.
     case m: NodeEditSaveResp =>
       val v0 = value
+
       // Нужно найти узел, который обновился. Теоретически возможно, что это не текущий узел, хоть и маловероятно.
-      def findF(treeLoc: TreeLoc[MNodeState]): Boolean =
+      def findF(treeLoc: TreeLoc[MNodeState]): Boolean = {
         treeLoc.getLabel
-          .infoPot
+          .infoOrCached( beaconsRO.value.cacheMap )
           .exists(_.id ==* m.nodeId)
+      }
 
       (for {
         loc0 <- v0.openedLoc
@@ -494,7 +497,7 @@ class TreeAh[M](
           r
         }
         openedPath <- v0.opened
-        info <- mns0.infoPot.toOption
+        info <- mns0.infoOrCached( beaconsRO.value.cacheMap )
       } yield {
         // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
         // Организовать реквест на сервер.
@@ -547,14 +550,9 @@ class TreeAh[M](
                     .set( Pot.empty[Boolean].fail(ex) )
                 },
                 // Если всё ок, то обновить состояние текущего узла.
-                {_ =>
+                {mLknNode2 =>
                   MNodeState.adv.set(None) andThen
-                  MNodeState.infoPot.modify { _.map {
-                    MLknNode.adv
-                      .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
-                      .composeLens( MLknAdv.advShowOpened )
-                      .set( m.reason.isChecked )
-                  }}
+                  MNodeState.infoPot.modify( _.ready(mLknNode2) )
                 }
               )
             }
@@ -591,7 +589,7 @@ class TreeAh[M](
           r
         }
         opened <- v0.opened
-        info <- mns0.infoPot.toOption
+        info <- mns0.infoOrCached( beaconsRO.value.cacheMap )
       } yield {
         // Организовать реквест на сервер.
         val fx = Effect {
@@ -642,14 +640,9 @@ class TreeAh[M](
                     .set( Pot.empty[Boolean].fail(ex) )
                 },
                 // Если всё ок, то обновить состояние текущего узла.
-                {_ =>
+                {node2 =>
                   MNodeState.adv.set(None) andThen
-                    MNodeState.infoPot.modify( _.map(
-                      MLknNode.adv
-                        .composeTraversal( Traversal.fromTraverse[Option, MLknAdv] )
-                        .composeLens( MLknAdv.alwaysOutlined )
-                        .set( m.reason.isChecked )
-                    ))
+                  MNodeState.infoPot.modify( _.ready( node2 ) )
                 }
               )
             }

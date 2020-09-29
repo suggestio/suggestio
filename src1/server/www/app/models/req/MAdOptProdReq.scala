@@ -9,9 +9,6 @@ import play.api.mvc.Request
   * Created: 26.10.17 22:08
   * Description: Модель реквеста с данными по продьюсеру и опциональным инстансом карточки.
   */
-trait IAdOptReq[A] extends IReq[A] {
-  def madOpt: Option[MNode]
-}
 
 
 /** Класс модели реквеса, который содержит данные по продьюсеру с опциональной рекламной карточкой.
@@ -30,7 +27,6 @@ case class MAdOptProdReq[A](
                            )
   extends MReqWrap[A]
   with IProdReq[A]
-  with IAdOptReq[A]
 
 
 object MAdOptProdReq {
@@ -52,5 +48,8 @@ object MAdOptProdReq {
       user      = req0.user
     )
   }
+
+  def apply[A](req0: IAdProdReq[A]): MAdOptProdReq[A] =
+    MAdOptProdReq( Some( req0.mad ), req0 )
 
 }

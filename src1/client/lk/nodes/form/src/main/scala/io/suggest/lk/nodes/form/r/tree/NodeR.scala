@@ -82,6 +82,13 @@ class NodeR(
       val nodePath = p.node.nodePath
       val pns = p.node.state
 
+      val infoPot = pns.infoPot
+        .orElse {
+          // Найти в кэше маячков ответ сервера:
+          Pot.fromOption( pns.bcnInfoFromCache( p.bcnCache ) )
+        }
+      val infoOpt = infoPot.toOption
+
       // Контейнер узла узла + дочерних узлов.
       MuiTreeItem {
         // Заголовок и переключалка ля управления размещением текущей карточки в данном узле:
@@ -91,6 +98,7 @@ class NodeR(
             isAdv       = p.advMode,
             chs         = p.chs,
             asList      = true,
+            beaconCache = p.bcnCache,
           )
         }( nodeHeaderR.component.apply )
 
@@ -109,29 +117,25 @@ class NodeR(
           // и есть режим формы у узла допускают рендер деталей. (СКОБКИ) ОБЯЗАТЕЛЬНЫ, иначе компилятор скомпилит феерическое нечто.
           (p.advMode match {
             // Управления узлами: детали текущего узла рендерятся всегда.
-            case false  => true
+            case false =>
+              true
             // Размещение карточки в узлах: Все галочки сокрыты, если главная галочка размещения выключена
-            case true   => pns.advHasAdvPot contains[Boolean] true
+            case true =>
+              pns.advHasAdvPot
+                .toOption
+                .orElse(
+                  pns
+                    .bcnInfoFromCache(p.bcnCache)
+                    .flatMap(_.adv)
+                    .map(_.hasAdv)
+                )
+                .contains[Boolean]( true )
           })
         ) {
-          // ADN-режим: обычное управление ADN-узлами.
-          val infoPot = pns.infoPot
-            .orElse {
-              // Найти в кэше маячков ответ сервера:
-              Pot.fromOption(for {
-                bcnSignal     <- pns.beacon
-                bcnUid        <- bcnSignal.data.detect.signal.beaconUid
-                resp          <- p.bcnCache.respForUid( bcnUid )
-              } yield {
-                // TODO Возможно, надо пробрасывать pending/failed из bcnCache.scanReq?
-                resp
-              })
-            }
-          val infoOpt = infoPot.toOption
-
           MuiList()(
 
             if (!p.advMode) {
+              // ADN-режим: обычное управление ADN-узлами.
               React.Fragment(
 
                 // Тулбар для раскрытого узла:
@@ -203,7 +207,8 @@ class NodeR(
                 nodeAdvRowR.component(
                   propsProxy.resetZoom(
                     nodeAdvRowR.PropsVal(
-                      flag      = pns.advAlwaysOpenedPot,
+                      flag      = pns.advAlwaysOpenedPot
+                        .orElse( infoPot.flatMap{ m => Pot.fromOption(m.adv.map(_.advShowOpened)) }),
                       msgCode   = MsgCodes.`Show.ad.opened`,
                       onChange  = AdvShowOpenedChange(p.node.nodePath, _),
                     )
@@ -214,7 +219,8 @@ class NodeR(
                 nodeAdvRowR.component(
                   propsProxy.resetZoom(
                     nodeAdvRowR.PropsVal(
-                      flag      = pns.advAlwaysOutlinedPot,
+                      flag      = pns.advAlwaysOutlinedPot
+                        .orElse( infoPot.flatMap{ m => Pot.fromOption(m.adv.map(_.alwaysOutlined)) }),
                       msgCode   = MsgCodes.`Always.outlined`,
                       onChange  = AlwaysOutlinedSet(p.node.nodePath, _),
                     )

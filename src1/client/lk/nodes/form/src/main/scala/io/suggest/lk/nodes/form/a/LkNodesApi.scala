@@ -6,7 +6,6 @@ import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp}
-import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -84,7 +83,7 @@ trait ILkNodesApi {
     * @param onNode На каком узле действо разворачивать при открытии?
     * @return Фьючерс с обнволённым узлом.
     */
-  def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[_]
+  def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[MLknNode]
 
   /** Запустить запрос обновления флага AlwaysOutlined, для указанного узла и карточки.
     *
@@ -93,7 +92,7 @@ trait ILkNodesApi {
     * @param onNode На каком узле размещение карточки.
     * @return Фьючерс.
     */
-  def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[_]
+  def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[MLknNode]
 
   /** Выставить новый режим тарификации указанного узла.
     *
@@ -245,30 +244,34 @@ final class LkNodesApiHttpImpl(
       .unJson[MLknNode]
   }
 
-  override def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[_] = {
-    val S = HttpConst.Status
-    val req = HttpReq.routed(
-      route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode)),
-      data = HttpReqData(
-        config = diConfig.httpClientConfig(),
-      ),
-    )
-    HttpClient.execute( req )
+  override def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[MLknNode] = {
+    HttpClient
+      .execute(
+        HttpReq.routed(
+          route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode)),
+          data = HttpReqData(
+            config = diConfig.httpClientConfig(),
+          ),
+        )
+      )
       .respAuthFut
-      .successIfStatus( S.OK, S.NO_CONTENT )
+      .successIf200
+      .unJson[MLknNode]
   }
 
-  override def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[_] = {
-    val S = HttpConst.Status
-    val req = HttpReq.routed(
-      route = routes.controllers.LkNodes.setAlwaysOutlined(adId, isAlwaysOutlined, RcvrKey.rcvrKey2urlPath(onNode)),
-      data = HttpReqData(
-        config = diConfig.httpClientConfig(),
-      ),
-    )
-    HttpClient.execute( req )
+  override def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[MLknNode] = {
+    HttpClient
+      .execute(
+        HttpReq.routed(
+          route = routes.controllers.LkNodes.setAlwaysOutlined(adId, isAlwaysOutlined, RcvrKey.rcvrKey2urlPath(onNode)),
+          data = HttpReqData(
+            config = diConfig.httpClientConfig(),
+          ),
+        )
+      )
       .respAuthFut
-      .successIfStatus( S.OK, S.NO_CONTENT )
+      .successIf200
+      .unJson[MLknNode]
   }
 
   override def beaconsScan(scanReq: MLknBeaconsScanReq): Future[MLknNodeResp] = {

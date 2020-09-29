@@ -287,11 +287,19 @@ class ShowcaseUtil @Inject() (
     * @return Множество найденных edge-флагов.
     */
   def collectScRcvrFlags(qs: MScQs, mad: MNode): Iterable[MEdgeFlagData] = {
+    val rcvrIds = (
+      qs.common.locEnv.bleBeacons ::
+      qs.search.rcvrId.toList ::
+      Nil
+    )
+      .iterator
+      .flatten
+      .map(_.id)
+      .toSet
+
     (for {
-      rcvrIdU <- qs.search.rcvrId.iterator
-      rcvrId = rcvrIdU.id
       e <- mad.edges.withPredicateIter( MPredicates.Receiver )
-      if e.nodeIds contains rcvrId
+      if (e.nodeIds & rcvrIds).nonEmpty
       // Могут быть одинаковые флаги, слать их много раз смысла нет.
       flagData <- e.info
         .flags
