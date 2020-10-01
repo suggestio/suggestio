@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.a.pop
 
 import diode._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.lk.nodes.{LkNodesConst, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
@@ -10,7 +11,6 @@ import io.suggest.log.Log
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import scalaz.Tree
 import japgolly.univeq._
 
 import scala.util.Success
@@ -24,7 +24,7 @@ import scala.util.Success
 class CreateNodeAh[M](
                        api          : ILkNodesApi,
                        modelRW      : ModelRW[M, Option[MCreateNodeS]],
-                       treeRO       : ModelRO[Tree[MNodeState]],
+                       treeRO       : ModelRO[MTree],
                      )
   extends ActionHandler(modelRW)
   with Log
@@ -98,26 +98,34 @@ class CreateNodeAh[M](
           // Путь до родительского узла:
           parentPath = m.parentPath.filter { parentPath =>
             parentPath.nonEmpty && {
+              val mtree = treeRO.value
               // Переданный путь должен содержать только реальные узлы допустимого типа и роли:
-              treeRO
-                .value
-                .loc
-                .pathToNode( parentPath )
-                .exists { mnsLoc =>
-                  mnsLoc.getLabel.infoPot
-                    .exists { info =>
-                      info.ntype.exists(_.userCanCreateSubNodes) &&
-                      (info.isAdmin contains[Boolean] true)
-                    } &&
-                    // Цепочка узлов до указанного узла должна содержать нормальные узлы, не виртуальные категории.
-                    mnsLoc
-                      .path
-                      .iterator
-                      .forall { mns =>
-                        (mns.role ==* MTreeRoles.Normal) ||
-                        (mns.role ==* MTreeRoles.Root)
-                      }
-                }
+              (for {
+                nodeIdsTree <- mtree.idsTree.toOption
+                loc0 <- nodeIdsTree
+                  .loc
+                  .pathToNode( parentPath )
+                mnsPath = loc0
+                  .path
+                  .iterator
+                  .flatMap( mtree.nodesMap.get )
+                  .to( LazyList )
+                mns <- mnsPath.headOption
+              } yield {
+                mns
+                  .infoPot
+                  .exists { info =>
+                    info.ntype.exists(_.userCanCreateSubNodes) &&
+                    (info.isAdmin contains[Boolean] true)
+                  } &&
+                  // Цепочка узлов до указанного узла должна содержать нормальные узлы, не виртуальные категории.
+                  mnsPath.forall { mns =>
+                    (mns.role ==* MTreeRoles.Normal) ||
+                    (mns.role ==* MTreeRoles.Root)
+                  }
+              })
+                // Эмулируем сложный exists() через for-yield + getOrElse false:
+                .getOrElseFalse
             }
             // Отфильтровываем возможные виртуальные узлы и пути до них, т.к. на выходе нужен только реальный RcvrKey.
           },
@@ -142,10 +150,14 @@ class CreateNodeAh[M](
         cs <- value
         if cs.isValid && !cs.saving.isPending
         parentPath <- cs.parentPath
-        parentNodeLoc <- treeRO.value
+        mtree = treeRO.value
+        nodeIdsTree <- mtree.idsTree.toOption
+        parentNodeLoc <- nodeIdsTree
           .loc
           .pathToNode( parentPath )
-        parentRk = parentNodeLoc.rcvrKey
+        parentRk = mtree.nodesMap
+          .mnsPath( parentNodeLoc )
+          .rcvrKey
         if parentRk.nonEmpty
       } yield {
         // Огранизовать запрос на сервер.

@@ -28,7 +28,8 @@ final class SubNodesR(
 
   case class PropsVal(
                        rawNodePathRev: NodePath_t,
-                       subNodes: EphemeralStream[Tree[MNodeState]],
+                       subNodes: EphemeralStream[Tree[String]],
+                       nodesMap: Map[String, MNodeState],
                      )
   implicit val pvFeq = FastEqUtil[PropsVal] { (a, b) =>
     (a.rawNodePathRev ===* b.rawNodePathRev) &&
@@ -64,16 +65,18 @@ final class SubNodesR(
 
                 // Вывести кол-во выключенных под-узлов, если такие есть.
                 {
-                  val chCountDisabled = s
-                    .subNodes
-                    .iterator
-                    .count { chTree =>
-                      chTree.rootLabel
-                        .infoPot
-                        .exists { info =>
-                          info.isEnabled contains[Boolean] false
-                        }
-                    }
+                  // Считаем disabled-узлы:
+                  val chCountDisabled = (for {
+                    treeIdTree <- s.subNodes.iterator
+                    treeId = treeIdTree.rootLabel
+                    mns  <- s.nodesMap.get( treeId )
+                    info <- mns.infoPot.toOption
+                    if info.isEnabled contains[Boolean] false
+                  } yield {
+                    1
+                  })
+                    .sum
+
                   ReactCommonUtil.maybeEl(chCountDisabled > 0) {
                     <.span(
                       HtmlConstants.COMMA,

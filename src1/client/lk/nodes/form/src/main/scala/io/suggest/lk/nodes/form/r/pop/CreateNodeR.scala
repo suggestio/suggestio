@@ -46,8 +46,9 @@ class CreateNodeR(
                  ) {
 
   case class PropsVal(
-                       create: Option[MCreateNodeS],
-                       tree  : Pot[Tree[MNodeState]],
+                       create     : Option[MCreateNodeS],
+                       tree       : Pot[Tree[String]],
+                       nodesMap   : Map[String, MNodeState],
                      ) {
     def createParentPath = create.flatMap(_.parentPath)
   }
@@ -185,12 +186,18 @@ class CreateNodeR(
                           pathRev -> (mns, pathRev)
                         }
                         .flatten
+                        .flatMap { case (treeId, v) =>
+                          props.nodesMap
+                            .get( treeId )
+                            .map( _ -> v )
+                            .toEphemeralStream
+                        }
                         .filter { case (mns, _) =>
                           (mns.role ==* MTreeRoles.Normal) &&
-                            mns.infoPot.exists { info =>
-                              (info.isAdmin contains[Boolean] true) &&
-                                info.ntype.exists(_.userCanCreateSubNodes)
-                            }
+                          mns.infoPot.exists { info =>
+                            (info.isAdmin contains[Boolean] true) &&
+                            info.ntype.exists(_.userCanCreateSubNodes)
+                          }
                         }
                       // Вернуть None, если нет ни одного подходящего узла, чтобы передать рендер в getOrElse-ветвь.
                       Option.when( !nodesToRender.isEmpty ) {

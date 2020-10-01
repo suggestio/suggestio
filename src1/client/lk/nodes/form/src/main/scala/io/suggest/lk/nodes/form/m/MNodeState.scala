@@ -8,7 +8,9 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
-import scalaz.{Tree, TreeLoc}
+import scalaz.{EphemeralStream, Tree, TreeLoc}
+
+import scala.collection.immutable.HashMap
 
 /**
   * Suggest.io
@@ -32,37 +34,46 @@ object MNodeState {
     * (или наподобии того, что сервер должен бы прислать).
     * @param tree Дерево или поддерево.
     */
-  def processNormalTree(tree: Tree[MLknNode]): Tree[MNodeState] = {
-    for (lkNode <- tree) yield {
-      MNodeState(
-        infoPot = Pot.empty.ready( lkNode ),
-        role    = MTreeRoles.Normal,
-      )
-    }
+  def respTreeToIdsTree(tree: Tree[MLknNode]): Tree[String] = {
+    tree.map(_.id)
+  }
+
+  /** Рендер в nodes map. */
+  def fromRespNode(lknNode: MLknNode): MNodeState = {
+    MNodeState(
+      infoPot = Pot.empty.ready( lknNode ),
+      role    = MTreeRoles.Normal,
+    )
   }
 
 
   /** Собрать корневой элемент. */
-  def mkRoot = MNodeState(
+  def mkRootNode = MNodeState(
     infoPot = Pot.empty,
     role    = MTreeRoles.Root,
   )
 
 
-  implicit class MnsLocExt(private val loc: TreeLoc[MNodeState]) extends AnyVal {
+  implicit class MnsLocExt(private val nodesMap: Map[String, MNodeState]) extends AnyVal {
 
-    /** Сборка цепочки id узлов от корня до указанного узла. */
+    def mnsPath(loc: TreeLoc[String]) = loc
+      .path
+      .iterator
+      .flatMap( nodesMap.get )
+
+  }
+
+
+  implicit class MnsIterExt( private val mnss: IterableOnce[MNodeState] ) extends AnyVal {
+    /** .mnsPath().rcvrKey */
     def rcvrKey: RcvrKey = {
-      (for {
-        mns <- loc.path.iterator
-        id  <- mns.nodeId
-      } yield {
-        id
-      })
+      mnss
+        .iterator
+        .takeWhile( _.role.isRealNode )
+        .flatMap(_.nodeId)
         .toList
         .reverse
     }
-
   }
 
 }
@@ -116,24 +127,6 @@ case class MNodeState(
       .toOption
       .map(_.id)
       .orElse( beaconUidOpt )
-  }
-
-
-  def infoOrCached(bcnCache: => Map[String, MBeaconCachedEntry]): Option[MLknNode] = {
-    infoPot
-      .toOption
-      .orElse( bcnInfoFromCache(bcnCache) )
-  }
-
-  def bcnInfoFromCache(bcnCache: => Map[String, MBeaconCachedEntry]): Option[MLknNode] = {
-    for {
-      bcnSignal     <- beacon
-      bcnUid        <- bcnSignal.data.detect.signal.beaconUid
-      resp          <- bcnCache.respForUid( bcnUid )
-    } yield {
-      // TODO Возможно, надо пробрасывать pending/failed из bcnCache.scanReq?
-      resp
-    }
   }
 
 }

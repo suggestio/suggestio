@@ -7,7 +7,7 @@ import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.{ILkNodesApi, LknFormAh}
 import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh, NameEditAh}
 import io.suggest.lk.nodes.form.a.tree.{BeaconsAh, TreeAh}
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeState, MTree, MTreeOuter, NodesDiConf}
+import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknPopups, MNodeState, MTree, MTreeOuter, MTreeRoles, NodesDiConf}
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
@@ -19,11 +19,13 @@ import io.suggest.lk.m.MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.{CircuitUtil, DoNothing, DoNothingActionProcessor, StateInp}
 import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.spa.DiodeUtil.Implicits._
 import play.api.libs.json.Json
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
+import scala.collection.immutable.HashMap
 import scala.concurrent.Future
 
 /**
@@ -70,7 +72,7 @@ case class LkNodesFormCircuit(
     val createNodeAh = new CreateNodeAh(
       api         = lkNodesApi,
       modelRW     = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.createNodeS ),
-      treeRO      = treeRW.zoom(_.nodes.get),
+      treeRO      = treeRW,
     )
 
     // Реактор на события, связанные с окошком удаления узла.
@@ -91,7 +93,7 @@ case class LkNodesFormCircuit(
     val nameEditAh = new NameEditAh(
       api = lkNodesApi,
       modelRW = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.editName ),
-      currNodeRO = treeRW.zoom(_.openedLoc.map(_.getLabel)),
+      currNodeRO = treeRW.zoom( _.openedNode ),
       beaconsRO = beaconsRO,
     )
 
@@ -102,7 +104,6 @@ case class LkNodesFormCircuit(
       api     = lkNodesApi,
       modelRW = treeRW,
       confRO  = confR,
-      beaconsRO = beaconsRO,
     )
 
     var sharingHandlers = List[HandlerFunction]( treeAh, popupsHandler )
@@ -137,36 +138,61 @@ object LkNodesFormCircuit {
 
   @inline implicit def univEq: UnivEq[LkNodesFormCircuit] = UnivEq.force
 
+  /** Инициализация изолированной формы.
+    * Используется JSON со страницы, на которой форма живёт.
+    *
+    * @return Root-модель.
+    */
   def initIsolated(): ActionResult[MLkNodesRoot] = {
-    // TODO Нужно инициализировать пустое состояние, и заполнять его эффектом?
     val stateInp = StateInp.find().get
     val base64   = stateInp.value.get
     val mFormInit = Json.parse(base64).as[MLknFormInit]
 
-    val tree = Tree.Node(
+    val rootNode = MNodeState.mkRootNode
+    val rootNodeId = MTreeRoles.Root.treeId
+
+    // Сборка дерева ids узлов, сами узлы живут в nodesMap.
+    val idsTree = Tree.Node(
       // Запиливаем корень, чтобы было наподобии выдачи. TODO Надо ли это в LK-форме?
-      root = MNodeState.mkRoot,
+      root = rootNodeId,
       forest = EphemeralStream.cons(
-        MNodeState.processNormalTree( mFormInit.resp0.subTree ),
+        MNodeState.respTreeToIdsTree( mFormInit.resp0.subTree ),
         EphemeralStream.emptyEphemeralStream
       ),
     )
 
+    // Сборка карты данных по узлам в дереве.
+    val nodesMap = (
+      (rootNodeId -> rootNode) ##::
+        mFormInit
+          .resp0
+          .subTree
+          .map { lknNode =>
+            lknNode.id -> MNodeState.fromRespNode( lknNode )
+          }
+          .flatten
+      )
+      .iterator
+      .to( HashMap )
+
+    // Сборка корневой модели.
     val mroot = MLkNodesRoot(
       conf = mFormInit.conf,
       tree = MTreeOuter(
         tree = MTree(
-          nodes = Pot.empty.ready( tree ),
-          opened = tree
+          idsTree = Pot.empty.ready( idsTree ),
+          nodesMap = nodesMap,
+          opened = idsTree
             .loc
+            .map( nodesMap.apply )
             .find { m =>
               m.getLabel.infoPot.exists { info =>
                 mFormInit.conf.onNodeId contains[String] info.id
               }
             }
             .map(_.toNodePath),
-        )
-      )
+        ),
+      ),
     )
 
     // Потом удалить input, который больше не нужен.

@@ -4,7 +4,7 @@ import com.materialui.{Mui, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiL
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.MLknNode
-import io.suggest.lk.nodes.form.m.{CreateNodeClick, MBeaconCachedEntry, MNodeState, NodesDiConf}
+import io.suggest.lk.nodes.form.m.{CreateNodeClick, MNodeState, NodesDiConf}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -33,15 +33,12 @@ class BeaconInfoR(
                        nodeState  : MNodeState,
                        isAdvMode  : Boolean,
                        infoOpt    : Option[MLknNode],
-                       bcnCache   : Map[String, MBeaconCachedEntry],
                      )
   implicit val propsValFeq = FastEqUtil[PropsVal] { (a, b) =>
     (a.nodeState ===* b.nodeState) &&
     (a.isAdvMode ==* b.isAdvMode) &&
     // Инстанс пересобирается постоянно, но внутренние содержимое - статично.
-    OptFastEq.Plain.eqv( a.infoOpt, b.infoOpt ) &&
-    // TODO Opt Карта кэша меняется чаще, чем стоило бы пере-рендеривать текущий элемент.
-    (a.bcnCache  ===* b.bcnCache)
+    OptFastEq.Plain.eqv( a.infoOpt, b.infoOpt )
   }
 
   type Props_t = PropsVal

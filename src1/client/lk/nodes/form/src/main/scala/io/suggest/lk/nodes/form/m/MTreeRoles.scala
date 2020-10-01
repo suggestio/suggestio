@@ -15,7 +15,9 @@ object MTreeRoles extends Enum[MTreeRole] {
     * Чтобы дерево было однотонно, нужен невидимый "нулевой" элемент у основания дерева,
     * под которым живут все остальные элементы.
     */
-  case object Root extends MTreeRole
+  case object Root extends MTreeRole {
+    def treeId = toString
+  }
 
   /** Существующий узел N2, выраженный узлом дерева nodes-формы.
     * Узлы приходят с сервера или отправляются на сервер. */
@@ -24,7 +26,9 @@ object MTreeRoles extends Enum[MTreeRole] {
   /** Виртуальный видимый элемент дерева, визуально группирующий обнаруженные маячки поблизости.
     * Действия для элемента просты: Можно свернуть-развернуть (или даже этого нельзя).
     */
-  case object BeaconsDetected extends MTreeRole
+  case object BeaconsDetected extends MTreeRole {
+    def treeId = toString
+  }
 
   /** Сигнал от bluetooth-маячка поблизости. */
   case object BeaconSignal extends MTreeRole
@@ -45,6 +49,11 @@ object MTreeRole {
 
     /** Разворачивать ли какие-то данные раскрытого узла дерева? */
     def canRenderDetails: Boolean = {
+      isRealNode
+    }
+
+    /** Это реальный узел (может/должен реальным узлом в СУБД сервера)? */
+    def isRealNode: Boolean = {
       (treeRole ==* MTreeRoles.Normal) ||
       (treeRole ==* MTreeRoles.BeaconSignal)
     }

@@ -7,7 +7,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m.{MEditNodeState, MLkNodesRoot, NodeEditCancelClick, NodeEditNameChange, NodeEditOkClick}
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.spa.{FastEqUtil, OptFastEq}
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
@@ -163,7 +163,9 @@ class NameEditDiaR(
         nameOrigC = propsProxy.connect { mroot =>
           for {
             loc0 <- mroot.tree.tree.openedLoc
-            info <- loc0.getLabel.infoOrCached( mroot.tree.beacons.cacheMap )
+            treeId = loc0.getLabel
+            mns <- mroot.tree.tree.nodesMap.get( treeId )
+            info <- mns.infoPot.toOption
             infoName <- info.name
           } yield {
             infoName

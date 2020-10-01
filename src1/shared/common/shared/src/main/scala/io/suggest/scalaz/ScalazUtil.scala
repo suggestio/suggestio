@@ -231,15 +231,39 @@ object ScalazUtil {
         }
       }
 
+      /** Не быстрая и неэффективная разборка абстрактного множества в ephemeral-список.
+        * Это добро следует использовать только для небольших множеств. */
+      def fromSet[A](s: Set[A]): EphemeralStream[A] = {
+        if (s.isEmpty)
+          ephSt.emptyEphemeralStream
+        else
+          ephSt.cons( s.head, fromSet(s.tail) )
+      }
+
+      def fromOption[A](s: Option[A]): EphemeralStream[A] = {
+        s.fold [EphemeralStream[A]] ( ephSt[A] )( ephSt.cons(_, ephSt[A]) )
+      }
+
     }
-    implicit final class LazyListExt[T]( private val ll: LazyList[T] ) extends AnyVal {
+
+    implicit final class SciLazyListExt[T]( private val ll: LazyList[T] ) extends AnyVal {
       def toEphemeralStream: EphemeralStream[T] =
         EphemeralStream.fromLazyList( ll )
     }
 
-    implicit final class StdListExt[T]( private val l: List[T]) extends AnyVal {
+    implicit final class SciListExt[T]( private val l: List[T]) extends AnyVal {
       def toEphemeralStream: EphemeralStream[T] =
         EphemeralStream.fromList(l)
+    }
+
+    implicit final class SciSetExt[T]( private val s: Set[T]) extends AnyVal {
+      def toEphemeralStream: EphemeralStream[T] =
+        EphemeralStream.fromSet( s )
+    }
+
+    implicit final class OptionExt[T]( private val o: Option[T] ) extends AnyVal {
+      def toEphemeralStream: EphemeralStream[T] =
+        EphemeralStream.fromOption( o )
     }
 
   }

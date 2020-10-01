@@ -213,8 +213,6 @@ class ScNodesDiaAh[M](
 object ScNodesDiaAh {
 
   def scNodesCircuitInit(userIsLoggedIn: Boolean): ActionResult[MLkNodesRoot] = {
-    val nodes0 = MTree.emptyNodesTreePot
-
     // Минимальное начальное состояние:
     val lknRoot = MLkNodesRoot(
       conf = MLknConf(
@@ -222,10 +220,8 @@ object ScNodesDiaAh {
         adIdOpt  = None,
       ),
       tree = MTreeOuter(
-        tree = MTree(
-          // Для loggedIn-юзера сразу ставим pending, чтобы была крутилка - потом будет подгрузка узлов.
-          nodes = if (userIsLoggedIn) nodes0.pending() else nodes0,
-        ),
+        // Для loggedIn-юзера сразу ставим pending, чтобы была крутилка - потом будет подгрузка узлов.
+        tree = MTree.emptyNodesTree( isPending = userIsLoggedIn ),
       ),
     )
 

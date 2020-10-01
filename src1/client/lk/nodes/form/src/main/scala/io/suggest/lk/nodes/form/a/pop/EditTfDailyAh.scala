@@ -92,8 +92,9 @@ class EditTfDailyAh[M](
 
       (for {
         loc0 <- tree.openedLoc
-        currNode = loc0.getLabel
-        info <- currNode.infoPot.toOption
+        nodeId = loc0.getLabel
+        mns <- tree.nodesMap.get( nodeId )
+        info <- mns.infoPot.toOption
       } yield {
         val currNodeTfOpt = info.tf
 

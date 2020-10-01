@@ -53,68 +53,6 @@ class TreeR(
 
     /** Рендер текущего компонента. */
     def render(p: Props, s: State): VdomElement = {
-      /** Функция рекурсивного рендер всего дерева узлов.
-        *
-        * @param subTreeOrig Оригинальное поддерево из circuit-состояния с поддержкой целостности указателей.
-        * @param subTreeIndexed Только что проиндексированное дерево.
-        * @param parentNodePathRev Собранный наколенке reverse-путь до родительского элемента.
-        * @return Отрендеренный VdomNode.
-        */
-      def _renderTreeNodeIndexed(
-                                  subTreeOrig             : Tree[MNodeState],
-                                  subTreeIndexed          : Tree[(MNodeState, Int)],
-                                  parentNodePathRev       : NodePath_t,
-                                  isAdvMode               : Boolean,
-                                ): VdomNode = {
-        val (mns, i) = subTreeIndexed.rootLabel
-        val nodePathRev: NodePath_t = i :: parentNodePathRev
-        val origSubForest = subTreeOrig.subForest
-
-        val chsRendered = subTreeIndexed.subForest
-          // Проходим оба subForest одновременно, чтобы иметь на руках сразу индексированное дерево, и неизменный указатель на оригинал.
-          .zip( origSubForest )
-          .map { case (chTreeIndexed, chTreeOrig) =>
-            _renderTreeNodeIndexed(
-              subTreeIndexed      = chTreeIndexed,
-              parentNodePathRev   = nodePathRev,
-              subTreeOrig         = chTreeOrig,
-              isAdvMode           = isAdvMode,
-            )
-          }
-          .iterator
-          .toVdomArray
-
-        // Рендер всякого разного
-        mns.role match {
-
-          // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
-          case MTreeRoles.Root =>
-            chsRendered
-
-          // Обычный узел - рендерим через NodeR()
-          case _ =>
-            // Рендер treeItem'а:
-            val mnsr = MNodeStateRender(
-              state = mns,
-              rawNodePathRev = nodePathRev,
-            )
-
-            p.wrap { mroot =>
-              nodeR.PropsVal(
-                node          = mnsr,
-                advMode       = isAdvMode,
-                opened        = mroot.tree.tree.opened,
-                chs           = origSubForest,
-                bcnCache      = mroot.tree.beacons.cacheMap,
-              )
-            } (
-              nodeR.component
-                .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
-            )
-
-        }
-      }
-
       <.div(
         ^.`class` := Css.flat(Css.Table.TABLE, Css.Table.Width.XL),
 
@@ -122,7 +60,74 @@ class TreeR(
         s.root4nodeC { mrootProxy =>
           val mroot = mrootProxy.value
           val isAdvMode = mroot.conf.adIdOpt.nonEmpty
-          val nodesPot = mroot.tree.tree.nodes
+
+          /** Функция рекурсивного рендер всего дерева узлов.
+            *
+            * @param subTreeOrig Оригинальное поддерево из circuit-состояния с поддержкой целостности указателей.
+            * @param subTreeIndexed Только что проиндексированное дерево.
+            * @param parentNodePathRev Собранный наколенке reverse-путь до родительского элемента.
+            * @return Отрендеренный VdomNode.
+            */
+          def _renderTreeNodeIndexed(
+                                      subTreeOrig             : Tree[String],
+                                      subTreeIndexed          : Tree[(String, Int)],
+                                      parentNodePathRev       : NodePath_t,
+                                      isAdvMode               : Boolean,
+                                    ): VdomNode = {
+            val (treeId, i) = subTreeIndexed.rootLabel
+
+            val nodePathRev: NodePath_t = i :: parentNodePathRev
+            val origSubForest = subTreeOrig.subForest
+
+            val chsRendered = subTreeIndexed
+              .subForest
+              // Проходим оба subForest одновременно, чтобы иметь на руках сразу индексированное дерево, и неизменный указатель на оригинал.
+              .zip( origSubForest )
+              .map { case (chTreeIndexed, chTreeOrig) =>
+                _renderTreeNodeIndexed(
+                  subTreeIndexed      = chTreeIndexed,
+                  parentNodePathRev   = nodePathRev,
+                  subTreeOrig         = chTreeOrig,
+                  isAdvMode           = isAdvMode,
+                )
+              }
+              .iterator
+              .toVdomArray
+
+            val mns = mroot.tree.tree.nodesMap( treeId )
+
+            // Рендер всякого разного
+            mns.role match {
+
+              // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
+              case MTreeRoles.Root =>
+                chsRendered
+
+              // Обычный узел - рендерим через NodeR()
+              case _ =>
+                // Рендер treeItem'а:
+                val mnsr = MNodeStateRender(
+                  state = mns,
+                  rawNodePathRev = nodePathRev,
+                )
+
+                p.wrap { mroot =>
+                  nodeR.PropsVal(
+                    node          = mnsr,
+                    advMode       = isAdvMode,
+                    opened        = mroot.tree.tree.opened,
+                    chs           = origSubForest,
+                    nodesMap      = mroot.tree.tree.nodesMap,
+                  )
+                } (
+                  nodeR.component
+                    .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
+                )
+
+            }
+          }
+
+          val nodesPot = mroot.tree.tree.idsTree
 
           React.Fragment(
 
@@ -225,8 +230,9 @@ class TreeR(
     .initialStateFromProps { propsProxy =>
       State(
         root4nodeC = propsProxy.connect(identity(_))( FastEqUtil[MLkNodesRoot] { (a, b) =>
-          (a.tree.tree.nodes ===* b.tree.tree.nodes) &&
           (a.tree.tree.opened ===* b.tree.tree.opened) &&
+          (a.tree.tree.nodesMap ===* b.tree.tree.nodesMap) &&
+          (a.tree.tree.idsTree ===* b.tree.tree.idsTree) &&
           (a.conf.adIdOpt ===* b.conf.adIdOpt)
         }),
       )

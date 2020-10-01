@@ -41,13 +41,14 @@ class NodeR(
     *
     * @param node Голова этого под-дерева.
     * @param chs Нединамический указатель на список под-узлов, пробрасываемый в SubNodesR().
+    * @param nodesMap Карта данных по узлам.
     */
   case class PropsVal(
                        node               : MNodeStateRender,
                        opened             : Option[NodePath_t],
                        advMode            : Boolean,
-                       chs                : EphemeralStream[Tree[MNodeState]],
-                       bcnCache           : Map[String, MBeaconCachedEntry],
+                       chs                : EphemeralStream[Tree[String]],
+                       nodesMap           : Map[String, MNodeState],
                      )
 
   implicit val NodeRPropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
@@ -55,7 +56,7 @@ class NodeR(
     (a.opened ===* b.opened) &&
     (a.advMode ==* b.advMode) &&
     (a.chs ===* b.chs) &&
-    (a.bcnCache ===* b.bcnCache)
+    (a.nodesMap ===* b.nodesMap)
   }
 
 
@@ -83,10 +84,6 @@ class NodeR(
       val pns = p.node.state
 
       val infoPot = pns.infoPot
-        .orElse {
-          // Найти в кэше маячков ответ сервера:
-          Pot.fromOption( pns.bcnInfoFromCache( p.bcnCache ) )
-        }
       val infoOpt = infoPot.toOption
 
       // Контейнер узла узла + дочерних узлов.
@@ -98,7 +95,6 @@ class NodeR(
             isAdv       = p.advMode,
             chs         = p.chs,
             asList      = true,
-            beaconCache = p.bcnCache,
           )
         }( nodeHeaderR.component.apply )
 
@@ -122,13 +118,6 @@ class NodeR(
             // Размещение карточки в узлах: Все галочки сокрыты, если главная галочка размещения выключена
             case true =>
               pns.advHasAdvPot
-                .toOption
-                .orElse(
-                  pns
-                    .bcnInfoFromCache(p.bcnCache)
-                    .flatMap(_.adv)
-                    .map(_.hasAdv)
-                )
                 .contains[Boolean]( true )
           })
         ) {
@@ -193,6 +182,7 @@ class NodeR(
                     subNodesR.PropsVal(
                       subNodes = p.chs,
                       rawNodePathRev = p.node.rawNodePathRev,
+                      nodesMap = p.nodesMap,
                     )
                   )
                   subNodesR.component( z2 )
@@ -208,7 +198,7 @@ class NodeR(
                   propsProxy.resetZoom(
                     nodeAdvRowR.PropsVal(
                       flag      = pns.advAlwaysOpenedPot
-                        .orElse( infoPot.flatMap{ m => Pot.fromOption(m.adv.map(_.advShowOpened)) }),
+                        .orElse( infoPot.flatMap { m => Pot.fromOption(m.adv.map(_.advShowOpened)) }),
                       msgCode   = MsgCodes.`Show.ad.opened`,
                       onChange  = AdvShowOpenedChange(p.node.nodePath, _),
                     )
@@ -220,7 +210,7 @@ class NodeR(
                   propsProxy.resetZoom(
                     nodeAdvRowR.PropsVal(
                       flag      = pns.advAlwaysOutlinedPot
-                        .orElse( infoPot.flatMap{ m => Pot.fromOption(m.adv.map(_.alwaysOutlined)) }),
+                        .orElse( infoPot.flatMap { m => Pot.fromOption(m.adv.map(_.alwaysOutlined)) }),
                       msgCode   = MsgCodes.`Always.outlined`,
                       onChange  = AlwaysOutlinedSet(p.node.nodePath, _),
                     )
@@ -236,7 +226,6 @@ class NodeR(
                 beaconInfoR.PropsVal(
                   nodeState = pns,
                   isAdvMode = p.advMode,
-                  bcnCache  = p.bcnCache,
                   infoOpt   = infoOpt,
                 )
               }

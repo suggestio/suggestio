@@ -36,7 +36,8 @@ class LknPopupsR(
         propsProxy.wrap { mroot =>
           createNodeR.PropsVal(
             create = mroot.popups.createNodeS,
-            tree   = mroot.tree.tree.nodes,
+            tree   = mroot.tree.tree.idsTree,
+            nodesMap = mroot.tree.tree.nodesMap,
           )
         }( createNodeR.component.apply ),
 

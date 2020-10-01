@@ -61,8 +61,7 @@ class NameEditAh[M](
         // Первый for -- это эмуляция if, чтобы не плодить ненужное ветвление в коде:
         _ <- OptionUtil.SomeBool.orNone( v0.isEmpty )
         currNode <- currNodeRO.value
-        infoOpt = currNode.infoOrCached( beaconsRO.value.cacheMap )
-        info <- infoOpt
+        info <- currNode.infoPot.toOption
       } yield {
         // Раскрыть диалог:
         val v2 = Some( MEditNodeState(

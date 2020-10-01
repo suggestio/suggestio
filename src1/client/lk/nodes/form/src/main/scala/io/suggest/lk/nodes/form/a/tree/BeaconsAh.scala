@@ -3,15 +3,16 @@ package io.suggest.lk.nodes.form.a.tree
 import diode._
 import diode.data.Pot
 import io.suggest.ble.BeaconDetected
-import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknConf}
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknConf, MLknNode}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.primo.Keep
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
-import scalaz.Tree
+import scalaz.{Tree, TreeLoc}
 
 import scala.collection.immutable.HashMap
 import scala.util.Success
@@ -36,11 +37,12 @@ class BeaconsAh[M](
     case m: BeaconsDetected =>
       val v0 = value
 
-      val tree0 = v0.tree
-        .nodesOpt
+      val rootTreeId = MTreeRoles.Root.treeId
+      val tree0: Tree[String] = v0.tree
+        .idsTreeOpt
         .getOrElse {
           Tree.Leaf(
-            root   = MNodeState.mkRoot,
+            root   = rootTreeId,
           )
         }
 
@@ -48,104 +50,113 @@ class BeaconsAh[M](
       val loc0 = tree0.loc
 
       // Найти текущую группу маячков в дереве:
+      val bcnGroupId = MTreeRoles.BeaconsDetected.treeId
       val bcnsGroupLocOpt0 = loc0
-        .findChild( _.rootLabel.role ==* MTreeRoles.BeaconsDetected )
+        .findChild( _.rootLabel ==* bcnGroupId )
 
       // Дополнить группу маячков свеже-полученными данными:
-      val (bcnsGroupLoc1, haveBcnIds) = bcnsGroupLocOpt0.fold {
-        // Пока нет подсписка с маячками. Добавить в начало общего дерева:
-        val bcnsSubTreeEmpty = Tree.Leaf(
-          root = MNodeState(
+      val (bcnsGroupLoc1, nodesAppend1, haveBcnIds) = bcnsGroupLocOpt0
+        .fold [(TreeLoc[String], HashMap[String, MNodeState], Set[String])] {
+          // Пока нет подсписка с маячками. Добавить в начало общего дерева:
+          val bcnsSubTreeEmpty = Tree.Leaf(
+            root = bcnGroupId,
+          )
+          val mns2 = MNodeState(
             role = MTreeRoles.BeaconsDetected,
-          ),
-        )
-        val loc1 = loc0.insertDownFirst( bcnsSubTreeEmpty )
-        loc1 -> Set.empty[String]
+          )
+          val nodesAppend = HashMap.empty + (bcnGroupId -> mns2)
+          val loc1 = loc0.insertDownFirst( bcnsSubTreeEmpty )
+          (loc1, nodesAppend, Set.empty[String])
 
-      } { bcnsGroupLoc0 =>
-        // Нужно пройти текущую группу, обновив инфу в уже отрендеренных маячках.
-        lazy val bcnSignalNow = BeaconDetected.seenNowMs()
-        val subForest2 = bcnsGroupLoc0
-          .tree
-          .subForest
-          // Форсируем без lazy, чтобы выкинуть из памяти старые инстасы MBeaconSignal.
-          .iterator
-          .map { bcnTree0 =>
-            val mns0 = bcnTree0.rootLabel
-            val nodeIdOpt = mns0.nodeId
-            (for {
-              nodeId <- nodeIdOpt
-              bcnSignalOpt2 = m.beacons.get( nodeId )
-              bcnSignal2 <- bcnSignalOpt2 orElse mns0.beacon.map(_.data)
-            } yield {
-              val bcnState2 = MNodeBeaconState(
-                data      = bcnSignal2,
-                isVisible = bcnSignalOpt2.nonEmpty || bcnSignal2.detect.isStillVisibleNow( bcnSignalNow ),
-              )
-              val bcnSubForest = bcnTree0.subForest
-              val bcnLabel2 = ( MNodeState.beacon set Some(bcnState2) )( bcnTree0.rootLabel )
-              Tree.Node( bcnLabel2, bcnSubForest ) -> nodeIdOpt
-            })
-              .getOrElse( bcnTree0 -> None )
-          }
-          .toList
+        } { bcnsGroupLoc0 =>
+          // Нужно пройти текущую группу, обновив инфу в уже отрендеренных маячках.
+          lazy val bcnSignalNow = BeaconDetected.seenNowMs()
 
-        val rootLbl = bcnsGroupLoc0.getLabel
-        val loc1 = bcnsGroupLoc0.setTree {
-          Tree.Node( rootLbl, subForest2.map(_._1).toEphemeralStream )
+          val nodesAppend2 = (for {
+            treeKeySubtree0 <- bcnsGroupLoc0
+              .tree
+              .subForest
+              // Форсируем без lazy, чтобы выкинуть из памяти старые инстасы MBeaconSignal.
+              .iterator
+            treeKey = treeKeySubtree0.rootLabel
+            mns0 <- v0.tree.nodesMap.get( treeKey )
+            nodeIdOpt = mns0.nodeId
+            nodeId <- nodeIdOpt
+            bcnSignalOpt2 = m.beacons.get( nodeId )
+            bcnSignal2 <- bcnSignalOpt2 orElse mns0.beacon.map(_.data)
+            bcnState2 = MNodeBeaconState(
+              data      = bcnSignal2,
+              isVisible = bcnSignalOpt2.nonEmpty || bcnSignal2.detect.isStillVisibleNow( bcnSignalNow ),
+            )
+            mns2 = (MNodeState.beacon set Some(bcnState2))(mns0)
+          } yield {
+            treeKey -> mns2
+          })
+            .to( HashMap )
+
+          // Собираем id уже пройденных маячков:
+          (bcnsGroupLoc0, nodesAppend2, nodesAppend2.keySet)
         }
 
-        // Собираем id уже пройденных маячков:
-        val existingBcnIds = subForest2
-          .iterator
-          .flatMap(_._2)
-          .toSet
+      // Нужно определить НОВЫЕ маячки, которых нет в исходном дереве.
+      val appendBcns = if (haveBcnIds.isEmpty)
+        m.beacons
+      else
+        m.beacons
+          .view
+          .filterKeys( !haveBcnIds.contains(_) )
+          .toMap
 
-        loc1 -> existingBcnIds
+      // Сборка обновлённой карты данных по узлам:
+      val nodesAppend2: HashMap[String, MNodeState] = if (appendBcns.isEmpty) {
+        nodesAppend1
+      } else {
+        nodesAppend1.merged[MNodeState](
+          appendBcns
+            .view
+            .mapValues { bcnSignal =>
+              MNodeState(
+                role = MTreeRoles.BeaconSignal,
+                beacon = Some( MNodeBeaconState(bcnSignal) ),
+                // Порыться в кэше на предмет серверной инфы по маячку:
+                infoPot = bcnSignal.detect.signal.beaconUid
+                  .flatMap( v0.tree.nodesMap.get )
+                  .fold( Pot.empty[MLknNode] )( _.infoPot ),
+              )
+            }
+            .to( HashMap )
+        )( Keep.right )
       }
 
-      // Нужно определить новые маячки, добавив их в хвост subForest.
-      val appendBcns =
-        if (haveBcnIds.isEmpty) m.beacons
-        else m.beacons.filterKeys( !haveBcnIds.contains(_) )
-
-
+      // Собрать обновлённый location для дерева узлов:
       val bcnsGroupLoc2 = if (appendBcns.isEmpty) {
         // Не требуется добавлять новых маячков в список:
         bcnsGroupLoc1
-
       } else {
         // Добавляем неизвестные ранее маячки в список:
         val tree1 = Tree.Node(
           root = bcnsGroupLoc1.getLabel,
           forest = bcnsGroupLoc1.tree.subForest ++ appendBcns
-            .valuesIterator
-            .map { bcnSignal =>
-              Tree.Leaf {
-                MNodeState(
-                  role = MTreeRoles.BeaconSignal,
-                  beacon = Some( MNodeBeaconState(bcnSignal) ),
-                  // Порыться в кэше на предмет серверной инфы по маячку:
-                  infoPot = Pot.fromOption {
-                    bcnSignal.detect.signal.beaconUid
-                      .flatMap( v0.beacons.cacheMap.get )
-                      .flatMap( _.nodeScanResp )
-                  },
-                )
-              }
-            }
-            .to( LazyList )
-            .toEphemeralStream,
+            .keySet
+            .toEphemeralStream
+            .map( Tree.Leaf(_) ),
         )
         bcnsGroupLoc1.setTree( tree1 )
       }
 
-      var modStateF = MTreeOuter.tree.modify {
-        MTree.setNodes( bcnsGroupLoc2.toTree )
-      }
+      var modTreeF = MTree.setNodes( bcnsGroupLoc2.toTree )
+
+      var nodesMap2 = v0.tree.nodesMap
+      if (v0.tree.idsTreeOpt.isEmpty || !(nodesMap2 contains rootTreeId))
+        nodesMap2 += (rootTreeId -> MNodeState.mkRootNode)
+      if (nodesAppend2.nonEmpty)
+        nodesMap2 = nodesMap2.merged( nodesAppend2 )(Keep.right)
+      if (nodesMap2 !===* v0.tree.nodesMap)
+        modTreeF = modTreeF andThen (MTree.nodesMap set nodesMap2)
+
+      var modTreeOuterF = MTreeOuter.tree.modify( modTreeF )
 
       // TODO Если исчез opened-маячок, то обновить opened на валидное значение.
-      // TODO Что делать, если одновременно исчезли все маячки? Удалять группу маячков из списка? Или просто сворачивать её?
 
       var fxAcc = List.empty[Effect]
 
@@ -153,12 +164,21 @@ class BeaconsAh[M](
         // Если есть маячки для запроса с сервера, то запросить инфу по ним.
         val unknownBcnIds = (for {
           bcnTree <- bcnsGroupLoc2.tree.subForest.iterator
-          mns = bcnTree.rootLabel
-          if mns.infoPot.isEmpty
-          beaconState <- mns.beacon
-          beaconUid <- beaconState.data.detect.signal.beaconUid
+          nodeId = bcnTree.rootLabel
+          mnsOpt = nodesMap2.get(nodeId)
+          if mnsOpt.fold(true) { mns =>
+            mns.infoPot.isEmpty &&
+            !mns.infoPot.isUnavailable
+          }
         } yield {
-          beaconUid
+          (for {
+            mns <- mnsOpt
+            beacon <- mns.beacon
+            bUid <- beacon.data.detect.signal.beaconUid
+          } yield {
+            bUid
+          })
+            .getOrElse( nodeId )
         })
           .toSet
 
@@ -181,14 +201,14 @@ class BeaconsAh[M](
           }
           fxAcc ::= scanReqFx
 
-          modStateF = modStateF andThen MTreeOuter.beacons
+          modTreeOuterF = modTreeOuterF andThen MTreeOuter.beacons
             .composeLens( MBeaconScan.scanReq )
             .modify( _.pending() )
         }
       }
 
       // Сохранить обновлённое состояние:
-      val v2 = modStateF(v0)
+      val v2 = modTreeOuterF(v0)
       ah.updatedMaybeEffect(v2, fxAcc.mergeEffects)
 
 
@@ -209,32 +229,44 @@ class BeaconsAh[M](
         // Ответ получен - разобраться.
         {resp =>
           // Найденные маячки:
-          val now = System.currentTimeMillis()
           var cachedMapAppend = resp.subTree
             .subForest
             .map { nodeResp =>
               val lknNode = nodeResp.rootLabel
-              val cacheEntry = MBeaconCachedEntry(
-                nodeScanResp = Some( lknNode ),
-                fetchedAtMs = now,
-              )
-              lknNode.id -> cacheEntry
+              val mns2 = v0.tree
+                .nodesMap
+                .get( lknNode.id )
+                .fold {
+                  MNodeState(
+                    infoPot   = Pot.empty.ready( lknNode ),
+                    role      = MTreeRoles.BeaconSignal,
+                  )
+                } {
+                  MNodeState.infoPot.modify(_.ready(lknNode))
+                }
+              lknNode.id -> mns2
             }
             // Собираем промежуточную карту, т.к. keySet нужен на следующем шаге:
             .iterator
             .to( HashMap )
 
           // Определить НЕнайденные на сервере маячки, чтобы инфу о них тоже закэшировать:
-          val notFoundBcnIds = m.reqArgs.beaconUids diff cachedMapAppend.keySet
+          val notFoundBcnIds = m.reqArgs.beaconUids -- cachedMapAppend.keySet
           if (notFoundBcnIds.nonEmpty) {
-            val notFoundValue = MBeaconCachedEntry(
-              fetchedAtMs = now,
-            )
             val notFoundMap = (for {
               notFoundBcnId <- notFoundBcnIds.iterator
             } yield {
+              val mns2 = v0.tree
+                .nodesMap
+                .get( notFoundBcnId )
+                .getOrElse {
+                  MNodeState(
+                    infoPot = Pot.empty.unavailable(),
+                    role = MTreeRoles.BeaconSignal,
+                  )
+                }
               // Есть неизвестные для сервера маячки. Закэшировать:
-              notFoundBcnId -> notFoundValue
+              notFoundBcnId -> mns2
             })
               .to( HashMap )
 
@@ -242,9 +274,13 @@ class BeaconsAh[M](
           }
 
           // Залить новую карту маячков в состояние:
-          val v2 = MTreeOuter.beacons.modify(
-            MBeaconScan.cacheMap.modify( _.merged(cachedMapAppend)(Keep.right) ) andThen
-            MBeaconScan.scanReq.modify(_.ready(resp))
+          val v2 = (
+            MTreeOuter.tree
+              .composeLens( MTree.nodesMap )
+              .modify( _.merged(cachedMapAppend)(Keep.right) ) andThen
+            MTreeOuter.beacons
+              .composeLens( MBeaconScan.scanReq )
+              .modify(_.ready(resp))
           )(v0)
 
           updated(v2)
@@ -258,13 +294,16 @@ class BeaconsAh[M](
         nodeId <- m.nodeIdOpt
         nodeUpdatedOpt <- m.nodeUpdated.toOption
         v0 = value
-        cachedEntry0 <- v0.beacons.cacheMap.get( nodeId )
+        mns0 <- v0.tree.nodesMap.get( nodeId )
       } yield {
         // Заменить beacon в карте кэша на полученный ответ сервера.
-        val cachedEntry2 = (MBeaconCachedEntry.nodeScanResp set nodeUpdatedOpt)( cachedEntry0 )
-        val v2 = MTreeOuter.beacons
-          .composeLens( MBeaconScan.cacheMap )
-          .modify(_ + (nodeId -> cachedEntry2))(v0)
+        val cachedEntry2 = MNodeState.infoPot
+          .set( Pot.fromOption(nodeUpdatedOpt) )(mns0)
+        val v2 = MTreeOuter.tree
+          .composeLens( MTree.nodesMap )
+          .modify { nodesMap0 =>
+            nodesMap0 + (nodeId -> cachedEntry2)
+          }(v0)
         updated(v2)
       })
         .getOrElse( noChange )
