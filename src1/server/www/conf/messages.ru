@@ -1155,5 +1155,5 @@ Logout.account=Выйти из учётной записи
 Are.you.sure.to.logout.account=Вы уверены, что хотите выйти из учётной записи?
 
 Mode=Режим
-Current.ad.adv.management=Управление размещение текущей карточки
+Current.ad.adv.management=Управление размещением текущей карточки
 

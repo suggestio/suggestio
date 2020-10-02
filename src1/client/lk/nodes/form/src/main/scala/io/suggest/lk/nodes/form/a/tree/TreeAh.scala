@@ -23,7 +23,7 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.spa.DoNothing
 
 import scala.collection.immutable.HashMap
-import scala.util.Success
+import scala.util.{Success, Try}
 
 /**
   * Suggest.io
@@ -690,43 +690,41 @@ class TreeAh[M](
 
       } else {
         // Ответ сервера на инициализацию
-        val v2 = m.treePot.toTry.fold [MTree] (
+        m.treePot.toTry.fold(
           {ex =>
-            MTree.idsTree.modify( _.fail(ex) )(v0)
+            logger.error( ErrorMsgs.INIT_FLOW_UNEXPECTED, ex, m )
+            val v2 = MTree.idsTree.modify( _.fail(ex) )(v0)
+            updated(v2)
           },
           {resp =>
             val rootNodeId = MTreeRoles.Root.treeId
 
-            // Залить начальное дерево:
-            val subTree2 = Tree.Node[String](
-              root   = rootNodeId,
-              forest = {
-                val appendedTree = EphemeralStream.cons(
-                  MNodeState.respTreeToIdsTree( resp.subTree ),
-                  EphemeralStream.emptyEphemeralStream
-                )
+            val appendedTree = EphemeralStream.cons(
+              MNodeState.respTreeToIdsTree( resp.subTree ),
+              EphemeralStream.emptyEphemeralStream
+            )
 
-                // Предыдущее дерево: берём из текущего (как бы пустого) состояния, т.к. там могут быть результаты BeaconsDetected:
-                v0.idsTree
-                  .toOption
-                  .map { nodesTree0 =>
-                    // Удалить из старого дерева узлы текущего юзера, если они там были
-                    def findF(idsTree: Tree[String]): Boolean = {
-                      v0.nodesMap
-                        .get( idsTree.rootLabel )
-                        .exists( _.role ==* MTreeRoles.Normal )
-                    }
-
-                    val subForest0 = nodesTree0.subForest
-
-                    if (subForest0.iterator exists findF)
-                      subForest0.filter( !findF(_) )
-                    else
-                      subForest0
-                  }
-                  .filterNot( _.isEmpty )
-                  .fold( appendedTree )( _ ++ appendedTree )
+            val rootSubForestKeepOpt = v0.idsTree
+              .toOption
+              .map { idsTree0 =>
+                // Нелениво взять из старого леса только возможную подгруппу видимых маячков:
+                val bcnsGroupId = MTreeRoles.BeaconsDetected.treeId
+                idsTree0
+                  .subForest
+                  .iterator
+                  .filter( _.rootLabel ==* bcnsGroupId )
+                  .toList
+                  .toEphemeralStream
               }
+              .filterNot( _.isEmpty )
+
+            val rootAndKeepSubForests = rootSubForestKeepOpt
+              .fold( appendedTree ) { _ ++ appendedTree }
+
+            // Залить начальное дерево:
+            val idsTree2 = Tree.Node[String](
+              root   = rootNodeId,
+              forest = rootAndKeepSubForests,
             )
 
             val appendNodes = resp.subTree
@@ -737,50 +735,66 @@ class TreeAh[M](
               .iterator
               .to( HashMap )
 
-            // Т.к. обновляем дерево, то какие id осталвяем в карте nodesMap?
-            val keepTreeIds = subTree2
-              .flatten
-              .iterator
-              .toSet
-
-            var nodesMap2 = v0.nodesMap
-            val rmTreeIds = v0.nodesMap.keySet -- keepTreeIds
-            if (rmTreeIds.nonEmpty)
-              nodesMap2 = nodesMap2 -- rmTreeIds
+            // Есть соблазн задействовать старую карту узлов, но изменение режима формы означает, что
+            // старая инфа об узлах неверна в новом режиме (не содержит корректных значений Adv или ADN-полей).
+            // Поэтому, начинаем с чистого листа, и недостающиую инфу по текущим видимым маячкам надо будет перезапросить с сервера:
+            var nodesMap2 = v0.nodesMap.empty +
+              (rootNodeId -> v0.nodesMap.getOrElse(rootNodeId, MNodeState.mkRootNode))
+            // Промигрировать другие нужные узлы из старой карты:
+            for {
+              keepedTreeIds <- rootSubForestKeepOpt
+              keepedTreeIdTree <- keepedTreeIds.iterator
+              keepedTreeId <- keepedTreeIdTree.flatten.iterator
+              mns0 <- v0.nodesMap.get( keepedTreeId )
+            } {
+              // Выставить отрицательный pending, чтобы в BeaconsAh обнаружилась необходимость перекачать инфу по маячку:
+              val mns2 = if (mns0.role ==* MTreeRoles.BeaconSignal)
+                MNodeState.infoPot.modify( _.pending(BeaconsAh.PENDING_VALUE_NEED_REGET) )(mns0)
+              else
+                mns0
+              nodesMap2 = nodesMap2 + (keepedTreeId -> mns2)
+            }
+            // Добавить в карту узлы с сервера:
             if (appendNodes.nonEmpty)
               nodesMap2 = nodesMap2.merged( appendNodes )(Keep.right)
-            if (!(nodesMap2 contains rootNodeId))
-              nodesMap2 = nodesMap2 + (rootNodeId -> MNodeState.mkRootNode)
 
-            var v1 = (
-              MTree.setNodes( subTree2 ) andThen
+            val v1 = (
+              MTree.setNodes( idsTree2 ) andThen
               MTree.nodesMap.set( nodesMap2 )
             )(v0)
 
+            // После очистки могли появиться неизвестные видимые bluetooth-маячки, и нужно подумать над организацией beacon-scan-запроса на сервер:
+            val bcnScanFx = BeaconsDetected( Map.empty ).toEffectPure
+
             // opened: надо по возможности выставить в текущее значение (если оно актуально),
             // либо в conf.nodeId, либо в корневой узел, если он есть.
-            v1.openedLoc
+            val v2 = v1
+              .openedLoc
               // TODO Если loc пустой, попытаться максимально приблизится к нему.
               //      Понадобится при перезагрузке дерева, когда глубокие под-узлы могут быть недоступны.
               .fold {
                 // Текущий путь не актуален после сброса дерева: возможно, conf.nodeId содержит искомый узел.
                 (for {
                   confNodeId <- confRO.value.onNodeId
-                  loc0 <- subTree2
-                    .loc
-                    .map( nodesMap2.apply )
-                    .find { loc =>
-                      loc
-                        .getLabel
-                        .infoPot
-                        .exists(_.id ==* confNodeId)
-                    }
+                  loc0 <- Try {
+                    idsTree2
+                      .loc
+                      .map( nodesMap2.apply )
+                      .find { loc =>
+                        loc
+                          .getLabel
+                          .infoPot
+                          .exists(_.id ==* confNodeId)
+                      }
+                  }
+                    .toOption
+                    .flatten
                 } yield {
                   MTree.opened set Some(loc0.toNodePath)
                 })
                   .orElse {
                     // Выбрать корневой узел.
-                    val modF = MTree.opened set Some(subTree2.loc.toNodePath)
+                    val modF = MTree.opened set Some(idsTree2.loc.toNodePath)
                     Some(modF)
                   }
                   .orElse {
@@ -792,9 +806,10 @@ class TreeAh[M](
                   // Вернуть MTree
                   .fold(v1)( _(v1) )
               }(_ => v1)   // Оставить текущее значение opened, если opened-локация работает.
+
+            updated( v2, bcnScanFx )
           }
         )
-        updated(v2)
       }
 
   }

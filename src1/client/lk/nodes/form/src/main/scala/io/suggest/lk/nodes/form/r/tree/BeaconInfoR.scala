@@ -64,29 +64,14 @@ class BeaconInfoR(
           // Расстояние до маячка:
           distanceCmR.component( propsProxy.resetZoom( bcnState ) ),
 
-          // Инфа по маячку от сервера.
-          if (s.nodeState.infoPot.isPending) {
+          ReactCommonUtil.maybeNode( s.nodeState.infoPot.isPending ) {
             MuiListItem()(
               treeStuffR.LineProgress()
             )
+          },
 
-          } else if (s.nodeState.infoPot.isUnavailable) {
-            // Отмеченный недоступностью узел намекает, что есть какое-то препятствие для получения информации с сервера.
-            // Например, незалогиенность юзера в случае, когда форма отрендерена внутри выдачи.
-            MuiListItem()(
-              MuiListItemIcon()(
-                Mui.SvgIcons.Warning()(),
-              ),
-              if (nodesDiConf.isUserLoggedIn()) {
-                MuiListItemText()(
-                  crCtxP.message( MsgCodes.`Something.gone.wrong` )
-                )
-              } else {
-                nodesDiConf.needLogInVdom()
-              },
-            )
-
-          } else (for {
+          // Инфа по маячку от сервера.
+          (for {
             bcnUid <- bcnState.data.detect.signal.beaconUid
             if s.infoOpt
               // TODO Вернуть exists(), когда будут запросы на сервер за данными по видимым маячкам.

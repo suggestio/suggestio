@@ -287,9 +287,7 @@ final class LkNodesApiHttpImpl(
             // Короткий таймаут, т.к. данные скана могут слишком сильно устареть в ожидании ответа.
             timeoutMs = Some( 5000 ),
             cache = MHttpCacheInfo(
-              // Кэш для дедубликации одинаковых запросов.
-              // Network-запрос следует делать всегда, т.к. изменение на сервере должно рано или поздно появляться и на экране устройства.
-              policy = MHttpCachingPolicies.Fastest,
+              policy = MHttpCachingPolicies.NetworkFirst,
             ),
           ),
         )

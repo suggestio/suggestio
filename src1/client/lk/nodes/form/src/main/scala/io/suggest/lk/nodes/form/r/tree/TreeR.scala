@@ -1,15 +1,17 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiPaper, MuiProgressVariants, MuiTreeView, MuiTreeViewProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiPaper, MuiProgressVariants, MuiTreeItem, MuiTreeItemProps, MuiTreeView, MuiTreeViewProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react._
 import diode.react.ReactPot._
-import io.suggest.common.html.HtmlConstants.`.`
+import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.Implicits._
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.FastEqUtil
@@ -35,7 +37,9 @@ import js.JSConverters._
 class TreeR(
              nodeR                : NodeR,
              crCtxP               : React.Context[MCommonReactCtx],
-           ) {
+           )
+  extends Log
+{
 
   type Props = ModelProxy[MLkNodesRoot]
 
@@ -94,37 +98,58 @@ class TreeR(
               .iterator
               .toVdomArray
 
-            val mns = mroot.tree.tree.nodesMap( treeId )
-
-            // Рендер всякого разного
-            mns.role match {
-
-              // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
-              case MTreeRoles.Root =>
-                chsRendered
-
-              // Обычный узел - рендерим через NodeR()
-              case _ =>
-                // Рендер treeItem'а:
-                val mnsr = MNodeStateRender(
-                  state = mns,
-                  rawNodePathRev = nodePathRev,
+            mroot.tree.tree.nodesMap
+              .get( treeId )
+              .fold[VdomNode] {
+                // Внутренняя ошибка: дерево id не соответствует карте состояний, и какой-то объявленный узел отсутствует.
+                logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = (treeId, mroot.tree.tree.nodesMap.keySet) )
+                MuiTreeItem(
+                  new MuiTreeItemProps {
+                    override val nodeId = treeId
+                  }
+                )(
+                  MuiTypoGraphy(
+                    new MuiTypoGraphyProps {
+                      override val color = MuiTypoGraphyColors.error
+                    }
+                  )(
+                    crCtxP.message( MsgCodes.`Error` ),
+                    SPACE,
+                    DIEZ, treeId,
+                  ),
+                  chsRendered,
                 )
+              } { mns =>
+                // Рендер подветви дерева:
+                mns.role match {
 
-                p.wrap { mroot =>
-                  nodeR.PropsVal(
-                    node          = mnsr,
-                    advMode       = isAdvMode,
-                    opened        = mroot.tree.tree.opened,
-                    chs           = origSubForest,
-                    nodesMap      = mroot.tree.tree.nodesMap,
-                  )
-                } (
-                  nodeR.component
-                    .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
-                )
+                  // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
+                  case MTreeRoles.Root =>
+                    chsRendered
 
-            }
+                  // Обычный узел - рендерим через NodeR()
+                  case _ =>
+                    // Рендер treeItem'а:
+                    val mnsr = MNodeStateRender(
+                      state = mns,
+                      rawNodePathRev = nodePathRev,
+                    )
+
+                    p.wrap { mroot =>
+                      nodeR.PropsVal(
+                        node          = mnsr,
+                        advMode       = isAdvMode,
+                        opened        = mroot.tree.tree.opened,
+                        chs           = origSubForest,
+                        nodesMap      = mroot.tree.tree.nodesMap,
+                      )
+                    } (
+                      nodeR.component
+                        .withKey( nodePathRev.mkString(`.`) )(_)( chsRendered )
+                    )
+
+                }
+              }
           }
 
           val nodesPot = mroot.tree.tree.idsTree

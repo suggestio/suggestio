@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiMenuItem, MuiMenuItemProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -14,9 +14,7 @@ import io.suggest.sc.m.{MScRoot, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js.UndefOr
+import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
 
 /**
   * Suggest.io
@@ -53,43 +51,58 @@ class ScNodesR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesModeChanged(nextMode) )
     }
 
-    def render(s: State): VdomElement = {
-      s.circuitOptC { circuitOptProxy =>
-        val platCss = platfromCss()
+    def render(propsProxy: Props, s: State): VdomElement = {
+      crCtxP.consume { crCtx =>
+        s.circuitOptC { circuitOptProxy =>
+          val circuitOpt = circuitOptProxy.value
+          val platCss = platfromCss()
 
-        val circuitOpt = circuitOptProxy.value
+          val isNativeSelect = propsProxy.value.dev.platform.isCordova
+          val modeSelectProps = new MuiSelectProps {
+            override val native = isNativeSelect
+          }
 
-        val diaChildren = List[VdomNode](
+          val modeMsg = crCtx.messages( MsgCodes.`Mode` )
+          val nodesManagementMsg = crCtx.messages( MsgCodes.`Nodes.management` )
 
-          // Заголовок
-          platformComponents.diaTitle(Nil)(
-            {
-              val nodesManagementMsg = crCtxP.message( MsgCodes.`Nodes.management` )
+          // Сборка фунцкии, которая собирает один элемент селекта.
+          val __mkSelectOption = if (isNativeSelect) {
+            (_value: MLkNodesMode, _title: String) =>
+              <.option(
+                ^.value := _value.value,
+                _title,
+              ): VdomElement
+          } else {
+            (_value: MLkNodesMode, _title: String) =>
+              MuiMenuItem.component.apply(
+                new MuiMenuItemProps {
+                  override val value = _value.value
+                }
+              )(_title): VdomElement
+          }
+
+          val diaChildren = List[VdomNode](
+
+            // Заголовок
+            platformComponents.diaTitle(Nil)(
               s.haveFocusedAdAdminSomeC { haveFocusedAdAdminSomeProxy =>
                 val haveFocusedAdmin = haveFocusedAdAdminSomeProxy.value.value
                 if (!haveFocusedAdmin) {
                   // Нет сфокусированной карточки: просто рендерить обычный заголовок.
-                  nodesManagementMsg
+                  React.Fragment(
+                    nodesManagementMsg
+                  )
 
                 } else {
                   // Рендерим селект, где можно выбрать или управление узлами, или карточку.
                   // Пункт селекта обычного режима работы (управление узлами)
-                  val nodesManageItem = MuiMenuItem(
-                    new MuiMenuItemProps {
-                      override val value = MLkNodesModes.NodesManage.value
-                    }
-                  )(
-                    nodesManagementMsg,
-                  )
+                  val nodesManageItem = __mkSelectOption( MLkNodesModes.NodesManage, nodesManagementMsg )
 
                   // Пункт селекта для управления размещением карточки в узлах:
-                  val advInNodesItem = MuiMenuItem(
-                    new MuiMenuItemProps {
-                      override val value = MLkNodesModes.AdvInNodes.value
-                    }
-                  )(
-                    crCtxP.message( MsgCodes.`Current.ad.adv.management` ),
-                    // TODO Отрендерить тут миниатюру главного блока текущей карточки.
+                  // TODO Отрендерить внутри миниатюру главного блока текущей карточки, если ненативный select.
+                  val advInNodesItem = __mkSelectOption(
+                    MLkNodesModes.AdvInNodes,
+                    crCtx.messages( MsgCodes.`Current.ad.adv.management` )
                   )
 
                   // Непосредственно селект.
@@ -97,10 +110,11 @@ class ScNodesR(
                     MuiTextField(
                       new MuiTextFieldProps {
                         override val select = true
-                        override val label = crCtxP.message( MsgCodes.`Mode` ).rawNode
+                        override val label = modeMsg.rawNode
                         override val value = nodesModeProxy.value.value
                         override val fullWidth = true
                         override val onChange = _onModeChange
+                        override val SelectProps = modeSelectProps
                       }
                     )(
                       nodesManageItem,
@@ -108,52 +122,53 @@ class ScNodesR(
                     )
                   }
                 }
-              }
-            },
-          ),
+              },
+            ),
 
-          // Содержимое диалога.
-          MuiDialogContent()(
-            circuitOpt.whenDefinedEl { circuit =>
-              circuit.wrap(identity(_))( lkNodesFormR.component.apply )
-            },
-          ),
+            // Содержимое диалога.
+            MuiDialogContent()(
+              circuitOpt.whenDefinedEl { circuit =>
+                circuit.wrap(identity(_))( lkNodesFormR.component.apply )
+              },
+            ),
 
-          // Кнопки внизу.
-          MuiDialogActions(
-            platformComponents.diaActionsProps()(platCss)
-          )(
-            MuiButton(
-              new MuiButtonProps {
-                override val size = MuiButtonSizes.large
-                override val onClick = _onCloseClick
-              }
+            // Кнопки внизу.
+            MuiDialogActions(
+              platformComponents.diaActionsProps()(platCss)
             )(
-              crCtxP.message( MsgCodes.`Close` )
-            )
-          ),
-        )
+              MuiButton(
+                new MuiButtonProps {
+                  override val size = MuiButtonSizes.large
+                  override val onClick = _onCloseClick
+                }
+              )(
+                crCtx.messages( MsgCodes.`Close` )
+              )
+            ),
 
-        // Вложенный коннекшен допускается, т.к. обновление внешнего связано только с полным монтированием-демонтированием диалога.
-        scCssP.consume { scCss =>
-          s.isDiaFullScreenSomeC { isDiaFullScreenSomeProxy =>
-            val _isFullScreen = isDiaFullScreenSomeProxy.value.value
-            val _rootCssU = JsOptionUtil.maybeDefined( _isFullScreen )( scCss.Header.header.htmlClass )
-            MuiDialog {
-              val diaCss = new MuiDialogClasses {
-                override val paper = platCss.Dialogs.paper.htmlClass
-                // Если есть unsafe-зоны на экране, то нужен отступ сверху в fullscreen-режиме:
-                override val root = _rootCssU
-              }
-              new MuiDialogProps {
-                override val open = circuitOpt.nonEmpty
-                override val classes = diaCss
-                override val onClose = _onCloseClick
-                override val fullScreen = _isFullScreen
-              }
-            } (
-              diaChildren: _*
-            )
+          )
+
+          // Вложенный коннекшен допускается, т.к. обновление внешнего связано только с полным монтированием-демонтированием диалога.
+          scCssP.consume { scCss =>
+            s.isDiaFullScreenSomeC { isDiaFullScreenSomeProxy =>
+              val _isFullScreen = isDiaFullScreenSomeProxy.value.value
+              val _rootCssU = JsOptionUtil.maybeDefined( _isFullScreen )( scCss.Header.header.htmlClass )
+              MuiDialog {
+                val diaCss = new MuiDialogClasses {
+                  override val paper = platCss.Dialogs.paper.htmlClass
+                  // Если есть unsafe-зоны на экране, то нужен отступ сверху в fullscreen-режиме:
+                  override val root = _rootCssU
+                }
+                new MuiDialogProps {
+                  override val open = circuitOpt.nonEmpty
+                  override val classes = diaCss
+                  override val onClose = _onCloseClick
+                  override val fullScreen = _isFullScreen
+                }
+              } (
+                diaChildren: _*
+              )
+            }
           }
         }
       }

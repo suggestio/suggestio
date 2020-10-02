@@ -23,6 +23,10 @@ import scala.util.Success
   * Created: 11.09.2020 22:03
   * Description: Контроллер для работы с маячками.
   */
+object BeaconsAh {
+  final def PENDING_VALUE_NEED_REGET = -1L
+}
+
 class BeaconsAh[M](
                     modelRW     : ModelRW[M, MTreeOuter],
                     confRO      : ModelRO[MLknConf],
@@ -163,12 +167,22 @@ class BeaconsAh[M](
       if (!v0.beacons.scanReq.isPending) {
         // Если есть маячки для запроса с сервера, то запросить инфу по ним.
         val unknownBcnIds = (for {
-          bcnTree <- bcnsGroupLoc2.tree.subForest.iterator
-          nodeId = bcnTree.rootLabel
-          mnsOpt = nodesMap2.get(nodeId)
-          if mnsOpt.fold(true) { mns =>
-            mns.infoPot.isEmpty &&
-            !mns.infoPot.isUnavailable
+          bcnTree <- bcnsGroupLoc2
+            .tree
+            .subForest
+            .iterator
+          treeId = bcnTree.rootLabel
+          mnsOpt = nodesMap2.get( treeId )
+          if mnsOpt.fold {
+            // Нельзя запрашивать с сервера всякие виртуальные узлы или под-группы:
+            MTreeRoles
+              .withNameOption( treeId )
+              .isEmpty
+          } { mns =>
+            // Если необходимо получить инфу
+            (mns.infoPot.isEmpty && !mns.infoPot.isUnavailable) ||
+            // Или если выставлен маркер, что нужен reget...
+            (mns.infoPot isPendingWithStartTime BeaconsAh.PENDING_VALUE_NEED_REGET)
           }
         } yield {
           (for {
@@ -178,7 +192,11 @@ class BeaconsAh[M](
           } yield {
             bUid
           })
-            .getOrElse( nodeId )
+            .orElse {
+              mnsOpt
+                .flatMap( _.nodeId )
+            }
+            .getOrElse( treeId )
         })
           .toSet
 
@@ -259,13 +277,14 @@ class BeaconsAh[M](
               val mns2 = v0.tree
                 .nodesMap
                 .get( notFoundBcnId )
+                .map( MNodeState.infoPot.modify(_.unavailable()) )
                 .getOrElse {
                   MNodeState(
                     infoPot = Pot.empty.unavailable(),
                     role = MTreeRoles.BeaconSignal,
                   )
                 }
-              // Есть неизвестные для сервера маячки. Закэшировать:
+              // Есть неизвестные для сервера маячки.
               notFoundBcnId -> mns2
             })
               .to( HashMap )
