@@ -171,7 +171,7 @@ object ZTreeUtil {
 
 
 
-  implicit class TreeLocOps[A](private val treeLoc: TreeLoc[A]) extends AnyVal {
+  implicit final class TreeLocOps[A](private val treeLoc: TreeLoc[A]) extends AnyVal {
 
     def toNodePath: NodePath_t = {
       val l0 = treeLoc.lefts.length
@@ -218,7 +218,7 @@ object ZTreeUtil {
 
 
   /** Доп.утиль для инстансов Option[TreeLoc]. */
-  implicit class TreeLocOptOps[A](private val treeLocOpt: Option[TreeLoc[A]]) extends AnyVal {
+  implicit final class TreeLocOptOps[A](private val treeLocOpt: Option[TreeLoc[A]]) extends AnyVal {
 
     /** Сконвертить опциональный TreeLoc в опциональный элемент дерева. */
     def toLabelOpt: Option[A] = treeLocOpt.map(_.getLabel)
@@ -234,10 +234,27 @@ object ZTreeUtil {
   }
 
 
-  implicit class TreeOptOps[A](private val treeOpt: Option[Tree[A]]) extends AnyVal {
+  implicit final class TreeOptOps[A](private val treeOpt: Option[Tree[A]]) extends AnyVal {
 
     def containsLabel(a: A)(implicit ue: UnivEq[A]): Boolean = {
       treeOpt.exists(_.rootLabel ==* a)
+    }
+
+  }
+
+
+  implicit final class TreeOps[A]( private val tree: Tree[A] ) extends AnyVal {
+
+    def filter(f: A => Boolean): Option[Tree[A]] = {
+      import ScalazUtil.Implicits._
+      Option.when(f(tree.rootLabel)) {
+        Tree.Node(
+          root = tree.rootLabel,
+          forest = tree
+            .subForest
+            .flatMap( _.filter(f).toEphemeralStream ),
+        )
+      }
     }
 
   }

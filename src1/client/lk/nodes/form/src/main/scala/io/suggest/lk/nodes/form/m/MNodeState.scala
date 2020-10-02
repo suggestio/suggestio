@@ -8,9 +8,7 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
-import scalaz.{EphemeralStream, Tree, TreeLoc}
-
-import scala.collection.immutable.HashMap
+import scalaz.{Tree, TreeLoc}
 
 /**
   * Suggest.io

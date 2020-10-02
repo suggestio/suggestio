@@ -283,7 +283,8 @@ class TreeAh[M](
     case m: CreateNodeResp =>
       val v0 = value
       (for {
-        loc0 <- v0.openedLoc
+        idsTree0 <- v0.idsTreeOpt
+        loc0 <- idsTree0.loc.pathToNode( m.parentPath )
         // Ошибки с сервера отрабатываются в CreateNodeAh:
         resp <- m.tryResp.toOption
         newChild = MNodeState.respTreeToIdsTree( Tree.Leaf(resp) )
@@ -398,7 +399,16 @@ class TreeAh[M](
           {_ =>
             loc0
               .delete
-              // В корне пирамиды находится юзер. Удалить сам себя он наверное не может...
+              .flatMap { loc1 =>
+                // Успешно удалён некорневой узел дерева.
+                // Вероятно, узел может быть в дереве объявлен где-то ещё, поэтому зачищаем всё оставшееся дерево целиком:
+                loc1
+                  .toTree
+                  .filter { currTreeId =>
+                    currTreeId !=* m.nodeId
+                  }
+              }
+              // Если None: В корне пирамиды находится root-узел или юзер. Юзер удалить сам себя он наверное не может...
               .fold {
                 // Но если смог, то надо перезагружать страницу:
                 val fx = Effect.action {
@@ -406,10 +416,9 @@ class TreeAh[M](
                   DoNothing
                 }
                 effectOnly(fx)
-              } { loc1 =>
-                // Успешно удалён некорневой узел дерева. Подчистить состояние:
+              } { tree2 =>
                 val v2 = v0.copy(
-                  idsTree     = v0.idsTree.ready( loc1.toTree ),
+                  idsTree   = v0.idsTree.ready( tree2 ),
                   nodesMap  = v0.nodesMap -- loc0.tree.flatten.iterator,
                   opened    = for {
                     path0 <- v0.opened

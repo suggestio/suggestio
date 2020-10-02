@@ -172,9 +172,7 @@ class CreateNodeAh[M](
           api
             .createSubNodeSubmit( parentRk, req )
             .transform { tryResp =>
-              val action = CreateNodeResp(
-                tryResp = tryResp
-              )
+              val action = CreateNodeResp( parentPath, parentRk, req, tryResp )
               Success(action)
             }
         }

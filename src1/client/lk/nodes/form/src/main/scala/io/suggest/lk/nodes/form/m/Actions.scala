@@ -1,8 +1,9 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.ble.beaconer.MBeaconData
-import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeResp}
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
 
@@ -92,7 +93,12 @@ case object CreateNodeSaveClick
 
 
 /** Среагировать на ответ сервера по поводу успешного добавления нового узла. */
-case class CreateNodeResp(tryResp: Try[MLknNode] )
+case class CreateNodeResp(
+                           parentPath : NodePath_t,
+                           parentRk   : RcvrKey,
+                           req        : MLknNodeReq,
+                           tryResp    : Try[MLknNode],
+                         )
   extends LkNodesAction
   with INodeUpdatedResp
 {
