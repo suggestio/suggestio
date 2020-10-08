@@ -6,6 +6,7 @@ import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.jd.MJdEdgeId
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -119,5 +120,20 @@ case class MJdtProps1(
 
   def isContentCssStyled: Boolean =
     lineHeight.nonEmpty
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 128) { renderF =>
+      bgColor foreach renderF("bgC")
+      bgImg foreach renderF("bgI")
+      topLeft foreach renderF("xy")
+      isMain foreach renderF("main")
+      rotateDeg foreach renderF("rot")
+      textShadow foreach renderF("sha")
+      widthPx foreach renderF("w")
+      heightPx foreach renderF("h")
+      expandMode foreach renderF("exp")
+      lineHeight foreach renderF("lh")
+    }
+  }
 
 }

@@ -1,6 +1,7 @@
 package io.suggest.jd.tags.qd
 
 import io.suggest.jd.MJdEdgeId
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -18,14 +19,26 @@ import play.api.libs.functional.syntax._
   */
 object MQdOp {
 
-  implicit def QD_OP_FORMAT: OFormat[MQdOp] = (
-    (__ \ "y").format[MQdOpType] and
-    (__ \ "g").formatNullable[MJdEdgeId] and
-    (__ \ "i").formatNullable[Int] and
-    (__ \ "a").formatNullable[MQdAttrsText] and
-    (__ \ "l").formatNullable[MQdAttrsLine] and
-    (__ \ "e").formatNullable[MQdAttrsEmbed]
-  )(apply, unlift(unapply))
+  object Fields {
+    def OP_TYPE = "y"
+    def EDGE_INFO = "g"
+    def INDEX = "i"
+    def ATTRS_TEXT = "a"
+    def ATTRS_LINE = "l"
+    def ATTRS_EMBED = "e"
+  }
+
+  implicit def QD_OP_FORMAT: OFormat[MQdOp] = {
+    val F = Fields
+    (
+      (__ \ F.OP_TYPE).format[MQdOpType] and
+      (__ \ F.EDGE_INFO).formatNullable[MJdEdgeId] and
+      (__ \ F.INDEX).formatNullable[Int] and
+      (__ \ F.ATTRS_TEXT).formatNullable[MQdAttrsText] and
+      (__ \ F.ATTRS_LINE).formatNullable[MQdAttrsLine] and
+      (__ \ F.ATTRS_EMBED).formatNullable[MQdAttrsEmbed]
+    )(apply, unlift(unapply))
+  }
 
   @inline implicit def univEq: UnivEq[MQdOp] = UnivEq.derive
 
@@ -54,4 +67,19 @@ case class MQdOp(
                   attrsText  : Option[MQdAttrsText]   = None,
                   attrsLine  : Option[MQdAttrsLine]   = None,
                   attrsEmbed : Option[MQdAttrsEmbed]  = None
-               )
+               ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 128) { renderF =>
+      val F = MQdOp.Fields
+      val render0 = renderF("")
+      render0(opType)
+      edgeInfo foreach render0
+      index foreach renderF( F.INDEX )
+      attrsText foreach render0
+      attrsLine foreach render0
+      attrsEmbed foreach render0
+    }
+  }
+
+}

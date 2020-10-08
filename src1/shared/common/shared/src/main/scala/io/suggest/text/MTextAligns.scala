@@ -66,8 +66,6 @@ sealed abstract class MTextAlign(override val value: String) extends StringEnumE
     */
   def quillName: Option[String] = Some(cssName)
 
-  override final def toString = value
-
 }
 
 
@@ -75,9 +73,8 @@ sealed abstract class MTextAlign(override val value: String) extends StringEnumE
 object MTextAlign {
 
   /** Поддержка play-json для всех элементов модели [[MTextAligns]]. */
-  implicit val MTEXT_ALIGN_FORMAT: Format[MTextAlign] = {
+  implicit def MTEXT_ALIGN_FORMAT: Format[MTextAlign] =
     EnumeratumUtil.valueEnumEntryFormat( MTextAligns )
-  }
 
   @inline implicit def univEq: UnivEq[MTextAlign] = UnivEq.derive
 

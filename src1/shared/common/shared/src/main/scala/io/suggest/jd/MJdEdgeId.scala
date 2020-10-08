@@ -7,6 +7,7 @@ import io.suggest.img.MImgFormat
 import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.ScalazUtil
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -22,31 +23,20 @@ import scalaz.{Validation, ValidationNel}
   */
 object MJdEdgeId {
 
+  object Fields {
+    final def EDGE_UID = "e"
+    final def IMG_FORMAT = "f"
+    final def CROP = "c"
+  }
+
   /** Поддержка play-json. */
-  implicit def mJdEdgePtrFormat: OFormat[MJdEdgeId] = {
-    val oldJdEdgeIdReads = (__ \ "i").read[EdgeUid_t]
-
-    val jdEdgeFmt0: OFormat[MJdEdgeId] = (
-      (__ \ "e").format {
-        // TODO 2018-04-20 Раньше было {i: 234}, а теперь просто 234. Удалить лишнее после resaveAll().
-        val f0 = implicitly[Format[EdgeUid_t]]
-        val r2 = f0.orElse( oldJdEdgeIdReads )
-        Format(r2, f0)
-      } and
-      (__ \ "f").formatNullable[MImgFormat] and
-      (__ \ "c").formatNullable[MCrop]
+  implicit def mJdEdgeIdFormat: OFormat[MJdEdgeId] = {
+    val F = Fields
+    (
+      (__ \ F.EDGE_UID).format[EdgeUid_t] and
+      (__ \ F.IMG_FORMAT).formatNullable[MImgFormat] and
+      (__ \ F.CROP).formatNullable[MCrop]
     )(apply, unlift(unapply))
-
-    // TODO 2018-04-20 Это совместимость со старой одноимённой моделью. Выставление outImgFmt произойдёт при портировании через AdnJdEdgesMigration.
-    val jdEdgeReads2 = jdEdgeFmt0.orElse(
-      for (oldJdEdgeUid <- oldJdEdgeIdReads) yield {
-        apply(
-          edgeUid       = oldJdEdgeUid
-        )
-      }
-    )
-
-    OFormat(jdEdgeReads2, jdEdgeFmt0)
   }
 
   @inline implicit def univEq: UnivEq[MJdEdgeId] = UnivEq.derive
@@ -94,9 +84,9 @@ object MJdEdgeId {
     )(apply _)
   }
 
-  val edgeUid       = GenLens[MJdEdgeId](_.edgeUid)
-  val outImgFormat  = GenLens[MJdEdgeId](_.outImgFormat)
-  val crop          = GenLens[MJdEdgeId](_.crop)
+  def edgeUid       = GenLens[MJdEdgeId](_.edgeUid)
+  def outImgFormat  = GenLens[MJdEdgeId](_.outImgFormat)
+  def crop          = GenLens[MJdEdgeId](_.crop)
 
 }
 
@@ -117,5 +107,14 @@ final case class MJdEdgeId(
 {
 
   override def id = edgeUid
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 32) { renderF =>
+      val F = MJdEdgeId.Fields
+      renderF( F.EDGE_UID )(edgeUid)
+      outImgFormat foreach renderF( F.IMG_FORMAT )
+      crop foreach renderF( F.CROP )
+    }
+  }
 
 }

@@ -6,7 +6,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.font.{MFont, MFontSize}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
 import io.suggest.scalaz.ScalazUtil
-import io.suggest.text.UrlUtil2
+import io.suggest.text.{StringUtil, UrlUtil2}
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -125,6 +125,23 @@ case class MQdAttrsText(
       size.isDefined ||
       color.isDefined ||
       background.isDefined
+  }
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 256) { renderF =>
+      val F = MQdAttrsText.Fields
+      bold foreach renderF( F.BOLD_FN )
+      italic foreach renderF( F.ITALIC_FN )
+      underline foreach renderF( F.UNDERLINE_FN )
+      strike foreach renderF( F.STRIKE_FN )
+      color foreach renderF( F.COLOR_FN )
+      background foreach renderF( F.BACKGROUND_FN )
+      link foreach renderF( F.LINK_FN )
+      src foreach renderF( F.SRC_FN )
+      font foreach renderF( F.FONT_FN )
+      size foreach renderF( F.SIZE_FN )
+      script foreach renderF( F.SCRIPT_FN )
+    }
   }
 
 }

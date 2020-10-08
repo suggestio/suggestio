@@ -135,7 +135,15 @@
     </table>
   }
 
-  @lkBlock("Связанные домены") {
+  @for( doc <- mnode.extras.doc ) {
+    @lkBlock("JSON Document") {
+      <pre>@doc.template.drawTree</pre>
+      <br/>
+      <a href="@routes.LkAdEdit.editAd( mnode.id.get )">@ctx.messages( MsgCodes.`Edit` )</a>
+    }
+  }
+
+@lkBlock("Связанные домены") {
     @_nodeDomainsTpl(mnode)
   }
 

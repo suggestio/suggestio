@@ -4,11 +4,10 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.err.ErrorConstants
 import io.suggest.math.MathConst
 import io.suggest.primo.ISetUnset
-import io.suggest.text.MTextAlign
+import io.suggest.text.{MTextAlign, StringUtil}
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 
@@ -101,6 +100,18 @@ case class MQdAttrsLine(
       codeBlock.isEmpty &&
       blockQuote.isEmpty &&
       (this ==* other)
+  }
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 64) { renderF =>
+      val F = MQdAttrsLine.Fields
+      header foreach renderF( F.HEADER_FN )
+      list foreach renderF( F.LIST_FN )
+      indent foreach renderF( F.INDENT_FN )
+      codeBlock foreach renderF( F.CODE_BLOCK_FN )
+      blockQuote foreach renderF( F.BLOCK_QUOTE_FN )
+      align foreach renderF("")
+    }
   }
 
 }

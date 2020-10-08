@@ -88,6 +88,7 @@ case class SetVal[T](value: T) extends ISetUnset[T] {
   override def map[A](f: T => A) = SetVal(f(value))
   override def foreach[U](f: (T) => U): Unit = f(value)
   override def isEmpty = false
+  override def toString = value.toString
 }
 
 
@@ -100,6 +101,7 @@ case object UnSetVal extends ISetUnset[Nothing] {
   override def map[A](f: Nothing => A) = this
   override def foreach[U](f: (Nothing) => U): Unit = {}
   override def isEmpty = true
+  override def toString = ""
 
   @inline implicit def univEq: UnivEq[UnSetVal.type] = UnivEq.derive
 }

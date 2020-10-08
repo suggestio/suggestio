@@ -152,4 +152,54 @@ object StringUtil {
   def isBase64UrlSafe(s: String): Boolean =
     s matches "^[-a-zA-Z0-9_]+$"
 
+
+  /** Поддержка быстрой перезаписи toString()-метода, чтобы исключить кучу None/Some или иных слов-сорняков
+    * и именованием присутствующих полей.
+    *
+    * {{{
+    *   override def toString: String = {
+    *     StringUtil.toStringHelper(this, 256) { renderF =>
+    *       renderF("")(name)
+    *       if (props1.nonEmpty) renderF("props")(props1)
+    *       qdProps foreach renderF( "qd" )
+    *     }
+    *   }
+    * }}}
+    *
+    * @param that Текущий case class.
+    * @param lenDflt Дефолтовая длина string-буфера.
+    * @param render Функция рендера содержимого
+    *               $1 - функция рендера имени поля класса и значения.
+    * @return Строка для возврата наружу из перезаписываемого toString()-метода.
+    */
+  def toStringHelper(that: Product, lenDflt: Int = 256)
+                    (render: (String => Any => Unit) => Unit): String = {
+    val sb = new StringBuilder( lenDflt )
+      .append( that.productPrefix )
+      .append( '(' )
+
+    val comma = ','
+    val eqSign = '='
+
+    def __append(name: String): Any => Unit = {
+      value: Any =>
+        if (name.nonEmpty)
+          sb.append( name )
+            .append( eqSign )
+        sb
+          .append( value )
+          .append( comma )
+    }
+
+    render( __append )
+
+    // Отбросить финальную запятую:
+    val lastCharIndex = sb.length() - 1
+    if (sb.charAt(lastCharIndex) ==* comma )
+      sb.setLength( lastCharIndex )
+
+    sb.append( ')' )
+      .toString()
+  }
+
 }

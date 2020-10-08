@@ -1,11 +1,13 @@
 package io.suggest.color
 
 import boopickle.Default._
+import io.suggest.color.MColorData.MCOLOR_DATA_FORMAT
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.math.MathConst
 import io.suggest.scalaz.ScalazUtil
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -143,5 +145,15 @@ case class MColorData(
 
   /** Вернуть инстанс MRgb, даже если он отсутствует в полях. */
   def getRgb: MRgb = rgb.getOrElse( _parsedRgb )
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 16) { renderF =>
+      renderF("")(code)
+      val F = MColorData.Fields
+      rgb foreach renderF( F.RGB_FN )
+      freqPc foreach renderF( F.FREQ_PC_FN )
+      count foreach renderF( F.COUNT_FN )
+    }
+  }
 
 }

@@ -6,10 +6,10 @@ import io.suggest.err.ErrorConstants
 import io.suggest.math.MathConst
 import io.suggest.media.MediaConst
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 
@@ -85,6 +85,14 @@ case class MQdAttrsEmbed(
       h         <- heightSU.toOption
     } yield {
       MSize2di( width = w, height = h )
+    }
+  }
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 16) { renderF =>
+      val F = MQdAttrsEmbed.Fields
+      width foreach renderF( F.WIDTH_FN )
+      height foreach renderF( F.HEIGHT_FN )
     }
   }
 

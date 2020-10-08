@@ -16,6 +16,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{EphemeralStream, Show, Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.text.StringUtil
 
 import scala.collection.MapView
 
@@ -290,9 +291,12 @@ final case class JdTag(
   }
 
   override def toString: String = {
-    "#" + name +
-      (if (props1.isEmpty) "" else "," + props1) +
-      qdProps.fold("")(_.toString)
+    StringUtil.toStringHelper(this, 256) { renderF =>
+      val F = JdTag.Fields
+      renderF("")(name)
+      if (props1.nonEmpty) renderF("")(props1)
+      qdProps foreach renderF( F.QD_PROPS_FN )
+    }
   }
 
 }
