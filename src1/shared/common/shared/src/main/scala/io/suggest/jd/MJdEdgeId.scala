@@ -55,33 +55,36 @@ object MJdEdgeId {
                 imgContSzOpt  : Option[ISize2di]
               ): ValidationNel[String, MJdEdgeId] = {
     val edgeInfoOpt = edges.get( m.edgeUid )
-    val cropAndWhVldOpt = for {
-      mcrop     <- m.crop
-      contSz    <- imgContSzOpt
-      edgeInfo  <- edgeInfoOpt
-      img       <- edgeInfo.img
-      imgWh     <- img.imgWh
-    } yield {
-      MCrop.validate(
-        crop      = mcrop,
-        tgContSz  = contSz,
-        imgWh     = imgWh
-      )
-    }
 
-    (
-      Validation.liftNel(m.edgeUid)(
-        { _ => !edgeInfoOpt.exists(_.img.exists(_.isImg)) },
-        ErrorConstants.emsgF("img")("e")
-      ) |@|
-      // Формат пока прости копипастим из VldInfo: Юзер не управляет заданием выходного формата.
-      Validation.success(
-        edgeInfoOpt
-          .flatMap(_.img)
-          .flatMap(_.dynFmt)
-      ) |@|
-      ScalazUtil.optValidationOrNone( cropAndWhVldOpt )
-    )(apply _)
+    Validation
+      .liftNel( edgeInfoOpt.orNull )( _ == null, s"edge #${m.edgeUid} missing" )
+      .andThen { edgeInfo =>
+        val cropAndWhVldOpt = for {
+          mcrop     <- m.crop
+          contSz    <- imgContSzOpt
+          img       <- edgeInfo.img
+          imgWh     <- img.imgWh
+        } yield {
+          MCrop.validate(
+            crop      = mcrop,
+            tgContSz  = contSz,
+            imgWh     = imgWh
+          )
+        }
+
+        (
+          Validation.liftNel(m.edgeUid)(
+            { _ => !edgeInfo.img.exists(_.isImg) },
+            ErrorConstants.emsgF("img")("e")
+          ) |@|
+          // Формат пока просто копипастим из VldInfo: Юзер не управляет заданием выходного формата.
+          ScalazUtil.liftNelSome(
+            edgeInfo.img.flatMap(_.dynFmt),
+            s"edge#${m.edgeUid}.dynFmt missing"
+          )( Validation.success ) |@|
+          ScalazUtil.optValidationOrNone( cropAndWhVldOpt )
+        )(apply _)
+      }
   }
 
   def edgeUid       = GenLens[MJdEdgeId](_.edgeUid)

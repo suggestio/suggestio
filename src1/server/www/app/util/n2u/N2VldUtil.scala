@@ -81,7 +81,8 @@ final class N2VldUtil @Inject()(
 
 
   private def _findEdgeNodes(nodeIds: Set[String], ofNodeTypes: Seq[MNodeType] = Nil): Future[Map[String, MNode]] = {
-    def logPrefix = s"_findEdgeNodes(${nodeIds.size}, [${ofNodeTypes.mkString(" ")}]):"
+    val _count = nodeIds.size
+    def logPrefix = s"_findEdgeNodes(${_count}, [${ofNodeTypes.mkString(" ")}]):"
 
     for {
       allowedIds <- mNodes.dynSearchIds(
@@ -91,6 +92,7 @@ final class N2VldUtil @Inject()(
           override val withIds = nodeIds.toSeq
           // Интересуют только enabled-узлы:
           override val isEnabled = Some(true)
+          override def limit = _count
         }
       )
       resMap <- {
@@ -167,7 +169,9 @@ final class N2VldUtil @Inject()(
             mimg      <- imgsNeededMap.get( edgeUid )
             imgNode   <- mediasMap.get( mimg.dynImgId.mediaId )
             if imgNode.common.ntype ==* MNodeTypes.Media.Image
-            fileEdge  <- imgNode.edges.withPredicateIter( MPredicates.Blob.File ).nextOption()
+            fileEdge  <- imgNode.edges
+              .withPredicateIter( MPredicates.Blob.File )
+              .nextOption()
             mediaEdge <- fileEdge.media
           } yield {
             mediaEdge
