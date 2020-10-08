@@ -13,7 +13,6 @@ import io.suggest.n2.node.MNode
 import models.req.IReq
 import play.api.libs.json.Json
 import util.showcase.IScUtil
-import FutureUtil.Implicits._
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import util.cdn.CorsUtil
 
@@ -210,7 +209,7 @@ trait ScUniApi
         }
       }
 
-      val fut = for {
+      (for {
         isWithGrid  <- isWithGridFut
         if isWithGrid
         indexRaOpt  <- indexRaOptFut
@@ -224,12 +223,21 @@ trait ScUniApi
         qs2         <- qsAfterIndexFut
         logic       = TileAdsLogic(qs2)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
+          // Обход перехватчика NSEE - пусть пойдёт по нормальному логгированию.
+          .recover { case ex: Throwable =>
+            throw new RuntimeException(ex)
+          }
       } yield {
         LOGGER.trace(s"$logPrefix Search for grid ads => ${respAction.ads.iterator.flatMap(_.ads).size} ads")
-        respAction
-      }
-
-      fut.toOptFut
+        Some( respAction )
+      })
+        .recover { case ex =>
+          if (ex.isInstanceOf[NoSuchElementException])
+            LOGGER.trace(s"$logPrefix Future.filter returned false, isWithGrid?$isWithGridFut", ex)
+          else
+            LOGGER.warn(s"$logPrefix Grid respAction failed.", ex)
+          None
+        }
     }
 
 

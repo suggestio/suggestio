@@ -472,7 +472,9 @@ trait ScAdsTile
           LOGGER.trace(s"$logPrefix Ad#${brArgs.mad.idOrNull} renders focused by default.")
           jdAdUtil.getNodeTpl( brArgs.mad ) -> Nil
         } else {
-          val (tpl1, i) = jdAdUtil.getNodeTpl(brArgs.mad).getMainBlockOrFirst
+          val (tpl1, i) = jdAdUtil
+            .getNodeTpl( brArgs.mad )
+            .getMainBlockOrFirst
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
           jdAdUtil.resetBlkWide( tpl1 ) -> (i :: Nil)
         }

@@ -87,39 +87,72 @@ final class LkNodes @Inject() (
   import esModel.api._
 
 
-  private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[MLknAdv] = {
-    for (mad <- madOpt) yield {
-      val rcvrEdges = mad.edges
-        .withNodePred(nodeId, MPredicates.Receiver)
-        .to( LazyList )
-      val edgeOpt = rcvrEdges.headOption
+  /** Сборка options-карты по поводу размещения карточки в узле.
+    *
+    * @param nodeId id узла-ресивера.
+    * @param madOpt Рекламная карточка, если есть.
+    * @return options Map.
+    */
+  private def _hasAdv2(nodeId: String, madOpt: Option[MNode]): Map[MLknOpKey, MLknOpValue] = {
+    madOpt
+      .map { mad =>
+        val rcvrEdges = mad.edges
+          .withNodePred( nodeId, MPredicates.Receiver )
+          .to( LazyList )
+        val edgeOpt = rcvrEdges.headOption
 
-      MLknAdv(
-        hasAdv = rcvrEdges.nonEmpty,
-        advShowOpened = edgeOpt
-          .flatMap(_.info.flag)
-          .getOrElseFalse,
-        alwaysOutlined = edgeOpt.exists(
-          _.info.flagsMap contains MEdgeFlags.AlwaysOutlined
-        ),
-      )
-    }
+        Map[MLknOpKey, MLknOpValue](
+          // Включено размещение в узле?
+          MLknOpKeys.AdvEnabled -> MLknOpValue(
+            bool = OptionUtil.SomeBool( rcvrEdges.nonEmpty ),
+          ),
+          // Постоянная раскрытость карточки?
+          MLknOpKeys.ShowOpened -> MLknOpValue(
+            bool = OptionUtil.SomeBool(
+              edgeOpt
+                .flatMap(_.info.flag)
+                .getOrElseFalse
+            ),
+          ),
+          // Постоянная обводка карточки:
+          MLknOpKeys.AlwaysOutlined -> MLknOpValue(
+            bool = OptionUtil.SomeBool(
+              edgeOpt.exists(
+                _.info.flagsMap contains MEdgeFlags.AlwaysOutlined
+              )
+            )
+          ),
+        )
+      }
+      .getOrElse( Map.empty )
   }
 
 
   // Общий код сборки инфы по одному узлу.
-  private def _mkLknNode(mnode: MNode, madOpt: Option[MNode], isDetailed: Boolean,
+  private def _mkLknNode(mnode: MNode, madOpt: Option[MNode] = None, isDetailed: Option[Boolean] = None,
                          isAdmin: Option[Boolean] = None, tf: Option[MTfDailyInfo] = None): MLknNode = {
     val nodeId = mnode.id.get
+    val ntyp = mnode.common.ntype
     MLknNode(
       id                    = nodeId,
       name                  = mnode.guessDisplayNameOrId,
-      ntype                 = Some( mnode.common.ntype ),
-      isEnabled             = OptionUtil.SomeBool( mnode.common.isEnabled ),
+      ntype                 = Some( ntyp ),
       isAdmin               = isAdmin,
-      adv                   = _hasAdv(nodeId, madOpt),
+      options               = {
+        val map1 = madOpt.fold {
+           Map.empty[MLknOpKey, MLknOpValue]
+        } { _ =>
+          _hasAdv2( nodeId, madOpt )
+        }
+        // Вернуть node enabled для mnode:
+        map1 + {
+          val v = MLknOpValue(bool = OptionUtil.SomeBool( mnode.common.isEnabled ))
+          val k = MLknOpKeys.NodeEnabled
+          (k -> v)
+        }
+      },
       tf                    = tf,
-      isDetailed            = OptionUtil.SomeBool( isDetailed ),
+      isDetailed            = isDetailed,
     )
   }
 
@@ -162,15 +195,27 @@ final class LkNodes @Inject() (
       tfDailyInfoOpt          <- tfDailyInfoOptFut
     } yield {
       Tree.Node[MLknNode](
-        root = _mkLknNode( mnode, madOpt, isDetailed = true, OptionUtil.SomeBool(isAdmin), tfDailyInfoOpt ),
-        // TODO .fromLazyList(), когда scalaz дорастёт до обновления.
-        forest = subNodes
-          .toEphemeralStream
-          .map { chNode =>
-            // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
-            val lkn = _mkLknNode(chNode, madOpt, isDetailed = false)
-            Tree.Leaf( lkn )
-          },
+        root = _mkLknNode(
+          mnode,
+          madOpt      = madOpt,
+          isDetailed  = OptionUtil.SomeBool.someTrue,
+          isAdmin     = OptionUtil.SomeBool(isAdmin),
+          tf          = tfDailyInfoOpt
+        ),
+        forest = {
+          val someFalse = OptionUtil.SomeBool.someFalse
+          subNodes
+            .toEphemeralStream
+            .map { chNode =>
+              // canChangeAvailability: На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
+              val lkn = _mkLknNode(
+                chNode,
+                madOpt = madOpt,
+                isDetailed = someFalse,
+              )
+              Tree.Leaf( lkn )
+            }
+        },
       )
     }
   }
@@ -197,22 +242,19 @@ final class LkNodes @Inject() (
           mnodes <- mNodes.dynSearch( msearch )
         } yield {
           val someTrue = OptionUtil.SomeBool.someTrue
+          val someFalse = OptionUtil.SomeBool.someFalse
 
           (for {
             mnode <- mnodes.iterator
-            mnodeId <- mnode.id
           } yield {
-            val mLknNode = MLknNode(
-              id                        = mnodeId,
-              name                      = mnode.guessDisplayNameOrId,
-              ntype                     = Some( mnode.common.ntype ),
-              isEnabled                 = OptionUtil.SomeBool( mnode.common.isEnabled ),
-              isAdmin                   = someTrue,
-              adv                       = _hasAdv(mnodeId, madOpt),
-              tf                        = None, // tf для других узлов не особо важен, т.к. будет запрошен при открытии.
-              isDetailed                = OptionUtil.SomeBool.someFalse,
+            // tf: для других узлов не особо важен, т.к. будет запрошен при открытии.
+            val mLknNode = _mkLknNode(
+              mnode,
+              madOpt      = madOpt,
+              isDetailed  = someFalse,
+              isAdmin     = someTrue,
+              tf          = None,
             )
-
             Tree.Leaf( mLknNode )
           })
             .toList
@@ -233,7 +275,11 @@ final class LkNodes @Inject() (
           ),
         )
       }
-      _mkLknNode( personNode, madOpt, isDetailed = true )
+      _mkLknNode(
+        personNode,
+        madOpt = madOpt,
+        isDetailed = OptionUtil.SomeBool.someTrue,
+      )
     }
 
     for {
@@ -506,19 +552,16 @@ final class LkNodes @Inject() (
             // Дождаться окончания сохранения нового узла.
             val respFut = for {
               newNodeId     <- newNodeIdFut
+              mnode2 = (MNode.id set Some(newNodeId))(newNode)
               tfDailyInfo   <- tfDailyInfoFut
             } yield {
               val someTrue = OptionUtil.SomeBool.someTrue
               // Собираем ответ, сериализуем, возвращаем...
-              val mResp = MLknNode(
-                id        = newNodeId,
-                name      = Option.when(addNodeInfo.name.nonEmpty)(addNodeInfo.name),
-                ntype     = Some( ntype ),
-                isEnabled = OptionUtil.SomeBool( isEnabled ),
-                // Текущий юзер создал юзер, значит он может его и удалить.
-                isAdmin = someTrue,
-                tf        = Some(tfDailyInfo),
-                isDetailed = someTrue,
+              val mResp = _mkLknNode(
+                mnode2,
+                isDetailed  = someTrue,
+                isAdmin     = someTrue,
+                tf          = Some(tfDailyInfo),
               )
               Ok( Json.toJson(mResp) )
             }
@@ -563,19 +606,16 @@ final class LkNodes @Inject() (
 
         // Когда сохранение будет выполнено, то вернуть данные по обновлённому узлу.
         for {
-          _             <- saveFut
+          mnode2        <- saveFut
           tfDailyInfo   <- tfDailyInfoFut
         } yield {
           LOGGER.debug(s"setNodeEnabled($nodeId): enabled => $isEnabled")
           val someTrue = OptionUtil.SomeBool.someTrue
-          val mLknNode = MLknNode(
-            id                      = nodeId,
-            name                    = request.mnode.guessDisplayNameOrId,
-            ntype                   = Some( request.mnode.common.ntype ),
-            isEnabled               = OptionUtil.SomeBool( isEnabled ),
-            isAdmin                 = someTrue,
-            tf                      = Some(tfDailyInfo),
-            isDetailed              = someTrue,
+          val mLknNode = _mkLknNode(
+            mnode2,
+            isDetailed  = someTrue,
+            isAdmin     = someTrue,
+            tf          = Some( tfDailyInfo ),
           )
           Ok( Json.toJson(mLknNode) )
         }
@@ -650,14 +690,11 @@ final class LkNodes @Inject() (
             } yield {
               LOGGER.debug(s"$logPrefix Ok, nodeVsn => ${mnode.versionOpt.orNull}")
               val someTrue = OptionUtil.SomeBool.someTrue
-              val m = MLknNode(
-                id                      = nodeId,
-                name                    = mnode.guessDisplayNameOrId,
-                ntype                   = Some( mnode.common.ntype ),
-                isEnabled               = OptionUtil.SomeBool( mnode.common.isEnabled ),
-                isAdmin                 = someTrue,
-                tf                      = Some(tfDailyInfo),
-                isDetailed              = someTrue,
+              val m = _mkLknNode(
+                mnode,
+                isDetailed  = someTrue,
+                isAdmin     = someTrue,
+                tf          = Some(tfDailyInfo),
               )
               Ok( Json.toJson(m) )
             }
@@ -722,7 +759,7 @@ final class LkNodes @Inject() (
         MNode.edges.modify { edges0 =>
           // Удалить эдж текущего размещения. Даже если isEnabled=true, всё равно надо отфильтровать старый эдж, чтобы перезаписать его.
           val edgesIter1 = edges0
-            .withoutNodePred( nodeId, MPredicates.Receiver)
+            .withoutNodePred( nodeId, MPredicates.Receiver )
           val edgesIter2 = if (isEnabled) {
             // Найти/добавить эдж до указанного узла.
             val medge = MEdge(
@@ -741,20 +778,17 @@ final class LkNodes @Inject() (
 
       for {
         itemsSuppressed   <- suppressRelatedItemsFut
-        mnode2            <- updateNodeFut
+        mad2              <- updateNodeFut
       } yield {
         LOGGER.trace(s"setAdv(ad#$adId, node#$nodeId): adv => $isEnabled, suppressed $itemsSuppressed in billing")
         // Собрать ответ.
         val someTrue = OptionUtil.SomeBool.someTrue
-        val mLknNode = MLknNode(
-          id        = nodeId,
-          name      = request.mnode.guessDisplayNameOrId,
-          ntype     = Some( request.mnode.common.ntype ),
-          isEnabled = OptionUtil.SomeBool( request.mnode.common.isEnabled ),
-          isAdmin   = someTrue,
-          adv       = _hasAdv(nodeId, Some(mnode2)),
-          tf        = None, // На странице размещения это не важно
-          isDetailed = someTrue,
+        val mLknNode = _mkLknNode(
+          request.mnode,
+          madOpt      = Some( mad2 ),
+          isDetailed  = someTrue,
+          isAdmin     = someTrue,
+          tf          = None,    // На странице размещения это не важно
         )
 
         // Отправить сериализованные данные по узлу.
@@ -812,14 +846,12 @@ final class LkNodes @Inject() (
 
             // Собрать ответ.
             val someTrue = OptionUtil.SomeBool.someTrue
-            val mLknNode = MLknNode(
-              id        = mnode2.id.get,
-              name      = mnode2.guessDisplayNameOrId,
-              ntype     = Some( mnode2.common.ntype ),
-              isEnabled = OptionUtil.SomeBool( mnode2.common.isEnabled ),
-              isAdmin   = someTrue,
-              tf        = Some(tfInfo),
-              isDetailed = someTrue,
+            val mLknNode = _mkLknNode(
+              mnode2,
+              madOpt      = None,
+              isDetailed  = someTrue,
+              isAdmin     = someTrue,
+              tf          = Some(tfInfo),
             )
 
             // Собрать HTTP-ответ клиенту
@@ -879,7 +911,7 @@ final class LkNodes @Inject() (
           // Дождаться завершения апдейта.
           for {
             // Запустить обновление карточки на стороне ES: перезаписать эдж:
-            mnode2 <- mNodes.tryUpdate( request.mad ) {
+            mad2 <- mNodes.tryUpdate( request.mad ) {
               // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
               MNode.edges.modify { edges0 =>
                 MNodeEdges.out.set(
@@ -900,14 +932,11 @@ final class LkNodes @Inject() (
 
             // Собрать MLknNode в ответ:
             val someTrue = Some(true)
-            val mLknNode = MLknNode(
-              id        = request.mnode.id.get,
-              name      = request.mnode.guessDisplayNameOrId,
-              ntype     = Some( request.mnode.common.ntype ),
-              isEnabled = OptionUtil.SomeBool( request.mnode.common.isEnabled ),
-              isAdmin   = someTrue,
-              isDetailed = someTrue,
-              adv       = _hasAdv(nodeId, Some(mnode2)),
+            val mLknNode = _mkLknNode(
+              request.mnode,
+              madOpt      = Some(mad2),
+              isAdmin     = someTrue,
+              isDetailed  = someTrue,
             )
 
             Ok( Json.toJson(mLknNode) )
@@ -970,7 +999,7 @@ final class LkNodes @Inject() (
           // Дождаться завершения апдейта.
           for {
             // Запустить обновление карточки на стороне ES: перезаписать эдж:
-            mnode2 <- mNodes.tryUpdate( request.mad ) {
+            mad2 <- mNodes.tryUpdate( request.mad ) {
               // TODO Тут используется edge0/edge2 снаружи функции, хотя возможно стоит заново извлекать его из эджей текущего инстанса?
               MNode.edges.modify { edges0 =>
                 MNodeEdges.out.set(
@@ -990,15 +1019,12 @@ final class LkNodes @Inject() (
             LOGGER.trace(s"$logPrefix Done.")
 
             // Собрать MLknNode в ответ:
-            val someTrue = Some(true)
-            val mLknNode = MLknNode(
-              id        = request.mnode.id.get,
-              name      = request.mnode.guessDisplayNameOrId,
-              ntype     = Some( request.mnode.common.ntype ),
-              isEnabled = OptionUtil.SomeBool( request.mnode.common.isEnabled ),
-              isAdmin   = someTrue,
-              isDetailed = someTrue,
-              adv       = _hasAdv(nodeId, Some(mnode2)),
+            val someTrue = OptionUtil.SomeBool.someTrue
+            val mLknNode = _mkLknNode(
+              request.mnode,
+              isAdmin     = someTrue,
+              isDetailed  = someTrue,
+              madOpt      = Some(mad2),
             )
 
             Ok( Json.toJson(mLknNode) )
@@ -1166,8 +1192,6 @@ final class LkNodes @Inject() (
                     id          = bcnId,
                     ntype       = Some( MNodeTypes.BleBeacon ),
                     name        = bcnNode.guessDisplayName,
-                    // isEnabled возвращаем: Пусть все знают, что какой-то маячок выключен в системе, чтобы у люди могли быстрее отлаживать проблемы.
-                    isEnabled   = OptionUtil.SomeBool( bcnNode.common.isEnabled ),
                     // Права есть или нет - возвращаем, для isAnon тут будет всегда None.
                     isAdmin     = hasAdminRightsForIds.get( bcnId ),
                     // Недетализованный ответ: тариф и прочее не вычислялись.
@@ -1175,7 +1199,9 @@ final class LkNodes @Inject() (
                     // tf: тариф не возвращаем: юзер откроет узел и посмотрит.
                     // adv: тут пока только ADN-режим, без карточки.
                     parentName  = beaconIdDescrs.get( bcnId ),
-                    adv         = _hasAdv( bcnId, request.madOpt ),
+                    options     = _hasAdv2( bcnId, request.madOpt ) +
+                      // isEnabled возвращаем: Пусть все знают, что какой-то маячок выключен в системе, чтобы у люди могли быстрее отлаживать проблемы.
+                      (MLknOpKeys.NodeEnabled -> MLknOpValue(bool = OptionUtil.SomeBool( bcnNode.common.isEnabled ))),
                   )
                 )
               })
@@ -1195,6 +1221,49 @@ final class LkNodes @Inject() (
         }
       }
     //}
+  }
+
+
+  /** v2 - унифицированное управление флагами и прочими опциями, вместо кучи похожих экшенов/полей и т.д.
+    *
+    * POST-инг выставления какого-то опционального значения на узле.
+    * Например, значение размещения карточки на узле или управление активностью узла.
+    * Значение конкретного параметра -- находится внутри JSON-тела запроса.
+    *
+    * @return 200 OK + обновлённый MLknNode.
+    */
+  def modifyNode(qs: MLknModifyQs): Action[AnyContent] = {
+    def __notFoundA = Action.async { implicit request =>
+      LOGGER.warn(s"modifyNode($qs): Not supported qs combo.")
+      errorHandler.onClientError( request, NOT_FOUND )
+    }
+
+    // Режим управления размещением в узлах.
+    def __isTrue = qs.opValue.bool.getOrElseFalse
+
+    // Роутинг запроса в тот или иной конкретный экшен.
+    // ACL в разных экшенах различается, и различаются некоторые внутренние куски, поэтому унифицировать это проблематично.
+
+    qs.adIdOpt.fold {
+      qs.opKey match {
+        case MLknOpKeys.NodeEnabled =>
+          setNodeEnabled( qs.onNodeRk.last, __isTrue )
+        case _ =>
+          __notFoundA
+      }
+
+    } { adId =>
+      qs.opKey match {
+        case MLknOpKeys.AdvEnabled =>
+          setAdv( adId, __isTrue, qs.onNodeRk )
+        case MLknOpKeys.ShowOpened =>
+          setAdvShowOpened( adId, __isTrue, qs.onNodeRk )
+        case MLknOpKeys.AlwaysOutlined =>
+          setAlwaysOutlined( adId, __isTrue, qs.onNodeRk )
+        case _ =>
+          __notFoundA
+      }
+    }
   }
 
 }

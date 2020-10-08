@@ -4,6 +4,7 @@ import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiL
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.lk.nodes.MLknOpKeys
 import io.suggest.lk.nodes.form.m.{CreateNodeClick, MNodeState, MNodeStateRender}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.scalaz.NodePath_t
@@ -71,7 +72,9 @@ final class SubNodesR(
                     treeId = treeIdTree.rootLabel
                     mns  <- s.nodesMap.get( treeId )
                     info <- mns.infoPot.toOption
-                    if info.isEnabled contains[Boolean] false
+                    if info.options
+                      .get(MLknOpKeys.NodeEnabled)
+                      .flatMap(_.bool) contains[Boolean] false
                   } yield {
                     1
                   })

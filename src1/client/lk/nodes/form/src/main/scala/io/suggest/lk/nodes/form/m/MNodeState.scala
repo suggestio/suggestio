@@ -2,8 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.lk.nodes.{MLknAdv, MLknNode}
-import io.suggest.spa.DiodeUtil
+import io.suggest.lk.nodes.{MLknNode, MLknOpKey, MLknOpValue}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -22,9 +21,8 @@ object MNodeState {
   @inline implicit def univEq: UnivEq[MNodeState] = UnivEq.derive
 
   def infoPot     = GenLens[MNodeState](_.infoPot)
-  def isEnableUpd = GenLens[MNodeState](_.isEnabledUpd)
   def tfInfoWide  = GenLens[MNodeState](_.tfInfoWide)
-  def adv         = GenLens[MNodeState](_.adv)
+  def optionMods  = GenLens[MNodeState](_.optionMods)
   def beacon      = GenLens[MNodeState](_.beacon)
 
 
@@ -87,38 +85,33 @@ object MNodeState {
 case class MNodeState(
                        infoPot            : Pot[MLknNode]                     = Pot.empty,
                        role               : MTreeRole,
-                       isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        tfInfoWide         : Boolean                           = false,
-                       adv                : Option[MNodeAdvState]             = None,
+                       optionMods         : Map[MLknOpKey, Pot[MLknOpValue]]    = Map.empty,
                        beacon             : Option[MNodeBeaconState]          = None,
                      ) {
 
-  def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
+  def advIsPending: Boolean = ??? // adv.exists(_.newIsEnabledPot.isPending)
 
-  private def _boolPot(
-                        from: MNodeAdvState => Pot[Boolean],
-                        fallBack: MLknAdv => Boolean,
-                      ): Pot[Boolean] = {
-    adv
-      .map(from)
-      .orElse(
+  def optionBoolPot(key: MLknOpKey): Pot[Boolean] = {
+    (for {
+      optPot <- Pot
+        .fromOption( optionMods.get( key ) )
+        .flatten
+      bool <- Pot.fromOption( optPot.bool )
+    } yield bool)
+      .orElse {
         for {
-          info <- infoPot.toOption
-          adv <- info.adv
+          info <- infoPot
+          adv <- Pot.fromOption( info.options.get( key ) )
+          boolValue <- Pot.fromOption( adv.bool )
         } yield {
-          DiodeUtil.Bool( fallBack(adv) )
+          boolValue
         }
-      )
-      .getOrElse( Pot.empty[Boolean] )
+      }
   }
 
-  // TODO Надо унифицировать этот однотипный зоопарк сущностей в коллекцию или ассоц.массив.
-  def advHasAdvPot = _boolPot(_.newIsEnabledPot, _.hasAdv)
-  def advAlwaysOpenedPot = _boolPot(_.isShowOpenedPot, _.advShowOpened)
-  def advAlwaysOutlinedPot = _boolPot(_.alwaysOutlinedPot, _.alwaysOutlined)
-
   def beaconUidOpt = beacon
-    .flatMap(_.data.detect.signal.beaconUid)
+    .flatMap( _.data.detect.signal.beaconUid )
 
   def nodeId: Option[String] = {
     infoPot

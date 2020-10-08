@@ -91,23 +91,6 @@ object FutureUtil {
 
   object Implicits {
 
-    implicit class FutureExtOps[T](val fut: Future[T]) extends AnyVal {
-
-      /** Заворачивание возможного NSEE в None, а результата в Some().
-        *
-        * @return Фьючерс с опциональным результатом.
-        */
-      def toOptFut(implicit ec: ExecutionContext): Future[Option[T]] = {
-        fut
-          .map[Option[T]] { EmptyUtil.someF }
-          .recover { case _: NoSuchElementException =>
-            None
-          }
-      }
-
-    }
-
-
     implicit class ThrowableFutureOpsExt[Ex <: Throwable]( val fut: Future[Ex] ) extends AnyVal {
 
       def toFutureFailed[T](implicit ec: ExecutionContext): Future[T] =

@@ -306,27 +306,6 @@ class BeaconsAh[M](
         }
       )
 
-
-    // Обновить кэш после любого редактирования узла-маячка, имеющегося в кэш-карте.
-    case m: INodeUpdatedResp =>
-      (for {
-        nodeId <- m.nodeIdOpt
-        nodeUpdatedOpt <- m.nodeUpdated.toOption
-        v0 = value
-        mns0 <- v0.tree.nodesMap.get( nodeId )
-      } yield {
-        // Заменить beacon в карте кэша на полученный ответ сервера.
-        val cachedEntry2 = MNodeState.infoPot
-          .set( Pot.fromOption(nodeUpdatedOpt) )(mns0)
-        val v2 = MTreeOuter.tree
-          .composeLens( MTree.nodesMap )
-          .modify { nodesMap0 =>
-            nodesMap0 + (nodeId -> cachedEntry2)
-          }(v0)
-        updated(v2)
-      })
-        .getOrElse( noChange )
-
   }
 
 }

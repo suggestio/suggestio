@@ -7,6 +7,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
 import io.suggest.jd.render.u.JdUtil
+import io.suggest.lk.nodes.MLknOpKeys
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
@@ -63,13 +64,15 @@ class NodeAdsAh[M](
       val ts = System.currentTimeMillis()
 
       val fx = Effect {
-        lkNodesApi.setAdv(
-          adId      = m.adId,
-          isEnabled = m.isShown,
-          onNode    = confRO.value.nodeKey
-        ).transform { tryResp =>
-          Success( SetAdShownAtParentResp(m, tryResp, ts) )
-        }
+        lkNodesApi
+          .setAdv(
+            adId      = m.adId,
+            isEnabled = m.isShown,
+            onNode    = confRO.value.nodeKey,
+          )
+          .transform { tryResp =>
+            Success( SetAdShownAtParentResp(m, tryResp, ts) )
+          }
       }
 
       val v0 = value
@@ -103,8 +106,12 @@ class NodeAdsAh[M](
                   },
                   {mLknNode2 =>
                     adProps0.copy(
-                      adResp = MLkAdsOneAdResp.shownAtParent
-                        .set( mLknNode2.adv.fold( m.reason.isShown )(_.hasAdv) )( adProps0.adResp ),
+                      adResp = MLkAdsOneAdResp.shownAtParent.set(
+                        mLknNode2.options
+                          .get( MLknOpKeys.AdvEnabled )
+                          .flatMap( _.bool )
+                          .getOrElse( m.reason.isShown )
+                      )( adProps0.adResp ),
                       shownAtParentReq = Pot.empty
                     )
                   }

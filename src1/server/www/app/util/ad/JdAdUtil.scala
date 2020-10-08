@@ -3,6 +3,7 @@ package util.ad
 import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.{BlockWidths, MBlockExpandMode}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel
@@ -790,19 +791,26 @@ class JdAdUtil @Inject()(
                 else blkImgMaker
 
               // Дописать в результат рассчёта картинки инфу по оригинальной картинке:
-              for {
-                imakeRes <- maker.icompile( makeArgs )
+              (for {
+                imakeRes <- FutureUtil.tryCatchFut( maker.icompile( makeArgs ) )
               } yield {
-                MImgRenderInfo(eit.medge, eit.mimg, imakeRes.dynCallArgs, imakeRes.szReal)
-              }
+                val res = MImgRenderInfo(eit.medge, eit.mimg, imakeRes.dynCallArgs, imakeRes.szReal)
+                Some(res)
+              })
+                // Отработка ошибок рендера картинки:
+                .recover { case ex: Throwable =>
+                  LOGGER.error(s"$logPrefix Cannot prepare img for ad#${nodeId.orNull}${nodeTitle.fold("")(" | " + _)}\n jdTag = ${eit.jdTag}\n mimg2 = $mimg2\n makeArgs = $makeArgs\n img maker = $maker\n edge = ${eit.medge}", ex)
+                  None
+                }
             })
               // Явно запустить на исполнение все future в списке:
               .to( List )
           }
 
         } yield {
-          LOGGER.trace(s"$logPrefix Done, ${results.size} img.results.")
-          results
+          val results2 = results.flatten
+          LOGGER.trace(s"$logPrefix Done, ${results2} success of ${results.size} total img.results.")
+          results2
         }
       }
 

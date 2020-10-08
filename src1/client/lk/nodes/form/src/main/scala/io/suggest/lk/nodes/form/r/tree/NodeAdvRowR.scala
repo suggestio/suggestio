@@ -4,7 +4,6 @@ import com.materialui.{MuiLinearProgress, MuiLinearProgressClasses, MuiLinearPro
 import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.lk.nodes.form.m.LkNodesAction
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
@@ -28,7 +27,7 @@ final class NodeAdvRowR(
   case class PropsVal(
                        flag           : Pot[Boolean],
                        msgCode        : String,
-                       onChange       : Boolean => LkNodesAction,
+                       onChange       : Boolean => Callback,
                      )
   implicit val pvFeq = FastEqUtil[PropsVal] { (a, b) =>
     (a.flag ===* b.flag) &&
@@ -42,17 +41,16 @@ final class NodeAdvRowR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     private val _onRowClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-        val p = props.value
-        val wasChecked = p.flag contains true
-        props.value.onChange( !wasChecked )
+      ($.state: CallbackTo[Props_t]) >>= { s =>
+        val wasChecked = s.flag contains true
+        s.onChange( !wasChecked )
       }
     }
 
     private val _onSwitchChanged = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val newChecked = e.target.checked
-      ReactDiodeUtil.dispatchOnProxyScopeCBf( $ ) { props: Props =>
-        props.value.onChange( newChecked )
+      ($.state: CallbackTo[Props_t]) >>= { s =>
+        s.onChange( newChecked )
       }
     }
 

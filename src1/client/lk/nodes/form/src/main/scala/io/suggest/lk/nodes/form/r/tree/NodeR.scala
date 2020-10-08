@@ -12,6 +12,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import diode.data.Pot
+import io.suggest.common.empty.OptionUtil
+import io.suggest.lk.nodes.{MLknOpKey, MLknOpKeys, MLknOpValue}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.lk.nodes.form.u.LknFormUtilR
 import io.suggest.spa.FastEqUtil
@@ -73,6 +75,20 @@ class NodeR(
       }
     }
 
+    private def _onSwitchChange(optionKey: MLknOpKey)(isChecked: Boolean): Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        val p = propsProxy.value
+        ModifyNode(
+          nodePath = Some( p.node.nodePath ),
+          key = optionKey,
+          value = MLknOpValue(
+            bool = OptionUtil.SomeBool( isChecked ),
+          ),
+        )
+      }
+
+    }
+
     /**
       * Рекурсивный рендер под-дерева узлов.
       *
@@ -117,8 +133,7 @@ class NodeR(
               true
             // Размещение карточки в узлах: Все галочки сокрыты, если главная галочка размещения выключена
             case true =>
-              pns.advHasAdvPot
-                .contains[Boolean]( true )
+              pns.optionBoolPot( MLknOpKeys.AdvEnabled ) contains[Boolean] true
           })
         ) {
           MuiList()(
@@ -152,11 +167,7 @@ class NodeR(
                 // Ряд с переключателем isEnabled узла:
                 nodeEnabledR.component {
                   val enProps = nodeEnabledR.PropsVal(
-                    isEnabledUpd  = pns.isEnabledUpd,
-                    isEnabled     = infoPot
-                      .exists(_.isEnabled contains[Boolean] true),
-                    request       = pns.isEnabledUpd
-                      .fold[Pot[_]]( Pot.empty )(_.request),
+                    isEnabled     = pns.optionBoolPot( MLknOpKeys.NodeEnabled ),
                     canChangeAvailability = infoPot
                       .toOption
                       .flatMap(_.isAdmin),
@@ -197,10 +208,9 @@ class NodeR(
                 nodeAdvRowR.component(
                   propsProxy.resetZoom(
                     nodeAdvRowR.PropsVal(
-                      flag      = pns.advAlwaysOpenedPot
-                        .orElse( infoPot.flatMap { m => Pot.fromOption(m.adv.map(_.advShowOpened)) }),
+                      flag      = pns.optionBoolPot( MLknOpKeys.ShowOpened ),
                       msgCode   = MsgCodes.`Show.ad.opened`,
-                      onChange  = AdvShowOpenedChange(p.node.nodePath, _),
+                      onChange  = _onSwitchChange( MLknOpKeys.ShowOpened ),
                     )
                   )
                 ),
@@ -209,10 +219,9 @@ class NodeR(
                 nodeAdvRowR.component(
                   propsProxy.resetZoom(
                     nodeAdvRowR.PropsVal(
-                      flag      = pns.advAlwaysOutlinedPot
-                        .orElse( infoPot.flatMap { m => Pot.fromOption(m.adv.map(_.alwaysOutlined)) }),
+                      flag      = pns.optionBoolPot( MLknOpKeys.AlwaysOutlined ),
                       msgCode   = MsgCodes.`Always.outlined`,
-                      onChange  = AlwaysOutlinedSet(p.node.nodePath, _),
+                      onChange  = _onSwitchChange( MLknOpKeys.AlwaysOutlined ),
                     )
                   )
                 ),

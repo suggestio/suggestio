@@ -111,6 +111,9 @@ object DiodeUtil {
         }
       }
 
+
+      def emptyPot = Pot.empty[T]
+
     }
 
 

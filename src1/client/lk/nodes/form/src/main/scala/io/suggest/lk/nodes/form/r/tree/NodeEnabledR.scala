@@ -4,13 +4,15 @@ import com.materialui.{MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasse
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.nodes.form.m.{MNodeEnabledUpdateState, NodeIsEnabledChanged}
+import io.suggest.lk.nodes.form.m.ModifyNode
 import io.suggest.lk.r.plat.PlatformComponents
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import diode.data.Pot
+import io.suggest.common.empty.OptionUtil
+import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.FastEqUtil
@@ -31,15 +33,11 @@ final class NodeEnabledR(
                         ) {
 
   case class PropsVal(
-                       isEnabledUpd             : Option[MNodeEnabledUpdateState],
-                       isEnabled                : Boolean,
-                       request                  : Pot[_],
+                       isEnabled                : Pot[Boolean],
                        canChangeAvailability    : Option[Boolean],
                      )
   implicit val PropsValFastEq = FastEqUtil[PropsVal] { (a, b) =>
-    (a.isEnabledUpd ===* b.isEnabledUpd) &&
     (a.isEnabled ==* b.isEnabled) &&
-    (a.request ===* b.request) &&
     (a.canChangeAvailability ===* b.canChangeAvailability)
   }
 
@@ -51,18 +49,22 @@ final class NodeEnabledR(
   class Backend($: BackendScope[Props, Props_t]) {
 
     /** Реакция на изменение значения флага активности узла. */
-    private val _onNodeEnabledClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-        val wasChecked = props.value.isEnabled
-        NodeIsEnabledChanged( isEnabled = !wasChecked )
+    private val _onNodeEnabledClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      ($.state: CallbackTo[Props_t]) >>= { s =>
+        val wasChecked = s.isEnabled.get
+        val action = ModifyNode(
+          key = MLknOpKeys.NodeEnabled,
+          value = MLknOpValue(
+            bool = OptionUtil.SomeBool( !wasChecked ),
+          )
+        )
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, action )
       }
     }
 
     def render(s: Props_t): VdomElement = {
-      val isChecked = s.isEnabledUpd
-        .fold( s.isEnabled )( _.newIsEnabled )
-      val isDisabled = s.isEnabledUpd
-        .exists(_.request.isPending)
+      val isChecked = s.isEnabled contains[Boolean] true
+      val isDisabled = s.isEnabled.isPending
 
       s.canChangeAvailability.whenDefinedEl { canChangeAvail =>
         MuiListItem(
@@ -77,8 +79,8 @@ final class NodeEnabledR(
               // Текстом написать, включёно или нет.
               crCtxP.message( MsgCodes.yesNo(isChecked) ),
               // Отрендерить ошибку запроса.
-              s.isEnabledUpd
-                .flatMap(_.request.exceptionOption)
+              s.isEnabled
+                .exceptionOption
                 .whenDefinedNode { ex =>
                   React.Fragment(
                     <.br,

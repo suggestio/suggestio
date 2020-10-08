@@ -23,16 +23,19 @@ object MLknNode {
     (__ \ "i").format[String] and
     (__ \ "t").formatNullable[MNodeType] and
     (__ \ "n").formatNullable[String] and
-    (__ \ "e").formatNullable[Boolean] and
     (__ \ "a").formatNullable[Boolean] and
-    (__ \ "d").formatNullable[MLknAdv] and
     (__ \ "f").formatNullable[MTfDailyInfo] and
     (__ \ "l").formatNullable[Boolean] and
-    (__ \ "p").formatNullable[String]
+    (__ \ "p").formatNullable[String] and
+    (__ \ "o").formatNullable[Map[MLknOpKey, MLknOpValue]]
+      .inmap[Map[MLknOpKey, MLknOpValue] ](
+        _ getOrElse Map.empty,
+        opts => if (opts.isEmpty) None else Some(opts)
+      )
   )(apply, unlift(unapply))
 
 
-  def adv = GenLens[MLknNode](_.adv)
+  def options = GenLens[MLknNode](_.options)
 
 }
 
@@ -45,27 +48,25 @@ object MLknNode {
   * @param name Отображаемое название узла.
   *             None - означает, что или оно отсутствует.
   *             None - или (скорее всего) для данного юзера/запроса оно не возвращается.
-  * @param isEnabled Является ли узел активным сейчас?
-  *                  None - сервер не проверял и не возвращает это значение.
   * @param isAdmin Может ли текущий юзер управлять значением флага isEnabled или удалять узел?
   *                admin-привелегии в lk-nodes-форме зависят также от типа узла.
   *                None значит, что сервер не интересовался этим вопросом.
-  * @param adv Имеется ли размещение текущей рекламной карточки на указанном узле?
   * @param tf Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос.
   * @param isDetailed Это детализованный ответ сервера или краткий?
   *                   Чтобы различать отстуствие тарифа/размещения и т.д. и просто невозврат этих полей сервером.
   * @param parentName Опциональное описание.
+  * @param options Карта-контейнер простых переменных опций узла.
+  *                Сюда переехали все adv-флаги и отдельное поле isEnabled.
   */
 final case class MLknNode(
                            override val id        : String,
                            ntype                  : Option[MNodeType],
                            name                   : Option[String]            = None,
-                           isEnabled              : Option[Boolean]           = None,
                            isAdmin                : Option[Boolean]           = None,
-                           adv                    : Option[MLknAdv]           = None,
                            tf                     : Option[MTfDailyInfo]      = None,
                            isDetailed             : Option[Boolean]           = None,
                            parentName             : Option[String]            = None,
+                           options                : Map[MLknOpKey, MLknOpValue] = Map.empty,
                          )
   extends IId[String]
 {

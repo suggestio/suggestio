@@ -12,7 +12,7 @@ import io.suggest.ble.MUidBeacon
 import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
-import io.suggest.lk.nodes.MLknBeaconsScanReq
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknModifyQs, MLknOpKey, MLknOpKeys, MLknOpValue}
 import io.suggest.n2.edge.{MPredicate, MPredicates}
 import io.suggest.n2.edge.edit.MNodeEdgeIdQs
 import io.suggest.n2.media.{MFileMeta, MFileMetaHash, MFileMetaHashFlag, MFileMetaHashFlags}
@@ -754,7 +754,6 @@ object CommonModelsJvm extends MacroLogsDyn {
                               strB         : QueryStringBindable[String],
                               intOptB      : QueryStringBindable[Option[Int]],
                              ): QueryStringBindable[MUidBeacon] = {
-
     new QueryStringBindableImpl[MUidBeacon] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUidBeacon]] = {
         val k = key1F(key)
@@ -782,6 +781,86 @@ object CommonModelsJvm extends MacroLogsDyn {
           intOptB.unbind (k(DISTANCE_CM_FN),  value.distanceCm),
         )
       }
+    }
+  }
+
+
+  implicit def lknOpKeyQsb: QueryStringBindable[MLknOpKey] =
+    EnumeratumJvmUtil.valueEnumQsb( MLknOpKeys )
+
+  implicit def lknOpValueQsb: QueryStringBindable[MLknOpValue] = {
+    new QueryStringBindableImpl[MLknOpValue] {
+      private def boolOptB = implicitly[QueryStringBindable[Option[Boolean]]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLknOpValue]] = {
+        val F = MLknOpValue.Fields
+        val k = key1F(key)
+        for {
+          boolOptE <- boolOptB.bind( k(F.BOOL), params )
+        } yield {
+          for {
+            boolOpt <- boolOptE
+          } yield {
+            MLknOpValue(
+              bool = boolOpt,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MLknOpValue): String = {
+        val F = MLknOpValue.Fields
+        val k = key1F(key)
+        boolOptB.unbind( k(F.BOOL), value.bool )
+      }
+
+    }
+  }
+
+  /** Поддержка бинда для MLknModifyQs. */
+  implicit def lknModifyQsb: QueryStringBindable[MLknModifyQs] = {
+    new QueryStringBindableImpl[MLknModifyQs] {
+      private def stringSeqB = implicitly[QueryStringBindable[QsbSeq[String]]]
+      private def stringOptB = implicitly[QueryStringBindable[Option[String]]]
+      private def opKeyB = implicitly[QueryStringBindable[MLknOpKey]]
+      private def opValueB = implicitly[QueryStringBindable[MLknOpValue]]
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLknModifyQs]] = {
+        val k = key1F(key)
+        val F = MLknModifyQs.Fields
+        for {
+          onNodeRkE     <- stringSeqB.bind  ( k(F.ON_NODE_RK),    params )
+          adIdOptE      <- stringOptB.bind  ( k(F.AD_ID),         params )
+          opKeyE        <- opKeyB.bind      ( k(F.OP_KEY),        params )
+          opValueE      <- opValueB.bind    ( k(F.OP_VALUE),      params )
+        } yield {
+          for {
+            onNodeRk    <- onNodeRkE
+            adIdOpt     <- adIdOptE
+            opKey       <- opKeyE
+            opValue     <- opValueE
+          } yield {
+            MLknModifyQs(
+              onNodeRk  = onNodeRk.items.toList,
+              adIdOpt   = adIdOpt,
+              opKey     = opKey,
+              opValue   = opValue,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MLknModifyQs): String = {
+        val k = key1F(key)
+        val F = MLknModifyQs.Fields
+        _mergeUnbinded1(
+          stringSeqB.unbind ( k(F.ON_NODE_RK),    QsbSeq(value.onNodeRk) ),
+          stringOptB.unbind ( k(F.AD_ID),         value.adIdOpt ),
+          opKeyB.unbind     ( k(F.OP_KEY),        value.opKey   ),
+          opValueB.unbind   ( k(F.OP_VALUE),      value.opValue ),
+        )
+      }
+
     }
   }
 

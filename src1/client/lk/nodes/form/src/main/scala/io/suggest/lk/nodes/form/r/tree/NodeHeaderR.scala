@@ -2,12 +2,14 @@ package io.suggest.lk.nodes.form.r.tree
 
 import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
-import io.suggest.lk.nodes.form.m.{AdvOnNodeChanged, MNodeState, MNodeStateRender, MTreeRoles}
+import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
+import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import japgolly.scalajs.react._
@@ -62,13 +64,19 @@ final class NodeHeaderR(
     private lazy val _onAdvOnNodeChangedCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val isChecked = e.target.checked
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-        AdvOnNodeChanged( props.value.render.nodePath, isEnabled = isChecked )
+        ModifyNode(
+          nodePath = Some( props.value.render.nodePath ),
+          key = MLknOpKeys.AdvEnabled,
+          value = MLknOpValue(
+            bool = OptionUtil.SomeBool( isChecked ),
+          ),
+        )
       }
     }
 
     def render(propsProxy: Props, s: Props_t): VdomElement = {
       val st = s.render.state
-      val advPot = st.advHasAdvPot
+      val advPot = st.optionBoolPot( MLknOpKeys.AdvEnabled )
       val infoOpt = st.infoPot.toOption
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).

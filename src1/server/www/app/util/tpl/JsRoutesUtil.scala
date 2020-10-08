@@ -32,14 +32,11 @@ final class JsRoutesUtil {
   def lkNodesFormRoutes(): LazyList[JavaScriptReverseRoute] = {
     routes.javascript.LkNodes.subTree #::
     routes.javascript.LkNodes.createSubNodeSubmit #::
-    routes.javascript.LkNodes.setNodeEnabled #::
     routes.javascript.LkNodes.deleteNode #::
     routes.javascript.LkNodes.editNode #::
-    routes.javascript.LkNodes.setAdv #::
     routes.javascript.LkNodes.setTfDaily #::
-    routes.javascript.LkNodes.setAdvShowOpened #::
-    routes.javascript.LkNodes.setAlwaysOutlined #::
     routes.javascript.LkNodes.beaconsScan #::
+    routes.javascript.LkNodes.modifyNode #::
     routes.javascript.LkAds.adsPage #::
     controllers.sc.routes.javascript.ScSite.geoSite #::
     LazyList.empty

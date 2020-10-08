@@ -3,7 +3,7 @@ package io.suggest.lk.nodes.form.m
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.ble.beaconer.MBeaconData
-import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp}
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp, MLknOpKey, MLknOpValue}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.spa.DAction
 
@@ -28,14 +28,6 @@ sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
   val name: String
 }
 
-sealed trait INodeUpdatedResp extends LkNodesAction {
-  /** id узла, если есть. */
-  def nodeIdOpt: Option[String]
-  /** @return None - узел удалён.
-    *         Some() - узел обновлён на указанное состояние.
-    */
-  def nodeUpdated: Try[Option[MLknNode]]
-}
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
 case class NodeClick(
@@ -100,38 +92,11 @@ case class CreateNodeResp(
                            tryResp    : Try[MLknNode],
                          )
   extends LkNodesAction
-  with INodeUpdatedResp
-{
-  override lazy val nodeUpdated = tryResp.map(Some.apply)
-  override def nodeIdOpt = tryResp.toOption.map(_.id)
-}
 
 
 /** Добавление под-узла: юзер нажал "отмена". */
 case object CreateNodeCloseClick
   extends LkNodesAction
-
-
-
-/** Сигнал о клике по галочке узла. */
-case class NodeIsEnabledChanged(
-                                 isEnabled            : Boolean,
-                               )
-  extends LkNodesAction
-
-
-/** Сигнал ответа сервера на апдейт флага isEnabled. */
-case class NodeIsEnabledUpdateResp(
-                                    override val nodePath: NodePath_t,
-                                    nodeId               : String,
-                                    resp                 : Try[MLknNode]
-                                  )
-  extends LkNodesTreeAction
-  with INodeUpdatedResp
-{
-  override def nodeIdOpt = Some( nodeId )
-  override def nodeUpdated = resp.map(Some.apply)
-}
 
 
 // Удалятельство узлов.
@@ -154,11 +119,6 @@ case class NodeDeleteResp(
                            resp: Try[Boolean]
                          )
   extends LkNodesTreeAction
-  with INodeUpdatedResp
-{
-  override def nodeIdOpt = Some(nodeId)
-  override def nodeUpdated = resp.map(_ => None)
-}
 
 
 // Редактирование узла (переименование).
@@ -181,24 +141,27 @@ case class NodeEditSaveResp(
                              tryResp: Try[MLknNode]
                            )
   extends LkNodesAction
-  with INodeUpdatedResp
-{
-  override def nodeIdOpt = Some(nodeId)
-  override def nodeUpdated = tryResp.map(Some.apply)
-}
 
 
 // Управление размещением текущей карточки на указанном узле.
 
-/** Изменилось состояние галочки, управляющей размещением текущей карточки на узле. */
-case class AdvOnNodeChanged(override val nodePath: NodePath_t, isEnabled: Boolean)
-  extends LkNodesTreeAction
-/** Ответ сервера на тему управления размещением карточки на узле. */
-case class AdvOnNodeResp(
-                          override val nodePath: NodePath_t,
-                          tryResp: Try[MLknNode]
-                        )
-  extends LkNodesTreeAction
+/** Унифицированный экшен для управления флагами в обе стадии.
+  *
+  * @param nodePath Путь до узла в дереве на экране.
+  *                 None - означает, что смотреть надо в tree.opened.
+  * @param key Ключ.
+  * @param value Контейнер нового значения флага.
+  * @param nextPot Состояние.
+  * @param nodeRk RcvrKey для контроля корректности nodePath на асинхронных операциях с деревом.
+  */
+case class ModifyNode(
+                       nodePath     : Option[NodePath_t]      = None,
+                       key          : MLknOpKey,
+                       value        : MLknOpValue,
+                       nextPot      : Pot[MLknNode]           = Pot.empty,
+                       nodeRk       : Option[RcvrKey]         = None,
+                     )
+  extends LkNodesAction
 
 
 // Управление тарифом узла.
@@ -214,11 +177,6 @@ case object TfDailySaveClick
 /** Сигнал ответа сервера по поводу обновления тарифа. */
 case class TfDailySavedResp(tryResp: Try[MLknNode])
   extends LkNodesAction
-  with INodeUpdatedResp
-{
-  override def nodeIdOpt = tryResp.toOption.map(_.id)
-  override def nodeUpdated = tryResp.map(Some.apply)
-}
 
 
 /** Отмена редактирования тарифа текущего узла. */
@@ -230,35 +188,6 @@ case class TfDailyManualAmountChanged(amount: String)
   extends LkNodesAction
 
 case class TfDailyModeChanged( modeId: String ) extends LkNodesAction
-
-/** Изменилось значение галочки раскрытости карточки по дефолту. */
-case class AdvShowOpenedChange(
-                                override val nodePath: NodePath_t,
-                                isChecked: Boolean
-                              )
-  extends LkNodesTreeAction
-
-/** Ответ сервера на запрос изменения отображения рекламной карточки. */
-case class AdvShowOpenedChangeResp(
-                                    override val nodePath: NodePath_t,
-                                    reason: AdvShowOpenedChange,
-                                    tryResp: Try[MLknNode],
-                                  )
-  extends LkNodesTreeAction
-
-/** Изменение галочки постоянной обводки. */
-case class AlwaysOutlinedSet(
-                              override val nodePath: NodePath_t,
-                              isChecked: Boolean,
-                            )
-  extends LkNodesTreeAction
-
-case class AlwaysOutlinedResp(
-                               override val nodePath: NodePath_t,
-                               reason: AlwaysOutlinedSet,
-                               tryResp: Try[MLknNode],
-                             )
-  extends LkNodesTreeAction
 
 
 /** Экшены Beacons-контроллера. */

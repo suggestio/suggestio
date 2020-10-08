@@ -50,7 +50,8 @@ class BlkImgMaker @Inject() (
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     val origImgId = args.img.dynImgId.original
-    val outFmt = origImgId.imgFormat.get
+    val outFmtOpt = origImgId.imgFormat
+    val outFmt = outFmtOpt.get
 
     if (outFmt.isVector) {
       // Это SVG, а convert на выходе выдаёт растр. Надо кропать прямо на клиенте, а не здесь.

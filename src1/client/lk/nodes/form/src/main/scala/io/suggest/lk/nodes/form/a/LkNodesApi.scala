@@ -5,7 +5,7 @@ import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
-import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp}
+import io.suggest.lk.nodes.{MLknBeaconsScanReq, MLknNode, MLknNodeReq, MLknNodeResp, MLknModifyQs}
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -74,6 +74,7 @@ trait ILkNodesApi {
     * @param onNode RcvrKey узла, на котором происходит размещение.
     * @return Фьючерс с обновлённой инфой по узлу.
     */
+  @deprecated
   def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode]
 
   /** Запустить обновление флага showOpened для указанного узла и карточки.
@@ -83,6 +84,7 @@ trait ILkNodesApi {
     * @param onNode На каком узле действо разворачивать при открытии?
     * @return Фьючерс с обнволённым узлом.
     */
+  @deprecated
   def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[MLknNode]
 
   /** Запустить запрос обновления флага AlwaysOutlined, для указанного узла и карточки.
@@ -92,6 +94,7 @@ trait ILkNodesApi {
     * @param onNode На каком узле размещение карточки.
     * @return Фьючерс.
     */
+  @deprecated
   def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[MLknNode]
 
   /** Выставить новый режим тарификации указанного узла.
@@ -108,6 +111,12 @@ trait ILkNodesApi {
     * @return Фьючерс с ответом, где root-узел следует отбросить.
     */
   def beaconsScan(req: MLknBeaconsScanReq): Future[MLknNodeResp]
+
+  /** Обновление узла согласно переданным данным.
+    * @param qs Контейнер параметров запроса.
+    * @return Описание обновлённого узла.
+    */
+  def modifyNode(qs: MLknModifyQs): Future[MLknNode]
 
 }
 
@@ -208,6 +217,7 @@ final class LkNodesApiHttpImpl(
   }
 
 
+  @deprecated
   override def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode] = {
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.setAdv(
@@ -244,6 +254,7 @@ final class LkNodesApiHttpImpl(
       .unJson[MLknNode]
   }
 
+  @deprecated
   override def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[MLknNode] = {
     HttpClient
       .execute(
@@ -259,6 +270,7 @@ final class LkNodesApiHttpImpl(
       .unJson[MLknNode]
   }
 
+  @deprecated
   override def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[MLknNode] = {
     HttpClient
       .execute(
@@ -295,6 +307,26 @@ final class LkNodesApiHttpImpl(
       .respAuthFut
       .successIf200
       .unJson[MLknNodeResp]
+  }
+
+  override def modifyNode(qs: MLknModifyQs): Future[MLknNode] = {
+    HttpClient
+      .execute(
+        HttpReq.routed(
+          route = routes.controllers.LkNodes.modifyNode(
+            PlayJsonSjsUtil.toNativeJsonObj(
+              Json.toJsObject( qs ) )
+          ),
+          data = HttpReqData(
+            headers   = HttpReqData.headersJsonAccept,
+            timeoutMs = Some( 7000 ),
+            config    = diConfig.httpClientConfig(),
+          ),
+        )
+      )
+      .respAuthFut
+      .successIf200
+      .unJson[MLknNode]
   }
 
 }
