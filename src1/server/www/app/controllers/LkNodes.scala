@@ -586,7 +586,7 @@ final class LkNodes @Inject() (
     * @param isEnabled Новое значение флага.
     * @return 200 OK + обновлённый узел.
     */
-  def setNodeEnabled(nodeId: String, isEnabled: Boolean) = csrf.Check {
+  private def setNodeEnabled(nodeId: String, isEnabled: Boolean) = csrf.Check {
     bruteForceProtect {
       canChangeNodeAvailability(nodeId).async { implicit request =>
 
@@ -732,13 +732,13 @@ final class LkNodes @Inject() (
 
   /** Обновить статус карточки на узле.
     *
-    * @param adIdU id рекламной карточки.
+    * @param adId id рекламной карточки.
     * @param isEnabled Размещена или нет?
     * @param rcvrKey Ключ узла.
     * @return 200 OK + MLknNode.
     */
-  def setAdv(adIdU: MEsUuId, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
-    canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
+  private def setAdv(adId: String, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
+    canFreelyAdvAdOnNode(adId, rcvrKey).async { implicit request =>
       // Выполнить обновление текущей карточки согласно значению флага isEnabled.
       val nodeId = request.mnode.id.get
       val nodeIds = Set.empty + nodeId
@@ -865,16 +865,16 @@ final class LkNodes @Inject() (
 
   /** Выставление флага isShowOpened.
     *
-    * @param adIdU id карточки.
+    * @param adId id карточки.
     * @param isEnabled Состояние галочки.
     * @param rcvrKey Узел-ресивера.
     * @return 200 OK + Json[MLknNode].
     */
-  def setAdvShowOpened(adIdU: MEsUuId, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
-    canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
+  private def setAdvShowOpened(adId: String, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
+    canFreelyAdvAdOnNode(adId, rcvrKey).async { implicit request =>
       val nodeId = request.mnode.id.get
       val pred = MPredicates.Receiver.Self
-      lazy val logPrefix = s"setAdvShowOpened($adIdU, $isEnabled, $nodeId):"
+      lazy val logPrefix = s"setAdvShowOpened($adId, $isEnabled, $nodeId):"
 
       val madEdgeSelfOpt = request.mad.edges
         .withNodePred(nodeId, pred)
@@ -890,7 +890,7 @@ final class LkNodes @Inject() (
           NoContent
 
         } else {
-          LOGGER.trace(s"$logPrefix Will update mad#$adIdU with showOpened=$isEnabled on $nodeId")
+          LOGGER.trace(s"$logPrefix Will update mad#$adId with showOpened=$isEnabled on $nodeId")
           val edge2 = (
             MEdge.nodeIds
               .set( Set.empty + nodeId ) andThen
@@ -949,15 +949,15 @@ final class LkNodes @Inject() (
 
   /** Выставление флага isShowOpened.
     *
-    * @param adIdU id карточки.
+    * @param adId id карточки.
     * @param isEnabled Состояние галочки.
     * @param rcvrKey Узел-ресивера.
     */
-  def setAlwaysOutlined(adIdU: MEsUuId, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
-    canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
+  private def setAlwaysOutlined(adId: String, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
+    canFreelyAdvAdOnNode(adId, rcvrKey).async { implicit request =>
       val nodeId = request.mnode.id.get
       val pred = MPredicates.Receiver.Self
-      lazy val logPrefix = s"setAlwaysOutlined($adIdU, $isEnabled, $nodeId):"
+      lazy val logPrefix = s"setAlwaysOutlined($adId, $isEnabled, $nodeId):"
 
       val madEdgeSelfOpt = request.mad.edges
         .withNodePred(nodeId, pred)
@@ -973,19 +973,19 @@ final class LkNodes @Inject() (
           NoContent
 
         } else {
-          LOGGER.trace(s"$logPrefix Will update mad#$adIdU with AlwaysOutlined=$isEnabled on $nodeId")
+          LOGGER.trace(s"$logPrefix Will update mad#$adId with AlwaysOutlined=$isEnabled on $nodeId")
 
           val edge2 = (
             MEdge.nodeIds
               .set( Set.empty + nodeId ) andThen
-              MEdge.info.modify { info0 =>
-                val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
-                val flags2 =
-                  if (isEnabled) info0.flags.toSeq appended fd
-                  else (info0.flagsMap - fd.flag).values
-                MEdgeInfo.flags.set( flags2 )(info0)
-              }
-            )(edge0)
+            MEdge.info.modify { info0 =>
+              val fd = MEdgeFlagData( MEdgeFlags.AlwaysOutlined )
+              val flags2 =
+                if (isEnabled) info0.flags.toSeq appended fd
+                else (info0.flagsMap - fd.flag).values
+              MEdgeInfo.flags.set( flags2 )(info0)
+            }
+          )(edge0)
 
           // Если в данном эдже было несколко nodeIds, то распилить на несколько эджей.
           val eTail = if (edge0.nodeIds.sizeIs > 1) {

@@ -42,14 +42,6 @@ trait ILkNodesApi {
   def createSubNodeSubmit(parentRk: RcvrKey, data: MLknNodeReq): Future[MLknNode]
 
 
-  /** Вызов обновления флага isEnabled для указанного узла.
-    *
-    * @param nodeId id обновляемого узла.
-    * @param isEnabled Новое значение флага isEnabled.
-    * @return Фьючерс с обновлёнными данными по обновлённому узлу.
-    */
-  def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode]
-
   /** Запуск удаления какого-то узла на сервере.
     *
     * @param nodeId id узла.
@@ -66,36 +58,6 @@ trait ILkNodesApi {
     * @return Фьючерс с инфой по обновлённому узлу.
     */
   def editNode(nodeId: String, data: MLknNodeReq): Future[MLknNode]
-
-  /** Запустить экшен обновления прямого размещения на узле.
-    *
-    * @param adId id текущей карточки (берётся из конфига).
-    * @param isEnabled Разместить или снять с размещения?
-    * @param onNode RcvrKey узла, на котором происходит размещение.
-    * @return Фьючерс с обновлённой инфой по узлу.
-    */
-  @deprecated
-  def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode]
-
-  /** Запустить обновление флага showOpened для указанного узла и карточки.
-    *
-    * @param adId id рекламной карточки.
-    * @param isShowOpened Новое значение isShowOpened.
-    * @param onNode На каком узле действо разворачивать при открытии?
-    * @return Фьючерс с обнволённым узлом.
-    */
-  @deprecated
-  def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[MLknNode]
-
-  /** Запустить запрос обновления флага AlwaysOutlined, для указанного узла и карточки.
-    *
-    * @param adId id рекламной карточки.
-    * @param isAlwaysOutlined Новое значение флага AlwaysOutlined.
-    * @param onNode На каком узле размещение карточки.
-    * @return Фьючерс.
-    */
-  @deprecated
-  def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[MLknNode]
 
   /** Выставить новый режим тарификации указанного узла.
     *
@@ -167,21 +129,6 @@ final class LkNodesApiHttpImpl(
   }
 
 
-  override def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled),
-      data  = HttpReqData(
-        headers = HttpReqData.headersJsonAccept,
-        config = diConfig.httpClientConfig(),
-      ),
-    )
-    HttpClient.execute( req )
-      .respAuthFut
-      .successIf200
-      .unJson[MLknNode]
-  }
-
-
   override def deleteNode(nodeId: String): Future[Boolean] = {
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.deleteNode(nodeId),
@@ -217,26 +164,6 @@ final class LkNodesApiHttpImpl(
   }
 
 
-  @deprecated
-  override def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode] = {
-    val req = HttpReq.routed(
-      route = routes.controllers.LkNodes.setAdv(
-        adId          = adId,
-        isEnabled     = isEnabled,
-        onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
-      ),
-      data = HttpReqData(
-        headers = HttpReqData.headersJsonAccept,
-        config  = diConfig.httpClientConfig(),
-      ),
-    )
-    HttpClient.execute(req)
-      .respAuthFut
-      .successIf200
-      .unJson[MLknNode]
-  }
-
-
   override def setTfDaily(onNode: RcvrKey, mode: ITfDailyMode): Future[MLknNode] = {
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.setTfDaily(
@@ -249,38 +176,6 @@ final class LkNodesApiHttpImpl(
       )
     )
     HttpClient.execute(req)
-      .respAuthFut
-      .successIf200
-      .unJson[MLknNode]
-  }
-
-  @deprecated
-  override def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[MLknNode] = {
-    HttpClient
-      .execute(
-        HttpReq.routed(
-          route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode)),
-          data = HttpReqData(
-            config = diConfig.httpClientConfig(),
-          ),
-        )
-      )
-      .respAuthFut
-      .successIf200
-      .unJson[MLknNode]
-  }
-
-  @deprecated
-  override def setAlwaysOutlined(adId: String, isAlwaysOutlined: Boolean, onNode: RcvrKey): Future[MLknNode] = {
-    HttpClient
-      .execute(
-        HttpReq.routed(
-          route = routes.controllers.LkNodes.setAlwaysOutlined(adId, isAlwaysOutlined, RcvrKey.rcvrKey2urlPath(onNode)),
-          data = HttpReqData(
-            config = diConfig.httpClientConfig(),
-          ),
-        )
-      )
       .respAuthFut
       .successIf200
       .unJson[MLknNode]

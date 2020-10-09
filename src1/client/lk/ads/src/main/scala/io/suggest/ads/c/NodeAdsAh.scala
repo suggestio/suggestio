@@ -6,8 +6,9 @@ import io.suggest.ads.{LkAdsFormConst, MLkAdsConf, MLkAdsOneAdResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.lk.nodes.MLknOpKeys
+import io.suggest.lk.nodes.{MLknModifyQs, MLknOpKeys, MLknOpValue}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
@@ -65,10 +66,15 @@ class NodeAdsAh[M](
 
       val fx = Effect {
         lkNodesApi
-          .setAdv(
-            adId      = m.adId,
-            isEnabled = m.isShown,
-            onNode    = confRO.value.nodeKey,
+          .modifyNode(
+            MLknModifyQs(
+              onNodeRk  = confRO.value.nodeKey,
+              adIdOpt   = Some( m.adId ),
+              opKey     = MLknOpKeys.AdvEnabled,
+              opValue = MLknOpValue(
+                bool = OptionUtil.SomeBool( m.isShown ),
+              ),
+            )
           )
           .transform { tryResp =>
             Success( SetAdShownAtParentResp(m, tryResp, ts) )

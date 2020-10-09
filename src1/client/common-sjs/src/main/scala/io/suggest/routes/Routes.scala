@@ -273,27 +273,14 @@ sealed trait LkNodesCtlRoutes extends js.Object {
   /** Роута сабмита формы добавления нового узла. */
   def createSubNodeSubmit(parentRk: String): PlayRoute = js.native
 
-  /** Роута сабмита нового значения флага isEnabled. */
-  def setNodeEnabled(nodeId: String, isEnabled: Boolean): PlayRoute = js.native
-
   /** Роута для удаления узла. */
   def deleteNode(nodeId: String): PlayRoute = js.native
 
   /** Сабмит редактирования узла. */
   def editNode(nodeId: String): PlayRoute = js.native
 
-  /** Сабмит обновления данных размещения какой-то карточки на каком-то узле по rcvrKey. */
-  @deprecated
-  def setAdv(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
-
   /** Сабмит обновлённых данных по тарификацию размещений на узле. */
   def setTfDaily(onNodeRcvrKey: String): PlayRoute = js.native
-
-  @deprecated
-  def setAdvShowOpened(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
-
-  @deprecated
-  def setAlwaysOutlined(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): PlayRoute = js.native
 
   def beaconsScan(scanReq: js.Dictionary[js.Any]): PlayRoute = js.native
 
