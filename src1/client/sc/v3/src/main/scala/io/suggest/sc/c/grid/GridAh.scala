@@ -26,6 +26,7 @@ import io.suggest.log.Log
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom
 import scalaz.Tree
@@ -243,6 +244,50 @@ object GridAh {
     onlyMatching.nodeId.fold(true)( scAnm.nodeId.contains[String] )
   }
 
+
+  /** Сброс фокуса у всех карточек, кроме указанной.
+    * Указанная карточка - перезаписывается указанным инстансом.
+    *
+    * @param index Порядковый номер обновляемой карточки в плитке.
+    * @param scAd2 Обновлённая карточка для индекса.
+    * @param gridCore0 Исходное состояние плитки.
+    * @return Обновлённое состояние плитки.
+    */
+  def resetFocus(index: Int, scAd2: MScAdData, gridCore0: MGridCoreS): MGridCoreS = {
+    val adsPot2 = for (ads0 <- gridCore0.ads) yield {
+      val emptyPot = Pot.empty[MJdDataJs]
+      ads0
+        .iterator
+        .zipWithIndex
+        .map { case (xad0, i) =>
+          if (i ==* index) {
+            // Раскрыть выбранную карточку.
+            scAd2
+          } else if (xad0.focused !=* emptyPot) {
+            // Скрыть все уже открытые карточки.
+            (MScAdData.focused set emptyPot)(xad0)
+          } else {
+            // Нераскрытые карточки - пропустить без изменений.
+            xad0
+          }
+        }
+        .toVector
+    }
+
+    val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, gridCore0 )
+    val gridBuild2 = GridAh.rebuildGrid(
+      ads = adsPot2,
+      jdConf = gridCore0.jdConf,
+      jdRuntime = jdRuntime2,
+    )
+
+    gridCore0.copy(
+      jdRuntime = jdRuntime2,
+      ads       = adsPot2,
+      gridBuild = gridBuild2,
+    )
+  }
+
 }
 
 
@@ -436,7 +481,11 @@ class GridAh[M](
           if (ad0.isAlwaysOpened) {
             // Клик по всегда развёрнутой карточке должен приводить к скроллу к началу карточки без загрузки.
             val scrollFx = GridAh.scrollToAdFx( ad0, v0.core.gridBuild )
-            effectOnly(scrollFx)
+            // Состояние обновляем на данную карточку, чтобы sc-nodes-форма могла корректно определить текущую выбранную карточку.
+            // Для индикации фокуса на карточке, используем Pot.focused.unavailable(), чтобы scAd.focused отличался от Pot.empty.
+            val ad2 = MScAdData.focused.modify(_.unavailable())(ad0)
+            val v2 = MGridS.core.modify( GridAh.resetFocus(index, ad2, _) )(v0)
+            updatedSilent(v2, scrollFx)
 
           } else {
             ad0.focused.fold {

@@ -11,6 +11,7 @@ import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridBlockClick, MGridS, MScAdData}
 import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.log.Log
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 /**
@@ -87,52 +88,22 @@ class GridFocusRespHandler
         ActionResult.NoChange
 
       } { case (ad0, index) =>
-        val focResp = ra.ads.get
-        val focAd = focResp.ads.head
-        val focJdDataJs = MJdDataJs.fromJdData( focAd.jd, focAd.info )
-        val ad1 = MScAdData.focused
-          .modify(
-            _.ready( focJdDataJs )
-          )(ad0)
-
-        val adsPot2 = for (ads0 <- g0.core.ads) yield {
-          ads0
-            .iterator
-            .zipWithIndex
-            .map { case (xad0, i) =>
-              if (i ==* index) {
-                // Раскрыть выбранную карточку.
-                ad1
-              } else if (xad0.focused.nonEmpty) {
-                // Скрыть все уже открытык карточки.
-                MScAdData.focused
-                  .set( Pot.empty )(xad0)
-              } else {
-                // Нераскрытые карточки - пропустить без изменений.
-                xad0
-              }
-            }
-            .toVector
+        val ad1 = {
+          val focResp = ra.ads.get
+          val focAd = focResp.ads.head
+          val focJdDataJs = MJdDataJs.fromJdData( focAd.jd, focAd.info )
+          MScAdData.focused.modify( _.ready( focJdDataJs ) )(ad0)
         }
+        // Обновление фокусировки:
+        val gridCore2 = GridAh.resetFocus( index, ad1, g0.core )
 
-        val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, g0.core )
-        val gridBuild2 = GridAh.rebuildGrid(
-          ads = adsPot2,
-          jdConf = g0.core.jdConf,
-          jdRuntime = jdRuntime2,
-        )
-        val g2 = MGridS.core.modify(
-          _.copy(
-            jdRuntime = jdRuntime2,
-            ads       = adsPot2,
-            gridBuild = gridBuild2
-          )
-        )(g0)
         // Надо проскроллить выдачу на начало открытой карточки:
-        val scrollFx = GridAh.scrollToAdFx( ad1, gridBuild2 )
+        val scrollFx = GridAh.scrollToAdFx( ad1, gridCore2.gridBuild )
         val resetRouteFx = ResetUrlRoute().toEffectPure
 
-        val v2 = MScRoot.grid.set(g2)( ctx.value0 )
+        val v2 = MScRoot.grid
+          .composeLens( MGridS.core )
+          .set( gridCore2 )( ctx.value0 )
         val fxOpt = Some(scrollFx + resetRouteFx)
         ActionResult(Some(v2), fxOpt)
       }

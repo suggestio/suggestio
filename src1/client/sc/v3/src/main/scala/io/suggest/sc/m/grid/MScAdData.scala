@@ -33,6 +33,36 @@ object MScAdData {
   def main    = GenLens[MScAdData](_.main)
   def focused = GenLens[MScAdData](_.focused)
 
+
+  implicit final class ScAdDataOpsExt( private val scAd: MScAdData ) extends AnyVal {
+
+    def focOrMain: MJdDataJs =
+      scAd.focused getOrElse scAd.main
+
+    /** Всегда раскрытая карточка в данной плитке. */
+    def isAlwaysOpened: Boolean = {
+      scAd.main.doc.template.rootLabel.name ==* MJdTagNames.DOCUMENT
+    }
+
+    // 2019-11-18 Может быть ситуация, что уже развёрнутая карточка прямо в плитке, и вместо одного блока тут целый DOCUMENT.
+    def alwaysOpened: Option[MJdDataJs] =
+      OptionUtil.maybe( scAd.isAlwaysOpened )(scAd.main)
+
+    def focOrAlwaysOpened: Option[MJdDataJs] = {
+      scAd
+        .focused
+        .toOption
+        .orElse( alwaysOpened )
+    }
+
+    def nodeId: Option[String] =
+      scAd.main.doc.tagId.nodeId
+
+    def focusedOrMainPot: Pot[MJdDataJs] =
+      scAd.focused orElse scAd.mainAsFocused
+
+  }
+
 }
 
 
@@ -49,26 +79,9 @@ final case class MScAdData(
   extends OptStrId
 {
 
-  def focOrMain: MJdDataJs =
-    focused getOrElse main
+  lazy val mainAsFocused: Pot[MJdDataJs] =
+    focused.ready( main )
 
-  /** Всегда раскрытая карточка в данной плитке. */
-  def isAlwaysOpened: Boolean = {
-    main.doc.template.rootLabel.name ==* MJdTagNames.DOCUMENT
-  }
-
-  // 2019-11-18 Может быть ситуация, что уже развёрнутая карточка прямо в плитке, и вместо одного блока тут целый DOCUMENT.
-  def alwaysOpened: Option[MJdDataJs] =
-    OptionUtil.maybe( isAlwaysOpened )(main)
-
-  def focOrAlwaysOpened: Option[MJdDataJs] = {
-    focused
-      .toOption
-      .orElse( alwaysOpened )
-  }
-
-
-  def nodeId = main.doc.tagId.nodeId
-  override def id = nodeId
+  override def id = this.nodeId
 
 }

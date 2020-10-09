@@ -5,7 +5,7 @@ import diode.data.Pot
 import io.suggest.common.empty.EmptyProductPot
 import io.suggest.grid.build.MGridBuildResult
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.MJdRuntime
+import io.suggest.jd.render.m.{MJdDataJs, MJdRuntime}
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -60,19 +60,21 @@ case class MGridCoreS(
 
   /** Текущая открытая карточка, если есть. */
   lazy val focusedAdOpt: Option[MScAdData] = {
-    ads
-      .toOption
-      .flatMap { adsVec =>
-        adsVec.find { b =>
-          b.focused.nonEmpty
-        }
-      }
+    (for {
+      adsVec <- ads.iterator
+      emptyPot = Pot.empty[MJdDataJs]
+      scAd <- adsVec.iterator
+      if scAd.focused !=* emptyPot
+    } yield {
+      scAd
+    })
+      .nextOption()
   }
 
   /** Текущая открытая карточка, пригодная для операций над ней: размещение в маячке, например. */
   def myFocusedAdOpt: Option[MScAdData] = {
     focusedAdOpt.filter { scAd =>
-      scAd.focused.exists { foc =>
+      scAd.focusedOrMainPot.exists { foc =>
         (foc.info.canEditOpt contains[Boolean] true) &&
         // Запрещаем 404-карточки считать за "свои".
         !foc.info.isMad404
