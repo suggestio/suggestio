@@ -158,7 +158,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
       .mapZipWithIdIter[EdgeUid_t, MJdEdgeVldInfo] { jdEdge =>
         MJdEdgeVldInfo(
           jdEdge = jdEdge,
-          img    = None,
+          file    = None,
         )
       }
       .to( Map )

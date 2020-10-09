@@ -2,13 +2,13 @@ package util.n2u
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
-import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
+import io.suggest.jd.{MJdEdgeFileVldInfo, MJdEdge, MJdEdgeVldInfo}
 import io.suggest.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import models.im.{MDynImgId, MImg3}
 import scalaz.std.iterable._
 import scalaz.std.list._
@@ -160,35 +160,69 @@ final class N2VldUtil @Inject()(
     (for {
       jdEdge <- jdEdges.iterator
       edgeUid <- jdEdge.edgeDoc.id
+
+      fileNodeOpt = for {
+        fileSrv <- jdEdge.fileSrv
+        mnode <- nodesMap.get( fileSrv.nodeId )
+      } yield mnode
+
+      isJdImage = jdEdge.predicate ==>> MPredicates.JdContent.Image
+
+      // Проверить, что файл-узел существует, когда он требуется по смыслу:
+      // Это нужно, чтобы сейчас и позже правильно провалидировать эджи в ситуации, когда картинка есть в imgsNeededMap,
+      // но отсутствует в nodesMap или mediasMap. В подобной ситуации, не должно быть никакого MEdgePicInfo(false, None, None),
+      // а должен быть общий None - эдж невалиден, отсылки к нему из шаблона не валидны автоматически.
+      if {
+        if (isJdImage) {
+          val r = fileNodeOpt
+            .exists( _.common.ntype ==* MNodeTypes.Media.Image )
+          if (!r) LOGGER.warn(s"$logPrefix Image edge $jdEdge invalid: Edge related to missing/invalid/unexpected node#${fileNodeOpt.flatMap(_.id).orNull} or type#${fileNodeOpt.map(_.common.ntype).orNull}")
+          r
+        } else {
+          // Не image - связанный файл не обязателен.
+          true
+        }
+      }
+
+      // Если будут другие варианты в будущем, то тут можно объединять различные проверки:
+      isImage = isJdImage
     } yield {
-      val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
       val vldEdge = MJdEdgeVldInfo(
         jdEdge = jdEdge,
-        img    = OptionUtil.maybe( jdEdge.predicate ==>> MPredicates.JdContent.Image ) {
-          val mmediaOpt = for {
-            mimg      <- imgsNeededMap.get( edgeUid )
-            imgNode   <- mediasMap.get( mimg.dynImgId.mediaId )
-            if imgNode.common.ntype ==* MNodeTypes.Media.Image
-            fileEdge  <- imgNode.edges
+        file   = OptionUtil.maybe( isImage ) {
+          val edgeMediaOpt = for {
+            mimg       <- imgsNeededMap.get( edgeUid )
+            fileNode   <- mediasMap.get( mimg.dynImgId.mediaId )
+            // Извлечь данные искомого типа из эджа-файла.
+            if {
+              val ntyp = fileNode.common.ntype
+              if (isImage) {
+                ntyp ==* MNodeTypes.Media.Image
+              } else {
+                ntyp eqOrHasParent MNodeTypes.Media
+              }
+            }
+            fileEdge  <- fileNode.edges
               .withPredicateIter( MPredicates.Blob.File )
               .nextOption()
             mediaEdge <- fileEdge.media
           } yield {
+            LOGGER.trace(s"$logPrefix edge#$edgeUid => $mediaEdge")
             mediaEdge
           }
 
-          MEdgePicInfo(
-            isImg = nodeIdOpt
-              .flatMap { nodesMap.get }
-              .exists { _.common.ntype ==* MNodeTypes.Media.Image },
-            imgWh = mmediaOpt
+          MJdEdgeFileVldInfo(
+            isImg = fileNodeOpt
+              .nonEmpty,
+            imgWh = edgeMediaOpt
               .flatMap( _.picture.whPx ),
-            dynFmt = mmediaOpt
-              .flatMap( _.file.imgFormatOpt )
+            dynFmt = edgeMediaOpt
+              .flatMap( _.file.imgFormatOpt ),
           )
         }
       )
-      LOGGER.trace(s"$logPrefix Edge#${jdEdge.edgeDoc.id.orNull}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
+
+      LOGGER.trace(s"$logPrefix Edge#${jdEdge.edgeDoc.id.orNull}, nodeId#${fileNodeOpt.orNull} img=>${vldEdge.file}")
       edgeUid -> vldEdge
     })
       .toMap

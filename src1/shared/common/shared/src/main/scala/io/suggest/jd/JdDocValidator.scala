@@ -462,7 +462,7 @@ class JdDocValidator(
       // TODO Это наверное не правильно - управлять форматом на уровне валидации. Надо унести это куда?
       ScalazUtil.liftNelOpt[String, MImgFormat](
         edgeOpt
-          .flatMap(_.img)
+          .flatMap(_.file)
           .flatMap(_.dynFmt)
       )(Validation.success)
         .recoverToNoneTolerant |@|

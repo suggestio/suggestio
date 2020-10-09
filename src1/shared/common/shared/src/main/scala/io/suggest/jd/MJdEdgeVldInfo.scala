@@ -12,13 +12,13 @@ import io.suggest.img.MImgFormat
   */
 case class MJdEdgeVldInfo(
                            jdEdge : MJdEdge,
-                           img    : Option[MEdgePicInfo]
+                           file   : Option[MJdEdgeFileVldInfo]
                          )
 
 
 
 /** Модель для доступа к данным эджа и связанный с ним картинки. */
-case class MEdgePicInfo(
+case class MJdEdgeFileVldInfo(
                          isImg     : Boolean,
                          imgWh     : Option[ISize2di],
                          dynFmt    : Option[MImgFormat],

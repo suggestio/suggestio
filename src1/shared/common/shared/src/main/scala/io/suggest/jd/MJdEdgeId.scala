@@ -62,7 +62,7 @@ object MJdEdgeId {
         val cropAndWhVldOpt = for {
           mcrop     <- m.crop
           contSz    <- imgContSzOpt
-          img       <- edgeInfo.img
+          img       <- edgeInfo.file
           imgWh     <- img.imgWh
         } yield {
           MCrop.validate(
@@ -74,12 +74,12 @@ object MJdEdgeId {
 
         (
           Validation.liftNel(m.edgeUid)(
-            { _ => !edgeInfo.img.exists(_.isImg) },
+            { _ => !edgeInfo.file.exists(_.isImg) },
             ErrorConstants.emsgF("img")("e")
           ) |@|
           // Формат пока просто копипастим из VldInfo: Юзер не управляет заданием выходного формата.
           ScalazUtil.liftNelSome(
-            edgeInfo.img.flatMap(_.dynFmt),
+            edgeInfo.file.flatMap(_.dynFmt),
             s"edge#${m.edgeUid}.dynFmt missing"
           )( Validation.success ) |@|
           ScalazUtil.optValidationOrNone( cropAndWhVldOpt )

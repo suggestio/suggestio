@@ -293,8 +293,9 @@ final case class JdTag(
   override def toString: String = {
     StringUtil.toStringHelper(this, 256) { renderF =>
       val F = JdTag.Fields
-      renderF("")(name)
-      if (props1.nonEmpty) renderF("")(props1)
+      val render0 = renderF("")
+      render0(name)
+      if (props1.nonEmpty) render0(props1)
       qdProps foreach renderF( F.QD_PROPS_FN )
     }
   }

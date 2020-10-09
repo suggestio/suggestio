@@ -1,6 +1,7 @@
 package io.suggest.jd.tags
 
 import io.suggest.color.{IColorPickerMarker, MColorData}
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -50,4 +51,15 @@ case class MJdShadow(
                       vOffset   : Int,
                       color     : Option[MColorData],
                       blur      : Option[Int],
-                    )
+                    ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 32) { renderF =>
+      val render0 = renderF("")
+      render0( "(" + hOffset + " " + vOffset + ")" )
+      color foreach render0
+      blur foreach renderF("b")
+    }
+  }
+
+}

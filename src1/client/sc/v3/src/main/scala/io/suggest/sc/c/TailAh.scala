@@ -49,7 +49,11 @@ object TailAh {
   def getMainScreenSnapShot(v0: MScRoot): SioPages.Sc3 = {
     val inxState = v0.index.state
     val searchOpened = v0.index.search.panel.opened
-    val currRcvrId = inxState.rcvrId
+
+    // Если ничего в view пока не загружено, то стараемся поддерживать исходные значения
+    val bootingRoute = v0.internals.info.currRoute
+      .filter( _ => inxState.viewCurrent.isEmpty )
+    val currRcvrId = bootingRoute.fold(inxState.rcvrId)(_.nodeId)
 
     // TODO Поддержка нескольких тегов в URL.
     val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
@@ -60,9 +64,13 @@ object TailAh {
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
       locEnv        = OptionUtil.maybe {
         (currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty) &&
-          (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
-          v0.internals.info.geoLockTimer.isEmpty
-      }(v0.index.search.geo.mapInit.state.center),
+        (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
+        v0.internals.info.geoLockTimer.isEmpty
+      } {
+        bootingRoute
+          .flatMap(_.locEnv)
+          .getOrElse( v0.index.search.geo.mapInit.state.center )
+      },
       generation    = Some( inxState.generation ),
       searchOpened  = searchOpened,
       tagNodeId     = selTagIdOpt,
@@ -185,7 +193,7 @@ class TailAh(
     // Заставить роутер собрать новую ссылку.
     case m: ResetUrlRoute =>
       val v0 = value
-      lazy val nextRoute0 = TailAh.getMainScreenSnapShot( v0 )
+      def nextRoute0 = TailAh.getMainScreenSnapShot( v0 )
       var nextRoute2 = m.mods.fold(nextRoute0)( _(() => nextRoute0) )
 
       val currRouteLens = TailAh._currRoute

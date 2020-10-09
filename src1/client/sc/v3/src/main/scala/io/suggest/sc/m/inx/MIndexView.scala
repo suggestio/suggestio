@@ -1,5 +1,6 @@
 package io.suggest.sc.m.inx
 
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.MGeoPoint
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -32,3 +33,4 @@ case class MIndexView(
                        inxGeoPoint     : Option[MGeoPoint]         = None,
                        name            : Option[String]            = None,
                      )
+  extends EmptyProduct

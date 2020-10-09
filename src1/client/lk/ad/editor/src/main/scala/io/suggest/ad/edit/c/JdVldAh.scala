@@ -3,7 +3,7 @@ package io.suggest.ad.edit.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.JdDocChanged
 import io.suggest.ad.edit.m.vld.MJdVldAh
-import io.suggest.jd.{JdDocValidator, MEdgePicInfo, MJdEdgeVldInfo}
+import io.suggest.jd.{JdDocValidator, MJdEdgeFileVldInfo, MJdEdgeVldInfo}
 
 /**
   * Suggest.io
@@ -29,8 +29,8 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
           .mapValues { eData =>
             MJdEdgeVldInfo(
               jdEdge = eData.jdEdge,
-              img = for (fileJs <- eData.fileJs) yield {
-                MEdgePicInfo(
+              file = for (fileJs <- eData.fileJs) yield {
+                MJdEdgeFileVldInfo(
                   isImg  = true,
                   imgWh  = fileJs.whPx,
                   // Формат картинки не важен на клиенте, но важен серверу.
