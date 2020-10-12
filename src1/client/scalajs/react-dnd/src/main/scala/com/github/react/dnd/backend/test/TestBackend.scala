@@ -12,5 +12,5 @@ import scala.scalajs.js.annotation.JSImport
   * @see [[http://react-dnd.github.io/react-dnd/docs/backends/test]]
   */
 @js.native
-@JSImport(PACKAGE_NAME, JSImport.Default)
+@JSImport(PACKAGE_NAME, "TestBackend")
 object TestBackend extends IDndBackend

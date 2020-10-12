@@ -1,5 +1,6 @@
 package com.github.souporserious.react.measure
 
+import com.github.souporserious.react.measure.Measure.MeasureJs
 import minitest._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.raw.PropsChildren

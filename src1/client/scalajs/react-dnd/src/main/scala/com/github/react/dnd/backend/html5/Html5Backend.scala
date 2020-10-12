@@ -13,7 +13,7 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 21.08.2019 12:18
   */
 @js.native
-@JSImport(PACKAGE_NAME, JSImport.Default)
+@JSImport(PACKAGE_NAME, "HTML5Backend")
 object Html5Backend extends IDndBackend
 
 

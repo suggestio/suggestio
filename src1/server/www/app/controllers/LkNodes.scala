@@ -247,13 +247,12 @@ final class LkNodes @Inject() (
           (for {
             mnode <- mnodes.iterator
           } yield {
-            // tf: для других узлов не особо важен, т.к. будет запрошен при открытии.
             val mLknNode = _mkLknNode(
               mnode,
               madOpt      = madOpt,
               isDetailed  = someFalse,
               isAdmin     = someTrue,
-              tf          = None,
+              // tf: для других узлов не особо важен, т.к. будет запрошен при открытии.
             )
             Tree.Leaf( mLknNode )
           })
@@ -788,7 +787,7 @@ final class LkNodes @Inject() (
           madOpt      = Some( mad2 ),
           isDetailed  = someTrue,
           isAdmin     = someTrue,
-          tf          = None,    // На странице размещения это не важно
+          // tf: На странице размещения это не важно
         )
 
         // Отправить сериализованные данные по узлу.
@@ -848,7 +847,6 @@ final class LkNodes @Inject() (
             val someTrue = OptionUtil.SomeBool.someTrue
             val mLknNode = _mkLknNode(
               mnode2,
-              madOpt      = None,
               isDetailed  = someTrue,
               isAdmin     = someTrue,
               tf          = Some(tfInfo),

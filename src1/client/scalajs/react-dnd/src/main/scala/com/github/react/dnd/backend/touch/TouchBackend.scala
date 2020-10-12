@@ -11,5 +11,5 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 21.08.2019 14:39
   */
 @js.native
-@JSImport(PACKAGE_NAME, JSImport.Default)
+@JSImport(PACKAGE_NAME, "TouchBackend")
 object TouchBackend extends IDndBackend

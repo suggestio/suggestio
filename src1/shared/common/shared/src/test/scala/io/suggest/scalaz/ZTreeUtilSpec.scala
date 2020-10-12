@@ -1,8 +1,7 @@
 package io.suggest.scalaz
 
 import minitest._
-
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 
 /**
   * Suggest.io
@@ -15,12 +14,12 @@ object ZTreeUtilSpec extends SimpleTestSuite {
   private val tree1: Tree[String] = {
     Tree.Node(
       "root1",
-      Stream(
+      EphemeralStream(
         Tree.Leaf( "leaf11" ),
         Tree.Leaf( "leaf12" ),
         Tree.Node(
           "node13",
-          Stream(
+          EphemeralStream(
             Tree.Leaf("leaf131"),
             Tree.Leaf("leaf132"),
             Tree.Leaf("leaf133")
@@ -29,7 +28,7 @@ object ZTreeUtilSpec extends SimpleTestSuite {
         Tree.Leaf( "leaf14" ),
         Tree.Node(
           "node15",
-          Stream(
+          EphemeralStream(
             Tree.Leaf("leaf151")
           )
         ),

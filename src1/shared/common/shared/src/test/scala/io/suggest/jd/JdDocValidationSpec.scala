@@ -9,7 +9,7 @@ import io.suggest.n2.edge.{EdgeUid_t, MEdgeDoc, MPredicates}
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.primo.id._
 import japgolly.univeq._
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 import minitest._
 
 /**
@@ -37,7 +37,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
 
     val tplTree = Tree.Node(
       root = JdTag.document,
-      forest = Stream(
+      forest = EphemeralStream(
         // Уровень стрипов. Рендерим три стрипа.
 
         // Strip#1 содержит намёк на то, что это верхний блок.
@@ -52,7 +52,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
               code = "060d45"
             ))
           ),
-          forest = Stream(
+          forest = EphemeralStream(
             // Надпись "Верхний блок"
             JdTag.edgeQdTree( upperBlockEdgeId, MCoords2di(x = w1.value, y = h1.value) / 3 ),
 
@@ -73,7 +73,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
               code = "bcf014"
             ))
           ),
-          forest = Stream(
+          forest = EphemeralStream(
             JdTag.edgeQdTree( descriptionEdgeId,  MCoords2di(5,  10) ),
             JdTag.edgeQdTree( descrContentEdgeId, MCoords2di(33, 50) )
           )
@@ -91,7 +91,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
               code = "111111"
             ))
           ),
-          forest = Stream(
+          forest = EphemeralStream(
             JdTag.edgeQdTree( fr3text1EdgeId, MCoords2di(15, 200) ),
             JdTag.edgeQdTree( fr3text2EdgeId, MCoords2di(35, 400) )
           )

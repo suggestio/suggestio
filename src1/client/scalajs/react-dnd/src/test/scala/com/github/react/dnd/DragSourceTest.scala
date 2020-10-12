@@ -41,7 +41,11 @@ object DragSourceTest extends SimpleTestSuite {
     val compDraggable = DragSource[DragSourceTestJsCompProps1, DragSourceTestJsCompProps1, js.Object, Children.None](
       itemType = "test",
       spec = new DragSourceSpec[DragSourceTestJsCompProps1, js.Object] {
-        override val beginDrag: js.Function3[DragSourceTestJsCompProps1, DragSourceMonitor, js.Any, js.Object] = ???
+        override val beginDrag: js.Function3[DragSourceTestJsCompProps1, DragSourceMonitor, js.Any, js.Object] = {
+          (props, dsm, s) =>
+            println("!!! beginDrag() called inside headless test o_O")
+            js.Object()
+        }
       },
       collect = { (connect: DragSourceConnector, monitor: DragSourceMonitor) =>
         new DragSourceTestJsCompProps1 {

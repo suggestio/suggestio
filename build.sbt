@@ -386,13 +386,6 @@ lazy val mmgeoip2 = {
     .dependsOn(util, logsMacro)
 }
 
-/** mapbox.js API. */
-//lazy val mapBoxSjs = {
-//  val name = "scalajs-mapbox"
-//  Project(id = name, base = file("scalajs/" + name))
-//    .dependsOn(leafletSjs)
-//}
-
 /** Scala.js API facades for asmcrypto.js library. */
 lazy val asmCryptoJsSjs = {
   Project(id = "scalajs-asmcryptojs", base = file(DIR0 + "client/scalajs/asmcrypto/asmcryptojs"))
@@ -677,10 +670,11 @@ lazy val client = project
     commonSjs, commonReactSjs,
     reactMaterialUiSjs, reactQrCodeSjs, muiTreasurySjs,
     leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
+    lkAdvCommonSjs, mapsSjs,
     lkSjs, sysSjs,
     scCommonSjs, sc3Sjs,
     scSwSjs, swToolBoxSjs,
-    momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
+    momentSjs, reactDatePickerSjs, momentSioSjs, lkDtPeriodSjs,
     cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
     reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
     reactGridLayoutSjs, reactStoneCutterSjs,
@@ -701,11 +695,12 @@ lazy val server = project
   .settings(Common.settingsOrg: _*)
   .aggregate(
     commonJVM, logsMacro,
+    srvTestUtil,
     streamsUtil, brotliUtil,
     util, esUtil, textUtil, swfs, n2, securesocial,
     ipgeobase, stat,
     mgeo, commonWww, nodesWww,
-    mbill2,
+    commonSlickDriver, mbill2,
     secWwwUtil, secAvUtil, svgUtil,
     www
   )
@@ -719,3 +714,15 @@ lazy val sio2 = project
     client,
     server
   )
+
+
+/** Разные под-проекты, уже или ещё не нужные и не используемые. */
+/*
+lazy val trash = project
+  .in( file(DIR0) )
+  .settings(Common.settingsOrg: _*)
+  .aggregate(
+    mmgeoip2,
+    reactSanfonaSjs, reactResizableSjs, mapBoxGlSjs,
+  )
+*/

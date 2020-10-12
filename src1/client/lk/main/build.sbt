@@ -27,11 +27,6 @@ webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.confi
 // TODO scalajs-1.0: leaflet-markercluster и locatecontrol мешают переезду на ES2015.
 scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
 
-// TODO scalajs-1.0 Выставить в scalaJSLinkerConfig emitSourceMaps:
-//emitSourceMaps := true
-
-//(emitSourceMaps in fullOptJS) := false
-
 scalaJSUseMainModuleInitializer := true
 
 useYarn := true

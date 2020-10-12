@@ -42,4 +42,6 @@ object ReactDnd {
 
 
 @js.native
-trait IDndBackend extends js.Object
+trait IDndBackend extends js.Function2[js.Object, js.Object, js.Object] {
+  override def apply(manager: js.Object, context: js.Object): js.Object = js.native
+}

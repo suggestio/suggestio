@@ -5,7 +5,6 @@ import japgolly.scalajs.react.test.ReactTestUtils
 import minitest._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.testinterface.TestUtils
 
 import scala.scalajs.js
 

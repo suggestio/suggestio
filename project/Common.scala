@@ -174,12 +174,12 @@ object Common {
     /** Версия react-sidebar для быстрой организации боковых панелек.
       * @see [[https://github.com/balloob/react-sidebar]]
       */
-    val REACT_SIDEBAR = "2.3.2"
+    val REACT_SIDEBAR = "3.0.2"
 
     /** Версия STRML/react-resizable.
       * @see [[https://github.com/STRML/react-resizable]]
       */
-    val REACT_RESIZABLE = "1.10.1"
+    val REACT_RESIZABLE = "1.11.0"
 
     /** Версия pathikrit/better-files для удобной работы с файлами.
       * @see [[https://github.com/pathikrit/better-files]]
@@ -202,7 +202,7 @@ object Common {
     /** Версия react-scroll для управления скроллингом.
       * @see [[https://github.com/fisshy/react-scroll]]
       */
-    val REACT_SCROLL = "1.7.16"
+    val REACT_SCROLL = "1.8.1"
 
     /** Упрощённое API-обёртка над WebBluetooth для работы с маячками eddystone прямо из браузера.
       * @see [[https://github.com/zurfyx/eddystone-web-bluetooth]]
@@ -224,10 +224,10 @@ object Common {
     /** @see [[https://mvnrepository.com/artifact/commons-codec/commons-codec]] */
     val APACHE_COMMONS_CODEC = "1.12"
 
-    val REACT_MEASURE = "2.3.0"
+    val REACT_MEASURE = "2.5.2"
 
     /** @see [[https://www.npmjs.com/package/react-dnd]]. */
-    val REACT_DND = "10.0.2"
+    val REACT_DND = "11.1.3"
 
     /** @see [[https://www.npmjs.com/package/qrcode.react]]
       * @see [[https://github.com/zpao/qrcode.react]]
@@ -265,8 +265,6 @@ object Common {
   /** Очень общие сеттинги для js-проектов. */
   val settingsOrgJS = settingsBase ++ Seq[Setting[_]](
     scalaVersion := SCALA_VSN_JS
-    // scala.js [0.6.18 .. 1.0) Включить @ScalaJSDefined по умолчанию.
-    //scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
 
   /** Версия play. */
@@ -309,7 +307,7 @@ object Common {
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.7.4" // И контроллировать суффикс diodeReactVsn ниже!
+  val reactSjsVsn        = "1.7.5" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.

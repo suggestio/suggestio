@@ -5,7 +5,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import minitest._
 import play.api.libs.json.{Json, OFormat}
 import io.suggest.scalaz.ZTreeUtil._
-import scalaz.{Show, Tree}
+import scalaz.{EphemeralStream, Show, Tree}
 
 /**
   * Suggest.io
@@ -55,10 +55,10 @@ object JdTagSpec extends SimpleTestSuite {
   test("JSON: Simple Document( Strip(PlainPayload()) )") {
     val doc = Tree.Node(
       JdTag.document,
-      Stream(
+      EphemeralStream(
         Tree.Node(
           JdTag.block( bm300x140 ),
-          Stream(
+          EphemeralStream(
             JdTag.edgeQdTree(1, coord1)
           )
         )
@@ -71,17 +71,17 @@ object JdTagSpec extends SimpleTestSuite {
   test("JSON: Document with two strips, each with several children") {
     val doc = Tree.Node(
       JdTag.document,
-      Stream(
+      EphemeralStream(
         Tree.Node(
           JdTag.block( bm300x140 ),
-          Stream(
+          EphemeralStream(
             JdTag.edgeQdTree(2, coord1),
             JdTag.edgeQdTree(4, coord2)
           )
         ),
         Tree.Node(
           JdTag.block( bm300x300 ),
-          Stream(
+          EphemeralStream(
             JdTag.edgeQdTree(5, coord1),
             JdTag.edgeQdTree(1, coord2),
             JdTag.edgeQdTree(2, coord3)
@@ -97,10 +97,10 @@ object JdTagSpec extends SimpleTestSuite {
     val jdTag_p1_topLeft = JdTag.props1 composeLens MJdtProps1.topLeft
     val doc = Tree.Node(
       JdTag.document,
-      Stream(
+      EphemeralStream(
         Tree.Node(
           JdTag.block( bm300x140 ),
-          Stream(
+          EphemeralStream(
             JdTag.edgeQdTree(2, coord1)
               .loc
               .modifyLabel {
@@ -113,7 +113,7 @@ object JdTagSpec extends SimpleTestSuite {
         ),
         Tree.Node(
           JdTag.block( bm300x300 ),
-          Stream(
+          EphemeralStream(
             JdTag.edgeQdTree(5, coord3)
               .loc
               .modifyLabel {
