@@ -6,6 +6,7 @@ import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
 import io.suggest.n2.node.MNodeType
 import io.suggest.primo.id.OptStrId
+import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -125,6 +126,23 @@ case class MSc3IndexResp(
     )
   }
 
+  override def toString: String = {
+    StringUtil.toStringHelper( this, 128 ) { renderF =>
+      val render0 = renderF("")
+      nodeId foreach render0
+      render0( ntype )
+      name foreach render0
+      if (colors.nonEmpty)
+        render0( colors )
+      logoOpt foreach renderF("logo")
+      welcome foreach renderF("wc")
+      geoPoint foreach render0
+      isMyNode foreach renderF("my")
+      userGeoLoc foreach renderF("ugl")
+      isLoggedIn foreach renderF("login")
+    }
+  }
+
 }
 
 
@@ -134,5 +152,15 @@ object MWcNameFgH {
 case class MWcNameFgH(
                        nodeName       : Option[String] = None,
                        wcFgHeightPx   : Option[Int] = None,
-                     )
+                     ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 32) { renderF =>
+      val render0 = renderF("")
+      nodeName foreach render0
+      wcFgHeightPx foreach render0
+    }
+  }
+
+}
 

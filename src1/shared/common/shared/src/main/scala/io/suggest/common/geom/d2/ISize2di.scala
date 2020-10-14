@@ -101,7 +101,7 @@ object MSize2di extends IEsMappingProps {
   import boopickle.Default._
 
   /** Поддержка boopickle для инстансов [[MSize2di]]. */
-  implicit lazy val size2diPickler: Pickler[MSize2di] = {
+  implicit def size2diPickler: Pickler[MSize2di] = {
     generatePickler[MSize2di]
   }
 

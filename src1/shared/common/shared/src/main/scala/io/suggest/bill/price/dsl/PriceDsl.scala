@@ -23,7 +23,7 @@ import io.suggest.ueq.UnivEqUtil._
 
 object IPriceDslTerm {
 
-  implicit val iPriceDslTermPickler: Pickler[IPriceDslTerm] = {
+  implicit def iPriceDslTermPickler: Pickler[IPriceDslTerm] = {
     implicit val mPriceP = MPrice.mPricePickler
     implicit val mCalP = MCalType.mCalTypePickler
     implicit val mYmdP = MYmd.mYmdPickler

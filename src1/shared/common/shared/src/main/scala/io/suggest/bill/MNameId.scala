@@ -16,7 +16,7 @@ import play.api.libs.functional.syntax._
 object MNameId {
 
   /** Поддержка boopickle-сериализации. */
-  implicit val mNameIdPickler: Pickler[MNameId] = {
+  implicit def mNameIdPickler: Pickler[MNameId] = {
     generatePickler[MNameId]
   }
 

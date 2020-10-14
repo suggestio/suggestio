@@ -10,7 +10,6 @@
     "author": "Konstantin Nikiforov",
     "license": "CBCA",
     "dependencies": {
-        "cordova-android": "file:../../../../../../../../home/user/projects/repo/cordova-android",
         "cordova-custom-config": "^5.1.0",
         "cordova-ios": "^6.1.1",
         "cordova-plugin-appminimize": "git+https://github.com/tomloprod/cordova-plugin-appminimize.git",
@@ -56,5 +55,8 @@
             "ios",
             "android"
         ]
+    },
+    "devDependencies": {
+        "cordova-android": "^9.0.0"
     }
 }

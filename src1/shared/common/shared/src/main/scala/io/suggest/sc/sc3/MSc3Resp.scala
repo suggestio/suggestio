@@ -1,5 +1,6 @@
 package io.suggest.sc.sc3
 
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -57,6 +58,13 @@ case class MSc3Resp(
       .iterator
       .map(_.acType)
       .toSet
+  }
+
+  override def toString: String = {
+    StringUtil.toStringHelper( this, 512 ) { renderF =>
+      if (respActions.nonEmpty)
+        renderF("")(respActions.mkString("[\n", ",\n ", "\n]"))
+    }
   }
 
 }

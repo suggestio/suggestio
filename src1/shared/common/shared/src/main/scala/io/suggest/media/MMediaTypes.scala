@@ -45,7 +45,7 @@ object MMediaType {
   import boopickle.Default._
 
   /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit val mMediaTypePickler: Pickler[MMediaType] = {
+  implicit def mMediaTypePickler: Pickler[MMediaType] = {
     import MMediaTypes._
     compositePickler[MMediaType]
       .addConcreteType[Image.type]

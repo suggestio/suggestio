@@ -17,7 +17,7 @@ case class MAdv4FreeProps(
 
 object MAdv4FreeProps {
 
-  implicit val a4fPropsPickler: Pickler[MAdv4FreeProps] = {
+  implicit def a4fPropsPickler: Pickler[MAdv4FreeProps] = {
     generatePickler[MAdv4FreeProps]
   }
 

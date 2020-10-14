@@ -260,9 +260,7 @@ object Sc3Module { outer =>
         Effect.action {
           if (CordovaConstants.isCordovaPlatform()) {
             // В текущей форме cordova: тихо перезагрузить текущий Index с сервера без welcome, выставив в состояние залогиненность.
-            val act = ReGetIndex(
-              setLoggedIn = OptionUtil.SomeBool.someTrue
-            )
+            val act = ReGetIndex()
             sc3Circuit.dispatch( act )
           } else {
             // Обычный редирект - в браузере.
@@ -272,6 +270,12 @@ object Sc3Module { outer =>
           // в LoginForm делать ничего не надо:
           DoNothing
         }
+      }
+
+      override def onLogOut(): Option[Effect] = {
+        //val csrfFx = CsrfTokenEnsure( force = true ).toEffectPure
+        //Some( csrfFx )
+        None
       }
 
     }

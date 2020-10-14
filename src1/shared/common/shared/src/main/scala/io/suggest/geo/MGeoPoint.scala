@@ -23,7 +23,7 @@ import scala.util.Try
 
 object MGeoPoint {
 
-  implicit val MGEO_POINT_PICKLER: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
+  implicit def MGEO_POINT_PICKLER: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
 
   /** Константы для описания точности точек.
     * osm.org использует точность в зависимости от масштаба, но не более 5 знаков после запятой.

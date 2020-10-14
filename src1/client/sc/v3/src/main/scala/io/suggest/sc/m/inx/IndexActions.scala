@@ -16,10 +16,8 @@ sealed trait IIndexAction extends ISc3Action
 case class GetIndex( switchCtx: MScSwitchCtx )
   extends IIndexAction with IScIndexRespReason
 
-/** Перезагрузить текущий индекс.
-  * @param setLoggedIn И обновить состояние залогиненности на указанное значение, если задано.
-  */
-case class ReGetIndex(setLoggedIn: Option[Boolean]) extends IIndexAction
+/** Перезагрузить текущий индекс. */
+case class ReGetIndex() extends IIndexAction
 
 /** Сброс индекса. */
 case object UnIndex extends IIndexAction

@@ -100,7 +100,7 @@ class LogOutAh[M](
           updated( None )
         }
       })
-      .getOrElse( noChange )
+        .getOrElse( noChange )
 
   }
 

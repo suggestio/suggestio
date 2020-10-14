@@ -26,7 +26,7 @@ object MRangeYmd {
     }
   }
 
-  implicit val mRangeYmdPickler: Pickler[MRangeYmd] = {
+  implicit def mRangeYmdPickler: Pickler[MRangeYmd] = {
     implicit val mymdP = MYmd.mYmdPickler
     generatePickler[MRangeYmd]
   }

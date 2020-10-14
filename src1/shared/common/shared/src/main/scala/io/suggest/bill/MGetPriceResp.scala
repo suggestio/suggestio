@@ -17,7 +17,7 @@ import io.suggest.ueq.UnivEqUtil._
 
 object MGetPriceResp {
 
-  implicit val getPriceRespPickler: Pickler[MGetPriceResp] = {
+  implicit def getPriceRespPickler: Pickler[MGetPriceResp] = {
     implicit val priceP = MPrice.mPricePickler
     implicit val iPriceDslTermP = IPriceDslTerm.iPriceDslTermPickler
     generatePickler[MGetPriceResp]

@@ -2,6 +2,7 @@ package io.suggest.sc.sc3
 
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sc.ads.MSc3AdsResp
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -42,4 +43,16 @@ case class MSc3RespAction(
                            ads       : Option[MSc3AdsResp]          = None,
                            search    : Option[MGeoNodesResp]        = None,
                            confUpdate: Option[MScConfUpdate]        = None,
-                         )
+                         ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 256) { renderF =>
+      val render0 = renderF("")
+      render0( acType )
+      ads foreach render0
+      search foreach render0
+      confUpdate foreach render0
+    }
+  }
+
+}

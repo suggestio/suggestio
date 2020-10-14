@@ -3,6 +3,7 @@ package io.suggest.geo
 import io.suggest.ble.MUidBeacon
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import LocationConst._
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -57,5 +58,13 @@ case class MLocEnv(
                   )
   extends EmptyProduct
 {
-  def withGeoLocOpt(geoLocOpt: Option[MGeoLoc]) = copy(geoLocOpt = geoLocOpt)
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 64) { renderF =>
+      geoLocOpt foreach renderF(GEO_LOC_FN)
+      if (bleBeacons.nonEmpty)
+        renderF(BLE_BEACONS_FN)( bleBeacons.mkString("[", ", ", "]") )
+    }
+  }
+
 }

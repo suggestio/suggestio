@@ -47,7 +47,7 @@ final class ScLoginR(
       State(
 
         isVisibleSomeC = propsProxy.connect { m =>
-          OptionUtil.SomeBool( m.circuit.isDefined )
+          OptionUtil.SomeBool( m.isDiaOpened )
         },
 
       )

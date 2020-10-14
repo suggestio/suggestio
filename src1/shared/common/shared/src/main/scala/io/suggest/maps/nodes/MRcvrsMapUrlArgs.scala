@@ -24,7 +24,7 @@ object MRcvrsMapUrlArgs {
 
   import boopickle.Default._
 
-  implicit val rcvrsMapUrlArgsP: Pickler[MRcvrsMapUrlArgs] = {
+  implicit def rcvrsMapUrlArgsP: Pickler[MRcvrsMapUrlArgs] = {
     generatePickler[MRcvrsMapUrlArgs]
   }
 

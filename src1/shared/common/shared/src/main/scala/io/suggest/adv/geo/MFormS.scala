@@ -25,7 +25,7 @@ import japgolly.univeq.UnivEq
 
 object MFormS {
 
-  implicit val pickler: Pickler[MFormS] = {
+  implicit def pickler: Pickler[MFormS] = {
     implicit val mmapsP = MMapProps.mmapsPickler
     implicit val datePeriodP = MAdvPeriod.mAdvPeriodPickler
     implicit val circleP = CircleGs.CIRCLE_GS_PICKLER

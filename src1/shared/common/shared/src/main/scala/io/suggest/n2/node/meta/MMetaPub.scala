@@ -25,7 +25,7 @@ object MMetaPub extends IEmpty {
 
   def empty = apply()
 
-  implicit lazy val mMetaPubPickler: Pickler[MMetaPub] = {
+  implicit def mMetaPubPickler: Pickler[MMetaPub] = {
     implicit val addressP = MAddress.mAddresPickler
     implicit val businessP = MBusinessInfo.mBusinessInfoPickler
     generatePickler[MMetaPub]

@@ -19,12 +19,7 @@ trait LoginFormDiConfig extends IMHttpClientConfig {
 
   def onRedirect(onAction: ILoginFormAction, external: Boolean, rdrUrl: => String): Effect
 
-  def onLogOut(): Option[Effect] = Some {
-    Effect.action {
-      DomQuick.reloadPage()
-      DoNothing
-    }
-  }
+  def onLogOut(): Option[Effect]
 
 }
 
@@ -41,6 +36,13 @@ object LoginFormDiConfig {
     override def onRedirect(onAction: ILoginFormAction, external: Boolean, rdrUrl: => String): Effect = {
       Effect.action {
         DomQuick.goToLocation( rdrUrl )
+        DoNothing
+      }
+    }
+
+    override def onLogOut(): Option[Effect] = Some {
+      Effect.action {
+        DomQuick.reloadPage()
         DoNothing
       }
     }

@@ -93,7 +93,7 @@ object MReasonType {
 
   import boopickle.Default._
   /** Поддержка бинарной сериализации. */
-  implicit val mReasonTypePickler: Pickler[MReasonType] = {
+  implicit def mReasonTypePickler: Pickler[MReasonType] = {
     import MReasonTypes._
     // TODO 2.12 Организовать с помощью sealed. В scala-2.12 должны были уже починить.
     compositePickler[MReasonType]

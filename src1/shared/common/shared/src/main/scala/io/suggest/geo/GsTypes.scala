@@ -11,7 +11,7 @@ object GsType {
   import boopickle.Default._
 
   /** Поддержка boopickle. */
-  implicit val gsTypePickler: Pickler[GsType] = {
+  implicit def gsTypePickler: Pickler[GsType] = {
     import GsTypes._
     // TODO scala-2.12 Доверить поиск sealed-реализаций автоматике, когда scala-2.11 уйдёт в историю.
     compositePickler[GsType]

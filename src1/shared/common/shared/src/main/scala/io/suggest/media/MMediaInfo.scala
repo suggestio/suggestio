@@ -16,7 +16,7 @@ object IMediaInfo {
   import boopickle.Default._
 
   /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit lazy val iMediaItemPickler: Pickler[IMediaInfo] = {
+  implicit def iMediaItemPickler: Pickler[IMediaInfo] = {
     implicit val mMediaTypeP = MMediaType.mMediaTypePickler
     implicit val size2diP = MSize2di.size2diPickler
     implicit val p = compositePickler[IMediaInfo]

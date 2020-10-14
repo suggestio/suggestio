@@ -37,7 +37,7 @@ object MColors extends IEmpty {
   override val empty = apply()
 
   /** Поддержка boopickle. */
-  implicit lazy val mColorsPickler: Pickler[MColors] = {
+  implicit def mColorsPickler: Pickler[MColors] = {
     implicit val mColorsDataP = MColorData.mColorDataPickler
     generatePickler[MColors]
   }

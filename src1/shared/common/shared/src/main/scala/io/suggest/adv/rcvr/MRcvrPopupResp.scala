@@ -15,7 +15,7 @@ import io.suggest.ueq.UnivEqUtil._
   */
 
 object MRcvrPopupResp {
-  implicit val pickler: Pickler[MRcvrPopupResp] = {
+  implicit def pickler: Pickler[MRcvrPopupResp] = {
     implicit val mrpgP = IRcvrPopupNode.rcvrPopupGroupP
     generatePickler[MRcvrPopupResp]
   }
@@ -48,7 +48,7 @@ object IRcvrPopupNode extends NodesTreeApiIId with NodesTreeWalk {
     * (иначе будут два пиклера, вызывающие друг-друга в цикле).
     * Рекурсивность пиклера требует наличия интерфейса, поэтому тут интерфейс маппиться на свою единственную реализацию.
     */
-  implicit val rcvrPopupGroupP: Pickler[IRcvrPopupNode] = {
+  implicit def rcvrPopupGroupP: Pickler[IRcvrPopupNode] = {
     implicit val metaP = MRcvrPopupMeta.rcvrPopupMetaPickler
     implicit val selfP = compositePickler[IRcvrPopupNode]
     selfP.addConcreteType[MRcvrPopupNode]
@@ -90,7 +90,7 @@ case class MRcvrPopupNode(
   extends IRcvrPopupNode
 
 object MRcvrPopupMeta {
-  implicit val rcvrPopupMetaPickler: Pickler[MRcvrPopupMeta] = {
+  implicit def rcvrPopupMetaPickler: Pickler[MRcvrPopupMeta] = {
     implicit val mRangeOptP = MRangeYmdOpt.mRangeYmdOptPickler
     generatePickler[MRcvrPopupMeta]
   }

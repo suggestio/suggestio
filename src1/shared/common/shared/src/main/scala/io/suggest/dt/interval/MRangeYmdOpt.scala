@@ -13,7 +13,7 @@ import japgolly.univeq.UnivEq
   */
 object MRangeYmdOpt {
 
-  implicit val mRangeYmdOptPickler: Pickler[MRangeYmdOpt] = {
+  implicit def mRangeYmdOptPickler: Pickler[MRangeYmdOpt] = {
     implicit val mYmdP = MYmd.mYmdPickler
     generatePickler[MRangeYmdOpt]
   }

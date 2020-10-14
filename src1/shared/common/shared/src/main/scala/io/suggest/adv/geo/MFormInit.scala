@@ -16,7 +16,7 @@ import io.suggest.maps.nodes.MRcvrsMapUrlArgs
   */
 object MFormInit {
 
-  implicit val pickler: Pickler[MFormInit] = {
+  implicit def pickler: Pickler[MFormInit] = {
     implicit val a4fP   = MAdv4FreeProps.a4fPropsPickler
     implicit val advPricingP = MGetPriceResp.getPriceRespPickler
     implicit val formP  = MFormS.pickler

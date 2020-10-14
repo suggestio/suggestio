@@ -10,7 +10,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import io.suggest.sc.ScConstants
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.{GridBlockClick, GridLoadAds}
 import io.suggest.sc.m.inx._
@@ -134,6 +134,7 @@ object IndexAh {
         val qsTagIds = m.qs.search.tagNodeId
           .map(_.id)
           .toSet
+
         if (s0.geo.data.selTagIds !=* qsTagIds) {
           s0 = MScSearch.geo
             .composeLens( MGeoTabS.data )
@@ -161,6 +162,10 @@ object IndexAh {
         .toEffectPure
     }
 
+    // Если открыта форма логина, но индекс сообщает, что isLoggedIn, то сразу закрыть форму логина:
+    if (i1.isLoggedIn && mroot.dialogs.login.isDiaOpened)
+      fxsAcc ::= ScLoginFormShowHide( visible = false ).toEffectPure
+
     // Инициализация приветствия. Подготовить состояние welcome.
     val mWcSFutOpt = for {
       resp <- i1.resp.toOption
@@ -173,7 +178,7 @@ object IndexAh {
 
       wcInfo2 <- resp.welcome
       // Не надо отображать текущее приветствие повторно:
-      if !i0.resp.exists(_.welcome contains wcInfo2)
+      if !i0.resp.exists(_.welcome contains[MWelcomeInfo] wcInfo2)
     } yield {
       val tstamp = System.currentTimeMillis()
 
@@ -356,12 +361,14 @@ class IndexRah
     if (
       !isMultiNodeResp &&
       resp.nodes.exists { node =>
-        v0.index.resp.exists { rn =>
+        i0.resp.exists { rn =>
           (rn isSamePlace node.props) &&
           (rn isLookingSame node.props)
         }
       }
     ) {
+      println(s"same index:\n ${i0.respOpt.orNull}\n ${resp.nodes.headOption.map(_.props).orNull}")
+      // Индекс, видимо, не изменился - не перезагружать вид:
       var i1 = i0
 
       // Убрать возможный pending из resp:
@@ -395,6 +402,7 @@ class IndexRah
       ActionResult( Some(v2), fxAcc.mergeEffects )
 
     } else if (isMultiNodeResp || ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
+      println("multi-index")
       // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
       // Вместо переключения узла, надо спросить юзера, можно ли переходить полученный узел:
       val switchAskState = MInxSwitchAskS(
@@ -421,6 +429,7 @@ class IndexRah
       ActionResult.ModelUpdate(v2)
 
     } else {
+      println("index apply")
       // Индекс изменился, значит заливаем новый индекс в состояние:
       val actRes1 = IndexAh.indexUpdated(
         i0        = v0.index,
@@ -791,8 +800,7 @@ class IndexAh[M](
 
 
     // Перезагрузка текущего индекса.
-    case m: ReGetIndex =>
-      println(m)
+    case _: ReGetIndex =>
       val v0 = value
 
       val switchCtx = MScSwitchCtx(
@@ -805,20 +813,9 @@ class IndexAh[M](
         showWelcome = false,
       )
 
-      val v1 = m.setLoggedIn
-        .filter { loggedIn2 =>
-          v0.resp.nonEmpty &&
-          !v0.resp.exists(_.isLoggedIn contains loggedIn2)
-        }
-        .fold(v0) { loggedIn2 =>
-          MScIndex.resp.modify { respPot0 =>
-            respPot0.map { MSc3IndexResp.isLoggedIn set m.setLoggedIn }
-          }(v0)
-        }
-
       _getIndex(
         silentUpdate  = true,
-        v0            = v1,
+        v0            = v0,
         reason        = GetIndex( switchCtx ),
         switchCtx     = switchCtx,
       )

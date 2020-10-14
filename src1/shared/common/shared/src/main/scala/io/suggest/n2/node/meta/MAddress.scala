@@ -50,7 +50,7 @@ object MAddress extends IEmpty with IEsMappingProps {
     }
   }
 
-  implicit val mAddresPickler: Pickler[MAddress] = {
+  implicit def mAddresPickler: Pickler[MAddress] = {
     generatePickler[MAddress]
   }
 

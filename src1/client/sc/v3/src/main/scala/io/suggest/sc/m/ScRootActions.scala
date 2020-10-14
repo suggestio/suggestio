@@ -11,6 +11,7 @@ import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.m.inx.save.MIndexesRecent
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.spa.{DAction, SioPages}
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 
 import scala.util.Try
@@ -165,6 +166,17 @@ case class HandleScApiResp(
 
   def withSwitchCtxOpt(switchCtxOpt: Option[MScSwitchCtx]) =
     copy(switchCtxOpt = switchCtxOpt)
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 512) { renderF =>
+      val render0 = renderF("")
+      reqTimeStamp foreach render0
+      renderF("qs")( qs )
+      renderF("res")( tryResp )
+      renderF("rsn")( reason )
+      switchCtxOpt foreach render0
+    }
+  }
 
 }
 object HandleScApiResp {

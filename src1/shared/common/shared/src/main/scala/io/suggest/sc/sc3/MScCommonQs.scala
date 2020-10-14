@@ -4,7 +4,8 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MScreen
 import io.suggest.geo.MLocEnv
 import io.suggest.sc.{MScApiVsn, MScApiVsns, ScConstants}
-import japgolly.univeq.UnivEq
+import io.suggest.text.StringUtil
+import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -57,4 +58,17 @@ case class MScCommonQs(
                         apiVsn            : MScApiVsn           = MScApiVsns.unknownVsn,
                         screen            : Option[MScreen]     = None,
                         locEnv            : MLocEnv             = MLocEnv.empty,
-                      )
+                      ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 64) { renderF =>
+      val render0 = renderF("")
+      if (apiVsn !=* MScApiVsns.unknownVsn)
+        render0(apiVsn)
+      screen foreach render0
+      if (locEnv !=* MLocEnv.empty)
+        render0(locEnv)
+    }
+  }
+
+}

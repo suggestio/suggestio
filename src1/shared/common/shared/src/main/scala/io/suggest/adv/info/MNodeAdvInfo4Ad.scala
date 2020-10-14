@@ -15,7 +15,7 @@ import japgolly.univeq.UnivEq
 object MNodeAdvInfo4Ad {
 
   /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit val mAdvInfo4AdPickler: Pickler[MNodeAdvInfo4Ad] = {
+  implicit def mAdvInfo4AdPickler: Pickler[MNodeAdvInfo4Ad] = {
     implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
     generatePickler[MNodeAdvInfo4Ad]
   }

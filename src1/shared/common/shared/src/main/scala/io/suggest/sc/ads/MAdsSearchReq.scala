@@ -5,6 +5,7 @@ import play.api.libs.functional.syntax._
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.MEsUuId
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 
@@ -64,4 +65,16 @@ case class MAdsSearchReq(
                           textQuery   : Option[String]        = None,
                         )
   extends EmptyProduct
-
+{
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 64) { renderF =>
+      prodId foreach renderF( PRODUCER_ID_FN )
+      limit foreach renderF( LIMIT_FN )
+      offset foreach renderF( OFFSET_FN )
+      rcvrId foreach renderF( RECEIVER_ID_FN )
+      genOpt foreach renderF( GENERATION_FN )
+      tagNodeId foreach renderF( TAG_NODE_ID_FN )
+      textQuery foreach renderF( TEXT_QUERY_FN )
+    }
+  }
+}

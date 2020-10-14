@@ -3,6 +3,7 @@ package io.suggest.lk.nodes
 import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.ble.eddystone.EddyStoneUtil
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -20,7 +21,7 @@ import scalaz.std.option.optionSyntax._
 object MLknNodeReq {
 
   /** BooPickler для инстансов модели. */
-  implicit val mLknNodeReqPickler: Pickler[MLknNodeReq] = {
+  implicit def mLknNodeReqPickler: Pickler[MLknNodeReq] = {
     generatePickler[MLknNodeReq]
   }
 
@@ -51,9 +52,14 @@ object MLknNodeReq {
 
   @inline implicit def univEq: UnivEq[MLknNodeReq] = UnivEq.derive
 
+  object Fields {
+    def NAME = "n"
+    def ID = "i"
+  }
+
   implicit def mLknNodeReqFormat: OFormat[MLknNodeReq] = (
-    (__ \ "n").format[String] and
-    (__ \ "i").formatNullable[String]
+    (__ \ Fields.NAME).format[String] and
+    (__ \ Fields.ID).formatNullable[String]
   )(apply, unlift(unapply))
 
 }
@@ -68,4 +74,14 @@ object MLknNodeReq {
 case class MLknNodeReq(
                         name     : String,
                         id       : Option[String]
-                      )
+                      ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper( this, 128 ) { renderF =>
+      val F = MLknNodeReq.Fields
+      renderF( F.NAME )(name)
+      id foreach renderF( F.ID )
+    }
+  }
+
+}

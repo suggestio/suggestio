@@ -11,7 +11,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.nodes.{MLknOpKey, MLknOpKeys, MLknOpValue}
 import io.suggest.scalaz.NodePath_t

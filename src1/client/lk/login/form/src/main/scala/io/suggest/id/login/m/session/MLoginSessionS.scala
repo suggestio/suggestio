@@ -1,7 +1,7 @@
 package io.suggest.id.login.m.session
 
 import diode.data.Pot
-import io.suggest.proto.http.cookie.MHttpCookieParsed
+import io.suggest.proto.http.cookie.MCookieState
 import japgolly.univeq._
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
@@ -26,11 +26,11 @@ object MLoginSessionS {
 
 /** Контейнер данных сессии.
   *
-  * @param cookie Токен, пришедший с сервера.
-  *              pending/fail-состояния связаны (в первую очередь) с сохранением токена в какое-то хранилище на девайсе.
+  * @param cookie Cookie, пришедший с сервера.
+  *               pending/fail-состояния связаны (в первую очередь) с сохранением токена в какое-то хранилище на девайсе.
   * @param logout Состояние диалога выхода из системы.
   */
 final case class MLoginSessionS(
-                                 cookie           : Pot[MHttpCookieParsed]          = Pot.empty,
+                                 cookie           : Pot[MCookieState]               = Pot.empty,
                                  logout           : Option[MLogOutDia]              = None,
                                )

@@ -6,7 +6,9 @@ import io.suggest.bin.{ConvCodecs, IDataConv}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
+import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{HttpReq, HttpReqData, HttpRespTypes}
 import io.suggest.text.{CharSeqUtil, StringUtil}
 import japgolly.univeq._
 import org.scalajs.dom
@@ -51,7 +53,18 @@ object BlobJsUtil extends Log {
     */
   def b64Url2Blob(b64Url: String): Future[dom.Blob] = {
     Try {
-      HttpClient.getBlob( b64Url )
+      HttpClient
+        .execute(
+          new HttpReq(
+            method  = HttpConst.Methods.GET,
+            url     = b64Url,
+            data    = HttpReqData(
+              respType = HttpRespTypes.Blob,
+            ),
+          )
+        )
+        .resultFut
+        .flatMap(_.blob())
     }
       .recover { case ex =>
         logger.warn( ErrorMsgs.BASE64_TO_BLOB_FAILED, ex, b64Url )

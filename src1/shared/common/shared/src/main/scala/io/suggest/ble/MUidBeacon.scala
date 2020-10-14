@@ -39,5 +39,9 @@ final case class MUidBeacon(
                            )
   extends IId[String]
 {
-  override def toString = "B(" + id + "," + distanceCm.fold("")(_ + "cm") + ")"
+
+  override def toString: String = {
+    "B(" + id + "," + distanceCm.fold("")(_ + "cm") + ")"
+  }
+
 }

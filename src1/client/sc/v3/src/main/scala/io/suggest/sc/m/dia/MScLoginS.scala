@@ -18,6 +18,14 @@ object MScLoginS {
 
   def circuit = GenLens[MScLoginS]( _.circuit )
 
+
+  implicit final class ScLoginExt( private val scLogin: MScLoginS ) extends AnyVal {
+
+    def isDiaOpened: Boolean =
+      scLogin.circuit.isDefined
+
+  }
+
 }
 
 

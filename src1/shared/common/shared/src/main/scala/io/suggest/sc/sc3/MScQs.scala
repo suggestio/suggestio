@@ -3,7 +3,8 @@ package io.suggest.sc.sc3
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.index.MScIndexArgs
-import japgolly.univeq.UnivEq
+import io.suggest.text.StringUtil
+import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -85,4 +86,20 @@ case class MScQs(
                   foc       : Option[MScFocusArgs]   = None,
                   grid      : Option[MScGridArgs]    = None,
                   nodes     : Option[MScNodesArgs]   = None,
-                )
+                ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 256) { renderF =>
+      val render0 = renderF("")
+      if (common !=* MScCommonQs.empty)
+        render0( common )
+      if (search.nonEmpty)
+        render0( search )
+      index foreach render0
+      foc foreach render0
+      grid foreach render0
+      nodes foreach render0
+    }
+  }
+
+}

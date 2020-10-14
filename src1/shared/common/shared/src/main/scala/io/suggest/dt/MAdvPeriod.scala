@@ -14,7 +14,7 @@ import play.api.libs.functional.syntax._
 
 object MAdvPeriod {
 
-  implicit val mAdvPeriodPickler: Pickler[MAdvPeriod] = {
+  implicit def mAdvPeriodPickler: Pickler[MAdvPeriod] = {
     implicit val mappPickler = IPeriodInfo.periodInfoPickler
     generatePickler[MAdvPeriod]
   }

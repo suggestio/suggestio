@@ -65,9 +65,7 @@ class MenuR(
           ),
 
           // Строка входа в личный кабинет. В кордове - скрыта.
-          ReactCommonUtil.maybeNode( propsProxy.value.dev.platform.isBrowser )(
-            enterLkRowR.component( propsProxy )
-          ),
+          enterLkRowR.component( propsProxy ),
 
           // Кнопка редактирования карточки.
           editAdR.component( propsProxy ),

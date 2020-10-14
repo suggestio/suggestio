@@ -126,7 +126,7 @@ object MCurrency {
 
   import boopickle.CompositePickler
 
-  implicit val pickler: CompositePickler[MCurrency] = {
+  implicit def pickler: CompositePickler[MCurrency] = {
     import MCurrencies._
     import boopickle.Default._
     // TODO scala-2.12 скорее всего можно будет генерить это дело автоматом, без concrete types.

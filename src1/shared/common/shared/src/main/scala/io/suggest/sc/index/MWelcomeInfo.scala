@@ -3,6 +3,7 @@ package io.suggest.sc.index
 import io.suggest.color.MColorData
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.media.IMediaInfo
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -42,3 +43,14 @@ case class MWelcomeInfo(
                          fgImage: Option[IMediaInfo]
                        )
   extends EmptyProduct
+{
+
+  override def toString: String = {
+    StringUtil.toStringHelper( this, 128 ) { renderF =>
+      bgColor foreach renderF("bc")
+      bgImage foreach renderF("bg")
+      fgImage foreach renderF("fg")
+    }
+  }
+
+}

@@ -77,7 +77,7 @@ sealed abstract class MItemType(override val value: String) extends StringEnumEn
 object MItemType {
 
   /** Поддержка boopickle.*/
-  implicit val mItemTypePickler: Pickler[MItemType] = {
+  implicit def mItemTypePickler: Pickler[MItemType] = {
     import MItemTypes._
     compositePickler[MItemType]
       // TODO scala-2.12: возможно, там всё лучше чем сейчас. И все sealed-object'ы сами подцепятся.

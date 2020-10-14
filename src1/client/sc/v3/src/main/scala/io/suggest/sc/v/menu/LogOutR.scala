@@ -2,6 +2,7 @@ package io.suggest.sc.v.menu
 
 import scalacss.ScalaCssReact._
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -35,7 +36,7 @@ class LogOutR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val _onClick = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private def _onClick = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactCommonUtil.preventDefaultCB(e) >>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, CsrfTokenEnsure() ) >>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, LogoutStep() )
@@ -84,8 +85,10 @@ class LogOutR(
     .initialStateFromProps { propsProxy =>
       State(
         isShownSomeC = propsProxy.connect { mroot =>
-          OptionUtil.SomeBool( mroot.index.isLoggedIn )
-        },
+          val r = OptionUtil.SomeBool( mroot.index.isLoggedIn )
+          //println( "XXXXXXXXXXXXXX", getClass.getSimpleName, mroot.internals.login, r)
+          r
+        }(FastEq.AnyRefEq),
       )
     }
     .renderBackend[Backend]

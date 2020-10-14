@@ -10,8 +10,8 @@ import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
 import io.suggest.proto.http.client.cache.HttpCaching
-import io.suggest.proto.http.cookie.HttpCookieUtil
-import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpReqData, HttpResp, HttpRespTypes, IHttpResultHolder}
+import io.suggest.proto.http.cookie.{HttpCookieUtil, MCookieMeta, MCookieState}
+import io.suggest.proto.http.model.{HttpReq, HttpReqAdp, HttpResp, IHttpResultHolder}
 import io.suggest.routes.HttpRouteExtractor
 import io.suggest.sec.SessionConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -19,7 +19,6 @@ import japgolly.univeq._
 import io.suggest.text.{StringUtil, UrlUtil2}
 import org.scalajs.dom
 
-import scala.concurrent.Future
 import scala.scalajs.js
 
 /**
@@ -168,7 +167,7 @@ object HttpClient extends Log {
         // Отфильтровать кукис по домену, чтобы ошибочно не отправить сессию куда-то не по адресу.
         // Поддомены - игнорируем: домен должен точно совпадать.
         if {
-          val cookieDomainOpt = sessionCookie.domain
+          val cookieDomainOpt = sessionCookie.parsed.domain
             .orElse {
               // Определить исходный домен из ссылки в js-роутере
               httpReq.data.config.cookieDomainDflt.map(_())
@@ -179,7 +178,7 @@ object HttpClient extends Log {
           r
         }
       } {
-        val cookieValue = sessionCookie.toString
+        val cookieValue = sessionCookie.parsed.toCookie
         hdrs0 += (HttpConst.Headers.COOKIE -> cookieValue)
       }
 
@@ -232,7 +231,10 @@ object HttpClient extends Log {
                 }
               }
             } yield {
-              cookieParsed
+              MCookieState(
+                parsed  = cookieParsed,
+                meta    = MCookieMeta(),
+              )
             })
               // Не более одного сессионного кукиса:
               .nextOption()
@@ -243,28 +245,6 @@ object HttpClient extends Log {
           }
         }
       }
-  }
-
-
-  /** Метод быстрой выкачки указанной ссылки.
-    * Применяется для конвертации из base64-URL или Blob-URL в dom.Blob.
-    *
-    * @param url base64: или blob: URL, хотя можно любой.
-    * @return Фьючерс с блобом.
-    *         Future.failed при ошибке, в том числе если Fetch API не поддерживается.
-    */
-  def getBlob(url: String): Future[dom.Blob] = {
-    execute(
-      new HttpReq(
-        method  = HttpConst.Methods.GET,
-        url     = url,
-        data    = HttpReqData(
-          respType = HttpRespTypes.Blob,
-        ),
-      )
-    )
-      .resultFut
-      .flatMap(_.blob())
   }
 
 }

@@ -16,7 +16,7 @@ import play.api.libs.functional.syntax._
 object ITfDailyMode {
 
   /** Поддержка boopickle-сериализации. */
-  implicit val tfDailyModePickler: Pickler[ITfDailyMode] = {
+  implicit def tfDailyModePickler: Pickler[ITfDailyMode] = {
     compositePickler[ITfDailyMode]
       .addConcreteType[InheritTf.type]
       .addConcreteType[ManualTf]

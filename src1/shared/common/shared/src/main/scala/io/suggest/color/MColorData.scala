@@ -40,7 +40,7 @@ object MColorData
   }
 
   /** Поддержка boopickle. */
-  implicit val mColorDataPickler: Pickler[MColorData] = {
+  implicit def mColorDataPickler: Pickler[MColorData] = {
     generatePickler[MColorData]
   }
 

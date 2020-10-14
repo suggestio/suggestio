@@ -15,7 +15,7 @@ object MLamForm {
   import boopickle.Default._
 
   /** Поддержка бинарной сериализации модели между клиентом и сервером. */
-  implicit val mLamFormPickler: Pickler[MLamForm] = {
+  implicit def mLamFormPickler: Pickler[MLamForm] = {
     implicit val mMapProps = MMapProps.mmapsPickler
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     implicit val mCircleGsP = CircleGs.CIRCLE_GS_PICKLER

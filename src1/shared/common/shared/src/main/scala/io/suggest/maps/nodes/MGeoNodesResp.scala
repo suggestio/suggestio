@@ -4,6 +4,7 @@ import io.suggest.geo.IGeoShape
 import io.suggest.geo.IGeoShape.JsonFormats.minimalFormat
 import io.suggest.primo.id.OptStrId
 import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 // НЕ УДАЛЯТЬ, используется для обоих UnivEq.derive
 import io.suggest.ueq.UnivEqUtil._
@@ -49,6 +50,13 @@ case class MGeoNodesResp(
       .toMap
   }
 
+  override def toString: String = {
+    StringUtil.toStringHelper( this, 256 ) { renderF =>
+      if (nodes.nonEmpty)
+        renderF("")( nodes.mkString("[\n", ",\n ", "\n]") )
+    }
+  }
+
 }
 
 
@@ -63,7 +71,17 @@ case class MGeoNodePropsShapes(
                               )
   extends OptStrId
 {
+
   override def id = props.nodeId
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 128) { renderF =>
+      renderF("")( props )
+      if (shapes.nonEmpty)
+        renderF("gs")( shapes.length )
+    }
+  }
+
 }
 
 object MGeoNodePropsShapes {

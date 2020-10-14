@@ -20,7 +20,7 @@ import scalaz.syntax.validation._
 
 object IPeriodInfo {
 
-  implicit val periodInfoPickler: Pickler[IPeriodInfo] = {
+  implicit def periodInfoPickler: Pickler[IPeriodInfo] = {
     implicit val qapPickler = QuickAdvPeriod.qapIsoPickler
     compositePickler[IPeriodInfo]
       .addConcreteType[MIsoPeriod]

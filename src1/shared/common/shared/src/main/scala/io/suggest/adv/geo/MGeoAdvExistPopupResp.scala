@@ -13,7 +13,7 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MGeoAdvExistPopupResp {
 
-  implicit val pickler: Pickler[MGeoAdvExistPopupResp] = {
+  implicit def pickler: Pickler[MGeoAdvExistPopupResp] = {
     implicit val rowP = MGeoAdvExistRow.pickler
     generatePickler[MGeoAdvExistPopupResp]
   }
@@ -36,7 +36,7 @@ case class MGeoAdvExistPopupResp(
 
 
 object MGeoAdvExistRow {
-  implicit val pickler: Pickler[MGeoAdvExistRow] = {
+  implicit def pickler: Pickler[MGeoAdvExistRow] = {
     implicit val dateRangeOptP = MRangeYmdOpt.mRangeYmdOptPickler
     implicit val geoItemInfoP = MGeoItemInfo.mGeoItemInfoPickler
     generatePickler[MGeoAdvExistRow]
@@ -57,7 +57,7 @@ case class MGeoItemInfo(
   payload         : MGeoItemInfoPayload
 )
 object MGeoItemInfo {
-  implicit val mGeoItemInfoPickler: Pickler[MGeoItemInfo] = {
+  implicit def mGeoItemInfoPickler: Pickler[MGeoItemInfo] = {
     implicit val payloadP = MGeoItemInfoPayload.pickler
     generatePickler[MGeoItemInfo]
   }
@@ -67,7 +67,7 @@ object MGeoItemInfo {
 
 /** Модель описания полезной нагрузки в item'ах. */
 object MGeoItemInfoPayload {
-  implicit val pickler: Pickler[MGeoItemInfoPayload] = {
+  implicit def pickler: Pickler[MGeoItemInfoPayload] = {
     compositePickler[MGeoItemInfoPayload]
       .addConcreteType[OnMainScreen.type]
       .addConcreteType[InGeoTag]

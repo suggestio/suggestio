@@ -1,6 +1,5 @@
 package io.suggest.proto.http.cookie
 
-import java.time.format.DateTimeFormatter
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
 
 import io.suggest.dt.CommonDateTimeUtil
@@ -18,27 +17,6 @@ import scala.util.parsing.combinator._
   */
 
 object HttpCookieUtil {
-
-  sealed trait ICookieAttrToken
-
-  object Words {
-    final def EXPIRES = "Expires="
-    final def MAX_AGE = "Max-Age="
-    final def DOMAIN = "Domain="
-    final def PATH = "Path="
-    final def SECURE = "Secure"
-    final def HTTP_ONLY = "HttpOnly"
-    final def SAME_SITE = "SameSite="
-  }
-
-  case class Expires(date: OffsetDateTime) extends ICookieAttrToken
-  case class MaxAge(seconds: Long) extends ICookieAttrToken
-  case class Domain(domain: String) extends ICookieAttrToken
-  case class Path(path: String) extends ICookieAttrToken
-  case object Secure extends ICookieAttrToken
-  case object HttpOnly extends ICookieAttrToken
-  case class SameSite(policy: String) extends ICookieAttrToken
-
 
   /** Разовый парсинг кукисов, для примера.
     *
@@ -61,8 +39,10 @@ object HttpCookieUtil {
     *         false, если требует о кукисе с данным именем требуется забыть.
     *         None - transient-кукис, который живёт в текущих мыслях приложения, и не будет сохраняться никуда на постоянную.
     */
-  def isOkOrDiscardCookie(cookieParsed: MHttpCookieParsed, receivedAt: Option[Instant] ): Option[Boolean] = {
-    cookieParsed.maxAge
+  def isOkOrDiscardCookie( cookieParsed: MHttpCookieParsed,
+                           receivedAt: Option[Instant] ): Option[Boolean] = {
+    cookieParsed
+      .maxAge
       .map { maxAgeSec =>
         // Фильтровать по Max-Age относительно момента времени получения кукиса:
         maxAgeSec > 0 && receivedAt.fold(true) { rcvrAt =>
@@ -71,7 +51,7 @@ object HttpCookieUtil {
         }
       }
       .orElse {
-        cookieParsed.expires.map { cookieExpires =>
+        for (cookieExpires <- cookieParsed.expires) yield {
           // Фильтруем по Expiers относительно now():
           cookieExpires isAfter OffsetDateTime.now()
         }
@@ -83,11 +63,14 @@ object HttpCookieUtil {
 
 }
 
-import HttpCookieUtil._
-
 
 /** Парсеры Http-кукисов. */
 trait HttpCookieUtil extends JavaTokenParsers {
+
+  import HttpCookieUtil._
+  import ICookieAttrToken._
+  import MHttpCookieParsed.Words
+
 
   /** <Cookie-name> can be any US-ASCII characters, except control characters, spaces, or tabs.
     * It also must NOT contain a separator character like the following:
@@ -177,85 +160,5 @@ trait HttpCookieUtil extends JavaTokenParsers {
     lazy val cookiesDelim = ","
     rep1sep( oneCookie, cookiesDelim )
   }
-
-}
-
-
-final case class MHttpCookieParsed(
-                                    name      : String,
-                                    value     : String,
-                                    attrs     : List[ICookieAttrToken]  = Nil,
-                                  ) {
-
-  lazy val expires = attrs.collectFirst {
-    case m: Expires => m.date
-  }
-
-  lazy val maxAge = attrs.collectFirst {
-    case m: MaxAge => m.seconds
-  }
-
-  lazy val domain = attrs.collectFirst {
-    case m: Domain => m.domain
-  }
-
-  lazy val path = attrs.collectFirst {
-    case m: Path => m.path
-  }
-
-  lazy val secure = attrs contains Secure
-
-  lazy val httpOnly = attrs contains HttpOnly
-
-  lazy val sameSite = attrs.collectFirst {
-    case m: SameSite => m.policy
-  }
-
-  private def _toCookieSb(sb: StringBuilder = new StringBuilder( value.length * 2 )): StringBuilder = {
-    sb.append(name)
-      .append('=')
-      .append(value)
-  }
-
-  /** Рендер в Cookie-заголовок. */
-  def toCookie: String =
-    _toCookieSb().toString()
-
-  /** Рендер в Set-Cookie-заголовок. */
-  def toSetCookie: String = {
-    val sb = _toCookieSb()
-
-    // Отрендерить аттрибуты:
-    for (attr <- attrs) {
-      sb.append(';')
-        .append(' ')
-
-      attr match {
-        case Expires(dt) =>
-          sb.append( Words.EXPIRES )
-            .append( DateTimeFormatter.RFC_1123_DATE_TIME.format(dt) )
-        case MaxAge(seconds ) =>
-          sb.append( Words.MAX_AGE )
-            .append( seconds )
-        case Domain(domain) =>
-          sb.append( Words.DOMAIN )
-            .append( domain )
-        case Path(path) =>
-          sb.append( Words.PATH )
-            .append( path )
-        case Secure =>
-          sb.append( Words.SECURE )
-        case HttpOnly =>
-          sb.append( Words.HTTP_ONLY )
-        case SameSite(policy) =>
-          sb.append( Words.SAME_SITE )
-            .append( policy )
-      }
-    }
-
-    sb.toString()
-  }
-
-  override def toString = toSetCookie
 
 }

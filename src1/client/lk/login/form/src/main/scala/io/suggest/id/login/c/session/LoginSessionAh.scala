@@ -8,13 +8,12 @@ import io.suggest.kv.MKvStorage
 import io.suggest.lk.m.{LoginSessionRestore, LoginSessionSaved, LoginSessionSet}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.proto.http.cookie.{HttpCookieUtil, MHttpCookie, MHttpCookieParsed}
+import io.suggest.proto.http.cookie.{HttpCookieUtil, MCookieState, MHttpCookie}
 import io.suggest.sec.SessionConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.text.StringUtil
 import japgolly.univeq._
-import scalaz.syntax.id._
 
 import scala.util.Try
 
@@ -46,11 +45,14 @@ class LoginSessionAh[M](
     case m: LoginSessionSet =>
       val v0 = value
 
-      val isStore = HttpCookieUtil.isOkOrDiscardCookie( m.cookie, receivedAt = None )
+      val isStore = HttpCookieUtil.isOkOrDiscardCookie(
+        m.cookie.parsed,
+        receivedAt = Some( m.cookie.meta.receivedAt ),
+      )
       val isSaveNew = isStore contains true
 
       val pot1 = if (isStore contains false)
-        Pot.empty[MHttpCookieParsed]
+        Pot.empty[MCookieState]
       else
         v0.cookie ready m.cookie
 
@@ -58,9 +60,7 @@ class LoginSessionAh[M](
         Effect.action {
           val mkvs = MKvStorage(
             key   = KV_STORAGE_TOKEN_KEY,
-            value = MHttpCookie(
-              setCookieHeaderValue = m.cookie.toSetCookie,
-            ),
+            value = m.cookie.toRawCookie,
           )
           MKvStorage.save( mkvs )
           LoginSessionSaved( pot1 )
@@ -90,7 +90,7 @@ class LoginSessionAh[M](
       // TODO Надо какой-то таймер организовать, наверное.
       //      Чтобы перевалидировать кукис через определённое время, возможно делаяя keepalive для обновления сессии.
       //      А пока - сервер проверит и порешит.
-      updatedSilent(v2)
+      updated(v2)
 
 
     // Восстановить состояние токена из хранилища.
@@ -102,15 +102,15 @@ class LoginSessionAh[M](
           MKvStorage
             // Чтение из хранилища...
             .get[MHttpCookie]( KV_STORAGE_TOKEN_KEY )
-            .fold( Pot.empty[MHttpCookieParsed] ) { mkvs =>
-              val setCookieRaw = mkvs.value.setCookieHeaderValue
+            .fold( Pot.empty[MCookieState] ) { mkvs =>
+              val cookie = mkvs.value
 
               def setCookieRaw32 =
-                if (scalajs.LinkingInfo.developmentMode) setCookieRaw
-                else StringUtil.strLimitLen(setCookieRaw, 32)
+                if (scalajs.LinkingInfo.developmentMode) cookie.setCookieHeaderValue
+                else StringUtil.strLimitLen(cookie.setCookieHeaderValue, 32)
 
               HttpCookieUtil
-                .parseCookies( setCookieRaw )
+                .parseCookies( cookie.setCookieHeaderValue )
                 // Убедится, что не пустая строка на выходе пропарсилась:
                 .filterOrElse( _.nonEmpty, {
                   val e = ErrorMsgs.UNEXPECTED_EMPTY_DOCUMENT
@@ -133,7 +133,7 @@ class LoginSessionAh[M](
                   HttpCookieUtil
                     .isOkOrDiscardCookie(
                       cookieParsed = cookieParsed,
-                      receivedAt = mkvs.value.receivedAt into Some.apply
+                      receivedAt   = Some( cookie.meta.receivedAt ),
                     )
                     .collect {
                       case true => cookieParsed
@@ -145,7 +145,7 @@ class LoginSessionAh[M](
                     }
                 }
                 // Итого: запилить кукис в состояние контроллера, или удалить из хранилища.
-                .fold [Pot[MHttpCookieParsed]] (
+                .fold [Pot[MCookieState]] (
                   {error =>
                     logger.warn( ErrorMsgs.COOKIE_NOT_PARSED, msg = (KV_STORAGE_TOKEN_KEY, error, setCookieRaw32) )
 
@@ -154,7 +154,13 @@ class LoginSessionAh[M](
 
                     Pot.empty
                   },
-                  v0.cookie.ready
+                  { cookieParsed =>
+                    val cookieState = MCookieState(
+                      parsed  = cookieParsed,
+                      meta    = cookie.meta,
+                    )
+                    v0.cookie ready cookieState
+                  }
                 )
             }
         }
@@ -162,7 +168,7 @@ class LoginSessionAh[M](
       }
 
       val v2 = MLoginSessionS.token.modify(_.pending())(v0)
-      updatedSilent(v2, fx)
+      updated(v2, fx)
 
   }
 

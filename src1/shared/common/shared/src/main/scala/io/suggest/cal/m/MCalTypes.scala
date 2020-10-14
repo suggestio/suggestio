@@ -83,7 +83,7 @@ object MCalType {
   @inline implicit def univEq: UnivEq[MCalType] = UnivEq.derive
 
   /** Поддержка бинарной сериализации.*/
-  implicit val mCalTypePickler: Pickler[MCalType] = {
+  implicit def mCalTypePickler: Pickler[MCalType] = {
     compositePickler[MCalType]
       .addConcreteType[MCalTypes.WeekDay.type]
       .addConcreteType[MCalTypes.WeekEnd.type]

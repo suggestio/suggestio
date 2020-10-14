@@ -16,7 +16,7 @@ import play.api.libs.functional.syntax._
   */
 object MTfDailyInfo {
 
-  implicit val mTfDailyInfoPickler: Pickler[MTfDailyInfo] = {
+  implicit def mTfDailyInfoPickler: Pickler[MTfDailyInfo] = {
     implicit val lkTfDailyModeP = ITfDailyMode.tfDailyModePickler
     implicit val mCalTypeP = MCalType.mCalTypePickler
     implicit val mPriceP = MPrice.mPricePickler

@@ -31,7 +31,7 @@ object MMapProps {
   /** Какое-то очень дефолтовое значение зума карты. */
   def ZOOM_DEFAULT = 11
 
-  implicit val mmapsPickler: Pickler[MMapProps] = {
+  implicit def mmapsPickler: Pickler[MMapProps] = {
     implicit val mgpPickler = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[MMapProps]
   }

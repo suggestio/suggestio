@@ -15,7 +15,7 @@ object MLamFormInit {
   import boopickle.Default._
 
   /** Поддержка бинарной сериализации. */
-  implicit val mLamFormInitPickler: Pickler[MLamFormInit] = {
+  implicit def mLamFormInitPickler: Pickler[MLamFormInit] = {
     implicit val mGetPriceRespP = MGetPriceResp.getPriceRespPickler
     implicit val mLamFormP = MLamForm.mLamFormPickler
     implicit val a4fPropsP = MAdv4FreeProps.a4fPropsPickler

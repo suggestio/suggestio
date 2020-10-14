@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.session
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiPaper, MuiProgressVariants, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentText, MuiDialogContentTextProps, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiTypoGraphyAligns, MuiTypoGraphyColors, MuiTypoGraphyVariants}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.LogoutConfirm
@@ -66,30 +66,31 @@ class LogOutDiaR(
           MuiDialogContent()(
 
             // Текст вопроса:
-            MuiDialogContentText()(
+            MuiDialogContentText(
+              new MuiDialogContentTextProps {
+                override val align = MuiTypoGraphyAligns.center
+              }
+            )(
               crCtx.messages( MsgCodes.`Are.you.sure.to.logout.account` ),
-
-              // Вывод ошибки запроса разлогина:
-              s.exceptionOptC { exceptionOptProxy =>
-                exceptionOptProxy.value.whenDefinedEl { ex =>
-                  MuiPaper()(
-                    MuiTypoGraphy(
-                      new MuiTypoGraphyProps {
-                        override val variant = MuiTypoGraphyVariants.caption
-                        override val color = MuiTypoGraphyColors.error
-                      }
-                    )(
-                      crCtx.messages( MsgCodes.`Error` ),
-                      COLON, SPACE,
-                      ex.getMessage,
-                      SPACE,
-                      `(`, ex.getClass.getSimpleName, `)`,
-                    ),
-                  )
-                }
-              },
-
             ),
+
+            // Вывод ошибки запроса разлогина:
+            s.exceptionOptC { exceptionOptProxy =>
+              exceptionOptProxy.value.whenDefinedEl { ex =>
+                MuiDialogContentText(
+                  new MuiDialogContentTextProps {
+                    override val variant = MuiTypoGraphyVariants.caption
+                    override val color = MuiTypoGraphyColors.error
+                  }
+                )(
+                  crCtx.messages( MsgCodes.`Error` ),
+                  COLON, SPACE,
+                  ex.getMessage,
+                  SPACE,
+                  `(`, ex.getClass.getSimpleName, `)`,
+                )
+              }
+            },
 
             // Если pending, то отрендерить progress:
             s.isPendingSomeC { isPendingSomeProxy =>
@@ -137,7 +138,8 @@ class LogOutDiaR(
               )
             },
 
-          )
+          ),
+
         )
       }
 

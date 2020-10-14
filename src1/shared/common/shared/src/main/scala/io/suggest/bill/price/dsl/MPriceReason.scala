@@ -15,7 +15,7 @@ import japgolly.univeq.UnivEq
 object MPriceReason {
 
   /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit val iPriceReasonPickler: Pickler[MPriceReason] = {
+  implicit def iPriceReasonPickler: Pickler[MPriceReason] = {
     implicit val mReasonTypeP = MReasonType.mReasonTypePickler
     implicit val mCircleGsP = CircleGs.CIRCLE_GS_PICKLER
     implicit val mNameIdP = MNameId.mNameIdPickler

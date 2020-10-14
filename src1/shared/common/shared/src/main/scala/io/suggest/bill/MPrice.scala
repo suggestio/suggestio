@@ -24,7 +24,7 @@ object MPrice {
   import boopickle.Default._
 
   /** Поддержка сериализации. */
-  implicit val mPricePickler: Pickler[MPrice] = {
+  implicit def mPricePickler: Pickler[MPrice] = {
     implicit val currencyP = MCurrency.pickler
     generatePickler[MPrice]
   }

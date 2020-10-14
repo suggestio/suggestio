@@ -6,6 +6,7 @@ import play.api.libs.functional.syntax._
 import MGeoPoint.JsonFormatters.QS_OBJECT
 import diode.FastEq
 import io.suggest.spa.OptFastEq
+import io.suggest.text.StringUtil
 import japgolly.univeq._
 import monocle.macros.GenLens
 
@@ -68,4 +69,14 @@ object MGeoLoc {
 case class MGeoLoc(
                     point         : MGeoPoint,
                     accuracyOptM  : Option[Double]  = None
-                  )
+                  ) {
+
+  override def toString: String = {
+    StringUtil.toStringHelper(this, 16) { renderF =>
+      val render0 = renderF("")
+      render0( point )
+      accuracyOptM foreach render0
+    }
+  }
+
+}

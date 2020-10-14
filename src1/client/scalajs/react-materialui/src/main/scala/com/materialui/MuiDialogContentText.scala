@@ -22,7 +22,7 @@ object MuiDialogContentText {
 
 /** JSON props for [[MuiDialogContentText.component]]. */
 trait MuiDialogContentTextProps
-  extends MuiPropsBase
+  extends MuiTypoGraphyPropsBase
   with MuiPropsBaseClasses[MuiDialogContentTextClasses]
 
 

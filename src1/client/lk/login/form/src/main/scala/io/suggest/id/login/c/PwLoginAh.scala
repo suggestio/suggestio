@@ -150,6 +150,9 @@ class PwLoginAh[M](
         if (v0.loginBtnEnabled !=* loginBtnEnabled2)
           changesAcc = changesAcc andThen MEpwLoginS.loginBtnEnabled.set( loginBtnEnabled2 )
 
+        for (ex <- m.tryRes.failed)
+          logger.warn( ErrorMsgs.LOGIN_FORM_ERROR, ex, m )
+
         val v2 = changesAcc(v0)
         ah.updatedMaybeEffect( v2, fxOpt )
 

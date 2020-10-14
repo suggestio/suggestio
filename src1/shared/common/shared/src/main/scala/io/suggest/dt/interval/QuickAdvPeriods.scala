@@ -19,14 +19,14 @@ object QuickAdvPeriod {
 
   import QuickAdvPeriods._
 
-  implicit val qapIsoPickler: CompositePickler[QuickAdvIsoPeriod] = {
+  implicit def qapIsoPickler: CompositePickler[QuickAdvIsoPeriod] = {
     compositePickler[QuickAdvIsoPeriod]
       .addConcreteType[P3D.type]
       .addConcreteType[P1W.type]
       .addConcreteType[P1M.type]
   }
 
-  implicit val qapPickler: CompositePickler[QuickAdvPeriod] = {
+  implicit def qapPickler: CompositePickler[QuickAdvPeriod] = {
     // TODO Есть проблема с sealed и автогенерацией в scala-2.11: boopickle не видит реализации sealed-класса внутри модели.
     // На scala-2.12 проблема отчасти решена, т.е. можно выкрутиться с помощью generatePickler[] внутри QuickAdvPeriods.
     compositePickler[QuickAdvPeriod]
@@ -147,6 +147,6 @@ object QuickAdvPeriods extends StringEnum[QuickAdvPeriod] {
   }
 
 
-  override val values = findValues
+  override def values = findValues
 
 }

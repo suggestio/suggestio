@@ -21,7 +21,7 @@ import play.api.libs.json._
 object IGeoShape {
 
   /** Общий boopickler для ИСПОЛЬЗУЕМЫХ реализаций [[IGeoShape]]. */
-  implicit lazy val GEO_SHAPE_PICKLER: Pickler[IGeoShape] = {
+  implicit def GEO_SHAPE_PICKLER: Pickler[IGeoShape] = {
     // Добавлены только необходимые элементы.
     implicit val circleGsP = CircleGs.CIRCLE_GS_PICKLER
     implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
@@ -168,7 +168,7 @@ sealed trait IGeoShapeQuerable extends IGeoShape
 // Реализация GeoShape'ов:
 
 object PointGs extends IGeoShapeCompanion[PointGs] {
-  implicit lazy val POINT_GS_PICKLER: Pickler[PointGs] = {
+  implicit def POINT_GS_PICKLER: Pickler[PointGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[PointGs]
   }
@@ -185,7 +185,7 @@ case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
 /** Гео-шейп круга. */
 object CircleGs extends IGeoShapeCompanion[CircleGs] {
 
-  implicit lazy val CIRCLE_GS_PICKLER: Pickler[CircleGs] = {
+  implicit def CIRCLE_GS_PICKLER: Pickler[CircleGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[CircleGs]
   }
@@ -333,7 +333,7 @@ case class PolygonGs(
   def outerWithHoles = outer :: holes
 }
 object PolygonGs extends IGeoShapeCompanion[PolygonGs] {
-  implicit lazy val POLYGON_GS_PICKLER: Pickler[PolygonGs] = {
+  implicit def POLYGON_GS_PICKLER: Pickler[PolygonGs] = {
     implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
     generatePickler[PolygonGs]
   }
@@ -357,7 +357,7 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs])
   override def firstPoint = polygons.head.firstPoint
 }
 object MultiPolygonGs extends IGeoShapeCompanion[MultiPolygonGs] {
-  implicit lazy val MULTI_POLYGON_GS_PICKLER: Pickler[MultiPolygonGs] = {
+  implicit def MULTI_POLYGON_GS_PICKLER: Pickler[MultiPolygonGs] = {
     implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
     generatePickler[MultiPolygonGs]
   }

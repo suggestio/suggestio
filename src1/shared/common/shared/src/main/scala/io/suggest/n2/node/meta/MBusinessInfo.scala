@@ -84,7 +84,7 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
   /** Частоиспользуемый пустой экземпляр модели [[MBusinessInfo]]. */
   override val empty = MBusinessInfo()
 
-  implicit val mBusinessInfoPickler: Pickler[MBusinessInfo] = {
+  implicit def mBusinessInfoPickler: Pickler[MBusinessInfo] = {
     generatePickler[MBusinessInfo]
   }
 
