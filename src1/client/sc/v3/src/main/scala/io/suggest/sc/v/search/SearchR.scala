@@ -131,6 +131,7 @@ final class SearchR(
             override val pullRight    = true
             override val shadow       = true
             override val styles       = searchStyles
+            override val touchHandleWidth = 40
           }
         )( children )
       }

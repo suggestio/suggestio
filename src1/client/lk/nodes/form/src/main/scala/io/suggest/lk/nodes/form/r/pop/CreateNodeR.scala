@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
@@ -31,6 +31,7 @@ import scalaz.Tree
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -135,6 +136,62 @@ class CreateNodeR(
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
+      val isUseNativeSelect = platformComponents.useComplexNativeSelect()
+      val _selectProps = new MuiSelectProps {
+        override val native = isUseNativeSelect
+      }
+
+      // Готовим функция-рендерер для всех элементов селекта:
+      val renderF = if (isUseNativeSelect) {
+        (nodePathStr: String, mnsNodePathRev: Either[String, (MNodeState, NodePath_t)]) =>
+          <.option(
+            ^.value := nodePathStr,
+
+            mnsNodePathRev.fold[TagMod](
+              { title =>
+                TagMod(
+                  ^.disabled := true,
+                  title
+                )
+              },
+              {case (mns, nodePathRev) =>
+                mns.infoPot
+                  .toOption
+                  .flatMap( _.name )
+                  .orElse( mns.nodeId )
+                  .whenDefined
+              },
+            ),
+          ): VdomElement
+      } else {
+        (nodePathStr: String, mnsNodePathRev: Either[String, (MNodeState, NodePath_t)]) =>
+          MuiMenuItem.component.withKey( nodePathStr )(
+            new MuiMenuItemProps {
+              override val value = nodePathStr
+              override val disabled = mnsNodePathRev.isLeft
+            }
+          )(
+            mnsNodePathRev.fold[VdomNode](
+              {title =>
+                <.em(
+                  title,
+                )
+              },
+              { case (mns, nodePathRev) =>
+                nodeHeaderR.component(
+                  propsProxy.resetZoom(
+                    nodeHeaderR.PropsVal(
+                      render = MNodeStateRender( mns, nodePathRev ),
+                      isAdv  = false,
+                      asList = false,
+                    )
+                  )
+                )
+              }
+            ),
+          ): VdomElement
+      }
+
       crCtxP.consume { crCtx =>
         val platCss = platformCssStatic()
 
@@ -201,43 +258,32 @@ class CreateNodeR(
                         }
                       // Вернуть None, если нет ни одного подходящего узла, чтобы передать рендер в getOrElse-ветвь.
                       Option.when( !nodesToRender.isEmpty ) {
-                        nodesToRender
+                        val elems = nodesToRender
                           .iterator
-                          .map[VdomNode] { case (mns, nodePathRev) =>
+                          .map[VdomNode] { case mnsNodePathRev @ (mns, nodePathRev) =>
                             val nodePathStr = nodePathRev
                               .reverse
                               .tail
                               .mkString( pathDelimStr )
-                            MuiMenuItem.component.withKey( nodePathStr )(
-                              new MuiMenuItemProps {
-                                override val value = nodePathStr
-                              }
-                            )(
-                              nodeHeaderR.component(
-                                propsProxy.resetZoom(
-                                  nodeHeaderR.PropsVal(
-                                    render = MNodeStateRender( mns, nodePathRev ),
-                                    isAdv = false,
-                                    asList = false,
-                                  )
-                                )
-                              )
-                            )
+
+                            renderF( nodePathStr, Right(mnsNodePathRev) )
                           }
                           .toList
+
+                        if (isUseNativeSelect) {
+                          val id = MsgCodes.`Choose...`
+                          val title = crCtx.messages( id )
+                          val firstEmptyEl = renderF( id, Left(title) )
+                          firstEmptyEl :: elems
+                        } else {
+                          elems
+                        }
                       }
                     }
                     .getOrElse {
                       // Нет узлов, ничего не найдено.
-                      val emptyEl = MuiMenuItem(
-                        new MuiMenuItemProps {
-                          override val value = emptyValue
-                        }
-                      )(
-                        <.em(
-                          crCtx.messages( MsgCodes.`Nothing.found` )
-                        )
-                      ): VdomElement
+                      val title = crCtx.messages( MsgCodes.`Nothing.found` )
+                      val emptyEl = renderF(emptyValue, Left(title) )
                       emptyEl :: Nil
                     }
 
@@ -245,16 +291,22 @@ class CreateNodeR(
                   val _parentNodeMsg = crCtx.messages( MsgCodes.`Parent.node` ).rawNode
                   val parentPathOpt = props.createParentPath
                   val _nodePathValueStr = parentPathOpt
-                    .fold( emptyValue )( _.mkString( pathDelimStr ) )
+                    .fold {
+                      if (isUseNativeSelect)
+                        MsgCodes.`Choose...`
+                      else
+                        emptyValue
+                    }( _.mkString( pathDelimStr ) )
+
                   MuiTextField(
                     new MuiTextFieldProps {
-                      //override val `type` = HtmlConstants.Input.select
                       override val label = _parentNodeMsg
                       override val select = true
                       override val fullWidth = true
                       override val onChange = onParentChangeCbF
                       override val error = parentPathOpt.isEmpty
                       override val value = _nodePathValueStr
+                      override val SelectProps = _selectProps
                     }
                   )(
                     selectOptions: _*

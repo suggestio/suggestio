@@ -49,15 +49,22 @@ object MSc3IndexResp {
       }
     }
 
+    /** Логотипы-заголовки индексов визуально смотряться одинаково?
+      * Без учёта содержимого меню, прав доступа и т.д.
+      */
+    def isLogoTitleBgSame(b: MSc3IndexResp): Boolean = {
+      (a.name ==* b.name) &&
+      (a.colors ==* b.colors) &&
+      (a.logoOpt ==* b.logoOpt)
+    }
+
     /** Индексы выглядят одинаково?
       * Это чтобы фильтровать случаи, когда приходит дубликат индекса.
       * Такое бывает на эфемерных узлах или всяких районах.
       */
-    def isLookingSame(b: MSc3IndexResp): Boolean = {
+    def isLooksFullySame(b: MSc3IndexResp): Boolean = {
       (a ===* b) || {
-        (a.name ==* b.name) &&
-        (a.colors ==* b.colors) &&
-        (a.logoOpt ==* b.logoOpt) &&
+        isLogoTitleBgSame(b) &&
         (a.isLoggedIn ==* b.isLoggedIn)
       }
     }

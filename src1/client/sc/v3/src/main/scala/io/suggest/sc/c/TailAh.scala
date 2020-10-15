@@ -304,8 +304,8 @@ class TailAh(
               Option.when(!isDuplicate) {
                 val maxItems = MIndexesRecent.MAX_RECENT_ITEMS
                 MIndexesRecent.recents.modify { r0 =>
-                  // Удалять из списка старые значения, которые isLookingSame.
-                  val r1 = r0.filterNot(_.indexResp isLookingSame inxInfo2.indexResp)
+                  // Удалять из списка старые значения, которые выглядят похоже (без учёта isLoggedIn и прочих глубинных флагов).
+                  val r1 = r0.filterNot(_.indexResp isLogoTitleBgSame inxInfo2.indexResp)
                   // Укоротить список по максимальной длине.
                   val r2 =
                     if (r1.lengthIs > maxItems)  r1.take( maxItems - 1 )

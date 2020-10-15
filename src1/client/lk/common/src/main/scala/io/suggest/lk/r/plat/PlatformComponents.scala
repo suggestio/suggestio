@@ -83,4 +83,13 @@ class PlatformComponents(
     }
   }
 
+
+  /** На некоторых платформах (iOS Cordova) есть проблема с длинными ненативными селектами:
+    * при клике в выпадающем select-списке происходит выделение соседнего элемента вместо выбранного.
+    * @return true - если требуется нативный селект.
+    *         false - используется html-список.
+    */
+  def useComplexNativeSelect(): Boolean =
+    getPlatformCss().isRenderIos
+
 }

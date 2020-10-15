@@ -1,7 +1,9 @@
 package com.github.balloob.react.sidebar
 
+import io.suggest.sjs.common.vm.wnd.WindowStub
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -14,7 +16,7 @@ import scala.scalajs.js.annotation.JSImport
   */
 object Sidebar {
 
-  val component = JsComponent[SidebarProps, Children.Varargs, js.Object]( SidebarJs )
+  val component = JsComponent[SidebarProps, Children.Varargs, SidebarState]( js.constructorOf[SidebarForceIosJs] )
 
   def apply(props: SidebarProps)(children: VdomNode*) = component( props )(children: _*)
 
@@ -23,5 +25,34 @@ object Sidebar {
 
 @JSImport("react-sidebar", JSImport.Default)
 @js.native
-object SidebarJs extends js.Object
+class SidebarJs(props: SidebarProps) extends js.Object {
+  def componentDidMount(): Unit = js.native
+  def componentDidUpdate(): Unit = js.native
+  def onTouchStart(e: ReactTouchEvent): Unit = js.native
+  def onTouchMove(e: ReactTouchEvent): Unit = js.native
+  def setState(s: SidebarState): Unit = js.native
+  def saveSidebarWidth(): Unit = js.native
+  def render(): raw.React.Element = js.native
+}
 
+
+/** Отклонение неотключаемого запрета работать на ios.
+  * См. README и https://github.com/balloob/react-sidebar/commit/01dd3478af3349a409882bdd220ead6b3e3791c5
+  */
+class SidebarForceIosJs(props: SidebarProps) extends SidebarJs(props) {
+  override def componentDidMount(): Unit = {
+    setState(new SidebarState {
+      // TODO Возможно, надо отключать в браузере на iOS, но не в кордове.
+      override val dragSupported = WindowStub(dom.window).ontouchstart.nonEmpty
+    })
+    saveSidebarWidth()
+  }
+}
+
+
+/** State js-object for [[SidebarJs]]. */
+trait SidebarState extends js.Object {
+  val sidebarWidth: js.UndefOr[Int] = js.undefined
+  val touchIdentifier, touchStartX, touchCurrentX: js.UndefOr[js.Any] = js.undefined
+  val dragSupported: Boolean
+}

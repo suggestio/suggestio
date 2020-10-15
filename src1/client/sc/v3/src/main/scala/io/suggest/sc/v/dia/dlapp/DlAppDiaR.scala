@@ -94,7 +94,7 @@ class DlAppDiaR(
       val platformsRows: Seq[VdomNode] = MuiMenuItem.component.withKey( chooseMsgCode )(
         new MuiMenuItemProps {
           override val value = chooseMsgCode
-          val disabled = true
+          override val disabled = true
         }
       )(
         chooseText

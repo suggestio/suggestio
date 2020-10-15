@@ -363,7 +363,7 @@ class IndexRah
       resp.nodes.exists { node =>
         i0.resp.exists { rn =>
           (rn isSamePlace node.props) &&
-          (rn isLookingSame node.props)
+          (rn isLooksFullySame node.props)
         }
       }
     ) {
