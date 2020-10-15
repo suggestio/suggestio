@@ -38,7 +38,7 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
-import io.suggest.sc.m.dia.MScDialogs
+import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals}
@@ -59,10 +59,10 @@ import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
 import io.suggest.id.login.LoginFormCircuit
-import io.suggest.id.login.c.session.{LogOutAh, LoginSessionAh}
-import io.suggest.id.login.m.session.{MLogOutDia, MLoginSessionS}
+import io.suggest.id.login.c.session.{LogOutAh, SessionAh}
+import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi}
-import io.suggest.lk.m.LoginSessionRestore
+import io.suggest.lk.m.SessionRestore
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
@@ -322,8 +322,8 @@ class Sc3Circuit(
   val loggedInRO                  = indexRW.zoom(_.isLoggedIn)
 
   private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
-  private[sc] val loginSessionRW  = mkLensZoomRW( internalsRW, MScInternals.login )
-  private[sc] val logOutRW        = mkLensZoomRW( loginSessionRW, MLoginSessionS.logout )
+  private[sc] val loginSessionRW  = mkLensZoomRW( scLoginRW, MScLoginS.session )
+  private[sc] val logOutRW        = mkLensZoomRW( scLoginRW, MScLoginS.logout )
 
 
   // notifications
@@ -635,7 +635,7 @@ class Sc3Circuit(
     acc ::= scConfAh
 
     if (CordovaConstants.isCordovaPlatform()) {
-      acc ::= new LoginSessionAh(
+      acc ::= new SessionAh(
         modelRW = loginSessionRW,
       )
     }
@@ -785,7 +785,7 @@ class Sc3Circuit(
     // Сразу восстановить данные логина из БД:
     Future {
       if (platformRW.value.isCordova)
-        this.runEffectAction( LoginSessionRestore )
+        this.runEffectAction( SessionRestore )
     }
 
     // Немедленный запуск инициализации/загрузки

@@ -39,12 +39,12 @@ class ScLoginDiaAh[M](
     case m: ScLoginFormShowHide =>
       val v0 = value
 
-      if (m.visible && v0.circuit.isEmpty) {
+      if (m.visible && v0.ident.isEmpty) {
         val fx = _sc3PageModFx( Some(SioPages.Login()) )
         val ensureCsrfFx = CsrfTokenEnsure().toEffectPure
         effectOnly( fx + ensureCsrfFx )
 
-      } else if (!m.visible && v0.circuit.nonEmpty) {
+      } else if (!m.visible && v0.ident.nonEmpty) {
         val fx = _sc3PageModFx( None )
         effectOnly( fx )
 
@@ -57,7 +57,7 @@ class ScLoginDiaAh[M](
       val v0 = value
 
       m.loginPageOpt.fold {
-        v0.circuit.fold {
+        v0.ident.fold {
           noChange
 
         } { loginFormCircuit =>
@@ -72,13 +72,13 @@ class ScLoginDiaAh[M](
             effectOnly( startHideFx >> reDoFx )
 
           } else {
-            val v2 = (MScLoginS.circuit set None)(v0)
+            val v2 = (MScLoginS.ident set None)(v0)
             updated(v2)
           }
         }
 
       } { loginPage2 =>
-        val loginFormCircuit = v0.circuit getOrElse getLoginFormCircuit()
+        val loginFormCircuit = v0.ident getOrElse getLoginFormCircuit()
 
         val routeFx = Effect.action {
           loginFormCircuit.onRoute( loginPage2 )
@@ -86,8 +86,8 @@ class ScLoginDiaAh[M](
           DoNothing
         }
 
-        v0.circuit.fold {
-          val v2 = (MScLoginS.circuit set Some(loginFormCircuit))(v0)
+        v0.ident.fold {
+          val v2 = (MScLoginS.ident set Some(loginFormCircuit))(v0)
           updated(v2, routeFx)
         } { _ =>
           effectOnly( routeFx )

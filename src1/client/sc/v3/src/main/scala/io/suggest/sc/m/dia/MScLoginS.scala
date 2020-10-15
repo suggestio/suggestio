@@ -1,6 +1,7 @@
 package io.suggest.sc.m.dia
 
 import io.suggest.id.login.LoginFormCircuit
+import io.suggest.id.login.m.session.{MLogOutDia, MSessionS}
 import japgolly.univeq._
 import monocle.macros.GenLens
 
@@ -16,13 +17,15 @@ object MScLoginS {
 
   @inline implicit def univEq: UnivEq[MScLoginS] = UnivEq.derive
 
-  def circuit = GenLens[MScLoginS]( _.circuit )
+  def ident = GenLens[MScLoginS]( _.ident )
+  val session = GenLens[MScLoginS]( _.session )
+  val logout = GenLens[MScLoginS]( _.logout )
 
 
   implicit final class ScLoginExt( private val scLogin: MScLoginS ) extends AnyVal {
 
     def isDiaOpened: Boolean =
-      scLogin.circuit.isDefined
+      scLogin.ident.isDefined
 
   }
 
@@ -30,5 +33,7 @@ object MScLoginS {
 
 
 final case class MScLoginS(
-                            circuit         : Option[LoginFormCircuit]          = None,
+                            ident               : Option[LoginFormCircuit]          = None,
+                            session             : MSessionS                         = MSessionS.empty,
+                            logout              : Option[MLogOutDia]                = None,
                           )

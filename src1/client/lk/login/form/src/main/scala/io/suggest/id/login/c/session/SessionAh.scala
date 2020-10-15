@@ -3,9 +3,9 @@ package io.suggest.id.login.c.session
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.id.IdentConst.CookieToken.KV_STORAGE_TOKEN_KEY
-import io.suggest.id.login.m.session.MLoginSessionS
+import io.suggest.id.login.m.session.MSessionS
 import io.suggest.kv.MKvStorage
-import io.suggest.lk.m.{LoginSessionRestore, LoginSessionSaved, LoginSessionSet}
+import io.suggest.lk.m.{SessionRestore, SessionSaved, SessionSet}
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.cookie.{HttpCookieUtil, MCookieState, MHttpCookie}
@@ -21,11 +21,14 @@ import scala.util.Try
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 31.08.2020 18:33
-  * Description: Контроллер логин-токена.
+  * Description: Контроллер JWT-токена сессии, который между клиентом и сервером передаётся через кукис.
+  *
+  * Кукис сессии обновляется не только при логине, но и просто с ходом времени,
+  * с CSRF-GET-запросами и при прочих ситуациях.
   */
-class LoginSessionAh[M](
-                         modelRW: ModelRW[M, MLoginSessionS]
-                       )
+class SessionAh[M](
+                    modelRW: ModelRW[M, MSessionS],
+                  )
   extends ActionHandler(modelRW)
   with Log
 { ah =>
@@ -42,16 +45,16 @@ class LoginSessionAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запустить выставление/сброс токена сессии.
-    case m: LoginSessionSet =>
+    case m: SessionSet =>
       val v0 = value
 
       val isStore = HttpCookieUtil.isOkOrDiscardCookie(
         m.cookie.parsed,
         receivedAt = Some( m.cookie.meta.receivedAt ),
       )
-      val isSaveNew = isStore contains true
+      val isSaveNew = isStore contains[Boolean] true
 
-      val pot1 = if (isStore contains false)
+      val pot1 = if (isStore contains[Boolean] false)
         Pot.empty[MCookieState]
       else
         v0.cookie ready m.cookie
@@ -63,7 +66,7 @@ class LoginSessionAh[M](
             value = m.cookie.toRawCookie,
           )
           MKvStorage.save( mkvs )
-          LoginSessionSaved( pot1 )
+          SessionSaved( pot1 )
         }
       }
         .orElse {
@@ -74,19 +77,19 @@ class LoginSessionAh[M](
                 pot1
               else
                 Pot.empty
-              LoginSessionSaved( pot3 )
+              SessionSaved( pot3 )
             }
           }
         }
 
-      val v2 = (MLoginSessionS.token set pot1.pending() )(v0)
+      val v2 = (MSessionS.token set pot1.pending() )(v0)
       ah.updatedSilentMaybeEffect( v2, fxOpt )
 
 
     // Сигнал о сохранении сессии логина в постоянное хранилище.
-    case m: LoginSessionSaved =>
+    case m: SessionSaved =>
       val v0 = value
-      val v2 = (MLoginSessionS.token set m.cookiePot)(v0)
+      val v2 = (MSessionS.token set m.cookiePot)(v0)
       // TODO Надо какой-то таймер организовать, наверное.
       //      Чтобы перевалидировать кукис через определённое время, возможно делаяя keepalive для обновления сессии.
       //      А пока - сервер проверит и порешит.
@@ -94,7 +97,7 @@ class LoginSessionAh[M](
 
 
     // Восстановить состояние токена из хранилища.
-    case LoginSessionRestore =>
+    case SessionRestore =>
       val v0 = value
 
       val fx = Effect.action {
@@ -164,10 +167,10 @@ class LoginSessionAh[M](
                 )
             }
         }
-        LoginSessionSaved( pot2 )
+        SessionSaved( pot2 )
       }
 
-      val v2 = MLoginSessionS.token.modify(_.pending())(v0)
+      val v2 = MSessionS.token.modify(_.pending())(v0)
       updated(v2, fx)
 
   }

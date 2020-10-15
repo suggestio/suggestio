@@ -1,7 +1,6 @@
 package io.suggest.sc.m.in
 
 import diode.FastEq
-import io.suggest.id.login.m.session.MLoginSessionS
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m.boot.MScBoot
 import io.suggest.sc.sc3.MSc3Conf
@@ -24,8 +23,7 @@ object MScInternals {
       (a.jsRouter ===* b.jsRouter) &&
       (a.boot ===* b.boot) &&
       (a.conf ===* b.conf) &&
-      (a.daemon ===* b.daemon) &&
-      (a.login ===* b.login)
+      (a.daemon ===* b.daemon)
     }
   }
 
@@ -36,7 +34,6 @@ object MScInternals {
   val jsRouter      = GenLens[MScInternals](_.jsRouter)
   val boot          = GenLens[MScInternals](_.boot)
   val daemon        = GenLens[MScInternals](_.daemon)
-  val login         = GenLens[MScInternals](_.login)
 
 
   implicit final class ScInternalsOpsExt( private val scInts: MScInternals ) extends AnyVal {
@@ -63,5 +60,4 @@ case class MScInternals(
                          jsRouter       : MJsRouterS          = MJsRouterS.empty,
                          boot           : MScBoot             = MScBoot.default,
                          daemon         : MScDaemon           = MScDaemon.empty,
-                         login          : MLoginSessionS      = MLoginSessionS.empty,
                        )

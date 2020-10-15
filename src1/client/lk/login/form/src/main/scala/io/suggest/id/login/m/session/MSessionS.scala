@@ -12,14 +12,13 @@ import io.suggest.ueq.JsUnivEqUtil._
   * Created: 31.08.2020 18:15
   * Description: Контейнер данных сессии.
   */
-object MLoginSessionS {
+object MSessionS {
 
   def empty = apply()
 
-  @inline implicit def univEq: UnivEq[MLoginSessionS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSessionS] = UnivEq.derive
 
-  def token = GenLens[MLoginSessionS]( _.cookie )
-  def logout = GenLens[MLoginSessionS]( _.logout )
+  def token = GenLens[MSessionS]( _.cookie )
 
 }
 
@@ -28,9 +27,7 @@ object MLoginSessionS {
   *
   * @param cookie Cookie, пришедший с сервера.
   *               pending/fail-состояния связаны (в первую очередь) с сохранением токена в какое-то хранилище на девайсе.
-  * @param logout Состояние диалога выхода из системы.
   */
-final case class MLoginSessionS(
-                                 cookie           : Pot[MCookieState]               = Pot.empty,
-                                 logout           : Option[MLogOutDia]              = None,
-                               )
+final case class MSessionS(
+                            cookie           : Pot[MCookieState]               = Pot.empty,
+                          )

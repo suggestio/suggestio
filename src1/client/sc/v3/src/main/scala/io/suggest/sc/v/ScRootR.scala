@@ -161,7 +161,7 @@ class ScRootR (
         scSnacksR.component( mrootProxy ),
 
         // Диалог logout:
-        mrootProxy.wrap(_.internals.login.logout)( logOutDiaR.component.apply ),
+        mrootProxy.wrap( _.dialogs.login.logout )( logOutDiaR.component.apply ),
 
       )
 

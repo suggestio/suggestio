@@ -86,7 +86,7 @@ object TailAh {
       dlAppOpen    = v0.index.menu.dlApp.opened,
       settingsOpen = v0.dialogs.settings.opened,
       login = for {
-        loginCircuit <- v0.dialogs.login.circuit
+        loginCircuit <- v0.dialogs.login.ident
       } yield {
         loginCircuit.currentPage()
       },

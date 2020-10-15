@@ -31,7 +31,7 @@ final class ScLoginR(
       s.isVisibleSomeC { isVisibleSomeProxy =>
         val isVisible = isVisibleSomeProxy.value.value
         ReactCommonUtil.maybeEl( isVisible ) {
-          p.value.circuit.whenDefinedEl { loginFormCircuit =>
+          p.value.ident.whenDefinedEl { loginFormCircuit =>
             loginFormCircuit.wrap( identity(_) )( loginFormR.component.apply )
           }
         }

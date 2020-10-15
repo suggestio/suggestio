@@ -310,15 +310,36 @@ class TreeAh[M](
         resp <- m.tryResp.toOption
         newChild = MNodeState.respTreeToIdsTree( Tree.Leaf(resp) )
       } yield {
+        val mns2 = v0
+          .nodesMap
+          .get( resp.id )
+          .fold [MNodeState] {
+            MNodeState(
+              infoPot = Pot.empty.ready( resp ),
+              role    = MTreeRoles.Normal,
+            )
+          } { mns0 =>
+            mns0.copy(
+              infoPot = mns0.infoPot.ready( resp ),
+              role    = MTreeRoles.Normal,
+            )
+          }
+
         // Залить обновления в дерево, а CreateNodeAh удалит addState для текущего rcvrKey.
-        val v2 = MTree.setNodes {
-          loc0
-            .insertDownLast( newChild )
-            .toTree
-        }(v0)
+        val v2 = (
+          MTree.setNodes {
+            loc0
+              .insertDownLast( newChild )
+              .toTree
+          } andThen
+          MTree.nodesMap.modify(_ + (resp.id -> mns2))
+        )(v0)
         updated(v2)
       })
-        .getOrElse( noChange )
+        .getOrElse {
+          logger.warn( ErrorMsgs.JD_TREE_UNEXPECTED_CHILDREN, msg = m )
+          noChange
+        }
 
 
     // Сигнал о завершении запроса к серверу по поводу удаления узла.

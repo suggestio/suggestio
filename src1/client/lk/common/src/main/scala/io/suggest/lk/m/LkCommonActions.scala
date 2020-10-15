@@ -175,10 +175,10 @@ case class CsrfTokenResp(tstampMs: Long, tryResp: Try[MCsrfToken], reason: CsrfT
 
 
 
-sealed trait ILoginSessionAction extends ILkCommonAction
+sealed trait ISessionAction extends ILkCommonAction
 /** Команда к выставлению или удаление токена сессии. */
-case class LoginSessionSet( cookie: MCookieState ) extends ILoginSessionAction
+case class SessionSet(cookie: MCookieState ) extends ISessionAction
 /** Результат сохранения токена. */
-case class LoginSessionSaved( cookiePot: Pot[MCookieState] ) extends ILoginSessionAction
+case class SessionSaved(cookiePot: Pot[MCookieState] ) extends ISessionAction
 /** Восстановление состояния токена в память. */
-case object LoginSessionRestore extends ILoginSessionAction
+case object SessionRestore extends ISessionAction

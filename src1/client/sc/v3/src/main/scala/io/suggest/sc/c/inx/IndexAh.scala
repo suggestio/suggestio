@@ -367,7 +367,6 @@ class IndexRah
         }
       }
     ) {
-      println(s"same index:\n ${i0.respOpt.orNull}\n ${resp.nodes.headOption.map(_.props).orNull}")
       // Индекс, видимо, не изменился - не перезагружать вид:
       var i1 = i0
 
@@ -402,7 +401,6 @@ class IndexRah
       ActionResult( Some(v2), fxAcc.mergeEffects )
 
     } else if (isMultiNodeResp || ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
-      println("multi-index")
       // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
       // Вместо переключения узла, надо спросить юзера, можно ли переходить полученный узел:
       val switchAskState = MInxSwitchAskS(
@@ -429,7 +427,6 @@ class IndexRah
       ActionResult.ModelUpdate(v2)
 
     } else {
-      println("index apply")
       // Индекс изменился, значит заливаем новый индекс в состояние:
       val actRes1 = IndexAh.indexUpdated(
         i0        = v0.index,

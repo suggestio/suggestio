@@ -2,16 +2,13 @@ package io.suggest.id.login.c.session
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.id.IdentConst
 import io.suggest.id.login.c.IIdentApi
 import io.suggest.id.login.m.{LoginFormDiConfig, LogoutConfirm, LogoutStep}
 import io.suggest.id.login.m.session.MLogOutDia
-import io.suggest.kv.MKvStorage
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.DoNothing
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
@@ -30,7 +27,7 @@ class LogOutAh[M](
                  )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -50,18 +47,11 @@ class LogOutAh[M](
         }
 
       } else if (m.pot.isReady) {
-        // Всё ок, разлогиниваемся, стирая токен из хранилища.
+        // Всё ок: разлогиненная сессия получена с сервера, и будет записана отдельным вызовом. Просто скрыть logout-диалог.
         // TODO Эффект удаления токена только для cordova, в браузере - не нужно.
-        var fxAcc: Effect = Effect.action {
-          MKvStorage.delete( IdentConst.CookieToken.KV_STORAGE_TOKEN_KEY )
-          DoNothing
-        }
-
-        // Надо совершить какие-то действия (перезагрузить страницу, например):
-        for (fx <- diConfig.onLogOut())
-          fxAcc = fxAcc >> fx
-
-        updated( None, fxAcc )
+        // Надо совершить какие-то действия (перезагрузить страницу, например), когда требуется при компиляции:
+        val fxOpt = diConfig.onLogOut()
+        ah.updatedMaybeEffect( None, fxOpt )
 
       } else if (m.pot.isFailed) {
         // Тут ошибка запроса к серверу.
@@ -83,16 +73,16 @@ class LogOutAh[M](
         v0 <- value
       } yield {
         if (m.isLogout) {
+          val v2 = MLogOutDia.req.modify(_.pending())(v0)
           // Запустить logout-запрос на сервер:
           val fx = Effect {
             identApi
               .logout()
               .transform { tryResp =>
-                val action = LogoutStep( Pot.empty.withTry(tryResp) )
+                val action = LogoutStep( v2.req.withTry(tryResp) )
                 Success( action )
               }
           }
-          val v2 = MLogOutDia.req.modify(_.pending())(v0)
           updated( Some(v2), fx )
 
         } else {

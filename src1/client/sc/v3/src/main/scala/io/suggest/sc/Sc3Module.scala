@@ -13,7 +13,7 @@ import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
 import io.suggest.lk.IPlatformComponentsModule
 import io.suggest.lk.c.CsrfTokenApi
-import io.suggest.lk.m.LoginSessionSet
+import io.suggest.lk.m.SessionSet
 import io.suggest.lk.nodes.form.LkNodesModuleBase
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
@@ -214,7 +214,7 @@ object Sc3Module { outer =>
           sc3Circuit.loginSessionRW.value.cookie.toOption
         },
         sessionCookieSet = Option.when(isCordova) { sessionCookie =>
-          sc3Circuit.dispatch( LoginSessionSet( sessionCookie ) )
+          sc3Circuit.dispatch( SessionSet( sessionCookie ) )
         },
         // Дефолтовый домен кукисов сессии, т.к. сервер обычно не шлёт домена (чтобы не цеплялось под-доменов).
         cookieDomainDflt = Option.when(isCordova)( ScUniApi.scDomain ),
@@ -273,9 +273,8 @@ object Sc3Module { outer =>
       }
 
       override def onLogOut(): Option[Effect] = {
-        //val csrfFx = CsrfTokenEnsure( force = true ).toEffectPure
-        //Some( csrfFx )
-        None
+        val reGetIndexFx = ReGetIndex().toEffectPure
+        Some( reGetIndexFx )
       }
 
     }
@@ -292,7 +291,7 @@ object Sc3Module { outer =>
       React.Context( loginRouterCtl )
 
     override lazy val loginFormCssCtx: React.Context[LoginFormCss] =
-      LoginFormModuleBase.circuit2loginCssRCtx( outer.sc3Circuit.scLoginRW.value.circuit )
+      LoginFormModuleBase.circuit2loginCssRCtx( outer.sc3Circuit.scLoginRW.value.ident )
 
   }
   def getLoginFormCircuit = () => ScLoginFormModule.loginFormCircuit
