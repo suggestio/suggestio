@@ -59,7 +59,9 @@ class LogOutDiaR(
         React.Fragment(
           // Заголовок
           platformComponents.diaTitle( Nil )(
-            logoutAccountMsg,
+            platformComponents.diaTitleText(
+              logoutAccountMsg,
+            ),
           ),
 
           // Содержимое диалога: вопрос-подтверждение выхода.

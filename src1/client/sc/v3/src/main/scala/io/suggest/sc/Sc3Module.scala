@@ -56,7 +56,12 @@ import scala.util.Try
   * Description: DI-модуль линковки самого верхнего уровня sc3.
   * Все аргументы-зависимости объявлены и линкуются внутри тела модуля.
   */
-object Sc3Module { outer =>
+object Sc3Module {
+  /** Для возможности доступа из статических API тут есть переменная, где можно сохранить текущий инстанс. */
+  var ref: Sc3Module = null
+}
+
+class Sc3Module { outer =>
 
   import io.suggest.jd.render.JdRenderModule._
   import io.suggest.ReactCommonModule._
@@ -178,7 +183,7 @@ object Sc3Module { outer =>
 
   object ScHttpConfigImpl {
     /** Сборка HTTP-конфига для всей выдачи, без CSRF. */
-    def mkRootHttpClientConfigF = { () =>
+    val mkRootHttpClientConfigF = { () =>
       val isCordova = sc3Circuit.platformRW.value.isCordova
 
       // Замена стандартной, ограниченной в хидерах, fetch на нативный http-client.
@@ -308,9 +313,7 @@ object Sc3Module { outer =>
     with ScPlatformComponents
   {
     override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfigImpl {
-      override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit(
-        userIsLoggedIn = sc3Circuit.loggedInRO.value,
-      )
+      override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit( sc3Circuit )
       override def scRouterCtlOpt = Some( outer.sc3SpaRouter.state.routerCtl )
       override def closeForm = Some( Callback( outer.sc3Circuit.dispatch( ScNodesShowHide(false) ) ) )
       /** Ссылки в ЛК необходимо показывать только в браузере, но не в Cordova,

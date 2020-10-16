@@ -50,7 +50,9 @@ class ScSettingsDiaR(
 
         // Заголовок диалога.
         platformComponents.diaTitle(Nil)(
-          crCtxProv.message( MsgCodes.`Settings` ),
+          platformComponents.diaTitleText(
+            crCtxProv.message( MsgCodes.`Settings` ),
+          ),
         ),
 
         // Сами настройки.

@@ -24,7 +24,7 @@ import japgolly.scalajs.react._
   * Description: wrap-компонент для первого запуска система.
   */
 class WzFirstR(
-                scComponents          : PlatformComponents,
+                platformComponents          : PlatformComponents,
                 crCtxP                : React.Context[MCommonReactCtx],
                 platformCssP          : React.Context[PlatformCssStatic],
               ) {
@@ -82,18 +82,20 @@ class WzFirstR(
                       Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
                   }
 
-                  scComponents.diaTitle(props.css.header.htmlClass :: Nil)(
-                    title,
-                    platformCssP.consume { platformCss =>
-                      icon {
-                        val css = new MuiSvgIconClasses {
-                          override val root = platformCss.Dialogs.titleIcon.htmlClass
-                        }
-                        new MuiSvgIconProps {
-                          override val classes = css
-                        }
-                      }()
-                    },
+                  platformComponents.diaTitle(props.css.header.htmlClass :: Nil)(
+                    platformComponents.diaTitleText(
+                      title,
+                      platformCssP.consume { platformCss =>
+                        icon {
+                          val css = new MuiSvgIconClasses {
+                            override val root = platformCss.Dialogs.titleRightIcon.htmlClass
+                          }
+                          new MuiSvgIconProps {
+                            override val classes = css
+                          }
+                        }()
+                      },
+                    ),
                   )
                 },
 
@@ -238,7 +240,7 @@ class WzFirstR(
 
                   platformCssP.consume { platformCss =>
                     MuiDialogActions {
-                      scComponents.diaActionsProps( props.css.footer.htmlClass :: Nil )(platformCss)
+                      platformComponents.diaActionsProps( props.css.footer.htmlClass :: Nil )(platformCss)
                     } ( btns: _* )
                   }
                 }

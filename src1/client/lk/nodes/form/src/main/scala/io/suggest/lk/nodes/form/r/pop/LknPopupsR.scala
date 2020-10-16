@@ -33,13 +33,7 @@ class LknPopupsR(
         nameEditDiaR.component( propsProxy ),
 
         // Рендер попапа создания нового узла:
-        propsProxy.wrap { mroot =>
-          createNodeR.PropsVal(
-            create = mroot.popups.createNodeS,
-            tree   = mroot.tree.tree.idsTree,
-            nodesMap = mroot.tree.tree.nodesMap,
-          )
-        }( createNodeR.component.apply ),
+        createNodeR.component(propsProxy),
 
         // Рендер попапа редактирования тарифа текущего узла.
         popupsProxy.wrap( _.editTfDailyS )( editTfDailyR.component.apply ),

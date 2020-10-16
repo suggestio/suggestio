@@ -9,8 +9,6 @@ import japgolly.scalajs.react._
   * Created: 06.09.18 21:23
   */
 trait MuiPropsBase extends js.Object {
-  /** Unit function fired when the list item is clicked.
-     @param {object} event Click event targeting the list item. */
   val onClick:                     js.UndefOr[js.Function1[ReactEvent, Unit]]                     = js.undefined
   val onKeyPress:                  js.UndefOr[js.Function1[ReactKeyboardEventFromInput, Unit]]    = js.undefined
   val onMouseDown:                 js.UndefOr[js.Function1[ReactMouseEventFromInput, Unit]]       = js.undefined

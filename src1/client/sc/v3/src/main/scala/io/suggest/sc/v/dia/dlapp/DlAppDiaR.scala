@@ -39,7 +39,7 @@ import scala.scalajs.js.annotation.JSName
   */
 class DlAppDiaR(
                  osFamiliesR        : OsFamiliesR,
-                 scComponents       : PlatformComponents,
+                 platformComponents : PlatformComponents,
                  crCtxP             : React.Context[MCommonReactCtx],
                  platformCssP       : React.Context[PlatformCssStatic],
                ) {
@@ -181,8 +181,10 @@ class DlAppDiaR(
 
         React.Fragment(
 
-          scComponents.diaTitle( Nil )(
-            crCtx.messages( MsgCodes.`Download.application` ),
+          platformComponents.diaTitle( Nil )(
+            platformComponents.diaTitleText(
+              crCtx.messages( MsgCodes.`Download.application` ),
+            ),
             // TODO Кнопка сокрытия?
           ),
 
@@ -441,7 +443,7 @@ class DlAppDiaR(
 
           platformCssP.consume { platformCss =>
             MuiDialogActions {
-              scComponents.diaActionsProps()(platformCss)
+              platformComponents.diaActionsProps()(platformCss)
             } (
               MuiButton(
                 new MuiButtonProps {

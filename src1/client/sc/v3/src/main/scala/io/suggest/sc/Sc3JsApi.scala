@@ -18,8 +18,9 @@ import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 @JSExportTopLevel("___Sio___Sc___")
 object Sc3JsApi {
 
-  private def _d( action: DAction ) =
-    Sc3Module.sc3Circuit.dispatch( action )
+  private def _d( action: => DAction ) =
+    if (scalajs.LinkingInfo.developmentMode)
+      Sc3Module.ref.sc3Circuit.dispatch( action )
 
   @JSExport
   def unsafeOffsetAdd(incDecBy: Int): Unit =
@@ -30,14 +31,13 @@ object Sc3JsApi {
     _d( UnIndex )
 
   @JSExport
-  def reIndex(): Unit = {
-    val a = GetIndex(MScSwitchCtx(
+  def reIndex(): Unit = _d {
+    GetIndex(MScSwitchCtx(
       indexQsArgs = MScIndexArgs(
         geoIntoRcvr = true,
       ),
       showWelcome = false,
     ))
-    _d( a )
   }
 
   @JSExport

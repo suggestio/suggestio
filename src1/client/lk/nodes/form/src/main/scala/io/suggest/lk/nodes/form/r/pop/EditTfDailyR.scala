@@ -143,7 +143,9 @@ class EditTfDailyR(
 
         // Заголовок окна:
         platformComponents.diaTitle( Nil )(
-          crCtxP.message( MsgCodes.`Adv.tariff` ),
+          platformComponents.diaTitleText(
+            crCtxP.message( MsgCodes.`Adv.tariff` ),
+          ),
         ),
 
         // Содержимое диалога:

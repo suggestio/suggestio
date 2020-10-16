@@ -16,7 +16,7 @@ import play.api.libs.json.Json
   * Created: 14.11.16 17:40
   * Description: Поддержка логгирования на сервер в формате RemoteError.
   */
-final class RemoteLogAppender
+final class RemoteLogAppender( httpConfig: () => HttpClientConfig )
   extends ILogAppender
 {
 
@@ -37,6 +37,7 @@ final class RemoteLogAppender
         body = Json
           .toJson( logReport )
           .toString(),
+        config = httpConfig(),
       ),
     )
 
@@ -47,7 +48,12 @@ final class RemoteLogAppender
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {
       //val n = "\n"
-      println( ErrorMsgs.RME_LOGGER_REQ_FAIL + "\n " + logMsgs.mkString("\n ") + "\n" + ex /*+ " " + ex.getStackTrace.mkString(n,n,n)*/ )
+      var msg = ErrorMsgs.RME_LOGGER_REQ_FAIL
+
+      if (scalajs.LinkingInfo.developmentMode)
+        msg = msg + "\n " + logMsgs.mkString("\n ") + "\n" + ex /*+ " " + ex.getStackTrace.mkString(n,n,n)*/
+
+      println( msg )
     }
   }
 

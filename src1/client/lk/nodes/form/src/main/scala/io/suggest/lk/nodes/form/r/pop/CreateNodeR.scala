@@ -2,7 +2,6 @@ package io.suggest.lk.nodes.form.r.pop
 
 import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
-import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ble.BleConstants.Beacon.EddyStone
 import io.suggest.common.empty.OptionUtil
@@ -27,11 +26,8 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import monocle.Lens
-import scalaz.Tree
 
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -46,15 +42,16 @@ class CreateNodeR(
                    crCtxP                 : React.Context[MCommonReactCtx],
                  ) {
 
-  case class PropsVal(
-                       create     : Option[MCreateNodeS],
-                       tree       : Pot[Tree[String]],
-                       nodesMap   : Map[String, MNodeState],
-                     ) {
-    def createParentPath = create.flatMap(_.parentPath)
+  case class TreeParentPath(
+                             tree: MTree,
+                             parentPath: Option[NodePath_t],
+                           )
+  implicit val tppFeq = FastEqUtil[TreeParentPath] { (a, b) =>
+    (a.tree ===* b.tree) &&
+    (a.parentPath ===* b.parentPath)
   }
 
-  type Props_t = PropsVal
+  type Props_t = MLkNodesRoot
   type Props = ModelProxy[Props_t]
 
   case class State(
@@ -64,7 +61,7 @@ class CreateNodeR(
                     saveBtnDisabledSomeC        : ReactConnectProxy[Some[Boolean]],
                     isPendingSomeC              : ReactConnectProxy[Some[Boolean]],
                     exceptionOptC               : ReactConnectProxy[Option[Throwable]],
-                    propsTreeParentPathC        : ReactConnectProxy[Props_t],
+                    propsTreeParentPathC        : ReactConnectProxy[TreeParentPath],
                   )
 
   private def __mkTextField(
@@ -198,7 +195,9 @@ class CreateNodeR(
         val diaChs = List[VdomElement](
           // Заголовок окна:
           platformComponents.diaTitle( Nil )(
-            crCtx.messages( MsgCodes.`New.node` ),
+            platformComponents.diaTitleText(
+              crCtx.messages( MsgCodes.`New.node` ),
+            ),
           ),
 
           // Содержимое диалога:
@@ -230,8 +229,7 @@ class CreateNodeR(
                   val pathDelimStr = _PARENT_PATH_DELIM.toString
 
                   val props = propsProxy.value
-                  val selectOptions = props.tree
-                    .toOption
+                  val selectOptions = props.tree.idsTreeOpt
                     .flatMap { tree =>
                       // Подобрать подходящие узлы:
                       val nodesToRender = tree
@@ -244,7 +242,7 @@ class CreateNodeR(
                         }
                         .flatten
                         .flatMap { case (treeId, v) =>
-                          props.nodesMap
+                          props.tree.nodesMap
                             .get( treeId )
                             .map( _ -> v )
                             .toEphemeralStream
@@ -289,7 +287,7 @@ class CreateNodeR(
 
                   // Селект родительского узла:
                   val _parentNodeMsg = crCtx.messages( MsgCodes.`Parent.node` ).rawNode
-                  val parentPathOpt = props.createParentPath
+                  val parentPathOpt = props.parentPath
                   val _nodePathValueStr = parentPathOpt
                     .fold {
                       if (isUseNativeSelect)
@@ -413,42 +411,46 @@ class CreateNodeR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
+    .initialStateFromProps { rootProxy =>
+      val propsOptProxy = rootProxy.zoom( _.popups.createNodeS )
+
       // Сборка коннекшенов до полей:
       val mtfFeq = OptFastEq.Wrapped(FastEq.AnyRefEq)
       def __mkMtfConn(lens: Lens[MCreateNodeS, MTextFieldS]) =
-        propsProxy.connect(_.create.map(lens.get))( mtfFeq )
+        propsOptProxy.connect(_.map(lens.get))( mtfFeq )
 
       // Сборка состояния:
       State(
 
-        openedSomeC = propsProxy.connect { props =>
-          OptionUtil.SomeBool( props.create.isDefined )
+        openedSomeC = propsOptProxy.connect { propsOpt =>
+          OptionUtil.SomeBool( propsOpt.isDefined )
         },
 
         nameOptC = __mkMtfConn( MCreateNodeS.name ),
 
         idOptC = __mkMtfConn( MCreateNodeS.id ),
 
-        saveBtnDisabledSomeC = propsProxy.connect { propsOpt =>
-          val saveDisabled = propsOpt.create.fold(true) { props =>
+        saveBtnDisabledSomeC = propsOptProxy.connect { propsOpt =>
+          val saveDisabled = propsOpt.fold(true) { props =>
             !props.isValid ||
             props.saving.isPending
           }
           OptionUtil.SomeBool( saveDisabled )
         },
 
-        isPendingSomeC = propsProxy.connect { propsOpt =>
-          val isPending = propsOpt.create.exists(_.saving.isPending)
+        isPendingSomeC = propsOptProxy.connect { propsOpt =>
+          val isPending = propsOpt.exists(_.saving.isPending)
           OptionUtil.SomeBool( isPending )
         },
 
-        exceptionOptC = propsProxy.connect( _.create.flatMap(_.saving.exceptionOption) )( OptFastEq.Wrapped(FastEq.AnyRefEq) ),
+        exceptionOptC = propsOptProxy.connect( _.flatMap(_.saving.exceptionOption) )( OptFastEq.Wrapped(FastEq.AnyRefEq) ),
 
-        propsTreeParentPathC = propsProxy.connect(identity)( FastEqUtil[Props_t] { (a, b) =>
-          (a.createParentPath ===* b.createParentPath) &&
-          (a.tree ===* b.tree)
-        }),
+        propsTreeParentPathC = rootProxy.connect { mroot =>
+          TreeParentPath(
+            tree = mroot.tree.tree,
+            parentPath = mroot.popups.createNodeS.flatMap(_.parentPath),
+          )
+        }(tppFeq),
       )
     }
     .renderBackend[Backend]

@@ -321,7 +321,7 @@ class JsMessagesUtil @Inject() (
       MC.`Nodes.management` ::
       MC.`To.control.beacons.need.login` ::
       MC.`Mode` ::
-      MC.`Current.ad.adv.management` ::
+      MC.`Ad.adv.manage` ::
       Nil
 
     (

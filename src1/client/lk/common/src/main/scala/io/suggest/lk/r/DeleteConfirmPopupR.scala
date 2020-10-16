@@ -60,7 +60,9 @@ class DeleteConfirmPopupR(
       val diaChs = List[VdomElement](
         // Заголовок.
         platformComponents.diaTitle( Nil )(
-          crCtxP.message( MsgCodes.`Are.you.sure` )
+          platformComponents.diaTitleText(
+            crCtxP.message( MsgCodes.`Are.you.sure` ),
+          ),
         ),
 
         // Прогресс-бар

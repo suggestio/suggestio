@@ -29,6 +29,7 @@ import util.stat.StatUtil
 import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import views.html.static._
 import japgolly.univeq._
+import models.req.MReq
 import play.api.http.{HeaderNames, HttpEntity, HttpProtocol}
 import play.filters.csrf.CSRF
 import play.twirl.api.Xml
@@ -542,13 +543,14 @@ final class Static @Inject() (
     * @param path Путь, к которому запрошены опшыны.
     * @return
     */
-  def corsPreflight(path: String) = Action.async { implicit request =>
+  def corsPreflight(path: String) = maybeAuth().async { implicit request =>
     val isEnabled = corsUtil.CORS_PREFLIGHT_ALLOWED
 
     if (isEnabled && request.headers.get( HeaderNames.ACCESS_CONTROL_REQUEST_METHOD ).nonEmpty) {
       // Кэшировать ответ на клиенте для ускорения работы системы. TODO Увеличить значение на неск.порядков:
       val cache = CACHE_CONTROL -> "public, max-age=300"
       val headers2 = cache :: corsUtil.PREFLIGHT_CORS_HEADERS
+      LOGGER.trace( s"corsPreflight($path): 200 OK to ${request.remoteClientAddress}\n UA: ${request.headers.get(USER_AGENT)}\n X-Requested-With: ${request.headers.get(X_REQUESTED_WITH)}" )
       Ok.withHeaders( headers2 : _* )
 
     } else {

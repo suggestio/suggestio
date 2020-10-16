@@ -1,8 +1,9 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.nodes.form.m.{MLkNodesMode, MLkNodesModes}
@@ -14,7 +15,8 @@ import io.suggest.sc.m.{MScRoot, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^.{VdomNode, _}
+import japgolly.scalajs.react.vdom.html_<^._
+import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
@@ -85,44 +87,59 @@ class ScNodesR(
 
             // Заголовок
             platformComponents.diaTitle(Nil)(
-              s.haveFocusedAdAdminSomeC { haveFocusedAdAdminSomeProxy =>
-                val haveFocusedAdmin = haveFocusedAdAdminSomeProxy.value.value
-                if (!haveFocusedAdmin) {
-                  // Нет сфокусированной карточки: просто рендерить обычный заголовок.
-                  React.Fragment(
-                    nodesManagementMsg
-                  )
-
-                } else {
-                  // Рендерим селект, где можно выбрать или управление узлами, или карточку.
-                  // Пункт селекта обычного режима работы (управление узлами)
-                  val nodesManageItem = __mkSelectOption( MLkNodesModes.NodesManage, nodesManagementMsg )
-
-                  // Пункт селекта для управления размещением карточки в узлах:
-                  // TODO Отрендерить внутри миниатюру главного блока текущей карточки, если ненативный select.
-                  val advInNodesItem = __mkSelectOption(
-                    MLkNodesModes.AdvInNodes,
-                    crCtx.messages( MsgCodes.`Current.ad.adv.management` )
-                  )
-
-                  // Непосредственно селект.
-                  s.nodesModeC { nodesModeProxy =>
-                    MuiTextField(
-                      new MuiTextFieldProps {
-                        override val select = true
-                        override val label = modeMsg.rawNode
-                        override val value = nodesModeProxy.value.value
-                        override val fullWidth = true
-                        override val onChange = _onModeChange
-                        override val SelectProps = modeSelectProps
-                      }
-                    )(
-                      nodesManageItem,
-                      advInNodesItem,
-                    )
+              // Стрелочка "назад".
+              <.div(
+                platCss.Dialogs.backBtn,
+                MuiIconButton {
+                  new MuiIconButtonProps {
+                    override val onClick = _onCloseClick
                   }
-                }
-              },
+                } (
+                  platformComponents.arrowBack()(),
+                )
+              ),
+
+              // Текстовый заголовок: статически или в виде селекта режима, когда доступно более одного режима формы.
+              platformComponents.diaTitleText(
+                s.haveFocusedAdAdminSomeC { haveFocusedAdAdminSomeProxy =>
+                  val haveFocusedAdmin = haveFocusedAdAdminSomeProxy.value.value
+                  if (!haveFocusedAdmin) {
+                    // Нет сфокусированной карточки: просто рендерить обычный заголовок.
+                    React.Fragment(
+                      nodesManagementMsg
+                    )
+
+                  } else {
+                    // Рендерим селект, где можно выбрать или управление узлами, или карточку.
+                    // Пункт селекта обычного режима работы (управление узлами)
+                    val nodesManageItem = __mkSelectOption( MLkNodesModes.NodesManage, nodesManagementMsg )
+
+                    // Пункт селекта для управления размещением карточки в узлах:
+                    // TODO Отрендерить внутри миниатюру главного блока текущей карточки, если ненативный select.
+                    val advInNodesItem = __mkSelectOption(
+                      MLkNodesModes.AdvInNodes,
+                      crCtx.messages( MsgCodes.`Ad.adv.manage` )
+                    )
+
+                    // Непосредственно селект.
+                    s.nodesModeC { nodesModeProxy =>
+                      MuiTextField(
+                        new MuiTextFieldProps {
+                          override val select = true
+                          override val label = modeMsg.rawNode
+                          override val value = nodesModeProxy.value.value
+                          override val fullWidth = true
+                          override val onChange = _onModeChange
+                          override val SelectProps = modeSelectProps
+                        }
+                      )(
+                        nodesManageItem,
+                        advInNodesItem,
+                      )
+                    }
+                  }
+                },
+              ),
             ),
 
             // Содержимое диалога.
@@ -140,6 +157,7 @@ class ScNodesR(
                 new MuiButtonProps {
                   override val size = MuiButtonSizes.large
                   override val onClick = _onCloseClick
+                  override val fullWidth = true
                 }
               )(
                 crCtx.messages( MsgCodes.`Close` )
@@ -152,7 +170,12 @@ class ScNodesR(
           scCssP.consume { scCss =>
             s.isDiaFullScreenSomeC { isDiaFullScreenSomeProxy =>
               val _isFullScreen = isDiaFullScreenSomeProxy.value.value
-              val _rootCssU = JsOptionUtil.maybeDefined( _isFullScreen )( scCss.Header.header.htmlClass )
+              val _rootCssU = JsOptionUtil.maybeDefined( _isFullScreen )(
+                Css.flat(
+                  scCss.Header.header.htmlClass,
+                  scCss.Dialogs.unsafeBottom.htmlClass,
+                )
+              )
               MuiDialog {
                 val diaCss = new MuiDialogClasses {
                   override val paper = platCss.Dialogs.paper.htmlClass

@@ -1,10 +1,11 @@
 package io.suggest.lk.r.plat
 
-import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiDialogActionsClasses, MuiDialogActionsProps, MuiDialogTitle, MuiDialogTitleClasses, MuiDialogTitleProps, MuiSwitch, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import com.mui.treasury.styles.switch
 import io.suggest.css.Css
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
@@ -49,18 +50,24 @@ class PlatformComponents(
           override val classes = diaTitleCss
           override val disableTypography = true
         }
-      } (
+      } ( children )
+    }
+    .build
+
+
+  lazy val diaTitleText = ScalaComponent
+    .builder[Unit]( "ScDiaTitleText" )
+    .stateless
+    .render_C { (children) =>
+      val platCss = getPlatformCss()
+
+      <.div(
+        platCss.Dialogs.titleText,
         MuiTypoGraphy {
-          val mtgCss = new MuiTypoGraphyClasses {
-            override val root = platCss.Dialogs.title.htmlClass
-          }
           new MuiTypoGraphyProps {
             override val variant = MuiTypoGraphyVariants.h6
-            override val classes = mtgCss
           }
-        } (
-          children
-        )
+        } ( children )
       )
     }
     .build
@@ -91,5 +98,15 @@ class PlatformComponents(
     */
   def useComplexNativeSelect(): Boolean =
     getPlatformCss().isRenderIos
+
+
+  def arrowBack = {
+    val I = Mui.SvgIcons
+    if (getPlatformCss().isRenderIos) {
+      I.ArrowBackIos
+    } else {
+      I.ArrowBack
+    }
+  }
 
 }

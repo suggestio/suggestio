@@ -183,7 +183,8 @@ final case class MLogMsg(
         .append( s )
 
     for (msg <- message)
-      sb.append("## ").append( msg )
+      sb.append("## ")
+        .append( StringUtil.strLimitLen(msg, 512) )
         .append( s )
 
     for (u <- url)

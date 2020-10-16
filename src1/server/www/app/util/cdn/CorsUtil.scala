@@ -45,7 +45,7 @@ final class CorsUtil @Inject() (
       .fold("*") { _.mkString(", ") }
   }
 
-  def allowHeaders = {
+  def allowHeaders: Option[String] = {
     val hdrs0 = Set.empty + CONTENT_TYPE + ACCEPT
     val v = configuration.getOptional[Seq[String]]("cors.allow.headers")
       .fold( hdrs0 ) { hdrs0 ++ _ }

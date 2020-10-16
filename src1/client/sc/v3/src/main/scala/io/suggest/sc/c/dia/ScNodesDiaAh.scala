@@ -11,7 +11,6 @@ import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.Sc3Circuit
-import io.suggest.sc.Sc3Module.sc3Circuit
 import io.suggest.sc.m.{ScNodesBcnrSubscribeStatus, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.m.dia.MScNodes
 import io.suggest.sjs.dom2.DomQuick
@@ -212,7 +211,7 @@ class ScNodesDiaAh[M](
 
 object ScNodesDiaAh {
 
-  def scNodesCircuitInit(userIsLoggedIn: Boolean): ActionResult[MLkNodesRoot] = {
+  def scNodesCircuitInit(sc3Circuit: Sc3Circuit): ActionResult[MLkNodesRoot] = {
     // Минимальное начальное состояние:
     val lknRoot = MLkNodesRoot(
       conf = MLknConf(
@@ -221,7 +220,9 @@ object ScNodesDiaAh {
       ),
       tree = MTreeOuter(
         // Для loggedIn-юзера сразу ставим pending, чтобы была крутилка - потом будет подгрузка узлов.
-        tree = MTree.emptyNodesTree( isPending = userIsLoggedIn ),
+        tree = MTree.emptyNodesTree(
+          isPending = sc3Circuit.loggedInRO.value,
+        ),
       ),
     )
 

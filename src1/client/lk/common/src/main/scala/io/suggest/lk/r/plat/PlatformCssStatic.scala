@@ -22,7 +22,7 @@ object PlatformCssStatic {
 
 
 final case class PlatformCssStatic(
-                                    isRenderIos: Boolean,
+                                    val isRenderIos: Boolean,
                                   )
   extends StyleSheet.Inline
 {
@@ -33,18 +33,31 @@ final case class PlatformCssStatic(
   object Dialogs {
 
     val title = {
-      if (isRenderIos)
-        style(
-          fontWeight.bolder.important,
-          justifyContent.center,
-          display.flex,
-        )
-      else
-        style()
+      style(
+        display.flex,
+        alignItems.center,
+        alignContent.center,
+        justifyContent.flexStart,
+      )
     }
 
 
-    val titleIcon = {
+    val titleText = {
+      if (isRenderIos) {
+        style(
+          //justifyContent.center,
+          flexGrow( 20 ),
+          fontWeight.bolder.important,
+          display.flex,
+          justifyContent.center,
+        )
+      } else {
+        style()
+      }
+    }
+
+
+    val titleRightIcon = {
       if (isRenderIos) {
         style(
           position.absolute,
@@ -90,6 +103,21 @@ final case class PlatformCssStatic(
         )
       } else {
         style()
+      }
+    }
+
+
+    val backBtn = {
+      if (isRenderIos) {
+        style(
+          //marginTop( -6.px ),
+        )
+      } else {
+        style(
+          //marginTop( -2.px ),
+          marginLeft( -20.px ),
+          paddingRight( 20.px ),
+        )
       }
     }
 

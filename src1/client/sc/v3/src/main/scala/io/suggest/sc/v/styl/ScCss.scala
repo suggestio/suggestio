@@ -11,6 +11,7 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.m.styl.MScCssArgs
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import scalacss.internal.DslBase.ToStyle
 
 import scala.language.postfixOps
 
@@ -426,6 +427,18 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
   }
 
 
+  object Dialogs {
+
+    /** На айфоне снизу экрана служебная область с вырезом-линией. Не надо на неё распространять диалог или иные элементы. */
+    val unsafeBottom = {
+      var acc = List.empty[ToStyle]
+      for (bottomPx <- args.screenInfo.unsafeOffsets.bottomO)
+        acc ::= paddingBottom( bottomPx.px )
+      style( acc: _* )
+    }
+
+  }
+
 
 
   /** Инициализация ленивых scala-объектов для заполнения стилей выдачи.
@@ -447,6 +460,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
     Grid.container,
     Menu.panel,
+    Dialogs.unsafeBottom,
   )
 
 }
