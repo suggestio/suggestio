@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
@@ -186,6 +186,7 @@ class ScNodesR(
                   override val open = circuitOpt.nonEmpty
                   override val classes = diaCss
                   override val onClose = _onCloseClick
+                  override val disableBackdropClick = _isFullScreen
                   override val fullScreen = _isFullScreen
                 }
               } (

@@ -1,11 +1,16 @@
 package io.suggest.sc
 
+import io.suggest.ble.BeaconDetected
+import io.suggest.ble.eddystone.MEddyStoneUid
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.{SetDebug, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, UnIndex}
-import io.suggest.spa.DAction
+import io.suggest.sjs.dom2.DomQuick
+import io.suggest.spa.{DAction, DoNothing}
 
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.util.Random
 
 /**
   * Suggest.io
@@ -43,5 +48,47 @@ object Sc3JsApi {
   @JSExport
   def debug(isDebug: Boolean): Unit =
     _d( SetDebug( isDebug ) )
+
+
+  /** Хранилка состояния интервалов генерации сигналов от маячков: */
+  private var _beaconsIntervalIdsUnd: js.UndefOr[Iterable[Int]] = js.undefined
+
+  /** Запуск/остановка эмиссии сигналов маячков. */
+  @JSExport
+  def beaconsEmit(count: Int = 0): Unit = _d {
+    // Очистить текущие интервалы:
+    for {
+      ivlIds <- _beaconsIntervalIdsUnd.iterator
+      ivlId  <- ivlIds
+    } yield {
+      DomQuick.clearInterval( ivlId )
+    }
+
+    // Запуск генерации сигналов eddystone-uid.
+    if (count > 0) {
+      val rnd = new Random()
+      val ivlIds = (1 to count)
+        .foldLeft( List.empty[Int] ) { (acc, i) =>
+          val bcnTxPower = -70 - rnd.nextInt(30)
+          // Генерация псевдо-случайного id вида "aa112233445566778899-000000000456"
+          val tailId = 100000000000L + rnd.nextLong(1000000L) + i
+          val bcnUid = "bb112233445566778899-" + tailId.toString
+          val ivlId = DomQuick.setInterval( 800 + rnd.nextInt(800) ) { () =>
+            val action = BeaconDetected(
+              signal = MEddyStoneUid(
+                rssi    = -30 - rnd.nextInt(70),
+                txPower = bcnTxPower,
+                uid     = bcnUid,
+              ),
+            )
+            _d( action )
+          }
+          ivlId :: acc
+        }
+      _beaconsIntervalIdsUnd = js.defined( ivlIds )
+    }
+
+    DoNothing
+  }
 
 }

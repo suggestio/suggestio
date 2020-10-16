@@ -4,7 +4,7 @@ package io.suggest.ble.eddystone
   *
   * @param rssi Ощущаемая устройством мощность сигнала.
   * @param txPower Мощность.
-  * @param id id UID-маячка.
+  * @param uid id UID-маячка.
   *           Т.к. на неужное разделение 16 байт id на Namespace ID и Beacon ID нам вообще параллельно,
   *           то тут hex-строка с 16 байтами полного id.
   */

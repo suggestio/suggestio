@@ -85,9 +85,7 @@ class LogOutR(
     .initialStateFromProps { propsProxy =>
       State(
         isShownSomeC = propsProxy.connect { mroot =>
-          val r = OptionUtil.SomeBool( mroot.index.isLoggedIn )
-          //println( "XXXXXXXXXXXXXX", getClass.getSimpleName, mroot.internals.login, r)
-          r
+          OptionUtil.SomeBool( mroot.index.isLoggedIn )
         }(FastEq.AnyRefEq),
       )
     }

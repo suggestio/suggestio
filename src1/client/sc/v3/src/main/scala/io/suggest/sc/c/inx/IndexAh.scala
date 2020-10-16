@@ -266,14 +266,12 @@ class IndexRah
     val eMsg = ErrorMsgs.GET_NODE_INDEX_FAILED
     logger.error( eMsg, ex, msg = ctx.m )
 
-
     val inx_search_geo_LENS = MScIndex.search
       .composeLens( MScSearch.geo )
     val ctx_v0_index_LENS = MRhCtx.value0
       .composeLens( MScRoot.index )
 
     var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
-
 
     // Если закешированные scQs содержат что-либо, то надо их обнулить. Иначе повторная ошибка будет прожёвана как уже пройденный успех.
     val inx_search_geo_found_LENS = inx_search_geo_LENS
@@ -397,6 +395,10 @@ class IndexRah
       ) {
         fxAcc ::= GridLoadAds(clean = true, ignorePending = true).toEffectPure
       }
+
+      // Скрыть форму логина, если открыта. В норме - это должно отрабатывать в другой ветке.
+      if (i1.isLoggedIn && v0.dialogs.login.isDiaOpened)
+        fxAcc ::= ScLoginFormShowHide( visible = false ).toEffectPure
 
       ActionResult( Some(v2), fxAcc.mergeEffects )
 

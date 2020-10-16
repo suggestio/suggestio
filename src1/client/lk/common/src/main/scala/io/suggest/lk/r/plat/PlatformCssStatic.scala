@@ -110,11 +110,9 @@ final case class PlatformCssStatic(
     val backBtn = {
       if (isRenderIos) {
         style(
-          //marginTop( -6.px ),
         )
       } else {
         style(
-          //marginTop( -2.px ),
           marginLeft( -20.px ),
           paddingRight( 20.px ),
         )

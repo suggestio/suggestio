@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ble.BleConstants.Beacon.EddyStone
@@ -368,6 +368,7 @@ class CreateNodeR(
                 MuiButton(
                   new MuiButtonProps {
                     override val onClick = onSaveClickCbF
+                    override val size = MuiButtonSizes.large
                     override val disabled = saveBtnDisabledSomeProxy.value.value
                   }
                 )(
@@ -380,6 +381,7 @@ class CreateNodeR(
             MuiButton(
               new MuiButtonProps {
                 override val onClick = onCloseClickCbF
+                override val size = MuiButtonSizes.large
               }
             )(
               crCtx.messages( MsgCodes.`Close` ),
@@ -400,6 +402,7 @@ class CreateNodeR(
               override val maxWidth = MuiDialogMaxWidths.sm
               override val fullWidth = true
               override val classes = diaCss
+              override val disableBackdropClick = true
             }
           )( diaChs: _* )
         }
