@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiListItem, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiProgressVariants, MuiSwitchProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{MuiColorTypes, MuiListItem, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSwitchProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -12,8 +12,8 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
-import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
 import io.suggest.lk.nodes.form.r.LkNodesFormCss
+import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
@@ -27,6 +27,7 @@ import japgolly.univeq._
   * Description: Компонент флага isEnabled.
   */
 final class NodeEnabledR(
+                          treeStuffR           : TreeStuffR,
                           platformComponents   : PlatformComponents,
                           crCtxP               : React.Context[MCommonReactCtx],
                           lkNodesFormCssP      : React.Context[LkNodesFormCss],
@@ -102,31 +103,27 @@ final class NodeEnabledR(
             }
           }(),
 
-          // Отрендерить крутилку текущего запроса:
-          ReactCommonUtil.maybeNode( isDisabled ) {
-            lkNodesFormCssP.consume { lknCss =>
-              val css = new MuiLinearProgressClasses {
-                override val root = lknCss.Node.linearProgress.htmlClass
-              }
-              MuiLinearProgress(
-                new MuiLinearProgressProps {
-                  override val variant = MuiProgressVariants.indeterminate
-                  override val classes = css
+
+          {
+            val chs = List[VdomNode](
+              // Отрендерить крутилку текущего запроса:
+              ReactCommonUtil.maybeNode( isDisabled ) {
+                treeStuffR.LineProgress()
+              },
+
+              platformComponents.muiSwitch {
+                new MuiSwitchProps {
+                  override val checked = isChecked
+                  override val disabled = isDisabled
+                  // switch не пробрасывает событие переключения наверх - нужен отдельных listener.
+                  override val onClick = JsOptionUtil.maybeDefined( canChangeAvail )( _onNodeEnabledClickCbF )
                 }
-              )
+              },
+            )
+            lkNodesFormCssP.consume { lknCss =>
+              MuiListItemSecondaryAction( lknCss.Node.sceActProgressProps )( chs: _* )
             }
           },
-
-          MuiListItemSecondaryAction()(
-            platformComponents.muiSwitch {
-              new MuiSwitchProps {
-                override val checked = isChecked
-                override val disabled = isDisabled
-                // switch не пробрасывает событие переключения наверх - нужен отдельных listener.
-                override val onClick = JsOptionUtil.maybeDefined( canChangeAvail )( _onNodeEnabledClickCbF )
-              }
-            },
-          ),
 
         )
       }

@@ -1,6 +1,9 @@
 package io.suggest.lk.nodes.form.r
 
+import com.materialui.{MuiListItemSecondaryActionClasses, MuiListItemSecondaryActionProps}
 import io.suggest.css.ScalaCssDefaults._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -16,8 +19,23 @@ case class LkNodesFormCss() extends StyleSheet.Inline {
   object Node {
 
     val linearProgress = style(
-      flexGrow( 3 ),
+      width( 150.px ),
+      height( 1.px ),
     )
+
+    /** MuiList SecondaryAction, содержащая progress внутри. */
+    val secActProgress = style(
+      display.flex,
+      alignItems.center,
+    )
+    def sceActProgressProps: MuiListItemSecondaryActionProps = {
+      val css = new MuiListItemSecondaryActionClasses {
+        override val root = secActProgress.htmlClass
+      }
+      new MuiListItemSecondaryActionProps {
+        override val classes = css
+      }
+    }
 
     val toolBar = style(
       justifyContent.spaceAround

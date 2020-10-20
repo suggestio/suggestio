@@ -1,12 +1,12 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiListItem, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemText, MuiProgressVariants, MuiSwitch, MuiSwitchProps}
+import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemText, MuiSwitch, MuiSwitchProps}
 import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.i18n.MCommonReactCtx
+import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -20,6 +20,7 @@ import japgolly.univeq._
   * Description: Галочки (свитчи) размещения карточки на узле.
   */
 final class NodeAdvRowR(
+                         treeStuffR           : TreeStuffR,
                          lkNodesFormCssP      : React.Context[LkNodesFormCss],
                          crCtxP               : React.Context[MCommonReactCtx],
                        ) {
@@ -66,29 +67,23 @@ final class NodeAdvRowR(
           crCtxP.message( s.msgCode ),
         ),
 
-        ReactCommonUtil.maybeNode( s.flag.isPending ) {
-          lkNodesFormCssP.consume { lknCss =>
-            val css = new MuiLinearProgressClasses {
-              override val root = lknCss.Node.linearProgress.htmlClass
-            }
-            MuiLinearProgress(
-              new MuiLinearProgressProps {
-                override val variant = MuiProgressVariants.indeterminate
-                override val classes = css
+        {
+          val chs = List[VdomNode](
+            ReactCommonUtil.maybeNode( s.flag.isPending ) {
+              treeStuffR.LineProgress()
+            },
+            MuiSwitch(
+              new MuiSwitchProps {
+                override val checked  = s.flag contains true
+                override val disabled = s.flag.isPending
+                override val onChange = _onSwitchChanged
               }
-            )
+            ),
+          )
+          lkNodesFormCssP.consume { lknCss =>
+            MuiListItemSecondaryAction( lknCss.Node.sceActProgressProps )( chs: _* )
           }
         },
-
-        MuiListItemSecondaryAction()(
-          MuiSwitch(
-            new MuiSwitchProps {
-              override val checked  = s.flag contains true
-              override val disabled = s.flag.isPending
-              override val onChange = _onSwitchChanged
-            }
-          )
-        ),
       )
     }
 

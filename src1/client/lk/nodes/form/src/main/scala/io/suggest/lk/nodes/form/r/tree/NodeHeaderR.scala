@@ -110,16 +110,25 @@ final class NodeHeaderR(
 
         // Название узла:
         MuiListItemText {
-          val _textPrimary = infoOpt
-            .flatMap( _.name )
-            .orElse( st.beaconUidOpt )
+          val _textPrimary = (for {
+            info <- infoOpt
+            name <- info.name
+          } yield {
+            name
+          })
             .orUndefined
 
-          val _textSecondary = infoOpt
-            .flatMap(_.ntype)
-            .map { ntype =>
-              crCtxP.message( ntype.singular ).rawNode
-            }
+          val _textSecondary = (for {
+            info <- infoOpt
+            ntype <- info.ntype
+            if _textPrimary.nonEmpty
+          } yield {
+            crCtxP.message( ntype.singular ).rawNode
+          })
+            .orElse(
+              st.beaconUidOpt
+                .map(_.rawNode)
+            )
             .orUndefined
 
           new MuiListItemTextProps {

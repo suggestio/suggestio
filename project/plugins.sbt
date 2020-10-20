@@ -52,7 +52,7 @@ addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")
 // Плагины для интеграции scalajs + npm + webpack.
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.18.0")
 
-addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
+addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.1" cross CrossVersion.full)
 
 // для for-yield-оптимизации (https://github.com/fosskers/scalaz-and-cats#i-chain-operations-with-for--yield-isnt-that-all-i-need)
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")

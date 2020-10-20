@@ -36,6 +36,7 @@ trait LkNodesModuleBase
 
   // tree
   lazy val treeR = wire[TreeR]
+  lazy val treeItemR = wire[TreeItemR]
   lazy val goToLkLinkR = wire[GoToLkLinkR]
   lazy val nodeR = wire[NodeR]
   lazy val nodeEnabledR = wire[NodeEnabledR]
