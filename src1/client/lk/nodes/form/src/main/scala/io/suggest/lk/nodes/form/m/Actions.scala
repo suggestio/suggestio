@@ -199,6 +199,8 @@ case class BeaconsDetected( beacons: Map[String, MBeaconData] ) extends ILknBeac
 /** Ответ сервера с инфой по маячкам. */
 case class BeaconsScanResp( reqArgs: MLknBeaconsScanReq, tryResp: Try[MLknNodeResp] ) extends ILknBeaconsAction
 
+/** Выполнить рендер. */
+case object BeaconsRenderTimer extends ILknBeaconsAction
 
 /** Переключение формы между управлением узлами и размещением рекламной карточки на лету. */
 case class SetAd( adId: Option[String] ) extends LkNodesAction

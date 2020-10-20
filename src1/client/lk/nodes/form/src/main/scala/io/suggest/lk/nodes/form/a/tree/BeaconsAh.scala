@@ -9,7 +9,9 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.primo.Keep
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import scalaz.{Tree, TreeLoc}
@@ -159,6 +161,7 @@ class BeaconsAh[M](
         modTreeF = modTreeF andThen (MTree.nodesMap set nodesMap2)
 
       var modTreeOuterF = MTreeOuter.tree.modify( modTreeF )
+      var modBeaconsAcc = List.empty[MBeaconScan => MBeaconScan]
 
       // TODO Если исчез opened-маячок, то обновить opened на валидное значение.
 
@@ -219,29 +222,58 @@ class BeaconsAh[M](
           }
           fxAcc ::= scanReqFx
 
-          modTreeOuterF = modTreeOuterF andThen MTreeOuter.beacons
-            .composeLens( MBeaconScan.scanReq )
-            .modify( _.pending() )
+          modBeaconsAcc ::= MBeaconScan.scanReq.modify( _.pending() )
+
         }
       }
 
+      // Обновлений от сигналов маячков может быть много каждую секунду. Но обновлять экран надо не чаще раза в секунду,
+      // иначе всё затупит и встанет колом. Поэтому, нужно silent update, а рендер запускать только по таймауту.
+      if (v0.beacons.updateTimeout ==* Pot.empty) {
+        fxAcc ::= _reRenderFx
+        modBeaconsAcc ::= MBeaconScan.updateTimeout.modify(_.pending())
+      }
+
       // Сохранить обновлённое состояние:
+      if (modBeaconsAcc.nonEmpty)
+        modTreeOuterF = modTreeOuterF andThen MTreeOuter.beacons.modify( modBeaconsAcc.reduce(_ andThen _) )
+
       val v2 = modTreeOuterF(v0)
-      ah.updatedMaybeEffect(v2, fxAcc.mergeEffects)
+      ah.updatedSilentMaybeEffect( v2, fxAcc.mergeEffects )
+
+
+    // Срабатывание таймера отложенного рендера.
+    case BeaconsRenderTimer =>
+      val v0 = value
+
+      if (v0.beacons.updateTimeout.isPending) {
+        val v2 = (
+          MTreeOuter.beacons
+            .composeLens( MBeaconScan.updateTimeout )
+            .set( Pot.empty ) andThen
+          // Явная пересборка инстанса tree, чтобы шаблоны заметили обновление.
+          MTreeOuter.tree
+            .modify(_.copy())
+        )(v0)
+        // updated вызывает пере-рендер в шаблонах.
+        updated(v2)
+      } else {
+        // pending отсутствует в состоянии - игнорируем команду к пере-рендеру.
+        noChange
+      }
 
 
     // Отработка результата запроса на сервер с маячками.
     case m: BeaconsScanResp =>
       val v0 = value
 
-      m.tryResp.fold(
+      var modF = m.tryResp.fold(
         // Запрос не удался.
         {ex =>
-          val v2 = MTreeOuter.beacons
+          MTreeOuter.beacons
             .composeLens( MBeaconScan.scanReq )
-            .modify(_.fail(ex))(v0)
+            .modify(_.fail(ex))
           // TODO sc: эффект check-connectivity в выдачу?
-          updated(v2)
         },
 
         // Ответ получен - разобраться.
@@ -293,19 +325,36 @@ class BeaconsAh[M](
           }
 
           // Залить новую карту маячков в состояние:
-          val v2 = (
+          (
             MTreeOuter.tree
               .composeLens( MTree.nodesMap )
               .modify( _.merged(cachedMapAppend)(Keep.right) ) andThen
             MTreeOuter.beacons
               .composeLens( MBeaconScan.scanReq )
               .modify(_.ready(resp))
-          )(v0)
-
-          updated(v2)
+          )
         }
       )
 
+      val fxOpt = Option.when( v0.beacons.updateTimeout ==* Pot.empty ) {
+        // TODO Opt тут MTreeOuter.beacons обновляется второй раз. Надо бы объеденить все изменения внутри beacons-поля.
+        modF = modF andThen MTreeOuter.beacons
+          .composeLens( MBeaconScan.updateTimeout )
+          .modify(_.pending())
+
+        _reRenderFx
+      }
+
+      val v2 = modF( v0 )
+      ah.updatedSilentMaybeEffect( v2, fxOpt )
+
+  }
+
+
+  private def _reRenderFx: Effect = Effect {
+    DomQuick
+      .timeoutPromiseT( 1333 )( BeaconsRenderTimer )
+      .fut
   }
 
 }

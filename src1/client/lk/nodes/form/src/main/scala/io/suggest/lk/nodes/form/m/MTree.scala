@@ -24,7 +24,8 @@ object MTree {
   implicit object MTreeFastEq extends FastEq[MTree] {
     override def eqv(a: MTree, b: MTree): Boolean = {
       (a.idsTree ===* b.idsTree) &&
-      (a.opened ===* b.opened)
+      (a.opened ===* b.opened) &&
+      (a.nodesMap ===* b.nodesMap)
     }
   }
 

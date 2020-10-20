@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.background.mode.CordovaBgModeAh
-import io.suggest.daemon.{BgModeDaemonInit, HtmlBgTimerAh, MDaemonDescr, MDaemonInitOpts, MDaemonStates}
+import io.suggest.daemon.{BgModeDaemonInit, HtmlBgTimerAh, MDaemonDescr, MDaemonInitOpts, MDaemonState, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPlatformS, MScreenInfo}
@@ -441,7 +441,7 @@ class Sc3Circuit(
         )
       }
 
-      if (daemonS.state contains MDaemonStates.Work) {
+      if (daemonS.state contains[MDaemonState] MDaemonStates.Work) {
         // Если что-то изменилось, то надо запустить обновление плитки.
         def finishWorkProcFx: Effect = {
           Effect.action( ScDaemonWorkProcess(isActive = false) )

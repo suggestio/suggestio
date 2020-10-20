@@ -255,9 +255,7 @@ class TreeR(
     .initialStateFromProps { propsProxy =>
       State(
         root4nodeC = propsProxy.connect(identity(_))( FastEqUtil[MLkNodesRoot] { (a, b) =>
-          (a.tree.tree.opened ===* b.tree.tree.opened) &&
-          (a.tree.tree.nodesMap ===* b.tree.tree.nodesMap) &&
-          (a.tree.tree.idsTree ===* b.tree.tree.idsTree) &&
+          (a.tree.tree ===* b.tree.tree) &&
           (a.conf.adIdOpt ===* b.conf.adIdOpt)
         }),
       )

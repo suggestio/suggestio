@@ -96,20 +96,39 @@ object BleBeaconerAh extends Log {
     */
   def mkFingerPrint( beacons: Seq[(String, MUidBeacon)] ): Option[Int] = {
     OptionUtil.maybe( beacons.nonEmpty ) {
-      (for {
-        (bcnUid, rep) <- beacons.iterator
-        distanceCm <- rep.distanceCm
-      } yield {
-        bcnUid -> BeaconUtil.quantedDistance( distanceCm )
-      })
-        .toSeq
-        // Сортируем по нормализованному кванту расстояния и по id маячка, чтобы раздавить флуктуации от рядом находящихся маячков.
-        .sortBy { case (bcnUid, distQ) =>
-          "%04d".format(distQ) + "." + bcnUid
-        }
-        .map(_._1)
-        .hashCode()
+      if (beacons.lengthIs >= 3) {
+        // Когда в эфире много маячков, дистанция игнорируется.
+        mkFingerPrintRaw( beacons )
+      } else {
+        // Когда в эфире полтора маячка, учитываем дистанцию:
+        mkFingerPrintDistanced( beacons )
+      }
     }
+  }
+
+
+  def mkFingerPrintDistanced( beacons: Seq[(String, MUidBeacon)] ): Int = {
+    (for {
+      (bcnUid, rep) <- beacons.iterator
+      distanceCm <- rep.distanceCm
+    } yield {
+      bcnUid -> BeaconUtil.quantedDistance( distanceCm )
+    })
+      .toSeq
+      // Сортируем по нормализованному кванту расстояния и по id маячка, чтобы раздавить флуктуации от рядом находящихся маячков.
+      .sortBy { case (bcnUid, distQ) =>
+        "%04d".format(distQ) + "." + bcnUid
+      }
+      .map(_._1)
+      .hashCode()
+  }
+
+  def mkFingerPrintRaw( beacons: Seq[(String, MUidBeacon)] ): Int = {
+    beacons
+      .iterator
+      .map(_._1)
+      .toSet
+      .hashCode()
   }
 
 
@@ -334,7 +353,6 @@ class BleBeaconerAh[M](
 
     // API сообщает, что получило сигнал от какого-то ble-маячка.
     case m: BeaconDetected =>
-      //println(m)
       val v0 = value
 
       if (v0.isEnabled contains false) {
@@ -410,7 +428,6 @@ class BleBeaconerAh[M](
           if {
             val isOk = now - mbd.detect.seenAtMs < ttl
             val isToDelete = !isOk
-            //println(s"drop?$isToDelete $k, now=$now lastSeen=${mbd.lastSeenMs} diff=${now - mbd.lastSeenMs} max-ttl=$ttl isOk=$isOk")
             isToDelete
           }
         } yield k)
@@ -435,7 +452,6 @@ class BleBeaconerAh[M](
           } else {
             v0.gcIntervalId
           }
-          //println(s"gc: ${keys2delete.mkString(", ")} ${v0.beacons.size}->${beacons2.size}")
 
           val v2 = v0.copy(
             notifyAllTimer  = notifyAllTimerOpt2,
@@ -449,7 +465,6 @@ class BleBeaconerAh[M](
 
     // Сработал таймер уведомления в внешней системы о существенном изменении среди маячков.
     case m: MaybeNotifyAll =>
-      //println(m)
       val v0 = value
 
       def __maybeRmTimer() = {
@@ -468,7 +483,6 @@ class BleBeaconerAh[M](
             .flatMap( _(v0.nearbyReport, v2.nearbyReport) )
 
         if (fpr2 !=* v0.envFingerPrint) {
-          //println(s"fpr CHANGED: ${v0.envFingerPrint}=>$fpr2\n beaconsMap = ${v0.beacons}\n nearby = ${beaconsNearby.mkString(", ")}")
           // Изменился отпечаток маячков с момента последнего уведомления всех вокруг. Надо организовать обновлённый список маячков.
           val v2 = v0.copy(
             envFingerPrint = fpr2,
@@ -483,7 +497,6 @@ class BleBeaconerAh[M](
 
         } else {
           // Нет смысла уведомлять кого-либо: ничего существенно не изменилось в маячков.
-          //println("nothing changed " + v0.envFingerPrint + "==" + fpr2)
           val v2Opt = __maybeRmTimer()
           // Если oneShot, то нужно уведомить через onChange, хотя ничего и не изменилось - функция сама порешит.
           val fxOpt = OptionUtil.maybeOpt( v0.opts.oneShot )(
@@ -502,7 +515,6 @@ class BleBeaconerAh[M](
 
     // Управление активностью BleBeaconer: вкл/выкл.
     case m: BtOnOff =>
-      //println(m)
       val v0 = value
       def isCanBeEnabled = m.opts.hardOff || !v0.opts.hardOff
       // Включён или включается.
@@ -543,7 +555,6 @@ class BleBeaconerAh[M](
           noChange
 
         } else {
-          //println("bb ON-OFF @" + System.currentTimeMillis())
           (for {
             // TODO Запускать асинхронную проверку isEnabled(), и/или вызов enable() и т.д.
             apiActFx <- startApiActivation(
@@ -648,7 +659,6 @@ class BleBeaconerAh[M](
           },
           {bbApi =>
             // Успешная активация API. Надо запустить таймер начального накопления данных по маячкам.
-            //println("bb API active @" + System.currentTimeMillis())
             val (timerInfo, timerFx) = BleBeaconerAh.startNotifyAllTimer( BleBeaconerAh.EARLY_INIT_TIMEOUT_MS )
             val v2 = v0.copy(
               notifyAllTimer    = Some(timerInfo),

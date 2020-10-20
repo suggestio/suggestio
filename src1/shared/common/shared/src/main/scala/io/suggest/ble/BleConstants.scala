@@ -12,9 +12,8 @@ import io.suggest.common.uuid.LowUuidUtil
 object BleConstants {
 
   /** Строка с четырьмя нулями */
-  val FOUR_ZEROES: String = {
+  def FOUR_ZEROES: String =
     "0" * 4
-  }
 
   /**
     * Какой-то суффикс для UUID сервиса BLE.
@@ -22,7 +21,7 @@ object BleConstants {
     * то подгоняя под UUID, то под нормальное число.
     * @return Строковой suffix UUID в lower case.
     */
-  val SERVICES_BASE_UUID_LC: String = {
+  def SERVICES_BASE_UUID_LC: String = {
     val d = LowUuidUtil.UID_PARTS_DELIM
     d + FOUR_ZEROES + d + "1000-8000-00805F9B34FB"
   }

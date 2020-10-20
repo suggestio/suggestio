@@ -358,6 +358,8 @@ class IndexRah
     // Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
     if (
       !isMultiNodeResp &&
+      // Явную принудительную перезагрузку текущего индекса не перемалываем в same index.
+      !ctx.m.reason.isInstanceOf[ReGetIndex] &&
       resp.nodes.exists { node =>
         i0.resp.exists { rn =>
           (rn isSamePlace node.props) &&
@@ -395,10 +397,6 @@ class IndexRah
       ) {
         fxAcc ::= GridLoadAds(clean = true, ignorePending = true).toEffectPure
       }
-
-      // Скрыть форму логина, если открыта. В норме - это должно отрабатывать в другой ветке.
-      if (i1.isLoggedIn && v0.dialogs.login.isDiaOpened)
-        fxAcc ::= ScLoginFormShowHide( visible = false ).toEffectPure
 
       ActionResult( Some(v2), fxAcc.mergeEffects )
 
