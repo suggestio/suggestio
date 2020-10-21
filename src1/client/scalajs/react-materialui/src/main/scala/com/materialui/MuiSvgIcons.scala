@@ -1,9 +1,5 @@
 package com.materialui
 
-import japgolly.scalajs.react.component.Js.{RawMounted, UnmountedWithRawType}
-import japgolly.scalajs.react.vdom.VdomNode
-import japgolly.scalajs.react.{Children, JsComponent, ReactMouseEventFromHtml}
-
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
@@ -1658,8 +1654,10 @@ object MuiSvgIcons {
   object MyLocation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/navigation", JSImport.Default)
   object MapsNavigation extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/maps/near-me", JSImport.Default)
-  object MapsNearMe extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NearMe", JSImport.Default)
+  object NearMe extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NearMeOutlined", JSImport.Default)
+  object NearMeOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/person-pin-circle", JSImport.Default)
   object MapsPersonPinCircle extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/person-pin", JSImport.Default)

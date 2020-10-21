@@ -121,7 +121,7 @@ final class NodeEnabledR(
               },
             )
             lkNodesFormCssP.consume { lknCss =>
-              MuiListItemSecondaryAction( lknCss.Node.sceActProgressProps )( chs: _* )
+              MuiListItemSecondaryAction( lknCss.Node.secActFlexLineProps )( chs: _* )
             }
           },
 

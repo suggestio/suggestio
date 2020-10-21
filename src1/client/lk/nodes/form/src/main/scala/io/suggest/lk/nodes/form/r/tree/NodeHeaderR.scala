@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -9,6 +9,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
+import io.suggest.lk.nodes.form.r.LkNodesFormCss
 import io.suggest.lk.nodes.{MLknOpKeys, MLknOpValue}
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.react.ReactDiodeUtil.Implicits._
@@ -34,6 +35,7 @@ final class NodeHeaderR(
                          distanceValueR       : DistanceValueR,
                          treeStuffR           : TreeStuffR,
                          crCtxP               : React.Context[MCommonReactCtx],
+                         lkNodesFormCss       : React.Context[LkNodesFormCss],
                        ) {
 
   case class PropsVal(
@@ -142,16 +144,25 @@ final class NodeHeaderR(
           beacon <- st.beacon
           if !s.isAdv
         } yield {
-          MuiListItemSecondaryAction()(
-            MuiTypoGraphy(
+          val chs = lkNodesFormCss.consume { lkNodesCss =>
+            MuiTypoGraphy {
+              val css = new MuiTypoGraphyClasses {
+                override val root = lkNodesCss.Node.flexLine.htmlClass
+              }
               new MuiTypoGraphyProps {
                 override val variant = MuiTypoGraphyVariants.caption
                 override val color = MuiTypoGraphyColors.textSecondary
+                override val noWrap = true
+                override val classes = css
               }
-            )(
+            } (
+              ReactCommonUtil.maybeNode( beacon.data.lastDistanceCm.exists(_ <= 15) )(
+                Mui.SvgIcons.NearMeOutlined()()
+              ),
               distanceValueR.component( propsProxy.resetZoom(beacon) ),
-            ),
-          )
+            )
+          }
+          MuiListItemSecondaryAction()( chs )
         })
           .whenDefinedNode,
 

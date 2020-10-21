@@ -360,7 +360,7 @@ object ScCssStatic extends StyleSheet.Inline {
       /** Горизонтальный прогресс-бар запроса. */
       val progress = {
         style(
-          height( 5.px ),
+          height( 1.px ),
           position.absolute,
           bottom( 1.px ),
           width( 100.%% ),

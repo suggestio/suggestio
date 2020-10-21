@@ -50,10 +50,12 @@ class TreeItemR(
 
   implicit val propsValFeq = FastEqUtil[PropsVal] { (a, b) =>
     (a.subTreeOrig ===* b.subTreeOrig) &&
-    (a.subTreeIndexed ===* b.subTreeIndexed) &&
-    (a.nodePathRev ===* b.nodePathRev) &&
+    // subTreeIndexed пересобирается при каждом рендере, но собирается только на базе subTreeOrig, поэтому просто игнорируем subTreeIndexed.
+    //(a.subTreeIndexed ===* b.subTreeIndexed) &&
+    (a.tree ===* b.tree) &&
     (a.isAdvMode ==* b.isAdvMode) &&
-    (a.tree ===* b.tree)
+    // Инстанс nodePathRev пересобирается при каждом рендере, но он небольшой - сравниваем напрямую.
+    (a.nodePathRev ==* b.nodePathRev)
   }
 
 
@@ -62,7 +64,7 @@ class TreeItemR(
 
 
   class Backend( $: BackendScope[Props, Props_t] ) {
-    def render(p: Props, s: Props_t): VdomElement = {
+    def render(p: Props, s: Props_t): VdomNode = {
       val treeId = s.subTreeIndexed.rootLabel._1
       val origSubForest = s.subTreeOrig.subForest
 
@@ -81,10 +83,12 @@ class TreeItemR(
           )
           component.withKey( chNodePathRev.mkString(`.`) )( p2 ): VdomElement
         }
+        .iterator
+        .toVdomArray
 
       s.tree.nodesMap
         .get( treeId )
-        .fold[VdomElement] {
+        .fold[VdomNode] {
           // Внутренняя ошибка: дерево id не соответствует карте состояний, и какой-то объявленный узел отсутствует.
           logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = (treeId, s.tree.nodesMap.keySet) )
           MuiTreeItem(
@@ -102,9 +106,7 @@ class TreeItemR(
               DIEZ, treeId,
             ),
 
-            chsRendered
-              .iterator
-              .toVdomArray,
+            chsRendered,
           )
         } { mns =>
           // Рендер подветви дерева:
@@ -112,7 +114,7 @@ class TreeItemR(
 
             // Единственный корневой элемент: пропуск рендера, переход на следующий уровень.
             case MTreeRoles.Root =>
-              React.Fragment( chsRendered.iterator.toSeq: _* )
+              chsRendered
 
             // Обычный узел - рендерим через NodeR()
             case _ =>
@@ -134,11 +136,7 @@ class TreeItemR(
 
               nodeR
                 .component
-                .withKey( s.nodePathRev.mkString(`.`) )(p2)(
-                  chsRendered
-                    .iterator
-                    .toVdomArray
-                )
+                .withKey( s.nodePathRev.mkString(`.`) )(p2)( chsRendered )
 
           }
         }

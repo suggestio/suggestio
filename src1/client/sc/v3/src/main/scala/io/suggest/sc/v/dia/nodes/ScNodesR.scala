@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentProps, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
@@ -17,6 +17,8 @@ import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -143,7 +145,11 @@ class ScNodesR(
             ),
 
             // Содержимое диалога.
-            MuiDialogContent()(
+            MuiDialogContent(
+              new MuiDialogContentProps {
+                override val dividers = true
+              }
+            )(
               circuitOpt.whenDefinedEl { circuit =>
                 circuit.wrap(identity(_))( lkNodesFormR.component.apply )
               },
@@ -188,6 +194,7 @@ class ScNodesR(
                   override val onClose = _onCloseClick
                   override val disableBackdropClick = _isFullScreen
                   override val fullScreen = _isFullScreen
+                  override val fullWidth = true
                 }
               } (
                 diaChildren: _*

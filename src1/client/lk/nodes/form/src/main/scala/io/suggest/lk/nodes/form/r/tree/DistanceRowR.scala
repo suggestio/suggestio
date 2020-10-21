@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{MuiListItem, MuiListItemText, MuiListItemTextProps}
+import com.materialui.{MuiListItem, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps}
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.nodes.form.m.MNodeBeaconState
@@ -41,7 +41,9 @@ class DistanceRowR(
           )(),
 
           // Расстояние или бесконечность - справа
-          distanceValueR.component(propsProxy),
+          MuiListItemSecondaryAction()(
+            distanceValueR.component( propsProxy )
+          ),
 
         )
       }

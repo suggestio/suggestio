@@ -1,6 +1,5 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.MuiListItemSecondaryAction
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.DistanceUtil
@@ -32,8 +31,7 @@ class DistanceValueR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .render_S { beaconState =>
-      MuiListItemSecondaryAction()(
-
+      <.span(
         beaconState.data
           .lastDistanceCm
           .filter(_ => beaconState.isVisible)

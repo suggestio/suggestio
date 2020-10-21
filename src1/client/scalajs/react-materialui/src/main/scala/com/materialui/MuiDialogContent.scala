@@ -3,6 +3,8 @@ package com.materialui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -23,6 +25,9 @@ object MuiDialogContent {
 trait MuiDialogContentProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiDialogContentClasses]
+{
+  val dividers: js.UndefOr[Boolean] = js.undefined
+}
 
 
 /** Props for [[MuiDialogContentProps.classes]]. */
