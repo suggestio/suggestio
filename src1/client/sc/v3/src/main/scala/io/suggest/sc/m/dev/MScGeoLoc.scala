@@ -122,7 +122,7 @@ case class MGeoLocSwitchS(
   *                Тут можно хранить ошибки позиционирования тоже.
   */
 case class MGeoLocWatcher(
-                           watchId    : Option[GeoLocWatchId_t],
+                           watchId    : Pot[GeoLocWatchId_t],
                            lastPos    : Pot[MGeoLoc]   = Pot.empty
                          )
   extends EmptyProduct

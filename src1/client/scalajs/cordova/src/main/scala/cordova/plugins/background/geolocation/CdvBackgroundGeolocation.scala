@@ -52,79 +52,79 @@ trait ICdvBackgroundGeolocation extends js.Object {
 
 
   def configure(options: ConfigOptions,
-                success: js.Function0[Unit] = js.native,
-                failure: js.Function1[js.Any, Unit] = js.native,
+                success: js.Function0[_] = js.native,
+                failure: js.Function1[js.Any, _] = js.native,
                ): Unit = js.native
 
-  def getConfig(success: js.Function1[ConfigOptions, Unit],
-                fail: js.Function1[js.Any, Unit] = js.native,
+  def getConfig(success: js.Function1[ConfigOptions, _],
+                fail: js.Function1[js.Any, _] = js.native,
                ): Unit = js.native
 
   def start(): Unit = js.native
 
   def stop(): Unit = js.native
 
-  def getCurrentLocation(success: js.Function1[Location, Unit],
-                         fail: js.Function1[js.Any, Unit] = js.native,
+  def getCurrentLocation(success: js.Function1[Location, _],
+                         fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                          options: js.UndefOr[LocationOptions] = js.undefined,
                         ): Unit = js.native
 
-  def getStationaryLocation(success: js.Function1[StationaryLocation | Null, Unit],
-                            fail: js.Function1[BackgroundGeolocationError, Unit],
+  def getStationaryLocation(success: js.Function1[StationaryLocation | Null, _],
+                            fail: js.Function1[BackgroundGeolocationError, _],
                            ): Unit = js.native
 
   @deprecated("Use checkStatus()", "Next major version")
-  def isLocationEnabled(success: js.Function1[Boolean, Unit],
-                        fail: js.Function1[js.Any, Unit] = js.native,
+  def isLocationEnabled(success: js.Function1[Boolean, _],
+                        fail: js.Function1[js.Any, _] = js.native,
                        ): Unit = js.native
 
-  def checkStatus(success: js.Function1[ServiceStatus, Unit],
-                  fail: js.Function1[BackgroundGeolocationError, Unit] = js.native): Unit = js.native
+  def checkStatus(success: js.Function1[ServiceStatus, _],
+                  fail: js.Function1[BackgroundGeolocationError, _] = js.native): Unit = js.native
 
   def showAppSettings(): Unit = js.native
 
   /** Android-only. */
   def showLocationSettings(): Unit = js.native
 
-  def getLocations(success: js.Function1[js.Array[Location], Unit],
-                   fail: js.Function1[BackgroundGeolocationError, Unit] = js.native): Unit = js.native
+  def getLocations(success: js.Function1[js.Array[Location], _],
+                   fail: js.Function1[BackgroundGeolocationError, _] = js.native): Unit = js.native
 
-  def getValidLocations(success: js.Function1[js.Array[Location], Unit],
-                        fail: js.Function1[BackgroundGeolocationError, Unit] = js.native): Unit = js.native
+  def getValidLocations(success: js.Function1[js.Array[Location], _],
+                        fail: js.Function1[BackgroundGeolocationError, _] = js.native): Unit = js.native
 
   def deleteLocation(locationId: LocationId_t,
-                     success: js.Function0[Unit] = js.native,
-                     fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+                     success: js.Function0[_] = js.native,
+                     fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                     ): Unit = js.native
 
-  def deleteAllLocations(success: js.Function0[Unit] = js.native,
-                         fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+  def deleteAllLocations(success: js.Function0[_] = js.native,
+                         fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                         ): Unit = js.native
 
   /** iOS */
   def switchMode(modeId: ServiceMode,
-                 success: js.Function0[Unit] = js.native,
-                 fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+                 success: js.Function0[_] = js.native,
+                 fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                 ): Unit = js.native
 
-  def forceSync( success: js.Function0[Unit] = js.native,
-                 fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+  def forceSync( success: js.Function0[_] = js.native,
+                 fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                ): Unit = js.native
 
   def getLogEntries(limit: Int, fromId: Int, minLevel: LogLevel,
-                    success: js.Function1[js.Array[LogEntry], Unit],
-                    fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+                    success: js.Function1[js.Array[LogEntry], _],
+                    fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                    ): Unit = js.native
 
   def removeAllListeners(eventType: String = js.native): Unit = js.native
 
-  def startTask(success: js.Function1[TaskId, Unit],
-                fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+  def startTask(success: js.Function1[TaskId, _],
+                fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                ): Unit = js.native
 
   def endTask(taskId: TaskId,
-              success: js.Function0[Unit] = js.native,
-              fail: js.Function1[BackgroundGeolocationError, Unit] = js.native,
+              success: js.Function0[_] = js.native,
+              fail: js.Function1[BackgroundGeolocationError, _] = js.native,
              ): Unit = js.native
 
 
@@ -188,37 +188,37 @@ object ICdvBackgroundGeolocation {
     def endTaskF(taskId: TaskId): Future[Unit] =
       JsApiUtil.call0ErrFut( cdvBgGeo.endTask(taskId, _, _) )
 
-    def onLocation(callback: Location => Unit): Unit =
+    def onLocation(callback: Location => _): Unit =
       cdvBgGeo.on( Events.LOCATION, callback )
 
-    def onStationary(callback: StationaryLocation => Unit): Unit =
+    def onStationary(callback: StationaryLocation => _): Unit =
       cdvBgGeo.on( Events.STATIONARY, callback )
 
-    def onActivity(callback: Activity => Unit): Unit =
+    def onActivity(callback: Activity => _): Unit =
       cdvBgGeo.on( Events.ACTIVITY, callback )
 
-    def onStart(callback: () => Unit): Unit =
+    def onStart(callback: () => _): Unit =
       cdvBgGeo.on( Events.START, callback )
 
-    def onStop(callback: () => Unit): Unit =
+    def onStop(callback: () => _): Unit =
       cdvBgGeo.on( Events.STOP, callback )
 
-    def onError(callback: BackgroundGeolocationError => Unit): Unit =
+    def onError(callback: BackgroundGeolocationError => _): Unit =
       cdvBgGeo.on( Events.ERROR, callback )
 
-    def onAuthorization(callback: AuthorizationStatus => Unit): Unit =
+    def onAuthorization(callback: AuthorizationStatus => _): Unit =
       cdvBgGeo.on( Events.AUTHORIZATION, callback )
 
-    def onForeground(callback: () => Unit): Unit =
+    def onForeground(callback: () => _): Unit =
       cdvBgGeo.on( Events.FOREGROUND, callback )
 
-    def onBackground(callback: () => Unit): Unit =
+    def onBackground(callback: () => _): Unit =
       cdvBgGeo.on( Events.BACKGROUND, callback )
 
-    def onAbortRequested(callback: () => Unit): Unit =
+    def onAbortRequested(callback: () => _): Unit =
       cdvBgGeo.on( Events.ABORT_REQUESTED, callback )
 
-    def onHttpAuthorization(callback: () => Unit): Unit =
+    def onHttpAuthorization(callback: () => _): Unit =
       cdvBgGeo.on( Events.HTTP_AUTHORIZATION, callback )
 
   }

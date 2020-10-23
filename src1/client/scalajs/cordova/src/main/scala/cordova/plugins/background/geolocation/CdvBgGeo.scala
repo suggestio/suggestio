@@ -1,5 +1,8 @@
 package cordova.plugins.background.geolocation
 
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
+
 import scala.scalajs.js
 import scala.util.Try
 
@@ -8,11 +11,17 @@ import scala.util.Try
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 21.10.2020 21:54
   */
-object CdvBgGeo {
+object CdvBgGeo extends Log {
 
   /** Проверка доступности API. */
-  def isAvailable(): Boolean =
-    Try( !js.isUndefined(CdvBackgroundGeolocation) ) getOrElse false
+  def isAvailable(): Boolean = {
+    Try( !js.isUndefined(CdvBackgroundGeolocation) )
+      .recover { case ex: Throwable =>
+        logger.warn( ErrorMsgs.NATIVE_API_ERROR, ex, this )
+        false
+      }
+      .get
+  }
 
   object Events {
 

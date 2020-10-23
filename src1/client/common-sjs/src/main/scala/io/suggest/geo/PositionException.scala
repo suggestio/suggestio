@@ -1,7 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.common.html.HtmlConstants.{SPACE, `(`, `)`}
-import org.scalajs.dom.PositionError
+import io.suggest.common.html.HtmlConstants._
 
 /**
   * Suggest.io
@@ -9,11 +8,18 @@ import org.scalajs.dom.PositionError
   * Created: 05.12.17 18:20
   * Description: Модель исключения геопозиционирования.
   */
-case class PositionException(domError: PositionError) extends RuntimeException {
+final case class PositionException(
+                                    code      : Int,
+                                    message   : String,
+                                    isPermissionDenied: Boolean,
+                                    raw       : Any,
+                                  )
+  extends RuntimeException
+{
 
   override def getMessage: String =
-    domError.message + SPACE + `(` + domError.code + `)`
+    message + SPACE + `(` + code + `)`
 
-  override final def toString = getMessage
+  override def toString = getMessage
 
 }

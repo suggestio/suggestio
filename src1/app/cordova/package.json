@@ -19,7 +19,6 @@
         "cordova-plugin-ble-central": "^1.2.5",
         "cordova-plugin-device": "^2.0.3",
         "cordova-plugin-fetch": "file:../../../../../../../../home/user/projects/repo/cordova-plugin-fetch",
-        "cordova-plugin-geolocation": "^4.0.1",
         "cordova-plugin-local-notification": "git+https://github.com/Steffaan/cordova-plugin-local-notifications.git",
         "cordova-plugin-localization-strings": "3.2.1",
         "cordova-plugin-network-information": "^2.0.2",
@@ -30,7 +29,6 @@
     },
     "cordova": {
         "plugins": {
-            "cordova-plugin-geolocation": {},
             "cordova-plugin-splashscreen": {},
             "cordova.plugins.diagnostic": {},
             "cordova-plugin-whitelist": {},
@@ -49,7 +47,19 @@
             "cordova-plugin-localization-strings": {
                 "TRANSLATION_PATH": "translations/app/"
             },
-            "cordova-plugin-fetch": {}
+            "cordova-plugin-fetch": {},
+            "8bhsolutions-cordova-plugin-background-geolocation": {
+                "GOOGLE_PLAY_SERVICES_VERSION": "11+",
+                "ANDROID_SUPPORT_LIBRARY_VERSION": "23+",
+                "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
+                "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
+                "ICON": "@mipmap/icon",
+                "SMALL_ICON": "@mipmap/icon",
+                "ACCOUNT_NAME": "@string/app_name",
+                "ACCOUNT_LABEL": "@string/app_name",
+                "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
+                "CONTENT_AUTHORITY": "$PACKAGE_NAME"
+            }
         },
         "platforms": [
             "ios",
@@ -57,6 +67,7 @@
         ]
     },
     "devDependencies": {
+        "8bhsolutions-cordova-plugin-background-geolocation": "file:../../../../../../../../home/user/projects/repo/cordova-background-geolocation",
         "cordova-android": "^9.0.0"
     }
 }

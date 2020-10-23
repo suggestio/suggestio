@@ -513,6 +513,7 @@ class JsMessagesUtil @Inject() (
     MC.`Inacceptable.password.format` ::
     MC.`Logout.account` ::
     MC.`Are.you.sure.to.logout.account` ::
+    MC.`Input.text.from.picture` ::
     Nil
   }
 

@@ -23,9 +23,6 @@
       "BLUETOOTH_USAGE_DESCRIPTION": " ",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-geolocation": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-local-notification": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -49,6 +46,11 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "8bhsolutions-cordova-plugin-background-geolocation": {
+      "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
+      "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

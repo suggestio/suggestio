@@ -1,9 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.suggest.appsuggest"
-        version="1.0.8"
-        xmlns="http://www.w3.org/ns/widgets"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="io.suggest.appsuggest" version="1.0.8" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Suggest.io</name>
     <description>
       Suggest.io client with Bluetooth beacons support.
@@ -70,6 +66,7 @@
         <resource-file src="res/icon/android/mipmap-xhdpi/ic_notification.png" target="app/src/main/res/mipmap-xhdpi/ic_notification.png" />
         <resource-file src="res/icon/android/mipmap-xxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxhdpi/ic_notification.png" />
         <resource-file src="res/icon/android/mipmap-xxxhdpi/ic_notification.png" target="app/src/main/res/mipmap-xxxhdpi/ic_notification.png" />
+        <resource-file src="res/icon/android/mipmap-xxxhdpi/ic_notification.png" target="app/src/main/res/mipmap/icon.png" />
         <config-file parent="/*" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.INTERNET" />
             <uses-permission android:name="android.permission.NETWORK_ACCESS" />
@@ -129,9 +126,7 @@
         <icon height="88" src="res/icon/ios/AppIcon44x44@2x.png" width="88" />
         <icon height="172" src="res/icon/ios/AppIcon86x86@2x.png" width="172" />
         <icon height="196" src="res/icon/ios/AppIcon98x98@2x.png" width="196" />
-        <!-- Тут сброс UIBgModes, т.к. не ясно как удалить из массива один элемент audio, который зачем-то выставляется
-             плагином background-mode. Удалить этот плагин? Всё равно не особо нужен. Тогда можно вернуть сюда только добавление bluetooth-central. -->
-        <custom-config-file parent="UIBackgroundModes" target="*-Info.plist" mode="replace">
+        <custom-config-file mode="replace" parent="UIBackgroundModes" target="*-Info.plist">
             <array>
                 <string>bluetooth-central</string>
                 <string>fetch</string>
@@ -142,11 +137,10 @@
             <array>
                 <string>io.suggest.bgtasks.v1</string>
             </array>
-       </config-file>
+        </config-file>
     </platform>
-    <preference name="BackgroundColor" value="0xff2d3d4e"/>
+    <preference name="BackgroundColor" value="0xff2d3d4e" />
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
-    <plugin name="cordova-plugin-geolocation" spec="~4.0.1" />
     <plugin name="cordova-plugin-splashscreen" spec="~5.0.2" />
     <plugin name="cordova.plugins.diagnostic" spec="~4.0.10" />
     <plugin name="cordova-plugin-whitelist" spec="1" />

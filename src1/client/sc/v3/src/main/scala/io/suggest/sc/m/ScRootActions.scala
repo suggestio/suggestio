@@ -10,6 +10,7 @@ import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.m.inx.save.MIndexesRecent
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
+import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.spa.{DAction, SioPages}
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
@@ -49,6 +50,9 @@ case object ScreenResetPrepare extends IScRootAction
 case object ScreenResetNow extends IScRootAction
 
 
+/** Интерфейс экшенов для GeoLocAh. */
+sealed trait IGeoLocAction extends IScRootAction
+
 /** Управление подсистемой геолокации в режиме вкл/выкл.
   *
   * @param enabled Включена?
@@ -62,11 +66,10 @@ case class GeoLocOnOff(
                         // TODO Записывать это напрямую в состояние из circuit? Или эффектом отдельным? Или...?
                         scSwitch    : Option[MScSwitchCtx]    = None,
                       )
-  extends IScRootAction
-
+  extends IGeoLocAction
 
 /** trait только для [[GlLocation]] и [[GlError]]. */
-sealed trait IGeoLocSignal extends IScRootAction {
+sealed trait IGeoLocSignal extends IGeoLocAction {
   def glType: GeoLocType
   def isSuccess: Boolean
   final def isError: Boolean = !isSuccess
@@ -88,15 +91,18 @@ case class GlError(override val glType: GeoLocType, error: PositionException) ex
   override def either = Left(error)
 }
 
+/** Обновление gl watcher'ов в состоянии новыми идентификаторами. */
+case class GlModWatchers( watchers: Map[GeoLocType, Pot[GeoLocWatchId_t]] ) extends IGeoLocAction
+
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
-case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IScRootAction
+case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IGeoLocAction
 
 
 /** Сработал таймер подавления нежелательных координат. */
-case class GlSuppressTimeout(generation: Long) extends IScRootAction
+case class GlSuppressTimeout(generation: Long) extends IGeoLocAction
 
 /** Запросить восстановление работы геолокации с перемещением в новую точку. */
-case object GlCheckAfterResume extends IScRootAction
+case object GlCheckAfterResume extends IGeoLocAction
 
 /** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
 case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScRootAction

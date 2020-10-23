@@ -16,29 +16,26 @@ import japgolly.univeq.UnivEq
 object GeoLocTypes extends StringEnum[GeoLocType] {
 
   /** Неточная быстрая геолокация по вышкам. */
-  case object Bss extends GeoLocType("b") {
-    override def precision        = 20
-    override def isHighAccuracy     = false
-    override def previous         = None
-    override def suppressorTtlMs  = None
-  }
+  //case object Bss extends GeoLocType("b") {
+  //  override def precision        = 20
+  //  override def isHighAccuracy     = false
+  //  override def previous         = None
+  //}
 
-  /** Точная медленная геолокация по спутникам. */
+  /** Точная небыстрая геолокация по спутникам. */
   case object Gps extends GeoLocType("g") {
     override def precision        = 50
-    override def isHighAccuracy     = true
-    override def previous         = Some(Bss)
-    /** Считаем для GPS необходимость отклика в течение 10 секунд максимум. */
-    override def suppressorTtlMs  = Some(10000)
+    override def isHighAccuracy   = true
+    override def previous         = None //Some(Bss)
   }
 
 
-  override val values = findValues
+  override def values = findValues
 
   /** Все значения модели. */
-  def all = Set[GeoLocType](Gps, Bss)
+  def all = Set.empty[GeoLocType] + Gps
   /** Минимальная точность у вышек. */
-  def min = Bss
+  def min = Gps //Bss
   /** Максимальная точность у gps. */
   def max = Gps
 
@@ -64,15 +61,7 @@ sealed abstract class GeoLocType(override val value: String) extends StringEnumE
     }
   }
 
-  /**
-    * Если данному типу разрешено доминировать над нижележащими, то тут указыватеся макс.время
-    * доминирования в миллисекундах. Если за это время от источника не поступило свежих новостей, то
-    * подавление нижележащих источников отменяется.
-    */
-  def suppressorTtlMs: Option[Int]
-
 }
-
 
 object GeoLocType {
 
@@ -85,6 +74,18 @@ object GeoLocType {
 
   @inline implicit def univEq: UnivEq[GeoLocType] = UnivEq.derive
 
+
+  implicit final class GltExt(private val glType: GeoLocType) extends AnyVal {
+
+    /**
+      * Если данному типу разрешено доминировать над нижележащими, то тут указыватеся макс.время
+      * доминирования в миллисекундах. Если за это время от источника не поступило свежих новостей, то
+      * подавление нижележащих источников отменяется.
+      */
+    def suppressorTtlMs: Option[Int] = {
+      glType.previous.map( _ => 10000 )
+    }
+
+  }
+
 }
-
-
