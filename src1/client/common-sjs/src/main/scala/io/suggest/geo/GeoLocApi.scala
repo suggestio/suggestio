@@ -18,14 +18,15 @@ trait GeoLocApi {
 
   def isAvailable(): Boolean
 
-  def watchPosition( options: GeoLocApiWatchOptions ): Future[GeoLocWatchId_t]
+  /** ОПРЕДЕЛИТЬ и наблюдать геолокацию. */
+  def getAndWatchPosition(options: GeoLocApiWatchOptions ): Future[GeoLocWatchId_t]
 
   def clearWatch(watchId: GeoLocWatchId_t): Future[_]
 
 }
 
 
-/** Опции для абстрактного интерфейса [[GeoLocApi.watchPosition()]].
+/** Опции для абстрактного интерфейса [[GeoLocApi.getAndWatchPosition()]].
   */
 final case class GeoLocApiWatchOptions(
                                         onLocation        : (MGeoLoc) => Unit,

@@ -26,13 +26,6 @@ picture
 *.rar
 *.gz
 node_modules/
-ui/node_modules
-ui/dist
-ui/.tmp
-ui/.sass-cache
-ui/bower_components
-ui/twirl
-app-2.11/
 *_jb_tmp_*
 
 src1/server/www/conf/application.conf*

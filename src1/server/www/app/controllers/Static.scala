@@ -29,7 +29,6 @@ import util.stat.StatUtil
 import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import views.html.static._
 import japgolly.univeq._
-import models.req.MReq
 import play.api.http.{HeaderNames, HttpEntity, HttpProtocol}
 import play.filters.csrf.CSRF
 import play.twirl.api.Xml

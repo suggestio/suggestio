@@ -44,14 +44,12 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 //addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.1.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.2.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.3.0")
 
 //addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")
 
-// Плагины для интеграции scalajs + npm + webpack.
-// 0.19 - молча не собирает в play stage, не поддерживает scalajs-1.3.
-addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.18.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.20.0")
 
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.1" cross CrossVersion.full)
 

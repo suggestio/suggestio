@@ -58,8 +58,8 @@ sealed trait WindowStub extends js.Object {
   def navigator: js.UndefOr[Navigator] = js.native
   def matchMedia(mediaQuery: String): UndefOr[MediaQueryList] = js.native
 
-  var ontouchstart: js.UndefOr[js.Function1[raw.TouchEvent, _]] = js.native
-  var ontouchmove: js.UndefOr[js.Function1[raw.TouchEvent, _]] = js.native
-  var ontouchend: js.UndefOr[js.Function1[raw.TouchEvent, _]] = js.native
-  var ontouchcancel: js.UndefOr[js.Function1[raw.TouchEvent, _]] = js.native
+  var ontouchstart: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
+  var ontouchmove: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
+  var ontouchend: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
+  var ontouchcancel: js.UndefOr[js.Function1[dom.TouchEvent, _]] = js.native
 }

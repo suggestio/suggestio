@@ -46,9 +46,9 @@ object RcvrMarkersR {
   type Props_t = Pot[MGeoNodesResp]
   type Props = ModelProxy[Props_t]
 
-  val FILL_OPACITY    = 0.15
-  val STROKE_OPACITY  = 0.7
-  val STROKE_WEIGHT   = 1
+  def FILL_OPACITY    = 0.15
+  def STROKE_OPACITY  = 0.7
+  def STROKE_WEIGHT   = 1
 
   protected class Backend($: BackendScope[Props, Props_t]) {
 
@@ -76,14 +76,14 @@ object RcvrMarkersR {
     private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
 
     // Внутренний класс вместо кортежа, т.к. у scalac крышу срывает от кортежей с RComp_t внутри.
-    private case class ResTuple( latLng: LatLng, jsComp: VdomElement )
+    private case class ResTuple( latLng: LatLng, jsComp: List[VdomElement] )
 
 
     /** Рендер всей гео.карты. */
     def render(rcvrsGeoPotProxy: Props, children: PropsChildren): VdomElement = {
       rcvrsGeoPotProxy().toOption.whenDefinedEl { mRcvrsGeo =>
         // Собираем сложный итератор, который на выходе в элементах выдаёт два аккамулятора: маркеры и шейпы.
-        val iter = for {
+        val markersAndShapeComponents = (for {
           mnode <- mRcvrsGeo.nodes.iterator
 
           // Собираем параметры отображения маркеров текущего узла над его шейпами.
@@ -131,6 +131,11 @@ object RcvrMarkersR {
           // Если возможно, отрендерить шейп узла в react-компонент, вычислить центр шейпа, и туда маркер засандалить.
           resTuple: ResTuple = {
             gs match {
+              // Просто точка.
+              case pointGs: PointGs =>
+                val ll = MapsUtil.geoPoint2LatLng( pointGs.coord )
+                ResTuple( ll, Nil )
+
               // Рендерим react-круг.
               case circleGs: CircleGs =>
                 val _center = circleGs.center
@@ -149,7 +154,7 @@ object RcvrMarkersR {
                   }
                 }
                 val rc = CircleR( opts )
-                ResTuple(_centerLatLng, rc)
+                ResTuple(_centerLatLng, rc :: Nil)
 
               // Рендерить полигон или мультиполигон.
               case lPolygon: ILPolygonGs =>
@@ -170,7 +175,7 @@ object RcvrMarkersR {
                   }
                 }
                 val rc = PolygonR(opts)
-                ResTuple(_centerLL, rc)
+                ResTuple(_centerLL, rc :: Nil)
 
               // TODO Реализовать рендер остальных шейпов. Сейчас они пока не нужны.
               case other =>
@@ -180,7 +185,6 @@ object RcvrMarkersR {
           }
 
         } yield {
-          val shapeComponents0 = resTuple.jsComp :: Nil
           // Собрать маркер узла над шейпом:
           /*markerOptionsOpt.fold [(List[Marker], List[RComp_t])] {
             // Маркер выставить нет возможности. Поэтому нужно собрать CircleMarkerR вместо него.
@@ -196,7 +200,7 @@ object RcvrMarkersR {
             }
             val cm = CircleMarkerR(cmProps)()
               .asInstanceOf[RComp_t]
-            val shapeComponents2 = cm :: shapeComponents0
+            val shapeComponents2 = cm :: resTuple.jsComp
             (Nil, shapeComponents2)
 
           } { markerOptions =>*/
@@ -204,18 +208,17 @@ object RcvrMarkersR {
             val marker = Leaflet.marker( resTuple.latLng, markerOptions )
             marker.nodeId = nodeId.get
             val markers = marker :: Nil
-            (markers, shapeComponents0)
+            (markers, resTuple.jsComp)
           //}
-        }
-
-        // Превратить итератор аккамуляторов в два стабильных аккамулятора.
-        val (markers9, shapeComponents9) = iter
+        })
           .foldLeft( (List.empty[List[Marker]], List.empty[List[VdomElement]]) ) {
             case ((markersAcc, shapeComponentsAcc), (markers, shapeComponents)) =>
               (markers :: markersAcc,
                 shapeComponents :: shapeComponentsAcc)
           }
 
+        // Превратить итератор аккамуляторов в два стабильных аккамулятора.
+        val (markers9, shapeComponents9) = markersAndShapeComponents
 
         // Вернуть итоговый react-компонент:
         LayerGroupR()(

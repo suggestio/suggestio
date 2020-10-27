@@ -57,7 +57,7 @@ class GeoLocAh[M](
       val glType: GeoLocType = GeoLocTypes.Gps
       glApi
         // Подписка на события геолокации:
-        .watchPosition(
+        .getAndWatchPosition(
           GeoLocApiWatchOptions(
             onLocation = { geoLoc =>
               dispatcher( GlLocation( glType, geoLoc ) )

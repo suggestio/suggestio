@@ -17,7 +17,7 @@ www-stage:
   before_script:
   - /sbin/entrypoint.sh
   script:
-  - sbt 'project www' stage
+  - sbt 'set scalaJSStage in Global := FullOptStage' 'project www' 'stage'
   - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io
 
 ## Развёртывание на серверах. (надо разобраться, почему target/universal недоступен отсюда).

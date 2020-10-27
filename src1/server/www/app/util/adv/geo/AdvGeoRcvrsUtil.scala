@@ -11,6 +11,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
 import io.suggest.es.model.{EsModel, IMust, MEsNestedSearch}
+import io.suggest.geo.{IGeoShape, PointGs}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MRcvrsMapUrlArgs}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
@@ -66,7 +67,7 @@ final class AdvGeoRcvrsUtil @Inject()(
 
 
   /** "Версия" формата ресиверов, чтобы сбрасывать карту, даже когда она не изменилась. */
-  private def RCVRS_MAP_CRC_VSN = 8
+  private def RCVRS_MAP_CRC_VSN = 9
 
   /** Максимально допустимый уровень рекурсивного погружения во вложенность ресиверов.
     * Первый уровень -- это 1. */
@@ -292,15 +293,42 @@ final class AdvGeoRcvrsUtil @Inject()(
     * @tparam Mat Обычно NotUsed.
     * @return Source, выдающий ноды и MGeoNodePropsShapes.
     */
-  def withNodeLocShapes[Mat]( src: Source[(MNode, MSc3IndexResp), Mat] ): Source[(MNode, MGeoNodePropsShapes), Mat] = {
+  def withNodeLocShapes[Mat]( src: Source[(MNode, MSc3IndexResp), Mat],
+                              points: Boolean = true,
+                              shapes: Boolean = false,
+                            ): Source[(MNode, MGeoNodePropsShapes), Mat] = {
     src
       .map { case (mnode, props) =>
         // Собрать шейпы геолокации узла:
-        val geoShapes = mnode.edges
-          .withPredicateIter( MPredicates.NodeLocation )
-          .flatMap( _.info.geoShapes )
-          .map(_.shape)
-          .toSeq
+        val geoShapes = if (points || shapes) {
+          (for {
+            e <- mnode.edges.withPredicateIter( MPredicates.NodeLocation )
+            gs <- {
+              var acc = List.empty[IterableOnce[IGeoShape]]
+
+              if (points) {
+                acc ::= e.info.geoPoints
+                  .iterator
+                  .map( PointGs.apply )
+              }
+
+              if (shapes) {
+                acc ::= e.info.geoShapes
+                  .iterator
+                  .map(_.shape)
+              }
+
+              acc
+                .iterator
+                .flatten
+            }
+          } yield {
+            gs
+          })
+            .toSeq
+        } else {
+          Nil
+        }
 
         val ngs = MGeoNodePropsShapes(
           props  = props,

@@ -251,7 +251,7 @@ object Common {
   val settingsBase = Seq[Setting[_]](
     organization := ORG,
     // Выключение сборки документации
-    sources in (Compile, doc) := Seq.empty,
+    //sources in (Compile, doc) := Seq.empty,
     publishArtifact in (Compile, packageDoc) := false
     // Ускорение резолва зависимостей путём запрета их резолва без явной необходимости.
     //, offline := true

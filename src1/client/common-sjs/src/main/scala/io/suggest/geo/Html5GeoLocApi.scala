@@ -27,7 +27,7 @@ final class Html5GeoLocApi extends GeoLocApi {
   override def isAvailable(): Boolean =
     underlying.isDefined
 
-  override def watchPosition( options: GeoLocApiWatchOptions ): Future[GeoLocWatchId_t] = {
+  override def getAndWatchPosition(options: GeoLocApiWatchOptions ): Future[GeoLocWatchId_t] = {
     Future {
       (for {
         h5GeoLocApi <- underlying

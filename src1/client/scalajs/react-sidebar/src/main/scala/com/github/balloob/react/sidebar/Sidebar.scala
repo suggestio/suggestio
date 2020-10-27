@@ -16,6 +16,9 @@ import scala.scalajs.js.annotation.JSImport
   */
 object Sidebar {
 
+  // workaround on scalajs-1.3.0 for https://github.com/scalacenter/scalajs-bundler/issues/381#issuecomment-717258485
+  js.constructorOf[SidebarJs]
+
   val component = JsComponent[SidebarProps, Children.Varargs, SidebarState]( js.constructorOf[SidebarForceIosJs] )
 
   def apply(props: SidebarProps)(children: VdomNode*) = component( props )(children: _*)

@@ -2,8 +2,7 @@ package com.github.balloob.react.sidebar
 
 import minitest._
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js
+import japgolly.scalajs.react.test._
 
 /**
   * Suggest.io
@@ -12,12 +11,6 @@ import scala.scalajs.js
   * Description: Tests for [[Sidebar]] binding.
   */
 object SidebarSpec extends SimpleTestSuite {
-
-  test("js-component should exist") {
-    assert( SidebarJs != null )
-    assert( !js.isUndefined(SidebarJs) )
-  }
-
 
   test("sjs-component should be usable") {
     val sidebarContent = <.div(
@@ -34,7 +27,7 @@ object SidebarSpec extends SimpleTestSuite {
         override val pullRight  = false
         override val shadow     = true
       }
-    }(
+    } (
       <.div(
         <.strong(
           "some outer content",
@@ -49,8 +42,10 @@ object SidebarSpec extends SimpleTestSuite {
       )
     )
 
-    assert( !js.isUndefined(comp) )
-    assert( comp.toString.length > 0 )
+    ReactTestUtils.withRenderedIntoDocument( comp ) { mounted =>
+      val htmlStr = mounted.outerHtmlScrubbed()
+      assert( htmlStr.length > 0 )
+    }
   }
 
 }

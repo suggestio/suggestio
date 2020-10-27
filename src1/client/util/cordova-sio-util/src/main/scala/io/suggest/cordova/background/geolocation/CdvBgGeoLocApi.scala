@@ -2,6 +2,8 @@ package io.suggest.cordova.background.geolocation
 
 import cordova.plugins.background.geolocation._
 import io.suggest.geo._
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import japgolly.univeq._
@@ -17,7 +19,7 @@ import scala.util.Try
   * Created: 23.10.2020 11:57
   * Description: Реализация GeoLocApi поверх cordova-plugin-background-geolocation.
   */
-final class CdvBgGeoLocApi extends GeoLocApi {
+final class CdvBgGeoLocApi extends GeoLocApi with Log {
 
   override def underlying =
     Option.when( isAvailable() )( CdvBackgroundGeolocation )
@@ -27,7 +29,7 @@ final class CdvBgGeoLocApi extends GeoLocApi {
     CdvBgGeo.isAvailable()
 
 
-  override def watchPosition(options: GeoLocApiWatchOptions): Future[GeoLocWatchId_t] = {
+  override def getAndWatchPosition(options: GeoLocApiWatchOptions): Future[GeoLocWatchId_t] = {
     // Подписаться на события геолокации:
     Try {
       CdvBackgroundGeolocation.removeAllListeners()
@@ -118,7 +120,14 @@ final class CdvBgGeoLocApi extends GeoLocApi {
 
   override def clearWatch(watchIds: GeoLocWatchId_t): Future[_] = {
     Future {
-      CdvBackgroundGeolocation.removeAllListeners()
+      Try {
+        CdvBackgroundGeolocation.removeAllListeners()
+      }
+        .failed
+        .foreach { ex =>
+          logger.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, watchIds )
+        }
+
       CdvBackgroundGeolocation.stop()
     }
   }

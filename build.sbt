@@ -280,6 +280,7 @@ lazy val reactSidebar = {
   val name = "react-sidebar"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
+    .settings( libDepsReactTest )
 }
 
 /** Scala.js биндинги для компонентов react-scroll. */
@@ -623,7 +624,7 @@ lazy val www = project
   )
   .settings(
     scalaJSProjects := Seq(lkSjs, sc3Sjs, scSwSjs, sysSjs),
-    pipelineStages in Assets ++= Seq(scalaJSPipeline),
+    pipelineStages in Assets := Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
     // react DatePicker
     npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
