@@ -90,9 +90,9 @@ final class CdvBgGeoLocApi extends GeoLocApi with Log {
           override val locationProvider = CdvBackgroundGeolocation.ACTIVITY_PROVIDER
 
           // У приложения пока геолокация не работает в фоне.
-          //override val startOnBoot = false
-          //override val saveBatteryOnBackground = true
-          //override val stopOnTerminate = true
+          override val startOnBoot = false
+          override val saveBatteryOnBackground = true
+          override val stopOnTerminate = true
 
           override val desiredAccuracy = {
             if (_isHighAccuracy) {

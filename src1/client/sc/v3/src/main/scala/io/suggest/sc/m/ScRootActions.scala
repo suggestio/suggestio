@@ -5,7 +5,7 @@ import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.lk.nodes.form.m.MLkNodesMode
 import io.suggest.routes.routes
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.m.dev.MOnLineInfo
+import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.m.inx.save.MIndexesRecent
@@ -103,6 +103,11 @@ case class GlSuppressTimeout(generation: Long) extends IGeoLocAction
 
 /** Запросить восстановление работы геолокации с перемещением в новую точку. */
 case object GlCheckAfterResume extends IGeoLocAction
+
+/** Переброска в GeoLocAh запроса из Leaflet.Map().locate() и stopLocation(). */
+case class GlLeafletApiLocate(locateOpts: Option[GlLeafletLocateArgs] ) extends IGeoLocAction
+/** Таймаут запроса геолокации из leaflet. */
+case object GlLeafletApiLocateTimeout extends IGeoLocAction
 
 /** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
 case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScRootAction

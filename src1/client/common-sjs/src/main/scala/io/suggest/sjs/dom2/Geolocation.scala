@@ -1,6 +1,6 @@
 package io.suggest.sjs.dom2
 
-import org.scalajs.dom.{Position, PositionError}
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -29,12 +29,38 @@ trait Geolocation extends js.Object {
     * Возможно, есть ещё какие-то девиации, поэтому возвращать надо js.Any.
     */
   @JSName("watchPosition")
-  def watchPosition2(successCallback: js.Function1[Position, _],
-                     errorCallback: js.Function1[PositionError, _] = js.native,
-                     options: PositionOptions = js.native): GeoLocWatchId_t = js.native
+  def watchPosition2(successCallback: js.Function1[dom.Position, _],
+                     errorCallback: js.Function1[dom.PositionError, _] = js.native,
+                     options: dom.PositionOptions = js.native): GeoLocWatchId_t = js.native
 
   /** Очистка watch'а, возвращённого из watchPosition2(), который js.Any */
   @JSName("clearWatch")
   def clearWatch2(watchId: GeoLocWatchId_t): Unit = js.native
 
+}
+
+
+/** Замена для dom.Position */
+trait Position extends js.Object {
+  def timestamp: Double
+  val coords: Coordinates
+}
+
+
+/** Координаты. Замена для dom.Coordinates. */
+trait Coordinates extends js.Object {
+  val altitudeAccuracy,
+      speed,
+      heading,
+      altitude: js.UndefOr[Double] = js.undefined
+
+  val longitude,
+      latitude,
+      accuracy: Double
+}
+
+
+trait PositionError extends js.Object {
+  val code: Int
+  val message: String
 }

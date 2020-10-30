@@ -28,7 +28,8 @@ object MScGeoLoc {
     override def eqv(a: MScGeoLoc, b: MScGeoLoc): Boolean = {
       (a.watchers   ===* b.watchers) &&
       (a.suppressor ===* b.suppressor) &&
-      (a.switch     ===* b.switch)
+      (a.switch     ===* b.switch) &&
+      (a.leafletLoc ===* b.leafletLoc)
     }
   }
 
@@ -37,6 +38,7 @@ object MScGeoLoc {
   def watchers    = GenLens[MScGeoLoc](_.watchers)
   def suppressor  = GenLens[MScGeoLoc](_.suppressor)
   def switch      = GenLens[MScGeoLoc](_.switch)
+  def leafletLoc  = GenLens[MScGeoLoc](_.leafletLoc)
 
 }
 
@@ -51,19 +53,19 @@ case class MScGeoLoc(
                       watchers        : Map[GeoLocType, MGeoLocWatcher]     = Map.empty,
                       suppressor      : Option[Suppressor]                  = None,
                       switch          : MGeoLocSwitchS                      = MGeoLocSwitchS.empty,
+                      leafletLoc      : Option[MGlSourceS]                  = None,
                     ) {
 
   /** Данные о текущем наиболее точном местоположении. */
   lazy val currentLocation: Option[(GeoLocType, MGeoLoc)] = {
-    val elements = (
-      for {
-        (glType, watcher) <- watchers.iterator
-        gl <- watcher.lastPos.toOption
-      } yield {
-        glType -> gl
-      }
-    )
+    val elements = (for {
+      (glType, watcher) <- watchers.iterator
+      gl <- watcher.lastPos.toOption
+    } yield {
+      glType -> gl
+    })
       .toSeq
+
     // Вернуть наиболее точный из элементов.
     OptionUtil.maybe( elements.nonEmpty ) {
       elements.maxBy( _._1.precision )

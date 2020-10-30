@@ -1,5 +1,6 @@
 package util.acl
 
+import io.suggest.sjs.SjsUtil
 import javax.inject.Inject
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
@@ -62,7 +63,7 @@ final class IsSuOrDevelOr404 @Inject() (
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
   private class ImplC extends isSuOr404Ctl.Base {
     override protected def isAllowed(user: ISioUser): Boolean = {
-      super.isAllowed(user) || mCommonDi.isDev
+      super.isAllowed(user) || mCommonDi.isDev || SjsUtil.isDevelDetected
     }
   }
 

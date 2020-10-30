@@ -14,7 +14,7 @@ import scala.scalajs.js.annotation.JSImport
 //@JSImport("string-replace-loader?search=L&replace=LLLLLLLLL!./node_modules/leaflet.locatecontrol/src/L.Control.Locate.js", JSImport.Namespace)
 @JSImport("leaflet.locatecontrol", JSImport.Namespace)
 @js.native
-class LocateControl(options: LocateOptions) extends IControl {
+class LocateControl(options: LocateControlOptions) extends IControl {
 
   def start(): LocateControl = js.native
 

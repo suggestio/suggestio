@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
+import io.suggest.cordova.CordovaConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.log.buffered.BufLogAppender
 import io.suggest.log.filter.SevereFilter
@@ -63,6 +64,13 @@ object Sc3Main extends Log {
     val modules = new Sc3Module
     if (scalajs.LinkingInfo.developmentMode)
       Sc3Module.ref = modules
+
+    Try {
+      if (CordovaConstants.isCordovaPlatform())
+        modules.sc3LeafletOverrides.mapPatch()
+    }
+      .logFailure( ErrorMsgs.NATIVE_API_ERROR )
+
 
     // Активировать отправку логов на сервер:
     Try {

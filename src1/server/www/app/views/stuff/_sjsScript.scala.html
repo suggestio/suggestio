@@ -20,6 +20,6 @@
 
 
 @* Нужно определить, что на руках: бандл или library? *@
-@for( fileName <- SjsUtil.jsScripts("/public", prefix, ctx.api.isProd) ) {
+@for( fileName <- SjsUtil.jsScripts( prefix, ctx.api.isProd ) ) {
   <script type="text/javascript" src="@cdn.asset( fileName )"></script>
 }

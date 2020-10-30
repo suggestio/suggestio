@@ -4,7 +4,8 @@ import io.suggest.sjs.leaflet.control.IControl
 import io.suggest.sjs.leaflet.event.{LEventTarget, MouseEvent}
 import io.suggest.sjs.leaflet.handler.IHandler
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw.{HTMLElement, Position}
+import org.scalajs.dom.PositionError
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -41,6 +42,9 @@ class LMap extends LEventTarget {
 
   def locate(options: LocateOptions): LMap = js.native
   def stopLocate(): LMap = js.native
+  var _locateOptions: js.UndefOr[LocateOptions] = js.native
+  def _handleGeolocationResponse(pos: Position): Unit = js.native
+  def _handleGeolocationError(error: PositionError): Unit = js.native
 
   def remove(): LMap = js.native
 

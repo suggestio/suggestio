@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.control
 
-import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
+import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateControlOptions}
 import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 
 import scala.scalajs.js
@@ -20,6 +20,6 @@ class LControl extends js.Object {
   /** For feature-detection. */
   var locate: UndefOr[_] = js.native
 
-  def locate(options: UndefOr[LocateOptions] = js.native): LocateControl = js.native
+  def locate(options: UndefOr[LocateControlOptions] = js.native): LocateControl = js.native
 
 }

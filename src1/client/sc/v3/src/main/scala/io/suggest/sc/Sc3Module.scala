@@ -23,6 +23,7 @@ import io.suggest.routes.IJsRouter
 import io.suggest.sc.c.dia.ScNodesDiaAh
 import io.suggest.sc.m.{MScRoot, RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.inx.ReGetIndex
+import io.suggest.sc.u.Sc3LeafletOverrides
 import io.suggest.sc.u.api.{ScAppApiHttp, ScUniApi, ScUniApiHttpImpl}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.v._
@@ -88,6 +89,7 @@ class Sc3Module { outer =>
     }
     wire[Sc3Circuit]
   }
+  lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
 
 
   // React contexts

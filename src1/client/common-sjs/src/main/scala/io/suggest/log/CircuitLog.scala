@@ -16,12 +16,12 @@ trait CircuitLog[M <: AnyRef] extends Circuit[M] with Log {
 
   override def handleFatal(action: Any, e: Throwable): Unit = {
     logger.error( CIRCUIT_ERROR_CODE, e, action )
-    super.handleFatal(action, e)
+    //super.handleFatal(action, e)
   }
 
   override def handleError(msg: String): Unit = {
     logger.warn( CIRCUIT_ERROR_CODE, msg = msg )
-    super.handleError(msg)
+    //super.handleError(msg)
   }
 
 }

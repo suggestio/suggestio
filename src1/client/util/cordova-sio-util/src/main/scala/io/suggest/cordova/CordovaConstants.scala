@@ -13,13 +13,17 @@ import scala.util.Try
   */
 object CordovaConstants {
 
-  /** Является ли данная платформа - Cordova? */
-  def isCordovaPlatform(): Boolean = {
+  private lazy val _isCordova: Boolean = {
     JsApiUtil.isDefinedSafe(
       js.Dynamic.global
         .selectDynamic( cordova.CORDOVA )
     )
   }
+
+
+  /** Является ли данная платформа - Cordova? */
+  def isCordovaPlatform(): Boolean =
+    _isCordova
 
 
   object Events {

@@ -19,27 +19,21 @@ import scala.scalajs.js.annotation.JSImport
 
 object LMapR {
 
-  val component = JsComponent[LMapPropsR, Children.Varargs, Null]( LMapJsR )
-    .addFacade[LMapJsR]
+  val component = JsComponent[LMapPropsR, Children.Varargs, Null]( js.constructorOf[LMapJsR] )
 
 }
 
 
 @JSImport("react-leaflet", "Map")
 @js.native
-sealed class LMapJsR(
-                       props   : LMapPropsR,
-                       context : Context
-                     )
+class LMapJsR(
+               props   : LMapPropsR,
+               context : Context,
+             )
   extends MapComponentR(props, context)
 {
   override type El_t = LMap
 }
-
-
-@JSImport("react-leaflet", "Map")
-@js.native
-object LMapJsR extends js.Object
 
 
 trait LMapPropsR extends MapOptions {

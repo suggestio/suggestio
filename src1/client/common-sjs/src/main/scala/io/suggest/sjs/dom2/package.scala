@@ -35,4 +35,13 @@ package object dom2 {
   @inline implicit def fetchHeadersExt(headers: Headers ): FetchHeaders =
     headers.asInstanceOf[FetchHeaders]
 
+  @inline implicit def coords2domCoords( coords: Coordinates ): dom.Coordinates =
+    coords.asInstanceOf[dom.Coordinates]
+
+  @inline implicit def position2domPosition( position: Position ): dom.Position =
+    position.asInstanceOf[dom.Position]
+
+  @inline implicit def posError2domPosError( posError: PositionError ): dom.PositionError =
+    posError.asInstanceOf[dom.PositionError]
+
 }

@@ -22,7 +22,7 @@ object DomQuick {
     * @param timeMs Время в миллисекундах.
     * @return id-таймера на стороне юзер-агента.
     */
-  def setTimeout[U](timeMs: Int)(f: () => U): Int = {
+  def setTimeout[U](timeMs: Double)(f: () => U): Int = {
     dom.window.setTimeout(f, timeMs)
   }
 
@@ -50,10 +50,10 @@ object DomQuick {
     * @param timeMs Через сколько миллисекунд исполнить возвращаемый Promise.
     * @return Контейнер с данными, касающиеся новоиспечённого Promise'а.
     */
-  def timeoutPromise(timeMs: Int): TimeoutPromise[None.type] = {
+  def timeoutPromise(timeMs: Double): TimeoutPromise[None.type] = {
     timeoutPromiseT(timeMs)(None)
   }
-  def timeoutPromiseT[T](timeMs: Int)(res: T): TimeoutPromise[T] = {
+  def timeoutPromiseT[T](timeMs: Double)(res: T): TimeoutPromise[T] = {
     val p = Promise[T]()
     val timerId = setTimeout(timeMs) { () =>
       p.success(res)

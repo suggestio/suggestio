@@ -7,17 +7,25 @@ import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.dev.{MGeoLocSwitchS, MGeoLocWatcher, MScGeoLoc, Suppressor}
+import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MGeoLocSwitchS, MGeoLocWatcher, MGlSourceS, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
 import io.suggest.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom2
 import io.suggest.sjs.dom2._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.spa.DiodeUtil.Implicits._
-import scala.concurrent.duration._
+import io.suggest.spa.DoNothing
+import monocle.Traversal
+import org.scalajs.dom
+import org.scalajs.dom.raw.PositionError
+import scalaz.Need
+import scalaz.std.option._
 
+import scala.concurrent.duration._
+import scala.scalajs.js
 import scala.util.Success
 
 /**
@@ -120,6 +128,9 @@ class GeoLocAh[M](
 
           var fxAcc = List.empty[Effect]
 
+          for (leafLoc <- v0.leafletLoc)
+            fxAcc ::= _leafletOnLocationFx( leafLoc.args, loc.location )
+
           // Если приходят высокоточные данные GPS, то надо отказаться от неточных данных геолокации хотя бы на какое-то время.
           val supprOpt = for {
             ttlMs <- loc.glType.suppressorTtlMs
@@ -175,12 +186,14 @@ class GeoLocAh[M](
                 v0.switch.withOutScSwitch
               }
             },
+            leafletLoc = v0.leafletLoc
+              .filter(_.args.locateOpts.watch contains[Boolean] true),
           )
 
           // Уведомить другие контроллеры о наступлении геолокации.
           fxAcc ::= GlPubSignal( Some(loc), v0.switch.scSwitch ).toEffectPure
 
-          ah.updateMaybeSilentFx( v0.switch.onOff ===* v2.switch.onOff )(v2, fxAcc.mergeEffects.get)
+          ah.optionalResult( Some(v2),  fxAcc.mergeEffects,  silent = v0.switch.onOff ===* v2.switch.onOff )
 
         }
       } else {
@@ -326,19 +339,37 @@ class GeoLocAh[M](
           // Should never happen.
           logger.error( ErrorMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
           noChange
+
         } { watcher0 =>
           // Если onOff - pending, то сохранить ошибку:
-          val notifyOthersFx = GlPubSignal( Some(m), v0.switch.scSwitch ).toEffectPure
+          var fxAcc: Effect = GlPubSignal( Some(m), v0.switch.scSwitch ).toEffectPure
+          var modAccF = List.empty[MScGeoLoc => MScGeoLoc]
+          def _modAccMerge = modAccF
+            .reduceOption(_ andThen _)
+            .fold(v0)(_(v0))
+
+          for (leafOpts <- v0.leafletLoc) {
+            fxAcc += Effect.action {
+              leafOpts.args.onLocError( m.error.raw.asInstanceOf[dom.PositionError] )
+              DoNothing
+            }
+            modAccF ::= MScGeoLoc.leafletLoc set None
+          }
 
           if (m.error.isPermissionDenied) {
             // TODO Отрабатывать так для всех ошибок? Ведь таймаут геолокации и POSITION_UNAVAILABLE аналогичны по сути:
             // Если ошибка DENIED, то выключить геолокацию жестко:
-            val v1 =
-              if (v0.switch.scSwitch.isEmpty) v0
-              else MScGeoLoc.switch.modify(_.withOutScSwitch)(v0)
+            if (v0.switch.scSwitch.nonEmpty)
+              modAccF ::= MScGeoLoc.switch.modify(_.withOutScSwitch)
 
-            val (clearWatchersFxOpt, v2) = GeoLocAh.doDisable(v1, isHard = true, withException = m.error)
-            val fx = (notifyOthersFx :: clearWatchersFxOpt.toList)
+            val v1 = _modAccMerge
+
+            val (clearWatchersFxOpt, v2) = GeoLocAh.doDisable(
+              v0 = v1,
+              isHard = true,
+              withException = m.error,
+            )
+            val fx = (fxAcc :: clearWatchersFxOpt.toList)
               .mergeEffects
               .get
             updated( v2, fx )
@@ -351,27 +382,161 @@ class GeoLocAh[M](
             val wa2 = MGeoLocWatcher.lastPos
               .modify(_.fail(m.error))(watcher0)
 
-            val v2 = (
+            modAccF ::= (
               MScGeoLoc.watchers
                 .modify( _ + (m.glType -> wa2) ) andThen
               MScGeoLoc.switch
                 .modify(_.withOutScSwitch)
-            )(v0)
+            )
+            val v2 = _modAccMerge
 
             if (v2.switch.onOff.isPending) {
-              val isOnOff2 = v2.switch.onOff getOrElse true
+              val lens = MScGeoLoc.switch
+                .composeLens(MGeoLocSwitchS.onOff)
+              val isOnOff2 = lens.get(v2) getOrElse[Boolean] true
 
               val onOff2 = FailedStale(isOnOff2, m.error)
-              val v3 = MScGeoLoc.switch
-                .composeLens(MGeoLocSwitchS.onOff)
-                .set(onOff2)(v2)
-              updated(v3, notifyOthersFx)
+              val v3 = (lens set onOff2)(v2)
+              updated(v3, fxAcc)
             } else {
-              updatedSilent(v2, notifyOthersFx)
+              updatedSilent(v2, fxAcc)
             }
           }
         }
 
+
+    // Вызов функции локации внутри Leaflet, но вместо API произошла переброска в текущий circuit.
+    case m: GlLeafletApiLocate =>
+      val v0 = value
+      m.locateOpts.fold {
+        // Выключения подписки на геолокацию.
+        if (v0.leafletLoc.isEmpty) {
+          noChange
+        } else {
+          val v2 = (MScGeoLoc.leafletLoc set None)(v0)
+          updatedSilent(v2)
+        }
+
+      } { leafletLocateOpts =>
+        // Запрашивается включение подписки на геолокацию.
+        var fxAcc = List.empty[Effect]
+
+        // Если есть текущая геолокация, то вернуть её сразу же:
+        for ( (_, geoLoc) <- v0.currentLocation)
+          fxAcc ::= _leafletOnLocationFx( leafletLocateOpts, geoLoc )
+
+        // Если геолокация выключена, то надо её включить.
+        if (!(v0.switch.onOff contains[Boolean] true))
+          fxAcc ::= GeoLocOnOff( enabled = true, isHard = false ).toEffectPure
+
+        // Если задан timeout, то запустить таймер.
+        val timeoutNeedOpt = for {
+          timeoutMs <- leafletLocateOpts.locateOpts.timeout.toOption
+        } yield {
+          Need {
+            DomQuick.timeoutPromiseT( timeoutMs )( GlLeafletApiLocateTimeout )
+          }
+        }
+        for (timeoutNeed <- timeoutNeedOpt)
+          fxAcc ::= Effect( timeoutNeed.value.fut )
+
+        val v2Opt = if (v0.currentLocation.nonEmpty) {
+          // Закрыть старый таймаут, если есть.
+          for (fx <- _cancelLeafletTimeout(v0.leafletLoc))
+            fxAcc ::= fx
+
+          val v2 = (MScGeoLoc.leafletLoc set Some(
+            MGlSourceS(
+              args            = leafletLocateOpts,
+              timeoutId       = timeoutNeedOpt
+                .map( need => () => need.value.timerId ),
+            )
+          ))(v0)
+          Some( v2 )
+
+        } else if (v0.leafletLoc.nonEmpty) {
+          val v2 = (MScGeoLoc.leafletLoc set None)(v0)
+          Some( v2 )
+
+        } else {
+          None
+        }
+
+        ah.optionalResult( v2Opt, fxAcc.mergeEffects, silent = true )
+      }
+
+
+    case GlLeafletApiLocateTimeout =>
+      val v0 = value
+      (for {
+        glSrcS <- v0.leafletLoc
+      } yield {
+        v0.currentLocation.fold {
+          // Отправить ошибку по таймауту:
+          val locErrorFx = Effect.action {
+            val posErr = new dom2.PositionError {
+              override val code = PositionError.TIMEOUT
+              override val message = "Timeout"
+            }
+            glSrcS.args.onLocError( posErr )
+            DoNothing
+          }
+
+          // Если watch, то подчистить данные по таймеру. Иначе - вычистить сразу всё.
+          val v2 = (MScGeoLoc.leafletLoc set None)(v0)
+          updatedSilent(v2, locErrorFx)
+
+        } { case (_, currLoc) =>
+          // Отправить текущее местоположение, если ещё не отправлено.
+          val fx = _leafletOnLocationFx( glSrcS.args, currLoc )
+          // Если !watch, то почистить состояние целиком. Иначе - снести только timeoutId.
+          val v2 = if (glSrcS.args.locateOpts.watch contains[Boolean] true) {
+            // Чистка только данных по таймеру.
+            MScGeoLoc.leafletLoc
+              .composeTraversal( Traversal.fromTraverse[Option, MGlSourceS] )
+              .composeLens( MGlSourceS.timeoutId )
+              .set( None )(v0)
+          } else {
+            // Без watch, поэтому просто чистим состояние целиком.
+            MScGeoLoc.leafletLoc.set( None )(v0)
+          }
+
+          updatedSilent(v2, fx)
+        }
+      })
+        .getOrElse( noChange )
+
+  }
+
+
+  /** Эффект переброса данных в leaflet функцию onLocation. */
+  private def _leafletOnLocationFx(lOpts: GlLeafletLocateArgs, geoLoc: MGeoLoc) = Effect.action {
+    val _coords = new Coordinates {
+      override val longitude = geoLoc.point.lon.toDouble
+      override val latitude = geoLoc.point.lat.toDouble
+      override val accuracy = geoLoc.accuracyOptM getOrElse 1000.0
+    }
+    val pos = new dom2.Position {
+      override val timestamp = js.Date.now()    // TODO Брать реальный timestamp, а не выдумывать на ходу.
+      override val coords = _coords
+    }
+    lOpts.onLocation( pos )
+    DoNothing
+  }
+
+
+  /** Эффект отмены таймаута. */
+  private def _cancelLeafletTimeout( leafletLocOpt: Option[MGlSourceS] ): Option[Effect] = {
+    // Закрыть старый таймаут, если есть.
+    for {
+      leafletLoc0 <- leafletLocOpt
+      timer0 <- leafletLoc0.timeoutId
+    } yield {
+      Effect.action {
+        DomQuick.clearTimeout( timer0() )
+        DoNothing
+      }
+    }
   }
 
 }

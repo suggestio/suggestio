@@ -1,6 +1,6 @@
 package react.leaflet.control
 
-import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
+import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateControlOptions}
 import react.leaflet.Context
 import japgolly.scalajs.react.{JsComponent, Children}
 
@@ -28,8 +28,8 @@ object LocateControlR {
 
 
 /** Рабочий (благодаря jsConstructor) прототип фасада ES6-класса LocateControl. */
-sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
-  extends MapControlR[LocateOptions](_props, _ctx)
+sealed class LocateControlC(_props: LocateControlOptions, _ctx: Context)
+  extends MapControlR[LocateControlOptions](_props, _ctx)
 {
 
   override type El_t = LocateControl
@@ -41,5 +41,5 @@ sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
 }
 
 
-trait LocateControlPropsR extends LocateOptions {
+trait LocateControlPropsR extends LocateControlOptions {
 }
