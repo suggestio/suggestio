@@ -45,6 +45,15 @@ object MScIndex {
     def isAnyPanelOpened: Boolean =
       scIndex.search.panel.opened || scIndex.menu.opened
 
+    def panelsOpened: Iterable[MScSideBar] = {
+      var acc = List.empty[MScSideBar]
+      if (scIndex.search.panel.opened)
+        acc ::= MScSideBars.Search
+      if (scIndex.menu.opened)
+        acc ::= MScSideBars.Menu
+      acc
+    }
+
     /** Первый запуск? */
     def isFirstRun: Boolean =
       scIndex.resp.isEmpty

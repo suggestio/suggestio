@@ -6,7 +6,9 @@ import cordova.plugins.fetch.CdvPluginFetch
 import diode.{Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
+import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.cordova.fetch.CdvFetchHttpResp
+import io.suggest.geo.GeoLocApi
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.session.MLogOutDia
@@ -90,7 +92,13 @@ class Sc3Module { outer =>
     wire[Sc3Circuit]
   }
   lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
-
+  lazy val preferGeoApi: Option[GeoLocApi] = {
+    Option.when( CordovaConstants.isCordovaPlatform() ) {
+      new CdvBgGeoLocApi(
+        getMessages = () => sc3Circuit.internalsInfoRW.value.commonReactCtx.messages,
+      )
+    }
+  }
 
   // React contexts
   lazy val muiThemeCtx = React.createContext[MuiTheme]( null )

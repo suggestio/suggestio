@@ -1151,9 +1151,12 @@ Add.beacon.to.account=Присоединить этот маячок к учёт
 To.control.beacons.need.login=Войдите в систему для доступа к функциями управления маячками.
 Parent.node=Родительский узел
 
-Logout.account=Выйти из учётной записи
+Logout.account=Выйти из учетной записи
 Are.you.sure.to.logout.account=Вы уверены, что хотите выйти из учётной записи?
 
 Mode=Режим
 Ad.adv.manage=Размещение карточки
+
+Bg.location=Текущее местоположение
+Bg.location.hint=Обнаружение предложений поблизости
 

@@ -487,9 +487,13 @@ object MsgCodes {
   val `Parent.node` = "Parent.node"
 
   val `Logout.account` = "Logout.account"
+  val `Logout` = "Logout"
   val `Are.you.sure.to.logout.account` = "Are.you.sure.to.logout.account"
 
   val `Mode` = "Mode"
   val `Ad.adv.manage` = "Ad.adv.manage"
+
+  val `Bg.location` = "Bg.location"
+  val `Bg.location.hint` = "Bg.location.hint"
 
 }

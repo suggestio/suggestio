@@ -2,17 +2,20 @@ package io.suggest.sc.c.dev
 
 import cordova.Cordova
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
-import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
+import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
 import io.suggest.ble.api.IBleBeaconsApi
+import io.suggest.common.empty.OptionUtil
 import io.suggest.event.DomEvents
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{HwBack, PauseOrResume, SetPlatformReady}
+import io.suggest.sc.m.{HwBack, MScRoot, PauseOrResume, SetPlatformReady}
 import io.suggest.log.Log
 import io.suggest.sc.m.inx.{MScSideBar, MScSideBars, SideBarOpenClose}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import io.suggest.spa.DiodeUtil.Implicits._
 import org.scalajs.dom
 import org.scalajs.dom.Event
 
@@ -166,11 +169,12 @@ object PlatformAh extends Log {
 
 /** Контроллер сигналов платформы. */
 class PlatformAh[M](
-                     modelRW    : ModelRW[M, MPlatformS]
+                     modelRW    : ModelRW[M, MPlatformS],
+                     rootRO     : ModelRO[MScRoot],
                    )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -182,7 +186,14 @@ class PlatformAh[M](
         noChange
       } else {
         val v2 = (isUsingNow_LENS set m.isScVisible)(v0)
-        updated(v2)
+
+        // Если сокрыие выдачи с открытой панелью, то скрыть панель:
+        var fxAcc = List.empty[Effect]
+        if (v0.isCordova && !m.isScVisible)
+          for (p <- rootRO().index.panelsOpened)
+            fxAcc ::= SideBarOpenClose( p, open = OptionUtil.SomeBool.someFalse ).toEffectPure
+
+        ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
       }
 
     // Сигнал о готовности платформы к работе.

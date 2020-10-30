@@ -58,6 +58,7 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
 import io.suggest.event.DomEvents
+import io.suggest.geo.GeoLocApi
 import io.suggest.id.login.LoginFormCircuit
 import io.suggest.id.login.c.session.{LogOutAh, SessionAh}
 import io.suggest.id.login.m.session.MLogOutDia
@@ -68,6 +69,7 @@ import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
+import io.suggest.sc.m.in.MScInternals.boot
 import io.suggest.sc.m.inx.save.{MIndexesRecent, MIndexesRecentOuter}
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.v.styl.ScCss
@@ -93,6 +95,7 @@ class Sc3Circuit(
                   sc3UniApi                 : IScUniApi,
                   scAppApi                  : IScAppApi,
                   csrfTokenApi              : ICsrfTokenApi,
+                  preferGeoApi              : Option[GeoLocApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
   extends CircuitLog[MScRoot]
@@ -413,12 +416,14 @@ class Sc3Circuit(
   )
 
   private val geoLocAh = new GeoLocAh(
-    dispatcher  = this,
-    modelRW     = scGeoLocRW
+    dispatcher   = this,
+    modelRW      = scGeoLocRW,
+    preferGeoApi = preferGeoApi,
   )
 
   private val platformAh = new PlatformAh(
-    modelRW = platformRW
+    modelRW = platformRW,
+    rootRO  = rootRW,
   )
 
   private[sc] val focusedAd = gridCoreRW.zoom(_.myFocusedAdOpt)
@@ -727,7 +732,14 @@ class Sc3Circuit(
     val plat = platformRW.value
     // TODO Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).
     val nextState = plat.isUsingNow
-    (plat.hasBle && plat.isReady) && {
+    (plat.hasBle &&
+      plat.isReady &&
+      // Нельзя запрашивать bluetooth до boot'а GeoLoc: BLE scan требует права ACCESS_FINE_LOCATION,
+      // приводя к проблеме http://source.suggest.io/sio/sio2/issues/5 , а вместе с
+      // плагином cdv-bg-geoloc - к какому-то зависону из-за facade.pause() в геолокации и StackOverflowError в
+      // ble-central-плагине при отстутствии прав на FINE_LOCATION.
+      bootRW().targets.isEmpty
+    ) && {
       Future {
         val msg = BtOnOff(
           isEnabled = nextState,
@@ -889,10 +901,30 @@ class Sc3Circuit(
     subscribe( mkLensZoomRO(platformRW, MPlatformS.isUsingNow) ) { isUsingNowProxy =>
       // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
       val isUsingNow = isUsingNowProxy.value
-      val bleIsToEnable = _dispatchBleBeaconerOnOff()
 
-      // Глушить фоновый GPS-мониторинг:
-      __dispatchGeoLocOnOff(isUsingNow)
+      // Подавляем управление геолокацией/bluetooth до окончания работы wzFirst, который только запрашивает разрешения на это.
+      val boot = bootRW()
+      if (boot.targets.isEmpty && (boot.wzFirstDone contains[Boolean] true)) {
+        val bleIsToEnable = _dispatchBleBeaconerOnOff()
+
+        // Глушить фоновый GPS-мониторинг:
+        __dispatchGeoLocOnOff(isUsingNow)
+
+        // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
+        if (
+          daemonSleepTimerAh.nonEmpty && (
+            isUsingNow match {
+              // включение: beaconer всегда выключен.
+              case true  => bleIsToEnable
+              // выключение
+              case false => (beaconerRW.value.isEnabled contains[Boolean] true)
+            }
+          )
+        ) {
+          // Если сокрытие и включён bluetooth-мониторинг, то перейти в background-режим.
+          this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
+        }
+      }
 
       // Если активация приложения, и есть отображаемые нотификации, то надо их затереть.
       if (isUsingNow && osNotifyRW.value.hasNotifications) {
@@ -900,21 +932,6 @@ class Sc3Circuit(
           val msg = CloseNotify(Nil)
           this.runEffectAction( msg )
         }
-      }
-
-      // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
-      if (
-        daemonSleepTimerAh.nonEmpty && (
-          isUsingNow match {
-            // включение: beaconer всегда выключен.
-            case true  => bleIsToEnable
-            // выключение
-            case false => (beaconerRW.value.isEnabled contains[Boolean] true)
-          }
-        )
-      ) {
-        // Если сокрытие и включён bluetooth-мониторинг, то перейти в background-режим.
-        this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
       }
 
       // В фоне не приходят события уведомления online/offline в cordova. TODO В браузере тоже надо пере-проверять?

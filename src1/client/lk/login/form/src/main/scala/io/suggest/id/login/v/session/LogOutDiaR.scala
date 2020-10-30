@@ -54,13 +54,13 @@ class LogOutDiaR(
       val platCss = platfromCss()
 
       val chs = crCtxP.consume { crCtx =>
-        val logoutAccountMsg = crCtx.messages( MsgCodes.`Logout.account` )
+
 
         React.Fragment(
           // Заголовок
           platformComponents.diaTitle( Nil )(
             platformComponents.diaTitleText(
-              logoutAccountMsg,
+              crCtx.messages( MsgCodes.`Logout.account` ),
             ),
           ),
 
@@ -127,17 +127,20 @@ class LogOutDiaR(
             ),
 
             // Кнопка подтверждения выхода
-            s.isPendingSomeC { isPendingSomeProxy =>
-              MuiButton(
-                new MuiButtonProps {
-                  override val size = MuiButtonSizes.large
-                  override val variant = MuiButtonVariants.text
-                  override val onClick = _onLogoutConfirmed
-                  override val disabled = isPendingSomeProxy.value.value
-                }
-              )(
-                logoutAccountMsg,
-              )
+            {
+              val logOutMsg = crCtx.messages( MsgCodes.`Logout` )
+              s.isPendingSomeC { isPendingSomeProxy =>
+                MuiButton(
+                  new MuiButtonProps {
+                    override val size = MuiButtonSizes.large
+                    override val variant = MuiButtonVariants.text
+                    override val onClick = _onLogoutConfirmed
+                    override val disabled = isPendingSomeProxy.value.value
+                  }
+                )(
+                  logOutMsg,
+                )
+              }
             },
 
           ),

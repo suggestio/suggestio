@@ -2,8 +2,9 @@ package io.suggest.cordova.background.geolocation
 
 import cordova.plugins.background.geolocation._
 import io.suggest.geo._
+import io.suggest.i18n.MsgCodes
 import io.suggest.log.Log
-import io.suggest.msg.ErrorMsgs
+import io.suggest.msg.{ErrorMsgs, Messages}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import japgolly.univeq._
@@ -19,7 +20,12 @@ import scala.util.Try
   * Created: 23.10.2020 11:57
   * Description: Реализация GeoLocApi поверх cordova-plugin-background-geolocation.
   */
-final class CdvBgGeoLocApi extends GeoLocApi with Log {
+final class CdvBgGeoLocApi(
+                            getMessages: () => Messages,
+                          )
+  extends GeoLocApi
+  with Log
+{
 
   override def underlying =
     Option.when( isAvailable() )( CdvBackgroundGeolocation )
@@ -81,39 +87,50 @@ final class CdvBgGeoLocApi extends GeoLocApi with Log {
     )
 
     // Запуск фонового мониторинга:
-    for {
-      _ <- currLocP.future
-      // Сконфигурировать фоновый мониторинг:
-      configFut = CdvBackgroundGeolocation.configureF(
-        new ConfigOptions {
-          // TODO Для background-геолокации задействовать DISTANCE_FILTER_PROVIDER
-          override val locationProvider = CdvBackgroundGeolocation.ACTIVITY_PROVIDER
+    if (options.watcher.watch) {
+      for {
+        _ <- currLocP.future
+        // Сконфигурировать фоновый мониторинг
+        messages = getMessages()
+        configFut = CdvBackgroundGeolocation.configureF(
+          new ConfigOptions {
+            // TODO Для background-геолокации задействовать DISTANCE_FILTER_PROVIDER
+            override val locationProvider = CdvBackgroundGeolocation.ACTIVITY_PROVIDER
 
-          // У приложения пока геолокация не работает в фоне.
-          override val startOnBoot = false
-          override val saveBatteryOnBackground = true
-          override val stopOnTerminate = true
-
-          override val desiredAccuracy = {
-            if (_isHighAccuracy) {
-              CdvBackgroundGeolocation.HIGH_ACCURACY
-            } else {
-              CdvBackgroundGeolocation.MEDIUM_ACCURACY
+            // У приложения пока геолокация не работает в фоне.
+            override val startOnBoot = false
+            override val saveBatteryOnBackground = true
+            override val stopOnTerminate = true
+            // TODO Не ясно, что с сервисом. Надо будет разобраться. Наверное, он нужен.
+            //override val startForeground = false
+            override val desiredAccuracy = {
+              if (_isHighAccuracy) {
+                CdvBackgroundGeolocation.HIGH_ACCURACY
+              } else {
+                CdvBackgroundGeolocation.MEDIUM_ACCURACY
+              }
             }
-          }
-          override val fastestInterval = _maxAgeMsU
+            override val fastestInterval = _maxAgeMsU
 
+            // Нотификация для geolocation-мониторинга в андройде.
+            override val notificationTitle = messages( MsgCodes.`Bg.location` )
+            override val notificationText = messages( MsgCodes.`Bg.location.hint` )
+            //override val notificationIconSmall = "res://ic_notification"
+          }
+        )
+        _ = {
+          CdvBackgroundGeolocation.onLocation( _onLocationF )
+          for (onErrorF <- _onErrorOptF)
+            CdvBackgroundGeolocation.onError( onErrorF )
         }
-      )
-      _ = {
-        CdvBackgroundGeolocation.onLocation( _onLocationF )
-        for (onErrorF <- _onErrorOptF)
-          CdvBackgroundGeolocation.onError( onErrorF )
+        _ <- configFut
+      } yield {
+        CdvBackgroundGeolocation.start()
+        js.undefined
       }
-      _ <- configFut
-    } yield {
-      CdvBackgroundGeolocation.start()
-      js.undefined
+
+    } else {
+      Future.successful( js.undefined )
     }
   }
 

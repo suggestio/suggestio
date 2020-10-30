@@ -1149,3 +1149,6 @@ Are.you.sure.to.logout.account=Are you sure to logout?
 Mode=Mode
 Ad.adv.manage=Advertise the card 
 
+Bg.location=Current location
+Bg.location.hint=Monitoring offers nearby
+

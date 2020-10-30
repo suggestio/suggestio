@@ -38,8 +38,10 @@ final case class GeoLocApiWatchOptions(
   *
   * @param highAccuracy Какие accuracy требуется получать?
   * @param maxAge Срок жизни.
+  * @param watch Продолжительный мониторинг?
   */
 final case class GeoLocWatcherInfo(
+                                    watch             : Boolean,
                                     highAccuracy      : Option[Boolean]       = None,
                                     maxAge            : Option[Duration]      = None,
                                   )

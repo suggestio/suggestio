@@ -126,7 +126,7 @@ final class SearchR(
             override val sidebar      = searchBarBody.rawNode
             override val onSetOpen    = _onSetOpenSearchSidebarF
             override val open         = searchOpenedSomeProxy.value.opened
-            override val transitions  = true
+            override val transitions  = mrootProxy.value.dev.platform.isUsingNow
             override val touch        = true
             override val pullRight    = true
             override val shadow       = true

@@ -6,6 +6,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
+import io.suggest.log.Log
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
@@ -30,6 +31,7 @@ import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 import react.leaflet.poly.{PolygonPropsR, PolygonR}
 import io.suggest.math.SimpleArithmetics._
+import io.suggest.msg.ErrorMsgs
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -41,7 +43,7 @@ import scala.scalajs.js.UndefOr
   * Created: 19.12.16 12:50
   * Description: Поддержка простенького react-компонента для кластера ресиверов на карте.
   */
-object RcvrMarkersR {
+object RcvrMarkersR extends Log {
 
   type Props_t = Pot[MGeoNodesResp]
   type Props = ModelProxy[Props_t]
@@ -82,6 +84,10 @@ object RcvrMarkersR {
     /** Рендер всей гео.карты. */
     def render(rcvrsGeoPotProxy: Props, children: PropsChildren): VdomElement = {
       rcvrsGeoPotProxy().toOption.whenDefinedEl { mRcvrsGeo =>
+        // Чтобы при проблемах не заваливать логи сотнями ошибок, нужен счётчик-заглушка,
+        // который говорит: сколько ещё максимум ошибок/проблем можно залоггировать:
+        var _logErrorsMax = 2
+
         // Собираем сложный итератор, который на выходе в элементах выдаёт два аккамулятора: маркеры и шейпы.
         val markersAndShapeComponents = (for {
           mnode <- mRcvrsGeo.nodes.iterator
@@ -177,10 +183,15 @@ object RcvrMarkersR {
                 val rc = PolygonR(opts)
                 ResTuple(_centerLL, rc :: Nil)
 
-              // TODO Реализовать рендер остальных шейпов. Сейчас они пока не нужны.
+              // Неподдерживаемый шейп. Используем обходные пути для рендера, но не допускаем исключений.
               case other =>
-                println("Unsupported geo-shape: " + other)
-                ???
+                if (_logErrorsMax > 0) {
+                  logger.warn( ErrorMsgs.GEO_JSON_GEOM_COORD_UNEXPECTED_ELEMENT, msg = (other.shapeType, _logErrorsMax) )
+                  _logErrorsMax -= 1
+                }
+                val centerGp = other.centerPoint getOrElse other.firstPoint
+                val centerLL = MapsUtil.geoPoint2LatLng( centerGp )
+                ResTuple( centerLL, Nil )
             }
           }
 

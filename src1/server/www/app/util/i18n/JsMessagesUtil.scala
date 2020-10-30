@@ -322,6 +322,7 @@ class JsMessagesUtil @Inject() (
       MC.`To.control.beacons.need.login` ::
       MC.`Mode` ::
       MC.`Ad.adv.manage` ::
+      MC.`Bg.location` :: MC.`Bg.location.hint` ::
       Nil
 
     (
@@ -511,7 +512,7 @@ class JsMessagesUtil @Inject() (
     MC.`Password.change` ::
     MC.`New.password.saved` ::
     MC.`Inacceptable.password.format` ::
-    MC.`Logout.account` ::
+    MC.`Logout.account` :: MC.`Logout` ::
     MC.`Are.you.sure.to.logout.account` ::
     MC.`Input.text.from.picture` ::
     Nil

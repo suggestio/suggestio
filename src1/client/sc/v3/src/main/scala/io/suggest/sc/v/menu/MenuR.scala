@@ -150,7 +150,7 @@ class MenuR(
             override val sidebar      = menuSideBarBody.rawNode
             override val pullRight    = false
             override val touch        = true
-            override val transitions  = true
+            override val transitions  = propsProxy.value.dev.platform.isUsingNow
             override val open         = menuOpenedSomeProxy.value.value
             override val onSetOpen    = _onSetOpenMenuSidebarF
             override val shadow       = true

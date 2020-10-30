@@ -25,10 +25,12 @@ object CordovaDiagonsticPermissionUtil {
         message =>
           geoLocP.failure( new RuntimeException(message) )
       )
-      for (res <- geoLocP.future) yield
+      for (res <- geoLocP.future) yield {
         CdpGeoLocPermData( res )
+      }
     } catch {
       case ex: Throwable =>
+        println(ex)
         Future.failed( ex )
     }
   }

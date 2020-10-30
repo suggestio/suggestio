@@ -5,6 +5,7 @@ import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.ble.beaconer.BtOnOff
 import io.suggest.common.empty.OptionUtil
+import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MPlatformS, MScreenInfo}
 import io.suggest.geo.GeoLocUtilJs
 import io.suggest.msg.ErrorMsgs
@@ -578,7 +579,8 @@ class WzFirstDiaAh[M](
     // Геолокация
     PermissionSpec(
       phase     = MWzPhases.GeoLocPerm,
-      supported = GeoLocUtilJs.envHasGeoLoc(),
+      // Для cordova нет смысла проверять наличие плагина, который всегда есть.
+      supported = CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc(),
       askPermF  = {
         val htmlAskPermF = { () =>
           IPermissionState.maybeKnownF(h5PermApiAvail)( Html5PermissionApi.getPermissionState( PermissionName.geolocation ) )

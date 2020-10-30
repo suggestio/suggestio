@@ -3,8 +3,6 @@ package io.suggest.sc.c.dev
 import diode.data.{FailedStale, Pot, Ready}
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.cordova.CordovaConstants
-import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.geo._
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MGeoLocSwitchS, MGeoLocWatcher, MGlSourceS, MScGeoLoc, Suppressor}
@@ -36,8 +34,9 @@ import scala.util.Success
   * Работает в фоне, обновляя состояние, поэтому везде тут updatedSilent().
   */
 class GeoLocAh[M](
-                   dispatcher  : Dispatcher,
-                   modelRW     : ModelRW[M, MScGeoLoc]
+                   dispatcher           : Dispatcher,
+                   modelRW              : ModelRW[M, MScGeoLoc],
+                   preferGeoApi         : Option[GeoLocApi],
                  )
   extends ActionHandler( modelRW )
   with Log
@@ -59,7 +58,7 @@ class GeoLocAh[M](
       .toMap
   }
 
-  private def startWatchFx(wTypes: Iterable[GeoLocType], glApi: GeoLocApi) = {
+  private def _geoLocateFx(wTypes: Iterable[GeoLocType], glApi: GeoLocApi, watch: Boolean) = {
     val maxAgeSome = Some( 20.seconds )
     Option.when(wTypes.nonEmpty)( Effect {
       val glType: GeoLocType = GeoLocTypes.Gps
@@ -76,6 +75,7 @@ class GeoLocAh[M](
             watcher = GeoLocWatcherInfo(
               highAccuracy  = Some( glType.isHighAccuracy ),
               maxAge        = maxAgeSome,
+              watch         = watch,
             ),
           )
         )
@@ -145,7 +145,7 @@ class GeoLocAh[M](
               case (wtype, _) =>
                 wtype.precision <= loc.glType.precision
             }
-            val (fxOpt, watchers2) = GeoLocAh.clearWatchers( ws4clean )
+            val (fxOpt, watchers2) = clearWatchers( ws4clean )
             fxOpt.foreach( fxAcc ::= _ )
             val watchers2Iter =  wsKeep ++ watchers2
 
@@ -263,7 +263,7 @@ class GeoLocAh[M](
         } {
           // Включение геолокации:
           case true =>
-            GeoLocAh.GEO_LOC_API.fold {
+            GEO_LOC_API.fold {
               // should never happen(?)
               logger.warn( ErrorMsgs.GEO_LOCATION_FAILED, msg = m )
               effectOnly(glPubErrFx)
@@ -276,7 +276,7 @@ class GeoLocAh[M](
 
               val watchers2 = pendingWatch( needWatchers0, v0.watchers )
               val needWatchers2 = watchers2.keys
-              val startFxOpt = startWatchFx( needWatchers2, geoApi )
+              val startFxOpt = _geoLocateFx( needWatchers2, geoApi, true )
 
               var switchModAccF = MGeoLocSwitchS.onOff
                 .modify( _.ready(true).pending() )
@@ -293,7 +293,7 @@ class GeoLocAh[M](
 
           // Заглушить геолокацию и suppressor.
           case false =>
-            val (fxOpt, v2) = GeoLocAh.doDisable(v0, m.isHard)
+            val (fxOpt, v2) = _doDisableFx(v0, m.isHard)
 
             // TODO Нужна поддержка частичной остановки watcher'ов. Пока assert для защиты от ошибочного использования нереализованной частичной остановки.
             assert( m.onlyTypes.isEmpty )
@@ -309,12 +309,12 @@ class GeoLocAh[M](
       (for {
         s <- v0.suppressor
         if s.generation ==* m.generation
-        glApi <- GeoLocAh.GEO_LOC_API
+        glApi <- GEO_LOC_API
       } yield {
         val prevGlTypes0 = s.minWatch.allPrevious
         val watchers2 = pendingWatch( prevGlTypes0, v0.watchers )
         val prevGlTypes2 = watchers2.keys
-        val startWatchFxOpt = startWatchFx( prevGlTypes2, glApi )
+        val startWatchFxOpt = _geoLocateFx( prevGlTypes2, glApi, watch = true )
 
         val v2 = v0.copy(
           watchers    = v0.watchers ++ watchers2,
@@ -364,7 +364,7 @@ class GeoLocAh[M](
 
             val v1 = _modAccMerge
 
-            val (clearWatchersFxOpt, v2) = GeoLocAh.doDisable(
+            val (clearWatchersFxOpt, v2) = _doDisableFx(
               v0 = v1,
               isHard = true,
               withException = m.error,
@@ -426,8 +426,16 @@ class GeoLocAh[M](
           fxAcc ::= _leafletOnLocationFx( leafletLocateOpts, geoLoc )
 
         // Если геолокация выключена, то надо её включить.
-        if (!(v0.switch.onOff contains[Boolean] true))
+        if (!(v0.switch.onOff contains[Boolean] true)) {
           fxAcc ::= GeoLocOnOff( enabled = true, isHard = false ).toEffectPure
+        } else for {
+          glApi <- GEO_LOC_API
+          fx <- _geoLocateFx(
+            wTypes = GeoLocTypes.Gps :: Nil,
+            glApi  = glApi,
+            watch  = false,
+          )
+        } fxAcc ::= fx
 
         // Если задан timeout, то запустить таймер.
         val timeoutNeedOpt = for {
@@ -539,21 +547,17 @@ class GeoLocAh[M](
     }
   }
 
-}
-
-
-/** Статическая утиль для контроллера [[GeoLocAh]]. */
-object GeoLocAh {
 
   /** Интерфейс API для геолокации. */
   private lazy val GEO_LOC_API: Option[GeoLocApi] = {
-    var apis: LazyList[GeoLocApi] =
-      new Html5GeoLocApi #::
-      LazyList.empty
+    var apis = LazyList.cons[GeoLocApi]( new Html5GeoLocApi, LazyList.empty )
 
-    // TODO Что сделать с deviceReady? API плагина доступно только после deviceReady.
-    if (CordovaConstants.isCordovaPlatform())
-      apis #::= new CdvBgGeoLocApi
+    // Если в конструкторе определено иное API для геолокации, то его - в начало списка кандидатов.
+    for (glApi <- preferGeoApi) {
+      // Используем prepended, т.к. голый инстанс API не требуется заворачивать в функцию.
+      val apis2 = apis.prepended( glApi )
+      apis = apis2
+    }
 
     apis.find( _.isAvailable() )
   }
@@ -611,7 +615,7 @@ object GeoLocAh {
 
 
   /** Выполнить действия выключения геолокации. */
-  private def doDisable(v0: MScGeoLoc, isHard: Boolean, withException: Exception = null) = {
+  private def _doDisableFx(v0: MScGeoLoc, isHard: Boolean, withException: Exception = null) = {
     for (s <- v0.suppressor)
       DomQuick.clearTimeout(s.timerId)
 

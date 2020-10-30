@@ -52,7 +52,9 @@ final case class PlatformCssStatic(
           justifyContent.center,
         )
       } else {
-        style()
+        style(
+          width( 100.%% )
+        )
       }
     }
 
