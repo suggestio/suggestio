@@ -112,19 +112,9 @@ class CspUtil @Inject() (
   /** Готовые кастомные CSP-политики. */
   object CustomPolicies {
 
-    /** CSP-заголовок сайта выдачи. Выдача нуждается в доступе к tile'ам карты. */
-    def PageWithMapboxGl = mkCustomPolicyHdr {
-      val mbHost = "https://*.mapbox.com"
-      val blob = Csp.Sources.BLOB
-
-      (
-        CspPolicy.defaultSrc.modify(_ + blob) andThen
-        CspPolicy.connectSrc.modify(_ + mbHost) andThen
-        CspPolicy.scriptSrc.modify(_ + blob + Csp.Sources.UNSAFE_EVAL) andThen
-        // Хз, надо ли imgSrc, т.к. она векторная и через XHR свои тайлы получает.
-        CspPolicy.imgSrc.modify( _ + mbHost + blob )
-      )
-    }
+    def Captcha = mkCustomPolicyHdr(
+      CspPolicy.imgSrc.modify( _ + Csp.Sources.BLOB )
+    )
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
     def PageWithOsmLeaflet = mkCustomPolicyHdr( CspPolicy.allowOsmLeaflet )

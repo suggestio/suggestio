@@ -29,7 +29,7 @@ class Csrf @Inject() (
     HeaderNames.VARY -> "Set-Cookie,Cookie" ::
       // Cache-Control подавляет токен внутри CSRFAddToken.
       // Но только если хидер НЕ пустой, либо НЕ содержит no-cache.
-      HeaderNames.CACHE_CONTROL -> "private, no-cache, must-revalidate" ::
+      HeaderNames.CACHE_CONTROL -> "private, no-cache, no-store" ::
       Nil
   }
 

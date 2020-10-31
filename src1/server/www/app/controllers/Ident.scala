@@ -144,13 +144,6 @@ final class Ident @Inject() (
   // - Login v2 ------------------------------------------------------------------------
   // -----------------------------------------------------------------------------------
 
-  /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */
-  private def CSP_HDR_OPT: Option[(String, String)] = {
-    cspUtil.mkCustomPolicyHdr(
-      CspPolicy.imgSrc.modify( _ + Csp.Sources.BLOB )
-    )
-  }
-
   /** Страница с отдельной формой логина по имени-паролю.
     * @param lfp Парсится на стороне сервера.
     * @return Страница с логином.
@@ -163,7 +156,7 @@ final class Ident @Inject() (
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
       )
       Ok( lkLoginTpl() )
-        .withCspHeader( CSP_HDR_OPT )
+        .withCspHeader( cspUtil.CustomPolicies.Captcha )
     }
   }
 
@@ -300,7 +293,7 @@ final class Ident @Inject() (
       .withHeaders(
         EXPIRES       -> "0",
         PRAGMA        -> "no-cache",
-        CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
+        CACHE_CONTROL -> "no-store, no-cache, no-store",
       )
   }
   private def _tokenResp(token: String): Result =

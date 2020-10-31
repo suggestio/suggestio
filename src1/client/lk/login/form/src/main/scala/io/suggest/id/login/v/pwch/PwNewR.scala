@@ -3,6 +3,7 @@ package io.suggest.id.login.v.pwch
 import com.materialui.{MuiFormGroup, MuiFormGroupProps}
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.pwch.MPwNew
@@ -64,7 +65,7 @@ class PwNewR (
             state       = p.pwNew.password1,
             hasError    = p.pwNew.isPasswordsErrorShown,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = false) ),
-            isPassword  = !p.pwNew.pwVisible,
+            inputType   = HtmlConstants.Input.maybePassword( !p.pwNew.pwVisible ),
             inputName   = IdentConst.Login.PASSWORD_FN,    // По идее, вообще необязательно. По идее - "password"
             label       =
               if (p.isNew) MsgCodes.`Type.new.password`
@@ -82,7 +83,7 @@ class PwNewR (
             state       = p.pwNew.password2,
             hasError    = p.pwNew.isPasswordsErrorShown,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = true) ),
-            isPassword  = !p.pwNew.pwVisible,
+            inputType   = HtmlConstants.Input.maybePassword( !p.pwNew.pwVisible ),
             inputName   = "",
             label       =
               if (p.isNew) MsgCodes.`Confirm.new.password`

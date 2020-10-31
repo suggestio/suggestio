@@ -66,7 +66,9 @@ final class LoginFormCircuit(
   private[login] val reg4SetPasswordRW  = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
 
 
-  val captchaApi: ICaptchaApi = new CaptchaApiHttp
+  val captchaApi: ICaptchaApi = new CaptchaApiHttp(
+    httpConfig = diConfig.httpClientConfig,
+  )
 
   private val formAh = new FormAh(
     modelRW   = overallRW,

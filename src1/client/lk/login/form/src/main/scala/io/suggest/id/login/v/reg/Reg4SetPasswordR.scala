@@ -3,6 +3,7 @@ package io.suggest.id.login.v.reg
 import com.materialui.{MuiFormGroup, MuiFormGroupProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.MLoginRootS
@@ -48,7 +49,8 @@ class Reg4SetPasswordR(
               state       = p.reg.s0Creds.phone,
               hasError    = false,
               mkAction    = None,
-              isPassword  = false,
+              inputType   = HtmlConstants.Input.text,
+              autoFocus   = false,
               inputName   = IdentConst.Login.NAME_FN,    // По идее, вообще необязательно. По идее - "password"
               label       = MsgCodes.`Username`,
               placeHolder = "",

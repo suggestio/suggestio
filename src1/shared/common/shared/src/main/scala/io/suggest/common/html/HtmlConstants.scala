@@ -85,6 +85,9 @@ object HtmlConstants {
     val range = "range"
     val password = "password"
     val number = "number"
+    val tel = "tel"
+    def maybePassword(isPassword: Boolean): String =
+      if (isPassword) password else text
   }
 
 

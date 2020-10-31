@@ -34,7 +34,8 @@ class TextFieldR(
                        state        : MTextFieldS,
                        hasError     : Boolean,
                        mkAction     : Option[String => DAction],
-                       isPassword   : Boolean,
+                       inputType    : String,
+                       autoFocus    : Boolean = false,
                        inputName    : String,
                        label        : String,
                        placeHolder  : String,
@@ -49,13 +50,14 @@ class TextFieldR(
       (a.disabled        ==* b.disabled) &&
       (a.hasError        ==* b.hasError) &&
       (a.mkAction.isEmpty ==* b.mkAction.isEmpty) &&
-      (a.isPassword      ==* b.isPassword) &&
       (a.inputName      ===* b.inputName) &&
       (a.label          ===* b.label) &&
       (a.placeHolder    ===* b.placeHolder) &&
       (a.onBlur         ===* b.onBlur) &&
       (a.required        ==* b.required) &&
-      (a.visibilityChange.isEmpty ==* b.visibilityChange.isEmpty)
+      (a.visibilityChange.isEmpty ==* b.visibilityChange.isEmpty) &&
+      (a.autoFocus      ==* b.autoFocus) &&
+      (a.inputType      ===* b.inputType)
     }
   }
 
@@ -74,7 +76,7 @@ class TextFieldR(
         val p = propsProxy.value
         p.visibilityChange
           .fold[Callback]( Callback.empty ) { visibilityChangeF =>
-            val isVisibleNext = p.isPassword
+            val isVisibleNext = p.inputType ==* HtmlConstants.Input.password
             propsProxy.dispatchCB( visibilityChangeF(isVisibleNext) )
           }
       }
@@ -123,7 +125,7 @@ class TextFieldR(
                     override val size = MuiButtonSizes.small
                   }
                 )(
-                  (if (p.isPassword)
+                  (if (p.inputType ==* HtmlConstants.Input.password)
                     Mui.SvgIcons.Visibility
                   else
                     Mui.SvgIcons.VisibilityOff)()(),
@@ -140,16 +142,13 @@ class TextFieldR(
                 override val value = js.defined {
                   p.state.value
                 }
-                override val `type` = {
-                  if (p.isPassword) HtmlConstants.Input.password
-                  else HtmlConstants.Input.text
-                }
+                override val `type`       = p.inputType
                 override val name         = p.inputName
                 override val onChange     = _onChangeUndef
                 override val label        = crCtx.messages( p.label )
                 override val placeholder  = crCtx.messages( p.placeHolder )
                 override val required     = p.required
-                override val autoFocus    = !p.isPassword
+                override val autoFocus    = p.autoFocus
                 override val fullWidth    = true
                 override val classes      = mfcCss
                 override val error        = p.hasError || !p.state.isValid

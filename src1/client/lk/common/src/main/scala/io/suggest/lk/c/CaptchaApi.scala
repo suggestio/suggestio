@@ -5,7 +5,7 @@ import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
-import io.suggest.proto.http.model.{HttpReq, HttpReqData, HttpRespTypes}
+import io.suggest.proto.http.model.{HttpClientConfig, HttpReq, HttpReqData, HttpRespTypes}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -29,7 +29,7 @@ trait ICaptchaApi {
 }
 
 /** Реализация CaptchaApi поверх http. */
-class CaptchaApiHttp extends ICaptchaApi {
+class CaptchaApiHttp( httpConfig: () => HttpClientConfig ) extends ICaptchaApi {
 
   override def getCaptcha(token: String): Future[MCaptchaData] = {
     for {
@@ -48,7 +48,8 @@ class CaptchaApiHttp extends ICaptchaApi {
             timeoutMs = Some( 10.seconds.toMillis.toInt ),
             cache = MHttpCacheInfo(
               policy = MHttpCachingPolicies.NetworkOnly
-            )
+            ),
+            config = httpConfig(),
           )
         )
       )

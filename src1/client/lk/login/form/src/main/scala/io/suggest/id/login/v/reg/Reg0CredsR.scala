@@ -4,6 +4,7 @@ import com.materialui.{Mui, MuiColorTypes, MuiFormGroup, MuiFormGroupProps, MuiI
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.reg.step0.MReg0Creds
@@ -74,25 +75,6 @@ class Reg0CredsR(
           }
         },
 
-        // Поле ввода email:
-        {
-          val regEmailBlurSome = Some( RegEmailBlur )
-          val mkActionSome = Some( RegEmailEdit.apply _ )
-          p.wrap { props =>
-            textFieldR.PropsVal(
-              state       = props.email,
-              hasError    = false,
-              mkAction    = mkActionSome,
-              isPassword  = false,
-              inputName   = IdentConst.Login.NAME_FN,
-              label       = MsgCodes.`Your.email.addr`,
-              onBlur      = regEmailBlurSome,
-              placeHolder = MsgCodes.`Email.example`,
-            )
-          }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
-        },
-
-
         // Поле ввода номера телефона:
         {
           val regPhoneBlurSome = Some( RegPhoneBlur )
@@ -102,11 +84,31 @@ class Reg0CredsR(
               state       = props.phone,
               hasError    = false,
               mkAction    = mkActionSome,
-              isPassword  = false,
+              inputType   = HtmlConstants.Input.tel,
+              autoFocus   = true,
               inputName   = IdentConst.Login.PHONE_FN,
               label       = MsgCodes.`Mobile.phone.number`,
               placeHolder = MsgCodes.`Phone.number.example`,
               onBlur      = regPhoneBlurSome,
+            )
+          }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
+        },
+
+        // Поле ввода email:
+        {
+          val regEmailBlurSome = Some( RegEmailBlur )
+          val mkActionSome = Some( RegEmailEdit.apply _ )
+          p.wrap { props =>
+            textFieldR.PropsVal(
+              state       = props.email,
+              hasError    = false,
+              mkAction    = mkActionSome,
+              inputType   = HtmlConstants.Input.text,
+              autoFocus   = false,
+              inputName   = IdentConst.Login.NAME_FN,
+              label       = MsgCodes.`Your.email.addr`,
+              onBlur      = regEmailBlurSome,
+              placeHolder = MsgCodes.`Email.example`,
             )
           }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
         },

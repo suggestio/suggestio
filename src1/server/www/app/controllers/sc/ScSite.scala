@@ -281,7 +281,9 @@ final class ScSite @Inject() (
     CspPolicy.jsUnsafeInline andThen
     CspPolicy.styleUnsafeInline andThen
     // data: для fonts. Почему-то валятся csp-отчёты о необходимости этого в выдаче.
-    CspPolicy.fontSrc.modify(_ + Csp.Sources.DATA)
+    CspPolicy.fontSrc.modify(_ + Csp.Sources.DATA) andThen
+    // Captcha требует blob'а. TODO Дедублицировать строку ниже с CspUtil.CustomPolicies.Captcha
+    CspPolicy.imgSrc.modify(_ + Csp.Sources.BLOB)
   )
 
 
