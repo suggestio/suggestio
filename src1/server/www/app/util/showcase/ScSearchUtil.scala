@@ -124,6 +124,7 @@ final class ScSearchUtil {
       override val limit = qs.search.limit getOrElse LIMIT_DFLT
       override val offset = qs.search.offset getOrElse 0
       override val nodeTypes = _nodeTypes4search
+      override def isEnabled = OptionUtil.SomeBool.someTrue
     }
 
     Future.successful(r)
