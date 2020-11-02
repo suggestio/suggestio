@@ -137,5 +137,13 @@
       "ICON": "@mipmap/icon",
       "SMALL_ICON": "@mipmap/icon"
     }
+  },
+  "cordova-plugin-inappbrowser": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-inappbrowser@4.0.0"
+    },
+    "is_top_level": true,
+    "variables": {}
   }
 }

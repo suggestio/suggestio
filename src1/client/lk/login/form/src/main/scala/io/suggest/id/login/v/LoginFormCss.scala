@@ -82,4 +82,16 @@ case class LoginFormCss() extends StyleSheet.Inline {
     minHeight( 360.px )
   )
 
+  /** Высота 100% */
+  val h100 = style(
+    height( 100.%% ),
+  )
+
+  val stepperContent = style(
+    display.flex,
+    flexDirection.column,
+    justifyContent.spaceBetween,
+    flexGrow( 50 ),
+  )
+
 }

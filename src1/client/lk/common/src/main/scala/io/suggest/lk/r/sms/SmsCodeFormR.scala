@@ -82,7 +82,7 @@ class SmsCodeFormR(
                 v.typed.value: MuiInputValue_t
               }
               override val label        = labelText.rawNode
-              override val `type`       = HtmlConstants.Input.text
+              override val `type`       = HtmlConstants.Input.tel
               override val error        = !v.typed.isValid
               override val onBlur       = _onInputBlurCbF
               override val disabled     = v.disabled

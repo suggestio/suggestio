@@ -78,7 +78,7 @@ class Reg0CredsR(
         // Поле ввода номера телефона:
         {
           val regPhoneBlurSome = Some( RegPhoneBlur )
-          val mkActionSome = Some( RegPhoneEdit.apply _ )
+          val mkActionSome = Some( RegPhoneEdit )
           p.wrap { props =>
             textFieldR.PropsVal(
               state       = props.phone,
@@ -97,13 +97,13 @@ class Reg0CredsR(
         // Поле ввода email:
         {
           val regEmailBlurSome = Some( RegEmailBlur )
-          val mkActionSome = Some( RegEmailEdit.apply _ )
+          val mkActionSome = Some( RegEmailEdit )
           p.wrap { props =>
             textFieldR.PropsVal(
               state       = props.email,
               hasError    = false,
               mkAction    = mkActionSome,
-              inputType   = HtmlConstants.Input.text,
+              inputType   = HtmlConstants.Input.email,
               autoFocus   = false,
               inputName   = IdentConst.Login.NAME_FN,
               label       = MsgCodes.`Your.email.addr`,

@@ -88,7 +88,7 @@ class CaptchaFormR(
                 captchaS.typed.value: MuiInputValue_t
               }
               override val label        = placeHolderText.rawNode
-              override val `type`       = HtmlConstants.Input.text
+              override val `type`       = HtmlConstants.Input.tel
               override val error        = !captchaS.typed.isValid
               override val onBlur       = _onInputBlurCbF
               override val disabled     = captchaS.disabled

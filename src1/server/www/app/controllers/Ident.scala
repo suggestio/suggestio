@@ -26,7 +26,6 @@ import io.suggest.n2.node.common.MNodeCommon
 import io.suggest.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.csp.{Csp, CspPolicy}
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{CustomTtl, LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.spa.SioPages
@@ -103,10 +102,6 @@ final class Ident @Inject() (
   import esModel.api._
   import mPersonIdentModel.api._
   import slick.profile.api._
-
-
-  /** Длина смс-кодов (кол-во цифр). */
-  def SMS_CODE_LEN = 5
 
 
   /**
@@ -188,7 +183,7 @@ final class Ident @Inject() (
 
             } else if (personsFound.lengthCompare(1) > 0) {
               // Сразу несколько юзеров. Это может быть какая-то ошибка или уязвимость.
-              val ex = new IllegalStateException(s"$logPrefix Many nodes with same username: internal data-defect or vulnerability. Giving up.")
+              val ex = new IllegalStateException(s"$logPrefix Many nodes with same username: internal data-defect or vulnerability: [${personsFound.iterator.flatMap(_.id).mkString(", ")}] Giving up.")
               Future.failed( ex )
 
             } else {
@@ -257,7 +252,7 @@ final class Ident @Inject() (
   private def _sendIdCodeSms(phoneNumber: String, smsCode: String, ctx: Context) = {
     smsSendUtil.smsSend(
       MSmsSend(
-        msgs = Map(
+        msgs = Map.empty + (
           phoneNumber -> (ctx.messages( MsgCodes.`Registration.code`, smsCode ) :: Nil)
         ),
         ttl       = Some( 10.minutes ),
@@ -327,6 +322,7 @@ final class Ident @Inject() (
             // Проверить валидность номера телефона.
             .filterOrElse(
               {creds1 =>
+                // TODO Объединить с normalize phone number, т.к. в обоих случаях происходит просто отсев нецифровых символов.
                 Validators.isPhoneValid( creds1.phone )
               },
               {

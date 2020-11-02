@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.reg
 
-import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiMobileStepper, MuiMobileStepperClasses, MuiMobileStepperProps, MuiMobileStepperVariants}
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiFormGroup, MuiFormGroupClasses, MuiFormGroupProps, MuiMobileStepper, MuiMobileStepperClasses, MuiMobileStepperProps, MuiMobileStepperVariants}
 import diode.{FastEq, UseValueEq}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -19,8 +19,10 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaC
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -148,71 +150,83 @@ class RegR(
         )
       }
 
-      val formContent = MuiFormControl(
-        new MuiFormControlProps {
-          override val component = js.defined( <.fieldset.name )
-        }
-      )(
-
-        MuiFormGroup(
-          new MuiFormGroupProps {
-            override val row = true
+      loginFormCssCtxP.consume { loginFormCssCtx =>
+        val formContent = MuiFormControl {
+          val css = new MuiFormControlClasses {
+            override val root = loginFormCssCtx.h100.htmlClass
           }
-        )(
+          new MuiFormControlProps {
+            override val component = js.defined( <.fieldset.name )
+            override val classes = css
+          }
+        } (
 
-          // Прогресс-бар ожидания...
-          s.isSubmitPendingSomeC { loginProgressR.component.apply },
-
-          // Вся пошаговая рега здесь
-          loginFormCssCtxP.consume { loginFormCssCtx =>
-            // Стили для переключателя шагов
-            val stepperCss = new MuiMobileStepperClasses {
-              override val root = loginFormCssCtx.regStepper.htmlClass
+          MuiFormGroup {
+            val css = new MuiFormGroupClasses {
+              override val root = loginFormCssCtx.h100.htmlClass
             }
-
-            s.activeStepC { activeStepProxy =>
-              val _activeStep = activeStepProxy.value
-
-              <.div(
-                _activeStep match {
-                  case MRegSteps.S0Creds        => step0Creds
-                  case MRegSteps.S1Captcha      => stepCaptcha
-                  case MRegSteps.S2SmsCode      => stepSmsCode
-                  case MRegSteps.S3CheckBoxes   => stepCheckBoxes
-                  case MRegSteps.S4SetPassword  => stepSetPassword
-                },
-
-                MuiMobileStepper.component(
-                  new MuiMobileStepperProps {
-                    override val steps      = MRegSteps.values.length
-                    override val activeStep = _activeStep.value
-                    override val variant    = MuiMobileStepperVariants.dots
-                    override val backButton = backBtn.rawNode
-                    override val nextButton = nextBtn.rawNode
-                    override val classes    = stepperCss
-                  }
-                ),
-              )
-
+            new MuiFormGroupProps {
+              override val row = false
+              override val classes = css
             }
-          },
+          } (
 
+            {
+              // Вся пошаговая рега здесь
+              // Стили для переключателя шагов
+              val stepperCss = new MuiMobileStepperClasses {
+                override val root = loginFormCssCtx.regStepper.htmlClass
+              }
+              s.activeStepC { activeStepProxy =>
+                val _activeStep = activeStepProxy.value
+
+                <.div(
+                  loginFormCssCtx.stepperContent,
+
+                  _activeStep match {
+                    case MRegSteps.S0Creds        => step0Creds
+                    case MRegSteps.S1Captcha      => stepCaptcha
+                    case MRegSteps.S2SmsCode      => stepSmsCode
+                    case MRegSteps.S3CheckBoxes   => stepCheckBoxes
+                    case MRegSteps.S4SetPassword  => stepSetPassword
+                  },
+
+                  MuiMobileStepper.component(
+                    new MuiMobileStepperProps {
+                      override val steps      = MRegSteps.values.length
+                      override val activeStep = _activeStep.value
+                      override val variant    = MuiMobileStepperVariants.dots
+                      override val backButton = backBtn.rawNode
+                      override val nextButton = nextBtn.rawNode
+                      override val classes    = stepperCss
+                    }
+                  ),
+                )
+
+              }
+            },
+
+            // Прогресс-бар ожидания...
+            s.isSubmitPendingSomeC { loginProgressR.component.apply },
+
+          ),
         )
-      )
 
-      s.isSubmitPendingSomeC { isSubmitPendingSomeProxy =>
-        val isBusy = isSubmitPendingSomeProxy.value.value
-        <.form(
-          // Сабмит формы идентичен NextClick, возможен на любом шаге.
-          if (isBusy)
-            ^.disabled  := true
-          else
-            ^.onSubmit ==> _onFormSubmit,
+        s.isSubmitPendingSomeC { isSubmitPendingSomeProxy =>
+          val isBusy = isSubmitPendingSomeProxy.value.value
+          <.form(
+            loginFormCssCtx.h100,
+            // Сабмит формы идентичен NextClick, возможен на любом шаге.
+            if (isBusy)
+              ^.disabled  := true
+            else
+              ^.onSubmit ==> _onFormSubmit,
 
-          formContent,
-        )
+            formContent,
+          )
+        }
+
       }
-
     }
 
   }

@@ -18,6 +18,13 @@ object MuiLink {
   final def apply(props: MuiLinkProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
+
+  object Underline {
+    final def NONE = "none"
+    final def HOVER = "hover"
+    final def ALWAYS = "always"
+  }
+
 }
 
 

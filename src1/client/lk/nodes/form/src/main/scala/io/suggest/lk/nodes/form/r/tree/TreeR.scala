@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiPaper, MuiProgressVariants, MuiTreeView, MuiTreeViewProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiLink, MuiLinkProps, MuiPaper, MuiProgressVariants, MuiTreeView, MuiTreeViewProps, MuiTypoGraphy, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react._
 import diode.react.ReactPot._
 import io.suggest.css.Css
@@ -29,6 +29,7 @@ import js.JSConverters._
   */
 class TreeR(
              treeItemR            : TreeItemR,
+             nodesDiConf          : NodesDiConf,
              crCtxP               : React.Context[MCommonReactCtx],
            )
   extends Log
@@ -48,6 +49,10 @@ class TreeR(
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, TreeInit() )
     }
 
+    private lazy val _onLoginClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      nodesDiConf.closeForm getOrElse Callback.empty
+    }
+
     /** Рендер текущего компонента. */
     def render(p: Props, s: State): VdomElement = {
       <.div(
@@ -61,6 +66,36 @@ class TreeR(
           val nodesPot = mroot.tree.tree.idsTree
 
           React.Fragment(
+
+            // Когда ничего нет, то надо заполнить пустоту...
+            nodesPot
+              .filter { nodesTree =>
+                // Дерево может быть пустым...
+                !nodesTree
+                  .subForest
+                  .filter(!_.subForest.isEmpty)
+                  .isEmpty
+              }
+              .renderEmpty {
+                // Если юзер НЕ залогинен, то надо вывести предложение к логину.
+                if (nodesPot.isPending) {
+                  crCtxP.message( MsgCodes.`Please.wait` )
+
+                } else if (!nodesDiConf.isUserLoggedIn()) {
+                  // Юзер НЕ залогинен. Вывести приглашение к логину.
+                  MuiLink(
+                    new MuiLinkProps {
+                      override val onClick = _onLoginClick
+                      override val underline = MuiLink.Underline.ALWAYS
+                    }
+                  )(
+                    nodesDiConf.needLogInVdom(),
+                  )
+
+                } else {
+                  crCtxP.message( MsgCodes.`Nothing.found` )
+                }
+              },
 
             // Дерево загружено в память, рендерим:
             nodesPot.render { nodesTree =>

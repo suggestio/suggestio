@@ -45,8 +45,9 @@ class Reg2SmsCodeR(
         MuiFormLabel()(
           commonReactCtxP.consume { commonCtx =>
             s.phoneNumberC { phoneNumberProxy =>
+              val phoneNbsp = phoneNumberProxy.value
               <.span(
-                commonCtx.messages( MsgCodes.`Sms.code.sent.to.your.phone.number.0`, phoneNumberProxy.value )
+                commonCtx.messages( MsgCodes.`Sms.code.sent.to.your.phone.number.0`, phoneNbsp )
               )
             }
           }

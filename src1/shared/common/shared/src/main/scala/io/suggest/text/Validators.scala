@@ -52,11 +52,9 @@ object Validators {
     * @return true, если строка похожа на номер телефона.
     */
   def isPhoneValid(phone: String): Boolean = {
-    """^\(*\+*[1-9]{0,3}\)*-*[1-9]{0,3}[-. /]*\(*[2-9]\d{2}\)*[-. /]*\d{3}[-. /]*\d{4} *e*x*t*\.* *\d{0,4}$"""
-      .r
-      .pattern
-      .matcher( phone )
-      .matches()
+    val norm = "[^0-9]".r.replaceAllIn(phone, "")
+    val l = norm.length
+    (l >= 11) && (l <= 14)
   }
 
 

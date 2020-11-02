@@ -25,13 +25,12 @@ class CspUtil @Inject() (
 
   private def IFRAMES_SRCS: Set[String] = {
     // По идее, proto нужен только на dev, где всё по http. На prod будет https автоматом, т.к. там он везде.
-    Set[String](
-      Csp.Sources.BLOB,
-      Csp.Sources.SELF,
+    Set.empty[String] +
+      Csp.Sources.BLOB +
+      Csp.Sources.SELF +
       // Раньше было перечисление youtube и vimeo, но теперь всё проще: пусть просто будут все сайты.
       // Фильтрация по хостам должна быть где-то на сервере, а не в CSP.
-      HttpConst.Proto.HTTPS + HttpConst.Proto.DELIM + Csp.Sources.*
-    )
+      (HttpConst.Proto.HTTPS + HttpConst.Proto.DELIM + Csp.Sources.*)
   }
 
   /** Включена ли поддержка CSP-заголовков? */

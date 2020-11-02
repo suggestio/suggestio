@@ -21,6 +21,8 @@ trait LoginFormDiConfig extends IMHttpClientConfig {
 
   def onLogOut(): Option[Effect]
 
+  def showInfoPage: Option[String => Callback]
+
 }
 
 
@@ -46,6 +48,8 @@ object LoginFormDiConfig {
         DoNothing
       }
     }
+
+    override def showInfoPage = None
 
   }
 

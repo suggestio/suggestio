@@ -96,9 +96,7 @@ final class SmsRuClient @Inject() (
           .withRequestTimeout( 10.seconds )
           .post( formData )
       } yield {
-        LOGGER.debug(s"$logPrefix Done req#$reqId status=${wsResult.status} ${wsResult.statusText}")
-        if (wsResult.status !=* 200)
-          LOGGER.trace(s" ${wsResult.body}")
+        LOGGER.debug(s"$logPrefix Done req#$reqId status=${wsResult.status} ${wsResult.statusText}${if ((wsResult.status !=* 200) || LOGGER.underlying.isTraceEnabled()) "\n" + wsResult.body else ""}")
         wsResult
           .json
           .validate[MSmsRuResult]

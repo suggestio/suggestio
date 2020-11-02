@@ -58,6 +58,9 @@
     },
     "cordova.plugins.diagnostic": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-inappbrowser": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {

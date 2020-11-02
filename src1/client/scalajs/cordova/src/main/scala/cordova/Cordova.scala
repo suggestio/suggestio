@@ -25,4 +25,6 @@ object Cordova extends js.Object {
     */
   def platformId: String = js.native
 
+  val InAppBrowser: cordova.plugins.inappbrowser.InAppBrowser = js.native
+
 }

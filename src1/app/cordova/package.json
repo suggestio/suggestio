@@ -59,7 +59,8 @@
                 "ACCOUNT_LABEL": "@string/app_name",
                 "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
                 "CONTENT_AUTHORITY": "$PACKAGE_NAME"
-            }
+            },
+            "cordova-plugin-inappbrowser": {}
         },
         "platforms": [
             "ios",
@@ -68,6 +69,7 @@
     },
     "devDependencies": {
         "8bhsolutions-cordova-plugin-background-geolocation": "file:../../../../../../../../home/user/projects/repo/cordova-background-geolocation",
-        "cordova-android": "^9.0.0"
+        "cordova-android": "^9.0.0",
+        "cordova-plugin-inappbrowser": "^4.0.0"
     }
 }

@@ -2,7 +2,9 @@ package io.suggest.sc
 
 import com.materialui.MuiTheme
 import com.softwaremill.macwire._
+import cordova.Cordova
 import cordova.plugins.fetch.CdvPluginFetch
+import cordova.plugins.inappbrowser.InAppBrowser
 import diode.{Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
@@ -43,6 +45,7 @@ import io.suggest.sc.v.search._
 import io.suggest.sc.v.search.found._
 import io.suggest.sc.v.snack._
 import io.suggest.sc.v.styl._
+import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
@@ -290,6 +293,18 @@ class Sc3Module { outer =>
       override def onLogOut(): Option[Effect] = {
         val reGetIndexFx = ReGetIndex().toEffectPure
         Some( reGetIndexFx )
+      }
+
+      override def showInfoPage: Option[String => Callback] = {
+        Option.when(
+          CordovaConstants.isCordovaPlatform() &&
+          JsApiUtil.isDefinedSafe( Cordova.InAppBrowser )
+        ) { url =>
+          // TODO Проводить вызов через контроллер страницы, т.к. браузер открывается не сразу, и надо отображать крутилку, блокируя интерфейс.
+          Callback {
+            Cordova.InAppBrowser.open( url, target = InAppBrowser.Target.SYSTEM )
+          }
+        }
       }
 
     }

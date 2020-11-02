@@ -52,6 +52,9 @@
       "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
       "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
       "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-inappbrowser": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },
   "dependent_plugins": {
