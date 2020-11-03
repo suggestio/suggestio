@@ -7,6 +7,11 @@
     "files": {}
   },
   "installed_plugins": {
+    "8bhsolutions-cordova-plugin-background-geolocation": {
+      "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
+      "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-custom-config": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -21,6 +26,12 @@
     },
     "cordova-plugin-ble-central": {
       "BLUETOOTH_USAGE_DESCRIPTION": " ",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-inappbrowser": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-local-notification": {
@@ -43,17 +54,6 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-fetch": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "8bhsolutions-cordova-plugin-background-geolocation": {
-      "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
-      "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-inappbrowser": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

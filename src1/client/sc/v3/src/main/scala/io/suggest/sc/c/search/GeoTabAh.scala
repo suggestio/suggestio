@@ -4,10 +4,7 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
 import io.suggest.grid.GridConst
-import io.suggest.maps.c.RcvrMarkersInitAh
-import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.maps.nodes.MRcvrsMapUrlArgs
-import io.suggest.maps.u.IAdvRcvrsMapApi
+import io.suggest.maps.m.HandleMapReady
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.grid.GridLoadAds
@@ -80,10 +77,8 @@ object GeoTabAh {
 
 class GeoTabAh[M](
                    api            : IScUniApi,
-                   rcvrsMapApi    : IAdvRcvrsMapApi,
                    screenInfoRO   : ModelRO[MScreenInfo],
                    scRootRO       : ModelRO[MScRoot],
-                   rcvrMapArgsRO  : ModelRO[MRcvrsMapUrlArgs],
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
   extends ActionHandler( modelRW )
@@ -303,58 +298,6 @@ class GeoTabAh[M](
         .composeLens( MGeoTabData.lmap )
         .set( Some(m.map) )(v0)
       updatedSilent( v2 )
-
-
-    // Сигнал запуска инициализации маркеров с сервера.
-    case RcvrMarkersInit =>
-      val v0 = value
-      if (!v0.data.rcvrsCache.isPending) {
-        // Эффект скачивания карты с сервера:
-        val fx = RcvrMarkersInitAh.startInitFx( rcvrMapArgsRO(), rcvrsMapApi )
-        // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
-        val v2 = MGeoTabS.data
-          .composeLens( MGeoTabData.rcvrsCache )
-          .modify(_.pending())(v0)
-        updatedSilent( v2, fx )
-
-      } else {
-        noChange
-      }
-
-
-    // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
-    case m: InstallRcvrMarkers =>
-      val v0 = value
-      val rcvrsCache0 = v0.data.rcvrsCache
-      val rcvrsCache2 = m.tryResp.fold(
-        {ex =>
-          logger.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
-          rcvrsCache0.fail(ex)
-        },
-        {resp =>
-          rcvrsCache0.ready(
-            MSearchRespInfo(
-              textQuery   = None,
-              resp        = resp
-            )
-          )
-        }
-      )
-
-      val v2 = (
-        MGeoTabS.data
-          .composeLens( MGeoTabData.rcvrsCache )
-          .set( rcvrsCache2 ) andThen
-        // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
-        MGeoTabS.mapInit.modify { mapInit0 =>
-          if (mapInit0.rcvrs.isEmpty)
-            MMapInitState.rcvrs.set( rcvrsCache2 )(v0.mapInit)
-          else
-            mapInit0
-        }
-      )(v0)
-
-      updated( v2 )
 
   }
 

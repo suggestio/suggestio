@@ -16,7 +16,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.maps.c.MapCommonAh
+import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
@@ -69,7 +69,6 @@ import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
-import io.suggest.sc.m.in.MScInternals.boot
 import io.suggest.sc.m.inx.save.{MIndexesRecent, MIndexesRecentOuter}
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.v.styl.ScCss
@@ -285,6 +284,14 @@ class Sc3Circuit(
   private[sc] val geoTabDataRW    = mkLensZoomRW(geoTabRW, MGeoTabS.data)( MGeoTabData.MGeoTabDataFastEq )
   private val mapDelayRW          = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
+  private val rcvrCacheRW         = mkLensZoomRW(geoTabDataRW, MGeoTabData.rcvrsCache)
+  private val rcvrRespRW          = rcvrCacheRW.zoomRW( _.map(_.resp) ) {
+    (potCache0, potResp2) =>
+      potResp2.map { resp2 =>
+        potCache0.fold( MSearchRespInfo(None, resp2) )(_.copy(resp = resp2))
+      }
+  }
+
   private val gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
   private[sc] val gridCoreRW      = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
   private val jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
@@ -378,9 +385,14 @@ class Sc3Circuit(
     modelRW         = geoTabRW,
     api             = sc3UniApi,
     scRootRO        = rootRW,
-    rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
-    rcvrMapArgsRO   = rcvrsMapUrlRO,
+  )
+
+  private val rcvrMarkersInitAh = new RcvrMarkersInitAh(
+    modelRW         = rcvrRespRW,
+    api             = advRcvrsMapApi,
+    argsRO          = rcvrsMapUrlRO,
+    isOnlineRoOpt   = Some( onLineRW.zoom(_.isOnline) ),
   )
 
   private val indexAh = new IndexAh(
@@ -691,6 +703,7 @@ class Sc3Circuit(
 
     acc ::= sTextAh
     acc ::= geoTabAh    // TODO Объеденить с searchAh
+    acc ::= rcvrMarkersInitAh
 
     // Основные события индекса не частые, но доступны всегда *ДО*geoTabAh*:
     acc ::= indexAh

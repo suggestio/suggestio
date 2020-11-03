@@ -114,7 +114,7 @@ class BootAh[M](
         MBootServiceIds.JsRouter :: super.depends
 
       override def startFx: Effect = {
-        val bgFx = RcvrMarkersInit.toEffectPure
+        val bgFx = RcvrMarkersInit().toEffectPure
         val bootSvcFx = Effect {
           val z = CircuitUtil.mkLensZoomRO( circuit.geoTabDataRW, MGeoTabData.rcvrsCache )
           _startWithPot( serviceId, z )

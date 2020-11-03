@@ -253,7 +253,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
   // Запустить инициализацию карты ресиверов после окончания инициализации circuit.
   Future {
-    dispatch(RcvrMarkersInit)
+    dispatch(RcvrMarkersInit())
   }
 
   // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.

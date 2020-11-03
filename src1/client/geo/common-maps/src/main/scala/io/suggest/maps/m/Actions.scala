@@ -1,5 +1,6 @@
 package io.suggest.maps.m
 
+import diode.data.Pot
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
@@ -8,6 +9,7 @@ import io.suggest.sjs.leaflet.map.{LMap, LatLng, Zoom_t}
 import io.suggest.spa.DAction
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 import scala.util.Try
 
@@ -73,9 +75,10 @@ object OpenAdvGeoExistPopup {
 
 
 /** Экшен запуска инициализации карты маркеров ресиверов. */
-case object RcvrMarkersInit extends IMapsAction
-/** Экшен выставления указанных recevier-маркеров в состояние. */
-case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IMapsAction
+case class RcvrMarkersInit( resp: Pot[MGeoNodesResp] = Pot.empty )  extends IMapsAction
+object RcvrMarkersInit {
+  def resp = GenLens[RcvrMarkersInit]( _.resp )
+}
 
 /** Экшен "открытия" ресивера на карте.
   * В редакторе - открытие попапа. В выдаче - переход в ресивер.

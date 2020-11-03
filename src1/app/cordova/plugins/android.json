@@ -33,9 +33,6 @@
     "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-fetch": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-local-notification": {
       "ANDROID_SUPPORT_V4_VERSION": "26.+",
       "PACKAGE_NAME": "io.suggest.appsuggest"
@@ -60,6 +57,9 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-inappbrowser": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

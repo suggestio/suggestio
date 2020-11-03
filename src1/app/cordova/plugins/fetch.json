@@ -115,14 +115,6 @@
     "is_top_level": true,
     "variables": {}
   },
-  "cordova-plugin-fetch": {
-    "source": {
-      "type": "local",
-      "path": "/var/user/projects/sio/sio2/src1/app/cordova/node_modules/cordova-plugin-fetch"
-    },
-    "is_top_level": true,
-    "variables": {}
-  },
   "8bhsolutions-cordova-plugin-background-geolocation": {
     "source": {
       "type": "local",
@@ -142,6 +134,14 @@
     "source": {
       "type": "registry",
       "id": "cordova-plugin-inappbrowser@4.0.0"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-fetch": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/aporat/cordova-plugin-fetch"
     },
     "is_top_level": true,
     "variables": {}

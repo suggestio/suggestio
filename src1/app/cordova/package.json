@@ -11,14 +11,12 @@
     "license": "CBCA",
     "dependencies": {
         "cordova-custom-config": "^5.1.0",
-        "cordova-ios": "^6.1.1",
         "cordova-plugin-appminimize": "git+https://github.com/tomloprod/cordova-plugin-appminimize.git",
         "cordova-plugin-background-fetch": "^6.0.7",
         "cordova-plugin-background-mode": "^0.7.3",
         "cordova-plugin-badge": "^0.8.8",
         "cordova-plugin-ble-central": "^1.2.5",
         "cordova-plugin-device": "^2.0.3",
-        "cordova-plugin-fetch": "file:../../../../../../../../home/user/projects/repo/cordova-plugin-fetch",
         "cordova-plugin-local-notification": "git+https://github.com/Steffaan/cordova-plugin-local-notifications.git",
         "cordova-plugin-localization-strings": "3.2.1",
         "cordova-plugin-network-information": "^2.0.2",
@@ -47,7 +45,6 @@
             "cordova-plugin-localization-strings": {
                 "TRANSLATION_PATH": "translations/app/"
             },
-            "cordova-plugin-fetch": {},
             "8bhsolutions-cordova-plugin-background-geolocation": {
                 "GOOGLE_PLAY_SERVICES_VERSION": "11+",
                 "ANDROID_SUPPORT_LIBRARY_VERSION": "23+",
@@ -60,16 +57,18 @@
                 "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
                 "CONTENT_AUTHORITY": "$PACKAGE_NAME"
             },
-            "cordova-plugin-inappbrowser": {}
+            "cordova-plugin-inappbrowser": {},
+            "cordova-plugin-fetch": {}
         },
         "platforms": [
-            "ios",
-            "android"
+            "android",
+            "ios"
         ]
     },
     "devDependencies": {
         "8bhsolutions-cordova-plugin-background-geolocation": "file:../../../../../../../../home/user/projects/repo/cordova-background-geolocation",
         "cordova-android": "^9.0.0",
+        "cordova-plugin-fetch": "git+https://github.com/aporat/cordova-plugin-fetch.git",
         "cordova-plugin-inappbrowser": "^4.0.0"
     }
 }

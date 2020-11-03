@@ -258,4 +258,7 @@ object ErrorMsgs {
   def COOKIE_DOMAIN_UNEXPECTED = "Cookie.domain.unexpected"
 
   def UNEXPECTED_NON_EMPTY_VALUE = "Unexpected.non.empty.value"
+
+  def ALREADY_DONE = "Already.done"
+
 }
