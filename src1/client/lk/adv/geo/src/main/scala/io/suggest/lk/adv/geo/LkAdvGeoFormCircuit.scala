@@ -82,7 +82,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
             circle = radCircle,
             state  = MRadS(
               radiusMarkerCoords = MapsUtil.radiusMarkerLatLng(radCircle)
-            )
+            ),
+            enabled = mFormInit.radEnabled,
           )
         },
         datePeriod = mFormInit.form.datePeriod,

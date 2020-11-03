@@ -32,4 +32,5 @@ case class MFormInit(
                       advPricing    : MGetPriceResp,
                       form          : MFormS,
                       rcvrsMap      : MRcvrsMapUrlArgs,
+                      radEnabled    : Boolean,
                     )

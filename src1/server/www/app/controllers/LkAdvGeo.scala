@@ -128,11 +128,11 @@ final class LkAdvGeo @Inject() (
           datePeriod      = MAdvPeriod(),
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
           radCircle       = Some( advGeoFormUtil.radCircle0(gp0) ),
-          tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE
+          tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE,
         )
       }
 
-      resLogic.result(formFut, Ok)
+      resLogic.result(formFut, Ok, radEnabled = false)
     }
   }
 
@@ -175,8 +175,9 @@ final class LkAdvGeo @Inject() (
       *
       * @param formFut Маппинг формы.
       * @param rs Статус ответа HTTP.
+      * @param radEnabled Значение для rad.enabled (включён ли круг на карте по умолчанию?).
       */
-    def result(formFut: Future[MFormS], rs: Status): Future[Result] = {
+    def result(formFut: Future[MFormS], rs: Status, radEnabled: Boolean): Future[Result] = {
       def logPrefix = s"result(${request.mad.idOrNull} $rs):"
 
       // Считаем в фоне начальный ценник для размещения...
@@ -203,6 +204,7 @@ final class LkAdvGeo @Inject() (
           advPricing    = advPricing,
           form          = formS,
           rcvrsMap      = rcvrsMapUrlArgs,
+          radEnabled    = radEnabled,
         )
 
         // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
