@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sio3-suggest-io
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: sio3.suggest.io
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s3-nodes-sio-upload
+  namespace: default
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  tls:
+  - hosts:
+    - s3.nodes.suggest.io
+    secretName: s3.nodes.suggest.io.443
+  rules:
+  - host: s3.nodes.suggest.io
+    http:
+      paths:
+      - path: /upload/
+        pathType: Prefix
+        backend:
+          service:
+            name: sio3-suggest-io
+            port:
+              number: 80
+--- 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s3-nodes-sio-websocket
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection   "upgrade";
+spec:
+  tls:
+  - hosts:
+    - s3.nodes.suggest.io
+    secretName: s3.nodes.suggest.io.443
+  rules:
+  - host: s3.nodes.suggest.io
+    http:
+      paths:
+      - path: /ws/
+        pathType: Prefix
+        backend:
+          service:
+            name: sio3-suggest-io
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s3-nodes-sio-other
+  namespace: default
+spec:
+  tls:
+  - hosts:
+    - s3.nodes.suggest.io
+    secretName: s3.nodes.suggest.io.443
+  rules:
+  - host: s3.nodes.suggest.io
+    http:
+      paths:
+      - path: /img/
+        pathType: Prefix
+        backend:
+          service:
+            name: sio3-suggest-io
+            port:
+              number: 80
+---

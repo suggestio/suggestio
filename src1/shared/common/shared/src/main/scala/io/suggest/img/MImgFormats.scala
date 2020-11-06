@@ -21,13 +21,13 @@ case object MImgFormats extends StringEnum[MImgFormat] {
   case object JPEG extends MImgFormat("j") {
     override def name = "jpeg"
     override def uploadMaxFileSizeKb = 30 * bInKb
-    override def uploadSideSizeMaxPx = 6000
+    override def uploadSideSizeMaxPx = 8000
   }
 
   case object PNG extends MImgFormat("p") {
     override def name = "png"
     override def uploadMaxFileSizeKb = 4 * bInKb
-    override def uploadSideSizeMaxPx = 3000
+    override def uploadSideSizeMaxPx = 5000
   }
 
   case object GIF extends MImgFormat("g") {
@@ -37,7 +37,7 @@ case object MImgFormats extends StringEnum[MImgFormat] {
     override def layersOptimize = true
     override def imFinalRepage = true
     override def uploadMaxFileSizeKb = 2 * bInKb
-    override def uploadSideSizeMaxPx = 2000
+    override def uploadSideSizeMaxPx = 3000
   }
 
   /** SVG бывает SVGZ (пожатый GZIP), и просто голым текстом (SVG).

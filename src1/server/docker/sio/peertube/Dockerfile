@@ -12,7 +12,7 @@ RUN groupadd -g ${gid} ${group} && \
     useradd --system -d "${peertube_home}" --no-create-home -u ${uid} -g ${gid} -s /bin/nologin ${user}
 
 ## Сразу установить yarn, чтобы сразу его переконфигурировать:
-RUN pacman -S --asdeps yarn
+RUN pacman -S --noconfirm --asdeps yarn
 RUN yarn config set --home enableTelemetry 0
 
 ## Загрузить пуб.ключ для проверки подписи релиза peertube:
@@ -32,16 +32,25 @@ RUN cd $BUILD_HOME && \
    sudo -u $BUILD_USER tar -xf $PKG_TAR_GZ && \
    cd $BUILD_HOME/$package && \
    ## TODO PKGBUILD: Попытаться заменить depends=postgresql на postgresql-libs?
-   sleep 1 && sudo -u $BUILD_USER makepkg --noconfirm -sifrc && \
+   sleep 1 && sudo -u $BUILD_USER PKGEXT=".pkg.tar.gz" makepkg --noconfirm -sifrc && \
    cd $BUILD_HOME && \
    rm -rf $package $PKG_TAR_GZ; \
   done
 
 ENV PEERTUBE_HOME=/var/lib/peertube
 
-## https://github.com/Chocobozzz/PeerTube/blob/develop/support/doc/production.md#prepare-peertube-directory
-#RUN mkdir -p $PEERTUBE_HOME/config $PEERTUBE_HOME/storage $PEERTUBE_HOME/versions && \
+## Настройка после установки. По мотивам
+## https://github.com/Chocobozzz/PeerTube/blob/develop/support/doc/production.md
 
-RUN chown -R peertube:peertube $PEERTUBE_HOME
+## TODO Экспортнуть дефолтовое содержимое /etc/peertube куда-нибудь?
+## Пока надо вручную заполнить смонтированную пустую /etc/peertube.
 
+VOLUME /etc/peertube
+
+VOLUME $peertube_home
+
+RUN systemctl enable redis && \
+    systemctl enable peertube
+
+CMD ["/sbin/systemctl", "default"]
 

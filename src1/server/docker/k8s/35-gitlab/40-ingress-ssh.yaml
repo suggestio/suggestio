@@ -1,10 +1,14 @@
 ## Проброс ssh через 222 порт tcp - ingress.
-##
+#
+## !!! После заливки этого файла, надо:
+## $ kubectl -n ingress-nginx edit deploy
+## И в список spec/template/spec/container/args дописать строку:
+##          - --tcp-services-configmap=default/tcp-services
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tcp-services
-  namespace: ingress-nginx
+  namespace: default
 data:
-  222: default/gitlab-svc:22
-
+  222:  "default/gitlab-svc:ssh"
+---

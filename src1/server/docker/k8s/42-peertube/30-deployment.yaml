@@ -1,0 +1,83 @@
+## 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peertube
+  labels:
+    app: peertube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: peertube
+  template:
+    metadata:
+      labels:
+        app: peertube
+    spec:
+      nodeSelector:
+        io.suggest.peertube.here: "true"
+      containers:
+      - name: peertube-cont
+        image: docker-registry.suggest.io:5000/sio/sio2/peertube:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9099
+        volumeMounts:
+        - mountPath: /var/lib/redis
+          name: var-lib-redis
+        - mountPath: /var/lib/peertube
+          name: var-lib-peertube
+        - mountPath: /etc/peertube
+          name: etc-peertube
+        #env:
+      ## pod params
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: var-lib-redis
+        hostPath:
+          path: /var/lib/containers/peertube/redis
+          type: DirectoryOrCreate
+      - name: var-lib-peertube
+        hostPath:
+          path: /var/lib/containers/peertube/peertube
+          type: DirectoryOrCreate
+      - name: etc-peertube
+        hostPath:
+          path: /var/lib/containers/peertube/config
+          type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peertube-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: peertube
+  ports:
+  - name: www
+    protocol: TCP
+    port: 9099
+    targetPort: 9099
+
+---
+## Правило ингресса для проброса запросов в peertube.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-peertube
+spec:
+  rules:
+  - host: video.suggest.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: peertube-svc
+            port:
+              name: www
+---

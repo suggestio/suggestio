@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: powerdns-suggest-io
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: powerdns.suggest.io
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: powerdns-suggest-io
+  namespace: default
+spec:
+  rules:
+  - host: powerdns.cbca.ru
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: powerdns-suggest-io
+            port:
+              number: 80
+--- 
