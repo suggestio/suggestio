@@ -12,7 +12,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.log.Log
-import japgolly.scalajs.react.vdom.{TagOf, TagMod, VdomElement}
+import japgolly.scalajs.react.vdom.{Attr, TagMod, TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, html}
 import scalacss.ScalaCssReact._
@@ -49,11 +49,19 @@ class QdRrrHtml(
     def imgMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod =
       TagMod.empty
 
-    def imgPostProcess(e: MEdgeDataJs, jdtQdOp: MQdOpCont, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): TagOf[html.Element] =
-      imgEl
+    def imgPostProcess(e: MEdgeDataJs, jdtQdOp: MQdOpCont, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element], key: Int): VdomElement =
+      imgEl( ^.key := key )
 
-    def frameMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod =
-      TagMod.empty
+    def frameMods( e: MEdgeDataJs, jdtQdOp: MQdOpCont, frame: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
+      // Видео-фрейм без дополнительного div-контейнера:
+      frame(
+        ^.key := key,
+      )
+    }
+
+    /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
+    def _hrefAttr: Attr[String] =
+      ^.href
 
     /** Выполнить рендеринг текущего qd-тега. */
     def render(): VdomElement =
@@ -97,10 +105,6 @@ class QdRrrHtml(
       })
         .to( LazyList )
     }
-
-    /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
-    private def _hrefAttr =
-      if (rrrProps.jdArgs.conf.isEdit) ^.title else ^.href
 
     @tailrec
     final def _doRender(counters: QdRrrOpKeyCounters = QdRrrOpKeyCounters()): VdomElement = {
@@ -227,11 +231,7 @@ class QdRrrHtml(
           )
         }
 
-        finalTm = imgPostProcess( e, jdtQdOp, embedStyleOpt, finalTm )(
-          ^.key := i
-        )
-
-        _currLineAccRev ::= finalTm
+        _currLineAccRev ::= imgPostProcess( e, jdtQdOp, embedStyleOpt, finalTm, i )
       }
 
       if (resOpt.isEmpty)
@@ -249,36 +249,13 @@ class QdRrrHtml(
           .fold( rrrProps.jdArgs.jdRuntime.jdCss.video ) { _ =>
             rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( jdtQdOp.jdTagId )
           }
-        val keyV = "V" + i
         val iframe = <.iframe(
           ^.src := src,
-          ^.key := keyV,
           ^.allowFullScreen := true,
-          whStyl
+          whStyl,
         )
 
-        val tm = if ( rrrProps.jdArgs.conf.isEdit ) {
-          // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
-          var outerAcc = List.empty[TagMod]
-          outerAcc ::= <.div(
-            ^.key := (keyV + "z"),
-            ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
-            whStyl,
-            frameMods( e, jdtQdOp ),
-          )
-          outerAcc =
-            (^.key := (keyV + "c")) ::
-              (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
-              iframe ::
-              outerAcc
-          <.div( outerAcc: _* )
-
-        } else {
-          // Видео-фрейм без дополнительного div-контейнера.
-          iframe
-        }
-
-        _currLineAccRev ::= tm
+        _currLineAccRev ::= frameMods( e, jdtQdOp, iframe, whStyl, key = "V" + i )
       }
 
       if (resOpt.isEmpty)

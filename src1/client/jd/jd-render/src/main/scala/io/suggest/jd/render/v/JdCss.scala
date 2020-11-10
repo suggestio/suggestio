@@ -12,6 +12,7 @@ import io.suggest.font.MFontSizes
 import io.suggest.grid.GridCalc
 import io.suggest.jd.{JdConst, MJdConf, MJdTagId}
 import io.suggest.jd.render.m.MJdCssArgs
+import io.suggest.jd.tags.qd.MQdAttrsEmbed
 import io.suggest.jd.tags.{IJdTagGetter, JdTag, MJdTagName, MJdTagNames}
 import io.suggest.primo.ISetUnset
 import japgolly.univeq._
@@ -757,6 +758,36 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // text indents.
 
+  lazy val whCssPxDflt = HtmlConstants.Iframes.whCsspxDflt
+
+  /** Класс для унификации доступа к размерам embed-фрейма.
+    * Нужен для унификации кода рассчёта wh между embedAttrF и react-resizable props. */
+  case class EmbedWh( jdtId: MJdTagId ) {
+
+    private val _ctxOpt = for {
+      jdt <- jdCssArgs.data.jdTagsById.get( jdtId )
+      qdProps <- jdt.qdProps
+      embedAttrs <- qdProps.attrsEmbed
+    } yield {
+      embedAttrs
+    }
+
+    private def _mkSize( getValue: MQdAttrsEmbed => Option[ISetUnset[Int]], default: Int): Int = {
+      (for {
+        embedAttrs <- _ctxOpt
+        sizeSU <- getValue( embedAttrs )
+        sizePx <- sizeSU.toOption
+      } yield {
+        sizePx
+      })
+        .getOrElse( default )
+    }
+
+    def heightPx = _mkSize(_.height, whCssPxDflt.height)
+    def widthPx = _mkSize(_.width, whCssPxDflt.width)
+
+  }
+
   val embedAttrF = {
     styleF(
       new Domain.OverSeq(
@@ -765,17 +796,12 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     ) (
       {jdtId =>
         var acc = List.empty[ToStyle]
-        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
 
-        for {
-          jdt <- jdCssArgs.data.jdTagsById.get( jdtId )
-          embedAttrs <- jdt.qdProps.get.attrsEmbed
-        } yield {
-          for (heightSU <- embedAttrs.height; heightPx <- heightSU)
-            acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
-          for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-            acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
-        }
+        val embedWh = EmbedWh( jdtId )
+
+        val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
+        acc ::= height( _szMulted( embedWh.heightPx, wideSzMultOpt ).px )
+        acc ::= width( _szMulted( embedWh.widthPx, wideSzMultOpt ).px )
 
         styleS( acc: _* )
       },
@@ -823,7 +849,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   val video = {
-    val whDflt = HtmlConstants.Iframes.whCsspxDflt
+    val whDflt = whCssPxDflt
     style(
       width ( _szMulted(whDflt.width).px ),
       height( _szMulted(whDflt.height).px )

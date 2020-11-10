@@ -2,6 +2,7 @@ package io.suggest.jd.edit.v
 
 import com.github.react.dnd._
 import com.github.souporserious.react.measure.ContentRect
+import com.github.strml.react.resizable.{ResizableBox, ResizableBoxProps, ResizeCallbackData}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -32,6 +33,7 @@ import scalacss.StyleA
 import scalacss.internal.{LengthUnit, Literal}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -144,8 +146,13 @@ final class JdEditR(
     class QdContentB(contentRef: Ref.Simple[html.Element],
                      $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
 
+      private lazy val _qdResizeHandlers = {
+        import com.github.strml.react.resizable.ResizableProps.Handle._
+        js.Array( SW, S, SE, E, NE )
+      }
+
       /** Рендерер Qd-контента под нужды редактора. */
-      class QdEditRenderer(p: MJdRrrProps) extends qdRrrHtml.Renderer(p) {
+      final class QdEditRenderer(p: MJdRrrProps) extends qdRrrHtml.Renderer(p) {
 
         /** Сборка доп.модификаций для картинки. */
         override def imgMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod = {
@@ -153,10 +160,46 @@ final class JdEditR(
           _notifyImgWhOnEdit($, e)
         }
 
+        /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
+        override def _hrefAttr: VdomAttr[String] =
+          ^.title
+
+
+        def _rszBoxProps( edgeDataJs: MEdgeDataJs, jdtQdOp: MQdOpCont, lockAspect: Boolean ): ResizableBoxProps = {
+          val embedWh = p.jdArgs.jdRuntime.jdCss.EmbedWh( jdtQdOp.jdTagId )
+          val reaction = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
+            val wh = rszCbData.size
+            //e.stopPropagationCB >>
+            e.preventDefaultCB >>
+              ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
+                wh.width.toInt,
+                jdtQdOp.qdOp,
+                edgeUid = edgeDataJs.jdEdge.edgeDoc.id.get,
+                heightPx = Option.when(wh.height > 0)(wh.height.toInt),
+              ))
+          }
+          new ResizableBoxProps {
+            override val width = embedWh.widthPx.toDouble
+            override val height = embedWh.heightPx.toDouble
+            override val onResize = reaction
+            override val onResizeStart = js.defined {
+              ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
+                e.preventDefaultCB
+              }
+            }
+            override val lockAspectRatio = lockAspect
+            override val onResizeStop = reaction
+            override val transformScale = p.jdArgs.conf.szMult.toDouble
+            override val resizeHandles = _qdResizeHandlers
+          }
+        }
+
+
         override def imgPostProcess(e: MEdgeDataJs,
                                     jdtQdOp: MQdOpCont,
                                     embedStyleOpt: Option[StyleA],
-                                    imgEl: TagOf[html.Element] ): TagOf[html.Element] = {
+                                    imgEl: TagOf[html.Element],
+                                    key: Int ): VdomElement = {
           // Поддержка горизонтального ресайза картинки/видео.
           (for {
             _               <- Option.when( p.isCurrentSelected )(null)
@@ -173,33 +216,55 @@ final class JdEditR(
                 (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
               }
 
-            <.div(
-              ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
-              imgEl,
+            ResizableBox.component.withKey(key)(
+              _rszBoxProps( e, jdtQdOp, lockAspect = true )
+            )(
               <.div(
-                jdCssStatic.horizResizable,
-                ^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
-                  onQdEmbedResize(jdtQdOp.qdOp, e, false)(event)
-                },
-                ^.height := maskHeightPx.px,
-                embedStyle,
-                ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
+                ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
+                imgEl,
+                <.div(
+                  //jdCssStatic.horizResizable,
+                  //^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
+                  //  onQdEmbedResize(jdtQdOp.qdOp, e, false)(event)
+                  //},
+                  ^.height := maskHeightPx.px,
+                  embedStyle,
+                  ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
+                )
               )
-            )
+            ): VdomElement
           })
-            .getOrElse( imgEl )
+            .getOrElse( super.imgPostProcess(e, jdtQdOp, embedStyleOpt, imgEl, key) )
         }
 
-        override def frameMods( e: MEdgeDataJs, jdtQdOp: MQdOpCont ): TagMod = {
+        override def frameMods( edgeDataJs: MEdgeDataJs, jdtQdOp: MQdOpCont, iframe: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
+          // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
+          var outerAcc = List.empty[TagMod]
+          outerAcc ::= <.div(
+            ^.key := (key + "z"),
+            ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
+            whStyl,
+            //jdCssStatic.hvResizable,
+            ^.style := js.Object(),
+            //^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
+            //  onQdEmbedResize( jdtQdOp.qdOp, edgeDataJs, true)( event )
+            //}
+          )
+          outerAcc =
+            (^.key := (key + "c")) ::
+              (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
+              iframe ::
+              outerAcc
+          val tag = <.div( outerAcc: _* )
+
           if (p.isCurrentSelected) {
-            TagMod(
-              jdCssStatic.hvResizable,
-              ^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
-                onQdEmbedResize( jdtQdOp.qdOp, e, true)( event )
-              }
+            ResizableBox.component.withKey(key) {
+              _rszBoxProps( edgeDataJs, jdtQdOp, lockAspect = false )
+            } (
+              tag,
             )
           } else {
-            TagMod.empty
+            tag
           }
         }
 
@@ -260,8 +325,18 @@ final class JdEditR(
       }
 
       def render(props: MRrrEdit with MRrrEditCollectDrag, state: MJdRrrProps): VdomElement = {
+        val rendered: VdomElement = _doRender(state)
+
+        // TODO Подцепить ReactResizable для Qd-контента.
+        /*if (
+          (state.subTree.rootLabel.name ==* MJdTagNames.QD_CONTENT) &&
+          state.isCurrentSelected
+        ) {
+          rendered = ResizableBox(  )
+        }*/
+
         props.dragF
-          .applyVdomEl( _doRender(state) )
+          .applyVdomEl( rendered )
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */

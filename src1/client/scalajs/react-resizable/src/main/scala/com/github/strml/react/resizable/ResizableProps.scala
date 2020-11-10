@@ -2,6 +2,7 @@ package com.github.strml.react.resizable
 
 import scala.scalajs.js
 import japgolly.scalajs.react._
+import org.scalajs.dom.html
 
 import scala.scalajs.js.|
 
@@ -15,6 +16,8 @@ trait ResizableProps extends js.Object {
 
   val width: Double
   val height : Double
+
+  val className: js.UndefOr[String] = js.undefined
 
   /** Either a ReactElement to be used as handle,
     * or a function returning an element that is fed the handle's location as its first argument. */
@@ -48,7 +51,9 @@ trait ResizableProps extends js.Object {
 
   val draggableOpts: js.UndefOr[js.Object] = js.undefined
 
-  val resizeHandles: js.UndefOr[ResizableProps.Handle] = js.undefined
+  val resizeHandles: js.UndefOr[js.Array[ResizableProps.Handle]] = js.undefined
+
+  val transformScale: js.UndefOr[Double] = js.undefined
 
 }
 trait ResizableBoxProps extends ResizableProps {
@@ -81,6 +86,16 @@ object ResizableProps {
 }
 
 
+@js.native
+trait Wh extends js.Object {
+  val width: Double = js.native
+  val height: Double = js.native
+}
+
 
 @js.native
-trait ResizeCallbackData extends js.Object
+trait ResizeCallbackData extends js.Object {
+  val node: html.Element = js.native
+  val size: Wh = js.native
+  val handle: ResizableProps.Handle
+}

@@ -175,7 +175,7 @@ lazy val lkCommonSjs = {
     .dependsOn(
       commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
       reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs,
-      flowjsSjs, muiTreasurySjs,
+      flowjsSjs, muiTreasurySjs, reactResizableSjs,
     )
 }
 
@@ -659,7 +659,11 @@ lazy val www = project
     // react-image-crop
     npmAssets ++= NpmAssets.ofProject( reactImageCropSjs ) { nodeModules =>
       (nodeModules / "react-image-crop" / "dist") * "*.css"
-    }.value
+    }.value,
+    // react-resizeable
+    npmAssets ++= NpmAssets.ofProject( reactResizableSjs ) { nodeModules =>
+      (nodeModules / "react-resizable" / "css") * "*.css"
+    }.value,
   )
 
 
