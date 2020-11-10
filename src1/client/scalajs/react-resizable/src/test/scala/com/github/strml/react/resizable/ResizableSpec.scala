@@ -2,6 +2,7 @@ package com.github.strml.react.resizable
 
 import minitest._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.test._
 
 import scala.scalajs.js
 
@@ -28,8 +29,10 @@ object ResizableSpec extends SimpleTestSuite {
         "Content"
       )
     )
-    assert( !js.isUndefined(unmounted) )
-    assert( unmounted != null )
+    ReactTestUtils.withRenderedIntoDocument( unmounted ) { mounted =>
+      val htmlStr = mounted.outerHtmlScrubbed()
+      assert( htmlStr.length > 0 )
+    }
   }
 
 }

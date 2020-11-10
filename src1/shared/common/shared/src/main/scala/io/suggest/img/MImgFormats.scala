@@ -154,10 +154,8 @@ sealed abstract class MImgFormat(override val value: String) extends StringEnumE
   /** Добавлять -layers  Optimize */
   def layersOptimize: Boolean = false
 
-
   /** Аплоад: максимальный размер файла. */
   def uploadMaxFileSizeKb: Int
-
 
   /** Аплоад: максимальный размер одной стороны картинки. */
   def uploadSideSizeMaxPx: Int

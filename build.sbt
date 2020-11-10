@@ -257,6 +257,7 @@ lazy val reactResizableSjs = {
   val name = "react-resizable"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
+    .settings( libDepsReactTest )
 }
 
 /** React drag-n-drop фасады scala-js. */

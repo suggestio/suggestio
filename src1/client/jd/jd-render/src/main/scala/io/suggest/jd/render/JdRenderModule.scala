@@ -11,6 +11,10 @@ import io.suggest.jd.render.v._
   */
 object JdRenderModule {
 
+  lazy val jdRrr = wire[JdRrr]
+
+  lazy val qdRrrHtml = wire[QdRrrHtml]
+
   lazy val jdR = wire[JdR]
 
   lazy val jdCssStatic = wire[JdCssStatic]

@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.u.JdUtil
-import io.suggest.jd.render.v.JdR
+import io.suggest.jd.render.v.{JdR, JdRrr}
 import io.suggest.n2.edge.MEdgeFlags
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
@@ -26,9 +26,10 @@ import org.scalajs.dom.html
   * - элементы плитки должны быть html-тегами, а не компонентами
   * - карточки должны рендерится лениво, а не перерендериваться постоянно.
   */
-class GridCoreR(
-                 jdR                        : JdR,
-               ) {
+final class GridCoreR(
+                       jdRrr              : JdRrr,
+                       jdR                : JdR,
+                     ) {
 
   type Props_t = MGridCoreS
   type Props = ModelProxy[Props_t]
@@ -108,7 +109,7 @@ class GridCoreR(
             },
 
             // Выставить класс для ремонта z-index контейнера блока.
-            jdR.fixZIndexIfBlock( jdDoc2.template.rootLabel ),
+            jdRrr.fixZIndexIfBlock( jdDoc2.template.rootLabel ),
 
             jdR.apply {
               // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.

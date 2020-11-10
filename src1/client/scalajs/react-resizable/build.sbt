@@ -23,3 +23,5 @@ npmDependencies in Compile ++= Seq(
 )
 
 useYarn := true
+
+requireJsDomEnv in Test := true

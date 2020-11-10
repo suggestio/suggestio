@@ -1,3 +1,4 @@
+## Удалено, nginx для легаси пока на внешнем сервере.
 ---
 apiVersion: v1
 kind: Service

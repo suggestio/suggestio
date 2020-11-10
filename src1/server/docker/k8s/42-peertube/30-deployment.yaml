@@ -70,14 +70,21 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-peertube
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "8G"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 spec:
   rules:
   - host: video.suggest.io
     http:
       paths:
-      - backend:
-          service:
-            name: peertube-svc
-            port:
-              name: www
+        - pathType: Prefix
+          path: /
+          backend:
+            service:
+              name: peertube-svc
+              port:
+                name: www
 ---

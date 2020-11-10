@@ -10,7 +10,7 @@ import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
-import io.suggest.jd.render.v.{JdCssStatic, JdR, QdRrrHtml}
+import io.suggest.jd.render.v.{JdCssStatic, JdRrr, MQdOpCont, QdRrrHtml}
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.lk.r.img.LkImgUtilJs
@@ -22,12 +22,13 @@ import io.suggest.log.Log
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.TagOf
+import japgolly.scalajs.react.vdom.{TagMod, TagOf}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.html
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import scalacss.ScalaCssReact._
+import scalacss.StyleA
 import scalacss.internal.{LengthUnit, Literal}
 
 import scala.scalajs.js
@@ -38,10 +39,11 @@ import scala.scalajs.js
   * Created: 30.08.2019 10:40
   * Description: Компонент для редактирования jd-карточек.
   */
-class JdEditR(
-               val jdR            : JdR,
-               jdCssStatic        : JdCssStatic,
-             )
+final class JdEditR(
+                     val jdRrr          : JdRrr,
+                     val qdRrrHtml      : QdRrrHtml,
+                     jdCssStatic        : JdCssStatic,
+                   )
   extends Log
 {
 
@@ -137,24 +139,74 @@ class JdEditR(
 
 
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
-  object JdRrrEdit extends jdR.JdRrrBase {
+  object JdRrrEdit extends jdRrr.Base {
 
     class QdContentB(contentRef: Ref.Simple[html.Element],
                      $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
 
+      /** Рендерер Qd-контента под нужды редактора. */
+      class QdEditRenderer(p: MJdRrrProps) extends qdRrrHtml.Renderer(p) {
+
+        /** Сборка доп.модификаций для картинки. */
+        override def imgMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod = {
+          // В редакторе следует рендерить img-теги, подслушивая у них wh:
+          _notifyImgWhOnEdit($, e)
+        }
+
+        override def imgPostProcess(e: MEdgeDataJs,
+                                    jdtQdOp: MQdOpCont,
+                                    embedStyleOpt: Option[StyleA],
+                                    imgEl: TagOf[html.Element] ): TagOf[html.Element] = {
+          // Поддержка горизонтального ресайза картинки/видео.
+          (for {
+            _               <- Option.when( p.isCurrentSelected )(null)
+            origWh          <- e.origWh
+            attrsEmbed      <- jdtQdOp.qdOp.attrsEmbed
+            embedStyle      <- embedStyleOpt
+          } yield {
+            // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
+            // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
+            val maskHeightPx = attrsEmbed
+              .width
+              .flatMap(_.toOption)
+              .fold( origWh.height ) { displayWidthPx =>
+                (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
+              }
+
+            <.div(
+              ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
+              imgEl,
+              <.div(
+                jdCssStatic.horizResizable,
+                ^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
+                  onQdEmbedResize(jdtQdOp.qdOp, e, false)(event)
+                },
+                ^.height := maskHeightPx.px,
+                embedStyle,
+                ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
+              )
+            )
+          })
+            .getOrElse( imgEl )
+        }
+
+        override def frameMods( e: MEdgeDataJs, jdtQdOp: MQdOpCont ): TagMod = {
+          if (p.isCurrentSelected) {
+            TagMod(
+              jdCssStatic.hvResizable,
+              ^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
+                onQdEmbedResize( jdtQdOp.qdOp, e, true)( event )
+              }
+            )
+          } else {
+            TagMod.empty
+          }
+        }
+
+      }
+
       override def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
-        QdRrrHtml(
-          jdCssStatic = jdCssStatic,
-          rrrProps    = p,
-          // Для редактора: следует рендерить img-теги, подслушивая у них wh:
-          imgEdgeMods = Some {
-            _notifyImgWhOnEdit($, _)
-          },
-          // Выбранный qd-тег можно ресайзить:
-          resizableCb = OptionUtil.maybe( p.isCurrentSelected ) {
-            onQdEmbedResize(_, _, _)(_)
-          },
-        )
+        new QdEditRenderer( p )
           .render()
       }
 
@@ -396,17 +448,6 @@ class JdEditR(
       }
 
 
-      // TODO Косяк scalac-2.13.1 - не получается собрать эту функцию внутри DragSource()()
-      /** Реакция на начало перетаскивания qd-контента. */
-      private val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
-        (props, _, _) =>
-          // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
-          val s = props.p.value
-          val jdt = s.subTree.rootLabel
-          props.p dispatchNow JdTagDragStart(jdt, s.tagId)
-          // Отрендерить в json данные, которые будут переданы в DropTarget.
-          MJsDropInfo( DCT.STRIP )
-      }
 
       val blockDndComp = {
         DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
@@ -421,6 +462,16 @@ class JdEditR(
             }
           }
         ) {
+          /** Реакция на начало перетаскивания qd-контента. */
+          val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
+            (props, _, _) =>
+              // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
+              val s = props.p.value
+              val jdt = s.subTree.rootLabel
+              props.p dispatchNow JdTagDragStart(jdt, s.tagId)
+              // Отрендерить в json данные, которые будут переданы в DropTarget.
+              MJsDropInfo( DCT.STRIP )
+          }
 
           DragSource[MRrrEdit with MRrrEditCollectDrop, MRrrEditCollectDrag, MJsDropInfo, Children.None](
             itemType = DCT.STRIP,

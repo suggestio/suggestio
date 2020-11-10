@@ -13,9 +13,9 @@ import scala.scalajs.js.annotation.JSImport
   */
 object ResizableBox {
 
-  val component = JsComponent[ResizableProps, Children.Varargs, js.Object]( ResizableJs )
+  val component = JsComponent[ResizableBoxProps, Children.Varargs, js.Object]( ResizableJs )
 
-  def apply(props: ResizableProps)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: ResizableBoxProps)(children: VdomNode*) = component(props)(children: _*)
 
 }
 

@@ -1,3 +1,4 @@
+## Удалено, nginx для легаси пока на внешнем сервере.
 ---
 apiVersion: v1
 kind: Service
@@ -13,6 +14,8 @@ kind: Ingress
 metadata:
   name: powerdns-suggest-io
   namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/16"
 spec:
   rules:
   - host: powerdns.cbca.ru

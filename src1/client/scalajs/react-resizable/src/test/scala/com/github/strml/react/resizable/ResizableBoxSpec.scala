@@ -1,7 +1,8 @@
 package com.github.strml.react.resizable
 
-import minitest._
+import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^._
+import minitest._
 
 import scala.scalajs.js
 
@@ -13,14 +14,13 @@ import scala.scalajs.js
   */
 object ResizableBoxSpec extends SimpleTestSuite {
 
-
   test("js component must exist in namespace") {
     assert( !js.isUndefined(ResizableBoxJs) )
     assert( ResizableBoxJs != null )
   }
 
   test("Component must be usable") {
-    val props = new ResizableProps {
+    val props = new ResizableBoxProps {
       override val height  = 100
       override val width   = 200
     }
@@ -29,8 +29,10 @@ object ResizableBoxSpec extends SimpleTestSuite {
         "Content"
       )
     )
-    assert( !js.isUndefined(unmounted) )
-    assert( unmounted != null )
+    ReactTestUtils.withRenderedIntoDocument( unmounted ) { mounted =>
+      val htmlStr = mounted.outerHtmlScrubbed()
+      assert( htmlStr.length > 0 )
+    }
   }
 
 

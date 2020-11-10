@@ -1,7 +1,9 @@
 package com.github.strml.react.resizable
 
 import scala.scalajs.js
-import japgolly.scalajs.react.ReactEvent
+import japgolly.scalajs.react._
+
+import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -14,16 +16,20 @@ trait ResizableProps extends js.Object {
   val width: Double
   val height : Double
 
-  // If you change this, be sure to update your css
+  /** Either a ReactElement to be used as handle,
+    * or a function returning an element that is fed the handle's location as its first argument. */
+  val handle: js.UndefOr[raw.React.Element | js.Function1[ResizableProps.Handle, raw.React.Element]] = js.undefined
 
-  // [10, 10]
+  /** If you change this, be sure to update your css
+    * default: [10, 10]
+    */
   val handleSize: js.UndefOr[js.Array[Double]] = js.undefined
 
   // false
   val lockAspectRatio: js.UndefOr[Boolean] = js.undefined
 
   // See [[Axis]].
-  val axis: js.UndefOr[String] = js.undefined
+  val axis: js.UndefOr[ResizableProps.Axis] = js.undefined
 
   // [10, 10],
   val minConstraints: js.UndefOr[js.Array[Double]] = js.undefined
@@ -42,15 +48,38 @@ trait ResizableProps extends js.Object {
 
   val draggableOpts: js.UndefOr[js.Object] = js.undefined
 
+  val resizeHandles: js.UndefOr[ResizableProps.Handle] = js.undefined
+
+}
+trait ResizableBoxProps extends ResizableProps {
+  val style: js.UndefOr[js.Object] = js.undefined
 }
 
+object ResizableProps {
 
-object Axis {
-  final def BOTH = "both"
-  final def X = "x"
-  final def Y = "y"
-  final def NONE = "none"
+  type Axis <: String
+  object Axis {
+    final def BOTH = "both".asInstanceOf[Axis]
+    final def X = "x".asInstanceOf[Axis]
+    final def Y = "y".asInstanceOf[Axis]
+    final def NONE = "none".asInstanceOf[Axis]
+  }
+
+
+  type Handle <: String
+  object Handle {
+    final def S = "s".asInstanceOf[Handle]
+    final def W = "w".asInstanceOf[Handle]
+    final def E = "e".asInstanceOf[Handle]
+    final def N = "n".asInstanceOf[Handle]
+    final def SW = "sw".asInstanceOf[Handle]
+    final def NW = "nw".asInstanceOf[Handle]
+    final def SE = "se".asInstanceOf[Handle]
+    final def NE = "ne".asInstanceOf[Handle]
+  }
+
 }
+
 
 
 @js.native
