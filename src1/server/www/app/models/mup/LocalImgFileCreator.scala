@@ -51,7 +51,12 @@ final case class MLocalImgFileCreatorArgs(
 
 
 /** Маскировка MLocalImg под TemporaryFile. */
-final case class LocalImgFile(override val file: File, creator: LocalImgFileCreator) extends TemporaryFile {
+final case class LocalImgFile(
+                               override val file: File,
+                               creator: LocalImgFileCreator
+                             )
+  extends TemporaryFile
+{
   override def path = file.toPath
   override def temporaryFileCreator = creator
 }

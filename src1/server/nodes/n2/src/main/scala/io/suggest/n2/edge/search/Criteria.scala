@@ -7,7 +7,6 @@ import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
 import io.suggest.n2.edge.MPredicate
 import io.suggest.n2.media.storage.MStorage
-import org.elasticsearch.index.query.RangeQueryBuilder
 
 /**
   * Suggest.io

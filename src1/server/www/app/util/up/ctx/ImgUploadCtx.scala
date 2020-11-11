@@ -1,6 +1,7 @@
 package util.up.ctx
 
 import java.awt.image.BufferedImage
+import java.nio.file.Path
 
 import com.google.inject.assistedinject.Assisted
 import io.suggest.common.fut.FutureUtil
@@ -11,7 +12,6 @@ import io.suggest.svg.SvgUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import javax.inject.Inject
-import models.mup.MUploadCtxArgs
 import org.apache.batik.gvt.GraphicsNode
 import org.w3c.dom.Document
 import play.api.inject.Injector
@@ -26,32 +26,34 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Модели контекста аплоада.
   */
 
-
 /** Интерфейс для Guice DI-factory, которая собирает инстансы upload-контекста [[ImgUploadCtx]]. */
 trait IImgUploadCtxFactory {
-  def make( upCtxArgs: MUploadCtxArgs ): ImgUploadCtx
+  def make(path: Path): ImgUploadCtx
 }
 
+
 /** Реализация upload-контекста на базе lazy vals. */
-class ImgUploadCtx @Inject()(
-                              @Assisted upCtxArgs          : MUploadCtxArgs,
-                              injector                     : Injector,
-                            )
+final class ImgUploadCtx @Inject()(
+                                    @Assisted override val path             : Path,
+                                    injector                                : Injector,
+                                  )
   extends IUploadCtx
   with MacroLogsImplLazy
 {
+
+  override val file = super.file
 
   private lazy val imgFileUtil = injector.instanceOf[ImgFileUtil]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
-  private lazy val imgFmtOpt = upCtxArgs.detectedMimeTypeOpt.flatMap( MImgFormats.withMime )
+  private lazy val imgFmtOpt = detectedMimeTypeOpt.flatMap( MImgFormats.withMime )
 
 
   private lazy val svgDocOpt: Option[Document] = {
     SvgUtil.safeOpenWrap(
-      SvgUtil.open( upCtxArgs.file )
+      SvgUtil.open( file )
     )
   }
 
@@ -63,36 +65,53 @@ class ImgUploadCtx @Inject()(
     }
   }
 
+  def isImgSzValid(sz: MSize2di): Boolean =
+    sz.height > 0 && sz.width > 0
+
   /** Ширина и длина картинки, когда это картинка. */
   override lazy val imageWh: Option[MSize2di] = {
     for {
       imgFmt    <- imgFmtOpt
-      mimeType  <- upCtxArgs.detectedMimeTypeOpt
-    } yield {
-      val res = imgFmt match {
+      imgSz2d   <- imgFmt match {
         case MImgFormats.PNG | MImgFormats.JPEG | MImgFormats.GIF =>
-          imgFileUtil.getImageWh( mimeType, upCtxArgs.file )
+          for {
+            mimeType <- detectedMimeTypeOpt
+            sz2d = imgFileUtil.getImageWh( mimeType, file )
+            if {
+              val r = isImgSzValid( sz2d )
+              if (!r) LOGGER.warn(s"$logPrefix Invalid $imgFmt sz detected: $sz2d" )
+              r
+            }
+          } yield sz2d
+
         case MImgFormats.SVG =>
           SvgUtil
             .getDocWh(svgDocOpt.get)
             .filter { res =>
-              val r = res.height > 0 && res.width > 0
-              if (!r) LOGGER.warn(s"$logPrefix Dropped invalid SVG-size detected by SvgUtil doc: $res")
+              val r = isImgSzValid( res )
+              if (!r) LOGGER.warn(s"$logPrefix Dropped invalid $imgFmt size detected by SvgUtil doc: $res")
               r
             }
-            .getOrElse {
-              val r = svgGvtOpt
-                .get
-                .getPrimitiveBounds
-                .toSize2di
-              // TODO Профильтровать полученные размеры, а только потом устроить .get
-              LOGGER.debug(s"$logPrefix No declared SVG wh. Draw SVG to detect factical w/h => $r")
-              r
+            .orElse {
+              for {
+                svgGvt <- svgGvtOpt
+                rect = svgGvt.getPrimitiveBounds
+                sz2d = rect.toSize2di
+                if {
+                  val r = isImgSzValid(sz2d)
+                  if (!r) LOGGER.warn(s"$logPrefix Invalid $imgFmt size from GVT: $sz2d")
+                  r
+                }
+              } yield {
+                LOGGER.debug(s"$logPrefix Draw SVG to detect factical w/h => $sz2d")
+                sz2d
+              }
             }
       }
+    } yield {
       // Теоретически, можно организовать fallback через MLocalImg.getImageWh() для обеих ветвей. Это требует imageWh завернуть в Future[].
-      LOGGER.trace(s"$logPrefix sz=$res for imgFmt=$imgFmt mime=$mimeType")
-      res
+      LOGGER.trace(s"$logPrefix sz=$imgSz2d for imgFmt=$imgFmt")
+      imgSz2d
     }
   }
 
@@ -102,20 +121,20 @@ class ImgUploadCtx @Inject()(
       .map { imgFmt =>
         try {
           // Это картинка. Проверить лимиты по размеру файла и размеру сторон картинки.
-          (upCtxArgs.fileLength <= imgFmt.uploadMaxFileSizeB) &&
+          (fileLength <= imgFmt.uploadMaxFileSizeB) &&
             imageWh.exists { wh =>
               val szMax = imgFmt.uploadSideSizeMaxPx
               (wh.width <= szMax) && (wh.height <= szMax)
             }
         } catch {
           case ex: Throwable =>
-            LOGGER.error(s"validateFileContentEarly: Failed to validate file ${upCtxArgs.file} ${upCtxArgs.detectedMimeTypeOpt.orNull} ${upCtxArgs.fileLength}b", ex)
+            LOGGER.error(s"validateFileContentEarly: Failed to validate file $file ${detectedMimeTypeOpt.orNull} ${fileLength}b", ex)
             false
         }
       }
       .getOrElse {
         // Неизвестный тип файла. Непонятно, как проверять.
-        LOGGER.info( s"Don't know, how to early-validate ${upCtxArgs.detectedMimeTypeOpt.orNull}" )
+        LOGGER.info( s"Don't know, how to early-validate ${detectedMimeTypeOpt.orNull}" )
         true
       }
   }
@@ -124,12 +143,12 @@ class ImgUploadCtx @Inject()(
   /** Декодирование изображения в BufferedImage. */
   private lazy val bufferedImageFutOpt: Future[Option[BufferedImage]] = {
     val optFut = for {
-      mime    <- upCtxArgs.detectedMimeTypeOpt
+      mime    <- detectedMimeTypeOpt
       imgFmt  <- imgFmtOpt
     } yield {
       if (imgFmt !=* MImgFormats.SVG) {
         Future {
-          imgFileUtil.readImage(mime, upCtxArgs.file)
+          imgFileUtil.readImage(mime, file)
         }
       } else {
         throw new UnsupportedOperationException(s"$logPrefix Image format not supported for ImageIO: $imgFmt")
@@ -145,7 +164,7 @@ class ImgUploadCtx @Inject()(
         bufferedImageFutOpt
           .map(_.nonEmpty)
           .recover { case ex: Throwable =>
-            val logMgs = s"validateImageFut: Image file invalid, MIME=${upCtxArgs.detectedMimeTypeOpt.orNull}, file=${upCtxArgs.file}"
+            val logMgs = s"validateImageFut: Image file invalid, MIME=${detectedMimeTypeOpt.orNull}, file=$file"
             if (ex.isInstanceOf[NoSuchElementException])
               LOGGER.warn(logMgs)
             else

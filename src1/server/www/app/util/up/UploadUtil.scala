@@ -1,11 +1,13 @@
 package util.up
 
+import java.nio.file.Path
+
 import io.suggest.crypto.hash.HashesHex
 import javax.inject.{Inject, Singleton}
-import models.mup.{MDownLoadQs, MUploadCtxArgs, MUploadFileHandlers}
+import models.mup.{MDownLoadQs, MUploadFileHandler, MUploadFileHandlers}
 import play.api.Configuration
 import play.api.inject.Injector
-import util.up.ctx.{AnyFileUploadCtx, IImgUploadCtxFactory, IUploadCtx}
+import util.up.ctx.{IAnyFileUploadCtxFactory, IImgUploadCtxFactory, IUploadCtx}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -18,14 +20,15 @@ import scala.concurrent.duration._
   * Ориентирована на возможность балансировки файлов между нодами.
   */
 @Singleton
-class UploadUtil @Inject()(
-                            injector: Injector,
-                          ) {
+final class UploadUtil @Inject()(
+                                  injector: Injector,
+                                ) {
 
   private def configuration = injector.instanceOf[Configuration]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
   private lazy val imgUploadCtxFactory = injector.instanceOf[IImgUploadCtxFactory]
+  private lazy val anyFileUploadCtxFactory = injector.instanceOf[IAnyFileUploadCtxFactory]
 
 
   /**
@@ -80,14 +83,16 @@ class UploadUtil @Inject()(
 
   /** Вернуть инстанс IUploadCtx на основе upload-аргументов.
     *
-    * @param upCtxArgs Upload-аргументы.
+    * @param path Путь до Upload-файла.
     * @return Инстанс IUploadCtx.
     */
-  def makeUploadCtx( upCtxArgs: MUploadCtxArgs ): IUploadCtx = {
-    upCtxArgs.uploadArgs.info.fileHandler
-      .fold[IUploadCtx] ( AnyFileUploadCtx ) {
+  def makeUploadCtx( path: Path, fileHandler: Option[MUploadFileHandler] ): IUploadCtx = {
+    fileHandler
+      .fold [IUploadCtx] {
+        anyFileUploadCtxFactory.make( path )
+      } {
         case MUploadFileHandlers.Image =>
-          imgUploadCtxFactory.make( upCtxArgs )
+          imgUploadCtxFactory.make( path )
       }
   }
 

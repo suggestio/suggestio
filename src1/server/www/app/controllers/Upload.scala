@@ -566,13 +566,12 @@ final class Upload @Inject()(
         }
 
         // Сборка Upload-контекста. Дальнейший сбор информации по загруженному файлу должен происходить в контексте.
-        upCtxArgs = MUploadCtxArgs(filePart, uploadArgs, request.body)
-        upCtx = uploadUtil.makeUploadCtx( upCtxArgs )
+        upCtx = uploadUtil.makeUploadCtx( filePart.ref.path, uploadArgs.info.fileHandler )
 
         sizeB = uploadArgs.fileProps.sizeB.get
         // Сверить размер файла с заявленным размером
         if {
-          val srcLen = upCtxArgs.fileLength
+          val srcLen = upCtx.fileLength
           val r = (srcLen ==* sizeB)
           LOGGER.trace(s"$logPrefix File size check: expected=$sizeB detected=$srcLen ;; match? $r")
           if (!r)
@@ -583,7 +582,7 @@ final class Upload @Inject()(
         declaredMime = uploadArgs.fileProps.mime.get
 
         // Определить MIME-тип принятого файла:
-        detectedMimeType <- upCtxArgs.detectedMimeTypeOpt
+        detectedMimeType <- upCtx.detectedMimeTypeOpt
         // Бывает, что MIME не совпадает. Решаем, что нужно делать согласно настройкам аплоада. Пример:
         // Detected file MIME type [application/zip] does not match to expected [application/vnd.android.package-archive]
         mimeType = {
@@ -594,7 +593,7 @@ final class Upload @Inject()(
           ) {
             detectedMimeType
           } else {
-            val msg = s"Detected file MIME type [${upCtxArgs.detectedMimeTypeOpt.orNull}] does not match to expected $declaredMime"
+            val msg = s"Detected file MIME type [${upCtx.detectedMimeTypeOpt.orNull}] does not match to expected $declaredMime"
             LOGGER.warn(s"$logPrefix $msg")
             uploadArgs.info.obeyMime.fold {
               __appendErr( msg )
@@ -614,7 +613,7 @@ final class Upload @Inject()(
         if {
           val r = upCtx.validateFileContentEarly()
           if (!r)
-            __appendErr( s"Failed to validate size limits: len=${upCtxArgs.fileLength}b img=${request.body.fileCreator.liArgs.mLocalImg.dynImgId.imgFormat.orNull}/${upCtx.imageWh.orNull}" )
+            __appendErr( s"Failed to validate size limits: len=${upCtx.fileLength}b img=${request.body.fileCreator.liArgs.mLocalImg.dynImgId.imgFormat.orNull}/${upCtx.imageWh.orNull}" )
           r
         }
 
@@ -629,7 +628,7 @@ final class Upload @Inject()(
         for {
           // Рассчитать хэш-суммы файла (digest).
           hashesHex2 <- fileUtil.mkHashesHexAsync(
-            file    = upCtxArgs.file,
+            file    = upCtx.file,
             hashes  = uploadArgs.fileProps
               .hashesHex
               .map(_.hType),
@@ -653,7 +652,7 @@ final class Upload @Inject()(
                     .exists { mfhash =>
                       val r = mfhash.hexValue ==* fmHashQs.hexValue
                       if (!r) {
-                        LOGGER.error(s"$logPrefix $mfhash != ${fmHashQs.hType} ${fmHashQs.hexValue} file=${upCtxArgs.file} ${upCtxArgs.fileLength}b user=${request.user.personIdOpt.orNull}")
+                        LOGGER.error(s"$logPrefix $mfhash != ${fmHashQs.hType} ${fmHashQs.hexValue} file=${upCtx.file} ${upCtx.fileLength}b user=${request.user.personIdOpt.orNull}")
                         errSb.synchronized {
                           __appendErr( s"File hash ${fmHashQs.hType.fullStdName} '${mfhash.hexValue}' doesn't match to declared '${fmHashQs.hexValue}'." )
                         }
@@ -681,7 +680,7 @@ final class Upload @Inject()(
           // Анти-оптимизация: Запускаем ТОЛЬКО ПОСЛЕ pure-java-проверок, т.к. в clam тоже находят дыры. https://www.opennet.ru/opennews/art.shtml?num=47964
           clamAvScanResFut = clamAvUtil.scan(
             ClamAvScanRequest(
-              file = upCtxArgs.file.getAbsolutePath
+              file = upCtx.file.getAbsolutePath
             )
           )
 
@@ -690,7 +689,7 @@ final class Upload @Inject()(
             val r = clamAvScanRes.isClean
             LOGGER.trace(s"ClamAV: clean?$r took=${System.currentTimeMillis() - startMs} ms. ret=$clamAvScanRes")
             if (!r) {
-              LOGGER.warn(s"ClamAV INFECTED $clamAvScanRes for file ${upCtxArgs.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
+              LOGGER.warn(s"ClamAV INFECTED $clamAvScanRes for file ${upCtx.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
               errSb.synchronized {
                 __appendErr( s"AntiVirus check failed." )
               }
@@ -712,7 +711,7 @@ final class Upload @Inject()(
           saveFileToShardFut = {
             val wr = WriteRequest(
               contentType  = mimeType,
-              file         = upCtxArgs.file,
+              file         = upCtx.file,
               origFileName = fileNameOpt
             )
             LOGGER.trace(s"$logPrefix Will save file $wr to storage $storageInfo ...")

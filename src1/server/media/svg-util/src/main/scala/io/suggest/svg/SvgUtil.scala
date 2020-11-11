@@ -141,12 +141,18 @@ object SvgUtil extends MacroLogsImpl {
         widthAv     <- Option( attrs.getNamedItem("width") )
         __parseAv = (av: Node) => Math.round( av.getNodeValue.toDouble ).toInt
         widthPx = __parseAv( widthAv )
-        // TODO Логгировать ошибку
-        if widthPx > 0
+        if {
+          val r = widthPx > 0
+          if (!r) LOGGER.warn(s"Invalid width: $widthPx px ($widthAv)")
+          r
+        }
         heightAv    <- Option( attrs.getNamedItem("height") )
         heightPx = __parseAv( heightAv )
-        // TODO Логгировать ошибку
-        if heightPx > 0
+        if {
+          val r = heightPx > 0
+          if (!r) LOGGER.warn(s"Invalid height: $widthPx px ($widthAv)")
+          r
+        }
       } yield {
         MSize2di(
           width  = widthPx,

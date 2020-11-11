@@ -2,7 +2,7 @@ package models.mup
 
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
-import util.up.ctx.IImgUploadCtxFactory
+import util.up.ctx.{IAnyFileUploadCtxFactory, IImgUploadCtxFactory}
 
 /**
   * Suggest.io
@@ -17,6 +17,11 @@ class GuiceDiModule extends AbstractModule {
     install(
       new FactoryModuleBuilder()
         .build( classOf[IImgUploadCtxFactory] )
+    )
+
+    install(
+      new FactoryModuleBuilder()
+        .build( classOf[IAnyFileUploadCtxFactory] )
     )
 
     install(

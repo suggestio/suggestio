@@ -1,5 +1,10 @@
 package util.up.ctx
 
+import java.nio.file.Path
+
+import com.google.inject.assistedinject.Assisted
+import javax.inject.Inject
+
 import scala.concurrent.Future
 
 /**
@@ -8,7 +13,11 @@ import scala.concurrent.Future
   * Created: 17.02.2020 18:17
   * Description: Контекст, разрешающий любой файл.
   */
-object AnyFileUploadCtx extends IUploadCtx {
+final case class AnyFileUploadCtx @Inject() (
+                                              @Assisted override val path: Path,
+                                            )
+  extends IUploadCtx
+{
 
   override def imageWh = None
 
@@ -23,4 +32,9 @@ object AnyFileUploadCtx extends IUploadCtx {
 
   override def imageHasTransparentColors() = None
 
+}
+
+
+trait IAnyFileUploadCtxFactory {
+  def make(path: Path): AnyFileUploadCtx
 }

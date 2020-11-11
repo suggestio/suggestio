@@ -1,6 +1,9 @@
 package util.up.ctx
 
+import java.nio.file.Path
+
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.file.MimeUtilJvm
 
 import scala.concurrent.Future
 
@@ -11,6 +14,12 @@ import scala.concurrent.Future
   * Description: Интерфейс для различных Upload-контекстов.
   */
 trait IUploadCtx {
+
+  def path: Path
+  def file = path.toFile
+  lazy val fileLength = file.length()
+  lazy val detectedMimeTypeOpt: Option[String] =
+    MimeUtilJvm.probeContentType( path )
 
   def imageWh: Option[MSize2di]
 
