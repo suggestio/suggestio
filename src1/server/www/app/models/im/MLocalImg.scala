@@ -108,7 +108,7 @@ class MLocalImgs @Inject() (
     Future.successful(ds)
   }
 
-  def identify(mimg: MLocalImg) = {
+  def identify(mimg: MLocalImg): Future[Info] = {
     Future {
       val file = fileOf(mimg)
       if ( blocking(file.exists()) ) {

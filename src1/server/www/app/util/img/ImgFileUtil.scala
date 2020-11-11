@@ -5,7 +5,6 @@ import java.io.File
 
 import javax.imageio.{ImageIO, ImageReader}
 import javax.imageio.stream.FileImageInputStream
-import javax.inject.Inject
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImplLazy
 import org.im4java.core.Info

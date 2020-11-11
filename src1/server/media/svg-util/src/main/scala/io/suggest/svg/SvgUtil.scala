@@ -139,12 +139,18 @@ object SvgUtil extends MacroLogsImpl {
         svgRoot     <- Option( doc.getFirstChild )
         attrs       <- Option( svgRoot.getAttributes )
         widthAv     <- Option( attrs.getNamedItem("width") )
+        __parseAv = (av: Node) => Math.round( av.getNodeValue.toDouble ).toInt
+        widthPx = __parseAv( widthAv )
+        // TODO Логгировать ошибку
+        if widthPx > 0
         heightAv    <- Option( attrs.getNamedItem("height") )
+        heightPx = __parseAv( heightAv )
+        // TODO Логгировать ошибку
+        if heightPx > 0
       } yield {
-        def __parseAv(av: Node) = Math.round( av.getNodeValue.toDouble ).toInt
         MSize2di(
-          width  = __parseAv(widthAv),
-          height = __parseAv(heightAv)
+          width  = widthPx,
+          height = heightPx,
         )
       }
     }

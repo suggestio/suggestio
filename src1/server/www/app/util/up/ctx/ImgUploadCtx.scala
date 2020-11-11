@@ -75,14 +75,22 @@ class ImgUploadCtx @Inject()(
         case MImgFormats.SVG =>
           SvgUtil
             .getDocWh(svgDocOpt.get)
+            .filter { res =>
+              val r = res.height > 0 && res.width > 0
+              if (!r) LOGGER.warn(s"$logPrefix Dropped invalid SVG-size detected by SvgUtil doc: $res")
+              r
+            }
             .getOrElse {
-              LOGGER.warn(s"$logPrefix No document wh. Drawing SVG to detect factical w/h. Usually differs from real document viewport sz.")
-              svgGvtOpt
+              val r = svgGvtOpt
                 .get
                 .getPrimitiveBounds
                 .toSize2di
+              // TODO Профильтровать полученные размеры, а только потом устроить .get
+              LOGGER.debug(s"$logPrefix No declared SVG wh. Draw SVG to detect factical w/h => $r")
+              r
             }
       }
+      // Теоретически, можно организовать fallback через MLocalImg.getImageWh() для обеих ветвей. Это требует imageWh завернуть в Future[].
       LOGGER.trace(s"$logPrefix sz=$res for imgFmt=$imgFmt mime=$mimeType")
       res
     }

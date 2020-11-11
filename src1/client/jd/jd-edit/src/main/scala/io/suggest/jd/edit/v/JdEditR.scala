@@ -22,6 +22,7 @@ import io.suggest.pick.MimeConst
 import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.log.Log
+import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._
@@ -228,25 +229,32 @@ final class JdEditR(
           } yield {
             // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
             // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
-            val displayWidthPxOpt = attrsEmbed.width
-              .flatMap(_.toOption)
-            val maskHeightPxOpt = displayWidthPxOpt
+            def __getPosValue( optU: Option[ISetUnset[Int]] ) =
+              optU
+                .flatMap(_.toOption)
+                .filter(_ > 0)
+
+            val displayWidthPxOpt = __getPosValue( attrsEmbed.width )
+
+            // Вычислить отображаемую высоту картинки.
+            // Нередко, высота картинки неизвестна/не задана. Но react-resizable требует точное значение, иначе exception или деформированная картинка.
+            val displayHeightPxOpt = __getPosValue( attrsEmbed.height )
               .orElse {
-                val h = origWh.height
-                Option.when( h > 0 )(h)
+                // Попытаться определить отображаемую высоту на основе данных из origWh:
+                displayWidthPxOpt
+                  .map { displayWidthPx =>
+                    (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
+                  }
+                  .filter(_ > 0)
               }
-              .map { displayWidthPx =>
-                (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
-              }
-              .filter(_ > 0)
-            println("maskHeightPx := " + maskHeightPxOpt)
+            println("displayHeightPx := " + displayHeightPxOpt)
 
             ResizableBox.component.withKey(key) {
               _rszBoxProps( e, jdtQdOp, lockAspect = true, saveHeight = false, whDefault = {
                 // Нужно пронормировать оригинальный размер картинки в текущий размер.
                 (for {
                   displayWidthPx <- displayWidthPxOpt
-                  maskHeightPx <- maskHeightPxOpt
+                  maskHeightPx <- displayHeightPxOpt
                 } yield {
                   MSize2di(
                     width  = displayWidthPx,
@@ -264,7 +272,7 @@ final class JdEditR(
                   //^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
                   //  onQdEmbedResize(jdtQdOp.qdOp, e, false)(event)
                   //},
-                  maskHeightPxOpt.whenDefined { maskHeightPx =>
+                  displayHeightPxOpt.whenDefined { maskHeightPx =>
                     ^.height := maskHeightPx.px
                   },
                   embedStyle,
