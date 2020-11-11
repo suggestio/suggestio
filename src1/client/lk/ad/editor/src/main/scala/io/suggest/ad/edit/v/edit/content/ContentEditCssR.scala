@@ -3,10 +3,14 @@ package io.suggest.ad.edit.v.edit.content
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.color.MColorData
+import io.suggest.common.html.HtmlConstants
+import io.suggest.css.CssR
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.internal.mutable.StyleSheet
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.img.MImgFormats
+import io.suggest.pick.MimeConst
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.ueq.UnivEqUtil._
 
@@ -49,6 +53,11 @@ class ContentEditCssR {
       )
     }
 
+    // Заменить уголок ресайза.
+    ".react-resizable-handle" - (
+      backgroundImage :=  s"""url('${HtmlConstants.Proto.DATA_}${MImgFormats.SVG.mime};${MimeConst.Words.BASE64},PHN2ZyBpZD0i0KHQu9C+0LlfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgNiA2Ij48c3R5bGU+LnN0MHtmaWxsOm5vbmV9PC9zdHlsZT48cGF0aCBkPSJNNiA2SDBWNC4yaDQuMlYwSDZ2NnoiLz48L3N2Zz4=')"""
+    )
+
   }
 
 
@@ -63,6 +72,6 @@ class ContentEditCssR {
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
 
-  def apply(propsValProxy: Props) = component( propsValProxy )
+  def apply(propsValProxy: Props): VdomElement = CssR.compProxied( propsValProxy.zoom(new ContentCss(_)) ) //component( propsValProxy )
 
 }

@@ -6,6 +6,8 @@ import com.github.strml.react.resizable.{ResizableBox, ResizableBoxProps, Resize
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdEdgeId
@@ -33,7 +35,6 @@ import scalacss.StyleA
 import scalacss.internal.{LengthUnit, Literal}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -156,31 +157,49 @@ final class JdEditR(
 
         /** Сборка доп.модификаций для картинки. */
         override def imgMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod = {
-          // В редакторе следует рендерить img-теги, подслушивая у них wh:
-          _notifyImgWhOnEdit($, e)
+          TagMod(
+            // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
+            ^.draggable := false,
+            // В редакторе следует рендерить img-теги, подслушивая у них wh:
+            _notifyImgWhOnEdit($, e),
+          )
         }
 
         /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
         override def _hrefAttr: VdomAttr[String] =
           ^.title
 
-
-        def _rszBoxProps( edgeDataJs: MEdgeDataJs, jdtQdOp: MQdOpCont, lockAspect: Boolean ): ResizableBoxProps = {
+        /** Сборка ResizeBoxProps для ресайзинкка внутри QD-контента (картинки, фреймы, и т.д.) */
+        def _rszBoxProps( edgeDataJs: MEdgeDataJs, jdtQdOp: MQdOpCont,
+                          lockAspect: Boolean, saveHeight: Boolean, whDefault: => MSize2di ): ResizableBoxProps = {
+          // event.preventDefault нужен в callback'ах, чтобы избежать конфликтов с react-dnd из-за наступления drag.
           val embedWh = p.jdArgs.jdRuntime.jdCss.EmbedWh( jdtQdOp.jdTagId )
           val reaction = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
-            val wh = rszCbData.size
-            //e.stopPropagationCB >>
-            e.preventDefaultCB >>
-              ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
-                wh.width.toInt,
-                jdtQdOp.qdOp,
-                edgeUid = edgeDataJs.jdEdge.edgeDoc.id.get,
-                heightPx = Option.when(wh.height > 0)(wh.height.toInt),
-              ))
+            var cb = e.preventDefaultCB
+            if (rszCbData.size.width > 0) {
+              cb = cb >> {
+                val wh = rszCbData.size
+                println( s"wh = ${wh.width}x${wh.height}" )
+                ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
+                  wh.width.toInt,
+                  jdtQdOp.qdOp,
+                  edgeUid = edgeDataJs.jdEdge.edgeDoc.id.get,
+                  heightPx = Option.when(saveHeight && wh.height > 0)(wh.height.toInt),
+                ))
+              }
+            }
+            cb
           }
+          lazy val whDflt: MSize2di = whDefault
+
+          // для react-resizable нужна высота и длина одновременно, хотя у нас обычно картинки БЕЗ заданной высоты для пропорционального масштабирования.
+          // Поэтому, нужно довычислить высоту, когда её не хватает.
+          val _widthPx = embedWh.widthPx getOrElse whDflt.width
+          val _heightPx = embedWh.heightPx getOrElse whDflt.height
+          println(s"RszBoxProps = ${_widthPx}x${_heightPx}")
           new ResizableBoxProps {
-            override val width = embedWh.widthPx.toDouble
-            override val height = embedWh.heightPx.toDouble
+            override val width = _widthPx.toDouble
+            override val height = _heightPx.toDouble
             override val onResize = reaction
             override val onResizeStart = js.defined {
               ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
@@ -209,16 +228,34 @@ final class JdEditR(
           } yield {
             // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
             // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
-            val maskHeightPx = attrsEmbed
-              .width
+            val displayWidthPxOpt = attrsEmbed.width
               .flatMap(_.toOption)
-              .fold( origWh.height ) { displayWidthPx =>
+            val maskHeightPxOpt = displayWidthPxOpt
+              .orElse {
+                val h = origWh.height
+                Option.when( h > 0 )(h)
+              }
+              .map { displayWidthPx =>
                 (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
               }
+              .filter(_ > 0)
+            println("maskHeightPx := " + maskHeightPxOpt)
 
-            ResizableBox.component.withKey(key)(
-              _rszBoxProps( e, jdtQdOp, lockAspect = true )
-            )(
+            ResizableBox.component.withKey(key) {
+              _rszBoxProps( e, jdtQdOp, lockAspect = true, saveHeight = false, whDefault = {
+                // Нужно пронормировать оригинальный размер картинки в текущий размер.
+                (for {
+                  displayWidthPx <- displayWidthPxOpt
+                  maskHeightPx <- maskHeightPxOpt
+                } yield {
+                  MSize2di(
+                    width  = displayWidthPx,
+                    height = maskHeightPx,
+                  )
+                })
+                  .getOrElse( origWh )
+              })
+            } (
               <.div(
                 ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
                 imgEl,
@@ -227,7 +264,9 @@ final class JdEditR(
                   //^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
                   //  onQdEmbedResize(jdtQdOp.qdOp, e, false)(event)
                   //},
-                  ^.height := maskHeightPx.px,
+                  maskHeightPxOpt.whenDefined { maskHeightPx =>
+                    ^.height := maskHeightPx.px
+                  },
                   embedStyle,
                   ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
                 )
@@ -259,7 +298,7 @@ final class JdEditR(
 
           if (p.isCurrentSelected) {
             ResizableBox.component.withKey(key) {
-              _rszBoxProps( edgeDataJs, jdtQdOp, lockAspect = false )
+              _rszBoxProps( edgeDataJs, jdtQdOp, lockAspect = false, saveHeight = true, whDefault = HtmlConstants.Iframes.whCsspxDflt )
             } (
               tag,
             )

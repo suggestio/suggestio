@@ -197,10 +197,6 @@ class QdRrrHtml(
         }
         embedStyleOpt.foreach( imgArgsAcc ::= _ )
 
-        // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
-        if (rrrProps.jdArgs.conf.isEdit)
-          imgArgsAcc ::= (^.draggable := false)
-
         // Доп.модификации извне.
         val imgModsExt = imgMods(e, jdtQdOp)
         if (imgModsExt ne TagMod.empty)

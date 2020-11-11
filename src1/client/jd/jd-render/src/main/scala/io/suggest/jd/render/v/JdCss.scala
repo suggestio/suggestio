@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -758,8 +759,6 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // text indents.
 
-  lazy val whCssPxDflt = HtmlConstants.Iframes.whCsspxDflt
-
   /** Класс для унификации доступа к размерам embed-фрейма.
     * Нужен для унификации кода рассчёта wh между embedAttrF и react-resizable props. */
   case class EmbedWh( jdtId: MJdTagId ) {
@@ -772,19 +771,18 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       embedAttrs
     }
 
-    private def _mkSize( getValue: MQdAttrsEmbed => Option[ISetUnset[Int]], default: Int): Int = {
-      (for {
+    private def _mkSize( getValue: MQdAttrsEmbed => Option[ISetUnset[Int]] ): Option[Int] = {
+      for {
         embedAttrs <- _ctxOpt
         sizeSU <- getValue( embedAttrs )
         sizePx <- sizeSU.toOption
       } yield {
         sizePx
-      })
-        .getOrElse( default )
+      }
     }
 
-    def heightPx = _mkSize(_.height, whCssPxDflt.height)
-    def widthPx = _mkSize(_.width, whCssPxDflt.width)
+    def heightPx = _mkSize(_.height )
+    def widthPx = _mkSize(_.width )
 
   }
 
@@ -800,8 +798,10 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         val embedWh = EmbedWh( jdtId )
 
         val wideSzMultOpt = jdCssArgs.data.jdtWideSzMults.get( jdtId )
-        acc ::= height( _szMulted( embedWh.heightPx, wideSzMultOpt ).px )
-        acc ::= width( _szMulted( embedWh.widthPx, wideSzMultOpt ).px )
+        for (h <- embedWh.heightPx)
+          acc ::= height( _szMulted( h , wideSzMultOpt ).px )
+        for (w <- embedWh.widthPx)
+          acc ::= width( _szMulted( w , wideSzMultOpt ).px )
 
         styleS( acc: _* )
       },
@@ -849,7 +849,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   val video = {
-    val whDflt = whCssPxDflt
+    val whDflt = HtmlConstants.Iframes.whCsspxDflt
     style(
       width ( _szMulted(whDflt.width).px ),
       height( _szMulted(whDflt.height).px )
