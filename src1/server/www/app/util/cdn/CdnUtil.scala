@@ -268,7 +268,7 @@ class CdnUtil @Inject() (
         } yield {
           // Может быть несколько результатов, если у volume существуют реплики.
           // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
-          val myExtHost = uploadUtil.MY_NODE_PUBLIC_URL
+          val myExtHost = uploadUtil.MY_NODE_PUBLIC_HOST
           volLocs
             .find { volLoc =>
               volLoc.publicUrl ==* myExtHost

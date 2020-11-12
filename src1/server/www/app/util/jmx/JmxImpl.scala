@@ -20,7 +20,7 @@ import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
 import util.es.SiowebEsModelJmx
-import util.img.DynImgUtilJmx
+import util.img.{DynImgUtilJmx, ImgMaintainUtilJmx}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,6 +51,7 @@ case class JmxImpl @Inject()(
                                bill2UtilJmx                  : Bill2UtilJmx,
                                tfDailyUtilJmx                : TfDailyUtilJmx,
                                nodesUtilJmx                  : NodesUtilJmx,
+                               imgMaintainUtilJmx            : ImgMaintainUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext,
                              )

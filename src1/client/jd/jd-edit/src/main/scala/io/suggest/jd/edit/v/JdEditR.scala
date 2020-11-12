@@ -2,7 +2,7 @@ package io.suggest.jd.edit.v
 
 import com.github.react.dnd._
 import com.github.souporserious.react.measure.ContentRect
-import com.github.strml.react.resizable.{ResizableBox, ResizableBoxProps, ResizeCallbackData}
+import com.github.strml.react.resizable.{ResizableBox, ResizableBoxProps, ResizableProps, ResizeCallbackData}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -10,7 +10,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdEdgeId
+import io.suggest.jd.{MJdConf, MJdEdgeId}
 import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.{JdCssStatic, JdRrr, MQdOpCont, QdRrrHtml}
@@ -36,6 +36,7 @@ import scalacss.StyleA
 import scalacss.internal.{LengthUnit, Literal}
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -142,16 +143,22 @@ final class JdEditR(
   }
 
 
+  /** Какие ручки ресайза отображать для текущего контента? */
+  private def _qdResizeHandlers(widthPx: Int, heightPx: Int, jdConf: MJdConf): js.Array[ResizableProps.Handle] = {
+    import com.github.strml.react.resizable.ResizableProps.Handle._
+    var acc = SE :: Nil
+    val limitPx = 60
+    if ( jdConf.szMultF(widthPx) > limitPx) acc ::= S
+    if ( jdConf.szMultF(heightPx) > limitPx) acc ::= E
+    acc.toJSArray
+  }
+
+
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   object JdRrrEdit extends jdRrr.Base {
 
     class QdContentB(contentRef: Ref.Simple[html.Element],
                      $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
-
-      private lazy val _qdResizeHandlers = {
-        import com.github.strml.react.resizable.ResizableProps.Handle._
-        js.Array( SW, S, SE, E, NE )
-      }
 
       /** Рендерер Qd-контента под нужды редактора. */
       final class QdEditRenderer(p: MJdRrrProps) extends qdRrrHtml.Renderer(p) {
@@ -180,7 +187,6 @@ final class JdEditR(
             if (rszCbData.size.width > 0) {
               cb = cb >> {
                 val wh = rszCbData.size
-                println( s"wh = ${wh.width}x${wh.height}" )
                 ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
                   wh.width.toInt,
                   jdtQdOp.qdOp,
@@ -197,7 +203,6 @@ final class JdEditR(
           // Поэтому, нужно довычислить высоту, когда её не хватает.
           val _widthPx = embedWh.widthPx getOrElse whDflt.width
           val _heightPx = embedWh.heightPx getOrElse whDflt.height
-          println(s"RszBoxProps = ${_widthPx}x${_heightPx}")
           new ResizableBoxProps {
             override val width = _widthPx.toDouble
             override val height = _heightPx.toDouble
@@ -210,7 +215,7 @@ final class JdEditR(
             override val lockAspectRatio = lockAspect
             override val onResizeStop = reaction
             override val transformScale = p.jdArgs.conf.szMult.toDouble
-            override val resizeHandles = _qdResizeHandlers
+            override val resizeHandles = _qdResizeHandlers( _widthPx, _heightPx, p.jdArgs.conf )
           }
         }
 
@@ -247,7 +252,6 @@ final class JdEditR(
                   }
                   .filter(_ > 0)
               }
-            println("displayHeightPx := " + displayHeightPxOpt)
 
             ResizableBox.component.withKey(key) {
               _rszBoxProps( e, jdtQdOp, lockAspect = true, saveHeight = false, whDefault = {

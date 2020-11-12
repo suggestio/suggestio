@@ -177,7 +177,7 @@ final class CanDownloadFile @Inject()(
         // Поискать инфу по распределённому хранилищу:
         storageCheckE.fold(
           {expectedVolumeLocations =>
-            LOGGER.warn(s"$logPrefix DL request NOT related to current node.\n Current node = ${uploadUtil.MY_NODE_PUBLIC_URL}\n Storage volumes = ${expectedVolumeLocations.mkString(" | ")}")
+            LOGGER.warn(s"$logPrefix DL request NOT related to current node.\n Current node = ${uploadUtil.MY_NODE_PUBLIC_HOST}\n Storage volumes = ${expectedVolumeLocations.mkString(" | ")}")
             expectedVolumeLocations
               // Самозащита от неверных редиректов (seaweedfs нередко удивляла в прошлом).
               .find(_.publicUrl.nonEmpty)
@@ -185,7 +185,7 @@ final class CanDownloadFile @Inject()(
                 LOGGER.warn(s"$logPrefix No available volume locations for media ${edgeMedia.storage}\n file = ${edgeMedia.storage}")
                 _throwNotFound(rh)
               } { vol0 =>
-                LOGGER.debug(s"$logPrefix Redirecting from me ${uploadUtil.MY_NODE_PUBLIC_URL} => ${vol0.publicUrl}\n storage = ${edgeMedia.storage}\n file = ${edgeMedia.file}")
+                LOGGER.debug(s"$logPrefix Redirecting from me ${uploadUtil.MY_NODE_PUBLIC_HOST} => ${vol0.publicUrl}\n storage = ${edgeMedia.storage}\n file = ${edgeMedia.file}")
                 val rdr = Results.Redirect( vol0.publicUrl + rh.uri, Status.SEE_OTHER )
                 throw HttpResultingException( Future.successful(rdr) )
               }

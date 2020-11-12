@@ -3,7 +3,6 @@ package io.suggest.common.geom.d2
 import enumeratum.values.StringEnumEntry
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.math.SimpleArithmetics
-import io.suggest.media.MediaConst
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 
@@ -89,11 +88,18 @@ object MSize2di extends IEsMappingProps {
   import play.api.libs.json._
   import play.api.libs.functional.syntax._
 
+  object Fields {
+    /** Короткий идентификатор поля ширины. */
+    val WIDTH_FN  = "w"
+    /** Короткое название поля высоты. */
+    val HEIGHT_FN = "h"
+  }
+
   implicit val MSIZE2DI_FORMAT: OFormat[MSize2di] = {
-    val C = MediaConst.NamesShort
+    val F = Fields
     (
-      (__ \ C.WIDTH_FN).format[Int] and
-      (__ \ C.HEIGHT_FN).format[Int]
+      (__ \ F.WIDTH_FN).format[Int] and
+      (__ \ F.HEIGHT_FN).format[Int]
     )(apply, unlift(unapply))
   }
 
@@ -150,7 +156,7 @@ object MSize2di extends IEsMappingProps {
         index = someTrue,
       )
     )
-    val F = MediaConst.NamesShort
+    val F = Fields
     Json.obj(
       F.WIDTH_FN -> numField,
       F.HEIGHT_FN -> numField,

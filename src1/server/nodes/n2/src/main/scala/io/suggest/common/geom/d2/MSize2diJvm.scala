@@ -1,7 +1,5 @@
 package io.suggest.common.geom.d2
 
-import java.awt.geom.RectangularShape
-
 import play.api.data.Mapping
 
 /**
@@ -12,26 +10,8 @@ import play.api.data.Mapping
   */
 object MSize2diJvm {
 
-  object Implicits {
-
-    /** JVM-only утиль для связывания [[MSize2di]] с jvm-only-моделями. */
-    implicit class AwtRectangle2dExtOps(val rect2d: RectangularShape) extends AnyVal {
-
-      /** Приведение awt-прямоугольников к [[MSize2di]], попутно скругляя размеры. */
-      def toSize2di: MSize2di = {
-        MSize2di(
-          width  = rect2d.getWidth.toInt,
-          height = rect2d.getHeight.toInt
-        )
-      }
-
-    }
-
-  }
-
-
   /** Form-маппинг для SysImgMake. Код вынесен из BlockMetaJvm. */
-  def formMapping: Mapping[MSize2di] = {
+  def size2dFormMapping: Mapping[MSize2di] = {
     import play.api.data.Forms._
     val sizeMapping = number(1, 5000)
     mapping(

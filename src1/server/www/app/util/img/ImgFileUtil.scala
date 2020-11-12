@@ -7,7 +7,9 @@ import javax.imageio.{ImageIO, ImageReader}
 import javax.imageio.stream.FileImageInputStream
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImplLazy
+import javax.inject.Inject
 import org.im4java.core.Info
+import play.api.inject.Injector
 
 import scala.concurrent.blocking
 import scala.jdk.CollectionConverters._
@@ -18,7 +20,11 @@ import scala.jdk.CollectionConverters._
  * Created: 29.09.15 11:16
  * Description: Утиль для работы с файлами изображений.
  */
-final class ImgFileUtil extends MacroLogsImplLazy {
+final class ImgFileUtil @Inject()(
+                                   injector: Injector
+                                 )
+  extends MacroLogsImplLazy
+{
 
   def orUnknown(mimeOpt: Option[String]): String = {
     mimeOpt getOrElse "image/unknown"

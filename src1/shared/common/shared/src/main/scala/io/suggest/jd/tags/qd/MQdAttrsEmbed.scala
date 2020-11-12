@@ -4,7 +4,6 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.math.MathConst
-import io.suggest.media.MediaConst
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
@@ -22,8 +21,8 @@ import scalaz.syntax.apply._
 object MQdAttrsEmbed {
 
   object Fields {
-    val WIDTH_FN  = MediaConst.NamesShort.WIDTH_FN
-    val HEIGHT_FN = MediaConst.NamesShort.HEIGHT_FN
+    val WIDTH_FN  = MSize2di.Fields.WIDTH_FN
+    val HEIGHT_FN = MSize2di.Fields.HEIGHT_FN
   }
 
 

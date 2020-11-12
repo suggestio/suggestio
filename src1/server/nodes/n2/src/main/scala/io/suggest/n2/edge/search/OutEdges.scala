@@ -453,7 +453,7 @@ object OutEdges extends MacroLogsImpl {
 
         // Поиск по критериям file-storage.
         if (oe.fileStorType.nonEmpty) {
-          val qbStorType = QueryBuilders.termsQuery( EF.EO_MEDIA_S_TYPE_FN, oe.fileStorType.iterator.map(_.value).toSeq: _* )
+          val qbStorType = QueryBuilders.termsQuery( EF.EO_MEDIA_STORAGE_TYPE_FN, oe.fileStorType.iterator.map(_.value).toSeq: _* )
           _qOpt = _qOpt
             .map { qb0 =>
               QueryBuilders.boolQuery()
@@ -468,7 +468,7 @@ object OutEdges extends MacroLogsImpl {
 
         // Поиск по метаданным файлового хранилища.
         if (oe.fileStorMetaData.nonEmpty) {
-          val qbStorMeta = QueryBuilders.termsQuery( EF.EO_MEDIA_S_DATA_META_FN, oe.fileStorMetaData.toSeq: _* )
+          val qbStorMeta = QueryBuilders.termsQuery( EF.EO_MEDIA_STORAGE_DATA_META_FN, oe.fileStorMetaData.toSeq: _* )
           _qOpt = _qOpt
             .map { qb0 =>
               QueryBuilders.boolQuery()
@@ -512,9 +512,33 @@ object OutEdges extends MacroLogsImpl {
           }
         }
 
+        // Сборка критерия для высоты или ширины.
+        def __pictureWhCr(fn: => String, values: List[Int]): Unit = {
+          if (values.nonEmpty) {
+            val qb: QueryBuilder = values match {
+              case exact :: Nil =>
+                QueryBuilders.termQuery( fn, exact )
+              case from :: to :: Nil =>
+                QueryBuilders.rangeQuery( fn )
+                  .gte( from )
+                  .lt( to )
+              case unsupported =>
+                throw new IllegalArgumentException( s"Unsupported picture wh-values description: $fn = $unsupported" )
+            }
+            _qOpt = _qOpt.map[QueryBuilder] { qb0 =>
+              QueryBuilders.boolQuery()
+                .must( qb0 )
+                .must( qb )
+            }.orElse {
+              Some( qb )
+            }
+          }
+        }
+        __pictureWhCr( MNodeFields.Edges.EO_MEDIA_PICTURE_WH_WIDTH_FN, oe.pictureWidthPx )
+        __pictureWhCr( MNodeFields.Edges.EO_MEDIA_PICTURE_WH_HEIGHT_FN, oe.pictureHeightPx )
 
         if (_qOpt.isEmpty)
-          LOGGER.warn(s"edge.NestedSearch: suppressed empty bool query for $oe")
+          LOGGER.warn(s"empty bool query for $oe")
 
         _qOpt.iterator
       }

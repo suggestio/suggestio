@@ -34,6 +34,10 @@ import io.suggest.n2.media.storage.MStorage
   * @param fileHashesHex Поиск по файловым хэшам.
   * @param fileMimes Поиск по mime-типам файлов.
   * @param fileSizeB Поиск по размеру (размерам) хранимых файлов.
+  * @param pictureHeightPx Высота картинки.
+  *                        List(x) - точное совпадение размера.
+  *                        List(x1, x2) - интервал от и до.
+  * @param pictureWidthPx Ширина картинки. Аналогично высоте.
   */
 final case class Criteria(
                            nodeIds           : Seq[String]              = Nil,
@@ -56,6 +60,9 @@ final case class Criteria(
                            fileIsOriginal    : Option[Boolean]          = None,
                            fileStorType      : Set[MStorage]            = Set.empty,
                            fileStorMetaData  : Set[String]              = Set.empty,
+                           // media.picture
+                           pictureHeightPx   : List[Int]                = Nil,
+                           pictureWidthPx    : List[Int]                = Nil,
                          )
   extends EmptyProduct
   with IMust

@@ -13,7 +13,7 @@ import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Validation, ValidationNel}
-import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import scalaz._
 import scalaz.syntax.apply._
 
@@ -53,7 +53,9 @@ object MFileMeta
     (
       (__ \ F.MIME_FN).formatNullable[String] and
       (__ \ F.SIZE_B_FN).formatNullable[Long] and
-      (__ \ F.IS_ORIGINAL_FN).formatNullable[Boolean].formatBooleanOrTrue and
+      // isOrig: до 2020-11-12 здесь было только false|undefined, но для поиска оригиналов надо сохранять точное значение: false|true.
+      (__ \ F.IS_ORIGINAL_FN).formatNullable[Boolean]
+        .inmap[Boolean](_.getOrElseTrue, Some.apply) and
       (__ \ F.HASHES_HEX_FN).formatNullable[Seq[MFileMetaHash]]
         .inmap[Seq[MFileMetaHash]](
           EmptyUtil.opt2ImplEmpty1F(Nil),

@@ -6,7 +6,6 @@ import java.nio.file.Path
 import com.google.inject.assistedinject.Assisted
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.common.geom.d2.MSize2diJvm.Implicits._
 import io.suggest.img.MImgFormats
 import io.suggest.svg.SvgUtil
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -53,7 +52,8 @@ final class ImgUploadCtx @Inject()(
 
   private lazy val svgDocOpt: Option[Document] = {
     SvgUtil.safeOpenWrap(
-      SvgUtil.open( file )
+      SvgUtil.open( file ),
+      file.toString,
     )
   }
 
@@ -96,10 +96,10 @@ final class ImgUploadCtx @Inject()(
               for {
                 svgGvt <- svgGvtOpt
                 rect = svgGvt.getPrimitiveBounds
-                sz2d = rect.toSize2di
+                sz2d = SvgUtil.rect2Size2d( rect )
                 if {
                   val r = isImgSzValid(sz2d)
-                  if (!r) LOGGER.warn(s"$logPrefix Invalid $imgFmt size from GVT: $sz2d")
+                  if (!r) LOGGER.warn(s"$logPrefix Invalid $imgFmt size from GVT: primitiveBounds=$sz2d (${svgGvt.getPrimitiveBounds}) || bounds=${svgGvt.getBounds} geometryBounds=${svgGvt.getGeometryBounds} sensitiveBounds=${svgGvt.getSensitiveBounds}")
                   r
                 }
               } yield {

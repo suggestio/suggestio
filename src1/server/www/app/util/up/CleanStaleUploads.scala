@@ -87,7 +87,7 @@ final class CleanStaleUploads @Inject() (
             val must = IMust.MUST
 
             val myNodeFileCr = Criteria(
-              nodeIds = uploadUtil.MY_NODE_PUBLIC_URL :: Nil,
+              nodeIds = uploadUtil.MY_NODE_PUBLIC_HOST :: Nil,
               predicates = MPredicates.Blob :: Nil,
               flags = EdgeFlagCriteria(
                 flag = MEdgeFlags.InProgress :: Nil,

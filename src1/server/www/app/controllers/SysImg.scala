@@ -212,7 +212,7 @@ final class SysImg @Inject() (
   /** Маппинг для [[models.im.make.MImgMakeArgs]] под нужды этого контроллера. */
   def makeArgsM(img: MImgT): Mapping[MImgMakeArgs] = {
     mapping(
-      "blockMeta" -> MSize2diJvm.formMapping,
+      "blockMeta" -> MSize2diJvm.size2dFormMapping,
       "szMult"    -> FormUtil.szMultM,
       "devScreen" -> optional(MScreenJvm.mappingFat),
       "compress"  -> CompressMode.mappingOpt

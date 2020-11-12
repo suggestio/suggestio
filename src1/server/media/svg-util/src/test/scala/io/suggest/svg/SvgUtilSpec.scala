@@ -20,14 +20,15 @@ class SvgUtilSpec extends AnyFlatSpec {
   }
 
   /** Тестируем isSvgValid() и isSvgFileValid(). */
-  private def testFilePath(filepath: String, isSvg: Boolean, svgDeepTest: Boolean = true): Unit = {
+  private def testFilePath(filePath: String, isSvg: Boolean, svgDeepTest: Boolean = true): Unit = {
     // Тестируем isSvgValid():
-    val is = getClass.getResourceAsStream(filepath)
-    val url = getClass.getResource(filepath).toString
+    val is = getClass.getResourceAsStream(filePath)
+    val url = getClass.getResource(filePath).toString
     assert(is != null, "[[Test file NOT found]]")
     try {
       val docOpt = SvgUtil.safeOpenWrap(
-        SvgUtil.open(is, url)
+        SvgUtil.open(is, url),
+        filePath,
       )
       docOpt.nonEmpty shouldBe isSvg
 
@@ -46,9 +47,9 @@ class SvgUtilSpec extends AnyFlatSpec {
     }
 
     // тестируем isSvgFileValid():
-    val fpath = getClass.getResource(filepath).getFile
+    val fpath = getClass.getResource(filePath).getFile
     val f = new File(fpath)
-    SvgUtil.safeOpenWrap( SvgUtil.open(f) ).nonEmpty  shouldBe  isSvg
+    SvgUtil.safeOpenWrap( SvgUtil.open(f), f.toString ).nonEmpty  shouldBe  isSvg
   }
 
 

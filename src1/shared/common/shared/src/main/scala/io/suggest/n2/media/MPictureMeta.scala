@@ -4,6 +4,7 @@ import io.suggest.color.MHistogram
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.{IEsMappingProps, MappingDsl}
+import io.suggest.model.PrefixedFn
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -29,6 +30,13 @@ object MPictureMeta
 
     val WH_PX_FN        = "wh"
     val HISTOGRAM_FN    = "hst"
+
+    object Wh extends PrefixedFn {
+      import MSize2di.{Fields => F}
+      override protected def _PARENT_FN = WH_PX_FN
+      def WIDTH_FN = _fullFn( F.WIDTH_FN )
+      def HEIGHT_FN = _fullFn( F.HEIGHT_FN )
+    }
 
   }
 

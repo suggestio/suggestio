@@ -63,8 +63,16 @@ object MEdgeMedia
 
       override protected def _PARENT_FN = STORAGE_FN
 
-      def S_TYPE_FN = _fullFn( F.STORAGE_FN )
-      def S_DATA_META_FN = _fullFn( F.Data.DATA_META_FN )
+      def STORARGE_TYPE_FN = _fullFn( F.STORAGE_FN )
+      def STORARGE_DATA_META_FN = _fullFn( F.Data.DATA_META_FN )
+    }
+
+
+    object Picture extends PrefixedFn {
+      import MPictureMeta.Fields.{Wh => F}
+      override protected def _PARENT_FN = PICTURE_META_FN
+      def WH_WIDTH_FN = _fullFn( F.WIDTH_FN )
+      def WH_HEIGHT_FN = _fullFn( F.HEIGHT_FN )
     }
 
   }

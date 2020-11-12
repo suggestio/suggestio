@@ -731,7 +731,7 @@ final class Upload @Inject()(
             pictureMeta = MPictureMeta(
               whPx = upCtx.imageWh,
             ),
-            nodeIds = Set.empty + uploadUtil.MY_NODE_PUBLIC_URL,
+            nodeIds = Set.empty + uploadUtil.MY_NODE_PUBLIC_HOST,
           )
 
           // Проверки закончены. Пора переходить к действиям по сохранению узла, сохранению и анализу файла.
@@ -1327,7 +1327,7 @@ final class Upload @Inject()(
     val NL = '\n'
 
     sb.append("my public url = ")
-      .append( uploadUtil.MY_NODE_PUBLIC_URL )
+      .append( uploadUtil.MY_NODE_PUBLIC_HOST )
       .append(NL)
 
     sb.append("localhost = ")

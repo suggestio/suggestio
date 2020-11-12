@@ -36,7 +36,7 @@ final class UploadUtil @Inject()(
     * Используется для распределённого хранилища файлов.
     * Ожидается что-то типа "s2.nodes.suggest.io".
     */
-  lazy val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
+  lazy val MY_NODE_PUBLIC_HOST = configuration.get[String]("upload.host.my.public")
 
   /** Из-за особенностей play-framework, приходится избыточные сроки жизни ссылок.
     * Проблема на длинном аплоаде (более 1.5 минут) экшен вызывается дважды,
