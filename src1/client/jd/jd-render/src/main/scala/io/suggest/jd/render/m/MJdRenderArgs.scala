@@ -18,16 +18,16 @@ import monocle.macros.GenLens
 
 object MJdRenderArgs {
 
-  val empty = apply()
+  lazy val empty = apply()
 
   /** Поддержка FastEq для инстансов [[MJdRenderArgs]]. */
   implicit object MJdRenderArgsFastEq extends FastEq[MJdRenderArgs] {
     override def eqv(a: MJdRenderArgs, b: MJdRenderArgs): Boolean = {
-      (a.selPath              ===* b.selPath) &&
-        (a.selJdtBgImgMod     ===* b.selJdtBgImgMod) &&
-        (a.hideNonMainStrips  ==*  b.hideNonMainStrips) &&
-        (a.groupOutLined      ===* b.groupOutLined) &&
-        (a.dnd                ===* b.dnd)
+      (a.selPath            ===* b.selPath) &&
+      (a.selJdtBgImgMod.isEmpty ==* b.selJdtBgImgMod.isEmpty) &&
+      (a.hideNonMainStrips  ==*  b.hideNonMainStrips) &&
+      (a.groupOutLined      ===* b.groupOutLined) &&
+      (a.dnd                ===* b.dnd)
     }
   }
 
@@ -58,4 +58,9 @@ case class MJdRenderArgs(
                           hideNonMainStrips   : Boolean                     = false,
                           groupOutLined       : Option[MColorData]          = None,
                           dnd                 : MJdDndS                     = MJdDndS.empty,
-                        )
+                        ) {
+
+  lazy val selPathRev: Option[NodePath_t] =
+    selPath.map(_.reverse)
+
+}

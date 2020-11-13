@@ -301,7 +301,6 @@ class DocEditAh[M](
         // 10. Очистить эджи от неиспользуемых.
         val edgesData3 = JdTag
           .purgeUnusedEdges( tpl1, edgesData2 )
-          .toMap
 
         // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
         val dataPrefix = HtmlConstants.Proto.DATA_
@@ -651,7 +650,6 @@ class DocEditAh[M](
               MJdDataJs.edges.set(
                 JdTag
                   .purgeUnusedEdges(tpl2, dataEdges0)
-                  .toMap
               )
             ) andThen
             MJdArgs.jdRuntime.set(
@@ -785,7 +783,6 @@ class DocEditAh[M](
         .map { dataEdgesMap1 =>
           val dataEdges2 = JdTag
             .purgeUnusedEdges(v0.jdDoc.jdArgs.data.doc.template, dataEdgesMap1)
-            .toMap
 
           MDocS.jdDoc
             .composeLens( MJdDocEditS.jdArgs )
@@ -804,7 +801,6 @@ class DocEditAh[M](
       val edges0 = v0.jdDoc.jdArgs.data.edges
       val edges2 = JdTag
         .purgeUnusedEdges( v0.jdDoc.jdArgs.data.doc.template, edges0 )
-        .toMap
 
       if ( edges0.size ==* edges2.size ) {
         noChange

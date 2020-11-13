@@ -26,9 +26,9 @@ object MJdArgs {
       ((a.data ===* b.data) || MJdDataJs.MJdDataJsFastEq.eqv(a.data, b.data)) &&
       // jdRuntime пересобирается на каждый чих, поэтому сравниваем внутренне:
       //((a.jdRuntime ===* b.jdRuntime) || MJdRuntime.MJdRuntimeFastEq.eqv(a.jdRuntime, b.jdRuntime)) &&
-      (a.conf ===* b.conf) &&
-      // Бывает, что инстансы генерятся на лету. Поэтому сравниваем глубинно:
-      ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
+      (a.conf ===* b.conf)
+      // renderArgs - слишком глобальные *здесь*. См. JdRrr.Base.getRenderArgs(), которые генерит локальные render args (в контексте текущего рендера)
+      // ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
     }
   }
 
@@ -126,15 +126,6 @@ case class MJdArgs(
     }
       yield h)
       .sum
-  }
-
-
-  def toRrrProps: MJdRrrProps = {
-    MJdRrrProps(
-      subTree = data.doc.template,
-      tagId   = data.doc.tagId,
-      jdArgs  = this,
-    )
   }
 
 }

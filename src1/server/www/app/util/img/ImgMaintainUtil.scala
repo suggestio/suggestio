@@ -26,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.11.2020 13:09
-  * Description: Утиль для овладевания
+  * Description: Утиль для поддержания коллекции картинок в корректном виде.
   */
 final class ImgMaintainUtil @Inject()(
                                        injector: Injector,
@@ -96,6 +96,7 @@ final class ImgMaintainUtil @Inject()(
         val _read = countRead.incrementAndGet()
         val nodeId = mnode.id.get
         LOGGER.trace(s"$logPrefix (${_read}) Found node#$nodeId")
+
         (for {
           fileEdge <- mnode.edges
             .withPredicateIter( MPredicates.Blob.File )

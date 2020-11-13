@@ -491,6 +491,12 @@ final class JdRrr(
       val chs = EphemeralStream.toIterable( p.subTree.subForest )
 
       if (chs.nonEmpty) {
+        // Пробрасывать данные gridBuild в дочерние теги? Да, только если текущий тег - это документ.
+        // Не надо пробрасывать данные grid build внутрь блоков, чтобы не вызывать кучу пере-рендера в редакторе,
+        // где gridBuild вызывается очень часто (из-за qd-blockless и других причин).
+        val gridBuild2 = p.gridBuildRes
+          .filter(_ => p.subTree.rootLabel.name ==* MJdTagNames.DOCUMENT)
+
         val parents2 = p.subTree.rootLabel :: p.parents
         chs
           .iterator
@@ -509,6 +515,8 @@ final class JdRrr(
               subTree = childJdTree,
               tagId   = tagId,
               parents = parents2,
+              gridBuildRes = gridBuild2,
+              renderArgs = getRenderArgs( tagId, p.jdArgs ),
             )
             // Вместо wrap используем прямой зум, чтобы избежать вызова цепочек функций, создающих множественные
             // инстансы одинаковых MJdRrrProps, которые будут удлиняться с каждым под-уровнем.
@@ -527,6 +535,15 @@ final class JdRrr(
       chs.map(_._3)
     }
 
+    def getRenderArgs(jdtId: MJdTagId, jdArgs: MJdArgs): MJdRenderArgs
+    /** Сборка render args под текущий jdt-тег.
+      * Обычные jdArgs.renderArgs -- глобальны для всгео рендера, и в редакторе всё перерендеривается на каждый чих.
+      *
+      * @param jdArgs Данные рендера.
+      * @return MJdRenderArgs, оптимально подходящий для текущего рендера.
+      */
+    def getRenderArgs(jdArgs: MJdArgs): MJdRenderArgs =
+      getRenderArgs( jdArgs.data.doc.tagId, jdArgs )
 
     val anyTagComp = ScalaComponent
       .builder[ModelProxy[MJdArgs]]( getClass.getSimpleName )
@@ -537,6 +554,8 @@ final class JdRrr(
             subTree = jdArgs.data.doc.template,
             tagId   = jdArgs.data.doc.tagId,
             jdArgs  = jdArgs,
+            // Проброс renderArgs, т.к. скорее всего они уже выставлены наверху.
+            renderArgs = getRenderArgs( jdArgs ),
           )
         }( renderTag )(implicitly, MJdRrrProps.MJdRrrPropsFastEq)
       }

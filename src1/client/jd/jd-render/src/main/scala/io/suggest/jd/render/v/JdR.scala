@@ -2,6 +2,7 @@ package io.suggest.jd.render.v
 
 import com.github.souporserious.react.measure.ContentRect
 import diode.react.{ModelProxy, ReactConnectProps}
+import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m._
 import io.suggest.log.Log
 import io.suggest.react.ReactDiodeUtil
@@ -96,6 +97,11 @@ final class JdR(
     /** Сборка инстанса компонента. Здесь можно навешивать hoc'и и прочее счастье. */
     override def mkDocument(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
       documentComp.withKey(key)(props)
+
+
+    // Обычный рендер, и RenderArgs управляется в GridCoreR или просто глобально пустой.
+    override def getRenderArgs(jdtId: MJdTagId, jdArgs: Props_t): MJdRenderArgs =
+      jdArgs.renderArgs
 
   }
 

@@ -4,18 +4,16 @@ import com.github.react.dnd._
 import com.github.souporserious.react.measure.ContentRect
 import com.github.strml.react.resizable.{ResizableBox, ResizableBoxProps, ResizableProps, ResizeCallbackData}
 import diode.react.ModelProxy
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.dev.MSzMult
-import io.suggest.jd.{MJdConf, MJdEdgeId}
+import io.suggest.jd.{MJdConf, MJdEdgeId, MJdTagId}
 import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
-import io.suggest.jd.render.v.{JdCssStatic, JdRrr, MQdOpCont, QdRrrHtml}
+import io.suggest.jd.render.v.{JdCssStatic, JdRrr, MQdEmbedProps, QdRrrHtml}
 import io.suggest.jd.tags._
-import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.lk.r.img.LkImgUtilJs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
@@ -30,6 +28,7 @@ import japgolly.scalajs.react.vdom.{TagMod, TagOf}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.html
+import org.scalajs.dom.html.Image
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
@@ -161,27 +160,17 @@ final class JdEditR(
                      $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
 
       /** Рендерер Qd-контента под нужды редактора. */
-      final class QdEditRenderer(p: MJdRrrProps) extends qdRrrHtml.Renderer(p) {
-
-        /** Сборка доп.модификаций для картинки. */
-        override def imgMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod = {
-          TagMod(
-            // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
-            ^.draggable := false,
-            // В редакторе следует рендерить img-теги, подслушивая у них wh:
-            _notifyImgWhOnEdit($, e),
-          )
-        }
+      final class QdEditRenderer(override val rrrProps: MJdRrrProps) extends qdRrrHtml.RrrBase {
 
         /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
         override def _hrefAttr: VdomAttr[String] =
           ^.title
 
         /** Сборка ResizeBoxProps для ресайзинкка внутри QD-контента (картинки, фреймы, и т.д.) */
-        def _rszBoxProps( edgeDataJs: MEdgeDataJs, jdtQdOp: MQdOpCont,
+        def _rszBoxProps( embedProps: MQdEmbedProps,
                           lockAspect: Boolean, saveHeight: Boolean, whDefault: => MSize2di ): ResizableBoxProps = {
           // event.preventDefault нужен в callback'ах, чтобы избежать конфликтов с react-dnd из-за наступления drag.
-          val embedWh = p.jdArgs.jdRuntime.jdCss.EmbedWh( jdtQdOp.jdTagId )
+          val embedWh = rrrProps.jdArgs.jdRuntime.jdCss.EmbedWh( embedProps.jdtQdOp.jdTagId )
           val reaction = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
             var cb = e.preventDefaultCB
             if (rszCbData.size.width > 0) {
@@ -189,8 +178,8 @@ final class JdEditR(
                 val wh = rszCbData.size
                 ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
                   wh.width.toInt,
-                  jdtQdOp.qdOp,
-                  edgeUid = edgeDataJs.jdEdge.edgeDoc.id.get,
+                  embedProps.jdtQdOp.qdOp,
+                  edgeUid = embedProps.edge.jdEdge.edgeDoc.id.get,
                   heightPx = Option.when(saveHeight && wh.height > 0)(wh.height.toInt),
                 ))
               }
@@ -214,23 +203,41 @@ final class JdEditR(
             }
             override val lockAspectRatio = lockAspect
             override val onResizeStop = reaction
-            override val transformScale = p.jdArgs.conf.szMult.toDouble
-            override val resizeHandles = _qdResizeHandlers( _widthPx, _heightPx, p.jdArgs.conf )
+            override val transformScale = rrrProps.jdArgs.conf.szMult.toDouble
+            override val resizeHandles = _qdResizeHandlers( _widthPx, _heightPx, rrrProps.jdArgs.conf )
           }
         }
 
+        override def imgMods(embedProps: MQdEmbedProps, imgTag: VdomTagOf[Image]): TagOf[Image] = {
+          imgTag(
+            // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
+            ^.draggable := false,
+            // В редакторе следует рендерить img-теги, подслушивая у них wh:
+            _notifyImgWhOnEdit( $, embedProps.edge ),
+          )
+        }
 
-        override def imgPostProcess(e: MEdgeDataJs,
-                                    jdtQdOp: MQdOpCont,
+        override def imgPostProcess(embedProps: MQdEmbedProps,
                                     embedStyleOpt: Option[StyleA],
                                     imgEl: TagOf[html.Element],
-                                    key: Int ): VdomElement = {
+                                   ): VdomElement = {
+          <.div(
+            ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
+            imgEl,
+            // Макса поверх картинки, чтобы гарантировано подавить перетаскивание картинки:
+            <.div(
+              embedStyleOpt.whenDefined,
+              ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
+            )
+          )
+        }
+
+        override def renderImg(embedProps: MQdEmbedProps, i: Int): VdomElement = {
           // Поддержка горизонтального ресайза картинки/видео.
           (for {
-            _               <- Option.when( p.isCurrentSelected )(null)
-            origWh          <- e.origWh
-            attrsEmbed      <- jdtQdOp.qdOp.attrsEmbed
-            embedStyle      <- embedStyleOpt
+            _               <- Option.when( rrrProps.isCurrentSelected )(null)
+            origWh          <- embedProps.edge.origWh
+            attrsEmbed      <- embedProps.jdtQdOp.qdOp.attrsEmbed
           } yield {
             // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
             // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
@@ -253,8 +260,8 @@ final class JdEditR(
                   .filter(_ > 0)
               }
 
-            ResizableBox.component.withKey(key) {
-              _rszBoxProps( e, jdtQdOp, lockAspect = true, saveHeight = false, whDefault = {
+            ResizableBox.component.withKey(i) {
+              _rszBoxProps( embedProps, lockAspect = true, saveHeight = false, whDefault = {
                 // Нужно пронормировать оригинальный размер картинки в текущий размер.
                 (for {
                   displayWidthPx <- displayWidthPxOpt
@@ -269,37 +276,21 @@ final class JdEditR(
               })
             } (
               <.div(
-                ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
-                imgEl,
-                <.div(
-                  //jdCssStatic.horizResizable,
-                  //^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
-                  //  onQdEmbedResize(jdtQdOp.qdOp, e, false)(event)
-                  //},
-                  displayHeightPxOpt.whenDefined { maskHeightPx =>
-                    ^.height := maskHeightPx.px
-                  },
-                  embedStyle,
-                  ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
-                )
+                Img( embedProps )
               )
             ): VdomElement
           })
-            .getOrElse( super.imgPostProcess(e, jdtQdOp, embedStyleOpt, imgEl, key) )
+            .getOrElse( super.renderImg(embedProps, i) )
         }
 
-        override def frameMods( edgeDataJs: MEdgeDataJs, jdtQdOp: MQdOpCont, iframe: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
+        override def frameMods( embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
           // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
           var outerAcc = List.empty[TagMod]
           outerAcc ::= <.div(
             ^.key := (key + "z"),
             ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
             whStyl,
-            //jdCssStatic.hvResizable,
             ^.style := js.Object(),
-            //^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
-            //  onQdEmbedResize( jdtQdOp.qdOp, edgeDataJs, true)( event )
-            //}
           )
           outerAcc =
             (^.key := (key + "c")) ::
@@ -308,9 +299,9 @@ final class JdEditR(
               outerAcc
           val tag = <.div( outerAcc: _* )
 
-          if (p.isCurrentSelected) {
+          if (rrrProps.isCurrentSelected) {
             ResizableBox.component.withKey(key) {
-              _rszBoxProps( edgeDataJs, jdtQdOp, lockAspect = false, saveHeight = true, whDefault = HtmlConstants.Iframes.whCsspxDflt )
+              _rszBoxProps( embedProps, lockAspect = false, saveHeight = true, whDefault = HtmlConstants.Iframes.whCsspxDflt )
             } (
               tag,
             )
@@ -357,16 +348,6 @@ final class JdEditR(
           .withRef( contentRef )
       }
 
-      /** Callback ресайза. */
-      private def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)
-                                 (e: ReactMouseEventFromHtml): Callback = {
-        _parseWidth(e).fold(Callback.empty) { widthPx =>
-          // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
-          val heightPxOpt = OptionUtil.maybe(withHeight)(_parseHeight(e).get)
-          e.stopPropagationCB >>
-            ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeUid = edgeDataJs.jdEdge.edgeDoc.id.get, heightPx = heightPxOpt ) )
-        }
-      }
 
       /** Самописная поддержка ресайза контента только силами браузера. */
       private def onQdTagResize(e: ReactMouseEventFromHtml): Callback = {
@@ -732,6 +713,24 @@ final class JdEditR(
       .build
     override def mkDocument(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
       documentDndComp.withKey(key)(props)
+
+
+    /** Требуется подготовка RenderArgs, т.к. поля в модели постоянно изменяются. */
+    override def getRenderArgs( jdtId: MJdTagId, jdArgs: MJdArgs ): MJdRenderArgs = {
+      val selPath2 = jdArgs.renderArgs
+        .selPath
+        .filter { _ =>
+          jdArgs.renderArgs.selPathRev.get ==* jdtId.selPathRev
+        }
+      val ra0 = jdArgs.renderArgs
+
+      ra0.copy(
+        // Изменение selPath не должно вызывать пере-рендер всего на свете. Пропускаем только изменения, релевантные текущему тегу.
+        selPath = selPath2,
+        selJdtBgImgMod = ra0.selJdtBgImgMod
+          .filter(_ => selPath2.isDefined),
+      )
+    }
 
   }
 

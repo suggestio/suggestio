@@ -6,7 +6,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
-import io.suggest.n2.edge.{EdgeUid_t, EdgesUtil}
+import io.suggest.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.ErrorMsgs
@@ -17,8 +17,6 @@ import play.api.libs.json._
 import scalaz.{EphemeralStream, Show, Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.text.StringUtil
-
-import scala.collection.MapView
 
 /**
   * Suggest.io
@@ -247,11 +245,18 @@ object JdTag {
     * @tparam E Тип эджа (любой).
     * @return Прочищенная карта эджей.
     */
-  def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): MapView[EdgeUid_t, E] = {
-    EdgesUtil.purgeUnusedEdgesFromMap(
-      usedEdgeIds = tpl.deepEdgesUids.toSet,
-      edgesMap    = edgesMap
-    )
+  def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
+    val neededEdgesUids = tpl.deepEdgesUids.toSet
+    if (neededEdgesUids.isEmpty) {
+      Map.empty
+    } else {
+      val keys2del = edgesMap.keySet -- neededEdgesUids
+      if (keys2del.isEmpty) {
+        edgesMap
+      } else {
+        edgesMap -- keys2del
+      }
+    }
   }
 
 

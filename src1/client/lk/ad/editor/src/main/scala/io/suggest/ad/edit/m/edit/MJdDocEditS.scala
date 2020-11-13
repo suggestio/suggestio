@@ -41,10 +41,12 @@ case class MJdDocEditS(
                       ) {
 
   lazy val toRrrProps: MJdRrrProps = {
-    (
-      MJdRrrProps.gridBuildResult
-        .set( Some(gridBuild) )
-    )(jdArgs.toRrrProps)
+    MJdRrrProps(
+      subTree = jdArgs.data.doc.template,
+      tagId   = jdArgs.data.doc.tagId,
+      jdArgs  = jdArgs,
+      gridBuildRes = Some(gridBuild),
+    )
   }
 
 }

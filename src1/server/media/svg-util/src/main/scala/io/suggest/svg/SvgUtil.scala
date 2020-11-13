@@ -4,6 +4,8 @@ import java.awt.geom.RectangularShape
 import java.io.{File, FileInputStream, InputStream}
 
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.img.MImgFormats
+import io.suggest.pick.MimeConst
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory
 import org.apache.batik.bridge.{BridgeContext, DocumentLoader, GVTBuilder, UserAgentAdapter}
@@ -47,8 +49,8 @@ object SvgUtil extends MacroLogsImpl {
           ((w0 < minSideSizePx) && (h0 < minSideSizePx)) ||
           // или если есть хотя бы один размер меньше 1 (нельзя же нулевой размер в базу записывать, даже если второй размер ненулевой)
           (w0 < 1) || (h0 < 1)
-      )
-    ) {
+        )
+      ) {
         __magnifySizes(
           w0 = w0 * magnifyBy,
           h0 = h0 * magnifyBy,
@@ -211,8 +213,8 @@ object SvgUtil extends MacroLogsImpl {
    * @return true, если svg внутри допустим. Иначе false.
    */
   def maybeSvgMime(mime: String): Boolean = {
-    mime.startsWith("text/") || mime.startsWith("image/svg")
-    // TODO Заюзать MImgFmts.SVG.mimePrefix для "image/svg"
+    (mime startsWith MimeConst.Words.TEXT_) ||
+    (mime startsWith MImgFormats.SVG.mimePrefix)
   }
 
 }

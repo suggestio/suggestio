@@ -2,8 +2,6 @@ package io.suggest.n2.edge
 
 import io.suggest.jd.MJdEdge
 
-import scala.collection.MapView
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -24,12 +22,6 @@ object EdgesUtil {
 
   def nextEdgeUidFromMap(edgeUidMap: Map[EdgeUid_t, _]): EdgeUid_t = {
     nextEdgeUidFrom( edgeUidMap.keys )
-  }
-
-  def purgeUnusedEdgesFromMap[E](usedEdgeIds: Set[EdgeUid_t], edgesMap: Map[EdgeUid_t, E]): MapView[EdgeUid_t, E] = {
-    edgesMap
-      .view
-      .filterKeys { usedEdgeIds.contains }
   }
 
   // TODO Нужно задействовать CanBuildFrom[].

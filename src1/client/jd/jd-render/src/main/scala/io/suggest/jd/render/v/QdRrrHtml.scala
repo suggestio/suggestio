@@ -12,13 +12,18 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.log.Log
-import japgolly.scalajs.react.vdom.{Attr, TagMod, TagOf, VdomElement}
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.spa.FastEqUtil
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.{Attr, TagOf}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, html}
 import scalacss.ScalaCssReact._
 
 import scala.annotation.tailrec
 import japgolly.univeq._
+import org.scalajs.dom.html.Image
 import scalacss.StyleA
 import scalaz.EphemeralStream
 
@@ -43,16 +48,72 @@ class QdRrrHtml(
   extends Log
 {
 
-  case class Renderer(rrrProps: MJdRrrProps) {
+  trait RrrBaseStatic {
+
+    val rrrProps: MJdRrrProps
 
     /** Сборка доп.модификаций для картинки. */
-    def imgMods(e: MEdgeDataJs, jdtQdOp: MQdOpCont): TagMod =
-      TagMod.empty
+    def imgMods(embedProps: MQdEmbedProps, imgTag: TagOf[html.Image]): TagOf[html.Image]
 
-    def imgPostProcess(e: MEdgeDataJs, jdtQdOp: MQdOpCont, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element], key: Int): VdomElement =
-      imgEl( ^.key := key )
+    /** Пост-обработка рендера картинки. imgEl скорее всего НЕ-img-тег. */
+    def imgPostProcess(props: MQdEmbedProps, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): VdomElement
 
-    def frameMods( e: MEdgeDataJs, jdtQdOp: MQdOpCont, frame: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
+    val Img = ScalaComponent
+      .builder[MQdEmbedProps]( "Img" )
+      .initialStateFromProps( identity )
+      .render_P { props =>
+        // Аккамулируем аттрибуты для рендера img-тега.
+        var imgArgsAcc = List.empty[TagMod]
+
+        // width/height экранного представления картинки задаётся в CSS:
+        // Контейнер ресайза также требует этот стиль, поэтому кэшируем стиль в переменной:
+        val embedStyleOpt = for (ae <- props.jdtQdOp.qdOp.attrsEmbed if ae.nonEmpty) yield {
+          rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( props.jdtQdOp.jdTagId )
+        }
+        embedStyleOpt.foreach( imgArgsAcc ::= _ )
+
+        // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
+        props.edge.imgSrcOpt.fold [Unit] {
+          logger.warn( ErrorMsgs.IMG_EXPECTED, msg = props )
+        } { imgSrc =>
+          imgArgsAcc ::= (^.src := imgSrc)
+        }
+
+        for {
+          attrsText <- props.jdtQdOp.qdOp.attrsText
+          if props.jdtQdOp.jdTag.props1.isContentCssStyled || attrsText.isCssStyled
+        } {
+          imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textF( props.jdtQdOp.jdTagId )
+        }
+
+        var renderedTag: TagOf[html.Element] = {
+          val img = <.img(
+            imgArgsAcc: _*
+          )
+          // Доп.модификации img-тега извне:
+          imgMods( props, img )
+        }
+
+        // Поддержка рендера внутри a-тега (ссылка). В редакторе не рендерим её, чтобы не было случайных переходов при кликах по шаблону.
+        for (attrsText <- props.jdtQdOp.qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
+          renderedTag = <.a(
+            // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
+            _hrefAttr := link,
+            renderedTag,
+          )
+        }
+
+        imgPostProcess( props, embedStyleOpt, renderedTag )
+      }
+      .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate( MQdEmbedProps.Feq ) )
+      .build
+
+    /** Рендер картинки. Stateless, чтобы гарантировать чистоту поведения для возможности оптимизации. */
+    def renderImg(embedProps: MQdEmbedProps, i: Int): VdomElement =
+      Img.withKey(i)( embedProps )
+
+
+    def frameMods( embedProps: MQdEmbedProps, frame: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
       // Видео-фрейм без дополнительного div-контейнера:
       frame(
         ^.key := key,
@@ -60,8 +121,12 @@ class QdRrrHtml(
     }
 
     /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
-    def _hrefAttr: Attr[String] =
-      ^.href
+    def _hrefAttr: Attr[String]
+
+  }
+
+
+  trait RrrBase extends RrrBaseStatic {
 
     /** Выполнить рендеринг текущего qd-тега. */
     def render(): VdomElement =
@@ -148,19 +213,22 @@ class QdRrrHtml(
             var framesCnt = counters.frame
             var imagesCnt = counters.image
             var othersCnt = counters.other
+            def embedProps = MQdEmbedProps( e, jdtQdOp )
+
             e.jdEdge.predicate match {
               case MPredicates.JdContent.Text =>
                 // Рендер текста. Нужно отработать аттрибуты рендера текста.
                 _insertText( e.jdEdge.edgeDoc.text.get, jdtQdOp, othersCnt )
                 othersCnt += 1
+
               // Рендер картинки.
               case MPredicates.JdContent.Image =>
-                _insertImage( e, jdtQdOp, imagesCnt )
+                _currLineAccRev ::= renderImg( embedProps, imagesCnt )
                 imagesCnt += 1
 
               // Рендер видео (или иного фрейма).
               case MPredicates.JdContent.Frame =>
-                _insertFrame( e, jdtQdOp, framesCnt )
+                _insertFrame( embedProps, framesCnt )
                 framesCnt += 1
 
               case other =>
@@ -181,69 +249,16 @@ class QdRrrHtml(
       counters2Opt
     }
 
-    /** Вставка картинки-изображения. */
-    private def _insertImage(e: MEdgeDataJs, jdtQdOp: MQdOpCont, i: Int): Unit = {
-      val resOpt = for {
-        // Определяем img.src. Quill не понимает blob-ссылки, только data или http.
-        imgSrc <- e.imgSrcOpt
-      } yield {
-        // Аккамулируем аттрибуты для рендера img-тега.
-        var imgArgsAcc = List.empty[TagMod]
-
-        // width/height экранного представления картинки задаётся в CSS:
-        // Контейнер ресайза также требует этот стиль, поэтому кэшируем стиль в переменной:
-        val embedStyleOpt = for (ae <- jdtQdOp.qdOp.attrsEmbed if ae.nonEmpty) yield {
-          rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( jdtQdOp.jdTagId )
-        }
-        embedStyleOpt.foreach( imgArgsAcc ::= _ )
-
-        // Доп.модификации извне.
-        val imgModsExt = imgMods(e, jdtQdOp)
-        if (imgModsExt ne TagMod.empty)
-          imgArgsAcc ::= imgModsExt
-
-        // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
-        imgArgsAcc =
-          (^.src := imgSrc) ::
-          imgArgsAcc
-
-        for {
-          attrsText <- jdtQdOp.qdOp.attrsText
-          if jdtQdOp.jdTag.props1.isContentCssStyled || attrsText.isCssStyled
-        } {
-          imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textF( jdtQdOp.jdTagId )
-        }
-
-        var finalTm: TagOf[html.Element] = <.img(
-          imgArgsAcc: _*
-        )
-
-        // Поддержка рендера внутри a-тега (ссылка). В редакторе не рендерим её, чтобы не было случайных переходов при кликах по шаблону.
-        for (attrsText <- jdtQdOp.qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
-          finalTm = <.a(
-            // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
-            _hrefAttr := link,
-            finalTm
-          )
-        }
-
-        _currLineAccRev ::= imgPostProcess( e, jdtQdOp, embedStyleOpt, finalTm, i )
-      }
-
-      if (resOpt.isEmpty)
-        logger.warn(ErrorMsgs.IMG_EXPECTED, msg = e)
-    }
-
 
     /** Рендер video. */
-    private def _insertFrame(e: MEdgeDataJs, jdtQdOp: MQdOpCont, i: Int): Unit = {
+    private def _insertFrame( embedProps: MQdEmbedProps, i: Int ): Unit = {
       val resOpt = for {
-        src <- e.jdEdge.url
+        src <- embedProps.edge.jdEdge.url
       } yield {
-        val whStyl = jdtQdOp.qdOp.attrsEmbed
+        val whStyl = embedProps.jdtQdOp.qdOp.attrsEmbed
           .filter(_.nonEmpty)
           .fold( rrrProps.jdArgs.jdRuntime.jdCss.video ) { _ =>
-            rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( jdtQdOp.jdTagId )
+            rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
           }
         val iframe = <.iframe(
           ^.src := src,
@@ -251,11 +266,11 @@ class QdRrrHtml(
           whStyl,
         )
 
-        _currLineAccRev ::= frameMods( e, jdtQdOp, iframe, whStyl, key = "V" + i )
+        _currLineAccRev ::= frameMods( embedProps, iframe, whStyl, key = "V" + i )
       }
 
       if (resOpt.isEmpty)
-        logger.warn(ErrorMsgs.VIDEO_EXPECTED, msg = e)
+        logger.warn( ErrorMsgs.VIDEO_EXPECTED, msg = embedProps )
     }
 
 
@@ -610,6 +625,21 @@ class QdRrrHtml(
 
   }
 
+
+  /** Дефолтовая реализация рендерера под нужды обычного (не-edit) рендера. */
+  case class Renderer(override val rrrProps: MJdRrrProps) extends RrrBase {
+
+    def _hrefAttr: Attr[String] =
+      ^.href
+
+    override def imgMods(embedProps: MQdEmbedProps, imgTag: VdomTagOf[Image]): TagOf[Image] =
+      imgTag
+
+    override def imgPostProcess(props: MQdEmbedProps, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): VdomElement =
+      imgEl
+
+  }
+
 }
 
 
@@ -644,3 +674,23 @@ final case class MQdOpCont(
                             jdTag       : JdTag,
                             jdTagId     : MJdTagId,
                           )
+object MQdOpCont {
+  @inline implicit def univEq: UnivEq[MQdOpCont] = UnivEq.derive
+}
+
+
+final case class MQdEmbedProps( edge: MEdgeDataJs, jdtQdOp: MQdOpCont ) {
+
+
+
+}
+object MQdEmbedProps {
+
+  @inline implicit def univEq: UnivEq[MQdEmbedProps] = UnivEq.derive
+
+  implicit val Feq = FastEqUtil[MQdEmbedProps] { (a, b) =>
+    (a.edge ==* b.edge) &&
+    (a.jdtQdOp ===* b.jdtQdOp)
+  }
+
+}

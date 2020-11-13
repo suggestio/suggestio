@@ -133,14 +133,16 @@ class ContentLayerBtnR {
           override val title: React.Node = Messages( props.titleMsgCode )
         }
       )(
-        MuiIconButton {
-          val fn = ReactCommonUtil.cbFun1ToJsCb( _onBtnClick(props.action) )
-          new MuiIconButtonProps {
-            override val onClick  = fn
-            override val disabled = !props.enabled
-          }
-        } (
-          props.icon()()
+        <.span(
+          MuiIconButton {
+            val fn = ReactCommonUtil.cbFun1ToJsCb( _onBtnClick(props.action) )
+            new MuiIconButtonProps {
+              override val onClick  = fn
+              override val disabled = !props.enabled
+            }
+          } (
+            props.icon()()
+          )
         )
       )
     }

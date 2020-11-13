@@ -6,7 +6,7 @@ import io.suggest.jd.MJdTagId
 import io.suggest.jd.tags.JdTag
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import monocle.macros.GenLens
 import scalaz.Tree
 
@@ -22,10 +22,11 @@ object MJdRrrProps {
     override def eqv(a: MJdRrrProps, b: MJdRrrProps): Boolean = {
       (a ===* b) || {
         (a.subTree        ===* b.subTree) &&
-        (a.tagId          ===* b.tagId) &&
-        (a.jdArgs         ===* b.jdArgs) &&
-        (a.parents        ===* b.parents) &&
-        (a.gridBuildRes   ===* b.gridBuildRes)
+        (a.tagId          ==* b.tagId) &&
+        MJdArgs.MJdArgsFastEq.eqv(a.jdArgs, b.jdArgs) &&
+        //(a.parents        ===* b.parents) &&
+        (a.gridBuildRes   ===* b.gridBuildRes) &&
+        ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
       }
     }
   }
@@ -43,6 +44,7 @@ case class MJdRrrProps(
                         jdArgs          : MJdArgs,
                         parents         : List[JdTag]               = Nil,
                         gridBuildRes    : Option[MGridBuildResult]  = None,
+                        renderArgs      : MJdRenderArgs             = MJdRenderArgs.empty,
                       ) {
 
   lazy val isCurrentSelected: Boolean =
