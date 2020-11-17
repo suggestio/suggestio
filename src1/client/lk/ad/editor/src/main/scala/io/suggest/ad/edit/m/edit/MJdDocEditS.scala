@@ -62,6 +62,7 @@ case class MJdDocEditS(
       jdArgs  = jdArgs,
       // someThis - костылёк, существенно ускоряющий рендер в редакторе без использования OptFastEq внутри MJdRrrProps.FastEq.
       gridBuildRes = gridBuild.someThis,
+      renderArgs = jdArgs.renderArgs,
     )
   }
 

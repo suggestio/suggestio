@@ -54,7 +54,7 @@ case class MJdRrrProps(
                         jdArgs          : MJdArgs,
                         parents         : List[JdTag]               = Nil,
                         gridBuildRes    : Option[MGridBuildResult]  = None,
-                        renderArgs      : MJdRenderArgs             = MJdRenderArgs.empty,
+                        renderArgs      : MJdRenderArgs,
                       ) {
 
   lazy val isCurrentSelected: Boolean =

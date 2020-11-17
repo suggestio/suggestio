@@ -716,12 +716,14 @@ final class JdEditR(
 
     /** Требуется подготовка RenderArgs, т.к. поля в модели постоянно изменяются. */
     override def getRenderArgs( jdtId: MJdTagId, jdArgs: MJdArgs ): MJdRenderArgs = {
-      val selPath2 = jdArgs.renderArgs
+      val ra0 = jdArgs.renderArgs
+      val selPath2 = ra0
         .selPath
         .filter { _ =>
-          jdArgs.renderArgs.selPathRev.get ==* jdtId.selPathRev
+          val selPathRev = ra0.selPathRev.get
+          (selPathRev ==* jdtId.selPathRev) ||
+          (selPathRev.tails contains jdtId.selPathRev)
         }
-      val ra0 = jdArgs.renderArgs
 
       ra0.copy(
         // Изменение selPath не должно вызывать пере-рендер всего на свете. Пропускаем только изменения, релевантные текущему тегу.
