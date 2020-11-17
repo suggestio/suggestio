@@ -235,8 +235,8 @@ class DocEditAh[M](
 
         // Это qd-blockless? Надо пересчитать плитку.
         if (qdContentTag.props1.topLeft.isEmpty) {
-          modF = modF andThen MJdDocEditS.gridBuild
-            .set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+          modF = modF andThen
+            (MJdDocEditS.gridBuildIfChanged set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
         }
 
         modF
@@ -661,7 +661,8 @@ class DocEditAh[M](
             var jdDocModF = MJdDocEditS.jdArgs.set( jdArgs2 )
 
             if ( isQdBlockless( oldSelectedJdt ) )
-              jdDocModF = jdDocModF andThen MJdDocEditS.gridBuild.set( GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+              jdDocModF = jdDocModF andThen
+                (MJdDocEditS.gridBuildIfChanged set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
 
             jdDocModF
           }(v2)
@@ -818,7 +819,7 @@ class DocEditAh[M](
     case _: GridRebuild =>
       val v0 = value
       val v2 = MDocS.jdDoc
-        .composeLens( MJdDocEditS.gridBuild )
+        .composeLens( MJdDocEditS.gridBuildIfChanged )
         .set( GridBuilderUtilJs.buildGridFromJdArgs(v0.jdDoc.jdArgs) )(v0)
 
       updated(v2)
@@ -1281,7 +1282,7 @@ class DocEditAh[M](
         var v2 = MDocS.jdDoc.modify(
           (MJdDocEditS.jdArgs set jdArgs2) andThen
           // Если перемещение strip'а или сброс qd-контента на документ, то надо пересчитать плитку:
-          (MJdDocEditS.gridBuild set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
+          (MJdDocEditS.gridBuildIfChanged set GridBuilderUtilJs.buildGridFromJdArgs(jdArgs2) )
         )(v0)
         updated(v2)
       }
@@ -1579,10 +1580,8 @@ class DocEditAh[M](
         )(v0.jdDoc.jdArgs)
 
         val v2 = MDocS.jdDoc.modify(
-          MJdDocEditS.jdArgs.set( jdArgs2 ) andThen
-          MJdDocEditS.gridBuild.set(
-            GridBuilderUtilJs.buildGridFromJdArgs( jdArgs2 )
-          )
+          (MJdDocEditS.jdArgs set jdArgs2) andThen
+          (MJdDocEditS.gridBuildIfChanged set GridBuilderUtilJs.buildGridFromJdArgs( jdArgs2 ) )
         )(v0)
 
         updated( v2 )

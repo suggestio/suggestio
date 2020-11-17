@@ -4,7 +4,8 @@ import diode.FastEq
 import io.suggest.grid.build.MGridBuildResult
 import io.suggest.jd.render.m.{MJdArgs, MJdRrrProps}
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import monocle.PLens
 import monocle.macros.GenLens
 
 /**
@@ -26,6 +27,20 @@ object MJdDocEditS {
 
   val jdArgs      = GenLens[MJdDocEditS](_.jdArgs)
   def gridBuild   = GenLens[MJdDocEditS](_.gridBuild)
+
+  /** Тут линза с костылём, чтобы НЕ обновлять инстанс пересчитанной плитки. */
+  def gridBuildIfChanged = {
+    val _gridBuild_LENS = gridBuild
+    PLens[MJdDocEditS, MJdDocEditS, MGridBuildResult, MGridBuildResult](
+      _gridBuild_LENS.get
+    ) { gridBuild2 => v0 =>
+      val gb0 = _gridBuild_LENS get v0
+      if (gb0 !=* gridBuild2)
+        _gridBuild_LENS.set(gridBuild2)(v0)
+      else
+        v0
+    }
+  }
 
 }
 

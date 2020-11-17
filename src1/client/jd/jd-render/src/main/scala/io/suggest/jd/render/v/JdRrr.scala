@@ -258,8 +258,8 @@ final class JdRrr(
         // За пределами редактора: только векторные картинки подлежат эмуляции кропа на клиенте (кроме wide-блоков):
         OptionUtil.maybe(
           jdt.props1.expandMode.isEmpty ||
-            // В редакторе: все фоновые картинки блоков- всегда оригиналы с эмуляцией кропа на клиенте:
-            state.jdArgs.conf.isEdit
+          // В редакторе: все фоновые картинки блоков- всегда оригиналы с эмуляцией кропа на клиенте:
+          state.jdArgs.conf.isEdit
         ) {
           // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
           val whOpt = jdt.props1.wh
@@ -398,10 +398,10 @@ final class JdRrr(
 
           // Если задана фоновая картинка, от отрендерить её.
           (for {
-            bgImgData <- s.props1.bgImg
-            edge      <- state.jdArgs.data.edges.get( bgImgData.edgeUid )
+            edge      <- state.current_p1BgImgEdgeOpt
             if edge.jdEdge.predicate ==>> MPredicates.JdContent.Image
             bgImgSrc  <- edge.origImgSrcOpt
+            bgImgData <- s.props1.bgImg
           } yield {
             <.img(
               ^.`class` := Css.Block.BG,

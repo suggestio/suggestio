@@ -28,7 +28,6 @@ import japgolly.scalajs.react.vdom.{TagMod, TagOf}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.html
-import org.scalajs.dom.html.Image
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
@@ -156,8 +155,7 @@ final class JdEditR(
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   object JdRrrEdit extends jdRrr.Base {
 
-    class QdContentB(contentRef: Ref.Simple[html.Element],
-                     $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps]) extends QdContentBase {
+    class QdContentB( $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps] ) extends QdContentBase {
 
       /** Рендерер Qd-контента под нужды редактора. */
       final class QdEditRenderer(override val rrrProps: MJdRrrProps) extends qdRrrHtml.RrrBase {
@@ -208,7 +206,7 @@ final class JdEditR(
           }
         }
 
-        override def imgMods(embedProps: MQdEmbedProps, imgTag: VdomTagOf[Image]): TagOf[Image] = {
+        override def imgMods(embedProps: MQdEmbedProps, imgTag: TagOf[html.Image]): TagOf[html.Image] = {
           imgTag(
             // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
             ^.draggable := false,
@@ -283,30 +281,34 @@ final class JdEditR(
             .getOrElse( super.renderImg(embedProps, i) )
         }
 
-        override def frameMods( embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
+        override def iframeMods( embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement = {
           // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
           var outerAcc = List.empty[TagMod]
           outerAcc ::= <.div(
-            ^.key := (key + "z"),
+            ^.key := "z",
             ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
             whStyl,
             ^.style := js.Object(),
           )
           outerAcc =
-            (^.key := (key + "c")) ::
+            (^.key := "c") ::
               (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
               iframe ::
               outerAcc
-          val tag = <.div( outerAcc: _* )
+          <.div( outerAcc: _* )
+        }
 
+        override def renderFrame(embedProps: MQdEmbedProps, i: Int): VdomElement = {
           if (rrrProps.isCurrentSelected) {
-            ResizableBox.component.withKey(key) {
+            ResizableBox.component.withKey(i) {
               _rszBoxProps( embedProps, lockAspect = false, saveHeight = true, whDefault = HtmlConstants.Iframes.whCsspxDflt )
             } (
-              tag,
+              <.div(
+                Frame( embedProps ),
+              ),
             )
           } else {
-            tag
+            super.renderFrame( embedProps, i )
           }
         }
 
@@ -342,13 +344,6 @@ final class JdEditR(
       }
 
 
-      override def _doRender(state: MJdRrrProps): TagOf[html.Element] = {
-        // ref для react-dnd можно выставлять только здесь.
-        super._doRender(state)
-          .withRef( contentRef )
-      }
-
-
       /** Самописная поддержка ресайза контента только силами браузера. */
       private def onQdTagResize(e: ReactMouseEventFromHtml): Callback = {
         _parseWidth(e).fold(Callback.empty) { widthPx =>
@@ -357,7 +352,9 @@ final class JdEditR(
       }
 
       def render(props: MRrrEdit with MRrrEditCollectDrag, state: MJdRrrProps): VdomElement = {
-        val rendered: VdomElement = _doRender(state)
+        val rendered: VdomElement =
+          _doRender( state )
+            .withOptionalRef( props.refOpt )
 
         // TODO Подцепить ReactResizable для Qd-контента.
         /*if (
@@ -388,6 +385,16 @@ final class JdEditR(
         val p = props.p.value
         !p.parents.exists( p.jdArgs.selJdt.treeLocOpt.containsLabel )
     }
+
+    // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
+    private val qdContentInnerC = ScalaComponent
+      .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContentB].getSimpleName )
+      .initialStateFromProps( rrrEdit2mproxyValueF )
+      .renderBackend[QdContentB]
+      .configure( ReactDiodeUtil.p2sShouldComponentUpdate(rrrEdit2mproxyValueF)(MJdRrrProps.MJdRrrPropsFastEq) )
+      .build
+      .toJsComponent
+      .raw
 
     class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
       // import, иначе будет рантаймовая ошибка валидации DragSourceSpec (лишние поля json-класса)
@@ -427,18 +434,9 @@ final class JdEditR(
           }
         }
       )(
-        // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
-        ScalaComponent
-          .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContentB].getSimpleName )
-          .initialStateFromProps( rrrEdit2mproxyValueF )
-          .backend( new QdContentB(contentRef, _) )
-          .renderBackend
-          .configure( ReactDiodeUtil.p2sShouldComponentUpdate(rrrEdit2mproxyValueF)(MJdRrrProps.MJdRrrPropsFastEq) )
-          .build
-          .toJsComponent
-          .raw
+        qdContentInnerC
       )
-        .cmapCtorProps( _rrrPropsCMap )
+        .cmapCtorProps( _mkRrrPropsCmapF( Some(contentRef) ) )
 
       def render(props: ModelProxy[MJdRrrProps]): VdomElement =
         contentDndComp(props)
@@ -453,7 +451,7 @@ final class JdEditR(
 
     // -------------------------------------------------------------------------------------------------
 
-    class BlockB(blockRef: Ref.Simple[html.Div], $: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps]) extends BlockBase {
+    class BlockB( $: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps] ) extends BlockBase {
 
       override def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         TagMod(
@@ -485,7 +483,7 @@ final class JdEditR(
           //^.onDragOver ==> jdStripDragOver,
           //^.onDrop     ==> onDropToStrip
         )
-          .withRef( blockRef )
+        //  .withRef( blockRef )
       }
 
       def render(props: MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, state: MJdRrrProps): VdomElement = {
@@ -497,25 +495,30 @@ final class JdEditR(
       }
 
     }
+    /** Scala-компонент-обёртка для простого рендера одного блока: */
+    private val blockDndInnerCompJsRaw = ScalaComponent
+      .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockB].getSimpleName )
+      .initialStateFromProps( rrrEdit2mproxyValueF )
+      .renderBackend[BlockB]
+      .configure( ReactDiodeUtil.p2sShouldComponentUpdate( rrrEdit2mproxyValueF.compose[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag](identity) )(MJdRrrProps.MJdRrrPropsFastEq) )
+      .build
+      .toJsComponent
+      .raw
 
 
-    /** Инстанс функции canDrag() для BlockDndB. */
-    private lazy val _blockCanDragF: js.Function2[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, Boolean] = {
-      (props, mon) =>
-        // Не таскать, если сейчас выделен какой-то иной элемент.
-        val p = props.p.value
-        p.isCurrentSelected
-    }
-
-    /** Компонент блока для jd-редактора.
-      * Т.к. нужны ref'ы, то надо их изолировать между инстансами.
-      */
-    class BlockDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+    /** Компонент блока с поддержкой drag-n-drop. */
+    private val blockDndC = {
       import MimeConst.Sio.{DataContentTypes => DCT}
 
-      private val blockRef = Ref[html.Div]
+      /** Инстанс функции canDrag() для BlockDndB. */
+      val _blockCanDragF: js.Function2[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, Boolean] = {
+        (props, mon) =>
+          // Не таскать, если сейчас выделен какой-то иной элемент.
+          val p = props.p.value
+          p.isCurrentSelected
+      }
 
-      private val _blockDropF: js.Function3[MRrrEdit with MRrrEditCollectDrop, DropTargetMonitor, js.Any, js.UndefOr[MJsDropInfo]] = {
+      val _blockDropF: js.Function3[MRrrEdit with MRrrEditCollectDrop, DropTargetMonitor, js.Any, js.UndefOr[MJsDropInfo]] = {
         (props, mon, _) =>
           if (!mon.didDrop()) {
             val itemType = mon.getItemType()
@@ -554,94 +557,84 @@ final class JdEditR(
           js.undefined
       }
 
+      DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
+        // Сверху на блок можно скидывать qd-контент
+        itemType = DCT.CONTENT_ELEMENT,
+        spec = new DropTargetSpec[MRrrEdit with MRrrEditCollectDrop, MJsDropInfo] {
+          override val drop = js.defined( _blockDropF )
+        },
+        collect = { (conn, mon) =>
+          new MRrrEditCollectDrop {
+            override val dropF = conn.dropTarget()
+          }
+        }
+      ) {
+        /** Реакция на начало перетаскивания qd-контента. */
+        val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
+          (props, _, _) =>
+            // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
+            val s = props.p.value
+            val jdt = s.subTree.rootLabel
+            props.p dispatchNow JdTagDragStart(jdt, s.tagId)
+            // Отрендерить в json данные, которые будут переданы в DropTarget.
+            MJsDropInfo( DCT.STRIP )
+        }
 
-
-      val blockDndComp = {
-        DropTarget[MRrrEdit, MRrrEditCollectDrop, MJsDropInfo, Children.None](
-          // Сверху на блок можно скидывать qd-контент
-          itemType = DCT.CONTENT_ELEMENT,
-          spec = new DropTargetSpec[MRrrEdit with MRrrEditCollectDrop, MJsDropInfo] {
-            override val drop = js.defined( _blockDropF )
+        DragSource[MRrrEdit with MRrrEditCollectDrop, MRrrEditCollectDrag, MJsDropInfo, Children.None](
+          itemType = DCT.STRIP,
+          spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, MJsDropInfo] {
+            override val beginDrag = _beginDragF
+            override val canDrag   = _blockCanDragF
           },
           collect = { (conn, mon) =>
-            new MRrrEditCollectDrop {
-              override val dropF = conn.dropTarget()
+            // Пробросить collecting function + какие-то возможные данные к общим props'ам.
+            new MRrrEditCollectDrag {
+              override val dragF = conn.dragSource()
             }
-          }
-        ) {
-          /** Реакция на начало перетаскивания qd-контента. */
-          val _beginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
-            (props, _, _) =>
-              // Запустить обработку по circuit. По логике кажется, что должно быть асинхронно, но рендер перетаскивания может нарушаться.
-              val s = props.p.value
-              val jdt = s.subTree.rootLabel
-              props.p dispatchNow JdTagDragStart(jdt, s.tagId)
-              // Отрендерить в json данные, которые будут переданы в DropTarget.
-              MJsDropInfo( DCT.STRIP )
-          }
-
-          DragSource[MRrrEdit with MRrrEditCollectDrop, MRrrEditCollectDrag, MJsDropInfo, Children.None](
-            itemType = DCT.STRIP,
-            spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag, MJsDropInfo] {
-              override val beginDrag = _beginDragF
-              override val canDrag   = _blockCanDragF
-            },
-            collect = { (conn, mon) =>
-              // Пробросить collecting function + какие-то возможные данные к общим props'ам.
-              new MRrrEditCollectDrag {
-                override val dragF = conn.dragSource()
-              }
-            },
-          )(
-            ScalaComponent
-              .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockB].getSimpleName )
-              .initialStateFromProps( rrrEdit2mproxyValueF )
-              .backend( new BlockB(blockRef, _) )
-              .renderBackend
-              .configure( ReactDiodeUtil.p2sShouldComponentUpdate( rrrEdit2mproxyValueF.compose[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag](identity) )(MJdRrrProps.MJdRrrPropsFastEq) )
-              .build
-              .toJsComponent
-              .raw
-          )
-            .toJsComponent
-            .raw
-        }
-          .cmapCtorProps( _rrrPropsCMap )
+          },
+        )(
+          blockDndInnerCompJsRaw
+        )
+          .toJsComponent
+          .raw
       }
-
-      def render(props: ModelProxy[MJdRrrProps]): VdomElement =
-        blockDndComp(props)
+        .cmapCtorProps( _mkRrrPropsCmapF() )
     }
-    val blockDndComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[BlockDndB].getSimpleName )
-      .renderBackend[BlockDndB]
-      .build
+
     override def mkBlock(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      blockDndComp.withKey(key)(props)
+      blockDndC.withKey(key)(props)
 
 
     // -------------------------------------------------------------------------------------------------
 
     /** Сборка документа под редактор. */
-    class DocumentB(docRef: Ref.Simple[html.Div], $: BackendScope[MRrrEdit with MRrrEditCollectDrop, Unit]) extends DocumentBase {
+    class DocumentB( $: BackendScope[MRrrEdit with MRrrEditCollectDrop, Unit] ) extends DocumentBase {
 
       // Т.к. react-dnd присылает null вместо компонента, то узнать относительные координаты
       // в момент перетаскивания получается невозможно.
 
       def render(p: MRrrEdit with MRrrEditCollectDrop): VdomElement = {
-        p.dropF.applyVdomEl(
-          // div-обёртка нужна, т.к. react-dnd требует нативных элементов: голые компоненты не принимаются.
-          <.div(
-            _renderGrid(p.p)
-          )
-            .withRef( docRef )
+        // div-обёртка нужна, т.к. react-dnd требует нативных элементов: голые компоненты не принимаются.
+        val content = <.div(
+          _renderGrid(p.p)
         )
+          .withOptionalRef( p.refOpt )
+        p.dropF.applyVdomEl( content )
       }
 
     }
+
+    // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
+    private val documentInnerC = ScalaComponent
+      .builder [MRrrEdit with MRrrEditCollectDrop] ( classOf[DocumentB].getSimpleName )
+      .renderBackend[DocumentB]
+      .build
+      .toJsComponent
+      .raw
+
     class DocumentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
       // Для получения относительных координат, используем дополнительный ref.
-      private val docRef = Ref[html.Div]
+      private val docRef = Ref[html.Element]
 
       import MimeConst.Sio.{DataContentTypes => DCT}
 
@@ -693,16 +686,9 @@ final class JdEditR(
           }
         },
       )(
-        // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
-        ScalaComponent
-          .builder [MRrrEdit with MRrrEditCollectDrop] ( classOf[DocumentB].getSimpleName )
-          .backend(new DocumentB(docRef, _))
-          .renderBackend
-          .build
-          .toJsComponent
-          .raw
+        documentInnerC
       )
-        .cmapCtorProps( _rrrPropsCMap )
+        .cmapCtorProps( _mkRrrPropsCmapF( Some(docRef) ) )
 
       def render(props: ModelProxy[MJdRrrProps]): VdomElement =
         _documentDndWrapperComponent(props)
@@ -738,12 +724,14 @@ final class JdEditR(
   /** Расшаренный инстанс общей функции для всех вызовов DndComponent().cmapCtorProps().
     * Функция оборачивает ModelProxy в инстанс MRrrEdit.
     */
-  private val _rrrPropsCMap: (ModelProxy[MJdRrrProps] => MRrrEdit) = {
+  private def _mkRrrPropsCmapF( refO: Option[Ref.Simple[html.Element]] = None ): (ModelProxy[MJdRrrProps] => MRrrEdit) = {
     proxy =>
       new MRrrEdit {
         override val p = proxy
+        override val refOpt = refO
       }
   }
+
 
   private val rrrEdit2mproxyValueF = ReactDiodeUtil.modelProxyValueF.compose[MRrrEdit with MRrrEditCollectDrag](_.p)
 
@@ -754,6 +742,8 @@ final class JdEditR(
 trait MRrrEdit extends js.Object {
   /** Исходные scala-пропертисы. */
   val p: ModelProxy[MJdRrrProps]
+  /** Проброска ref через props внутрь компонента. */
+  val refOpt: Option[Ref.Simple[html.Element]]
 }
 object MRrrEdit {
   implicit object MRrrEdit2MProxy extends Props2ModelProxy[MRrrEdit] {

@@ -26,7 +26,7 @@ object FastEqUtil {
     val collFastEq = new FastEq[(K, V)] {
       override def eqv(a: (K, V), b: (K, V)): Boolean = {
         feqK.eqv(a._1, b._1) &&
-          feqV.eqv(a._2, b._2)
+        feqV.eqv(a._2, b._2)
       }
     }
     CollFastEq[(K, V), M]( collFastEq )

@@ -34,7 +34,7 @@ final class JdR(
 
       override def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
         qdRrrHtml
-          .Renderer( p )
+          .NormalRrr( p )
           .render()
       }
 
@@ -88,7 +88,8 @@ final class JdR(
       }
 
     }
-    val documentComp = ScalaComponent
+    // lazy, т.к. в выдаче компонент обычно не нужен - там многое вскрывается в GridCoreR.
+    lazy val documentComp = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( classOf[BlockB].getSimpleName )
       .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
       .renderBackend[DocumentB]

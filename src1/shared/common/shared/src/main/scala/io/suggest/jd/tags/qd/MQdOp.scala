@@ -55,7 +55,7 @@ object MQdOp {
 /** Класс модели описания одной quill-delta операции.
   *
   * @param opType Тип операции: insert, delete, retain.
-  * @param edgeInfo embed, живущий среди эджей узла.
+  * @param edgeInfo Данные эджа до текста или embed'а, живущего среди эджей узла.
   * @param index Индекс для retain/delete операций.
   * @param attrsText Аттрибуты рендера текста.
   * @param attrsLine Аттрибуты рендера текущей строки.

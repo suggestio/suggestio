@@ -113,12 +113,38 @@ class QdRrrHtml(
       Img.withKey(i)( embedProps )
 
 
-    def frameMods( embedProps: MQdEmbedProps, frame: TagOf[html.IFrame], whStyl: StyleA, key: String ): TagMod = {
-      // Видео-фрейм без дополнительного div-контейнера:
-      frame(
-        ^.key := key,
-      )
-    }
+    val Frame = ScalaComponent
+      .builder[MQdEmbedProps]( "Frame" )
+      .initialStateFromProps( identity )
+      .render_P { embedProps =>
+        val whStyl = embedProps.jdtQdOp.qdOp.attrsEmbed
+          .filter(_.nonEmpty)
+          .fold( rrrProps.jdArgs.jdRuntime.jdCss.video ) { _ =>
+            rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
+          }
+        val srcUrl = embedProps.edge.jdEdge.url
+
+        if (srcUrl.isEmpty)
+          logger.warn( ErrorMsgs.VIDEO_EXPECTED, msg = embedProps )
+
+        val iframe = <.iframe(
+          srcUrl.whenDefined {
+            ^.src := _
+          },
+          ^.allowFullScreen := true,
+          whStyl,
+        )
+        iframeMods( embedProps, iframe, whStyl )
+      }
+      .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate( MQdEmbedProps.Feq ) )
+      .build
+
+    /** Пост-процессинг iframe-тега. */
+    def iframeMods( embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement
+
+      /** Рендер фрейма через компонент. */
+    def renderFrame(embedProps: MQdEmbedProps, i: Int): VdomElement =
+      Frame.withKey( i )( embedProps )
 
     /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
     def _hrefAttr: Attr[String]
@@ -208,7 +234,7 @@ class QdRrrHtml(
         case MQdOpTypes.Insert =>
           for {
             qdEi <- jdtQdOp.qdOp.edgeInfo
-            e <- rrrProps.jdArgs.data.edges.get( qdEi.edgeUid )
+            e <- rrrProps.current_qdEdges.get( qdEi.edgeUid )
           } yield {
             var framesCnt = counters.frame
             var imagesCnt = counters.image
@@ -228,7 +254,7 @@ class QdRrrHtml(
 
               // Рендер видео (или иного фрейма).
               case MPredicates.JdContent.Frame =>
-                _insertFrame( embedProps, framesCnt )
+                _currLineAccRev ::= renderFrame( embedProps, framesCnt )
                 framesCnt += 1
 
               case other =>
@@ -242,35 +268,17 @@ class QdRrrHtml(
           }
 
         case other =>
-          throw new UnsupportedOperationException( ErrorMsgs.NOT_IMPLEMENTED + HtmlConstants.SPACE + other )
+          if (scalajs.LinkingInfo.developmentMode) {
+            throw new UnsupportedOperationException( ErrorMsgs.NOT_IMPLEMENTED + HtmlConstants.SPACE + other )
+          } else {
+            logger.warn( ErrorMsgs.NOT_IMPLEMENTED, msg = other )
+            None
+          }
       }
+
       if (counters2Opt.isEmpty)
         logger.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = jdtQdOp.qdOp.edgeInfo)
       counters2Opt
-    }
-
-
-    /** Рендер video. */
-    private def _insertFrame( embedProps: MQdEmbedProps, i: Int ): Unit = {
-      val resOpt = for {
-        src <- embedProps.edge.jdEdge.url
-      } yield {
-        val whStyl = embedProps.jdtQdOp.qdOp.attrsEmbed
-          .filter(_.nonEmpty)
-          .fold( rrrProps.jdArgs.jdRuntime.jdCss.video ) { _ =>
-            rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
-          }
-        val iframe = <.iframe(
-          ^.src := src,
-          ^.allowFullScreen := true,
-          whStyl,
-        )
-
-        _currLineAccRev ::= frameMods( embedProps, iframe, whStyl, key = "V" + i )
-      }
-
-      if (resOpt.isEmpty)
-        logger.warn( ErrorMsgs.VIDEO_EXPECTED, msg = embedProps )
     }
 
 
@@ -626,8 +634,8 @@ class QdRrrHtml(
   }
 
 
-  /** Дефолтовая реализация рендерера под нужды обычного (не-edit) рендера. */
-  case class Renderer(override val rrrProps: MJdRrrProps) extends RrrBase {
+  /** Обычный рендерер для просмотра/отображения qd-контента (без редактирования). */
+  case class NormalRrr(override val rrrProps: MJdRrrProps) extends RrrBase {
 
     def _hrefAttr: Attr[String] =
       ^.href
@@ -637,6 +645,9 @@ class QdRrrHtml(
 
     override def imgPostProcess(props: MQdEmbedProps, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): VdomElement =
       imgEl
+
+    override def iframeMods(embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement =
+      iframe
 
   }
 
@@ -689,8 +700,11 @@ object MQdEmbedProps {
   @inline implicit def univEq: UnivEq[MQdEmbedProps] = UnivEq.derive
 
   implicit val Feq = FastEqUtil[MQdEmbedProps] { (a, b) =>
-    (a.edge ==* b.edge) &&
+    val r = (a.edge ==* b.edge) &&
     (a.jdtQdOp ===* b.jdtQdOp)
+
+    println( s"Feq => $r | ${a.edge ==* b.edge} ${a.jdtQdOp ===* b.jdtQdOp} ${a.edge.hashCode()}/${b.edge.hashCode()} ${a.jdtQdOp.hashCode()}/${b.jdtQdOp.hashCode()}" )
+    r
   }
 
 }
