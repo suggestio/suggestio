@@ -33,6 +33,8 @@ final case class MGridBuildResult(
       .toMap
   }
 
+  lazy val someThis = Some(this)
+
 }
 
 

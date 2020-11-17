@@ -60,7 +60,8 @@ case class MJdDocEditS(
       subTree = jdArgs.data.doc.template,
       tagId   = jdArgs.data.doc.tagId,
       jdArgs  = jdArgs,
-      gridBuildRes = Some(gridBuild),
+      // someThis - костылёк, существенно ускоряющий рендер в редакторе без использования OptFastEq внутри MJdRrrProps.FastEq.
+      gridBuildRes = gridBuild.someThis,
     )
   }
 

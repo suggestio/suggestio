@@ -477,9 +477,9 @@ class QdRrrHtml(
             val renderAcc1 = __renderPrevLinesGrp(acc0, iStr)
 
             // Текущая строка аттрибутов не имеет, поэтому можно её сразу же рендерить без группирования.
-            val firstLine = _renderLineAlone(
+            val firstLine = <.p(
+              ^.key := (iStr + "s"),   // чтобы не было duplicate key
               line,
-              ^.key := (iStr + "s")   // чтобы не было duplicate key
             )
             val renderAcc2 = firstLine :: renderAcc1
 
@@ -521,13 +521,6 @@ class QdRrrHtml(
       // Вернуть итог
       <.div(
         TagMod.fromTraversableOnce( renderAcc2 )
-      )
-    }
-
-    private def _renderLineAlone(line: TagMod, tm0: TagMod): TagMod = {
-      <.p(
-        tm0,
-        line
       )
     }
 

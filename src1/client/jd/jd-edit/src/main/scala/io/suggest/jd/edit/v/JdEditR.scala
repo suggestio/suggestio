@@ -396,7 +396,7 @@ final class JdEditR(
       .toJsComponent
       .raw
 
-    class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+    class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
       // import, иначе будет рантаймовая ошибка валидации DragSourceSpec (лишние поля json-класса)
       import MimeConst.Sio.{DataContentTypes => DCT}
 
@@ -443,7 +443,9 @@ final class JdEditR(
     }
     val qdContentDndComp = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentDndB].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
       .renderBackend[QdContentDndB]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
       .build
     override def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
       qdContentDndComp.withKey(key)(props)
@@ -601,8 +603,16 @@ final class JdEditR(
         .cmapCtorProps( _mkRrrPropsCmapF() )
     }
 
+    // Компонент-обёртка над blockDndC, чтобы подавлять пере-рендеры на уровне блоков.
+    private val blockDndCompWrap = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( "BlockDnd" )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .render_P( blockDndC.apply )
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
+      .build
+
     override def mkBlock(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      blockDndC.withKey(key)(props)
+      blockDndCompWrap.withKey(key)(props)
 
 
     // -------------------------------------------------------------------------------------------------
@@ -693,6 +703,9 @@ final class JdEditR(
       def render(props: ModelProxy[MJdRrrProps]): VdomElement =
         _documentDndWrapperComponent(props)
     }
+
+    /** Document+Dnd - Компонент, который вызывается из формы редактора. Нет componentShouldUpdate(),
+      * т.к. это проверяется на уровне внешнего connect(). */
     val documentDndComp = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( classOf[DocumentDndB].getSimpleName )
       .renderBackend[DocumentDndB]

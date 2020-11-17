@@ -29,11 +29,11 @@ object MJdRrrProps {
         (a.subTree        ===* b.subTree) &&
         (a.tagId          ==* b.tagId) &&
         // jdArgs НЕ сравниваем (кроме conf), вместо этого сравниваем lazy-val'ы с эджами.
+        //MJdArgs.MJdArgsFastEq.eqv(a.jdArgs, b.jdArgs) &&
         (a.jdArgs.conf ===* b.jdArgs.conf) &&
         OptFastEq.Plain.eqv(a.current_p1BgImgEdgeOpt, b.current_p1BgImgEdgeOpt) &&
         // Связанные эджи сравниваем только по keys и values через eq:
         qdEdgesFeq.eqv( a.current_qdEdges, b.current_qdEdges ) &&
-        //MJdArgs.MJdArgsFastEq.eqv(a.jdArgs, b.jdArgs) &&
         //(a.parents        ===* b.parents) &&
         (a.gridBuildRes   ===* b.gridBuildRes) &&
         ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
