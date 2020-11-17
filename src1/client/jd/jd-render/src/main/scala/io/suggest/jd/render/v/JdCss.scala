@@ -4,7 +4,6 @@ import diode.FastEq
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -848,6 +847,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
 
+  /** Это compat-стиль, НЕ поддерживающий wideSzMult.
+    * С 2020-11-17 стало обязательным указание WH для video-фреймов, поэтому
+    */
   val video = {
     val whDflt = HtmlConstants.Iframes.whCsspxDflt
     style(

@@ -119,7 +119,11 @@ class QdRrrHtml(
       .render_P { embedProps =>
         val whStyl = embedProps.jdtQdOp.qdOp.attrsEmbed
           .filter(_.nonEmpty)
-          .fold( rrrProps.jdArgs.jdRuntime.jdCss.video ) { _ =>
+          .fold {
+            // По идее, стили уже должны быть заданы, но до 2020-11-17 attrsEmbed были необязательными, поэтому тут костыли:
+            // TODO Это можно удалить в будущем, когда все jd-карточки пройдут контроль валидности: тут не поддержки wideSzOpt, и фреймы хромают.
+            rrrProps.jdArgs.jdRuntime.jdCss.video
+          } { _ =>
             rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
           }
         val srcUrl = embedProps.edge.jdEdge.url

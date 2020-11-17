@@ -508,22 +508,36 @@ class JdDocValidator(
 
 
   /** Валидация опциональных embed-аттрибутов.
+    * Необходимы w/h обязательно, n/r/
     *
     * @param attrsEmbedOpt Опциональный инстанс embed attrs.
     * @param edgeOpt Данные связанного эджа, если есть.
     * @return Провалидированный почищенный опциональный инстанс.
     */
   private def validateQdAttrsEmbed(attrsEmbedOpt: Option[MQdAttrsEmbed], edgeOpt: Option[MJdEdgeVldInfo]): ValidationNel[String, Option[MQdAttrsEmbed]] = {
+    val P = MPredicates.JdContent
     edgeOpt
       .filter { edge =>
-        val P = MPredicates.JdContent
         (P.Frame :: P.Image :: Nil)
           .contains( edge.jdEdge.predicate )
       }
       .fold {
         Validation.success[NonEmptyList[String], Option[MQdAttrsEmbed]]( None )
-      } { _ =>
-        ScalazUtil.liftNelOpt( attrsEmbedOpt.filter(_.nonEmpty) )( MQdAttrsEmbed.validateForStore )
+      } { edgeVld =>
+        // есть vld-эдж необходимого embed-типа (Image, Frame и т.д.). Проверить, что заданность w/h (оба или одного) для картинки или фрейма.
+        ScalazUtil
+          .liftNelSome( attrsEmbedOpt.filter(_.nonEmpty), "video.or.image.embed.size.missing" ) {
+            attrsEmbed =>
+              // TODO Если frame, то нужно WH одновременно. Если Image, то достаточно только ширины.
+              MQdAttrsEmbed.validateForStore(
+                attrsEmbed,
+                // Для картинки - достаточно только высоты. Для фрейма (видео) обязательны и ширина, и высота.
+                isHeightNeeded = (edgeVld.jdEdge.predicate ==* P.Frame),
+              )
+          }
+          // Сброс некорректных. До 2020-11-17 w/h были необязательными вообще.
+          // Это приводило бы чрезвычайному усложению кода стилей JdCss (без доступа к эджам!) для масштабировании видео-фремов (с опорой на w/h-константы из RFC HtmlConstants.Iframes.whCsspxDflt).
+          // И теперь для картинок - заданность хотя бы высоты - тоже обязательна.
           .recoverToNoneTolerant
       }
   }

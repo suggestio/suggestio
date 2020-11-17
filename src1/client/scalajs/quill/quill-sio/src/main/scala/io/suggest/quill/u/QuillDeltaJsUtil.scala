@@ -8,7 +8,7 @@ import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
-import io.suggest.n2.edge.{EdgeUid_t, MEdgeDataJs, MEdgeDoc, MPredicates}
+import io.suggest.n2.edge.{EdgeUid_t, MEdgeDataJs, MEdgeDoc, MPredicate, MPredicates}
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.log.Log
 import io.suggest.text.MTextAligns
@@ -337,60 +337,63 @@ class QuillDeltaJsUtil extends Log {
       .iterator
       .map { dOp =>
         val deltaAttrsOpt = dOp.attributes.toOption
-        val qdOp = MQdOp(
-          opType = deltaOp2qdType( dOp ),
-          edgeInfo = for (raw <- dOp.insert.toOption) yield {
-            val typeOfRaw = js.typeOf(raw)
 
-            // Проанализировать тип значения insert-поля: там или строка текста, или object с данными embed'а.
-            val jdEdgeJs = if (typeOfRaw ==* JsTypes.STRING) {
-              val text = raw.asInstanceOf[String]
-              str2EdgeMap.getOrElseUpdate(text, {
-                MEdgeDataJs(
-                  jdEdge = MJdEdge(
-                    predicate = jdContPred.Text,
-                    edgeDoc = MEdgeDoc(
-                      id        = Some( nextEdgeUid() ),
-                      text      = Some( text ),
-                    ),
-                  )
+        val jdEdgeJsOpt = for (raw <- dOp.insert.toOption) yield {
+          val typeOfRaw = js.typeOf(raw)
+
+          // Проанализировать тип значения insert-поля: там или строка текста, или object с данными embed'а.
+          if (typeOfRaw ==* JsTypes.STRING) {
+            val text = raw.asInstanceOf[String]
+            str2EdgeMap.getOrElseUpdate(text, {
+              MEdgeDataJs(
+                jdEdge = MJdEdge(
+                  predicate = jdContPred.Text,
+                  edgeDoc = MEdgeDoc(
+                    id        = Some( nextEdgeUid() ),
+                    text      = Some( text ),
+                  ),
                 )
-              })
+              )
+            })
 
-            } else if (typeOfRaw ==* JsTypes.OBJECT) {
-              // TODO Дедублицировать с JsTypes.STRING ветвью: часть кода очень похожа, хотя отличий тоже хватает.
-              val deltaEmbed = raw.asInstanceOf[DeltaEmbed]
-              // Внутри или image, или video
-              val pred = if (deltaEmbed.image.nonEmpty) {
-                jdContPred.Image
-              } else if (deltaEmbed.video.nonEmpty) {
-                jdContPred.Frame
-              } else {
-                logger.error( ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED, msg = JSON.stringify(deltaEmbed) )
-                throw new IllegalArgumentException(ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED)
-              }
-
-              val anyStrContent = deltaEmbed.image
-                .orElse( deltaEmbed.video )
-                .get
-
-              str2EdgeMap.getOrElseUpdate(anyStrContent, {
-                // Собрать embed edge
-                MEdgeDataJs(
-                  jdEdge = MJdEdge(
-                    predicate = pred,
-                    edgeDoc = MEdgeDoc(
-                      id = Some( nextEdgeUid() ),
-                    ),
-                    url = Some( anyStrContent ),
-                    // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
-                  )
-                )
-              })
+          } else if (typeOfRaw ==* JsTypes.OBJECT) {
+            // TODO Дедублицировать с JsTypes.STRING ветвью: часть кода очень похожа, хотя отличий тоже хватает.
+            val deltaEmbed = raw.asInstanceOf[DeltaEmbed]
+            // Внутри или image, или video
+            val pred = if (deltaEmbed.image.nonEmpty) {
+              jdContPred.Image
+            } else if (deltaEmbed.video.nonEmpty) {
+              jdContPred.Frame
             } else {
-              throw new IllegalArgumentException("op.i=" + raw)
+              logger.error( ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED, msg = JSON.stringify(deltaEmbed) )
+              throw new IllegalArgumentException(ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED)
             }
 
+            val anyStrContent = deltaEmbed.image
+              .orElse( deltaEmbed.video )
+              .get
+
+            str2EdgeMap.getOrElseUpdate(anyStrContent, {
+              // Собрать embed edge
+              MEdgeDataJs(
+                jdEdge = MJdEdge(
+                  predicate = pred,
+                  edgeDoc = MEdgeDoc(
+                    id = Some( nextEdgeUid() ),
+                  ),
+                  url = Some( anyStrContent ),
+                  // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
+                )
+              )
+            })
+          } else {
+            throw new IllegalArgumentException("op.i=" + raw)
+          }
+        }
+
+        val qdOp = MQdOp(
+          opType = deltaOp2qdType( dOp ),
+          edgeInfo = jdEdgeJsOpt.map { jdEdgeJs =>
             MJdEdgeId(
               edgeUid = jdEdgeJs.jdEdge.edgeDoc.id.get,
             )
@@ -403,8 +406,43 @@ class QuillDeltaJsUtil extends Log {
             .flatMap( deltaAtts2qdAttrs ),
           attrsLine = deltaAttrsOpt
             .flatMap( deltaAttrs2qdAttrsLine ),
-          attrsEmbed = deltaAttrsOpt
-            .flatMap( deltaAttrs2qdAttrsEmbed )
+          attrsEmbed = {
+            val attrsEmbedOpt = deltaAttrsOpt
+              .flatMap( deltaAttrs2qdAttrsEmbed )
+
+            // Для frame - обязательны wh, для image - только w.
+            val P = MPredicates.JdContent
+            jdEdgeJsOpt
+              .filter { e =>
+                (P.Frame :: P.Image :: Nil) contains[MPredicate] e.jdEdge.predicate
+              }
+              .fold( attrsEmbedOpt ) { e =>
+                // Требуется обязательный attrsEmbed.
+                lazy val dfltSz = HtmlConstants.Iframes.whCsspxDflt
+                val r = attrsEmbedOpt.fold {
+                  MQdAttrsEmbed(
+                    width  = Some( SetVal(dfltSz.width) ),
+                    height = Option.when( e.jdEdge.predicate ==* P.Frame )( SetVal(dfltSz.height) ),
+                  )
+                } { attrsEmbed =>
+                  // Уже заданы какие-то embed-аттрибуты. Подогнать под требования:
+                  var changesAcc = List.empty[MQdAttrsEmbed => MQdAttrsEmbed]
+
+                  // Для картинки и для фрейма - ширина обязательная.
+                  if (attrsEmbed.width.isEmpty)
+                    changesAcc ::= (MQdAttrsEmbed.width set Some(SetVal(dfltSz.width)))
+
+                  // Для фрейма - высота обязательная.
+                  if ((e.jdEdge.predicate ==* P.Frame) && attrsEmbed.height.isEmpty)
+                    changesAcc ::= (MQdAttrsEmbed.height set Some(SetVal(dfltSz.height)))
+
+                  changesAcc
+                    .reduceOption(_ andThen _)
+                    .fold( attrsEmbed )( _(attrsEmbed) )
+                }
+                Some(r)
+              }
+          }
         )
         // Завернуть в дерево.
         Tree.Leaf(

@@ -5,11 +5,13 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.math.MathConst
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
+import io.suggest.scalaz.ScalazUtil
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import scalaz.ValidationNel
+import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 
 /**
@@ -39,21 +41,34 @@ object MQdAttrsEmbed {
   @inline implicit def univEq: UnivEq[MQdAttrsEmbed] = UnivEq.derive
 
 
-  def validateForStore(attrsEmbed: MQdAttrsEmbed): ValidationNel[String, MQdAttrsEmbed] = {
+  def validateForStore(attrsEmbed: MQdAttrsEmbed, isHeightNeeded: Boolean): ValidationNel[String, MQdAttrsEmbed] = {
     val errMsgF = ErrorConstants.emsgF("embed")
-    def sideValidate(suOpt: Option[ISetUnset[Int]], fn: String) = {
-      ISetUnset.validateSetOpt( suOpt,  errMsgF(fn) ) { value =>
-        // TODO Вписать нормальные цифры, например исходя из размера внешнего контейнера.
-        // TODO Уменьшать цифры, если выходят за пределы контейнера. Пропорционально.
-        MathConst.Counts.validateMinMax(value, min = 10, max = 1000, errMsgF(fn) )
+    def sideValidate(suOpt: Option[ISetUnset[Int]], fn: String, mustBeSome: Boolean) = {
+      def __mkVld(suOpt: Option[ISetUnset[Int]]) = {
+        ISetUnset.validateSetOpt( suOpt,  errMsgF(fn) ) { value =>
+          // TODO Вписать нормальные цифры, например исходя из размера внешнего контейнера.
+          // TODO Уменьшать цифры, если выходят за пределы контейнера. Пропорционально.
+          MathConst.Counts.validateMinMax(value, min = 10, max = 1000, errMsgF(fn) )
+        }
+      }
+
+      if (mustBeSome) {
+        ScalazUtil.liftNelSome( suOpt, errMsgF(fn) )(Validation.success) andThen __mkVld
+      } else {
+        __mkVld( suOpt )
       }
     }
     val F = Fields
     (
-      sideValidate(attrsEmbed.width,  F.WIDTH_FN) |@|
-      sideValidate(attrsEmbed.height, F.HEIGHT_FN)
+      // Ширина должна быть задана всегда:
+      sideValidate(attrsEmbed.width,  F.WIDTH_FN, true) |@|
+      // Высота нужна только для фреймов, поэтому учитываем мнение внешней функции.
+      sideValidate(attrsEmbed.height, F.HEIGHT_FN, isHeightNeeded)
     )(apply)
   }
+
+  def width = GenLens[MQdAttrsEmbed](_.width)
+  def height = GenLens[MQdAttrsEmbed](_.height)
 
 }
 

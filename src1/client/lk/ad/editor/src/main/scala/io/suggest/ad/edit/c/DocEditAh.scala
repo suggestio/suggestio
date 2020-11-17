@@ -307,30 +307,27 @@ class DocEditAh[M](
         //val blobPrefix = HtmlConstants.Proto.BLOB_
 
         // 30. Найти новые эджи картинок, которые надо загружать на сервер.
-        val dataEdgesForUpload = (
-          for {
-            edgeData <- edgesData3.valuesIterator
-            jde = edgeData.jdEdge
-            edgeUid <- jde.edgeDoc.id
-            // Три варианта:
-            // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
-            // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
-            // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
-            dataUrl <- jde.url
-            if {
-              (
-                //(dataUrl startsWith blobPrefix) ||    // Quill.Formats.Image режет ссылки, не являющиеся http | https | data:base64
-                (dataUrl startsWith dataPrefix)
-              ) && {
-                // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
-                // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
-                !(edgesData0 contains edgeUid)
-              }
+        val dataEdgesForUpload = (for {
+          edgeData <- edgesData3.valuesIterator
+          jde = edgeData.jdEdge
+          edgeUid <- jde.edgeDoc.id
+          // Три варианта:
+          // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
+          // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
+          // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
+          dataUrl <- jde.url
+          if {
+            ( //(dataUrl startsWith blobPrefix) ||    // Quill.Formats.Image режет ссылки, не являющиеся http | https | data:base64
+              (dataUrl startsWith dataPrefix)
+            ) && {
+              // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
+              // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
+              !(edgesData0 contains edgeUid)
             }
-          } yield {
-            (dataUrl, edgeData)
           }
-        )
+        } yield {
+          (dataUrl, edgeData)
+        })
           .toSeq
 
         // Собрать эффект запуска аплоада на сервер для всех найденных картинок.
@@ -384,7 +381,7 @@ class DocEditAh[M](
           }
           .toTree
 
-        val jdDoc2 = MJdDoc.template.set( __updateTpl(qdSubTree3) )(v0.jdDoc.jdArgs.data.doc)
+        val jdDoc2 = (MJdDoc.template set __updateTpl(qdSubTree3) )(v0.jdDoc.jdArgs.data.doc)
 
         // Залить все данные в новое состояние.
         val v2 = (
