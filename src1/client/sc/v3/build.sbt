@@ -40,7 +40,10 @@ webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.confi
 
 // TODO scalajs-1.0: leaflet-markercluster и locatecontrol мешают переезду на ES2015 (true).
 // ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
-scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
+scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
+  .withUseECMAScript2015(true)
+  .withAvoidClasses(false)      // false - Firefox сильнее тормозит из-за ES2015 classes, но размер js'ника значительно меньше.
+)}
 
 // Выключение оптимизации для дебага нетривиальных ошибок, видимых только на продакшене
 //scalaJSLinkerConfig ~= { _.withOptimizer(false) }

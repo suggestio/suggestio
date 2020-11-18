@@ -15,7 +15,10 @@ webpackBundlingMode := BundlingMode.LibraryOnly()
 
 //(emitSourceMaps in fullOptJS) := false
 
-scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }
+scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
+  .withUseECMAScript2015(true)
+  .withAvoidClasses(false)      // false - Firefox сильнее тормозит из-за ES2015 classes, но размер js'ника значительно меньше.
+)}
 
 scalaJSUseMainModuleInitializer := true
 

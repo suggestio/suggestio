@@ -259,7 +259,7 @@ object Common {
 
   /** Очень общие сеттинги для jvm-проектов. */
   val settingsOrg = settingsBase ++ Seq[Setting[_]](
-    scalaVersion := SCALA_VSN
+    scalaVersion := SCALA_VSN,
   )
 
   /** Очень общие сеттинги для js-проектов. */

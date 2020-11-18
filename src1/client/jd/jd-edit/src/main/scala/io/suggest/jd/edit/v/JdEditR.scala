@@ -203,6 +203,7 @@ final class JdEditR(
             override val onResizeStop = reaction
             override val transformScale = rrrProps.jdArgs.conf.szMult.toDouble
             override val resizeHandles = _qdResizeHandlers( _widthPx, _heightPx, rrrProps.jdArgs.conf )
+            override val className = Css.Display.INLINE_BLOCK
           }
         }
 
