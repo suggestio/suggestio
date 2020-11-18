@@ -26,7 +26,8 @@ webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.confi
 
 scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
   .withUseECMAScript2015(true)
-  .withAvoidClasses(false)      // false - Firefox сильнее тормозит из-за ES2015 classes, но размер js'ника значительно меньше.
+  .withAvoidClasses(true)      // false - Firefox сильнее тормозит из-за ES2015 classes, но размер js'ника значительно меньше.
+  .withAvoidLetsAndConsts(true)
 )}
 
 scalaJSUseMainModuleInitializer := true

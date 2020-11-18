@@ -68,6 +68,7 @@
     "devDependencies": {
         "8bhsolutions-cordova-plugin-background-geolocation": "file:../../../../../../../../home/user/projects/repo/cordova-background-geolocation",
         "cordova-android": "^9.0.0",
+        "cordova-ios": "^6.1.1",
         "cordova-plugin-fetch": "git+https://github.com/aporat/cordova-plugin-fetch.git",
         "cordova-plugin-inappbrowser": "^4.0.0"
     }
