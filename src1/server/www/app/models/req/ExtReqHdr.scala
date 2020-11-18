@@ -87,7 +87,9 @@ trait ExtReqHdr extends RequestHeader {
     headers
       .get( HeaderNames.X_FORWARDED_PROTO )
       .filter(!_.isEmpty)
-      .fold (secure) { protos =>
+      .fold {
+        secure
+      } { protos =>
         firstForwarded(protos)
           .toLowerCase()
           .startsWith( HttpConst.Proto.HTTPS  )

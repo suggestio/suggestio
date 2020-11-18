@@ -168,7 +168,14 @@ class CdnUtil @Inject() (
 
   def absUrl(call: Call)(implicit ctx: Context): String = {
     import ctx.request
-    val absUrl = call.absoluteURL( secure = ctx.request.isTransferSecure )
+    val absUrl = call.absoluteURL(
+      secure = ctx.request.isTransferSecure || {
+        // Есть проблема с isTransferSecure: бывает неправильное false при https-запросах, ИДУЩИХ ЧЕРЕЗ CDN, которые
+        // внутри идут на голый http://backend.suggest.io и вызывающий false в isTransferSecure, если X-Forwarded-Proto не указан.
+        (DISABLED_ON_HOSTS contains ctx.request.host) &&
+        ctx.api.ctxUtil.HTTPS_ENABLED
+      },
+    )
     if (absUrl startsWith HttpConst.Proto.CURR_PROTO) {
       // Вот так бывает: протокол не указан, потому что forCall() больше не пишет протокол.
       // Значит, уже отсылка к CDN, и значит дописываем https (или http, если локалхост):

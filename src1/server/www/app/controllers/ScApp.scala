@@ -95,7 +95,8 @@ final class ScApp @Inject()(
             } yield {
               iconInfo_src_LENS.modify { relSrc =>
                 val call = cdnUtil.asset( relSrc )(ctx)
-                cdnUtil.absUrl( call )(ctx)
+                // TODO absUrl?
+                call.url
               }(iconInfo)
             })
               .to( LazyList )

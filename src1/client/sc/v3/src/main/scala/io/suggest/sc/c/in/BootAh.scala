@@ -296,7 +296,7 @@ class BootAh[M](
   }
 
 
-  private def _processStartState( v0: MScBoot, svcIds: List[MBootServiceId] ): ActionResult[M] = {
+  private def _processStartState( v0: MScBoot, svcIds: List[MBootServiceId], afterFx: Option[Effect] = None): ActionResult[M] = {
     val startAcc2 = _processServiceStart(
       StartAcc(
         v0          = v0,
@@ -304,7 +304,10 @@ class BootAh[M](
       )
     )
 
-    val fxOpt = startAcc2.fxAcc.mergeEffects
+    val fxOpt = (startAcc2.fxAcc :: afterFx.toList :: Nil)
+      .iterator
+      .flatten
+      .mergeEffects
 
     ah.updatedMaybeEffect( startAcc2.v0, fxOpt )
   }
@@ -331,12 +334,15 @@ class BootAh[M](
           logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
           noChange
         } { svcData0 =>
-          val svcData2 = MBootServiceState.started.set(
+          var svcDataModF = MBootServiceState.started.set(
             Some(
               m.tryRes
                 .map(_ => true)
             )
-          )(svcData0)
+          )
+          if (svcData0.after.nonEmpty)
+            svcDataModF = svcDataModF andThen MBootServiceState.after.set( None )
+          val svcData2 = svcDataModF(svcData0)
 
           // Залить полученную инфу в состояние.
           val v1 = v0.copy(
@@ -348,13 +354,9 @@ class BootAh[M](
           )
 
           if (v1.targets.nonEmpty) {
-            _processStartState( v1, v1.targets.toList )
+            _processStartState( v1, v1.targets.toList, svcData0.after )
           } else {
-            // Зачем-то тут вызывался reRouteFx. Вероятно, по ошибке появился в ходе исправления другой ошибки.
-            // Он вызывал дублирующийся вызов GetIndex в выдаче и дальнейший повторный пробный вызов GetIndex с геолокацией,
-            // (приводивший к трём запросам index вместо одного при старте с включённой геолокацией).
-            //val fx = _reRouteFx( allowRouteTo = true )
-            updatedSilent(v1)
+            ah.updatedSilentMaybeEffect( v1, svcData0.after )
           }
         }
 
@@ -438,13 +440,32 @@ class BootAh[M](
     // Но пока на это всё плевать, т.к. код для просто упорядоченного запуска уже получился слишком сложный.
 
     // Экшен, сигнализирующий о завершении запуска сервиса:
-    val doneMyselfFx = _svcStartDoneAction( MBootServiceIds.GeoLocDataAcc ).toEffectPure
+    var fx: Effect = _svcStartDoneAction( MBootServiceIds.GeoLocDataAcc ).toEffectPure
+    var modsF = (MScBoot.wzFirstDone set OptionUtil.SomeBool.someTrue)
 
-    val v2 = (MScBoot.wzFirstDone set OptionUtil.SomeBool.someTrue)(v0)
-    // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
-    val fx = doneMyselfFx >> _reRouteFx(
+    val reRouteFx = _reRouteFx(
       allowRouteTo = !(started || runned)
     )
+    v0.services
+      .get( MBootServiceIds.JsRouter )
+      .fold [Unit] {
+        // Нет JsRouter-сервиса. Странно. Запустить reRouteFx на исполнение...
+        logger.warn( ErrorMsgs.INIT_FLOW_UNEXPECTED, msg = (MBootServiceIds.JsRouter, v0) )
+        // Сразу запустить _reRouteFx, т.к. роутер уже готов.
+        fx = fx >> reRouteFx
+      } { jsRouterSvc =>
+        if (jsRouterSvc.started.exists(_ getOrElse false)) {
+          // Сразу запустить _reRouteFx, т.к. роутер уже готов.
+          fx = fx >> reRouteFx
+        } else {
+          // JS-роутер ещё не готов. Надо закинуть в состояние after-эффект.
+          val jsRouterSvc2 = (MBootServiceState.after set Some(reRouteFx))(jsRouterSvc)
+          modsF = modsF andThen MScBoot.services.modify(_ + (MBootServiceIds.JsRouter -> jsRouterSvc2))
+        }
+      }
+
+    // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
+    val v2 = modsF(v0)
 
     updated(v2, fx)
   }
