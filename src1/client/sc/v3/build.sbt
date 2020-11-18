@@ -42,7 +42,9 @@ webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.confi
 // ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
 scalaJSLinkerConfig in ThisBuild ~= { _.withESFeatures(_
   .withUseECMAScript2015(true)
-  .withAvoidClasses(true)      // false - Firefox сильнее тормозит из-за ES2015 classes, но размер js'ника значительно меньше.
+  // avoid ES class'es = true, иначе тормозит iOS Safari (cordova app) и Firefox (по каким-то benchmark'ам) из-за ES2015 classes
+  .withAvoidClasses(true)
+  // avoid let & const = true, иначе тормозит iOS Safari (cordova app) https://github.com/scala-js/scala-js/pull/4277 https://bugs.webkit.org/show_bug.cgi?id=199866
   .withAvoidLetsAndConsts(true)
 )}
 

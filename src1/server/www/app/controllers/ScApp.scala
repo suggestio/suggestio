@@ -2,11 +2,12 @@ package controllers
 
 import io.suggest.app.ios.{MIosItem, MIosItemAsset, MIosItemMeta, MIosManifest}
 import io.suggest.dev.{MOsFamilies, MOsFamily}
-import io.suggest.err.HttpResultingException, HttpResultingException._
+import io.suggest.err.HttpResultingException
+import HttpResultingException._
 import io.suggest.es.model.EsModel
 import io.suggest.ext.svc.MExtService
 import io.suggest.i18n.MsgCodes
-import io.suggest.ico.MLinkRelIcon
+import io.suggest.ico.{MIconInfo, MLinkRelIcon}
 import io.suggest.img.MImgFormats
 import io.suggest.n2.edge.{MEdge, MPredicates}
 import io.suggest.n2.media.{MEdgeMedia, MFileMeta, MFileMetaHash}
@@ -21,6 +22,7 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import japgolly.univeq._
 import javax.inject.Inject
 import models.im.MFavIcons
+import models.mctx.Context
 import models.req.INodeOptReq
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
@@ -80,7 +82,25 @@ final class ScApp @Inject()(
         shortName = Some( sio ),
         startUrl  = sc.routes.ScSite.geoSite().url,
         display   = Some( MPwaDisplayModes.Standalone ),
-        icons     = MFavIcons.Icons().allIcons.map(_.icon),
+        icons     = {
+          val iconsRel = MFavIcons.Icons().allIcons
+          if (iconsRel.isEmpty) {
+            Nil
+          } else {
+            implicit val ctx = implicitly[Context]
+            val iconInfo_src_LENS = MIconInfo.src
+            (for {
+              relIcon <- iconsRel.iterator
+              iconInfo = relIcon.icon
+            } yield {
+              iconInfo_src_LENS.modify { relSrc =>
+                val call = cdnUtil.asset( relSrc )(ctx)
+                cdnUtil.absUrl( call )(ctx)
+              }(iconInfo)
+            })
+              .to( LazyList )
+          }
+        },
       )
 
       corsUtil.withCorsIfNeeded(

@@ -2,6 +2,7 @@ package io.suggest.ico
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -32,6 +33,9 @@ object MIconInfo {
       } and
     (__ \ "type").write[String]
   )(unlift(unapply))
+
+
+  def src = GenLens[MIconInfo](_.src)
 
 }
 
