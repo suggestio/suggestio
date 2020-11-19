@@ -218,7 +218,7 @@ class GeoTabAh[M](
           val mnode = nodePropsShapes.props
           val nodeId = mnode.nodeId.get
           // Есть окликнутый узел. Действовать исходя из типа узла.
-          if (mnode.ntype ==* MNodeTypes.Tag) {
+          if (mnode.ntype.exists(_ eqOrHasParent MNodeTypes.Tag)) {
             // Это тег. Обновить состояние выбранных тегов, искать в плитке.
             val isAlreadySelected = v0.data.selTagIds contains nodeId
 

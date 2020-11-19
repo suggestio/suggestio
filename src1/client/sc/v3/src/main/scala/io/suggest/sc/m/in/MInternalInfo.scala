@@ -4,7 +4,8 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.proto.http.model.MCsrfToken
-import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecentOuter}
+import io.suggest.sc.index.MScIndexInfo
+import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.spa.SioPages.Sc3
 import japgolly.univeq.UnivEq
@@ -55,19 +56,19 @@ final case class MInternalInfo(
                                 csrfToken         : Pot[MCsrfToken]         = Pot.empty,
                               ) {
 
-  lazy val inxRecentsClean: List[MIndexInfo] = {
+  lazy val inxRecentsClean: List[MScIndexInfo] = {
     (for {
       indexesRecent <- indexesRecents.saved.toOption
-      if indexesRecent.recents.nonEmpty
+      if indexesRecent.indexes.nonEmpty
 
       // Убрать первый элемент, если это текущий узел
-      forDisplay = indexesRecent.recents
+      forDisplay = indexesRecent.indexes
         .headOption
-        .fold( indexesRecent.recents ) { firstInx =>
+        .fold( indexesRecent.indexes ) { firstInx =>
           if (currRoute.exists( _ isSamePlaceAs firstInx.state )) {
-            indexesRecent.recents.tail
+            indexesRecent.indexes.tail
           } else {
-            indexesRecent.recents
+            indexesRecent.indexes
           }
         }
 

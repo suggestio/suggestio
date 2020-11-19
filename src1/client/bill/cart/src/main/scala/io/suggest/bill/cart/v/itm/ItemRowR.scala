@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.itm
 
-import com.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiSvgIcon, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartSelectItem
@@ -107,12 +107,25 @@ class ItemRowR(
           {
             val (avaIconComponent, iconHintCodeOpt) = if (props.mitem.rcvrIdOpt.isDefined) {
               // Размещение в узле. Отдельная иконка для ble-маячка
-              val nodeTypeHint = props.rcvrNode
-                .filter( _.ntype !=* MNodeTypes.AdnNode )
-                .fold( MsgCodes.`Node` )( _.ntype.singular )
-              val nodeIcon = props.rcvrNode
-                .filter( _.ntype ==* MNodeTypes.BleBeacon )
-                .fold[MuiSvgIcon] (Mui.SvgIcons.LocationCity) (_ => Mui.SvgIcons.BluetoothSearching)
+              val ntypeOpt = props.rcvrNode
+                .flatMap(_.ntype)
+
+              val nodeTypeHint = (for {
+                ntype <- ntypeOpt
+                if !(ntype eqOrHasParent MNodeTypes.AdnNode)
+              } yield {
+                ntype.singular
+              })
+                .getOrElse( MsgCodes.`Node` )
+
+              val nodeIcon = (for {
+                ntype <- ntypeOpt
+                if ntype eqOrHasParent MNodeTypes.BleBeacon
+              } yield {
+                Mui.SvgIcons.BluetoothSearching
+              })
+                .getOrElse( Mui.SvgIcons.LocationCity )
+
               nodeIcon -> Some(nodeTypeHint)
             } else if (props.mitem.geoShape.isDefined) {
               // На карте

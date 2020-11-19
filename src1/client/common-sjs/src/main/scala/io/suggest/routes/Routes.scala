@@ -194,6 +194,7 @@ sealed trait ScCtlRoutes extends js.Object {
 @js.native
 sealed trait ScSubControllers extends js.Object {
   def ScSite: ScSiteCtlRoutes = js.native
+  def ScStuff: ScStuffCtlRoutes = js.native
 }
 @js.native
 sealed trait ScSiteCtlRoutes extends js.Object {
@@ -213,6 +214,14 @@ sealed trait ScAppCtlRoutes extends js.Object {
 
   /** Роута до генератора манифестов установки приложения на Apple iOS. */
   def iosInstallManifest(args: js.Dictionary[js.Any]): PlayRoute = js.native
+
+}
+
+
+@js.native
+sealed trait ScStuffCtlRoutes extends js.Object {
+
+  def fillNodesList(): PlayRoute = js.native
 
 }
 

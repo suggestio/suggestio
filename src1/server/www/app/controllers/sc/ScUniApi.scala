@@ -282,7 +282,7 @@ trait ScUniApi
           acType = MScRespActionTypes.ConfUpdate,
           confUpdate = Some(
             MScConfUpdate(
-              rcvrsMap = Some(rcvrsMapUrlArgs)
+              rcvrsMap = Some(rcvrsMapUrlArgs),
             )
           )
         )

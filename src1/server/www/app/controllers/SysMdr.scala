@@ -2,7 +2,6 @@ package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.color.MColors
 import io.suggest.common.empty.OptionUtil
 import javax.inject.Inject
 import io.suggest.ctx.CtxData
@@ -390,9 +389,9 @@ final class SysMdr @Inject() (
               // Пока интересует только название целевого узла.
               MSc3IndexResp(
                 nodeId  = mnode.id,
-                ntype   = mnode.common.ntype,
-                colors  = MColors.empty, //mnode.meta.colors,
-                name    = mnode.guessDisplayName
+                ntype   = Some( mnode.common.ntype ),
+                name    = mnode.guessDisplayName,
+                //mnode.meta.colors - игнор цветов, интересует только название.
               )
             }
             .toMat( Sink.seq[MSc3IndexResp] )( Keep.right )

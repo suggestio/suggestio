@@ -78,7 +78,7 @@ object Sc3Main extends Log {
         minSeverity = LogSeverities.Warn,
         underlying = new BufLogAppender(
           underlying = new RemoteLogAppender(
-            httpConfig = modules.ScHttpConfigImpl.mkRootHttpClientConfigF,
+            httpConfig = modules.ScHttpConf.mkRootHttpClientConfigF,
           ),
         ),
       )

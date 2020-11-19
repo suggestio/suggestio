@@ -1,6 +1,7 @@
 package io.suggest.sc.index
 
 import io.suggest.color.MColors
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
@@ -25,9 +26,15 @@ object MSc3IndexResp {
   /** Поддержка play-json сериализации. */
   implicit def MSC_NODE_INFO_FORMAT: OFormat[MSc3IndexResp] = (
     (__ \ "a").formatNullable[String] and
-    (__ \ "t").format[MNodeType] and
+    (__ \ "t").formatNullable[MNodeType] and
     (__ \ "n").formatNullable[String] and
-    (__ \ "c").format[MColors] and
+    (__ \ "c").formatNullable[MColors]
+      .inmap[MColors](
+        EmptyUtil.opt2ImplMEmptyF( MColors ),
+        EmptyUtil.someF,
+        // TODO Заменить someF/Some.apply на опциональный EmptyUtil.implEmpty2OptF, когда придёт время.
+        //      2020-11-19: Т.к. приложения, размещенные на сервисах дистрибуции (v2.0), пока не готовы, и надо повременить.
+      ) and
     (__ \ "l").formatNullable[IMediaInfo] and
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
@@ -93,12 +100,14 @@ object MSc3IndexResp {
   * @param isLoggedIn Залогинен ли юзер.
   *                   Раньше оно было в Sc3Conf на уровне ScSite, но этот уровень живёт в приложении своей жизнью.
   *                   None означает, что сервер не раскрывает текущий статус залогиненности юзера.
+  * @param ntype None используется при запросах на сервер.
+  *              Хотя теоретически возможно и использование для эфемерных узлов на сервере.
   */
 case class MSc3IndexResp(
                          nodeId     : Option[String],
-                         ntype      : MNodeType,
+                         ntype      : Option[MNodeType],
                          name       : Option[String],
-                         colors     : MColors,
+                         colors     : MColors               = MColors.empty,
                          logoOpt    : Option[IMediaInfo]    = None,
                          welcome    : Option[MWelcomeInfo]  = None,
                          geoPoint   : Option[MGeoPoint]     = None,
@@ -112,11 +121,17 @@ case class MSc3IndexResp(
   override final def id = nodeId
 
   /** Отображаемое имя узла. По идее, None быть не должно. */
-  def nameOrIdOpt = name orElse nodeId
-  /** Отображаемое имя узла, либо пустая строка. */
-  def nameOrIdOrEmpty = nameOrIdOpt getOrElse ""
+  def nameOrIdOpt: Option[String] =
+    name orElse nodeId
 
-  def idOrNameOrEmpty = nodeId.orElse(name).getOrElse("")
+  /** Отображаемое имя узла, либо пустая строка. */
+  def nameOrIdOrEmpty: String = nameOrIdOpt getOrElse ""
+
+  def idOrNameOrEmpty: String = {
+    nodeId
+      .orElse( name )
+      .getOrElse( "" )
+  }
 
   /** Инфа на клиенте для рендера welcome-заголовка. */
   lazy val wcNameFgH: MWcNameFgH = {
@@ -137,7 +152,7 @@ case class MSc3IndexResp(
     StringUtil.toStringHelper( this, 128 ) { renderF =>
       val render0 = renderF("")
       nodeId foreach render0
-      render0( ntype )
+      ntype foreach render0
       name foreach render0
       if (colors.nonEmpty)
         render0( colors )

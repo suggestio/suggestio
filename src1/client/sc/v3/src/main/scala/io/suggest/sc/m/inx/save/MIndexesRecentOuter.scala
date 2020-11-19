@@ -1,6 +1,7 @@
 package io.suggest.sc.m.inx.save
 
 import diode.data.Pot
+import io.suggest.sc.index.{MScIndexInfo, MScIndexes}
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -23,9 +24,9 @@ object MIndexesRecentOuter {
   implicit final class IndexesRecentOuterOpsExt( private val inxRecentOuter: MIndexesRecentOuter ) extends AnyVal {
 
     /** Ускоренное чтение значения saved.recents. */
-    def recentIndexes: List[MIndexInfo] = {
+    def recentIndexes: List[MScIndexInfo] = {
       inxRecentOuter.saved
-        .fold [List[MIndexInfo]] ( Nil )( _.recents )
+        .fold [List[MScIndexInfo]] ( Nil )( _.indexes )
     }
 
   }
@@ -40,5 +41,5 @@ object MIndexesRecentOuter {
   */
 final case class MIndexesRecentOuter(
                                       searchCss     : SearchCss,
-                                      saved         : Pot[MIndexesRecent]       = Pot.empty,
+                                      saved         : Pot[MScIndexes]       = Pot.empty,
                                     )

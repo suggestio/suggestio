@@ -11,6 +11,23 @@ import play.api.routing.JavaScriptReverseRoute
   */
 final class JsRoutesUtil {
 
+  def sc(): LazyList[JavaScriptReverseRoute] = {
+    routes.javascript.Sc.pubApi #::
+    controllers.sc.routes.javascript.ScStuff.fillNodesList #::
+    routes.javascript.RemoteLogs.receive #::
+    routes.javascript.Static.advRcvrsMapJson #::
+    routes.javascript.Static.csrfToken #::
+    routes.javascript.Ident.rdrUserSomewhere #::
+    routes.javascript.LkAds.adsPage #::
+    routes.javascript.LkAdEdit.editAd #::
+    // Роуты для скачивания приложения:
+    routes.javascript.ScApp.appDownloadInfo #::
+    routes.javascript.ScApp.iosInstallManifest #::
+    // Роуты доп.форм, встроенных в выдачу:
+    loginRoutes() #:::
+    lkNodesFormRoutes()
+  }
+
   /** JS-роуты для сборки роутеров под логин-форму.
     * Вынесено из шаблона, т.к. с некоторых пор роуты нужны ещё в выдаче. */
   def loginRoutes(): LazyList[JavaScriptReverseRoute] = {

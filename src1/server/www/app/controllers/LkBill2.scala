@@ -595,7 +595,7 @@ final class LkBill2 @Inject() (
       } yield {
         MSc3IndexResp(
           nodeId  = mnode.id,
-          ntype   = mnode.common.ntype,
+          ntype   = Some( mnode.common.ntype ),
           // mnode.meta.colors,  // TODO Надо ли цвета рендерить?
           colors  = MColors.empty,
           name    = mnode.guessDisplayNameOrId,

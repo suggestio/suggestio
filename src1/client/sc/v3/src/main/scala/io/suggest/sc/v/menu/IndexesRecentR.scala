@@ -86,7 +86,7 @@ class IndexesRecentR(
           // Отрендерить список рядов:
           s.inxRecentsC { intInfoProxy =>
             val inxRecents = intInfoProxy.value
-            ReactCommonUtil.maybeEl( inxRecents.saved.exists(_.recents.nonEmpty) ) {
+            ReactCommonUtil.maybeEl( inxRecents.saved.exists(_.indexes.nonEmpty) ) {
               val mroot = p.value
               val currInxState = mroot.index.state
               val distanceToOrNull = currInxState.inxGeoPoint.orNull

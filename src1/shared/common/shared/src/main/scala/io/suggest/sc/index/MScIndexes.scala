@@ -1,8 +1,6 @@
-package io.suggest.sc.m.inx.save
+package io.suggest.sc.index
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
-import io.suggest.conf.ConfConst
-import io.suggest.kv.MKvStorage
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -17,7 +15,7 @@ import play.api.libs.json._
   * Данные по карточкам - должны быть в кжше браузера, а тут - лишь общая информация.
   */
 
-object MIndexesRecent {
+object MScIndexes {
 
   def empty = apply()
 
@@ -30,48 +28,29 @@ object MIndexesRecent {
     def LASTS = "l"
   }
 
-  implicit def lastIndexesJson: OFormat[MIndexesRecent] = {
+  implicit def lastIndexesJson: OFormat[MScIndexes] = {
     val F = Fields
-    (__ \ F.LASTS).formatNullable[List[MIndexInfo]]
-      .inmap[List[MIndexInfo]](
+    (__ \ F.LASTS).formatNullable[List[MScIndexInfo]]
+      .inmap[List[MScIndexInfo]](
         EmptyUtil.opt2ImplEmptyF( Nil ),
         lasts => Option.when(lasts.nonEmpty)(lasts)
       )
-      .inmap(apply, _.recents)
+      .inmap(apply, _.indexes)
   }
 
-  @inline implicit def univEq: UnivEq[MIndexesRecent] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScIndexes] = UnivEq.derive
 
 
-  /** Сохранить указанное состояние. */
-  def save(li: MIndexesRecent): Unit = {
-    MKvStorage.save(
-      MKvStorage(
-        key = ConfConst.SC_INDEXES_RECENT,
-        value = li,
-      )
-    )
-  }
-
-
-  /** Прочитать сохранённое ранее значение. */
-  def get(): Option[MIndexesRecent] = {
-    MKvStorage
-      .get[MIndexesRecent]( ConfConst.SC_INDEXES_RECENT )
-      .map(_.value)
-  }
-
-
-  def recents = GenLens[MIndexesRecent](_.recents)
+  def indexes = GenLens[MScIndexes](_.indexes)
 
 }
 
 
 /** Контейнер данных по недавним индексам.
   *
-  * @param recents Массив последних элементов, новые - сначала.
+  * @param indexes Массив индексов.
   */
-final case class MIndexesRecent(
-                                 recents        : List[MIndexInfo]          = Nil,
-                               )
+final case class MScIndexes(
+                             indexes        : List[MScIndexInfo]          = Nil,
+                           )
   extends EmptyProduct

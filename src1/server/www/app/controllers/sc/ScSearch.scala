@@ -140,12 +140,13 @@ trait ScSearch
       val srcFut = for {
         msearch <- nodesSearch
       } yield {
-        // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
-        val nodesSrc = mNodes.dynSearchSource( msearch )
-
         // Организовать чтение найденных узлов из БД:
         val src0 = advGeoRcvrsUtil
-          .nodesAdvGeoPropsSrc(nodesSrc, wcAsLogo = false)
+          .nodesAdvGeoPropsSrc(
+            // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
+            mNodes.dynSearchSource( msearch ),
+            wcAsLogo = false
+          )
           // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
           .alsoTo( saveScStatSink )
 

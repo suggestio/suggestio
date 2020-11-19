@@ -47,6 +47,7 @@ GET  /sc/routes/:c/router.js            @controllers.sc.ScJsRouter.scJsRouterCac
 GET  /sc/sc.webmanifest                 @controllers.ScApp.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 GET  /sc/app                            @controllers.ScApp.appDownloadInfo(a: io.suggest.sc.app.MScAppGetQs)
 GET  /sc/app/ios                        @controllers.ScApp.iosInstallManifest( m: io.suggest.sc.app.MScAppManifestQs )
+POST /sc/nodes/fill                     @controllers.sc.ScStuff.fillNodesList
 
 ## Входы в личные кабинеты
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)

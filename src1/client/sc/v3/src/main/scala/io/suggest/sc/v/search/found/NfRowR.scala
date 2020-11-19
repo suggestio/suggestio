@@ -26,7 +26,6 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -139,7 +138,7 @@ final case class NfRowR2(
       // Нельзя nodeId.get, т.к. могут быть узлы без id (по идее - максимум 1 узел в списке).
       val nodeId = p.idOrNameOrEmpty
 
-      val isTag = p.ntype ==* MNodeTypes.Tag
+      val isTag = p.ntype.exists(_ eqOrHasParent MNodeTypes.Tag)
 
       var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(nodeId) ::
         Nil

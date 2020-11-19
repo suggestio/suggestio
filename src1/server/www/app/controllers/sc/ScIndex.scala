@@ -536,7 +536,7 @@ trait ScIndex
         } yield {
           val inxRa = MSc3IndexResp(
             nodeId        = currNodeIdOpt,
-            ntype         = mnode.common.ntype,
+            ntype         = Some( mnode.common.ntype ),
             name          = Option( title ),
             colors        = mnode.meta.colors,
             logoOpt       = logoOpt,

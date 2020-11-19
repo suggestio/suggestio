@@ -37,8 +37,7 @@ class ConfUpdateRah
       rcvrsMapUrlArgs2 <- action.rcvrsMap
       if rcvrsMapUrlArgs2 !=* conf0.rcvrsMapUrl
     } {
-      conf2 = MSc3Conf.rcvrsMapUrl
-        .set( rcvrsMapUrlArgs2 )(conf2)
+      conf2 = (MSc3Conf.rcvrsMapUrl set rcvrsMapUrlArgs2)(conf2)
       // TODO Организовать эффект или таймер для обновления карты. Таймер нужен, чтобы карта не обновлялась слишком часто.
     }
 

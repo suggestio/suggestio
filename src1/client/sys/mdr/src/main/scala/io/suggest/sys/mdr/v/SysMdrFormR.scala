@@ -111,7 +111,7 @@ class SysMdrFormR(
                     req
                       .nodesMap
                       .get(req.info.nodeId)
-                      .map(_.ntype)
+                      .flatMap(_.ntype)
                   },
                 nodesMap                = req.nodesMap,
                 directSelfNodesSorted   = req.directSelfNodesSorted,
@@ -175,9 +175,8 @@ class SysMdrFormR(
                 for {
                   nodeInfo <- nodeInfoOpt
                   adnNode  <- nodeInfo.nodesMap.get( nodeInfo.info.nodeId )
-                } yield {
-                  adnNode.ntype
-                }
+                  ntype    <- adnNode.ntype
+                } yield ntype
               },
             queueReportOpt = nextRespOpt.map(_.resp.mdrQueue),
             errorsCount = nextRespOpt.fold(0)(_.resp.errorNodeIds.size)

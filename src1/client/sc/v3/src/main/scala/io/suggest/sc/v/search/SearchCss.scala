@@ -63,16 +63,18 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
       var rowsCount = 0
       for (nodes <- args.nodesFound.req) {
         // Теги могут занимать и треть и пол-ряда. Поэтому ряды тегов надо считать по-особому:
-        val nodesDoubleCount = nodes.resp.nodes
-          .iterator
-          .map { n =>
-            n.props.ntype match {
-              case MNodeTypes.Tag => 1
-              case _ => 2
-            }
+        val nodesDoubleCount = (for {
+          nodeFound <- nodes.resp.nodes
+          ntype <- nodeFound.props.ntype
+        } yield {
+          ntype match {
+            case MNodeTypes.Tag => 1
+            case _ => 2
           }
+        })
           .sum
           .toInt
+
         rowsCount += Math.max(1, nodesDoubleCount / 2)
       }
       if (args.nodesFound.req.isPending)

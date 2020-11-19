@@ -274,7 +274,7 @@ final class AdvGeoRcvrsUtil @Inject()(
           // props'ы для одной точки.
           val props = MSc3IndexResp(
             nodeId  = Some( nodeId ),
-            ntype   = mnode.common.ntype,
+            ntype   = Some( mnode.common.ntype ),
             name    = hintOpt,
             // Цвета узла. Можно без цвета паттерна, т.к. он не нужен.
             colors  = mnode.meta.colors,

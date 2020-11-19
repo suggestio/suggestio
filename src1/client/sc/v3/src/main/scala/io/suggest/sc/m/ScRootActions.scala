@@ -4,16 +4,16 @@ import diode.data.Pot
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.lk.nodes.form.m.MLkNodesMode
 import io.suggest.routes.routes
-import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
-import io.suggest.sc.m.inx.save.MIndexesRecent
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.spa.{DAction, SioPages}
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 import scala.util.Try
 
@@ -124,10 +124,16 @@ case class ResetUrlRoute(
   extends IScRootAction
 
 /** Восстановление текущего состояния ранее-посещённых индексов. */
-case class LoadIndexRecents(clean: Boolean) extends IScRootAction
+case class LoadIndexRecents(
+                             clean: Boolean,
+                             pot: Pot[MScIndexes] = Pot.empty
+                           ) extends IScRootAction
+object LoadIndexRecents {
+  def pot = GenLens[LoadIndexRecents](_.pot)
+}
 
 /** Сохранить в базу инфу по индексу. */
-case class SaveRecentIndex(inxRecent2: Option[MIndexesRecent] = None) extends IScRootAction
+case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScRootAction
 
 /** Выбор узла в списке недавних узлов. */
 case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScRootAction

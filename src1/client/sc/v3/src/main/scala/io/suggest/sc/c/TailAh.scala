@@ -16,13 +16,15 @@ import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.geo.GeoLocUtilJs
+import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.react.r.ComponentCatch
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
+import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
-import io.suggest.sc.m.inx.save.{MIndexInfo, MIndexesRecent, MIndexesRecentOuter}
+import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.menu.DlAppOpen
+import io.suggest.sc.u.api.IScStuffApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
@@ -31,7 +33,7 @@ import io.suggest.spa.{DAction, DoNothing, SioPages}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
 
-import scala.util.Try
+import scala.util.{Success, Try}
 
 /**
   * Suggest.io
@@ -156,7 +158,7 @@ object TailAh {
       .composeLens( MInternalInfo.inxRecents )
   }
 
-  private def recents2searchCssModF(inxRecents: MIndexesRecent) = {
+  private def recents2searchCssModF(inxRecents: MScIndexes) = {
     MIndexesRecentOuter.searchCss
       .composeLens( SearchCss.args )
       .composeLens( MSearchCssProps.nodesFound )
@@ -164,7 +166,7 @@ object TailAh {
       .modify( _.ready(
         MSearchRespInfo(
           resp = MGeoNodesResp(
-            nodes = for (inxInfo <- inxRecents.recents) yield {
+            nodes = for (inxInfo <- inxRecents.indexes) yield {
               MGeoNodePropsShapes(
                 props = inxInfo.indexResp,
               )
@@ -183,6 +185,7 @@ class TailAh(
               modelRW                  : ModelRW[MScRoot, MScRoot],
               scRespHandlers           : Seq[IRespHandler],
               scRespActionHandlers     : Seq[IRespActionHandler],
+              scStuffApi               : IScStuffApi,
             )
   extends ActionHandler(modelRW)
   with Log
@@ -226,32 +229,100 @@ class TailAh(
     // Запуск чтения сохранённых недавно-посещённых узлов.
     case m: LoadIndexRecents =>
       val v0 = value
-
       val outerLens = TailAh.root_internals_info_inxRecentsPrev_LENS
 
-      if (m.clean) {
-        // Завернуть в эффект?
-        val readTryRes = Try( MIndexesRecent.get() )
-          .map( _ getOrElse MIndexesRecent.empty )
+      (for {
+        indexes2 <- m.pot.toOption
+      } yield {
+        // Если !clean, и пришли с сервера прочищенные результаты, то надо восстановить исходную сортировку: сервер возвращает несортированный chunked-ответ.
+        val pot2 = (for {
+          indexesOuter0 <- outerLens.get( v0 ).saved
+          indexes0 = indexesOuter0.indexes
+          if !m.clean && !m.pot.isFailed &&
+             indexes0.nonEmpty && indexes2.nonEmpty
+        } yield {
+          val nodeId2i = indexes0
+            .iterator
+            .flatMap(_.state.nodeId)
+            .zipWithIndex
+            .toMap
+          MScIndexes.indexes.modify { inxs =>
+            inxs.sortBy { inx =>
+              inx.state.nodeId
+                .flatMap( nodeId2i.get )
+                .getOrElse( Int.MaxValue )
+            }
+          }(indexes2)
+        })
+          .orElse( m.pot )
 
-        var infoModF = MIndexesRecentOuter.saved.modify(
-          _.withTry(
-            Try( MIndexesRecent.get() )
-              .map( _ getOrElse MIndexesRecent.empty )
-          )
+        // Успешно прочитан результат.
+        val modF = (
+          (MIndexesRecentOuter.saved set pot2) andThen
+          // Обновить CSS для списка узлов, раз уж всё впорядке.
+          (TailAh.recents2searchCssModF( indexes2 ))
         )
 
-        for (recent2 <- readTryRes)
-          infoModF = infoModF andThen TailAh.recents2searchCssModF( recent2 )
+        // Если clean, то запустить запрос на сервер по сверке списка узлов: вдруг, что-то изменилось.
+        val fxOpt = Option.when( m.clean && indexes2.indexes.nonEmpty ) {
+          Effect.action {
+            CsrfTokenEnsure(
+              onComplete = Some {
+                Effect {
+                  scStuffApi
+                    .fillNodesList( indexes2 )
+                    .transform { tryRes =>
+                      val respRes = for (list <- tryRes) yield
+                        (MScIndexes.indexes set list)(indexes2)
+                      val a = m.copy(
+                        clean = false,
+                        pot = m.pot.withTry(respRes),
+                      )
+                      Success(a)
+                    }
+                }
+              }
+            )
+          }
+        }
+        val v2 = outerLens.modify( modF )(v0)
+        ah.updatedMaybeEffect( v2, fxOpt )
+      })
+        .orElse {
+          for (ex <- m.pot.exceptionOption) yield {
+            logger.error( ErrorMsgs.SRV_REQUEST_FAILED, ex, m )
+            // Отработать ошибку чтения.
+            val v2 = outerLens
+              .composeLens( MIndexesRecentOuter.saved )
+              .modify( _.fail(ex) )(v0)
+            updated(v2)
+          }
+        }
+        .getOrElse {
+          if (m.clean) {
+            // Запустить эффект чтения из хранилища:
+            val fx = Effect.action {
+              val tryRes = Try {
+                MIndexesRecentJs
+                  .get()
+                  .getOrElse( MScIndexes.empty )
+              }
+              LoadIndexRecents.pot.modify(_ withTry tryRes)(m)
+            }
+            val potLens = outerLens composeLens MIndexesRecentOuter.saved
+            val v2 = if (potLens.exist(_.isPending)(v0)) {
+              v0
+            } else {
+              potLens.modify(_.pending())(v0)
+            }
+            updatedSilent( v2, fx )
 
-        val v2 = outerLens.modify( infoModF )(v0)
-        updated(v2)
-
-      } else {
-        // Просто пересборка инстанса, чтобы освежить какие-то lazy-val'ы.
-        val v2 = outerLens.modify( identity )(v0)
-        updated(v2)
-      }
+          } else {
+            // Просто пересборка инстанса, чтобы освежить какие-то lazy-val'ы.
+            val v2 = outerLens.modify(identity)(v0)
+            updated(v2)
+          }
+        }
 
 
     // Сохранить инфу по индексу.
@@ -268,7 +339,7 @@ class TailAh(
             // Получить на руки текущее сохранённое состояние:
             val recentOpt0 = v0.internals.info.indexesRecents.saved.toOption orElse {
               val tryRes = Try {
-                MIndexesRecent.get()
+                MIndexesRecentJs.get()
               }
               for (ex <- tryRes.failed)
                 logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex )
@@ -278,7 +349,7 @@ class TailAh(
             }
 
             // Сборка сохраняемого инстанса MIndexInfo.
-            val inxInfo2 = MIndexInfo(
+            val inxInfo2 = MScIndexInfo(
               state         = currRoute,
               indexResp     = {
                 if (currIndexResp.geoPoint.nonEmpty) {
@@ -293,17 +364,17 @@ class TailAh(
             )
 
             // Сохранить/обновить сохранённое состояние.
-            val recentOpt2 = recentOpt0.fold [Option[MIndexesRecent]] {
-              val ir = MIndexesRecent( inxInfo2 :: Nil )
+            val recentOpt2 = recentOpt0.fold [Option[MScIndexes]] {
+              val ir = MScIndexes( inxInfo2 :: Nil )
               Some(ir)
             } { recents0 =>
-              val isDuplicate = recents0.recents.exists { m =>
+              val isDuplicate = recents0.indexes.exists { m =>
                 (m.state isSamePlaceAs currRoute)
               }
 
               Option.when(!isDuplicate) {
-                val maxItems = MIndexesRecent.MAX_RECENT_ITEMS
-                MIndexesRecent.recents.modify { r0 =>
+                val maxItems = MScIndexes.MAX_RECENT_ITEMS
+                MScIndexes.indexes.modify { r0 =>
                   // Удалять из списка старые значения, которые выглядят похоже (без учёта isLoggedIn и прочих глубинных флагов).
                   val r1 = r0.filterNot(_.indexResp isLogoTitleBgSame inxInfo2.indexResp)
                   // Укоротить список по максимальной длине.
@@ -321,7 +392,7 @@ class TailAh(
             } { recents2 =>
               // Записать в постоянное хранилище
               for {
-                ex <- Try( MIndexesRecent.save( recents2 ) ).failed
+                ex <- Try( MIndexesRecentJs.save( recents2 ) ).failed
               }
                 logger.warn( ErrorMsgs.KV_STORAGE_ACTION_FAILED, ex )
 
@@ -358,7 +429,7 @@ class TailAh(
       // Переход в ранее-посещённую локацию: найти в recent-списке предшествующее состояние выдачи.
       lens.get( v0 )
         .iterator
-        .flatMap(_.recents)
+        .flatMap(_.indexes)
         .find(_.indexResp ===* m.inxRecent)
         .fold {
           logger.warn( ErrorMsgs.NODE_NOT_FOUND, msg = m )

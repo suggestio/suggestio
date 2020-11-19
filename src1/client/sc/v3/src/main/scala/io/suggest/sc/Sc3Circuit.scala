@@ -33,7 +33,7 @@ import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeA
 import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.menu.DlAppAh
 import io.suggest.sc.c.search._
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MScIndexes}
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
@@ -48,7 +48,7 @@ import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
 import io.suggest.sc.u.Sc3ConfUtil
-import io.suggest.sc.u.api.{IScAppApi, IScUniApi}
+import io.suggest.sc.u.api.{IScAppApi, IScStuffApi, IScUniApi}
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -69,7 +69,7 @@ import io.suggest.lk.r.plat.PlatformCssStatic
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
-import io.suggest.sc.m.inx.save.{MIndexesRecent, MIndexesRecentOuter}
+import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sc.v.toast.ScNotifications
@@ -93,6 +93,7 @@ class Sc3Circuit(
                   // Автоматические DI-аргументы:
                   sc3UniApi                 : IScUniApi,
                   scAppApi                  : IScAppApi,
+                  scStuffApi                : IScStuffApi,
                   csrfTokenApi              : ICsrfTokenApi,
                   preferGeoApi              : Option[GeoLocApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
@@ -206,7 +207,7 @@ class Sc3Circuit(
         info = MInternalInfo(
           indexesRecents = MIndexesRecentOuter(
             searchCss = searchCssEmpty,
-            saved = Pot.empty[MIndexesRecent],
+            saved = Pot.empty[MScIndexes],
           ),
         ),
       ),
@@ -379,6 +380,7 @@ class Sc3Circuit(
     routerCtl             = routerState.routerCtl,
     scRespHandlers        = respHandlers,
     scRespActionHandlers  = respActionHandlers,
+    scStuffApi            = scStuffApi,
   )
 
   private val geoTabAh = new GeoTabAh(
@@ -736,7 +738,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.

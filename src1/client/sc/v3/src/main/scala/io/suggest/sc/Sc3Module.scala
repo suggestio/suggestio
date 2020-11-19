@@ -28,7 +28,7 @@ import io.suggest.sc.c.dia.ScNodesDiaAh
 import io.suggest.sc.m.{MScRoot, RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.u.Sc3LeafletOverrides
-import io.suggest.sc.u.api.{ScAppApiHttp, ScUniApi, ScUniApiHttpImpl}
+import io.suggest.sc.u.api.{IScStuffApi, IScUniApi, ScAppApiHttp, ScStuffApiHttp, ScUniApi, ScUniApiHttpImpl}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.dlapp._
@@ -51,6 +51,7 @@ import io.suggest.spa.{DoNothing, SioPages}
 import japgolly.scalajs.react.{Callback, React}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
 
 import scala.util.Try
@@ -184,17 +185,21 @@ class Sc3Module { outer =>
     import ScLoginFormModule.logOutDiaR
     wire[ScRootR]
   }
-  lazy val sc3UniApi = {
-    import ScHttpConfigImpl._
+  lazy val sc3UniApi: IScUniApi = {
+    import ScHttpConf._
     wire[ScUniApiHttpImpl]
   }
+  lazy val scStuffApi: IScStuffApi = {
+    import ScHttpConfCsrf._
+    wire[ScStuffApiHttp]
+  }
   lazy val csrfTokenApi = {
-    import ScHttpConfigImpl._
+    import ScHttpConf._
     wire[CsrfTokenApi]
   }
   lazy val scAppApiHttp = wire[ScAppApiHttp]
 
-  object ScHttpConfigImpl {
+  object ScHttpConf {
     /** Сборка HTTP-конфига для всей выдачи, без CSRF. */
     val mkRootHttpClientConfigF = { () =>
       val isCordova = sc3Circuit.platformRW.value.isCordova
@@ -243,13 +248,21 @@ class Sc3Module { outer =>
     }
   }
 
-  /** HTTP-конфигурация для самостоятельных под-форм выдачи. */
-  sealed trait ScHttpConfigImpl extends IMHttpClientConfig {
-    override def httpClientConfig = () => {
-      ( // Выставить CSRF-токен для всех под-форм, т.к. там почти все запросы требуют CSRF-токена:
-        (HttpClientConfig.csrfToken set sc3Circuit.csrfTokenRW.value.toOption)
-      )(ScHttpConfigImpl.mkRootHttpClientConfigF())
+  /** Активация поддержки CSRF для всех запросов. */
+  object ScHttpConfCsrf {
+    val httpClientConfig = () => {
+      val v0 = ScHttpConf.mkRootHttpClientConfigF()
+      val csrf2 = sc3Circuit.csrfTokenRW.value.toOption
+      // Выставить CSRF-токен для всех под-форм, т.к. там почти все запросы требуют CSRF-токена:
+      if (v0.csrfToken !=* csrf2)
+        (HttpClientConfig.csrfToken set csrf2)(v0)
+      else
+        v0
     }
+  }
+  /** HTTP-конфигурация для самостоятельных под-форм выдачи. */
+  sealed trait ScHttpConfCsrf extends IMHttpClientConfig {
+    override def httpClientConfig = ScHttpConfCsrf.httpClientConfig
   }
 
 
@@ -264,7 +277,7 @@ class Sc3Module { outer =>
     with ScPlatformComponents
   {
 
-    override val diConfig: LoginFormDiConfig = new LoginFormDiConfig with ScHttpConfigImpl {
+    override val diConfig: LoginFormDiConfig = new LoginFormDiConfig with ScHttpConfCsrf {
 
       override def onClose(): Option[Callback] = {
         val cb = Callback {
@@ -337,7 +350,7 @@ class Sc3Module { outer =>
     extends LkNodesModuleBase
     with ScPlatformComponents
   {
-    override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfigImpl {
+    override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfCsrf {
       override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit( sc3Circuit )
       override def scRouterCtlOpt = Some( outer.sc3SpaRouter.state.routerCtl )
       override def closeForm = Some( Callback( outer.sc3Circuit.dispatch( ScNodesShowHide(false) ) ) )
