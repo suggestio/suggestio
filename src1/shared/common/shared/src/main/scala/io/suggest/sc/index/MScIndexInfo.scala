@@ -2,6 +2,7 @@ package io.suggest.sc.index
 
 import io.suggest.spa.SioPages
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -29,6 +30,9 @@ object MScIndexInfo {
 
 
   @inline implicit def univEq: UnivEq[MScIndexInfo] = UnivEq.derive
+
+  def indexResp = GenLens[MScIndexInfo](_.indexResp)
+  def state = GenLens[MScIndexInfo](_.state)
 
 }
 

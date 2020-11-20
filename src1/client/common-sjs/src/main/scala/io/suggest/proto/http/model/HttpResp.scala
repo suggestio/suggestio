@@ -2,6 +2,8 @@ package io.suggest.proto.http.model
 
 import boopickle.Pickler
 import io.suggest.id.IdentConst
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.http.HttpConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -96,7 +98,7 @@ object IHttpRespHelper {
 }
 
 
-object HttpResp {
+object HttpResp extends Log {
 
   /** API для HttpResp и Future[HttpResp]. */
   implicit class HttpRespFutOpsExt[A](val a: A)(implicit ev: IHttpRespHelper[A]) {
@@ -198,9 +200,14 @@ object HttpResp {
       for {
         jsonText <- responseTextFut
       } yield {
-        Json
+        val r = Json
           .parse(jsonText)
-          .as[T]
+          .validate[T]
+
+        if (r.isError)
+          logger.error( ErrorMsgs.JSON_PARSE_ERROR, msg = r )
+
+        r.get
       }
     }
 

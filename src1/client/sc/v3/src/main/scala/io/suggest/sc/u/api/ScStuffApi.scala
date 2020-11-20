@@ -3,7 +3,7 @@ package io.suggest.sc.u.api
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReq, HttpReqData}
 import io.suggest.routes.routes
-import io.suggest.sc.index.{MScIndexInfo, MScIndexes}
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -21,7 +21,7 @@ trait IScStuffApi {
     * @param currNodes Перечисление текущих узлов.
     * @return Фьючерс со списком узлов из ответа.
     */
-  def fillNodesList( currNodes: MScIndexes ): Future[List[MScIndexInfo]]
+  def fillNodesList( currNodes: MScIndexes ): Future[List[MSc3IndexResp]]
 
 }
 
@@ -32,7 +32,8 @@ final class ScStuffApiHttp(
   extends IScStuffApi
 {
 
-  override def fillNodesList(currNodes: MScIndexes): Future[List[MScIndexInfo]] = {
+  override def fillNodesList(currNodes: MScIndexes): Future[List[MSc3IndexResp]] = {
+    // TODO indexes2 - надо почистить, оставив только id узлов, координаты и может что-то ещё.
     HttpClient
       .execute(
         HttpReq.routed(
@@ -48,7 +49,7 @@ final class ScStuffApiHttp(
         )
       )
       .resultFut
-      .unJson[List[MScIndexInfo]]
+      .unJson[List[MSc3IndexResp]]
   }
 
 }

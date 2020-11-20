@@ -247,6 +247,7 @@ class TailAh(
             .flatMap(_.state.nodeId)
             .zipWithIndex
             .toMap
+
           MScIndexes.indexes.modify { inxs =>
             inxs.sortBy { inx =>
               inx.state.nodeId
@@ -271,11 +272,28 @@ class TailAh(
               onComplete = Some {
                 Effect {
                   scStuffApi
-                    // TODO indexes2 - надо почистить, оставив только id узлов, координаты и может что-то ещё.
                     .fillNodesList( indexes2 )
                     .transform { tryRes =>
-                      val respRes = for (list <- tryRes) yield
-                        (MScIndexes.indexes set list)(indexes2)
+                      // Сконвертировать набор resp'ов к необходимому представлению рантаймового списка. Заменить обновлённые узлы:
+                      val respRes = for (resps2 <- tryRes) yield {
+                        val resps2Map = (for {
+                          r <- resps2.iterator
+                          nodeId <- r.nodeId
+                        } yield {
+                          nodeId -> r
+                        })
+                          .toMap
+
+                        MScIndexes.indexes.modify { inxs0 =>
+                          for {
+                            inx0 <- inxs0
+                            nodeId <- inx0.indexResp.nodeId
+                            resp2 <- resps2Map.get( nodeId )
+                          } yield {
+                            MScIndexInfo.indexResp.set( resp2 )(inx0)
+                          }
+                        }(indexes2)
+                      }
                       val a = m.copy(
                         clean = false,
                         pot = m.pot.withTry(respRes),
