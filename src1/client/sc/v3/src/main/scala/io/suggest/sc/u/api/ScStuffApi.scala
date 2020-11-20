@@ -42,7 +42,7 @@ final class ScStuffApiHttp(
             body = Json
               .toJson( currNodes )
               .toString(),
-            timeoutMs = Some( 10000 ),
+            timeoutMs = Some( 5000 ),
             config = httpClientConfig(),
           )
         )

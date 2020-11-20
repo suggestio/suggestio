@@ -405,9 +405,19 @@ final class StatUtil @Inject()(
         LOGGER.trace(s"$msg saved to mstat[$merrId]." )
       }
     } else {
-      LOGGER.info(s"$msg not saving, logging:\n${stat2.mstat.toString}${if (logTail.nonEmpty) "\n" else ""}$logTail")
+      dontSaveStat(
+        stat2     = stat2,
+        prefix    = s"$msg not saving, logging:\n",
+        logTail   = logTail,
+      )
       Future.successful(())
     }
+  }
+
+  /** Рендер статистики только в лог. */
+  def dontSaveStat(stat2: Stat2, prefix: String = "", logTail: => String = ""): Unit = {
+    val _logTail: String = logTail
+    LOGGER.info(s"$prefix${stat2.mstat.toString}${if (_logTail.nonEmpty) "\n" else ""}${_logTail}")
   }
 
 

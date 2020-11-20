@@ -60,7 +60,6 @@ final class Static @Inject() (
   private lazy val corsUtil = injector.instanceOf[CorsUtil]
   private lazy val siteMapUtil = injector.instanceOf[SiteMapUtil]
   private lazy val isAuth = injector.instanceOf[IsAuth]
-  private lazy val bruteForceProtect = injector.instanceOf[BruteForceProtect]
   private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
   private lazy val statUtil = injector.instanceOf[StatUtil]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
@@ -190,56 +189,56 @@ final class Static @Inject() (
       }
 
     } else {
-      bruteForceProtect {
-        maybeAuth().async( _cspJsonBp ) { implicit request =>
-          // Залить ошибку в MStat.
-          val requestBodyStr = request.body.toString()
-          request.body.validate( cspUtil.WRAP_REPORT_READS ).fold(
-            // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
-            {violations =>
-              val msg = s"Invalid JSON: ${violations.mkString(", ")}"
-              LOGGER.warn(s"$logPrefix $msg\n---------\n${Json.prettyPrint(request.body)}")
-              errorHandler.onClientError(request, BAD_REQUEST, msg)
-            },
+      // bruteForceProtect нельзя. CSP часто сыпляться пачками, и это приведёт к блэклистингу кучи вызовов API к IP.
+      maybeAuth().async( _cspJsonBp ) { implicit request =>
+        // Залить ошибку в MStat.
+        val requestBodyStr = request.body.toString()
+        request.body.validate( cspUtil.WRAP_REPORT_READS ).fold(
+          // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
+          {violations =>
+            val msg = s"Invalid JSON: ${violations.mkString(", ")}"
+            LOGGER.warn(s"$logPrefix $msg\n---------\n${Json.prettyPrint(request.body)}")
+            errorHandler.onClientError(request, BAD_REQUEST, msg)
+          },
 
-            // Всё ок распарсилось.
-            {cspViol =>
-              // Сам результат парсинга не особо важен, это скорее контроль контента.
-              val userSaOptFut = statUtil.userSaOptFutFromRequest()
-              val _ctx = implicitly[Context]
+          // Всё ок распарсилось.
+          {cspViol =>
+            // Сам результат парсинга не особо важен, это скорее контроль контента.
+            val userSaOptFut = statUtil.userSaOptFutFromRequest()
+            val _ctx = implicitly[Context]
 
-              for {
-                _userSaOpt <- userSaOptFut
+            for {
+              _userSaOpt <- userSaOptFut
 
-                stat2 = new statUtil.Stat2 {
-                  override def logMsg = Some("CSP-report")
-                  override def ctx = _ctx
-                  override def uri = Some( cspViol.documentUri )
-                  override def components = {
-                    MComponents.CSP :: MComponents.Error :: super.components
-                  }
-                  override def statActions = Nil
-                  override def userSaOpt = _userSaOpt
-
-                  override def diag = {
-                    if (statUtil.SAVE_GARBAGE_TO_MSTAT)
-                      MDiag(
-                        message = Some( requestBodyStr )
-                      )
-                    else
-                      MDiag.empty
-                  }
+              stat2 = new statUtil.Stat2 {
+                override def logMsg = Some("CSP-report")
+                override def ctx = _ctx
+                override def uri = Some( cspViol.documentUri )
+                override def components = {
+                  MComponents.CSP :: MComponents.Error :: super.components
                 }
+                override def statActions = Nil
+                override def userSaOpt = _userSaOpt
 
-                r <- statUtil.maybeSaveGarbageStat( stat2, logTail = Json.prettyPrint(request.body) )
-
-              } yield {
-                LOGGER.trace(s"$logPrefix Saved csp-report -> $r")
-                NoContent
+                override def diag = {
+                  if (statUtil.SAVE_GARBAGE_TO_MSTAT)
+                    MDiag(
+                      message = Some( requestBodyStr )
+                    )
+                  else
+                    MDiag.empty
+                }
               }
+
+              // Принудительно НЕ сохраняем статистику, т.к. это требует системы фильтрации и дедубликации мегатонн статистики.
+              //r <- statUtil.maybeSaveGarbageStat( stat2, logTail =  )
+              r = statUtil.dontSaveStat( stat2, logTail = Json.prettyPrint(request.body) )
+            } yield {
+              LOGGER.trace(s"$logPrefix Done: CSP-report#$r from ${stat2.remoteAddr.remoteAddr}" )
+              NoContent
             }
-          )
-        }
+          }
+        )
       }
     }
   }

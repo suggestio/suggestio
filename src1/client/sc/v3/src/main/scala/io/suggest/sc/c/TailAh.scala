@@ -235,6 +235,7 @@ class TailAh(
         indexes2 <- m.pot.toOption
       } yield {
         // Если !clean, и пришли с сервера прочищенные результаты, то надо восстановить исходную сортировку: сервер возвращает несортированный chunked-ответ.
+        // TODO Надо учитывать, что за время запроса могут появиться новые элементы в списке на клиенте. И нужно отрабатывать все три списка (текущий, запрошенный и полученный).
         val pot2 = (for {
           indexesOuter0 <- outerLens.get( v0 ).saved
           indexes0 = indexesOuter0.indexes
@@ -270,6 +271,7 @@ class TailAh(
               onComplete = Some {
                 Effect {
                   scStuffApi
+                    // TODO indexes2 - надо почистить, оставив только id узлов, координаты и может что-то ещё.
                     .fillNodesList( indexes2 )
                     .transform { tryRes =>
                       val respRes = for (list <- tryRes) yield
