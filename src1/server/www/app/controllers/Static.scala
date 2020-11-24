@@ -234,7 +234,7 @@ final class Static @Inject() (
               //r <- statUtil.maybeSaveGarbageStat( stat2, logTail =  )
               r = statUtil.dontSaveStat( stat2, logTail = Json.prettyPrint(request.body) )
             } yield {
-              LOGGER.trace(s"$logPrefix Done: CSP-report#$r from ${stat2.remoteAddr.remoteAddr}" )
+              LOGGER.trace( s"$logPrefix Done: CSP-report#$r from ${stat2.remoteAddr.remoteAddr}" )
               NoContent
             }
           }

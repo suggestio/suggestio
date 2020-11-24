@@ -41,13 +41,13 @@ trait ResizableProps extends js.Object {
   val maxConstraints: js.UndefOr[js.Array[Double]] = js.undefined
 
   // (e: SyntheticEvent, data: ResizeCallbackData) => any,
-  val onResizeStop: js.UndefOr[js.Function2[ReactEvent, ResizeCallbackData, _]] = js.undefined
+  val onResizeStop: js.UndefOr[ResizableProps.Cb] = js.undefined
 
   // (e: SyntheticEvent, data: ResizeCallbackData) => any,
-  val onResizeStart: js.UndefOr[js.Function2[ReactEvent, ResizeCallbackData, _]] = js.undefined
+  val onResizeStart: js.UndefOr[ResizableProps.Cb] = js.undefined
 
   // (e: SyntheticEvent, data: ResizeCallbackData) => any,
-  val onResize: js.UndefOr[js.Function2[ReactEvent, ResizeCallbackData, _]] = js.undefined
+  val onResize: js.UndefOr[ResizableProps.Cb] = js.undefined
 
   val draggableOpts: js.UndefOr[js.Object] = js.undefined
 
@@ -61,6 +61,8 @@ trait ResizableBoxProps extends ResizableProps {
 }
 
 object ResizableProps {
+
+  type Cb = js.Function2[ReactEvent, ResizeCallbackData, _]
 
   type Axis <: String
   object Axis {

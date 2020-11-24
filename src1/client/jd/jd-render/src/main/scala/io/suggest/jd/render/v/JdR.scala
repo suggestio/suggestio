@@ -32,9 +32,9 @@ final class JdR(
     /** Реализация контента. */
     final class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends QdContentBase {
 
-      override def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
+      override def _qdContentRrrHtml(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
         qdRrrHtml
-          .NormalRrr( p )
+          .QdRrr( qdRrrHtml.RenderOnly, propsProxy )
           .render()
       }
 
@@ -47,8 +47,8 @@ final class JdR(
       }
 
       /** Фасад для рендера. */
-      def render(state: MJdRrrProps): VdomElement =
-        _doRender(state)
+      def render( propsProxy: ModelProxy[MJdRrrProps] ): VdomElement =
+        _doRender( propsProxy )
 
     }
     /** Сборка react-компонента. def - т.к. в редакторе может не использоваться. */

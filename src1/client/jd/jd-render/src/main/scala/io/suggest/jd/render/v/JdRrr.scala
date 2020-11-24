@@ -80,9 +80,10 @@ final class JdRrr(
 
     trait QdContentBase {
 
-      def _qdContentRrrHtml(p: MJdRrrProps): VdomElement
+      def _qdContentRrrHtml(p: ModelProxy[MJdRrrProps]): VdomElement
 
-      def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Element] = {
+      def _renderQdContentTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Element] = {
+        val state = propsProxy.value
         import state.jdArgs.jdRuntime.jdCss
 
         val qdTag = state.subTree.rootLabel
@@ -92,7 +93,7 @@ final class JdRrr(
           _bgColorOpt( qdTag, state.jdArgs ),
 
           // Рендер qd-контента в html.
-          _qdContentRrrHtml( state ),
+          _qdContentRrrHtml( propsProxy ),
         )
 
         // Поддержка абсолютного позиционирования внутри контейнера:
@@ -137,9 +138,10 @@ final class JdRrr(
         <.div( contTagModsAcc : _* )
       }
 
-      def _doRender(state: MJdRrrProps): TagOf[html.Element] = {
+      def _doRender(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Element] = {
         // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
-        val tag0 = _renderQdContentTag(state)
+        val tag0 = _renderQdContentTag( propsProxy )
+        val state = propsProxy.value
 
         if (
           state.parents

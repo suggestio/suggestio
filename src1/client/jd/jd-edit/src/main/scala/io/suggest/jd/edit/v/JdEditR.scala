@@ -15,19 +15,22 @@ import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.{JdCssStatic, JdRrr, MQdEmbedProps, QdRrrHtml}
 import io.suggest.jd.tags._
 import io.suggest.lk.r.img.LkImgUtilJs
-import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.n2.edge.{MEdgeDataJs, MPredicates}
 import io.suggest.pick.MimeConst
 import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.{TagMod, TagOf}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.html
+import org.scalajs.dom.html.{Element, Image}
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
@@ -142,189 +145,310 @@ final class JdEditR(
 
 
   /** Какие ручки ресайза отображать для текущего контента? */
-  private def _qdResizeHandlers(widthPx: Int, heightPx: Int, jdConf: MJdConf): js.Array[ResizableProps.Handle] = {
+  private def _qdResizeHandlers(wh: MSize2di, jdConf: MJdConf): js.Array[ResizableProps.Handle] = {
     import com.github.strml.react.resizable.ResizableProps.Handle._
     var acc = SE :: Nil
     val limitPx = 60
-    if ( jdConf.szMultF(widthPx) > limitPx) acc ::= S
-    if ( jdConf.szMultF(heightPx) > limitPx) acc ::= E
+    if ( jdConf.szMultF(wh.width) > limitPx) acc ::= S
+    if ( jdConf.szMultF(wh.height) > limitPx) acc ::= E
     acc.toJSArray
+  }
+
+
+  /** Qd-рендерер для редактора. */
+  object QdRrrEdit extends qdRrrHtml.QdRrrBase {
+
+    /** В редакторе href будет приводить к ненужным переходам. */
+    override def _hrefAttr = ^.title
+
+    // event.preventDefault нужен в callback'ах, чтобы избежать конфликтов с react-dnd из-за наступления drag.
+    private lazy val _onEmbedResizeStartCbF = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, _: ResizeCallbackData) =>
+      e.preventDefaultCB
+    }
+
+    /** Сборка ResizeBoxProps для ресайзинкка внутри QD-контента (картинки, фреймы, и т.д.) */
+    def _rszBoxProps( wh: MSize2di, lockAspect: Boolean, jdConf: MJdConf, onResizeF: ResizableProps.Cb ): ResizableBoxProps = {
+      new ResizableBoxProps {
+        override val width            = wh.width.toDouble
+        override val height           = wh.height.toDouble
+        override val onResize         = onResizeF
+        override val onResizeStart    = _onEmbedResizeStartCbF
+        override val lockAspectRatio  = lockAspect
+        override val onResizeStop     = onResizeF
+        override val transformScale   = jdConf.szMult.toDouble
+        override val resizeHandles    = _qdResizeHandlers( wh, jdConf )
+        override val className        = Css.Display.INLINE_BLOCK
+      }
+    }
+
+
+    private def _embedWh(embedProps: MQdEmbedProps, whDefault: => MSize2di): MSize2di = {
+      lazy val whDflt: MSize2di = whDefault
+
+      // для react-resizable нужна высота и длина одновременно, хотя у нас обычно картинки БЕЗ заданной высоты для пропорционального масштабирования.
+      // Поэтому, нужно довычислить высоту, когда её не хватает.
+      val embedWh = embedProps.jdCss.EmbedWh( embedProps.jdtQdOp.jdTagId )
+
+      MSize2di(
+        width = embedWh.widthPx getOrElse whDflt.width,
+        height = embedWh.heightPx getOrElse whDflt.height,
+      )
+    }
+
+
+    /** Backend компонента, рендерящего картинку в рамках одной qd op. */
+    final class ImgInner($: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps]) extends ImgBackendBase {
+
+      override def imgMods(embedPropsProxy: ModelProxy[MQdEmbedProps], imgTag: TagOf[Image]): TagOf[Image] = {
+        imgTag(
+          // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
+          ^.draggable := false,
+          // В редакторе следует рендерить img-теги, подслушивая у них wh:
+          _notifyImgWhOnEdit( $, embedPropsProxy.value.edge ),
+        )
+      }
+
+      override def imgPostProcess(embedPropsProxy: ModelProxy[MQdEmbedProps],
+                                  embedStyleOpt: Option[StyleA],
+                                  imgEl: TagOf[Element]): VdomElement = {
+        <.div(
+          ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
+          imgEl,
+          // Макса поверх картинки, чтобы гарантировано подавить перетаскивание картинки:
+          <.div(
+            embedStyleOpt.whenDefined,
+            ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
+          )
+        )
+      }
+
+    }
+    /** Компонент рендера содержимого одной картинки на основе qd op. */
+    val ImgInner = ScalaComponent
+      .builder[ModelProxy[MQdEmbedProps]]( classOf[ImgInner].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[ImgInner]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MQdEmbedProps.Feq ) )
+      .build
+
+
+    /** FastEq, сверюющий isCurrentlySelected в добавок к стандартному EmbedProps.Feq */
+    val qdEmbedPropsSelectedFeq = FastEqUtil[MQdEmbedProps] { (a, b) =>
+      MQdEmbedProps.Feq.eqv( a, b ) &&
+      (a.rrrProps.isCurrentSelected ==* b.rrrProps.isCurrentSelected)
+    }
+
+
+    /** Компоненты для ресайзера qd-картинок и qd-фреймов шарят тут общий код. */
+    trait EmbedResizeBackendBase {
+
+      val $: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps]
+
+      /** JS-Callback-функции для ресайза. */
+      // TODO Надо затолкать это всё внутрь компонентов QdRrrHtml.Image и Frame.
+      lazy val _onEmbedResizeCbF: ResizableProps.Cb = {
+        ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
+          var cb = e.preventDefaultCB
+
+          if (rszCbData.size.width > 0) {
+            cb = cb >> ($.state >>= { embedProps: MQdEmbedProps =>
+              // Сохранять высоту только для фреймов. Для картинок - сохранять не надо.
+              val isSaveHeight = embedProps.edge.jdEdge.predicate match {
+                case MPredicates.JdContent.Image => false
+                case MPredicates.JdContent.Frame => true
+                // should never happen
+                case other =>
+                  logger.error( ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, msg = (other, embedProps.jdtQdOp.jdTag, ResizableBox) )
+                  false
+              }
+              val wh = rszCbData.size
+              ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
+                widthPx  = wh.width.toInt,
+                qdOp     = embedProps.jdtQdOp.qdOp,
+                edgeUid  = embedProps.edge.jdEdge.edgeDoc.id.get,
+                heightPx = Option.when(isSaveHeight && wh.height > 0)(wh.height.toInt),
+              ))
+            })
+          }
+
+          cb
+        }
+      }
+
+    }
+
+
+    /** Backend компонента рендера qd-картинки с поддержкой ресайза. */
+    final class ImgResizable(
+                               override val $: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps],
+                             )
+      extends EmbedResizeBackendBase
+    {
+
+      def render( embedProps: MQdEmbedProps, children: PropsChildren ): VdomNode = {
+        // Поддержка ресайза картинки/видео.
+        (for {
+          _               <- Option.when( embedProps.rrrProps.isCurrentSelected )(null)
+          origWh          <- embedProps.edge.origWh
+          attrsEmbed      <- embedProps.jdtQdOp.qdOp.attrsEmbed
+        } yield {
+          // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
+          // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
+          def __getPosValue( optU: Option[ISetUnset[Int]] ) =
+            optU
+              .flatMap(_.toOption)
+              .filter(_ > 0)
+
+          val displayWidthPxOpt = __getPosValue( attrsEmbed.width )
+
+          // Вычислить отображаемую высоту картинки.
+          // Нередко, высота картинки неизвестна/не задана. Но react-resizable требует точное значение, иначе exception или деформированная картинка.
+          val displayHeightPxOpt = __getPosValue( attrsEmbed.height )
+            .orElse {
+              // Попытаться определить отображаемую высоту на основе данных из origWh:
+              displayWidthPxOpt
+                .map { displayWidthPx =>
+                  (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
+                }
+                .filter(_ > 0)
+            }
+
+          ResizableBox.component {
+            _rszBoxProps(
+              wh = _embedWh(
+                embedProps,
+                whDefault = {
+                  // Нужно пронормировать оригинальный размер картинки в текущий размер.
+                  (for {
+                    displayWidthPx <- displayWidthPxOpt
+                    maskHeightPx <- displayHeightPxOpt
+                  } yield {
+                    MSize2di(
+                      width  = displayWidthPx,
+                      height = maskHeightPx,
+                    )
+                  })
+                    .getOrElse( origWh )
+                },
+              ),
+              lockAspect = true,
+              onResizeF = _onEmbedResizeCbF,
+              jdConf = embedProps.rrrProps.jdArgs.conf,
+            )
+          } (
+            <.div(
+              children,
+            )
+          ): VdomElement
+        })
+          .getOrElse[VdomNode]( children )
+      }
+
+    }
+    val ImgResizable = ScalaComponent
+      .builder[ModelProxy[MQdEmbedProps]]( classOf[ImgResizable].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackendWithChildren[ImgResizable]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(qdEmbedPropsSelectedFeq) )
+      .build
+    override def renderImg(embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int): VdomElement = {
+      ImgResizable.withKey(i)( embedPropsProxy )(
+        ImgInner( embedPropsProxy ),
+      )
+    }
+
+
+    /** Рендер qd-фрейма в редакторе. */
+    final class FrameInner($: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps] ) extends FrameBackendBase {
+
+      override def iframeMods( embedPropsProxy: ModelProxy[MQdEmbedProps], iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement = {
+        // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
+        var outerAcc = List.empty[TagMod]
+        outerAcc ::= <.div(
+          ^.key := "z",
+          ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
+          whStyl,
+          ^.style := js.Object(),
+        )
+        outerAcc =
+          (^.key := "c") ::
+            (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
+            iframe ::
+            outerAcc
+        <.div( outerAcc: _* )
+      }
+
+    }
+    val FrameInner = ScalaComponent
+      .builder[ModelProxy[MQdEmbedProps]]( classOf[FrameInner].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[FrameInner]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MQdEmbedProps.Feq ) )
+      .build
+
+    final class FrameResizable (
+                                 override val $: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps],
+                               )
+      extends EmbedResizeBackendBase
+    {
+
+      def render( embedProps: MQdEmbedProps, children: PropsChildren ): VdomNode = {
+        // TODO При переключении isCurrentSelected происходит мерцание фрейма. Некрасиво и тормозно. Надо как-то скрывать ResizableBox без перемонтирования поддерева Frame.
+        if (embedProps.rrrProps.isCurrentSelected) {
+          ResizableBox.component {
+            _rszBoxProps(
+              wh = _embedWh(
+                embedProps = embedProps,
+                whDefault  = HtmlConstants.Iframes.whCsspxDflt,
+              ),
+              lockAspect  = false,
+              onResizeF   = _onEmbedResizeCbF,
+              jdConf      = embedProps.rrrProps.jdArgs.conf,
+            )
+          } (
+            <.div(
+              children,
+            ),
+          )
+        } else {
+          children
+        }
+      }
+
+    }
+    val FrameResizable = ScalaComponent
+      .builder[ModelProxy[MQdEmbedProps]]( classOf[FrameResizable].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackendWithChildren[FrameResizable]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(qdEmbedPropsSelectedFeq) )
+      .build
+
+    override def renderFrame(embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int): VdomElement = {
+      FrameResizable.withKey(i)( embedPropsProxy )(
+        FrameInner( embedPropsProxy ),
+      )
+    }
+
   }
 
 
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   object JdRrrEdit extends jdRrr.Base {
 
-    class QdContentB( $: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps] ) extends QdContentBase {
+    class QdContentInner($: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps] ) extends QdContentBase {
 
-      /** Рендерер Qd-контента под нужды редактора. */
-      final class QdEditRenderer(override val rrrProps: MJdRrrProps) extends qdRrrHtml.RrrBase {
-
-        /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
-        override def _hrefAttr: VdomAttr[String] =
-          ^.title
-
-        /** Сборка ResizeBoxProps для ресайзинкка внутри QD-контента (картинки, фреймы, и т.д.) */
-        def _rszBoxProps( embedProps: MQdEmbedProps,
-                          lockAspect: Boolean, saveHeight: Boolean, whDefault: => MSize2di ): ResizableBoxProps = {
-          // event.preventDefault нужен в callback'ах, чтобы избежать конфликтов с react-dnd из-за наступления drag.
-          val embedWh = rrrProps.jdArgs.jdRuntime.jdCss.EmbedWh( embedProps.jdtQdOp.jdTagId )
-          val reaction = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
-            var cb = e.preventDefaultCB
-            if (rszCbData.size.width > 0) {
-              cb = cb >> {
-                val wh = rszCbData.size
-                ReactDiodeUtil.dispatchOnProxyScopeCB( $, QdEmbedResize(
-                  wh.width.toInt,
-                  embedProps.jdtQdOp.qdOp,
-                  edgeUid = embedProps.edge.jdEdge.edgeDoc.id.get,
-                  heightPx = Option.when(saveHeight && wh.height > 0)(wh.height.toInt),
-                ))
-              }
-            }
-            cb
-          }
-          lazy val whDflt: MSize2di = whDefault
-
-          // для react-resizable нужна высота и длина одновременно, хотя у нас обычно картинки БЕЗ заданной высоты для пропорционального масштабирования.
-          // Поэтому, нужно довычислить высоту, когда её не хватает.
-          val _widthPx = embedWh.widthPx getOrElse whDflt.width
-          val _heightPx = embedWh.heightPx getOrElse whDflt.height
-          new ResizableBoxProps {
-            override val width = _widthPx.toDouble
-            override val height = _heightPx.toDouble
-            override val onResize = reaction
-            override val onResizeStart = js.defined {
-              ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
-                e.preventDefaultCB
-              }
-            }
-            override val lockAspectRatio = lockAspect
-            override val onResizeStop = reaction
-            override val transformScale = rrrProps.jdArgs.conf.szMult.toDouble
-            override val resizeHandles = _qdResizeHandlers( _widthPx, _heightPx, rrrProps.jdArgs.conf )
-            override val className = Css.Display.INLINE_BLOCK
-          }
-        }
-
-        override def imgMods(embedProps: MQdEmbedProps, imgTag: TagOf[html.Image]): TagOf[html.Image] = {
-          imgTag(
-            // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
-            ^.draggable := false,
-            // В редакторе следует рендерить img-теги, подслушивая у них wh:
-            _notifyImgWhOnEdit( $, embedProps.edge ),
-          )
-        }
-
-        override def imgPostProcess(embedProps: MQdEmbedProps,
-                                    embedStyleOpt: Option[StyleA],
-                                    imgEl: TagOf[html.Element],
-                                   ): VdomElement = {
-          <.div(
-            ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
-            imgEl,
-            // Макса поверх картинки, чтобы гарантировано подавить перетаскивание картинки:
-            <.div(
-              embedStyleOpt.whenDefined,
-              ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
-            )
-          )
-        }
-
-        override def renderImg(embedProps: MQdEmbedProps, i: Int): VdomElement = {
-          // Поддержка горизонтального ресайза картинки/видео.
-          (for {
-            _               <- Option.when( rrrProps.isCurrentSelected )(null)
-            origWh          <- embedProps.edge.origWh
-            attrsEmbed      <- embedProps.jdtQdOp.qdOp.attrsEmbed
-          } yield {
-            // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
-            // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
-            def __getPosValue( optU: Option[ISetUnset[Int]] ) =
-              optU
-                .flatMap(_.toOption)
-                .filter(_ > 0)
-
-            val displayWidthPxOpt = __getPosValue( attrsEmbed.width )
-
-            // Вычислить отображаемую высоту картинки.
-            // Нередко, высота картинки неизвестна/не задана. Но react-resizable требует точное значение, иначе exception или деформированная картинка.
-            val displayHeightPxOpt = __getPosValue( attrsEmbed.height )
-              .orElse {
-                // Попытаться определить отображаемую высоту на основе данных из origWh:
-                displayWidthPxOpt
-                  .map { displayWidthPx =>
-                    (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
-                  }
-                  .filter(_ > 0)
-              }
-
-            ResizableBox.component.withKey(i) {
-              _rszBoxProps( embedProps, lockAspect = true, saveHeight = false, whDefault = {
-                // Нужно пронормировать оригинальный размер картинки в текущий размер.
-                (for {
-                  displayWidthPx <- displayWidthPxOpt
-                  maskHeightPx <- displayHeightPxOpt
-                } yield {
-                  MSize2di(
-                    width  = displayWidthPx,
-                    height = maskHeightPx,
-                  )
-                })
-                  .getOrElse( origWh )
-              })
-            } (
-              <.div(
-                Img( embedProps )
-              )
-            ): VdomElement
-          })
-            .getOrElse( super.renderImg(embedProps, i) )
-        }
-
-        override def iframeMods( embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement = {
-          // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
-          var outerAcc = List.empty[TagMod]
-          outerAcc ::= <.div(
-            ^.key := "z",
-            ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
-            whStyl,
-            ^.style := js.Object(),
-          )
-          outerAcc =
-            (^.key := "c") ::
-              (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
-              iframe ::
-              outerAcc
-          <.div( outerAcc: _* )
-        }
-
-        override def renderFrame(embedProps: MQdEmbedProps, i: Int): VdomElement = {
-          if (rrrProps.isCurrentSelected) {
-            ResizableBox.component.withKey(i) {
-              _rszBoxProps( embedProps, lockAspect = false, saveHeight = true, whDefault = HtmlConstants.Iframes.whCsspxDflt )
-            } (
-              <.div(
-                Frame( embedProps ),
-              ),
-            )
-          } else {
-            super.renderFrame( embedProps, i )
-          }
-        }
-
-      }
-
-      override def _qdContentRrrHtml(p: MJdRrrProps): VdomElement = {
-        new QdEditRenderer( p )
+      override def _qdContentRrrHtml(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
+        qdRrrHtml
+          .QdRrr( QdRrrEdit, propsProxy )
           .render()
       }
 
-      override def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Element] = {
+      override def _renderQdContentTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Element] = {
+        val state = propsProxy.value
         val qdTag = state.subTree.rootLabel
 
         // Нельзя withRef() для этого внешнего тега, т.к. другой measure-ref выставляется внутри super._renderQdContentTag().
-        super._renderQdContentTag(state)(
+        super._renderQdContentTag( propsProxy )(
           _maybeSelected(qdTag, state.jdArgs),
           _selectableOnClick( $ )( _.p.value ),
 
@@ -352,21 +476,14 @@ final class JdEditR(
         }
       }
 
-      def render(props: MRrrEdit with MRrrEditCollectDrag, state: MJdRrrProps): VdomElement = {
-        val rendered: VdomElement =
-          _doRender( state )
+      def render(props: MRrrEdit with MRrrEditCollectDrag/*, state: MJdRrrProps*/): VdomElement = {
+        var rendered: VdomElement =
+          _doRender( props.p )
             .withOptionalRef( props.refOpt )
 
-        // TODO Подцепить ReactResizable для Qd-контента.
-        /*if (
-          (state.subTree.rootLabel.name ==* MJdTagNames.QD_CONTENT) &&
-          state.isCurrentSelected
-        ) {
-          rendered = ResizableBox(  )
-        }*/
+        rendered = props.dragF.applyVdomEl( rendered )
 
-        props.dragF
-          .applyVdomEl( rendered )
+        rendered
       }
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
@@ -388,16 +505,16 @@ final class JdEditR(
     }
 
     // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
-    private val qdContentInnerC = ScalaComponent
-      .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContentB].getSimpleName )
+    private val QdContentInner = ScalaComponent
+      .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContentInner].getSimpleName )
       .initialStateFromProps( rrrEdit2mproxyValueF )
-      .renderBackend[QdContentB]
+      .renderBackend[QdContentInner]
       .configure( ReactDiodeUtil.p2sShouldComponentUpdate(rrrEdit2mproxyValueF)(MJdRrrProps.MJdRrrPropsFastEq) )
       .build
       .toJsComponent
       .raw
 
-    class QdContentDndB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
+    class QdContentDnd($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
       // import, иначе будет рантаймовая ошибка валидации DragSourceSpec (лишние поля json-класса)
       import MimeConst.Sio.{DataContentTypes => DCT}
 
@@ -422,7 +539,7 @@ final class JdEditR(
           MJsDropInfo( DCT.CONTENT_ELEMENT, xyOff )
       }
 
-      val contentDndComp = DragSource[MRrrEdit, MRrrEditCollectDrag, MJsDropInfo, Children.None](
+      val contentDnd = DragSource[MRrrEdit, MRrrEditCollectDrag, MJsDropInfo, Children.None](
         itemType = DCT.CONTENT_ELEMENT,
         spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrag, MJsDropInfo] {
           override val beginDrag = _qdBeginDragF
@@ -435,26 +552,26 @@ final class JdEditR(
           }
         }
       )(
-        qdContentInnerC
+        QdContentInner
       )
         .cmapCtorProps( _mkRrrPropsCmapF( Some(contentRef) ) )
 
       def render(props: ModelProxy[MJdRrrProps]): VdomElement =
-        contentDndComp(props)
+        contentDnd(props)
     }
-    val qdContentDndComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentDndB].getSimpleName )
+    val QdContentDnd = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentDnd].getSimpleName )
       .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .renderBackend[QdContentDndB]
+      .renderBackend[QdContentDnd]
       .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
       .build
     override def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      qdContentDndComp.withKey(key)(props)
+      QdContentDnd.withKey(key)(props)
 
 
     // -------------------------------------------------------------------------------------------------
 
-    class BlockB( $: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps] ) extends BlockBase {
+    class BlockInner($: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps] ) extends BlockBase {
 
       override def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         TagMod(
@@ -499,10 +616,10 @@ final class JdEditR(
 
     }
     /** Scala-компонент-обёртка для простого рендера одного блока: */
-    private val blockDndInnerCompJsRaw = ScalaComponent
-      .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockB].getSimpleName )
+    private val BlockInnerJsRaw = ScalaComponent
+      .builder[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag]( classOf[BlockInner].getSimpleName )
       .initialStateFromProps( rrrEdit2mproxyValueF )
-      .renderBackend[BlockB]
+      .renderBackend[BlockInner]
       .configure( ReactDiodeUtil.p2sShouldComponentUpdate( rrrEdit2mproxyValueF.compose[MRrrEdit with MRrrEditCollectDrop with MRrrEditCollectDrag](identity) )(MJdRrrProps.MJdRrrPropsFastEq) )
       .build
       .toJsComponent
@@ -510,7 +627,7 @@ final class JdEditR(
 
 
     /** Компонент блока с поддержкой drag-n-drop. */
-    private val blockDndC = {
+    private val BlockDndRendered = {
       import MimeConst.Sio.{DataContentTypes => DCT}
 
       /** Инстанс функции canDrag() для BlockDndB. */
@@ -596,7 +713,7 @@ final class JdEditR(
             }
           },
         )(
-          blockDndInnerCompJsRaw
+          BlockInnerJsRaw
         )
           .toJsComponent
           .raw
@@ -604,22 +721,22 @@ final class JdEditR(
         .cmapCtorProps( _mkRrrPropsCmapF() )
     }
 
-    // Компонент-обёртка над blockDndC, чтобы подавлять пере-рендеры на уровне блоков.
-    private val blockDndCompWrap = ScalaComponent
+    // Компонент-обёртка над BlockDnd, чтобы подавлять пере-рендеры на уровне блоков.
+    private val BlockDnd = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( "BlockDnd" )
       .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .render_P( blockDndC.apply )
+      .render_P( BlockDndRendered.apply )
       .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
       .build
 
     override def mkBlock(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      blockDndCompWrap.withKey(key)(props)
+      BlockDnd.withKey(key)(props)
 
 
     // -------------------------------------------------------------------------------------------------
 
     /** Сборка документа под редактор. */
-    class DocumentB( $: BackendScope[MRrrEdit with MRrrEditCollectDrop, Unit] ) extends DocumentBase {
+    class DocumentInner( $: BackendScope[MRrrEdit with MRrrEditCollectDrop, Unit] ) extends DocumentBase {
 
       // Т.к. react-dnd присылает null вместо компонента, то узнать относительные координаты
       // в момент перетаскивания получается невозможно.
@@ -636,14 +753,14 @@ final class JdEditR(
     }
 
     // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
-    private val documentInnerC = ScalaComponent
-      .builder [MRrrEdit with MRrrEditCollectDrop] ( classOf[DocumentB].getSimpleName )
-      .renderBackend[DocumentB]
+    private val DocumentInner = ScalaComponent
+      .builder [MRrrEdit with MRrrEditCollectDrop] ( classOf[DocumentInner].getSimpleName )
+      .renderBackend[DocumentInner]
       .build
       .toJsComponent
       .raw
 
-    class DocumentDndB($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+    class DocumentDnd( $: BackendScope[ModelProxy[MJdRrrProps], Unit] ) {
       // Для получения относительных координат, используем дополнительный ref.
       private val docRef = Ref[html.Element]
 
@@ -697,7 +814,7 @@ final class JdEditR(
           }
         },
       )(
-        documentInnerC
+        DocumentInner
       )
         .cmapCtorProps( _mkRrrPropsCmapF( Some(docRef) ) )
 
@@ -707,12 +824,12 @@ final class JdEditR(
 
     /** Document+Dnd - Компонент, который вызывается из формы редактора. Нет componentShouldUpdate(),
       * т.к. это проверяется на уровне внешнего connect(). */
-    val documentDndComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[DocumentDndB].getSimpleName )
-      .renderBackend[DocumentDndB]
+    val DocumentDnd = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[DocumentDnd].getSimpleName )
+      .renderBackend[DocumentDnd]
       .build
     override def mkDocument(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      documentDndComp.withKey(key)(props)
+      DocumentDnd.withKey(key)(props)
 
 
     /** Требуется подготовка RenderArgs, т.к. поля в модели постоянно изменяются. */

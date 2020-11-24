@@ -1,5 +1,6 @@
 package io.suggest.jd.render.v
 
+import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -13,6 +14,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.log.Log
 import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.ReactDiodeUtil.Implicits.ModelProxyExt
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -48,42 +50,47 @@ class QdRrrHtml(
   extends Log
 {
 
-  trait RrrBaseStatic {
+  trait QdRrrBase {
 
-    val rrrProps: MJdRrrProps
+    /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
+    def _hrefAttr: Attr[String]
 
-    /** Сборка доп.модификаций для картинки. */
-    def imgMods(embedProps: MQdEmbedProps, imgTag: TagOf[html.Image]): TagOf[html.Image]
+    /** Заготовка для компонента Img backend. */
+    trait ImgBackendBase {
 
-    /** Пост-обработка рендера картинки. imgEl скорее всего НЕ-img-тег. */
-    def imgPostProcess(props: MQdEmbedProps, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): VdomElement
+      /** Сборка доп.модификаций для картинки. */
+      def imgMods( embedPropsProxy: ModelProxy[MQdEmbedProps],
+                   imgTag: TagOf[html.Image] ): TagOf[html.Image]
 
-    val Img = ScalaComponent
-      .builder[MQdEmbedProps]( "Img" )
-      .initialStateFromProps( identity )
-      .render_P { props =>
+      /** Пост-обработка рендера картинки. imgEl скорее всего НЕ-img-тег. */
+      def imgPostProcess(embedPropsProxy: ModelProxy[MQdEmbedProps],
+                         embedStyleOpt: Option[StyleA],
+                         imgEl: TagOf[html.Element]): VdomElement
+
+      def render(embedPropsProxy: ModelProxy[MQdEmbedProps]): VdomElement = {
+        val embedProps = embedPropsProxy.value
         // Аккамулируем аттрибуты для рендера img-тега.
         var imgArgsAcc = List.empty[TagMod]
 
         // width/height экранного представления картинки задаётся в CSS:
         // Контейнер ресайза также требует этот стиль, поэтому кэшируем стиль в переменной:
-        val embedStyleOpt = for (ae <- props.jdtQdOp.qdOp.attrsEmbed if ae.nonEmpty) yield {
-          rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( props.jdtQdOp.jdTagId )
+        val embedStyleOpt = for (ae <- embedProps.jdtQdOp.qdOp.attrsEmbed if ae.nonEmpty) yield {
+          embedProps.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
         }
         embedStyleOpt.foreach( imgArgsAcc ::= _ )
 
         // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
-        props.edge.imgSrcOpt.fold [Unit] {
-          logger.warn( ErrorMsgs.IMG_EXPECTED, msg = props )
+        embedProps.edge.imgSrcOpt.fold [Unit] {
+          logger.warn( ErrorMsgs.IMG_EXPECTED, msg = embedProps )
         } { imgSrc =>
           imgArgsAcc ::= (^.src := imgSrc)
         }
 
         for {
-          attrsText <- props.jdtQdOp.qdOp.attrsText
-          if props.jdtQdOp.jdTag.props1.isContentCssStyled || attrsText.isCssStyled
+          attrsText <- embedProps.jdtQdOp.qdOp.attrsText
+          if embedProps.jdtQdOp.jdTag.props1.isContentCssStyled || attrsText.isCssStyled
         } {
-          imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textF( props.jdtQdOp.jdTagId )
+          imgArgsAcc ::= embedProps.jdCss.textF( embedProps.jdtQdOp.jdTagId )
         }
 
         var renderedTag: TagOf[html.Element] = {
@@ -91,11 +98,11 @@ class QdRrrHtml(
             imgArgsAcc: _*
           )
           // Доп.модификации img-тега извне:
-          imgMods( props, img )
+          imgMods( embedPropsProxy, img )
         }
 
         // Поддержка рендера внутри a-тега (ссылка). В редакторе не рендерим её, чтобы не было случайных переходов при кликах по шаблону.
-        for (attrsText <- props.jdtQdOp.qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
+        for (attrsText <- embedProps.jdtQdOp.qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
           renderedTag = <.a(
             // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
             _hrefAttr := link,
@@ -103,28 +110,29 @@ class QdRrrHtml(
           )
         }
 
-        imgPostProcess( props, embedStyleOpt, renderedTag )
+        imgPostProcess( embedPropsProxy, embedStyleOpt, renderedTag )
       }
-      .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate( MQdEmbedProps.Feq ) )
-      .build
 
-    /** Рендер картинки. Stateless, чтобы гарантировать чистоту поведения для возможности оптимизации. */
-    def renderImg(embedProps: MQdEmbedProps, i: Int): VdomElement =
-      Img.withKey(i)( embedProps )
+    }
+    def renderImg( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement
 
 
-    val Frame = ScalaComponent
-      .builder[MQdEmbedProps]( "Frame" )
-      .initialStateFromProps( identity )
-      .render_P { embedProps =>
+    trait FrameBackendBase {
+
+      /** Пост-процессинг iframe-тега. */
+      def iframeMods( embedPropsProxy: ModelProxy[MQdEmbedProps], iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement
+
+      def render(embedPropsProxy: ModelProxy[MQdEmbedProps]): VdomElement = {
+        val embedProps = embedPropsProxy.value
+
         val whStyl = embedProps.jdtQdOp.qdOp.attrsEmbed
           .filter(_.nonEmpty)
           .fold {
             // По идее, стили уже должны быть заданы, но до 2020-11-17 attrsEmbed были необязательными, поэтому тут костыли:
             // TODO Это можно удалить в будущем, когда все jd-карточки пройдут контроль валидности: тут не поддержки wideSzOpt, и фреймы хромают.
-            rrrProps.jdArgs.jdRuntime.jdCss.video
+            embedProps.jdCss.video
           } { _ =>
-            rrrProps.jdArgs.jdRuntime.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
+            embedProps.jdCss.embedAttrF( embedProps.jdtQdOp.jdTagId )
           }
         val srcUrl = embedProps.edge.jdEdge.url
 
@@ -138,25 +146,69 @@ class QdRrrHtml(
           ^.allowFullScreen := true,
           whStyl,
         )
-        iframeMods( embedProps, iframe, whStyl )
+        iframeMods( embedPropsProxy, iframe, whStyl )
       }
-      .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate( MQdEmbedProps.Feq ) )
-      .build
 
-    /** Пост-процессинг iframe-тега. */
-    def iframeMods( embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement
-
-      /** Рендер фрейма через компонент. */
-    def renderFrame(embedProps: MQdEmbedProps, i: Int): VdomElement =
-      Frame.withKey( i )( embedProps )
-
-    /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
-    def _hrefAttr: Attr[String]
+    }
+    def renderFrame( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement
 
   }
 
 
-  trait RrrBase extends RrrBaseStatic {
+  /** Реализация рендера изолированных компонентов для обычного рендера (без редактора карточек). */
+  object RenderOnly extends QdRrrBase {
+
+    override def _hrefAttr = ^.href
+
+
+    final class Img($: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps]) extends ImgBackendBase {
+      override def imgMods(embedPropsProxy: ModelProxy[MQdEmbedProps], imgTag: VdomTagOf[Image]): TagOf[Image] =
+        imgTag
+
+      override def imgPostProcess(embedPropsProxy: ModelProxy[MQdEmbedProps], embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): VdomElement =
+        imgEl
+    }
+
+    val Img = ScalaComponent
+      .builder[ModelProxy[MQdEmbedProps]]( classOf[Img].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[Img]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MQdEmbedProps.Feq ) )
+      .build
+
+    /** Рендер картинки. Stateless, чтобы гарантировать чистоту поведения для возможности оптимизации. */
+    override def renderImg(embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int): VdomElement =
+      Img.withKey(i)( embedPropsProxy )
+
+
+    final class Frame($: BackendScope[ModelProxy[MQdEmbedProps], MQdEmbedProps]) extends FrameBackendBase {
+
+      override def iframeMods(embedPropsProxy: ModelProxy[MQdEmbedProps], iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement =
+        iframe
+
+    }
+
+    val Frame = ScalaComponent
+      .builder[ModelProxy[MQdEmbedProps]]( classOf[Frame].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[Frame]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MQdEmbedProps.Feq ) )
+      .build
+
+    /** Рендер фрейма через компонент. */
+    override def renderFrame( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement =
+      Frame.withKey( i )( embedPropsProxy )
+
+  }
+
+
+  /** Рендерер с внутренним mutable state. */
+  case class QdRrr(
+                    qdRrr: QdRrrBase,
+                    rrrPropsProxy: ModelProxy[MJdRrrProps],
+                  ) {
+
+    val rrrProps = rrrPropsProxy.value
 
     /** Выполнить рендеринг текущего qd-тега. */
     def render(): VdomElement =
@@ -243,7 +295,9 @@ class QdRrrHtml(
             var framesCnt = counters.frame
             var imagesCnt = counters.image
             var othersCnt = counters.other
-            def embedProps = MQdEmbedProps( e, jdtQdOp )
+            def embedProps = rrrPropsProxy.resetZoom(
+              MQdEmbedProps( e, jdtQdOp, rrrProps )
+            )
 
             e.jdEdge.predicate match {
               case MPredicates.JdContent.Text =>
@@ -253,12 +307,12 @@ class QdRrrHtml(
 
               // Рендер картинки.
               case MPredicates.JdContent.Image =>
-                _currLineAccRev ::= renderImg( embedProps, imagesCnt )
+                _currLineAccRev ::= qdRrr.renderImg( embedProps, imagesCnt )
                 imagesCnt += 1
 
               // Рендер видео (или иного фрейма).
               case MPredicates.JdContent.Frame =>
-                _currLineAccRev ::= renderFrame( embedProps, framesCnt )
+                _currLineAccRev ::= qdRrr.renderFrame( embedProps, framesCnt )
                 framesCnt += 1
 
               case other =>
@@ -424,7 +478,7 @@ class QdRrrHtml(
         for (linkSU <- attrs.link; link <- linkSU) {
           var hrefAttrs = List[TagMod](
             keyTm,
-            _hrefAttr := link,
+            qdRrr._hrefAttr := link,
             acc
           )
           for (textStyle <- textStyleOpt) {
@@ -630,24 +684,6 @@ class QdRrrHtml(
 
   }
 
-
-  /** Обычный рендерер для просмотра/отображения qd-контента (без редактирования). */
-  case class NormalRrr(override val rrrProps: MJdRrrProps) extends RrrBase {
-
-    def _hrefAttr: Attr[String] =
-      ^.href
-
-    override def imgMods(embedProps: MQdEmbedProps, imgTag: VdomTagOf[Image]): TagOf[Image] =
-      imgTag
-
-    override def imgPostProcess(props: MQdEmbedProps, embedStyleOpt: Option[StyleA], imgEl: TagOf[html.Element]): VdomElement =
-      imgEl
-
-    override def iframeMods(embedProps: MQdEmbedProps, iframe: TagOf[html.IFrame], whStyl: StyleA ): VdomElement =
-      iframe
-
-  }
-
 }
 
 
@@ -684,24 +720,34 @@ final case class MQdOpCont(
                           )
 object MQdOpCont {
   @inline implicit def univEq: UnivEq[MQdOpCont] = UnivEq.derive
+  implicit val QdOpConfFeq = FastEqUtil[MQdOpCont] { (a, b) =>
+    (a.qdOp ===* b.qdOp) &&
+    (a.jdTag ===* b.jdTag) &&
+    (a.jdTagId ===* b.jdTagId)
+  }
 }
 
 
-final case class MQdEmbedProps( edge: MEdgeDataJs, jdtQdOp: MQdOpCont ) {
-
-
-
+/** Контейнер пропертисов для рендера одного embed'а: картинки или фрейма.
+  *
+  * @param edge Эдж.
+  * @param jdtQdOp Контейнер данных qd op.
+  * @param rrrProps Текущий контекст.
+  */
+final case class MQdEmbedProps( edge      : MEdgeDataJs,
+                                jdtQdOp   : MQdOpCont,
+                                rrrProps  : MJdRrrProps,
+                              ) {
+  def jdCss = rrrProps.jdArgs.jdRuntime.jdCss
 }
 object MQdEmbedProps {
 
   @inline implicit def univEq: UnivEq[MQdEmbedProps] = UnivEq.derive
 
   implicit val Feq = FastEqUtil[MQdEmbedProps] { (a, b) =>
-    val r = (a.edge ==* b.edge) &&
-    (a.jdtQdOp ===* b.jdtQdOp)
-
-    println( s"Feq => $r | ${a.edge ==* b.edge} ${a.jdtQdOp ===* b.jdtQdOp} ${a.edge.hashCode()}/${b.edge.hashCode()} ${a.jdtQdOp.hashCode()}/${b.jdtQdOp.hashCode()}" )
-    r
+    (a.edge ===* b.edge) &&
+    MQdOpCont.QdOpConfFeq.eqv(a.jdtQdOp, b.jdtQdOp)
+    // jdCss не сверяем, т.к. названия классов стабильны, а рендер обновляеться вместе с qd-тегом.
   }
 
 }

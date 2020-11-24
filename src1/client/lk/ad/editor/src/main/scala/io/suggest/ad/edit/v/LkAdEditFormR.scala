@@ -166,7 +166,7 @@ class LkAdEditFormR(
               LCSS.previewInnerCont,
 
               // Тело превьюшки в виде плитки.
-              s.jdPreviewArgsC { jdEditR.JdRrrEdit.documentDndComp.apply },
+              s.jdPreviewArgsC { jdEditR.JdRrrEdit.DocumentDnd.apply },
 
               <.div(
                 ^.`class` := Css.CLEAR
