@@ -2,6 +2,7 @@ package com.github.react.dnd
 
 import japgolly.scalajs.react.raw
 import japgolly.scalajs.react.vdom.VdomElement
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -15,7 +16,7 @@ import scala.scalajs.js.annotation.JSName
 trait DragSourceConnector extends js.Object {
 
   def dragSource(): DragSourceF[DragSourceFOptions] = js.native
-  def dragPreview(): DragSourceF[DragPreviewFOptions] = js.native
+  def dragPreview(): DragPreviewF[DragPreviewFOptions] = js.native
 
 }
 
@@ -27,6 +28,11 @@ trait DragSourceF[-Options_t <: js.Object] extends js.Function {
   def applyNode[T <: raw.React.Node](node: T, options: Options_t = js.native): T = js.native
   @JSName("apply")
   def applyRef[T <: raw.React.Ref](ref: T, options: Options_t = js.native): T = js.native
+}
+@js.native
+trait DragPreviewF[-Options_t <: js.Object] extends DragSourceF[Options_t] {
+  @JSName("apply")
+  def applyImage[T <: dom.html.Image](image: T, options: Options_t = js.native): T = js.native
 }
 object DragSourceF {
   implicit class DragSourceExt[-T <: js.Object]( val ds: DragSourceF[T] ) extends AnyVal {

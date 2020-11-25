@@ -34,7 +34,7 @@ import org.scalajs.dom.html.{Element, Image}
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
-import scalacss.internal.{LengthUnit, Literal}
+import scalacss.internal.Literal
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -68,28 +68,6 @@ final class JdEditR(
       jdCssStatic.selectedTag
     }
   }
-
-
-  private def _parseStylePx(e: ReactMouseEventFromHtml)(f: CSSStyleDeclaration => String): Option[Int] = {
-    for {
-      // Используем currentTarget, т.к. хром возвращает события откуда попало, а не из точки аттача.
-      // TODO Если за пределами блока отпускание мыши, то и это не помогает.
-      target        <- Option(e.currentTarget)
-      if e.button ==* 0
-      style         <- Option(target.style)
-      sizePxStyl    <- Option(f(style))
-      pxIdx = sizePxStyl.indexOf( LengthUnit.px.value )
-      if pxIdx > 0
-    } yield {
-      sizePxStyl
-        .substring(0, pxIdx)
-        .toInt
-    }
-  }
-  private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] =
-    _parseStylePx(e)(_.width)
-  private def _parseHeight(e: ReactMouseEventFromHtml): Option[Int] =
-    _parseStylePx(e)(_.height)
 
 
   /** Повесить onload для картинки, считывающий ей wh.
@@ -155,16 +133,15 @@ final class JdEditR(
   }
 
 
+  private val _preventDefaultCbF = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, _: ResizeCallbackData) =>
+    e.preventDefaultCB
+  }
+
   /** Qd-рендерер для редактора. */
   object QdRrrEdit extends qdRrrHtml.QdRrrBase {
 
     /** В редакторе href будет приводить к ненужным переходам. */
     override def _hrefAttr = ^.title
-
-    // event.preventDefault нужен в callback'ах, чтобы избежать конфликтов с react-dnd из-за наступления drag.
-    private lazy val _onEmbedResizeStartCbF = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, _: ResizeCallbackData) =>
-      e.preventDefaultCB
-    }
 
     /** Сборка ResizeBoxProps для ресайзинкка внутри QD-контента (картинки, фреймы, и т.д.) */
     def _rszBoxProps( wh: MSize2di, lockAspect: Boolean, jdConf: MJdConf, onResizeF: ResizableProps.Cb ): ResizableBoxProps = {
@@ -172,7 +149,8 @@ final class JdEditR(
         override val width            = wh.width.toDouble
         override val height           = wh.height.toDouble
         override val onResize         = onResizeF
-        override val onResizeStart    = _onEmbedResizeStartCbF
+        // event.preventDefault нужен в callback'ах, чтобы избежать конфликтов с react-dnd из-за наступления drag.
+        override val onResizeStart    = _preventDefaultCbF
         override val lockAspectRatio  = lockAspect
         override val onResizeStop     = onResizeF
         override val transformScale   = jdConf.szMult.toDouble
@@ -435,66 +413,58 @@ final class JdEditR(
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   object JdRrrEdit extends jdRrr.Base {
 
-    class QdContentInner($: BackendScope[MRrrEdit with MRrrEditCollectDrag, MJdRrrProps] ) extends QdContentBase {
+    final class QdContent( $: BackendScope[ModelProxy[MJdRrrProps], Unit] ) extends super.QdContentBase {
 
-      override def _qdContentRrrHtml(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        qdRrrHtml
-          .QdRrr( QdRrrEdit, propsProxy )
-          .render()
-      }
-
-      override def _renderQdContentTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Element] = {
-        val state = propsProxy.value
-        val qdTag = state.subTree.rootLabel
-
-        // Нельзя withRef() для этого внешнего тега, т.к. другой measure-ref выставляется внутри super._renderQdContentTag().
-        super._renderQdContentTag( propsProxy )(
-          _maybeSelected(qdTag, state.jdArgs),
-          _selectableOnClick( $ )( _.p.value ),
-
-          // Рендерить особые указатели мыши в режиме редактирования.
-          if (state.isCurrentSelected) {
-            // Текущий тег выделен. Значит, пусть будет move-указатель
-            TagMod(
-              ^.`class` := Css.Cursor.MOVE,
-              jdCssStatic.horizResizable,
-              // TODO onResize -> ...
-              ^.onMouseUp ==> onQdTagResize,
-            )
-          } else {
-            // Текущий тег НЕ выделен. Указатель обычной мышкой.
-            ^.`class` := Css.Cursor.POINTER
-          },
-        )
-      }
-
-
-      /** Самописная поддержка ресайза контента только силами браузера. */
-      private def onQdTagResize(e: ReactMouseEventFromHtml): Callback = {
-        _parseWidth(e).fold(Callback.empty) { widthPx =>
-          ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetContentWidth( Some(widthPx) ) )
-        }
-      }
-
-      def render(props: MRrrEdit with MRrrEditCollectDrag/*, state: MJdRrrProps*/): VdomElement = {
-        var rendered: VdomElement =
-          _doRender( props.p )
-            .withOptionalRef( props.refOpt )
-
-        rendered = props.dragF.applyVdomEl( rendered )
-
-        rendered
-      }
+      override def qdRrr = QdRrrEdit
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
       override def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
         ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
-          props: MRrrEdit with MRrrEditCollectDrag =>
-            _qdBoundsMeasured( props.p, timeStampMs, cr )
+          props: ModelProxy[MJdRrrProps]  =>
+            _qdBoundsMeasured( props, timeStampMs, cr )
         }
       }
 
     }
+    val QdContent = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContent].getSimpleName )
+      .renderBackend[QdContent]
+      .build
+
+
+    final class QdContainer($: BackendScope[MRrrEdit with MRrrEditCollectDrag, Unit] ) extends super.QdContainerBase {
+
+      override def _renderQdContentTag(propsProxy: ModelProxy[MJdRrrProps], acc0: List[TagMod]): TagOf[html.Div] = {
+        val state = propsProxy.value
+        val qdTag = state.subTree.rootLabel
+
+        val acc1: List[TagMod] = (
+          _maybeSelected(qdTag, state.jdArgs) ::
+          _selectableOnClick( $ )( _.p.value )(MRrrEdit.MRrrEdit2MProxy) ::
+          acc0
+        )
+        // Нельзя withRef() для этого внешнего тега, т.к. другой measure-ref выставляется внутри super._renderQdContentTag().
+        super._renderQdContentTag( propsProxy, acc1 )
+      }
+
+      def render( props: MRrrEdit with MRrrEditCollectDrag, children: PropsChildren ): VdomElement = {
+        props.dragF.applyVdomEl {
+          _doRender( props.p, children )
+            .withOptionalRef( props.refOpt )
+        }
+      }
+
+    }
+    // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
+    private val QdContainer = ScalaComponent
+      .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContainer].getSimpleName )
+      .stateless
+      .renderBackendWithChildren[QdContainer]
+      .build
+    private val QdContainerJsRaw = QdContainer
+      .toJsComponent
+      .raw
+
 
     /** Инстанс функции canDrag(), используемый во всех инстансах QdContentDndB. */
     private lazy val _qdCanDragF: js.Function2[MRrrEdit with MRrrEditCollectDrag, DragSourceMonitor, Boolean] = {
@@ -504,21 +474,10 @@ final class JdEditR(
         !p.parents.exists( p.jdArgs.selJdt.treeLocOpt.containsLabel )
     }
 
-    // Компонент-обёртка, который просто вызывает функцию dropTarget() над исходным document-компонентом.
-    private val QdContentInner = ScalaComponent
-      .builder[MRrrEdit with MRrrEditCollectDrag]( classOf[QdContentInner].getSimpleName )
-      .initialStateFromProps( rrrEdit2mproxyValueF )
-      .renderBackend[QdContentInner]
-      .configure( ReactDiodeUtil.p2sShouldComponentUpdate(rrrEdit2mproxyValueF)(MJdRrrProps.MJdRrrPropsFastEq) )
-      .build
-      .toJsComponent
-      .raw
-
-    class QdContentDnd($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) {
+    /** Dnd HOC поверх QdContainerEdit. */
+    final class QdContainerDnd($: BackendScope[MRrrEdit, Unit]) {
       // import, иначе будет рантаймовая ошибка валидации DragSourceSpec (лишние поля json-класса)
       import MimeConst.Sio.{DataContentTypes => DCT}
-
-      private val contentRef = Ref[html.Element]
 
       private val _qdBeginDragF: js.Function3[MRrrEdit with MRrrEditCollectDrag, DragSourceMonitor, js.Any, MJsDropInfo] = {
         (props, mon, _) =>
@@ -527,7 +486,7 @@ final class JdEditR(
           val jdt = s.subTree.rootLabel
           props.p dispatchNow JdTagDragStart(jdt, s.tagId)
 
-          var el = contentRef.unsafeGet()
+          var el = props.refOpt.get.unsafeGet()
           if (!s.parents.exists(_.name ==* MJdTagNames.STRIP)) {
             // qd-blockless. Ищем координаты для родительского контейнера.
             el = el.parentElement
@@ -539,7 +498,7 @@ final class JdEditR(
           MJsDropInfo( DCT.CONTENT_ELEMENT, xyOff )
       }
 
-      val contentDnd = DragSource[MRrrEdit, MRrrEditCollectDrag, MJsDropInfo, Children.None](
+      val containerDndHoc = DragSource[MRrrEdit, MRrrEditCollectDrag, MJsDropInfo, Children.Varargs](
         itemType = DCT.CONTENT_ELEMENT,
         spec = new DragSourceSpec[MRrrEdit with MRrrEditCollectDrag, MJsDropInfo] {
           override val beginDrag = _qdBeginDragF
@@ -552,26 +511,113 @@ final class JdEditR(
           }
         }
       )(
-        QdContentInner
+        QdContainerJsRaw
       )
-        .cmapCtorProps( _mkRrrPropsCmapF( Some(contentRef) ) )
 
-      def render(props: ModelProxy[MJdRrrProps]): VdomElement =
-        contentDnd(props)
+      def render(props: MRrrEdit, children: PropsChildren): VdomElement =
+        containerDndHoc(props)(children)
+
     }
-    val QdContentDnd = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentDnd].getSimpleName )
-      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .renderBackend[QdContentDnd]
-      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
+    val QdContainerDnd = ScalaComponent
+      .builder[MRrrEdit]( classOf[QdContainerDnd].getSimpleName )
+      .stateless
+      .renderBackendWithChildren[QdContainerDnd]
       .build
-    override def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      QdContentDnd.withKey(key)(props)
+
+
+    final class QdResize($: BackendScope[ModelProxy[MJdRrrProps], Unit]) {
+
+      private lazy val _onResizeF: ResizableProps.Cb = {
+        ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, rszCbData: ResizeCallbackData) =>
+          var cb = e.preventDefaultCB
+
+          if (rszCbData.size.width > 0) {
+            cb = cb >> {
+              val wh = rszCbData.size
+              ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetContentWidth( Some(wh.width.toInt) ) )
+            }
+          }
+
+          cb
+        }
+      }
+
+      def render(propsProxy: ModelProxy[MJdRrrProps], propsChildren: PropsChildren): VdomNode = {
+        val state = propsProxy.value
+        // Подцепить react-resizable для qd-контента:
+        val jdt = state.subTree.rootLabel
+
+        (for {
+          widthPx <- jdt.props1.widthPx
+          if state.isCurrentSelected
+        } yield {
+          ResizableBox {
+            val wh = MSize2di(
+              width = widthPx,
+              height = jdt.props1.heightPx getOrElse 100,
+            )
+            val jdConf = state.jdArgs.conf
+            new ResizableBoxProps {
+              override val axis             = ResizableProps.Axis.X
+              override val height           = wh.height
+              override val width            = widthPx
+              override val transformScale   = jdConf.szMult.toDouble
+              override val resizeHandles    = js.Array( ResizableProps.Handle.SE )
+              override val lockAspectRatio  = false
+              override val onResize         = _onResizeF
+              override val onResizeStop     = _onResizeF
+              override val onResizeStart    = _preventDefaultCbF
+            }
+          } (
+            <.div(
+              propsChildren,
+            )
+          ): VdomElement
+        })
+          // Если не определена ширина или тег не выделен, то и рендерить ползунки размера не надо.
+          .getOrElse[VdomNode]( propsChildren )
+      }
+
+    }
+    val QdResize = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdResize].getSimpleName )
+      //.initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .stateless
+      .renderBackendWithChildren[QdResize]
+      //.configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
+      .build
+
+
+    /** Backend, связывающий в единую кучу все упомянутые qd-компоненты. */
+    final class QdAll( $: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps] ) {
+      val contentRef = Ref[html.Element]
+
+      def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
+        val rrrEdit = new MRrrEdit {
+          override val p = propsProxy
+          override val refOpt = Some( contentRef )
+        }
+        QdContainerDnd( rrrEdit )(
+          QdResize( propsProxy )(
+            QdContent( propsProxy )
+          )
+        )
+      }
+    }
+    val QdAll = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdAll].getSimpleName )
+      .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[QdAll]
+      .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdRrrPropsFastEq) )
+      .build
+
+    override def mkQdContainer(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      QdAll.withKey(key)(props)
 
 
     // -------------------------------------------------------------------------------------------------
 
-    class BlockInner($: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps] ) extends BlockBase {
+    final class BlockInner($: BackendScope[MRrrEdit with MRrrEditCollectDrag with MRrrEditCollectDrop, MJdRrrProps] ) extends BlockBase {
 
       override def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         TagMod(
@@ -884,6 +930,9 @@ object MRrrEdit {
   }
   implicit def mprox: Props2ModelProxy[MRrrEdit with MRrrEditCollectDrag] =
     MRrrEdit2MProxy.asInstanceOf[Props2ModelProxy[MRrrEdit with MRrrEditCollectDrag]]
+
+  val getPropsProxy = ReactDiodeUtil.modelProxyValueF.compose[MRrrEdit](_.p)
+
 }
 /** Доп.пропертисы к [[MRrrEdit]], инжектируемые из collect-function для DropTarget. */
 trait MRrrEditCollectDrop extends js.Object {

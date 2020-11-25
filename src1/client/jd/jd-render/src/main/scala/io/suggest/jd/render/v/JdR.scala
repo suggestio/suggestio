@@ -7,7 +7,7 @@ import io.suggest.jd.render.m._
 import io.suggest.log.Log
 import io.suggest.react.ReactDiodeUtil
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -29,14 +29,8 @@ final class JdR(
   /** Обычная рендерилка без функций редактирования. */
   private object JdRrr extends jdRrr.Base {
 
-    /** Реализация контента. */
-    final class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends QdContentBase {
-
-      override def _qdContentRrrHtml(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        qdRrrHtml
-          .QdRrr( qdRrrHtml.RenderOnly, propsProxy )
-          .render()
-      }
+    final class QdContent($: BackendScope[ModelProxy[MJdRrrProps], Unit]) extends super.QdContentBase {
+      override def qdRrr = qdRrrHtml.RenderOnly
 
       /** Реакция на получение информации о размерах внеблокового qd-контента. */
       override def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
@@ -46,20 +40,44 @@ final class JdR(
         }
       }
 
+    }
+    val QdContent = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContent].getSimpleName )
+      //.initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+      .renderBackend[QdContent]
+      //.configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
+      .build
+
+
+    /** Реализация контента. */
+    final class QdContainer($: BackendScope[ModelProxy[MJdRrrProps], Unit]) extends super.QdContainerBase {
+
       /** Фасад для рендера. */
-      def render( propsProxy: ModelProxy[MJdRrrProps] ): VdomElement =
-        _doRender( propsProxy )
+      def render( propsProxy: ModelProxy[MJdRrrProps], children: PropsChildren ): VdomElement =
+        _doRender( propsProxy, children )
 
     }
     /** Сборка react-компонента. def - т.к. в редакторе может не использоваться. */
-    val qdContentComp = ScalaComponent
-      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContentB].getSimpleName )
+    val QdContainer = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( classOf[QdContainer].getSimpleName )
+      .renderBackendWithChildren[QdContainer]
+      .build
+
+
+    /** Объединяющий компонент для qd-частей с единой проверкой shouldComponentUpdate(). */
+    val QdAll = ScalaComponent
+      .builder[ModelProxy[MJdRrrProps]]( "Qd" )
       .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-      .renderBackend[QdContentB]
+      .render_P { props =>
+        QdContainer(props)(
+          QdContent( props )
+        )
+      }
       .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(MJdRrrProps.MJdRrrPropsFastEq) )
       .build
-    def mkQdContent(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
-      qdContentComp.withKey(key)(props)
+
+    override def mkQdContainer(key: Key, props: ModelProxy[MJdRrrProps]): VdomElement =
+      QdAll.withKey( key )(props)
 
 
     /** Реализация блока для обычного рендера. */

@@ -27,17 +27,6 @@ class JdCssStatic extends StyleSheet.Inline {
     )
   }
 
-
-  /** Поддержка горизонтального ресайза. */
-  val horizResizable = style(
-    // TODO Хотелось с &.hover(...), но в хроме полный ахтунг и погибель
-    resize.horizontal,
-  )
-
-  val hvResizable = style(
-    resize.both
-  )
-
   /** Общий стиль для всех AbsPos-тегов. */
   val absPosStyleAll = style(
     position.absolute,

@@ -50,10 +50,8 @@ class QdRrrHtml(
   extends Log
 {
 
-  trait QdRrrBase {
-
-    /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
-    def _hrefAttr: Attr[String]
+  /** Дополнения, необходимые для реализации [[IQdRrr]]. */
+  trait QdRrrBase extends IQdRrr {
 
     /** Заготовка для компонента Img backend. */
     trait ImgBackendBase {
@@ -114,7 +112,6 @@ class QdRrrHtml(
       }
 
     }
-    def renderImg( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement
 
 
     trait FrameBackendBase {
@@ -150,7 +147,6 @@ class QdRrrHtml(
       }
 
     }
-    def renderFrame( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement
 
   }
 
@@ -204,14 +200,14 @@ class QdRrrHtml(
 
   /** Рендерер с внутренним mutable state. */
   case class QdRrr(
-                    qdRrr: QdRrrBase,
+                    qdRrr: IQdRrr,
                     rrrPropsProxy: ModelProxy[MJdRrrProps],
                   ) {
 
     val rrrProps = rrrPropsProxy.value
 
     /** Выполнить рендеринг текущего qd-тега. */
-    def render(): VdomElement =
+    def render(): TagOf[html.Div] =
       _doRender()
 
     /** Аккамулятор сегментов рендера текущей строки.
@@ -254,7 +250,7 @@ class QdRrrHtml(
     }
 
     @tailrec
-    final def _doRender(counters: QdRrrOpKeyCounters = QdRrrOpKeyCounters()): VdomElement = {
+    final def _doRender(counters: QdRrrOpKeyCounters = QdRrrOpKeyCounters()): TagOf[html.Div] = {
       _restOps match {
         // Есть операция для обработки.
         case qdOp #:: restOpsTail =>
@@ -502,7 +498,7 @@ class QdRrrHtml(
     }
 
     /** Отработать аккамулятор строк, массово отформатировав все накопленные строки. */
-    private def _renderLines(): VdomElement = {
+    private def _renderLines(): TagOf[html.Div] = {
 
       // Есть сценарий рендера пройденной группы.
       def __renderPrevLinesGrp(acc0: LinesRrrAcc, iStr: String): List[TagMod] = {
@@ -683,6 +679,21 @@ class QdRrrHtml(
     }
 
   }
+
+}
+
+
+/** Интерфейс для рендера qd-элементов (фреймов, картинок, ссылок), не требующих контекста.
+  * Элементы в редакторе отличаются от тех же элементов обычного рендера.
+  */
+trait IQdRrr {
+
+  /** Аттрибут href для ссылки. В норме href, но в редакторе href будет приводить к ненужным переходам. */
+  def _hrefAttr: Attr[String]
+
+  def renderImg( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement
+
+  def renderFrame( embedPropsProxy: ModelProxy[MQdEmbedProps], i: Int ): VdomElement
 
 }
 

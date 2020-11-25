@@ -19,6 +19,10 @@ object DropTarget {
     * @param spec Спека.
     * @param collect Collecting function.
     * @param jsComp react-компонент, который будет дорабатываться для перетаскивания.
+    * @tparam P0 JSON обёртка над исходными пропертисами jsComp
+    * @tparam PC JSON-пропертисы от collect функции.
+    * @tparam I Тип properties для drop item'а.
+    * @tparam C Children.
     * @return Компонент с dnd-обёрткой.
     */
   def apply[P0 <: js.Object, PC <: js.Object, I <: js.Object, C <: Children]
