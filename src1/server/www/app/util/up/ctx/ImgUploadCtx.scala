@@ -61,7 +61,7 @@ final class ImgUploadCtx @Inject()(
     for {
       svgDoc <- svgDocOpt
     } yield {
-      SvgUtil.buildGvt(svgDoc)
+      SvgUtil.buildGvt( svgDoc )
     }
   }
 
@@ -96,7 +96,10 @@ final class ImgUploadCtx @Inject()(
               for {
                 svgGvt <- svgGvtOpt
                 rect = svgGvt.getPrimitiveBounds
-                sz2d = SvgUtil.rect2Size2d( rect )
+                sz2d = SvgUtil.rect2Size2d(
+                  width0 = rect.getWidth,
+                  height0 = rect.getHeight,
+                )
                 if {
                   val r = isImgSzValid(sz2d)
                   if (!r) LOGGER.warn(s"$logPrefix Invalid $imgFmt size from GVT: primitiveBounds=$sz2d (${svgGvt.getPrimitiveBounds}) || bounds=${svgGvt.getBounds} geometryBounds=${svgGvt.getGeometryBounds} sensitiveBounds=${svgGvt.getSensitiveBounds}")

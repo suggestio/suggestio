@@ -1,6 +1,5 @@
 package io.suggest.svg
 
-import java.awt.geom.RectangularShape
 import java.io.{File, FileInputStream, InputStream}
 
 import io.suggest.common.geom.d2.MSize2di
@@ -8,10 +7,11 @@ import io.suggest.img.MImgFormats
 import io.suggest.pick.MimeConst
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory
-import org.apache.batik.bridge.{BridgeContext, DocumentLoader, GVTBuilder, UserAgentAdapter}
+import org.apache.batik.bridge.{BridgeContext, DocumentLoader, GVTBuilder, UserAgentAdapter, ViewBox}
 import org.apache.batik.gvt.GraphicsNode
-import org.apache.batik.util.XMLResourceDescriptor
+import org.apache.batik.util.{SVGConstants, XMLResourceDescriptor}
 import org.w3c.dom.{Document, Node}
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 import scala.util.Try
@@ -29,18 +29,19 @@ object SvgUtil extends MacroLogsImpl {
     * натуральных числе.
     * SVG-файл может иметь координаты в дробях где-то между 0 и 1, при округлении возвращая нули.
     *
-    * @param rect2d Прямоугольник AWT.
+    * @param width0 Ширина в неких условных единицах.
+    * @param height0 Высота в тех же условных единицах.
     * @return Размерчик.
     */
-  def rect2Size2d(rect2d: RectangularShape): MSize2di = {
+  def rect2Size2d(width0: Double, height0: Double): MSize2di = {
     // Уровень в пикселях, ниже которого размер не должен быть.
     // Выведенные размеры должны позволять оценивать пропорцию картинки с какой-то необходимой точностью.
     val magnifyBy = 10
     val minSideSizePx = magnifyBy
 
     @tailrec def __magnifySizes(
-                                 w0: Double = rect2d.getWidth,
-                                 h0: Double = rect2d.getHeight,
+                                 w0: Double = width0,
+                                 h0: Double = height0,
                                  restStepCount: Int = 7,
                                ): MSize2di = {
       if (
@@ -177,19 +178,20 @@ object SvgUtil extends MacroLogsImpl {
     * @return Размер, если задан.
     */
   def getDocWh(doc: Document): Option[MSize2di] = {
+    lazy val svgRoot = Option( doc.getFirstChild )
     Try {
       for {
-        svgRoot     <- Option( doc.getFirstChild )
+        svgRoot     <- svgRoot
         attrs       <- Option( svgRoot.getAttributes )
-        widthAv     <- Option( attrs.getNamedItem("width") )
-        __parseAv = (av: Node) => Math.round( av.getNodeValue.toDouble ).toInt
+        widthAv     <- Option( attrs.getNamedItem( SVGConstants.SVG_WIDTH_ATTRIBUTE ) )
+        __parseAv = (av: Node) => av.getNodeValue.toDouble
         widthPx = __parseAv( widthAv )
         if {
           val r = widthPx > 0
           if (!r) LOGGER.warn(s"Invalid width: $widthPx px ($widthAv)")
           r
         }
-        heightAv    <- Option( attrs.getNamedItem("height") )
+        heightAv    <- Option( attrs.getNamedItem( SVGConstants.SVG_HEIGHT_ATTRIBUTE ) )
         heightPx = __parseAv( heightAv )
         if {
           val r = heightPx > 0
@@ -197,14 +199,39 @@ object SvgUtil extends MacroLogsImpl {
           r
         }
       } yield {
-        MSize2di(
-          width  = widthPx,
-          height = heightPx,
+        val r = rect2Size2d(
+          width0  = widthPx,
+          height0 = heightPx
         )
+        LOGGER.trace(s"SVG WH => $r from WH attrs; raw_WH=($widthPx $heightPx)")
+        r
       }
     }
       .toOption
       .flatten
+      .orElse {
+        // Попытаться распедалить аттрибут viewBox, чтобы описать пропорции SVG.
+        Try {
+          for {
+            svgRoot     <- svgRoot
+            attrs       <- Option( svgRoot.getAttributes )
+            viewBoxAv   <- Option( attrs.getNamedItem( SVGConstants.SVG_VIEW_BOX_ATTRIBUTE ) )
+            viewBox     <- Option( viewBoxAv.getNodeValue )
+            viewBoxArr  <- Option( ViewBox.parseViewBoxAttribute(null, viewBox, null) )
+            if viewBoxArr.length ==* 4
+          } yield {
+            val Array(minX, minY, width, height) = viewBoxArr
+            val r = rect2Size2d(
+              width0 = width - minX,
+              height0 = height - minY,
+            )
+            LOGGER.trace(s"SVG viewBox = $viewBox ; wh => $r")
+            r
+          }
+        }
+          .toOption
+          .flatten
+      }
   }
 
   /**

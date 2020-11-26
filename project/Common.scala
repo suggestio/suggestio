@@ -149,7 +149,7 @@ object Common {
     /** Версия Apache Batik для работы с SVG.
       * @see [[https://xmlgraphics.apache.org/batik/download.html]]
       */
-    val APACHE_BATIK = "1.12"
+    val APACHE_BATIK = "1.13"
 
     /** Версия scala-parser-combinators.
       * @see [[https://github.com/scala/scala-parser-combinators]]
