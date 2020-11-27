@@ -533,12 +533,13 @@ object OutEdges extends MacroLogsImpl {
             val qb: QueryBuilder = values match {
               case exact :: Nil =>
                 QueryBuilders.termQuery( fn, exact )
+              // Кажется, что range не работает или работает не правильно:
               case from :: to :: Nil =>
                 QueryBuilders.rangeQuery( fn )
                   .gte( from )
                   .lt( to )
-              case unsupported =>
-                throw new IllegalArgumentException( s"Unsupported picture wh-values description: $fn = $unsupported" )
+              case terms =>
+                QueryBuilders.termsQuery( fn, terms: _* )
             }
             _qOpt = _qOpt.map[QueryBuilder] { qb0 =>
               QueryBuilders.boolQuery()

@@ -3,7 +3,7 @@ package util.img
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.dev.{MPxRatio, MPxRatios, MScreen}
+import io.suggest.dev.{MPxRatios, MScreen}
 import io.suggest.n2.node.MNode
 import io.suggest.sc.ScConstants
 import models.blk._
@@ -53,30 +53,34 @@ class LogoUtil @Inject() (
   }
 
   def getLogo4scr(logoImg: MImgT, screenOpt: Option[MScreen]): Future[MImgT] = {
-    val heightCssPx = ScConstants.Logo.HEIGHT_CSSPX
-    getLogo4scr(logoImg, heightCssPx, screenOpt)
-  }
-  def getLogo4scr(logoImg: MImgT, heightCssPx: Int, screenOpt: Option[MScreen]): Future[MImgT] = {
-    // Узнаём pixelRatio для дальнейших рассчетов.
-    val pxRatio = screenOpt
-      .map(_.pxRatio)
-      .getOrElse(MPxRatios.default)
-    getLogo4scr(logoImg, heightCssPx, pxRatio)
-  }
-  def getLogo4scr(logoImg: MImgT, heightCssPx: Int, pxRatio: MPxRatio): Future[MImgT] = {
-    // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
-    // Исходя из pxRatio нужно посчитать высоту логотипа
-    val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
     val outFmt = logoImg.dynImgId.imgFormat.get
 
-    // Вернуть скомпленную картинку.
-    val logoImg2 = logoImg.withDynOps(
-      AbsResizeOp( MSize2di(height = heightPx, width = 0) ) ::
-        StripOp ::
-        ImCompression.forPxRatio( CompressModes.Fg, pxRatio)
-          .toOps( outFmt )
-    )
-    Future.successful( logoImg2 )
+    if (outFmt.isVector) {
+      // Для SVG надо просто вернуть svg.
+      Future.successful( logoImg.original )
+
+    } else {
+      // Для растра - подготовить размеры картинки:
+      val heightCssPx = ScConstants.Logo.HEIGHT_CSSPX
+
+      // Узнаём pixelRatio для дальнейших рассчетов.
+      val pxRatio = screenOpt
+        .map(_.pxRatio)
+        .getOrElse(MPxRatios.default)
+
+      // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
+      // Исходя из pxRatio нужно посчитать высоту логотипа
+      val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
+
+      // Вернуть скомпленную картинку.
+      val logoImg2 = logoImg.withDynOps(
+        AbsResizeOp( MSize2di(height = heightPx, width = 0) ) ::
+          StripOp ::
+          ImCompression.forPxRatio( CompressModes.Fg, pxRatio)
+            .toOps( outFmt )
+      )
+      Future.successful( logoImg2 )
+    }
   }
 
   // TODO Это забор getLogo4scr надо выпилить. Есть FitImgMaker, его и надо юзать.

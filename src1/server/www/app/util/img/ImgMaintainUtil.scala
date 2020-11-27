@@ -51,6 +51,8 @@ final class ImgMaintainUtil @Inject()(
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
+  def MY_HOST = uploadUtil.MY_NODE_PUBLIC_HOST
+
 
   /** Нужно для поиска картинок на текущем узле использовать swfs volume ids. */
   def getSwfsVolumeIds(query: Option[MNodeSearch] = None ): Future[Map[SwfsVolumeId_t, Long]] = {
@@ -111,6 +113,36 @@ final class ImgMaintainUtil @Inject()(
   }
 
 
+  /** Оставить только volume id, относящиеся к указанному хостнейму.
+    *
+    * @param allVolumesIds Нефильтрованные volume ids.
+    *                      Выхлоп getSwfsVolumeIds().keys, например.
+    * @param myHost Имя хостнейма, для которого собираются volume ids.
+    * @return Фьючерс с отфильтрованным множеством volume ids под текущий хост.
+    */
+  def onlyForNodeSwfsVolumeIds(allVolumesIds: Set[SwfsVolumeId_t],
+                               myHost: String = MY_HOST): Future[Set[SwfsVolumeId_t]] = {
+    lazy val logPrefix = s"onlyMyNodeSwfsVolumeIds(${allVolumesIds.size}vols, $myHost)#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix Starting with ${allVolumesIds.toSeq.sorted} for node $myHost")
+
+    (Future.traverse( allVolumesIds: Iterable[SwfsVolumeId_t] ) { volumeId =>
+      for (locs <- swfsVolumeCache.getLocations( volumeId )) yield {
+        if (locs.exists { volLoc =>
+          (volLoc.url equalsIgnoreCase myHost) ||
+            (volLoc.publicUrl equalsIgnoreCase myHost)
+        }) {
+          LOGGER.trace(s"$logPrefix Found swfs volume#$volumeId - related to my host#$myHost")
+          volumeId :: Nil
+        } else {
+          LOGGER.trace(s"$logPrefix NOT relevant swfs volume#$volumeId skipped, [${locs.mkString(", ")}] not contains host#$myHost")
+          Nil
+        }
+      }
+    })
+      .map( _.iterator.flatten.toSet )
+  }
+
+
   /** Найти картинки и их пересчитать рамеры из файлов, сохранив изменившиеся размеры в базу.
     * Поиск только на текущем media-узле.
     *
@@ -157,26 +189,8 @@ final class ImgMaintainUtil @Inject()(
         r
       }
 
-      myHost = uploadUtil.MY_NODE_PUBLIC_HOST
-
       // Надо собрать только volume_ids, относящиеся к текущей ноде:
-      myNodeVolumeIds <- {
-        (Future.traverse( allVolumesIds: Iterable[SwfsVolumeId_t] ) { volumeId =>
-          for (locs <- swfsVolumeCache.getLocations( volumeId )) yield {
-            if (locs.exists { volLoc =>
-              (volLoc.url equalsIgnoreCase myHost) ||
-              (volLoc.publicUrl equalsIgnoreCase myHost)
-            }) {
-              LOGGER.trace(s"$logPrefix Found swfs volume#$volumeId - related to my host#$myHost")
-              volumeId :: Nil
-            } else {
-              LOGGER.trace(s"$logPrefix NOT relevant swfs volume#$volumeId skipped, [${locs.mkString(", ")}] not contains host#$myHost")
-              Nil
-            }
-          }
-        })
-          .map( _.iterator.flatten.toSet )
-      }
+      myNodeVolumeIds <- onlyForNodeSwfsVolumeIds( allVolumesIds )
 
       countRead = new AtomicInteger( 0 )
       countWrite = new AtomicInteger( 0 )
@@ -193,7 +207,7 @@ final class ImgMaintainUtil @Inject()(
       _ <- mNodes
         .source[MNode](
           searchQuery = {
-            LOGGER.info(s"$logPrefix My node is ${myHost}, my storage have ${myNodeVolumeIds.size} shards with ${allVolumesIdsInfo.view.filterKeys(myNodeVolumeIds.contains).values.sum} files.\n Shard ids are: [${myNodeVolumeIds.toSeq.sorted.mkString(" ")}] ")
+            LOGGER.info(s"$logPrefix My node is ${uploadUtil.MY_NODE_PUBLIC_HOST}, my storage have ${myNodeVolumeIds.size} shards with ${allVolumesIdsInfo.view.filterKeys(myNodeVolumeIds.contains).values.sum} files.\n Shard ids are: [${myNodeVolumeIds.toSeq.sorted.mkString(" ")}] ")
             var crsAcc0 = List.empty[Criteria]
             if (myNodeVolumeIds.nonEmpty) {
               val fileStorTypes = Set.empty[MStorage] + MStorages.SeaWeedFs
@@ -375,6 +389,8 @@ sealed trait ImgMaintainUtilJmxMBean {
 
   def getSwfsVolumeIds(): String
 
+  def getHostSwfsVolumeIds(hostName: String): String
+
   def getSwfsVolumeIdsForNodes(nodeIds: String): String
 
   def refreshNodeSavedWhs( onlyWithWhValues: String,
@@ -403,8 +419,27 @@ final class ImgMaintainUtilJmx @Inject() (injector: Injector)
     val strFut = for {
       buckets <- imgMaintainUtil.getSwfsVolumeIds()
     } yield {
-      buckets.mkString(", \n")
+      buckets.mkString("\n#v | count\n-------\n", ", \n", "")
     }
+    JmxBase.awaitString( strFut )
+  }
+
+
+  override def getHostSwfsVolumeIds(hostName: String): String = {
+    val _imgMaintainUtil = imgMaintainUtil
+    val strFut = for {
+      allBuckets <- _imgMaintainUtil.getSwfsVolumeIds()
+      filteredVolumeIds <- _imgMaintainUtil.onlyForNodeSwfsVolumeIds(
+        allBuckets.keySet,
+        myHost = if (hostName.nonEmpty) hostName else _imgMaintainUtil.MY_HOST,
+      )
+    } yield {
+      allBuckets
+        .view
+        .filterKeys( filteredVolumeIds.contains )
+        .mkString( "\n#v | count\n-------\n", ", \n", "" )
+    }
+
     JmxBase.awaitString( strFut )
   }
 
