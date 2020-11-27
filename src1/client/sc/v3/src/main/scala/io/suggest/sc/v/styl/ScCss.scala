@@ -209,7 +209,16 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
       val fgImg = {
         // Подгонка логотипа приветствия под текущий экран: центровка.
         val whMx = args.wcFgWh.fold(StyleS.empty) { wh0 =>
-          val wh2 = wh0 / 2
+          // Если векторная графика, то надо растянуть её до приемлемых размеров.
+          val wh2 = if (args.wcFgVector) {
+            val widthPx2 = 280
+            wh0.copy(
+              width  = widthPx2,
+              height = (wh0.height.toDouble * widthPx2.toDouble / wh0.width.toDouble).toInt,
+            )
+          } else {
+            wh0 / 2
+          }
           val margin0 = wh2 / (-2)
           val margin2 = MSize2di.height.modify(_ + 25)(margin0)
           _imgWhMixin( wh2, margin2 )

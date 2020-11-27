@@ -3,9 +3,10 @@ package io.suggest.sc.m.styl
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.color.MColors
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreenInfo
-import io.suggest.media.IMediaInfo
+import io.suggest.img.MImgFormats
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
@@ -30,7 +31,8 @@ object MScCssArgs {
       OptFastEq.Plain.eqv(a.customColorsOpt, b.customColorsOpt) &&
         ((a.screenInfo ===* b.screenInfo) || (a.screenInfo ==* b.screenInfo)) &&
         (a.wcBgWh ===* b.wcBgWh) &&
-        (a.wcFgWh ===* b.wcFgWh)
+        (a.wcFgWh ===* b.wcFgWh) &&
+        (a.wcFgVector ==* b.wcFgVector)
     }
   }
 
@@ -38,17 +40,21 @@ object MScCssArgs {
     val indexRespOpt = indexResp.toOption
     val wcOpt = indexRespOpt.flatMap(_.welcome)
 
-    def __wcWhOpt(f: MWelcomeInfo => Option[IMediaInfo]) = {
-      wcOpt
-        .flatMap(f)
-        .flatMap(_.whPx)
-    }
+    val fgOpt = wcOpt.flatMap(_.fgImage)
 
     MScCssArgs(
       customColorsOpt = indexRespOpt.map(_.colors),
       screenInfo      = screenInfo,
-      wcBgWh          = __wcWhOpt( _.bgImage ),
-      wcFgWh          = __wcWhOpt( _.fgImage ),
+      wcBgWh          = wcOpt.flatMap(_.bgImage).flatMap(_.whPx),
+      wcFgWh          = fgOpt.flatMap(_.whPx),
+      wcFgVector      = (for {
+        wc <- wcOpt
+        fg <- wc.fgImage
+        imgFmt <- MImgFormats.withMime( fg.contentType )
+      } yield {
+        imgFmt.isVector
+      })
+        .getOrElseFalse
     )
   }
 
@@ -62,4 +68,5 @@ final case class MScCssArgs(
                              screenInfo        : MScreenInfo,
                              wcBgWh            : Option[MSize2di],
                              wcFgWh            : Option[MSize2di],
+                             wcFgVector        : Boolean,
                            )

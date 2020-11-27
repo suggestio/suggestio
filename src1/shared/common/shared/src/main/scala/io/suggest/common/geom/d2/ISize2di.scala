@@ -143,7 +143,6 @@ object MSize2di extends IEsMappingProps {
     }
   }
 
-
   def width = GenLens[MSize2di](_.width)
   def height = GenLens[MSize2di](_.height)
 
