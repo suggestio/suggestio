@@ -83,13 +83,14 @@ class GalleryUtil @Inject() (
     * @param ctx Контекст рендера.
     * @return Фьючерс со списком ссылок в исходном порядке.
     */
-  def renderGalleryCdn(galleryImgs: Seq[MImgT], mediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]])(implicit ctx: Context): Future[Seq[Call]] = {
+  def renderGalleryCdn(galleryImgs: Seq[MImgT], mediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]])
+                      (implicit ctx: Context): Future[Seq[(MImgT, Call)]] = {
     if (galleryImgs.isEmpty) {
       Future.successful(Nil)
     } else {
       for (mediaHostsMap <- mediaHostsMapFut) yield {
         for (galImg <- galleryImgs) yield {
-          renderGalleryItemCdn(galImg, mediaHostsMap)
+          galImg -> renderGalleryItemCdn(galImg, mediaHostsMap)
         }
       }
     }

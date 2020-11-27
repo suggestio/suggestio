@@ -634,7 +634,8 @@ trait ScIndex
           url    = cdnUtil.maybeAbsUrl( _qs.common.apiVsn.forceAbsUrls ) {
             dynImgUtil.distCdnImgCall(mimg, mediaHostsMap)
           }(ctx),
-          whPx   = whPxOpt
+          whPx   = whPxOpt,
+          contentType = mimg.dynImgId.imgFormat.get.mime,
         )
         Some( mMediaInfo )
       }

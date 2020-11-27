@@ -177,13 +177,14 @@ final class SioControllerApi @Inject()(
       status.sendEntity(
         HttpEntity.Streamed(
           data          = dataSource.data,
-          contentLength = Some( dataSource.sizeB ),
+          contentLength = dataSource.sizeB,
           contentType   = Some( contentType ),
         )
       )
     } else {
       // Добавить заголовки в акк
-      hdrsAcc ::= CONTENT_LENGTH -> dataSource.sizeB.toString
+      for (sizeB <- dataSource.sizeB)
+        hdrsAcc ::= CONTENT_LENGTH -> sizeB.toString
       // Вернуть HEAD-ответ без тела:
       status
         .as( contentType )

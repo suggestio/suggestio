@@ -27,9 +27,10 @@ object IMediaInfo {
   implicit def IMEDIA_INFO_FORMAT: OFormat[IMediaInfo] = (
     (__ \ "y").format[MMediaType] and
     (__ \ "u").format[String] and
+    (__ \ "t").format[String] and
     (__ \ "i").lazyFormatNullable( IMEDIA_INFO_FORMAT ) and
     (__ \ "w").formatNullable[MSize2di]
-  ).apply( MMediaInfo.apply, { imi: IMediaInfo => (imi.giType, imi.url, imi.thumb, imi.whPx) } )
+  ).apply( MMediaInfo.apply, { imi: IMediaInfo => (imi.giType, imi.url, imi.contentType, imi.thumb, imi.whPx) } )
 
   @inline implicit def univEq: UnivEq[IMediaInfo] = UnivEq.derive
 
@@ -43,8 +44,11 @@ sealed trait IMediaInfo {
   /** Тип элемента галлереи. Изначально только Image. */
   def giType   : MMediaType
 
-  /** Ссылка на картинку. */
+  /** Ссылка на файл. */
   def url      : String
+
+  /** Тип файла. */
+  def contentType: String
 
   /**
     * Элемент thumb-галлереи, если есть.
@@ -65,10 +69,12 @@ sealed trait IMediaInfo {
   * @param thumb Элемент thumb-галлереи, если есть.
   *              По идее всегда картинка или None.
   *              В теории же -- необязательно.
+  * @param contentType Тип MIME.
   */
 case class MMediaInfo(
                        override val giType   : MMediaType,
                        override val url      : String,
+                       override val contentType: String,
                        override val thumb    : Option[IMediaInfo] = None,
                        override val whPx     : Option[MSize2di] = None
                      )

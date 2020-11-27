@@ -68,24 +68,27 @@ final class CanDynImg @Inject() (
 
           fileNodesMap <- mNodes.multiGetMapCache( mimg.dynImgId.mediaIdAndOrigMediaId.toSet )
 
-          nodeOrig = fileNodesMap
-            .get( mimg.dynImgId.origNodeId )
-            .filter { mnode =>
-              {
-                val r1 = mnode.common.isEnabled
-                if (!r1) LOGGER.warn(s"$logPrefix 404. Img node is disabled.")
-                r1
-              } && {
-                val r2 = mnode.common.ntype ==* MNodeTypes.Media.Image
-                if (!r2) LOGGER.warn(s"$logPrefix 404. Node type is ${mnode.common.ntype}, but image expected.")
-                r2
+          nodeOrig = {
+            LOGGER.trace(s"$logPrefix orig?$isImgOrig fileNodesMap = $fileNodesMap")
+            fileNodesMap
+              .get( mimg.dynImgId.origNodeId )
+              .filter { mnode =>
+                {
+                  val r1 = mnode.common.isEnabled
+                  if (!r1) LOGGER.warn(s"$logPrefix 404. Img node is disabled.")
+                  r1
+                } && {
+                  val r2 = mnode.common.ntype ==* MNodeTypes.Media.Image
+                  if (!r2) LOGGER.warn(s"$logPrefix 404. Node type is ${mnode.common.ntype}, but image expected.")
+                  r2
+                }
               }
-            }
-            .getOrElse {
-              // Узел не найден или выключен. Считаем, что картинка просто не существует
-              LOGGER.trace(s"$logPrefix Img node not found or unrelated filtered-out.")
-              _imageNotFoundThrow
-            }
+              .getOrElse {
+                // Узел не найден или выключен. Считаем, что картинка просто не существует
+                LOGGER.trace(s"$logPrefix Img node not found or unrelated filtered-out.")
+                _imageNotFoundThrow
+              }
+          }
 
           // Далее у нас два режима работы:
           (mmedia: MNode, respMediaOpt: Option[MNode]) = {
@@ -142,7 +145,7 @@ final class CanDynImg @Inject() (
               case Right(storageInfoOpt) =>
                 LOGGER.trace(s"$logPrefix Passed. Storage=${storageInfoOpt.fold("this")(_.toString)} respMedia=${respMediaOpt.orNull}")
                 val req1 = MFileReq(
-                  derivativeOpt        = respMediaOpt,
+                  derivativeOpt     = respMediaOpt,
                   storageInfo       = storageInfoOpt,
                   mnode             = nodeOrig,
                   user              = user,

@@ -34,7 +34,7 @@ case class GetResponse(
       .getOrElse( MimeConst.APPLICATION_OCTET_STREAM )
   }
 
-  override lazy val sizeB: Long = {
+  override lazy val sizeB: Option[Long] = {
     (for {
       hdrVs <- headers.get( HeaderNames.CONTENT_LENGTH ).iterator
       hdr   <- hdrVs
@@ -43,7 +43,6 @@ case class GetResponse(
       hdr.toLong
     })
       .nextOption()
-      .getOrElse( 0L )
   }
 
   override lazy val compression: Option[MCompressAlgo] = {

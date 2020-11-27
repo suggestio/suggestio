@@ -165,6 +165,7 @@ final class MarketLkAdn @Inject() (
         galleryCalls  <- galleryUtil.renderGalleryCdn(galleryImgs, mediaHostsMapFut)(ctx)
       } yield {
         galleryCalls
+          .map(_._2)
       }
 
       // Подготовить аргументы для рендера шаблона:

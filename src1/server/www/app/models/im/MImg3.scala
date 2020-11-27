@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import java.util.NoSuchElementException
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.es.model.EsModel
 import io.suggest.fio.{IDataSource, MDsReadArgs, WriteRequest}
 import io.suggest.img
@@ -27,7 +27,6 @@ import japgolly.univeq._
 import monocle.macros.GenLens
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -97,31 +96,6 @@ class MImgs3 @Inject() (
     }
   }
 
-  private def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    for (mmediaOpt <- mediaOptFut(mimg)) yield {
-      for {
-        mnode   <- mmediaOpt
-        fEdge   <- _fileEdge( mnode )
-        eMedia  <- fEdge.media
-        whPx    <- eMedia.picture.whPx
-      } yield {
-        img.ImgSzDated(
-          sz          = whPx,
-          dateCreated = mnode.meta.basic.dateCreated,
-        )
-      }
-    }
-  }
-
-  /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
-    * т.е. метаданные обязательные изначально. */
-  private def _updateMetaWith(mimg: MImgT, localWh: ISize2di, localImg: MLocalImg): Unit = {
-    // should never happen
-    // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
-    // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
-    LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
-  }
-
 
   /** Убедится, что в хранилищах существует сохраненный экземпляр MNode.
     * Если нет, то создрать и сохранить. */
@@ -136,10 +110,11 @@ class MImgs3 @Inject() (
 
   /** Сгенерить новый экземпляр MNode и сохранить. */
   def saveMnode(mimg: MImgT): Future[MNode] = {
-    val permFut = permMetaCached(mimg)
+    val permFut = imgMetaData(mimg)
     val fname = mimg.userFileName.getOrElse {
       mLocalImgs.generateFileName( mimg.toLocalInstance )
     }
+
     val mnodeFut = for {
       perm    <- permFut
     } yield {
@@ -388,72 +363,35 @@ class MImgs3 @Inject() (
 
   private def ORIG_META_CACHE_SECONDS = 60
 
-  /** Закешированный результат чтения метаданных из постоянного хранилища. */
-  def permMetaCached(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    cacheApiUtil.getOrElseFut(mimg.dynImgId.fileName + ".giwh", ORIG_META_CACHE_SECONDS.seconds) {
-      _getImgMeta(mimg)
+  /** Сохранённые в узле  метаданные картинки. */
+  def imgMetaData(mimg: MImgT): Future[Option[ImgSzDated]] = {
+    for (mmediaOpt <- mediaOptFut(mimg)) yield {
+      for {
+        mnode   <- mmediaOpt
+        fEdge   <- _fileEdge( mnode )
+        eMedia  <- fEdge.media
+        whPx    <- eMedia.picture.whPx
+      } yield {
+        img.ImgSzDated(
+          sz          = whPx,
+          dateCreated = mnode.meta.basic.dateCreated,
+        )
+      }
     }
   }
 
   /** Получить ширину и длину картинки. */
   override def getImageWH(mimg: MImgT): Future[Option[ISize2di]] = {
-    // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
-    val mimg2Fut = for {
-      metaOpt <- permMetaCached(mimg)
-      meta = metaOpt.get
+    // Ищем уже определённые ранее данные по картинке.
+    (for {
+      metaOpt <- imgMetaData(mimg)
     } yield {
-      Some( meta.sz )
-    }
-
-    val localInst = mimg.toLocalInstance
-    lazy val logPrefix = s"getImageWh(${mimg.dynImgId.fileName}): "
-
-    val fut = if (mLocalImgs.isExists(localInst)) {
-      // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
-      val localFut = mLocalImgs.getImageWH(localInst)
-      mimg2Fut.recoverWith {
-        case ex: Exception =>
-          if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn(logPrefix + "Unable to read img info from PERMANENT models", ex)
-          localFut
-      }
-
-    } else {
-      // Сразу запускаем выкачивание локальной картинки. Если не понадобится сейчас, то скорее всего понадобится
-      // чуть позже -- на раздаче самой картинки, а не её метаданных.
-      val toLocalImgFut = toLocalImg(mimg)
-      mimg2Fut.recoverWith { case ex: Throwable =>
-        // Запустить детектирование размеров.
-        val whOptFut = toLocalImgFut.flatMap { localImgOpt =>
-          localImgOpt.fold {
-            LOGGER.warn(logPrefix + "local img was NOT read. cannot collect img meta.")
-            Future.successful( Option.empty[MSize2di] )
-          } { mLocalImgs.getImageWH }
-        }
-        if (ex.isInstanceOf[NoSuchElementException])
-          LOGGER.debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
-        // Сохранить полученные метаданные в хранилище.
-        // Если есть уже сохраненная карта метаданных, то дополнить их данными WH, а не перезатереть.
-        for (localWhOpt <- whOptFut;  localImgOpt <- toLocalImgFut) {
-          for (localWh <- localWhOpt;  localImg <- localImgOpt) {
-            _updateMetaWith(mimg, localWh, localImg)
-          }
-        }
-        // Вернуть фьючерс с метаданными, не дожидаясь сохранения оных.
-        whOptFut
-      }
-    }
-
-    // Любое исключение тут можно подавить:
-    fut.recover {
-      case ex: Exception =>
-        LOGGER.warn(logPrefix + "Unable to read img info meta from all models", ex)
-        None
-    }
+      metaOpt.map(_.sz)
+    })
   }
 
   override def rawImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    permMetaCached(mimg)
+    imgMetaData(mimg)
       .filter(_.isDefined)
       .recoverWith {
         // Пытаемся прочитать эти метаданные из модели MLocalImg.

@@ -55,6 +55,7 @@ final class Img @Inject() (
       import ctx304.request
 
       lazy val logPrefix = s"dynImg(${mimg.dynImgId.fileName})#${System.currentTimeMillis()}:"
+      LOGGER.trace(s"$logPrefix To return answer, devivative?${request.derivativeOpt.nonEmpty} orig?${mimg.dynImgId.isOriginal}")
 
       // Надо всё-таки вернуть картинку. Возможно, картинка-дериватив ещё не создана. Уточняем:
       (if (request.derivativeOpt.isEmpty && !mimg.dynImgId.isOriginal) {

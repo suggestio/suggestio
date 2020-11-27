@@ -60,6 +60,9 @@ final class IsFileNotModified @Inject()(
 
 
   def maybeNotModified[A](ctx304: Ctx304[A]): Option[Result] = {
+    lazy val logPrefix = s"maybeNotModified(${ctx304.request.remoteClientAddress})#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix Starting...")
+
     if (ctx304.fileEtagExpectedOpt.isEmpty)
       LOGGER.warn(s"Missing file hash for etagging, file-node#${ctx304.request.derivativeOrOrig.idOrNull}\n fileMeta=${ctx304.request.edgeMedia.file}")
 
@@ -71,10 +74,12 @@ final class IsFileNotModified @Inject()(
       if etagsReqHdr !=* "*"
       // ETag задан и доступен, больше никаких условий тут быть не должно: никаких запасных проверок Last-Modified.
     } yield {
+      LOGGER.trace(s"$logPrefix etag expected=$fileEtagExpected req.header=${etagsReqHdr}")
       etagsReqHdr
         .split(",")
         .find(_.trim ==* fileEtagExpected)
         .map { _ =>
+          LOGGER.trace(s"$logPrefix 304 NotModified, ${etagsReqHdr}")
           // В исходниках Assets-контроллера play, etag-успех возвращает 304 с этой пачкой хидеров:
           with304Headers( ctx304, Results.NotModified )
         }
@@ -86,6 +91,7 @@ final class IsFileNotModified @Inject()(
           ifModifiedSince    <- Assets.parseModifiedDate(ifModifiedSinceStr)
           if !ctx304.fileLastModifiedZ.toInstant.isAfter( ifModifiedSince.toInstant )
         } yield {
+          LOGGER.trace(s"$logPrefix NotModified, because ifModifinedSince=$ifModifiedSince fileLastMod=${ctx304.fileLastModifiedZ}")
           Results.NotModified
         }
       }

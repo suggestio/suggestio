@@ -1362,6 +1362,7 @@ final class Upload @Inject()(
     import ctx304.request
 
     lazy val logPrefix = s"downloadLogic(i?$dispInline,b?$returnBody):"
+    LOGGER.trace(s"$logPrefix Starting, $ctx304")
 
     val s = request.edgeMedia.storage.get
 
@@ -1375,12 +1376,14 @@ final class Upload @Inject()(
           rangeHdr <- ctx304.request.headers.get( RANGE )
           if rangeHdr matches "bytes=([0-9]{1,10}+-[0-9]{1,10},?\\s*)+"
         } yield {
-          MDsRangeInfo(
+          val r = MDsRangeInfo(
             range = rangeHdr,
             rangeIf = ctx304.request.headers
               .get( IF_RANGE )
               .filter(_.nonEmpty),
           )
+          LOGGER.trace(s"$logPrefix rangeInfo for $rangeHdr => $r")
+          r
         },
       ),
     )

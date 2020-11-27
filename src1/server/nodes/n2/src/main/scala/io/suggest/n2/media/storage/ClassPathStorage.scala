@@ -129,7 +129,12 @@ class ClassPathStorage @Inject()(
             )
           }
 
-          override lazy val sizeB = resUrl.openConnection().getContentLengthLong
+          override lazy val sizeB = {
+            Option( resUrl.openConnection() )
+              .map( _.getContentLengthLong )
+              .filter( _ >= 0 )
+          }
+
           override def compression = compAlgoOpt
         }
       }

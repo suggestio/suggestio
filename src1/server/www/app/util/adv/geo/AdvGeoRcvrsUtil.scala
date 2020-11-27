@@ -267,7 +267,8 @@ final class AdvGeoRcvrsUtil @Inject()(
                   szCss
                 }
                 Some(szFinal)
-              }
+              },
+              contentType = logoMakeRes.dynCallArgs.dynImgId.imgFormat.get.mime,
             )
           }
 

@@ -122,7 +122,7 @@ final class SysImg @Inject() (
   def showOne(im: MImgT) = csrf.AddToken {
     isSu().async { implicit request =>
       // TODO Искать, где используется эта картинка.
-      for (metaOpt <- mImgs3.permMetaCached(im)) yield {
+      for (metaOpt <- mImgs3.imgMetaData(im)) yield {
         Ok(showOneTpl(im, metaOpt))
       }
     }

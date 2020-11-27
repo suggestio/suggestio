@@ -21,7 +21,7 @@ trait IDataSource {
   def data: Source[ByteString, _]
 
   /** Размер файла. */
-  def sizeB: Long
+  def sizeB: Option[Long]
 
   /** Если в запросе допускалось использование сжатия, то на выходе ответ может быть сжат. */
   def compression: Option[MCompressAlgo]

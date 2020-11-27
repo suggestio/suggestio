@@ -2,7 +2,6 @@ package util.img
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.geom.d2.ISize2di
 import io.suggest.dev.MScreen
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.n2.node.MNode
@@ -57,20 +56,48 @@ class WelcomeUtil @Inject() (
                           (implicit ctx: Context): Future[Option[MWelcomeRenderArgs]] = {
     // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
     def _colorBg = colorBg(mnode)
+    lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}):"
 
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
     val bgFut = mnode.Quick.Adn.galImgs
       .headOption
       .fold[Future[Either[String, MImgWithWhInfo]]] {
         Future.successful(_colorBg)
+
       } { case (jdId, bgEdge) =>
         val dynImgId = MDynImgId.fromJdEdge(jdId, bgEdge)
-        val oiik = MImg3(dynImgId)
-        val fut0 = mImgs3.getImageWH( oiik.original )
-        lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}):"
+        val mimg = MImg3(dynImgId)
+        val mimgOrig = mimg.original
+        val fut0 = mImgs3.getImageWH( mimgOrig )
         fut0.map {
           case Some(meta) =>
-            Right(bgCallForScreen(oiik, screen, meta))
+            val r = screen
+              .flatMap { scr =>
+                BasicScreenSizes
+                  .includesSize( scr.wh )
+                  .map(_ -> scr)
+              }
+              .fold {
+                LOGGER.debug(s"$logPrefix No screen sz info for $screen. Returning original img.")
+                MImgWithWhInfo(mimg, meta)
+              } { case (bss, screen) =>
+                val dynArgs = if (dynImgId.imgFormat.exists(_.isVector)) {
+                  // Для svg - вернуть оригинал.
+                  mimgOrig
+                } else {
+                  val outFmt = MImgFormats.JPEG
+                  val imOps = bgImConvertArgs(outFmt, bss, screen)
+                  mimgOrig.withDynImgId(
+                    mimgOrig.dynImgId.copy(
+                      imgFormat = Some( outFmt ),
+                      imgOps    = imOps,
+                    )
+                  )
+                }
+
+                MImgWithWhInfo(dynArgs, bss)
+              }
+            Right(r)
           case _ =>
             trace(s"$logPrefix no welcome bg WH for $bgEdge")
             colorBg(mnode)
@@ -104,33 +131,6 @@ class WelcomeUtil @Inject() (
     }
   }
 
-
-  /** Собрать ссылку на фоновую картинку. */
-  private def bgCallForScreen(oiik: MImgT, screenOpt: Option[MScreen], origMeta: ISize2di)
-                             (implicit ctx: Context): MImgWithWhInfo = {
-    val oiik2 = oiik.original
-    lazy val logPrefix = s"bgCallForScreen($oiik):"
-    screenOpt
-      .flatMap { scr =>
-        BasicScreenSizes
-          .includesSize( scr.wh )
-          .map(_ -> scr)
-      }
-      .fold {
-        LOGGER.debug(s"$logPrefix No screen sz info for $screenOpt. Returning original img.")
-        MImgWithWhInfo(oiik, origMeta)
-      } { case (bss, screen) =>
-        val outFmt = MImgFormats.JPEG
-        val imOps = bgImConvertArgs(outFmt, bss, screen)
-        val dynArgs = oiik2.withDynImgId(
-          oiik2.dynImgId.copy(
-            imgFormat = Some( outFmt ),
-            imgOps    = imOps,
-          )
-        )
-        MImgWithWhInfo(dynArgs, bss)
-      }
-  }
 
   /** Сгенерить аргументы для генерации dyn-img ссылки. По сути, тут список параметров для вызова convert.
     * @param scrSz Размер конечной картинки.

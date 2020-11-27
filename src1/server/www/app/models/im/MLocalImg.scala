@@ -100,7 +100,10 @@ class MLocalImgs @Inject() (
     val file = fileOf(mimg)
     val ds = new IDataSource {
       override lazy val data        = FileIO.fromPath( file.toPath )
-      override lazy val sizeB       = blocking( file.length() )
+      override lazy val sizeB       = {
+        Some( blocking( file.length() ) )
+          .filter( _ > 0L )
+      }
       override lazy val contentType = getMimeSync(mimg)
       // Без скрытого сжатия, тут его не бывает.
       override def compression = None

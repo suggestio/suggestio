@@ -160,7 +160,7 @@ class SwfsClientWsSpec extends PlaySpec with GuiceOneAppPerSuite {
           .run()
           .map { bs => new String( bs.toArray ) }
         "have expected resp.body lenght" in {
-          gr.sizeB shouldBe f.length()
+          gr.sizeB shouldBe Some(f.length())
         }
         "contain valid Content-Type" in {
           gr.contentType shouldBe ct
