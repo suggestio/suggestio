@@ -152,7 +152,7 @@ final class SwfsStorage @Inject()(
           .recoverWith { case ex =>
             val errMsg = s"$logPrefix Cannot read from volume ${vlocHead.url} (public ${vlocHead.publicUrl})"
             if (ex.isInstanceOf[NoSuchElementException])
-              LOGGER.warn( errMsg )
+              LOGGER.warn( errMsg + " => 404 | NSEE | etc..." )
             else
               LOGGER.warn( errMsg, ex )
 

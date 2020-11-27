@@ -1354,11 +1354,13 @@ final class Upload @Inject()(
         .async( downloadLogic(
           dispInline = dlQs.dispInline,
           returnBody = returnBody,
-        )(_) )
+        )(_)() )
     }
   }
 
-  def downloadLogic[A](dispInline: Boolean, returnBody: Boolean)(ctx304: Ctx304[A]): Future[Result] = {
+  def downloadLogic[A](dispInline: Boolean, returnBody: Boolean)
+                      (ctx304: Ctx304[A])
+                      (notFound: => Future[Result] = errorHandler.onClientError( ctx304.request, statusCode = NOT_FOUND, message = "File not found" )): Future[Result] = {
     import ctx304.request
 
     lazy val logPrefix = s"downloadLogic(i?$dispInline,b?$returnBody):"
@@ -1413,8 +1415,8 @@ final class Upload @Inject()(
       )
     })
       .recoverWith { case ex: NoSuchElementException =>
-        LOGGER.debug(s"$logPrefix File #${storClient.getClass.getSimpleName}[${s.data}] not found", ex)
-        errorHandler.onClientError( request, statusCode = NOT_FOUND, message = "File not found" )
+        LOGGER.debug(s"$logPrefix File ${storClient.getClass.getSimpleName}#${s.data} not found", ex)
+        notFound
       }
   }
 

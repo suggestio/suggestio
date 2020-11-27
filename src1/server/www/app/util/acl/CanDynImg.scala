@@ -158,7 +158,7 @@ final class CanDynImg @Inject() (
               // Это не тот узел, а какой-то другой. Скорее всего, distUtil уже ругнулось в логи на эту тему.
               // По идее, это отработка какой-то ошибки в кластере, либо клиент подменил URL неправильным хостом.
               case Left(volLocs) =>
-                LOGGER.warn(s"$logPrefix DistUtil refused media request: NOT related to this node. media#${mmedia.idOrNull} storage is ${edgeMedia.storage}, volume locations = ${volLocs.mkString(", ")}")
+                LOGGER.warn(s"$logPrefix Media request NOT related to this node. media#${mmedia.idOrNull} storage is ${edgeMedia.storage}, volume locations = ${volLocs.mkString(", ")}")
                 // Попытаться отредиректить на правильный узел.
                 volLocs
                   .headOption

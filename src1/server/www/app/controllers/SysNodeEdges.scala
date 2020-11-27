@@ -219,7 +219,7 @@ final class SysNodeEdges @Inject() (
       .async( uploadCtl.downloadLogic(
         dispInline = false,
         returnBody = true,
-      )(_) )
+      )(_)() )
   }
 
 }

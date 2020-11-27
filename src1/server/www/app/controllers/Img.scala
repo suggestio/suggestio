@@ -5,10 +5,11 @@ import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import play.api.inject.Injector
+import play.api.mvc.Result
 import util.acl.{CanDynImg, IsFileNotModified}
 import util.img.DynImgUtil
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 /**
@@ -57,8 +58,8 @@ final class Img @Inject() (
       lazy val logPrefix = s"dynImg(${mimg.dynImgId.fileName})#${System.currentTimeMillis()}:"
       LOGGER.trace(s"$logPrefix To return answer, devivative?${request.derivativeOpt.nonEmpty} orig?${mimg.dynImgId.isOriginal}")
 
-      // Надо всё-таки вернуть картинку. Возможно, картинка-дериватив ещё не создана. Уточняем:
-      (if (request.derivativeOpt.isEmpty && !mimg.dynImgId.isOriginal) {
+      /** Действие в случае отсутствия запрошенного дериватива. */
+      def __onDerivativeMissing(): Future[Result] = {
         // Запрошен дериватив, который ещё пока не существует.
         for {
           localImg <- dynImgUtil.ensureLocalImgReady(mimg, cacheResult = false)
@@ -76,7 +77,7 @@ final class Img @Inject() (
                 fileName  = { _ => Some(mimg.dynImgId.fileName) }
               )
             } else status0
-          )
+            )
             .as {
               Try( MimeUtilJvm.probeContentType(imgFile.toPath) )
                 .toOption
@@ -92,6 +93,12 @@ final class Img @Inject() (
               LAST_MODIFIED -> request.mnode.meta.basic.dateCreated.toZonedDateTime,
             )
         }
+      }
+
+      // Надо всё-таки вернуть картинку. Возможно, картинка-дериватив ещё не создана. Уточняем:
+      (if (request.derivativeOpt.isEmpty && !mimg.dynImgId.isOriginal) {
+        __onDerivativeMissing()
+
       } else {
         // В базе уже есть готовая к раздаче картинка. Организуем akka-stream: swfs -> here -> client.
         // Кэшировать это скорее всего небезопасно, да и выигрыша мало (с локалхоста на локалхост), поэтому без кэша.
@@ -101,7 +108,24 @@ final class Img @Inject() (
         uploadCtl.downloadLogic(
           dispInline = true,
           returnBody = returnBody,
-        )(ctx304)
+        )(ctx304)(
+          notFound = {
+            // Если файл из базы не найден в хранилище, то значит он не существует, и надо его удалить из СУБД.
+            // Пока разрешаем такой трюк только для деривативов.
+            request
+              .derivativeOpt
+              // Фильтровать SVG? Не фильтруем, т.к. у него по идее деривативов и так быть не должно.
+              .fold {
+                // Это отсутствующий оригинал. Что-то сильно не так с хранилищем.
+                LOGGER.error(s"$logPrefix Missing expected file in storage: ${request.storageInfo.orNull} node[${ctx304.request.mnode.id}]")
+                errorHandler.onClientError( ctx304.request, NOT_FOUND )
+              } { derivedNode =>
+                // Этот узел дериватива не валиден: файл отсутствует в хранилище. Пересоздать...
+                LOGGER.info(s"$logPrefix Expected derivative img missing in storage ${ctx304.request.storageInfo.orNull}, recovering ${derivedNode.id}")
+                __onDerivativeMissing()
+              }
+          }
+        )
       })
         .recoverWith { case ex: Throwable =>
           // TODO Пересобрать неисправную картинку, если не-оригинал?
