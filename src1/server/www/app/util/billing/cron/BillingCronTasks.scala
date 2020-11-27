@@ -39,7 +39,7 @@ class BillingCronTasks @Inject()(
 
 
   private def depubExpired = MCronTask(
-    startDelay  = 5.seconds,
+    startDelay  = 12.seconds,
     every       = ADVS_EVERY,
     displayName = "depublishExpiredAdvs()",
   ) { () =>
@@ -50,7 +50,7 @@ class BillingCronTasks @Inject()(
   }
 
   private def advOfflineAdvs = MCronTask(
-    startDelay  = 15.seconds,
+    startDelay  = 17.seconds,
     every       = ADVS_EVERY,
     displayName = "advertiseOfflineAds()",
   ) { () =>

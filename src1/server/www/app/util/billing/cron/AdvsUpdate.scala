@@ -97,16 +97,19 @@ abstract class AdvsUpdate
       }
       .runWith( streamsUtil.Sinks.count )
       .flatMap { countTotal =>
-        if (countTotal > 0)
+        if (countTotal > 0) {
+          // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
+          // Иначе свежие теги НЕ находятся в индексе на последующих итерациях. TODO Актуально ли это ещё? Теги ребилдятся в отдельном потоке, вроде.
           LOGGER.info(s"$logPrefix Done, total processed: $countTotal")
-        // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
-        // Иначе свежие теги НЕ находятся в индексе на последующих итерациях. TODO Актуально ли это ещё? Теги ребилдятся в отдельном потоке, вроде.
-        mNodes
-          .refreshIndex()
-          .recover { case ex: Throwable =>
-            LOGGER.error(s"$logPrefix Can't refresh es-index", ex)
-          }
-          .map(_ => countTotal)
+          mNodes
+            .refreshIndex()
+            .recover { case ex: Throwable =>
+              LOGGER.error(s"$logPrefix Can't refresh es-index", ex)
+            }
+            .map(_ => countTotal)
+        } else {
+          Future.successful( countTotal )
+        }
       }
   }
 
@@ -157,13 +160,15 @@ abstract class AdvsUpdate
     * @param nodeId id обрабатываемого узла.
     */
   def runForNodeId(nodeId: String): Future[_] = {
-    val madOptFut = mNodes.getByIdCache(nodeId)
+    val madOptFut = mNodes.getByIdCache( nodeId )
 
     lazy val logPrefix = s"runForAdId($nodeId/${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix Starting...")
 
     // Нужны только item'ы, которые поддерживаются adv-билдерами
-    val acc0Fut = for (madOpt <- madOptFut) yield {
+    val acc0Fut = for {
+      madOpt <- madOptFut
+    } yield {
       Acc(
         mnode       = madOpt.get,
         ctxOuterFut = _builderCtxOuterFut
@@ -179,8 +184,8 @@ abstract class AdvsUpdate
       if hasItemsForProcessing(mitems)
 
       // Блокировка транзакции в недо-экшене, готовящем db-экшены и обновляющий карточку.
-      acc2 <- {
-        val fut = for {
+      acc2 <- DBIO.from {
+        for {
           acc0 <- acc0Fut
           // Это сложная операция: выстраивание набора изменений, наложение его на карточку, сохранение карточки, выстраивание экшенов SQL-транзакции:
           tuData1 <- esModel.tryUpdateM[MNode, TryUpdateBuilder]( mNodes, TryUpdateBuilder(acc0) ) { tuData =>
@@ -189,11 +194,10 @@ abstract class AdvsUpdate
         } yield {
           tuData1.acc
         }
-        DBIO.from(fut)
       }
 
       // Внести накопленные изменения в БД биллинга
-      _ <- DBIO.seq(acc2.dbActions: _*)
+      _ <- DBIO.seq( acc2.dbActions: _* )
 
     } yield {
       LOGGER.trace(s"$logPrefix Done")

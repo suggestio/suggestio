@@ -481,6 +481,21 @@ object OutEdges extends MacroLogsImpl {
         }
 
 
+        // Отработка фильтрации по шардам файлового хранилища.
+        for (shards <- oe.fileStorShards) {
+          val qb = QueryBuilders.boolQuery()
+          _qOpt foreach qb.must
+
+          val fn = EF.EO_MEDIA_STORAGE_DATA_SHARDS_FN
+          if (shards.isEmpty)
+            qb mustNot QueryBuilders.existsQuery( fn )
+          else
+            qb filter QueryBuilders.termsQuery( fn, shards.toSeq: _* )
+
+          _qOpt = Some( qb )
+        }
+
+
         // Поиск/фильтрация по флагам.
         if (oe.flags.nonEmpty) {
           val flagsQbs = (for {

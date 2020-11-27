@@ -64,7 +64,8 @@ object MEdgeMedia
       override protected def _PARENT_FN = STORAGE_FN
 
       def STORARGE_TYPE_FN = _fullFn( F.STORAGE_FN )
-      def STORARGE_DATA_META_FN = _fullFn( F.Data.DATA_META_FN )
+      def STORAGE_DATA_META_FN = _fullFn( F.Data.DATA_META_FN )
+      def STORAGE_DATA_SHARDS_FN = _fullFn( F.Data.DATA_SHARDS_FN )
     }
 
 

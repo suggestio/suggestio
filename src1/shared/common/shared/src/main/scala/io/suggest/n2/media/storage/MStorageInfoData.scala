@@ -19,17 +19,17 @@ object MStorageInfoData extends IEsMappingProps {
 
   object Fields {
     def META_FN = "d"
-    def HOST_FN = "h"
+    def SHARDS_FN = "h"
   }
 
   implicit def mediaStorageInfoDataJson: OFormat[MStorageInfoData] = {
     val F = Fields
     (
       (__ \ F.META_FN).format[String] and
-      (__ \ F.HOST_FN).formatNullable[Seq[String]]
-        .inmap[Seq[String]](
-          EmptyUtil.opt2ImplEmptyF( Seq.empty ),
-          hosts => Option.when(hosts.nonEmpty)(hosts)
+      (__ \ F.SHARDS_FN).formatNullable[Set[String]]
+        .inmap[Set[String]](
+          EmptyUtil.opt2ImplEmptyF( Set.empty ),
+          shards => Option.when( shards.nonEmpty )(shards)
         )
     )(apply, unlift(unapply))
   }
@@ -45,26 +45,27 @@ object MStorageInfoData extends IEsMappingProps {
       // получать от хранилища листинг всех файлов, прогнать каждый файл по поиску, выявить и удалить лишние файлы из хранилища.
       F.META_FN -> FKeyWord.indexedJs,
       // Хосты индексируем просто на будущее. Это не для всех хранилищ, и индекс будет очень маленький и не уникальный.
-      F.HOST_FN -> FKeyWord.indexedJs,
+      F.SHARDS_FN -> FKeyWord.indexedJs,
     )
   }
 
 
   def meta = GenLens[MStorageInfoData](_.meta)
-  //lazy val hosts = GenLens[MStorageInfoData](_.hosts)
+  def shards = GenLens[MStorageInfoData](_.shards)
 
 }
 
 
-/** @param hosts Данные хоста, если необходимо.
-  *              Поле предусмотрено для HostPath-хранилища, которое может быть ограничено по хостам.
+/** @param shards Данные шарды или хоста в рамках хранилища, если необходимо.
+  *               Для SWFS -- это volume id (например "3" для FID="3,425adeff53").
+  *               Для HostPath-хранилищ -- id хостов.
   * @param meta Текстовый указатель (метаданные хранилища).
   *             Для swfs - это fid.
   *             Для ассета - это неизменяемая часть названия.
   */
 final case class MStorageInfoData(
                                    meta      : String,
-                                   hosts     : Seq[String]      = Nil,
+                                   shards    : Set[String]      = Set.empty,
                                  ) {
 
   /** Кэширование распарсенного SeaweedFS FID. */
@@ -74,9 +75,9 @@ final case class MStorageInfoData(
   override def toString: String = {
     val sb = new StringBuilder(32, meta)
 
-    if (hosts.nonEmpty) {
+    if (shards.nonEmpty) {
       sb.append('[')
-      hosts.foreach { host =>
+      shards.foreach { host =>
         sb.append(host)
           .append(",")
       }

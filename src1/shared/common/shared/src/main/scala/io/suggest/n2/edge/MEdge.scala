@@ -63,7 +63,8 @@ object MEdge
       import MEdgeMedia.Fields.{StorageFns => S}
 
       def STORAGE_TYPE_FN = _fullFn( S.STORARGE_TYPE_FN )
-      def STORAGE_DATA_META_FN = _fullFn( S.STORARGE_DATA_META_FN )
+      def STORAGE_DATA_META_FN = _fullFn( S.STORAGE_DATA_META_FN )
+      def STORAGE_DATA_SHARDS_FN = _fullFn( S.STORAGE_DATA_SHARDS_FN )
 
       import MEdgeMedia.Fields.{Picture => P}
       def PICTURE_WH_WIDTH_FN = _fullFn( P.WH_WIDTH_FN )

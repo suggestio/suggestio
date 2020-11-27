@@ -60,6 +60,7 @@ final case class Criteria(
                            fileIsOriginal    : Option[Boolean]          = None,
                            fileStorType      : Set[MStorage]            = Set.empty,
                            fileStorMetaData  : Set[String]              = Set.empty,
+                           fileStorShards : Option[Set[String]]      = None,
                            // media.picture
                            pictureHeightPx   : List[Int]                = Nil,
                            pictureWidthPx    : List[Int]                = Nil,

@@ -90,7 +90,7 @@ object CommonModelsJvm extends MacroLogsDyn {
 
   implicit def storageInfoDataQsb(implicit
                                   strB         : QueryStringBindable[String],
-                                  strSetB      : QueryStringBindable[Seq[String]],
+                                  strSeqB      : QueryStringBindable[QsbSeq[String]],
                                  ): QueryStringBindable[MStorageInfoData] = {
     new QueryStringBindableImpl[MStorageInfoData] {
 
@@ -99,7 +99,7 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F(key)
         for {
           dataE       <- strB.bind( k(F.META_FN), params )
-          hostsE      <- strSetB.bind( k(F.HOST_FN), params )
+          hostsE      <- strSeqB.bind( k(F.SHARDS_FN), params )
         } yield {
           for {
             data      <- dataE
@@ -107,7 +107,7 @@ object CommonModelsJvm extends MacroLogsDyn {
           } yield {
             MStorageInfoData(
               meta  = data,
-              hosts = hosts,
+              shards = hosts.items.toSet,
             )
           }
         }
@@ -118,7 +118,7 @@ object CommonModelsJvm extends MacroLogsDyn {
         val k = key1F(key)
         _mergeUnbinded1(
           strB.unbind( k(F.META_FN), value.meta ),
-          strSetB.unbind( k(F.HOST_FN), value.hosts ),
+          strSeqB.unbind( k(F.SHARDS_FN), QsbSeq( value.shards.toSeq ) ),
         )
       }
 

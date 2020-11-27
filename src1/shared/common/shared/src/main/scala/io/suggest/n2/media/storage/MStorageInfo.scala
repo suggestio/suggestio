@@ -24,6 +24,7 @@ object MStorageInfo extends IEsMappingProps {
       import MStorageInfoData.{Fields => F}
       override protected def _PARENT_FN = DATA_FN
       def DATA_META_FN = _fullFn( F.META_FN )
+      def DATA_SHARDS_FN = _fullFn( F.SHARDS_FN )
     }
   }
 

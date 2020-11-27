@@ -64,7 +64,8 @@ final class SwfsStorage @Inject()(
         storage = MStorageInfo(
           storage = MStorages.SeaWeedFs,
           data = MStorageInfoData(
-            meta = resp.fid,
+            meta   = resp.fid,
+            shards = Set.empty + resp.fidParsed.volumeId.toString,
           ),
         ),
       )

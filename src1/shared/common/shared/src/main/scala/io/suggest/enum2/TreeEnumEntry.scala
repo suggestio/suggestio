@@ -54,6 +54,9 @@ object TreeEnumEntry {
     def meAndParents: LazyList[T] =
       that #:: parents
 
+    def meAndChildrenDeep: LazyList[T] =
+      that #:: deepChildren
+
   }
 
 
