@@ -276,6 +276,9 @@ class CdnUtil @Inject() (
           // Может быть несколько результатов, если у volume существуют реплики.
           // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
           val myExtHost = uploadUtil.MY_NODE_PUBLIC_HOST
+          if (volLocs.isEmpty)
+            LOGGER.warn(s"$logPrefix Lost SWFS volume#${fid.volumeId} with 0 locations for fid#$fid. Bypassing error...")
+
           volLocs
             .find { volLoc =>
               volLoc.publicUrl ==* myExtHost

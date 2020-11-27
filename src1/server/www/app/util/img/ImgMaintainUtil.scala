@@ -47,7 +47,7 @@ final class ImgMaintainUtil @Inject()(
   private lazy val esModel = injector.instanceOf[EsModel]
   private lazy val mLocalImgs = injector.instanceOf[MLocalImgs]
   private lazy val imgUploadCtxFactory = injector.instanceOf[IImgUploadCtxFactory]
-  private lazy val swfsVolumeCache = injector.instanceOf[SwfsVolumeCache]
+  private[img] lazy val swfsVolumeCache = injector.instanceOf[SwfsVolumeCache]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
   implicit private lazy val mat = injector.instanceOf[Materializer]
 
@@ -401,6 +401,8 @@ sealed trait ImgMaintainUtilJmxMBean {
                                 nodeIds: String,
                                 ): String
 
+  def swfsVolumesDisplay(volumeIds: String): String
+
 }
 
 final class ImgMaintainUtilJmx @Inject() (injector: Injector)
@@ -516,6 +518,42 @@ final class ImgMaintainUtilJmx @Inject() (injector: Injector)
     } yield {
       s"Done $res nodes."
     }
+    JmxBase.awaitString( strFut )
+  }
+
+
+  override def swfsVolumesDisplay(volumeIdsRaw: String): String = {
+    val _imgMaintainUtil = imgMaintainUtil
+
+    val strFut = for {
+
+      volumeIds <- Option
+        .when( volumeIdsRaw.nonEmpty ) {
+          "[, ]+".r
+            .split( volumeIdsRaw )
+            .iterator
+            .map(_.toInt: SwfsVolumeId_t)
+            .toSet
+        }
+        .fold [Future[Set[SwfsVolumeId_t]]] {
+          _imgMaintainUtil
+            .getSwfsVolumeIds()
+            .map(_.keySet)
+        }( Future.successful )
+
+      locsStrs <- Future.traverse( volumeIds: Iterable[SwfsVolumeId_t] ) { volumeId =>
+        for {
+          locs <- _imgMaintainUtil.swfsVolumeCache.getLocations(volumeId)
+        } yield {
+          s"$volumeId -> ${locs.mkString(" | ")}"
+        }
+      }
+
+    } yield {
+      locsStrs
+        .mkString("\n", "\n", "")
+    }
+
     JmxBase.awaitString( strFut )
   }
 
