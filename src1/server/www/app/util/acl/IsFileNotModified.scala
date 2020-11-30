@@ -61,12 +61,11 @@ final class IsFileNotModified @Inject()(
 
   def maybeNotModified[A](ctx304: Ctx304[A]): Option[Result] = {
     lazy val logPrefix = s"maybeNotModified(${ctx304.request.remoteClientAddress})#${System.currentTimeMillis()}:"
-    LOGGER.trace(s"$logPrefix Starting...")
 
     if (ctx304.fileEtagExpectedOpt.isEmpty)
       LOGGER.warn(s"Missing file hash for etagging, file-node#${ctx304.request.derivativeOrOrig.idOrNull}\n fileMeta=${ctx304.request.edgeMedia.file}")
 
-    (for {
+    val resOpt = (for {
       // Использовать sha1-хэш, который используется для ETag
       fileEtagExpected <- ctx304.fileEtagExpectedOpt
       etagsReqHdr <- ctx304.request.headers.get( HeaderNames.IF_NONE_MATCH )
@@ -95,6 +94,11 @@ final class IsFileNotModified @Inject()(
           Results.NotModified
         }
       }
+
+    if (resOpt.isEmpty)
+      LOGGER.trace(s"$logPrefix Modified, returning None following next action.")
+
+    resOpt
   }
 
 

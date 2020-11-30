@@ -205,22 +205,29 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
     /** Контейнер стилей элементов переднего плана экрана приветствия. */
     object Fg {
 
+      /** Данные по картинки. */
+      val fgImgWhOpt = for (wh0 <- args.wcFgWh) yield {
+        if (args.wcFgVector) {
+          // SVG-картинку растягивать по ширине принудительно.
+          val widthPx2 = 280
+          wh0.copy(
+            width  = widthPx2,
+            height = (wh0.height.toDouble * widthPx2.toDouble / wh0.width.toDouble).toInt,
+          )
+        } else {
+          wh0 / 2
+        }
+      }
+
       /** Стили логотипа экрана приветствия. */
       val fgImg = {
         // Подгонка логотипа приветствия под текущий экран: центровка.
-        val whMx = args.wcFgWh.fold(StyleS.empty) { wh0 =>
+        val whMx = fgImgWhOpt.fold(StyleS.empty) { wh2 =>
           // Если векторная графика, то надо растянуть её до приемлемых размеров.
-          val wh2 = if (args.wcFgVector) {
-            val widthPx2 = 280
-            wh0.copy(
-              width  = widthPx2,
-              height = (wh0.height.toDouble * widthPx2.toDouble / wh0.width.toDouble).toInt,
-            )
-          } else {
-            wh0 / 2
-          }
-          val margin0 = wh2 / (-2)
-          val margin2 = MSize2di.height.modify(_ + 25)(margin0)
+          val margin2 = MSize2di(
+            height = wh2.height / -2 + 25,
+            width  = wh2.width / -2,
+          )
           _imgWhMixin( wh2, margin2 )
         }
 
@@ -231,9 +238,20 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
         )
       }
 
-      val fgText = _styleAddClass( _SM_WELCOME_AD + "_fg-text" )
+      val fgText = {
+        var acc: List[ToStyle] =
+          addClassName( _SM_WELCOME_AD + "_fg-text" ) ::
+          Nil
+
+        // Отработать центровку по вертикали с учётом возможного растягивания векторного fgImg.
+        for (fgImgWh <- fgImgWhOpt)
+          acc ::= marginTop( fgImgWh.height.px )
+
+        style( acc: _* )
+      }
 
       val helper = _styleAddClass( _SM_WELCOME_AD + "_helper" )
+
     }
 
   }

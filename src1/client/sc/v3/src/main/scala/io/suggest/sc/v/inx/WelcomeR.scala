@@ -97,11 +97,6 @@ class WelcomeR(
               <.div(
                 CSS.Fg.fgText,
 
-                // Выровнять по вертикали с учётом картинки переднего плана:
-                wcNameFgH.wcFgHeightPx.whenDefined { fgHeightPx =>
-                  ^.marginTop := (fgHeightPx / 2).px
-                },
-
                 // Отобразить текстовый логотип, такой же как и в заголовке:
                 nodeNameR.component(
                   nodeNameR.PropsVal(
