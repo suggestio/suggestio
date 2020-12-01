@@ -36,7 +36,7 @@ import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MScIndexes}
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
-import io.suggest.sc.m.boot.{Boot, MBootServiceIds, MSpaRouterState}
+import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
@@ -285,12 +285,28 @@ class Sc3Circuit(
   private[sc] val geoTabDataRW    = mkLensZoomRW(geoTabRW, MGeoTabS.data)( MGeoTabData.MGeoTabDataFastEq )
   private val mapDelayRW          = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
-  private val rcvrCacheRW         = mkLensZoomRW(geoTabDataRW, MGeoTabData.rcvrsCache)
-  private val rcvrRespRW          = rcvrCacheRW.zoomRW( _.map(_.resp) ) {
-    (potCache0, potResp2) =>
-      potResp2.map { resp2 =>
-        potCache0.fold( MSearchRespInfo(None, resp2) )(_.copy(resp = resp2))
-      }
+  private val rcvrRespRW          = {
+    geoTabRW.zoomRW( _.data.rcvrsCache.map(_.resp) ) {
+      (geoTab0, potResp2) =>
+        val rcvrsCache2 = for (gnr <- potResp2) yield {
+          MSearchRespInfo(
+            textQuery   = None,
+            resp        = gnr,
+          )
+        }
+
+        var modF = MGeoTabS.data
+          .composeLens( MGeoTabData.rcvrsCache )
+          .set( rcvrsCache2 )
+
+        // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
+        val geoTab_mapInit_rcvrs_LENS = MGeoTabS.mapInit
+          .composeLens( MMapInitState.rcvrs )
+        if (geoTab_mapInit_rcvrs_LENS.get(geoTab0).isEmpty)
+          modF = modF andThen geoTab_mapInit_rcvrs_LENS.set( rcvrsCache2 )
+
+        modF( geoTab0 )
+    }
   }
 
   private val gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
@@ -824,7 +840,8 @@ class Sc3Circuit(
       } else {
         Nil
       }
-      val bootMsg = Boot( MBootServiceIds.RcvrsMap :: svcsTail )
+      val rcvrMapBi = MBootServiceIds.RcvrsMap
+      val bootMsg = Boot( rcvrMapBi :: svcsTail )
       this.runEffectAction( bootMsg )
     }
 
@@ -955,7 +972,13 @@ class Sc3Circuit(
     }
 
     Future {
-      this.runEffectAction( LoadIndexRecents(clean = true) )
+      val jsRouterBootSvcId = MBootServiceIds.JsRouter
+      val a = BootAfter(
+        jsRouterBootSvcId,
+        LoadIndexRecents(clean = true).toEffectPure,
+      )
+      val fx = Boot( jsRouterBootSvcId :: Nil ).toEffectPure >> a.toEffectPure
+      this.runEffect( fx, a )
     }
   }
 

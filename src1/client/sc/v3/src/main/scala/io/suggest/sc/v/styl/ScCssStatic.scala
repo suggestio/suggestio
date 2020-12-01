@@ -375,7 +375,7 @@ object ScCssStatic extends StyleSheet.Inline {
         verticalAlign.middle,
         marginLeft(6.px),
         maxHeight(30.px),
-        maxWidth(140.px),
+        maxWidth(64.px),
         // без disableGutters, нужно рубить правый отступ
         marginRight(0.px).important
       )

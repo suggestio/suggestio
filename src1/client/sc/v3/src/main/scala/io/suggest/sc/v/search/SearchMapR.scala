@@ -12,7 +12,7 @@ import io.suggest.maps.r.{LGeoMapR, MapLoaderMarkerR, RcvrMarkersR, ReactLeaflet
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.MGeoTabS
+import io.suggest.sc.m.search.{MGeoTabS, MSearchRespInfo}
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
@@ -40,7 +40,7 @@ class SearchMapR {
 
   protected[this] case class State(
                                     mmapC       : ReactConnectProxy[MMapS],
-                                    rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]],
+                                    rcvrsGeoC   : ReactConnectProxy[Pot[MSearchRespInfo[MGeoNodesResp]]],
                                     loaderOptC  : ReactConnectProxy[Option[MGeoPoint]],
                                     userLocOptC : ReactConnectProxy[Option[MGeoLoc]],
                                     isInitSomeC : ReactConnectProxy[Some[Boolean]],
@@ -84,7 +84,9 @@ class SearchMapR {
           // Плагин для геолокации текущего юзера.
           LocateControlR(),
           // Рендер шейпов и маркеров текущий узлов.
-          s.rcvrsGeoC { RcvrMarkersR.applyNoChildren },
+          s.rcvrsGeoC { reqWrapProxy =>
+            reqWrapProxy.wrap( _.map(_.resp) )( RcvrMarkersR.applyNoChildren )
+          },
           // Рендер опционального маркера-крутилки для ожидания загрузки.
           s.loaderOptC { MapLoaderMarkerR.component.apply },
           // Рендер круга текущей геолокации юзера:
@@ -148,9 +150,7 @@ class SearchMapR {
 
         rcvrsGeoC   = mapInitProxy.connect { props =>
           // Отображать найденные в поиске ресиверы вместо всех.
-          props
-            .mapInit.rcvrs
-            .map(_.resp)
+          props.mapInit.rcvrs
         },
 
         loaderOptC  = mapInitProxy.connect(_.mapInit.loader)( OptFastEq.Plain ),

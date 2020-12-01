@@ -207,7 +207,7 @@ final case class ScCss( args: MScCssArgs ) extends StyleSheet.Inline {
 
       /** Данные по картинки. */
       val fgImgWhOpt = for (wh0 <- args.wcFgWh) yield {
-        if (args.wcFgVector) {
+        if (args.wcFgForceEnlarge) {
           // SVG-картинку растягивать по ширине принудительно.
           val widthPx2 = 280
           wh0.copy(

@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiSvgIconClasses, MuiSvgIconProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -71,19 +71,13 @@ class ScErrorDiaR(
             }
             new MuiIconButtonProps {
               override val onClick  = _onCloseCbF
-              //override val color    = MuiColorTypes.inherit
+              override val color    = MuiColorTypes.default
               override val classes  = cssClasses
+              override val centerRipple = true
             }
           } (
-            Mui.SvgIcons.CancelOutlined {
-              // TODO Надо это? Скопипасчено из IndexSwitchAskR:
-              val css = new MuiSvgIconClasses {
-                override val root = C.smallBtnSvgIcon.htmlClass
-              }
-              new MuiSvgIconProps {
-                override val classes = css
-              }
-            }(),
+            // Без стиля root = C.smallBtnSvgIcon, т.к. это слишком деформирует неотключаемую кругловатую "тень" кнопки.
+            Mui.SvgIcons.CancelOutlined()(),
           )
         ),
 

@@ -49,7 +49,7 @@ case class MBootServiceState(
     _foldStarted( _ => true )
 
   /** Завершился ли start() успешно? */
-  def isStartCompleted: Boolean =
+  def isStartDoneSuccess: Boolean =
     _foldStarted( identity[Boolean] )
 
 }

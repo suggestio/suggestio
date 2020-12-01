@@ -52,6 +52,16 @@ object Sc3JsApi extends Log {
     _d( SetDebug( isDebug ) )
 
 
+  @JSExport
+  def throwSnack(): Unit = {
+    _d {
+      val a = DoNothing
+      Sc3Module.ref.sc3Circuit.handleEffectProcessingError(a, new NoSuchElementException)
+      a
+    }
+  }
+
+
   /** Хранилка состояния интервалов генерации сигналов от маячков: */
   private var _beaconsIntervalIdsUnd: js.UndefOr[Iterable[Int]] = js.undefined
 

@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreenInfo
 import io.suggest.img.MImgFormats
-import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -32,7 +32,7 @@ object MScCssArgs {
         ((a.screenInfo ===* b.screenInfo) || (a.screenInfo ==* b.screenInfo)) &&
         (a.wcBgWh ===* b.wcBgWh) &&
         (a.wcFgWh ===* b.wcFgWh) &&
-        (a.wcFgVector ==* b.wcFgVector)
+        (a.wcFgForceEnlarge ==* b.wcFgForceEnlarge)
     }
   }
 
@@ -47,12 +47,17 @@ object MScCssArgs {
       screenInfo      = screenInfo,
       wcBgWh          = wcOpt.flatMap(_.bgImage).flatMap(_.whPx),
       wcFgWh          = fgOpt.flatMap(_.whPx),
-      wcFgVector      = (for {
+      wcFgForceEnlarge = (for {
         wc <- wcOpt
         fg <- wc.fgImage
         imgFmt <- MImgFormats.withMime( fg.contentType )
+        isVector = imgFmt.isVector
+        // Разрешить растягивать векторные картинки:
+        if isVector &&
+           // Запретить растягивать служебные страницы. Нужно для пустого эфемерного suggest.io-узла в произвольной точке.
+           indexRespOpt.exists(_.nodeId.nonEmpty)
       } yield {
-        imgFmt.isVector
+        isVector
       })
         .getOrElseFalse
     )
@@ -68,5 +73,5 @@ final case class MScCssArgs(
                              screenInfo        : MScreenInfo,
                              wcBgWh            : Option[MSize2di],
                              wcFgWh            : Option[MSize2di],
-                             wcFgVector        : Boolean,
+                             wcFgForceEnlarge  : Boolean,
                            )

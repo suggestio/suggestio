@@ -20,6 +20,7 @@ import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
+import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
@@ -560,8 +561,17 @@ class TailAh(
       }
 
       // Проверка поля searchOpened
-      if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened)
-        fxsAcc ::= SideBarOpenClose( MScSideBars.Search, OptionUtil.SomeBool(m.mainScreen.searchOpened) ).toEffectPure
+      if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
+        // Первое раскрытие панели может приводить к запросам в jsRouter, который на раннем этапе может быть ещё не готов.
+        // Поэтому проверяем загруженность роутера в память, прежде чем запускать.
+        var sideBarFx = SideBarOpenClose( MScSideBars.Search, OptionUtil.SomeBool(m.mainScreen.searchOpened) ).toEffectPure
+        if (v0.internals.boot.wzFirstDone.isEmpty) {
+          val jsRouterSvcId = MBootServiceIds.JsRouter
+          sideBarFx = Boot( jsRouterSvcId :: Nil ).toEffectPure >>
+            BootAfter( jsRouterSvcId, sideBarFx ).toEffectPure
+        }
+        fxsAcc ::= sideBarFx
+      }
 
       // Проверка id нового узла.
       if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {

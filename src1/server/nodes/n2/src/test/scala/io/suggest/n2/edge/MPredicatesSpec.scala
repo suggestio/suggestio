@@ -11,6 +11,7 @@ import org.scalatest.flatspec.AnyFlatSpec
  */
 class MPredicatesSpec extends AnyFlatSpec with PlayJsonTestUtil {
 
+  import io.suggest.enum2.TreeEnumEntry._
 
   override type T = MPredicate
 

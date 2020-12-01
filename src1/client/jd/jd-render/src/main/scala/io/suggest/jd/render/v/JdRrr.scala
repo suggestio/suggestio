@@ -323,12 +323,11 @@ final class JdRrr(
             origWh <- edge.origWh
             blockHeightPx   <- jdt.props1.heightPx
           } {
-            val wideSzMultOpt = jdt.props1
-              .expandMode
-              .filter(_.hasWideSzMult)
-              .flatMap { _ =>
-                state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
-              }
+            val wideSzMultOpt = for {
+              expandMode <- jdt.props1.expandMode
+              if expandMode.hasWideSzMult
+              r <- state.jdArgs.jdRuntime.data.jdtWideSzMults.get( state.tagId )
+            } yield r
 
             val isUseWidthCalc = ImgCommonUtil.isUseWidthForBlockBg(
               blockHeightPx = blockHeightPx,

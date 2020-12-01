@@ -13,7 +13,7 @@ import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
@@ -22,7 +22,6 @@ import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
@@ -52,7 +51,7 @@ object RcvrMarkersR extends Log {
   def STROKE_OPACITY  = 0.7
   def STROKE_WEIGHT   = 1
 
-  protected class Backend($: BackendScope[Props, Props_t]) {
+  protected class Backend($: BackendScope[Props, Unit]) {
 
     private def onMarkerClicked(e: MarkerEvent): Callback = {
       val marker = e.layer
@@ -115,7 +114,14 @@ object RcvrMarkersR extends Log {
                 // Для cordova требуются абсолютные ссылки на картинки, иначе она подставит file:// в протокол.
                 o.iconUrl = HttpClient.mkAbsUrlIfPreferred( iconInfo.url )
                 // Описываем размеры иконки по данным сервера.
-                o.iconSize = MapsUtil.size2d2LPoint( wh )
+                // Следует ограничить ширину и высоту
+                o.iconSize = {
+                  val wh2 = wh.copy(
+                    width = Math.min( wh.width, 80 ),
+                    height = Math.min( wh.height, 50 ),
+                  )
+                  MapsUtil.size2d2LPoint( wh2 )
+                }
                 // Для иконки -- якорь прямо в середине.
                 o.iconAnchor = MapsUtil.size2d2LPoint( wh / 2 )
                 Leaflet.icon(o)
@@ -274,10 +280,8 @@ object RcvrMarkersR extends Log {
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+    .stateless
     .renderBackendWithChildren[Backend]
-    // Тут мега-трэш-код, т.к. есть проблемы с дженериком состояния и отсутствующим FastEq[S].
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( FastEqUtil.PotAsOptionFastEq( FastEqUtil.AnyRefFastEq ) ) )
     .build
 
 

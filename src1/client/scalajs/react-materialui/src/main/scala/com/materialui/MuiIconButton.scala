@@ -13,12 +13,21 @@ object MuiIconButton {
   final def apply(props: MuiIconButtonProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
+
+  type Edge <: js.Any
+  object Edge {
+    final def START = "start".asInstanceOf[Edge]
+    final def END = "end".asInstanceOf[Edge]
+    final def FALSE = false.asInstanceOf[Edge]
+  }
+
 }
 
 
 /** JSON для [[MuiIconButton]] props. */
 trait MuiIconButtonPropsBase extends MuiButtonBaseCommonProps {
-  val color, edge, size: js.UndefOr[String] = js.undefined
+  val edge: js.UndefOr[MuiIconButton.Edge] = js.undefined
+  val color, size: js.UndefOr[String] = js.undefined
   val disableFocusRipple: js.UndefOr[Boolean] = js.undefined
 }
 trait MuiIconButtonProps
@@ -33,10 +42,4 @@ trait MuiIconButtonClasses extends MuiClassesBase {
   val colorSecondary: js.UndefOr[String] = js.undefined
   val disabled: js.UndefOr[String] = js.undefined
   val label: js.UndefOr[String] = js.undefined
-}
-
-
-object MuiIconButtonEdges {
-  final def start = "start"
-  final def end = "end"
 }

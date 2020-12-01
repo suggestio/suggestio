@@ -9,7 +9,6 @@ import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
-import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success

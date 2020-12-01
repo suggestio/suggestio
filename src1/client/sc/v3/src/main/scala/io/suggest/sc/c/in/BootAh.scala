@@ -223,7 +223,7 @@ class BootAh[M](
             restTargets         = restTargetsTl,
             stepsCounter        = acc0.stepsCounter + 1,
             // Всё ли запущено на данном уровне зависимостей?
-            levelStartCompleted = acc0.levelStartCompleted  &&  svcDataOpt0.exists( _.isStartCompleted )
+            levelStartCompleted = acc0.levelStartCompleted  &&  svcDataOpt0.exists( _.isStartDoneSuccess )
           )
           _processServiceStart( acc2 )
 
@@ -265,7 +265,7 @@ class BootAh[M](
             levelStartCompleted = {
               acc0.levelStartCompleted &&
               acc2.levelStartCompleted &&
-              svcData2.isStartCompleted
+              svcData2.isStartDoneSuccess
             },
             // Залить в состояние обновлённые данные по сервису:
             v0 = if (isWillStart) {
@@ -416,6 +416,37 @@ class BootAh[M](
     case m: BootLocDataWzAfterWz =>
       _afterWzDone( Some(m.startedAtMs), runned = true, started = true )
 
+
+    // Подписка на окончание загрузки чего-либо.
+    case m: BootAfter =>
+      val v0 = value
+      v0.services
+        .get( m.svcId )
+        .map { svcState0 =>
+          // Есть инфа по состоянию загрузки указанного сервиса.
+          if ( svcState0.started.exists { _.fold(_ => true, identity) } ) {
+            // Загрузка уже завершена. Запустить эффект.
+            effectOnly( m.fx )
+          } else {
+            // Загрузка пока не завершена. Надо закинуть в состояние инфу по эффекту.
+            val svcState2 = MBootServiceState.after.modify { fxOpt0 =>
+              val fx2 = fxOpt0.fold(m.fx)(_ + m.fx)
+              Some( fx2 )
+            }(svcState0)
+            val v2 = MScBoot.services.modify(_ + (m.svcId -> svcState2))(v0)
+            updatedSilent(v2)
+          }
+        }
+        .getOrElse {
+          // Состояние сервис не найдено в карте сервисов.
+          m.ifMissing.fold {
+            logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+            noChange
+          } { ifMissingFx =>
+            effectOnly( ifMissingFx )
+          }
+        }
+
   }
 
   private def _reRouteFx(allowRouteTo: Boolean): Effect = {
@@ -431,7 +462,10 @@ class BootAh[M](
   /** Мастер уже завершился или не запускался и не планирует. Быстро или медленно.
     * Но суть исходная - заняться получением гео.данных, если их ещё нет.
     */
-  private def _afterWzDone(wzStartedAtMs: Option[Long] = None, runned: Boolean = false, started: Boolean = false, v0: MScBoot = value): ActionResult[M] = {
+  private def _afterWzDone(wzStartedAtMs: Option[Long] = None,
+                           runned: Boolean = false,
+                           started: Boolean = false,
+                           v0: MScBoot = value): ActionResult[M] = {
     //println( s"_afterWzDone(${wzStartedAtMs.orNull}): Need geo loc? route=" + circuit.internalsRW.value.info.currRoute )
 
     // Тут несколько вариантов:

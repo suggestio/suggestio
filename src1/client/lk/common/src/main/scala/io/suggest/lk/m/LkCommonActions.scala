@@ -10,7 +10,7 @@ import io.suggest.crypto.hash.MHash
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.proto.http.cookie.{MCookieState, MHttpCookie, MHttpCookieParsed}
+import io.suggest.proto.http.cookie.MCookieState
 import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken}
 import io.suggest.spa.DAction
 import io.suggest.up.{ITransferProgressInfo, MUploadResp}
