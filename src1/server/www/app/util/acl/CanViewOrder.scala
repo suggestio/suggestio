@@ -121,7 +121,7 @@ final class CanViewOrder @Inject() (
           // Узел скорее всего в кеше, поэтому проверяем по узлу в первую очередь.
           nodeAdmOptFut.flatMap {
             // Есть запрошенный узел, и текущий юзер является админом этого узла.
-            case someNode if someNode.isDefined =>
+            case someNode @ Some(_) =>
               __proceed( someNode )
 
             case noNode @ None =>

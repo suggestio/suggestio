@@ -581,10 +581,8 @@ final class JdEditR(
     }
     val QdResize = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( classOf[QdResize].getSimpleName )
-      //.initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
       .stateless
       .renderBackendWithChildren[QdResize]
-      //.configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
       .build
 
 

@@ -122,7 +122,7 @@ class HistogramParsersSpec extends PlaySpec {
     "parse multiline histogram text from temporary file" in {
       val tempFile = File.createTempFile(classOf[MainColorDetectorSpec].getSimpleName, ".txt")
       // Хелпер для записи строки в файл.
-      def writeText(text: String) {
+      def writeText(text: String): Unit = {
         val out = new PrintWriter(tempFile)
         try {
           out.println(text)

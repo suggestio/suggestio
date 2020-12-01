@@ -1,7 +1,6 @@
 package util.geo.osm
 
 import org.scalatestplus.play._
-import util.geo.osm.OsmElemTypes.OsmElemType
 
 /**
  * Suggest.io

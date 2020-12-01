@@ -92,4 +92,20 @@ case class MJdRrrProps(
     }
   }
 
+
+  /** Кэш для фонового видео. Нужно для видео-фона блока. */
+  /*
+  lazy val current_FrameEdgeOpt: Option[(MQdAttrsEmbed, MEdgeDataJs)] = {
+    for {
+      qdOp        <- subTree.rootLabel.qdProps
+      attrEmbed   <- qdOp.attrsEmbed
+      ei          <- qdOp.edgeInfo
+      embedEdge   <- jdArgs.data.edges.get( ei.edgeUid )
+      if embedEdge.jdEdge.predicate ==* MPredicates.JdContent.Frame
+    } yield {
+      (attrEmbed, embedEdge)
+    }
+  }
+  */
+
 }
