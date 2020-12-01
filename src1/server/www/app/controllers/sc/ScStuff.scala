@@ -88,7 +88,6 @@ final class ScStuff @Inject()(
             .nodesAdvGeoPropsSrc(
               // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
               searchSrc,
-              wcAsLogo = false,
             )
             .map { case (_, inxInfo) =>
               Json.toJson( inxInfo )

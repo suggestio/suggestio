@@ -693,7 +693,7 @@ final class LkBill2 @Inject() (
         advGeoRcvrsUtil.nodesAdvGeoPropsSrc(
           nodesSrc = Source( adnNodes ),
           // Т.к. интересует вертикальный/квадратный лого, то делаем приоритет на картинку приветствия.
-          wcAsLogo = true
+          wcAsLogo = true,
         )
           .map(_._2)
           .toMat( Sink.seq )(Keep.right)

@@ -298,7 +298,6 @@ final class Static @Inject() (
                     .onMapRcvrsSearch(NODES_PER_CHUNK)
                     .toEsQuery
                 ),
-                wcAsLogo = true
               )
             )
             // JSON-рендер каждого item'а:

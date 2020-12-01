@@ -174,7 +174,7 @@ final class AdvGeoRcvrsUtil @Inject()(
     *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
     *         всегда возвращали один и тот же результат.
     */
-  def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean): Source[(MNode, MSc3IndexResp), M] = {
+  def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean = true): Source[(MNode, MSc3IndexResp), M] = {
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
@@ -222,7 +222,7 @@ final class AdvGeoRcvrsUtil @Inject()(
             }
             .transform {
               case Success(logoMakeRes) =>
-                LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
+                LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw fakeImgMake?${logoMakeRes.isFake}")
                 val r = Some( logoMakeRes -> targetSz )
                 Success(r)
               case Failure(ex) =>

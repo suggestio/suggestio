@@ -145,7 +145,6 @@ trait ScSearch
           .nodesAdvGeoPropsSrc(
             // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
             mNodes.dynSearchSource( msearch ),
-            wcAsLogo = false
           )
           // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
           .alsoTo( saveScStatSink )
