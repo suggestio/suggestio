@@ -156,7 +156,7 @@ class TreeR(
                     override val color = MuiTypoGraphyColors.textSecondary
                   }
                 )(
-                  crCtxP.message( MsgCodes.`Error` ),
+                  crCtxP.message( MsgCodes.`Something.gone.wrong` ),
                 ),
 
                 // Вывод сообщения об ошибке, если есть:
@@ -184,6 +184,7 @@ class TreeR(
                   }
                 )(
                   Mui.SvgIcons.Refresh()(),
+                  crCtxP.message( MsgCodes.`Try.again` ),
                 ),
               )
             },

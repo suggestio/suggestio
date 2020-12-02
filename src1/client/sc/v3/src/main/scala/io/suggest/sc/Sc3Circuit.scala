@@ -651,6 +651,9 @@ class Sc3Circuit(
   private val csrfTokenAh = new CsrfTokenAh(
     modelRW       = csrfTokenRW,
     csrfTokenApi  = csrfTokenApi,
+    onError       = Some { () =>
+      OnlineCheckConn.toEffectPure
+    },
   )
 
   private val logOutAh = mkLogOutAh( logOutRW )

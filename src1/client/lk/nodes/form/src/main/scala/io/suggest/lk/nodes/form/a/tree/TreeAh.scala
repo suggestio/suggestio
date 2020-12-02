@@ -34,6 +34,7 @@ class TreeAh[M](
                  api          : ILkNodesApi,
                  modelRW      : ModelRW[M, MTree],
                  confRO       : ModelRO[MLknConf],
+                 nodesDiConf  : NodesDiConf,
                )
   extends ActionHandler(modelRW)
   with Log
@@ -474,9 +475,8 @@ class TreeAh[M](
       val v0 = value
 
       if (m.treePot ===* Pot.empty) {
-        // Запрашивается инициализация дерева. Начать:
-        // Начальная инициализация дерева от корня.
-        val fx = Effect {
+        // Запрашивается инициализация дерева. Запустить начальную инициализацию дерева от корня:
+        var fx: Effect = Effect {
           api
             .subTree(
               adId = confRO.value.adIdOpt
@@ -486,6 +486,11 @@ class TreeAh[M](
               Success( TreeInit( treePot2 ) )
             }
         }
+
+        // Если была ошибка, то запросить действия-эффекты снаружи:
+        if (v0.idsTree.isFailed)
+          fx = nodesDiConf.retryErrorFx( fx )
+
         val v2 = MTree.idsTree.modify( _.pending() )(v0)
         updated(v2, fx)
 

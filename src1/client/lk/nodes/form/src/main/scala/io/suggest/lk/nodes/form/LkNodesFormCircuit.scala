@@ -104,6 +104,7 @@ case class LkNodesFormCircuit(
       api     = lkNodesApi,
       modelRW = treeRW,
       confRO  = confR,
+      nodesDiConf = diConfig,
     )
 
     var sharingHandlers = List[HandlerFunction]( treeAh, popupsHandler )

@@ -17,7 +17,7 @@ import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.id.login.m.{ILoginFormAction, LoginFormDiConfig}
 import io.suggest.lk.IPlatformComponentsModule
 import io.suggest.lk.c.CsrfTokenApi
-import io.suggest.lk.m.SessionSet
+import io.suggest.lk.m.{CsrfTokenEnsure, SessionSet}
 import io.suggest.lk.nodes.form.LkNodesModuleBase
 import io.suggest.lk.nodes.form.m.NodesDiConf
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
@@ -25,7 +25,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IMHttpClientConfig}
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.c.dia.ScNodesDiaAh
-import io.suggest.sc.m.{MScRoot, RouteTo, ScLoginFormShowHide, ScNodesShowHide}
+import io.suggest.sc.m.{MScRoot, OnlineCheckConn, RouteTo, ScLoginFormShowHide, ScNodesShowHide}
 import io.suggest.sc.m.inx.ReGetIndex
 import io.suggest.sc.u.Sc3LeafletOverrides
 import io.suggest.sc.u.api.{IScStuffApi, IScUniApi, ScAppApiHttp, ScStuffApiHttp, ScUniApi, ScUniApiHttpImpl}
@@ -361,6 +361,13 @@ class Sc3Module { outer =>
       override def needLogInVdom(chs: VdomNode*) =
         outer.sc3Circuit.wrap( identity(_) )( scNodesNeedLoginR.component(_)(chs: _*) )
       override def withBleBeacons = true
+      override def retryErrorFx(effect: Effect): Effect = {
+        val retryFx = CsrfTokenEnsure(
+          force = true,
+          onComplete = Some(effect),
+        ).toEffectPure
+        OnlineCheckConn.toEffectPure + retryFx
+      }
     }
   }
   def getNodesFormCircuit = () => ScNodesFormModule.lkNodesFormCircuit

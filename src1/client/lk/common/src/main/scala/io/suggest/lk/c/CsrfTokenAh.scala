@@ -2,6 +2,7 @@ package io.suggest.lk.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import diode.data.Pot
+import diode.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.lk.m.{CsrfTokenEnsure, CsrfTokenResp}
 import io.suggest.log.Log
@@ -12,6 +13,7 @@ import io.suggest.routes.routes
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Success
 
 /**
@@ -21,8 +23,9 @@ import scala.util.Success
   * Description: Контроллер для управления токеном.
   */
 class CsrfTokenAh[M](
-                      modelRW: ModelRW[M, Pot[MCsrfToken]],
-                      csrfTokenApi: ICsrfTokenApi,
+                      modelRW       : ModelRW[M, Pot[MCsrfToken]],
+                      csrfTokenApi  : ICsrfTokenApi,
+                      onError       : Option[() => Effect],
                     )
   extends ActionHandler( modelRW )
   with Log
@@ -61,7 +64,23 @@ class CsrfTokenAh[M](
 
       } else {
         val v2 = v0 withTry m.tryResp
-        ah.updatedMaybeEffect( v2, m.reason.onComplete )
+        val fxOpt = m.tryResp.fold [Option[Effect]] (
+          {ex =>
+            // При ошибке - залоггировать, попробовать снова:
+            logger.error( ErrorMsgs.SRV_REQUEST_FAILED, ex, m )
+            val retryFx = m.reason
+              .toEffectPure
+              .after( 2.seconds )
+            // Проверить соединение с инетом.
+            val fx = onError.fold(retryFx)(m => m() + retryFx)
+            Some(fx)
+          },
+          {_ =>
+            // Всё ок - запустить эффект, идущий следом:
+            m.reason.onComplete
+          }
+        )
+        ah.updatedMaybeEffect( v2, fxOpt )
       }
 
   }

@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.m
 
-import diode.ActionResult
+import diode.{ActionResult, Effect}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.proto.http.model.IMHttpClientConfig
 import io.suggest.spa.SioPages
@@ -37,6 +37,11 @@ trait NodesDiConf extends IMHttpClientConfig {
   /** Надо ли инициализировать части, связанные с beacons-сканнером? */
   def withBleBeacons: Boolean
 
+  /** Трансформер эффекта, который используется для подавления ошибки.
+    * Для sc3 требуется проверить валидность CSRF-токена, например.
+    */
+  def retryErrorFx(effect: Effect): Effect
+
 }
 
 
@@ -51,6 +56,7 @@ object NodesDiConf {
     override def isUserLoggedIn() = true
     override def needLogInVdom(chs: VdomNode*) = EmptyVdom
     override def withBleBeacons = false
+    override def retryErrorFx(effect: Effect) = effect
   }
 
 }
