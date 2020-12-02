@@ -1,6 +1,5 @@
 package io.suggest.jd.render.v
 
-import com.github.souporserious.react.measure.ContentRect
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m._
@@ -31,26 +30,19 @@ final class JdR(
 
     final class QdContent($: BackendScope[ModelProxy[MJdRrrProps], Unit]) extends super.QdContentBase {
       override def qdRrr = qdRrrHtml.RenderOnly
-
-      /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      override def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
-        ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
-          propsProxy: ModelProxy[MJdRrrProps] =>
-            _qdBoundsMeasured( propsProxy, timeStampMs, cr )
-        }
-      }
-
     }
     val QdContent = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( classOf[QdContent].getSimpleName )
-      //.initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
       .renderBackend[QdContent]
-      //.configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdRrrProps.MJdRrrPropsFastEq ) )
       .build
 
 
     /** Реализация контента. */
-    final class QdContainer($: BackendScope[ModelProxy[MJdRrrProps], Unit]) extends super.QdContainerBase {
+    final class QdContainer(override val $: BackendScope[ModelProxy[MJdRrrProps], Unit])
+      extends super.QdContainerBase[ModelProxy[MJdRrrProps], Unit]
+    {
+
+      override def _getModelProxy = $.props
 
       /** Фасад для рендера. */
       def render( propsProxy: ModelProxy[MJdRrrProps], children: PropsChildren ): VdomElement =

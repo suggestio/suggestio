@@ -1,7 +1,6 @@
 package io.suggest.jd.edit.v
 
 import com.github.react.dnd._
-import com.github.souporserious.react.measure.ContentRect
 import com.github.strml.react.resizable.{ResizableBox, ResizableBoxProps, ResizableProps, ResizeCallbackData}
 import diode.react.ModelProxy
 import io.suggest.common.geom.coord.MCoords2di
@@ -414,17 +413,7 @@ final class JdEditR(
   object JdRrrEdit extends jdRrr.Base {
 
     final class QdContent( $: BackendScope[ModelProxy[MJdRrrProps], Unit] ) extends super.QdContentBase {
-
       override def qdRrr = QdRrrEdit
-
-      /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      override def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
-        ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
-          props: ModelProxy[MJdRrrProps]  =>
-            _qdBoundsMeasured( props, timeStampMs, cr )
-        }
-      }
-
     }
     val QdContent = ScalaComponent
       .builder[ModelProxy[MJdRrrProps]]( classOf[QdContent].getSimpleName )
@@ -432,10 +421,13 @@ final class JdEditR(
       .build
 
 
-    final class QdContainer($: BackendScope[MRrrEdit with MRrrEditCollectDrag, Unit] ) extends super.QdContainerBase {
+    final class QdContainer(override val $: BackendScope[MRrrEdit with MRrrEditCollectDrag, Unit] )
+      extends super.QdContainerBase[MRrrEdit with MRrrEditCollectDrag, Unit]
+    {
 
-      override def _renderQdContentTag(propsProxy: ModelProxy[MJdRrrProps], acc0: List[TagMod]): TagOf[html.Div] = {
-        val state = propsProxy.value
+      override def _getModelProxy = $.props.map(_.p)
+
+      override def _renderQdContentTag(state: MJdRrrProps, acc0: List[TagMod]): TagOf[html.Div] = {
         val qdTag = state.subTree.rootLabel
 
         val acc1: List[TagMod] = (
@@ -444,7 +436,7 @@ final class JdEditR(
           acc0
         )
         // Нельзя withRef() для этого внешнего тега, т.к. другой measure-ref выставляется внутри super._renderQdContentTag().
-        super._renderQdContentTag( propsProxy, acc1 )
+        super._renderQdContentTag( state, acc1 )
       }
 
       def render( props: MRrrEdit with MRrrEditCollectDrag, children: PropsChildren ): VdomElement = {
@@ -928,9 +920,6 @@ object MRrrEdit {
   }
   implicit def mprox: Props2ModelProxy[MRrrEdit with MRrrEditCollectDrag] =
     MRrrEdit2MProxy.asInstanceOf[Props2ModelProxy[MRrrEdit with MRrrEditCollectDrag]]
-
-  val getPropsProxy = ReactDiodeUtil.modelProxyValueF.compose[MRrrEdit](_.p)
-
 }
 /** Доп.пропертисы к [[MRrrEdit]], инжектируемые из collect-function для DropTarget. */
 trait MRrrEditCollectDrop extends js.Object {

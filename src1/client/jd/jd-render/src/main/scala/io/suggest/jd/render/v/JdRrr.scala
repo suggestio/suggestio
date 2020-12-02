@@ -89,105 +89,25 @@ final class JdRrr(
       def qdRrr: IQdRrr
 
       def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        val tag0 = qdRrrHtml
+        qdRrrHtml
           .QdRrr( qdRrr, propsProxy )
           .render()
-
-        val state = propsProxy.value
-
-        if (
-          state.parents
-            .exists(_.name ==* MJdTagNames.STRIP)
-        ) {
-          // Рендер внутри блока, просто пропускаем контент на выход
-          tag0
-
-        } else {
-          // Флаг для костыля принудительного ручного re-measure в mkChildrenF().
-          // Отнесена по-дальше от самой функции, т.к. есть подозрение, что эта внешняя переменная склонна к
-          // самозабвению из-за каких-то косяков в sjs-компиляторе.
-          var isReMeasured = false
-
-          // Сборка измерителя размеров тега:
-          Measure {
-            // Собираем callback реакции на ресайз: она должна слать таймштамп из Pot'а, чтобы контроллер мог разобрать,
-            // актуален ли callback. Может быть неактуален, т.к. замер происходит в рамках requestAnimationFrame(), которая слишком асинхронна.
-            val __onResizeF = ReactCommonUtil.cbFun1ToJsCb(
-              blocklessQdContentBoundsMeasuredJdCb(
-                for {
-                  qdBl      <- state.qdBlOpt
-                  qdBlPend  <- qdBl.pendingOpt
-                } yield {
-                  qdBlPend.startTime
-                }
-              )
-            )
-
-            // Функция __mkChildrenF() вызывается 2-3 раза с одного react-рендера!
-            def __mkChildrenF(chArgs: MeasureChildrenArgs): raw.PropsChildren = {
-              // Костыль для принудительного запуска одного повторного измерения, если в состоянии задано (Pot[QdBl*].pending).
-              // Запуск измерения вызывает повторный __mkChildrenF(), поэтому нужна максимально жесткая и гарантированная
-              // система предотвращения бесконечного цикла.
-              isReMeasured.synchronized {
-                if (!isReMeasured && state.qdBlOpt.exists(_.isPending)) {
-                  isReMeasured = true
-                  Future {
-                    chArgs.measure()
-                  }
-                }
-              }
-
-              // ref должен быть прямо в теге как можно ближе к контенту, чтобы правильно измерить размер react-measure.
-              tag0(
-                ^.genericRef := chArgs.measureRef,
-              )
-                .rawElement
-            }
-
-            new MeasureProps {
-              override val client = true
-              override val bounds = true
-              override val children = __mkChildrenF
-              override val onResize = __onResizeF
-            }
-          }
-          // TODO Почему-то не работает MeasureR здесь: сигналы в JdAh приходят, но рендер некорректен, и видимого результата не происходит. Надо исправить, чтобы MeasureR работал.
-          /*
-          measureR.component {
-            measureR.PropsVal(
-              onMeasured = blocklessQdContentBoundsMeasuredJdCb(
-                for {
-                  qdBl      <- state.qdBlOpt
-                  qdBlPend  <- qdBl.pendingOpt
-                } yield {
-                  qdBlPend.startTime
-                }
-              ),
-              isToMeasure = () => state.qdBlOpt.exists(_.isPending),
-              mBounds = true,
-              mClient = true,
-              childrenTag = tag1,
-            )
-          },
-          */
-        }
-      }
-
-      /** Реакция на получение информации о размерах внеблокового qd-контента. */
-      def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback
-
-      def _qdBoundsMeasured(mp: ModelProxy[MJdRrrProps], timeStampMs: Option[Long], cr: ContentRect): QdBoundsMeasured = {
-        val m = mp.value
-        QdBoundsMeasured(m.subTree.rootLabel, m.tagId, timeStampMs, cr)
       }
 
     }
 
 
-    trait QdContainerBase {
+    /** Контейнер для qd-контента.
+      * Живёт отдельно, т.к. в редакторе resize вставляется между двумя компонентами,
+      * чтобы resize-ползунки были повёрнутыми/трансформированы вместе с контентом.
+      */
+    trait QdContainerBase[P, S] {
 
-      def _renderQdContentTag(propsProxy: ModelProxy[MJdRrrProps], acc0: List[TagMod]): TagOf[html.Div] = {
-        val state = propsProxy.value
+      def $: BackendScope[P, S]
+
+      def _getModelProxy: CallbackTo[ModelProxy[MJdRrrProps]]
+
+      def _renderQdContentTag(state: MJdRrrProps, acc0: List[TagMod]): TagOf[html.Div] = {
         import state.jdArgs.jdRuntime.jdCss
 
         val qdTag = state.subTree.rootLabel
@@ -243,8 +163,8 @@ final class JdRrr(
 
       def _doRender(propsProxy: ModelProxy[MJdRrrProps], children: PropsChildren): TagOf[html.Div] = {
         // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
-        val tag0 = _renderQdContentTag( propsProxy, children :: Nil )
         val state = propsProxy.value
+        val tag0 = _renderQdContentTag( state, children :: Nil )
 
         if (
           state.parents
@@ -259,6 +179,11 @@ final class JdRrr(
 
           val tag1 = tag0( jdCss.qdBlOuter )
 
+          // Флаг для костыля принудительного ручного re-measure в mkChildrenF().
+          // Отнесена по-дальше от самой функции, т.к. есть подозрение, что эта внешняя переменная склонна к
+          // самозабвению из-за каких-то косяков в sjs-компиляторе.
+          var isReMeasured = false
+
           <.div(
             // У нас тут - контейнер контента внеблоковый.
             jdCssStatic.contentOuterS,
@@ -268,8 +193,78 @@ final class JdRrr(
             // Если карточка имеет цвет outline-выделения, то выделить и контент:
             _groupOutlineRender(state),
 
-            tag1,
+            // Сборка измерителя размеров тега:
+            Measure {
+              // Собираем callback реакции на ресайз: она должна слать таймштамп из Pot'а, чтобы контроллер мог разобрать,
+              // актуален ли callback. Может быть неактуален, т.к. замер происходит в рамках requestAnimationFrame(), которая слишком асинхронна.
+              val __onResizeF = ReactCommonUtil.cbFun1ToJsCb(
+                blocklessQdContentBoundsMeasuredJdCb(
+                  for {
+                    qdBl      <- state.qdBlOpt
+                    qdBlPend  <- qdBl.pendingOpt
+                  } yield {
+                    qdBlPend.startTime
+                  }
+                )
+              )
+
+              // Функция __mkChildrenF() вызывается 2-3 раза с одного react-рендера!
+              def __mkChildrenF(chArgs: MeasureChildrenArgs): raw.PropsChildren = {
+                // Костыль для принудительного запуска одного повторного измерения, если в состоянии задано (Pot[QdBl*].pending).
+                // Запуск измерения вызывает повторный __mkChildrenF(), поэтому нужна максимально жесткая и гарантированная
+                // система предотвращения бесконечного цикла.
+                isReMeasured.synchronized {
+                  if (!isReMeasured && state.qdBlOpt.exists(_.isPending)) {
+                    isReMeasured = true
+                    Future {
+                      chArgs.measure()
+                    }
+                  }
+                }
+
+                // ref должен быть прямо в теге как можно ближе к контенту, чтобы правильно измерить размер react-measure.
+                tag1(
+                  ^.genericRef := chArgs.measureRef,
+                )
+                  .rawElement
+              }
+
+              new MeasureProps {
+                override val client = true
+                override val bounds = true
+                override val children = __mkChildrenF
+                override val onResize = __onResizeF
+              }
+            }
+            // TODO Почему-то не работает MeasureR здесь: сигналы в JdAh приходят, но рендер некорректен, и видимого результата не происходит. Надо исправить, чтобы MeasureR работал.
+            /*
+            measureR.component {
+              measureR.PropsVal(
+                onMeasured = blocklessQdContentBoundsMeasuredJdCb(
+                  for {
+                    qdBl      <- state.qdBlOpt
+                    qdBlPend  <- qdBl.pendingOpt
+                  } yield {
+                    qdBlPend.startTime
+                  }
+                ),
+                isToMeasure = () => state.qdBlOpt.exists(_.isPending),
+                mBounds = true,
+                mClient = true,
+                childrenTag = tag1,
+              )
+            },
+            */
           )
+        }
+      }
+
+      /** Реакция на получение информации о размерах внеблокового qd-контента. */
+      def blocklessQdContentBoundsMeasuredJdCb(timeStampMs: Option[Long])(cr: ContentRect): Callback = {
+        _getModelProxy >>= { propsProxy =>
+          val m = propsProxy.value
+          val action = QdBoundsMeasured(m.subTree.rootLabel, m.tagId, timeStampMs, cr)
+          propsProxy.dispatchCB( action )
         }
       }
 
