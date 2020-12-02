@@ -370,12 +370,15 @@ object ScCssStatic extends StyleSheet.Inline {
       /** Список тегов. */
       val listDiv = ScCssStatic._styleAddClass( "shops-list" )
 
+      def LOGO_WIDTH_MAX_PX = 140
+      def LOGO_HEIGHT_MAX_PX = 56
+
       /** Стиль иконки узла в списке узлов. */
       val nodeLogo = style(
         verticalAlign.middle,
         marginLeft(6.px),
-        maxHeight(30.px),
-        maxWidth(64.px),
+        maxHeight( LOGO_HEIGHT_MAX_PX.px ),
+        maxWidth( LOGO_WIDTH_MAX_PX.px ),
         // без disableGutters, нужно рубить правый отступ
         marginRight(0.px).important
       )

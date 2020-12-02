@@ -5,12 +5,14 @@ import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.img.MImgFormats
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.m.search.MSearchCssProps.MSearchCssPropsFastEq
-import io.suggest.sc.v.styl.ScCss
+import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -98,6 +100,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     }
   }
 
+  /*
   private val NODES_WITH_FIELD_HEIGHT_PX: Int = {
     var nlh = NODES_LIST_HEIGHT_PX
     if (!isScrollWithField) nlh += ScCss.TABS_OFFSET_PX
@@ -107,6 +110,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     Math.min( maxH, nlh )
   }
+  */
 
   private val GEO_MAP_HEIGHT_PX: Int = {
     Math.max(
@@ -143,7 +147,6 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     val container = style(
       overflowX.hidden,
       overflowY.auto,
-      //height( NODES_WITH_FIELD_HEIGHT_PX.px ),
     )
 
     // После втыкания materialUI, возникла необходимость описывать стили не-инлайново через classes.
@@ -201,6 +204,47 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
       SearchCss._nameSuffixGen,
     )
 
+
+    val rowItemIconF = {
+      val NF = ScCssStatic.Search.NodesFound
+      val maxWidthPx = NF.LOGO_WIDTH_MAX_PX
+      val maxHeightPx = NF.LOGO_HEIGHT_MAX_PX
+
+      styleF {
+        new Domain.OverSeq(
+          args.nodesFound.nodesMap
+            .iterator
+            .filter(_._2.props.logoOpt.nonEmpty)
+            .map(_._1)
+            .toIndexedSeq
+        )
+      } { nodeId =>
+        var acc = List.empty[ToStyle]
+
+        for {
+          nodeProps <- args.nodesFound.nodesMap.get(nodeId)
+          logo <- nodeProps.props.logoOpt
+          isVector = MImgFormats
+            .withMime( logo.contentType )
+            .exists(_.isVector)
+          // Для векторной и для растровой картинок надо использовать различный подход:
+          // Векторную растягиваем до разрешённого максимума, растровую - подчиняем размеру
+          wh <- logo.whPx
+          widthPx1 = if (isVector) {
+            // SVG: Берём за основу ширины максимально-допустимую ширину, проецируем высоту, сравниваем с макс.высотой,
+            // проецируем итоговую ширину из выбранной высоты.
+            val heightPx1 = maxWidthPx * wh.height / wh.width
+            val heightPx2 = Math.min( maxHeightPx, heightPx1 )
+            wh.width * heightPx2 / wh.height
+          } else wh.width
+          widthPx2 = Math.min( widthPx1, maxWidthPx )
+        } {
+          acc ::= minWidth( widthPx2.px )
+        }
+
+        styleS( acc: _* )
+      }
+    }
   }
 
 

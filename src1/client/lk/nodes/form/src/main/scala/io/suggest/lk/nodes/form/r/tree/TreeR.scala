@@ -93,7 +93,14 @@ class TreeR(
                   )
 
                 } else {
-                  crCtxP.message( MsgCodes.`Nothing.found` )
+                  MuiTypoGraphy(
+                    new MuiTypoGraphyProps {
+                      override val variant = MuiTypoGraphyVariants.subtitle1
+                      override val color = MuiTypoGraphyColors.textSecondary
+                    }
+                  )(
+                    crCtxP.message( MsgCodes.`Nothing.found` )
+                  )
                 }
               },
 

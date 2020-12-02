@@ -26,6 +26,7 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -227,7 +228,16 @@ final case class NfRowR2(
 
         // Иконка узла, присланная сервером:
         p.logoOpt.whenDefinedNode { icon =>
-          MuiListItemIcon()(
+          MuiListItemIcon {
+            // Ширина может отличаться, в mui она задана статически как min-width: 56px.
+            // Нужно выставлять ширину по ширине текущей картинки.
+            val iconCss = new MuiListItemIconClasses {
+              override val root = props.searchCss.NodesFound.rowItemIconF(nodeId).htmlClass
+            }
+            new MuiListItemIconProps {
+              override val classes = iconCss
+            }
+          } (
             <.img(
               NodesCSS.nodeLogo,
               ^.src := HttpClient.mkAbsUrlIfPreferred( icon.url )
