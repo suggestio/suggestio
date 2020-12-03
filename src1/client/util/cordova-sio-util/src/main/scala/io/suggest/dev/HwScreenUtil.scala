@@ -43,7 +43,17 @@ object HwScreenUtil {
         } else if (platform equalsIgnoreCase CordovaPluginDeviceUtil.Platform.iOS) {
           // Для iOS возможны варианты.
           val devModel = CordovaPluginDevice.model
-          if (devModel startsWith "iPhone") {
+          val orientation = MOrientations2d.forSize2d( mscreen.wh )
+
+          if (devModel startsWith "iPhone13,") {
+            // iphone 12 - вырез наверху отличается от предыдущих поколений.
+            MTlbr(
+              topO  = Option.when(orientation ==* MOrientations2d.Vertical)( 36 ),
+              leftO = Option.when(orientation ==* MOrientations2d.Horizontal)( 40 ),
+              bottomO = Option.when( orientation ==* MOrientations2d.Vertical )( 12 ),
+            )
+
+          } else if (devModel startsWith "iPhone") {
             // Это айфон. С model id всё необычно:
             // iPhone12,5 = 11 pro max
             //       12,3 = 11 pro
@@ -52,7 +62,6 @@ object HwScreenUtil {
             // Наборы свойств хардварных экранов повторяются между поколениями, при этом очень различаются внутри поколения.
             // Поэтому игнорим model id, и матчим по фактическому размеру экрана.
             val screenWhs = Set.empty[Int] + mscreen.wh.width + mscreen.wh.height
-            val orientation = MOrientations2d.forSize2d( mscreen.wh )
 
             if (
               // iPhone 10 | iPhone 11 Pro

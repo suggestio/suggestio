@@ -54,8 +54,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.experimental.{RequestInfo, RequestInit}
 
-import scala.util.Try
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -209,9 +207,8 @@ class Sc3Module { outer =>
       // и главное: поддержку кукисов и произвольных заголовков запроса/ответа, ради чего и есть весь сыр-бор.
       val fetchApi = OptionUtil.maybeOpt(isCordova)(
         // Try: какие-то трудности на фоне JSGlobalScope при недоступности cordova-API в браузере.
-        Try( CdvPluginFetch.cordovaFetchUnd.toOption )
+        CdvPluginFetch.cordovaFetchUnd
           .toOption
-          .flatten
           .map { cdvFetchF =>
             // Оборачиваем функцию, чтобы выдавала стандартный Response() с поддержкой clone() и прочего.
             {(reqInfo: RequestInfo, reqInit: RequestInit) =>
@@ -243,7 +240,7 @@ class Sc3Module { outer =>
         cookieDomainDflt = Option.when(isCordova)( ScUniApi.scDomain ),
         fetchApi = fetchApi,
         // okhttp выдаёт ошибку перед запросами: method POST must have request body. Для подавление косяка, выставляем флаг принудительного body:
-        forcePostBodyNonEmpty = fetchApi.nonEmpty,
+        //forcePostBodyNonEmpty = fetchApi.nonEmpty,
       )
     }
   }
