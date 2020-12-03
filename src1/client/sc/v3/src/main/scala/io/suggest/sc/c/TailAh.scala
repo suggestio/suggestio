@@ -54,26 +54,32 @@ object TailAh {
     val searchOpened = v0.index.search.panel.opened
 
     // Если ничего в view пока не загружено, то стараемся поддерживать исходные значения
-    val bootingRoute = v0.internals.info.currRoute
-      .filter( _ => inxState.viewCurrent.isEmpty )
+    val route0 = v0.internals.info.currRoute
+    val bootingRoute = route0
+      .filter( _ => inxState.viewCurrent.isEmpty && v0.index.resp.isEmpty )
     val currRcvrId = bootingRoute.fold(inxState.rcvrId)(_.nodeId)
 
     // TODO Поддержка нескольких тегов в URL.
     val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
 
+    val locEnv2 = OptionUtil.maybe {
+      currRcvrId.isEmpty
+      //(currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty) &&
+      //  (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
+      //  v0.internals.info.geoLockTimer.isEmpty
+    } {
+      bootingRoute
+        .flatMap(_.locEnv)
+        .getOrElse( v0.index.search.geo.mapInit.state.center )
+    }
+    //println(s"BootingRoute prev.locEnv = ${bootingRoute.flatMap(_.locEnv)} |||| ${bootingRoute}\n next locEnv = ${v0.index.search.geo.mapInit.state.center}\n locEnv2 => $locEnv2")
+
+
     SioPages.Sc3(
       nodeId        = currRcvrId,
       // Не рендерить координаты в URL, если находишься в контексте узла, закрыта панель поиска и нет выбранного тега.
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
-      locEnv        = OptionUtil.maybe {
-        (currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty) &&
-        (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
-        v0.internals.info.geoLockTimer.isEmpty
-      } {
-        bootingRoute
-          .flatMap(_.locEnv)
-          .getOrElse( v0.index.search.geo.mapInit.state.center )
-      },
+      locEnv        = locEnv2,
       generation    = Some( inxState.generation ),
       searchOpened  = searchOpened,
       tagNodeId     = selTagIdOpt,
@@ -523,7 +529,7 @@ class TailAh(
       var jsRouterAwaitRoute = false
 
       // Текущее значение MainScreen:
-      val currMainScreen = TailAh.getMainScreenSnapShot(v0)
+      val currMainScreen = TailAh.getMainScreenSnapShot( v0 )
 
       var isToReloadIndex = isFullyReady && v0.index.resp.isTotallyEmpty
 
@@ -596,17 +602,17 @@ class TailAh(
           }
         )
       ) {
+        for (nextGeoPoint <- m.mainScreen.locEnv) {
+          modsAcc ::= MScRoot.index
+            .composeLens( TailAh._inxSearchGeoMapInitLens )
+            .composeLens( MMapInitState.state )
+            .modify {
+              _.withCenterInitReal( nextGeoPoint )
+            }
+        }
         if (isFullyReady) {
           needUpdateUi = true
           isToReloadIndex = true
-          for (nextGeoPoint <- m.mainScreen.locEnv) {
-            modsAcc ::= MScRoot.index
-              .composeLens( TailAh._inxSearchGeoMapInitLens )
-              .composeLens( MMapInitState.state )
-              .modify {
-                _.withCenterInitReal( nextGeoPoint )
-              }
-          }
         } else {
           jsRouterAwaitRoute = true
         }

@@ -465,7 +465,8 @@ class IndexAh[M](
     * @return ActionResult.
     */
   private def _getIndex(silentUpdate: Boolean, v0: MScIndex,
-                        reason: IScIndexRespReason, switchCtx: MScSwitchCtx): ActionResult[M] = {
+                        reason: IScIndexRespReason, switchCtx: MScSwitchCtx,
+                        onChangeFxs: List[Effect] = Nil): ActionResult[M] = {
     val ts = System.currentTimeMillis()
     val root = rootRO.value
 
@@ -529,7 +530,9 @@ class IndexAh[M](
 
     } else {
       // Надо делать запрос, обновив состояние:
-      val fx = Effect {
+      var fxAcc: List[Effect] = onChangeFxs
+      fxAcc ::= OnlineCheckConn.toEffectPure
+      fxAcc ::= Effect {
         api
           .pubApi(args)
           .transform { tryRes =>
@@ -542,7 +545,7 @@ class IndexAh[M](
             )
             Success(r2)
           }
-      } + OnlineCheckConn.toEffectPure
+      }
 
       var valueModF = MScIndex.resp.modify(_.pending(ts))
 
@@ -557,7 +560,7 @@ class IndexAh[M](
         .modify( nodesFoundModF )
 
       val v2 = valueModF(v0)
-      ah.updateMaybeSilentFx(silentUpdate)(v2, fx)
+      ah.updateMaybeSilentFx(silentUpdate)(v2, fxAcc.mergeEffects.get)
     }
   }
 
@@ -745,6 +748,7 @@ class IndexAh[M](
       ) {
         // Ничего как бы и не изменилось.
         noChange
+
       } else {
         val outer_LENS = MScIndex.search
           .composeLens( MScSearch.geo )
@@ -782,6 +786,8 @@ class IndexAh[M](
           v0            = v1,
           reason        = m,
           switchCtx     = switchCtx,
+          // Если действительно что-то изменилось на карте - предложить обновление строки URL.
+          onChangeFxs   = ResetUrlRoute().toEffectPure :: Nil,
         )
       }
 

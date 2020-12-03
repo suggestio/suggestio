@@ -175,6 +175,9 @@ final class AdvGeoRcvrsUtil @Inject()(
     *         всегда возвращали один и тот же результат.
     */
   def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean = true): Source[(MNode, MSc3IndexResp), M] = {
+    // TODO 2020-12-03 - Надо wcAsLogo устранить, и возвращать на клиент и welcome fg, и лого.
+    //      Тут происходит подмена logoOpt на wcFg, невидимая на клиенте, что вызывает конфликты и нарушения в стилях SearchCss для одного и того же узла.
+
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
