@@ -76,6 +76,13 @@ object MSc3IndexResp {
       }
     }
 
+    /** Выбор логотипа с приоритетом на wcFg. */
+    def wcFgOrLogo: Option[IMediaInfo] = {
+      a.welcome
+        .flatMap( _.fgImage )
+        .orElse( a.logoOpt )
+    }
+
   }
 
 

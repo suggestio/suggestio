@@ -214,7 +214,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
         new Domain.OverSeq(
           args.nodesFound.nodesMap
             .iterator
-            .filter(_._2.props.logoOpt.nonEmpty)
+            .filter(_._2.props.wcFgOrLogo.nonEmpty)
             .map(_._1)
             .toIndexedSeq
         )
@@ -223,7 +223,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
         for {
           nodeProps <- args.nodesFound.nodesMap.get(nodeId)
-          logo <- nodeProps.props.logoOpt
+          logo <- nodeProps.props.wcFgOrLogo
           isVector = MImgFormats
             .withMime( logo.contentType )
             .exists(_.isVector)

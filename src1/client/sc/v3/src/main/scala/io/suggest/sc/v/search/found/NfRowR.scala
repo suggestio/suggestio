@@ -227,7 +227,7 @@ final case class NfRowR2(
         },
 
         // Иконка узла, присланная сервером:
-        p.logoOpt.whenDefinedNode { icon =>
+        p.wcFgOrLogo.whenDefinedNode { icon =>
           MuiListItemIcon {
             // Ширина может отличаться, в mui она задана статически как min-width: 56px.
             // Нужно выставлять ширину по ширине текущей картинки.
