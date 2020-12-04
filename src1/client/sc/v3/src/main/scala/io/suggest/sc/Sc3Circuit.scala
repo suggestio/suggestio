@@ -706,7 +706,6 @@ class Sc3Circuit(
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
     //if ( !jsRouterRW.value.isReady ) {
       acc ::= new JsRouterInitAh(
-        circuit = circuit,
         modelRW = jsRouterRW
       )
     //}
@@ -822,6 +821,18 @@ class Sc3Circuit(
     }
 
     this.runEffectAction( OnlineInit(true) )
+
+    // Инициализировать список последних узлов, когда платформа будет готова к RW-хранилищу и HTTP-запросам актуализации сохранённого списка.
+    // Например, cordova-fetch может быть не готова на iOS до platform-ready.
+    Future {
+      val jsRouterBootSvcId = MBootServiceIds.JsRouter
+      val a = BootAfter(
+        jsRouterBootSvcId,
+        LoadIndexRecents(clean = true).toEffectPure,
+      )
+      val fx = Boot( jsRouterBootSvcId :: Nil ).toEffectPure >> a.toEffectPure
+      this.runEffect( fx, a )
+    }
   }
 
 
@@ -972,16 +983,6 @@ class Sc3Circuit(
       // В фоне не приходят события уведомления online/offline в cordova. TODO В браузере тоже надо пере-проверять?
       if (isUsingNow)
         this.runEffectAction( OnlineCheckConn )
-    }
-
-    Future {
-      val jsRouterBootSvcId = MBootServiceIds.JsRouter
-      val a = BootAfter(
-        jsRouterBootSvcId,
-        LoadIndexRecents(clean = true).toEffectPure,
-      )
-      val fx = Boot( jsRouterBootSvcId :: Nil ).toEffectPure >> a.toEffectPure
-      this.runEffect( fx, a )
     }
   }
 

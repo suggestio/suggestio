@@ -52,7 +52,7 @@ class ScErrorDiaAh(
 
       if (v0.fold(true)(_.potRO.exists(_.value.isPending))) {
         // Если перезапись, то надо отписаться от любой предыдущей подписки на событие:
-        var fx = checkOnlineFx
+        var fx: Effect = checkOnlineFx
 
         // Надо подписаться на события изменения связанного pot'а, чтобы после error-диалог после retry мог сам скрыться с экрана.
         for (v <- v0; unSubsFx <- ScErrorDiaAh._maybeUnSubscribeFx(v))
@@ -121,7 +121,7 @@ class ScErrorDiaAh(
     // Закрыть диалог ошибки.
     case CloseError =>
       value.fold(noChange) { errDia0 =>
-        var fx = OnlineCheckConn.toEffectPure
+        var fx: Effect = OnlineCheckConn.toEffectPure
         for (subsFx <- ScErrorDiaAh._maybeUnSubscribeFx( errDia0 ))
           fx += subsFx
 

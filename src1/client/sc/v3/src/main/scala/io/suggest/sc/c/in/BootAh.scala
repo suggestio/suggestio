@@ -97,7 +97,7 @@ class BootAh[M](
           val z = CircuitUtil.mkLensZoomRO( circuit.jsRouterRW, MJsRouterS.jsRouter )
           _startWithPot( serviceId, z )
         }
-        val bgFx = JsRouterInit.toEffectPure
+        val bgFx = JsRouterInit().toEffectPure
         bootSvcFx + bgFx
       }
       // TODO Sc3Main содержит свой запуск jsRouter-инициализации, который ещё активирует RmeLogging.

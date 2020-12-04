@@ -521,9 +521,11 @@ class TailAh(
       // Аккамулятор функций, обновляющих список модов, которые будут наложены на v0.
       var modsAcc = List.empty[MScRoot => MScRoot]
 
-      // Возможно js-роутер ещё не готов, и нужно отложить полную обработку состояния:
-      val isFullyReady = v0.internals.jsRouter.jsRouter.isReady &&
-        (v0.internals.boot.wzFirstDone.getOrElseTrue /*isEmpty || contains[Boolean] true*/)
+      // Возможно js-роутер или cordova-fetch ещё не готовы, и нужно отложить полную обработку состояния.
+      // Ожидание cordova-fetch требуется, т.к. cordova либо AFNetworking на iOS 12 как-то долговато инициализируются.
+      val isFullyReady = v0.dev.platform.isReady &&
+        v0.internals.jsRouter.jsRouter.isReady &&
+        v0.internals.boot.wzFirstDone.getOrElseTrue
 
       // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
       var jsRouterAwaitRoute = false
@@ -570,7 +572,11 @@ class TailAh(
       if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
         // Первое раскрытие панели может приводить к запросам в jsRouter, который на раннем этапе может быть ещё не готов.
         // Поэтому проверяем загруженность роутера в память, прежде чем запускать.
-        var sideBarFx = SideBarOpenClose( MScSideBars.Search, OptionUtil.SomeBool(m.mainScreen.searchOpened) ).toEffectPure
+        var sideBarFx: Effect = SideBarOpenClose(
+          bar = MScSideBars.Search,
+          open = OptionUtil.SomeBool(m.mainScreen.searchOpened),
+        ).toEffectPure
+
         if (v0.internals.boot.wzFirstDone.isEmpty) {
           val jsRouterSvcId = MBootServiceIds.JsRouter
           sideBarFx = Boot( jsRouterSvcId :: Nil ).toEffectPure >>
@@ -705,22 +711,44 @@ class TailAh(
       }
 
       // Запихнуть в состояние текущий экшен для запуска позднее, если требуется:
+      val root_internals_jsRouter_delayedRouteTo_LENS = MScRoot.internals
+        .composeLens( MScInternals.jsRouter )
+        .composeLens( MJsRouterS.delayedRouteTo )
+      val delayedRouteTo0 = root_internals_jsRouter_delayedRouteTo_LENS get v0
       for {
         awaitRouteOpt <- {
           // Выставить роуту
           if (jsRouterAwaitRoute)
             Some(Some(m))
           // Сбросить ранее выставленную роуту
-          else if (v0.internals.jsRouter.delayedRouteTo.nonEmpty)
+          else if (delayedRouteTo0.nonEmpty)
             Some(None)
           // Ничего менять в состоянии delayed-роуты не надо
           else None
         }
       } {
-        modsAcc ::= MScRoot.internals
-          .composeLens( MScInternals.jsRouter )
-          .composeLens( MJsRouterS.delayedRouteTo )
-          .set( awaitRouteOpt )
+        modsAcc ::= root_internals_jsRouter_delayedRouteTo_LENS set awaitRouteOpt
+
+        // Если delayed-роутера выставлена впервые, то надо подписаться на BootAfter(js-роутера), дождавшись platform ready.
+        if (delayedRouteTo0.isEmpty) {
+          fxsAcc ::= BootAfter(
+            MBootServiceIds.Platform,
+            fx = Effect.action {
+              // Надо по наступлению готовности платформы и роутера запускать delayed-роуту в обработку.
+              // В cordova на iOS-12 роутер готов до platformReady, на остальных - наоборот.
+              BootAfter(
+                MBootServiceIds.JsRouter,
+                fx = Effect.action {
+                  root_internals_jsRouter_delayedRouteTo_LENS
+                    .get( modelRW.value )
+                    .get
+                  // Сохранённая delayed-роута будет зачищена в ходе обработки RouteTo (см.выше delayedRouteTo.nonEmpty).
+                },
+              )
+            }
+          )
+            .toEffectPure
+        }
       }
 
       // Диалог first-run открыт?

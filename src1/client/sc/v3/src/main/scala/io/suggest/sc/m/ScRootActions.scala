@@ -37,10 +37,7 @@ trait IScIndexRespReason extends IScApiRespReason
 sealed trait IScRootAction extends DAction
 
 /** Запустить инициализацию js-роутера. */
-case object JsRouterInit extends IScRootAction
-
-/** Сигнал основной цепочке о состоянии основного js-роутера. */
-case class JsRouterStatus( payload: Try[routes.type] ) extends IScRootAction
+case class JsRouterInit( status: Pot[routes.type] = Pot.empty ) extends IScRootAction
 
 
 /** События экрана. */
@@ -211,7 +208,6 @@ case object SetPlatformReady extends IPlatformAction
 
 
 case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScRootAction
-
 
 
 /** Маркер-интерфейс для экшенов для ErrorAh: */

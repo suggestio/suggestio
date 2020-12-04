@@ -41,7 +41,7 @@ class DlAppAh(
 
       } else {
         var updF = MDlAppDia.opened set m.opened
-        var finalFx = ResetUrlRoute().toEffectPure
+        var finalFx: Effect = ResetUrlRoute().toEffectPure
 
         if (m.opened) {
           for (osFamily <- v0.platform if v0.getReq.isEmpty && !v0.getReq.isPending) {

@@ -17,7 +17,6 @@ import scala.util.Success
   * Description: Обработчик событий готовности js-роутера к работе.
   */
 class JsRouterInitAh[M <: AnyRef](
-                                   circuit: Circuit[M],
                                    modelRW: ModelRW[M, MJsRouterS]
                                  )
   extends ActionHandler( modelRW )
@@ -26,58 +25,52 @@ class JsRouterInitAh[M <: AnyRef](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Команда к запуску инициализации js-роутера.
-    case JsRouterInit =>
+    case m: JsRouterInit =>
       val v0 = value
-      if (v0.jsRouter.isReady || v0.jsRouter.isPending) {
-        // Инициализация уже запущена или выполнена ранее.
-        noChange
+
+      if (m.status.isEmpty && !m.status.isFailed) {
+        if (v0.jsRouter.isReady || v0.jsRouter.isPending) {
+          // Инициализация уже запущена или выполнена ранее.
+          noChange
+
+        } else {
+          // Нужно запустить инициалиазацию js-роутера:
+          val fx = Effect {
+            SrvRouter
+              .ensureJsRouter()
+              .transform { tryRes =>
+                val m2 = m.copy(
+                  status = m.status withTry tryRes,
+                )
+                Success( m2 )
+              }
+          }
+          val v2 = MJsRouterS.jsRouter
+            .set( m.status.pending() )(v0)
+
+          // silent - потому что pending никого не интересует.
+          updatedSilent(v2, fx)
+        }
 
       } else {
-        // Нужно запустить инициалиазацию js-роутера:
-        val fx = Effect {
-          SrvRouter
-            .ensureJsRouter()
-            .transform { tryRes =>
-              Success(JsRouterStatus(tryRes))
-            }
+        // Сигнал готовности и проблеме инициализации роутера.
+        var stateMods = MJsRouterS.jsRouter.set( m.status )
+        var fxsAcc = List.empty[Effect]
+
+        // Если неудача, то надо попробовать ещё раз:
+        if (m.status.isFailed || m.status.isUnavailable) {
+          fxsAcc ::= Effect {
+            DomQuick
+              .timeoutPromiseT( 300 )( JsRouterInit() )
+              .fut
+          }
         }
-        val v2 = MJsRouterS.jsRouter
-          .modify( _.pending() )(v0)
 
-        // silent - потому что pending никого не интересует.
-        updatedSilent(v2, fx)
+        // Обновить состояние и закончить.
+        val v2 = stateMods( v0 )
+
+        ah.updatedMaybeEffect( v2, fxsAcc.mergeEffects )
       }
-
-
-    // Сигнал готовности и проблеме инициализации роутера.
-    case m: JsRouterStatus =>
-      val v0 = value
-
-      var stateMods = MJsRouterS.jsRouter.modify( _.withTry(m.payload) )
-      var fxsAcc = List.empty[Effect]
-
-      // Если задана SPA-роута, и js-роутер готов, повторно вызвать SPA-роуту:
-      for {
-        routeTo <- v0.delayedRouteTo
-        if m.payload.isSuccess
-      } {
-        fxsAcc ::= routeTo.toEffectPure
-        stateMods = stateMods andThen MJsRouterS.delayedRouteTo.set(None)
-      }
-
-      // Если неудача, то надо попробовать ещё раз:
-      if (m.payload.isFailure) {
-        fxsAcc ::= Effect {
-          DomQuick
-            .timeoutPromiseT( 300 )( JsRouterInit )
-            .fut
-        }
-      }
-
-      // Обновить состояние и закончить.
-      val v2 = stateMods( v0 )
-
-      ah.updatedMaybeEffect( v2, fxsAcc.mergeEffects )
 
   }
 

@@ -31,7 +31,7 @@ object DAction {
     /** Ускоренное заворачивание в Effect.action() с отбрасыванием ленивости исполнения.
       * Когда нет сайд-эффектов, нет тяжелых действия или сложных манипуляций, этого достаточно.
       */
-    def toEffectPure(implicit ec: ExecutionContext): Effect =
+    def toEffectPure(implicit ec: ExecutionContext) =
       Effect.action(act)
 
   }

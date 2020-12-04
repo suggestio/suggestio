@@ -112,11 +112,16 @@ class ScreenAh[M](
 
       // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
       // Выполнить ребилд ScCss в фоне:
-      var fx = ScCssReBuild.toEffectPure
+      var fx: Effect = ScCssReBuild.toEffectPure
 
       // Если закрыта левая панель меню, то нужно её раскрыть (нужна как ориентир, иначе непонятно).
-      if (!rootRO.value.index.menu.opened)
-        fx = SideBarOpenClose( MScSideBars.Menu, open = OptionUtil.SomeBool.someTrue ).toEffectPure >> fx
+      if (!rootRO.value.index.menu.opened) {
+        val menuOpenFx = SideBarOpenClose(
+          bar = MScSideBars.Menu,
+          open = OptionUtil.SomeBool.someTrue,
+        ).toEffectPure
+        fx = menuOpenFx >> fx
+      }
 
       updated(v2, fx)
 
