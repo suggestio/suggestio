@@ -32,7 +32,8 @@ final case class MOsToast(
                            appBadgeCounter: Option[Int]            = None, // cnl => badge
                            // action handlers
                            onEvent        : Map[String, DAction]   = Map.empty,
-                           sticky         : Option[Boolean]        = None
+                           sticky         : Option[Boolean]        = None,
+                           channel        : Option[String]         = None,
                          )
 object MOsToast {
   @inline implicit def univEq: UnivEq[MOsToast] = UnivEq.force

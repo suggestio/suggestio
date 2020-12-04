@@ -18,7 +18,7 @@ import japgolly.univeq._
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.|
+import scala.scalajs.js.{UndefOr, |}
 import scala.util.Try
 
 /**
@@ -236,6 +236,7 @@ final class CordovaLocalNotificationAh[M](
           override val actions = _actionsUndef
           override val badge = osToast.appBadgeCounter.orUndefined
           override val sticky = osToast.sticky.orUndefined
+          override val channel = osToast.channel.orUndefined
         }
 
         CnlToastInfo(_toastIntId, osToast, cnlToast)

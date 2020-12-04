@@ -12,6 +12,7 @@ import japgolly.univeq._
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.UndefOr
 import scala.util.Try
 
 /**
@@ -113,6 +114,8 @@ final class CdvBgGeoLocApi(
             override val fastestInterval = _maxAgeMsU
 
             // Нотификация для geolocation-мониторинга в андройде.
+            override val startForeground = false
+            override val notificationsEnabled = false
             override val notificationTitle = messages( MsgCodes.`Bg.location` )
             override val notificationText = messages( MsgCodes.`Bg.location.hint` )
             //override val notificationIconSmall = "res://ic_notification"

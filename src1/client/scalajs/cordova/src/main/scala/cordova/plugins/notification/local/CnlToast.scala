@@ -20,7 +20,7 @@ trait CnlToast extends js.Object {
   val summary: js.UndefOr[String] = js.undefined
   val led: js.UndefOr[CnlLed] = js.undefined
   val clock: js.UndefOr[js.Any] = js.undefined
-  val channel: js.UndefOr[js.Any] = js.undefined
+  val channel: js.UndefOr[String] = js.undefined
   val actions: js.UndefOr[js.Array[String | CnlAction]] = js.undefined
 
   val text: js.UndefOr[String | js.Array[CnlMessage]] = js.undefined

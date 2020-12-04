@@ -140,6 +140,9 @@ final class ScNotifications(
           //silent = OptionUtil.SomeBool.someTrue,
           // foreground: iOS не отображат уведомление на раскрытом приложении. https://github.com/katzer/cordova-plugin-local-notifications/issues/1711
           foreground = OptionUtil.SomeBool.someTrue,
+          sticky = OptionUtil.SomeBool.someFalse,
+          // Канал: если его не задать в cordova-android, то это уведомление пойдёт внутрь background-геолокации и станет нескрываемым.
+          channel = Some( MsgCodes.`Suggest.io` ),
           // TODO icon - вывести круглую иконку узла, в котором может быть находится пользователь? Взять присланную сервером или текущую какую-нибудь?
           // image - без картинки, т.к. это довольно узконаправленное решение.
           /*imageUrl = for {
