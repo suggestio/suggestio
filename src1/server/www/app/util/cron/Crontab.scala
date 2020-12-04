@@ -12,6 +12,7 @@ import util.stat.StatCronTasks
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq._
 import play.api.Configuration
+import util.adv.geo.tag.GeoTagsUtilJmx
 import util.up.CleanStaleUploads
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,6 +54,7 @@ case class Crontab @Inject() (
     implicitly[ClassTag[LocalImgsDeleteEmptyDirs]] #::
     implicitly[ClassTag[LocalImgsDeleteNotExistingInPermanent]] #::
     implicitly[ClassTag[CleanStaleUploads]] #::
+    implicitly[ClassTag[GeoTagsUtilJmx]] #::
     LazyList.empty
   }
 

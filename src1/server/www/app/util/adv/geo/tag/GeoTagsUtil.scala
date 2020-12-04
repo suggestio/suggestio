@@ -1,8 +1,7 @@
 package util.adv.geo.tag
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.{Keep, Sink}
-import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.util.SioEsUtil
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -20,9 +19,13 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import io.suggest.es.model.{EsModel, MEsNestedSearch}
+import models.mcron.MCronTask
 import models.mproj.ICommonDi
+import play.api.inject.Injector
+import util.cron.ICronTasksProvider
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 /**
@@ -37,7 +40,7 @@ import scala.util.{Failure, Success}
   * Сброс хлама в теги необходим для поиска тегов.
   */
 class GeoTagsUtil @Inject() (
-                              mCommonDi     : ICommonDi
+                              mCommonDi     : ICommonDi,
                             )
   extends MacroLogsImpl
 {
@@ -574,29 +577,38 @@ trait GeoTagsUtilJmxMBean {
 
 }
 
+
+@Singleton
 final class GeoTagsUtilJmx @Inject() (
-                                       esModel                   : EsModel,
-                                       geoTagsUtil               : GeoTagsUtil,
-                                       mNodes                    : MNodes,
-                                       implicit private val ec   : ExecutionContext
+                                       injector: Injector,
                                      )
   extends JmxBase
   with GeoTagsUtilJmxMBean
+  with ICronTasksProvider
 {
 
+  private def esModel = injector.instanceOf[EsModel]
+  private def geoTagsUtil = injector.instanceOf[GeoTagsUtil]
+  private def mNodes = injector.instanceOf[MNodes]
+  implicit private def ec = injector.instanceOf[ExecutionContext]
+
   import JmxBase._
-  import esModel.api._
 
   override def _jmxType = Types.UTIL
 
   override def deleteAllTagNodes(): String = {
-    val fut = for (countDeleted <- geoTagsUtil.deleteAllTagNodes()) yield {
+    val fut = for {
+      countDeleted <- geoTagsUtil.deleteAllTagNodes()
+    } yield {
       s"Deleted $countDeleted tag nodes."
     }
     awaitString(fut)
   }
 
   override def rebuildTagByNodeId(nodeId: String): String = {
+    val _esModel = esModel
+    import _esModel.api._
+
     val fut = for {
       mnodeOpt <- mNodes
         .getByIdCache(nodeId)
@@ -627,5 +639,17 @@ final class GeoTagsUtilJmx @Inject() (
     awaitString( fut )
   }
 
-}
+  /** Список задач, которые надо вызывать по таймеру.
+    * Засунут в JMX, т.к. GeoTagsUtil не синглтон и быть им не обязан. А сингтоном является этот JMX-класс.
+    */
+  override def cronTasks(): Iterable[MCronTask] = {
+    val rebuildAllCron = MCronTask(
+      startDelay  = 1.minutes,
+      every       = 15.minutes,
+      displayName = "rebuildAllTags",
+    )( geoTagsUtil.rebuildAllTagNodes )
 
+    rebuildAllCron :: Nil
+  }
+
+}
