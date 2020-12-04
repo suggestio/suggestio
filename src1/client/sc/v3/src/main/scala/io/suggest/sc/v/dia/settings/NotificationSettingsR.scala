@@ -21,19 +21,20 @@ class NotificationSettingsR(
   type Props_t = MScOsNotifyS
   type Props = ModelProxy[Props_t]
 
+  private lazy val innerComp = onOffSettingR.prepare(
+    text = crCtxProv.message( MsgCodes.`Notifications` ),
+    onOffAction = { isEnabled =>
+      if (isEnabled)
+        NotificationPermAsk( isVisible = true )
+      else
+        NotifyStartStop( isStart = isEnabled )
+    },
+  )
+
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsProxy =>
-      val innerComp = onOffSettingR.prepare(
-        text = crCtxProv.message( MsgCodes.`Notifications` ),
-        onOffAction = { isEnabled =>
-          if (isEnabled)
-            NotificationPermAsk( isVisible = true )
-          else
-            NotifyStartStop( isStart = isEnabled )
-        },
-      )
       propsProxy.wrap(_.hasPermission)( innerComp.component.apply )
     }
     .build

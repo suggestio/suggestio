@@ -8,7 +8,7 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
-import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
+import io.suggest.sc.sc3.{MSc3Resp, MScConfUpdate, MScQs, MScRespActionType}
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.spa.{DAction, SioPages}
 import io.suggest.text.StringUtil
@@ -258,8 +258,15 @@ case class OnlineCheckConnRes( netInfo: MOnLineInfo ) extends IOnlineAction
 
 
 sealed trait IScConfAction extends IScRootAction
+
 /** Замена текущего значения debug-флага. */
 case class SetDebug(isDebug: Boolean) extends IScConfAction
+
+/** Экшен сохранения конфига.
+  * @param update None, то будет пересохранён текущий конфиг без условно.
+  *               Some() с обновление - сохранение конфига только если что-то изменилось согласно данным обновления.
+  */
+case class SaveConf( update: Option[MScConfUpdate] = None ) extends IScConfAction
 
 
 /** Экшены для sc-login. */

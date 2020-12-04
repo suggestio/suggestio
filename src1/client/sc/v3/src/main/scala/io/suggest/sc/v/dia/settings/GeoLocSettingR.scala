@@ -20,20 +20,20 @@ class GeoLocSettingR(
   type Props_t = MGeoLocSwitchS
   type Props = ModelProxy[Props_t]
 
+  private lazy val innerComp = onOffSettingR.prepare(
+    text = crCtxProv.message( MsgCodes.`Geolocation` ),
+    onOffAction = { isEnabled =>
+      GeoLocOnOff(
+        enabled = isEnabled,
+        isHard  = true,
+      )
+    },
+  )
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsProxy =>
-      val innerComp = onOffSettingR.prepare(
-        text = crCtxProv.message( MsgCodes.`Geolocation` ),
-        onOffAction = { isEnabled =>
-          GeoLocOnOff(
-            enabled = isEnabled,
-            isHard  = true,
-          )
-        },
-      )
       propsProxy.wrap(_.onOff)( innerComp.component.apply )
     }
     .build

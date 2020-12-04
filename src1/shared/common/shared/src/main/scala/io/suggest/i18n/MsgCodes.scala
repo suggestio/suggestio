@@ -496,4 +496,7 @@ object MsgCodes {
   val `Bg.location` = "Bg.location"
   val `Bg.location.hint` = "Bg.location.hint"
 
+  val `Debug` = "Debug"
+  val `Version` = "Version"
+
 }

@@ -633,7 +633,8 @@ class Sc3Circuit(
   )
 
   private val scConfAh = new ScConfAh(
-    modelRW = confRW,
+    modelRW  = confRW,
+    scInitRO = rootRW.zoom(_.toScInit),
   )
 
   /** Контроллер управления отдельной формой логина. */

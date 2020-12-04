@@ -21,10 +21,19 @@ class VersionR(
   // Какой-то race condition с инициализацией js-компонента MuiTypography:
   // sjs-react выдаёт ошибку: Invalid JsComponent! ...
 
+  val VERSION_STRING = {
+    var vsn = SioGitUtil.currentRevision
+
+    // Добавить "-dev" в конце, чтобы отличать отладочный билд.
+    if (scalajs.LinkingInfo.developmentMode)
+      vsn += "-dev"
+
+    vsn
+  }
+
   val component = ScalaComponent
-    .builder[Unit]( getClass.getSimpleName )
-    .stateless
-    .render_P { _ =>
+    .builder
+    .static( getClass.getSimpleName ) {
       scCssP.consume { scCss =>
         MuiTypoGraphy {
           val css = new MuiTypoGraphyClasses {
@@ -39,7 +48,7 @@ class VersionR(
             override val classes = css
           }
         } (
-          SioGitUtil.currentRevision,
+          VERSION_STRING,
         )
       }
     }

@@ -19,24 +19,24 @@ class BlueToothSettingR(
   type Props_t = MBeaconerS
   type Props = ModelProxy[Props_t]
 
+  private lazy val innerComp = onOffSettingR.prepare(
+    text = MsgCodes.`Bluetooth`,
+    onOffAction = { isEnabled =>
+      BtOnOff(
+        isEnabled = isEnabled,
+        opts = MBeaconerOpts(
+          hardOff = true,
+          askEnableBt = true,
+          oneShot = false,
+        ),
+      )
+    },
+  )
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsProxy =>
-      val innerComp = onOffSettingR.prepare(
-        text = MsgCodes.`Bluetooth`,
-        onOffAction = { isEnabled =>
-          BtOnOff(
-            isEnabled = isEnabled,
-            opts = MBeaconerOpts(
-              hardOff = true,
-              askEnableBt = true,
-              oneShot = false,
-            ),
-          )
-        },
-      )
       propsProxy.wrap( _.isEnabled )( innerComp.component.apply )
     }
     .build

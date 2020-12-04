@@ -1,15 +1,21 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiList}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiList, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.Css
 import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.{MScRoot, SettingsDiaOpen}
+import io.suggest.sc.m.{MScRoot, SetDebug, SettingsDiaOpen}
+import io.suggest.sc.v.menu.VersionR
+import io.suggest.spa.DiodeUtil
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.raw.React.Node
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -25,12 +31,20 @@ class ScSettingsDiaR(
                       unsafeOffsetSettingR    : UnsafeOffsetSettingR,
                       notificationSettingsR   : NotificationSettingsR,
                       platformComponents      : PlatformComponents,
+                      onOffSettingR           : OnOffSettingR,
+                      versionR                : VersionR,
                       crCtxProv               : React.Context[MCommonReactCtx],
                       platformCssP            : React.Context[PlatformCssStatic],
                     ) {
 
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
+
+  /** Компонент переключения (выкючения) debug-режима. */
+  private lazy val setDebugCompCont = onOffSettingR.prepare(
+    text = MsgCodes.`Debug` ,
+    onOffAction = SetDebug,
+  )
 
 
   case class State(
@@ -74,7 +88,33 @@ class ScSettingsDiaR(
             // debug-функции не должны тормозить работу выдачи, если нет флага при запуске.
             s.debugSomeC { isDebugEnabled =>
               ReactCommonUtil.maybeEl( isDebugEnabled.value.value ) {
-                p.wrap(_.dev.screen.info)( unsafeOffsetSettingR.component.apply )
+                React.Fragment(
+
+                  // Разделитель.
+                  MuiListItem(
+                    new MuiListItemProps {
+                      override val dense = true
+                      override val divider = true
+                    }
+                  )(),
+
+                  // Переключалка-выключалка debug mode
+                  p.wrap { mroot => DiodeUtil.Bool( mroot.internals.conf.debug ) } ( setDebugCompCont.component.apply ),
+
+                  // Управление unsafe-offsets, и данные по экрану устройства.
+                  p.wrap(_.dev.screen.info)( unsafeOffsetSettingR.component.apply ),
+
+                  // Версия системы (та же, что и на левой панели меню внизу, но тут по-крупному):
+                  MuiListItem()(
+                    MuiListItemText(
+                      new MuiListItemTextProps {
+                        override val primary   = MsgCodes.`Version`
+                        override val secondary = versionR.VERSION_STRING
+                      }
+                    )(),
+                  ),
+
+                )
               }
             },
 

@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
@@ -10,8 +10,12 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.raw.React.Node
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
+
+import scala.scalajs.js.UndefOr
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -23,6 +27,7 @@ class UnsafeOffsetSettingR {
 
   type Props_t = MScreenInfo
   type Props = ModelProxy[Props_t]
+
 
   case class State(
                     mtbrOptC      : ReactConnectProxy[MTlbr],
@@ -55,6 +60,9 @@ class UnsafeOffsetSettingR {
       }
 
       React.Fragment(
+
+
+
         // Строка с контролом для замены offset'ов
         MuiListItem(
           liProps
@@ -66,11 +74,6 @@ class UnsafeOffsetSettingR {
               <.span(
                 ^.`class` := Css.Floatt.RIGHT,
 
-                // Уменьшение
-                _mkPlusMinusBtn(-1)( MINUS ),
-
-                SPACE,
-
                 // Текущее значение:
                 s.mtbrOptC { mtbrOptProxy =>
                   <.span(
@@ -78,8 +81,11 @@ class UnsafeOffsetSettingR {
                   )
                 },
 
-                SPACE,
+                <.br,
 
+                // Уменьшение
+                _mkPlusMinusBtn(-1)( MINUS ),
+                SPACE,
                 // Увеличение
                 _mkPlusMinusBtn(+1)( PLUS ),
 
@@ -118,12 +124,14 @@ class UnsafeOffsetSettingR {
         MuiListItem(
           liProps
         )(
-          MuiListItemText()(
-            <.small(
-              ^.wordWrap.`break-word`,
-              dom.window.navigator.userAgent,
-            )
-          )
+          MuiListItemText {
+            val uaStr = Try( dom.window.navigator.userAgent )
+              .fold(_.toString, identity)
+            new MuiListItemTextProps {
+              override val primary = "User-Agent"
+              override val secondary = uaStr
+            }
+          }()
         ),
 
       )
