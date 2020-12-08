@@ -328,7 +328,7 @@ class BootAh[M](
         }
 
       if (svcIds2.isEmpty) {
-        logger.log( ErrorMsgs.ALREADY_DONE, msg = m )
+        //logger.log( ErrorMsgs.ALREADY_DONE, msg = m )
         noChange
       } else {
         val v1 = MScBoot.targets.modify(_ ++ svcIds2)(v0)

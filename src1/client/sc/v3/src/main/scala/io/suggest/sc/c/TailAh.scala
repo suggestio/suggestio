@@ -731,21 +731,25 @@ class TailAh(
 
         // Если delayed-роутера выставлена впервые, то надо подписаться на BootAfter(js-роутера), дождавшись platform ready.
         if (delayedRouteTo0.isEmpty) {
+          val afterRouterReadyFx = Effect.action {
+            // Надо по наступлению готовности платформы и роутера запускать delayed-роуту в обработку.
+            // В cordova на iOS-12 роутер готов до platformReady, на остальных - наоборот.
+            val runRouteFx = Effect.action {
+              root_internals_jsRouter_delayedRouteTo_LENS
+                .get( modelRW.value )
+                .get
+            }
+            // Сохранённая delayed-роута будет зачищена в ходе обработки RouteTo (см.выше delayedRouteTo.nonEmpty).
+            BootAfter(
+              MBootServiceIds.JsRouter,
+              fx = runRouteFx,
+              ifMissing = Some( runRouteFx ),
+            )
+          }
           fxsAcc ::= BootAfter(
             MBootServiceIds.Platform,
-            fx = Effect.action {
-              // Надо по наступлению готовности платформы и роутера запускать delayed-роуту в обработку.
-              // В cordova на iOS-12 роутер готов до platformReady, на остальных - наоборот.
-              BootAfter(
-                MBootServiceIds.JsRouter,
-                fx = Effect.action {
-                  root_internals_jsRouter_delayedRouteTo_LENS
-                    .get( modelRW.value )
-                    .get
-                  // Сохранённая delayed-роута будет зачищена в ходе обработки RouteTo (см.выше delayedRouteTo.nonEmpty).
-                },
-              )
-            }
+            fx = afterRouterReadyFx,
+            ifMissing = Some( afterRouterReadyFx ),
           )
             .toEffectPure
         }
