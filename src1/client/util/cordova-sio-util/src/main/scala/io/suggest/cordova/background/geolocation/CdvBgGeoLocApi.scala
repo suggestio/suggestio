@@ -12,7 +12,6 @@ import japgolly.univeq._
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.UndefOr
 import scala.util.Try
 
 /**
@@ -100,7 +99,6 @@ final class CdvBgGeoLocApi(
 
             // У приложения пока геолокация не работает в фоне.
             override val startOnBoot = false
-            override val saveBatteryOnBackground = true
             override val stopOnTerminate = true
             // TODO Не ясно, что с сервисом. Надо будет разобраться. Наверное, он нужен.
             //override val startForeground = false
@@ -113,7 +111,11 @@ final class CdvBgGeoLocApi(
             }
             override val fastestInterval = _maxAgeMsU
 
-            // Нотификация для geolocation-мониторинга в андройде.
+            // iOS
+            // saveBatteryOnBackground: это для некоего background, поэтому не ясно, актуально ли для foreground-работы.
+            override val saveBatteryOnBackground = true
+
+            // Android:
             override val startForeground = false
             override val notificationsEnabled = false
             override val notificationTitle = messages( MsgCodes.`Bg.location` )

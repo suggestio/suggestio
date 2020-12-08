@@ -24,13 +24,6 @@
     "cordova-plugin-background-mode": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-ble-central": {
-      "BLUETOOTH_USAGE_DESCRIPTION": " ",
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-fetch": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-inappbrowser": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -54,6 +47,14 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-ble-central": {
+      "IOS_INIT_ON_LOAD": "true",
+      "BLUETOOTH_USAGE_DESCRIPTION": " ",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

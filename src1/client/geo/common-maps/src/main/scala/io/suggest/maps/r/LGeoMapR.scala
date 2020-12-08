@@ -73,7 +73,7 @@ object LGeoMapR {
       override val center    = MapsUtil.geoPoint2LatLng( v.mapS.center )
       override val zoom      = js.defined( v.mapS.zoom )
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
-      override val maxZoom   = js.defined( 18 )
+      override val maxZoom   = js.defined( 16 )
       override val useFlyTo  = v.animated
       override val onLocationFound = _onLocationFound2
 

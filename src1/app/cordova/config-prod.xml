@@ -27,17 +27,6 @@
     <allow-navigation href="https://*.vk.com/*" />
     <allow-navigation href="https://*.userapi.com/*" />
     <allow-navigation href="https://*.vkuservideo.net/*" />
-    <!--
-    <allow-navigation href="http://192.168.42.17:9000/*" />
-    <allow-navigation href="http://outself:9000/*" />
-    <allow-navigation href="https://deanhume.github.io/*" />
-    <allow-navigation href="https://storage.googleapis.com/*" />
-    <allow-navigation href="https://paperplanes.world/*" />
-    <allow-navigation href="https://polytimer.rocks/*" />
-    <allow-navigation href="https://sii.im/*" />
-    <allow-navigation href="https://relay.socketnetwork.io/*" />
-    <allow-navigation href="https://fonts.googleapis.com/*" />
-    -->
     <preference name="StatusBarOverlaysWebView" value="true" />
     <preference name="StatusBarStyle" value="lightcontent" />
     <preference name="StatusBarBackgroundColor" value="#2d3d4e" />
@@ -60,11 +49,6 @@
         <icon density="xhdpi" src="res/icon/android/icon-96.png" />
         <icon density="xxhdpi" src="res/icon/android/icon-144.png" />
         <icon density="xxxhdpi" src="res/icon/android/icon-192.png" />
-        <!--
-        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
-            <application android:usesCleartextTraffic="true" />
-	</edit-config>
-	-->
         <resource-file src="res/icon/android/mipmap-mdpi/ic_notification.png" target="app/src/main/res/mipmap-mdpi/ic_notification.png" />
         <resource-file src="res/icon/android/mipmap-hdpi/ic_notification.png" target="app/src/main/res/mipmap-hdpi/ic_notification.png" />
         <resource-file src="res/icon/android/mipmap-xhdpi/ic_notification.png" target="app/src/main/res/mipmap-xhdpi/ic_notification.png" />
@@ -76,9 +60,9 @@
             <uses-permission android:name="android.permission.NETWORK_ACCESS" />
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
             <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-	</config-file>
-	<custom-preference name="android-manifest/uses-permission/[@android:name='android.permission.AUTHENTICATE_ACCOUNTS']" delete="true" />
-	<custom-preference name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" delete="true" />
+        </config-file>
+        <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.AUTHENTICATE_ACCOUNTS']" />
+        <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" />
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />
@@ -153,6 +137,5 @@
     <plugin name="cordova-plugin-local-notification" spec="~0.9.3">
         <variable name="ANDROID_SUPPORT_V4_VERSION" value="26.+" />
     </plugin>
-    <plugin name="cordova-plugin-ble-central" spec="~1.2.5" />
     <plugin name="cordova-custom-config" spec="~5.1.0" />
 </widget>

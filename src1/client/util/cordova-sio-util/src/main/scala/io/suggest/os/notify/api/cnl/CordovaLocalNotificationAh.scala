@@ -18,7 +18,7 @@ import japgolly.univeq._
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.|
 import scala.util.Try
 
 /**

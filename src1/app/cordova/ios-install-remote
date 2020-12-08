@@ -8,7 +8,13 @@ MYDIR=$(dirname $0)
 $MYDIR/ios-prepare
 
 ## 1. rsync с обновлениями.
-rsync -e ssh -avz $MYDIR developer@mac:Desktop/IOS/cordova
+rsync \
+    -e ssh \
+    -avz \
+    --exclude="platforms/android/build" \
+    --exclude="platforms/android/*/build" \
+    $MYDIR \
+    developer@mac:Desktop/IOS/cordova
 
 ssh developer@mac << EOF
 set -ex

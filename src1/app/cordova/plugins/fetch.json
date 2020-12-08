@@ -49,16 +49,6 @@
       "ANDROID_SUPPORT_V4_VERSION": "26.+"
     }
   },
-  "cordova-plugin-ble-central": {
-    "source": {
-      "type": "registry",
-      "id": "cordova-plugin-ble-central"
-    },
-    "is_top_level": true,
-    "variables": {
-      "BLUETOOTH_USAGE_DESCRIPTION": " "
-    }
-  },
   "cordova-custom-config": {
     "source": {
       "type": "registry",
@@ -140,8 +130,16 @@
   },
   "cordova-plugin-fetch": {
     "source": {
+      "type": "local",
+      "path": "/var/user/projects/sio/sio2/src1/app/cordova/node_modules/cordova-plugin-fetch"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-ble-central": {
+    "source": {
       "type": "registry",
-      "id": "https://github.com/aporat/cordova-plugin-fetch"
+      "id": "cordova-plugin-ble-central@1.3.1"
     },
     "is_top_level": true,
     "variables": {}

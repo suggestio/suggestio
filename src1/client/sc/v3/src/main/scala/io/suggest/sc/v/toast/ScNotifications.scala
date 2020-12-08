@@ -1,6 +1,6 @@
 package io.suggest.sc.v.toast
 
-import diode.{Dispatcher, Effect, ModelRO}
+import diode.{Effect, ModelRO}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamilies
 import io.suggest.geo.DistanceUtil
@@ -24,7 +24,6 @@ import japgolly.univeq._
   */
 final class ScNotifications(
                              rootRO       : ModelRO[MScRoot],
-                             //dispatcher   : Dispatcher,
                            ) {
 
   private def NOTIFY_AD_TITLE_MAX_LEN = 40

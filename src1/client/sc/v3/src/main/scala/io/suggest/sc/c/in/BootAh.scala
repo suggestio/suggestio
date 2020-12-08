@@ -320,8 +320,20 @@ class BootAh[M](
       val v0 = value
 
       // Нужно залить в состояние список запрошенных целей, которые ещё не запущены:
-      val v1 = MScBoot.targets.modify(_ ++ m.svcIds)(v0)
-      _processStartState( v1, m.svcIds )
+      // Нужно вычистить сервисы, чьё состояние уже отработано ранее:
+      val svcIds2 = m.svcIds
+        .filterNot { svcId =>
+          (v0.services contains svcId) ||
+          (v0.targets contains svcId)
+        }
+
+      if (svcIds2.isEmpty) {
+        logger.log( ErrorMsgs.ALREADY_DONE, msg = m )
+        noChange
+      } else {
+        val v1 = MScBoot.targets.modify(_ ++ svcIds2)(v0)
+        _processStartState( v1, svcIds2 )
+      }
 
 
     // Сигнал завершения какого-то этапа.
