@@ -51,7 +51,6 @@ final class LkAdnMap @Inject() (
   private lazy val bill2Util = injector.instanceOf[Bill2Util]
   private lazy val advGeoLocUtil = injector.instanceOf[AdvGeoLocUtil]
   private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
-  private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val lkGeoCtlUtil = injector.instanceOf[LkGeoCtlUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
