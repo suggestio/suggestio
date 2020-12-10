@@ -17,7 +17,7 @@ import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.n2.node.{IMNodes, MNode, MNodeTypes, NodeNotFoundException}
-import io.suggest.sc.MScApiVsns
+import io.suggest.sc.{MScApiVsns, ScConstants}
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
@@ -153,7 +153,7 @@ trait ScIndex
           override def subSearches  = subSearch :: Nil
           override def isEnabled    = Some(true)
           override def nodeTypes    = MNodeTypes.AdnNode :: Nil
-          override def limit        = 5
+          override def limit        = ScConstants.Index.MAX_NODES_DETECT
         }
         val nearBeaconHolderOptFut = mNodes.dynSearch(msearch)
         for (mnodes <- nearBeaconHolderOptFut) yield {
@@ -218,7 +218,7 @@ trait ScIndex
             }
             override def withAdnRights = withAdnRights1
             override def adnRightsMustOrNot = adnRightsMustOrNot1
-            override def limit = 5
+            override def limit = ScConstants.Index.MAX_NODES_DETECT
           }
           // Запустить поиск по запрошенным адресам.
           for {
@@ -315,11 +315,16 @@ trait ScIndex
     def indexNodesFut: Future[Seq[MIndexNodeInfo]] = {
       l00_rcvrByIdFut.recoverWith { case _: NoSuchElementException =>
         val beaconsNodesFut = l10_detectUsingNearBeacons
-        val coordsNodesFut  = for (coordNodes <- l50_detectUsingCoords) yield {
+        val coordsNodesFut  = for {
+          coordNodes <- l50_detectUsingCoords
+        } yield {
           // Надо выкинуть !isRcvr, если ЕСТЬ isRcvr.
-          if ( coordNodes.exists(m => !m.isRcvr) && coordNodes.exists(_.isRcvr) ) {
+          if (
+            coordNodes.exists(m => !m.isRcvr) &&
+            coordNodes.exists(_.isRcvr)
+          ) {
             val r = coordNodes.filter(_.isRcvr)
-            LOGGER.trace(s"$logPrefix Dropping non-rcvr nodes: \n was ${coordNodes.length} nodes = ${coordNodes.iterator.map(_.currNodeIdOpt.getOrElse("?")).mkString(", ")}\n become ${r.length} nodes = ${r.iterator.map(_.currNodeIdOpt.getOrElse("?")).mkString(", ")}")
+            LOGGER.trace(s"$logPrefix Dropping non-rcvr nodes: \n was ${coordNodes.length} nodes = ${coordNodes.iterator.map(_.currNodeIdOpt getOrElse "?").mkString(", ")}\n become ${r.length} nodes = ${r.iterator.map(_.currNodeIdOpt getOrElse "?").mkString(", ")}")
             r
           } else {
             coordNodes

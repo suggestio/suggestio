@@ -26,15 +26,12 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
-  *
-  * Без dependency injection, чтобы снизить кол-во React.Context().consume-компонентов: пусть всё будет в списке снаружи.
   */
 final class NfRowR(
                     scCssP                   : React.Context[ScCss],

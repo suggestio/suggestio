@@ -250,4 +250,12 @@ object ScConstants {
 
   }
 
+
+  object Index {
+
+    /** Кол-во узлов, которые разом детектятся в ScIndex. */
+    final def MAX_NODES_DETECT = 50
+
+  }
+
 }

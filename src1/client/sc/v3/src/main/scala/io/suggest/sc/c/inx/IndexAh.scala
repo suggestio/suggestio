@@ -481,10 +481,14 @@ class IndexAh[M](
         // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
         locEnv = {
           // Слать на сервер координаты с карты или с gps, если идёт определение местоположения.
-          if (switchCtx.demandLocTest) root.locEnvUser
-          else if (switchCtx.forceGeoLoc.nonEmpty) MLocEnv(switchCtx.forceGeoLoc, root.locEnvBleBeacons)
-          else if (switchCtx.indexQsArgs.nodeId.isEmpty) root.locEnvMap
-          else MLocEnv.empty
+          if (switchCtx.demandLocTest)
+            root.locEnvUser
+          else if (switchCtx.forceGeoLoc.nonEmpty)
+            MLocEnv(switchCtx.forceGeoLoc, root.locEnvBleBeacons)
+          else if (switchCtx.indexQsArgs.nodeId.isEmpty)
+            root.locEnvMap
+          else
+            MLocEnv.empty
         },
         screen = Some( root.dev.screen.info.screen ),
       ),
