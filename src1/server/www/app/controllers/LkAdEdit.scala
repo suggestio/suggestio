@@ -437,9 +437,7 @@ final class LkAdEdit @Inject() (
 
   /** Сериализовать в строку инсанс MAdEditFormInit. */
   private def _formInit2str(formInit: MAdEditFormInit): String = {
-    // TODO Есть мнение, что надо будет заюзать MsgPack+base64, т.е. и бинарь, и JSON в одном флаконе.
     // Этот JSON рендерится в html-шаблоне сейчас в строковую помойку вида "&quota&quot;,&quot" и довольно толстоват.
-    // Только сначала желательно бы выкинуть boopickle, заменив её на play-json или msgpack везде, где уже используется.
     Json.toJson(formInit).toString()
   }
 

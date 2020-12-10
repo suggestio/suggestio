@@ -2,11 +2,10 @@ package io.suggest.sc.v.hdr
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.media.IMediaInfo
+import io.suggest.media.MMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.ScConstants
 import io.suggest.sc.v.styl.ScCssStatic
-import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -37,7 +36,7 @@ class LogoR(
     * @param styled Стилизовать цветами узла?
     */
   case class PropsVal(
-                       logoOpt      : Option[IMediaInfo],
+                       logoOpt      : Option[MMediaInfo],
                        nodeNameOpt  : Option[String],
                        styled       : Boolean,
                      )

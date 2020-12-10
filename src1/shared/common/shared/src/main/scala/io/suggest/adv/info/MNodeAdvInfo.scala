@@ -1,11 +1,12 @@
 package io.suggest.adv.info
 
-import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
-import io.suggest.media.IMediaInfo
+import io.suggest.media.MMediaInfo
 import io.suggest.n2.node.meta.MMetaPub
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -16,13 +17,14 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MNodeAdvInfo {
 
-  implicit def mNodeAdvInfoPickler: Pickler[MNodeAdvInfo] = {
-    implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
-    implicit val mMetaPubP = MMetaPub.mMetaPubPickler
-    implicit val mAdvInfo4AdP = MNodeAdvInfo4Ad.mAdvInfo4AdPickler
-    implicit val mMediaInfoP = IMediaInfo.iMediaItemPickler
-    generatePickler[MNodeAdvInfo]
-  }
+  implicit def nodeAdvInfoJson: OFormat[MNodeAdvInfo] = (
+    (__ \ "b").format[String] and
+    (__ \ "n").format[String] and
+    (__ \ "t").formatNullable[MTfDailyInfo] and
+    (__ \ "a").formatNullable[MNodeAdvInfo4Ad] and
+    (__ \ "m").format[MMetaPub] and
+    (__ \ "g").format[Seq[MMediaInfo]]
+  )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MNodeAdvInfo] = UnivEq.derive
 
@@ -43,6 +45,6 @@ case class MNodeAdvInfo(
                          tfDaily        : Option[MTfDailyInfo],
                          tfDaily4Ad     : Option[MNodeAdvInfo4Ad],
                          meta           : MMetaPub,
-                         gallery        : Seq[IMediaInfo]
+                         gallery        : Seq[MMediaInfo]
                        )
 

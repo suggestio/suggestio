@@ -1,9 +1,7 @@
 package io.suggest.geo
 
-import boopickle.Default._
 import diode.FastEq
 import io.suggest.common.geom.coord.{GeoCoord_t, ICoord2dHelper}
-import io.suggest.common.html.HtmlConstants.{SPACE, `(`, `)`}
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.math.MathConst
 import japgolly.univeq.UnivEq
@@ -22,8 +20,6 @@ import scala.util.Try
  */
 
 object MGeoPoint {
-
-  implicit def MGEO_POINT_PICKLER: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
 
   /** Константы для описания точности точек.
     * osm.org использует точность в зависимости от масштаба, но не более 5 знаков после запятой.

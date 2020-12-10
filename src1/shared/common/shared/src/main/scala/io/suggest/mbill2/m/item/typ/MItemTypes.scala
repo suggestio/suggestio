@@ -1,6 +1,5 @@
 package io.suggest.mbill2.m.item.typ
 
-import boopickle.Default._
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
@@ -75,18 +74,6 @@ sealed abstract class MItemType(override val value: String) extends StringEnumEn
 
 
 object MItemType {
-
-  /** Поддержка boopickle.*/
-  implicit def mItemTypePickler: Pickler[MItemType] = {
-    import MItemTypes._
-    compositePickler[MItemType]
-      // TODO scala-2.12: возможно, там всё лучше чем сейчас. И все sealed-object'ы сами подцепятся.
-      .addConcreteType[AdvDirect.type]
-      .addConcreteType[GeoTag.type]
-      .addConcreteType[GeoPlace.type]
-      .addConcreteType[GeoLocCaptureArea.type]
-      .addConcreteType[TagDirect.type]
-  }
 
   @inline implicit def univEq: UnivEq[MItemType] = UnivEq.derive
 

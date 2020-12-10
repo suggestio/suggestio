@@ -1,6 +1,5 @@
 package io.suggest.n2.node.meta
 
-import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.{IEsMappingProps, MappingDsl}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
@@ -50,9 +49,6 @@ object MAddress extends IEmpty with IEsMappingProps {
     }
   }
 
-  implicit def mAddresPickler: Pickler[MAddress] = {
-    generatePickler[MAddress]
-  }
 
   @inline implicit def univEq: UnivEq[MAddress] = UnivEq.derive
 

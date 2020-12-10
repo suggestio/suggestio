@@ -8,8 +8,10 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.YmdR
+import io.suggest.scalaz.ScalazUtil.Implicits.EphStreamExt
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -19,7 +21,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   */
 object ItemsPricesR {
 
-  type Props = ModelProxy[Option[IPriceDslTerm]]
+  type Props = ModelProxy[Option[Tree[PriceDsl]]]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -28,7 +30,8 @@ object ItemsPricesR {
     private val tdCssBody = Css.Table.Td.WHITE :: tdCssBase
 
     /** Рендер строки маппера с данными его полей (кроме underlying). */
-    def _renderMapperReason(mapper: Mapper) = {
+    def _renderMapperReason(mapperTree: Tree[PriceDsl]) = {
+      val mapper = mapperTree.rootLabel
       <.tr(
         mapper.reason.whenDefined { priceReason =>
           // Рендерить название причины начисления
@@ -84,7 +87,7 @@ object ItemsPricesR {
         <.td(
           ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssBody ),
           ^.width   := 100.px,
-          JsFormatUtil.formatPrice( mapper.price )
+          JsFormatUtil.formatPrice( mapperTree.price )
         )
 
       )
@@ -92,7 +95,7 @@ object ItemsPricesR {
 
 
     /** Рендер одного ряда с под-элементами. */
-    private def _renderUnderlyingRow(und: IPriceDslTerm, undLevel: Int, withTableOuter: Boolean = true) = {
+    private def _renderUnderlyingRow(und: Tree[PriceDsl], undLevel: Int, withTableOuter: Boolean = true) = {
       <.tr(
         <.td(
           ^.`class` := Css.flat1( tdCssBody ),
@@ -104,7 +107,7 @@ object ItemsPricesR {
 
 
     /** Рендер данных по тарифу. */
-    private def _renderBaseTfPriceData(tfPrice: BaseTfPrice) = {
+    private def _renderBaseTfPriceData(tfPrice: PriceDsl) = {
       // Желательно не более трёх полей, т.к. это дело на самом нижнем уровне рендерится с ощутимым сдвигом слева.
       <.tr(
         // Дата
@@ -131,25 +134,30 @@ object ItemsPricesR {
         ),
 
         // Рендерить цены по тарифу для календаря.
-        <.td(
-          ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssBody ),
-          ^.width   := 100.px,
-          JsFormatUtil.formatPrice( tfPrice.price ),
-          Messages( MsgCodes.`_per_.day` )
-        )
+        tfPrice.price.whenDefined { mprice =>
+          <.td(
+            ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssBody ),
+            ^.width   := 100.px,
+            JsFormatUtil.formatPrice( mprice ),
+            Messages( MsgCodes.`_per_.day` ),
+          )
+        }
       )
     }
 
 
-    private def _renderChildren(term: IPriceDslTerm, sumLevel: Int) = {
+    private def _renderChildren(term: Tree[PriceDsl], sumLevel: Int) = {
       val undLevel = sumLevel + 1
-      term.children.toVdomArray { c =>
-        _renderPriceTerm(c, level = undLevel, withTableOuter = false)
-      }
+      term
+        .subForest
+        .iterator
+        .toVdomArray { c =>
+          _renderPriceTerm(c, level = undLevel, withTableOuter = false)
+        }
     }
 
 
-    private def _renderOuterTableForRow(term: IPriceDslTerm, level: Int) = {
+    private def _renderOuterTableForRow(term: Tree[PriceDsl], level: Int) = {
       <.table(
         ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL ),
         ^.marginLeft := (level * 2).px
@@ -157,32 +165,41 @@ object ItemsPricesR {
     }
 
 
-    private def _renderPriceTerm(term: IPriceDslTerm, level: Int = 0, withTableOuter: Boolean = true): VdomNode = {
-      val contentRows: VdomNode = term match {
+    private def _renderPriceTerm(priceDslTree: Tree[PriceDsl], level: Int = 0, withTableOuter: Boolean = true): VdomNode = {
+      val priceDsl = priceDslTree.rootLabel
+      val contentRows: VdomNode = priceDsl.term match {
         // У нас тут маппер. Рендерить его и его содержимое.
-        case mapper: Mapper =>
+        case PriceDslTerms.Mapper =>
           VdomArray(
-            _renderMapperReason(mapper)(
+            _renderMapperReason( priceDslTree )(
               ^.key := "r"
             ),
-            _renderUnderlyingRow( mapper.underlying, undLevel = level + 1, withTableOuter = true )(
-              ^.key := "u"
-            )
+            priceDslTree
+              .subForest
+              .zipWithIndex
+              .iterator
+              .toVdomArray { case (subTree, i) =>
+                _renderUnderlyingRow( subTree, undLevel = level + 1, withTableOuter = true )(
+                  ^.key := "u"
+                )
+              }
+
           )
 
-        case tfPrice: BaseTfPrice =>
+        case PriceDslTerms.BasePrice =>
           VdomArray(
-            _renderBaseTfPriceData( tfPrice )(
+            _renderBaseTfPriceData( priceDsl )(
               ^.key := "a"
             )
           )
 
-        case sum: Sum =>
-          _renderChildren(sum, level)
+        case PriceDslTerms.Sum =>
+          _renderChildren( priceDslTree, level )
       }
 
       if (withTableOuter) {
-        term.children
+        priceDslTree
+          .subForest
           .headOption
           .fold[VdomNode](contentRows) { firstChild =>
             _renderOuterTableForRow(firstChild, level)(

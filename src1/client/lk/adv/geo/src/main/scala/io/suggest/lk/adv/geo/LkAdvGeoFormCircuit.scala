@@ -5,7 +5,6 @@ import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.{MFormInit, MFormS}
 import io.suggest.bill.MGetPriceResp
-import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
@@ -15,10 +14,8 @@ import io.suggest.lk.adv.geo.r.LkAdvGeoHttpApiImpl
 import io.suggest.lk.adv.m.{IRcvrPopupProps, MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
-import io.suggest.pick.PickleUtil
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.log.CircuitLog
-import io.suggest.pick.BlobJsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
@@ -28,6 +25,7 @@ import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.StateInp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import play.api.libs.json.Json
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -52,12 +50,13 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
   /** Сборка начальной корневой модели. */
   override protected def initialModel: MRoot = {
-    // Десериализовывать из base64 из скрытого поля через boopickle + base64.
     val mrootOpt: Option[MRoot] = for {
       stateInp <- StateInp.find()
-      base64   <- stateInp.value
+      stateJsonStr <- stateInp.value
     } yield {
-      val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MFormInit](base64)
+      val mFormInit = Json
+        .parse( stateJsonStr )
+        .as[MFormInit]
       // Собираем начальный инстанс MRoot на основе данных, переданных с сервера...
       MRoot(
         mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),

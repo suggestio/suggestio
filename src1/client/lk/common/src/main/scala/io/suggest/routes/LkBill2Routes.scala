@@ -2,7 +2,7 @@ package io.suggest.routes
 
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{_}
+import io.suggest.proto.http.model._
 
 import scala.concurrent.Future
 
@@ -40,7 +40,7 @@ trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
     HttpClient.execute( req )
       .respAuthFut
       .successIf200
-      .unBooPickle[MNodeAdvInfo]
+      .unJson[MNodeAdvInfo]
   }
 
 }

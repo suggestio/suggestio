@@ -2,7 +2,7 @@ package io.suggest.lk.adv.r
 
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
-import io.suggest.adv.rcvr.{IRcvrPopupNode, RcvrKey}
+import io.suggest.adv.rcvr.{MRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -51,7 +51,7 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
   }
 
   /** Рендер тела одного узла. */
-  protected[this] def _renderNodeRow(node: IRcvrPopupNode, rcvrKey: RcvrKey, v: PropsVal): VdomElement
+  protected[this] def _renderNodeRow(node: MRcvrPopupNode, rcvrKey: RcvrKey, v: PropsVal): VdomElement
 
 
   /** react render. */
@@ -64,7 +64,7 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
       // Функция для рендера узла и его под-групп. Рекурсивна, т.к. в группах тоже могут быть узлы.
       // node -- узел для рендера
       // parentRcvrKeyRev обратный rcvrKey родительского узла или Nil для рендера top-level узла.
-      def __renderNode(node: IRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): VdomElement = {
+      def __renderNode(node: MRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): VdomElement = {
         val rcvrKeyRev = node.id :: parentRcvrKeyRev
         val rcvrKey = rcvrKeyRev.reverse
 

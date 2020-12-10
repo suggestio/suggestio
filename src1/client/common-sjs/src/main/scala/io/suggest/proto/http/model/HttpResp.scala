@@ -1,10 +1,9 @@
 package io.suggest.proto.http.model
 
-import boopickle.Pickler
 import io.suggest.id.IdentConst
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
-import io.suggest.pick.{MimeConst, PickleUtil}
+import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2.DomQuick
@@ -16,7 +15,7 @@ import play.api.libs.json.{Json, Reads}
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
+import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success}
 
 /**
@@ -174,24 +173,6 @@ object HttpResp extends Log {
       } yield {
         JSON.parse( jsonText )
           .asInstanceOf[T]
-      }
-    }
-
-    /**
-      * Декодировать будущий ответ сервера в инстанс какой-то модели с помощью boopickle и десериализатора,
-      * переданного в implicit typeclass'е.
-      *
-      * @tparam T Тип отрабатываемой модели.
-      * @return Фьючерс с десериализованным инстансом произвольной модели.
-      */
-    def unBooPickle[T: Pickler]: Future[T] = {
-      for {
-        resp <- ev.httpRespFut(a)
-        if !resp.bodyUsed
-        ab <- resp.arrayBuffer
-      } yield {
-        val bbuf = TypedArrayBuffer.wrap( ab )
-        PickleUtil.unpickle[T](bbuf)
       }
     }
 

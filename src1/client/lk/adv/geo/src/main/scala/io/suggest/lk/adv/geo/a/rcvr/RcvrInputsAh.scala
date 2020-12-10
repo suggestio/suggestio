@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.a.rcvr
 import diode.data.Pot
 import diode._
 import io.suggest.adv.geo.RcvrsMap_t
-import io.suggest.adv.rcvr.{IRcvrPopupNode, MRcvrPopupResp}
+import io.suggest.adv.rcvr.{MRcvrPopupNode, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.m.SetRcvrStatus
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
@@ -35,7 +35,7 @@ class RcvrInputsAh[M](
         // Найти узел с текущим id среди всех узлов.
         val checkedOnServerOpt = resp.node
           // Можно заменить .flatMap на .get: Ведь если это событие обрабатывается, значит хоть одна нода точно должна быть.
-          .flatMap( IRcvrPopupNode.findNode(e.rcvrKey, _) )
+          .flatMap( MRcvrPopupNode.findNode(e.rcvrKey, _) )
           .flatMap(_.checkbox)
           // Содержит ли описание узла с сервера текущее значение чекбокса? Если да, то значит значение галочки вернулось на исходное.
           .map(_.checked)

@@ -11,7 +11,7 @@ import enumeratum.values.{StringEnum, StringEnumEntry}
 
 object MDbgKeys extends StringEnum[MDbgKey] {
 
-  /** Инфа о рассчёте стоимости: сериализованный через boopickle блобик с инстансом PriceDsl. */
+  /** Инфа о рассчёте стоимости. */
   case object PriceDsl extends MDbgKey("p") {
 
     // Версии API

@@ -2,7 +2,7 @@ package io.suggest.sc.index
 
 import io.suggest.color.MColorData
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.media.IMediaInfo
+import io.suggest.media.MMediaInfo
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
@@ -22,8 +22,8 @@ object MWelcomeInfo {
 
   implicit def MWELCOME_INFO_FORMAT: OFormat[MWelcomeInfo] = (
     (__ \ "a").formatNullable[MColorData] and
-    (__ \ "b").formatNullable[IMediaInfo] and
-    (__ \ "c").formatNullable[IMediaInfo]
+    (__ \ "b").formatNullable[MMediaInfo] and
+    (__ \ "c").formatNullable[MMediaInfo]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MWelcomeInfo] = UnivEq.derive
@@ -39,8 +39,8 @@ object MWelcomeInfo {
   */
 case class MWelcomeInfo(
                          bgColor: Option[MColorData],
-                         bgImage: Option[IMediaInfo],
-                         fgImage: Option[IMediaInfo]
+                         bgImage: Option[MMediaInfo],
+                         fgImage: Option[MMediaInfo]
                        )
   extends EmptyProduct
 {

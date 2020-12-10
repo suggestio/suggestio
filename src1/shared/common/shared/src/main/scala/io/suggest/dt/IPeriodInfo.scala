@@ -1,6 +1,5 @@
 package io.suggest.dt
 
-import boopickle.Default._
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvIsoPeriod, QuickAdvPeriod, QuickAdvPeriods}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -19,13 +18,6 @@ import scalaz.syntax.validation._
   */
 
 object IPeriodInfo {
-
-  implicit def periodInfoPickler: Pickler[IPeriodInfo] = {
-    implicit val qapPickler = QuickAdvPeriod.qapIsoPickler
-    compositePickler[IPeriodInfo]
-      .addConcreteType[MIsoPeriod]
-      .addConcreteType[MCustomPeriod]
-  }
 
   def default = MIsoPeriod()
 

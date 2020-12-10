@@ -1,6 +1,5 @@
 package io.suggest.n2.node.meta
 
-import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.color.MColors
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
@@ -24,12 +23,6 @@ object MMetaPub extends IEmpty {
   override type T = MMetaPub
 
   def empty = apply()
-
-  implicit def mMetaPubPickler: Pickler[MMetaPub] = {
-    implicit val addressP = MAddress.mAddresPickler
-    implicit val businessP = MBusinessInfo.mBusinessInfoPickler
-    generatePickler[MMetaPub]
-  }
 
   implicit def mMetaPubFormat: OFormat[MMetaPub] = (
     (__ \ "n").formatNullable[String] and

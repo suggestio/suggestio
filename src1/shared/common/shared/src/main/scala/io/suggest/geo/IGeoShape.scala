@@ -1,6 +1,5 @@
 package io.suggest.geo
 
-import boopickle.Default._
 import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.primo.IApply1
 import japgolly.univeq._
@@ -19,29 +18,6 @@ import play.api.libs.json._
   * Потом переехала в [mgeo], затем классы моделей стали совсем кросс-платфроменными и переехали сюда.
   */
 object IGeoShape {
-
-  /** Общий boopickler для ИСПОЛЬЗУЕМЫХ реализаций [[IGeoShape]]. */
-  implicit def GEO_SHAPE_PICKLER: Pickler[IGeoShape] = {
-    // Добавлены только необходимые элементы.
-    implicit val circleGsP = CircleGs.CIRCLE_GS_PICKLER
-    implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
-    implicit val pointGsP = PointGs.POINT_GS_PICKLER
-    implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
-    implicit val multiPolygonGsP = MultiPolygonGs.MULTI_POLYGON_GS_PICKLER
-
-    // Сразу же защищаемся от рекурсивных пиклеров. Это особенно нужно для GeometryCollectionGs:
-    implicit val geoShapeP = compositePickler[IGeoShape]
-
-    geoShapeP
-      .addConcreteType[CircleGs]              // ГеоКруг -- основная гео-фигура в личном кабинете.
-      .addConcreteType[PolygonGs]             // OsmUtil. Карты в ЛК уже вовсю рендерят полигоны.
-      .addConcreteType[PointGs]
-      .addConcreteType[LineStringGs]          // OsmUtil. PolygonGs тянет её за собой всё равно.
-      .addConcreteType[MultiPolygonGs]        // OsmUtil
-      .addConcreteType[GeometryCollectionGs]  // OsmUtil, но в реале оно наверное не нужно.
-      // TODO Добавить поддержку остальных моделей при необходимости.
-  }
-
 
   /** Контейнер различных вариантов поддержки JSON-сериализации/десериализации.
     *
@@ -168,10 +144,6 @@ sealed trait IGeoShapeQuerable extends IGeoShape
 // Реализация GeoShape'ов:
 
 object PointGs extends IGeoShapeCompanion[PointGs] {
-  implicit def POINT_GS_PICKLER: Pickler[PointGs] = {
-    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
-    generatePickler[PointGs]
-  }
   @inline implicit def univEq: UnivEq[PointGs] = UnivEq.derive
 }
 /** Гео-шейп точки. */
@@ -184,11 +156,6 @@ case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
 
 /** Гео-шейп круга. */
 object CircleGs extends IGeoShapeCompanion[CircleGs] {
-
-  implicit def CIRCLE_GS_PICKLER: Pickler[CircleGs] = {
-    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
-    generatePickler[CircleGs]
-  }
 
   /** Валидация гео-круга под нужды какой-то абстрактной формы.  */
   def validate(gc: CircleGs, radiusConstrains: IMinMaxM): ValidationNel[String, CircleGs] = {
@@ -223,10 +190,7 @@ case class CircleGs(
 
 
 object EnvelopeGs extends IGeoShapeCompanion[EnvelopeGs] {
-  implicit def ENVELOPE_GS_PICKLER: Pickler[EnvelopeGs] = {
-    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
-    generatePickler[EnvelopeGs]
-  }
+  @inline implicit def univEq: UnivEq[EnvelopeGs] = UnivEq.derive
 }
 /** Гео-шейп квадрата. */
 case class EnvelopeGs(
@@ -264,7 +228,6 @@ case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
 }
 object GeometryCollectionGs extends IGeoShapeCompanion[GeometryCollectionGs] {
   @inline implicit def univEq: UnivEq[GeometryCollectionGs] = UnivEq.derive
-  // TODO В целях безопасности, boopickle для GeometryCollectionGs генерится внутри IGeoShape с учётом рекурсии.
 }
 
 
@@ -285,10 +248,6 @@ case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
   override def shapeType = GsTypes.MultiPoint
 }
 object MultiPointGs extends MultiPointShapeStaticC[MultiPointGs] {
-  implicit def MULTI_POINT_PICKLER: Pickler[MultiPointGs] = {
-    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
-    generatePickler[MultiPointGs]
-  }
   @inline implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
 }
 
@@ -298,10 +257,6 @@ case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
   override def firstPoint = coords.head
 }
 object LineStringGs extends MultiPointShapeStaticC[LineStringGs] {
-  implicit def LINE_STRING_PICKLER: Pickler[LineStringGs] = {
-    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
-    generatePickler[LineStringGs]
-  }
   @inline implicit def univEq: UnivEq[LineStringGs] = UnivEq.derive
 }
 
@@ -312,10 +267,7 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends IGeoShapeQuerable
   override def firstPoint = lines.head.firstPoint
 }
 object MultiLineStringGs extends IGeoShapeCompanion[MultiLineStringGs] {
-  implicit def MULTI_LINE_STRING_PICKLER: Pickler[MultiLineStringGs] = {
-    implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
-    generatePickler[MultiLineStringGs]
-  }
+  @inline implicit def univEq: UnivEq[MultiLineStringGs] = UnivEq.derive
 }
 
 
@@ -333,10 +285,6 @@ case class PolygonGs(
   def outerWithHoles = outer :: holes
 }
 object PolygonGs extends IGeoShapeCompanion[PolygonGs] {
-  implicit def POLYGON_GS_PICKLER: Pickler[PolygonGs] = {
-    implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
-    generatePickler[PolygonGs]
-  }
   @inline implicit def univEq: UnivEq[PolygonGs] = UnivEq.derive
 
   def apply(lsgss: List[Seq[MGeoPoint]]): PolygonGs = {
@@ -357,11 +305,5 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs])
   override def firstPoint = polygons.head.firstPoint
 }
 object MultiPolygonGs extends IGeoShapeCompanion[MultiPolygonGs] {
-  implicit def MULTI_POLYGON_GS_PICKLER: Pickler[MultiPolygonGs] = {
-    implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
-    generatePickler[MultiPolygonGs]
-  }
-
   @inline implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
-
 }

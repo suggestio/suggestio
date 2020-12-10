@@ -3,6 +3,8 @@ package io.suggest.adn.mapf
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
 import io.suggest.maps.nodes.MRcvrsMapUrlArgs
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -12,16 +14,12 @@ import io.suggest.maps.nodes.MRcvrsMapUrlArgs
   */
 object MLamFormInit {
 
-  import boopickle.Default._
-
-  /** Поддержка бинарной сериализации. */
-  implicit def mLamFormInitPickler: Pickler[MLamFormInit] = {
-    implicit val mGetPriceRespP = MGetPriceResp.getPriceRespPickler
-    implicit val mLamFormP = MLamForm.mLamFormPickler
-    implicit val a4fPropsP = MAdv4FreeProps.a4fPropsPickler
-    implicit val rcvrsMapUrlArgsP = MRcvrsMapUrlArgs.rcvrsMapUrlArgsP
-    generatePickler[MLamFormInit]
-  }
+  implicit def lafFormInitJson: OFormat[MLamFormInit] = (
+    (__ \ "c").format[MLamConf] and
+    (__ \ "p").format[MGetPriceResp] and
+    (__ \ "f").format[MLamForm] and
+    (__ \ "a").formatNullable[MAdv4FreeProps]
+  )(apply, unlift(unapply))
 
 }
 

@@ -1,6 +1,5 @@
 package io.suggest.dt
 
-import boopickle.Default._
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -15,8 +14,6 @@ import play.api.libs.functional.syntax._
 
 // TODO С появлением java.time на js, необходимость в этих костылях отпала. Надо удалить все ymd-модели, заменив их на java.time-модели.
 object MYmd {
-
-  implicit def mYmdPickler: Pickler[MYmd] = generatePickler[MYmd]
 
   /** Отрендерить в строку, используя указанный разделитель. */
   def ymdToString(ymd: MYmd, sep: String): String = {

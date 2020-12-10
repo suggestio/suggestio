@@ -1,6 +1,5 @@
 package io.suggest.bill
 
-import boopickle.Default._
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -14,11 +13,6 @@ import play.api.libs.functional.syntax._
 
 /** Вспомогательная модель очень базовой инфы по чему-то сложному: только опциональный id и название чего-то. */
 object MNameId {
-
-  /** Поддержка boopickle-сериализации. */
-  implicit def mNameIdPickler: Pickler[MNameId] = {
-    generatePickler[MNameId]
-  }
 
   @inline implicit def univEq: UnivEq[MNameId] = UnivEq.derive
 

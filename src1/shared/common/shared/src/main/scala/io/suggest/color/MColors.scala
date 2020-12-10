@@ -1,6 +1,5 @@
 package io.suggest.color
 
-import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.err.ErrorConstants
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
@@ -35,12 +34,6 @@ object MColors extends IEmpty {
   override type T = MColors
 
   override val empty = apply()
-
-  /** Поддержка boopickle. */
-  implicit def mColorsPickler: Pickler[MColors] = {
-    implicit val mColorsDataP = MColorData.mColorDataPickler
-    generatePickler[MColors]
-  }
 
   /** Поддержка JSON. */
   implicit val MCOLORS_FORMAT: OFormat[MColors] = (

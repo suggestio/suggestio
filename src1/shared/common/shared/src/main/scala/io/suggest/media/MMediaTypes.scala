@@ -41,15 +41,5 @@ object MMediaType {
 
   @inline implicit def univEq: UnivEq[MMediaType] = UnivEq.derive
 
-
-  import boopickle.Default._
-
-  /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit def mMediaTypePickler: Pickler[MMediaType] = {
-    import MMediaTypes._
-    compositePickler[MMediaType]
-      .addConcreteType[Image.type]
-  }
-
 }
 

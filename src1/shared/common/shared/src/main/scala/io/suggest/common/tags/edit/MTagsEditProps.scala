@@ -1,5 +1,6 @@
 package io.suggest.common.tags.edit
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.i18n.MMessage
 import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
@@ -8,6 +9,8 @@ import scalaz.syntax.apply._
 import scalaz.std.iterable._
 import scalaz.std.string._
 import io.suggest.ueq.UnivEqUtil._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -33,6 +36,14 @@ object MTagsEditProps {
 
   @inline implicit def univEq: UnivEq[MTagsEditProps] = UnivEq.derive
 
+  implicit def tagsEditPropsJson: OFormat[MTagsEditProps] = {
+    (
+      (__ \ "q").format[MTagsEditQueryProps] and
+      (__ \ "e").formatNullable[Set[String]]
+        .inmap[Set[String]]( EmptyUtil.opt2ImplEmptyF(Set.empty), x => Option.when(x.nonEmpty)(x) )
+    )(apply, unlift(unapply))
+  }
+
 }
 
 
@@ -50,6 +61,13 @@ case class MTagsEditProps(
 
 object MTagsEditQueryProps {
   @inline implicit def univEq: UnivEq[MTagsEditQueryProps] = UnivEq.derive
+
+  implicit def tagsEditQueryPropsJson: OFormat[MTagsEditQueryProps] = (
+    (__ \ "t").format[String] and
+    (__ \ "e").formatNullable[Seq[MMessage]]
+      .inmap[Seq[MMessage]]( EmptyUtil.opt2ImplEmptyF(Nil), x => Option.when(x.nonEmpty)(x) )
+  )(apply, unlift(unapply))
+
 }
 
 /** Состояние поиска. */

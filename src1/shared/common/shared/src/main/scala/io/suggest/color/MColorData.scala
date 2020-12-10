@@ -1,7 +1,5 @@
 package io.suggest.color
 
-import boopickle.Default._
-import io.suggest.color.MColorData.MCOLOR_DATA_FORMAT
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
@@ -37,11 +35,6 @@ object MColorData
   object Examples {
     def WHITE = apply("FFFFFF")
     def BLACK = apply("000000")
-  }
-
-  /** Поддержка boopickle. */
-  implicit def mColorDataPickler: Pickler[MColorData] = {
-    generatePickler[MColorData]
   }
 
   /** Поддержка JSON. */

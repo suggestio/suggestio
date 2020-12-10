@@ -21,13 +21,6 @@ object MRcvrsMapUrlArgs {
 
   @inline implicit def univEq: UnivEq[MRcvrsMapUrlArgs] = UnivEq.derive
 
-
-  import boopickle.Default._
-
-  implicit def rcvrsMapUrlArgsP: Pickler[MRcvrsMapUrlArgs] = {
-    generatePickler[MRcvrsMapUrlArgs]
-  }
-
 }
 
 

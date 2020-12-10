@@ -21,15 +21,6 @@ import scala.collection.MapView
   */
 object MPrice {
 
-  import boopickle.Default._
-
-  /** Поддержка сериализации. */
-  implicit def mPricePickler: Pickler[MPrice] = {
-    implicit val currencyP = MCurrency.pickler
-    generatePickler[MPrice]
-  }
-
-
   object HellImplicits {
     /** Монойд для amount_t. */
     implicit def AmountMonoid: Monoid[Amount_t] = {

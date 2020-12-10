@@ -1,11 +1,12 @@
 package io.suggest.adv.rcvr
 
-import boopickle.Default._
 import io.suggest.common.tree.{NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.primo.id.IId
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -15,10 +16,12 @@ import io.suggest.ueq.UnivEqUtil._
   */
 
 object MRcvrPopupResp {
-  implicit def pickler: Pickler[MRcvrPopupResp] = {
-    implicit val mrpgP = IRcvrPopupNode.rcvrPopupGroupP
-    generatePickler[MRcvrPopupResp]
+
+  implicit def rcvrPopupRespJson: OFormat[MRcvrPopupResp] = {
+    (__ \ "n").formatNullable[MRcvrPopupNode]
+      .inmap[MRcvrPopupResp]( apply, _.node )
   }
+
   @inline implicit def univEq: UnivEq[MRcvrPopupResp] = UnivEq.derive
 }
 
@@ -27,74 +30,53 @@ object MRcvrPopupResp {
   * @param node Рекурсивная модель данных по размещению на узлу и под-узлах, если возможно.
   */
 case class MRcvrPopupResp(
-                          node: Option[IRcvrPopupNode]
+                           // TODO Нужно сделать Tree.Node(MRcvrPopupNode) вместо рекурсивных костылей с subGroups-полем.
+                           node: Option[MRcvrPopupNode]
                          )
 
 
 /** Поддержка для модели узлов и подузлов ресиверов в попапе ресивера. */
-object IRcvrPopupNode extends NodesTreeApiIId with NodesTreeWalk {
+object MRcvrPopupNode extends NodesTreeApiIId with NodesTreeWalk {
 
-  override type T = IRcvrPopupNode
+  override type T = MRcvrPopupNode
 
-  override protected def _subNodesOf(node: IRcvrPopupNode): Iterator[IRcvrPopupNode] = {
+  override protected def _subNodesOf(node: MRcvrPopupNode): Iterator[MRcvrPopupNode] = {
     node.subGroups
       .iterator
       .flatMap(_.nodes)
   }
 
-  /**
-    * Рекурсивный pickler весь живёт здесь.
-    * Пиклер для [[MRcvrPopupNode]] тоже здесь генерится, т.к. иначе всё будет плохо:
-    * (иначе будут два пиклера, вызывающие друг-друга в цикле).
-    * Рекурсивность пиклера требует наличия интерфейса, поэтому тут интерфейс маппиться на свою единственную реализацию.
-    */
-  implicit def rcvrPopupGroupP: Pickler[IRcvrPopupNode] = {
-    implicit val metaP = MRcvrPopupMeta.rcvrPopupMetaPickler
-    implicit val selfP = compositePickler[IRcvrPopupNode]
-    selfP.addConcreteType[MRcvrPopupNode]
-  }
+  implicit def rcvrPopupNodeJson: OFormat[MRcvrPopupNode] = (
+    (__ \ "i").format[String] and
+    (__ \ "n").formatNullable[String] and
+    (__ \ "c").formatNullable[MRcvrPopupMeta] and
+    (__ \ "g").format[Seq[MRcvrPopupGroup]]
+  )(apply, unlift(unapply))
 
-  @inline implicit def univEq: UnivEq[IRcvrPopupNode] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MRcvrPopupNode] = UnivEq.force
 
 }
-
-/**
-  * Интерфейс для модели [[MRcvrPopupNode]].
-  * Рекурсивные типы в boopickle неявно требуют интерфейса, который они будут реализовавывать.
-  * Без интерфейса всё молча компилится в пустой pickler, бесконечно вызывающий сам себя.
-  */
-sealed trait IRcvrPopupNode extends IId[String] {
-
-  /** id узла. */
-  override val id     : String
-
-  /** Отображаемое название узла. */
-  val name            : Option[String]
-
-  /** Данные по чек-боксу, если надо отображать. */
-  val checkbox        : Option[MRcvrPopupMeta]
-
-  /** Подгруппы узлов текущего узла. */
-  val subGroups       : Seq[MRcvrPopupGroup]
-
-}
-
 
 /** Описание узла с данными одного узла в ответе [[MRcvrPopupResp]]. */
-case class MRcvrPopupNode(
-                           override val id              : String,
-                           override val name            : Option[String],
-                           override val checkbox        : Option[MRcvrPopupMeta],
-                           override val subGroups       : Seq[MRcvrPopupGroup]
-                         )
-  extends IRcvrPopupNode
+final case class MRcvrPopupNode(
+                                 id              : String,
+                                 name            : Option[String],
+                                 checkbox        : Option[MRcvrPopupMeta],
+                                 subGroups       : Seq[MRcvrPopupGroup]
+                               )
+  extends IId[String]
 
 object MRcvrPopupMeta {
-  implicit def rcvrPopupMetaPickler: Pickler[MRcvrPopupMeta] = {
-    implicit val mRangeOptP = MRangeYmdOpt.mRangeYmdOptPickler
-    generatePickler[MRcvrPopupMeta]
-  }
+
   @inline implicit def univEq: UnivEq[MRcvrPopupMeta] = UnivEq.derive
+
+  implicit def rcvrPopupMetaJson: OFormat[MRcvrPopupMeta] = (
+    (__ \ "e").format[Boolean] and
+    (__ \ "c").format[Boolean] and
+    (__ \ "o").format[Boolean] and
+    (__ \ "d").format[MRangeYmdOpt]
+  )(apply, unlift(unapply))
+
 }
 /** Метаданные узла для размещения прямо на нём.
   *
@@ -120,8 +102,16 @@ case class MRcvrPopupMeta(
   */
 case class MRcvrPopupGroup(
                             title  : Option[String],
-                            nodes  : Seq[IRcvrPopupNode]
+                            nodes  : Seq[MRcvrPopupNode]
                           )
 object MRcvrPopupGroup {
+
   @inline implicit def univEq: UnivEq[MRcvrPopupGroup] = UnivEq.derive
+
+  implicit def rcvrPopupGroupJson: OFormat[MRcvrPopupGroup] = (
+    (__ \ "t").formatNullable[String] and
+    // TODO Нужно завернуть в Tree.Node(MRcvrPopupNode), и убрать этот класс-костыль.
+    (__ \ "n").lazyFormat( implicitly[Format[Seq[MRcvrPopupNode]]] )
+  )(apply, unlift(unapply))
+
 }

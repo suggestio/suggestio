@@ -1,7 +1,7 @@
 package io.suggest.lk.adv.geo.r.rcvr
 
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.adv.rcvr.{IRcvrPopupNode, RcvrKey}
+import io.suggest.adv.rcvr.{MRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.{MRcvr, SetRcvrStatus}
@@ -38,7 +38,7 @@ object RcvrPopupR {
 
 
     /** Рендер тела одного узла. */
-    override protected[this] def _renderNodeRow(node: IRcvrPopupNode, rcvrKey: RcvrKey, v: MRcvr): VdomElement = {
+    override protected[this] def _renderNodeRow(node: MRcvrPopupNode, rcvrKey: RcvrKey, v: MRcvr): VdomElement = {
       // Рендер галочки текущего узла, если она задана.
       node.checkbox.whenDefinedEl { n =>
         val nodeName = node.name.getOrElse( node.id )

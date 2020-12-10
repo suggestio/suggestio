@@ -7,7 +7,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
-import io.suggest.bill.price.dsl.IPriceDslTerm
+import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.dt.period.r.DatePeriodR
 import io.suggest.spa.OptFastEq.Wrapped
@@ -15,6 +15,7 @@ import io.suggest.common.empty.OptionUtil
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.lmap.LMapR
 import japgolly.scalajs.react.vdom.html_<^._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -41,7 +42,7 @@ object LamFormR {
                                     geoMapPropsC          : ReactConnectProxy[MGeoMapPropsR],
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
                                     rcvrsC                : ReactConnectProxy[MLamRcvrs],
-                                    priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
+                                    priceDslOptC          : ReactConnectProxy[Option[Tree[PriceDsl]]],
                                     currentPotC           : ReactConnectProxy[MExistGeoS],
                                     radPopupPropsC        : ReactConnectProxy[Option[RadPopupR.PropsVal]]
                                   )

@@ -1,6 +1,5 @@
 package io.suggest.lk.nodes
 
-import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.ble.eddystone.EddyStoneUtil
 import io.suggest.text.StringUtil
@@ -19,12 +18,6 @@ import scalaz.std.option.optionSyntax._
   * Description: Модель тела запроса создания/редактирования узла в списке узлов.
   */
 object MLknNodeReq {
-
-  /** BooPickler для инстансов модели. */
-  implicit def mLknNodeReqPickler: Pickler[MLknNodeReq] = {
-    generatePickler[MLknNodeReq]
-  }
-
 
   def validateReq(req: MLknNodeReq, isEdit: Boolean): ValidationNel[String, MLknNodeReq] = {
     if (isEdit) {

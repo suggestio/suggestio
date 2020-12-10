@@ -1,12 +1,14 @@
 package io.suggest.adv.geo
 
-import boopickle.Default._
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.dt.MAdvPeriod
-import io.suggest.geo.CircleGs
+import io.suggest.geo.{CircleGs, IGeoShape}
 import io.suggest.maps.MMapProps
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -14,7 +16,6 @@ import japgolly.univeq.UnivEq
   * Created: 14.12.16 16:53
   * Description: Модели состояния формы георазмещения, расшаренные между клиентом и сервером.
   *
-  * Для передачи модели между клиентом и сервером используется бинарный boopickle + BASE64 (RFC4648_URLSAFE желательно).
   * Бинарщина быстрая и обфусцированная даже на предмет типов и имён полей.
   *
   * 2016.12.28: Было решено, что эта модель должна быть более эфемерна, чем было изначально.
@@ -25,14 +26,24 @@ import japgolly.univeq.UnivEq
 
 object MFormS {
 
-  implicit def pickler: Pickler[MFormS] = {
-    implicit val mmapsP = MMapProps.mmapsPickler
-    implicit val datePeriodP = MAdvPeriod.mAdvPeriodPickler
-    implicit val circleP = CircleGs.CIRCLE_GS_PICKLER
-    generatePickler[MFormS]
-  }
-
   def TZ_OFFSET_IGNORE = Int.MinValue
+
+  implicit def advGeoFormJson: OFormat[MFormS] = {
+    val gsSer = IGeoShape.JsonFormats.minimalFormatter
+    import gsSer.circle
+
+    (
+      (__ \ "p").format[MMapProps] and
+      (__ \ "m").format[Boolean] and
+      (__ \ "e").formatNullable[Boolean] and
+      (__ \ "r").formatNullable[RcvrsMap_t]
+        .inmap[RcvrsMap_t]( EmptyUtil.opt2ImplEmptyF(Map.empty), x => Option.when(x.nonEmpty)(x) ) and
+      (__ \ "t").format[MTagsEditProps] and
+      (__ \ "d").format[MAdvPeriod] and
+      (__ \ "c").formatNullable[CircleGs] and
+      (__ \ "z").format[Int]
+    )(apply, unlift(unapply))
+  }
 
   @inline implicit def univEq: UnivEq[MFormS] = UnivEq.derive
 

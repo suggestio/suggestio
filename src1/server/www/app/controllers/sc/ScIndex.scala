@@ -9,10 +9,10 @@ import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.{EsModelDi, IMust, MEsNestedSearch}
 import io.suggest.es.search.MSubSearch
-import io.suggest.geo.{MGeoLoc, _}
+import io.suggest.geo._
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
-import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
+import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.n2.node.search.MNodeSearch
@@ -398,7 +398,7 @@ trait ScIndex
       }
 
       /** Подготовка данных по логотипу узла. */
-      def logoMediaInfoOptFut: Future[Option[IMediaInfo]] = {
+      def logoMediaInfoOptFut: Future[Option[MMediaInfo]] = {
         logoImgOptFut.flatMap { logoImgOpt =>
           FutureUtil.optFut2futOpt(logoImgOpt) { logoImg =>
             // Пока без wh, т.к. у логотипа была константная высота, заданная в css-пикселях ScConstants.Logo.HEIGHT_CSSPX

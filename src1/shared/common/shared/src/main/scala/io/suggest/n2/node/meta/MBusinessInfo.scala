@@ -1,6 +1,5 @@
 package io.suggest.n2.node.meta
 
-import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.err.ErrorConstants
 import io.suggest.es.{IEsMappingProps, MappingDsl}
@@ -83,10 +82,6 @@ object MBusinessInfo extends IEmpty with IEsMappingProps {
 
   /** Частоиспользуемый пустой экземпляр модели [[MBusinessInfo]]. */
   override val empty = MBusinessInfo()
-
-  implicit def mBusinessInfoPickler: Pickler[MBusinessInfo] = {
-    generatePickler[MBusinessInfo]
-  }
 
   @inline implicit def univEq: UnivEq[MBusinessInfo] = UnivEq.derive
 

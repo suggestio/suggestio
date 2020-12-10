@@ -1,6 +1,5 @@
 package io.suggest.cal.m
 
-import boopickle.Default._
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
@@ -81,14 +80,5 @@ object MCalType {
   }
 
   @inline implicit def univEq: UnivEq[MCalType] = UnivEq.derive
-
-  /** Поддержка бинарной сериализации.*/
-  implicit def mCalTypePickler: Pickler[MCalType] = {
-    compositePickler[MCalType]
-      .addConcreteType[MCalTypes.WeekDay.type]
-      .addConcreteType[MCalTypes.WeekEnd.type]
-      .addConcreteType[MCalTypes.PrimeTime.type]
-      .addConcreteType[MCalTypes.All.type]
-  }
 
 }

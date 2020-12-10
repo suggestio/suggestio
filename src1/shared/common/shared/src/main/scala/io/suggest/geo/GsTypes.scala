@@ -8,24 +8,6 @@ import play.api.libs.functional.syntax._
 
 object GsType {
 
-  import boopickle.Default._
-
-  /** Поддержка boopickle. */
-  implicit def gsTypePickler: Pickler[GsType] = {
-    import GsTypes._
-    // TODO scala-2.12 Доверить поиск sealed-реализаций автоматике, когда scala-2.11 уйдёт в историю.
-    compositePickler[GsType]
-      .addConcreteType[Point.type]
-      .addConcreteType[Polygon.type]
-      .addConcreteType[Circle.type]
-      .addConcreteType[LineString.type]
-      .addConcreteType[MultiPoint.type]
-      .addConcreteType[MultiLineString.type]
-      .addConcreteType[MultiPolygon.type]
-      .addConcreteType[GeometryCollection.type]
-      .addConcreteType[Envelope.type]
-  }
-
   /** Поддержка JSON сериализации/десериализации в JsString. */
   implicit val GS_TYPE_FORMAT: Format[GsType] = {
     EnumeratumUtil.valueEnumEntryFormat(GsTypes)

@@ -1,6 +1,5 @@
 package io.suggest.dt.interval
 
-import boopickle.Default._
 import io.suggest.dt.MYmd
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -24,11 +23,6 @@ object MRangeYmd {
     def format(start: String, end: String): String = {
       PREFIX + start + DELIM + end + SUFFIX
     }
-  }
-
-  implicit def mRangeYmdPickler: Pickler[MRangeYmd] = {
-    implicit val mymdP = MYmd.mYmdPickler
-    generatePickler[MRangeYmd]
   }
 
   implicit def mRangeYmdFormat: OFormat[MRangeYmd] = (

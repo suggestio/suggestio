@@ -1,8 +1,6 @@
 package io.suggest.req
 
 import javax.inject.{Inject, Singleton}
-import boopickle.Pickler
-import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc._
 
@@ -42,33 +40,6 @@ final class ReqUtil @Inject() (
     * и повышения компактности кода. */
   abstract class ActionTransformerImpl[-R[_], +P[_]] extends ActionTransformer[R, P] {
     override protected def executionContext = ec
-  }
-
-
-  /** Сборка BodyParser'а, который десериализует тело запроса через boopickle. */
-  def picklingBodyParser[T](implicit pickler: Pickler[T]): BodyParser[T] = {
-    parse.raw(maxLength = 2048)
-      // Десериализовать тело реквеста...
-      .validate { rawBuf =>
-        def logPrefix = s"picklingBodyParser($pickler):"
-        rawBuf.asBytes()
-          .filter( _.nonEmpty )
-          .toRight[Result] {
-            LOGGER.error(s"$logPrefix Request body is null or empty.")
-            Results.UnprocessableEntity("Request body expected.")
-          }
-          .flatMap { byteStr =>
-            try {
-              val bbuf = byteStr.asByteBuffer
-              val mfs = PickleUtil.unpickle[T](bbuf)
-              Right(mfs)
-            } catch {
-              case ex: Throwable =>
-                LOGGER.error(s"$logPrefix Unable to deserialize req.body", ex)
-                Left(Results.BadRequest("invalid body"))
-            }
-          }
-      }
   }
 
 }

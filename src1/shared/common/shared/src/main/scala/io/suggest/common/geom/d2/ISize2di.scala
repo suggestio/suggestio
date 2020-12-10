@@ -6,7 +6,6 @@ import io.suggest.math.SimpleArithmetics
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -103,13 +102,6 @@ object MSize2di extends IEsMappingProps {
     )(apply, unlift(unapply))
   }
 
-
-  import boopickle.Default._
-
-  /** Поддержка boopickle для инстансов [[MSize2di]]. */
-  implicit def size2diPickler: Pickler[MSize2di] = {
-    generatePickler[MSize2di]
-  }
 
   /** Собрать инстанс [[MSize2di]] из данных, записанных в [[ISize2di]] */
   def apply(sz2d: ISize2di): MSize2di = {

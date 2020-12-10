@@ -2,7 +2,7 @@ package io.suggest.sc.v.inx
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.media.IMediaInfo
+import io.suggest.media.MMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
@@ -37,8 +37,8 @@ class WelcomeR(
     */
   case class State(
                     visibileOptC              : ReactConnectProxy[Option[Boolean]],
-                    bgImgOptC                 : ReactConnectProxy[Option[IMediaInfo]],
-                    fgImgOptC                 : ReactConnectProxy[Option[IMediaInfo]],
+                    bgImgOptC                 : ReactConnectProxy[Option[MMediaInfo]],
+                    fgImgOptC                 : ReactConnectProxy[Option[MMediaInfo]],
                     nodeNameFgOptC            : ReactConnectProxy[MWcNameFgH],
                   )
 

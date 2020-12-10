@@ -11,8 +11,6 @@ import play.api.libs.functional.syntax._
   * Created: 07.12.16 15:06
   * Description: Модель сообщения, подлежащего client-side локализации перед рендером.
   * Внутри play есть встроенная похожая модель.
-  *
-  * 2016.dec.19: Из-за интеграции с boopickle пришлось пока отказаться от args: Any* в пользу явного Seq[Int].
   */
 object MMessage {
 

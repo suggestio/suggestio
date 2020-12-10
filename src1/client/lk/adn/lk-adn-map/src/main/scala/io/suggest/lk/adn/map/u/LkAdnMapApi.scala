@@ -6,8 +6,10 @@ import io.suggest.bill.MGetPriceResp
 import io.suggest.geo.json.GjFeature
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
-import io.suggest.pick.PickleUtil
+import io.suggest.pick.MimeConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -47,26 +49,26 @@ class LkAdnMapApiHttpImpl
 
   override def getPriceSubmit(nodeId: String, mForm: MLamForm): Future[MGetPriceResp] = {
     val req = HttpReq.routed(
-      route = routes.controllers.LkAdnMap.getPriceSubmit(nodeId),
+      route = routes.controllers.LkAdnMap.getPriceSubmit( nodeId ),
       data  = HttpReqData(
-        headers   = HttpReqData.headersBinarySendAccept,
-        body      = PickleUtil.pickle( mForm ),
-        respType  = HttpRespTypes.ArrayBuffer
+        headers   = HttpReqData.headersJsonSendAccept,
+        body      = Json.toJson( mForm ).toString(),
       )
     )
     HttpClient.execute( req )
       .respAuthFut
       .successIf200
-      .unBooPickle[MGetPriceResp]
+      .unJson[MGetPriceResp]
   }
 
 
   override def forNodeSubmit(nodeId: String, mForm: MLamForm): Future[String] = {
     val req = HttpReq.routed(
-      route = routes.controllers.LkAdnMap.forNodeSubmit(nodeId),
+      route = routes.controllers.LkAdnMap.forNodeSubmit( nodeId ),
       data  = HttpReqData(
-        headers = HttpReqData.headersBinarySend,
-        body      = PickleUtil.pickle( mForm ),
+        headers   = HttpReqData.headersJsonSend +
+          (HttpConst.Headers.ACCEPT -> MimeConst.TEXT_PLAIN),
+        body      = Json.toJson( mForm ).toString(),
         respType  = HttpRespTypes.Default
       )
     )
@@ -100,7 +102,7 @@ class LkAdnMapApiHttpImpl
     HttpClient.execute(req)
       .respAuthFut
       .successIf200
-      .unBooPickle[MGeoAdvExistPopupResp]
+      .unJson[MGeoAdvExistPopupResp]
   }
 
 }

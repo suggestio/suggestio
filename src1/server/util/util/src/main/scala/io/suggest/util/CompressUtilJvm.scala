@@ -17,6 +17,25 @@ import org.apache.commons.io.IOUtils
 @Singleton
 class CompressUtilJvm {
 
+  def gzip(uncompressed: Array[Byte]): Array[Byte] = {
+    val baos = new ByteArrayOutputStream( uncompressed.length / 2 )
+    val gzipper = new GZIPOutputStream( baos )
+    gzipper.write( uncompressed, 0, uncompressed.length )
+    gzipper.finish()
+    baos.toByteArray
+  }
+
+
+  def gunzip(compressed: Array[Byte]): Array[Byte] = {
+    val gunzipper = new GZIPInputStream(
+      new ByteArrayInputStream( compressed )
+    )
+    val baos = new ByteArrayOutputStream( compressed.length * 3 )
+    IOUtils.copy(gunzipper, baos)
+    baos.toByteArray
+  }
+
+
   /** Неявная утварь всякая. */
   object Implicits {
 
@@ -24,11 +43,7 @@ class CompressUtilJvm {
     implicit object GzipCompressConv extends IDataConv[ByteBuffer, ConvCodecs.Gzip, Array[Byte]] {
       override def convert(uncompressed: ByteBuffer): Array[Byte] = {
         val byteArr = BinaryUtil.byteBufToByteArray( uncompressed )
-        val baos = new ByteArrayOutputStream( byteArr.length / 2 )
-        val gzipper = new GZIPOutputStream( baos )
-        gzipper.write( byteArr, 0, byteArr.length )
-        gzipper.finish()
-        baos.toByteArray
+        gzip( byteArr )
       }
     }
 
@@ -36,17 +51,10 @@ class CompressUtilJvm {
     /** Gunzip-разжимающий конвертер. */
     implicit object GunzipDeCompressConv extends IDataConv[Array[Byte], ConvCodecs.Gzip, ByteBuffer] {
       override def convert(bytes: Array[Byte]): ByteBuffer = {
-        val gunzipper = new GZIPInputStream(
-          new ByteArrayInputStream( bytes )
-        )
-        val baos = new ByteArrayOutputStream( bytes.length * 3 )
-        IOUtils.copy(gunzipper, baos)
-        val barr = baos.toByteArray
-        ByteBuffer.wrap( barr )
+        ByteBuffer.wrap( gunzip(bytes) )
       }
     }
 
   }
-
 
 }

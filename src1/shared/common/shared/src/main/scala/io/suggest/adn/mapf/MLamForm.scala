@@ -1,8 +1,10 @@
 package io.suggest.adn.mapf
 
 import io.suggest.dt.MAdvPeriod
-import io.suggest.geo.{CircleGs, MGeoPoint}
+import io.suggest.geo.{CircleGs, IGeoShape}
 import io.suggest.maps.MMapProps
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -12,15 +14,17 @@ import io.suggest.maps.MMapProps
   */
 object MLamForm {
 
-  import boopickle.Default._
+  implicit def lamFormJson: OFormat[MLamForm] = {
+    val minFmt = IGeoShape.JsonFormats.minimalFormatter
+    import minFmt.circle
 
-  /** Поддержка бинарной сериализации модели между клиентом и сервером. */
-  implicit def mLamFormPickler: Pickler[MLamForm] = {
-    implicit val mMapProps = MMapProps.mmapsPickler
-    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
-    implicit val mCircleGsP = CircleGs.CIRCLE_GS_PICKLER
-    implicit val mAdvPeriodP = MAdvPeriod.mAdvPeriodPickler
-    generatePickler[MLamForm]
+    (
+      (__ \ "mp").format[MMapProps] and
+      (__ \ "mc").format[CircleGs] and
+      (__ \ "dp").format[MAdvPeriod] and
+      (__ \ "a").formatNullable[Boolean] and
+      (__ \ "tz").format[Int]
+    )(apply, unlift(unapply))
   }
 
 }

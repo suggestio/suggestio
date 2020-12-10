@@ -8,9 +8,11 @@ import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
-import io.suggest.pick.PickleUtil
+import io.suggest.pick.MimeConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, PlayRoute, routes}
 import io.suggest.tags.{ITagsApi, TagsHttpApiImpl}
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -55,8 +57,6 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   with LkBill2NodeAdvInfoHttpApiImpl
 {
 
-  import MGeoAdvExistPopupResp.pickler
-
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = routes.controllers.LkAdvGeo.tagsSearch2
 
@@ -93,7 +93,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
     )
       .respAuthFut
       .successIf200
-      .unBooPickle[MGeoAdvExistPopupResp]
+      .unJson[MGeoAdvExistPopupResp]
   }
 
   /** Запросить у сервера рассчёт цены. */
@@ -104,15 +104,14 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
           adId = confRO().adId
         ),
         data = HttpReqData(
-          headers   = HttpReqData.headersBinarySendAccept,
-          body      = PickleUtil.pickle(mFormS),
-          respType  = HttpRespTypes.ArrayBuffer
+          headers   = HttpReqData.headersJsonSendAccept,
+          body      = Json.toJson( mFormS ).toString,
         )
       )
     )
       .respAuthFut
       .successIf200
-      .unBooPickle[MGetPriceResp]
+      .unJson[MGetPriceResp]
   }
 
   override def forAdSubmit(mFormS: MFormS): Future[String] = {
@@ -122,8 +121,9 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
           adId = confRO().adId
         ),
         data = HttpReqData(
-          headers   = HttpReqData.headersBinarySend,
-          body      = PickleUtil.pickle(mFormS),
+          headers   = HttpReqData.headersBinarySend +
+            (HttpConst.Headers.ACCEPT -> MimeConst.TEXT_PLAIN),
+          body      = Json.toJson( mFormS ).toString(),
           respType  = HttpRespTypes.Default
         )
       )

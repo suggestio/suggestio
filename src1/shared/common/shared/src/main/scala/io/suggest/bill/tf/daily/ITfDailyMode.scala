@@ -1,6 +1,5 @@
 package io.suggest.bill.tf.daily
 
-import boopickle.Default._
 import io.suggest.bill.Amount_t
 import io.suggest.i18n.MsgCodes
 import japgolly.univeq.UnivEq
@@ -14,14 +13,6 @@ import play.api.libs.functional.syntax._
   * Description: Модель режимов тарификации размещения на узле.
   */
 object ITfDailyMode {
-
-  /** Поддержка boopickle-сериализации. */
-  implicit def tfDailyModePickler: Pickler[ITfDailyMode] = {
-    compositePickler[ITfDailyMode]
-      .addConcreteType[InheritTf.type]
-      .addConcreteType[ManualTf]
-  }
-
 
   @inline implicit def univEq: UnivEq[ITfDailyMode] = {
     import io.suggest.ueq.UnivEqUtil._

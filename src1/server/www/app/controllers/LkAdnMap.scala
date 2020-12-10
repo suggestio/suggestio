@@ -1,19 +1,13 @@
 package controllers
 
-import akka.util.ByteString
 import javax.inject.Inject
 import io.suggest.adn.mapf.{MLamConf, MLamForm, MLamFormInit}
-import io.suggest.adv.geo.OnGeoCapturing
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.pick.PickleUtil
-import io.suggest.pick.PickleSrvUtil._
 import io.suggest.util.logs.MacroLogsImpl
 import models.madn.mapf.MAdnMapTplArgs
-import io.suggest.bill.MGetPriceResp.getPriceRespPickler
-import io.suggest.bin.ConvCodecs
 import io.suggest.ctx.CtxData
 import io.suggest.dt.MAdvPeriod
 import io.suggest.mbill2.m.gid.Gid_t
@@ -28,8 +22,11 @@ import util.billing.Bill2Util
 import util.sec.CspUtil
 import views.html.lk.adn.mapf._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import play.api.libs.json.Json
+import play.api.mvc.BodyParser
 
 import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -61,7 +58,8 @@ final class LkAdnMap @Inject() (
 
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */
-  private def formPostBP = reqUtil.picklingBodyParser[MLamForm]
+  private def formPostBP: BodyParser[MLamForm] =
+    parse.json[MLamForm]
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -120,7 +118,7 @@ final class LkAdnMap @Inject() (
       }
 
       // Собрать конфиг для MLamFormInit, сериализовать в Base64:
-      val lamFormInitB64Fut = for {
+      val lamFormInitStrFut = for {
         priceResp       <- priceRespFut
         lamForm         <- lamFormFut
         a4fPropsOpt     <- a4fPropsOptFut
@@ -135,9 +133,10 @@ final class LkAdnMap @Inject() (
           form            = lamForm,
           adv4FreeProps   = a4fPropsOpt
         )
-        // Сериализовать в base64-строку:
-        // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
-        PickleUtil.pickleConv[MLamFormInit, ConvCodecs.Base64, String](init)
+        // Сериализовать в строку:
+        Json
+          .toJson( init )
+          .toString()
       }
 
       import cspUtil.Implicits._
@@ -145,7 +144,7 @@ final class LkAdnMap @Inject() (
       // Собрать наконец HTTP-ответ
       for {
         ctx             <- ctxFut
-        lamFormInitB64  <- lamFormInitB64Fut
+        lamFormInitB64  <- lamFormInitStrFut
       } yield {
         // Собрать основные аргументы для рендера шаблона
         val rargs = MAdnMapTplArgs(
@@ -274,8 +273,7 @@ final class LkAdnMap @Inject() (
           for {
             pricing <- pricingFut
           } yield {
-            val bbuf = PickleUtil.pickle( pricing )
-            Ok( ByteString(bbuf) )
+            Ok( Json.toJson( pricing ) )
           }
         }
       )
@@ -298,13 +296,12 @@ final class LkAdnMap @Inject() (
   def currentGeoItemPopup(itemId: Gid_t) = csrf.Check {
     lazy val logPrefix = s"existGeoAdvsShapePopup($itemId):"
     lkGeoCtlUtil.currentItemPopup(itemId, MItemTypes.adnMapTypes) { m =>
-      m.iType match {
-        case MItemTypes.GeoLocCaptureArea =>
-          Some( OnGeoCapturing )
-        case otherType =>
-          LOGGER.error(s"$logPrefix Unexpected iType=$otherType for #${m.id}, Ignored item.")
-          None
-      }
+      val r = (m.iType ==* MItemTypes.GeoLocCaptureArea)
+
+      if (!r)
+        LOGGER.error(s"$logPrefix Unexpected iType=${m.iType} for #${m.id}, Ignored item.")
+
+      r
     }
   }
 

@@ -15,13 +15,16 @@ import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.util.effect.WT
 import io.suggest.n2.node.MNode
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
+import scalaz.{EphemeralStream, Tree}
 import util.adv.AdvUtil
 import util.billing.{Bill2Conf, BillDebugUtil}
+
 import scala.concurrent.Future
 
 /**
@@ -148,7 +151,7 @@ final class LkAdnMapBillUtil @Inject() (
             itm -> OptionUtil.maybe(!isFreeAdv)(priceTerm)
           }
       }
-      .map { billDebugUtil.insertItemWithPriceDebug }
+      .map { billDebugUtil.insertItemWithPriceDebug1 }
       .toSeq
 
     DBIO.sequence( itemActions )
@@ -159,7 +162,8 @@ final class LkAdnMapBillUtil @Inject() (
   // TODO Подумать на тему максимум одной покупки и отката других adn-map размещений ПОСЛЕ оплаты.
 
   /** Рассчёт ценника размещения. */
-  def getPricing(formRes: MLamForm, isSuFree: Boolean, abc: IAdvBillCtx)(implicit ctx: Context): Future[MGetPriceResp] = {
+  def getPricing(formRes: MLamForm, isSuFree: Boolean, abc: IAdvBillCtx)
+                (implicit ctx: Context): Future[MGetPriceResp] = {
     if (isSuFree) {
       bill2Conf.zeroPricingFut
     } else {
@@ -167,7 +171,8 @@ final class LkAdnMapBillUtil @Inject() (
     }
   }
   def getPricing(formRes: MLamForm, abc: IAdvBillCtx)(implicit ctx: Context): Future[MGetPriceResp] = {
-    val priceDsl = advUtil.prepareForRender( getPriceDsl(formRes, abc) )
+    val priceDsl = advUtil.prepareForRender(
+      getPriceDsl(formRes, abc) )
     // Собрать итоговый ответ с подробными ценами для формы.
     val resp = MGetPriceResp(
       prices   = priceDsl.price :: Nil,
@@ -182,33 +187,37 @@ final class LkAdnMapBillUtil @Inject() (
     * @param abc Контекст подсчёта.
     * @return Терм PriceDSL, готовый к рассчётам цены.
     */
-  def getPriceDsl(formRes: MLamForm, abc: IAdvBillCtx): IPriceDslTerm = {
-    // Рассчитать исходную финансовую нагрузку на основе посуточного тарифа.
-    val p0 = advUtil.calcDateAdvPriceOnTf(TF_NODE_ID, abc)
-
+  def getPriceDsl(formRes: MLamForm, abc: IAdvBillCtx): Tree[PriceDsl] = {
     // Размещение в геолокации выдачи.
+    lazy val p0 = advUtil.calcDateAdvPriceOnTf(TF_NODE_ID, abc)
+
     // Для "упрощения" цифр и просто по техническим причинам используется два вложенных маппера: один по площади, второй -- константа.
-    val innerMapper = Mapper(
-      underlying   = p0,
-      // Маппер-константа.
-      multiplifier = Some( PRICE_MULT ),
-      reason       = Some( MPriceReason(
-        reasonType = MReasonTypes.GeoLocCapture
-      ))
+    val innerMapper = Tree.Node(
+      PriceDsl.mapper(
+        // Маппер-константа.
+        multiplifier = Some( PRICE_MULT ),
+        reason       = Some( MPriceReason(
+          reasonType = MReasonTypes.GeoLocCapture
+        ))
+      ),
+      // Рассчитать исходную финансовую нагрузку на основе посуточного тарифа.
+      p0 ##:: EphemeralStream.emptyEphemeralStream[Tree[PriceDsl]],
     )
 
     // Маппер по площади на карте - снаружи, чтобы можно было внутрь него пихать иные мапперы.
-    val geoMapper = Mapper(
-      underlying    = innerMapper,
-      multiplifier  = Some(
-        getGeoPriceMult( formRes.mapCursor )
-      ),
-      reason        = Some(
-        MPriceReason(
-          reasonType = MReasonTypes.GeoArea,
-          geoCircles = Seq( formRes.mapCursor )
+    val geoMapper = Tree.Node(
+      PriceDsl.mapper(
+        multiplifier  = Some(
+          getGeoPriceMult( formRes.mapCursor )
+        ),
+        reason        = Some(
+          MPriceReason(
+            reasonType = MReasonTypes.GeoArea,
+            geoCircles = Seq( formRes.mapCursor )
+          )
         )
-      )
+      ),
+      EphemeralStream( innerMapper ),
     )
 
     geoMapper

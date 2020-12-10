@@ -1,12 +1,10 @@
 package controllers
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
-import akka.util.ByteString
 import javax.inject.Inject
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
 import io.suggest.bill.MGetPriceResp
-import io.suggest.bin.ConvCodecs
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.ctx.CtxData
 import io.suggest.dt.MAdvPeriod
@@ -20,13 +18,11 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.n2.node.MNode
-import io.suggest.pick.PickleUtil
-import io.suggest.pick.PickleSrvUtil._
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.req.IAdProdReq
-import play.api.mvc.Result
+import play.api.mvc.{BodyParser, Result}
 import util.acl._
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoRcvrsUtil}
@@ -69,7 +65,6 @@ final class LkAdvGeo @Inject() (
   private lazy val advRcvrsUtil = injector.instanceOf[AdvRcvrsUtil]
   private lazy val advGeoRcvrsUtil = injector.instanceOf[AdvGeoRcvrsUtil]
   private lazy val streamsUtil = injector.instanceOf[StreamsUtil]
-  private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val cspUtil = injector.instanceOf[CspUtil]
   private lazy val lkGeoCtlUtil = injector.instanceOf[LkGeoCtlUtil]
   private lazy val canThinkAboutAdvOnMapAdnNode = injector.instanceOf[CanThinkAboutAdvOnMapAdnNode]
@@ -207,8 +202,7 @@ final class LkAdvGeo @Inject() (
           radEnabled    = radEnabled,
         )
 
-        // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
-        PickleUtil.pickleConv[MFormInit, ConvCodecs.Base64, String](mFormInit)
+        Json.toJson( mFormInit ).toString()
       }
 
 
@@ -352,7 +346,8 @@ final class LkAdvGeo @Inject() (
 
 
   /** Body parser для реквестов, содержащих внутри себя сериализованный инстанс MFormS. */
-  private def formPostBP = reqUtil.picklingBodyParser[MFormS]
+  private def formPostBP: BodyParser[MFormS] =
+    parse.json[MFormS]
 
 
   /**
@@ -389,8 +384,7 @@ final class LkAdvGeo @Inject() (
             pricing <- pricingFut
           } yield {
             // Сериализация результата.
-            val bbuf = PickleUtil.pickle(pricing)
-            Ok( ByteString(bbuf) )
+            Ok( Json.toJson(pricing) )
           }
         }
       )
@@ -419,28 +413,28 @@ final class LkAdvGeo @Inject() (
   def existGeoAdvsShapePopup(itemId: Gid_t) = csrf.Check {
     lazy val logPrefix = s"existGeoAdvsShapePopup($itemId):"
     lkGeoCtlUtil.currentItemPopup(itemId, MItemTypes.advGeoTypes) { m =>
-      m.iType match {
-        case MItemTypes.GeoTag =>
-          m.tagFaceOpt
-            .map { InGeoTag.apply }
-        case MItemTypes.GeoPlace =>
-          Some( OnMainScreen )
-        case otherType =>
-          LOGGER.error(s"$logPrefix Unexpected iType=$otherType for #${m.id}, Dropping adv data.")
-          None
-      }
+      val r = (
+        (m.iType ==* MItemTypes.GeoPlace) ||
+        (m.iType ==* MItemTypes.GeoTag)
+      )
+
+      if (!r)
+        LOGGER.error(s"$logPrefix Unexpected iType=${m.iType} for #${m.id}, Dropping adv data.")
+
+      r
     }
   }
 
 
+  def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) =
+    _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
+
   /** Рендер попапа при клике по узлу-ресиверу на карте ресиверов.
     *
-    * @param adIdU id текущей карточки, которую размещают.
-    * @param rcvrNodeIdU id узла, по которому кликнул юзер.
-    * @return Бинарь для boopickle на стороне JS.
+    * @param adId id текущей карточки, которую размещают.
+    * @param rcvrNodeId id узла, по которому кликнул юзер.
+    * @return 200 OK + JSON.
     */
-  def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
-
   private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = csrf.Check {
     canThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
@@ -604,7 +598,7 @@ final class LkAdvGeo @Inject() (
           ))
         )
 
-        Ok( ByteString( PickleUtil.pickle(resp) ) )
+        Ok( Json.toJson( resp ) )
           // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
           .withHeaders(
             CACHE_CONTROL -> "private, max-age=10"

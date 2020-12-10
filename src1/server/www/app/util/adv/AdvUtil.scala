@@ -18,7 +18,7 @@ import models.mcal.MCalsCtx
 import models.mctx.Context
 import models.mdt.IDateStartEnd
 import play.api.inject.Injector
-import scalaz.Tree
+import scalaz.{EphemeralStream, Tree}
 import util.TplDataFormatUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
@@ -46,7 +46,7 @@ final class AdvUtil @Inject() (
 
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
-  private lazy val WEEKEND_DAYS: Set[Int] = {
+  private def WEEKEND_DAYS: Set[Int] = {
     (DayOfWeek.SATURDAY :: DayOfWeek.SUNDAY :: Nil)
       .iterator
       .map(_.getValue)
@@ -110,16 +110,18 @@ final class AdvUtil @Inject() (
     * @param abc Контекст рассчётов.
     * @return Для получения цены можно вызвать .price.
     */
-  def calcDateAdvPriceOnTf(tfRcvrId: String, abc: IAdvBillCtx): IPriceDslTerm = {
+  def calcDateAdvPriceOnTf(tfRcvrId: String, abc: IAdvBillCtx): Tree[PriceDsl] = {
     lazy val logPrefix = s"calcDateAdvPriceOnTf($tfRcvrId)[${System.currentTimeMillis}]:"
 
     // Извлечь подходящий тариф из карты тарифов узлов.
-    abc.tfsMap.get(tfRcvrId).fold[IPriceDslTerm] {
+    abc.tfsMap.get(tfRcvrId).fold[Tree[PriceDsl]] {
       // TODO Валюта нулевого ценника берётся с потолка. Нужен более адекватный источник валюты.
       val res = MPrice(0L, MCurrencies.default)
       LOGGER.debug(s"$logPrefix Missing TF for $tfRcvrId. Guessing adv as free: $res")
-      BaseTfPrice(
-        price = res
+      Tree.Leaf(
+        PriceDsl.base(
+          price = res
+        )
       )
 
     } { tf =>
@@ -159,7 +161,7 @@ final class AdvUtil @Inject() (
       val weekendDays = WEEKEND_DAYS
 
       // Рассчет стоимости для одной даты (дня) размещения.
-      def calculateDateAdvPrice(day: LocalDate): IPriceDslTerm = {
+      def calculateDateAdvPrice(day: LocalDate): Tree[PriceDsl] = {
         val dayOfWeek = day.getDayOfWeek.getValue
 
         val clause4dayOpt = clausesWithCals
@@ -175,18 +177,22 @@ final class AdvUtil @Inject() (
 
         val dayAmount = clause4day.amount
 
-        BaseTfPrice(
-          price     = MPrice(dayAmount, tf.currency),
-          mCalType  = clause4dayOpt
-            .map(_._2.mcal.calType)
-            .orElse( Some(MCalTypes.WeekDay) ),
-          date      = Some( MYmd.from(day) )
+        Tree.Leaf(
+          PriceDsl.base(
+            price     = MPrice(dayAmount, tf.currency),
+            mCalType  = clause4dayOpt
+              .map(_._2.mcal.calType)
+              .orElse( Some(MCalTypes.WeekDay) ),
+            date      = Some( MYmd.from(day) )
+          )
         )
       }
 
       // Цикл суммирования стоимости дат, начиная с $1 и заканчивая dateEnd.
-      @tailrec def walkDaysAndPrice(day: LocalDate, accRev0: List[IPriceDslTerm] = Nil): List[IPriceDslTerm] = {
-        val accRev1 = calculateDateAdvPrice(day) :: accRev0
+      @tailrec def walkDaysAndPrice(day: LocalDate,
+                                    accRev0: EphemeralStream[Tree[PriceDsl]] = EphemeralStream.emptyEphemeralStream
+                                   ): EphemeralStream[Tree[PriceDsl]] = {
+        val accRev1 = calculateDateAdvPrice(day) ##:: accRev0
         val day1 = day.plusDays(1)
         if (!day1.isBefore(dateEnd)) {
           accRev1.reverse
@@ -196,22 +202,26 @@ final class AdvUtil @Inject() (
       }
 
       // amount1 - минимальная оплата одного минимального блока по времени
-      val amount1 = Sum(
+      lazy val amount1 = Tree.Node(
+        PriceDsl.sum(),
         walkDaysAndPrice(dateStart)
       )
 
       // amountN -- amount1 домноженная на кол-во блоков карточки.
-      val amountN = abc.blockModulesCount.fold [IPriceDslTerm] (amount1) { bmc =>
-        Mapper(
-          multiplifier = Some(bmc),
-          reason       = Some(
-            MPriceReason(
-              reasonType  = MReasonTypes.BlockModulesCount,
-              ints        = bmc :: Nil
-            )
+      val amountN = abc.blockModulesCount.fold [Tree[PriceDsl]] (amount1) { bmc =>
+        Tree.Node(
+          PriceDsl.mapper(
+            multiplifier = Some(bmc),
+            reason       = Some(
+              MPriceReason(
+                reasonType  = MReasonTypes.BlockModulesCount,
+                ints        = bmc :: Nil
+              )
+            ),
           ),
-          underlying = amount1
+          amount1 ##:: EphemeralStream.emptyEphemeralStream[Tree[PriceDsl]],
         )
+
       }
 
       LOGGER.trace(s"$logPrefix amount (min/full) = ${amount1.price} / ${amountN.price}")
@@ -302,7 +312,7 @@ final class AdvUtil @Inject() (
     * @param ctx Контекст рендера.
     * @return Price-терм, готовый к отправке клиенту.
     */
-  def prepareForRender(priceDsl: IPriceDslTerm)(implicit ctx: Context): IPriceDslTerm = {
+  def prepareForRender(priceDsl: Tree[PriceDsl])(implicit ctx: Context): Tree[PriceDsl] = {
     priceDsl
       .mapAllPrices { TplDataFormatUtil.setFormatPrice }
   }
@@ -314,7 +324,7 @@ final class AdvUtil @Inject() (
     * @param priceDsl Нормализуемый price-терм.
     * @return Нормализованный price-терм.
     */
-  def prepareForSave(priceDsl: IPriceDslTerm): IPriceDslTerm = {
+  def prepareForSave(priceDsl: Tree[PriceDsl]): Tree[PriceDsl] = {
     // Раньше тут была нормализация дробной части стоимости, теперь ничего нет. TODO Удалить метод?
     priceDsl
   }

@@ -1,10 +1,10 @@
 package util.billing
 
+import java.nio.charset.Charset
 import java.time.{LocalDate, OffsetDateTime}
 
 import javax.inject.Inject
-import io.suggest.bill.price.dsl.IPriceDslTerm
-import io.suggest.bin.ConvCodecs
+import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.di.ISlickDbConfig
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.dbg.{MDbgKeys, MDebug, MDebugs}
@@ -15,12 +15,14 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect.{RWT, WT}
-import io.suggest.pick.PickleUtil
+import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import io.suggest.util.{CompressUtilJvm, JmxBase}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.inject.Injector
+import play.api.libs.json.Json
+import scalaz.Tree
 
 import scala.concurrent.ExecutionContext
 
@@ -49,20 +51,30 @@ final class BillDebugUtil @Inject() (
 
   import mCommonDi.ec
   import mCommonDi.slick.profile.api._
-  import compressUtilJvm.Implicits._
 
+  def STR_ENC_CHARSET = Charset.defaultCharset()
 
   /** Сериализация инстанса PriceDSL в формат для хранения. */
   // TODO Добавить поддержку версий формата. Сюда или прямо в модель ключей.
-  def priceDsl2bytes(priceTerm: IPriceDslTerm): Array[Byte] = {
-    PickleUtil.pickleConv[IPriceDslTerm, ConvCodecs.Gzip, Array[Byte]](priceTerm)
+  def priceDsl2bytes(priceTerm: Tree[PriceDsl]): Array[Byte] = {
+    compressUtilJvm.gzip(
+      Json
+        .toJson( priceTerm )
+        .toString()
+        .getBytes( STR_ENC_CHARSET )
+    )
   }
 
   // TODO Добавить поддержку версий формата. Сюда или прямо в модель ключей.
-  def bytes2priceDsl(bytes: Array[Byte]): IPriceDslTerm = {
-    PickleUtil.unpickleConv[Array[Byte], ConvCodecs.Gzip, IPriceDslTerm](bytes)
+  def bytes2priceDsl(bytes: Array[Byte]): Tree[PriceDsl] = {
+    val jsonStr = new String(
+      compressUtilJvm.gunzip( bytes ),
+      STR_ENC_CHARSET
+    )
+    Json
+      .parse( jsonStr )
+      .as[Tree[PriceDsl]]
   }
-
 
 
   /** Сохранение отладки с инстансом priceDsl.
@@ -71,13 +83,13 @@ final class BillDebugUtil @Inject() (
     * @param priceTerm Терм priceDsl.
     * @return DB-экшен, возвращающий кол-во добавленных рядов.
     */
-  def savePriceDslDebug(objectId: Gid_t, priceTerm: IPriceDslTerm): DBIOAction[Int, NoStream, Effect.Write] = {
+  def savePriceDslDebug(objectId: Gid_t, priceTerm: Tree[PriceDsl]): DBIOAction[Int, NoStream, Effect.Write] = {
     val key = MDbgKeys.PriceDsl
     val mdbg0 = MDebug(
       objectId = objectId,
       key      = key,
       vsn      = key.V_CURRENT,
-      data     = priceDsl2bytes(priceTerm)
+      data     = priceDsl2bytes( priceTerm )
     )
     mDebugs.insertOne( mdbg0 )
   }
@@ -90,7 +102,7 @@ final class BillDebugUtil @Inject() (
     * @param priceTermOpt Терм рассчёта цены, если есть.
     * @return DB-экшен, возвращающий сохранённый инстанс MItem.
     */
-  def insertItemWithPriceDebug(mitem: MItem, priceTermOpt: Option[IPriceDslTerm]): DBIOAction[MItem, NoStream, WT] = {
+  def insertItemWithPriceDebug(mitem: MItem, priceTermOpt: Option[Tree[PriceDsl]]): DBIOAction[MItem, NoStream, WT] = {
     val dbAction = for {
       mItem2      <- mItems.insertOne(mitem)
       dbgCount    <- priceTermOpt.fold [DBIOAction[Int, NoStream, Effect.Write]] {
@@ -105,7 +117,7 @@ final class BillDebugUtil @Inject() (
     dbAction.transactionally
   }
   /** Кортежная реализация insertItemWithPriceDebug/2, которая обычно и нужна. */
-  def insertItemWithPriceDebug(mitemTerm: (MItem, Option[IPriceDslTerm])): DBIOAction[MItem, NoStream, WT] = {
+  def insertItemWithPriceDebug1(mitemTerm: (MItem, Option[Tree[PriceDsl]])): DBIOAction[MItem, NoStream, WT] = {
     val (mitem, priceTermOpt) = mitemTerm
     insertItemWithPriceDebug(mitem, priceTermOpt)
   }
@@ -116,7 +128,7 @@ final class BillDebugUtil @Inject() (
     * @param objectId id записи биллинга.
     * @return DB-экшен, опционально возвращающий терм рассчёта стоимости.
     */
-  def getPriceDebug(objectId: Gid_t): DBIOAction[Option[IPriceDslTerm], NoStream, Effect.Read] = {
+  def getPriceDebug(objectId: Gid_t): DBIOAction[Option[Tree[PriceDsl]], NoStream, Effect.Read] = {
     val key = MDbgKeys.PriceDsl
     for {
       dbgOpt <- mDebugs.getByIdKey(objectId, key)
@@ -168,7 +180,7 @@ final class BillDebugUtil @Inject() (
       }
 
       // Надо фильтрануть priceDsl по датам, не трогая остальных частей.
-      priceDslOpt2: Option[IPriceDslTerm] <- {
+      priceDslOpt2: Option[Tree[PriceDsl]] <- {
         if (mitem.price.amount > 0) {
           // Это обычный item, оплаченный юзером. Имеет смысл поискать дебажную инфу и поковыряться в ней.
           for {

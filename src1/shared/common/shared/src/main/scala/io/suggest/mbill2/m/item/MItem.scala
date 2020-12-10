@@ -25,24 +25,42 @@ import play.api.libs.functional.syntax._
 
 object MItem {
 
+  object Fields {
+    final def ORDER_ID = "o"
+    final def ITEM_TYPE = "t"
+    final def STATUS = "s"
+    final def PRICE = "p"
+    final def NODE_ID = "n"
+    final def DATE_START = "a"
+    final def DATE_END = "z"
+    final def RCVR_ID = "r"
+    final def REASON = "e"
+    final def GEO_SHAPE = "g"
+    final def TAG_FACE = "f"
+    final def TAG_NODE_ID = "y"
+    final def DATE_STATUS = "u"
+    final def ID = "i"
+  }
+
   /** Поддержка play-json для инстансом [[MItem]]. */
   implicit def mItemFormat: OFormat[MItem] = {
+    val F = Fields
     val dtFmt = CommonDateTimeUtil.Implicits.offsetDateTimeFormat
     (
-      (__ \ "o").format[Gid_t] and
-      (__ \ "t").format[MItemType] and
-      (__ \ "s").format[MItemStatus] and
-      (__ \ "p").format[MPrice] and
-      (__ \ "n").format[String] and
-      (__ \ "a").formatNullable[OffsetDateTime](dtFmt) and
-      (__ \ "z").formatNullable[OffsetDateTime](dtFmt) and
-      (__ \ "r").formatNullable[String] and
-      (__ \ "e").formatNullable[String] and
-      (__ \ "g").formatNullable[IGeoShape]( IGeoShape.JsonFormats.minimalFormat ) and
-      (__ \ "f").formatNullable[String] and
-      (__ \ "y").formatNullable[String] and
-      (__ \ "u").format[OffsetDateTime](dtFmt) and
-      (__ \ "i").formatNullable[Gid_t]
+      (__ \ F.ORDER_ID).format[Gid_t] and
+      (__ \ F.ITEM_TYPE).format[MItemType] and
+      (__ \ F.STATUS).format[MItemStatus] and
+      (__ \ F.PRICE).format[MPrice] and
+      (__ \ F.NODE_ID).format[String] and
+      (__ \ F.DATE_START).formatNullable[OffsetDateTime](dtFmt) and
+      (__ \ F.DATE_END).formatNullable[OffsetDateTime](dtFmt) and
+      (__ \ F.RCVR_ID).formatNullable[String] and
+      (__ \ F.REASON).formatNullable[String] and
+      (__ \ F.GEO_SHAPE).formatNullable[IGeoShape]( IGeoShape.JsonFormats.minimalFormat ) and
+      (__ \ F.TAG_FACE).formatNullable[String] and
+      (__ \ F.TAG_NODE_ID).formatNullable[String] and
+      (__ \ F.DATE_STATUS).format[OffsetDateTime](dtFmt) and
+      (__ \ F.ID).formatNullable[Gid_t]
     )(apply, unlift(unapply))
   }
 

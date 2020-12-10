@@ -1,8 +1,9 @@
 package io.suggest.adv.info
 
-import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -14,11 +15,10 @@ import japgolly.univeq.UnivEq
 /** Статическая поддержка контейнера инфы по размещению какой-то (текущей) карточки на текущем узле. */
 object MNodeAdvInfo4Ad {
 
-  /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit def mAdvInfo4AdPickler: Pickler[MNodeAdvInfo4Ad] = {
-    implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
-    generatePickler[MNodeAdvInfo4Ad]
-  }
+  implicit def nodeAdvInfo4AdJson: OFormat[MNodeAdvInfo4Ad] = (
+    (__ \ "b").format[Int] and
+    (__ \ "t").format[MTfDailyInfo]
+  )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MNodeAdvInfo4Ad] = UnivEq.derive
 

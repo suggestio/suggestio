@@ -1,6 +1,5 @@
 package io.suggest.maps
 
-import boopickle.Default._
 import io.suggest.geo.MGeoPoint
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import japgolly.univeq.UnivEq
@@ -30,11 +29,6 @@ object MMapProps {
 
   /** Какое-то очень дефолтовое значение зума карты. */
   def ZOOM_DEFAULT = 11
-
-  implicit def mmapsPickler: Pickler[MMapProps] = {
-    implicit val mgpPickler = MGeoPoint.MGEO_POINT_PICKLER
-    generatePickler[MMapProps]
-  }
 
   /** Поддержка play-json. */
   implicit def MMAP_PROPS_FORMAT: OFormat[MMapProps] = (

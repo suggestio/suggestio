@@ -1,7 +1,6 @@
 package io.suggest.maps.r
 
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.adv.geo.{InGeoTag, OnGeoCapturing, OnMainScreen}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -84,18 +83,20 @@ object ExistPopupR {
               row.items.toVdomArray { itm =>
                 <.span(
                   ^.key := itm.itemId,
-                  itm.payload match {
+                  itm.itemType match {
                     // lk-adv-geo
-                    case OnMainScreen =>
+                    case MItemTypes.GeoPlace =>
                       Messages(MsgCodes.`Main.screen`)
-                    case InGeoTag(face) =>
+                    case MItemTypes.GeoTag =>
                       <.span(
                         _tagPrefix,
-                        face
+                        itm.tagFace.whenDefined,
                       )
                     // lk-adn-map
-                    case OnGeoCapturing =>
+                    case MItemTypes.GeoLocCaptureArea =>
                       Messages(MItemTypes.GeoLocCaptureArea.nameI18n)
+                    case other =>
+                      "TODO: " + other
                   },
                   _onlineNow.when(itm.isOnlineNow),
                   COMMA, SPACE

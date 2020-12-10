@@ -19,9 +19,6 @@ import io.suggest.xplay.qsb.QueryStringBindableImpl
   * Description: Представление географической точки в рамках проекта s.io.
   * Сделано наподобии org.elasticsearch.common.geo.Geopoint с поправкой на полную неизменяемость и другие фичи.
   *
-  * 2016.dec.14: Пошёл вынос класса модели в common, где уже ему было давно заготовлено место.
-  * Унификация связана с попыткой использования boopickle на js-стороне.
-  *
   * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]]
   */
 

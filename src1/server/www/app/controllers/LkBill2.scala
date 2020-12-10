@@ -1,7 +1,6 @@
 package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.util.ByteString
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
 import io.suggest.bill.tf.daily.MTfDailyInfo
@@ -19,7 +18,6 @@ import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.pick.PickleUtil
 import io.suggest.req.ReqUtil
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.logs.MacroLogsImpl
@@ -253,8 +251,7 @@ final class LkBill2 @Inject() (
       )
 
       // Сериализовать и отправить ответ.
-      val bbuf = PickleUtil.pickle(m)
-      Ok( ByteString(bbuf) )
+      Ok( Json.toJson(m) )
     }
   }
 

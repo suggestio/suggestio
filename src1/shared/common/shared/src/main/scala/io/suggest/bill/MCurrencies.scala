@@ -124,18 +124,6 @@ sealed abstract class MCurrency(override val value: String) extends StringEnumEn
 /** Статическая кроссплатформенная утиль для инстансов модели [[MCurrency]]. */
 object MCurrency {
 
-  import boopickle.CompositePickler
-
-  implicit def pickler: CompositePickler[MCurrency] = {
-    import MCurrencies._
-    import boopickle.Default._
-    // TODO scala-2.12 скорее всего можно будет генерить это дело автоматом, без concrete types.
-    compositePickler[MCurrency]
-      .addConcreteType[RUB.type]
-      .addConcreteType[EUR.type]
-      .addConcreteType[USD.type]
-  }
-
   @inline implicit def univEq: UnivEq[MCurrency] = UnivEq.derive
 
   /** Поддержка play-json. */

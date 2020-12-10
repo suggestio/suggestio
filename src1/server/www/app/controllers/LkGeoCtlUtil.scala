@@ -1,6 +1,5 @@
 package controllers
 
-import akka.util.ByteString
 import javax.inject.Inject
 import akka.stream.scaladsl.{Keep, Sink}
 import au.id.jazzy.play.geojson.{GeoJson, LngLatCrs}
@@ -10,7 +9,6 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.pick.PickleUtil
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
@@ -20,6 +18,8 @@ import play.api.mvc.Result
 import util.acl.CanAccessItem
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil}
 import util.billing.Bill2Util
+import japgolly.univeq._
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -103,7 +103,7 @@ protected final class LkGeoCtlUtil @Inject() (
     * @return Action.
     */
   def currentItemPopup(itemId: Gid_t, itemTypes: Seq[MItemType])
-                      (itemMapperF: MAdvGeoBasicInfo => Option[MGeoItemInfoPayload]) = {
+                      (itemMapperF: MAdvGeoBasicInfo => Boolean) = {
     canAccessItem(itemId, edit = false).async { implicit request =>
       def logPrefix = s"existGeoAdvsShapePopup($itemId):"
 
@@ -149,7 +149,7 @@ protected final class LkGeoCtlUtil @Inject() (
             items = infos
               .sortBy(m => (m.tagFaceOpt, m.id) )
               .flatMap { m =>
-                val mgiPlOpt = itemMapperF(m)
+                val isAccepted = itemMapperF( m )
                 /* Option[MGeoItemInfoPayload] = m.iType match {
                   case MItemTypes.GeoTag =>
                     m.tagFaceOpt
@@ -162,15 +162,17 @@ protected final class LkGeoCtlUtil @Inject() (
                   //throw new IllegalArgumentException("Unexpected iType = " + otherType)
                 }*/
 
-                if (mgiPlOpt.isEmpty)
+                if (!isAccepted) {
                   LOGGER.warn(s"$logPrefix Dropped adv data: $m")
-
-                for (mgiPl <- mgiPlOpt) yield {
-                  MGeoItemInfo(
+                  None
+                } else {
+                  val gii = MGeoItemInfo(
                     itemId        = m.id,
-                    isOnlineNow   = m.status == MItemStatuses.Online,
-                    payload       = mgiPl
+                    isOnlineNow   = (m.status ==* MItemStatuses.Online),
+                    itemType      = m.iType,
+                    tagFace       = m.tagFaceOpt,
                   )
+                  Some(gii)
                 }
               }
           )
@@ -178,7 +180,7 @@ protected final class LkGeoCtlUtil @Inject() (
           startMs -> row
         }
         // Вернуться на уровень основного потока...
-        .mergeSubstreams
+         .mergeSubstreams
         // Собрать все имеющиеся результаты в единую коллекцию:
         .toMat( Sink.seq )(Keep.both)
         .run()
@@ -198,8 +200,7 @@ protected final class LkGeoCtlUtil @Inject() (
         LOGGER.trace(s"$logPrefix count=$itemsCount/$itemsMax haveMore=${mresp.haveMore} rows=${mresp.rows}")
 
         // Сериализовать и вернуть результат:
-        val pickled = PickleUtil.pickle(mresp)
-        Ok( ByteString(pickled) )
+        Ok( Json.toJson(mresp) )
           .withHeaders( CACHE_10 )
       }
     }

@@ -1,7 +1,5 @@
 package io.suggest.dt.interval
 
-import boopickle.CompositePickler
-import boopickle.Default._
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.dt.IYmdHelper
 import io.suggest.enum2.EnumeratumUtil
@@ -16,25 +14,6 @@ import play.api.libs.functional.syntax._
   * Description: Пошаренная между клиентом и сервером модель "быстрых" периодов размещения.
   */
 object QuickAdvPeriod {
-
-  import QuickAdvPeriods._
-
-  implicit def qapIsoPickler: CompositePickler[QuickAdvIsoPeriod] = {
-    compositePickler[QuickAdvIsoPeriod]
-      .addConcreteType[P3D.type]
-      .addConcreteType[P1W.type]
-      .addConcreteType[P1M.type]
-  }
-
-  implicit def qapPickler: CompositePickler[QuickAdvPeriod] = {
-    // TODO Есть проблема с sealed и автогенерацией в scala-2.11: boopickle не видит реализации sealed-класса внутри модели.
-    // На scala-2.12 проблема отчасти решена, т.е. можно выкрутиться с помощью generatePickler[] внутри QuickAdvPeriods.
-    compositePickler[QuickAdvPeriod]
-      .addConcreteType[P3D.type]
-      .addConcreteType[P1W.type]
-      .addConcreteType[P1M.type]
-      .addConcreteType[Custom.type]
-  }
 
   @inline implicit def univEq: UnivEq[QuickAdvPeriod] = UnivEq.derive
 

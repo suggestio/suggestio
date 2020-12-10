@@ -1,6 +1,5 @@
 package io.suggest.bill.tf.daily
 
-import boopickle.Default._
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import japgolly.univeq.UnivEq
@@ -15,13 +14,6 @@ import play.api.libs.functional.syntax._
   * Description: Инфа по тарифу для представления юзеру.
   */
 object MTfDailyInfo {
-
-  implicit def mTfDailyInfoPickler: Pickler[MTfDailyInfo] = {
-    implicit val lkTfDailyModeP = ITfDailyMode.tfDailyModePickler
-    implicit val mCalTypeP = MCalType.mCalTypePickler
-    implicit val mPriceP = MPrice.mPricePickler
-    generatePickler[MTfDailyInfo]
-  }
 
   @inline implicit def univEq: UnivEq[MTfDailyInfo] = {
     import io.suggest.ueq.UnivEqUtil._

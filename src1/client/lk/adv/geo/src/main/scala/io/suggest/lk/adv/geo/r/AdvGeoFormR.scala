@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.bill.price.dsl.IPriceDslTerm
+import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.css.Css
 import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adv.geo.m._
@@ -21,6 +21,7 @@ import react.leaflet.control.LocateControlR
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.react.ReactCommonUtil
 import react.leaflet.lmap.LMapR
+import scalaz.Tree
 
 import scala.scalajs.js
 
@@ -64,7 +65,7 @@ object AdvGeoFormR {
                               geoAdvPopupC        : ReactConnectProxy[MExistGeoPopupS],
                               mRadOptC            : ReactConnectProxy[Option[MRad]],
                               radEnabledPropsC    : ReactConnectProxy[RadEnabledR.PropsVal],
-                              priceDslOptC        : ReactConnectProxy[Option[IPriceDslTerm]],
+                              priceDslOptC        : ReactConnectProxy[Option[Tree[PriceDsl]]],
                               mDocC               : ReactConnectProxy[MDocS]
                             )
 

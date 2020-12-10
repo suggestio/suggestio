@@ -91,20 +91,6 @@ sealed abstract class MReasonType(override val value: String) extends StringEnum
 
 object MReasonType {
 
-  import boopickle.Default._
-  /** Поддержка бинарной сериализации. */
-  implicit def mReasonTypePickler: Pickler[MReasonType] = {
-    import MReasonTypes._
-    // TODO 2.12 Организовать с помощью sealed. В scala-2.12 должны были уже починить.
-    compositePickler[MReasonType]
-      .addConcreteType[OnMainScreen.type]
-      .addConcreteType[GeoArea.type]
-      .addConcreteType[BlockModulesCount.type]
-      .addConcreteType[Tag.type]
-      .addConcreteType[Rcvr.type]
-      .addConcreteType[GeoLocCapture.type]
-  }
-
   @inline implicit def univEq: UnivEq[MReasonType] = UnivEq.derive
 
   implicit def mReasonTypeFormat: Format[MReasonType] =

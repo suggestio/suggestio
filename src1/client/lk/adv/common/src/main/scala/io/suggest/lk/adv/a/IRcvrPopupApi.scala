@@ -31,14 +31,14 @@ trait RcvrPopupHttpApiImpl extends IRcvrPopupApi {
     val req = HttpReq.routed(
       route = _rcvrPopupRoute(nodeId),
       data  = HttpReqData(
-        headers  = HttpReqData.headersBinaryAccept,
+        headers  = HttpReqData.headersJsonAccept,
         respType = HttpRespTypes.ArrayBuffer
       )
     )
     HttpClient.execute( req )
       .respAuthFut
       .successIf200
-      .unBooPickle[MRcvrPopupResp]
+      .unJson[MRcvrPopupResp]
   }
 
 }

@@ -11,53 +11,23 @@ import play.api.libs.functional.syntax._
   * Created: 14.04.17 9:42
   * Description: Кросс-модель описания одного элемента галереи.
   */
-object IMediaInfo {
+object MMediaInfo {
 
-  import boopickle.Default._
+  implicit def MEDIA_INFO_FORMAT: OFormat[MMediaInfo] = {
+    // Чтобы инстанс был только один на операцию, но вычищался из памяти, тут используется связка из var.
+    var fmt: OFormat[MMediaInfo] = null
+    fmt = (
+      (__ \ "y").format[MMediaType] and
+      (__ \ "u").format[String] and
+      (__ \ "t").format[String] and
+      (__ \ "i").lazyFormatNullable( fmt ) and
+      (__ \ "w").formatNullable[MSize2di]
+    )( apply, unlift(unapply) )
 
-  /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit def iMediaItemPickler: Pickler[IMediaInfo] = {
-    implicit val mMediaTypeP = MMediaType.mMediaTypePickler
-    implicit val size2diP = MSize2di.size2diPickler
-    implicit val p = compositePickler[IMediaInfo]
-    p.addConcreteType[MMediaInfo]
+    fmt
   }
 
-
-  implicit def IMEDIA_INFO_FORMAT: OFormat[IMediaInfo] = (
-    (__ \ "y").format[MMediaType] and
-    (__ \ "u").format[String] and
-    (__ \ "t").format[String] and
-    (__ \ "i").lazyFormatNullable( IMEDIA_INFO_FORMAT ) and
-    (__ \ "w").formatNullable[MSize2di]
-  ).apply( MMediaInfo.apply, { imi: IMediaInfo => (imi.giType, imi.url, imi.contentType, imi.thumb, imi.whPx) } )
-
-  @inline implicit def univEq: UnivEq[IMediaInfo] = UnivEq.derive
-
-}
-
-// TODO Удалить трейт IMediaInfo следом за boopickle-сериализацией здесь. Оставить только MMediaInfo.
-
-/** Трейт, т.к. у нас тут рекурсивная модель, без трейта нельзя. */
-sealed trait IMediaInfo {
-
-  /** Тип элемента галлереи. Изначально только Image. */
-  def giType   : MMediaType
-
-  /** Ссылка на файл. */
-  def url      : String
-
-  /** Тип файла. */
-  def contentType: String
-
-  /**
-    * Элемент thumb-галлереи, если есть.
-    * По идее всегда картинка или None. В теории же -- необязательно.
-    */
-  def thumb    : Option[IMediaInfo]
-
-  /** Опциональная инфа по ширине и высоте картинки/видео. */
-  def whPx     : Option[MSize2di]
+  @inline implicit def univEq: UnivEq[MMediaInfo] = UnivEq.derive
 
 }
 
@@ -72,12 +42,10 @@ sealed trait IMediaInfo {
   * @param contentType Тип MIME.
   */
 case class MMediaInfo(
-                       override val giType   : MMediaType,
-                       override val url      : String,
-                       override val contentType: String,
-                       override val thumb    : Option[IMediaInfo] = None,
-                       override val whPx     : Option[MSize2di] = None
+                       giType   : MMediaType,
+                       url      : String,
+                       contentType: String,
+                       // TODO ЗАменить поле на обёртку Tree.Node()
+                       thumb    : Option[MMediaInfo] = None,
+                       whPx     : Option[MSize2di] = None
                      )
-  extends IMediaInfo
-
-

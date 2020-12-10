@@ -2,8 +2,8 @@ package io.suggest.adv.rcvr
 
 import io.suggest.dt.MYmd
 import io.suggest.dt.interval.MRangeYmdOpt
-import io.suggest.pick.PickleUtil
 import minitest._
+import play.api.libs.json.Json
 
 /**
   * Suggest.io
@@ -14,21 +14,19 @@ import minitest._
 object MRcvrPopupRespSpec extends SimpleTestSuite {
 
   private def _doTest(m: MRcvrPopupResp): Unit = {
-    val m2 = PickleUtil.unpickle[MRcvrPopupResp](
-      PickleUtil.pickle(m)
-    )
+    val m2 = Json.toJson(m).as[MRcvrPopupResp]
     assertEquals(m2, m)
   }
 
 
-  test("boopickle against empty model") {
+  test("serialize empty model") {
     val m0 = MRcvrPopupResp(
       node = None
     )
     _doTest(m0)
   }
 
-  test("boopickle against lightly-filled model") {
+  test("serialize lightly-filled model") {
     val m1 = MRcvrPopupResp(
       node = Some(MRcvrPopupNode(
         id   = "asdadasdsa",
@@ -45,7 +43,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
     _doTest(m1)
   }
 
-  test("boopickle against complexly-filled model") {
+  test("serialize complexly-filled model") {
     val m2 = MRcvrPopupResp(
       node = Some(MRcvrPopupNode(
         id   = "asdadasdsa",

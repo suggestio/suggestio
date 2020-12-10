@@ -1,6 +1,5 @@
 package io.suggest.adv.free
 
-import boopickle.Default._
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -16,10 +15,6 @@ case class MAdv4FreeProps(
 )
 
 object MAdv4FreeProps {
-
-  implicit def a4fPropsPickler: Pickler[MAdv4FreeProps] = {
-    generatePickler[MAdv4FreeProps]
-  }
 
   /** Поддержка play-json. */
   implicit def mAdv4FreePropsFormat: OFormat[MAdv4FreeProps] = (

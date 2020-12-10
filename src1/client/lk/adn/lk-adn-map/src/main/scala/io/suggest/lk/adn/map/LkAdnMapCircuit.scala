@@ -4,7 +4,6 @@ import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
-import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adn.map.a._
 import io.suggest.lk.adn.map.m.IRadOpts.IRadOptsFastEq
 import io.suggest.lk.adn.map.m.MLamRad.MLamRadFastEq
@@ -17,12 +16,11 @@ import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.m.{MRadS, RcvrMarkersInit}
 import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.pick.BlobJsUtil.SjsBase64JsDecoder
-import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.spa.StateInp
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -40,8 +38,10 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
   /** Собрать начальный инстанс MRoot. */
   override protected def initialModel: MRoot = {
     val stateInp = StateInp.find().get
-    val base64 = stateInp.value.get
-    val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLamFormInit](base64)
+    val stateJsonStr = stateInp.value.get
+    val mFormInit = Json
+      .parse( stateJsonStr )
+      .as[MLamFormInit]
 
     MRoot(
       mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),

@@ -15,6 +15,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.util.effect.WT
 import io.suggest.n2.node.{MNode, MNodes}
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.AdvGeoBasicInfo_t
@@ -22,6 +23,7 @@ import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
+import scalaz.{EphemeralStream, Tree}
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.{Bill2Conf, BillDebugUtil}
@@ -214,7 +216,7 @@ final class AdvGeoBillUtil @Inject() (
               // Проверить на geo + тег:
               .findWithReasonType( MReasonTypes.Tag )
               .map { tagSubTerm =>
-                val tagFace = tagSubTerm.reason.get.strings.head
+                val tagFace = tagSubTerm.rootLabel.reason.get.strings.head
                 LOGGER.trace(s"$logPrefix2 It is a GeoTag: #$tagFace")
                 // Это размещение в гео-теге.
                 MItem(
@@ -258,14 +260,14 @@ final class AdvGeoBillUtil @Inject() (
               .findWithReasonType( MReasonTypes.Rcvr )
               .flatMap { rcvrSubTerm =>
                 // Это прямое размещение на каком-то ресивере. У него обязан быть выставленный id.
-                val rcvrId = rcvrSubTerm.reason.get.nameIds.head.id.get
+                val rcvrId = rcvrSubTerm.rootLabel.reason.get.nameIds.head.id.get
                 LOGGER.trace(s"$logPrefix2 It is Rcvr term on rcvrId=$rcvrId")
 
                 // Это может быть главный экран или тег.
                 rcvrSubTerm
                   .findWithReasonType( MReasonTypes.Tag )
                   .map { tagSubTerm =>
-                    val tagFace = tagSubTerm.reason.get.strings.head
+                    val tagFace = tagSubTerm.rootLabel.reason.get.strings.head
                     LOGGER.trace(s"$logPrefix2 It is direct tag #$tagFace on Rcvr#$rcvrId")
                     // Это размещение в теге на ресивере.
                     MItem(
@@ -303,7 +305,9 @@ final class AdvGeoBillUtil @Inject() (
                   }
               }
           }
-          .map { itm => itm -> OptionUtil.maybe(!isFreeAdv)(term2) }
+          .map { itm =>
+            itm -> OptionUtil.maybe(!isFreeAdv)(term2)
+          }
           .orElse {
             // Какая-то логическая ошибка в коде: этот метод не понимает выхлоп из calcAdvGeoPrice().
             throw new UnsupportedOperationException(s"Not supported price term: $term2 Please check current billing class code.")
@@ -311,7 +315,7 @@ final class AdvGeoBillUtil @Inject() (
             //None
           }
       }
-      .map { billDebugUtil.insertItemWithPriceDebug }
+      .map { billDebugUtil.insertItemWithPriceDebug1 }
       .toSeq
 
     DBIO
@@ -352,20 +356,26 @@ final class AdvGeoBillUtil @Inject() (
 
 
   /** Сборка PriceDSL, на основе которой можно вычислить результат. */
-  def calcAdvGeoPrice(abc: MGeoAdvBillCtx): Sum = {
+  def calcAdvGeoPrice(abc: MGeoAdvBillCtx): Tree[PriceDsl] = {
     import abc.res
 
     lazy val logPrefix = s"calcAdvGeoPrice()[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix $res")
 
-    var accRev: List[IPriceDslTerm] = Nil
+    var accRev: List[Tree[PriceDsl]] = Nil
 
     val tagsWithReasons = res.tagsEdit.tagsExists
-      .toSeq
+      .toList
       .sorted
       .map { tagFace =>
-        tagFace -> Some( MPriceReason(MReasonTypes.Tag, strings = tagFace :: Nil) )
+        val reason = MPriceReason(
+          MReasonTypes.Tag,
+          strings = tagFace :: Nil,
+        )
+        tagFace -> Some( reason )
       }
+
+    lazy val priceDslSum = PriceDsl.sum()
 
     // Посчитать стоимость размещения указанных элементов (oms, теги) в гео-круге.
     for {
@@ -374,16 +384,19 @@ final class AdvGeoBillUtil @Inject() (
     } {
       // Посчитать стоимость данного гео-круга:
       val radiusKm = radCircle.radiusKm
-      var accGeoRev: List[IPriceDslTerm] = Nil
+      var accGeoRev: List[Tree[PriceDsl]] = Nil
 
       val allDaysPrice = advUtil.calcDateAdvPriceOnTf(GEO_TF_SRC_NODE_ID, abc)
+      val allDaysPrices = EphemeralStream( allDaysPrice )
 
       // Накинуть за гео-круг + главный экран:
       if (res.onMainScreen) {
-        accGeoRev ::= Mapper(
-          underlying    = allDaysPrice,
-          multiplifier  = Some( ON_MAIN_SCREEN_MULT ),
-          reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) )
+        accGeoRev ::= Tree.Node(
+          PriceDsl.mapper(
+            multiplifier  = Some( ON_MAIN_SCREEN_MULT ),
+            reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) ),
+          ),
+          allDaysPrices
         )
       }
 
@@ -391,19 +404,29 @@ final class AdvGeoBillUtil @Inject() (
       for {
         (_, reasonOpt) <- tagsWithReasons
       } {
-        accGeoRev ::= Mapper(
-          underlying = allDaysPrice,
-          reason     = reasonOpt
+        accGeoRev ::= Tree.Node(
+          PriceDsl.mapper(
+            reason     = reasonOpt,
+          ),
+          allDaysPrices
         )
       }
 
-      val geoAllDaysPrice = Mapper(
-        underlying    = Sum( accGeoRev.reverse ),
-        multiplifier  = Some( getGeoPriceMult(radiusKm) ),
-        reason        = Some( MPriceReason(
-          MReasonTypes.GeoArea,
-          geoCircles  = radCircle :: Nil
-        ) )
+      val accGeosSum = Tree.Node(
+        priceDslSum,
+        // reverse - перенесён из прошлой реализации, видимо для поддержания логического порядка.
+        accGeoRev.reverse.toEphemeralStream
+      )
+
+      val geoAllDaysPrice = Tree.Node(
+        PriceDsl.mapper(
+          multiplifier  = Some( getGeoPriceMult(radiusKm) ),
+          reason        = Some( MPriceReason(
+            MReasonTypes.GeoArea,
+            geoCircles  = radCircle :: Nil
+          ) ),
+        ),
+        EphemeralStream( accGeosSum )
       )
 
       // Закинуть гео-итог в общий акк.
@@ -447,16 +470,20 @@ final class AdvGeoBillUtil @Inject() (
             Some(ON_MAIN_SCREEN_MULT)
           }
           // Маппер OMS нужен ВСЕГДА, иначе addToOrder() не поймёт, что от него хотят.
-          val rcvrOmsPrice = Mapper(
-            underlying    = rcvrPrice,
-            multiplifier  = omsMultOpt,
-            reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) )
+          val rcvrOmsPrice = Tree.Node(
+            PriceDsl.mapper(
+              multiplifier  = omsMultOpt,
+              reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) ),
+            ),
+            EphemeralStream( rcvrPrice )
           )
 
           // Закинуть в аккамулятор результатов.
-          accRev ::= Mapper(
-            underlying = rcvrOmsPrice,
-            reason     = __rcvrPriceReason(rcvrId)
+          accRev ::= Tree.Node(
+            PriceDsl.mapper(
+              reason     = __rcvrPriceReason(rcvrId),
+            ),
+            EphemeralStream( rcvrOmsPrice )
           )
         }
       }
@@ -476,21 +503,33 @@ final class AdvGeoBillUtil @Inject() (
           val tagsOnRcvrPrices = for {
             (_, reasonOpt) <- tagsWithReasons
           } yield {
-            Mapper(
-              underlying  = rcvrTagPrice,
-              reason      = reasonOpt
+            Tree.Node(
+              PriceDsl.mapper(
+                reason      = reasonOpt
+              ),
+              EphemeralStream( rcvrTagPrice )
             )
           }
 
-          accRev ::= Mapper(
-            underlying  = Sum(tagsOnRcvrPrices),
-            reason      = __rcvrPriceReason(rcvrId)
+          accRev ::= Tree.Node(
+            PriceDsl.mapper(
+              reason      = __rcvrPriceReason(rcvrId)
+            ),
+            EphemeralStream(
+              Tree.Node(
+                priceDslSum,
+                tagsOnRcvrPrices.toEphemeralStream,
+              )
+            )
           )
         }
       }
     }
 
-    Sum( accRev.reverse )
+    Tree.Node(
+      priceDslSum,
+      accRev.reverse.toEphemeralStream
+    )
     // Для рендера юзеру: надо не забыть .mapAllPrices( .normalizeByExponent + TplDataFormatUtil.setPriceAmountStr )
   }
 

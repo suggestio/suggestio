@@ -26,9 +26,6 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     libraryDependencies ++= Seq(
       // Универсальные зависимости для клиента и сервера. Наследуются во ВСЕ компоненты проекта.
-      // Сериализация:
-      // Быстрая-компактная-ломучая бинарщина boopickle, которую надо удалить в пользу play-json.
-      "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
       "com.typesafe.play" %%% "play-json" % Common.Vsn.PLAY_JSON_VSN,
       // Вместо scala.Enumeration используем сие:
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,

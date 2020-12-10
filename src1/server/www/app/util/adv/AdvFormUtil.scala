@@ -102,18 +102,15 @@ final class AdvFormUtil @Inject() (
   /** Нужно здесь отрендерить amount для каждой суммы, т.к. на стороне scala.js это геморно. */
   def prepareAdvPricing(pricing: MGetPriceResp)(implicit ctx: Context): MGetPriceResp = {
     if ( pricing.prices.exists(_.amountStrOpt.isEmpty) ) {
-      pricing.withPrices(
-        for (mprice <- pricing.prices) yield {
-          TplDataFormatUtil.setFormatPrice(mprice)
-        }
-      )
+      MGetPriceResp.prices
+        .modify( _.map( TplDataFormatUtil.setFormatPrice ) )( pricing )
     } else {
       pricing
     }
   }
 
 
-  /** Дефолтовое состояние Adv4Free, пробрасываемое в react+boopickle-формы,
+  /** Дефолтовое состояние Adv4Free, пробрасываемое в js-формы,
     * поддерживающие галочку бесплатного размещения.
     *
     * @param ctx Контекст рендера.

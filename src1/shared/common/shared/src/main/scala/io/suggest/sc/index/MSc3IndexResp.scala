@@ -4,7 +4,7 @@ import io.suggest.color.MColors
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
-import io.suggest.media.IMediaInfo
+import io.suggest.media.MMediaInfo
 import io.suggest.n2.node.MNodeType
 import io.suggest.primo.id.OptStrId
 import io.suggest.text.StringUtil
@@ -35,7 +35,7 @@ object MSc3IndexResp {
         // TODO Заменить someF/Some.apply на опциональный EmptyUtil.implEmpty2OptF, когда придёт время.
         //      2020-11-19: Т.к. приложения, размещенные на сервисах дистрибуции (v2.0), пока не готовы, и надо повременить.
       ) and
-    (__ \ "l").formatNullable[IMediaInfo] and
+    (__ \ "l").formatNullable[MMediaInfo] and
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
     (__ \ "m").formatNullable[Boolean] and
@@ -77,7 +77,7 @@ object MSc3IndexResp {
     }
 
     /** Выбор логотипа с приоритетом на wcFg. */
-    def wcFgOrLogo: Option[IMediaInfo] = {
+    def wcFgOrLogo: Option[MMediaInfo] = {
       a.welcome
         .flatMap( _.fgImage )
         .orElse( a.logoOpt )
@@ -115,7 +115,7 @@ case class MSc3IndexResp(
                          ntype      : Option[MNodeType],
                          name       : Option[String],
                          colors     : MColors               = MColors.empty,
-                         logoOpt    : Option[IMediaInfo]    = None,
+                         logoOpt    : Option[MMediaInfo]    = None,
                          welcome    : Option[MWelcomeInfo]  = None,
                          geoPoint   : Option[MGeoPoint]     = None,
                          isMyNode   : Option[Boolean]       = None,

@@ -1,10 +1,12 @@
 package io.suggest.bill.price.dsl
 
-import boopickle.Default._
 import io.suggest.bill.MNameId
-import io.suggest.geo.CircleGs
+import io.suggest.common.empty.EmptyUtil
+import io.suggest.geo.{CircleGs, IGeoShape}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -14,15 +16,39 @@ import japgolly.univeq.UnivEq
   */
 object MPriceReason {
 
-  /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit def iPriceReasonPickler: Pickler[MPriceReason] = {
-    implicit val mReasonTypeP = MReasonType.mReasonTypePickler
-    implicit val mCircleGsP = CircleGs.CIRCLE_GS_PICKLER
-    implicit val mNameIdP = MNameId.mNameIdPickler
+  implicit def priceReasonFormat: OFormat[MPriceReason] = {
+    val fmt = IGeoShape.JsonFormats.minimalFormatter
+    import fmt.circle
 
-    generatePickler[MPriceReason]
+    (
+      (__ \ "r").format[MReasonType] and
+      (__ \ "i").formatNullable[Seq[Int]]
+        .inmap[Seq[Int]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          x => Option.when( x.nonEmpty )(x)
+        ) and
+      (__ \ "s").formatNullable[Seq[String]]
+        .inmap[Seq[String]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          x => Option.when( x.nonEmpty )(x)
+        ) and
+      (__ \ "d").formatNullable[Seq[Double]]
+        .inmap[Seq[Double]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          x => Option.when( x.nonEmpty )(x)
+        ) and
+      (__ \ "c").formatNullable[Seq[CircleGs]]
+        .inmap[Seq[CircleGs]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          x => Option.when( x.nonEmpty )(x)
+        ) and
+      (__ \ "n").formatNullable[Seq[MNameId]]
+        .inmap[Seq[MNameId]](
+          EmptyUtil.opt2ImplEmptyF(Nil),
+          x => Option.when( x.nonEmpty )(x)
+        )
+    )(apply, unlift(unapply))
   }
-
 
   @inline implicit def univEq: UnivEq[MPriceReason] = UnivEq.derive
 

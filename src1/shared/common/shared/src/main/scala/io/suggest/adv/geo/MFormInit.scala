@@ -1,9 +1,10 @@
 package io.suggest.adv.geo
 
-import boopickle.Default._
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
 import io.suggest.maps.nodes.MRcvrsMapUrlArgs
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -16,13 +17,14 @@ import io.suggest.maps.nodes.MRcvrsMapUrlArgs
   */
 object MFormInit {
 
-  implicit def pickler: Pickler[MFormInit] = {
-    implicit val a4fP   = MAdv4FreeProps.a4fPropsPickler
-    implicit val advPricingP = MGetPriceResp.getPriceRespPickler
-    implicit val formP  = MFormS.pickler
-    implicit val rcvrsMapUrlArgsP = MRcvrsMapUrlArgs.rcvrsMapUrlArgsP
-    generatePickler[MFormInit]
-  }
+  implicit def advGeoFormInitJson: OFormat[MFormInit] = (
+    (__ \ "i").format[String] and
+    (__ \ "e").formatNullable[MAdv4FreeProps] and
+    (__ \ "p").format[MGetPriceResp] and
+    (__ \ "f").format[MFormS] and
+    (__ \ "r").format[MRcvrsMapUrlArgs] and
+    (__ \ "d").format[Boolean]
+  )(apply, unlift(unapply))
 
 }
 
