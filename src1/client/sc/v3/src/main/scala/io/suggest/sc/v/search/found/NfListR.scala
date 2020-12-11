@@ -1,7 +1,7 @@
 package io.suggest.sc.v.search.found
 
 import com.materialui.{MuiGrid, MuiGridClasses, MuiGridProps}
-import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.css.Css
 import io.suggest.log.Log
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.v.styl.ScCssStatic
@@ -30,6 +30,7 @@ final class NfListR
     * @param onTouchStartF Опциональная реакция на touchstart, определяемая на верхнем уровне.
     */
   case class PropsVal(
+                       isScrollable     : Boolean = false,
                        onTouchStartF    : Option[ReactUIEventFromHtml => Callback]      = None,
                      )
 
@@ -40,8 +41,12 @@ final class NfListR
       val NodesCSS = ScCssStatic.Search.NodesFound
 
       MuiGrid {
+        val listClass =
+          if (p.isScrollable) NodesCSS.nodesListScrollable.htmlClass
+          else Css.Overflow.HIDDEN
+
         val listClasses = new MuiGridClasses {
-          override val root = (NodesCSS.listDiv :: NodesCSS.nodesList :: Nil).toHtmlClass
+          override val root = Css.flat( NodesCSS.listDiv.htmlClass, listClass )
         }
 
         val onTouchMoveUndF: js.UndefOr[js.Function1[ReactTouchEventFromInput, Unit]] =

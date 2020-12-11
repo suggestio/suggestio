@@ -42,7 +42,6 @@ final class NfRowsR(
   case class PropsVal(
                        row          : MNodesFoundRowProps,
                        onClickF     : MSc3IndexResp => DAction,
-                       isWide       : Boolean,
                        crCtx        : MCommonReactCtx,
                        scCss        : ScCss,
                      )
@@ -50,7 +49,6 @@ final class NfRowsR(
   implicit val propsValFullFeq = FastEqUtil[PropsVal] { (a, b) =>
     MNodesFoundRowProps.MNodesFoundRowPropsFeq.eqv( a.row, b.row ) &&
     // onClickF на рендер не влияет.
-    (a.isWide ==* b.isWide) &&
     (a.crCtx ===* b.crCtx) &&
     (a.scCss ===* b.scCss)
   }
@@ -178,7 +176,7 @@ final class NfRowsR(
         },
 
         // Название узла
-        p.name.filter(_ => props.isWide).whenDefinedEl { nodeName =>
+        p.name.whenDefinedEl { nodeName =>
           // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
           val rootCss = JsOptionUtil.maybeDefined(isTag)(
             Css.flat( NodesCSS.tagRowText.htmlClass, props.scCss.fgColor.htmlClass )
@@ -236,7 +234,7 @@ final class NfRowsR(
       )
 
       MuiGrid {
-        val css = JsOptionUtil.maybeDefined( props.isWide && !isTag ) {
+        val css = JsOptionUtil.maybeDefined( !isTag ) {
           new MuiGridClasses {
             override val root = ScCssStatic.Search.NodesFound.gridRowAdn.htmlClass
           }
@@ -259,7 +257,7 @@ final class NfRowsR(
     .build
 
 
-  def apply(nodesFoundProxy: ModelProxy[Seq[MNodesFoundRowProps]], isWide: Boolean)
+  def apply(nodesFoundProxy: ModelProxy[Seq[MNodesFoundRowProps]])
            (onClickF: MSc3IndexResp => DAction): VdomElement = {
     val nodesFound = nodesFoundProxy.value
 
@@ -268,7 +266,6 @@ final class NfRowsR(
         nodesFound.toVdomArray { nodeFound =>
           val rowProps = PropsVal(
             row       = nodeFound,
-            isWide    = isWide,
             crCtx     = crCtx,
             scCss     = scCss,
             onClickF  = onClickF,

@@ -111,7 +111,7 @@ class IndexesRecentR(
                 )
               }
               val rowsProxy = p.resetZoom[Seq[MNodesFoundRowProps]]( rowsData )
-              nfRowsR( rowsProxy, isWide = true )( IndexRecentNodeClick )
+              nfRowsR( rowsProxy )( IndexRecentNodeClick )
             }
           },
         ),

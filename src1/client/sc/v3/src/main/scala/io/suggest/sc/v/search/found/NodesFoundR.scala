@@ -257,7 +257,7 @@ final class NodesFoundR(
         )
       )(
         s.nodesFoundRowsC { nodesFoundProxy =>
-          nfRowsR( nodesFoundProxy, isWide = true ) { inxResp =>
+          nfRowsR( nodesFoundProxy ) { inxResp =>
             NodeRowClick( inxResp.idOrNameOrEmpty )
           }
         },

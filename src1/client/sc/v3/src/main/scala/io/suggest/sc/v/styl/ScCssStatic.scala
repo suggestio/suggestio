@@ -346,16 +346,10 @@ object ScCssStatic extends StyleSheet.Inline {
         width( 100.%% )
       )
 
-      val nodesList = {
-        val zeroPx = 0.px
-        style(
-          paddingTop( zeroPx ),
-          paddingBottom( zeroPx ),
-          overflow.hidden,
-          // Закомменчено, было нужно для Mui popover, но и это надо будет спилить вместе с Popover'ом.
-          //maxWidth( Search.PANEL_WIDTH_PX.px ),
-        )
-      }
+      val nodesListScrollable = style(
+        overflow.auto,
+        maxHeight( 250.px ),
+      )
 
       /** Горизонтальный прогресс-бар запроса. */
       val progress = {
@@ -368,7 +362,14 @@ object ScCssStatic extends StyleSheet.Inline {
       }
 
       /** Список тегов. */
-      val listDiv = ScCssStatic._styleAddClass( "shops-list" )
+      val listDiv = {
+        val zeroPx = 0.px
+        style(
+          addClassName( "shops-list" ),
+          paddingTop( zeroPx ),
+          paddingBottom( zeroPx ),
+        )
+      }
 
       def LOGO_WIDTH_MAX_PX = 140
       def LOGO_HEIGHT_MAX_PX = 56

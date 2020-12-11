@@ -94,13 +94,15 @@ class IndexSwitchAskR(
 
             // Список найденных узлов:
             nfListR.component(
-              nfListR.PropsVal()
+              nfListR.PropsVal(
+                isScrollable = true,
+              )
             )(
               s.nodesFoundPropsC { nodesFoundProxy =>
                 nfRowsR(
                   nodesFoundProxy = nodesFoundProxy,
                   // Рендерить компактной плиткой, если узлов многовато.
-                  isWide = nodesFoundProxy.value.lengthIs < ScConstants.Index.SWITCH_ASK_COMPACTED_LIST_LEN_MIN,
+                  //nodesFoundProxy.value.lengthIs < ScConstants.Index.SWITCH_ASK_COMPACTED_LIST_LEN_MIN,
                 ) { inxResp =>
                   IndexSwitchNodeClick( Some(inxResp.idOrNameOrEmpty) )
                 }
