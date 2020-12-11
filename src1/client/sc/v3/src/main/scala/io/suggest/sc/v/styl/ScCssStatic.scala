@@ -343,7 +343,7 @@ object ScCssStatic extends StyleSheet.Inline {
 
       /** CSS grid item для ADN-узлов (не тегов). */
       val gridRowAdn = style(
-        //width( 100.%% )
+        width( 100.%% )
       )
 
       val nodesList = {

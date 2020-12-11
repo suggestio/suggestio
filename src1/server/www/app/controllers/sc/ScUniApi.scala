@@ -241,11 +241,12 @@ trait ScUniApi
     }
 
 
-    /** Запуск поиска тегов, если запрошен. */
+    /** Запуск поиска узлов (в т.ч. тегов), если запрошен. */
     def searchRaOptFut: Future[Option[MSc3RespAction]] = {
       val futOpt = for {
         _ <- qs.nodes
       } yield {
+        // Запрошен поиск узлов. Подготовить список искомых узлов.
         for {
           qs2         <- qsAfterIndexFut
           logic       = ScSearchLogic(qs2.common.apiVsn)(qs2)(_request)

@@ -9,7 +9,7 @@ import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.{IndexRecentNodeClick, MScRoot}
 import io.suggest.sc.m.search.MNodesFoundRowProps
-import io.suggest.sc.v.search.found.{NfListR, NfRowR}
+import io.suggest.sc.v.search.found.{NfListR, NfRowsR}
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
@@ -31,7 +31,7 @@ import scalacss.ScalaCssReact._
   */
 class IndexesRecentR(
                       nfListR                  : NfListR,
-                      nfRowR                   : NfRowR,
+                      nfRowsR                  : NfRowsR,
                       crCtxP                   : React.Context[MCommonReactCtx],
                       scCssP                   : React.Context[ScCss],
                     ) {
@@ -111,7 +111,7 @@ class IndexesRecentR(
                 )
               }
               val rowsProxy = p.resetZoom[Seq[MNodesFoundRowProps]]( rowsData )
-              nfRowR( rowsProxy )( IndexRecentNodeClick )
+              nfRowsR( rowsProxy, isWide = true )( IndexRecentNodeClick )
             }
           },
         ),

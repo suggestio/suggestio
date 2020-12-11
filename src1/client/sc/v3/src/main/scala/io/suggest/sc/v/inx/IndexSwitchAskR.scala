@@ -7,10 +7,11 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import ReactDiodeUtil.Implicits._
+import io.suggest.sc.ScConstants
 import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.SearchCss
-import io.suggest.sc.v.search.found.{NfListR, NfRowR}
+import io.suggest.sc.v.search.found.{NfListR, NfRowsR}
 import io.suggest.sc.v.snack.SnackComp
 import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.spa.OptFastEq
@@ -25,7 +26,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class IndexSwitchAskR(
                        nfListR          : NfListR,
-                       nfRowR           : NfRowR,
+                       nfRowsR          : NfRowsR,
                        crCtxProv        : React.Context[MCommonReactCtx],
                      )
   extends SnackComp
@@ -95,9 +96,15 @@ class IndexSwitchAskR(
             nfListR.component(
               nfListR.PropsVal()
             )(
-              nfRowR( s.nodesFoundPropsC ) { inxResp =>
-                IndexSwitchNodeClick( Some(inxResp.idOrNameOrEmpty) )
-              },
+              s.nodesFoundPropsC { nodesFoundProxy =>
+                nfRowsR(
+                  nodesFoundProxy = nodesFoundProxy,
+                  // Рендерить компактной плиткой, если узлов многовато.
+                  isWide = nodesFoundProxy.value.lengthIs < ScConstants.Index.SWITCH_ASK_COMPACTED_LIST_LEN_MIN,
+                ) { inxResp =>
+                  IndexSwitchNodeClick( Some(inxResp.idOrNameOrEmpty) )
+                }
+              }
             ),
 
           ),

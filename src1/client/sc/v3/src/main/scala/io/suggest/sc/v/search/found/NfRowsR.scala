@@ -1,7 +1,7 @@
 package io.suggest.sc.v.search.found
 
 import com.materialui.{Mui, MuiGrid, MuiGridClasses, MuiGridProps, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconClasses, MuiSvgIconProps}
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -19,7 +19,8 @@ import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.spa.DAction
+import io.suggest.spa.{DAction, FastEqUtil}
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -33,42 +34,31 @@ import scala.scalajs.js
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
-final class NfRowR(
-                    scCssP                   : React.Context[ScCss],
-                    crCtxP                   : React.Context[MCommonReactCtx],
-                  ) {
+final class NfRowsR(
+                     scCssP                   : React.Context[ScCss],
+                     crCtxP                   : React.Context[MCommonReactCtx],
+                   ) {
 
-  def apply( nodesFoundRowsC: ReactConnectProxy[Seq[MNodesFoundRowProps]] ) =
-    _using( nfRowR => nodesFoundRowsC( nfRowR.rows ) )
+  case class PropsVal(
+                       row          : MNodesFoundRowProps,
+                       onClickF     : MSc3IndexResp => DAction,
+                       isWide       : Boolean,
+                       crCtx        : MCommonReactCtx,
+                       scCss        : ScCss,
+                     )
 
-  def apply( nodesFoundProxy: ModelProxy[Seq[MNodesFoundRowProps]] ) =
-    _using( nfRowR => nfRowR.rows(nodesFoundProxy) )
-
-
-  private def _using(f: NfRowR2 => VdomElement) = {
-    (onClickF: MSc3IndexResp => DAction) =>
-      crCtxP.consume { crCtx =>
-        scCssP.consume { scCss =>
-          val nfRowR = NfRowR2( crCtx, scCss, onClickF )
-          f(nfRowR)
-        }
-      }
+  implicit val propsValFullFeq = FastEqUtil[PropsVal] { (a, b) =>
+    MNodesFoundRowProps.MNodesFoundRowPropsFeq.eqv( a.row, b.row ) &&
+    // onClickF на рендер не влияет.
+    (a.isWide ==* b.isWide) &&
+    (a.crCtx ===* b.crCtx) &&
+    (a.scCss ===* b.scCss)
   }
 
-}
 
-
-/** Чтобы не плодить кучу ctx.consume()-компонентов, тут класс-контейнер единственного инстанса
-  * компонента под готовые контексты.
-  */
-final case class NfRowR2(
-                          crCtx        : MCommonReactCtx,
-                          scCss        : ScCss,
-                          onClickF     : MSc3IndexResp => DAction,
-                        ) {
-
-  type Props_t = MNodesFoundRowProps
+  type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
+
 
   class Backend($: BackendScope[Props, Props_t]) {
 
@@ -76,7 +66,8 @@ final case class NfRowR2(
     private val _onNodeRowClickJsF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCBf($) {
         propsProxy: Props =>
-          onClickF( propsProxy.value.node.props )
+          val props = propsProxy.value
+          props.onClickF( props.row.node.props )
       }
     }
 
@@ -87,19 +78,19 @@ final case class NfRowR2(
 
       // Рассчитать наименьшее расстояние от юзера до узла:
       val distanceMOpt = for {
-        distanceToPoint <- Option( props.withDistanceToNull )
+        distanceToPoint <- Option( props.row.withDistanceToNull )
 
         locLl = MapsUtil.geoPoint2LatLng( distanceToPoint )
 
         distancesIter = {
           (
             // Поискать geoPoint среди основных данных узла.
-            props.node.props.geoPoint
+            props.row.node.props.geoPoint
               .iterator
               .map( MapsUtil.geoPoint2LatLng ) #::
             // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
             (for {
-              nodeShape <- props.node.shapes.iterator
+              nodeShape <- props.row.node.shapes.iterator
             } yield {
               // Поиск точки центра узла.
               nodeShape.centerPoint
@@ -131,14 +122,14 @@ final case class NfRowR2(
 
       } yield distance
 
-      val p = props.node.props
+      val p = props.row.node.props
 
       // Нельзя nodeId.get, т.к. могут быть узлы без id (по идее - максимум 1 узел в списке).
       val nodeId = p.idOrNameOrEmpty
 
       val isTag = p.ntype.exists(_ eqOrHasParent MNodeTypes.Tag)
 
-      var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(nodeId) ::
+      var rowRootCssAcc = props.row.searchCss.NodesFound.rowItemBgF(nodeId) ::
         Nil
       rowRootCssAcc ::= {
         if (isTag) NodesCSS.tagRow
@@ -157,7 +148,7 @@ final case class NfRowR2(
           override val classes = listItemCss
           override val button = true
           override val onClick = _onNodeRowClickJsF
-          override val selected = props.selected
+          override val selected = props.row.selected
           override val dense = !isTag
           override val disableGutters = true
         }
@@ -168,7 +159,7 @@ final case class NfRowR2(
             val cls = new MuiListItemIconClasses {
               override val root = Css.flat(
                 NodesCSS.tagRowIconCont.htmlClass,
-                scCss.fgColor.htmlClass,
+                props.scCss.fgColor.htmlClass,
               )
             }
             new MuiListItemIconProps {
@@ -187,10 +178,10 @@ final case class NfRowR2(
         },
 
         // Название узла
-        p.name.whenDefinedEl { nodeName =>
+        p.name.filter(_ => props.isWide).whenDefinedEl { nodeName =>
           // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
           val rootCss = JsOptionUtil.maybeDefined(isTag)(
-            Css.flat( NodesCSS.tagRowText.htmlClass, scCss.fgColor.htmlClass )
+            Css.flat( NodesCSS.tagRowText.htmlClass, props.scCss.fgColor.htmlClass )
           )
 
           val theClasses = new MuiListItemTextClasses {
@@ -199,19 +190,19 @@ final case class NfRowR2(
             override val primary = (
               ScCssStatic.thinText ::
                 NodesCSS.tagRowTextPrimary ::
-                props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
+                props.row.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
                 Nil
               ).toHtmlClass
 
             override val secondary = Css.flat(
-              props.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass,
+              props.row.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass,
               ScCssStatic.thinText.htmlClass,
             )
           }
 
           val text2ndOpt = distanceMOpt
             .map { distanceM =>
-              val distanceFmt = crCtx.messages( DistanceUtil.formatDistanceM(distanceM) )
+              val distanceFmt = props.crCtx.messages( DistanceUtil.formatDistanceM(distanceM) )
               (HtmlConstants.`~` + distanceFmt): raw.React.Node
             }
           MuiListItemText(
@@ -229,7 +220,7 @@ final case class NfRowR2(
             // Ширина может отличаться, в mui она задана статически как min-width: 56px.
             // Нужно выставлять ширину по ширине текущей картинки.
             val iconCss = new MuiListItemIconClasses {
-              override val root = props.searchCss.NodesFound.rowItemIconF(nodeId).htmlClass
+              override val root = props.row.searchCss.NodesFound.rowItemIconF(nodeId).htmlClass
             }
             new MuiListItemIconProps {
               override val classes = iconCss
@@ -245,7 +236,7 @@ final case class NfRowR2(
       )
 
       MuiGrid {
-        val css = JsOptionUtil.maybeDefined( !isTag ) {
+        val css = JsOptionUtil.maybeDefined( props.isWide && !isTag ) {
           new MuiGridClasses {
             override val root = ScCssStatic.Search.NodesFound.gridRowAdn.htmlClass
           }
@@ -264,21 +255,29 @@ final case class NfRowR2(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(propsValFullFeq) )
     .build
 
 
-  def row(outerProxy: ModelProxy[_], rowProps: MNodesFoundRowProps) = {
-    val nodeId = rowProps.node.props.idOrNameOrEmpty
-    component.withKey(nodeId)( outerProxy.resetZoom(rowProps) )
-  }
+  def apply(nodesFoundProxy: ModelProxy[Seq[MNodesFoundRowProps]], isWide: Boolean)
+           (onClickF: MSc3IndexResp => DAction): VdomElement = {
+    val nodesFound = nodesFoundProxy.value
 
-  def rows(rowsPropsProxy: ModelProxy[Seq[MNodesFoundRowProps]]): VdomElement = {
-    React.Fragment(
-      rowsPropsProxy.value.toVdomArray { rowProps =>
-        row( rowsPropsProxy, rowProps )
+    crCtxP.consume { crCtx =>
+      scCssP.consume { scCss =>
+        nodesFound.toVdomArray { nodeFound =>
+          val rowProps = PropsVal(
+            row       = nodeFound,
+            isWide    = isWide,
+            crCtx     = crCtx,
+            scCss     = scCss,
+            onClickF  = onClickF,
+          )
+          val nodeId = nodeFound.node.props.idOrNameOrEmpty
+          component.withKey(nodeId)( nodesFoundProxy.resetZoom(rowProps) )
+        }
       }
-    )
+    }
   }
 
 }

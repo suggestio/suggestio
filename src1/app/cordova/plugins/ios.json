@@ -18,9 +18,6 @@
     "cordova-plugin-appminimize": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
-    "cordova-plugin-background-fetch": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
     "cordova-plugin-background-mode": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
@@ -55,6 +52,9 @@
     "cordova-plugin-ble-central": {
       "IOS_INIT_ON_LOAD": "true",
       "BLUETOOTH_USAGE_DESCRIPTION": " ",
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-background-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

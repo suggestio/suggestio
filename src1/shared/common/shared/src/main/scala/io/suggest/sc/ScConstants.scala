@@ -253,8 +253,11 @@ object ScConstants {
 
   object Index {
 
-    /** Кол-во узлов, которые разом детектятся в ScIndex. */
+    /** Кол-во узлов, которые разом детектятся в ScIndex на сервере. */
     final def MAX_NODES_DETECT = 50
+
+    /** Кол-во узлов на клиенте, после которого требуется рендерить ужатый список (плитку логотипов). */
+    final def SWITCH_ASK_COMPACTED_LIST_LEN_MIN = 5
 
   }
 

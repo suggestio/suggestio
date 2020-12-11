@@ -35,7 +35,7 @@ import scala.scalajs.js
 final class NodesFoundR(
                          measureR                 : MeasureR,
                          rightR                   : RightR,
-                         nfRowR                   : NfRowR,
+                         nfRowsR                  : NfRowsR,
                          nfListR                  : NfListR,
                          scCssP                   : React.Context[ScCss],
                          crCtxP                   : React.Context[MCommonReactCtx],
@@ -256,8 +256,10 @@ final class NodesFoundR(
           onTouchStartF     = Some( _onNfListTouchMove ),
         )
       )(
-        nfRowR( s.nodesFoundRowsC ) { inxResp =>
-          NodeRowClick( inxResp.idOrNameOrEmpty )
+        s.nodesFoundRowsC { nodesFoundProxy =>
+          nfRowsR( nodesFoundProxy, isWide = true ) { inxResp =>
+            NodeRowClick( inxResp.idOrNameOrEmpty )
+          }
         },
       ): VdomElement
 
