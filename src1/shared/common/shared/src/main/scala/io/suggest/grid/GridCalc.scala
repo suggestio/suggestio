@@ -60,7 +60,8 @@ object GridCalc {
   def getSzMult4tilesScr(colsCount: Int, dscr: IWidth, conf: MGridCalcConf): MSzMult = {
     val unitColsCount = colsCount / conf.cellWidth.relSz
     // Минимальная остаточная ширина экрана в пикселях. Это расстояние по бокам.
-    val MIN_W1_PX = 0d
+    // 1.5 cellPadding - это в первую очередь для iphone12 pro max, где ширина 428px, и szMult=1.3 приводит к w1=-14px
+    val MIN_W1_PX = - 1.5 * conf.cellPadding
 
     // Считаем целевое кол-во колонок на экране.
     @tailrec def detectSzMult(restSzMults: List[MSzMult]): MSzMult = {
