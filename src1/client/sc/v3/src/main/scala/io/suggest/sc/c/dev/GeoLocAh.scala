@@ -58,7 +58,7 @@ class GeoLocAh[M](
       .toMap
   }
 
-  private def _geoLocateFx(wTypes: Iterable[GeoLocType], glApi: GeoLocApi, watch: Boolean) = {
+  private def _geoLocateFx(wTypes: Iterable[GeoLocType], glApi: GeoLocApi, watch: Boolean): Option[Effect] = {
     val maxAgeSome = Some( 20.seconds )
     Option.when(wTypes.nonEmpty)( Effect {
       val glType: GeoLocType = GeoLocTypes.Gps

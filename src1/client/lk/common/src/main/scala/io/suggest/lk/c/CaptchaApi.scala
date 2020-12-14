@@ -38,12 +38,8 @@ class CaptchaApiHttp( httpConfig: () => HttpClientConfig ) extends ICaptchaApi {
         HttpReq.routed(
           route = routes.controllers.Captcha.getCaptcha( token ),
           data  = HttpReqData(
-            headers = {
-              val C = HttpConst.Headers
-              Map(
-                C.ACCEPT -> "image/*"
-              )
-            },
+            headers = Map.empty +
+              (HttpConst.Headers.ACCEPT -> "image/*"),
             respType = HttpRespTypes.Blob,
             timeoutMs = Some( 10.seconds.toMillis.toInt ),
             cache = MHttpCacheInfo(

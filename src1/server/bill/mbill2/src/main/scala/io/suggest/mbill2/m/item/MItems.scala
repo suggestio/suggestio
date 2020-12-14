@@ -322,7 +322,7 @@ object MItemJvm {
 
   object Implicits {
 
-    implicit class MItemJvmOpsExt(val o: MItem) extends AnyVal {
+    implicit class MItemJvmOpsExt(private val o: MItem) extends AnyVal {
 
       def dtIntervalOpt: Option[Interval] = {
         for (start <- o.dateStartOpt; end <- o.dateEndOpt) yield {

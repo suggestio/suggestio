@@ -24,7 +24,19 @@
     "cordova-plugin-appminimize": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
+    "cordova-plugin-background-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
     "cordova-plugin-background-mode": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-ble-central": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-inappbrowser": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-local-notification": {
@@ -48,18 +60,6 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova.plugins.diagnostic": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-inappbrowser": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-fetch": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-ble-central": {
-      "PACKAGE_NAME": "io.suggest.appsuggest"
-    },
-    "cordova-plugin-background-fetch": {
       "PACKAGE_NAME": "io.suggest.appsuggest"
     }
   },

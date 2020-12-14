@@ -71,6 +71,9 @@ object HttpReqData {
       // config.cookies плюсовать здесь нельзя, т.к. Cookie входит в список prohibited headers.
     }
 
+    def timeoutMsOr0: Int =
+      reqData.timeoutMs getOrElse 0
+
   }
 
 }
@@ -100,8 +103,4 @@ case class HttpReqData(
                         onProgress    : Option[ITransferProgressInfo => Unit] = None,
                         config        : HttpClientConfig      = HttpClientConfig.empty,
                         credentials   : Option[Boolean]       = None,
-                      ) {
-
-  def timeoutMsOr0 = timeoutMs getOrElse 0
-
-}
+                      )

@@ -668,8 +668,13 @@ class TailAh(
 
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
-      if (m.mainScreen.needGeoLoc &&
-        v0.internals.boot.wzFirstDone.nonEmpty &&
+      if (
+        m.mainScreen.needGeoLoc && {
+          val boot = v0.internals.boot
+          boot.targets.isEmpty &&
+          boot.services.isEmpty &&
+          boot.wzFirstDone.nonEmpty
+        } &&
         v0.dialogs.first.view.isEmpty
       ) {
         // Если геолокация ещё не запущена, то запустить:

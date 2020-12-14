@@ -127,7 +127,7 @@ class AdvBuilderUtil @Inject() (
   def partitionItemsByType(items: Iterable[MItem], itypes: MItemType*): (Iterable[MItem], Iterable[MItem]) = {
     items.partition { i =>
       // Интересуют только item'ы с искомым значением в поле itype.
-      itypes.contains( i.iType )
+      itypes contains[MItemType] i.iType
       // Тут была проверка на mitem.gsOpt, но это защита от самого себя и она была выпилена.
     }
   }
@@ -225,7 +225,7 @@ class AdvBuilderUtil @Inject() (
         val myNodeIds = items
           .iterator
           .filter { i =>
-            needInterruptItypes.contains( i.iType )
+            needInterruptItypes contains i.iType
           }
           .map(_.nodeId)
           .toSet

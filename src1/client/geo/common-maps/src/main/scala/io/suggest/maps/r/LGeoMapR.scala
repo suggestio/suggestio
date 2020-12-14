@@ -72,8 +72,13 @@ object LGeoMapR {
     new LMapPropsR {
       override val center    = MapsUtil.geoPoint2LatLng( v.mapS.center )
       override val zoom      = js.defined( v.mapS.zoom )
-      // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
-      override val maxZoom   = js.defined( 16 )
+
+      // maxZoom: Значение требует markercluster
+      // 18 - в leaflet бывает сверхприближение на touch-устройствах с retina, и пустая карта.
+      // 17 - видны номера домов в городе на osm.org.
+      // 16 - номера домов не видны.
+      override val maxZoom   = js.defined( 17 )
+
       override val useFlyTo  = v.animated
       override val onLocationFound = _onLocationFound2
 

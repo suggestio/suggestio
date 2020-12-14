@@ -756,7 +756,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
@@ -950,7 +950,10 @@ class Sc3Circuit(
 
       // Подавляем управление геолокацией/bluetooth до окончания работы wzFirst, который только запрашивает разрешения на это.
       val boot = bootRW()
-      if (boot.targets.isEmpty && (boot.wzFirstDone contains[Boolean] true)) {
+      if (
+        boot.targets.isEmpty &&
+        (boot.wzFirstDone contains[Boolean] true)
+      ) {
         val bleIsToEnable = _dispatchBleBeaconerOnOff()
 
         // Глушить фоновый GPS-мониторинг:

@@ -60,8 +60,9 @@ final class CdvBgGeoLocApi(
       mgl
     }
 
-    val currLocP = Promise[MGeoLoc]()
-    val _onErrorOptF = for (onErrorF <- options.onError) yield {
+    val _onErrorOptF = for {
+      onErrorF <- options.onError
+    } yield {
       {bgGeoError: BackgroundGeolocationError =>
         val ex = PositionException(
           bgGeoError.code,
@@ -74,12 +75,17 @@ final class CdvBgGeoLocApi(
       }
     }
 
+    val currLocP = Promise[MGeoLoc]()
+
     // Немедленный запуск получения текущего местоположения:
     CdvBackgroundGeolocation.getCurrentLocation(
       success = _onLocationF andThen currLocP.success,
       fail = _onErrorOptF
-        .map(_ andThen currLocP.failure)
-        .getOrElse(null),
+        .map { onErrorF =>
+          val f = (onErrorF andThen currLocP.failure)
+          f: js.Function1[BackgroundGeolocationError, _]
+        }
+        .orNull,
       options = new LocationOptions {
         override val maximumAge = _maxAgeMsU
         override val enableHighAccuracy = _isHighAccuracy
@@ -123,12 +129,15 @@ final class CdvBgGeoLocApi(
             //override val notificationIconSmall = "res://ic_notification"
           }
         )
-        _ = {
+
+        _ <- {
           CdvBackgroundGeolocation.onLocation( _onLocationF )
           for (onErrorF <- _onErrorOptF)
             CdvBackgroundGeolocation.onError( onErrorF )
+
+          configFut
         }
-        _ <- configFut
+
       } yield {
         CdvBackgroundGeolocation.start()
         js.undefined
