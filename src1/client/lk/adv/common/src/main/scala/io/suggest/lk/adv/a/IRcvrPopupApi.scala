@@ -30,10 +30,7 @@ trait RcvrPopupHttpApiImpl extends IRcvrPopupApi {
   override def rcvrPopup(nodeId: String): Future[MRcvrPopupResp] = {
     val req = HttpReq.routed(
       route = _rcvrPopupRoute(nodeId),
-      data  = HttpReqData(
-        headers  = HttpReqData.headersJsonAccept,
-        respType = HttpRespTypes.ArrayBuffer
-      )
+      data  = HttpReqData.justAcceptJson,
     )
     HttpClient.execute( req )
       .respAuthFut

@@ -34,15 +34,6 @@ object HttpReqData {
     HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON
   )
 
-  def headersBinarySendAccept =
-    headersSendAccept( MimeConst.APPLICATION_OCTET_STREAM )
-  def headersBinarySend = Map.empty[String, String] + (
-    HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM
-  )
-  def headersBinaryAccept = Map.empty[String, String] +
-    (HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_OCTET_STREAM)
-
-
   def headersJsonSend = Map.empty[String, String] +
     (HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON)
 

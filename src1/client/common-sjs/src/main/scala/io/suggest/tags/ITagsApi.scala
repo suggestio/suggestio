@@ -36,10 +36,7 @@ trait TagsHttpApiImpl extends ITagsApi {
         route = _tagsSearchRoute(
           PlayJsonSjsUtil.toNativeJsonObj(
             Json.toJsObject(args) ) ),
-        data  = HttpReqData(
-          headers  = HttpReqData.headersBinaryAccept,
-          respType = HttpRespTypes.ArrayBuffer
-        )
+        data  = HttpReqData.justAcceptJson,
       )
     )
       .respAuthFut

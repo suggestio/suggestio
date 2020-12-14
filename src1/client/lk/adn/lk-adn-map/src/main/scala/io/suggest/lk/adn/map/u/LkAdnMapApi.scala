@@ -94,10 +94,7 @@ class LkAdnMapApiHttpImpl
   override def currentGeoItemPopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
     val req = HttpReq.routed(
       route = routes.controllers.LkAdnMap.currentGeoItemPopup(itemId),
-      data  = HttpReqData(
-        headers   = HttpReqData.headersBinaryAccept,
-        respType  = HttpRespTypes.ArrayBuffer
-      )
+      data  = HttpReqData.justAcceptJson,
     )
     HttpClient.execute(req)
       .respAuthFut

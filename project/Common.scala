@@ -331,11 +331,6 @@ object Common {
   val diodeVsn = "1.1.13"
   val diodeReactVsn = diodeVsn //+ "." + reactSjsVsn.replaceAllLiterally(".", "")
 
-  /** Версия сериализатора boopickle. 
-    * @see [[https://github.com/ochrons/boopickle]]
-    */
-  val boopickleVsn = "1.3.+"
-
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]
     */

@@ -32,10 +32,7 @@ trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
   override def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo] = {
     val req = HttpReq.routed(
       route = _nodeAdvInfoRoute(nodeId),
-      data = HttpReqData(
-        headers  = HttpReqData.headersBinaryAccept,
-        respType = HttpRespTypes.ArrayBuffer
-      )
+      data = HttpReqData.justAcceptJson,
     )
     HttpClient.execute( req )
       .respAuthFut

@@ -85,10 +85,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
     HttpClient.execute(
       HttpReq.routed(
         route = routes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId),
-        data  = HttpReqData(
-          headers  = HttpReqData.headersBinaryAccept,
-          respType = HttpRespTypes.ArrayBuffer
-        )
+        data  = HttpReqData.justAcceptJson,
       )
     )
       .respAuthFut
@@ -121,7 +118,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
           adId = confRO().adId
         ),
         data = HttpReqData(
-          headers   = HttpReqData.headersBinarySend +
+          headers   = HttpReqData.headersJsonSend +
             (HttpConst.Headers.ACCEPT -> MimeConst.TEXT_PLAIN),
           body      = Json.toJson( mFormS ).toString(),
           respType  = HttpRespTypes.Default
