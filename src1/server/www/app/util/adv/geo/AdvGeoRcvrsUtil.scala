@@ -170,9 +170,7 @@ final class AdvGeoRcvrsUtil @Inject()(
   /** Карта ресиверов, размещённых через lk-adn-map.
     *
     * @param nodesSrc Источник MNode. См. mNodes.source[MNode](...).
-    * @return Фьючерс с картой узлов.
-    *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
-    *         всегда возвращали один и тот же результат.
+    * @return Source с данными по индексами узлов.
     */
   def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean = true): Source[(MNode, MSc3IndexResp), M] = {
     // TODO 2020-12-03 - Надо wcAsLogo устранить, и возвращать на клиент и welcome fg, и лого.

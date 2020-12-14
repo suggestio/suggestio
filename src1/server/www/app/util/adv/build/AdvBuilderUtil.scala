@@ -1,6 +1,6 @@
 package util.adv.build
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevels}
 import io.suggest.mbill2.m.item.status.MItemStatuses

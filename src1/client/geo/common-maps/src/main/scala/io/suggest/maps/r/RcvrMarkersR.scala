@@ -161,9 +161,7 @@ object RcvrMarkersR extends Log {
                   override val weight       = STROKE_WEIGHT
                   override val color        = _strokeColor
                   override val opacity      = STROKE_OPACITY
-                  override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
-                    _onClickCbF( _center )
-                  }
+                  override val onClick      = _onClickCbF( _center )
                 }
                 val rc = CircleR( opts )
                 ResTuple(_centerLatLng, rc :: Nil)
@@ -182,9 +180,7 @@ object RcvrMarkersR extends Log {
                   override val weight       = STROKE_WEIGHT
                   override val color        = _strokeColor
                   override val opacity      = STROKE_OPACITY
-                  override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
-                    _onClickCbF( _center )
-                  }
+                  override val onClick      = _onClickCbF( _center )
                 }
                 val rc = PolygonR(opts)
                 ResTuple(_centerLL, rc :: Nil)
