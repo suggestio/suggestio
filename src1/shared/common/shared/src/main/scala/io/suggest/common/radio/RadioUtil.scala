@@ -10,12 +10,20 @@ import japgolly.univeq._
   */
 object RadioUtil {
 
+  def DBM_MAX = 20
+  def DBM_MIN = -120
+
+  def isRssiValid(rssi: Int): Boolean = {
+    (rssi <= DBM_MAX) &&
+    (rssi >= DBM_MIN)
+  }
+
   /**
     * Оценка расстояния до маячка.
     *
     * @param distance0m Расстояние в метрах, на которой излучается сигнал с rssi0.
     * @param rssi0 Значение RSSI для сигнала на расстоянии distance0.
-    * @param rssi Текущее значение RSSI сигнала, до которого требуется оценить расстояние.
+    * @param rssiOpt Текущее значение RSSI сигнала, до которого требуется оценить расстояние.
     *
     * @return None, если невозможно определить расстояние на основе указанных данных.
     *         Some() с оценкой расстояния до маячка в метрах.
@@ -23,11 +31,11 @@ object RadioUtil {
     * @see [[http://developer.radiusnetworks.com/2014/12/04/fundamentals-of-beacon-ranging.html]]
 	  * @see [[http://stackoverflow.com/questions/21338031/radius-networks-ibeacon-ranging-fluctuation]]
     */
-  def calculateAccuracy(distance0m: Int, rssi0: Int, rssi: Int): Option[Double] = {
-    if (rssi >= 0) {
-      None
-
-    } else {
+  def calculateAccuracy(distance0m: Int, rssi0: Int, rssiOpt: Option[Int]): Option[Double] = {
+    for {
+      rssi <- rssiOpt
+      if isRssiValid( rssi )
+    } yield {
       // The iBeacon distance formula uses txPower at 1 meters, but the Eddystone
       // protocol reports the value at 0 meters. 41dBm is the signal loss that
       // occurs over 1 meter, so we subtract that from the reported txPower.
@@ -52,7 +60,7 @@ object RadioUtil {
         0.89976 * Math.pow(ratio, 7.7095) + 0.111
       }
 
-      Some(accuracy)
+      accuracy
     }
   }
 
@@ -60,7 +68,7 @@ object RadioUtil {
     calculateAccuracy(
       distance0m  = signal.distance0m,
       rssi0       = signal.rssi0,
-      rssi        = signal.rssi
+      rssiOpt     = signal.rssi,
     )
   }
 
@@ -71,7 +79,7 @@ object RadioUtil {
 trait IRadioSignal {
 
   /** Текущая мощность сигнала в децибелах. */
-  def rssi: Int
+  def rssi: Option[Int]
 
 }
 

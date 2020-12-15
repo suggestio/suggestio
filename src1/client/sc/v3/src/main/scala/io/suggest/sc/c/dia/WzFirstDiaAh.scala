@@ -311,7 +311,7 @@ class WzFirstDiaAh[M](
       if (
         m.showHide &&
         v0.view.isEmpty &&
-        WzFirstDiaAh.isNeedWizardFlow()
+        WzFirstDiaAh.isNeedWizardFlowVal
       ) {
         // Запускаемся.
         var fxsAcc: List[Effect] = Nil
@@ -667,5 +667,8 @@ object WzFirstDiaAh extends Log {
 
     tryR getOrElse true
   }
+
+
+  lazy val isNeedWizardFlowVal = isNeedWizardFlow()
 
 }

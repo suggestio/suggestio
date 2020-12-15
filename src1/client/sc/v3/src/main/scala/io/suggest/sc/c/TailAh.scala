@@ -15,10 +15,10 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
-import io.suggest.geo.GeoLocUtilJs
 import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.react.r.ComponentCatch
+import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
 import io.suggest.sc.m.dia.InitFirstRunWz
@@ -669,26 +669,25 @@ class TailAh(
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
       if (
-        m.mainScreen.needGeoLoc && {
-          val boot = v0.internals.boot
-          boot.targets.isEmpty &&
-          boot.services.isEmpty &&
-          boot.wzFirstDone.nonEmpty
-        } &&
-        v0.dialogs.first.view.isEmpty
+        m.mainScreen.needGeoLoc &&
+        v0.internals.boot.wzFirstDone.nonEmpty &&
+        v0.dialogs.first.view.isEmpty &&
+        !WzFirstDiaAh.isNeedWizardFlowVal
       ) {
         // Если геолокация ещё не запущена, то запустить:
         if (
-          GeoLocUtilJs.envHasGeoLoc() &&
-          !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) &&
-          !isGeoLocRunning
+          !isGeoLocRunning &&
+          !(v0.dev.geoLoc.switch.onOff contains[Boolean] true)
         ) {
           fxsAcc ::= GeoLocOnOff(enabled = true, isHard = false).toEffectPure
           isGeoLocRunning = true
         }
 
         // Если bluetooth не запущен - запустить в добавок к геолокации:
-        if (v0.dev.platform.hasBle && !(v0.dev.beaconer.isEnabled contains[Boolean] true)) {
+        if (
+          !(v0.dev.beaconer.isEnabled contains[Boolean] true) &&
+          v0.dev.platform.hasBle
+        ) {
           fxsAcc ::= Effect.action {
             BtOnOff(
               isEnabled = true,

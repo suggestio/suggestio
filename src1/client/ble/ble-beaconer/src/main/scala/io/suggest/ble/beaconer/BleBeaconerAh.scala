@@ -244,7 +244,7 @@ class BleBeaconerAh[M](
                         .enableBle()
                         // iOS: Ошибку включения трактуем как успех: пусть ошибка возникнет на уровне listenBeacons().
                         .recover { case ex =>
-                          logger.warn( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED, ex, msg = bbApi )
+                          logger.info( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED, ex, msg = bbApi )
                           true
                         }
                   }
@@ -275,7 +275,7 @@ class BleBeaconerAh[M](
                   __foldApisAsync( restApis.tail )
                 }
 
-                def __runNext() =
+                def __runNext(): Unit =
                   if (!nextP.isCompleted)
                     nextP.success( None )
 
@@ -355,7 +355,7 @@ class BleBeaconerAh[M](
     case m: BeaconDetected =>
       val v0 = value
 
-      if (v0.isEnabled contains false) {
+      if (v0.isEnabled contains[Boolean] false) {
         logger.info( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
 
@@ -518,7 +518,7 @@ class BleBeaconerAh[M](
       val v0 = value
       def isCanBeEnabled = m.opts.hardOff || !v0.opts.hardOff
       // Включён или включается.
-      val isEnabledNow = v0.isEnabled contains true
+      val isEnabledNow = v0.isEnabled contains[Boolean] true
 
       if (
         // Сначала проверяем на предмет дублирующегося включения с изменением опций работы демона.
@@ -585,7 +585,9 @@ class BleBeaconerAh[M](
           DomQuick.clearTimeout( timerInfo.timerId )
 
         // Гасим BleBeaconer: выключить API, грохнуть все таймеры в состоянии и т.д.
-        val apiStopFxOpt = for (bbApi <- v0.bleBeaconsApi.toOption) yield {
+        val apiStopFxOpt = for {
+          bbApi <- v0.bleBeaconsApi.toOption
+        } yield {
           Effect {
             bbApi
               .unListenAllBeacons()
@@ -629,10 +631,12 @@ class BleBeaconerAh[M](
     // Обработать результат подписки API на события.
     case m: HandleListenRes =>
       val v0 = value
+
       if (!v0.bleBeaconsApi.isPending) {
         // API выключено. Что-то не так, наверное.
         logger.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, msg = m )
         noChange
+
       } else {
         // Сейчас система включена, и API активно. Значит пришёл сигнал об активации API (или ошибке активации).
         // Запустить таймер перехода из тихого в нормальный режим работы (уведомлять всех).
@@ -712,7 +716,7 @@ class BleBeaconerAh[M](
             __updatedMaybeEffect
           },
           {isEnabled2 =>
-            if (v0.isEnabled contains isEnabled2) {
+            if (v0.isEnabled contains[Boolean] isEnabled2) {
               // Завершена ожидавшаяся инициализация или де-инициализация.
               __updatedMaybeEffect
             } else {

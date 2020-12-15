@@ -4,6 +4,7 @@ import com.apple.ios.core.bluetooth.CBAdvData
 import com.github.don.cordova.plugin.ble.central.BtDevice
 import io.suggest.ble.api.cordova.ble.BtAdvData.ScanRecordToken
 import io.suggest.ble.eddystone.{MEddyStoneUid, MFrameTypes}
+import io.suggest.common.radio.RadioUtil
 import io.suggest.common.uuid.LowUuidUtil
 import io.suggest.js.JsTypes
 import io.suggest.msg.ErrorMsgs
@@ -142,7 +143,10 @@ case class EddyStoneParser(override val dev: BtDevice)
           esAdBytes.byteLength >= MFrameTypes.UID.frameMinByteLen
       ) {
         val euid = MEddyStoneUid(
-          rssi    = dev.rssi.get,
+          rssi    = dev.rssi
+            // Фильтруем сигналы до валидных значений. В частности, фильтруем dev.rssi=127, официально означающий None.
+            .filter( RadioUtil.isRssiValid )
+            .toOption,
           txPower = JsBinaryUtil.littleEndianToInt8(esAdBytes, 1),
           uid     = LowUuidUtil.hexStringToEddyUid(
             JsBinaryUtil.typedArrayToHexString(

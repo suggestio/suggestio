@@ -375,7 +375,7 @@ class BootAh[M](
 
     // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
     case BootLocDataWz =>
-      if (WzFirstDiaAh.isNeedWizardFlow()) {
+      if (WzFirstDiaAh.isNeedWizardFlowVal) {
         // Нет уже заданных гео-данных, и требуется запуск мастера.
         // Текущий эффект передаёт управление в WizardAh, мониторя завершение визарда.
         val initFirstWzFx = InitFirstRunWz(true).toEffectPure

@@ -89,7 +89,7 @@ object Sc3JsApi extends Log {
           val ivlId = DomQuick.setInterval( 800 + rnd.nextInt(800) ) { () =>
             val action = BeaconDetected(
               signal = MEddyStoneUid(
-                rssi    = -30 - rnd.nextInt(70),
+                rssi    = Some( -30 - rnd.nextInt(70) ),
                 txPower = bcnTxPower,
                 uid     = bcnUid,
               ),

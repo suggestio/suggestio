@@ -54,14 +54,11 @@
             "cordova-plugin-inappbrowser": {},
             "cordova-plugin-fetch": {},
             "cordova-plugin-background-fetch": {},
-            "cordova-plugin-ble-central": {
-                "IOS_INIT_ON_LOAD": "false",
-                "BLUETOOTH_USAGE_DESCRIPTION": " "
-            }
+            "cordova-plugin-ble-central": {}
         },
         "platforms": [
-            "ios",
-            "android"
+            "android",
+            "ios"
         ]
     },
     "devDependencies": {
