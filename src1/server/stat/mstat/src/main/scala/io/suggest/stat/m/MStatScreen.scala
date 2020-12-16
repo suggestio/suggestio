@@ -42,7 +42,7 @@ object MStatScreen
   override def esMappingProps(implicit dsl: MappingDsl): JsObject = {
     import dsl._
 
-    val vportFields = FObject.plain( MViewPort.esMappingProps )
+    val vportFields = FObject.plain( MViewPort )
 
     val F = Fields
     Json.obj(

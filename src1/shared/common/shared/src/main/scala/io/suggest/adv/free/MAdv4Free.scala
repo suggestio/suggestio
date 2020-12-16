@@ -1,6 +1,7 @@
 package io.suggest.adv.free
 
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /** Модель diode-состояния суперюзерской формочки.
   *
@@ -16,5 +17,7 @@ case class MAdv4Free(
 object MAdv4Free {
 
   @inline implicit def univEq: UnivEq[MAdv4Free] = UnivEq.derive
+
+  def checked = GenLens[MAdv4Free]( _.checked )
 
 }

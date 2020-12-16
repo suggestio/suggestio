@@ -580,7 +580,7 @@ final class MappingDsl { dsl =>
       (__ \ "include_in_root").formatNullable[Boolean]
     )(apply, unlift(unapply))
 
-    def disabled = apply(
+    def disabled: FObject = apply(
       typ         = DocFieldTypes.Object,
       enabled     = someFalse,
     )
@@ -597,7 +597,7 @@ final class MappingDsl { dsl =>
                 enabled           : Option[Boolean]     = someTrue,
                 includeInParent   : Option[Boolean]     = None,
                 includeInRoot     : Option[Boolean]     = None,
-              ) = apply(
+              ): FObject = apply(
       typ             = DocFieldTypes.NestedObject,
       enabled         = enabled,
       properties      = Some(properties),

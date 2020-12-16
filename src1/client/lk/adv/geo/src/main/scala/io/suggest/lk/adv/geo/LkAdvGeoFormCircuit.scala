@@ -23,7 +23,7 @@ import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
 import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.spa.StateInp
+import io.suggest.spa.{CircuitUtil, StateInp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json
 // TODO import MAdv4Free....FastEq
@@ -98,7 +98,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   }
 
 
-  private val otherRW  = zoomRW(_.other) { _.withOther(_) }
+  private val otherRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.other )( MOther.MOtherFastEq )
 
   private val API = new LkAdvGeoHttpApiImpl(otherRW)
 
@@ -125,10 +125,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     // Эффект пересчёта стоимости размещения с помощью сервера.
     val priceUpdateEffect = ResetPrice.toEffectPure
 
-    val rcvrRW  = zoomRW(_.rcvr) { _.withRcvr(_) }
+    val rcvrRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.rcvr )
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }
 
-    val mmapRW  = zoomRW(_.mmap) { _.withMapState(_) }
+    val mmapRW  = CircuitUtil.mkLensRootZoomRW(this, MRoot.mmap)
 
     // Собираем handler'ы
 
@@ -144,7 +144,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val tagsAh = new TagsEditAh(
-      modelRW         = zoomRW(_.tags) { _.withTagsEditState(_) },
+      modelRW         = CircuitUtil.mkLensRootZoomRW( this, MRoot.tags ),
       api             = API,
       priceUpdateFx   = priceUpdateEffect
     )
@@ -159,23 +159,17 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val datePeriodAh = new DtpAh(
-      modelRW = zoomRW(_.datePeriod) { _.withDatePeriod(_) },
+      modelRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.datePeriod ),
       priceUpdateFx = priceUpdateEffect
     )
 
     val adv4freeAh = new Adv4FreeAh(
       // Для оптимального подхвата Option[] используем zoomMap:
-      modelRW = zoomMapRW(_.adv4free)(_.checked) { (m, checkedOpt) =>
-        m.withAdv4Free(
-          for (a4f0 <- m.adv4free; checked2 <- checkedOpt) yield {
-            a4f0.withChecked(checked2)
-          }
-        )
-      },
+      modelRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.adv4free ),
       priceUpdateFx = priceUpdateEffect
     )
 
-    val geoAdvRW = zoomRW(_.geoAdv) { _.withCurrGeoAdvs(_) }
+    val geoAdvRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.geoAdv )( MExistGeoS.MExistGeoSFastEq )
 
     val geoAdvsInitAh = new GeoAdvExistInitAh(
       api           = API,
@@ -195,11 +189,11 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val radAh = new RadAh(
-      modelRW       = zoomRW(_.rad) { _.withRad(_) },
+      modelRW       = CircuitUtil.mkLensRootZoomRW( this, MRoot.rad ),
       priceUpdateFx = priceUpdateEffect
     )
 
-    val billRW = zoomRW(_.bill) { _.withBill(_) }
+    val billRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.bill )
 
     val priceAh = new PriceAh(
       modelRW       = billRW.zoomRW(_.price) { _.withPrice(_) },
@@ -207,7 +201,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       doSubmitF     = submitFormFut
     )
 
-    val mPopupsRW = zoomRW(_.popups) { _.withPopups(_) }
+    val mPopupsRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.popups )
 
     val nodeInfoPopupAh = new NodeInfoPopupAh(
       api     = API,

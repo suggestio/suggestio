@@ -48,7 +48,7 @@ trait LkAdnMapFormInitRouter extends InitRouter {
 
     // Основное тело формы:
     circuit
-      .wrap(mrootRO)( LamFormR.apply )
+      .wrap(mrootRO)( LamFormR.component.apply )
       .renderIntoDOM(
         VUtil.getElementByIdOrNull[HTMLDivElement]( AdnMapFormConstants.FORM_CONT_ID )
       )

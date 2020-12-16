@@ -1,11 +1,10 @@
 package util.adv.build
 
 import java.time.OffsetDateTime
-
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.ImplementedBy
-import javax.inject.Inject
 
+import javax.inject.Inject
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -13,7 +12,7 @@ import io.suggest.n2.edge.MPredicate
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
 import models.mproj.ICommonDi
-import util.adn.mapf.GeoLocBuilder
+import util.adn.mapf.{GeoLocBuilder, GeoLocTagBuilder}
 import util.adv.direct.{AdvDirectBuilder, AdvDirectTagsBuilder}
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
@@ -248,6 +247,7 @@ final case class AdvBuilder @Inject() (
   with AgtBuilder
   with AgpBuilder
   with GeoLocBuilder
+  with GeoLocTagBuilder
   with AdvDirectTagsBuilder
 {
 

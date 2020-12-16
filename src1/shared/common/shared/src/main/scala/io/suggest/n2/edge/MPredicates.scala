@@ -56,7 +56,7 @@ object MPredicates extends StringEnum[MPredicate] {
   case object TaggedBy extends MPredicate("l") {
 
     /** Adv geo tags: платное размещение в гео-тегах. */
-    case object Agt extends MPredicate("lg") with _Child
+    case object AdvGeoTag extends MPredicate("lg") with _Child
 
     /** Узел сам-себе тег. В этом эдже лежит его tag payload: tag face'ы, гео-шейпы.
       * Все tag face'ы со всех узлов храняться в одном индексе, в т.ч. и этот.
@@ -69,8 +69,12 @@ object MPredicates extends StringEnum[MPredicate] {
       */
     case object DirectTag extends MPredicate("ld") with _Child
 
+    /** Тег локации ADN-узла на карте.
+      * Можно провести параллель с карточным AdvGeoTag, но для ADN-узла. */
+    case object LocationTag extends MPredicate("ll") with _Child
+
     override def children: LazyList[MPredicate] =
-      Agt #:: Self #:: DirectTag #:: super.children
+      AdvGeoTag #:: Self #:: DirectTag #:: LocationTag #:: super.children
 
   }
 

@@ -107,7 +107,7 @@ object AdvGeoFormR {
         ),
 
         // Верхняя половина, правая колонка:
-        p.wrap(_.datePeriod)( DatePeriodR.apply ),
+        p.wrap(_.datePeriod)( DatePeriodR.component.apply ),
 
         // Тут немного пустоты нужно...
         <.br,
@@ -160,7 +160,7 @@ object AdvGeoFormR {
         <.br,
 
         // Рендерить табличку с данными по рассчёту текущей цены:
-        s.priceDslOptC { ItemsPricesR.apply }
+        s.priceDslOptC { ItemsPricesR.component.apply }
 
       )   // top div
     }     // render()

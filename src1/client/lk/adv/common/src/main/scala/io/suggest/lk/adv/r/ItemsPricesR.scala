@@ -231,6 +231,4 @@ object ItemsPricesR {
     .renderBackend[Backend]
     .build
 
-  def apply(priceDslOptProxy: Props) = component( priceDslOptProxy )
-
 }

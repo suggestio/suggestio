@@ -1,22 +1,20 @@
-package util.adv.geo.tag
+package util.adn.mapf
 
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.n2.edge._
-import japgolly.univeq._
+import io.suggest.n2.edge.{MPredicate, MPredicates}
 import util.adv.build.IAdvBuilder
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 19.02.16 15:15
-  * Description: Трейт поддержки adv-билдинга для гео-тегов.
+  * Created: 16.12.2020 16:00
+  * Description: Поддержка location-тегов наподобии GeoTag'ов.
   */
-trait AgtBuilder extends IAdvBuilder {
+trait GeoLocTagBuilder extends IAdvBuilder {
 
-  private final def _PRED   = MPredicates.TaggedBy.AdvGeoTag
-  private final def _ITYPE  = MItemTypes.GeoTag
-
+  private final def _ITYPE = MItemTypes.LocationTag
+  private final def _PRED  = MPredicates.TaggedBy.LocationTag
 
   override def supportedItemTypes: List[MItemType] = {
     _ITYPE :: super.supportedItemTypes

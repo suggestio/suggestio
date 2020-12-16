@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.{IRadOpts, MLamRcvrs, MRoot}
+import io.suggest.lk.adn.map.m.{MLamRad, MLamRcvrs, MRoot}
 import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
@@ -29,7 +29,6 @@ import scalaz.Tree
 object LamFormR {
 
   import MGeoMapPropsR.MGeoMapPropsRFastEq
-  import IRadOpts.IRadOptsFastEq
   import MLamRcvrs.MLamRcvrsFastEq
   import MExistGeoS.MExistGeoSFastEq
   import RadPopupR.PropsValFastEq
@@ -40,7 +39,7 @@ object LamFormR {
   /** Модель состояния компонента. */
   protected[this] case class State(
                                     geoMapPropsC          : ReactConnectProxy[MGeoMapPropsR],
-                                    radOptsC              : ReactConnectProxy[IRadOpts[_]],
+                                    radOptsC              : ReactConnectProxy[MLamRad],
                                     rcvrsC                : ReactConnectProxy[MLamRcvrs],
                                     priceDslOptC          : ReactConnectProxy[Option[Tree[PriceDsl]]],
                                     currentPotC           : ReactConnectProxy[MExistGeoS],
@@ -67,9 +66,9 @@ object LamFormR {
           // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
           val lg = List[VdomElement](
             // Рендер текущих размещений.
-            s.currentPotC { CurrentGeoR.apply },
+            s.currentPotC { CurrentGeoR.component.apply },
             // Маркер местоположения узла.
-            s.radOptsC { MapCursorR.apply }
+            s.radOptsC { MapCursorR.component.apply }
           )
 
           rcvrsProxy().nodesResp.toOption.fold[VdomElement] {
@@ -80,7 +79,7 @@ object LamFormR {
         },
 
         // L-попап при клике по rad cursor.
-        s.radPopupPropsC { RadPopupR.apply },
+        s.radPopupPropsC { RadPopupR.component.apply },
 
       )
 
@@ -100,7 +99,7 @@ object LamFormR {
         ),
 
         // Верхняя половина, правая колонка:
-        p.wrap(_.datePeriod)( DatePeriodR.apply ),
+        p.wrap(_.datePeriod)( DatePeriodR.component.apply ),
 
         // Рендер географической карты:
         s.geoMapPropsC { mapPropsProxy =>
@@ -113,7 +112,7 @@ object LamFormR {
         <.br,
 
         // Рендерить табличку с данными по рассчёту текущей цены:
-        s.priceDslOptC { ItemsPricesR.apply }
+        s.priceDslOptC { ItemsPricesR.component.apply }
 
       )
     }
@@ -132,7 +131,7 @@ object LamFormR {
             cssClass      = mapCssClass
           )
         },
-        radOptsC      = propsProxy.connect(identity),
+        radOptsC      = propsProxy.connect(_.rad),
         rcvrsC        = propsProxy.connect(_.rcvrs),
         priceDslOptC  = propsProxy.connect(_.price.respDslOpt),
         currentPotC   = propsProxy.connect(_.current),
@@ -147,7 +146,5 @@ object LamFormR {
     }
     .renderBackend[Backend]
     .build
-
-  def apply(mRootProxy: Props) = component(mRootProxy)
 
 }

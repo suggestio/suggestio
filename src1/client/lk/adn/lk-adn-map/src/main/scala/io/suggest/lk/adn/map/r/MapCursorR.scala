@@ -1,8 +1,7 @@
 package io.suggest.lk.adn.map.r
 
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.IRadOpts
-import io.suggest.maps.m.MRadT
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.lk.adn.map.m.MLamRad
 import io.suggest.maps.m.MRadT.MRadTFastEq
 import io.suggest.maps.r.rad.RadMapControlsR
 import io.suggest.spa.OptFastEq.Wrapped
@@ -18,12 +17,12 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   */
 object MapCursorR {
 
-  type Props_t = IRadOpts[_]
+  type Props_t = MLamRad
   type Props = ModelProxy[Props_t]
 
 
   protected[this] case class State(
-                                    mRadTOptC      : ReactConnectProxy[Option[MRadT[_]]]
+                                    mRadC      : ReactConnectProxy[MLamRad],
                                   )
 
 
@@ -31,25 +30,22 @@ object MapCursorR {
 
     def render(p: Props, s: State): VdomElement = {
       // Опциональное размещение в круге и в точке.
-      s.mRadTOptC { RadMapControlsR.apply }
+      s.mRadC { mradProxy =>
+        RadMapControlsR.component( mradProxy.zoom(Some.apply) )
+      }
     }
 
   }
 
 
   val component = ScalaComponent
-    .builder[Props](getClass.getSimpleName )
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
-        mRadTOptC = p.connect { radOpts =>
-          Some( radOpts.rad )
-        }
+        mRadC = p.connect( identity ),
       )
     }
     .renderBackend[Backend]
     .build
-
-  private def _apply(nodeMarkerProxy: Props) = component(nodeMarkerProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

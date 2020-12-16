@@ -33,7 +33,11 @@ object MItemTypes extends StringEnum[MItemType] {
   /** Юзер просто пополняет sio-баланс, перекачивая на него деньги из внешнего источника денег. */
   case object BalanceCredit extends MItemType("e")
 
+  /** ADN-узел занимает площадь геолокацию на карте. */
   case object GeoLocCaptureArea extends MItemType("l")
+
+  /** Тег для локации ADN-узла: по аналогии с гео-тегом, но не для карточки. */
+  case object LocationTag extends MItemType("o")
 
 
   override val values = findValues
@@ -44,14 +48,14 @@ object MItemTypes extends StringEnum[MItemType] {
 
   def advDirectTypes  : List[MItemType]     = AdvDirect :: TagDirect :: Nil
 
-  def adnMapTypes     : List[MItemType]     = GeoLocCaptureArea :: Nil
+  def adnMapTypes     : List[MItemType]     = GeoLocCaptureArea :: LocationTag :: Nil
 
   /** Типы, допустимые к использованию в модели MAdvDeclKey. */
   def advDeclTypes    : List[MItemType]     = AdvDirect :: Nil
 
   def interruptable   = values.filter(_.isInterruptable)
 
-  def tagTypes        : List[MItemType]     = GeoTag :: TagDirect :: Nil
+  def tagTypes        : List[MItemType]     = GeoTag :: TagDirect :: LocationTag :: Nil
 
   /** Для каких типов разрешена модерация уровная ЛК юзера? */
   def userMdrAllowed  : List[MItemType]     = advDirectTypes

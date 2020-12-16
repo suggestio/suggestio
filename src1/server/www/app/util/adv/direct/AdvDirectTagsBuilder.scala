@@ -95,19 +95,7 @@ trait AdvDirectTagsBuilder extends IAdvBuilder {
 
   /** Теги требуют обработки с выставлением MItem.tagNodeId. */
   override def installSql(items: Iterable[MItem]): IAdvBuilder = {
-    val tagItemType = _ITYPE
-    val (ditems, others) = items.partition { i =>
-      i.iType ==* tagItemType
-    }
-
-    val this2 = super.installSql(others)
-
-    // Собираем db-экшены для инсталляции
-    if (ditems.nonEmpty) {
-      advBuilderUtil.tagsInstallSql(this2, ditems)
-    } else {
-      this2
-    }
+    advBuilderUtil.tagsInstallSql(this, items, _ITYPE, super.installSql )
   }
 
 }

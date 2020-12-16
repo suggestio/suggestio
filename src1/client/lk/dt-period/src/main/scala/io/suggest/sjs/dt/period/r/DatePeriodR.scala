@@ -44,6 +44,4 @@ object DatePeriodR {
     }
     .build
 
-  def apply(props: Props) = component( props )
-
 }

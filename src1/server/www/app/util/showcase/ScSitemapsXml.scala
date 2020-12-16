@@ -62,7 +62,7 @@ class ScSitemapsXml @Inject() (
       override val outEdges: MEsNestedSearch[Criteria] = {
         val preds = MPredicates.AdvGeoPlace ::
           MPredicates.Receiver ::
-          MPredicates.TaggedBy.Agt ::
+          MPredicates.TaggedBy.AdvGeoTag ::
           MPredicates.TaggedBy.DirectTag ::
           Nil
         MEsNestedSearch(

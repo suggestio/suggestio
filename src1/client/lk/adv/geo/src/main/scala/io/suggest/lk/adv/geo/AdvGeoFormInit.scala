@@ -3,7 +3,6 @@ package io.suggest.lk.adv.geo
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.init.routed.InitRouter
-import io.suggest.lk.adv.geo.m.MRoot.MRootFastEq
 import io.suggest.lk.adv.m.MPriceS.MPriceSFastEq
 import io.suggest.lk.adv.geo.m.MPopupsS.MPopupsFastEq
 import io.suggest.lk.adv.geo.r.AdvGeoFormR

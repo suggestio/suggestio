@@ -56,7 +56,4 @@ object CurrentGeoR {
     .renderBackend[Backend]
     .build
 
-  private def _apply(currGeoSProxy: Props) = component(currGeoSProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
-
 }

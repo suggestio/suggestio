@@ -14,6 +14,7 @@ import models.mproj.ICommonDi
 import util.adv.geo.tag.GeoTagsUtil
 import util.billing.BillDebugUtil
 import io.suggest.mbill2.m.item.MItemJvm.Implicits._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -23,14 +24,18 @@ import scala.concurrent.Future
   * Created: 31.03.16 21:35
   * Description: Утиль для AdvBuilder'а.
   */
-class AdvBuilderUtil @Inject() (
-                                 mItems           : MItems,
-                                 geoTagsUtil      : GeoTagsUtil,
-                                 billDebugUtil    : BillDebugUtil,
-                                 mCommonDi        : ICommonDi
-                               )
+final class AdvBuilderUtil @Inject() (
+                                       mCommonDi        : ICommonDi
+                                     )
   extends MacroLogsImpl
 {
+
+  import mCommonDi.current.injector
+
+  private lazy val mItems = injector.instanceOf[MItems]
+  private lazy val geoTagsUtil = injector.instanceOf[GeoTagsUtil]
+  private lazy val billDebugUtil = injector.instanceOf[BillDebugUtil]
+
 
   import mCommonDi._
   import slick.profile.api._
@@ -271,11 +276,20 @@ class AdvBuilderUtil @Inject() (
   /** Код SQL-инсталляции для тегов.
     *
     * @param b0 adv-билдер.
-    * @param ditems item'ы, которые билдим.
+    * @param items item'ы, которые билдим.
+    * @param next Следующий шаг.
     * @return Обновлённый инстанс [[IAdvBuilder]].
     */
-  def tagsInstallSql(b0: IAdvBuilder, ditems: Iterable[MItem]): IAdvBuilder = {
-    lazy val logPrefix = s"AGT.installSql(${ditems.size}):"
+  def tagsInstallSql(b0: IAdvBuilder, items: Iterable[MItem], tagItemType: MItemType, next: Iterable[MItem] => IAdvBuilder): IAdvBuilder = {
+    val (ditems, others) = items.partition { i =>
+      i.iType ==* tagItemType
+    }
+
+    val this2 = next(others)
+    lazy val logPrefix = s"tagsInstallSql(${ditems.size}):"
+
+    // Собираем db-экшены для инсталляции
+    if (ditems.nonEmpty) {
       LOGGER.trace(s"$logPrefix There are ${ditems.size} geotags for install...")
 
       b0.withAccUpdatedFut { acc0 =>
@@ -309,7 +323,111 @@ class AdvBuilderUtil @Inject() (
           (Acc.dbActions set dbas1)(acc0)
         }
       }
+    } else {
+      this2
+    }
   }
+
+
+  /** Код обновления MNode под гео-тег (AdvGeoTag, LocationTag).
+    *
+    * @param builder Инстанс текущего билдера.
+    * @param items Все item'ы, как подходящие под item type, так и все остальные.
+    * @param itype Текущий тип item type.
+    * @param predicate Предикат для создаваемых эджей.
+    * @param next Следующий шаг.
+    * @return Обновлённое состояние билдера.
+    */
+  def installNodeGeoTag(
+                         builder: IAdvBuilder,
+                         items: Iterable[MItem],
+                         itype: MItemType,
+                         predicate: MPredicate,
+                         next: Iterable[MItem] => IAdvBuilder,
+                       ): IAdvBuilder = {
+
+    lazy val logPrefix = s"installNodeGeoTag(${System.currentTimeMillis}):"
+
+    val (tagItems, other) = items.partition { i =>
+      // Интересуют только item'ы тегов, у которых всё правильно оформлено.
+      (i.iType ==* itype) && {
+        val r = i.geoShape.isDefined && i.tagFaceOpt.isDefined
+        if (!r)
+          LOGGER.error(s"$logPrefix Invalid geo-tag item: one or more required fields are empty:\n $i")
+        r
+      }
+    }
+    val this2 = next( other )
+
+    // При сборке эджей считаем, что карточка уже была заранее очищена от предыдущих тегов.
+    // Это особенность новой архитектуры: всё перенакатывается заново всегда.
+
+    if (tagItems.nonEmpty) {
+      LOGGER.debug(s"$logPrefix Found ${tagItems.size} items for adv-geo-tag install: ${tagItems.iterator.flatMap(_.id).mkString(",")}")
+
+      // Теги отработать, группируя по шейпу. Т.е. размещать в эджах карточек ровно как на форме размещения в тегах.
+      // Индексировать дубликаты тегов внутри карточки легче для индексов, нежели избыточно индексировать шейпы.
+      // Хотя это может вызвать неточности при аггрегации документов по тегам.
+      // id узлов-тегов достаём из outer ctx.
+      this2.withAccUpdatedFut { acc0 =>
+        for {
+          ctxOuter <- acc0.ctxOuterFut
+        } yield {
+          val agtEdgesIter = tagItems
+            .iterator
+            .toSeq
+            .groupBy(_.geoShape.get)
+            // Конвертим группы в отдельные эджи.
+            .iterator
+            .map { case (gs, gsItems) =>
+              // Сборка всех tag face'ов.
+              val tagFacesSet = gsItems
+                .iterator
+                .flatMap(_.tagFaceOpt)
+                .toSet
+
+              // Надо собрать опорные точки для общей статистики, записав их рядышком.
+              val geoPoints = grabGeoPoints4Stats( gsItems )
+                .toSet
+                .toSeq
+
+              val nodeIdsSet = tagFacesSet
+                .iterator
+                .flatMap { tagFace =>
+                  val tnOpt = ctxOuter.tagNodesMap.get(tagFace)
+                  val tnIdOpt = tnOpt.flatMap(_.id)
+                  // Сообщать о проблеме с тегом: неправильно вызывать этот код, если узел тега ещё не существует. TODO Может сразу делать throw?
+                  if (tnIdOpt.isEmpty)
+                    LOGGER.error(s"$logPrefix No tag-node found for tag-face or _id missing: $tnOpt")
+                  tnIdOpt
+                }
+                .toSet
+
+              MEdge(
+                predicate = predicate,
+                nodeIds   = nodeIdsSet,
+                info      = MEdgeInfo(
+                  tags      = tagFacesSet,
+                  geoShapes = MEdgeGeoShape(
+                    id      = MEdgeGeoShape.SHAPE_ID_START,
+                    glevel  = MNodeGeoLevels.geoTag,
+                    shape   = gs
+                  ) :: Nil,
+                  geoPoints = geoPoints
+                )
+              )
+            }
+
+          acc_node_edges_out_LENS
+            .modify(_ ++ agtEdgesIter)(acc0)
+        }
+      }
+
+    } else {
+      this2
+    }
+  }
+
 
 }
 

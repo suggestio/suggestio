@@ -41,8 +41,8 @@ object RadPopupR {
             override val position = MapsUtil.geoPoint2LatLng(p.point)
           }
         )(
-          OptsR( propsProxy )
-        ): VdomElement
+          OptsR( propsProxy ),
+        )
       }
     }
 
@@ -54,8 +54,5 @@ object RadPopupR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  private def _apply(propsValProxy: Props) = component(propsValProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

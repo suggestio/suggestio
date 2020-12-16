@@ -113,7 +113,7 @@ class ScAdSearchUtil @Inject() (
           preds ::= tagPredParent.DirectTag
 
         if (args.common.locEnv.geoLocOpt.nonEmpty)
-          preds ::= tagPredParent.Agt
+          preds ::= tagPredParent.AdvGeoTag
 
         // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(

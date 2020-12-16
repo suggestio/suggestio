@@ -5,7 +5,6 @@ import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.lk.adn.map.a._
-import io.suggest.lk.adn.map.m.IRadOpts.IRadOptsFastEq
 import io.suggest.lk.adn.map.m.MLamRad.MLamRadFastEq
 import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
@@ -19,7 +18,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.dt.period.r.DtpAh
-import io.suggest.spa.StateInp
+import io.suggest.spa.{CircuitUtil, StateInp}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -57,7 +56,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       } yield {
         MAdv4Free(
           static  = a4fProps,
-          checked = mFormInit.form.adv4freeChecked.contains(true)
+          checked = mFormInit.form.adv4freeChecked contains[Boolean] true,
         )
       },
       price = MPriceS(
@@ -80,7 +79,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
     // Поддержка экшенов виджета цены с кнопкой сабмита.
     val priceAh = new PriceAh(
-      modelRW = zoomRW(_.price) { _.withPrice(_) },
+      modelRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.price ),
       priceAskFutF = { () =>
         httpApi.getPriceSubmit( nodeIdProxy(), formRO() )
       },
@@ -94,36 +93,28 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
     // Обновлять состояние при изменении конфигурации карты.
     val mapCommonAh = new MapCommonAh(
-      mmapRW = zoomRW(_.mmap) { _.withMap(_) }
+      mmapRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.mmap ),
     )
 
-    val radOptsRW = zoomRW [IRadOpts[MRoot]] (identity) { _.withRadOpts(_) }
+    val radRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.rad )
     // Реакция на двиганье маркера на карте:
     val radAh = new LamRadAh(
-      modelRW       = radOptsRW,
+      modelRW       = radRW,
       priceUpdateFx = priceUpdateEffect
     )
 
-    val radRw = radOptsRW.zoomRW(_.rad) { _.withRad(_) }
-
     val radPopupAh = new LamRadPopupAh(
-      modelRW = radRw.zoomRW(_.popup) { _.withPopup(_) }
+      modelRW = radRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
     // Поддержка реакции на adv4free:
     val adv4freeAh = new Adv4FreeAh(
       // Для оптимального подхвата Option[] используем zoomMap:
-      modelRW = zoomMapRW(_.adv4free)(_.checked) { (m, checkedOpt) =>
-        m.withAdv4Free(
-          for (a4f0 <- m.adv4free; checked2 <- checkedOpt) yield {
-            a4f0.withChecked(checked2)
-          }
-        )
-      },
+      modelRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.adv4free ),
       priceUpdateFx = priceUpdateEffect
     )
 
-    val currentRW = zoomRW(_.current) { _.withCurrent(_) }
+    val currentRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.current )
 
     val currentGeoAh = new CurrentGeoAh(
       api         = httpApi,
@@ -138,11 +129,11 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
     // Реакция на события виджета с датой:
     val datePeriodAh = new DtpAh(
-      modelRW       = zoomRW(_.datePeriod) { _.withDatePeriod(_) },
+      modelRW       = CircuitUtil.mkLensRootZoomRW( this, MRoot.datePeriod ),
       priceUpdateFx = priceUpdateEffect
     )
 
-    val rcvrsRw = zoomRW(_.rcvrs) { _.withRcvrs(_) }
+    val rcvrsRw = CircuitUtil.mkLensRootZoomRW( this, MRoot.rcvrs )
 
     // Карта покрытия с данными ресиверов:
     val rcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl()
