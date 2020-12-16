@@ -119,21 +119,23 @@ final class EsModel @Inject()(
 
       /** Отправить маппинг в elasticsearch. */
       def putMapping()(implicit dsl: MappingDsl): Future[Boolean] = {
-        lazy val logPrefix = s"$model.putMapping[${System.currentTimeMillis()}]:"
         val indexName = model.ES_INDEX_NAME
         val typeName = model.ES_TYPE_NAME
+        lazy val logPrefix = s"$model.putMapping($indexName/$typeName)[${System.currentTimeMillis()}]:"
         LOGGER.trace(s"$logPrefix $indexName/$typeName")
+
+        val mappingJson = model.generateMapping()
 
         val fut = esClient.admin().indices()
           .preparePutMapping(indexName)
           .setType(typeName)
-          .setSource( model.generateMapping().toString(), XContentType.JSON )
+          .setSource( mappingJson.toString(), XContentType.JSON )
           .executeFut()
           .map( _.isAcknowledged )
 
         fut.onComplete {
           case Success(res) => LOGGER.trace(s"$logPrefix Done, ack=$res")
-          case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
+          case Failure(ex)  => LOGGER.error(s"$logPrefix Failed put mapping:\n-----------------------------------\n ${Json.prettyPrint(mappingJson)}\n ---------------------------------", ex)
         }
 
         fut
@@ -1605,7 +1607,7 @@ final class EsModel @Inject()(
     lazy val logPrefix = s"createIndex($newIndexName):"
     fut.onComplete {
       case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
-      case Failure(ex)  => LOGGER.error(s"$logPrefix failed", ex)
+      case Failure(ex)  => LOGGER.error(s"$logPrefix failed, settings was:\n${settings.toDelimitedString('\n')}", ex)
     }
 
     fut

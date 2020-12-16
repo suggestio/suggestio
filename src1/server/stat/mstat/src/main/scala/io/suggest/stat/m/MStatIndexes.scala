@@ -68,11 +68,13 @@ class MStatIndexes @Inject() (
 
   /** Сгенерить настройки для создаваемого индекса. */
   def indexSettingsCreate: Settings = {
+    val I = EsModelUtil.Settings.Index
     Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
-      .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,    s"${MStatIndexes.INDEX_REFRESH_INTERVAL_SEC}s")
-      .put( EsModelUtil.Settings.Index.NUMBER_OF_REPLICAS,  REPLICAS_COUNT)
-      .put( EsModelUtil.Settings.Index.NUMBER_OF_SHARDS,    MStatIndexes.NUMBER_OF_SHARDS)
+      .put( I.REFRESH_INTERVAL,    s"${MStatIndexes.INDEX_REFRESH_INTERVAL_SEC}s")
+      .put( I.NUMBER_OF_REPLICAS,  REPLICAS_COUNT)
+      .put( I.NUMBER_OF_SHARDS,    MStatIndexes.NUMBER_OF_SHARDS)
+      // TODO Уменьшаем расход места, потребление RAM
       .build()
   }
 
