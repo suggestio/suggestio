@@ -16,7 +16,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
   * Created: 16.12.16 21:16
   * Description: Компонент списка текущих, добавленных в заказ, тегов.
   */
-object TagsExistsR {
+final class TagsExistsR {
 
   type Props = ModelProxy[Set[String]]
 
@@ -60,8 +60,4 @@ object TagsExistsR {
     .renderBackend[Backend]
     .build
 
-  def apply(tagsExists: Props) = component(tagsExists)
-
 }
-
-

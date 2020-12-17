@@ -16,7 +16,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
   * Created: 16.12.16 20:32
   * Description: Пока-статическая кнопка добавления введенного тега с очень толстым handler'ом.
   */
-object TagAddBtnR {
+final class TagAddBtnR {
 
   type Props = ModelProxy[_]
 
@@ -42,8 +42,6 @@ object TagAddBtnR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(proxy: Props) = component(proxy)
 
 }
 

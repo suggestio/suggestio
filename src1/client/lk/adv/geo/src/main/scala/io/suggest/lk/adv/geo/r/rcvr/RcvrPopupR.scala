@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.r.rcvr
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.adv.rcvr.{MRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -20,7 +20,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, Scal
   * @see [[http://ochrons.github.io/diode/usage/ApplicationModel.html]] ## Complex Access Patterns
   */
 
-object RcvrPopupR {
+final class RcvrPopupR {
 
   type Props_t = MRcvr
   type Props = ModelProxy[Props_t]
@@ -107,9 +107,5 @@ object RcvrPopupR {
     .stateless
     .renderBackend[Backend]
     .build
-
-
-  private def _apply(props: Props) = component(props)
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

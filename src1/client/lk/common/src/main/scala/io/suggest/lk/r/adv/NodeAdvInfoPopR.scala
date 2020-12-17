@@ -332,11 +332,10 @@ object NodeAdvInfoPopR {
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(innerHtmlOptProxy: Props) = component( innerHtmlOptProxy )
 
 }

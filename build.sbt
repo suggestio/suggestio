@@ -60,7 +60,8 @@ lazy val commonJS = common.js
     scalaVersion := Common.SCALA_VSN_JS,
     libraryDependencies ++= Seq(
       // java.time-поддержка на клиенте:
-      "io.github.cquiroz" %%% "scala-java-time" % Common.Vsn.SCALA_JAVA_TIME
+      "io.github.cquiroz" %%% "scala-java-time" % Common.Vsn.SCALA_JAVA_TIME,
+      // tzdb только в [lk-dt-period-sjs]
     )
   )
 
@@ -299,14 +300,14 @@ lazy val lkDtPeriodSjs = {
 lazy val lkAdvCommonSjs = {
   val name = "lk-adv-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
-    .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs, mapsSjs)
+    .dependsOn(lkCommonSjs, commonReactSjs, mapsSjs)
 }
 
 /** Sjs-модуль для поддержки подсистемы размещения в гео-тегах. */
 lazy val lkAdvGeoSjs = {
   val name = "lk-adv-geo-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/geo"))
-    .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarkerClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
+    .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarkerClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs, lkDtPeriodSjs)
 }
 
 /** Sjs поддержки формы управления узлами/под-узлами в ЛК узла. */
@@ -421,7 +422,7 @@ lazy val lkTagsEditSjs = {
 lazy val lkAdnMapSjs = {
   val prefix = "lk-adn-map"
   Project(id = prefix + "-sjs", base = file(DIR0 + "client/lk/adn/" + prefix))
-    .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
+    .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs, lkDtPeriodSjs)
 }
 
 /** Scala.js формы редактирования метаданных узла. */

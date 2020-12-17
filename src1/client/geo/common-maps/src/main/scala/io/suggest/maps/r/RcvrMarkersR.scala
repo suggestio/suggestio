@@ -1,7 +1,7 @@
 package io.suggest.maps.r
 
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
@@ -22,7 +22,7 @@ import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
-import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
 import react.leaflet.circle.{CirclePropsR, CircleR}
@@ -34,7 +34,6 @@ import io.suggest.msg.ErrorMsgs
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -66,7 +65,7 @@ object RcvrMarkersR extends Log {
       dispatchOnProxyScopeCB($, msg)
     }
 
-    private def _toColorOpt(mcdOpt: Option[MColorData]): UndefOr[String] = {
+    private def _toColorOpt(mcdOpt: Option[MColorData]): js.UndefOr[String] = {
       val colorOpt = for (mcd <- mcdOpt) yield {
         HtmlConstants.DIEZ + mcd.code
       }
@@ -279,9 +278,5 @@ object RcvrMarkersR extends Log {
     .stateless
     .renderBackendWithChildren[Backend]
     .build
-
-
-  def apply(rcvrsGeoPotProxy: Props)(children: VdomNode*) = component(rcvrsGeoPotProxy)(children: _*)
-  val applyNoChildren: ReactConnectProps[Props_t] = apply(_)()
 
 }

@@ -12,7 +12,8 @@ version := "0.0.0"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn
+  "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn,
+  "com.softwaremill.macwire" %% "macros" % Common.Vsn.MACWIRE % "provided",
 )
 
 useYarn := true

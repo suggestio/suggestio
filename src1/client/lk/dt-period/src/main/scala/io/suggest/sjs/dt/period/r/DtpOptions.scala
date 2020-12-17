@@ -1,13 +1,13 @@
 package io.suggest.sjs.dt.period.r
 
 import com.github.hacker0x01.react.date.picker.{DatePickerPropsR, DatePickerR, Date_t, PopperPlacements}
-import com.momentjs.Moment
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.AdvConstants
 import io.suggest.common.qs.QsConstants
 import io.suggest.css.Css
 import io.suggest.dt.{MAdvPeriod, MYmd}
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriod, QuickAdvPeriods}
+import io.suggest.dt.moment.MomentJsUtil.Implicits._
 import io.suggest.lk.r.PropTableR
 import io.suggest.lk.r.Forms.InputCont
 import io.suggest.msg.Messages
@@ -15,11 +15,12 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
+
+import java.time.LocalDate
 //import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun2ToJsCb
-import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -50,10 +51,10 @@ object DtpOptions {
       dispatchOnProxyScopeCB($, SetQap(qap))
     }
 
-    def onCustomDateChange(fn: DtpInputFn, newDate: Moment): Callback = {
+    def onCustomDateChange(fn: DtpInputFn, newDate: LocalDate): Callback = {
       val msg = SetDateStartEnd(
         fn      = fn,
-        moment  = newDate
+        date  = newDate,
       )
       dispatchOnProxyScopeCB($, msg)
     }
@@ -117,27 +118,27 @@ object DtpOptions {
                             new DatePickerPropsR {
                               override val locale: UndefOr[String] = momentLocale
 
-                              override val selected: js.UndefOr[Date_t] = ymd.to[Moment]
-                              override val minDate: UndefOr[Date_t] = fn.minDate(customRangeOpt)
+                              override val selected: js.UndefOr[Date_t] = ymd.to[Date_t]
+                              override val minDate: UndefOr[Date_t] = fn.minDate(customRangeOpt).toMoment
 
                               // date range через два поля:
                               override val selectsStart: UndefOr[Boolean] = fn.selectsStart
                               override val selectsEnd: UndefOr[Boolean] = fn.selectsEnd
                               override val startDate: UndefOr[Date_t] = {
                                 customRangeOpt
-                                  .map(_.dateStart.to[Moment])
+                                  .map(_.dateStart.to[Date_t])
                                   .toUndef
                               }
                               override val endDate: UndefOr[Date_t] = {
                                 customRangeOpt
-                                  .map(_.dateEnd.to[Moment])
+                                  .map(_.dateEnd.to[Date_t])
                                   .toUndef
                               }
 
                               // TODO Opt инстансы callback-функций можно прооптимизировать, вынеся в val-карту функций или в state, например.
                               override val onChange: js.UndefOr[js.Function2[Date_t, ReactEvent, Unit]] = js.defined {
                                 cbFun2ToJsCb { (newDate, _) =>
-                                  onCustomDateChange(fn, newDate)
+                                  onCustomDateChange(fn, newDate.toLocalDate)
                                 }
                               }
                               // Для end-даты показывать сразу два месяца.
@@ -148,7 +149,7 @@ object DtpOptions {
                                 else
                                   js.undefined
                               }
-                              override val maxDate: UndefOr[Date_t] = fn.maxDate
+                              override val maxDate: UndefOr[Date_t] = fn.maxDate.toMoment
                               override val popperPlacement: UndefOr[String] = PopperPlacements.`bottom-end`
                             }
                           )

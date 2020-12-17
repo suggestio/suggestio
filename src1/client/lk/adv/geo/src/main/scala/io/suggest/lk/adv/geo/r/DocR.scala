@@ -88,6 +88,4 @@ object DocR {
     .renderBackend[Backend]
     .build
 
-  def apply( mDocProxy: Props ) = component( mDocProxy )
-
 }

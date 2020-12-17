@@ -16,7 +16,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
   * Created: 16.12.16 16:50
   * Description: React-компонент тривиального чекбокса размещения на главном экране.
   */
-object OnMainScreenR {
+final class OnMainScreenR {
 
   case class PropsVal(value: Boolean)
 
@@ -55,8 +55,6 @@ object OnMainScreenR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(props: Props) = component(props)
 
 }
 

@@ -85,7 +85,7 @@ class SearchMapR {
           LocateControlR(),
           // Рендер шейпов и маркеров текущий узлов.
           s.rcvrsGeoC { reqWrapProxy =>
-            reqWrapProxy.wrap( _.map(_.resp) )( RcvrMarkersR.applyNoChildren )
+            reqWrapProxy.wrap( _.map(_.resp) )( RcvrMarkersR.component(_)() )
           },
           // Рендер опционального маркера-крутилки для ожидания загрузки.
           s.loaderOptC { MapLoaderMarkerR.component.apply },

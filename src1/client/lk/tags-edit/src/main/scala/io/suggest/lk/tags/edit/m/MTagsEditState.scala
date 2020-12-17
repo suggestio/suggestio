@@ -6,6 +6,7 @@ import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.common.tags.search.MTagsFound
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -28,6 +29,18 @@ object MTagsEditState {
 
   @inline implicit def univEq: UnivEq[MTagsEditState] = UnivEq.derive
 
+  val props = GenLens[MTagsEditState]( _.props )
+  val found = GenLens[MTagsEditState]( _.found )
+  def searchTimer = GenLens[MTagsEditState]( _.searchTimer )
+
+
+  implicit final class TagsEditStateExt( private val tes: MTagsEditState ) extends AnyVal {
+
+    def reset: MTagsEditState =
+      (MTagsEditState.props set tes.props)(MTagsEditState.empty)
+
+  }
+
 }
 
 /**
@@ -41,12 +54,4 @@ case class MTagsEditState(
                            props        : MTagsEditProps      = MTagsEditProps(),
                            found        : Pot[MTagsFound]     = Pot.empty,
                            searchTimer  : Option[Long]        = None
-) {
-
-  def withProps(props2: MTagsEditProps) = copy(props = props2)
-  def withFound(found2: Pot[MTagsFound]) = copy(found = found2)
-  def withSearchTimer(timer2: Option[Long]) = copy(searchTimer = timer2)
-
-  def reset = MTagsEditState.empty.withProps(props)
-
-}
+                         )

@@ -14,7 +14,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   *
   * 2017-06-02: Все две опции-галочки объеденины в одну обязательную галочку, которая не требует рендера.
   */
-object OptsR {
+final class OptsR {
 
   type Props = ModelProxy[_]
 
@@ -40,8 +40,5 @@ object OptsR {
     .stateless
     .renderBackend[Backend]
     .build
-
-
-  def apply(optsProxy: Props) = component(optsProxy)
 
 }

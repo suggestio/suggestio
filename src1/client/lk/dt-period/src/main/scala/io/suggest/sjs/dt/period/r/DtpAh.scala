@@ -1,14 +1,14 @@
 package io.suggest.sjs.dt.period.r
 
-import com.momentjs.Moment
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.dt.interval.{QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd}
 import io.suggest.sjs.common.dt.JsDateUtil
 import io.suggest.log.Log
 import io.suggest.sjs.dt.period.m.{DtpInputFns, SetDateStartEnd, SetQap}
-import io.suggest.dt.moment.MomentJsUtil.Implicits._
 import io.suggest.msg.ErrorMsgs
+
+import java.time.LocalDate
 
 /**
   * Suggest.io
@@ -58,18 +58,18 @@ class DtpAh[M](
 
       } { oldRange =>
         // Нужно выставить новую строку с датой в состояние.
-        val now = Moment()
+        val now = LocalDate.now()
 
-        val start1 = if (s.fn == DtpInputFns.start) s.moment else oldRange.dateStart.to[Moment]
-        val end1   = if (s.fn == DtpInputFns.end) s.moment else oldRange.dateEnd.to[Moment]
+        val start1 = if (s.fn == DtpInputFns.start) s.date else oldRange.dateStart.to[LocalDate]
+        val end1   = if (s.fn == DtpInputFns.end) s.date else oldRange.dateEnd.to[LocalDate]
 
         // Нужно убедится, что дата начала идёт ПЕРЕД датой окончания.
-        val start2 = Moment.max(now, start1)
+        val start2 = (now :: start1 :: Nil).max
 
         // Надо убедится, что дата окончания хотя бы на день впереди даты начала.
-        val tomorrow = Moment(now).tomorrow
-        val startTomorrow = Moment(start2).tomorrow
-        val end2 = Moment.max(end1, tomorrow, startTomorrow)
+        val tomorrow = now.plusDays(1)
+        val startTomorrow = start2.plusDays(1)
+        val end2 = (end1 :: tomorrow :: startTomorrow :: Nil).max
 
         val range2 = oldRange.copy(
           dateStart = MYmd.from(start2),

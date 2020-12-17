@@ -119,7 +119,4 @@ object ExistAdvGeoShapesR extends Log {
     .renderBackend[Backend]
     .build
 
-  def _apply(gjResp: Props) = component(gjResp)
-  val apply: ReactConnectProps[Props_t] = _apply
-
 }

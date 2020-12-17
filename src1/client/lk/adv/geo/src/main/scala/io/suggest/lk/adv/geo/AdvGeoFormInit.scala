@@ -5,7 +5,6 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.init.routed.InitRouter
 import io.suggest.lk.adv.m.MPriceS.MPriceSFastEq
 import io.suggest.lk.adv.geo.m.MPopupsS.MPopupsFastEq
-import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.r.PriceR
 import io.suggest.lk.r.popup.PopupsContR
@@ -14,6 +13,7 @@ import io.suggest.sjs.common.vm.spa.LkPreLoader
 import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.univeq._
+import com.softwaremill.macwire._
 
 /**
  * Suggest.io
@@ -37,20 +37,22 @@ trait AdvGeoFormInitRouter extends InitRouter {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 
-    val circuit = LkAdvGeoFormCircuit
+    val module = wire[LkAdvGeoFormModule]
+
+    val circuit = module.lkAdvGeoFormCircuit
 
     // Рендер всей формы:
-    val formR = circuit.wrap(identity(_))(AdvGeoFormR.apply)
+    val formR = circuit.wrap(identity(_))( module.advGeoFormR.component.apply )
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvGeoConstants.REACT_FORM_TARGET_ID )
     formR.renderIntoDOM( formTarget )
 
     // Отдельно идёт рендер виджета цены PriceR:
-    val priceR = circuit.wrap(_.bill.price)(PriceR.apply)
+    val priceR = circuit.wrap(_.bill.price)( PriceR.component.apply )
     val priceTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
     priceR.renderIntoDOM( priceTarget )
 
     // Рендер контейнера попапов.
-    val popsContR = circuit.wrap(_.popups)( AdvGeoPopupsR.apply )
+    val popsContR = circuit.wrap(_.popups)( module.advGeoPopupsR.component.apply )
     val popsContTarget = PopupsContR.initDocBody()
     popsContR.renderIntoDOM( popsContTarget )
 

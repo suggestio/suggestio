@@ -20,7 +20,7 @@ import io.suggest.spa.OptFastEq
   * Created: 09.06.17 16:24
   * Description: Компонент обычных html-попапов для Lk-adn-map-формы.
   */
-object LamPopupsR {
+final class LamPopupsR {
 
   type Props = ModelProxy[MRoot]
 
@@ -36,10 +36,10 @@ object LamPopupsR {
 
       val popups = Seq[VdomNode](
         // Попап инфы по размещению на узле.
-        state.nodeAdvInfoOptC { NodeAdvInfoPopR.apply },
+        state.nodeAdvInfoOptC { NodeAdvInfoPopR.component.apply },
 
         // Попап с какой-либо ошибкой среди попапов.
-        state.errorPopupOptC { ErrorPopupR.apply }
+        state.errorPopupOptC { ErrorPopupR.component.apply }
       )
 
       state.popContPropsC { popContPropsProxy =>
@@ -74,8 +74,5 @@ object LamPopupsR {
     }
     .renderBackend[Backend]
     .build
-
-
-  def apply(mroot: Props) = component(mroot)
 
 }

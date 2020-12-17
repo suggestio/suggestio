@@ -14,7 +14,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Created: 31.03.17 16:35
   * Description: React-компонент инфы по узлу.
   */
-object AdvGeoNodeInfoPopR {
+final class AdvGeoNodeInfoPopR {
 
   type Props = ModelProxy[Option[MNodeInfoPopupS]]
 
@@ -23,7 +23,7 @@ object AdvGeoNodeInfoPopR {
 
     def render(props: Props): VdomElement = {
       props().whenDefinedEl { ps =>
-        props.wrap(_ => ps.req.toOption)( NodeAdvInfoPopR.apply )
+        props.wrap(_ => ps.req.toOption)( NodeAdvInfoPopR.component.apply )
       }
     }
 
@@ -35,7 +35,5 @@ object AdvGeoNodeInfoPopR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(infoPopupOptProxy: Props) = component( infoPopupOptProxy )
 
 }

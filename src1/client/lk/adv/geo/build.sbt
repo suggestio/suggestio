@@ -12,7 +12,8 @@ version := "0.0.0"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "extra"       % Common.reactSjsVsn
+  "com.github.japgolly.scalajs-react" %%% "extra" % Common.reactSjsVsn,
+  "com.softwaremill.macwire" %% "macros" % Common.Vsn.MACWIRE % "provided",
 )
 
 useYarn := true

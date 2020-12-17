@@ -23,7 +23,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
   * Created: 16.12.16 18:52
   * Description: Компонент контейнера для найденных тегов.
   */
-object TagsFoundR {
+final class TagsFoundR {
 
   type Props = ModelProxy[Pot[MTagsFound]]
 
@@ -123,7 +123,5 @@ object TagsFoundR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(resp: Props) = component(resp)
 
 }

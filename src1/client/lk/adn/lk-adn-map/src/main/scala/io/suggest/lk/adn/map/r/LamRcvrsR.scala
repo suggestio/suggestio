@@ -9,7 +9,7 @@ import io.suggest.maps.r.RcvrMarkersR
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.spa.OptFastEq.Plain
-import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
@@ -21,7 +21,7 @@ import react.leaflet.layer.LayerGroupR
   * Description: React-компонент для отображения на карте разных других ресиверов.
   * Рендерится внутри компонента Leaflet-карты.
   */
-object LamRcvrsR {
+final class LamRcvrsR {
 
   type Props = ModelProxy[MLamRcvrs]
 
@@ -36,8 +36,8 @@ object LamRcvrsR {
       LayerGroupR()(
 
         // Рендер гео.карты узлов-ресиверов. Сейчас она такая же, как и карта в lk-adv-geo:
-        s.nodesRespPotC { nodesRespPot =>
-          RcvrMarkersR(nodesRespPot)(children)
+        s.nodesRespPotC {
+          RcvrMarkersR.component(_)(children)
         },
 
         // Рендерить крутилку на карте, пока с сервера происходит подгрузка данных для попапа:
@@ -71,8 +71,5 @@ object LamRcvrsR {
     }
     .renderBackendWithChildren[Backend]
     .build
-
-
-  def apply(lamRcvrsProxy: Props)(children: VdomNode*) = component( lamRcvrsProxy )(children: _*)
 
 }

@@ -24,7 +24,6 @@ object RadR {
   type Props = ModelProxy[Props_t]
 
   protected case class State(
-                              mRadTC                  : ReactConnectProxy[Option[MRadT[_]]],
                               centerPopupC            : ReactConnectProxy[Option[Boolean]],
                               radEnabledPropsC        : ReactConnectProxy[RadEnabledR.PropsVal]
                             )
@@ -39,12 +38,9 @@ object RadR {
         LayerGroupR()(
 
           // Слой с кругом и маркерами управления оными.
-          if (mrad.enabled) {
-            s.mRadTC { RadMapControlsR.apply }
-
-          } else {
-            // !v.enabled -- галочка размещения на карте выключена.
-            ReactCommonUtil.VdomNullElement
+          {
+            lazy val radEl = p.wrap(x => x: Option[MRadT[_]])( RadMapControlsR.component.apply )
+            ReactCommonUtil.maybeEl( mrad.enabled )( radEl )
           },
 
           // Попап управления центром.
@@ -57,11 +53,11 @@ object RadR {
                 }
               )(
                 <.div(
-                  s.radEnabledPropsC( RadEnabledR.apply )
+                  s.radEnabledPropsC( RadEnabledR.component.apply )
                 )
               )
             }
-          }
+          },
 
         )
 
@@ -75,7 +71,6 @@ object RadR {
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mradOptProxy =>
       State(
-        mRadTC = mradOptProxy.connect(identity),
         centerPopupC = mradOptProxy.connect { mradOpt =>
           mradOpt.map(_.centerPopup)
         },
@@ -87,9 +82,5 @@ object RadR {
     }
     .renderBackend[Backend]
     .build
-
-
-  private def _apply(props: Props) = component(props)
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

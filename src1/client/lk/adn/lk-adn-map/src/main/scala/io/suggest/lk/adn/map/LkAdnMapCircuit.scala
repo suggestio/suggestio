@@ -29,7 +29,7 @@ import scala.concurrent.Future
   * Created: 18.04.17 21:55
   * Description: Diode circuit для формы размещения целого узла на карте мира.
   */
-class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
+final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.ADN_MAP_CIRCUIT_ERROR
 

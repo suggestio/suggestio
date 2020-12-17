@@ -1,5 +1,6 @@
 package io.suggest.lk.adn.map
 
+import com.softwaremill.macwire._
 import io.suggest.adn.mapf.AdnMapFormConstants
 import io.suggest.adv.AdvConstants
 import io.suggest.init.routed.InitRouter
@@ -40,29 +41,31 @@ trait LkAdnMapFormInitRouter extends InitRouter {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 
+    val module = wire[LkAdnMapFormModule]
+
     // Инициализировать электросхему формы:
-    val circuit = new LkAdnMapCircuit
+    val circuit = module.lkAdnMapCircuit
 
     // Припаять схему к html-вёрстке от сервера.
     val mrootRO = circuit.zoom(identity)
 
     // Основное тело формы:
     circuit
-      .wrap(mrootRO)( LamFormR.component.apply )
+      .wrap(mrootRO)( module.lamFormR.component.apply )
       .renderIntoDOM(
         VUtil.getElementByIdOrNull[HTMLDivElement]( AdnMapFormConstants.FORM_CONT_ID )
       )
 
     // Виджет стоимости на правой панели:
     circuit
-      .wrap(_.price)(PriceR.apply)
+      .wrap(_.price)( PriceR.component.apply )
       .renderIntoDOM(
         VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
       )
 
     // Рендер контейнера обычных попапов.
     circuit
-      .wrap(mrootRO)( LamPopupsR.apply )
+      .wrap(mrootRO)( module.lamPopupsR.component.apply )
       .renderIntoDOM(
         PopupsContR.initDocBody()
       )

@@ -94,6 +94,4 @@ object ErrorPopupR {
     .renderBackend[Backend]
     .build
 
-  def apply(exOptProxy: Props) = component( exOptProxy )
-
 }

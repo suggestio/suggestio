@@ -1,8 +1,9 @@
 package io.suggest.dt.moment
 
 import com.momentjs.{Moment, Units}
-import io.suggest.dt.Month0Indexed
+import io.suggest.dt.{IYmdHelper, Month0Indexed}
 
+import java.time.LocalDate
 import scala.scalajs.js
 
 /**
@@ -54,6 +55,27 @@ object MomentJsUtil {
       }
 
     }
+
+
+    implicit final class MomentOpsExt( private val moment: Moment ) extends AnyVal {
+      def toLocalDate: LocalDate = {
+        implicitly[IYmdHelper[Moment]]
+          .toYmd( moment )
+          .to[LocalDate]
+      }
+    }
+
+
+    implicit final class JLocalDateMomentExt( private val localDate: LocalDate ) extends AnyVal {
+
+      def toMoment: Moment = {
+        implicitly[IYmdHelper[LocalDate]]
+          .toYmd( localDate )
+          .to[Moment]
+      }
+
+    }
+
 
   }
 

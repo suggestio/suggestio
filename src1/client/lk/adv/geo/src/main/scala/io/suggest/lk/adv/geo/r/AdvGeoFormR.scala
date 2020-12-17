@@ -37,7 +37,11 @@ import scala.scalajs.js
   *
   * Этот react-компонент формы должен подключаться в diode circuit через wrap().
   */
-object AdvGeoFormR {
+final class AdvGeoFormR(
+                         rcvrPopupR: RcvrPopupR,
+                         tagsEditR: TagsEditR,
+                         val onMainScreenR: OnMainScreenR,
+                       ) {
 
   // Без пинка, FastEq не подцеплялись к работе и вызывали лишней re-render внутри коннекшенов.
   import MRcvr.MRcvrFastEq
@@ -57,7 +61,7 @@ object AdvGeoFormR {
     * [[https://github.com/scala/scala/pull/4017]]
     */
   protected case class State(
-                              onMainScrC          : ReactConnectProxy[OnMainScreenR.PropsVal],
+                              onMainScrC          : ReactConnectProxy[onMainScreenR.PropsVal],
                               rcvrsGeoC           : ReactConnectProxy[Pot[MGeoNodesResp]],
                               rcvrPopupC          : ReactConnectProxy[MRcvr],
                               geoMapPropsC        : ReactConnectProxy[MGeoMapPropsR],
@@ -80,30 +84,28 @@ object AdvGeoFormR {
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
         // Рендер компонента документации.
-        s.mDocC { DocR.apply },
+        s.mDocC { DocR.component.apply },
 
         // Галочка бесплатного размещения для суперюзеров.
-        p.wrap(_.adv4free) { a4fOptProx =>
-          Adv4FreeR(a4fOptProx)
-        },
+        p.wrap(_.adv4free)( Adv4FreeR.component.apply ),
 
         // Верхняя половина, левая колонка:
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
 
           // Галочка активности георазмещения на карте.
-          s.radEnabledPropsC( RadEnabledR.apply ),
+          s.radEnabledPropsC( RadEnabledR.component.apply ),
           <.br,
           <.br,
 
           // Галочка размещения на главном экране
-          s.onMainScrC( OnMainScreenR.apply ),
+          s.onMainScrC( onMainScreenR.component.apply ),
 
           <.br,
           <.br,
 
           // Компонент подсистемы выбора тегов:
-          p.wrap( _.tags )( TagsEditR.apply )
+          p.wrap( _.tags )( tagsEditR.component.apply )
         ),
 
         // Верхняя половина, правая колонка:
@@ -115,7 +117,7 @@ object AdvGeoFormR {
 
         // Если не удалось прочитать маркеры ресиверов с сервера, то отрендерить заметное сообщение об ошибке.
         s.rcvrsGeoC { x =>
-          MapInitFailR( x.asInstanceOf[ModelProxy[Pot[_]]] )
+          MapInitFailR.component( x.asInstanceOf[ModelProxy[Pot[_]]] )
         },
 
         // Рендер географической карты:
@@ -128,26 +130,27 @@ object AdvGeoFormR {
             LocateControlR(),
 
             // Рендер кружочков текущих размещений.
-            s.geoAdvExistGjC( ExistAdvGeoShapesR.apply ),
+            s.geoAdvExistGjC( ExistAdvGeoShapesR.component.apply ),
 
             // Рендер попапа над кружочком георазмещения:
-            s.geoAdvPopupC( ExistPopupR.apply ),
+            s.geoAdvPopupC( ExistPopupR.component.apply ),
 
             // Запрешаем рендер красного круга пока не нарисованы все остальные. Так надо, чтобы он был поверх их всех.
-            s.geoAdvExistGjC { potProxy =>
-              val pot = potProxy.value
-              // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
-              // TODO Отрендерить попап ошибки, если failed.
-              ReactCommonUtil.maybeEl( pot.isReady || pot.isFailed ) {
-                s.mRadOptC( RadR.apply )
+            {
+              lazy val inner = s.mRadOptC( RadR.component.apply )
+              s.geoAdvExistGjC { potProxy =>
+                val pot = potProxy.value
+                // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
+                // TODO Отрендерить попап ошибки, если failed.
+                ReactCommonUtil.maybeEl( pot.isReady || pot.isFailed )(inner)
               }
             },
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
-            s.rcvrsGeoC( RcvrMarkersR.applyNoChildren ),
+            s.rcvrsGeoC( RcvrMarkersR.component(_)() ),
 
             // Рендер опционального попапа над ресивером.
-            s.rcvrPopupC( RcvrPopupR.apply )
+            s.rcvrPopupC( rcvrPopupR.component.apply )
           )
           val lgmCtx = LGeoMapR.LgmCtx.mk( $ )
           s.geoMapPropsC { mapProps =>
@@ -160,7 +163,7 @@ object AdvGeoFormR {
         <.br,
 
         // Рендерить табличку с данными по рассчёту текущей цены:
-        s.priceDslOptC { ItemsPricesR.component.apply }
+        s.priceDslOptC { ItemsPricesR.component.apply },
 
       )   // top div
     }     // render()
@@ -168,7 +171,7 @@ object AdvGeoFormR {
   }
 
 
-  protected val component = ScalaComponent
+  val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       val mradOptZoomF = { r: MRoot => r.rad }
@@ -176,7 +179,7 @@ object AdvGeoFormR {
 
       State(
         onMainScrC   = propsProxy.connect { mroot =>
-          OnMainScreenR.PropsVal(
+          onMainScreenR.PropsVal(
             mroot.other.onMainScreen
           )
         },
@@ -202,7 +205,5 @@ object AdvGeoFormR {
     }
     .renderBackend[Backend]
     .build
-
-  def apply(props: Props) = component(props)
 
 }

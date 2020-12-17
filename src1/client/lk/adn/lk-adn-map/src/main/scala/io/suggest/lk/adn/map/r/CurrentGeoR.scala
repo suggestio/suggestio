@@ -19,7 +19,7 @@ import scala.scalajs.js
   * Created: 18.05.17 17:32
   * Description: React-компонент leaflet-элементов, отображающих текущее состояние размещения узла на карте.
   */
-object CurrentGeoR {
+final class CurrentGeoR {
 
   type Props_t = MExistGeoS
   type Props = ModelProxy[Props_t]
@@ -34,10 +34,10 @@ object CurrentGeoR {
     def render(s: State): VdomElement = {
       LayerGroupR()(
 
-        s.geoJsonC { ExistAdvGeoShapesR.apply },
+        s.geoJsonC { ExistAdvGeoShapesR.component.apply },
 
         // Рендер попапа при клике по шейпу.
-        s.popupC { ExistPopupR.apply }
+        s.popupC { ExistPopupR.component.apply }
 
       )
     }

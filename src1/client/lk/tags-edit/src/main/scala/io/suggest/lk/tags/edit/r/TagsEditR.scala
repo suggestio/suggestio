@@ -19,7 +19,12 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Тут всё спроектировано под M.wrap(TagsEditR(_)), без connect.
   * Внутренние же компоненты прилинкованы через .connect().
   */
-object TagsEditR {
+final class TagsEditR(
+                       tagNameInpR: TagNameInpR,
+                       tagsFoundR: TagsFoundR,
+                       tagAddBtnR: TagAddBtnR,
+                       tagsExistsR: TagsExistsR,
+                     ) {
 
   type Props = ModelProxy[MTagsEditState]
 
@@ -45,16 +50,16 @@ object TagsEditR {
         ),
 
         // поле ввода имени тега.
-        s.tagQueryConn( TagNameInpR.apply ),
+        s.tagQueryConn( tagNameInpR.component.apply ),
 
         // поисковый контейнер с подсказками названий тегов.
-        s.tagsFoundConn( TagsFoundR.apply ),
+        s.tagsFoundConn( tagsFoundR.component.apply ),
 
         // tagAddBtn: Кнопка "добавить", изначально она пропада под списком подсказок
-        TagAddBtnR(p),
+        tagAddBtnR.component(p),
 
         // tagExistsCont: Уже добавленные к заказу гео-теги.
-        s.tagsExistConn( TagsExistsR.apply )
+        s.tagsExistConn( tagsExistsR.component.apply )
 
       )
     }  // def render()
@@ -62,7 +67,7 @@ object TagsEditR {
   } // class Backend
 
 
-  protected val component = ScalaComponent
+  val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       // Инициализировать связи до модели для нужд суб-компонентов:
@@ -74,7 +79,5 @@ object TagsEditR {
     }
     .renderBackend[Backend]
     .build
-
-  def apply(props: Props) = component(props)
 
 }

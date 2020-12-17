@@ -29,7 +29,7 @@ object RadAhUtil {
 
     v0.withCircleState(
       // Выставить новый центр круга в состояние.
-      circle = CircleGs.center.set(c2)(v0.circle),
+      circle = (CircleGs.center set c2)(v0.circle),
       state  = v0.state.copy(
         centerDragging = None,
         // Пересчитать координаты маркера радиуса.

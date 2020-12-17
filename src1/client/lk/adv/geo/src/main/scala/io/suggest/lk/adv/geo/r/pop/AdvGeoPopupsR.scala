@@ -18,7 +18,9 @@ import io.suggest.lk.r.popup.PopupsContR
   * Created: 31.03.17 16:13
   * Description: React-компонент попапов.
   */
-object AdvGeoPopupsR {
+final class AdvGeoPopupsR(
+                           advGeoNodeInfoPopR: AdvGeoNodeInfoPopR
+                         ) {
 
   type Props = ModelProxy[MPopupsS]
 
@@ -35,13 +37,13 @@ object AdvGeoPopupsR {
     def render(state: State): VdomElement = {
       val popupsChildren = List[VdomNode](
         // Попап инфы по размещению на узле.
-        state.nodeInfoConn { AdvGeoNodeInfoPopR.apply },
+        state.nodeInfoConn { advGeoNodeInfoPopR.component.apply },
 
         // Попап "Пожалуйста, подождите...":
         state.pendingOptConn { PleaseWaitPopupR.apply },
 
         // Попап с какой-либо ошибкой среди попапов.
-        state.errorOptConn { ErrorPopupR.apply }
+        state.errorOptConn { ErrorPopupR.component.apply }
 
       )
 
@@ -77,7 +79,5 @@ object AdvGeoPopupsR {
     }
     .renderBackend[Backend]
     .build
-
-  def apply(mPopupsProxy: Props) = component( mPopupsProxy )
 
 }

@@ -46,7 +46,7 @@ import scala.concurrent.Future
   * Created: 14.12.16 16:45
   * Description: Diode circuit мудрёной формы георазмещения, которая для view используется react.
   */
-object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
+final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
   /** Сборка начальной корневой модели. */
   override protected def initialModel: MRoot = {

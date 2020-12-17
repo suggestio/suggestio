@@ -1,6 +1,6 @@
 package io.suggest.maps.r.rad
 
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -34,7 +34,7 @@ object RadEnabledR {
   }
 
 
-  protected class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     def onRadEnabledChanged(e: ReactEventFromInput): Callback = {
       val isEnabled = e.target.checked
@@ -77,8 +77,5 @@ object RadEnabledR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def _apply(props: Props) = component(props)
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

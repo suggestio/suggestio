@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -16,7 +16,9 @@ import react.leaflet.popup.{LPopupPropsR, LPopupR}
   * Created: 22.05.17 16:28
   * Description: React-компонент leaflet-попапа, появляющегося при клике по rad-элементам.
   */
-object RadPopupR {
+final class RadPopupR(
+                       optsR: OptsR,
+                     ) {
 
   type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
@@ -41,7 +43,7 @@ object RadPopupR {
             override val position = MapsUtil.geoPoint2LatLng(p.point)
           }
         )(
-          OptsR( propsProxy ),
+          optsR.component( propsProxy ),
         )
       }
     }

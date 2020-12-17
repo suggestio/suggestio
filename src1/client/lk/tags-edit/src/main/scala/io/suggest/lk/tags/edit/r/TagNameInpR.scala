@@ -19,7 +19,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
   * Created: 16.12.16 18:41
   * Description: Компонент инпута названия тега для поиска/создания оного.
   */
-object TagNameInpR {
+final class TagNameInpR {
 
   type Props = ModelProxy[MTagsEditQueryProps]
 
@@ -83,9 +83,4 @@ object TagNameInpR {
     .renderBackend[Backend]
     .build
 
-  def apply(queryState: Props) = component(queryState)
-
 }
-
-
-

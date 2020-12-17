@@ -20,7 +20,6 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class LkAdnEditPopupsR(
                         lkAdEditCss     : LkAdnEditCss,
-                        galleryR        : NodeGalleryR,
                         val cropPopupR  : CropPopupR
                       ) {
 
@@ -41,10 +40,10 @@ class LkAdnEditPopupsR(
     def render(s: State): VdomElement = {
       val popupsVdom = Seq[VdomNode](
         // Попап ошибки.
-        s.errorPopupC { ErrorPopupR.apply },
+        s.errorPopupC { ErrorPopupR.component.apply },
 
         // Попап кропа картинки.
-        s.cropPopupC { cropPopupR.apply }
+        s.cropPopupC { cropPopupR.component.apply }
       )
 
       s.popupsContPropsC {

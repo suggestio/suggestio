@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.m.SetAdv4Free
 import io.suggest.react.ReactCommonUtil.Implicits._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
@@ -35,6 +35,16 @@ object Adv4FreeR {
     }
 
     def render(props: Props, checkedOptConn: State): VdomElement = {
+      // Единственная динамическая часть компонента: input-галочка
+      val checkBox = checkedOptConn { checkedOptProx =>
+        checkedOptProx().whenDefinedEl { checked =>
+          <.input(
+            ^.`type`    := HtmlConstants.Input.checkbox,
+            ^.checked   := checked,
+            ^.onChange ==> onChange
+          )
+        }
+      }
       props().whenDefinedEl { v =>
         <.div(
           ^.`class` := Css.Lk.Adv.Su.CONTAINER,
@@ -42,17 +52,7 @@ object Adv4FreeR {
           <.label(
             ^.`class` := Css.CLICKABLE,
 
-            // Единственная динамическая часть компонента: input-галочка
-            checkedOptConn { checkedOptProx =>
-              checkedOptProx().whenDefinedEl { checked =>
-                <.input(
-                  ^.`type`    := HtmlConstants.Input.checkbox,
-                  ^.name      := v.static.fn,
-                  ^.checked   := checked,
-                  ^.onChange ==> onChange
-                )
-              }
-            },
+            checkBox,
             <.span(
               ^.`class` := Css.Input.STYLED_CHECKBOX
             ),
@@ -76,7 +76,5 @@ object Adv4FreeR {
     }
     .renderBackend[Backend]
     .build
-
-  def apply(props: Props) = component(props)
 
 }

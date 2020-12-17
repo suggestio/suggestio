@@ -122,7 +122,4 @@ object ExistPopupR {
     .renderBackend[Backend]
     .build
 
-  private def _apply(mGeoAdvs: Props) = component(mGeoAdvs)
-  val apply: ReactConnectProps[Props_t] = _apply
-
 }

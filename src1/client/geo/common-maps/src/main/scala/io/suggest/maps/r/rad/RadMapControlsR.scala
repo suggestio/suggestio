@@ -76,7 +76,4 @@ object RadMapControlsR {
     }
     .build
 
-
-  def apply(props: Props) = component(props)
-
 }

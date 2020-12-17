@@ -26,12 +26,18 @@ import scalaz.Tree
   * Все react-компоненты были наготово взяты из lk-adv-geo-формы, как и в прошлый раз
   * на fsm-mvm архитектуре.
   */
-object LamFormR {
+final class LamFormR(
+                      optsR: OptsR,
+                      val radPopupR: RadPopupR,
+                      mapCursorR: MapCursorR,
+                      lamRcvrsR: LamRcvrsR,
+                      currentGeoR: CurrentGeoR,
+                    ) {
 
   import MGeoMapPropsR.MGeoMapPropsRFastEq
   import MLamRcvrs.MLamRcvrsFastEq
   import MExistGeoS.MExistGeoSFastEq
-  import RadPopupR.PropsValFastEq
+  import radPopupR.PropsValFastEq
 
   type Props = ModelProxy[MRoot]
 
@@ -43,7 +49,7 @@ object LamFormR {
                                     rcvrsC                : ReactConnectProxy[MLamRcvrs],
                                     priceDslOptC          : ReactConnectProxy[Option[Tree[PriceDsl]]],
                                     currentPotC           : ReactConnectProxy[MExistGeoS],
-                                    radPopupPropsC        : ReactConnectProxy[Option[RadPopupR.PropsVal]]
+                                    radPopupPropsC        : ReactConnectProxy[Option[radPopupR.PropsVal]]
                                   )
 
 
@@ -66,20 +72,20 @@ object LamFormR {
           // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
           val lg = List[VdomElement](
             // Рендер текущих размещений.
-            s.currentPotC { CurrentGeoR.component.apply },
+            s.currentPotC { currentGeoR.component.apply },
             // Маркер местоположения узла.
-            s.radOptsC { MapCursorR.component.apply }
+            s.radOptsC { mapCursorR.component.apply }
           )
 
           rcvrsProxy().nodesResp.toOption.fold[VdomElement] {
             LayerGroupR()( lg: _* )
           } { _ =>
-            LamRcvrsR(rcvrsProxy)( lg: _* )
+            lamRcvrsR.component(rcvrsProxy)( lg: _* )
           }
         },
 
         // L-попап при клике по rad cursor.
-        s.radPopupPropsC { RadPopupR.component.apply },
+        s.radPopupPropsC { radPopupR.component.apply },
 
       )
 
@@ -95,7 +101,7 @@ object LamFormR {
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
           // Для OptsR можно использовать wrap, но этот же коннекшен пробрасывается в rad popup, поэтому везде connect.
-          OptsR(p)
+          optsR.component( p )
         ),
 
         // Верхняя половина, правая колонка:
@@ -137,7 +143,7 @@ object LamFormR {
         currentPotC   = propsProxy.connect(_.current),
         radPopupPropsC = propsProxy.connect { p =>
           OptionUtil.maybe( p.rad.popup ) {
-            RadPopupR.PropsVal(
+            radPopupR.PropsVal(
               point = p.rad.circle.center
             )
           }

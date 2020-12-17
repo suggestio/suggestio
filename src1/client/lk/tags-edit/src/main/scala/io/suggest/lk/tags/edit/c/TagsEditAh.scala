@@ -3,7 +3,7 @@ package io.suggest.lk.tags.edit.c
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.coll.SetUtil
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.common.tags.edit.{MTagsEditQueryProps, TagsEditConstants}
+import io.suggest.common.tags.edit.{MTagsEditProps, MTagsEditQueryProps, TagsEditConstants}
 import io.suggest.i18n.MMessage
 import io.suggest.lk.tags.edit.m._
 
@@ -12,6 +12,7 @@ import diode.Implicits.runAfterImpl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.tags.{ITagsApi, MTagsSearchQs}
+import japgolly.univeq._
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -26,7 +27,7 @@ class TagsEditAh[M](
                      modelRW         : ModelRW[M, MTagsEditState],
                      api             : ITagsApi,
                      priceUpdateFx   : Effect
-)
+                   )
   extends ActionHandler(modelRW)
   with Log
 {
@@ -36,19 +37,17 @@ class TagsEditAh[M](
     // Выбор тега среди найденных: добавить в exists-теги.
     case AddTagFound(tagFace) =>
       val v0 = value
-
       val tagFaces = TagFacesUtil.query2tags(tagFace)
-      // Если после добавления тега (тегов) множество тегов не изменилось внутри, то поддерживаем исходную референсную целостность.
-      val te2 = SetUtil.addToSetOrKeepRef1(v0.props.tagsExists, tagFaces)
-
-      // Собрать и сохранить новое состояние редактора тегов, сбросив поисковое поле.
-      val p2 = v0.props.copy(
-        query       = MTagsEditQueryProps(),
-        tagsExists  = te2
-      )
 
       // И надо забыть обо всех найденных тегах:
-      val v2 = v0.reset.withProps(p2)
+      val v2 = MTagsEditState.props
+        .modify( _.copy(
+          // Собрать и сохранить новое состояние редактора тегов, сбросив поисковое поле.
+          query       = MTagsEditQueryProps(),
+          // Если после добавления тега (тегов) множество тегов не изменилось внутри, то поддерживаем исходную референсную целостность.
+          tagsExists  = SetUtil.addToSetOrKeepRef1(v0.props.tagsExists, tagFaces),
+        ))( v0.reset )
+
       updated( v2, priceUpdateFx )
 
 
@@ -61,11 +60,10 @@ class TagsEditAh[M](
       val text0 = p0.query.text
       // Проверяем тут, изменился ли текст на самом деле:
       val v1 = if (q != text0) {
-        v0.withProps(
-          p0.withQuery(
-            p0.query.withText( q )
-          )
-        )
+        MTagsEditState.props
+          .composeLens( MTagsEditProps.query )
+          .composeLens( MTagsEditQueryProps.text )
+          .set( q )(v0)
       } else {
         v0
       }
@@ -76,7 +74,7 @@ class TagsEditAh[M](
         // Пусто в поисковом запросе. Сбросить состояние поиска.
         updated( v1.reset )
 
-      } else if (qtrim == text0) {
+      } else if (qtrim ==* text0) {
         // Текст вроде бы не изменился относительно предыдущего шага.
         updated( v1 )
 
@@ -87,7 +85,7 @@ class TagsEditAh[M](
           .after( TagsEditConstants.Search.START_SEARCH_TIMER_MS.milliseconds )
 
         // Залить в состояние итоги запуска запроса:
-        val v2 = v1.withSearchTimer( Some(now) )
+        val v2 = (MTagsEditState.searchTimer set Some(now))(v1)
 
         updated(v2, awaitFx)
       }
@@ -96,10 +94,11 @@ class TagsEditAh[M](
     // Настала пора запуска реквеста
     case StartSearchReq(now0) =>
       val v0 = value
-      if ( v0.searchTimer.contains(now0) ) {
+      if ( v0.searchTimer contains[Long] now0) {
         // Можно начинать искать теги на сервере...
         val fx = Effect( startTagsSearch(now0) )
-        val v1 = v0.withFound( v0.found.pending() )
+        val v1 = MTagsEditState.found
+          .modify(_.pending())(v0)
         updated( v1, fx )
 
       } else {
@@ -112,7 +111,7 @@ class TagsEditAh[M](
     // Среагировать на ответ сервера по поводу поиска тегов.
     case HandleTagsFound(resp, now0) =>
       val v0 = value
-      if (v0.searchTimer.contains(now0)) {
+      if (v0.searchTimer contains[Long] now0) {
         // Это ожидаемый запрос, обновить состояние.
         val v1 = v0.copy(
           found       = v0.found.ready(resp),
@@ -129,10 +128,10 @@ class TagsEditAh[M](
     // Добавление текущего введённого тега в список текущих тегов.
     case AddCurrentTag =>
       val v0 = value
-      val p0 = v0.props
+
       // Если поле пустое или слишком короткое, то красным его подсветить.
       // А если есть вбитый тег, то огранизовать добавление.
-      val faces = TagFacesUtil.query2tags( p0.query.text )
+      val faces = TagFacesUtil.query2tags( v0.props.query.text )
 
       // Проверяем название тега...
       val errors: Seq[MMessage] = if (faces.isEmpty) {
@@ -158,42 +157,44 @@ class TagsEditAh[M](
 
       if (errors.isEmpty) {
         // Ошибок валидации нет. Заливаем в старое множество новые теги...
-        val te2 = SetUtil.addToSetOrKeepRef1(p0.tagsExists, faces)
-        val p2 = p0.copy(
-          query       = MTagsEditQueryProps(),
-          tagsExists  = te2
-        )
-        val v2 = v0.withProps(p2)
-        // Если что-то реально изменилось (te2 != te0), то запустить эффект пересчёта стоимости.
+        val te2 = SetUtil.addToSetOrKeepRef1( v0.props.tagsExists, faces)
 
-        if (te2 != p0.tagsExists) {
+        val v2 = MTagsEditState.props.modify(_.copy(
+          query       = MTagsEditQueryProps(),
+          tagsExists  = te2,
+        ))(v0)
+
+        // Если что-то реально изменилось (te2 != te0), то запустить эффект пересчёта стоимости.
+        if (te2 != v0.props.tagsExists) {
           updated(v2, priceUpdateFx)
         } else {
           updated(v2)
         }
       } else {
         // Есть хотя бы одна ошибка. Закинуть ошибки в состояние.
-        val p2 = p0.withQuery( p0.query.withErrors(errors) )
-        updated( v0.withProps(p2) )
+        val v2 = MTagsEditState.props
+          .composeLens( MTagsEditProps.query )
+          .composeLens( MTagsEditQueryProps.errors )
+          .set( errors )(v0)
+        updated( v2 )
       }
 
 
     // Удаление тега из списка добавленных ранее (existing) тегов.
     case RmTag(tagFace) =>
       val v0 = value
-      val p0 = v0.props
-      val te0 = p0.tagsExists
+      val te0 = v0.props.tagsExists
       val te1 = te0 - tagFace
       if (te1.size < te0.size) {
-        val p2 = p0.withTagsExists(te1)
-        val v2 = v0.withProps(p2)
+        val v2 = MTagsEditState.props
+          .composeLens( MTagsEditProps.tagsExists )
+          .set( te1 )(v0)
         updated(v2, priceUpdateFx)
       } else {
         noChange
       }
 
   }
-
 
 
   /** Код эффекта запроса поиска тегов. */

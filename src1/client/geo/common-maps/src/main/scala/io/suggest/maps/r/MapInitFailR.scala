@@ -36,6 +36,4 @@ object MapInitFailR {
     }
     .build
 
-  def apply(potProxy: Props) = component(potProxy)
-
 }

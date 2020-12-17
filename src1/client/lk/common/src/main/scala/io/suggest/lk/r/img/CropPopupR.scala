@@ -141,11 +141,10 @@ class CropPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
 
 }

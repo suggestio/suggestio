@@ -15,7 +15,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Created: 19.04.17 11:49
   * Description: react-компонент маркера узла.
   */
-object MapCursorR {
+final class MapCursorR {
 
   type Props_t = MLamRad
   type Props = ModelProxy[Props_t]
