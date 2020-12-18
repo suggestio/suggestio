@@ -1,7 +1,6 @@
 package io.suggest.maps.m
 
 import diode.FastEq
-import io.suggest.geo.MGeoPoint
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
 import io.suggest.sjs.leaflet.map.{IWhenReadyArgs, Zoom_t}
 import io.suggest.spa.OptFastEq

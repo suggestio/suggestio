@@ -6,13 +6,12 @@ import io.suggest.lk.adn.map.m.MRoot
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import io.suggest.spa.OptFastEq.Plain
-import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
-import MErrorPopupS.MErrorPopupSFastEq
-import io.suggest.lk.r.popup.PopupsContR
-import io.suggest.spa.OptFastEq
+import diode.data.Pot
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 
 /**
   * Suggest.io
@@ -20,56 +19,45 @@ import io.suggest.spa.OptFastEq
   * Created: 09.06.17 16:24
   * Description: Компонент обычных html-попапов для Lk-adn-map-формы.
   */
-final class LamPopupsR {
+final class LamPopupsR(
+                        errorPopupR: ErrorPopupR,
+                      ) {
 
   type Props = ModelProxy[MRoot]
 
   protected case class State(
-                              popContPropsC             : ReactConnectProxy[PopupsContR.PropsVal],
-                              nodeAdvInfoOptC           : ReactConnectProxy[Option[MNodeAdvInfo]],
-                              errorPopupOptC            : ReactConnectProxy[Option[MErrorPopupS]]
+                              nodeAdvInfoPotC           : ReactConnectProxy[Pot[MNodeAdvInfo]],
+                              errorPopupOptC            : ReactConnectProxy[Option[Throwable]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
 
     def render(state: State): VdomElement = {
-
-      val popups = Seq[VdomNode](
-        // Попап инфы по размещению на узле.
-        state.nodeAdvInfoOptC { NodeAdvInfoPopR.component.apply },
+      React.Fragment(
 
         // Попап с какой-либо ошибкой среди попапов.
-        state.errorPopupOptC { ErrorPopupR.component.apply }
-      )
+        state.errorPopupOptC { exOptProxy =>
+          exOptProxy.wrap( MErrorPopupS.fromExOpt )( errorPopupR.component.apply )
+        },
 
-      state.popContPropsC { popContPropsProxy =>
-        // Рендер контейнера попапов:
-        PopupsContR( popContPropsProxy )(
-          popups: _*
-        )
-      }
+        state.nodeAdvInfoPotC { nodeAdvInfoPotProxy =>
+          nodeAdvInfoPotProxy.wrap( _.toOption )( NodeAdvInfoPopR.component.apply )
+        },
+
+      )
     }
 
   }
 
 
   val component = ScalaComponent
-    .builder[Props](getClass.getSimpleName )
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mrootProxy =>
       State(
-        popContPropsC = mrootProxy.connect { mroot =>
-          // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.
-          val prPot = mroot.rcvrs.popupResp
-          PopupsContR.PropsVal(
-            visible = prPot.nonEmpty || prPot.isFailed
-          )
-        },
-        nodeAdvInfoOptC = mrootProxy.connect { _.rcvrs.popupResp.toOption },
+        nodeAdvInfoPotC = mrootProxy.connect( _.rcvrs.popupResp )( FastEqUtil.PotAsOptionFastEq(FastEqUtil.AnyRefFastEq) ),
         errorPopupOptC = mrootProxy.connect { mroot =>
-          MErrorPopupS.fromExOpt(
-            mroot.rcvrs.popupResp.exceptionOption
-          )
-        }( OptFastEq.Wrapped )
+          mroot.rcvrs.popupResp.exceptionOption
+        }( OptFastEq.Wrapped(FastEqUtil.AnyRefFastEq) ),
       )
     }
     .renderBackend[Backend]

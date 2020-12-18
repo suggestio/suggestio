@@ -686,6 +686,4 @@ class LkAdEditFormR(
     .renderBackend[Backend]
     .build
 
-  def apply(rootProxy: Props) = component(rootProxy)
-
 }

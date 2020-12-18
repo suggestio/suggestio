@@ -17,7 +17,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 14.04.17 22:29
   * Description: Компонент с описанием назначением формы.
   */
-object DocR {
+final class DocR {
 
   type Props = ModelProxy[MDocS]
 

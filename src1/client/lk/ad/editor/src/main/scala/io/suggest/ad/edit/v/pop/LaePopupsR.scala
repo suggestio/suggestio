@@ -3,6 +3,7 @@ package io.suggest.ad.edit.v.pop
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.v.LkAdEditCss
+import io.suggest.common.empty.OptionUtil
 import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.lk.r.img.CropPopupR
@@ -22,6 +23,7 @@ import io.suggest.spa.OptFastEq.Wrapped
 final class LaePopupsR(
                         deleteConfirmPopupR: DeleteConfirmPopupR,
                         lkAdEditCss     : LkAdEditCss,
+                        errorPopupR     : ErrorPopupR,
                         val cropPopupR  : CropPopupR
                       ) {
 
@@ -33,43 +35,51 @@ final class LaePopupsR(
   type Props = ModelProxy[MAeRoot]
 
   protected case class State(
-                              popupsContPropsC    : ReactConnectProxy[PopupsContR.PropsVal],
+                              popupsVisibleSomeC  : ReactConnectProxy[Some[Boolean]],
                               errorMsgsC          : ReactConnectProxy[Option[MErrorPopupS]],
                               cropPopPropsOptC    : ReactConnectProxy[Option[cropPopupR.PropsVal]],
-                              deleteConfirmOptC   : ReactConnectProxy[Option[MDeleteConfirmPopupS]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
+
     def render(p: Props, s: State): VdomElement = {
-      val popupContBody = Seq[VdomNode](
-        // Попап с ~отрендеренными ошибками:
-        s.errorMsgsC { ErrorPopupR.component.apply },
+      val popupContBody = List[VdomNode](
 
         // Попап кропа картинки:
         s.cropPopPropsOptC { cropPopupR.component.apply },
 
       )
+
       React.Fragment(
+
+        // Попап с ~отрендеренными ошибками:
+        s.errorMsgsC { errorPopupR.component.apply },
+
         // Попап подтверждения удаления рекламной карточки.
         p.wrap( _.popups.deleteConfirm )( deleteConfirmPopupR.component.apply ),
 
-        s.popupsContPropsC { popupContProps =>
-          PopupsContR(popupContProps)( popupContBody: _* )
+        s.popupsVisibleSomeC { popupContProps =>
+          popupContProps.wrap { visibleSome =>
+            PopupsContR.PropsVal(
+              visible = visibleSome.value,
+            )
+          }( PopupsContR(_)( popupContBody: _* ) )
         },
+
       )
     }
+
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { rootProxy =>
       State(
-        popupsContPropsC = rootProxy.connect { mroot =>
-          val p = mroot.popups
 
-          PopupsContR.PropsVal(
-            visible = p.error.nonEmpty || p.pictureCrop.nonEmpty
-          )
+        popupsVisibleSomeC = rootProxy.connect { mroot =>
+          val p = mroot.popups
+          OptionUtil.SomeBool( p.error.nonEmpty || p.pictureCrop.nonEmpty )
         },
 
         errorMsgsC = rootProxy.connect { _.popups.error },
@@ -89,20 +99,14 @@ final class LaePopupsR(
                 edgeUid   = edge.jdEdge.edgeDoc.id,
                 nodePath  = root.doc.jdDoc.jdArgs.renderArgs.selPath,
               ),
-              withDelete  = false
+              withDelete  = false,
             )
           }
         },
-
-        deleteConfirmOptC = rootProxy.connect { mroot =>
-          mroot.popups.deleteConfirm
-        }
 
       )
     }
     .renderBackend[Backend]
     .build
-
-  def apply(rootProxy: Props) = component( rootProxy )
 
 }

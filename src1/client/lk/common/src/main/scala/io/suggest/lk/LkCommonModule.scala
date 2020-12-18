@@ -54,6 +54,8 @@ object LkCommonModule {
 
   lazy val touchSwitchR = wire[TouchSwitchR]
 
+  lazy val errorPopupR = wire[ErrorPopupR]
+
 }
 
 

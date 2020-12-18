@@ -10,6 +10,8 @@ import io.suggest.lk.adn.map.r._
   */
 final class LkAdnMapFormModule {
 
+  import io.suggest.lk.LkCommonModule._
+
   lazy val lkAdnMapCircuit = wire[LkAdnMapCircuit]
 
   lazy val lamFormR = wire[LamFormR]

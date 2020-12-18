@@ -1,8 +1,8 @@
 package io.suggest.lk.adn.map.r
 
-import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
+import io.suggest.lk.adn.map.m.MLamRad
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -20,31 +20,28 @@ final class RadPopupR(
                        optsR: OptsR,
                      ) {
 
-  type Props_t = Option[PropsVal]
+  type Props_t = MLamRad
   type Props = ModelProxy[Props_t]
 
-  case class PropsVal(
-                       point  : MGeoPoint
-                     )
+  protected case class State(
+                              shownAtOrNullC : ReactConnectProxy[MGeoPoint],
+                            )
 
-  implicit object PropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.point eq b.point
-    }
-  }
+  protected class Backend($: BackendScope[Props, State]) {
 
+    def render(propsProxy: Props, s: State): VdomElement = {
+      lazy val opts = optsR.component( propsProxy )
 
-  protected class Backend($: BackendScope[Props, Unit]) {
-
-    def render(propsProxy: Props): VdomElement = {
-      propsProxy().whenDefinedEl { p =>
-        LPopupR(
-          new LPopupPropsR {
-            override val position = MapsUtil.geoPoint2LatLng(p.point)
-          }
-        )(
-          optsR.component( propsProxy ),
-        )
+      s.shownAtOrNullC { shownAtOrNullProxy =>
+        Option( shownAtOrNullProxy() ).whenDefinedEl { p =>
+          LPopupR(
+            new LPopupPropsR {
+              override val position = MapsUtil.geoPoint2LatLng( p )
+            }
+          )(
+            opts,
+          )
+        }
       }
     }
 
@@ -53,7 +50,13 @@ final class RadPopupR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+        shownAtOrNullC = propsProxy.connect { props =>
+          if (props.popup) props.circle.center else null
+        },
+      )
+    }
     .renderBackend[Backend]
     .build
 

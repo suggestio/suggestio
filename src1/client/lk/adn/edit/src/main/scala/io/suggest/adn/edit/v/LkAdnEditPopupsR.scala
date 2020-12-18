@@ -8,7 +8,7 @@ import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.img.CropPopupR
 import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.spa.OptFastEq
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -20,7 +20,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class LkAdnEditPopupsR(
                         lkAdEditCss     : LkAdnEditCss,
-                        val cropPopupR  : CropPopupR
+                        errorPopupR     : ErrorPopupR,
+                        val cropPopupR  : CropPopupR,
                       ) {
 
   type Props = ModelProxy[MLkAdnEditRoot]
@@ -39,16 +40,19 @@ class LkAdnEditPopupsR(
   class Backend($: BackendScope[Props, State]) {
     def render(s: State): VdomElement = {
       val popupsVdom = Seq[VdomNode](
-        // Попап ошибки.
-        s.errorPopupC { ErrorPopupR.component.apply },
 
         // Попап кропа картинки.
         s.cropPopupC { cropPopupR.component.apply }
       )
 
-      s.popupsContPropsC {
-        PopupsContR(_)( popupsVdom: _* )
-      }
+      React.Fragment(
+        // Попап ошибки.
+        s.errorPopupC { errorPopupR.component.apply },
+
+        s.popupsContPropsC {
+          PopupsContR(_)( popupsVdom: _* )
+        },
+      )
     }
   }
 

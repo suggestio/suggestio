@@ -15,6 +15,8 @@ import io.suggest.lk.tags.edit.TagsEditModule
   */
 final class LkAdvGeoFormModule {
 
+  import io.suggest.lk.LkCommonModule._
+
   val tagsEditModule = wire[TagsEditModule]
   import tagsEditModule._
 
@@ -29,5 +31,7 @@ final class LkAdvGeoFormModule {
   lazy val rcvrPopupR = wire[RcvrPopupR]
 
   lazy val onMainScreenR = wire[OnMainScreenR]
+
+  lazy val docR = wire[DocR]
 
 }

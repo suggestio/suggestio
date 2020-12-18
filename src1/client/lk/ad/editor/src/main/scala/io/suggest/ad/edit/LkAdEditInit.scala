@@ -46,13 +46,13 @@ trait LkAdEditInit extends InitRouter {
     val rootRO = circuit.rootRO
 
     // Произвести рендер компонента формы:
-    val formComponent = circuit.wrap(rootRO)(modules.lkAdEditFormR.apply)
+    val formComponent = circuit.wrap(rootRO)( modules.lkAdEditFormR.component.apply )
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )
     formComponent.renderIntoDOM( formTarget )
 
     // Рендерить контейнер попапов...
     circuit
-      .wrap(rootRO)(modules.laePopupsR.apply)
+      .wrap(rootRO)( modules.laePopupsR.component.apply )
       .renderIntoDOM( PopupsContR.initDocBody() )
 
     // Требуются фоновые веб-воркеры для параллельного хэширования разными алгоритмами.

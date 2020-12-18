@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, MPopupsS}
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import io.suggest.spa.OptFastEq.Wrapped
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.lk.m.MErrorPopupS
@@ -19,7 +19,8 @@ import io.suggest.lk.r.popup.PopupsContR
   * Description: React-компонент попапов.
   */
 final class AdvGeoPopupsR(
-                           advGeoNodeInfoPopR: AdvGeoNodeInfoPopR
+                           errorPopupR: ErrorPopupR,
+                           advGeoNodeInfoPopR: AdvGeoNodeInfoPopR,
                          ) {
 
   type Props = ModelProxy[MPopupsS]
@@ -36,23 +37,28 @@ final class AdvGeoPopupsR(
 
     def render(state: State): VdomElement = {
       val popupsChildren = List[VdomNode](
-        // Попап инфы по размещению на узле.
-        state.nodeInfoConn { advGeoNodeInfoPopR.component.apply },
-
         // Попап "Пожалуйста, подождите...":
         state.pendingOptConn { PleaseWaitPopupR.apply },
 
+      )
+
+      React.Fragment(
+
         // Попап с какой-либо ошибкой среди попапов.
-        state.errorOptConn { ErrorPopupR.component.apply }
+        state.errorOptConn { errorPopupR.component.apply },
+
+        // Попап инфы по размещению на узле.
+        state.nodeInfoConn { advGeoNodeInfoPopR.component.apply },
+
+        // Рендер контейнера попапов:
+        state.popContPropsConn { popContPropsProxy =>
+          PopupsContR( popContPropsProxy )(
+            popupsChildren: _*
+          )
+        },
 
       )
 
-      state.popContPropsConn { popContPropsProxy =>
-        // Рендер контейнера попапов:
-        PopupsContR( popContPropsProxy )(
-          popupsChildren: _*
-        )
-      }
     }
 
   }

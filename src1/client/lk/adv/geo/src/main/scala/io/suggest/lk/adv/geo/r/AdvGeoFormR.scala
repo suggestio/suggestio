@@ -40,6 +40,7 @@ import scala.scalajs.js
 final class AdvGeoFormR(
                          rcvrPopupR: RcvrPopupR,
                          tagsEditR: TagsEditR,
+                         docR: DocR,
                          val onMainScreenR: OnMainScreenR,
                        ) {
 
@@ -84,7 +85,7 @@ final class AdvGeoFormR(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
         // Рендер компонента документации.
-        s.mDocC { DocR.component.apply },
+        s.mDocC { docR.component.apply },
 
         // Галочка бесплатного размещения для суперюзеров.
         p.wrap(_.adv4free)( Adv4FreeR.component.apply ),

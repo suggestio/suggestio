@@ -1,8 +1,8 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.{MLamRad, MLamRcvrs, MRoot}
-import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR}
+import io.suggest.lk.adn.map.m.{MLamRcvrs, MRoot}
+import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR, MMapS}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
@@ -10,8 +10,6 @@ import react.leaflet.control.LocateControlR
 import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.dt.period.r.DatePeriodR
-import io.suggest.spa.OptFastEq.Wrapped
-import io.suggest.common.empty.OptionUtil
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.lmap.LMapR
 import japgolly.scalajs.react.vdom.html_<^._
@@ -28,7 +26,7 @@ import scalaz.Tree
   */
 final class LamFormR(
                       optsR: OptsR,
-                      val radPopupR: RadPopupR,
+                      radPopupR: RadPopupR,
                       mapCursorR: MapCursorR,
                       lamRcvrsR: LamRcvrsR,
                       currentGeoR: CurrentGeoR,
@@ -37,19 +35,15 @@ final class LamFormR(
   import MGeoMapPropsR.MGeoMapPropsRFastEq
   import MLamRcvrs.MLamRcvrsFastEq
   import MExistGeoS.MExistGeoSFastEq
-  import radPopupR.PropsValFastEq
 
   type Props = ModelProxy[MRoot]
 
 
   /** Модель состояния компонента. */
   protected[this] case class State(
-                                    geoMapPropsC          : ReactConnectProxy[MGeoMapPropsR],
-                                    radOptsC              : ReactConnectProxy[MLamRad],
+                                    geoMapPropsC          : ReactConnectProxy[MMapS],
                                     rcvrsC                : ReactConnectProxy[MLamRcvrs],
                                     priceDslOptC          : ReactConnectProxy[Option[Tree[PriceDsl]]],
-                                    currentPotC           : ReactConnectProxy[MExistGeoS],
-                                    radPopupPropsC        : ReactConnectProxy[Option[radPopupR.PropsVal]]
                                   )
 
 
@@ -67,25 +61,28 @@ final class LamFormR(
         LocateControlR(),
 
         // Карта покрытия ресиверов (подгружается асихронно).
-        s.rcvrsC { rcvrsProxy =>
-
+        {
           // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
           val lg = List[VdomElement](
             // Рендер текущих размещений.
-            s.currentPotC { currentGeoR.component.apply },
+            p.wrap( _.current )( currentGeoR.component.apply ),
             // Маркер местоположения узла.
-            s.radOptsC { mapCursorR.component.apply }
+            p.wrap( _.rad )( mapCursorR.component.apply ),
           )
-
-          rcvrsProxy().nodesResp.toOption.fold[VdomElement] {
-            LayerGroupR()( lg: _* )
-          } { _ =>
-            lamRcvrsR.component(rcvrsProxy)( lg: _* )
+          s.rcvrsC { rcvrsProxy =>
+            rcvrsProxy()
+              .nodesResp
+              .toOption
+              .fold[VdomElement] {
+                LayerGroupR()( lg: _* )
+              } { _ =>
+                lamRcvrsR.component(rcvrsProxy)( lg: _* )
+              }
           }
         },
 
         // L-попап при клике по rad cursor.
-        s.radPopupPropsC { radPopupR.component.apply },
+        p.wrap( _.rad )( radPopupR.component.apply ),
 
       )
 
@@ -108,10 +105,19 @@ final class LamFormR(
         p.wrap(_.datePeriod)( DatePeriodR.component.apply ),
 
         // Рендер географической карты:
-        s.geoMapPropsC { mapPropsProxy =>
-          LMapR.component(
-            LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy, lgmCtx )
-          )( mapChildren: _* )
+        {
+          val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
+          s.geoMapPropsC { mapPropsProxy =>
+            val lgmPropsProxy = mapPropsProxy.zoom { mmapS =>
+              MGeoMapPropsR(
+                mapS          = mmapS,
+                cssClass      = mapCssClass
+              )
+            }
+            LMapR.component(
+              LGeoMapR.lmMapSProxy2lMapProps( lgmPropsProxy, lgmCtx )
+            )( mapChildren: _* )
+          }
         },
 
 
@@ -129,25 +135,10 @@ final class LamFormR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
-      val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
       State(
-        geoMapPropsC         = propsProxy.connect { p =>
-          MGeoMapPropsR(
-            mapS          = p.mmap,
-            cssClass      = mapCssClass
-          )
-        },
-        radOptsC      = propsProxy.connect(_.rad),
+        geoMapPropsC  = propsProxy.connect( _.mmap ),
         rcvrsC        = propsProxy.connect(_.rcvrs),
         priceDslOptC  = propsProxy.connect(_.price.respDslOpt),
-        currentPotC   = propsProxy.connect(_.current),
-        radPopupPropsC = propsProxy.connect { p =>
-          OptionUtil.maybe( p.rad.popup ) {
-            radPopupR.PropsVal(
-              point = p.rad.circle.center
-            )
-          }
-        }
       )
     }
     .renderBackend[Backend]
