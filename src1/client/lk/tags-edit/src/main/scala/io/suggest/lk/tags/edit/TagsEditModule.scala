@@ -21,6 +21,4 @@ final class TagsEditModule {
 
   lazy val tagNameInpR = wire[TagNameInpR]
 
-  lazy val tagAddBtnR = wire[TagAddBtnR]
-
 }

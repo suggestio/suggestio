@@ -5,10 +5,10 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.tags.edit.MTagsEditQueryProps
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.tags.edit.m.MTagsEditState
-import io.suggest.msg.Messages
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 
 /**
   * Suggest.io
@@ -22,8 +22,8 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 final class TagsEditR(
                        tagNameInpR: TagNameInpR,
                        tagsFoundR: TagsFoundR,
-                       tagAddBtnR: TagAddBtnR,
                        tagsExistsR: TagsExistsR,
+                       crCtxP: React.Context[MCommonReactCtx],
                      ) {
 
   type Props = ModelProxy[MTagsEditState]
@@ -46,7 +46,7 @@ final class TagsEditR(
         // Локализованный заголовок виджета
         <.h2(
           ^.`class` := Css.Lk.MINOR_TITLE,
-          Messages( "Tags.choosing" )
+          crCtxP.message( MsgCodes.`Tags.choosing` ),
         ),
 
         // поле ввода имени тега.
@@ -54,9 +54,6 @@ final class TagsEditR(
 
         // поисковый контейнер с подсказками названий тегов.
         s.tagsFoundConn( tagsFoundR.component.apply ),
-
-        // tagAddBtn: Кнопка "добавить", изначально она пропада под списком подсказок
-        tagAddBtnR.component(p),
 
         // tagExistsCont: Уже добавленные к заказу гео-теги.
         s.tagsExistConn( tagsExistsR.component.apply )

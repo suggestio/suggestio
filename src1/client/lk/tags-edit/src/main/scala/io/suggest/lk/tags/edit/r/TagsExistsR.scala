@@ -1,14 +1,12 @@
 package io.suggest.lk.tags.edit.r
 
+import com.materialui.{MuiChip, MuiChipProps, MuiChipVariants}
 import diode.react.ModelProxy
-import io.suggest.css.Css
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.common.html.HtmlConstants.SPACE
-import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.RmTag
-import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -22,31 +20,24 @@ final class TagsExistsR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    /** Клик по кнопке удаления exists-тега. */
-    def onTagDeleteClick(tagName: String): Callback = {
-      dispatchOnProxyScopeCB($, RmTag(tagName))
+    private def _onTagDeleteCb(tagName: String) = {
+      ReactCommonUtil.cbFun1ToJsCb { _: ReactUIEventFromHtml =>
+        dispatchOnProxyScopeCB($, RmTag(tagName))
+      }
     }
 
 
     def render(tagsExists: Props): VdomElement = {
-      // tagExistsCont: Уже добавленные к заказу гео-теги.
       <.div(
-        tagsExists().toSeq.sorted.toVdomArray { tagName =>
-          <.div(
-            ^.`class` := (Css.TagsEdit.JS_TAG_EDITABLE + SPACE + Css.TagsEdit.CONTAINER),
-            ^.key     := tagName,
-
-            // Имя тега
-            tagName,
-
-            // Кнопка удаления тега из списка.
-            <.span(
-              ^.`class`  := Css.flat(Css.TagsEdit.JS_TAG_DELETE, Css.Buttons.BTN, Css.Buttons.NEGATIVE),
-              ^.title    := Messages( MsgCodes.`Delete` ),
-              // TODO Брать tagName из key или содержимого div'а выше на уровне Callback'а, а не здесь.
-              ^.onClick --> onTagDeleteClick(tagName),
-              "[x]"
-            )
+        tagsExists().toVdomArray { tagName =>
+          MuiChip(
+            new MuiChipProps {
+              // TODO variant=outlined для уже установленных тегов на текущий момент.
+              override val variant    = MuiChipVariants.default
+              override val onDelete   = _onTagDeleteCb( tagName )
+              override val label      = tagName
+              // icon тега не указываем, чтобы визуально разгрузить отображение одинаковыми картинками.
+            }
           )
         }
       )
