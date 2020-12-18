@@ -1,8 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.MLamRad
-import io.suggest.maps.m.MRadT.MRadTFastEq
+import io.suggest.maps.m.MRad
 import io.suggest.maps.r.rad.RadMapControlsR
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
@@ -17,22 +16,20 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   */
 final class MapCursorR {
 
-  type Props_t = MLamRad
+  type Props_t = Option[MRad]
   type Props = ModelProxy[Props_t]
 
 
   protected[this] case class State(
-                                    mRadC      : ReactConnectProxy[MLamRad],
+                                    mRadOptC      : ReactConnectProxy[Option[MRad]],
                                   )
 
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       // Опциональное размещение в круге и в точке.
-      s.mRadC { mradProxy =>
-        RadMapControlsR.component( mradProxy.zoom(Some.apply) )
-      }
+      s.mRadOptC { RadMapControlsR.component.apply }
     }
 
   }
@@ -42,7 +39,7 @@ final class MapCursorR {
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { p =>
       State(
-        mRadC = p.connect( identity ),
+        mRadOptC = p.connect( identity ),
       )
     }
     .renderBackend[Backend]

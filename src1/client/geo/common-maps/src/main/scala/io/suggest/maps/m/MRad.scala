@@ -1,7 +1,8 @@
 package io.suggest.maps.m
 
-import io.suggest.geo.CircleGs
+import io.suggest.geo.{CircleGs, MGeoPoint}
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -12,16 +13,11 @@ import japgolly.univeq._
   */
 object MRad {
 
-  /** Поддержка FastEq для инстансов [[MRad]]. */
-  implicit object MRadFastEq extends IMRadTFastEq[MRad] {
-    override def eqv(a: MRad, b: MRad) = {
-      super.eqv(a, b) &&
-        (a.enabled ==* b.enabled) &&
-        (a.centerPopup ==* b.centerPopup)
-    }
-  }
-
   @inline implicit def univEq: UnivEq[MRad] = UnivEq.derive
+
+  def circle = GenLens[MRad]( _.circle )
+  def state = GenLens[MRad]( _.state )
+  def enabled = GenLens[MRad]( _.enabled )
 
 }
 
@@ -31,18 +27,16 @@ object MRad {
   * @param circle Состояние текущих параметров георазмещения в радиусе на карте.
   * @param state Состояние rad-компонентов.
   */
-case class MRad(
-                 override val circle      : CircleGs,
-                 override val state       : MRadS,
-                 enabled                  : Boolean    = true,
-                 centerPopup              : Boolean    = false
-               )
-  extends MRadT[MRad]
-{
+final case class MRad(
+                       circle                   : CircleGs,
+                       state                    : MRadS,
+                       enabled                  : Boolean    = true,
+                     ) {
 
-  override def withCircle(circle2: CircleGs) = copy(circle = circle2)
-  override def withState(state2: MRadS) = copy(state = state2)
-  def withEnabled(enabled2: Boolean) = copy(enabled = enabled2)
-  def withCenterPopup(enabled2: Boolean) = copy(centerPopup = enabled2)
+  /** Вычислить текущий центр. */
+  def currentCenter: MGeoPoint = {
+    state.centerDragging
+      .getOrElse( circle.center )
+  }
 
 }

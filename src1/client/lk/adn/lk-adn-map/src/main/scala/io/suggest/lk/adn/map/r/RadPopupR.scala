@@ -2,7 +2,7 @@ package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
-import io.suggest.lk.adn.map.m.MLamRad
+import io.suggest.maps.m.MAdvGeoS
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -20,7 +20,7 @@ final class RadPopupR(
                        optsR: OptsR,
                      ) {
 
-  type Props_t = MLamRad
+  type Props_t = MAdvGeoS
   type Props = ModelProxy[Props_t]
 
   protected case class State(
@@ -53,7 +53,10 @@ final class RadPopupR(
     .initialStateFromProps { propsProxy =>
       State(
         shownAtOrNullC = propsProxy.connect { props =>
-          if (props.popup) props.circle.center else null
+          props.rad
+            .filter( _ => props.radPopup )
+            .map(_.circle.center)
+            .orNull
         },
       )
     }

@@ -1,6 +1,6 @@
 package io.suggest.maps.r.rad
 
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -9,7 +9,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.popup.{LPopupPropsR, LPopupR}
 import io.suggest.spa.OptFastEq.Wrapped
-import MRadT.MRadTFastEq
+import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactCommonUtil
 
 /**
@@ -20,7 +20,7 @@ import io.suggest.react.ReactCommonUtil
   */
 object RadR {
 
-  type Props_t = Option[MRad]
+  type Props_t = MAdvGeoS
   type Props = ModelProxy[Props_t]
 
   protected case class State(
@@ -32,30 +32,35 @@ object RadR {
   protected class Backend($: BackendScope[Props, State]) {
 
     def render(p: Props, s: State): VdomElement = {
-      p().whenDefinedEl { mrad =>
+      p().rad.whenDefinedEl { mrad =>
 
         // Рендер группы слоёв одной пачкой, чтобы можно было всё скопом вернуть наверх.
         LayerGroupR()(
 
           // Слой с кругом и маркерами управления оными.
           {
-            lazy val radEl = p.wrap(x => x: Option[MRadT[_]])( RadMapControlsR.component.apply )
+            lazy val radEl = RadMapControlsR.component( p.zoom(_.rad) )
             ReactCommonUtil.maybeEl( mrad.enabled )( radEl )
           },
 
           // Попап управления центром.
-          s.centerPopupC { popupEnabledOpt =>
-            val opt = popupEnabledOpt.value.filter(identity)
-            opt.whenDefinedEl { _ =>
-              LPopupR(
-                new LPopupPropsR {
-                  override val position = MapsUtil.geoPoint2LatLng( mrad.currentCenter )
+          {
+            lazy val popupContent = <.div(
+              s.radEnabledPropsC( RadEnabledR.component.apply )
+            )
+            s.centerPopupC { popupEnabledOpt =>
+              popupEnabledOpt
+                .value
+                .filter( identity )
+                .whenDefinedEl { _ =>
+                  LPopupR(
+                    new LPopupPropsR {
+                      override val position = MapsUtil.geoPoint2LatLng( mrad.currentCenter )
+                    }
+                  )(
+                    popupContent,
+                  )
                 }
-              )(
-                <.div(
-                  s.radEnabledPropsC( RadEnabledR.component.apply )
-                )
-              )
             }
           },
 
@@ -71,11 +76,11 @@ object RadR {
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mradOptProxy =>
       State(
-        centerPopupC = mradOptProxy.connect { mradOpt =>
-          mradOpt.map(_.centerPopup)
+        centerPopupC = mradOptProxy.connect { props =>
+          OptionUtil.SomeBool( props.radPopup )
         },
         radEnabledPropsC = RadEnabledR.radEnabledPropsConn(
-          mradOptProxy,
+          mradOptProxy.zoom(_.rad),
           renderHintAsText = true
         )
       )

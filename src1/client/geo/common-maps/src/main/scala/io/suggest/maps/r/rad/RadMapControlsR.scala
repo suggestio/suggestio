@@ -2,7 +2,7 @@ package io.suggest.maps.r.rad
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
-import io.suggest.maps.m.MRadT
+import io.suggest.maps.m.MRad
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.layer.LayerGroupR
@@ -18,7 +18,7 @@ import io.suggest.spa.OptFastEq.Wrapped
   */
 object RadMapControlsR {
 
-  type Props = ModelProxy[Option[MRadT[_]]]
+  type Props = ModelProxy[Option[MRad]]
 
 
   protected case class State(

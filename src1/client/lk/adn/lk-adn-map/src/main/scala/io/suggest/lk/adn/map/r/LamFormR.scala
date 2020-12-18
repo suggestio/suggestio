@@ -5,6 +5,7 @@ import io.suggest.lk.adn.map.m.{MLamRcvrs, MRoot}
 import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR, MMapS}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
 import io.suggest.bill.price.dsl.PriceDsl
@@ -65,9 +66,9 @@ final class LamFormR(
           // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
           val lg = List[VdomElement](
             // Рендер текущих размещений.
-            p.wrap( _.current )( currentGeoR.component.apply ),
+            p.wrap( _.geo.existAdv )( currentGeoR.component.apply ),
             // Маркер местоположения узла.
-            p.wrap( _.rad )( mapCursorR.component.apply ),
+            p.wrap( _.geo.rad )( mapCursorR.component.apply ),
           )
           s.rcvrsC { rcvrsProxy =>
             rcvrsProxy()
@@ -82,7 +83,7 @@ final class LamFormR(
         },
 
         // L-попап при клике по rad cursor.
-        p.wrap( _.rad )( radPopupR.component.apply ),
+        p.wrap( _.geo )( radPopupR.component.apply ),
 
       )
 
@@ -136,7 +137,7 @@ final class LamFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        geoMapPropsC  = propsProxy.connect( _.mmap ),
+        geoMapPropsC  = propsProxy.connect( _.geo.mmap ),
         rcvrsC        = propsProxy.connect(_.rcvrs),
         priceDslOptC  = propsProxy.connect(_.price.respDslOpt),
       )

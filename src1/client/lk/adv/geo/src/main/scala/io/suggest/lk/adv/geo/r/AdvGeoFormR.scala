@@ -10,7 +10,7 @@ import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.maps.m.{MExistGeoPopupS, MGeoMapPropsR, MRad}
+import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR, MRad}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -20,8 +20,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.react.ReactCommonUtil
+import io.suggest.spa.FastEqUtil
 import react.leaflet.lmap.LMapR
 import scalaz.Tree
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.scalajs.js
 
@@ -48,7 +51,6 @@ final class AdvGeoFormR(
   import MRcvr.MRcvrFastEq
   import MGeoMapPropsR.MGeoMapPropsRFastEq
   import MExistGeoPopupS.MGeoCurPopupSFastEq
-  import MRad.MRadFastEq
   import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
 
 
@@ -68,7 +70,7 @@ final class AdvGeoFormR(
                               geoMapPropsC        : ReactConnectProxy[MGeoMapPropsR],
                               geoAdvExistGjC      : ReactConnectProxy[Pot[js.Array[GjFeature]]],
                               geoAdvPopupC        : ReactConnectProxy[MExistGeoPopupS],
-                              mRadOptC            : ReactConnectProxy[Option[MRad]],
+                              mRadOptC            : ReactConnectProxy[MAdvGeoS],
                               radEnabledPropsC    : ReactConnectProxy[RadEnabledR.PropsVal],
                               priceDslOptC        : ReactConnectProxy[Option[Tree[PriceDsl]]],
                               mDocC               : ReactConnectProxy[MDocS]
@@ -88,7 +90,7 @@ final class AdvGeoFormR(
         s.mDocC { docR.component.apply },
 
         // Галочка бесплатного размещения для суперюзеров.
-        p.wrap(_.adv4free)( Adv4FreeR.component.apply ),
+        p.wrap(_.adv.free)( Adv4FreeR.component.apply ),
 
         // Верхняя половина, левая колонка:
         <.div(
@@ -106,11 +108,11 @@ final class AdvGeoFormR(
           <.br,
 
           // Компонент подсистемы выбора тегов:
-          p.wrap( _.tags )( tagsEditR.component.apply )
+          p.wrap( _.adv.tags )( tagsEditR.component.apply )
         ),
 
         // Верхняя половина, правая колонка:
-        p.wrap(_.datePeriod)( DatePeriodR.component.apply ),
+        p.wrap(_.adv.datePeriod)( DatePeriodR.component.apply ),
 
         // Тут немного пустоты нужно...
         <.br,
@@ -175,7 +177,7 @@ final class AdvGeoFormR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
-      val mradOptZoomF = { r: MRoot => r.rad }
+      val mradOptZoomF = { r: MRoot => r.geo.rad }
       val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
 
       State(
@@ -184,23 +186,26 @@ final class AdvGeoFormR(
             mroot.other.onMainScreen
           )
         },
-        rcvrsGeoC        = propsProxy.connect(_.rcvr.rcvrsGeo),
-        rcvrPopupC       = propsProxy.connect(_.rcvr),
+        rcvrsGeoC        = propsProxy.connect(_.adv.rcvr.rcvrsGeo),
+        rcvrPopupC       = propsProxy.connect(_.adv.rcvr),
         geoMapPropsC     = propsProxy.connect { p =>
           MGeoMapPropsR(
-            mapS          = p.mmap,
+            mapS          = p.geo.mmap,
             cssClass      = mapCssClass,
           )
         },
-        geoAdvExistGjC   = propsProxy.connect(_.geoAdv.geoJson),
-        geoAdvPopupC     = propsProxy.connect(_.geoAdv.popup),
+        geoAdvExistGjC   = propsProxy.connect(_.geo.existAdv.geoJson),
+        geoAdvPopupC     = propsProxy.connect(_.geo.existAdv.popup),
         // Для рендера подходит только radEnabled, а он у нас генерится заново каждый раз.
-        mRadOptC         = propsProxy.connect(mradOptZoomF),
+        mRadOptC         = propsProxy.connect(_.geo)( FastEqUtil[MAdvGeoS] { (a, b) =>
+          (a.rad ===* b.rad) &&
+          (a.radPopup ==* b.radPopup)
+        }),
         radEnabledPropsC = RadEnabledR.radEnabledPropsConn(
           propsProxy.zoom(mradOptZoomF),
-          renderHintAsText = false
+          renderHintAsText = false,
         ),
-        priceDslOptC     = propsProxy.connect( _.bill.price.respDslOpt ),
+        priceDslOptC     = propsProxy.connect( _.adv.bill.price.respDslOpt ),
         mDocC            = propsProxy.connect(_.other.doc)
       )
     }

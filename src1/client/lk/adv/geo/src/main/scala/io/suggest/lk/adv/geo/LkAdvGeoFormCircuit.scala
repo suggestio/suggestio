@@ -19,7 +19,7 @@ import io.suggest.log.CircuitLog
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
-import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
+import io.suggest.maps.c.{MapCommonAh, RadAh, RadPopupAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
 import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
@@ -29,7 +29,6 @@ import play.api.libs.json.Json
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
-import MRad.MRadFastEq
 import io.suggest.maps.m.MExistGeoS.MExistGeoSFastEq
 // TODO import MAdvPeriod...FastEq
 import MPopupsS.MPopupsFastEq
@@ -59,38 +58,42 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
         .as[MFormInit]
       // Собираем начальный инстанс MRoot на основе данных, переданных с сервера...
       MRoot(
-        mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
+        geo = MAdvGeoS(
+          mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
+          rad  = for (radCircle <- mFormInit.form.radCircle) yield {
+            MRad(
+              circle = radCircle,
+              state  = MRadS(
+                radiusMarkerCoords = MapsUtil.radiusMarkerLatLng(radCircle)
+              ),
+              enabled = mFormInit.radEnabled,
+            )
+          },
+        ),
         other = MOther(
           adId     = mFormInit.adId,
           rcvrsMap = mFormInit.rcvrsMap
         ),
-        adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
-          MAdv4Free(
-            static  = a4fProps,
-            checked = mFormInit.form.adv4freeChecked.getOrElseFalse
-          )
-        },
-        tags = MTagsEditState(
-          props = mFormInit.form.tagsEdit
+        adv = MAdvS(
+          free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
+            MAdv4Free(
+              static  = a4fProps,
+              checked = mFormInit.form.adv4freeChecked.getOrElseFalse
+            )
+          },
+          tags = MTagsEditState(
+            props = mFormInit.form.tagsEdit
+          ),
+          rcvr = MRcvr(
+            rcvrsMap = mFormInit.form.rcvrsMap
+          ),
+          datePeriod = mFormInit.form.datePeriod,
+          bill = MBillS(
+            price = MPriceS(
+              resp = Ready( mFormInit.advPricing )
+            )
+          ),
         ),
-        rcvr = MRcvr(
-          rcvrsMap = mFormInit.form.rcvrsMap
-        ),
-        rad  = for (radCircle <- mFormInit.form.radCircle) yield {
-          MRad(
-            circle = radCircle,
-            state  = MRadS(
-              radiusMarkerCoords = MapsUtil.radiusMarkerLatLng(radCircle)
-            ),
-            enabled = mFormInit.radEnabled,
-          )
-        },
-        datePeriod = mFormInit.form.datePeriod,
-        bill = MBillS(
-          price = MPriceS(
-            resp = Ready( mFormInit.advPricing )
-          )
-        )
       )
     }
 
@@ -125,10 +128,12 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
     // Эффект пересчёта стоимости размещения с помощью сервера.
     val priceUpdateEffect = ResetPrice.toEffectPure
 
-    val rcvrRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.rcvr )
+    val advRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.adv )
+    val rcvrRW = CircuitUtil.mkLensZoomRW( advRW, MAdvS.rcvr )
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }
 
-    val mmapRW  = CircuitUtil.mkLensRootZoomRW(this, MRoot.mmap)
+    val geoRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.geo )
+    val mmapRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.mmap )
 
     // Собираем handler'ы
 
@@ -144,7 +149,7 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
     )
 
     val tagsAh = new TagsEditAh(
-      modelRW         = CircuitUtil.mkLensRootZoomRW( this, MRoot.tags ),
+      modelRW         = CircuitUtil.mkLensZoomRW( advRW, MAdvS.tags ),
       api             = API,
       priceUpdateFx   = priceUpdateEffect
     )
@@ -159,26 +164,26 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
     )
 
     val datePeriodAh = new DtpAh(
-      modelRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.datePeriod ),
+      modelRW = CircuitUtil.mkLensZoomRW( advRW, MAdvS.datePeriod ),
       priceUpdateFx = priceUpdateEffect
     )
 
     val adv4freeAh = new Adv4FreeAh(
       // Для оптимального подхвата Option[] используем zoomMap:
-      modelRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.adv4free ),
+      modelRW = CircuitUtil.mkLensZoomRW( advRW, MAdvS.free ),
       priceUpdateFx = priceUpdateEffect
     )
 
-    val geoAdvRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.geoAdv )( MExistGeoS.MExistGeoSFastEq )
+    val existAdvRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.existAdv )( MExistGeoS.MExistGeoSFastEq )
 
     val geoAdvsInitAh = new GeoAdvExistInitAh(
       api           = API,
-      existAdvsRW   = geoAdvRW.zoomRW(_.geoJson) { _.withGeoJson(_) }
+      existAdvsRW   = existAdvRW.zoomRW(_.geoJson) { _.withGeoJson(_) }
     )
 
     val geoAdvsPopupAh = new GeoAdvsPopupAh(
       api     = API,
-      modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
+      modelRW = existAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
     val advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl()
@@ -189,11 +194,14 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
     )
 
     val radAh = new RadAh(
-      modelRW       = CircuitUtil.mkLensRootZoomRW( this, MRoot.rad ),
+      modelRW       = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.rad ),
       priceUpdateFx = priceUpdateEffect
     )
+    val radPopupAh = new RadPopupAh(
+      modelRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.radPopup ),
+    )
 
-    val billRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.bill )
+    val billRW = CircuitUtil.mkLensZoomRW( advRW, MAdvS.bill )
 
     val priceAh = new PriceAh(
       modelRW       = billRW.zoomRW(_.price) { _.withPrice(_) },
@@ -222,9 +230,10 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
       tagsAh,
       onMainScreenAh,
       datePeriodAh,
-      adv4freeAh,
       // lk-попапы (вне leaflet):
       nodeInfoPopupAh,
+      radPopupAh,
+      adv4freeAh,
       // init-вызовы в конце, т.к. они довольно редкие.
       geoAdvsInitAh,
       rcvrsMapInitAh,
@@ -252,9 +261,9 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
 
   // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.
   Future {
-    val pot = zoom(_.rcvr.popupResp).value
+    val pot = zoom(_.adv.rcvr.popupResp).value
     if (pot.isEmpty && !pot.isPending) {
-      for (rcvrPopupState <- zoom(_.rcvr.popupState).value) yield {
+      for (rcvrPopupState <- zoom(_.adv.rcvr.popupState).value) yield {
         // Есть повод устроить запрос.
         val a = OpenMapRcvr(
           nodeId    = rcvrPopupState.nodeId,
@@ -267,9 +276,9 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
 
   // Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
   Future {
-    val tagSearchText = zoom(_.tags.props.query).value.text
+    val tagSearchText = zoom(_.adv.tags.props.query).value.text
     if (tagSearchText.nonEmpty) {
-      val pot = zoom(_.tags).value.found
+      val pot = zoom(_.adv.tags).value.found
       if (pot.isEmpty && !pot.isPending) {
         dispatch( SetTagSearchQuery(tagSearchText) )
       }

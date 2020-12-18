@@ -10,24 +10,24 @@ import io.suggest.maps.u.MapsUtil
 
 object RadAhUtil {
 
-  def radCenterDragging[V <: MRadT[V]](v0: V, rcd: RadCenterDragging): V = {
-    v0.withState(
-      MRadS.centerDragging.set( Some(rcd.geoPoint) )(v0.state)
-    )
+  def radCenterDragging(v0: MRad, rcd: RadCenterDragging): MRad = {
+    MRad.state
+      .composeLens( MRadS.centerDragging )
+      .set( Some(rcd.geoPoint) )(v0)
   }
 
-  def radCenterDragStart[V <: MRadT[V]](v0: V): V = {
-    v0.withState(
-      MRadS.centerDragging.set( Some(v0.circle.center) )(v0.state)
-    )
+  def radCenterDragStart(v0: MRad): MRad = {
+    MRad.state
+      .composeLens( MRadS.centerDragging )
+      .set( Some(v0.circle.center) )(v0)
   }
 
-  def radCenterDragEnd[V <: MRadT[V]](v0: V, rcde: RadCenterDragEnd): V = {
+  def radCenterDragEnd(v0: MRad, rcde: RadCenterDragEnd): MRad = {
     val rmc0 = v0.state.radiusMarkerCoords
     val c0 = v0.circle.center
     val c2 = rcde.geoPoint
 
-    v0.withCircleState(
+    v0.copy(
       // Выставить новый центр круга в состояние.
       circle = (CircleGs.center set c2)(v0.circle),
       state  = v0.state.copy(
@@ -42,10 +42,10 @@ object RadAhUtil {
     )
   }
 
-  def radiusDragStart[V <: MRadT[V]](v0: V): V = {
-    v0.withState(
-      MRadS.radiusDragging.set(true)(v0.state)
-    )
+  def radiusDragStart(v0: MRad): MRad = {
+    MRad.state
+      .composeLens(MRadS.radiusDragging)
+      .set( true )(v0)
   }
 
 
@@ -55,11 +55,9 @@ object RadAhUtil {
     * @param rmGp1 Новая координата маркера радиуса.
     * @param contraints Ограничения радиуса.
     * @param stillDragging Новое значение флага radiusDragging.
-    * @tparam V Тип модели-реализации [[io.suggest.maps.m.MRadT]]
-    * @return Новый инстанс модели-реализации [[io.suggest.maps.m.MRadT]].
+    * @return Обновлённый MRad.
     */
-  def onRadiusDrag[V <: MRadT[V]](v0: V, contraints: IMinMaxM, rmGp1: MGeoPoint, stillDragging: Boolean): V = {
-
+  def onRadiusDrag(v0: MRad, contraints: IMinMaxM, rmGp1: MGeoPoint, stillDragging: Boolean): MRad = {
     // Считаем расстояние между новым радиусом и исходным центром.
     val distanceM = Math.abs(
       MapsUtil.distanceBetween(v0.circle.center, rmGp1)
@@ -82,7 +80,7 @@ object RadAhUtil {
       rmGp1
     }
 
-    v0.withCircleState(
+    v0.copy(
       circle  = circle2,
       state   = v0.state.copy(
         radiusDragging      = stillDragging,
@@ -106,7 +104,8 @@ class RadAh[M](
                 modelRW           : ModelRW[M, Option[MRad]],
                 priceUpdateFx     : Effect
               )
-  extends ActionHandler(modelRW) {
+  extends ActionHandler(modelRW)
+{
 
   /** Действия работы с радиусом очень одинаковы как при drag, так и при drag end. */
   private def _handleNewRadiusXY(rd: IGeoPointField, stillDragging: Boolean): Option[MRad] = {
@@ -176,29 +175,43 @@ class RadAh[M](
     // Сигнал включения/выключения rad-подсистемы.
     case RadOnOff(isEnabled) =>
       _valueFold { mrad0 =>
-        val mrad1 = mrad0.withEnabled(isEnabled)
+        val mrad1 = (MRad.enabled set isEnabled)(mrad0)
         updated( Some(mrad1), priceUpdateFx )
       }
-
-    // Сигнал клика по некоторым rad-элементам.
-    case _: IRadClick =>
-      _valueFold { mrad0 =>
-        if (mrad0.centerPopup) {
-          noChange
-        } else {
-          val mrad1 = mrad0.withCenterPopup( !mrad0.centerPopup )
-          updated( Some(mrad1) )
-        }
-      }
-
-    // Сигнал закрытия попапа.
-    case HandleMapPopupClose if value.exists(_.centerPopup) =>
-      val mrad0 = value.get
-      val mrad1 = mrad0.withCenterPopup(false)
-      updated( Some(mrad1) )
 
   }
 
   private def _valueFold(f: MRad => ActionResult[M]) = value.fold(noChange)(f)
+
+}
+
+
+/** Контроллер попапа над кругом размещения. */
+final class RadPopupAh[M](
+                           modelRW: ModelRW[M, Boolean],
+                         )
+  extends ActionHandler( modelRW )
+{
+
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Сигнал клика по некоторым rad-элементам.
+    case _: IRadClick =>
+      val v0 = value
+      if (v0) {
+        noChange
+      } else {
+        updated( true )
+      }
+
+    // Сигнал закрытия попапа.
+    case HandleMapPopupClose =>
+      if (!value) {
+        noChange
+      } else {
+        updated( false )
+      }
+
+  }
 
 }

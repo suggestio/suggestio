@@ -5,14 +5,13 @@ import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.lk.adn.map.a._
-import io.suggest.lk.adn.map.m.MLamRad.MLamRadFastEq
 import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
-import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
+import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
-import io.suggest.maps.m.{MRadS, RcvrMarkersInit}
+import io.suggest.maps.m.{MAdvGeoS, MRad, MRadS, RcvrMarkersInit}
 import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -43,14 +42,17 @@ final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot]
       .as[MLamFormInit]
 
     MRoot(
-      mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
-      conf = mFormInit.conf,
-      rad = MLamRad(
-        circle = mFormInit.form.mapCursor,
-        state = MRadS(
-          radiusMarkerCoords = MapsUtil.radiusMarkerLatLng( mFormInit.form.mapCursor )
-        )
+      geo = MAdvGeoS(
+        mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
+        rad = Some( MRad(
+          circle = mFormInit.form.mapCursor,
+          state = MRadS(
+            radiusMarkerCoords = MapsUtil.radiusMarkerLatLng( mFormInit.form.mapCursor )
+          ),
+        )),
       ),
+      conf = mFormInit.conf,
+
       adv4free = for {
         a4fProps <- mFormInit.adv4FreeProps
       } yield {
@@ -76,6 +78,7 @@ final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot]
     val formRO = zoom(_.toForm)
 
     val nodeIdProxy = confRO.zoom(_.nodeId)
+    val geoRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.geo )
 
     // Поддержка экшенов виджета цены с кнопкой сабмита.
     val priceAh = new PriceAh(
@@ -93,18 +96,18 @@ final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot]
 
     // Обновлять состояние при изменении конфигурации карты.
     val mapCommonAh = new MapCommonAh(
-      mmapRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.mmap ),
+      mmapRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.mmap ),
     )
 
-    val radRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.rad )
+    val radRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.rad )
     // Реакция на двиганье маркера на карте:
-    val radAh = new LamRadAh(
+    val radAh = new RadAh(
       modelRW       = radRW,
       priceUpdateFx = priceUpdateEffect
     )
 
     val radPopupAh = new LamRadPopupAh(
-      modelRW = radRW.zoomRW(_.popup) { _.withPopup(_) }
+      modelRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.radPopup )
     )
 
     // Поддержка реакции на adv4free:
@@ -114,17 +117,17 @@ final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot]
       priceUpdateFx = priceUpdateEffect
     )
 
-    val currentRW = CircuitUtil.mkLensRootZoomRW( this, MRoot.current )
+    val existAdvsRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.existAdv )
 
     val currentGeoAh = new CurrentGeoAh(
       api         = httpApi,
-      modelRW     = currentRW.zoomRW(_.geoJson) { _.withGeoJson(_) },
+      modelRW     = existAdvsRW.zoomRW(_.geoJson) { _.withGeoJson(_) },
       nodeIdProxy = nodeIdProxy
     )
 
     val curGeoPopupAh = new CurrentGeoPopupAh(
       api         = httpApi,
-      modelRW     = currentRW.zoomRW(_.popup) { _.withPopup(_) }
+      modelRW     = existAdvsRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
     // Реакция на события виджета с датой:

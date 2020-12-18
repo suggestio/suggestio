@@ -5,7 +5,6 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.init.routed.InitRouter
 import io.suggest.lk.adv.m.MPriceS.MPriceSFastEq
 import io.suggest.lk.adv.geo.m.MPopupsS.MPopupsFastEq
-import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.r.PriceR
 import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.sjs.common.view.VUtil
@@ -47,7 +46,7 @@ trait AdvGeoFormInitRouter extends InitRouter {
     formR.renderIntoDOM( formTarget )
 
     // Отдельно идёт рендер виджета цены PriceR:
-    val priceR = circuit.wrap(_.bill.price)( PriceR.component.apply )
+    val priceR = circuit.wrap(_.adv.bill.price)( PriceR.component.apply )
     val priceTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
     priceR.renderIntoDOM( priceTarget )
 
