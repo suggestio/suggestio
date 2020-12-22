@@ -5,8 +5,7 @@ import scala.scalajs.js.annotation._
 
 object Mui {
   @js.native @JSImport("@material-ui/core/AppBar", JSImport.Default) object AppBar extends js.Any
-  @js.native @JSImport("@material-ui/core/AutoComplete", JSImport.Default) object AutoComplete
-      extends js.Any
+  @js.native @JSImport("@material-ui/lab/Autocomplete", JSImport.Default) object AutoComplete extends js.Any
   @js.native @JSImport("@material-ui/core/Avatar", JSImport.Default) object Avatar extends js.Any
   @js.native @JSImport("@material-ui/core/Badge", JSImport.Default) object Badge   extends js.Any
   @js.native @JSImport("@material-ui/core/BottomNavigation", JSImport.Default) object BottomNavigation

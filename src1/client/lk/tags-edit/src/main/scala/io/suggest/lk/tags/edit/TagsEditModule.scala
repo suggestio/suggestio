@@ -15,10 +15,4 @@ final class TagsEditModule {
 
   lazy val tagsEditR = wire[TagsEditR]
 
-  lazy val tagsExistsR = wire[TagsExistsR]
-
-  lazy val tagsFoundR = wire[TagsFoundR]
-
-  lazy val tagNameInpR = wire[TagNameInpR]
-
 }

@@ -6,7 +6,6 @@ import japgolly.scalajs.react.{Callback, CallbackTo, ReactEvent}
 import japgolly.scalajs.react.internal.OptionLike
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.collection.immutable.ArraySeq
 import scala.scalajs.js
 import scala.language.{higherKinds, implicitConversions}
 
@@ -46,6 +45,13 @@ object ReactCommonUtil {
   def cbFun2ToJsCb[Arg1, Arg2, Res](fun: (Arg1, Arg2) => CallbackTo[Res]): js.Function2[Arg1, Arg2, Res] = {
     { (arg1, arg2) =>
       fun(arg1, arg2)
+        .runNow()
+    }
+  }
+
+  def cbFun3ToJsCb[A1,A2,A3,Res](fun: (A1,A2,A3) => CallbackTo[Res]): js.Function3[A1,A2,A3,Res] = {
+    { (a1, a2, a3) =>
+      fun(a1, a2, a3)
         .runNow()
     }
   }
@@ -92,6 +98,7 @@ object ReactCommonUtil {
     * @see Решение взято из [[https://github.com/japgolly/scalajs-react/issues/500#issuecomment-426559951]]
     */
   lazy val genericRefAttr = VdomAttr( VdomAttr.Ref.attrName )
+
 
   /** Все неявности складируются сюда. */
   object Implicits {
@@ -171,7 +178,6 @@ object ReactCommonUtil {
       }
 
     }
-
 
   }
 

@@ -11,6 +11,13 @@ object MuiChip {
   final def apply(props: MuiChipProps = MuiPropsBaseStatic.empty) =
     component(props)
 
+  type Variant <: String
+  /** Values for [[MuiChipProps.variant]]. */
+  object Variant {
+    final def DEFAULT = "default".asInstanceOf[Variant]
+    final def OUTLINED = "outlined".asInstanceOf[Variant]
+  }
+
 }
 
 
@@ -34,12 +41,6 @@ trait MuiChipProps
   val variant: js.UndefOr[String] = js.undefined
 }
 
-
-/** Values for [[MuiChipProps.variant]]. */
-object MuiChipVariants {
-  val default = "default"
-  val outlined = "outlined"
-}
 
 /** CSS styles for [[MuiChipProps.classes]]. */
 trait MuiChipClasses extends MuiClassesBase {

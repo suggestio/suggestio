@@ -35,7 +35,7 @@ object MTagsFound {
 
   implicit def tagsFoundJson: OFormat[MTagsFound] = {
     (__ \ "t")
-      .format[Seq[MTagFound]]
+      .format[List[MTagFound]]
       .inmap[MTagsFound]( apply, _.tags )
   }
 
@@ -45,5 +45,5 @@ object MTagsFound {
 
 /** Контейнер результата аггрегации тегов. */
 case class MTagsFound(
-                       tags  : Seq[MTagFound]
+                       tags  : List[MTagFound],
                      )

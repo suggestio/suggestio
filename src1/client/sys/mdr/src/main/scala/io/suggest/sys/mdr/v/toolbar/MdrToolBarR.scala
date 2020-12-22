@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.toolbar
 
-import com.materialui.{MuiChip, MuiChipProps, MuiChipVariants}
+import com.materialui.{MuiChip, MuiChipProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants._
@@ -69,7 +69,7 @@ class MdrToolBarR(
         MuiChip(
           new MuiChipProps {
 
-            override val variant = MuiChipVariants.outlined
+            override val variant = MuiChip.Variant.OUTLINED
             override val label: js.UndefOr[React.Node] = {
               <.span(
                 (props.nodeOffset + props.errorsCount).toString,

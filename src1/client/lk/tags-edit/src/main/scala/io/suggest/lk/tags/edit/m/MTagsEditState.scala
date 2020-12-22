@@ -3,10 +3,11 @@ package io.suggest.lk.tags.edit.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.tags.edit.MTagsEditProps
-import io.suggest.common.tags.search.MTagsFound
+import io.suggest.common.tags.search.{MTagFound, MTagsFound}
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -54,4 +55,19 @@ case class MTagsEditState(
                            props        : MTagsEditProps      = MTagsEditProps(),
                            found        : Pot[MTagsFound]     = Pot.empty,
                            searchTimer  : Option[Long]        = None
-                         )
+                         ) {
+
+  lazy val renderOptions: List[MTagFound] = {
+    var tagsAcc = found
+      .fold( List.empty[MTagFound] )(_.tags)
+
+    // Если человек вводит название неизвестного тега, то отрендерить и его:
+    val queryAsMtf = props.query.asTagFound
+    val query = props.query.text
+    if (query.nonEmpty && !tagsAcc.exists(_.face ==* query))
+      tagsAcc ::= queryAsMtf
+
+    tagsAcc
+  }
+
+}

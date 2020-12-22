@@ -57,6 +57,7 @@ class JsMessagesUtil @Inject() (
   /** Сообщения редактора тегов. */
   private def TAGS_EDITOR_MSGS: IterableOnce[String] = {
     MC.`Add` ::
+      MC.`Clear` ::
       "Tags.choosing" ::
       MC.`Add.tags` ::
       MC.`Delete` ::

@@ -27,4 +27,4 @@ case class SetTagSearchQuery(query: String) extends TagsEditAction
 case object AddCurrentTag extends TagsEditAction
 
 
-case class StartSearchReq(now: Long) extends TagsEditAction
+case class StartSearchReq(now: Long = System.currentTimeMillis()) extends TagsEditAction

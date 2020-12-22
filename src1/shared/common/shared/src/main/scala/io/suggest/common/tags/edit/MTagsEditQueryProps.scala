@@ -1,6 +1,7 @@
 package io.suggest.common.tags.edit
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.tags.search.MTagFound
 import io.suggest.i18n.MMessage
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -31,7 +32,13 @@ object MTagsEditQueryProps {
 
 
 /** Состояние поиска. */
-case class MTagsEditQueryProps(
-                                text    : String = "",
-                                errors  : Seq[MMessage] = Nil,
-                              )
+final case class MTagsEditQueryProps(
+                                      text    : String = "",
+                                      errors  : Seq[MMessage] = Nil,
+                                    ) {
+
+  /** Приведение к MTagFound, с поддержанием референсной целостности. */
+  lazy val asTagFound =
+    MTagFound( text, count = 0 )
+
+}

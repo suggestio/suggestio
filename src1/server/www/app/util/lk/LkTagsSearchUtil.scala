@@ -67,11 +67,10 @@ final class LkTagsSearchUtil @Inject() (
     for {
       found <- mNodes.dynSearch(nodeSearch)
     } yield {
-      val infos = for {
-        tn      <- found
+      val infos = (for {
+        tn      <- found.iterator
         tagEdge <- tn.edges
           .withPredicateIter( MPredicates.TaggedBy.Self )
-          .toSeq
         tFace   <- tagEdge.info.tags.headOption
         tCount  <- tagEdge.order
       } yield {
@@ -79,7 +78,8 @@ final class LkTagsSearchUtil @Inject() (
           face  = tFace,
           count = tCount
         )
-      }
+      })
+        .to( List )
 
       MTagsFound(
         tags = infos

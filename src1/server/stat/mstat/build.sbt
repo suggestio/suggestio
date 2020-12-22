@@ -9,7 +9,7 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 resolvers ++= {
   import Common.Repo._
   Seq(
-    ("typesafe-releases"     at TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true),
+    ("typesafe-releases-art" at TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true),
     ("sonatype-oss-releases" at SONATYPE_OSS_RELEASES_URL).withAllowInsecureProtocol(true)
   )
 }

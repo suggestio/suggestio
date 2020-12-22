@@ -5,7 +5,7 @@ name := "swfs"
 version := "0.0.0"
 
 resolvers ++= Seq(
-  ("typesafe-releases"       at Common.Repo.TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true),
+  ("typesafe-releases-art"   at Common.Repo.TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true),
   ("sonatype-oss-releases"   at Common.Repo.SONATYPE_OSS_RELEASES_URL).withAllowInsecureProtocol(true),
   ("sonatype-oss-snapshots"  at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL).withAllowInsecureProtocol(true)
 )

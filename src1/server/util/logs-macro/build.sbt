@@ -5,7 +5,7 @@ name := "logs-macro"
 version := "0.0.0"
 
 resolvers ++= Seq(
-  ("typesafe-releases" at Common.Repo.TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true)
+  ("typesafe-releases-art" at Common.Repo.TYPESAFE_RELEASES_URL).withAllowInsecureProtocol(true)
 )
 
 
