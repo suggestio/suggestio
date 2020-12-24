@@ -12,7 +12,7 @@ import io.suggest.ad.edit.m.edit.{MStripEdS, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
-import io.suggest.color.IColorPickerMarker
+import io.suggest.color.{IColorPickerMarker, MHistogram}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.scalaz.ZTreeUtil._
@@ -26,6 +26,7 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.edit.v.JdEditR
 import io.suggest.jd.tags.{JdTag, MJdShadow, MJdTagName, MJdTagNames}
+import io.suggest.lk.m.color.MColor2PickerCtx
 import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, TouchSwitchR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
@@ -68,6 +69,7 @@ class LkAdEditFormR(
                      val showWideR              : ShowWideR,
                      val colorCheckBoxR         : ColorCheckBoxR,
                      rotateR                    : RotateR,
+                     outLineR                   : OutLineR,
                      widthPxOptR                : WidthPxOptR,
                      lineHeightR                : LineHeightR,
                      val slideBlockR            : SlideBlockR,
@@ -78,6 +80,7 @@ class LkAdEditFormR(
                      titleR                     : TitleR,
                      textShadowR                : TextShadowR,
                      val touchSwitchR           : TouchSwitchR,
+                     //colorPickerCtxP            : React.Context[MColor2PickerCtx],
                    ) {
 
   type Props = ModelProxy[MAeRoot]
@@ -104,6 +107,7 @@ class LkAdEditFormR(
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                               contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
                               isTouchDevSomeC                 : ReactConnectProxy[Some[Boolean]],
+                              //colorPaletteC                   : ReactConnectProxy[MHistogram],
                             )
 
   case class SlideBlocksState(
@@ -129,6 +133,7 @@ class LkAdEditFormR(
 
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
+      val br = <.br: VdomNode
 
       val contentDiv = <.div(
         ^.`class` := Css.Overflow.HIDDEN,
@@ -140,11 +145,11 @@ class LkAdEditFormR(
         CssR.component( quillCssFactory ),
 
         // Отрендерить стили редактора:
-        p.wrap(_ => lkCss)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
-        p.wrap(_ => lkAdEditCss)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
+        p.wrap(_ => lkCss)( CssR.compProxied.apply ),
+        p.wrap(_ => lkAdEditCss)( CssR.compProxied.apply ),
 
         // Рендер jd-css
-        p.wrap(_ => jdCssStatic)( CssR.compProxied.apply )(implicitly, FastEq.AnyRefEq),
+        p.wrap(_ => jdCssStatic)( CssR.compProxied.apply ),
         s.jdCssArgsC { CssR.compProxied.apply },
 
         // Редактирование заголовка.
@@ -222,14 +227,19 @@ class LkAdEditFormR(
               ),
 
               s.expandModeOptC { showWideR.apply },
-              <.br, <.br, <.br,
+              br,
+              br,
+
+              // Управление обводкой данного блока.
+              p.wrap( _blockFiltered(_.getLabel.props1.outline) )( outLineR.component.apply ),
+              br, br, br,
 
               // Управление main-блоками.
               s.useAsMainStripPropsOptC { useAsMainR.apply },
-              <.br,
+              br,
 
               // Кнопка удаления текущего блока.
-              s.stripEdSOptC { deleteStripBtnR.apply }
+              s.stripEdSOptC { deleteStripBtnR.apply },
             )
             // Слайд редактор блока.
             val slideBlockVdom = s.slideBlocks.block { propsOpt =>
@@ -282,7 +292,7 @@ class LkAdEditFormR(
 
               // Редактор контента
               s.quillEdOptC { quillEditorR.apply },
-              <.br,
+              br,
 
               // Цвет фона контента.
               s.colors.contentBgCbOptC { colorCheckBoxR.apply },
@@ -301,7 +311,7 @@ class LkAdEditFormR(
                 __qdContentSelected(_)(_.props1.lineHeight)
               }(lineHeightR.apply)(implicitly, FastEq.ValueEq),
 
-              <.br,
+              br,
               // Управление тенью текста:
               p.wrap { mroot =>
                 mroot.doc.jdDoc.jdArgs.selJdt
@@ -354,7 +364,7 @@ class LkAdEditFormR(
 
         ),
 
-        <.br,
+        br,
 
         <.div(
           ^.`class` := Css.flat( Css.Lk.Submit.SUBMIT_W, Css.Size.M ),
@@ -366,7 +376,7 @@ class LkAdEditFormR(
       )
 
       // Провайдер поддержки drag-drop:
-      s.isTouchDevSomeC { isTouchDevSomeProxy =>
+      val rDndCtx = s.isTouchDevSomeC { isTouchDevSomeProxy =>
         val isTouchDev = isTouchDevSomeProxy.value.value
         val _backend =
           if (isTouchDev) TouchBackend
@@ -384,8 +394,28 @@ class LkAdEditFormR(
           innerContent
         )
       }
+
+      // Пробросить color palette через контекст внутрь color2 picker'ов.
+      // TODO Требуется mui color 0.4.7 из-за https://github.com/mikbry/material-ui-color/issues/86
+      //s.colorPaletteC { colorPaletteProxy =>
+      //  val histed = MColor2PickerCtx( colorPaletteProxy.value )
+      //  colorPickerCtxP.provide( histed )(
+          rDndCtx
+      //  )
+      //}
     }
 
+  }
+
+
+  private def _blockFiltered[T](f: TreeLoc[JdTag] => Option[T])
+                               (mroot: MAeRoot): Option[T] = {
+    // Без for, чтобы финальные Option-инстансы не пересобирались из-за финального yield/.map()
+    mroot.doc.jdDoc.jdArgs
+      .selJdt
+      .treeLocOpt
+      .filter(_.getLabel.name ==* MJdTagNames.STRIP)
+      .flatMap(f)
   }
 
 
@@ -396,14 +426,7 @@ class LkAdEditFormR(
       // Фунция с дедублицированным кодом сборки коннекшена до пропертисов plus-minus control'ов (для стрипов).
       def __mkBlockFilteredC[T](f: TreeLoc[JdTag] => Option[T])
                                (implicit feq: FastEq[T]): ReactConnectProxy[Option[T]] = {
-        p.connect { mroot =>
-          // Без for, чтобы финальные Option-инстансы не пересобирались из-за финального yield/.map()
-          mroot.doc.jdDoc.jdArgs
-            .selJdt
-            .treeLocOpt
-            .filter(_.getLabel.name ==* MJdTagNames.STRIP)
-            .flatMap(f)
-        }( OptFastEq.Wrapped( feq ) )
+        p.connect( _blockFiltered(f)  )( OptFastEq.Wrapped( feq ) )
       }
 
       val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
@@ -574,7 +597,7 @@ class LkAdEditFormR(
 
                 colorPickerR.PropsVal(
                   color         = bgColor,
-                  colorPresets  = mroot.doc.editors.colorsState.colorPresets,
+                  colorPresets  = mroot.doc.editors.colorsState.colorPresets.colors,
                   cssClass      = cssClassOpt,
                   topLeftPx     = Some( topLeft2 ),
                 )
@@ -680,6 +703,8 @@ class LkAdEditFormR(
         isTouchDevSomeC = p.connect { mroot =>
           OptionUtil.SomeBool( mroot.conf.touchDev )
         }( FastEq.AnyRefEq ),
+
+        //colorPaletteC = p.connect( _.doc.editors.colorsState.colorPresets ),
 
       )
     }

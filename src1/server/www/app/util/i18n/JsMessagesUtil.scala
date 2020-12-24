@@ -380,6 +380,7 @@ class JsMessagesUtil @Inject() (
       MC.`Dont.expand` ::
       MC.`Line.height` ::
       MC.`Title` ::
+      MC.`Outline` :: MC.`Transparent` :: MC.`Define.manually` ::
       MBlockExpandModes.values.iterator.map(_.msgCode).toList
   }
 

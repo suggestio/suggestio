@@ -38,9 +38,9 @@ object JdTag {
   /** Полиморфная поддержка play-json. */
   implicit val JD_TAG_FORMAT: OFormat[JdTag] = (
     (__ \ Fields.TYPE_FN).format[MJdTagName] and
-    (__ \ Fields.PROPS_FN).formatNullable[MJdtProps1]
-      .inmap[MJdtProps1](
-        EmptyUtil.opt2ImplMEmptyF(MJdtProps1),
+    (__ \ Fields.PROPS_FN).formatNullable[MJdProps1]
+      .inmap[MJdProps1](
+        EmptyUtil.opt2ImplMEmptyF(MJdProps1),
         EmptyUtil.implEmpty2OptF
       ) and
     (__ \ Fields.QD_PROPS_FN).formatNullable[MQdOp]
@@ -58,8 +58,8 @@ object JdTag {
   def qd(topLeft: MCoords2di = null): JdTag = {
     JdTag(
       MJdTagNames.QD_CONTENT,
-      props1 = Option(topLeft).fold(MJdtProps1.empty) { tL =>
-        MJdtProps1(
+      props1 = Option(topLeft).fold(MJdProps1.empty) { tL =>
+        MJdProps1(
           topLeft = Some(tL)
         )
       }
@@ -97,7 +97,7 @@ object JdTag {
   def block(bm: BlockMeta, bgColor: Option[MColorData] = None): JdTag = {
     apply(
       MJdTagNames.STRIP,
-      props1 = MJdtProps1(
+      props1 = MJdProps1(
         bgColor     = bgColor,
         widthPx     = Some(bm.width),
         heightPx    = Some(bm.height),
@@ -186,6 +186,14 @@ object JdTag {
         case other =>
           throw new IllegalArgumentException( (ErrorMsgs.JD_TREE_UNEXPECTED_ROOT_TAG, other).toString() )
       }
+    }
+
+    def getMainBgColor: Option[MColorData] = {
+      getMainBlockOrFirst
+        ._1
+        .rootLabel
+        .props1
+        .bgColor
     }
 
     def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {
@@ -278,7 +286,7 @@ object JdTag {
   */
 final case class JdTag(
                         name      : MJdTagName,
-                        props1    : MJdtProps1    = MJdtProps1.empty,
+                        props1    : MJdProps1    = MJdProps1.empty,
                         qdProps   : Option[MQdOp] = None
                       )
   // lazy val hashCode: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?

@@ -5,7 +5,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.form.MFormResourceKey
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
+import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdProps1}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.n2.edge.EdgeUid_t
 import scalaz.Tree
@@ -143,7 +143,7 @@ object IJdEdgeIdViewAdp {
 
   private def _jdtag_p1_bgImg_LENS = {
     JdTag.props1
-      .composeLens( MJdtProps1.bgImg )
+      .composeLens( MJdProps1.bgImg )
   }
 
 }

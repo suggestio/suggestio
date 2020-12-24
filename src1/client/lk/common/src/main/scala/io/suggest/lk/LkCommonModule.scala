@@ -1,12 +1,14 @@
 package io.suggest.lk
 
 import com.softwaremill.macwire._
+import io.suggest.lk.m.color.MColor2PickerCtx
 import io.suggest.lk.r._
 import io.suggest.lk.r.captcha.CaptchaFormR
 import io.suggest.lk.r.color._
 import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR}
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.lk.r.sms.SmsCodeFormR
+import japgolly.scalajs.react.React
 
 /**
   * Suggest.io
@@ -55,6 +57,12 @@ object LkCommonModule {
   lazy val touchSwitchR = wire[TouchSwitchR]
 
   lazy val errorPopupR = wire[ErrorPopupR]
+
+
+  lazy val color2PickerCtx: React.Context[MColor2PickerCtx] =
+    React.createContext[MColor2PickerCtx]( MColor2PickerCtx() )
+
+  lazy val color2PickerR = wire[Color2PickerR]
 
 }
 

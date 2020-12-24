@@ -21,14 +21,14 @@ import play.api.libs.json._
   *
   * Неявно-пустая модель.
   */
-object MJdtProps1 extends IEmpty {
+object MJdProps1 extends IEmpty {
 
-  override type T = MJdtProps1
+  override type T = MJdProps1
 
   override def empty = apply()
 
   /** Поддержка play-json. */
-  implicit def jdtProps1Format: OFormat[MJdtProps1] = {
+  implicit def jdtProps1Format: OFormat[MJdProps1] = {
     (
       (__ \ "a").formatNullable[MColorData] and
       (__ \ "b").formatNullable[MJdEdgeId] and
@@ -39,22 +39,24 @@ object MJdtProps1 extends IEmpty {
       (__ \ "f").formatNullable[Int] and
       (__ \ "h").formatNullable[Int] and
       (__ \ "x").formatNullable[MBlockExpandMode] and
-      (__ \ "l").formatNullable[Int]
+      (__ \ "l").formatNullable[Int] and
+      (__ \ "o").formatNullable[MJdOutLine]
     )(apply, unlift(unapply))
   }
 
-  @inline implicit def univEq: UnivEq[MJdtProps1] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJdProps1] = UnivEq.derive
 
-  def bgColor     = GenLens[MJdtProps1](_.bgColor)
-  def bgImg       = GenLens[MJdtProps1](_.bgImg)
-  def topLeft     = GenLens[MJdtProps1](_.topLeft)
-  def isMain      = GenLens[MJdtProps1](_.isMain)
-  def rotateDeg   = GenLens[MJdtProps1](_.rotateDeg)
-  def textShadow  = GenLens[MJdtProps1](_.textShadow)
-  def widthPx     = GenLens[MJdtProps1](_.widthPx)
-  def heightPx    = GenLens[MJdtProps1](_.heightPx)
-  def expandMode  = GenLens[MJdtProps1](_.expandMode)
-  def lineHeight  = GenLens[MJdtProps1](_.lineHeight)
+  def bgColor     = GenLens[MJdProps1](_.bgColor)
+  def bgImg       = GenLens[MJdProps1](_.bgImg)
+  def topLeft     = GenLens[MJdProps1](_.topLeft)
+  def isMain      = GenLens[MJdProps1](_.isMain)
+  def rotateDeg   = GenLens[MJdProps1](_.rotateDeg)
+  def textShadow  = GenLens[MJdProps1](_.textShadow)
+  def widthPx     = GenLens[MJdProps1](_.widthPx)
+  def heightPx    = GenLens[MJdProps1](_.heightPx)
+  def expandMode  = GenLens[MJdProps1](_.expandMode)
+  def lineHeight  = GenLens[MJdProps1](_.lineHeight)
+  def outline     = GenLens[MJdProps1](_.outline)
 
 
   object LineHeight {
@@ -62,6 +64,19 @@ object MJdtProps1 extends IEmpty {
     def MAX = 300
     def isValid(lineHeight: Int): Boolean =
       (lineHeight >= 2) || (lineHeight <= MAX)
+  }
+
+
+  implicit final class JdtP1Ext( private val jdP1: MJdProps1 ) extends AnyVal {
+
+    def wh: Option[MSize2di] = {
+      for (w <- jdP1.widthPx; h <- jdP1.heightPx)
+        yield MSize2di(w, height = h)
+    }
+
+    def isContentCssStyled: Boolean =
+      jdP1.lineHeight.nonEmpty
+
   }
 
 }
@@ -81,19 +96,21 @@ object MJdtProps1 extends IEmpty {
   * @param heightPx Высота. Вынесена из BlockMeta.height.
   * @param expandMode Режим расширения тега. Вынесено из BlockMeta.expandMode
   * @param lineHeight Межстрочный интервал.
+  * @param outline Поле с данными обводки.
   */
-case class MJdtProps1(
-                       bgColor    : Option[MColorData]        = None,
-                       bgImg      : Option[MJdEdgeId]         = None,
-                       topLeft    : Option[MCoords2di]        = None,
-                       isMain     : Option[Boolean]           = None,
-                       rotateDeg  : Option[Int]               = None,
-                       textShadow : Option[MJdShadow]         = None,
-                       widthPx    : Option[Int]               = None,
-                       heightPx   : Option[Int]               = None,
-                       expandMode : Option[MBlockExpandMode]  = None,
-                       lineHeight : Option[Int]               = None,
-)
+final case class MJdProps1(
+                            bgColor    : Option[MColorData]        = None,
+                            bgImg      : Option[MJdEdgeId]         = None,
+                            topLeft    : Option[MCoords2di]        = None,
+                            isMain     : Option[Boolean]           = None,
+                            rotateDeg  : Option[Int]               = None,
+                            textShadow : Option[MJdShadow]         = None,
+                            widthPx    : Option[Int]               = None,
+                            heightPx   : Option[Int]               = None,
+                            expandMode : Option[MBlockExpandMode]  = None,
+                            lineHeight : Option[Int]               = None,
+                            outline    : Option[MJdOutLine]        = None,
+                          )
   extends EmptyProduct
 {
 
@@ -113,14 +130,6 @@ case class MJdtProps1(
     }
   }
 
-  def wh: Option[MSize2di] = {
-    for (w <- widthPx; h <- heightPx)
-      yield MSize2di(w, height = h)
-  }
-
-  def isContentCssStyled: Boolean =
-    lineHeight.nonEmpty
-
   override def toString: String = {
     StringUtil.toStringHelper(this, 128) { renderF =>
       bgColor foreach renderF("bgC")
@@ -133,6 +142,7 @@ case class MJdtProps1(
       heightPx foreach renderF("h")
       expandMode foreach renderF("exp")
       lineHeight foreach renderF("lh")
+      outline foreach renderF("ol")
     }
   }
 

@@ -245,6 +245,14 @@ object Common {
       */
     val FLOW_JS = "2.14.1"
 
+    /** The lightest colorpicker for React Material-Ui.
+      * @see [[https://github.com/mikbry/material-ui-color]]
+      */
+    val MATERIALUI_COLOR = "0.4.6"
+
+    /** material-ui-color зачем-то зависит от styled-components. */
+    val STYLED_COMPONENTS = "5.2.1"
+
   }
 
 

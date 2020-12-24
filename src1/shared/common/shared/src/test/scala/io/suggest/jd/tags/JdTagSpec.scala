@@ -94,7 +94,7 @@ object JdTagSpec extends SimpleTestSuite {
 
 
   test("JSON: 3-level document tree with inner children") {
-    val jdTag_p1_topLeft = JdTag.props1 composeLens MJdtProps1.topLeft
+    val jdTag_p1_topLeft = JdTag.props1 composeLens MJdProps1.topLeft
     val doc = Tree.Node(
       JdTag.document,
       EphemeralStream(

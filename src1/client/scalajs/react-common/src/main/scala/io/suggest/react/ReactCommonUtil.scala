@@ -27,6 +27,12 @@ object ReactCommonUtil {
       .andThen( _.runNow() )
   }
 
+  def cbFun0ToJsCb[Res](fun: () => CallbackTo[Res]): js.Function0[Res] = {
+    {() =>
+      fun().runNow
+    }
+  }
+
   /**
     * Приведение функции, возвращающей js Callback к js-функции-листенеру.
     * Это некая замена "==>" для pure-js-компонентов.

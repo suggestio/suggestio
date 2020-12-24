@@ -173,7 +173,7 @@ lazy val lkCommonSjs = {
     .dependsOn(
       commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
       reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs,
-      flowjsSjs, muiTreasurySjs, reactResizableSjs,
+      flowjsSjs, muiTreasurySjs, reactResizableSjs, reactMaterialUiColorSjs,
     )
 }
 
@@ -509,6 +509,12 @@ lazy val muiTreasurySjs = {
     .dependsOn( reactMaterialUiSjs )
 }
 
+/** API для mui color picker. */
+lazy val reactMaterialUiColorSjs = {
+  Project( id = "scalajs-react-materialui-color", base = file(DIR0 + "client/scalajs/react-materialui-color") )
+    .dependsOn( reactMaterialUiSjs )
+}
+
 /** Форма организации заливки какого-либо файла на сервер. */
 lazy val sysEdgeEditSjs = {
   Project(id = "sys-edge-edit-sjs", base = file(DIR0 + "client/sys/edge-edit"))
@@ -672,7 +678,7 @@ lazy val client = project
   .aggregate(
     commonJS,
     commonSjs, commonReactSjs,
-    reactMaterialUiSjs, reactQrCodeSjs, muiTreasurySjs,
+    reactMaterialUiSjs, reactQrCodeSjs, muiTreasurySjs, reactMaterialUiColorSjs,
     leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
     lkAdvCommonSjs, mapsSjs,
     lkSjs, sysSjs,

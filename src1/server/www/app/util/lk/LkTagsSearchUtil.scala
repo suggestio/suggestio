@@ -1,7 +1,6 @@
 package util.lk
 
 import javax.inject.Inject
-import javax.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.search.{MTagFound, MTagsFound}
 import io.suggest.es.model.{EsModel, MEsNestedSearch}

@@ -19,6 +19,8 @@ object MHistogram
   extends IEsMappingProps
 {
 
+  def empty = apply()
+
   object Fields {
     val COLORS_FN = "c"
   }
@@ -26,11 +28,11 @@ object MHistogram
   /** Поддержка play-json. Используется в т.ч. для веб-сокетов. */
   implicit def histogramJson: OFormat[MHistogram] = {
     val F = Fields
-    val mcdsJson = implicitly[Format[Seq[MColorData]]]
+    val mcdsJson = implicitly[Format[List[MColorData]]]
 
     val normalFormat = (__ \ F.COLORS_FN)
       .formatNullable( mcdsJson )
-      .inmap[Seq[MColorData]](
+      .inmap[List[MColorData]](
         EmptyUtil.opt2ImplEmpty1F( Nil ),
         colors => Option.when(colors.nonEmpty)(colors)
       )
@@ -120,10 +122,12 @@ object MHistogram
   * @param colors Отсортированная гистограмма.
   */
 case class MHistogram(
-                       colors     : Seq[MColorData],
+                       colors     : List[MColorData]    = Nil,
                      )
   extends EmptyProduct
 {
+
+  def withColors(colors: List[MColorData]) = copy(colors = colors)
 
   /** Выставить всем цветам freqPc но основе поля count. */
   lazy val withRelFrequences = this.relFreqsCalculated

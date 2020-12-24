@@ -1,6 +1,5 @@
 package io.suggest.lk.m.color
 
-import diode.FastEq
 import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -16,19 +15,11 @@ object MColorsState {
 
   def empty = apply()
 
-  implicit object MColorsDataSFastEq extends FastEq[MColorsState] {
-    override def eqv(a: MColorsState, b: MColorsState): Boolean = {
-      (a.colorPresets ===* b.colorPresets) &&
-      (a.histograms ===* b.histograms) &&
-      (a.picker ===* b.picker)
-    }
-  }
-
   @inline implicit def univEq: UnivEq[MColorsState] = UnivEq.derive
 
 
   /** Макс.длина списка презетов. Должна быть кратна 8 (зависит от color-picker'а). */
-  private val PRESETS_LEN_MAX = 16
+  private def PRESETS_LEN_MAX = 16
 
   def prependPresets(presets0: List[MColorData], mcd: MColorData): List[MColorData] = {
     var cps = mcd :: presets0
@@ -52,18 +43,24 @@ object MColorsState {
   *               None - color picker отсутствует.
   */
 case class MColorsState(
-                         colorPresets    : List[MColorData]           = Nil,
+                         colorPresets    : MHistogram                 = MHistogram.empty,
                          histograms      : Map[String, MHistogram]    = Map.empty,
                          picker          : Option[MColorPickerS]      = None,
                        ) {
 
-  def withColorPresets(colorPresets: List[MColorData])        = copy(colorPresets = colorPresets)
+  def withColorPresets(colorPresets: MHistogram)        = copy(colorPresets = colorPresets)
   def withHistograms(histograms: Map[String, MHistogram])     = copy(histograms = histograms)
   def withPicker(picker: Option[MColorPickerS])               = copy(picker = picker)
 
-  lazy val colorPresetsLen = colorPresets.length
+  lazy val colorPresetsLen = colorPresets.colors.length
 
-  def prependPresets(mcd: MColorData) = withColorPresets( MColorsState.prependPresets(colorPresets, mcd) )
+  def prependPresets(mcd: MColorData) =
+    withColorPresets(
+      MHistogram(
+        MColorsState.prependPresets(colorPresets.colors, mcd)
+      )
+    )
+
 
 }
 

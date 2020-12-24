@@ -80,12 +80,7 @@ final class GridCoreR(
               else
                 ad.focOrAlwaysOpened
             }
-            bgColorOpt = adDataForJdRenderArgs.doc.template
-              .getMainBlockOrFirst
-              ._1
-              .rootLabel
-              .props1
-              .bgColor
+            bgColorOpt = adDataForJdRenderArgs.doc.template.getMainBgColor
             if bgColorOpt.nonEmpty
           } yield {
             MJdRenderArgs(

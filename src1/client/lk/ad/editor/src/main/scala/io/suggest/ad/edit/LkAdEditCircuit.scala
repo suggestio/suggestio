@@ -187,7 +187,7 @@ class LkAdEditCircuit(
 
     def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
       JdTag.props1
-        .composeLens( MJdtProps1.bgColor )
+        .composeLens( MJdProps1.bgColor )
         .set( colorOpt2 )( jdTag )
     }
 
@@ -260,7 +260,7 @@ class LkAdEditCircuit(
   private val shadowColorRW = {
     val zoomer = new ZoomToBgColorPick {
       def jdt_p1_textShadow_color_TRAV = JdTag.props1
-        .composeLens( MJdtProps1.textShadow )
+        .composeLens( MJdProps1.textShadow )
         .composeTraversal( Traversal.fromTraverse[Option, MJdShadow] )
         .composeLens( MJdShadow.color )
 

@@ -3,7 +3,7 @@ package io.suggest.ad.edit.v.edit
 import diode.react.ModelProxy
 import io.suggest.ad.edit.m.LineHeightSet
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.tags.MJdtProps1
+import io.suggest.jd.tags.MJdProps1
 import io.suggest.lk.r.SliderOptR
 import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq
@@ -33,12 +33,12 @@ class LineHeightR(
 
       propsOptProxy.wrap { valueOpt =>
         for (value <- valueOpt) yield {
-          val max = MJdtProps1.LineHeight.MAX
+          val max = MJdProps1.LineHeight.MAX
           sliderOptR.PropsVal(
             label     = label,
             value     = value,
             onChange  = onChange,
-            min       = MJdtProps1.LineHeight.MIN,
+            min       = MJdProps1.LineHeight.MIN,
             max       = max,
             default   = 25,
           )

@@ -1160,3 +1160,7 @@ Ad.adv.manage=Размещение карточки
 Bg.location=Текущее местоположение
 Bg.location.hint=Обнаружение предложений поблизости
 
+Outline=Обводка
+Transparent=Прозрачно
+Define.manually=Задать вручную
+

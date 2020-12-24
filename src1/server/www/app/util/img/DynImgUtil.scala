@@ -14,7 +14,7 @@ import io.suggest.es.model.{BulkProcessorListener, EsModel, MEsNestedSearch}
 import io.suggest.img.{MImgFormat, MImgFormats}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.jd.tags.{JdTag, MJdtProps1}
+import io.suggest.jd.tags.{JdTag, MJdProps1}
 import io.suggest.n2.edge.MPredicates
 import io.suggest.n2.edge.search.Criteria
 import io.suggest.n2.extra.{MAdnExtra, MNodeExtras}
@@ -556,7 +556,7 @@ final class DynImgUtil @Inject() (
       .composeLens( MNodeDoc.template )
 
     val jdt_p1_bgImg_LENS = JdTag.props1
-      .composeLens( MJdtProps1.bgImg )
+      .composeLens( MJdProps1.bgImg )
 
     val jdt_qdProps_edgeInfo_LENS = JdTag.qdProps
       .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )

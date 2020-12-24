@@ -10,7 +10,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.grid.GridCalc
 import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId, MJdTagId}
-import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
+import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdProps1}
 import io.suggest.n2.edge.{EdgeUid_t, MEdge, MEdgeDoc, MNodeEdges, MPredicates}
 import io.suggest.n2.media.MPictureMeta
 import io.suggest.n2.node.{MNode, MNodeTypes, MNodes}
@@ -240,7 +240,7 @@ class JdAdUtil @Inject()(
   /** traversal от JdTag до bm.isWide-флага. */
   private def _jdt_p1_bm_wide_LENS = {
     JdTag.props1
-      .composeLens( MJdtProps1.expandMode )
+      .composeLens( MJdProps1.expandMode )
   }
 
   /** Выставление нового значения флага wide для всех блоков, имеющих иное значение флага.
@@ -568,7 +568,7 @@ class JdAdUtil @Inject()(
         // Удалить все crop'ы из растровых картинок, у которых задан кроп. Все растровые картинки должны бы быть уже подогнаны под карточку.
 
         val _jdt_p1_bgImg_LENS = JdTag.props1
-          .composeLens( MJdtProps1.bgImg )
+          .composeLens( MJdProps1.bgImg )
 
         val _jdt_p1_bgImg_crop_LENS = _jdt_p1_bgImg_LENS
           .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )

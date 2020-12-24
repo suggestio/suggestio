@@ -84,6 +84,8 @@ class LkAdEditModule
 
   lazy val deleteConfirmPopupR = wire[DeleteConfirmPopupR]
 
+  lazy val outLineR = wire[OutLineR]
+
 
   // circuit deps
 

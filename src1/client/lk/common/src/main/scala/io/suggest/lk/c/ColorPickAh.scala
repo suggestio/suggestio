@@ -45,7 +45,7 @@ class ColorPickAh[M](
       )
 
       // Запилить в состояние презетов выбранный цвет.
-      if (m.isCompleted && !(v2.colorsState.colorPresets contains m.mcd)) {
+      if (m.isCompleted && !(v2.colorsState.colorPresets.colors contains m.mcd)) {
         v2 = v2.withColorsState(
           v2.colorsState
             .prependPresets( m.mcd )
@@ -67,7 +67,7 @@ class ColorPickAh[M](
       // Сохранить текущий цвет.
       for (
         mcd <- v0.colorOpt
-        if !v2.colorsState.colorPresets.contains(mcd)
+        if !(v2.colorsState.colorPresets.colors contains mcd)
       ) {
         v2 = v2.withColorsState(
           v2.colorsState.prependPresets( mcd )
@@ -90,6 +90,7 @@ class ColorPickAh[M](
             // "Старого" цвета нет, но возможно есть среди других цветов что-нибудь
             v0.colorsState
               .colorPresets
+              .colors
               .headOption
           }
           .getOrElse {
@@ -107,7 +108,9 @@ class ColorPickAh[M](
           colorOpt    = None,
           // И запихивать старый цвет в список цветов вместо oldColor?
           colorsState = v0.colorsState.copy(
-            colorPresets = (color0 :: v0.colorsState.colorPresets).distinct,
+            colorPresets = v0.colorsState.colorPresets.withColors(
+              (color0 :: v0.colorsState.colorPresets.colors).distinct
+            ),
             picker = for (p <- v0.colorsState.picker)
               yield p.withOldColor( v0.colorOpt )
           )

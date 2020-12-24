@@ -1,6 +1,7 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes, MBlockExpandMode}
+import io.suggest.color.MColorData
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
@@ -114,3 +115,12 @@ case class SetBlurTextShadow(blur: Int) extends ILkEditAction
 
 /** Редактирование заголовка карточки. */
 case class TitleEdit( title: String ) extends ILkEditAction
+
+
+/** Переключение ручного режима обводки. */
+case class OutlineOnOff( onOff: Boolean ) extends ILkEditAction
+/** Выставление цвета для цвета обводки. */
+case class OutlineColorSet(color: MColorData ) extends ILkEditAction
+case class OutlineColorModeSet( haveColor: Boolean ) extends ILkEditAction
+
+case class OutlineShowHide( isVisible: Boolean ) extends ILkEditAction

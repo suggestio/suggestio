@@ -340,7 +340,7 @@ class LkAdnEditFormR(
           } yield {
             colorPickerR.PropsVal(
               color         = mcd,
-              colorPresets  = props.internals.colorState.colorPresets,
+              colorPresets  = props.internals.colorState.colorPresets.colors,
               topLeftPx     = Some(
                 cps.shownAt.copy(
                   x = cps.shownAt.x - (if (marker ==* MColorTypes.Fg) 220 else 0),

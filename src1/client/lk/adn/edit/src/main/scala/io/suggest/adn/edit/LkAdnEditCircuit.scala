@@ -5,7 +5,7 @@ import io.suggest.spa.{CircuitUtil, OptFastEq, StateInp}
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
 import io.suggest.adn.edit.c.{NodeEditAh, RootAh}
 import io.suggest.adn.edit.m._
-import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes, MColors}
+import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes, MColors, MHistogram}
 import io.suggest.lk.c.{ColorPickAh, UploadAh}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MUploadAh
@@ -47,7 +47,9 @@ class LkAdnEditCircuit
       internals = MAdnEditInternals(
         conf = minit.conf,
         colorState = MColorsState(
-          colorPresets  = minit.form.meta.colors.allColorsIter.toList,
+          colorPresets = MHistogram(
+            minit.form.meta.colors.allColorsIter.toList
+          ),
         ),
       ),
       node = MAdnNodeS(

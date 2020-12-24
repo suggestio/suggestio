@@ -500,4 +500,8 @@ object MsgCodes {
   val `Debug` = "Debug"
   val `Version` = "Version"
 
+  val `Outline` = "Outline"
+  val `Transparent` = "Transparent"
+  val `Define.manually` = "Define.manually"
+
 }

@@ -25,6 +25,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Chip", JSImport.Default) object Chip              extends js.Any
   @js.native @JSImport("@material-ui/core/CircularProgress", JSImport.Default) object CircularProgress
       extends js.Any
+  @js.native @JSImport("@material-ui/core/ClickAwayListener", JSImport.Default) object ClickAwayListener extends js.Any
   @js.native @JSImport("@material-ui/core/DatePicker", JSImport.Default) object DatePicker extends js.Any
   @js.native @JSImport("@material-ui/core/Dialog", JSImport.Default) object Dialog         extends js.Any
   @js.native @JSImport("@material-ui/core/DialogActions", JSImport.Default) object DialogActions extends js.Any

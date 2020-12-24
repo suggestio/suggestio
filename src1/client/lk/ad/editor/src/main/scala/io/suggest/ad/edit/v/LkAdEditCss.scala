@@ -139,6 +139,14 @@ class LkAdEditCss
 
   }
 
+  object Outline {
+
+    val container = style(
+      display.flex,
+    )
+
+  }
+
 
   initInnerObjects(
     Title.titleInp,
@@ -147,6 +155,7 @@ class LkAdEditCss
     TextShadow.second,
     Crop.popup,
     StripMain.showAll,
+    Outline.container,
   )
 
 }

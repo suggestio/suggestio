@@ -59,8 +59,9 @@ final class TagsEditR(
       * Коллбэк ввода текста в поле имени нового тега.
       * Надо обновить состояние и запустить поисковый запрос, если требуется.
       */
-    private val _onTextChangeCb = ReactCommonUtil.cbFun3ToJsCb { (e: ReactEventFromInput, queryStr2: String, reason: OnInputChangeReason) =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetTagSearchQuery(queryStr2) )
+    private val _onTextChangeCb = ReactCommonUtil.cbFun3ToJsCb {
+      (e: ReactEventFromInput, queryStr2: String, reason: OnInputChangeReason) =>
+        ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetTagSearchQuery(queryStr2) )
     }
 
 
@@ -111,6 +112,7 @@ final class TagsEditR(
       val addTagsMsg = crCtxP.message( MsgCodes.`Add.tags` )
       val _tagAva = MuiAvatar()( HtmlConstants.DIEZ )
       val mtfEmpty = MTagFound("", 0)
+      val mcvDefault = MuiChip.Variant.DEFAULT
 
       <.div(
         // Локализованный заголовок виджета
@@ -128,7 +130,7 @@ final class TagsEditR(
                   MuiChip(
                     new MuiChipProps {
                       // TODO variant=outlined для уже установленных тегов на текущий момент.
-                      override val variant    = MuiChip.Variant.DEFAULT
+                      override val variant    = mcvDefault
                       override val onDelete   = _onTagDeleteCb( tagName )
                       override val label      = tagName
                       // Визуально разгружаем через отказ от #-аватара.
@@ -164,10 +166,11 @@ final class TagsEditR(
             (a.face ==* b.face)
           }: js.Function2[MTagFound, MTagFound, Boolean]
 
+          val mcvOutlined = MuiChip.Variant.OUTLINED
           val _renderOneOptionJsF = { (mtf: MTagFound, _: js.Object) =>
             MuiChip.component(
               new MuiChipProps {
-                override val variant    = MuiChip.Variant.OUTLINED
+                override val variant    = mcvOutlined
                 override val label      = mtf.face
                 override val avatar     = _tagAva.rawElement
               }

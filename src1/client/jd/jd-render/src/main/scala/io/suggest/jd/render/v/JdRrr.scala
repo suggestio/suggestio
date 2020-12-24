@@ -3,6 +3,7 @@ package io.suggest.jd.render.v
 import com.github.dantrain.react.stonecutter._
 import com.github.souporserious.react.measure.{ContentRect, Measure, MeasureChildrenArgs, MeasureProps}
 import diode.react.ModelProxy
+import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.css.Css
@@ -39,7 +40,6 @@ import scala.concurrent.Future
 final class JdRrr(
                    jdCssStatic        : JdCssStatic,
                    qdRrrHtml          : QdRrrHtml,
-                   //measureR           : MeasureR,
                  )
   extends Log
 {
@@ -71,10 +71,17 @@ final class JdRrr(
     def _groupOutlineRender(state: MJdRrrProps): TagMod = {
       state.jdArgs.renderArgs
         .groupOutLined
-        .whenDefined { mcd =>
+        .whenDefined { rootBlkColor =>
+          // Если в текущем или parent jdTag содержатся иные настройки outline.color, то взять их.
+          val mcdOpt = (state.subTree.rootLabel :: state.parents)
+            .iterator
+            .flatMap(_.props1.outline)
+            .nextOption()
+            .fold [Option[MColorData]] ( Some(rootBlkColor) ) ( _.color )
+
           TagMod(
             state.jdArgs.jdRuntime.jdCss.blockGroupOutline,
-            ^.outlineColor := mcd.hexCode,
+            ^.outlineColor := mcdOpt.fold( "rgba(0,0,0,0)" )(_.hexCode),
           )
         }
     }
@@ -190,8 +197,12 @@ final class JdRrr(
             jdCss.contentOuter,
             jdCss.qdBlF( state.tagId ),
 
-            // Если карточка имеет цвет outline-выделения, то выделить и контент:
-            _groupOutlineRender(state),
+            // Если карточка имеет цвет outline-выделения, то выделить и контент.
+            // При ротации никакой обводки не делаем, т.к. это имеет какой-то смысл делать только внутри контейнера с ротацией.
+            // TODO Возможно, вообще никакой qd-bl-обводки не делать? Или перенести это внутрь _renderQdContentTag()?
+            ReactCommonUtil.maybe(state.subTree.rootLabel.props1.rotateDeg.isEmpty)(
+              _groupOutlineRender(state)
+            ),
 
             // Сборка измерителя размеров тега:
             Measure {

@@ -252,7 +252,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стиль выделения группы блоков. */
   val blockGroupOutline = style(
     outlineStyle.solid,
-    outlineWidth( _szMulted( BlockPaddings.default.outlinePx ).px )
+    outlineWidth( _szMulted( BlockPaddings.default.outlinePx ).px ),
   )
 
   /** Стили контейнера контента: блок или qd-blockless. */

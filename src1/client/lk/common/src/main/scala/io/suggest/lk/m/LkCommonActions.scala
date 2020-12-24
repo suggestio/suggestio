@@ -15,6 +15,7 @@ import io.suggest.proto.http.model.{IHttpResultHolder, MCsrfToken}
 import io.suggest.spa.DAction
 import io.suggest.up.{ITransferProgressInfo, MUploadResp}
 import io.suggest.url.MHostUrl
+import monocle.Traversal
 import org.scalajs.dom.File
 
 import scala.util.Try
@@ -72,13 +73,26 @@ case class ColorBtnClick(vpXy: MCoords2di, marker: Option[IColorPickerMarker]) e
 case class ColorCheckboxChange(isEnabled: Boolean, marker: Option[IColorPickerMarker]) extends ILkCommonAction
 
 
+sealed trait IColor2Action extends ILkCommonAction
+
+
+/** Добавить в общую палитру цвет, указанный в исходнике. */
+case class ColorAddToPalette(
+                              mcd: MColorData,
+                            )
+  extends IColor2Action
+
+
 /** Клик просто где-то в body. */
 case object DocBodyClick extends ILkCommonAction
 
 
-
 /** Изменилось file-поле выбора картинки. */
-case class UploadFile(files: collection.Seq[File], resKey: MFormResourceKey) extends ILkCommonAction
+case class UploadFile(
+                       files      : collection.Seq[File],
+                       resKey     : MFormResourceKey,
+                     )
+  extends ILkCommonAction
 
 
 sealed trait IPictureCropAction extends ILkCommonAction

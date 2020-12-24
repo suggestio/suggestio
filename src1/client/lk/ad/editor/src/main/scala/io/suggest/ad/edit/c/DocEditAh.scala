@@ -5,7 +5,7 @@ import diode.data.Pot
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.{MDocS, MEditorsS, MJdDocEditS, MQdEditS, MSlideBlocks, MStripEdS, SlideBlockKeys}
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
@@ -19,7 +19,7 @@ import io.suggest.jd.render.u.JdUtil
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.lk.m.color.MColorsState
-import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
+import io.suggest.lk.m.{ColorAddToPalette, FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
 import io.suggest.n2.edge.{EdgesUtil, MEdgeDataJs, MEdgeDoc, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages}
 import io.suggest.pick.{BlobJsUtil, ContentTypeCheck, MimeConst}
@@ -42,7 +42,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
-import monocle.Traversal
+import monocle.{Lens, Traversal}
 
 import scala.util.Random
 import scalaz.{EphemeralStream, Tree, TreeLoc}
@@ -92,29 +92,29 @@ class DocEditAh[M](
 
   implicit class MDocSOptOpsExt( val treeLocOpt: Option[TreeLoc[JdTag]] ) {
 
-    def shadowUpdated(v0: MDocS)(f: Option[MJdShadow] => Option[MJdShadow]): ActionResult[M] = {
+    def docUpdated[T](v0: MDocS, p1Lens: Lens[MJdProps1, T], runtime: Boolean = true)(f: T => T): ActionResult[M] = {
       treeLocOpt.fold(noChange) { treeLoc0 =>
         val treeLoc2 = treeLoc0
           .modifyLabel {
             JdTag.props1
-              .composeLens( MJdtProps1.textShadow )
+              .composeLens( p1Lens )
               .modify(f)
           }
         val tpl2 = treeLoc2.toTree
         val jdDoc2 = (MJdDoc.template set tpl2)( v0.jdDoc.jdArgs.data.doc )
 
-        val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs)
-          .result
+        var modAccF = MJdArgs.data
+          .composeLens( MJdDataJs.doc )
+          .set(jdDoc2)
+
+        if (runtime) {
+          val jdRuntime2 = mkJdRuntime(jdDoc2, v0.jdDoc.jdArgs).result
+          modAccF = modAccF andThen (MJdArgs.jdRuntime set jdRuntime2)
+        }
 
         val v2 = MDocS.jdDoc
-          .composeLens(MJdDocEditS.jdArgs)
-          .modify(
-            MJdArgs.jdRuntime
-              .set( jdRuntime2 ) andThen
-            MJdArgs.data
-              .composeLens( MJdDataJs.doc )
-              .set(jdDoc2)
-          )( v0 )
+          .composeLens( MJdDocEditS.jdArgs )
+          .modify( modAccF )( v0 )
 
         updated(v2)
       }
@@ -126,7 +126,7 @@ class DocEditAh[M](
     val v0 = value
     v0.jdDoc.jdArgs.selJdt
       .treeLocOpt
-      .shadowUpdated(v0)(f)
+      .docUpdated(v0, MJdProps1.textShadow)(f)
   }
 
 
@@ -462,12 +462,12 @@ class DocEditAh[M](
         if (jdt0.props1.lineHeight !=* m.lineHeight) && (
           // Убедится, что значение не выходит за допустымые пределы поворота:
           m.lineHeight
-            .fold(true)( MJdtProps1.LineHeight.isValid )
+            .fold(true)( MJdProps1.LineHeight.isValid )
         )
 
       } yield {
         val jdt2 = JdTag.props1
-          .composeLens( MJdtProps1.lineHeight )
+          .composeLens( MJdProps1.lineHeight )
           .set( m.lineHeight )( jdt0 )
 
         _updateQdContentProps(jdt2, v0)
@@ -492,7 +492,7 @@ class DocEditAh[M](
 
       } yield {
         val jdt2 = JdTag.props1
-          .composeLens( MJdtProps1.rotateDeg )
+          .composeLens( MJdProps1.rotateDeg )
           .set( m.degrees )( jdt0 )
 
         _updateQdContentProps(jdt2, v0)
@@ -677,7 +677,7 @@ class DocEditAh[M](
             .map(_.getLabel)
             .to( LazyList )
           bgColor <- jdt.props1.bgColor
-          if !(v2.editors.colorsState.colorPresets contains bgColor)
+          if !(v2.editors.colorsState.colorPresets.colors contains bgColor)
         } yield {
           bgColor
         })
@@ -688,9 +688,11 @@ class DocEditAh[M](
         // Если есть обновления по цветам или отображается color picker...
         if (bgColorsAppend.nonEmpty) {
           // закинуть его цвет фона в color-презеты.
-          colorStateUpdAccF ::= MColorsState.colorPresets.modify {
-            bgColorsAppend.foldLeft(_) { MColorsState.prependPresets }
-          }
+          colorStateUpdAccF ::= MColorsState.colorPresets
+            .composeLens( MHistogram.colors )
+            .modify {
+              bgColorsAppend.foldLeft(_) { MColorsState.prependPresets }
+            }
         }
 
         if (v2.editors.colorsState.picker.nonEmpty)
@@ -834,10 +836,10 @@ class DocEditAh[M](
       val (sz3, lens) = m.model match {
         case bhs @ BlockHeights =>
           val sz2 = bhs.withValue( m.value )
-          sz2 -> MJdtProps1.heightPx
+          sz2 -> MJdProps1.heightPx
         case bws @ BlockWidths =>
           val sz2 = bws.withValue( m.value )
-          sz2 -> MJdtProps1.widthPx
+          sz2 -> MJdProps1.widthPx
       }
       val bmUpdateF = lens.set( Some(sz3.value) )
 
@@ -1088,7 +1090,7 @@ class DocEditAh[M](
       val jdtLabel2 = {
         val dndJdt0 = dndJdtLoc0.getLabel
         JdTag.props1
-          .composeLens( MJdtProps1.topLeft )
+          .composeLens( MJdProps1.topLeft )
           .set( Some(clXy2) )(dndJdt0)
       }
 
@@ -1234,7 +1236,7 @@ class DocEditAh[M](
 
         // Убрать значение topLeft, если задано. Это для qd-blockless, когда контент был вынесен за пределы блока.
         val jdt_p1_topLeft_LENS = JdTag.props1
-          .composeLens( MJdtProps1.topLeft )
+          .composeLens( MJdProps1.topLeft )
         val needModifyJdt = jdt_p1_topLeft_LENS
           .get(droppedBlockLabel)
           .nonEmpty
@@ -1323,7 +1325,7 @@ class DocEditAh[M](
           val topColorMcdOpt = Some(topColorMcd)
 
           lazy val p1_bgColor_LENS = JdTag.props1
-            .composeLens( MJdtProps1.bgColor )
+            .composeLens( MJdProps1.bgColor )
 
           val tpl2 = for {
             el1 <- v0.jdDoc.jdArgs.data.doc.template
@@ -1410,7 +1412,7 @@ class DocEditAh[M](
       }
 
       val jdt_p1_width_LENS = JdTag.props1
-        .composeLens( MJdtProps1.widthPx )
+        .composeLens( MJdProps1.widthPx )
 
       if (jdt_p1_width_LENS.get(jdt0) ==* widthPxOpt2) {
         // Ширина изменилась в исходное значение.
@@ -1549,7 +1551,7 @@ class DocEditAh[M](
       val v0 = value
 
       val jdt_p1_bm_expandOpt_LENS = JdTag.props1
-        .composeLens( MJdtProps1.expandMode )
+        .composeLens( MJdProps1.expandMode )
       val jdtLoc0 = v0.jdDoc.jdArgs
         .selJdt.treeLocOpt
         .get
@@ -1591,7 +1593,7 @@ class DocEditAh[M](
 
       // Фунция для ленивого обновления стрипа новым значением.
       val p1_isMain_LENS = JdTag.props1
-        .composeLens( MJdtProps1.isMain )
+        .composeLens( MJdProps1.isMain )
 
       def __updateLocLabel(label: JdTag, newValue: Option[Boolean]): JdTag = {
         if ( p1_isMain_LENS.get(label) !=* newValue) {
@@ -1851,7 +1853,7 @@ class DocEditAh[M](
           (jdt.name ==* MJdTagNames.QD_CONTENT) &&
           (jdt.props1.textShadow.isDefined !=* m.enabled)
         }
-        .shadowUpdated(v0) { _ =>
+        .docUpdated(v0, MJdProps1.textShadow) { _ =>
           OptionUtil.maybe(m.enabled) {
             MJdShadow(
               hOffset = 4,
@@ -1889,6 +1891,120 @@ class DocEditAh[M](
           )
       }
 
+
+    // Выставление цвета обводки.
+    case m: OutlineColorSet =>
+      val v0 = _ensureGroupOutlined( value )
+      val treeLocOpt = v0.jdDoc.jdArgs.selJdt.treeLocOpt
+      treeLocOpt
+        .filter { treeLoc =>
+          val jdt = treeLoc.getLabel
+          // TODO Надо активировать поддержку обводки на уровне DOCUMENT, когда будет поддержка этого в форме редактора.
+          (jdt.name ==* MJdTagNames.STRIP) &&
+          (!(jdt.props1.outline.flatMap(_.color) contains m.color))
+        }
+        .docUpdated( v0, MJdProps1.outline, runtime = false ) { jdOutlineOpt0 =>
+          val jdOutline0 = jdOutlineOpt0.get
+          val jdOutLine2 = (MJdOutLine.color set Some(m.color))(jdOutline0)
+          Some( jdOutLine2 )
+        }
+
+
+    // Активация/деакцивация вручную заданной обводки для блока/документа.
+    case m: OutlineOnOff =>
+      val v0 = _ensureGroupOutlined( value )
+      val treeLocOpt = v0.jdDoc.jdArgs.selJdt.treeLocOpt
+      treeLocOpt
+        .filter { treeLoc =>
+          val jdt = treeLoc.getLabel
+          // TODO Надо активировать поддержку обводки на уровне DOCUMENT, когда будет поддержка этого в форме редактора.
+          (jdt.name ==* MJdTagNames.STRIP) &&
+          (jdt.props1.outline.nonEmpty !=* m.onOff)
+        }
+        .docUpdated( v0, MJdProps1.outline, runtime = false ) { jdOutlineOpt0 =>
+          Option.when( m.onOff ) {
+            // Включение. Выставить начальное состояние:
+            jdOutlineOpt0 getOrElse {
+              MJdOutLine(
+                color = treeLocOpt
+                  .flatMap(_.getLabel.props1.bgColor),
+              )
+            }
+          }
+        }
+
+    case m: OutlineColorModeSet =>
+      val v0 = _ensureGroupOutlined( value )
+      val treeLocOpt = v0.jdDoc.jdArgs.selJdt.treeLocOpt
+      treeLocOpt
+        .filter { treeLoc =>
+          val jdt = treeLoc.getLabel
+          // TODO Надо активировать поддержку обводки на уровне DOCUMENT, когда будет поддержка этого в форме редактора.
+          (jdt.name ==* MJdTagNames.STRIP) &&
+          (jdt.props1.outline.exists(_.color.nonEmpty !=* m.haveColor))
+        }
+        .docUpdated( v0, MJdProps1.outline, runtime = false ) { jdOutlineOpt0 =>
+          val jdOutline0 = jdOutlineOpt0.get
+          val color2 = Option.when( m.haveColor ) {
+            jdOutline0
+              .color
+              .orElse {
+                treeLocOpt
+                  .flatMap(_.getLabel.props1.bgColor)
+              }
+              .getOrElse {
+                // TODO Взять цвет из другого (главного) блока?
+                MColorData.Examples.WHITE
+              }
+          }
+          val jdOutline2 = (MJdOutLine.color set color2)( jdOutline0 )
+          Some( jdOutline2 )
+        }
+
+
+    case m: OutlineShowHide =>
+      val v0 = value
+      if (m.isVisible) {
+        val v2 = _ensureGroupOutlined(v0)
+        if (v2 ===* v0)
+          noChange
+        else
+          updated(v2)
+      } else {
+        val goLens = DocEditAh._jdDoc_args_render_groupOutlined_LENS
+        if (goLens.get(v0).isEmpty) {
+          noChange
+        } else {
+          val v2 = (goLens set None)(v0)
+          updated(v2)
+        }
+      }
+
+
+
+    case m: ColorAddToPalette =>
+      val v0 = value
+      val v2 = MDocS.editors
+        .composeLens( MEditorsS.colorsState )
+        .modify( _.prependPresets( m.mcd ) )(v0)
+      updatedSilent(v2)
+
+  }
+
+
+  private def _ensureGroupOutlined(v0: MDocS): MDocS = {
+    val goLens = DocEditAh._jdDoc_args_render_groupOutlined_LENS
+
+    if (goLens.get(v0).isEmpty) {
+      // Нужно выявить цвет обводки на основе блока.
+      val bgMcdOpt = v0.jdDoc.jdArgs.data.doc.template.getMainBgColor
+      bgMcdOpt.fold(v0) { _ =>
+        (goLens set bgMcdOpt)(v0)
+      }
+    } else {
+      // Уже выставлен groupOutlined ранее. Вернуть исходник.
+      v0
+    }
   }
 
 }
@@ -1907,6 +2023,10 @@ object DocEditAh {
     }
   }
 
+  private def _jdDoc_args_render_groupOutlined_LENS = MDocS.jdDoc
+    .composeLens( MJdDocEditS.jdArgs )
+    .composeLens( MJdArgs.renderArgs )
+    .composeLens( MJdRenderArgs.groupOutLined )
 
   private def _jdArgs_renderArgs_dnd_LENS = {
     MDocS.jdDoc
