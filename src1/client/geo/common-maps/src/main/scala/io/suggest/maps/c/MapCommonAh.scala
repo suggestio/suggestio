@@ -76,17 +76,13 @@ class MapCommonAh[M](
         _setMapCenter(hlf, v2)
       }
 
-    // Сигнал "жесткой" центровки карты.
-    case ismc: ISetMapCenter =>
-      _setMapCenter(ismc)
-
     // Сигнал центровки карты с учетом попапа в указанной точке.
     case ismc: ISetMapCenterForPopup =>
       // TODO Нужно, отценровать карту как-то по-особому, чтобы центр был ниже реального центра.
       _setMapCenter(ismc)
 
     // Сигнал сокрытия попапа на карте Leaflet.
-    case _: IHandleMapPopupClose =>
+    case HandleMapPopupClose =>
       // Почему-то бывает, что сообщение о закрытие попапа приходят дважды.
       noChange
 

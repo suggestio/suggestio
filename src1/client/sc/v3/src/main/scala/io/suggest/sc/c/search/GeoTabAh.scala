@@ -4,11 +4,10 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
 import io.suggest.grid.GridConst
-import io.suggest.maps.m.HandleMapReady
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.grid.GridLoadAds
-import io.suggest.sc.m.inx.{MScIndex, MScSideBars, SideBarOpenClose}
+import io.suggest.sc.m.inx.{MScIndex, MScSideBars, MapReIndex, SideBarOpenClose}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot, OnlineCheckConn}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.MScQs

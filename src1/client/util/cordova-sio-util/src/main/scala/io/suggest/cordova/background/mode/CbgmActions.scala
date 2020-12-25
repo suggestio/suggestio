@@ -1,6 +1,6 @@
 package io.suggest.cordova.background.mode
 
-import io.suggest.spa.DAction
+import io.suggest.daemon.IDaemonAction
 
 import scala.collection.immutable.HashMap
 import scala.scalajs.js
@@ -11,7 +11,7 @@ import scala.scalajs.js
   * Created: 16.04.2020 14:56
   * Description: Экшены для контроллера плагина c-p-bg-mode.
   */
-sealed trait ICbgmAction extends DAction
+sealed trait ICbgmAction extends IDaemonAction
 
 /** Пришло событие от плагина. */
 final case class CbgmEvent( eventType: String ) extends ICbgmAction

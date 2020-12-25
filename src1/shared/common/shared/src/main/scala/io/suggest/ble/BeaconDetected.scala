@@ -10,14 +10,17 @@ import scala.concurrent.duration._
   * Description: Экшен и модель с инфой по одному маячку.
   */
 
+/** Интерфейс сигналов, принмаемых beaconer fsm. */
+trait IBleBeaconAction extends DAction
+
+
 /** Сигнал об обнаружении одного ble-маячка. */
 case class BeaconDetected(
                            // TODO beacon - Заменить на EddyStone напрямую?
                            signal       : IBeaconSignal,
                            seenAtMs     : Long              = BeaconDetected.seenNowMs(),
                          )
-  extends DAction
-
+  extends IBleBeaconAction
 
 object BeaconDetected {
 

@@ -29,11 +29,11 @@ object MScInternals {
 
   @inline implicit def univEq: UnivEq[MScInternals] = UnivEq.force
 
-  val info          = GenLens[MScInternals](_.info)
-  val conf          = GenLens[MScInternals](_.conf)
-  val jsRouter      = GenLens[MScInternals](_.jsRouter)
-  val boot          = GenLens[MScInternals](_.boot)
-  val daemon        = GenLens[MScInternals](_.daemon)
+  def info          = GenLens[MScInternals](_.info)
+  def conf          = GenLens[MScInternals](_.conf)
+  def jsRouter      = GenLens[MScInternals](_.jsRouter)
+  def boot          = GenLens[MScInternals](_.boot)
+  def daemon        = GenLens[MScInternals](_.daemon)
 
 
   implicit final class ScInternalsOpsExt( private val scInts: MScInternals ) extends AnyVal {

@@ -34,7 +34,7 @@ object MGeoTabData {
 
   @inline implicit def univEq: UnivEq[MGeoTabData] = UnivEq.derive
 
-  val rcvrsCache  = GenLens[MGeoTabData](_.rcvrsCache)
+  def rcvrsCache  = GenLens[MGeoTabData](_.rcvrsCache)
   val delay       = GenLens[MGeoTabData](_.delay)
   def lmap        = GenLens[MGeoTabData](_.lmap)
   def selTagIds   = GenLens[MGeoTabData](_.selTagIds)

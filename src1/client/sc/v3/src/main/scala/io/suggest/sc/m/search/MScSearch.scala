@@ -26,7 +26,7 @@ object MScSearch {
 
   val geo   = GenLens[MScSearch](_.geo)
   def panel = GenLens[MScSearch](_.panel)
-  val text  = GenLens[MScSearch](_.text)
+  def text  = GenLens[MScSearch](_.text)
 
 
   implicit class ScSearchExt( private val scSearch: MScSearch ) extends AnyVal {

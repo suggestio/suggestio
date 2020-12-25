@@ -9,7 +9,7 @@ import io.suggest.log.Log
 import io.suggest.spa.StateInp
 import play.api.libs.json.Json
 import japgolly.univeq._
-import monocle.PLens
+import monocle.Lens
 
 import scala.util.Try
 
@@ -29,7 +29,7 @@ object Sc3ConfUtil extends Log {
     !FORCE_PRODUCTION_MODE && scalajs.LinkingInfo.developmentMode
 
 
-  private def _prepareSave[T](t: T, lens: PLens[T, T, Option[Long], Option[Long]]): T = {
+  private def _prepareSave[T](t: T, lens: Lens[T, Option[Long]]): T = {
     val ts2 = MSc3Conf.timestampSec()
 
     if (lens.get(t) contains ts2) {
@@ -134,7 +134,7 @@ object Sc3ConfUtil extends Log {
     if (inits.isEmpty) {
       None
 
-    } else if (inits.lengthCompare(1) ==* 0) {
+    } else if (inits.lengthIs == 1) {
       inits.headOption
 
     } else {

@@ -36,15 +36,21 @@ trait IScIndexRespReason extends IScApiRespReason
 /** Интерфейс корневых экшенов. */
 sealed trait IScRootAction extends DAction
 
-/** Запустить инициализацию js-роутера. */
-case class JsRouterInit( status: Pot[routes.type] = Pot.empty ) extends IScRootAction
+sealed trait IScJsRouterInitAction extends IScRootAction
 
+/** Запустить инициализацию js-роутера. */
+case class JsRouterInit( status: Pot[routes.type] = Pot.empty ) extends IScJsRouterInitAction
+
+
+trait IScScreenAction extends IScRootAction
 
 /** События экрана. */
-case object ScreenResetPrepare extends IScRootAction
+case object ScreenResetPrepare extends IScScreenAction
 
 /** Сработал таймер непосредственного запуска действий при ресайзе. */
-case object ScreenResetNow extends IScRootAction
+case object ScreenResetNow extends IScScreenAction
+
+case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScScreenAction
 
 
 /** Интерфейс экшенов для GeoLocAh. */
@@ -91,23 +97,23 @@ case class GlError(override val glType: GeoLocType, error: PositionException) ex
 /** Обновление gl watcher'ов в состоянии новыми идентификаторами. */
 case class GlModWatchers( watchers: Map[GeoLocType, Pot[GeoLocWatchId_t]] ) extends IGeoLocAction
 
-/** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
-case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IGeoLocAction
-
-
 /** Сработал таймер подавления нежелательных координат. */
 case class GlSuppressTimeout(generation: Long) extends IGeoLocAction
-
-/** Запросить восстановление работы геолокации с перемещением в новую точку. */
-case object GlCheckAfterResume extends IGeoLocAction
 
 /** Переброска в GeoLocAh запроса из Leaflet.Map().locate() и stopLocation(). */
 case class GlLeafletApiLocate(locateOpts: Option[GlLeafletLocateArgs] ) extends IGeoLocAction
 /** Таймаут запроса геолокации из leaflet. */
 case object GlLeafletApiLocateTimeout extends IGeoLocAction
 
+
+/** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
+case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IScTailAction
+
 /** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
-case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScRootAction
+case class RouteTo( mainScreen: SioPages.Sc3 ) extends IScTailAction
+
+
+sealed trait IScTailAction extends IScRootAction
 
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию.
   * @param mods Функция обновления роуты.
@@ -118,32 +124,33 @@ case class ResetUrlRoute(
                           mods: Option[(() => SioPages.Sc3) => SioPages.Sc3] = None,
                           force: Boolean = false
                         )
-  extends IScRootAction
+  extends IScTailAction
 
 /** Восстановление текущего состояния ранее-посещённых индексов. */
 case class LoadIndexRecents(
                              clean: Boolean,
                              pot: Pot[MScIndexes] = Pot.empty
-                           ) extends IScRootAction
+                           )
+  extends IScTailAction
 object LoadIndexRecents {
   def pot = GenLens[LoadIndexRecents](_.pot)
 }
 
 /** Сохранить в базу инфу по индексу. */
-case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScRootAction
+case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScTailAction
 
 /** Выбор узла в списке недавних узлов. */
-case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScRootAction
+case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScTailAction
 
 
 /** Экшен хардварной кнопки "Назад", которую надо отрабатывать по-особому. */
-case object HwBack extends IScRootAction
+case object HwBack extends IScTailAction
 
 /** Запуск таймера ожидания получения гео-координат. */
-case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends ISc3Action
+case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends IScTailAction
 
 /** Наступление таймаута получения гео-координат. */
-case class GeoLocTimeOut( switchCtx: MScSwitchCtx ) extends ISc3Action
+case class GeoLocTimeOut( switchCtx: MScSwitchCtx ) extends IScTailAction
 
 
 /** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.
@@ -160,7 +167,7 @@ case class HandleScApiResp(
                             reason         : IScApiRespReason,
                             switchCtxOpt   : Option[MScSwitchCtx] = None,
                           )
-  extends ISc3Action
+  extends IScTailAction
 {
 
   /** Проверить тип экшена ответа. */
@@ -207,8 +214,6 @@ case class PauseOrResume(isScVisible: Boolean) extends IPlatformAction
 case object SetPlatformReady extends IPlatformAction
 
 
-case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScRootAction
-
 
 /** Маркер-интерфейс для экшенов для ErrorAh: */
 sealed trait IScErrorAction extends IScRootAction
@@ -225,8 +230,10 @@ case object CloseError extends IScErrorAction
 case class SetErrorState(scErr: MScErrorDia) extends IScErrorAction
 
 
+sealed trait IScSettingsAction extends IScRootAction
+
 /** Управление отображением диалога настроек выдачи. */
-case class SettingsDiaOpen(opened: Boolean) extends IScErrorAction
+case class SettingsDiaOpen(opened: Boolean) extends IScSettingsAction
 
 
 

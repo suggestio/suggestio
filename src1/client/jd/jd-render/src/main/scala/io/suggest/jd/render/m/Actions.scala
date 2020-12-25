@@ -29,7 +29,10 @@ case class QdBoundsMeasured(
   extends IJdAction
 
 
+
+trait IGridAction extends DAction
+
 /** Принудительный пересчёт плитки.
   * Поддержка должна быть реализована на уровне каждой конкретной circuit.
   */
-case class GridRebuild(force: Boolean = false) extends IJdAction
+case class GridRebuild(force: Boolean = false) extends IGridAction

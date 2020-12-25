@@ -32,10 +32,10 @@ object MInternalInfo {
   @inline implicit def univEq: UnivEq[MInternalInfo] = UnivEq.derive
 
   def geoLockTimer  = GenLens[MInternalInfo]( _.geoLockTimer )
-  val currRoute     = GenLens[MInternalInfo]( _.currRoute )
+  def currRoute     = GenLens[MInternalInfo]( _.currRoute )
   def messages      = GenLens[MInternalInfo]( _.commonReactCtx )
   def inxRecents    = GenLens[MInternalInfo]( _.indexesRecents )
-  val csrfToken     = GenLens[MInternalInfo]( _.csrfToken )
+  def csrfToken     = GenLens[MInternalInfo]( _.csrfToken )
 
 }
 

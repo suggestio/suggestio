@@ -5,7 +5,7 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.sjs.leaflet.map.{LMap, LatLng, Zoom_t}
+import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
 import io.suggest.spa.DAction
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
@@ -25,20 +25,15 @@ import scala.util.Try
 trait IMapsAction extends DAction
 
 /** Интерфейс для сообщений выставления центра. */
-trait ISetMapCenterForPopup extends IMapsAction with IGeoPointField
+sealed trait ISetMapCenterForPopup extends IMapsAction with IGeoPointField
 
-
-trait ISetMapCenter extends IMapsAction with IGeoPointField
 
 /** Экшен выставления центра карты на указанную гео-точку. */
-case class HandleLocationFound(override val geoPoint: MGeoPoint) extends ISetMapCenter
+case class HandleLocationFound(override val geoPoint: MGeoPoint) extends IMapsAction with IGeoPointField
 
-
-trait IHandleMapPopupClose extends IMapsAction
 
 /** Команда среагировать на сокрытие произвольного попапа карты на стороне leaflet. */
-case object HandleMapPopupClose extends IHandleMapPopupClose
-
+case object HandleMapPopupClose extends IMapsAction
 
 
 // Rad-события для маркера центра круга
@@ -50,7 +45,7 @@ case class RadCenterDragging(geoPoint: MGeoPoint) extends IMapsAction with IGeoP
 case class RadCenterDragEnd(geoPoint: MGeoPoint) extends IMapsAction with IGeoPointField
 
 
-trait IRadClick extends IMapsAction
+sealed trait IRadClick extends IMapsAction
 /** Экшен клика по центру круга. */
 case object RadCenterClick extends IRadClick
 case object RadAreaClick extends IRadClick
@@ -73,9 +68,10 @@ object OpenAdvGeoExistPopup {
 }
 
 
+sealed trait IRcvrMarkersInitAction extends DAction
 
 /** Экшен запуска инициализации карты маркеров ресиверов. */
-case class RcvrMarkersInit( resp: Pot[MGeoNodesResp] = Pot.empty )  extends IMapsAction
+case class RcvrMarkersInit( resp: Pot[MGeoNodesResp] = Pot.empty ) extends IRcvrMarkersInitAction
 object RcvrMarkersInit {
   def resp = GenLens[RcvrMarkersInit]( _.resp )
 }
@@ -115,6 +111,3 @@ case object MapDragStart extends IMapsAction
 
 /** Событие окончания перетаскивания карты. */
 case class MapDragEnd(distancePx: Double) extends IMapsAction
-
-/** Реагировать на окончание инициализации карты. */
-case class HandleMapReady(map: LMap) extends IMapsAction

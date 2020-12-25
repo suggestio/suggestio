@@ -1,6 +1,6 @@
 package io.suggest.cordova.background.fetch
 
-import io.suggest.spa.DAction
+import io.suggest.daemon.IDaemonSleepAction
 
 import scala.util.Try
 
@@ -9,7 +9,7 @@ import scala.util.Try
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.05.2020 18:05
   */
-sealed trait ICbfAction extends DAction
+sealed trait ICbfAction extends IDaemonSleepAction
 
 /** Срабатывание callback'а для указанного id. */
 case class CbfTaskCall(taskId: String) extends ICbfAction

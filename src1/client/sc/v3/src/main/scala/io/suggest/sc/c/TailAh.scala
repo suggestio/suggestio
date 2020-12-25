@@ -21,7 +21,7 @@ import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
-import io.suggest.sc.m.dia.InitFirstRunWz
+import io.suggest.sc.m.dia.first.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.menu.DlAppOpen
@@ -984,11 +984,6 @@ class TailAh(
       })
         // Вернуть содержимое Left или Right.
         .fold(identity, identity)
-
-
-    // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
-    case _: WcTimeOut =>
-      noChange
 
 
     // Ошибка от компонента.

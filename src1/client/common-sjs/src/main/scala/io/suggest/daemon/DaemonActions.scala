@@ -8,8 +8,7 @@ import io.suggest.spa.DAction
   * Created: 16.04.2020 15:05
   * Description: Общие экшены для контроллеров демонизации вёб-приложения.
   */
-sealed trait IDaemonAction extends DAction
-
+trait IDaemonAction extends DAction
 
 /** Команда к инициализации или деиницилизации системы демонизации.
   *
@@ -18,20 +17,21 @@ sealed trait IDaemonAction extends DAction
   */
 case class BgModeDaemonInit(initOpts: Option[MDaemonInitOpts] ) extends IDaemonAction
 
-
 /** Команда к демонизации приложения. */
 case class DaemonBgModeSet( isDaemon: Boolean ) extends IDaemonAction
 
+
+trait IDaemonSleepAction extends DAction
 
 /** Команда к запуску/остановке sleep-таймера.
   * @param options None - снять таймер.
   *                Some() - выставить таймер с указаннмыи параметрами.
   */
-case class DaemonSleepTimerSet( options: Option[MDaemonSleepTimer] ) extends IDaemonAction
+case class DaemonSleepTimerSet( options: Option[MDaemonSleepTimer] ) extends IDaemonSleepAction
 
 
 /** Завершение работы таймера - обязательно для cordova-plugin-background-fetch. */
-case object DaemonSleepTimerFinish extends IDaemonAction
+case object DaemonSleepTimerFinish extends IDaemonSleepAction
 
 
-protected[daemon] case class DaemonSleepTimerUpdate( timerId: Option[Int] ) extends IDaemonAction
+protected[daemon] case class DaemonSleepTimerUpdate( timerId: Option[Int] ) extends IDaemonSleepAction

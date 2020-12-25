@@ -22,13 +22,6 @@ case class ReGetIndex() extends IIndexAction
 /** Сброс индекса. */
 case object UnIndex extends IIndexAction
 
-/** Нажатие на экран приветствия. */
-case object WcClick extends IIndexAction
-
-/** Срабатывание таймера автоматического переключения фазы welcome.
-  * @param timestamp Таймштамп-отметка, для проверки актуальности сработавшего таймера.
-  */
-case class WcTimeOut(timestamp: Long) extends IIndexAction
 
 
 /** Команда к ребилду текущего инстанса ScCss. */
@@ -43,10 +36,23 @@ case object ScCssReBuild extends IIndexAction
   */
 case class SideBarOpenClose(bar: MScSideBar, open: Option[Boolean]) extends IIndexAction
 
-
 /** Клик по элементу списка в InxSwitch.
   * @param nodeId None значит кнопку закрытия или автоматический выбор первого узла. */
 case class IndexSwitchNodeClick( nodeId: Option[String] = None ) extends IIndexAction
 
 /** Команда перехода на предыдущий узел. */
 case object GoToPrevIndexView extends IIndexAction with IScIndexRespReason
+
+/** Команда к запуску index-реакции на текущее состояние гео.карты. */
+case class MapReIndex( rcvrId: Option[String] ) extends IIndexAction with IScIndexRespReason
+
+
+sealed trait IWelcomeAction extends ISc3Action
+
+/** Нажатие на экран приветствия. */
+case object WcClick extends IWelcomeAction
+
+/** Срабатывание таймера автоматического переключения фазы welcome.
+  * @param timestamp Таймштамп-отметка, для проверки актуальности сработавшего таймера.
+  */
+case class WcTimeOut(timestamp: Long) extends IWelcomeAction

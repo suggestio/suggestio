@@ -25,7 +25,7 @@ object MScScreenS {
 
   @inline implicit def univEq: UnivEq[MScScreenS] = UnivEq.derive
 
-  def info      = GenLens[MScScreenS](_.info)
+  val info      = GenLens[MScScreenS](_.info)
   def rszTimer  = GenLens[MScScreenS](_.rszTimer)
 
 }

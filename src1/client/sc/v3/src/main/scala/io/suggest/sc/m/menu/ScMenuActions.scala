@@ -12,10 +12,7 @@ import scala.util.Try
   * Created: 12.12.2019 14:43
   * Description: Экшены менюшки выдачи.
   */
-sealed trait IScMenuAction extends ISc3Action
-
-
-sealed trait IScAppAction extends IScMenuAction
+sealed trait IScAppAction extends ISc3Action
 
 /** Экшен управления диалогом скачивания приложения. */
 case class DlAppOpen(opened: Boolean ) extends IScAppAction

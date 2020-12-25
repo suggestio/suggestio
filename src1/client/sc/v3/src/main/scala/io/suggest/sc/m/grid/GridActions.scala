@@ -1,8 +1,9 @@
 package io.suggest.sc.m.grid
 
 import diode.Effect
+import io.suggest.jd.render.m.IGridAction
 import io.suggest.sc.ads.MScNodeMatchInfo
-import io.suggest.sc.m.{ISc3Action, IScApiRespReason}
+import io.suggest.sc.m.IScApiRespReason
 
 /**
   * Suggest.io
@@ -10,8 +11,6 @@ import io.suggest.sc.m.{ISc3Action, IScApiRespReason}
   * Created: 15.11.17 10:42
   * Description: Diode-экшены плитки карточек.
   */
-sealed trait IGridAction extends ISc3Action
-
 
 /** Команда к запуску заливки данных в плитку.
   *

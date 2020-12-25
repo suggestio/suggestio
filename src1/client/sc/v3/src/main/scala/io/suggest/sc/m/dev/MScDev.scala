@@ -36,8 +36,8 @@ object MScDev {
   val platform = GenLens[MScDev]( _.platform )
   val geoLoc = GenLens[MScDev]( _.geoLoc )
   val beaconer = GenLens[MScDev]( _.beaconer )
-  val osNotify = GenLens[MScDev]( _.osNotify )
-  val onLine = GenLens[MScDev]( _.onLine )
+  def osNotify = GenLens[MScDev]( _.osNotify )
+  def onLine = GenLens[MScDev]( _.onLine )
   def platformCss = GenLens[MScDev]( _.platformCss )
 
 }

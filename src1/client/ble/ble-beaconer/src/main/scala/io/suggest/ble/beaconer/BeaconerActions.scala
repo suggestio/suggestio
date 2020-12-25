@@ -1,5 +1,6 @@
 package io.suggest.ble.beaconer
 
+import io.suggest.ble.IBleBeaconAction
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.spa.DAction
 
@@ -11,10 +12,6 @@ import scala.util.Try
   * Created: 12.10.16 16:09
   * Description: Сигналы для подписки на мониторинг маячков.
   */
-
-/** Интерфейс сигналов, принмаемых beaconer fsm. */
-sealed trait IBleBeaconAction extends DAction
-
 
 /** Управление работой системой мониторинга маячков.
   *

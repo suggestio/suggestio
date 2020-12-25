@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit
 
 import scalacss.ScalaCssReact._
-import com.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiClickAwayListener, MuiFormControlLabel, MuiFormControlLabelProps, MuiMenuItem, MuiMenuItemProps, MuiSelect, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy}
+import com.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiClickAwayListener, MuiFormControlLabel, MuiFormControlLabelProps, MuiSelect, MuiSelectProps, MuiTypoGraphy}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{OutlineColorModeSet, OutlineColorSet, OutlineOnOff, OutlineShowHide}
 import io.suggest.ad.edit.v.LkAdEditCss
@@ -66,7 +66,7 @@ final class OutLineR(
     }
 
     private val _onSelectOpen = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      _showOutlineCb(true)
+      _showOutlineCb( true )
     }
 
     /** При закрытии color-picker'а следует отправить последний итоговый цвет в палитру цветов. */
@@ -147,15 +147,17 @@ final class OutLineR(
         },
 
         // Если режим заданного цвета, то нужен color picker.
-        s.colorDefinedOptC { colorOptProxy =>
-          colorOptProxy.value.whenDefinedEl { mcd =>
-            color2PickerR.component(
-              color2PickerR.PropsVal(
-                colorProxy  = colorOptProxy.resetZoom( mcd ),
-                onChange    = _onColorChange,
-                onOpenClose = _onOpenCloseSome,
+        {
+          s.colorDefinedOptC { colorOptProxy =>
+            colorOptProxy.value.whenDefinedEl { mcd =>
+              color2PickerR.component(
+                color2PickerR.PropsVal(
+                  colorProxy  = colorOptProxy.resetZoom( mcd ),
+                  onChange    = _onColorChange,
+                  onOpenClose = _onOpenCloseSome,
+                )
               )
-            )
+            }
           }
         },
 

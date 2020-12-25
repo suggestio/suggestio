@@ -3,12 +3,13 @@ package io.suggest.sc
 import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
+import io.suggest.ble.IBleBeaconAction
 import io.suggest.ble.beaconer.{BleBeaconerAh, BtOnOff, MBeaconerOpts, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.background.mode.CordovaBgModeAh
-import io.suggest.daemon.{BgModeDaemonInit, HtmlBgTimerAh, MDaemonDescr, MDaemonInitOpts, MDaemonState, MDaemonStates}
+import io.suggest.daemon.{BgModeDaemonInit, IDaemonAction, IDaemonSleepAction, MDaemonDescr, MDaemonInitOpts, MDaemonState, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPlatformS, MScreenInfo}
@@ -17,7 +18,7 @@ import io.suggest.jd.MJdConf
 import io.suggest.jd.render.c.JdAh
 import io.suggest.jd.render.u.JdUtil
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.m.{IMapsAction, IRcvrMarkersInitAction, MMapS}
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg._
@@ -36,14 +37,14 @@ import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MScIndexes}
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
-import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds, MSpaRouterState}
+import io.suggest.sc.m.boot.{Boot, BootAfter, IBootAction, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals}
-import io.suggest.sc.m.inx.{MScIndex, MScIndexState, MScSwitchCtx}
-import io.suggest.sc.m.menu.{MDlAppDia, MMenuS}
+import io.suggest.sc.m.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexState, MScSwitchCtx}
+import io.suggest.sc.m.menu.{IScAppAction, MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MSc3Init}
@@ -61,14 +62,18 @@ import io.suggest.event.DomEvents
 import io.suggest.geo.GeoLocApi
 import io.suggest.id.login.LoginFormCircuit
 import io.suggest.id.login.c.session.{LogOutAh, SessionAh}
+import io.suggest.id.login.m.ILogoutAction
 import io.suggest.id.login.m.session.MLogOutDia
+import io.suggest.jd.render.m.{IGridAction, IJdAction}
 import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi}
-import io.suggest.lk.m.SessionRestore
+import io.suggest.lk.m.{ICsrfTokenAction, ISessionAction, SessionRestore}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic
-import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
+import io.suggest.os.notify.{CloseNotify, IOsNotifyAction, NotifyStartStop}
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
+import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
+import io.suggest.sc.m.dia.first.IWz1Action
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.v.styl.ScCss
@@ -243,12 +248,12 @@ class Sc3Circuit(
   private[sc] val rootRW          = zoomRW(identity) { (_, new2) => new2 } ( MScRootFastEq )
 
   private[sc] val internalsRW     = mkLensRootZoomRW(this, MScRoot.internals)( MScInternalsFastEq )
-  private[sc] val internalsInfoRW = mkLensZoomRW( internalsRW, MScInternals.info )
-  private[sc] val csrfTokenRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.csrfToken )
-  private[sc] val currRouteRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.currRoute )
+  private[sc] def internalsInfoRW = mkLensZoomRW( internalsRW, MScInternals.info )
+  private[sc] def csrfTokenRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.csrfToken )
+  private[sc] def currRouteRW     = mkLensZoomRW( internalsInfoRW, MInternalInfo.currRoute )
 
   private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
-  private[sc] val titlePartsRO    = rootRW.zoom [List[String]] { mroot =>
+  private[sc] def titlePartsRO    = rootRW.zoom [List[String]] { mroot =>
     var acc = List.empty[String]
 
     // Заголовок узла.
@@ -273,7 +278,7 @@ class Sc3Circuit(
     acc
   }( FastEq.ValueEq )
 
-  private val indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
+  private def indexWelcomeRW      = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
   private[sc] def scCssRO         = mkLensZoomRO(indexRW, MScIndex.scCss)
 
   private val searchRW            = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
@@ -281,11 +286,11 @@ class Sc3Circuit(
 
   private val mapInitRW           = mkLensZoomRW(geoTabRW, MGeoTabS.mapInit)( MMapInitStateFastEq )
   private val mmapsRW             = mkLensZoomRW(mapInitRW, MMapInitState.state)( MMapSFastEq4Map )
-  private val searchTextRW        = mkLensZoomRW(searchRW, MScSearch.text)( MScSearchTextFastEq )
+  private def searchTextRW        = mkLensZoomRW(searchRW, MScSearch.text)( MScSearchTextFastEq )
   private[sc] val geoTabDataRW    = mkLensZoomRW(geoTabRW, MGeoTabS.data)( MGeoTabData.MGeoTabDataFastEq )
   private val mapDelayRW          = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
-  private val rcvrRespRW          = {
+  private def rcvrRespRW          = {
     geoTabRW.zoomRW( _.data.rcvrsCache.map(_.resp) ) {
       (geoTab0, potResp2) =>
         val rcvrsCache2 = for (gnr <- potResp2) yield {
@@ -309,59 +314,62 @@ class Sc3Circuit(
     }
   }
 
-  private val gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
-  private[sc] val gridCoreRW      = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
-  private val jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
+  private def gridRW              = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
+  private def gridCoreRW          = mkLensZoomRW( gridRW, MGridS.core )( MGridCoreS.MGridCoreSFastEq )
+  private def jdRuntimeRW         = mkLensZoomRW( gridCoreRW, MGridCoreS.jdRuntime )( FastEqUtil.AnyRefFastEq )
 
   private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
   private val scScreenRW          = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
   private val scGeoLocRW          = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
-  private val onLineRW            = mkLensZoomRW(devRW, MScDev.onLine)
+  private def onLineRW            = mkLensZoomRW(devRW, MScDev.onLine)
 
-  private val confRW              = mkLensZoomRW(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
-  private val rcvrsMapUrlRO       = mkLensZoomRO(confRW, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
+  private def confRW              = mkLensZoomRW(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
+  private def rcvrsMapUrlRO       = mkLensZoomRO(confRW, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
 
   private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformS.MPlatformSFastEq )
   private[sc] def platformCssRO   = mkLensZoomRO(devRW, MScDev.platformCss)
 
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
-  private[sc] val beaconsNearbyRO = mkLensZoomRO( beaconerRW, MBeaconerS.nearbyReport )
-  private[sc] lazy val beaconsRO  = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
+  private[sc] def beaconsRO       = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
-  private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
-  private[sc] val scLoginRW       = mkLensZoomRW(dialogsRW, MScDialogs.login)
+  private[sc] def firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
+  private[sc] def scLoginRW       = mkLensZoomRW(dialogsRW, MScDialogs.login)
   private val scNodesRW           = mkLensZoomRW(dialogsRW, MScDialogs.nodes)
 
-  private val bootRW              = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
-  private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
-  private val scErrorDiaRW        = mkLensZoomRW(dialogsRW, MScDialogs.error)( OptFastEq.Wrapped(MScErrorDia.MScErrorDiaFastEq) )
+  private def bootRW              = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
+  private[sc] def jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
+  private def scErrorDiaRW        = mkLensZoomRW(dialogsRW, MScDialogs.error)( OptFastEq.Wrapped(MScErrorDia.MScErrorDiaFastEq) )
 
-  private val menuRW              = mkLensZoomRW( indexRW, MScIndex.menu )( MMenuS.MMenuSFastEq )
-  private val dlAppDiaRW          = mkLensZoomRW( menuRW, MMenuS.dlApp )( MDlAppDia.MDlAppDiaFeq )
+  private def menuRW              = mkLensZoomRW( indexRW, MScIndex.menu )( MMenuS.MMenuSFastEq )
+  private def dlAppDiaRW          = mkLensZoomRW( menuRW, MMenuS.dlApp )( MDlAppDia.MDlAppDiaFeq )
 
-  private[sc] val inxStateRO      = mkLensZoomRO( indexRW, MScIndex.state )
+  private[sc] def inxStateRO      = mkLensZoomRO( indexRW, MScIndex.state )
 
   private val screenInfoRO        = mkLensZoomRO(scScreenRW, MScScreenS.info)( MScreenInfoFastEq )
-  private val screenRO            = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
+  private def screenRO            = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
 
-  private val osNotifyRW          = mkLensZoomRW(devRW, MScDev.osNotify)( MScOsNotifyS.MScOsNotifyFeq )
-  val loggedInRO                  = indexRW.zoom(_.isLoggedIn)
+  private def osNotifyRW          = mkLensZoomRW(devRW, MScDev.osNotify)( MScOsNotifyS.MScOsNotifyFeq )
+  def loggedInRO                  = indexRW.zoom(_.isLoggedIn)
 
-  private lazy val daemonRW       = mkLensZoomRW( internalsRW, MScInternals.daemon )
-  private[sc] val loginSessionRW  = mkLensZoomRW( scLoginRW, MScLoginS.session )
-  private[sc] val logOutRW        = mkLensZoomRW( scLoginRW, MScLoginS.logout )
+  private def daemonRW            = mkLensZoomRW( internalsRW, MScInternals.daemon )
+  private[sc] def loginSessionRW  = mkLensZoomRW( scLoginRW, MScLoginS.session )
+  private def logOutRW            = mkLensZoomRW( scLoginRW, MScLoginS.logout )
 
+  private[sc] def focusedAdRO = gridCoreRW.zoom(_.myFocusedAdOpt)
 
   // notifications
-  private val scNotifications = new ScNotifications(
+  private def scNotifications = new ScNotifications(
     rootRO = rootRW,
   )
 
-  /** Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах. */
-  val (respHandlers, respActionHandlers) = {
+  // Action-Handler'ы
+
+  /** Хвостовой контроллер -- сюда свалено разное управление выдачей. */
+  private def tailAh = {
+    // Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах.
     // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
-    val mixed = List[IRespWithActionHandler](
+    val mixed: LazyList[IRespWithActionHandler] = (
       new GridRespHandler(
         isDoOsNotify = rootRW.zoom { mroot =>
           // Разрешается делать нотификацию уровня ОС только если:
@@ -371,49 +379,44 @@ class Sc3Circuit(
           //!mroot.dev.platform.isUsingNow
         },
         scNotifications = scNotifications,
-      ),
-      new GridFocusRespHandler,
-      new IndexRah,
-      new NodesSearchRah( screenInfoRO ),
+      ) #::
+        new GridFocusRespHandler #::
+        new IndexRah #::
+        new NodesSearchRah( screenInfoRO ) #::
+        LazyList.empty
+      )
+
+    val respHandlers: LazyList[IRespHandler] = mixed
+
+    val respActionHandlers: LazyList[IRespActionHandler] =
+      new ConfUpdateRah #::
+      mixed
+
+    new TailAh(
+      modelRW               = rootRW,
+      routerCtl             = routerState.routerCtl,
+      scRespHandlers        = respHandlers,
+      scRespActionHandlers  = respActionHandlers,
+      scStuffApi            = scStuffApi,
     )
-
-    val rahs: List[IRespActionHandler] =
-      new ConfUpdateRah ::
-      mixed
-
-    val rhs: List[IRespHandler] =
-      mixed
-
-    (rhs, rahs)
   }
 
 
-  // Action-Handler'ы
-
-  // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
-  private val tailAh = new TailAh(
-    modelRW               = rootRW,
-    routerCtl             = routerState.routerCtl,
-    scRespHandlers        = respHandlers,
-    scRespActionHandlers  = respActionHandlers,
-    scStuffApi            = scStuffApi,
-  )
-
-  private val geoTabAh = new GeoTabAh(
+  private def geoTabAh = new GeoTabAh(
     modelRW         = geoTabRW,
     api             = sc3UniApi,
     scRootRO        = rootRW,
     screenInfoRO    = screenInfoRO,
   )
 
-  private val rcvrMarkersInitAh = new RcvrMarkersInitAh(
+  private def rcvrMarkersInitAh = new RcvrMarkersInitAh(
     modelRW         = rcvrRespRW,
     api             = advRcvrsMapApi,
     argsRO          = rcvrsMapUrlRO,
     isOnlineRoOpt   = Some( onLineRW.zoom(_.isOnline) ),
   )
 
-  private val indexAh = new IndexAh(
+  private def indexAh = new IndexAh(
     api     = sc3UniApi,
     modelRW = indexRW,
     rootRO  = rootRW,
@@ -429,19 +432,19 @@ class Sc3Circuit(
     foldHandlers( mapCommonAh, scMapDelayAh )
   }
 
-  private val gridAh = new GridAh(
+  private def gridAh = new GridAh(
     api           = sc3UniApi,
     scRootRO      = rootRW,
     screenRO      = screenRO,
     modelRW       = gridRW
   )
 
-  private val screenAh = new ScreenAh(
+  private def screenAh = new ScreenAh(
     modelRW = scScreenRW,
     rootRO  = rootRW
   )
 
-  private val sTextAh = new STextAh(
+  private def searchTextAh = new STextAh(
     modelRW = searchTextRW
   )
 
@@ -451,12 +454,10 @@ class Sc3Circuit(
     preferGeoApi = preferGeoApi,
   )
 
-  private val platformAh = new PlatformAh(
+  private def platformAh = new PlatformAh(
     modelRW = platformRW,
     rootRO  = rootRW,
   )
-
-  private[sc] val focusedAd = gridCoreRW.zoom(_.myFocusedAdOpt)
 
   private val beaconerAh = new BleBeaconerAh(
     modelRW     = beaconerRW,
@@ -530,39 +531,39 @@ class Sc3Circuit(
     },
   )
 
-  private val wzFirstDiaAh = new WzFirstDiaAh(
+  private def wzFirstDiaAh = new WzFirstDiaAh(
     platformRO    = platformRW,
     screenInfoRO  = screenInfoRO,
     modelRW       = firstRunDiaRW,
     dispatcher    = this,
   )
 
-  private val bootAh = new BootAh(
+  private def bootAh = new BootAh(
     modelRW = bootRW,
     circuit = this,
   )
 
-  private val jdAh = new JdAh(
+  private def jdAh = new JdAh(
     modelRW = jdRuntimeRW,
   )
 
-  private val scErrorDiaAh = new ScErrorDiaAh(
+  private def scErrorDiaAh = new ScErrorDiaAh(
     modelRW = scErrorDiaRW,
     circuit = this,
   )
 
-  private val dlAppAh = new DlAppAh(
+  private def dlAppAh = new DlAppAh(
     modelRW       = dlAppDiaRW,
     scAppApi      = scAppApi,
     indexStateRO  = inxStateRO,
   )
 
-  private val scSettingsDiaAh = new ScSettingsDiaAh(
+  private def scSettingsDiaAh = new ScSettingsDiaAh(
     modelRW = mkLensZoomRW( dialogsRW, MScDialogs.settings ),
   )
 
 
-  private val notifyAh: Option[HandlerFunction] = {
+  private def notifyAh: Option[HandlerFunction] = {
     if (CordovaConstants.isCordovaPlatform()) {
       // Проверить готовность плагина нельзя: PlatformReady ещё не наступил.
       // Для cordova: контроллер нотификаций через cordova-plugin-local-notification:
@@ -583,7 +584,7 @@ class Sc3Circuit(
 
 
   /** Контроллер демона. */
-  private val daemonBgModeAh: Option[HandlerFunction] = {
+  private def daemonBgModeAh: Option[HandlerFunction] = {
     if (CordovaConstants.isCordovaPlatform()) {
       Some(new CordovaBgModeAh(
         modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cdvBgMode ),
@@ -594,7 +595,7 @@ class Sc3Circuit(
     }
   }
 
-  private lazy val scDaemonAh = new ScDaemonAh(
+  private def scDaemonAh = new ScDaemonAh(
     modelRW       = daemonRW,
     platfromRO    = platformRW,
     dispatcher    = this,
@@ -602,53 +603,51 @@ class Sc3Circuit(
 
 
   /** Выборочный контроллер sleep-таймера демона. */
-  private val daemonSleepTimerAh: Option[HandlerFunction] = {
-    Option.when( daemonBgModeAh.nonEmpty ) {
-      if ( CordovaConstants.isCordovaPlatform() /*&& CordovaBgTimerAh.hasCordovaBgTimer()*/ ) {
-        new CdvBgFetchAh(
-          dispatcher = this,
-          modelRW = mkLensZoomRW( daemonRW, MScDaemon.cdvBgFetch )
-        )
-        //new CordovaBgTimerAh(
-        //  dispatcher = this,
-        //  modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cdvBgTimer ),
-        //)
-      } else {
+  private def daemonSleepTimerAh: Option[HandlerFunction] = {
+    Option.when ( CordovaConstants.isCordovaPlatform() /*&& CordovaBgTimerAh.hasCordovaBgTimer()*/ ) {
+      new CdvBgFetchAh(
+        dispatcher = this,
+        modelRW = mkLensZoomRW( daemonRW, MScDaemon.cdvBgFetch )
+      )
+      //new CordovaBgTimerAh(
+      //  dispatcher = this,
+      //  modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cdvBgTimer ),
+      //)
+    } /*else {
         // TODO Не ясно, надо ли это активировать вообще? Может выкинуть (закомментить) этот контроллер? И его модель-состояние следом.
         new HtmlBgTimerAh(
           dispatcher = this,
           modelRW    = mkLensZoomRW( daemonRW, MScDaemon.htmlBgTimer ),
         )
-      }
-    }
+      }*/
   }
 
   /** Контроллер статуса интернет-подключения. */
-  private val onLineAh = new OnLineAh(
+  private def onLineAh = new OnLineAh(
     modelRW       = onLineRW,
     dispatcher    = this,
     retryActionRO = scErrorDiaRW.zoom( _.flatMap(_.retryAction) ),
     platformRO    = platformRW,
   )
 
-  private val scConfAh = new ScConfAh(
+  private def scConfAh = new ScConfAh(
     modelRW  = confRW,
     scInitRO = rootRW.zoom(_.toScInit),
   )
 
   /** Контроллер управления отдельной формой логина. */
-  private val scLoginDiaAh = new ScLoginDiaAh(
+  private def scLoginDiaAh = new ScLoginDiaAh(
     modelRW = scLoginRW,
     getLoginFormCircuit = getLoginFormCircuit,
   )
 
-  private val scNodesDiaAh = new ScNodesDiaAh(
+  private def scNodesDiaAh = new ScNodesDiaAh(
     modelRW           = scNodesRW,
     getNodesCircuit   = getNodesFormCircuit,
     sc3Circuit        = this,
   )
 
-  private val csrfTokenAh = new CsrfTokenAh(
+  private def csrfTokenAh = new CsrfTokenAh(
     modelRW       = csrfTokenRW,
     csrfTokenApi  = csrfTokenApi,
     onError       = Some { () =>
@@ -656,98 +655,56 @@ class Sc3Circuit(
     },
   )
 
-  private val logOutAh = mkLogOutAh( logOutRW )
+  private def logOutAh = mkLogOutAh( logOutRW )
+  private def welcomeAh = new WelcomeAh( indexWelcomeRW )
+  private def sessionAh = new SessionAh(
+    modelRW = loginSessionRW,
+  )
+  private def jsRouterInitAh = new JsRouterInitAh(
+    modelRW = jsRouterRW
+  )
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( routes )
 
 
-  override protected val actionHandler: HandlerFunction = {
-    // TODO На основе конкретного Action-интерфейса роутить сигнал сразу к нужному контроллеру.
-    var acc = List.empty[HandlerFunction]
-
-    // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
-    acc ::= tailAh
-    acc ::= logOutAh
-    acc ::= scNodesDiaAh
-    acc ::= scLoginDiaAh
-    acc ::= scConfAh
-
-    if (CordovaConstants.isCordovaPlatform()) {
-      acc ::= new SessionAh(
-        modelRW = loginSessionRW,
-      )
+  /** Функция-роутер экшенов в конкретные контроллеры. */
+  override protected val actionHandler: HandlerFunction = { (mroot, action) =>
+    val ctlOrNull: HandlerFunction = action match {
+      case _: IBleBeaconAction          => beaconerAh
+      case _: IMapsAction               => mapAhs
+      case _: IGeoLocAction             => geoLocAh
+      case _: IGridAction               => gridAh
+      case _: IJdAction                 => jdAh
+      case _: IScTailAction             => tailAh
+      case _: IOnlineAction             => onLineAh
+      case _: IIndexAction              => indexAh
+      case _: ISearchTextAction         => searchTextAh
+      case _: IScScreenAction           => screenAh
+      case _: IPlatformAction           => platformAh
+      case _: IScNodesAction            => scNodesDiaAh
+      case _: IWelcomeAction            => welcomeAh
+      case _: ISessionAction            => sessionAh
+      case _: IGeoTabAction             => geoTabAh
+      case _: ICsrfTokenAction          => csrfTokenAh
+      case _: IOsNotifyAction           => notifyAh.get
+      case _: IScErrorAction            => scErrorDiaAh
+      case _: IScAppAction              => dlAppAh
+      case _: IScSettingsAction         => scSettingsDiaAh
+      case _: IScDaemonAction           => scDaemonAh
+      case _: IDaemonAction             => daemonBgModeAh.get
+      case _: IDaemonSleepAction        => daemonSleepTimerAh.get
+      // редкие варианты:
+      case _: IScConfAction             => scConfAh
+      case _: IScLoginAction            => scLoginDiaAh
+      case _: ILogoutAction             => logOutAh
+      case _: IBootAction               => bootAh
+      case _: IWz1Action                => wzFirstDiaAh
+      case _: IRcvrMarkersInitAction    => rcvrMarkersInitAh
+      case _: IScJsRouterInitAction     => jsRouterInitAh
+      case _: ComponentCatch            => tailAh
     }
-
-    acc ::= csrfTokenAh
-
-    for (ah <- daemonBgModeAh) {
-      acc ::= scDaemonAh
-      acc ::= ah
-    }
-
-    for (ah <- daemonSleepTimerAh)
-      acc ::= ah
-
-    // Контроллер для нативного приложения.
-    // TODO Не добавлять dlAppAh, когда не нужен (MPlatformS.isDlAppAvail()). Но доступ к MPlatformS отсюда невозможен из конструктора.
-    acc ::= dlAppAh
-
-    acc ::= scErrorDiaAh
-
-    // Контроллер диалога настроек.
-    acc ::= scSettingsDiaAh
-
-    // Диалоги обычно закрыты. Тоже - в хвост.
-    acc ::= wzFirstDiaAh
-
-    // Контроллер загрузки
-    acc ::= bootAh
-
-    // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
-    //if ( !jsRouterRW.value.isReady ) {
-      acc ::= new JsRouterInitAh(
-        modelRW = jsRouterRW
-      )
-    //}
-
-    // События уровня платформы.
-    acc ::= platformAh
-    acc ::= onLineAh
-
-    // Контроллер нотификаций.
-    for (ah <- notifyAh)
-      acc ::= ah
-
-    // События jd-шаблонов в плитке.
-    acc ::= jdAh
-
-    acc ::= sTextAh
-    acc ::= geoTabAh    // TODO Объеденить с searchAh
-    acc ::= rcvrMarkersInitAh
-
-    // Основные события индекса не частые, но доступны всегда *ДО*geoTabAh*:
-    acc ::= indexAh
-
-    //if ( indexWelcomeRW().nonEmpty )
-      acc ::= new WelcomeAh( indexWelcomeRW )
-
-    //if ( mapInitRW.value.ready )
-      acc ::= mapAhs
-
-    // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
-    acc ::= gridAh
-
-    // Контроллер BLE-маячков. Сигналы приходят часто, поэтому его - ближе к голове списка.
-    acc ::= beaconerAh
-
-    // Геолокация довольно часто получает сообщения (когда активна), поэтому её -- тоже в начало списка контроллеров:
-    acc ::= geoLocAh
-
-    // Экран отрабатываем в начале, но необходимость этого под вопросом.
-    acc ::= screenAh
-
-    // Собрать все контроллеры в пачку.
-    composeHandlers( acc: _* )
+    Option( ctlOrNull )
+      .flatMap( _(mroot, action) )
   }
 
 
@@ -756,7 +713,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
   /** Когда наступает platform ready и BLE доступен,
     * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
@@ -771,6 +728,7 @@ class Sc3Circuit(
       // приводя к проблеме http://source.suggest.io/sio/sio2/issues/5 , а вместе с
       // плагином cdv-bg-geoloc - к какому-то зависону из-за facade.pause() в геолокации и StackOverflowError в
       // ble-central-плагине при отстутствии прав на FINE_LOCATION.
+      // TODO Нельзя запрашивать только ВКЛючение, но не выключенине. На случай каких-то проблем с boot-состоянием.
       bootRW().targets.isEmpty
     ) && {
       Future {

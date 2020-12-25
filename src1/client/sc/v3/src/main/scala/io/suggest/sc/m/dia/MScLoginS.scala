@@ -18,8 +18,8 @@ object MScLoginS {
   @inline implicit def univEq: UnivEq[MScLoginS] = UnivEq.derive
 
   def ident = GenLens[MScLoginS]( _.ident )
-  val session = GenLens[MScLoginS]( _.session )
-  val logout = GenLens[MScLoginS]( _.logout )
+  def session = GenLens[MScLoginS]( _.session )
+  def logout = GenLens[MScLoginS]( _.logout )
 
 
   implicit final class ScLoginExt( private val scLogin: MScLoginS ) extends AnyVal {

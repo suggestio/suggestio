@@ -49,7 +49,6 @@ class ScSettingsDiaR(
 
   case class State(
                     openedSomeC       : ReactConnectProxy[Some[Boolean]],
-                    btMissOnOsC       : ReactConnectProxy[Option[MOsFamily]],
                     debugSomeC        : ReactConnectProxy[Some[Boolean]],
                   )
 
@@ -170,11 +169,6 @@ class ScSettingsDiaR(
 
         openedSomeC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( mroot.dialogs.settings.opened )
-        },
-
-        btMissOnOsC = propsProxy.connect { mroot =>
-          val p = mroot.dev.platform
-          OptionUtil.maybeOpt( p.hasBle )( p.osFamily )
         },
 
         debugSomeC = propsProxy.connect { mroot =>

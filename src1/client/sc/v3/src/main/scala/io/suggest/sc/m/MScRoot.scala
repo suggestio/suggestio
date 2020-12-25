@@ -43,7 +43,7 @@ object MScRoot {
   /** "Линзы" для упрощённого доступа к полям нижнего уровня. */
   val dev       = GenLens[MScRoot](_.dev)
   val index     = GenLens[MScRoot](_.index)
-  val grid      = GenLens[MScRoot](_.grid)
+  def grid      = GenLens[MScRoot](_.grid)
   val internals = GenLens[MScRoot](_.internals)
   val dialogs   = GenLens[MScRoot](_.dialogs)
 

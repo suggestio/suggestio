@@ -11,11 +11,11 @@ import io.suggest.sc.Sc3Circuit
 import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot._
-import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.m.search.MGeoTabData
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.sc.m.dia.first.InitFirstRunWz
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.CircuitUtil
 import io.suggest.spa.DiodeUtil.Implicits._

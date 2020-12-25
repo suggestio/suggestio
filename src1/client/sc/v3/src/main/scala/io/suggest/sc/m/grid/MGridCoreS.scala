@@ -36,7 +36,7 @@ object MGridCoreS {
 
 
   def jdConf    = GenLens[MGridCoreS](_.jdConf)
-  val jdRuntime = GenLens[MGridCoreS](_.jdRuntime)
+  def jdRuntime = GenLens[MGridCoreS](_.jdRuntime)
   def ads       = GenLens[MGridCoreS](_.ads)
   def gridBuild = GenLens[MGridCoreS](_.gridBuild)
 

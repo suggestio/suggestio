@@ -324,6 +324,7 @@ class JsMessagesUtil @Inject() (
       MC.`Mode` ::
       MC.`Ad.adv.manage` ::
       MC.`Bg.location` :: MC.`Bg.location.hint` ::
+      ErrorMsgs.SC_FSM_EVENT_FAILED ::
       Nil
 
     (

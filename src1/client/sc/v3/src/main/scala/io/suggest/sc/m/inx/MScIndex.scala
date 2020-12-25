@@ -32,12 +32,12 @@ object MScIndex {
 
   @inline implicit def univEq: UnivEq[MScIndex] = UnivEq.derive
 
-  val state   = GenLens[MScIndex](_.state)
+  def state   = GenLens[MScIndex](_.state)
   def resp    = GenLens[MScIndex](_.resp)
-  val welcome = GenLens[MScIndex](_.welcome)
+  def welcome = GenLens[MScIndex](_.welcome)
   val search  = GenLens[MScIndex](_.search)
-  val scCss   = GenLens[MScIndex](_.scCss)
-  val menu    = GenLens[MScIndex](_.menu)
+  def scCss   = GenLens[MScIndex](_.scCss)
+  def menu    = GenLens[MScIndex](_.menu)
 
 
   implicit final class MScIndexOpsExt( private val scIndex: MScIndex ) extends AnyVal {
