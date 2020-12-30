@@ -1,5 +1,6 @@
 package io.suggest.sc.m
 
+import diode.{ActionResult, Effect}
 import diode.data.Pot
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.lk.nodes.form.m.MLkNodesMode
@@ -8,12 +9,13 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m.dev.{GlLeafletLocateArgs, MOnLineInfo}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.inx.MScSwitchCtx
-import io.suggest.sc.sc3.{MSc3Resp, MScConfUpdate, MScQs, MScRespActionType}
+import io.suggest.sc.sc3.{MSc3Resp, MScConfUpdate, MScQs, MScRespActionType, MScSettingsData}
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.spa.{DAction, SioPages}
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import play.api.libs.json.JsValue
 
 import scala.util.Try
 
@@ -211,7 +213,7 @@ sealed trait IPlatformAction extends IScRootAction
 case class PauseOrResume(isScVisible: Boolean) extends IPlatformAction
 
 /** Сигнал готовности платформы к полноценной работе. */
-case object SetPlatformReady extends IPlatformAction
+case class PlatformReady(state: Pot[Boolean] = Pot.empty ) extends IPlatformAction
 
 
 
@@ -235,6 +237,24 @@ sealed trait IScSettingsAction extends IScRootAction
 /** Управление отображением диалога настроек выдачи. */
 case class SettingsDiaOpen(opened: Boolean) extends IScSettingsAction
 
+/** Прочитать сеттинги из хранилища и применить. */
+case class SettingsRestore( data: Pot[Option[MScSettingsData]] = Pot.empty ) extends IScSettingsAction
+
+/** Выставление настройки выдачи в новое значение. */
+case class SettingSet( key: String, value: JsValue, save: Boolean ) extends IScSettingsAction
+
+/** Использовать значение сеттинга для генерации возможного эффекта.
+  * @param fx Если JsValue == JsNull, то значит значение настройки отсутствует вообще в хранилище, либо хранится как null.
+  */
+case class SettingEffect( key: String, fx: JsValue => Option[Effect] ) extends IScSettingsAction
+
+/** Произвольные действия с текущими настройками.
+  * ActionResult.newValueOpt - опциональные обновлённые настройки.
+  * ActionResult.effectOpt - опциональный эффект от обработки настроек.
+  * ActionResult.silent используется как аналог save-флага:
+  * Если silent=true - не сохранять изменения в хранилище.
+  */
+case class WithSettings( action: MScSettingsData => ActionResult[MScSettingsData] ) extends IScSettingsAction
 
 
 sealed trait IScDaemonAction extends IScRootAction

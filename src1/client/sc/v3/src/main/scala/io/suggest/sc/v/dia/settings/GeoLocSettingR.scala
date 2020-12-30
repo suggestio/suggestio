@@ -1,8 +1,8 @@
 package io.suggest.sc.v.dia.settings
 
 import diode.react.ModelProxy
+import io.suggest.conf.ConfConst
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.sc.m.GeoLocOnOff
 import io.suggest.sc.m.dev.MGeoLocSwitchS
 import japgolly.scalajs.react._
 
@@ -20,21 +20,17 @@ class GeoLocSettingR(
   type Props_t = MGeoLocSwitchS
   type Props = ModelProxy[Props_t]
 
-  private lazy val innerComp = onOffSettingR.prepare(
-    text = crCtxProv.message( MsgCodes.`Geolocation` ),
-    onOffAction = { isEnabled =>
-      GeoLocOnOff(
-        enabled = isEnabled,
-        isHard  = true,
-      )
-    },
-  )
-
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsProxy =>
-      propsProxy.wrap(_.onOff)( innerComp.component.apply )
+      onOffSettingR.component(
+        onOffSettingR.PropsVal(
+          text            = crCtxProv.message( MsgCodes.`Geolocation` ),
+          onOff           = Right( ConfConst.ScSettings.LOCATION_ENABLED ),
+          isCheckedProxy  = propsProxy.zoom(_.onOff),
+        )
+      )
     }
     .build
 

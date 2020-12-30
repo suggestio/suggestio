@@ -4,7 +4,6 @@ import diode._
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
-import io.suggest.dev.MPlatformS
 import io.suggest.maps.m.RcvrMarkersInit
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.Sc3Circuit
@@ -136,7 +135,7 @@ class BootAh[M](
 
           if (plat.isCordova) {
             // cordova - Нужно повесится на platform-ready.
-            val isReadyRO = CircuitUtil.mkLensZoomRO(circuit.platformRW, MPlatformS.isReady)
+            val isReadyRO = circuit.platformRW.zoom(_.isReady)
             _startWithPot( serviceId, isReadyRO, timeoutOkMs = Some(7000) )
           } else {
             // browser - сразу вернуть ответ.
@@ -213,7 +212,7 @@ class BootAh[M](
 
         val svcStartCompleted = svcDataOpt0.exists( _.isStarted )
 
-        val prevTargetsHasSvc = (acc0.prevTargets contains acc0.restTargets.head)
+        val prevTargetsHasSvc = (acc0.prevTargets contains svcId)
         if (
           // Эта служба уже [была] запущена, возможно уже работает?
           svcStartCompleted || prevTargetsHasSvc
@@ -454,9 +453,8 @@ class BootAh[M](
           m.ifMissing.fold {
             logger.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
             noChange
-          } { ifMissingFx =>
-            effectOnly( ifMissingFx )
-          }
+          }( effectOnly )
+          // TODO Надо как-то логгировать по-нормальному ошибки внутри эффекта, иначе трудно что-либо понять без ковыряния в отладчике.
         }
 
   }

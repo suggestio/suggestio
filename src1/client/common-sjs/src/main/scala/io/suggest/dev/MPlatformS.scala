@@ -1,9 +1,11 @@
 package io.suggest.dev
 
 import diode.FastEq
+import diode.data.Pot
 import japgolly.univeq._
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -16,7 +18,7 @@ object MPlatformS {
   implicit object MPlatformSFastEq extends FastEq[MPlatformS] {
     override def eqv(a: MPlatformS, b: MPlatformS): Boolean = {
       (a.isUsingNow ==* b.isUsingNow) &&
-      (a.isReady ==* b.isReady) &&
+      (a.isReadyPot ===* b.isReadyPot) &&
       (a.isCordova ==* b.isCordova) &&
       (a.hasBle ==* b.hasBle) &&
       (a.osFamily ===* b.osFamily)
@@ -25,8 +27,8 @@ object MPlatformS {
 
   @inline implicit def univEq: UnivEq[MPlatformS] = UnivEq.derive
 
-  val isUsingNow  = GenLens[MPlatformS](_.isUsingNow)
-  val isReady     = GenLens[MPlatformS](_.isReady)
+  def isUsingNow  = GenLens[MPlatformS](_.isUsingNow)
+  def isReadyPot  = GenLens[MPlatformS](_.isReadyPot)
   def isCordova   = GenLens[MPlatformS](_.isCordova)
   def hasBle      = GenLens[MPlatformS](_.hasBle)
   def osFamily    = GenLens[MPlatformS](_.osFamily)
@@ -42,6 +44,9 @@ object MPlatformS {
     def isUseIosStyles: Boolean =
       plat.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS
 
+    def isReady: Boolean =
+      plat.isReadyPot contains true
+
   }
 
 }
@@ -49,7 +54,8 @@ object MPlatformS {
 
 /** Контейнер данных платформы.
   *
-  * @param isReady Готовность платформы к полноценной работе.
+  * @param isReadyPot Готовность платформы к полноценной работе.
+  *                   pending означает переключение в противоположное состояние.
   * @param isCordova Является ли текущеая платформа cordova-окружением?
   * @param isUsingNow Активная работа с приложением сейчас?
   *                   true значит, что вкладка открыта и активна, приложение открыто и на переднем плане.
@@ -62,7 +68,7 @@ object MPlatformS {
   */
 case class MPlatformS(
                        isUsingNow     : Boolean,
-                       isReady        : Boolean,
+                       isReadyPot     : Pot[Boolean] = Pot.empty,
                        isCordova      : Boolean,
                        hasBle         : Boolean,
                        osFamily       : Option[MOsFamily],

@@ -3,7 +3,7 @@ package io.suggest.dev
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
 import io.suggest.ext.svc.{MExtService, MExtServices}
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -62,7 +62,7 @@ object MOsFamily {
     EnumeratumUtil.valueEnumEntryFormat( MOsFamilies )
 
 
-  implicit final class OsFamilyOpsExt( private val osf: MOsFamily ) extends AnyVal {
+  implicit final class OsFamilyExt( private val osf: MOsFamily ) extends AnyVal {
 
     /** Поддерживается ли минификация приложения силами cordova? */
     def isCdvAppMinimizable: Boolean = {
@@ -71,6 +71,19 @@ object MOsFamily {
         case _ => false
       }
     }
+
+
+    /** Использовать ли bg mode в cordova? */
+    def isUseBgModeDaemon: Boolean =
+      osf ==* MOsFamilies.Android
+
+  }
+
+
+  implicit final class OsFamilyOptExt( private val osOpt: Option[MOsFamily] ) extends AnyVal {
+
+    def isUseBgModeDaemon: Boolean =
+      osOpt.exists(_.isUseBgModeDaemon)
 
   }
 

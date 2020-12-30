@@ -183,19 +183,24 @@ class Sc3Module { outer =>
     import ScLoginFormModule.logOutDiaR
     wire[ScRootR]
   }
-  lazy val sc3UniApi: IScUniApi = {
+
+
+  def sc3UniApi: IScUniApi = {
     import ScHttpConf._
     wire[ScUniApiHttpImpl]
   }
-  lazy val scStuffApi: IScStuffApi = {
+  def scStuffApi: IScStuffApi = {
     import ScHttpConfCsrf._
     wire[ScStuffApiHttp]
   }
-  lazy val csrfTokenApi = {
+  def csrfTokenApi = {
     import ScHttpConf._
     wire[CsrfTokenApi]
   }
-  lazy val scAppApiHttp = wire[ScAppApiHttp]
+  def scAppApiHttp = {
+    import ScHttpConf._
+    wire[ScAppApiHttp]
+  }
 
   object ScHttpConf {
     /** Сборка HTTP-конфига для всей выдачи, без CSRF. */

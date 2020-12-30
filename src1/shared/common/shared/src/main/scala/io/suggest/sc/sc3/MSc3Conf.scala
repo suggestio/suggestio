@@ -20,13 +20,13 @@ import io.suggest.ueq.UnivEqUtil._
 object MSc3Conf {
 
   object Fields {
-    val ABOUT_SIO_NODE_ID           = "a"
-    val RCVRS_MAP_URL               = "r"
-    val API_VSN                     = "v"
-    val DEBUG_FLAG                  = "d"
-    val SERVER_GENERATED_AT         = "g"
-    val CLIENT_UPDATED_AT           = "u"
-    val GEN                         = "e"
+    def ABOUT_SIO_NODE_ID           = "a"
+    def RCVRS_MAP_URL               = "r"
+    def API_VSN                     = "v"
+    def DEBUG_FLAG                  = "d"
+    def SERVER_GENERATED_AT         = "g"
+    def CLIENT_UPDATED_AT           = "u"
+    def GEN                         = "e"
   }
 
   /** Поддержка play-json.

@@ -3,8 +3,6 @@ package io.suggest.sc.v.dia.settings
 import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiList, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.css.Css
-import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.lk.r.plat.{PlatformComponents, PlatformCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -12,10 +10,7 @@ import io.suggest.sc.m.{MScRoot, SetDebug, SettingsDiaOpen}
 import io.suggest.sc.v.menu.VersionR
 import io.suggest.spa.DiodeUtil
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.React.Node
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -39,12 +34,6 @@ class ScSettingsDiaR(
 
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
-
-  /** Компонент переключения (выкючения) debug-режима. */
-  private lazy val setDebugCompCont = onOffSettingR.prepare(
-    text = MsgCodes.`Debug` ,
-    onOffAction = SetDebug,
-  )
 
 
   case class State(
@@ -98,7 +87,15 @@ class ScSettingsDiaR(
                   )(),
 
                   // Переключалка-выключалка debug mode
-                  p.wrap { mroot => DiodeUtil.Bool( mroot.internals.conf.debug ) } ( setDebugCompCont.component.apply ),
+                  onOffSettingR.component(
+                    onOffSettingR.PropsVal(
+                      text  = MsgCodes.`Debug` ,
+                      onOff = Left( SetDebug ),
+                      isCheckedProxy = p.zoom { mroot =>
+                        DiodeUtil.Bool( mroot.internals.conf.debug )
+                      },
+                    )
+                  ),
 
                   // Управление unsafe-offsets, и данные по экрану устройства.
                   p.wrap(_.dev.screen.info)( unsafeOffsetSettingR.component.apply ),

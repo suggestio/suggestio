@@ -1,6 +1,9 @@
 package io.suggest.sc.m.dia.settings
 
-import japgolly.univeq.UnivEq
+import diode.data.Pot
+import io.suggest.sc.sc3.MScSettingsData
+import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
 import monocle.macros.GenLens
 
 /**
@@ -19,9 +22,11 @@ object MScSettingsDia {
   @inline implicit def univEq: UnivEq[MScSettingsDia] = UnivEq.derive
 
   def opened = GenLens[MScSettingsDia]( _.opened )
+  def data = GenLens[MScSettingsDia]( _.data )
 
 }
 
 case class MScSettingsDia(
-                           opened     : Boolean       = false,
+                           opened       : Boolean                 = false,
+                           data         : Pot[MScSettingsData]    = Pot.empty,
                          )

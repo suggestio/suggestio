@@ -61,8 +61,6 @@ class UnsafeOffsetSettingR {
 
       React.Fragment(
 
-
-
         // Строка с контролом для замены offset'ов
         MuiListItem(
           liProps

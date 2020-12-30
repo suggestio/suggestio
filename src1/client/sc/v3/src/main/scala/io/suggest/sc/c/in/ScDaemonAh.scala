@@ -4,11 +4,10 @@ import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
 import io.suggest.sjs.common.async.AsyncUtil._
 import io.suggest.sc.m.{ScDaemonSleepAlarm, ScDaemonDozed, ScDaemonFallSleepTimerSet, ScDaemonWorkProcess}
 import io.suggest.sc.m.in.MScDaemon
-import diode.Implicits._
 import diode.data.Pot
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.daemon.{DaemonBgModeSet, DaemonSleepTimerFinish, DaemonSleepTimerSet, MDaemonSleepTimer, MDaemonState, MDaemonStates}
-import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
+import io.suggest.dev.MPlatformS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
@@ -43,13 +42,6 @@ class ScDaemonAh[M](
   extends ActionHandler( modelRW )
   with Log
 { ah =>
-
-
-  /** Использовать ли cordova-bgMode-плагин?
-    * На iOS плагин не работает, и уже не компилируется.
-    */
-  def USE_BG_MODE: Boolean =
-    platfromRO.value.osFamily contains[MOsFamily] MOsFamilies.Android
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -93,7 +85,10 @@ class ScDaemonAh[M](
         }
       }
 
-      if (USE_BG_MODE && (v0.cdvBgMode.isActive !=* m.isActive))
+      if (
+        platfromRO.value.osFamily.isUseBgModeDaemon &&
+        (v0.cdvBgMode.isActive !=* m.isActive)
+      )
         fxsAcc ::= DaemonBgModeSet( isDaemon = m.isActive ).toEffectPure
 
       if (!m.isActive)
@@ -133,8 +128,11 @@ class ScDaemonAh[M](
         // На случай какой-либо задержки логики фонового сканирования, нужно гарантировать выключение демона через время.
         val fallSleepTimerFx = Effect.action {
           val timerId = DomQuick.setTimeout( ScDaemonAh.FALL_SLEEP_AFTER.toMillis.toInt ) { () =>
-            val a = if (USE_BG_MODE) ScDaemonSleepAlarm( isActive = false )
-                    else ScDaemonWorkProcess( isActive = false )
+            val a = if (platfromRO.value.osFamily.isUseBgModeDaemon)
+              ScDaemonSleepAlarm( isActive = false )
+            else
+              ScDaemonWorkProcess( isActive = false )
+
             dispatcher( a )
           }
           ScDaemonFallSleepTimerSet( Some(timerId) )

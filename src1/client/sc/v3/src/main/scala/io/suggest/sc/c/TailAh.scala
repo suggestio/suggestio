@@ -741,7 +741,7 @@ class TailAh(
             val runRouteFx = Effect.action {
               root_internals_jsRouter_delayedRouteTo_LENS
                 .get( modelRW.value )
-                .get
+                .getOrElse( DoNothing )
             }
             // Сохранённая delayed-роута будет зачищена в ходе обработки RouteTo (см.выше delayedRouteTo.nonEmpty).
             BootAfter(

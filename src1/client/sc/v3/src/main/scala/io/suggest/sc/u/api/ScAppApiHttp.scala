@@ -1,7 +1,7 @@
 package io.suggest.sc.u.api
 
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{HttpReq, HttpReqData}
+import io.suggest.proto.http.model.{HttpClientConfig, HttpReq, HttpReqData}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.app.{MScAppGetQs, MScAppGetResp}
@@ -29,7 +29,11 @@ trait IScAppApi {
 }
 
 
-class ScAppApiHttp extends IScAppApi {
+class ScAppApiHttp(
+                    httpClientConfig: () => HttpClientConfig,
+                  )
+  extends IScAppApi
+{
 
   override def appDownloadInfo(qs: MScAppGetQs): Future[MScAppGetResp] = {
     HttpClient.execute(
@@ -42,6 +46,7 @@ class ScAppApiHttp extends IScAppApi {
         data = HttpReqData(
           headers = HttpReqData.headersJsonSendAccept,
           timeoutMs = Some( 10.seconds.toMillis.toInt ),
+          config  = httpClientConfig(),
         ),
       )
     )

@@ -8,16 +8,30 @@ package io.suggest.conf
   */
 object ConfConst {
 
-  def SC_PREFIX = "sc."
+  final def SC_PREFIX = "sc."
 
-  /** Инициализация конфига. */
-  def SC_INIT_KEY = SC_PREFIX + "init"
+  /** Ключ в user-хранилищи по init-контейнеру конфига выдачи. */
+  final def SC_INIT_KEY = SC_PREFIX + "init"
+
+  /** Ключ хранилища настроек выдачи. */
+  final def SC_SETTINGS_KEY = SC_PREFIX + "settings"
+
+  object ScSettings {
+    private final def _ENABLED = ".enabled"
+
+    // Ключи внутри settings-контейнера.
+    final def BLUETOOTH_BEACONS_ENABLED   = "bluetooth.beacons" + _ENABLED
+    final def BLUETOOTH_BEACONS_BACKGROUND_SCAN   = "bluetooth.beacons.background.scan" + _ENABLED
+    final def LOCATION_ENABLED            = "location" + _ENABLED
+    final def NOTIFICATIONS_ENABLED       = "notifications" + _ENABLED
+  }
+
 
   /** Первый запуск. */
-  def SC_FIRST_RUN = SC_PREFIX + "first.run"
+  final def SC_FIRST_RUN = SC_PREFIX + "first.run"
 
-  def IS_TOUCH_DEV = "device.touch.is"
+  final def IS_TOUCH_DEV = "device.touch.is"
 
-  def SC_INDEXES_RECENT = "sc.indexes.recent"
+  final def SC_INDEXES_RECENT = "sc.indexes.recent"
 
 }

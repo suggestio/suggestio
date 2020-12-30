@@ -4,12 +4,12 @@ import diode.{Effect, FastEq, ModelRW}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.IBleBeaconAction
-import io.suggest.ble.beaconer.{BleBeaconerAh, BtOnOff, MBeaconerOpts, MBeaconerS}
+import io.suggest.ble.beaconer.{BleBeaconerAh, MBeaconerS}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.fetch.CdvBgFetchAh
 import io.suggest.cordova.background.mode.CordovaBgModeAh
-import io.suggest.daemon.{BgModeDaemonInit, IDaemonAction, IDaemonSleepAction, MDaemonDescr, MDaemonInitOpts, MDaemonState, MDaemonStates}
+import io.suggest.daemon.{IDaemonAction, IDaemonSleepAction, MDaemonState, MDaemonStates}
 import io.suggest.dev.MScreen.MScreenFastEq
 import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPlatformS, MScreenInfo}
@@ -34,16 +34,16 @@ import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, ScConfAh, WelcomeA
 import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.menu.DlAppAh
 import io.suggest.sc.c.search._
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MScIndexes}
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexes}
 import io.suggest.sc.m._
 import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
-import io.suggest.sc.m.boot.{Boot, BootAfter, IBootAction, MBootServiceIds, MSpaRouterState}
+import io.suggest.sc.m.boot.{Boot, IBootAction, MBootServiceIds, MSpaRouterState}
 import io.suggest.sc.m.dev.{MScDev, MScOsNotifyS, MScScreenS}
 import io.suggest.sc.m.dia.{MScDialogs, MScLoginS}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.grid.{GridAfterUpdate, GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.in.{MInternalInfo, MScDaemon, MScInternals}
-import io.suggest.sc.m.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexState, MScSwitchCtx}
+import io.suggest.sc.m.inx.{IIndexAction, IWelcomeAction, MScIndex, MScIndexState}
 import io.suggest.sc.m.menu.{IScAppAction, MDlAppDia, MMenuS}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
@@ -66,10 +66,10 @@ import io.suggest.id.login.m.ILogoutAction
 import io.suggest.id.login.m.session.MLogOutDia
 import io.suggest.jd.render.m.{IGridAction, IJdAction}
 import io.suggest.lk.c.{CsrfTokenAh, ICsrfTokenApi}
-import io.suggest.lk.m.{ICsrfTokenAction, ISessionAction, SessionRestore}
+import io.suggest.lk.m.{ICsrfTokenAction, ISessionAction}
 import io.suggest.lk.nodes.form.LkNodesFormCircuit
 import io.suggest.lk.r.plat.PlatformCssStatic
-import io.suggest.os.notify.{CloseNotify, IOsNotifyAction, NotifyStartStop}
+import io.suggest.os.notify.IOsNotifyAction
 import io.suggest.os.notify.api.html5.{Html5NotificationApiAdp, Html5NotificationUtil}
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.in.{BootAh, ScDaemonAh}
@@ -80,7 +80,7 @@ import io.suggest.sc.v.styl.ScCss
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.ueq.UnivEqUtil._
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.Try
 
@@ -96,10 +96,10 @@ class Sc3Circuit(
                   getLoginFormCircuit       : () => LoginFormCircuit,
                   getNodesFormCircuit       : () => LkNodesFormCircuit,
                   // Автоматические DI-аргументы:
-                  sc3UniApi                 : IScUniApi,
-                  scAppApi                  : IScAppApi,
-                  scStuffApi                : IScStuffApi,
-                  csrfTokenApi              : ICsrfTokenApi,
+                  sc3UniApi                 : => IScUniApi,
+                  scAppApi                  : => IScAppApi,
+                  scStuffApi                : => IScStuffApi,
+                  csrfTokenApi              : => ICsrfTokenApi,
                   preferGeoApi              : Option[GeoLocApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
@@ -422,7 +422,7 @@ class Sc3Circuit(
     rootRO  = rootRW,
   )
 
-  private val mapAhs = {
+  private val mapAhs: HandlerFunction = {
     val mapCommonAh = new MapCommonAh(
       mmapRW = mmapsRW
     )
@@ -448,33 +448,46 @@ class Sc3Circuit(
     modelRW = searchTextRW
   )
 
-  private val geoLocAh = new GeoLocAh(
+  private val geoLocAh: HandlerFunction = new GeoLocAh(
     dispatcher   = this,
     modelRW      = scGeoLocRW,
     preferGeoApi = preferGeoApi,
   )
 
   private def platformAh = new PlatformAh(
-    modelRW = platformRW,
-    rootRO  = rootRW,
+    modelRW           = platformRW,
+    rootRO            = rootRW,
+    dispatcher        = this,
+    scNotifications   = scNotifications,
   )
 
-  private val beaconerAh = new BleBeaconerAh(
+  private val beaconerAh: HandlerFunction = new BleBeaconerAh(
     modelRW     = beaconerRW,
     dispatcher  = this,
     bcnsIsSilentRO = scNodesRW.zoom(_.circuit.isEmpty),
     onNearbyChange = Some { (nearby0, nearby2) =>
       val daemonS = daemonRW.value
+      var fxAcc = List.empty[Effect]
 
-      // Отправить эффект изменения в списке маячков, чтобы
-      if (scNodesRW.value.circuit.nonEmpty) {
-        this.runEffect(
-          Effect.action {
-            scNodesDiaAh.handleBeaconsDetected()
-            DoNothing
-          },
+      // Отправить эффект изменения в списке маячков
+      if (scNodesRW.value.circuit.nonEmpty)
+        fxAcc ::= Effect.action {
+          scNodesDiaAh.handleBeaconsDetected()
           DoNothing
-        )
+        }
+
+      /** Экшен для перезапроса с сервера только BLE-карточек плитки. */
+      def _gridBleReloadFx: Effect = {
+        Effect.action {
+          GridLoadAds(
+            clean         = true,
+            ignorePending = true,
+            silent        = OptionUtil.SomeBool.someTrue,
+            onlyMatching  = Some( MScNodeMatchInfo(
+              ntype = Some( MNodeTypes.BleBeacon ),
+            )),
+          )
+        }
       }
 
       if (daemonS.state contains[MDaemonState] MDaemonStates.Work) {
@@ -483,19 +496,19 @@ class Sc3Circuit(
           Effect.action( ScDaemonWorkProcess(isActive = false) )
         }
 
-        val fx = if (nearby0 ===* nearby2) {
+        if (nearby0 ===* nearby2) {
           // Ничего не изменилось: такое возможно при oneShot-режиме. Надо сразу деактивировать режим демонизации.
-          finishWorkProcFx
+          fxAcc ::= finishWorkProcFx
         } else {
           // Что-то изменилось в списке маячков. Надо запустить обновление плитки.
-          val shutOffAfterGrid = Effect.action {
+          fxAcc ::= Effect.action {
             GridAfterUpdate(
               effect = finishWorkProcFx,
             )
           }
-          _gridBleReloadFx + shutOffAfterGrid
+          fxAcc ::= _gridBleReloadFx
         }
-        Some( fx )
+        fxAcc.mergeEffects
 
       } else {
         // Логика зависит от режима, который сейчас: работа демон или обычный режим вне демона.
@@ -515,14 +528,14 @@ class Sc3Circuit(
               }
             ) {
               // Нужно забросить в состояние плитки инфу о необходимости обновится после заливки исходной плитки.
-              Effect.action {
-                GridAfterUpdate( _gridBleReloadFx )
-              }
+              (Effect.action( GridAfterUpdate( _gridBleReloadFx )) :: fxAcc)
+                .mergeEffects
+                .get
             }
 
           } else {
             // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
-            Some( _gridBleReloadFx )
+            (_gridBleReloadFx :: fxAcc).mergeEffects
           }
 
           gridUpdFxOpt
@@ -584,15 +597,11 @@ class Sc3Circuit(
 
 
   /** Контроллер демона. */
-  private def daemonBgModeAh: Option[HandlerFunction] = {
-    if (CordovaConstants.isCordovaPlatform()) {
-      Some(new CordovaBgModeAh(
-        modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cdvBgMode ),
-        dispatcher  = this,
-      ))
-    } else {
-      None
-    }
+  private def daemonBgModeAh: HandlerFunction = {
+    new CordovaBgModeAh(
+      modelRW     = mkLensZoomRW( daemonRW, MScDaemon.cdvBgMode ),
+      dispatcher  = this,
+    )
   }
 
   private def scDaemonAh = new ScDaemonAh(
@@ -603,17 +612,17 @@ class Sc3Circuit(
 
 
   /** Выборочный контроллер sleep-таймера демона. */
-  private def daemonSleepTimerAh: Option[HandlerFunction] = {
-    Option.when ( CordovaConstants.isCordovaPlatform() /*&& CordovaBgTimerAh.hasCordovaBgTimer()*/ ) {
+  private def daemonSleepTimerAh: HandlerFunction = {
       new CdvBgFetchAh(
         dispatcher = this,
         modelRW = mkLensZoomRW( daemonRW, MScDaemon.cdvBgFetch )
       )
+    //if ( CordovaConstants.isCordovaPlatform() /*&& CordovaBgTimerAh.hasCordovaBgTimer()*/ ) {
       //new CordovaBgTimerAh(
       //  dispatcher = this,
       //  modelRW    = mkLensZoomRW( daemonRW, MScDaemon.cdvBgTimer ),
       //)
-    } /*else {
+    /*} else {
         // TODO Не ясно, надо ли это активировать вообще? Может выкинуть (закомментить) этот контроллер? И его модель-состояние следом.
         new HtmlBgTimerAh(
           dispatcher = this,
@@ -691,8 +700,8 @@ class Sc3Circuit(
       case _: IScAppAction              => dlAppAh
       case _: IScSettingsAction         => scSettingsDiaAh
       case _: IScDaemonAction           => scDaemonAh
-      case _: IDaemonAction             => daemonBgModeAh.get
-      case _: IDaemonSleepAction        => daemonSleepTimerAh.get
+      case _: IDaemonAction             => daemonBgModeAh
+      case _: IDaemonSleepAction        => daemonSleepTimerAh
       // редкие варианты:
       case _: IScConfAction             => scConfAh
       case _: IScLoginAction            => scLoginDiaAh
@@ -715,92 +724,11 @@ class Sc3Circuit(
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
   //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
-  /** Когда наступает platform ready и BLE доступен,
-    * надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
-    */
-  private def _dispatchBleBeaconerOnOff(): Boolean = {
-    val plat = platformRW.value
-    // TODO Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).
-    val nextState = plat.isUsingNow
-    (plat.hasBle &&
-      plat.isReady &&
-      // Нельзя запрашивать bluetooth до boot'а GeoLoc: BLE scan требует права ACCESS_FINE_LOCATION,
-      // приводя к проблеме http://source.suggest.io/sio/sio2/issues/5 , а вместе с
-      // плагином cdv-bg-geoloc - к какому-то зависону из-за facade.pause() в геолокации и StackOverflowError в
-      // ble-central-плагине при отстутствии прав на FINE_LOCATION.
-      // TODO Нельзя запрашивать только ВКЛючение, но не выключенине. На случай каких-то проблем с boot-состоянием.
-      bootRW().targets.isEmpty
-    ) && {
-      Future {
-        val msg = BtOnOff(
-          isEnabled = nextState,
-          opts = MBeaconerOpts(
-            hardOff       = false,
-            // Не долбить мозг юзеру системным запросом включения bluetooth.
-            askEnableBt   = false,
-            oneShot       = false,
-          )
-        )
-        this.runEffectAction( msg )
-      }
-      nextState
-    }
-  }
 
-  /** Реакция на готовность платформы к работе. */
-  private def _onPlatformReady(): Unit = {
-    // Активировать сборку Bluetooth-маячков:
-    _dispatchBleBeaconerOnOff()
-
-    // Принудительно пересчитать экран. В cordova данные экрана определяются через cordova-plugin-device.
-    if (platformRW.value.isCordova)
-      this.runEffectAction( ScreenResetNow )
-
-    // Активировать поддержку нотификаций:
-    if (notifyAh.nonEmpty) Future {
-      val msg = NotifyStartStop(isStart = true)
-      this.runEffectAction( msg )
-    }
-
-    // Инициализация демонизатора
-    if ( daemonBgModeAh.nonEmpty && scDaemonAh.USE_BG_MODE ) Future {
-      val daemonizerInitA = BgModeDaemonInit(
-        initOpts = Some( MDaemonInitOpts(
-          //events = MDaemonEvents(
-          //  activated = ScDaemonWorkProcess,
-          //),
-          descr = MDaemonDescr(
-            needBle = true,
-          ),
-          notification = Some( scNotifications.daemonNotifyOpts() ),
-        ))
-      )
-      this.runEffectAction( daemonizerInitA )
-    }
-
-    this.runEffectAction( OnlineInit(true) )
-
-    // Инициализировать список последних узлов, когда платформа будет готова к RW-хранилищу и HTTP-запросам актуализации сохранённого списка.
-    // Например, cordova-fetch может быть не готова на iOS до platform-ready.
-    Future {
-      val jsRouterBootSvcId = MBootServiceIds.JsRouter
-      val a = BootAfter(
-        jsRouterBootSvcId,
-        LoadIndexRecents(clean = true).toEffectPure,
-      )
-      val fx = Boot( jsRouterBootSvcId :: Nil ).toEffectPure >> a.toEffectPure
-      this.runEffect( fx, a )
-    }
-  }
-
-
-  // Отработать инициализацию js-роутера в самом начале конструктора.
-  // По факту, инициализация уже наверное запущена в main(), но тут ещё и подписка на события...
   {
-    // Сразу восстановить данные логина из БД:
+    // Сразу запустить инициализация платформы, которая запустит инициализацию остального:
     Future {
-      if (platformRW.value.isCordova)
-        this.runEffectAction( SessionRestore )
+      this.runEffectAction( PlatformReady() )
     }
 
     // Немедленный запуск инициализации/загрузки
@@ -816,148 +744,7 @@ class Sc3Circuit(
       val bootMsg = Boot( rcvrMapBi :: svcsTail )
       this.runEffectAction( bootMsg )
     }
-
-    // TODO Platform boot - унесено в BootAh.PlatformSvc
-    val isPlatformReadyRO = mkLensZoomRO( platformRW, MPlatformS.isReady )
-    // Начинаем юзать платформу прямо в конструкторе circuit. Это может быть небезопасно, поэтому тут try-catch для всей этой логики.
-    try {
-      // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
-      if ( Try(isPlatformReadyRO.value) getOrElse false ) {
-        // Платформа уже готова. Запустить эффект активации BLE-маячков.
-        //LOG.log( "isPlatformReadyNowTry" )
-        _onPlatformReady()
-      } else {
-        // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
-        //LOG.warn( WarnMsgs.PLATFORM_NOT_READY, msg = isPlatformReadyNowTry )
-
-        // 2018-06-26: Добавить запасной таймер на случай если платформа так и не приготовится.
-        val readyTimeoutId = DomQuick.setTimeout( 7000 ) { () =>
-          if (!isPlatformReadyRO.value) {
-            logger.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
-            // Без Future() т.к. это и так в контексте таймера.
-            val msg = SetPlatformReady
-            this.runEffectAction( msg )
-          }
-        }
-
-        val sp = Promise[None.type]()
-        val unSubscribePlatformReadyF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
-          if (isReadyNowProxy.value) {
-            DomQuick.clearTimeout( readyTimeoutId )
-            // Запустить bluetooth-мониторинг.
-            _onPlatformReady()
-            // TODO Активировать фоновый GPS-мониторинг, чтобы видеть себя на карте. Нужен маркер на карте и спрашивался о переходе в новую локацию.
-            sp.success(None)
-          }
-        }
-
-        // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
-        sp.future
-          .andThen { case _ => unSubscribePlatformReadyF() }
-      }
-    } catch { case ex: Throwable =>
-      // Возникла ошибка от подготовки платформы прямо в конструкторе. Подавить, т.к. иначе всё встанет колом.
-      logger.error( ErrorMsgs.CATCHED_CONSTRUCTOR_EXCEPTION, ex )
-    }
-
-    // Управление активированностью фоновой геолокации:
-    def __dispatchGeoLocOnOff(enable: Boolean): Unit = {
-      // Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
-      val mroot = rootRW()
-      val mgl = mroot.dev.geoLoc
-      val isEnabled = mgl.switch.onOff contains[Boolean] true
-      // Надо попытаться всё-равно включить геолокацию в DEV-mode, т.к. браузеры не дают геолокацию без ssl в локалке.
-      val isToEnable = (
-        enable && !isEnabled &&
-        (Sc3ConfUtil.isDevMode || !mgl.switch.hardLock)
-      )
-      // Надо запускать обновление выдачи, если включение геолокации и панель карты закрыта.
-      val isRunGeoLocInx = isToEnable && !mroot.index.search.panel.opened
-      if (
-        isToEnable || (!enable && isEnabled)
-      ) {
-        lazy val sctx = MScSwitchCtx(
-          indexQsArgs = MScIndexArgs(
-            geoIntoRcvr = true,
-            retUserLoc  = false,
-          ),
-          demandLocTest = true,
-        )
-        Future {
-          val msg = GeoLocOnOff(
-            enabled  = enable,
-            isHard   = false,
-            scSwitch = OptionUtil.maybe(isRunGeoLocInx)(sctx)
-          )
-          this.runEffectAction( msg )
-        }
-        // При включении - запустить таймер геолокации, чтобы обновился index на новую геолокацию.
-        if (isRunGeoLocInx) Future {
-          // Передавать контекст, в котором явно указано, что это фоновая проверка смены локации, и всё должно быть тихо.
-          val msg = GeoLocTimerStart(sctx)
-          this.runEffectAction( msg )
-        }
-      }
-    }
-
-
-    // Реагировать на события активности приложения выдачи.
-    subscribe( mkLensZoomRO(platformRW, MPlatformS.isUsingNow) ) { isUsingNowProxy =>
-      // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
-      val isUsingNow = isUsingNowProxy.value
-
-      // Подавляем управление геолокацией/bluetooth до окончания работы wzFirst, который только запрашивает разрешения на это.
-      val boot = bootRW()
-      if (
-        boot.targets.isEmpty &&
-        (boot.wzFirstDone contains[Boolean] true)
-      ) {
-        val bleIsToEnable = _dispatchBleBeaconerOnOff()
-
-        // Глушить фоновый GPS-мониторинг:
-        __dispatchGeoLocOnOff(isUsingNow)
-
-        // Если уход в фон с активным мониторингом маячков, то надо уйти в бэкграунд.
-        if (
-          daemonSleepTimerAh.nonEmpty && (
-            isUsingNow match {
-              // включение: beaconer всегда выключен.
-              case true  => bleIsToEnable
-              // выключение
-              case false => (beaconerRW.value.isEnabled contains[Boolean] true)
-            }
-          )
-        ) {
-          // Если сокрытие и включён bluetooth-мониторинг, то перейти в background-режим.
-          this.runEffectAction( ScDaemonDozed(isActive = !isUsingNow) )
-        }
-      }
-
-      // Если активация приложения, и есть отображаемые нотификации, то надо их затереть.
-      if (isUsingNow && osNotifyRW.value.hasNotifications) {
-        Future {
-          val msg = CloseNotify(Nil)
-          this.runEffectAction( msg )
-        }
-      }
-
-      // В фоне не приходят события уведомления online/offline в cordova. TODO В браузере тоже надо пере-проверять?
-      if (isUsingNow)
-        this.runEffectAction( OnlineCheckConn )
-    }
   }
-
-
-  /** Экшен для перезапроса с сервера только BLE-карточек плитки. */
-  private def _gridBleReloadAction = GridLoadAds(
-    clean         = true,
-    ignorePending = true,
-    silent        = OptionUtil.SomeBool.someTrue,
-    onlyMatching  = Some( MScNodeMatchInfo(
-      ntype = Some( MNodeTypes.BleBeacon ),
-    )),
-  )
-  private def _gridBleReloadFx = Effect.action( _gridBleReloadAction )
 
 
   private def _errFrom(action: Any, ex: Throwable): Unit = {
