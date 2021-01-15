@@ -49,13 +49,11 @@ object PlatformAh extends Log {
   def isBleAvailCheck(): Boolean =
     IBleBeaconsApi.detectApis().nonEmpty
 
-  /** Статический метод, выполняющий начальную инициализацию платформы.
-    * Можно вызывать только один раз во время запуска.
-    * Повторный вызов приведёт к некорректной работе системы.
+  /** Статический метод, выполняющий начальную инициализацию данных платформы без серьёзных сайд-эффектов.
     *
     * @return Начальный инстанс MPlatformS.
     */
-  def platformInit(dispatcher: Dispatcher): MPlatformS = {
+  def platformInit(): MPlatformS = {
     val doc = dom.document
     // Инициализация для cordova-окружения:
     val isCordova = CordovaConstants.isCordovaPlatform()
@@ -95,7 +93,6 @@ object PlatformAh extends Log {
       // Браузеры - всегда готовы. Cordova готова только по внутреннему сигналу готовности.
       isCordova   = isCordova,
       isUsingNow  = !doc.hidden,
-      hasBle      = !isCordova,
       osFamily    = osFamilyTryOpt.toOption.flatten,
     )
   }
@@ -324,17 +321,13 @@ final class PlatformAh[M](
 
       } else if (m.state.isReady) {
         // Готовность успешно перешла в новое качество.
-        val isReadyNow = m.state contains true
+        val isReadyNow = m.state contains[Boolean] true
         // Собираем модификатор значения v0 в несколько шагов. isReady надо выставлять всегда:
         var modF = MPlatformS.isReadyPot set m.state
         var fxAcc = List.empty[Effect]
 
         if (isReadyNow) {
           // Проверить, не изменились ли ещё какие-то платформенные флаги?
-          val bleAvail2 = PlatformAh.isBleAvailCheck()
-          if (v0.hasBle !=* bleAvail2)
-            modF = modF andThen MPlatformS.hasBle.set( bleAvail2 )
-
           // Определить платформу cordova, если она не была правильно определена на предыдущем шаге.
           if (v0.isCordova) {
             Try( Cordova.platformId )
@@ -389,10 +382,16 @@ final class PlatformAh[M](
           fxAcc ::= {
             val jsRouterBootSvcId = MBootServiceIds.JsRouter
             val bootJsRouterFx = Boot( jsRouterBootSvcId :: Nil ).toEffectPure
-            val loadRecentsFx = BootAfter(
-              jsRouterBootSvcId,
-              Effect.action( LoadIndexRecents(clean = true) ),
-            ).toEffectPure
+
+            val loadRecentsFx = Effect.action {
+              val afterFx = Effect.action( LoadIndexRecents(clean = true) )
+              BootAfter(
+                jsRouterBootSvcId,
+                fx        = afterFx,
+                ifMissing = Some( afterFx ),
+              )
+            }
+
             bootJsRouterFx >> loadRecentsFx
           }
         }
@@ -470,7 +469,7 @@ final class PlatformAh[M](
 
     // Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).
     Option.when(
-      plat.hasBle &&
+      (mroot.dev.beaconer.hasBle contains true) &&
       plat.isReady &&
       // Нельзя запрашивать bluetooth до boot'а GeoLoc: BLE scan требует права ACCESS_FINE_LOCATION,
       // приводя к проблеме http://source.suggest.io/sio/sio2/issues/5 , а вместе с
@@ -479,16 +478,13 @@ final class PlatformAh[M](
       // TODO Нельзя запрашивать только ВКЛючение, но не выключенине. На случай каких-то проблем с boot-состоянием.
       mroot.internals.boot.targets.isEmpty
     ) {
-      println(1)
       // Проброска через Settings, чтобы гасить жестко выключенный bluetooth.
       Effect.action {
-        println(2)
         WithSettings { settingsData =>
-          println(3)
           // Если приложение уходит в фон, то nextState может быть переопределено настройками background-сканирования BLE.
           val S = ConfConst.ScSettings
 
-          def __getBool(k: String) =
+          def __getBool(k: String): Boolean =
             settingsData.data.value
               .get( k )
               .flatMap( _.asOpt[Boolean] )
@@ -501,16 +497,12 @@ final class PlatformAh[M](
           val isToEnable = isBleEnabledInSettings &&
             (isScVisible || __getBool( S.BLUETOOTH_BEACONS_BACKGROUND_SCAN ))
 
-          println(6, isToEnable, isBleEnabledInSettings)
-
-          val fxOpt = Option.when( !(mroot.dev.beaconer.isEnabled contains isToEnable) ) {
+          val fxOpt = Option.when( !(mroot.dev.beaconer.isEnabled contains[Boolean] isToEnable) ) {
             // Требуется изменить текущее состояние сканера маячков.
             Effect.action {
-              println(9, isToEnable)
               BtOnOff(
                 isEnabled = isToEnable,
                 opts = MBeaconerOpts(
-                  hardOff       = false,
                   // Не долбить мозг юзеру системным запросом включения bluetooth.
                   askEnableBt   = false,
                   oneShot       = false,

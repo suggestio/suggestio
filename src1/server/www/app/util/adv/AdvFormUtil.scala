@@ -1,7 +1,6 @@
 package util.adv
 
 import java.time.LocalDate
-
 import javax.inject.Inject
 import scalaz._
 import scalaz.syntax.apply._
@@ -20,6 +19,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.inject.Injector
 import util.TplDataFormatUtil
+import util.acl.SioControllerApi
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,6 +34,7 @@ final class AdvFormUtil @Inject() (
                                   ) {
 
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
+  private lazy val sioControllerApi = injector.instanceOf[SioControllerApi]
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
@@ -76,8 +77,9 @@ final class AdvFormUtil @Inject() (
   def maybeFreeAdv()(implicit request: IReq[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
     val isFreeOpt = freeAdvFormM
-      .bindFromRequest()
+      .bindFromRequest()(request, sioControllerApi.defaultFormBinding)
       .fold({_ => None}, identity)
+
     isFreeAdv( isFreeOpt )
   }
 

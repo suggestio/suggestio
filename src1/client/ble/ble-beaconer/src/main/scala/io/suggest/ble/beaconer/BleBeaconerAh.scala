@@ -14,10 +14,11 @@ import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.stat.RunningAverage
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 import scala.concurrent.{Future, Promise}
-import scala.util.Success
+import scala.util.{Success, Try}
 
 /**
   * Suggest.io
@@ -76,7 +77,7 @@ object BleBeaconerAh extends Log {
           (k, MUidBeacon(uid, Some(accuracyCm) ))
         }
         if (res.isEmpty)
-          logger.warn( ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
+          logger.log( ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
         res
       }
       //.filter { tuple =>
@@ -193,121 +194,115 @@ class BleBeaconerAh[M](
     * @param askEnableBt Если API доступно, но BT выключен, то запрашивать юзера включение BT?
     * @return Опциональный эффект.
     */
-  private def startApiActivation( askEnableBt: Boolean ): Option[Effect] = {
-    // Поиск и подключение всех доступных API для сбора маячков.
-    // TODO Унести детектирование API внутрь эффекта или в отдельный эффект?
-    val apis = IBleBeaconsApi.detectApis()
-    //LOG.log( msg = apis.mkString( HtmlConstants.COMMA ) )
+  private def startApiActivation( askEnableBt: Boolean ): Effect = {
+    // Подписаться на первое доступное API. При ошибках - переходить к следующему API по списку.
+    // На все API нет смысла подписываться: тогда будут приходить ненужные уведомления.
+    Effect {
+      // Асинхронная свёрстка списка доступных API'шек.
+      def __foldApisAsync(restApis: Seq[IBleBeaconsApi]): Future[IBleBeaconsApi] = {
+        restApis.headOption.fold [Future[IBleBeaconsApi]] {
+          val emsg = ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE
+          logger.log( emsg, msg = restApis )
+          Future.failed( new NoSuchElementException( emsg ) )
 
-    OptionUtil.maybe( apis.nonEmpty ) {
-      // Подписаться на первое доступное API. При ошибках - переходить к следующему API по списку.
-      // На все API нет смысла подписываться: тогда будут приходить ненужные уведомления.
-      Effect {
-        // Асинхронная свёрстка списка доступных API'шек.
-        def __foldApisAsync(restApis: Seq[IBleBeaconsApi]): Future[IBleBeaconsApi] = {
-          restApis.headOption.fold [Future[IBleBeaconsApi]] {
-            val emsg = ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE
-            logger.log( emsg, msg = apis )
-            Future.failed( new NoSuchElementException( emsg ) )
+        } { bbApi =>
+          // Надо бы активировать bluetooth, раз уж пошла активация системы.
+          FutureUtil
+            .tryCatchFut {
+              for {
+                // Для андройд: надо пройти все проверки, включить блютус при необходимости.
+                // Для iOS: все проверки и попытка включения могут зафейлится вообще (до listenBeacons).
+                // Т.к. платформа влияет на всю ветвь isEnabled, ветка включения bluetooth через API опциональна:
+                // подавляем все возможные ошибки, но всё равно пытаемся началь слушать маячки.
 
-          } { bbApi =>
-            // Надо бы активировать bluetooth, раз уж пошла активация системы.
-            FutureUtil
-              .tryCatchFut {
-                for {
-                  // Для андройд: надо пройти все проверки, включить блютус при необходимости.
-                  // Для iOS: все проверки и попытка включения могут зафейлится вообще (до listenBeacons).
-                  // Т.к. платформа влияет на всю ветвь isEnabled, ветка включения bluetooth через API опциональна:
-                  // подавляем все возможные ошибки, но всё равно пытаемся началь слушать маячки.
-
-                  // Узнать, включён ли bluetooth сейчас?
-                  isEnabled0 <- bbApi
-                    .isBleEnabled()
-                    // iOS: подавить любые возможные ошибки:
-                    .recover { case ex =>
-                      logger.warn( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED, ex, msg = bbApi )
-                      false
-                    }
-
-                  // Если API выключено, нужно убедится, что разрешено включать.
-                  if {
-                    val r = isEnabled0 || askEnableBt
-                    if (!r) logger.log( ErrorMsgs.BLE_BT_DISABLED, msg = (bbApi, isEnabled0, askEnableBt) )
-                    r
+                // Узнать, включён ли bluetooth сейчас?
+                isEnabled0 <- bbApi
+                  .isBleEnabled()
+                  // iOS: подавить любые возможные ошибки:
+                  .recover { case ex =>
+                    logger.warn( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED, ex, msg = bbApi )
+                    false
                   }
 
-                  // Если bt вЫключен, то запустить активацию bt:
-                  isEnabled2 <- {
-                    if (isEnabled0)
-                      Future.successful(isEnabled0)
-                    else
-                      bbApi
-                        .enableBle()
-                        // iOS: Ошибку включения трактуем как успех: пусть ошибка возникнет на уровне listenBeacons().
-                        .recover { case ex =>
-                          logger.info( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED, ex, msg = bbApi )
-                          true
-                        }
-                  }
-
-                  // Если bt точно выключен, то смысла запускать сканирование нет.
-                  if {
-                    val r = isEnabled2
-                    if (!r)
-                      logger.log( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED, msg = (bbApi, r) )
-                    r
-                  }
-
-                  // Запустить непосредственное слушанье маячков:
-                  _ <- bbApi.listenBeacons( dispatcher(_: BeaconDetected) )
-
-                } yield {
-                  bbApi
+                // Если API выключено, нужно убедится, что разрешено включать.
+                if {
+                  val r = isEnabled0 || askEnableBt
+                  if (!r) logger.log( ErrorMsgs.BLE_BT_DISABLED, msg = (bbApi, isEnabled0, askEnableBt) )
+                  r
                 }
+
+                // Если bt вЫключен, то запустить активацию bt:
+                isEnabled2 <- {
+                  if (isEnabled0)
+                    Future.successful(isEnabled0)
+                  else
+                    bbApi
+                      .enableBle()
+                      // iOS: Ошибку включения трактуем как успех: пусть ошибка возникнет на уровне listenBeacons().
+                      .recover { case ex =>
+                        logger.info( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED, ex, msg = bbApi )
+                        true
+                      }
+                }
+
+                // Если bt точно выключен, то смысла запускать сканирование нет.
+                if {
+                  val r = isEnabled2
+                  if (!r)
+                    logger.log( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED, msg = (bbApi, r) )
+                  r
+                }
+
+                // Запустить непосредственное слушанье маячков:
+                _ <- bbApi.listenBeacons( dispatcher(_: BeaconDetected) )
+
+              } yield {
+                bbApi
               }
-              .recoverWith { case ex: Throwable =>
-                logger.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex, bbApi )
+            }
+            .recoverWith { case ex: Throwable =>
+              logger.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex, bbApi )
 
-                // На всякий случай - в фоне постараться грохнуть это API.
-                // Далее - велосипед для безопасного опускания неисправного API и переходу на следующий шаг:
-                val nextP = Promise[None.type]()
-                val runNextFut = nextP.future.flatMap { _ =>
-                  // перейти к следующему api:
-                  __foldApisAsync( restApis.tail )
-                }
+              // На всякий случай - в фоне постараться грохнуть это API.
+              // Далее - велосипед для безопасного опускания неисправного API и переходу на следующий шаг:
+              val nextP = Promise[None.type]()
+              val runNextFut = nextP.future.flatMap { _ =>
+                // перейти к следующему api:
+                __foldApisAsync( restApis.tail )
+              }
 
-                def __runNext(): Unit =
-                  if (!nextP.isCompleted)
-                    nextP.success( None )
+              def __runNext(): Unit =
+                if (!nextP.isCompleted)
+                  nextP.success( None )
 
-                try {
-                  bbApi
-                    .unListenAllBeacons()
-                    .recover { case ex2 =>
-                      logger.error( ErrorMsgs.BLE_BEACONS_API_SHUTDOWN_FAILED, ex2, bbApi)
-                      null
-                    }
-                    .foreach { _ =>
-                      __runNext()
-                    }
-                } catch {
-                  case ex3: Throwable =>
-                    logger.error( ErrorMsgs.BLE_BEACONS_API_SHUTDOWN_FAILED, ex3, bbApi)
+              try {
+                bbApi
+                  .unListenAllBeacons()
+                  .recover { case ex2 =>
+                    logger.error( ErrorMsgs.BLE_BEACONS_API_SHUTDOWN_FAILED, ex2, bbApi)
+                    null
+                  }
+                  .foreach { _ =>
                     __runNext()
-                }
-                // Запустить таймер макс.ожидания опускания неисправного API.
-                DomQuick.setTimeout(2000)(__runNext)
-
-                runNextFut
+                  }
+              } catch {
+                case ex3: Throwable =>
+                  logger.error( ErrorMsgs.BLE_BEACONS_API_SHUTDOWN_FAILED, ex3, bbApi)
+                  __runNext()
               }
-          }
+              // Запустить таймер макс.ожидания опускания неисправного API.
+              DomQuick.setTimeout(2000)(__runNext)
+
+              runNextFut
+            }
         }
-        // И запустить цикл асинхронной свёрстки списка доступных API, чтобы найти первое удачное рабочее API:
-        __foldApisAsync(apis)
-          .transform { tryRes =>
-            Success( HandleListenRes( tryRes ) )
-          }
       }
+
+      // И запустить цикл асинхронной свёрстки списка доступных API, чтобы найти первое удачное рабочее API:
+      __foldApisAsync( IBleBeaconsApi.detectApis() )
+        .transform { tryRes =>
+          Success( HandleListenRes( tryRes ) )
+        }
     }
   }
 
@@ -375,7 +370,7 @@ class BleBeaconerAh[M](
             val distanceOptM = RadioUtil.calculateAccuracy(m.signal)
 
             val distanceM: Double = distanceOptM getOrElse {
-              logger.warn(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.signal)
+              logger.log(ErrorMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.signal)
               99
             }
             // Нам проще работать с целочисленной дистанцией в сантиметрах
@@ -517,9 +512,9 @@ class BleBeaconerAh[M](
     // Управление активностью BleBeaconer: вкл/выкл.
     case m: BtOnOff =>
       val v0 = value
-      def isCanBeEnabled = m.opts.hardOff || !v0.opts.hardOff
       // Включён или включается.
       val isEnabledNow = v0.isEnabled contains[Boolean] true
+      def hasBle2 = v0.hasBle orElse v0.hasBle.pending()
 
       if (
         // Сначала проверяем на предмет дублирующегося включения с изменением опций работы демона.
@@ -539,10 +534,15 @@ class BleBeaconerAh[M](
           // Повторное выключение. Игнорить.
           logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.isEnabled) )
           noChange
-        } else if ( (isEnabledNow && !m.isEnabled) || (!isEnabledNow && m.isEnabled) ) {
+
+        } else if (
+          (isEnabledNow && !m.isEnabled) ||
+          (!isEnabledNow && m.isEnabled)
+        ) {
           // Если BLE-мониторинг включается, а поступил сигнал ВЫключения, надо дождаться активации и выключиться.
           val v2 = (MBeaconerS.afterOnOff set Some(m.toEffectPure))(v0)
           updatedSilent(v2)
+
         } else {
           logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled, v0.opts) )
           noChange
@@ -551,34 +551,21 @@ class BleBeaconerAh[M](
       } else if (!isEnabledNow && m.isEnabled) {
         // !isEnabledNow: Здесь учитывается также, что случай v0.isEnabled=Pot.empty - норма для первого включения.
         // Активировать BleBeaconer: запустить подписание на API.
-        if (!isCanBeEnabled) {
-          logger.log( ErrorMsgs.SUPPRESSED_INSUFFICIENT, msg = (m, v0.isEnabled, v0.opts.hardOff) )
-          noChange
-
-        } else {
-          (for {
-            // TODO Запускать асинхронную проверку isEnabled(), и/или вызов enable() и т.д.
-            apiActFx <- startApiActivation(
-              askEnableBt = v0.opts.askEnableBt,
-            )
-          } yield {
-            // Эффект подписки на маячковое API:
-            val v2 = v0.copy(
-              isEnabled     = v0.isEnabled
-                .ready(true)
-                .pending(),
-              bleBeaconsApi = v0.bleBeaconsApi.pending(),
-              // По идее, тут всегда None. Но в теории возможно и что-то невероятное...
-              gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
-              opts          = m.opts,
-            )
-            updated( v2, apiActFx )
-          })
-            .getOrElse {
-              logger.log(ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE, msg = m)
-              noChange
-            }
-        }
+        val apiActFx = startApiActivation(
+          askEnableBt = v0.opts.askEnableBt,
+        )
+        // Эффект подписки на маячковое API:
+        val v2 = v0.copy(
+          isEnabled     = v0.isEnabled
+            .ready(true)
+            .pending(),
+          bleBeaconsApi = v0.bleBeaconsApi.pending(),
+          // По идее, тут всегда None. Но в теории возможно и что-то невероятное...
+          gcIntervalId  = ensureGcInterval( v0.beacons.isEmpty, v0.gcIntervalId ),
+          opts          = m.opts,
+          hasBle        = hasBle2,
+        )
+        updated( v2, apiActFx )
 
       } else if (isEnabledNow && !m.isEnabled) {
         // Гасим таймеры в состоянии:
@@ -604,28 +591,48 @@ class BleBeaconerAh[M](
         }
 
         // если hard-сброс, то очистить карту.
-        val beacons2: Map[String, MBeaconData] =
-          if (m.opts.hardOff) Map.empty else v0.beacons
+        val beacons2: Map[String, MBeaconData] = {
+          Map.empty
+        }
+        val bcnsNearby2 = BleBeaconerAh.beaconsNearby( beacons2 )
 
         // Собрать новое состояние.
         val v2 = v0.copy(
           isEnabled         = v0.isEnabled.ready(false).pending(),
           notifyAllTimer    = None,
-          envFingerPrint    = None,
+          envFingerPrint    = BleBeaconerAh.mkFingerPrint( bcnsNearby2 ),
           bleBeaconsApi     = Pot.empty,
           // Надо грохнуть gc-таймер. Имитируем для этого естественный ход событий:
           gcIntervalId      = ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId),
           opts              = m.opts,
-          nearbyReport      = if (beacons2.isEmpty) Nil else v0.nearbyReport,
-          beacons           = beacons2
+          nearbyReport      = bcnsNearby2.map(_._2),
+          beacons           = beacons2,
+          hasBle            = hasBle2,
         )
 
         ah.updatedMaybeEffect( v2, apiStopFxOpt )
 
       } else {
         // Уже включёно или уже выключено.
-        logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
-        noChange
+        // Но если hasBle.isEmpty, надо всё-таки посмотреть, что там с доступностью bluetooth вообще.
+        if (v0.hasBle.isEmpty) {
+          val hasBleFx = Effect.action {
+            val hasBlePot2 = v0.hasBle withTry Try {
+              IBleBeaconsApi
+                .detectApis()
+                .nonEmpty
+            }
+            HasBleRes( hasBlePot2 )
+          }
+          val v2Opt = Option.when( !v0.hasBle.isPending ) {
+            MBeaconerS.hasBle.modify(_.pending())(v0)
+          }
+          ah.optionalResult( v2Opt, Some(hasBleFx), silent = true )
+
+        } else {
+          logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.isEnabled) )
+          noChange
+        }
       }
 
 
@@ -647,38 +654,42 @@ class BleBeaconerAh[M](
             val gcTimer2 = ensureGcInterval(beacons2.isEmpty, v0.gcIntervalId)
             logger.error(ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex = ex, msg = m)
             // Какая-то ошибка активации API. Ошибочное API уже должно быть выключено само.
+            val falsePot2 = v0.isEnabled.ready(false)
             val v2 = v0.copy(
-              isEnabled         = v0.isEnabled.ready(false),
+              isEnabled         = falsePot2,
               bleBeaconsApi     = v0.bleBeaconsApi.fail(ex),
               notifyAllTimer    = None,
               beacons           = beacons2,
               gcIntervalId      = gcTimer2,
-              // Выставить жесткое выключение:
-              opts = if (ex.isInstanceOf[NoSuchElementException] && !v0.opts.hardOff) {
-                // не найдено рабочего BLE API - выставить жесткое выключение bt вместо мягкого.
-                (MBeaconerOpts.hard set true)( v0.opts )
-              } else v0.opts,
               afterOnOff        = None,
+              hasBle = v0.hasBle
+                .orElse( falsePot2 )
+                .fail(ex),
             )
             ah.updatedMaybeEffect( v2, v0.afterOnOff )
           },
           {bbApi =>
             // Успешная активация API. Надо запустить таймер начального накопления данных по маячкам.
             val (timerInfo, timerFx) = BleBeaconerAh.startNotifyAllTimer( BleBeaconerAh.EARLY_INIT_TIMEOUT_MS )
+            val truePot2 = v0.isEnabled ready true
             val v2 = v0.copy(
               notifyAllTimer    = Some(timerInfo),
-              isEnabled         = v0.isEnabled.ready(true),
+              isEnabled         = truePot2,
               bleBeaconsApi     = v0.bleBeaconsApi.ready( bbApi ),
               gcIntervalId      = ensureGcInterval(v0.beacons.isEmpty, v0.gcIntervalId),
               afterOnOff        = None,
+              hasBle            = truePot2,
             )
+
             val timerFx2 = if (v0.opts.oneShot)
               timerFx >> Effect.action( BtOnOff(isEnabled = false, opts = v2.opts) )
             else
               timerFx
+
             val fx = (timerFx2 :: v0.afterOnOff.toList)
               .mergeEffects
               .get
+
             updated(v2, fx)
           }
         )
@@ -705,7 +716,7 @@ class BleBeaconerAh[M](
         var v2F = MBeaconerS.isEnabled
           .modify( _ withTry m.tryEnabled )
 
-        for (_ <- v0.afterOnOff)
+        if (v0.afterOnOff.nonEmpty)
           v2F = v2F andThen (MBeaconerS.afterOnOff set None)
 
         def __updatedMaybeEffect =
@@ -727,6 +738,19 @@ class BleBeaconerAh[M](
             }
           }
         )
+      }
+
+
+    // Изменение состояния флага hasBle.
+    case m: HasBleRes =>
+      val v0 = value
+      if (v0.hasBle ==* m.hasBle) {
+        noChange
+
+      } else {
+        val v2 = (MBeaconerS.hasBle set m.hasBle)(v0)
+        // По идее, подписки снаружи на это значение нет, поэтому тут silent.
+        updatedSilent(v2)
       }
 
   }

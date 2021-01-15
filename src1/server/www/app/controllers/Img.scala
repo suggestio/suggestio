@@ -2,11 +2,12 @@ package controllers
 
 import io.suggest.file.MimeUtilJvm
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.{Inject, Singleton}
 import models.im._
 import play.api.inject.Injector
 import play.api.mvc.Result
-import util.acl.{CanDynImg, IsFileNotModified}
+import util.acl.{CanDynImg, IsFileNotModified, SioControllerApi}
 import util.img.DynImgUtil
 
 import scala.concurrent.{ExecutionContext, Future}

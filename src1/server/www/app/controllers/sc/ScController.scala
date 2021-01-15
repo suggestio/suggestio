@@ -1,11 +1,12 @@
 package controllers.sc
 
-import controllers.{ISioControllerApi, SioControllerApi}
 import io.suggest.sc.sc3.MSc3RespAction
+
 import javax.inject.{Inject, Singleton}
 import models.mctx.Context
 import models.mproj.IMCommonDi
 import models.req.IReq
+import util.acl.SioControllerApi
 import util.cdn.ICdnUtilDi
 import util.di.ILogoUtilDi
 import util.stat.{IStatUtil, StatUtil}
@@ -72,21 +73,23 @@ final class ScCtlApi @Inject()(
 // deprecated
 trait ScController
   extends IMCommonDi
-  with ISioControllerApi
   with ICdnUtilDi
   with ILogoUtilDi
   with IStatUtil
 {
 
-  import sioControllerApi._
+  val sioControllerApi: SioControllerApi
+
+  import sioControllerApi.request2Messages
   import mCommonDi.ec
+
 
   /** Быстренькое добавление поля lazy val ctx в код sc-логики. */
   protected trait LazyContext {
 
     implicit def _request: IReq[_]
 
-    implicit lazy val ctx: Context = getContext2
+    implicit lazy val ctx: Context = sioControllerApi.getContext2
 
   }
 

@@ -80,7 +80,7 @@ class LkAdEditFormR(
                      titleR                     : TitleR,
                      textShadowR                : TextShadowR,
                      val touchSwitchR           : TouchSwitchR,
-                     //colorPickerCtxP            : React.Context[MColor2PickerCtx],
+                     colorPickerCtxP            : React.Context[MColor2PickerCtx],
                    ) {
 
   type Props = ModelProxy[MAeRoot]
@@ -107,7 +107,7 @@ class LkAdEditFormR(
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                               contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
                               isTouchDevSomeC                 : ReactConnectProxy[Some[Boolean]],
-                              //colorPaletteC                   : ReactConnectProxy[MHistogram],
+                              colorPaletteC                   : ReactConnectProxy[MHistogram],
                             )
 
   case class SlideBlocksState(
@@ -397,12 +397,12 @@ class LkAdEditFormR(
 
       // Пробросить color palette через контекст внутрь color2 picker'ов.
       // TODO Требуется mui color 0.4.7 из-за https://github.com/mikbry/material-ui-color/issues/86
-      //s.colorPaletteC { colorPaletteProxy =>
-      //  val histed = MColor2PickerCtx( colorPaletteProxy.value )
-      //  colorPickerCtxP.provide( histed )(
+      s.colorPaletteC { colorPaletteProxy =>
+        val histed = MColor2PickerCtx( colorPaletteProxy.value )
+        colorPickerCtxP.provide( histed )(
           rDndCtx
-      //  )
-      //}
+        )
+      }
     }
 
   }
@@ -704,7 +704,7 @@ class LkAdEditFormR(
           OptionUtil.SomeBool( mroot.conf.touchDev )
         }( FastEq.AnyRefEq ),
 
-        //colorPaletteC = p.connect( _.doc.editors.colorsState.colorPresets ),
+        colorPaletteC = p.connect( _.doc.editors.colorsState.colorPresets ),
 
       )
     }

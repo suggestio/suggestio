@@ -1,23 +1,21 @@
-package controllers
+package util.acl
 
 import io.suggest.fio.IDataSource
+import io.suggest.flash.FlashConstants
+import io.suggest.util.logs.MacroLogsImpl
+import japgolly.univeq._
 import models.mctx.ContextT
 import models.mproj.{ICommonDi, IMCommonDi}
 import models.req.MUserInits
+import play.api.data.Form
+import play.api.http.HttpEntity
 import play.api.i18n.{I18nSupport, Lang, Messages}
-import play.api.mvc._
+import play.api.mvc.{Result, _}
 import util.jsa.init.CtlJsInitT
 
-import scala.concurrent.Future
-import play.api.data.Form
-import play.api.mvc.Result
-
-import scala.language.implicitConversions
-import io.suggest.flash.FlashConstants
-import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
-import japgolly.univeq._
-import play.api.http.HttpEntity
+import scala.concurrent.Future
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -47,7 +45,7 @@ final class SioControllerApi @Inject()(
 {
 
   import SioControllerApi.LOGGER
-  import mCommonDi._
+  import mCommonDi.{ec, isProd, langs}
 
   implicit def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
@@ -202,9 +200,4 @@ final class SioControllerApi @Inject()(
     else resp.withHeaders( hdrsAcc: _* )
   }
 
-}
-
-
-trait ISioControllerApi {
-  val sioControllerApi: SioControllerApi
 }

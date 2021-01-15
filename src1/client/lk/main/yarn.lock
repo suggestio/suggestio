@@ -1748,7 +1748,7 @@ extend-shallow@^3.0.0, extend-shallow@^3.0.2:
     assign-symbols "^1.0.0"
     is-extendable "^1.0.1"
 
-extend@^3.0.1, extend@^3.0.2:
+extend@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/extend/-/extend-3.0.2.tgz#f8b1136b4071fbd8eb140aff858b1019ec2915fa"
   integrity sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==
@@ -2857,10 +2857,10 @@ material-colors@^1.2.1:
   resolved "https://registry.yarnpkg.com/material-colors/-/material-colors-1.2.6.tgz#6d1958871126992ceecc72f4bcc4d8f010865f46"
   integrity sha512-6qE4B9deFBIa9YSpOc9O0Sgc43zTeVYbgDT5veRKSlB2+ZuHNoVVxA1L/ckMUayV9Ay9y7Z/SZCLcGteW9i7bg==
 
-material-ui-color@0.4.6:
-  version "0.4.6"
-  resolved "https://registry.yarnpkg.com/material-ui-color/-/material-ui-color-0.4.6.tgz#f266cc0b83d145046797c334777d771ed9c2f272"
-  integrity sha512-EomZgtOKuGbIpEuCOq0+qCFU6phtlX6sAvjbqoCyBesmNHHKkahdlyoHTMKsy5Wdsqjr9lq0GJ/pz3pGnC3euA==
+material-ui-color@0.4.8:
+  version "0.4.8"
+  resolved "https://registry.yarnpkg.com/material-ui-color/-/material-ui-color-0.4.8.tgz#394e35802adec117e29ffcea3477a37b18e345f1"
+  integrity sha512-6ET0AqLBCEncIokemAT2Odzfbu3DB2eMTW0thY9TrjEoyMasLMRk7YFgAcI8VCVNsUROa5WbF+MY1oaYEnIcYQ==
 
 md5.js@^1.3.4:
   version "1.3.5"
@@ -3690,7 +3690,7 @@ quill-delta@^3.6.2:
     extend "^3.0.2"
     fast-diff "1.1.2"
 
-quill@1.3.7:
+quill@1.3.7, quill@^1.3.7:
   version "1.3.7"
   resolved "https://registry.yarnpkg.com/quill/-/quill-1.3.7.tgz#da5b2f3a2c470e932340cdbf3668c9f21f9286e8"
   integrity sha512-hG/DVzh/TiknWtE6QmWAF/pxoZKYxfe3J/d/+ShUWkDvvkZQVTPeVmUJVu1uE6DDooC4fWTiCLh84ul89oNz5g==
@@ -3699,18 +3699,6 @@ quill@1.3.7:
     deep-equal "^1.0.1"
     eventemitter3 "^2.0.3"
     extend "^3.0.2"
-    parchment "^1.1.4"
-    quill-delta "^3.6.2"
-
-quill@^1.2.6:
-  version "1.3.6"
-  resolved "https://registry.yarnpkg.com/quill/-/quill-1.3.6.tgz#99f4de1fee85925a0d7d4163b6d8328f23317a4d"
-  integrity sha512-K0mvhimWZN6s+9OQ249CH2IEPZ9JmkFuCQeHAOQax3EZ2nDJ3wfGh59mnlQaZV2i7u8eFarx6wAtvQKgShojug==
-  dependencies:
-    clone "^2.1.1"
-    deep-equal "^1.0.1"
-    eventemitter3 "^2.0.3"
-    extend "^3.0.1"
     parchment "^1.1.4"
     quill-delta "^3.6.2"
 
@@ -3835,10 +3823,10 @@ react-image-crop@2.0.8:
   resolved "https://registry.yarnpkg.com/react-image-crop/-/react-image-crop-2.0.8.tgz#59c917bbc251c455a92c32aff4dad1595ff38a96"
   integrity sha512-mKWV8WYJ0lAMQ0ZnwXDmAZO8UkWx3DGZHYKYzNuzK2vcJAmzevrlLQAb74Lvv1iK0+bCn9dDhAAduIypGnmWUQ==
 
-react-image-gallery@1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/react-image-gallery/-/react-image-gallery-1.0.6.tgz#cbbef85973e72bb01b5d331de68f884654f47b2f"
-  integrity sha512-RbbZypXY4JxwVCSBlUfPWnb4SVeDWsS1Bg2bxpVXO7wPbjpJaxolto19WUhNDmFur4GSnIvVj72F03opOj3zIA==
+react-image-gallery@1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/react-image-gallery/-/react-image-gallery-1.0.8.tgz#a628d2500b9a0a97854b02f21588f3d14febcda2"
+  integrity sha512-kxS+fUCdq8HerN9JvWnzzg8YdPouwbSgVzXxCzxI7ZcAcvDCr/XKxGjqSQ5Ue8DeUEglsAcNJDOdoLygyNgOwA==
   dependencies:
     clsx "^1.0.4"
     lodash.debounce "^4.0.8"
@@ -3899,17 +3887,16 @@ react-popper@^0.9.1:
     popper.js "^1.14.1"
     prop-types "^15.6.1"
 
-react-quill@1.3.3:
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/react-quill/-/react-quill-1.3.3.tgz#95b8e088ad4e4acc6c79c2f85bdc0460eebe08eb"
-  integrity sha512-T9RubLaWJ8gCfp7sOqmFupjiTiEp/EdGqhCG+PWGKc5UHiK6xIWNKWYsOHHEhQ+sZCKs8u/DPx47gc1VfFmcLg==
+react-quill@1.3.5:
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/react-quill/-/react-quill-1.3.5.tgz#8c4ad759da03365b17c79c6c52afa9772259844e"
+  integrity sha512-/W/rNCW+6QpGz8yQ9tFK5Ka/h/No1RqrcOOvCIOR092OiKzRFlU2xbPEwiP3Wgy/Dx13pi1YhjReDMX/5uotJg==
   dependencies:
     "@types/quill" "1.3.10"
-    "@types/react" "*"
     create-react-class "^15.6.0"
     lodash "^4.17.4"
     prop-types "^15.5.10"
-    quill "^1.2.6"
+    quill "^1.3.7"
     react-dom-factories "^1.0.0"
 
 react-resizable@1.11.0:

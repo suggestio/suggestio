@@ -15,7 +15,6 @@ import io.suggest.os.notify.api.html5.Html5NotificationUtil
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
 import io.suggest.sc.m.{GeoLocOnOff, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.dia.first._
-import io.suggest.sc.m.dia._
 import io.suggest.log.Log
 import io.suggest.sjs.dom2.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -48,6 +47,7 @@ import org.scalajs.dom.experimental.permissions.PermissionName
 class WzFirstDiaAh[M](
                        platformRO       : ModelRO[MPlatformS],
                        screenInfoRO     : ModelR[MScRoot, MScreenInfo],
+                       hasBleRO         : ModelRO[Boolean],
                        modelRW          : ModelRW[M, MWzFirstOuterS],
                        dispatcher       : Circuit[MScRoot],
                      )
@@ -572,7 +572,8 @@ class WzFirstDiaAh[M](
 
 
   /** Сборка спецификация по фазам, которые требуют проверки прав доступа. */
-  private def _permPhasesSpecs(platform: MPlatformS = platformRO.value): Seq[PermissionSpec] = {
+  private def _permPhasesSpecs(): Seq[PermissionSpec] = {
+    val platform = platformRO.value
     // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
     lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
 
@@ -601,7 +602,7 @@ class WzFirstDiaAh[M](
     // Bluetooth
     PermissionSpec(
       phase     = MWzPhases.BlueToothPerm,
-      supported = platform.hasBle,
+      supported = hasBleRO.value,
       askPermF  = CordovaDiagonsticPermissionUtil.getBlueToothState
     ) #::
     // Notifications

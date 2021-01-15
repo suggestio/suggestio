@@ -39,6 +39,7 @@ final class CanSubmitExtTargetForNode @Inject() (
   private lazy val isNodeAdmin = injector.instanceOf[IsNodeAdmin]
   private lazy val reqUtil = injector.instanceOf[ReqUtil]
   private lazy val httpErrorHandler = injector.instanceOf[HttpErrorHandler]
+  private lazy val sioControllerApi = injector.instanceOf[SioControllerApi]
   implicit private lazy val ec = injector.instanceOf[ExecutionContext]
 
 
@@ -55,7 +56,9 @@ final class CanSubmitExtTargetForNode @Inject() (
         val user = request.user
 
         val isAdnNodeAdmFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)
-        val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
+        val formBinded = advExtFormUtil
+          .oneTargetFullFormM(nodeId)
+          .bindFromRequest()(request, sioControllerApi.defaultFormBinding)
 
         // Запускаем сразу в фоне поиск уже сохранённой цели.
         val tgIdOpt = formBinded("id").value
@@ -102,7 +105,7 @@ final class CanSubmitExtTargetForNode @Inject() (
 
       def breakInAttempted(request: IReq[_], tg: MExtTarget): Future[Result] = {
         LOGGER.warn(s"FORBIDDEN: User[${request.user.personIdOpt}] @${request.remoteClientAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
-        httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"Target ${tg.id.get} doesn't belongs to node[$nodeId]." )
+        httpErrorHandler.onClientError( request, sioControllerApi.FORBIDDEN, s"Target ${tg.id.get} doesn't belongs to node[$nodeId]." )
       }
 
     }

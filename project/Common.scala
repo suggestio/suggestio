@@ -64,7 +64,7 @@ object Common {
     val LOG4J      = "2.10.0"
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
-    val THREETEN_EXTRA = "1.5.0"
+    val THREETEN_EXTRA = "1.5.+"
 
 
     // Это связано с elasticsearch-5.x. Так-то, можно уже обновлять и до 1.16.1 и 0.7 соответстветственно.
@@ -72,7 +72,7 @@ object Common {
     val SPATIAL4J = "0.6"
 
 
-    val REACT_IMAGE_GALLERY = "1.0.6"
+    val REACT_IMAGE_GALLERY = "1.0.8"
 
     /** Версия scalaz.
       * Изначально добавлена в проект, чтобы наконец выкинуть вечно-кривую валидацию через wix/accord.
@@ -80,12 +80,12 @@ object Common {
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
-    val SCALAZ = "7.3.2"
+    val SCALAZ = "7.3.+"
 
     /** Версия scalaCSS.
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    val SCALACSS = "0.6.1"
+    val SCALACSS = "0.7.+"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -118,7 +118,7 @@ object Common {
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]
       */
-    val REACT_QUILL = "1.3.3"
+    val REACT_QUILL = "1.3.5"
 
     val REACT_LEAFLET = "1.9.1"
 
@@ -149,7 +149,7 @@ object Common {
     /** Версия Apache Batik для работы с SVG.
       * @see [[https://xmlgraphics.apache.org/batik/download.html]]
       */
-    val APACHE_BATIK = "1.13"
+    val APACHE_BATIK = "1.+"
 
     /** Версия scala-parser-combinators.
       * @see [[https://github.com/scala/scala-parser-combinators]]
@@ -187,7 +187,7 @@ object Common {
     //val BETTER_FILES = "3.8.0"
 
     /** Используемая в проекте версия akka. */
-    val AKKA = "2.6.1"
+    val AKKA = "2.6.+"
 
     /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
       * @see [[https://github.com/typesafehub/akka-contrib-extra]]
@@ -232,13 +232,13 @@ object Common {
     /** @see [[https://www.npmjs.com/package/qrcode.react]]
       * @see [[https://github.com/zpao/qrcode.react]]
       */
-    val REACT_QRCODE = "1.0.0"
+    val REACT_QRCODE = "1.0.1"
 
     /** java.time.* API in scala
       * @see [[https://github.com/cquiroz/scala-java-time]]
       * @see [[https://mvnrepository.com/artifact/io.github.cquiroz/scala-java-time]]
       */
-    val SCALA_JAVA_TIME = "2.0.0"
+    val SCALA_JAVA_TIME = "2.1.0"
 
     /** Flow.js library providing multiple simultaneous, stable and resumable uploads via the HTML5 File API.
       * @see [[https://github.com/flowjs/flow.js/]]
@@ -248,7 +248,7 @@ object Common {
     /** The lightest colorpicker for React Material-Ui.
       * @see [[https://github.com/mikbry/material-ui-color]]
       */
-    val MATERIALUI_COLOR = "0.4.6"
+    val MATERIALUI_COLOR = "0.4.8"
 
     /** material-ui-color зачем-то зависит от styled-components. */
     val STYLED_COMPONENTS = "5.2.1"
@@ -276,7 +276,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.8.5"
+  val playVsn         = "2.8.7"
 
 
   /** Версия BouncyCastle. */

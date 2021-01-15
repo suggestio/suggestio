@@ -2,7 +2,7 @@ package io.suggest.ble.beaconer
 
 import diode.data.Pot
 import diode.{Effect, FastEq}
-import io.suggest.ble.BeaconsNearby_t
+import io.suggest.ble.{BeaconsNearby_t, MUidBeacon}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.html.HtmlConstants
@@ -46,6 +46,7 @@ object MBeaconerS {
   def gcIntervalId = GenLens[MBeaconerS](_.gcIntervalId)
   def nearbyReport = GenLens[MBeaconerS](_.nearbyReport)
   def opts = GenLens[MBeaconerS]( _.opts )
+  def hasBle = GenLens[MBeaconerS]( _.hasBle )
 
 }
 
@@ -61,12 +62,16 @@ object MBeaconerS {
   * @param envFingerPrint Хэш некоторых данных из карты маячков: чек-сумма текущего состояния.
   * @param bleBeaconsApi Текущее активное API.
   *                      empty - нет подключённого API на текущий момент.
-  *                      Ready(timerId) - Нормальный режим работы: об изменениях система уведомляется
   *                      Pending - идёт активация API в фоне.
   *                      Error - не удалось задействовать обнаруженное API.
   * @param gcIntervalId id таймера интервала сборки мусора.
   * @param nearbyReport Итоговый отчёт по текущим наблюдаемым маячкам.
   *                     Подписка на его изменения позволяет определять появление/исчезновение маячков.
+  * @param hasBle Известно ли, есть ли bluetooth-поддержка на данном устройстве.
+  *               Проверяется только после platform ready.
+  *               Pot.empty - ничего не проверялось, пока что.
+  *               Ready(true|false) - известно, поддерживается ли bluetooth или нет.
+  *               failed(ex) - ошибка проверки доступности bluetooth на текущем устройстве.
   */
 case class MBeaconerS(
                        isEnabled            : Pot[Boolean]               = Pot.empty,
@@ -78,12 +83,16 @@ case class MBeaconerS(
                        envFingerPrint       : Option[Int]                = None,
                        bleBeaconsApi        : Pot[IBleBeaconsApi]        = Pot.empty,
                        opts                 : MBeaconerOpts              = MBeaconerOpts.default,
+                       hasBle               : Pot[Boolean]               = Pot.empty,
                      )
   extends EmptyProduct
 {
 
   /** Отчёт по id маяков. */
-  lazy val nearbyReportById = nearbyReport.zipWithIdIter.toMap
+  lazy val nearbyReportById: Map[String, MUidBeacon] =
+    nearbyReport
+      .zipWithIdIter
+      .toMap
 
   // Перезапись toString, чтобы лишний мусор не рендерить.
   override final def toString: String = {

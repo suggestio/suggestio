@@ -21,7 +21,7 @@ import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
-import util.acl._
+import util.acl.{SioControllerApi, _}
 import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.ext.ExtServicesUtil
 import util.i18n.JsMessagesUtil
@@ -29,7 +29,6 @@ import util.sec.CspUtil
 import util.stat.StatUtil
 import OptionUtil.BoolOptOps
 import com.google.inject.Inject
-import controllers.SioControllerApi
 import io.suggest.es.model.EsModel
 import io.suggest.sec.csp.{Csp, CspPolicy}
 import views.html.sc._

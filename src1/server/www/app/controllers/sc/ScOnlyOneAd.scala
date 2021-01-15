@@ -1,11 +1,11 @@
 package controllers.sc
 
-import controllers.SioControllerApi
 import io.suggest.common.css.OnlyOneAdTopLeft
 import io.suggest.util.logs.MacroLogsImplLazy
+
 import javax.inject.Inject
 import models.blk.{OneAdQsArgs, RenderArgs, szMulted}
-import util.acl.GetAnyAd
+import util.acl.{GetAnyAd, SioControllerApi}
 import util.adr.AdRenderUtil
 import util.adv.AdvUtil
 import views.html.blocks.common.standaloneTpl

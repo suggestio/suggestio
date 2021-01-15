@@ -68,7 +68,7 @@ class ScSettingsDiaR(
             p.wrap(_.dev.beaconer)( blueToothSettingR.component.apply ),
 
             // Плашка об отсутствии bluetooth.
-            p.wrap(_.dev.platform)( blueToothUnAvailInfoR.component.apply ),
+            p.wrap(_.dev)( blueToothUnAvailInfoR.component.apply ),
 
             // Переключалка уведомлений.
             p.wrap(_.dev.osNotify)( notificationSettingsR.component.apply ),

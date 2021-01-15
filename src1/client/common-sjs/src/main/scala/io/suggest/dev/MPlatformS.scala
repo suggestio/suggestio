@@ -20,7 +20,6 @@ object MPlatformS {
       (a.isUsingNow ==* b.isUsingNow) &&
       (a.isReadyPot ===* b.isReadyPot) &&
       (a.isCordova ==* b.isCordova) &&
-      (a.hasBle ==* b.hasBle) &&
       (a.osFamily ===* b.osFamily)
     }
   }
@@ -30,7 +29,6 @@ object MPlatformS {
   def isUsingNow  = GenLens[MPlatformS](_.isUsingNow)
   def isReadyPot  = GenLens[MPlatformS](_.isReadyPot)
   def isCordova   = GenLens[MPlatformS](_.isCordova)
-  def hasBle      = GenLens[MPlatformS](_.hasBle)
   def osFamily    = GenLens[MPlatformS](_.osFamily)
 
 
@@ -61,15 +59,11 @@ object MPlatformS {
   *                   true значит, что вкладка открыта и активна, приложение открыто и на переднем плане.
   *                   Все системы должны быть активны.
   *                   false значит, что выдача неактивна: скрыта вкладка, приложение где-то в фоне. Спать.
-  * @param hasBle Доступен ли Bluetooth LE на данной платформе?
-  *               Следует помнить, что BLE может быть доступен, а платформа ещё не готова,
-  *               и работа с BLE API будет с не очень предсказуемыми результатами.
   * @param osFamily Семейство ОС. Может быть и None, если не удалось сопоставить по модели.
   */
 case class MPlatformS(
                        isUsingNow     : Boolean,
                        isReadyPot     : Pot[Boolean] = Pot.empty,
                        isCordova      : Boolean,
-                       hasBle         : Boolean,
                        osFamily       : Option[MOsFamily],
                      )

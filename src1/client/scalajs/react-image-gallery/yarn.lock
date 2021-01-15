@@ -2974,10 +2974,10 @@ react-dom@16.13.1:
     prop-types "^15.6.2"
     scheduler "^0.19.1"
 
-react-image-gallery@1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/react-image-gallery/-/react-image-gallery-1.0.6.tgz#cbbef85973e72bb01b5d331de68f884654f47b2f"
-  integrity sha512-RbbZypXY4JxwVCSBlUfPWnb4SVeDWsS1Bg2bxpVXO7wPbjpJaxolto19WUhNDmFur4GSnIvVj72F03opOj3zIA==
+react-image-gallery@1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/react-image-gallery/-/react-image-gallery-1.0.8.tgz#a628d2500b9a0a97854b02f21588f3d14febcda2"
+  integrity sha512-kxS+fUCdq8HerN9JvWnzzg8YdPouwbSgVzXxCzxI7ZcAcvDCr/XKxGjqSQ5Ue8DeUEglsAcNJDOdoLygyNgOwA==
   dependencies:
     clsx "^1.0.4"
     lodash.debounce "^4.0.8"

@@ -1,13 +1,12 @@
 package controllers.sc
 
-import controllers.SioControllerApi
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mctx.Context
-import util.acl.IgnoreAuth
+import util.acl.{IgnoreAuth, SioControllerApi}
 import views.js.sc.ScJsRouterTpl
 import japgolly.univeq._
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration._
 
 /**

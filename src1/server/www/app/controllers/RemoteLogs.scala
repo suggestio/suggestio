@@ -3,6 +3,7 @@ package controllers
 import io.suggest.log.MLogReport
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
 import models.mctx.Context
 import models.msc.MScRemoteDiag
@@ -11,7 +12,7 @@ import play.api.data.Forms.{mapping, nonEmptyText, optional, text}
 import play.api.http.MimeTypes
 import play.api.mvc.BodyParser
 import util.FormUtil.{emptyStrOptToNone, strIdentityF, strTrimF}
-import util.acl.MaybeAuth
+import util.acl.{MaybeAuth, SioControllerApi}
 import util.geo.GeoIpUtil
 import util.stat.StatUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._

@@ -3,7 +3,8 @@ package io.suggest.lk.m.color
 import diode.FastEq
 import io.suggest.color.MColorData
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,6 +25,9 @@ object MColorPick {
 
   @inline implicit def univEq: UnivEq[MColorPick] = UnivEq.derive
 
+  def colorOpt = GenLens[MColorPick]( _.colorOpt )
+  def colorsState = GenLens[MColorPick]( _.colorsState )
+
 }
 
 
@@ -32,12 +36,7 @@ object MColorPick {
   * @param colorOpt Текущее состояние цвета.
   * @param colorsState Пошаренное состояние всех цветов.
   */
-case class MColorPick(
-                       colorOpt     : Option[MColorData],
-                       colorsState  : MColorsState,
-                     ) {
-
-  def withColorOpt(colorOpt: Option[MColorData]) = copy(colorOpt = colorOpt)
-  def withColorsState(colorsState: MColorsState) = copy(colorsState = colorsState)
-
-}
+final case class MColorPick(
+                             colorOpt     : Option[MColorData],
+                             colorsState  : MColorsState,
+                           )

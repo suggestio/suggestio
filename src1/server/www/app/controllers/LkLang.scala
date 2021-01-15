@@ -13,7 +13,7 @@ import play.api.data.Form
 import play.api.i18n.{Lang, Messages}
 import play.api.mvc.Result
 import util.FormUtil.uiLangM
-import util.acl.{IsSu, MaybeAuth}
+import util.acl.{IsSu, MaybeAuth, SioControllerApi}
 import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
 import japgolly.univeq._

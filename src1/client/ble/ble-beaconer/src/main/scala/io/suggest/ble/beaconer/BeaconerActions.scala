@@ -1,8 +1,8 @@
 package io.suggest.ble.beaconer
 
+import diode.data.Pot
 import io.suggest.ble.IBleBeaconAction
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.spa.DAction
 
 import scala.util.Try
 
@@ -36,3 +36,7 @@ private[beaconer] case object DoGc extends IBleBeaconAction
   * @param tryEnabled Итоговое состояние, к которому пришла система.
   */
 private[beaconer] case class BtOnOffFinish(tryEnabled: Try[Boolean] ) extends IBleBeaconAction
+
+
+/** Результат отдельного тестирования наличия bluetooth. */
+private[beaconer] case class HasBleRes( hasBle: Pot[Boolean] ) extends IBleBeaconAction

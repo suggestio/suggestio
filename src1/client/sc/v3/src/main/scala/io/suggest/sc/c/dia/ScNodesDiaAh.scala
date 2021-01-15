@@ -55,7 +55,7 @@ class ScNodesDiaAh[M](
         nodesCircuit.dispatch( TreeInit() )
 
       // Отправляем текущий список маячков, даже пустой - тогда хотя бы будет создана подгруппа маячков в списке.
-      if (sc3Circuit.platformRW.value.hasBle)
+      if (sc3Circuit.hasBleRO.value)
         nodesCircuit.dispatch( beaconDetectedAction() )
 
       DoNothing

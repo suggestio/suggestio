@@ -118,7 +118,6 @@ class ScDaemonAh[M](
           BtOnOff(
             isEnabled = true,
             opts = MBeaconerOpts(
-              hardOff        = false,
               askEnableBt    = false,
               oneShot        = true,
             )

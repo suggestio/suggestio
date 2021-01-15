@@ -1981,13 +1981,13 @@ class DocEditAh[M](
       }
 
 
-
     case m: ColorAddToPalette =>
       val v0 = value
       val v2 = MDocS.editors
         .composeLens( MEditorsS.colorsState )
         .modify( _.prependPresets( m.mcd ) )(v0)
-      updatedSilent(v2)
+      // Без silent, т.к. mui color picker пока работает в uncontrolled, и повторное его открытие должно отображать текущее состояние палитры.
+      updated(v2)
 
   }
 

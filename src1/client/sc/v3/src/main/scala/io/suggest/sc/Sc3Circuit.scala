@@ -137,7 +137,7 @@ class Sc3Circuit(
       }
 
     val mscreen = JsScreenUtil.getScreen()
-    val mplatform = PlatformAh.platformInit(this)
+    val mplatform = PlatformAh.platformInit()
 
     val screenInfo = MScreenInfo(
       screen        = mscreen,
@@ -331,6 +331,7 @@ class Sc3Circuit(
 
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
   private[sc] def beaconsRO       = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
+  private[sc] val hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains true )
 
   private val dialogsRW           = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
   private[sc] def firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
@@ -547,6 +548,7 @@ class Sc3Circuit(
   private def wzFirstDiaAh = new WzFirstDiaAh(
     platformRO    = platformRW,
     screenInfoRO  = screenInfoRO,
+    hasBleRO      = hasBleRO,
     modelRW       = firstRunDiaRW,
     dispatcher    = this,
   )

@@ -26,7 +26,7 @@ import models.mup.{MColorDetectArgs, MUploadFileHandlers, MUploadInfoQs}
 import models.req.{BfpArgs, IReq}
 import play.api.libs.json.Json
 import play.api.mvc._
-import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
+import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin, SioControllerApi}
 import util.ad.{JdAdUtil, LkAdEdFormUtil}
 import util.ext.ExtRscUtil
 import util.mdr.MdrUtil

@@ -1,11 +1,11 @@
 package util.xplay
 
 import com.google.inject.Inject
-import controllers.SioControllerApi
 import io.suggest.n2.node.{IMNodes, MNode, MNodes}
 import models.mproj.IMCommonDi
 import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc.Result
+import util.acl.SioControllerApi
 
 import scala.concurrent.{ExecutionContext, Future}
 

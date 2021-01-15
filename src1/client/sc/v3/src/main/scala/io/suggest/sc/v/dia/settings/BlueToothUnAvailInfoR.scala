@@ -2,13 +2,14 @@ package io.suggest.sc.v.dia.settings
 
 import com.materialui.{MuiLink, MuiLinkProps, MuiListItem, MuiListItemText, MuiPaper}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.dev.{MOsFamily, MPlatformS}
+import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.m.SettingsDiaOpen
+import io.suggest.sc.m.dev.MScDev
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -22,7 +23,7 @@ class BlueToothUnAvailInfoR(
                              crCtxProv               : React.Context[MCommonReactCtx],
                            ) {
 
-  type Props_t = MPlatformS
+  type Props_t = MScDev
   type Props = ModelProxy[Props_t]
 
   /**
@@ -86,8 +87,9 @@ class BlueToothUnAvailInfoR(
     .initialStateFromProps { propsProxy =>
       State(
         btMissOnOsC = propsProxy.connect { p =>
-          Option.when( !p.hasBle ) {
-            OptionUtil.maybeOpt( !p.isBrowser )( p.osFamily )
+          val hasBle = p.beaconer.hasBle contains[Boolean] true
+          Option.when( !hasBle ) {
+            OptionUtil.maybeOpt( !p.platform.isBrowser )( p.platform.osFamily )
           }
         },
       )

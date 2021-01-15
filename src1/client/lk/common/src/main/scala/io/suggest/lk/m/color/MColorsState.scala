@@ -32,6 +32,17 @@ object MColorsState {
   def histograms    = GenLens[MColorsState](_.histograms)
   def picker        = GenLens[MColorsState](_.picker)
 
+
+  implicit final class McsExt( private val mcs0: MColorsState ) extends AnyVal {
+
+    def prependPresets(mcd: MColorData): MColorsState = {
+      MColorsState.colorPresets
+        .composeLens( MHistogram.colors )
+        .modify( MColorsState.prependPresets(_, mcd) )(mcs0)
+    }
+
+  }
+
 }
 
 
@@ -48,19 +59,7 @@ case class MColorsState(
                          picker          : Option[MColorPickerS]      = None,
                        ) {
 
-  def withColorPresets(colorPresets: MHistogram)        = copy(colorPresets = colorPresets)
-  def withHistograms(histograms: Map[String, MHistogram])     = copy(histograms = histograms)
-  def withPicker(picker: Option[MColorPickerS])               = copy(picker = picker)
-
   lazy val colorPresetsLen = colorPresets.colors.length
-
-  def prependPresets(mcd: MColorData) =
-    withColorPresets(
-      MHistogram(
-        MColorsState.prependPresets(colorPresets.colors, mcd)
-      )
-    )
-
 
 }
 

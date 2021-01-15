@@ -1,9 +1,9 @@
 package io.suggest.sc.v.dia.settings
 
 import diode.react.ModelProxy
-import io.suggest.ble.beaconer.{BtOnOff, MBeaconerS}
+import io.suggest.ble.beaconer.MBeaconerS
 import io.suggest.conf.ConfConst
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -14,7 +14,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Настройка геолокации.
   */
 class BlueToothSettingR(
-                         onOffSettingR   : OnOffSettingR,
+                         onOffSettingR          : OnOffSettingR,
+                         crCtxP                 : React.Context[MCommonReactCtx],
                        ) {
 
   type Props_t = MBeaconerS
@@ -24,12 +25,23 @@ class BlueToothSettingR(
     .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsProxy =>
-      onOffSettingR.component(
-        onOffSettingR.PropsVal(
-          text            = MsgCodes.`Bluetooth`,
-          onOff           = Right( ConfConst.ScSettings.BLUETOOTH_BEACONS_ENABLED ),
-          isCheckedProxy  = propsProxy.zoom(_.isEnabled),
-        )
+      val S = ConfConst.ScSettings
+      <.div(
+        onOffSettingR.component(
+          onOffSettingR.PropsVal(
+            text            = MsgCodes.`Bluetooth`,
+            onOff           = Right( S.BLUETOOTH_BEACONS_ENABLED ),
+            isCheckedProxy  = propsProxy.zoom(_.isEnabled),
+          )
+        ),
+
+        /*onOffSettingR.component(
+          onOffSettingR.PropsVal(
+            text = crCtxP.message( MsgCodes.`Background.mode` ),
+            onOff = Right( S.BLUETOOTH_BEACONS_BACKGROUND_SCAN ),
+          )
+        ),*/
+
       )
     }
     .build

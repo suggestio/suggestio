@@ -1,6 +1,5 @@
 package controllers.sc
 
-import controllers.SioControllerApi
 import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModel
@@ -9,9 +8,10 @@ import io.suggest.n2.node.search.MNodeSearch
 import io.suggest.sc.index.MScIndexes
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
+
 import javax.inject.Inject
 import play.api.libs.json.Json
-import util.acl.{BruteForceProtect, MaybeAuth}
+import util.acl.{BruteForceProtect, MaybeAuth, SioControllerApi}
 import util.adv.geo.AdvGeoRcvrsUtil
 
 /**

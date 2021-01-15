@@ -106,7 +106,6 @@ class ScSettingsDiaAh[M](
           BtOnOff(
             isEnabled = isEnabled2,
             opts = MBeaconerOpts(
-              hardOff     = m.save,
               askEnableBt = true,
               oneShot     = false,
             ),

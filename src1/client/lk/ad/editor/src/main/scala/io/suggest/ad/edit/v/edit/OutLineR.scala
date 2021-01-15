@@ -73,7 +73,7 @@ final class OutLineR(
     private def _onOpenClose(isOpen: Boolean): Callback = {
       var acc = _showOutlineCb(true)
 
-      if (isOpen) {
+      if (!isOpen) {
         acc = acc >> $.props >>= { props: Props =>
           props
             .value

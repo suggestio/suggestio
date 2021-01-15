@@ -686,13 +686,12 @@ class TailAh(
         // Если bluetooth не запущен - запустить в добавок к геолокации:
         if (
           !(v0.dev.beaconer.isEnabled contains[Boolean] true) &&
-          v0.dev.platform.hasBle
+          (v0.dev.beaconer.hasBle contains true)
         ) {
           fxsAcc ::= Effect.action {
             BtOnOff(
               isEnabled = true,
               opts = MBeaconerOpts(
-                hardOff     = false,
                 askEnableBt = false,
                 oneShot     = false,
               )

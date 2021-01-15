@@ -3,7 +3,7 @@ package io.suggest.lk.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.lk.m.color.{MColorPick, MColorPickerS}
+import io.suggest.lk.m.color.{MColorPick, MColorPickerS, MColorsState}
 import io.suggest.lk.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange, DocBodyClick}
 import japgolly.univeq._
 
@@ -40,16 +40,12 @@ class ColorPickAh[M](
     // Сигнал об изменении цвета. m.marker - используется в ColorSuggestR, чтобы заменять цвета без picker'а.
     case m: ColorChanged if isMyPickerOpened() || isMyMarker(m.marker) =>
       val v0 = value.get
-      var v2 = v0.withColorOpt(
-        colorOpt = Some( m.mcd )
-      )
+      var v2 = (MColorPick.colorOpt set Some( m.mcd ))(v0)
 
       // Запилить в состояние презетов выбранный цвет.
-      if (m.isCompleted && !(v2.colorsState.colorPresets.colors contains m.mcd)) {
-        v2 = v2.withColorsState(
-          v2.colorsState
-            .prependPresets( m.mcd )
-        )
+      if (m.isCompleted && !(v2.colorsState.colorPresets.colors contains[MColorData] m.mcd)) {
+        v2 = MColorPick.colorsState
+          .modify( _.prependPresets(m.mcd) )(v2)
       }
 
       updated( Some(v2) )
@@ -60,18 +56,17 @@ class ColorPickAh[M](
       val v0 = value.get
 
       // Убрать с экрана picker
-      var v2 = v0.withColorsState(
-        v0.colorsState.withPicker( None )
-      )
+      var v2 = MColorPick.colorsState
+        .composeLens( MColorsState.picker )
+        .set( None )(v0)
 
       // Сохранить текущий цвет.
       for (
         mcd <- v0.colorOpt
-        if !(v2.colorsState.colorPresets.colors contains mcd)
+        if !(v2.colorsState.colorPresets.colors contains[MColorData] mcd)
       ) {
-        v2 = v2.withColorsState(
-          v2.colorsState.prependPresets( mcd )
-        )
+        v2 = MColorPick.colorsState
+          .modify( _.prependPresets(mcd) )(v2)
       }
 
       updated( Some(v2) )
@@ -97,7 +92,7 @@ class ColorPickAh[M](
             // Вообще нет никаких цветов, ужас какой-то.
             MColorData.Examples.BLACK
           }
-        val v2 = v0.withColorOpt( Some(mcd2) )
+        val v2 = (MColorPick.colorOpt set Some(mcd2))(v0)
         updated( Some(v2) )
 
       } else if (!m.isEnabled && v0.colorOpt.nonEmpty) {
@@ -132,10 +127,10 @@ class ColorPickAh[M](
           oldColor = v0.colorsState.picker.flatMap(_.oldColor)
         )
       }
-      val v2 = v0.withColorsState(
-        v0.colorsState
-          .withPicker( pickerOpt2 )
-      )
+      val v2 = MColorPick.colorsState
+        .composeLens( MColorsState.picker )
+        .set( pickerOpt2 )( v0 )
+
       updated( Some(v2) )
 
   }
