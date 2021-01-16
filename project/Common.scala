@@ -187,7 +187,7 @@ object Common {
     //val BETTER_FILES = "3.8.0"
 
     /** Используемая в проекте версия akka. */
-    val AKKA = "2.6.+"
+    val AKKA = "2.6.10"
 
     /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
       * @see [[https://github.com/typesafehub/akka-contrib-extra]]
