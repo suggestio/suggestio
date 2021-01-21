@@ -3,6 +3,7 @@ package io.suggest.sc.v.hdr
 import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.Css
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.v.styl.ScCssStatic
@@ -29,7 +30,10 @@ class RightR {
     val render: VdomElement = {
       MuiIconButton {
         val icBtnCss = new MuiIconButtonClasses {
-          override val root = ScCssStatic.Search.TextBar.inputsH.htmlClass
+          override val root = Css.flat(
+            ScCssStatic.Search.TextBar.inputsH.htmlClass,
+            ScCssStatic.Header.Buttons.mui5iconBtnPatch.htmlClass,
+          )
         }
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF

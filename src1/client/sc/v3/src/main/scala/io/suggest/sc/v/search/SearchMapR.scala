@@ -16,7 +16,7 @@ import io.suggest.sc.m.search.{HandleMapReady, MGeoTabS, MSearchRespInfo}
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react._
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
 import io.suggest.spa.OptFastEq
@@ -75,8 +75,6 @@ class SearchMapR {
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
-        val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
-
         // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
         val mapChildren = List[VdomElement](
           // Рендерим основную гео-карту:
@@ -103,11 +101,6 @@ class SearchMapR {
         val lgmCtx = LGeoMapR.LgmCtx.mk( $, attribution = false)
 
         <.div(
-          ^.onTouchStart  ==> _stopPropagationF,
-          ^.onTouchEnd    ==> _stopPropagationF,
-          ^.onTouchMove   ==> _stopPropagationF,
-          ^.onTouchCancel ==> _stopPropagationF,
-
           s.mmapC { mmapProxy =>
             mmapProxy.wrap { mmap =>
               MGeoMapPropsR(

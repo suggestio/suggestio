@@ -13,6 +13,7 @@ import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.reg.RegR
+import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
@@ -69,7 +70,7 @@ class LoginFormR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SwitсhLoginTab(newTab) )
     }
 
-    private val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+    private lazy val _onLoginCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       Callback.lazily( lfDiConf.onClose() getOrElse Callback.empty )
     }
 
@@ -144,7 +145,7 @@ class LoginFormR(
               override val open = visibleSomeProxy.value.value
               override val onClose = JsOptionUtil.maybeDefined(!notCloseable)( _onLoginCloseCbF )
               // disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
-              override val disableBackdropClick = notCloseable
+              //override val disableBackdropClick = notCloseable // mui v5 - не требуется,
               override val disableEscapeKeyDown = notCloseable
               override val classes = diaCss
             }
@@ -156,15 +157,17 @@ class LoginFormR(
       }
 
       // Добавить внутренний контекст для CSS.
-      s.loginFormCssC { loginFormCssProxy =>
+      val result = s.loginFormCssC { loginFormCssProxy =>
         <.div(
           CssR.compProxied( loginFormCssProxy ),
 
           loginFormCssCtx.provide( loginFormCssProxy.value )(
             allForm
-          )
+          ),
         )
       }
+
+      MaterialUiUtil.postprocessTopLevel( result )
     }
 
   }

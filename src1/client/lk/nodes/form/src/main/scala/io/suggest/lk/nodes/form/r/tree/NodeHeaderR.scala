@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemSecondaryAction, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemIconProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -22,6 +22,7 @@ import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
+import scala.scalajs.js
 import scalajs.js.JSConverters._
 
 /**
@@ -43,12 +44,14 @@ final class NodeHeaderR(
                        isAdv          : Boolean,
                        asList         : Boolean,
                        chs            : EphemeralStream[Tree[String]] = null,
+                       onClick        : Option[js.Function1[ReactEvent, Unit]] = None,
                      )
   implicit lazy val nodeHeaderPvFeq = FastEqUtil[PropsVal] { (a, b) =>
     MNodeStateRender.NodeStateRenderFeq.eqv( a.render, b.render ) &&
     (a.isAdv ==* b.isAdv) &&
     (a.chs ===* b.chs) &&
-    (a.asList ==* b.asList)
+    (a.asList ==* b.asList) &&
+    (a.onClick eq b.onClick)
   }
 
 
@@ -80,6 +83,7 @@ final class NodeHeaderR(
       val st = s.render.state
       val advPot = st.optionBoolPot( MLknOpKeys.AdvEnabled )
       val infoOpt = st.infoPot.toOption
+      val _onClickUndef = s.onClick.orUndefined
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
       val listItemRendered = MuiListItem()(
@@ -95,7 +99,11 @@ final class NodeHeaderR(
             }
           }
           .whenDefinedNode { ntype =>
-            MuiListItemIcon()(
+            MuiListItemIcon(
+              new MuiListItemIconProps {
+                override val onClick = _onClickUndef
+              }
+            )(
               (ntype match {
                 case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
                 case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
@@ -136,6 +144,7 @@ final class NodeHeaderR(
           new MuiListItemTextProps {
             override val primary = _textPrimary
             override val secondary = _textSecondary
+            override val onClick = _onClickUndef
           }
         }(),
 
@@ -162,7 +171,11 @@ final class NodeHeaderR(
               distanceValueR.component( propsProxy.resetZoom(beacon) ),
             )
           }
-          MuiListItemSecondaryAction()( chs )
+          MuiListItemSecondaryAction(
+            new MuiListItemSecondaryActionProps {
+              override val onClick = _onClickUndef
+            }
+          )( chs )
         })
           .whenDefinedNode,
 

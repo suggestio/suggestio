@@ -1,7 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomNode
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
 
@@ -32,10 +32,10 @@ trait MuiTreeItemProps
   val icon: js.UndefOr[raw.React.Node] = js.undefined
   val label: js.UndefOr[raw.React.Node] = js.undefined
   val nodeId: String
-  val onIconClick: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onLabelClick: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val TransitionComponent: js.UndefOr[raw.React.ElementType] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
+  val ContentComponent: js.UndefOr[raw.React.ComponentType[MuiTreeItemContentProps]] = js.undefined
+  val ContentProps: js.UndefOr[MuiTreeItemContentProps] = js.undefined
 }
 
 
@@ -44,6 +44,8 @@ trait MuiTreeItemClasses extends MuiClassesBase {
       selected,
       group,
       content,
+      focused,
+      disabled,
       iconContainer,
       label: js.UndefOr[String] = js.undefined
 }

@@ -16,6 +16,7 @@ import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.form.MFormResourceKey
 import io.suggest.img.ImgUtilRJs
 import io.suggest.lk.r.FilesDropZoneR
+import io.suggest.lk.u.LkImgUtilJs
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf

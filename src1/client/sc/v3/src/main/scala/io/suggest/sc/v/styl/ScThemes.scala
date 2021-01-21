@@ -37,7 +37,7 @@ final class ScThemes {
       override val primary      = primaryColor
       override val secondary    = secondaryColor
       // TODO Нужно портировать getLuminance() и выбирать dark/light на основе формулы luma >= 0.5. https://github.com/mui-org/material-ui/blob/355317fb479dc234c6b1e374428578717b91bdc0/packages/material-ui/src/styles/colorManipulator.js#L151
-      override val `type`       = MuiPaletteTypes.dark
+      override val mode       = MuiPaletteTypes.dark
       override val text         = paletteText
       override val background   = palletteBg
       override val action       = btnsPalette

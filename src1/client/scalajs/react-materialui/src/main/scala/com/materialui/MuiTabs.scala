@@ -35,7 +35,9 @@ trait MuiTabsProps
     * actions: This object contains all possible actions that can be triggered programmatically.
     */
   val action: js.UndefOr[js.Function1[MuiTabsActions, Unit]] = js.undefined
-  val centered: js.UndefOr[Boolean] = js.undefined
+  val allowScrollButtonsMobile,
+      centered
+      : js.UndefOr[Boolean] = js.undefined
   /** 'secondary' | 'primary' */
   val indicatorColor: js.UndefOr[String] = js.undefined
   @JSName("onChange")

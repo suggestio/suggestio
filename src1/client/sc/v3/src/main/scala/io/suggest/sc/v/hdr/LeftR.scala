@@ -1,12 +1,15 @@
 package io.suggest.sc.v.hdr
 
-import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -30,6 +33,9 @@ class LeftR {
       MuiIconButton {
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF
+          override val classes = new MuiIconButtonClasses {
+            override val root = ScCssStatic.Header.Buttons.mui5iconBtnPatch.htmlClass
+          }
         }
       }(
         Mui.SvgIcons.ArrowBackIosOutlined()()

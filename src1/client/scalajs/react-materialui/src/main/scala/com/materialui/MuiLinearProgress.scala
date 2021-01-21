@@ -39,6 +39,4 @@ object MuiProgressVariants {
   // linear-only
   val buffer = "buffer"
   val query = "query"
-  // circular-only
-  val static = "static"
 }

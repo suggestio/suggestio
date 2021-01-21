@@ -420,7 +420,7 @@ class WzFirstDiaAh[M](
           .toEffectPure
         Some(fx)
       case MWzPhases.BlueToothPerm =>
-        val fx = BtOnOff( isEnabled = true )
+        val fx = BtOnOff( isEnabled = OptionUtil.SomeBool.someTrue )
           .toEffectPure
         Some(fx)
       case MWzPhases.NotificationPerm =>

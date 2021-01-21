@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit
 
 import scalacss.ScalaCssReact._
-import com.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiClickAwayListener, MuiFormControlLabel, MuiFormControlLabelProps, MuiSelect, MuiSelectProps, MuiTypoGraphy}
+import com.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiClickAwayListener, MuiFormControlLabel, MuiFormControlLabelProps, MuiSelect, MuiSelectProps, MuiTextField, MuiTypoGraphy}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{OutlineColorModeSet, OutlineColorSet, OutlineOnOff, OutlineShowHide}
 import io.suggest.ad.edit.v.LkAdEditCss
@@ -140,6 +140,7 @@ final class OutLineR(
                   override val onChange   = _colorModeChange
                   override val onOpen     = _onSelectOpen
                   override val native     = true
+                  override val variant    = MuiTextField.Variants.standard
                 }
               )( _children )
             }

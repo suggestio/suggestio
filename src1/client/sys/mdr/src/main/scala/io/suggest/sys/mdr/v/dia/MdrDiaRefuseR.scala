@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.dia
 
-import com.materialui.{Mui, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{Mui, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiLinearProgress, MuiModalCloseReason, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -14,8 +14,10 @@ import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -43,17 +45,16 @@ class MdrDiaRefuseR {
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Ввод текста в поле причины. */
-    private def _onReasonChanged(e: ReactEventFromInput): Callback = {
+    private val _onReasonChangedF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEventFromInput =>
       val reason2 = e.target.value
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SetDismissReason(reason2))
     }
-    private val _onReasonChangedF = ReactCommonUtil.cbFun1ToJsCb( _onReasonChanged )
 
 
     /** Клик по кнопке подтверждения отказа в размещении. */
-    private def _onRefuseClick(e: ReactEvent): Callback =
+    private val _onRefuseClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, DismissOkClick)
-    private val _onRefuseClickF = ReactCommonUtil.cbFun1ToJsCb( _onRefuseClick )
+    }
 
 
     /** Клик по кнопке закрытия диалога. */
@@ -61,6 +62,14 @@ class MdrDiaRefuseR {
       ReactDiodeUtil.dispatchOnProxyScopeCB($, DismissCancelClick)
     private val _onCancelClickF = ReactCommonUtil.cbFun1ToJsCb( _onCancelClick )
 
+
+    private val _onDiaCloseCbF = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEvent, reason: String) =>
+      if (reason ==* MuiModalCloseReason.escapeKeyDown) {
+        _onCancelClick(e)
+      } else {
+        Callback.empty
+      }
+    }
 
     def render(propsOptProxy: Props): VdomElement = {
       val props = propsOptProxy.value
@@ -72,7 +81,8 @@ class MdrDiaRefuseR {
       MuiDialog(
         new MuiDialogProps {
           override val open = isShown
-          override val onEscapeKeyDown = _onCancelClickF
+          @JSName("onClose")
+          override val onClose2 = _onDiaCloseCbF
           override val maxWidth = js.defined( MuiDialogMaxWidths.md )
           override val fullWidth = true
         }
@@ -95,6 +105,7 @@ class MdrDiaRefuseR {
               override val onChange = _onReasonChangedF
               override val disabled = inputsDisabled
               override val fullWidth = true
+              override val variant = MuiTextField.Variants.standard
             }
           )(),
 

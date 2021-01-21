@@ -31,6 +31,7 @@ import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, TouchSwitchR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
+import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.spa.{FastEqUtil, OptFastEq}
@@ -396,13 +397,14 @@ class LkAdEditFormR(
       }
 
       // Пробросить color palette через контекст внутрь color2 picker'ов.
-      // TODO Требуется mui color 0.4.7 из-за https://github.com/mikbry/material-ui-color/issues/86
-      s.colorPaletteC { colorPaletteProxy =>
+      val result = s.colorPaletteC { colorPaletteProxy =>
         val histed = MColor2PickerCtx( colorPaletteProxy.value )
         colorPickerCtxP.provide( histed )(
           rDndCtx
         )
       }
+
+      MaterialUiUtil.postprocessTopLevel( result )
     }
 
   }

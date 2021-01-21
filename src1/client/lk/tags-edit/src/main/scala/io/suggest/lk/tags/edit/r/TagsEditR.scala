@@ -1,6 +1,7 @@
 package io.suggest.lk.tags.edit.r
 
 import com.materialui.MuiAutoComplete.{OnChangeDetails, OnChangeReason, OnInputChangeReason}
+import com.materialui.MuiTextField.Variant
 import com.materialui.{MuiAutoComplete, MuiAvatar, MuiChip, MuiChipProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
@@ -20,7 +21,7 @@ import japgolly.univeq._
 import scala.scalajs.js
 import js.JSConverters._
 import scala.scalajs.js.annotation.JSName
-import scala.scalajs.js.|
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -81,10 +82,10 @@ final class TagsEditR(
 
 
     private val _onOptionChangeJs = ReactCommonUtil.cbFun4ToJsCb {
-      (e: ReactEvent,
+      (_: ReactEvent,
        option: MTagFound | js.Array[MTagFound] | Null,
        reason: OnChangeReason,
-       details: js.UndefOr[OnChangeDetails[MTagFound]]) =>
+       _: js.UndefOr[OnChangeDetails[MTagFound]]) =>
         // Требуется реакция на select-option. И, возможно, на clear.
         if (reason == MuiAutoComplete.OnChangeReason.SELECT_OPTION) {
           ReactDiodeUtil.dispatchOnProxyScopeCB( $, AddTagFound( option.asInstanceOf[MTagFound].face ) )
@@ -112,7 +113,7 @@ final class TagsEditR(
       val addTagsMsg = crCtxP.message( MsgCodes.`Add.tags` )
       val _tagAva = MuiAvatar()( HtmlConstants.DIEZ )
       val mtfEmpty = MTagFound("", 0)
-      val mcvDefault = MuiChip.Variant.DEFAULT
+      val mcvDefault = MuiChip.Variant.FILLED
 
       <.div(
         // Локализованный заголовок виджета
@@ -157,6 +158,7 @@ final class TagsEditR(
                   override val inputProps       = textFieldProps.inputProps
                   override val label            = addTagsMsg.rawElement
                   override val onKeyUp          = _onKeyUpCb
+                  override val variant          = MuiTextField.Variants.standard
                 }
               )()
                 .rawElement
@@ -167,7 +169,7 @@ final class TagsEditR(
           }: js.Function2[MTagFound, MTagFound, Boolean]
 
           val mcvOutlined = MuiChip.Variant.OUTLINED
-          val _renderOneOptionJsF = { (mtf: MTagFound, _: js.Object) =>
+          val _renderOneOptionJsF = { (_: js.Object, mtf: MTagFound, _: js.Object) =>
             MuiChip.component(
               new MuiChipProps {
                 override val variant    = mcvOutlined
@@ -176,7 +178,7 @@ final class TagsEditR(
               }
             )
               .rawNode
-          }: js.Function2[MTagFound, js.Object, raw.React.Node]
+          }: js.Function3[js.Object, MTagFound, js.Object, raw.React.Node]
 
           crCtxP.consume { crCtx =>
             val clearMsgStr = crCtx.messages( MsgCodes.`Clear` )

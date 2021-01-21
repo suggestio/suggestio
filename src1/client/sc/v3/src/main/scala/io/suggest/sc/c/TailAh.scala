@@ -690,7 +690,7 @@ class TailAh(
         ) {
           fxsAcc ::= Effect.action {
             BtOnOff(
-              isEnabled = true,
+              isEnabled = OptionUtil.SomeBool.someTrue,
               opts = MBeaconerOpts(
                 askEnableBt = false,
                 oneShot     = false,

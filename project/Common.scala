@@ -113,7 +113,7 @@ object Common {
       */
     // TODO Кажется, эти значения ни на что не влияют. react-quill тащит свою версию quill с собой.
     val QUILL = "1.3.7"
-    val QUILL_DELTA = "4.2.1"
+    val QUILL_DELTA = "4.2.2"
 
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]

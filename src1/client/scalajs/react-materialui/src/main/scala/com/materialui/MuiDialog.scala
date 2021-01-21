@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
@@ -24,12 +25,6 @@ trait MuiDialogProps
   val fullScreen: js.UndefOr[Boolean] = js.undefined
   val fullWidth: js.UndefOr[Boolean] = js.undefined
   val maxWidth: js.UndefOr[String | Boolean] = js.undefined
-  val onEnter: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEntered: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEntering: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExit: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExited: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExiting: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val PaperProps: js.UndefOr[js.Object] = js.undefined
   val scroll: js.UndefOr[String] = js.undefined
   val TransitionComponent: js.UndefOr[Component_t] = js.undefined

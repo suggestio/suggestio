@@ -89,7 +89,7 @@ class TextNiR(
               MuiTextField(
                 new MuiTextFieldProps {
                   override val multiline  = true
-                  override val rows       = js.defined( 2 )
+                  override val minRows       = js.defined( 2 )
                   override val value      = _value
                   override val onChange   = _onTextEdit
                   override val variant    = MuiTextField.Variants.outlined

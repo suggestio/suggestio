@@ -20,6 +20,13 @@ object MuiSvgIcon {
     }
   }
 
+  type FontSize <: String
+  object FontSize {
+    final def inherit = "inherit".asInstanceOf[FontSize]
+    final def large = "large".asInstanceOf[FontSize]
+    final def small = "small".asInstanceOf[FontSize]
+  }
+
 }
 
 @js.native
@@ -32,7 +39,7 @@ trait MuiSvgIconProps
   with MuiPropsBaseComponent
 {
   val color: js.UndefOr[String] = js.undefined
-  val fontSize: js.UndefOr[String] = js.undefined
+  val fontSize: js.UndefOr[MuiSvgIcon.FontSize] = js.undefined
   val htmlColor: js.UndefOr[String] = js.undefined
   val shapeRendering: js.UndefOr[String] = js.undefined
   val titleAccess: js.UndefOr[String] = js.undefined
@@ -40,12 +47,7 @@ trait MuiSvgIconProps
 }
 
 
-object MuiFontSizes {
-  final def default = "default"
-  final def inherit = "inherit"
-  final def large = "large"
-  final def small = "small"
-}
+
 
 trait MuiSvgIconClasses extends MuiClassesBase {
   val colorPrimary, colorSecondary, colorAction, colorError, colorDisabled, fontSizeInherit,

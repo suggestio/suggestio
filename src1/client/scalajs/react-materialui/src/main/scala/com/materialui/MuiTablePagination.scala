@@ -30,8 +30,8 @@ trait MuiTablePaginationProps
   val labelDisplayedRows: js.UndefOr[js.Function1[FromToCount, React.Node]] = js.undefined
   val labelRowsPerPage: js.UndefOr[js.Function1[FromToCountPage, React.Node]] = js.undefined
   val nextIconButtonProps: js.UndefOr[js.Object] = js.undefined
-  val onChangePage: js.UndefOr[js.Function2[ReactEvent, Int, _]] = js.undefined
-  val onChangeRowsPerPage: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
+  val onPageChange: js.UndefOr[js.Function2[ReactEvent, Int, _]] = js.undefined
+  val onRowsPerPageChange: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
   val page: Int
   val rowsPerPage: Int
   val rowsPerPageOptions: js.UndefOr[js.Array[Int]] = js.undefined

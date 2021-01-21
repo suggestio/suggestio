@@ -2,6 +2,8 @@ package io.suggest.sc.v.snack
 
 import com.materialui.{MuiAnchorOrigin, MuiSnackBar, MuiSnackBarProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.react.ReactDiodeUtil.Implicits._
+import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.{CloseError, MScRoot}
 import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
@@ -75,25 +77,32 @@ final class ScSnacksR(
         override val vertical   = MuiAnchorOrigin.bottom
         override val horizontal = MuiAnchorOrigin.center
       }
-      s.currSnackOrNullC { currSnackOrNullProxy =>
-        val currSnackOrNull = currSnackOrNullProxy.value
-        val child = if (currSnackOrNull ===* offlineSnackR) {
-          offline
-        } else if (currSnackOrNull ===* indexSwitchAskR) {
-          inxSwitch
-        } else {
-          // TODO Надо хоть что-то рендерить? Может как-то обойтись без ненужного?
-          scErr
-        }
-
-        MuiSnackBar {
-          new MuiSnackBarProps {
-            override val open         = currSnackOrNull ne null
-            override val anchorOrigin = _anchorOrigin
-            override val onClose      = _onCloseJsCbF
+      CatchR.component( p.resetZoom( classOf[ScSnacksR].getSimpleName ) )(
+        s.currSnackOrNullC { currSnackOrNullProxy =>
+          val currSnackOrNull = currSnackOrNullProxy.value
+          val child = if (currSnackOrNull ===* offlineSnackR) {
+            offline
+          } else if (currSnackOrNull ===* indexSwitchAskR) {
+            inxSwitch
+          } else {
+            // TODO Надо хоть что-то рендерить? Может как-то обойтись без ненужного?
+            scErr
           }
-        } ( child )
-      }
+
+          MuiSnackBar {
+            new MuiSnackBarProps {
+              override val open         = currSnackOrNull ne null
+              override val anchorOrigin = _anchorOrigin
+              override val onClose      = _onCloseJsCbF
+            }
+          } (
+            // TODO mui5 - При Grow идёт запись в node.style. Поэтому тут div.
+            <.div(
+              child
+            )
+          )
+        }
+      )
     }
 
   }

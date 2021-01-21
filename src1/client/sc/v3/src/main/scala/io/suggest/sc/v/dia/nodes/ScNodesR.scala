@@ -1,6 +1,7 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentProps, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.MuiTextField.Variant
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentProps, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiModalCloseReason, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
@@ -14,9 +15,12 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.{MScRoot, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sjs.common.empty.JsOptionUtil
+import japgolly.univeq._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -42,9 +46,12 @@ class ScNodesR(
                     nodesModeC                    : ReactConnectProxy[MLkNodesMode],
                   )
 
+  private def _isDiaFullScreen(mroot: MScRoot): Boolean =
+    mroot.dev.screen.info.isDialogWndFullScreen( minWidth = 450 )
+
   class Backend($: BackendScope[Props, State]) {
 
-    private lazy val _onCloseClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+    private lazy val _onCloseBtnClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesShowHide(visible = false) )
     }
 
@@ -62,6 +69,7 @@ class ScNodesR(
           val isNativeSelect = propsProxy.value.dev.platform.isCordova
           val modeSelectProps = new MuiSelectProps {
             override val native = isNativeSelect
+            override val variant = MuiTextField.Variants.standard
           }
 
           val modeMsg = crCtx.messages( MsgCodes.`Mode` )
@@ -92,7 +100,7 @@ class ScNodesR(
                 platCss.Dialogs.backBtn,
                 MuiIconButton {
                   new MuiIconButtonProps {
-                    override val onClick = _onCloseClick
+                    override val onClick = _onCloseBtnClick
                   }
                 } (
                   platformComponents.arrowBack()(),
@@ -160,7 +168,7 @@ class ScNodesR(
               MuiButton(
                 new MuiButtonProps {
                   override val size = MuiButtonSizes.large
-                  override val onClick = _onCloseClick
+                  override val onClick = _onCloseBtnClick
                   override val fullWidth = true
                 }
               )(
@@ -189,8 +197,7 @@ class ScNodesR(
                 new MuiDialogProps {
                   override val open = circuitOpt.nonEmpty
                   override val classes = diaCss
-                  override val onClose = _onCloseClick
-                  override val disableBackdropClick = _isFullScreen
+                  override val onClose = _onCloseBtnClick
                   override val fullScreen = _isFullScreen
                   override val fullWidth = true
                 }
@@ -214,7 +221,7 @@ class ScNodesR(
         circuitOptC = propsProxy.connect( _.dialogs.nodes.circuit ),
 
         isDiaFullScreenSomeC = propsProxy.connect { mroot =>
-          OptionUtil.SomeBool( mroot.dev.screen.info.isDialogWndFullScreen(450) )
+          OptionUtil.SomeBool( _isDiaFullScreen(mroot) )
         },
 
         haveFocusedAdAdminSomeC = propsProxy.connect { mroot =>

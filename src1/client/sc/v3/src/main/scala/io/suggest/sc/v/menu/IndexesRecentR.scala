@@ -3,7 +3,7 @@ package io.suggest.sc.v.menu
 import com.materialui.{MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.css.CssR
+import io.suggest.css.{Css, CssR}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.react.ReactCommonUtil
@@ -23,6 +23,8 @@ import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
+import scala.scalajs.js.UndefOr
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -30,6 +32,7 @@ import scalacss.ScalaCssReact._
   * Description: Рендер недавно-посещённых узлов.
   */
 class IndexesRecentR(
+                      menuItemR                : MenuItemR,
                       nfListR                  : NfListR,
                       nfRowsR                  : NfRowsR,
                       crCtxP                   : React.Context[MCommonReactCtx],
@@ -52,10 +55,14 @@ class IndexesRecentR(
       React.Fragment(
         MuiListItem {
           val css = new MuiListItemClasses {
-            override val root = ScCssStatic.Menu.Rows.rowLink.htmlClass
+            override val root = Css.flat(
+              menuItemR.MENU_LIST_ITEM_CSS_ROOT,
+              ScCssStatic.Menu.Rows.rowLink.htmlClass,
+            )
           }
           new MuiListItemProps {
-            override val disableGutters = true
+            override val disableGutters = menuItemR.DISABLE_GUTTERS
+            override val button = false
             override val classes = css
           }
         } (
@@ -133,7 +140,7 @@ class IndexesRecentR(
         inxRecentsC = propsProxy.connect {
           _.internals.info.indexesRecents
         } (
-          FastEqUtil { (a, b) =>
+          FastEqUtil[MIndexesRecentOuter] { (a, b) =>
             a.saved ===* b.saved
           }
         ),

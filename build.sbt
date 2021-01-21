@@ -275,6 +275,7 @@ lazy val reactSanfonaSjs = {
 }
 
 /** Scala.js биндинги для react-sidebar компонентов. */
+// TODO Убрать, не используется, теперь MuiDrawer.
 lazy val reactSidebar = {
   val name = "react-sidebar"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
@@ -485,7 +486,7 @@ lazy val sc3Sjs = {
     .enablePlugins(WebScalaJS)
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
-      mapsSjs, jdRenderSjs, reactSidebar, reactScroll, reactQrCodeSjs,
+      mapsSjs, jdRenderSjs, reactScroll, reactQrCodeSjs,
       loginFormSjs, lkNodesFormSjs,
     )
 }
@@ -688,7 +689,7 @@ lazy val client = project
     cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
     reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
     reactGridLayoutSjs, reactStoneCutterSjs,
-    reactSidebar, reactScroll, reactMeasureSjs, reactDndSjs,
+    reactScroll, reactMeasureSjs, reactDndSjs,
     quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
     lkAdEditorSjs, lkAdnEditSjs,
     lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,

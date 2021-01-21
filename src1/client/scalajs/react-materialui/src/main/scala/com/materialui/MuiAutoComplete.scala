@@ -57,7 +57,7 @@ object MuiAutoComplete {
         inputValue,
         openText
         : js.UndefOr[String] = js.undefined
-    val closeIcon,
+    val clearIcon,
         loadingText,
         noOptionsText,
         popupIcon
@@ -89,7 +89,7 @@ object MuiAutoComplete {
     val PopperComponent: js.UndefOr[js.Any] = js.undefined
     val renderGroup: js.UndefOr[js.Function1[js.Any, raw.React.Node]] = js.undefined
     val renderInput: js.Function1[MuiTextFieldProps, raw.React.Node]
-    val renderOption: js.UndefOr[js.Function2[T, js.Object, raw.React.Node]] = js.undefined
+    val renderOption: js.UndefOr[js.Function3[js.Object, T, js.Object, raw.React.Node]] = js.undefined
     val renderTags: js.UndefOr[js.Function2[js.Array[T], js.Function1[String, js.Any], raw.React.Node]] = js.undefined
     val size: js.UndefOr[Size] = js.undefined
     val value: js.UndefOr[T] = js.undefined

@@ -11,26 +11,26 @@ import scala.scalajs.js
   * Created: 14.02.2020 17:32
   * Description: [[https://material-ui.com/api/expansion-panel-summary/]]
   */
-object MuiExpansionPanelSummary {
+object MuiAccordionSummary {
 
-  val component = JsComponent[MuiExpansionPanelSummaryProps, Children.Varargs, Null]( Mui.ExpansionPanelSummary )
+  val component = JsComponent[MuiAccordionSummaryProps, Children.Varargs, Null]( Mui.AccordionSummary )
 
-  final def apply( props: MuiExpansionPanelSummaryProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+  final def apply( props: MuiAccordionSummaryProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component( props )( children: _* )
 
 }
 
 
-trait MuiExpansionPanelSummaryProps
+trait MuiAccordionSummaryProps
   extends MuiPropsBase
-  with MuiPropsBaseClasses[MuiExpansionPanelSummaryClasses]
+  with MuiPropsBaseClasses[MuiAccordionSummaryClasses]
 {
   val expandIcon: js.UndefOr[raw.React.Node] = js.undefined
   val IconButtonProps: js.UndefOr[MuiIconButtonProps] = js.undefined
 }
 
 
-trait MuiExpansionPanelSummaryClasses extends MuiClassesBase {
+trait MuiAccordionSummaryClasses extends MuiClassesBase {
   val expanded: js.UndefOr[String] = js.undefined
   val focused: js.UndefOr[String] = js.undefined
   val disabled: js.UndefOr[String] = js.undefined

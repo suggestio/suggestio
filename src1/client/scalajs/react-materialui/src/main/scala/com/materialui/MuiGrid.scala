@@ -23,65 +23,65 @@ object MuiGrid {
 
 
   private object W {
-    def CENTER = "center"
-    def FLEX_START = "flex-start"
-    def FLEX_END = "flex-end"
-    def STRETCH = "stretch"
+    final def CENTER = "center"
+    final def FLEX_START = "flex-start"
+    final def FLEX_END = "flex-end"
+    final def STRETCH = "stretch"
   }
 
 
   type AlignContent <: js.Any
   object AlignContent {
-    def stretch = W.STRETCH.asInstanceOf[AlignContent]
-    def center = W.CENTER.asInstanceOf[AlignContent]
-    def `flex-start` = W.FLEX_START.asInstanceOf[AlignContent]
-    def `flex-end` = W.FLEX_END.asInstanceOf[AlignContent]
-    def `space-between` = "space-between".asInstanceOf[AlignContent]
-    def `space-around` = "space-around".asInstanceOf[AlignContent]
+    final def stretch = W.STRETCH.asInstanceOf[AlignContent]
+    final def center = W.CENTER.asInstanceOf[AlignContent]
+    final def `flex-start` = W.FLEX_START.asInstanceOf[AlignContent]
+    final def `flex-end` = W.FLEX_END.asInstanceOf[AlignContent]
+    final def `space-between` = "space-between".asInstanceOf[AlignContent]
+    final def `space-around` = "space-around".asInstanceOf[AlignContent]
   }
 
 
   type AlignItems <: js.Any
   object AlignItems {
-    def `flex-start` = W.FLEX_START.asInstanceOf[AlignItems]
-    def center = W.CENTER.asInstanceOf[AlignItems]
-    def `flex-end` = W.FLEX_END.asInstanceOf[AlignItems]
-    def stretch = W.STRETCH.asInstanceOf[AlignItems]
-    def baseline = "baseline".asInstanceOf[AlignItems]
+    final def `flex-start` = W.FLEX_START.asInstanceOf[AlignItems]
+    final def center = W.CENTER.asInstanceOf[AlignItems]
+    final def `flex-end` = W.FLEX_END.asInstanceOf[AlignItems]
+    final def stretch = W.STRETCH.asInstanceOf[AlignItems]
+    final def baseline = "baseline".asInstanceOf[AlignItems]
   }
 
 
   type Direction <: js.Any
   object Direction {
-    def row = "row".asInstanceOf[Direction]
-    def `row-reverse` = "row-reverse".asInstanceOf[Direction]
-    def column = "column".asInstanceOf[Direction]
-    def `column-reverse` = "column-reverse".asInstanceOf[Direction]
+    final def row = "row".asInstanceOf[Direction]
+    final def `row-reverse` = "row-reverse".asInstanceOf[Direction]
+    final def column = "column".asInstanceOf[Direction]
+    final def `column-reverse` = "column-reverse".asInstanceOf[Direction]
   }
 
 
-  type Justify <: js.Any
-  object Justify {
-    def `flex-start` = W.FLEX_START.asInstanceOf[Justify]
-    def center = W.CENTER.asInstanceOf[Justify]
-    def `flex-end` = W.FLEX_END.asInstanceOf[Justify]
-    def `space-between` = "space-between".asInstanceOf[Justify]
-    def `space-around` = "space-around".asInstanceOf[Justify]
-    def `space-evenly` = "space-evenly".asInstanceOf[Justify]
+  type JustifyContent <: js.Any
+  object JustifyContent {
+    final def `flex-start` = W.FLEX_START.asInstanceOf[JustifyContent]
+    final def center = W.CENTER.asInstanceOf[JustifyContent]
+    final def `flex-end` = W.FLEX_END.asInstanceOf[JustifyContent]
+    final def `space-between` = "space-between".asInstanceOf[JustifyContent]
+    final def `space-around` = "space-around".asInstanceOf[JustifyContent]
+    final def `space-evenly` = "space-evenly".asInstanceOf[JustifyContent]
   }
 
 
   type Size = Boolean | String | Int
   object Size {
-    def auto = "auto".asInstanceOf[Size]
+    final def auto = "auto".asInstanceOf[Size]
   }
 
 
   type Wrap <: js.Any
   object Wrap {
-    def nowrap = "nowrap".asInstanceOf[Wrap]
-    def wrap = "wrap".asInstanceOf[Wrap]
-    def `wrap-reverse` = "wrap-reverse".asInstanceOf[Wrap]
+    final def nowrap = "nowrap".asInstanceOf[Wrap]
+    final def wrap = "wrap".asInstanceOf[Wrap]
+    final def `wrap-reverse` = "wrap-reverse".asInstanceOf[Wrap]
   }
 
 }
@@ -97,7 +97,7 @@ trait MuiGridProps
   val container: js.UndefOr[Boolean] = js.undefined
   val direction: js.UndefOr[MuiGrid.Direction] = js.undefined
   val item: js.UndefOr[Boolean] = js.undefined
-  val justify: js.UndefOr[MuiGrid.Justify] = js.undefined
+  val justifyContent: js.UndefOr[MuiGrid.JustifyContent] = js.undefined
   val lg: js.UndefOr[MuiGrid.Size] = js.undefined
   val md: js.UndefOr[MuiGrid.Size] = js.undefined
   val sm: js.UndefOr[MuiGrid.Size] = js.undefined

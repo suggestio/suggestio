@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.pop
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiProgressVariants, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiLinearProgress, MuiLinearProgressProps, MuiList, MuiListItem, MuiListItemText, MuiMenuItem, MuiMenuItemProps, MuiModalCloseReason, MuiProgressVariants, MuiSelectProps, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ble.BleConstants.Beacon.EddyStone
@@ -28,6 +28,7 @@ import japgolly.univeq._
 import monocle.Lens
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -126,9 +127,18 @@ class CreateNodeR(
       dispatchOnProxyScopeCB( $, CreateNodeSaveClick )
     }
 
-    /** Реакция на отмену или сокрытие диалога. */
-    private val onCloseClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+    private def _onClose =
       dispatchOnProxyScopeCB( $, CreateNodeCloseClick )
+
+    private val onCloseBtnClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      _onClose
+    }
+
+    /** Реакция на отмену или сокрытие диалога. */
+    private val onCloseDiaCbF = ReactCommonUtil.cbFun2ToJsCb { (_: ReactEvent, closeReason: MuiModalCloseReason) =>
+      Callback.when( closeReason !=* MuiModalCloseReason.backdropClick )(
+        _onClose
+      )
     }
 
 
@@ -136,6 +146,7 @@ class CreateNodeR(
       val isUseNativeSelect = platformComponents.useComplexNativeSelect()
       val _selectProps = new MuiSelectProps {
         override val native = isUseNativeSelect
+        override val variant = MuiTextField.Variants.standard
       }
 
       // Готовим функция-рендерер для всех элементов селекта:
@@ -305,6 +316,7 @@ class CreateNodeR(
                       override val error = parentPathOpt.isEmpty
                       override val value = _nodePathValueStr
                       override val SelectProps = _selectProps
+                      override val variant = MuiTextField.Variants.standard
                     }
                   )(
                     selectOptions: _*
@@ -380,7 +392,7 @@ class CreateNodeR(
             // Кнопка "Закрыть"
             MuiButton(
               new MuiButtonProps {
-                override val onClick = onCloseClickCbF
+                override val onClick = onCloseBtnClickCbF
                 override val size = MuiButtonSizes.large
               }
             )(
@@ -398,11 +410,11 @@ class CreateNodeR(
           MuiDialog(
             new MuiDialogProps {
               override val open = openedSomeProxy.value.value
-              override val onClose = onCloseClickCbF
+              @JSName("onClose")
+              override val onClose2 = onCloseDiaCbF
               override val maxWidth = MuiDialogMaxWidths.sm
               override val fullWidth = true
               override val classes = diaCss
-              override val disableBackdropClick = true
             }
           )( diaChs: _* )
         }

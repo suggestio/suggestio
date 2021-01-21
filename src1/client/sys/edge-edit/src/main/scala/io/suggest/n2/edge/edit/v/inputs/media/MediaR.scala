@@ -154,7 +154,8 @@ class MediaR(
                     override val onChange = _onFileMimeChanged
                     override val label = _label.rawNode
                     override val classes = _tfCss
-                    override val required  = true
+                    override val required = true
+                    override val variant = MuiTextField.Variants.standard
                   }
                 )()
               }
@@ -174,7 +175,8 @@ class MediaR(
                     override val onChange = _onFileSizeChanged
                     override val label = _label.rawNode
                     override val classes = _tfCss
-                    override val required  = true
+                    override val required = true
+                    override val variant = MuiTextField.Variants.standard
                   }
                 )()
               }
@@ -244,6 +246,7 @@ class MediaR(
                                 override val value = _value
                                 override val onChange = _onFileHashChange( mhash )
                                 override val required  = true
+                                override val variant = MuiTextField.Variants.standard
                               }
                             }()
                           ),
@@ -313,6 +316,7 @@ class MediaR(
                     override val value    = fileStorageTypeProxy.value.value
                     override val onChange = _onFileStorageTypeChange
                     override val classes  = _tfCss
+                    override val variant  = MuiTextField.Variants.standard
                   }
                 )(storageOptions: _*)
               }
@@ -332,6 +336,7 @@ class MediaR(
                     override val classes  = _tfCss
                     override val required = true
                     override val error    = fileStorageMetaData.isEmpty
+                    override val variant  = MuiTextField.Variants.standard
                   }
                 )()
               }
@@ -351,7 +356,7 @@ class MediaR(
         // TODO CircularProgressWithLabel вместо CircularProgress
         MuiCircularProgress(
           new MuiCircularProgressProps {
-            override val variant = progressOpt.fold( MuiProgressVariants.indeterminate )( _ => MuiProgressVariants.static )
+            override val variant = progressOpt.fold( MuiProgressVariants.indeterminate )( _ => MuiProgressVariants.determinate )
             override val value = progressOpt.toUndef
           }
         )

@@ -1,15 +1,14 @@
-package io.suggest.lk.r.img
+package io.suggest.lk.u
 
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
 import io.suggest.lk.m.SetImgWh
 import io.suggest.lk.m.img.MPictureCropPopup
-import io.suggest.n2.edge.EdgeUid_t
-import io.suggest.msg.ErrorMsgs
-import io.suggest.react.Props2ModelProxy
-import io.suggest.react.ReactDiodeUtil
 import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
+import io.suggest.n2.edge.EdgeUid_t
+import io.suggest.react.{Props2ModelProxy, ReactDiodeUtil}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
 import org.scalajs.dom.html
 

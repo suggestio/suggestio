@@ -18,6 +18,7 @@ import scalacss.ScalaCssReact._
   * Description: Пункт "О проекте" в левом меню выдачи.
   */
 class AboutSioR(
+                 menuItemR              : MenuItemR,
                  scCssP                 : React.Context[ScCss],
                  crCtxProv              : React.Context[MCommonReactCtx],
                  routerCtlProv          : React.Context[RouterCtl[SioPages.Sc3]],
@@ -32,10 +33,7 @@ class AboutSioR(
       import ScCssStatic.Menu.{Rows => R}
 
       lazy val _listItem = MuiListItem(
-        new MuiListItemProps {
-          override val disableGutters = true
-          override val button = true
-        }
+        menuItemR.MENU_LIST_ITEM_PROPS
       )(
         MuiListItemText()(
           scCssP.consume { scCss =>

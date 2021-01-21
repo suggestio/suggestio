@@ -17,6 +17,7 @@ import scalacss.ScalaCssReact._
   * Description: Пункт меню для доступа к форме управления узлами.
   */
 class ScNodesBtnR(
+                   menuItemR     : MenuItemR,
                    scCssP        : React.Context[ScCss],
                    crCtxProv     : React.Context[MCommonReactCtx],
                  ) {
@@ -42,9 +43,10 @@ class ScNodesBtnR(
         //ReactCommonUtil.maybeEl( isVisible ) {
           MuiListItem(
             new MuiListItemProps {
-              override val disableGutters = true
+              override val disableGutters = menuItemR.DISABLE_GUTTERS
               override val button = true
               override val onClick = _onMenuItemClick
+              override val classes = menuItemR.MENU_LIST_ITEM_CSS
             }
           )(
             MuiListItemText()(

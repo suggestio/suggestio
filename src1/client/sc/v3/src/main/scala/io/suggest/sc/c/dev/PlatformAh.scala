@@ -5,7 +5,6 @@ import diode.data.Pot
 import diode.Implicits._
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
-import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -45,9 +44,6 @@ import scala.util.matching.Regex
   * Description: Контроллер платформы, на которой исполняется выдача.
   */
 object PlatformAh extends Log {
-
-  def isBleAvailCheck(): Boolean =
-    IBleBeaconsApi.detectApis().nonEmpty
 
   /** Статический метод, выполняющий начальную инициализацию данных платформы без серьёзных сайд-эффектов.
     *
@@ -195,14 +191,13 @@ final class PlatformAh[M](
         // Запрос инверсии готовности.
         val isReadyNext = !v0.isReady
         if (isReadyNext) {
-          // Уточнить значение текущей видимости:
-          val doc = dom.document
-          val isCordova = CordovaConstants.isCordovaPlatform()
-
           // Инициализация. Подписаться на события:
           val subscribeFx = Effect.action {
-            // Может оказаться, что device уже ready:
             val isReadyPot2 = Try {
+              // Может оказаться, что device уже ready:
+              val doc = dom.document
+              val isCordova = CordovaConstants.isCordovaPlatform()
+
               if (isCordova) {
                 var isReady = false
                 // Это кордова-контейнер для веб-приложения.
@@ -267,11 +262,12 @@ final class PlatformAh[M](
                 v0.isReadyPot
                   .ready(isReadyNext)
                   .fail,
-                isReadyNow =>
+                {isReadyNow =>
                   if (isReadyNow)
                     DiodeUtil.Bool.truePot
                   else
                     v0.isReadyPot.pending()
+                }
               )
 
             PlatformReady( isReadyPot2 )
@@ -328,6 +324,8 @@ final class PlatformAh[M](
 
         if (isReadyNow) {
           // Проверить, не изменились ли ещё какие-то платформенные флаги?
+          fxAcc ::= BtOnOff( isEnabled = None ).toEffectPure
+
           // Определить платформу cordova, если она не была правильно определена на предыдущем шаге.
           if (v0.isCordova) {
             Try( Cordova.platformId )
@@ -469,7 +467,7 @@ final class PlatformAh[M](
 
     // Не выполнять эффектов, если результата от них не будет (без фактической смены состояния или hardOff).
     Option.when(
-      (mroot.dev.beaconer.hasBle contains true) &&
+      (mroot.dev.beaconer.hasBle contains[Boolean] true) &&
       plat.isReady &&
       // Нельзя запрашивать bluetooth до boot'а GeoLoc: BLE scan требует права ACCESS_FINE_LOCATION,
       // приводя к проблеме http://source.suggest.io/sio/sio2/issues/5 , а вместе с
@@ -501,7 +499,7 @@ final class PlatformAh[M](
             // Требуется изменить текущее состояние сканера маячков.
             Effect.action {
               BtOnOff(
-                isEnabled = isToEnable,
+                isEnabled = OptionUtil.SomeBool( isToEnable ),
                 opts = MBeaconerOpts(
                   // Не долбить мозг юзеру системным запросом включения bluetooth.
                   askEnableBt   = false,

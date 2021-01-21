@@ -46,7 +46,7 @@ trait MuiSliderProps
   val min: js.UndefOr[Value_t] = js.undefined
   val name: js.UndefOr[String] = js.undefined
   @JSName("onChange")
-  val onChange2: js.UndefOr[js.Function2[ReactEventFromHtml, Value_t, Unit]] = js.undefined
+  val onChange2: js.UndefOr[js.Function2[ReactEvent, Value_t, Unit]] = js.undefined
   val onChangeCommitted: js.UndefOr[js.Function2[ReactEventFromHtml, Value_t, Unit]] = js.undefined
   /** horizontal | vertical */
   val orientation: js.UndefOr[String] = js.undefined

@@ -8,6 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.v.session.LogOutDiaR
+import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.react.r.CatchR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.routes.IJsRouter
@@ -72,56 +73,55 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     def render(mrootProxy: Props, s: State): VdomElement = {
-      // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
-      // Содержимое правой панели (панель поиска)
-      // search (правый) sidebar.
-      // Левая панель меню:
-      val menuSideBar = menuR.component( mrootProxy )(
+      val menuSideBar = React.Fragment(
         // Правая панель поиска:
-        searchR.component( mrootProxy )(
+        searchR.component( mrootProxy ),
 
-          // заголовок выдачи:
-          headerR.component( mrootProxy ),
+        // Левая панель - панель меню:
+        menuR.component( mrootProxy ),
 
-          {
-            // Основное тело выдачи:
-            val scContent = <.div(
-              // Ссылаемся на стиль.
-              ScCssStatic.Root.root,
+        // заголовок выдачи:
+        headerR.component( mrootProxy ),
 
-              // Экран приветствия узла:
-              mrootProxy.wrap(_.index)( welcomeR.component.apply ),
+        {
+          // Основное тело выдачи:
+          val scContent = <.div(
+            // Ссылаемся на стиль.
+            ScCssStatic.Root.root,
 
-              // Рендер плитки карточек узла:
-              mrootProxy.wrap( _.grid )( gridR.component.apply )( implicitly, MGridS.MGridSFastEq ),
+            // Экран приветствия узла:
+            mrootProxy.wrap(_.index)( welcomeR.component.apply ),
+
+            // Рендер плитки карточек узла:
+            mrootProxy.wrap( _.grid )( gridR.component.apply )( implicitly, MGridS.MGridSFastEq ),
+          )
+
+          s.isRenderScC { isRenderSomeProxy =>
+            scContent(
+              // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
+              if (isRenderSomeProxy.value.value) ^.visibility.visible
+              else ^.visibility.hidden,
             )
-
-            s.isRenderScC { isRenderSomeProxy =>
-              scContent(
-                // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
-                if (isRenderSomeProxy.value.value) ^.visibility.visible
-                else ^.visibility.hidden,
-              )
-            }
-          },
-        )
+          }
+        },
       )
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       val sc = React.Fragment(
 
-        // В iOS 13 Safari вылетает ошибка при рендере. Пытаемся её перехватить:
-        mrootProxy.wrap( _ => ScCssStatic.getClass.getName )( CatchR.component(_)(
-          // css, который рендерится только один раз:
-          React.Fragment(
-            CssR.component( ScCssStatic ),
-            CssR.component( mrootProxy.value.dev.platformCss ),
-            // Рендер стилей перед снаружи и перед остальной выдачей.
-            // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
-            s.scCssC { CssR.compProxied.apply },
+        // В iOS 13 Safari вылетает ошибка при рендере css. Пытаемся её перехватить, чтобы вся выдача не слетала:
+        mrootProxy.wrap( _ => ScCssStatic.getClass.getName ) {
+          CatchR.component(_)(
+            // css, который рендерится только один раз:
+            React.Fragment(
+              CssR.component( ScCssStatic ),
+              CssR.component( mrootProxy.value.dev.platformCss ),
+              // Рендер стилей перед снаружи и перед остальной выдачей.
+              // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
+              s.scCssC { CssR.compProxied.apply },
+            )
           )
-
-        )),
+        },
 
 
         // Рендер провайдера тем MateriaUI, который заполняет react context.
@@ -172,9 +172,11 @@ class ScRootR (
       val scWithJsRouterCtx = s.jsRouterOptC { jsRouterOptProxy =>
         jsRouterOptP.provide( jsRouterOptProxy.value )(scWithCrCtx)
       }
-      s.scCssC { scCssProxy =>
+      val result = s.scCssC { scCssProxy =>
         scCssP.provide( scCssProxy.value )( scWithJsRouterCtx )
       }
+
+      MaterialUiUtil.postprocessTopLevel( result )
     }
 
   }

@@ -86,7 +86,7 @@ class MdrSidePanelR(
             def __mdrPot(ai: MMdrActionInfo) =
               nodeProps.mdrPots.getOrElse(ai, Pot.empty)
 
-            val divider = MuiDivider()
+            val divider = MuiDivider()()
 
             <.div(
 

@@ -14,6 +14,7 @@ import io.suggest.id.login.m.pwch.MPwChangeRootS
 import io.suggest.id.login.m.{PasswordBlur, PwVisibilityChange, RegNextClick, SetPassword}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{ErrorSnackR, LoginProgressR, TextFieldR}
+import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
@@ -196,9 +197,8 @@ class PwChangeR (
               MuiDialogMaxWidths.xs
             }
             override val open = true
-            //override val onClose = _onCancelClickCbF
             // TODO disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
-            override val disableBackdropClick = true
+            //override val onClose = _onCancelClickCbF
             override val disableEscapeKeyDown = true
             override val classes = diaCss
           }
@@ -215,15 +215,17 @@ class PwChangeR (
       }
 
       // Добавить внутренний контекст для CSS.
-      s.loginFormCssC { loginFormCssProxy =>
+      val result = s.loginFormCssC { loginFormCssProxy =>
         <.div(
           CssR.compProxied( loginFormCssProxy ),
 
           loginFormCssCtx.provide( loginFormCssProxy.value )(
             dia
-          )
+          ),
         )
       }
+
+      MaterialUiUtil.postprocessTopLevel( result )
     }
 
   }

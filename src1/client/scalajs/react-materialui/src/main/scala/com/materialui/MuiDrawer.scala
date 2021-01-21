@@ -21,11 +21,11 @@ trait MuiDrawerPropsBase
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiDrawerClasses]
 {
-  val anchor: js.UndefOr[String] = js.undefined
+  val anchor: js.UndefOr[MuiDrawerAnchor] = js.undefined
   val elevation: js.UndefOr[Int] = js.undefined
   val ModalProps: js.UndefOr[MuiModalProps] = js.undefined
   val PaperProps: js.UndefOr[MuiPaperProps] = js.undefined
-  val SlideProps: js.UndefOr[js.Object] = js.undefined
+  val SlideProps: js.UndefOr[MuiSlideProps] = js.undefined
   val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
@@ -44,22 +44,21 @@ trait MuiTemporaryDrawerProps
 }
 
 
-object MuiDrawerVariants {
-  val permanent = "permanent"
-  val persistent = "persistent"
-  val temporary = "temporary"
+object MuiDrawerVariant {
+  final def permanent = "permanent".asInstanceOf[MuiDrawerVariant]
+  final def persistent = "persistent".asInstanceOf[MuiDrawerVariant]
+  final def temporary = "temporary".asInstanceOf[MuiDrawerVariant]
 }
 
 
-object MuiDrawerAnchors {
-  val left = "left"
-  val right = "right"
-  val top = "top"
-  val bottom = "bottom"
+object MuiDrawerAnchor {
+  final def left = "left".asInstanceOf[MuiDrawerAnchor]
+  final def right = "right".asInstanceOf[MuiDrawerAnchor]
+  final def top = "top".asInstanceOf[MuiDrawerAnchor]
+  final def bottom = "bottom".asInstanceOf[MuiDrawerAnchor]
 }
 
-trait MuiDrawerClasses extends js.Object {
-  // no root css here
+trait MuiDrawerClasses extends MuiClassesBase {
   val docked: js.UndefOr[String] = js.undefined
   val paper: js.UndefOr[String] = js.undefined
   val paperAnchorLeft: js.UndefOr[String] = js.undefined

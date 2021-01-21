@@ -156,6 +156,7 @@ class TextFieldR(
                 override val disabled     = p.disabled
                 // для возможности управления visibility пароля, пробрасываем дополнительные input props:
                 override val InputProps   = inpAdornProps.toUndef
+                override val variant      = MuiTextField.Variants.standard
               }
             )()
           }

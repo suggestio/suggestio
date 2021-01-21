@@ -14,7 +14,7 @@ import io.suggest.img.crop.MCrop
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.lk.m._
 import io.suggest.lk.m.img.{MPictureCropPopup, MUploadAh}
-import io.suggest.lk.r.img.LkImgUtilJs
+import io.suggest.lk.u.LkImgUtilJs
 import io.suggest.log.Log
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge._

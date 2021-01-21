@@ -514,13 +514,15 @@ class BleBeaconerAh[M](
       val v0 = value
       // Включён или включается.
       val isEnabledNow = v0.isEnabled contains[Boolean] true
+      val isEnabled2 = m.isEnabled contains[Boolean] true
+      def isDisabled2 = m.isEnabled contains[Boolean] false
       def hasBle2 = v0.hasBle orElse v0.hasBle.pending()
 
       if (
         // Сначала проверяем на предмет дублирующегося включения с изменением опций работы демона.
         // Здесь может быть pending в isEnabled -- это нормально, если дублирующийся сигнал запуска был слишком быстрым.
         // hardOff-флаг не проверяем, т.к. демон уже включён (isEnabledNow).
-        m.isEnabled && isEnabledNow &&
+        isEnabled2 && isEnabledNow &&
         (m.opts !=* v0.opts)
       ) {
         // Обновление опций работы демона. Такое бывает, если BtOnOff был запущен сначала из контроллера демона,
@@ -530,14 +532,14 @@ class BleBeaconerAh[M](
 
       } else if (v0.isEnabled.isPending) {
         // Отработать ситуацию с pending и повторным включением или выключением.
-        if (!isEnabledNow && !m.isEnabled) {
+        if (!isEnabledNow && isDisabled2) {
           // Повторное выключение. Игнорить.
           logger.log( ErrorMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.isEnabled) )
           noChange
 
         } else if (
-          (isEnabledNow && !m.isEnabled) ||
-          (!isEnabledNow && m.isEnabled)
+          (isEnabledNow && isDisabled2) ||
+          (!isEnabledNow && isEnabled2)
         ) {
           // Если BLE-мониторинг включается, а поступил сигнал ВЫключения, надо дождаться активации и выключиться.
           val v2 = (MBeaconerS.afterOnOff set Some(m.toEffectPure))(v0)
@@ -548,7 +550,7 @@ class BleBeaconerAh[M](
           noChange
         }
 
-      } else if (!isEnabledNow && m.isEnabled) {
+      } else if (!isEnabledNow && isEnabled2) {
         // !isEnabledNow: Здесь учитывается также, что случай v0.isEnabled=Pot.empty - норма для первого включения.
         // Активировать BleBeaconer: запустить подписание на API.
         val apiActFx = startApiActivation(
@@ -567,7 +569,7 @@ class BleBeaconerAh[M](
         )
         updated( v2, apiActFx )
 
-      } else if (isEnabledNow && !m.isEnabled) {
+      } else if (isEnabledNow && isDisabled2) {
         // Гасим таймеры в состоянии:
         for (timerInfo <- v0.notifyAllTimer)
           DomQuick.clearTimeout( timerInfo.timerId )
@@ -598,7 +600,9 @@ class BleBeaconerAh[M](
 
         // Собрать новое состояние.
         val v2 = v0.copy(
-          isEnabled         = v0.isEnabled.ready(false).pending(),
+          isEnabled         = v0.isEnabled
+            .ready(false)
+            .pending(),
           notifyAllTimer    = None,
           envFingerPrint    = BleBeaconerAh.mkFingerPrint( bcnsNearby2 ),
           bleBeaconsApi     = Pot.empty,
@@ -613,7 +617,7 @@ class BleBeaconerAh[M](
         ah.updatedMaybeEffect( v2, apiStopFxOpt )
 
       } else {
-        // Уже включёно или уже выключено.
+        // Уже включёно, или уже выключено, или m.isEnabled == None.
         // Но если hasBle.isEmpty, надо всё-таки посмотреть, что там с доступностью bluetooth вообще.
         if (v0.hasBle.isEmpty) {
           val hasBleFx = Effect.action {
@@ -682,7 +686,12 @@ class BleBeaconerAh[M](
             )
 
             val timerFx2 = if (v0.opts.oneShot)
-              timerFx >> Effect.action( BtOnOff(isEnabled = false, opts = v2.opts) )
+              timerFx >> Effect.action(
+                BtOnOff(
+                  isEnabled = OptionUtil.SomeBool.someFalse,
+                  opts = v2.opts,
+                )
+              )
             else
               timerFx
 

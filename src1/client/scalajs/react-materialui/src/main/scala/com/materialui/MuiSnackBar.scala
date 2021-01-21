@@ -30,12 +30,6 @@ trait MuiSnackBarProps
   val key: js.UndefOr[js.Any] = js.undefined
   val message: js.UndefOr[raw.React.Node] = js.undefined
   val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEnter: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEntered: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEntering: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExit: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExited: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExiting: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val open: js.UndefOr[Boolean] = js.undefined
   val resumeHideDuration: js.UndefOr[Double] = js.undefined
   val TransitionComponent: js.UndefOr[String | js.Function | js.Object] = js.undefined

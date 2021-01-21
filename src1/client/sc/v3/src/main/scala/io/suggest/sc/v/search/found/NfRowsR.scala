@@ -16,6 +16,7 @@ import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.search.MNodesFoundRowProps
+import io.suggest.sc.v.menu.MenuItemR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
@@ -35,6 +36,7 @@ import scala.scalajs.js
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
 final class NfRowsR(
+                     menuItemR                : MenuItemR,
                      scCssP                   : React.Context[ScCss],
                      crCtxP                   : React.Context[MCommonReactCtx],
                    ) {
@@ -138,7 +140,10 @@ final class NfRowsR(
         .mkString( HtmlConstants.SPACE )
 
       val listItemCss = new MuiListItemClasses {
-        override val root = rowRootCss
+        override val root = Css.flat(
+          rowRootCss,
+          menuItemR.MENU_LIST_ITEM_CSS_ROOT,
+        )
       }
 
       val listItem = MuiListItem.component.withKey(nodeId)(
@@ -148,7 +153,7 @@ final class NfRowsR(
           override val onClick = _onNodeRowClickJsF
           override val selected = props.row.selected
           override val dense = !isTag
-          override val disableGutters = true
+          override val disableGutters = menuItemR.DISABLE_GUTTERS
         }
       )(
         // Если тег, то имеет смысл выставить пометку, что это тег:

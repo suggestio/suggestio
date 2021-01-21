@@ -1,19 +1,22 @@
 package io.suggest.sc.v.search
 
-import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
+import com.materialui.{MuiDrawerAnchor, MuiDrawerClasses, MuiSwipeableDrawer}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.{Css, CssR}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil, StyleProps}
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.search._
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.search.found.NodesFoundR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -39,15 +42,25 @@ final class SearchR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
+    private def _onSetOpen(opened: Boolean): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, OptionUtil.SomeBool(opened)) )
+
+    private val _onOpenCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      _onSetOpen( true )
+    }
+    private val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      _onSetOpen( false )
     }
 
-    def render(mrootProxy: Props, s: State, children: PropsChildren): VdomElement = {
+    //private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
+    //  ReactDiodeUtil.dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, OptionUtil.SomeBool(opened)) )
+    //}
+
+    def render(mrootProxy: Props, s: State): VdomElement = {
 
       val nodesSearch = nodesFoundR.component( mrootProxy )
 
-      val searchCss = s.searchCssC { CssR.compProxied.apply }
+      val searchCss = s.searchCssC( CssR.compProxied.apply )
 
       // Непосредственно, панель поиска:
       val searchBarBody = scCssP.consume { scCss =>
@@ -98,42 +111,31 @@ final class SearchR(
         )
       }
 
-      // Значение "initial" для css-свойст.
-      val css_initial = ScCss.css_initial
-
-      val searchStyles = {
-        val sidebarStyl = new StyleProps {
-          override val zIndex    = ScCss.sideBarZIndex
-          override val overflowY = css_initial
-        }
-        val contentStyl = new StyleProps {
-          override val overflowY = css_initial
-        }
-        val overlayStyl = new StyleProps {
-          override val zIndex = -100
-        }
-        new SidebarStyles {
-          override val sidebar = sidebarStyl
-          override val content = contentStyl
-          override val overlay = overlayStyl
-        }
+      val _drawerCss = new MuiDrawerClasses {
+        override val paper = ScCssStatic.Body.ovh.htmlClass
       }
+      val _anchorRight = MuiDrawerAnchor.right
 
       s.searchSideBarC { searchOpenedSomeProxy =>
-        // Используем react-sidebar вместо mui.SwipeableDrawer, т.к. последний конфиликтует с гео-картой на уровне touch-событий.
-        Sidebar(
-          new SidebarProps {
-            override val sidebar      = searchBarBody.rawNode
-            override val onSetOpen    = _onSetOpenSearchSidebarF
-            override val open         = searchOpenedSomeProxy.value.opened
-            override val transitions  = mrootProxy.value.dev.platform.isUsingNow
-            override val touch        = true
-            override val pullRight    = true
-            override val shadow       = true
-            override val styles       = searchStyles
-            override val touchHandleWidth = 40
+        MuiSwipeableDrawer(
+          new MuiSwipeableDrawer.Props {
+            override val onOpen = _onOpenCbF
+            override val onClose = _onCloseCbF
+            override val open = searchOpenedSomeProxy.value.opened
+            override val disableBackdropTransition = true
+            override val transitionDuration = {
+              if (mrootProxy.value.dev.platform.isUsingNow)
+                js.undefined
+              else
+                js.defined( 0d )
+            }
+            override val anchor = _anchorRight
+            override val classes = _drawerCss
+            override val hideBackdrop = true
           }
-        )( children )
+        )(
+          searchBarBody,
+        )
       }
     }
 
@@ -153,7 +155,7 @@ final class SearchR(
 
       )
     }
-    .renderBackendWithChildren[Backend]
+    .renderBackend[Backend]
     .build
 
 }

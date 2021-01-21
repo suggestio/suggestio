@@ -1,10 +1,11 @@
 package io.suggest.dev
 
-import com.materialui.{Mui, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps}
+import com.materialui.{Mui, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyProps}
 import io.suggest.common.html.HtmlConstants
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -35,8 +36,13 @@ class OsFamiliesR {
             },
 
             HtmlConstants.SPACE,
-            <.span(
-              textCss.whenDefined( ^.`class` := _ ),
+            MuiTypoGraphy(
+              new MuiTypoGraphyProps {
+                override val classes = new MuiTypoGraphyClasses {
+                  override val root = textCss
+                }
+              }
+            )(
               osPlatform.value,
             )
 

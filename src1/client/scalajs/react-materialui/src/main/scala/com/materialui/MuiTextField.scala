@@ -40,8 +40,8 @@ trait MuiTextFieldProps extends MuiFormControlProps {
   val multiline: js.UndefOr[Boolean] = js.undefined
   val name: js.UndefOr[String] = js.undefined
   val placeholder: js.UndefOr[String] = js.undefined
-  val rows: js.UndefOr[String | Int] = js.undefined
-  val rowsMax: js.UndefOr[String | Int] = js.undefined
+  val minRows: js.UndefOr[String | Int] = js.undefined
+  val maxRows: js.UndefOr[String | Int] = js.undefined
   val select: js.UndefOr[Boolean] = js.undefined
   val SelectProps: js.UndefOr[MuiSelectProps] = js.undefined
   val `type`: js.UndefOr[String] = js.undefined

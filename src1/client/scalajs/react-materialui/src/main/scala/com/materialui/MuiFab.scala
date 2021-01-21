@@ -36,7 +36,7 @@ trait MuiFabProps
 
 
 object MuiFabVariants {
-  val round = "round"
+  val circular = "circular"
   val extended = "extended"
 }
 

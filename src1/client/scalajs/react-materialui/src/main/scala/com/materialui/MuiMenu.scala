@@ -38,12 +38,6 @@ trait MuiMenuProps
   val MenuListProps: js.UndefOr[js.Object] = js.undefined
   val open: Boolean
   val onClose: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
-  val onEnter: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEntered: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEntering: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExit: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExited: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onExiting: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val PopoverClasses: js.UndefOr[js.Object/*TODO заменить Object на MuiPopoverClasses */] = js.undefined
   val transitionDuration: js.UndefOr[MuiTransitionDuration] = js.undefined
   val variant: js.UndefOr[MuiMenu.Variant] = js.undefined

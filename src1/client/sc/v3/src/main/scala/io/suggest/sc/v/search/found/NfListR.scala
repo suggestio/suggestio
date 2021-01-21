@@ -42,11 +42,11 @@ final class NfListR
 
       MuiGrid {
         val listClass =
-          if (p.isScrollable) NodesCSS.nodesListScrollable.htmlClass
-          else Css.Overflow.HIDDEN
+          if (p.isScrollable) NodesCSS.nodesListScrollable
+          else ScCssStatic.Body.ovh
 
         val listClasses = new MuiGridClasses {
-          override val root = Css.flat( NodesCSS.listDiv.htmlClass, listClass )
+          override val root = Css.flat( NodesCSS.listDiv.htmlClass, listClass.htmlClass )
         }
 
         val onTouchMoveUndF: js.UndefOr[js.Function1[ReactTouchEventFromInput, Unit]] =

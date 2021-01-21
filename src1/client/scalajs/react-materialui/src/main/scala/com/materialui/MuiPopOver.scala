@@ -41,13 +41,6 @@ trait MuiPopOverProps
   val marginThreshold: js.UndefOr[Int] = js.undefined
 
   val onClose: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val onEnter: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val onEntered: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val onEntering: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val onExit: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val onExited: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-  val onExiting: js.UndefOr[js.Function1[ReactEvent, _]] = js.undefined
-
   val open: Boolean
 
   val PaperProps: js.UndefOr[MuiPaperProps] = js.undefined

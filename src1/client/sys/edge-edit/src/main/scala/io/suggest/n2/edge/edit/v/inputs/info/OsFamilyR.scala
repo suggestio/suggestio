@@ -66,6 +66,7 @@ class OsFamilyR(
             override val label  = _label.rawNode
             override val onChange = _onOsChanged
             override val classes = _css
+            override val variant = MuiTextField.Variants.standard
           }
         )( _children: _* )
       }

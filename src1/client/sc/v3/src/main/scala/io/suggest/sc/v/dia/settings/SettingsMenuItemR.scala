@@ -66,7 +66,7 @@ class SettingsMenuItemR(
           override val root = R.rowLink.htmlClass
         }
         new MuiListItemProps {
-          override val disableGutters = true
+          override val disableGutters = false
           override val button         = true
           override val onClick        = _onClickCbF
           override val classes        = css

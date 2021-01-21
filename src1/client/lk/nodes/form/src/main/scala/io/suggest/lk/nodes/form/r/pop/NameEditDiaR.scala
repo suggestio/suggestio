@@ -96,6 +96,7 @@ class NameEditDiaR(
                       override val required       = true
                       override val helperText     = _inputHelperText.rawNode
                       override val onChange       = _onInputChanged
+                      override val variant        = MuiTextField.Variants.standard
                     }
                   )()
                 }

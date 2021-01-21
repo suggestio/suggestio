@@ -23,6 +23,7 @@ import scalacss.ScalaCssReact._
   * Description: Кнопка редактирования текущей открытой карточки.
   */
 class EditAdR(
+               menuItemR     : MenuItemR,
                scCssP        : React.Context[ScCss],
                crCtxProv     : React.Context[MCommonReactCtx],
                jsRouterOptP  : React.Context[Option[IJsRouter]],
@@ -42,10 +43,7 @@ class EditAdR(
       import ScCssStatic.Menu.{Rows => R}
 
       lazy val content = MuiListItem(
-        new MuiListItemProps {
-          override val disableGutters = true
-          override val button = true
-        }
+        menuItemR.MENU_LIST_ITEM_PROPS
       )(
         MuiListItemText()(
           scCssP.consume { scCss =>

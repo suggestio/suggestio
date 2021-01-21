@@ -14,7 +14,7 @@ object MuiChip {
   type Variant <: String
   /** Values for [[MuiChipProps.variant]]. */
   object Variant {
-    final def DEFAULT = "default".asInstanceOf[Variant]
+    final def FILLED = "filled".asInstanceOf[Variant]
     final def OUTLINED = "outlined".asInstanceOf[Variant]
   }
 
@@ -38,7 +38,7 @@ trait MuiChipProps
   val onDelete: js.UndefOr[js.Function1[ReactUIEventFromHtml, _]] = js.undefined
   /** @see [[MuiRadioSizes]] */
   val size: js.UndefOr[String] = js.undefined
-  val variant: js.UndefOr[String] = js.undefined
+  val variant: js.UndefOr[MuiChip.Variant] = js.undefined
 }
 
 

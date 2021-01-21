@@ -1,12 +1,11 @@
 package io.suggest.sc.v.menu
 
-import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
-import com.materialui.{MuiDivider, MuiList, MuiListItem}
+import com.materialui.{MuiDivider, MuiDrawerAnchor, MuiList, MuiListItem, MuiSwipeableDrawer}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.{ReactCommonUtil, StyleProps}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.dia.dlapp.DlAppMenuItemR
@@ -16,6 +15,8 @@ import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -46,11 +47,18 @@ class MenuR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val _onSetOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
+    private def _onSetOpen(opened: Boolean): Callback =
       dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Menu, OptionUtil.SomeBool(opened)) )
+    //private val _onSetOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onSetOpen )
+
+    private val _onOpenCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      _onSetOpen( true )
+    }
+    private val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      _onSetOpen( false )
     }
 
-    def render(propsProxy: Props, s: State, propsChildren: PropsChildren): VdomElement = {
+    def render(propsProxy: Props, s: State): VdomElement = {
       // Сборка панели меню:
       val menuRows = <.div(
         ScCssStatic.Menu.Rows.rowsContainer,
@@ -61,7 +69,7 @@ class MenuR(
           indexesRecentR.component( propsProxy ),
 
           MuiListItem()(
-            MuiDivider()
+            MuiDivider()(),
           ),
 
           // Строка входа в личный кабинет. В кордове - скрыта.
@@ -125,38 +133,28 @@ class MenuR(
         )    // .panel
       }
 
-      val menuSideBarStyles = {
-        val zIndexBase = ScCss.sideBarZIndex * 2
-        val sidebarStyl = new StyleProps {
-          override val zIndex    = zIndexBase
-          override val overflowY = ScCss.css_initial
-        }
-        val overlayStyl = new StyleProps {
-          override val zIndex = zIndexBase - 1
-        }
-        val contentStyl = new StyleProps {
-          override val overflowY = ScCss.css_initial
-        }
-        new SidebarStyles {
-          override val sidebar = sidebarStyl
-          override val overlay = overlayStyl
-          override val content = contentStyl
-        }
-      }
-
       s.menuOpenedSomeC { menuOpenedSomeProxy =>
-        Sidebar(
-          new SidebarProps {
-            override val sidebar      = menuSideBarBody.rawNode
-            override val pullRight    = false
-            override val touch        = true
-            override val transitions  = propsProxy.value.dev.platform.isUsingNow
-            override val open         = menuOpenedSomeProxy.value.value
-            override val onSetOpen    = _onSetOpenMenuSidebarF
-            override val shadow       = true
-            override val styles       = menuSideBarStyles
+        MuiSwipeableDrawer(
+          new MuiSwipeableDrawer.Props {
+            override val onOpen = _onOpenCbF
+            override val open = menuOpenedSomeProxy.value.value
+            override val onClose = _onCloseCbF
+            override val anchor = MuiDrawerAnchor.left
+            // TODO Тут при iOS обычно отключают это. Возможно, тоже нужен iOS+browser-вариант с отключением левого свайпа?
+            override val disableSwipeToOpen = false
+            override val transitionDuration = {
+              if (propsProxy.value.dev.platform.isUsingNow) {
+                // default - анимация по умолчанию.
+                js.undefined
+              } else {
+                // Выключить анимацию, если приложение скрыто или экран выключен.
+                js.defined( 0d )
+              }
+            }
           }
-        )( propsChildren )
+        )(
+          menuSideBarBody,
+        )
       }
     }
 
@@ -174,7 +172,7 @@ class MenuR(
 
       )
     }
-    .renderBackendWithChildren[Backend]
+    .renderBackend[Backend]
     .build
 
 }

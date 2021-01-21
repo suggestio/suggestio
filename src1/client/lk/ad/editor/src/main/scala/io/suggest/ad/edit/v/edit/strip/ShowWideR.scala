@@ -51,6 +51,7 @@ class ShowWideR(
 
       val _selectProps = new MuiSelectProps {
         override val native = true
+        override val variant = MuiTextField.Variants.standard
       }
 
       val select = MuiTextField(
@@ -59,6 +60,7 @@ class ShowWideR(
           override val SelectProps = _selectProps
           override val value = js.defined( currSelectValue )
           override val onChange = _onClickJsCbF
+          override val variant = MuiTextField.Variants.standard
         }
       )(
         <.option(

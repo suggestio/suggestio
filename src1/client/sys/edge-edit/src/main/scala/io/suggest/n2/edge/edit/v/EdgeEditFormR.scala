@@ -7,6 +7,7 @@ import scalacss.ScalaCssReact._
 import io.suggest.css.CssR
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.lk.m.MErrorPopupS
+import io.suggest.lk.u.MaterialUiUtil
 import io.suggest.n2.edge.edit.m.{MDeleteDiaS, MEdgeEditRoot}
 import io.suggest.n2.edge.edit.v.inputs.act.{DeleteBtnR, DeleteDiaR, ErrorDiaR, FileExistDiaR, SaveBtnR}
 import io.suggest.n2.edge.edit.v.inputs.info.EdgeInfoR
@@ -47,7 +48,7 @@ class EdgeEditFormR(
     def render(p: Props): VdomElement = {
       val css = p.wrap(_ => EdgeEditCss)( CssR.compProxied.apply )
 
-      MuiPaper()(
+      val result = MuiPaper()(
         crCtxProv.provide( MCommonReactCtx.default )(
           <.div(
             MuiFormControl(
@@ -111,6 +112,8 @@ class EdgeEditFormR(
           )
         )
       )
+
+      MaterialUiUtil.postprocessTopLevel( result )
     }
 
   }

@@ -3,6 +3,7 @@ package io.suggest.sc.c.dia
 import diode.data._
 import diode.{ActionHandler, ActionResult, Effect, ModelRW, UpdateSilent}
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.conf.ConfConst
 import io.suggest.kv.MKvStorage
 import io.suggest.log.Log
@@ -104,7 +105,7 @@ class ScSettingsDiaAh[M](
       val okFxOpt: Option[Effect] = if (m.key ==* K.BLUETOOTH_BEACONS_ENABLED) {
         val fx = Effect.action {
           BtOnOff(
-            isEnabled = isEnabled2,
+            isEnabled = OptionUtil.SomeBool( isEnabled2 ),
             opts = MBeaconerOpts(
               askEnableBt = true,
               oneShot     = false,

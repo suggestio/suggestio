@@ -1,7 +1,7 @@
 package io.suggest.sc.v.dia.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiExpansionPanel, MuiExpansionPanelDetails, MuiExpansionPanelProps, MuiExpansionPanelSummary, MuiExpansionPanelSummaryClasses, MuiExpansionPanelSummaryProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiAccordion, MuiAccordionDetails, MuiAccordionProps, MuiAccordionSummary, MuiAccordionSummaryClasses, MuiAccordionSummaryProps, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -80,27 +80,25 @@ class DlAppDiaR(
       }
     }
 
-    /*
-    private def _onDownLoadBtnClick(dlInfo: MScAppDlInfo) = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, DlApp(dlInfo) )
-    }
-    */
-
 
     def render(s: State): VdomElement = {
       // Отрендерить список платформ в дефолтовом порядке:
       val chooseMsgCode = MsgCodes.`Choose...`
       val chooseText = crCtxP.message( chooseMsgCode )
+      val menuRowCss = ScCssStatic.Menu.Rows.mui5ListItem.htmlClass
       val platformsRows: Seq[VdomNode] = MuiMenuItem.component.withKey( chooseMsgCode )(
         new MuiMenuItemProps {
           override val value = chooseMsgCode
           override val disabled = true
+          override val classes = new MuiMenuItemClasses {
+            override val root = menuRowCss
+          }
         }
       )(
         chooseText
       ) :: osFamiliesR.osFamiliesMenuItems(
         itemCss = new MuiMenuItemClasses {
-          override val root = ScCssStatic.flexCenter.htmlClass
+          override val root = Css.flat( ScCssStatic.flexCenter.htmlClass, menuRowCss )
         },
         textCss = ScCssStatic.thinText.htmlClass,
       )
@@ -204,6 +202,7 @@ class DlAppDiaR(
                     override val onChange = _onOsFamilyChange
                     override val classes  = _osFamilySelectCss
                     override val disabled = dlAppDia.getReq.isPending
+                    override val variant  = MuiTextField.Variants.standard
                   }
                 )(
                   platformsRows: _*
@@ -224,10 +223,10 @@ class DlAppDiaR(
                   )
 
                 } else {
-                  val summaryCss = new MuiExpansionPanelSummaryClasses {
+                  val summaryCss = new MuiAccordionSummaryClasses {
                     override val content = Css.flat( ScCssStatic.thinText.htmlClass, ScCssStatic.flexCenter.htmlClass )
                   }
-                  val summaryProps = new MuiExpansionPanelSummaryProps {
+                  val summaryProps = new MuiAccordionSummaryProps {
                     override val classes = summaryCss
                   }
                   <.div(
@@ -246,8 +245,8 @@ class DlAppDiaR(
                           Mui.SvgIcons.Apple()()
                       }
 
-                      MuiExpansionPanel.component.withKey( index )(
-                        new MuiExpansionPanelProps {
+                      MuiAccordion.component.withKey( index )(
+                        new MuiAccordionProps {
                           @JSName("onChange")
                           override val onChange2 = _onExpandChanged( index )
                           override val expanded = dlAppDia.expanded contains index
@@ -255,7 +254,7 @@ class DlAppDiaR(
                       )(
 
                         // Что откуда качать:
-                        MuiExpansionPanelSummary( summaryProps )(
+                        MuiAccordionSummary( summaryProps )(
                           // Левая иконка:
                           if (dlInfo.extSvc.isEmpty) {
                             getAppIcon
@@ -271,7 +270,7 @@ class DlAppDiaR(
                         ),
 
                         // Раскрытая часть панели.
-                        MuiExpansionPanelDetails()(
+                        MuiAccordionDetails()(
 
                           MuiTable()(
                             MuiTableBody()(

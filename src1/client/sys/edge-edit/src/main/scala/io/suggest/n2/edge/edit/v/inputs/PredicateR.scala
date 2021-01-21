@@ -64,6 +64,7 @@ class PredicateR(
               override val value    = predicateProxy.value.value
               override val onChange = _onPredicateChangeCbF
               override val classes  = css
+              override val variant  = MuiTextField.Variants.standard
             }
           } (
             _children: _*

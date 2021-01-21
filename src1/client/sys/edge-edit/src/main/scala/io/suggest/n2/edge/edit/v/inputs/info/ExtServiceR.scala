@@ -87,6 +87,7 @@ class ExtServiceR(
               override val value    = _value
               override val onChange = _onChangeCbF
               override val classes  = css
+              override val variant  = MuiTextField.Variants.standard
             }
           } (
             _children: _*

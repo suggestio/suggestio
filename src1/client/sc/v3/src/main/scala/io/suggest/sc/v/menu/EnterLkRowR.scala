@@ -1,6 +1,6 @@
 package io.suggest.sc.v.menu
 
-import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -18,6 +18,8 @@ import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
 
+import scala.scalajs.js.UndefOr
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -25,6 +27,7 @@ import scalacss.ScalaCssReact._
   * Description: Компонент строки меню с ссылкой для логина в s.io.
   */
 class EnterLkRowR(
+                   menuItemR     : MenuItemR,
                    scCssP        : React.Context[ScCss],
                    crCtxProv     : React.Context[MCommonReactCtx],
                    jsRouterOptP  : React.Context[Option[IJsRouter]],
@@ -58,10 +61,7 @@ class EnterLkRowR(
 
       // Ссылка на вход или на личный кабинет
       val listItem = MuiListItem(
-        new MuiListItemProps {
-          override val disableGutters = true
-          override val button = true
-        }
+        menuItemR.MENU_LIST_ITEM_PROPS
       )(
         MuiListItemText()(
           scCssP.consume { scCss =>

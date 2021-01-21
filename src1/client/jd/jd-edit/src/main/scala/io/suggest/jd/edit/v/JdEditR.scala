@@ -13,7 +13,7 @@ import io.suggest.jd.edit.m._
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.{JdCssStatic, JdRrr, MQdEmbedProps, QdRrrHtml}
 import io.suggest.jd.tags._
-import io.suggest.lk.r.img.LkImgUtilJs
+import io.suggest.lk.u.LkImgUtilJs
 import io.suggest.n2.edge.{MEdgeDataJs, MPredicates}
 import io.suggest.pick.MimeConst
 import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}

@@ -86,6 +86,7 @@ class SmsCodeFormR(
               override val error        = !v.typed.isValid
               override val onBlur       = _onInputBlurCbF
               override val disabled     = v.disabled
+              override val variant      = MuiTextField.Variants.standard
             }
           )()
         }

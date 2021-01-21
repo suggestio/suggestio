@@ -1,15 +1,17 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.VdomNode
+
 import scala.scalajs.js
 
 
 object MuiDivider {
 
-  val component = JsComponent[MuiDividerProps, Children.None, Null](Mui.Divider)
+  val component = JsComponent[MuiDividerProps, Children.Varargs, Null](Mui.Divider)
 
-  final def apply(props: MuiDividerProps = MuiPropsBaseStatic.empty) =
-    component(props)
+  final def apply(props: MuiDividerProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
         

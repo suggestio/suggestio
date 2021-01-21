@@ -176,7 +176,7 @@ object Sc3Main extends Log {
 
 
     Try {
-      body.className += ScCssStatic.Body.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
+      body.className += ScCssStatic.Body.ovh.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
     }
       .logFailure( ErrorMsgs.SHOULD_NEVER_HAPPEN, body )
 

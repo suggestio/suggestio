@@ -23,6 +23,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Компонент пункта меню с кнопкой выхода из системы.
   */
 class LogOutR(
+               menuItemR   : MenuItemR,
                crCtxP      : React.Context[MCommonReactCtx],
                scCssP      : React.Context[ScCss],
              ) {
@@ -51,9 +52,10 @@ class LogOutR(
           // Ссылка на вход или на личный кабинет
           val listItem = MuiListItem(
             new MuiListItemProps {
-              override val disableGutters = true
+              override val disableGutters = menuItemR.DISABLE_GUTTERS
               override val button = true
               override val onClick = _onClick
+              override val classes = menuItemR.MENU_LIST_ITEM_CSS
             }
           )(
             MuiListItemText()(

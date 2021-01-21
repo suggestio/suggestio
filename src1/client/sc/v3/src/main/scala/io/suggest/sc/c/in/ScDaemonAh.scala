@@ -2,10 +2,11 @@ package io.suggest.sc.c.in
 
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
 import io.suggest.sjs.common.async.AsyncUtil._
-import io.suggest.sc.m.{ScDaemonSleepAlarm, ScDaemonDozed, ScDaemonFallSleepTimerSet, ScDaemonWorkProcess}
+import io.suggest.sc.m.{ScDaemonDozed, ScDaemonFallSleepTimerSet, ScDaemonSleepAlarm, ScDaemonWorkProcess}
 import io.suggest.sc.m.in.MScDaemon
 import diode.data.Pot
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.daemon.{DaemonBgModeSet, DaemonSleepTimerFinish, DaemonSleepTimerSet, MDaemonSleepTimer, MDaemonState, MDaemonStates}
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.ErrorMsgs
@@ -116,7 +117,7 @@ class ScDaemonAh[M](
         // Провести короткое ble-сканирование. hardOff-флаг проверялся на стадии DaemonActivate, тут не проверяем.
         val btScanFx = Effect.action {
           BtOnOff(
-            isEnabled = true,
+            isEnabled = OptionUtil.SomeBool.someTrue,
             opts = MBeaconerOpts(
               askEnableBt    = false,
               oneShot        = true,

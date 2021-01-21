@@ -104,7 +104,7 @@ class InputSliderR(
             val _value = propsOpt.fold(0)(_.value)
             val _min   = propsOpt.fold(0)(_.min)
             val _max   = propsOpt.fold(0)(_.max)
-            val _onChange = ReactCommonUtil.cbFun2ToJsCb { (e: ReactEventFromHtml, value2: Value_t) =>
+            val _onChange = ReactCommonUtil.cbFun2ToJsCb { (_: ReactEvent, value2: Value_t) =>
               onValueChange(value2)
             }
             new MuiSliderProps {

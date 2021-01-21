@@ -27,14 +27,20 @@ object MuiToolTip {
 
 trait MuiToolTipProps extends MuiPropsBase {
   val classes: js.UndefOr[MuiToolTipClasses] = js.undefined
-  val disableFocusListener: js.UndefOr[Boolean] = js.undefined
-  val disableHoverListener: js.UndefOr[Boolean] = js.undefined
-  val disableTouchListener: js.UndefOr[Boolean] = js.undefined
-  val enterDelay: js.UndefOr[Double] = js.undefined
-  val enterTouchDelay: js.UndefOr[Double] = js.undefined
+
+  val disableFocusListener,
+      disableHoverListener,
+      disableTouchListener,
+      disableInteractive
+      : js.UndefOr[Boolean] = js.undefined
+
+  val enterDelaym,
+      enterTouchDelay,
+      leaveDelay,
+      leaveTouchDelay
+      : js.UndefOr[Double] = js.undefined
+
   val id: js.UndefOr[String] = js.undefined
-  val leaveDelay: js.UndefOr[Double] = js.undefined
-  val leaveTouchDelay: js.UndefOr[Double] = js.undefined
   val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val onOpen: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val open: js.UndefOr[Boolean] = js.undefined

@@ -51,6 +51,7 @@ class TitleR(
             override val onChange   = _onTitleChangeCbF
             override val label      = titleMsg
             override val classes    = _css
+            override val variant    = MuiTextField.Variants.standard
           }
         )()
       }

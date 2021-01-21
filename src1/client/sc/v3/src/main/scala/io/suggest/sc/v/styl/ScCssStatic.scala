@@ -45,9 +45,7 @@ object ScCssStatic extends StyleSheet.Inline {
 
   object Body {
 
-    /** Главный обязательный статический класс для body. */
-    val smBody = style(
-      //addClassName( _SM_ + "body" ),
+    val ovh = style(
       overflow.hidden
     )
 
@@ -125,6 +123,12 @@ object ScCssStatic extends StyleSheet.Inline {
           Css.Lk._SM_BUTTON,
           ScCssStatic.Header.HEADER + "_btn"
         )
+      )
+
+      // TODO mui5 Удалить этот стиль-костыль, когда починят стили mui IconButton.
+      val mui5iconBtnPatch = style(
+        padding( 12.px ),
+        borderRadius( 50.%% ),
       )
 
       /** Выравнивание кнопок. */
@@ -439,6 +443,12 @@ object ScCssStatic extends StyleSheet.Inline {
     /** Стили строк меню */
     object Rows {
 
+      // TODO mui5 Удалить этот стиль, когда починят рендер стилей ListItem.
+      val mui5ListItem = style(
+        paddingTop( 8.px ),
+        paddingBottom( 8.px ),
+      )
+
       val rowsContainer = style(
         position.relative
       )
@@ -508,7 +518,7 @@ object ScCssStatic extends StyleSheet.Inline {
 
 
   initInnerObjects(
-    Body.smBody,
+    Body.ovh,
     Root.root,
 
     Header.Buttons.search,

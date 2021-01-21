@@ -12,19 +12,19 @@ import scala.scalajs.js.annotation.JSName
   * Created: 14.02.2020 17:00
   * Description: [[https://material-ui.com/api/expansion-panel/]]
   */
-object MuiExpansionPanel {
+object MuiAccordion {
 
-  val component = JsComponent[MuiExpansionPanelProps, Children.Varargs, Null]( Mui.ExpansionPanel )
+  val component = JsComponent[MuiAccordionProps, Children.Varargs, Null]( Mui.Accordion )
 
-  final def apply(props: MuiExpansionPanelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
+  final def apply(props: MuiAccordionProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
 
 
-trait MuiExpansionPanelProps
+trait MuiAccordionProps
   extends MuiPropsBase
-  with MuiPropsBaseClasses[MuiExpansionPanelClasses]
+  with MuiPropsBaseClasses[MuiAccordionClasses]
 {
   val defaultExpanded: js.UndefOr[Boolean] = js.undefined
   val disabled: js.UndefOr[Boolean] = js.undefined
@@ -36,7 +36,7 @@ trait MuiExpansionPanelProps
 }
 
 
-trait MuiExpansionPanelClasses extends MuiClassesBase {
+trait MuiAccordionClasses extends MuiClassesBase {
   val rounded: js.UndefOr[String] = js.undefined
   val expanded: js.UndefOr[String] = js.undefined
   val disabled: js.UndefOr[String] = js.undefined

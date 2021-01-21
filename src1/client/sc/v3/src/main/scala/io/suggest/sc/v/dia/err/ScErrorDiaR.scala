@@ -71,7 +71,7 @@ class ScErrorDiaR(
             }
             new MuiIconButtonProps {
               override val onClick  = _onCloseCbF
-              override val color    = MuiColorTypes.default
+              //override val color    = MuiColorTypes.default  // mui-5.0: button.color.default := primary
               override val classes  = cssClasses
               override val centerRipple = true
             }

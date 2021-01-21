@@ -16,9 +16,10 @@ import scala.util.Try
 /** Управление работой системой мониторинга маячков.
   *
   * @param isEnabled Новое состояние (вкл/выкл)
+  *                  None значит, что остаться в текущем состоянии, возможно совершив какие-то несущественные действия.
   * @param opts Опции, сохраняемые в состоянии beaconer'а.
   */
-case class BtOnOff(isEnabled: Boolean,
+case class BtOnOff(isEnabled: Option[Boolean],
                    opts: MBeaconerOpts = MBeaconerOpts.default) extends IBleBeaconAction
 
 /** Экшен Результат подписки на события API. */

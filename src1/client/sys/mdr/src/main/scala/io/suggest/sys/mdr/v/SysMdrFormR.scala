@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v
 
-import com.materialui.{MuiDrawer, MuiDrawerAnchors, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
+import com.materialui.{MuiDrawer, MuiDrawerAnchor, MuiDrawerProps, MuiDrawerVariant, MuiToolBar}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.CssR
@@ -74,8 +74,8 @@ class SysMdrFormR(
         // Левая панель:
         MuiDrawer(
           new MuiDrawerProps {
-            override val variant = MuiDrawerVariants.permanent
-            override val anchor  = MuiDrawerAnchors.right
+            override val variant = MuiDrawerVariant.permanent
+            override val anchor  = MuiDrawerAnchor.right
           }
         )(
           // Содержимое формы модерации карточки:

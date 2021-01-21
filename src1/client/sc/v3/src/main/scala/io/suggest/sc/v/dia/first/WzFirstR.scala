@@ -182,7 +182,6 @@ class WzFirstR(
                       // Кнопка "Позже"
                       val laterBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
-                          override val color   = MuiColorTypes.default
                           override val variant = MuiButtonVariants.text
                           override val onClick = _laterClickCbF
                           override val size    = MuiButtonSizes.large
@@ -193,7 +192,6 @@ class WzFirstR(
                       // Кнопка "Разрешить"
                       val allowBtn: VdomNode = MuiButton {
                         new MuiButtonProps {
-                          override val color   = MuiColorTypes.default
                           override val variant = MuiButtonVariants.text
                           override val onClick = _allowClickCbF
                           override val size    = MuiButtonSizes.large

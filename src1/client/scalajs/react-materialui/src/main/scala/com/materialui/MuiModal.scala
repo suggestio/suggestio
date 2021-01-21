@@ -28,7 +28,7 @@ trait MuiModalPropsBase extends MuiPropsBase {
   val BackdropProps: js.UndefOr[js.Object] = js.undefined
   val container: js.UndefOr[js.Object | js.Function] = js.undefined
   val disableAutoFocus: js.UndefOr[Boolean] = js.undefined
-  val disableBackdropClick: js.UndefOr[Boolean] = js.undefined
+  // disableBackdropClick: удалено из m-ui v5.
   val disableEnforceFocus: js.UndefOr[Boolean] = js.undefined
   val disableEscapeKeyDown: js.UndefOr[Boolean] = js.undefined
   val disablePortal: js.UndefOr[Boolean] = js.undefined
@@ -38,15 +38,20 @@ trait MuiModalPropsBase extends MuiPropsBase {
   val manager: js.UndefOr[js.Object] = js.undefined
   val onBackdropClick: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   @JSName("onClose")
-  val onClose2: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
+  val onClose2: js.UndefOr[js.Function2[ReactEvent, MuiModalCloseReason, Unit]] = js.undefined
   val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onEscapeKeyDown: js.UndefOr[js.Function1[ReactKeyboardEvent, Unit]] = js.undefined
   val onRendered: js.UndefOr[js.Function0[Unit]] = js.undefined
   val open: Boolean
 }
 trait MuiModalProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiModalClasses]
+
+
+object MuiModalCloseReason {
+  final def backdropClick = "backdropClick".asInstanceOf[MuiModalCloseReason]
+  final def escapeKeyDown = "escapeKeyDown".asInstanceOf[MuiModalCloseReason]
+}
 
 
 trait MuiModalClasses extends MuiClassesBase {

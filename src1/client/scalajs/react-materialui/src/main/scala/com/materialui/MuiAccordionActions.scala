@@ -11,24 +11,24 @@ import scala.scalajs.js
   * Created: 14.02.2020 17:19
   * Description: [[https://material-ui.com/api/expansion-panel-actions/]]
   */
-object MuiExpansionPanelActions {
+object MuiAccordionActions {
 
-  val component = JsComponent[MuiExpansionPanelActionsProps, Children.Varargs, Null]( Mui.ExpansionPanelActions )
+  val component = JsComponent[MuiAccordionActionsProps, Children.Varargs, Null]( Mui.AccordionActions )
 
-  final def apply( props: MuiExpansionPanelActionsProps = MuiPropsBaseStatic.empty )(children: VdomNode*) =
+  final def apply( props: MuiAccordionActionsProps = MuiPropsBaseStatic.empty )(children: VdomNode*) =
     component(props)(children: _*)
 
 }
 
 
-trait MuiExpansionPanelActionsProps
+trait MuiAccordionActionsProps
   extends MuiPropsBase
-  with MuiPropsBaseClasses[MuiExpansionPanelActionsClasses]
+  with MuiPropsBaseClasses[MuiAccordionActionsClasses]
 {
   val disableSpacing: js.UndefOr[Boolean] = js.undefined
 }
 
 
-trait MuiExpansionPanelActionsClasses extends MuiClassesBase {
+trait MuiAccordionActionsClasses extends MuiClassesBase {
   val spacing: js.UndefOr[String] = js.undefined
 }

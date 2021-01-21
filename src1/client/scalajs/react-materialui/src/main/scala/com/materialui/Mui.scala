@@ -5,7 +5,7 @@ import scala.scalajs.js.annotation._
 
 object Mui {
   @js.native @JSImport("@material-ui/core/AppBar", JSImport.Default) object AppBar extends js.Any
-  @js.native @JSImport("@material-ui/lab/Autocomplete", JSImport.Default) object AutoComplete extends js.Any
+  @js.native @JSImport("@material-ui/core/Autocomplete", JSImport.Default) object AutoComplete extends js.Any
   @js.native @JSImport("@material-ui/core/Avatar", JSImport.Default) object Avatar extends js.Any
   @js.native @JSImport("@material-ui/core/Badge", JSImport.Default) object Badge   extends js.Any
   @js.native @JSImport("@material-ui/core/BottomNavigation", JSImport.Default) object BottomNavigation
@@ -78,6 +78,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/RadioGroup", JSImport.Default) object RadioGroup extends js.Any
   @js.native @JSImport("@material-ui/core/Select", JSImport.Default) object Select extends js.Any
   @js.native @JSImport("@material-ui/core/Slider", JSImport.Default) object Slider       extends js.Any
+  @js.native @JSImport("@material-ui/core/Slide", JSImport.Default) object Slide extends js.Any
   @js.native @JSImport("@material-ui/core/Subheader", JSImport.Default) object Subheader extends js.Any
   @js.native @JSImport("@material-ui/core/SvgIcon", JSImport.Default) object SvgIcon     extends js.Any
 
@@ -113,15 +114,16 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Tooltip", JSImport.Default) object Tooltip extends js.Any
   @js.native @JSImport("@material-ui/core/Typography", JSImport.Default) object Typography extends js.Any
 
-  @js.native @JSImport("@material-ui/core/ExpansionPanel", JSImport.Default) object ExpansionPanel extends js.Any
-  @js.native @JSImport("@material-ui/core/ExpansionPanelActions", JSImport.Default) object ExpansionPanelActions extends js.Any
-  @js.native @JSImport("@material-ui/core/ExpansionPanelDetails", JSImport.Default) object ExpansionPanelDetails extends js.Any
-  @js.native @JSImport("@material-ui/core/ExpansionPanelSummary", JSImport.Default) object ExpansionPanelSummary extends js.Any
+  @js.native @JSImport("@material-ui/core/Accordion", JSImport.Default) object Accordion extends js.Any
+  @js.native @JSImport("@material-ui/core/AccordionActions", JSImport.Default) object AccordionActions extends js.Any
+  @js.native @JSImport("@material-ui/core/AccordionDetails", JSImport.Default) object AccordionDetails extends js.Any
+  @js.native @JSImport("@material-ui/core/AccordionSummary", JSImport.Default) object AccordionSummary extends js.Any
 
   @js.native @JSImport("@material-ui/lab/TreeView", JSImport.Default) object TreeView extends js.Any
   @js.native @JSImport("@material-ui/lab/TreeItem", JSImport.Default) object TreeItem extends js.Any
 
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
+  @js.native @JSImport("@material-ui/styles/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
   val SvgIcons = MuiSvgIcons
 
 }

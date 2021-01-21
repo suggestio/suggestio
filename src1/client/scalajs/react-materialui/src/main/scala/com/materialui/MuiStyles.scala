@@ -94,7 +94,7 @@ trait MuiPalette extends js.Object {
   val error: js.UndefOr[MuiColor] = js.undefined
   val contrastThreshold: js.UndefOr[Int] = js.undefined
   val tonalOffset: js.UndefOr[Double] = js.undefined
-  val `type`: js.UndefOr[String] = js.undefined
+  val mode: js.UndefOr[String] = js.undefined
   val divider: js.UndefOr[String] = js.undefined
   val background: js.UndefOr[MuiPaletteBackground] = js.undefined
   val action: js.UndefOr[MuiPaletteAction] = js.undefined
@@ -125,6 +125,7 @@ trait MuiRawTheme extends js.Object {
   val props: js.UndefOr[js.Object] = js.undefined
   val shadows: js.UndefOr[js.Array[String]] = js.undefined
   val typography: js.UndefOr[MuiThemeTypoGraphy] = js.undefined
+  val components: js.UndefOr[js.Object] = js.undefined
 }
 
 

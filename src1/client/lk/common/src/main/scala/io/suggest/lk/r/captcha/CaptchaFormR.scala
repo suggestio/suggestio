@@ -92,6 +92,7 @@ class CaptchaFormR(
               override val error        = !captchaS.typed.isValid
               override val onBlur       = _onInputBlurCbF
               override val disabled     = captchaS.disabled
+              override val variant      = MuiTextField.Variants.standard
             }
           )()
         }
