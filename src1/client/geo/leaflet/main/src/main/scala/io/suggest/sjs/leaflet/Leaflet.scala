@@ -11,6 +11,7 @@ import io.suggest.sjs.leaflet.path.circle.{Circle, CircleMarker, CircleMarkerOpt
 import io.suggest.sjs.leaflet.path.poly._
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
+import io.suggest.sjs.leaflet.tooltip.{Tooltip, TooltipOptions}
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -82,6 +83,9 @@ trait ILeaflet extends js.Object {
   val version: String = js.native
 
   def whenReady(f: js.Function1[IWhenReadyArgs, _]): Unit = js.native
+
+  def tooltip(options: TooltipOptions = js.native,
+              source: Layer = js.native): Tooltip = js.native
 
 }
 

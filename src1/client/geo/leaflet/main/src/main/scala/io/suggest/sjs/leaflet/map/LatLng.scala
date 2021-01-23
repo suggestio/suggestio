@@ -24,6 +24,11 @@ object LatLng extends js.Object {
 }
 
 
+trait LatLngLiteral extends js.Object {
+  val lat: Double
+  val lng: Double
+}
+
 @js.native
 trait ILatLng extends js.Object {
 

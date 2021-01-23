@@ -1,6 +1,7 @@
 package io.suggest.sjs.leaflet.event
 
 import io.suggest.sjs.leaflet.popup.Popup
+import io.suggest.sjs.leaflet.tooltip.Tooltip
 
 import scala.scalajs.js
 
@@ -15,5 +16,13 @@ import scala.scalajs.js
 trait PopupEvent extends Event {
 
   var popup: Popup = js.native
+
+}
+
+
+@js.native
+trait TooltipEvent extends Event {
+
+  val tooltip: Tooltip = js.native
 
 }

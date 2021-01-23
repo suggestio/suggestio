@@ -57,6 +57,8 @@ trait MuiStyles extends js.Object {
   def rgbToHex(color: String | MuiColor): String = js.native
   def hslToRgb(color: String | MuiColor): String = js.native
 
+  def useTheme(): MuiTheme = js.native
+
 }
 
 

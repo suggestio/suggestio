@@ -41,10 +41,10 @@ trait MuiModalPropsBase extends MuiPropsBase {
   val onClose2: js.UndefOr[js.Function2[ReactEvent, MuiModalCloseReason, Unit]] = js.undefined
   val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val onRendered: js.UndefOr[js.Function0[Unit]] = js.undefined
-  val open: Boolean
 }
+
 trait MuiModalProps
-  extends MuiPropsBase
+  extends MuiModalPropsBase
   with MuiPropsBaseClasses[MuiModalClasses]
 
 

@@ -16,7 +16,6 @@ object MuiSwipeableDrawer {
 
   trait Props
     extends MuiDrawerPropsBase
-    with MuiModalPropsBase
   {
     val disableBackdropTransition: js.UndefOr[Boolean] = js.undefined
     val disableDiscovery: js.UndefOr[Boolean] = js.undefined
@@ -26,6 +25,7 @@ object MuiSwipeableDrawer {
     val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]]
     val onOpen: js.Function1[ReactEvent, Unit]
     val swipeAreaWidth: js.UndefOr[Double] = js.undefined
+    val open: js.UndefOr[Boolean] = js.undefined
   }
 
 }

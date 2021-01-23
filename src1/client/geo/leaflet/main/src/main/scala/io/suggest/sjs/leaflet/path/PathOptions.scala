@@ -1,5 +1,7 @@
 package io.suggest.sjs.leaflet.path
 
+import io.suggest.sjs.leaflet.layer.LayerOptions
+
 import scala.scalajs.js
 
 /**
@@ -7,10 +9,8 @@ import scala.scalajs.js
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.11.15 14:26
   * Description: JSON for declaring Path style.
-  *
-  * For scala 0.6.14+.
   */
-trait PathOptions extends js.Object {
+trait PathOptions extends LayerOptions {
 
   //true   Whether to draw stroke along the path. Set it to false to disable borders on polygons or circles.
   val stroke          : js.UndefOr[Boolean]   = js.undefined

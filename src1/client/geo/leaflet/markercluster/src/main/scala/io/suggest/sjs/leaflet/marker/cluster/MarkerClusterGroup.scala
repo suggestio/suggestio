@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.marker.cluster
 
-import io.suggest.sjs.leaflet.event.LEventTarget
+import io.suggest.sjs.leaflet.event.Evented
 import io.suggest.sjs.leaflet.layer.group.FeatureGroup
 import io.suggest.sjs.leaflet.map.Layer
 import io.suggest.sjs.leaflet.LEAFLET_IMPORT
@@ -31,7 +31,7 @@ object MarkerClusterGroup {
 @js.native
 sealed class MarkerClusterGroup(options: MarkerClusterGroupOptions)
   extends FeatureGroup
-  with LEventTarget
+  with Evented
 {
 
   def initialize(options: MarkerClusterGroupOptions): Unit = js.native

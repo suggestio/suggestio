@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import com.materialui.{MuiDrawerAnchor, MuiDrawerClasses, MuiSwipeableDrawer}
+import com.materialui.{MuiDrawerAnchor, MuiDrawerClasses, MuiModalProps, MuiSwipeableDrawer}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -115,6 +115,9 @@ final class SearchR(
         override val paper = ScCssStatic.Body.ovh.htmlClass
       }
       val _anchorRight = MuiDrawerAnchor.right
+      val _modalProps = new MuiModalProps {
+        override val hideBackdrop = true
+      }
 
       s.searchSideBarC { searchOpenedSomeProxy =>
         MuiSwipeableDrawer(
@@ -131,7 +134,7 @@ final class SearchR(
             }
             override val anchor = _anchorRight
             override val classes = _drawerCss
-            override val hideBackdrop = true
+            override val ModalProps = _modalProps
           }
         )(
           searchBarBody,

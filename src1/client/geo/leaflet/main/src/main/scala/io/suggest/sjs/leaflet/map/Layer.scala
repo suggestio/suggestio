@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet.map
 
 import io.suggest.sjs.leaflet.LEAFLET_IMPORT
-import io.suggest.sjs.leaflet.event.LEventTarget
+import io.suggest.sjs.leaflet.event.Evented
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -14,7 +14,7 @@ import scala.scalajs.js.annotation.JSImport
   */
 @JSImport(LEAFLET_IMPORT, "Layer")
 @js.native
-class Layer extends LEventTarget {
+class Layer extends Evented {
 
   def onAdd(lmap: LMap): this.type = js.native
 

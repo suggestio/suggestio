@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import com.materialui.{MuiTheme, MuiThemeProvider, MuiThemeProviderProps}
+import com.materialui.{Mui, MuiTheme, MuiThemeProvider, MuiThemeProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColors

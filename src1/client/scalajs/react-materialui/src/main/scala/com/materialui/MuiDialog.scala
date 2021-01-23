@@ -30,6 +30,7 @@ trait MuiDialogProps
   val TransitionComponent: js.UndefOr[Component_t] = js.undefined
   val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
+  val open: Boolean
 }
 
 

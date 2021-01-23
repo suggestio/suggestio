@@ -17,3 +17,9 @@ trait LayerEvent extends Event {
   val layer: Layer = js.native
 
 }
+
+
+@js.native
+trait LayersControlEvent extends LayerEvent {
+  val name: String = js.native
+}
