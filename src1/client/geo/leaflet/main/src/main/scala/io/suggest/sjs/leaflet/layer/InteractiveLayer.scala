@@ -8,7 +8,9 @@ import io.suggest.sjs.leaflet.map.Layer
   * Created: 23.01.2021 0:16
   * @see [[https://leafletjs.com/reference-1.6.0.html#interactive-layer]]
   */
-trait InteractiveLayer extends Layer {
+trait InteractiveLayer extends Layer
+
+trait InteractiveLayerOptions extends LayerOptions {
 
   val interactive,
       bubblingMouseEvents: Boolean

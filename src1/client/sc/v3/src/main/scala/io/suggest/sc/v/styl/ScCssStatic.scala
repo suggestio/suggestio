@@ -272,6 +272,17 @@ object ScCssStatic extends StyleSheet.Inline {
       width( PANEL_WIDTH_PX.px ),
     )
 
+    /** Нужно, чтобы карточки оставались кликабельными. */
+    val modal = {
+      val zeroPx = 0.px
+      style(
+        left.initial,
+        right( zeroPx ),
+        top( zeroPx ),
+        bottom( zeroPx ),
+      )
+    }
+
     /** Поля текстового поиска и контейнер оной. */
     object TextBar {
 

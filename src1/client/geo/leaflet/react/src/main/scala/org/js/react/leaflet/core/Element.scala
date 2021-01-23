@@ -9,7 +9,7 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 22.01.2021 17:09
   */
 
-trait LeafletElement[T <: js.Object, C <: js.Any] extends js.Object {
+trait LeafletElement[T, C <: js.Any] extends js.Object {
   val instance: T
   val context: LeafletContextInterface
   val container: js.UndefOr[C] = js.undefined

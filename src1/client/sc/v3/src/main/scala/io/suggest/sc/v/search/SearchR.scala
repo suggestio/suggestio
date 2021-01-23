@@ -113,6 +113,13 @@ final class SearchR(
 
       val _drawerCss = new MuiDrawerClasses {
         override val paper = ScCssStatic.Body.ovh.htmlClass
+        override val modal = {
+          val S = ScCssStatic.Search
+          Css.flat(
+            S.panel.htmlClass,
+            S.modal.htmlClass,
+          )
+        }
       }
       val _anchorRight = MuiDrawerAnchor.right
       val _modalProps = new MuiModalProps {
