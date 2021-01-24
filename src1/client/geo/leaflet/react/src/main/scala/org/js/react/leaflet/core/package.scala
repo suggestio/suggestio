@@ -29,7 +29,9 @@ package object core {
   type DivOverlayLifecycleHook[E, P <: js.Object] =
     js.Function4[LeafletElement[E, js.Any], LeafletContextInterface, P, SetOpenFunc, Unit]
 
+  type DivOverlayHookRes[E <: DivOverlay, P <: js.Object] =
+    js.Function2[P, SetOpenFunc, ElementHookRef[E, js.Any]]
   type DivOverlayHook[E <: DivOverlay, P <: js.Object] =
-    js.Function2[ElementHook[E, P], DivOverlayLifecycleHook[E, P], js.Function2[P, SetOpenFunc, ElementHookRef[E, js.Any]]]
+    js.Function2[ElementHook[E, P], DivOverlayLifecycleHook[E, P], DivOverlayHookRes[E, P]]
 
 }

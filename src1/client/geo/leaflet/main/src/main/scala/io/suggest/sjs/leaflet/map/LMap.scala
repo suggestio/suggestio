@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.map
 
-import io.suggest.sjs.leaflet.control.IControl
+import io.suggest.sjs.leaflet.control.Control
 import io.suggest.sjs.leaflet.event.{Evented, MouseEvent}
 import io.suggest.sjs.leaflet.handler.IHandler
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
@@ -78,8 +78,8 @@ class LMap extends Evented {
   def openPopup(html: String | HTMLElement, latLng: LatLng, options: PopupOptions = js.native): this.type = js.native
   def closePopup(popup: Popup = js.native): this.type = js.native
 
-  def addControl(control: IControl): this.type = js.native
-  def removeControl(control: IControl): this.type = js.native
+  def addControl(control: Control): this.type = js.native
+  def removeControl(control: Control): this.type = js.native
 
 
   // Conversion Methods

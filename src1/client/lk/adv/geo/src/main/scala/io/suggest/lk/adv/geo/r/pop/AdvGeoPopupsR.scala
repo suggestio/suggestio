@@ -71,7 +71,7 @@ final class AdvGeoPopupsR(
         popContPropsConn = propsProxy.connect { props =>
           // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.
           PopupsContR.PropsVal(
-            visible = props.nonEmpty
+            visible = props.firstPotPending.nonEmpty
           )
         },
         nodeInfoConn    = propsProxy.connect( _.nodeInfo ),

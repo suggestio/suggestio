@@ -16,7 +16,7 @@ import scala.scalajs.js.annotation.JSImport
  */
 @JSImport(LEAFLET_IMPORT, "Control")
 @js.native
-class IControl extends Layer {
+class Control extends Layer {
 
   //var position: String = js.native
 
@@ -29,5 +29,7 @@ class IControl extends Layer {
   def addTo(lmap: LMap): this.type = js.native
 
   def remove(): js.native = js.native
+
+  def options: ControlOptions = js.native
 
 }

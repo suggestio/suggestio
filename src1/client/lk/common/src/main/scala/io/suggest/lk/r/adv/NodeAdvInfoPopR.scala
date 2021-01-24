@@ -22,6 +22,7 @@ import react.image.gallery.{IgItem, ImageGalleryPropsR, ImageGalleryR}
 
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -201,6 +202,7 @@ object NodeAdvInfoPopR {
           override val onClose = _popupCloseCb
           override val fullWidth = true
           override val maxWidth = MuiDialogMaxWidths.md
+          override val hideBackdrop = true
         }
       )(
 
