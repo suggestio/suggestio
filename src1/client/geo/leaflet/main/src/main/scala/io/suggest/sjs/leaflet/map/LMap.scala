@@ -1,6 +1,7 @@
 package io.suggest.sjs.leaflet.map
 
 import io.suggest.sjs.leaflet.control.Control
+import io.suggest.sjs.leaflet.control.zoom.ZoomOptions
 import io.suggest.sjs.leaflet.event.{Evented, MouseEvent}
 import io.suggest.sjs.leaflet.handler.IHandler
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}

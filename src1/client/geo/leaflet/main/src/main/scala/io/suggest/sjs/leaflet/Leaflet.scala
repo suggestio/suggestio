@@ -2,16 +2,19 @@ package io.suggest.sjs.leaflet
 
 import io.suggest.sjs.leaflet.control.LControl
 import io.suggest.sjs.leaflet.geojson.{GeoJson, GjOptions}
+import io.suggest.sjs.leaflet.layer.grid.{GridLayer, GridLayerOptions}
 import io.suggest.sjs.leaflet.layer.group.{FeatureGroup, LayerGroup}
+import io.suggest.sjs.leaflet.layer.tile.{TileLayer, TileLayerOptions}
 import io.suggest.sjs.leaflet.map._
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
+import io.suggest.sjs.leaflet.overlay.{ImageOverlay, ImageOverlayOptions, SvgOverlay, VideoOverlay, VideoOverlayOptions}
 import io.suggest.sjs.leaflet.path.PathOptions
 import io.suggest.sjs.leaflet.path.circle.{Circle, CircleMarker, CircleMarkerOptions, CircleOptions}
 import io.suggest.sjs.leaflet.path.poly._
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
-import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
 import io.suggest.sjs.leaflet.tooltip.{Tooltip, TooltipOptions}
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -29,7 +32,7 @@ trait ILeaflet extends js.Object {
 
   def map(target: MapTarget, options: MapOptions = js.native): LMap = js.native
 
-  def tileLayer(urlTemplate: String, options: TlOptions = js.native): TileLayer = js.native
+  def tileLayer(urlTemplate: String, options: TileLayerOptions = js.native): TileLayer = js.native
 
   /** Geo coordinates. */
   def latLng(lat: Double, lng: Double, altitude: Double = js.native): LatLng = js.native
@@ -86,6 +89,26 @@ trait ILeaflet extends js.Object {
 
   def tooltip(options: TooltipOptions = js.native,
               source: Layer = js.native): Tooltip = js.native
+
+  def gridLayer(options: GridLayerOptions = js.native): GridLayer = js.native
+
+  def imageOverlay(
+                    imageUrl: String,
+                    imageBounds: LatLngBoundsExpression,
+                    options: ImageOverlayOptions = js.native,
+                  ): ImageOverlay = js.native
+
+  def videoOverlay(
+                    video         : String | js.Array[String] | dom.html.Video,
+                    bounds        : LatLngBoundsExpression,
+                    options       : VideoOverlayOptions = js.native,
+                  ): VideoOverlay = js.native
+
+  def svgOverlay(
+                  svgImage: String | dom.svg.Element,
+                  bounds: LatLngBoundsExpression,
+                  options: ImageOverlayOptions = js.native,
+                ): SvgOverlay = js.native
 
 }
 

@@ -1,7 +1,6 @@
 package org.js.react.leaflet.core
 
 import japgolly.scalajs.react.raw
-import japgolly.scalajs.react.raw.PropsWithChildren
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -11,6 +10,10 @@ import scala.scalajs.js.annotation.JSImport
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 24.01.2021 0:37
   */
+trait PropsWithChildren extends js.Object {
+  val children: js.UndefOr[raw.React.Node] = js.undefined
+}
+
 @js.native
 @JSImport(PACKAGE_NAME, "createContainerComponent")
 object createContainerComponent extends js.Function {

@@ -1,6 +1,6 @@
 package io.suggest.sjs
 
-import io.suggest.sjs.leaflet.map.{LatLng, LatLngLiteral}
+import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds, LatLngLiteral}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
@@ -38,5 +38,8 @@ package object leaflet {
   type LatLngTuple = js.Array[Double]  // [number, number]
   /** @see [[https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/leaflet/index.d.ts#L137]] */
   type LatLngExpression = LatLng | LatLngLiteral | LatLngTuple
+
+  type LatLngBoundsLiteral = js.Array[LatLngTuple]
+  type LatLngBoundsExpression = LatLngBounds | LatLngBoundsLiteral
 
 }
