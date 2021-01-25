@@ -7,10 +7,11 @@ import io.suggest.css.Css
 import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
+import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR, MRad}
+import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -44,6 +45,7 @@ final class AdvGeoFormR(
                          rcvrPopupR: RcvrPopupR,
                          tagsEditR: TagsEditR,
                          docR: DocR,
+                         advGeoPopupsR: AdvGeoPopupsR,
                          val onMainScreenR: OnMainScreenR,
                        ) {
 
@@ -167,6 +169,9 @@ final class AdvGeoFormR(
 
         // Рендерить табличку с данными по рассчёту текущей цены:
         s.priceDslOptC { ItemsPricesR.component.apply },
+
+        // Попапы:
+        p.wrap(_.popups)( advGeoPopupsR.component.apply ),
 
       )   // top div
     }     // render()

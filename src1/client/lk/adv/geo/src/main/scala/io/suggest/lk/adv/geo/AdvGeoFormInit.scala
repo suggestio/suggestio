@@ -4,9 +4,7 @@ import io.suggest.adv.AdvConstants
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.init.routed.InitRouter
 import io.suggest.lk.adv.m.MPriceS.MPriceSFastEq
-import io.suggest.lk.adv.geo.m.MPopupsS.MPopupsFastEq
 import io.suggest.lk.adv.r.PriceR
-import io.suggest.lk.r.popup.PopupsContR
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import org.scalajs.dom.raw.HTMLDivElement
@@ -49,11 +47,6 @@ trait AdvGeoFormInitRouter extends InitRouter {
     val priceR = circuit.wrap(_.adv.bill.price)( PriceR.component.apply )
     val priceTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
     priceR.renderIntoDOM( priceTarget )
-
-    // Рендер контейнера попапов.
-    val popsContR = circuit.wrap(_.popups)( module.advGeoPopupsR.component.apply )
-    val popsContTarget = PopupsContR.initDocBody()
-    popsContR.renderIntoDOM( popsContTarget )
 
   }
 
