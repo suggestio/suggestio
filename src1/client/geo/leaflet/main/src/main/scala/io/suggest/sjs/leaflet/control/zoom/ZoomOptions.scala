@@ -12,7 +12,7 @@ import scala.scalajs.js.annotation.JSImport
  * Description: API for zoom options model.
  */
 @js.native
-@JSImport(LEAFLET_IMPORT, "Zoom")
+@JSImport(LEAFLET_IMPORT, "Control.Zoom")
 class Zoom extends js.Object
 
 @js.native

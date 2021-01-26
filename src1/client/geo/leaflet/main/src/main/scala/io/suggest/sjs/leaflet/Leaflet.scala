@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet
 
 import io.suggest.sjs.leaflet.control.LControl
-import io.suggest.sjs.leaflet.geojson.{GeoJson, GjOptions}
+import io.suggest.sjs.leaflet.geojson.{GeoJson, GeoJsonOptions}
 import io.suggest.sjs.leaflet.layer.grid.{GridLayer, GridLayerOptions}
 import io.suggest.sjs.leaflet.layer.group.{FeatureGroup, LayerGroup}
 import io.suggest.sjs.leaflet.layer.tile.{TileLayer, TileLayerOptions}
@@ -77,7 +77,7 @@ trait ILeaflet extends js.Object {
   def featureGroup(layers: js.Array[Layer] = js.native): FeatureGroup = js.native
 
   /** Instantiate GeoJSON layers builder. */
-  def geoJson(data: js.Any = js.native, options: GjOptions = js.native): GeoJson = js.native
+  def geoJson(data: js.Any = js.native, options: GeoJsonOptions = js.native): GeoJson = js.native
 
   /** Rollback window.L to previous value. */
   // TODO Удалить, когда без-window.L-сборка окончательно зафиксируется в релизах leaflet.

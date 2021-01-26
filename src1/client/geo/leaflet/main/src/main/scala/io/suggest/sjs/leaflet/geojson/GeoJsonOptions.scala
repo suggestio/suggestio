@@ -14,11 +14,9 @@ import scala.scalajs.js
   *
   * @see [[http://leafletjs.com/reference.html#geojson]]
   * @see [[http://leafletjs.com/examples/geojson.html]]
-  *
-  * Need scala 0.6.14+.
   */
 
-trait GjOptions extends js.Object {
+trait GeoJsonOptions extends js.Object {
 
   val style: js.UndefOr[js.Function1[GjFeature, PathOptions]]             = js.undefined
 

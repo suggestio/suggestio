@@ -38,7 +38,7 @@ object TagsEditConstants {
   object Constraints {
 
     /** Максимальная символьная длина одного тега. */
-    def TAG_LEN_MAX = 40
+    def TAG_LEN_MAX = 50
 
     /** Минимальная символьная длина одного тега. */
     def TAG_LEN_MIN = 1

@@ -17,6 +17,11 @@ object TagFacesUtil {
       .toSeq
   }
 
+  def normalizeTag(q: String): String = {
+    q .trim
+      .replace("[,;\\s#]+", " ")
+  }
+
   def queryOpt2tags(qOpt: Option[String]): Seq[String] = {
     qOpt.fold [Seq[String]] (Nil) (query2tags)
   }

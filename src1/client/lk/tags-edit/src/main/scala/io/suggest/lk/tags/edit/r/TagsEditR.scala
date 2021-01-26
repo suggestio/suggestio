@@ -1,10 +1,10 @@
 package io.suggest.lk.tags.edit.r
 
 import com.materialui.MuiAutoComplete.{OnChangeDetails, OnChangeReason, OnInputChangeReason}
-import com.materialui.MuiTextField.Variant
 import com.materialui.{MuiAutoComplete, MuiAvatar, MuiChip, MuiChipProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.search.MTagFound
 import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -21,7 +21,7 @@ import japgolly.univeq._
 import scala.scalajs.js
 import js.JSConverters._
 import scala.scalajs.js.annotation.JSName
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -76,9 +76,14 @@ final class TagsEditR(
     }
 
 
-    private val _getOptionLabelJs = { (mtf: MTagFound) =>
-      mtf.face
-    }: js.Function1[MTagFound, String]
+    private val _getOptionLabelJs = { (m: MTagFound | String) =>
+      if (m.isInstanceOf[String]) {
+        val s = m.asInstanceOf[String]
+        TagFacesUtil.normalizeTag( s )
+      } else {
+        m.asInstanceOf[MTagFound].face
+      }
+    }: js.Function1[MTagFound | String, String]
 
 
     private val _onOptionChangeJs = ReactCommonUtil.cbFun4ToJsCb {
@@ -88,10 +93,17 @@ final class TagsEditR(
        _: js.UndefOr[OnChangeDetails[MTagFound]]) =>
         // Требуется реакция на select-option. И, возможно, на clear.
         if (reason == MuiAutoComplete.OnChangeReason.SELECT_OPTION) {
-          ReactDiodeUtil.dispatchOnProxyScopeCB( $, AddTagFound( option.asInstanceOf[MTagFound].face ) )
+          _onSelectedOptionClick( option.asInstanceOf[MTagFound] )
         } else {
           Callback.empty
         }
+    }
+
+    private def _onSelectedOptionClick(mtf: MTagFound): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, AddTagFound( mtf.face ) )
+
+    private def _onSelectedOptionClickCbF(mtf: MTagFound) = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+      _onSelectedOptionClick( mtf )
     }
 
 
@@ -170,11 +182,12 @@ final class TagsEditR(
 
           val mcvOutlined = MuiChip.Variant.OUTLINED
           val _renderOneOptionJsF = { (_: js.Object, mtf: MTagFound, _: js.Object) =>
-            MuiChip.component(
+            MuiChip.component.withKey(mtf.nodeId getOrElse mtf.face)(
               new MuiChipProps {
                 override val variant    = mcvOutlined
                 override val label      = mtf.face
                 override val avatar     = _tagAva.rawElement
+                override val onClick    = _onSelectedOptionClickCbF( mtf )
               }
             )
               .rawNode
@@ -188,6 +201,7 @@ final class TagsEditR(
 
               MuiAutoComplete(
                 new MuiAutoComplete.Props[MTagFound] {
+                  // TODO Нужно, чтобы клавишами вверх-вниз на клавиатуре можно было выбирать из предлагаемых элементов.
                   override val open                 = tagsAcc.nonEmpty
                   override val options              = tagsAcc.toJSArray
                   override val getOptionLabel       = _getOptionLabelJs

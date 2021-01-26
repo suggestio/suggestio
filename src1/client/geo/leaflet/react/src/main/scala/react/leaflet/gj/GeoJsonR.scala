@@ -1,6 +1,6 @@
 package react.leaflet.gj
 
-import io.suggest.sjs.leaflet.geojson.GjOptions
+import io.suggest.sjs.leaflet.geojson.GeoJsonOptions
 import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
@@ -27,7 +27,7 @@ object GeoJsonR {
 object LGeoJsonJs extends js.Object
 
 
-trait GeoJsonPropsR extends GjOptions {
+trait GeoJsonPropsR extends GeoJsonOptions {
 
   /** Обязательные данные для рендера. */
   val data: js.Any

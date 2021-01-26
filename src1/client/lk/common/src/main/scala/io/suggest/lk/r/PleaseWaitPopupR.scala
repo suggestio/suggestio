@@ -40,7 +40,6 @@ object PleaseWaitPopupR {
 
       s.isVisibleSomeC { isVisibleProxy =>
         val _isVisible = isVisibleProxy.value.value
-        println( _isVisible )
         MuiDialog(
           new MuiDialogProps {
             override val open = _isVisible
@@ -69,7 +68,6 @@ object PleaseWaitPopupR {
     .initialStateFromProps { propsProxy =>
       State(
         isVisibleSomeC = propsProxy.connect { props =>
-          println( props )
           OptionUtil.SomeBool( props.nonEmpty )
         },
       )

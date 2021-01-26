@@ -13,7 +13,7 @@ import scala.scalajs.js.|
   * Created: 25.01.2021 18:42
   */
 @js.native
-@JSImport(LEAFLET_IMPORT, "Attribution")
+@JSImport(LEAFLET_IMPORT, "Control.Attribution")
 class Attribution(override val options: AttributionOptions = js.native) extends Control {
   def setPrefix(prefix: String | Boolean): this.type = js.native
   def addAttribution(text: String): this.type = js.native

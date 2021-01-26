@@ -35,9 +35,9 @@ class TagsEditAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Выбор тега среди найденных: добавить в exists-теги.
-    case AddTagFound(tagFace) =>
+    case m: AddTagFound =>
       val v0 = value
-      val tagFaces = TagFacesUtil.query2tags(tagFace)
+      val tagFace2 = TagFacesUtil.normalizeTag( m.tagFace )
 
       // И надо забыть обо всех найденных тегах:
       val v2 = MTagsEditState.props
@@ -45,7 +45,7 @@ class TagsEditAh[M](
           // Собрать и сохранить новое состояние редактора тегов, сбросив поисковое поле.
           query       = MTagsEditQueryProps(),
           // Если после добавления тега (тегов) множество тегов не изменилось внутри, то поддерживаем исходную референсную целостность.
-          tagsExists  = SetUtil.addToSetOrKeepRef1(v0.props.tagsExists, tagFaces),
+          tagsExists  = SetUtil.addToSetOrKeepRef1(v0.props.tagsExists, tagFace2 :: Nil),
         ))( v0.reset )
 
       updated( v2, priceUpdateFx )
@@ -131,33 +131,31 @@ class TagsEditAh[M](
 
       // Если поле пустое или слишком короткое, то красным его подсветить.
       // А если есть вбитый тег, то огранизовать добавление.
-      val faces = TagFacesUtil.query2tags( v0.props.query.text )
+      val tagFace = TagFacesUtil.normalizeTag( v0.props.query.text )
 
       // Проверяем название тега...
-      val errors: Seq[MMessage] = if (faces.isEmpty) {
+      val errors: Seq[MMessage] = if (tagFace.isEmpty) {
         MMessage( "error.required" ) :: Nil
       } else {
         // Проверяем минимальную длину
         val minLen = TagsEditConstants.Constraints.TAG_LEN_MIN
         val maxLen = TagsEditConstants.Constraints.TAG_LEN_MAX
-        faces.flatMap { q =>
-          val ql = q.length
+        val ql = tagFace.length
 
-          if (ql < minLen) {
-            // Слишком короткое имя тега:
-            MMessage("error.minLength", Json.arr(minLen) ) :: Nil
-          } else if (ql > maxLen) {
-            // Максимальную длина превышена:
-            MMessage("error.maxLength", Json.arr(maxLen) ) :: Nil
-          } else {
-            Nil
-          }
+        if (ql < minLen) {
+          // Слишком короткое имя тега:
+          MMessage("error.minLength", Json.arr(minLen) ) :: Nil
+        } else if (ql > maxLen) {
+          // Максимальную длина превышена:
+          MMessage("error.maxLength", Json.arr(maxLen) ) :: Nil
+        } else {
+          Nil
         }
       }
 
       if (errors.isEmpty) {
         // Ошибок валидации нет. Заливаем в старое множество новые теги...
-        val te2 = SetUtil.addToSetOrKeepRef1( v0.props.tagsExists, faces)
+        val te2 = SetUtil.addToSetOrKeepRef1( v0.props.tagsExists, tagFace :: Nil )
 
         val v2 = MTagsEditState.props.modify(_.copy(
           query       = MTagsEditQueryProps(),
