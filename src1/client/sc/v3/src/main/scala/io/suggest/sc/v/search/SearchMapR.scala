@@ -17,7 +17,7 @@ import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.LMap
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.sc.v.styl.ScCssStatic
@@ -135,7 +135,7 @@ class SearchMapR {
         rcvrsGeoC   = mapInitProxy.connect { props =>
           // Отображать найденные в поиске ресиверы вместо всех.
           props.mapInit.rcvrs
-        },
+        }( FastEqUtil.AnyRefFastEq ),
 
         loaderOptC  = mapInitProxy.connect(_.mapInit.loader)( OptFastEq.Plain ),
 

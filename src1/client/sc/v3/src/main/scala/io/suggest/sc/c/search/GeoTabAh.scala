@@ -152,7 +152,8 @@ class GeoTabAh[M](
           v0.data.rcvrsCache
         } else {
           v0.mapInit.rcvrs
-            .pending( tstamp )
+          // Без pending, чтобы перестройка маркеров не происходила на каждый re-index (сравнение по инстансу и апдейт -- сразу ниже по коду)
+          //.pending( tstamp )
         }
         // Обновить карту ресиверов в состоянии, если инстанс изменился:
         val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs) {

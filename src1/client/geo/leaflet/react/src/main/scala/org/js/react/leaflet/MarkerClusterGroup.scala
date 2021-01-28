@@ -1,9 +1,12 @@
 package org.js.react.leaflet
 
+import io.suggest.sjs.leaflet.event.LeafletEventHandlerFnMap
 import io.suggest.sjs.leaflet.marker.Marker
-import io.suggest.sjs.leaflet.marker.cluster.{MarkerClusterGroupOptions, MarkerClusterGroup => LeafletMarkerClusterGroup}
+import io.suggest.sjs.leaflet.marker.cluster.{MarkerClusterEvents, MarkerClusterGroupOptions, MarkerClusterGroup => LeafletMarkerClusterGroup}
 import japgolly.scalajs.react.{Children, JsForwardRefComponent}
 import org.js.react.leaflet.core.{EventedProps, LayerProps, LeafletContextInterface, LeafletElement, createLayerComponent, useEventHandlers}
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.scalajs.js
 
@@ -38,8 +41,15 @@ object MarkerClusterGroup {
         override val context = context2
       }
 
-      for (fnMap <- props.eventHandlers)
-        useEventHandlers( leafEl, fnMap )
+      for (fnMap <- props.eventHandlers) {
+        for (onClusterMarkerClickF <- fnMap.clusterMarkerClick)
+          mcg.on3( MarkerClusterEvents.CLICK, onClusterMarkerClickF )
+        for (onClusterClick <- fnMap.clusterclick)
+          mcg.on3( MarkerClusterEvents.CLUSTER_CLICK, onClusterClick )
+
+        // НЕЛЬЗЯ использовать useEventHandlers(), т.к. effect будет сброшен до первого update, а внутри update хуки не пашут, и эффект повторно организовать уже нельзя.
+        //useEventHandlers( leafEl, fnMap )
+      }
 
       leafEl
     },
@@ -51,15 +61,22 @@ object MarkerClusterGroup {
       }
 
       for {
-        fnMap <- props2.eventHandlers
-        if !(props0.eventHandlers contains fnMap)
+        fnMap2 <- props2.eventHandlers
+        if !(props0.eventHandlers contains fnMap2)
       } {
-        val leafEl = new LeafletElement[LeafletMarkerClusterGroup, js.Any] {
-          override val instance = mcg
-          // TODO Внутри useEventHandlers() оно не испольузется, но это ненормально - пропихивать null наружу.
-          override val context = null
+        def _updateCallback[T](eventType: String, getFn: LeafletEventHandlerFnMap => js.UndefOr[js.Function1[T, Unit]]): Unit = {
+          val fn0U = props0.eventHandlers
+            .flatMap(getFn)
+          val fn2U = getFn( fnMap2 )
+          if (fn2U !===* fn0U) {
+            for (fn0 <- fn0U)
+              mcg.off3( eventType, fn0 )
+            for (fn2 <- fn2U)
+              mcg.on3( eventType, fn2 )
+          }
         }
-        useEventHandlers(leafEl, fnMap)
+        _updateCallback( MarkerClusterEvents.CLICK, _.clusterMarkerClick )
+        _updateCallback( MarkerClusterEvents.CLUSTER_CLICK, _.clusterclick )
       }
     },
 

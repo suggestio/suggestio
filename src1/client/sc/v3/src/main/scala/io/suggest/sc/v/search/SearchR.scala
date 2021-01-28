@@ -62,30 +62,49 @@ final class SearchR(
       val searchCss = s.searchCssC( CssR.compProxied.apply )
 
       // Непосредственно, панель поиска:
-      val searchBarBody = scCssP.consume { scCss =>
-        // Рендер вкладки карты:
-        val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.component.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
+      // Рендер вкладки карты:
+      val geoMap = mrootProxy.wrap( _.index.search.geo )( searchMapR.component.apply )(implicitly, MGeoTabS.MGeoTabSFastEq)
 
-        // Тело текущего таба.
-        val tabContentInner = <.div(
-          // Содержимое вкладки с картой.
-          ^.`class` := Css.Display.DISPLAY_BLOCK,
-          // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
-          nodesSearch,
-          // Гео.карта:
-          geoMap,
+      // Тело текущего таба.
+      val tabContentInner = <.div(
+        // Содержимое вкладки с картой.
+        ^.`class` := Css.Display.DISPLAY_BLOCK,
+        // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
+        nodesSearch,
+        // Гео.карта:
+        geoMap,
+      )
+
+      val tabContent = mrootProxy.wrap { props =>
+        val geo = props.index.search.geo
+        geoMapOuterR.PropsVal(
+          searchCss     = geo.css,
+          showCrossHair = true
         )
+      } { cssProxy =>
+        geoMapOuterR.component(cssProxy)(
+          tabContentInner
+        )
+      }
 
+      val panelTagmod = TagMod(
+        ScCssStatic.Root.panelCommon,
+        ScCssStatic.Search.panel,
+
+        // Рендер очень динамической search-only css'ки:
+        searchCss,
+      )
+      val panelBgTagmod = TagMod(
+        ScCssStatic.Root.panelBg,
+      )
+
+      val searchBarBody = scCssP.consume { scCss =>
         <.div(
-          ScCssStatic.Root.panelCommon,
-          ScCssStatic.Search.panel,
-
-          // Рендер очень динамической search-only css'ки:
-          searchCss,
+          panelTagmod,
 
           // Фон панели.
           <.div(
-            ScCssStatic.Root.panelBg,
+            panelBgTagmod,
             scCss.panelBg,
           ),
 
@@ -94,18 +113,7 @@ final class SearchR(
             scCss.Search.content,
 
             // Контент вкладки, наконец.
-            mrootProxy.wrap { props =>
-              val geo = props.index.search.geo
-              geoMapOuterR.PropsVal(
-                searchCss     = geo.css,
-                showCrossHair = true
-              )
-            } { cssProxy =>
-              geoMapOuterR.component(cssProxy)(
-                tabContentInner
-              )
-            }
-
+            tabContent,
           )
         )
       }

@@ -26,7 +26,6 @@ import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.leaflet.marker.cluster.MarkerClusterEvents
 import org.js.react.leaflet.{Circle, CircleProps, LayerGroup, MarkerClusterGroup, MarkerClusterGroupProps, Polygon, PolygonProps}
 
 import scala.scalajs.js
