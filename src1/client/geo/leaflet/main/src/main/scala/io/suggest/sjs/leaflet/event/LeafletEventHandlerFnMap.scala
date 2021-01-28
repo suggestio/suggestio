@@ -1,6 +1,9 @@
 package io.suggest.sjs.leaflet.event
 
+import io.suggest.sjs.leaflet.marker.MarkerEvent
+
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -38,6 +41,7 @@ trait LeafletEventHandlerFnMap extends js.Object {
       error,
       update,
       down,
+      animationend, spiderfied, unspiderfied,   // Leaflet.MarkerCluster
       predrag
       : js.UndefOr[LeafletEventHandlerFn] = js.undefined
 
@@ -56,6 +60,7 @@ trait LeafletEventHandlerFnMap extends js.Object {
   val locationfound: js.UndefOr[LocationEventHandlerFn] = js.undefined
 
   val click,
+      clusterclick,                               // Leaflet.MarkerCluster
       dblclick,
       mousedown,
       mouseup,
@@ -65,6 +70,9 @@ trait LeafletEventHandlerFnMap extends js.Object {
       contextmenu,
       preclick
       : js.UndefOr[LeafletMouseEventHandlerFn] = js.undefined
+
+  @JSName( "click" )
+  val clusterMarkerClick: js.UndefOr[js.Function1[MarkerEvent, Unit]] = js.undefined  // Leaflet.MarkerCluster
 
   val keypress,
       keydown,

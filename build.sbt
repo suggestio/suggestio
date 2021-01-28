@@ -652,7 +652,7 @@ lazy val www = project
     }.value,
     // leaflet MarkerCluster
     npmAssets ++= NpmAssets.ofProject(leafletMarkerClusterSjs) { nodeModules =>
-      (nodeModules / "leaflet.markercluster" / "dist") * "*.css"
+      (nodeModules / "@glartek" / "leaflet.markercluster" / "dist") * "*.css"
     }.value,
     // quill
     npmAssets ++= NpmAssets.ofProject(reactQuillSjs) { nodeModules =>

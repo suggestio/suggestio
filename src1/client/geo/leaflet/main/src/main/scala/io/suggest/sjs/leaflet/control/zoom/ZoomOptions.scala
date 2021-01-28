@@ -15,9 +15,8 @@ import scala.scalajs.js.annotation.JSImport
 @JSImport(LEAFLET_IMPORT, "Control.Zoom")
 class Zoom extends js.Object
 
-@js.native
 trait ZoomOptions extends js.Object {
 
-  var animate: Boolean = js.native
+  var animate: js.UndefOr[Boolean] = js.undefined
 
 }

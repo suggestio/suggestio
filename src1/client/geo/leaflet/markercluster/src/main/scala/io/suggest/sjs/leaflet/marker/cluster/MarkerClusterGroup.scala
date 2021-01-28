@@ -27,7 +27,8 @@ object MarkerClusterGroup {
 }
 
 
-@JSImport("imports-loader?L=leaflet!exports-loader?L.MarkerClusterGroup!./node_modules/leaflet.markercluster/dist/leaflet.markercluster.js", JSImport.Namespace)
+@JSImport("imports-loader?L=leaflet!exports-loader?L.MarkerClusterGroup!./node_modules/@glartek/leaflet.markercluster/dist/leaflet.markercluster.js", JSImport.Namespace)
+//@JSImport("@glartek/leaflet.markercluster", JSImport.Namespace)
 @js.native
 sealed class MarkerClusterGroup(options: MarkerClusterGroupOptions)
   extends FeatureGroup

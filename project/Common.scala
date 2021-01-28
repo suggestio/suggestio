@@ -120,7 +120,10 @@ object Common {
       */
     val REACT_QUILL = "1.3.5"
 
-    val REACT_LEAFLET = "1.9.1"
+    /** @see [[https://github.com/PaulLeCam/react-leaflet]]
+      * @see [[https://www.npmjs.com/package/react-leaflet]]
+      */
+    val REACT_LEAFLET             = "3.0.5"
 
     /** Окостыливание экспортов js-модулей для совместимости с webpack и es-modules.
       * @see [[https://github.com/webpack-contrib/exports-loader]]
@@ -323,14 +326,17 @@ object Common {
    *  что может вызвать проблемы на сборке с пустым ivy2-кешем во время освежения версии в webjars.
    *  1.3.2 - Первая публичная версия без window.L вообще по дефолту. 1.3.3 - временный rollback.
    */
-  val leafletJsVsn              = "1.3.4"
+  val leafletJsVsn              = "1.7.1"
 
   /** Версия L.control.locate.js.
     * 0.62.0: грязно проверяет и работает с window.L, что конфликтует minified js. string-replace решает проблему. */
-  val leafletControlLocateJsVsn = "0.62.0"
+  val leafletControlLocateJsVsn = "0.72.0"
 
-  /** Версия Leaflet.markercluster.js. */
-  val leafletMarkerClusterJsVsn = "1.3.0"
+  /** Версия Leaflet.markercluster.js.
+    * @see [[https://github.com/Glartek/Leaflet.markercluster]]
+    * @see [[https://www.npmjs.com/package/@glartek/leaflet.markercluster]]
+    */
+  val leafletMarkerClusterJsVsn = "1.4.4"
 
   
   /** Версия diode.

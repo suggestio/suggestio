@@ -303,6 +303,11 @@
   resolved "https://registry.yarnpkg.com/@flowjs/flow.js/-/flow.js-2.14.1.tgz#267d9f9d0958f32267ea5815c2a7cc09b9219304"
   integrity sha512-99DWlPnksOOS8uHfo+bhSjvs8d2MfLTB/22JBDC2ONwz/OCdP+gL/iiM4puMSTE2wH4A2/+J0eMc7pKwusXunw==
 
+"@glartek/leaflet.markercluster@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@glartek/leaflet.markercluster/-/leaflet.markercluster-1.4.4.tgz#4ad1accf12a7ee1759d17dbc2aed1b49948f79d0"
+  integrity sha512-9ZFmiegPfugwEB7xU8R9cjpKhvqAclJqzXzCUzRB9nzLl15JGsUhT3PlKK1oU+4elUEdBgQBaXlGnKo7pDSxww==
+
 "@material-ui/core@5.0.0-alpha.24":
   version "5.0.0-alpha.24"
   resolved "https://registry.yarnpkg.com/@material-ui/core/-/core-5.0.0-alpha.24.tgz#06ec3e1ccae48965b58842455dddc13f441e0112"
@@ -452,6 +457,11 @@
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@react-dnd/shallowequal/-/shallowequal-2.0.0.tgz#a3031eb54129f2c66b2753f8404266ec7bf67f0a"
   integrity sha512-Pc/AFTdwZwEKJxFJvlxrSmGe/di+aAOBn60sremrpLo6VI/6cmiUYNNwlI5KNYttg7uypzA3ILPMPgxB2GYZEg==
+
+"@react-leaflet/core@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@react-leaflet/core/-/core-1.0.2.tgz#39c6a73f61c666d5dcf673741cea2672fa4bbae1"
+  integrity sha512-QbleYZTMcgujAEyWGki8Lx6cXQqWkNtQlqf5c7NImlIp8bKW66bFpez/6EVatW7+p9WKBOEOVci/9W7WW70EZg==
 
 "@types/events@*":
   version "3.0.0"
@@ -2968,20 +2978,15 @@ lcid@^2.0.0:
   dependencies:
     invert-kv "^2.0.0"
 
-leaflet.locatecontrol@0.62.0:
-  version "0.62.0"
-  resolved "https://registry.yarnpkg.com/leaflet.locatecontrol/-/leaflet.locatecontrol-0.62.0.tgz#cf0c65170a87f2ed4b1a59e3307b773cd268d27d"
-  integrity sha512-coatKzdlrWAnlrOyy+38K9VhcSs/r/UDH32Q+mD07wvNAzrfBiaVYJhtHfqUWsVU8xKRuza/1nMbWWH54Ey6Sw==
+leaflet.locatecontrol@0.72.0:
+  version "0.72.0"
+  resolved "https://registry.yarnpkg.com/leaflet.locatecontrol/-/leaflet.locatecontrol-0.72.0.tgz#7de5c109a0e10a928bae85e4996e5efa49a3c905"
+  integrity sha512-enAf10UG9Z1bV0siTP/+vG/ZVncDqSA3V8c6iZ3s6KWL5Ngkk4A4mk9Ssefj46ey98I9HSYWqoS+k2Y7EaKjwQ==
 
-leaflet.markercluster@1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/leaflet.markercluster/-/leaflet.markercluster-1.3.0.tgz#58eb0654e90bd3274a660390ab0bc734212b204d"
-  integrity sha512-bHBaI8kTaLrZxI/ZP7pnNaS8WCKKz98BU1//B5OH9b/kTk6IriduvDtMFGlGBYYr/ymuXCB9lO7HsGBr5dSw5w==
-
-leaflet@1.3.4:
-  version "1.3.4"
-  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.3.4.tgz#7f006ea5832603b53d7269ef5c595fd773060a40"
-  integrity sha512-FYL1LGFdj6v+2Ifpw+AcFIuIOqjNggfoLUwuwQv6+3sS21Za7Wvapq+LhbSE4NDXrEj6eYnW3y7LsaBICpyXtw==
+leaflet@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.7.1.tgz#10d684916edfe1bf41d688a3b97127c0322a2a19"
+  integrity sha512-/xwPEBidtg69Q3HlqPdU3DnrXQOvQU/CCHA1tcDQVzOwm91YMYaILjNp7L4Eaw5Z4sOYdbBz6koWyibppd8Zqw==
 
 lines-and-columns@^1.1.6:
   version "1.1.6"
@@ -3019,11 +3024,6 @@ locate-path@^3.0.0:
   dependencies:
     p-locate "^3.0.0"
     path-exists "^3.0.0"
-
-lodash-es@^4.0.0:
-  version "4.17.11"
-  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.11.tgz#145ab4a7ac5c5e52a3531fb4f310255a152b4be0"
-  integrity sha512-DHb1ub+rMjjrxqlB3H56/6MXtm1lSksDp2rA2cNWjG8mlDUYFhUj3Di2Zn5IwSU87xLv8tNIQ7sSwE/YOX/D/Q==
 
 lodash.assign@^4.2.0:
   version "4.2.0"
@@ -3075,7 +3075,7 @@ lodash.throttle@^4.1.1:
   resolved "https://registry.yarnpkg.com/lodash.throttle/-/lodash.throttle-4.1.1.tgz#c23e91b710242ac70c37f1e1cda9274cc39bf2f4"
   integrity sha1-wj6RtxAkKscMN/HhzaknTMOb8vQ=
 
-lodash@^4.0.0, lodash@^4.0.1, lodash@^4.17.11, lodash@^4.17.4:
+lodash@^4.0.1, lodash@^4.17.11, lodash@^4.17.4:
   version "4.17.11"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
@@ -4157,14 +4157,12 @@ react-is@^16.7.0, react-is@^16.8.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.1.tgz#5b3531bd76a645a4c9fb6e693ed36419e3301339"
   integrity sha512-NAnt2iGDXohE5LI7uBnLnqvLQMtzhkiAOLXTmv+qnF9Ky7xAPcX8Up/xWIhxvLVGJvuLiNc4xQLtuqDRzb4fSA==
 
-react-leaflet@1.9.1:
-  version "1.9.1"
-  resolved "https://registry.yarnpkg.com/react-leaflet/-/react-leaflet-1.9.1.tgz#0a282d8d26f66ea2d719ebb8f4a5fa156b33b8c8"
-  integrity sha512-QiYpjyf1DHy0gLAR2958Mo5Wlu2u7FubIjapPpuUAQNFmjkVSteiDLlEdDpGswTHTyNAfKLS+u9PqvfipMDZKA==
+react-leaflet@3.0.5:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/react-leaflet/-/react-leaflet-3.0.5.tgz#6b246867e4b08e3bc5960eebee91376785ce578b"
+  integrity sha512-0hJwwRMo5ChY+0nr1yO/UDCT4alIqMgJ7S/HoMBkL65Sr1yJ8eX5lAXk3EkdBUOwxQlMYCduU87pczYmudnlbQ==
   dependencies:
-    lodash "^4.0.0"
-    lodash-es "^4.0.0"
-    warning "^3.0.0"
+    "@react-leaflet/core" "^1.0.2"
 
 react-measure@2.5.2:
   version "2.5.2"
@@ -5225,13 +5223,6 @@ vm-browserify@0.0.4:
   integrity sha1-XX6kW7755Kb/ZflUOOCofDV9WnM=
   dependencies:
     indexof "0.0.1"
-
-warning@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/warning/-/warning-3.0.0.tgz#32e5377cb572de4ab04753bdf8821c01ed605b7c"
-  integrity sha1-MuU3fLVy3kqwR1O9+IIcAe1gW3w=
-  dependencies:
-    loose-envify "^1.0.0"
 
 watchpack@^1.5.0:
   version "1.6.0"

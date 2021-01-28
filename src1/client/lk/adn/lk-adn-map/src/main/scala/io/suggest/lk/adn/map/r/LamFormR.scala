@@ -7,13 +7,11 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
-import react.leaflet.control.LocateControlR
 import io.suggest.bill.price.dsl.PriceDsl
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.dt.period.r.DatePeriodR
-import react.leaflet.layer.LayerGroupR
-import react.leaflet.lmap.LMapR
 import japgolly.scalajs.react.vdom.html_<^._
+import org.js.react.leaflet.{LayerGroup, MapContainer}
 import scalaz.Tree
 
 /**
@@ -53,13 +51,16 @@ final class LamFormR(
 
     def render(p: Props, s: State): VdomElement = {
 
+      val lgmCtx = LGeoMapR.LgmCtx( p )
+
       val mapChildren = List[VdomElement](
 
         // Рендерим основную плитку карты.
         ReactLeafletUtil.Tiles.OsmDefault,
 
         // Плагин для геолокации текущего юзера.
-        LocateControlR(),
+        lgmCtx.LocateControlR(),
+        lgmCtx.EventsR(),
 
         // Карта покрытия ресиверов (подгружается асихронно).
         {
@@ -75,7 +76,7 @@ final class LamFormR(
               .nodesResp
               .toOption
               .fold[VdomElement] {
-                LayerGroupR()( lg: _* )
+                LayerGroup()( lg: _* )
               } { _ =>
                 lamRcvrsR.component(rcvrsProxy)( lg: _* )
               }
@@ -87,7 +88,6 @@ final class LamFormR(
 
       )
 
-      val lgmCtx = LGeoMapR.LgmCtx.mk( $ )
 
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
@@ -115,8 +115,8 @@ final class LamFormR(
                 cssClass      = mapCssClass
               )
             }
-            LMapR.component(
-              LGeoMapR.lmMapSProxy2lMapProps( lgmPropsProxy, lgmCtx )
+            MapContainer(
+              LGeoMapR.reactLeafletMapProps( lgmPropsProxy, lgmCtx )
             )( mapChildren: _* )
           }
         },

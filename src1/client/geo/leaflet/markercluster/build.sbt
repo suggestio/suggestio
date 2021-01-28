@@ -13,7 +13,7 @@ version := "0.0.0"
 scalacOptions += "-feature"
 
 npmDependencies in Compile ++= Seq(
-  "leaflet.markercluster" -> Common.leafletMarkerClusterJsVsn
+  "@glartek/leaflet.markercluster" -> Common.leafletMarkerClusterJsVsn
 )
 
 npmDevDependencies in Compile ++= Seq(

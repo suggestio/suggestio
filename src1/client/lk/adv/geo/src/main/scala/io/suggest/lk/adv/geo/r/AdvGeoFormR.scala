@@ -18,14 +18,13 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import react.leaflet.control.LocateControlR
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.FastEqUtil
-import react.leaflet.lmap.LMapR
 import scalaz.Tree
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import org.js.react.leaflet.MapContainer
 
 import scala.scalajs.js
 
@@ -127,12 +126,15 @@ final class AdvGeoFormR(
 
         // Рендер географической карты:
         {
+          val lgmCtx = LGeoMapR.LgmCtx( p )
+
           val mapChildren = List[VdomNode](
             // Рендерим основную плитку карты.
             ReactLeafletUtil.Tiles.OsmDefault,
 
             // Плагин для геолокации текущего юзера.
-            LocateControlR(),
+            lgmCtx.LocateControlR(),
+            lgmCtx.EventsR(),
 
             // Рендер кружочков текущих размещений.
             s.geoAdvExistGjC( ExistAdvGeoShapesR.component.apply ),
@@ -157,10 +159,9 @@ final class AdvGeoFormR(
             // Рендер опционального попапа над ресивером.
             s.rcvrPopupC( rcvrPopupR.component.apply )
           )
-          val lgmCtx = LGeoMapR.LgmCtx.mk( $ )
           s.geoMapPropsC { mapProps =>
-            LMapR.component(
-              LGeoMapR.lmMapSProxy2lMapProps( mapProps, lgmCtx )
+            MapContainer(
+              LGeoMapR.reactLeafletMapProps( mapProps, lgmCtx )
             )( mapChildren: _* )
           }
         },

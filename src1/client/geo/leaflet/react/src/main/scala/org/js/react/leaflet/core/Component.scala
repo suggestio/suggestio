@@ -10,14 +10,10 @@ import scala.scalajs.js.annotation.JSImport
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 24.01.2021 0:37
   */
-trait PropsWithChildren extends js.Object {
-  val children: js.UndefOr[raw.React.Node] = js.undefined
-}
-
 @js.native
 @JSImport(PACKAGE_NAME, "createContainerComponent")
 object createContainerComponent extends js.Function {
-  def apply[E, P <: PropsWithChildren]
+  def apply[E, P <: js.Object]
            (useElement: ElementHook[E, P])
            : raw.React.ForwardRefComponent[P, E]
            = js.native
@@ -27,7 +23,7 @@ object createContainerComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createDivOverlayComponent")
 object createDivOverlayComponent extends js.Function {
-  def apply[E <: DivOverlay, P <: PropsWithChildren]
+  def apply[E <: DivOverlay, P <: js.Object]
            (useElement: DivOverlayHookRes[E, P])
            : raw.React.ForwardRefComponent[P, E]
            = js.native

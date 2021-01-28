@@ -14,15 +14,14 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{HandleMapReady, MGeoTabS, MSearchRespInfo}
 import io.suggest.sjs.leaflet.event.DragEndEvent
-import io.suggest.sjs.leaflet.map.IWhenReadyArgs
+import io.suggest.sjs.leaflet.map.LMap
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
-import react.leaflet.control.LocateControlR
-import react.leaflet.lmap.LMapR
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.sc.v.styl.ScCssStatic
+import org.js.react.leaflet.MapContainer
 
 /**
   * Suggest.io
@@ -52,21 +51,13 @@ class SearchMapR {
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onMapDragEnd(e: DragEndEvent): Callback =
+    private val _onMapDragEndOptF = ReactCommonUtil.cbFun1ToJsCb { e: DragEndEvent =>
       dispatchOnProxyScopeCB( $, MapDragEnd(distancePx = e.distance) )
-    private val _onMapDragEndOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd ) )
-
-
-    //private def _onMapDragStart(e: LEvent): Callback =
-    //  dispatchOnProxyScopeCB( $, MapDragStart )
-    //private val _onMapDragStartOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragStart ) )
-
-
-    private def _onMapReady(e: IWhenReadyArgs): Callback =
-      dispatchOnProxyScopeCB( $, HandleMapReady(e.target) )
-    private val _onMapReadyOptF = {
-      Some( ReactCommonUtil.cbFun1ToJsCb(_onMapReady) )
     }
+
+    private val _onMapReadyOptF = Some { ReactCommonUtil.cbFun1ToJsCb { lmap: LMap =>
+      dispatchOnProxyScopeCB( $, HandleMapReady( lmap ) )
+    }}
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
@@ -75,12 +66,18 @@ class SearchMapR {
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
+        val lgmCtx = LGeoMapR.LgmCtx(
+          propsProxy,
+          onDragEnd = _onMapDragEndOptF,
+        )
+
         // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
         val mapChildren = List[VdomElement](
           // Рендерим основную гео-карту:
           ReactLeafletUtil.Tiles.OsmDefault,
           // Плагин для геолокации текущего юзера.
-          LocateControlR(),
+          lgmCtx.LocateControlR(),
+          lgmCtx.EventsR(),
           // Рендер шейпов и маркеров текущий узлов.
           s.rcvrsGeoC { reqWrapProxy =>
             reqWrapProxy.wrap( _.map(_.resp) )( RcvrMarkersR.component(_)() )
@@ -98,8 +95,6 @@ class SearchMapR {
             .toHtmlClass
         )
 
-        val lgmCtx = LGeoMapR.LgmCtx.mk( $, attribution = false)
-
         <.div(
           s.mmapC { mmapProxy =>
             mmapProxy.wrap { mmap =>
@@ -108,15 +103,11 @@ class SearchMapR {
                 // Управление анимацией: при наличии каких-либо ресиверов, нужно вырубать анимацию, чтобы меньше дёргалась карта при поиске.
                 animated      = propsProxy.value.isRcvrsEqCached,
                 cssClass      = geoMapCssSome,
-                // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
-                //trackWndResize = someFalse,
-                whenReady     = _onMapReadyOptF,
-                //onDragStart   = _onMapDragStartOptF,
-                onDragEnd     = _onMapDragEndOptF,
+                whenCreated   = _onMapReadyOptF,
               )
             } { geoMapPropsProxy =>
-              LMapR.component(
-                LGeoMapR.lmMapSProxy2lMapProps( geoMapPropsProxy, lgmCtx )
+              MapContainer.component(
+                LGeoMapR.reactLeafletMapProps( geoMapPropsProxy, lgmCtx )
               )( mapChildren: _* )
             }
           }

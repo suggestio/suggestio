@@ -15,25 +15,23 @@ import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.leaflet.Leaflet
-import io.suggest.sjs.leaflet.event.MouseEvent
+import io.suggest.sjs.leaflet.event.{LeafletEventHandlerFnMap, LeafletMouseEventHandlerFn, MouseEvent}
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
-import react.leaflet.circle.{CirclePropsR, CircleR}
-import react.leaflet.layer.LayerGroupR
-import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
-import react.leaflet.poly.{PolygonPropsR, PolygonR}
 import io.suggest.math.SimpleArithmetics._
 import io.suggest.msg.ErrorMsgs
+import io.suggest.sjs.leaflet.marker.cluster.MarkerClusterEvents
+import org.js.react.leaflet.{Circle, CircleProps, LayerGroup, MarkerClusterGroup, MarkerClusterGroupProps, Polygon, PolygonProps}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -52,7 +50,7 @@ object RcvrMarkersR extends Log {
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
-    private def onMarkerClicked(e: MarkerEvent): Callback = {
+    private val _onMarkerClicked = ReactCommonUtil.cbFun1ToJsCb { e: MarkerEvent =>
       val marker = e.layer
       val nodeId = marker.nodeId.get
       val latLng = marker.getLatLng()
@@ -73,7 +71,10 @@ object RcvrMarkersR extends Log {
     }
 
 
-    private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
+    private val _mcgEventTypes = new LeafletEventHandlerFnMap {
+      @JSName( "click" )
+      override val clusterMarkerClick = _onMarkerClicked
+    }
 
     // Внутренний класс вместо кортежа, т.к. у scalac крышу срывает от кортежей с RComp_t внутри.
     private case class ResTuple( latLng: LatLng, jsComp: List[VdomElement] )
@@ -93,9 +94,11 @@ object RcvrMarkersR extends Log {
           // Собираем параметры отображения маркеров текущего узла над его шейпами.
           nodeId = mnode.props.nodeId
 
-          _onClickCbF = { _mgp: MGeoPoint =>
-            cbFun1ToJsCb { _: MouseEvent =>
-              _clickEvent(nodeId.get, _mgp)
+          _onShapeClickEventHandlers = { (center: MGeoPoint) =>
+            new LeafletEventHandlerFnMap {
+              override val click = ReactCommonUtil.cbFun1ToJsCb { _: MouseEvent =>
+                _clickEvent(nodeId.get, center)
+              }: LeafletMouseEventHandlerFn
             }
           }
 
@@ -151,7 +154,7 @@ object RcvrMarkersR extends Log {
               case circleGs: CircleGs =>
                 val _center = circleGs.center
                 val _centerLatLng = MapsUtil.geoPoint2LatLng( _center )
-                val opts = new CirclePropsR {
+                val opts = new CircleProps {
                   override val radius       = circleGs.radiusM
                   override val center       = _centerLatLng
                   override val fillColor    = _fillColor
@@ -160,9 +163,9 @@ object RcvrMarkersR extends Log {
                   override val weight       = STROKE_WEIGHT
                   override val color        = _strokeColor
                   override val opacity      = STROKE_OPACITY
-                  override val onClick      = _onClickCbF( _center )
+                  override val eventHandlers = _onShapeClickEventHandlers( _center )
                 }
-                val rc = CircleR( opts )
+                val rc = Circle.component( opts )()
                 ResTuple(_centerLatLng, rc :: Nil)
 
               // Рендерить полигон или мультиполигон.
@@ -171,7 +174,7 @@ object RcvrMarkersR extends Log {
                 // Вычислить гео-центр этого полигона
                 val _centerLL = MapsUtil.polyLatLngs2center( _positions )
                 val _center = MapsUtil.latLng2geoPoint( _centerLL )
-                val opts = new PolygonPropsR {
+                val opts = new PolygonProps {
                   override val positions    = _positions
                   override val fillColor    = _fillColor
                   override val fillOpacity  = FILL_OPACITY
@@ -179,9 +182,9 @@ object RcvrMarkersR extends Log {
                   override val weight       = STROKE_WEIGHT
                   override val color        = _strokeColor
                   override val opacity      = STROKE_OPACITY
-                  override val onClick      = _onClickCbF( _center )
+                  override val eventHandlers = _onShapeClickEventHandlers( _center )
                 }
-                val rc = PolygonR(opts)
+                val rc = Polygon.component(opts)()
                 ResTuple(_centerLL, rc :: Nil)
 
               // Неподдерживаемый шейп. Используем обходные пути для рендера, но не допускаем исключений.
@@ -233,22 +236,22 @@ object RcvrMarkersR extends Log {
         val (markers9, shapeComponents9) = markersAndShapeComponents
 
         // Вернуть итоговый react-компонент:
-        LayerGroupR()(
+        LayerGroup()(
 
           // Полигоны, мультиполигоны, круги.
           ReactCommonUtil.maybeNode( shapeComponents9.nonEmpty ) {
-            LayerGroupR()(
+            LayerGroup()(
               // Используем ускоренный flattenRev вместо штатного flatten, т.к. порядок нам не важен.
               Lists.flattenRev( shapeComponents9 ): _*
             )
           },
 
           // Точки-маркеры поверх вообще всех svg-шейпов
-          markers9.headOption.whenDefinedEl { _ =>
-            MarkerClusterGroupR(
-              new MarkerClusterGroupPropsR {
+          Option.when[VdomElement]( markers9.nonEmpty ) {
+            MarkerClusterGroup.component(
+              new MarkerClusterGroupProps {
                 override val markers      = markers9.iterator.flatten.toJSArray
-                override val markerClick  = _onMarkerClickedF
+                override val eventHandlers = _mcgEventTypes
 
                 // По дефолту 80. Но как-то опаздывает оно с разделением мелких кластеров.
                 override val maxClusterRadius = 60
@@ -262,7 +265,8 @@ object RcvrMarkersR extends Log {
                 override val showCoverageOnHover = false
               }
             )
-          },
+          }
+            .whenDefinedEl,
 
           children
         )

@@ -6,11 +6,11 @@ import io.suggest.maps.m._
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LeafletEventHandlerFnMap}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import react.leaflet.marker.{MarkerPropsR, MarkerR}
+import org.js.react.leaflet.{Marker, MarkerProps}
 
 /**
   * Suggest.io
@@ -27,29 +27,26 @@ object DraggablePinMarkerR {
 
     private val _pinIcon = MapIcons.pinMarkerIcon()
 
-    // Функции-коллбеки для маркера центра круга.
-    private val _centerClickF     = cbFun1ToJsCb { _: Event => _dispatch( RadCenterClick ) }
-    private val _centerDragStartF = cbFun1ToJsCb { _: Event => _dispatch(RadCenterDragStart) }
-    private val _centerDraggingF  = cbFun1ToJsCb( _markerDragging(_: Event, RadCenterDragging) )
-    private val _centerDragEndF   = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadCenterDragEnd) )
+    /** Функции-коллбеки для маркера центра круга. */
+    private val _eventHandlers = new LeafletEventHandlerFnMap {
+      override val click = cbFun1ToJsCb { _: Event => _dispatch( RadCenterClick ) }
+      override val dragstart = cbFun1ToJsCb { _: Event => _dispatch(RadCenterDragStart) }
+      override val drag = cbFun1ToJsCb( _markerDragging(_: Event, RadCenterDragging) )
+      override val dragend = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadCenterDragEnd) )
+    }
 
     def render(latLngProxy: Props): VdomElement = {
       latLngProxy().whenDefinedEl { geoPoint =>
-        MarkerR(
-          new MarkerPropsR {
+        Marker.component(
+          new MarkerProps {
             // Параметры рендера:
             override val position    = MapsUtil.geoPoint2LatLng( geoPoint )
             override val draggable   = true
             override val clickable   = true
             override val icon        = _pinIcon
-
-            // Привязка событий:
-            override val onClick     = _centerClickF
-            override val onDragStart = _centerDragStartF
-            override val onDrag      = _centerDraggingF
-            override val onDragEnd   = _centerDragEndF
+            override val eventHandlers = _eventHandlers
           }
-        )
+        )()
       }
     }
 
@@ -61,7 +58,5 @@ object DraggablePinMarkerR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(latLngProxy: Props) = component(latLngProxy)
 
 }

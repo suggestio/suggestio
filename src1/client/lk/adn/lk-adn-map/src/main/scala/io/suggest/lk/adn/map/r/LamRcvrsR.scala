@@ -12,7 +12,7 @@ import io.suggest.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
-import react.leaflet.layer.LayerGroupR
+import org.js.react.leaflet.LayerGroup
 
 /**
   * Suggest.io
@@ -33,7 +33,7 @@ final class LamRcvrsR {
   class Backend($: BackendScope[Props, State]) {
 
     def render(s: State, children: PropsChildren): VdomElement = {
-      LayerGroupR()(
+      LayerGroup()(
 
         // Рендер гео.карты узлов-ресиверов. Сейчас она такая же, как и карта в lk-adv-geo:
         s.nodesRespPotC {

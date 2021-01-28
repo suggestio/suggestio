@@ -4,9 +4,9 @@ import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
-import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
+import org.js.react.leaflet.{TileLayer, TileLayerProps}
 
-import scala.scalajs.js.UndefOr
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -37,13 +37,15 @@ object ReactLeafletUtil extends Log {
     }
 
     def mkDefaultLayer() = {
-      TileLayerR(
-        new TileLayerPropsR {
-          override val url = LeafletConstants.Tiles.URL_OSM_DFLT
-          override val detectRetina: UndefOr[Boolean] = {
+      val _url = LeafletConstants.Tiles.URL_OSM_DFLT
+
+      TileLayer.component.withKey( "tile:" + _url )(
+        new TileLayerProps {
+          override val url = _url
+          override val detectRetina: js.UndefOr[Boolean] = {
             isDetectRetina()
           }
-          override val attribution: UndefOr[String] = {
+          override val attribution: js.UndefOr[String] = {
             LeafletConstants.Tiles.ATTRIBUTION_OSM
           }
         }

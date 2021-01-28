@@ -16,9 +16,9 @@ import scala.scalajs.js.|
   * Created: 25.01.2021 18:48
   */
 
-trait LayerWithChildrenProps extends LayerProps with PropsWithChildren
+//trait LayerWithChildrenProps extends LayerProps with PropsWithChildren
 
-trait PathWithChildrenProps extends PathProps with PropsWithChildren
+//trait PathWithChildrenProps extends PathProps with PropsWithChildren
 
 
 @js.native
@@ -34,7 +34,7 @@ object createControlComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createLayerComponent")
 object createLayerComponent extends js.Function {
-  def apply[E <: Layer, P <: LayerWithChildrenProps]
+  def apply[E <: Layer, P <: LayerProps /*LayerWithChildrenProps*/]
            (createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, js.Any]],
             updateElement: js.Function3[E, P, P, Unit] = js.native)
            : raw.React.ForwardRefComponent[P, E]
@@ -45,7 +45,7 @@ object createLayerComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createOverlayComponent")
 object createOverlayComponent extends js.Function {
-  def apply[E <: DivOverlay, P <: LayerWithChildrenProps]
+  def apply[E <: DivOverlay, P <: LayerProps /*LayerWithChildrenProps*/]
            (createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, js.Any]],
             useLifecycle: DivOverlayLifecycleHook[E, P])
            : raw.React.ForwardRefComponent[P, E]
@@ -56,7 +56,7 @@ object createOverlayComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createPathComponent")
 object createPathComponent extends js.Function {
-  def apply[E <: FeatureGroup | Path, P <: PathWithChildrenProps]
+  def apply[E <: FeatureGroup | Path, P <: PathProps /*PathWithChildrenProps*/]
            (createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, js.Any]],
             updateElement: js.Function3[E, P, P, Unit])
            : raw.React.ForwardRefComponent[P, E]

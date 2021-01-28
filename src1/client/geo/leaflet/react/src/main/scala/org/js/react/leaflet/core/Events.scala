@@ -17,8 +17,9 @@ trait EventedProps extends js.Object {
 
 @js.native
 @JSImport(PACKAGE_NAME, "useEventHandlers")
-object useEventHandlers extends js.Function2[LeafletElement[Evented, js.Any], LeafletEventHandlerFnMap, Unit] {
-  override def apply(element: LeafletElement[Evented, js.Any],
-                     eventHandlers: LeafletEventHandlerFnMap = js.native,
-                    ): Unit = js.native
+object useEventHandlers extends js.Function {
+  def apply[E <: Evented, C <: js.Any]
+           (element: LeafletElement[E, C],
+            eventHandlers: LeafletEventHandlerFnMap = js.native)
+           : Unit = js.native
 }

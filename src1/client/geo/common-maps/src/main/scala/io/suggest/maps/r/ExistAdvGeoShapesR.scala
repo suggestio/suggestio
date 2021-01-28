@@ -1,7 +1,7 @@
 package io.suggest.maps.r
 
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.adv.AdvConstants.CurrShapes
 import io.suggest.geo.{GeoConstants, MGeoPoint, MGeoPointJs}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
@@ -13,13 +13,13 @@ import io.suggest.sjs.leaflet.map.{LatLng, Layer}
 import io.suggest.sjs.leaflet.path.PathOptions
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.Implicits._
-import react.leaflet.gj.{GeoJsonPropsR, GeoJsonR}
 import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.m.OpenAdvGeoExistPopup
 import io.suggest.msg.ErrorMsgs
 import japgolly.scalajs.react.vdom.VdomElement
+import org.js.react.leaflet.{GeoJson, GeoJsonProps}
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr}
@@ -50,7 +50,7 @@ object ExistAdvGeoShapesR extends Log {
         }
 
         // Собрать GeoJSON-слой для кружочков, но рендером управлять через callback'и.
-        GeoJsonR( new GeoJsonPropsR {
+        GeoJson.component( new GeoJsonProps {
 
           override val data = GjFeatureCollection(gjFeatures)
 
@@ -107,7 +107,7 @@ object ExistAdvGeoShapesR extends Log {
             }
           }
 
-        })
+        })()
       }
     }
 

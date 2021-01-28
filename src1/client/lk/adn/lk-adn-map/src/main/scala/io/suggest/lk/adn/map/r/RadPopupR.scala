@@ -8,7 +8,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import react.leaflet.popup.{LPopupPropsR, LPopupR}
+import org.js.react.leaflet.{Popup, PopupProps}
 
 /**
   * Suggest.io
@@ -34,8 +34,8 @@ final class RadPopupR(
 
       s.shownAtOrNullC { shownAtOrNullProxy =>
         Option( shownAtOrNullProxy() ).whenDefinedEl { p =>
-          LPopupR(
-            new LPopupPropsR {
+          Popup(
+            new PopupProps {
               override val position = MapsUtil.geoPoint2LatLng( p )
             }
           )(

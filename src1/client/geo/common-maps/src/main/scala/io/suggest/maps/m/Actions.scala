@@ -106,8 +106,5 @@ case class MapZoomEnd( override val newZoom: Zoom_t ) extends IMapZoomEnd
 case class MapMoveEnd( newCenterLL: LatLng ) extends IMapsAction
 
 
-/** Событие начала перетаскивания карты. */
-case object MapDragStart extends IMapsAction
-
 /** Событие окончания перетаскивания карты. */
 case class MapDragEnd(distancePx: Double) extends IMapsAction

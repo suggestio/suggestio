@@ -5,6 +5,7 @@ import io.suggest.sjs.leaflet.map.{FitBoundsOptions, LMap, MapOptions}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
+import org.js.react.leaflet.core.EventedProps
 import org.scalajs.dom
 import org.scalajs.dom.html.Element
 
@@ -31,7 +32,7 @@ object MapContainer {
 }
 
 
-trait MapContainerProps extends MapOptions {
+trait MapContainerProps extends MapOptions with EventedProps {
   val bounds: js.UndefOr[LatLngBoundsExpression] = js.undefined
   val boundsOptions: js.UndefOr[FitBoundsOptions] = js.undefined
   val className: js.UndefOr[String] = js.undefined

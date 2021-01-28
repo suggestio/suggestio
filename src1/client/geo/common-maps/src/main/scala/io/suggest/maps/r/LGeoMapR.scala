@@ -3,15 +3,17 @@ package io.suggest.maps.r
 import diode.react.ModelProxy
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
-import io.suggest.react.{Props2ModelProxy, ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
+import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateControlOptions}
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, Events, LeafletEventHandlerFnMap, LocationEvent, LocationEventHandlerFn, PopupEvent}
 import io.suggest.sjs.leaflet.map.LMap
-import japgolly.scalajs.react.BackendScope
-import react.leaflet.lmap.LMapPropsR
+import japgolly.scalajs.react.component.ReactForwardRef
+import japgolly.scalajs.react.ScalaFnComponent
+import org.js.react.leaflet.{LocateControl, MapContainerProps, useMapEvent, useMapEvents}
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -22,38 +24,54 @@ import scala.scalajs.js
   */
 object LGeoMapR {
 
-  /** Внешний контекст, чтобы инстансы кэшировать. */
   case class LgmCtx(
-                     onLocationFoundF   : js.Function1[LocationEvent, Unit],
-                     onPopupCloseF      : js.Function1[PopupEvent, Unit],
-                     onZoomEndF         : js.Function1[Event, Unit],
-                     onMoveEndF         : js.Function1[Event, Unit],
-                     attribution        : js.UndefOr[Boolean],
-                   )
-  object LgmCtx {
-    def mk[P: Props2ModelProxy, S]($: BackendScope[P, S],
-                                   attribution: js.UndefOr[Boolean] = js.undefined) = LgmCtx(
-      onLocationFoundF = ReactCommonUtil.cbFun1ToJsCb { locEvent: LocationEvent =>
-        val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, HandleLocationFound(gp) )
-      },
+                     proxy          : ModelProxy[_],
+                     onDragEnd      : js.UndefOr[js.Function1[DragEndEvent, Unit]]  = js.undefined,
+                   ) {
 
-      onPopupCloseF = ReactCommonUtil.cbFun1ToJsCb { _: PopupEvent =>
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, HandleMapPopupClose )
-      },
+    /** Компонент LocateControl с подпиской на события карты. */
+    object LocateControlR {
+      val component = ReactForwardRef[LocateControlOptions, LocateControl] { (props, refOpt)=>
+        // Подписаться на locationfound-события карты:
+        useMapEvent(
+          Events.LOCATION_FOUND,
+          ReactCommonUtil.cbFun1ToJsCb { locEvent: LocationEvent =>
+            val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
+            proxy.dispatchCB( HandleLocationFound(gp) )
+          }: LocationEventHandlerFn
+        )
 
-      onZoomEndF = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
-        val newZoom = event.target.asInstanceOf[LMap].getZoom().toInt
-        ReactDiodeUtil.dispatchOnProxyScopeCB( $, MapZoomEnd(newZoom) )
-      },
+        // Вернуть компонент LocationControl:
+        LocateControl.component.withOptionalRef( refOpt )( props )
+      }
+      def apply(props: LocateControlOptions = new LocateControlOptions {}) =
+        component(props)
+    }
 
-      onMoveEndF = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
-        val newZoom = event.target.asInstanceOf[LMap].getCenter()
-        ReactDiodeUtil.dispatchOnProxyScopeCB($, MapMoveEnd(newZoom) )
-      },
 
-      attribution = attribution,
-    )
+    /** Подписка на основные события гео.карты. */
+    val EventsR = ScalaFnComponent[Unit] { _ =>
+      useMapEvents(
+        new LeafletEventHandlerFnMap {
+          override val popupclose = ReactCommonUtil.cbFun1ToJsCb { _: PopupEvent =>
+            proxy.dispatchCB( HandleMapPopupClose )
+          }
+          override val zoomend = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
+            val newZoom = event.target.asInstanceOf[LMap].getZoom().toInt
+            proxy.dispatchCB( MapZoomEnd(newZoom) )
+          }
+          override val moveend = ReactCommonUtil.cbFun1ToJsCb { event: Event =>
+            val newZoom = event.target.asInstanceOf[LMap].getCenter()
+            proxy.dispatchCB( MapMoveEnd(newZoom) )
+          }
+          override val dragend = onDragEnd
+        }
+      )
+
+      // Без компонента, только эффект подписки на события.
+      ReactCommonUtil.VdomNullElement
+    }
+
   }
 
 
@@ -63,35 +81,22 @@ object LGeoMapR {
     * @param lgmCtx Постоянные инстансы, хранящиеся за пределами map-коннекшена.
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( proxy: ModelProxy[MGeoMapPropsR], lgmCtx: LgmCtx ): LMapPropsR = {
+  def reactLeafletMapProps( proxy: ModelProxy[MGeoMapPropsR], lgmCtx: LgmCtx ): MapContainerProps = {
     val v = proxy()
-    val _onLocationFound2 = JsOptionUtil.maybeDefined( v.mapS.locationFound contains[Boolean] true ) {
-      lgmCtx.onLocationFoundF
-    }
-    // Карта должна рендерится с такими параметрами:
-    new LMapPropsR {
-      override val center    = MapsUtil.geoPoint2LatLng( v.mapS.center )
-      override val zoom      = js.defined( v.mapS.zoom )
+
+    new MapContainerProps {
+      override val center         = MapsUtil.geoPoint2LatLng( v.mapS.center )
+      override val zoom           = js.defined( v.mapS.zoom )
 
       // maxZoom: Значение требует markercluster
       // 18 - в leaflet бывает сверхприближение на touch-устройствах с retina, и пустая карта.
       // 17 - видны номера домов в городе на osm.org.
       // 16 - номера домов не видны.
-      override val maxZoom   = js.defined( 17 )
+      override val maxZoom        = js.defined( 17 )
+      override val whenCreated    = v.whenCreated.toUndef
+      override val className      = v.cssClass.toUndef
 
-      override val useFlyTo  = v.animated
-      override val onLocationFound = _onLocationFound2
-
-      override val onPopupClose = js.defined( lgmCtx.onPopupCloseF )
-      override val onZoomEnd    = js.defined( lgmCtx.onZoomEndF )
-      override val onMoveEnd    = js.defined( lgmCtx.onMoveEndF )
-
-      // Пробрасываем extra-пропертисы:
-      override val whenReady    = v.whenReady.toUndef
-      override val className    = v.cssClass.toUndef
-      override val onDragStart  = v.onDragStart.toUndef
-      override val onDragEnd    = v.onDragEnd.toUndef
-      override val attributionControl = lgmCtx.attribution
+      override val attributionControl = v.attribution.orUndefined
     }
   }
 

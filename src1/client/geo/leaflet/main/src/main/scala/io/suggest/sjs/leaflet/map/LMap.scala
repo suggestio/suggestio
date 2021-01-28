@@ -1,16 +1,18 @@
 package io.suggest.sjs.leaflet.map
 
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 import io.suggest.sjs.leaflet.control.Control
 import io.suggest.sjs.leaflet.control.zoom.ZoomOptions
 import io.suggest.sjs.leaflet.event.{Evented, MouseEvent}
 import io.suggest.sjs.leaflet.handler.IHandler
+import io.suggest.sjs.leaflet.layer.group.ControlledLayer
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import org.scalajs.dom.raw.{HTMLElement, Position}
 import org.scalajs.dom.PositionError
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSGlobal
+import scala.scalajs.js.annotation.{JSGlobal, JSImport}
 
 /**
   * Suggest.io
@@ -20,8 +22,8 @@ import scala.scalajs.js.annotation.JSGlobal
   * @see [[http://leafletjs.com/reference.html#map-set-methods]]
   */
 @js.native
-@JSGlobal("L.Map")
-class LMap extends Evented {
+@JSImport(LEAFLET_IMPORT, "Map")
+class LMap extends Evented with ControlledLayer {
 
   def setView(center: LatLng, zoom: Zoom_t = js.native, zoomOpts: ZoomOptions = js.native): LMap = js.native
 
@@ -70,8 +72,6 @@ class LMap extends Evented {
 
   // Methods for Layers and Controls
   // http://leafletjs.com/reference.html#map-stuff-methods
-  def addLayer(layer: Layer): this.type = js.native
-  def removeLayer(layer: Layer): this.type = js.native
   def hasLayer(layer: Layer): Boolean = js.native
   def eachLayer(f: js.Function1[Layer,_], ctx: js.Object = js.native): this.type = js.native
 

@@ -2,7 +2,7 @@ package io.suggest.maps.m
 
 import diode.FastEq
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
-import io.suggest.sjs.leaflet.map.{IWhenReadyArgs, Zoom_t}
+import io.suggest.sjs.leaflet.map.{LMap, Zoom_t}
 import io.suggest.spa.OptFastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -27,10 +27,9 @@ object MGeoMapPropsR {
       (a.mapS ===* b.mapS) &&
       (a.animated ==* b.animated) &&
       P.eqv(a.cssClass,     b.cssClass) &&
-      V.eqv(a.trackWndResize, b.trackWndResize) &&
-      P.eqv(a.whenReady,    b.whenReady) &&
-      P.eqv(a.onDragStart,  b.onDragStart) &&
-      P.eqv(a.onDragEnd,    b.onDragEnd)
+      P.eqv(a.whenCreated,    b.whenCreated) &&
+      P.eqv(a.onDragEnd,    b.onDragEnd) &&
+      (a.attribution ===* b.attribution)
     }
   }
 
@@ -41,9 +40,8 @@ case class MGeoMapPropsR(
                           mapS            : MMapS,
                           animated        : Boolean                                       = true,
                           cssClass        : Option[String]                                = None,
-                          trackWndResize  : Option[Boolean]                               = None,
-                          whenReady       : Option[js.Function1[IWhenReadyArgs, Unit]]    = None,
-                          onDragStart     : Option[js.Function1[Event, Unit]]             = None,
+                          whenCreated     : Option[js.Function1[LMap, Unit]]              = None,
                           onDragEnd       : Option[js.Function1[DragEndEvent, Unit]]      = None,
+                          attribution     : Option[Boolean]                               = None,
                         )
 

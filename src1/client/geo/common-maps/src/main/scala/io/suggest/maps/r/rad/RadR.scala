@@ -6,11 +6,10 @@ import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import react.leaflet.layer.LayerGroupR
-import react.leaflet.popup.{LPopupPropsR, LPopupR}
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactCommonUtil
+import org.js.react.leaflet.{LayerGroup, Popup, PopupProps}
 
 /**
   * Suggest.io
@@ -35,7 +34,7 @@ object RadR {
       p().rad.whenDefinedEl { mrad =>
 
         // Рендер группы слоёв одной пачкой, чтобы можно было всё скопом вернуть наверх.
-        LayerGroupR()(
+        LayerGroup()(
 
           // Слой с кругом и маркерами управления оными.
           {
@@ -53,8 +52,8 @@ object RadR {
                 .value
                 .filter( identity )
                 .whenDefinedEl { _ =>
-                  LPopupR(
-                    new LPopupPropsR {
+                  Popup(
+                    new PopupProps {
                       override val position = MapsUtil.geoPoint2LatLng( mrad.currentCenter )
                     }
                   )(

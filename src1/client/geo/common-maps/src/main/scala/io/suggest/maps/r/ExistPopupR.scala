@@ -1,6 +1,6 @@
 package io.suggest.maps.r
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -12,7 +12,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import react.leaflet.popup.{LPopupPropsR, LPopupR}
+import org.js.react.leaflet.{Popup, PopupProps}
 
 /**
   * Suggest.io
@@ -59,8 +59,8 @@ object ExistPopupR {
       }
 
       popDataOpt.whenDefinedEl { case (popResp, popState) =>
-        LPopupR(
-          new LPopupPropsR {
+        Popup(
+          new PopupProps {
             override val position = MapsUtil.geoPoint2LatLng( popState.geoPoint )
           }
         ) {

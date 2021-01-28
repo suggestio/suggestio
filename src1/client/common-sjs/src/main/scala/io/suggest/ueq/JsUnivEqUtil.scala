@@ -41,6 +41,8 @@ object JsUnivEqUtil {
   @inline implicit def modelRoUe[T: UnivEq]: UnivEq[ModelRO[T]]     = UnivEq.force
   @inline implicit def modelRUe[M: UnivEq, T: UnivEq]: UnivEq[ModelR[M,T]] = UnivEq.force
 
-  @inline implicit def jsFunUnivEq: UnivEq[js.Function] = UnivEq.force
+  @inline implicit def jsFunUe: UnivEq[js.Function] = UnivEq.force
+
+  @inline implicit def undefOrUe[T: UnivEq]: UnivEq[js.UndefOr[T]] = UnivEq.force
 
 }

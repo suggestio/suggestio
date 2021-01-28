@@ -1,7 +1,6 @@
 package io.suggest.lk.adv.r
 
 import diode.react.ModelProxy
-import diode.react.ReactPot.potWithReact
 import io.suggest.adv.rcvr.{MRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -13,8 +12,7 @@ import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.msg.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback}
-import react.leaflet.layer.LayerGroupR
-import react.leaflet.popup.{LPopupPropsR, LPopupR}
+import org.js.react.leaflet.{LayerGroup, Popup, PopupProps}
 
 /**
   * Suggest.io
@@ -98,7 +96,7 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
 
       val latLng = MapsUtil.geoPoint2LatLng( state.latLng )
 
-      LayerGroupR()(
+      LayerGroup()(
 
         // Рендер маркера-крутилки на карте в ожидании рендера.
         MapIcons.preloaderLMarkerPot( v.popupResp, latLng ),
@@ -107,8 +105,8 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
         // TODO Pot.renderReady, renderPending: react тут начала выбрасывать ошибку, что react element expected, а мы шлём ей массивы.
         //v.popupResp.renderReady { resp =>
         v.popupResp.toOption.whenDefinedEl { resp =>
-          LPopupR(
-            new LPopupPropsR {
+          Popup(
+            new PopupProps {
               override val position = latLng
             }
           )(

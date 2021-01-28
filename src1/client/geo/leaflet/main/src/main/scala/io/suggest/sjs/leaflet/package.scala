@@ -19,6 +19,13 @@ package object leaflet {
 
   type MapTarget = String | HTMLElement
 
+  type PolygonCoords_t = js.Array[Double] | js.Array[js.Array[Double]] | js.Array[js.Array[js.Array[Double]]] | js.Array[js.Array[js.Array[js.Array[Double]]]]
+
+  /** @see [[https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/leaflet/index.d.ts#L135]] */
+  type LatLngTuple = js.Array[Double]  // [number, number]
+  /** @see [[https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/leaflet/index.d.ts#L137]] */
+  type LatLngExpression = LatLng | LatLngLiteral | LatLngTuple
+
   /** Polygon bodies as GeoJSON coordinates arrays.
     *
     * Described as:
@@ -30,14 +37,7 @@ package object leaflet {
     * @see [[http://leafletjs.com/reference-1.0.3.html#polygon]]
     * @see [[https://github.com/PaulLeCam/react-leaflet/blob/master/src/Polygon.js]]
     */
-  type PolygonLatLngs_t = js.Array[LatLng] | js.Array[js.Array[LatLng]] | js.Array[js.Array[js.Array[LatLng]]]
-
-  type PolygonCoords_t = js.Array[Double] | js.Array[js.Array[Double]] | js.Array[js.Array[js.Array[Double]]] | js.Array[js.Array[js.Array[js.Array[Double]]]]
-
-  /** @see [[https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/leaflet/index.d.ts#L135]] */
-  type LatLngTuple = js.Array[Double]  // [number, number]
-  /** @see [[https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/leaflet/index.d.ts#L137]] */
-  type LatLngExpression = LatLng | LatLngLiteral | LatLngTuple
+  type PolygonLatLngs_t = js.Array[LatLngExpression] | js.Array[js.Array[LatLngExpression]] | js.Array[js.Array[js.Array[LatLngExpression]]]
 
   type LatLngBoundsLiteral = js.Array[LatLngTuple]
   type LatLngBoundsExpression = LatLngBounds | LatLngBoundsLiteral

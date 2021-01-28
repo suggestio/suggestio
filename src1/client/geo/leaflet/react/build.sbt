@@ -6,7 +6,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-leaflet-react"
 
-version := "0.0.0"
+version := Common.Vsn.REACT_LEAFLET
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"

@@ -5,10 +5,10 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m.MRad
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.Implicits._
-import react.leaflet.layer.LayerGroupR
 import RadCircleR.RadCirclePropsValFastEq
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.OptFastEq.Wrapped
+import org.js.react.leaflet.LayerGroup
 
 /**
   * Suggest.io
@@ -60,17 +60,17 @@ object RadMapControlsR {
     }
     // Отрендерить...
     .render_S { s =>
-      LayerGroupR()(
+      LayerGroup()(
 
         // Основной круг для описания слоя:
-        s.radCirclePropsOptC { RadCircleR.apply },
+        s.radCirclePropsOptC { RadCircleR.component.apply },
 
         // Маркер центра круга.
         // TODO Скрывать маркер центра, если расстояние в пикселях до радиуса < 5
-        s.centerGeoPointOptC { DraggablePinMarkerR.apply },
+        s.centerGeoPointOptC { DraggablePinMarkerR.component.apply },
 
         // Маркер радиуса круга. Сделан в виде circle-marker'а.
-        s.radiusGeoPointOptC { RadiusMarkerR.apply }
+        s.radiusGeoPointOptC { RadiusMarkerR.component.apply }
 
       )
     }

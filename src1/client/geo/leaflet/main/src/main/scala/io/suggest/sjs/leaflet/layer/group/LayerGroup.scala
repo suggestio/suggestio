@@ -14,13 +14,9 @@ import scala.scalajs.js.annotation.JSImport
  */
 @JSImport(LEAFLET_IMPORT, "LayerGroup")
 @js.native
-class LayerGroup extends Layer {
+class LayerGroup extends Layer with ControlledLayer {
 
   def addTo(lmap: LMap): this.type = js.native
-
-  def addLayer(layer: Layer): this.type = js.native
-
-  def removeLayer(layer: Layer): this.type = js.native
 
   def removeLayer(id: String): this.type = js.native
 
@@ -36,4 +32,13 @@ class LayerGroup extends Layer {
 
   def toGeoJSON(): js.Object = js.native
 
+}
+
+
+
+/** react-leaflet's layer container interface. */
+@js.native
+trait ControlledLayer extends js.Object {
+  def addLayer(layer: Layer): this.type = js.native
+  def removeLayer(layer: Layer): this.type = js.native
 }

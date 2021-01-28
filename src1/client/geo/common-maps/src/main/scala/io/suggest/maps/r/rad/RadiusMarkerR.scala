@@ -4,13 +4,13 @@ import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import react.leaflet.marker.{MarkerPropsR, MarkerR}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.maps.m.{RadiusDragEnd, RadiusDragStart, RadiusDragging}
-import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LeafletEventHandlerFnMap}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
+import org.js.react.leaflet.{Marker, MarkerProps}
 
 /**
   * Suggest.io
@@ -27,26 +27,24 @@ object RadiusMarkerR {
 
     private val _radiusIcon = MapIcons.radiusMarkerIcon()
 
-    // Стабильные инстансы callback-функций для маркера радиуса.
-    private val _radiusDragStartF = cbFun1ToJsCb { _: Event => _dispatch(RadiusDragStart) }
-    private val _radiusDraggingF  = cbFun1ToJsCb( _markerDragging(_: Event, RadiusDragging) )
-    private val _radiusDragEndF   = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadiusDragEnd) )
+    /** инстансы callback-функций для маркера радиуса. */
+    private val _eventHandlers = new LeafletEventHandlerFnMap {
+      override val dragstart = cbFun1ToJsCb { _: Event => _dispatch(RadiusDragStart) }
+      override val drag = cbFun1ToJsCb( _markerDragging(_: Event, RadiusDragging) )
+      override val dragend = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadiusDragEnd) )
+    }
 
 
     def render(geoPointOptProxy: Props): VdomElement = {
       geoPointOptProxy().whenDefinedEl { geoPoint =>
-        MarkerR(
-          new MarkerPropsR {
+        Marker.component(
+          new MarkerProps {
             override val position    = MapsUtil.geoPoint2LatLng(geoPoint)
             override val draggable   = true
             override val icon        = _radiusIcon
-
-            // Привязка событий:
-            override val onDragStart = _radiusDragStartF
-            override val onDrag      = _radiusDraggingF
-            override val onDragEnd   = _radiusDragEndF
+            override val eventHandlers = _eventHandlers
           }
-        )
+        )()
       }
     }
 
@@ -58,7 +56,5 @@ object RadiusMarkerR {
     .stateless
     .renderBackend[Backend]
     .build
-
-  def apply(geoPointOptProxy: Props) = component(geoPointOptProxy)
 
 }

@@ -4,7 +4,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.geo._
 import io.suggest.maps.MMapProps
 import io.suggest.maps.m.MMapS
-import io.suggest.sjs.leaflet.{Leaflet, PolygonLatLngs_t}
+import io.suggest.sjs.leaflet.{LatLngExpression, Leaflet, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LatLng, Point}
 
 import scala.scalajs.js.JSConverters._
@@ -83,7 +83,7 @@ object MapsUtil {
       .map { lsgs =>
         lsgs
           .coords
-          .map( MapsUtil.geoPoint2LatLng )
+          .map( MapsUtil.geoPoint2LatLng(_): LatLngExpression )
           .toJSArray
       }
       .toJSArray
