@@ -64,9 +64,12 @@ object LGeoMapR {
             val newZoom = event.target.asInstanceOf[LMap].getCenter()
             proxy.dispatchCB( MapMoveEnd(newZoom) )
           }
-          override val dragend = onDragEnd
         }
       )
+
+      // useMapEvents() плохо отрабатывает undefined-значения. Поэтому вручную проходим опциональные листенеры.
+      for (fn <- onDragEnd)
+        useMapEvent( Events.DRAG_END, fn )
 
       // Без компонента, только эффект подписки на события.
       ReactCommonUtil.VdomNullElement
