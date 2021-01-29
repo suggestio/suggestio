@@ -25,44 +25,39 @@ class ScNodesBtnR(
   type Props_t = MScRoot
   type Props = ModelProxy[Props_t]
 
-  case class State(
-                    //isVisibleSomeC            : ReactConnectProxy[Some[Boolean]],
-                  )
-
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     private lazy val _onMenuItemClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesShowHide( visible = true ) )
     }
 
-    def render(s: State): VdomElement = {
-      //s.isVisibleSomeC { isVisibleSomeProxy =>
-        import ScCssStatic.Menu.{Rows => R}
+    val render: VdomElement = {
+      import ScCssStatic.Menu.{Rows => R}
 
-        //val isVisible = isVisibleSomeProxy.value.value
-        //ReactCommonUtil.maybeEl( isVisible ) {
-          MuiListItem(
-            new MuiListItemProps {
-              override val disableGutters = menuItemR.DISABLE_GUTTERS
-              override val button = true
-              override val onClick = _onMenuItemClick
-              override val classes = menuItemR.MENU_LIST_ITEM_CSS
-            }
-          )(
-            MuiListItemText()(
-              scCssP.consume { scCss =>
-                <.span(
-                  R.rowContent,
-                  scCss.fgColor,
-                  crCtxProv.message( MsgCodes.`Nodes.management` ),
-                )
-              },
-
-              // TODO Вывести счётких текущих видимых маячков.
+      MuiListItem(
+        new MuiListItemProps {
+          override val disableGutters = menuItemR.DISABLE_GUTTERS
+          override val button = true
+          override val onClick = _onMenuItemClick
+          override val classes = menuItemR.MENU_LIST_ITEM_CSS
+        }
+      )(
+        MuiListItemText()(
+          {
+            val span0 = <.span(
+              R.rowContent,
+              crCtxProv.message( MsgCodes.`Nodes.management` ),
             )
-          )
-        //}
-      //}
+            scCssP.consume { scCss =>
+              span0(
+                scCss.fgColor,
+              )
+            }
+          },
+
+          // TODO Вывести счётких текущих видимых маячков.
+        )
+      )
     }
 
   }
@@ -70,16 +65,7 @@ class ScNodesBtnR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
-      State(
-
-        //isVisibleSomeC = propsProxy.connect { mroot =>
-          //OptionUtil.SomeBool( mroot.index.isLoggedIn )
-          //OptionUtil.SomeBool.someTrue
-        //},
-
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

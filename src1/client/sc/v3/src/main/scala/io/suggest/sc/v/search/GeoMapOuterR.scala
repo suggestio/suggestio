@@ -39,9 +39,26 @@ class GeoMapOuterR(
   class Backend($: BackendScope[Props, State]) {
 
     def render(searchCssProxy: Props, s: State, children: PropsChildren): VdomElement = {
+      val searchCss = searchCssProxy.value.searchCss
+
+      // Прицел для наведения. Пока не ясно, отображать его всегда или только когда карта перетаскивается.
+      val crosshair = s.showCrossHairSomeC { showCrossHairOrNone =>
+        val div0 = <.div(
+          ScCssStatic.Search.Geo.crosshair,
+          HtmlConstants.PLUS
+        )
+        ReactCommonUtil.maybeEl( showCrossHairOrNone.value.getOrElseFalse ) {
+          scCssP.consume { scCss =>
+            div0(
+              scCss.Search.Geo.crosshair,
+              searchCss.GeoMap.crosshair,
+            )
+          }
+        }
+      }: VdomNode
+
       scCssP.consume { scCss =>
         val mapTabCSS = scCss.Search.Geo
-        val searchCss = searchCssProxy.value.searchCss
 
         <.div(
           mapTabCSS.outer,
@@ -58,17 +75,7 @@ class GeoMapOuterR(
             )
           ),
 
-          // Прицел для наведения. Пока не ясно, отображать его всегда или только когда карта перетаскивается.
-          s.showCrossHairSomeC { showCrossHairOrNone =>
-            ReactCommonUtil.maybeEl( showCrossHairOrNone.value.getOrElseFalse ) {
-              <.div(
-                ScCssStatic.Search.Geo.crosshair, mapTabCSS.crosshair,
-                searchCss.GeoMap.crosshair,
-                HtmlConstants.PLUS
-              )
-            }
-          }
-
+          crosshair,
         )
       }
     }

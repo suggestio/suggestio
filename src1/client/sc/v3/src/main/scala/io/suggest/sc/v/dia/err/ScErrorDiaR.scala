@@ -1,12 +1,13 @@
 package io.suggest.sc.v.dia.err
 
-import com.materialui.{Mui, MuiColorTypes, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiFab, MuiFabProps, MuiFabVariants, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants, MuiSnackBarContent, MuiSnackBarContentProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.r.CatchR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.{CloseError, RetryError}
@@ -44,16 +45,16 @@ class ScErrorDiaR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    val onClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private val onClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, RetryError)
     }
 
-    val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, CloseError)
     }
 
 
-    def render(s: State): VdomElement = {
+    def render(p: Props, s: State): VdomElement = {
       val C = ScCssStatic.Notifies
 
       val _message = <.div(
@@ -158,12 +159,14 @@ class ScErrorDiaR(
         )
       }
 
-      MuiSnackBarContent {
-        new MuiSnackBarContentProps {
-          override val action  = _message.rawNode
-          override val message = _retryBtn.rawNode
+      CatchR.component( p.zoom(_ => classOf[ScErrorDiaR].getSimpleName) )(
+        MuiSnackBarContent {
+          new MuiSnackBarContentProps {
+            override val action  = _message.rawNode
+            override val message = _retryBtn.rawNode
+          }
         }
-      }
+      )
     }
 
   }

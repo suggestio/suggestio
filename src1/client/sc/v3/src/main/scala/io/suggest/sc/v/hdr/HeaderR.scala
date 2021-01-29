@@ -52,26 +52,28 @@ class HeaderR(
       val hdrProgress   = s.hdrProgressC { hdrProgressR.component.apply }
       val hdrGoBack     = s.goBackC { goBackR.component.apply }
 
-      scCssP.consume { scCss =>
-        val tm0 = <.div(
-          ScCssStatic.Header.header,
-          scCss.Header.header,
-          // -- Кнопки заголовка в зависимости от состояния выдачи --
-          // Кнопки при нахождении в обычной выдаче без посторонних вещей:
+      val tm0 = <.div(
+        ScCssStatic.Header.header,
+        // -- Кнопки заголовка в зависимости от состояния выдачи --
+        // Кнопки при нахождении в обычной выдаче без посторонних вещей:
 
-          // Слева:
-          hdrGoBack,
-          hdrMenuBtn,
+        // Слева:
+        hdrGoBack,
+        hdrMenuBtn,
 
-          // По центру:
-          hdrLogo,
+        // По центру:
+        hdrLogo,
 
-          // Справа:
-          hdrSearchBtn,
-          hdrProgress,
-        )
-        s.isColoredSomeC { isColoredSomeProxy =>
+        // Справа:
+        hdrSearchBtn,
+        hdrProgress,
+      )
+
+      s.isColoredSomeC { isColoredSomeProxy =>
+        scCssP.consume { scCss =>
+          val hdrCss = scCss.Header.header: TagMod
           tm0(
+            hdrCss,
             ReactCommonUtil.maybe( isColoredSomeProxy.value.value ) {
               TagMod(
                 scCss.fgColorBorder,

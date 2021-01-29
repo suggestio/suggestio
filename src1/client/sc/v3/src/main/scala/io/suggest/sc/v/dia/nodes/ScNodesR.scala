@@ -179,9 +179,9 @@ class ScNodesR(
           )
 
           // Вложенный коннекшен допускается, т.к. обновление внешнего связано только с полным монтированием-демонтированием диалога.
-          scCssP.consume { scCss =>
-            s.isDiaFullScreenSomeC { isDiaFullScreenSomeProxy =>
-              val _isFullScreen = isDiaFullScreenSomeProxy.value.value
+          s.isDiaFullScreenSomeC { isDiaFullScreenSomeProxy =>
+            val _isFullScreen = isDiaFullScreenSomeProxy.value.value
+            scCssP.consume { scCss =>
               val _rootCssU = JsOptionUtil.maybeDefined( _isFullScreen )(
                 Css.flat(
                   scCss.Header.header.htmlClass,

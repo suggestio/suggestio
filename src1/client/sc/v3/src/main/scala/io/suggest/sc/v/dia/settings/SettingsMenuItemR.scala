@@ -1,18 +1,18 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconClasses, MuiSvgIconProps}
+import com.materialui.{Mui, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconClasses, MuiSvgIconProps}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{MScRoot, SettingsDiaOpen}
+import io.suggest.sc.v.menu.MenuItemR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -21,6 +21,7 @@ import scala.scalajs.js.UndefOr
   * Description: wrap-компонент пункта меню, содержащего данные для скачивания мобильного приложения.
   */
 class SettingsMenuItemR(
+                         menuItemR          : MenuItemR,
                          scCssP             : React.Context[ScCss],
                          crCtxProv          : React.Context[MCommonReactCtx],
                        ) {
@@ -62,20 +63,20 @@ class SettingsMenuItemR(
       )
 
       MuiListItem {
-        val css = new MuiListItemClasses {
-          override val root = R.rowLink.htmlClass
-        }
         new MuiListItemProps {
-          override val disableGutters = false
+          override val disableGutters = menuItemR.DISABLE_GUTTERS
           override val button         = true
           override val onClick        = _onClickCbF
-          override val classes        = css
+          override val classes        = menuItemR.MENU_LIST_ITEM_CSS
         }
       } (
         scCssP.consume { scCss =>
           MuiListItemText {
             val css = new MuiListItemTextClasses {
-              override val root = scCss.fgColor.htmlClass
+              override val root = Css.flat (
+                scCss.fgColor.htmlClass,
+                R.rowLink.htmlClass,
+              )
             }
             new MuiListItemTextProps {
               override val classes = css

@@ -64,22 +64,22 @@ class EnterLkRowR(
         menuItemR.MENU_LIST_ITEM_PROPS
       )(
         MuiListItemText()(
-          scCssP.consume { scCss =>
+          s.mode { modeProxy =>
+            val msgCode = modeProxy.value match {
+              case Modes._NOT_LOGGED_IN     => MsgCodes.`Login.page.title`
+              case Modes._LOGGED_IN         => MsgCodes.`Personal.cabinet`
+              case _                        => MsgCodes.`Go.to.node.ads`
+            }
             val textSpan = <.span(
               R.rowContent,
-              scCss.fgColor,
+              crCtxProv.message( msgCode ),
             )
-            s.mode { modeProxy =>
-              val msgCode = modeProxy.value match {
-                case Modes._NOT_LOGGED_IN     => MsgCodes.`Login.page.title`
-                case Modes._LOGGED_IN         => MsgCodes.`Personal.cabinet`
-                case _                        => MsgCodes.`Go.to.node.ads`
-              }
+            scCssP.consume { scCss =>
               textSpan(
-                crCtxProv.message( msgCode )
+                scCss.fgColor,
               )
             }
-          }
+          },
         )
       )
 

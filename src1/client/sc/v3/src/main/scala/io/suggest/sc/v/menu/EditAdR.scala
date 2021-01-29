@@ -1,7 +1,6 @@
 package io.suggest.sc.v.menu
 
-import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
-import diode.FastEq
+import com.materialui.{MuiListItem, MuiListItemText}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.proto.http.client.HttpClient
@@ -13,7 +12,6 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
-import io.suggest.spa.OptFastEq
 import scalacss.ScalaCssReact._
 
 /**
@@ -46,12 +44,16 @@ class EditAdR(
         menuItemR.MENU_LIST_ITEM_PROPS
       )(
         MuiListItemText()(
-          scCssP.consume { scCss =>
-            <.span(
+          {
+            val span0 = <.span(
               R.rowContent,
-              scCss.fgColor,
               crCtxProv.message( MsgCodes.`Edit` ),
             )
+            scCssP.consume { scCss =>
+              span0(
+                scCss.fgColor,
+              )
+            }
           }
         )
       )

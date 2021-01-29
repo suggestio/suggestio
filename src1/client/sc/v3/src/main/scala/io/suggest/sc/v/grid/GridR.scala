@@ -59,6 +59,45 @@ class GridR(
 
       val smFlex = ScCssStatic.smFlex: TagMod
 
+      val gridContent = {
+        val chs0 = TagMod(
+          ScCssStatic.Grid.container,
+
+          jdCssStatic1,
+          jdCss1,
+          gridCore,
+        )
+        s.gridSzC { gridSzProxy =>
+          scCssP.consume { scCss =>
+            val gridSz = gridSzProxy.value
+            <.div(
+              scCss.Grid.container,
+              ^.width  := gridSz.width.px,
+              ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
+              chs0,
+            )
+          }
+        }
+      }
+
+      // Крутилка подгрузки карточек.
+      val loader = s.loaderPotC { adsPotPendingSomeProxy =>
+        ReactCommonUtil.maybeEl( adsPotPendingSomeProxy.value.value ) {
+          scCssP.consume { scCss =>
+          MuiCircularProgress {
+            val cssClasses = new MuiCircularProgressClasses {
+              override val root = scCss.Grid.loader.htmlClass
+            }
+            new MuiCircularProgressProps {
+              override val color   = MuiColorTypes.secondary
+              override val classes = cssClasses
+            }
+          }
+          }
+          
+        }
+      }
+
       scCssP.consume { scCss =>
         val GridCss = scCss.Grid
 
@@ -73,41 +112,10 @@ class GridR(
             <.div(
               GridCss.content,
 
-              // Начинается [пере]сборка всей плитки
-              // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
-              {
-                val stylesTm = TagMod(
-                  ScCssStatic.Grid.container,
-                  GridCss.container,
-                )
-                s.gridSzC { gridSzProxy =>
-                  val gridSz = gridSzProxy.value
-                  <.div(
-                    stylesTm,
-                    ^.width  := gridSz.width.px,
-                    ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
+              // Всея плитка:
+              gridContent,
 
-                    jdCssStatic1,
-                    jdCss1,
-                    gridCore,
-                  )
-                }
-              },
-
-              // Крутилка подгрузки карточек.
-              s.loaderPotC { adsPotPendingSomeProxy =>
-                ReactCommonUtil.maybeEl( adsPotPendingSomeProxy.value.value ) {
-                  MuiCircularProgress {
-                    val cssClasses = new MuiCircularProgressClasses {
-                      override val root = scCss.Grid.loader.htmlClass
-                    }
-                    new MuiCircularProgressProps {
-                      override val color   = MuiColorTypes.secondary
-                      override val classes = cssClasses
-                    }
-                  }
-                }
-              }
+              loader,
 
             )
           )

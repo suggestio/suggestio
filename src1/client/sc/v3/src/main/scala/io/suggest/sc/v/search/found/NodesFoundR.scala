@@ -151,10 +151,14 @@ final class NodesFoundR(
             crCtxP.consume { crCtx =>
               val startSearchTypingMsg = crCtx.messages( MsgCodes.`Search.start.typing` )
 
-              scCssP.consume { scCss =>
-                s.queryC { queryProxy =>
+              s.queryC { queryProxy =>
+                val query = queryProxy.value
+                val _margin =
+                  if (query.length > 15) MuiInputPropsMargins.dense
+                  else MuiInputPropsMargins.none
+
+                scCssP.consume { scCss =>
                   MuiInput {
-                    val query = queryProxy.value
                     val inputCss = new MuiInputClasses {
                       override val underline = scCss.Search.TextBar.underline.htmlClass
                       override val root = TextBarCSS.inputsH.htmlClass
@@ -165,7 +169,7 @@ final class NodesFoundR(
                       override val onChange = _onInputJsF
                       override val placeholder = startSearchTypingMsg
                       override val value = js.defined( query )
-                      override val margin = if (query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
+                      override val margin = _margin
                       // clear-кнопка:
                       //override val endAdornment = clearBtnUndef
                       override val inputRef = js.defined( _htmlInputRefHandlerJsF )
@@ -227,28 +231,31 @@ final class NodesFoundR(
 
       // Не найдено узлов.
       lazy val noNodesFound = MuiList()(
-        scCssP.consume { scCss =>
-          MuiListItemText {
-            val css = new MuiListItemTextClasses {
-              override val root = Css.flat(
-                scCss.fgColor.htmlClass,
-                ScCssStatic.Search.NodesFound.nothingFound.htmlClass,
-              )
+        {
+          val respQuery = s.respQueryC { respQueryOptProxy =>
+            val (msgCode, msgArgs) = respQueryOptProxy.value.fold {
+              MsgCodes.`No.tags.here` -> List.empty[js.Any]
+            } { query =>
+              MsgCodes.`No.tags.found.for.1.query` -> ((query: js.Any) :: Nil)
             }
-            new MuiListItemTextProps {
-              override val classes = css
-            }
-          } (
-            s.respQueryC { respQueryOptProxy =>
-              val (msgCode, msgArgs) = respQueryOptProxy.value.fold {
-                MsgCodes.`No.tags.here` -> List.empty[js.Any]
-              } { query =>
-                MsgCodes.`No.tags.found.for.1.query` -> ((query: js.Any) :: Nil)
+            crCtxP.message( msgCode, msgArgs: _* )
+          }
+          scCssP.consume { scCss =>
+            MuiListItemText {
+              val css = new MuiListItemTextClasses {
+                override val root = Css.flat(
+                  scCss.fgColor.htmlClass,
+                  ScCssStatic.Search.NodesFound.nothingFound.htmlClass,
+                )
               }
-              crCtxP.message( msgCode, msgArgs: _* )
-            },
-          )
-        }
+              new MuiListItemTextProps {
+                override val classes = css
+              }
+            } (
+              respQuery,
+            )
+          }
+        },
       ): VdomElement
       // Список найденных узлов.
       lazy val nodesFoundList = nfListR.component(

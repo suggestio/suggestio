@@ -59,13 +59,17 @@ class LogOutR(
             }
           )(
             MuiListItemText()(
-              scCssP.consume { scCss =>
-                <.span(
+              {
+                val span0 = <.span(
                   R.rowContent,
-                  scCss.fgColor,
                   crCtxP.message( MsgCodes.`Logout.account` ),
                   //HtmlConstants.ELLIPSIS,
                 )
+                scCssP.consume { scCss =>
+                  span0(
+                    scCss.fgColor,
+                  )
+                }
               }
             )
           )

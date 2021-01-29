@@ -85,7 +85,7 @@ final class SearchR(
         geoMapOuterR.component(cssProxy)(
           tabContentInner
         )
-      }
+      }: VdomNode
 
       val panelTagmod = TagMod(
         ScCssStatic.Root.panelCommon,

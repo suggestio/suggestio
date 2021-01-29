@@ -36,12 +36,16 @@ class AboutSioR(
         menuItemR.MENU_LIST_ITEM_PROPS
       )(
         MuiListItemText()(
-          scCssP.consume { scCss =>
-            <.span(
+          {
+            val span0 = <.span(
               R.rowContent,
-              scCss.fgColor,
               crCtxProv.message( MsgCodes.`Suggest.io.Project` ),
             )
+            scCssP.consume { scCss =>
+              span0(
+                scCss.fgColor,
+              )
+            }
           }
         )
       )

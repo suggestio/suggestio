@@ -24,8 +24,8 @@ class HdrProgressR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(propsSomeProxy: Props): VdomElement = {
-      scCssP.consume { scCss =>
-        ReactCommonUtil.maybeEl( propsSomeProxy.value.value ) {
+      ReactCommonUtil.maybeEl( propsSomeProxy.value.value ) {
+        scCssP.consume { scCss =>
           MuiLinearProgress {
             val cssClasses = new MuiLinearProgressClasses {
               override val root = Css.flat(

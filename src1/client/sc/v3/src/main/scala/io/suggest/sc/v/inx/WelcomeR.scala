@@ -50,80 +50,100 @@ class WelcomeR(
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
-      scCssP.consume { scCss =>
-        val AnimCss = ScConstants.Welcome.Anim
-        val CSS = scCss.Welcome
+      // Необходимо, чтобы все коннекшены жили за пределами scCss context.consume():
+      // Обновление контекста в момент node switch может вызывать ненужный пере-монтирование всего welcome-поддерева,
+      // из-за сброса контекста при index-switch или повороте/изменении экрана.
+      val AnimCss = ScConstants.Welcome.Anim
 
-        val tms = TagMod(
-          scCss.bgColor,
-          ScCssStatic.Welcome.welcome,
-          ^.`class` := AnimCss.WILL_FADEOUT_CSS_CLASS,
+      // Рендер фонового изображения.
+      val bgImg = s.bgImgOptC { bgImgOptProxy =>
+        bgImgOptProxy.value.whenDefinedEl { bgImg =>
+          val bgImgSrc =
+            ^.src := bgImg.url
+          scCssP.consume { scCss =>
+            <.img(
+              // Подгонка фона wh под экран и центровка происходит в ScCss:
+              scCss.Welcome.Bg.bgImg,
+              scCss.bgColor,
+              bgImgSrc,
+            )
+          }
+        }
+      }
 
-          ^.onClick --> _onClick,
+      // Рендер логотипа или картинки переднего плана.
+      val fgImg = s.fgImgOptC { fgImgOptProxy =>
+        fgImgOptProxy.value.whenDefinedEl { fgImg =>
+          val fgImgSrc =
+            ^.src := fgImg.url
 
-          // Рендер фонового изображения.
-          s.bgImgOptC { bgImgOptProxy =>
-            bgImgOptProxy.value.whenDefinedEl { bgImg =>
-              <.img(
-                // Подгонка фона wh под экран и центровка происходит в ScCss:
-                CSS.Bg.bgImg, scCss.bgColor,
-                ^.src := bgImg.url
-              )
-            }
-          },
-
-          // Рендер логотипа или картинки переднего плана.
-          s.fgImgOptC { fgImgOptProxy =>
-            fgImgOptProxy.value.whenDefinedEl { fgImg =>
-              // Есть графический логотип, отрендерить его изображение:
+          // Есть графический логотип, отрендерить его изображение:
+          scCssP.consume { scCss =>
+            <.span(
               <.span(
-                <.span(
-                  CSS.Fg.helper
-                ),
+                scCss.Welcome.Fg.helper
+              ),
 
-                <.img(
-                  // Центровка лого происходит в ScCss.
-                  CSS.Fg.fgImg,
-                  ^.src := fgImg.url
-                )
+              <.img(
+                // Центровка лого происходит в ScCss.
+                scCss.Welcome.Fg.fgImg,
+                fgImgSrc,
               )
-            }
-          },
+            )
+          }
+        }
+      }
 
-          // Текстовый логотип-подпись, если доступно название узла.
-          s.nodeNameFgOptC { wcNameFgHProxy =>
-            val wcNameFgH = wcNameFgHProxy.value
-            wcNameFgH.nodeName.whenDefinedEl { nodeName =>
+      // Текстовый логотип-подпись, если доступно название узла.
+      val nodeName = s.nodeNameFgOptC { wcNameFgHProxy =>
+        wcNameFgHProxy
+          .value
+          .nodeName
+          .whenDefinedEl { nodeName =>
+            // Отобразить текстовый логотип, такой же как и в заголовке:
+            val nodeNameInner = nodeNameR.component(
+              nodeNameR.PropsVal(
+                nodeName = nodeName,
+                styled = true,
+              )
+            ): TagMod
+            scCssP.consume { scCss =>
               <.div(
-                CSS.Fg.fgText,
-
-                // Отобразить текстовый логотип, такой же как и в заголовке:
-                nodeNameR.component(
-                  nodeNameR.PropsVal(
-                    nodeName = nodeName,
-                    styled = true
-                  )
-                ),
+                scCss.Welcome.Fg.fgText,
+                nodeNameInner,
               )
             }
           }
+      }
+
+      val div0 = <.div(
+        ScCssStatic.Welcome.welcome,
+        ^.`class` := AnimCss.WILL_FADEOUT_CSS_CLASS,
+
+        ^.onClick --> _onClick,
+        bgImg,
+        fgImg,
+        nodeName,
+      )
+
+      s.visibileOptC { visibleOptProxy =>
+        val visibleOpt = visibleOptProxy.value
+        val fadingOut = visibleOpt.getOrElseFalse
+
+        val tagMods = TagMod(
+          ^.classSet(
+            AnimCss.TRANS_02_CSS_CLASS     -> fadingOut,
+            AnimCss.FADEOUT_CSS_CLASS      -> fadingOut,
+          ),
+
+          if (visibleOpt.isEmpty) ^.display.none
+          else ^.display.block,
         )
 
-        s.visibileOptC { visibleOptProxy =>
-          val visibleOpt = visibleOptProxy.value
-          val fadingOut = visibleOpt.getOrElseFalse
-
-          <.div(
-            ^.classSet1(
-              AnimCss.WILL_FADEOUT_CSS_CLASS,
-              AnimCss.TRANS_02_CSS_CLASS     -> fadingOut,
-              AnimCss.FADEOUT_CSS_CLASS      -> fadingOut,
-            ),
-
-            if (visibleOpt.isEmpty) ^.display.none
-            else ^.display.block,
-
-            tms,
+        scCssP.consume { scCss =>
+          div0(
+            scCss.bgColor,
+            tagMods,
           )
         }
       }
