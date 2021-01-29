@@ -23,12 +23,12 @@ object BfpArgs {
 }
 
 case class BfpArgs(
-                   lagMs              : Int       = 222,
+                   lagMs              : Int       = 111,
                    attackLagMs        : Int       = 2000,
-                   tryCountDivisor    : Int       = 2,
+                   tryCountDivisor    : Int       = 5,
                    cachePrefix        : String    = "bfp:",
                    cacheTtl           : Duration  = 30.second,
-                   tryCountDeadline   : Int       = 40
+                   tryCountDeadline   : Int       = 100
                   ) {
 
   def withTryCountDivisor(tcDiv: Int) = copy(tryCountDivisor = tcDiv)
