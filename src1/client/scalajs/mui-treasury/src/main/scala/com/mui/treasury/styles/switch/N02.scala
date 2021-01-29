@@ -12,8 +12,8 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 28.07.2020 16:48
   */
 @js.native
-@JSImport( PKG_STYLES + "/switch/ios", JSImport.Namespace )
-object Ios extends js.Object {
-  def iosSwitchStyles(theme: MuiTheme): MuiSwitchClasses = js.native
-  def useIosSwitchStyles(props: js.Object = js.native): MuiSwitchClasses = js.native
+@JSImport( PKG_STYLES + "/switch/n02", JSImport.Namespace )
+object N02 extends js.Object {
+  def n02SwitchStyles(theme: MuiTheme): MuiSwitchClasses = js.native
+  def useN02SwitchStyles(props: js.Object = js.native): MuiSwitchClasses = js.native
 }

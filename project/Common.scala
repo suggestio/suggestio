@@ -312,7 +312,8 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactJsVsn         = "16.13.1"
+  //val reactJsVsn         = "16.13.1"
+  val reactJsVsn         = "17.0.1"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.

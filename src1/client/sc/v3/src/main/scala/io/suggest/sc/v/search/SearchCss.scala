@@ -50,8 +50,6 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
   import dsl._
 
-  private def isScrollWithField = args.screenInfo.screen.isHeightEnought
-
   private def TAB_BODY_HEIGHT_PX = {
     val si = args.screenInfo
     si.screen.wh.height - si.unsafeOffsets.top
@@ -91,7 +89,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
       var listHeightPx = rowsCount * rowHeightPx
       if (rowsCount > MAX_ROWS_COUNT) listHeightPx += rowHeightPx/2
 
-      //println("search rows height pxx: ", rowHeightPx, rowsCount, args.req.isFailed, args.req.isPending, args.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
+      //println("search rows height pxx: ", rowHeightPx, rowsCount, args.nodesFound.req.isFailed, args.nodesFound.req.isPending, args.nodesFound.req.fold(0)(_.resp.nodes.length), rowHeightPx, rowsCount > MAX_ROWS_COUNT)
 
       listHeightPx.toInt
 
@@ -101,6 +99,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   }
 
   /*
+  private def isScrollWithField = args.screenInfo.screen.isHeightEnought
   private val NODES_WITH_FIELD_HEIGHT_PX: Int = {
     var nlh = NODES_LIST_HEIGHT_PX
     if (!isScrollWithField) nlh += ScCss.TABS_OFFSET_PX
@@ -123,19 +122,33 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   /** Стили для гео-карты гео-картой. */
   object GeoMap {
 
-    val geomap = style(
-      if (GEO_MAP_HEIGHT_PX > 0)
-        height( GEO_MAP_HEIGHT_PX.px )
-      else
-        display.none,
-    )
+    // TODO args.searchBar - надо вынести это в отдельные стили, которые рендерятся только для GeoTab.
 
-    val crosshair = style(
-      if (GEO_MAP_HEIGHT_PX > 0)
-        top( -(GEO_MAP_HEIGHT_PX / 2 + 12).px )
-      else
-        display.none,
-    )
+    val geomap = {
+      if (args.searchBar) {
+        style(
+          if (GEO_MAP_HEIGHT_PX > 0)
+            height( GEO_MAP_HEIGHT_PX.px )
+          else
+            display.none
+        )
+      } else {
+        style()
+      }
+    }
+
+    val crosshair = {
+      if (args.searchBar) {
+        style(
+          if (GEO_MAP_HEIGHT_PX > 0)
+            top( -(GEO_MAP_HEIGHT_PX / 2 + 12).px )
+          else
+            display.none
+        )
+      } else {
+        style()
+      }
+    }
 
   }
 
@@ -144,10 +157,14 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   object NodesFound {
 
     /** Контейнер поиска узлов и текстового поля для единого скроллинга. */
-    val container = style(
-      overflowX.hidden,
-      overflowY.auto,
-    )
+    val container = if (args.searchBar) {
+      style(
+        overflowX.hidden,
+        overflowY.auto,
+      )
+    } else {
+      style()
+    }
 
     // После втыкания materialUI, возникла необходимость описывать стили не-инлайново через classes.
 

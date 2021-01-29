@@ -23,8 +23,6 @@ import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
-import scala.scalajs.js.UndefOr
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

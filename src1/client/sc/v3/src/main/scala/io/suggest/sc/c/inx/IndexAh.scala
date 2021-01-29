@@ -414,7 +414,8 @@ class IndexRah
           )
           val cssArgs = MSearchCssProps(
             nodesFound  = nodesFound2,
-            screenInfo  = ctx.value0.dev.screen.info
+            screenInfo  = ctx.value0.dev.screen.info,
+            searchBar   = false,
           )
           SearchCss( cssArgs )
         },
@@ -726,8 +727,7 @@ class IndexAh[M](
       if (v0.scCss.args != scCssArgs) {
         val scCss2 = ScCss( scCssArgs )
         val searchCss2 = SearchCss(
-          args = MSearchCssProps.screenInfo
-            .set(scCssArgs.screenInfo)(v0.search.geo.css.args)
+          args = (MSearchCssProps.screenInfo set scCssArgs.screenInfo)(v0.search.geo.css.args),
         )
         val v2 = (
           MScIndex.scCss.set( scCss2 ) andThen

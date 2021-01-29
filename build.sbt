@@ -274,8 +274,9 @@ lazy val reactSanfonaSjs = {
     .dependsOn( commonReactSjs )
 }
 
-/** Scala.js биндинги для react-sidebar компонентов. */
-// TODO Убрать, не используется, теперь MuiDrawer.
+/** Scala.js биндинги для react-sidebar компонентов.
+  * MuiDrawer не всегда подходит, т.к. обрабатывает touch-события на уровне document, пробрасывая их в панель на уровне js.
+  */
 lazy val reactSidebar = {
   val name = "react-sidebar"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))

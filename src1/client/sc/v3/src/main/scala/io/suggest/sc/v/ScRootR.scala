@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import com.materialui.{Mui, MuiTheme, MuiThemeProvider, MuiThemeProviderProps}
+import com.materialui.{MuiTheme, MuiThemeProvider, MuiThemeProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColors
@@ -73,7 +73,7 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     def render(mrootProxy: Props, s: State): VdomElement = {
-      val menuSideBar = React.Fragment(
+      val scWithSideBars = React.Fragment(
         // Правая панель поиска:
         searchR.component( mrootProxy ),
 
@@ -134,7 +134,7 @@ class ScRootR (
                 override val theme = _theme
               }
             )(
-              menuSideBar,
+              scWithSideBars,
             ),
 
             // Диалог логина.

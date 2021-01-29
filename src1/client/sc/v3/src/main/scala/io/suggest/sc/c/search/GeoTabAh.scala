@@ -46,6 +46,7 @@ object GeoTabAh {
     val args2 = MSearchCssProps(
       nodesFound = nodesFound,
       screenInfo = screenInfo,
+      searchBar  = true,
     )
     val isNeedRebuild = (searchCssOrNull == null) ||
       MSearchCssProps.MSearchCssPropsFastEq.neqv(searchCssOrNull.args, args2)
@@ -166,7 +167,7 @@ class GeoTabAh[M](
         val v2 = v0.copy(
           found   = found2,
           mapInit = mapInit2,
-          css     = GeoTabAh._mkSearchCss(found2, screenInfoRO.value, v0.css)
+          css     = GeoTabAh._mkSearchCss(found2, screenInfoRO.value, v0.css),
         )
 
         updated(v2, runReqFx)

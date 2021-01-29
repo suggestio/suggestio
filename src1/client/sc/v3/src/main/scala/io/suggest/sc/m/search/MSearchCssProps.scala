@@ -17,7 +17,8 @@ object MSearchCssProps {
   implicit object MSearchCssPropsFastEq extends FastEq[MSearchCssProps] {
     override def eqv(a: MSearchCssProps, b: MSearchCssProps): Boolean = {
       (a.nodesFound ===* b.nodesFound) &&
-      (a.screenInfo ===* b.screenInfo)
+      (a.screenInfo ===* b.screenInfo) &&
+      (a.searchBar ==* b.searchBar)
     }
   }
 
@@ -25,11 +26,20 @@ object MSearchCssProps {
 
   def nodesFound = GenLens[MSearchCssProps](_.nodesFound)
   def screenInfo = GenLens[MSearchCssProps](_.screenInfo)
+  def searchBar = GenLens[MSearchCssProps](_.searchBar)
 
 }
 
 
+/** Аргументы для SearchCss.
+  *
+  * @param nodesFound Найденный список узлов.
+  * @param screenInfo Данные экрана устройства.
+  * @param searchBar Рендерить ли стили для панели поиска в целом?
+                     TODO args.searchBar - надо вынести это в отдельные стили, которые рендерятся только для GeoTab.
+  */
 case class MSearchCssProps(
                             nodesFound   : MNodesFoundS   = MNodesFoundS.empty,
                             screenInfo   : MScreenInfo,
+                            searchBar    : Boolean        = false,
                           )

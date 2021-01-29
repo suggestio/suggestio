@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu
 
 import diode.react.ModelProxy
-import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiListItem, MuiListItemText}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement

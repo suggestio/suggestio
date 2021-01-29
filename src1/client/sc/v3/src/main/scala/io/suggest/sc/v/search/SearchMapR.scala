@@ -66,6 +66,8 @@ class SearchMapR {
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
+        val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
+
         val lgmCtx = LGeoMapR.LgmCtx(
           propsProxy,
           onDragEnd = _onMapDragEndOptF,
@@ -96,6 +98,11 @@ class SearchMapR {
         )
 
         <.div(
+          ^.onTouchStart  ==> _stopPropagationF,
+          ^.onTouchEnd    ==> _stopPropagationF,
+          ^.onTouchMove   ==> _stopPropagationF,
+          ^.onTouchCancel ==> _stopPropagationF,
+
           s.mmapC { mmapProxy =>
             mmapProxy.wrap { mmap =>
               MGeoMapPropsR(

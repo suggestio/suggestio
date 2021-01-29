@@ -11,11 +11,11 @@ import io.suggest.sc.m.search._
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.v.search.found.NodesFoundR
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
+import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -51,9 +51,7 @@ final class SearchR(
       _onSetOpen( false )
     }
 
-    //private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb { opened: Boolean =>
-    //  ReactDiodeUtil.dispatchOnProxyScopeCB( $, SideBarOpenClose(MScSideBars.Search, OptionUtil.SomeBool(opened)) )
-    //}
+    //private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onSetOpen )
 
     def render(mrootProxy: Props, s: State): VdomElement = {
 
@@ -118,6 +116,8 @@ final class SearchR(
         )
       }
 
+      // Реализация панели на базе MuiDrawer. Она лучше поддерживается и лучше вытаскивается из-за экрана.
+      // Активировать, когда удасться изолировать touch-события карты от воздействия на MuiDrawer.
       val _drawerCss = new MuiDrawerClasses {
         override val paper = ScCssStatic.Body.ovh.htmlClass
         override val modal = {
@@ -129,26 +129,32 @@ final class SearchR(
         }
       }
       val _anchorRight = MuiDrawerAnchor.right
-      val _modalProps = new MuiModalProps {
-        override val hideBackdrop = true
-      }
+
 
       s.searchSideBarC { searchOpenedSomeProxy =>
+        val mroot = mrootProxy.value
+
+        val _modalPropsU = JsOptionUtil.maybeDefined {
+          // Нужно узнать, сколько у нас есть места на экране на основе плитки. Отключение backdrop делает невозможным сокрытие панели взмахом.
+          mroot.grid.core.jdConf.gridColumnsCount > 3
+        } {
+          new MuiModalProps {
+            override val hideBackdrop = true
+          }
+        }
+
+        val _animDurationU = JsOptionUtil.maybeDefined( mroot.dev.platform.isUsingNow )( 0d )
+
         MuiSwipeableDrawer(
           new MuiSwipeableDrawer.Props {
             override val onOpen = _onOpenCbF
             override val onClose = _onCloseCbF
             override val open = searchOpenedSomeProxy.value.opened
             override val disableBackdropTransition = true
-            override val transitionDuration = {
-              if (mrootProxy.value.dev.platform.isUsingNow)
-                js.undefined
-              else
-                js.defined( 0d )
-            }
+            override val transitionDuration = _animDurationU
             override val anchor = _anchorRight
             override val classes = _drawerCss
-            override val ModalProps = _modalProps
+            override val ModalProps = _modalPropsU
           }
         )(
           searchBarBody,

@@ -26,7 +26,7 @@ object MaterialUiUtil {
     MuiStylesProvider.component(
       // Нет смысла делать эти пропертисы явно-статическими: этот код вызывается максимум один раз в любой форме (т.к. монтирование корня формы идёт через circuit.wrap() )
       new MuiStylesProvider.Props {
-        override val injectFirst = true
+        override val injectFirst = false
       }
     )(
       appComp,

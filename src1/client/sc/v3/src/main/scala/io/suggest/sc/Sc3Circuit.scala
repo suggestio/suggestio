@@ -162,8 +162,9 @@ class Sc3Circuit(
       scInit.conf -> gen
     }
 
-    val searchCssEmpty = SearchCss( MSearchCssProps(
-      screenInfo = screenInfo
+    def searchCssEmpty(isBar: Boolean) = SearchCss( MSearchCssProps(
+      screenInfo = screenInfo,
+      searchBar = isBar,
     ))
 
     MScRoot(
@@ -183,7 +184,7 @@ class Sc3Circuit(
             mapInit = MMapInitState(
               state = MMapS(scInit.mapProps)
             ),
-            css = searchCssEmpty,
+            css = searchCssEmpty(true),
           ),
         ),
         scCss = ScCss(
@@ -211,7 +212,7 @@ class Sc3Circuit(
         conf = conf2,
         info = MInternalInfo(
           indexesRecents = MIndexesRecentOuter(
-            searchCss = searchCssEmpty,
+            searchCss = searchCssEmpty(false),
             saved = Pot.empty[MScIndexes],
           ),
         ),

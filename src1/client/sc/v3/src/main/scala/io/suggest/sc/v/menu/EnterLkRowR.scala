@@ -1,6 +1,6 @@
 package io.suggest.sc.v.menu
 
-import com.materialui.{MuiListItem, MuiListItemClasses, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiListItem, MuiListItemText}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -17,8 +17,6 @@ import io.suggest.sc.m.{MScRoot, ScLoginFormShowHide}
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
