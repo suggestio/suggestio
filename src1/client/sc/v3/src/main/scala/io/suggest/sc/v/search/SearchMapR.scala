@@ -73,7 +73,6 @@ class SearchMapR {
           onDragEnd = _onMapDragEndOptF,
         )
 
-        // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
         val mapChildren = List[VdomElement](
           // Рендерим основную гео-карту:
           ReactLeafletUtil.Tiles.OsmDefault,

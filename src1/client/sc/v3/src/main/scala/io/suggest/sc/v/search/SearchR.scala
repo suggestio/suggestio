@@ -16,7 +16,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -151,6 +150,8 @@ final class SearchR(
             override val onClose = _onCloseCbF
             override val open = searchOpenedSomeProxy.value.opened
             override val disableBackdropTransition = true
+            // Тут по умолчанию не работает на iOS, хотя в кордове оно должно быть всегда. В браузере iOS Safari - надо тестировать.
+            override val disableSwipeToOpen = false
             override val transitionDuration = _animDurationU
             override val anchor = _anchorRight
             override val classes = _drawerCss
