@@ -125,22 +125,26 @@ class ScRootR (
 
 
         // Рендер провайдера тем MateriaUI, который заполняет react context.
-        s.colorsC { mcolorsProxy =>
-          val _theme = scThemes.muiDefault( mcolorsProxy.value )
-          // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
-          muiThemeCtxP.provide( _theme )(
-            MuiThemeProvider(
-              new MuiThemeProviderProps {
-                override val theme = _theme
-              }
-            )(
-              scWithSideBars,
-            ),
+        {
+          // Диалог логина.
+          val loginDia = mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply )
 
-            // Диалог логина.
-            mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply ),
+          s.colorsC { mcolorsProxy =>
+            val _theme = scThemes.muiDefault( mcolorsProxy.value )
+            // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
+            muiThemeCtxP.provide( _theme )(
+              MuiThemeProvider(
+                new MuiThemeProviderProps {
+                  override val theme = _theme
+                }
+              )(
+                scWithSideBars,
+              ),
 
-          )
+              loginDia,
+
+            )
+          }
         },
 
         // Диалог управления узлами. Без темы, иначе дизайн сыплется.

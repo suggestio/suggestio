@@ -35,7 +35,9 @@ class OsFamiliesR {
               case _ => EmptyVdom   // TODO отступ? пустая иконка или ...?
             },
 
-            HtmlConstants.SPACE,
+            HtmlConstants.NBSP_STR,
+            HtmlConstants.NBSP_STR,
+
             MuiTypoGraphy(
               new MuiTypoGraphyProps {
                 override val classes = new MuiTypoGraphyClasses {

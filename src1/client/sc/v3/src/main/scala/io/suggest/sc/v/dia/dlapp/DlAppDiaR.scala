@@ -1,7 +1,7 @@
 package io.suggest.sc.v.dia.dlapp
 
 import com.github.zpao.qrcode.react.{ReactQrCode, ReactQrCodeProps}
-import com.materialui.{Mui, MuiAccordion, MuiAccordionDetails, MuiAccordionProps, MuiAccordionSummary, MuiAccordionSummaryClasses, MuiAccordionSummaryProps, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiAccordion, MuiAccordionDetails, MuiAccordionProps, MuiAccordionSummary, MuiAccordionSummaryClasses, MuiAccordionSummaryProps, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiCircularProgress, MuiCircularProgressProps, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiFormControlClasses, MuiLink, MuiLinkClasses, MuiLinkProps, MuiMenuItem, MuiMenuItemClasses, MuiMenuItemProps, MuiProgressVariants, MuiSelectClasses, MuiSelectProps, MuiTable, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -28,7 +28,7 @@ import play.api.libs.json.Json
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.LinkingInfo.developmentMode
-import scala.scalajs.js.URIUtils
+import scala.scalajs.js.{URIUtils, UndefOr}
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -105,6 +105,11 @@ class DlAppDiaR(
 
       val _osFamilySelectCss = new MuiFormControlClasses {
         override val root = ScCssStatic.AppDl.osFamily.htmlClass
+      }
+      val _selectProps = new MuiSelectProps {
+        override val classes = new MuiSelectClasses {
+          override val selectMenu = ScCssStatic.flexCenter.htmlClass
+        }
       }
 
       // Содержимое диалога
@@ -201,6 +206,7 @@ class DlAppDiaR(
                     override val value    = osFamilyStr
                     override val onChange = _onOsFamilyChange
                     override val classes  = _osFamilySelectCss
+                    override val SelectProps = _selectProps
                     override val disabled = dlAppDia.getReq.isPending
                     override val variant  = MuiTextField.Variants.standard
                   }

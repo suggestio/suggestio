@@ -527,6 +527,9 @@ object ScCssStatic extends StyleSheet.Inline {
     justifyContent.center,
   )
 
+  val cursorPointer = style(
+    cursor.pointer,
+  )
 
   initInnerObjects(
     Body.ovh,

@@ -124,6 +124,7 @@ object Mui {
 
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   @js.native @JSImport("@material-ui/styles/StylesProvider", JSImport.Default) object StylesProvider extends js.Any
+  @js.native @JSImport("@material-ui/core/StyledEngineProvider", JSImport.Default) object StyledEngineProvider extends js.Any
   val SvgIcons = MuiSvgIcons
 
 }

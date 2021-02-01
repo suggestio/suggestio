@@ -80,7 +80,7 @@ final class SearchR(
         )
       } { cssProxy =>
         geoMapOuterR.component(cssProxy)(
-          tabContentInner
+          tabContentInner,
         )
       }: VdomNode
 
@@ -91,9 +91,7 @@ final class SearchR(
         // Рендер очень динамической search-only css'ки:
         searchCss,
       )
-      val panelBgTagmod = TagMod(
-        ScCssStatic.Root.panelBg,
-      )
+      val panelBgTagmod: TagMod = ScCssStatic.Root.panelBg
 
       val searchBarBody = scCssP.consume { scCss =>
         <.div(
@@ -129,7 +127,6 @@ final class SearchR(
       }
       val _anchorRight = MuiDrawerAnchor.right
 
-
       s.searchSideBarC { searchOpenedSomeProxy =>
         val mroot = mrootProxy.value
 
@@ -142,7 +139,7 @@ final class SearchR(
           }
         }
 
-        val _animDurationU = JsOptionUtil.maybeDefined( mroot.dev.platform.isUsingNow )( 0d )
+        val _animDurationU = JsOptionUtil.maybeDefined( !mroot.dev.platform.isUsingNow )( 0d )
 
         MuiSwipeableDrawer(
           new MuiSwipeableDrawer.Props {

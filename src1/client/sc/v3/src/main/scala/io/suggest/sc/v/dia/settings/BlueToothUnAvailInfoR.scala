@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.settings
 
-import com.materialui.{MuiLink, MuiLinkProps, MuiListItem, MuiListItemText, MuiPaper}
+import com.materialui.{MuiLink, MuiLinkClasses, MuiLinkProps, MuiListItem, MuiListItemText, MuiPaper}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.dev.MOsFamily
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -10,6 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.m.menu.DlAppOpen
 import io.suggest.sc.m.SettingsDiaOpen
 import io.suggest.sc.m.dev.MScDev
+import io.suggest.sc.v.styl.ScCssStatic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -65,9 +66,12 @@ class BlueToothUnAvailInfoR(
                     MuiLink(
                       new MuiLinkProps {
                         override val onClick = _onInstallAppClickCbF
+                        override val classes = new MuiLinkClasses {
+                          override val root = ScCssStatic.cursorPointer.htmlClass
+                        }
                       }
                     )(
-                      crCtx.messages( MsgCodes.`Install.app.for.access.to.0`, MsgCodes.`Bluetooth` )
+                      crCtx.messages( MsgCodes.`Install.app.for.access.to.0`, MsgCodes.`Bluetooth` ),
                     ),
                   )
                 },
