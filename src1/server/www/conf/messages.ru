@@ -1011,7 +1011,7 @@ No.tags.found.for.1.query=Не найдено "{0}".
 
 Go.to.node.ads=К рекламным карточкам узла
 Personal.cabinet=Личный кабинет
-Show.ad.opened=Отображать карточку развёрнутой?
+Show.ad.opened=Отображать развёрнутой?
 
 On=Вкл
 Off=Выкл

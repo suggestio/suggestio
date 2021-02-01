@@ -42,7 +42,7 @@ case class HttpClientConfig(
                              sessionCookieSet   : Option[MCookieState => Unit]  = None,
                              cookieDomainDflt   : Option[() => String]          = None,
                              fetchApi           : Option[(RequestInfo, RequestInit) => Future[HttpResp]] = None,
-                             forcePostBodyNonEmpty: Boolean = false,
+                             forcePostBodyNonEmpty: Boolean                     = false,
                            )
 
 trait IMHttpClientConfig {

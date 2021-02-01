@@ -86,28 +86,22 @@ case class MNodeState(
                        infoPot            : Pot[MLknNode]                     = Pot.empty,
                        role               : MTreeRole,
                        tfInfoWide         : Boolean                           = false,
-                       optionMods         : Map[MLknOpKey, Pot[MLknOpValue]]    = Map.empty,
+                       optionMods         : Map[MLknOpKey, Pot[MLknOpValue]]  = Map.empty,
                        beacon             : Option[MNodeBeaconState]          = None,
                      ) {
 
-  def advIsPending: Boolean = ??? // adv.exists(_.newIsEnabledPot.isPending)
-
   def optionBoolPot(key: MLknOpKey): Pot[Boolean] = {
-    (for {
-      optPot <- Pot
-        .fromOption( optionMods.get( key ) )
-        .flatten
-      bool <- Pot.fromOption( optPot.bool )
-    } yield bool)
-      .orElse {
-        for {
-          info <- infoPot
-          adv <- Pot.fromOption( info.options.get( key ) )
-          boolValue <- Pot.fromOption( adv.bool )
-        } yield {
-          boolValue
+    for {
+      opVal <- optionMods
+        .getOrElse( key, Pot.empty )
+        .orElse[MLknOpValue] {
+          infoPot
+            .flatMap { info =>
+              Pot.fromOption( info.options.get( key ) )
+            }
         }
-      }
+      bool <- Pot.fromOption( opVal.bool )
+    } yield bool
   }
 
   def beaconUidOpt = beacon

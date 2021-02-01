@@ -246,7 +246,8 @@ class Sc3Module { outer =>
         cookieDomainDflt = Option.when(isCordova)( ScUniApi.scDomain ),
         fetchApi = fetchApi,
         // okhttp выдаёт ошибку перед запросами: method POST must have request body. Для подавление косяка, выставляем флаг принудительного body:
-        //forcePostBodyNonEmpty = fetchApi.nonEmpty,
+        // Можно сделать только для osFamily = android, но пока оставляем для всей кордовы.
+        forcePostBodyNonEmpty = fetchApi.nonEmpty && isCordova,
       )
     }
   }

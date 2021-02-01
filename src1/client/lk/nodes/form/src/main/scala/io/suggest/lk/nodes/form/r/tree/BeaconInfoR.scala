@@ -57,6 +57,7 @@ class BeaconInfoR(
 
 
     def render(propsProxy: Props, s: Props_t): VdomElement = {
+      val _isDisabled = s.nodeState.infoPot.isPending
       // Сигнал от маячка: надо отрендерить инфу по выбранному маячку:
       s.nodeState.beacon.whenDefinedEl { bcnState =>
         React.Fragment(
@@ -64,7 +65,7 @@ class BeaconInfoR(
           // Расстояние до маячка:
           distanceCmR.component( propsProxy.resetZoom( bcnState ) ),
 
-          ReactCommonUtil.maybeNode( s.nodeState.infoPot.isPending ) {
+          ReactCommonUtil.maybeNode( _isDisabled ) {
             MuiListItem()(
               treeStuffR.LineProgress()
             )
@@ -81,13 +82,15 @@ class BeaconInfoR(
             val isLoggedIn = nodesDiConf.isUserLoggedIn()
             crCtxP.consume { crCtx =>
               MuiListItem {
-                val _onClickF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-                  val nameDflt = crCtx.messages( MsgCodes.`Beacon.name.example` )
-                  _addBtnClick( bcnUid, Some(nameDflt) )
-                }
                 new MuiListItemProps {
                   override val button = true
-                  override val onClick = JsOptionUtil.maybeDefined(isLoggedIn)(_onClickF)
+                  override val onClick = JsOptionUtil.maybeDefined(isLoggedIn) {
+                    ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
+                      val nameDflt = crCtx.messages( MsgCodes.`Beacon.name.example` )
+                      _addBtnClick( bcnUid, Some(nameDflt) )
+                    }
+                  }
+                  override val disabled = _isDisabled
                 }
               } (
                 MuiListItemIcon()(
