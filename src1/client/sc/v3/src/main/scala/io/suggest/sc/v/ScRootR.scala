@@ -129,6 +129,8 @@ class ScRootR (
           // Диалог логина.
           val loginDia = mrootProxy.wrap( _.dialogs.login )( scLoginR.component.apply )
 
+          val snackBar = scSnacksR.component( mrootProxy )
+
           s.colorsC { mcolorsProxy =>
             val _theme = scThemes.muiDefault( mcolorsProxy.value )
             // Внешний react-контекст scala-уровня, т.к. не удалось понять, как достать MuiTheme из ThemeProvider-контекста.
@@ -143,6 +145,8 @@ class ScRootR (
 
               loginDia,
 
+              // snackbar
+              snackBar,
             )
           }
         },
@@ -160,9 +164,6 @@ class ScRootR (
         ReactCommonUtil.maybeNode( mrootProxy.value.dev.platform.isDlAppAvail ) {
           dlAppDiaR.component( mrootProxy )
         },
-
-        // snackbar
-        scSnacksR.component( mrootProxy ),
 
         // Диалог logout:
         mrootProxy.wrap( _.dialogs.login.logout )( logOutDiaR.component.apply ),

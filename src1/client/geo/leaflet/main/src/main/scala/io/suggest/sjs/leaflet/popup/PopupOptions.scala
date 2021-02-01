@@ -21,6 +21,7 @@ trait PopupOptions extends js.Object {
   val maxHeight: UndefOr[Int] = js.undefined
 
   val autoPan: UndefOr[Boolean] = js.undefined
+  val autoClose: UndefOr[Boolean] = js.undefined
 
   val keepInView: UndefOr[Boolean] = js.undefined
 

@@ -31,18 +31,22 @@ class RcvrInputsAh[M](
       respPot().fold {
         logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = e )
         noChange
+
       } { resp =>
         // Найти узел с текущим id среди всех узлов.
-        val checkedOnServerOpt = resp.node
+        val checkedOnServerOpt = for {
+          node <- resp.node
           // Можно заменить .flatMap на .get: Ведь если это событие обрабатывается, значит хоть одна нода точно должна быть.
-          .flatMap( MRcvrPopupNode.findNode(e.rcvrKey, _) )
-          .flatMap(_.checkbox)
+          treeWalkRes <- MRcvrPopupNode.findNode(e.rcvrKey, node)
+          checkBox <- treeWalkRes.checkbox
+        } yield {
           // Содержит ли описание узла с сервера текущее значение чекбокса? Если да, то значит значение галочки вернулось на исходное.
-          .map(_.checked)
+          checkBox.checked
+        }
 
         val rcvrMap0 = value
 
-        val rcvrMap1 = if ( checkedOnServerOpt.contains(e.checked) ) {
+        val rcvrMap1 = if ( checkedOnServerOpt contains e.checked ) {
           rcvrMap0 - e.rcvrKey
         } else {
           rcvrMap0 + (e.rcvrKey -> e.checked)

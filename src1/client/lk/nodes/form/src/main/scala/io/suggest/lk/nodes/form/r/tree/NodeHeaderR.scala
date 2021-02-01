@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemIconProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemIconProps, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -19,10 +19,12 @@ import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
+import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scalajs.js.JSConverters._
 
 /**
@@ -61,7 +63,7 @@ final class NodeHeaderR(
 
   class Backend($: BackendScope[Props, Props_t]) {
 
-    private lazy val _onAdvOnNodeClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private lazy val _stopPropagationCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
       e.stopPropagationCB
     }
 
@@ -76,17 +78,20 @@ final class NodeHeaderR(
             bool = OptionUtil.SomeBool( isChecked ),
           ),
         )
-      }
+      } >> e.stopPropagationCB
     }
 
     def render(propsProxy: Props, s: Props_t): VdomElement = {
       val st = s.render.state
       val advPot = st.optionBoolPot( MLknOpKeys.AdvEnabled )
       val infoOpt = st.infoPot.toOption
-      val _onClickUndef = s.onClick.orUndefined
 
       // TODO Пока делаем однострочный список, хотя лучше задействовать что-то иное (тулбар?).
-      val listItemRendered = MuiListItem()(
+      val listItemRendered = MuiListItem(
+        new MuiListItemProps {
+          override val onClick = s.onClick.orUndefined
+        }
+      )(
 
         // Иконка-значок типа узла:
         infoOpt
@@ -99,11 +104,7 @@ final class NodeHeaderR(
             }
           }
           .whenDefinedNode { ntype =>
-            MuiListItemIcon(
-              new MuiListItemIconProps {
-                override val onClick = _onClickUndef
-              }
-            )(
+            MuiListItemIcon()(
               (ntype match {
                 case MNodeTypes.BleBeacon                     => Mui.SvgIcons.BluetoothAudio
                 case MNodeTypes.AdnNode                       => Mui.SvgIcons.HomeWorkOutlined
@@ -144,7 +145,6 @@ final class NodeHeaderR(
           new MuiListItemTextProps {
             override val primary = _textPrimary
             override val secondary = _textSecondary
-            override val onClick = _onClickUndef
           }
         }(),
 
@@ -171,11 +171,7 @@ final class NodeHeaderR(
               distanceValueR.component( propsProxy.resetZoom(beacon) ),
             )
           }
-          MuiListItemSecondaryAction(
-            new MuiListItemSecondaryActionProps {
-              override val onClick = _onClickUndef
-            }
-          )( chs )
+          MuiListItemSecondaryAction()( chs )
         })
           .whenDefinedNode,
 
@@ -226,16 +222,20 @@ final class NodeHeaderR(
               .flatMap(_.ntype)
               .exists(_.showScLink)
         ) {
-          val isChecked = advPot
-            .toOption
-            .getOrElseFalse
-          MuiListItemSecondaryAction()(
+          MuiListItemSecondaryAction(
+            new MuiListItemSecondaryActionProps {
+              override val onClick = _stopPropagationCbF
+            }
+          )(
             MuiSwitch(
               new MuiSwitchProps {
-                override val checked        = isChecked
+                override val checked = {
+                  advPot
+                    .toOption
+                    .getOrElseFalse
+                }
                 override val disabled       = advPot.isPending
                 override val onChange       = _onAdvOnNodeChangedCbF
-                override val onClick        = _onAdvOnNodeClickCbF
               }
             ),
           )

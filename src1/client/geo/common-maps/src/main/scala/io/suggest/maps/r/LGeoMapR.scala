@@ -53,7 +53,7 @@ object LGeoMapR {
     val EventsR = ScalaFnComponent[Unit] { _ =>
       useMapEvents(
         new LeafletEventHandlerFnMap {
-          override val popupclose = ReactCommonUtil.cbFun1ToJsCb { _: PopupEvent =>
+          override val popupclose = ReactCommonUtil.cbFun1ToJsCb { e: PopupEvent =>
             proxy.dispatchCB( HandleMapPopupClose )
           }
           override val zoomend = ReactCommonUtil.cbFun1ToJsCb { event: Event =>

@@ -2,7 +2,6 @@ package io.suggest.sjs.leaflet.popup
 
 import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 import io.suggest.sjs.leaflet.div.DivOverlay
-import io.suggest.sjs.leaflet.event.Evented
 import io.suggest.sjs.leaflet.map.{LMap, LatLng}
 import org.scalajs.dom.raw.HTMLElement
 

@@ -6,7 +6,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.{MRcvr, SetRcvrStatus}
 import io.suggest.lk.adv.r.RcvrPopupBackendBaseR
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.vdom.html_<^._
@@ -30,10 +30,13 @@ final class RcvrPopupR {
   protected[this] class Backend(override val $: BackendScope[Props, Unit])
     extends RcvrPopupBackendBaseR[MRcvr, Unit] {
 
+    private val _stopPropagationCB = ReactCommonUtil.stopPropagationCB _
+
     /** Реакция на изменение флага узла-ресивера в попапе узла. */
     private def _rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventFromInput): Callback = {
       val checked = e.target.checked
-      dispatchOnProxyScopeCB( $, SetRcvrStatus(rk, checked) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetRcvrStatus(rk, checked) ) >>
+      _stopPropagationCB(e)
     }
 
 

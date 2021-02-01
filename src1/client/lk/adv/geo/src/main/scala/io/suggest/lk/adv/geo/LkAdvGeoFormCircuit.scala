@@ -285,4 +285,6 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
     }
   }
 
+  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MRoot] )
+
 }
