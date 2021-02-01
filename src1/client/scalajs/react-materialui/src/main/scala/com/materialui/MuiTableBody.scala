@@ -2,13 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
 
 object MuiTableBody {
 
-  val component = JsComponent[MuiTableBodyProps, Children.Varargs, Null](Mui.TableBody)
+  val component = JsForwardRefComponent[MuiTableBodyProps, Children.Varargs, dom.html.Element](Mui.TableBody)
 
   def apply(props: MuiTableBodyProps = MuiPropsBaseStatic.empty)(children: VdomNode*) = {
     component(props)(children: _*)

@@ -1,6 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
@@ -10,7 +11,7 @@ import scala.scalajs.js.annotation.JSName
 
 object MuiSwitch {
 
-  def mkComponent = JsComponent[MuiSwitchProps, Children.None, Null](_: js.Any)
+  def mkComponent = JsForwardRefComponent[MuiSwitchProps, Children.None, dom.html.Element](_: js.Any)
 
   lazy val component = mkComponent( Mui.Switch )
 

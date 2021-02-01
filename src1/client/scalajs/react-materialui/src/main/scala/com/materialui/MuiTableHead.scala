@@ -2,12 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 
 object MuiTableHead {
 
-  val component = JsComponent[MuiTableHeadProps, Children.Varargs, Null](Mui.TableHead)
+  val component = JsForwardRefComponent[MuiTableHeadProps, Children.Varargs, dom.html.Element](Mui.TableHead)
 
   /**
     * @param children Children passed to table header.

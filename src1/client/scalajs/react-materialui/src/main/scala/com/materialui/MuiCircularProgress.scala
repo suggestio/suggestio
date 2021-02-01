@@ -1,13 +1,14 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
 object MuiCircularProgress {
 
-  val component = JsComponent[MuiCircularProgressProps, Children.None, Null](Mui.CircularProgress)
+  val component = JsForwardRefComponent[MuiCircularProgressProps, Children.None, dom.html.Element](Mui.CircularProgress)
 
   final def apply(props: MuiCircularProgressProps = MuiPropsBaseStatic.empty) =
     component(props)

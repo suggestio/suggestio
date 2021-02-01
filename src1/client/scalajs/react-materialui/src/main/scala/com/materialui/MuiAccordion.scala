@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -14,7 +15,7 @@ import scala.scalajs.js.annotation.JSName
   */
 object MuiAccordion {
 
-  val component = JsComponent[MuiAccordionProps, Children.Varargs, Null]( Mui.Accordion )
+  val component = JsForwardRefComponent[MuiAccordionProps, Children.Varargs, dom.html.Element]( Mui.Accordion )
 
   final def apply(props: MuiAccordionProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

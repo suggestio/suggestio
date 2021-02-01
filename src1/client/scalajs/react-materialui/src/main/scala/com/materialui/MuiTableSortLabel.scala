@@ -2,13 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
 
 object MuiTableSortLabel {
 
-  val component = JsComponent[MuiTableSortLabelProps, Children.Varargs, Null](Mui.TableSortLabel)
+  val component = JsForwardRefComponent[MuiTableSortLabelProps, Children.Varargs, dom.html.Element](Mui.TableSortLabel)
 
   def apply(props: MuiTableSortLabelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

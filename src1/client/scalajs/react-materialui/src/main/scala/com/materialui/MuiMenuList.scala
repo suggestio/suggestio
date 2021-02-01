@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -13,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiMenuList {
 
-  val component = JsComponent[MuiMenuListProps, Children.Varargs, Null]( Mui.MenuList )
+  val component = JsForwardRefComponent[MuiMenuListProps, Children.Varargs, dom.html.Element]( Mui.MenuList )
 
   def apply(props: MuiMenuListProps)(children: VdomNode*) =
     component(props)(children: _*)

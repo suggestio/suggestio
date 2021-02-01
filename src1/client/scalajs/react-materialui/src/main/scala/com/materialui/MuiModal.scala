@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -15,7 +16,7 @@ import scala.scalajs.js.annotation.JSName
   */
 object MuiModal {
 
-  val component = JsComponent[MuiModalProps, Children.Varargs, Null]( Mui.Modal )
+  val component = JsForwardRefComponent[MuiModalProps, Children.Varargs, dom.html.Element]( Mui.Modal )
 
   def apply(props: MuiModalProps)(children: VdomNode*) =
     component( props )(children: _*)

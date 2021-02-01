@@ -2,6 +2,8 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 /**
@@ -12,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiDialogActions {
 
-  val component = JsComponent[MuiDialogActionsProps, Children.Varargs, Null](Mui.DialogActions)
+  val component = JsComponent[MuiDialogActionsProps, Children.Varargs, dom.html.Element](Mui.DialogActions)
 
   final def apply(props: MuiDialogActionsProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

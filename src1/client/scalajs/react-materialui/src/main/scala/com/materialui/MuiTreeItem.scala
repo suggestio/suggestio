@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -14,7 +15,7 @@ import scala.scalajs.js
   */
 object MuiTreeItem {
 
-  val component = JsComponent[MuiTreeItemProps, Children.Varargs, Null]( Mui.TreeItem )
+  val component = JsForwardRefComponent[MuiTreeItemProps, Children.Varargs, dom.html.Element]( Mui.TreeItem )
 
   def apply(props: MuiTreeItemProps)(children: VdomNode*) =
     component(props)(children: _*)

@@ -1,6 +1,7 @@
 package com.materialui
 
-import japgolly.scalajs.react.{Children, JsComponent, raw}
+import japgolly.scalajs.react.{Children, JsComponent, JsForwardRefComponent, raw}
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -12,7 +13,7 @@ import scala.scalajs.js
   */
 object MuiMobileStepper {
 
-  val component = JsComponent[MuiMobileStepperProps, Children.None, Null]( Mui.MobileStepper )
+  val component = JsForwardRefComponent[MuiMobileStepperProps, Children.None, dom.html.Element]( Mui.MobileStepper )
 
   def apply(props: MuiMobileStepperProps) =
     component(props)

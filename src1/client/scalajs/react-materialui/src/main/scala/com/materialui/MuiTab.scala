@@ -1,6 +1,7 @@
 package com.materialui
 
-import japgolly.scalajs.react.{Children, JsComponent, raw}
+import japgolly.scalajs.react._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -12,7 +13,7 @@ import scala.scalajs.js
   */
 object MuiTab {
 
-  val component = JsComponent[MuiTabProps, Children.None, Null]( Mui.Tab )
+  val component = JsForwardRefComponent[MuiTabProps, Children.None, dom.html.Element]( Mui.Tab )
 
   def apply(props: MuiTabProps) = component(props)
 

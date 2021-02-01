@@ -2,13 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
 
 object MuiSwipeableDrawer {
 
-  val component = JsComponent[Props, Children.Varargs, Null](Mui.SwipeableDrawer)
+  val component = JsForwardRefComponent[Props, Children.Varargs, dom.html.Div](Mui.SwipeableDrawer)
 
   def apply(props: Props = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

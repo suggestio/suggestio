@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -16,7 +17,7 @@ import scala.scalajs.js.|
   */
 object MuiGrid {
 
-  val component = JsComponent[MuiGridProps, Children.Varargs, Null]( Mui.Grid )
+  val component = JsForwardRefComponent[MuiGridProps, Children.Varargs, dom.html.Element]( Mui.Grid )
 
   def apply(props: MuiGridProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

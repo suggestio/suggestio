@@ -2,12 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 
 object MuiCardMedia {
 
-  val component = JsComponent[MuiCardMediaProps, Children.Varargs, Null](Mui.CardMedia)
+  val component = JsForwardRefComponent[MuiCardMediaProps, Children.Varargs, dom.html.Element](Mui.CardMedia)
 
   final def apply(props: MuiCardMediaProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

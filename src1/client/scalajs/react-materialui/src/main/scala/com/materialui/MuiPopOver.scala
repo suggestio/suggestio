@@ -17,7 +17,7 @@ import scala.scalajs.js.|
   */
 object MuiPopOver {
 
-  val component = JsComponent[MuiPopOverProps, Children.Varargs, Null]( Mui.Popover )
+  val component = JsForwardRefComponent[MuiPopOverProps, Children.Varargs, dom.html.Element]( Mui.Popover )
 
   final def apply(props: MuiPopOverProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

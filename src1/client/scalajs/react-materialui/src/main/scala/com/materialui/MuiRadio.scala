@@ -1,6 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -13,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiRadio {
 
-  val component = JsComponent[MuiRadioProps, Children.None, Null]( Mui.Radio )
+  val component = JsForwardRefComponent[MuiRadioProps, Children.None, dom.html.Element]( Mui.Radio )
 
   def apply( p: MuiRadioProps = MuiPropsBaseStatic.empty ) =
     component(p)

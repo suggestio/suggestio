@@ -2,12 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
     
 object MuiAvatar {
 
-  val component = JsComponent[js.Object, Children.Varargs, Null](Mui.Avatar)
+  val component = JsForwardRefComponent[js.Object, Children.Varargs, dom.html.Element](Mui.Avatar)
 
   final def apply(props: MuiAvatarProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

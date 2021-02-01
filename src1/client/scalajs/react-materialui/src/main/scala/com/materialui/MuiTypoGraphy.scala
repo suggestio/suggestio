@@ -2,6 +2,8 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 /**
@@ -11,7 +13,7 @@ import scala.scalajs.js
   */
 object MuiTypoGraphy {
 
-  val component = JsComponent[MuiTypoGraphyProps, Children.Varargs, Null](Mui.Typography)
+  val component = JsForwardRefComponent[MuiTypoGraphyProps, Children.Varargs, dom.html.Element](Mui.Typography)
 
   def apply(props: MuiTypoGraphyProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

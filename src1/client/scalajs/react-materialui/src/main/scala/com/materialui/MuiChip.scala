@@ -1,12 +1,14 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 
 object MuiChip {
 
-  val component = JsComponent[MuiChipProps, Children.None, Null](Mui.Chip)
+  val component = JsForwardRefComponent[MuiChipProps, Children.None, dom.html.Element](Mui.Chip)
 
   final def apply(props: MuiChipProps = MuiPropsBaseStatic.empty) =
     component(props)

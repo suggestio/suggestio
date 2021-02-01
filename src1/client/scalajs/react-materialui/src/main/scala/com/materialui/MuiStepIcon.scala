@@ -1,8 +1,8 @@
 package com.materialui
 
-import japgolly.scalajs.react.raw
+import japgolly.scalajs.react.{Children, JsForwardRefComponent, raw}
 import japgolly.scalajs.react.vdom.VdomNode
-import japgolly.scalajs.react.{Children, JsComponent}
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -14,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiStepIcon {
 
-  val component = JsComponent[MuiStepIconProps, Children.Varargs, Null]( Mui.StepIcon )
+  val component = JsForwardRefComponent[MuiStepIconProps, Children.Varargs, dom.html.Element]( Mui.StepIcon )
 
   /** @param children In most cases will simply be a string containing a title for the label. */
   def apply(props: MuiStepIconProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =

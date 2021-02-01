@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
+import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
@@ -15,7 +16,7 @@ import scala.scalajs.js.|
   */
 object MuiFormControlLabel {
 
-  val component = JsComponent[MuiFormControlLabelProps, Children.None, Null](Mui.FormControlLabel)
+  val component = JsForwardRefComponent[MuiFormControlLabelProps, Children.None, dom.html.Element](Mui.FormControlLabel)
 
   final def apply(props: MuiFormControlLabelProps = MuiPropsBaseStatic.empty) =
     component(props)

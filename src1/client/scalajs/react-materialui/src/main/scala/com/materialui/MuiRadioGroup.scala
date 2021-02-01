@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -14,7 +15,7 @@ import scala.scalajs.js.|
   */
 object MuiRadioGroup {
 
-  val component = JsComponent[MuiRadioGroupProps, Children.Varargs, Null]( Mui.RadioGroup )
+  val component = JsForwardRefComponent[MuiRadioGroupProps, Children.Varargs, dom.html.Element]( Mui.RadioGroup )
 
   def apply(props: MuiRadioGroupProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

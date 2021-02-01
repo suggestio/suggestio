@@ -1,8 +1,8 @@
 package com.materialui
 
-import japgolly.scalajs.react.raw
+import japgolly.scalajs.react.{Children, JsComponent, JsForwardRefComponent, raw}
 import japgolly.scalajs.react.vdom.VdomNode
-import japgolly.scalajs.react.{Children, JsComponent}
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -14,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiStepper {
 
-  val component = JsComponent[MuiStepperProps, Children.Varargs, Null]( Mui.Stepper )
+  val component = JsForwardRefComponent[MuiStepperProps, Children.Varargs, dom.html.Element]( Mui.Stepper )
 
   /** @param children Two or more <Step /> components. */
   def apply(props: MuiStepperProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =

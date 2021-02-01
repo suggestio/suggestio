@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -13,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiAccordionSummary {
 
-  val component = JsComponent[MuiAccordionSummaryProps, Children.Varargs, Null]( Mui.AccordionSummary )
+  val component = JsForwardRefComponent[MuiAccordionSummaryProps, Children.Varargs, dom.html.Element]( Mui.AccordionSummary )
 
   final def apply( props: MuiAccordionSummaryProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component( props )( children: _* )

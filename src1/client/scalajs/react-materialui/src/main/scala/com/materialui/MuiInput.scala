@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
+import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
@@ -15,7 +16,7 @@ import scala.scalajs.js.|
   */
 object MuiInput {
 
-  val component = JsComponent[MuiInputProps, Children.None, Null](Mui.Input)
+  val component = JsForwardRefComponent[MuiInputProps, Children.None, dom.html.Element](Mui.Input)
 
   final def apply(props: MuiInputProps = MuiPropsBaseStatic.empty) =
     component(props)

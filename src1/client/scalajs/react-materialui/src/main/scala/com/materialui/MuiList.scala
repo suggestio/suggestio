@@ -3,6 +3,7 @@ package com.materialui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -10,7 +11,7 @@ import scala.scalajs.js.|
 
 object MuiList {
 
-  val component = JsComponent[MuiListProps, Children.Varargs, Null](Mui.List)
+  val component = JsForwardRefComponent[MuiListProps, Children.Varargs, dom.html.Element](Mui.List)
 
   /** @param children These are usually `ListItem`s that are passed to be part of the list. */
   final def apply(props: MuiListProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =

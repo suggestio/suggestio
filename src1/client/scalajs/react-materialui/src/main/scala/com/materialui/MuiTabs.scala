@@ -4,7 +4,8 @@ import japgolly.scalajs.react.vdom.VdomNode
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
-import japgolly.scalajs.react.{Children, JsComponent, ReactEventFromHtml}
+import japgolly.scalajs.react.{Children, JsForwardRefComponent, ReactEventFromHtml}
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -15,7 +16,7 @@ import japgolly.scalajs.react.{Children, JsComponent, ReactEventFromHtml}
   */
 object MuiTabs {
 
-  val component = JsComponent[MuiTabsProps, Children.Varargs, Null]( Mui.Tabs )
+  val component = JsForwardRefComponent[MuiTabsProps, Children.Varargs, dom.html.Element]( Mui.Tabs )
 
   def apply(props: MuiTabsProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

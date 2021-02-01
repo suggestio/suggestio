@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -12,7 +13,7 @@ import scala.scalajs.js
   */
 object MuiListItemText {
 
-  val component = JsComponent[MuiListItemTextProps, Children.Varargs, Null](Mui.ListItemText)
+  val component = JsForwardRefComponent[MuiListItemTextProps, Children.Varargs, dom.html.Element](Mui.ListItemText)
 
   final def apply(props: MuiListItemTextProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

@@ -3,6 +3,7 @@ package com.materialui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -10,7 +11,7 @@ import scala.scalajs.js.|
 
 object MuiTablePagination {
 
-  val component = JsComponent[MuiTablePaginationProps, Children.Varargs, Null](Mui.TablePagination)
+  val component = JsForwardRefComponent[MuiTablePaginationProps, Children.Varargs, dom.html.Element](Mui.TablePagination)
 
   def apply(props: MuiTablePaginationProps)(children: VdomNode*) =
     component(props)(children: _*)

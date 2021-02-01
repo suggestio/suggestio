@@ -3,6 +3,7 @@ package com.materialui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -17,7 +18,7 @@ import scala.scalajs.js.`|`
   */
 object MuiToolTip {
 
-  val component = JsComponent[MuiToolTipProps, Children.Varargs, Null](Mui.Tooltip)
+  val component = JsForwardRefComponent[MuiToolTipProps, Children.Varargs, dom.html.Element](Mui.Tooltip)
 
   def apply(p: MuiToolTipProps)(children: VdomElement*) =
     component(p)(children: _*)

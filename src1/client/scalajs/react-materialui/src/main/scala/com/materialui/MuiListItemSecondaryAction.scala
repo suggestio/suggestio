@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -12,7 +13,7 @@ import japgolly.scalajs.react.vdom.VdomNode
   */
 object MuiListItemSecondaryAction {
 
-  val component = JsComponent[MuiListItemSecondaryActionProps, Children.Varargs, Null]( Mui.ListItemSecondaryAction )
+  val component = JsForwardRefComponent[MuiListItemSecondaryActionProps, Children.Varargs, dom.html.Element]( Mui.ListItemSecondaryAction )
 
   def apply(props: MuiListItemSecondaryActionProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

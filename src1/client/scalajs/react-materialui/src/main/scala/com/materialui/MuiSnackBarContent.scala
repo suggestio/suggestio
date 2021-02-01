@@ -1,6 +1,8 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 /**
@@ -10,7 +12,7 @@ import scala.scalajs.js
   */
 object MuiSnackBarContent {
 
-  val component = JsComponent[MuiSnackBarContentProps, Children.None, Null](Mui.SnackbarContent)
+  val component = JsForwardRefComponent[MuiSnackBarContentProps, Children.None, dom.html.Div]( Mui.SnackbarContent )
 
   final def apply(props: MuiSnackBarContentProps = MuiPropsBaseStatic.empty) =
     component(props)

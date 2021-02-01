@@ -2,12 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 
 object MuiToolBar {
 
-  val component = JsComponent[MuiToolBarProps, Children.Varargs, Null](Mui.Toolbar)
+  val component = JsForwardRefComponent[MuiToolBarProps, Children.Varargs, dom.html.Element](Mui.Toolbar)
 
   def apply(props: MuiToolBarProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

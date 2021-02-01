@@ -2,13 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
 
 object MuiIconButton {
 
-  val component = JsComponent[MuiIconButtonProps, Children.Varargs, Null](Mui.IconButton)
+  val component = JsForwardRefComponent[MuiIconButtonProps, Children.Varargs, dom.html.Element](Mui.IconButton)
 
   final def apply(props: MuiIconButtonProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -9,7 +10,7 @@ import scala.scalajs.js.`|`
 
 object MuiDialog {
 
-  val component = JsComponent[MuiDialogProps, Children.Varargs, Null](Mui.Dialog)
+  val component = JsForwardRefComponent[MuiDialogProps, Children.Varargs, dom.html.Element](Mui.Dialog)
 
   final def apply(props: MuiDialogProps)(children: VdomNode*) =
     component(props)(children: _*)

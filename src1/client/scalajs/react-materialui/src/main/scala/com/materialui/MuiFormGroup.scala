@@ -1,7 +1,8 @@
 package com.materialui
 
 import japgolly.scalajs.react.vdom.VdomNode
-import japgolly.scalajs.react.{Children, JsComponent}
+import japgolly.scalajs.react.{Children, JsComponent, JsForwardRefComponent}
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -14,7 +15,7 @@ import scala.scalajs.js
   */
 object MuiFormGroup {
 
-  val component = JsComponent[MuiFormGroupProps, Children.Varargs, Null]( Mui.FormGroup )
+  val component = JsForwardRefComponent[MuiFormGroupProps, Children.Varargs, dom.html.Element]( Mui.FormGroup )
 
   final def apply(props: MuiFormGroupProps = MuiPropsBaseStatic.empty)(children: VdomNode*) = component(props)(children: _*)
 

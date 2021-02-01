@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -9,7 +10,7 @@ import scala.scalajs.js.|
 
 object MuiButtonBase {
 
-  val component = JsComponent[MuiButtonBaseProps, Children.Varargs, Null](Mui.Button)
+  val component = JsForwardRefComponent[MuiButtonBaseProps, Children.Varargs, dom.html.Element](Mui.Button)
 
   final def apply(props: MuiButtonBaseProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

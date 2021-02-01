@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -9,7 +10,7 @@ import scala.scalajs.js.`|`
 
 object MuiTextField {
 
-  val component = JsComponent[MuiTextFieldProps, Children.Varargs, Null](Mui.TextField)
+  val component = JsForwardRefComponent[MuiTextFieldProps, Children.Varargs, dom.html.Element](Mui.TextField)
 
   def apply(props: MuiTextFieldProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

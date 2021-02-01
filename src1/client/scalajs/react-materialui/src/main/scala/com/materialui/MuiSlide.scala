@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -14,7 +15,7 @@ import scala.scalajs.js.`|`
   */
 object MuiSlide {
 
-  val component = JsComponent[MuiSlideProps, Children.Varargs, Null]( Mui.Slide )
+  val component = JsForwardRefComponent[MuiSlideProps, Children.Varargs, dom.html.Element]( Mui.Slide )
 
   def apply( props: MuiSlideProps = MuiPropsBaseStatic.empty )( children: VdomElement ) =
     component( props )( children )

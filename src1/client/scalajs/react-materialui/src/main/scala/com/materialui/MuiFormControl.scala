@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -13,7 +14,7 @@ import scala.scalajs.js.|
   */
 object MuiFormControl {
 
-  val component = JsComponent[MuiFormControlProps, Children.Varargs, Null](Mui.FormControl)
+  val component = JsForwardRefComponent[MuiFormControlProps, Children.Varargs, dom.html.Element](Mui.FormControl)
 
   final def apply(props: MuiFormControlProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

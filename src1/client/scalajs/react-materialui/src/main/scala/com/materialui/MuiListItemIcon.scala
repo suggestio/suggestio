@@ -2,6 +2,8 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 /**
@@ -12,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiListItemIcon {
 
-  val component = JsComponent[MuiListItemIconProps, Children.Varargs, Null](Mui.ListItemIcon)
+  val component = JsForwardRefComponent[MuiListItemIconProps, Children.Varargs, dom.html.Element](Mui.ListItemIcon)
 
   final def apply(props: MuiListItemIconProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

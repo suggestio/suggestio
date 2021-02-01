@@ -1,6 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -14,7 +15,7 @@ import scala.scalajs.js.|
   */
 object MuiSlider {
 
-  val component = JsComponent[MuiSliderProps, Children.None, Null](Mui.Slider)
+  val component = JsForwardRefComponent[MuiSliderProps, Children.None, dom.html.Element](Mui.Slider)
 
   final def apply(props: MuiSliderProps = MuiPropsBaseStatic.empty) =
     component(props)

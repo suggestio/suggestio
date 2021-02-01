@@ -31,7 +31,7 @@ class ScErrorDiaR(
                    crCtxProv     : React.Context[MCommonReactCtx],
                  )
   extends SnackComp
-{
+{ that =>
 
   type Props_t = MScErrorDia
   type Props = ModelProxy[Option[Props_t]]
@@ -45,11 +45,11 @@ class ScErrorDiaR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private val onClickCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private val onClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, RetryError)
     }
 
-    private val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { e: ReactEvent =>
+    private val _onCloseCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
       ReactDiodeUtil.dispatchOnProxyScopeCB($, CloseError)
     }
 
@@ -143,23 +143,26 @@ class ScErrorDiaR(
             override val title = retryText.rawNode
           }
         )(
-          s.retryPendingOptC {
-            _.value.whenDefinedEl { isPending =>
-              MuiFab {
-                new MuiFabProps {
-                  override val variant = MuiFabVariants.extended
-                  override val onClick = onClickCbF
-                  override val disabled = isPending
-                }
-              } (
-                retryIcon,
-              )
-            }
-          }
+          // div нужен, т.к. mui-tooltip дёргает в useIsFocusVisible.js:91, рушится на внезапный node.ownerDocument = undefined.
+          <.div(
+            s.retryPendingOptC {
+              _.value.whenDefinedEl { isPending =>
+                MuiFab {
+                  new MuiFabProps {
+                    override val variant = MuiFabVariants.extended
+                    override val onClick = onClickCbF
+                    override val disabled = isPending
+                  }
+                } (
+                  retryIcon,
+                )
+              }
+            },
+          ),
         )
       }
 
-      CatchR.component( p.zoom(_ => classOf[ScErrorDiaR].getSimpleName) )(
+      CatchR.component( p.zoom(_ => that.getClass.getSimpleName) )(
         MuiSnackBarContent {
           new MuiSnackBarContentProps {
             override val action  = _message.rawNode

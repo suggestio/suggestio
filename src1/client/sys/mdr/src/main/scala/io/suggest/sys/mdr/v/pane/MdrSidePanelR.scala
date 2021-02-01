@@ -86,7 +86,7 @@ class MdrSidePanelR(
             def __mdrPot(ai: MMdrActionInfo) =
               nodeProps.mdrPots.getOrElse(ai, Pot.empty)
 
-            val divider = MuiDivider()()
+            val divider: VdomElement = MuiDivider()()
 
             <.div(
 
@@ -124,7 +124,7 @@ class MdrSidePanelR(
                   .flatMap { case (itype, mitems) =>
                     // Ряд заголовка типа item'а.
                     val itypeName = Messages( itype.nameI18n )
-                    val itypeCaption = propsPotProxy.wrap { _ =>
+                    val itypeCaption: VdomElement = propsPotProxy.wrap { _ =>
                       val ai = MMdrActionInfo(
                         itemType = Some( itype )
                       )
@@ -144,7 +144,7 @@ class MdrSidePanelR(
                     // Отрендерить непосредственно mitems:
                     val itemRows = mitems
                       .iterator
-                      .map { mitem =>
+                      .map[VdomElement] { mitem =>
                         propsPotProxy.wrap { _ =>
                           val ai = MMdrActionInfo(
                             itemId = mitem.id
@@ -229,10 +229,13 @@ class MdrSidePanelR(
                       }
                       .to(LazyList)
 
-                    itypeCaption #::
+                    val r: LazyList[VdomElement] =
+                      itypeCaption #::
                       itemRows #:::
                       divider #::
                       LazyList.empty
+
+                    r
                   }
                   .toVdomArray,
 

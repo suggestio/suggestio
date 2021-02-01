@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomNode
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -13,7 +14,7 @@ import scala.scalajs.js
   */
 object MuiInputLabel {
 
-  val component = JsComponent[MuiInputLabelProps, Children.Varargs, Null](Mui.InputLabel)
+  val component = JsForwardRefComponent[MuiInputLabelProps, Children.Varargs, dom.html.Element](Mui.InputLabel)
 
   final def apply(props: MuiInputLabelProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

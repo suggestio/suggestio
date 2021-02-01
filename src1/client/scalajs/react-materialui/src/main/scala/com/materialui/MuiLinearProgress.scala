@@ -1,12 +1,14 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
+
 import scala.scalajs.js
 
 
 object MuiLinearProgress {
 
-  val component = JsComponent[MuiLinearProgressProps, Children.None, Null](Mui.LinearProgress)
+  val component = JsForwardRefComponent[MuiLinearProgressProps, Children.None, dom.html.Element](Mui.LinearProgress)
 
   final def apply(props: MuiLinearProgressProps = MuiPropsBaseStatic.empty) =
     component(props)

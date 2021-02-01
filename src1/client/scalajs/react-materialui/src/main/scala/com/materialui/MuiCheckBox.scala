@@ -1,6 +1,7 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
@@ -10,7 +11,7 @@ import scala.scalajs.js.annotation.JSName
 
 object MuiCheckBox {
 
-  val component = JsComponent[MuiCheckBoxProps, Children.None, Null](Mui.CheckBox)
+  val component = JsForwardRefComponent[MuiCheckBoxProps, Children.None, dom.html.Element](Mui.CheckBox)
 
   final def apply(props: MuiCheckBoxProps = MuiPropsBaseStatic.empty) =
     component(props)

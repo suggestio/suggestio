@@ -2,13 +2,14 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
 
 object MuiPaper {
 
-  val component = JsComponent[MuiPaperProps, Children.Varargs, Null](Mui.Paper)
+  val component = JsForwardRefComponent[MuiPaperProps, Children.Varargs, dom.html.Element](Mui.Paper)
 
   final def apply(props: MuiPaperProps = MuiPropsBaseStatic.empty)(children: VdomNode*) =
     component(props)(children: _*)

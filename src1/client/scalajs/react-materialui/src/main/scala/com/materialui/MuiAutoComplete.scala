@@ -2,6 +2,7 @@ package com.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -16,7 +17,7 @@ import scala.scalajs.js.|
   */
 object MuiAutoComplete {
 
-  val component = JsComponent[Props[_], Children.None, Null]( Mui.AutoComplete )
+  val component = JsForwardRefComponent[Props[_], Children.None, dom.html.Element]( Mui.AutoComplete )
 
   def apply[T]( p: Props[T] ) =
     component( p )
