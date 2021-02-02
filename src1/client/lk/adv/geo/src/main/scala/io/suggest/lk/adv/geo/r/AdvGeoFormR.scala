@@ -58,16 +58,9 @@ final class AdvGeoFormR(
   type Props = ModelProxy[MRoot]
 
 
-  /** Состояние содержит коннекшены от корневой модели до некоторых обновляемых компонентов.
-    *
-    * scalac 2.11.8 выдаёт ошибочный warning здесь на тему existential types, см.
-    * [[http://scala-language.1934581.n4.nabble.com/Option-What-Option-td4647470.html]]
-    * [[https://github.com/scala/scala/pull/4017]]
-    */
   protected case class State(
                               onMainScrC          : ReactConnectProxy[onMainScreenR.PropsVal],
                               rcvrsGeoC           : ReactConnectProxy[Pot[MGeoNodesResp]],
-                              rcvrPopupC          : ReactConnectProxy[MRcvr],
                               geoMapPropsC        : ReactConnectProxy[MGeoMapPropsR],
                               geoAdvExistGjC      : ReactConnectProxy[Pot[js.Array[GjFeature]]],
                               geoAdvPopupC        : ReactConnectProxy[MExistGeoPopupS],
@@ -157,7 +150,8 @@ final class AdvGeoFormR(
             s.rcvrsGeoC( RcvrMarkersR.component(_)() ),
 
             // Рендер опционального попапа над ресивером.
-            s.rcvrPopupC( rcvrPopupR.component.apply )
+            p.wrap(_.adv.rcvr)( rcvrPopupR.component.apply ),
+
           )
           s.geoMapPropsC { mapProps =>
             MapContainer(
@@ -193,7 +187,6 @@ final class AdvGeoFormR(
           )
         },
         rcvrsGeoC        = propsProxy.connect(_.adv.rcvr.rcvrsGeo),
-        rcvrPopupC       = propsProxy.connect(_.adv.rcvr),
         geoMapPropsC     = propsProxy.connect { p =>
           MGeoMapPropsR(
             mapS          = p.geo.mmap,

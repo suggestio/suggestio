@@ -3,8 +3,9 @@ package io.suggest.lk.adv.geo.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.geo.RcvrsMap_t
-import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
+import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.lk.adv.m.IRcvrPopupProps
+import io.suggest.maps.m.MRcvrPopupS
 import io.suggest.maps.nodes.MGeoNodesResp
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.JsUnivEqUtil._

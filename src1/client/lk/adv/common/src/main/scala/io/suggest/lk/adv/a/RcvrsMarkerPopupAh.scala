@@ -2,9 +2,8 @@ package io.suggest.lk.adv.a
 
 import diode._
 import diode.data.Pot
-import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.lk.adv.m.IRcvrPopupProps
-import io.suggest.maps.m._
+import io.suggest.maps.m.{MRcvrPopupS, _}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log

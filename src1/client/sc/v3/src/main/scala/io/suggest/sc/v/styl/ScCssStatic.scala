@@ -531,6 +531,16 @@ object ScCssStatic extends StyleSheet.Inline {
     cursor.pointer,
   )
 
+
+  object Snacks {
+
+    val bordered = style(
+      border.attr := ("1px " + solid.value + " rgb(49,49,49)"),
+    )
+
+  }
+
+
   initInnerObjects(
     Body.ovh,
     Root.root,
@@ -552,6 +562,7 @@ object ScCssStatic extends StyleSheet.Inline {
     Menu.version,
 
     AppDl.osFamily,
+    Snacks.bordered,
   )
 
 }

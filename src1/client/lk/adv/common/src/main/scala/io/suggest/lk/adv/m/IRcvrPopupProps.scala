@@ -2,7 +2,8 @@ package io.suggest.lk.adv.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
+import io.suggest.adv.rcvr.MRcvrPopupResp
+import io.suggest.maps.m.MRcvrPopupS
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 

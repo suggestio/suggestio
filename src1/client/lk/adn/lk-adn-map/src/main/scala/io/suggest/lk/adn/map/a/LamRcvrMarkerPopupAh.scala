@@ -2,11 +2,10 @@ package io.suggest.lk.adn.map.a
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.lk.m.NodeInfoPopupClose
-import io.suggest.maps.m.{HandleRcvrPopupTryResp, OpenMapRcvr}
+import io.suggest.maps.m.{HandleRcvrPopupTryResp, MRcvrPopupS, OpenMapRcvr}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
@@ -48,7 +47,7 @@ class LamRcvrMarkerPopupAh[M](
         resp = v0.popupResp.pending(),
         state = Some( MRcvrPopupS(
           nodeId = rrp.nodeId,
-          latLng = rrp.geoPoint
+          geoPoint = rrp.geoPoint
         ))
       )
 

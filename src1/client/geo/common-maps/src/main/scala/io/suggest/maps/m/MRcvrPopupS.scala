@@ -1,14 +1,19 @@
-package io.suggest.adv.rcvr
+package io.suggest.maps.m
 
 import io.suggest.geo.MGeoPoint
+import io.suggest.maps.u.MapsUtil
 import japgolly.univeq.UnivEq
 
 
 /** Состояние попапа над ресивером на карте. */
 case class MRcvrPopupS(
-  nodeId  : String,
-  latLng  : MGeoPoint
-)
+                        nodeId  : String,
+                        geoPoint  : MGeoPoint
+                      ) {
+
+  lazy val leafletLatLng = MapsUtil.geoPoint2LatLng( geoPoint )
+
+}
 
 
 object MRcvrPopupS {

@@ -64,7 +64,7 @@ final class LamRcvrsR {
             popupState <- m.popupState
             if m.popupResp.isPending
           } yield {
-            popupState.latLng
+            popupState.geoPoint
           }
         }
       )

@@ -141,6 +141,7 @@ class ScRootR (
                 }
               )(
                 scWithSideBars,
+
               ),
 
               loginDia,

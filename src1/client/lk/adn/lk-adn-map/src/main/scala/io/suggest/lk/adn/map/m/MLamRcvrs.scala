@@ -3,7 +3,7 @@ package io.suggest.lk.adn.map.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.info.MNodeAdvInfo
-import io.suggest.adv.rcvr.MRcvrPopupS
+import io.suggest.maps.m.MRcvrPopupS
 import io.suggest.maps.nodes.MGeoNodesResp
 
 /**

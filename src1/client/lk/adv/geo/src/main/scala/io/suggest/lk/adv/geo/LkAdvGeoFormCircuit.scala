@@ -267,7 +267,7 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
         // Есть повод устроить запрос.
         val a = OpenMapRcvr(
           nodeId    = rcvrPopupState.nodeId,
-          geoPoint  = rcvrPopupState.latLng
+          geoPoint  = rcvrPopupState.geoPoint
         )
         dispatch(a)
       }

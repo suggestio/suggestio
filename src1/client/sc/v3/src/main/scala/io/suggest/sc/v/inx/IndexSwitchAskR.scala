@@ -7,7 +7,6 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
 import ReactDiodeUtil.Implicits._
-import io.suggest.sc.ScConstants
 import io.suggest.sc.m.inx.{IndexSwitchNodeClick, MInxSwitch}
 import io.suggest.sc.m.search.MNodesFoundRowProps
 import io.suggest.sc.v.search.SearchCss
@@ -116,6 +115,7 @@ class IndexSwitchAskR(
           // Чтобы кнопки выравнивались вертикально, а не горизонтально
           override val action = notsCss.snackActionCont.htmlClass
           override val message = notsCss.snackMsg.htmlClass
+          override val root = ScCssStatic.Snacks.bordered.htmlClass
         }
 
         // Объединяем всё:
