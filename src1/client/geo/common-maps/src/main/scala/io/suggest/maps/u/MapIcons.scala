@@ -17,7 +17,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.log.Log
 import japgolly.scalajs.react.vdom.html_<^._
 import org.js.react.leaflet.core.CircleMarkerProps
-import org.js.react.leaflet.{Circle, CircleMarker, CircleProps, LayerGroup, Marker, MarkerProps}
+import org.js.react.leaflet.{CircleMarker, LayerGroup, Marker, MarkerProps}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -156,7 +156,8 @@ object MapIcons extends Log {
     val weight2 = 2
 
     LayerGroup()(
-      // Круга радиуса расположения.
+      /*
+      // Круг радиуса расположения. Скрыт и не рендерится сейчас, т.к. плагин locatecontrol его тоже не отображает.
       userLoc.accuracyOptM.whenDefinedNode { accuracyM =>
         Circle.component(
           new CircleProps {
@@ -170,6 +171,7 @@ object MapIcons extends Log {
           }
         )()
       },
+      */
 
       CircleMarker.component(
         new CircleMarkerProps {

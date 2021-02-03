@@ -12,7 +12,6 @@ import io.suggest.maps.u.MapIcons
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.r.RangeYmdR
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
@@ -54,7 +53,7 @@ final class RcvrPopupR {
     }
 
     private def _rcvrInfoClick(rk: RcvrKey): Callback = {
-      dispatchOnProxyScopeCB($, OpenNodeInfoClick(rk))
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, OpenNodeInfoClick(rk))
     }
 
 
@@ -133,15 +132,16 @@ final class RcvrPopupR {
 
 
     /** react render. */
-    def render(props: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
 
+      // Содержимое попапа:
       val popupContent = s.popupContentC { rcvrProxy =>
         // Функция для рендера узла и его под-групп. Рекурсивна, т.к. в группах тоже могут быть узлы.
         // node -- узел для рендера
         // parentRcvrKeyRev обратный rcvrKey родительского узла или Nil для рендера top-level узла.
         val rcvr = rcvrProxy.value
 
-        def __renderNode(node: MRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): VdomElement = {
+        def __renderNode(node: MRcvrPopupNode, parentRcvrKeyRev: List[String]): VdomElement = {
           val rcvrKeyRev = node.id :: parentRcvrKeyRev
           val rcvrKey = rcvrKeyRev.reverse
 
@@ -179,12 +179,11 @@ final class RcvrPopupR {
           rcvr.popupResp
             .toOption
             .flatMap(_.node)
-            .whenDefinedEl { topNode =>
-              __renderNode(topNode)
-            },
+            .whenDefinedEl( __renderNode(_, Nil) )
         )
       }
 
+      // Слой попапов на карте:
       LayerGroup()(
 
         // Рендер маркера-крутилки на карте в ожидании рендера.
@@ -201,6 +200,9 @@ final class RcvrPopupR {
             Popup(
               new PopupProps {
                 override val position = resp.leafletLatLng
+                // 250px - выставлено из-за проблем с шириной попапов: ширина вычисляется автоматом, когда контент попапа
+                // ещё не отрендерен в коннекшене popupContent. Поэтому тут выставлена жесткая минимальная ширина.
+                // Максимальная ширина в текущей реализации - по сути не важна, обычно width = minWidth, т.к. контент попапа часто бывает пуст.
                 override val minWidth = 250
                 override val maxWidth = 350
               }
@@ -228,14 +230,14 @@ final class RcvrPopupR {
             .filter( _ => props.popupResp.isPending )
         },
 
-        popupContentC = propsProxy.connect( identity ) {
+        popupContentC = propsProxy.connect( identity )(
           FastEqUtil[MRcvr] {
             val respFeq = FastEqUtil.PotAsOptionFastEq( FastEqUtil.AnyRefFastEq[MRcvrPopupResp] )
             (a, b) =>
               respFeq.eqv( a.popupResp, b.popupResp ) &&
               (a.rcvrsMap ===* b.rcvrsMap)
           }
-        },
+        ),
 
         shownAtOptC = propsProxy.connect( _.popupState ),
 
