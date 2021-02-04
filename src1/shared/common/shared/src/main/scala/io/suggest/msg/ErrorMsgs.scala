@@ -261,4 +261,5 @@ object ErrorMsgs {
 
   def ALREADY_DONE = "Already.done"
 
+  def IGNORED_EXCEPTION = "Ignored.error"
 }

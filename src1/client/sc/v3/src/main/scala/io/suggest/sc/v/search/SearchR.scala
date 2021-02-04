@@ -16,6 +16,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
+import scala.scalajs.js.UndefOr
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -53,7 +55,6 @@ final class SearchR(
     //private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onSetOpen )
 
     def render(mrootProxy: Props, s: State): VdomElement = {
-
       val nodesSearch = nodesFoundR.component( mrootProxy )
 
       val searchCss = s.searchCssC( CssR.compProxied.apply )
@@ -130,13 +131,10 @@ final class SearchR(
       s.searchSideBarC { searchOpenedSomeProxy =>
         val mroot = mrootProxy.value
 
-        val _modalPropsU = JsOptionUtil.maybeDefined {
+        val _modalProps = new MuiModalProps {
           // Нужно узнать, сколько у нас есть места на экране на основе плитки. Отключение backdrop делает невозможным сокрытие панели взмахом.
-          mroot.grid.core.jdConf.gridColumnsCount > 3
-        } {
-          new MuiModalProps {
-            override val hideBackdrop = true
-          }
+          override val hideBackdrop = (mroot.grid.core.jdConf.gridColumnsCount > 3)
+          override val keepMounted = true
         }
 
         val _animDurationU = JsOptionUtil.maybeDefined( !mroot.dev.platform.isUsingNow )( 0d )
@@ -152,7 +150,8 @@ final class SearchR(
             override val transitionDuration = _animDurationU
             override val anchor = _anchorRight
             override val classes = _drawerCss
-            override val ModalProps = _modalPropsU
+            override val ModalProps = _modalProps
+            override val swipeAreaWidth = 30
           }
         )(
           searchBarBody,

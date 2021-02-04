@@ -64,6 +64,7 @@ trait ICdvBackgroundGeolocation extends js.Object {
 
   def stop(): Unit = js.native
 
+  // blocking!!!
   def getCurrentLocation(success: js.Function1[Location, _],
                          fail: js.Function1[BackgroundGeolocationError, _] = js.native,
                          options: js.UndefOr[LocationOptions] = js.undefined,
@@ -130,7 +131,7 @@ trait ICdvBackgroundGeolocation extends js.Object {
 
   def headlessTask(task: HeadlessTaskEvent): Unit = js.native
 
-  def on(eventName: String, callback: js.Function): Unit = js.native
+  def on(eventName: String, callback: js.Function): EventSubscription = js.native
 
 }
 
@@ -188,37 +189,37 @@ object ICdvBackgroundGeolocation {
     def endTaskF(taskId: TaskId): Future[Unit] =
       JsApiUtil.call0ErrFut( cdvBgGeo.endTask(taskId, _, _) )
 
-    def onLocation(callback: Location => _): Unit =
+    def onLocation(callback: Location => _) =
       cdvBgGeo.on( Events.LOCATION, callback )
 
-    def onStationary(callback: StationaryLocation => _): Unit =
+    def onStationary(callback: StationaryLocation => _) =
       cdvBgGeo.on( Events.STATIONARY, callback )
 
-    def onActivity(callback: Activity => _): Unit =
+    def onActivity(callback: Activity => _) =
       cdvBgGeo.on( Events.ACTIVITY, callback )
 
-    def onStart(callback: () => _): Unit =
+    def onStart(callback: () => _) =
       cdvBgGeo.on( Events.START, callback )
 
-    def onStop(callback: () => _): Unit =
+    def onStop(callback: () => _) =
       cdvBgGeo.on( Events.STOP, callback )
 
-    def onError(callback: BackgroundGeolocationError => _): Unit =
+    def onError(callback: BackgroundGeolocationError => _) =
       cdvBgGeo.on( Events.ERROR, callback )
 
-    def onAuthorization(callback: AuthorizationStatus => _): Unit =
+    def onAuthorization(callback: AuthorizationStatus => _) =
       cdvBgGeo.on( Events.AUTHORIZATION, callback )
 
-    def onForeground(callback: () => _): Unit =
+    def onForeground(callback: () => _) =
       cdvBgGeo.on( Events.FOREGROUND, callback )
 
-    def onBackground(callback: () => _): Unit =
+    def onBackground(callback: () => _) =
       cdvBgGeo.on( Events.BACKGROUND, callback )
 
-    def onAbortRequested(callback: () => _): Unit =
+    def onAbortRequested(callback: () => _) =
       cdvBgGeo.on( Events.ABORT_REQUESTED, callback )
 
-    def onHttpAuthorization(callback: () => _): Unit =
+    def onHttpAuthorization(callback: () => _) =
       cdvBgGeo.on( Events.HTTP_AUTHORIZATION, callback )
 
   }

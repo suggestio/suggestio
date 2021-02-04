@@ -25,12 +25,12 @@ trait PositionOptions extends js.Object {
 @js.native
 trait Geolocation extends js.Object {
 
-  /** Cordova на андройде возвращает UUID, а браузер по стандарту- Int.
+  /** Cordova на андройде (cordova-plugin-geolocation) возвращает UUID, а браузер по стандарту -- Int.
     * Возможно, есть ещё какие-то девиации, поэтому возвращать надо js.Any.
     */
   @JSName("watchPosition")
-  def watchPosition2(successCallback: js.Function1[dom.Position, _],
-                     errorCallback: js.Function1[dom.PositionError, _] = js.native,
+  def watchPosition2(successCallback: js.Function1[dom.Position, Unit],
+                     errorCallback: js.Function1[dom.PositionError, Unit] = js.native,
                      options: dom.PositionOptions = js.native): GeoLocWatchId_t = js.native
 
   /** Очистка watch'а, возвращённого из watchPosition2(), который js.Any */
@@ -60,6 +60,11 @@ trait Coordinates extends js.Object {
 }
 
 
+object PositionError {
+  final val PERMISSION_DENIED = 1
+  final val POSITION_UNAVAILABLE = 2
+  final val TIMEOUT = 3
+}
 trait PositionError extends js.Object {
   val code: Int
   val message: String

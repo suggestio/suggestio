@@ -11,17 +11,24 @@ import japgolly.univeq._
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 22.10.2020 10:32
   * Description: Универсальный интерфейс для абстрагирования различных API геолокации.
+  * Используется stateful-инстанс из-за потребности абстрагироваться от двух слишком различных API (html5 api, cdb-bg-geoloc.).
   */
 trait GeoLocApi {
+
+  def reset(): Future[_]
+
+  def configure(options: GeoLocApiWatchOptions): Future[_]
 
   def underlying: Option[js.Any]
 
   def isAvailable(): Boolean
 
   /** ОПРЕДЕЛИТЬ и наблюдать геолокацию. */
-  def getAndWatchPosition(options: GeoLocApiWatchOptions ): Future[GeoLocWatchId_t]
+  def getAndWatchPosition(): Future[_]
 
-  def clearWatch(watchId: GeoLocWatchId_t): Future[_]
+  def getPosition(): Future[_]
+
+  def clearWatch(): Future[_]
 
 }
 

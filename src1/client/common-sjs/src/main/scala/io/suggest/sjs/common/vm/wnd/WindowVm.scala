@@ -4,7 +4,7 @@ import io.suggest.sjs.common.vm.wnd.compstyle.GetComputedStyleT
 import io.suggest.sjs.common.vm.wnd.dpr.DevPxRatioT
 import io.suggest.sjs.common.vm.wnd.nav.NavigatorVm
 import org.scalajs.dom
-import org.scalajs.dom.{MediaQueryList, Navigator, Window, raw}
+import org.scalajs.dom.{MediaQueryList, Navigator, Window}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr

@@ -31,7 +31,7 @@ object LGeoMapR {
 
     /** Компонент LocateControl с подпиской на события карты. */
     object LocateControlR {
-      val component = ReactForwardRef[LocateControlOptions, LocateControl] { (props, refOpt)=>
+      val component = ReactForwardRef[LocateControlOptions, LocateControl] { (props, refOpt) =>
         // Подписаться на locationfound-события карты:
         useMapEvent(
           Events.LOCATION_FOUND,

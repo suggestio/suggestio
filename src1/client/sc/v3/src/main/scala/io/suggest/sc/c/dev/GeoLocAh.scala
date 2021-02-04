@@ -18,7 +18,6 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import monocle.Traversal
 import org.scalajs.dom
-import org.scalajs.dom.raw.PositionError
 import scalaz.Need
 import scalaz.std.option._
 
@@ -62,9 +61,12 @@ class GeoLocAh[M](
     val maxAgeSome = Some( 20.seconds )
     Option.when(wTypes.nonEmpty)( Effect {
       val glType: GeoLocType = GeoLocTypes.Gps
-      glApi
+
+      (for {
+        _ <- glApi.reset()
+
         // Подписка на события геолокации:
-        .getAndWatchPosition(
+        _ <- glApi.configure(
           GeoLocApiWatchOptions(
             onLocation = { geoLoc =>
               dispatcher( GlLocation( glType, geoLoc ) )
@@ -79,6 +81,11 @@ class GeoLocAh[M](
             ),
           )
         )
+
+        _ <- glApi.getAndWatchPosition()
+      } yield {
+        js.undefined.asInstanceOf[GeoLocWatchId_t]
+      })
         // Завернуть в ответный экшен:
         .transform { tryChanges =>
           val thePot = Pot.empty[GeoLocWatchId_t] withTry tryChanges
@@ -422,20 +429,26 @@ class GeoLocAh[M](
         var fxAcc = List.empty[Effect]
 
         // Если есть текущая геолокация, то вернуть её сразу же:
-        for ( (_, geoLoc) <- v0.currentLocation)
+        // TODO currentLocation надо проверять по maxAge, но пока сейчас дата-время получения ещё не сохраняется в состоянии.
+        var alreadyRepliedLocation = false
+        for ( (_, geoLoc) <- v0.currentLocation) {
           fxAcc ::= _leafletOnLocationFx( leafletLocateOpts, geoLoc )
+          alreadyRepliedLocation = true
+        }
 
         // Если геолокация выключена, то надо её включить.
-        if (!(v0.switch.onOff contains[Boolean] true)) {
+        if (!(v0.switch.onOff contains[Boolean] true))
           fxAcc ::= GeoLocOnOff( enabled = true, isHard = false ).toEffectPure
-        } else for {
-          glApi <- GEO_LOC_API
-          fx <- _geoLocateFx(
-            wTypes = GeoLocTypes.Gps :: Nil,
-            glApi  = glApi,
-            watch  = false,
-          )
-        } fxAcc ::= fx
+        else {
+          // Надо запустить single-update, чтобы гарантированно получить текущее местоположение.
+          for (glApi <- GEO_LOC_API) {
+            fxAcc ::= Effect {
+              glApi
+                .getPosition()
+                .map(_ => DoNothing)
+            }
+          }
+        }
 
         // Если задан timeout, то запустить таймер.
         val timeoutNeedOpt = for {
@@ -448,7 +461,11 @@ class GeoLocAh[M](
         for (timeoutNeed <- timeoutNeedOpt)
           fxAcc ::= Effect( timeoutNeed.value.fut )
 
-        val v2Opt = if (v0.currentLocation.nonEmpty) {
+        val v2Opt = if (
+          !alreadyRepliedLocation ||
+          (leafletLocateOpts.locateOpts.watch contains[Boolean] true)
+        ) {
+          // Нужно ждать получения локации.
           // Закрыть старый таймаут, если есть.
           for (fx <- _cancelLeafletTimeout(v0.leafletLoc))
             fxAcc ::= fx
@@ -462,7 +479,8 @@ class GeoLocAh[M](
           ))(v0)
           Some( v2 )
 
-        } else if (v0.leafletLoc.nonEmpty) {
+        } else if (alreadyRepliedLocation && v0.leafletLoc.nonEmpty) {
+          // Уже отправлен одноразовый ответ геолокации. Надо удалить старые leafletLoc-данные из состояния:
           val v2 = (MScGeoLoc.leafletLoc set None)(v0)
           Some( v2 )
 
@@ -483,7 +501,8 @@ class GeoLocAh[M](
           // Отправить ошибку по таймауту:
           val locErrorFx = Effect.action {
             val posErr = new dom2.PositionError {
-              override val code = PositionError.TIMEOUT
+              // Используем не-нативные константы PositionError, т.к. внутри WebView нет гарантий, что в window определён тип PositionError.*
+              override val code = dom2.PositionError.TIMEOUT
               override val message = "Timeout"
             }
             glSrcS.args.onLocError( posErr )
@@ -577,21 +596,21 @@ class GeoLocAh[M](
 
     val fxOpt = OptionUtil.maybeOpt( forStop.nonEmpty ) {
       for (glApi <- GEO_LOC_API) yield {
-        Effect.action {
-          // Остановка:
-          for (cc <- forStop)
-            glApi.clearWatch( cc._2 )
-
-          // Вернуть очищенную карту результатов работы:
-          val clearedPot = Pot.empty[GeoLocWatchId_t]
-          GlModWatchers(
-            watchers = (for {
-              ((glType, _), _) <- forStop.iterator
-            } yield {
-              glType -> clearedPot
-            })
-              .toMap,
-          )
+        Effect {
+          for {
+            _ <- glApi.reset()
+          } yield {
+            // Вернуть очищенную карту результатов работы:
+            val clearedPot = Pot.empty[GeoLocWatchId_t]
+            GlModWatchers(
+              watchers = (for {
+                ((glType, _), _) <- forStop.iterator
+              } yield {
+                glType -> clearedPot
+              })
+                .toMap,
+            )
+          }
         }
       }
     }
