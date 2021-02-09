@@ -21,7 +21,10 @@ import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.sc.v.styl.ScCssStatic
+import io.suggest.sjs.leaflet.control.locate.LocateControlOptions
 import org.js.react.leaflet.MapContainer
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -61,12 +64,11 @@ class SearchMapR {
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
-      val props = propsProxy.value
-
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
         val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
+        val props = propsProxy.value
 
         val lgmCtx = LGeoMapR.LgmCtx(
           propsProxy,
@@ -77,7 +79,12 @@ class SearchMapR {
           // Рендерим основную гео-карту:
           ReactLeafletUtil.Tiles.OsmDefault,
           // Плагин для геолокации текущего юзера.
-          lgmCtx.LocateControlR(),
+          lgmCtx.LocateControlR(
+            new LocateControlOptions {
+              // iOS=false: showCompass требует разрешение на motion detection, которое вылетает каждый раз и не сохраняется.
+              override val showCompass = false
+            }
+          ),
           lgmCtx.EventsR(),
           // Рендер шейпов и маркеров текущий узлов.
           s.rcvrsGeoC { reqWrapProxy =>

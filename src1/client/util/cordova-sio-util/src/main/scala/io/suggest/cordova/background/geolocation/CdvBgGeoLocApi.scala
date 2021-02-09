@@ -84,7 +84,7 @@ final class CdvBgGeoLocApi(
       // Подписаться на события геолокации:
       _ <- CdvBackgroundGeolocation.configureF(
         new ConfigOptions {
-          // TODO Для background-геолокации задействовать DISTANCE_FILTER_PROVIDER, для андройда попробовать ACTIVITY_PROVIDER
+          // TODO Для background-геолокации задействовать DISTANCE_FILTER_PROVIDER, для андройда попробовать ACTIVITY_PROVIDER, и чтобы без лишних motion-запросов.
           override val locationProvider = CdvBackgroundGeolocation.DISTANCE_FILTER_PROVIDER
 
           // У приложения пока геолокация не работает в фоне.
@@ -100,16 +100,23 @@ final class CdvBgGeoLocApi(
           }
           override val fastestInterval = _maxAgeMsU
 
-          // iOS
-          // saveBatteryOnBackground: это для некоего background, поэтому не ясно, актуально ли для foreground-работы.
-          override val saveBatteryOnBackground = true
-
           // Android:
-          override val startForeground = true
+          override val startForeground = false
           override val notificationsEnabled = false
           override val notificationTitle = messages( MsgCodes.`Bg.location` )
           override val notificationText = messages( MsgCodes.`Bg.location.hint` )
+
+          // iOS
+          /** Pauses location updates when app is paused. [false] */
+          override val pauseLocationUpdates = true
+          //override val saveBatteryOnBackground = true
+          /** The minimum distance (measured in meters) a device must move horizontally before an update event is generated. [500] */
+          override val distanceFilter = 100
+
           //override val notificationIconSmall = "res://ic_notification"
+          // debug=true: На iOS происходит StackOverflow начиная со второго запуска - https://github.com/mauron85/cordova-plugin-background-geolocation/issues/736
+          //override val debug = true
+          override val activityType = "OtherNavigation"
         }
       )
 
@@ -140,17 +147,26 @@ final class CdvBgGeoLocApi(
   }
 
 
+  /** Метод бросает экзепшены из Future.
+    * Например, если GPS отключён, то будет JavaScriptException(BackgroundGeolocationError{code = 2, ...})
+    */
   override def getPosition(): Future[_] = {
     // getCurrentLocation() - метод, блокирующий метод плагина, умеет наглухо вешать приложение при запуске, если забыть указать timeout.
     // Используем его для запуска single update, чтобы получить текущие координаты локацию как можно скорее (придут в onLocation).
+    // TODO iOS - вызов getCurrentLocation() требует motion & orientation permission.
     CdvBackgroundGeolocation.getCurrentLocationF(
       options = new LocationOptions {
-        // Выставить маленький таймаут, чтобы просто запустить singleUpdate-геолокацию, и вернуть управление.
+        // TODO Android: Выставить маленький таймаут, чтобы просто запустить singleUpdate-геолокацию, и вернуть управление.
+        //      Иначе, приложение на андройде повиснет с бесконечным таймаутом.
         override val timeout = 75
         override val maximumAge = _maxAgeMsU
-        override val enableHighAccuracy = _isHighAccuracy
+        override val enableHighAccuracy = false //_isHighAccuracy
       },
     )
+      .andThen { tryLoc =>
+        for (res <- tryLoc)
+          _onLocationF(res)
+      }
   }
 
 

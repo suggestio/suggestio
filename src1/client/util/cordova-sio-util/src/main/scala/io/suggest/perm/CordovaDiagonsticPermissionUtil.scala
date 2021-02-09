@@ -2,6 +2,8 @@ package io.suggest.perm
 
 import cordova.Cordova
 import cordova.plugins.diagnostic.{BluetoothState_t, LocationMode_t, PermissionStatus_t}
+import io.suggest.log.Log
+import io.suggest.msg.ErrorMsgs
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -13,7 +15,7 @@ import scala.concurrent.{Future, Promise}
   * Created: 23.01.19 12:21
   * Description: Поддержка унифицированного доступа к пермишшенам
   */
-object CordovaDiagonsticPermissionUtil {
+object CordovaDiagonsticPermissionUtil extends Log {
 
   /** Получение данных пермишшена. */
   def getGeoLocPerm(): Future[CdpGeoLocPermData] = {
@@ -30,7 +32,7 @@ object CordovaDiagonsticPermissionUtil {
       }
     } catch {
       case ex: Throwable =>
-        println(ex)
+        logger.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, ErrorMsgs.GEO_LOCATION_FAILED )
         Future.failed( ex )
     }
   }
@@ -62,7 +64,7 @@ object CordovaDiagonsticPermissionUtil {
     Cordova.plugins.diagnostic.bluetoothState
 
   def AndroidLocationModes =
-    Cordova.plugins.diagnostic.locationModeUndef
+    Cordova.plugins.diagnostic.locationModeU
 
 }
 

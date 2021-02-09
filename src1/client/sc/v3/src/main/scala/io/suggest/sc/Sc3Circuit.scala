@@ -82,6 +82,7 @@ import io.suggest.ueq.UnivEqUtil._
 
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.{JSON, JavaScriptException}
 import scala.util.Try
 
 /**
@@ -779,8 +780,22 @@ class Sc3Circuit(
   }
 
   override def handleEffectProcessingError[A](action: A, error: Throwable): Unit = {
-    super.handleEffectProcessingError(action, error)
-    _errFrom(action, error)
+    val error2 = error match {
+      case jsErr: JavaScriptException =>
+        Try {
+          var msgAcc = JSON.stringify( jsErr.exception.asInstanceOf[js.Any] )
+
+          for ( msg <- Option(jsErr.getMessage()) )
+            msgAcc = msg + " " + msgAcc
+
+          new RuntimeException( msgAcc, error )
+        }
+          .getOrElse( error )
+
+      case _ => error
+    }
+    super.handleEffectProcessingError(action, error2)
+    _errFrom(action, error2)
   }
 
 }

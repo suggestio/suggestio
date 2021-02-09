@@ -109,6 +109,7 @@ class GeoLocAh[M](
 
     // Есть на руках местоположение.
     case loc: GlLocation =>
+      println( loc )
       val v0 = value
 
       // Не подпадает ли текущая геолокация под нож подавления?
@@ -337,6 +338,7 @@ class GeoLocAh[M](
 
     // Ошибка считывания геолокации.
     case m: GlError =>
+      println( m )
       val v0 = value
       // Подхватываем ошибку, если есть куда записывать её.
       // Игнорим _isLocNotSuppressed(), т.к. ошибка не ломает возможное значение внутри Pot.
@@ -445,7 +447,11 @@ class GeoLocAh[M](
             fxAcc ::= Effect {
               glApi
                 .getPosition()
-                .map(_ => DoNothing)
+                .transform {
+                  case tryRes =>
+                    println( "getPositionRes => " + tryRes )
+                    Success(DoNothing)
+                }
             }
           }
         }
@@ -569,7 +575,11 @@ class GeoLocAh[M](
 
   /** Интерфейс API для геолокации. */
   private lazy val GEO_LOC_API: Option[GeoLocApi] = {
-    var apis = LazyList.cons[GeoLocApi]( new Html5GeoLocApi, LazyList.empty )
+    var apis = LazyList.empty[GeoLocApi]
+
+    // Добавить HTML5 geolocation API в начало списка. Т.к. cdv-bg-geo вторичен.
+    val apis22 = LazyList.cons[GeoLocApi]( new Html5GeoLocApi, apis )
+    apis = apis22
 
     // Если в конструкторе определено иное API для геолокации, то его - в начало списка кандидатов.
     for (glApi <- preferGeoApi) {

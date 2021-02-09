@@ -1,7 +1,7 @@
 package io.suggest.sc.v.grid
 
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.grid.GridBuilderUtilJs
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.u.JdUtil
@@ -39,10 +39,8 @@ final class GridCoreR(
 
     /** Клик по карточке в плитке. */
     private def onBlockClick(nodeId: String)(e: ReactMouseEvent): Callback = {
-      if( e.button ==* 0 ) {
+      Callback.when( e.button ==* 0 ) {
         ReactDiodeUtil.dispatchOnProxyScopeCB($, GridBlockClick(nodeId))
-      } else {
-        Callback.empty
       }
     }
 
@@ -106,7 +104,7 @@ final class GridCoreR(
             // Выставить класс для ремонта z-index контейнера блока.
             jdRrr.fixZIndexIfBlock( jdDoc2.template.rootLabel ),
 
-            jdR.apply {
+            jdR {
               // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
               mgridProxy.resetZoom(
                 MJdArgs(
@@ -132,8 +130,5 @@ final class GridCoreR(
     .stateless
     .renderBackend[Backend]
     .build
-
-  private def _apply(gridProxy: Props) = component(gridProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
 
 }

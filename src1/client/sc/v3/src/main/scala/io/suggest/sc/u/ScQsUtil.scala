@@ -22,10 +22,11 @@ object ScQsUtil {
 
 
   /** Сборка LocEnv на основе описанных данных. */
-  private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean): MLocEnv = {
+  private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean, hasPrevNode: Boolean = false): MLocEnv = {
     MLocEnv(
       geoLocOpt  = OptionUtil.maybeOpt(withGeoLoc)( mroot.geoLocOpt ),
-      bleBeacons = mroot.locEnvBleBeacons
+      // При переходе в под-узел, зачем отображать маячки с предыдущей страницы? Незачем.
+      bleBeacons = if (hasPrevNode) mroot.locEnvBleBeacons else Nil,
     )
   }
 
@@ -78,7 +79,11 @@ object ScQsUtil {
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
-        locEnv = getLocEnv(mroot, withGeoLoc = currRcvrId.isEmpty),
+        locEnv = getLocEnv(
+          mroot,
+          withGeoLoc = currRcvrId.isEmpty,
+          hasPrevNode = inxState.prevNodeOpt.nonEmpty,
+        ),
       ),
       search = MAdsSearchReq(
         rcvrId      = currRcvrId,

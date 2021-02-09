@@ -37,6 +37,7 @@ object MTree {
   def idsTree = GenLens[MTree](_.idsTree)
   val opened = GenLens[MTree](_.opened)
   def nodesMap = GenLens[MTree](_.nodesMap)
+  //def reRenderTimer = GenLens[MTree](_.reRenderTimer)
 
   /** Короткий код выставления дерева в состояние. */
   def setNodes(tree2: Tree[String]) = idsTree.modify(_.ready(tree2))
@@ -81,11 +82,13 @@ object MTree {
   * @param opened rcvr-key для узла дерева, у которого сейчас отображаются полный список properties'ов.
   * @param nodesMap Карта инфы по узлам в дереве.
   *                 В самом дереве содержатся только id узлов в данной карте.
+  * param reRenderTimer Таймер принудительного пере-рендера дерева.
   */
 case class MTree(
-                  idsTree     : Pot[Tree[String]],
-                  opened      : Option[NodePath_t]      = None,
-                  nodesMap    : HashMap[String, MNodeState],
+                  idsTree             : Pot[Tree[String]],
+                  opened              : Option[NodePath_t]                = None,
+                  nodesMap            : HashMap[String, MNodeState],
+                  //reRenderTimer       : Option[Int]                       = None,
                 ) {
 
   lazy val idsTreeOpt = idsTree.toOption

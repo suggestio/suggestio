@@ -144,4 +144,9 @@ object MuiColorTypes {
   val error = "error"
   val textPrimary = "textPrimary"
   val textSecondary = "textSecondary"
+
+  // icon
+  val disabled = "disabled"
+  val action = "action"
+
 }

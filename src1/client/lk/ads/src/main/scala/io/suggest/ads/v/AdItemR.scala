@@ -1,7 +1,7 @@
 package io.suggest.ads.v
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.ad.blk.BlockHeights
 import io.suggest.ads.m.{MAdProps, SetAdShownAtParent}
@@ -185,8 +185,5 @@ class AdItemR(
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
-
-  def _apply(props: Props) = component(props)
-  val apply: ReactConnectProps[PropsVal] = _apply
 
 }

@@ -55,6 +55,26 @@ class WzFirstDiaAh[M](
   with Log
 { ah =>
 
+  /** Внутренняя модель для спецификации одного пермишшена. */
+  private trait IPermissionSpec {
+    /** id фазы. */
+    def phase: MWzPhase
+    /** Есть ли поддержка на уровне платформы? Синхронная проверка доступности соответствующего API. */
+    def isSupported(): Boolean
+    /** Чтение текущего состояния пермишена. Запуск асихнронного получения данных по пермишшену. */
+    def readPermissionState(): Future[IPermissionState]
+    /** Запрос у юзера права доступа. */
+    def requestPermissionFx: Effect
+  }
+  implicit private class PermSpecOpsExt( private val pss: IterableOnce[IPermissionSpec] ) {
+    /** Найти утиль для пермишшена указанной wz-фазы. */
+    def findPhase(phase: MWzPhase): Option[IPermissionSpec] =
+      pss
+        .iterator
+        .find(_.phase ==* phase)
+  }
+
+
   private def _subscribeCssRebuildFx: Effect = {
     Effect.action {
       val unSubscribeF = dispatcher.subscribe( screenInfoRO ) { _ =>
@@ -71,18 +91,6 @@ class WzFirstDiaAh[M](
     }
   }
 
-
-  /** Внутренняя модель для спецификации пермишшена.
-    *
-    * @param supported Есть ли поддержка на уровне платформы?
-    * @param phase id фазы.
-    * @param askPermF Функция запуска асихнронного получения данных по пермишшену.
-    */
-  private case class PermissionSpec(
-                                     supported          : Boolean,
-                                     phase              : MWzPhase,
-                                     askPermF           : () => Future[IPermissionState]
-                                   )
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -104,57 +112,57 @@ class WzFirstDiaAh[M](
           view0.frame match {
             case MWzFrames.AskPerm =>
               // Положительный ответ - запросить доступ в реальности.
-              val accessFxOpt = _requestAccessFx( view0.phase )
+              _permPhasesSpecs()
+                .findPhase( view0.phase )
+                .map( _.requestPermissionFx )
+                .fold {
+                  // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
+                  _wzGoToNextPhase(first0)
 
-              accessFxOpt.fold {
-                // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
-                _wzGoToNextPhase(first0)
+                } { accessFx =>
+                  // Эффект разблокировки диалога, чтобы крутилка ожидания не вертелась бесконечно.
+                  val inProgressTimeoutFx = Effect {
+                    // Если доступ поддерживает подписку на изменение статуса, то подписаться + frame=InProgress с долгим таймаутом.
+                    // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в 1-2 секунды.
+                    // Отказ юзера можно будет перехватить позже.
+                    val inProgressTimeoutSec = (for {
+                      permStatePot  <- first0.perms.get( view0.phase )
+                      permState     <- permStatePot.toOption
 
-              } { accessFx =>
-                // Эффект разблокировки диалога, чтобы крутилка ожидания не вертелась бесконечно.
-                val inProgressTimeoutFx = Effect {
-                  // Если доступ поддерживает подписку на изменение статуса, то подписаться + frame=InProgress с долгим таймаутом.
-                  // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в 1-2 секунды.
-                  // Отказ юзера можно будет перехватить позже.
-                  val inProgressTimeoutSec = (for {
-                    permStatePot  <- first0.perms.get( view0.phase )
-                    permState     <- permStatePot.toOption
+                      if permState.hasOnChangeApi && {
+                        // API доступно, но это не значит, что оно работает. Подписаться:
+                        // TODO Надо бы перенести подписку прямо в WzPhasePermRes. Возможна ситуация, что диалог-мастер и фактический запрос геолокации отображаются одновременно.
+                        val tryRes = Try(
+                          permState.onChange { pss: IPermissionState =>
+                            val action = WzPhasePermRes( view0.phase, Success(pss) )
+                            dispatcher.dispatch( action )
+                          }
+                        )
+                        for (ex <- tryRes.failed)
+                          logger.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, (permState, m) )
+                        tryRes.isSuccess
+                      }
+                    } yield {
+                      // Подписка удалась: надо InProgress с длинным таймаутом.
+                      // TODO 5 увеличить до 10 секунд, когда в браузерах стабилизируется PermissionStatus.onchange
+                      5
+                    })
+                      // Нет возможности подписаться на события. Надо InProgress закрывать по таймауту.
+                      .getOrElse( 2 )
 
-                    if permState.hasOnChangeApi && {
-                      // API доступно, но это не значит, что оно работает. Подписаться:
-                      // TODO Надо бы перенести подписку прямо в WzPhasePermRes. Возможна ситуация, что диалог-мастер и фактический запрос геолокации отображаются одновременно.
-                      val tryRes = Try(
-                        permState.onChange { pss: IPermissionState =>
-                          dispatcher.dispatch(
-                            WzPhasePermRes( view0.phase, Success(pss) )
-                          )
-                        }
+                    DomQuick
+                      .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis.toInt )(
+                        WzPhasePermRes(view0.phase, Failure(new NoSuchElementException))
                       )
-                      for (ex <- tryRes.failed)
-                        logger.warn( ErrorMsgs.PERMISSION_API_FAILED, ex, (permState, m) )
-                      tryRes.isSuccess
-                    }
-                  } yield {
-                    // Подписка удалась: надо InProgress с длинным таймаутом.
-                    // TODO 5 увеличить до 10 секунд, когда в браузерах стабилизируется PermissionStatus.onchange
-                    5
-                  })
-                    // Нет возможности подписаться на события. Надо InProgress закрывать по таймауту.
-                    .getOrElse( 2 )
+                      .fut
+                  }
 
-                  DomQuick
-                    .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis.toInt )(
-                      WzPhasePermRes(view0.phase, Failure(new NoSuchElementException))
-                    )
-                    .fut
+                  // Переключить view в состояние ожидания.
+                  val v2 = _setFrame( MWzFrames.InProgress )
+
+                  val fxs = accessFx + inProgressTimeoutFx
+                  updated( v2, fxs )
                 }
-
-                // Переключить view в состояние ожидания.
-                val v2 = _setFrame( MWzFrames.InProgress )
-
-                val fxs = accessFx + inProgressTimeoutFx
-                updated( v2, fxs )
-              }
 
             // yes в info-окне означает retry, по идее.
             case MWzFrames.Info =>
@@ -324,11 +332,11 @@ class WzFirstDiaAh[M](
         // Пройтись по списку фаз, активировав проверки прав:
         for {
           phaseSpec <- _permPhasesSpecs()
-          if phaseSpec.supported
+          if phaseSpec.isSupported()
         } {
           fxsAcc ::= Effect {
             phaseSpec
-              .askPermF()
+              .readPermissionState()
               .transform { tryPermState =>
                 val action = WzPhasePermRes( phaseSpec.phase, tryPermState )
                 Success( action )
@@ -411,25 +419,6 @@ class WzFirstDiaAh[M](
 
   private def _wz1_outer_inner_TRAV = MWzFirstOuterS.view
     .composeTraversal( Traversal.fromTraverse[Option, MWzFirstS] )
-
-  /** Сборка эффекта реального запросить доступа в зависимости от фазы. */
-  private def _requestAccessFx(phase: MWzPhase): Option[Effect] = {
-    phase match {
-      case MWzPhases.GeoLocPerm =>
-        val fx = GeoLocOnOff( enabled = true, isHard = true )
-          .toEffectPure
-        Some(fx)
-      case MWzPhases.BlueToothPerm =>
-        val fx = BtOnOff( isEnabled = OptionUtil.SomeBool.someTrue )
-          .toEffectPure
-        Some(fx)
-      case MWzPhases.NotificationPerm =>
-        val fx = NotificationPermAsk( isVisible = true ).toEffectPure
-        Some(fx)
-      case _ =>
-        None
-    }
-  }
 
 
   /** Перещёлкивание на следующую фазу диалога. */
@@ -572,51 +561,60 @@ class WzFirstDiaAh[M](
 
 
   /** Сборка спецификация по фазам, которые требуют проверки прав доступа. */
-  private def _permPhasesSpecs(): Seq[PermissionSpec] = {
+  private def _permPhasesSpecs(): Seq[IPermissionSpec] = {
     val platform = platformRO.value
     // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
     lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
 
     // Геолокация
-    PermissionSpec(
-      phase     = MWzPhases.GeoLocPerm,
-      // Для cordova нет смысла проверять наличие плагина, который всегда есть.
-      supported = CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc(),
-      askPermF  = {
-        val htmlAskPermF = { () =>
-          IPermissionState.maybeKnownF(h5PermApiAvail)( Html5PermissionApi.getPermissionState( PermissionName.geolocation ) )
+    new IPermissionSpec {
+      override def phase = MWzPhases.GeoLocPerm
+      override def isSupported(): Boolean = {
+        // Для cordova нет смысла проверять наличие плагина, который всегда должен быть.
+        CordovaConstants.isCordovaPlatform() || GeoLocUtilJs.envHasGeoLoc()
+      }
+      override def readPermissionState(): Future[IPermissionState] = {
+        def htmlAskPermF = {
+          IPermissionState.maybeKnownF(h5PermApiAvail)(
+            Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+          )
         }
         if (platform.isCordova) {
-          () =>
-            CordovaDiagonsticPermissionUtil
-              .getGeoLocPerm()
-              .recoverWith { case ex: Throwable =>
-                // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
-                logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
-                htmlAskPermF()
-              }
-        } else
+          CordovaDiagonsticPermissionUtil
+            .getGeoLocPerm()
+            .recoverWith { case ex: Throwable =>
+              // diag-плагин на разных платформах работает по-разному. Отрабатываем ситуацию, когда он может не работать:
+              logger.info( ErrorMsgs.DIAGNOSTICS_RETRIEVE_FAIL, ex, (Try(Cordova), Try(Cordova.plugins), Try(Cordova.plugins.diagnostic)) )
+              htmlAskPermF
+            }
+        } else {
           htmlAskPermF
+        }
       }
-    ) #::
-    // Bluetooth
-    PermissionSpec(
-      phase     = MWzPhases.BlueToothPerm,
-      supported = hasBleRO.value,
-      askPermF  = CordovaDiagonsticPermissionUtil.getBlueToothState
-    ) #::
-    // Notifications
-    PermissionSpec(
-      phase = MWzPhases.NotificationPerm,
-      supported = {
+      override def requestPermissionFx: Effect =
+        GeoLocOnOff( enabled = true, isHard = true ).toEffectPure
+
+    } #:: new IPermissionSpec {
+      // Bluetooth
+      override def phase = MWzPhases.BlueToothPerm
+      override def isSupported() = hasBleRO()
+      override def readPermissionState() =
+        CordovaDiagonsticPermissionUtil.getBlueToothState()
+      override def requestPermissionFx: Effect =
+        BtOnOff( isEnabled = OptionUtil.SomeBool.someTrue ).toEffectPure
+
+    } #:: new IPermissionSpec {
+      // Notifications
+      override def phase = MWzPhases.NotificationPerm
+      override def isSupported(): Boolean = {
         (platform.isCordova && CordovaNotificationlLocalUtil.isCnlApiAvailable()) ||
         // Т.к. уведомления только по Bluetooth-маячкам, то нотификейшены не требуются в prod-режиме браузера.
         (platform.isBrowser && Html5NotificationUtil.isApiAvailable() && WzFirstDiaAh.NOTIFICATION_IN_BROWSER)
-      },
-      askPermF = {
+      }
+      override def readPermissionState(): Future[IPermissionState] = {
         if (platform.isCordova) {
-          CordovaNotificationlLocalUtil.hasPermissionState
-        } else { () =>
+          CordovaNotificationlLocalUtil.hasPermissionState()
+        } else {
           (if (h5PermApiAvail) {
             Try {
               Html5PermissionApi.getPermissionState( PermissionName.notifications )
@@ -630,9 +628,10 @@ class WzFirstDiaAh[M](
             .getOrElse( Future.failed(new UnsupportedOperationException) )
         }
       }
-    ) #::
-    // И всё на этом.
-    LazyList.empty[PermissionSpec]
+      override def requestPermissionFx: Effect =
+        NotificationPermAsk( isVisible = true ).toEffectPure
+
+    } #:: LazyList.empty[IPermissionSpec]
   }
 
 }

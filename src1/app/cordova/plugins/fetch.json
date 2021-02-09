@@ -97,21 +97,6 @@
     "is_top_level": true,
     "variables": {}
   },
-  "8bhsolutions-cordova-plugin-background-geolocation": {
-    "source": {
-      "type": "local",
-      "path": "/var/user/projects/sio/sio2/src1/app/cordova/node_modules/8bhsolutions-cordova-plugin-background-geolocation"
-    },
-    "is_top_level": true,
-    "variables": {
-      "GOOGLE_PLAY_SERVICES_VERSION": "11+",
-      "ANDROID_SUPPORT_LIBRARY_VERSION": "23+",
-      "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
-      "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
-      "ICON": "@mipmap/icon",
-      "SMALL_ICON": "@mipmap/icon"
-    }
-  },
   "cordova-plugin-inappbrowser": {
     "source": {
       "type": "registry",
@@ -140,6 +125,25 @@
     "source": {
       "type": "registry",
       "id": "cordova-plugin-ble-central"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "8bhsolutions-cordova-plugin-background-geolocation": {
+    "source": {
+      "type": "registry",
+      "id": "https://github.com/ebhsgit/cordova-plugin-background-geolocation"
+    },
+    "is_top_level": true,
+    "variables": {
+      "ALWAYS_USAGE_DESCRIPTION": "To speed-up search for offers nearby",
+      "MOTION_USAGE_DESCRIPTION": "Compass on the map need motion sensor"
+    }
+  },
+  "cordova-plugin-geolocation": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-geolocation@4.1.0"
     },
     "is_top_level": true,
     "variables": {}

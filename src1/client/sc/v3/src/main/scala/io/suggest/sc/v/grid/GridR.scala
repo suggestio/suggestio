@@ -55,7 +55,7 @@ class GridR(
       val jdCss1 = s.jdCssC { CssR.compProxied.apply }
 
       // Непосредственный рендер плитки - коннекшен в отдельный компонент, снаружи от рендера connect-зависимого контейнера плитки.
-      val gridCore = s.gridCoreC { gridCoreR.apply }
+      val gridCore = s.gridCoreC( gridCoreR.component.apply )
 
       val smFlex = ScCssStatic.smFlex: TagMod
 

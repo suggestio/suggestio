@@ -103,7 +103,7 @@ class NodeRenderR(
                     conf      = props.jdRuntime.jdCss.jdCssArgs.conf,
                   )
                 )
-                jdR.apply( mproxy )
+                jdR( mproxy )
               },
 
               // Рендер данных об узле

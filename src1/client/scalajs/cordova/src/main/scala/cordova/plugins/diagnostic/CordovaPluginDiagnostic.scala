@@ -47,7 +47,7 @@ trait CordovaPluginDiagnostic extends js.Object {
 
   def requestLocationAuthorization( onSuccess: js.Function1[PermissionStatus_t, _],
                                     onError  : js.Function1[String, _],
-                                    iosMode: String = js.native,
+                                    mode     : LocationAuthorizationMode_t = js.native,
                                   ): Unit = js.native
 
   /** On Android, this occurs when the Location Mode is changed.
@@ -76,10 +76,16 @@ trait CordovaPluginDiagnostic extends js.Object {
 
   def registerBluetoothStateChangeHandler( callback: js.Function1[BluetoothState_t, _] = js.native ): Unit = js.native
 
+  // Android
   @JSName("locationMode")
-  val locationModeUndef: js.UndefOr[LocationModes] = js.native
+  val locationModeU: js.UndefOr[LocationModes] = js.native
+
+  // Android, iOS
+  @JSName("locationAuthorizationMode")
+  val locationAuthorizationModeU: js.UndefOr[LocationAuthorizationMode_t] = js.native
 
 }
+
 
 object CordovaPluginDiagnostic {
   implicit class CpdOpsExt( val cpd: CordovaPluginDiagnostic ) extends AnyVal {

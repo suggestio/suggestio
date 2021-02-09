@@ -1,6 +1,6 @@
 package io.suggest.jd.render.v
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.jd.MJdTagId
 import io.suggest.jd.render.m._
 import io.suggest.log.Log
@@ -117,7 +117,6 @@ final class JdR(
   }
 
 
-  private def _apply(jdArgsProxy: Props) = JdRrr.anyTagComp( jdArgsProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(jdArgsProxy: Props) = JdRrr.anyTagComp( jdArgsProxy )
 
 }

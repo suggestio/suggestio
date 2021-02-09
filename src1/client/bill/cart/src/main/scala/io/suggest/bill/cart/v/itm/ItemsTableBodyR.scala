@@ -158,7 +158,7 @@ class ItemsTableBodyR(
                       conf      = props.jdRuntime.jdCss.jdCssArgs.conf,
                     )
                     val propsProxy2 = propsProxy.resetZoom( jdArgs )
-                    jdR.apply( propsProxy2 )
+                    jdR( propsProxy2 )
                   }
                   .orElse {
                     // Поискать в adn node logos

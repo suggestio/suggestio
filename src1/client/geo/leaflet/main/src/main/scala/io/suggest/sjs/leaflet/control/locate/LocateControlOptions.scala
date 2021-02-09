@@ -74,4 +74,6 @@ trait LocateControlOptions extends ControlOptions {
   // define location options e.g enableHighAccuracy: true or maxZoom: 10
   val locateOptions: js.UndefOr[LocateOptions] = js.undefined
 
+  val showCompass: js.UndefOr[Boolean] = js.undefined
+
 }

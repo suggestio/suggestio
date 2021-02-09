@@ -25,7 +25,7 @@ trait LkNodesModuleBase
   def diConfig: NodesDiConf
 
   lazy val lkNodesApi = wire[LkNodesApiHttpImpl]
-  lazy val lkNodesFormCircuit = wire[LkNodesFormCircuit]
+  def lkNodesFormCircuit = wire[LkNodesFormCircuit]
 
   // views
   lazy val lkNodesFormR = wire[LkNodesFormR]
@@ -70,5 +70,7 @@ final class LkNodesModule
 {
 
   override def diConfig = NodesDiConf.LkConf
+
+  override lazy val lkNodesFormCircuit = super.lkNodesFormCircuit
 
 }

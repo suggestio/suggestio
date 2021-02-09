@@ -3,6 +3,7 @@ package io.suggest.sc
 import com.materialui.MuiTheme
 import com.softwaremill.macwire._
 import cordova.Cordova
+import cordova.plugins.background.geolocation.CdvBgGeo
 import cordova.plugins.fetch.CdvPluginFetch
 import cordova.plugins.inappbrowser.InAppBrowser
 import diode.{Effect, ModelRW}
@@ -95,7 +96,7 @@ class Sc3Module { outer =>
   }
   lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
   lazy val preferGeoApi: Option[GeoLocApi] = {
-    Option.when( CordovaConstants.isCordovaPlatform() ) {
+    Option.when( CordovaConstants.isCordovaPlatform() && CdvBgGeo.isAvailable() ) {
       new CdvBgGeoLocApi(
         getMessages = () => sc3Circuit.internalsInfoRW.value.commonReactCtx.messages,
       )

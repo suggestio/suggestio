@@ -1,10 +1,11 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemIconProps, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiList, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemSecondaryAction, MuiListItemSecondaryActionProps, MuiListItemText, MuiListItemTextProps, MuiSvgIconProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyClasses, MuiTypoGraphyColors, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.lk.nodes.form.m.{MNodeStateRender, MTreeRoles, ModifyNode}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactCommonUtil.Implicits._
+import io.suggest.ble.BeaconDetected
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
@@ -19,12 +20,10 @@ import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
-import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.univeq._
 import scalaz.{EphemeralStream, Tree}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import scalajs.js.JSConverters._
 
 /**
@@ -115,7 +114,20 @@ final class NodeHeaderR(
                 case MNodeTypes.Media.Image                   => Mui.SvgIcons.ImageOutlined
                 case f if f ==>> MNodeTypes.Media             => Mui.SvgIcons.InsertDriveFileOutlined
                 case _                                        => Mui.SvgIcons.BuildOutlined
-              })()(),
+              })(
+                /* // Выключена блёклая иконка, т.к. на андройде почему-то теряются некоторые входящие eddystone-advertisements, и иконка сбивает с толку.
+                new MuiSvgIconProps {
+                  override val color = (for {
+                    bcn <- st.beacon
+                    // 5000ms - почему-то bluetooth-сканер пропускает некоторые кадры при сканировании.
+                    if (BeaconDetected.seenNowMs() - bcn.data.detect.seenAtMs) > 8000
+                  } yield {
+                    MuiColorTypes.disabled
+                  })
+                    .orUndefined
+                }
+                */
+              )(),
             )
           },
 

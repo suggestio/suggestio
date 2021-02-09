@@ -20,6 +20,6 @@ ssh developer@mac << EOF
 set -ex
 cd ~/Desktop/IOS/cordova
 export PATH=/usr/local/bin:$PATH
-./ios-prepare
+#./ios-prepare
 #cordova run ios --device
 EOF

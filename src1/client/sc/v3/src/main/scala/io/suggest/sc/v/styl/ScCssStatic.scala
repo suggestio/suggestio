@@ -99,7 +99,8 @@ object ScCssStatic extends StyleSheet.Inline {
       // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
       minWidth( 200.px ),
       width( 100.%% ),
-      zIndex( 10 ),
+      // z-index: 1200 - это уровень MuiSwipeableDrawer, чтобы Header был поверх swipe area, но ниже панели. Иначе кнопка некликабельная совсем.
+      zIndex( 1200 ),
       textAlign.center,
       // Этот transform скопирован из showcase.styl. Не ясно, нужен ли он.
       transform := "translate3d(0, 0, 0)",
@@ -258,6 +259,7 @@ object ScCssStatic extends StyleSheet.Inline {
 
     val welcome = style(
       addClassNames( _SM_WELCOME_AD ),
+      zIndex( 1300 ),
     )
 
   }

@@ -61,7 +61,7 @@
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         </config-file>
         <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.AUTHENTICATE_ACCOUNTS']" />
-        <!--custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" /-->
+        <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" />
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />
@@ -120,13 +120,15 @@
                 <string>bluetooth-central</string>
                 <string>fetch</string>
                 <string>processing</string>
+                <!--string>location</string-->
             </array>
-        </custom-config-file>
+	</custom-config-file>
         <config-file parent="BGTaskSchedulerPermittedIdentifiers" target="*-Info.plist">
             <array>
                 <string>io.suggest.bgtasks.v1</string>
             </array>
         </config-file>
+	<custom-config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription" mode="delete" />
     </platform>
     <preference name="BackgroundColor" value="0xff2d3d4e" />
     <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />

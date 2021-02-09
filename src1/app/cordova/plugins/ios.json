@@ -8,8 +8,8 @@
   },
   "installed_plugins": {
     "8bhsolutions-cordova-plugin-background-geolocation": {
-      "ALWAYS_USAGE_DESCRIPTION": "App requires background tracking",
-      "MOTION_USAGE_DESCRIPTION": "App requires motion detection",
+      "ALWAYS_USAGE_DESCRIPTION": "To speed-up search for offers nearby",
+      "MOTION_USAGE_DESCRIPTION": "Compass on the map need motion sensor",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-custom-config": {
@@ -30,6 +30,10 @@
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-fetch": {
+      "PACKAGE_NAME": "io.suggest.appsuggest"
+    },
+    "cordova-plugin-geolocation": {
+      "GPS_REQUIRED": "true",
       "PACKAGE_NAME": "io.suggest.appsuggest"
     },
     "cordova-plugin-inappbrowser": {

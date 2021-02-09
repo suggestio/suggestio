@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import cordova.plugins.background.geolocation.CdvBgGeo
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.cordova.CordovaConstants
@@ -27,6 +28,7 @@ import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import io.suggest.sjs.common.vm.wnd.WindowVm
 
 import scala.util.Try
 
@@ -65,12 +67,19 @@ object Sc3Main extends Log {
     if (scalajs.LinkingInfo.developmentMode)
       Sc3Module.ref = modules
 
+    // Если не доступно HTML5 geolocation API, то заменить его через cdv-bg-geolocation внутри leaflet'а.
     Try {
-      if (CordovaConstants.isCordovaPlatform())
+      if (
+        CordovaConstants.isCordovaPlatform() &&
+        WindowVm()
+          .navigator
+          .flatMap(_.geolocation)
+          .isEmpty &&
+        CdvBgGeo.isAvailable()
+      )
         modules.sc3LeafletOverrides.mapPatch()
     }
       .logFailure( ErrorMsgs.NATIVE_API_ERROR )
-
 
     // Активировать отправку логов на сервер:
     Try {

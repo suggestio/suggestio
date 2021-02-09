@@ -15,6 +15,8 @@ package object diagnostic {
 
   type LocationMode_t = String
 
+  type LocationAuthorizationMode_t <: String
+
   type BluetoothState_t = String
 
 }
