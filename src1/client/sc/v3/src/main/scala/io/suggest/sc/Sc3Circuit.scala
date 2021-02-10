@@ -467,13 +467,13 @@ class Sc3Circuit(
   private val beaconerAh: HandlerFunction = new BleBeaconerAh(
     modelRW     = beaconerRW,
     dispatcher  = this,
-    bcnsIsSilentRO = scNodesRW.zoom(_.circuit.isEmpty),
+    bcnsIsSilentRO = scNodesRW.zoom(!_.opened),
     onNearbyChange = Some { (nearby0, nearby2) =>
       val daemonS = daemonRW.value
       var fxAcc = List.empty[Effect]
 
       // Отправить эффект изменения в списке маячков
-      if (scNodesRW.value.circuit.nonEmpty)
+      if (scNodesRW.value.opened)
         fxAcc ::= Effect.action {
           scNodesDiaAh.handleBeaconsDetected()
           DoNothing

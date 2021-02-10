@@ -1,7 +1,6 @@
 package io.suggest.sc.v.dia.nodes
 
-import com.materialui.MuiTextField.Variant
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentProps, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiModalCloseReason, MuiSelectProps, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogContentProps, MuiDialogProps, MuiIconButton, MuiIconButtonProps, MuiMenuItem, MuiMenuItemProps, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
@@ -15,12 +14,11 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.{MScRoot, ScNodesModeChanged, ScNodesShowHide}
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.spa.FastEqUtil
 import japgolly.univeq._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -41,7 +39,7 @@ class ScNodesR(
 
   case class State(
                     circuitOptC                   : ReactConnectProxy[Option[LkNodesFormCircuit]],
-                    isDiaFullScreenSomeC          : ReactConnectProxy[Some[Boolean]],
+                    openedFullScreenC             : ReactConnectProxy[MScRoot],
                     haveFocusedAdAdminSomeC       : ReactConnectProxy[Some[Boolean]],
                     nodesModeC                    : ReactConnectProxy[MLkNodesMode],
                   )
@@ -179,8 +177,10 @@ class ScNodesR(
           )
 
           // Вложенный коннекшен допускается, т.к. обновление внешнего связано только с полным монтированием-демонтированием диалога.
-          s.isDiaFullScreenSomeC { isDiaFullScreenSomeProxy =>
-            val _isFullScreen = isDiaFullScreenSomeProxy.value.value
+          s.openedFullScreenC { mrootProxy =>
+            val mroot = mrootProxy.value
+            val _isFullScreen = _isDiaFullScreen( mroot )
+            val scNodes = mroot.dialogs.nodes
             scCssP.consume { scCss =>
               val _rootCssU = JsOptionUtil.maybeDefined( _isFullScreen )(
                 Css.flat(
@@ -195,7 +195,7 @@ class ScNodesR(
                   override val root = _rootCssU
                 }
                 new MuiDialogProps {
-                  override val open = circuitOpt.nonEmpty
+                  override val open = scNodes.opened
                   override val classes = diaCss
                   override val onClose = _onCloseBtnClick
                   override val fullScreen = _isFullScreen
@@ -220,9 +220,12 @@ class ScNodesR(
 
         circuitOptC = propsProxy.connect( _.dialogs.nodes.circuit ),
 
-        isDiaFullScreenSomeC = propsProxy.connect { mroot =>
-          OptionUtil.SomeBool( _isDiaFullScreen(mroot) )
-        },
+        openedFullScreenC = propsProxy.connect( identity )(
+          FastEqUtil[MScRoot] { (a, b) =>
+            (a.dialogs.nodes.opened ==* b.dialogs.nodes.opened) &&
+            (_isDiaFullScreen(a) ==* _isDiaFullScreen(b))
+          }
+        ),
 
         haveFocusedAdAdminSomeC = propsProxy.connect { mroot =>
           val focAdIdOpt = mroot.dialogs.nodes.focusedAdId

@@ -70,6 +70,8 @@ class ScNodesDiaAh[M](
       val v0 = value
 
       if (m.visible) {
+        val beaconsFx = ScNodesBcnrSubscribeStatus().toEffectPure
+
         v0.circuit.fold {
           val circuit = getNodesCircuit()
 
@@ -85,6 +87,7 @@ class ScNodesDiaAh[M](
             .value
             .flatMap(_.id)
           val v2 = v0.copy(
+            opened = true,
             circuit = Some(circuit),
             // Сбрасывать adv-состояние, если текущая focused-карточка отсутствует:
             mode = focusedAdId
@@ -94,20 +97,27 @@ class ScNodesDiaAh[M](
           )
 
           // Нужно подписаться на изменение данных по маячкам:
-          fx += ScNodesBcnrSubscribeStatus().toEffectPure
+          fx += beaconsFx
 
           updated( v2, fx )
 
-        } { nodesCircuit =>
-          // Запуск эффекта инициализации начального дерева:
-          val fx = _nodesCircuitInitFx( nodesCircuit )
-          effectOnly( fx )
+        } { _ =>
+          // Если диалог скрыт - просто сделать его видимым:
+          if (v0.opened) {
+            effectOnly( beaconsFx )
+          } else {
+            val v2 = (MScNodes.opened set true)(v0)
+            updated(v2, beaconsFx)
+          }
         }
 
-      } else if (!m.visible && v0.circuit.nonEmpty) {
+      } else if (v0.opened && !m.visible) {
         val v2 = v0.copy(
-          circuit = None,
-          focusedAdId = None,
+          opened = false,
+          circuit = v0.circuit
+            .filter(_ => m.keepState),
+          focusedAdId = v0.focusedAdId
+            .filter(_ => m.keepState),
         )
         // Нужно закрыть подписку на маячки:
         val fx = ScNodesBcnrSubscribeStatus( Pot.empty.unavailable() ).toEffectPure

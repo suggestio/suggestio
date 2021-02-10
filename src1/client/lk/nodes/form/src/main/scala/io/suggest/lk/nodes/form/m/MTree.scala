@@ -37,7 +37,6 @@ object MTree {
   def idsTree = GenLens[MTree](_.idsTree)
   val opened = GenLens[MTree](_.opened)
   def nodesMap = GenLens[MTree](_.nodesMap)
-  //def reRenderTimer = GenLens[MTree](_.reRenderTimer)
 
   /** Короткий код выставления дерева в состояние. */
   def setNodes(tree2: Tree[String]) = idsTree.modify(_.ready(tree2))
@@ -88,7 +87,6 @@ case class MTree(
                   idsTree             : Pot[Tree[String]],
                   opened              : Option[NodePath_t]                = None,
                   nodesMap            : HashMap[String, MNodeState],
-                  //reRenderTimer       : Option[Int]                       = None,
                 ) {
 
   lazy val idsTreeOpt = idsTree.toOption

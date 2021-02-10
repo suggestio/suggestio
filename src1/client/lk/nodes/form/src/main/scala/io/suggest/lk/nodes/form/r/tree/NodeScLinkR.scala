@@ -33,21 +33,18 @@ final class NodeScLinkR(
       var cb = e.stopPropagationCB
 
       // Если есть связь с выдачей, то отправить в роутер выдачи новое состояние:
-      for (scRouterCtl <- diConfig.scRouterCtlOpt) {
-        cb = cb >> e.preventDefaultCB >> {
-          $.props >>= { nodeId: Props =>
-            scRouterCtl.set(
-              SioPages.Sc3(
-                nodeId = Some( nodeId ),
-              )
-            )
-          }
+      diConfig
+        .openNodeScOpt
+        .fold {
+          // Если форма поддерживает закрытие/сокрытие, то сделать это:
+          for (closeFormCb <- diConfig.closeForm)
+            cb = cb >> closeFormCb
+        } { openNodeScF =>
+          // Провести указанный callback
+          cb = cb >>
+            e.preventDefaultCB >>
+            ($.props >>= openNodeScF)
         }
-      }
-
-      // Если форма поддерживает закрытие/сокрытие, то сделать это:
-      for (closeFormCb <- diConfig.closeForm)
-        cb = cb >> closeFormCb
 
       cb
     }
@@ -60,7 +57,7 @@ final class NodeScLinkR(
       )(
         MuiLink(
           new MuiLinkProps {
-            val target = JsOptionUtil.maybeDefined( diConfig.scRouterCtlOpt.isEmpty )( "_blank" )
+            val target = JsOptionUtil.maybeDefined( diConfig.openNodeScOpt.isEmpty )( "_blank" )
             override val onClick = _onLinkClick
             val href = HttpClient.mkAbsUrlIfPreferred(
               ScConstants.ScJsState.fixJsRouterUrl(

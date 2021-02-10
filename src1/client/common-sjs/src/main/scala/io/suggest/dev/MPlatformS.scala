@@ -47,6 +47,8 @@ object MPlatformS {
 
   }
 
+  def lastModifiedMs() = System.currentTimeMillis()
+
 }
 
 
@@ -66,4 +68,11 @@ case class MPlatformS(
                        isReadyPot     : Pot[Boolean] = Pot.empty,
                        isCordova      : Boolean,
                        osFamily       : Option[MOsFamily],
-                     )
+                     ) {
+
+  /** Сохраняем время последней модификации (suspend/resume), чтобы можно было расчитать,
+    * сколько времени приложение спало или бодрствовало.
+    */
+  val lastModifiedMs = MPlatformS.lastModifiedMs()
+
+}

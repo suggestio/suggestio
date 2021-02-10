@@ -1,6 +1,7 @@
 package io.suggest.sc.m.inx
 
 import io.suggest.sc.m.{ISc3Action, IScIndexRespReason}
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io
@@ -56,3 +57,7 @@ case object WcClick extends IWelcomeAction
   * @param timestamp Таймштамп-отметка, для проверки актуальности сработавшего таймера.
   */
 case class WcTimeOut(timestamp: Long) extends IWelcomeAction
+
+
+/** Маркер-трейт для index-экшенов, подразумевающих сохранение предыдущего индекса. */
+trait IStorePrevIndex { _: DAction => }

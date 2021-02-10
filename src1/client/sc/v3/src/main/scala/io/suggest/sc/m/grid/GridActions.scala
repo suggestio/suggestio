@@ -4,6 +4,7 @@ import diode.Effect
 import io.suggest.jd.render.m.IGridAction
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.m.IScApiRespReason
+import io.suggest.sc.m.inx.IStorePrevIndex
 
 /**
   * Suggest.io
@@ -34,7 +35,11 @@ case class GridLoadAds(
 
 
 /** Клик по карточке в плитке. */
-case class GridBlockClick(nodeId: String) extends IGridAction with IScApiRespReason
+case class GridBlockClick(nodeId: String)
+  extends IGridAction
+  with IScApiRespReason
+  // Если при клике по карточке сервер возвращает другой узел, то надо сохранить прошедший узел в состоянии.
+  with IStorePrevIndex
 
 /** Экшен скроллинга плитки. */
 case class GridScroll(scrollTop: Double) extends IGridAction

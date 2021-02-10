@@ -19,6 +19,7 @@ object MScNodes {
 
   @inline implicit def univEq: UnivEq[MScNodes] = UnivEq.derive
 
+  def opened = GenLens[MScNodes]( _.opened )
   def mode = GenLens[MScNodes]( _.mode )
   def circuit = GenLens[MScNodes]( _.circuit )
   def focusedAdId = GenLens[MScNodes]( _.focusedAdId )
@@ -29,6 +30,7 @@ object MScNodes {
 
 /** Контейнер данных формы управления узлами.
   *
+  * @param opened Видимо ли окно диалога?
   * @param mode Текущий режим работы формы.
   * @param circuit Логика lk-nodes-формы.
   * @param focusedAdId Дамп id открытой рекламной карточки на момент открытия формы.
@@ -38,6 +40,7 @@ object MScNodes {
   *                        Если не подписаны, то тут empty.
   */
 final case class MScNodes(
+                           opened               : Boolean                           = false,
                            mode                 : MLkNodesMode                      = MLkNodesModes.NodesManage,
                            circuit              : Option[LkNodesFormCircuit]        = None,
                            focusedAdId          : Option[String]                    = None,

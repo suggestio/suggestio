@@ -1,9 +1,10 @@
 package io.suggest.sc.v.menu
 
 import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{MScRoot, ScNodesShowHide}
 import io.suggest.sc.v.styl.{ScCss, ScCssStatic}
 import japgolly.scalajs.react._
@@ -28,7 +29,8 @@ class ScNodesBtnR(
   class Backend($: BackendScope[Props, Unit]) {
 
     private lazy val _onMenuItemClick = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesShowHide( visible = true ) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ScNodesShowHide( visible = true ) ) >>
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, SideBarOpenClose( bar = MScSideBars.Menu, open = Some(false) ) )
     }
 
     val render: VdomElement = {

@@ -28,7 +28,6 @@ import org.scalajs.dom
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLInputElement
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-import io.suggest.sjs.common.vm.wnd.WindowVm
 
 import scala.util.Try
 
@@ -71,10 +70,6 @@ object Sc3Main extends Log {
     Try {
       if (
         CordovaConstants.isCordovaPlatform() &&
-        WindowVm()
-          .navigator
-          .flatMap(_.geolocation)
-          .isEmpty &&
         CdvBgGeo.isAvailable()
       )
         modules.sc3LeafletOverrides.mapPatch()

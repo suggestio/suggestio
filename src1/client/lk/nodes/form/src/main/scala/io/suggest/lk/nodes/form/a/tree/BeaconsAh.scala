@@ -160,6 +160,18 @@ class BeaconsAh[M](
       if (nodesMap2 !===* v0.tree.nodesMap)
         modTreeF = modTreeF andThen (MTree.nodesMap set nodesMap2)
 
+      // Нужно проинкрементить корневой элемент opened-path после добавления корневой подгруппы Bluetooth-маячков.
+      if (
+        v0.tree.opened.exists(_.nonEmpty) &&
+        bcnsGroupLocOpt0.isEmpty
+      ) {
+        modTreeF = modTreeF andThen MTree.opened.modify { openedOpt0 =>
+          openedOpt0.map { opened0 =>
+            (opened0.head + 1) :: opened0.tail
+          }
+        }
+      }
+
       var modTreeOuterF = MTreeOuter.tree.modify( modTreeF )
       var modBeaconsAcc = List.empty[MBeaconScan => MBeaconScan]
 

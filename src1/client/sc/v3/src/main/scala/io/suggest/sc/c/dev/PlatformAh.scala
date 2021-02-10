@@ -15,7 +15,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, HwBack, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScreenResetNow, SettingEffect, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, HwBack, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.index.MScIndexArgs
@@ -172,9 +172,22 @@ final class PlatformAh[M](
         if (m.isScVisible)
           fxAcc ::= OnlineCheckConn.toEffectPure
 
-        if (v0.isCordova && !m.isScVisible)
-          for (p <- mroot.index.panelsOpened)
-            fxAcc ::= SideBarOpenClose( p, open = OptionUtil.SomeBool.someFalse ).toEffectPure
+        if (v0.isCordova) {
+          if (!m.isScVisible) {
+            for (p <- mroot.index.panelsOpened)
+              fxAcc ::= SideBarOpenClose( p, open = OptionUtil.SomeBool.someFalse ).toEffectPure
+
+          } else if (MPlatformS.lastModifiedMs() - v0.lastModifiedMs > 40000) {
+            // Возобновление работы выдачи. Если давно спим, то скрыть диалоги:
+            val dia = mroot.dialogs
+            if (dia.settings.opened)
+              fxAcc ::= SettingsDiaOpen(false).toEffectPure
+            if (dia.nodes.opened)
+              fxAcc ::= ScNodesShowHide(false).toEffectPure
+            if (dia.login.ident.nonEmpty)
+              fxAcc ::= ScLoginFormShowHide(false).toEffectPure
+          }
+        }
 
         ah.updatedMaybeEffect( v2, fxAcc.mergeEffects )
       }

@@ -1,9 +1,11 @@
 package io.suggest.sc.m.inx
 
+import diode.Effect
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.MGeoPoint
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -27,10 +29,12 @@ object MIndexView {
   * @param inxGeoPoint Текущая гео-точка, в которой отображается выдача.
   *                    Обычно совпадает с центром гео-карты, но не всегда.
   * @param name Название узла.
+  * @param fx доп.эффект при переключении в данный view.
   */
 case class MIndexView(
                        rcvrId          : Option[String]            = None,
                        inxGeoPoint     : Option[MGeoPoint]         = None,
                        name            : Option[String]            = None,
+                       fx              : Option[Effect]            = None,
                      )
   extends EmptyProduct

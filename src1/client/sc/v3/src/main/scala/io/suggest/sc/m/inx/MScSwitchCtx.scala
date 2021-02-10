@@ -1,5 +1,6 @@
 package io.suggest.sc.m.inx
 
+import diode.Effect
 import io.suggest.geo.MGeoLoc
 import io.suggest.sc.index.MScIndexArgs
 import japgolly.univeq.UnivEq
@@ -14,7 +15,7 @@ import japgolly.univeq.UnivEq
 
 object MScSwitchCtx {
 
-  @inline implicit def univEq: UnivEq[MScSwitchCtx] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScSwitchCtx] = UnivEq.force
 
 
   implicit final class SwitchOptExt(private val opt: Option[MScSwitchCtx]) extends AnyVal {
@@ -34,6 +35,9 @@ object MScSwitchCtx {
   * @param indexQsArgs Аргументы для запроса индекса.
   * @param forceGeoLoc Форсировать указанную геолокацию для запроса индекса.
   * @param showWelcome Поправка на отображение приветствия.
+  * @param storePrevIndex Сохранить в state.views состояние предыдущего индекса.
+  * @param afterSwitch После переключения - что сделать?
+  * @param afterBack Эффект при переходе назад. Требует storePrevIndex=true или иных условий для IndexAh._indexUpdated().
   */
 case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
@@ -41,5 +45,8 @@ case class MScSwitchCtx(
                          demandLocTest    : Boolean           = false,
                          forceGeoLoc      : Option[MGeoLoc]   = None,
                          showWelcome      : Boolean           = true,
+                         storePrevIndex   : Boolean           = false,
+                         afterSwitch      : Option[Effect]    = None,
+                         afterBack        : Option[Effect]    = None,
                        )
 

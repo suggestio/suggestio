@@ -12,7 +12,7 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
 import io.suggest.sc.m._
-import io.suggest.sc.m.grid.{GridBlockClick, GridLoadAds}
+import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3._
@@ -52,6 +52,13 @@ object IndexAh {
     // Сайд-эффекты закидываются в этот аккамулятор:
     var fxsAcc = List.empty[Effect]
 
+    // Если в switch оговорён доп.эффект, то запустить эффект.
+    for {
+      scSwitch      <- m.switchCtxOpt
+      afterSwitchFx <- scSwitch.afterSwitch
+    }
+      fxsAcc ::= afterSwitchFx
+
     val nextIndexView = MIndexView(
       rcvrId    = inx.nodeId,
       // Если nodeId не задан, то взять гео-точку из qs
@@ -60,7 +67,9 @@ object IndexAh {
         m.qs.common.locEnv.geoLocOpt
           .map(_.point)
       },
-      name = inx.name
+      name  = inx.name,
+      fx    = m.switchCtxOpt
+        .flatMap(_.afterBack),
     )
 
     var i1 = i0.copy(
@@ -68,7 +77,10 @@ object IndexAh {
       state = i0.state.copy(
         switch = MInxSwitch.empty,
         // Если фокусировка, то разрешить шаг наверх:
-        views = if ( m.reason.isInstanceOf[GridBlockClick] ) {
+        views = if (
+          m.switchCtxOpt.exists(_.storePrevIndex) ||
+          m.reason.isInstanceOf[IStorePrevIndex]
+        ) {
           nextIndexView <:: i0.state.views
         } else {
           NonEmptyList( nextIndexView )
@@ -473,7 +485,7 @@ class IndexAh[M](
 
     val isSearchNodes = root.index.search.panel.opened
 
-    // Допускать доп.барахло в ответе (foc-карточк, список нод, список плитки и т.д.)? Да, кроме фоновой проверки геолокации.
+    // Допускать доп.барахло в ответе (foc-карточек, список нод, список плитки и т.д.)? Да, кроме фоновой проверки геолокации.
     val withStuff = !switchCtx.demandLocTest
 
     val args = MScQs(
@@ -650,7 +662,8 @@ class IndexAh[M](
           forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
             MGeoLoc(point = mgp)
           },
-          showWelcome = prevNodeView.rcvrId.nonEmpty,
+          showWelcome = false, // prevNodeView.rcvrId.nonEmpty,
+          afterSwitch = v0.state.viewCurrent.fx,
         )
 
         // Запустить загрузку индекса - надо гео-точку подхватить.

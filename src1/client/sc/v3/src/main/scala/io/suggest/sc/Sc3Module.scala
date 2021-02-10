@@ -26,8 +26,9 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.model.{HttpClientConfig, HttpReqData, IMHttpClientConfig}
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.c.dia.ScNodesDiaAh
+import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.{MScRoot, OnlineCheckConn, RouteTo, ScLoginFormShowHide, ScNodesShowHide}
-import io.suggest.sc.m.inx.ReGetIndex
+import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx, ReGetIndex}
 import io.suggest.sc.u.Sc3LeafletOverrides
 import io.suggest.sc.u.api.{IScStuffApi, IScUniApi, ScAppApiHttp, ScStuffApiHttp, ScUniApi, ScUniApiHttpImpl}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -357,8 +358,37 @@ class Sc3Module { outer =>
   {
     override val diConfig: NodesDiConf = new NodesDiConf with ScHttpConfCsrf {
       override def circuitInit() = ScNodesDiaAh.scNodesCircuitInit( sc3Circuit )
-      override def scRouterCtlOpt = Some( outer.sc3SpaRouter.state.routerCtl )
-      override def closeForm = Some( Callback( outer.sc3Circuit.dispatch( ScNodesShowHide(false) ) ) )
+      override def openNodeScOpt = Some { nodeId =>
+        // Надо открыть выдачу, но чтобы кнопка "Назад" возвращала в исходный диалог узлов и возвращала предыдущее состояние выдачи.
+        Callback {
+          outer.sc3Circuit.dispatch(
+            GetIndex(
+              MScSwitchCtx(
+                indexQsArgs = MScIndexArgs(
+                  nodeId = Some(nodeId),
+                ),
+                showWelcome = false,
+                storePrevIndex = true,
+                afterSwitch = Some( Effect.action(
+                  ScNodesShowHide( false, keepState = true )
+                )),
+                afterBack = Some( Effect.action {
+                  ScNodesShowHide( true )
+                })
+              )
+            )
+          )
+        }
+
+        /*outer.sc3SpaRouter.state.routerCtl.set(
+          SioPages.Sc3(
+            nodeId = Some( nodeId ),
+          )
+        )*/
+      }
+      override def closeForm = Some( Callback(
+        outer.sc3Circuit.dispatch( ScNodesShowHide(false) )
+      ))
       /** Ссылки в ЛК необходимо показывать только в браузере, но не в Cordova,
         * т.к. переброс из приложения в браузер не готов, и мобильная вёрстка ЛК тоже отсутствует. */
       override def showLkLinks() = outer.sc3Circuit.platformRW.value.isBrowser

@@ -308,7 +308,11 @@ case class ScLoginFormChange(loginPageOpt: Option[SioPages.Login] ) extends IScL
 sealed trait IScNodesAction extends IScRootAction
 
 /** Переключение состояния формы отображения. */
-case class ScNodesShowHide( visible: Boolean ) extends IScNodesAction
+case class ScNodesShowHide(
+                            visible   : Boolean,
+                            keepState : Boolean = false
+                          )
+  extends IScNodesAction
 
 /** Смена режима работы nodes-формы. */
 case class ScNodesModeChanged( mode: MLkNodesMode ) extends IScNodesAction

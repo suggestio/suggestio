@@ -1,6 +1,6 @@
 package io.suggest.ueq
 
-import diode.{ModelR, ModelRO}
+import diode.{Effect, ModelR, ModelRO}
 import diode.data.Pot
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.experimental.permissions.{PermissionName, PermissionState}
@@ -45,5 +45,6 @@ object JsUnivEqUtil {
   @inline implicit def jsFunUe[F <: js.Function]: UnivEq[F] = UnivEq.force
 
   @inline implicit def undefOrUe[T: UnivEq]: UnivEq[js.UndefOr[T]] = UnivEq.force
+  @inline implicit def diodeEffectUe: UnivEq[Effect] = UnivEq.force
 
 }
