@@ -1,5 +1,6 @@
 package io.suggest.sc.v.hdr
 
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
@@ -123,8 +124,8 @@ class HeaderR(
           val r =
             mroot.index.resp.isPending ||
             mroot.grid.core.adsHasPending
-          Some(r)
-        }( OptFastEq.OptValueEq ),
+          OptionUtil.SomeBool( r )
+        }( FastEq.AnyRefEq ),
 
         goBackC = propsProxy.connect { mroot =>
           OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {

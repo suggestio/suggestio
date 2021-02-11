@@ -41,6 +41,10 @@ object MScIndexState {
     def inxGeoPoint: Option[MGeoPoint] =
       viewCurrent.inxGeoPoint
 
+    /** Разрешить ли рендерить карточки от bluetooth-маячков? */
+    def isBleGridAds: Boolean =
+      inxState.prevNodeOpt.isEmpty
+
   }
 
 }

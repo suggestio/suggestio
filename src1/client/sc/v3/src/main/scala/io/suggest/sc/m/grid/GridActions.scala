@@ -23,19 +23,25 @@ import io.suggest.sc.m.inx.IStorePrevIndex
   * @param onlyMatching Выборочный патчинг плитки по указанным предикатам, на основе которого были найдены карточки.
   *                    Предикат также определяет qs-поиска, и возвращённые сервером карточки замещают предыдущий
   *                    набор карточек, которые содержали в себе данный предикат в поле MScAdInfo().foundIn .
+  * @param afterLoadFx Какой эффект запустить после успешной загрузки карточек.
   */
 case class GridLoadAds(
                         clean          : Boolean,
                         ignorePending  : Boolean,
                         silent         : Option[Boolean] = None,
                         onlyMatching   : Option[MScNodeMatchInfo] = None,
+                        afterLoadFx    : Option[Effect] = None,
                       )
   extends IGridAction
   with IScApiRespReason
 
 
-/** Клик по карточке в плитке. */
-case class GridBlockClick(nodeId: String)
+/** Клик по карточке в плитке.
+  *
+  * @param nodeId id карточки-узла, по которой кликнули.
+  * @param noOpen Не раскрывать указанную карточку, а только проскроллить к ней.
+  */
+case class GridBlockClick(nodeId: String, noOpen: Boolean = false)
   extends IGridAction
   with IScApiRespReason
   // Если при клике по карточке сервер возвращает другой узел, то надо сохранить прошедший узел в состоянии.

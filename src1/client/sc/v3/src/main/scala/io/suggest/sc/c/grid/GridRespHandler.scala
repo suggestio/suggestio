@@ -79,10 +79,9 @@ final class GridRespHandler(
 
     val isGridPatching = mGla.exists(_.onlyMatching.nonEmpty)
 
-    val isCleanLoad =
-      qs.search.offset.fold(true)(_ ==* 0) &&
-      // Если происходит частичный патчинг выдачи, то это не clean-заливка:
-      !isGridPatching
+    // Если происходит частичный патчинг выдачи, то это не clean-заливка:
+    val isCleanLoad = !isGridPatching &&
+      qs.search.offset.fold(true)(_ ==* 0)
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
@@ -109,8 +108,16 @@ final class GridRespHandler(
       .iterator
       .map { sc3AdData =>
         // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
-        sc3AdData.jd.doc.tagId.nodeId
-          .flatMap( reusableAdsMap.get )
+        (for {
+          nodeId <- sc3AdData.jd.doc.tagId.nodeId
+          scAd0  <- reusableAdsMap.get( nodeId )
+        } yield {
+          // При focused index ad open, возможна ситуация с focused.pending. Нужно сбросить pending:
+          if (scAd0.focused.isPending)
+            (MScAdData.focused set Pot.empty)(scAd0)
+          else
+            scAd0
+        })
           // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
           .getOrElse {
             // Собрать начальное состояние карточки.
@@ -220,6 +227,10 @@ final class GridRespHandler(
 
     // Акк эффектов. В конце - afterUpdate-экшены. Тут List. LazyList при таком использовании переклинивает.
     var fxAcc = g0.afterUpdate
+
+    // Если есть эффекты в самом исходном экшене, то отработать:
+    for (reason <- mGla; fx <- reason.afterLoadFx)
+      fxAcc ::= fx
 
     // Если patch-запрос выдачи, пришли новые карточки и всё такое, то можно отрендерить системный нотификейшен.
     if (

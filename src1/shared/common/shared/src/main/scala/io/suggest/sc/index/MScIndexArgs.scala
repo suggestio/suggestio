@@ -18,6 +18,8 @@ import play.api.libs.json._
   */
 object MScIndexArgs {
 
+  def default = apply()
+
   /** Поддержка JSON-сериализации */
   implicit def mscIndexArgsFormat: OFormat[MScIndexArgs] = (
     // Всегда нужен хотя бы один ОБЯЗАТЕЛЬНЫЙ (не опциональный) формат. Иначе ScIndex будет неправильно начнётся.

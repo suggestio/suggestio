@@ -469,15 +469,17 @@ class Sc3Circuit(
     dispatcher  = this,
     bcnsIsSilentRO = scNodesRW.zoom(!_.opened),
     onNearbyChange = Some { (nearby0, nearby2) =>
-      val daemonS = daemonRW.value
       var fxAcc = List.empty[Effect]
 
       // Отправить эффект изменения в списке маячков
-      if (scNodesRW.value.opened)
+      if (scNodesRW.value.opened) {
         fxAcc ::= Effect.action {
           scNodesDiaAh.handleBeaconsDetected()
           DoNothing
         }
+      }
+
+      val canUpdateBleGrid = inxStateRO.value.isBleGridAds
 
       /** Экшен для перезапроса с сервера только BLE-карточек плитки. */
       def _gridBleReloadFx: Effect = {
@@ -493,13 +495,13 @@ class Sc3Circuit(
         }
       }
 
-      if (daemonS.state contains[MDaemonState] MDaemonStates.Work) {
+      if (daemonRW.value.state contains[MDaemonState] MDaemonStates.Work) {
         // Если что-то изменилось, то надо запустить обновление плитки.
         def finishWorkProcFx: Effect = {
           Effect.action( ScDaemonWorkProcess(isActive = false) )
         }
 
-        if (nearby0 ===* nearby2) {
+        if ( !canUpdateBleGrid || (nearby0 ===* nearby2) ) {
           // Ничего не изменилось: такое возможно при oneShot-режиме. Надо сразу деактивировать режим демонизации.
           fxAcc ::= finishWorkProcFx
         } else {
@@ -535,6 +537,10 @@ class Sc3Circuit(
                 .mergeEffects
                 .get
             }
+
+          } else if (!canUpdateBleGrid) {
+            // Выставлен запрет на изменение плитки.
+            None
 
           } else {
             // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
@@ -684,9 +690,9 @@ class Sc3Circuit(
   override protected val actionHandler: HandlerFunction = { (mroot, action) =>
     val ctlOrNull: HandlerFunction = action match {
       case _: IBleBeaconAction          => beaconerAh
+      case _: IGridAction               => gridAh
       case _: IMapsAction               => mapAhs
       case _: IGeoLocAction             => geoLocAh
-      case _: IGridAction               => gridAh
       case _: IJdAction                 => jdAh
       case _: IScTailAction             => tailAh
       case _: IOnlineAction             => onLineAh

@@ -23,6 +23,8 @@ import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.sc.ads.MScNodeMatchInfo
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.log.Log
+import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
@@ -210,6 +212,15 @@ object GridAh {
   }
 
 
+  /** Нечистый метод чтения текущего скролла через ковыряния внутри view'а,
+    * чтобы не усложнять модели и всю логику обработки скролла.
+    * Следует дёргать внутри Effect().
+    */
+  def getGridScrollTop(): Option[Double] = {
+    Option( dom.document.getElementById( GridScrollUtil.SCROLL_CONTAINER_ID ) )
+      .map( _.scrollTop )
+  }
+
   /** Восстановление скролла после добавления
     *
     * @param g0 Начальное состояние плитки.
@@ -227,10 +238,7 @@ object GridAh {
       // Есть какой-то заметный глазу скачок высоты плитки. Запустить эффект сдвига скролла плитки.
       Effect.action {
         // Нужно понять, есть ли скролл прямо сейчас: чтобы не нагружать состояние лишним мусором, дёргаем элемент напрямую.
-        if (
-          Option( dom.document.getElementById( GridScrollUtil.SCROLL_CONTAINER_ID ) )
-            .exists { el => el.scrollTop > 1 }
-        ) {
+        if ( getGridScrollTop().exists(_ > 1) ) {
           AnimateScroll.scrollMore( gridHeightDeltaPx, GridScrollUtil.scrollOptions(isSmooth = false) )
         }
 
@@ -474,8 +482,21 @@ class GridAh[M](
       GridAh
         .findAd(m.nodeId, v0.core)
         .fold {
-          logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
-          noChange
+          // TODO Отработать LoadMore, когда m.noLoad (т.е. идёт возврат из другой выдачи)
+          if (m.noOpen && v0.hasMoreAds) {
+            val fx = Effect.action {
+              GridLoadAds(
+                clean         = false,
+                ignorePending = false,
+                afterLoadFx   = Some( m.toEffectPure ),
+              )
+            }
+            effectOnly(fx)
+
+          } else {
+            logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+            noChange
+          }
 
         } { case (ad0, index) =>
           if (ad0.isAlwaysOpened) {
@@ -487,10 +508,36 @@ class GridAh[M](
             val v2 = MGridS.core.modify( GridAh.resetFocus(index, ad2, _) )(v0)
             updatedSilent(v2, scrollFx)
 
+          } else if (ad0.focused.nonEmpty) {
+            // Карточка уже раскрыта. Синхронное сокрытие карточки.
+            val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
+            val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
+            val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
+            val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
+            val v2          = MGridS.core.modify { core0 =>
+              core0.copy(
+                ads       = ads2,
+                jdRuntime = jdRuntime2,
+                gridBuild = gridBuild2
+              )
+            }(v0)
+            // В фоне - запустить скроллинг к началу карточки.
+            val scrollFx      = GridAh.scrollToAdFx( ad1, gridBuild2 )
+            val resetRouteFx  = ResetUrlRoute().toEffectPure
+            val fxs           = scrollFx + resetRouteFx
+            updated(v2, fxs)
+
           } else {
-            ad0.focused.fold {
-              // Карточка сейчас скрыта, её нужно раскрыть.
-              // Собрать запрос фокусировки на ровно одной рекламной карточке.
+            // Карточка сейчас скрыта, её нужно раскрыть.
+            // Собрать запрос фокусировки на ровно одной рекламной карточке.
+            if ( m.noOpen ) {
+              // Ничего загружать не требуется, только прокрутить к указанной карточке.
+              // Возможно, это переход "назад" из другой выдачи.
+              val fx = GridAh.scrollToAdFx( ad0, v0.core.gridBuild )
+              effectOnly(fx)
+
+            } else {
+              // Запуск запроса за данными карточки на сервер.
               val fx = Effect {
                 val qs = ScQsUtil.focAdsQs( scRootRO.value, m.nodeId )
 
@@ -501,6 +548,19 @@ class GridAh[M](
                       qs            = qs,
                       tryResp       = tryResp,
                       reason        = m,
+                      // Если сервер вернёт index ad open, то этот indexSwitch поможет потому вернутся юзеру назад.
+                      switchCtxOpt  = Some(
+                        MScSwitchCtx(
+                          // TODO indexQsArgs: Как тут None пропихнуть? Эти аргументы имеют мало смысла тут.
+                          indexQsArgs = MScIndexArgs(
+                            geoIntoRcvr = false,
+                            retUserLoc = false,
+                          ),
+                          afterBackGrid = Some( Effect.action {
+                            m.copy(noOpen = true)
+                          } ),
+                        )
+                      )
                     )
                     Success(r)
                   }
@@ -512,25 +572,6 @@ class GridAh[M](
 
               val v2 = GridAh.saveAdIntoValue(index, ad1, v0)
               updated(v2, fx)
-
-            } { _ =>
-              // Карточка уже раскрыта. Синхронное сокрытие карточки.
-              val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
-              val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
-              val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core)
-              val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
-              val v2          = MGridS.core.modify { core0 =>
-                core0.copy(
-                  ads       = ads2,
-                  jdRuntime = jdRuntime2,
-                  gridBuild = gridBuild2
-                )
-              }(v0)
-              // В фоне - запустить скроллинг к началу карточки.
-              val scrollFx      = GridAh.scrollToAdFx( ad1, gridBuild2 )
-              val resetRouteFx  = ResetUrlRoute().toEffectPure
-              val fxs           = scrollFx + resetRouteFx
-              updated(v2, fxs)
             }
           }
         }

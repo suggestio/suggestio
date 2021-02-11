@@ -134,7 +134,6 @@ class Sc3Module { outer =>
 
 
   // grid
-  lazy val gridCoreR = wire[GridCoreR]
   lazy val gridR   = wire[GridR]
 
 
@@ -369,12 +368,12 @@ class Sc3Module { outer =>
                 ),
                 showWelcome = false,
                 storePrevIndex = true,
-                afterSwitch = Some( Effect.action(
+                afterIndex = Some( Effect.action(
                   ScNodesShowHide( false, keepState = true )
                 )),
                 afterBack = Some( Effect.action {
                   ScNodesShowHide( true )
-                })
+                }),
               )
             )
           )

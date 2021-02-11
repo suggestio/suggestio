@@ -84,7 +84,9 @@ case class MGridCoreS(
 
   /** Происходит ли сейчас загрузка какой-либо карточки? */
   lazy val _adsHasPending: Boolean =
-    ads.iterator.flatten.exists(_.focused.isPending)
+    ads.iterator.flatten.exists { scAd =>
+      scAd.focused.isPending
+    }
 
   /** Происходит ли сейчас загрузка какой-либо карточки или карточек? */
   def adsHasPending: Boolean =

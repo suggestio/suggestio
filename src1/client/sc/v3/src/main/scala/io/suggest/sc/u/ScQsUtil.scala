@@ -22,11 +22,11 @@ object ScQsUtil {
 
 
   /** Сборка LocEnv на основе описанных данных. */
-  private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean, hasPrevNode: Boolean = false): MLocEnv = {
+  private def getLocEnv(mroot: MScRoot, withGeoLoc: Boolean, withBluetooth: Boolean = true): MLocEnv = {
     MLocEnv(
       geoLocOpt  = OptionUtil.maybeOpt(withGeoLoc)( mroot.geoLocOpt ),
       // При переходе в под-узел, зачем отображать маячки с предыдущей страницы? Незачем.
-      bleBeacons = if (hasPrevNode) mroot.locEnvBleBeacons else Nil,
+      bleBeacons = if (withBluetooth) mroot.locEnvBleBeacons else Nil,
     )
   }
 
@@ -82,7 +82,7 @@ object ScQsUtil {
         locEnv = getLocEnv(
           mroot,
           withGeoLoc = currRcvrId.isEmpty,
-          hasPrevNode = inxState.prevNodeOpt.nonEmpty,
+          withBluetooth = inxState.isBleGridAds,
         ),
       ),
       search = MAdsSearchReq(
@@ -107,7 +107,11 @@ object ScQsUtil {
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
-        locEnv = getLocEnv(mroot, withGeoLoc = false),
+        locEnv = getLocEnv(
+          mroot,
+          withGeoLoc = false,
+          withBluetooth = mroot.index.state.isBleGridAds,
+        ),
       ),
       search = MAdsSearchReq(
         rcvrId = mroot.index.state.rcvrId.toEsUuIdOpt,

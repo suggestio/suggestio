@@ -17,7 +17,6 @@ object MScSwitchCtx {
 
   @inline implicit def univEq: UnivEq[MScSwitchCtx] = UnivEq.force
 
-
   implicit final class SwitchOptExt(private val opt: Option[MScSwitchCtx]) extends AnyVal {
 
     def showWelcome: Boolean =
@@ -36,8 +35,9 @@ object MScSwitchCtx {
   * @param forceGeoLoc Форсировать указанную геолокацию для запроса индекса.
   * @param showWelcome Поправка на отображение приветствия.
   * @param storePrevIndex Сохранить в state.views состояние предыдущего индекса.
-  * @param afterSwitch После переключения - что сделать?
+  * @param afterIndex После переключения - что сделать?
   * @param afterBack Эффект при переходе назад. Требует storePrevIndex=true или иных условий для IndexAh._indexUpdated().
+  * @param afterBackGrid Эффект после "назад" и после получения и обработки начальной порции блоков плитки.
   */
 case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
@@ -46,7 +46,8 @@ case class MScSwitchCtx(
                          forceGeoLoc      : Option[MGeoLoc]   = None,
                          showWelcome      : Boolean           = true,
                          storePrevIndex   : Boolean           = false,
-                         afterSwitch      : Option[Effect]    = None,
+                         afterIndex       : Option[Effect]    = None,
                          afterBack        : Option[Effect]    = None,
+                         afterBackGrid    : Option[Effect]    = None,
                        )
 

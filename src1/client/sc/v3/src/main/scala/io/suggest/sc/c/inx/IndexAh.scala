@@ -43,6 +43,24 @@ import scala.util.Success
 
 object IndexAh {
 
+  def _gridReLoadFx(raTypes: Set[MScRespActionType], scSwitchOpt: Option[MScSwitchCtx] = None): Option[Effect] = {
+    val afterGridFxOpt = scSwitchOpt.flatMap(_.afterBackGrid)
+
+    if (raTypes contains MScRespActionTypes.AdsTile) {
+      afterGridFxOpt
+
+    } else {
+      val fx = Effect.action {
+        GridLoadAds(
+          clean         = true,
+          ignorePending = true,
+          afterLoadFx   = afterGridFxOpt,
+        )
+      }
+      Some(fx)
+    }
+  }
+
   /** Непосредственное обновление индекса.
     *
     * @param inx Новый индекс.
@@ -55,7 +73,7 @@ object IndexAh {
     // Если в switch оговорён доп.эффект, то запустить эффект.
     for {
       scSwitch      <- m.switchCtxOpt
-      afterSwitchFx <- scSwitch.afterSwitch
+      afterSwitchFx <- scSwitch.afterIndex
     }
       fxsAcc ::= afterSwitchFx
 
@@ -68,8 +86,7 @@ object IndexAh {
           .map(_.point)
       },
       name  = inx.name,
-      fx    = m.switchCtxOpt
-        .flatMap(_.afterBack),
+      switchCtxOpt = m.switchCtxOpt,
     )
 
     var i1 = i0.copy(
@@ -77,7 +94,19 @@ object IndexAh {
       state = i0.state.copy(
         switch = MInxSwitch.empty,
         // Если фокусировка, то разрешить шаг наверх:
-        views = if (
+        views = if (m.reason ==* GoToPrevIndexView) {
+          // Переход на шаг назад. Выкинуть верхний view из списка. Предшествующий ему view заменить на собранный выше.
+          i0.state
+            .views
+            .tails
+            .tail
+            .tailMaybe
+            .toOption
+            .flatMap(_.headOption)
+            .fold( NonEmptyList( nextIndexView ) ) { nel0 =>
+              nextIndexView <:: nel0
+            }
+        } else if (
           m.switchCtxOpt.exists(_.storePrevIndex) ||
           m.reason.isInstanceOf[IStorePrevIndex]
         ) {
@@ -169,10 +198,13 @@ object IndexAh {
       SaveRecentIndex().toEffectPure
 
     // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
-    if ( !(respActionTypes contains MScRespActionTypes.AdsTile) ) {
-      fxsAcc ::= GridLoadAds(clean = true, ignorePending = true)
-        .toEffectPure
-    }
+    for (fx <- _gridReLoadFx(
+      respActionTypes,
+      m.switchCtxOpt
+        // Клик по блоку с последующим index ad open не должен приводить к эффектам сброса плитки и т.д.
+        .filter(_ => !m.reason.isInstanceOf[IStorePrevIndex])
+    ))
+      fxsAcc ::= fx
 
     // Если открыта форма логина, но индекс сообщает, что isLoggedIn, то сразу закрыть форму логина:
     if (i1.isLoggedIn && mroot.dialogs.login.isDiaOpened)
@@ -402,13 +434,13 @@ class IndexRah
       var fxAcc = List.empty[Effect]
 
       // Запустить эффект обновления плитки, если плитка не пришла автоматом.
-      if (
-        !ctx.m.tryResp
+      for (fx <- IndexAh._gridReLoadFx(
+        ctx.m.tryResp
           .toOption
-          .exists(_.respActionTypes contains MScRespActionTypes.AdsTile)
-      ) {
-        fxAcc ::= GridLoadAds(clean = true, ignorePending = true).toEffectPure
-      }
+          .fold( Set.empty[MScRespActionType] )(_.respActionTypes),
+        ctx.m.switchCtxOpt,
+      ))
+        fxAcc ::= fx
 
       ActionResult( Some(v2), fxAcc.mergeEffects )
 
@@ -654,25 +686,28 @@ class IndexAh[M](
     case m @ GoToPrevIndexView =>
       val v0 = value
       v0.state.prevNodeOpt.fold(noChange) { prevNodeView =>
-        // Контекст переключения.
-        val switchCtx = MScSwitchCtx(
-          indexQsArgs = MScIndexArgs(
-            nodeId = prevNodeView.rcvrId,
-          ),
-          forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
-            MGeoLoc(point = mgp)
-          },
-          showWelcome = false, // prevNodeView.rcvrId.nonEmpty,
-          afterSwitch = v0.state.viewCurrent.fx,
+        // Сборка контекста переключения индекса с учётом данных из возможного сохранённого ранее в состоянии контекста.
+        val indexQsArgs2 = MScIndexArgs(
+          nodeId = prevNodeView.rcvrId,
         )
+        val switchCtx2 = v0.state.viewCurrent
+          .switchCtxOpt
+          .getOrElse( MScSwitchCtx( indexQsArgs2 ) )
+          .copy(
+            indexQsArgs = indexQsArgs2,
+            forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
+              MGeoLoc(point = mgp)
+            },
+            showWelcome = false, // prevNodeView.rcvrId.nonEmpty,
+          )
 
         // Запустить загрузку индекса - надо гео-точку подхватить.
         _getIndex(
           silentUpdate  = false,
           v0            = v0,
-          // TODO m.asInstanceOf[IScIndexRespReason] - Ошибка в scalac-2.13.1. Потом - убрать asInstanceOf[].
+          // TODO m.asInstanceOf[IScIndexRespReason] - Ошибка в scalac-2.13.x. Потом - убрать asInstanceOf[].
           reason        = m.asInstanceOf[IScIndexRespReason],
-          switchCtx     = switchCtx
+          switchCtx     = switchCtx2
         )
       }
 
