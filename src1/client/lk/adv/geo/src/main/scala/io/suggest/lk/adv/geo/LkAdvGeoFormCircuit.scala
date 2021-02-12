@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo
 import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
-import io.suggest.adv.geo.{MFormInit, MFormS}
+import io.suggest.adv.geo.{AdvGeoConstants, MFormInit, MFormS}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
@@ -195,7 +195,8 @@ final class LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MR
 
     val radAh = new RadAh(
       modelRW       = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.rad ),
-      priceUpdateFx = priceUpdateEffect
+      priceUpdateFx = priceUpdateEffect,
+      radiusMinMax  = AdvGeoConstants.Radius,
     )
     val radPopupAh = new RadPopupAh(
       modelRW = CircuitUtil.mkLensZoomRW( geoRW, MAdvGeoS.radPopup ),

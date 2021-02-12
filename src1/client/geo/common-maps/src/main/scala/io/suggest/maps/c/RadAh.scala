@@ -1,7 +1,6 @@
 package io.suggest.maps.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.geo.{CircleGs, IGeoPointField, MGeoPoint}
 import io.suggest.maps.m._
@@ -102,7 +101,8 @@ object RadAhUtil {
   */
 class RadAh[M](
                 modelRW           : ModelRW[M, Option[MRad]],
-                priceUpdateFx     : Effect
+                priceUpdateFx     : Effect,
+                radiusMinMax      : IMinMaxM,
               )
   extends ActionHandler(modelRW)
 {
@@ -112,7 +112,7 @@ class RadAh[M](
     val v0 = value.get
     // Посчитать радиус:
     val rmGp1 = rd.geoPoint
-    val v2 = RadAhUtil.onRadiusDrag(v0, AdvGeoConstants.Radius, rmGp1, stillDragging)
+    val v2 = RadAhUtil.onRadiusDrag(v0, radiusMinMax, rmGp1, stillDragging)
     Some(v2)
   }
 

@@ -2,7 +2,7 @@ package io.suggest.lk.adn.map
 
 import diode.data.Ready
 import diode.react.ReactConnector
-import io.suggest.adn.mapf.MLamFormInit
+import io.suggest.adn.mapf.{AdnMapFormConstants, MLamFormInit}
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.lk.adn.map.a._
 import io.suggest.lk.adn.map.m._
@@ -103,7 +103,8 @@ final class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot]
     // Реакция на двиганье маркера на карте:
     val radAh = new RadAh(
       modelRW       = radRW,
-      priceUpdateFx = priceUpdateEffect
+      priceUpdateFx = priceUpdateEffect,
+      radiusMinMax  = AdnMapFormConstants.Rad.RadiusM,
     )
 
     val radPopupAh = new LamRadPopupAh(
