@@ -25,8 +25,8 @@ object AdSearchConstants {
 
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
-    * index answer вместо focused ads. */
-  def FOC_INDEX_ALLOWED_FN   = "n"
+    * ответ index ad open вместо focused ads. */
+  def FOC_INDEX_AD_OPEN_FN   = "n"
 
   /** @return Имя поля с кодом используемого режима lookup'а карточки. */
   def AD_LOOKUP_MODE_FN    = "k"

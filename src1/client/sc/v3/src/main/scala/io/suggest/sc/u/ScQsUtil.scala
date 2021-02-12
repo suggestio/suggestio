@@ -2,7 +2,7 @@ package io.suggest.sc.u
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MPxRatios, MScreen}
-import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.es.model.MEsUuId.Implicits._
@@ -103,6 +103,8 @@ object ScQsUtil {
 
   /** qs для фокусировки на карточке. */
   def focAdsQs(mroot: MScRoot, adId: String): MScQs = {
+    val withBluetoothAds = mroot.index.state.isBleGridAds
+
     MScQs(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
@@ -110,16 +112,19 @@ object ScQsUtil {
         locEnv = getLocEnv(
           mroot,
           withGeoLoc = false,
-          withBluetooth = mroot.index.state.isBleGridAds,
+          withBluetooth = withBluetoothAds,
         ),
       ),
       search = MAdsSearchReq(
         rcvrId = mroot.index.state.rcvrId.toEsUuIdOpt,
       ),
-      // TODO common: надо выставлять подгрузку grid-карточек при перескоке foc->index, чтобы плитка приходила сразу?
       foc = Some(
         MScFocusArgs(
-          focIndexAllowed  = true,
+          indexAdOpen      = Some(
+            MIndexAdOpenQs(
+              withBleBeaconAds = withBluetoothAds,
+            )
+          ),
           lookupMode       = None,
           lookupAdId       = adId,
         )
@@ -139,7 +144,7 @@ object ScQsUtil {
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some( screenForGridAds(mroot) ),
-        locEnv = getLocEnv(mroot, withGeoLoc = false),
+        locEnv = getLocEnv(mroot, withGeoLoc = false, withBluetooth = true),
       ),
       search = MAdsSearchReq(
         genOpt = Some( mroot.index.state.generation ),

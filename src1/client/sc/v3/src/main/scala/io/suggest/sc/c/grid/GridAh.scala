@@ -559,6 +559,8 @@ class GridAh[M](
                           afterBackGrid = Some( Effect.action {
                             m.copy(noOpen = true)
                           } ),
+                          // В случае, если сервер пришлёт index ad open вместо плитки, новый индекс надо добавить в стопку поверх существующего.
+                          viewsAction = MScSwitchCtx.ViewsAction.PUSH,
                         )
                       )
                     )

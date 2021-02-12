@@ -367,13 +367,13 @@ class Sc3Module { outer =>
                   nodeId = Some(nodeId),
                 ),
                 showWelcome = false,
-                storePrevIndex = true,
                 afterIndex = Some( Effect.action(
                   ScNodesShowHide( false, keepState = true )
                 )),
                 afterBack = Some( Effect.action {
                   ScNodesShowHide( true )
                 }),
+                viewsAction = MScSwitchCtx.ViewsAction.PUSH,
               )
             )
           )

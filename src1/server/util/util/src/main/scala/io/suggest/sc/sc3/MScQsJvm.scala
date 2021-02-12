@@ -5,7 +5,7 @@ import io.suggest.sc.MScApiVsn
 import play.api.mvc.QueryStringBindable
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
-import io.suggest.sc.ads.{MAdsSearchReq, MLookupMode, MScFocusArgs, MScGridArgs, MScNodesArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MLookupMode, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.xplay.qsb.QueryStringBindableImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -255,8 +255,41 @@ object MScQsJvm {
   }
 
 
+  /** Поддержка QSB для MIndexAdOpenQs. */
+  implicit def indexAdOpenQsb(implicit
+                              boolB            : QueryStringBindable[Boolean],
+                             ): QueryStringBindable[MIndexAdOpenQs] = {
+    new QueryStringBindableImpl[MIndexAdOpenQs] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MIndexAdOpenQs]] = {
+        val F = MIndexAdOpenQs.Fields
+        val k = key1F( key )
+        for {
+          withBleBeaconAdsE <- boolB.bind( k(F.WITH_BLE_BEACON_ADS), params )
+        } yield {
+          for {
+            withBleBeaconAds <- withBleBeaconAdsE
+          } yield {
+            MIndexAdOpenQs(
+              withBleBeaconAds = withBleBeaconAds,
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MIndexAdOpenQs): String = {
+        val F = MIndexAdOpenQs.Fields
+        val k = key1F( key )
+        boolB.unbind( k(F.WITH_BLE_BEACON_ADS), value.withBleBeaconAds )
+      }
+
+    }
+  }
+
+
   /** Поддержка QSB для MScFocusArgs. */
   implicit def mScFocusArgsQsb(implicit
+                               indexAdOpenQs    : QueryStringBindable[Option[MIndexAdOpenQs]],
                                boolB            : QueryStringBindable[Boolean],
                                lookupModeOptB   : QueryStringBindable[Option[MLookupMode]],
                                strB             : QueryStringBindable[String]
@@ -267,17 +300,26 @@ object MScQsJvm {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScFocusArgs]] = {
         val k = key1F(key)
         for {
-          focJumpAllowedE         <- boolB.bind         ( k(FOC_INDEX_ALLOWED_FN),    params )
+          indexAdOpenOptE         <- {
+            val indexAdOpenK = k( FOC_INDEX_AD_OPEN_FN )
+            indexAdOpenQs
+              .bind( indexAdOpenK, params )
+              .orElse {
+                boolB
+                  .bind( indexAdOpenK, params )
+                  .map( _.map(MIndexAdOpenQs.fromFocIndexAdOpenEnabled) )
+              }
+          }
           lookupModeOptE          <- lookupModeOptB.bind( k(AD_LOOKUP_MODE_FN),       params )
           lookupAdIdE             <- strB.bind          ( k(LOOKUP_AD_ID_FN),         params )
         } yield {
           for {
-            focIndexAllowed       <- focJumpAllowedE
+            indexAdOpenOpt        <- indexAdOpenOptE
             lookupModeOpt         <- lookupModeOptE
             lookupAdId            <- lookupAdIdE
           } yield {
             MScFocusArgs(
-              focIndexAllowed     = focIndexAllowed,
+              indexAdOpen         = indexAdOpenOpt,
               lookupMode          = lookupModeOpt,
               lookupAdId          = lookupAdId
             )
@@ -288,9 +330,9 @@ object MScQsJvm {
       override def unbind(key: String, value: MScFocusArgs): String = {
         val k = key1F(key)
         _mergeUnbinded1(
-          boolB.unbind          ( k(FOC_INDEX_ALLOWED_FN),    value.focIndexAllowed ),
+          indexAdOpenQs.unbind  ( k(FOC_INDEX_AD_OPEN_FN),    value.indexAdOpen ),
           lookupModeOptB.unbind ( k(AD_LOOKUP_MODE_FN),       value.lookupMode ),
-          strB.unbind           ( k(LOOKUP_AD_ID_FN),         value.lookupAdId )
+          strB.unbind           ( k(LOOKUP_AD_ID_FN),         value.lookupAdId ),
         )
       }
 

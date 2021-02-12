@@ -20,7 +20,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
-import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs, MScGridArgs, MScNodesArgs}
+import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
 import io.suggest.sc.c.search.SearchAh
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
@@ -89,12 +89,14 @@ object IndexAh {
       switchCtxOpt = m.switchCtxOpt,
     )
 
+    val indexViewAction = m.switchCtxOpt.flatMap(_.viewsAction)
+
     var i1 = i0.copy(
       resp = i0.resp.ready(inx),
       state = i0.state.copy(
         switch = MInxSwitch.empty,
-        // Если фокусировка, то разрешить шаг наверх:
-        views = if (m.reason ==* GoToPrevIndexView) {
+        // Обновить стопку индексов в связи с новым индексом:
+        views = if (indexViewAction ==* MScSwitchCtx.ViewsAction.POP) {
           // Переход на шаг назад. Выкинуть верхний view из списка. Предшествующий ему view заменить на собранный выше.
           i0.state
             .views
@@ -106,12 +108,11 @@ object IndexAh {
             .fold( NonEmptyList( nextIndexView ) ) { nel0 =>
               nextIndexView <:: nel0
             }
-        } else if (
-          m.switchCtxOpt.exists(_.storePrevIndex) ||
-          m.reason.isInstanceOf[IStorePrevIndex]
-        ) {
+        } else if ( indexViewAction ==* MScSwitchCtx.ViewsAction.PUSH ) {
+          // Погружение в под-индексы... Сохранить старый индекс, чтобы отобразилась кнопка "назад".
           nextIndexView <:: i0.state.views
         } else {
+          // index view action == RESET
           NonEmptyList( nextIndexView )
         }
       ),
@@ -202,7 +203,9 @@ object IndexAh {
       respActionTypes,
       m.switchCtxOpt
         // Клик по блоку с последующим index ad open не должен приводить к эффектам сброса плитки и т.д.
-        .filter(_ => !m.reason.isInstanceOf[IStorePrevIndex])
+        .filter { _ =>
+          !m.switchCtxOpt.exists(_.viewsAction ==* MScSwitchCtx.ViewsAction.PUSH)
+        }
     ))
       fxsAcc ::= fx
 
@@ -544,7 +547,12 @@ class IndexAh[M](
         if withStuff
       } yield {
         MScFocusArgs(
-          focIndexAllowed = true,
+          // TODO А надо ли тут допускать index ad open, если и так происходит запрос индекса?
+          indexAdOpen     = Some(
+            MIndexAdOpenQs(
+              withBleBeaconAds = false,
+            )
+          ),
           lookupMode      = None,
           lookupAdId      = focAdId
         )

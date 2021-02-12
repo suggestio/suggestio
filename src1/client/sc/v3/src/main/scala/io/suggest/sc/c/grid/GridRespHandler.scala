@@ -15,6 +15,7 @@ import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -102,32 +103,50 @@ final class GridRespHandler(
         Map.empty
       }
     }
+    //val isWithBleAds = ctx.value0.index.state.isBleGridAds
+    //println(s"isWithBleAds = $isWithBleAds")
 
     // Подготовить полученные с сервера карточки:
-    val newScAds = gridResp.ads
-      .iterator
-      .map { sc3AdData =>
-        // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
-        (for {
-          nodeId <- sc3AdData.jd.doc.tagId.nodeId
-          scAd0  <- reusableAdsMap.get( nodeId )
-        } yield {
-          // При focused index ad open, возможна ситуация с focused.pending. Нужно сбросить pending:
-          if (scAd0.focused.isPending)
-            (MScAdData.focused set Pot.empty)(scAd0)
-          else
-            scAd0
-        })
-          // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
-          .getOrElse {
-            // Собрать начальное состояние карточки.
-            // Сервер может присылать уже открытые карточи - это нормально.
-            // Главное - их сразу пропихивать и в focused, и в обычные блоки.
-            MScAdData(
-              main = MJdDataJs.fromJdData( sc3AdData.jd, sc3AdData.info ),
-            )
-          }
-      }
+    val newScAds = (for {
+      sc3AdData <- gridResp.ads.iterator
+      nodeIdOpt = sc3AdData.jd.doc.tagId.nodeId
+      // TODO Нужно профильтровать карточки на предмет bluetooth.
+      /*if isWithBleAds || (for {
+        //nodeId <- nodeIdOpt.iterator
+        matchInfo <- sc3AdData.info.matchInfos.iterator
+        nodeMatch <- {
+          println(s"ad#$nodeIdOpt => nodeMatch = $matchInfo")
+          matchInfo.nodeMatchings.iterator
+        }
+        if nodeMatch.ntype contains[MNodeType] MNodeTypes.BleBeacon
+      } yield {
+        println("Dropped BLE ad: " + nodeIdOpt)
+        false
+      })
+        .nextOption()
+        .getOrElse(true)*/
+    } yield {
+      // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
+      (for {
+        nodeId <- nodeIdOpt
+        scAd0  <- reusableAdsMap.get( nodeId )
+      } yield {
+        // При focused index ad open, возможна ситуация с focused.pending. Нужно сбросить pending:
+        if (scAd0.focused.isPending)
+          (MScAdData.focused set Pot.empty)(scAd0)
+        else
+          scAd0
+      })
+        // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
+        .getOrElse {
+          // Собрать начальное состояние карточки.
+          // Сервер может присылать уже открытые карточи - это нормально.
+          // Главное - их сразу пропихивать и в focused, и в обычные блоки.
+          MScAdData(
+            main = MJdDataJs.fromJdData( sc3AdData.jd, sc3AdData.info ),
+          )
+        }
+    })
       .to( Vector )
 
     // Самоконтроль для отладки: Проверить, совпадает ли SzMult между сервером и клиентом?

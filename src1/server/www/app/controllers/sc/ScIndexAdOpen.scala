@@ -1,8 +1,9 @@
 package controllers.sc
 
+import io.suggest.geo.MLocEnv
 import io.suggest.n2.node.MNode
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.sc3.MScQs
+import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import models.req.IReq
 import util.showcase.IScUtil
 
@@ -34,12 +35,26 @@ trait ScIndexAdOpen
     // TODO Заменить lazy val на val.
     override lazy val _qs: MScQs = {
       // v3 выдача. Собрать аргументы для вызова index-логики:
+      var qsCommon2 = focQs.common
+
+      // Если выставлен отказ от bluetooth-маячков в ответе, то убрать маячки из locEnv.
+      if (
+        focQs.foc
+          .exists(_.indexAdOpen
+            .exists(!_.withBleBeaconAds)) &&
+        qsCommon2.locEnv.bleBeacons.nonEmpty
+      ) {
+        qsCommon2 = MScCommonQs.locEnv
+          .composeLens( MLocEnv.bleBeacons )
+          .set( Nil )( qsCommon2 )
+      }
+
       MScQs(
-        common = focQs.common,
+        common = qsCommon2,
         index = Some(
           MScIndexArgs(
           )
-        )
+        ),
       )
     }
 

@@ -231,7 +231,7 @@ class ShowcaseUtil @Inject() (
 
     val toProducerFutOpt = for {
       focQs <- qs.foc
-      if focQs.focIndexAllowed
+      if focQs.indexAdOpen.nonEmpty
     } yield {
       for {
         // Прочитать из хранилища указанную карточку.

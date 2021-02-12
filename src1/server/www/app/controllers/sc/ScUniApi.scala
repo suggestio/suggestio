@@ -60,7 +60,7 @@ trait ScUniApi
     lazy val focJumpToIndexNodeOptFut: Future[Option[MNode]] = {
       (for {
         focQs <- qs.foc
-        if focQs.focIndexAllowed
+        if focQs.indexAdOpen.nonEmpty
       } yield {
         // Запустить нормальную проверку на перескок в индекс.
         scUtil.isFocGoToProducerIndexFut( qs )
@@ -75,7 +75,7 @@ trait ScUniApi
         val logic = ScIndexLogic(qs)(_request)
         LOGGER.trace(s"$logPrefix Normal index-logic created: $logic")
         Future.successful( Some(logic) )
-      } else if ( qs.foc.exists(_.focIndexAllowed) ) {
+      } else if ( qs.foc.exists(_.indexAdOpen.nonEmpty) ) {
         for (toNnodeOpt <- focJumpToIndexNodeOptFut) yield {
           for (toNode <- toNnodeOpt) yield {
             val inxLogic = ScFocToIndexLogicV3(toNode, qs)( _request )
@@ -126,14 +126,13 @@ trait ScUniApi
               foc0 <- qs.foc
               if {
                 // Разрешить авто-фокус, если это запрос при запуске, т.е. в рамках пачки index+grid+foc:
-                qs.grid.exists(_.focAfterJump contains true) ||
+                qs.grid.exists(_.focAfterJump contains[Boolean] true) ||
                 // Разрешать авто-фокус при любом переходе куда угодно (выключено по итогам разговоров):
                 ScConstants.Focused.AUTO_FOCUS_AFTER_FOC_INDEX
               }
             } yield {
               // если требуется авто-фокусировка, то снять флаг focIndex на всякий случай (для возможной от бесконечных переходов). В норме - это ни на что не должно влиять.
-              MScFocusArgs.focIndexAllowed
-                .set(false)(foc0)
+              (MScFocusArgs.indexAdOpen set None)(foc0)
             }
           )
           LOGGER.trace(s"$logPrefix Ads search after index qs2=$qs2")

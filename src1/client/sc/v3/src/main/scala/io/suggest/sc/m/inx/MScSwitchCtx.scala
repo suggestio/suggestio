@@ -1,6 +1,7 @@
 package io.suggest.sc.m.inx
 
 import diode.Effect
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoLoc
 import io.suggest.sc.index.MScIndexArgs
 import japgolly.univeq.UnivEq
@@ -24,6 +25,17 @@ object MScSwitchCtx {
 
   }
 
+
+  type ViewsAction = Option[Boolean]
+  object ViewsAction {
+    /** Замена index.state.views на новый индекс. */
+    final def RESET: ViewsAction = None
+    /** Добавление нового индекса с сохранением старого. */
+    final def PUSH: ViewsAction = OptionUtil.SomeBool.someTrue
+    /** Убрать последний индекс из стопки. */
+    final def POP: ViewsAction = OptionUtil.SomeBool.someFalse
+  }
+
 }
 
 
@@ -34,7 +46,6 @@ object MScSwitchCtx {
   * @param indexQsArgs Аргументы для запроса индекса.
   * @param forceGeoLoc Форсировать указанную геолокацию для запроса индекса.
   * @param showWelcome Поправка на отображение приветствия.
-  * @param storePrevIndex Сохранить в state.views состояние предыдущего индекса.
   * @param afterIndex После переключения - что сделать?
   * @param afterBack Эффект при переходе назад. Требует storePrevIndex=true или иных условий для IndexAh._indexUpdated().
   * @param afterBackGrid Эффект после "назад" и после получения и обработки начальной порции блоков плитки.
@@ -45,9 +56,9 @@ case class MScSwitchCtx(
                          demandLocTest    : Boolean           = false,
                          forceGeoLoc      : Option[MGeoLoc]   = None,
                          showWelcome      : Boolean           = true,
-                         storePrevIndex   : Boolean           = false,
                          afterIndex       : Option[Effect]    = None,
                          afterBack        : Option[Effect]    = None,
                          afterBackGrid    : Option[Effect]    = None,
+                         viewsAction      : MScSwitchCtx.ViewsAction   = MScSwitchCtx.ViewsAction.RESET,
                        )
 
