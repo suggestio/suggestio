@@ -79,7 +79,7 @@ trait ScUniApi
         for (toNnodeOpt <- focJumpToIndexNodeOptFut) yield {
           for (toNode <- toNnodeOpt) yield {
             val inxLogic = ScFocToIndexLogicV3(toNode, qs)( _request )
-            LOGGER.trace(s"$logPrefix Foc-index jump detected, index-logic already here: $inxLogic")
+            LOGGER.trace(s"$logPrefix Foc-index jump, index-ad-open logic $inxLogic")
             inxLogic
           }
         }
@@ -96,9 +96,10 @@ trait ScUniApi
     lazy val qsAfterIndexFut: Future[MScQs] = {
       for {
         scIndexRespActionOpt <- indexRaOptFut
+        indexLogicOpt <- indexLogicOptFut
       } yield {
         LOGGER.trace(s"$logPrefix scIndexRespActionOpt ? ${scIndexRespActionOpt.nonEmpty}")
-        val qsAfterIndex = for {
+        (for {
           scIndexRespAction   <- scIndexRespActionOpt
           if scIndexRespAction.acType ==* MScRespActionTypes.Index
           nodesResp = scIndexRespAction.search.get
@@ -119,7 +120,10 @@ trait ScUniApi
                       .map( MGeoLoc(_) )
                       .orElse( qs.common.locEnv.geoLocOpt )
                   }
-                }( qs.common )
+                }(
+                  // Использовать indexLogin
+                  indexLogicOpt.fold(qs)(_._qs).common
+                )
             },
             // Надо ли сразу фокусировать кликнутую карточку после перехода в новый index?
             foc = for {
@@ -137,8 +141,7 @@ trait ScUniApi
           )
           LOGGER.trace(s"$logPrefix Ads search after index qs2=$qs2")
           qs2
-        }
-        qsAfterIndex.getOrElse {
+        }) getOrElse {
           // Не будет index'а в ответе, возвращаем исходный qs для дальнейших действий.
           LOGGER.trace(s"$logPrefix no new index, using origin qs.")
           qs

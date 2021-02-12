@@ -44,6 +44,7 @@ trait ScIndexAdOpen
             .exists(!_.withBleBeaconAds)) &&
         qsCommon2.locEnv.bleBeacons.nonEmpty
       ) {
+        LOGGER.trace(s"$logPrefix _qs: Forget ${qsCommon2.locEnv.bleBeacons.length} BLE Beacons info from QS locEnv, because foc.indexAdOpen.withBleBeaconsAds = false")
         qsCommon2 = MScCommonQs.locEnv
           .composeLens( MLocEnv.bleBeacons )
           .set( Nil )( qsCommon2 )

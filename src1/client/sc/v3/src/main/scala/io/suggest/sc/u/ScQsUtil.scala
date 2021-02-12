@@ -103,8 +103,6 @@ object ScQsUtil {
 
   /** qs для фокусировки на карточке. */
   def focAdsQs(mroot: MScRoot, adId: String): MScQs = {
-    val withBluetoothAds = mroot.index.state.isBleGridAds
-
     MScQs(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
@@ -112,7 +110,7 @@ object ScQsUtil {
         locEnv = getLocEnv(
           mroot,
           withGeoLoc = false,
-          withBluetooth = withBluetoothAds,
+          withBluetooth = mroot.index.state.isBleGridAds,
         ),
       ),
       search = MAdsSearchReq(
@@ -122,13 +120,13 @@ object ScQsUtil {
         MScFocusArgs(
           indexAdOpen      = Some(
             MIndexAdOpenQs(
-              withBleBeaconAds = withBluetoothAds,
+              withBleBeaconAds = false,
             )
           ),
           lookupMode       = None,
           lookupAdId       = adId,
         )
-      )
+      ),
     )
   }
 

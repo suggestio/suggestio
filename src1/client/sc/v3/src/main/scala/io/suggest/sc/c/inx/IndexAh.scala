@@ -707,6 +707,7 @@ class IndexAh[M](
               MGeoLoc(point = mgp)
             },
             showWelcome = false, // prevNodeView.rcvrId.nonEmpty,
+            viewsAction = MScSwitchCtx.ViewsAction.POP,
           )
 
         // Запустить загрузку индекса - надо гео-точку подхватить.
