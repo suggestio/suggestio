@@ -23,7 +23,7 @@ import io.suggest.spa.DoNothing
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 import scalaz.std.option._
@@ -65,6 +65,9 @@ class WzFirstDiaAh[M](
     def readPermissionState(): Future[IPermissionState]
     /** Запрос у юзера права доступа. */
     def requestPermissionFx: Effect
+    /** Если пермишшен уже выдан без запроса, то можно запустить дополнительно эффект: */
+    def onGrantedByDefault: Option[Effect] =
+      Some( requestPermissionFx )
   }
   implicit private class PermSpecOpsExt( private val pss: IterableOnce[IPermissionSpec] ) {
     /** Найти утиль для пермишшена указанной wz-фазы. */
@@ -117,13 +120,13 @@ class WzFirstDiaAh[M](
                 .map( _.requestPermissionFx )
                 .fold {
                   // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
-                  _wzGoToNextPhase(first0)
+                  _wzGoToNextPhase( first0 )
 
                 } { accessFx =>
                   // Эффект разблокировки диалога, чтобы крутилка ожидания не вертелась бесконечно.
                   val inProgressTimeoutFx = Effect {
                     // Если доступ поддерживает подписку на изменение статуса, то подписаться + frame=InProgress с долгим таймаутом.
-                    // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в 1-2 секунды.
+                    // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в несколько секунд.
                     // Отказ юзера можно будет перехватить позже.
                     val inProgressTimeoutSec = (for {
                       permStatePot  <- first0.perms.get( view0.phase )
@@ -144,15 +147,14 @@ class WzFirstDiaAh[M](
                       }
                     } yield {
                       // Подписка удалась: надо InProgress с длинным таймаутом.
-                      // TODO 5 увеличить до 10 секунд, когда в браузерах стабилизируется PermissionStatus.onchange
-                      5
+                      10
                     })
                       // Нет возможности подписаться на события. Надо InProgress закрывать по таймауту.
-                      .getOrElse( 2 )
+                      .getOrElse( 3 )
 
                     DomQuick
                       .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis.toInt )(
-                        WzPhasePermRes(view0.phase, Failure(new NoSuchElementException))
+                        WzPhasePermRes(view0.phase, Failure(new TimeoutException( ErrorMsgs.PERMISSION_REQUEST_TIMEOUT )))
                       )
                       .fut
                   }
@@ -235,11 +237,11 @@ class WzFirstDiaAh[M](
 
         // Надо понять, сейчас текущая фаза или какая-то другая уже. Всякое бывает.
         if (m.phase ==* view00.phase) {
+          // Это текущая фаза.
           val isGrantedOpt =
             for (permState <- m.res.toOption)
             yield permState.isGranted
 
-          // Это текущая фаза.
           view00.frame match {
 
             // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
@@ -261,7 +263,7 @@ class WzFirstDiaAh[M](
 
             // Ответ от юзера - является ценным.
             case MWzFrames.Info =>
-              if (isGrantedOpt contains true) {
+              if (isGrantedOpt contains[Boolean] true) {
                 // Положительный ответ + Info => следующая фаза.
                 _wzGoToNextPhase( v1 )
               } else {
@@ -272,7 +274,7 @@ class WzFirstDiaAh[M](
             // Возможно, если разрешение было реально запрошено ещё какой-то подсистемой выдачи (за пределами этого диалога), косяк.
             case ph @ MWzFrames.AskPerm =>
               logger.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (ph, m) )
-              if (isGrantedOpt contains true) {
+              if (isGrantedOpt contains[Boolean] true) {
                 _wzGoToNextPhase( v1 )
               } else {
                 val v2 = _setFrame( MWzFrames.Info )
@@ -424,16 +426,16 @@ class WzFirstDiaAh[M](
   /** Перещёлкивание на следующую фазу диалога. */
   private def _wzGoToNextPhase(v0: MWzFirstOuterS): ActionResult[M] = {
     val view0 = v0.view.get
-    val currPhase = view0.phase
-    val allPhases = MWzPhases.values
+    var fxAcc = List.empty[Effect]
 
     (for {
-      nextPhase <- allPhases
+      nextPhase <- MWzPhases
+        .values
         // Обязательно iterator, т.к. тут нужна лень и ТОЛЬКО первый успешный результат.
         .iterator
         // Получить итератор фаз ПОСЛЕ текущей фазы:
         .dropWhile { nextPhase =>
-          nextPhase !=* currPhase
+          nextPhase !=* view0.phase
         }
         .drop(1)
 
@@ -473,6 +475,16 @@ class WzFirstDiaAh[M](
 
           } else {
             // granted или что-то неведомое - пропуск фазы или завершение, если не осталось больше фаз для обработки.
+            if (perm.isGranted && nextPhase !=* view0.phase) {
+              for {
+                permSpec <- _permPhasesSpecs().iterator
+                if permSpec.phase ==* nextPhase
+                fx <- permSpec.onGrantedByDefault
+              } {
+                fxAcc ::= fx
+              }
+            }
+
             OptionUtil.maybe(v0.perms.exists(_._2.isPending))( v0 )
           }
         }
@@ -505,7 +517,8 @@ class WzFirstDiaAh[M](
         }
     } yield {
       // Следующая фаза одобрена:
-      updated(v9)
+      val fxOpt = fxAcc.mergeEffects
+      ah.updatedMaybeEffect( v9, fxOpt )
     })
       .nextOption()
       .getOrElse {
@@ -540,7 +553,9 @@ class WzFirstDiaAh[M](
         val d2 = MWzFirstOuterS.view.set(
           Some( (MWzFirstS.visible set false)( view0 ) )
         )(v0)
-        val allFx = saveFx + unRenderFx
+        val allFx = (saveFx :: unRenderFx :: fxAcc)
+          .mergeEffects
+          .get
         updated( d2, allFx )
       }
   }
@@ -561,7 +576,7 @@ class WzFirstDiaAh[M](
 
 
   /** Сборка спецификация по фазам, которые требуют проверки прав доступа. */
-  private def _permPhasesSpecs(): Seq[IPermissionSpec] = {
+  private def _permPhasesSpecs(): LazyList[IPermissionSpec] = {
     val platform = platformRO.value
     // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
     lazy val h5PermApiAvail = Html5PermissionApi.isApiAvail()
@@ -630,7 +645,7 @@ class WzFirstDiaAh[M](
       }
       override def requestPermissionFx: Effect =
         NotificationPermAsk( isVisible = true ).toEffectPure
-
+      override def onGrantedByDefault = None
     } #:: LazyList.empty[IPermissionSpec]
   }
 

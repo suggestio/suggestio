@@ -62,7 +62,7 @@ object TailAh {
     // TODO Поддержка нескольких тегов в URL.
     val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
 
-    val locEnv2 = OptionUtil.maybe {
+    val locEnv2 = OptionUtil.maybeOpt {
       currRcvrId.isEmpty
       //(currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty) &&
       //  (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
@@ -70,10 +70,18 @@ object TailAh {
     } {
       bootingRoute
         .flatMap(_.locEnv)
-        .getOrElse( v0.index.search.geo.mapInit.state.center )
+        .orElse {
+          Option.when( v0.internals.boot.wzFirstDone contains[Boolean] true )(
+            v0.index.search.geo.mapInit.state.center
+          )
+        }
+        .orElse {
+          v0.dev.geoLoc
+            .currentLocation
+            .map(_._2.point)
+        }
     }
-    //println(s"BootingRoute prev.locEnv = ${bootingRoute.flatMap(_.locEnv)} |||| ${bootingRoute}\n next locEnv = ${v0.index.search.geo.mapInit.state.center}\n locEnv2 => $locEnv2")
-
+    //println(s"BootingRoute prev.locEnv = ${bootingRoute.flatMap(_.locEnv)} |||| ${bootingRoute}\n next mapCenter = ${v0.index.search.geo.mapInit.state.center}\n locEnv2 => $locEnv2 wz1Done?${v0.internals.boot.wzFirstDone}")
 
     SioPages.Sc3(
       nodeId        = currRcvrId,
@@ -686,7 +694,7 @@ class TailAh(
         // Если bluetooth не запущен - запустить в добавок к геолокации:
         if (
           !(v0.dev.beaconer.isEnabled contains[Boolean] true) &&
-          (v0.dev.beaconer.hasBle contains true)
+          (v0.dev.beaconer.hasBle contains[Boolean] true)
         ) {
           fxsAcc ::= Effect.action {
             BtOnOff(
@@ -801,79 +809,75 @@ class TailAh(
     case m: GlPubSignal =>
       val v0 = value
 
-      // Сейчас ожидаем максимально точных координат?
-      v0.internals.info.geoLockTimer.fold {
-        // Сейчас не ожидаются координаты. Просто сохранить координаты в состояние карты.
-        m.origOpt
-          .flatMap(_.locationOpt)
-          // TODO Opt: iphone шлёт кучу одинаковых или похожих координат, раз в 1-2 секунды. Надо это фильтровать?
-          .fold( noChange ) { geoLoc =>
-            // Не двигать карту, сохранять координаты только в .userLoc
-            val v2 = MScRoot.index
-              .composeLens( TailAh._inxSearchGeoMapInitLens )
-              .composeLens( MMapInitState.userLoc )
-              .set( Some(geoLoc) )(v0)
-            ah.updateMaybeSilent( !v0.index.search.panel.opened )(v2)
-          }
+      var modsAcc = List.empty[MScRoot => MScRoot]
+      var fxAcc = List.empty[Effect]
+      var nonSilentUpdate = false
 
-      } { geoLockTimerId =>
-        // Прямо сейчас этот контроллер ожидает координаты.
-        // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
-        def __finished(v00: MScRoot, isSuccess: Boolean) = {
-          val switchCtx = m.scSwitch.getOrElse {
-            MScSwitchCtx(
-              indexQsArgs = MScIndexArgs(
-                geoIntoRcvr = true,
-                retUserLoc  = !isSuccess,
-              )
+
+      for {
+        geoLockTimerId <- v0.internals.info.geoLockTimer
+        if m.origOpt.exists(_.glType.isHighAccuracy)
+      } {
+        val switchCtx = m.scSwitch.getOrElse {
+          MScSwitchCtx(
+            indexQsArgs = MScIndexArgs(
+              geoIntoRcvr = true,
+              retUserLoc  = m.origOpt
+                .fold(true)(_.either.isLeft),
             )
-          }
-          val fxs = TailAh.getIndexFx( switchCtx ) + Effect.action {
-            DomQuick.clearTimeout(geoLockTimerId)
-            DoNothing
-          }
-          val (v22, fxs2) = TailAh._removeTimer(v00)
-            .fold( (v00, fxs) ) { case (alterF, ctFx) =>
-              alterF(v00) -> (fxs + ctFx)
-            }
-          updatedSilent(v22, fxs2)
+          )
         }
 
-        m.origOpt
-          .flatMap(_.either.toOption)
-          .fold {
-            // Ожидаются координаты, но пришла ошибка. Можно ещё подождать, но пока считаем, что это конец.
-            // Скорее всего, юзер отменил геолокацию или что-то ещё хуже.
-            logger.warn( ErrorMsgs.GEO_LOCATION_FAILED, msg = m )
-            __finished(v0, isSuccess = false)
+        fxAcc ::= TailAh.getIndexFx( switchCtx )
+        fxAcc ::= Effect.action {
+          DomQuick.clearTimeout(geoLockTimerId)
+          DoNothing
+        }
 
-          } { geoLoc =>
-            // Есть какие-то координаты, но не факт, что ожидаемо точные.
-            // Т.к. работает suppressor, то координаты можно всегда записывать в состояние, не боясь постороннего "шума".
-            val v1 = MScRoot.index
-              .composeLens( TailAh._inxSearchGeoMapInitLens )
-              .modify { mi0 =>
-                // Текущая позиция юзера - всегда обновляется.
-                var mi2 = MMapInitState.userLoc
-                  .set( Some(geoLoc) )( mi0 )
-                // Нельзя менять местоположение на карте, если это просто фоновое тестирование индекса.
-                if (!m.scSwitch.exists(_.demandLocTest)) {
-                  // Нормальное ожидаемое определение местоположения. Переместить карту в текущую точку.
-                  mi2 = MMapInitState.state
-                    .modify(_.withCenterInitReal( geoLoc.point ))(mi2)
-                }
-                mi2
-              }(v0)
-
-            if (m.origOpt.exists(_.glType.isHighAccuracy)) {
-              // Пришли точные координаты. Завершаем ожидание.
-              __finished(v1, isSuccess = true)
-            } else {
-              // Пока получены не точные координаты. Надо ещё подождать координат по-точнее...
-              updatedSilent(v1)
-            }
+        TailAh
+          ._removeTimer( v0 )
+          .foreach { case (alterF, ctFx) =>
+            modsAcc ::= alterF
+            fxAcc ::= ctFx
           }
       }
+
+      // Обновить локацию на карте.
+      for {
+        glSignal <- m.origOpt
+        geoLoc <- glSignal.locationOpt
+      } {
+        // Всегда сохранять координаты в .userLoc
+        var modF = MMapInitState.userLoc set Some(geoLoc)
+
+        if (
+          // Нельзя менять местоположение на карте, если это просто фоновое тестирование индекса.
+          !m.scSwitch.exists(_.demandLocTest) &&
+          // Если очень ожидается текущая геолокация, то задвинуть карту.
+          (v0.internals.boot.wzFirstDone contains[Boolean] false) &&
+          (v0.internals.info.currRoute.exists { r =>
+            r.locEnv.isEmpty && r.nodeId.isEmpty
+          })
+        ) {
+          modF = modF andThen MMapInitState
+            .state.modify( _.withCenterInitReal(geoLoc.point) )
+          nonSilentUpdate = true
+        } else {
+          nonSilentUpdate = nonSilentUpdate || v0.index.search.panel.opened
+        }
+
+        modsAcc ::= MScRoot.index
+          .composeLens( TailAh._inxSearchGeoMapInitLens )
+          .modify( modF )
+      }
+
+      ah.optionalResult(
+        v2Opt = modsAcc
+          .reduceOption(_ andThen _)
+          .map(_(v0)),
+        fxOpt = fxAcc.mergeEffects,
+        silent = !nonSilentUpdate,
+      )
 
 
     // Наступил таймаут ожидания геолокации. Нужно активировать инициализацию в имеющемся состоянии

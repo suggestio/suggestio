@@ -15,7 +15,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, HwBack, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, HwBack, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.index.MScIndexArgs
@@ -336,6 +336,9 @@ final class PlatformAh[M](
         var fxAcc = List.empty[Effect]
 
         if (isReadyNow) {
+          // Возможно, что HwScreenUtil не смогло определить точные размеры экрана, и нужно повторить определение экрана после наступления cordova ready.
+          fxAcc ::= ScreenResetPrepare.toEffectPure
+
           // Проверить, не изменились ли ещё какие-то платформенные флаги?
           fxAcc ::= BtOnOff( isEnabled = None ).toEffectPure
 
@@ -371,6 +374,7 @@ final class PlatformAh[M](
             if (v0.osFamily.isUseBgModeDaemon) {
               fxAcc ::= Effect.action {
                 BgModeDaemonInit(
+                  // Это текущая фаза.
                   initOpts = Some( MDaemonInitOpts(
                     //events = MDaemonEvents(
                     //  activated = ScDaemonWorkProcess,

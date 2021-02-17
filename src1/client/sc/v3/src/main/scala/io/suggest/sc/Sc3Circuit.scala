@@ -101,7 +101,7 @@ class Sc3Circuit(
                   scAppApi                  : => IScAppApi,
                   scStuffApi                : => IScStuffApi,
                   csrfTokenApi              : => ICsrfTokenApi,
-                  preferGeoApi              : Option[GeoLocApi],
+                  geoLocApis                : () => LazyList[GeoLocApi],
                   mkLogOutAh                : ModelRW[MScRoot, Option[MLogOutDia]] => LogOutAh[MScRoot],
                 )
   extends CircuitLog[MScRoot]
@@ -435,7 +435,8 @@ class Sc3Circuit(
     foldHandlers( mapCommonAh, scMapDelayAh )
   }
 
-  private def gridAh = new GridAh(
+  // val - это из-за повторяющегося GridScroll-эффекта
+  private val gridAh: HandlerFunction = new GridAh(
     api           = sc3UniApi,
     scRootRO      = rootRW,
     screenRO      = screenRO,
@@ -454,7 +455,7 @@ class Sc3Circuit(
   private val geoLocAh: HandlerFunction = new GeoLocAh(
     dispatcher   = this,
     modelRW      = scGeoLocRW,
-    preferGeoApi = preferGeoApi,
+    geoLocApis   = geoLocApis,
   )
 
   private def platformAh = new PlatformAh(
@@ -791,8 +792,10 @@ class Sc3Circuit(
         Try {
           var msgAcc = JSON.stringify( jsErr.exception.asInstanceOf[js.Any] )
 
-          for ( msg <- Option(jsErr.getMessage()) )
-            msgAcc = msg + " " + msgAcc
+          for ( msg <- Option(jsErr.getMessage()) ) {
+            val msg2 = msg + " " + msgAcc
+            msgAcc = msg2
+          }
 
           new RuntimeException( msgAcc, error )
         }

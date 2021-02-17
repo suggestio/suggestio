@@ -69,8 +69,9 @@ object Sc3Main extends Log {
     // Если не доступно HTML5 geolocation API, то заменить его через cdv-bg-geolocation внутри leaflet'а.
     Try {
       if (
-        CordovaConstants.isCordovaPlatform() &&
-        CdvBgGeo.isAvailable()
+        CordovaConstants.isCordovaPlatform()
+        // На момент запуска, событие cordova ready ещё не наступило, поэтому дёргать проверку плагинов - довольно взрывоопасная идея.
+        //&& CdvBgGeo.isAvailableAndCordovaReady()
       )
         modules.sc3LeafletOverrides.mapPatch()
     }

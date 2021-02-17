@@ -13,8 +13,8 @@ import scala.util.Try
   */
 object CdvBgGeo extends Log {
 
-  /** Проверка доступности API. */
-  def isAvailable(): Boolean = {
+  /** Проверка доступности API. Можно дёргать только после наступления события cordova ready. */
+  def isAvailableAndCordovaReady(): Boolean = {
     Try( !js.isUndefined(CdvBackgroundGeolocation) )
       .recover { case ex: Throwable =>
         logger.warn( ErrorMsgs.NATIVE_API_ERROR, ex, this )

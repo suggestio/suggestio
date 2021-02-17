@@ -11,7 +11,8 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.cordova.fetch.CdvFetchHttpResp
-import io.suggest.geo.GeoLocApi
+import io.suggest.dev.{MOsFamilies, MOsFamily}
+import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase
 import io.suggest.id.login.m.session.MLogOutDia
@@ -96,12 +97,41 @@ class Sc3Module { outer =>
     wire[Sc3Circuit]
   }
   lazy val sc3LeafletOverrides = new Sc3LeafletOverrides( sc3Circuit )
-  lazy val preferGeoApi: Option[GeoLocApi] = {
-    Option.when( CordovaConstants.isCordovaPlatform() && CdvBgGeo.isAvailable() ) {
-      new CdvBgGeoLocApi(
-        getMessages = () => sc3Circuit.internalsInfoRW.value.commonReactCtx.messages,
-      )
-    }
+
+  /** Функция, возвращающая списки стабильных инстансов реализаций API геолокации. */
+  val geoLocApis: () => LazyList[GeoLocApi] = {
+    lazy val html5GeoLocApi = wire[Html5GeoLocApi]
+    lazy val cdvBgGeoLocApi = new CdvBgGeoLocApi(
+      getMessages = () => sc3Circuit.internalsInfoRW.value.commonReactCtx.messages,
+    )
+
+    () =>
+      val mplat = sc3Circuit.platformRW.value
+
+      if (!mplat.isReady) {
+        // Для cordova событие READY ещё не наступило, поэтому CdvBgGeo.isAvailable дёрнуть тут нельзя.
+        // Считаем, что CdvBgGeo доступен, когда доступно cordova API.
+        LazyList.empty
+
+      } else {
+        var apisAcc = LazyList.empty[GeoLocApi]
+
+        // Добавить HTML5 geolocation API в начало списка. Т.к. cdv-bg-geo вторичен.
+        val apis22 = LazyList.cons[GeoLocApi]( html5GeoLocApi, apisAcc )
+        apisAcc = apis22
+
+        if (
+          mplat.isCordova &&
+          CdvBgGeo.isAvailableAndCordovaReady() &&
+          // cdv-background-geolocation: как-то странно он на android работает, поэтому активируем его только для iOS:
+          (mplat.osFamily contains[MOsFamily] MOsFamilies.Apple_iOS)
+        ) {
+          val apis33 = LazyList.cons[GeoLocApi]( cdvBgGeoLocApi, apisAcc )
+          apisAcc = apis33
+        }
+
+        apisAcc
+      }
   }
 
   // React contexts

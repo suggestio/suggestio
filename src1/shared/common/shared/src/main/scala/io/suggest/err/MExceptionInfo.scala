@@ -1,7 +1,6 @@
 package io.suggest.err
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.math.MathConst
 import io.suggest.scalaz.ScalazUtil
 import io.suggest.text.StringUtil
 import japgolly.univeq.UnivEq
@@ -27,7 +26,7 @@ object MExceptionInfo {
     (__ \ "s").formatNullable[Seq[String]]
       .inmap[Seq[String]](
         EmptyUtil.opt2ImplEmptyF(Nil),
-        traces => Option.when(traces.isEmpty)(traces)
+        traces => Option.when(traces.nonEmpty)(traces)
       )
   )(apply, unlift(unapply))
 

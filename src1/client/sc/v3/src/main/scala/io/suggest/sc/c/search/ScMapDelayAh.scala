@@ -31,7 +31,7 @@ class ScMapDelayAh[M](
 
   private def _mapMoveListen = _listenTimeout(None, true, MAP_DRAG_END_TIMEOUT)
 
-  private def _listenTimeout(rcvrId: Option[String], listenMove: Boolean, timeoutMs: Int) = {
+  private def _listenTimeout(rcvrId: Option[String], listenMove: Boolean, timeoutMs: Int): ActionResult[M] = {
     val gen = System.currentTimeMillis()
     val tp = DomQuick.timeoutPromiseT(timeoutMs)( MapDelayTimeOut(gen) )
     val v2 = MMapDelay(
@@ -87,6 +87,14 @@ class ScMapDelayAh[M](
       resOpt
         .getOrElse( noChange )
 
+    /* // Нельзя тут трогать locationfound, т.к. он может происходить много раз вподряд,
+       // TODO нужно только после L.control.locate.start() вызывать максимум один раз. Возможно, следует задействовать MapMoveEnd().
+    case _: HandleLocationFound =>
+      val fx = MapReIndex(
+        rcvrId = None
+      ).toEffectPure
+      effectOnly(fx)
+    */
 
   }
 

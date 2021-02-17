@@ -28,7 +28,11 @@ object HwScreenUtil {
     */
   def getScreenUnsafeAreas(mscreen: MScreen): MTlbr = {
     try {
-      Option.when( CordovaConstants.isCordovaPlatform() ) {
+      Option.when(
+        CordovaConstants.isCordovaPlatform() &&
+        // Бывает, что device-плагин ещё не инициализировался.
+        CordovaPluginDeviceUtil.isAvailable()
+      ) {
         // С user-agent'ами полный швах и зоопарк, даже внутри cordova:
         // Например, iPad любит прикидываться компом.
         // Поэтому пытаемся получить данные через cordova-plugin-device:

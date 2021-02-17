@@ -4,6 +4,7 @@ import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.nodes.{MLknNode, MLknOpKey, MLknOpValue}
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.spa.DiodeUtil
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -91,17 +92,20 @@ case class MNodeState(
                      ) {
 
   def optionBoolPot(key: MLknOpKey): Pot[Boolean] = {
-    for {
-      opVal <- optionMods
-        .getOrElse( key, Pot.empty )
-        .orElse[MLknOpValue] {
-          infoPot
-            .flatMap { info =>
-              Pot.fromOption( info.options.get( key ) )
-            }
-        }
-      bool <- Pot.fromOption( opVal.bool )
-    } yield bool
+    optionMods
+      .getOrElse( key, Pot.empty )
+      .orElse[MLknOpValue] {
+        infoPot
+          .flatMap { info =>
+            Pot.fromOption( info.options.get( key ) )
+          }
+      }
+      .flatMap { opVal =>
+        opVal
+          .bool
+          // Гарантировать ссылочную целостность для стабильных инстансов Pot(true) и Pot(false):
+          .fold( Pot.empty[Boolean] )( DiodeUtil.Bool.apply )
+      }
   }
 
   def beaconUidOpt = beacon

@@ -40,7 +40,7 @@ final class CdvBgGeoLocApi(
 
 
   override def isAvailable() =
-    CdvBgGeo.isAvailable()
+    CdvBgGeo.isAvailableAndCordovaReady()
 
 
   override def configure(options: GeoLocApiWatchOptions): Future[_] = {
@@ -160,7 +160,7 @@ final class CdvBgGeoLocApi(
         //      Иначе, приложение на андройде повиснет с бесконечным таймаутом.
         override val timeout = 75
         override val maximumAge = _maxAgeMsU
-        override val enableHighAccuracy = false //_isHighAccuracy
+        override val enableHighAccuracy = true //_isHighAccuracy
       },
     )
       .andThen { tryLoc =>

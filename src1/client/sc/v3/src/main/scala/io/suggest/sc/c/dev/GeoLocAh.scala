@@ -32,11 +32,11 @@ import scala.util.Success
   * Description: Контроллер геолокации.
   * Работает в фоне, обновляя состояние, поэтому везде тут updatedSilent().
   */
-class GeoLocAh[M](
-                   dispatcher           : Dispatcher,
-                   modelRW              : ModelRW[M, MScGeoLoc],
-                   preferGeoApi         : Option[GeoLocApi],
-                 )
+final class GeoLocAh[M](
+                         dispatcher           : Dispatcher,
+                         modelRW              : ModelRW[M, MScGeoLoc],
+                         geoLocApis           : () => LazyList[GeoLocApi],
+                       )
   extends ActionHandler( modelRW )
   with Log
 { ah =>
@@ -109,7 +109,6 @@ class GeoLocAh[M](
 
     // Есть на руках местоположение.
     case loc: GlLocation =>
-      println( loc )
       val v0 = value
 
       // Не подпадает ли текущая геолокация под нож подавления?
@@ -338,7 +337,6 @@ class GeoLocAh[M](
 
     // Ошибка считывания геолокации.
     case m: GlError =>
-      println( m )
       val v0 = value
       // Подхватываем ошибку, если есть куда записывать её.
       // Игнорим _isLocNotSuppressed(), т.к. ошибка не ломает возможное значение внутри Pot.
@@ -448,8 +446,7 @@ class GeoLocAh[M](
               glApi
                 .getPosition()
                 .transform {
-                  case tryRes =>
-                    println( "getPositionRes => " + tryRes )
+                  case _ =>
                     Success(DoNothing)
                 }
             }
@@ -574,21 +571,9 @@ class GeoLocAh[M](
 
 
   /** Интерфейс API для геолокации. */
-  private lazy val GEO_LOC_API: Option[GeoLocApi] = {
-    var apis = LazyList.empty[GeoLocApi]
-
-    // Добавить HTML5 geolocation API в начало списка. Т.к. cdv-bg-geo вторичен.
-    val apis22 = LazyList.cons[GeoLocApi]( new Html5GeoLocApi, apis )
-    apis = apis22
-
-    // Если в конструкторе определено иное API для геолокации, то его - в начало списка кандидатов.
-    for (glApi <- preferGeoApi) {
-      // Используем prepended, т.к. голый инстанс API не требуется заворачивать в функцию.
-      val apis2 = apis.prepended( glApi )
-      apis = apis2
-    }
-
-    apis.find( _.isAvailable() )
+  private def GEO_LOC_API: Option[GeoLocApi] = {
+    geoLocApis()
+      .find( _.isAvailable() )
   }
 
   /** Зачистка watcher'ов. */

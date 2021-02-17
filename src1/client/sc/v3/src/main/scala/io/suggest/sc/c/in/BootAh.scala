@@ -405,6 +405,7 @@ class BootAh[M](
         // Есть какая-то деятельность в визарде. Подписаться
         val fx = Effect {
           val p = Promise[None.type]()
+          // TODO Заменить Promise-subscribe-зоопарк и вообще весь этот экшен на эффект, передаваемый внутри InitFirstRunWz() на предыдущем шаге (см.выше).
           // Состояние wizard'а инициализировано, значит wizard запущен, дождаться завершения мастера.
           val wizardWatcherUnSubscribeF = circuit.subscribe(firstRO) { diaFirstProxy =>
             val r = diaFirstProxy.value.view
@@ -461,11 +462,19 @@ class BootAh[M](
 
   private def _reRouteFx(allowRouteTo: Boolean): Effect = {
     Effect.action {
-      circuit.internalsRW
-        .value
-        .info.currRoute
-        .filter { _ => allowRouteTo }
-        .fold[IScRootAction](ResetUrlRoute(force = true))(RouteTo.apply)
+      (for {
+        currRoute <- circuit.internalsRW
+          .value
+          .info.currRoute
+        if allowRouteTo
+      } yield {
+        RouteTo( currRoute )
+      })
+        .getOrElse {
+          ResetUrlRoute(
+            force = true,
+          )
+        }
     }
   }
 

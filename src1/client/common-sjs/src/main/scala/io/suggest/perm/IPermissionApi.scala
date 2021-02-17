@@ -41,6 +41,25 @@ trait IPermissionState {
   /** Выключить мониторинг изменения состояния. */
   def onChangeReset(): Unit
 
+  override final def toString: String = {
+    val sb = new StringBuilder( 32, getClass.getSimpleName )
+      .append( '(' )
+
+    if (isPoweredOn)
+      sb.append('O')
+    if (isGranted)
+      sb.append('G')
+    if (isDenied)
+      sb.append('D')
+    if (isPoweredOn)
+      sb.append('P')
+    if (hasOnChangeApi)
+      sb.append('c')
+
+    sb.append( ')' )
+      .toString()
+  }
+
 }
 
 object IPermissionState {

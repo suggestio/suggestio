@@ -1,5 +1,7 @@
 package cordova.plugins.device
 
+import io.suggest.sjs.JsApiUtil
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 
@@ -27,6 +29,9 @@ object CordovaPluginDevice extends js.Object {
 
 
 object CordovaPluginDeviceUtil {
+
+  def isAvailable(): Boolean =
+    JsApiUtil.isDefinedSafe( CordovaPluginDevice )
 
   object Platform {
     final def Android = "Android"
