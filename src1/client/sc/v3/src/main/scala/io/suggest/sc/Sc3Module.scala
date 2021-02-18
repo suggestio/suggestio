@@ -120,6 +120,7 @@ class Sc3Module { outer =>
         val apis22 = LazyList.cons[GeoLocApi]( html5GeoLocApi, apisAcc )
         apisAcc = apis22
 
+        /*
         if (
           mplat.isCordova &&
           CdvBgGeo.isAvailableAndCordovaReady() &&
@@ -129,6 +130,7 @@ class Sc3Module { outer =>
           val apis33 = LazyList.cons[GeoLocApi]( cdvBgGeoLocApi, apisAcc )
           apisAcc = apis33
         }
+        */
 
         apisAcc
       }

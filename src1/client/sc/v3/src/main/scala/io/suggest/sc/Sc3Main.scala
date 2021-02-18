@@ -1,9 +1,7 @@
 package io.suggest.sc
 
-import cordova.plugins.background.geolocation.CdvBgGeo
 import io.suggest.event.WndEvents
 import io.suggest.common.html.HtmlConstants
-import io.suggest.cordova.CordovaConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.log.buffered.BufLogAppender
 import io.suggest.log.filter.SevereFilter
@@ -67,6 +65,7 @@ object Sc3Main extends Log {
       Sc3Module.ref = modules
 
     // Если не доступно HTML5 geolocation API, то заменить его через cdv-bg-geolocation внутри leaflet'а.
+    /*
     Try {
       if (
         CordovaConstants.isCordovaPlatform()
@@ -76,6 +75,7 @@ object Sc3Main extends Log {
         modules.sc3LeafletOverrides.mapPatch()
     }
       .logFailure( ErrorMsgs.NATIVE_API_ERROR )
+    */
 
     // Активировать отправку логов на сервер:
     Try {

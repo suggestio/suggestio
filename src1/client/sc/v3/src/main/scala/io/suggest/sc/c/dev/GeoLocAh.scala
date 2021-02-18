@@ -240,7 +240,7 @@ final class GeoLocAh[M](
       val v0 = value
 
       // Сборка GlPubSignal, который обычно (но не всегда) нужен.
-      def glPubErrFx = GlPubSignal( None, m.scSwitch.orElse(v0.switch.scSwitch) )
+      def glPubErrFx = GlPubSignal( None, m.scSwitch orElse v0.switch.scSwitch )
         .toEffectPure
 
       // Оформляем всю логику через option, чтобы не было паутины if:

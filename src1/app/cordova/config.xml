@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.suggest.appsuggest" version="4.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="io.suggest.appsuggest" version="4.1.0" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Suggest.io</name>
     <description>
       Suggest.io client with Bluetooth beacons support.
@@ -62,9 +62,11 @@
         </config-file>
         <custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.AUTHENTICATE_ACCOUNTS']" />
 	<custom-preference delete="true" name="android-manifest/uses-permission/[@android:name='android.permission.ACCESS_BACKGROUND_LOCATION']" />
+	<!--
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
           <application android:usesCleartextTraffic="true" />
         </edit-config>
+	-->
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />
