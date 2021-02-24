@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.Implicits._
 import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
 import diode.{ActionHandler, ActionResult, Dispatcher, Effect, ModelRO, ModelRW}
+import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -521,6 +522,7 @@ final class PlatformAh[M](
                   // Не долбить мозг юзеру системным запросом включения bluetooth.
                   askEnableBt   = false,
                   oneShot       = false,
+                  scanMode    = IBleBeaconsApi.ScanMode.BALANCED,
                 )
               )
             }

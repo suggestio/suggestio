@@ -1,5 +1,6 @@
 package io.suggest.ble.beaconer
 
+import io.suggest.ble.api.IBleBeaconsApi
 import japgolly.univeq._
 import monocle.macros.GenLens
 
@@ -27,8 +28,10 @@ object MBeaconerOpts {
   *                    true - Если bluetooth выключен в ОС, будет открыт системный диалог.
   *                    false - Если bt выключен на уровне ОС, то beaconer будет деактивирован следом.
   * @param oneShot Одноразовое сканирование радиоэфира, и выключение после окончания сканирования.
+  * @param scanMode Насколько агрессивно можно тратить энергию на сканирование?
   */
 case class MBeaconerOpts(
                           askEnableBt       : Boolean           = true,
                           oneShot           : Boolean           = false,
+                          scanMode       : IBleBeaconsApi.ScanMode   = IBleBeaconsApi.ScanMode.LOW_POWER,
                         )

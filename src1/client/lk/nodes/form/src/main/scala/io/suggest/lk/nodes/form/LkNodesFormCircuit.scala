@@ -87,7 +87,7 @@ case class LkNodesFormCircuit(
     val editTfDailyAh = new EditTfDailyAh(
       api     = lkNodesApi,
       modelRW = CircuitUtil.mkLensZoomRW( popupsRW, MLknPopups.editTfDailyS ),
-      treeRO  = treeRW
+      treeRO  = treeRW,
     )
 
     val nameEditAh = new NameEditAh(

@@ -3,10 +3,12 @@ package io.suggest.ble.api.cordova.ble
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
 import io.suggest.ble.{BeaconDetected, BleConstants}
 import io.suggest.ble.api.IBleBeaconsApi
+import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
 import io.suggest.sjs.JsApiUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
@@ -28,10 +30,10 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     * @return Фьчерс с true/false.
     *         Ошибок метод не возвращает, а тоже false.
     */
-  private def _syncBoolApiMethodHelper(doIt: (js.Function0[_], js.Function0[_]) => Unit): Future[Boolean] = {
+  private def _syncBoolApiMethodHelper(doIt: (js.Function0[Unit], js.Function0[Unit]) => Unit): Future[Boolean] = {
     Future {
       val p = Promise[Boolean]()
-      def setIsEnabled(isEnabled: Boolean) = {
+      def setIsEnabled(isEnabled: Boolean): () => Unit = {
         () => p.success(isEnabled)
       }
       doIt(
@@ -72,15 +74,32 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
 
 
   /** Начать слушанье ble-маячков, отсылая данные в указанный fsm. */
-  override def listenBeacons(listener: Function1[BeaconDetected, _]): Future[_] = {
+  override def listenBeacons(opts: IBleBeaconsApi.ListenOptions): Future[_] = {
     Future {
       Ble.startScanWithOptions(
         // Короткого UUID тут достаточно. 0xFEAA обязателен здесь для ФОНОВОГО сканирования на iOS и Android.
         services      = js.Array( BleConstants.Beacon.EddyStone.SERVICE_UUID_16B_LC ),
         options = new StartScanOptions {
           override val reportDuplicates = true
+          // TODO Выставлять LOW_LATENCY при открытом сканере узлов.
+          // TODO Продумать вариант использования LOW_ENERGY scan.
+          override val scanMode = {
+            val Outer = IBleBeaconsApi.ScanMode
+            val CdvBle = StartScanOptions.ScanMode
+            if (opts.scanMode ==* Outer.BALANCED) {
+              CdvBle.BALANCED
+            } else if (opts.scanMode ==* Outer.FULL_POWER) {
+              CdvBle.LOW_LATENCY
+            } else if (opts.scanMode ==* Outer.LOW_POWER) {
+              CdvBle.LOW_POWER
+            } else if (opts.scanMode ==* Outer.OPPORTUNISTIC) {
+              CdvBle.OPPORTUNISTIC
+            } else {
+              throw new IllegalArgumentException( opts.toString + " " + opts.scanMode )
+            }
+          }
         },
-        success       = _handleDeviceFound(_: BtDevice, listener),
+        success       = _handleDeviceFound(_: BtDevice, opts.onBeacon),
         failure       = _handleError(_: js.Any)
       )
     }
@@ -91,7 +110,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     * Получена инфа с каким-то bluetooth advertisement, необязательно по маячкам.
     * Надо бы распарсить это в поддержимаемые маячки или отфильтровать.
     */
-  def _handleDeviceFound(dev: BtDevice, listener: Function1[BeaconDetected, _]): Unit = {
+  def _handleDeviceFound(dev: BtDevice, listener: Function1[BeaconDetected, Unit]): Unit = {
     // Заинлайненный список beacon-парсеров.
     // Функция собирает один beacon-парсер и пытается провести парсинг...
     val f = { parserFactory: BeaconParserFactory =>
@@ -127,6 +146,15 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
       p.future
     }
       .flatten
+  }
+
+  override def isScannerRestartNeededSettingsOnly(v0: IBleBeaconsApi.ListenOptions,
+                                                  v2: IBleBeaconsApi.ListenOptions,
+                                                  osFamily: Option[MOsFamily]): Boolean = {
+    // Android: перезапускать сканирование при изменении scanMode.
+    // iOS игнорит тонкие настройки сканирования.
+    osFamily.fold(true)(_ ==* MOsFamilies.Android) &&
+    (v0.scanMode !=* v2.scanMode)
   }
 
 }

@@ -5,6 +5,7 @@ import io.suggest.sjs.common.async.AsyncUtil._
 import io.suggest.sc.m.{ScDaemonDozed, ScDaemonFallSleepTimerSet, ScDaemonSleepAlarm, ScDaemonWorkProcess}
 import io.suggest.sc.m.in.MScDaemon
 import diode.data.Pot
+import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.daemon.{DaemonBgModeSet, DaemonSleepTimerFinish, DaemonSleepTimerSet, MDaemonSleepTimer, MDaemonState, MDaemonStates}
@@ -48,8 +49,6 @@ class ScDaemonAh[M](
 
     // Запуск периодического фонового мониторинга.
     case m: ScDaemonDozed =>
-      //logger.log( msg = m )
-
       val fx = Effect.action {
         DaemonSleepTimerSet(
           options = Option.when( m.isActive ) {
@@ -74,7 +73,6 @@ class ScDaemonAh[M](
 
     // Срабатывание таймера запуска процесса демона.
     case m: ScDaemonSleepAlarm =>
-      //logger.log( msg = m )
       val v0 = value
 
       var fxsAcc = List.empty[Effect]
@@ -104,8 +102,6 @@ class ScDaemonAh[M](
     // Если true, значит запущен демон, активен WAKE_LOCK система какое-то время держит CPU включённым.
     // Запустить сканирование.
     case m: ScDaemonWorkProcess =>
-      //logger.log( msg = m )
-
       val v0 = value
       val daemonState2 = MDaemonStates.fromIsActive( m.isActive )
       val v2 = (
@@ -121,6 +117,8 @@ class ScDaemonAh[M](
             opts = MBeaconerOpts(
               askEnableBt    = false,
               oneShot        = true,
+              // Используем Balanced mode - этого достаточно для короткого сканирования.
+              scanMode       = IBleBeaconsApi.ScanMode.BALANCED,
             )
           )
         }
@@ -161,7 +159,6 @@ class ScDaemonAh[M](
 
     // Сохранение выставленного таймера в состояние.
     case m: ScDaemonFallSleepTimerSet =>
-      //logger.log( msg = m )
       val v0 = value
 
       if (v0.fallSleepTimer.isPending) {

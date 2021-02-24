@@ -3,7 +3,8 @@ package io.suggest.sc.c.dia
 import cordova.Cordova
 import diode._
 import diode.data.{Pending, Pot}
-import io.suggest.ble.beaconer.BtOnOff
+import io.suggest.ble.api.IBleBeaconsApi
+import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.{MPlatformS, MScreenInfo}
@@ -615,8 +616,16 @@ class WzFirstDiaAh[M](
       override def isSupported() = hasBleRO()
       override def readPermissionState() =
         CordovaDiagonsticPermissionUtil.getBlueToothState()
-      override def requestPermissionFx: Effect =
-        BtOnOff( isEnabled = OptionUtil.SomeBool.someTrue ).toEffectPure
+      override def requestPermissionFx: Effect = {
+        BtOnOff(
+          isEnabled = OptionUtil.SomeBool.someTrue,
+          opts = MBeaconerOpts(
+            scanMode    = IBleBeaconsApi.ScanMode.BALANCED,
+            askEnableBt = true,
+            oneShot     = false,
+          ),
+        ).toEffectPure
+      }
 
     } #:: new IPermissionSpec {
       // Notifications

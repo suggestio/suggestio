@@ -2,6 +2,7 @@ package io.suggest.sc.c
 
 import cordova.plugins.appminimize.CdvAppMinimize
 import diode._
+import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -702,6 +703,7 @@ class TailAh(
               opts = MBeaconerOpts(
                 askEnableBt = false,
                 oneShot     = false,
+                scanMode    = IBleBeaconsApi.ScanMode.BALANCED,
               )
             )
           }

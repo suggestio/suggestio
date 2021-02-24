@@ -7,6 +7,7 @@ import io.suggest.ble.{BeaconDetected, BeaconUtil, BeaconsNearby_t, MUidBeacon}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.radio.RadioUtil
+import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
@@ -183,18 +184,25 @@ class BleBeaconerAh[M](
                         dispatcher        : Dispatcher,
                         modelRW           : ModelRW[M, MBeaconerS],
                         bcnsIsSilentRO    : ModelRO[Boolean],
+                        osFamilyOpt       : => Option[MOsFamily],
                         onNearbyChange    : Option[(BeaconsNearby_t, BeaconsNearby_t) => Option[Effect]] = None,
                       )
   extends ActionHandler(modelRW)
   with Log
 { ah =>
 
+  private def _getListenOpts(opts: MBeaconerOpts) = {
+    IBleBeaconsApi.ListenOptions(
+      onBeacon = dispatcher(_: BeaconDetected),
+      scanMode = opts.scanMode,
+    )
+  }
 
   /** Запуск поиска и активации Ble Beacon API.
-    * @param askEnableBt Если API доступно, но BT выключен, то запрашивать юзера включение BT?
+    * @param opts Опции включения.
     * @return Опциональный эффект.
     */
-  private def startApiActivation( askEnableBt: Boolean ): Effect = {
+  private def startApiActivation( opts: MBeaconerOpts, listenOpts: IBleBeaconsApi.ListenOptions ): Effect = {
     // Подписаться на первое доступное API. При ошибках - переходить к следующему API по списку.
     // На все API нет смысла подписываться: тогда будут приходить ненужные уведомления.
     Effect {
@@ -226,8 +234,8 @@ class BleBeaconerAh[M](
 
                 // Если API выключено, нужно убедится, что разрешено включать.
                 if {
-                  val r = isEnabled0 || askEnableBt
-                  if (!r) logger.log( ErrorMsgs.BLE_BT_DISABLED, msg = (bbApi, isEnabled0, askEnableBt) )
+                  val r = isEnabled0 || opts.askEnableBt
+                  if (!r) logger.log( ErrorMsgs.BLE_BT_DISABLED, msg = (bbApi, isEnabled0, opts.askEnableBt) )
                   r
                 }
 
@@ -254,7 +262,7 @@ class BleBeaconerAh[M](
                 }
 
                 // Запустить непосредственное слушанье маячков:
-                _ <- bbApi.listenBeacons( dispatcher(_: BeaconDetected) )
+                _ <- bbApi.listenBeacons( listenOpts )
 
               } yield {
                 bbApi
@@ -527,8 +535,30 @@ class BleBeaconerAh[M](
       ) {
         // Обновление опций работы демона. Такое бывает, если BtOnOff был запущен сначала из контроллера демона,
         // а затем одновременно из Sc3Circuit при активации в приложения.
-        val v2 = (MBeaconerS.opts set m.opts)(v0)
-        updatedSilent(v2)
+        var modF = MBeaconerS.opts set m.opts
+
+        val fxOpt = for {
+          api <- v0.bleBeaconsApi.toOption
+          // Если изменились настройки сканирования, то надо перезапустить скан с новыми опциями:
+          listenOpts2 = _getListenOpts( m.opts )
+          if api.isScannerRestartNeededSettingsOnly( _getListenOpts(v0.opts), listenOpts2, osFamilyOpt )
+        } yield {
+          modF = modF andThen MBeaconerS.isEnabled.modify(_.pending())
+          Effect {
+            api
+              .unListenAllBeacons()
+              .flatMap { _ =>
+                api.listenBeacons( listenOpts2 )
+              }
+              .transform { tryRes =>
+                val tryEnabled = tryRes.map(_ => true)
+                Success( BtOnOffFinish(tryEnabled) )
+              }
+          }
+        }
+
+        val v2 = modF(v0)
+        ah.updatedSilentMaybeEffect( v2, fxOpt )
 
       } else if (v0.isEnabled.isPending) {
         // Отработать ситуацию с pending и повторным включением или выключением.
@@ -553,9 +583,10 @@ class BleBeaconerAh[M](
       } else if (!isEnabledNow && isEnabled2) {
         // !isEnabledNow: Здесь учитывается также, что случай v0.isEnabled=Pot.empty - норма для первого включения.
         // Активировать BleBeaconer: запустить подписание на API.
-        val apiActFx = startApiActivation(
-          askEnableBt = v0.opts.askEnableBt,
-        )
+
+        // 2021.02.23: Тут ранее isEnableBt бралось из v0.opts, а не из m.opts. С чем это связано - не ясно.
+        val apiActFx = startApiActivation( m.opts, _getListenOpts(m.opts) )
+
         // Эффект подписки на маячковое API:
         val v2 = v0.copy(
           isEnabled     = v0.isEnabled

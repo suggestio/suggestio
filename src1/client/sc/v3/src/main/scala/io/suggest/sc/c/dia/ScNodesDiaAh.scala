@@ -2,6 +2,9 @@ package io.suggest.sc.c.dia
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Circuit, Effect, ModelRW}
+import io.suggest.ble.api.IBleBeaconsApi
+import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -70,6 +73,7 @@ class ScNodesDiaAh[M](
       val v0 = value
 
       if (m.visible) {
+        // Нужно подписаться на изменение данных по маячкам:
         val beaconsFx = ScNodesBcnrSubscribeStatus().toEffectPure
 
         v0.circuit.fold {
@@ -96,8 +100,22 @@ class ScNodesDiaAh[M](
             focusedAdId = focusedAdId,
           )
 
-          // Нужно подписаться на изменение данных по маячкам:
           fx += beaconsFx
+
+          // TODO Opt Energy Надо сканер запускать только если когда группа маячков раскрыта (видима), не так глобально.
+          if (sc3Circuit.beaconerEnabled.value) {
+            // Обновить настройки BLE-сканера, чтобы данные по маячкам обновлялись максимально оперативно (в ущерб энергопотреблению).
+            fx += Effect.action {
+              BtOnOff(
+                isEnabled = OptionUtil.SomeBool.someTrue,
+                opts = MBeaconerOpts(
+                  askEnableBt = false,
+                  oneShot = false,
+                  scanMode = IBleBeaconsApi.ScanMode.FULL_POWER,
+                )
+              )
+            }
+          }
 
           updated( v2, fx )
 
@@ -119,8 +137,24 @@ class ScNodesDiaAh[M](
           focusedAdId = v0.focusedAdId
             .filter(_ => m.keepState),
         )
+
         // Нужно закрыть подписку на маячки:
-        val fx = ScNodesBcnrSubscribeStatus( Pot.empty.unavailable() ).toEffectPure
+        var fx: Effect = ScNodesBcnrSubscribeStatus( Pot.empty.unavailable() ).toEffectPure
+
+        // Отменить усиленное сканирование bluetooth-эфира:
+        if (sc3Circuit.beaconerEnabled.value) {
+          fx += Effect.action {
+            BtOnOff(
+              isEnabled = OptionUtil.SomeBool.someTrue,
+              opts = MBeaconerOpts(
+                askEnableBt = false,
+                oneShot = false,
+                scanMode = IBleBeaconsApi.ScanMode.BALANCED,
+              )
+            )
+          }
+        }
+
         updated( v2, fx )
 
       } else {

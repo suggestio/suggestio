@@ -17,37 +17,37 @@ object Ble extends js.Object {
   def scan(
             services  : Services_t,
             seconds   : Int,
-            success   : js.Function1[BtDevice, _],
-            failure   : js.Function1[js.Any, _] = js.native
+            success   : js.Function1[BtDevice, Unit],
+            failure   : js.Function1[js.Any, Unit] = js.native
           ): Unit = js.native
 
   def startScan(
                  services  : Services_t,
                  success   : js.Function1[BtDevice, _],
-                 failure   : js.Function1[js.Any, _] = js.native
+                 failure   : js.Function1[js.Any, Unit] = js.native
                ): Unit = js.native
 
   def startScanWithOptions(
                             services  : Services_t,
                             options   : StartScanOptions,
                             success   : js.Function1[BtDevice, _],
-                            failure   : js.Function1[js.Any, _] = js.native
+                            failure   : js.Function1[js.Any, Unit] = js.native
                           ): Unit = js.native
 
   def stopScan(
-                success   : js.Function0[_]         = js.native,
-                failure   : js.Function1[js.Any, _] = js.native
+                success   : js.Function0[Unit]         = js.native,
+                failure   : js.Function1[js.Any, Unit] = js.native
               ): Unit = js.native
 
   def isEnabled(
-                 enabled    : js.Function0[_],
-                 notEnabled : js.Function0[_]
+                 enabled    : js.Function0[Unit],
+                 notEnabled : js.Function0[Unit]
                ): Unit = js.native
 
   /** iOS not supported. */
   def enable(
-              success   : js.Function0[_],
-              refused   : js.Function0[_]
+              success   : js.Function0[Unit],
+              refused   : js.Function0[Unit]
             ): Unit = js.native
 
   // ...

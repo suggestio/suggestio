@@ -54,7 +54,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2._
-import io.suggest.spa.{DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.spa.{CircuitUtil, DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
@@ -332,6 +332,7 @@ class Sc3Circuit(
   private[sc] def platformCssRO   = mkLensZoomRO(devRW, MScDev.platformCss)
 
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
+  private[sc] def beaconerEnabled = beaconerRW.zoom(_.isEnabled contains true)
   private[sc] def beaconsRO       = mkLensZoomRO( beaconerRW, MBeaconerS.beacons )
   private[sc] val hasBleRO        = mkLensZoomRO( beaconerRW, MBeaconerS.hasBle ).zoom( _ contains true )
 
@@ -469,6 +470,7 @@ class Sc3Circuit(
     modelRW     = beaconerRW,
     dispatcher  = this,
     bcnsIsSilentRO = scNodesRW.zoom(!_.opened),
+    osFamilyOpt = CircuitUtil.mkLensZoomRO( platformRW, MPlatformS.osFamily ).value,
     onNearbyChange = Some { (nearby0, nearby2) =>
       var fxAcc = List.empty[Effect]
 
@@ -733,7 +735,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
 
   {
