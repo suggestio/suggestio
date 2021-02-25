@@ -30,7 +30,7 @@ trait AdnRights extends DynSearchArgs {
     } else {
       val fn = MNodeFields.Extras.ADN_RIGHTS_FN
 
-      val mustOrNot = IMust.mustOrNot(adnRightsMustOrNot)
+      val mustOrNot = IMust.mustOrNot( adnRightsMustOrNot )
       // Собираем terms query, объединяя через AND (must).
       val allTermsQ = (for (r <- _withAdnRights) yield {
         MWrapClause(mustOrNot, QueryBuilders.termQuery(fn, r.value))

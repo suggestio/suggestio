@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MOsFamily
 import io.suggest.msg.ErrorMsgs
 import io.suggest.log.Log
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.util.Try

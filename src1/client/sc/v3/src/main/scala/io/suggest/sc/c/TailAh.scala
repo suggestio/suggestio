@@ -2,6 +2,7 @@ package io.suggest.sc.c
 
 import cordova.plugins.appminimize.CdvAppMinimize
 import diode._
+import diode.data.Pot
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.{BtOnOff, MBeaconerOpts}
 import io.suggest.common.empty.OptionUtil
@@ -32,6 +33,7 @@ import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.{DAction, DoNothing, SioPages}
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
 
@@ -856,9 +858,12 @@ class TailAh(
           // Нельзя менять местоположение на карте, если это просто фоновое тестирование индекса.
           !m.scSwitch.exists(_.demandLocTest) &&
           // Если очень ожидается текущая геолокация, то задвинуть карту.
-          (v0.internals.boot.wzFirstDone contains[Boolean] false) &&
-          (v0.internals.info.currRoute.exists { r =>
-            r.locEnv.isEmpty && r.nodeId.isEmpty
+          (
+            !(v0.internals.boot.wzFirstDone contains[Boolean] true) ||
+            (v0.index.resp ==* Pot.empty)
+          ) &&
+          (v0.internals.info.currRoute.exists { currRoute =>
+            currRoute.locEnv.isEmpty && currRoute.nodeId.isEmpty
           })
         ) {
           modF = modF andThen MMapInitState

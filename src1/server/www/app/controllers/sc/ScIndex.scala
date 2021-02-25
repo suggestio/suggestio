@@ -36,7 +36,6 @@ import util.showcase.IScUtil
 import japgolly.univeq._
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -175,63 +174,69 @@ trait ScIndex
 
     /** поискать покрывающий ТЦ/город/район. */
     def l50_detectUsingCoords: Future[Seq[MIndexNodeInfo]] = {
-      // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
-      // В понятиях старой выдачи, это поиск активного узла-здания.
-      // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
-      val _reqGeoLocFut = reqGeoLocFut
+      for {
+        geoLocOpt <- reqGeoLocFut
 
-      _reqGeoLocFut.flatMap { geoLocOpt =>
         // Пусть будет сразу NSEE, если нет данных геолокации.
-        val geoLoc = geoLocOpt.get
-        LOGGER.trace(s"$logPrefix Detect node using geo-loc: $geoLoc")
+        geoLoc = {
+          if (geoLocOpt.isEmpty)
+            LOGGER.trace(s"$logPrefix No geolocation, nothing to search")
+          geoLocOpt.get
+        }
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
-        val circle = CircleGs(geoLoc.point, radiusM = 1)
-        val qShape = CircleGsJvm.toEsQueryMaker( circle )
-        val nodeLocPred = MPredicates.NodeLocation
+        circle = CircleGs(geoLoc.point, radiusM = 1)
+        qShapes = CircleGsJvm.toEsQueryMaker( circle ) :: Nil
+        nodeLocPreds = MPredicates.NodeLocation :: Nil
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
-        val (withAdnRights1, adnRightsMustOrNot1) = if (!_scIndexArgs.geoIntoRcvr) {
+        (withAdnRights1, adnRightsMustOrNot1) = if (!_scIndexArgs.geoIntoRcvr) {
           // Запрещено погружаться в ресиверы. Значит, ищем просто узел-обёртку для выдачи, а не ресивер.
           (MAdnRights.RECEIVER :: Nil, false)
         } else {
           (Nil, true)
         }
+        someTrue = {
+          LOGGER.trace(s"$logPrefix geoIntoRcvr=${_scIndexArgs.geoIntoRcvr} => adnRights=[${withAdnRights1.mkString(",")}] adnRightsMustOrNot=${adnRightsMustOrNot1}")
+          OptionUtil.SomeBool.someTrue
+        }
 
-        val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
-          val msearch = new MNodeSearch {
-            // Неактивные узлы сразу вылетают из выдачи.
-            override val isEnabled = Some(true)
-            override val outEdges: MEsNestedSearch[Criteria] = {
-              // Возможно, надо сортировать на предмет близости к точке.
-              val gsCr = GsCriteria(
-                levels = ngl :: Nil,
-                shapes = qShape :: Nil
-              )
-              val cr = Criteria(
-                predicates  = nodeLocPred :: Nil,
-                gsIntersect = Some(gsCr)
-              )
-              MEsNestedSearch(
-                clauses = cr :: Nil,
-              )
-            }
-            override def withAdnRights = withAdnRights1
-            override def adnRightsMustOrNot = adnRightsMustOrNot1
-            override def limit = ScConstants.Index.MAX_NODES_DETECT
-          }
-          // Запустить поиск по запрошенным адресам.
+        // Получить первый успешный результат или вернуть NSEE.
+        rs <- Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
           for {
-            mnodes <- mNodes.dynSearch(msearch)
+            mnodes <- mNodes.dynSearch(
+              new MNodeSearch {
+                // Неактивные узлы сразу вылетают из выдачи.
+                override def isEnabled = someTrue
+                override val outEdges: MEsNestedSearch[Criteria] = {
+                  // Возможно, надо сортировать на предмет близости к точке.
+                  val cr = Criteria(
+                    predicates  = nodeLocPreds,
+                    gsIntersect = Some {
+                      GsCriteria(
+                        levels = ngl :: Nil,
+                        shapes = qShapes,
+                      )
+                    },
+                  )
+                  MEsNestedSearch(
+                    clauses = cr :: Nil,
+                  )
+                }
+                override def withAdnRights = withAdnRights1
+                override def adnRightsMustOrNot = adnRightsMustOrNot1
+                override def limit = ScConstants.Index.MAX_NODES_DETECT
+              }
+            )
           } yield {
-            LOGGER.trace(s"$logPrefix $geoLoc on level $ngl => [${mnodes.length}] - ${mnodes.iterator.flatMap(_.id).mkString(", ")}")
+            LOGGER.trace(s"$logPrefix $geoLoc on level $ngl => [${mnodes.length}]: [${mnodes.iterator.flatMap(_.id).mkString(", ")}]")
             mnodes
               .iterator
               .map { mnode =>
                 MIndexNodeInfo(
                   mnode  = mnode,
                   // 2018-03-23 Проверка упрощена. TODO Можно попытаться вынести её на уровень поиска в индексе по adnRights. Сортировать по RCVR и ngl (а как по дважды-nested сортировать???), и сразу получить нужный элемент.
-                  isRcvr = mnode.extras.isRcvr
+                  isRcvr = mnode.extras.isRcvr,
                 )
               }
               // Явный запуск сборки коллекции, чтобы инициализацировать все val'ы внутри MIndexNodeInfo.
@@ -239,40 +244,31 @@ trait ScIndex
           }
         }
 
-        // Получить первый успешный результат или вернуть NSEE.
-        val fut1 = for (rs <- nglsResultsFut) yield {
-          rs.iterator
-            .flatten
-            .foldLeft( (false: Boolean, List.empty[MIndexNodeInfo]) ) {
-              case (acc0 @ (haveNonRcvrNode, nodeInfoAcc0), nodeInfo) =>
-                if (!nodeInfo.isRcvr) {
-                  if (haveNonRcvrNode) {
-                    LOGGER.trace(s"$logPrefix Dropped non-rcvr node - ${nodeInfo.mnode.guessDisplayNameOrIdOrEmpty}")
-                    acc0
-                  } else {
-                    (true, nodeInfo :: nodeInfoAcc0)
-                  }
+      } yield {
+        val r = rs.iterator
+          .flatten
+          .foldLeft( (false: Boolean, List.empty[MIndexNodeInfo]) ) {
+            case (acc0 @ (haveNonRcvrNode, nodeInfoAcc0), nodeInfo) =>
+              if (!nodeInfo.isRcvr) {
+                if (haveNonRcvrNode) {
+                  LOGGER.trace(s"$logPrefix Dropped non-rcvr node - ${nodeInfo.mnode.guessDisplayNameOrIdOrEmpty}")
+                  acc0
                 } else {
-                  (haveNonRcvrNode, nodeInfo :: nodeInfoAcc0)
+                  LOGGER.trace(s"$logPrefix !haveNonRcvrNode, and found !rcvr node#${nodeInfo.currNodeIdOpt.orNull}: ${nodeInfo.mnode.guessDisplayName getOrElse ""} ##${nodeInfo.mnode.idOrNull}")
+                  (true, nodeInfo :: nodeInfoAcc0)
                 }
-            }
-            ._2
-            .reverse
-          //LOGGER.trace(s"$logPrefix First-detected node#${resNode.mnode.idOrNull} isRcvr?${resNode.isRcvr}")
-        }
+              } else {
+                LOGGER.trace(s"$logPrefix Found rcvr node#${nodeInfo.currNodeIdOpt.orNull}: ${nodeInfo.mnode.guessDisplayName getOrElse ""}")
+                (haveNonRcvrNode, nodeInfo :: nodeInfoAcc0)
+              }
+          }
+          ._2
+          .reverse
 
-        // Записываем в логи промежуточные итоги геолокации.
-        fut1.onComplete {
-          case Success(info) =>
-            LOGGER.trace(s"$logPrefix For $geoLoc geolocated ${info.length} receivers: [${info.iterator.flatMap(_.mnode.id).mkString(", ")}]")
-          case Failure(ex2) =>
-            if (ex2.isInstanceOf[NoSuchElementException])
-              LOGGER.trace(s"$logPrefix No receivers found via geolocation: $geoLoc")
-            else
-              LOGGER.warn(s"$logPrefix Failed to geolocate for receiver node using $geoLoc", ex2)
-        }
+        //LOGGER.trace(s"$logPrefix First-detected node#${resNode.mnode.idOrNull} isRcvr?${resNode.isRcvr}")
+        LOGGER.trace(s"$logPrefix For $geoLoc geolocated ${r.length} receivers: [${r.iterator.flatMap(_.mnode.id).mkString(", ")}]")
 
-        fut1
+        r
       }
     }
 
@@ -281,7 +277,7 @@ trait ScIndex
     def l95_ephemeralNodesFromPool: Future[Seq[MIndexNodeInfo]] = {
       val ephNodeId = nodesUtil.noAdsFound404RcvrId( ctx )
       val _mnodeOptFut = mNodes.getByIdCache( ephNodeId )
-      LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
+      LOGGER.trace(s"$logPrefix Index node NOT geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
 
       for (mnodeOpt <- _mnodeOptFut) yield {
         val mnode = mnodeOpt.get
@@ -314,6 +310,8 @@ trait ScIndex
       */
     def indexNodesFut: Future[Seq[MIndexNodeInfo]] = {
       l00_rcvrByIdFut.recoverWith { case _: NoSuchElementException =>
+        // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
+        // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
         val beaconsNodesFut = l10_detectUsingNearBeacons
         val coordsNodesFut  = for {
           coordNodes <- l50_detectUsingCoords

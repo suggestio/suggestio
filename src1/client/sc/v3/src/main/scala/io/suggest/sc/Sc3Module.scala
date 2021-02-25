@@ -3,7 +3,6 @@ package io.suggest.sc
 import com.materialui.MuiTheme
 import com.softwaremill.macwire._
 import cordova.Cordova
-import cordova.plugins.background.geolocation.CdvBgGeo
 import cordova.plugins.fetch.CdvPluginFetch
 import cordova.plugins.inappbrowser.InAppBrowser
 import diode.{Effect, ModelRW}
@@ -11,7 +10,6 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.cordova.CordovaConstants
 import io.suggest.cordova.background.geolocation.CdvBgGeoLocApi
 import io.suggest.cordova.fetch.CdvFetchHttpResp
-import io.suggest.dev.{MOsFamilies, MOsFamily}
 import io.suggest.geo.{GeoLocApi, Html5GeoLocApi}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.LoginFormModuleBase

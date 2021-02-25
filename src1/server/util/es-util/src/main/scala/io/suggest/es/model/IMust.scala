@@ -23,10 +23,8 @@ object IMust {
     *             false обязательно быть не должно.
     * @return Must_t.
     */
-  def mustOrNot(flag: Boolean): Must_t = {
-    // Оптимизация: вместо if-else используем упрощённый вариант:
-    Some(flag)
-  }
+  def mustOrNot(flag: Boolean): Must_t =
+    OptionUtil.SomeBool( flag )
 
   def mustOrShould(flag: Boolean): Must_t = {
     if (flag) MUST else SHOULD
