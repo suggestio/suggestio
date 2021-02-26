@@ -209,7 +209,7 @@ class WzFirstDiaAh[M](
       val first00 = value
       first00.view.fold {
         // warn, т.к. это признак нарушения в процессе инициализации.
-        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
+        logger.log( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, first00) )
         noChange
 
       } { view00 =>
@@ -542,14 +542,9 @@ class WzFirstDiaAh[M](
           }
           DoNothing
         }
-        // Удаление из DOM с задержкой.
-        val unRenderFx = Effect {
-          DomQuick
-            .timeoutPromiseT( 1.seconds.toMillis.toInt ) {
-              InitFirstRunWz(false)
-            }
-            .fut
-        }
+        // Удаление из DOM
+        val unRenderFx = InitFirstRunWz(false).toEffectPure
+
         // Надо скрыть диалог анимированно:
         val d2 = MWzFirstOuterS.view.set(
           Some( (MWzFirstS.visible set false)( view0 ) )

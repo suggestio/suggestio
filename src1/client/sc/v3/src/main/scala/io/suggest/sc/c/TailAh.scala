@@ -19,11 +19,12 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.lk.m.CsrfTokenEnsure
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
+import io.suggest.perm.BoolOptPermissionState
 import io.suggest.react.r.ComponentCatch
 import io.suggest.sc.c.dia.WzFirstDiaAh
 import io.suggest.sc.index.{MIndexesRecentJs, MSc3IndexResp, MScIndexArgs, MScIndexInfo, MScIndexes}
 import io.suggest.sc.m.boot.{Boot, BootAfter, MBootServiceIds}
-import io.suggest.sc.m.dia.first.InitFirstRunWz
+import io.suggest.sc.m.dia.first.{InitFirstRunWz, MWzFrames, MWzPhases, WzPhasePermRes}
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.menu.DlAppOpen
@@ -793,7 +794,7 @@ class TailAh(
         val switchCtx = MScSwitchCtx(
           showWelcome = m.mainScreen.showWelcome,
           indexQsArgs = MScIndexArgs(
-            geoIntoRcvr = false,
+            geoIntoRcvr = m.mainScreen.nodeId.isEmpty && (v0.index.resp ==* Pot.empty),
             retUserLoc  = v0.index.search.geo.mapInit.userLoc.isEmpty,
             nodeId      = m.mainScreen.nodeId,
           ),
@@ -876,6 +877,21 @@ class TailAh(
         modsAcc ::= MScRoot.index
           .composeLens( TailAh._inxSearchGeoMapInitLens )
           .modify( modF )
+      }
+
+      // Если wz1 ждёт пермишшена на геолокацию, то надо обрадовать его:
+      if (
+        (v0.internals.boot.wzFirstDone contains[Boolean] false) &&
+        (v0.dialogs.first.view.exists { wz1 =>
+          (wz1.phase ==* MWzPhases.GeoLocPerm) &&
+          (wz1.frame ==* MWzFrames.InProgress)
+        })
+      ) {
+        fxAcc ::= WzPhasePermRes(
+          phase = MWzPhases.GeoLocPerm,
+          res = Success( BoolOptPermissionState(OptionUtil.SomeBool.someTrue) ),
+        )
+          .toEffectPure
       }
 
       ah.optionalResult(
