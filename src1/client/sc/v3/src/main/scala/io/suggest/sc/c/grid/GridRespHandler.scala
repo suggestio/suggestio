@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.{ActionResult, Effect, ModelRO}
 import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build.{MGridBuildResult, MGridRenderInfo}
+import io.suggest.jd.{MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
@@ -145,13 +146,47 @@ final class GridRespHandler(
     val onlyMatchingInfoOpt = mGla
       .flatMap(_.onlyMatching)
     val ads2 = ads0.ready {
+      // Записать порядковый номер в scAd.main.doc.tagId.selPath
+      val scAd_jdDataJs_doc_jdId_selPathRev_LENS = MScAdData.main
+        .composeLens( MJdDataJs.doc )
+        .composeLens( MJdDoc.jdId )
+        .composeLens( MJdTagId.selPathRev )
+      /** Добавление в selPathRev порядкового номера карточки с текущим nodeId среди карточек с таким же nodeId. */
+      def _appendSelPathRevDupIndexes(scAds0: Vector[MScAdData], state0: Map[Option[String], Int]): Vector[MScAdData] = {
+        // Добавить порядковый номер на случай повторяющихся id карточек. Повторятся id могут даже внутри newScAds.
+        var state = Map.empty[Option[String], Int]
+        for (scAd <- scAds0) yield {
+          val adId = scAd.nodeId
+          // Определить очередной порядковый номер для карточки с данными id:
+          val index2 = state
+            .get( adId )
+            .fold(0)(_ + 1)
+          state += (adId -> index2)
+          scAd_jdDataJs_doc_jdId_selPathRev_LENS
+            .modify( index2 :: _ )(scAd)
+        }
+      }
+
+      /** Сборка state0 (карты dup-индексов - порядковых номеров среди карточек с одинаковым nodeId)
+        * для _appendSelPathRevDupIndexes() на основе списка имеющихся карточек. */
+      def _buildDupIndexes(scAds0: Iterable[MScAdData]): Map[Option[String], Int] = {
+        scAds0
+          .groupMapReduce( _.nodeId )( scAd_jdDataJs_doc_jdId_selPathRev_LENS.get(_).headOption.getOrElse(0) )( Math.max )
+      }
+
       (for {
         ads0 <- ads0.toOption
         if !isCleanLoad && ads0.nonEmpty
+      } yield {
         // Если активен матчинг, то надо удалить только обновляемые карточки, которые подпадают под матчинг.
         // В рамках текущей реализации, при пропатчивании выдачи, карточки заменяются (добавляются) только в начало.
-        ads9 = onlyMatchingInfoOpt.fold( ads0 ++ newScAds ) { onlyMatchingInfo =>
-          newScAds ++ ads0.filterNot { scAd =>
+        onlyMatchingInfoOpt.fold {
+          // Без матчинга, без патчинга. Просто докидываем новые карточки в конец списка:
+          val newScAds2 = _appendSelPathRevDupIndexes( newScAds, _buildDupIndexes(ads0) )
+          ads0 ++ newScAds2
+
+        } { onlyMatchingInfo =>
+          val ads1 = ads0.filterNot { scAd =>
             scAd.main.info.isMad404 || {
               // Проверить данные карточки, чтобы решить, надо ли её удалять отсюда:
               // - если карточка содержит критерии и подпадающие, и НЕподпадающие => смотрим по newScAdsById, удаляем если она там есть.
@@ -175,12 +210,17 @@ final class GridRespHandler(
               isDrop
             }
           }
-        }
 
-      } yield {
-        ads9
+          // Одна и та же карточка может идти в выдаче несколько раз в разных ипостасях.
+          // Добавить в jdTagId.selPathRev порядковый номер дубликата карточки с учётом уже имеющихся карточек и учитывая предшествующие добавляемые карточки.
+          val newScAds2 = _appendSelPathRevDupIndexes(newScAds, _buildDupIndexes(ads1))
+          newScAds2 ++ ads1
+        }
       })
-        .getOrElse( newScAds )
+        .getOrElse {
+          // Добавить порядковый номер на случай повторяющихся id карточек. Повторятся id могут даже внутри newScAds.
+          _appendSelPathRevDupIndexes( newScAds, Map.empty )
+        }
     }
 
     val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
