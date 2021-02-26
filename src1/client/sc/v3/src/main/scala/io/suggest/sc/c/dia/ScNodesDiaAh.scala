@@ -61,6 +61,11 @@ class ScNodesDiaAh[M](
       if (sc3Circuit.hasBleRO.value)
         nodesCircuit.dispatch( beaconDetectedAction() )
 
+      // Восстановить режим формы, если происходил сброс диалога.
+      val v0 = value
+      if (v0.focusedAdId.nonEmpty)
+        nodesCircuit.dispatch( SetAd(v0.focusedAdId) )
+
       DoNothing
     }
   }

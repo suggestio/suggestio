@@ -13,6 +13,7 @@ import io.suggest.sc.sc3.{MSc3Resp, MScConfUpdate, MScQs, MScRespActionType, MSc
 import io.suggest.sjs.dom2.GeoLocWatchId_t
 import io.suggest.spa.{DAction, SioPages}
 import io.suggest.text.StringUtil
+import japgolly.scalajs.react.extra.router.SetRouteVia
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json.JsValue
@@ -121,10 +122,12 @@ sealed trait IScTailAction extends IScRootAction
   * @param mods Функция обновления роуты.
   *             Исходное значение роуты передаётся как функция, потому что оно лениво и не всегда нужно.
   * @param force Не проверять роуту на предмет дубликата, пробрасывать в sjsreact-router даже повторную роуту.
+  * @param replace
   */
 case class ResetUrlRoute(
-                          mods: Option[(() => SioPages.Sc3) => SioPages.Sc3] = None,
-                          force: Boolean = false
+                          mods    : Option[(() => SioPages.Sc3) => SioPages.Sc3] = None,
+                          force   : Boolean = false,
+                          via     : SetRouteVia = SetRouteVia.HistoryPush,
                         )
   extends IScTailAction
 
@@ -144,9 +147,6 @@ case class SaveRecentIndex(inxRecent2: Option[MScIndexes] = None) extends IScTai
 /** Выбор узла в списке недавних узлов. */
 case class IndexRecentNodeClick( inxRecent: MSc3IndexResp ) extends IScTailAction
 
-
-/** Экшен хардварной кнопки "Назад", которую надо отрабатывать по-особому. */
-case object HwBack extends IScTailAction
 
 /** Запуск таймера ожидания получения гео-координат. */
 case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends IScTailAction

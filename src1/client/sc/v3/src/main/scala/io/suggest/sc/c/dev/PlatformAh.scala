@@ -16,7 +16,7 @@ import io.suggest.daemon.{BgModeDaemonInit, MDaemonDescr, MDaemonInitOpts}
 import io.suggest.dev.{MOsFamilies, MOsFamily, MPlatformS}
 import io.suggest.lk.m.SessionRestore
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, HwBack, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
+import io.suggest.sc.m.{GeoLocOnOff, GeoLocTimerStart, LoadIndexRecents, MScRoot, OnlineCheckConn, OnlineInit, PauseOrResume, PlatformReady, ScDaemonDozed, ScLoginFormShowHide, ScNodesShowHide, ScreenResetNow, ScreenResetPrepare, SettingEffect, SettingsDiaOpen, WithSettings}
 import io.suggest.log.Log
 import io.suggest.os.notify.{CloseNotify, NotifyStartStop}
 import io.suggest.sc.index.MScIndexArgs
@@ -27,7 +27,7 @@ import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
-import io.suggest.spa.{DiodeUtil, DoNothing}
+import io.suggest.spa.{DiodeUtil, DoNothing, HwBackBtn}
 import io.suggest.spa.DiodeUtil.Implicits._
 import org.scalajs.dom
 import org.scalajs.dom.Event
@@ -252,7 +252,7 @@ final class PlatformAh[M](
                 // Так-то оно работает по умолчанию, но нужно отработать сворачивание приложения в фон, когда некуда уходить.
                 doc.addEventListener4s( CordovaEvents.BACK_BUTTON ) { _: Event =>
                   // Если в History API больше некуда идти, то надо сворачиваться.
-                  dispatcher.dispatch( HwBack )
+                  dispatcher.dispatch( HwBackBtn )
                 }
 
                 // Вернуть текущее значение isReady, которое зависит от подписки на DEVICE_READY.

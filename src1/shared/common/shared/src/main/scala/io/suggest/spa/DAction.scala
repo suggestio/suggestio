@@ -41,6 +41,13 @@ object DAction {
 trait DActionType extends ActionType[DAction]
 
 
+/** Marker-trait для событий нажатия хардварных кнопок на устройстве. */
+trait IHwBtnAction extends DAction
+
+/** Экшен хардварной кнопки "Назад", которую надо отрабатывать по-особому. */
+case object HwBackBtn extends IHwBtnAction
+
+
 /** Унифицированный для всех NOP-экшен, который не должен нигде отрабатываться. */
 case object DoNothing extends DAction
 

@@ -15,7 +15,6 @@ import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.v.toast.ScNotifications
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
-import io.suggest.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
@@ -103,28 +102,11 @@ final class GridRespHandler(
         Map.empty
       }
     }
-    //val isWithBleAds = ctx.value0.index.state.isBleGridAds
-    //println(s"isWithBleAds = $isWithBleAds")
 
     // Подготовить полученные с сервера карточки:
     val newScAds = (for {
       sc3AdData <- gridResp.ads.iterator
       nodeIdOpt = sc3AdData.jd.doc.tagId.nodeId
-      // TODO Нужно профильтровать карточки на предмет bluetooth.
-      /*if isWithBleAds || (for {
-        //nodeId <- nodeIdOpt.iterator
-        matchInfo <- sc3AdData.info.matchInfos.iterator
-        nodeMatch <- {
-          println(s"ad#$nodeIdOpt => nodeMatch = $matchInfo")
-          matchInfo.nodeMatchings.iterator
-        }
-        if nodeMatch.ntype contains[MNodeType] MNodeTypes.BleBeacon
-      } yield {
-        println("Dropped BLE ad: " + nodeIdOpt)
-        false
-      })
-        .nextOption()
-        .getOrElse(true)*/
     } yield {
       // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
       (for {
@@ -190,7 +172,6 @@ final class GridRespHandler(
                     scAd.nodeId.fold(false)( newScAdsById.contains )
                 }
               }
-              //println(s"RESP scAd#${scAd.id.orNull} nms[${scAdNodeMatches.size}]=$scAdNodeMatches drop?$isDrop")
               isDrop
             }
           }
@@ -201,7 +182,6 @@ final class GridRespHandler(
       })
         .getOrElse( newScAds )
     }
-    //println(s"+${newScAds.size} have=${g0.core.ads.fold(0)(_.size)} = ${ads2.get.size}")
 
     val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core)
     val g2 = g0.copy(

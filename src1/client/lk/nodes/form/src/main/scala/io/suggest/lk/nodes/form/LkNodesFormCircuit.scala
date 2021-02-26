@@ -124,6 +124,7 @@ case class LkNodesFormCircuit(
     // Корневой handler для глобальных действий формы:
     val rootAh = new LknFormAh(
       modelRW = zoomRW(identity){ (_, v2) => v2 },
+      diConf  = diConfig,
     )
     composeHandlers( allHandlers, rootAh )
 

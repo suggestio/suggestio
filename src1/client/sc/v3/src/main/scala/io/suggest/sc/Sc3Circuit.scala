@@ -54,7 +54,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom2._
-import io.suggest.spa.{CircuitUtil, DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, OptFastEq}
+import io.suggest.spa.{CircuitUtil, DAction, DoNothing, DoNothingActionProcessor, FastEqUtil, IHwBtnAction, OptFastEq}
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.CircuitUtil._
 import org.scalajs.dom
@@ -715,6 +715,7 @@ class Sc3Circuit(
       case _: IScDaemonAction           => scDaemonAh
       case _: IDaemonAction             => daemonBgModeAh
       case _: IDaemonSleepAction        => daemonSleepTimerAh
+      case _: IHwBtnAction              => tailAh
       // редкие варианты:
       case _: IScConfAction             => scConfAh
       case _: IScLoginAction            => scLoginDiaAh

@@ -33,7 +33,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.dom2.DomQuick
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.spa.{DAction, DoNothing, SioPages}
+import io.suggest.spa.{DAction, DoNothing, HwBackBtn, SioPages}
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom
@@ -235,7 +235,7 @@ class TailAh(
         // Уведомить в фоне роутер, заодно разблокировав интерфейс.
         val fx = Effect.action {
           routerCtl
-            .set( nextRoute2 )
+            .set( nextRoute2, m.via )
             .runNow()
           DoNothing
         }
@@ -494,36 +494,48 @@ class TailAh(
 
 
     // Сигнал нажатия хардварной кнопки back (приложение).
-    case HwBack =>
+    case m @ HwBackBtn =>
       val v0 = value
 
-      // cordova (android): при нажатии back надо скрыть открытые панели или диалоги, иначе свернуть приложение в фон.
-      val plat = v0.dev.platform
-      if (
-        plat.isCordova &&
-        // TODO m.RouteTo.isBack - нажата кнопка Back?
-        TailAh._currRoute
-          .get(v0)
-          .exists { m => !m.isSomeThingOpened }
-      ) {
-        if (plat.isUsingNow && plat.isReady) {
-          val minimizeFx = Effect.action {
-            CdvAppMinimize.minimize()
+      // TODO dia.nodes.circuit: Надо оптимизировать этот костыль, чтобы через js-роутер отрабатывалась ситуация:
+      //      Запилить LkNodes js-роутер по аналогии с login-form, но более сложный.
+      v0.dialogs.nodes.circuit
+        .map { nodesCircuit =>
+          val fx = Effect.action {
+            nodesCircuit.dispatch( m.asInstanceOf[HwBackBtn.type] )
             DoNothing
           }
-          effectOnly( minimizeFx )
-
-        } else {
-          noChange
+          effectOnly(fx)
         }
+        .getOrElse {
+          // cordova (android): при нажатии back надо скрыть открытые панели или диалоги, иначе свернуть приложение в фон.
+          val plat = v0.dev.platform
+          if (
+            plat.isCordova &&
+              // TODO m.RouteTo.isBack - нажата кнопка Back?
+              TailAh._currRoute
+                .get(v0)
+                .exists { m => !m.isSomeThingOpened }
+          ) {
+            if (plat.isUsingNow && plat.isReady) {
+              val minimizeFx = Effect.action {
+                CdvAppMinimize.minimize()
+                DoNothing
+              }
+              effectOnly( minimizeFx )
 
-      } else {
-        val goBackFx = Effect.action {
-          dom.window.history.back()
-          DoNothing
+            } else {
+              noChange
+            }
+
+          } else {
+            val goBackFx = Effect.action {
+              dom.window.history.back()
+              DoNothing
+            }
+            effectOnly( goBackFx )
+          }
         }
-        effectOnly( goBackFx )
-      }
 
 
     // SPA-роутер заливает в состояние данные из URL.

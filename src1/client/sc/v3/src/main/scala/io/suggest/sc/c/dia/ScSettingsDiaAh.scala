@@ -19,6 +19,7 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
+import japgolly.scalajs.react.extra.router.SetRouteVia
 import play.api.libs.json.JsNull
 
 import scala.util.Try
@@ -88,7 +89,12 @@ class ScSettingsDiaAh[M](
 
       } else {
         val v2 = (MScSettingsDia.opened set m.opened)(v0)
-        val fx = ResetUrlRoute().toEffectPure
+        // Заменяем в истории, т.к. иначе откроется панель меню.
+        val fx = Effect.action {
+          ResetUrlRoute(
+            via = SetRouteVia.HistoryReplace,
+          )
+        }
         updated(v2, fx)
       }
 
