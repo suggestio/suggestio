@@ -20,6 +20,7 @@ trait LeafletElement[T, C <: js.Any] extends js.Object {
 @JSImport(PACKAGE_NAME, "createElementHook")
 object createElementHook extends js.Function {
 
+  /** @param updateElement (instance: E, NEXTProps: P, PREVProps: P) => Unit. */
   def apply[E <: js.Object, P <: js.Object, C <: js.Any]
   (
     createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, C]],

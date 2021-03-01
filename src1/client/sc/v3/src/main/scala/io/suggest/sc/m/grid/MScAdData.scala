@@ -61,6 +61,9 @@ object MScAdData {
     def focusedOrMainPot: Pot[MJdDataJs] =
       scAd.focused orElse scAd.mainAsFocused
 
+    def mainAsFocused: Pot[MJdDataJs] =
+      scAd.focused.ready( scAd.main )
+
   }
 
 }
@@ -78,9 +81,6 @@ final case class MScAdData(
                           )
   extends OptStrId
 {
-
-  lazy val mainAsFocused: Pot[MJdDataJs] =
-    focused.ready( main )
 
   override def id = this.nodeId
 

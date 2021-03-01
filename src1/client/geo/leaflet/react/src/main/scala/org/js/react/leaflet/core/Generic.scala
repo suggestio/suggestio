@@ -34,6 +34,7 @@ object createControlComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createLayerComponent")
 object createLayerComponent extends js.Function {
+  /** @param updateElement (instance: E, NEXTProps: P, PREVProps: P) => Unit. */
   def apply[E <: Layer, P <: LayerProps /*LayerWithChildrenProps*/]
            (createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, js.Any]],
             updateElement: js.Function3[E, P, P, Unit] = js.native)
@@ -56,6 +57,7 @@ object createOverlayComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createPathComponent")
 object createPathComponent extends js.Function {
+  /** @param updateElement (instance: E, NEXTProps: P, PREVProps: P) => Unit. */
   def apply[E <: FeatureGroup | Path, P <: PathProps /*PathWithChildrenProps*/]
            (createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, js.Any]],
             updateElement: js.Function3[E, P, P, Unit])
@@ -67,6 +69,7 @@ object createPathComponent extends js.Function {
 @js.native
 @JSImport(PACKAGE_NAME, "createTileLayerComponent")
 object createTileLayerComponent extends js.Function {
+  /** @param updateElement (instance: E, NEXTProps: P, PREVProps: P) => Unit. */
   def apply[E <: Layer, P <: LayerProps]
            (createElement: js.Function2[P, LeafletContextInterface, LeafletElement[E, js.Any]],
             updateElement: js.Function3[E, P, P, Unit])

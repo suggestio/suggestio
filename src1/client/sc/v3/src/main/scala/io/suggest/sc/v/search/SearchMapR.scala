@@ -24,8 +24,6 @@ import io.suggest.sc.v.styl.ScCssStatic
 import io.suggest.sjs.leaflet.control.locate.LocateControlOptions
 import org.js.react.leaflet.MapContainer
 
-import scala.scalajs.js.UndefOr
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

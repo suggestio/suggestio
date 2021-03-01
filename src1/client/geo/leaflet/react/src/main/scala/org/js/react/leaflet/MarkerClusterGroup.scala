@@ -4,7 +4,7 @@ import io.suggest.sjs.leaflet.event.LeafletEventHandlerFnMap
 import io.suggest.sjs.leaflet.marker.Marker
 import io.suggest.sjs.leaflet.marker.cluster.{MarkerClusterEvents, MarkerClusterGroupOptions, MarkerClusterGroup => LeafletMarkerClusterGroup}
 import japgolly.scalajs.react.{Children, JsForwardRefComponent}
-import org.js.react.leaflet.core.{EventedProps, LayerProps, LeafletContextInterface, LeafletElement, createLayerComponent, useEventHandlers}
+import org.js.react.leaflet.core.{EventedProps, LayerProps, LeafletContextInterface, LeafletElement, createLayerComponent}
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 
@@ -54,7 +54,7 @@ object MarkerClusterGroup {
       leafEl
     },
 
-    updateElement = { (mcg, props0, props2) =>
+    updateElement = { (mcg, props2, props0) =>
       if (props0.markers ne props2.markers) {
         mcg.clearLayers()
            .addLayers( props2.markers )
