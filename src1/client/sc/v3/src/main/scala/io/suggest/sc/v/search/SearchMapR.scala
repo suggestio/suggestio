@@ -39,7 +39,7 @@ class SearchMapR {
 
 
   protected[this] case class State(
-                                    mmapC       : ReactConnectProxy[MMapS],
+                                    mmapC       : ReactConnectProxy[Props_t],
                                     rcvrsGeoC   : ReactConnectProxy[Pot[MSearchRespInfo[MGeoNodesResp]]],
                                     loaderOptC  : ReactConnectProxy[Option[MGeoPoint]],
                                     userLocOptC : ReactConnectProxy[Option[MGeoLoc]],
@@ -76,6 +76,7 @@ class SearchMapR {
         val mapChildren = List[VdomElement](
           // Рендерим основную гео-карту:
           ReactLeafletUtil.Tiles.OsmDefault,
+
           // Плагин для геолокации текущего юзера.
           lgmCtx.LocateControlR(
             new LocateControlOptions {
@@ -84,14 +85,30 @@ class SearchMapR {
             }
           ),
           lgmCtx.EventsR(),
+
           // Рендер шейпов и маркеров текущий узлов.
           s.rcvrsGeoC { reqWrapProxy =>
             reqWrapProxy.wrap( _.map(_.resp) )( RcvrMarkersR.component(_)() )
           },
+
           // Рендер опционального маркера-крутилки для ожидания загрузки.
           s.loaderOptC { MapLoaderMarkerR.component.apply },
+
           // Рендер круга текущей геолокации юзера:
           s.userLocOptC { LocShapeR.component.apply },
+
+          // Рендер поддержки обновления координат и зума карты:
+          s.mmapC { geoTabProxy =>
+            val geoTab = geoTabProxy.value
+            LGeoMapR.CenterZoomTo(
+              MGeoMapPropsR(
+                mapS      = geoTab.mapInit.state,
+                // Управление анимацией: при наличии каких-либо ресиверов, нужно вырубать анимацию, чтобы меньше дёргалась карта при поиске.
+                animated  = geoTab.isRcvrsEqCached,
+              )
+            )
+          },
+          
         )
 
         // Код сборки css был унесён за пределы тела коннекшена до внедрения scCss-через-контекст.
@@ -107,21 +124,21 @@ class SearchMapR {
           ^.onTouchMove   ==> _stopPropagationF,
           ^.onTouchCancel ==> _stopPropagationF,
 
-          s.mmapC { mmapProxy =>
-            mmapProxy.wrap { mmap =>
-              MGeoMapPropsR(
-                mapS          = mmap,
-                // Управление анимацией: при наличии каких-либо ресиверов, нужно вырубать анимацию, чтобы меньше дёргалась карта при поиске.
-                animated      = propsProxy.value.isRcvrsEqCached,
-                cssClass      = geoMapCssSome,
-                whenCreated   = _onMapReadyOptF,
+          propsProxy.wrap(_.mapInit.state) { mmapProxy =>
+            MapContainer.component(
+              LGeoMapR.reactLeafletMapProps(
+                MGeoMapPropsR(
+                  mapS          = mmapProxy.value,
+                  // Управление анимацией: при наличии каких-либо ресиверов, нужно вырубать анимацию, чтобы меньше дёргалась карта при поиске.
+                  animated      = propsProxy.value.isRcvrsEqCached,
+                  cssClass      = geoMapCssSome,
+                  whenCreated   = _onMapReadyOptF,
+                ),
+                lgmCtx,
               )
-            } { geoMapPropsProxy =>
-              MapContainer.component(
-                LGeoMapR.reactLeafletMapProps( geoMapPropsProxy, lgmCtx )
-              )( mapChildren: _* )
-            }
-          }
+            )( mapChildren: _* )
+          },
+
         )
       }
 
@@ -141,7 +158,9 @@ class SearchMapR {
     .initialStateFromProps { mapInitProxy =>
       State(
 
-        mmapC       = mapInitProxy.connect(_.mapInit.state),
+        mmapC = mapInitProxy.connect( identity )( FastEqUtil[MGeoTabS] {(a, b) =>
+          MMapS.CenterZoomFeq.eqv( a.mapInit.state, b.mapInit.state )
+        }),
 
         rcvrsGeoC   = mapInitProxy.connect { props =>
           // Отображать найденные в поиске ресиверы вместо всех.

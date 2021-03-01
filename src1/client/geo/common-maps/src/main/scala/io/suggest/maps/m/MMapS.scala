@@ -3,6 +3,7 @@ package io.suggest.maps.m
 import diode.FastEq
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.MMapProps
+import io.suggest.spa.FastEqUtil
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
@@ -16,6 +17,13 @@ import monocle.macros.GenLens
   * возможностью перемещения и масштабирования этой карты.
   */
 object MMapS {
+
+  lazy val CenterZoomFeq = {
+    FastEqUtil[MMapS] { (a, b) =>
+      (a.center ===* b.center) &&
+      (a.zoom ==* b.zoom)
+    }
+  }
 
   implicit object MMapSFastEq4Map extends FastEq[MMapS] {
     override def eqv(a: MMapS, b: MMapS): Boolean = {

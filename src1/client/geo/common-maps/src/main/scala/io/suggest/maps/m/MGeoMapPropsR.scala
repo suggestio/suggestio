@@ -1,8 +1,8 @@
 package io.suggest.maps.m
 
 import diode.FastEq
-import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
-import io.suggest.sjs.leaflet.map.{LMap, Zoom_t}
+import io.suggest.sjs.leaflet.event.DragEndEvent
+import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.spa.OptFastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -23,7 +23,6 @@ object MGeoMapPropsR {
   implicit object MGeoMapPropsRFastEq extends FastEq[MGeoMapPropsR] {
     override def eqv(a: MGeoMapPropsR, b: MGeoMapPropsR): Boolean = {
       val P = OptFastEq.Plain
-      val V = OptFastEq.OptValueEq
       (a.mapS ===* b.mapS) &&
       (a.animated ==* b.animated) &&
       P.eqv(a.cssClass,     b.cssClass) &&

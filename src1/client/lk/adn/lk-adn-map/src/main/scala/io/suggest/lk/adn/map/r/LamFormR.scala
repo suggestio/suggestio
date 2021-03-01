@@ -86,6 +86,13 @@ final class LamFormR(
         // L-попап при клике по rad cursor.
         p.wrap( _.geo )( radPopupR.component.apply ),
 
+        s.geoMapPropsC { mmapProxy =>
+          val p = MGeoMapPropsR(
+            mapS          = mmapProxy.value,
+          )
+          LGeoMapR.CenterZoomTo( p )
+        },
+
       )
 
 
@@ -106,21 +113,15 @@ final class LamFormR(
         p.wrap(_.datePeriod)( DatePeriodR.component.apply ),
 
         // Рендер географической карты:
-        {
-          val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
-          s.geoMapPropsC { mapPropsProxy =>
-            val lgmPropsProxy = mapPropsProxy.zoom { mmapS =>
-              MGeoMapPropsR(
-                mapS          = mmapS,
-                cssClass      = mapCssClass
-              )
-            }
-            MapContainer(
-              LGeoMapR.reactLeafletMapProps( lgmPropsProxy, lgmCtx )
-            )( mapChildren: _* )
-          }
+        p.wrap(_.geo.mmap) { mmapProxy =>
+          val p = MGeoMapPropsR(
+            mapS          = mmapProxy.value,
+            cssClass      = Some( Css.Lk.Maps.MAP_CONTAINER ),
+          )
+          MapContainer(
+            LGeoMapR.reactLeafletMapProps( p, lgmCtx )
+          )( mapChildren: _* )
         },
-
 
         <.br,
 
@@ -137,7 +138,7 @@ final class LamFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        geoMapPropsC  = propsProxy.connect( _.geo.mmap ),
+        geoMapPropsC  = propsProxy.connect( _.geo.mmap )( MMapS.CenterZoomFeq ),
         rcvrsC        = propsProxy.connect(_.rcvrs),
         priceDslOptC  = propsProxy.connect(_.price.respDslOpt),
       )

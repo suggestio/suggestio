@@ -31,25 +31,6 @@ object MScSearch {
 
   implicit class ScSearchExt( private val scSearch: MScSearch ) extends AnyVal {
 
-    /** Сброс состояния найденных узлов (тегов), если возможно. */
-    def maybeResetNodesFound: MScSearch = {
-      resetNodesFoundIfAny getOrElse scSearch
-    }
-
-    /** Вернуть обновлённый инстанс [[MScSearch]], если теги изменились в ходе сброса. */
-    def resetNodesFoundIfAny: Option[MScSearch] = {
-      Option.when( scSearch.geo.found.nonEmpty ) {
-        resetTagsForce
-      }
-    }
-
-    def resetTagsForce: MScSearch = {
-      geo
-        .composeLens(MGeoTabS.found)
-        .set( MNodesFoundS.empty )(scSearch)
-    }
-
-
     /** Дедубликация кода сброса значения this.mapInit.loader. */
     // TODO Заинлайнить? Код по факту переместился в под-модель geo, а тут просто дёргается.
     def resetMapLoader: MScSearch = {

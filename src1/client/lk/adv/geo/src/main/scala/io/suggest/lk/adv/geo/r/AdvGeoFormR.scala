@@ -11,7 +11,7 @@ import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR}
+import io.suggest.maps.m.{MAdvGeoS, MExistGeoPopupS, MGeoMapPropsR, MMapS}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -61,7 +61,7 @@ final class AdvGeoFormR(
   protected case class State(
                               onMainScrC          : ReactConnectProxy[onMainScreenR.PropsVal],
                               rcvrsGeoC           : ReactConnectProxy[Pot[MGeoNodesResp]],
-                              geoMapPropsC        : ReactConnectProxy[MGeoMapPropsR],
+                              geoMapPropsC        : ReactConnectProxy[MMapS],
                               geoAdvExistGjC      : ReactConnectProxy[Pot[js.Array[GjFeature]]],
                               geoAdvPopupC        : ReactConnectProxy[MExistGeoPopupS],
                               mRadOptC            : ReactConnectProxy[MAdvGeoS],
@@ -152,10 +152,22 @@ final class AdvGeoFormR(
             // Рендер опционального попапа над ресивером.
             p.wrap(_.adv.rcvr)( rcvrPopupR.component.apply ),
 
+            s.geoMapPropsC { mmapProxy =>
+              val p = MGeoMapPropsR(
+                mapS = mmapProxy.value,
+              )
+              LGeoMapR.CenterZoomTo( p )
+            },
+
           )
-          s.geoMapPropsC { mapProps =>
+
+          p.wrap(_.geo.mmap) { mmap =>
+            val props = MGeoMapPropsR(
+              mapS     = mmap.value,
+              cssClass = Some( Css.Lk.Maps.MAP_CONTAINER ),
+            )
             MapContainer(
-              LGeoMapR.reactLeafletMapProps( mapProps, lgmCtx )
+              LGeoMapR.reactLeafletMapProps( props, lgmCtx )
             )( mapChildren: _* )
           }
         },
@@ -178,7 +190,6 @@ final class AdvGeoFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       val mradOptZoomF = { r: MRoot => r.geo.rad }
-      val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
 
       State(
         onMainScrC   = propsProxy.connect { mroot =>
@@ -187,12 +198,7 @@ final class AdvGeoFormR(
           )
         },
         rcvrsGeoC        = propsProxy.connect(_.adv.rcvr.rcvrsGeo),
-        geoMapPropsC     = propsProxy.connect { p =>
-          MGeoMapPropsR(
-            mapS          = p.geo.mmap,
-            cssClass      = mapCssClass,
-          )
-        },
+        geoMapPropsC     = propsProxy.connect(_.geo.mmap)( MMapS.CenterZoomFeq ),
         geoAdvExistGjC   = propsProxy.connect(_.geo.existAdv.geoJson),
         geoAdvPopupC     = propsProxy.connect(_.geo.existAdv.popup),
         // Для рендера подходит только radEnabled, а он у нас генерится заново каждый раз.

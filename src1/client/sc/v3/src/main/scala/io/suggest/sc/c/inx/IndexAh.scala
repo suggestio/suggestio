@@ -151,7 +151,8 @@ object IndexAh {
         }
 
         // Возможный сброс состояния тегов
-        s0 = s0.maybeResetNodesFound
+        if (s0.geo.found.nonEmpty)
+          fxsAcc ::= SearchTextChanged("", noWait = true).toEffectPure
 
         // Если заход в узел с карты, то надо скрыть search-панель.
         if (s0.panel.opened && {

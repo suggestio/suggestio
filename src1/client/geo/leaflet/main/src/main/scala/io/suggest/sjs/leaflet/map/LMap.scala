@@ -12,7 +12,7 @@ import org.scalajs.dom.PositionError
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.{JSGlobal, JSImport}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -30,18 +30,27 @@ class LMap extends Evented with ControlledLayer {
   def setZoom(zoom: Zoom_t, zoopOpts: ZoomOptions = js.native): LMap = js.native
   def zoomIn(delta: Double, zoomOpts: ZoomOptions = js.native): LMap = js.native
   def zoomOut(delta: Double, zoomOpts: ZoomOptions = js.native): LMap = js.native
-  def setZoomAround(latLng: LatLng, zoom: Zoom_t, zoomOpts: ZoomOptions = js.native): LMap = js.native
+  def setZoomAround(aroundThis: LatLng | Point, zoom: Zoom_t, zoomOpts: ZoomOptions = js.native): LMap = js.native
 
   def fitBounds(latLngBounds: LatLngBounds, options: FitBoundsOptions = js.native): LMap = js.native
 
   def fitWorld(options: FitBoundsOptions = js.native): LMap = js.native
 
   def panTo(latLng: LatLng, options: PanOptions = js.native): LMap = js.native
+  def panBy(point: Point, options: PanOptions = js.native): LMap = js.native
+
+  def flyTo(latLng: LatLng, zoom: Zoom_t = js.native, options: ZoomOptions | PanOptions = js.native): LMap = js.native
+  def flyToBounds(bounds: LatLngBounds, options: FitBoundsOptions = js.native): LMap = js.native
 
   def invalidateSize(animate: Boolean): LMap = js.native
   def invalidateSize(options: PanOptions): LMap = js.native
 
   def setMaxBounds(bound: LatLngBounds): LMap = js.native
+  def setMinZoom(zoom: Zoom_t): LMap = js.native
+  def setMaxZoom(zoom: Zoom_t): LMap = js.native
+  def panInsideBounds(bounds: LatLngBounds, options: PanOptions = js.native): LMap = js.native
+  def panInside(latLng: LatLng, options: js.Object /*FitBoundsOptions*/ = js.native): LMap = js.native
+  def stop(): LMap = js.native
 
   def locate(options: LocateOptions): LMap = js.native
   def stopLocate(): LMap = js.native

@@ -10,7 +10,7 @@ import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, Events, LeafletEventHa
 import io.suggest.sjs.leaflet.map.LMap
 import japgolly.scalajs.react.component.ReactForwardRef
 import japgolly.scalajs.react.ScalaFnComponent
-import org.js.react.leaflet.{LocateControl, MapContainerProps, useMapEvent, useMapEvents}
+import org.js.react.leaflet.{LocateControl, MapContainerProps, useMap, useMapEvent, useMapEvents}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -84,9 +84,7 @@ object LGeoMapR {
     * @param lgmCtx Постоянные инстансы, хранящиеся за пределами map-коннекшена.
     * @return Инстанс LMapPropsR.
     */
-  def reactLeafletMapProps( proxy: ModelProxy[MGeoMapPropsR], lgmCtx: LgmCtx ): MapContainerProps = {
-    val v = proxy()
-
+  def reactLeafletMapProps( v: MGeoMapPropsR, lgmCtx: LgmCtx ): MapContainerProps = {
     new MapContainerProps {
       override val center         = MapsUtil.geoPoint2LatLng( v.mapS.center )
       override val zoom           = js.defined( v.mapS.zoom )
@@ -101,6 +99,21 @@ object LGeoMapR {
 
       override val attributionControl = v.attribution.orUndefined
     }
+  }
+
+
+  lazy val CenterZoomTo = ScalaFnComponent[MGeoMapPropsR] { props =>
+    val mapInstance = useMap()
+
+    val centerLL = MapsUtil.geoPoint2LatLng( props.mapS.center )
+    val zoom = props.mapS.zoom
+
+    if (props.animated)
+      mapInstance.setView( centerLL, zoom )
+    else
+      mapInstance.flyTo( centerLL, zoom )
+
+    ReactCommonUtil.VdomNullElement
   }
 
 }
