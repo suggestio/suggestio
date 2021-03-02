@@ -736,7 +736,7 @@ class Sc3Circuit(
   addProcessor( DoNothingActionProcessor[MScRoot] )
 
   // Раскомментить, когда необходимо залогировать в консоль весь ход работы выдачи:
-  //addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
+  addProcessor( io.suggest.spa.LoggingAllActionsProcessor[MScRoot] )
 
 
   {

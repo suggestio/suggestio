@@ -36,6 +36,8 @@ object MScSwitchCtx {
     final def POP: ViewsAction = OptionUtil.SomeBool.someFalse
   }
 
+  final def INDEX_MAP_RESET_DFLT = true
+
 }
 
 
@@ -49,6 +51,7 @@ object MScSwitchCtx {
   * @param afterIndex После переключения - что сделать?
   * @param afterBack Эффект при переходе назад. Требует storePrevIndex=true или иных условий для IndexAh._indexUpdated().
   * @param afterBackGrid Эффект после "назад" и после получения и обработки начальной порции блоков плитки.
+  * @param indexMapReset Обновить гео.карту по индексу узла с сервера.
   */
 case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
@@ -60,5 +63,6 @@ case class MScSwitchCtx(
                          afterBack        : Option[Effect]    = None,
                          afterBackGrid    : Option[Effect]    = None,
                          viewsAction      : MScSwitchCtx.ViewsAction   = MScSwitchCtx.ViewsAction.RESET,
+                         indexMapReset    : Boolean           = MScSwitchCtx.INDEX_MAP_RESET_DFLT,
                        )
 

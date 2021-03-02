@@ -205,55 +205,56 @@ class GeoTabAh[M](
 
     // Клик по узлу в списке найденных гео-узлов.
     case m: NodeRowClick =>
-      // Найти узел, который был окликнут.
       val v0 = value
-      v0.found
-        .nodesMap
-        .get( m.nodeId )
-        .fold {
+
+      (for {
+        // Найти узел, который был окликнут.
+        nodePropsShapes <- v0.found.nodesMap.get( m.nodeId )
+      } yield {
+        val mnode = nodePropsShapes.props
+        val nodeId = mnode.nodeId.get
+
+        // Есть окликнутый узел. Действовать исходя из типа узла.
+        if (mnode.ntype.exists(_ eqOrHasParent MNodeTypes.Tag)) {
+          // Это тег. Обновить состояние выбранных тегов, искать в плитке.
+          val isAlreadySelected = v0.data.selTagIds contains nodeId
+
+          val v2 = MGeoTabS.data
+            .composeLens( MGeoTabData.selTagIds )
+            .set {
+              var set0 = Set.empty[String]
+
+              // Снять либо выставить выделение для тега:
+              if (!isAlreadySelected) // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
+                set0 += nodeId  // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
+
+              set0
+            }(v0)
+
+          val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
+          val closeSearchFx = SideBarOpenClose( MScSideBars.Search, open = OptionUtil.SomeBool.someFalse ).toEffectPure
+
+          val fx = gridLoadFx >> closeSearchFx
+          updated(v2, fx)
+
+        } else {
+          // Это не тег, значит это adn-узел. Надо перейти в выдачу выбранного узла.
+          val fx = MapReIndex(mnode.nodeId).toEffectPure
+          // Надо сбросить выбранные теги, есть есть.
+          if (v0.data.selTagIds.isEmpty) {
+            effectOnly(fx)
+          } else {
+            val v2 = MGeoTabS.data
+              .composeLens( MGeoTabData.selTagIds )
+              .set( Set.empty )(v0)
+            updated(v2, fx)
+          }
+        }
+      })
+        .getOrElse {
           // Почему-то не найдено узла, по которому произошёл клик.
           logger.error( ErrorMsgs.NODE_NOT_FOUND, msg = (m, v0.found.nodesMap.keysIterator.mkString("[", ", ", "]")) )
           noChange
-
-        } { nodePropsShapes =>
-          val mnode = nodePropsShapes.props
-          val nodeId = mnode.nodeId.get
-          // Есть окликнутый узел. Действовать исходя из типа узла.
-          if (mnode.ntype.exists(_ eqOrHasParent MNodeTypes.Tag)) {
-            // Это тег. Обновить состояние выбранных тегов, искать в плитке.
-            val isAlreadySelected = v0.data.selTagIds contains nodeId
-
-            val v2 = MGeoTabS.data
-              .composeLens( MGeoTabData.selTagIds )
-              .set {
-                var set0 = Set.empty[String]
-
-                // Снять либо выставить выделение для тега:
-                if (!isAlreadySelected) // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
-                  set0 += nodeId  // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
-
-                set0
-              }(v0)
-
-            val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
-            val closeSearchFx = SideBarOpenClose( MScSideBars.Search, open = OptionUtil.SomeBool.someFalse ).toEffectPure
-
-            val fx = gridLoadFx >> closeSearchFx
-            updated(v2, fx)
-
-          } else {
-            // Это не тег, значит это adn-узел. Надо перейти в выдачу выбранного узла.
-            val fx = MapReIndex(mnode.nodeId).toEffectPure
-            // Надо сбросить выбранные теги, есть есть.
-            if (v0.data.selTagIds.isEmpty) {
-              effectOnly(fx)
-            } else {
-              val v2 = MGeoTabS.data
-                .composeLens( MGeoTabData.selTagIds )
-                .set( Set.empty )(v0)
-              updated(v2, fx)
-            }
-          }
         }
 
 

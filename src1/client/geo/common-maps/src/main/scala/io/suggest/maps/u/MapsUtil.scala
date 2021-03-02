@@ -48,6 +48,32 @@ object MapsUtil {
   }
 
 
+  object Implicits {
+    implicit final class MGeoPointsExt(private val gps: IterableOnce[MGeoPoint]) extends AnyVal {
+
+      /** Выбрать ближайшую точку к указанной точке.
+        *
+        * @param toPoint К какой точке искать близость.
+        * @return Опциональный результат. None, когда исходный список точек пуст.
+        */
+      def nearestTo(toPoint: MGeoPoint): Option[MGeoPoint] = {
+        lazy val toPointLL = geoPoint2LatLng( toPoint )
+        gps
+          .iterator
+          .minByOption { currPoint =>
+            geoPoint2LatLng(currPoint) distanceTo toPointLL
+          }
+      }
+
+      def nearestOrFirst(toPointOpt: Option[MGeoPoint]): Option[MGeoPoint] = {
+        toPointOpt
+          .fold( gps.iterator.nextOption() ) { nearestTo }
+      }
+
+    }
+  }
+
+
   /**
     * Посчитать дефолтовые координаты маркера радиуса на основе указанного круга.
     * @param geoCircle Текущий круг.

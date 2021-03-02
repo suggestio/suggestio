@@ -77,14 +77,13 @@ class ScMapDelayAh[M](
 
     // Срабатывание таймера.
     case m: MapDelayTimeOut =>
-      val resOpt = for {
+      (for {
         v0 <- value
         if v0.generation ==* m.gen
       } yield {
         val fx = MapReIndex(v0.rcvrId).toEffectPure
         updatedSilent( None, fx )
-      }
-      resOpt
+      })
         .getOrElse( noChange )
 
     /* // Нельзя тут трогать locationfound, т.к. он может происходить много раз вподряд,

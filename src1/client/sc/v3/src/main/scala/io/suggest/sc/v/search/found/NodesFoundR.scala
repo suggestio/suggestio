@@ -23,6 +23,7 @@ import ReactCommonUtil.Implicits._
 import com.github.souporserious.react.measure.ContentRect
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.jd.render.v.MeasureR
+import io.suggest.sc.index.MSc3IndexResp
 
 import scala.scalajs.js
 
@@ -257,15 +258,19 @@ final class NodesFoundR(
           }
         },
       ): VdomElement
+
       // Список найденных узлов.
       lazy val nodesFoundList = nfListR.component(
         nfListR.PropsVal(
           onTouchStartF     = Some( _onNfListTouchMove ),
         )
       )(
-        s.nodesFoundRowsC { nodesFoundProxy =>
-          nfRowsR( nodesFoundProxy ) { inxResp =>
+        {
+          val onRowClickF = { inxResp: MSc3IndexResp =>
             NodeRowClick( inxResp.idOrNameOrEmpty )
+          }
+          s.nodesFoundRowsC { nodesFoundProxy =>
+            nfRowsR( nodesFoundProxy )( onRowClickF )
           }
         },
       ): VdomElement

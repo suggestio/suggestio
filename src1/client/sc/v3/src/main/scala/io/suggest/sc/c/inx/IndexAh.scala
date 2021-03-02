@@ -28,6 +28,8 @@ import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.styl.ScCss
+import io.suggest.maps.u.MapsUtil.Implicits._
+import io.suggest.sc.c.inx.IndexAh.MAP_ZOOM_ON_NODE
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import scalaz.NonEmptyList
@@ -42,6 +44,9 @@ import scala.util.Success
   */
 
 object IndexAh {
+
+  /** Значение зума при переходе в узел. */
+  final def MAP_ZOOM_ON_NODE = 16
 
   def _gridReLoadFx(raTypes: Set[MScRespActionType], scSwitchOpt: Option[MScSwitchCtx] = None): Option[Effect] = {
     val afterGridFxOpt = scSwitchOpt.flatMap(_.afterBackGrid)
@@ -121,23 +126,30 @@ object IndexAh {
 
         // Выставить полученную с сервера геоточку как текущую.
         // TODO Не сбрасывать точку, если index не изменился.
-        s0 = inx.geoPoint
-          .filter { mgp =>
-            !(i0.search.geo.mapInit.state.center ~= mgp)
+        s0 = (for {
+          mgp <- inx.geoPoint
+          if {
+            val r = m.switchCtxOpt.fold( MScSwitchCtx.INDEX_MAP_RESET_DFLT )(_.indexMapReset)
+            println(getClass.getSimpleName + " indexMapReset = " + r)
+            r
           }
-          .fold(s0) { mgp =>
-            MScSearch.geo
-              .composeLens(MGeoTabS.mapInit)
-              .composeLens(MMapInitState.state)
-              .modify {
-                _.copy(
-                  centerInit = mgp,
-                  centerReal = None,
-                  // Увеличить зум, чтобы приблизить.
-                  zoom = 15
-                )
-              }(s0)
-          }
+          geo_mapInit_state_LENS = MScSearch.geo
+            .composeLens( MGeoTabS.mapInit )
+            .composeLens( MMapInitState.state )
+          if !(geo_mapInit_state_LENS.get(i0.search).center ~= mgp)
+
+        } yield {
+          geo_mapInit_state_LENS
+            .modify {
+              _.copy(
+                centerInit = mgp,
+                centerReal = None,
+                // Увеличить зум, чтобы приблизить.
+                zoom = MAP_ZOOM_ON_NODE,
+              )
+            }(s0)
+        })
+          .getOrElse( s0 )
 
         // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
         for {
@@ -804,24 +816,75 @@ class IndexAh[M](
     // Необходимо перезапросить индекс для текущего состояния карты
     case m: MapReIndex =>
       val v0 = value
+
+      val outer_LENS = MScIndex.search
+        .composeLens( MScSearch.geo )
+
+      // Поискать точку для перемещения карты среди узлов.
+      val nextGpOpt = for {
+        rcvrId <- m.rcvrId
+        geoTab = outer_LENS.get(v0)
+        nfReq  <- geoTab.found.reqOpt
+        nf     <- nfReq.resp.nodesMap.get( rcvrId )
+        // Центр карты берём за точку "притяжения" при поиске ближайшего узла.
+        userLocPoint = geoTab.mapInit.state.center
+        // Найти в списке ресиверов координату кликнутого ресивера.
+        gp     <- nf.shapes
+          .iterator
+          .flatMap(_.centerPoint)
+          .nearestTo( userLocPoint )
+          .orElse {
+            nf.shapes
+              .iterator
+              .map(_.firstPoint)
+              .nearestTo( userLocPoint )
+          }
+          .orElse {
+            nf.props.geoPoint
+          }
+      } yield {
+        gp
+      }
+
+      val mmap = v0.search.geo.mapInit.state
       if (
         (m.rcvrId.nonEmpty && m.rcvrId ==* v0.state.rcvrId) ||
-        (m.rcvrId.isEmpty && v0.search.geo.mapInit.state.isCenterRealNearInit)
+        (m.rcvrId.isEmpty && mmap.isCenterRealNearInit)
       ) {
-        // Ничего как бы и не изменилось.
-        noChange
+        // Ничего как бы и не изменилось. Может карту просто переместить?
+        (for {
+          gp <- nextGpOpt
+          if !(gp ~= mmap.center)
+        } yield {
+          val v2 = outer_LENS
+            .composeLens( MGeoTabS.mapInit )
+            .composeLens( MMapInitState.state )
+            .modify( _.copy(
+              zoom = MAP_ZOOM_ON_NODE,
+              centerInit = gp,
+              centerReal = None,
+            ))(v0)
+          updated(v2)
+        })
+          .getOrElse( noChange )
 
       } else {
-        val outer_LENS = MScIndex.search
-          .composeLens( MScSearch.geo )
 
-        var geoTabModF = MGeoTabS.mapInit
-          .composeLens( MMapInitState.loader )
-          .set( Some(v0.search.geo.mapInit.state.center) )
+        var mapInitModF = MMapInitState.loader
+          .set( Some(mmap.center) )
+
+        for (gp <- nextGpOpt) {
+          // Перемещение в данную точку:
+          mapInitModF = mapInitModF andThen MMapInitState.state
+            .modify( _.copy(zoom = MAP_ZOOM_ON_NODE, centerInit = gp, centerReal = None ) )
+        }
+
+        var geoTabModF = MGeoTabS.mapInit.modify( mapInitModF )
 
         // Обнулить id текущего тега.
         val geoTab_data_selTagIds_LENS = MGeoTabS.data
           .composeLens( MGeoTabData.selTagIds )
+
         if (
           outer_LENS
             .composeLens( geoTab_data_selTagIds_LENS )
@@ -841,6 +904,10 @@ class IndexAh[M](
             nodeId        = m.rcvrId,
           ),
           showWelcome = m.rcvrId.nonEmpty,
+          indexMapReset = {
+            println(getClass.getSimpleName + " nextGpOpt = " + nextGpOpt)
+            nextGpOpt.isEmpty
+          },
         )
 
         _getIndex(
