@@ -1,7 +1,9 @@
 package io.suggest.sc.c.search
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.maps.m.{MapDragEnd, MapMoveEnd, OpenMapRcvr}
+import io.suggest.geo.MGeoPoint
+import io.suggest.maps.m.{IMapsAction, MapDragEnd, MapMoveEnd, OpenMapRcvr}
+import io.suggest.maps.u.MapsUtil
 import io.suggest.sc.m.inx.MapReIndex
 import io.suggest.sc.m.search.{MMapDelay, MapDelayTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -29,15 +31,18 @@ class ScMapDelayAh[M](
 
   private def RCVR_ID_CLICK_TIMEOUT = 250
 
-  private def _mapMoveListen = _listenTimeout(None, true, MAP_DRAG_END_TIMEOUT)
+  private def _mapMoveListen(reason: IMapsAction, geoPoint: Option[MGeoPoint]): ActionResult[M] = {
+    val mri = MapReIndex( None, geoPoint, reason)
+    _listenTimeout(mri, true, MAP_DRAG_END_TIMEOUT)
+  }
 
-  private def _listenTimeout(rcvrId: Option[String], listenMove: Boolean, timeoutMs: Int): ActionResult[M] = {
+  private def _listenTimeout(reason: MapReIndex, listenMove: Boolean, timeoutMs: Int): ActionResult[M] = {
     val gen = System.currentTimeMillis()
     val tp = DomQuick.timeoutPromiseT(timeoutMs)( MapDelayTimeOut(gen) )
     val v2 = MMapDelay(
       timerId     = tp.timerId,
       generation  = gen,
-      rcvrId      = rcvrId,
+      reason      = reason,
       listenMove  = listenMove
     )
     val fx = Effect( tp.fut )
@@ -48,22 +53,25 @@ class ScMapDelayAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Юзер таскает карту, значит надо среагировать на перемещение карты.
-    case _: MapDragEnd =>
-      _mapMoveListen
+    case m: MapDragEnd =>
+      _mapMoveListen(m, None)
 
 
     // Сигнал о перемещении карты.
-    case _: MapMoveEnd =>
-      val resOpt = for {
+    case m: MapMoveEnd =>
+      (for {
         v0 <- value
         if v0.listenMove
       } yield {
         // Разрешено прослушивание map moveEnd событий. Перезапускаем таймер.
         DomQuick.clearTimeout( v0.timerId )
+
+        val mgpOpt = Option( m.newCenterLL )
+          .map( MapsUtil.latLng2geoPoint )
+
         // Выставить новый move-таймер
-        _mapMoveListen
-      }
-      resOpt
+        _mapMoveListen(m, mgpOpt )
+      })
         .getOrElse( noChange )
 
 
@@ -72,7 +80,8 @@ class ScMapDelayAh[M](
       for (v0 <- value)
         DomQuick.clearTimeout( v0.timerId )
 
-      _listenTimeout( Some(m.nodeId), false, RCVR_ID_CLICK_TIMEOUT )
+      val reason = MapReIndex( Some(m.nodeId), None, m )
+      _listenTimeout( reason, false, RCVR_ID_CLICK_TIMEOUT )
 
 
     // Срабатывание таймера.
@@ -81,10 +90,11 @@ class ScMapDelayAh[M](
         v0 <- value
         if v0.generation ==* m.gen
       } yield {
-        val fx = MapReIndex(v0.rcvrId).toEffectPure
+        val fx = v0.reason.toEffectPure
         updatedSilent( None, fx )
       })
         .getOrElse( noChange )
+
 
     /* // Нельзя тут трогать locationfound, т.к. он может происходить много раз вподряд,
        // TODO нужно только после L.control.locate.start() вызывать максимум один раз. Возможно, следует задействовать MapMoveEnd().

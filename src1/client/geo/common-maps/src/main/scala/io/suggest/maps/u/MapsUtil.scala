@@ -57,12 +57,18 @@ object MapsUtil {
         * @return Опциональный результат. None, когда исходный список точек пуст.
         */
       def nearestTo(toPoint: MGeoPoint): Option[MGeoPoint] = {
-        lazy val toPointLL = geoPoint2LatLng( toPoint )
-        gps
-          .iterator
-          .minByOption { currPoint =>
-            geoPoint2LatLng(currPoint) distanceTo toPointLL
+        val iter = gps.iterator
+        for (first <- iter.nextOption()) yield {
+          if (iter.isEmpty) {
+            first
+          } else {
+            val toPointLL = geoPoint2LatLng( toPoint )
+            (Iterator.single(first) ++ iter)
+              .minBy { currPoint =>
+                geoPoint2LatLng(currPoint) distanceTo toPointLL
+              }
           }
+        }
       }
 
       def nearestOrFirst(toPointOpt: Option[MGeoPoint]): Option[MGeoPoint] = {

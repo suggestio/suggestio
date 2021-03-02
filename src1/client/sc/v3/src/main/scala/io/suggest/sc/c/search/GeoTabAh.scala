@@ -3,6 +3,7 @@ package io.suggest.sc.c.search
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
+import io.suggest.geo.MGeoPoint
 import io.suggest.grid.GridConst
 import io.suggest.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
@@ -16,6 +17,8 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.maps.u.MapsUtil.Implicits.MGeoPointsExt
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -70,6 +73,26 @@ object GeoTabAh {
     scRoot_index_search_geo_LENS
       .composeLens( MGeoTabS.found )
       .composeLens( MNodesFoundS.req )
+  }
+
+  /** Извлечение точки маркера на карте. */
+  def nodePropsShapesToNodeGeoPoint(nodePropsShapes: MGeoNodePropsShapes, v0: MGeoTabS): Option[MGeoPoint] = {
+    val userLocPoint = v0.mapInit.state.center
+    nodePropsShapes
+      .shapes
+      .iterator
+      .flatMap(_.centerPoint)
+      .nearestTo( userLocPoint )
+      .orElse {
+        nodePropsShapes
+          .shapes
+          .iterator
+          .map(_.firstPoint)
+          .nearestTo( userLocPoint )
+      }
+      .orElse {
+        nodePropsShapes.props.geoPoint
+      }
   }
 
 }
@@ -239,7 +262,14 @@ class GeoTabAh[M](
 
         } else {
           // Это не тег, значит это adn-узел. Надо перейти в выдачу выбранного узла.
-          val fx = MapReIndex(mnode.nodeId).toEffectPure
+          val fx = Effect.action {
+            MapReIndex(
+              mnode.nodeId,
+              GeoTabAh.nodePropsShapesToNodeGeoPoint( nodePropsShapes, v0 ),
+              m,
+            )
+          }
+
           // Надо сбросить выбранные теги, есть есть.
           if (v0.data.selTagIds.isEmpty) {
             effectOnly(fx)

@@ -1,6 +1,8 @@
 package io.suggest.sc.m.search
 
 import diode.{FastEq, UseValueEq}
+import io.suggest.maps.m.IMapsAction
+import io.suggest.sc.m.inx.MapReIndex
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 
@@ -16,7 +18,7 @@ object MMapDelay {
     override def eqv(a: MMapDelay, b: MMapDelay): Boolean = {
       (a.timerId ==* b.timerId) &&
       (a.generation ==* b.generation) &&
-      (a.rcvrId ===* b.rcvrId) &&
+      (a.reason ===* b.reason) &&
       (a.listenMove ==* b.listenMove)
     }
   }
@@ -39,7 +41,7 @@ object MMapDelay {
 case class MMapDelay(
                       timerId           : Int,
                       generation        : Long,
-                      rcvrId            : Option[String],
+                      reason            : MapReIndex,
                       listenMove        : Boolean
                     )
   extends UseValueEq

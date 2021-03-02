@@ -8,12 +8,11 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
 import io.suggest.log.Log
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.leaflet.Leaflet
@@ -58,8 +57,7 @@ object RcvrMarkersR extends Log {
     }
 
     private def _clickEvent(nodeId: String, gp: MGeoPoint): Callback = {
-      val msg = OpenMapRcvr(nodeId, gp)
-      dispatchOnProxyScopeCB($, msg)
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, OpenMapRcvr(nodeId, gp))
     }
 
     private def _toColorOpt(mcdOpt: Option[MColorData]): js.UndefOr[String] = {

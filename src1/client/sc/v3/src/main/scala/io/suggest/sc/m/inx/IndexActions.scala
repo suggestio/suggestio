@@ -1,6 +1,8 @@
 package io.suggest.sc.m.inx
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.sc.m.{ISc3Action, IScIndexRespReason}
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io
@@ -44,7 +46,7 @@ case class IndexSwitchNodeClick( nodeId: Option[String] = None ) extends IIndexA
 case object GoToPrevIndexView extends IIndexAction with IScIndexRespReason
 
 /** Команда к запуску index-реакции на текущее состояние гео.карты. */
-case class MapReIndex( rcvrId: Option[String] ) extends IIndexAction with IScIndexRespReason
+case class MapReIndex( rcvrId: Option[String], geoPoint: Option[MGeoPoint], reason: DAction ) extends IIndexAction with IScIndexRespReason
 
 
 sealed trait IWelcomeAction extends ISc3Action

@@ -4,7 +4,7 @@ import cordova.plugins.statusbar.CdvStatusBar
 import diode._
 import diode.data.{Pot, Ready}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.{MGeoLoc, MLocEnv}
+import io.suggest.geo.{MGeoLoc, MGeoPoint, MLocEnv}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
@@ -19,17 +19,17 @@ import io.suggest.sc.sc3._
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.log.Log
+import io.suggest.maps.m.MMapS
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MIndexAdOpenQs, MScFocusArgs, MScGridArgs, MScNodesArgs}
-import io.suggest.sc.c.search.SearchAh
+import io.suggest.sc.c.search.{GeoTabAh, SearchAh}
 import io.suggest.sc.m.dia.err.MScErrorDia
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.u.ScQsUtil
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sc.v.styl.ScCss
-import io.suggest.maps.u.MapsUtil.Implicits._
-import io.suggest.sc.c.inx.IndexAh.MAP_ZOOM_ON_NODE
+import io.suggest.sc.c.inx.IndexAh.{MAP_ZOOM_ON_NODE, setMap}
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import scalaz.NonEmptyList
@@ -65,6 +65,17 @@ object IndexAh {
       Some(fx)
     }
   }
+
+
+  def setMap(center: MGeoPoint, mapRcvrId: Option[String])(v0: MMapS): MMapS = {
+    v0.copy(
+      centerInit = center,
+      centerReal = None,
+      // Увеличить зум, чтобы приблизить.
+      zoom = mapRcvrId.fold(v0.zoom)(_ => MAP_ZOOM_ON_NODE),
+    )
+  }
+
 
   /** Непосредственное обновление индекса.
     *
@@ -128,11 +139,7 @@ object IndexAh {
         // TODO Не сбрасывать точку, если index не изменился.
         s0 = (for {
           mgp <- inx.geoPoint
-          if {
-            val r = m.switchCtxOpt.fold( MScSwitchCtx.INDEX_MAP_RESET_DFLT )(_.indexMapReset)
-            println(getClass.getSimpleName + " indexMapReset = " + r)
-            r
-          }
+          if m.switchCtxOpt.fold( MScSwitchCtx.INDEX_MAP_RESET_DFLT )(_.indexMapReset)
           geo_mapInit_state_LENS = MScSearch.geo
             .composeLens( MGeoTabS.mapInit )
             .composeLens( MMapInitState.state )
@@ -140,14 +147,7 @@ object IndexAh {
 
         } yield {
           geo_mapInit_state_LENS
-            .modify {
-              _.copy(
-                centerInit = mgp,
-                centerReal = None,
-                // Увеличить зум, чтобы приблизить.
-                zoom = MAP_ZOOM_ON_NODE,
-              )
-            }(s0)
+            .modify( setMap(mgp, inx.nodeId) )(s0)
         })
           .getOrElse( s0 )
 
@@ -716,7 +716,9 @@ class IndexAh[M](
           .getOrElse( MScSwitchCtx( indexQsArgs2 ) )
           .copy(
             indexQsArgs = indexQsArgs2,
-            forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
+            forceGeoLoc = for {
+              mgp <- prevNodeView.inxGeoPoint
+            } yield {
               MGeoLoc(point = mgp)
             },
             showWelcome = false, // prevNodeView.rcvrId.nonEmpty,
@@ -820,31 +822,25 @@ class IndexAh[M](
       val outer_LENS = MScIndex.search
         .composeLens( MScSearch.geo )
 
-      // Поискать точку для перемещения карты среди узлов.
-      val nextGpOpt = for {
-        rcvrId <- m.rcvrId
-        geoTab = outer_LENS.get(v0)
-        nfReq  <- geoTab.found.reqOpt
-        nf     <- nfReq.resp.nodesMap.get( rcvrId )
-        // Центр карты берём за точку "притяжения" при поиске ближайшего узла.
-        userLocPoint = geoTab.mapInit.state.center
-        // Найти в списке ресиверов координату кликнутого ресивера.
-        gp     <- nf.shapes
-          .iterator
-          .flatMap(_.centerPoint)
-          .nearestTo( userLocPoint )
-          .orElse {
-            nf.shapes
+      val geoPointNextOpt = m.geoPoint
+        .orElse {
+          for {
+            rcvrId <- m.rcvrId
+            geoTab = outer_LENS.get(v0)
+            nf     <- (
+              geoTab.found.reqOpt #::
+              // Или поискать в общей карте ресиверов:
+              geoTab.data.rcvrsCache.toOption #::
+              LazyList.empty
+            )
               .iterator
-              .map(_.firstPoint)
-              .nearestTo( userLocPoint )
+              .flatMap( _.flatMap(_.resp.nodesMap.get(rcvrId)) )
+              .nextOption()
+            gp     <- GeoTabAh.nodePropsShapesToNodeGeoPoint( nf, v0.search.geo )
+          } yield {
+            gp
           }
-          .orElse {
-            nf.props.geoPoint
-          }
-      } yield {
-        gp
-      }
+        }
 
       val mmap = v0.search.geo.mapInit.state
       if (
@@ -853,17 +849,13 @@ class IndexAh[M](
       ) {
         // Ничего как бы и не изменилось. Может карту просто переместить?
         (for {
-          gp <- nextGpOpt
+          gp <- geoPointNextOpt
           if !(gp ~= mmap.center)
         } yield {
           val v2 = outer_LENS
             .composeLens( MGeoTabS.mapInit )
             .composeLens( MMapInitState.state )
-            .modify( _.copy(
-              zoom = MAP_ZOOM_ON_NODE,
-              centerInit = gp,
-              centerReal = None,
-            ))(v0)
+            .modify( setMap(gp, m.rcvrId) )(v0)
           updated(v2)
         })
           .getOrElse( noChange )
@@ -873,10 +865,10 @@ class IndexAh[M](
         var mapInitModF = MMapInitState.loader
           .set( Some(mmap.center) )
 
-        for (gp <- nextGpOpt) {
+        for (gp <- geoPointNextOpt) {
           // Перемещение в данную точку:
           mapInitModF = mapInitModF andThen MMapInitState.state
-            .modify( _.copy(zoom = MAP_ZOOM_ON_NODE, centerInit = gp, centerReal = None ) )
+            .modify( setMap(gp, m.rcvrId) )
         }
 
         var geoTabModF = MGeoTabS.mapInit.modify( mapInitModF )
@@ -904,10 +896,7 @@ class IndexAh[M](
             nodeId        = m.rcvrId,
           ),
           showWelcome = m.rcvrId.nonEmpty,
-          indexMapReset = {
-            println(getClass.getSimpleName + " nextGpOpt = " + nextGpOpt)
-            nextGpOpt.isEmpty
-          },
+          indexMapReset = geoPointNextOpt.isEmpty,
         )
 
         _getIndex(
