@@ -249,8 +249,8 @@ object Common {
     val FLOW_JS = "2.14.1"
 
 
-    val MATERIAL_UI = "5.0.0-alpha.25"
-    val MATERIAL_UI_ICONS = "5.0.0-alpha.24"
+    val MATERIAL_UI = "5.0.0-alpha.26"
+    val MATERIAL_UI_ICONS = "5.0.0-alpha.26"
 
     /** @see [[https://www.npmjs.com/package/@emotion/react]] */
     val EMOTION_REACT = "11.1.5"
@@ -260,7 +260,7 @@ object Common {
     /** The lightest colorpicker for React Material-Ui.
       * @see [[https://github.com/mikbry/material-ui-color]]
       */
-    val MATERIALUI_COLOR = "0.4.8"
+    val MATERIALUI_COLOR = "0.4.10"
 
     /** material-ui-color зачем-то зависит от styled-components. */
     val STYLED_COMPONENTS = "5.2.1"
