@@ -20,15 +20,14 @@ object MMapS {
 
   lazy val CenterZoomFeq = {
     FastEqUtil[MMapS] { (a, b) =>
-      (a.center ===* b.center) &&
+      (a.centerInit ===* b.centerInit) &&
       (a.zoom ==* b.zoom)
     }
   }
 
   implicit object MMapSFastEq4Map extends FastEq[MMapS] {
     override def eqv(a: MMapS, b: MMapS): Boolean = {
-      (a.zoom ==* b.zoom) &&
-      (a.centerInit ===* b.centerInit) &&
+      CenterZoomFeq.eqv(a, b) &&
       // Не реагировать на изменение реальной координаты, т.к. сюда идёт запись только из callback'ов карты.
       //(a.centerReal ===* b.centerReal) &&
       (a.locationFound ===* b.locationFound)

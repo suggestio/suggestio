@@ -80,7 +80,7 @@ object LGeoMapR {
 
   /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
     *
-    * @param proxy Прокси [[io.suggest.maps.m.MGeoMapPropsR]].
+    * @param v Инстанс [[io.suggest.maps.m.MGeoMapPropsR]].
     * @param lgmCtx Постоянные инстансы, хранящиеся за пределами map-коннекшена.
     * @return Инстанс LMapPropsR.
     */
@@ -102,6 +102,8 @@ object LGeoMapR {
   }
 
 
+  /** Выставление center/zoom из состояния.
+    * Для коннекшена следует использовать MMapS.CenterZoomFeq. */
   lazy val CenterZoomTo = ScalaFnComponent[MGeoMapPropsR] { props =>
     val mapInstance = useMap()
 
@@ -109,9 +111,9 @@ object LGeoMapR {
     val zoom = props.mapS.zoom
 
     if (props.animated)
-      mapInstance.setView( centerLL, zoom )
-    else
       mapInstance.flyTo( centerLL, zoom )
+    else
+      mapInstance.setView( centerLL, zoom )
 
     ReactCommonUtil.VdomNullElement
   }
