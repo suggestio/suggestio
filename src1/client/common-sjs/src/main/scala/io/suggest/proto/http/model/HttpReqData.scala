@@ -55,8 +55,11 @@ object HttpReqData {
     * @param xrwValue Значение для X-Request-With.
     * @return Карта хидеров.
     */
-  def mkBaseHeaders(xrwValue: String = HttpConst.Headers.XRequestedWith.XRW_VALUE): Map[String, String] =
+  def mkBaseHeaders(
+                     xrwValue: String = HttpConst.Headers.XRequestedWith.XRW_VALUE,
+                   ): Map[String, String] = {
     Map.empty + (HttpConst.Headers.XRequestedWith.XRW_NAME -> xrwValue)
+  }
 
 
   implicit final class HttpReqDataOpsExt( private val reqData: HttpReqData ) extends AnyVal {

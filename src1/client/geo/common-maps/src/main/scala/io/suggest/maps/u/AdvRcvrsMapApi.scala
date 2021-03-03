@@ -36,8 +36,9 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvr
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
     val __mkRoute = jsRoutes.controllers.Static.advRcvrsMapJson _
 
+    val route = __mkRoute( args.hashSum )
     val req = HttpReq.routed(
-      route = __mkRoute( args.hashSum ),
+      route = route,
       data  = HttpReqData(
         headers = HttpReqData.headersJsonAccept,
         cache = MHttpCacheInfo(

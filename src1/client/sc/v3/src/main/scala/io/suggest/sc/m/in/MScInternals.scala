@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m.boot.MScBoot
 import io.suggest.sc.sc3.MSc3Conf
+import io.suggest.spa.delay.MDelayerS
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -34,6 +35,7 @@ object MScInternals {
   def jsRouter      = GenLens[MScInternals](_.jsRouter)
   def boot          = GenLens[MScInternals](_.boot)
   def daemon        = GenLens[MScInternals](_.daemon)
+  def delayer       = GenLens[MScInternals](_.delayer)
 
 
   implicit final class ScInternalsOpsExt( private val scInts: MScInternals ) extends AnyVal {
@@ -60,4 +62,5 @@ case class MScInternals(
                          jsRouter       : MJsRouterS          = MJsRouterS.empty,
                          boot           : MScBoot             = MScBoot.default,
                          daemon         : MScDaemon           = MScDaemon.empty,
+                         delayer        : MDelayerS           = MDelayerS.default,
                        )

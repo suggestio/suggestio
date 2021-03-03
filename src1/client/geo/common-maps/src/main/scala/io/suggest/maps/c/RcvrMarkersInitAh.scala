@@ -80,7 +80,7 @@ class RcvrMarkersInitAh[M](
             // Повторные ошибочные запросы отработать по долгому таймеру.
             val fx = Effect
               .action( m )
-              .after( (if (v0.isFailed) 120 else 10).seconds )
+              .after( (if (v0.isFailed) 5 else 10).seconds )
 
             updatedSilent( v2, fx )
           }
@@ -89,12 +89,7 @@ class RcvrMarkersInitAh[M](
         // Ожидаемый ответ сервера по запросу. Сохранить в состояние.
         val v2 = v0.ready( gnResp )
 
-        // Перезакачать данные через часик...
-        val fx = Effect
-          .action( RcvrMarkersInit() )
-          .after( 1.hours )
-
-        updated( v2, fx )
+        updated( v2 )
       }
 
   }

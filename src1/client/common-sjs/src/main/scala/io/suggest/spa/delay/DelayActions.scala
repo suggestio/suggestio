@@ -1,7 +1,7 @@
 package io.suggest.spa.delay
 
+import diode.Effect
 import io.suggest.spa.DAction
-import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -12,11 +12,8 @@ import japgolly.univeq.UnivEq
 sealed trait IDelayAction extends DAction
 
 /** Команда к отправки экшена в отложенные. */
-object DelayAction {
-  @inline implicit def univEq: UnivEq[DelayAction] = UnivEq.derive
-}
-case class DelayAction(action: DAction, delayMs: Int) extends IDelayAction
+case class DelayAction(key: String, fx: Effect, delayMs: Int) extends IDelayAction
 
 /** Сработал таймер отложенного экшена. */
-private[delay] case class FireDelayedAction(actionId: Int) extends IDelayAction
+private[delay] case class FireDelayedAction(key: String) extends IDelayAction
 

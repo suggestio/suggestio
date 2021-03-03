@@ -1,6 +1,5 @@
 package io.suggest.spa.delay
 
-import diode.FastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
@@ -17,13 +16,6 @@ object MDelayerS {
 
   @inline implicit def univEq: UnivEq[MDelayerS] = UnivEq.derive
 
-  implicit object MDelayerFastEq extends FastEq[MDelayerS] {
-    override def eqv(a: MDelayerS, b: MDelayerS): Boolean = {
-      (a.counter == b.counter) &&
-        (a.delayed ===* b.delayed)
-    }
-  }
-
   def delayed = GenLens[MDelayerS]( _.delayed )
 
 }
@@ -35,6 +27,5 @@ object MDelayerS {
   * @param delayed Мапа-каталог из отложенных экшенов.
   */
 case class MDelayerS(
-                      counter     : Int                        = 0,
-                      delayed     : Map[Int, MDelayedAction]   = Map.empty
+                      delayed     : Map[String, MDelayedAction]   = Map.empty
                     )

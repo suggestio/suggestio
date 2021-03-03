@@ -10,10 +10,15 @@ import io.suggest.sjs.dom2.DomQuick
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 11.10.17 17:26
-  * Description: Контроллер управления отложенными экшенами.
+  * Description: Контроллер управления отложенными экшенами, которые не должны запускаться чаще указанного времени.
+  * Просто отложить экшен/эффект - не проблема: Effect().after(...).
+  * Однако, если нужно лимитировать частоту запуска эффекта, то этот контроллер облегчает задачу:
+  * задать ключ, передать эффект и время. По таймауту будет запущен только самый последний эффект с данным ключом.
   */
-class ActionDelayerAh[M](stateRW: ModelRW[M, MDelayerS])
-  extends ActionHandler(stateRW)
+class ActionDelayerAh[M](
+                          modelRW: ModelRW[M, MDelayerS],
+                        )
+  extends ActionHandler(modelRW)
   with Log
 {
 
@@ -23,36 +28,35 @@ class ActionDelayerAh[M](stateRW: ModelRW[M, MDelayerS])
     case m: DelayAction =>
       // Организуем откладывание экшена на потом:
       val v0 = value
-      val actionId = v0.counter
-      val counter1 = v0.counter + 1
       val fx = Effect {
         DomQuick
-          .timeoutPromiseT(m.delayMs)( FireDelayedAction(actionId) )
+          .timeoutPromiseT(m.delayMs)( FireDelayedAction(m.key) )
           .fut
       }
 
       // Сохраняем итоги деятельности в состояние.
       val a2 = MDelayedAction( m )
-      val v2 = v0.copy(
-        counter = counter1,
-        delayed = v0.delayed.updated(actionId, a2)
-      )
+      val v2 = MDelayerS.delayed
+        .modify(_.updated(m.key, a2))(v0)
       updated(v2, fx)
 
 
     // Настала пора исполнить отложенный на потом экшен:
     case m: FireDelayedAction =>
       val v0 = value
-      v0.delayed.get(m.actionId).fold {
-        logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
-        noChange
-      } { delayed =>
-        val fx = delayed.info.action.toEffectPure
+      (for {
+        delayed <- v0.delayed.get( m.key )
+      } yield {
+        val fx = delayed.info.fx
         val v2 = MDelayerS.delayed
-          .modify( _ - m.actionId )(v0)
+          .modify( _ - m.key )(v0)
 
         updated(v2, fx)
-      }
+      })
+        .getOrElse {
+          logger.warn( ErrorMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+          noChange
+        }
 
   }
 

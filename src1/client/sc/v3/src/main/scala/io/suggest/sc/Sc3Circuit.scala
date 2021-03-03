@@ -78,7 +78,9 @@ import io.suggest.sc.m.inx.save.MIndexesRecentOuter
 import io.suggest.sc.m.styl.MScCssArgs
 import io.suggest.sc.v.styl.ScCss
 import io.suggest.sc.v.toast.ScNotifications
+import io.suggest.spa.delay.{ActionDelayerAh, IDelayAction}
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -309,7 +311,8 @@ class Sc3Circuit(
         // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
         val geoTab_mapInit_rcvrs_LENS = MGeoTabS.mapInit
           .composeLens( MMapInitState.rcvrs )
-        if (geoTab_mapInit_rcvrs_LENS.get(geoTab0).isEmpty)
+        val currRcvrs0 = geoTab_mapInit_rcvrs_LENS.get(geoTab0)
+        if (currRcvrs0.isEmpty || (currRcvrs0 ===* geoTab0.data.rcvrsCache))
           modF = modF andThen geoTab_mapInit_rcvrs_LENS.set( rcvrsCache2 )
 
         modF( geoTab0 )
@@ -359,6 +362,8 @@ class Sc3Circuit(
   private def daemonRW            = mkLensZoomRW( internalsRW, MScInternals.daemon )
   private[sc] def loginSessionRW  = mkLensZoomRW( scLoginRW, MScLoginS.session )
   private def logOutRW            = mkLensZoomRW( scLoginRW, MScLoginS.logout )
+
+  private def delayerRW           = mkLensZoomRW( internalsRW, MScInternals.delayer )
 
   private[sc] def focusedAdRO = gridCoreRW.zoom(_.myFocusedAdOpt)
 
@@ -464,6 +469,10 @@ class Sc3Circuit(
     rootRO            = rootRW,
     dispatcher        = this,
     scNotifications   = scNotifications,
+  )
+
+  private def delayerAh = new ActionDelayerAh(
+    modelRW = delayerRW,
   )
 
   private val beaconerAh: HandlerFunction = new BleBeaconerAh(
@@ -724,6 +733,7 @@ class Sc3Circuit(
       case _: IWz1Action                => wzFirstDiaAh
       case _: IRcvrMarkersInitAction    => rcvrMarkersInitAh
       case _: IScJsRouterInitAction     => jsRouterInitAh
+      case _: IDelayAction              => delayerAh
       case _: ComponentCatch            => tailAh
     }
     Option( ctlOrNull )

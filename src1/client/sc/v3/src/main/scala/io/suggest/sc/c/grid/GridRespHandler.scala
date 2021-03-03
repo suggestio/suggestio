@@ -154,7 +154,7 @@ final class GridRespHandler(
       /** Добавление в selPathRev порядкового номера карточки с текущим nodeId среди карточек с таким же nodeId. */
       def _appendSelPathRevDupIndexes(scAds0: Vector[MScAdData], state0: Map[Option[String], Int]): Vector[MScAdData] = {
         // Добавить порядковый номер на случай повторяющихся id карточек. Повторятся id могут даже внутри newScAds.
-        var state = Map.empty[Option[String], Int]
+        var state = state0
         for (scAd <- scAds0) yield {
           val adId = scAd.nodeId
           // Определить очередной порядковый номер для карточки с данными id:

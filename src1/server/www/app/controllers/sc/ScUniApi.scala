@@ -270,12 +270,8 @@ trait ScUniApi
       * Изначально - текущую версию rcvrsMap.json, например.
       */
     private def confUpdateRaOptFut: Future[Option[MSc3RespAction]] = {
-      val someRaOrNseeFut: Future[Option[MSc3RespAction]] = for {
-        // 2018-11-15 Только на index-ответы возвращать конфиг. Апдейты не часты, поэтому возвращать их на каждый чих не нужно.
-        // В будущем можно чаще/реже возвращать всё это добро.
-        indexLogicOpt <- indexLogicOptFut
-        if indexLogicOpt.nonEmpty
-
+      // Не возвращать confUpdate при search-запросах.
+      (for {
         // Решено, что надо вернуть свежие "новости".
         // Запустить рассчёт данных карты:
         rcvrsMapUrlArgs <- rcvrsMapUrlArgsFut
@@ -290,13 +286,12 @@ trait ScUniApi
           )
         )
         Some(ra)
-      }
-
-      someRaOrNseeFut.recover { case ex: Throwable =>
-        if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.error(s"$logPrefix Unable to confUpdate", ex)
-        None
-      }
+      })
+        .recover { case ex: Throwable =>
+          if (!ex.isInstanceOf[NoSuchElementException])
+            LOGGER.error(s"$logPrefix Unable to confUpdate", ex)
+          None
+        }
     }
 
 
