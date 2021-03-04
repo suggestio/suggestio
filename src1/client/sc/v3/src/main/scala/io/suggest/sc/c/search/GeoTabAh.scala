@@ -266,7 +266,6 @@ class GeoTabAh[M](
             MapReIndex(
               mnode.nodeId,
               GeoTabAh.nodePropsShapesToNodeGeoPoint( nodePropsShapes, v0 ),
-              m,
             )
           }
 

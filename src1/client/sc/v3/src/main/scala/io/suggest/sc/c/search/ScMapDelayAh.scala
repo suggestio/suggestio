@@ -32,7 +32,7 @@ class ScMapDelayAh[M](
   private def RCVR_ID_CLICK_TIMEOUT = 250
 
   private def _mapMoveListen(reason: IMapsAction, geoPoint: Option[MGeoPoint]): ActionResult[M] = {
-    val mri = MapReIndex( None, geoPoint, reason)
+    val mri = MapReIndex( None, geoPoint )
     _listenTimeout(mri, true, MAP_DRAG_END_TIMEOUT)
   }
 
@@ -80,7 +80,7 @@ class ScMapDelayAh[M](
       for (v0 <- value)
         DomQuick.clearTimeout( v0.timerId )
 
-      val reason = MapReIndex( Some(m.nodeId), None, m )
+      val reason = MapReIndex( Some(m.nodeId), None )
       _listenTimeout( reason, false, RCVR_ID_CLICK_TIMEOUT )
 
 

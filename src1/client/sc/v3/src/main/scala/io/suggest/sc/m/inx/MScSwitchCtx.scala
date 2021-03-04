@@ -5,6 +5,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoLoc
 import io.suggest.sc.index.MScIndexArgs
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -37,6 +38,8 @@ object MScSwitchCtx {
   }
 
   final def INDEX_MAP_RESET_DFLT = true
+
+  def indexMapReset = GenLens[MScSwitchCtx](_.indexMapReset)
 
 }
 

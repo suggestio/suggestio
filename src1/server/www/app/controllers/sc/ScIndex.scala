@@ -467,39 +467,41 @@ trait ScIndex
             .to( LazyList )
 
           // Ленивая коллекция гео-точек для NodeLocation-эджей
-          val edgesPoints = nodeLocEdges
+          val edgesPoints: Seq[MGeoPoint] = nodeLocEdges
             .flatMap { medge =>
-              medge.info
-                .geoPoints
-                .headOption
-                .orElse {
-                  medge.info.geoShapes
-                    .iterator
-                    .flatMap { gs =>
-                      gs.shape.centerPoint
-                    }
-                    .nextOption()
-                }
+              val ei = medge.info
+              if (ei.geoPoints.nonEmpty) {
+                ei.geoPoints
+              } else {
+                ei.geoShapes
+                  .flatMap( _.shape.centerPoint )
+              }
             }
 
           // Надо вернуть
           // - Ближайшую к текущей локации точку, чтобы избежать ситуации.
           // - либо первую центральную точку,
           // - либо первую попавшующся точку вообще.
-          val r = _qs.common.locEnv.geoLocOpt
+          val r = (for {
+            geoLoc <- _qs.common.locEnv.geoLocOpt
             // Если есть хотя бы 2 точки, то надо выбирать ближайшую.
-            .filter { _ => edgesPoints.lengthCompare(1) > 0 }
-            .map { geoLoc =>
-              // Есть геолокация. Найти ближайшую точку среди имеющихся.
-              edgesPoints.minBy { centerPoint =>
+            if edgesPoints.lengthIs > 1
+          } yield {
+            // Есть геолокация. Найти ближайшую точку среди имеющихся.
+            val nearestPoint = edgesPoints
+              .minBy { centerPoint =>
                 CoordOps.distanceXY[MGeoPoint, GeoCoord_t]( centerPoint, geoLoc.point )
                   .abs
                   .doubleValue
               }( Ordering.Double.TotalOrdering )
-            }
+            LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}: nearest to $geoLoc point => $nearestPoint\n Choosen from ${edgesPoints.length} points: ${edgesPoints.mkString(" | ")}")
+            nearestPoint
+          })
             // Нет геолокации - ищем первую попавщуюся центральную точку:
             .orElse {
-              edgesPoints.headOption
+              val r = edgesPoints.headOption
+              LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}: Choosen the only possible geopoint ${r.orNull}")
+              r
             }
             // Нет центральных точек - взять первую попавшуюся из любого шейпа.
             .orElse {
@@ -507,7 +509,9 @@ trait ScIndex
                 nlEdge <- nodeLocEdges.iterator
                 gs <- nlEdge.info.geoShapes
               } yield {
-                gs.shape.firstPoint
+                val r = gs.shape.firstPoint
+                LOGGER.warn(s"$logPrefix Node#${mnode.idOrNull} choose any shape firstPoint $r, because no geoPoints or centerPoints.")
+                r
               })
                 .nextOption()
             }

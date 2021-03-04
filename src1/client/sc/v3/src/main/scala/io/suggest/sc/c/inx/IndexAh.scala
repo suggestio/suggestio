@@ -144,7 +144,6 @@ object IndexAh {
             .composeLens( MGeoTabS.mapInit )
             .composeLens( MMapInitState.state )
           if !(geo_mapInit_state_LENS.get(i0.search).center ~= mgp)
-
         } yield {
           geo_mapInit_state_LENS
             .modify( setMap(mgp, inx.nodeId) )(s0)

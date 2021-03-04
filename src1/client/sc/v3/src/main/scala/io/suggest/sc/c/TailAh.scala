@@ -195,6 +195,11 @@ object TailAh {
       ))
   }
 
+
+  private def root_index_search_geo_init_state_LENS = MScRoot.index
+    .composeLens( _inxSearchGeoMapInitLens )
+    .composeLens( MMapInitState.state )
+
 }
 
 
@@ -633,9 +638,7 @@ class TailAh(
         )
       ) {
         for (nextGeoPoint <- m.mainScreen.locEnv) {
-          modsAcc ::= MScRoot.index
-            .composeLens( TailAh._inxSearchGeoMapInitLens )
-            .composeLens( MMapInitState.state )
+          modsAcc ::= TailAh.root_index_search_geo_init_state_LENS
             .modify {
               _.withCenterInitReal( nextGeoPoint )
             }
@@ -833,17 +836,27 @@ class TailAh(
 
       for {
         geoLockTimerId <- v0.internals.info.geoLockTimer
-        if m.origOpt.exists(_.glType.isHighAccuracy)
+        glSignal <- m.origOpt
+        if glSignal.glType.isHighAccuracy
       } {
-        val switchCtx = m.scSwitch.getOrElse {
+        val mapAlreadySet = glSignal.isSuccess && v0.index.resp.isEmpty
+
+        if (mapAlreadySet)
+          for (geoLoc <- glSignal.locationOpt)
+            modsAcc ::= TailAh.root_index_search_geo_init_state_LENS
+              .modify( _.withCenterInitReal( geoLoc.point ) )
+
+        val indexMapReset2 = !mapAlreadySet
+        val switchCtx = m.scSwitch.fold {
           MScSwitchCtx(
             indexQsArgs = MScIndexArgs(
               geoIntoRcvr = true,
               retUserLoc  = m.origOpt
                 .fold(true)(_.either.isLeft),
-            )
+            ),
+            indexMapReset = indexMapReset2,
           )
-        }
+        } (MScSwitchCtx.indexMapReset set indexMapReset2)
 
         fxAcc ::= TailAh.getIndexFx( switchCtx )
         fxAcc ::= Effect.action {
